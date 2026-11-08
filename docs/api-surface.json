@@ -3176,54 +3176,6 @@
       "consumers": []
     },
     {
-      "path": "/api/inference-targets/{target_id}",
-      "methods": [
-        "DELETE"
-      ],
-      "module": "web.routes.primitives.profiles",
-      "consumers": []
-    },
-    {
-      "path": "/api/inference-targets/{target_id}",
-      "methods": [
-        "GET"
-      ],
-      "module": "web.routes.primitives.profiles",
-      "consumers": []
-    },
-    {
-      "path": "/api/inference-targets/{target_id}",
-      "methods": [
-        "PUT"
-      ],
-      "module": "web.routes.primitives.profiles",
-      "consumers": []
-    },
-    {
-      "path": "/api/inference-targets/{target_id}/probe",
-      "methods": [
-        "POST"
-      ],
-      "module": "web.routes.primitives.profiles",
-      "consumers": []
-    },
-    {
-      "path": "/api/inference-targets/{target_id}/secret",
-      "methods": [
-        "DELETE"
-      ],
-      "module": "web.routes.primitives.profiles",
-      "consumers": []
-    },
-    {
-      "path": "/api/inference-targets/{target_id}/secret",
-      "methods": [
-        "PUT"
-      ],
-      "module": "web.routes.primitives.profiles",
-      "consumers": []
-    },
-    {
       "path": "/api/inference/acquisitions/{job_id}",
       "methods": [
         "GET"
@@ -3232,14 +3184,6 @@
       "consumers": [
         "web"
       ]
-    },
-    {
-      "path": "/api/inference/acquisitions/{job_id}/cancel",
-      "methods": [
-        "POST"
-      ],
-      "module": "web.routes.setup",
-      "consumers": []
     },
     {
       "path": "/api/inference/assignments",
@@ -3290,22 +3234,6 @@
       "consumers": [
         "web"
       ]
-    },
-    {
-      "path": "/api/inference/capabilities",
-      "methods": [
-        "GET"
-      ],
-      "module": "web.routes.setup",
-      "consumers": []
-    },
-    {
-      "path": "/api/inference/capabilities/{capability_id}",
-      "methods": [
-        "GET"
-      ],
-      "module": "web.routes.setup",
-      "consumers": []
     },
     {
       "path": "/api/inference/defaults",
@@ -3368,14 +3296,6 @@
       ]
     },
     {
-      "path": "/api/inference/model-library/connect-paired-device",
-      "methods": [
-        "POST"
-      ],
-      "module": "web.routes.model_library",
-      "consumers": []
-    },
-    {
       "path": "/api/inference/model-library/define-endpoint",
       "methods": [
         "POST"
@@ -3404,14 +3324,6 @@
       "consumers": [
         "web"
       ]
-    },
-    {
-      "path": "/api/inference/setup",
-      "methods": [
-        "GET"
-      ],
-      "module": "web.routes.setup",
-      "consumers": []
     },
     {
       "path": "/api/intel/jobs",
@@ -6794,14 +6706,6 @@
       ]
     },
     {
-      "path": "/api/setup/hub-default-summary",
-      "methods": [
-        "GET"
-      ],
-      "module": "web.routes.setup",
-      "consumers": []
-    },
-    {
       "path": "/api/setup/lan",
       "methods": [
         "POST"
@@ -6858,14 +6762,6 @@
       "consumers": [
         "web"
       ]
-    },
-    {
-      "path": "/api/setup/runtime-options",
-      "methods": [
-        "GET"
-      ],
-      "module": "web.routes.setup",
-      "consumers": []
     },
     {
       "path": "/api/setup/runtime-test",

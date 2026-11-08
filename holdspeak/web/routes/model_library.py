@@ -154,20 +154,6 @@ def build_model_library_router(ctx: WebContext) -> APIRouter:
         except Exception:
             return _provider_error_500("Failed to add agent engine")
 
-    @router.post("/api/inference/model-library/connect-paired-device")
-    async def connect_paired_device(request: Request) -> Any:
-        try:
-            draft, secret = await _provider_body(request)
-            if secret is not None:
-                raise ServiceError("model_library_secret_invalid", "Paired device has no credential body.", context={"status": 400})
-            result = service.connect_paired_device(request.state.principal, draft)
-            _engine_changed("connect_paired_device")
-            return JSONResponse(result, status_code=200)
-        except ServiceError as exc:
-            return _safe_error(exc)
-        except Exception:
-            return _provider_error_500("Failed to connect paired device")
-
     @router.post("/api/inference/model-library/use-model-file")
     async def use_model_file(request: Request) -> Any:
         staging_path: Path | None = None

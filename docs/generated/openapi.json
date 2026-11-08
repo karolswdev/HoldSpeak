@@ -14112,235 +14112,6 @@
         "summary": "Api Create Inference Target"
       }
     },
-    "/api/inference-targets/{target_id}": {
-      "delete": {
-        "operationId": "api_delete_inference_target_api_inference_targets__target_id__delete",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "target_id",
-            "required": true,
-            "schema": {
-              "title": "Target Id",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Api Delete Inference Target Api Inference Targets  Target Id  Delete"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Api Delete Inference Target"
-      },
-      "get": {
-        "operationId": "api_get_inference_target_api_inference_targets__target_id__get",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "target_id",
-            "required": true,
-            "schema": {
-              "title": "Target Id",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Api Get Inference Target Api Inference Targets  Target Id  Get"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Api Get Inference Target"
-      },
-      "put": {
-        "operationId": "api_update_inference_target_api_inference_targets__target_id__put",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "target_id",
-            "required": true,
-            "schema": {
-              "title": "Target Id",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Api Update Inference Target Api Inference Targets  Target Id  Put"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Api Update Inference Target"
-      }
-    },
-    "/api/inference-targets/{target_id}/probe": {
-      "post": {
-        "description": "Test this legacy destination without persisting a connection result.",
-        "operationId": "api_probe_target_api_inference_targets__target_id__probe_post",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "target_id",
-            "required": true,
-            "schema": {
-              "title": "Target Id",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Api Probe Target Api Inference Targets  Target Id  Probe Post"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Api Probe Target"
-      }
-    },
-    "/api/inference-targets/{target_id}/secret": {
-      "delete": {
-        "operationId": "api_delete_inference_target_secret_api_inference_targets__target_id__secret_delete",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "target_id",
-            "required": true,
-            "schema": {
-              "title": "Target Id",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Api Delete Inference Target Secret Api Inference Targets  Target Id  Secret Delete"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Api Delete Inference Target Secret"
-      },
-      "put": {
-        "operationId": "api_set_inference_target_secret_api_inference_targets__target_id__secret_put",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "target_id",
-            "required": true,
-            "schema": {
-              "title": "Target Id",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Api Set Inference Target Secret Api Inference Targets  Target Id  Secret Put"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Api Set Inference Target Secret"
-      }
-    },
     "/api/inference/acquisitions/{job_id}": {
       "get": {
         "operationId": "api_inference_acquisition_api_inference_acquisitions__job_id__get",
@@ -14378,45 +14149,6 @@
           }
         },
         "summary": "Api Inference Acquisition"
-      }
-    },
-    "/api/inference/acquisitions/{job_id}/cancel": {
-      "post": {
-        "operationId": "api_inference_cancel_api_inference_acquisitions__job_id__cancel_post",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "job_id",
-            "required": true,
-            "schema": {
-              "title": "Job Id",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Api Inference Cancel Api Inference Acquisitions  Job Id  Cancel Post"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Api Inference Cancel"
       }
     },
     "/api/inference/assignments": {
@@ -14507,63 +14239,6 @@
           }
         },
         "summary": "Set Assignment"
-      }
-    },
-    "/api/inference/capabilities": {
-      "get": {
-        "operationId": "api_inference_capabilities_api_inference_capabilities_get",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Api Inference Capabilities Api Inference Capabilities Get"
-                }
-              }
-            },
-            "description": "Successful Response"
-          }
-        },
-        "summary": "Api Inference Capabilities"
-      }
-    },
-    "/api/inference/capabilities/{capability_id}": {
-      "get": {
-        "operationId": "api_inference_capability_api_inference_capabilities__capability_id__get",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "capability_id",
-            "required": true,
-            "schema": {
-              "title": "Capability Id",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Api Inference Capability Api Inference Capabilities  Capability Id  Get"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Api Inference Capability"
       }
     },
     "/api/inference/defaults": {
@@ -14674,24 +14349,6 @@
         "summary": "Connect Hosted Model"
       }
     },
-    "/api/inference/model-library/connect-paired-device": {
-      "post": {
-        "operationId": "connect_paired_device_api_inference_model_library_connect_paired_device_post",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Connect Paired Device Api Inference Model Library Connect Paired Device Post"
-                }
-              }
-            },
-            "description": "Successful Response"
-          }
-        },
-        "summary": "Connect Paired Device"
-      }
-    },
     "/api/inference/model-library/define-endpoint": {
       "post": {
         "operationId": "define_endpoint_api_inference_model_library_define_endpoint_post",
@@ -14744,24 +14401,6 @@
           }
         },
         "summary": "Use Model File"
-      }
-    },
-    "/api/inference/setup": {
-      "get": {
-        "operationId": "api_inference_setup_api_inference_setup_get",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Api Inference Setup Api Inference Setup Get"
-                }
-              }
-            },
-            "description": "Successful Response"
-          }
-        },
-        "summary": "Api Inference Setup"
       }
     },
     "/api/intel/jobs": {
@@ -28870,24 +28509,6 @@
         "summary": "Api Setup Found"
       }
     },
-    "/api/setup/hub-default-summary": {
-      "get": {
-        "operationId": "api_hub_default_summary_api_setup_hub_default_summary_get",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Api Hub Default Summary Api Setup Hub Default Summary Get"
-                }
-              }
-            },
-            "description": "Successful Response"
-          }
-        },
-        "summary": "Api Hub Default Summary"
-      }
-    },
     "/api/setup/lan": {
       "post": {
         "description": "One explicit Setup-open LAN look; the shared found read never scans.",
@@ -29017,24 +28638,6 @@
           }
         },
         "summary": "Api Setup People"
-      }
-    },
-    "/api/setup/runtime-options": {
-      "get": {
-        "operationId": "api_runtime_options_api_setup_runtime_options_get",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Api Runtime Options Api Setup Runtime Options Get"
-                }
-              }
-            },
-            "description": "Successful Response"
-          }
-        },
-        "summary": "Api Runtime Options"
       }
     },
     "/api/setup/runtime-test": {

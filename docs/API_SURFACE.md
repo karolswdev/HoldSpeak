@@ -14,7 +14,7 @@ For example, the old meeting Slack-export route returns `slack_moved_to_channel`
 Read the handler and owning guide before treating route presence as feature availability.
 Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
-Routes: 882 (plus static mounts). iOS-consumed: 89. Web-consumed: 603.
+Routes: 869 (plus static mounts). iOS-consumed: 89. Web-consumed: 603.
 
 ## device_audio_ws
 
@@ -659,7 +659,6 @@ Routes: 882 (plus static mounts). iOS-consumed: 89. Web-consumed: 603.
 | POST | `/api/inference/model-library/add-to-library` | web |
 | POST | `/api/inference/model-library/connect-cli-engine` | web |
 | POST | `/api/inference/model-library/connect-hosted-model` | web |
-| POST | `/api/inference/model-library/connect-paired-device` | server only |
 | POST | `/api/inference/model-library/define-endpoint` | web |
 | POST | `/api/inference/model-library/download` | web |
 | POST | `/api/inference/model-library/use-model-file` | web |
@@ -887,12 +886,6 @@ Routes: 882 (plus static mounts). iOS-consumed: 89. Web-consumed: 603.
 |---|---|---|
 | GET | `/api/inference-targets` | web |
 | POST | `/api/inference-targets` | server only |
-| DELETE | `/api/inference-targets/{target_id}` | server only |
-| GET | `/api/inference-targets/{target_id}` | server only |
-| PUT | `/api/inference-targets/{target_id}` | server only |
-| POST | `/api/inference-targets/{target_id}/probe` | server only |
-| DELETE | `/api/inference-targets/{target_id}/secret` | server only |
-| PUT | `/api/inference-targets/{target_id}/secret` | server only |
 | POST | `/api/profiles` | server only |
 | DELETE | `/api/profiles/{profile_id}` | server only |
 | PUT | `/api/profiles/{profile_id}` | server only |
@@ -1220,23 +1213,17 @@ Routes: 882 (plus static mounts). iOS-consumed: 89. Web-consumed: 603.
 | Method | Path | Consumers |
 |---|---|---|
 | GET | `/api/inference/acquisitions/{job_id}` | web |
-| POST | `/api/inference/acquisitions/{job_id}/cancel` | server only |
-| GET | `/api/inference/capabilities` | server only |
-| GET | `/api/inference/capabilities/{capability_id}` | server only |
-| GET | `/api/inference/setup` | server only |
 | POST | `/api/setup/discover-models` | web |
 | POST | `/api/setup/first-value/start` | web |
 | POST | `/api/setup/first-value/{attempt_id}/event` | web |
 | POST | `/api/setup/first-value/{attempt_id}/finish` | web |
 | GET | `/api/setup/found` | web |
-| GET | `/api/setup/hub-default-summary` | server only |
 | POST | `/api/setup/lan` | web |
 | GET | `/api/setup/local-ai` | web |
 | POST | `/api/setup/local-ai` | web |
 | POST | `/api/setup/local-ai/cancel` | server only |
 | PUT | `/api/setup/onboarding` | web |
 | POST | `/api/setup/people` | web |
-| GET | `/api/setup/runtime-options` | server only |
 | POST | `/api/setup/runtime-test` | web |
 | GET | `/api/setup/status` | ios, web |
 | POST | `/api/setup/use` | web |

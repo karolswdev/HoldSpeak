@@ -1,3 +1,7 @@
+"""PARKED 20261108 (subtraction day, Lane R): tests of parked routes.
+
+Moved from ``tests/unit/test_profile_key_routes.py``: test_secret_subresource_is_owner_only_and_redacted, test_secret_subresource_rejects_bad_target_and_body. Not collected.
+"""
 from __future__ import annotations
 
 from types import SimpleNamespace

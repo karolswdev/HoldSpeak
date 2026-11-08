@@ -47,7 +47,6 @@ def build_setup_router(ctx: WebContext) -> APIRouter:
     if inference_setup is None:
         raise RuntimeError("InferenceSetupApplicationService must be supplied at application composition")
     inference_acquisition = ctx.inference_acquisition_service
-    inference_capabilities = ctx.inference_capability_service
     router = APIRouter()
 
     def _ops() -> operations.OperationRegistry:
@@ -152,22 +151,6 @@ def build_setup_router(ctx: WebContext) -> APIRouter:
         except Exception as exc:
             return error_500(exc, log, "Failed to look on the network")
 
-    @router.get("/api/setup/hub-default-summary")
-    def api_hub_default_summary() -> Any:
-        try:
-            from ...inference_targets import this_machine_target
-
-            target = this_machine_target()
-            if not target.ready:
-                return {"engine": "", "model": "", "available": False}
-            return {
-                "engine": "llama.cpp",
-                "model": target.model,
-                "available": True,
-            }
-        except Exception as exc:
-            return error_500(exc, log, "Failed to read hub default summary")
-
     @router.post("/api/setup/runtime-test")
     async def api_setup_runtime_test(request: Request) -> Any:
         try:
@@ -260,45 +243,6 @@ def build_setup_router(ctx: WebContext) -> APIRouter:
         except ServiceError as exc:
             return _inference_error(exc)
 
-    @router.get("/api/setup/runtime-options")
-    async def api_runtime_options() -> Any:
-        try:
-            from ...setup_runtime import discover_local_models
-            return await run_in_threadpool(discover_local_models)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to discover local runtime models")
-
-    @router.get("/api/inference/setup")
-    def api_inference_setup(request: Request) -> Any:
-        try:
-            return {"setup": inference_setup.get_inference_setup(request.state.principal)}
-        except ServiceError as exc:
-            return _error(exc)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to read inference setup")
-
-    @router.get("/api/inference/capabilities")
-    def api_inference_capabilities(request: Request) -> Any:
-        try:
-            if inference_capabilities is None:
-                raise RuntimeError("InferenceCapabilityApplicationService must be supplied at application composition")
-            return {"capabilities": inference_capabilities.get_capabilities(request.state.principal)}
-        except ServiceError as exc:
-            return _inference_error(exc)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to read inference capabilities")
-
-    @router.get("/api/inference/capabilities/{capability_id}")
-    def api_inference_capability(capability_id: str, request: Request) -> Any:
-        try:
-            if inference_capabilities is None:
-                raise RuntimeError("InferenceCapabilityApplicationService must be supplied at application composition")
-            return {"capability": inference_capabilities.get_capability(request.state.principal, capability_id)}
-        except ServiceError as exc:
-            return _inference_error(exc)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to read inference capability")
-
     @router.get("/api/inference/acquisitions/{job_id}")
     def api_inference_acquisition(job_id: str, request: Request) -> Any:
         try:
@@ -309,20 +253,6 @@ def build_setup_router(ctx: WebContext) -> APIRouter:
             return _inference_error(exc)
         except Exception as exc:
             return error_500(exc, log, "Failed to read model acquisition")
-
-    @router.post("/api/inference/acquisitions/{job_id}/cancel")
-    async def api_inference_cancel(job_id: str, request: Request) -> Any:
-        try:
-            if inference_acquisition is None:
-                raise ServiceError("inference_acquisition_unavailable", "Model downloads are unavailable on this hub.", context={"status": 503})
-            body = await request.json()
-            if not isinstance(body, dict):
-                raise ServiceError("inference_cancel_invalid", "Expected a JSON object.", context={"status": 400})
-            return inference_acquisition.cancel(request.state.principal, job_id, body)
-        except ServiceError as exc:
-            return _inference_error(exc)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to cancel model acquisition")
 
     @router.post("/api/setup/discover-models")
     async def api_discover_models(request: Request) -> Any:
