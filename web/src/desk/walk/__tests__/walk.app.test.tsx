@@ -20,10 +20,21 @@ const mocks = vi.hoisted(() => ({
 vi.mock("../../shell", () => ({ openSurface: mocks.openSurface, openSurfaceOr: mocks.openSurfaceOr }));
 vi.mock("../../verbRegistry", () => ({ verbById: mocks.verbById }));
 vi.mock("../../feedback/capture", () => ({ captureWindowPng: mocks.captureWindowPng }));
-vi.mock("../../../lib/api", () => ({
-  apiFetch: mocks.apiFetch,
-  readableError: (error: unknown) => (error instanceof Error ? error.message : "Request failed"),
-}));
+// The walk's wire is the typed client (the null-read guard); here it rides
+// the stubbed global fetch so each case keeps its recorded hub answers.
+vi.mock("../../../lib/api", async (importOriginal) => {
+  const real = await importOriginal<typeof import("../../../lib/api")>();
+  return {
+    ...real,
+    apiFetch: async (path: string, init: RequestInit & { json?: unknown } = {}) => {
+      const { json, ...request } = init;
+      const response = await fetch(path, { ...request, body: json === undefined ? request.body : JSON.stringify(json) });
+      const body = await response.json().catch(() => null);
+      if (!response.ok) throw new real.ApiError(response.status, "", body);
+      return body;
+    },
+  };
+});
 
 import { WalkRunner } from "../WalkRunner";
 
