@@ -118,7 +118,8 @@ describe("The Walk", () => {
     expect(await screen.findByTestId("walk-words", {}, { timeout: 3000 })).toHaveTextContent(
       "Press New program. The well opens.");
     expect(await screen.findByTestId("walk-ring")).toBeInTheDocument();
-    expect(screen.getByTestId("walk-backdrop")).toBeInTheDocument();
+    // The dim is four sides around the part; none is over it.
+    expect(screen.getAllByTestId(/^walk-backdrop-/)).toHaveLength(4);
     expect(screen.getByTestId("walk-count")).toHaveTextContent("1 of 3");
     fireEvent.click(screen.getByTestId("walk-next"));
 
@@ -213,6 +214,8 @@ describe("The Walk", () => {
     expect(await screen.findByTestId("walk-line", {}, { timeout: 9000 }))
       .toHaveTextContent("The Needs you window is not open · This step is skipped");
     expect(screen.queryByTestId("walk-ring")).toBeNull();
+    // Nothing marked, nothing dimmed: the desk stays live.
+    expect(screen.queryAllByTestId(/^walk-backdrop-/)).toHaveLength(0);
     expect(await screen.findByTestId("walk-end", {}, { timeout: 4000 })).toHaveTextContent("Thanks · 1 answer");
     expect(posts).toHaveLength(1);
   }, 20000);
@@ -251,10 +254,16 @@ describe("The Walk", () => {
     const target = screen.getByTestId("programs-new");
     await waitFor(() => expect(target.getBoundingClientRect().bottom).toBeLessThanOrEqual(844 - 64 - 200));
     expect(target.getBoundingClientRect().top).toBeGreaterThanOrEqual(60);
-    // The backdrop and the ring still mark it, where it is now.
-    expect(screen.getByTestId("walk-backdrop")).toBeInTheDocument();
+    // The dim and the ring still mark it, where it is now: the dim ends at
+    // the ring on each side, nothing of it over the part.
     await waitFor(() => expect(screen.getByTestId("walk-ring").style.top)
       .toBe(`${target.getBoundingClientRect().top - 6}px`));
+    const ring = screen.getByTestId("walk-ring").style;
+    const dim = (side: string) => screen.getByTestId(`walk-backdrop-${side}`).style;
+    expect(dim("top").height).toBe(ring.top);
+    expect(dim("bottom").top).toBe(`${parseFloat(ring.top) + parseFloat(ring.height)}px`);
+    expect(dim("left").width).toBe(ring.left);
+    expect(dim("right").left).toBe(`${parseFloat(ring.left) + parseFloat(ring.width)}px`);
   });
 
   it("shows one plain line and gets out of the way when the hub refuses the token", async () => {

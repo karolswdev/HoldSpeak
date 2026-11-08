@@ -1,9 +1,10 @@
 /** The Walk (2026-11-07): the desk runs a walk script step by step.
  *
  * A step opens a window (the desk's own openers), runs a verb, marks one
- * part of a window and asks one question. The mark is a cut-out in a dim
- * backdrop (the backdrop is cut, nothing is drawn over the part, and the
- * part stays live to the pointer), with a 2 px accent ring that pulses once.
+ * part of a window and asks one question. The mark is a dim of four
+ * rectangles around the part (nothing is drawn over the part, and the part
+ * stays live to the pointer), with a 2 px accent ring that pulses once.
+ * A step with no part to mark dims nothing: the desk stays live.
  * The card sits beside the part (the other side when there is no room). At
  * phone width the card is one sheet at the bottom, above the dock, and the
  * part scrolls into view above the sheet. The part is searched ONLY in the
@@ -66,17 +67,21 @@ function sameRect(a: Rect | null, b: Rect | null): boolean {
   return !!a && !!b && a.left === b.left && a.top === b.top && a.width === b.width && a.height === b.height;
 }
 
-/** The backdrop with the part cut out (even-odd: the hole is not painted and
- * takes no pointer). */
-export function holePath(rect: Rect, width: number, height: number): string {
-  const x = rect.left - RING;
-  const y = rect.top - RING;
-  const w = rect.width + RING * 2;
-  const h = rect.height + RING * 2;
-  const r = 8;
-  return `path(evenodd, "M0 0H${width}V${height}H0Z M${x + r} ${y}H${x + w - r}A${r} ${r} 0 0 1 ${x + w} ${y + r}`
-    + `V${y + h - r}A${r} ${r} 0 0 1 ${x + w - r} ${y + h}H${x + r}A${r} ${r} 0 0 1 ${x} ${y + h - r}`
-    + `V${y + r}A${r} ${r} 0 0 1 ${x + r} ${y}Z")`;
+/** The dim as four rectangles around the part (top, bottom, left, right).
+ * No element is over the part, so it takes the pointer at once, also in the
+ * frame it moves (first run 2026-11-07: a clip-path cut-out lagged its part
+ * and took the press). Each side is clamped to the viewport. */
+export function dimRects(rect: Rect, width: number, height: number): Record<"top" | "bottom" | "left" | "right", Rect> {
+  const x = Math.max(0, Math.min(width, rect.left - RING));
+  const y = Math.max(0, Math.min(height, rect.top - RING));
+  const right = Math.max(x, Math.min(width, rect.left + rect.width + RING));
+  const bottom = Math.max(y, Math.min(height, rect.top + rect.height + RING));
+  return {
+    top: { left: 0, top: 0, width, height: y },
+    bottom: { left: 0, top: bottom, width, height: height - bottom },
+    left: { left: 0, top: y, width: x, height: bottom - y },
+    right: { left: right, top: y, width: width - right, height: bottom - y },
+  };
 }
 
 /** Beside the part: right, else left, else under it, else over it. */
@@ -390,8 +395,10 @@ function WalkSession({ token }: { token: string }) {
     <div className="walk-layer" data-walk="" data-testid="walk">
       {marked ? (
         <>
-          <div className="walk-backdrop" aria-hidden="true" data-testid="walk-backdrop"
-            style={{ clipPath: holePath(marked, width, height) }} />
+          {Object.entries(dimRects(marked, width, height)).map(([side, box]) => (
+            <div key={side} className="walk-backdrop" aria-hidden="true" data-testid={`walk-backdrop-${side}`}
+              style={{ left: box.left, top: box.top, width: box.width, height: box.height }} />
+          ))}
           <div className="walk-ring" aria-hidden="true" data-testid="walk-ring"
             style={{ left: marked.left - RING, top: marked.top - RING,
               width: marked.width + RING * 2, height: marked.height + RING * 2 }} />
