@@ -2,6 +2,8 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · #1929 HS-S31 the shared queue outcome contract: `queue_outcome` answers waiting/launched/failed/cancelled/unknown from retained records; Waiting Automation occurrences read it; a cancelled entry is never revived, an unknown never repeated.
+- 2026-11-08 · #1926 HS-S24 the Program's spend amount is a note, never a cap: stored, read as `spend note · 40 USD`, one mono fact in the Program window; over the note still runs.
 - 2026-11-08 · #1926 HS-S24 the Program's spend amount is a note, never a cap: stored, read as `spend note · 40 USD`, one mono fact in the Program window; over the note still runs.
 - 2026-11-08 · #1934 Fix forward #1932/#1878: the bell's badge-slot token lives in design-tokens.json (the regeneration had dropped it); the Program-from-action wire fixtures re-recorded with the plan_goal checkpoint.
 - 2026-11-08 · #1933 HS-S55 The project-update source policy has one home, holdspeak/services/project_update_policy.py: the HTTP tool loop (trusted run binding) and the MCP dispatcher (durable CLI credential) import it, ProjectUpdateService keeps its P2 source-scope names as delegates (project_update_service 4,050 → 3,898 lines, engine_tool_loop 537 → 309).
