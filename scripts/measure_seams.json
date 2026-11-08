@@ -1,29 +1,77 @@
 {
-  "about": "Named seams we are removing: a second implementation of one thing. Each count must go to zero over the nights. scripts/measure.py reads this file.",
+  "about": "Named seams we are removing: a second implementation of one thing. Each count must go to zero over the nights. scripts/measure.py reads this file. An exclude entry with a slash is a path from the repo root; one without a slash names a file or a folder on the way. \"suffixes\" narrows the file types (default: every text type the script reads).",
   "seams": [
     {
       "name": "Two step-dot implementations (wizard and walk)",
+      "why": "The New program wizard and The Walk each draw their own step dots; one step-dot part serves both.",
       "pattern": "pg-wiz-dot\\b|walk-dot\\b",
       "paths": ["web/src"],
       "exclude": []
     },
     {
       "name": "ProgramRefused definitions",
+      "why": "One refusal class for Programs, defined once in program_definitions.py.",
       "pattern": "class ProgramRefused",
       "paths": ["holdspeak"],
       "exclude": []
     },
     {
       "name": "_create_app lines in web_server.py",
+      "why": "web_server.py still builds the app beside the web package's own factory.",
       "pattern": "_create_app",
       "paths": ["holdspeak/web_server.py"],
       "exclude": []
     },
     {
       "name": "Keystore readers outside keystore.py",
+      "why": "Every secret goes through keystore.py; a direct keyring call is a second reader (and a second Keychain prompt).",
       "pattern": "keyring\\.",
       "paths": ["holdspeak"],
       "exclude": ["keystore.py"]
+    },
+    {
+      "name": "Refusal classes outside the definitions homes",
+      "why": "#1894 made program_definitions.py and project_definitions.py the homes of the words; a Refused class in another service is a second home.",
+      "pattern": "class .*Refused\\(",
+      "paths": ["holdspeak/services"],
+      "exclude": ["program_definitions.py", "project_definitions.py"]
+    },
+    {
+      "name": "\"Hand to agent\" face strings",
+      "why": "#1884/#1886 replaced the second hand-off verb with Run as program; the old words must not come back on a face or in user docs.",
+      "pattern": "[\"'`>*]Hand to agent",
+      "paths": ["web/src", "holdspeak", "docs"],
+      "exclude": ["docs/internal", "__tests__"]
+    },
+    {
+      "name": "toUpperCase( in web/src/desk/needs",
+      "why": "The lamp guard's rule: Needs you casing comes from the type scale, not from code that shouts.",
+      "pattern": "toUpperCase\\(",
+      "paths": ["web/src/desk/needs"],
+      "exclude": ["__tests__"]
+    },
+    {
+      "name": "Viewport max-width media outside the container-query allowlist",
+      "why": "UX-CANON §D: a window body stacks under its surface container, never viewport media; the allowlist is the shell list in web/src/desk/__tests__/containerQueryLaw.test.ts.",
+      "pattern": "@media\\s*\\(\\s*max-width",
+      "paths": ["web/src"],
+      "suffixes": [".css"],
+      "exclude": [
+        "web/src/design/atmosphere-preview.css",
+        "web/src/desk/chair/chair.css",
+        "web/src/desk/components/attention.css",
+        "web/src/desk/components/chrome-menus.css",
+        "web/src/desk/components/dock.css",
+        "web/src/desk/components/list-view.css",
+        "web/src/desk/components/pullout.css",
+        "web/src/desk/components/session-pullout.css",
+        "web/src/desk/pullouts/intelligence.css",
+        "web/src/desk/thought-workspace/thought-workspace.css",
+        "web/src/styles/react-app.css",
+        "web/src/desk/feedback/feedback.css",
+        "web/src/desk/screen/screen.css",
+        "web/src/styles/global.css"
+      ]
     }
   ]
 }

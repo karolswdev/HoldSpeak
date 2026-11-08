@@ -26,7 +26,7 @@ BACKEND_PRIVATE_DECISIONS: dict[tuple[str, str], tuple[str, str]] = {
     ("holdspeak/calls/service.py", "_override_profile"): ("a call's default engine: the home engine profile as the call thread's profile_override (the existing next-run override) unless calls.turn is assigned; no new route law", "143-03"),
     ("holdspeak/memory/engine.py", "_resolve_selected_head"): ("canonical selected Memory assignment adapter; existing planner validation, no wider-head fallback", "143-04"),
     ("holdspeak/services/project_door_service.py", "_resolve_connection"): ("provider account identity; exact pasted site binding, no inference route", "143-01"),
-    ("holdspeak/services/project_service.py", "_nudge_target"): ("exact stored outbound destination match; no inference route or dispatch", "143-01"),
+    ("holdspeak/services/project_room_reads.py", "_nudge_target"): ("exact stored outbound destination match; no inference route or dispatch", "143-01"),
     ("holdspeak/commands/doctor.py", "_check_runtime_profiles"): ("readiness audit; no route selection", "143-03"),
     ("holdspeak/delivery/factory_launch.py", "_valid_profile"): ("agent delivery validation", "143-10"),
     ("holdspeak/desktop_presence.py", "_select_presence_renderer"): ("non-inference false positive", "143-01"),
