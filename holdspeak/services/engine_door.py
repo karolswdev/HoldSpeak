@@ -21,14 +21,20 @@ DEFAULT_DEADLINE_SECONDS = 120.0
 class EngineDoorError(RuntimeError):
     """A job did not complete. ``code`` is ``no_engine`` (no engine is
     assigned to the job) or ``failed`` (the engine ran and gave no answer).
-    ``operation_id`` names the runner's receipt when the job reached it."""
+    ``operation_id`` names the runner's receipt when the job reached it;
+    ``error`` is the engine's own words."""
 
-    def __init__(self, code: str, detail: str, *, operation_id: str = "", outcome: str = "") -> None:
+    def __init__(
+        self, code: str, detail: str, *, operation_id: str = "", outcome: str = "",
+        send_phase: str = "", error: str = "",
+    ) -> None:
         super().__init__(detail)
         self.code = code
         self.detail = detail
         self.operation_id = operation_id
         self.outcome = outcome
+        self.send_phase = send_phase
+        self.error = error
 
 
 @dataclass(frozen=True)
@@ -50,6 +56,8 @@ class Answer:
     result: Any
     operation_id: str
     engine: Engine
+    outcome: str = "succeeded"
+    send_phase: str = ""
 
     @property
     def output(self) -> str:
@@ -184,11 +192,15 @@ def run(
 def _answer(outcome: Any, captured: list[Any], engine: Engine, job: str) -> Answer:
     operation_id = str(getattr(outcome, "operation_id", "") or "")
     status = getattr(outcome, "outcome", None)
+    state = str(status or "")
+    send_phase = str(getattr(outcome, "send_phase", "") or "")
     failed = isinstance(status, str) and status != "succeeded"
     result = captured[0] if captured else getattr(outcome, "result", None)
     if failed or result is None:
-        state = status if isinstance(status, str) else ""
-        detail = str(getattr(outcome, "error", "") or state or "no answer")
-        raise EngineDoorError("failed", f"{job} did not complete: {detail}", operation_id=operation_id, outcome=state)
-    return Answer(result=result, operation_id=operation_id, engine=engine)
+        error = str(getattr(outcome, "error", "") or "")
+        raise EngineDoorError(
+            "failed", f"{job} did not complete: {error or state or 'no answer'}",
+            operation_id=operation_id, outcome=state, send_phase=send_phase, error=error,
+        )
+    return Answer(result=result, operation_id=operation_id, engine=engine, outcome=state, send_phase=send_phase)
 

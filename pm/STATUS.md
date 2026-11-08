@@ -3,6 +3,7 @@
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
 - 2026-11-08 · (PR) The Rails journal summary runs through the engine door: one root invoke on the assigned engine (its kernel operation is the journal's route receipt), the egress badge from the engine's lamp, memory fitted to the engine's room; no bundle, frozen route or parent run.
+- 2026-11-08 · (PR) The preparation brief runs its model draft through the engine door (the invoke receipt, Stop and the four route states keep their words).
 - 2026-11-08 · (PR) The engine door: `holdspeak/services/engine_door.py` runs one AI job on its assigned engine and raises one `EngineDoorError`; thread guardrail and compaction, the Program shaper, note task finding and the four memory jobs (embed, extract, consolidate, page) call it instead of eight hand-built runner calls.
 - 2026-11-08 · #1972 Fix forward #1971: the Decisions reader reads the verb registry on use (the speakable desk test mocks the store).
 - 2026-11-08 · #1971 A desk decision can be deleted from its one face: the Decisions window's Object › Delete and the reader's Delete (beside Retire) run the one delete with its Undo; a meeting's record keeps no Delete; the two 393 screen-glass delete cases run green.
