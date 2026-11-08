@@ -196,7 +196,10 @@ class FakeGitHub:
             self.prs[number] = {"number": number, "url": url, "branch": branch, "state": "open", "approved_by": []}
             return SimpleNamespace(returncode=0, stdout=url + "\n", stderr="")
         if argv[1:3] == ["pr", "merge"]:
-            number = int(argv[3])
+            # HS-S25: a person-gated merge names the PR by its URL.
+            target = argv[3]
+            number = next(n for n, row in self.prs.items() if row["url"] == target) if target.startswith("https://") \
+                else int(target)
             self.prs[number]["state"] = "merged"
             self.sweep()
             return SimpleNamespace(returncode=0, stdout="", stderr="")
@@ -206,20 +209,42 @@ class FakeGitHub:
             return SimpleNamespace(returncode=0, stdout=json.dumps(self.runs), stderr="")
         return SimpleNamespace(returncode=1, stdout="", stderr="unknown gh call")
 
+    #: HS-S25: the gh state of the next review reads ("live" reads them).
+    read_state = "live"
+
     def sweep(self) -> None:
         """What the Heartbeat's follow-through writes: the launch's PR, its
-        state, its CI rollup and who approved it."""
+        state, its CI rollup and who approved it. HS-S25: a PR's raw
+        ``latest_reviews`` (gh's ``latestReviews``), when a test sets it, goes
+        through the real receipt normalization and the real observation;
+        otherwise ``approved_by``/``changes_requested`` stand for it."""
+        from holdspeak.delivery.follow_through import observe_review
+        from holdspeak.delivery.pr_receipts import _approved_by, _changes_requested, read_token, review_quality
+
         for record in self.rig.ledger.list():
             pr = next((row for row in self.prs.values() if row["branch"] == record.get("branch")), None)
             if pr is None:
                 continue
             follow = dict(record.get("follow_through") or {})
             ci = self.ci_by_number.get(pr["number"], self.ci)
+            if "latest_reviews" in pr:
+                raw = pr["latest_reviews"]
+                approved, changes = _approved_by(raw), _changes_requested(raw)
+            else:
+                approved, changes = list(pr["approved_by"]), list(pr.get("changes_requested") or [])
+                raw = ([{"author": {"login": login}, "state": "APPROVED"} for login in approved]
+                       + [{"author": {"login": row["login"]}, "state": "CHANGES_REQUESTED"} for row in changes])
             follow["pr"] = {"url": pr["url"], "number": pr["number"], "state": pr["state"], "ci": ci,
-                            "approved_by": list(pr["approved_by"]),
+                            "approved_by": approved,
                             # JRN14: a review that asks for changes, with its words.
-                            **({"changes_requested": list(pr["changes_requested"])} if pr.get("changes_requested") else {})}
+                            **({"changes_requested": changes} if changes else {})}
             follow["pr_state"] = f"pr_{pr['state']}"
+            token = read_token()
+            head = pr.get("head") or git(Path(record["worktree_path"]), "rev-parse", "HEAD")
+            row = {"url": pr["url"], "number": pr["number"], "head_sha": head, "approved_by": approved,
+                   "changes_requested": changes, "review_read": {"quality": review_quality(raw), "token": token}}
+            follow = observe_review(follow, row, {"path": "sweep", "gh_state": self.read_state, "token": token},
+                                    at="2026-11-08T00:00:00+00:00")
             self.rig.ledger.update(record["launch_id"], follow_through=follow)
 
 

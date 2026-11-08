@@ -556,3 +556,25 @@ def test_a_pr_closed_unmerged_ends_the_poll(tmp_path, db, monkeypatch, state) ->
         assert rig.gh.calls == []
     finally:
         rig.tmux.ended = True
+
+
+def test_a_failed_poll_records_an_unavailable_review_read(tmp_path, db, monkeypatch) -> None:
+    """HS-S25: the direct read fails; the PR is kept, the review attempt says
+    the read was unavailable, the last snapshot stays history."""
+    rig = _rehearsal_launch(tmp_path, db, monkeypatch)
+    try:
+        rig.gh.prs = [dict(_real_pr(rig.branch, rig.head, "OPEN"), latestReviews=[])]
+        _sweep(rig)
+        rig.observer.poll_open_prs(OWNER)
+        review = rig.launches.get(rig.result["launch_id"])["follow_through"]["review"]
+        assert review["attempt"]["path"] == "poll" and review["attempt"]["quality"] == "complete"
+        good = review["snapshot"]["seq"]
+        rig.gh.prs = []  # gh pr view answers "no pull requests found"
+        rig.observer.poll_open_prs(OWNER)
+        follow = rig.launches.get(rig.result["launch_id"])["follow_through"]
+        assert follow["pr"]["number"] == REAL_PR1["number"]
+        assert follow["review"]["attempt"]["quality"] == "unavailable"
+        assert follow["review"]["attempt"]["detail"] == "gh_failed"
+        assert follow["review"]["snapshot"]["seq"] == good
+    finally:
+        rig.tmux.ended = True

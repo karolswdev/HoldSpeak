@@ -797,3 +797,61 @@ def test_secure_close_after_publication_is_reported(tmp_path, db, monkeypatch) -
         assert json.loads(current["source_manifest_json"])["closure_keys"] == [PR_URL]
     finally:
         rig.tmux.ended = True
+
+
+# ── HS-S25: the review observation of the launch's PR ───────────────
+
+
+def test_sweep_records_the_review_and_a_failed_sweep_keeps_it_as_history(tmp_path, db, monkeypatch) -> None:
+    """Real receipts + real observer: a complete read is the snapshot; a
+    failed source read later is an unavailable attempt, and the snapshot is
+    kept, never refreshed by the retained rows."""
+    rig = _launch(tmp_path, db, monkeypatch)
+    approve = {"author": {"login": "alice-gh"}, "state": "APPROVED", "body": "", "submittedAt": "2026-11-01T10:00:00Z"}
+    rig.gh.prs = [dict(_pr(rig.branch, rig.head, state="OPEN"), latestReviews=[approve])]
+    _sweep(rig)
+    follow = rig.launches.get(rig.result["launch_id"])["follow_through"]
+    review = follow["review"]
+    assert review["attempt"]["quality"] == "complete" and review["attempt"]["path"] == "sweep"
+    assert review["snapshot"]["approved_by"] == ["alice-gh"]
+    assert review["snapshot"]["head"] == rig.head
+    assert review["snapshot"]["seq"] == review["attempt"]["seq"] == 1
+    assert review["snapshot"]["read"] == rig.receipts.rows_view()["sources"][0]["read_token"]
+    # "pr" keeps its shape (the receipt every face reads).
+    assert "review" not in follow["pr"]
+
+    rig.gh.fail = (1, "HTTP 502")
+    _sweep(rig)
+    review = rig.launches.get(rig.result["launch_id"])["follow_through"]["review"]
+    assert review["attempt"]["quality"] == "unavailable" and review["attempt"]["seq"] == 2
+    assert review["snapshot"]["seq"] == 1, "a stale row never becomes a fresh snapshot"
+    assert review["snapshot"]["approved_by"] == ["alice-gh"]
+
+    rig.gh.fail = None
+    rig.gh.prs = [dict(_pr(rig.branch, rig.head, state="OPEN"), latestReviews=[{"author": None, "state": "APPROVED"}])]
+    _sweep(rig)
+    review = rig.launches.get(rig.result["launch_id"])["follow_through"]["review"]
+    assert review["attempt"]["quality"] == "incomplete" and review["snapshot"]["seq"] == 1
+
+    rig.gh.prs = []  # the PR is absent from the bounded list: not a dismissal
+    _sweep(rig)
+    review = rig.launches.get(rig.result["launch_id"])["follow_through"]["review"]
+    assert review["attempt"]["quality"] == "target_missing"
+    assert review["snapshot"]["approved_by"] == ["alice-gh"] and review["snapshot"]["seq"] == 1
+    rig.tmux.ended = True
+
+
+def test_a_row_of_another_read_is_not_this_sweeps_observation() -> None:
+    from holdspeak.delivery.follow_through import observe_review
+
+    state = {"pr": {"url": PR_URL, "number": 7}}
+    row = {"url": PR_URL, "number": 7, "head_sha": "a" * 40, "approved_by": ["alice-gh"],
+           "review_read": {"quality": "complete", "token": "direct-1"}}
+    mixed = observe_review(state, row, {"path": "sweep", "gh_state": "live", "token": "list-9"}, at="t")
+    assert mixed["review"]["attempt"]["quality"] == "mismatched" and "snapshot" not in mixed["review"]
+    same = observe_review(mixed, row, {"path": "poll", "gh_state": "live", "token": "direct-1"}, at="t")
+    again = observe_review(same, row, {"path": "sweep", "gh_state": "live", "token": "list-9"}, at="t")
+    # Same-second applications keep their own order; the mismatched sweep
+    # after the poll leaves the poll's snapshot as the last good one.
+    assert [same["review"]["seq"], again["review"]["seq"]] == [2, 3]
+    assert again["review"]["snapshot"]["seq"] == 2 and again["review"]["attempt"]["quality"] == "mismatched"

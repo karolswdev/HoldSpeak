@@ -137,6 +137,54 @@ def _config_control_mode() -> str:
     return read()
 
 
+def observe_review(
+    state: Mapping[str, Any], row: Optional[Mapping[str, Any]], read: Mapping[str, str], *, at: str,
+) -> dict[str, Any]:
+    """HS-S25: record one review observation of the launch's kept PR.
+
+    ``review.attempt`` is the latest applied read (its quality, target,
+    observed head and local time); ``review.snapshot`` is the last
+    complete read of that PR (who approved, who asked for changes). The
+    per-launch ``seq`` orders the applications (equal times are not one
+    read). A failed, stale, mismatched or incomplete read changes only
+    the attempt: it never revokes or refreshes the snapshot. The local
+    order is not GitHub's order."""
+    state = dict(state)
+    kept = state.get("pr") or {}
+    if not (kept.get("number") and kept.get("url")):
+        return state
+    review = dict(state.get("review") or {})
+    seq = int(review.get("seq") or 0) + 1
+    attempt: dict[str, Any] = {
+        "seq": seq, "path": str(read.get("path") or ""),
+        "at": at,
+        "url": kept.get("url"), "number": kept.get("number"),
+        "read": "", "head": "",
+    }
+    if str(read.get("gh_state") or "") != "live":
+        attempt["quality"] = "unavailable"
+        attempt["detail"] = str(read.get("gh_state") or "")
+    elif row is None or row.get("number") != kept.get("number") or row.get("url") != kept.get("url"):
+        attempt["quality"] = "target_missing"
+    else:
+        row_read = row.get("review_read") or {}
+        attempt["read"] = str(row_read.get("token") or "")
+        attempt["head"] = str(row.get("head_sha") or "")
+        if not attempt["read"] or attempt["read"] != str(read.get("token") or ""):
+            attempt["quality"] = "mismatched"  # a cached row of another read
+        elif row_read.get("quality") != "complete":
+            attempt["quality"] = "incomplete"
+        else:
+            attempt["quality"] = "complete"
+            review["snapshot"] = {
+                key: attempt[key] for key in ("seq", "path", "at", "url", "number", "read", "head")
+            } | {"approved_by": list(row.get("approved_by") or []),
+                 "changes_requested": list(row.get("changes_requested") or [])}
+    review["seq"], review["attempt"] = seq, attempt
+    state["review"] = review
+    return state
+
+
 class FollowThroughObserver:
     """One sweep's follow-through over the launch ledger. Every collaborator
     is injectable; production builds them in :func:`default_follow_through`."""
@@ -206,6 +254,7 @@ class FollowThroughObserver:
             log.error("launch budget check failed: %s", exc)
             receipt["budget"] = [{"error": str(exc)}]
         rows_by_source: dict[str, list[dict[str, Any]]] = {}
+        reads: dict[str, dict[str, str]] = {}
         for source_id in sorted({str(r.get("source_id") or "") for r in launches}):
             view = self._receipts.refresh(source_id)
             entry = next(
@@ -221,10 +270,14 @@ class FollowThroughObserver:
                 "detail": str(entry.get("detail") or ""),
             })
             rows_by_source[source_id] = list(entry.get("prs") or [])
+            # HS-S25: the source read this sweep applies (live, and its token).
+            reads[source_id] = {"path": "sweep", "gh_state": str(entry.get("gh_state") or "gh_failed"),
+                                "token": str(entry.get("read_token") or "")}
         mode = str(self._control_mode() or "yolo").lower()
         for launch in launches:
             try:
-                self._follow(principal, launch, rows_by_source, mode, receipt)
+                self._follow(principal, launch, rows_by_source, mode, receipt,
+                             read=reads.get(str(launch.get("source_id") or "")))
             except Exception as exc:  # one launch never stops the others
                 log.error("follow-through for %s failed: %s", launch.get("launch_id"), exc)
                 receipt.setdefault("errors", []).append(str(launch.get("launch_id") or ""))
@@ -336,10 +389,19 @@ class FollowThroughObserver:
                 receipt["polled"].append({"launch_id": launch_id, "gh_state": gh,
                                           "state": (row or {}).get("state")})
                 if row is None:
+                    # HS-S25: a failed direct read is recorded as uncertain;
+                    # the PR and the last review snapshot stay as they were.
+                    launch["follow_through"] = self._observe_review(
+                        launch["follow_through"], None, {"path": "poll", "gh_state": gh, "token": ""})
+                    self._save(launch_id, launch["follow_through"])
                     continue
                 rows = [row]
+                read = {"path": "poll", "gh_state": gh,
+                        "token": str((row.get("review_read") or {}).get("token") or "")}
             else:
                 rows, gh = lister(source_id, branches[launch_id])
+                read = {"path": "poll", "gh_state": gh,
+                        "token": str(((rows[0] if rows else {}).get("review_read") or {}).get("token") or "")}
                 receipt["discovered"].append({"launch_id": launch_id, "gh_state": gh, "prs": len(rows)})
                 if gh != "live":
                     continue
@@ -351,7 +413,7 @@ class FollowThroughObserver:
                     receipt.setdefault("retired", []).append(launch_id)
                     continue
             try:
-                self._follow(principal, launch, {source_id: rows}, mode, receipt)
+                self._follow(principal, launch, {source_id: rows}, mode, receipt, read=read)
             except Exception as exc:  # one launch never stops the others
                 log.error("PR poll for %s failed: %s", launch_id, exc)
                 receipt.setdefault("errors", []).append(launch_id)
@@ -648,7 +710,7 @@ class FollowThroughObserver:
     def _follow(
         self, principal: Any, launch: dict[str, Any],
         rows_by_source: Mapping[str, list[dict[str, Any]]], mode: str,
-        receipt: dict[str, Any],
+        receipt: dict[str, Any], *, read: Optional[Mapping[str, str]] = None,
     ) -> None:
         launch_id = str(launch["launch_id"])
         state = dict(launch.get("follow_through") or {})
@@ -681,6 +743,8 @@ class FollowThroughObserver:
             # The PR was closed without a merge: nothing closes, nothing is
             # removed, and the launch is no longer followed.
             state["done"] = True
+        if read is not None:
+            state = self._observe_review(state, row, read)
         if state != before:
             self._save(launch_id, state)
         if row is None or row.get("state") != "merged":
@@ -720,6 +784,11 @@ class FollowThroughObserver:
         )
         self._save(launch_id, state)
         receipt["cleaned"].append({"launch_id": launch_id, **cleanup})
+
+    def _observe_review(
+        self, state: Mapping[str, Any], row: Optional[Mapping[str, Any]], read: Mapping[str, str],
+    ) -> dict[str, Any]:
+        return observe_review(state, row, read, at=self._clock().isoformat(timespec="seconds"))
 
     def _select_pr(
         self, launch: Mapping[str, Any], state: Mapping[str, Any], rows: list[dict[str, Any]],
