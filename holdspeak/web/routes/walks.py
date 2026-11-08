@@ -92,8 +92,21 @@ async def _page(request: Request, fn: Callable[[], Any], *, what: str) -> JSONRe
 
 
 def build_walks_router(ctx: WebContext) -> APIRouter:
-    desk_token = str(getattr(ctx, "web_auth_token", "") or "")
     router = APIRouter()
+
+    def desk_token() -> str:
+        """The desk's bootstrap token, read at request time: the context's
+        field is filled when the server binds, after this router is built;
+        the config holds the same value."""
+        value = str(getattr(ctx, "web_auth_token", "") or "")
+        if value:
+            return value
+        try:
+            from ...config import Config
+
+            return str(Config.load().meeting.web_auth_token or "")
+        except Exception:
+            return ""
 
     @router.post("/api/walks")
     async def api_walk_create(request: Request) -> Any:
@@ -108,7 +121,8 @@ def build_walks_router(ctx: WebContext) -> APIRouter:
     async def walk_page(token: str, request: Request) -> Any:
         address = _address(request)
         if not _misses().blocked(address) and await run_in_threadpool(_service().known, token):
-            armed = f"/?token={desk_token}&walk={token}" if desk_token else f"/?walk={token}"
+            bootstrap = desk_token()
+            armed = f"/?token={bootstrap}&walk={token}" if bootstrap else f"/?walk={token}"
             return RedirectResponse(armed, status_code=303, headers=PAGE_HEADERS)
         _misses().miss(address)
         shell = await run_in_threadpool(_react_shell)
