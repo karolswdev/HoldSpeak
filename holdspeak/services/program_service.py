@@ -570,7 +570,7 @@ def your_turn(program: Mapping[str, Any], steps: Iterable[Mapping[str, Any]],
                           "title": (f"Start a step from checkpoint {str(proposal['start_from'].get('ref') or '').rsplit('/', 1)[-1]} of {label}"
                                     if isinstance(proposal.get("start_from"), Mapping)
                                     else f"Add a step after {label}: {proposal.get('title')}")})
-        if state in ("pr_open", "merge_ask") and step.get("gate_review") == "person" and not facts.get("person_approved"):
+        if state in ("pr_open", "merge_ask") and step.get("gate_review") == "person" and _ask_review(facts):
             name = (facts.get("person") or {}).get("name") or "the reviewer"
             number = step.get("pr_number")
             items.append({**base, "id": f"{step['id']}:ask_review", "kind": "ask_review",
@@ -588,6 +588,16 @@ def your_turn(program: Mapping[str, Any], steps: Iterable[Mapping[str, Any]],
             "title": f"Close \u201c{program['title']}\u201d: every step is finished",
         })
     return items
+
+
+def _ask_review(facts: Mapping[str, Any]) -> bool:
+    """HS-S25: offer "Ask <person> to review" when the latest complete read
+    shows no approval or a request for changes; never when the read was not
+    usable (asking again does not fix a read) or a merge is requested."""
+    shown = facts.get("person_review")
+    if isinstance(shown, Mapping) and shown.get("state"):
+        return shown["state"] in ("not_approved", "changes")
+    return not facts.get("person_approved")
 
 
 # ── PG-REQ §8: what he can change on a step, by its state ────────────
@@ -2723,8 +2733,22 @@ class ProgramService:
                     step.setdefault("facts", {})["merge_declined_at"] = self._clock()
                     self.transition(program, step, "pr_open", by="owner", line="Not yet: the PR stays open")
                 else:
-                    if step.get("gate_review") == "person" and not (step.get("facts") or {}).get("person_approved"):
-                        raise ProgramRefused("person_review_missing", "The person has not approved the PR on GitHub yet.")
+                    if step.get("gate_review") == "person":
+                        if (step.get("facts") or {}).get("local_merge"):
+                            if not (step.get("facts") or {}).get("person_approved"):
+                                raise ProgramRefused("person_review_missing",
+                                                     "The person has not approved the PR on GitHub yet.")
+                        else:
+                            # HS-S25: his press reads the current review again
+                            # (never the remembered approval or a stale face).
+                            program = self._program(program_id)
+                            review = self.runner().person_review(program, step)
+                            if not review["eligible"]:
+                                from .program_runner import review_words, sentence_of
+
+                                raise ProgramRefused(
+                                    "merge_requested" if review["state"] == "merge_requested" else "person_review_missing",
+                                    sentence_of(review_words(review, step.get("facts") or {})))
                     if not self.requirements_met(program, step):
                         raise ProgramRefused("requirements_not_met", "A requirement of this step is not met. Press Met, "
                                              "or waive it.")

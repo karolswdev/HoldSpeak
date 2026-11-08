@@ -48,6 +48,9 @@ class FakeRegistry:
     def sources(self):
         return list(self._sources)
 
+    def get(self, source_id):
+        return next((s for s in self._sources if s.source_id == source_id), None)
+
 
 GH_FIXTURE = [
     {
@@ -354,3 +357,52 @@ def test_egress_census_gh_and_fetch_only() -> None:
 
     text = (pkg / "pr_receipts.py").read_text(encoding="utf-8")
     assert text.count('"fetch"') == 1  # one explicit egress verb
+
+
+# ── HS-S25: the review read keeps its quality and its read ─────────
+
+
+def test_review_quality_keeps_complete_empty_and_malformed_apart() -> None:
+    from holdspeak.delivery.pr_receipts import _approved_by, review_quality
+
+    approve = {"author": {"login": "alice-gh"}, "state": "APPROVED", "submittedAt": "2026-11-01T10:00:00Z"}
+    assert review_quality([approve]) == "complete"
+    assert review_quality([]) == "complete"  # a valid empty list: no approval, not a dismissal
+    assert review_quality([{**approve, "state": "COMMENTED"}]) == "complete"
+    assert review_quality(None) == "incomplete"
+    assert review_quality({"nodes": []}) == "incomplete"
+    assert review_quality([approve, "x"]) == "incomplete"
+    assert review_quality([approve, {"author": None, "state": "APPROVED"}]) == "incomplete"  # deleted author
+    assert review_quality([approve, {"author": {"login": "bob"}, "state": "SOMETHING"}]) == "incomplete"
+    # The malformed row does not hide Alice's approval in the summary.
+    assert _approved_by([approve, {"author": None, "state": "APPROVED"}]) == ["alice-gh"]
+
+
+def test_rows_carry_the_token_of_the_read_that_made_them(tmp_path) -> None:
+    raw = [dict(GH_FIXTURE[0], reviewDecision="APPROVED", latestReviews=[]),
+           dict(GH_FIXTURE[1])]  # no latestReviews: incomplete
+
+    def runner(argv, cwd=None):
+        if argv[:2] == ["git", "-C"] or argv[0] == "git":
+            return subprocess.CompletedProcess(argv, 1, "", "")
+        if argv[:3] == ["gh", "pr", "view"]:
+            return subprocess.CompletedProcess(argv, 0, json.dumps(raw[0]), "")
+        return subprocess.CompletedProcess(argv, 0, json.dumps(raw), "")
+
+    source = FakeSource(worktrees=[FakeWorktree(str(tmp_path), "main")])
+    svc = PrReceiptsService(FakeRegistry(source), runner=runner, gh_available=lambda: True,
+                            gate_matcher=lambda _p: False)
+    entry = svc.refresh()["sources"][0]
+    token = entry["read_token"]
+    assert token
+    by_number = {row["number"]: row for row in entry["prs"]}
+    assert by_number[42]["review_read"] == {"quality": "complete", "token": token}
+    assert by_number[42]["approved_by"] == []  # reviewDecision alone is nobody's approval
+    assert by_number[41]["review_read"] == {"quality": "incomplete", "token": token}
+    row, gh = svc.view_pr("src_1", "https://github.com/o/r/pull/42")
+    assert gh == "live" and row["review_read"]["token"] not in ("", token)
+    # The direct read replaced its row in the cache, under its own token:
+    # the cache envelope keeps the list read's token.
+    after = svc.rows_view()["sources"][0]
+    assert after["read_token"] == token
+    assert {r["number"]: r["review_read"]["token"] for r in after["prs"]}[42] == row["review_read"]["token"]
