@@ -406,7 +406,7 @@ class ProgramRunner:
         """A Program made with a goal (its claim row pending) is planned from
         the goal: the steps are written; at yolo it then starts. The planner
         call runs off the tick (a check's thread) when the runner is async."""
-        from .program_service import PLAN_GOAL_KIND
+        from .program_definitions import PLAN_GOAL_KIND
 
         moved: list[str] = []
         for program in programs:
@@ -429,7 +429,7 @@ class ProgramRunner:
 
     def _plan_goal(self, program_id: str) -> bool:
         from . import program_planner
-        from .program_service import PLAN_GOAL_KIND, PLAN_GOAL_NOT_NEEDED
+        from .program_definitions import PLAN_GOAL_KIND, PLAN_GOAL_NOT_NEEDED
 
         settle = self.service.settle_plan_claim
         try:
