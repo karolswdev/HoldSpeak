@@ -50,6 +50,8 @@ def build_program_subparsers(parser: Any) -> None:
     decide.add_argument("--finding-id", default=None)
     decide.add_argument("--lesson-id", default=None)
     decide.add_argument("--reason", default=None)
+    decide.add_argument("--expected-delivery-checkpoint-id", default=None,
+                        help="A delivery row: the delivery line it shows (required for a delivery)")
     decide.add_argument("--json", action="store_true")
 
 
@@ -121,9 +123,11 @@ def run_program_command(args: Any, *, out: Optional[TextIO] = None, opener: Any 
         status, answer = call("GET", f"/api/programs/{args.program_id}", **kw)
     else:
         body = {"kind": args.kind, "choice": args.choice}
-        for key, value in (("finding_id", args.finding_id), ("lesson_id", args.lesson_id), ("reason", args.reason)):
+        for key, value in (("finding_id", args.finding_id), ("lesson_id", args.lesson_id), ("reason", args.reason),
+                           ("expected_delivery_checkpoint_id", args.expected_delivery_checkpoint_id)):
             if value is not None:
-                body[key] = int(value) if key == "lesson_id" and str(value).isdigit() else value
+                body[key] = int(value) if key in ("lesson_id", "expected_delivery_checkpoint_id") \
+                    and str(value).isdigit() else value
         status, answer = call("POST", f"/api/programs/{args.program_id}/steps/{args.step_id}/decide", body, **kw)
     if args.json:
         print(json.dumps(answer, indent=2, ensure_ascii=False), file=stream)

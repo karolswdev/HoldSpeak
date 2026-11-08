@@ -280,6 +280,10 @@ def happened_line(kind: str, item: Mapping[str, Any], step: Optional[Mapping[str
         line = sentence(f"The reviewer found a required fix: {text}" if must else f"The reviewer found: {text}")
         return line if clean(line) else ("The reviewer found a required fix." if must else "The reviewer found one fix.")
     if kind == "delivery":
+        said = str((item.get("delivery") or {}).get("happened") or "")
+        if said:  # HS-S32: a known PR's state, from the hub's own words
+            line = sentence(said)
+            return line if clean(line) else "HoldSpeak cannot confirm the delivery."
         title = _squash(item.get("title"))
         failed = _DELIVER_FAILED.match(title)
         if failed:
@@ -363,8 +367,14 @@ def question_line(kind: str, item: Mapping[str, Any]) -> str:
     if kind == "answer":
         return "What do you answer the agent?"
     if kind == "delivery":
-        return ("Try the delivery again, or skip it?" if "retry" in (item.get("choices") or [])
-                else "Merge the delivery pull request, or skip the delivery?")
+        choices = item.get("choices") or []
+        if "retry" in choices:
+            return "Try the delivery again, or skip it?"
+        if "merge" in choices:
+            return "Merge the delivery pull request, or skip the delivery?"
+        if "check" in choices:
+            return "Check the delivery pull request on GitHub, or skip the delivery?"
+        return "Skip the delivery? HoldSpeak cannot confirm it."
     if kind == "limited":
         nxt = (item.get("next") or {}).get("label") or "the next agent"
         return sentence(f"Continue in {nxt} now, or wait for the reset?")
@@ -446,9 +456,13 @@ def consequence(kind: str, choice: str, item: Mapping[str, Any], step: Optional[
     if kind == "step_amend":
         return "The agent gets the line." if choice == "send" else "Nothing is sent."
     if kind == "delivery":
-        return {"merge": "Merge the delivery pull request. The program is then delivered.",
+        # HS-S32: Skip says "not delivered" only when nothing reached GitHub.
+        known = (item.get("delivery") or {}).get("state", "retry") == "retry"
+        return {"merge": "Merge the delivery pull request. HoldSpeak then reads the result on GitHub.",
+                "check": "HoldSpeak reads the pull request on GitHub. Nothing changes there.",
                 "retry": "Try the delivery again.",
-                "skip": "Skip it. The program stays Done, not delivered."}.get(choice, "")
+                "skip": ("Skip it. The program stays Done, not delivered." if known
+                         else "Skip it. The program stays Done. The delivery stays not confirmed.")}.get(choice, "")
     return ""
 
 
@@ -469,8 +483,8 @@ _SETTLED = {
     ("requirement_proposed", "add"): "The requirement is added.", ("requirement_proposed", "skip"): "Nothing is added.",
     ("step_change", "apply"): "The step changes.", ("step_change", "skip"): "The step stays as it is.",
     ("step_amend", "send"): "The agent gets the line.", ("step_amend", "skip"): "Nothing is sent.",
-    ("delivery", "merge"): "The program is delivered.", ("delivery", "retry"): "The delivery runs again.",
-    ("delivery", "skip"): "The program stays Done, not delivered.",
+    ("delivery", "merge"): "HoldSpeak asked GitHub to merge the PR.", ("delivery", "retry"): "The delivery runs again.",
+    ("delivery", "check"): "HoldSpeak read the PR on GitHub.", ("delivery", "skip"): "The program stays Done.",
     ("audit_file", "file"): "The findings are Door tasks.", ("audit_file", "skip"): "No task is made.",
     ("fix_program", "make"): "The fix program waits for your Start.", ("fix_program", "skip"): "No fix program.",
     ("lesson", "keep_program"): "Kept for this program.", ("lesson", "keep_repo"): "A step keeps it for the repository.",

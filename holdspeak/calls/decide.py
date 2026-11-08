@@ -327,7 +327,8 @@ class DeskHeld:
     def decide(self, body: Mapping[str, Any], choice: str) -> None:
         """His spoken yes: the item's own verb, as his press, ``via="call"``.
         Raises the verb's refusal (answered already, not mergeable, …)."""
-        self.briefing().decide_item(OWNER, str(body["ref"]), choice, via="call")
+        self.briefing().decide_item(OWNER, str(body["ref"]), choice, via="call",
+                                    expected_delivery_checkpoint_id=body.get("expected_delivery_checkpoint_id"))
 
     def reach(self) -> Any:
         if self._reach is not None:

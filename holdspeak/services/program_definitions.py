@@ -163,7 +163,8 @@ DECIDE_CHOICES = {
     "step_amend": ("send", "skip"),
     # PG-LANG LANG13: the delivery at Done failed (retry) or waits for his
     # merge at Secure (merge); skip leaves the Program Done, undelivered.
-    "delivery": ("retry", "merge", "skip"),
+    # HS-S32: check reads a known delivery PR on GitHub (read only).
+    "delivery": ("retry", "merge", "check", "skip"),
     # PG-LANG JRN9, JRN10 (journey J7): an audit's findings to file (Secure),
     # and the fix program its MUST findings make.
     "audit_file": ("file", "skip"),

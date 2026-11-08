@@ -184,6 +184,12 @@ class FakeGitHub:
         #: The base branch's runs, newest first (``gh run list``; JRN3), as
         #: GitHub answers them: ``{status, conclusion, name, headSha}``.
         self.runs: list[dict[str, Any]] = []
+        #: HS-S32: what ``gh pr merge`` of a Program's delivery PR does
+        #: (``merged``; ``queued``: it answers yes and the PR stays open;
+        #: ``fail``: it answers no; ``raise``: the transport throws) and what
+        #: ``gh pr view`` answers (``live``; ``fail``; ``garbage``: not JSON).
+        self.merge_mode = "merged"
+        self.view_mode = "live"
 
     def __call__(self, argv: list[str], cwd: Optional[str] = None, **kwargs: Any) -> Any:
         if argv[:1] != ["gh"]:
@@ -194,13 +200,29 @@ class FakeGitHub:
             branch = argv[argv.index("--head") + 1]
             url = f"https://github.com/acme/app/pull/{number}"
             self.prs[number] = {"number": number, "url": url, "branch": branch, "state": "open", "approved_by": []}
+            if "--base" in argv:
+                self.prs[number]["base"] = argv[argv.index("--base") + 1]
+            if cwd:
+                # HS-S32: the PR's head as pushed (the delivery's prepared commit).
+                self.prs[number]["head_sha"] = git(Path(cwd), "rev-parse", "HEAD")
             return SimpleNamespace(returncode=0, stdout=url + "\n", stderr="")
+        if argv[1:3] == ["pr", "view"]:
+            return self._view(argv)
         if argv[1:3] == ["pr", "merge"]:
             # HS-S25: a person-gated merge names the PR by its URL.
             target = argv[3]
             number = next(n for n, row in self.prs.items() if row["url"] == target) if target.startswith("https://") \
                 else int(target)
-            self.prs[number]["state"] = "merged"
+            mode = self.merge_mode if str(self.prs[number]["branch"]).endswith("/delivery") else "merged"
+            if mode == "raise":
+                raise OSError("gh: connection reset")
+            if mode == "fail":
+                return SimpleNamespace(returncode=1, stdout="", stderr="GraphQL: Base branch was modified")
+            if "--match-head-commit" in argv and argv[argv.index("--match-head-commit") + 1] != \
+                    self.prs[number].get("head_sha"):
+                return SimpleNamespace(returncode=1, stdout="", stderr="Head branch was modified")
+            if mode == "merged":
+                self.prs[number]["state"] = "merged"
             self.sweep()
             return SimpleNamespace(returncode=0, stdout="", stderr="")
         if argv[1:3] == ["run", "list"]:
@@ -208,6 +230,22 @@ class FakeGitHub:
 
             return SimpleNamespace(returncode=0, stdout=json.dumps(self.runs), stderr="")
         return SimpleNamespace(returncode=1, stdout="", stderr="unknown gh call")
+
+    def _view(self, argv: list[str]) -> Any:
+        """HS-S32: ``gh pr view <url> --json …`` as GitHub answers it."""
+        import json
+
+        if self.view_mode == "fail":
+            return SimpleNamespace(returncode=1, stdout="", stderr="HTTP 401: Bad credentials")
+        if self.view_mode == "garbage":
+            return SimpleNamespace(returncode=0, stdout="<html>rate limited</html>", stderr="")
+        pr = next((row for row in self.prs.values() if row["url"] == argv[3]), None)
+        if pr is None:
+            return SimpleNamespace(returncode=1, stdout="", stderr="no pull requests found")
+        return SimpleNamespace(returncode=0, stderr="", stdout=json.dumps({
+            "url": pr["url"], "number": pr["number"], "state": str(pr["state"]).upper(),
+            "headRefOid": pr.get("head_sha") or "", "baseRefName": pr.get("base") or "main",
+            "headRefName": pr["branch"], "isCrossRepository": bool(pr.get("fork"))}))
 
     #: HS-S25: the gh state of the next review reads ("live" reads them).
     read_state = "live"

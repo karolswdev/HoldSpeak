@@ -84,8 +84,9 @@ const VERBS: Record<string, { choice: string; word: string; primary?: boolean }[
   requirement_proposed: [{ choice: "add", word: "Add", primary: true }, { choice: "skip", word: "Skip" }],
   step_change: [{ choice: "apply", word: "Apply", primary: true }, { choice: "skip", word: "Skip" }],
   step_amend: [{ choice: "send", word: "Send", primary: true }, { choice: "skip", word: "Skip" }],
-  // LANG13: the hub's choices decide which (merge, skip at Secure; retry, skip after a failure).
-  delivery: [{ choice: "merge", word: "Merge", primary: true }, { choice: "retry", word: "Retry", primary: true }, { choice: "skip", word: "Skip" }],
+  // LANG13, HS-S32: the hub's choices decide which; the first one offered is primary.
+  delivery: [{ choice: "merge", word: "Merge" }, { choice: "retry", word: "Retry" }, { choice: "check", word: "Check" },
+    { choice: "skip", word: "Skip" }],
   // PG-LANG JRN9 / JRN10: an audit's findings at Secure; its fix program.
   audit_file: [{ choice: "file", word: "File", primary: true }, { choice: "skip", word: "Skip" }],
   fix_program: [{ choice: "make", word: "Make", primary: true }, { choice: "skip", word: "Skip" }],
@@ -100,7 +101,9 @@ const PROGRAM_KINDS = new Set(["audit_file", "fix_program", "lesson"]);
 /** The verbs an item offers: its kind's, kept to the choices the hub sent. */
 function verbsFor(item: YourTurnItem): { choice: string; word: string; primary?: boolean }[] {
   const all = VERBS[item.kind] ?? [];
-  return item.kind === "delivery" ? all.filter((verb) => item.choices.includes(verb.choice)) : all;
+  if (item.kind !== "delivery") return all;
+  return all.filter((verb) => item.choices.includes(verb.choice))
+    .map((verb, index) => ({ ...verb, primary: index === 0 && verb.choice !== "skip" }));
 }
 
 const REQUIREMENT_KINDS = new Set(["requirement_word", "requirement_left", "todo"]);
@@ -127,7 +130,7 @@ function itemFact(item: YourTurnItem, step: ProgramStep | undefined, program: Pr
   if (item.kind === "parked") return step?.parked_reason ? "Parked" : "";
   if (item.kind === "core") return "A core question";
   if (item.kind === "limited") return item.warning ? "Near its limit" : "Limited";
-  if (item.kind === "delivery") return "The delivery";
+  if (item.kind === "delivery") return item.delivery?.words ?? "The delivery";
   if (item.kind === "requirement_word") return step ? "Your word · holds the merge" : "Your word";
   if (item.kind === "todo") return item.head ?? "To do";
   if (item.kind === "requirement_left") return requirementOf(program, item)?.kind_word ?? "";
@@ -212,6 +215,9 @@ export function YourTurnWell({ program, onDecided, onOpenBrief, onOpenText }: {
     if (item.finding_id) body.finding_id = item.finding_id;
     if (item.kind === "add_step" && item.proposal != null) body.finding_id = String(item.proposal);
     if (item.kind === "lesson" && item.lesson_id != null) body.lesson_id = item.lesson_id;
+    if (item.kind === "delivery" && item.expected_delivery_checkpoint_id != null) {
+      body.expected_delivery_checkpoint_id = item.expected_delivery_checkpoint_id;
+    }
     try {
       if (item.kind === "close") onDecided(await closeProgram(program.id));
       else if (REQUIREMENT_KINDS.has(item.kind) && item.requirement_id) {
@@ -658,14 +664,17 @@ function ViewMore({ view, onView }: { view: ProgramView; onView(next: ProgramVie
 }
 
 /** LANG13: a Done program's delivery settles to one line under the track
- *  ("Delivered to dw app/1 (PR #12)"), from the ledger's delivery row. */
+ *  ("Delivered to dw app/1 (PR #12)"), from the ledger's delivery row.
+ *  HS-S32: a skipped delivery says what is known ("Skipped the delivery:
+ *  Done, not delivered", or "…: PR #12 not confirmed"); Done is never
+ *  read as delivered. */
 function DeliveredLine({ program }: { program: Program }) {
   if (program.state !== "done") return null;
   const row = program.checkpoints.find((line) => line.kind === "delivery");
-  if (!row || row.choice !== "delivered") return null;
+  if (!row || (row.choice !== "delivered" && row.choice !== "skipped")) return null;
   return (
-    <p className="pg-line-settle" data-testid="programs-delivered">
-      <DotWord tone="ok">{row.line}</DotWord>
+    <p className="pg-line-settle" data-testid="programs-delivered" data-choice={row.choice}>
+      <DotWord tone={row.choice === "delivered" ? "ok" : "idle"}>{row.line}</DotWord>
     </p>
   );
 }

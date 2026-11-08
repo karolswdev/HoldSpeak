@@ -63,6 +63,11 @@ import dreamingFixture from "../__fixtures__/program.dreaming.json";
 import deliveryFailedFixture from "../__fixtures__/program.delivery_failed.json";
 import deliveryMergeFixture from "../__fixtures__/program.delivery_merge.json";
 import deliveryMergedFixture from "../__fixtures__/program.delivery_merged.json";
+import deliveryCheckFixture from "../__fixtures__/program.delivery_check.json";
+import deliveryCheckedOpenFixture from "../__fixtures__/program.delivery_checked_open.json";
+import deliveryUnknownFixture from "../__fixtures__/program.delivery_unknown.json";
+import deliveryQueuedFixture from "../__fixtures__/program.delivery_queued.json";
+import deliveryLegacyFixture from "../__fixtures__/program.delivery_legacy_blocked.json";
 import textApplyFixture from "../__fixtures__/program.text_apply.json";
 // PG-IMPORT IMP2: the to-do row and his Done, the ending word (scripts/record_program_fixtures.py).
 import todoFixture from "../__fixtures__/program.todo.json";
@@ -559,6 +564,7 @@ describe("LANG13: the delivery at Done (recorded on the rig: tests/integration/t
     expect(within(tray).getAllByRole("button").map((button) => button.textContent)).toEqual(["Retry", "Skip"]);
     expect(within(tray).getAllByTestId("programs-turn-consequence").map((node) => node.textContent))
       .toEqual(["Try the delivery again.", "Skip it. The program stays Done, not delivered."]);
+    expect(headline.textContent).toContain("Not delivered");
   });
 
   it("at Secure, Merge presses through and the Done window settles to Delivered to dw app/1 (PR #n)", async () => {
@@ -572,14 +578,83 @@ describe("LANG13: the delivery at Done (recorded on the rig: tests/integration/t
     const headline = within(await screen.findByTestId("programs-your-turn")).getAllByTestId("programs-turn-item")[0];
     expect(within(headline).getByTestId("programs-brief-question").textContent).toBe("Merge the delivery pull request, or skip the delivery?");
     expect(within(headline).getAllByTestId("programs-turn-consequence")[0].textContent)
-      .toBe("Merge the delivery pull request. The program is then delivered.");
+      .toBe("Merge the delivery pull request. HoldSpeak then reads the result on GitHub.");
+    // HS-S32: "PR #n open" beside Merge, Check and Skip.
+    const item = waiting.your_turn_items[0];
+    expect(headline.textContent).toContain(`PR #${item.pr!.number} open`);
+    expect(within(within(headline).getByTestId("programs-tray")).getAllByRole("button").map((button) => button.textContent))
+      .toEqual(["Merge", "Check", "Skip"]);
     expect(screen.queryByTestId("programs-delivered")).toBeNull();
     fireEvent.click(within(headline).getByTestId("programs-turn-merge"));
     await waitFor(() => expect(screen.queryByTestId("programs-your-turn")).toBeNull());
-    expect(calls).toContain(`POST /api/programs/${waiting.id}/steps/program/decide ${JSON.stringify({ kind: "delivery", choice: "merge" })}`);
+    expect(calls).toContain(`POST /api/programs/${waiting.id}/steps/program/decide ${JSON.stringify({
+      kind: "delivery", choice: "merge", expected_delivery_checkpoint_id: item.expected_delivery_checkpoint_id })}`);
     const pr = merged.checkpoints.find((row) => row.kind === "delivery" && row.choice === "delivered")!;
     expect(screen.getByTestId("programs-delivered").textContent).toBe(pr.line);
     expect(pr.line).toMatch(/^Delivered to dw app\/1 \(PR #\d+\)( · phase closed)?$/);
+  });
+});
+
+describe("HS-S32: a known delivery PR is checked, never made again (recorded: tests/integration/test_program_delivery.py)", () => {
+  const tray = (headline: HTMLElement) =>
+    within(within(headline).getByTestId("programs-tray")).getAllByRole("button").map((button) => button.textContent);
+
+  it("a merge that GitHub did not confirm offers Check and Skip, never Retry or Merge", async () => {
+    const program = deliveryCheckFixture as unknown as Program;
+    const item = program.your_turn_items[0];
+    hub({ [`GET /api/programs/${program.id}`]: program });
+    render(<ProgramBody programId={program.id} />);
+    const headline = within(await screen.findByTestId("programs-your-turn")).getAllByTestId("programs-turn-item")[0];
+    expect(tray(headline)).toEqual(["Check", "Skip"]);
+    expect(headline.textContent).toContain(`PR #${item.pr!.number} · Not confirmed`);
+    expect(within(headline).getByTestId("programs-brief-question").textContent)
+      .toBe("Check the delivery pull request on GitHub, or skip the delivery?");
+    expect(within(headline).getByTestId("programs-brief-happened").textContent)
+      .toBe(`A merge of the delivery PR #${item.pr!.number} is requested. GitHub has not confirmed it.`);
+    expect(screen.queryByTestId("programs-delivered")).toBeNull();  // Done is not delivered
+  });
+
+  it("Check sends the line it shows; an open PR comes back with Merge, Check and Skip", async () => {
+    const waiting = deliveryMergeFixture as unknown as Program;
+    const answer = deliveryCheckedOpenFixture as unknown as { program: Program };
+    const item = waiting.your_turn_items[0];
+    hub({
+      [`GET /api/programs/${waiting.id}`]: waiting,
+      [`POST /api/programs/${waiting.id}/steps/program/decide`]: deliveryCheckedOpenFixture,
+    });
+    render(<ProgramBody programId={waiting.id} />);
+    const headline = within(await screen.findByTestId("programs-your-turn")).getAllByTestId("programs-turn-item")[0];
+    fireEvent.click(within(headline).getByTestId("programs-turn-check"));
+    await waitFor(() => expect(calls).toContain(`POST /api/programs/${waiting.id}/steps/program/decide ${JSON.stringify({
+      kind: "delivery", choice: "check", expected_delivery_checkpoint_id: item.expected_delivery_checkpoint_id })}`));
+    const next = answer.program.your_turn_items[0];
+    expect(next.expected_delivery_checkpoint_id).not.toBe(item.expected_delivery_checkpoint_id);
+    await waitFor(() => expect(screen.getAllByTestId("programs-turn-item")[0].textContent).toContain(`PR #${next.pr!.number} open`));
+    expect(tray(screen.getAllByTestId("programs-turn-item")[0])).toEqual(["Merge", "Check", "Skip"]);
+  });
+
+  it("a queued merge and a closed PR stay Not confirmed with Check and Skip", async () => {
+    for (const fixture of [deliveryQueuedFixture, deliveryUnknownFixture]) {
+      const program = fixture as unknown as Program;
+      hub({ [`GET /api/programs/${program.id}`]: program });
+      render(<ProgramBody programId={program.id} />);
+      const headline = within(await screen.findByTestId("programs-your-turn")).getAllByTestId("programs-turn-item")[0];
+      expect(tray(headline)).toEqual(["Check", "Skip"]);
+      expect(headline.textContent).toContain(`PR #${program.your_turn_items[0].pr!.number} · Not confirmed`);
+      expect(within(headline).getAllByTestId("programs-turn-consequence").map((node) => node.textContent).at(-1))
+        .toBe("Skip it. The program stays Done. The delivery stays not confirmed.");
+      cleanup();
+    }
+  });
+
+  it("an old delivery line is shown, with Skip only", async () => {
+    const program = deliveryLegacyFixture as unknown as Program;
+    hub({ [`GET /api/programs/${program.id}`]: program });
+    render(<ProgramBody programId={program.id} />);
+    const headline = within(await screen.findByTestId("programs-your-turn")).getAllByTestId("programs-turn-item")[0];
+    expect(tray(headline)).toEqual(["Skip"]);
+    expect(headline.textContent).toContain("Not confirmed");
+    expect(within(headline).getByTestId("programs-brief-question").textContent).toBe("Skip the delivery? HoldSpeak cannot confirm it.");
   });
 });
 

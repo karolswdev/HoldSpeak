@@ -379,7 +379,8 @@ TOOLS: list[dict[str, Any]] = [
                     "requirement_id: met, unmet, waive with reason, send_back), what an agent proposed "
                     "(proposal_id: requirement_proposed add or skip, step_change apply or skip, step_amend send or skip; "
                     "a split of a step too big for its budget is a step_change: apply splits it, skip runs it as it is), "
-                    "the delivery at Done (delivery, no step_id: retry, merge at Secure, skip). Owner only.",
+                    "the delivery at Done (delivery, no step_id: retry, merge, check, skip, with "
+                    "expected_delivery_checkpoint_id from the row). Owner only.",
      "inputSchema": _schema({
          "program_id": _ID, "step_id": {"type": ["string", "null"], "maxLength": 128},
          "kind": {"type": "string", "enum": ["merge", "finding", "parked", "ask_review", "core", "race", "add_step", "close",
@@ -391,6 +392,8 @@ TOOLS: list[dict[str, Any]] = [
          "proposal_id": {"type": ["string", "integer", "null"]},
          "via": {"type": ["string", "null"], "enum": ["desk", "phone", "call", "telegram", "page", None],
                  "description": "Where he answered (desk by default); the ledger line names it."},
+         "expected_delivery_checkpoint_id": {"type": ["integer", "null"],
+                                             "description": "A delivery: the row's delivery line (required)."},
      }, ["program_id", "kind", "choice"])},
     {"name": "program.handoff",
      "description": "Move a step that holds an agent to another agent, in the same worktree on the same branch, with "
@@ -524,6 +527,7 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
         principal, str(args["program_id"]), str(args.get("step_id") or ""), kind=str(args.get("kind") or ""),
         choice=str(args.get("choice") or ""), finding_id=args.get("finding_id"), reason=args.get("reason"),
         requirement_id=args.get("requirement_id"), proposal_id=args.get("proposal_id"), via=args.get("via"),
+        expected_delivery_checkpoint_id=args.get("expected_delivery_checkpoint_id"),
     )
 
 

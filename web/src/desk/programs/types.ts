@@ -442,6 +442,10 @@ export interface YourTurnItem {
   logs?: { agent: string; log: string; step_id: string }[];
   /** audit_file / fix_program: the findings it is about. */
   count?: number;
+  /** delivery (HS-S32): the delivery line the row shows (every press sends it
+   *  back) and its state in words ("PR #12 open", "PR #12 · Not confirmed"). */
+  expected_delivery_checkpoint_id?: number;
+  delivery?: { state: "retry" | "open" | "requested" | "unknown" | "blocked"; words: string; happened?: string };
   /** lesson (JRN11): its ledger row (sent as `lesson_id`), the cause, the steps. */
   lesson_id?: number;
   source?: "red" | "finding" | string;
@@ -632,6 +636,8 @@ export interface DecideBody {
   reason?: string;
   /** JRN11: the lesson a Lesson row answers. */
   lesson_id?: number;
+  /** HS-S32: a delivery press names the delivery line it answers. */
+  expected_delivery_checkpoint_id?: number;
 }
 
 /** The step a Drafting row writes (`POST …/plan`). */

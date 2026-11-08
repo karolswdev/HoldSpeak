@@ -1,0 +1,843 @@
+{
+  "allowed_profiles": [],
+  "asks": 0,
+  "budget_tokens": null,
+  "can_prove": {
+    "check": true,
+    "review": true,
+    "shot": false,
+    "shot_reason": "No shot command in this repository",
+    "word": true
+  },
+  "check_command": "sh /Users/karol/dev/tools/wt-s32/tests/fixtures/fake_program_check.sh",
+  "checkpoints": [
+    {
+      "at": "2026-11-08T08:10:34.380235+00:00",
+      "by": "engine",
+      "choice": "failed",
+      "decision_record_id": null,
+      "id": 18,
+      "kind": "delivery",
+      "line": "Could not deliver to dw app/1: GitHub did not merge the delivery PR",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": null,
+      "ref_commit": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {
+        "branch": "program/the-hub-stops-stalling/delivery",
+        "pr_number": 7,
+        "words": "GitHub did not merge the delivery PR"
+      }
+    },
+    {
+      "at": "2026-11-08T08:10:34.362228+00:00",
+      "by": "engine",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 17,
+      "kind": null,
+      "line": "The program is done",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": null,
+      "ref_commit": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    },
+    {
+      "at": "2026-11-08T08:10:34.361793+00:00",
+      "by": "engine",
+      "choice": "pr_open",
+      "decision_record_id": null,
+      "id": 16,
+      "kind": "delivery",
+      "line": "The delivery PR #102 to dw app/1 waits for your merge · it closes the phase",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": null,
+      "ref_commit": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {
+        "branch": "program/the-hub-stops-stalling/delivery",
+        "phase": {
+          "closed": true,
+          "phase": "1",
+          "project": "app"
+        },
+        "pr_number": 102,
+        "receipt": {
+          "pr": {
+            "base": "main",
+            "branch": "program/the-hub-stops-stalling/delivery",
+            "head": "4335d9e742e858e8674f542faaa32bfe7154abe8",
+            "number": 102,
+            "url": "https://github.com/acme/app/pull/102"
+          },
+          "remote": true,
+          "stage": "pr",
+          "target": {
+            "ref": "dw:app/1",
+            "words": "dw app/1"
+          },
+          "v": 1
+        }
+      }
+    },
+    {
+      "at": "2026-11-08T08:10:33.647083+00:00",
+      "by": "owner",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 15,
+      "kind": null,
+      "line": "Closed the program",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": null,
+      "ref_commit": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    },
+    {
+      "at": "2026-11-08T08:10:33.474874+00:00",
+      "by": "engine",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 14,
+      "kind": null,
+      "line": "Merged #101",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": "refs/holdspeak/checkpoints/step-faff8b07bd41/8",
+      "ref_commit": "ddaebc7844daa439f266d74e27002c386c4be6af",
+      "rule": null,
+      "step_id": "step-faff8b07bd41",
+      "undo": {
+        "pin": {
+          "commit": "ddaebc7844daa439f266d74e27002c386c4be6af",
+          "head": "c190f0bedf5be04d1a446c301965faf554533aa6",
+          "n": 8,
+          "ref": "refs/holdspeak/checkpoints/step-faff8b07bd41/8",
+          "tree": "d3c30799c80a6edb5d38cac682b70673943a817d"
+        },
+        "seen": {
+          "check": "green",
+          "checked": "c190f0bedf5be04d1a446c301965faf554533aa6",
+          "commit": "c190f0bedf5be04d1a446c301965faf554533aa6",
+          "pr": 101,
+          "state": "merged"
+        }
+      }
+    },
+    {
+      "at": "2026-11-08T08:10:33.322118+00:00",
+      "by": "owner",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 13,
+      "kind": null,
+      "line": "Merged PR #101 on his press",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": "refs/holdspeak/checkpoints/step-faff8b07bd41/7",
+      "ref_commit": "46195225eac97892808637ebfcdff4841fcb52e1",
+      "rule": null,
+      "step_id": "step-faff8b07bd41",
+      "undo": {
+        "pin": {
+          "commit": "46195225eac97892808637ebfcdff4841fcb52e1",
+          "head": "c190f0bedf5be04d1a446c301965faf554533aa6",
+          "n": 7,
+          "ref": "refs/holdspeak/checkpoints/step-faff8b07bd41/7",
+          "tree": "d3c30799c80a6edb5d38cac682b70673943a817d"
+        }
+      }
+    },
+    {
+      "at": "2026-11-08T08:10:33.286818+00:00",
+      "by": "engine",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 12,
+      "kind": null,
+      "line": "The program waits on you",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": null,
+      "ref_commit": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    },
+    {
+      "at": "2026-11-08T08:10:33.166841+00:00",
+      "by": "engine",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 11,
+      "kind": null,
+      "line": "Merge? PR #101: check green",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": "refs/holdspeak/checkpoints/step-faff8b07bd41/6",
+      "ref_commit": "c0d4293c0f280862eb90ac0744323a04a0dfdedc",
+      "rule": null,
+      "step_id": "step-faff8b07bd41",
+      "undo": {
+        "pin": {
+          "commit": "c0d4293c0f280862eb90ac0744323a04a0dfdedc",
+          "head": "c190f0bedf5be04d1a446c301965faf554533aa6",
+          "n": 6,
+          "ref": "refs/holdspeak/checkpoints/step-faff8b07bd41/6",
+          "tree": "d3c30799c80a6edb5d38cac682b70673943a817d"
+        },
+        "seen": {
+          "check": "green",
+          "checked": "c190f0bedf5be04d1a446c301965faf554533aa6",
+          "commit": "c190f0bedf5be04d1a446c301965faf554533aa6",
+          "pr": 101,
+          "state": "merge_ask"
+        }
+      }
+    },
+    {
+      "at": "2026-11-08T08:10:33.031626+00:00",
+      "by": "engine",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 10,
+      "kind": null,
+      "line": "Opened PR #101",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": "refs/holdspeak/checkpoints/step-faff8b07bd41/5",
+      "ref_commit": "c71b447fc9a06b7c0274cf1eb547b50c70b91313",
+      "rule": null,
+      "step_id": "step-faff8b07bd41",
+      "undo": {
+        "pin": {
+          "commit": "c71b447fc9a06b7c0274cf1eb547b50c70b91313",
+          "head": "c190f0bedf5be04d1a446c301965faf554533aa6",
+          "n": 5,
+          "ref": "refs/holdspeak/checkpoints/step-faff8b07bd41/5",
+          "tree": "d3c30799c80a6edb5d38cac682b70673943a817d"
+        },
+        "seen": {
+          "check": "green",
+          "checked": "c190f0bedf5be04d1a446c301965faf554533aa6",
+          "commit": "c190f0bedf5be04d1a446c301965faf554533aa6",
+          "pr": 101,
+          "state": "pr_open"
+        }
+      }
+    },
+    {
+      "at": "2026-11-08T08:10:32.756625+00:00",
+      "by": "engine",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 9,
+      "kind": null,
+      "line": "Checked · green · under a minute · /tmp/rig/hs-program-step-faff8b07bd41/.tmp/program-check/step-faff8b07bd41/20261108T081032Z.log",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": "refs/holdspeak/checkpoints/step-faff8b07bd41/4",
+      "ref_commit": "30fd6405203a351b7d4c9e7b52f868aa54ef4cdd",
+      "rule": null,
+      "step_id": "step-faff8b07bd41",
+      "undo": {
+        "pin": {
+          "commit": "30fd6405203a351b7d4c9e7b52f868aa54ef4cdd",
+          "head": "c190f0bedf5be04d1a446c301965faf554533aa6",
+          "n": 4,
+          "ref": "refs/holdspeak/checkpoints/step-faff8b07bd41/4",
+          "tree": "d3c30799c80a6edb5d38cac682b70673943a817d"
+        },
+        "seen": {
+          "check": "green",
+          "checked": "c190f0bedf5be04d1a446c301965faf554533aa6",
+          "commit": "c190f0bedf5be04d1a446c301965faf554533aa6",
+          "state": "checking"
+        }
+      }
+    },
+    {
+      "at": "2026-11-08T08:10:32.576515+00:00",
+      "by": "engine",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 8,
+      "kind": null,
+      "line": "Running the check: sh /Users/karol/dev/tools/wt-s32/tests/fixtures/fake_program_check.sh",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": "refs/holdspeak/checkpoints/step-faff8b07bd41/3",
+      "ref_commit": "83323e61421621600f367d4b66e3cbc1f177c713",
+      "rule": null,
+      "step_id": "step-faff8b07bd41",
+      "undo": {
+        "pin": {
+          "commit": "83323e61421621600f367d4b66e3cbc1f177c713",
+          "head": "c190f0bedf5be04d1a446c301965faf554533aa6",
+          "n": 3,
+          "ref": "refs/holdspeak/checkpoints/step-faff8b07bd41/3",
+          "tree": "59e4ed40ccd61772eb556dbe3af41478a6e5a5c7"
+        },
+        "seen": {
+          "commit": "c190f0bedf5be04d1a446c301965faf554533aa6",
+          "state": "checking"
+        }
+      }
+    },
+    {
+      "at": "2026-11-08T08:10:32.451988+00:00",
+      "by": "engine",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 7,
+      "kind": null,
+      "line": "New commit c190f0be; the check runs",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": "refs/holdspeak/checkpoints/step-faff8b07bd41/2",
+      "ref_commit": "5a201f5c16c7df2b7395354ba2a0ddd92b2ef410",
+      "rule": null,
+      "step_id": "step-faff8b07bd41",
+      "undo": {
+        "pin": {
+          "commit": "5a201f5c16c7df2b7395354ba2a0ddd92b2ef410",
+          "head": "c190f0bedf5be04d1a446c301965faf554533aa6",
+          "n": 2,
+          "ref": "refs/holdspeak/checkpoints/step-faff8b07bd41/2",
+          "tree": "59e4ed40ccd61772eb556dbe3af41478a6e5a5c7"
+        },
+        "seen": {
+          "commit": "c190f0bedf5be04d1a446c301965faf554533aa6",
+          "state": "checking"
+        }
+      }
+    },
+    {
+      "at": "2026-11-08T08:10:32.242807+00:00",
+      "by": "engine",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 6,
+      "kind": null,
+      "line": "Handed to Claude Code in hs-program-step-faff8b07bd41",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": "refs/holdspeak/checkpoints/step-faff8b07bd41/1",
+      "ref_commit": "6c51fb4c3dd7bc12c4b9785599e5828dec538134",
+      "rule": null,
+      "step_id": "step-faff8b07bd41",
+      "undo": {
+        "pin": {
+          "commit": "6c51fb4c3dd7bc12c4b9785599e5828dec538134",
+          "head": "43dccf759ec1b4c2f99ac8bf632ff4d394f96a19",
+          "n": 1,
+          "ref": "refs/holdspeak/checkpoints/step-faff8b07bd41/1",
+          "tree": "90a1b0066be817adbacbf888bc59ac1327c819e3"
+        },
+        "seen": {
+          "state": "briefed"
+        }
+      }
+    },
+    {
+      "at": "2026-11-08T08:10:32.147626+00:00",
+      "by": "owner",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 5,
+      "kind": null,
+      "line": "Started the program",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": null,
+      "ref_commit": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    },
+    {
+      "at": "2026-11-08T08:10:32.112285+00:00",
+      "by": "owner",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 4,
+      "kind": null,
+      "line": "Added 1 step",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": null,
+      "ref_commit": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    },
+    {
+      "at": "2026-11-08T08:10:32.111116+00:00",
+      "by": "owner",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 3,
+      "kind": null,
+      "line": "Changed delivery",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": null,
+      "ref_commit": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    },
+    {
+      "at": "2026-11-08T08:10:32.109978+00:00",
+      "by": "engine",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 2,
+      "kind": "dw_context",
+      "line": "Read the Delivery Workbench roadmap (11 bytes for the briefs)",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": null,
+      "ref_commit": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {
+        "text": "Project app"
+      }
+    },
+    {
+      "at": "2026-11-08T08:10:32.033314+00:00",
+      "by": "owner",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 1,
+      "kind": null,
+      "line": "Made the program from the Fast cycle template",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": null,
+      "ref_commit": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    }
+  ],
+  "closed_at": "2026-11-08T08:10:33.646859+00:00",
+  "control": "secure",
+  "control_word": "Secure",
+  "created_at": "2026-11-08T08:10:32.032928+00:00",
+  "decided_for_you": [],
+  "default": {
+    "agent": "Claude Code",
+    "engine": null,
+    "profile": "claude-default",
+    "runs_on": [
+      {
+        "agent": "Claude Code",
+        "engine": null,
+        "label": "Claude Code",
+        "profile": "claude-default"
+      }
+    ]
+  },
+  "delivery": {
+    "kind": "dw",
+    "linked": false,
+    "ref": "app/1"
+  },
+  "done": 1,
+  "done_in": "under a minute",
+  "family": {
+    "children": [],
+    "parent": null
+  },
+  "finished": "needs_decision",
+  "finished_words": "finished · needs a decision",
+  "for_person": null,
+  "for_person_id": null,
+  "goal": "Stop the stalls.",
+  "id": "program-ff2f0e493a0c",
+  "in_state_seconds": 0,
+  "last_checkpoint": {
+    "at": "2026-11-08T08:10:34.380235+00:00",
+    "by": "engine",
+    "choice": "failed",
+    "decision_record_id": null,
+    "id": 18,
+    "kind": "delivery",
+    "line": "Could not deliver to dw app/1: GitHub did not merge the delivery PR",
+    "operation_id": null,
+    "overturnable": false,
+    "overturned_at": null,
+    "pin_note": null,
+    "ref": null,
+    "ref_commit": null,
+    "rule": null,
+    "step_id": "",
+    "undo": {
+      "branch": "program/the-hub-stops-stalling/delivery",
+      "pr_number": 7,
+      "words": "GitHub did not merge the delivery PR"
+    }
+  },
+  "line": "Done, 1 PR, 8 Nov",
+  "may_call": false,
+  "may_handoff": false,
+  "night": null,
+  "note_id": "program-program-ff2f0e493a0c",
+  "note_window": "pullout:note:program-program-ff2f0e493a0c",
+  "origin_ref": null,
+  "persons": [],
+  "place": {
+    "origin": null,
+    "person": null,
+    "project": null
+  },
+  "planner": null,
+  "prefer_idle": false,
+  "project": null,
+  "project_id": null,
+  "repository": {
+    "base_branch": "main",
+    "label": "app",
+    "root": "/tmp/rig/app"
+  },
+  "requirements": [],
+  "review_depth": null,
+  "reviewer": {
+    "agent": null,
+    "engine": null,
+    "profile": null
+  },
+  "revision": 7,
+  "rounds": [],
+  "rounds_before_start": false,
+  "search_words": "the hub stops stalling stop the stalls. fast-cycle indexes #101 fast cycle",
+  "skipped": 0,
+  "spend_limit_usd": null,
+  "state": "done",
+  "state_word": "Done",
+  "status_line": "Done · 1 of 1 done · 1 waits on you · check: fake_program_check.sh · control Secure",
+  "steps": [
+    {
+      "after": [],
+      "agent": "Claude Code",
+      "amendments": [],
+      "branch": "program/the-hub-stops-stalling/1-indexes",
+      "brief": "Add the indexes.",
+      "budget_tokens": null,
+      "check": {
+        "command": "sh /Users/karol/dev/tools/wt-s32/tests/fixtures/fake_program_check.sh",
+        "commit": "c190f0bedf5be04d1a446c301965faf554533aa6",
+        "log": "/tmp/rig/hs-program-step-faff8b07bd41/.tmp/program-check/step-faff8b07bd41/20261108T081032Z.log",
+        "minutes": 0.0,
+        "reasons": [],
+        "running": false,
+        "sections": [
+          {
+            "name": "build",
+            "state": "green"
+          },
+          {
+            "name": "vitest",
+            "state": "green"
+          },
+          {
+            "name": "pytest",
+            "state": "green"
+          },
+          {
+            "name": "sweep",
+            "state": "green"
+          },
+          {
+            "name": "canon",
+            "state": "green"
+          },
+          {
+            "name": "repo",
+            "state": "green"
+          }
+        ],
+        "verdict": "green"
+      },
+      "contenders": [],
+      "editable": [
+        "title"
+      ],
+      "effort": "medium",
+      "elapsed": "under a minute",
+      "elapsed_seconds": 1,
+      "ended_at": "2026-11-08T08:10:33.455840+00:00",
+      "ending": "finished",
+      "engine": null,
+      "estimate": null,
+      "findings": [],
+      "for_person": null,
+      "for_person_id": null,
+      "frozen": {
+        "after": "It is merged",
+        "agent": "It is merged",
+        "amend": "It is merged",
+        "brief": "It is merged",
+        "budget": "It is merged",
+        "effort": "It is merged",
+        "for_person": "It is merged",
+        "gate_check": "It is merged",
+        "gate_merge": "It is merged",
+        "gate_review": "It is merged",
+        "may_call": "It is merged",
+        "owns": "It is merged",
+        "position": "It is merged",
+        "prefer_idle": "It is merged",
+        "race": "It is merged",
+        "requirements": "It is merged",
+        "review_depth": "It is merged",
+        "runs_on_then": "It is merged"
+      },
+      "gate": {
+        "check": true,
+        "merge": "level",
+        "review": "none",
+        "review_depth": "delta"
+      },
+      "handoffs": [],
+      "held_reason": null,
+      "history": null,
+      "id": "step-faff8b07bd41",
+      "last_checkpoint": {
+        "at": "2026-11-08T08:10:33.474874+00:00",
+        "by": "engine",
+        "choice": null,
+        "decision_record_id": null,
+        "id": 14,
+        "kind": null,
+        "line": "Merged #101",
+        "operation_id": null,
+        "overturnable": false,
+        "overturned_at": null,
+        "pin_note": null,
+        "ref": "refs/holdspeak/checkpoints/step-faff8b07bd41/8",
+        "ref_commit": "ddaebc7844daa439f266d74e27002c386c4be6af",
+        "rule": null,
+        "step_id": "step-faff8b07bd41",
+        "undo": {
+          "pin": {
+            "commit": "ddaebc7844daa439f266d74e27002c386c4be6af",
+            "head": "c190f0bedf5be04d1a446c301965faf554533aa6",
+            "n": 8,
+            "ref": "refs/holdspeak/checkpoints/step-faff8b07bd41/8",
+            "tree": "d3c30799c80a6edb5d38cac682b70673943a817d"
+          },
+          "seen": {
+            "check": "green",
+            "checked": "c190f0bedf5be04d1a446c301965faf554533aa6",
+            "commit": "c190f0bedf5be04d1a446c301965faf554533aa6",
+            "pr": 101,
+            "state": "merged"
+          }
+        }
+      },
+      "launch_id": "L1",
+      "limit": null,
+      "may_call": false,
+      "ordinal": 1,
+      "origin_ref": null,
+      "owns": [],
+      "parked_by": null,
+      "parked_reason": null,
+      "pr": {
+        "number": 101,
+        "url": "https://github.com/acme/app/pull/101"
+      },
+      "prefer_idle": false,
+      "profile": "claude-default",
+      "race": 0,
+      "race_both_red": false,
+      "race_of": null,
+      "report": {
+        "claimed": [],
+        "files": [
+          "a.py"
+        ],
+        "files_more": 0,
+        "not_checked": [],
+        "observed": [
+          {
+            "at": "2026-11-08T08:10:32.451988+00:00",
+            "checkpoint": 7,
+            "line": "Commit c190f0be"
+          },
+          {
+            "at": "2026-11-08T08:10:32.756625+00:00",
+            "checkpoint": 9,
+            "line": "Check green on c190f0be"
+          },
+          {
+            "at": "2026-11-08T08:10:33.031626+00:00",
+            "checkpoint": 10,
+            "line": "PR #101 opened"
+          },
+          {
+            "at": "2026-11-08T08:10:33.474874+00:00",
+            "checkpoint": 14,
+            "line": "PR #101 merged"
+          }
+        ],
+        "words": {
+          "claimed": "The agent says:",
+          "files": "Files:",
+          "not_checked": "Not checked:",
+          "observed": "Checked:"
+        }
+      },
+      "report_text": null,
+      "requirements": [],
+      "review": {
+        "reviewer": null,
+        "round": null,
+        "verdict": null
+      },
+      "rounds": 0,
+      "runs_on": [
+        {
+          "agent": "Claude Code",
+          "engine": null,
+          "label": "Claude Code",
+          "profile": "claude-default"
+        }
+      ],
+      "started_at": "2026-11-08T08:10:32.242261+00:00",
+      "state": "done",
+      "state_word": "Done",
+      "station": 5,
+      "stations": [
+        "brief",
+        "work",
+        "check",
+        "review",
+        "pr",
+        "merge"
+      ],
+      "story": [
+        {
+          "at": "2026-11-08T08:10:33.166841+00:00",
+          "line": "Merge? PR #101: check green."
+        },
+        {
+          "at": "2026-11-08T08:10:33.322118+00:00",
+          "line": "Merged PR #101 on his press."
+        },
+        {
+          "at": "2026-11-08T08:10:33.474874+00:00",
+          "line": "Merged #101."
+        }
+      ],
+      "taken": false,
+      "title": "Indexes",
+      "updated_at": "2026-11-08T08:10:33.606139+00:00",
+      "wait": null,
+      "worktree": "hs-program-step-faff8b07bd41"
+    }
+  ],
+  "template": "fast-cycle",
+  "title": "The hub stops stalling",
+  "total": 1,
+  "track": [
+    {
+      "mark": "done",
+      "ordinal": 1,
+      "title": "Indexes"
+    }
+  ],
+  "updated_at": "2026-11-08T08:10:34.362105+00:00",
+  "usage_warning_share": null,
+  "within": [],
+  "your_turn": 1,
+  "your_turn_items": [
+    {
+      "brief": {
+        "blocked": [],
+        "blocked_words": "",
+        "consequences": {
+          "skip": "Skip it. The program stays Done. The delivery stays not confirmed."
+        },
+        "doing": "It delivers its record to dw app/1.",
+        "goal": "Goal: Stop the stalls.",
+        "happened": "HoldSpeak cannot confirm the delivery PR #7. It may be on GitHub.",
+        "question": "Skip the delivery? HoldSpeak cannot confirm it."
+      },
+      "choices": [
+        "skip"
+      ],
+      "delivery": {
+        "happened": "HoldSpeak cannot confirm the delivery PR #7. It may be on GitHub",
+        "state": "blocked",
+        "words": "Not confirmed"
+      },
+      "expected_delivery_checkpoint_id": 18,
+      "for_person_id": null,
+      "id": "program-ff2f0e493a0c:delivery",
+      "kind": "delivery",
+      "launch_id": null,
+      "ordinal": 0,
+      "pr": {
+        "number": 7,
+        "url": null
+      },
+      "program_id": "program-ff2f0e493a0c",
+      "program_title": "The hub stops stalling",
+      "project_id": null,
+      "since": "2026-11-08T08:10:34.380235+00:00",
+      "step_id": "",
+      "step_title": "",
+      "title": "The delivery PR #7 of “The hub stops stalling” is not confirmed"
+    }
+  ]
+}
