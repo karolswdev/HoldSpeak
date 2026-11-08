@@ -323,29 +323,18 @@ def invoke(db: Any, principal: Any, capability: str, revision: str, payload: dic
            deadline: float = DEADLINE_SECONDS) -> tuple[Optional[str], str]:
     """One routed call; ``(output or None, model)``. The planner
     (``program_planner``) calls it with its own contract and deadline."""
-    from ..kernel.inference_runner import InvocationRequest, ServiceContract
-    from ..kernel.prompt_adapter import CanonicalPromptAdapter
-    from ..kernel.runtime import _as_principal
+    from . import engine_door
 
-    broker = _broker_for(db)
-    request = InvocationRequest(
-        deployment_revision=revision,
-        definition_origin=ServiceContract.for_payload(contract, contract_revision, payload),
-        deadline_at=time.time() + deadline,
-        payload=payload,
-    )
-    captured: list[Any] = []
-
-    def _capture(value: Any) -> str:
-        captured.append(value)
-        return f"{contract.replace('.', '-')}:{revision}"
-
-    with _as_principal(principal):
-        outcome = broker.inference_runner.invoke(request, CanonicalPromptAdapter(), publish=_capture)
-    if str(getattr(outcome, "outcome", "")) != "succeeded" or not captured:
+    try:
+        answer = engine_door.run(
+            _broker_for(db), principal, capability, payload,
+            engine=engine_door.Engine(revision), contract=contract,
+            contract_revision=contract_revision, deadline=deadline,
+            result_ref=f"{contract.replace('.', '-')}:{revision}",
+        )
+    except engine_door.EngineDoorError:
         return None, ""
-    result = captured[0] if isinstance(captured[0], dict) else {"output": captured[0]}
-    return str(result.get("output") or ""), str(result.get("model") or "")
+    return answer.output, answer.model
 
 
 def read_answer(output: str) -> tuple[Optional[dict[str, Any]], Optional[str]]:

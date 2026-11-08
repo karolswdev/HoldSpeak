@@ -11,8 +11,7 @@ import json as _json
 import re as _re
 from typing import Any
 
-from ..kernel.inference_runner import InvocationRequest, ServiceContract
-from ..kernel.prompt_adapter import CanonicalPromptAdapter
+from . import engine_door
 from ..principals import Principal
 
 
@@ -78,9 +77,9 @@ def _resolve_deployment_revision(broker: Any, capability_id: str) -> tuple[str, 
     # ``SELECT ... FROM deployment_revisions WHERE model=<profile id>``, and a
     # profile id is not a model name.  Resolution now goes through the same
     # path as the update drafter and Ask: profile -> plan -> frozen leg.
-    from .project_update_service import _resolve_for_capability
+    from .engine_door import engine_for
 
-    revision_id, _assignment_id, _profile_id = _resolve_for_capability(broker, capability_id)
+    revision_id = engine_for(broker, capability_id).revision
     with broker.database._connection() as conn:
         rev = conn.execute(
             "SELECT boundary FROM deployment_revisions WHERE id=?", (revision_id,),
@@ -107,12 +106,6 @@ def run_guardrail(
     that must be redacted if the chat.guardrail capability routes through
     a cloud boundary (HS-153 close counsel M1).
     """
-    import json as _json
-    import time as _time
-    from ..kernel.runtime import _as_principal
-
-    runner = broker.inference_runner
-
     # Format for CanonicalPromptAdapter (system_prompt + user_prompt).
     instruction = guardrail.get("instruction", "")
     transcript_lines: list[str] = []
@@ -192,44 +185,31 @@ def run_guardrail(
     # Remove _sensitive_texts sentinel before dispatch.
     payload.pop("_sensitive_texts", None)
 
-    request = InvocationRequest(
-        deployment_revision=deployment_revision,
-        definition_origin=ServiceContract.for_payload(
-            "chat.guardrail", "1", payload,
-        ),
-        deadline_at=_time.time() + 120,
-        payload=payload,
-    )
-    captured: list[Any] = []
+    try:
+        answer = engine_door.run(
+            broker, principal, "chat.guardrail", payload,
+            engine=engine_door.Engine(deployment_revision),
+            result_ref=f"guardrail-result:{thread_id}",
+        )
+    except engine_door.EngineDoorError:
+        return {"violations": [], "warnings": []}
 
-    def _capture(value: Any) -> str:
-        captured.append(value)
-        return f"guardrail-result:{thread_id}"
-
-    with _as_principal(principal):
-        outcome = runner.invoke(request, CanonicalPromptAdapter(), publish=_capture)
-
-    # Direct dict path (mocked runner).
-    result = getattr(outcome, "result", None)
-    if isinstance(result, dict):
+    result = answer.result
+    if isinstance(result, dict) and "output" not in result:
         return {
             "violations": list(result.get("violations", [])),
             "warnings": list(result.get("warnings", [])),
         }
-
-    # Real runner path: publish callback captured the adapter's result.
-    if captured:
-        adapter_result = captured[0]
-        if isinstance(adapter_result, dict) and "output" in adapter_result:
-            raw = str(adapter_result["output"])
-            # HS-153-06: robust extraction handles think-blocks, fences,
-            # and trailing prose from models like Qwen3.6.
-            parsed = _extract_structured_json(raw)
-            if parsed is not None:
-                return {
-                    "violations": list(parsed.get("violations", [])),
-                    "warnings": list(parsed.get("warnings", [])),
-                }
+    if isinstance(result, dict) and "output" in result:
+        raw = str(result["output"])
+        # HS-153-06: robust extraction handles think-blocks, fences,
+        # and trailing prose from models like Qwen3.6.
+        parsed = _extract_structured_json(raw)
+        if parsed is not None:
+            return {
+                "violations": list(parsed.get("violations", [])),
+                "warnings": list(parsed.get("warnings", [])),
+            }
 
     return {"violations": [], "warnings": []}
 
@@ -250,12 +230,6 @@ def run_compact(
     that must be redacted if the chat.compact capability routes through
     a cloud boundary (HS-153 close counsel M1).
     """
-    import json as _json
-    import time as _time
-    from ..kernel.runtime import _as_principal
-
-    runner = broker.inference_runner
-
     # Format messages into a user_prompt for CanonicalPromptAdapter.
     transcript_lines: list[str] = []
     for msg in messages:
@@ -318,38 +292,26 @@ def run_compact(
     # Remove _sensitive_texts sentinel before dispatch.
     payload.pop("_sensitive_texts", None)
 
-    request = InvocationRequest(
-        deployment_revision=deployment_revision,
-        definition_origin=ServiceContract.for_payload(
-            "chat.compact", "1", payload,
-        ),
-        deadline_at=_time.time() + 120,
-        payload=payload,
-    )
-    captured: list[Any] = []
-    def _capture(value: Any) -> str:
-        captured.append(value)
-        return f"compact-result:{thread_id}"
+    try:
+        answer = engine_door.run(
+            broker, principal, "chat.compact", payload,
+            engine=engine_door.Engine(deployment_revision),
+            result_ref=f"compact-result:{thread_id}",
+        )
+    except engine_door.EngineDoorError:
+        return {"summary": ""}
 
-    with _as_principal(principal):
-        outcome = runner.invoke(request, CanonicalPromptAdapter(), publish=_capture)
-
-    # Direct dict with "summary" key (mocked runner path).
-    result = getattr(outcome, "result", None)
+    result = answer.result
     if isinstance(result, dict) and "summary" in result:
         return {"summary": str(result["summary"])}
-
-    # Real runner path: the publish callback captured the adapter's result.
-    if captured:
-        adapter_result = captured[0]
-        if isinstance(adapter_result, dict) and "output" in adapter_result:
-            raw = str(adapter_result["output"])
-            # HS-153-06: robust extraction handles think-blocks, fences,
-            # and trailing prose from models like Qwen3.6.
-            parsed = _extract_structured_json(raw)
-            if parsed is not None and "summary" in parsed:
-                return {"summary": str(parsed["summary"])}
-            if raw:
-                return {"summary": raw}
+    if isinstance(result, dict) and "output" in result:
+        raw = str(result["output"])
+        # HS-153-06: robust extraction handles think-blocks, fences,
+        # and trailing prose from models like Qwen3.6.
+        parsed = _extract_structured_json(raw)
+        if parsed is not None and "summary" in parsed:
+            return {"summary": str(parsed["summary"])}
+        if raw:
+            return {"summary": raw}
 
     return {"summary": ""}
