@@ -950,6 +950,7 @@
     "search_words": "mermaid words in notes search find words in fences. race find words inside mermaid fences race",
     "skipped": 0,
     "spend_limit_usd": null,
+    "spend_note": null,
     "state": "running",
     "state_word": "Running",
     "status_line": "Running · 0 of 1 done · check: echo · control Normal",

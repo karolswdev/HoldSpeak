@@ -324,6 +324,7 @@
     "search_words": "the phone line the sip runner the line window",
     "skipped": 0,
     "spend_limit_usd": null,
+    "spend_note": null,
     "state": "waiting",
     "state_word": "Your turn",
     "status_line": "Your turn · 0 of 2 done · 2 wait on you · check: fake_program_check.sh · control Normal",
