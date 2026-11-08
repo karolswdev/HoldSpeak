@@ -11,6 +11,9 @@ export type WindowBack = {
   testId?: string;
   /** The Back's word while this step owns it (a wizard says Cancel). */
   label?: string;
+  /** The frame's close asks this step first; true = the step took it and
+   *  the window stays (a wizard's close is its Cancel). */
+  onCloseRequest?: () => boolean;
 };
 
 /** The host provides a setter; null means no host (pullouts, tests). */

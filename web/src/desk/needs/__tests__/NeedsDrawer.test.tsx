@@ -1462,12 +1462,20 @@ describe("the briefing page on a Program row (PG-DIRECTION DIR3)", () => {
       return {} as never;
     });
     render(<NeedsDrawer />);
-    const title = needsPageNone.items[0].title;
-    await waitFor(() => expect(face(row(title)).verbs).toEqual(["Go on", "Park", "Later ▾", "Send ▾"]));
+    // Owner walk 2026-11-08: the row is the Program; Send is in its menu.
+    const title = needsPageNone.items[0].group;
+    await waitFor(() => expect(face(row(title)).verbs).toEqual(["Decide"]));
     expect(face(row(title)).fact).not.toMatch(/Page/);
-    fireEvent.click(within(row(title)).getByRole("button", { name: /^Send:/ }));
+    fireEvent.contextMenu(row(title), { clientX: 40, clientY: 60 });
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Send" }));
     fireEvent.click(await screen.findByRole("menuitem", { name: "Copy page link" }));
-    await waitFor(() => expect(face(row(title)).verbs).toEqual(["Go on", "Park", "Later ▾", "Revoke"]));
+    await waitFor(() => expect(face(row(title)).verbs).toEqual(["Decide"]));
+    await waitFor(() => expect(face(row(title)).fact).toMatch(/Page link copied/));
+    fireEvent.contextMenu(row(title), { clientX: 40, clientY: 60 });
+    const menu = await screen.findByRole("menu", { name: title });
+    expect(within(menu).getAllByRole("menuitem").map((m) => m.textContent)).toContain("Revoke the page");
+    expect(within(menu).queryByRole("menuitem", { name: "Send" })).toBeNull();
+    fireEvent.keyDown(menu, { key: "Escape" });
     expect(posts).toEqual([{ path: "/api/reach/packages", json: { refs: [needsPageNone.items[0].id] } }]);
     expect(writeText).toHaveBeenCalledWith(`${window.location.origin}${reachPackage.path}`);
     expect(face(row(title)).fact).toMatch(/Page link copied · open until \d\d:\d\d$/);
@@ -1489,11 +1497,13 @@ describe("the briefing page on a Program row (PG-DIRECTION DIR3)", () => {
       return {} as never;
     });
     render(<NeedsDrawer />);
-    const title = needsPageOpen.items[0].title;
+    const title = needsPageOpen.items[0].group;
     // (The copy above, in this module, marked the same recorded page copied.)
     await waitFor(() => expect(face(row(title)).fact).toMatch(/(Page open|Page link copied · open) until \d\d:\d\d$/));
-    fireEvent.click(within(row(title)).getByRole("button", { name: /Revoke the page/ }));
-    await waitFor(() => expect(face(row(title)).verbs).toEqual(["Go on", "Park", "Later ▾", "Send ▾"]));
+    fireEvent.contextMenu(row(title), { clientX: 40, clientY: 60 });
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Revoke the page" }));
+    await waitFor(() => expect(face(row(title)).fact).not.toMatch(/Page/));
+    expect(face(row(title)).verbs).toEqual(["Decide"]);
     expect(posts).toEqual([`/api/reach/packages/${page.package_id}/revoke`]);
   });
 });
@@ -1515,13 +1525,13 @@ describe("Later and Telegram on a Program row (PG-DIRECTION DIR4, DIR5)", () => 
     render(<NeedsDrawer />);
     const item = needsSent.items[0];
     const sent = item.program.page.sent;
-    await waitFor(() => expect(face(row(item.title)).fact).toContain(
+    await waitFor(() => expect(face(row(item.group)).fact).toContain(
       `Sent to Telegram ${clock(sent.at)} · page open until ${clock(item.program.page.expires_at)}`));
-    expect(face(row(item.title)).egress).toBe("");
-    expect(face(row(item.title)).verbs).toEqual(["Go on", "Park", "Later ▾", "Revoke"]);
+    expect(face(row(item.group)).egress).toBe("");
+    expect(face(row(item.group)).verbs).toEqual(["Decide"]);
   });
 
-  it("Later ▾ ▸ In 1 hour defers the item: it moves to the end, not counted, with its time", async () => {
+  it("Later ▸ In 1 hour in the row's menu defers the item: it moves to the end, not counted, with its time", async () => {
     let deferred = false;
     const posts: { path: string; json: unknown }[] = [];
     vi.mocked(apiFetch).mockImplementation(async (path: string, init?: unknown) => {
@@ -1537,13 +1547,16 @@ describe("Later and Telegram on a Program row (PG-DIRECTION DIR4, DIR5)", () => 
     });
     render(<NeedsDrawer />);
     const item = needsSent.items[0];
-    fireEvent.click(await within(await waitFor(() => row(item.title))).findByRole("button", { name: /^Later:/ }));
+    fireEvent.contextMenu(await waitFor(() => row(item.group)), { clientX: 40, clientY: 60 });
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Later" }));
     fireEvent.click(await screen.findByRole("menuitem", { name: "In 1 hour" }));
     await waitFor(() => expect(posts).toEqual([{ path: "/api/reach/later", json: { ref: item.id, later: "in_1h" } }]));
     const later = needsLater.items[0];
-    await waitFor(() => expect(face(row(later.title)).fact).toContain(`Later · back at ${clock(later.later.until)}`));
-    expect(face(row(later.title)).verbs).not.toContain("Later ▾");
-    await waitFor(() => expect(row(later.title).getAttribute("data-counted")).toBe("false"));
+    await waitFor(() => expect(face(row(later.group)).fact).toContain(`Later · back at ${clock(later.later.until)}`));
+    fireEvent.contextMenu(row(later.group), { clientX: 40, clientY: 60 });
+    const menu = await screen.findByRole("menu", { name: later.group });
+    expect(within(menu).queryByRole("menuitem", { name: "Later" })).toBeNull();
+    await waitFor(() => expect(row(later.group).getAttribute("data-counted")).toBe("false"));
   });
 });
 
@@ -1653,5 +1666,83 @@ describe("one row, one verb (owner walk 2026-11-08)", () => {
     const li = row("Send the vendor contract");
     expect(li.querySelector("[data-testid=needs-row-state]")?.textContent).toBe("Bea");
     expect(screen.getByTestId("needs-people-open")).toBeTruthy();
+  });
+});
+
+// Owner walk 2026-11-08, the Program rows: the row is the Program (its title),
+// the ask's quiet word and ONE verb; Later and Send are the row's menu.
+// Replays the hub's recorded answers (needs_you.rows.json `program`, recorded
+// by scripts/record_needs_you_fixture.py --rows on the Programs rig).
+describe("a Program row is the object (owner walk 2026-11-08)", () => {
+  const program = (needsRows as unknown as { program: { title: string; steps: Array<{ gets: Gets; post?: string; body?: unknown }> } }).program;
+  const [before, afterMerge] = program.steps;
+  const title = program.title;
+  const ask = (before.gets["/api/desk/needs-you?fresh=1"] as { items: Array<{ title: string; openRef: string }> }).items[0];
+  let hub: Gets;
+  let posts: Array<{ path: string; json: unknown }>;
+  const openPullout = vi.fn();
+  const REAL_PULLOUT = useDesk.getState().openPullout;
+
+  beforeEach(() => {
+    hub = before.gets;
+    posts = [];
+    openPullout.mockClear();
+    useDesk.setState({ openPullout } as never);
+    vi.mocked(apiFetch).mockImplementation(async (path: string, init?: unknown) => {
+      const method = (init as { method?: string } | undefined)?.method ?? "GET";
+      if (method !== "GET") {
+        posts.push({ path: String(path), json: (init as { json?: unknown }).json });
+        if (String(path) === afterMerge.post) hub = afterMerge.gets;
+        return {} as never;
+      }
+      return recordedGet(hub, String(path)) as never;
+    });
+    return () => useDesk.setState({ openPullout: REAL_PULLOUT } as never);
+  });
+
+  it("a Merge ask is the Program's title, the quiet word Merge and one verb, Merge; no Later ▾, no Send ▾", async () => {
+    render(<NeedsDrawer />);
+    const li = await waitFor(() => row(title));
+    expect(face(li).lamps).toEqual(["Merge"]);
+    expect(face(li).verbs).toEqual(["Merge"]);
+    expect(within(li).getByRole("button", { name: `Merge: ${title}` }).className).toContain("btn--secondary");
+    // The one rule: the step's number stays; the step's question is the hover.
+    expect(face(li).fact).toBe("Step 1");
+    expect(li.querySelector(".needs-row-fact")?.getAttribute("title")).toBe(ask.title);
+    expect(li.querySelector("[data-verb='program-defer'], [data-verb='program-send']")).toBeNull();
+    expect(li.textContent).not.toMatch(/▾/);
+  });
+
+  it("the row's context menu carries Not yet, Later (the times) and Send (the page)", async () => {
+    render(<NeedsDrawer />);
+    fireEvent.contextMenu(await waitFor(() => row(title)), { clientX: 40, clientY: 60 });
+    const menu = await screen.findByRole("menu", { name: title });
+    expect(within(menu).getAllByRole("menuitem").map((m) => m.textContent)).toEqual(["Open", "Not yet", "Later»", "Send»"]);
+    fireEvent.click(within(menu).getByRole("menuitem", { name: "Later" }));
+    for (const time of ["In 1 hour", "At 13:00", "Tonight", "Tomorrow"]) {
+      expect(await screen.findByRole("menuitem", { name: time })).toBeTruthy();
+    }
+    fireEvent.click(within(menu).getByRole("menuitem", { name: "Send" }));
+    expect(await screen.findByRole("menuitem", { name: "Copy page link" })).toBeTruthy();
+    expect(screen.getByRole("menuitem", { name: "Send to Telegram" })).toBeTruthy();
+  });
+
+  it("a press on the row opens the Program; a press on Merge does only the merge", async () => {
+    render(<NeedsDrawer />);
+    fireEvent.click((await waitFor(() => row(title))).querySelector(".needs-row-name")!);
+    await waitFor(() => expect(openPullout).toHaveBeenCalledWith(ask.openRef));
+    openPullout.mockClear();
+    fireEvent.click(within(row(title)).getByRole("button", { name: `Merge: ${title}` }));
+    await waitFor(() => expect(posts).toEqual([{ path: afterMerge.post, json: afterMerge.body }]));
+    expect(openPullout).not.toHaveBeenCalled();
+  });
+
+  it("after the merge the Program's close is his turn: the quiet word Your turn, the verb Open", async () => {
+    render(<NeedsDrawer />);
+    fireEvent.click(within(await waitFor(() => row(title))).getByRole("button", { name: `Merge: ${title}` }));
+    await waitFor(() => expect(face(row(title)).lamps).toEqual(["Your turn"]));
+    expect(face(row(title)).verbs).toEqual(["Open"]);
+    fireEvent.click(within(row(title)).getByRole("button", { name: `Open: ${title}` }));
+    await waitFor(() => expect(openPullout).toHaveBeenCalledWith(ask.openRef));
   });
 });

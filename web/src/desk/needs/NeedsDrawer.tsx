@@ -192,6 +192,8 @@ const PROGRAM_CHOICE_WORDS: Record<string, string> = {
   allow: "Allow the commit", not_now: "Not now",
   // PG-LANG JRN9 to JRN11: an audit's findings, its fix program, a lesson.
   file: "File", make: "Make", keep_program: "Keep for this program", keep_repo: "Keep for HoldSpeak",
+  // A Program whose every step is finished.
+  close: "Close",
 };
 
 /** Owner walk 2026-11-08: where the row's context menu opens (a right
@@ -201,7 +203,7 @@ type RowMenu = { x: number; y: number; row: Element | null };
 /** The rows whose other verbs live in the row's context menu (the More
  *  Button is gone: one verb on the row, the rest on a right press). */
 export function hasRowMenu(face: Pick<NeedFace, "verbs">): boolean {
-  return face.verbs.kind === "work" || face.verbs.kind === "confirm";
+  return face.verbs.kind === "work" || face.verbs.kind === "confirm" || face.verbs.kind === "program";
 }
 
 /** The context menu's Project entry: `Open the Project: <name>` opens the
@@ -223,11 +225,6 @@ function NeedVerbsView({ face, primary, onWell, well, menu = null, onMenu = () =
   extra?: WorkMenuEntry[];
 }) {
   const [busy, setBusy] = useState(false);
-  const moreRef = useRef<HTMLButtonElement>(null);
-  const [more, setMore] = useState(false);
-  // PG-DIRECTION DIR5: Send ▾ on a Program row (Copy page link, Send to Telegram).
-  const sendRef = useRef<HTMLButtonElement>(null);
-  const [sendOpen, setSendOpen] = useState(false);
   const projects = useDesk((state) => state.projects);
   const setSourceReceipt = useSourceReceipt((st) => st.set);
   const lead = primary ? "primary" : "secondary";
@@ -273,63 +270,53 @@ function NeedVerbsView({ face, primary, onWell, well, menu = null, onMenu = () =
           ))}
         </>
       );
-    case "program":
-      // Programs (2026-10-28): Merge / Not yet; Fix now / Later / Skip;
-      // Resume / Skip; Send… (prepares the ask; he presses Send there).
-      return (
-        <>
-          {v.choices.map((choice, index) => {
-            const word = PROGRAM_CHOICE_WORDS[choice] ?? choice;
-            return (
-              <Button key={choice} dense variant={index === 0 ? lead : "ghost"} loading={busy} disabled={busy}
-                aria-label={named(word)} data-testid="needs-row-verb" data-verb={`program-${choice.replace("_", "-")}`}
-                onClick={(event) => void act(index === 0 && choice !== "prepare" ? "Done" : word, () => apiFetch(v.decide, {
-                  method: "POST", json: { kind: v.itemKind, choice, ...(v.findingId ? { finding_id: v.findingId } : {}),
-                    ...(v.lessonId != null ? { lesson_id: v.lessonId } : {}) },
-                }), face.id, (event.currentTarget as Element).closest("li"))}>{word}</Button>
-            );
-          })}
-          {/* PG-DIRECTION DIR4: Later is an answer (the four times). A row
-              he deferred already sits in the Later group with its time. */}
-          {v.ref && briefable(v.itemKind) && !v.later ? (
-            <>
-              <Button ref={moreRef} dense variant="ghost" disabled={busy} aria-label={named("Later")} aria-haspopup="menu"
-                aria-expanded={more} data-testid="needs-row-verb" data-verb="program-defer"
-                onClick={() => setMore((value) => !value)}>Later ▾</Button>
-              {more && moreRef.current ? <WorkMenu label={named("Later")} x={moreRef.current.getBoundingClientRect().left}
-                y={moreRef.current.getBoundingClientRect().bottom} autoFocus onClose={() => setMore(false)}
-                returnFocus={() => moreRef.current?.focus()}
-                entries={LATER_TIMES.map((time) => ({ type: "item" as const, id: `later-${time.id}`, label: time.label,
-                  ghost: busy ? "Busy" : undefined,
-                  onSelect: () => void act("Later", () => deferItem(String(v.ref), time.id), face.id) }))} /> : null}
-            </>
-          ) : null}
-          {/* PG-DIRECTION DIR3: the item's briefing page. Revoke ends the
-              token, not the item. */}
-          {v.ref && briefable(v.itemKind) ? (
-            v.page ? (
-              <Button dense variant="ghost" loading={busy} disabled={busy} aria-label={named("Revoke the page")}
-                data-testid="needs-row-verb" data-verb="program-revoke-page"
-                onClick={() => void act("Revoke", () => revokePage(String(v.page?.package_id)), face.id)}>Revoke</Button>
-            ) : (
-              <>
-                <Button ref={sendRef} dense variant="ghost" loading={busy} disabled={busy} aria-label={named("Send")}
-                  aria-haspopup="menu" aria-expanded={sendOpen} data-testid="needs-row-verb" data-verb="program-send"
-                  onClick={() => setSendOpen((value) => !value)}>Send ▾</Button>
-                {sendOpen && sendRef.current ? <WorkMenu label={named("Send")} x={sendRef.current.getBoundingClientRect().left}
-                  y={sendRef.current.getBoundingClientRect().bottom} autoFocus onClose={() => setSendOpen(false)}
-                  returnFocus={() => sendRef.current?.focus()}
-                  entries={[
-                    { type: "item" as const, id: "copy-link", label: "Copy page link", ghost: busy ? "Busy" : undefined,
-                      onSelect: () => void act("Copy page link", () => copyPageLink(String(v.ref)), face.id) },
-                    { type: "item" as const, id: "send-telegram", label: "Send to Telegram", ghost: busy ? "Busy" : undefined,
-                      onSelect: () => void act("Send to Telegram", () => sendToTelegram(String(v.ref)), face.id) },
-                  ]} /> : null}
-              </>
-            )
-          ) : null}
-        </>
-      );
+    case "program": {
+      // Owner walk 2026-11-08: the row is one verb, the ask's lead (Merge on
+      // a merge ask, Decide on a decision, else Open); a press on the row
+      // opens the Program. Its other choices, Later (the times) and Send
+      // (the briefing page) are the row's context menu.
+      const opener = faceOpener(face);
+      const decide = (choice: string, label: string, origin?: Element | null) => act(label, () => apiFetch(v.decide, {
+        method: "POST", json: { kind: v.itemKind, choice, ...(v.findingId ? { finding_id: v.findingId } : {}),
+          ...(v.lessonId != null ? { lesson_id: v.lessonId } : {}) },
+      }), face.id, origin);
+      const merges = v.ask === "merge" && v.choices.includes("merge");
+      const leadWord = merges ? "Merge" : v.ask === "decide" ? "Decide" : "Open";
+      const ghost = busy ? "Busy" : undefined;
+      const choiceEntries: WorkMenuEntry[] = v.choices.filter((choice) => !(merges && choice === "merge")).map((choice) => {
+        const word = PROGRAM_CHOICE_WORDS[choice] ?? choice;
+        return { type: "item" as const, id: `choice-${choice}`, label: word, ghost,
+          onSelect: () => void decide(choice, choice === "prepare" ? word : "Done", menu?.row) };
+      });
+      const briefs = Boolean(v.ref && briefable(v.itemKind));
+      const entries: WorkMenuEntry[] = [
+        ...(opener ? [{ type: "item" as const, id: "open", label: "Open", onSelect: opener }] : []),
+        ...choiceEntries,
+        // PG-DIRECTION DIR4: Later is an answer (the times). A row he
+        // deferred already sits in the Later group with its time.
+        ...(briefs && !v.later ? [{ type: "sub" as const, id: "later", label: "Later",
+          entries: LATER_TIMES.map((time) => ({ type: "item" as const, id: `later-${time.id}`, label: time.label, ghost,
+            onSelect: () => void act("Later", () => deferItem(String(v.ref), time.id), face.id) })) }] : []),
+        // PG-DIRECTION DIR3/DIR5: the item's briefing page. Revoke ends the
+        // token, not the item.
+        ...(briefs ? (v.page
+          ? [{ type: "item" as const, id: "revoke-page", label: "Revoke the page", ghost,
+            onSelect: () => void act("Revoke", () => revokePage(String(v.page?.package_id)), face.id) }]
+          : [{ type: "sub" as const, id: "send", label: "Send", entries: [
+            { type: "item" as const, id: "copy-link", label: "Copy page link", ghost,
+              onSelect: () => void act("Copy page link", () => copyPageLink(String(v.ref)), face.id) },
+            { type: "item" as const, id: "send-telegram", label: "Send to Telegram", ghost,
+              onSelect: () => void act("Send to Telegram", () => sendToTelegram(String(v.ref)), face.id) },
+          ] }]) : []),
+      ];
+      return <>
+        <Button dense variant="secondary" loading={busy} disabled={busy || (!merges && !opener)} aria-label={named(leadWord)}
+          data-testid="needs-row-verb" data-verb={merges ? "program-merge" : v.ask === "decide" ? "program-decide" : "program-open"}
+          onClick={(event) => merges ? void decide("merge", "Done", event.currentTarget) : opener?.()}>{leadWord}</Button>
+        {menu ? <WorkMenu label={face.name} x={menu.x} y={menu.y} entries={[...entries, ...extra]} autoFocus onClose={() => onMenu(null)}
+          returnFocus={() => menu.row?.querySelector<HTMLElement>("[data-testid=needs-row-verb]")?.focus()} /> : null}
+      </>;
+    }
     case "allow-helper":
       return <Button dense variant={lead} loading={busy} disabled={busy}
         aria-label={named("Allow helper")} data-testid="needs-row-verb" data-verb="allow-helper"
