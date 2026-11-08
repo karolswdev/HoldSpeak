@@ -12,7 +12,7 @@
   "check_command": "scripts/quick_check.sh",
   "checkpoints": [
     {
-      "at": "2026-11-08T12:03:45.276739+00:00",
+      "at": "2026-11-08T23:14:41.812135+00:00",
       "by": "engine",
       "choice": "not_planned",
       "decision_record_id": null,
@@ -30,7 +30,7 @@
       "undo": {}
     },
     {
-      "at": "2026-11-08T12:03:45.277165+00:00",
+      "at": "2026-11-08T23:14:41.812514+00:00",
       "by": "owner",
       "choice": null,
       "decision_record_id": null,
@@ -51,7 +51,7 @@
   "closed_at": null,
   "control": "normal",
   "control_word": "Normal",
-  "created_at": "2026-11-08T12:03:45.276739+00:00",
+  "created_at": "2026-11-08T23:14:41.812135+00:00",
   "decided_for_you": [],
   "default": {
     "agent": "Claude Code",
@@ -75,10 +75,10 @@
   "for_person": null,
   "for_person_id": null,
   "goal": "After a meeting, the meeting's Note should end with a short recap: the decisions, the actions with their owners, and the open questions. It comes from the transcript we already keep, runs on the local model, and sends nothing out. It is a section of the Note that I can edit, not a new window.\n\nIt must be fast: under 20 seconds after Stop on this Mac. It must not make up owners: when nobody was named, it says \"No owner\". Alice asked for this for her team's standups, so she sees it before it ships.",
-  "id": "program-0ab45a64d33e",
+  "id": "program-e0b1ba18ed75",
   "in_state_seconds": 0,
   "last_checkpoint": {
-    "at": "2026-11-08T12:03:45.276739+00:00",
+    "at": "2026-11-08T23:14:41.812135+00:00",
     "by": "engine",
     "choice": "not_planned",
     "decision_record_id": null,
@@ -99,8 +99,8 @@
   "may_call": false,
   "may_handoff": false,
   "night": null,
-  "note_id": "program-program-0ab45a64d33e",
-  "note_window": "pullout:note:program-program-0ab45a64d33e",
+  "note_id": "program-program-e0b1ba18ed75",
+  "note_window": "pullout:note:program-program-e0b1ba18ed75",
   "origin_ref": null,
   "persons": [],
   "place": {
@@ -123,9 +123,9 @@
       "choices": [
         "waive"
       ],
-      "created_at": "2026-11-08T12:03:45.277455+00:00",
+      "created_at": "2026-11-08T23:14:41.812952+00:00",
       "evidence": {},
-      "id": "req-c5948bfe736a",
+      "id": "req-eb44e9929300",
       "judged_at": null,
       "judged_commit": null,
       "kind": "review",
@@ -133,7 +133,7 @@
       "label": "R1",
       "ordinal": 1,
       "parent_id": null,
-      "program_id": "program-0ab45a64d33e",
+      "program_id": "program-e0b1ba18ed75",
       "required": true,
       "rounds": 0,
       "running": false,
@@ -152,9 +152,9 @@
       "choices": [
         "waive"
       ],
-      "created_at": "2026-11-08T12:03:45.277798+00:00",
+      "created_at": "2026-11-08T23:14:41.813409+00:00",
       "evidence": {},
-      "id": "req-ffc49f81ee99",
+      "id": "req-c4b9fc7be137",
       "judged_at": null,
       "judged_commit": null,
       "kind": "review",
@@ -162,7 +162,7 @@
       "label": "R2",
       "ordinal": 2,
       "parent_id": null,
-      "program_id": "program-0ab45a64d33e",
+      "program_id": "program-e0b1ba18ed75",
       "required": true,
       "rounds": 0,
       "running": false,
@@ -198,7 +198,7 @@
   "title": "Meeting recap in the Note",
   "total": 0,
   "track": [],
-  "updated_at": "2026-11-08T12:03:45.276739+00:00",
+  "updated_at": "2026-11-08T23:14:41.812135+00:00",
   "usage_warning_share": null,
   "within": [],
   "your_turn": 0,
