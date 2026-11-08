@@ -449,9 +449,11 @@
     animation: needs-row-settle 180ms var(--ease-standard) both;
   }
 }
+/* Owner walk 2026-11-08: Done slides the row out (the kit's standard ease),
+   with the green wash; the count in Mine ticks down when the read lands. */
 @keyframes needs-row-settle {
-  from { background: color-mix(in srgb, var(--ok-strong) 16%, var(--wb-paper)); opacity: 1; }
-  to { background: color-mix(in srgb, var(--ok-strong) 16%, var(--wb-paper)); opacity: 0; }
+  from { background: color-mix(in srgb, var(--ok-strong) 16%, var(--wb-paper)); opacity: 1; transform: translateX(0); }
+  to { background: color-mix(in srgb, var(--ok-strong) 16%, var(--wb-paper)); opacity: 0; transform: translateX(32px); }
 }
 /* PG-DIRECTION DIR4/DIR5: a Program row with four verbs (its choices, Later ▾,
    Send ▾ or Revoke) puts them on their own line at 393, so the name and its
@@ -473,8 +475,8 @@
 
 /* HS-S43 (owner verdict 2026-11-07): two bands. The toolbar is the steel
    bar material over a 1 px hairline; the list below it is window paper.
-   The scope (Mine, They owe me, To decide) is one segmented control; the
-   People Button stays at the band's right end. */
+   The scope (Mine · People) is one segmented control at the band's left;
+   nothing floats at its right (owner walk 2026-11-08). */
 .needs-drawer > .kit-toolbar {
   background: var(--wb-steel);
   border-bottom: 1px solid var(--wb-rule);
@@ -495,9 +497,50 @@
 .desk-next .needs-drawer .needs-scope .needs-chip.btn {
   border-radius: 6px;
 }
-.needs-drawer .needs-people .kit-toolglyph {
-  margin-right: 6px;
+
+/* ── Owner walk 2026-11-08: one row, one verb. ──
+   The row is the object: 44 px at the desk, hairline rules only, the name
+   on one line, one quiet word, one verb. A press on the row opens the item,
+   so the row wears the kit's hover and press material. */
+:is(.needs-drawer, .today-needs) .needs-row[data-dot="true"] {
+  min-height: 44px;
+}
+:is(.needs-drawer, .today-needs) .needs-row[data-opens="true"]:active:not(:has(.btn:active)) {
+  background: color-mix(in srgb, var(--wb-sel) 12%, var(--wb-paper));
+}
+:is(.needs-drawer, .today-needs) .needs-row[data-dot="true"] .kit-dotword {
+  color: var(--wb-muted);
+}
+/* The weight the agents wrote (Must fix, Should fix, Noted) tints the glyph:
+   must the attention ember, should the accent, noted muted. */
+:is(.needs-drawer, .today-needs) .needs-row[data-tier] > img {
+  border-radius: 5px;
+  padding: 2px;
+  width: 22px;
+  height: 22px;
+}
+:is(.needs-drawer, .today-needs) .needs-row[data-tier="must"] > img {
+  background: color-mix(in srgb, var(--lamp-ask) 26%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--lamp-ask) 70%, transparent);
+}
+:is(.needs-drawer, .today-needs) .needs-row[data-tier="should"] > img {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 55%, transparent);
+}
+:is(.needs-drawer, .today-needs) .needs-row[data-tier="noted"] > img {
+  filter: grayscale(1);
+  opacity: 0.55;
+}
+:is(.needs-drawer, .today-needs) .needs-row[data-tier="noted"] .needs-row-name {
+  font-weight: 500;
+  color: var(--wb-muted);
+}
+/* The People scope ends with Open People (what people owe him in People). */
+.needs-people-foot {
+  display: flex;
+  padding: 4px 10px;
 }
 @container surface (max-width: 520px) {
-  .desk-next .needs-drawer .needs-people.btn { min-height: 44px; }
+  .desk-next .needs-drawer .needs-scope .needs-chip.btn,
+  .desk-next .needs-drawer .needs-people-open.btn { min-height: 44px; }
 }

@@ -140,38 +140,41 @@ describe("Needs you on the daily week: the chips and one verb per row (Bettermen
     });
   });
 
-  it("They owe me + Theo shows exactly Theo's two rows, each with Nudge", async () => {
+  it("People + Theo shows exactly Theo's two rows, each with Nudge", async () => {
     render(<NeedsDrawer />);
-    await waitFor(() => expect(weekRows().length).toBe(9));
+    // Owner walk 2026-11-08: Mine (his own and his decisions) is the scope
+    // the window opens on; People is what people owe him.
+    await waitFor(() => expect(weekRows().length).toBe(4));
     const bar = screen.getByTestId("needs-filter");
-    // A chip says its count; the head still says the one number.
-    expect(within(bar).getByRole("button", { name: "They owe me · 5" })).toBeTruthy();
-    expect(within(bar).getByRole("button", { name: "Mine · 2" })).toBeTruthy();
+    // Mine says the one number; To decide its rows.
+    expect(within(bar).getByRole("button", { name: "Mine · 4" })).toBeTruthy();
     expect(within(bar).getByRole("button", { name: "To decide · 2" })).toBeTruthy();
-    fireEvent.click(within(bar).getByRole("button", { name: "They owe me · 5" }));
+    expect(within(bar).getByTestId("needs-open-people").closest("[data-testid='needs-scope']")).toBeTruthy();
+    fireEvent.click(within(bar).getByTestId("needs-open-people"));
+    await waitFor(() => expect(weekRows().length).toBe(5));
     fireEvent.click(within(bar).getByTestId("needs-chip-person"));
     fireEvent.click(await screen.findByRole("menuitem", { name: "Theo Park · 2" }));
     await waitFor(() => expect(names()).toEqual(["Profile the reconciliation job", "Write up alert rule changes"]));
     for (const row of weekRows()) {
       const verbs = [...row.querySelectorAll<HTMLElement>("[data-testid='needs-row-verb']")].map((b) => b.dataset.verb);
-      expect(verbs).toEqual(["nudge", "more"]);
+      expect(verbs).toEqual(["nudge"]);
+      expect(row.querySelector("[data-testid=needs-row-state]")?.textContent).toBe("Theo Park");
     }
     expect(screen.getByTestId("arrival-display").textContent).toBe("4 need you");
-    // A second press clears a chip: the whole list again.
+    // A second press clears a chip: the whole scope again.
     fireEvent.click(within(bar).getByTestId("needs-chip-person"));
-    // The scope (Mine, They owe me, To decide) is one segmented band.
-    expect(within(bar).getByTestId("needs-chip-theirs").closest("[data-testid='needs-scope']")).toBeTruthy();
-    fireEvent.click(within(bar).getByTestId("needs-chip-theirs"));
-    await waitFor(() => expect(weekRows().length).toBe(9));
+    await waitFor(() => expect(weekRows().length).toBe(5));
+    fireEvent.click(within(bar).getByTestId("needs-chip-mine"));
+    await waitFor(() => expect(weekRows().length).toBe(4));
   });
 
-  it("More ▸ Hand to agent opens the launch sheet on the row's action (Betterment AG4)", async () => {
+  it("the row's context menu ▸ Hand to agent opens the launch sheet on the row's action (Betterment AG4)", async () => {
     const { useAgentHand } = await import("../agentHand");
     useAgentHand.setState({ origin: null });
     render(<NeedsDrawer />);
-    await waitFor(() => expect(weekRows().length).toBe(9));
+    await waitFor(() => expect(weekRows().length).toBe(4));
     const row = weekRows().find((li) => li.textContent?.includes("Email Dana about the cutover window"))!;
-    fireEvent.click(row.querySelector<HTMLElement>("[data-verb='more']")!);
+    fireEvent.contextMenu(row, { clientX: 40, clientY: 40 });
     fireEvent.click(await screen.findByRole("menuitem", { name: "Hand to agent" }));
     const card = (dailyWeek.needsYou.items as Array<{ title: string; actionItemId?: string }>)
       .find((i) => i.title === "Email Dana about the cutover window")!.actionItemId;
@@ -180,11 +183,10 @@ describe("Needs you on the daily week: the chips and one verb per row (Bettermen
 
   it("Mine shows his two rows with Done, and Done closes the item through follow-through", async () => {
     render(<NeedsDrawer />);
-    await waitFor(() => expect(weekRows().length).toBe(9));
-    fireEvent.click(within(screen.getByTestId("needs-filter")).getByTestId("needs-chip-mine"));
     await waitFor(() => expect(names()).toEqual([
-      "Email Dana about the cutover window", "Review design doc on settlement retries"]));
-    const done = weekRows()[0].querySelector<HTMLElement>("[data-verb='done']")!;
+      "Do it", "Email Dana about the cutover window", "Review design doc on settlement retries",
+      "Talk about the staff path in our next one-on-one"]));
+    const done = weekRows().find((li) => li.textContent?.includes("Email Dana"))!.querySelector<HTMLElement>("[data-verb='done']")!;
     expect(done.textContent).toBe("Done");
     fireEvent.click(done);
     await waitFor(() => expect(posts).toContainEqual(expect.objectContaining({
@@ -194,7 +196,9 @@ describe("Needs you on the daily week: the chips and one verb per row (Bettermen
 
   it("Nudge prepares a message in the Send well and sends nothing", async () => {
     render(<NeedsDrawer />);
-    await waitFor(() => expect(weekRows().length).toBe(9));
+    await waitFor(() => expect(weekRows().length).toBe(4));
+    fireEvent.click(screen.getByTestId("needs-open-people"));
+    await waitFor(() => expect(weekRows().length).toBe(5));
     const row = weekRows().find((li) => li.textContent?.includes("Write up alert rule changes"))!;
     fireEvent.click(row.querySelector<HTMLElement>("[data-verb='nudge']")!);
     const well = await screen.findByTestId("needs-nudge");
@@ -208,7 +212,7 @@ describe("Needs you on the daily week: the chips and one verb per row (Bettermen
 
   it("a decision waits for Decide; Accept, Not now and Drop are in place", async () => {
     render(<NeedsDrawer />);
-    await waitFor(() => expect(weekRows().length).toBe(9));
+    await waitFor(() => expect(weekRows().length).toBe(4));
     fireEvent.click(within(screen.getByTestId("needs-filter")).getByTestId("needs-chip-decide"));
     await waitFor(() => expect(names()).toEqual(["Do it", "Talk about the staff path in our next one-on-one"]));
     const row = weekRows().find((li) => li.textContent?.includes("Do it"))!;
@@ -258,18 +262,20 @@ describe("Needs you after the week's summaries: kept on arrival, Drop and Undo (
     // Every row of the week is in a group: nothing is left ungrouped.
     expect(document.querySelectorAll("li.needs-row").length).toBe(
       groups().reduce((n, g) => n + g.querySelectorAll("li.needs-row").length, 0));
+    // Mine: his own promises and his decisions; People: what people owe him.
     const sync = groups().find((g) => g.querySelector("h3")?.textContent?.startsWith("New from Payments platform sync"))!;
-    expect(groupNames(sync)).toEqual([
-      "Confirm the vendor freeze dates", "Draft the rollback runbook", "Email Dana about the cutover window",
-      "Freeze ledger writes during the cutover", "Profile the reconciliation job",
-    ]);
-    // No Confirm anywhere: the promises are kept; each has Drop beside its verb.
+    expect(groupNames(sync)).toEqual(["Email Dana about the cutover window", "Freeze ledger writes during the cutover"]);
+    // No Confirm anywhere: the promises are kept; each has its one verb
+    // (Drop is in the row's context menu, owner walk 2026-11-08).
     expect(document.querySelectorAll("[data-verb='confirm']")).toHaveLength(0);
     const dana = [...sync.querySelectorAll<HTMLElement>("li.needs-row")].find((li) => li.textContent?.includes("Email Dana"))!;
     expect([...dana.querySelectorAll<HTMLElement>("[data-testid='needs-row-verb']")].map((b) => b.dataset.verb))
-      .toEqual(["done", "drop", "more"]);
+      .toEqual(["done"]);
     const freeze = [...sync.querySelectorAll<HTMLElement>("li.needs-row")].find((li) => li.textContent?.includes("Freeze ledger"))!;
     expect(freeze.querySelector("[data-verb='decide']")).toBeTruthy();
+    fireEvent.click(screen.getByTestId("needs-open-people"));
+    await waitFor(() => expect(groupNames(groups().find((g) => g.querySelector("h3")?.textContent?.startsWith("New from Payments platform sync"))!))
+      .toEqual(["Confirm the vendor freeze dates", "Draft the rollback runbook", "Profile the reconciliation job"]));
     // Drawn once: the hub is told these meetings were seen.
     await waitFor(() => expect(posts.find((p) => p.url === "/api/desk/needs-you/seen")).toBeTruthy());
     const seen = posts.find((p) => p.url === "/api/desk/needs-you/seen")!.json as { meeting_ids: string[] };
@@ -279,8 +285,14 @@ describe("Needs you after the week's summaries: kept on arrival, Drop and Undo (
   it("Drop on a kept promise posts dismiss; Undo posts reopen", async () => {
     render(<NeedsDrawer />);
     await waitFor(() => expect(groups()).toHaveLength(3));
-    const row = [...document.querySelectorAll<HTMLElement>("li.needs-row")].find((li) => li.textContent?.includes("Write up alert rule changes"))!;
-    fireEvent.click(row.querySelector<HTMLElement>("[data-verb='drop']")!);
+    fireEvent.click(screen.getByTestId("needs-open-people"));
+    const row = await waitFor(() => {
+      const hit = [...document.querySelectorAll<HTMLElement>("li.needs-row")].find((li) => li.textContent?.includes("Write up alert rule changes"));
+      if (!hit) throw new Error("no row yet");
+      return hit;
+    });
+    fireEvent.contextMenu(row, { clientX: 40, clientY: 40 });
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Drop" }));
     await waitFor(() => expect(screen.getByTestId("needs-dropped").textContent).toContain("Dropped · Write up alert rule changes"));
     const card = (dailyArrival.needsYou.items as Array<{ title: string; actionItemId?: string }>)
       .find((i) => i.title === "Write up alert rule changes")!.actionItemId;
@@ -328,7 +340,7 @@ describe("Needs you when People could not be read (Betterment D6)", () => {
       "/api/desk/needs-you?fresh=1": dailyWeek.needsYou, "/api/door": hubWire("door.empty").wire,
     }, String(url)));
     render(<NeedsDrawer />);
-    await waitFor(() => expect(weekRows().length).toBe(9));
+    await waitFor(() => expect(weekRows().length).toBe(4));
     expect(screen.queryByTestId("needs-people-read-failed")).toBeNull();
   });
 });

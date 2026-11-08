@@ -148,6 +148,41 @@ export interface NeedFace {
    *  carries the word (`cutover`); the drawer folds the rows of one word
    *  and one Project into one row (`13 mentions of cutover`). */
   match?: string;
+  /** Owner walk 2026-11-08: the row's weight, read from the agents' title
+   *  prefix (`Must fix:`, `Should fix:`, `Noted:`); the prefix leaves the
+   *  name. It tints the glyph and sorts the rows (must first). */
+  tier?: NeedTier;
+}
+
+export type NeedTier = "must" | "should" | "noted";
+
+/** The three prefixes the agents write, and the word each weight says. */
+const TIER_PREFIXES: ReadonlyArray<[NeedTier, RegExp, string]> = [
+  ["must", /^\s*must fix\s*:\s*/i, "Must fix"],
+  ["should", /^\s*should fix\s*:\s*/i, "Should fix"],
+  ["noted", /^\s*noted\s*:\s*/i, "Noted"],
+];
+
+/** `Must fix: X` → `{ tier: "must", name: "X" }`; any other title → null. */
+export function tierOf(title: string): { tier: NeedTier; name: string } | null {
+  for (const [tier, prefix] of TIER_PREFIXES) {
+    if (prefix.test(title)) {
+      const name = title.replace(prefix, "").trim();
+      return name ? { tier, name } : null;
+    }
+  }
+  return null;
+}
+
+/** The word of a weight (`Must fix`), for the glyph's name. */
+export function tierWord(tier: NeedTier): string {
+  return TIER_PREFIXES.find(([t]) => t === tier)?.[2] ?? "";
+}
+
+/** The sort key of a row's weight: must, should, a row with no weight,
+ *  noted. Inside one key the hub's rank stays. */
+export function tierRank(face: Pick<NeedFace, "tier">): number {
+  return face.tier === "must" ? 0 : face.tier === "should" ? 1 : face.tier === "noted" ? 3 : 2;
 }
 
 export type NeedDirection = "mine" | "theirs" | "decide" | "setup";
@@ -678,6 +713,8 @@ export function personOf(item: NeedsYouRoomItem): { key: string; name: string } 
 export function needFace(member: NeedsYouMember, ctx: NeedCtx): NeedFace {
   const face = memberFace(member, ctx);
   face.kindWord = kindWordOf(face);
+  const tiered = tierOf(face.name);
+  if (tiered) { face.name = tiered.name; face.tier = tiered.tier; }
   return face;
 }
 
@@ -787,7 +824,10 @@ function askRank(face: NeedFace): number {
  *  hub's rank order. One object, one row. */
 export function needFaces(members: readonly NeedsYouMember[], ctx: NeedCtx): NeedFace[] {
   const faces = foldAsks(members.map((m) => needFace(m, ctx)));
-  return [...faces.filter((f) => f.group === "agents"), ...faces.filter((f) => f.group === "rest")];
+  // Owner walk 2026-11-08: the rest sort by weight (must first); a stable
+  // sort keeps the hub's rank inside one weight.
+  const rest = faces.filter((f) => f.group === "rest").sort((a, b) => tierRank(a) - tierRank(b));
+  return [...faces.filter((f) => f.group === "agents"), ...rest];
 }
 
 function observedAt(at: string | null | undefined, now?: Date): string {

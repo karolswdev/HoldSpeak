@@ -29,6 +29,12 @@ import reachPackage from "../../programs/__fixtures__/reach.package.json";
 // PG-DIRECTION DIR4/DIR5: recorded by tests/integration/test_desk_reach_settings.py.
 import needsLater from "../../reach/__fixtures__/needs_you.later.json";
 import needsSent from "../../reach/__fixtures__/needs_you.sent.json";
+// Owner walk 2026-11-08: recorded by scripts/record_needs_you_fixture.py --rows
+// (the owner's own findings titled Must fix / Should fix / Noted, a plain one,
+// one Bea owes; Done on the Must fix row, and the read after).
+import needsRows from "../__fixtures__/needs_you.rows.json";
+import { recordedGet, type Gets } from "../../../test/recordedHub";
+import { openIntelligence } from "../../intelligenceNavigation";
 
 vi.mock("../../../lib/api", async (original) => ({
   ...(await original<typeof import("../../../lib/api")>()),
@@ -40,6 +46,10 @@ vi.mock("../../shell", async (original) => ({
   openSurfaceOr: vi.fn(),
 }));
 vi.mock("../../components/MicButton", () => ({ MicButton: () => null }));
+vi.mock("../../intelligenceNavigation", async (original) => ({
+  ...(await original<typeof import("../../intelligenceNavigation")>()),
+  openIntelligence: vi.fn(),
+}));
 
 const NOW = Date.now();
 const ago = (minutes: number) => new Date(NOW - minutes * 60_000).toISOString();
@@ -309,7 +319,7 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
       kind: "decision", fact: "Staff hiring loop", lamps: ["To review"], verbs: ["Decide"],
     });
     expect(face(row("Sam: send the status by Thursday"))).toMatchObject({
-      kind: "action", fact: "Sam Rivera · 1:1", lamps: ["Due today"], verbs: ["Done", "More"],
+      kind: "action", fact: "Sam Rivera · 1:1", lamps: ["Due today"], verbs: ["Done"],
     });
     expect(face(row("Vendor call"))).toMatchObject({
       kind: "meeting", fact: "20 min · summary failed", lamps: ["No summary"], verbs: ["Summarize"],
@@ -442,42 +452,29 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
   });
 
   // HS-S43 (D22/G43 = A): the People overlay shows what he owes his people and
-  // leaves out what they owe him. Owner verdict 2026-11-07 on the sentence
-  // over the list: "it looks really ugly". The toolbar carries one People
-  // Button; its title names the coverage; the face has no sentence.
-  it("S43: the coverage is one People Button in the toolbar, never a sentence over the list, in every settled state", async () => {
+  // leaves out what they owe him. Owner walk 2026-11-08: the toolbar is ONE
+  // band, Mine · People at its left and nothing at its right; the People
+  // scope ends with Open People (the coverage, one press away).
+  it("S43: the toolbar is one segmented control, Mine · People; People ends with Open People, in every settled state", async () => {
     vi.mocked(openSurfaceOr).mockClear();
     const calls = () => vi.mocked(apiFetch).mock.calls.map((c) => String(c[0]));
     await mount();
     expect(screen.queryByText(/does not show People commitments/)).toBeNull();
-    expect(screen.queryByTestId("needs-people-coverage")).toBeNull();
     const toolbar = screen.getByTestId("needs-toolbar");
-    const people = within(toolbar).getAllByRole("button", { name: "People" });
-    expect(people).toHaveLength(1);
-    expect(screen.getAllByTestId("needs-open-people")).toHaveLength(1);
-    expect(people[0].getAttribute("title")).toBe("What people owe you is in People");
-    expect(people[0].querySelector("svg.kit-toolglyph[data-kind='person']")).toBeTruthy();
-    expect(within(screen.getByTestId("needs-list")).queryByRole("button", { name: "People" })).toBeNull();
-    expect(screen.getByTestId("needs-list").textContent).not.toMatch(/owe you|commitments to you/);
-    // The scope chips, when drawn, are one segmented band in the same toolbar.
-    toolbar.querySelectorAll("[data-testid='needs-chip-mine'],[data-testid='needs-chip-theirs'],[data-testid='needs-chip-decide']")
-      .forEach((chip) => expect(chip.closest(".needs-scope")).toBeTruthy());
+    expect(toolbar.querySelector(".kit-toolbar-trailing")).toBeNull();
+    const scope = within(toolbar).getByTestId("needs-scope");
+    expect([...scope.querySelectorAll("button")].map((b) => b.getAttribute("data-testid"))).toEqual(["needs-chip-mine", "needs-open-people"]);
+    expect(within(scope).getByRole("button", { name: "Mine · 8" }).getAttribute("aria-pressed")).toBe("true");
+    expect(within(scope).getByRole("button", { name: "People" }).getAttribute("aria-pressed")).toBe("false");
     expect(screen.getByText("8 need you")).toBeTruthy();
-    fireEvent.click(people[0]);
-    expect(openSurfaceOr).toHaveBeenCalledTimes(1);
+    fireEvent.click(within(scope).getByRole("button", { name: "People" }));
+    expect(within(scope).getByRole("button", { name: "People" }).getAttribute("aria-pressed")).toBe("true");
+    fireEvent.click(screen.getByTestId("needs-people-open"));
     expect(openSurfaceOr).toHaveBeenCalledWith("open-people", "/");
-    // No People read is made to draw the Button or on the press.
+    // No People read is made to draw the control or on the press.
     expect(calls().some((p) => p.startsWith("/api/people"))).toBe(false);
 
-    // Filtered: the Button stays, outside the chip conditions.
-    const rowsBefore = screen.getByTestId("needs-list").querySelectorAll("li.needs-row").length;
-    fireEvent.click(within(screen.getByTestId("needs-filter")).getByTestId("needs-chip-project"));
-    fireEvent.click(screen.getAllByRole("menuitem")[0]);
-    expect(within(screen.getByTestId("needs-filter")).getByTestId("needs-chip-project").getAttribute("data-filter-active")).toBe("true");
-    expect(screen.getByTestId("needs-list").querySelectorAll("li.needs-row").length).toBeLessThan(rowsBefore);
-    expect(screen.getAllByTestId("needs-open-people")).toHaveLength(1);
-
-    // Empty and People unread: the Button stays and the warning stays.
+    // Empty and People unread: the control stays and the warning stays.
     vi.mocked(apiFetch).mockImplementation(async () =>
       ({ count: 0, items: [], coverage: [], complete: true, peopleStoreState: "locked" }) as never);
     (globalThis as { __resetNeedsYou?: () => void }).__resetNeedsYou?.();
@@ -799,7 +796,7 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
       kind: "action",
       fact: "from philo3_architect_meeting",
       lamps: ["To confirm"],
-      verbs: ["Confirm", "More"],
+      verbs: ["Confirm"],
     });
     // No glyph-only control: every verb carries its word.
     for (const button of action.querySelectorAll(".needs-row-verbs button")) {
@@ -1547,5 +1544,114 @@ describe("Later and Telegram on a Program row (PG-DIRECTION DIR4, DIR5)", () => 
     await waitFor(() => expect(face(row(later.title)).fact).toContain(`Later · back at ${clock(later.later.until)}`));
     expect(face(row(later.title)).verbs).not.toContain("Later ▾");
     await waitFor(() => expect(row(later.title).getAttribute("data-counted")).toBe("false"));
+  });
+});
+
+// Owner walk 2026-11-08 ("way too cluttered, 'more' doesn't even look like a
+// button… the 'Done', the 'Yours'"): one row, one verb. Replays the hub's
+// recorded answers (needs_you.rows.json), never typed rows.
+describe("one row, one verb (owner walk 2026-11-08)", () => {
+  const [before, afterDone] = needsRows.steps as Array<{ gets: Gets; post?: string; body?: unknown }>;
+  const must = "openSystemShade() fires an event nobody hears";
+  let hub: Gets;
+  let posts: Array<{ path: string; json: unknown }>;
+
+  beforeEach(() => {
+    hub = before.gets;
+    posts = [];
+    vi.mocked(openIntelligence).mockClear();
+    vi.mocked(apiFetch).mockImplementation(async (path: string, init?: unknown) => {
+      const method = (init as { method?: string } | undefined)?.method ?? "GET";
+      if (method !== "GET") {
+        posts.push({ path: String(path), json: (init as { json?: unknown }).json });
+        if (String(path) === afterDone.post) hub = afterDone.gets;
+        return {} as never;
+      }
+      return recordedGet(hub, String(path)) as never;
+    });
+  });
+
+  const names = () => [...document.querySelectorAll<HTMLElement>("[data-testid='needs-list'] li.needs-row .needs-row-name")]
+    .map((n) => n.textContent);
+
+  it("a row under Mine is the glyph, the name and Done: no Yours, no More", async () => {
+    render(<NeedsDrawer />);
+    await screen.findByText("4 need you");
+    const li = row(must);
+    expect(li.querySelector("[data-testid=needs-row-state]")).toBeNull();
+    expect(li.textContent).not.toMatch(/Yours/i);
+    expect([...li.querySelectorAll(".needs-row-verbs button")].map((b) => b.textContent)).toEqual(["Done"]);
+    expect(within(li).getByRole("button", { name: `Done: ${must}` }).className).toContain("btn--secondary");
+    expect(li.querySelector("[data-verb='more']")).toBeNull();
+  });
+
+  it("the three prefixes become kinds: the glyph's tint and the order, must first", async () => {
+    render(<NeedsDrawer />);
+    await screen.findByText("4 need you");
+    // The hub ranks must, noted, plain, should; the rows sort by weight.
+    expect(names()).toEqual([
+      must,
+      "the walk sheet keeps its old height",
+      "Book the cutover dry run",
+      "the Dock badge reads the count twice",
+    ]);
+    expect(names().some((n) => /^(Must fix|Should fix|Noted):/.test(n ?? ""))).toBe(false);
+    const tiers = [...document.querySelectorAll<HTMLElement>("[data-testid='needs-list'] li.needs-row")]
+      .map((li) => [li.getAttribute("data-tier"), li.querySelector(":scope > img")?.getAttribute("alt")]);
+    expect(tiers).toEqual([["must", "Must fix"], ["should", "Should fix"], [null, "Action"], ["noted", "Noted"]]);
+  });
+
+  it("a press on the row opens the item where it lives; Done does not", async () => {
+    render(<NeedsDrawer />);
+    await screen.findByText("4 need you");
+    fireEvent.click(row(must).querySelector(".needs-row-name")!);
+    expect(openIntelligence).toHaveBeenCalledWith({ view: "follow-through", followThroughId: "rows-must" });
+    vi.mocked(openIntelligence).mockClear();
+    fireEvent.click(within(row(must)).getByRole("button", { name: `Done: ${must}` }));
+    await waitFor(() => expect(posts).toHaveLength(1));
+    expect(openIntelligence).not.toHaveBeenCalled();
+  });
+
+  it("Done posts the done act; the row leaves and the count ticks down", async () => {
+    render(<NeedsDrawer />);
+    await screen.findByText("4 need you");
+    expect(screen.getByRole("button", { name: "Mine · 4" })).toBeTruthy();
+    fireEvent.click(within(row(must)).getByRole("button", { name: `Done: ${must}` }));
+    await screen.findByText("3 need you");
+    expect(posts).toEqual([{ path: afterDone.post, json: afterDone.body }]);
+    expect(names()).not.toContain(must);
+    expect(names()).toHaveLength(3);
+    expect(screen.getByRole("button", { name: "Mine · 3" })).toBeTruthy();
+  });
+
+  it("the other verbs are the row's context menu; More is gone", async () => {
+    render(<NeedsDrawer />);
+    await screen.findByText("4 need you");
+    fireEvent.contextMenu(row(must), { clientX: 40, clientY: 60 });
+    const menu = await screen.findByRole("menu", { name: must });
+    expect(within(menu).getAllByRole("menuitem").map((m) => m.textContent)).toEqual(
+      expect.arrayContaining(["Open", "Later", "Drop", "Hand to agent"]),
+    );
+    fireEvent.click(within(menu).getByRole("menuitem", { name: /Later/ }));
+    await waitFor(() => expect(posts.map((p) => (p.json as { verb?: string }).verb)).toEqual(["snooze"]));
+  });
+
+  it("the toolbar is one segmented control; People shows what a person owes, named by the person", async () => {
+    render(<NeedsDrawer />);
+    await screen.findByText("4 need you");
+    const toolbar = screen.getByTestId("needs-toolbar");
+    // The band: the one control at its left; at its right only the calendar
+    // offer this recorded desk has (no calendar), never a People Button.
+    const scope = within(toolbar).getByTestId("needs-scope");
+    expect(scope.getAttribute("role")).toBe("group");
+    expect([...scope.querySelectorAll("button")].map((b) => b.textContent)).toEqual(["Mine4", "People"]);
+    expect([...toolbar.querySelectorAll(".kit-toolbar-trailing button")].map((b) => b.textContent)).toEqual(["Connect calendar"]);
+    expect(toolbar.querySelector(".kit-toolglyph")).toBeNull();
+    expect(names()).not.toContain("Send the vendor contract");
+    fireEvent.click(within(toolbar).getByRole("button", { name: "People" }));
+    expect(names()).toEqual(["Send the vendor contract"]);
+    const li = row("Send the vendor contract");
+    expect(li.querySelector("[data-testid=needs-row-state]")?.textContent).toBe("Bea");
+    expect(screen.getByTestId("needs-people-open")).toBeTruthy();
   });
 });

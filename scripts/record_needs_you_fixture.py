@@ -13,6 +13,11 @@ Run it again when a producer's answer shape changes:
     HOME=$(mktemp -d) uv run python scripts/record_needs_you_fixture.py
 
 It writes ``web/src/desk/__tests__/fixtures/needsYou.recorded.json``.
+
+``--rows`` records only the Needs-you rows scenario (the owner's own action
+items an agent titled ``Must fix:``, ``Should fix:``, ``Noted:``, one plain
+and one a person owes; Done on the first) into
+``web/src/desk/needs/__fixtures__/needs_you.rows.json``.
 """
 from __future__ import annotations
 
@@ -34,6 +39,7 @@ import test_desk_needs_you as seeds  # noqa: E402
 from holdspeak.runtime import composition  # noqa: E402
 
 OUT = REPO / "web" / "src" / "desk" / "__tests__" / "fixtures" / "needsYou.recorded.json"
+ROWS_OUT = REPO / "web" / "src" / "desk" / "needs" / "__fixtures__" / "needs_you.rows.json"
 
 # The reads the Chair and the Settings window make (found by replaying the
 # face with an empty table and listing every path it asked for).
@@ -265,7 +271,69 @@ def eval_error() -> dict[str, Any]:
             _close()
 
 
+#: The rows the owner saw on 2026-11-08: an agent's findings, titled by
+#: their weight, all his own (owner ``me``, no due date: the hub says YOURS).
+ROWS = (
+    ("rows-noted", "Noted: the Dock badge reads the count twice", "me"),
+    ("rows-should", "Should fix: the walk sheet keeps its old height", "me"),
+    ("rows-plain", "Book the cutover dry run", "me"),
+    ("rows-must", "Must fix: openSystemShade() fires an event nobody hears", "me"),
+    ("rows-theirs", "Send the vendor contract", "Bea"),
+)
+
+
+def rows() -> dict[str, Any]:
+    """The Needs-you rows scenario: one synced meeting with the ROWS above,
+    the read, Done on the Must fix row (the row's one verb), the read after."""
+    from datetime import datetime, timezone
+
+    with pytest.MonkeyPatch.context() as mp:
+        hub = _boot("rows", mp)
+        try:
+            now = datetime.now(timezone.utc)
+            meeting_id = "rows-findings-meeting"
+            pushed = _post(hub, "/api/sync/push", {"meetings": [{
+                "meta": {"id": meeting_id, "kind": "meeting", "last_modified": now.isoformat(), "deleted": False},
+                "value": {
+                    "id": meeting_id, "started_at": (now - timedelta(minutes=30)).isoformat(),
+                    "ended_at": now.isoformat(), "title": "Audit findings", "tags": [], "segments": [],
+                    "bookmarks": [], "capture_status": "finalized", "transcription_status": "active",
+                    "provenance": "native",
+                    "intel": {
+                        "timestamp": now.timestamp(), "topics": [], "summary": "The audit's findings.",
+                        "action_items": [
+                            {"id": item_id, "task": task, "owner": owner, "due": None,
+                             "status": "pending", "review_state": "accepted", "created_at": now.isoformat()}
+                            for item_id, task, owner in ROWS
+                        ],
+                    },
+                },
+            }]})
+            assert pushed["received"]["meetings"] == 1, pushed
+            before = _gets(hub, COMMON_GETS)
+            must = next(row for row in before["/api/desk/needs-you?fresh=1"]["items"]
+                        if str(row.get("title", "")).startswith("Must fix:"))
+            done = {"card_id": str(must.get("actionItemId") or must.get("ref")), "verb": "done", "payload": {}}
+            answer = _post(hub, "/api/follow-through/complete", done)
+            return {
+                "must": must["title"],
+                "steps": [
+                    {"name": "before", "gets": before},
+                    {"name": "done", "post": "/api/follow-through/complete", "body": done, "answer": answer,
+                     "gets": _gets(hub, COMMON_GETS)},
+                ],
+            }
+        finally:
+            _close()
+
+
 def main() -> int:
+    if "--rows" in sys.argv[1:]:
+        ROWS_OUT.parent.mkdir(parents=True, exist_ok=True)
+        ROWS_OUT.write_text(json.dumps({"schema": "needs-you-rows@1", "recordedBy": "scripts/record_needs_you_fixture.py --rows",
+                                        **rows()}, indent=1, sort_keys=True, default=str) + "\n", encoding="utf-8")
+        print(f"wrote {ROWS_OUT.relative_to(REPO)} ({ROWS_OUT.stat().st_size} bytes)")
+        return 0
     fixture = {
         "schema": "needs-you-recorded@1",
         "recordedBy": "scripts/record_needs_you_fixture.py",
