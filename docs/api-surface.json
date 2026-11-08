@@ -889,9 +889,7 @@
         "POST"
       ],
       "module": "web.routes.monday_brief",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/brief/latest",
@@ -1083,9 +1081,7 @@
         "DELETE"
       ],
       "module": "web.routes.calendar_events",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/calendar/events/{event_id}/link",
@@ -3246,46 +3242,6 @@
       ]
     },
     {
-      "path": "/api/front-door/apply",
-      "methods": [
-        "GET"
-      ],
-      "module": "web.routes.front_door",
-      "consumers": [
-        "web"
-      ]
-    },
-    {
-      "path": "/api/front-door/apply",
-      "methods": [
-        "POST"
-      ],
-      "module": "web.routes.front_door",
-      "consumers": [
-        "web"
-      ]
-    },
-    {
-      "path": "/api/front-door/recommendation",
-      "methods": [
-        "GET"
-      ],
-      "module": "web.routes.front_door",
-      "consumers": [
-        "web"
-      ]
-    },
-    {
-      "path": "/api/front-door/topology",
-      "methods": [
-        "GET"
-      ],
-      "module": "web.routes.front_door",
-      "consumers": [
-        "web"
-      ]
-    },
-    {
       "path": "/api/gate/audit",
       "methods": [
         "GET"
@@ -3549,9 +3505,7 @@
         "GET"
       ],
       "module": "web.routes.model_library",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/inference/model-library/add-to-library",
@@ -3559,9 +3513,7 @@
         "POST"
       ],
       "module": "web.routes.model_library",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/inference/model-library/connect-cli-engine",
@@ -3579,9 +3531,7 @@
         "POST"
       ],
       "module": "web.routes.model_library",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/inference/model-library/connect-paired-device",
@@ -3607,9 +3557,7 @@
         "POST"
       ],
       "module": "web.routes.model_library",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/inference/model-library/use-model-file",
@@ -3617,9 +3565,7 @@
         "POST"
       ],
       "module": "web.routes.model_library",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/inference/setup",
@@ -4929,9 +4875,7 @@
         "POST"
       ],
       "module": "web.routes.people",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/people/relationships/{relationship_id}/owed",
@@ -5669,9 +5613,7 @@
         "POST"
       ],
       "module": "web.routes.project_setup",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/project-setups/{session_id}",

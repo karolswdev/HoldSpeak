@@ -42,7 +42,6 @@ def mount_routers(app: Any, hub: HubComposition, *, auth_token: Optional[str]) -
         build_dictation_router,
         build_door_router,
         build_concierge_router,
-        build_front_door_router,
         build_follow_through_router,
         build_proposal_router,
         build_people_router,
@@ -95,7 +94,6 @@ def mount_routers(app: Any, hub: HubComposition, *, auth_token: Optional[str]) -
     mount_router(app, build_proposal_router(web_ctx))
     mount_router(app, build_door_router(web_ctx))
     mount_router(app, build_concierge_router(web_ctx))
-    mount_router(app, build_front_door_router(web_ctx))
     mount_router(app, build_people_router(web_ctx))
     mount_router(app, build_automations_router(web_ctx))
     mount_router(app, build_decision_records_router(web_ctx))

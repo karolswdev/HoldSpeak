@@ -14,21 +14,6 @@
       "path": "web/src/desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
       "rule_id": "failure-missing-facts",
       "text": "Could not open. Note unchanged."
-    },
-    {
-      "path": "web/src/pages/cores/AssignmentEditor.tsx",
-      "rule_id": "failure-missing-facts",
-      "text": "(\".assignment-candidates button\")?.focus()}>Replace unavailable model"
-    },
-    {
-      "path": "web/src/pages/cores/AssignmentEditor.tsx",
-      "rule_id": "legacy-product-nouns",
-      "text": "Choose a model chain."
-    },
-    {
-      "path": "web/src/pages/cores/AssignmentEditor.tsx",
-      "rule_id": "legacy-product-nouns",
-      "text": "No custom chain"
     }
   ]
 }

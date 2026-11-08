@@ -14,7 +14,7 @@ For example, the old meeting Slack-export route returns `slack_moved_to_channel`
 Read the handler and owning guide before treating route presence as feature availability.
 Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
-Routes: 932 (plus static mounts). iOS-consumed: 89. Web-consumed: 603.
+Routes: 928 (plus static mounts). iOS-consumed: 89. Web-consumed: 590.
 
 ## device_audio_ws
 
@@ -203,7 +203,7 @@ Routes: 932 (plus static mounts). iOS-consumed: 89. Web-consumed: 603.
 | Method | Path | Consumers |
 |---|---|---|
 | GET | `/api/calendar/events` | server only |
-| DELETE | `/api/calendar/events/{event_id}/link` | web |
+| DELETE | `/api/calendar/events/{event_id}/link` | server only |
 | POST | `/api/calendar/events/{event_id}/link` | server only |
 
 ## web.routes.calendar_snapshot
@@ -519,15 +519,6 @@ Routes: 932 (plus static mounts). iOS-consumed: 89. Web-consumed: 603.
 | POST | `/api/follow-through/commit-decision` | server only |
 | POST | `/api/follow-through/complete` | web |
 
-## web.routes.front_door
-
-| Method | Path | Consumers |
-|---|---|---|
-| GET | `/api/front-door/apply` | web |
-| POST | `/api/front-door/apply` | web |
-| GET | `/api/front-door/recommendation` | web |
-| GET | `/api/front-door/topology` | web |
-
 ## web.routes.inference_assignments
 
 | Method | Path | Consumers |
@@ -683,21 +674,21 @@ Routes: 932 (plus static mounts). iOS-consumed: 89. Web-consumed: 603.
 
 | Method | Path | Consumers |
 |---|---|---|
-| GET | `/api/inference/model-library` | web |
-| POST | `/api/inference/model-library/add-to-library` | web |
+| GET | `/api/inference/model-library` | server only |
+| POST | `/api/inference/model-library/add-to-library` | server only |
 | POST | `/api/inference/model-library/connect-cli-engine` | web |
-| POST | `/api/inference/model-library/connect-hosted-model` | web |
+| POST | `/api/inference/model-library/connect-hosted-model` | server only |
 | POST | `/api/inference/model-library/connect-paired-device` | server only |
 | POST | `/api/inference/model-library/define-endpoint` | web |
-| POST | `/api/inference/model-library/download` | web |
-| POST | `/api/inference/model-library/use-model-file` | web |
+| POST | `/api/inference/model-library/download` | server only |
+| POST | `/api/inference/model-library/use-model-file` | server only |
 
 ## web.routes.monday_brief
 
 | Method | Path | Consumers |
 |---|---|---|
 | POST | `/api/brief/generate` | web |
-| POST | `/api/brief/items/{item_id}/shelf` | web |
+| POST | `/api/brief/items/{item_id}/shelf` | server only |
 | GET | `/api/brief/latest` | web |
 | GET | `/api/brief/shelf` | server only |
 | GET | `/api/brief/{brief_id}` | web |
@@ -769,7 +760,7 @@ Routes: 932 (plus static mounts). iOS-consumed: 89. Web-consumed: 603.
 | GET | `/api/people/relationships/{relationship_id}/notes` | server only |
 | POST | `/api/people/relationships/{relationship_id}/notes` | web |
 | GET | `/api/people/relationships/{relationship_id}/one-on-ones` | web |
-| POST | `/api/people/relationships/{relationship_id}/one-on-ones` | web |
+| POST | `/api/people/relationships/{relationship_id}/one-on-ones` | server only |
 | POST | `/api/people/relationships/{relationship_id}/owed` | server only |
 | DELETE | `/api/people/relationships/{relationship_id}/owner-aliases` | web |
 | POST | `/api/people/relationships/{relationship_id}/owner-aliases` | web |
@@ -1095,7 +1086,7 @@ Routes: 932 (plus static mounts). iOS-consumed: 89. Web-consumed: 603.
 
 | Method | Path | Consumers |
 |---|---|---|
-| POST | `/api/project-setups` | web |
+| POST | `/api/project-setups` | server only |
 | GET | `/api/project-setups/{session_id}` | server only |
 | POST | `/api/project-setups/{session_id}/abandon` | server only |
 | POST | `/api/project-setups/{session_id}/answers` | server only |

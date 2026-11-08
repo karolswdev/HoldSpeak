@@ -103,57 +103,6 @@ def test_history_core_artifacts_wing_stays_parked() -> None:
     assert "PreparedResults" in live, "the meeting's Results are drawn under Outcomes ▸ Prepared"
 
 
-def test_runs_on_room_stays_folded_into_the_models_module() -> None:
-    """HS-112-01 — the standalone Runs-on room stays retired.
-
-    Story 143-12 lawfully replaced the old target-CRUD Models body with a thin
-    `settings/Models.tsx` host adapter to ModelLibraryCore. The technical
-    placement facts now live in its folded Runs on disclosure, beside folded
-    RAW facts; the library may never recreate a raw Field/Select editor or
-    reopen the retired target route.
-    """
-    assert not (WEB_SRC / "pages" / "cores" / "ProfilesCore.tsx").exists(), (
-        "HS-112-01 regression: the standalone Runs-on room must stay retired."
-    )
-    adapter = (WEB_SRC / "pages" / "cores" / "settings" / "Models.tsx").read_text(
-        encoding="utf-8"
-    )
-    door = (WEB_SRC / "pages" / "cores" / "frontDoor.tsx").read_text(
-        encoding="utf-8"
-    )
-    core = (WEB_SRC / "pages" / "cores" / "ModelLibraryCore.tsx").read_text(
-        encoding="utf-8"
-    )
-    client = (WEB_SRC / "pages" / "cores" / "modelLibrary.ts").read_text(
-        encoding="utf-8"
-    )
-    # HS-156-04: the adapter hosts the front door, which hosts the library
-    # in its Advanced fold. The composition chain: settings/Models -> FrontDoorView -> ModelLibraryCore.
-    assert "FrontDoorView" in adapter and "/api/inference-targets" not in adapter, (
-        "HS-156-04 regression: the Models slot adapter must host the front "
-        "door, never revive target CRUD."
-    )
-    assert "ModelLibraryCore" in door and "/api/inference-targets" not in door, (
-        "HS-156-04 regression: the front door must host the Model Library "
-        "in its Advanced fold, never revive target CRUD."
-    )
-    assert 'FoldGadget title="Where it runs"' in core and "SurfaceFacts" in core, (
-        "HS-112-01 regression: Where it runs technical facts must remain folded in "
-        "the one Models/Model Library surface."
-    )
-    assert "<Field" not in core and "<Select" not in core, (
-        "HS-112-01 regression: Model Library must not recreate a raw "
-        "label-over-input target editor."
-    )
-    assert "/api/inference-targets" not in core + client, (
-        "HS-143-12 regression: Model Library must not reopen the retired "
-        "inference-target writer."
-    )
-    assert "/api/inference/model-library" in client, (
-        "HS-143-12 regression: the one availability authority transport is missing."
-    )
-
-
 def test_dictation_core_speech_settings_never_regresses() -> None:
     """HS-102-06 — the Speak gear face (Readiness/Knowledge/Runtime) is
     composed groups + EditInPlace + the shared RuntimeDestination, never

@@ -53,7 +53,6 @@ FACE_DIRS = ("features/", "pages/cores/", "desk/")
 # meets weekly come first.
 TUESDAY_USE: dict[str, int] = {
     # Tier 1 -- weekly contact surfaces
-    "Models": 8,           # pages/cores/settings/Models.tsx
     "ConnectionsPane": 8,
     "SettingsCore": 7,
     "DoorCore": 7,
@@ -222,18 +221,8 @@ MIC_ALLOWLIST: tuple[tuple[str, str, str], ...] = (
      "Date/time picker — a calendar value, not dictatable text"),
     ("features/project-room/review/ReviewPosture.tsx", "review-defer-date",
      "Defer-until date picker — a calendar value, not dictatable text"),
-    ("pages/cores/ModelLibraryCore.tsx", "Hosted provider",
-     "Provider key (password) — a secret is never dictated"),
-    ("pages/cores/ModelLibraryCore.tsx", "Endpoint provider",
-     "Provider key (password) — a secret is never dictated"),
-    ("pages/cores/ModelLibraryCore.tsx", 'accept=".gguf,.mlx"',
-     "Model file chooser — an OS file picker, not a text input"),
-    ("pages/cores/ModelLibraryCore.tsx", "name={groupName}",
-     "Model row selection radio — not a text input"),
-    ("pages/cores/TopologyMapView.tsx", 'placeholder="Key (optional)"',
-     "Provider key (password) — a secret is never dictated"),
-    ("pages/cores/TopologyMapView.tsx", 'placeholder="Provider"',
-     "Provider key (password) — a secret is never dictated"),
+    # Parked 2026-11-08 with the Models chain (pages/cores/_parked/): the four
+    # ModelLibraryCore and two TopologyMapView secret/file/radio exemptions.
     ("pages/cores/history/ImportSection.tsx", "accept={IMPORT_ACCEPT}",
      "Audio/transcript import chooser — an OS file picker, not a text input"),
     # -- 4 justified `mic={false}` opt-outs (census §3) ---------------------
