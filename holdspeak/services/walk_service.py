@@ -34,6 +34,17 @@ _STEP_KEYS = frozenset({"open", "verb", "highlight", "ask"})
 MAX_STEPS = 60
 MAX_WORDS = 2000
 SKIP = "skip"
+# The storage bound of one walk (Codex review of #1808). The token routes are
+# reachable over Tailscale, so repeated valid answers must not fill the disk:
+# - one PNG per question: a later image of the same ref replaces the earlier
+#   one (``<ref>.png``), and the refs are the script's asks, so a walk keeps at
+#   most one image per step (MAX_STEPS = 60);
+# - an earlier answer keeps its TEXT (choice, words, time) under ``earlier``,
+#   at most MAX_EARLIER = 5 per question; older text drops off;
+# - all the PNGs of one walk together stay within WALK_BYTES = 64 MiB; past it
+#   an image is refused (``walk_shot_budget``) and the text answer still lands.
+MAX_EARLIER = 5
+WALK_BYTES = 64 * 1024 * 1024
 
 
 class WalkRefused(ServiceError):
@@ -110,6 +121,14 @@ def validate_script(script: Any) -> dict[str, Any]:
     refs: set[str] = set()
     return {"title": _text(script.get("title"), "title", 200),
             "steps": [_step(step, index, refs) for index, step in enumerate(steps)]}
+
+
+def _stored(directory: Path, ref: str) -> int:
+    """The bytes of the walk's PNGs, without ``<ref>.png`` (it is replaced)."""
+    try:
+        return sum(entry.stat().st_size for entry in directory.glob("*.png") if entry.name != f"{ref}.png")
+    except OSError:
+        return 0
 
 
 def _hash(token: str) -> str:
@@ -212,27 +231,30 @@ class WalkService:
             answer: dict[str, Any] = {"choice": choice, "at": utc_now_iso()}
             if said:
                 answer["words"] = said
+            refused: Optional[dict[str, str]] = None
             if window_png:
                 directory = self.root / record["id"]
-                answers = record.get("answers") or {}
-                count = len((answers.get(ref) or {}).get("earlier") or []) + (1 if ref in answers else 0)
-                name = ref if count == 0 else f"{ref}-{count + 1}"
                 try:
-                    answer["shot"] = ui_feedback.save_walk_shot(directory, name, window_png)
+                    answer["shot"] = ui_feedback.save_walk_shot(directory, ref, window_png,
+                                                                room=WALK_BYTES - _stored(directory, ref))
+                except ui_feedback.WalkShotBudgetError as exc:
+                    refused = {"code": "walk_shot_budget", "detail": str(exc)}
                 except ui_feedback.UIFeedbackError as exc:
                     raise WalkRefused("walk_shot_invalid", str(exc), status=422) from None
-                except FileExistsError:
-                    raise WalkRefused("walk_shot_exists", "This shot is stored already.", status=409) from None
             answers = dict(record.get("answers") or {})
             previous = answers.get(ref)
             if previous:
-                # A second answer keeps the first: never delete.
+                # A second answer keeps the first answer's text (the image is replaced).
                 earlier = list(previous.pop("earlier", []) or [])
-                answer["earlier"] = [*earlier, previous]
+                kept = {key: value for key, value in previous.items() if key != "shot"}
+                answer["earlier"] = [*earlier, kept][-MAX_EARLIER:]
             answers[ref] = answer
             record["answers"] = answers
             self._write(self.root / record["id"], record)
-        return {"ref": ref, **{key: value for key, value in answer.items() if key != "earlier"}}
+        receipt = {"ref": ref, **{key: value for key, value in answer.items() if key != "earlier"}}
+        if refused:
+            receipt["shot_refused"] = refused
+        return receipt
 
 
 _DEFAULT: Optional[WalkService] = None
@@ -245,4 +267,4 @@ def default_walk_service() -> WalkService:
     return _DEFAULT
 
 
-__all__ = ["PAGE_PREFIX", "WalkRefused", "WalkService", "default_walk_service", "validate_script"]
+__all__ = ["MAX_EARLIER", "PAGE_PREFIX", "WALK_BYTES", "WalkRefused", "WalkService", "default_walk_service", "validate_script"]

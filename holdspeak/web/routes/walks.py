@@ -12,6 +12,11 @@ the handler checks the token through ``services/walk_service.py`` and is the
 only authority. The token creates no owner session and reaches no other route.
 Wrong tokens count against the briefing page's per-address limit (one limit).
 The token is never logged.
+
+The answer route is bounded before it reads (Codex review of #1808): a
+blocked address gets 429 and an unknown token 404 (one miss) with no body
+read; a body over WALK_BODY_BYTES = 24 MiB gets 413 before JSON parses it
+(one 16 MiB PNG is 21.4 MiB in base64, so the largest valid shot still fits).
 """
 from __future__ import annotations
 
@@ -24,13 +29,15 @@ from starlette.concurrency import run_in_threadpool
 from ...logging_config import get_logger
 from ...services.errors import ServiceError
 from ..context import WebContext
-from .briefing import PAGE_HEADERS, _address, _body, _refused
+from .briefing import PAGE_HEADERS, BodyTooLarge, _address, _body, _bounded_body, _refused, _too_large
 from .pages import _react_shell
 
 log = get_logger("web.routes.walks")
 
 #: The 404 shell is the desk itself (it opens as usual), so it keeps the
 #: page headers but not the page's Content-Security-Policy.
+WALK_BODY_BYTES = 24 * 1024 * 1024
+
 SHELL_HEADERS = {key: value for key, value in PAGE_HEADERS.items() if key != "Content-Security-Policy"}
 
 
@@ -60,11 +67,15 @@ async def _run(fn: Callable[[], Any], *, status: int = 200, headers: dict[str, s
                             status_code=500, headers=headers)
 
 
+def _too_many() -> JSONResponse:
+    return JSONResponse({"error": "too_many_tries", "code": "too_many_tries",
+                         "detail": "Too many tries. Wait one minute."}, status_code=429, headers=PAGE_HEADERS)
+
+
 async def _page(request: Request, fn: Callable[[], Any], *, what: str) -> JSONResponse:
     address = _address(request)
     if _misses().blocked(address):
-        return JSONResponse({"error": "too_many_tries", "code": "too_many_tries",
-                             "detail": "Too many tries. Wait one minute."}, status_code=429, headers=PAGE_HEADERS)
+        return _too_many()
 
     def guarded() -> Any:
         try:
@@ -105,7 +116,19 @@ def build_walks_router(ctx: WebContext) -> APIRouter:
 
     @router.post("/api/w/{token}/answer")
     async def api_walk_answer(token: str, request: Request) -> Any:
-        body = await _body(request)
+        # The miss limit and the token first: nothing reads the body before.
+        address = _address(request)
+        if _misses().blocked(address):
+            return _too_many()
+        if not await run_in_threadpool(_service().known, token):
+            _misses().miss(address)
+            from ...services.walk_service import WalkRefused
+
+            return _refused(WalkRefused("walk_not_found", "This walk is not known.", status=404), PAGE_HEADERS)
+        try:
+            body = await _bounded_body(request, WALK_BODY_BYTES)
+        except BodyTooLarge:
+            return _too_large(PAGE_HEADERS)
         return await _page(request, lambda: _service().answer(
             token, body.get("ref"), body.get("choice"), words=body.get("words"),
             window_png=body.get("window_png"),
