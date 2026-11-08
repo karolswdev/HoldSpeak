@@ -2,6 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · #1885 One Done for a promise: Needs you's three client Done copies become one markDone (needsApi.ts), follow-through complete and People's transition answer one receipt (card_id, status, done_at), and the duplicate commitment verb kind goes (26 → 25).
 - 2026-11-08 · #1883 Fix forward #1882: the Needs you AG4 test runs the one Run as a program; the row menu keeps the agent session (launch sheet) as "Hand to an agent session".
 - 2026-11-08 · #1882 One Run as a program: the decision reader gets the verb beside Send, the Needs you menu's Hand to agent becomes the same call under the one name, and a program's skip record is filed once (by its writer).
 - 2026-11-08 · #1881 The API surface reads template literals whole (a nested `${...}` is one path parameter): web-consumed routes 712 → 716, PUT and DELETE /api/projects/{project_id}/resources/{resource_ref:path} web-consumed again.
