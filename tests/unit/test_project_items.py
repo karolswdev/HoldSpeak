@@ -685,3 +685,101 @@ class TestRouteIntegration:
     def test_list_items_not_found_404(self, rig, client) -> None:
         resp = client.get("/api/projects/proj-nope/items")
         assert resp.status_code == 404
+
+
+# ── project_definitions (2026-11-08): one owner of the Project vocabulary ───────────────────────
+
+def test_old_and_new_import_paths_give_the_same_objects() -> None:
+    from holdspeak.services import project_definitions as definitions
+    from holdspeak.services import project_service as service
+
+    assert len(definitions.__all__) == len(set(definitions.__all__))
+    for name in definitions.__all__:
+        assert getattr(service, name) is getattr(definitions, name), name
+    # The class keeps its old attributes as the same objects.
+    cls = service.ProjectService
+    assert cls.PLAIN_REASONS is definitions.PLAIN_REASONS
+    assert cls._plain_reason is definitions.plain_reason
+    assert cls._entities is definitions.snapshot_entities
+    assert cls._token_sort_key is definitions.token_sort_key
+    assert cls._validate_severity is definitions.validate_severity
+    assert cls._validate_lifecycle is definitions.validate_lifecycle
+    assert cls._validate_optional_ref is definitions.validate_optional_ref
+    assert cls._validate_details is definitions.validate_details
+    for name in ("_SEVERITY_ORDER", "_CHANGE_KIND_PHRASES", "_PLAIN_REASON_PATTERNS", "_COMMITMENT_SETTLED",
+                 "_STATE_SEVERITY", "_TOKEN_ORDER_PREFIXES", "_WEEK_DAYS", "_ASK_STOP_CODE", "_ROOM_UPDATES_CAP"):
+        assert getattr(cls, name) is getattr(definitions, name), name
+    with pytest.raises(ValidationError):
+        definitions.validate_lifecycle("milestone", "flying")
+
+
+def test_a_refusal_from_the_new_module_reaches_the_http_envelope_unchanged(rig) -> None:
+    from pathlib import Path
+
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+
+    from holdspeak.services import project_definitions as definitions
+    from holdspeak.web.context import WebContext
+    from holdspeak.web.routes import build_projects_router
+
+    with pytest.raises(ValidationError) as raised:
+        definitions.validate_severity("apocalyptic")
+    tb = raised.value.__traceback__
+    while tb.tb_next is not None:
+        tb = tb.tb_next
+    assert Path(tb.tb_frame.f_code.co_filename).name == "project_definitions.py"
+    assert raised.value.code == "validation"
+
+    db, svc = rig
+    app = FastAPI()
+    app.include_router(build_projects_router(WebContext(get_state=lambda: {}, project_service=svc)))
+    client = TestClient(app)
+    project = client.post("/api/projects", json={"name": "Envelope"}).json()["project"]
+    answer = client.post(f"/api/projects/{project['id']}/items",
+                         json={"item_type": "risk", "title": "R", "severity": "apocalyptic",
+                               "details": {"likelihood": "high", "impact": "bad"}})
+    assert answer.status_code == 400
+    assert answer.json() == {"success": False, "error": raised.value.detail}
+
+
+def test_the_definitions_module_does_not_reach_the_project_runtime() -> None:
+    import subprocess
+    import sys
+
+    probe = ("import sys, holdspeak.services.project_definitions; "
+             "print(' '.join(sorted(m for m in sys.modules if m.startswith('holdspeak'))))")
+    loaded = subprocess.run([sys.executable, "-c", probe], capture_output=True, text=True, check=True).stdout.split()
+    assert "holdspeak.services.project_definitions" in loaded, loaded
+    for module in loaded:
+        assert "project_service" not in module and "project_room" not in module, loaded
+        assert not module.startswith(("holdspeak.web", "holdspeak.runtime", "holdspeak.db")), loaded
+
+
+def test_no_module_imports_a_definition_through_the_project_service() -> None:
+    # A definition comes from project_definitions; a project_service
+    # import carries only runtime names (ProjectService, _custody_identity, ...).
+    import ast
+    from pathlib import Path
+
+    from holdspeak.services import project_definitions as definitions
+
+    package = Path(definitions.__file__).resolve().parents[1]
+    reached = set(definitions.__all__) | {
+        "PLAIN_REASONS", "_plain_reason", "_entities", "_token_sort_key", "_validate_severity",
+        "_validate_lifecycle", "_validate_optional_ref", "_validate_details",
+    }
+    wrong = []
+    for path in sorted(package.rglob("*.py")):
+        if path == package / "services" / "project_service.py":
+            continue
+        for node in ast.walk(ast.parse(path.read_text())):
+            if isinstance(node, ast.ImportFrom) and (node.module or "").endswith("project_service"):
+                names = sorted({alias.name for alias in node.names} & set(definitions.__all__))
+                if names:
+                    wrong.append(f"{path.relative_to(package)}:{node.lineno} {names}")
+            # A definition reached through the class: ``ProjectService.PLAIN_REASONS``.
+            if (isinstance(node, ast.Attribute) and node.attr in reached
+                    and isinstance(node.value, ast.Name) and node.value.id == "ProjectService"):
+                wrong.append(f"{path.relative_to(package)}:{node.lineno} ProjectService.{node.attr}")
+    assert not wrong, wrong

@@ -1727,8 +1727,8 @@ class ProjectStewardService(StewardContract):
             snapshot = watch.get("snapshot")
             if not snapshot:
                 continue
-            from .project_service import ProjectService
-            pr_entities.extend(ProjectService._entities(snapshot))
+            from .project_definitions import snapshot_entities
+            pr_entities.extend(snapshot_entities(snapshot))
 
         if not pr_entities:
             return {

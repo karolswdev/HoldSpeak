@@ -52,7 +52,7 @@ _thread_lock = threading.Lock()
 
 def is_read_method(method: str) -> bool:
     """True when a pipeline event of ``method`` is a read receipt."""
-    from holdspeak.services.project_service import ROOM_WRITE_METHODS
+    from holdspeak.services.project_definitions import ROOM_WRITE_METHODS
 
     if method in ROOM_WRITE_METHODS:
         return False
