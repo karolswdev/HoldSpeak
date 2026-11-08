@@ -134,7 +134,7 @@ def _seed_checked(hub: Hub) -> None:
     assert resp.status_code == 200, resp.text
     resp = hub.client.post(f"/api/providers/jira/connections/{JIRA_SITE}|{JIRA_EMAIL}/recheck")
     assert resp.status_code == 200, resp.text
-    resp = hub.client.post(f"/api/providers/confluence/connections/{CONF_SITE}|{CONF_EMAIL}/recheck")
+    resp = hub.client.post("/api/connections/confluence/recheck", json={"ref": f"{CONF_SITE}|{CONF_EMAIL}"})
     assert resp.status_code == 200, resp.text
 
 

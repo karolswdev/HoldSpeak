@@ -5,13 +5,12 @@ Not imported. Kept for history; restore with ``git revert`` of the parking commi
 """
 from __future__ import annotations
 """Transport-neutral activity project-rule operations (HS-123-07)."""
-from holdspeak.services.observer import NullObserver, PipelineObserver, observe_service
+from holdspeak.services.observer import NullObserver, PipelineObserver
 from typing import Any
 from ...db.core import Database
 from ...principals import Principal
 
 
-@observe_service
 class ParkedActivityRulesService:
     def __init__(self, db: Database, *, observer: PipelineObserver | None = None) -> None:
         self._db = db
