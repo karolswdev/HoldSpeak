@@ -5,6 +5,7 @@ import { requestDecisionEdit } from "../decisionEdit";
 import { acceptDecision } from "../../decide";
 import { plainReason } from "../../surface/plainFailure";
 import { Button } from "../../../components/signal/Signal";
+import { RunAsProgramVerb } from "../../programs/RunAsProgram";
 import { holdObject, qualifiedRef } from "../../api";
 import { decisionRecordSourceRef, openRef } from "../../openObject";
 import { allObjects } from "../../world";
@@ -850,6 +851,16 @@ function DecisionReader({
           data-testid="decision-reader-send">
           <ToolGlyph kind="send" />Send…
         </Button>
+      ) : null}
+      {receipt && !proposed ? (
+        <RunAsProgramVerb variant="secondary" testId="decision-reader-program"
+          title={(receipt.title || "").trim() || receipt.decision_text}
+          origin={{
+            kind: "decision_record", id: receipt.id,
+            title: (receipt.title || "").trim() || receipt.decision_text,
+            goal: [receipt.decision_text, receipt.rationale].filter((part) => (part || "").trim()).join("\n\n"),
+            projectId: receipt.sources?.find((source) => source.source_type === "project")?.source_ref || null,
+          }} />
       ) : null}
     </Toolbar>
   );

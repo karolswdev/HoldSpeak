@@ -63,7 +63,7 @@ import { NoteSendWells } from "../documentSendsLazy";
 import { wireDate } from "../surface/format";
 import { cancelArming, useArmingOutcome } from "./arming";
 import { WorkMenu, type WorkMenuEntry } from "../components/DeskMenu";
-import { openHand } from "../agentHand";
+import { runAsProgram } from "../programs/RunAsProgram";
 import { Disclosure } from "../surface/patterns/Disclosure";
 import { AddToProject } from "../AddToProject";
 import "./needs.css";
@@ -407,9 +407,10 @@ function NeedVerbsView({ face, primary, onWell, well, menu = null, onMenu = () =
         { type: "item", id: "later", label: "Later", ghost: busy ? "Busy" : undefined,
           onSelect: () => void act("Later", () => followThrough(v.cardId, "snooze", { until: tomorrowDay() }), key) },
         { type: "item", id: "drop", label: "Drop", ghost: busy ? "Busy" : undefined, onSelect: () => void drop() },
-        // Betterment AG4: hand the action to an agent from where he reads it.
-        { type: "item", id: "hand", label: "Hand to agent",
-          onSelect: () => openHand({ kind: "action", id: v.cardId, title: face.name }) },
+        // One verb, one name (2026-11-08): the action becomes a Program from
+        // where he reads it, through the one Run as a program.
+        { type: "item", id: "program", label: "Run as a program", ghost: busy ? "Busy" : undefined,
+          onSelect: () => void act("Run as a program", () => runAsProgram({ kind: "action", id: v.cardId }), key) },
       ];
       return <>
         {v.direction === "theirs" ? (

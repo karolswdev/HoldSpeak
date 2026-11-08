@@ -35,6 +35,8 @@ import needsSent from "../../reach/__fixtures__/needs_you.sent.json";
 import needsRows from "../__fixtures__/needs_you.rows.json";
 import { recordedGet, type Gets } from "../../../test/recordedHub";
 import { openIntelligence } from "../../intelligenceNavigation";
+import { openProgram } from "../../programs/open";
+import madeFromAction from "../../programs/__fixtures__/program.from_action.json";
 
 vi.mock("../../../lib/api", async (original) => ({
   ...(await original<typeof import("../../../lib/api")>()),
@@ -46,6 +48,10 @@ vi.mock("../../shell", async (original) => ({
   openSurfaceOr: vi.fn(),
 }));
 vi.mock("../../components/MicButton", () => ({ MicButton: () => null }));
+vi.mock("../../programs/open", async (original) => ({
+  ...(await original<typeof import("../../programs/open")>()),
+  openProgram: vi.fn(),
+}));
 vi.mock("../../intelligenceNavigation", async (original) => ({
   ...(await original<typeof import("../../intelligenceNavigation")>()),
   openIntelligence: vi.fn(),
@@ -1644,10 +1650,29 @@ describe("one row, one verb (owner walk 2026-11-08)", () => {
     fireEvent.contextMenu(row(must), { clientX: 40, clientY: 60 });
     const menu = await screen.findByRole("menu", { name: must });
     expect(within(menu).getAllByRole("menuitem").map((m) => m.textContent)).toEqual(
-      expect.arrayContaining(["Open", "Later", "Drop", "Hand to agent"]),
+      expect.arrayContaining(["Open", "Later", "Drop", "Run as a program"]),
     );
     fireEvent.click(within(menu).getByRole("menuitem", { name: /Later/ }));
     await waitFor(() => expect(posts.map((p) => (p.json as { verb?: string }).verb)).toEqual(["snooze"]));
+  });
+
+  // One verb, one name (2026-11-08): the menu's agent entry is the one Run as
+  // a program (RunAsProgram.tsx), never a second "Hand to agent".
+  it("Run as a program in the row menu makes the program from the action and opens it", async () => {
+    vi.mocked(openProgram).mockClear();
+    const answer = vi.mocked(apiFetch).getMockImplementation()!;
+    vi.mocked(apiFetch).mockImplementation(async (path: string, init?: unknown) => {
+      const done = await answer(path, init as never);
+      return (String(path) === "/api/programs/from-action" ? madeFromAction : done) as never;
+    });
+    render(<NeedsDrawer />);
+    await screen.findByText("4 need you");
+    fireEvent.contextMenu(row(must), { clientX: 40, clientY: 60 });
+    const menu = await screen.findByRole("menu", { name: must });
+    expect(within(menu).queryByRole("menuitem", { name: /Hand to agent/ })).toBeNull();
+    fireEvent.click(within(menu).getByRole("menuitem", { name: "Run as a program" }));
+    await waitFor(() => expect(openProgram).toHaveBeenCalledWith(String((madeFromAction as { id?: string }).id)));
+    expect(posts).toEqual([{ path: "/api/programs/from-action", json: { action_id: "rows-must" } }]);
   });
 
   it("the toolbar is one segmented control; People shows what a person owes, named by the person", async () => {
