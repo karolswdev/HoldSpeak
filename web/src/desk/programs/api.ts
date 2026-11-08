@@ -52,6 +52,8 @@ export interface CreateBody {
   reviewer_engine?: string;
   origin_ref?: string;
   for_person_id?: string;
+  /** HS-S24: the spend note in US dollars (a note, never a cap). */
+  spend_limit_usd?: number;
 }
 
 /** The hub answers the new Program's wire (or `{program}`). */

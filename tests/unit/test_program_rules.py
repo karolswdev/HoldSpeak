@@ -114,8 +114,7 @@ def test_race_winner_add_step_and_done() -> None:
     ({"outside_repo": True}, "outside the program's repository"),
     ({"outside_owned": ["web/x.ts"]}, "no step owns (web/x.ts)"),
     ({"egress": True}, "send something"),
-    ({"spend_usd": 0.5}, "no spend limit"),
-    ({"spend_usd": 5, "spend_limit_usd": 2}, "limit of $2.00"),
+    ({"spend_usd": 0.5}, "no spend note"),
     ({"authority": True}, "who or what may act"),
     ({"config": True}, "settings"),
     ({"gate_hold": True}, "gate holds"),
@@ -135,6 +134,8 @@ def test_each_core_question_goes_to_him_at_every_level(facts, words) -> None:
 def test_not_core_and_the_ladder_words() -> None:
     assert is_core({}) == ""
     assert is_core({"spend_usd": 1, "spend_limit_usd": 5}) == ""
+    # HS-S24 (D20/G24): the amount is a note, never a cap; over it stops nothing.
+    assert is_core({"spend_usd": 5, "spend_limit_usd": 2}) == ""
     assert is_core({"finding_text": "rename the variable"}) == ""
     assert [level_of(word) for word in ("safe", "neutral", "yolo", "SECURE", None)] == [S, N, Y, S, N]
     _him(decide(N, "something_new"), core=True)

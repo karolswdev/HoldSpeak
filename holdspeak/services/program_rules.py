@@ -102,8 +102,9 @@ def is_core(facts: Mapping[str, Any]) -> str:
     - the goal: ``goal_change``;
     - the shape: ``outside_repo``, ``outside_owned`` (files);
     - egress beyond the PR: ``egress``;
-    - money: ``spend_usd`` beyond ``spend_limit_usd``, or any spend when the
-      limit is unset;
+    - money: any spend when the Program has no spend note (HS-S24, ruled
+      2026-11-07 D20/G24: the amount is a note he reads, never a cap; a
+      spend over the note stops nothing);
     - authority or config: ``authority``, ``config``, ``gate_hold``;
     - safety: a finding tagged security or data loss (``finding_text`` or
       ``finding_tags``), ``tests_deleted``, ``destructive_migration``;
@@ -121,11 +122,8 @@ def is_core(facts: Mapping[str, Any]) -> str:
         return "it would send something beyond the step's own PR"
     spend = facts.get("spend_usd")
     if spend is not None and float(spend or 0) > 0:
-        limit = facts.get("spend_limit_usd")
-        if limit is None:
-            return "it spends money and the program has no spend limit"
-        if float(spend) > float(limit):
-            return f"it spends more than the program's limit of ${float(limit):.2f}"
+        if facts.get("spend_limit_usd") is None:
+            return "it spends money and the program has no spend note"
     if facts.get("authority"):
         return "it changes who or what may act"
     if facts.get("config"):

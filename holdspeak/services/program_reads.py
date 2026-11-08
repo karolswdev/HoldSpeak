@@ -1314,12 +1314,27 @@ def _wire(db: Any, program: Mapping[str, Any], steps: list[dict[str, Any]], *, c
                       "shot_reason": shot_reason or None},
         "decided_for_you": decided_for_you(db, program["id"]),
         "control_word": level_word(program.get("control")),
-        "spend_limit_usd": program.get("spend_limit_usd"), "closed_at": program.get("closed_at"),
+        "spend_limit_usd": program.get("spend_limit_usd"), "spend_note": spend_note(program.get("spend_limit_usd")),
+        "closed_at": program.get("closed_at"),
         "revision": int(program.get("revision") or 0),
         "status_line": _status_line(program, summary),
         **_language_wire(db, program, engine=engine),
         **_audit_wire(program, steps, checkpoints),
     }
+
+
+def spend_note(amount: Any) -> Optional[str]:
+    """HS-S24 (D20/G24 ruled 2026-11-07, disclosure-only): the amount he
+    typed is a note he reads on the Program's face, never a cap. ``None``
+    when he set none. ``spend note · 40 USD``; cents only when he typed them."""
+    if amount is None or amount == "":
+        return None
+    try:
+        value = float(amount)
+    except (TypeError, ValueError):
+        return None
+    words = f"{value:.0f}" if value == int(value) else f"{value:.2f}"
+    return f"spend note · {words} USD"
 
 
 def _audit_wire(program: Mapping[str, Any], steps: list[dict[str, Any]],

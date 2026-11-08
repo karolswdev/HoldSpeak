@@ -681,9 +681,9 @@ class ProgramService:
             try:
                 spend_limit_usd = float(spend_limit_usd)
             except (TypeError, ValueError):
-                raise ProgramRefused("spend_limit_invalid", "The spend limit is a number of dollars.", status=400)
+                raise ProgramRefused("spend_limit_invalid", "The spend note is a number of dollars.", status=400)
             if spend_limit_usd < 0:
-                raise ProgramRefused("spend_limit_invalid", "The spend limit is zero or more dollars.", status=400)
+                raise ProgramRefused("spend_limit_invalid", "The spend note is zero or more dollars.", status=400)
         root, project_id = self._repository(repository, project_id or None)
         profile = self._profile(default_profile, "default_profile") or defaults.get("default_profile") or "claude-default"
         # A template's engine is for its pi; a profile he chose instead (Claude
@@ -797,7 +797,7 @@ class ProgramService:
         if "spend_limit_usd" in fields:
             value = fields["spend_limit_usd"]
             program["spend_limit_usd"] = None if value in (None, "") else float(value)
-            changed.append("spend limit")
+            changed.append("spend note")
         if fields.get("default_profile") is not None or fields.get("default_engine") is not None:
             profile = self._profile(fields.get("default_profile"), "default_profile") or program["default_profile"]
             engine = self._engine_id(fields.get("default_engine"), profile, "default_engine")
