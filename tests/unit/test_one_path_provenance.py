@@ -303,11 +303,12 @@ def test_the_provenance_matrix_covers_every_named_surface() -> None:
     named entry forms. This is the guard against the matrix quietly shrinking
     back to a convenient subset.
     """
-    # HS-151-02: Recipe chat retired (was 16)
-    assert len(SURFACE_DRIVERS) == 15
+    # HS-151-02: Recipe chat retired (was 16); 2026-11-08: Sequence and
+    # Workflow parked with their runner (was 15).
+    assert len(SURFACE_DRIVERS) == 13
     assert ROOT_SHAPED_SURFACES | CHILD_SHAPED_SURFACES == set(SURFACE_DRIVERS)
     assert set(SURFACE_DRIVERS) == {
-        "Ask", "Recipe run", "Sequence", "Workflow",
+        "Ask", "Recipe run",
         "manual Workbench", "scheduled Workbench", "memory writeback", "Rails",
         "Decision promotion", "Delivery review", "voice", "meeting live",
         "meeting deferred", "dictation pipeline",
