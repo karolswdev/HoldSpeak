@@ -742,3 +742,16 @@ input[type="file"]::file-selector-button:hover {
     min-width: var(--desk-button-hit-size);
   }
 }
+
+/* iOS Safari zooms the page when a focused field's text is under 16 px
+   (the walk of 2026-11-08 on his iPhone: innerWidth 385 of 440, the right
+   edge of every window cut off, the shots cropped). A field on a touch
+   phone is 16 px, so the page never zooms; the desk's type scale stands
+   elsewhere. */
+@media (max-width: 480px) and (pointer: coarse) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}
