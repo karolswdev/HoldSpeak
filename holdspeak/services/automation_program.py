@@ -49,7 +49,7 @@ def clean_program_fields(fields: dict[str, Any]) -> None:
     """Validate the PG14 fields in place (template, control, Runs on, flags)."""
     from ..program_templates import TEMPLATE_IDS
     from .program_rules import DESK_MODES
-    from .program_service import AGENT_LABELS, MAX_RUNS_ON
+    from .program_definitions import AGENT_LABELS, MAX_RUNS_ON
 
     if "program_template" in fields:
         template = str(fields["program_template"] or "").strip().lower()
@@ -212,7 +212,7 @@ def run_program(db: Any, principal: Any, wb: Any, *, now: Optional[datetime] = N
     ``window``; a run that starts nothing has ``reason`` in words. A refusal
     (no template, no repository, no open action) raises ``ServiceError``."""
     from ..program_templates import FROM_THE_DESK
-    from .program_service import ProgramRefused
+    from .program_definitions import ProgramRefused
 
     latest = latest_program(db, wb.id)
     if latest is not None and latest["state"] in STILL_RUNNING:

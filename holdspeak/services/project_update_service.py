@@ -686,7 +686,8 @@ def _build_programs(db: Any, project_id: str, claims: list[Claim]) -> list[str]:
     """Programs (2026-10-28, §9b): one Progress line per Program of the
     Project: done, running, waiting, with the merged PR numbers."""
     try:
-        from .program_service import FINISHED_STATES, ProgramService
+        from .program_service import ProgramService
+        from .program_definitions import FINISHED_STATES
 
         service = ProgramService(db)
         rows = service.for_project(project_id)

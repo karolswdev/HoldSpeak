@@ -308,7 +308,7 @@ def happened_line(kind: str, item: Mapping[str, Any], step: Optional[Mapping[str
                 if item.get("source") == "red" else f"The reviewer found the same thing on {len(steps)} steps: {item.get('words')}")
         return sentence(what)
     if kind == "race":
-        from .program_service import agent_label
+        from .program_definitions import agent_label
 
         return sentence(f"Agents raced on this step. {agent_label(step.get('profile'))} finished and waits for your pick")
     if kind == "add_step":
@@ -937,7 +937,7 @@ def list_line(state: str, steps: list[Mapping[str, Any]], turn: list[Mapping[str
     """The Programs list's one line for a program, as a chief of staff says
     it: "Step 2 of 3 waits on you since 21:43", "Runs step 4 of 8, Claude
     Code, 11 min", "Done, 14 PRs, 28 Oct", "Drafting, 8 steps"."""
-    from .program_service import agent_label, duration_words
+    from .program_definitions import agent_label, duration_words
 
     total = len(steps)
     of = f" of {total}" if total else ""
