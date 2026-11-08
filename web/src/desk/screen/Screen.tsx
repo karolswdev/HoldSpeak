@@ -249,6 +249,8 @@ export function Screen() {
                 id={o.key}
                 kind={o.kind}
                 kindWord={o.kindWord}
+                ariaName={o.ariaName}
+                labelCut="end"
                 name={o.name}
                 sprite={o.sprite}
                 spriteSelected={o.spriteSelected}
