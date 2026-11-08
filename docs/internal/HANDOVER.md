@@ -1,6 +1,19 @@
-# Handover — Muad'Dib XXXVIII (2026-11-07, one brain)
+# Handover (2026-11-07, one brain)
+
+This is the ONE handover. It replaces every numbered handover before it (the owner, 2026-11-07: "kill all the previous handovers… default the latest one to just handover.md"). Rewrite it in place at each handover; history is in git.
 
 Read first, in order: `CLAUDE.md` "How we work now" (the seven lines of 2026-11-07 and the evening amendment to rule 3), this file, `pm/STATUS.md` (one line per merge), `docs/walks.md`. Two Brains is retired; nothing in `docs/internal/TWO-BRAINS.md` is current process.
+
+## Part 0: how we think (the mentality, written down)
+
+- **Move fast, with three checks and no ceremony.** A change is one concern, a few files, a worker in a worktree, a PR within the hour. A test that fails on main, one quick check per merge batch, his desk on main. Nothing else gates. A red is fixed forward at once, never debated; a revert is for security or data loss only.
+- **One brain decides; workers build.** No mutual checks, no counsel rounds, no planning packages, no completion reports, no status paragraphs. A brief is the step text: the job, the settled decision, the owned files, the focused tests. The owner makes a ruling in one sentence; we do not ask twice.
+- **The owner judges faces live, hand-held.** Every wave ends with a walk link to his phone. His answers, with the screen he saw, are the ruling and seed the next slices. A face rejected twice is not patched a third time: it goes to a canvas with directions, he picks, then one build.
+- **Subtract.** Every change removes a seam or a second implementation; it never adds one. Two implementations of one thing (two voices, two TTS engines, two keystores, two planners) are a defect by definition. "Retaining a facade" is allowed only when the dependency is honestly one-way afterwards.
+- **Effortless and powerful, native, delightful.** The desk is strong; the glue and the core workflows are not. Pick work by core workflow, not by finding. A control that needs explaining has failed. No prose on faces, no modals, no counter of zero, no grey; the kit's material, motion with intent, the library Button for every verb.
+- **Truth over comfort.** Say what failed, with the output. Say what was skipped. A flake is proven by a rerun, not assumed. Measure: merges per day, presses by him, hours from finding to main.
+- **Diagnose before you theorize.** When the hub wedges, `kill -USR1` and read the stack; when a check is slow, read the step it sits on. Guessing cost an hour tonight; the stack dump took two minutes.
+- **Never touch his real state.** Tests never see his HOME, DB or Keychain. Park, don't delete (two owner-ruled exceptions tonight: kokoro, the old handovers). Never change the hub's binary path without expecting the Keychain to ask.
 
 ## Part I: the rulings of the day (owner, verbatim where it matters)
 
