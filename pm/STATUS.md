@@ -2,6 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · #1866 compose_hub builds each shared adapter and service once (GitHub and Jira adapters 5 → 1, Confluence, WatchService and the evidence collector 3 → 1, the pairing token store 2 → 1); hub_composition.py 566 → 529 lines, cold start 1.69 → 1.64 s (noise).
 - 2026-11-08 · #1865 Five faces never draw a count of zero (the Update footer drew "0 updates"): A8 5 → 0, A1 81 → 2.
 - 2026-11-08 · #1864 Every module imports a Program definition from program_definitions, never through the service (HS-S51 repoint): modules importing program_service 28 → 27, definition-only importers 1 → 0, definition imports through the service 24 → 0.
 - 2026-11-08 · #1863 The desk declares viewport-fit=cover, so the iPhone's safe-area insets the walk, the dock and the pullouts already read are no longer 0.
