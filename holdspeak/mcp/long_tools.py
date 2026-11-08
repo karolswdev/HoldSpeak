@@ -44,8 +44,6 @@ LONG_TOOLS: dict[str, str] = {
     "ask.run": "model",
     "workbench.run": "model",
     "recipe.run": "model",
-    "sequence.run": "model",
-    "workflow.run": "model",
     "thought.refine": "model",
     "thought.answer_and_continue": "model",
     "project.draft_update": "model (generator llm)",

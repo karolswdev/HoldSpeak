@@ -100,7 +100,8 @@ export function CapabilitySection({ object: o, blocked }: {
     const result = await useDesk
       .getState()
       .runCapability(
-        o.kind as "recipe" | "chain" | "workflow",
+        // Only a Mode has this section now (Sequences and Workflows parked).
+        o.kind as "recipe",
         o.id,
         runInput,
       );

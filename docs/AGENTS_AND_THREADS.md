@@ -150,9 +150,8 @@ a run, but it never authorizes a run.
 A Workflow is a saved sequence of supported processing nodes. The sequence service validates the graph and freezes route evidence before each child call.
 It returns a parent receipt, child receipts, steps, and an Artifact projection. A node failure policy can hold, skip, or carry output.
 
-`sequence.run`, `sequence.cancel`, `workflow.run`, and `workflow.cancel` use
-the same admitted path. They are not a general scheduler or a free-running
-agent loop. See [Automation](AUTOMATION.md).
+The iPad runs a Sequence or a Workflow on the hub. The Desk and the MCP tools
+do not: use a Program for work that runs. See [Automation](AUTOMATION.md).
 
 ## MCP
 

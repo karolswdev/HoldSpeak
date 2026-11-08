@@ -819,22 +819,9 @@ export async function loadAll(): Promise<LoadResult> {
         status.directory = "live";
       })
       .catch((e) => fail("directory", "Zones", e)),
-    apiFetch<Record<string, unknown>>("/api/chains")
-      .then((d) => {
-        items.chain = wireArray(d, "chains")
-          .filter((c) => !wireBool(c, "deleted"))
-          .map(fromWireChain).filter((x): x is Chain => x !== null);
-        status.chain = "live";
-      })
-      .catch((e) => fail("chain", "Sequences", e)),
-    apiFetch<Record<string, unknown>>("/api/workflows")
-      .then((d) => {
-        items.workflow = wireArray(d, "workflows")
-          .filter((w) => !wireBool(w, "deleted"))
-          .map(fromWireWorkflow).filter((x): x is Workflow => x !== null);
-        status.workflow = "live";
-      })
-      .catch((e) => fail("workflow", "Workflows", e)),
+    // The Sequence and Workflow faces are parked (2026-11-08): Programs are
+    // the one engine for work that runs. The desk reads no chain or workflow;
+    // the iPad's Crew run keeps the hub's run routes.
     apiFetch<Record<string, unknown>>("/api/workbenches")
       .then((d) => {
         items.workbench = wireArray(d, "workbenches")

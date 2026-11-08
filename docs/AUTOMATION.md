@@ -14,7 +14,7 @@ Use the path that owns your trigger and result:
 | Schedule | The hub reaches the saved time | One run record for that occurrence |
 | Event | A supported source event matches | One run record for that event |
 | Agent handoff | The Automation's **Do** is **Hand to an agent session** | A brief and a coding-agent launch |
-| Sequence or Workflow | You start a saved sequence | Parent and child receipts |
+| Sequence or Workflow | You start a saved sequence on the iPad | Parent and child receipts |
 | Project Watch and Steward | A configured Project source changes | Observation, review, and permitted follow-up |
 | Heartbeat | A supported unattended sweep runs | A Heartbeat evaluation |
 | Cadence | **run-now** or the enabled Cadence loop | Open-loop review and prepared next actions |
@@ -29,7 +29,7 @@ The same systems can be reached through these supported paths:
 | [Interview](INTERVIEW.md) | You answer or select **Try draft** | Saved context, suggestions, manual drafts, and supported Project setup |
 | [Thread tools](USER_GUIDE.md#ask) | A model requests a permitted tool during a turn | Tool execution within the Thread mode and its policy |
 | [Agent or Ask](WEB_DESK.md) | You submit an instruction | A model result from selected context |
-| [Sequence or Workflow](MCP_SIDECAR.md#sequence) | You start a configured run | Parent and child receipts |
+| [Sequence or Workflow](IPAD.md) | You start a configured run on the iPad | Parent and child receipts |
 | [Project Watches and Steward](PROJECT_ROOMS.md) | A supported source change matches configured Project behavior | Project-scoped observation, proposals, and supported effects |
 | [Heartbeat](USER_GUIDE.md#notices-and-the-heartbeat) | A configured unattended sweep runs | Evaluation of available work under the Heartbeat policy |
 | [Scheduled recording](USER_GUIDE.md#schedule-a-recording) | A configured recording time arrives | Meeting capture when the hub can run it |

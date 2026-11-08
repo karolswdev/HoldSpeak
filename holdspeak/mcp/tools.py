@@ -1040,8 +1040,6 @@ def _dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal)
         raise ToolError(f"Unknown tool: {name}")
     retired_family_fields = {
         "ask.run": {"inference_target_id"},
-        "sequence.run": {"inference_target_id"},
-        "workflow.run": {"inference_target_id"},
     }
     if retired := (retired_family_fields.get(name, set()) & set(args)):
         raise ToolError(f"Invalid arguments for {name}: retired field(s): {', '.join(sorted(retired))}")

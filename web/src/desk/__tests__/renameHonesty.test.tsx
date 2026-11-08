@@ -28,9 +28,10 @@ const EXPECTED: Record<PrimitiveKind, string | null> = {
   kb: null,
   directory: null,
   recipe: null,
-  workflow: null,
+  // The Sequence and Workflow faces are parked (2026-11-08): no rename.
+  workflow: "No rename path",
   project: null,
-  chain: null,
+  chain: "No rename path",
   workbench: null,
   meeting: null,
   artifact: "Named by the run that minted it",
@@ -58,7 +59,6 @@ describe("HS-132-07 rename honesty", () => {
   });
 
   it("carries the routes the hub already served but the map had lost", () => {
-    expect(primitiveUpdateUrl("chain", "c1")).toBe("/api/chains/c1");
     expect(primitiveUpdateUrl("workbench", "w1")).toBe("/api/workbenches/w1");
     // The route this story added to the hub.
     expect(primitiveUpdateUrl("meeting", "m1")).toBe("/api/meetings/m1");

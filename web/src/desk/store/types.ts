@@ -330,7 +330,7 @@ export interface DeskState {
   /** Create in-world (HS-73-03): instant POST, spawn at center, NEW beat,
    * editor open. The object IS the editor -- no modal, ever. */
   createPrimitive(
-    kind: "note" | "decision" | "kb" | "recipe" | "zone" | "workflow" | "workbench",
+    kind: "note" | "decision" | "kb" | "recipe" | "zone" | "workbench",
     overrides?: Record<string, unknown>,
   ): Promise<void>;
   /** Put a record the hub has just created into the store at once, from
@@ -421,7 +421,7 @@ export interface DeskState {
   /** Run a capability through the real route; the persisted result
    * MATERIALIZES on the desk (HS-74-03: refresh + the NEW beat). */
   runCapability(
-    kind: "recipe" | "chain" | "workflow",
+    kind: "recipe",
     id: string,
     input: string,
   ): Promise<{
