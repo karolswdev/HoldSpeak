@@ -106,3 +106,44 @@ def test_committed_openapi_matches_reference_app() -> None:
     declared["info"].pop("x-philo-note")
     declared["info"].pop("x-source-snapshot")
     assert declared == live, "OpenAPI drift: run scripts/philo_openapi_reference.py with isolated HOME"
+
+
+_RESOURCE_ROUTE = "/api/projects/{project_id}/resources/{resource_ref:path}"
+
+
+def test_a_nested_template_literal_maps_to_its_route() -> None:
+    """``${…}`` with a template inside reads whole: each one is a path param."""
+    source = (
+        "await apiFetch(\n"
+        "  `/api/projects/${encodeURIComponent(project.id)}/resources/"
+        "${encodeURIComponent(`note:${noteId}`)}`,\n"
+        '  { method: "PUT", json: { relationship: "related" } },\n'
+        ");\n"
+    )
+    calls = gen.extract_from_text(source)
+    assert "/api/projects/*/resources/*" in calls
+    assert any(gen._route_matches(c, _RESOURCE_ROUTE) for c in calls)
+
+
+def test_a_path_in_a_variable_one_line_above_is_found() -> None:
+    source = (
+        "const url = `/api/briefs/${encodeURIComponent(briefId)}/keep`;\n"
+        'await apiFetch(url, { method: "POST" });\n'
+    )
+    calls = gen.extract_from_text(source)
+    assert calls == {"/api/briefs/*/keep"}
+    assert gen._route_matches("/api/briefs/*/keep", "/api/briefs/{brief_id}/keep")
+
+
+def test_a_plain_string_still_maps() -> None:
+    calls = gen.extract_from_text('await apiFetch("/api/dictation/dry-run?x=1");')
+    assert calls == {"/api/dictation/dry-run"}
+
+
+def test_a_non_api_string_is_ignored() -> None:
+    source = (
+        'const label = "Add to project";\n'
+        "const note = `note:${noteId}`;\n"
+        "const href = `https://example.com/api/${id}`;\n"
+    )
+    assert gen.extract_from_text(source) == set()

@@ -9,8 +9,9 @@ web sources. This generator makes the surface a committed artifact:
   construction the route pre-flight uses), so nothing can hide.
 - **Consumers** are extracted from the real call sites: every string literal
   carrying an ``api/…`` path in ``apple/`` (the iOS client) and ``web/src``
-  (the web app). Interpolations (``\\(…)`` in Swift, ``${…}`` in JS, ``{…}``)
-  become wildcard segments; query strings are stripped.
+  (the web app), including JS template literals with nested templates.
+  Interpolations (``\\(…)`` in Swift, ``${…}`` in JS, ``{…}``) become
+  wildcard segments; query strings are stripped.
 - Each route is tagged ``web`` / ``ios`` / both / neither (server-only).
 
 Regenerate after any route change:
@@ -41,6 +42,11 @@ WILD = "*"
 
 _SWIFT_LITERAL = re.compile(r'"((?:/)?(?:api/|health\b|ws\b)[^"\n]*)"')
 _WEB_LITERAL = re.compile(r'["\'`](/(?:api|ws)(?:/[^"\'`\n]*)?)["\'`]')
+# The regex above closes a template literal at the first quote or backtick, so
+# a nested template such as
+# `/api/projects/${a}/resources/${encodeURIComponent(`note:${id}`)}` reads as a
+# fragment. ``_web_templates`` also reads each template literal whole.
+_WEB_TEMPLATE_START = re.compile(r"`(?=/(?:api|ws)\b)")
 # Client-side interpolations that become wildcard segments.
 _SWIFT_INTERP = re.compile(r"\\\([^)]*\)")
 _JS_INTERP = re.compile(r"\$\{[^}]*\}")
@@ -123,18 +129,96 @@ def _normalize(raw: str) -> str | None:
     return text
 
 
-def _extract(paths: Iterable[Path], pattern: re.Pattern[str]) -> set[str]:
+def _skip_quoted(text: str, i: int) -> int:
+    """Index after the '…' or "…" string that opens at ``text[i]``."""
+    quote = text[i]
+    i += 1
+    while i < len(text) and text[i] not in (quote, "\n"):
+        i += 2 if text[i] == "\\" else 1
+    return i + 1
+
+
+def _skip_expression(text: str, i: int) -> int:
+    """Index after the ``}`` that closes the ``${`` expression starting at ``text[i]``."""
+    depth = 1
+    while i < len(text):
+        ch = text[i]
+        if ch in "'\"":
+            i = _skip_quoted(text, i)
+            continue
+        if ch == "`":
+            _, i = _read_template(text, i)
+            continue
+        if ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                return i + 1
+        i += 1
+    return i
+
+
+def _read_template(text: str, start: int) -> tuple[str | None, int]:
+    """Read the template literal that opens at ``text[start]`` (a backtick).
+
+    Returns the literal with every ``${…}`` replaced by a wildcard (nested
+    templates inside an interpolation are skipped whole), and the index after
+    the closing backtick. The literal is None when it spans lines.
+    """
+    out: list[str] = []
+    single_line = True
+    i = start + 1
+    while i < len(text):
+        ch = text[i]
+        if ch == "\\":
+            out.append(text[i : i + 2])
+            i += 2
+        elif ch == "`":
+            return ("".join(out) if single_line else None), i + 1
+        elif text.startswith("${", i):
+            out.append(WILD)
+            i = _skip_expression(text, i + 2)
+        else:
+            if ch == "\n":
+                single_line = False
+            out.append(ch)
+            i += 1
+    return None, i
+
+
+def _web_templates(text: str) -> Iterable[str]:
+    """Every template literal that starts with an /api or /ws path, read whole."""
+    for match in _WEB_TEMPLATE_START.finditer(text):
+        literal, _ = _read_template(text, match.start())
+        normalized = _normalize(literal) if literal is not None else None
+        # A template with no literal segment after /api (`/api/${a}/${b}`)
+        # names no route; it would mark every route of its depth.
+        if normalized and any(s != WILD for s in _segments(normalized)[1:]):
+            yield literal
+
+
+def _extract(
+    paths: Iterable[Path], pattern: re.Pattern[str], *, templates: bool = False
+) -> set[str]:
     found: set[str] = set()
     for path in paths:
         try:
             text = path.read_text(encoding="utf-8")
         except (UnicodeDecodeError, OSError):
             continue
-        for match in pattern.finditer(text):
-            normalized = _normalize(match.group(1))
-            if normalized:
-                found.add(normalized)
+        found |= extract_from_text(text, pattern, templates=templates)
     return found
+
+
+def extract_from_text(
+    text: str, pattern: re.Pattern[str] = _WEB_LITERAL, *, templates: bool = True
+) -> set[str]:
+    """The call templates in one source text (web by default)."""
+    raws = [match.group(1) for match in pattern.finditer(text)]
+    if templates:
+        raws.extend(_web_templates(text))
+    return {n for n in map(_normalize, raws) if n}
 
 
 def extract_ios_calls() -> set[str]:
@@ -152,7 +236,7 @@ def extract_web_calls() -> set[str]:
         if not p.name.endswith((".test.js", ".test.ts", ".test.tsx"))
         and "__tests__" not in p.parts
     ]
-    return _extract(files, _WEB_LITERAL)
+    return _extract(files, _WEB_LITERAL, templates=True)
 
 
 def _segments(path: str) -> list[str]:
