@@ -14,7 +14,7 @@ For example, the old meeting Slack-export route returns `slack_moved_to_channel`
 Read the handler and owning guide before treating route presence as feature availability.
 Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
-Routes: 918 (plus static mounts). iOS-consumed: 87. Web-consumed: 586.
+Routes: 907 (plus static mounts). iOS-consumed: 87. Web-consumed: 586.
 
 ## device_audio_ws
 
@@ -141,17 +141,6 @@ Routes: 918 (plus static mounts). iOS-consumed: 87. Web-consumed: 586.
 
 | Method | Path | Consumers |
 |---|---|---|
-| GET | `/api/automations/events` | server only |
-| GET | `/api/automations/presets` | server only |
-| GET | `/api/automations/reactions` | server only |
-| POST | `/api/automations/reactions` | server only |
-| POST | `/api/automations/reactions/process` | server only |
-| PUT | `/api/automations/reactions/{reaction_id}/enabled` | server only |
-| GET | `/api/automations/watches` | server only |
-| POST | `/api/automations/watches` | server only |
-| POST | `/api/automations/watches/{watch_id}/baseline` | server only |
-| PUT | `/api/automations/watches/{watch_id}/enabled` | server only |
-| POST | `/api/automations/watches/{watch_id}/test` | server only |
 | GET | `/api/workbenches/{workbench_id}/automations` | web |
 | POST | `/api/workbenches/{workbench_id}/automations` | web |
 | PATCH | `/api/workbenches/{workbench_id}/automations/{automation_id}` | web |

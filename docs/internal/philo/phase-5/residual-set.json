@@ -573,6 +573,78 @@
       "transport": "http",
       "entry_point": "holdspeak/web/routes/projects.py::build_projects_router.api_suggested_sources",
       "discriminator": "SuggestedSourceService"
+    },
+    {
+      "story": "watch-fold-2026-11-08",
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/automations.py::build_automations_router",
+      "discriminator": "ReactionService"
+    },
+    {
+      "story": "watch-fold-2026-11-08",
+      "transport": "mcp",
+      "entry_point": "event.list",
+      "discriminator": ""
+    },
+    {
+      "story": "watch-fold-2026-11-08",
+      "transport": "mcp",
+      "entry_point": "reaction.create",
+      "discriminator": ""
+    },
+    {
+      "story": "watch-fold-2026-11-08",
+      "transport": "mcp",
+      "entry_point": "reaction.list",
+      "discriminator": ""
+    },
+    {
+      "story": "watch-fold-2026-11-08",
+      "transport": "mcp",
+      "entry_point": "reaction.presets",
+      "discriminator": ""
+    },
+    {
+      "story": "watch-fold-2026-11-08",
+      "transport": "mcp",
+      "entry_point": "reaction.process",
+      "discriminator": ""
+    },
+    {
+      "story": "watch-fold-2026-11-08",
+      "transport": "mcp",
+      "entry_point": "reaction.set_enabled",
+      "discriminator": ""
+    },
+    {
+      "story": "watch-fold-2026-11-08",
+      "transport": "mcp",
+      "entry_point": "watch.create",
+      "discriminator": ""
+    },
+    {
+      "story": "watch-fold-2026-11-08",
+      "transport": "mcp",
+      "entry_point": "watch.list",
+      "discriminator": ""
+    },
+    {
+      "story": "watch-fold-2026-11-08",
+      "transport": "mcp",
+      "entry_point": "watch.preview",
+      "discriminator": ""
+    },
+    {
+      "story": "watch-fold-2026-11-08",
+      "transport": "mcp",
+      "entry_point": "watch.refresh",
+      "discriminator": ""
+    },
+    {
+      "story": "watch-fold-2026-11-08",
+      "transport": "mcp",
+      "entry_point": "watch.set_enabled",
+      "discriminator": ""
     }
   ],
   "public_tools_added": [
@@ -748,11 +820,11 @@
     }
   ],
   "measurements": {
-    "residual_identities": 277,
-    "residual_mcp": 225,
+    "residual_identities": 266,
+    "residual_mcp": 214,
     "residual_http": 52,
     "http_constructions": 53,
-    "public_tools": 305
+    "public_tools": 294
   },
   "entries": [
     {
@@ -1297,12 +1369,6 @@
     },
     {
       "transport": "mcp",
-      "entry_point": "event.list",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/reactions.py)"
-    },
-    {
-      "transport": "mcp",
       "entry_point": "follow_through.board",
       "discriminator": "",
       "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
@@ -1789,36 +1855,6 @@
     },
     {
       "transport": "mcp",
-      "entry_point": "reaction.create",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/reactions.py)"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "reaction.list",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/reactions.py)"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "reaction.presets",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/reactions.py)"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "reaction.process",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/reactions.py)"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "reaction.set_enabled",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/reactions.py)"
-    },
-    {
-      "transport": "mcp",
       "entry_point": "recipe.chat",
       "discriminator": "",
       "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
@@ -1993,36 +2029,6 @@
     },
     {
       "transport": "mcp",
-      "entry_point": "watch.create",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/reactions.py)"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "watch.list",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/reactions.py)"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "watch.preview",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/reactions.py)"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "watch.refresh",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/reactions.py)"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "watch.set_enabled",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/reactions.py)"
-    },
-    {
-      "transport": "mcp",
       "entry_point": "workbench.add_item",
       "discriminator": "",
       "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
@@ -2090,12 +2096,6 @@
     {
       "transport": "http",
       "entry_point": "holdspeak/web/routes/automations.py::build_automations_router",
-      "discriminator": "ReactionService",
-      "reason": "route builds its own service instance instead of the hub's bound one"
-    },
-    {
-      "transport": "http",
-      "entry_point": "holdspeak/web/routes/automations.py::build_automations_router",
       "discriminator": "ResourcefulService",
       "reason": "route builds its own service instance instead of the hub's bound one"
     },
@@ -2158,6 +2158,12 @@
       "entry_point": "holdspeak/web/routes/dictation/pipeline.py::build_pipeline_router",
       "discriminator": "DictationService",
       "reason": "route builds its own service instance instead of the hub's bound one"
+    },
+    {
+      "transport": "http",
+      "entry_point": "holdspeak/web/routes/automations.py::build_automations_router.watches",
+      "discriminator": "WatchService",
+      "reason": "route builds its own service instance when the hub's bound one is absent (an isolated route fixture); the watch fold of 2026-11-08 replaced the ReactionService construction here"
     },
     {
       "transport": "http",
