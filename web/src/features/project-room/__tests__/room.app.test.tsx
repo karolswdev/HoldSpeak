@@ -35,6 +35,9 @@ import R174 from "./room-wires/receipts174.json";
 // test_the_now_wing_says_where_it_stands_from_this_weeks_meetings_and_notes
 // (HOLDSPEAK_WIRE_WRITE=1): the RECON seed through the real hub's /room.
 import P3 from "./room-wires/nowP3.json";
+// Recorded by tests/integration/test_desk_project_room.py::
+// test_a_committed_decision_names_its_person_on_the_decided_line (HOLDSPEAK_WIRE_WRITE=1).
+import COMMITTED from "./room-wires/committedWord.json";
 // Betterment Q1: Ask this project on an engine that does not answer, then Ask
 // again (tests/unit/test_desk_room_ask.py records it from the real routes).
 import Q1 from "./room-wires/roomAskQ1.json";
@@ -1609,6 +1612,29 @@ describe("Betterment P3: the Now wing says where the project stands", () => {
     // old desk decision window opens.
     expect(calls.slice(before).map((c) => c.key).filter((key) => key.includes("/api/decision"))).toEqual([]);
     expect(Object.keys(useDesk.getState().windowsById).filter((id) => id.startsWith("desk_decision"))).toEqual([]);
+  });
+});
+
+
+describe("#1891: a committed decision names its Person on the Decided line", () => {
+  const pid = (COMMITTED.room as { project_id: string }).project_id;
+  const table = (): Record<string, Answer> => ({
+    [room(pid)]: () => clone(COMMITTED.room),
+    [`GET /api/projects/${pid}/proposals`]: () => clone(COMMITTED.proposals),
+  });
+
+  it("draws Committed · <name> at the committed line's right, and nothing on the other", async () => {
+    wire(table());
+    render(<WindowHarness scope={`project:${pid}`} />);
+    const week = await screen.findByTestId("room-this-week");
+    const lines = within(week).getAllByTestId("this-week-line");
+    const committed = lines.find((l) => l.textContent?.includes("Adopt quorumdb"))!;
+    const quiet = lines.find((l) => l.textContent?.includes("Keep the nightly export"))!;
+    const word = within(committed).getByTestId("this-week-committed");
+    expect(word.textContent).toBe("Committed · Mira Okafor");
+    expect(committed.lastElementChild).toBe(word);
+    expect(within(quiet).queryByTestId("this-week-committed")).toBeNull();
+    expect(quiet.textContent).not.toContain("Committed");
   });
 });
 

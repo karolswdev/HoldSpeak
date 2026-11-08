@@ -1474,3 +1474,23 @@ def test_a_decision_with_an_owner_is_one_row_for_that_person(hub: Hub) -> None:
     assert [(row["direction"], row["person_id"], row.get("person_name")) for row in rows] == [
         ("theirs", mira, "Mira Okafor")], rows
     assert _titles(_ok(hub.client.get(f"/api/desk/needs-you?fresh=1&person={mira}"))) == ["Adopt quorumdb"]
+
+
+def test_a_from_desk_decision_with_an_owner_reaches_a_cached_read(hub: Hub) -> None:
+    """The desk's poll reads the cache (no ``fresh=1``): a decision the Decide
+    well commits to Mira is her row on the next read, not after the 15-minute
+    rebuild."""
+    _ok(hub.client.post("/api/people/setup", json={}))
+    mira = _ok(hub.client.post("/api/people/relationships", json={
+        "display_name": "Mira Okafor", "relationship_kind": "direct_report"}), 201)["relationship"]["id"]
+    project = _ok(hub.client.post("/api/projects", json={
+        "name": "Ledger", "command_id": "decision-commit-cached"}))["project"]["id"]
+    before = _ok(hub.client.get("/api/desk/needs-you"))
+    assert _rows_titled(before, "Adopt quorumdb") == []
+
+    _ok(hub.client.post("/api/decision-records/from-desk", json={
+        "title": "Adopt quorumdb", "status": "accepted",
+        "project_id": project, "owner_person_id": mira}), 201)
+
+    rows = _rows_titled(_ok(hub.client.get("/api/desk/needs-you")), "Adopt quorumdb")
+    assert [(row["direction"], row["person_id"]) for row in rows] == [("theirs", mira)], rows
