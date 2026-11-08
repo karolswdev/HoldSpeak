@@ -8,7 +8,6 @@ import { DeskFilingStrip } from "../../components/DeskFilingStrip";
 import { plainReason } from "../../surface/plainFailure";
 import { Button } from "../../../components/signal/Signal";
 import { RunAsProgramVerb } from "../../programs/RunAsProgram";
-import { verbById } from "../../verbRegistry";
 import { setDecisionReaderObject } from "../../decisionReaderObject";
 import { qualifiedRef } from "../../api";
 import { decisionRecordSourceRef, openRef } from "../../openObject";
@@ -836,13 +835,18 @@ function DecisionReader({
   // Delete is the desk's one delete (`object.delete`, the one undo receipt):
   // offered only where it can run. The window closes first, so the receipt on
   // the desk is in view (as the window's Object ▸ Delete does).
-  const deleteVerb = verbById("object.delete");
+  // The verb registry is read on use (its module reaches the live compositor
+  // at load; a view test that mocks the store must not pull it in).
   const deleteCtx = { selectedRef: deskId ? `decision:${deskId}` : null };
-  const canDelete = Boolean(deskId && deleteVerb && !deleteVerb.ghost(deleteCtx));
+  const canDelete = Boolean(deskId);
   const deleteDecision = () => {
-    if (!deleteVerb || !canDelete) return;
-    useDesk.getState().closeSurfaceWindow("open-decisions");
-    deleteVerb.run(deleteCtx);
+    if (!canDelete) return;
+    void import("../../verbRegistry").then(({ verbById }) => {
+      const deleteVerb = verbById("object.delete");
+      if (!deleteVerb || deleteVerb.ghost(deleteCtx)) return;
+      useDesk.getState().closeSurfaceWindow("open-decisions");
+      deleteVerb.run(deleteCtx);
+    });
   };
   const { copy, receipt: copyReceipt } = useCopyReceipt();
   const items = useDesk((state) => state.items);
