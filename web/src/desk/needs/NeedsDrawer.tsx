@@ -23,7 +23,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { create } from "zustand";
 import { Button } from "../../components/signal/Signal";
 import { apiFetch, readableError } from "../../lib/api";
-import { doneRoute, followThrough, markDone } from "./needsApi";
+import { doneRoute, followThrough, markDone, tomorrowDay } from "./needsApi";
 import { useAgentFlights } from "../agentFlights";
 import { commandForDoorVerb, labelFor, supportsDoorVerb, type DoorVerb } from "../chair/doorVerbs";
 import { useGate } from "../gate";
@@ -59,9 +59,9 @@ import {
   urlHost,
   type NeedFace,
   type NeedsChips,
+  dayWord,
 } from "./needsFace";
 import { NoteSendWells } from "../documentSendsLazy";
-import { wireDate } from "../surface/format";
 import { cancelArming, useArmingOutcome } from "./arming";
 import { WorkMenu, type WorkMenuEntry } from "../components/DeskMenu";
 import { openHand } from "../agentHand";
@@ -72,6 +72,8 @@ import "./needs.css";
 import { briefable, copyPageLink, deferItem, LATER_TIMES, revokePage, sendToTelegram } from "../reach";
 import { openPhoneWing } from "../calls/phoneFocus";
 import { Token } from "../surface/Token";
+import { ItemReader, ItemReaderContext, readsInPlace, useReadInPlace } from "./ItemReader";
+import { INTELLIGENCE_NAVIGATE, takeFollowThrough, type IntelligenceNavigation } from "../intelligenceNavigation";
 
 /** Answer: the agent's window with the answer field focused. Lane C2 builds
  *  the agent window and honors the hint; today the session opener opens the
@@ -114,14 +116,7 @@ export function offerUndo(name: string, undo: () => Promise<unknown>): void {
   }, UNDO_MS);
 }
 
-const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
-/** `Thu 22 Oct`: a due day as the rows say it. */
-export function dayWord(iso: string | null | undefined): string {
-  const d = iso ? wireDate(iso) : null;
-  return d ? `${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}` : "";
-}
+export { dayWord };
 
 /** Betterment D2: the short message Nudge drafts. He reads it, can change
  *  it in the note, and presses Send himself. */
@@ -129,12 +124,6 @@ export function nudgeText(task: string, person: string, due: string | null | und
   const first = person.trim().split(/\s+/)[0] || "Hi";
   const when = dayWord(due);
   return `${first}, is "${task}" on track${when ? ` for ${when}` : ""}? Tell me if you need help.`;
-}
-
-/** Later: the row comes back tomorrow (the follow-through snooze is by day). */
-export function tomorrowDay(now: Date = new Date()): string {
-  const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 /** PHILO-15 B61: the receipt a source Retry leaves in the drawer. */
@@ -225,6 +214,9 @@ function NeedVerbsView({ face, primary, onWell, well, menu = null, onMenu = () =
   const [busy, setBusy] = useState(false);
   const projects = useDesk((state) => state.projects);
   const setSourceReceipt = useSourceReceipt((st) => st.set);
+  // The item reader (2026-11-08): in the Needs-you window, Open on an item
+  // with no other home reads it in place.
+  const readHere = useReadInPlace(face);
   const lead = primary ? "primary" : "secondary";
   const v = face.verbs;
   const named = (verb: string) => `${verb}: ${face.name}`;
@@ -382,7 +374,7 @@ function NeedVerbsView({ face, primary, onWell, well, menu = null, onMenu = () =
           onClick={() => refOpener(v.ref)?.()}>Review</Button>
       );
     case "work": {
-      const opener = faceOpener(face);
+      const opener = readHere ?? faceOpener(face);
       const key = `action-item:${v.cardId}`;
       // Betterment D3: Drop removes it; Undo (8 s) opens it again.
       const drop = () => act("Drop", async () => {
@@ -1374,6 +1366,21 @@ export function NeedsDrawer() {
   };
   const [showMuted, setShowMuted] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
+  // The item reader (2026-11-08): the action item read in place, by a press
+  // on its row, its menu's Open, or an `action_item:<id>` ref (the
+  // follow-through request: its event when this window is mounted, the
+  // pending id when it mounts after).
+  const [readerId, setReaderId] = useState<string | null>(() => takeFollowThrough());
+  useEffect(() => {
+    const onNavigate = (event: Event) => {
+      const nav = (event as CustomEvent<IntelligenceNavigation>).detail;
+      if (nav?.view !== "follow-through" || !nav.followThroughId) return;
+      takeFollowThrough();
+      setReaderId(nav.followThroughId);
+    };
+    window.addEventListener(INTELLIGENCE_NAVIGATE, onNavigate);
+    return () => window.removeEventListener(INTELLIGENCE_NAVIGATE, onNavigate);
+  }, []);
 
   // The Door read: the next event and whether a calendar is connected.
   const computedAt = needs.room?.computedAt ?? null;
@@ -1454,6 +1461,13 @@ export function NeedsDrawer() {
   const memberRefs = new Set(faces.filter((f) => !f.uncounted).map((f) => f.memberRef ?? f.id));
   const sourceReceipt = useSourceReceipt((st) => st.receipt);
   useRowMarks(listRef, all, memberRefs);
+  // The item in the reader: its row's face. Once the list is read and the
+  // item is not in it (Done, Later, or gone), the reader returns to the list.
+  const readerFace = readerId
+    ? all.find((f) => f.verbs.kind === "work" && f.verbs.cardId === readerId) ?? null
+    : null;
+  const readerGone = Boolean(readerId && !readerFace && needsRead);
+  useEffect(() => { if (readerGone) setReaderId(null); }, [readerGone]);
 
   const upcoming = door?.upcoming?.[0];
   const next = nextWord(upcoming
@@ -1468,7 +1482,10 @@ export function NeedsDrawer() {
     if (target.closest("button, a, input, textarea, select, .needs-drawer-well")) return;
     const id = target.closest("li.needs-row")?.getAttribute("data-object-id");
     const face = all.find((f) => f.id === id);
-    if (face) faceOpener(face)?.();
+    if (!face) return;
+    const item = readsInPlace(face);
+    if (item) setReaderId(item);
+    else faceOpener(face)?.();
   };
 
 
@@ -1519,6 +1536,7 @@ export function NeedsDrawer() {
     <div className="needs-drawer kit-face" data-testid="needs-drawer"
       data-settling={settling ? "true" : undefined} aria-busy={settling ? true : undefined}>
       {settling ? <div className="needs-drawer-settling"><SurfaceState loading /></div> : null}
+      {readerFace ? <ItemReader face={readerFace} onBack={() => setReaderId(null)} /> : <ItemReaderContext.Provider value={setReaderId}>
       <Toolbar label="Needs you" data-testid="needs-toolbar" trailing={offer}>
         {chipRow}
       </Toolbar>
@@ -1572,6 +1590,7 @@ export function NeedsDrawer() {
           {scope === "people" && !settling ? <div className="needs-people-foot">{openPeople}</div> : null}
         </ScrollHint>
       </div>
+      </ItemReaderContext.Provider>}
       {/* The Chair's head keeps its testids (the Chair-ready signal of the
           glass rigs): the status bar's first word IS the Chair's display. */}
       <StatusBar data-testid="arrival-headline" items={statusItems} verbs={dropped ? <NeedsDroppedReceipt /> : null} />

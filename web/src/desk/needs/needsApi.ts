@@ -19,6 +19,12 @@ export function followThrough(cardId: string, verb: string, payload: Record<stri
   return apiFetch(FOLLOW_THROUGH, { method: "POST", json: { card_id: cardId, verb, payload } });
 }
 
+/** Later: the row comes back tomorrow (the follow-through snooze is by day). */
+export function tomorrowDay(now: Date = new Date()): string {
+  const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 /** The one receipt a Done answers, whichever route took it. */
 export type DoneReceipt = { id: string; status: string; doneAt: string | null };
 
