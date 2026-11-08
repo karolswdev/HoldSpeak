@@ -2,6 +2,8 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · (PR) One table of Programs operations (`services/program_operations.py`): the 36 Programs routes and 33 MCP tools come from it; the hand-written twins are parked; 8 web-only verbs get their MCP tool (templates, from_action, race, step_take, step_hand_back, shape_engine, shape_held_drop, plan_programs); MCP 294 → 302.
+- 2026-11-08 · (PR) Operation parity census: `scripts/operation_parity.py` maps every live route, MCP tool and CLI command to the service operations it reaches; 581 operations, 289 web only, 89 MCP only, 201 both (`docs/generated/operation-parity.md`).
 - 2026-11-08 · (PR) One morning brief: Telegram /brief, the morning push, Reach's morning line, the CLI and MCP `cadence.brief` read the day's brief (Telegram keeps the first open loop's buttons); `holdspeak/cadence/brief.py` parked; a changed open loop makes the brief stale.
 - 2026-11-08 · (PR) Fix forward #2002: the recorded `/api/inference/assignments` answers are re-recorded without `sequence.step`/`workflow.node` (45 task rows); the Runs on glass reads the engine-door probe (no route plan or execution id, 9183f78ba).
 - 2026-11-08 · Fix forward #2007: the graph cites the parked reactions family and ReactionService (graph join guard).

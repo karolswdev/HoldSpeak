@@ -18,6 +18,7 @@ from dataclasses import dataclass
 from typing import Any, Callable, Mapping, Optional
 
 from ..principals import Principal, PrincipalKind
+from .program_operations import THREAD_CLASSES as _PROGRAM_THREAD_CLASSES
 
 # ---------------------------------------------------------------------------
 # Classification map -- every MCP tool, fail-closed
@@ -333,29 +334,9 @@ _ALL_TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     "calls.list": ("evidence_read", False),
     "calls.hangup": ("effect_proposal", False),
     "calls.place": ("effect_proposal", False),
-    # Programs (2026-10-28): the engine's goal-cut-into-steps verbs.
-    "program.list": ("evidence_read", False),
-    "program.get": ("evidence_read", False),
-    "program.create": ("effect_proposal", False),
-    "program.plan": ("effect_proposal", False),
-    "program.update": ("effect_proposal", False),
-    "program.start": ("effect_proposal", False),
-    "program.park": ("effect_proposal", False),
-    "program.resume": ("effect_proposal", False),
-    "program.propose_fix": ("effect_proposal", False),
-    "program.checkpoint": ("effect_proposal", False),
-    "program.step_done": ("effect_proposal", False),
-    "program.start_from": ("effect_proposal", False),
-    "program.require": ("effect_proposal", False),
-    "program.step_update": ("effect_proposal", False),
-    "program.amend": ("effect_proposal", False),
-    "program.step_remove": ("effect_proposal", False),
-    "program.text": ("evidence_read", False),
-    "program.text_apply": ("effect_proposal", False),
-    "program.shape": ("effect_proposal", False),
-    "program.plan_draft": ("effect_proposal", False),
-    "program.round": ("effect_proposal", False),
-    "program.add_to_night": ("effect_proposal", False),
+    # Programs (2026-10-28; one table 2026-11-08): the engine's
+    # goal-cut-into-steps verbs, classed by ``services/program_operations.py``.
+    **_PROGRAM_THREAD_CLASSES,
     "project.mark_update_delivered": ("effect_proposal", False),
     # Phone (2026-10-28): his phone.
     "phone.status": ("evidence_read", False),
@@ -365,10 +346,10 @@ _ALL_TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     # PG-DIRECTION DIR1: a briefing page for a held item (owner only).
     "phone.brief": ("effect_proposal", False),
     "phone.later": ("effect_proposal", False),
-    # PG-DIRECTION DIR8: AUTHORITY, so in no palette and refused by
-    # ``tool_class``; a call's turn holds it for his spoken yes
-    # (``palettes.CALL_HELD_AUTHORITY``), the one way it is admitted.
-    "program.decide": ("effect_proposal", False),
+    # PG-DIRECTION DIR8: ``program.decide`` is AUTHORITY, so in no palette and
+    # refused by ``tool_class``; a call's turn holds it for his spoken yes
+    # (``palettes.CALL_HELD_AUTHORITY``), the one way it is admitted. Its row
+    # (``effect_proposal``) is the table's, above.
 }
 
 # Public accessors

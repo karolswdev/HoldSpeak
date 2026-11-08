@@ -924,7 +924,7 @@ This spelling difference does not change the gate's behavior.
 `program.step_update` takes both `"level"` and `"auto"`.
 
 
-The MCP tools are in the `program` family:
+The MCP tools are in the `program` family. They and the HTTP routes come from one table, `holdspeak/services/program_operations.py`:
 
 | Tool | What it does | Who can use it |
 |---|---|---|
@@ -949,6 +949,13 @@ The MCP tools are in the `program` family:
 | `program.plan_draft` | Draft the steps of a program in Drafting from its goal: one engine call; the rows with their size. With `text` and `split`, split one drafted step. Nothing is written. | You, or the orchestrating agent |
 | `program.propose_fix` | From an audit, make the fix program in Drafting: one step for each MUST finding, each with a Review requirement that it is fixed. It never starts it. | You, or the agent that made the audit |
 | `program.round` | The interview rounds: `open`, `next` (one question), `answer` (the rows it implies), `skip_question`, `not_this`, `done`, `skip`, `reopen`. | You, or the agent that made the program. Answer for yourself: a `=` line in the text from an agent is refused. |
+| `program.templates` | List the templates: `id`, `name` and `description`. `program.create` takes the `id` as `template`. | Everyone |
+| `program.from_action` | Make a program in Drafting from one open action of a project (`action_id`, `project_id`). It does not start it. | You, or the orchestrating agent |
+| `program.race` | Make a step that has not started into a race: `n` agents (2 or 3) do the same step. | You at once; an orchestrating agent by the Control level |
+| `program.step_take`, `program.step_hand_back` | Take over the running lane of a step, and give it back. | You only |
+| `program.shape_engine` | Read the engine that shapes the program: `{engine, capability}`, or null. | Everyone |
+| `program.shape_held_drop` | Not this: drop the change rows that a shaping call left waiting. | You, or the orchestrating agent |
+| `program.plan_programs` | Apply a draft that has more than one program: `which` is `all` or the place of one program. | You, or the orchestrating agent |
 | `phone.brief` | Make the briefing page for one held item, and with `send: "telegram"` send it to your Telegram chat. | You only |
 | `phone.later` | Later on one held item, with your words for the time. It decides nothing. | You only |
 
