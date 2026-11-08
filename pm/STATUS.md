@@ -2,6 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · #1830 One keystore: one master key in the Keychain (read through /usr/bin/security, 2 s deadline), every secret sealed in keystore.enc; old per-secret items move in on first start.
 - 2026-11-07 · #1822 The walk starts only when the desk is ready, and moves one beat later.
 - 2026-11-07 · #1821 #1820 The walk link opens the desk by itself (carries the desk bootstrap token).
 - 2026-11-07 · #1819 #1817 SIGUSR1 dumps every hub thread's stack into the log (no chain).
