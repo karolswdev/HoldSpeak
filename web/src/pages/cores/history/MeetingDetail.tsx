@@ -227,7 +227,11 @@ export function MeetingOutcomes({ data, meeting, onDecide }: {
   const [drafts, setDrafts] = useState<Record<string, Draft>>({});
   const [more, setMore] = useState<Record<string, MoreMenu>>({});
   const [editing, setEditing] = useState<Record<string, boolean>>({});
-  const [doorPeople, setDoorPeople] = useState<Record<string, string>>({});
+  // HS-S41: the Door read has a state and an attempt. A late answer for an
+  // older action set or an older attempt never overwrites a newer read.
+  type DoorRead = { key: string; status: "pending" | "ready" | "failed"; found: Record<string, string> };
+  const [door, setDoor] = useState<DoorRead>({ key: "", status: "ready", found: {} });
+  const [doorAttempt, setDoorAttempt] = useState(0);
   const doorRead = useRef<{ key: string; promise: Promise<Record<string, string>> } | null>(null);
   const moreRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   useEffect(() => {
@@ -249,14 +253,16 @@ export function MeetingOutcomes({ data, meeting, onDecide }: {
     .filter(Boolean)
     .sort()
     .join("|");
-  const doorReadKey = `${data.reviewRevision ?? ""}:${confirmedActionIds}`;
+  const doorReadKey = `${data.reviewRevision ?? ""}:${confirmedActionIds}:${doorAttempt}`;
   useEffect(() => {
     let live = true;
     if (!confirmedActionIds) {
       doorRead.current = null;
-      setDoorPeople({});
+      setDoor({ key: doorReadKey, status: "ready", found: {} });
       return () => { live = false; };
     }
+    // A stale destination is not shown while the current read is open.
+    setDoor({ key: doorReadKey, status: "pending", found: {} });
     const wanted = new Set(confirmedActionIds.split("|"));
     const existing = doorRead.current?.key === doorReadKey ? doorRead.current.promise : null;
     const promise = existing ?? apiFetch<{ board?: Record<string, Array<{
@@ -285,21 +291,26 @@ export function MeetingOutcomes({ data, meeting, onDecide }: {
     doorRead.current = { key: doorReadKey, promise };
     void promise
       .then((found) => {
-        if (live) setDoorPeople(found);
+        if (live) setDoor({ key: doorReadKey, status: "ready", found });
       })
       .catch(() => {
         if (doorRead.current?.key === doorReadKey) doorRead.current = null;
-        if (live) setDoorPeople({});
+        if (live) setDoor({ key: doorReadKey, status: "failed", found: {} });
       });
     return () => { live = false; };
   }, [confirmedActionIds, doorReadKey]);
+  const doorCurrent = door.key === doorReadKey ? door : { key: doorReadKey, status: "pending" as const, found: {} };
+  const doorPeople = doorCurrent.status === "ready" ? doorCurrent.found : {};
+  const checkPerson = () => setDoorAttempt((attempt) => attempt + 1);
+  // An owner is a NAME. Two people with one display name are one choice,
+  // never two rows that look like a choice of person.
+  const ownerNames = Array.from(new Set(people
+    .map((person) => String(person.display_name ?? "").trim())
+    .filter(Boolean)));
   const ownerOptions = [
     { value: "", label: "Who?" },
     { value: "Me", label: "Me" },
-    ...people
-      .map((person) => String(person.display_name ?? "").trim())
-      .filter(Boolean)
-      .map((name) => ({ value: name, label: name })),
+    ...ownerNames.filter((name) => name !== "Me").map((name) => ({ value: name, label: name })),
   ];
   const draftFor = (row: OutcomeRow, id: string): Draft =>
     drafts[id] ?? { text: row.text, owner: row.owner ?? "", due: row.due ?? "" };
@@ -379,6 +390,14 @@ export function MeetingOutcomes({ data, meeting, onDecide }: {
       menuEntries.push({
         type: "item", id: `people-${id}`, label: "People", ghost: menuBusy,
         onSelect: () => openPerson(row.personRelationshipId!, "prep"),
+      });
+    } else if (!pending && row.plate === "ACT" && row.proposalId && row.actionItemId) {
+      // HS-S41: no person is known from this read. Check reads the Door
+      // again; it never confirms, links or saves.
+      menuEntries.push({
+        type: "item", id: `check-person-${id}`, label: "Check person",
+        ghost: menuBusy ?? (doorCurrent.status === "pending" ? "Reading" : undefined),
+        onSelect: checkPerson,
       });
     }
     const hasMenu = menuEntries.length > 0;
@@ -544,6 +563,11 @@ export function MeetingOutcomes({ data, meeting, onDecide }: {
           aria-label="Retry outcome refresh" onClick={() => void data.retryOutcomeReview()}>
           Retry
         </Button>
+      ) : null}
+      {confirmedActionIds && doorCurrent.status === "failed" ? (
+        <ActionNotice tone="warn" role="alert" action={{ label: "Check", onClick: checkPerson }}>
+          <span data-testid="meeting-door-read-failed">Could not read who these are</span>
+        </ActionNotice>
       ) : null}
     </>
   );
