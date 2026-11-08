@@ -35,10 +35,7 @@ if TYPE_CHECKING:
 # HS-165 law: MCP-only families (project.*, provider.*) are classified
 # for the tool GATE but belong to NO thread palette -- the thread
 # grammar stays bounded; agents reach those tools over MCP only.
-# HS-200-17: ``practice_recipe.*`` joins them.  R17-3 forbids widening the
-# ordinary Thread palette for the prepared-recipe catalog, and a mode
-# allow-list computed from the class map would have widened Desk and Chase
-# by three tools as a side effect of classifying them for the gate.
+# HS-200-17's ``practice_recipe.*`` family is parked (2026-11-08).
 # PHILO-10-01 (#694): ``channel.*`` joins them -- the Send's family is the
 # Room's, reached over MCP or named by a custom mode; the seeded Desk and
 # Chase palettes do not widen by classifying it for the gate.
@@ -69,7 +66,7 @@ def _thread_side(name: str) -> bool:
     # MCP-only families: an agent composes the desk over MCP; the seeded
     # thread palettes do not widen (no palette grows versus main).
     return name not in _MCP_ONLY and not name.startswith(
-        ("project.", "provider.", "interview.", "practice_recipe.", "channel.", "desk_window.", "automation.",
+        ("project.", "provider.", "interview.", "channel.", "desk_window.", "automation.",
          # Betterment Q9: Find the tasks on a note (the note.* MCP family).
          "note.",
          # Calls (2026-10-28): the phone line is an MCP and REST family.
