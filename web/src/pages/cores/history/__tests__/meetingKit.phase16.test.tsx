@@ -617,6 +617,8 @@ describe("the meeting's Decisions through Confirm (the hook and the ledger, rend
     fireEvent.click(screen.getByTestId("outcome-refresh-retry-btn"));
     await waitFor(() => expect(screen.getByTestId("action-done-btn")).toBeTruthy());
     expect(receipts.at(-1)?.text).toBe("Refreshed");
+    // UX-CANON A8: with nothing left to confirm, no "Confirm all 0".
+    expect(screen.queryByTestId("proposal-confirm-all-btn")).toBeNull();
   });
 });
 

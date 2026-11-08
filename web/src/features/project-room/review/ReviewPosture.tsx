@@ -646,11 +646,7 @@ export function ReviewPosture({ ctrl }: { ctrl: ReviewController }) {
               <section key={group.kind} className="surface-section review-kind-section" data-testid="review-kind-group">
                 <header className="surface-section-head">
                   <h3 data-testid="review-kind-label">{kindLabel(group.kind)}</h3>
-                  {openInGroup.length > 0 ? (
-                    <Token data-testid="review-kind-count" className="surface-token">
-                      {openInGroup.length}
-                    </Token>
-                  ) : null}
+                  {openInGroup.length > 0 ? <Token data-testid="review-kind-count" className="surface-token">{openInGroup.length}</Token> : null}
                 </header>
                 <ul className="surface-ledger-rows">
                   {openInGroup.map((proposal) => {

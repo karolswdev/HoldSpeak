@@ -765,6 +765,8 @@ describe("Empty update list", () => {
     render(<WindowHarness scope="project:p1" />);
     await openUpdateList();
     const line = screen.getByText("No updates yet");
+    // UX-CANON A8: the footer never says "0 updates".
+    expect(screen.queryByTestId("update-footer-receipt")).toBeNull();
     const empty = line.closest('.surface-state[data-object="project"]') as HTMLElement;
     expect(empty.querySelector("img.surface-state-sprite")).toBeTruthy();
     const drafts = () => apiFetch.mock.calls.filter(([u, init]) =>
