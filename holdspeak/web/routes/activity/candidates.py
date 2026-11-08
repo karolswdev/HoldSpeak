@@ -7,7 +7,7 @@ from ....db import get_database, get_observer
 from ....principals import UNAUTHENTICATED
 from ....services.activity_meeting_candidate_service import ActivityMeetingCandidateService
 from ....services.errors import NotFound, ValidationError
-from ....web_requests import _ActivityMeetingCandidateRequest, _ActivityMeetingCandidateStatusRequest
+from ....web_requests import _ActivityMeetingCandidateRequest
 from ...context import WebContext
 from ...runtime_support import _meeting_callback_payload, error_500
 from ....logging_config import get_logger
@@ -22,10 +22,6 @@ def _start_with_principal(on_start:Any,principal:Any)->Any:
 def _err(e:Exception)->JSONResponse:return JSONResponse({"error":"activity meeting candidate not found" if isinstance(e,NotFound) else str(e)},status_code=404 if isinstance(e,NotFound) else 400)
 def build_candidates_router(ctx:WebContext)->APIRouter:
  router=APIRouter()
- @router.get("/api/activity/meeting-candidates/preview")
- def preview(request:Request,limit:int=50)->Any:
-  try:return JSONResponse(_svc().preview(_principal(request),limit))
-  except Exception as e:return error_500(e,log,"Failed to preview activity meeting candidates")
  @router.get("/api/activity/meeting-candidates")
  def list_candidates(request:Request,source_connector_id:Optional[str]=None,status:Optional[str]=None,limit:int=100)->Any:
   try:return JSONResponse(_svc().list(_principal(request),source_connector_id,status,limit))
@@ -36,11 +32,6 @@ def build_candidates_router(ctx:WebContext)->APIRouter:
   try:return JSONResponse(_svc().create(_principal(request),payload.model_dump()))
   except ValidationError as e:return _err(e)
   except Exception as e:return error_500(e,log,"Failed to create activity meeting candidate")
- @router.put("/api/activity/meeting-candidates/{candidate_id}/status")
- def update(request:Request,candidate_id:str,payload:_ActivityMeetingCandidateStatusRequest)->Any:
-  try:return JSONResponse(_svc().update_status(_principal(request),candidate_id,payload.status))
-  except (NotFound,ValidationError) as e:return _err(e)
-  except Exception as e:return error_500(e,log,"Failed to update activity meeting candidate")
  @router.post("/api/activity/meeting-candidates/{candidate_id}/start")
  def start(request:Request,candidate_id:str)->Any:
   if ctx.on_start is None:return JSONResponse({"success":False,"error":"Meeting start control not supported"},status_code=501)

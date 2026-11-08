@@ -14,7 +14,7 @@ For example, the old meeting Slack-export route returns `slack_moved_to_channel`
 Read the handler and owning guide before treating route presence as feature availability.
 Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
-Routes: 932 (plus static mounts). iOS-consumed: 89. Web-consumed: 603.
+Routes: 915 (plus static mounts). iOS-consumed: 89. Web-consumed: 603.
 
 ## device_audio_ws
 
@@ -38,35 +38,21 @@ Routes: 932 (plus static mounts). iOS-consumed: 89. Web-consumed: 603.
 | DELETE | `/api/activity/meeting-candidates` | server only |
 | GET | `/api/activity/meeting-candidates` | web |
 | POST | `/api/activity/meeting-candidates` | server only |
-| GET | `/api/activity/meeting-candidates/preview` | server only |
 | POST | `/api/activity/meeting-candidates/{candidate_id}/start` | web |
-| PUT | `/api/activity/meeting-candidates/{candidate_id}/status` | server only |
 
 ## web.routes.activity.enrichment
 
 | Method | Path | Consumers |
 |---|---|---|
-| GET | `/api/activity/annotations` | server only |
 | GET | `/api/activity/briefing` | ios |
 | GET | `/api/activity/enrichment/connectors` | web |
-| PUT | `/api/activity/enrichment/connectors/{connector_id}` | server only |
-| DELETE | `/api/activity/enrichment/connectors/{connector_id}/annotations` | server only |
-| DELETE | `/api/activity/enrichment/connectors/{connector_id}/candidates` | server only |
 | GET | `/api/activity/enrichment/connectors/{connector_id}/dry-run` | web |
-| GET | `/api/activity/enrichment/connectors/{connector_id}/runs` | server only |
-| GET | `/api/activity/enrichment/github/preview` | server only |
-| POST | `/api/activity/enrichment/github/run` | server only |
-| GET | `/api/activity/enrichment/jira/preview` | server only |
-| POST | `/api/activity/enrichment/jira/run` | server only |
-| POST | `/api/activity/enrichment/pipelines/{pipeline_id}/run` | server only |
 | POST | `/api/activity/extension/events` | server only |
 
 ## web.routes.activity.ledger
 
 | Method | Path | Consumers |
 |---|---|---|
-| POST | `/api/activity/domains` | server only |
-| DELETE | `/api/activity/domains/{domain}` | server only |
 | DELETE | `/api/activity/records` | web |
 | GET | `/api/activity/records` | web |
 | POST | `/api/activity/refresh` | web |
@@ -79,7 +65,6 @@ Routes: 932 (plus static mounts). iOS-consumed: 89. Web-consumed: 603.
 |---|---|---|
 | GET | `/api/activity/nudges` | ios, web |
 | POST | `/api/activity/nudges/select` | ios, web |
-| POST | `/api/activity/nudges/select/clear` | server only |
 | POST | `/api/activity/nudges/{nudge_id}/dismiss` | ios, web |
 
 ## web.routes.activity.plugin_jobs
@@ -89,7 +74,6 @@ Routes: 932 (plus static mounts). iOS-consumed: 89. Web-consumed: 603.
 | GET | `/api/plugin-jobs` | web |
 | POST | `/api/plugin-jobs/process` | web |
 | GET | `/api/plugin-jobs/summary` | web |
-| POST | `/api/plugin-jobs/{job_id}/cancel` | server only |
 | POST | `/api/plugin-jobs/{job_id}/retry-now` | web |
 
 ## web.routes.activity.rules
@@ -98,7 +82,6 @@ Routes: 932 (plus static mounts). iOS-consumed: 89. Web-consumed: 603.
 |---|---|---|
 | GET | `/api/activity/project-rules` | web |
 | POST | `/api/activity/project-rules` | server only |
-| POST | `/api/activity/project-rules/apply` | server only |
 | POST | `/api/activity/project-rules/preview` | server only |
 | DELETE | `/api/activity/project-rules/{rule_id}` | web |
 | PUT | `/api/activity/project-rules/{rule_id}` | server only |

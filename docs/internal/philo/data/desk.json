@@ -244,12 +244,6 @@
           "execution": "passed"
         },
         {
-          "path": "web/src/desk/thought-workspace/ThoughtReadsWell.test.tsx",
-          "node": "keeps the new action ID across set denial after accepted cleanup left an older stored ID",
-          "assertion": "The active Reads well uses its new in-memory retry identity rather than the stale accepted stored ID.",
-          "execution": "passed"
-        },
-        {
           "path": "web/src/desk/__tests__/palette.app.test.tsx",
           "node": "same-title, same-time meetings show distinct attendees and open their exact identities",
           "assertion": "Software wire fixtures keep both meeting rows and open each canonical identity; root separately walks the real isolated meeting reads and window scopes.",
@@ -716,7 +710,7 @@
         },
         {
           "path": "web/src/desk/__tests__/keymap.test.ts",
-          "node": "a ghosted verb refuses quietly (\u2318W with no window open)",
+          "node": "a ghosted verb refuses quietly (⌘W with no window open)",
           "assertion": "The keymap does not run a ghosted verb.",
           "execution": "not_run"
         },
@@ -827,19 +821,7 @@
           "claim": "External files are accepted only over a release target."
         }
       ],
-      "tests": [
-        {
-          "path": "web/src/desk/__tests__/dropMatrix.test.ts",
-          "node": "unlisted pairs refuse (inert, never a guess)",
-          "assertion": "Unlisted source/target pairs return no effect."
-        },
-        {
-          "path": "web/src/desk/__tests__/glassDrop.test.tsx",
-          "node": "every hub-supported suffix imports; junk refuses by name",
-          "assertion": "The inspected suite asserts external dragover/drop handling.",
-          "execution": "not_run"
-        }
-      ],
+      "tests": [],
       "docs": [
         "docs/DESK_OBJECT_MODEL.md",
         "docs/internal/philo/SRS.md"
@@ -1362,7 +1344,7 @@
         "docs/internal/philo/phase-17/IMPLEMENTATION-PRODUCTIVITY.md"
       ],
       "limitations": [
-        "No real network model was called in this branch\u2019s tests.",
+        "No real network model was called in this branch’s tests.",
         "Owner use and public release remain unverified."
       ],
       "failure_states": [
@@ -1376,7 +1358,7 @@
     {
       "id": "people.prep.read",
       "name": "Read 1:1 preparation",
-      "purpose": "Read a report\u2019s next 1:1, agenda, projects, confirmed actions and both obligations by their exact identity.",
+      "purpose": "Read a report’s next 1:1, agenda, projects, confirmed actions and both obligations by their exact identity.",
       "domain": "desk",
       "status": "built_unreleased",
       "status_reason": "The productive-desk branch wires People Prep and verifies accepted-action ownership and terminal-state exclusion with focused tests; owner use remains unobserved. Focused October 16 component tests cover both exact commitment inspectors and intent-open Add wells, with accepted writes clearing only the submitted raw draft. Release and owner use remain separate.",
@@ -1463,7 +1445,7 @@
         "docs/internal/FLAGSHIP-EXPERIENCE-PLAN-2026-10-16/IMPLEMENTATION-CDE.md"
       ],
       "limitations": [
-        "Verification uses isolated fixtures, not the owner\u2019s reports or calendar.",
+        "Verification uses isolated fixtures, not the owner’s reports or calendar.",
         "Owner use and public release remain unverified."
       ],
       "failure_states": [

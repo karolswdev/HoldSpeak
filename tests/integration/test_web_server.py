@@ -2247,7 +2247,7 @@ class TestPluginRunQueueApiEndpoints:
     plugins = property(lambda self: self)
     """Tests for deferred MIR plugin-run queue endpoints."""
 
-    def test_plugin_jobs_list_retry_and_cancel(self, monkeypatch, test_client):
+    def test_plugin_jobs_list_and_retry(self, monkeypatch, test_client):
         now = datetime(2026, 3, 29, 20, 0, 0)
 
         class FakeDb:
@@ -2376,26 +2376,13 @@ class TestPluginRunQueueApiEndpoints:
         assert retry_data["job"]["id"] == 2
         assert retry_data["job"]["status"] == "queued"
 
-        cancel_response = test_client.post("/api/plugin-jobs/1/cancel")
-        assert cancel_response.status_code == 200
-        assert cancel_response.json()["success"] is True
-        assert fake_db.plugins.get_plugin_run_job(1) is None
-
         retry_running = test_client.post("/api/plugin-jobs/3/retry-now")
         assert retry_running.status_code == 409
         assert retry_running.json()["success"] is False
 
-        cancel_running = test_client.post("/api/plugin-jobs/3/cancel")
-        assert cancel_running.status_code == 409
-        assert cancel_running.json()["success"] is False
-
         missing_retry = test_client.post("/api/plugin-jobs/999/retry-now")
         assert missing_retry.status_code == 404
         assert missing_retry.json()["success"] is False
-
-        missing_cancel = test_client.post("/api/plugin-jobs/999/cancel")
-        assert missing_cancel.status_code == 404
-        assert missing_cancel.json()["success"] is False
 
     def test_plugin_jobs_process_requires_runtime_callback(self, test_client):
         response = test_client.post("/api/plugin-jobs/process", json={"mode": "retry_now", "max_jobs": 3})

@@ -4,7 +4,6 @@ from holdspeak.services.observer import NullObserver, PipelineObserver, observe_
 from typing import Any
 from ..db.core import Database
 from ..principals import Principal
-from .errors import ValidationError
 
 
 @observe_service
@@ -35,14 +34,6 @@ class ActivityLedgerService:
     def update_settings(self, principal: Principal, settings: dict[str, Any]) -> dict[str, Any]:
         result = self._db.activity.update_activity_privacy_settings(enabled=settings["enabled"], retention_days=settings["retention_days"])
         return {"settings": result, "status": self.status(principal)}
-
-    def upsert_domain_rule(self, principal: Principal, domain: str, rule: str) -> dict[str, Any]:
-        try: value = self._db.activity.upsert_activity_domain_rule(domain=domain, action=rule)
-        except ValueError as exc: raise ValidationError(str(exc)) from exc
-        return {"rule": value, "status": self.status(principal)}
-
-    def delete_domain_rule(self, principal: Principal, domain: str) -> dict[str, Any]:
-        return {"deleted": self._db.activity.delete_activity_domain_rule(domain), "status": self.status(principal)}
 
     def delete_records(self, principal: Principal, domain: str | None, project_id: str | None) -> dict[str, Any]:
         return {"deleted": self._db.activity.delete_activity_records(domain=domain, project_id=project_id), "status": self.status(principal)}

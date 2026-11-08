@@ -1,6 +1,6 @@
 """HTTP adapters for activity project-rule operations."""
 from __future__ import annotations
-from typing import Any, Optional
+from typing import Any
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 from ....db import get_database, get_observer
@@ -44,8 +44,4 @@ def build_rules_router(ctx:WebContext)->APIRouter:
   try:return JSONResponse(_svc().preview(_principal(request),payload.model_dump(),None))
   except ValidationError as e:return _err(e)
   except Exception as e:return error_500(e,log,"Failed to preview activity project rule")
- @router.post("/api/activity/project-rules/apply")
- def apply(request:Request,limit:Optional[int]=None)->Any:
-  try:return JSONResponse(_svc().apply(_principal(request),limit))
-  except Exception as e:return error_500(e,log,"Failed to apply activity project rules")
  return router

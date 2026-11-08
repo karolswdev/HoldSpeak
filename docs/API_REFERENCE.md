@@ -4,7 +4,7 @@ This reference supplements [API surface](API_SURFACE.md). The existing real-app
 generator owns the route roster; this census adds static handler evidence.
 It does not invent request/response schemas for raw `Request` handlers.
 
-Census baseline snapshot: `675401a857b85336d4acaa8c65383dfc9636e4c8`. Handler evidence and test candidates are read from the current working tree at generation. **932 method/route entries**.
+Census baseline snapshot: `675401a857b85336d4acaa8c65383dfc9636e4c8`. Handler evidence and test candidates are read from the current working tree at generation. **915 method/route entries**.
 
 **Verification boundary:** inspect the full endpoint ledger, `docs/generated/api-reference.json` (not in git; run `scripts/gen_docs.sh` to write it),
 and the [declared OpenAPI schemas](generated/openapi.json) for transport models.
@@ -33,12 +33,12 @@ the shared RuntimeBus. Companion client tags come from the existing generator.
 | --- | ---: |
 | `device_audio_ws` | 1 |
 | `fastapi.applications` | 4 |
-| `web.routes.activity.candidates` | 6 |
-| `web.routes.activity.enrichment` | 14 |
-| `web.routes.activity.ledger` | 7 |
-| `web.routes.activity.nudges` | 4 |
-| `web.routes.activity.plugin_jobs` | 5 |
-| `web.routes.activity.rules` | 6 |
+| `web.routes.activity.candidates` | 4 |
+| `web.routes.activity.enrichment` | 4 |
+| `web.routes.activity.ledger` | 5 |
+| `web.routes.activity.nudges` | 3 |
+| `web.routes.activity.plugin_jobs` | 4 |
+| `web.routes.activity.rules` | 5 |
 | `web.routes.agent_hand` | 17 |
 | `web.routes.authority` | 7 |
 | `web.routes.automations` | 19 |

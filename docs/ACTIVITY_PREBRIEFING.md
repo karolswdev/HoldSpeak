@@ -22,9 +22,7 @@ meetings are available from `GET /api/activity/meeting-candidates`.
 ## Start a candidate
 
 Open a record to inspect its source references. The current Activity face offers
-**Start meeting** for a candidate and **Dry run** for a connector. Candidate
-status can also be changed with `PUT /api/activity/meeting-candidates/{candidate_id}/status`
-and a `{ "status": "..." }` body. Starting a candidate uses the ordinary
+**Start meeting** for a candidate and **Dry run** for a connector. Starting a candidate uses the ordinary
 meeting capture and authority path; it does not approve an unrelated external
 effect.
 

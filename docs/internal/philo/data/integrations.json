@@ -157,18 +157,6 @@
           "node": "retries the failed message through the existing regenerate writer",
           "assertion": "A failed answer offers the canonical regenerate writer for that message.",
           "execution": "passed"
-        },
-        {
-          "path": "web/src/desk/__tests__/ThreadComposer.test.tsx",
-          "node": "allows an explicit new Send of retained words after unknown, blocking only the actual pending command",
-          "assertion": "A new deliberate Send is possible after unknown; pending blocks another dispatch.",
-          "execution": "passed"
-        },
-        {
-          "path": "web/src/desk/__tests__/ThreadComposer.test.tsx",
-          "node": "names an unknown task outcome without automatic replay and retains newer typing and speech",
-          "assertion": "Transport ambiguity retains original command and newer typed/spoken draft without replay.",
-          "execution": "passed"
         }
       ],
       "docs": [
@@ -1621,10 +1609,7 @@
       ],
       "apis": [
         "GET /api/activity/enrichment/connectors",
-        "PUT /api/activity/enrichment/connectors/{connector_id}",
-        "GET /api/activity/enrichment/connectors/{connector_id}/dry-run",
-        "GET /api/activity/enrichment/connectors/{connector_id}/runs",
-        "POST /api/activity/enrichment/pipelines/{pipeline_id}/run"
+        "GET /api/activity/enrichment/connectors/{connector_id}/dry-run"
       ],
       "configuration": [
         "~/.holdspeak/connector_packs",
@@ -1769,10 +1754,7 @@
         "activity_annotations",
         "connector_runs"
       ],
-      "apis": [
-        "GET /api/activity/enrichment/github/preview",
-        "POST /api/activity/enrichment/github/run"
-      ],
+      "apis": [],
       "configuration": [
         "gh path",
         "timeout",
@@ -1816,17 +1798,6 @@
           "path": "tests/unit/test_activity_github.py",
           "node": "test_preview_github_cli_enrichment_plans_read_only_commands",
           "assertion": "Mutating gh commands are rejected by the command policy.",
-          "execution": {
-            "status": "passed",
-            "record": "docs/generated/test-execution.json",
-            "run": "full-python-suite",
-            "cases": 1
-          }
-        },
-        {
-          "path": "tests/integration/test_web_activity_api.py",
-          "node": "test_github_run_records_a_connector_run_row",
-          "assertion": "A GitHub connector run is recorded as a connector_runs row.",
           "execution": {
             "status": "passed",
             "record": "docs/generated/test-execution.json",
@@ -1904,8 +1875,6 @@
         "GET /api/providers/confluence/connections",
         "POST /api/providers/jira/connections/{ref}/recheck",
         "POST /api/providers/confluence/connections/{ref}/recheck",
-        "GET /api/activity/enrichment/jira/preview",
-        "POST /api/activity/enrichment/jira/run",
         "GET /api/calendar/events"
       ],
       "configuration": [

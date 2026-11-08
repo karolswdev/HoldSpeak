@@ -323,7 +323,7 @@ def test_census_sees_source_route_changes_while_openapi_is_unchanged(route_surfa
         app.router.routes.remove(route)
         return route
 
-    _drop("DELETE", "/api/activity/domains/{domain}")  # removed from source
+    _drop("DELETE", "/api/activity/project-rules/{rule_id}")  # removed from source
     _drop("DELETE", "/api/activity/records")
 
     @app.delete("/api/activity/records")
@@ -336,7 +336,7 @@ def test_census_sees_source_route_changes_while_openapi_is_unchanged(route_surfa
 
     assert _openapi_digest() == before
     assert "new: http POST /api/philo-census-probe has no edge (philo_census_probe)" in lines
-    assert any(line.startswith("removed: http DELETE /api/activity/domains/{domain} ") for line in lines)
+    assert any(line.startswith("removed: http DELETE /api/activity/project-rules/{rule_id} ") for line in lines)
     assert any(
         line.startswith("changed: http DELETE /api/activity/records (")
         and "delete_records_renamed" in line

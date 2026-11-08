@@ -58353,72 +58353,6 @@
       ]
     },
     {
-      "id": "edge.http.delete.api_activity_domains_domain",
-      "kind": "edge",
-      "label": "DELETE /api/activity/domains/{domain} [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "DELETE",
-          "path": "/api/activity/domains/{domain}"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/activity/ledger.py",
-          "line": 41,
-          "symbol": "delete_domain",
-          "claim": "delete_domain receives DELETE /api/activity/domains/{domain}; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.delete.api_activity_enrichment_connectors_connector_id_annotations",
-      "kind": "edge",
-      "label": "DELETE /api/activity/enrichment/connectors/{connector_id}/annotations [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "DELETE",
-          "path": "/api/activity/enrichment/connectors/{connector_id}/annotations"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/activity/enrichment.py",
-          "line": 43,
-          "symbol": "clear_annotations",
-          "claim": "clear_annotations receives DELETE /api/activity/enrichment/connectors/{connector_id}/annotations; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.delete.api_activity_enrichment_connectors_connector_id_candidates",
-      "kind": "edge",
-      "label": "DELETE /api/activity/enrichment/connectors/{connector_id}/candidates [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "DELETE",
-          "path": "/api/activity/enrichment/connectors/{connector_id}/candidates"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/activity/enrichment.py",
-          "line": 48,
-          "symbol": "clear_candidates",
-          "claim": "clear_candidates receives DELETE /api/activity/enrichment/connectors/{connector_id}/candidates; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
       "id": "edge.http.delete.api_activity_meeting_candidates",
       "kind": "edge",
       "label": "DELETE /api/activity/meeting-candidates [exposure=conditional]",
@@ -59381,28 +59315,6 @@
       ]
     },
     {
-      "id": "edge.http.get.api_activity_annotations",
-      "kind": "edge",
-      "label": "GET /api/activity/annotations [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "GET",
-          "path": "/api/activity/annotations"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/activity/enrichment.py",
-          "line": 53,
-          "symbol": "annotations",
-          "claim": "annotations receives GET /api/activity/annotations; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
       "id": "edge.http.get.api_activity_briefing",
       "kind": "edge",
       "label": "GET /api/activity/briefing [exposure=conditional]",
@@ -59469,72 +59381,6 @@
       ]
     },
     {
-      "id": "edge.http.get.api_activity_enrichment_connectors_connector_id_runs",
-      "kind": "edge",
-      "label": "GET /api/activity/enrichment/connectors/{connector_id}/runs [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "GET",
-          "path": "/api/activity/enrichment/connectors/{connector_id}/runs"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/activity/enrichment.py",
-          "line": 66,
-          "symbol": "runs",
-          "claim": "runs receives GET /api/activity/enrichment/connectors/{connector_id}/runs; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.get.api_activity_enrichment_github_preview",
-      "kind": "edge",
-      "label": "GET /api/activity/enrichment/github/preview [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "GET",
-          "path": "/api/activity/enrichment/github/preview"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/activity/enrichment.py",
-          "line": 71,
-          "symbol": "github_preview",
-          "claim": "github_preview receives GET /api/activity/enrichment/github/preview; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.get.api_activity_enrichment_jira_preview",
-      "kind": "edge",
-      "label": "GET /api/activity/enrichment/jira/preview [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "GET",
-          "path": "/api/activity/enrichment/jira/preview"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/activity/enrichment.py",
-          "line": 81,
-          "symbol": "jira_preview",
-          "claim": "jira_preview receives GET /api/activity/enrichment/jira/preview; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
       "id": "edge.http.get.api_activity_meeting_candidates",
       "kind": "edge",
       "label": "GET /api/activity/meeting-candidates [exposure=conditional]",
@@ -59553,28 +59399,6 @@
           "line": 30,
           "symbol": "list_candidates",
           "claim": "list_candidates receives GET /api/activity/meeting-candidates; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.get.api_activity_meeting_candidates_preview",
-      "kind": "edge",
-      "label": "GET /api/activity/meeting-candidates/preview [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "GET",
-          "path": "/api/activity/meeting-candidates/preview"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/activity/candidates.py",
-          "line": 26,
-          "symbol": "preview",
-          "claim": "preview receives GET /api/activity/meeting-candidates/preview; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
         }
       ]
     },
@@ -59817,72 +59641,6 @@
           "line": 223,
           "symbol": "list_events",
           "claim": "list_events receives GET /api/automations/events; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.get.api_automations_practice_recipes",
-      "kind": "edge",
-      "label": "GET /api/automations/practice-recipes [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "GET",
-          "path": "/api/automations/practice-recipes"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/automations.py",
-          "line": 134,
-          "symbol": "list_practice_recipes",
-          "claim": "list_practice_recipes receives GET /api/automations/practice-recipes; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.get.api_automations_practice_recipes_recipe_id",
-      "kind": "edge",
-      "label": "GET /api/automations/practice-recipes/{recipe_id} [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "GET",
-          "path": "/api/automations/practice-recipes/{recipe_id}"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/automations.py",
-          "line": 138,
-          "symbol": "get_practice_recipe",
-          "claim": "get_practice_recipe receives GET /api/automations/practice-recipes/{recipe_id}; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.get.api_automations_practice_recipes_recipe_id_plan",
-      "kind": "edge",
-      "label": "GET /api/automations/practice-recipes/{recipe_id}/plan [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "GET",
-          "path": "/api/automations/practice-recipes/{recipe_id}/plan"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/automations.py",
-          "line": 147,
-          "symbol": "compile_practice_recipe",
-          "claim": "compile_practice_recipe receives GET /api/automations/practice-recipes/{recipe_id}/plan; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
         }
       ]
     },
@@ -65621,94 +65379,6 @@
       ]
     },
     {
-      "id": "edge.http.post.api_activity_domains",
-      "kind": "edge",
-      "label": "POST /api/activity/domains [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "POST",
-          "path": "/api/activity/domains"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/activity/ledger.py",
-          "line": 36,
-          "symbol": "domain",
-          "claim": "domain receives POST /api/activity/domains; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.post.api_activity_enrichment_github_run",
-      "kind": "edge",
-      "label": "POST /api/activity/enrichment/github/run [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "POST",
-          "path": "/api/activity/enrichment/github/run"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/activity/enrichment.py",
-          "line": 75,
-          "symbol": "github_run",
-          "claim": "github_run receives POST /api/activity/enrichment/github/run; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.post.api_activity_enrichment_jira_run",
-      "kind": "edge",
-      "label": "POST /api/activity/enrichment/jira/run [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "POST",
-          "path": "/api/activity/enrichment/jira/run"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/activity/enrichment.py",
-          "line": 85,
-          "symbol": "jira_run",
-          "claim": "jira_run receives POST /api/activity/enrichment/jira/run; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.post.api_activity_enrichment_pipelines_pipeline_id_run",
-      "kind": "edge",
-      "label": "POST /api/activity/enrichment/pipelines/{pipeline_id}/run [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "POST",
-          "path": "/api/activity/enrichment/pipelines/{pipeline_id}/run"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/activity/enrichment.py",
-          "line": 61,
-          "symbol": "pipeline",
-          "claim": "pipeline receives POST /api/activity/enrichment/pipelines/{pipeline_id}/run; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
       "id": "edge.http.post.api_activity_extension_events",
       "kind": "edge",
       "label": "POST /api/activity/extension/events [exposure=conditional]",
@@ -65819,28 +65489,6 @@
       ]
     },
     {
-      "id": "edge.http.post.api_activity_nudges_select_clear",
-      "kind": "edge",
-      "label": "POST /api/activity/nudges/select/clear [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "POST",
-          "path": "/api/activity/nudges/select/clear"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/activity/nudges.py",
-          "line": 33,
-          "symbol": "clear",
-          "claim": "clear receives POST /api/activity/nudges/select/clear; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
       "id": "edge.http.post.api_activity_project_rules",
       "kind": "edge",
       "label": "POST /api/activity/project-rules [exposure=conditional]",
@@ -65859,28 +65507,6 @@
           "line": 29,
           "symbol": "create",
           "claim": "create receives POST /api/activity/project-rules; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.post.api_activity_project_rules_apply",
-      "kind": "edge",
-      "label": "POST /api/activity/project-rules/apply [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "POST",
-          "path": "/api/activity/project-rules/apply"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/activity/rules.py",
-          "line": 48,
-          "symbol": "apply",
-          "claim": "apply receives POST /api/activity/project-rules/apply; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
         }
       ]
     },
@@ -69896,28 +69522,6 @@
       ]
     },
     {
-      "id": "edge.http.post.api_plugin_jobs_job_id_cancel",
-      "kind": "edge",
-      "label": "POST /api/plugin-jobs/{job_id}/cancel [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "POST",
-          "path": "/api/plugin-jobs/{job_id}/cancel"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/activity/plugin_jobs.py",
-          "line": 44,
-          "symbol": "cancel",
-          "claim": "cancel receives POST /api/plugin-jobs/{job_id}/cancel; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
       "id": "edge.http.post.api_plugin_jobs_job_id_retry_now",
       "kind": "edge",
       "label": "POST /api/plugin-jobs/{job_id}/retry-now [exposure=conditional]",
@@ -72400,50 +72004,6 @@
           "line": 47,
           "symbol": "run",
           "claim": "run receives POST /api/workflows/{workflow_id}/run; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.put.api_activity_enrichment_connectors_connector_id",
-      "kind": "edge",
-      "label": "PUT /api/activity/enrichment/connectors/{connector_id} [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "PUT",
-          "path": "/api/activity/enrichment/connectors/{connector_id}"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/activity/enrichment.py",
-          "line": 28,
-          "symbol": "update_connector",
-          "claim": "update_connector receives PUT /api/activity/enrichment/connectors/{connector_id}; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.put.api_activity_meeting_candidates_candidate_id_status",
-      "kind": "edge",
-      "label": "PUT /api/activity/meeting-candidates/{candidate_id}/status [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "PUT",
-          "path": "/api/activity/meeting-candidates/{candidate_id}/status"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/activity/candidates.py",
-          "line": 40,
-          "symbol": "update",
-          "claim": "update receives PUT /api/activity/meeting-candidates/{candidate_id}/status; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
         }
       ]
     },
