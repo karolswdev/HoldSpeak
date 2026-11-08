@@ -260,6 +260,7 @@
     },
     "revision": 1,
     "spend_limit_usd": null,
+    "spend_note": null,
     "state": "drafting",
     "state_word": "Drafting",
     "status_line": "Drafting \u00b7 0 of 1 done \u00b7 check: true \u00b7 control Normal",

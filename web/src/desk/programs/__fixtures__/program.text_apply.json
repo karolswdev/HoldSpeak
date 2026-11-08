@@ -842,6 +842,7 @@
       "search_words": "the hub stops stalling every route under 100 ms while a meeting records. holdspeak build-and-review indexes people routes the loop watch the fan-out build and review",
       "skipped": 0,
       "spend_limit_usd": null,
+      "spend_note": null,
       "state": "running",
       "state_word": "Running",
       "status_line": "Running · 0 of 4 done · check: fake_program_check.sh · control YOLO",

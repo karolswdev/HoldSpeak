@@ -141,6 +141,7 @@
   "search_words": "move the people routes off the event loop and prove no handler holds it over… move the people routes off the event loop and prove no handler holds it over 100 ms holdspeak fast-cycle fast cycle",
   "skipped": 0,
   "spend_limit_usd": null,
+  "spend_note": null,
   "state": "drafting",
   "state_word": "Drafting",
   "status_line": "Drafting · 0 of 0 done · control YOLO",

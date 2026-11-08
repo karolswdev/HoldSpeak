@@ -600,6 +600,7 @@
   "search_words": "the fast path the fast path. holdspeak race fast read path #101 race",
   "skipped": 0,
   "spend_limit_usd": null,
+  "spend_note": null,
   "state": "done",
   "state_word": "Done",
   "status_line": "Done · 1 of 1 done · check: fake_program_check.sh · control Normal",
