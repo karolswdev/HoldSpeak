@@ -36,7 +36,7 @@
       "phase1_refs": [],
       "sources": [
         {
-          "path": "web/src/desk/thought-workspace/TaskWell.tsx",
+          "path": "web/src/desk/thought-workspace/_parked/TaskWell.tsx",
           "symbol": "export function TaskWell({",
           "claim": "The note task well invokes the real Door task producer."
         }

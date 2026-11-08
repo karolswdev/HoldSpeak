@@ -27,9 +27,9 @@
       "sources": [
         {
           "claim": "Defines meeting capture fields and timed transcript segment relationships.",
-          "line": 24,
-          "path": "holdspeak/db/schema.py",
-          "symbol": "SCHEMA_SQL"
+          "line": 16,
+          "path": "holdspeak/db/schema/meetings.py",
+          "symbol": "SQL"
         }
       ],
       "storage": [
@@ -65,9 +65,9 @@
       "sources": [
         {
           "claim": "Stores proposal content/destination hashes and separate lifecycle axes.",
-          "line": 424,
-          "path": "holdspeak/db/schema.py",
-          "symbol": "SCHEMA_SQL"
+          "line": 55,
+          "path": "holdspeak/db/schema/decisions_projects.py",
+          "symbol": "SQL"
         }
       ],
       "storage": [
@@ -101,9 +101,9 @@
       "sources": [
         {
           "claim": "Defines operation identity, envelope, principal, state, warrant and claim fields.",
-          "line": 2118,
-          "path": "holdspeak/db/schema.py",
-          "symbol": "SCHEMA_SQL"
+          "line": 11,
+          "path": "holdspeak/db/schema/kernel_journal.py",
+          "symbol": "SQL"
         }
       ],
       "storage": [
@@ -170,9 +170,9 @@
       "sources": [
         {
           "claim": "Defines attempt state, outcome, disposition and result/receipt references.",
-          "line": 3060,
-          "path": "holdspeak/db/schema.py",
-          "symbol": "SCHEMA_SQL"
+          "line": 229,
+          "path": "holdspeak/db/schema/cadence_agents.py",
+          "symbol": "SQL"
         }
       ],
       "storage": [

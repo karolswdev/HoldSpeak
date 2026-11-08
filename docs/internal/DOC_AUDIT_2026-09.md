@@ -62,7 +62,7 @@ The index links current user guides and the existing Interview specification pac
 | Interview sections and limits | [Descriptors](../../holdspeak/services/interview_contracts.py), [service](../../holdspeak/services/interview_service.py), [MCP family](../../holdspeak/mcp/families/interview.py) |
 | Try draft and saved context | [Interview panel](../../web/src/desk/components/_parked/InterviewPanel.tsx), [Thread window](../../web/src/desk/pullouts/_parked/ThreadPullout.tsx) |
 | Thread policies and modes | [Tool gate](../../holdspeak/services/thread_tools.py), [mode seeds](../../holdspeak/services/thread_modes.py) |
-| Models and current entry points | [Concierge](../../web/src/features/concierge/ConciergeCore.tsx), [controller](../../web/src/features/concierge/useConciergeController.ts), [Settings](../../web/src/pages/cores/SettingsCore.tsx) |
+| Models and current entry points | [Concierge](../../web/src/features/concierge/_parked/ConciergeCore.tsx), [controller](../../web/src/features/concierge/useConciergeController.ts), [Settings](../../web/src/pages/cores/SettingsCore.tsx) |
 | Current Project creation and Room controls | [Project creation](../../web/src/features/project-room/door/DoorCore.tsx), [source controller](../../web/src/features/project-room/door/useDoorController.ts), [Room](../../web/src/features/project-room/ProjectRoomCore.tsx) |
 | Model quality and delivery limits | [Interview delivery record](architect-assistant/DELIVERY_STATUS.md), [verification](architect-assistant/VALIDATION.md) |
 | Authority and default | [Control mode configuration](../../holdspeak/config/core.py), [authority guide](../AUTHORITY.md), Thread gate |

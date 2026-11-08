@@ -110,7 +110,7 @@ RESOLUTIONS = f"{GRAPH_DIR}/council-resolutions.json"
 # parked SystemShade, AttentionDrawer and ProjectMemoryCore; the rulings did
 # not change.  2026-11-08: one evidence path moved to the parked
 # ThreadComposer; the rulings did not change.
-COUNCIL_REVISION = "879868da3df60149fd90dafe075b9769be409385"
+COUNCIL_REVISION = "3aa5deae8ccd5e20bd0826fc4899a5389ff979bb"
 # Subtype normalization: the whole table.  Two different subtypes for one node
 # are one classification only when a row below relates them; the node then
 # gets the finer (right-hand) value.  Anything else is a conflict and stays

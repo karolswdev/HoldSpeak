@@ -19803,13 +19803,13 @@
       "id": "excluded.first_value.two_failures_at_once",
       "combination": "any two DictationFailure categories at the same instant",
       "applicability": "unreachable",
-      "reason": "the gate holds ONE capture state and ONE failure (web/src/desk/components/FirstWords.tsx:50, :51)."
+      "reason": "the gate holds ONE capture state and ONE failure (web/src/desk/components/_parked/FirstWords.tsx:50, :51)."
     },
     {
       "id": "excluded.first_value.success_x_failure",
       "combination": "capture_state = 'success' AND a failure contract on the face",
       "applicability": "unreachable",
-      "reason": "the two are branches of one state variable (web/src/desk/components/FirstWords.tsx:33-34)."
+      "reason": "the two are branches of one state variable (web/src/desk/components/_parked/FirstWords.tsx:33-34)."
     },
     {
       "id": "excluded.briefs.empty_x_item_shelved",

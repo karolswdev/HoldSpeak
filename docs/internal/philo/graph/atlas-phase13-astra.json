@@ -5165,9 +5165,9 @@
           "claim": "The Delivery terminal mounts in the Desk."
         },
         {
-          "path": "web/src/desk/pullouts/registry.ts",
-          "symbol": "chain: ChainPullout",
-          "claim": "Chain objects have a registered pullout."
+          "path": "web/src/desk/pullouts/_parked/ChainPullout.tsx",
+          "symbol": "export function ChainPullout(",
+          "claim": "Chain objects had a pullout; it is parked with the Sequence faces (#1979)."
         },
         {
           "path": "web/src/desk/pullouts/registry.ts",

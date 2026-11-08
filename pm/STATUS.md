@@ -2,6 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · (PR) Fix forward the parkings (#1979, #1975, #1992, #2002): the residual census skips parked routes and drops four paid identities; the graph, the metadata, the council evidence and the doc audit name the parked paths; the static graph drops eight removed route edges; the Engines words guard scans the runson feature.
 - 2026-11-08 · Sequences fold into the recipe run: the iPad runs a crew on the hub one Mode at a time, a Workflow as its saved Ask; the Sequence/Workflow runner, its run/cancel routes, projection and the `sequence.step`/`workflow.node` capabilities parked.
 - 2026-11-08 · #1999 Park eleven registry verbs with no way in: desk.new-thread and the ten no-op thread.* slash verbs (their only reader, ThreadComposer, parked in #1975).
 - 2026-11-08 · #1996 Park settle mode (Hide the menus / Back to Desk): no menu, palette row or shortcut turned it on, and its one button sat in the Change places window nothing opens; Escape runs Back as on any desk.

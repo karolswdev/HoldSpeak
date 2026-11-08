@@ -8435,13 +8435,13 @@
       ],
       "sources": [
         {
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "symbol": "isUnreachable",
           "line": 84,
           "claim": "the concierge row knows an UNREACHABLE engine"
         },
         {
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "symbol": "UNREACHABLE",
           "line": 127,
           "claim": "it draws a failure chip for it"
@@ -8465,13 +8465,13 @@
       ],
       "sources": [
         {
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "symbol": "addEngineState",
           "line": 567,
           "claim": "Use this for summaries is enabled only when the added engine checked READY"
         },
         {
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "symbol": "concierge-add-model",
           "line": 550,
           "claim": "the checked model name is shown beside it"
@@ -8495,7 +8495,7 @@
       ],
       "sources": [
         {
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "symbol": "concierge-add-reason",
           "line": 558,
           "claim": "a refused check states its reason in an alert beside the field"
@@ -9833,13 +9833,13 @@
       "id": "excluded.first_value.two_failures_at_once",
       "combination": "any two DictationFailure categories at the same instant",
       "applicability": "unreachable",
-      "reason": "the gate holds ONE capture state and ONE failure (web/src/desk/components/FirstWords.tsx:50, :51)."
+      "reason": "the gate holds ONE capture state and ONE failure (web/src/desk/components/_parked/FirstWords.tsx:50, :51)."
     },
     {
       "id": "excluded.first_value.success_x_failure",
       "combination": "capture_state = 'success' AND a failure contract on the face",
       "applicability": "unreachable",
-      "reason": "the two are branches of one state variable (web/src/desk/components/FirstWords.tsx:33-34)."
+      "reason": "the two are branches of one state variable (web/src/desk/components/_parked/FirstWords.tsx:33-34)."
     },
     {
       "id": "excluded.briefs.empty_x_item_shelved",
