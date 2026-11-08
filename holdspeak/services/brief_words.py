@@ -810,7 +810,9 @@ def step_report(step: Mapping[str, Any], checkpoints: Iterable[Mapping[str, Any]
         elif req_state == "not_yet":
             why = {"word": "nobody judged it", "review": "no review ran"}.get(kind, "it did not run")
             not_checked.append({"line": f"{name}: {why}"})
-    if not step.get("gate_check"):
+    if step.get("kind") == "prompt":
+        pass  # one model call: no check or review was ever part of it
+    elif not step.get("gate_check"):
         not_checked.append({"line": "The gate check was off"})
     elif verdict == "none":
         not_checked.append({"line": "No check command ran"})

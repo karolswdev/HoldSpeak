@@ -160,7 +160,15 @@ CREATE TABLE IF NOT EXISTS program_steps (
     runs_on_json TEXT NOT NULL DEFAULT '[]',
     handoffs_json TEXT NOT NULL DEFAULT '[]',
     may_call INTEGER NOT NULL DEFAULT 0,
-    budget_tokens INTEGER
+    budget_tokens INTEGER,
+    -- 2026-11-08 (the prompt step): NULL is an agent step (a launch in a
+    -- worktree); 'prompt' is one model call on the assigned engine, with no
+    -- repository. deliver: where its answer goes (inbox, needs_you, today,
+    -- destination:<id>, project_updates:<id>); sources_json: the About refs
+    -- its brief expands when it runs.
+    kind TEXT,
+    deliver TEXT,
+    sources_json TEXT NOT NULL DEFAULT '[]'
 );
 CREATE INDEX IF NOT EXISTS idx_program_steps_program ON program_steps(program_id, ordinal);
 CREATE TABLE IF NOT EXISTS program_checkpoints (

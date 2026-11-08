@@ -1206,6 +1206,48 @@ def _deliver_one(db: Any, principal: Any, wb: Any, row: dict[str, Any]) -> dict[
     return _to_inbox(db, wb, row)
 
 
+# ── one result, delivered (an automation's artifact or a prompt step) ──
+
+
+def deliver_text(
+    db: Any, principal: Any, target: str, *, key: str, title: str, body: str,
+    refs: list[str], generator: str, origin_words: str, used_item_id: str = "",
+) -> dict[str, Any]:
+    """Put one text result where ``target`` says, once per ``key``.
+
+    The same paths an automation's result takes: a project_updates row with
+    its source refs, an Inbox note, a Needs you item, or a prepared send (he
+    presses Send). ``today`` files nothing: Today reads the result itself.
+    ``key`` is the result's own stable ref (``program_step:<id>``): a second
+    delivery of the same key makes nothing new. ``origin_words`` is the
+    Markdown line under a note ("From the program [...](...)"). A failure
+    raises; the caller keeps the result readable where it is."""
+    who = _delivery_principal(principal)
+    target = str(target or "inbox")
+    if target.startswith(PROJECT_UPDATES_PREFIX):
+        project_id = target[len(PROJECT_UPDATES_PREFIX):]
+        if not str(body or "").strip():
+            return {"target": target, "outcome": "failed", "error": "The engine returned no text."}
+        update_id, outcome = _write_project_update(
+            db, who, project_id, body=body, refs=refs, generator=generator, used_item_id=used_item_id)
+        return {"target": target, "outcome": outcome, "update_id": update_id, "project_id": project_id}
+    if target == "today":
+        return {"target": "today", "outcome": "shown"}
+    if target == "needs_you":
+        made = _add_read_item(db, who, title, key)
+        return {"target": "needs_you", "outcome": "added" if made else "kept",
+                **({"action_item_id": made} if made else {})}
+    note_id = result_note_id(key)
+    filed = _file_note(db, note_id, title, f"{str(body or '').rstrip()}\n\n---\n{origin_words}",
+                       inbox=not target.startswith(DESTINATION_PREFIX))
+    if target.startswith(DESTINATION_PREFIX):
+        destination_id = target[len(DESTINATION_PREFIX):]
+        outcome, send_id = _prepare_send(db, who, destination_id, f"note:{note_id}", None)
+        return {"target": target, "outcome": outcome, "note_id": note_id, "send_id": send_id}
+    return {"target": "inbox", "outcome": "noted" if filed is not None else "kept", "note_id": note_id,
+            "filed": bool(filed)}
+
+
 def _remember_project_update(db: Any, artifact_id: Any, update_id: Any, project_id: Any) -> bool:
     """Link a delivered artifact to its exact, project-validated update."""
     clean_artifact_id = str(artifact_id or "").strip()
@@ -1237,50 +1279,65 @@ def _remember_project_update(db: Any, artifact_id: Any, update_id: Any, project_
     return True
 
 
-def _to_project_updates(
-    db: Any, principal: Any, wb: Any, row: dict[str, Any], project_id: str,
-) -> dict[str, Any]:
-    """Put one automation result in the project's one update ledger."""
+def _write_project_update(
+    db: Any, principal: Any, project_id: str, *, body: str, refs: list[str], generator: str,
+    used_item_id: str = "",
+) -> tuple[str, str]:
+    """``(update_id, "written")``: the project's one update for this result.
+
+    A tool-capable engine already used the application's update producer
+    during the run (``run_trace`` of ``used_item_id`` names the row it
+    wrote): that row is the result; no second revision is made. Otherwise
+    one update is written from ``body`` with the refs the run looked at,
+    else ``refs``."""
     from .project_service import ProjectService
     from .project_update_service import ProjectUpdateService
     from .run_trace import use_by_item
 
-    item_id = str(row.get("item_id") or "")
-    refs: list[str] = []
-    try:
-        used = use_by_item(db, [item_id]).get(item_id, {})
-        refs = [str(entry.get("ref") or "") for entry in used.get("looked_at", [])]
-        # A tool-capable update already used the application's update
-        # producer. Reuse that row as the automation result; do not create a
-        # second project_updates revision for the same run.
-        for entry in used.get("wrote", []):
-            ref = str(entry.get("ref") or "")
-            if not ref.startswith("project_update:"):
-                continue
-            existing_id = ref.split(":", 1)[1].strip()
-            existing = db.project_updates.get_update(existing_id)
-            if existing is not None and str(existing.get("project_id") or "") == project_id:
-                _remember_project_update(db, row["artifact_id"], existing_id, project_id)
-                return {"artifact_id": row["artifact_id"], "target": str(wb.output_target),
-                        "outcome": "written", "update_id": existing_id,
-                        "project_id": project_id}
-    except Exception:
-        refs = []
-    if not refs:
-        refs = sources_of(wb)
-    body = str(row.get("result") or "").strip()
-    if not body:
-        return {"artifact_id": row["artifact_id"], "target": str(wb.output_target),
-                "outcome": "failed", "error": "The update engine returned no text."}
+    looked: list[str] = []
+    if used_item_id:
+        try:
+            used = use_by_item(db, [used_item_id]).get(used_item_id, {})
+            looked = [str(entry.get("ref") or "") for entry in used.get("looked_at", [])]
+            for entry in used.get("wrote", []):
+                ref = str(entry.get("ref") or "")
+                if not ref.startswith("project_update:"):
+                    continue
+                existing_id = ref.split(":", 1)[1].strip()
+                existing = db.project_updates.get_update(existing_id)
+                if existing is not None and str(existing.get("project_id") or "") == project_id:
+                    return existing_id, "written"
+        except Exception:
+            looked = []
     service = ProjectUpdateService(db, project_service=ProjectService(db))
     update = service.write_agent_update(
-        principal, project_id, body_md=body, source_refs=refs,
-        generator=f"agent:automation:{wb.id}",
+        principal, project_id, body_md=body, source_refs=looked or list(refs), generator=generator,
     )
-    _remember_project_update(db, row["artifact_id"], update.get("id"), project_id)
-    return {"artifact_id": row["artifact_id"], "target": str(wb.output_target),
-            "outcome": "written", "update_id": str(update.get("id") or ""),
-            "project_id": project_id}
+    return str(update.get("id") or ""), "written"
+
+
+def _to_project_updates(
+    db: Any, principal: Any, wb: Any, row: dict[str, Any], project_id: str,
+) -> dict[str, Any]:
+    """Put one automation result in the project's one update ledger."""
+    body = str(row.get("result") or "").strip()
+    base = {"artifact_id": row["artifact_id"], "target": str(wb.output_target)}
+    from .run_trace import use_by_item
+
+    item_id = str(row.get("item_id") or "")
+    try:
+        wrote = any(str(entry.get("ref") or "").startswith("project_update:")
+                    for entry in use_by_item(db, [item_id]).get(item_id, {}).get("wrote", []))
+    except Exception:
+        wrote = False
+    if not body and not wrote:
+        return {**base, "outcome": "failed", "error": "The update engine returned no text."}
+    update_id, outcome = _write_project_update(
+        db, principal, project_id, body=body, refs=sources_of(wb), generator=f"agent:automation:{wb.id}",
+        used_item_id=item_id,
+    )
+    _remember_project_update(db, row["artifact_id"], update_id, project_id)
+    return {**base, "outcome": outcome, "update_id": update_id, "project_id": project_id}
 
 
 def inbox_directory_id(db: Any) -> Optional[str]:
@@ -1304,62 +1361,77 @@ def inbox_directory_id(db: Any) -> Optional[str]:
     return INBOX_DIRECTORY_ID
 
 
-def _to_inbox(db: Any, wb: Any, row: dict[str, Any]) -> dict[str, Any]:
-    note_id = result_note_id(str(row["artifact_id"]))
+def _file_note(db: Any, note_id: str, title: str, body: str, *, inbox: bool = True) -> Optional[bool]:
+    """Write the result note once. ``None``: it was there already; else
+    whether it was filed in the Inbox."""
     if db.notes.get(note_id, include_deleted=True) is not None:
-        return {"artifact_id": row["artifact_id"], "target": "inbox", "outcome": "kept", "note_id": note_id}
-    body = (
-        f"{str(row['result'] or '').rstrip()}\n\n---\n"
-        f"From the automation [{wb.name or 'Automation'}](/?open=workbench:{wb.id})."
-    )
-    db.notes.upsert(note_id=note_id, title=str(row["title"] or wb.name or "Result"), body_markdown=body)
+        return None
+    db.notes.upsert(note_id=note_id, title=str(title or "Result"), body_markdown=body)
     filed = False
-    inbox_id = inbox_directory_id(db)
+    inbox_id = inbox_directory_id(db) if inbox else None
     if inbox_id:
         db.directory_memberships.upsert(primitive_id=f"note:{note_id}", directory_id=inbox_id)
         filed = True
     _changed("note", note_id)
+    return filed
+
+
+def _to_inbox(db: Any, wb: Any, row: dict[str, Any]) -> dict[str, Any]:
+    note_id = result_note_id(str(row["artifact_id"]))
+    body = (
+        f"{str(row['result'] or '').rstrip()}\n\n---\n"
+        f"From the automation [{wb.name or 'Automation'}](/?open=workbench:{wb.id})."
+    )
+    filed = _file_note(db, note_id, str(row["title"] or wb.name or "Result"), body)
+    if filed is None:
+        return {"artifact_id": row["artifact_id"], "target": "inbox", "outcome": "kept", "note_id": note_id}
     return {"artifact_id": row["artifact_id"], "target": "inbox", "outcome": "noted",
             "note_id": note_id, "filed": filed}
 
 
-def _to_needs_you(db: Any, principal: Any, wb: Any, row: dict[str, Any]) -> dict[str, Any]:
+def _add_read_item(db: Any, principal: Any, title: str, source_ref: str) -> Optional[str]:
+    """One Door item "Read the new result", owned by the owner and due
+    today, so Needs you counts it (the same rule the agent follow-through
+    uses: delivery/follow_through.py). ``None`` when the source has one."""
     from .door_service import DoorService
     from .follow_through_service import FollowThroughService
 
-    source_ref = f"artifact:{row['artifact_id']}"
     door = DoorService(FollowThroughService(db), None, None, None, db=db)  # type: ignore[arg-type]
     if door.has_item_for_source(source_ref):
-        return {"artifact_id": row["artifact_id"], "target": "needs_you", "outcome": "kept"}
-    # Owned by the owner and due today, so Needs you counts it (the same
-    # rule the agent follow-through uses: delivery/follow_through.py).
+        return None
     item = door.add_item(
-        principal, f"Read the new result: {row['title'] or wb.name}", owner="me",
+        principal, f"Read the new result: {title}", owner="me",
         due=datetime.now().astimezone().date().isoformat(),
         source_type="automation_result", source_ref=source_ref,
     )
+    return str(item["id"])
+
+
+def _to_needs_you(db: Any, principal: Any, wb: Any, row: dict[str, Any]) -> dict[str, Any]:
+    made = _add_read_item(db, principal, str(row["title"] or wb.name), f"artifact:{row['artifact_id']}")
+    if made is None:
+        return {"artifact_id": row["artifact_id"], "target": "needs_you", "outcome": "kept"}
     return {"artifact_id": row["artifact_id"], "target": "needs_you", "outcome": "added",
-            "action_item_id": item["id"]}
+            "action_item_id": made}
 
 
-def _to_destination(
-    db: Any, principal: Any, destination_id: str, artifact_id: str,
-    *, automation_origin: Mapping[str, Any] | None = None,
-) -> dict[str, Any]:
-    document_ref = f"artifact:{artifact_id}"
+def _prepare_send(
+    db: Any, principal: Any, destination_id: str, document_ref: str,
+    automation_origin: Mapping[str, Any] | None,
+) -> tuple[str, str]:
+    """``(outcome, send_id)``: ``kept`` when the document has a live send to
+    the destination, else ``prepared``. Prepare only: the bytes are frozen
+    in a ``prepared`` send; nothing leaves until he presses Send."""
     with db._connection() as conn:
         seen = conn.execute(
             "SELECT id FROM channel_sends WHERE document_ref=? AND destination_id=? AND state!='discarded'",
             (document_ref, destination_id),
         ).fetchone()
     if seen is not None:
-        return {"artifact_id": artifact_id, "target": DESTINATION_PREFIX + destination_id,
-                "outcome": "kept", "send_id": str(seen["id"])}
+        return "kept", str(seen["id"])
     from .. import operations
     from .channel_service import ChannelService
 
-    # Prepare only: the bytes are frozen in a ``prepared`` send; nothing leaves
-    # until he presses Send.
     # The hub's installed registry owns the normal channel service.  This
     # internal delivery needs the same operation descriptors and kernel path,
     # while carrying source-owned automation provenance into this one frozen
@@ -1377,8 +1449,16 @@ def _to_destination(
         principal, "channel.prepare", {"document_ref": document_ref, "destination_id": destination_id},
     )
     send = (result or {}).get("send") or {}
+    return "prepared", str(send.get("id") or "")
+
+
+def _to_destination(
+    db: Any, principal: Any, destination_id: str, artifact_id: str,
+    *, automation_origin: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    outcome, send_id = _prepare_send(db, principal, destination_id, f"artifact:{artifact_id}", automation_origin)
     return {"artifact_id": artifact_id, "target": DESTINATION_PREFIX + destination_id,
-            "outcome": "prepared", "send_id": str(send.get("id") or "")}
+            "outcome": outcome, "send_id": send_id}
 
 
 def _changed(kind: str, obj_id: str) -> None:
