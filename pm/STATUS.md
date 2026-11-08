@@ -2,6 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · #1829 A person review gate reads the current review, not the remembered approval (HS-S25, G25 branch A).
 - 2026-11-07 · #1822 The walk starts only when the desk is ready, and moves one beat later.
 - 2026-11-07 · #1821 #1820 The walk link opens the desk by itself (carries the desk bootstrap token).
 - 2026-11-07 · #1819 #1817 SIGUSR1 dumps every hub thread's stack into the log (no chain).
