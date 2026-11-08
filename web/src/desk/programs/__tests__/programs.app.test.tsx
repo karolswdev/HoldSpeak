@@ -10,7 +10,7 @@
  * outcome: the row leaves the well, the status bar count drops, the row
  * reads Overturned. */
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { useState, type ReactNode } from "react";
+import { lazy, useState, type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import listFixture from "../__fixtures__/programs.list.json";
 import runningFixture from "../__fixtures__/program.running.json";
@@ -172,6 +172,10 @@ import { needFace } from "../../needs/needsFace";
 import type { NeedsYouRoomItem } from "../../needsYou";
 import { DESK_APPLICATIONS } from "../../applications";
 import { BackSlotContext, TitleSlotContext, WingSlotContext, type WindowBack } from "../../surface";
+import { SurfaceWindowHost, type SurfaceRow } from "../../components/SurfaceWindows";
+import { useDesk } from "../../store";
+import { EMPTY_ITEMS } from "../../api";
+import programsCss from "../programs.css?raw";
 
 function subscribe(type: string, listener: (frame: Frame) => void) {
   const set = mocks.listeners.get(type) ?? new Set<(frame: Frame) => void>();
@@ -1036,7 +1040,7 @@ describe("New program is a wizard inside the window (owner, live walk 2026-11-08
     const runs = screen.getByTestId("programs-wizard-step-3");
     const levels = within(runs).getByRole("group", { name: "Runs" });
     const segments = within(levels).getAllByRole("button");
-    expect(segments.map((node) => node.textContent)).toEqual(["Runs by itself", "Asks before it merges or sends", "Asks at every step"]);
+    expect(segments.map((node) => node.querySelector(".pg-wiz-level-word")!.textContent)).toEqual(["Runs by itself", "Asks before it merges or sends", "Asks at every step"]);
     await waitFor(() => expect(within(levels).getByRole("button", { name: "Runs by itself" }).getAttribute("aria-pressed")).toBe("true"));
     expect(segments.filter((node) => node.getAttribute("aria-pressed") === "true")).toHaveLength(1);
     expect(screen.getByTestId("programs-wizard-level-line").textContent).toBe("HoldSpeak decides all it can; only core questions come to you");
@@ -1048,6 +1052,88 @@ describe("New program is a wizard inside the window (owner, live walk 2026-11-08
     await waitFor(() => expect(mocks.openPullout).toHaveBeenCalledWith(`program:${madeProgram.id}`));
     // The desk's level is not his choice: the body is the recorded one.
     expect(sent()).toEqual([made.request.json]);
+  });
+
+  // Fails on main: there the frame's close calls closeSurfaceWindow and the draft is gone.
+  it("the frame's close while the wizard is open is its Cancel: back to the list, the window stays, no POST", async () => {
+    hub({ "GET /api/programs": list, "GET /api/projects": projects.response.body, "POST /api/programs": made.response.body });
+    const closeSurfaceWindow = vi.fn();
+    const before = useDesk.getState().closeSurfaceWindow;
+    useDesk.setState({ items: EMPTY_ITEMS, panelMin: [], panelMax: [], panelOrder: [], panelRects: {}, closeSurfaceWindow });
+    const row: SurfaceRow = { key: "open-programs", id: "surface-programs", title: "Programs", glyph: "▦", eyebrow: "Orchestration", Core: lazy(async () => ({ default: ProgramsCore })) };
+    try {
+      render(<div className="desk-next"><SurfaceWindowHost row={row} scope={undefined} items={EMPTY_ITEMS} /></div>);
+      await screen.findAllByTestId("programs-band");
+      fireEvent.click(screen.getByTestId("programs-new"));
+      await ready();
+      choose(roster[0].id);
+      const close = () => document.querySelector<HTMLButtonElement>(".desk-gadget-close")!;
+      fireEvent.click(close());
+      await waitFor(() => expect(screen.queryByTestId("programs-wizard")).toBeNull());
+      expect(screen.getByTestId("programs-list")).toBeTruthy();
+      expect(closeSurfaceWindow).not.toHaveBeenCalled();
+      expect(posts()).toEqual([]);
+      // With the list back, the frame's close closes the window again.
+      fireEvent.click(close());
+      await waitFor(() => expect(closeSurfaceWindow).toHaveBeenCalledWith("open-programs"));
+    } finally {
+      useDesk.setState({ closeSurfaceWindow: before });
+    }
+  });
+
+  it("the card's quiet line: no counter of zero; a project with programs says how many", async () => {
+    const target = roster[1].id;
+    const projectOf = (row: ProgramList["programs"][number]) => row.project?.id ?? row.project_id;
+    const one = { projects: [(projects.response.body as { projects: unknown[] }).projects[1]] };
+    hub({ "GET /api/programs": { ...list, programs: list.programs.filter((row) => projectOf(row) !== target) }, "GET /api/projects": one });
+    renderWindow(<ProgramsCore />);
+    fireEvent.click(await screen.findByTestId("programs-new"));
+    await screen.findByTestId("programs-wizard-card-name");
+    expect(screen.getByTestId("programs-wizard-card-line").textContent).toBe("Fast cycle");
+    cleanup();
+    const owned = list.programs.slice(0, 2).map((row) => ({ ...row, project_id: target, project: row.project ? { ...row.project, id: target } : row.project }));
+    hub({ "GET /api/programs": { ...list, programs: owned }, "GET /api/projects": one });
+    renderWindow(<ProgramsCore />);
+    fireEvent.click(await screen.findByTestId("programs-new"));
+    await screen.findByTestId("programs-wizard-card-name");
+    expect(screen.getByTestId("programs-wizard-card-line").textContent).toBe("2 programs · Fast cycle");
+  });
+
+  // Fails on main: there is no programs-wizard-fold row and no short level words.
+  it("screen 3 on the phone: the short level words and one folded Check · Spending row under a 480 surface container", async () => {
+    hub({ "GET /api/programs": list, "GET /api/projects": projects.response.body });
+    renderWindow(<ProgramsCore />);
+    await screen.findAllByTestId("programs-band");
+    fireEvent.click(screen.getByTestId("programs-new"));
+    await ready();
+    choose(roster[0].id);
+    fireEvent.click(next());
+    fireEvent.click(next());
+    const runs = screen.getByTestId("programs-wizard-step-3");
+    const levels = within(runs).getByRole("group", { name: "Runs" });
+    expect([...levels.querySelectorAll(".pg-wiz-level-short")].map((node) => node.textContent)).toEqual(["By itself", "Asks to merge", "Asks each step"]);
+    // The accessible name stays the whole meaning at every width.
+    expect(within(levels).getByRole("button", { name: "Asks before it merges or sends" })).toBeTruthy();
+    const fold = screen.getByTestId("programs-wizard-fold");
+    expect(fold.textContent).toBe("Check · The repository's · Spending not capped");
+    fireEvent.change(screen.getByLabelText("Check"), { target: { value: "make check" } });
+    expect(fold.textContent).toBe("Check · make check · Spending not capped");
+    // A press on the folded row opens Check (the phone can still set it).
+    expect(runs.querySelector(".pg-wiz-runs")!.hasAttribute("data-check-open")).toBe(false);
+    fireEvent.click(fold);
+    expect(runs.querySelector(".pg-wiz-runs")!.hasAttribute("data-check-open")).toBe(true);
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByLabelText("Check")));
+    // jsdom has no container queries: the fold is proven as the rule text.
+    const phone = programsCss.slice(programsCss.indexOf("@container surface (max-width: 480px)"));
+    expect(phone.startsWith("@container surface (max-width: 480px)")).toBe(true);
+    const block = phone.slice(0, phone.indexOf("\n}\n") + 2);
+    expect(block).toContain(".pg-wiz-levels .pg-wiz-level-word { display: none; }");
+    expect(block).toContain(".pg-wiz-levels .pg-wiz-level-short { display: inline; }");
+    expect(block).toContain(".pg-wiz-runs:not([data-check-open]) .gadget-row:has(.pg-wiz-check)");
+    expect(block).toContain(".pg-wiz-runs:not([data-check-open]) .gadget-row:has(.pg-wiz-spending) { display: none; }");
+    expect(block).toContain(".pg-wiz-runs:not([data-check-open]) > .btn.pg-wiz-fold { display: flex; }");
+    expect(programsCss).toMatch(/\.pg-wiz-level-short,\s*\.btn\.pg-wiz-fold \{ display: none; \}/);
+    expect(posts()).toEqual([]);
   });
 });
 
