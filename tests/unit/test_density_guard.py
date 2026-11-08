@@ -218,3 +218,38 @@ def test_settings_files_live_in_the_settings_folder() -> None:
         f"Settings files at the top of web/src/pages/cores/: {strays}. "
         "Put them in web/src/pages/cores/settings/."
     )
+
+
+# The Programs app tests are split by face (2026-11-08): one file per concern,
+# sharing web/src/desk/programs/__tests__/programs.test-setup.tsx (the mocks,
+# the recorded answers, the helpers). programs.app.test.tsx was 3,735 lines
+# before that split. A new case goes in the file of its face; a file that
+# outgrows the budget is split by concern, never bumped.
+_PROGRAMS_TESTS = SRC / "desk/programs/__tests__"
+_PROGRAMS_TEST_FILES = (
+    "programs.list.app.test.tsx",
+    "programs.needs.app.test.tsx",
+    "programs.wizard.app.test.tsx",
+    "programs.window.app.test.tsx",
+    "programs.steps.app.test.tsx",
+    "programs.text.app.test.tsx",
+    "programs.plan.app.test.tsx",
+    "programs.test-setup.tsx",
+)
+_PROGRAMS_TEST_BUDGET = 900
+
+
+def test_programs_app_tests_stay_split_by_face() -> None:
+    assert not (_PROGRAMS_TESTS / "programs.app.test.tsx").exists(), (
+        "web/src/desk/programs/__tests__/programs.app.test.tsx is back. Put each "
+        "case in the programs.<face>.app.test.tsx of its face."
+    )
+    offenders = []
+    for name in _PROGRAMS_TEST_FILES:
+        n = _lines(_PROGRAMS_TESTS / name)
+        if n > _PROGRAMS_TEST_BUDGET:
+            offenders.append(f"{name}: {n} lines (budget {_PROGRAMS_TEST_BUDGET})")
+    assert not offenders, (
+        "Programs app test files over budget. Split the file by concern; do not "
+        "bump the budget:\n  " + "\n  ".join(offenders)
+    )
