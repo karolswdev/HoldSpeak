@@ -1,0 +1,113 @@
+/* The Walk (2026-11-07): a dim backdrop with the part cut out, a 2 px accent
+   ring that pulses once and stays, and one card in kit material beside the
+   part. Over the windows, the dock and the popovers; under the feedback strip. */
+.walk-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 95;
+  pointer-events: none;
+}
+
+.walk-backdrop {
+  position: fixed;
+  inset: 0;
+  background: color-mix(in srgb, var(--wb-ink, #0f1a22) 46%, transparent);
+  pointer-events: auto;
+  transition: clip-path 180ms ease-out;
+}
+
+.walk-ring {
+  position: fixed;
+  box-sizing: border-box;
+  border: 2px solid var(--accent);
+  border-radius: 8px;
+  pointer-events: none;
+  animation: walk-ring-pulse 900ms ease-out 1;
+}
+
+@keyframes walk-ring-pulse {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 55%, transparent); }
+  100% { box-shadow: 0 0 0 14px color-mix(in srgb, var(--accent) 0%, transparent); }
+}
+
+.walk-card {
+  position: fixed;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: min(340px, calc(100vw - 24px));
+  box-sizing: border-box;
+  padding: 14px 16px 12px;
+  color: var(--wb-ink);
+  border: 1px solid var(--wb-rule, #22313b);
+  border-radius: var(--desk-window-radius, 8px);
+  background: var(--wb-paper);
+  box-shadow: var(--depth-card), var(--depth-row);
+  pointer-events: auto;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.walk-card[data-docked] {
+  left: 12px;
+  right: 12px;
+  bottom: calc(var(--desk-dock-h, 0px) + 12px);
+  width: auto;
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.walk-words,
+.walk-line,
+.walk-question,
+.walk-title,
+.walk-count {
+  margin: 0;
+}
+
+.walk-question,
+.walk-title {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.walk-line {
+  color: var(--text-muted, var(--wb-ink));
+}
+
+.walk-verbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.walk-count {
+  align-self: flex-end;
+  color: var(--text-muted, var(--wb-ink));
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.walk-refused {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--desk-dock-h, 0px) + 12px);
+  z-index: 95;
+  transform: translateX(-50%);
+  margin: 0;
+  padding: 8px 12px;
+  color: var(--wb-ink);
+  border: 1px solid var(--wb-rule, #22313b);
+  border-radius: var(--desk-window-radius, 8px);
+  background: var(--wb-paper);
+  box-shadow: var(--depth-row);
+  font-size: 13px;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .walk-ring { animation: none; }
+  .walk-backdrop { transition: none; }
+}

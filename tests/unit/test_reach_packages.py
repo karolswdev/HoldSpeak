@@ -21,7 +21,7 @@ from typing import Any
 import pytest
 
 from holdspeak.principals import (
-    Principal, PrincipalKind, PrincipalRight, briefing_route, phone_device_route, required_right,
+    Principal, PrincipalKind, PrincipalRight, briefing_route, phone_device_route, required_right, walk_route,
 )
 from holdspeak.services import briefing_service as briefing_module
 from holdspeak.services.briefing_service import (
@@ -269,6 +269,10 @@ def test_a_page_token_reaches_no_other_route(tmp_path, monkeypatch) -> None:
             walked += 1
             if phone_device_route(verb, path):
                 # Admitted at the edge for a paired phone; its handler refuses the page token.
+                assert answer.status_code >= 400, f"{verb} {route.path}: {answer.status_code}"
+                continue
+            if walk_route(verb, path):
+                # The Walk: admitted at the edge for a walk token; its handler refuses the page token.
                 assert answer.status_code >= 400, f"{verb} {route.path}: {answer.status_code}"
                 continue
             assert required_right(verb, path) is not None, f"{verb} {route.path} is open at the edge"

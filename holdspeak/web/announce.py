@@ -96,6 +96,8 @@ QUIET_ROUTES: dict[tuple[str, str], str] = {
     # (kind reach, the package id) and the Program service its own frame.
     ("POST", "/api/b/{token}/answer"): "the briefing service announces (kind reach, the package id; never the token)",
     ("POST", "/api/ui-feedback"): "local developer report; no desk object changes",
+    ("POST", "/api/walks"): "a walk script for the owner's review; no desk object changes",
+    ("POST", "/api/w/{token}/answer"): "a walk answer; its path holds the token; no desk object changes",
     ("POST", "/api/ui-feedback/{identifier}/transcribe"): "local report attachment; no desk object changes",
 }
 

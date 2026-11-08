@@ -1,0 +1,48 @@
+{
+  "answers": {},
+  "steps": [
+    {
+      "open": {
+        "app": "surface-programs"
+      }
+    },
+    {
+      "highlight": {
+        "target": "programs-new",
+        "words": "Press New program. The well opens."
+      }
+    },
+    {
+      "ask": {
+        "choices": [
+          "Keep",
+          "Redo"
+        ],
+        "question": "Does the well read clearly?",
+        "ref": "s11-well"
+      },
+      "highlight": {
+        "target": "[data-testid='programs-make'] .gadget-row",
+        "words": "The project choice."
+      }
+    },
+    {
+      "ask": {
+        "choices": [
+          "Keep",
+          "Redo"
+        ],
+        "question": "Is the line clear?",
+        "ref": "needs-coverage"
+      },
+      "highlight": {
+        "target": "needs-people-coverage",
+        "words": "Whose obligations the list shows."
+      },
+      "open": {
+        "app": "chair:needs"
+      }
+    }
+  ],
+  "title": "Wave two"
+}

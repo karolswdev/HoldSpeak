@@ -34223,6 +34223,141 @@
         "summary": "Api Regenerate Update"
       }
     },
+    "/api/w/{token}": {
+      "get": {
+        "operationId": "api_walk_page_api_w__token__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "title": "Token",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Walk Page Api W  Token  Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Walk Page"
+      }
+    },
+    "/api/w/{token}/answer": {
+      "post": {
+        "operationId": "api_walk_answer_api_w__token__answer_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "title": "Token",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Walk Answer Api W  Token  Answer Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Walk Answer"
+      }
+    },
+    "/api/walks": {
+      "post": {
+        "operationId": "api_walk_create_api_walks_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Walk Create Api Walks Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Walk Create"
+      }
+    },
+    "/api/walks/{walk_id}": {
+      "get": {
+        "operationId": "api_walk_read_api_walks__walk_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "walk_id",
+            "required": true,
+            "schema": {
+              "title": "Walk Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Walk Read Api Walks  Walk Id  Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Walk Read"
+      }
+    },
     "/api/watches": {
       "get": {
         "operationId": "list_watches_api_watches_get",

@@ -1,0 +1,23 @@
+{
+  "title": "Wave two · 2026-11-07",
+  "steps": [
+    {"open": {"app": "surface-programs"}},
+    {"highlight": {"target": "programs-new", "words": "Press New program. The well opens."}},
+    {"highlight": {"target": "[data-testid='programs-make'] .gadget-row", "window": "surface-programs", "words": "The project choice in the New program well."},
+     "ask": {"ref": "programs-well-project", "question": "Does the project choice read clearly?", "choices": ["Keep", "Redo"]}},
+    {"open": {"app": "chair:needs"},
+     "highlight": {"target": "needs-people-coverage", "words": "The line that says whose obligations Needs you shows."},
+     "ask": {"ref": "needs-coverage", "question": "Is the coverage line clear?", "choices": ["Keep", "Redo"]}},
+    {"highlight": {"target": "needs-open-people", "window": "chair:needs", "words": "Open People, beside the coverage line."},
+     "ask": {"ref": "needs-open-people", "question": "Is Open People in the right place?", "choices": ["Keep", "Redo"]}},
+    {"open": {"app": "open-project-memory", "scope": "@first-project"},
+     "highlight": {"target": "room-programs", "words": "The Programs filed to this project."},
+     "ask": {"ref": "room-programs", "question": "Does the Programs fold read clearly?", "choices": ["Keep", "Redo"]}},
+    {"highlight": {"target": "[data-testid='room-people-link'], [data-testid='room-people-resolve-verb'], [data-testid='room-people-head-verb']", "window": "open-project-memory", "words": "Press a name, then Link joins it to a person."},
+     "ask": {"ref": "room-people-link", "question": "Is the People Link clear before you press it?", "choices": ["Keep", "Redo"]}},
+    {"open": {"app": "review-meetings", "scope": "@first-meeting"},
+     "highlight": {"target": "meeting-decide", "words": "Press Decide. The Decide well opens."}},
+    {"highlight": {"target": "decide-scope", "window": "review-meetings", "words": "The project line: where the decision is filed."},
+     "ask": {"ref": "decide-project-line", "question": "Do you see the project before Save?", "choices": ["Keep", "Redo"]}}
+  ]
+}

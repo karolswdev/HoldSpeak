@@ -855,6 +855,24 @@ def briefing_route(method: str, path: str) -> bool:
     return any(verb == want and pattern.match(path) for want, pattern in _BRIEFING_ROUTES)
 
 
+# The Walk (2026-11-07): a walk's data routes. The token is the path segment,
+# like the briefing page's. The handler (``web/routes/walks.py``) is the only
+# authority; the token reads its own walk and posts its answers, nothing else.
+_WALK_ROUTES: tuple[tuple[str, Any], ...] = tuple(
+    (verb, re.compile("^" + pattern + "$"))
+    for verb, pattern in (
+        ("GET", rf"/api/w/{_BRIEFING_TOKEN}"),
+        ("POST", rf"/api/w/{_BRIEFING_TOKEN}/answer"),
+    )
+)
+
+
+def walk_route(method: str, path: str) -> bool:
+    """True for exactly the walk's token routes."""
+    verb = str(method or "").upper()
+    return any(verb == want and pattern.match(path) for want, pattern in _WALK_ROUTES)
+
+
 #: The Line's wire (LINE design §4): the only routes a line-node credential
 #: reaches. The owner (a local node on the hub token) reaches them too.
 LINE_WIRE_ROUTES = frozenset({"/api/calls/line/hello", "/api/calls/line/events", "/api/calls/line/next"})
@@ -882,6 +900,8 @@ def required_right(method: str, path: str) -> Optional[PrincipalRight]:
         return None  # the handler admits the owner, an agent or a paired phone
     if briefing_route(verb, path):
         return None  # the handler checks the token's hash, expiry and revocation
+    if walk_route(verb, path):
+        return None  # the handler checks the walk token's hash
     if verb == "POST" and path in LINE_WIRE_ROUTES:
         return PrincipalRight.LINE_LINK
     if verb == "POST" and path == LINE_ENROL_ROUTE:

@@ -35,6 +35,7 @@ The owning guide explains how to inspect the result.
 | Develop goals, Projects, and working context | [Interview](INTERVIEW.md) |
 | Prepare a decision or implementation brief | [Architecture work](ARCHITECTURE_WORK.md) |
 | Review current work and retained attention | [Desk Memory](DESK_MEMORY.md) |
+| Give feedback on the Desk, one step at a time, from one link | [Walks](walks.md) |
 | Find earlier records and source evidence | [Memory](RELATIONSHIP_AWARE_MEMORY.md) |
 | Prepare with confidential People context | [People integration](PEOPLE_INTEGRATION.md), [People security](PEOPLE_SECURITY.md) |
 | Choose wallpaper and presentation preferences | [Environments](ENVIRONMENTS.md) |
