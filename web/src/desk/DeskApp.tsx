@@ -49,6 +49,7 @@ import { DrawerWindows } from "./drawer";
 import { ConductorWindows } from "./conductor";
 import { UiFeedbackHost } from "./feedback/UiFeedbackHost";
 import { useUiFeedbackState } from "./feedback/runtime";
+import { WalkRunner } from "./walk/WalkRunner";
 import "./desk.css";
 
 // Object-specific heavyweight windows cross an actual user-open boundary
@@ -100,6 +101,7 @@ export default function DeskApp() {
       <DeskDeleteHost />
       <DeskFaces />
       <UiFeedbackHost />
+      <WalkRunner />
     </>
   );
 }

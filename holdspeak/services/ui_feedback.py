@@ -350,6 +350,29 @@ def save_feedback(payload: Mapping[str, Any], *, home: Path | None = None) -> di
             shutil.rmtree(temporary, ignore_errors=True)
 
 
+WALKS_DIR = "walks"
+
+
+def walks_root(home: Path | None = None) -> Path:
+    """The Walk's folder, inside the feedback folder: a walk's script, its
+    answers and its window shots land where feedback bundles land."""
+    return feedback_root(home) / WALKS_DIR
+
+
+def save_walk_shot(directory: Path, name: str, screenshot_base64: Any) -> str:
+    """Validate one walk window PNG with the feedback limits and write it
+    once (``name`` is a plain file stem; an existing file is never replaced).
+    Returns the file name."""
+    if not re.fullmatch(r"[A-Za-z0-9_-]{1,96}", str(name or "")):
+        raise _error("The shot name is not valid.")
+    screenshot = _decode_attachment(screenshot_base64, "window_png", MAX_PNG_BYTES)
+    _validate_png(screenshot)
+    directory.mkdir(parents=True, exist_ok=True, mode=0o700)
+    filename = f"{name}.png"
+    _durable_write(directory / filename, screenshot)
+    return filename
+
+
 def _feedback_directory(identifier: str, home: Path | None = None) -> Path:
     if not isinstance(identifier, str) or not _ID_RE.fullmatch(identifier):
         raise UIFeedbackError("id must be 32 lowercase hexadecimal characters.")

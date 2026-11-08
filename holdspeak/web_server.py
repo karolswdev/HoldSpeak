@@ -1842,6 +1842,10 @@ class MeetingWebServer:
         from .web.routes.briefing import build_briefing_router
 
         mount_router(app, build_briefing_router(web_ctx))
+        # The Walk (2026-11-07): a guided feedback walk on the desk from one link.
+        from .web.routes.walks import build_walks_router
+
+        mount_router(app, build_walks_router(web_ctx))
         # Phone (2026-10-28): the desk reaches him on his phone and he reaches
         # it. HOLDSPEAK_PHONE=off (every rig) mounts nothing.
         from .phone import phone_on

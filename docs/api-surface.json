@@ -8224,6 +8224,44 @@
       ]
     },
     {
+      "path": "/api/w/{token}",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.walks",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/w/{token}/answer",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.walks",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/walks",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.walks",
+      "consumers": []
+    },
+    {
+      "path": "/api/walks/{walk_id}",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.walks",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/watches",
       "methods": [
         "GET"
@@ -8922,6 +8960,14 @@
         "GET"
       ],
       "module": "web.routes.pages",
+      "consumers": []
+    },
+    {
+      "path": "/w/{token}",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.walks",
       "consumers": []
     },
     {
