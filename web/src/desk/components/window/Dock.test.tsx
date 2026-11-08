@@ -58,6 +58,7 @@ const mocks = vi.hoisted(() => {
     focusPanel,
     closeSurfaceWindow: vi.fn(),
     resetLayout: vi.fn(),
+    applyScheduledRecordingEvent: vi.fn(),
   });
   const defaultApiFetch = async (path: string): Promise<unknown> => {
       if (path === "/api/meetings/ready") return { meetings: durable.readyRows };
