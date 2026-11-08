@@ -5506,94 +5506,6 @@
       ]
     },
     {
-      "path": "/api/project-setups/{session_id}",
-      "methods": [
-        "GET"
-      ],
-      "module": "web.routes.project_setup",
-      "consumers": []
-    },
-    {
-      "path": "/api/project-setups/{session_id}/abandon",
-      "methods": [
-        "POST"
-      ],
-      "module": "web.routes.project_setup",
-      "consumers": []
-    },
-    {
-      "path": "/api/project-setups/{session_id}/answers",
-      "methods": [
-        "POST"
-      ],
-      "module": "web.routes.project_setup",
-      "consumers": []
-    },
-    {
-      "path": "/api/project-setups/{session_id}/finalize",
-      "methods": [
-        "POST"
-      ],
-      "module": "web.routes.project_setup",
-      "consumers": []
-    },
-    {
-      "path": "/api/project-setups/{session_id}/proposals/{proposal_id}/clarify",
-      "methods": [
-        "POST"
-      ],
-      "module": "web.routes.project_setup",
-      "consumers": []
-    },
-    {
-      "path": "/api/project-setups/{session_id}/proposals/{proposal_id}/clarify-jira-scope",
-      "methods": [
-        "POST"
-      ],
-      "module": "web.routes.project_setup",
-      "consumers": []
-    },
-    {
-      "path": "/api/project-setups/{session_id}/proposals/{proposal_id}/clarify-scope",
-      "methods": [
-        "POST"
-      ],
-      "module": "web.routes.project_setup",
-      "consumers": []
-    },
-    {
-      "path": "/api/project-setups/{session_id}/proposals/{proposal_id}/deselect",
-      "methods": [
-        "POST"
-      ],
-      "module": "web.routes.project_setup",
-      "consumers": []
-    },
-    {
-      "path": "/api/project-setups/{session_id}/proposals/{proposal_id}/select",
-      "methods": [
-        "POST"
-      ],
-      "module": "web.routes.project_setup",
-      "consumers": []
-    },
-    {
-      "path": "/api/project-setups/{session_id}/proposals/{proposal_id}/test",
-      "methods": [
-        "POST"
-      ],
-      "module": "web.routes.project_setup",
-      "consumers": []
-    },
-    {
-      "path": "/api/project-setups/{session_id}/suggest",
-      "methods": [
-        "POST"
-      ],
-      "module": "web.routes.project_setup",
-      "consumers": []
-    },
-    {
       "path": "/api/projects",
       "methods": [
         "GET"
@@ -5672,14 +5584,6 @@
       ]
     },
     {
-      "path": "/api/projects/{project_id}/action-items",
-      "methods": [
-        "GET"
-      ],
-      "module": "web.routes.projects",
-      "consumers": []
-    },
-    {
       "path": "/api/projects/{project_id}/artifacts",
       "methods": [
         "GET"
@@ -5698,14 +5602,6 @@
       "consumers": [
         "web"
       ]
-    },
-    {
-      "path": "/api/projects/{project_id}/briefings",
-      "methods": [
-        "GET"
-      ],
-      "module": "web.routes.projects",
-      "consumers": []
     },
     {
       "path": "/api/projects/{project_id}/briefs",
@@ -6048,14 +5944,6 @@
       "consumers": [
         "web"
       ]
-    },
-    {
-      "path": "/api/projects/{project_id}/summary",
-      "methods": [
-        "GET"
-      ],
-      "module": "web.routes.projects",
-      "consumers": []
     },
     {
       "path": "/api/projects/{project_id}/updates",

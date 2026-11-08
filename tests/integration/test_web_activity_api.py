@@ -390,68 +390,6 @@ def test_connector_dry_run_unknown_connector_returns_404(
     assert response.status_code == 404
 
 
-def test_project_briefings_endpoint_returns_timeline_newest_first(
-    test_client: TestClient,
-    activity_db: Database,
-) -> None:
-    """HS-13-09: GET /api/projects/{id}/briefings walks
-    meeting_context annotations matching `value.project_id`,
-    newest first."""
-    activity_db.projects.create_project(
-        project_id="holdspeak", name="HoldSpeak", keywords=["holdspeak"]
-    )
-    activity_db.projects.create_project(
-        project_id="other", name="Other", keywords=["other"]
-    )
-    # Two snapshots for holdspeak (different content), one for
-    # the other project. The endpoint scopes by project_id.
-    activity_db.activity.create_activity_annotation(
-        source_connector_id="meeting_context",
-        annotation_type="meeting_context_briefing",
-        title="HoldSpeak — meeting context",
-        value={"project_id": "holdspeak", "markdown": "# v1"},
-    )
-    activity_db.activity.create_activity_annotation(
-        source_connector_id="meeting_context",
-        annotation_type="meeting_context_briefing",
-        title="HoldSpeak — meeting context",
-        value={"project_id": "holdspeak", "markdown": "# v2"},
-    )
-    activity_db.activity.create_activity_annotation(
-        source_connector_id="meeting_context",
-        annotation_type="meeting_context_briefing",
-        title="Other — meeting context",
-        value={"project_id": "other", "markdown": "# o"},
-    )
-
-    response = test_client.get("/api/projects/holdspeak/briefings")
-    assert response.status_code == 200
-    body = response.json()
-    assert body["project_id"] == "holdspeak"
-    assert len(body["briefings"]) == 2
-    assert body["briefings"][0]["value"]["markdown"] == "# v2"
-    assert body["briefings"][1]["value"]["markdown"] == "# v1"
-
-
-def test_project_briefings_endpoint_unknown_project_returns_404(
-    test_client: TestClient,
-) -> None:
-    response = test_client.get("/api/projects/no_such_project/briefings")
-    assert response.status_code == 404
-
-
-def test_project_briefings_endpoint_empty_when_no_runs(
-    test_client: TestClient,
-    activity_db: Database,
-) -> None:
-    activity_db.projects.create_project(
-        project_id="quiet", name="Quiet project", keywords=["quiet"]
-    )
-    response = test_client.get("/api/projects/quiet/briefings")
-    assert response.status_code == 200
-    assert response.json() == {"project_id": "quiet", "briefings": []}
-
-
 def test_briefing_endpoint_returns_null_when_no_annotation(
     test_client: TestClient,
 ) -> None:
@@ -502,8 +440,6 @@ def test_briefing_endpoint_returns_latest_briefing_and_run(
     assert payload["briefing"]["value"]["markdown"].startswith("# x")
     assert payload["last_run"] is not None
     assert payload["last_run"]["succeeded"] is True
-
-
 
 
 def test_activity_project_rule_api_creates_previews_updates_and_deletes(

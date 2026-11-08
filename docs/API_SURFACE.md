@@ -14,7 +14,7 @@ For example, the old meeting Slack-export route returns `slack_moved_to_channel`
 Read the handler and owning guide before treating route presence as feature availability.
 Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
-Routes: 911 (plus static mounts). iOS-consumed: 89. Web-consumed: 603.
+Routes: 897 (plus static mounts). iOS-consumed: 89. Web-consumed: 603.
 
 ## device_audio_ws
 
@@ -1075,17 +1075,6 @@ Routes: 911 (plus static mounts). iOS-consumed: 89. Web-consumed: 603.
 | Method | Path | Consumers |
 |---|---|---|
 | POST | `/api/project-setups` | web |
-| GET | `/api/project-setups/{session_id}` | server only |
-| POST | `/api/project-setups/{session_id}/abandon` | server only |
-| POST | `/api/project-setups/{session_id}/answers` | server only |
-| POST | `/api/project-setups/{session_id}/finalize` | server only |
-| POST | `/api/project-setups/{session_id}/proposals/{proposal_id}/clarify` | server only |
-| POST | `/api/project-setups/{session_id}/proposals/{proposal_id}/clarify-jira-scope` | server only |
-| POST | `/api/project-setups/{session_id}/proposals/{proposal_id}/clarify-scope` | server only |
-| POST | `/api/project-setups/{session_id}/proposals/{proposal_id}/deselect` | server only |
-| POST | `/api/project-setups/{session_id}/proposals/{proposal_id}/select` | server only |
-| POST | `/api/project-setups/{session_id}/proposals/{proposal_id}/test` | server only |
-| POST | `/api/project-setups/{session_id}/suggest` | server only |
 
 ## web.routes.project_updates
 
@@ -1129,10 +1118,8 @@ Routes: 911 (plus static mounts). iOS-consumed: 89. Web-consumed: 603.
 | DELETE | `/api/projects/{project_id}` | web |
 | GET | `/api/projects/{project_id}` | web |
 | PATCH | `/api/projects/{project_id}` | web |
-| GET | `/api/projects/{project_id}/action-items` | server only |
 | GET | `/api/projects/{project_id}/artifacts` | web |
 | POST | `/api/projects/{project_id}/ask-tasks` | web |
-| GET | `/api/projects/{project_id}/briefings` | server only |
 | GET | `/api/projects/{project_id}/items` | web |
 | POST | `/api/projects/{project_id}/items` | server only |
 | PATCH | `/api/projects/{project_id}/items/{item_id}` | server only |
@@ -1151,7 +1138,6 @@ Routes: 911 (plus static mounts). iOS-consumed: 89. Web-consumed: 603.
 | GET | `/api/projects/{project_id}/suggested-sources` | web |
 | POST | `/api/projects/{project_id}/suggested-sources/{ref:path}/add` | web |
 | POST | `/api/projects/{project_id}/suggested-sources/{ref:path}/dismiss` | web |
-| GET | `/api/projects/{project_id}/summary` | server only |
 
 ## web.routes.proposals
 
