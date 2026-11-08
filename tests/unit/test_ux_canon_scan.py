@@ -609,10 +609,12 @@ class TestMicAllowlist:
         """23 census - retired Thread checkbox + R13 + Workbench grammar
         - the Thread number field parked with the Thread window (Q4) = 23,
         + DIR10's briefing-page answer field (the thin kit has no mic) = 24,
-        + the Programs wizard's Folder path and Check command (#1833) = 26."""
+        + the Programs wizard's Folder path and Check command (#1833) = 26,
+        - the six ModelLibraryCore/TopologyMapView entries parked with the
+        Models chain (2026-11-08) = 20."""
         mod = _load_scanner()
-        assert len(mod.MIC_ALLOWLIST) == 26
-        assert len({(p, n) for p, n, _ in mod.MIC_ALLOWLIST}) == 26
+        assert len(mod.MIC_ALLOWLIST) == 20
+        assert len({(p, n) for p, n, _ in mod.MIC_ALLOWLIST}) == 20
 
 
 _MIC_HOST_FIELDS = (
@@ -738,17 +740,6 @@ def test_password_exemption_belongs_to_its_own_element_only() -> None:
     found = scanner.scan_mic("features/x/Row.tsx", opted_out, opted_out.splitlines())
     labels = [opted_out.splitlines()[v.line].strip() for v in found]
     assert labels == ['label="Name"', 'label="Server address"']
-
-
-def test_the_real_concierge_address_well_is_not_blind() -> None:
-    """Astra's in-memory check: opt the real address well out of its mic."""
-    scanner = _load_scanner()
-    path = Path(__file__).resolve().parents[2] / "web/src/features/concierge/ConciergeCore.tsx"
-    content = path.read_text()
-    rel = "features/concierge/ConciergeCore.tsx"
-    assert scanner.scan_mic(rel, content, content.splitlines()) == []
-    hole = content.replace('label="Server address"', 'label="Server address"\n              mic={false}', 1)
-    assert len(scanner.scan_mic(rel, hole, hole.splitlines())) == 1
 
 
 def test_workbench_instruction_keeps_one_named_grammar_mic_authority() -> None:

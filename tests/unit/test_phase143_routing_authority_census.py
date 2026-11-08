@@ -202,10 +202,6 @@ PROFILE_ID_CLASSIFICATIONS = {
         "holdspeak/commands/doctor.py|_check_runtime_profiles|profile_id#2", "holdspeak/commands/doctor.py|_check_runtime_profiles|profile_id#3",
         "holdspeak/commands/doctor.py|_check_dictation_runtime|profile_id",
         "holdspeak/db/models/__init__.py|RecipeRecord.to_dict|profile_id", "holdspeak/inference_targets.py|InferenceTarget.to_dict|profile_id",
-        # HS-162-03: front_door.py profile_id reads (display, Phase 156).
-        "holdspeak/web/routes/front_door.py|build_front_door_router.get_topology|profile_id",
-        "holdspeak/web/routes/front_door.py|build_front_door_router.get_topology|profile_id#2",
-        "holdspeak/web/routes/front_door.py|build_front_door_router.get_topology|profile_id#3",
         "holdspeak/services/ask_service.py|AskService.ask|profile_id",
         "holdspeak/services/inference_setup_service.py|InferenceSetupApplicationService.get_inference_setup|profile_id", "holdspeak/services/settings_service.py|meeting_placement_summary|profile_id",
         "holdspeak/setup_status.py|_trust_block|profile_id",

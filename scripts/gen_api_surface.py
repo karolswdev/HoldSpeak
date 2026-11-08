@@ -697,6 +697,7 @@ def _web_files() -> list[Path]:
         for p in web_src.rglob(suffix)
         if not p.name.endswith((".test.js", ".test.ts", ".test.tsx"))
         and "__tests__" not in p.parts
+        and "_parked" not in p.parts  # parked code is neither compiled nor served
     )
 
 

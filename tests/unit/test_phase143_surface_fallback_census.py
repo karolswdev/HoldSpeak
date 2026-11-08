@@ -107,9 +107,6 @@ BACKEND_PRIVATE_DECISIONS: dict[tuple[str, str], tuple[str, str]] = {
     ("holdspeak/services/support.py", "_norm_run_target"): ("workflow placement normalization", "143-10"),
     ("holdspeak/services/workbench_runner.py", "_route_target"): ("frozen route egress projection", "143-10"),
     ("holdspeak/services/calendar_snapshot_service.py", "_rank_vision_targets"): ("vision-capable profile ordering by boundary (local first) for the direct-dispatch fallback; the pick is receipted with its host, never silent", "175-07"),
-    ("holdspeak/services/front_door_service.py", "_collect_profile_from_done_item"): ("front-door plan profile identity extraction from receipt; not assignment authority", "156-04"),
-    ("holdspeak/services/front_door_service.py", "_resolve_group_assignments"): ("front-door plan assignment composition from completed provisioning items", "156-04"),
-    ("holdspeak/services/front_door_service.py", "_select_preset_for_tier"): ("front-door catalog preset selection for pack recommendation; not assignment authority", "156-04"),
     ("holdspeak/speaker_intel.py", "_get_fallback_speaker"): ("speaker identity fallback, not inference", "143-01"),
     ("holdspeak/web/routes/system/settings.py", "_resolve_meetings_host"): ("host display at enqueue; resolve_meeting_placement for settings read, not assignment", "172-02"),
     ("holdspeak/web/routes/system/settings.py", "_placement_host"): ("endpoint host extraction from resolved placement; no route selection", "172-02"),
@@ -156,17 +153,12 @@ WEB_ROUTING_SURFACES: dict[str, tuple[str, str]] = {
     # The Settings field names (profile_id reads "Engine") moved with the
     # gadget bindings out of SettingsCore.tsx (2026-11-08).
     "web/src/pages/cores/settings/bindings.tsx": ("inference-route", "143-13"),
-    "web/src/pages/cores/AssignmentEditor.tsx": ("inference-route", "143-13"),
-    "web/src/pages/cores/AssignmentModelChooser.tsx": ("inference-route", "143-13"),
     "web/src/pages/cores/assignmentExperience.ts": ("inference-route", "143-13"),
     "web/src/pages/cores/core-types.ts": ("display-transport", "143-11"),
-    "web/src/pages/cores/ModelLibraryCore.tsx": ("display-transport", "143-12"),
-    "web/src/pages/cores/TopologyMapView.tsx": ("display-transport", "156-04"),
     "web/src/features/project-room/core/Ask.tsx": ("display-transport", "169-07"),
     "web/src/features/project-room/model.ts": ("display-transport", "169-07"),
     "web/src/features/concierge/api.ts": ("display-transport", "170-03"),
     "web/src/pages/cores/dictation/SpeakFace.tsx": ("display-transport", "170-04"),
-    "web/src/pages/cores/modelLibrary.ts": ("display-transport", "143-12"),
     "web/src/meetings/summaryRoute.ts": ("display-transport", "201-04"),
     "web/src/features/concierge/endpointDraft.ts": ("display-transport", "201-09"),
     "web/src/features/concierge/useConciergeController.ts": ("inference-route", "201-09"),
@@ -210,6 +202,8 @@ def _private_decisions() -> set[tuple[str, str]]:
     selector_words = ("resolve", "select", "route", "placement", "profile", "target")
     route_evidence = (*POINTER_TOKENS, "deployment_revision", "resolve_placement", "InferenceRunner", "provider", "model")
     for path in sorted(BACKEND.rglob("*.py")):
+        if "_parked" in path.parts:  # kept, never imported
+            continue
         source = path.read_text(encoding="utf-8")
         tree = ast.parse(source, filename=str(path))
         for node in ast.walk(tree):

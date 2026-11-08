@@ -104,7 +104,7 @@ DESK_READS = (
     "/api/people/relationships",
     "/api/desk/needs-you?fresh=1",
 )
-PROBING_READS = ("/api/concierge/detect", "/api/front-door/recommendation")
+PROBING_READS = ("/api/concierge/detect",)
 
 
 def test_the_desk_reads_answer_while_the_engine_is_a_black_hole(hub, black_hole, monkeypatch):

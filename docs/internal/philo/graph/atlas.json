@@ -18488,12 +18488,12 @@
       ],
       "sources": [
         {
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "symbol": "const isUnreachable = engine.state === \"UNREACHABLE\";",
           "claim": "the concierge row knows an UNREACHABLE engine"
         },
         {
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "symbol": ": isUnreachable ? <StateChip state=\"failure\" label=\"UNREACHABLE\" />",
           "claim": "it draws a failure chip for it"
         }
@@ -18516,12 +18516,12 @@
       ],
       "sources": [
         {
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "symbol": "disabled={ctrl.addEngineChecking || ctrl.addEngineState !== \"READY\" || !ctrl.addEngineModel}",
           "claim": "Use this for summaries is enabled only when the added engine checked READY and a model is picked"
         },
         {
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "symbol": "data-testid=\"concierge-add-model\"",
           "claim": "the checked model name is shown beside it"
         }
@@ -18544,7 +18544,7 @@
       ],
       "sources": [
         {
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "symbol": "className=\"concierge-add-engine-reason\" data-testid=\"concierge-add-reason\"",
           "claim": "a refused check states its reason in an alert beside the field"
         }

@@ -1450,7 +1450,7 @@
           "claim": "The service defines canonical assignment groups including writing, speech recognition, and meetings."
         },
         {
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "symbol": "ConciergeCore",
           "line": 571,
           "claim": "The Models window add-engine verb \"Use\" writes the summary assignment (useConciergeController.useNewEngineForSummaries)."
