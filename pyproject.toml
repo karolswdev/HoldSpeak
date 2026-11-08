@@ -114,17 +114,10 @@ wakeword = [
     # HS-60: the optional local wake-word engine (Apache-2.0; ONNX runtime).
     "openwakeword>=0.6.0",
 ]
-tts = [
-    # HS-154-01: optional server-side TTS (kokoro-onnx: MIT; weights: Apache-2.0).
-    # The phonemizer + espeak-ng transitive chain is GPL-3.0 — the Settings UI
-    # carries the one-line note when this extra is enabled.
-    "kokoro-onnx>=0.4.0",
-    "soundfile>=0.12.0",
-]
 # The Line (2026-10-29, docs/internal/betterment/line/LINE-DESIGN-2026-10-29.md):
-# its own speech. Each is MIT (code); the weights are CC-BY-4.0 (Parakeet TDT
-# 0.6B v2, Kyutai Pocket TTS). Nothing here is GPL: not kokoro-onnx, not
-# faster-whisper (each pulls GPL code; design §2).
+# its own speech, and the desk's voice (/api/tts speaks through the Line's
+# Pocket TTS). Each is MIT (code); the weights are CC-BY-4.0 (Parakeet TDT
+# 0.6B v2, Kyutai Pocket TTS). Nothing here pulls GPL code (design §2).
 line = [
     "onnx-asr>=0.12.0",
     "onnxruntime>=1.20",

@@ -941,10 +941,10 @@ describe("Settings › Sounds without the speech extra", () => {
     const details = within(group).getByText("Details").closest("details")!;
     expect(details).not.toHaveAttribute("open");
     expect(within(details).getByRole("button", { name: "Copy", hidden: true })).not.toBeVisible();
-    expect(within(details).getByText("pip install 'holdspeak[tts]'")).not.toBeVisible();
+    expect(within(details).getByText("pip install 'holdspeak[line]'")).not.toBeVisible();
     fireEvent.click(within(group).getByText("Details"));
     expect(details).toHaveAttribute("open");
-    expect(within(details).getByText("pip install 'holdspeak[tts]'")).toBeInTheDocument();
+    expect(within(details).getByText("pip install 'holdspeak[line]'")).toBeInTheDocument();
     expect(within(details).getByRole("button", { name: "Copy" })).toBeVisible();
     expect(within(group).queryByRole("checkbox")).toBeNull();
   });

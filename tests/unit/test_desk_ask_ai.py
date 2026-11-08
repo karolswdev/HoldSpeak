@@ -603,8 +603,7 @@ def test_a_call_turn_lands_its_words_and_call_mode_persists(hub, tmp_path: Path,
     import holdspeak.web.routes.tts as tts_routes
     from holdspeak.web.context import WebContext
 
-    monkeypatch.setattr(tts_routes, "_kokoro_checked", True)
-    monkeypatch.setattr(tts_routes, "_kokoro_available", False)
+    monkeypatch.setattr(tts_routes, "_line_installed", lambda: False)
     tts_app = FastAPI()
     tts_app.include_router(tts_routes.build_tts_router(WebContext(get_state=lambda: {})))
     tts_status = TestClient(tts_app).get("/api/tts/status").json()

@@ -136,8 +136,8 @@ State: **Shipped** means merged to main. **Left** means a later slice.
 ## LICENCE. The hub's own GPL pulls (Left; needs his ruling)
 
 - **Goal**: no GPL code in a HoldSpeak process.
-- **Findings** (design §2): the `tts` extra (Kokoro) imports `phonemizer` and
+- **Findings** (design §2): the old `tts` extra imports `phonemizer` and
   loads `libespeak-ng` (GPL-3.0-or-later) in the hub; `faster-whisper` imports
   PyAV, whose Linux wheel bundles `libx264` and `libx265` (GPL-2.0-or-later).
-- **Changes**: his ruling first (design §14); then swap Kokoro for Pocket TTS
-  in the hub's speech, and keep PyAV out of the Linux STT path.
+- **Changes**: his ruling first (design §14); then swap the old `tts` extra for Pocket TTS
+  in the hub's speech (done 2026-11-07: the owner's ruling removed the extra; `/api/tts` speaks through the Line's Pocket TTS), and keep PyAV out of the Linux STT path.

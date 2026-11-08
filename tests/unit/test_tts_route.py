@@ -1,423 +1,130 @@
-"""HS-154-01 — TTS route tests.
+"""The desk's /api/tts speaks through the Line's Pocket TTS (one hub voice, 2026-11-07).
 
-- 404 law: POST /api/tts answers 404 when the extra is absent.
-- Status shape: GET /api/tts/status returns {installed: bool, model_ready: bool}.
-- Stream shape: POST /api/tts returns streaming WAV with correct header.
-- Weights download carries egress badge and receipt.
-- Voice validation: invalid voice returns 400, not silent empty 200.
-- Model filename constants: route uses the correct v1.0 filenames.
+- Status: ``installed`` = the ``line`` extra imports; ``model_ready`` = the
+  Line's TTS preset is ready; ``engine`` and ``voice`` name the Line's voice.
+- POST streams a WAV at the Line's rate from the engine's PCM chunks.
+- 404 ``tts_not_installed`` without the extra; 404 ``tts_model_not_ready``
+  before the weights are fetched.
+- The download route starts the Line's fetch job once (no second downloader).
 """
 from __future__ import annotations
 
-import importlib
-import json
 import struct
-import sys
-import types
-from pathlib import Path
-from typing import Any
-from unittest.mock import MagicMock, patch
+from typing import Any, Iterator
 
+import numpy as np
 import pytest
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
 
-REPO = Path(__file__).resolve().parents[2]
+from holdspeak.line import models as line_models
+from holdspeak.line import speech
+from holdspeak.line.audio import RATE
+from holdspeak.web.context import WebContext
+from holdspeak.web.routes import tts as tts_routes
 
-# ---- helpers ----
+
+class FakePocket:
+    made: list[str] = []
+
+    def __init__(self, *, voice: str = speech.TTS_VOICE, threads: Any = None) -> None:
+        FakePocket.made.append(voice)
+
+    def stream(self, text: str, stop: Any = None) -> Iterator[np.ndarray]:
+        yield np.full(160, 1000, dtype=np.int16)
+        yield np.full(320, -1000, dtype=np.int16)
 
 
-def _app_client():
-    """Build a minimal TestClient around the TTS router."""
-    from fastapi import FastAPI
-    from fastapi.testclient import TestClient
-
-    from holdspeak.web.context import WebContext
-    from holdspeak.web.routes.tts import build_tts_router, _reset_kokoro_state
-
-    _reset_kokoro_state()
-    ctx = WebContext(get_state=lambda: {})
+@pytest.fixture
+def client(monkeypatch: pytest.MonkeyPatch):
+    tts_routes._reset_state()
+    FakePocket.made = []
+    monkeypatch.setattr(tts_routes, "_line_installed", lambda: True)
+    monkeypatch.setattr(line_models, "ready", lambda row: True)
+    monkeypatch.setattr(speech, "Pocket", FakePocket)
     app = FastAPI()
-    app.include_router(build_tts_router(ctx))
-    return TestClient(app), _reset_kokoro_state
-
-
-def _hide_kokoro():
-    """Temporarily hide real kokoro_onnx so the import check fails.
-
-    Returns a cleanup function that restores the original state.
-    """
-    from holdspeak.web.routes.tts import _reset_kokoro_state
-
-    _reset_kokoro_state()
-    saved = sys.modules.pop("kokoro_onnx", None)
-
-    # Block future imports during this test (PEP 451: use find_spec)
-    class _KokoroBlocker:
-        """Meta-path finder that blocks kokoro_onnx import."""
-
-        def find_spec(self, name, path, target=None):
-            if name == "kokoro_onnx" or name.startswith("kokoro_onnx."):
-                raise ImportError("kokoro_onnx hidden by test")
-            return None
-
-    blocker = _KokoroBlocker()
-    sys.meta_path.insert(0, blocker)
-
-    def cleanup():
-        sys.meta_path.remove(blocker)
-        if saved is not None:
-            sys.modules["kokoro_onnx"] = saved
-        _reset_kokoro_state()
-
-    return cleanup
-
-
-def _inject_fake_kokoro():
-    """Inject a fake kokoro_onnx module into sys.modules.
-
-    Returns the mock module and a cleanup function.
-    """
-    import numpy as np
-
-    from holdspeak.web.routes.tts import _reset_kokoro_state
-
-    _reset_kokoro_state()
-    saved = sys.modules.pop("kokoro_onnx", None)
-
-    fake = types.ModuleType("kokoro_onnx")
-    fake.__name__ = "kokoro_onnx"
-
-    _VALID_VOICES = {"af_heart", "af", "af_bella", "am_adam"}
-
-    class FakeKokoro:
-        def __init__(self, model_path: str, voices_path: str):
-            self.model_path = model_path
-            self.voices_path = voices_path
-
-        def create(self, text: str, voice: str = "af_heart", speed: float = 1.0):
-            # Match real kokoro-onnx: raise ValueError on unknown voice
-            if voice not in _VALID_VOICES:
-                raise ValueError(f"Voice {voice} not found in available voices")
-            # Return ~0.1s of silence at 24000 Hz
-            sample_rate = 24000
-            num_samples = int(0.1 * sample_rate)
-            samples = np.zeros(num_samples, dtype=np.float32)
-            return samples, sample_rate
-
-    fake.Kokoro = FakeKokoro
-    sys.modules["kokoro_onnx"] = fake
-
-    def cleanup():
-        sys.modules.pop("kokoro_onnx", None)
-        if saved is not None:
-            sys.modules["kokoro_onnx"] = saved
-        _reset_kokoro_state()
-
-    return fake, cleanup
-
-
-# ---- 404 law: extra absent ----
-
-
-class TestTtsNotInstalled:
-    """When the kokoro-onnx extra is absent, routes 404 with typed code.
-
-    replaces: tests/e2e/test_hs154_call_glass.py::test_tts_api_404_law
-    """
-
-    def test_status_returns_not_installed(self):
-        cleanup = _hide_kokoro()
-        try:
-            client, reset = _app_client()
-            try:
-                r = client.get("/api/tts/status")
-                assert r.status_code == 200
-                data = r.json()
-                assert data["installed"] is False
-                assert data["model_ready"] is False
-            finally:
-                reset()
-        finally:
-            cleanup()
-
-    def test_post_tts_returns_404(self):
-        cleanup = _hide_kokoro()
-        try:
-            client, reset = _app_client()
-            try:
-                r = client.post("/api/tts", json={"text": "Hello"})
-                assert r.status_code == 404
-                data = r.json()
-                assert data["code"] == "tts_not_installed"
-            finally:
-                reset()
-        finally:
-            cleanup()
-
-    def test_download_returns_404(self):
-        cleanup = _hide_kokoro()
-        try:
-            client, reset = _app_client()
-            try:
-                r = client.post("/api/tts/download")
-                assert r.status_code == 404
-                data = r.json()
-                assert data["code"] == "tts_not_installed"
-            finally:
-                reset()
-        finally:
-            cleanup()
-
-
-# ---- status shape ----
-
-
-class TestTtsStatus:
-    """GET /api/tts/status returns a well-shaped response."""
-
-    def test_status_shape_without_extra(self):
-        cleanup = _hide_kokoro()
-        try:
-            client, reset = _app_client()
-            try:
-                r = client.get("/api/tts/status")
-                assert r.status_code == 200
-                data = r.json()
-                assert isinstance(data["installed"], bool)
-                assert isinstance(data["model_ready"], bool)
-            finally:
-                reset()
-        finally:
-            cleanup()
-
-    def test_status_installed_no_model(self, tmp_path):
-        """Extra installed but model weights not downloaded."""
-        fake, cleanup = _inject_fake_kokoro()
-        try:
-            from holdspeak.web.routes import tts as tts_module
-
-            # Point to an empty dir -- no weight files
-            empty_dir = tmp_path / "empty-tts"
-            empty_dir.mkdir()
-            with patch.object(tts_module, "_model_weights_dir", return_value=empty_dir):
-                client, reset = _app_client()
-                try:
-                    r = client.get("/api/tts/status")
-                    data = r.json()
-                    assert data["installed"] is True
-                    # Model not ready because weight files don't exist
-                    assert data["model_ready"] is False
-                finally:
-                    reset()
-        finally:
-            cleanup()
-
-    def test_status_installed_with_model(self, tmp_path):
-        """Extra installed AND model weights present."""
-        fake, cleanup = _inject_fake_kokoro()
-        try:
-            from holdspeak.web.routes import tts as tts_module
-
-            # Point weights dir to tmp_path with fake weight files
-            weights_dir = tmp_path / "tts"
-            weights_dir.mkdir()
-            (weights_dir / "kokoro-v1.0.fp16.onnx").write_bytes(b"fake-model")
-            (weights_dir / "voices-v1.0.bin").write_bytes(b"fake-voices")
-
-            with patch.object(tts_module, "_model_weights_dir", return_value=weights_dir):
-                client, reset = _app_client()
-                try:
-                    r = client.get("/api/tts/status")
-                    data = r.json()
-                    assert data["installed"] is True
-                    assert data["model_ready"] is True
-                finally:
-                    reset()
-        finally:
-            cleanup()
-
-
-# ---- stream shape ----
-
-
-class TestTtsStream:
-    """POST /api/tts streams a valid WAV with the correct header."""
-
-    def test_stream_returns_wav(self, tmp_path):
-        """With fake kokoro + fake weights: WAV header + PCM data."""
-        fake, cleanup = _inject_fake_kokoro()
-        try:
-            from holdspeak.web.routes import tts as tts_module
-
-            weights_dir = tmp_path / "tts"
-            weights_dir.mkdir()
-            (weights_dir / "kokoro-v1.0.fp16.onnx").write_bytes(b"fake-model")
-            (weights_dir / "voices-v1.0.bin").write_bytes(b"fake-voices")
-
-            with patch.object(tts_module, "_model_weights_dir", return_value=weights_dir):
-                client, reset = _app_client()
-                try:
-                    r = client.post("/api/tts", json={"text": "Hello world"})
-                    assert r.status_code == 200
-                    assert "audio/wav" in r.headers.get("content-type", "")
-
-                    # Verify WAV header
-                    wav_data = r.content
-                    assert len(wav_data) > 44  # At least the header
-                    assert wav_data[:4] == b"RIFF"
-                    assert wav_data[8:12] == b"WAVE"
-                    assert wav_data[12:16] == b"fmt "
-                finally:
-                    reset()
-        finally:
-            cleanup()
-
-    def test_missing_text_returns_400(self, tmp_path):
-        fake, cleanup = _inject_fake_kokoro()
-        try:
-            from holdspeak.web.routes import tts as tts_module
-
-            weights_dir = tmp_path / "tts"
-            weights_dir.mkdir()
-            (weights_dir / "kokoro-v1.0.fp16.onnx").write_bytes(b"fake-model")
-            (weights_dir / "voices-v1.0.bin").write_bytes(b"fake-voices")
-
-            with patch.object(tts_module, "_model_weights_dir", return_value=weights_dir):
-                client, reset = _app_client()
-                try:
-                    r = client.post("/api/tts", json={})
-                    assert r.status_code == 400
-                    assert r.json()["code"] == "tts_invalid_request"
-                finally:
-                    reset()
-        finally:
-            cleanup()
-
-    def test_model_not_ready_returns_503(self, tmp_path):
-        """Extra installed but no model files → 503."""
-        fake, cleanup = _inject_fake_kokoro()
-        try:
-            from holdspeak.web.routes import tts as tts_module
-
-            # Point to an empty dir -- no weight files
-            empty_dir = tmp_path / "empty-tts"
-            empty_dir.mkdir()
-            with patch.object(tts_module, "_model_weights_dir", return_value=empty_dir):
-                client, reset = _app_client()
-                try:
-                    r = client.post("/api/tts", json={"text": "Hello"})
-                    assert r.status_code == 503
-                    assert r.json()["code"] == "tts_model_not_ready"
-                finally:
-                    reset()
-        finally:
-            cleanup()
-
-
-# ---- download receipt + egress badge ----
-
-
-class TestTtsDownload:
-    """POST /api/tts/download carries egress badge and receipt."""
-
-    def test_download_receipt_and_egress(self, tmp_path):
-        """Successful download returns receipt + egress badge."""
-        fake, cleanup = _inject_fake_kokoro()
-        try:
-            from holdspeak.web.routes import tts as tts_module
-
-            weights_dir = tmp_path / "tts"
-            weights_dir.mkdir()
-
-            def _fake_urlretrieve(url: str, dest: str):
-                """Simulate the download by creating the weight files."""
-                Path(dest).write_bytes(b"fake-weight-data")
-
-            with patch.object(tts_module, "_model_weights_dir", return_value=weights_dir), \
-                 patch.object(tts_module.urllib.request, "urlretrieve", _fake_urlretrieve):
-                client, reset = _app_client()
-                try:
-                    r = client.post("/api/tts/download")
-                    assert r.status_code == 202
-                    data = r.json()
-                    # Receipt
-                    assert "receipt" in data
-                    assert data["receipt"]["downloaded"] is True
-                    assert "elapsed_s" in data["receipt"]
-                    assert "total_bytes" in data["receipt"]
-                    # Egress badge
-                    assert "egress" in data
-                    assert data["egress"]["host"] == "github.com"
-                    assert "bytes_estimate" in data["egress"]
-                finally:
-                    reset()
-        finally:
-            cleanup()
-
-
-# ---- voice validation (DEFECT 3 fix) ----
-
-
-class TestTtsVoiceValidation:
-    """Invalid voice returns 400 with typed code, not silent empty 200."""
-
-    def test_invalid_voice_returns_400(self, tmp_path):
-        """Requesting a non-existent voice returns 400 tts_invalid_voice."""
-        fake, cleanup = _inject_fake_kokoro()
-        try:
-            from holdspeak.web.routes import tts as tts_module
-
-            weights_dir = tmp_path / "tts"
-            weights_dir.mkdir()
-            (weights_dir / "kokoro-v1.0.fp16.onnx").write_bytes(b"fake-model")
-            (weights_dir / "voices-v1.0.bin").write_bytes(b"fake-voices")
-
-            with patch.object(tts_module, "_model_weights_dir", return_value=weights_dir):
-                client, reset = _app_client()
-                try:
-                    r = client.post("/api/tts", json={"text": "Hello", "voice": "nonexistent"})
-                    assert r.status_code == 400
-                    data = r.json()
-                    assert data["code"] == "tts_invalid_voice"
-                    assert "nonexistent" in data["message"]
-                finally:
-                    reset()
-        finally:
-            cleanup()
-
-    def test_valid_voice_succeeds(self, tmp_path):
-        """A known voice returns 200 with WAV data."""
-        fake, cleanup = _inject_fake_kokoro()
-        try:
-            from holdspeak.web.routes import tts as tts_module
-
-            weights_dir = tmp_path / "tts"
-            weights_dir.mkdir()
-            (weights_dir / "kokoro-v1.0.fp16.onnx").write_bytes(b"fake-model")
-            (weights_dir / "voices-v1.0.bin").write_bytes(b"fake-voices")
-
-            with patch.object(tts_module, "_model_weights_dir", return_value=weights_dir):
-                client, reset = _app_client()
-                try:
-                    r = client.post("/api/tts", json={"text": "Hello", "voice": "af_heart"})
-                    assert r.status_code == 200
-                    assert r.content[:4] == b"RIFF"
-                finally:
-                    reset()
-        finally:
-            cleanup()
-
-
-# ---- model filename constants ----
-
-
-class TestTtsModelFilenames:
-    """Route uses the correct v1.0 model filenames."""
-
-    def test_model_filenames_are_v1(self):
-        """The module-level constants use v1.0 filenames."""
-        from holdspeak.web.routes.tts import _MODEL_FILENAME, _VOICES_FILENAME
-
-        assert "v1.0" in _MODEL_FILENAME
-        assert "v1.0" in _VOICES_FILENAME
-        assert _MODEL_FILENAME.endswith(".onnx")
-        assert _VOICES_FILENAME.endswith(".bin")
+    app.include_router(tts_routes.build_tts_router(WebContext(get_state=lambda: {})))
+    yield TestClient(app)
+    tts_routes._reset_state()
+
+
+def test_status_names_the_line_engine_and_reads_the_preset(client, monkeypatch) -> None:
+    seen: list[str] = []
+    monkeypatch.setattr(line_models, "ready", lambda row: seen.append(row["role"]) or True)
+    data = client.get("/api/tts/status").json()
+    assert data == {"installed": True, "model_ready": True, "engine": "pocket", "voice": speech.TTS_VOICE}
+    assert seen == ["tts"]
+
+    monkeypatch.setattr(line_models, "ready", lambda row: False)
+    assert client.get("/api/tts/status").json()["model_ready"] is False
+
+
+def test_post_streams_a_wav_of_the_engine_chunks(client) -> None:
+    r = client.post("/api/tts", json={"text": "Hello world", "speed": 1.4})
+    assert r.status_code == 200, r.text
+    assert "audio/wav" in r.headers["content-type"]
+    body = r.content
+    assert body[:4] == b"RIFF" and body[8:12] == b"WAVE" and body[12:16] == b"fmt "
+    channels, rate = struct.unpack("<HI", body[22:28])
+    assert (channels, rate) == (1, RATE)
+    pcm = np.frombuffer(body[44:], dtype="<i2")
+    assert len(pcm) == 480 and pcm[0] == 1000 and pcm[-1] == -1000
+    # One engine per process: a second request reuses it.
+    assert client.post("/api/tts", json={"text": "Again"}).status_code == 200
+    assert FakePocket.made == [speech.TTS_VOICE]
+
+
+def test_post_without_the_line_extra_is_404(client, monkeypatch) -> None:
+    monkeypatch.setattr(tts_routes, "_line_installed", lambda: False)
+    r = client.post("/api/tts", json={"text": "Hello"})
+    assert r.status_code == 404 and r.json()["code"] == "tts_not_installed"
+    status = client.get("/api/tts/status").json()
+    assert status["installed"] is False and status["model_ready"] is False
+    assert client.post("/api/tts/download").json()["code"] == "tts_not_installed"
+
+
+def test_the_import_probe_fails_when_pocket_tts_cannot_import(monkeypatch) -> None:
+    import builtins
+
+    real = builtins.__import__
+
+    def blocked(name, *args, **kwargs):
+        if name == "pocket_tts":
+            raise ImportError("hidden by test")
+        return real(name, *args, **kwargs)
+
+    tts_routes._reset_state()
+    monkeypatch.setattr(builtins, "__import__", blocked)
+    try:
+        assert tts_routes._line_installed() is False
+    finally:
+        tts_routes._reset_state()
+
+
+def test_post_before_the_weights_is_404(client, monkeypatch) -> None:
+    monkeypatch.setattr(line_models, "ready", lambda row: False)
+    r = client.post("/api/tts", json={"text": "Hello"})
+    assert r.status_code == 404 and r.json()["code"] == "tts_model_not_ready"
+    assert FakePocket.made == []
+
+
+def test_bad_requests_are_400(client) -> None:
+    assert client.post("/api/tts", json={}).json()["code"] == "tts_invalid_request"
+    r = client.post("/api/tts", json={"text": "Hi", "voice": "nonexistent"})
+    assert r.status_code == 400 and r.json()["code"] == "tts_invalid_voice"
+    assert "nonexistent" in r.json()["message"]
+
+
+def test_download_starts_the_line_fetch_once(client, monkeypatch) -> None:
+    started: list[str] = []
+    monkeypatch.setattr(line_models, "start", lambda preset_id, **_: started.append(preset_id) or {})
+    monkeypatch.setattr(line_models, "wait", lambda preset_id, seconds=10.0: None)
+    monkeypatch.setattr(line_models, "model_row", lambda row: {"state": "ready"})
+    r = client.post("/api/tts/download")
+    assert r.status_code == 202, r.text
+    data = r.json()
+    tts_row = next(row for row in line_models.presets() if row["role"] == "tts")
+    assert started == [tts_row["id"]]
+    assert data["receipt"]["downloaded"] is True
+    assert data["receipt"]["total_bytes"] == tts_row["source"]["download_bytes"]
+    assert data["egress"]["host"] == "huggingface.co"

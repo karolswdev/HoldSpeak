@@ -111,7 +111,7 @@ function isSpeechLine(line: PackDisplayLine): boolean {
 function isTtsLine(line: PackDisplayLine): boolean {
   return (
     line.job === "tts" ||
-    line.provenance === "builtin_kokoro" ||
+    line.provenance === "builtin_line" ||
     (line.group_label ?? line.label) === "Text-to-speech"
   );
 }

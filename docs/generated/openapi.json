@@ -33596,7 +33596,7 @@
     },
     "/api/tts": {
       "post": {
-        "description": "Synthesize text to streaming WAV audio.\n\n404 when the kokoro-onnx extra is absent.",
+        "description": "Synthesize text to streaming WAV audio with the Line's Pocket engine.\n\n404 ``tts_not_installed`` without the ``line`` extra; 404\n``tts_model_not_ready`` before the weights are fetched.",
         "operationId": "tts_speak_api_tts_post",
         "responses": {
           "200": {
@@ -33615,7 +33615,7 @@
     },
     "/api/tts/download": {
       "post": {
-        "description": "Download kokoro-onnx model weights (egress-badged, receipted).\n\nFollows the Model Library download pattern: POST triggers the\ndownload, 202 carries the receipt. The egress badge names the\nhost and an approximate size.",
+        "description": "Fetch the Line's TTS weights through ``line/models.py`` (egress-badged, receipted).\n\nStarts (or joins) the Line's fetch job for the TTS preset and waits\nfor it; the 202 carries the receipt and the egress badge.",
         "operationId": "tts_download_api_tts_download_post",
         "responses": {
           "200": {
@@ -33634,7 +33634,7 @@
     },
     "/api/tts/status": {
       "get": {
-        "description": "Report TTS availability: extra installed + model weights ready.",
+        "description": "Report TTS availability: the Line extra installed + its TTS weights ready.",
         "operationId": "tts_status_api_tts_status_get",
         "responses": {
           "200": {

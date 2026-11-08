@@ -126,7 +126,7 @@ defined in §6.1.
 | DC-01 | **The Thread** | thread/message/part tables; streamed turns over the router; Thread primitive + ThreadPullout; composer w/ mic, `@`-refs, attachments; markdown/code/mermaid; Keep→artifact; chat FTS; branch on edit/regenerate | `bridge/persistence`, `orchestrator` streaming, `thread.tsx`, `thread-list.tsx` |
 | DC-02 | **The Hands** | model tool calls → kernel tool turns; the MCP families as the in-process tool registry; pending-tool box (receipt in yolo, decision in safe); per-thread tool set; status line; elicitation as a kernel decision; tool result renderers for desk kinds | `orchestrator.executePass`, `PendingToolCallsBox`, `Elicitation.tsx`, `set_current_status` |
 | DC-03 | **The Practice** | slash commands on the verb registry; **modes** (tool allow-list + prompt + guardrails) as a Recipe extension; **guardrails** as a second router assignment reviewing tool calls; **annotations** (select → comment/dictate → queued into next turn); `/compact`; thread todo = action items | `FEApplet` slash commands, `mode-types.ts`, `guardrail-types.ts`, `SelectionPopover.tsx` |
-| DC-04 | **The Call** | TTS (Kokoro, Apache-2.0) per assistant turn; VAD; voice-call mode (listen → send → speak, visible state, click to stop) | `KokoroTTS.tsx`, `VoiceInput.tsx`, `DictationContext.tsx` |
+| DC-04 | **The Call** | TTS (an open model) per assistant turn; VAD; voice-call mode (listen → send → speak, visible state, click to stop) | `TTS.tsx`, `VoiceInput.tsx`, `DictationContext.tsx` |
 | DC-05 | **The Crew** | subthreads: a thread spawns child threads running under a Recipe/mode with auto-approved tools, parent↔child messages as bus notifications, block-then-background | `subthreadService.ts`, `create_subthread`/`*_send_message` tools |
 
 ### 4.2 Out of scope (deliberately not ported)
@@ -341,9 +341,10 @@ row; Submit/Decline resolve the operation. No new admission path.
 
 > **Status:** SHIPPED as Phase 154 The Call.
 
-- **TTS:** Kokoro (Apache-2.0). Two options; recommend **B**:
-  A) `kokoro-js` in the browser (ONNX, ~300 MB first load, no server work);
-  B) `kokoro` Python package server-side behind `POST /api/tts` streaming
+- **TTS:** an open model. Two options; recommend **B**:
+  (Superseded 2026-11-07: `/api/tts` speaks through the Line's Pocket TTS.)
+  A) a JS build of the model in the browser (ONNX, ~300 MB first load, no server work);
+  B) a Python package server-side behind `POST /api/tts` streaming
   WAV chunks — keeps the model on the hub (Art. III, one place), works for
   iPad later, and the hub already streams audio the other direction.
   Per assistant turn: a speaker glyph; in call mode, auto-speak on
@@ -480,7 +481,7 @@ notifications · walk.
 | Tool-call dialects: llama.cpp + small local models emit malformed JSON | The kernel already carries dialect material (`gemma4/qwen/…`) and the `llm-json` repair pattern; reuse; malformed = a `tool_requested` refusal row, not a crash. |
 | Scope creep toward "warpdrv in HoldSpeak" | §4.2 is the fence; each phase is its own arc with its own charter question. |
 | AGPL taint by an over-helpful worker | N5 + the clone lives only in the session scratchpad; workers get this plan, not the clone. |
-| TTS weight on the hub (Kokoro ~330 MB) | Lazy download on first `/call`, egress-badged as a model fetch; never on install. |
+| TTS weight on the hub (~330 MB) | Lazy download on first `/call`, egress-badged as a model fetch; never on install. |
 | People hard boundary vs. a chatty model | `people.*` results marked `sensitive`; the assembler refuses to put them into a cloud-scoped route (existing refusal), the guardrail seed flags it, the badge shows it. |
 | The web-unit baseline blind spot (six inherited vitest names) | The DC-01 close story ships `web-inherited-baseline.txt` (handover §3.D). |
 
@@ -503,7 +504,7 @@ notifications · walk.
    still get the receipt row *before* the model continues. Confirm.
 3. **DC order.** 01 → 02 is fixed. Then 03 (practice) or 04 (call)? For a
    manager on the move the Call may outrank modes/guardrails.
-4. **Kokoro server-side (B) or in-browser (A)?** Plan recommends B.
+4. **TTS server-side (B) or in-browser (A)?** Plan recommends B.
 5. **Do you want any external MCP server in the thread on day one?** If
    no, the MCP client stays parked and DC-02 stays small.
 

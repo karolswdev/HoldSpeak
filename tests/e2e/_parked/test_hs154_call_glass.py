@@ -104,12 +104,11 @@ def hub(tmp_path, monkeypatch):
 
     # Both legs prove the law WITHOUT the TTS extra. The hub runs in this
     # process, so pin its availability probe to "not installed": a machine
-    # whose venv carries kokoro_onnx (an all-extras sync) still tests the
+    # whose venv carries the line extra (an all-extras sync) still tests the
     # same law instead of reading its own install.
     import holdspeak.web.routes.tts as tts_routes
 
-    monkeypatch.setattr(tts_routes, "_kokoro_checked", True)
-    monkeypatch.setattr(tts_routes, "_kokoro_available", False)
+    monkeypatch.setattr(tts_routes, "_line_installed", lambda: False)
 
     server = MeetingWebServer(
         WebRuntimeCallbacks(
@@ -240,7 +239,7 @@ def test_tts_settings_glass(hub: dict) -> None:
                     _save_shot(page, "tts-settings-extra-off", width)
 
                     # Install instruction should be visible (no dead switch)
-                    install_hint = page.locator("text=holdspeak[tts]")
+                    install_hint = page.locator("text=holdspeak[line]")
                     assert install_hint.count() >= 1, (
                         f"Install instruction not found at {width}"
                     )
