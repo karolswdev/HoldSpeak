@@ -1605,7 +1605,7 @@
       "sha256": "556170846b42e12ccec2cc271c6f4ab78cade57dfb7ee0135e47187366e345fe"
     },
     {
-      "path": "web/src/desk/pullouts/DecisionPullout.tsx",
+      "path": "web/src/desk/pullouts/_parked/DecisionPullout.tsx",
       "sha256": "4dccfb441be6d1d2bc62e6fe29f69f6b17ba7c691949714119da9c860cda9584"
     },
     {
@@ -26319,7 +26319,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/DecisionPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/DecisionPullout.tsx",
           "line": 136,
           "symbol": "DecisionPullout",
           "claim": "The production JSX source declares onClick at this control site."
@@ -26415,7 +26415,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/DecisionPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/DecisionPullout.tsx",
           "line": 89,
           "symbol": "DecisionPullout",
           "claim": "The production JSX source declares onChange at this control site."
@@ -30335,7 +30335,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/DecisionPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/DecisionPullout.tsx",
           "line": 129,
           "symbol": "DecisionPullout",
           "claim": "The production JSX source declares onClick at this control site."
@@ -31263,7 +31263,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/DecisionPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/DecisionPullout.tsx",
           "line": 148,
           "symbol": "DecisionPullout",
           "claim": "The production JSX source declares onClick at this control site."
@@ -33775,7 +33775,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/DecisionPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/DecisionPullout.tsx",
           "line": 144,
           "symbol": "DecisionPullout",
           "claim": "The production JSX source declares onClick at this control site."
@@ -37151,7 +37151,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/DecisionPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/DecisionPullout.tsx",
           "line": 114,
           "symbol": "DecisionPullout",
           "claim": "The production JSX source declares onClick at this control site."
@@ -38991,7 +38991,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/DecisionPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/DecisionPullout.tsx",
           "line": 68,
           "symbol": "DecisionPullout",
           "claim": "The production JSX source declares onClick at this control site."
@@ -43935,7 +43935,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/DecisionPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/DecisionPullout.tsx",
           "line": 109,
           "symbol": "DecisionPullout",
           "claim": "The production JSX source declares onClick at this control site."
@@ -45327,7 +45327,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/DecisionPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/DecisionPullout.tsx",
           "line": 145,
           "symbol": "DecisionPullout",
           "claim": "The production JSX source declares onClick at this control site."

@@ -22317,7 +22317,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/pullouts/DecisionPullout.tsx",
+     "path": "web/src/desk/pullouts/_parked/DecisionPullout.tsx",
      "line": 68,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -22338,7 +22338,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/pullouts/DecisionPullout.tsx",
+     "path": "web/src/desk/pullouts/_parked/DecisionPullout.tsx",
      "line": 89,
      "anchor": "onChange",
      "claim": "a library control's onChange handler on PadGadget"
@@ -22359,7 +22359,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/pullouts/DecisionPullout.tsx",
+     "path": "web/src/desk/pullouts/_parked/DecisionPullout.tsx",
      "line": 109,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -22380,7 +22380,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/pullouts/DecisionPullout.tsx",
+     "path": "web/src/desk/pullouts/_parked/DecisionPullout.tsx",
      "line": 114,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -22401,7 +22401,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/pullouts/DecisionPullout.tsx",
+     "path": "web/src/desk/pullouts/_parked/DecisionPullout.tsx",
      "line": 129,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -22422,7 +22422,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/pullouts/DecisionPullout.tsx",
+     "path": "web/src/desk/pullouts/_parked/DecisionPullout.tsx",
      "line": 136,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -22443,7 +22443,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/pullouts/DecisionPullout.tsx",
+     "path": "web/src/desk/pullouts/_parked/DecisionPullout.tsx",
      "line": 144,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -22464,7 +22464,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/pullouts/DecisionPullout.tsx",
+     "path": "web/src/desk/pullouts/_parked/DecisionPullout.tsx",
      "line": 145,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -22485,7 +22485,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/pullouts/DecisionPullout.tsx",
+     "path": "web/src/desk/pullouts/_parked/DecisionPullout.tsx",
      "line": 148,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
