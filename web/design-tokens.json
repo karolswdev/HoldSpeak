@@ -1766,6 +1766,11 @@
         "doc": "the one count badge height (floor icons, dock, bell)"
       },
       {
+        "name": "--desk-badge-slot-w",
+        "value": "calc(var(--desk-badge-h) + 6px)",
+        "doc": "the bell's count slot: two digits fit, drawn before the count is read so the menu bar holds still"
+      },
+      {
         "name": "--desk-badge-ring",
         "value": "0 0 0 1.5px var(--wb-paper), 0 1px 3px rgba(12, 20, 32, 0.35)",
         "doc": "the count badge's paper ring and soft drop"
