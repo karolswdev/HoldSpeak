@@ -7,8 +7,10 @@ import inspect
 import json
 import logging
 import re
+import threading
 import time
 import uuid
+from collections import OrderedDict
 from dataclasses import dataclass
 from typing import Any, Protocol, runtime_checkable
 
@@ -67,16 +69,55 @@ class NullObserver:
 _CREDENTIAL_KEY = re.compile(r"(?i)[A-Za-z0-9_-]*(?:token|password|passwd|secret|api[_-]?key|apikey|credential|authorization)")
 
 
+#: The summary is the text the WHOLE value gives (Codex on #1936: a summary
+#: read from the head of a large result was not the old text; past the 1 MB
+#: guard it stored source text the guard left out). The cost was redaction:
+#: each string leaf, then the whole encoding (70 % of a Needs-you build).
+#: Both are pure functions of their exact text, so their answers are kept:
+#: the same text always gives the same summary, byte for byte. Bounds: the
+#: count of entries and the length of a text kept (a longer text is redacted
+#: each time, as before).
+_LEAF_SHORT = 1024
+_LEAF_LONG = 64 * 1024
+_ENCODED_KEPT = 256 * 1024
+
+
+@functools.lru_cache(maxsize=8192)
+def _redact_short(text: str) -> str:
+    return redact_bounded(text)
+
+
+@functools.lru_cache(maxsize=32)
+def _redact_long(text: str) -> str:
+    return redact_bounded(text)
+
+
+@functools.lru_cache(maxsize=4096)
+def _is_credential_key(key: str) -> bool:
+    return _CREDENTIAL_KEY.fullmatch(key) is not None
+
+
+def _redact_leaf(value: str) -> str:
+    # Only an exact ``str`` is kept: a subclass can give another ``str()``.
+    if type(value) is str:
+        if len(value) <= _LEAF_SHORT:
+            return _redact_short(value)
+        if len(value) <= _LEAF_LONG:
+            return _redact_long(value)
+    return redact_bounded(value)
+
+
 def _redact_tree(value: Any) -> Any:
     """Every string leaf redacted, and every value under a credential key
     withheld, BEFORE the JSON encoding (PHILO-17 redact, Astra r2: an
     encoded string escapes its quotes, which hides a quoted label)."""
     if isinstance(value, str):
-        return redact_bounded(value)
+        return _redact_leaf(value)
     if isinstance(value, dict):
         out: dict[Any, Any] = {}
         for key, item in value.items():
-            if (isinstance(key, str) and _CREDENTIAL_KEY.fullmatch(key)
+            if (isinstance(key, str)
+                    and (_is_credential_key(key) if type(key) is str else _CREDENTIAL_KEY.fullmatch(key))
                     and isinstance(item, (str, int, float)) and not isinstance(item, bool)
                     and str(item).strip() and not str(item).isdigit()):
                 out[key] = REDACTED
@@ -88,67 +129,45 @@ def _redact_tree(value: Any) -> Any:
     return value
 
 
-#: The leaf characters a summary reads before it stops taking items: twice
-#: the 2048-character cut; the encoding adds keys and quotes, so the cut falls
-#: inside the items it took (perf lane 2026-11-08). When redaction leaves the
-#: head too short, the whole is read.
-_HEAD_BUDGET = 4096
-
-
-def _head(value: Any, room: list[int]) -> tuple[Any, bool]:
-    """``value`` with the trailing items of its dicts and lists left out once
-    about ``room[0]`` leaf characters are taken; ``True`` when one was left
-    out. A string is never cut: each one is redacted whole (the rule of
-    ``redact_secrets``)."""
-    if isinstance(value, str):
-        room[0] -= len(value)
-        return value, False
-    if isinstance(value, dict):
-        out: dict[Any, Any] = {}
-        for key, item in value.items():
-            if room[0] <= 0:
-                return out, True
-            room[0] -= len(str(key))
-            out[key], cut = _head(item, room)
-            if cut:
-                return out, True
-        return out, False
-    if isinstance(value, (list, tuple)):
-        items: list[Any] = []
-        for item in value:
-            if room[0] <= 0:
-                return items, True
-            head, cut = _head(item, room)
-            items.append(head)
-            if cut:
-                return items, True
-        return items if isinstance(value, list) else tuple(items), False
-    room[0] -= 8
-    return value, False
-
-
-def _truncate(value: Any, limit: int = 2048) -> str:
-    # A summary keeps its first `limit` characters. A large result (the
-    # Needs-you aggregate: 100 KB) was redacted and encoded whole for that,
-    # 70 % of a Needs-you build (perf lane 2026-11-08). Its head is enough:
-    # the encoding of the head is the encoding of the whole up to the first
-    # item left out, which comes after the cut. When the head is too short
-    # after redaction, the whole is read as before.
-    try:
-        head, cut = _head(value, [_HEAD_BUDGET])
-    except Exception:
-        head, cut = value, False
-    if cut:
-        summary = _summary(head)
-        if len(summary) > limit + 64:
-            return summary[: limit - 1] + "…"
-    summary = _summary(value)
+def _redact_cut(summary: str, limit: int) -> str:
+    # PHILO-17 redact: agents read pipeline events (MCP ``pipeline://events``),
+    # so no credential a provider echoed is recorded. Redact the WHOLE text
+    # first (up to the 1 MB guard of ``redact_bounded``), then cut.
+    summary = redact_bounded(summary)
     if len(summary) > limit:
         return summary[: limit - 1] + "…"
     return summary
 
 
-def _summary(value: Any) -> str:
+#: The kept whole-text answers: an observed call summarizes its arguments
+#: and its result, so one Needs-you build reads about 80 texts. Bounded by
+#: their characters, oldest out first.
+_KEPT_CHARS = 4 * 1024 * 1024
+_kept: OrderedDict[tuple[str, int], str] = OrderedDict()
+_kept_size = 0
+_kept_lock = threading.Lock()
+
+
+def _redact_cut_kept(summary: str, limit: int) -> str:
+    global _kept_size
+    key = (summary, limit)
+    with _kept_lock:
+        answer = _kept.get(key)
+        if answer is not None:
+            _kept.move_to_end(key)
+            return answer
+    answer = _redact_cut(summary, limit)
+    with _kept_lock:
+        if key not in _kept:
+            _kept[key] = answer
+            _kept_size += len(summary)
+            while _kept_size > _KEPT_CHARS:
+                (old, _), _ = _kept.popitem(last=False)
+                _kept_size -= len(old)
+    return answer
+
+
+def _truncate(value: Any, limit: int = 2048) -> str:
     try:
         value = _redact_tree(value)
     except Exception:
@@ -160,11 +179,9 @@ def _summary(value: Any) -> str:
             summary = repr(value)
         except Exception:
             summary = "<unserializable>"
-
-    # PHILO-17 redact: agents read pipeline events (MCP ``pipeline://events``),
-    # so no credential a provider echoed is recorded. Redact first (the scan
-    # is bounded at 64k, far past this cut), then cut.
-    return redact_bounded(summary)
+    if type(summary) is str and len(summary) <= _ENCODED_KEPT:
+        return _redact_cut_kept(summary, limit)
+    return _redact_cut(summary, limit)
 
 
 #: What the observer never records (PHILO-15 20, Astra r1 on #1011): a
