@@ -27,10 +27,32 @@ export function frontWindow(id: string): HTMLElement | null {
     .sort((left, right) => zOf(right) - zOf(left))[0] ?? null;
 }
 
-/** The first match of a selector in a root, or null (a bad selector too). */
+/** True when the part is drawn: a part that is in the DOM but folded away
+ * or hidden (a closed fold, `display: none`) is not there for the guide. The
+ * walk asked about the Room's Programs fold at a zero rectangle instead of
+ * saying "No Programs here yet" (owner, 2026-11-08). Where the page has a
+ * layout (the browser), the part needs a box; where it has none (jsdom in a
+ * test), the styles decide. */
+export function isDrawn(element: HTMLElement): boolean {
+  const laidOut = document.documentElement.getBoundingClientRect().width > 0;
+  if (laidOut) {
+    const rect = element.getBoundingClientRect();
+    return rect.width > 0 && rect.height > 0;
+  }
+  for (let node: HTMLElement | null = element; node; node = node.parentElement) {
+    if (node.hidden) return false;
+    const style = getComputedStyle(node);
+    if (style.display === "none" || style.visibility === "hidden") return false;
+  }
+  return true;
+}
+
+/** The first DRAWN match of a selector in a root, or null (a bad selector too). */
 export function lookIn(root: ParentNode, selector: string): HTMLElement | null {
   try {
-    return root.querySelector<HTMLElement>(selector);
+    const all = root.querySelectorAll<HTMLElement>(selector);
+    for (const element of Array.from(all)) if (isDrawn(element)) return element;
+    return null;
   } catch {
     return null;
   }

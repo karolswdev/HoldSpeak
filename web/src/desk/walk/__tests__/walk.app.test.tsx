@@ -239,6 +239,25 @@ describe("The Walk", () => {
     expect(posts[0].view).toMatchObject({ rect: { left: 40, top: 120, width: 260, height: 32 } });
   });
 
+  it("treats a part that is in the DOM but not drawn as missing and skips the step", async () => {
+    vi.stubGlobal("fetch", hub());
+    // The project rows are in the window's DOM but folded away (display: none),
+    // as the Room's Programs fold was live on 2026-11-08: the guide must say
+    // the part is not there, not ask about a zero rectangle.
+    mocks.openSurface.mockImplementation((key: string) => {
+      if (key === "open-programs") {
+        mountWindow("surface-programs", `<button data-testid="programs-new">New program</button>
+          <section data-testid="programs-make" style="display: none"><ul data-testid="programs-make-rows"><li>Project</li></ul></section>`);
+      }
+      return true;
+    });
+    render(<WalkRunner />);
+    fireEvent.click(await screen.findByTestId("walk-next", {}, { timeout: 3000 }));
+    expect(await screen.findByTestId("walk-line", {}, { timeout: 9000 })).toHaveTextContent(/here yet/);
+    expect(screen.queryByTestId("walk-question")).toBeNull();
+    expect(document.querySelectorAll(".walk-halo")).toHaveLength(0);
+  }, 20000);
+
   it("says the step's window is not open and skips the step", async () => {
     vi.stubGlobal("fetch", hub());
     // Needs you does not open (its verb runs, no window comes).
