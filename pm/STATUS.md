@@ -2,6 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · #1855 A known delivery PR is checked and merged, never made again (HS-S32): Check, guarded Merge, stage-aware Retry, Skip, each bound to the delivery line it shows.
 - 2026-11-08 · #1854 Needs you: a Program row is the Program, its quiet ask word and one verb (Merge, Decide or Open); Later and Send moved to its context menu, and one rule in needsFace.ts decides each fact line.
 - 2026-11-08 · #1853 Fix forward #1849: compose_hub moves to runtime/hub_composition.py (566 lines), compose_delivery to runtime/delivery_composition.py (56), composition.py back to 583; the density guard is green.
 - 2026-11-08 · #1852 The New program wizard's frame close is its Cancel (back to the list, the window stays), and screen 3 fits the phone (short level words, Check · Spending folded).
