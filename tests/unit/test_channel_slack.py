@@ -226,81 +226,55 @@ def test_transport_errors_do_not_expose_webhook(slack: Any, monkeypatch: pytest.
     assert WEBHOOK not in str(caught.value)
 
 
-def _fake_backend(module: str, name: str, **attrs: Any) -> Any:
-    attrs["__module__"] = module
-    return type(name, (), attrs)()
+class _Master:
+    """The one Keychain item, faked (holdspeak/keystore.py)."""
 
-
-class _Vault:
     def __init__(self) -> None:
-        self.values: dict[tuple[str, str], str] = {}
+        self.value: str | None = None
 
-    def put(self, service: str, user: str, value: str) -> None:
-        self.values[(service, user)] = value
+    def read(self) -> str | None:
+        return self.value
 
-    def get(self, service: str, user: str) -> str | None:
-        return self.values.get((service, user))
+    def write(self, value: str) -> None:
+        self.value = value
 
 
-@pytest.mark.parametrize(
-    ("module", "name"),
-    [
-        ("keyring.backends.macOS", "Keyring"),
-        ("keyring.backends.SecretService", "Keyring"),
-        ("keyring.backends.Windows", "WinVaultKeyring"),
-    ],
-)
-def test_native_key_store_accepts_only_the_three_native_backends(module: str, name: str) -> None:
+def test_native_key_store_keeps_the_webhook_in_the_one_keystore(tmp_path: Any) -> None:
+    from holdspeak.keystore import Keystore
     from holdspeak.services.channel_slack import NativeSlackKeyStore
 
-    vault = _Vault()
-    backend = _fake_backend(module, name, set_password=vault.put, get_password=vault.get, vault=vault)
-    store = NativeSlackKeyStore(backend=backend)
+    master = _Master()
+    one = Keystore(tmp_path / "keystore.enc", master=master)
+    store = NativeSlackKeyStore(store=one)
     store.put("slack:work", WEBHOOK)
     assert store.get("slack:work") == WEBHOOK
-    assert vault.values == {("HoldSpeak Slack", "slack:work"): WEBHOOK}
-
-    chained = NativeSlackKeyStore(backend=_fake_backend(
-        "keyring.backends.chainer", "ChainerBackend",
-        backends=[_fake_backend("keyring.backends.fail", "Keyring"), backend],
-    ))
-    assert chained.get("slack:work") == WEBHOOK
+    assert one._load() == {"HoldSpeak Slack": {"slack:work": WEBHOOK}}
+    assert WEBHOOK.encode() not in one.path.read_bytes()
 
 
-@pytest.mark.parametrize(
-    "backend",
-    [
-        _fake_backend("keyring.backends.fail", "Keyring"),
-        _fake_backend("keyrings.alt.file", "PlaintextKeyring"),
-        _fake_backend("keyring.backends.chainer", "ChainerBackend", backends=[]),
-    ],
-)
-def test_non_native_key_store_is_refused_by_name(backend: Any) -> None:
+def test_native_key_store_names_unavailable_locked_and_missing_without_os_keychain(tmp_path: Any) -> None:
+    import base64
+
+    from holdspeak.keystore import Keystore
     from holdspeak.services.channel_slack import NativeSlackKeyStore, SlackKeyError
 
-    with pytest.raises(SlackKeyError) as caught:
-        NativeSlackKeyStore(backend=backend)
-    assert caught.value.code == "slack_key_store_not_native"
-
-
-def test_native_key_store_distinguishes_locked_and_missing_without_os_keychain() -> None:
-    from holdspeak.services.channel_slack import NativeSlackKeyStore, SlackKeyError
-
-    def locked(*_args: Any) -> Any:
-        raise RuntimeError("locked")
-
-    locked_store = NativeSlackKeyStore(backend=_fake_backend(
-        "keyring.backends.macOS", "Keyring", set_password=locked, get_password=locked,
-    ))
+    closed = NativeSlackKeyStore(store=Keystore(tmp_path / "closed.enc", master=None))
     with pytest.raises(SlackKeyError) as caught_get:
-        locked_store.get("slack:work")
+        closed.get("slack:work")
     with pytest.raises(SlackKeyError) as caught_put:
-        locked_store.put("slack:work", WEBHOOK)
-    assert caught_get.value.code == caught_put.value.code == "slack_key_store_locked"
+        closed.put("slack:work", WEBHOOK)
+    assert caught_get.value.code == caught_put.value.code == "slack_key_store_unavailable"
 
-    missing_store = NativeSlackKeyStore(backend=_fake_backend(
-        "keyring.backends.macOS", "Keyring", set_password=lambda *_args: None, get_password=lambda *_args: None,
-    ))
+    path = tmp_path / "keystore.enc"
+    NativeSlackKeyStore(store=Keystore(path, master=_Master())).put("slack:work", WEBHOOK)
+    other = _Master()
+    other.value = base64.b64encode(b"w" * 32).decode("ascii")  # another master key: the file does not open
+    locked = NativeSlackKeyStore(store=Keystore(path, master=other))
+    with pytest.raises(SlackKeyError) as caught_locked:
+        locked.get("slack:work")
+    assert caught_locked.value.code == "slack_key_store_locked"
+
+    missing_store = NativeSlackKeyStore(store=Keystore(tmp_path / "empty.enc", master=_Master()))
     with pytest.raises(SlackKeyError) as missing:
         missing_store.get("slack:work")
     assert missing.value.code == "slack_webhook_missing"

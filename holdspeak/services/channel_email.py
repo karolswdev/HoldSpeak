@@ -17,10 +17,9 @@ into major providers like sendgrid and so on."
   transmits them; their digest is the ``payload_digest`` of the ``external.egress``
   child (data class ``email_message``), a CHILD of the send under the send's
   authenticated principal, through the send's broker (the network seam, section 6).
-* **Key custody** (condition 2): the key lives in the OS keychain through
-  ``keyring``, behind a native-only allow-list (macOS Keychain, Linux Secret
-  Service, Windows Credential Manager); any other backend is refused
-  ``email_key_store_not_native``. The key is never planning material: not in
+* **Key custody** (condition 2): the key lives in the one keystore
+  (``holdspeak/keystore.py``: one master key in the native keychain, behind its
+  native-only allow-list; the secrets in one sealed file). The key is never planning material: not in
   the payload, the :class:`GatedOperation`, the admission's material, the
   sender's args or kwargs. Only the dispatch opener (:func:`transmit`) reads it
   and sets the header. Redirects are NOT followed (a 3xx is UNKNOWN
@@ -462,80 +461,26 @@ class MemoryEmailKeyStore:
 
 
 class NativeEmailKeyStore:
-    """The OS keychain only (``holdspeak/people/keys.py`` allow-list, plus Windows); no file, no env."""
+    """The email slots of the one keystore (``holdspeak/keystore.py``)."""
 
     service_name = "HoldSpeak Email"
-    ALLOWED_BACKENDS = frozenset({
-        "keyring.backends.macOS.Keyring",
-        "keyring.backends.SecretService.Keyring",
-        "keyring.backends.Windows.WinVaultKeyring",
-    })
-    CHAINER = "keyring.backends.chainer.ChainerBackend"
 
-    def __init__(self, backend: Any = None) -> None:
-        from holdspeak.people.keys import home_has_a_keychain
+    def __init__(self, store: Any = None) -> None:
+        from holdspeak import keystore
 
-        # No keychain in HOME (a rig's scratch HOME): never make macOS ask.
-        self._no_keychain = backend is None and not home_has_a_keychain()
-        if backend is None:
-            import keyring
-
-            backend = keyring.get_keyring()
-        self._backend = self.native(backend)
-
-    @classmethod
-    def native(cls, backend: Any) -> Any:
-        """The backend itself when it is native; a chainer's first native backend; else refused."""
-        name = _backend_name(backend)
-        if name in cls.ALLOWED_BACKENDS:
-            return backend
-        if name == cls.CHAINER:
-            for inner in getattr(backend, "backends", None) or ():
-                if _backend_name(inner) in cls.ALLOWED_BACKENDS:
-                    return inner
-        raise EmailKeyError("email_key_store_not_native")
+        self._slots = keystore.Slots(self.service_name, EmailKeyError, missing="email_key_missing",
+                                     locked="email_key_store_locked", unavailable="email_key_store_unavailable",
+                                     store=store)
 
     def get(self, key_ref: str) -> str:
-        if self._no_keychain:
-            raise EmailKeyError("email_key_store_unavailable")
-        try:
-            value = self._backend.get_password(self.service_name, key_ref)
-        except Exception:
-            value, locked = None, True
-        else:
-            locked = False
-        if locked:
-            raise EmailKeyError("email_key_store_locked")
-        if not value:
-            raise EmailKeyError("email_key_missing")
-        return str(value)
+        return self._slots.get(key_ref)
 
     def put(self, key_ref: str, key: str) -> None:
-        if self._no_keychain:
-            raise EmailKeyError("email_key_store_unavailable")
-        try:
-            self._backend.set_password(self.service_name, key_ref, str(key))
-        except Exception:
-            failed = True
-        else:
-            failed = False
-        if failed:
-            raise EmailKeyError("email_key_store_locked")
-
-
-def _backend_name(backend: Any) -> str:
-    kind = type(backend)
-    return f"{kind.__module__}.{kind.__qualname__}"
+        self._slots.put(key_ref, str(key))
 
 
 def default_key_store() -> Any:
-    """The keychain; a file store when ``HOLDSPEAK_CHANNEL_KEYSTORE_FILE`` is set (a rig hub)."""
-    from .channel_key_file import FileChannelKeyStore, channel_keystore_path
-
-    path = channel_keystore_path()
-    if path is not None:
-        return FileChannelKeyStore(path, NativeEmailKeyStore.service_name, EmailKeyError, "email_key_missing",
-                                   "email_key_store_locked")
+    """The one keystore (the rig's plain file when ``HOLDSPEAK_CHANNEL_KEYSTORE_FILE`` is set)."""
     return NativeEmailKeyStore()
 
 

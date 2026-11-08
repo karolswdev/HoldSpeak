@@ -1884,6 +1884,11 @@ class MeetingWebServer:
                 log.info(f"thread dump signal not registered: {exc}")
 
             anyio.to_thread.current_default_thread_limiter().total_tokens = HUB_THREAD_TOKENS
+            # 2026-11-08: the one keystore opens its master key once (bounded,
+            # off the loop) and moves the old per-secret Keychain items.
+            from . import keystore
+
+            threading.Thread(target=keystore.warm, name="keystore-warm", daemon=True).start()
             # PERF-HUB 2026-10-28: HOLDSPEAK_LOOP_WATCH=1 names any handler
             # that holds the event loop longer than 100 ms. Off by default.
             from .web import loop_watch

@@ -1485,7 +1485,7 @@ def _check_people_keystore() -> DoctorCheck:
         return DoctorCheck(
             name="People keystore",
             status="PASS",
-            detail="native (macOS Keychain / Secret Service)",
+            detail="native: the one keystore, its master key in the Keychain / Secret Service",
         )
     # Dev file keystore is active -- always WARN so it is LOUD.
     from ..people.store import DEFAULT_PEOPLE_DB_PATH, _dev_sidecar_path

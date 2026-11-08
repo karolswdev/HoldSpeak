@@ -10,9 +10,9 @@
 - Each device's push secret is derived from the hub secret and its kid, so it
   is never stored and changes when the device pairs again.
 
-The hub secret is in the key store: the channel key file when
-``HOLDSPEAK_CHANNEL_KEYSTORE_FILE`` is set (a rig), else the OS keychain,
-else (a HOME with no keychain) a 0600 file in HoldSpeak's data folder.
+The hub secret is in the one keystore (``holdspeak/keystore.py``: the rig's
+``HOLDSPEAK_CHANNEL_KEYSTORE_FILE``, else the sealed file), else (a HOME with
+no keychain) a 0600 file in HoldSpeak's data folder.
 
 The pairing shape (a short-lived token in a QR next to the hub's address,
 consumed once; a device JWT checked against the device row on every request)
@@ -83,49 +83,32 @@ class _FileSecret:
 
 
 def _store_for(slot: str = _SLOT) -> Any:
-    """One slot of the phone key store (the hub secret, his APNs key)."""
-    from ..services.channel_key_file import FileChannelKeyStore, channel_keystore_path
+    """One slot of the phone key store (the hub secret, his APNs key): the one
+    keystore; a HOME with no keychain (and no rig file) keeps the 0600 file."""
+    from .. import keystore
 
-    path = channel_keystore_path()
-    if path is not None:
-        class _Err(Exception):
-            pass
+    if keystore.rig_path() is None and not keystore.home_has_a_keychain():
+        return _FileSecret(_secret_file(slot))
 
-        keys = FileChannelKeyStore(path, _SERVICE, _Err, "missing", "locked")
+    class _Err(Exception):
+        pass
 
-        class _Keys:
-            def get(self) -> Optional[str]:
-                try:
-                    return keys.get(slot)
-                except _Err:
-                    return None
+    keys = keystore.Slots(_SERVICE, _Err, missing="missing", locked="locked", unavailable="unavailable")
 
-            def put(self, value: str) -> None:
+    class _Keys:
+        def get(self) -> Optional[str]:
+            try:
+                return keys.get(slot)
+            except _Err:
+                return None
+
+        def put(self, value: str) -> None:
+            try:
                 keys.put(slot, value)
+            except _Err as exc:
+                raise RuntimeError(f"phone_keystore_{exc}") from None
 
-        return _Keys()
-    from ..people.keys import home_has_a_keychain
-
-    if home_has_a_keychain():
-        try:
-            import keyring
-
-            backend = keyring.get_keyring()
-
-            class _Chain:
-                def get(self) -> Optional[str]:
-                    try:
-                        return backend.get_password(_SERVICE, slot)
-                    except Exception:
-                        return None
-
-                def put(self, value: str) -> None:
-                    backend.set_password(_SERVICE, slot, value)
-
-            return _Chain()
-        except Exception as exc:  # no keychain backend: the file below
-            log.info(f"phone secret: no keychain ({exc})")
-    return _FileSecret(_secret_file(slot))
+    return _Keys()
 
 
 def hub_secret() -> bytes:
