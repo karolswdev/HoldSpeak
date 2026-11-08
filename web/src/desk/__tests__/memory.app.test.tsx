@@ -220,6 +220,23 @@ describe("Desk memory (HS-526): relationship-aware recall", () => {
 });
 
 describe("Memory on the Desk: standing pages where the work lives", () => {
+  it("the Atlas Room: History's Pages row names Open, Risks and Changed; a row opens its page, each sentence with its source", async () => {
+    // replaces: tests/e2e/test_memory_faces_glass.py::test_memory_on_the_desk (face half: pages)
+    // The language (2026-11-08): R1 took This week off the Now face (the
+    // case was parked); the project's standing pages are History's head row.
+    render(<ProjectRoomCore scope="project:atlas" />);
+    fireEvent.click(await screen.findByTestId("room-head-history"));
+    const head = await screen.findByTestId("room-history-pages");
+    const rows = within(head).getAllByTestId("room-page-row");
+    expect(rows.map((r) => r.querySelector(".kit-listrow-name")?.textContent)).toEqual(["Open", "Risks", "Changed"]);
+    expect(within(head).queryAllByTestId("standing-page")).toEqual([]);
+    fireEvent.click(within(rows[2]).getByTestId("room-page-open"));
+    const page = await within(head).findByTestId("standing-page");
+    const cutover = within(page).getAllByTestId("standing-sentence").find((l) => l.textContent?.includes("Cutover date is 10-17"))!;
+    expect(within(cutover).getByTestId("memory-ref").textContent).toBe("Note 10-11");
+    expect(head.textContent).not.toContain("Harbor");
+    expect(head.textContent).not.toMatch(/Rewrite/i);
+  });
 
 
   it("Today -> Since yesterday: the desk's own pages, no project sentence", async () => {

@@ -7,6 +7,8 @@ import { receiptFace, receiptLabel, refusalWord } from "../../../desk/surface/eg
 import { wireDate } from "../../../desk/surface/format";
 import { spriteUrl } from "../../../desk/sprites";
 import { refOpener } from "../../../desk/openObject";
+import { Button } from "../../../components/signal/Signal";
+import { HistoryPages } from "./Pages";
 import type { RoomChangeRow, RoomSnapshot } from "../model";
 import { formatTimeShort, kindToPhrase, localDateStr } from "./format";
 
@@ -153,11 +155,14 @@ export function HistoryWing({
   itemIds,
   onOpenItem,
   onRetry,
+  onPrepare,
 }: {
   room: RoomSnapshot;
   itemIds: string[];
   onOpenItem: (id: string) => void;
   onRetry: () => void;
+  /** The language, 2026-11-08: `Prepare a brief` opens the Prepare posture. */
+  onPrepare: () => void;
 }) {
   const available = room.changes.state === "ok";
   const changes = room.changes.state === "ok" ? room.changes.recent : [];
@@ -214,7 +219,12 @@ export function HistoryWing({
             variant="secondary"
           />
         ) : null}
+        <Button dense variant="secondary" onClick={onPrepare} data-testid="room-history-prepare">
+          Prepare a brief
+        </Button>
       </Toolbar>
+      {/* The project's standing pages: one head row (the language, 2026-11-08). */}
+      <HistoryPages projectId={room.projectId} />
       {!available ? (
         <SurfaceState error="History unavailable" onRetry={onRetry} />
       ) : !allEntries.length ? (

@@ -1,11 +1,13 @@
 /** Spine (the language, 2026-11-08): a 4 px bar under a mast or inside an
  *  object row. It shows where a thing stands in the six meaning colours:
  *  steel (ours, running), brass (waits on you), moss (done), coral (at
- *  risk), graphite (parked), idle (not yet). Give it `segments` (each a
- *  tone and a share), or one `tone` and a `fill` from 0 to 1. */
+ *  risk), graphite (parked), idle (not yet). `person` is the person kind's
+ *  teal (--kind-person), for a share of people (the Room's People plate).
+ *  Give it `segments` (each a tone and a share), or one `tone` and a `fill`
+ *  from 0 to 1. */
 import "./spine.css";
 
-export type SpineTone = "steel" | "brass" | "moss" | "coral" | "graphite" | "idle";
+export type SpineTone = "steel" | "brass" | "moss" | "coral" | "graphite" | "idle" | "person";
 export type SpineSegment = { tone: SpineTone; share: number };
 
 export type SpineProps = {

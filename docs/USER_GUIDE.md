@@ -312,12 +312,12 @@ is narrower than whole-Desk Ask.
 ### The drafted update
 
 1. Open a Project Room.
-2. Select **Write update**.
+2. Select **Draft update**.
 3. Check the model chip and source references.
 4. Correct unsupported facts.
 5. Save or prepare the update only after review.
 
-**Write update** prepares text. It does not send the update. A project-update
+**Draft update** prepares text. It does not send the update. A project-update
 run has the Project service scope, source watches, policy, and run receipt.
 
 ### What a claim state means
@@ -362,7 +362,7 @@ Use the current feature that owns the result:
 | --- | --- |
 | Meeting or 1:1 preparation | Open the person's preparation view in People and inspect the available brief. |
 | Decision review | Open Ask, select decision evidence through the scope menu, and request a review. This is ordinary Ask. |
-| Weekly Project update | Open the Project Room and select **Write update**. |
+| Weekly Project update | Open the Project Room and select **Draft update**. |
 
 Inspect the sources and result before keeping or using the output.
 Review any **Wrote** changes and **Prepared** actions.
@@ -522,7 +522,7 @@ Use **Add source**, **Pause**, **Resume**, **Remove**, and suggested-source
 **Add** or **Dismiss** according to the source scope.
 
 The Ask field is **Ask this project**. Choose an answer or brief result and
-check the model chip. **Write update** prepares a Project update. A Project
+check the model chip. **Draft update** prepares a Project update. A Project
 Room run is narrower than whole-Desk Ask. See [Project Rooms](PROJECT_ROOMS.md).
 
 ## Settings

@@ -40,10 +40,6 @@
   color: var(--wb-muted);
   font-variant-numeric: tabular-nums;
 }
-.room-head .room-headline[data-tone="warn"] { color: var(--wb-warn-ink, var(--wb-text)); }
-.room-head .room-headline[data-tone="danger"] { color: var(--wb-danger-ink, var(--wb-text)); }
-.room-head .room-headline[data-tone="ok"] { color: var(--wb-text); }
-.room-head .room-headline { overflow-wrap: anywhere; min-width: 0; flex: 1 1 18rem; }
 
 /* Waiting on: the person, then what they owe, one line. */
 .room-now-mono {
@@ -119,7 +115,7 @@
 /* A Decided line's Person (#1891): the dot and word at the line's right. */
 .room-now-committed { margin-left: auto; white-space: nowrap; }
 
-/* 393: Write update spans the width under the state (the first screen). */
+/* 393: Draft update spans the width under the state (the first screen). */
 @container surface (max-width: 559.9px) {
   .room-head .room-head-trailing { margin-left: 0; width: 100%; }
   .room-head .room-head-trailing .btn,

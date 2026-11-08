@@ -1,9 +1,11 @@
-// R1 "the brief" (owner 2026-11-08): What changed. The latest published
-// update's first lines as plain text, one quiet line with its time, who wrote
-// it and Open the update; the kept update draft waits here with Continue
-// (owner ruling 2026-11-07: the Room opens on Now).
+// What changed (the language, 2026-11-08; the bold canvas RoomBold): a
+// raised plate with the latest published update's first lines set in the
+// display face as a pull-quote, one mono line with its time, who wrote it and
+// open the update; the kept update draft waits on the plate's foot with
+// Continue (owner ruling 2026-11-07: the Room opens on Now).
 import { useEffect, useState } from "react";
 import { SurfaceSection, wireClock, wireDayClock } from "../../../desk/surface";
+import { spriteUrl } from "../../../desk/sprites";
 import { Button } from "../../../components/signal/Signal";
 import type { RoomSnapshot } from "../model";
 import { dayWords } from "../now/model";
@@ -77,30 +79,37 @@ export function BriefSection({ room, updateCtrl }: {
   const meta = [when, update ? `by ${briefAuthor(update)}` : ""].filter(Boolean).join(" · ");
   return (
     <SurfaceSection label="What changed" className="room-brief" data-testid="room-what-changed">
-      {latestId ? (
-        <div className="room-brief-card">
-          {lines.map((line, index) => (
-            <p key={index} className="room-brief-line" data-testid="room-brief-line">{line}</p>
-          ))}
-          <p className="room-brief-meta" data-testid="room-brief-meta">
-            {meta ? <span>{meta}</span> : null}
-            {meta ? <span aria-hidden="true">·</span> : null}
-            <Button variant="chrome" className="room-link" loading={updateCtrl.loading}
-              onClick={() => void updateCtrl.continueDraft(latestId)} data-testid="room-brief-open">
-              Open the update
-            </Button>
-          </p>
-        </div>
-      ) : null}
-      {keptDraft ? (
-        <p className="room-brief-meta room-brief-draft" data-testid="room-head-update-draft">
-          <span>{keptDraft.when ? `Update draft · ${keptDraft.when}` : "Update draft"}</span>
-          <span aria-hidden="true">·</span>
-          <Button variant="chrome" className="room-link" loading={updateCtrl.loading}
-            onClick={() => void updateCtrl.continueDraft(keptDraft.id)}
-            data-testid="room-head-update-continue">Continue</Button>
-        </p>
-      ) : null}
+      <div className="room-brief-card" data-testid="room-brief-plate">
+        {latestId ? (
+          <>
+            {lines.length ? (
+              <blockquote className="room-brief-quote">
+                {lines.map((line, index) => (
+                  <p key={index} className="room-brief-line" data-testid="room-brief-line">{line}</p>
+                ))}
+              </blockquote>
+            ) : null}
+            <p className="room-brief-meta" data-testid="room-brief-meta">
+              {meta ? <span>{meta}</span> : null}
+              {meta ? <span aria-hidden="true">·</span> : null}
+              <Button variant="chrome" className="room-link" loading={updateCtrl.loading}
+                onClick={() => void updateCtrl.continueDraft(latestId)} data-testid="room-brief-open">
+                open the update
+              </Button>
+            </p>
+          </>
+        ) : null}
+        {keptDraft ? (
+          <div className="room-brief-draft" data-testid="room-head-update-draft">
+            <img className="room-brief-draft-glyph" src={spriteUrl("artifact", keptDraft.id, "rest", null, 20)}
+              alt="" width={20} height={20} draggable={false} />
+            <span className="room-brief-draft-words">{keptDraft.when ? `Update draft · ${keptDraft.when}` : "Update draft"}</span>
+            <Button dense variant="secondary" loading={updateCtrl.loading}
+              onClick={() => void updateCtrl.continueDraft(keptDraft.id)}
+              data-testid="room-head-update-continue">Continue</Button>
+          </div>
+        ) : null}
+      </div>
     </SurfaceSection>
   );
 }

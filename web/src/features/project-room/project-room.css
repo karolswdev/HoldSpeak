@@ -27,13 +27,6 @@
   flex-direction: column;
   gap: 6px;
 }
-.room-head-name-measure {
-  position: absolute;
-  visibility: hidden;
-  white-space: nowrap;
-  pointer-events: none;
-  overflow: hidden;
-}
 .room-headline { margin: 0; }
 .room-headline[data-accent] { color: var(--accent, #a86e4a); }
 .room-headline:not([data-accent]) { color: var(--text-muted); }
@@ -701,13 +694,6 @@
   gap: 6px 12px;
   min-width: 0;
 }
-.room-head .room-headline {
-  font: 650 19px / 1.2 var(--font-display);
-  letter-spacing: 0;
-  color: var(--wb-text);
-}
-.room-head .room-headline[data-accent] { color: var(--wb-text); }
-.room-head .room-headline:not([data-accent]) { color: var(--wb-muted); }
 .room-head-strip {
   display: inline-flex;
   flex-wrap: wrap;
@@ -1189,7 +1175,7 @@
 
 /* ══ Window grammar + delight (2026-10-24, lane note) ══════════════════
    The Room is a native project window: a 36 px toolbar under the title bar
-   (Write update the one primary), a compact head (the project's glyph, the
+   (Draft update the one primary), a compact head (the project's glyph, the
    state word in its colour with a lamp, the reason in ink, the objective in
    one muted line), sans sentence-case section captions in the display face
    with a hairline, and list rows edge to edge that lift on hover. The
@@ -1236,51 +1222,8 @@
   height: 28px;
 }
 
-.desk-next .room-body .room-head .room-headline {
-  flex: 1 1 auto;
-  min-width: 0;
-  font: 500 15px / 1.35 var(--font-ui);
-  letter-spacing: 0;
-  color: var(--wb-ink);
-}
-
-.desk-next .room-body .room-head .room-state-reason {
-  color: var(--wb-ink);
-}
-
-.desk-next .room-body .room-head .room-state-word {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-weight: 650;
-  color: var(--wb-ok-ink);
-}
-
-.desk-next .room-body .room-head .room-state-word::before {
-  content: "";
-  flex: none;
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: var(--lamp-ok);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--lamp-ok) 22%, transparent);
-}
-
-.desk-next .room-body .room-headline[data-tone="warn"] .room-state-word { color: var(--wb-ember-ink); }
-.desk-next .room-body .room-headline[data-tone="warn"] .room-state-word::before {
-  background: var(--lamp-ask);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--lamp-ask) 26%, transparent);
-}
-.desk-next .room-body .room-headline[data-tone="danger"] .room-state-word { color: var(--wb-danger-ink); }
-.desk-next .room-body .room-headline[data-tone="danger"] .room-state-word::before {
-  background: var(--lamp-fail);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--lamp-fail) 24%, transparent);
-}
-.desk-next .room-body .room-headline:is([data-tone="muted"], [data-tone="info"]) .room-state-word { color: var(--wb-info-ink); }
-.desk-next .room-body .room-headline:is([data-tone="muted"], [data-tone="info"]) .room-state-word::before {
-  background: var(--lamp-info);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--lamp-info) 22%, transparent);
-}
+/* The head's state word and reason: core/now-face.css (the language,
+   2026-11-08: the word in its meaning colour, no lamp before it). */
 
 .desk-next .room-body .room-head .room-now-facts {
   padding-left: 38px;

@@ -51,8 +51,8 @@ export function openProjectUpdates(projectId: string): void {
   }
 }
 
-/** Betterment P4 (projects) — `Write update for <project>` (the palette and
- * the Object menu): the Room opens and presses its own Write update, the
+/** Betterment P4 (projects) — `Draft update for <project>` (the palette and
+ * the Object menu): the Room opens and presses its own Draft update, the
  * same press as the Room head's Button. The Room takes the request once. */
 export const ROOM_WRITE_EVENT = "holdspeak:room-write-update";
 const roomWrites = new Set<string>();
