@@ -55,7 +55,7 @@ from .program_definitions import (
     programs_on,
 )
 from .program_service import ProgramService
-from . import program_night, program_split
+from . import program_night, program_prompt, program_split
 from .program_rules import HANDOFF_AFTER_MINUTES, decide, is_core, level_of
 from .program_verifier import log_tail, verify_log, verify_measure_log, verify_requirement_log
 
@@ -169,8 +169,11 @@ class ProgramRunner:
         review_words: Optional[Callable[[str], str]] = None,
         gate: Any = None,
         reach: Optional[Callable[[], Any]] = None,
+        broker: Optional[Callable[[], Any]] = None,
     ) -> None:
         self.service = service
+        #: The prompt step's engine door broker (``program_prompt``); the hub's own by default.
+        self._broker = broker
         #: PG-LANG LANG12: where the night's digest line goes (``ReachService``).
         self._reach = reach
         self.db = service.db
@@ -621,6 +624,12 @@ class ProgramRunner:
                 self._make_contenders(program, step, steps)
         steps = self.service.store.list_steps(program["id"])
         ready = [step for step in steps if step["state"] == "ready"]
+        # A prompt step is one model call: no agent slot, no repository, no night.
+        for step in [row for row in ready if program_prompt.is_prompt(row)]:
+            self._hand_prompt(program, step)
+        ready = [step for step in ready if not program_prompt.is_prompt(step)]
+        if not ready:
+            return
         # PG-LANG LANG12: a Program with a night line hands only inside it.
         room = program_night.night_room(self, program, ready)
         if room == 0:
@@ -676,6 +685,25 @@ class ProgramRunner:
                     room -= 1
                     if room <= 0:
                         break
+
+    def _hand_prompt(self, program: Mapping[str, Any], step: dict[str, Any]) -> None:
+        """Run one prompt step's call: on its own thread when the runner is
+        async (a call takes up to the door's deadline), else at once."""
+        if not program_prompt.claim(step["id"]):
+            return
+        if not self._async:
+            program_prompt.run_claimed(self, program, step, broker=self._broker)
+            return
+
+        def run() -> None:
+            try:
+                program_prompt.run_claimed(self, program, step, broker=self._broker)
+            finally:
+                # The step moved off the tick: the Program's state and frames follow now.
+                self.service.changed(program["id"], step["id"])
+                self.tick_program(program["id"])
+
+        threading.Thread(target=run, daemon=True, name=f"program-prompt-{step['id']}").start()
 
     def _spend_core(self, program: Mapping[str, Any], step: Mapping[str, Any], profile: str,
                     engine: Optional[str]) -> str:
@@ -1079,6 +1107,12 @@ class ProgramRunner:
         state = step["state"]
         if history_of(step):
             return  # PG17: an imported merged PR; it closes with the Program
+        if program_prompt.is_prompt(step):
+            # A prompt step has no agent to follow: a call cut off (a hub
+            # restart) is run again; one that runs now is left alone.
+            if state in ("briefed", "working") and not program_prompt.running(step["id"]):
+                self._hand_prompt(program, step)
+            return
         if self._core_hold(step) and state != "checking":
             return
         if (step.get("facts") or {}).get("awaiting_pick"):

@@ -1169,6 +1169,10 @@ def step_wire(db: Any, program: Mapping[str, Any], step: Mapping[str, Any],
         "state_word": word, "station": (_AUDIT_STATION_OF if audit else _STATION_OF).get(state, -1),
         "stations": list(AUDIT_STATIONS if audit else STATIONS),
         "brief": step.get("brief_markdown") or "", "owns": list(step.get("owns") or []),
+        # 2026-11-08: "prompt" is one model call (no agent, no worktree); its
+        # answer goes where ``deliver`` says, its brief reads ``sources``.
+        "kind": step.get("kind") or "agent", "deliver": step.get("deliver"),
+        "sources": list(step.get("sources") or []),
         "after": list(step.get("after") or []), "effort": step.get("effort"),
         "profile": profile, "agent": agent_label(profile), "engine": _engine_wire(profile, engine_id, engine=engine),
         "prefer_idle": bool(step.get("prefer_idle") or program.get("prefer_idle")),

@@ -44,7 +44,8 @@ STEP_TRANSITIONS: dict[str, frozenset[str]] = {
     "planned": frozenset({"ready", "parked"}),
     "ready": frozenset({"briefed", "planned", "parked"}),
     "briefed": frozenset({"working", "waiting", "limited", "checking", "parked", "failed"}),
-    "working": frozenset({"briefed", "waiting", "limited", "checking", "parked", "failed"}),
+    # 2026-11-08: a prompt step (one model call) is done when its answer comes.
+    "working": frozenset({"briefed", "waiting", "limited", "checking", "done", "parked", "failed"}),
     "waiting": frozenset({"briefed", "working", "limited", "checking", "parked", "failed"}),
     # PG19: the agent stopped at its usage limit; a handoff re-briefs the
     # step in the next agent (``briefed``), a reset lets it go on.

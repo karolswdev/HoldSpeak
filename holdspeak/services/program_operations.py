@@ -132,6 +132,15 @@ _STEP = {
         "for_person_id": {"type": ["string", "null"], "description": "The person this step is owed to (a People id)."},
         "may_call": {"type": ["boolean", "null"], "description": "The engine may call the owner's phone about this step where the Reach rules allow it."},
         "no_diff_ok": {"type": ["boolean", "null"], "description": "The step may end with no change (else a step that writes nothing goes back to its agent)."},
+        "kind": {"type": ["string", "null"], "enum": ["agent", "prompt", None],
+                 "description": "agent (default): an agent in a worktree. prompt: one model call on the engine "
+                                "assigned to automations, with no repository; the brief is the call, the answer "
+                                "is the step's report."},
+        "deliver": {"type": ["string", "null"], "maxLength": 200,
+                    "description": "A prompt step: where the answer goes: inbox (default), needs_you, today, "
+                                   "destination:<id> (prepared; he presses Send) or project_updates:<project id>."},
+        "sources": {"type": ["array", "null"], "items": {"type": "string", "maxLength": 200}, "maxItems": 50,
+                    "description": "A prompt step: what it is about (note:<id>, meetings:this_week, person:<id>, ...)."},
         "history": {
             "type": ["object", "null"],
             "description": "A step that merged already (PG17): it is written Merged with this PR and merge time; "
@@ -204,6 +213,7 @@ _CREATE_FIELDS = (
     "title", "goal", "repository", "project_id", "base_branch", "control", "check_command", "template",
     "default_profile", "default_engine", "reviewer_profile", "reviewer_engine", "prefer_idle", "origin_ref",
     "for_person_id", "spend_limit_usd", "runs_on", "allowed_profiles", "may_handoff", "usage_warning_share", "may_call",
+    "steps",
 )
 _UPDATE_FIELDS = (
     "title", "goal", "control", "prefer_idle", "project_id", "spend_limit_usd", "default_profile", "default_engine",
@@ -365,7 +375,8 @@ OPERATIONS: tuple[ProgramOperation, ...] = (
     _P("program.create", _create, ("POST", "/api/programs"), status=201,
        description="Make a Program: a goal cut into steps, each handed to an agent in its own worktree, checked by a "
                    "verified log, reviewed, and merged on his press at Secure or by the engine at Normal and YOLO (only core questions reach him). Name a "
-                   "repository path or a project_id (its repository). It starts in Drafting.",
+                   "repository path or a project_id (its repository); a Program of only prompt steps needs none. "
+                   "It starts in Drafting.",
        schema=_schema({
            "title": {"type": "string", "minLength": 1, "maxLength": 200},
            "goal": {"type": "string", "maxLength": 12000},
@@ -386,6 +397,8 @@ OPERATIONS: tuple[ProgramOperation, ...] = (
                                "description": "The most a paid engine may cost; unset: any spend is his question."},
            "may_call": {"type": ["boolean", "null"],
                         "description": "The engine may call the owner's phone (not only message it) where the Reach rules allow it. Default off; on in overnight."},
+           "steps": {"type": ["array", "null"], "items": _STEP,
+                     "description": "The steps, written at once. A Program of only prompt steps needs no repository."},
            **_HANDOFF,
        }, ["title"])),
     _P("program.from_action", lambda s, p, a: s.from_action(p, a.get("action_id"), project_id=a.get("project_id")),

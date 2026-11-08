@@ -14,13 +14,13 @@ from typing import Any, Mapping, Optional
 
 PROGRAM_COLUMNS = ('id', 'title', 'goal_markdown', 'project_id', 'repo_root', 'base_branch', 'control', 'spend_limit_usd', 'check_command', 'reviewer_profile', 'reviewer_engine', 'default_profile', 'default_engine', 'prefer_idle', 'template', 'origin_ref', 'for_person_id', 'created_by', 'state', 'note_id', 'closed_at', 'revision', 'created_at', 'updated_at', 'default_runs_on_json', 'allowed_profiles_json', 'may_handoff', 'usage_warning_share', 'may_call', 'review_depth', 'planner_engine', 'budget_tokens', 'night_json', 'within_json', 'delivery_ref', 'rounds_before_start')
 
-STEP_COLUMNS = ('id', 'program_id', 'ordinal', 'title', 'brief_markdown', 'owns_json', 'after_json', 'profile', 'engine', 'prefer_idle', 'effort', 'race', 'race_of', 'gate_check', 'gate_review', 'review_depth', 'gate_merge', 'state', 'held_reason', 'launch_id', 'worktree', 'branch', 'head_commit', 'checked_commit', 'pr_url', 'pr_number', 'check_log', 'check_verdict', 'facts_json', 'review_verdict', 'findings_json', 'report', 'rounds', 'parked_reason', 'parked_by', 'origin_ref', 'for_person_id', 'started_at', 'ended_at', 'updated_at', 'runs_on_json', 'handoffs_json', 'may_call', 'budget_tokens')
+STEP_COLUMNS = ('id', 'program_id', 'ordinal', 'title', 'brief_markdown', 'owns_json', 'after_json', 'profile', 'engine', 'prefer_idle', 'effort', 'race', 'race_of', 'gate_check', 'gate_review', 'review_depth', 'gate_merge', 'state', 'held_reason', 'launch_id', 'worktree', 'branch', 'head_commit', 'checked_commit', 'pr_url', 'pr_number', 'check_log', 'check_verdict', 'facts_json', 'review_verdict', 'findings_json', 'report', 'rounds', 'parked_reason', 'parked_by', 'origin_ref', 'for_person_id', 'started_at', 'ended_at', 'updated_at', 'runs_on_json', 'handoffs_json', 'may_call', 'budget_tokens', 'kind', 'deliver', 'sources_json')
 
 REQUIREMENT_COLUMNS = ('id', 'program_id', 'step_id', 'ordinal', 'text', 'kind', 'required', 'spec_json', 'each_step', 'parent_id', 'state', 'judged_commit', 'evidence_json', 'waived_reason', 'rounds', 'by_kind', 'created_at', 'updated_at', 'judged_at')
 
 #: The JSON columns and their wire keys.
 _JSON_FIELDS = {"owns_json": "owns", "after_json": "after", "findings_json": "findings", "facts_json": "facts",
-                "runs_on_json": "runs_on", "handoffs_json": "handoffs"}
+                "runs_on_json": "runs_on", "handoffs_json": "handoffs", "sources_json": "sources"}
 #: The Program's JSON columns (PG19) and their wire keys.
 _PROGRAM_JSON = {"default_runs_on_json": "default_runs_on", "allowed_profiles_json": "allowed_profiles",
                  "within_json": "within"}
@@ -61,9 +61,10 @@ _STEP_UPSERT = (
     "review_depth, gate_merge, state, held_reason, launch_id, worktree, branch, head_commit, "
     "checked_commit, pr_url, pr_number, check_log, check_verdict, facts_json, review_verdict, "
     "findings_json, report, rounds, parked_reason, parked_by, origin_ref, for_person_id, "
-    "started_at, ended_at, updated_at, runs_on_json, handoffs_json, may_call, budget_tokens) VALUES (?, ?, ?, ?, ?, "
+    "started_at, ended_at, updated_at, runs_on_json, handoffs_json, may_call, budget_tokens, kind, deliver, "
+    "sources_json) VALUES (?, ?, ?, ?, ?, "
     "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, "
-    "?, ?, ?) ON CONFLICT(id) DO "
+    "?, ?, ?, ?, ?, ?) ON CONFLICT(id) DO "
     "UPDATE SET ordinal=excluded.ordinal, title=excluded.title, "
     "brief_markdown=excluded.brief_markdown, owns_json=excluded.owns_json, "
     "after_json=excluded.after_json, profile=excluded.profile, engine=excluded.engine, "
@@ -80,7 +81,8 @@ _STEP_UPSERT = (
     "parked_by=excluded.parked_by, origin_ref=excluded.origin_ref, "
     "for_person_id=excluded.for_person_id, started_at=excluded.started_at, "
     "ended_at=excluded.ended_at, updated_at=excluded.updated_at, runs_on_json=excluded.runs_on_json, "
-    "handoffs_json=excluded.handoffs_json, may_call=excluded.may_call, budget_tokens=excluded.budget_tokens"
+    "handoffs_json=excluded.handoffs_json, may_call=excluded.may_call, budget_tokens=excluded.budget_tokens, "
+    "kind=excluded.kind, deliver=excluded.deliver, sources_json=excluded.sources_json"
 )
 
 
