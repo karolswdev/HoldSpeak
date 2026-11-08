@@ -202,6 +202,10 @@ describe("Needs you: the head counts what needs him; Waiting lists the rest", ()
       // a Desk decision has no source meeting).
       if (value === "/api/decisions/philo13-a2-decision")
         return { decision: { id: "philo13-a2-decision", title: "R1 adopt the release checklist", status: "proposed" } } as never;
+      // GET /api/decision-records/source/desk/{id}: its record (every Desk
+      // decision has one, decision_record_service sync_from_desk).
+      if (value === "/api/decision-records/source/desk/philo13-a2-decision")
+        return [{ id: "record-philo13-a2" }] as never;
       return null as never;
     });
   }
@@ -231,11 +235,12 @@ describe("Needs you: the head counts what needs him; Waiting lists the rest", ()
     const decision = rowNamed("R1 adopt the release checklist")!;
     expect(within(decision).getByRole("button", { name: "Confirm: R1 adopt the release checklist" })).toBeEnabled();
     fireEvent.click(within(decision).getByText("R1 adopt the release checklist"));
-    // The real opener (shell.ts openPrimitive) runs against the real desk store:
-    // the decision's own window opens, in front.
+    // The real opener runs against the real desk store: the decision opens its
+    // record in the Decisions window reader (the one decision face, 2026-11-08).
     await waitFor(() =>
-      expect(useDesk.getState().pullouts.map((p) => p.id)).toContain("decision:philo13-a2-decision"),
+      expect(useDesk.getState().windowsById["surface-decisions"]?.scope).toBe("record:record-philo13-a2"),
       { timeout: 3000 });
+    expect(useDesk.getState().pullouts.map((p) => p.id)).not.toContain("decision:philo13-a2-decision");
   });
 });
 

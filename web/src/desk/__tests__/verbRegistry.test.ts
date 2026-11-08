@@ -13,23 +13,24 @@ import { THREAD_SLASH_COMMANDS } from "../components/ThreadComposer";
 import { EMPTY_ITEMS, fromWireDirectory, qualifiedRef } from "../api";
 import { useDesk } from "../store";
 import { windowObjectEntry } from "../objectMenu";
-import type { Decision } from "../../lib/primitives";
+import type { KB } from "../../lib/primitives";
 import type { WorkMenuEntry } from "../components/DeskMenu";
 
 const CTX = { selectedRef: null };
 
 describe("the verb registry (HS-105-05 / HS-111-07 v2)", () => {
-  it("Object Open restores an existing qualified decision as one canonical pullout", () => {
-    const decision: Decision = {
-      kind: "decision", id: "d-freeze", title: "Freeze the old ledger on Nov 5", status: "proposed",
-      deciders: [], contextMarkdown: "", decisionMarkdown: "Freeze writes on Nov 5.",
-      alternatives: [], consequencesMarkdown: "", tags: [], createdAt: "2026-10-16T12:00:00Z",
+  // A Knowledge item stands for an object pullout: a decision opens its
+  // record in the Decisions window (the one decision face, 2026-11-08).
+  it("Object Open restores an existing qualified object as one canonical pullout", () => {
+    const knowledge: KB = {
+      kind: "kb", id: "k-freeze", name: "Freeze the old ledger on Nov 5", memberIds: [],
+      createdAt: "2026-10-16T12:00:00Z",
     };
-    const ref = qualifiedRef(decision.kind, decision.id);
+    const ref = qualifiedRef(knowledge.kind, knowledge.id);
     const panelId = `pullout:${ref}`;
     const previous = useDesk.getState();
     useDesk.setState({
-      items: { ...EMPTY_ITEMS, decision: [decision] },
+      items: { ...EMPTY_ITEMS, kb: [knowledge] },
       pullouts: [], panelMin: [], panelOrder: [], panelDepth: {},
     });
     try {
@@ -46,7 +47,7 @@ describe("the verb registry (HS-105-05 / HS-111-07 v2)", () => {
       expect(useDesk.getState().pullouts.map((pullout) => pullout.id)).toEqual([ref]);
       expect(useDesk.getState().panelMin).not.toContain(panelId);
       expect(useDesk.getState().panelOrder.at(-1)).toBe(panelId);
-      expect(useDesk.getState().items.decision).toEqual([decision]);
+      expect(useDesk.getState().items.kb).toEqual([knowledge]);
     } finally {
       useDesk.setState(previous, true);
     }
