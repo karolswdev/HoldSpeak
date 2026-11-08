@@ -144,22 +144,6 @@ EMITTED_WITHOUT_CONSUMER: dict[str, str] = {
         "Consumed in process by AskService._tap_loop_text: it finishes the "
         "Ask's last ask_text frame."
     ),
-    # DEFECT (2026-11-08): the Needs you arming row (desk/needs/arming.ts) and
-    # Coming up read the store that applyScheduledRecordingEvent fills; its
-    # only live caller was CaptureHero, parked with the Chair hero, so these
-    # three reach no face. The fix is a subscription, not a park.
-    "scheduled_recording.arming": (
-        "DEFECT: Needs you's arming row should read it; the subscription left "
-        "with the parked CaptureHero."
-    ),
-    "scheduled_recording.cancelled": (
-        "DEFECT: Needs you's arming row should read it; the subscription left "
-        "with the parked CaptureHero."
-    ),
-    "scheduled_recording.missed": (
-        "DEFECT: Needs you's arming row should read it; the subscription left "
-        "with the parked CaptureHero."
-    ),
 }
 
 #: Frames the web listens for that the hub never emits, WITH the reason.

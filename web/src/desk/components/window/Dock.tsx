@@ -46,6 +46,9 @@ const DOCK_LIVE_FRAME_TYPES = [
   "desk_changed",
   "intel_complete",
   "meeting_started",
+  "scheduled_recording.arming",
+  "scheduled_recording.cancelled",
+  "scheduled_recording.missed",
   "scheduled_recording.refused",
   "scheduled_recording.started",
   "scheduled_recording.stopped",
@@ -239,6 +242,13 @@ function useDockLiveReads(): {
     const unsubscribers = DOCK_LIVE_FRAME_TYPES.map((type) =>
       subscribe(type, (frame) => {
         setLive((previous) => reduceDockFrame(previous, frame));
+        // The scheduled recording's arming, cancel, miss, refusal, start and
+        // stop feed the desk store that Needs you's arming row and Coming up
+        // read (the Dock is the desk's one subscriber to these frames).
+        if (frame.type.startsWith("scheduled_recording.")) {
+          useDesk.getState().applyScheduledRecordingEvent(
+            frame.type, (frame.data ?? {}) as Record<string, unknown>);
+        }
         // A window open, close or move changes nothing the Dock reads.
         if (frame.type === "desk_changed" && !frameNames(frame?.data, NEEDS_YOU_CHANGE_KINDS)) return;
         if (frame.type === "desk_changed") {
