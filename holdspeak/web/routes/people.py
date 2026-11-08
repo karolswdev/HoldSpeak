@@ -326,13 +326,6 @@ def build_people_router(ctx: WebContext) -> APIRouter:
         except PeopleServiceError as exc:
             raise _failure(exc) from exc
 
-    @router.get("/history")
-    def history(request: Request, relationship_id: str | None = None) -> dict[str, Any]:
-        try:
-            return {"history": service.history_summary(principal(request), relationship_id)}
-        except PeopleServiceError as exc:
-            raise _failure(exc) from exc
-
     @router.get("/commitments/{commitment_id}/execution")
     def commitment_execution(request: Request, commitment_id: str) -> dict[str, Any]:
         try:

@@ -165,10 +165,6 @@ def build_live_router(ctx: WebContext) -> APIRouter:
     async def api_meeting_stop(request: Request, _: Optional[_StopRequest] = None) -> Any:
         return await _stop(request)
 
-    @router.post("/api/stop")
-    async def api_stop(request: Request, _: Optional[_StopRequest] = None) -> Any:
-        return await _stop(request)
-
     @router.patch("/api/meeting")
     def api_update_meeting(request: Request, payload: _UpdateMeetingRequest) -> Any:
         try:

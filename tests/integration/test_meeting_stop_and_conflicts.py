@@ -39,7 +39,7 @@ def test_stop_without_a_live_meeting_refuses_by_name_and_spares_the_runtime():
     )
     client = TestClient(server.app)
 
-    for path in ("/api/meeting/stop", "/api/stop"):
+    for path in ("/api/meeting/stop",):
         response = client.post(path)
         payload = response.json()
         assert payload["success"] is False, path
@@ -104,7 +104,7 @@ def test_stop_route_keeps_confirmed_stop_success_when_save_fails():
         ),
         host="127.0.0.1",
     )
-    response = TestClient(server.app).post("/api/stop")
+    response = TestClient(server.app).post("/api/meeting/stop")
 
     assert response.status_code == 200
     assert response.json()["success"] is True

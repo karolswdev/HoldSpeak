@@ -52,37 +52,6 @@ def test_run_now_then_loops_carry_evidence_and_next_action(client):
     assert top["egress"]["scope"] == "local"
 
 
-def test_brief_route_leads_with_top_move(client):
-    c, _ = client
-    c.post("/api/cadence/run-now")
-    b = c.get("/api/cadence/brief").json()
-    assert b["headline"] and b["items"] and b["open_count"] >= 1
-    assert b["items"][0]["next_action"]["title"]
-    assert b["egress"]["scope"] == "local"
-
-
-def test_closeout_recommends_and_batch_applies(client):
-    c, db = client
-    c.post("/api/cadence/run-now")
-    co = c.get("/api/cadence/closeout").json()
-    assert co["open_count"] >= 1 and co["recs"]
-    assert all("action" in r and "reason" in r and "severity" in r for r in co["recs"])
-    # batch-apply: snooze them all
-    decisions = [{"loop_id": r["loop"]["id"], "action": "snooze"} for r in co["recs"]]
-    res = c.post("/api/cadence/closeout/apply", json={"decisions": decisions}).json()
-    assert res["applied"] == len(decisions) and res["skipped"] == 0
-    assert all(l["status"] == "snoozed" for l in c.get("/api/cadence/loops").json()["loops"])
-
-
-def test_audit_route_is_local_and_complete(client):
-    c, _ = client
-    c.post("/api/cadence/run-now")
-    audit = c.get("/api/cadence/audit").json()
-    assert audit["egress"]["scope"] == "local"
-    assert audit["totals"]["loops"] >= 1
-    assert "loops" in audit and "nudges" in audit and "policies" in audit
-
-
 def test_history_lists_nudges(client):
     c, db = client
     c.post("/api/cadence/run-now")

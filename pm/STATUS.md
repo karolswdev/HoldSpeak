@@ -2,6 +2,12 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · #1998 Park 18 more routes no client reads (action-item aliases, cadence reads, speakers, the /api/stop alias, …): hub routes 872 → 854, live holdspeak+tests −930/+14 lines.
+- 2026-11-08 · #1993 Park 13 inference target, setup and model-library routes no client reads: hub routes 885 → 872, live holdspeak+tests −516/+9 lines; the residual census skips parked route files.
+- 2026-11-08 · #1989 Park 15 provider, delivery and dictation routes no client reads: hub routes 900 → 885, live holdspeak+tests −960/+7 lines.
+- 2026-11-08 · #1985 Park 14 project setup and project read routes no client reads: hub routes 914 → 900, live holdspeak+tests −1250 lines.
+- 2026-11-08 · #1980 Park 4 /api/programs routes no client reads (from-desk, propose_fix, step checkpoint, step remove): hub routes 918 → 914; the MCP tools keep the service methods.
+- 2026-11-08 · #1977 Park 17 /api/activity routes no client reads: hub routes 935 → 918, live holdspeak+tests −930/+85 lines (handlers, handler-only service methods and their tests parked).
 - 2026-11-08 · #2007 Watch fold 4: ReactionService, its 11 MCP tools and 11 `/api/automations/*` routes are parked; an old event start reads "The event start must be set again"; MCP 305 → 294 tools. One watch: WatchService.
 - 2026-11-08 · #2001 Watch fold 3: the conductor tick no longer runs the legacy watch refresh or the Reaction projection; the heartbeat sweep is the one watch scheduler.
 - 2026-11-08 · #2000 Watch fold 2: an Automation's "when something happens" start is a WatchService watch (rule `event_type` → `automation.run`), each event mints one occurrence and runs it; the Reaction pair is no longer made.

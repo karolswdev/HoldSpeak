@@ -64,15 +64,6 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
             body["success"] = False
         return JSONResponse(body, status_code=404)
 
-    @router.get("/api/projects/{project_id}/briefings")
-    def api_list_project_briefings(project_id: str, request: Request, limit: int = 50) -> Any:
-        try:
-            return JSONResponse(service.list_briefings(principal(request), project_id, limit))
-        except NotFound:
-            return JSONResponse({"error": f"Unknown project: {project_id}"}, status_code=404)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to list project briefings")
-
     @router.get("/api/projects/{project_id}/room")
     async def api_project_room(project_id: str, request: Request) -> Any:
         try:
@@ -453,24 +444,6 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
             return not_found(exc)
         except Exception as exc:
             return error_500(exc, log, "Failed to compare Project meetings")
-
-    @router.get("/api/projects/{project_id}/summary")
-    def api_project_summary(project_id: str, request: Request) -> Any:
-        try:
-            return JSONResponse(service.summary(principal(request), project_id))
-        except NotFound as exc:
-            return not_found(exc)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to get project summary")
-
-    @router.get("/api/projects/{project_id}/action-items")
-    def api_project_action_items(project_id: str, request: Request) -> Any:
-        try:
-            return JSONResponse({"action_items": service.list_action_items(principal(request), project_id)})
-        except NotFound as exc:
-            return not_found(exc)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to get project action items")
 
     @router.get("/api/projects/{project_id}/artifacts")
     def api_project_artifacts(project_id: str, request: Request) -> Any:

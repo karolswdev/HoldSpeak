@@ -26,7 +26,6 @@ from holdspeak.db import Database
 from holdspeak.db.delivery_receipts import NodeReceiptLedger
 from holdspeak.delivery.commands import HubCommandService, NodeCommandProcessor
 from holdspeak.delivery.node_link import (
-    NODE_PROTOCOL,
     NodeLinkState,
     NodeTokenStore,
 )
@@ -426,78 +425,3 @@ def test_unknown_command_id_receipt_is_404(rig) -> None:
     assert res.json()["error"] == "unknown_command_id"
 
 
-def test_remote_claim_rides_the_node_link_and_results_leg(rig) -> None:
-    _, token = rig.link.token_store.create("studio-mac")
-    rig.link.hello(
-        "studio-mac",
-        token,
-        node_protocol=NODE_PROTOCOL,
-        instance_id="proc-1",
-        capabilities=["coder.steering"],
-    )
-    node_id = rig.link.status_of("studio-mac") and rig.link.nodes_view()["nodes"][0]["node_id"]
-
-    sent = rig.service.submit(
-        {
-            "node_id": node_id,
-            "target_id": "term_remote",
-            "target_generation": "gen_remote",
-            "operation": {"family": "coder_steering", "verb": "terminal.text"},
-            "payload": {"text": "over the wire", "session_key": KEY},
-            "expected_sequence": 1,
-        }
-    )
-    assert sent["state"] == "sent"
-
-    # The node's claim leg (HS-94-03's endpoint shape) now carries it.
-    claim = rig.link.poll_commands("studio-mac", token)
-    assert claim["commands_schema"] == 1
-    assert [c["command_id"] for c in claim["commands"]] == [sent["command_id"]]
-    envelope = claim["commands"][0]
-    assert envelope["authority"]["actor"] == "owner"
-
-    # Results leg: the node's OWN token; receipts join the hub half.
-    receipt = {
-        "receipt_schema": 1,
-        "receipt_id": "receipt_wire1",
-        "command_id": sent["command_id"],
-        "node_id": node_id,
-        "target_id": "term_remote",
-        "target_generation": "gen_remote",
-        "state": "succeeded",
-        "outcome": "delivered",
-        "applied_sequence": 1,
-        "payload_sha256": envelope["payload_sha256"],
-        "payload_head": envelope["payload_head"],
-    }
-    res = rig.client.post(
-        "/api/delivery/terminal/node/results",
-        json={"name": "studio-mac", "results": [receipt]},
-        headers={"X-HoldSpeak-Node-Token": token},
-    )
-    assert res.status_code == 200
-    assert res.json() == {"ok": True, "processed": 1}
-    joined = rig.client.get(
-        f"/api/delivery/terminal/commands/{sent['command_id']}"
-    )
-    assert joined.json()["hub_state"] == "complete"
-    assert joined.json()["receipt"]["receipt_id"] == "receipt_wire1"
-
-
-def test_results_leg_refuses_wrong_and_browser_tokens(rig) -> None:
-    rig.link.token_store.create("studio-mac")
-    wrong = rig.client.post(
-        "/api/delivery/terminal/node/results",
-        json={"name": "studio-mac", "results": []},
-        headers={"X-HoldSpeak-Node-Token": "not-the-token"},
-    )
-    assert wrong.status_code == 401
-    assert wrong.json()["error"] == "token_rejected"
-
-    browser = rig.client.post(
-        "/api/delivery/terminal/node/results",
-        json={"name": "studio-mac", "results": []},
-        headers={"X-HoldSpeak-Node-Token": WEB_TOKEN},
-    )
-    assert browser.status_code == 401
-    assert browser.json()["error"] == "node_token_required"

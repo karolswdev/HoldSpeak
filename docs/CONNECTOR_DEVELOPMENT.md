@@ -306,7 +306,6 @@ does not. The columns are `connector_id`, `started_at`, `finished_at`,
 The database methods are `record_connector_run`, `list_connector_runs` and
 `delete_connector_runs`. They are in
 [`holdspeak/db/activity/enrichment.py`](../holdspeak/db/activity/enrichment.py).
-The route is `GET /api/activity/enrichment/connectors/{id}/runs`.
 `PipelineRunner` reads these rows to decide on a freshness skip.
 
 ## Out of scope

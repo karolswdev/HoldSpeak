@@ -104,22 +104,6 @@ def build_threads_router(ctx: WebContext) -> APIRouter:
         except ServiceError as exc:
             return _error(exc)
 
-    @router.get("/api/threads/{thread_id}/interview/promotions")
-    def api_interview_promotions(thread_id: str, request: Request) -> Any:
-        # HS-200-10 (AC4): the read half. `promotion_id` otherwise existed only
-        # inside the single `promote` response, so nothing the owner could reach
-        # named a promotion and `revoke_promotion` was unreachable. Owner-only,
-        # enforced in the service exactly as the verbs are. Routes only --
-        # there is no MCP tool here either.
-        from ...services.interview_service import InterviewService
-        try:
-            promotions = InterviewService(_service()._db).promotions(_principal(request), thread_id)
-            return JSONResponse({"promotions": promotions})
-        except ServiceError as exc:
-            return _error(exc)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to list interview promotions")
-
     @router.post("/api/threads")
     async def api_create_thread(request: Request) -> Any:
         body = await _json_body(request)
@@ -485,30 +469,6 @@ def build_threads_router(ctx: WebContext) -> APIRouter:
             return _error(exc)
         except Exception as exc:
             return error_500(exc, log, "Failed to add todo")
-
-    @router.post("/api/threads/{thread_id}/agent")
-    async def api_agent(thread_id: str, request: Request) -> Any:
-        """``/agent <text>``: file the text as an action item, then hand it
-        to a coding agent (Conductor K2)."""
-        body = await _json_body(request)
-        text = str((body or {}).get("text", "")).strip()
-        if not text:
-            return JSONResponse(
-                {"error": "agent_empty", "message": "Text is required"},
-                status_code=400,
-            )
-        try:
-            result = await _service().agent_from_thread(
-                _principal(request), thread_id, text,
-                profile=(body or {}).get("profile") or None,
-                project_id=(body or {}).get("project_id") or None,
-            )
-            status = 202 if result.get("status") == "ok" else 409
-            return JSONResponse(result, status_code=status)
-        except (ServiceError, ValidationError) as exc:
-            return _error(exc)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to hand to agent")
 
     @router.delete("/api/threads/{thread_id}/annotations/{part_id}")
     def api_delete_annotation(thread_id: str, part_id: str, request: Request) -> Any:

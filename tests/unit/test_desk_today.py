@@ -1,7 +1,7 @@
 """DELIGHT slice 5 (2026-10-28): Today in the evening, the hub half.
 
 ``GET /api/today/since-morning`` lists what got done today, newest first:
-a task ticked (through the real ``PATCH /api/action-items/{id}``), a note
+a task ticked (through the real ``PATCH /api/all-action-items/{id}``), a note
 filed (``POST /api/notes`` + ``PUT /api/directories/{id}/members/note:<id>``),
 a decision recorded, a send sent and a meeting held (their rows as the
 producers write them). Yesterday's work, a pending task, a note left in no
@@ -83,7 +83,7 @@ def _seed(hub: Any) -> dict[str, str]:
                 " VALUES (?, 'meeting:m-today', 'd-1', 'folder', '{}', 'x', x'00', 'x', ?, ?, ?, ?)",
                 (sid, '{"title": "Payments weekly summary"}', state, _iso(settled), _iso(settled)))
     # The task is ticked through the hub's own route (the Needs-you Done).
-    _ok(hub.client.patch("/api/action-items/a-tick", json={"status": "done"}))
+    _ok(hub.client.patch("/api/all-action-items/a-tick", json={"status": "done"}))
     note = _ok(hub.client.post("/api/notes", json={"title": "", "body_markdown": "# Cutover notes\nThe plan."}), 201)
     loose = _ok(hub.client.post("/api/notes", json={"title": "A loose note", "body_markdown": "x"}), 201)
     folder = _ok(hub.client.post("/api/directories", json={"name": "Payments"}), 201)

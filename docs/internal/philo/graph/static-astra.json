@@ -5706,11 +5706,6 @@
           "path": "/api/meeting/stop"
         },
         {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "POST",
-          "path": "/api/stop"
-        },
-        {
           "inventory_path": "docs/internal/philo/data/voice.json",
           "record_id": "meeting.capture"
         }
@@ -7176,11 +7171,6 @@
           "inventory_path": "docs/generated/openapi.json",
           "method": "POST",
           "path": "/api/meeting/stop"
-        },
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "POST",
-          "path": "/api/stop"
         },
         {
           "inventory_path": "docs/internal/philo/data/voice.json",
@@ -9263,11 +9253,6 @@
           "inventory_path": "docs/generated/openapi.json",
           "method": "POST",
           "path": "/api/meeting/stop"
-        },
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "POST",
-          "path": "/api/stop"
         },
         {
           "inventory_path": "docs/internal/philo/data/voice.json",
@@ -58353,72 +58338,6 @@
       ]
     },
     {
-      "id": "edge.http.delete.api_activity_domains_domain",
-      "kind": "edge",
-      "label": "DELETE /api/activity/domains/{domain} [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "DELETE",
-          "path": "/api/activity/domains/{domain}"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/activity/ledger.py",
-          "line": 41,
-          "symbol": "delete_domain",
-          "claim": "delete_domain receives DELETE /api/activity/domains/{domain}; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.delete.api_activity_enrichment_connectors_connector_id_annotations",
-      "kind": "edge",
-      "label": "DELETE /api/activity/enrichment/connectors/{connector_id}/annotations [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "DELETE",
-          "path": "/api/activity/enrichment/connectors/{connector_id}/annotations"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/activity/enrichment.py",
-          "line": 43,
-          "symbol": "clear_annotations",
-          "claim": "clear_annotations receives DELETE /api/activity/enrichment/connectors/{connector_id}/annotations; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.delete.api_activity_enrichment_connectors_connector_id_candidates",
-      "kind": "edge",
-      "label": "DELETE /api/activity/enrichment/connectors/{connector_id}/candidates [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "DELETE",
-          "path": "/api/activity/enrichment/connectors/{connector_id}/candidates"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/activity/enrichment.py",
-          "line": 48,
-          "symbol": "clear_candidates",
-          "claim": "clear_candidates receives DELETE /api/activity/enrichment/connectors/{connector_id}/candidates; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
       "id": "edge.http.delete.api_activity_meeting_candidates",
       "kind": "edge",
       "label": "DELETE /api/activity/meeting-candidates [exposure=conditional]",
@@ -58745,50 +58664,6 @@
           "line": 134,
           "symbol": "api_unfile_member",
           "claim": "api_unfile_member receives DELETE /api/directories/{directory_id}/members/{primitive_id}; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.delete.api_inference_targets_target_id",
-      "kind": "edge",
-      "label": "DELETE /api/inference-targets/{target_id} [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "DELETE",
-          "path": "/api/inference-targets/{target_id}"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/primitives/profiles.py",
-          "line": 192,
-          "symbol": "api_delete_inference_target",
-          "claim": "api_delete_inference_target receives DELETE /api/inference-targets/{target_id}; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.delete.api_inference_targets_target_id_secret",
-      "kind": "edge",
-      "label": "DELETE /api/inference-targets/{target_id}/secret [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "DELETE",
-          "path": "/api/inference-targets/{target_id}/secret"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/primitives/profiles.py",
-          "line": 174,
-          "symbol": "api_delete_inference_target_secret",
-          "claim": "api_delete_inference_target_secret receives DELETE /api/inference-targets/{target_id}/secret; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
         }
       ]
     },
@@ -59381,28 +59256,6 @@
       ]
     },
     {
-      "id": "edge.http.get.api_activity_annotations",
-      "kind": "edge",
-      "label": "GET /api/activity/annotations [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "GET",
-          "path": "/api/activity/annotations"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/activity/enrichment.py",
-          "line": 53,
-          "symbol": "annotations",
-          "claim": "annotations receives GET /api/activity/annotations; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
       "id": "edge.http.get.api_activity_briefing",
       "kind": "edge",
       "label": "GET /api/activity/briefing [exposure=conditional]",
@@ -59469,72 +59322,6 @@
       ]
     },
     {
-      "id": "edge.http.get.api_activity_enrichment_connectors_connector_id_runs",
-      "kind": "edge",
-      "label": "GET /api/activity/enrichment/connectors/{connector_id}/runs [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "GET",
-          "path": "/api/activity/enrichment/connectors/{connector_id}/runs"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/activity/enrichment.py",
-          "line": 66,
-          "symbol": "runs",
-          "claim": "runs receives GET /api/activity/enrichment/connectors/{connector_id}/runs; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.get.api_activity_enrichment_github_preview",
-      "kind": "edge",
-      "label": "GET /api/activity/enrichment/github/preview [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "GET",
-          "path": "/api/activity/enrichment/github/preview"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/activity/enrichment.py",
-          "line": 71,
-          "symbol": "github_preview",
-          "claim": "github_preview receives GET /api/activity/enrichment/github/preview; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.get.api_activity_enrichment_jira_preview",
-      "kind": "edge",
-      "label": "GET /api/activity/enrichment/jira/preview [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "GET",
-          "path": "/api/activity/enrichment/jira/preview"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/activity/enrichment.py",
-          "line": 81,
-          "symbol": "jira_preview",
-          "claim": "jira_preview receives GET /api/activity/enrichment/jira/preview; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
       "id": "edge.http.get.api_activity_meeting_candidates",
       "kind": "edge",
       "label": "GET /api/activity/meeting-candidates [exposure=conditional]",
@@ -59553,28 +59340,6 @@
           "line": 30,
           "symbol": "list_candidates",
           "claim": "list_candidates receives GET /api/activity/meeting-candidates; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.get.api_activity_meeting_candidates_preview",
-      "kind": "edge",
-      "label": "GET /api/activity/meeting-candidates/preview [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "GET",
-          "path": "/api/activity/meeting-candidates/preview"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/activity/candidates.py",
-          "line": 26,
-          "symbol": "preview",
-          "claim": "preview receives GET /api/activity/meeting-candidates/preview; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
         }
       ]
     },
@@ -59799,94 +59564,6 @@
       ]
     },
     {
-      "id": "edge.http.get.api_automations_events",
-      "kind": "edge",
-      "label": "GET /api/automations/events [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "GET",
-          "path": "/api/automations/events"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/automations.py",
-          "line": 223,
-          "symbol": "list_events",
-          "claim": "list_events receives GET /api/automations/events; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.get.api_automations_presets",
-      "kind": "edge",
-      "label": "GET /api/automations/presets [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "GET",
-          "path": "/api/automations/presets"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/automations.py",
-          "line": 237,
-          "symbol": "list_presets",
-          "claim": "list_presets receives GET /api/automations/presets; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.get.api_automations_reactions",
-      "kind": "edge",
-      "label": "GET /api/automations/reactions [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "GET",
-          "path": "/api/automations/reactions"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/automations.py",
-          "line": 244,
-          "symbol": "list_reactions",
-          "claim": "list_reactions receives GET /api/automations/reactions; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.get.api_automations_watches",
-      "kind": "edge",
-      "label": "GET /api/automations/watches [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "GET",
-          "path": "/api/automations/watches"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/automations.py",
-          "line": 181,
-          "symbol": "list_watches",
-          "claim": "list_watches receives GET /api/automations/watches; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
       "id": "edge.http.get.api_brief_latest",
       "kind": "edge",
       "label": "GET /api/brief/latest [exposure=conditional]",
@@ -59949,72 +59626,6 @@
           "line": 138,
           "symbol": "api_get_brief",
           "claim": "api_get_brief receives GET /api/briefs/{brief_id}; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.get.api_cadence_audit",
-      "kind": "edge",
-      "label": "GET /api/cadence/audit [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "GET",
-          "path": "/api/cadence/audit"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/cadence.py",
-          "line": 61,
-          "symbol": "audit",
-          "claim": "audit receives GET /api/cadence/audit; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.get.api_cadence_brief",
-      "kind": "edge",
-      "label": "GET /api/cadence/brief [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "GET",
-          "path": "/api/cadence/brief"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/cadence.py",
-          "line": 45,
-          "symbol": "brief",
-          "claim": "brief receives GET /api/cadence/brief; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.get.api_cadence_closeout",
-      "kind": "edge",
-      "label": "GET /api/cadence/closeout [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "GET",
-          "path": "/api/cadence/closeout"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/cadence.py",
-          "line": 49,
-          "symbol": "closeout",
-          "claim": "closeout receives GET /api/cadence/closeout; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
         }
       ]
     },
@@ -60693,28 +60304,6 @@
       ]
     },
     {
-      "id": "edge.http.get.api_delivery_events",
-      "kind": "edge",
-      "label": "GET /api/delivery/events [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "GET",
-          "path": "/api/delivery/events"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/delivery.py",
-          "line": 122,
-          "symbol": "api_delivery_events",
-          "claim": "api_delivery_events receives GET /api/delivery/events; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
       "id": "edge.http.get.api_delivery_evidence_bundle_id_asset_id",
       "kind": "edge",
       "label": "GET /api/delivery/evidence/{bundle_id}/{asset_id} [exposure=conditional]",
@@ -60777,28 +60366,6 @@
           "line": 120,
           "symbol": "api_factory_profiles",
           "claim": "api_factory_profiles receives GET /api/delivery/factory/profiles; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.get.api_delivery_node_commands",
-      "kind": "edge",
-      "label": "GET /api/delivery/node/commands [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "GET",
-          "path": "/api/delivery/node/commands"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/delivery_node.py",
-          "line": 154,
-          "symbol": "api_node_commands",
-          "claim": "api_node_commands receives GET /api/delivery/node/commands; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
         }
       ]
     },
@@ -61089,28 +60656,6 @@
       ]
     },
     {
-      "id": "edge.http.get.api_dictation_agent_context",
-      "kind": "edge",
-      "label": "GET /api/dictation/agent-context [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "GET",
-          "path": "/api/dictation/agent-context"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/dictation/agent.py",
-          "line": 45,
-          "symbol": "api_dictation_agent_context",
-          "claim": "api_dictation_agent_context receives GET /api/dictation/agent-context; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
       "id": "edge.http.get.api_dictation_agent_hooks",
       "kind": "edge",
       "label": "GET /api/dictation/agent-hooks [exposure=conditional]",
@@ -61199,28 +60744,6 @@
       ]
     },
     {
-      "id": "edge.http.get.api_dictation_floor",
-      "kind": "edge",
-      "label": "GET /api/dictation/floor [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "GET",
-          "path": "/api/dictation/floor"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/dictation/floor.py",
-          "line": 61,
-          "symbol": "api_audio_floor",
-          "claim": "api_audio_floor receives GET /api/dictation/floor; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
       "id": "edge.http.get.api_dictation_journal",
       "kind": "edge",
       "label": "GET /api/dictation/journal [exposure=conditional]",
@@ -61283,28 +60806,6 @@
           "line": 27,
           "symbol": "api_dictation_project_context",
           "claim": "api_dictation_project_context receives GET /api/dictation/project-context; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.get.api_dictation_project_doc_suggestion",
-      "kind": "edge",
-      "label": "GET /api/dictation/project-doc-suggestion [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "GET",
-          "path": "/api/dictation/project-doc-suggestion"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/dictation/project_docs.py",
-          "line": 75,
-          "symbol": "api_dictation_project_doc_suggestion_get",
-          "claim": "api_dictation_project_doc_suggestion_get receives GET /api/dictation/project-doc-suggestion; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
         }
       ]
     },
@@ -61617,72 +61118,6 @@
       ]
     },
     {
-      "id": "edge.http.get.api_inference_capabilities",
-      "kind": "edge",
-      "label": "GET /api/inference/capabilities [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "GET",
-          "path": "/api/inference/capabilities"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/setup.py",
-          "line": 142,
-          "symbol": "api_inference_capabilities",
-          "claim": "api_inference_capabilities receives GET /api/inference/capabilities; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.get.api_inference_capabilities_capability_id",
-      "kind": "edge",
-      "label": "GET /api/inference/capabilities/{capability_id} [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "GET",
-          "path": "/api/inference/capabilities/{capability_id}"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/setup.py",
-          "line": 153,
-          "symbol": "api_inference_capability",
-          "claim": "api_inference_capability receives GET /api/inference/capabilities/{capability_id}; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.get.api_inference_setup",
-      "kind": "edge",
-      "label": "GET /api/inference/setup [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "GET",
-          "path": "/api/inference/setup"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/setup.py",
-          "line": 133,
-          "symbol": "api_inference_setup",
-          "claim": "api_inference_setup receives GET /api/inference/setup; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
       "id": "edge.http.get.api_inference_targets",
       "kind": "edge",
       "label": "GET /api/inference-targets [exposure=conditional]",
@@ -61701,28 +61136,6 @@
           "line": 77,
           "symbol": "api_list_inference_targets",
           "claim": "api_list_inference_targets receives GET /api/inference-targets; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.get.api_inference_targets_target_id",
-      "kind": "edge",
-      "label": "GET /api/inference-targets/{target_id} [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "GET",
-          "path": "/api/inference-targets/{target_id}"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/primitives/profiles.py",
-          "line": 119,
-          "symbol": "api_get_inference_target",
-          "claim": "api_get_inference_target receives GET /api/inference-targets/{target_id}; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
         }
       ]
     },
@@ -62211,28 +61624,6 @@
       ]
     },
     {
-      "id": "edge.http.get.api_meetings_meeting_id_plugin_runs",
-      "kind": "edge",
-      "label": "GET /api/meetings/{meeting_id}/plugin-runs [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "GET",
-          "path": "/api/meetings/{meeting_id}/plugin-runs"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/meetings/insights.py",
-          "line": 38,
-          "symbol": "api_get_meeting_plugin_runs",
-          "claim": "api_get_meeting_plugin_runs receives GET /api/meetings/{meeting_id}/plugin-runs; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
       "id": "edge.http.get.api_meetings_meeting_id_projects",
       "kind": "edge",
       "label": "GET /api/meetings/{meeting_id}/projects [exposure=conditional]",
@@ -62651,28 +62042,6 @@
       ]
     },
     {
-      "id": "edge.http.get.api_people_history",
-      "kind": "edge",
-      "label": "GET /api/people/history [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "GET",
-          "path": "/api/people/history"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/people.py",
-          "line": 244,
-          "symbol": "history",
-          "claim": "history receives GET /api/people/history; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
       "id": "edge.http.get.api_people_readiness",
       "kind": "edge",
       "label": "GET /api/people/readiness [exposure=conditional]",
@@ -62849,28 +62218,6 @@
       ]
     },
     {
-      "id": "edge.http.get.api_project_setups_session_id",
-      "kind": "edge",
-      "label": "GET /api/project-setups/{session_id} [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "GET",
-          "path": "/api/project-setups/{session_id}"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/project_setup.py",
-          "line": 62,
-          "symbol": "get_setup",
-          "claim": "get_setup receives GET /api/project-setups/{session_id}; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
       "id": "edge.http.get.api_projects",
       "kind": "edge",
       "label": "GET /api/projects [exposure=conditional]",
@@ -62915,28 +62262,6 @@
       ]
     },
     {
-      "id": "edge.http.get.api_projects_project_id_action_items",
-      "kind": "edge",
-      "label": "GET /api/projects/{project_id}/action-items [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "GET",
-          "path": "/api/projects/{project_id}/action-items"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/projects.py",
-          "line": 392,
-          "symbol": "api_project_action_items",
-          "claim": "api_project_action_items receives GET /api/projects/{project_id}/action-items; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
       "id": "edge.http.get.api_projects_project_id_artifacts",
       "kind": "edge",
       "label": "GET /api/projects/{project_id}/artifacts [exposure=conditional]",
@@ -62955,28 +62280,6 @@
           "line": 401,
           "symbol": "api_project_artifacts",
           "claim": "api_project_artifacts receives GET /api/projects/{project_id}/artifacts; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.get.api_projects_project_id_briefings",
-      "kind": "edge",
-      "label": "GET /api/projects/{project_id}/briefings [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "GET",
-          "path": "/api/projects/{project_id}/briefings"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/projects.py",
-          "line": 38,
-          "symbol": "api_list_project_briefings",
-          "claim": "api_list_project_briefings receives GET /api/projects/{project_id}/briefings; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
         }
       ]
     },
@@ -63333,28 +62636,6 @@
       ]
     },
     {
-      "id": "edge.http.get.api_projects_project_id_summary",
-      "kind": "edge",
-      "label": "GET /api/projects/{project_id}/summary [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "GET",
-          "path": "/api/projects/{project_id}/summary"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/projects.py",
-          "line": 383,
-          "symbol": "api_project_summary",
-          "claim": "api_project_summary receives GET /api/projects/{project_id}/summary; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
       "id": "edge.http.get.api_projects_project_id_updates",
       "kind": "edge",
       "label": "GET /api/projects/{project_id}/updates [exposure=conditional]",
@@ -63439,50 +62720,6 @@
           "line": 451,
           "symbol": "confluence_connections",
           "claim": "confluence_connections receives GET /api/providers/confluence/connections; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.get.api_providers_confluence_discover",
-      "kind": "edge",
-      "label": "GET /api/providers/confluence/discover [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "GET",
-          "path": "/api/providers/confluence/discover"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/providers.py",
-          "line": 494,
-          "symbol": "confluence_discover",
-          "claim": "confluence_discover receives GET /api/providers/confluence/discover; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.get.api_providers_github_connection",
-      "kind": "edge",
-      "label": "GET /api/providers/github/connection [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "GET",
-          "path": "/api/providers/github/connection"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/providers.py",
-          "line": 117,
-          "symbol": "github_connection",
-          "claim": "github_connection receives GET /api/providers/github/connection; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
         }
       ]
     },
@@ -63971,50 +63208,6 @@
       ]
     },
     {
-      "id": "edge.http.get.api_setup_hub_default_summary",
-      "kind": "edge",
-      "label": "GET /api/setup/hub-default-summary [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "GET",
-          "path": "/api/setup/hub-default-summary"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/setup.py",
-          "line": 58,
-          "symbol": "api_hub_default_summary",
-          "claim": "api_hub_default_summary receives GET /api/setup/hub-default-summary; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.get.api_setup_runtime_options",
-      "kind": "edge",
-      "label": "GET /api/setup/runtime-options [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "GET",
-          "path": "/api/setup/runtime-options"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/setup.py",
-          "line": 125,
-          "symbol": "api_runtime_options",
-          "claim": "api_runtime_options receives GET /api/setup/runtime-options; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
       "id": "edge.http.get.api_setup_status",
       "kind": "edge",
       "label": "GET /api/setup/status [exposure=conditional]",
@@ -64077,28 +63270,6 @@
           "line": 38,
           "symbol": "api_list_speakers",
           "claim": "api_list_speakers receives GET /api/speakers; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.get.api_speakers_speaker_id",
-      "kind": "edge",
-      "label": "GET /api/speakers/{speaker_id} [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "GET",
-          "path": "/api/speakers/{speaker_id}"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/meetings/speakers.py",
-          "line": 45,
-          "symbol": "api_get_speaker",
-          "claim": "api_get_speaker receives GET /api/speakers/{speaker_id}; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
         }
       ]
     },
@@ -64411,28 +63582,6 @@
       ]
     },
     {
-      "id": "edge.http.get.api_threads_thread_id_interview_promotions",
-      "kind": "edge",
-      "label": "GET /api/threads/{thread_id}/interview/promotions [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "GET",
-          "path": "/api/threads/{thread_id}/interview/promotions"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/threads.py",
-          "line": 108,
-          "symbol": "api_interview_promotions",
-          "claim": "api_interview_promotions receives GET /api/threads/{thread_id}/interview/promotions; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
       "id": "edge.http.get.api_tts_status",
       "kind": "edge",
       "label": "GET /api/tts/status [exposure=conditional]",
@@ -64473,28 +63622,6 @@
           "line": 196,
           "symbol": "api_update_markdown",
           "claim": "api_update_markdown receives GET /api/updates/{update_id}/markdown; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.get.api_watches",
-      "kind": "edge",
-      "label": "GET /api/watches [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "GET",
-          "path": "/api/watches"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/watches.py",
-          "line": 41,
-          "symbol": "list_watches",
-          "claim": "list_watches receives GET /api/watches; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
         }
       ]
     },
@@ -65137,72 +64264,6 @@
       ]
     },
     {
-      "id": "edge.http.patch.api_action_items_item_id",
-      "kind": "edge",
-      "label": "PATCH /api/action-items/{item_id} [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "PATCH",
-          "path": "/api/action-items/{item_id}"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/meetings/action_items.py",
-          "line": 39,
-          "symbol": "api_update_action_item",
-          "claim": "api_update_action_item receives PATCH /api/action-items/{item_id}; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.patch.api_action_items_item_id_edit",
-      "kind": "edge",
-      "label": "PATCH /api/action-items/{item_id}/edit [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "PATCH",
-          "path": "/api/action-items/{item_id}/edit"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/meetings/action_items.py",
-          "line": 47,
-          "symbol": "api_edit_action_item",
-          "claim": "api_edit_action_item receives PATCH /api/action-items/{item_id}/edit; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.patch.api_action_items_item_id_review",
-      "kind": "edge",
-      "label": "PATCH /api/action-items/{item_id}/review [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "PATCH",
-          "path": "/api/action-items/{item_id}/review"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/meetings/action_items.py",
-          "line": 43,
-          "symbol": "api_update_action_item_review",
-          "claim": "api_update_action_item_review receives PATCH /api/action-items/{item_id}/review; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
       "id": "edge.http.patch.api_all_action_items_item_id",
       "kind": "edge",
       "label": "PATCH /api/all-action-items/{item_id} [exposure=conditional]",
@@ -65221,28 +64282,6 @@
           "line": 55,
           "symbol": "api_update_global_action_item",
           "claim": "api_update_global_action_item receives PATCH /api/all-action-items/{item_id}; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.patch.api_all_action_items_item_id_edit",
-      "kind": "edge",
-      "label": "PATCH /api/all-action-items/{item_id}/edit [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "PATCH",
-          "path": "/api/all-action-items/{item_id}/edit"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/meetings/action_items.py",
-          "line": 63,
-          "symbol": "api_edit_global_action_item",
-          "claim": "api_edit_global_action_item receives PATCH /api/all-action-items/{item_id}/edit; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
         }
       ]
     },
@@ -65357,28 +64396,6 @@
       ]
     },
     {
-      "id": "edge.http.patch.api_speakers_speaker_id",
-      "kind": "edge",
-      "label": "PATCH /api/speakers/{speaker_id} [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "PATCH",
-          "path": "/api/speakers/{speaker_id}"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/meetings/speakers.py",
-          "line": 54,
-          "symbol": "api_update_speaker",
-          "claim": "api_update_speaker receives PATCH /api/speakers/{speaker_id}; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
       "id": "edge.http.patch.api_thoughts_thought_id_working",
       "kind": "edge",
       "label": "PATCH /api/thoughts/{thought_id}/working [exposure=conditional]",
@@ -65463,94 +64480,6 @@
           "line": 307,
           "symbol": "set_workbench_automation_enabled",
           "claim": "set_workbench_automation_enabled receives PATCH /api/workbenches/{workbench_id}/automations/{automation_id}; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.post.api_activity_domains",
-      "kind": "edge",
-      "label": "POST /api/activity/domains [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "POST",
-          "path": "/api/activity/domains"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/activity/ledger.py",
-          "line": 36,
-          "symbol": "domain",
-          "claim": "domain receives POST /api/activity/domains; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.post.api_activity_enrichment_github_run",
-      "kind": "edge",
-      "label": "POST /api/activity/enrichment/github/run [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "POST",
-          "path": "/api/activity/enrichment/github/run"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/activity/enrichment.py",
-          "line": 75,
-          "symbol": "github_run",
-          "claim": "github_run receives POST /api/activity/enrichment/github/run; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.post.api_activity_enrichment_jira_run",
-      "kind": "edge",
-      "label": "POST /api/activity/enrichment/jira/run [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "POST",
-          "path": "/api/activity/enrichment/jira/run"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/activity/enrichment.py",
-          "line": 85,
-          "symbol": "jira_run",
-          "claim": "jira_run receives POST /api/activity/enrichment/jira/run; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.post.api_activity_enrichment_pipelines_pipeline_id_run",
-      "kind": "edge",
-      "label": "POST /api/activity/enrichment/pipelines/{pipeline_id}/run [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "POST",
-          "path": "/api/activity/enrichment/pipelines/{pipeline_id}/run"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/activity/enrichment.py",
-          "line": 61,
-          "symbol": "pipeline",
-          "claim": "pipeline receives POST /api/activity/enrichment/pipelines/{pipeline_id}/run; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
         }
       ]
     },
@@ -65665,28 +64594,6 @@
       ]
     },
     {
-      "id": "edge.http.post.api_activity_nudges_select_clear",
-      "kind": "edge",
-      "label": "POST /api/activity/nudges/select/clear [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "POST",
-          "path": "/api/activity/nudges/select/clear"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/activity/nudges.py",
-          "line": 33,
-          "symbol": "clear",
-          "claim": "clear receives POST /api/activity/nudges/select/clear; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
       "id": "edge.http.post.api_activity_project_rules",
       "kind": "edge",
       "label": "POST /api/activity/project-rules [exposure=conditional]",
@@ -65705,28 +64612,6 @@
           "line": 29,
           "symbol": "create",
           "claim": "create receives POST /api/activity/project-rules; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.post.api_activity_project_rules_apply",
-      "kind": "edge",
-      "label": "POST /api/activity/project-rules/apply [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "POST",
-          "path": "/api/activity/project-rules/apply"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/activity/rules.py",
-          "line": 48,
-          "symbol": "apply",
-          "claim": "apply receives POST /api/activity/project-rules/apply; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
         }
       ]
     },
@@ -65947,116 +64832,6 @@
           "line": 107,
           "symbol": "api_issue_grant",
           "claim": "api_issue_grant receives POST /api/authority/grants; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.post.api_automations_reactions",
-      "kind": "edge",
-      "label": "POST /api/automations/reactions [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "POST",
-          "path": "/api/automations/reactions"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/automations.py",
-          "line": 251,
-          "symbol": "create_reaction",
-          "claim": "create_reaction receives POST /api/automations/reactions; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.post.api_automations_reactions_process",
-      "kind": "edge",
-      "label": "POST /api/automations/reactions/process [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "POST",
-          "path": "/api/automations/reactions/process"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/automations.py",
-          "line": 274,
-          "symbol": "process_reactions",
-          "claim": "process_reactions receives POST /api/automations/reactions/process; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.post.api_automations_watches",
-      "kind": "edge",
-      "label": "POST /api/automations/watches [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "POST",
-          "path": "/api/automations/watches"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/automations.py",
-          "line": 188,
-          "symbol": "create_watch",
-          "claim": "create_watch receives POST /api/automations/watches; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.post.api_automations_watches_watch_id_baseline",
-      "kind": "edge",
-      "label": "POST /api/automations/watches/{watch_id}/baseline [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "POST",
-          "path": "/api/automations/watches/{watch_id}/baseline"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/automations.py",
-          "line": 216,
-          "symbol": "baseline_watch",
-          "claim": "baseline_watch receives POST /api/automations/watches/{watch_id}/baseline; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.post.api_automations_watches_watch_id_test",
-      "kind": "edge",
-      "label": "POST /api/automations/watches/{watch_id}/test [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "POST",
-          "path": "/api/automations/watches/{watch_id}/test"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/automations.py",
-          "line": 209,
-          "symbol": "test_watch",
-          "claim": "test_watch receives POST /api/automations/watches/{watch_id}/test; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
         }
       ]
     },
@@ -66387,28 +65162,6 @@
           "line": 29,
           "symbol": "create",
           "claim": "create receives POST /api/chains; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.post.api_coders_clear_stale",
-      "kind": "edge",
-      "label": "POST /api/coders/clear-stale [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "POST",
-          "path": "/api/coders/clear-stale"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/system/coders.py",
-          "line": 376,
-          "symbol": "api_companion_clear_stale",
-          "claim": "api_companion_clear_stale receives POST /api/coders/clear-stale; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
         }
       ]
     },
@@ -67212,28 +65965,6 @@
       ]
     },
     {
-      "id": "edge.http.post.api_delivery_prs_launches_launch_id_input",
-      "kind": "edge",
-      "label": "POST /api/delivery/prs/launches/{launch_id}/input [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "POST",
-          "path": "/api/delivery/prs/launches/{launch_id}/input"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/delivery_prs.py",
-          "line": 174,
-          "symbol": "api_delivery_pr_launch_input",
-          "claim": "api_delivery_pr_launch_input receives POST /api/delivery/prs/launches/{launch_id}/input; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
       "id": "edge.http.post.api_delivery_prs_proposals_proposal_id_decide",
       "kind": "edge",
       "label": "POST /api/delivery/prs/proposals/{proposal_id}/decide [exposure=conditional]",
@@ -67406,28 +66137,6 @@
           "line": 174,
           "symbol": "api_terminal_command",
           "claim": "api_terminal_command receives POST /api/delivery/terminal/commands; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.post.api_delivery_terminal_node_results",
-      "kind": "edge",
-      "label": "POST /api/delivery/terminal/node/results [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "POST",
-          "path": "/api/delivery/terminal/node/results"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/delivery_terminal.py",
-          "line": 220,
-          "symbol": "api_terminal_node_results",
-          "claim": "api_terminal_node_results receives POST /api/delivery/terminal/node/results; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
         }
       ]
     },
@@ -67648,50 +66357,6 @@
           "line": 33,
           "symbol": "api_desk_seed",
           "claim": "api_desk_seed receives POST /api/desk/seed; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.post.api_dictation_agent_context_clear",
-      "kind": "edge",
-      "label": "POST /api/dictation/agent-context/clear [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "POST",
-          "path": "/api/dictation/agent-context/clear"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/dictation/agent.py",
-          "line": 110,
-          "symbol": "api_dictation_agent_context_clear",
-          "claim": "api_dictation_agent_context_clear receives POST /api/dictation/agent-context/clear; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.post.api_dictation_agent_context_summarize",
-      "kind": "edge",
-      "label": "POST /api/dictation/agent-context/summarize [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "POST",
-          "path": "/api/dictation/agent-context/summarize"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/dictation/agent.py",
-          "line": 141,
-          "symbol": "api_dictation_agent_context_summarize",
-          "claim": "api_dictation_agent_context_summarize receives POST /api/dictation/agent-context/summarize; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
         }
       ]
     },
@@ -67960,50 +66625,6 @@
       ]
     },
     {
-      "id": "edge.http.post.api_dictation_project_doc_suggestion_apply",
-      "kind": "edge",
-      "label": "POST /api/dictation/project-doc-suggestion/apply [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "POST",
-          "path": "/api/dictation/project-doc-suggestion/apply"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/dictation/project_docs.py",
-          "line": 90,
-          "symbol": "api_dictation_project_doc_suggestion_apply",
-          "claim": "api_dictation_project_doc_suggestion_apply receives POST /api/dictation/project-doc-suggestion/apply; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.post.api_dictation_project_doc_suggestion_dismiss",
-      "kind": "edge",
-      "label": "POST /api/dictation/project-doc-suggestion/dismiss [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "POST",
-          "path": "/api/dictation/project-doc-suggestion/dismiss"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/dictation/project_docs.py",
-          "line": 119,
-          "symbol": "api_dictation_project_doc_suggestion_dismiss",
-          "claim": "api_dictation_project_doc_suggestion_dismiss receives POST /api/dictation/project-doc-suggestion/dismiss; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
       "id": "edge.http.post.api_dictation_project_kb_starter",
       "kind": "edge",
       "label": "POST /api/dictation/project-kb/starter [exposure=conditional]",
@@ -68110,28 +66731,6 @@
           "line": 43,
           "symbol": "api_create_directory",
           "claim": "api_create_directory receives POST /api/directories; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.post.api_follow_through_commit_decision",
-      "kind": "edge",
-      "label": "POST /api/follow-through/commit-decision [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "POST",
-          "path": "/api/follow-through/commit-decision"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/follow_through.py",
-          "line": 123,
-          "symbol": "commit_decision",
-          "claim": "commit_decision receives POST /api/follow-through/commit-decision; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
         }
       ]
     },
@@ -68268,28 +66867,6 @@
       ]
     },
     {
-      "id": "edge.http.post.api_inference_acquisitions_job_id_cancel",
-      "kind": "edge",
-      "label": "POST /api/inference/acquisitions/{job_id}/cancel [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "POST",
-          "path": "/api/inference/acquisitions/{job_id}/cancel"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/setup.py",
-          "line": 175,
-          "symbol": "api_inference_cancel",
-          "claim": "api_inference_cancel receives POST /api/inference/acquisitions/{job_id}/cancel; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
       "id": "edge.http.post.api_inference_assignments_clear",
       "kind": "edge",
       "label": "POST /api/inference/assignments/clear [exposure=conditional]",
@@ -68422,28 +66999,6 @@
       ]
     },
     {
-      "id": "edge.http.post.api_inference_targets_target_id_probe",
-      "kind": "edge",
-      "label": "POST /api/inference-targets/{target_id}/probe [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "POST",
-          "path": "/api/inference-targets/{target_id}/probe"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/primitives/profiles.py",
-          "line": 86,
-          "symbol": "api_probe_target",
-          "claim": "api_probe_target receives POST /api/inference-targets/{target_id}/probe; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
       "id": "edge.http.post.api_intel_process",
       "kind": "edge",
       "label": "POST /api/intel/process [exposure=conditional]",
@@ -68506,28 +67061,6 @@
           "line": 78,
           "symbol": "api_preview_intent_route",
           "claim": "api_preview_intent_route receives POST /api/intents/preview; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.post.api_invocations_invocation_id_cancel",
-      "kind": "edge",
-      "label": "POST /api/invocations/{invocation_id}/cancel [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "POST",
-          "path": "/api/invocations/{invocation_id}/cancel"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/primitives/invocations.py",
-          "line": 53,
-          "symbol": "api_cancel_invocation",
-          "claim": "api_cancel_invocation receives POST /api/invocations/{invocation_id}/cancel; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
         }
       ]
     },
@@ -69566,28 +68099,6 @@
       ]
     },
     {
-      "id": "edge.http.post.api_plugin_jobs_job_id_cancel",
-      "kind": "edge",
-      "label": "POST /api/plugin-jobs/{job_id}/cancel [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "POST",
-          "path": "/api/plugin-jobs/{job_id}/cancel"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/activity/plugin_jobs.py",
-          "line": 44,
-          "symbol": "cancel",
-          "claim": "cancel receives POST /api/plugin-jobs/{job_id}/cancel; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
       "id": "edge.http.post.api_plugin_jobs_job_id_retry_now",
       "kind": "edge",
       "label": "POST /api/plugin-jobs/{job_id}/retry-now [exposure=conditional]",
@@ -69694,226 +68205,6 @@
           "line": 50,
           "symbol": "start_setup",
           "claim": "start_setup receives POST /api/project-setups; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.post.api_project_setups_session_id_abandon",
-      "kind": "edge",
-      "label": "POST /api/project-setups/{session_id}/abandon [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "POST",
-          "path": "/api/project-setups/{session_id}/abandon"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/project_setup.py",
-          "line": 320,
-          "symbol": "abandon",
-          "claim": "abandon receives POST /api/project-setups/{session_id}/abandon; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.post.api_project_setups_session_id_answers",
-      "kind": "edge",
-      "label": "POST /api/project-setups/{session_id}/answers [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "POST",
-          "path": "/api/project-setups/{session_id}/answers"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/project_setup.py",
-          "line": 80,
-          "symbol": "answer",
-          "claim": "answer receives POST /api/project-setups/{session_id}/answers; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.post.api_project_setups_session_id_finalize",
-      "kind": "edge",
-      "label": "POST /api/project-setups/{session_id}/finalize [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "POST",
-          "path": "/api/project-setups/{session_id}/finalize"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/project_setup.py",
-          "line": 294,
-          "symbol": "finalize",
-          "claim": "finalize receives POST /api/project-setups/{session_id}/finalize; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.post.api_project_setups_session_id_proposals_proposal_id_clarify",
-      "kind": "edge",
-      "label": "POST /api/project-setups/{session_id}/proposals/{proposal_id}/clarify [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "POST",
-          "path": "/api/project-setups/{session_id}/proposals/{proposal_id}/clarify"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/project_setup.py",
-          "line": 178,
-          "symbol": "clarify_proposal",
-          "claim": "clarify_proposal receives POST /api/project-setups/{session_id}/proposals/{proposal_id}/clarify; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.post.api_project_setups_session_id_proposals_proposal_id_clarify_jira_scope",
-      "kind": "edge",
-      "label": "POST /api/project-setups/{session_id}/proposals/{proposal_id}/clarify-jira-scope [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "POST",
-          "path": "/api/project-setups/{session_id}/proposals/{proposal_id}/clarify-jira-scope"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/project_setup.py",
-          "line": 242,
-          "symbol": "clarify_jira_scope",
-          "claim": "clarify_jira_scope receives POST /api/project-setups/{session_id}/proposals/{proposal_id}/clarify-jira-scope; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.post.api_project_setups_session_id_proposals_proposal_id_clarify_scope",
-      "kind": "edge",
-      "label": "POST /api/project-setups/{session_id}/proposals/{proposal_id}/clarify-scope [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "POST",
-          "path": "/api/project-setups/{session_id}/proposals/{proposal_id}/clarify-scope"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/project_setup.py",
-          "line": 206,
-          "symbol": "clarify_repo_scope",
-          "claim": "clarify_repo_scope receives POST /api/project-setups/{session_id}/proposals/{proposal_id}/clarify-scope; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.post.api_project_setups_session_id_proposals_proposal_id_deselect",
-      "kind": "edge",
-      "label": "POST /api/project-setups/{session_id}/proposals/{proposal_id}/deselect [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "POST",
-          "path": "/api/project-setups/{session_id}/proposals/{proposal_id}/deselect"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/project_setup.py",
-          "line": 152,
-          "symbol": "deselect_proposal",
-          "claim": "deselect_proposal receives POST /api/project-setups/{session_id}/proposals/{proposal_id}/deselect; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.post.api_project_setups_session_id_proposals_proposal_id_select",
-      "kind": "edge",
-      "label": "POST /api/project-setups/{session_id}/proposals/{proposal_id}/select [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "POST",
-          "path": "/api/project-setups/{session_id}/proposals/{proposal_id}/select"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/project_setup.py",
-          "line": 126,
-          "symbol": "select_proposal",
-          "claim": "select_proposal receives POST /api/project-setups/{session_id}/proposals/{proposal_id}/select; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.post.api_project_setups_session_id_proposals_proposal_id_test",
-      "kind": "edge",
-      "label": "POST /api/project-setups/{session_id}/proposals/{proposal_id}/test [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "POST",
-          "path": "/api/project-setups/{session_id}/proposals/{proposal_id}/test"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/project_setup.py",
-          "line": 273,
-          "symbol": "test_proposal",
-          "claim": "test_proposal receives POST /api/project-setups/{session_id}/proposals/{proposal_id}/test; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.post.api_project_setups_session_id_suggest",
-      "kind": "edge",
-      "label": "POST /api/project-setups/{session_id}/suggest [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "POST",
-          "path": "/api/project-setups/{session_id}/suggest"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/project_setup.py",
-          "line": 107,
-          "symbol": "suggest",
-          "claim": "suggest receives POST /api/project-setups/{session_id}/suggest; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
         }
       ]
     },
@@ -70380,28 +68671,6 @@
       ]
     },
     {
-      "id": "edge.http.post.api_providers_confluence_connections_ref_recheck",
-      "kind": "edge",
-      "label": "POST /api/providers/confluence/connections/{ref}/recheck [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "POST",
-          "path": "/api/providers/confluence/connections/{ref}/recheck"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/providers.py",
-          "line": 471,
-          "symbol": "confluence_connection_recheck",
-          "claim": "confluence_connection_recheck receives POST /api/providers/confluence/connections/{ref}/recheck; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
       "id": "edge.http.post.api_providers_confluence_validate",
       "kind": "edge",
       "label": "POST /api/providers/confluence/validate [exposure=conditional]",
@@ -70420,28 +68689,6 @@
           "line": 537,
           "symbol": "confluence_validate_scope",
           "claim": "confluence_validate_scope receives POST /api/providers/confluence/validate; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.post.api_providers_github_connection_recheck",
-      "kind": "edge",
-      "label": "POST /api/providers/github/connection/recheck [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "POST",
-          "path": "/api/providers/github/connection/recheck"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/providers.py",
-          "line": 135,
-          "symbol": "github_connection_recheck",
-          "claim": "github_connection_recheck receives POST /api/providers/github/connection/recheck; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
         }
       ]
     },
@@ -71036,28 +69283,6 @@
           "line": 404,
           "symbol": "api_trigger_steward",
           "claim": "api_trigger_steward receives POST /api/steward/trigger; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.post.api_stop",
-      "kind": "edge",
-      "label": "POST /api/stop [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "POST",
-          "path": "/api/stop"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/meetings/live.py",
-          "line": 119,
-          "symbol": "api_stop",
-          "claim": "api_stop receives POST /api/stop; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
         }
       ]
     },
@@ -72030,50 +70255,6 @@
       ]
     },
     {
-      "id": "edge.http.put.api_activity_enrichment_connectors_connector_id",
-      "kind": "edge",
-      "label": "PUT /api/activity/enrichment/connectors/{connector_id} [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "PUT",
-          "path": "/api/activity/enrichment/connectors/{connector_id}"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/activity/enrichment.py",
-          "line": 28,
-          "symbol": "update_connector",
-          "claim": "update_connector receives PUT /api/activity/enrichment/connectors/{connector_id}; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.put.api_activity_meeting_candidates_candidate_id_status",
-      "kind": "edge",
-      "label": "PUT /api/activity/meeting-candidates/{candidate_id}/status [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "PUT",
-          "path": "/api/activity/meeting-candidates/{candidate_id}/status"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/activity/candidates.py",
-          "line": 40,
-          "symbol": "update",
-          "claim": "update receives PUT /api/activity/meeting-candidates/{candidate_id}/status; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
       "id": "edge.http.put.api_activity_project_rules_rule_id",
       "kind": "edge",
       "label": "PUT /api/activity/project-rules/{rule_id} [exposure=conditional]",
@@ -72136,50 +70317,6 @@
           "line": 54,
           "symbol": "api_set_control_mode",
           "claim": "api_set_control_mode receives PUT /api/authority/control-mode; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.put.api_automations_reactions_reaction_id_enabled",
-      "kind": "edge",
-      "label": "PUT /api/automations/reactions/{reaction_id}/enabled [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "PUT",
-          "path": "/api/automations/reactions/{reaction_id}/enabled"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/automations.py",
-          "line": 263,
-          "symbol": "set_reaction_enabled",
-          "claim": "set_reaction_enabled receives PUT /api/automations/reactions/{reaction_id}/enabled; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.put.api_automations_watches_watch_id_enabled",
-      "kind": "edge",
-      "label": "PUT /api/automations/watches/{watch_id}/enabled [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "PUT",
-          "path": "/api/automations/watches/{watch_id}/enabled"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/automations.py",
-          "line": 198,
-          "symbol": "set_watch_enabled",
-          "claim": "set_watch_enabled receives PUT /api/automations/watches/{watch_id}/enabled; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
         }
       ]
     },
@@ -72422,50 +70559,6 @@
           "line": 122,
           "symbol": "api_file_member",
           "claim": "api_file_member receives PUT /api/directories/{directory_id}/members/{primitive_id}; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.put.api_inference_targets_target_id",
-      "kind": "edge",
-      "label": "PUT /api/inference-targets/{target_id} [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "PUT",
-          "path": "/api/inference-targets/{target_id}"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/primitives/profiles.py",
-          "line": 132,
-          "symbol": "api_update_inference_target",
-          "claim": "api_update_inference_target receives PUT /api/inference-targets/{target_id}; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.put.api_inference_targets_target_id_secret",
-      "kind": "edge",
-      "label": "PUT /api/inference-targets/{target_id}/secret [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "PUT",
-          "path": "/api/inference-targets/{target_id}/secret"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/primitives/profiles.py",
-          "line": 153,
-          "symbol": "api_set_inference_target_secret",
-          "claim": "api_set_inference_target_secret receives PUT /api/inference-targets/{target_id}/secret; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
         }
       ]
     },
@@ -79957,11 +78050,6 @@
           "path": "/api/meeting/stop"
         },
         {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "POST",
-          "path": "/api/stop"
-        },
-        {
           "inventory_path": "docs/internal/philo/data/voice.json",
           "record_id": "meeting.capture"
         }
@@ -85050,11 +83138,6 @@
           "path": "/api/meeting/stop"
         },
         {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "POST",
-          "path": "/api/stop"
-        },
-        {
           "inventory_path": "docs/internal/philo/data/voice.json",
           "record_id": "meeting.capture"
         }
@@ -87225,11 +85308,6 @@
           "inventory_path": "docs/generated/openapi.json",
           "method": "POST",
           "path": "/api/meeting/stop"
-        },
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "POST",
-          "path": "/api/stop"
         },
         {
           "inventory_path": "docs/internal/philo/data/voice.json",

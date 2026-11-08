@@ -1,0 +1,116 @@
+"""PARKED 20261108 (subtraction day, Lane R): routes no client reads.
+
+Parked from ``holdspeak/web/routes/meetings/live.py``: POST /api/stop.
+Not imported. Kept for history; restore with ``git revert`` of the parking commit.
+"""
+from __future__ import annotations
+"""Live-meeting lifecycle routes backed by :class:`MeetingService`."""
+
+import asyncio
+from threading import Lock
+from typing import Any, Optional
+
+from fastapi import APIRouter, Request
+from fastapi.responses import JSONResponse
+
+from .....logging_config import get_logger
+from .....principals import UNAUTHENTICATED
+from .....services.meeting_service import MeetingService
+from .....web_requests import (
+    _StopRequest,
+)
+from ....context import WebContext
+
+log = get_logger("web.routes.meetings")
+
+# The runtime's named refusal when a stop press finds no meeting running
+# (`runtime/meeting_glue.py::_stop_active_meeting`). Matched on the message
+# rather than the type so this transport adapter need not import the runtime.
+_NO_ACTIVE_MEETING = "No active meeting"
+_STOP_IN_PROGRESS = "Meeting is already stopping"
+_SERVICE_CACHE_LOCK = Lock()
+
+
+def _service(ctx: WebContext) -> MeetingService:
+    """Get the composition-bound service, retaining partial-context support."""
+    if isinstance(ctx.meeting_service, MeetingService):
+        return ctx.meeting_service
+    with _SERVICE_CACHE_LOCK:
+        if isinstance(ctx.meeting_service, MeetingService):
+            return ctx.meeting_service
+        from .....db import get_database, get_observer
+
+        def update_callback(*, title: str | None, tags: list[str] | None) -> Any:
+            if ctx.on_update_meeting is not None:
+                return ctx.on_update_meeting(title=title, tags=tags)
+            if title is not None and ctx.on_set_title is not None:
+                ctx.on_set_title(title)
+            if tags is not None and ctx.on_set_tags is not None:
+                ctx.on_set_tags(tags)
+            return ctx.get_state() or {}
+
+        service = MeetingService(get_database(), observer=get_observer())  # _service composition
+        service.bind_lifecycle(
+            on_start=ctx.on_start,
+            on_stop=ctx.on_meeting_stop or ctx.on_stop,
+            on_bookmark=ctx.on_bookmark,
+            on_update=update_callback,
+        )
+        ctx.meeting_service = service
+        return service
+
+
+def _principal(request: Request):
+    return getattr(request.state, "principal", UNAUTHENTICATED)
+
+
+def parked_build_live_router(ctx: WebContext) -> APIRouter:
+    router = APIRouter()
+
+    async def _stop(request: Request) -> Any:
+        try:
+            service = _service(ctx)
+            stopped = await asyncio.to_thread(service.stop_capture, _principal(request))
+            ctx.broadcast("stopped", stopped)
+            # A stopped capture is a successful Stop even when persistence is
+            # partial. Keep the runtime's facts together so clients can say
+            # what stopped and what, if anything, was retained.
+            result: dict[str, Any] = dict(stopped) if isinstance(stopped, dict) else {}
+            result["success"] = True
+            if isinstance(stopped, dict):
+                meeting = stopped.get("meeting")
+                save = stopped.get("save")
+                if isinstance(meeting, dict) and isinstance(save, dict):
+                    meeting_id = str(meeting.get("id") or meeting.get("meeting_id") or "")
+                    checkpoint_candidate = (
+                        save.get("database_saved") is False
+                        and save.get("json_saved") is True
+                        and str(meeting.get("capture_status") or "").lower() == "recoverable"
+                    )
+                    if meeting_id and checkpoint_candidate:
+                        try:
+                            retained = service.get_meeting(
+                                _principal(request), meeting_id, include_parked=True
+                            )
+                        except Exception:
+                            retained = None
+                        # Recovery is a door only when the durable row exists;
+                        # a Stop payload alone is not proof of recoverability.
+                        result["capture_recovery_available"] = retained is not None
+            if result.get("device_cleanup_error"):
+                result["warning"] = result["device_cleanup_error"]
+            return JSONResponse(result)
+        except Exception as exc:
+            # HS-132-02: HS-132-01 made the meeting verb refuse by name when no
+            # meeting is live, but the refusal rode a 500 — a server fault for
+            # what is a client asking to stop nothing. It is a conflict with the
+            # current state, so it answers 409 and keeps the named reason.
+            status = 409 if any(reason in str(exc) for reason in (_NO_ACTIVE_MEETING, _STOP_IN_PROGRESS)) else 500
+            log.error("on_stop failed: %s", exc)
+            return JSONResponse({"success": False, "error": str(exc)}, status_code=status)
+
+    @router.post("/api/stop")
+    async def api_stop(request: Request, _: Optional[_StopRequest] = None) -> Any:
+        return await _stop(request)
+
+    return router

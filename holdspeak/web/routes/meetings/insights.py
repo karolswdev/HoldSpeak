@@ -1,6 +1,6 @@
 """Transport adapters for persisted meeting intelligence projections."""
 from __future__ import annotations
-from typing import Any, Optional
+from typing import Any
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 from ....logging_config import get_logger
@@ -34,14 +34,6 @@ def build_insights_router(ctx: WebContext) -> APIRouter:
             return JSONResponse({"error": "Meeting not found"}, status_code=404)
         except Exception as exc:
             return error_500(exc, log, "Failed to load meeting intent timeline")
-    @router.get("/api/meetings/{meeting_id}/plugin-runs")
-    def api_get_meeting_plugin_runs(meeting_id: str, request: Request, limit: int = 500, window_id: Optional[str] = None) -> Any:
-        try:
-            return JSONResponse(_service(ctx).list_plugin_runs(_principal(request), meeting_id, limit=limit, window_id=window_id))
-        except NotFound:
-            return JSONResponse({"error": "Meeting not found"}, status_code=404)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to load meeting plugin runs")
     @router.get("/api/meetings/{meeting_id}/artifacts")
     def api_get_meeting_artifacts(meeting_id: str, request: Request, limit: int = 200) -> Any:
         try:

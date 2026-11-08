@@ -2,7 +2,7 @@
 
 Proved on a real hub (inventory C, section 2.2, 2026-10-03): seven writes sent
 no bus frame, so a second window stayed stale until a reload -- action item
-done, action item edit, meeting rename, project create, resource add, meeting
+done, meeting rename, project create, resource add, meeting
 attach, Brief generate, thread create.
 
 The cause was structural: a write announced only when its service was built
@@ -215,8 +215,6 @@ def seeded(hub: Hub) -> dict[str, str]:
 NAMED_WRITES: dict[str, Callable[[Hub, dict[str, str]], tuple[int, Any]]] = {
     "action item done": lambda hub, ids: hub.call(
         "PATCH", f"/api/all-action-items/{ids['item']}", {"status": "done"}),
-    "action item edit": lambda hub, ids: hub.call(
-        "PATCH", f"/api/all-action-items/{ids['item']}/edit", {"task": "Send the plan today"}),
     "meeting rename": lambda hub, ids: hub.call(
         "PUT", f"/api/meetings/{ids['meeting']}", {"title": "Announce fence, renamed"}),
     "project create": lambda hub, ids: hub.call(

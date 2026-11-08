@@ -113,7 +113,7 @@ Read [Agents and Threads](AGENTS_AND_THREADS.md) for the retained conversation c
 The Interview service supports owner-controlled promotion through its HTTP command endpoint.
 Promotion creates a linked canonical record from the source fact.
 A client must supply the current revision and a new command identity.
-Read promotion results through `GET /api/threads/{thread_id}/interview/promotions`.
+The promotion command answer carries the promotion result.
 
 The command endpoint accepts section, fact-removal, disposition, status, promotion, and promotion-revocation events.
 The active Ask does not expose the older promotion panel.

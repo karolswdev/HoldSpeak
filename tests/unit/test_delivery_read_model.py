@@ -590,25 +590,3 @@ class TestDeliveryRoutes:
         assert refused.status_code == 400
         assert str(tmp_path) not in refused.json()["error"]
 
-    def test_events_route_replays_from_the_cursor(self, tmp_path):
-        fake = FakeDw()
-        repo = _make_plain_repo(tmp_path, "r1")
-        client, collector = _route_client(tmp_path, fake, [("demo", repo)])
-        first = client.get("/api/delivery/events").json()
-        assert first["delivery_schema"] == 1
-        assert first["events"] == []
-
-        fake.emit(repo.resolve(), {"ts": "t", "event": "gate_refusal",
-                                   "project": "demo", "story": "DM-1-01",
-                                   "detail": {"rule": "story-evidence"}, "tree": "t"})
-        collector.invalidate()
-        client.get("/api/delivery/snapshot")
-        replay = client.get(
-            "/api/delivery/events", params={"after": first["cursor"]}
-        ).json()
-        assert [e["event"] for e in replay["events"]] == ["gate_refusal"]
-        assert_wire_clean(replay, tmp_path)
-        drained = client.get(
-            "/api/delivery/events", params={"after": replay["cursor"]}
-        ).json()
-        assert drained["events"] == []

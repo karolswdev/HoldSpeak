@@ -1,6 +1,5 @@
 """HS-159-04: Watch routes -- the universal Watch surface on the wire.
 
-GET  /api/watches                           -- list all watches
 GET  /api/projects/{project_id}/watches     -- list project watches
 GET  /api/watches/{watch_id}                -- get watch with rules
 PATCH /api/watches/{watch_id}               -- update (material-edit semantics)
@@ -37,22 +36,6 @@ def build_watches_router(ctx: WebContext) -> APIRouter:
 
     def principal(request: Request) -> Any:
         return getattr(request.state, "principal", UNAUTHENTICATED)
-
-    # ── GET /api/watches ─────────────────────────────────────────
-
-    @router.get("/api/watches")
-    def list_watches(
-        request: Request,
-        state: str | None = None,
-        connector: str | None = None,
-    ) -> Any:
-        try:
-            watches = ctx.watch_service.list_watches(
-                principal(request), state=state, connector=connector,
-            )
-            return JSONResponse({"watches": watches})
-        except Exception as exc:
-            return error_500(exc, log, "Failed to list watches")
 
     # ── GET /api/projects/{project_id}/watches ───────────────────
 

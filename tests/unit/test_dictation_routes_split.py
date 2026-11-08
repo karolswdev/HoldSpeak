@@ -19,15 +19,9 @@ _EXPECTED_ROUTES = {
     ("/api/intents/override", "PUT"),
     ("/api/intents/preview", "POST"),
     ("/api/dictation/project-context", "GET"),
-    ("/api/dictation/agent-context", "GET"),
     ("/api/dictation/agent-hooks", "GET"),
-    ("/api/dictation/agent-context/clear", "POST"),
-    ("/api/dictation/agent-context/summarize", "POST"),
     ("/api/dictation/project-hs", "GET"),
     ("/api/dictation/project-hs", "PUT"),
-    ("/api/dictation/project-doc-suggestion", "GET"),
-    ("/api/dictation/project-doc-suggestion/apply", "POST"),
-    ("/api/dictation/project-doc-suggestion/dismiss", "POST"),
     ("/api/dictation/block-templates", "GET"),
     ("/api/dictation/blocks", "GET"),
     ("/api/dictation/blocks", "POST"),
@@ -62,7 +56,6 @@ _EXPECTED_ROUTES = {
     ("/api/dictation/journal/{entry_id}/replay", "POST"),
     # HS-112-06: the audio floor, read + claimable (leased) by the Desk's
     # open mic — the browser as an owner on the ONE arbiter.
-    ("/api/dictation/floor", "GET"),
     ("/api/dictation/floor/claim", "POST"),
     ("/api/dictation/floor/release", "POST"),
 }
@@ -87,4 +80,4 @@ def test_dictation_route_table_is_unchanged_after_split() -> None:
 
 
 def test_dictation_route_count_is_stable() -> None:
-    assert len(_router_route_set()) == len(_EXPECTED_ROUTES) == 41
+    assert len(_router_route_set()) == len(_EXPECTED_ROUTES) == 34

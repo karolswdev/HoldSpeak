@@ -134,9 +134,6 @@ def test_commitment_can_flow_to_workbench_output_and_satisfaction_history(
     ).json()["commitment"]
     assert satisfied["state"] == "done"
     assert satisfied["history"][-1]["evidence"][0]["status"] == "done"
-    history = client.get(f"/api/people/history?relationship_id={relationship['id']}").json()["history"]
-    assert history["satisfied"] == 1
-    assert history["with_evidence"] == 1
     reset_database()
 
 

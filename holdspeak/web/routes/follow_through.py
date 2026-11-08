@@ -36,7 +36,7 @@ def _enrich_board(
     degrades to the plain board silently and honestly (no error, no partial
     results).
     """
-    from ...services.people_service import PeopleService, UnavailablePeopleStore
+    from ...services.people_service import PeopleService
 
     try:
         from ...people import production_people_store
@@ -118,18 +118,6 @@ def build_follow_through_router(ctx: WebContext) -> APIRouter:
                 str(body.get("card_id") or ""),
                 str(body.get("verb") or ""),
                 body.get("payload"),
-            )
-        except ValueError as exc:
-            raise HTTPException(status_code=400, detail=str(exc)) from exc
-
-    @router.post("/commit-decision")
-    def commit_decision(request: Request, body: dict[str, Any] = Body(default={})) -> dict[str, Any]:
-        try:
-            return service.commit_decision(
-                principal(request),
-                str(body.get("decision_id") or ""),
-                owner=body.get("owner"),
-                due_at=body.get("due_at"),
             )
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc

@@ -29,10 +29,4 @@ def build_nudges_router(ctx:WebContext)->APIRouter:
   try:return JSONResponse(_svc().select(_principal(request),payload.get("record_id") if isinstance(payload,dict) else None))
   except ValidationError as e:return JSONResponse({"error":str(e)},status_code=400)
   except Exception as e:return error_500(e,log,"Failed to select activity record for dictation")
- @router.post("/api/activity/nudges/select/clear")
- def clear()->Any:
-  try:
-   from ....dictation_selection import clear_selected_record
-   clear_selected_record();return JSONResponse({"cleared":True})
-  except Exception as e:return error_500(e,log,"Failed to clear activity selection")
  return router

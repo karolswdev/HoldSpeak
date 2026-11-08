@@ -318,60 +318,6 @@ def test_dry_run_project_rewriter_uses_hs_context_when_enabled(
     assert body["final_text"] == "Implement the project-aware rewrite stage."
 
 
-def test_dry_run_stores_latest_project_doc_suggestion_and_dismisses(
-    test_client: TestClient,
-    settings_path: Path,
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    cfg = Config()
-    cfg.dictation.pipeline.enabled = True
-    cfg.dictation.pipeline.stages = ["project-rewriter", "kb-enricher"]
-    cfg.save(path=settings_path)
-    root = tmp_path / "target"
-    (root / ".hs").mkdir(parents=True)
-    (root / ".hs" / "instructions.md").write_text("Rewrite as coding-agent tasks.", encoding="utf-8")
-    (root / "pyproject.toml").write_text('[project]\nname = "target-proj"\n', encoding="utf-8")
-    monkeypatch.chdir(root)
-    monkeypatch.setattr(
-        assembly_module,
-        "build_runtime",
-        lambda **_kwargs: _SequenceRewriteRuntime(
-            [
-                "Document the retry worker handoff.",
-                '{"target_path": ".hs/handoffs/retry-worker-next-run.md", '
-                '"rationale": "Keeps the implementation handoff narrow.", '
-                '"content": "Retry worker handoffs should mention the next scheduled run."}',
-            ]
-        ),
-    )
-
-    response = test_client.post(
-        "/api/dictation/dry-run",
-        json={
-            "utterance": "capture the retry worker handoff",
-            "target": {"app_name": "WezTerm", "window_title": "codex - HoldSpeak"},
-        },
-    )
-
-    assert response.status_code == 200, response.text
-    suggestion = response.json()["stages"][0]["metadata"]["project_doc_suggestion"]
-    assert suggestion["target_path"] == ".hs/handoffs/retry-worker-next-run.md"
-
-    latest = test_client.get("/api/dictation/project-doc-suggestion")
-    assert latest.status_code == 200, latest.text
-    assert latest.json()["suggestion"] == suggestion
-
-    dismissed = test_client.post("/api/dictation/project-doc-suggestion/dismiss")
-    assert dismissed.status_code == 200, dismissed.text
-    assert dismissed.json()["dismissed"] is True
-    assert not (root / ".hs" / "handoffs" / "retry-worker-next-run.md").exists()
-
-    cleared = test_client.get("/api/dictation/project-doc-suggestion")
-    assert cleared.status_code == 200, cleared.text
-    assert cleared.json()["suggestion"] is None
-
-
 def test_dry_run_no_project_still_runs_pipeline(
     test_client: TestClient,
     settings_path: Path,

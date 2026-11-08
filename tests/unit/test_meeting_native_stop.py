@@ -499,7 +499,7 @@ def test_delayed_duplicate_stop_cannot_replace_the_winners_saved_activity(tmp_pa
     assert runtime.voice_session.active_owner is None
 
 
-@pytest.mark.parametrize("path", ["/api/meeting/stop", "/api/stop"])
+@pytest.mark.parametrize("path", ["/api/meeting/stop"])
 def test_stop_route_keeps_loop_responsive_and_broadcasts_warning_on_loop(path):
     async def exercise():
         entered, release = threading.Event(), threading.Event()
@@ -549,7 +549,7 @@ def test_stop_route_keeps_loop_responsive_and_broadcasts_warning_on_loop(path):
     asyncio.run(exercise())
 
 
-@pytest.mark.parametrize("path", ["/api/meeting/stop", "/api/stop"])
+@pytest.mark.parametrize("path", ["/api/meeting/stop"])
 def test_second_stop_answers_conflict(path):
     async def exercise():
         def stop():

@@ -299,8 +299,7 @@ def test_inference_targets_stays_the_write_path(client, db) -> None:
               "base_url": "http://192.168.1.43:8080/v1", "model": "q"},
     )
     assert resp.status_code == 201
-    target = resp.json()["inference_target"]
-    assert client.delete(f"/api/inference-targets/{target['id']}").status_code == 200
+    assert resp.json()["inference_target"]["id"]
 
 
 # ── the settings boundary never writes or returns the dead fields ──────

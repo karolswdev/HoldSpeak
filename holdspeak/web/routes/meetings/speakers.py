@@ -8,9 +8,7 @@ from fastapi.responses import JSONResponse
 
 from ....logging_config import get_logger
 from ....principals import UNAUTHENTICATED
-from ....services.errors import NotFound, ValidationError
 from ....services.meeting_service import MeetingService
-from ....web_requests import _SpeakerUpdateRequest
 from ...context import WebContext
 from ...runtime_support import error_500
 
@@ -40,26 +38,5 @@ def build_speakers_router(ctx: WebContext) -> APIRouter:
             return JSONResponse(_service(ctx).list_speakers(_principal(request)))
         except Exception as exc:
             return error_500(exc, log, "Failed to list speakers")
-
-    @router.get("/api/speakers/{speaker_id}")
-    def api_get_speaker(speaker_id: str, request: Request, limit: int = 500) -> Any:
-        try:
-            return JSONResponse(_service(ctx).get_speaker(_principal(request), speaker_id, limit))
-        except NotFound:
-            return JSONResponse({"error": "Speaker not found"}, status_code=404)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to get speaker")
-
-    @router.patch("/api/speakers/{speaker_id}")
-    def api_update_speaker(speaker_id: str, payload: _SpeakerUpdateRequest, request: Request) -> Any:
-        try:
-            return JSONResponse(_service(ctx).update_speaker(_principal(request), speaker_id, payload.model_dump()))
-        except ValidationError as exc:
-            return JSONResponse({"success": False, "error": str(exc)}, status_code=400)
-        except NotFound:
-            return JSONResponse({"success": False, "error": "Speaker not found"}, status_code=404)
-        except Exception as exc:
-            log.error("Failed to update speaker: %s", exc)
-            return JSONResponse({"success": False, "error": str(exc)}, status_code=500)
 
     return router

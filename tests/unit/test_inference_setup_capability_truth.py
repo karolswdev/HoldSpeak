@@ -6,8 +6,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
-from fastapi import FastAPI, Request
-from fastapi.testclient import TestClient
 
 from holdspeak.config import Config
 from holdspeak.db.core import Database
@@ -33,9 +31,6 @@ from holdspeak.services.inference_setup_service import (
     inspect_local_artifacts,
     load_config_read_only,
 )
-from holdspeak.web.context import WebContext
-from holdspeak.web.routes.setup import build_setup_router
-from holdspeak.services.setup_service import SetupService
 
 
 OWNER = Principal(PrincipalKind.OWNER, "owner")
@@ -401,19 +396,7 @@ def test_local_preset_union_and_mlx_runtime_use_real_dependency(tmp_path: Path, 
     ) == [local]
 
 
-def test_http_setup_has_no_legacy_mcp_resource_alias(tmp_path: Path, monkeypatch):
-    db, service = _service(tmp_path)
-    app = FastAPI()
-
-    @app.middleware("http")
-    async def owner(request: Request, call_next):
-        request.state.principal = OWNER
-        return await call_next(request)
-
-    app.include_router(build_setup_router(WebContext(
-        get_state=lambda: {}, setup_service=SetupService(db), inference_setup_service=service,
-    )))
-    assert TestClient(app).get("/api/inference/setup").status_code == 200
+def test_setup_has_no_legacy_mcp_resource_alias(tmp_path: Path, monkeypatch):
     for principal in (OWNER, AGENT):
         assert all(
             row["uri"] != "holdspeak://inference/setup"
@@ -433,29 +416,6 @@ def test_http_setup_has_no_legacy_mcp_resource_alias(tmp_path: Path, monkeypatch
         "params": {"uri": "holdspeak://inference/setup"},
     })
     assert "Unknown resource" in missing["error"]["message"]
-
-
-def test_http_agent_is_denied_and_projection_performs_no_runner_or_revision_write(tmp_path: Path, monkeypatch):
-    db, service = _service(tmp_path)
-    monkeypatch.setattr(
-        "holdspeak.deployment_revisions.capture_deployment_revision",
-        lambda *_args, **_kwargs: pytest.fail("projection attempted a deployment upsert"),
-    )
-    app = FastAPI()
-
-    @app.middleware("http")
-    async def agent(request: Request, call_next):
-        request.state.principal = AGENT
-        return await call_next(request)
-
-    app.include_router(build_setup_router(WebContext(
-        get_state=lambda: {}, setup_service=SetupService(db), inference_setup_service=service,
-    )))
-
-    response = TestClient(app).get("/api/inference/setup")
-
-    assert response.status_code == 403
-    assert response.json()["error"] == "Owner access is required."
 
 
 def test_owner_projection_never_saves_connects_or_loads_a_model(tmp_path: Path, monkeypatch):

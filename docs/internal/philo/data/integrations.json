@@ -361,8 +361,7 @@
         "Thread messages"
       ],
       "apis": [
-        "POST /api/threads/{thread_id}/interview",
-        "GET /api/threads/{thread_id}/interview/promotions"
+        "POST /api/threads/{thread_id}/interview"
       ],
       "configuration": [
         "Interview mode recipe",
@@ -1619,10 +1618,7 @@
       ],
       "apis": [
         "GET /api/activity/enrichment/connectors",
-        "PUT /api/activity/enrichment/connectors/{connector_id}",
-        "GET /api/activity/enrichment/connectors/{connector_id}/dry-run",
-        "GET /api/activity/enrichment/connectors/{connector_id}/runs",
-        "POST /api/activity/enrichment/pipelines/{pipeline_id}/run"
+        "GET /api/activity/enrichment/connectors/{connector_id}/dry-run"
       ],
       "configuration": [
         "~/.holdspeak/connector_packs",
@@ -1767,10 +1763,7 @@
         "activity_annotations",
         "connector_runs"
       ],
-      "apis": [
-        "GET /api/activity/enrichment/github/preview",
-        "POST /api/activity/enrichment/github/run"
-      ],
+      "apis": [],
       "configuration": [
         "gh path",
         "timeout",
@@ -1814,17 +1807,6 @@
           "path": "tests/unit/test_activity_github.py",
           "node": "test_preview_github_cli_enrichment_plans_read_only_commands",
           "assertion": "Mutating gh commands are rejected by the command policy.",
-          "execution": {
-            "status": "passed",
-            "record": "docs/generated/test-execution.json",
-            "run": "full-python-suite",
-            "cases": 1
-          }
-        },
-        {
-          "path": "tests/integration/test_web_activity_api.py",
-          "node": "test_github_run_records_a_connector_run_row",
-          "assertion": "A GitHub connector run is recorded as a connector_runs row.",
           "execution": {
             "status": "passed",
             "record": "docs/generated/test-execution.json",
@@ -1901,9 +1883,6 @@
         "POST /api/providers/jira/connections",
         "GET /api/providers/confluence/connections",
         "POST /api/providers/jira/connections/{ref}/recheck",
-        "POST /api/providers/confluence/connections/{ref}/recheck",
-        "GET /api/activity/enrichment/jira/preview",
-        "POST /api/activity/enrichment/jira/run",
         "GET /api/calendar/events"
       ],
       "configuration": [

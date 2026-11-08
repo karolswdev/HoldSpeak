@@ -58,10 +58,9 @@ meeting outcomes. Later external effects use the central operation policy.
 ## Where results appear
 
 The summary, topics, proposals, and artifacts are saved with the meeting. The
-intent timeline and plugin run history are available from:
+intent timeline is available from:
 
 - `GET /api/meetings/{meeting_id}/intent-timeline`
-- `GET /api/meetings/{meeting_id}/plugin-runs`
 - `GET /api/meetings/{meeting_id}/artifacts`
 - `GET /api/meetings/{meeting_id}/prepared`
 
