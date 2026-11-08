@@ -2,6 +2,18 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-07 · #1806 The Room's last-read line is one literal; the API manifest names the web as a resources DELETE consumer (batch guard red).
+- 2026-11-07 · #1805 Five failure lines say what stayed and what to do next (batch guard red).
+- 2026-11-07 · #1804 Meeting decisions show their project before Save, are created once, corrected on the canonical record (HS-S42).
+- 2026-11-07 · #1803 The Room's unread Programs state is a chip, not a prose line (batch ratchet red).
+- 2026-11-07 · #1802 Meeting shows the owner as a name; the Room links a name only after an informed Link (HS-S41).
+- 2026-11-07 · #1801 Add binds a project action to one new Program step and never rebuilds the plan (HS-S21).
+- 2026-11-07 · #1800 The quick check runs once per merge batch, on main, by the orchestrator.
+- 2026-11-07 · #1799 People Add keeps the saved request and finishes that one (HS-S33).
+- 2026-11-07 · #1798 The Room lists the Programs filed to its project (HS-S13).
+- 2026-11-07 · #1797 A new Program step starts at the base as origin has it, proved before the agent starts (HS-S22).
+- 2026-11-07 · #1796 Park the dead code the audit found; two helpers leave the web layer.
+- 2026-11-07 · #1795 STATUS one-liners.
 - 2026-11-07 · #1794 Create a Program in the project he chooses (HS-S11: global New opens a well, explicit project, truthful outcomes).
 - 2026-11-07 · #1793 Needs you says whose obligations it shows (HS-S43: one line + Open People).
 - 2026-11-07 · #1792 A Program's within list lowers the bar only when it admits a new path (HS-S23).
