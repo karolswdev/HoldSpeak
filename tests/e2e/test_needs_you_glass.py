@@ -384,6 +384,9 @@ READERS = r"""() => {
   const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
   for (let n = w.nextNode(); n; n = w.nextNode()) {
     const t = n.textContent.replace(/\s+/g, ' ').trim();
+    // The Room's status line counts its own project's needs (R1, #1923/#1937):
+    // a scoped number under the project's mast, not the desk's one number.
+    if (n.parentElement && n.parentElement.closest('[data-testid=room-status-need]')) continue;
     if (/needs? you/i.test(t) && vis(n.parentElement)) said.push(t);
   }
   for (const e of document.querySelectorAll('[aria-label]')) {
