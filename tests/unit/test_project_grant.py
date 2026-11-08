@@ -336,7 +336,7 @@ def test_a_live_project_grant_survives_a_real_restart_and_a_reissue(tmp_path: Pa
 
 The ratified canvas settles it as a correctness rule: a grant's controls show
 only where the credential's ISSUED palette holds the tools that grant covers.
-The face declares the two palette lists (``web/src/pages/cores/SettingsCore.tsx``
+The face declares the two palette lists (``web/src/pages/cores/settings/grants.tsx``
 ``PROJECT_GRANT_PALETTES``, ``DESK_GRANT_PALETTES``); this fence derives them
 from ``holdspeak.mcp.palettes.resolve_palette`` so a palette change cannot
 leave a grant's verb on a credential that cannot use it, or hide it from one
@@ -350,7 +350,7 @@ from holdspeak.kernel.desk import DESK_GRANT_OPERATIONS
 from holdspeak.kernel.project import PROJECT_GRANT_OPERATIONS
 from holdspeak.mcp.palettes import PALETTE_NAMES, resolve_palette
 
-SOURCE = Path(__file__).resolve().parents[2] / "web" / "src" / "pages" / "cores" / "SettingsCore.tsx"
+SOURCE = Path(__file__).resolve().parents[2] / "web" / "src" / "pages" / "cores" / "settings" / "grants.tsx"
 
 
 def _declared(name: str) -> list[str]:

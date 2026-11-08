@@ -82,5 +82,5 @@ def test_settings_page_language_list_matches_the_registry():
     # "auto" (per-utterance detection) stays the sentinel value; Window
     # Program W4 (the words) shows it as the sentence-case word "Automatic".
     assert '{ value: "auto", label: "Automatic" }' in prefs
-    page = (_REPO / "web/src/pages/cores/SettingsCore.tsx").read_text()
+    page = (_REPO / "web/src/pages/cores/settings/Speak.tsx").read_text()
     assert 'cyc(["model", "language"], "Language", LANGUAGE_OPTIONS)' in page

@@ -241,7 +241,7 @@ MIC_ALLOWLIST: tuple[tuple[str, str, str], ...] = (
      "HH:MM time field — a clock value, not dictatable prose"),
     ("pages/cores/CalendarSnapshotReviewCore.tsx", 'key="end"',
      "HH:MM time field — a clock value, not dictatable prose"),
-    ("pages/cores/SettingsCore.tsx", 'key="symbol"',
+    ("pages/cores/settings/Speak.tsx", 'key="symbol"',
      "Glyph field (a single symbol such as →) — not dictatable prose"),
     # -- the Programs wizard (#1833), 2026-11-08 ------------------------------
     ("desk/programs/ProgramWizard.tsx", 'label="Folder"',
