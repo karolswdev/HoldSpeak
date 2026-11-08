@@ -23,6 +23,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { create } from "zustand";
 import { Button } from "../../components/signal/Signal";
 import { apiFetch, readableError } from "../../lib/api";
+import { doneRoute, followThrough, markDone } from "./needsApi";
 import { useAgentFlights } from "../agentFlights";
 import { commandForDoorVerb, labelFor, supportsDoorVerb, type DoorVerb } from "../chair/doorVerbs";
 import { useGate } from "../gate";
@@ -134,11 +135,6 @@ export function nudgeText(task: string, person: string, due: string | null | und
 export function tomorrowDay(now: Date = new Date()): string {
   const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
-
-/** One follow-through verb on an action item (the hub's one write path). */
-function followThrough(cardId: string, verb: string, payload: Record<string, unknown> = {}) {
-  return apiFetch("/api/follow-through/complete", { method: "POST", json: { card_id: cardId, verb, payload } });
 }
 
 /** PHILO-15 B61: the receipt a source Retry leaves in the drawer. */
@@ -400,7 +396,7 @@ function NeedVerbsView({ face, primary, onWell, well, menu = null, onMenu = () =
         ...(opener ? [{ type: "item" as const, id: "open", label: "Open", onSelect: opener }] : []),
         ...(v.direction === "theirs"
           ? [{ type: "item" as const, id: "done", label: "Done", ghost: busy ? "Busy" : undefined,
-            onSelect: () => void act("Done", () => followThrough(v.cardId, "done"), key, menu?.row) }]
+            onSelect: () => void act("Done", () => markDone(v), key, menu?.row) }]
           : []),
         ...(v.next === "set_date"
           ? [{ type: "item" as const, id: "date", label: "Set a date", onSelect: () => onWell("date") }]
@@ -424,7 +420,7 @@ function NeedVerbsView({ face, primary, onWell, well, menu = null, onMenu = () =
             onClick={() => onWell(well === "nudge" ? null : "nudge")}>Nudge</Button>
         ) : (
           <Button dense variant="secondary" disabled={busy} aria-label={named("Done")} data-testid="needs-row-verb" data-verb="done"
-            onClick={(event) => void act("Done", () => followThrough(v.cardId, "done"), key, event.currentTarget)}>Done</Button>
+            onClick={(event) => void act("Done", () => markDone(v), key, event.currentTarget)}>Done</Button>
         )}
         {menu ? <WorkMenu label={face.name} x={menu.x} y={menu.y} entries={[...entries, ...extra]} autoFocus onClose={() => onMenu(null)}
           returnFocus={() => menu.row?.querySelector<HTMLElement>("[data-testid=needs-row-verb]")?.focus()} /> : null}
@@ -448,23 +444,6 @@ function NeedVerbsView({ face, primary, onWell, well, menu = null, onMenu = () =
           data-testid="needs-row-verb" data-verb="confirm"
           onClick={() => void act("Confirm", () => acceptDecision(v.decisionId), `decision:${v.decisionId}`)}>Confirm</Button>
       );
-    case "commitment": {
-      if (v.next === "mark_done") {
-        return (
-          <Button dense variant={lead} disabled={busy} aria-label={named("Done")} data-testid="needs-row-verb" data-verb="done"
-            onClick={(event) => void act("Done", () => apiFetch("/api/follow-through/complete", {
-              method: "POST", json: { card_id: v.cardId, verb: "done", payload: {} },
-            }), `action-item:${v.cardId}`, event.currentTarget)}>Done</Button>
-        );
-      }
-      const which: Well = v.next === "name_owner" ? "owner" : "date";
-      const label = which === "owner" ? "Name an owner" : "Set a date";
-      return (
-        <Button dense variant={lead} aria-label={named(label)} aria-expanded={well === which}
-          data-testid="needs-row-verb" data-verb={which === "owner" ? "name-owner" : "set-date"}
-          onClick={() => onWell(well ? null : which)}>{label}</Button>
-      );
-    }
     case "name-owner":
       if (!v.cardId && !v.openRef) return null;
       return (
@@ -504,14 +483,17 @@ function NeedVerbsView({ face, primary, onWell, well, menu = null, onMenu = () =
       const cmd = verb ? commandForDoorVerb(verb) : null;
       if (!verb || !cmd) return null;
       const label = labelFor(verb);
+      // One Done (2026-11-08): a Done on a Door card is markDone's.
+      const run = verb.arguments.verb === "done" && doneRoute(v)
+        ? () => markDone(v)
+        : () => apiFetch(cmd.endpoint, { method: "POST", json: cmd.body });
       // JRN2: a Door task can go to tonight's program (a Planned step).
       const actionId = String(v.card.target_ref ?? "").startsWith("action_item:") ? String(v.card.target_ref).slice("action_item:".length) : "";
       return (
         <>
           {actionId ? <TonightVerb kind="action" itemId={actionId} name={String(v.card.title ?? v.card.text ?? actionId)} /> : null}
           <Button dense variant={lead} disabled={busy} aria-label={named(label)} data-testid="needs-row-verb" data-verb="door-verb"
-            onClick={() => void act(label, () => apiFetch(cmd.endpoint, { method: "POST", json: cmd.body }),
-              `door:${cmd.endpoint}`)}>{label}</Button>
+            onClick={(event) => void act(label, run, `door:${cmd.endpoint}`, event.currentTarget)}>{label}</Button>
         </>
       );
     }
@@ -669,7 +651,7 @@ function CommitWell({ face, which, onDone }: { face: NeedFace; which: Well; onDo
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
   const v = face.verbs;
-  const cardId = v.kind === "commitment" || v.kind === "name-owner" || v.kind === "work" ? v.cardId : null;
+  const cardId = v.kind === "name-owner" || v.kind === "work" ? v.cardId : null;
   const save = async () => {
     const value = draft.trim();
     if (!value || !cardId || busy) return;
@@ -677,10 +659,7 @@ function CommitWell({ face, which, onDone }: { face: NeedFace; which: Well; onDo
     const verb = which === "owner" ? "delegate" : "due";
     const label = which === "owner" ? "Name an owner" : "Set a date";
     try {
-      await apiFetch("/api/follow-through/complete", {
-        method: "POST",
-        json: { card_id: cardId, verb, payload: verb === "delegate" ? { to: value } : { due_at: value } },
-      });
+      await followThrough(cardId, verb, verb === "delegate" ? { to: value } : { due_at: value });
       clearWriteFailure(`action-item:${cardId}`);
       onDone();
       void refreshNeedsYou(false);

@@ -430,12 +430,13 @@ def build_people_router(ctx: WebContext) -> APIRouter:
     ) -> dict[str, Any]:
         """Browser twin of the MCP commitment-transition application call."""
         try:
-            result = service.transition(
+            # The done receipt itself (card_id, verb, status, done_at): the
+            # shape /api/follow-through/complete answers.
+            return service.transition(
                 principal(request),
                 f"people:{commitment_id}",
                 str(body.get("verb") or ""),
             )
-            return {"transition": result}
         except PeopleServiceError as exc:
             raise _failure(exc) from exc
 

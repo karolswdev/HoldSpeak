@@ -144,9 +144,12 @@ def test_follow_through_hydrates_people_only_in_memory(service: PeopleService, d
     card = board.now[0]
     assert card.id == f"people:{commitment['id']}"
     assert card.target_ref == f"people:{relationship['id']}"
-    assert follow_through.complete(OWNER, card.id, "done") == {"card_id": card.id, "verb": "done"}
+    done = follow_through.complete(OWNER, card.id, "done")
+    assert {k: done[k] for k in ("card_id", "verb", "status")} == {"card_id": card.id, "verb": "done", "status": "done"}
+    assert done["done_at"]
     assert follow_through.board(OWNER).waiting == []
-    assert follow_through.complete(OWNER, card.id, "reopen") == {"card_id": card.id, "verb": "reopen"}
+    assert follow_through.complete(OWNER, card.id, "reopen") == {
+        "card_id": card.id, "verb": "reopen", "status": "open", "done_at": None}
     with pytest.raises(ValueError, match="people_commitment_verb_unsupported"):
         follow_through.complete(OWNER, card.id, "snooze", {"until": "2099-01-01"})
 

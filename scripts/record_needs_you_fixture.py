@@ -20,7 +20,8 @@ and one a person owes; Done on the first) into
 ``web/src/desk/needs/__fixtures__/needs_you.rows.json``, and beside it the
 Program row scenario (a Program step that waits for his Merge, on the
 Programs rig behind the same hub; Merge pressed, the read after) under
-``program``.
+``program``, and the one Done scenario (a Room commitment and a People
+promise, Done on each) under ``done``.
 """
 from __future__ import annotations
 
@@ -330,6 +331,45 @@ def rows() -> dict[str, Any]:
             _close()
 
 
+def done_rows() -> dict[str, Any]:
+    """The one Done scenario (2026-11-08): a Room commitment (a kept meeting
+    action, the browser seed of tests/unit/test_desk_needs_you.py) and a
+    People promise (I owe Priya), each a Needs-you row. The read, Done on
+    each through the route its row names, the read after each."""
+    with pytest.MonkeyPatch.context() as mp:
+        hub = _boot("done", mp)
+        try:
+            seeds._seed_hs172(hub)
+            action = next(p for p in _get(hub, "/api/projects/proj-a/proposals")["proposals"]
+                          if p["kind"] == "action" and p["state"] == "proposed")
+            # His own promise with a day: the row's one verb is Done.
+            _post(hub, f"/api/proposals/{action['id']}/confirm", {"owner": "me"})
+            _post(hub, "/api/people/setup", {})
+            rid = hub.client.post("/api/people/relationships", json={"display_name": "Priya Raman"}).json()["relationship"]["id"]
+            request = hub.client.post(f"/api/people/relationships/{rid}/requests", json={
+                "body": "Send Priya the rollout plan", "visibility": "shared_intent", "source": {"kind": "manual"},
+            }).json()["request"]
+            _post(hub, f"/api/people/requests/{request['id']}/accept", {})
+            before = _gets(hub, COMMON_GETS)
+            items = before["/api/desk/needs-you?fresh=1"]["items"]
+            commitment = next(row for row in items if row.get("source") == "commitment")
+            promise = next(row for row in items if row.get("source") == "people_commitment")
+            card = promise["_doorCard"]
+            people_verb = next(v for v in card["lawful_verbs"] if v["name"] == "people.commitment.transition"
+                               and v["arguments"]["verb"] == "done")
+            steps: list[dict[str, Any]] = [{"name": "before", "gets": before}]
+            done = {"card_id": str(commitment["actionItemId"]), "verb": "done", "payload": {}}
+            steps.append({"name": "commitment-done", "post": "/api/follow-through/complete", "body": done,
+                          "answer": _post(hub, "/api/follow-through/complete", done), "gets": _gets(hub, COMMON_GETS)})
+            path = f"/api/people/commitments/{people_verb['arguments']['commitment_id']}/transition"
+            body = {"verb": "done"}
+            steps.append({"name": "people-done", "post": path, "body": body,
+                          "answer": _post(hub, path, body), "gets": _gets(hub, COMMON_GETS)})
+            return {"commitment": commitment["title"], "promise": promise["title"], "steps": steps}
+        finally:
+            _close()
+
+
 def program_merge() -> dict[str, Any]:
     """The Program row scenario: the hub of the rows scenario, its Program
     service the Programs rig (real git, a fake agent and reviewer at the
@@ -381,7 +421,7 @@ def main() -> int:
     if "--rows" in sys.argv[1:]:
         ROWS_OUT.parent.mkdir(parents=True, exist_ok=True)
         ROWS_OUT.write_text(json.dumps({"schema": "needs-you-rows@1", "recordedBy": "scripts/record_needs_you_fixture.py --rows",
-                                        **rows(), "program": program_merge()}, indent=1, sort_keys=True, default=str) + "\n", encoding="utf-8")
+                                        **rows(), "program": program_merge(), "done": done_rows()}, indent=1, sort_keys=True, default=str) + "\n", encoding="utf-8")
         print(f"wrote {ROWS_OUT.relative_to(REPO)} ({ROWS_OUT.stat().st_size} bytes)")
         return 0
     fixture = {

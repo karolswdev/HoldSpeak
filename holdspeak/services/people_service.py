@@ -1905,8 +1905,13 @@ class PeopleService:
             raise PeopleServiceError("people_commitment_not_found")
         state = {"done": "done", "dismiss": "dismissed", "reopen": _OPEN_COMMITMENT}[verb]
         event = {"done": "satisfied", "dismiss": "dismissed", "reopen": "reopened"}[verb]
-        self._transition_commitment(commitment, state, event=event, source="follow_through")
-        return {"card_id": card_id, "verb": verb}
+        view = self._transition_commitment(commitment, state, event=event, source="follow_through")
+        # One done receipt (2026-11-08): the follow-through complete's shape,
+        # so the Desk reads every Done with one reader.
+        return {
+            "card_id": card_id, "verb": verb, "status": state,
+            "done_at": view.get("updated_at") if state == "done" else None,
+        }
 
     def _transition_commitment(
         self,

@@ -37,6 +37,9 @@ import { recordedGet, type Gets } from "../../../test/recordedHub";
 import { openIntelligence } from "../../intelligenceNavigation";
 import { openProgram } from "../../programs/open";
 import madeFromAction from "../../programs/__fixtures__/program.from_action.json";
+import { markDone, readDoneReceipt } from "../needsApi";
+import { readdirSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
 
 vi.mock("../../../lib/api", async (original) => ({
   ...(await original<typeof import("../../../lib/api")>()),
@@ -52,6 +55,12 @@ vi.mock("../../programs/open", async (original) => ({
   ...(await original<typeof import("../../programs/open")>()),
   openProgram: vi.fn(),
 }));
+// One Done (2026-11-08): every Done goes through needsApi's markDone (a spy
+// over the real function).
+vi.mock("../needsApi", async (original) => {
+  const real = await original<typeof import("../needsApi")>();
+  return { ...real, markDone: vi.fn(real.markDone) };
+});
 vi.mock("../../intelligenceNavigation", async (original) => ({
   ...(await original<typeof import("../../intelligenceNavigation")>()),
   openIntelligence: vi.fn(),
@@ -1849,5 +1858,87 @@ describe("Decide decides in place; the step travels (glue 2026-11-08)", () => {
     };
     walk(root);
     expect(writers).toEqual(["desk/decide.ts"]);
+  });
+});
+
+// One Done (2026-11-08): Done on a work row, a Room commitment and a People
+// promise each reach their route through the one markDone, read one receipt
+// and settle the row. Replays needs_you.rows.json (`steps` and `done`,
+// recorded by scripts/record_needs_you_fixture.py --rows), never typed rows.
+describe("one Done for a promise (2026-11-08)", () => {
+  type Step = { gets: Gets; post?: string; body?: unknown; answer?: unknown };
+  const done = needsRows.done as unknown as { commitment: string; promise: string; steps: Step[] };
+  let hub: Gets;
+  let posts: Array<{ path: string; json: unknown }>;
+
+  const replay = (steps: Step[]) => {
+    hub = steps[0].gets;
+    posts = [];
+    vi.mocked(markDone).mockClear();
+    vi.mocked(apiFetch).mockImplementation(async (path: string, init?: unknown) => {
+      const method = (init as { method?: string } | undefined)?.method ?? "GET";
+      if (method !== "GET") {
+        posts.push({ path: String(path), json: (init as { json?: unknown }).json });
+        const step = steps.find((s) => s.post === String(path));
+        if (!step) throw new Error(`no recorded answer for ${String(path)}`);
+        hub = step.gets;
+        return step.answer as never;
+      }
+      return recordedGet(hub, String(path)) as never;
+    });
+  };
+  const names = () => [...document.querySelectorAll<HTMLElement>("[data-testid='needs-list'] li.needs-row .needs-row-name")]
+    .map((n) => n.textContent);
+
+  it("Done on a work row is markDone to the follow-through complete; the row settles", async () => {
+    const steps = needsRows.steps as unknown as Step[];
+    replay(steps);
+    const must = "openSystemShade() fires an event nobody hears";
+    render(<NeedsDrawer />);
+    await screen.findByText("4 need you");
+    fireEvent.click(within(row(must)).getByRole("button", { name: `Done: ${must}` }));
+    await screen.findByText("3 need you");
+    expect(markDone).toHaveBeenCalledTimes(1);
+    expect(posts).toEqual([{ path: "/api/follow-through/complete", json: steps[1].body }]);
+    expect(names()).not.toContain(must);
+  });
+
+  it("Done on a Room commitment is markDone to the follow-through complete; the row settles", async () => {
+    replay(done.steps);
+    render(<NeedsDrawer />);
+    await waitFor(() => expect(names()).toContain(done.commitment));
+    fireEvent.click(within(row(done.commitment)).getByRole("button", { name: `Done: ${done.commitment}` }));
+    await waitFor(() => expect(names()).not.toContain(done.commitment));
+    expect(markDone).toHaveBeenCalledTimes(1);
+    const step = done.steps.find((s) => s.post === "/api/follow-through/complete")!;
+    expect(posts).toEqual([{ path: step.post, json: step.body }]);
+  });
+
+  it("Done on a People promise is markDone to People's transition; the row settles", async () => {
+    replay(done.steps);
+    render(<NeedsDrawer />);
+    await waitFor(() => expect(names()).toContain(done.promise));
+    fireEvent.click(within(row(done.promise)).getByRole("button", { name: `Done: ${done.promise}` }));
+    await waitFor(() => expect(names()).not.toContain(done.promise));
+    expect(markDone).toHaveBeenCalledTimes(1);
+    const step = done.steps.find((s) => String(s.post).startsWith("/api/people/commitments/"))!;
+    expect(posts).toEqual([{ path: step.post, json: { verb: "done" } }]);
+  });
+
+  it("both routes answer the one receipt: the row's id, done, and when", () => {
+    for (const step of [...done.steps.slice(1), (needsRows.steps as unknown as Step[])[1]]) {
+      const receipt = readDoneReceipt(step.answer);
+      expect(receipt.status).toBe("done");
+      expect(receipt.id).toBe(String((step.answer as { card_id: string }).card_id));
+      expect(receipt.doneAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+    }
+  });
+
+  it("no module in desk/needs but needsApi.ts posts to a Done route", () => {
+    const dir = resolve(__dirname, "..");
+    const routes = /\/api\/follow-through\/complete|\/api\/people\/commitments\/[^"'`]*\/transition/;
+    const posting = readdirSync(dir).filter((name) => /\.tsx?$/.test(name))
+      .filter((name) => routes.test(readFileSync(resolve(dir, name), "utf8")));
+    expect(posting).toEqual(["needsApi.ts"]);
   });
 });
