@@ -15,6 +15,7 @@ import sys
 from urllib.parse import urlsplit
 
 from pathlib import Path
+from typing import Any
 
 from ..audio_devices import check_blackhole_setup, get_default_input_device
 from ..config import Config

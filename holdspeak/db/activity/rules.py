@@ -4,11 +4,12 @@ Bodies moved verbatim from db/activity.py (HS-79-01, the Phase-63 discipline).
 """
 from __future__ import annotations
 
+import sqlite3
 import uuid
 from holdspeak.timestamps import local_wall, parse_wall, utc_now_iso
 from typing import Optional, Any
 
-from ..models import ActivityProjectRule
+from ..models import ActivityProjectRule, ActivityRecord
 
 
 class ActivityRulesMixin:

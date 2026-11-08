@@ -8,7 +8,7 @@ import sqlite3
 import threading
 from holdspeak.timestamps import local_now
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 from ..logging_config import get_logger
 from .base import BaseRepository

@@ -28,6 +28,7 @@ from holdspeak.services.recipe_service import RecipeService
 from holdspeak.services.refinement_application_service import RefinementApplicationService
 from holdspeak.services.workbench_service import WorkbenchService
 from holdspeak.services.inference_capability_service import InferenceCapabilityApplicationService
+from holdspeak.services.inference_setup_service import InferenceSetupApplicationService
 from holdspeak.inference_capabilities import process_inference_capability_registry
 from holdspeak.services.errors import ServiceError
 from holdspeak.principals import PrincipalKind

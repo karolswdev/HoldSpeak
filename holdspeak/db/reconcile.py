@@ -13,7 +13,7 @@ import re
 import functools
 import sqlite3
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 from ..logging_config import get_logger
 from .schema import SCHEMA_SQL, SCHEMA_VERSION
