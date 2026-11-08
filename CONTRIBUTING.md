@@ -101,15 +101,15 @@ Preserve generated regions and incoming heading links.
 Keep a target requirement separate from implemented behavior and a source inspection separate from a successful live run.
 Describe the source, trigger, executor, authority, output, and failure path when you document an agentic flow.
 
-After you change HTTP routes or MCP tools, regenerate the references:
+After you change MCP tools, regenerate the MCP reference:
 
 ```sh
-python scripts/gen_api_surface.py
 python scripts/gen_mcp_sidecar_doc.py
 ```
 
-`scripts/gen_docs.sh` runs every generator. Do not edit generated files by
-hand. Never use a live database as test data.
+The API surface and the files in `docs/generated/` are not in git.
+`scripts/gen_docs.sh` writes them when you need to read them. Do not edit
+generated files by hand. Never use a live database as test data.
 
 ## Report a problem
 

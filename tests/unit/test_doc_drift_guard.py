@@ -277,6 +277,16 @@ def _archived_paths() -> tuple[set[str], set[str]]:
     return files, dirs
 
 
+def _on_demand(relative: str) -> bool:
+    """A generated file that is not in git (scripts/check_docs.py's list)."""
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("_check_docs", _REPO / "scripts" / "check_docs.py")
+    module = importlib.util.module_from_spec(spec)  # type: ignore[arg-type]
+    spec.loader.exec_module(module)  # type: ignore[union-attr]
+    return relative in module.ON_DEMAND or relative.startswith(module.ON_DEMAND_PREFIXES)
+
+
 def test_link_guard_reads_prose_but_not_literal_fenced_examples(tmp_path: Path) -> None:
     text = "[Live](live.md)\n```yaml\n[Note door](door:open-people)\n```\n[Missing](missing.md)"
     path = tmp_path / "example.md"
@@ -304,6 +314,8 @@ def test_no_live_doc_has_a_dangling_relative_link() -> None:
                         archived = resolved.relative_to(_REPO).as_posix()
                         if archived in archived_files or archived in archived_dirs:
                             continue
+                        if _on_demand(archived):
+                            continue  # scripts/gen_docs.sh writes it on demand
                     offenders.append(
                         f"{path.relative_to(_REPO)}:{lineno}: -> {target}"
                     )

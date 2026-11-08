@@ -129,7 +129,22 @@ def _safe_path(root: Path, raw: Any) -> Path | None:
     candidate = Path(raw)
     if ".." in candidate.parts:
         return None
-    return root / candidate
+    path = root / candidate
+    if not path.exists():
+        # A park is not a missing file (scripts/parked_paths.py, 2026-11-08).
+        twin = _parked_twin(root, raw)
+        if twin is not None:
+            return root / twin
+    return path
+
+
+def _parked_twin(root: Path, relative: str) -> str | None:
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("_parked_paths", ROOT / "scripts" / "parked_paths.py")
+    module = importlib.util.module_from_spec(spec)  # type: ignore[arg-type]
+    spec.loader.exec_module(module)  # type: ignore[union-attr]
+    return module.parked_twin(root, relative)
 
 
 def _python_symbols(text: str) -> set[str]:
@@ -295,6 +310,32 @@ def _check_docs(root: Path, values: Any, location: str, result: ValidationResult
         _check_path(root, raw, "documentation", f"{location}[{i}]", result)
 
 
+_ROUTES: dict[Path, list[dict[str, Any]] | None] = {}
+
+
+def _route_inventory(root: Path) -> list[dict[str, Any]] | None:
+    """The route list: docs/api-surface.json when it was generated, else the
+    live app's (the file is not in git since 2026-11-08). The live read needs
+    the HoldSpeak environment; without it the reference is unchecked here."""
+    if root not in _ROUTES:
+        inventory = root / "docs/api-surface.json"
+        if inventory.is_file():
+            _ROUTES[root] = json.loads(inventory.read_text())["routes"]
+        else:
+            import sys
+
+            sys.path.insert(0, str(root / "scripts"))
+            try:
+                from gen_api_surface import build_manifest
+
+                _ROUTES[root] = build_manifest()["routes"]
+            except Exception:  # noqa: BLE001 - no HoldSpeak environment
+                _ROUTES[root] = None
+            finally:
+                sys.path.remove(str(root / "scripts"))
+    return _ROUTES[root]
+
+
 def _check_api(root: Path, value: Any, location: str, result: ValidationResult) -> None:
     """Check explicit routes; prose names of CLI/internal APIs are not routes."""
     if not isinstance(value, str):
@@ -302,12 +343,13 @@ def _check_api(root: Path, value: Any, location: str, result: ValidationResult) 
     match = re.fullmatch(r"(?:(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS|WS)(/[A-Z]+)* )?(/[^ ]+)", value)
     if not match:
         return
-    inventory = root / "docs/api-surface.json"
-    if not inventory.is_file():
+    routes = _route_inventory(root)
+    if routes is None:
         result.add("error", location, "explicit API reference requires docs/api-surface.json")
         return
-    normalize = lambda path: re.sub(r"\{[^}]+\}", "{}", path)
-    routes = json.loads(inventory.read_text())["routes"]
+    def normalize(path: str) -> str:
+        return re.sub(r"\{[^}]+\}", "{}", path)
+
     path = value.split(" ")[-1]
     candidates = [route for route in routes if normalize(route["path"]) == normalize(path)]
     methods = value.split(" ")[0].split("/") if " " in value else []

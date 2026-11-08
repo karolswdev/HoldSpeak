@@ -1,22 +1,20 @@
-"""HS-72-02 — the API surface, declared (Phase 72, One Spine).
+"""HS-72-02 — the API surface, read from the live app (Phase 72, One Spine).
 
-The HTTP surface is a committed artifact now (``docs/api-surface.json`` +
-``docs/API_SURFACE.md``), generated from the REAL assembled app with per-route
-consumers extracted from the real call sites. These tests keep it honest:
+The manifest is derived at check time from the REAL assembled app and the
+real call sites; no copy is committed (2026-11-08: ``docs/api-surface.json``
+and ``docs/API_SURFACE.md`` are generated on demand by
+``scripts/gen_api_surface.py``). These tests assert invariants:
 
-1. **The committed manifest matches the live app + call sites.** Adding,
-   removing or renaming a route (or a client call) without regenerating fails
-   here with a one-command fix.
-2. **Clients only call routes the app serves.** Every extracted iOS/web call
-   template matches a served route (the committed ``unmatched_calls`` must be
-   empty) — a Swift or web call to a misspelled/removed path fails CI.
+1. **Clients only call routes the app serves.** Every extracted iOS/web call
+   template matches a served route — a Swift or web call to a misspelled or
+   removed path fails here.
+2. **Every dynamic web call resolves to a route.**
 3. **Non-vacuity.** The manifest carries the load-bearing routes and the
-   consumer split the repo's docs used to hand-maintain (and get wrong).
+   consumer split.
 """
 from __future__ import annotations
 
 import importlib.util
-import json
 from pathlib import Path
 
 import pytest
@@ -24,8 +22,6 @@ import pytest
 pytest.importorskip("fastapi", reason="the manifest enumerates the real app")
 
 REPO = Path(__file__).parents[2]
-MANIFEST = REPO / "docs" / "api-surface.json"
-MANIFEST_MD = REPO / "docs" / "API_SURFACE.md"
 
 _spec = importlib.util.spec_from_file_location(
     "gen_api_surface", REPO / "scripts" / "gen_api_surface.py"
@@ -35,39 +31,16 @@ _spec.loader.exec_module(_spec and gen)  # type: ignore[union-attr]
 
 
 @pytest.fixture(scope="module")
-def committed() -> dict:
-    assert MANIFEST.exists(), (
-        "docs/api-surface.json is missing — generate it: "
-        "uv run python scripts/gen_api_surface.py"
-    )
-    return json.loads(MANIFEST.read_text())
-
-
-@pytest.fixture(scope="module")
 def live() -> dict:
     return gen.build_manifest()
 
 
-def test_committed_manifest_matches_the_live_app(committed, live) -> None:
-    assert committed["routes"] == live["routes"], (
-        "the committed API-surface manifest drifted from the live app/call "
-        "sites — regenerate: uv run python scripts/gen_api_surface.py"
-    )
-
-
-def test_committed_unresolved_calls_match_the_live_sources(committed, live) -> None:
-    assert committed["web_dynamic_calls"] == live["web_dynamic_calls"]
-    assert committed["unresolved_dynamic_calls"] == live["unresolved_dynamic_calls"], (
-        "the committed unresolved dynamic calls drifted from web/src — "
-        "regenerate: uv run python scripts/gen_api_surface.py"
-    )
-
-
-def test_committed_markdown_matches_the_manifest(committed) -> None:
-    assert MANIFEST_MD.read_text() == gen.render_markdown(committed), (
-        "docs/API_SURFACE.md drifted from the manifest — regenerate: "
-        "uv run python scripts/gen_api_surface.py"
-    )
+def test_every_dynamic_web_call_resolves_to_a_route(live) -> None:
+    """A web call whose path is built at run time is tagged by hand
+    (gen_api_surface's table) or it is unresolved: none may be."""
+    assert live["unresolved_dynamic_calls"]["web"] == [], (
+        "web calls whose route the census cannot name: "
+        f"{live['unresolved_dynamic_calls']['web']}")
 
 
 def test_clients_only_call_served_routes(live) -> None:
@@ -80,14 +53,14 @@ def test_clients_only_call_served_routes(live) -> None:
         f"{unmatched['web']}")
 
 
-def test_manifest_is_not_vacuous(committed) -> None:
-    paths = {r["path"] for r in committed["routes"]}
+def test_manifest_is_not_vacuous(live) -> None:
+    paths = {r["path"] for r in live["routes"]}
     # Load-bearing routes that must exist as long as the product does.
     for expected in ("/api/sync/pull", "/api/sync/push", "/api/dictation/remote",
                      "/api/meetings", "/ws", "/health"):
         assert expected in paths, f"manifest lost {expected}"
-    ios_routes = {r["path"] for r in committed["routes"] if "ios" in r["consumers"]}
-    web_routes = {r["path"] for r in committed["routes"] if "web" in r["consumers"]}
+    ios_routes = {r["path"] for r in live["routes"] if "ios" in r["consumers"]}
+    web_routes = {r["path"] for r in live["routes"] if "web" in r["consumers"]}
     # The split ARCHITECTURE.md used to undercount, now measured:
     assert "/api/dictation/remote" in ios_routes
     assert "/api/sync/pull" in ios_routes
@@ -104,16 +77,6 @@ def test_extractors_see_the_real_call_sites() -> None:
         "iOS extraction lost the coder-board calls — did the client move?")
     assert any(c.startswith("/api/dictation/") for c in web)
     assert len(ios) >= 15 and len(web) >= 60
-
-
-def test_committed_openapi_matches_reference_app() -> None:
-    """Declared schemas remain real; raw Request semantics remain outside them."""
-    declared = json.loads((REPO / "docs/generated/openapi.json").read_text())
-    live = gen.build_reference_app().openapi()
-    # Export provenance is documentation metadata, not a server schema field.
-    declared["info"].pop("x-philo-note")
-    declared["info"].pop("x-source-snapshot")
-    assert declared == live, "OpenAPI drift: run scripts/philo_openapi_reference.py with isolated HOME"
 
 
 _RESOURCE_ROUTE = "/api/projects/{project_id}/resources/{resource_ref:path}"

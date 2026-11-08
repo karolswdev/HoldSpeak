@@ -150,9 +150,6 @@ EMITTED_WITHOUT_CONSUMER: dict[str, str] = {
 #: Empty is the correct state: a subscription with no emitter is dead code.
 CONSUMED_WITHOUT_EMITTER: dict[str, str] = {}
 
-#: The generated/mirrored web copy of :data:`RUNTIME_FRAME_TYPES`.
-WEB_MIRROR_PATH = "web/src/runtime/frames.ts"
-
 
 def repo_root() -> Path:
     """The repository root (this file lives at ``<root>/holdspeak/``)."""
@@ -209,11 +206,8 @@ def scan_consumers(root: Path | None = None) -> dict[str, list[str]]:
     """Frame type -> ``path:line`` for every live consumer in ``web/src/``."""
     repo = root or repo_root()
     base = repo / "web" / "src"
-    mirror = (repo / WEB_MIRROR_PATH).resolve()
     found: dict[str, list[str]] = {}
     for path in sorted([*base.rglob("*.ts"), *base.rglob("*.tsx")]):
-        if path.resolve() == mirror:
-            continue  # the registry mirror names every frame; it consumes none
         if ".test." in path.name or "__tests__" in path.parts:
             continue  # a test that fabricates a frame is not a consumer
         if "_parked" in path.parts:
@@ -234,15 +228,3 @@ def scan_consumers(root: Path | None = None) -> dict[str, list[str]]:
             for name in _QUOTED.findall(match.group(1)):
                 found.setdefault(name, []).append(f"{rel}:{line}")
     return found
-
-
-def read_web_mirror(root: Path | None = None) -> tuple[str, ...]:
-    """The frame names declared by the web mirror, in file order."""
-    path = (root or repo_root()) / WEB_MIRROR_PATH
-    text = path.read_text(encoding="utf-8")
-    match = re.search(
-        r"RUNTIME_FRAME_TYPES\s*=\s*\[(.*?)\]\s*as\s+const", text, re.S
-    )
-    if match is None:
-        raise AssertionError(f"{WEB_MIRROR_PATH} has no RUNTIME_FRAME_TYPES array")
-    return tuple(_QUOTED.findall(match.group(1)))

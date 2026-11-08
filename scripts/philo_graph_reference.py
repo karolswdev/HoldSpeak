@@ -169,6 +169,16 @@ def _brain(pass_name: str) -> str:
     return pass_name.split("-", 1)[1]
 
 
+def _derived(root: Path, rel: str) -> str | None:
+    """A generated view derived from the tree (not in git since 2026-11-08)."""
+    scripts = str(Path(__file__).resolve().parent)
+    if scripts not in sys.path:
+        sys.path.insert(0, scripts)
+    from philo_graph_validate import _derived_inventory
+
+    return _derived_inventory(root, rel)
+
+
 def load_inputs(root: Path = ROOT) -> Inputs:
     """Read every input and hash it.  Inventories are the ones the passes cite."""
     passes = {
@@ -190,9 +200,14 @@ def load_inputs(root: Path = ROOT) -> Inputs:
     hashes = {}
     for rel in sorted(paths):
         target = root / rel
-        if not target.is_file():
+        if target.is_file():
+            hashes[rel] = _sha256(target)
+            continue
+        # A generated view is not in git (2026-11-08): derive it from the tree.
+        derived = _derived(root, rel)
+        if derived is None:
             raise JoinError([f"input-missing: {rel} does not exist in the tree"])
-        hashes[rel] = _sha256(target)
+        hashes[rel] = hashlib.sha256(derived.encode("utf-8")).hexdigest()
 
     lines = {}
     for number, line in enumerate(resolutions_text.splitlines(), start=1):
@@ -549,9 +564,13 @@ def current_routes(root: Path) -> dict[tuple[str, str], dict] | str:
 def openapi_routes(root: Path) -> set[tuple[str, str]]:
     """The (METHOD, path) pairs of the committed docs/generated/openapi.json."""
     target = root / "docs/generated/openapi.json"
-    if not target.is_file():
-        return set()
-    document = json.loads(target.read_text(encoding="utf-8"))
+    if target.is_file():
+        document = json.loads(target.read_text(encoding="utf-8"))
+    else:
+        derived = _derived(root, "docs/generated/openapi.json")
+        if derived is None:
+            return set()
+        document = json.loads(derived)
     return {
         (method.upper(), path)
         for path, operations in document.get("paths", {}).items()
