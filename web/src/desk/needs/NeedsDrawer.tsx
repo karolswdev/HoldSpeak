@@ -63,6 +63,7 @@ import { NoteSendWells } from "../documentSendsLazy";
 import { wireDate } from "../surface/format";
 import { cancelArming, useArmingOutcome } from "./arming";
 import { WorkMenu, type WorkMenuEntry } from "../components/DeskMenu";
+import { openHand } from "../agentHand";
 import { runAsProgram } from "../programs/RunAsProgram";
 import { Disclosure } from "../surface/patterns/Disclosure";
 import { AddToProject } from "../AddToProject";
@@ -411,6 +412,10 @@ function NeedVerbsView({ face, primary, onWell, well, menu = null, onMenu = () =
         // where he reads it, through the one Run as a program.
         { type: "item", id: "program", label: "Run as a program", ghost: busy ? "Busy" : undefined,
           onSelect: () => void act("Run as a program", () => runAsProgram({ kind: "action", id: v.cardId }), key) },
+        // Betterment AG4, under its honest name: one agent session on the
+        // action (the launch sheet), not a Program.
+        { type: "item", id: "hand", label: "Hand to an agent session",
+          onSelect: () => openHand({ kind: "action", id: v.cardId, title: face.name }) },
       ];
       return <>
         {v.direction === "theirs" ? (
