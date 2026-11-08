@@ -32,6 +32,7 @@ import shutil
 import subprocess
 import threading
 import time
+import uuid
 from pathlib import Path
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -229,6 +230,35 @@ def _changes_requested(reviews: Any) -> list[dict[str, str]]:
     return sorted(out, key=lambda row: (row["at"], row["login"]))
 
 
+#: HS-S25: the review states gh's ``latestReviews`` names. Any other state is
+#: an incomplete read for the person gate.
+_REVIEW_STATES = frozenset({"APPROVED", "CHANGES_REQUESTED", "COMMENTED", "DISMISSED", "PENDING"})
+
+
+def review_quality(reviews: Any) -> str:
+    """HS-S25: ``complete`` when every latest review has a known state and an
+    author login (a well-formed empty list is complete: no approval, not a
+    dismissal); ``incomplete`` for an absent, non-list or malformed list.
+    An incomplete read never stands for the person's approval or its loss."""
+    if not isinstance(reviews, list):
+        return "incomplete"
+    for review in reviews:
+        if not isinstance(review, dict):
+            return "incomplete"
+        author = review.get("author")
+        if not isinstance(author, dict) or not str(author.get("login") or "").strip():
+            return "incomplete"
+        if str(review.get("state") or "").upper() not in _REVIEW_STATES:
+            return "incomplete"
+    return "complete"
+
+
+def read_token() -> str:
+    """HS-S25: the identity of one successful raw gh read (not a provider
+    time). A row carries the token of the read that produced it."""
+    return uuid.uuid4().hex[:16]
+
+
 def _github_repo(url: str) -> str:
     path = urlparse(str(url or "")).path.strip("/").split("/")
     if len(path) >= 2 and urlparse(str(url or "")).hostname == "github.com":
@@ -256,6 +286,8 @@ class _SourcestatePr:
     detail: str = "not yet collected"
     observed_at: str = ""
     refreshed_monotonic: float = float("-inf")
+    #: HS-S25: the token of the last successful list read (its rows carry it).
+    read_token: str = ""
 
 
 class PrReceiptsService:
@@ -304,6 +336,7 @@ class PrReceiptsService:
                         "detail": state.detail,
                         "gh_state": gh_state(state.status, state.detail),
                         "observed_at": state.observed_at,
+                        "read_token": state.read_token,
                         # None only when never observed (the §13 rule).
                         "prs": None if state.rows is None else sorted(state.rows, key=order_key),
                     }
@@ -389,8 +422,9 @@ class PrReceiptsService:
 
         worktrees = self._worktree_facts(source)
         observed = _utc_now()
+        token = read_token()
         rows = [
-            self._row(source, pr, worktrees, attempt_story_ids, observed)
+            self._row(source, pr, worktrees, attempt_story_ids, observed, token)
             for pr in raw
             if isinstance(pr, dict)
         ]
@@ -400,6 +434,7 @@ class PrReceiptsService:
             state.status = "live"
             state.detail = ""
             state.observed_at = observed
+            state.read_token = token
 
     def _worktree_facts(self, source: Any) -> tuple[list[str], dict[str, str], list[str]]:
         """The source's worktree branches, HEAD per worktree id, and HEADs
@@ -414,7 +449,7 @@ class PrReceiptsService:
     def _row(
         self, source: Any, pr: dict[str, Any],
         worktrees: tuple[list[str], dict[str, str], list[str]],
-        attempt_story_ids: list[str], observed: str,
+        attempt_story_ids: list[str], observed: str, token: str = "",
     ) -> dict[str, Any]:
         """One PR row of the receipts (the shape every reader takes)."""
         worktree_branches, worktree_head_by_id, worktree_heads = worktrees
@@ -455,6 +490,8 @@ class PrReceiptsService:
                 "approved_by": _approved_by(pr.get("latestReviews")),
                 # JRN14: who asked for changes, with their words.
                 "changes_requested": _changes_requested(pr.get("latestReviews")),
+                # HS-S25: the review read's quality and the read that made it.
+                "review_read": {"quality": review_quality(pr.get("latestReviews")), "token": token},
                 "merged_at": str(pr.get("mergedAt") or ""),
                 # PHILO-15 B58: when the PR was opened (the Brief's PR row).
                 "created_at": str(pr.get("createdAt") or ""),
@@ -510,7 +547,7 @@ class PrReceiptsService:
             return None, "gh_failed"
         if not isinstance(raw, dict):
             return None, "gh_failed"
-        row = self._row(source, raw, self._worktree_facts(source), [], _utc_now())
+        row = self._row(source, raw, self._worktree_facts(source), [], _utc_now(), read_token())
         with self._lock:
             state = self._states.get(source_id)
             if state is not None and state.rows is not None:
@@ -549,7 +586,8 @@ class PrReceiptsService:
             return [], "gh_failed"
         facts = self._worktree_facts(source)
         observed = _utc_now()
-        return [self._row(source, pr, facts, [], observed) for pr in raw if isinstance(pr, dict)], "live"
+        token = read_token()
+        return [self._row(source, pr, facts, [], observed, token) for pr in raw if isinstance(pr, dict)], "live"
 
     def _degrade(self, source_id: str, detail: str) -> None:
         """Last-known-good retained; the status names the failure."""

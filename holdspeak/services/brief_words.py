@@ -802,8 +802,12 @@ def step_report(step: Mapping[str, Any], checkpoints: Iterable[Mapping[str, Any]
         not_checked.append({"line": "No check command ran"})
     elif not verdict:
         not_checked.append({"line": "The check did not run"})
-    if step.get("gate_review") in ("agent", "person") and not step.get("review_verdict") \
-            and not facts.get("person_approved"):
+    shown = (facts.get("person_review") or {}).get("state") if step.get("gate_review") == "person" else None
+    if shown == "unverified":
+        # HS-S25: a review read that failed is not a review that did not run.
+        not_checked.append({"line": "HoldSpeak could not read the latest review"})
+    elif step.get("gate_review") in ("agent", "person") and not step.get("review_verdict") \
+            and not facts.get("person_approved") and shown != "changes":
         not_checked.append({"line": "The review did not run"})
     claimed: list[dict[str, Any]] = []
     seen_lines: list[str] = []

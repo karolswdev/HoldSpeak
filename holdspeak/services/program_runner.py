@@ -436,7 +436,9 @@ class ProgramRunner:
     def _fingerprint(self, program_id: str) -> tuple:
         return tuple(
             (step["id"], step["state"], step.get("held_reason"), step.get("pr_number"), step.get("check_verdict"),
-             step.get("review_verdict"), len(step.get("findings") or []), step.get("rounds"))
+             step.get("review_verdict"), len(step.get("findings") or []), step.get("rounds"),
+             # HS-S25: a person review that changes its state or reason.
+             tuple(((step.get("facts") or {}).get("person_review") or {}).get(key) for key in ("state", "reason")))
             for step in self.service.store.list_steps(program_id)
         ) + tuple((row["id"], row["state"], row.get("judged_commit"))
                   for row in self.service.store.list_requirements(program_id))
@@ -2204,22 +2206,19 @@ class ProgramRunner:
             return
         if not pr or facts.get("merge_requested_at"):
             return
-        if step.get("gate_review") == "person" and not facts.get("person_approved"):
-            logins = self.service.person_logins(step.get("for_person_id") or program.get("for_person_id"))
-            if self._person_changes(program, step, facts, pr, logins):
-                return
-            approved = {str(login).casefold() for login in pr.get("approved_by") or []}
-            if logins and approved & logins:
-                facts["person_approved"] = True
-                step["facts"] = facts
-                self.service.save_step(step)
-                self.service._checkpoint(program, step, "engine", "The person approved the PR on GitHub")
-            else:
-                if facts.get("person") is None:
-                    person = step.get("for_person_id") or program.get("for_person_id")
-                    facts["person"] = {"id": person, "name": self.service.person_name(person)}
-                    step["facts"] = facts
-                    self.service.save_step(step)
+        if step.get("gate_review") == "person":
+            # HS-S25 (G25 branch A): the current review decides on every tick,
+            # also after an earlier approval; the approval stays history.
+            review = self.person_review(program, step)
+            facts = self._note_review(program, step, facts, review)
+            if review["state"] == "changes":
+                logins = self.service.person_logins(step.get("for_person_id") or program.get("for_person_id"))
+                if self._person_changes(program, step, facts, review["snapshot"], logins):
+                    return
+            if not review["eligible"]:
+                if step["state"] == "merge_ask":
+                    self.service.transition(program, step, "pr_open", facts=facts,
+                                            line=f"Merge withdrawn: {review_words(review, facts)}")
                 return
         ci = str(pr.get("ci") or "none")
         if ci == "failing":
@@ -2266,6 +2265,90 @@ class ProgramRunner:
                                 line=f"{name} asked for changes on GitHub; round {round_} goes back to the agent")
         return True
 
+    def person_review(self, program: Mapping[str, Any], step: Mapping[str, Any]) -> dict[str, Any]:
+        """HS-S25 (G25 branch A): may a person-gated GitHub step merge now?
+
+        Read-only (no gh call, no write): the step's launch ledger, its kept
+        PR and the latest applied review observation of that PR. Eligible
+        only when the latest attempt is a complete read of the step's own PR
+        (URL and number), its observed head agrees with the step's head, the
+        person resolves to at least one login, no matching login asks for
+        changes and a matching login approves. ``person_approved`` (history)
+        never decides. Returns ``{state, eligible, reason, number, head,
+        snapshot}``; state is approved, changes, not_approved, unverified or
+        merge_requested."""
+        facts = step.get("facts") or {}
+
+        def answer(state: str, reason: str, snapshot: Optional[Mapping[str, Any]] = None) -> dict[str, Any]:
+            snap = dict(snapshot or {})
+            return {"state": state, "eligible": state == "approved", "reason": reason,
+                    "number": snap.get("number") or step.get("pr_number"), "head": str(snap.get("head") or ""),
+                    "snapshot": snap}
+
+        if facts.get("merge_requested_at"):
+            return answer("merge_requested", "merge_requested")
+        launch_id = str(step.get("launch_id") or "")
+        try:
+            record = self.ledger().get(launch_id) if launch_id else None
+        except Exception:
+            record = None
+        if not record:
+            return answer("unverified", "launch_missing")
+        follow = record.get("follow_through") or {}
+        kept = follow.get("pr") or {}
+        url, number = str(step.get("pr_url") or ""), step.get("pr_number")
+        if not url or not number or kept.get("url") != url or kept.get("number") != number:
+            return answer("unverified", "target_mismatch")
+        review = follow.get("review") or {}
+        attempt, snapshot = review.get("attempt") or {}, review.get("snapshot") or {}
+        if not attempt:
+            return answer("unverified", "not_observed")
+        if attempt.get("quality") != "complete":
+            return answer("unverified", f"read_{attempt.get('quality') or 'unknown'}")
+        if (snapshot.get("seq") != attempt.get("seq") or snapshot.get("url") != url
+                or snapshot.get("number") != number):
+            return answer("unverified", "read_mismatched")
+        head = str(snapshot.get("head") or "")
+        if not head:
+            return answer("unverified", "head_unknown", snapshot)
+        if step.get("head_commit") and str(step["head_commit"]) != head:
+            return answer("unverified", "head_mismatch", snapshot)
+        logins = self.service.person_logins(step.get("for_person_id") or program.get("for_person_id"))
+        if not logins:
+            return answer("unverified", "person_unresolved", snapshot)
+        if any(isinstance(row, Mapping) and str(row.get("login") or "").casefold() in logins
+               for row in snapshot.get("changes_requested") or []):
+            return answer("changes", "changes_requested", snapshot)
+        if {str(login).casefold() for login in snapshot.get("approved_by") or []} & logins:
+            return answer("approved", "approved", snapshot)
+        return answer("not_approved", "no_approval", snapshot)
+
+    def _note_review(self, program: dict[str, Any], step: dict[str, Any], facts: dict[str, Any],
+                     review: Mapping[str, Any]) -> dict[str, Any]:
+        """HS-S25: keep ``facts.person_review`` (the bounded present state the
+        faces show) and the historical ``person_approved`` (set once, at the
+        first approval; never cleared). Saved only on a change."""
+        facts = dict(facts)
+        changed = False
+        if facts.get("person") is None:
+            person = step.get("for_person_id") or program.get("for_person_id")
+            facts["person"] = {"id": person, "name": self.service.person_name(person)}
+            changed = True
+        shown = {key: review.get(key) for key in ("state", "reason", "number", "head")}
+        if facts.get("person_review") != shown:
+            facts["person_review"] = shown
+            changed = True
+        first_approval = review["state"] == "approved" and not facts.get("person_approved")
+        if first_approval:
+            facts["person_approved"] = True
+            changed = True
+        if changed:
+            step["facts"] = facts
+            self.service.save_step(step)
+        if first_approval:
+            self.service._checkpoint(program, step, "engine", "The person approved the PR on GitHub")
+        return facts
+
     def _decide_merge(self, program: dict[str, Any], step: dict[str, Any], facts: dict[str, Any], what: str) -> None:
         """The merge rule on a green, reviewed and met step: the engine merges
         (YOLO, Normal) or his Merge row (Secure, or a step whose merge is his)."""
@@ -2298,8 +2381,22 @@ class ProgramRunner:
         number = step.get("pr_number")
         if not number:
             raise ProgramRefused("pr_unknown", "The step has no PR number yet.")
+        target = str(number)
+        if step.get("gate_review") == "person":
+            # HS-S25: the actual dispatch reads the gate again from the store,
+            # whoever calls (the engine, his press, a direct call), and names
+            # the PR by its validated URL, never a number read in a cwd.
+            fresh = self.service.store.get_step(str(step.get("id") or "")) or step
+            review = self.person_review(self.service.store.get_program(str(program.get("id") or "")) or program, fresh)
+            if review["state"] == "merge_requested":
+                raise ProgramRefused("merge_requested", "A merge of this PR is already requested. "
+                                     "HoldSpeak waits for GitHub to show the result.")
+            if not review["eligible"]:
+                raise ProgramRefused("person_review_missing",
+                                     sentence_of(review_words(review, fresh.get("facts") or {})))
+            target = str(fresh.get("pr_url") or "")
         cwd = str(step.get("worktree") or program.get("repo_root") or "")
-        proc = self._run(["gh", "pr", "merge", str(number), "--squash"], cwd=cwd)
+        proc = self._run(["gh", "pr", "merge", target, "--squash"], cwd=cwd)
         if proc.returncode != 0:
             detail = " ".join(str(proc.stdout or proc.stderr or "").split())[:200]
             self.service._checkpoint(program, step, "engine", f"Merge of PR #{number} failed: {detail}")
@@ -2321,6 +2418,26 @@ class ProgramRunner:
 
 
 _DEFAULT: Optional[ProgramRunner] = None
+
+#: HS-S25: why a person-gated step may not merge now, in his terms.
+_REVIEW_WORDS = {
+    "changes": "{name} asked for changes on the PR",
+    "not_approved": "{name} did not approve the PR",
+    "merge_requested": "a merge of the PR is already requested",
+    "unverified": "HoldSpeak could not read the latest review of the PR",
+}
+
+
+def review_words(review: Mapping[str, Any], facts: Mapping[str, Any]) -> str:
+    """The reason a person-gated step may not merge now (no full stop)."""
+    name = str((facts.get("person") or {}).get("name") or "") or "the reviewer"
+    words = _REVIEW_WORDS.get(str(review.get("state") or ""), _REVIEW_WORDS["unverified"])
+    text = words.format(name=name)
+    return text[:1].upper() + text[1:]
+
+
+def sentence_of(text: str) -> str:
+    return text if text.endswith(".") else text + "."
 
 
 def _within(cwd: Any, worktree: Any) -> bool:
