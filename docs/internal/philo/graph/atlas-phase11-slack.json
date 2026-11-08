@@ -9585,7 +9585,7 @@
           "claim": "The Meetings record comment names the removed aftercare Slack rows."
         },
         {
-          "path": "web/src/pages/cores/SettingsCore.tsx",
+          "path": "web/src/pages/cores/settings/Accounts.tsx",
           "symbol": "<Destinations />",
           "claim": "Settings keeps the channel destination group as the supported path."
         }
