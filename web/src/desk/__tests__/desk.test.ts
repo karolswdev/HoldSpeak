@@ -13,7 +13,6 @@ import {
   fromWireDirectory,
   fromWireNote,
   fromWireRecipe,
-  fromWireWorkflow,
   liveValues,
   loadAll,
 } from "../api";
@@ -71,7 +70,7 @@ describe("the D1 mold (PHILO-14 A0b)", () => {
     expect(spriteName("thread", "x")).toBe("thread");
     expect(spriteName("kb", "x")).toBe("artifact");
     expect(spriteName("story", "x")).toBe("note");
-    expect(spriteName("workflow", "x")).toBe("cartridge");
+    expect(spriteName("recipe", "x")).toBe("cartridge");
   });
 });
 
@@ -111,15 +110,6 @@ describe("wire normalizers", () => {
     expect(
       fromWireDirectory({ id: "d", name: "D", members: { y: 1 } })!.memberIds,
     ).toEqual(["y"]);
-  });
-  it("workflow graph_json stays an object", () => {
-    const w = fromWireWorkflow({
-      id: "w",
-      name: "W",
-      graph_json: { nodes: [] },
-    });
-    expect(w!.hasGraph).toBe(true);
-    expect(typeof w!.graphJson).toBe("object");
   });
   it("liveValues drops tombstones and unwraps values", () => {
     expect(
@@ -166,8 +156,6 @@ describe("lineage via detection", () => {
     note: [],
     kb: [],
     artifact: [],
-    chain: [],
-    workflow: [],
     directory: [],
     coder: [],
     recipe: [{ kind: "recipe", id: "r1", name: "Scout" }],
@@ -207,8 +195,6 @@ describe("world math", () => {
     kb: [],
     recipe: [],
     artifact: [],
-    chain: [],
-    workflow: [],
     directory: [
       { kind: "directory", id: "z", name: "Z", memberIds: ["m1"] } as any,
     ],
@@ -282,8 +268,6 @@ describe("qualified pull-out identity", () => {
     recipe: [{ kind: "recipe", id: "scout", name: "Scout" } as Persona],
     kb: [],
     directory: [],
-    chain: [],
-    workflow: [],
     coder: [],
     workbench: [],
   } as unknown as TypedItems;

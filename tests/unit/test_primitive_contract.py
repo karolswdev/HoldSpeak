@@ -212,8 +212,8 @@ class TestWebShapesCannotInventFields:
         "Directory": "directory",
         "KB": "kb",
         "Persona": "recipe",
-        "Chain": "chain",
-        "Workflow": "workflow",
+        # Chain and Workflow are no Desk kinds (parked 2026-11-08); their wire
+        # stays in the sync contract for the iPad.
     }
     # Documented view-model exceptions: TS fields composed in-app, not wire fields.
     EXCEPTIONS = {

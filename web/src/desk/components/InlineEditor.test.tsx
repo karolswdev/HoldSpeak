@@ -21,7 +21,7 @@ vi.mock("../pullouts/editors", () => {
 });
 
 const closeRefresh = vi.fn();
-const object = (kind: "note" | "kb" | "recipe" | "workflow") => ({
+const object = (kind: "note" | "kb" | "recipe") => ({
   id: `${kind}-1`,
   kind,
   title: `${kind} title`,
@@ -53,7 +53,7 @@ beforeEach(() => {
 });
 
 describe("HS-129-08 editor windows", () => {
-  it.each(["note", "kb", "recipe", "workflow"] as const)(
+  it.each(["note", "kb", "recipe"] as const)(
     "opens %s in a desk window without a vignette and returns focus on Escape",
     async (kind) => {
       const o = object(kind);

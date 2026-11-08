@@ -112,7 +112,7 @@ function PulloutFrame({
       icon={<img src={spriteUrl(o.kind, o.id, "rest", refAgent(o.ref))} alt="" width={30} height={30} className={spriteStateCssClass((o as { spriteState?: string }).spriteState ?? null) || undefined} data-sprite-variant={spriteVariantKey(o.kind, (o as { spriteState?: string }).spriteState ?? null)} />}
       title={name}
       open
-      beforeClose={editing && ["note", "kb", "recipe", "workflow"].includes(o.kind) ? flushBeforeClose : undefined}
+      beforeClose={editing && ["note", "kb", "recipe"].includes(o.kind) ? flushBeforeClose : undefined}
       onClose={close}
       actions={
         <>

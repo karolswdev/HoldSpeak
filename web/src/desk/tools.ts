@@ -31,7 +31,6 @@ export const KIND_GLYPH: Record<string, string> = {
   decision: "◈",   // diamond with inner — a weighed gem
   kb: "⬡",         // hexagon — a knowledge cell
   recipe: "◎",     // bullseye — a targeted agent
-  workflow: "⟁",   // triangle with dots — a flow graph
   workbench: "⊞",  // boxed plus — a compound workspace
   zone: "◰",       // square with upper-left quadrant — a region
   thread: "◬",     // triangle with left half — a speech ribbon
@@ -40,7 +39,6 @@ export const KIND_GLYPH: Record<string, string> = {
 
 export const KIND_LABEL: Record<string, string> = {
   artifact: "Artifact",
-  chain: "Workflow",
   coder: "Agent",
   decision: "Decision",
   kb: "Drawer",
@@ -49,6 +47,5 @@ export const KIND_LABEL: Record<string, string> = {
   project: "Project",
   recipe: "Mode",
   workbench: "Automation",
-  workflow: "Workflow",
   thread: "Thread",
 };

@@ -37,8 +37,6 @@ const ORDER = [
   "project",
   "recipe",
   "artifact",
-  "chain",
-  "workflow",
   "coder",
   "roadmap",
   "story",

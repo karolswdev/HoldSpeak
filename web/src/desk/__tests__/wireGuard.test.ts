@@ -14,8 +14,6 @@ import {
   fromWireRecipe,
   fromWireKb,
   fromWireDirectory,
-  fromWireChain,
-  fromWireWorkflow,
   fromWireWorkbench,
   fromWireRepository,
   fromCoderStatus,
@@ -254,42 +252,6 @@ describe("fromWireDirectory", () => {
   });
 });
 
-describe("fromWireChain", () => {
-  it("maps valid wire data", () => {
-    const c = fromWireChain({
-      id: "c1",
-      name: "Pipeline",
-      steps: ["a1", "a2"],
-      capability: { readiness: { state: "ready" } },
-    })!;
-    expect(c.kind).toBe("chain");
-    expect(c.steps).toEqual(["a1", "a2"]);
-    expect(c.capability).toBeTruthy();
-  });
-});
-
-describe("fromWireWorkflow", () => {
-  it("maps valid wire data with graph", () => {
-    const w = fromWireWorkflow({
-      id: "w1",
-      name: "Summarize",
-      prompt: "Do it",
-      graph_json: { id: "g1", name: "g", entry: "n1", nodes: [], exec_edges: [], data_edges: [] },
-      capability: null,
-    })!;
-    expect(w.kind).toBe("workflow");
-    expect(w.hasGraph).toBe(true);
-    expect(w.graphJson).toBeTruthy();
-  });
-  it("handles empty graph", () => {
-    const spy = vi.spyOn(console, "warn").mockImplementation(() => {});
-    const w = fromWireWorkflow({ id: "w2", name: "Empty" })!;
-    expect(w.hasGraph).toBe(false);
-    expect(w.graphJson).toBeUndefined();
-    spy.mockRestore();
-  });
-});
-
 describe("fromWireWorkbench", () => {
   it("maps valid wire data", () => {
     const wb = fromWireWorkbench({
@@ -369,7 +331,7 @@ describe("unknown kind handling", () => {
     // naturally omits it. This test validates the type-level guarantee.
     const knownKinds = new Set([
       "meeting", "artifact", "note", "decision", "directory", "kb",
-      "project", "repository", "recipe", "chain", "workflow", "coder",
+      "project", "repository", "recipe", "coder",
       "game", "layout", "roadmap", "story", "workbench",
     ]);
     expect(knownKinds.has("unknown_future_kind")).toBe(false);

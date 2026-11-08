@@ -87,18 +87,6 @@ function fixture(): Items {
         },
       } as Persona,
     ],
-    workflow: [
-      {
-        kind: "workflow",
-        id: "release",
-        name: "Release workflow",
-        capability: {
-          readiness: { state: "ready" },
-          input_schema: { required: ["input"] },
-          effect_classes: ["creates_artifact"],
-        },
-      },
-    ],
     coder: [
       { kind: "coder", id: "waiting", title: "App", state: "waiting" } as Coder,
       { kind: "coder", id: "busy", title: "Docs", state: "running" } as Coder,
@@ -116,7 +104,6 @@ describe("HS-93-04 contextual Desk action eligibility", () => {
       ),
     ).toEqual([
       "Ask Scout about Release checklist",
-      "Run Release workflow on Release checklist",
     ]);
   });
 

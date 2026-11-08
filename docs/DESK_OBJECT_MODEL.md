@@ -32,8 +32,6 @@ A descriptor alone does not establish a separate app or an available control.
 | `project` | Project | organization | no | send, rename, archive | Project Room (`open-project-memory`) |
 | `repository` | Repository | organization | yes | none | repository window |
 | `recipe` | Mode | capability | yes | ask, edit, rename, duplicate, delete | pullout |
-| `chain` | Sequence | capability | yes | delete | pullout |
-| `workflow` | Workflow | capability | yes | ask, edit, rename, duplicate, delete | pullout |
 | `workbench` | Automation | capability | yes | duplicate | Automation host, with legacy queue view for an old queue |
 | `coder` | Agent | presence | no | none | pullout |
 | `roadmap` | Roadmap | organization | no | none | roadmap window |
@@ -142,7 +140,7 @@ Any pair not in the table does nothing.
 
 | Target | Accepted kinds | Label | Result |
 | --- | --- | --- | --- |
-| Mode, Sequence, Workflow | Note, Knowledge, Meeting, Artifact | **Hold as source** | The record becomes held context. Nothing runs. |
+| Mode | Note, Knowledge, Meeting, Artifact | **Hold as source** | The record becomes held context. Nothing runs. |
 | Knowledge | Note, Meeting, Artifact, Mode | **Add to Knowledge** | The record joins the Knowledge. You can undo it. |
 
 The old Floor file-drop host is parked in the active Desk composition.
