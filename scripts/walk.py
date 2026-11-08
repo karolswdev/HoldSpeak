@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import json
 import os
-import subprocess
 import sys
 import urllib.error
 import urllib.request
@@ -22,25 +21,12 @@ from pathlib import Path
 HUB = os.environ.get("HOLDSPEAK_HUB", "http://127.0.0.1:8765")
 
 
-def _tailnet() -> str:
-    """The hub's address on the tailnet: HOLDSPEAK_TAILNET, else this machine's
-    Tailscale IPv4 (the MagicDNS name does not resolve on every tailnet; the IP
-    always does), else the local address."""
-    given = os.environ.get("HOLDSPEAK_TAILNET")
-    if given:
-        return given
-    for cli in ("tailscale", "/opt/homebrew/bin/tailscale", "/usr/local/bin/tailscale"):
-        try:
-            out = subprocess.run([cli, "ip", "-4"], capture_output=True, text=True, timeout=5)
-        except (OSError, subprocess.TimeoutExpired):
-            continue
-        ip = out.stdout.strip().splitlines()[0].strip() if out.returncode == 0 and out.stdout.strip() else ""
-        if ip:
-            return f"http://{ip}:8765"
-    return HUB
-
-
-TAILNET = _tailnet()
+# The hub's address on the tailnet (owner, 2026-11-08: "Need the tailscale dns.
+# Not the ip."): Tailscale Serve proxies https://<MagicDNS name> (443) to the
+# hub, a secure context for the mic and the viewport capture. The name
+# resolves through Tailscale's resolver on his devices (a plain `host` on the
+# Mac says NXDOMAIN; that is the system resolver, not the tailnet).
+TAILNET = os.environ.get("HOLDSPEAK_TAILNET", "https://karols-macbook-pro.tailad9943.ts.net")
 
 
 def _token() -> str:

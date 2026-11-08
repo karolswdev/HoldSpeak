@@ -56,7 +56,7 @@ them in this order: `open`, `verb`, `press`, `scroll`, `say`, `highlight`,
 the Room, not the Update posture that the Room kept from an earlier visit.
 
 Example: `docs/walks/2026-11-08-handheld.json`. To make a walk and get its
-two links (the Tailscale IP first, then this computer), and to read the answers:
+two links (the tailnet name over https first, then this computer), and to read the answers:
 
     uv run python scripts/walk.py new docs/walks/2026-11-07-wave-two.json
     uv run python scripts/walk.py read <id>
