@@ -30,7 +30,7 @@ import re
 import threading
 import uuid
 from pathlib import Path
-from typing import Any, Callable, Iterable, Mapping, Optional
+from typing import Any, Callable, Iterable, Mapping, NamedTuple, Optional
 
 from ..db.programs import ProgramStore
 from ..logging_config import get_logger
@@ -4775,7 +4775,7 @@ class ProgramService:
         if fields.get("head_commit") and fields["head_commit"] != old_head and old_head:
             self.requirements_moved(program, step)  # PG-REQ decision 4
         if to in FINISHED_STATES and current not in FINISHED_STATES and not history_of(step):
-            self._close_origin_task(program, step)
+            self._leave_origin_receipt(program, step)
         if to == "pr_open" and current != "pr_open" and step.get("pr_url"):
             from . import program_decisions
 
@@ -4838,38 +4838,44 @@ class ProgramService:
                                           undo={"via": str(via)})
                 self.changed(program_id, step["id"], verb="notice_lost")
 
-    def _close_origin_task(self, program: Mapping[str, Any], step: dict[str, Any]) -> None:
-        """A step made from a Door task (``origin_ref action:<id>``: Add to
-        tonight, a night's backlog, From the desk) closes that task when it
-        merges or is done, with the merge as its evidence (J4 station 5, "the
-        action closes with the PR as evidence"; the first real night: the
-        backlog's tasks stayed open after their steps merged on a remote with
-        no PR). Once; a closed task stays as it is; a failure is a log line."""
-        origin = str(step.get("origin_ref") or "")
+    def _leave_origin_receipt(self, program: Mapping[str, Any], step: dict[str, Any]) -> None:
+        """A merged or done step leaves its receipt on the desk item it came
+        from (``step_origin``): a step made from a Door task closes that task
+        with the merge as its evidence (J4 station 5); the Program's origin (a
+        note, a decision, a Room item) gets the merged PR linked, with the
+        Program id and the time (2026-11-08: a Program from a note never
+        linked its PR back). Once; a failure is a log line."""
         facts = dict(step.get("facts") or {})
-        if not origin.startswith("action:") or facts.get("origin_closed"):
+        origin = step_origin(self.db, step["id"])
+        if origin is None or facts.get("origin_closed"):
             return
-        item_id = origin.split(":", 1)[1]
         evidence = {key: value for key, value in (
             ("pr_url", step.get("pr_url")), ("pr_number", step.get("pr_number")),
             ("merged_sha", facts.get("merged_commit") or step.get("head_commit")), ("merged_at", self._clock()),
-            ("launch_id", step.get("launch_id"))) if value}
+            ("launch_id", step.get("launch_id")), ("program_id", program["id"])) if value}
+        if not origin.closes and not evidence.get("pr_url"):
+            return  # the Program's origin takes a PR; a merge with no PR leaves it as it is
         try:
+            from ..delivery.follow_through import leave_receipt
             from ..principals import Principal, PrincipalKind
-            from .follow_through_service import FollowThroughService
 
-            FollowThroughService(self.db).complete(Principal(PrincipalKind.OWNER, "program-engine"), item_id, "done",
-                                                   {"evidence": evidence})
-        except Exception as exc:  # the task stays open; the step is still done
-            log.info(f"program {program['id']}: the Door task {item_id} was not closed: {exc}")
+            outcome = leave_receipt(self.db, Principal(PrincipalKind.OWNER, "program-engine"), origin, evidence,
+                                    project_id=program.get("project_id"))
+        except Exception as exc:  # the origin stays as it is; the step is still done
+            log.info(f"program {program['id']}: no receipt on {origin.kind}:{origin.id}: {exc}")
             return
-        facts["origin_closed"] = item_id
+        if outcome not in ("closed", "linked", "already_closed"):
+            log.info(f"program {program['id']}: no receipt on {origin.kind}:{origin.id}: {outcome}")
+            return
+        facts["origin_closed"] = f"{origin.kind}:{origin.id}"
         step["facts"] = facts
         self.store.save_step(step)
-        merged = str(facts.get("merged_commit") or step.get("head_commit") or "")
+        merged = str(evidence.get("merged_sha") or "")
         what = f"PR #{step['pr_number']}" if step.get("pr_number") else f"the merge {merged[:8]}".rstrip()
+        line = (f"Closed its Door task with {what} as evidence" if origin.kind == "action" and origin.closes
+                else f"Merged · {what} · linked to its {ORIGIN_WORDS.get(origin.kind, 'origin')}")
         self.store.add_checkpoint(step_id=step["id"], program_id=program["id"], at=self._clock(), by="engine",
-                                  line=f"Closed its Door task with {what} as evidence"[:400])
+                                  line=line[:400])
 
     def _report_files(self, program: Mapping[str, Any], step: dict[str, Any]) -> None:
         """PG-IMPORT IMP1: the step's diff file names against its base, read
@@ -5511,21 +5517,51 @@ def _base_branch(root: str) -> str:
     return "main"
 
 
-def step_origin(db: Any, step_id: str) -> Optional[tuple[str, str]]:
-    """The desk item a step's merge closes (§9b): the step's own origin
-    (``action:<id>``), else the Program's decision origin. ``None``: none."""
+#: The words for an origin kind on a step's ledger line.
+ORIGIN_WORDS = {"note": "note", "decision": "decision", "decision_record": "decision", "project_item": "Room item",
+                "meeting": "meeting", "artifact": "artifact", "issue": "issue", "action": "task"}
+
+
+class Origin(NamedTuple):
+    """The desk item a merged step leaves its receipt on (§9b). ``closes``:
+    the step's own origin (its merge closes it); else the Program's origin,
+    which gets the PR linked only (HS-S21: one step never fulfils the whole
+    Program's item)."""
+
+    kind: str
+    id: str
+    closes: bool
+    program_id: str
+
+
+def origin_receipt(origin_ref: Any) -> Optional[tuple[str, str]]:
+    """The one decision of where an origin's receipt goes: ``kind:id`` of a
+    kind the hub writes a receipt on (the follow-through's closable kinds),
+    else ``None`` with one log line (no receipt for that kind)."""
+    from ..delivery.follow_through import CLOSABLE_KINDS
+
+    kind, _, ident = str(origin_ref or "").partition(":")
+    if not kind or not ident:
+        return None
+    if kind not in CLOSABLE_KINDS:
+        log.info(f"origin {kind}:{ident} takes no receipt; nothing written")
+        return None
+    return kind, ident
+
+
+def step_origin(db: Any, step_id: str) -> Optional[Origin]:
+    """The desk item a step's merge leaves its receipt on (§9b): the step's
+    own origin (``action:<id>``, closed), else the Program's origin of any
+    receipt kind (``origin_receipt``, linked). ``None``: none."""
     store = ProgramStore(db)
     step = store.get_step(str(step_id or ""))
     if step is None:
         return None
-    ref = str(step.get("origin_ref") or "")
-    if not ref:
-        program = store.get_program(step["program_id"]) or {}
-        program_ref = str(program.get("origin_ref") or "")
-        if program_ref.split(":", 1)[0] in ("decision", "decision_record"):
-            ref = program_ref
-    kind, _, ident = ref.partition(":")
-    return (kind, ident) if kind and ident else None
+    program_id = str(step.get("program_id") or "")
+    own = str(step.get("origin_ref") or "")
+    ref = own or str((store.get_program(program_id) or {}).get("origin_ref") or "")
+    target = origin_receipt(ref)
+    return Origin(target[0], target[1], bool(own), program_id) if target else None
 
 
 _DEFAULT: Optional[ProgramService] = None
@@ -5551,5 +5587,5 @@ __all__ = [
     "MAX_ROUNDS", "PROGRAMS_ENV", "PROGRAM_STATES", "PROGRAM_WORDS", "ProgramRefused", "ProgramService",
     "RACE_PROFILES", "STATIONS", "STEP_STATES", "STEP_TRANSITIONS", "STEP_WORDS", "agent_label",
     "VIA_CHANNELS", "VIA_WORDS", "via_of", "default_program_service", "duration_words", "history_of", "history_words", "name_words", "program_state",
-    "programs_on", "spoken_state", "step_origin", "triage_effort", "your_turn",
+    "ORIGIN_WORDS", "Origin", "origin_receipt", "programs_on", "spoken_state", "step_origin", "triage_effort", "your_turn",
 ]

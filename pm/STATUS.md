@@ -2,6 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · #1890 A merged step leaves its receipt on the Program's origin of any kind (a note gets its PR linked in its Room with the Program id, a decision record its PR link), through one origin_receipt and the follow-through's writers; an action still closes only through its bound step (HS-S21).
 - 2026-11-08 · #1889 One face for a meeting's decision: a Decide-well row opens the record reader in the Decisions window (not the Decision pullout), the project is its kit object row with "Filed", and a refused create shows the hub's reason with Retry.
 - 2026-11-08 · #1888 Fix forward #1885: the Needs-you recorder names private addresses server.local (LAN guard green) and recall.json is re-recorded with the receipt's status and done_at.
 - 2026-11-08 · #1887 Three architecture sources the splits moved (RoomHead, RemoteAccessModule, DestForm) point to their new files, so scripts/gen_docs.sh runs to the end again; a test validates the checked-in shards.

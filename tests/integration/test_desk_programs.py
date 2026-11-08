@@ -957,3 +957,106 @@ def test_create_through_the_route_with_a_decision_origin_binds_the_decision(tmp_
     assert program["state"] == "drafting" and program["origin_ref"] == f"decision_record:{record['id']}"
     assert program["place"]["origin"] == {"ref": f"decision_record:{record['id']}", "kind": "decision_record",
                                           "id": record["id"], "title": "Drop the nightly export"}
+
+
+# ── A merge leaves its receipt on the Program's origin (2026-11-08) ────
+
+def _origin_program(rig: Rig, origin_ref: str, steps: list[dict[str, Any]]) -> str:
+    with rig.db._connection() as conn:
+        conn.execute("INSERT OR IGNORE INTO projects (id, name) VALUES ('proj-app', 'App')")
+    pid = rig.service.create(OWNER, title="From the origin", goal="Do it.", repository=str(rig.repo),
+                             check_command=f"sh {FAKE_CHECK}", template="fast-cycle", control="yolo",
+                             project_id="proj-app", origin_ref=origin_ref)["id"]
+    rig.service.plan(OWNER, pid, steps=steps)
+    rig.service.start(OWNER, pid)
+    rig.tick()
+    return pid
+
+
+def _merge(rig: Rig, pid: str, ordinal: int, path: str) -> dict[str, Any]:
+    rig.agent.finish(rig.step(pid, ordinal)["launch_id"], {path: "x\n"})
+    rig.tick(4)
+    step = rig.step(pid, ordinal)
+    assert step["state"] in ("merged", "done"), step["state"]
+    assert step["pr"]["url"], step
+    return step
+
+
+def _pr_receipts(rig: Rig, ref: str) -> list[dict[str, Any]]:
+    with rig.db._connection() as conn:
+        rows = conn.execute("SELECT fact_json FROM project_observations WHERE subject_ref=? "
+                            "AND observation_kind='conductor.pr_linked'", (ref,)).fetchall()
+        links = conn.execute("SELECT evidence_ref FROM project_evidence_links WHERE target_ref=? "
+                             "AND relation='merged_pr'", (ref,)).fetchall()
+    facts = [json.loads(row[0]) for row in rows]
+    assert sorted(fact["pr_url"] for fact in facts) == sorted(row[0] for row in links)
+    return facts
+
+
+def test_a_program_from_a_note_links_its_merged_pr_to_the_note(tmp_path) -> None:
+    """The finding: a Program made from a Note never linked its merged PR
+    back. The Note's receipt (its Room link) names the PR, the Program and
+    the time; the step's ledger says so in words; a second tick writes no
+    second receipt."""
+    rig = Rig(tmp_path)
+    rig.db.notes.upsert(note_id="note-login", title="Login timeout", body_markdown="It times out.")
+    pid = _origin_program(rig, "note:note-login", [{"title": "Fix", "brief": "Fix the timeout."}])
+    step = _merge(rig, pid, 1, "src/login.py")
+    receipts = _pr_receipts(rig, "note:note-login")
+    assert len(receipts) == 1, receipts
+    fact = receipts[0]
+    assert fact["pr_url"] == step["pr"]["url"] and fact["pr_number"] == str(step["pr"]["number"])
+    assert fact["program_id"] == pid and fact["merged_at"] and fact["title"] == "Login timeout"
+    lines = [row["line"] for row in rig.service.store.list_checkpoints(pid)]
+    assert f"Merged · PR #{step['pr']['number']} · linked to its note" in lines, lines
+    rig.tick(2)
+    assert len(_pr_receipts(rig, "note:note-login")) == 1
+
+
+def test_a_program_from_an_action_closes_it_through_its_bound_step_with_the_pr(tmp_path) -> None:
+    """An action's receipt is its close (HS-S21): the bound step's merge
+    completes it, and the completion receipt names the PR and the Program.
+    The Program's own action origin closes nothing on an ordinary step."""
+    from holdspeak.services.service_event_ledger import ServiceEventLedger
+    from tests.integration.program_night_seed import door_task
+
+    rig = Rig(tmp_path)
+    task = door_task(rig, "add docs/terms.md")
+    pid = _origin_program(rig, f"action:{task}", [
+        {"title": "Other", "brief": "Add docs/other.md."},
+        {"title": "Terms", "brief": "Add docs/terms.md.", "origin_ref": f"action:{task}"}])
+    _merge(rig, pid, 1, "docs/other.md")
+    with rig.db._connection() as conn:
+        assert conn.execute("SELECT status FROM action_items WHERE id=?", (task,)).fetchone()[0] == "open"
+    rig.tick()
+    step = _merge(rig, pid, 2, "docs/terms.md")
+    completed = ServiceEventLedger(rig.db).list(OWNER, event_type="commitment.completed")
+    assert len(completed) == 1, completed
+    evidence = completed[0]["facts"]["evidence"]
+    assert evidence["pr_url"] == step["pr"]["url"] and evidence["pr_number"] == str(step["pr"]["number"])
+    assert evidence["program_id"] == pid
+
+
+def test_a_program_from_a_decision_still_links_the_record_to_the_pr(tmp_path) -> None:
+    rig = Rig(tmp_path)
+    record = DecisionRecordService(rig.db).create(
+        OWNER, decision_text="Drop the nightly export", rationale="The bus replaces it.",
+        source_type="desk", source_id="d-export")
+    pid = _origin_program(rig, f"decision_record:{record['id']}", [{"title": "Drop", "brief": "Drop it."}])
+    step = _merge(rig, pid, 1, "src/export.py")
+    assert ("pr", step["pr"]["url"]) in {(w["work_type"], w["work_ref"]) for w in _record(rig, record["id"])["work"]}
+
+
+def test_an_origin_kind_with_no_receipt_writes_nothing_and_logs_one_line(tmp_path, caplog) -> None:
+    import logging
+
+    rig = Rig(tmp_path)
+    with caplog.at_level(logging.INFO):
+        pid = _origin_program(rig, "dictation:d-1", [{"title": "Fix", "brief": "Fix it."}])
+        step = _merge(rig, pid, 1, "src/a.py")
+    lines = [r.getMessage() for r in caplog.records if "takes no receipt" in r.getMessage()]
+    assert lines == ["origin dictation:d-1 takes no receipt; nothing written"], lines
+    assert not (rig.service.store.get_step(step["id"])["facts"] or {}).get("origin_closed")
+    with rig.db._connection() as conn:
+        assert conn.execute("SELECT COUNT(*) FROM project_observations WHERE observation_kind="
+                            "'conductor.pr_linked'").fetchone()[0] == 0

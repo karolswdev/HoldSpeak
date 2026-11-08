@@ -892,7 +892,10 @@ class FollowThroughObserver:
             found = step_origin(self._db, item_id)
             if found is None:
                 return "not_closable"
-            kind, item_id = found
+            kind, item_id, closes = found.kind, found.id, found.closes
+            evidence = {**evidence, "program_id": found.program_id}
+        else:
+            closes = True
         if kind not in CLOSABLE_KINDS:
             return "not_closable"
         # Once the owner was asked, his answer decides, whatever the mode is
@@ -906,13 +909,20 @@ class FollowThroughObserver:
         if asked == "dismissed":
             return "close_declined"
         # Confirmed, or Normal/YOLO with no question asked: close.
-        return self._close(principal, kind, item_id, evidence, launch)
+        return self._close(principal, kind, item_id, evidence, launch, closes=closes)
 
     def _close(
         self, principal: Any, kind: str, item_id: str, evidence: dict[str, str],
-        launch: Optional[Mapping[str, Any]] = None,
+        launch: Optional[Mapping[str, Any]] = None, *, closes: bool = True,
     ) -> str:
+        """``closes`` False: the receipt only (a Program's origin, §9b): the
+        PR is linked, nothing is closed; an action has no receipt but its
+        close (HS-S21: it closes through the step bound to it)."""
         if kind == "project_item":
+            if not closes:
+                if self._db.projects.get_project_item(item_id) is None:
+                    return "origin_missing"
+                return self._link_in_room(principal, kind, item_id, evidence, launch or {})
             return self._close_project_item(principal, item_id, evidence, launch or {})
         if kind in ("note", "meeting", "artifact", "issue"):
             # An issue may leave its Watch's snapshot (resolved, out of the
@@ -921,6 +931,8 @@ class FollowThroughObserver:
                 return "origin_missing"
             return self._link_in_room(principal, kind, item_id, evidence, launch or {})
         if kind == "action":
+            if not closes:
+                return "not_closable"
             from ..services.follow_through_service import FollowThroughService
 
             try:
@@ -1021,6 +1033,7 @@ class FollowThroughObserver:
             "merged_at": str(evidence.get("merged_at") or ""),
             "launch_id": str(evidence.get("launch_id") or ""),
             "attempt_id": str(evidence.get("attempt_id") or ""),
+            "program_id": str(evidence.get("program_id") or ""),
         }
         fact_str = json.dumps(fact, sort_keys=True, separators=(",", ":"))
         content_hash = hashlib.sha256(fact_str.encode("utf-8")).hexdigest()[:32]
@@ -1325,8 +1338,22 @@ def default_follow_through(db: Any) -> FollowThroughObserver:
     )
 
 
+def leave_receipt(
+    db: Any, principal: Any, origin: Any, evidence: Mapping[str, Any], *, project_id: Optional[str] = None,
+) -> str:
+    """A Program step's merge leaves its receipt on its origin (``Origin`` of
+    ``program_service.step_origin``) through the same writers the
+    follow-through uses for a launch: ``closed``, ``linked``,
+    ``already_closed`` or why not."""
+    observer = FollowThroughObserver(db, ledger=None, registry=None, receipts=None, attempts=None)
+    launch = {"story_ref": {"project": project_id}} if project_id else {}
+    return observer._close(principal, origin.kind, origin.id, {k: str(v) for k, v in evidence.items()}, launch,
+                           closes=origin.closes)
+
+
 __all__ = [
     "CLOSABLE_KINDS",
+    "leave_receipt",
     "LINK_OBSERVATION",
     "MERGED_OBSERVATION",
     "UNLAUNCHED_STATES",
