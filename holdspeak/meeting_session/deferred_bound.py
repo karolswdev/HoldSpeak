@@ -15,6 +15,7 @@ def sha(value: Any) -> str:
 from .intel_plan import (
     CAPABILITY_DEFERRED_ANALYSIS,
     MeetingIntelRefused,
+    SESSION_CLOSED,
     SESSION_NOT_ADMITTED,
 )
 

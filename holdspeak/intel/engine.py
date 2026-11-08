@@ -9,7 +9,7 @@ from __future__ import annotations
 import time
 from collections.abc import Iterator
 from pathlib import Path
-from typing import Any, Callable, Optional, Union
+from typing import TYPE_CHECKING, Any, Callable, Optional, Union
 from urllib.parse import urlsplit
 
 import holdspeak.intel as _intel_pkg
@@ -65,6 +65,9 @@ log = get_logger("intel")
 #: process exit Python's finalization may collect both runtimes, but an abort
 #: during shutdown is benign (the process is already terminating).
 import threading as _threading
+
+if TYPE_CHECKING:
+    from ..kernel.inference_stream import Delta
 
 _LLAMA_CACHE_LOCK = _threading.Lock()
 _LLAMA_PROCESS_CACHE: dict[str, object] = {}
