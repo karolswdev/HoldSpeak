@@ -222,7 +222,7 @@ def test_loopback_classifier_has_no_request_authority_callers() -> None:
         ("web_server.py", "__init__"),
         ("web_server.py", "start"),
         ("web_server.py", "_start_mesh_advertising"),
-        ("runtime/composition.py", "compose_hub"),  # mesh_requires_token; moved out of web_server._create_app 2026-11-08
+        ("runtime/hub_composition.py", "compose_hub"),  # mesh_requires_token; moved out of web_server._create_app 2026-11-08
         # HS-200-45: the stdio sidecar's hub discovery. It classifies the host
         # it read out of the owner lock so it only ever dials loopback (POST
         # /api/mcp refuses an OWNER token off-loopback anyway, C5). An OUTBOUND
