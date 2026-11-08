@@ -2213,7 +2213,7 @@
       "phase1_refs": [],
       "sources": [
         {
-          "path": "web/src/pages/cores/connections/ConnectionsPane.tsx",
+          "path": "web/src/features/channels/accountChip.ts",
           "symbol": "case \"never_checked\": return \"Not checked\";",
           "claim": "the chip's words for a provider never checked"
         }
