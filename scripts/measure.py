@@ -17,6 +17,8 @@ reads these numbers:
    earliest author date) to the merge; PR open to merge stays beside it.
 3. The size of the built web bundle (holdspeak/static/_built/assets/*.js).
 4. The hub cold start: process start to the first GET / with status 200.
+   Beside it, the desk open on that hub in Chromium at 1440 (cold cache):
+   the /api requests it makes and the ms to the desk screen.
 5. The shape of the code: the largest files, files per package, the fence.
 6. The seams in scripts/measure_seams.json: each count must go to zero.
 7. Presses by him per night: The Walk's answers (walk.json in each folder
@@ -209,7 +211,9 @@ def bundle(repo: Path) -> list[Row]:
 
 # 4. Hub cold start -----------------------------------------------------------
 
-def _one_cold_start(repo: Path, timeout: float) -> float | None:
+def _one_cold_start(repo: Path, timeout: float, then=None):
+    """Seconds from start to the first GET / 200 (None: no 200). With
+    ``then``, its answer while the hub still runs: ``then(home, seconds)``."""
     home = tempfile.mkdtemp(prefix="measure-hub-")
     env = {**os.environ, **HUB_SWITCHES, "HOME": home, "HOLDSPEAK_WEB_PORT": str(HUB_PORT)}
     url = f"http://127.0.0.1:{HUB_PORT}/"
@@ -226,7 +230,8 @@ def _one_cold_start(repo: Path, timeout: float) -> float | None:
             try:
                 with urllib.request.urlopen(url, timeout=1) as resp:
                     if resp.status == 200:
-                        return time.monotonic() - start
+                        seconds = time.monotonic() - start
+                        return then(Path(home), seconds) if then else seconds
             except (urllib.error.URLError, ConnectionError, TimeoutError, OSError):
                 pass
             time.sleep(0.1)
@@ -265,6 +270,68 @@ def hub_cold_start(repo: Path, runs: int = 3, timeout: float = 30.0) -> list[Row
     if len(times) < runs:
         rows.append((label, "Runs with no 200", str(runs - len(times))))
     return rows
+
+
+# 4b. Desk open ---------------------------------------------------------------
+
+DESK_OPEN_LABEL = "Desk open (1440 wide, new desk, cold cache)"
+
+
+def _hub_token(home: Path) -> str:
+    config = home / ".config" / "holdspeak" / "config.json"
+    return str(json.loads(config.read_text()).get("meeting", {}).get("web_auth_token") or "")
+
+
+def _desk_open(home: Path, _seconds: float, runs: int = 3) -> tuple[list[int], list[float]]:
+    """The desk opened in Chromium: the /api requests and the ms from the
+    navigation to the desk screen, for each of ``runs`` cold opens (the first
+    run's arrival cards are crossed first, as on his desk)."""
+    from playwright.sync_api import sync_playwright
+
+    base = f"http://127.0.0.1:{HUB_PORT}/?token={_hub_token(home)}"
+    counts: list[int] = []
+    times: list[float] = []
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch()
+        try:
+            page = browser.new_context(viewport={"width": 1440, "height": 900}).new_page()
+            cdp = page.context.new_cdp_session(page)
+            page.goto(base, wait_until="load")
+            page.locator(".chair").wait_for(timeout=30_000)
+            if page.locator(".chair-first-value").count():
+                page.get_by_role("button", name=re.compile(r"^(Continue later|Open my desk)$")).click()
+            page.wait_for_selector("[data-testid=desk-screen]", state="attached", timeout=30_000)
+            page.wait_for_load_state("networkidle")
+            for _ in range(runs):
+                api: list[str] = []
+                listen = lambda request: api.append(request.url) if "/api/" in request.url else None  # noqa: E731
+                page.on("request", listen)
+                cdp.send("Network.clearBrowserCache")
+                started = time.monotonic()
+                page.goto(base, wait_until="load")
+                page.wait_for_selector("[data-testid=desk-screen]", state="attached", timeout=30_000)
+                times.append((time.monotonic() - started) * 1000)
+                page.wait_for_load_state("networkidle")
+                page.wait_for_timeout(1500)
+                page.remove_listener("request", listen)
+                counts.append(len(api))
+        finally:
+            browser.close()
+    return counts, times
+
+
+def desk_open(repo: Path, timeout: float = 60.0) -> list[Row]:
+    """Two numbers of the perf lane (2026-11-08): what a desk open costs."""
+    if _port_answers():
+        return [(DESK_OPEN_LABEL, f"Port {HUB_PORT}", "in use by another process; not measured")]
+    answer = _one_cold_start(repo, timeout, then=_desk_open)
+    if not answer:
+        return [(DESK_OPEN_LABEL, f"GET / 200, port {HUB_PORT}", f"no 200 in {timeout:.0f} s")]
+    counts, times = answer
+    return [
+        (DESK_OPEN_LABEL, "Median of 3, /api requests until the network is still", str(int(statistics.median(counts)))),
+        (DESK_OPEN_LABEL, "Median of 3, navigation to the desk screen", f"{statistics.median(times):.0f} ms"),
+    ]
 
 
 # 5. Shape of the code --------------------------------------------------------
@@ -446,6 +513,10 @@ def main(argv: list[str] | None = None) -> int:
         rows.append(("Hub cold start", "Skipped", "--no-hub"))
     else:
         _section(rows, "Hub cold start", hub_cold_start, repo)
+    if args.no_hub:
+        rows.append((DESK_OPEN_LABEL, "Skipped", "--no-hub"))
+    else:
+        _section(rows, DESK_OPEN_LABEL, desk_open, repo)
     _section(rows, "Shape", shape, repo)
     _section(rows, "Seams to remove (lines)", seams, repo)
     _section(rows, "Presses by him, last 24 h", presses, now)
