@@ -393,14 +393,14 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/FirstWords.tsx",
+     "path": "web/src/desk/components/_parked/FirstWords.tsx",
      "line": 493,
      "claim": "one verb, two labels: with a draft it takes custody first",
      "symbol": "FirstWords"
     },
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/FirstWords.tsx",
+     "path": "web/src/desk/components/_parked/FirstWords.tsx",
      "line": 254,
      "claim": "dismiss() keeps any draft, then hands off",
      "symbol": "dismiss"
@@ -421,14 +421,14 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/FirstWords.tsx",
+     "path": "web/src/desk/components/_parked/FirstWords.tsx",
      "line": 325,
      "claim": "the verb, the library Button, disabled until there are words",
      "symbol": "FirstWords"
     },
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/FirstWords.tsx",
+     "path": "web/src/desk/components/_parked/FirstWords.tsx",
      "line": 288,
      "claim": "keep() POSTs the note and stages it to open",
      "symbol": "keep"
@@ -449,14 +449,14 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/FirstWords.tsx",
+     "path": "web/src/desk/components/_parked/FirstWords.tsx",
      "line": 370,
      "claim": "the one capture key on the gate, the library Button",
      "symbol": "FirstWords"
     },
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/FirstWords.tsx",
+     "path": "web/src/desk/components/_parked/FirstWords.tsx",
      "line": 393,
      "claim": "the press calls toggle(): begin() when idle, stop() when listening",
      "symbol": "FirstWords"
@@ -1655,7 +1655,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/FirstWords.tsx",
+     "path": "web/src/desk/components/_parked/FirstWords.tsx",
      "line": 493,
      "claim": "Continue later is the gate's dismissal verb",
      "symbol": "Continue later"
@@ -1683,7 +1683,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/FirstWords.tsx",
+     "path": "web/src/desk/components/_parked/FirstWords.tsx",
      "line": 493,
      "claim": "the dismissal verb renames itself when a draft must be carried",
      "symbol": "needsDraftCustody"
@@ -1760,14 +1760,14 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/FirstWords.tsx",
+     "path": "web/src/desk/components/_parked/FirstWords.tsx",
      "line": 308,
      "claim": "Keep as Note stores the created note id",
      "symbol": "setKeptNoteId"
     },
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/FirstWords.tsx",
+     "path": "web/src/desk/components/_parked/FirstWords.tsx",
      "line": 310,
      "claim": "the receipt line says so",
      "symbol": "Kept as a note"
@@ -1795,14 +1795,14 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/FirstWords.tsx",
+     "path": "web/src/desk/components/_parked/FirstWords.tsx",
      "line": 34,
      "claim": "listening is a capture state",
      "symbol": "listening"
     },
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/FirstWords.tsx",
+     "path": "web/src/desk/components/_parked/FirstWords.tsx",
      "line": 382,
      "claim": "the verb becomes Stop listening while it holds",
      "symbol": "Stop listening"
@@ -1823,14 +1823,14 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/FirstWords.tsx",
+     "path": "web/src/desk/components/_parked/FirstWords.tsx",
      "line": 35,
      "claim": "an unsupported browser gets its own sentence",
      "symbol": "micUnsupportedMessage"
     },
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/FirstWords.tsx",
+     "path": "web/src/desk/components/_parked/FirstWords.tsx",
      "line": 409,
      "claim": "and its own state on the face",
      "symbol": "supported"
@@ -1851,14 +1851,14 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/FirstWords.tsx",
+     "path": "web/src/desk/components/_parked/FirstWords.tsx",
      "line": 49,
      "claim": "the gate's text is a durable draft",
      "symbol": "useDurableDraft"
     },
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/FirstWords.tsx",
+     "path": "web/src/desk/components/_parked/FirstWords.tsx",
      "line": 47,
      "claim": "it reports whether the words were recovered",
      "symbol": "recovered"
@@ -1879,7 +1879,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/FirstWords.tsx",
+     "path": "web/src/desk/components/_parked/FirstWords.tsx",
      "line": 34,
      "claim": "success is the terminal capture state",
      "symbol": "success"

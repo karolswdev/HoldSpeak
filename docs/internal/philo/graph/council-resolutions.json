@@ -446,7 +446,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/ThreadComposer.tsx",
+          "path": "web/src/desk/components/_parked/ThreadComposer.tsx",
           "line": 609,
           "symbol": "executeSlashCommand",
           "claim": "The keep slash command calls onKeep(lastAssistantId, \"note\") when a last assistant message exists."

@@ -9762,7 +9762,7 @@
       "id": "cr.live_astra.typed_note_receipt",
       "claim_ref": {
         "revision": "f575a5829b179548a2729dd58eb291f7d812b8c7",
-        "path": "web/src/desk/components/FirstWords.tsx",
+        "path": "web/src/desk/components/_parked/FirstWords.tsx",
         "line": 296,
         "anchor": "typed_note_receipt",
         "claim": "The typed Keep path posts the note and shows its kept receipt."
@@ -9791,7 +9791,7 @@
       "id": "cr.live_astra.draft_note_custody",
       "claim_ref": {
         "revision": "f575a5829b179548a2729dd58eb291f7d812b8c7",
-        "path": "web/src/desk/components/FirstWords.tsx",
+        "path": "web/src/desk/components/_parked/FirstWords.tsx",
         "line": 270,
         "anchor": "draft_note_custody",
         "claim": "Continue with typed text saves First dictation and opens it on the Desk."

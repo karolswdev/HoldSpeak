@@ -748,11 +748,11 @@
     }
   ],
   "measurements": {
-    "residual_identities": 265,
-    "residual_mcp": 209,
+    "residual_identities": 281,
+    "residual_mcp": 225,
     "residual_http": 56,
     "http_constructions": 57,
-    "public_tools": 289
+    "public_tools": 305
   },
   "entries": [
     {
@@ -1633,24 +1633,6 @@
     },
     {
       "transport": "mcp",
-      "entry_point": "practice_recipe.compile",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/practice_recipe.py)"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "practice_recipe.get",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/practice_recipe.py)"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "practice_recipe.list",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/practice_recipe.py)"
-    },
-    {
-      "transport": "mcp",
       "entry_point": "project.setup.answer",
       "discriminator": "",
       "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
@@ -1891,18 +1873,6 @@
     },
     {
       "transport": "mcp",
-      "entry_point": "sequence.cancel",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/sequence.py)"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "sequence.run",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/sequence.py)"
-    },
-    {
-      "transport": "mcp",
       "entry_point": "settings.get",
       "discriminator": "",
       "reason": "hand-wired family dispatcher (holdspeak/mcp/families/settings.py)"
@@ -2059,37 +2029,7 @@
     },
     {
       "transport": "mcp",
-      "entry_point": "workbench.cancel",
-      "discriminator": "",
-      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "workbench.create",
-      "discriminator": "",
-      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "workbench.delete",
-      "discriminator": "",
-      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
-    },
-    {
-      "transport": "mcp",
       "entry_point": "workbench.delete_item",
-      "discriminator": "",
-      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "workbench.get",
-      "discriminator": "",
-      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "workbench.list",
       "discriminator": "",
       "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
     },
@@ -2101,39 +2041,9 @@
     },
     {
       "transport": "mcp",
-      "entry_point": "workbench.results",
-      "discriminator": "",
-      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "workbench.run",
-      "discriminator": "",
-      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "workbench.update",
-      "discriminator": "",
-      "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
-    },
-    {
-      "transport": "mcp",
       "entry_point": "workbench.update_item",
       "discriminator": "",
       "reason": "hand-wired branch in holdspeak/mcp/tools.py dispatch"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "workflow.cancel",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/sequence.py)"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "workflow.run",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/sequence.py)"
     },
     {
       "transport": "http",

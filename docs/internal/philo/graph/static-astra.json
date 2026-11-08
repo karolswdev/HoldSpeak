@@ -493,7 +493,7 @@
       "sha256": "6048cfcddd34b00a41cfe22d12c4079bdca8a499b67b316e5b59cdd018242ee2"
     },
     {
-      "path": "holdspeak/mcp/families/practice_recipe.py",
+      "path": "holdspeak/mcp/families/_parked/practice_recipe.py",
       "sha256": "6cd1e2e708a742b0f6444b88eaf2abb8d0b068e6b4ef6d06dac35878cc584bda"
     },
     {
@@ -505,7 +505,7 @@
       "sha256": "61746e9a1ec4555732390ed0416e28a7b7a005844e501a29954e55544465b25a"
     },
     {
-      "path": "holdspeak/mcp/families/sequence.py",
+      "path": "holdspeak/mcp/families/_parked/sequence.py",
       "sha256": "7c0221609ec96b48bb5c079d97930f8dd45eaa689f5090de1f365d26fa04051b"
     },
     {
@@ -1325,7 +1325,7 @@
       "sha256": "ab78b4b372434bcf2ecac37bf579ce0637efdfa2ff8c6b48dfa4eec59bd418d9"
     },
     {
-      "path": "web/src/desk/components/CallChip.tsx",
+      "path": "web/src/desk/components/_parked/CallChip.tsx",
       "sha256": "84c68da1d4d9716e1013f24f2144c07fc9d07d0515069f578d4181fef1a39ad4"
     },
     {
@@ -1337,7 +1337,7 @@
       "sha256": "f8fe919dde93f34b22533df97362a9f0095b515af93bba92feae2112b1637ed2"
     },
     {
-      "path": "web/src/desk/components/DeliveryListSection.tsx",
+      "path": "web/src/desk/components/_parked/DeliveryListSection.tsx",
       "sha256": "edcb8a12b33252c220b10126e3814346a4bc62c5668f80c3dab279d80c0e7c8e"
     },
     {
@@ -1353,7 +1353,7 @@
       "sha256": "600e6c1c06564f84cfc5efbd0e0702919acadf31fbe3c6052b0469ebe8e78bec"
     },
     {
-      "path": "web/src/desk/components/DeskCreateMenu.tsx",
+      "path": "web/src/desk/components/_parked/DeskCreateMenu.tsx",
       "sha256": "ae2467b8fa678b18683b7e44c20d9f9cee1cc0ba038f21ecd223a75184464e75"
     },
     {
@@ -1381,7 +1381,7 @@
       "sha256": "a4d9b890728110d6b1b4f8eee837af02e31779792e05c9b3fd40a54e253739dd"
     },
     {
-      "path": "web/src/desk/components/DeskStartActions.tsx",
+      "path": "web/src/desk/components/_parked/DeskStartActions.tsx",
       "sha256": "c00d540e931ea39ca0710dae672c460ae812dd92961a2c4c2308aef3cced31e3"
     },
     {
@@ -1405,7 +1405,7 @@
       "sha256": "cbee5702535d6331ed7bcac028530a9931da6ef31382f8b3d1a50a3a70042149"
     },
     {
-      "path": "web/src/desk/components/FirstWords.tsx",
+      "path": "web/src/desk/components/_parked/FirstWords.tsx",
       "sha256": "2f9cf3f4c8f87cbe285a87bac1d3010c78882568ae8d323c82bb4751234b7f69"
     },
     {
@@ -1429,7 +1429,7 @@
       "sha256": "9462822982ce91534caa69a6a1640d72d179b9ca3c23379163bc1176bbcae994"
     },
     {
-      "path": "web/src/desk/components/InterviewPanel.tsx",
+      "path": "web/src/desk/components/_parked/InterviewPanel.tsx",
       "sha256": "6d8c99bd94bdc5fb073b74eef00dd4394a326a267501a8f7dbd07e6f33b372b5"
     },
     {
@@ -1441,7 +1441,7 @@
       "sha256": "80dd3786877cbc48c4b36263a1302798277c4cb0d0746af82c50086254ee7336"
     },
     {
-      "path": "web/src/desk/components/ModeTabs.tsx",
+      "path": "web/src/desk/components/_parked/ModeTabs.tsx",
       "sha256": "c95f228eef81e8763ffb25565d74ed52f0c8f8f14c8c6ed610e824d944957777"
     },
     {
@@ -1449,7 +1449,7 @@
       "sha256": "82258b72f8dc2e5cfa9a1bd341c77f8607c0be55123a566b635d3bd310bbf30a"
     },
     {
-      "path": "web/src/desk/components/PrReceiptsSection.tsx",
+      "path": "web/src/desk/components/_parked/PrReceiptsSection.tsx",
       "sha256": "835363a58eb5527321d754debb8fc25b884536c96e5b6a3d895cda6b9b0caaf2"
     },
     {
@@ -1481,7 +1481,7 @@
       "sha256": "6e2d202178ffcc87660110d580c3da75695fbe67b5b52f17dcc588aacb723b4c"
     },
     {
-      "path": "web/src/desk/components/SpeakerGlyph.tsx",
+      "path": "web/src/desk/components/_parked/SpeakerGlyph.tsx",
       "sha256": "12eba0bb72d5d3379d4b8c64ecd731f58f63b8164521ca329ac1af2f93caf51f"
     },
     {
@@ -1493,7 +1493,7 @@
       "sha256": "3be014820570504851a0ca9259c7cfb714fd1286d0a8dc7100a297551bc4d699"
     },
     {
-      "path": "web/src/desk/components/ThreadComposer.tsx",
+      "path": "web/src/desk/components/_parked/ThreadComposer.tsx",
       "sha256": "a3d130367e1570f1d2fbaa960028af104d310ec421859632a75dcdc36ab14e76"
     },
     {
@@ -1521,7 +1521,7 @@
       "sha256": "93bde508a36025b3cf91fe2d2548568b4c9f7c70b76f63366d6fdc2f04c8a972"
     },
     {
-      "path": "web/src/desk/components/ZoneWindow.tsx",
+      "path": "web/src/desk/components/_parked/ZoneWindow.tsx",
       "sha256": "0d068b02a80e1ab3612206a8d5aa8fda394a9441f9b93eb0f03e5ed7bd543f3d"
     },
     {
@@ -1533,7 +1533,7 @@
       "sha256": "48fa24fa307ea5144704a4a4267b13eb0e599b020d85fca163e444588f17546a"
     },
     {
-      "path": "web/src/desk/components/window/RoomActions.tsx",
+      "path": "web/src/desk/components/window/_parked/RoomActions.tsx",
       "sha256": "91bc886f62fc3039d0d01a6e485d211108fa746d30928e62d6a3551cabdea7f7"
     },
     {
@@ -1549,7 +1549,7 @@
       "sha256": "e0dfc6b45a8eeec061f55e02d6f617af00659394aeacaff20e4633f51e613c18"
     },
     {
-      "path": "web/src/desk/dropMatrix.ts",
+      "path": "web/src/desk/_parked/dropMatrix.ts",
       "sha256": "ec45670425587b3658f514eee8de24865fa78211517e4dd06f536bd387ef832f"
     },
     {
@@ -1577,7 +1577,7 @@
       "sha256": "82a8361144523f137b9a6249edd8c04736de86b8ce40a92c2f40033ce9f4f8bb"
     },
     {
-      "path": "web/src/desk/gl/engine.ts",
+      "path": "web/src/desk/gl/_parked/engine.ts",
       "sha256": "ba850ca174c7ac9b7f76bf5df85523a02ce800683fbbbe4e3d940d27ddba1b1b"
     },
     {
@@ -1597,7 +1597,7 @@
       "sha256": "facee483cdd14af9c8dd195cd06bc24628df9eed9f9f4fca9047fcc1fe4df687"
     },
     {
-      "path": "web/src/desk/pullouts/ChainPullout.tsx",
+      "path": "web/src/desk/pullouts/_parked/ChainPullout.tsx",
       "sha256": "dbec7376f54f4d299fc8a23dda2e9633be6d077644e15e48c9573eb00c8cc937"
     },
     {
@@ -1641,7 +1641,7 @@
       "sha256": "c6524b9d5e536632b62d9c5ca2c1350a6b468810cb841ef63953a40820a47864"
     },
     {
-      "path": "web/src/desk/pullouts/WorkflowPullout.tsx",
+      "path": "web/src/desk/pullouts/_parked/WorkflowPullout.tsx",
       "sha256": "a35d0ed71937de8599b64c9eecb6ea69153d51430b74d89e49a372b60c5c3163"
     },
     {
@@ -1661,7 +1661,7 @@
       "sha256": "704693394bb360c5bc961d23fc0d57a7306943ac1c0302bd8cdb29ef4b22b26d"
     },
     {
-      "path": "web/src/desk/pullouts/editors/WorkflowEditor.tsx",
+      "path": "web/src/desk/pullouts/_parked/editors/WorkflowEditor.tsx",
       "sha256": "807b564eede749a058a6812d294e4ea26e1c02981b18c0a9cfbea4fd65fc375c"
     },
     {
@@ -1673,7 +1673,7 @@
       "sha256": "d96139d9c84a6e2ee9be6f1d2ba9636c3e1916d0c9e299af1b60ba82ea8a759d"
     },
     {
-      "path": "web/src/desk/pullouts/shared/ThreadsSection.tsx",
+      "path": "web/src/desk/pullouts/_parked/ThreadsSection.tsx",
       "sha256": "ac6e859e3d8364c720918a74193aac045a5c80b45b7cc06716385ee7f3985e50"
     },
     {
@@ -1705,7 +1705,7 @@
       "sha256": "30439ebde5f3469ee6852fff01546ac7a391977560ee512e3dd94406f50f6a6a"
     },
     {
-      "path": "web/src/desk/surface/LedgerFilter.tsx",
+      "path": "web/src/desk/surface/_parked/LedgerFilter.tsx",
       "sha256": "949c9b99778de271cc4e400a4303c69d357c115beaa44465577cc85f529ccfe6"
     },
     {
@@ -1745,7 +1745,7 @@
       "sha256": "4c82422a4f515f81846717fef2ba48dca2641f334ed2a3b036db45f6a767c4b3"
     },
     {
-      "path": "web/src/desk/surface/patterns/LedgerRemainder.tsx",
+      "path": "web/src/desk/surface/patterns/_parked/LedgerRemainder.tsx",
       "sha256": "754b88dc94e34dfd99a008da2d604559271f96ab99dd187cdc70ff92c0d01399"
     },
     {
@@ -1765,7 +1765,7 @@
       "sha256": "6aca48d70bde769073dbe93d680863d212bc95b50979d28f76ddf222b47bb7a8"
     },
     {
-      "path": "web/src/desk/surface/patterns/TaskResume.tsx",
+      "path": "web/src/desk/surface/patterns/_parked/TaskResume.tsx",
       "sha256": "d886d9ad9772ce06a3a1d79d3beaea461d31d2fdfa2788d0036cc3ff83f3bafa"
     },
     {
@@ -1781,7 +1781,7 @@
       "sha256": "94a090a37e11dc30c2202206b54f060a8e58aae88d41397dd70e5f9b24978862"
     },
     {
-      "path": "web/src/desk/thought-workspace/ThoughtReadsWell.tsx",
+      "path": "web/src/desk/thought-workspace/_parked/ThoughtReadsWell.tsx",
       "sha256": "e8b0f12c525e7a4933c3e6fc565e3ac4c8685dea8554d4a8c457302ef705d544"
     },
     {
@@ -1969,7 +1969,7 @@
       "sha256": "4aeb7b52147564f811f198a4da3d441a7ed429bfd7e34231afc9d51470c2bf85"
     },
     {
-      "path": "web/src/pages/cores/CompanionCore.tsx",
+      "path": "web/src/pages/cores/_parked/CompanionCore.tsx",
       "sha256": "740cdb4d28de303df0cbbb1a44d1c3fab2c1cbb128689cd1bbd0638c69631948"
     },
     {
@@ -2105,7 +2105,7 @@
       "sha256": "142ff8aa24b229fc111a28ed918933587323ec1fe15d1f4fc41348cb4cf04612"
     },
     {
-      "path": "web/src/pages/cores/history/AftercareGadgets.tsx",
+      "path": "web/src/pages/cores/history/_parked/AftercareGadgets.tsx",
       "sha256": "72ca6bd084928e9a2f6191c2248c33d1b267cd3cdead0834c51f6cc750fad1a9"
     },
     {
@@ -2129,7 +2129,7 @@
       "sha256": "31f4186f5d748fce9ae475da1160c1babf95634ea2ab654cf71b4cbd1bd0b7f9"
     },
     {
-      "path": "web/src/pages/cores/history/MeetingReview.tsx",
+      "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
       "sha256": "595ffe9438300fa8b757d8ba17e31238420e6cf1a89899e8fa58d0d907ce6b48"
     },
     {
@@ -2494,7 +2494,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 333,
           "symbol": "copy",
           "claim": "copy() writes the current text to the clipboard and reports blocked access."
@@ -2509,7 +2509,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 75,
           "symbol": "loadPendingVoice",
           "claim": "The mount recovery marks retained audio and routes the user to the retry branch."
@@ -2524,7 +2524,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 206,
           "symbol": "completeHandoff",
           "claim": "The retry calls the same seed, refresh, onboarding and dismissal sequence."
@@ -2539,7 +2539,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 471,
           "symbol": "needsMicrophoneDoctor",
           "claim": "The setup control chooses configure-setup for microphone failures and project-setup otherwise."
@@ -2554,7 +2554,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 420,
           "symbol": "PadGadget",
           "claim": "The PadGadget owns text value and onChange updates the durable draft."
@@ -2599,7 +2599,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 233,
           "symbol": "accept-reviewed",
           "claim": "The bulk operation preserves unsupported, unknown and prior rows with a receipt."
@@ -2614,7 +2614,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 156,
           "symbol": "/confirm",
           "claim": "The confirm operation sends POST /api/proposals/{id}/confirm and renders the returned durable proposal."
@@ -2629,7 +2629,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 182,
           "symbol": "/dismiss",
           "claim": "The dismiss operation returns a durable state and focuses the next visible row."
@@ -2644,7 +2644,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 203,
           "symbol": "/edit",
           "claim": "The edit operation posts only the changed text, owner or due field."
@@ -2659,7 +2659,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 567,
           "symbol": "onOpenEvidence",
           "claim": "The evidence control routes to the transcript span for the proposal."
@@ -2674,7 +2674,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 97,
           "symbol": "outcome-review",
           "claim": "The review model decodes coverage, job, proposals and revision from the API response."
@@ -2689,7 +2689,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 541,
           "symbol": "meetings-review-more",
           "claim": "The disclosure exposes only controls supported by the row state."
@@ -2704,7 +2704,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 631,
           "symbol": "onOpenEvidence",
           "claim": "The kept row chooses its segment or transcript destination."
@@ -2719,7 +2719,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 708,
           "symbol": "onRunIntelligence",
           "claim": "The failed read keeps an explicit retry control."
@@ -3760,7 +3760,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 285,
           "symbol": "beginHandoff",
           "claim": "The dismissal calls beginHandoff with dismissed and any retained note id."
@@ -3775,7 +3775,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 500,
           "symbol": "dismiss",
           "claim": "The control reaches action.first_words.skip_help."
@@ -5530,7 +5530,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 316,
           "symbol": "review-project",
           "claim": "The control reaches action.meeting.open_project."
@@ -5569,7 +5569,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 716,
           "symbol": "review-open-transcript",
           "claim": "The control reaches action.meeting.open_transcript."
@@ -6060,7 +6060,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 182,
           "symbol": "stop",
           "claim": "Stop closes the stream, transcribes the result, or records the classified failure and retains audio for retry."
@@ -6104,7 +6104,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 296,
           "symbol": "keep",
           "claim": "The note POST result supplies the durable note id; the face presents Kept as a note or a named refusal."
@@ -6318,7 +6318,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 473,
           "symbol": "FirstWords",
           "claim": "Setup chooses configure-setup only for microphone doctor failures; every other Setup failure calls project-setup."
@@ -6633,7 +6633,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 156,
           "symbol": "startStreamSession",
           "claim": "The card starts the browser stream session, then transitions to listening and accepts the stopped transcript."
@@ -6648,7 +6648,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 333,
           "symbol": "copy",
           "claim": "The connection for edge.face.first_words_copy reaches Copy the editable words to the owner clipboard."
@@ -6663,7 +6663,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 420,
           "symbol": "PadGadget",
           "claim": "The connection for edge.face.first_words_text_edit reaches Edit the first-value text in place."
@@ -6683,7 +6683,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 254,
           "symbol": "dismiss",
           "claim": "dismiss() creates note custody when text exists, then starts the onboarding handoff."
@@ -6698,7 +6698,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 206,
           "symbol": "completeHandoff",
           "claim": "The connection for edge.face.first_words_retry_finish reaches Retry the pending first-value handoff."
@@ -6718,7 +6718,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 296,
           "symbol": "keep",
           "claim": "keep() posts /api/notes, stages note custody, and completes the desk handoff after a transcript."
@@ -6733,7 +6733,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 75,
           "symbol": "loadPendingVoice",
           "claim": "The connection for edge.face.first_words_reload reaches Recover retained browser audio and retry transcription."
@@ -6748,7 +6748,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 471,
           "symbol": "needsMicrophoneDoctor",
           "claim": "The connection for edge.face.first_words_setup reaches Open the named setup surface for the capture failure."
@@ -6763,7 +6763,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 500,
           "symbol": "dismiss",
           "claim": "The control reaches action.first_words.skip_help."
@@ -6858,7 +6858,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 233,
           "symbol": "accept-reviewed",
           "claim": "The connection for edge.face.meetings_review_accept_all reaches Accept all eligible reviewed proposals."
@@ -6873,7 +6873,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 156,
           "symbol": "/confirm",
           "claim": "The connection for edge.face.meetings_review_confirm reaches Confirm one supported proposal."
@@ -6888,7 +6888,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 182,
           "symbol": "/dismiss",
           "claim": "The connection for edge.face.meetings_review_dismiss reaches Dismiss one proposal and move focus."
@@ -6903,7 +6903,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 203,
           "symbol": "/edit",
           "claim": "The connection for edge.face.meetings_review_edit reaches Edit proposal text or supply typed unknowns."
@@ -6918,7 +6918,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 567,
           "symbol": "onOpenEvidence",
           "claim": "The connection for edge.face.meetings_review_evidence reaches Open the source transcript segment."
@@ -6933,7 +6933,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 97,
           "symbol": "outcome-review",
           "claim": "The connection for edge.face.meetings_review_load reaches Read the durable outcome review projection."
@@ -6948,7 +6948,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 541,
           "symbol": "meetings-review-more",
           "claim": "The connection for edge.face.meetings_review_more reaches Open the proposal row's additional controls."
@@ -6963,7 +6963,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 631,
           "symbol": "onOpenEvidence",
           "claim": "The connection for edge.face.meetings_review_open_kept reaches Open a retained proposal's evidence or transcript."
@@ -6978,7 +6978,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 716,
           "symbol": "review-open-transcript",
           "claim": "The control reaches action.meeting.open_transcript."
@@ -6993,7 +6993,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 316,
           "symbol": "review-project",
           "claim": "The control reaches action.meeting.open_project."
@@ -7008,7 +7008,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 708,
           "symbol": "onRunIntelligence",
           "claim": "The connection for edge.face.meetings_review_reread reaches Re-read a failed meeting transcript."
@@ -8189,7 +8189,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 285,
           "symbol": "beginHandoff",
           "claim": "Connection reaches action.first_words.dismiss: The dismissal calls beginHandoff with dismissed and any retained note id."
@@ -8204,7 +8204,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 333,
           "symbol": "copy",
           "claim": "copy() writes the current text to the clipboard and reports blocked access."
@@ -8224,7 +8224,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 296,
           "symbol": "keep",
           "claim": "Connection reaches action.voice.keep_first_value_note: The note POST result supplies the durable note id; the face presents Kept as a note or a named refusal."
@@ -8239,7 +8239,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 75,
           "symbol": "loadPendingVoice",
           "claim": "The mount recovery marks retained audio and routes the user to the retry branch."
@@ -8254,7 +8254,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 206,
           "symbol": "completeHandoff",
           "claim": "The retry calls the same seed, refresh, onboarding and dismissal sequence."
@@ -8269,7 +8269,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 471,
           "symbol": "needsMicrophoneDoctor",
           "claim": "The setup control chooses configure-setup for microphone failures and project-setup otherwise."
@@ -8284,7 +8284,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 500,
           "symbol": "dismiss",
           "claim": "The control reaches action.first_words.skip_help."
@@ -8308,7 +8308,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 182,
           "symbol": "stop",
           "claim": "Connection reaches action.voice.first_words_capture: Stop closes the stream, transcribes the result, or records the classified failure and retains audio for retry."
@@ -8323,7 +8323,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 420,
           "symbol": "PadGadget",
           "claim": "The PadGadget owns text value and onChange updates the durable draft."
@@ -8368,7 +8368,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 233,
           "symbol": "accept-reviewed",
           "claim": "The bulk operation preserves unsupported, unknown and prior rows with a receipt."
@@ -8383,7 +8383,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 156,
           "symbol": "/confirm",
           "claim": "The confirm operation sends POST /api/proposals/{id}/confirm and renders the returned durable proposal."
@@ -8398,7 +8398,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 182,
           "symbol": "/dismiss",
           "claim": "The dismiss operation returns a durable state and focuses the next visible row."
@@ -8413,7 +8413,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 203,
           "symbol": "/edit",
           "claim": "The edit operation posts only the changed text, owner or due field."
@@ -8428,7 +8428,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 567,
           "symbol": "onOpenEvidence",
           "claim": "The evidence control routes to the transcript span for the proposal."
@@ -8443,7 +8443,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 97,
           "symbol": "outcome-review",
           "claim": "The review model decodes coverage, job, proposals and revision from the API response."
@@ -8458,7 +8458,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 541,
           "symbol": "meetings-review-more",
           "claim": "The disclosure exposes only controls supported by the row state."
@@ -8473,7 +8473,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 631,
           "symbol": "onOpenEvidence",
           "claim": "The kept row chooses its segment or transcript destination."
@@ -8488,7 +8488,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 716,
           "symbol": "review-open-transcript",
           "claim": "The control reaches action.meeting.open_transcript."
@@ -8503,7 +8503,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 316,
           "symbol": "review-project",
           "claim": "The control reaches action.meeting.open_project."
@@ -8518,7 +8518,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 708,
           "symbol": "onRunIntelligence",
           "claim": "The failed read keeps an explicit retry control."
@@ -11587,7 +11587,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/ThreadComposer.tsx",
+          "path": "web/src/desk/components/_parked/ThreadComposer.tsx",
           "line": 609,
           "symbol": "executeSlashCommand",
           "claim": "The keep slash command calls onKeep(lastAssistantId, \"note\") when a last assistant message exists."
@@ -17199,7 +17199,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/ThreadComposer.tsx",
+          "path": "web/src/desk/components/_parked/ThreadComposer.tsx",
           "line": 1089,
           "anchor": "onText={(spoken) => setText((current) => current && !/\\s$/.test(current) ? `${current} ${spoken}` : current + spoken, ) }",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -17407,7 +17407,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/ThreadComposer.tsx",
+          "path": "web/src/desk/components/_parked/ThreadComposer.tsx",
           "line": 942,
           "anchor": "onSelectedIndexChange={setAcIndex}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -17551,7 +17551,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/CompanionCore.tsx",
+          "path": "web/src/pages/cores/_parked/CompanionCore.tsx",
           "line": 41,
           "anchor": "onDoor={() => setDoorOpen((v) => !v)}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -17967,7 +17967,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 579,
           "anchor": "onCommit={(next) => edit(p, { owner: next })}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -17999,7 +17999,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/ThreadComposer.tsx",
+          "path": "web/src/desk/components/_parked/ThreadComposer.tsx",
           "line": 929,
           "anchor": "onRemove={() => removeChip(i)}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -18271,7 +18271,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 589,
           "anchor": "onCommit={(next) => edit(p, { due: next })}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -18719,7 +18719,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/CompanionCore.tsx",
+          "path": "web/src/pages/cores/_parked/CompanionCore.tsx",
           "line": 85,
           "anchor": "onToggle={() => setToggled((t) => ({ ...t, [key]: !open }))}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -19375,7 +19375,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/ThreadComposer.tsx",
+          "path": "web/src/desk/components/_parked/ThreadComposer.tsx",
           "line": 963,
           "anchor": "onOpen={() => pickSlashItem(item)}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -19455,7 +19455,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/ZoneWindow.tsx",
+          "path": "web/src/desk/components/_parked/ZoneWindow.tsx",
           "line": 134,
           "anchor": "onAction={() => undefined}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -19615,7 +19615,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 503,
           "anchor": "onCommit={(next) => edit(p, { text: next })}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -19791,7 +19791,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/WorkflowPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/WorkflowPullout.tsx",
           "line": 31,
           "anchor": "onClose={closeEditor}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -20207,7 +20207,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/surface/patterns/TaskResume.tsx",
+          "path": "web/src/desk/surface/patterns/_parked/TaskResume.tsx",
           "line": 256,
           "anchor": "onConfirm={onDiscard}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -20287,7 +20287,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/ThreadComposer.tsx",
+          "path": "web/src/desk/components/_parked/ThreadComposer.tsx",
           "line": 941,
           "anchor": "onSelectItem={selectAutocompleteItem}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -20559,7 +20559,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/ZoneWindow.tsx",
+          "path": "web/src/desk/components/_parked/ZoneWindow.tsx",
           "line": 146,
           "anchor": "onDoubleClick={(event) => openPullout(member.id, { x: event.clientX, y: event.clientY }) }",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -21455,7 +21455,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/ZoneWindow.tsx",
+          "path": "web/src/desk/components/_parked/ZoneWindow.tsx",
           "line": 168,
           "anchor": "onSort={(key, dir) => setZoneViewPref(zoneId, { sort: key as SortKey, dir })}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -21471,7 +21471,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/ThreadComposer.tsx",
+          "path": "web/src/desk/components/_parked/ThreadComposer.tsx",
           "line": 988,
           "anchor": "onText={handleMicText}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -21775,7 +21775,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/DeskCreateMenu.tsx",
+          "path": "web/src/desk/components/_parked/DeskCreateMenu.tsx",
           "line": 58,
           "anchor": "onClose={() => setOpen(false)}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -21983,7 +21983,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/ZoneWindow.tsx",
+          "path": "web/src/desk/components/_parked/ZoneWindow.tsx",
           "line": 172,
           "anchor": "onRowClick={(member) => setSelectedMemberKey(`${member.kind}:${member.id}`)}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -22415,7 +22415,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/shared/ThreadsSection.tsx",
+          "path": "web/src/desk/pullouts/_parked/ThreadsSection.tsx",
           "line": 38,
           "anchor": "onOpen={() => openPullout(`thread:${t.id}`)}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -22447,7 +22447,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/ThreadComposer.tsx",
+          "path": "web/src/desk/components/_parked/ThreadComposer.tsx",
           "line": 980,
           "anchor": "onSelect={handleSelect}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -22751,7 +22751,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/PrReceiptsSection.tsx",
+          "path": "web/src/desk/components/_parked/PrReceiptsSection.tsx",
           "line": 138,
           "anchor": "onAction={() => void run( key, w.action === \"send\" ? \"Sending\" : \"Proposing\", () => w.action === \"send\" ? store.sendAgent(row, w.text) : store.propose( row, w.text, w.action === \"status\" ? \"status\" : ",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -22799,7 +22799,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/ZoneWindow.tsx",
+          "path": "web/src/desk/components/_parked/ZoneWindow.tsx",
           "line": 116,
           "anchor": "onClose={() => closeZoneWindow(zoneId)}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -22831,7 +22831,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ChainPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ChainPullout.tsx",
           "line": 52,
           "anchor": "onAction={() => openEditor(o.id)}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -22975,7 +22975,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/ThreadComposer.tsx",
+          "path": "web/src/desk/components/_parked/ThreadComposer.tsx",
           "line": 1074,
           "anchor": "onBlur={onCancel}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -23199,7 +23199,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/CompanionCore.tsx",
+          "path": "web/src/pages/cores/_parked/CompanionCore.tsx",
           "line": 149,
           "anchor": "onRetry={() => void recipes.reload()}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -23679,7 +23679,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/ZoneWindow.tsx",
+          "path": "web/src/desk/components/_parked/ZoneWindow.tsx",
           "line": 173,
           "anchor": "onRowDoubleClick={(member) => openPullout(member.id)}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -23727,7 +23727,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/CompanionCore.tsx",
+          "path": "web/src/pages/cores/_parked/CompanionCore.tsx",
           "line": 157,
           "anchor": "onToggle={() => openPersona(String(recipe.id))}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -23983,7 +23983,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 303,
           "anchor": "onRetry={() => void load()}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -24079,7 +24079,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 799,
           "anchor": "onConfirm={() => void acceptReviewed()}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -24095,7 +24095,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/surface/LedgerFilter.tsx",
+          "path": "web/src/desk/surface/_parked/LedgerFilter.tsx",
           "line": 124,
           "anchor": "onText={(text) => onQueryChange(text)}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -24367,7 +24367,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 560,
           "anchor": "onConfirm={() => void dismiss(p)}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -24447,7 +24447,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/DeskCreateMenu.tsx",
+          "path": "web/src/desk/components/_parked/DeskCreateMenu.tsx",
           "line": 80,
           "anchor": "onSelect={() => { setOpen(false); v.run(CTX); }}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -25167,7 +25167,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/PrReceiptsSection.tsx",
+          "path": "web/src/desk/components/_parked/PrReceiptsSection.tsx",
           "line": 107,
           "symbol": "PrReceiptsSection",
           "claim": "The production JSX source declares onClick at this control site."
@@ -25311,7 +25311,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/InterviewPanel.tsx",
+          "path": "web/src/desk/components/_parked/InterviewPanel.tsx",
           "line": 126,
           "symbol": "InterviewPanel",
           "claim": "The production JSX source declares onClick at this control site."
@@ -25375,7 +25375,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/InterviewPanel.tsx",
+          "path": "web/src/desk/components/_parked/InterviewPanel.tsx",
           "line": 220,
           "symbol": "InterviewPanel",
           "claim": "The production JSX source declares onClick at this control site."
@@ -25423,7 +25423,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/InterviewPanel.tsx",
+          "path": "web/src/desk/components/_parked/InterviewPanel.tsx",
           "line": 240,
           "symbol": "InterviewPanel",
           "claim": "The production JSX source declares onClick at this control site."
@@ -25695,7 +25695,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/CallChip.tsx",
+          "path": "web/src/desk/components/_parked/CallChip.tsx",
           "line": 140,
           "symbol": "CallChip",
           "claim": "The production JSX source declares onClick at this control site."
@@ -26031,7 +26031,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/DeskStartActions.tsx",
+          "path": "web/src/desk/components/_parked/DeskStartActions.tsx",
           "line": 32,
           "symbol": "DeskStartActions",
           "claim": "The production JSX source declares onClick at this control site."
@@ -26079,7 +26079,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/InterviewPanel.tsx",
+          "path": "web/src/desk/components/_parked/InterviewPanel.tsx",
           "line": 61,
           "symbol": "InterviewPanel",
           "claim": "The production JSX source declares onChange at this control site."
@@ -26223,7 +26223,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 655,
           "symbol": "renderPrior",
           "claim": "The production JSX source declares onClick at this control site."
@@ -27391,7 +27391,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SpeakerGlyph.tsx",
+          "path": "web/src/desk/components/_parked/SpeakerGlyph.tsx",
           "line": 64,
           "symbol": "SpeakerGlyph",
           "claim": "The production JSX source declares onKeyDown at this control site."
@@ -27743,7 +27743,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/editors/WorkflowEditor.tsx",
+          "path": "web/src/desk/pullouts/_parked/editors/WorkflowEditor.tsx",
           "line": 83,
           "symbol": "WorkflowEditor",
           "claim": "The production JSX source declares onChange at this control site."
@@ -28015,7 +28015,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/AftercareGadgets.tsx",
+          "path": "web/src/pages/cores/history/_parked/AftercareGadgets.tsx",
           "line": 36,
           "symbol": "AftercareGadgets",
           "claim": "The production JSX source declares onClick at this control site."
@@ -28127,7 +28127,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/PrReceiptsSection.tsx",
+          "path": "web/src/desk/components/_parked/PrReceiptsSection.tsx",
           "line": 154,
           "symbol": "PrReceiptsSection",
           "claim": "The production JSX source declares onClick at this control site."
@@ -29855,7 +29855,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/DeskStartActions.tsx",
+          "path": "web/src/desk/components/_parked/DeskStartActions.tsx",
           "line": 20,
           "symbol": "DeskStartActions",
           "claim": "The production JSX source declares onClick at this control site."
@@ -30111,7 +30111,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/WorkflowPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/WorkflowPullout.tsx",
           "line": 49,
           "symbol": "WorkflowPullout",
           "claim": "The production JSX source declares onClick at this control site."
@@ -30351,7 +30351,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/InterviewPanel.tsx",
+          "path": "web/src/desk/components/_parked/InterviewPanel.tsx",
           "line": 98,
           "symbol": "InterviewPanel",
           "claim": "The production JSX source declares onClick at this control site."
@@ -30511,7 +30511,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/surface/LedgerFilter.tsx",
+          "path": "web/src/desk/surface/_parked/LedgerFilter.tsx",
           "line": 156,
           "symbol": "LedgerFilterBar",
           "claim": "The production JSX source declares onClick at this control site."
@@ -30719,7 +30719,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/surface/patterns/LedgerRemainder.tsx",
+          "path": "web/src/desk/surface/patterns/_parked/LedgerRemainder.tsx",
           "line": 64,
           "symbol": "LedgerRemainder",
           "claim": "The production JSX source declares onClick at this control site."
@@ -30815,7 +30815,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 522,
           "symbol": "renderRow",
           "claim": "The production JSX source declares onClick at this control site."
@@ -31215,7 +31215,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/DeliveryListSection.tsx",
+          "path": "web/src/desk/components/_parked/DeliveryListSection.tsx",
           "line": 55,
           "symbol": "DeliveryListSection",
           "claim": "The production JSX source declares onClick at this control site."
@@ -31599,7 +31599,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ChainPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ChainPullout.tsx",
           "line": 66,
           "symbol": "ChainPullout",
           "claim": "The production JSX source declares onClick at this control site."
@@ -31855,7 +31855,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/ModeTabs.tsx",
+          "path": "web/src/desk/components/_parked/ModeTabs.tsx",
           "line": 115,
           "symbol": "ModeTabs",
           "claim": "The production JSX source declares onKeyDown at this control site."
@@ -32447,7 +32447,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/WorkflowPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/WorkflowPullout.tsx",
           "line": 50,
           "symbol": "WorkflowPullout",
           "claim": "The production JSX source declares onClick at this control site."
@@ -32543,7 +32543,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 788,
           "symbol": "MeetingReview",
           "claim": "The production JSX source declares onClick at this control site."
@@ -32559,7 +32559,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 473,
           "symbol": "FirstWords",
           "claim": "The production JSX source declares onClick at this control site."
@@ -32767,7 +32767,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/DeskCreateMenu.tsx",
+          "path": "web/src/desk/components/_parked/DeskCreateMenu.tsx",
           "line": 60,
           "symbol": "DeskCreateMenu",
           "claim": "The production JSX source declares onMouseLeave at this control site."
@@ -32927,7 +32927,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/CallChip.tsx",
+          "path": "web/src/desk/components/_parked/CallChip.tsx",
           "line": 141,
           "symbol": "CallChip",
           "claim": "The production JSX source declares onKeyDown at this control site."
@@ -33199,7 +33199,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/window/RoomActions.tsx",
+          "path": "web/src/desk/components/window/_parked/RoomActions.tsx",
           "line": 45,
           "symbol": "RoomActions",
           "claim": "The production JSX source declares onClick at this control site."
@@ -33359,7 +33359,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/ModeTabs.tsx",
+          "path": "web/src/desk/components/_parked/ModeTabs.tsx",
           "line": 132,
           "symbol": "ModeTabs",
           "claim": "The production JSX source declares onClick at this control site."
@@ -33535,7 +33535,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/thought-workspace/ThoughtReadsWell.tsx",
+          "path": "web/src/desk/thought-workspace/_parked/ThoughtReadsWell.tsx",
           "line": 129,
           "symbol": "ThoughtReadsWell",
           "claim": "The production JSX source declares onChange at this control site."
@@ -33615,7 +33615,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/ChainPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/ChainPullout.tsx",
           "line": 75,
           "symbol": "ChainPullout",
           "claim": "The production JSX source declares onClick at this control site."
@@ -33743,7 +33743,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/ThreadComposer.tsx",
+          "path": "web/src/desk/components/_parked/ThreadComposer.tsx",
           "line": 1072,
           "symbol": "InlineEditor",
           "claim": "The production JSX source declares onChange at this control site."
@@ -34191,7 +34191,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 440,
           "symbol": "FirstWords",
           "claim": "The production JSX source declares onClick at this control site."
@@ -34303,7 +34303,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/window/RoomActions.tsx",
+          "path": "web/src/desk/components/window/_parked/RoomActions.tsx",
           "line": 36,
           "symbol": "RoomActions",
           "claim": "The production JSX source declares onClick at this control site."
@@ -34463,7 +34463,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 320,
           "symbol": "MeetingReview",
           "claim": "The production JSX source declares onClick at this control site."
@@ -34799,7 +34799,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/ZoneWindow.tsx",
+          "path": "web/src/desk/components/_parked/ZoneWindow.tsx",
           "line": 179,
           "symbol": "ZoneWindow",
           "claim": "The production JSX source declares onClick at this control site."
@@ -34847,7 +34847,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/ThreadComposer.tsx",
+          "path": "web/src/desk/components/_parked/ThreadComposer.tsx",
           "line": 1073,
           "symbol": "InlineEditor",
           "claim": "The production JSX source declares onKeyDown at this control site."
@@ -34927,7 +34927,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/ZoneWindow.tsx",
+          "path": "web/src/desk/components/_parked/ZoneWindow.tsx",
           "line": 124,
           "symbol": "ZoneWindow",
           "claim": "The production JSX source declares onChange at this control site."
@@ -35167,7 +35167,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 459,
           "symbol": "FirstWords",
           "claim": "The production JSX source declares onClick at this control site."
@@ -35359,7 +35359,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SpeakerGlyph.tsx",
+          "path": "web/src/desk/components/_parked/SpeakerGlyph.tsx",
           "line": 63,
           "symbol": "SpeakerGlyph",
           "claim": "The production JSX source declares onClick at this control site."
@@ -35407,7 +35407,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/PrReceiptsSection.tsx",
+          "path": "web/src/desk/components/_parked/PrReceiptsSection.tsx",
           "line": 130,
           "symbol": "PrReceiptsSection",
           "claim": "The production JSX source declares onChange at this control site."
@@ -35951,7 +35951,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/editors/WorkflowEditor.tsx",
+          "path": "web/src/desk/pullouts/_parked/editors/WorkflowEditor.tsx",
           "line": 75,
           "symbol": "WorkflowEditor",
           "claim": "The production JSX source declares onChange at this control site."
@@ -36383,7 +36383,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 391,
           "symbol": "FirstWords",
           "claim": "The production JSX source declares onClick at this control site."
@@ -36559,7 +36559,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/AftercareGadgets.tsx",
+          "path": "web/src/pages/cores/history/_parked/AftercareGadgets.tsx",
           "line": 27,
           "symbol": "AftercareGadgets",
           "claim": "The production JSX source declares onClick at this control site."
@@ -36927,7 +36927,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/editors/WorkflowEditor.tsx",
+          "path": "web/src/desk/pullouts/_parked/editors/WorkflowEditor.tsx",
           "line": 111,
           "symbol": "WorkflowEditor",
           "claim": "The production JSX source declares onClick at this control site."
@@ -37263,7 +37263,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/WorkflowPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/WorkflowPullout.tsx",
           "line": 64,
           "symbol": "WorkflowPullout",
           "claim": "The production JSX source declares onClick at this control site."
@@ -37439,7 +37439,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/surface/LedgerFilter.tsx",
+          "path": "web/src/desk/surface/_parked/LedgerFilter.tsx",
           "line": 120,
           "symbol": "LedgerFilterBar",
           "claim": "The production JSX source declares onChange at this control site."
@@ -38495,7 +38495,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/editors/WorkflowEditor.tsx",
+          "path": "web/src/desk/pullouts/_parked/editors/WorkflowEditor.tsx",
           "line": 125,
           "symbol": "WorkflowEditor",
           "claim": "The production JSX source declares onClick at this control site."
@@ -38511,7 +38511,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 567,
           "symbol": "renderRow",
           "claim": "The production JSX source declares onClick at this control site."
@@ -38575,7 +38575,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/CompanionCore.tsx",
+          "path": "web/src/pages/cores/_parked/CompanionCore.tsx",
           "line": 112,
           "symbol": "sessionRow",
           "claim": "The production JSX source declares onClick at this control site."
@@ -38607,7 +38607,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/InterviewPanel.tsx",
+          "path": "web/src/desk/components/_parked/InterviewPanel.tsx",
           "line": 205,
           "symbol": "InterviewPanel",
           "claim": "The production JSX source declares onClick at this control site."
@@ -38943,7 +38943,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/ThreadComposer.tsx",
+          "path": "web/src/desk/components/_parked/ThreadComposer.tsx",
           "line": 1085,
           "symbol": "InlineEditor",
           "claim": "The production JSX source declares onMouseDown at this control site."
@@ -39119,7 +39119,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/PrReceiptsSection.tsx",
+          "path": "web/src/desk/components/_parked/PrReceiptsSection.tsx",
           "line": 114,
           "symbol": "PrReceiptsSection",
           "claim": "The production JSX source declares onClick at this control site."
@@ -39167,7 +39167,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/ZoneWindow.tsx",
+          "path": "web/src/desk/components/_parked/ZoneWindow.tsx",
           "line": 145,
           "symbol": "ZoneWindow",
           "claim": "The production JSX source declares onClick at this control site."
@@ -39183,7 +39183,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/ThreadComposer.tsx",
+          "path": "web/src/desk/components/_parked/ThreadComposer.tsx",
           "line": 1006,
           "symbol": "ThreadComposer",
           "claim": "The production JSX source declares onClick at this control site."
@@ -39295,7 +39295,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 500,
           "symbol": "FirstWords",
           "claim": "The production JSX source declares onClick at this control site."
@@ -39807,7 +39807,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 547,
           "symbol": "renderRow",
           "claim": "The production JSX source declares onClick at this control site."
@@ -39951,7 +39951,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/surface/LedgerFilter.tsx",
+          "path": "web/src/desk/surface/_parked/LedgerFilter.tsx",
           "line": 133,
           "symbol": "LedgerFilterBar",
           "claim": "The production JSX source declares onClick at this control site."
@@ -40207,7 +40207,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/InterviewPanel.tsx",
+          "path": "web/src/desk/components/_parked/InterviewPanel.tsx",
           "line": 86,
           "symbol": "InterviewPanel",
           "claim": "The production JSX source declares onClick at this control site."
@@ -40271,7 +40271,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/thought-workspace/ThoughtReadsWell.tsx",
+          "path": "web/src/desk/thought-workspace/_parked/ThoughtReadsWell.tsx",
           "line": 121,
           "symbol": "row",
           "claim": "The production JSX source declares onChange at this control site."
@@ -40399,7 +40399,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 484,
           "symbol": "renderRow",
           "claim": "The production JSX source declares onKeyDown at this control site."
@@ -40463,7 +40463,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/InterviewPanel.tsx",
+          "path": "web/src/desk/components/_parked/InterviewPanel.tsx",
           "line": 166,
           "symbol": "InterviewPanel",
           "claim": "The production JSX source declares onClick at this control site."
@@ -40591,7 +40591,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/surface/patterns/TaskResume.tsx",
+          "path": "web/src/desk/surface/patterns/_parked/TaskResume.tsx",
           "line": 220,
           "symbol": "TaskResume",
           "claim": "The production JSX source declares onClick at this control site."
@@ -40767,7 +40767,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/ThreadComposer.tsx",
+          "path": "web/src/desk/components/_parked/ThreadComposer.tsx",
           "line": 979,
           "symbol": "ThreadComposer",
           "claim": "The production JSX source declares onChange at this control site."
@@ -41679,7 +41679,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/PrReceiptsSection.tsx",
+          "path": "web/src/desk/components/_parked/PrReceiptsSection.tsx",
           "line": 170,
           "symbol": "PrReceiptsSection",
           "claim": "The production JSX source declares onClick at this control site."
@@ -41855,7 +41855,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 631,
           "symbol": "renderKept",
           "claim": "The production JSX source declares onClick at this control site."
@@ -41999,7 +41999,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/PrReceiptsSection.tsx",
+          "path": "web/src/desk/components/_parked/PrReceiptsSection.tsx",
           "line": 106,
           "symbol": "PrReceiptsSection",
           "claim": "The production JSX source declares onClick at this control site."
@@ -42095,7 +42095,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/editors/WorkflowEditor.tsx",
+          "path": "web/src/desk/pullouts/_parked/editors/WorkflowEditor.tsx",
           "line": 99,
           "symbol": "WorkflowEditor",
           "claim": "The production JSX source declares onClick at this control site."
@@ -42431,7 +42431,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 708,
           "symbol": "MeetingReview",
           "claim": "The production JSX source declares onClick at this control site."
@@ -42447,7 +42447,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/editors/WorkflowEditor.tsx",
+          "path": "web/src/desk/pullouts/_parked/editors/WorkflowEditor.tsx",
           "line": 53,
           "symbol": "WorkflowEditor",
           "claim": "The production JSX source declares onChange at this control site."
@@ -42559,7 +42559,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/DeskCreateMenu.tsx",
+          "path": "web/src/desk/components/_parked/DeskCreateMenu.tsx",
           "line": 48,
           "symbol": "DeskCreateMenu",
           "claim": "The production JSX source declares onClick at this control site."
@@ -42687,7 +42687,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/PrReceiptsSection.tsx",
+          "path": "web/src/desk/components/_parked/PrReceiptsSection.tsx",
           "line": 74,
           "symbol": "PrReceiptsSection",
           "claim": "The production JSX source declares onClick at this control site."
@@ -42703,7 +42703,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/ThreadComposer.tsx",
+          "path": "web/src/desk/components/_parked/ThreadComposer.tsx",
           "line": 63,
           "symbol": "RefChipRow",
           "claim": "The production JSX source declares onClick at this control site."
@@ -42911,7 +42911,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 489,
           "symbol": "FirstWords",
           "claim": "The production JSX source declares onClick at this control site."
@@ -42927,7 +42927,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 716,
           "symbol": "MeetingReview",
           "claim": "The production JSX source declares onClick at this control site."
@@ -43039,7 +43039,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/ThreadComposer.tsx",
+          "path": "web/src/desk/components/_parked/ThreadComposer.tsx",
           "line": 996,
           "symbol": "ThreadComposer",
           "claim": "The production JSX source declares onClick at this control site."
@@ -43087,7 +43087,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/PrReceiptsSection.tsx",
+          "path": "web/src/desk/components/_parked/PrReceiptsSection.tsx",
           "line": 202,
           "symbol": "PrReceiptsSection",
           "claim": "The production JSX source declares onClick at this control site."
@@ -43295,7 +43295,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/InterviewPanel.tsx",
+          "path": "web/src/desk/components/_parked/InterviewPanel.tsx",
           "line": 190,
           "symbol": "InterviewPanel",
           "claim": "The production JSX source declares onClick at this control site."
@@ -43343,7 +43343,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/ThreadComposer.tsx",
+          "path": "web/src/desk/components/_parked/ThreadComposer.tsx",
           "line": 981,
           "symbol": "ThreadComposer",
           "claim": "The production JSX source declares onKeyDown at this control site."
@@ -43391,7 +43391,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/CompanionCore.tsx",
+          "path": "web/src/pages/cores/_parked/CompanionCore.tsx",
           "line": 38,
           "symbol": "CompanionCore",
           "claim": "The production JSX source declares onChange at this control site."
@@ -43631,7 +43631,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 424,
           "symbol": "FirstWords",
           "claim": "The production JSX source declares onChange at this control site."
@@ -43919,7 +43919,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/InterviewPanel.tsx",
+          "path": "web/src/desk/components/_parked/InterviewPanel.tsx",
           "line": 76,
           "symbol": "InterviewPanel",
           "claim": "The production JSX source declares onClick at this control site."
@@ -44015,7 +44015,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 533,
           "symbol": "renderRow",
           "claim": "The production JSX source declares onClick at this control site."
@@ -44047,7 +44047,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/surface/patterns/TaskResume.tsx",
+          "path": "web/src/desk/surface/patterns/_parked/TaskResume.tsx",
           "line": 245,
           "symbol": "TaskResume",
           "claim": "The production JSX source declares onClick at this control site."
@@ -44063,7 +44063,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 450,
           "symbol": "FirstWords",
           "claim": "The production JSX source declares onClick at this control site."
@@ -44223,7 +44223,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/PrReceiptsSection.tsx",
+          "path": "web/src/desk/components/_parked/PrReceiptsSection.tsx",
           "line": 171,
           "symbol": "PrReceiptsSection",
           "claim": "The production JSX source declares onClick at this control site."
@@ -44495,7 +44495,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/ThreadComposer.tsx",
+          "path": "web/src/desk/components/_parked/ThreadComposer.tsx",
           "line": 1100,
           "symbol": "InlineEditor",
           "claim": "The production JSX source declares onClick at this control site."
@@ -44655,7 +44655,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/editors/WorkflowEditor.tsx",
+          "path": "web/src/desk/pullouts/_parked/editors/WorkflowEditor.tsx",
           "line": 91,
           "symbol": "WorkflowEditor",
           "claim": "The production JSX source declares onChange at this control site."
@@ -45071,7 +45071,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/pullouts/WorkflowPullout.tsx",
+          "path": "web/src/desk/pullouts/_parked/WorkflowPullout.tsx",
           "line": 55,
           "symbol": "WorkflowPullout",
           "claim": "The production JSX source declares onClick at this control site."
@@ -45167,7 +45167,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/ThreadComposer.tsx",
+          "path": "web/src/desk/components/_parked/ThreadComposer.tsx",
           "line": 1109,
           "symbol": "InlineEditor",
           "claim": "The production JSX source declares onClick at this control site."
@@ -57493,7 +57493,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 493,
           "symbol": "Continue later",
           "claim": "The FirstWords dismissal Button changes from Continue later to Save draft & continue when draft custody is required."
@@ -57509,7 +57509,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 451,
           "symbol": "copy",
           "claim": "Copy preserves the text through navigator.clipboard and reports a refusal in the card."
@@ -57530,7 +57530,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 463,
           "symbol": "Keep as Note",
           "claim": "Keep as Note is a library Button available when text exists."
@@ -57546,7 +57546,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 75,
           "symbol": "loadPendingVoice",
           "claim": "The card checks browser-retained audio on mount and exposes Retry through the failure branch."
@@ -57562,7 +57562,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 440,
           "symbol": "completeHandoff",
           "claim": "The handoff failure leaves a retry Button on the face."
@@ -57578,7 +57578,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 471,
           "symbol": "Button",
           "claim": "The failure contract exposes a setup Button that routes to the readiness or setup surface."
@@ -57599,7 +57599,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 500,
           "symbol": "dismiss",
           "claim": "The second dismissal Button calls dismiss(\"needs_help\") and changes to Save draft & skip when text needs custody."
@@ -57624,7 +57624,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 391,
           "symbol": "onClick",
           "claim": "The library Button toggles begin and stop for the browser capture session."
@@ -57640,7 +57640,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 424,
           "symbol": "onChange",
           "claim": "The editable PadGadget records draft custody and keeps text available to later actions."
@@ -57693,7 +57693,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 234,
           "symbol": "acceptReviewed",
           "claim": "Accept reviewed calls one canonical bulk route and renders accepted/left refusal counts."
@@ -57714,7 +57714,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 533,
           "symbol": "confirm",
           "claim": "The row Confirm Button posts to the proposal confirm route and replaces the durable row."
@@ -57735,7 +57735,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 555,
           "symbol": "ConfirmVerb",
           "claim": "Dismiss confirms through the library ConfirmVerb and posts the canonical dismiss route."
@@ -57756,7 +57756,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 547,
           "symbol": "review-edit",
           "claim": "Edit and the typed owner/due fields call the canonical proposal edit route."
@@ -57777,7 +57777,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 563,
           "symbol": "review-evidence",
           "claim": "Open evidence calls onOpenEvidence only when a transcript segment exists."
@@ -57798,7 +57798,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 94,
           "symbol": "load",
           "claim": "The review face reads one outcome-review projection on mount and after processing frames."
@@ -57819,7 +57819,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 522,
           "symbol": "review-more",
           "claim": "The MORE Button opens the row's disclosure for edit, dismiss and evidence controls."
@@ -57840,7 +57840,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 627,
           "symbol": "review-kept-open",
           "claim": "Kept rows retain an Open Button to evidence or the transcript."
@@ -57861,7 +57861,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 716,
           "symbol": "review-open-transcript",
           "claim": "The review coverage row opens the transcript when turns exist."
@@ -57882,7 +57882,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 316,
           "symbol": "review-project",
           "claim": "The review head's Project Button opens the selected project surface."
@@ -57903,7 +57903,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 707,
           "symbol": "Re-read",
           "claim": "A failed coverage read exposes Re-read and invokes the supplied intelligence rerun."
@@ -59817,72 +59817,6 @@
           "line": 223,
           "symbol": "list_events",
           "claim": "list_events receives GET /api/automations/events; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.get.api_automations_practice_recipes",
-      "kind": "edge",
-      "label": "GET /api/automations/practice-recipes [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "GET",
-          "path": "/api/automations/practice-recipes"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/automations.py",
-          "line": 134,
-          "symbol": "list_practice_recipes",
-          "claim": "list_practice_recipes receives GET /api/automations/practice-recipes; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.get.api_automations_practice_recipes_recipe_id",
-      "kind": "edge",
-      "label": "GET /api/automations/practice-recipes/{recipe_id} [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "GET",
-          "path": "/api/automations/practice-recipes/{recipe_id}"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/automations.py",
-          "line": 138,
-          "symbol": "get_practice_recipe",
-          "claim": "get_practice_recipe receives GET /api/automations/practice-recipes/{recipe_id}; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.get.api_automations_practice_recipes_recipe_id_plan",
-      "kind": "edge",
-      "label": "GET /api/automations/practice-recipes/{recipe_id}/plan [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "GET",
-          "path": "/api/automations/practice-recipes/{recipe_id}/plan"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/automations.py",
-          "line": 147,
-          "symbol": "compile_practice_recipe",
-          "claim": "compile_practice_recipe receives GET /api/automations/practice-recipes/{recipe_id}/plan; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
         }
       ]
     },
@@ -73925,7 +73859,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/thought-workspace/ThoughtReadsWell.tsx",
+          "path": "web/src/desk/thought-workspace/_parked/ThoughtReadsWell.tsx",
           "line": 56,
           "symbol": "node",
           "claim": "Source registers the browser keydown listener on node; static census records the registration site."
@@ -74085,7 +74019,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/DeskCreateMenu.tsx",
+          "path": "web/src/desk/components/_parked/DeskCreateMenu.tsx",
           "line": 30,
           "symbol": "document",
           "claim": "Source registers the browser keydown listener on document; static census records the registration site."
@@ -74373,7 +74307,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/DeskCreateMenu.tsx",
+          "path": "web/src/desk/components/_parked/DeskCreateMenu.tsx",
           "line": 29,
           "symbol": "document",
           "claim": "Source registers the browser pointerdown listener on document; static census records the registration site."
@@ -74453,7 +74387,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/gl/engine.ts",
+          "path": "web/src/desk/gl/_parked/engine.ts",
           "line": 227,
           "symbol": "window",
           "claim": "Source registers the browser resize listener on window; static census records the registration site."
@@ -74597,7 +74531,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/gl/engine.ts",
+          "path": "web/src/desk/gl/_parked/engine.ts",
           "line": 226,
           "symbol": "window",
           "claim": "Source registers the browser scroll listener on window; static census records the registration site."
@@ -74853,7 +74787,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/gl/engine.ts",
+          "path": "web/src/desk/gl/_parked/engine.ts",
           "line": 734,
           "symbol": "bindPointer",
           "claim": "canvas.addEventListener(contextmenu)."
@@ -74869,7 +74803,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/gl/engine.ts",
+          "path": "web/src/desk/gl/_parked/engine.ts",
           "line": 733,
           "symbol": "bindPointer",
           "claim": "canvas.addEventListener(pointercancel)."
@@ -74885,7 +74819,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/gl/engine.ts",
+          "path": "web/src/desk/gl/_parked/engine.ts",
           "line": 729,
           "symbol": "bindPointer",
           "claim": "canvas.addEventListener(pointerdown)."
@@ -74901,7 +74835,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/gl/engine.ts",
+          "path": "web/src/desk/gl/_parked/engine.ts",
           "line": 730,
           "symbol": "bindPointer",
           "claim": "canvas.addEventListener(pointermove) dispatches drag movement."
@@ -74917,7 +74851,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/gl/engine.ts",
+          "path": "web/src/desk/gl/_parked/engine.ts",
           "line": 731,
           "symbol": "bindPointer",
           "claim": "canvas.addEventListener(pointermove) tracks hover movement."
@@ -74933,7 +74867,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/gl/engine.ts",
+          "path": "web/src/desk/gl/_parked/engine.ts",
           "line": 732,
           "symbol": "bindPointer",
           "claim": "canvas.addEventListener(pointerup)."
@@ -77388,7 +77322,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/mcp/families/practice_recipe.py",
+          "path": "holdspeak/mcp/families/_parked/practice_recipe.py",
           "line": 65,
           "symbol": "source_census",
           "claim": "MCP catalogue declares practice_recipe.compile; tools.py aggregates family TOOLS and dispatches by name. Availability also depends on family import, palette and principal; not executed."
@@ -77409,7 +77343,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/mcp/families/practice_recipe.py",
+          "path": "holdspeak/mcp/families/_parked/practice_recipe.py",
           "line": 47,
           "symbol": "source_census",
           "claim": "MCP catalogue declares practice_recipe.get; tools.py aggregates family TOOLS and dispatches by name. Availability also depends on family import, palette and principal; not executed."
@@ -77430,7 +77364,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/mcp/families/practice_recipe.py",
+          "path": "holdspeak/mcp/families/_parked/practice_recipe.py",
           "line": 32,
           "symbol": "source_census",
           "claim": "MCP catalogue declares practice_recipe.list; tools.py aggregates family TOOLS and dispatches by name. Availability also depends on family import, palette and principal; not executed."
@@ -78942,7 +78876,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/mcp/families/sequence.py",
+          "path": "holdspeak/mcp/families/_parked/sequence.py",
           "line": 30,
           "symbol": "source_census",
           "claim": "MCP catalogue declares sequence.cancel; tools.py aggregates family TOOLS and dispatches by name. Availability also depends on family import, palette and principal; not executed."
@@ -78963,7 +78897,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/mcp/families/sequence.py",
+          "path": "holdspeak/mcp/families/_parked/sequence.py",
           "line": 13,
           "symbol": "source_census",
           "claim": "MCP catalogue declares sequence.run; tools.py aggregates family TOOLS and dispatches by name. Availability also depends on family import, palette and principal; not executed."
@@ -79782,7 +79716,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/mcp/families/sequence.py",
+          "path": "holdspeak/mcp/families/_parked/sequence.py",
           "line": 59,
           "symbol": "source_census",
           "claim": "MCP catalogue declares workflow.cancel; tools.py aggregates family TOOLS and dispatches by name. Availability also depends on family import, palette and principal; not executed."
@@ -79803,7 +79737,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/mcp/families/sequence.py",
+          "path": "holdspeak/mcp/families/_parked/sequence.py",
           "line": 42,
           "symbol": "source_census",
           "claim": "MCP catalogue declares workflow.run; tools.py aggregates family TOOLS and dispatches by name. Availability also depends on family import, palette and principal; not executed."
@@ -85562,7 +85496,7 @@
         },
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 473,
           "symbol": "FirstWords",
           "claim": "Setup chooses configure-setup only for microphone doctor failures; every other Setup failure calls project-setup."
@@ -85682,7 +85616,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/ThreadComposer.tsx",
+          "path": "web/src/desk/components/_parked/ThreadComposer.tsx",
           "line": 609,
           "symbol": "executeSlashCommand",
           "claim": "The keep slash command calls onKeep(lastAssistantId, \"note\") when a last assistant message exists."
@@ -85890,7 +85824,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 361,
           "symbol": "FirstWords",
           "claim": "The card presents the first-value capture, editable text and dismissal/retention verbs."
@@ -85922,7 +85856,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 94,
           "symbol": "load",
           "claim": "The interface receives Meetings review load at this source control."
@@ -86524,7 +86458,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 493,
           "symbol": "Continue later",
           "claim": "The FirstWords dismissal Button changes from Continue later to Save draft & continue when draft custody is required."
@@ -86545,7 +86479,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 451,
           "symbol": "copy",
           "claim": "Copy preserves the text through navigator.clipboard and reports a refusal in the card."
@@ -86566,7 +86500,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 463,
           "symbol": "Keep as Note",
           "claim": "Keep as Note is a library Button available when text exists."
@@ -86587,7 +86521,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 75,
           "symbol": "loadPendingVoice",
           "claim": "The card checks browser-retained audio on mount and exposes Retry through the failure branch."
@@ -86608,7 +86542,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 440,
           "symbol": "completeHandoff",
           "claim": "The handoff failure leaves a retry Button on the face."
@@ -86629,7 +86563,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 471,
           "symbol": "Button",
           "claim": "The failure contract exposes a setup Button that routes to the readiness or setup surface."
@@ -86650,7 +86584,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 500,
           "symbol": "dismiss",
           "claim": "The second dismissal Button calls dismiss(\"needs_help\") and changes to Save draft & skip when text needs custody."
@@ -86671,7 +86605,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 391,
           "symbol": "onClick",
           "claim": "The library Button toggles begin and stop for the browser capture session."
@@ -86692,7 +86626,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 424,
           "symbol": "onChange",
           "claim": "The editable PadGadget records draft custody and keeps text available to later actions."
@@ -86740,7 +86674,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 234,
           "symbol": "acceptReviewed",
           "claim": "Accept reviewed calls one canonical bulk route and renders accepted/left refusal counts."
@@ -86756,7 +86690,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 533,
           "symbol": "confirm",
           "claim": "The row Confirm Button posts to the proposal confirm route and replaces the durable row."
@@ -86772,7 +86706,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 555,
           "symbol": "ConfirmVerb",
           "claim": "Dismiss confirms through the library ConfirmVerb and posts the canonical dismiss route."
@@ -86788,7 +86722,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 547,
           "symbol": "review-edit",
           "claim": "Edit and the typed owner/due fields call the canonical proposal edit route."
@@ -86804,7 +86738,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 563,
           "symbol": "review-evidence",
           "claim": "Open evidence calls onOpenEvidence only when a transcript segment exists."
@@ -86820,7 +86754,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 94,
           "symbol": "load",
           "claim": "The review face reads one outcome-review projection on mount and after processing frames."
@@ -86836,7 +86770,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 522,
           "symbol": "review-more",
           "claim": "The MORE Button opens the row's disclosure for edit, dismiss and evidence controls."
@@ -86852,7 +86786,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 627,
           "symbol": "review-kept-open",
           "claim": "Kept rows retain an Open Button to evidence or the transcript."
@@ -86868,7 +86802,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 716,
           "symbol": "review-open-transcript",
           "claim": "The review coverage row opens the transcript when turns exist."
@@ -86884,7 +86818,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 316,
           "symbol": "review-project",
           "claim": "The review head's Project Button opens the selected project surface."
@@ -86900,7 +86834,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 707,
           "symbol": "Re-read",
           "claim": "A failed coverage read exposes Re-read and invokes the supplied intelligence rerun."
@@ -90628,7 +90562,7 @@
       ],
       "sources": [
         {
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "symbol": "Continue later",
           "line": 493,
           "claim": "Continue later is the gate's dismissal verb",
@@ -90643,7 +90577,7 @@
         },
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 493,
           "symbol": "Continue later",
           "claim": "Atlas state state.first_value.continue_later: Continue later is the gate's dismissal verb; static exposure is active or conditional as the relevant producer allows."
@@ -90670,7 +90604,7 @@
       ],
       "sources": [
         {
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "symbol": "needsDraftCustody",
           "line": 493,
           "claim": "the dismissal verb renames itself when a draft must be carried",
@@ -90678,7 +90612,7 @@
         },
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 493,
           "symbol": "needsDraftCustody",
           "claim": "Atlas state state.first_value.draft_custody: the dismissal verb renames itself when a draft must be carried; static exposure is active or conditional as the relevant producer allows."
@@ -91118,14 +91052,14 @@
       ],
       "sources": [
         {
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "symbol": "CaptureState",
           "line": 33,
           "claim": "idle is the first of the five capture states",
           "revision": "1cd55bc829c1291cad661f93b2d90e61f001f179"
         },
         {
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "symbol": "useState",
           "line": 50,
           "claim": "the gate starts idle",
@@ -91146,14 +91080,14 @@
       ],
       "sources": [
         {
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "symbol": "setKeptNoteId",
           "line": 308,
           "claim": "Keep as Note stores the created note id",
           "revision": "1cd55bc829c1291cad661f93b2d90e61f001f179"
         },
         {
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "symbol": "Kept as a note",
           "line": 310,
           "claim": "the receipt line says so",
@@ -91168,14 +91102,14 @@
         },
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 308,
           "symbol": "setKeptNoteId",
           "claim": "Atlas state state.first_value.kept: Keep as Note stores the created note id; static exposure is active or conditional as the relevant producer allows."
         },
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 310,
           "symbol": "Kept as a note",
           "claim": "Atlas state state.first_value.kept: the receipt line says so; static exposure is active or conditional as the relevant producer allows."
@@ -91202,14 +91136,14 @@
       ],
       "sources": [
         {
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "symbol": "listening",
           "line": 34,
           "claim": "listening is a capture state",
           "revision": "1cd55bc829c1291cad661f93b2d90e61f001f179"
         },
         {
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "symbol": "Stop listening",
           "line": 382,
           "claim": "the verb becomes Stop listening while it holds",
@@ -91217,14 +91151,14 @@
         },
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 34,
           "symbol": "listening",
           "claim": "Atlas state state.first_value.listening: listening is a capture state; static exposure is active or conditional as the relevant producer allows."
         },
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 382,
           "symbol": "Stop listening",
           "claim": "Atlas state state.first_value.listening: the verb becomes Stop listening while it holds; static exposure is active or conditional as the relevant producer allows."
@@ -91244,14 +91178,14 @@
       ],
       "sources": [
         {
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "symbol": "micUnsupportedMessage",
           "line": 35,
           "claim": "an unsupported browser gets its own sentence",
           "revision": "1cd55bc829c1291cad661f93b2d90e61f001f179"
         },
         {
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "symbol": "supported",
           "line": 409,
           "claim": "and its own state on the face",
@@ -91259,14 +91193,14 @@
         },
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 35,
           "symbol": "micUnsupportedMessage",
           "claim": "Atlas state state.first_value.mic_unsupported: an unsupported browser gets its own sentence; static exposure is active or conditional as the relevant producer allows."
         },
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 409,
           "symbol": "supported",
           "claim": "Atlas state state.first_value.mic_unsupported: and its own state on the face; static exposure is active or conditional as the relevant producer allows."
@@ -91293,7 +91227,7 @@
           "revision": "1cd55bc829c1291cad661f93b2d90e61f001f179"
         },
         {
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "symbol": "needs_help",
           "line": 500,
           "claim": "the gate offers it only after a failure",
@@ -91314,14 +91248,14 @@
       ],
       "sources": [
         {
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "symbol": "setRecoveredAudioAvailable",
           "line": 53,
           "claim": "retained audio is its own state",
           "revision": "1cd55bc829c1291cad661f93b2d90e61f001f179"
         },
         {
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "symbol": "canRetryRetainedAudio",
           "line": 372,
           "claim": "it keeps the verb alive when capture itself is unsupported",
@@ -91342,14 +91276,14 @@
       ],
       "sources": [
         {
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "symbol": "useDurableDraft",
           "line": 49,
           "claim": "the gate's text is a durable draft",
           "revision": "1cd55bc829c1291cad661f93b2d90e61f001f179"
         },
         {
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "symbol": "recovered",
           "line": 47,
           "claim": "it reports whether the words were recovered",
@@ -91357,14 +91291,14 @@
         },
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 75,
           "symbol": "loadPendingVoice",
           "claim": "FirstWords reads retained browser voice on mount and presents it as recovered draft custody."
         },
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 415,
           "symbol": "recovered",
           "claim": "The face says the local draft was recovered after relaunch and remains editable."
@@ -91384,7 +91318,7 @@
       ],
       "sources": [
         {
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "symbol": "success",
           "line": 34,
           "claim": "success is the terminal capture state",
@@ -91392,7 +91326,7 @@
         },
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 34,
           "symbol": "success",
           "claim": "Atlas state state.first_value.success: success is the terminal capture state; static exposure is active or conditional as the relevant producer allows."
@@ -91412,14 +91346,14 @@
       ],
       "sources": [
         {
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "symbol": "transcribing",
           "line": 34,
           "claim": "transcribing is a capture state",
           "revision": "1cd55bc829c1291cad661f93b2d90e61f001f179"
         },
         {
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "symbol": "Transcribing",
           "line": 399,
           "claim": "the verb reads it and is disabled",
@@ -93326,7 +93260,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 266,
           "symbol": "dismiss",
           "claim": "When text exists and is not already kept, Continue later writes that note before beginning handoff."
@@ -94089,7 +94023,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 182,
           "symbol": "stop",
           "claim": "Connection reaches action.voice.first_words_capture: Stop closes the stream, transcribes the result, or records the classified failure and retains audio for retry."
@@ -94103,7 +94037,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 333,
           "symbol": "copy",
           "claim": "copy() writes the current text to the clipboard and reports blocked access."
@@ -94117,7 +94051,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 420,
           "symbol": "PadGadget",
           "claim": "The PadGadget owns text value and onChange updates the durable draft."
@@ -94131,7 +94065,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 285,
           "symbol": "beginHandoff",
           "claim": "Connection reaches action.first_words.dismiss: The dismissal calls beginHandoff with dismissed and any retained note id."
@@ -94145,7 +94079,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 206,
           "symbol": "completeHandoff",
           "claim": "The retry calls the same seed, refresh, onboarding and dismissal sequence."
@@ -94159,7 +94093,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 296,
           "symbol": "keep",
           "claim": "Connection reaches action.voice.keep_first_value_note: The note POST result supplies the durable note id; the face presents Kept as a note or a named refusal."
@@ -94173,7 +94107,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 75,
           "symbol": "loadPendingVoice",
           "claim": "The mount recovery marks retained audio and routes the user to the retry branch."
@@ -94187,7 +94121,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 471,
           "symbol": "needsMicrophoneDoctor",
           "claim": "The setup control chooses configure-setup for microphone failures and project-setup otherwise."
@@ -94201,7 +94135,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 500,
           "symbol": "dismiss",
           "claim": "The control reaches action.first_words.skip_help."
@@ -94285,7 +94219,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 233,
           "symbol": "accept-reviewed",
           "claim": "The bulk operation preserves unsupported, unknown and prior rows with a receipt."
@@ -94299,7 +94233,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 156,
           "symbol": "/confirm",
           "claim": "The confirm operation sends POST /api/proposals/{id}/confirm and renders the returned durable proposal."
@@ -94313,7 +94247,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 182,
           "symbol": "/dismiss",
           "claim": "The dismiss operation returns a durable state and focuses the next visible row."
@@ -94327,7 +94261,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 203,
           "symbol": "/edit",
           "claim": "The edit operation posts only the changed text, owner or due field."
@@ -94341,7 +94275,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 567,
           "symbol": "onOpenEvidence",
           "claim": "The evidence control routes to the transcript span for the proposal."
@@ -94355,7 +94289,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 97,
           "symbol": "outcome-review",
           "claim": "The review model decodes coverage, job, proposals and revision from the API response."
@@ -94369,7 +94303,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 541,
           "symbol": "meetings-review-more",
           "claim": "The disclosure exposes only controls supported by the row state."
@@ -94383,7 +94317,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 631,
           "symbol": "onOpenEvidence",
           "claim": "The kept row chooses its segment or transcript destination."
@@ -94397,7 +94331,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 716,
           "symbol": "review-open-transcript",
           "claim": "The control reaches action.meeting.open_transcript."
@@ -94411,7 +94345,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 316,
           "symbol": "review-project",
           "claim": "The control reaches action.meeting.open_project."
@@ -94425,7 +94359,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 708,
           "symbol": "onRunIntelligence",
           "claim": "The failed read keeps an explicit retry control."
@@ -95594,7 +95528,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 285,
           "symbol": "beginHandoff",
           "claim": "Connection reaches action.first_words.dismiss: The dismissal calls beginHandoff with dismissed and any retained note id."
@@ -95608,7 +95542,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 333,
           "symbol": "copy",
           "claim": "copy() writes the current text to the clipboard and reports blocked access."
@@ -95622,7 +95556,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 296,
           "symbol": "keep",
           "claim": "Connection reaches action.voice.keep_first_value_note: The note POST result supplies the durable note id; the face presents Kept as a note or a named refusal."
@@ -95636,7 +95570,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 75,
           "symbol": "loadPendingVoice",
           "claim": "The mount recovery marks retained audio and routes the user to the retry branch."
@@ -95650,7 +95584,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 206,
           "symbol": "completeHandoff",
           "claim": "The retry calls the same seed, refresh, onboarding and dismissal sequence."
@@ -95664,7 +95598,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 471,
           "symbol": "needsMicrophoneDoctor",
           "claim": "The setup control chooses configure-setup for microphone failures and project-setup otherwise."
@@ -95678,7 +95612,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 500,
           "symbol": "dismiss",
           "claim": "The control reaches action.first_words.skip_help."
@@ -95692,7 +95626,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 182,
           "symbol": "stop",
           "claim": "Connection reaches action.voice.first_words_capture: Stop closes the stream, transcribes the result, or records the classified failure and retains audio for retry."
@@ -95706,7 +95640,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 420,
           "symbol": "PadGadget",
           "claim": "The PadGadget owns text value and onChange updates the durable draft."
@@ -95748,7 +95682,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 233,
           "symbol": "accept-reviewed",
           "claim": "The bulk operation preserves unsupported, unknown and prior rows with a receipt."
@@ -95762,7 +95696,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 156,
           "symbol": "/confirm",
           "claim": "The confirm operation sends POST /api/proposals/{id}/confirm and renders the returned durable proposal."
@@ -95776,7 +95710,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 182,
           "symbol": "/dismiss",
           "claim": "The dismiss operation returns a durable state and focuses the next visible row."
@@ -95790,7 +95724,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 203,
           "symbol": "/edit",
           "claim": "The edit operation posts only the changed text, owner or due field."
@@ -95804,7 +95738,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 567,
           "symbol": "onOpenEvidence",
           "claim": "The evidence control routes to the transcript span for the proposal."
@@ -95818,7 +95752,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 97,
           "symbol": "outcome-review",
           "claim": "The review model decodes coverage, job, proposals and revision from the API response."
@@ -95832,7 +95766,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 541,
           "symbol": "meetings-review-more",
           "claim": "The disclosure exposes only controls supported by the row state."
@@ -95846,7 +95780,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 631,
           "symbol": "onOpenEvidence",
           "claim": "The kept row chooses its segment or transcript destination."
@@ -95860,7 +95794,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 716,
           "symbol": "review-open-transcript",
           "claim": "The control reaches action.meeting.open_transcript."
@@ -95874,7 +95808,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 316,
           "symbol": "review-project",
           "claim": "The control reaches action.meeting.open_project."
@@ -95888,7 +95822,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 708,
           "symbol": "onRunIntelligence",
           "claim": "The failed read keeps an explicit retry control."
@@ -98086,7 +98020,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/ThreadComposer.tsx",
+          "path": "web/src/desk/components/_parked/ThreadComposer.tsx",
           "line": 609,
           "symbol": "executeSlashCommand",
           "claim": "The keep slash command calls onKeep(lastAssistantId, \"note\") when a last assistant message exists."
@@ -98534,7 +98468,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 493,
           "symbol": "Continue later",
           "claim": "The FirstWords dismissal Button changes from Continue later to Save draft & continue when draft custody is required."
@@ -98548,7 +98482,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 451,
           "symbol": "copy",
           "claim": "Copy preserves the text through navigator.clipboard and reports a refusal in the card."
@@ -98562,7 +98496,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 463,
           "symbol": "Keep as Note",
           "claim": "Keep as Note is a library Button available when text exists."
@@ -98576,7 +98510,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 75,
           "symbol": "loadPendingVoice",
           "claim": "The card checks browser-retained audio on mount and exposes Retry through the failure branch."
@@ -98590,7 +98524,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 440,
           "symbol": "completeHandoff",
           "claim": "The handoff failure leaves a retry Button on the face."
@@ -98604,7 +98538,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 473,
           "symbol": "FirstWords",
           "claim": "Setup chooses configure-setup only for microphone doctor failures; every other Setup failure calls project-setup."
@@ -98618,7 +98552,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 471,
           "symbol": "Button",
           "claim": "The failure contract exposes a setup Button that routes to the readiness or setup surface."
@@ -98632,7 +98566,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 500,
           "symbol": "dismiss",
           "claim": "The second dismissal Button calls dismiss(\"needs_help\") and changes to Save draft & skip when text needs custody."
@@ -98646,7 +98580,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 391,
           "symbol": "onClick",
           "claim": "The library Button toggles begin and stop for the browser capture session."
@@ -98660,7 +98594,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 424,
           "symbol": "onChange",
           "claim": "The editable PadGadget records draft custody and keeps text available to later actions."
@@ -98702,7 +98636,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 234,
           "symbol": "acceptReviewed",
           "claim": "Accept reviewed calls one canonical bulk route and renders accepted/left refusal counts."
@@ -98716,7 +98650,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 533,
           "symbol": "confirm",
           "claim": "The row Confirm Button posts to the proposal confirm route and replaces the durable row."
@@ -98730,7 +98664,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 555,
           "symbol": "ConfirmVerb",
           "claim": "Dismiss confirms through the library ConfirmVerb and posts the canonical dismiss route."
@@ -98744,7 +98678,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 547,
           "symbol": "review-edit",
           "claim": "Edit and the typed owner/due fields call the canonical proposal edit route."
@@ -98758,7 +98692,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 563,
           "symbol": "review-evidence",
           "claim": "Open evidence calls onOpenEvidence only when a transcript segment exists."
@@ -98772,7 +98706,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 94,
           "symbol": "load",
           "claim": "The review face reads one outcome-review projection on mount and after processing frames."
@@ -98786,7 +98720,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 522,
           "symbol": "review-more",
           "claim": "The MORE Button opens the row's disclosure for edit, dismiss and evidence controls."
@@ -98800,7 +98734,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 627,
           "symbol": "review-kept-open",
           "claim": "Kept rows retain an Open Button to evidence or the transcript."
@@ -98814,7 +98748,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 716,
           "symbol": "review-open-transcript",
           "claim": "The review coverage row opens the transcript when turns exist."
@@ -98828,7 +98762,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 316,
           "symbol": "review-project",
           "claim": "The review head's Project Button opens the selected project surface."
@@ -98842,7 +98776,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 707,
           "symbol": "Re-read",
           "claim": "A failed coverage read exposes Re-read and invokes the supplied intelligence rerun."
@@ -100354,7 +100288,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 473,
           "symbol": "FirstWords",
           "claim": "Setup chooses configure-setup only for microphone doctor failures; every other Setup failure calls project-setup."
@@ -100676,7 +100610,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 156,
           "symbol": "startStreamSession",
           "claim": "Interface connection for edge.face.first_words_speak: The card starts the browser stream session, then transitions to listening and accepts the stopped transcript."
@@ -100690,7 +100624,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 333,
           "symbol": "copy",
           "claim": "The connection for edge.face.first_words_copy reaches Copy the editable words to the owner clipboard."
@@ -100704,7 +100638,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 420,
           "symbol": "PadGadget",
           "claim": "The connection for edge.face.first_words_text_edit reaches Edit the first-value text in place."
@@ -100718,7 +100652,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 254,
           "symbol": "dismiss",
           "claim": "Interface connection for edge.face.first_words_continue_later: dismiss() creates note custody when text exists, then starts the onboarding handoff."
@@ -100732,7 +100666,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 206,
           "symbol": "completeHandoff",
           "claim": "The connection for edge.face.first_words_retry_finish reaches Retry the pending first-value handoff."
@@ -100746,7 +100680,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 296,
           "symbol": "keep",
           "claim": "Interface connection for edge.face.first_words_keep_note: keep() posts /api/notes, stages note custody, and completes the desk handoff after a transcript."
@@ -100760,7 +100694,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 75,
           "symbol": "loadPendingVoice",
           "claim": "The connection for edge.face.first_words_reload reaches Recover retained browser audio and retry transcription."
@@ -100774,7 +100708,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 471,
           "symbol": "needsMicrophoneDoctor",
           "claim": "The connection for edge.face.first_words_setup reaches Open the named setup surface for the capture failure."
@@ -100788,7 +100722,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 500,
           "symbol": "dismiss",
           "claim": "The control reaches action.first_words.skip_help."
@@ -100816,7 +100750,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 233,
           "symbol": "accept-reviewed",
           "claim": "The connection for edge.face.meetings_review_accept_all reaches Accept all eligible reviewed proposals."
@@ -100830,7 +100764,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 156,
           "symbol": "/confirm",
           "claim": "The connection for edge.face.meetings_review_confirm reaches Confirm one supported proposal."
@@ -100844,7 +100778,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 182,
           "symbol": "/dismiss",
           "claim": "The connection for edge.face.meetings_review_dismiss reaches Dismiss one proposal and move focus."
@@ -100858,7 +100792,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 203,
           "symbol": "/edit",
           "claim": "The connection for edge.face.meetings_review_edit reaches Edit proposal text or supply typed unknowns."
@@ -100872,7 +100806,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 567,
           "symbol": "onOpenEvidence",
           "claim": "The connection for edge.face.meetings_review_evidence reaches Open the source transcript segment."
@@ -100886,7 +100820,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 97,
           "symbol": "outcome-review",
           "claim": "The connection for edge.face.meetings_review_load reaches Read the durable outcome review projection."
@@ -100900,7 +100834,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 541,
           "symbol": "meetings-review-more",
           "claim": "The connection for edge.face.meetings_review_more reaches Open the proposal row's additional controls."
@@ -100914,7 +100848,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 631,
           "symbol": "onOpenEvidence",
           "claim": "The connection for edge.face.meetings_review_open_kept reaches Open a retained proposal's evidence or transcript."
@@ -100928,7 +100862,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 716,
           "symbol": "review-open-transcript",
           "claim": "The control reaches action.meeting.open_transcript."
@@ -100942,7 +100876,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 316,
           "symbol": "review-project",
           "claim": "The control reaches action.meeting.open_project."
@@ -100956,7 +100890,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 708,
           "symbol": "onRunIntelligence",
           "claim": "The connection for edge.face.meetings_review_reread reaches Re-read a failed meeting transcript."
@@ -101845,7 +101779,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 254,
           "symbol": "dismiss",
           "claim": "Interface connection for edge.face.first_words_continue_later: dismiss() creates note custody when text exists, then starts the onboarding handoff."
@@ -101859,7 +101793,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 333,
           "symbol": "copy",
           "claim": "The connection for edge.face.first_words_copy reaches Copy the editable words to the owner clipboard."
@@ -101873,7 +101807,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 296,
           "symbol": "keep",
           "claim": "Interface connection for edge.face.first_words_keep_note: keep() posts /api/notes, stages note custody, and completes the desk handoff after a transcript."
@@ -101887,7 +101821,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 75,
           "symbol": "loadPendingVoice",
           "claim": "The connection for edge.face.first_words_reload reaches Recover retained browser audio and retry transcription."
@@ -101901,7 +101835,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 206,
           "symbol": "completeHandoff",
           "claim": "The connection for edge.face.first_words_retry_finish reaches Retry the pending first-value handoff."
@@ -101915,7 +101849,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 471,
           "symbol": "needsMicrophoneDoctor",
           "claim": "The connection for edge.face.first_words_setup reaches Open the named setup surface for the capture failure."
@@ -101929,7 +101863,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 500,
           "symbol": "dismiss",
           "claim": "The control reaches action.first_words.skip_help."
@@ -101943,7 +101877,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 156,
           "symbol": "startStreamSession",
           "claim": "Interface connection for edge.face.first_words_speak: The card starts the browser stream session, then transitions to listening and accepts the stopped transcript."
@@ -101957,7 +101891,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 420,
           "symbol": "PadGadget",
           "claim": "The connection for edge.face.first_words_text_edit reaches Edit the first-value text in place."
@@ -101999,7 +101933,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 233,
           "symbol": "accept-reviewed",
           "claim": "The connection for edge.face.meetings_review_accept_all reaches Accept all eligible reviewed proposals."
@@ -102013,7 +101947,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 156,
           "symbol": "/confirm",
           "claim": "The connection for edge.face.meetings_review_confirm reaches Confirm one supported proposal."
@@ -102027,7 +101961,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 182,
           "symbol": "/dismiss",
           "claim": "The connection for edge.face.meetings_review_dismiss reaches Dismiss one proposal and move focus."
@@ -102041,7 +101975,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 203,
           "symbol": "/edit",
           "claim": "The connection for edge.face.meetings_review_edit reaches Edit proposal text or supply typed unknowns."
@@ -102055,7 +101989,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 567,
           "symbol": "onOpenEvidence",
           "claim": "The connection for edge.face.meetings_review_evidence reaches Open the source transcript segment."
@@ -102069,7 +102003,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 97,
           "symbol": "outcome-review",
           "claim": "The connection for edge.face.meetings_review_load reaches Read the durable outcome review projection."
@@ -102083,7 +102017,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 541,
           "symbol": "meetings-review-more",
           "claim": "The connection for edge.face.meetings_review_more reaches Open the proposal row's additional controls."
@@ -102097,7 +102031,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 631,
           "symbol": "onOpenEvidence",
           "claim": "The connection for edge.face.meetings_review_open_kept reaches Open a retained proposal's evidence or transcript."
@@ -102111,7 +102045,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 716,
           "symbol": "review-open-transcript",
           "claim": "The control reaches action.meeting.open_transcript."
@@ -102125,7 +102059,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 316,
           "symbol": "review-project",
           "claim": "The control reaches action.meeting.open_project."
@@ -102139,7 +102073,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/MeetingReview.tsx",
+          "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
           "line": 708,
           "symbol": "onRunIntelligence",
           "claim": "The connection for edge.face.meetings_review_reread reaches Re-read a failed meeting transcript."
@@ -110185,7 +110119,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 475,
           "symbol": "needsMicrophoneDoctor",
           "claim": "The setup branch selects configure-setup only for microphone failures and project-setup otherwise."
@@ -110864,7 +110798,7 @@
         },
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/dropMatrix.ts",
+          "path": "web/src/desk/_parked/dropMatrix.ts",
           "line": 22,
           "symbol": "DROP_MATRIX",
           "claim": "Declared source owner is present; this reference identifies the entry-point source. It does not prove every caller or the resulting operation."
@@ -112112,7 +112046,7 @@
         },
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "line": 473,
           "symbol": "FirstWords",
           "claim": "Setup chooses configure-setup only for microphone doctor failures; every other Setup failure calls project-setup."
@@ -112314,7 +112248,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/ThreadComposer.tsx",
+          "path": "web/src/desk/components/_parked/ThreadComposer.tsx",
           "line": 609,
           "symbol": "executeSlashCommand",
           "claim": "The keep slash command calls onKeep(lastAssistantId, \"note\") when a last assistant message exists."
