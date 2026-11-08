@@ -23,7 +23,7 @@ A descriptor alone does not establish a separate app or an available control.
 | `meeting` | Meeting | content | no | ask, send, hand | Meetings host |
 | `artifact` | Artifact | content | no | ask, send, hand | pullout |
 | `note` | Note | content | yes | ask, edit, rename, duplicate, delete, hand | Note workspace |
-| `decision` | Decision | content | yes | duplicate, delete, send, hand | pullout |
+| `decision` | Decision | content | yes | duplicate, delete, send, hand | Decisions window reader |
 | `thread` | Thread | content | yes | delete | current Ask/conversation host |
 | `directory` | Zone (drawer) | organization | yes | rename, delete | Directory contents window |
 | `kb` | Knowledge | organization | yes | ask, edit, rename, duplicate, delete | pullout |
@@ -48,6 +48,11 @@ unavailable row. Missing parents and filing cycles retain a reachable root.
 The previous spatial Floor and its list projection remain parked.
 
 An ID resolves as a bare ID or as a qualified `kind:id` reference.
+
+A decision has one face: its record in the reader of the Decisions window.
+Every decision reference (`decision:<id>`, `desk_decision:<id>`) opens it there.
+The reader has **Accept** (for a proposed decision), **Edit**, **Send…**,
+**Run as a program**, **Retire**, **Copy** and **Dictate about this**.
 
 ## Floor placement
 

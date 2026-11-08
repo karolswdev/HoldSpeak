@@ -5,7 +5,9 @@ of a window, and asks one question about it. You answer with one press.
 
 ## Open a walk
 
-1. Open the link that you got. It starts with `/w/`.
+1. Open the link that you got. Its path starts with `/w/`. The first link
+   uses the hub's tailnet name over https (Tailscale Serve), not its IP
+   address. The second link is for this computer.
 2. The Desk opens. A slow warm glow at the edge of the screen shows that the
    guide holds the walk. One caption line at the bottom edge shows the words
    of the step; the voice says the same.
@@ -18,7 +20,8 @@ of a window, and asks one question about it. You answer with one press.
    ripple. The window of the part comes to the front.
 5. The part that you must look at lifts with a halo in the accent colour.
    The rest of the Desk stays as it is.
-6. Read the question. Press a choice, for example **Keep** or **Redo**.
+6. Read the question in the bar. Press a choice, for example **Keep** or
+   **Redo**. The first choice is the primary button.
 7. To add words, press the microphone button (**Say more**) next to the
    choices. A text box opens under the choices. Type or speak. Then press a
    choice, or press **Send** to send only the words. Words do not select a
@@ -58,7 +61,8 @@ them in this order: `open`, `verb`, `press`, `scroll`, `say`, `highlight`,
 the Room, not the Update posture that the Room kept from an earlier visit.
 
 Example: `docs/walks/2026-11-08-handheld.json`. To make a walk and get its
-two links (the tailnet name over https first, then this computer), and to read the answers:
+two links (the tailnet name over https first, then this computer; set
+`HOLDSPEAK_TAILNET` to your hub's https tailnet address), and to read the answers:
 
     uv run python scripts/walk.py new docs/walks/2026-11-07-wave-two.json
     uv run python scripts/walk.py read <id>

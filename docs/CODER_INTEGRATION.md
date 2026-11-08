@@ -16,6 +16,11 @@ engine path.
    reviewer is needed.
 5. Press the launch control.
 
+**Hand to an agent session** starts one live agent session. **Run as a
+program** is a different verb: it makes a Program with steps, a gate and a
+merge (see [Programs](programs.md)). In Needs you, both verbs are on an
+action's right-press menu.
+
 The hub validates the agent profile and runtime prerequisites, then resolves a
 registered local repository. If the Project has no local source, it can use the
 GitHub fallback described below. It composes a bounded brief, creates a Git

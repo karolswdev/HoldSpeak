@@ -84,8 +84,8 @@ Then give the key to the hub:
 
 What the hub does with the key:
 
-- It keeps the key, the Key ID and the Team ID in your keystore (the macOS
-  Keychain, or the Secret Service on Linux). Each row says only **Stored in
+- It keeps the key, the Key ID and the Team ID in your keystore (one sealed
+  file; its master key is in the macOS Keychain, or the Secret Service on Linux). Each row says only **Stored in
   your keystore** or **Missing**. No page and no route shows the key again.
 - It uses the key only to sign a short token for each push to Apple. It sends
   the push only to Apple's push service.

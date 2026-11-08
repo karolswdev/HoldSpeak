@@ -268,6 +268,15 @@ engine key store or owner-only local custody. People keys stay in native key
 custody. A process that can already read the account can still read local
 credentials; use OS isolation for that threat.
 
+- **The keystore.** HoldSpeak keeps one master key in the OS keychain (on
+  macOS, the Keychain item `HoldSpeak` / `keystore-master-key`). Every other
+  secret is sealed with that key in one file,
+  `~/.local/share/holdspeak/keystore.enc` (mode 0600, AES-GCM). A rebuilt
+  Python environment does not cause one keychain prompt for each secret. When
+  the keychain does not answer in 2 seconds, the hub logs that secrets are not
+  available and continues. A secret in an old per-secret Keychain item moves
+  into the file at the first start or the first read. HoldSpeak deletes the old
+  item only after the file is on disk.
 - Model keys are written through the owner-only Model Library secret route. A
   model resource reports presence, not the key. A deleted key writes a tombstone
   that suppresses a headless environment fallback for that engine.
