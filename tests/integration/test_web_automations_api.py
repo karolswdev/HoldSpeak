@@ -45,9 +45,9 @@ def test_workbench_preset_facade_baselines_enables_tests_and_shows_history(
     """The workbench automation routes, since 2026-11-08 over WatchService:
     a new event start is a watch, read (the quiet baseline) and on at once;
     test reads without moving the baseline; a new PR in the review queue is
-    one review request, one occurrence and one history row."""
+    one review request, one Program run and one history row."""
+    from holdspeak.services import program_prompt
     from holdspeak.services.watch_service import AUTOMATION_INTENT_PREFIX
-    from holdspeak.services.workbench_service import WorkbenchService
 
     rows = {"now": [{"number": 23, "title": "Review me", "state": "open"}]}
     monkeypatch.setattr(
@@ -56,11 +56,14 @@ def test_workbench_preset_facade_baselines_enables_tests_and_shows_history(
     )
     ran: list = []
 
-    async def fake_run(self, principal, workbench_id, item_id, **kwargs):  # noqa: ANN001
-        ran.append(item_id)
-        return {"parent_operation_id": "op-review"}
+    # 2026-11-08: the start runs a Program of one prompt step; its model call is the seam.
+    monkeypatch.setenv("HOLDSPEAK_PROGRAMS", "off")
 
-    monkeypatch.setattr(WorkbenchService, "run_item", fake_run)
+    def fake_run(_runner, _program, step, **_kwargs):  # noqa: ANN001
+        ran.append(step["id"])
+        program_prompt.release(step["id"])
+
+    monkeypatch.setattr(program_prompt, "run_claimed", fake_run)
     missing_repo = client.post("/api/workbenches/wb-review/automations", json={
         "preset_id": "github-review-requested",
     })

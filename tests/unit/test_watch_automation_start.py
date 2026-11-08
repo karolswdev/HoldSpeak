@@ -14,7 +14,6 @@ import pytest
 from holdspeak.db.core import Database
 from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.services.watch_service import AUTOMATION_INTENT_PREFIX, WatchService
-from holdspeak.services.workbench_service import WorkbenchService
 from holdspeak.watch_condition_matcher import match_condition
 from holdspeak.watch_validation import validate_action
 
@@ -39,21 +38,26 @@ def test_automation_run_names_its_automation() -> None:
     assert validate_action({"kind": "project.observe", "workbench_id": "wb"})
 
 
-def _rig(tmp_path, monkeypatch, rows: dict) -> tuple[Database, WatchService, list]:
+def _rig(tmp_path, monkeypatch, rows: dict, *, instruction: str = "Write the release note.") -> tuple[Database, WatchService, list]:
+    """The watch and the Programs service are real; the step's one model
+    call is the seam (``program_prompt.run_claimed``)."""
+    from holdspeak.services import program_prompt
+
+    monkeypatch.setenv("HOLDSPEAK_PROGRAMS", "off")  # no tick: the start's own wait runs the step
     db = Database(tmp_path / "watch-automation.db")
-    db.workbenches.upsert(workbench_id="wb-merge", name="On merge", instruction="Write the release note.")
+    db.workbenches.upsert(workbench_id="wb-merge", name="On merge", instruction=instruction)
     service = WatchService(db, snapshot_fetcher=lambda *_a, **_k: rows["now"])
     ran: list = []
 
-    async def fake_run(self, principal, workbench_id, item_id, **kwargs):  # noqa: ANN001
-        ran.append((workbench_id, item_id, kwargs.get("request_id")))
-        return {"parent_operation_id": "op-1"}
+    def fake_run(_runner, program, step, **_kwargs):  # noqa: ANN001
+        ran.append((program, step))
+        program_prompt.release(step["id"])
 
-    monkeypatch.setattr(WorkbenchService, "run_item", fake_run)
+    monkeypatch.setattr(program_prompt, "run_claimed", fake_run)
     return db, service, ran
 
 
-def test_one_event_mints_one_occurrence_and_runs_it_once(tmp_path, monkeypatch) -> None:
+def test_one_event_starts_one_program_and_runs_it_once(tmp_path, monkeypatch) -> None:
     rows = {"now": _pr("open")}
     db, service, ran = _rig(tmp_path, monkeypatch, rows)
     watch = service.start_automation_event(
@@ -64,13 +68,13 @@ def test_one_event_mints_one_occurrence_and_runs_it_once(tmp_path, monkeypatch) 
 
     rows["now"] = _pr("merged")
     service.evaluate_once(OWNER, watch["id"])
-    [(workbench_id, item_id, request_id)] = ran
-    item = db.workbench_items.get(item_id)
-    assert workbench_id == "wb-merge" and item.title == "Ship it"
-    assert "Write the release note." in item.body and "github.pr.merged" in item.body
-    assert request_id == f"watch:{watch['id']}:{item_id}"
+    [(program, step)] = ran
+    assert program["title"] == "Ship it" and program["origin_ref"] == "workbench:wb-merge"
+    assert step["kind"] == "prompt"
+    assert "Write the release note." in step["brief_markdown"] and "github.pr.merged" in step["brief_markdown"]
     [row] = service.automation_event_history(OWNER, workbench_id="wb-merge", watch_id=watch["id"])
-    assert (row["item_id"], row["event_type"]) == (item_id, "github.pr.merged")
+    assert (row["program_id"], row["event_type"]) == (program["id"], "github.pr.merged")
+    assert db.workbench_items.list_for_workbench("wb-merge") == []  # no occurrence item
 
     service.evaluate_once(OWNER, watch["id"])
     assert len(ran) == 1  # the same event never runs twice
@@ -97,3 +101,15 @@ def test_a_source_that_cannot_be_read_refuses_and_nothing_is_on(tmp_path, monkey
             OWNER, workbench_id="wb-merge", preset_id="github-pr-merged", repository="o/r")
     [watch] = service.automation_event_watches("wb-merge")
     assert watch["state"] == "paused" and watch["last_error"] == "gh is not signed in"
+
+
+def test_an_automation_with_no_instruction_runs_the_events_words(tmp_path, monkeypatch) -> None:
+    rows = {"now": _pr("open")}
+    _db, service, ran = _rig(tmp_path, monkeypatch, rows, instruction="")
+    watch = service.start_automation_event(
+        OWNER, workbench_id="wb-merge", preset_id="github-pr-merged", repository="o/r")
+    rows["now"] = _pr("merged")
+    service.evaluate_once(OWNER, watch["id"])
+    [(_program, step)] = ran
+    assert step["brief_markdown"].startswith("Something happened: Ship it.")
+    assert "github.pr.merged" in step["brief_markdown"]

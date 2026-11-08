@@ -791,7 +791,7 @@ def test_an_event_choice_turns_its_start_on_and_its_occurrence_runs_without_a_pr
     occurrence runs at once (A2 follow-up: it used to wait for a press that
     never came). Since 2026-11-08 the start is a watch (WatchService): one
     real event from the recorded gh answer is driven through the watch's
-    evaluation to a minted occurrence, its run and its result."""
+    evaluation to one Program run and its result."""
     import subprocess
 
     import holdspeak.services.watch_sources as watch_sources
@@ -832,8 +832,14 @@ def test_an_event_choice_turns_its_start_on_and_its_occurrence_runs_without_a_pr
 
     monkeypatch.setattr(watch_sources, "fetch_watch_snapshot", lambda *_a, **_k: snapshot(wire["after"]))
     WatchService(db).evaluate_once(OWNER, start["id"])
-    [item] = [i for i in db.workbench_items.list_for_workbench(wb) if "watch_id" in i.context_json]
-    assert _json.loads(item.context_json)["event_type"] == "github.pr.review_requested"
+    # The event's run is a Program of one prompt step (2026-11-08); no occurrence item.
+    from holdspeak.db.programs import ProgramStore
+    from holdspeak.services.automation_runs import program_runs
+
+    [program] = program_runs(db, wb)
+    [step] = ProgramStore(db).list_steps(program["id"])
+    assert step["facts"]["run_context"]["event_type"] == "github.pr.review_requested"
+    assert db.workbench_items.list_for_workbench(wb) == []
     assert len(prompts) == 1 and "https://github.com/acme/ledger/pull/418" in prompts[0]
     # The same evaluation again mints nothing and runs nothing twice.
     WatchService(db).evaluate_once(OWNER, start["id"])
