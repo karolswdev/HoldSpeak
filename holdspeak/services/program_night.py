@@ -72,6 +72,8 @@ DIGEST_HOURS = 12
 NOTE_HOURS = 20
 #: The kinds Add to tonight takes.
 ITEM_KINDS = ("action", "note", "program_step")
+#: The principal of the engine's backlog read at the window's start.
+BACKLOG_ENGINE = "program-engine:night-backlog"
 #: The checkpoint kind of a night's digest.
 DIGEST_KIND = "night_digest"
 #: The checkpoint kinds of a night's backlog read, its red-main hold and its stop.
@@ -473,7 +475,7 @@ def read_backlog(runner: Any, program: Mapping[str, Any], start: datetime, end: 
             log.info(f"the canon was not read for tonight: {exc}")
     added = 0
     if items and level_of(program.get("control")) == "yolo":
-        engine = Principal(PrincipalKind.AGENT, "program-engine:night-backlog")
+        engine = Principal(PrincipalKind.AGENT, BACKLOG_ENGINE)
         for item in items:
             try:
                 if add_to_night(service, engine, kind=item["kind"], item_id=item["id"], program_id=program["id"])["added"]:
@@ -855,6 +857,12 @@ def _item(service: Any, kind: str, item_id: str, line: Any) -> dict[str, Any]:
             "origin_ref": f"action:{item_id}", "from": "A task on the Door"}
 
 
+def _backlog(principal: Any) -> bool:
+    """The engine's own backlog read (``read_backlog``): it adds to the night
+    it runs by rule, as YOLO's Decided for you; it is not a step's agent."""
+    return str(getattr(principal, "identity", "") or "") == BACKLOG_ENGINE
+
+
 def add_to_night(service: Any, principal: Any, *, kind: Any, item_id: Any, line: Any = None,
                  program_id: Any = None) -> dict[str, Any]:
     """Mark one item for tonight's planning (a Planned step of the night Program)."""
@@ -868,7 +876,8 @@ def add_to_night(service: Any, principal: Any, *, kind: Any, item_id: Any, line:
     same = fold_target(steps, item["title"])
     if same is not None and ((same.get("facts") or {}).get("night_item") or {}).get("ref") != item["ref"]:
         # The night has a step of that title: the item folds into it.
-        service._require_plan_open(principal, program)
+        if not _backlog(principal):
+            service._require_plan_open(principal, program)
         with _LOCK:
             service._fold(program, dict(same), str(item["brief"] or ""), by="owner" if _is_owner(principal) else "agent")
             service.changed(program["id"], same["id"], verb="night")
@@ -885,7 +894,8 @@ def add_to_night(service: Any, principal: Any, *, kind: Any, item_id: Any, line:
         if outcome.to_owner:
             raise ProgramRefused("owner_required", "Only you add to tonight at Normal and Secure; at YOLO the "
                                                    "engine adds it and says so.", status=403)
-        service._require_plan_open(principal, program)  # 2026-11-08: never into a running Program
+        if not _backlog(principal):  # 2026-11-08: an agent never plans into a running Program
+            service._require_plan_open(principal, program)
     with _LOCK:
         before = {row["id"] for row in service.store.list_steps(program["id"])}
         service.plan(RUNNER, program["id"], steps=[{"title": item["title"], "brief": item["brief"], "owns": item["owns"],
