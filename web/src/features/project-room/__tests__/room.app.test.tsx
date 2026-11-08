@@ -40,6 +40,10 @@ import P3 from "./room-wires/nowP3.json";
 import Q1 from "./room-wires/roomAskQ1.json";
 // Recorded by the real Room/Workbench integration fence, including refusal.
 import P7 from "./room-wires/updateAutomationP7.json";
+// Recorded by tests/integration/test_desk_project_room.py::
+// test_project_program_continuity_records_scope_and_reads (HOLDSPEAK_WIRE_WRITE=1):
+// the full hub, a Program created with {title, template, project_id} only.
+import P13 from "./room-wires/programs13.json";
 import { runAsk } from "../../../desk/ask";
 import { AskPanel } from "../../../desk/components/AskPanel";
 import ASK_THREAD from "../../../test/wire/ask.thread.wire.json";
@@ -1663,5 +1667,147 @@ describe("P7: the project update automation line", () => {
       key: `POST /api/workbenches/${automation.id}/results/${result.artifact_id}/open`,
       json: undefined,
     });
+  });
+});
+
+/* ── HS-S13 (D15/G13 = A): the project's Programs in the Room ────────── */
+
+
+describe("HS-S13: the Room lists the Programs filed to its project", () => {
+  const hand = P13.creationHandoff;
+  const projectA = P13.projects.a;
+  const made = hand.create.response.body as { id: string; title: string };
+  const deliver = (data: unknown) => act(() => {
+    for (const h of bus.handlers.get("desk_changed") ?? []) h({ type: "desk_changed", data });
+  });
+  const roomReads = (id: string) => calls.filter((c) => c.key === room(id)).length;
+
+  beforeEach(() => {
+    bus.handlers.clear();
+    useDesk.setState({ pullouts: [] });
+  });
+
+  it("draws the recorded rows in the Room and Open opens that exact Program", async () => {
+    wire({ [room(projectA)]: () => clone(hand.roomAfter) });
+    render(<WindowHarness scope={`project:${projectA}`} />);
+    const fold = await screen.findByTestId("room-fold-programs");
+    const rows = within(fold).getAllByTestId("room-program-row");
+    expect(rows).toHaveLength(1);
+    expect(rows[0].textContent).toContain("New program");
+    expect(rows[0].textContent).toContain("Drafting");
+    // The fold sits after Files and before Sources.
+    const folds = screen.getByTestId("room-folds");
+    const order = Array.from(folds.querySelectorAll("[data-room-slot]")).map((el) => el.getAttribute("data-room-slot"));
+    expect(order.indexOf("programs")).toBe(order.indexOf("files") + 1);
+    expect(order.indexOf("sources")).toBe(order.indexOf("programs") + 1);
+    fireEvent.click(within(rows[0]).getByTestId("room-program-open"));
+    expect(useDesk.getState().pullouts.map((p) => p.id)).toEqual([`program:${made.id}`]);
+    expect(hand.detail.id).toBe(made.id);
+    // Reading and opening sent no Program write.
+    expect(calls.filter((c) => c.key.includes("/api/programs"))).toEqual([]);
+    expect(rawButtons(document.body)).toEqual([]);
+  });
+
+  it("another project on the same repository shows only its own Program of the same title", async () => {
+    const other = P13.roomOther as { project_id: string; programs: { programs: { id: string }[] } };
+    wire({ [room(other.project_id)]: () => clone(other) });
+    render(<WindowHarness scope={`project:${other.project_id}`} />);
+    const rows = await screen.findAllByTestId("room-program-row");
+    expect(rows).toHaveLength(1);
+    fireEvent.click(within(rows[0]).getByTestId("room-program-open"));
+    expect(useDesk.getState().pullouts.map((p) => p.id)).toEqual([`program:${other.programs.programs[0].id}`]);
+    expect(other.programs.programs[0].id).not.toBe(made.id);
+  });
+
+  it("an empty list says none is filed; a failed read and an older hub never say zero", async () => {
+    const empty = P13.roomEmpty as { project_id: string };
+    wire({ [room(empty.project_id)]: () => clone(empty) });
+    const first = render(<WindowHarness scope={`project:${empty.project_id}`} />);
+    expect((await screen.findByTestId("room-programs-empty")).textContent).toBe("No Programs filed to this project");
+    expect(screen.queryByTestId("room-programs-unavailable")).toBeNull();
+    first.unmount();
+
+    const degraded = P13.roomDegraded as { project_id: string };
+    let reads = 0;
+    wire({ [room(degraded.project_id)]: () => (++reads === 1 ? clone(degraded) : clone(hand.roomAfter)) });
+    const second = render(<WindowHarness scope={`project:${degraded.project_id}`} />);
+    expect((await screen.findByTestId("room-programs-unavailable")).textContent).toBe("Could not read the Programs");
+    expect(screen.queryByTestId("room-programs-empty")).toBeNull();
+    expect(screen.queryByTestId("room-program-row")).toBeNull();
+    fireEvent.click(screen.getByTestId("room-programs-refresh"));
+    expect(await screen.findByTestId("room-program-row")).toBeTruthy();
+    second.unmount();
+
+    // A malformed list (a repeated id) is the same failure, not a shorter list.
+    const row = hand.roomAfter.programs.programs[0];
+    wire({ [room(projectA)]: () => ({ ...clone(hand.roomAfter), programs: { state: "ok", programs: [row, row] } }) });
+    const third = render(<WindowHarness scope={`project:${projectA}`} />);
+    expect((await screen.findByTestId("room-programs-unavailable")).getAttribute("data-reason")).toBe("malformed");
+    expect(screen.queryByTestId("room-program-row")).toBeNull();
+    third.unmount();
+
+    wire({ [room(BARE_ROOM.project_id)]: () => clone(BARE_ROOM) });
+    render(<WindowHarness scope={`project:${BARE_ROOM.project_id}`} />);
+    expect((await screen.findByTestId("room-programs-unavailable")).textContent).toBe("This hub does not read Programs");
+  });
+
+  it("the create's recorded frame reads the Room again: the new Program appears by its id", async () => {
+    let created = false;
+    wire({ [room(projectA)]: () => clone(created ? hand.roomAfter : hand.roomBefore) });
+    render(<WindowHarness scope={`project:${projectA}`} />);
+    expect(await screen.findByTestId("room-programs-empty")).toBeTruthy();
+    const before = roomReads(projectA);
+
+    // No notification: the Room keeps its read and invents no row.
+    created = true;
+    await new Promise((r) => setTimeout(r, 400));
+    expect(roomReads(projectA)).toBe(before);
+    expect(screen.queryByTestId("room-program-row")).toBeNull();
+
+    // A windows-only frame is not a read.
+    deliver({ kind: "windows", id: "today", op: "open", changes: [{ kind: "windows", id: "today", op: "open" }] });
+    await new Promise((r) => setTimeout(r, 400));
+    expect(roomReads(projectA)).toBe(before);
+
+    // The hub's own coalesced frame (top-level `note`, the Program in `changes`).
+    for (const frame of hand.frames) deliver(frame);
+    await waitFor(() => expect(screen.getAllByTestId("room-program-row")).toHaveLength(1));
+    expect(roomReads(projectA)).toBe(before + 1);
+    fireEvent.click(screen.getByTestId("room-program-open"));
+    expect(useDesk.getState().pullouts.map((p) => p.id)).toEqual([`program:${made.id}`]);
+  });
+
+  it("a Program frame in the legacy single-change shape reads the Room again", async () => {
+    let moved = false;
+    const after = { ...clone(hand.roomAfter), programs: { state: "ok", programs: P13.move.roomA } };
+    const withMoved = { ...clone(hand.roomAfter), programs: { state: "ok", programs: [
+      ...P13.move.roomA, ...P13.move.roomC] } };
+    wire({ [room(projectA)]: () => clone(moved ? after : withMoved) });
+    render(<WindowHarness scope={`project:${projectA}`} />);
+    await waitFor(() => expect(screen.getAllByTestId("room-program-row")).toHaveLength(2));
+    moved = true;
+    deliver({ kind: "program", id: P13.move.program, op: "update" });
+    await waitFor(() => expect(screen.getAllByTestId("room-program-row")).toHaveLength(1));
+    expect(screen.getByTestId("room-program-row").textContent).toContain("New program");
+  });
+
+  it("a failed re-read keeps the rows and says this is the last read, until a read lands", async () => {
+    let fail = false;
+    wire({ [room(projectA)]: () => {
+      if (fail) throw new ApiError(503, "down", {});
+      return clone(hand.roomAfter);
+    } });
+    render(<WindowHarness scope={`project:${projectA}`} />);
+    expect(await screen.findByTestId("room-program-row")).toBeTruthy();
+    expect(screen.queryByTestId("room-last-read")).toBeNull();
+    fail = true;
+    for (const frame of P13.move.frames) deliver(frame);
+    expect(await screen.findByTestId("room-last-read")).toBeTruthy();
+    expect(screen.getByTestId("room-last-read").textContent).toContain("This is the last read");
+    expect(screen.getByTestId("room-program-row")).toBeTruthy();
+    fail = false;
+    fireEvent.click(within(screen.getByTestId("room-last-read")).getByRole("button", { name: "Refresh" }));
+    await waitFor(() => expect(screen.queryByTestId("room-last-read")).toBeNull());
+    expect(screen.getByTestId("room-program-row")).toBeTruthy();
   });
 });

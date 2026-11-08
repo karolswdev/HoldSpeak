@@ -9,11 +9,13 @@ import {
   decodeDecision,
   decodeMeeting,
   decodeProject,
+  decodeRoomPrograms,
   decodeRoomSnapshot,
   lifecycleLabel,
   whyFaceWords,
 } from "../model";
 import type { RoomSnapshot } from "../model";
+import P13 from "./room-wires/programs13.json";
 
 describe("composeProjectTimeline", () => {
   it("interleaves meetings, decisions, and only promoted artifacts newest-down", () => {
@@ -507,5 +509,50 @@ describe("whyFaceWords", () => {
     expect(whyFaceWords("WAITING ON PRIYA")).toBe("Waiting on Priya");
     expect(whyFaceWords("PROPOSED · Standup")).toBe("Proposed · Standup");
     expect(whyFaceWords("Milestone · 7 days late")).toBe("Milestone · 7 days late");
+  });
+});
+
+/* HS-S13 (G13-A): the Programs section is read strictly; a malformed read is
+ * never a smaller list or a zero. The base wire is the real hub's
+ * (tests/integration/test_desk_project_room.py::
+ * test_project_program_continuity_records_scope_and_reads). */
+describe("decodeRoomPrograms", () => {
+  const recorded = P13.creationHandoff.roomAfter.programs;
+  const row = recorded.programs[0];
+
+  it("keeps the producer's rows, order and words", () => {
+    const many = { state: "ok", programs: [
+      { ...row, id: "program-b", state: "parked", state_word: "Parked" },
+      { ...row, id: "program-a", state: "landed", state_word: "Landed", done: 3, total: 3 },
+      { ...row, id: "program-c", state: "someday", state_word: "Someday", extra: 1 },
+    ] };
+    const decoded = decodeRoomPrograms(many);
+    expect(decoded.state).toBe("ok");
+    if (decoded.state !== "ok") return;
+    expect(decoded.programs.map((p) => [p.id, p.state, p.state_word])).toEqual([
+      ["program-b", "parked", "Parked"], ["program-a", "landed", "Landed"], ["program-c", "someday", "Someday"]]);
+    expect(decodeRoomSnapshot({ programs: recorded } as Record<string, unknown>).programs).toEqual({
+      state: "ok",
+      programs: [{ id: row.id, title: "New program", state: "drafting", state_word: "Drafting", done: 0, total: 0, your_turn: 0 }],
+    });
+  });
+
+  it("an empty list is ok and empty; absent and degraded stay what they are", () => {
+    expect(decodeRoomPrograms(P13.roomEmpty.programs)).toEqual({ state: "ok", programs: [] });
+    expect(decodeRoomPrograms(undefined)).toEqual({ state: "absent", reason: "missing" });
+    expect(decodeRoomPrograms(P13.roomDegraded.programs)).toEqual({ state: "degraded", error_code: "programs_read_failed" });
+  });
+
+  it.each([
+    ["a repeated id", { state: "ok", programs: [row, row] }],
+    ["a row with no id", { state: "ok", programs: [row, { ...row, id: "" }] }],
+    ["a null row", { state: "ok", programs: [row, null] }],
+    ["a list that is not a list", { state: "ok", programs: { 0: row } }],
+    ["no list", { state: "ok" }],
+    ["a count that is not a whole number", { state: "ok", programs: [{ ...row, done: "two" }] }],
+    ["a negative count", { state: "ok", programs: [{ ...row, your_turn: -1 }] }],
+    ["an unknown section state", { state: "partial", programs: [row] }],
+  ])("%s makes the section malformed, never a zero", (_name, raw) => {
+    expect(decodeRoomPrograms(raw)).toEqual({ state: "degraded", error_code: "malformed" });
   });
 });

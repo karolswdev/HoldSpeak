@@ -4,6 +4,7 @@
 // Two wings: ROOM · HISTORY. Ask well at the foot. No counters of zero,
 // no REV, no raw field names, the name said once.
 import { RunAsProgramVerb } from "../../desk/programs/RunAsProgram";
+import { RoomPrograms } from "../../desk/programs/RoomPrograms";
 import { HandRowVerb } from "../../desk/components/HandRowVerb";
 import { wireDate } from "../../desk/surface/format";
 import React, { useEffect, useLayoutEffect, useRef, useState, useMemo, useCallback, useReducer } from "react";
@@ -42,7 +43,7 @@ import {
   useRoomRead, withRead, type SlotReads,
 } from "./roomReads";
 import { registerProjectRepository, registrable, useProjectRepository } from "../../desk/projectRepository";
-import { plainFail, type PlainFail } from "../../desk/surface/plainFailure";
+import { plainFail, plainWords, type PlainFail } from "../../desk/surface/plainFailure";
 import { Loading } from "../../desk/surface/kit";
 import { useWindowTitle } from "../../desk/surface/title";
 import { Button } from "../../components/signal/Signal";
@@ -71,6 +72,8 @@ import type {
   RoomSuggestedSourceItem,
   RoomHealthPerson,
   NudgeLocal,
+  RoomProgramRow,
+  RoomSection,
 } from "./model";
 import { lifecycleLabel, formatDays, needsYouWhyWords, whyFaceWords } from "./model";
 import { StringGadget, CycleGadget, FoldGadget } from "../../desk/surface/gadgets";
@@ -1931,6 +1934,37 @@ function HistoryEntryRow({ entry, itemIds, onOpenItem }: {
 
 /* ── PHILO-17 refit: a folded section ── */
 
+/** HS-S13 (G13-A): the Programs filed to this Project, as the hub returned
+ *  them. Rows reuse the Programs fold (`desk/programs/RoomPrograms`); an
+ *  empty list, a hub that does not read Programs and a failed or malformed
+ *  read each say what they are, never a zero. */
+const ROOM_PROGRAM_CHANGE_KINDS = Object.freeze([...ROOM_CHANGE_KINDS, "program"]);
+
+function RoomProgramsSection({ section, onRefresh }: {
+  section: RoomSection<{ programs: RoomProgramRow[] }> | undefined;
+  onRefresh: () => void;
+}) {
+  if (section?.state === "ok" && section.programs.length) {
+    return <div className="room-fold" data-testid="room-fold-programs"><RoomPrograms programs={section.programs} /></div>;
+  }
+  if (section?.state === "ok") {
+    return (
+      <RoomFold title="Programs" testId="room-fold-programs">
+        <p className="room-empty-line" data-testid="room-programs-empty">No Programs filed to this project</p>
+      </RoomFold>
+    );
+  }
+  const failed = section?.state === "degraded";
+  return (
+    <RoomFold title="Programs" open={failed || undefined} testId="room-fold-programs">
+      <p className="room-empty-line" data-testid="room-programs-unavailable" data-reason={failed ? section.error_code : "absent"}>
+        {failed ? "Could not read the Programs" : "This hub does not read Programs"}
+      </p>
+      {failed ? <Button dense variant="secondary" onClick={onRefresh} data-testid="room-programs-refresh">Refresh</Button> : null}
+    </RoomFold>
+  );
+}
+
 /** A secondary section, folded until asked for (the library FoldGadget).
  *  A fold whose section draws nothing is not drawn (CSS :has). */
 function RoomFold({ title, token, open, testId, children }: {
@@ -2033,7 +2067,7 @@ function ProjectRoomCoreFor({ hero, scope, scopeLabel }: CoreProps) {
   const loading = ctrl.loadStatus === "loading";
   // A write in another window (a meeting filed, an update published, an
   // agent's write) shows in this Room with no reload.
-  useOnDeskChanged(() => { void ctrl.load(true); }, ROOM_CHANGE_KINDS);
+  useOnDeskChanged(() => { void ctrl.load(true); }, ROOM_PROGRAM_CHANGE_KINDS);
 
   const reviewData: RoomReviewData | null =
     ctrl.room?.review.state === "ok"
@@ -2403,6 +2437,12 @@ function ProjectRoomCoreFor({ hero, scope, scopeLabel }: CoreProps) {
           {shown ? null : <div className="room-settling-line"><Loading /></div>}
           {sendFailure}
           {ctrl.readError ? <div className="room-failure-title" title={ctrl.errorTitle || undefined}><SurfaceState error={ctrl.readError} onRetry={handleRefresh} /></div> : null}
+          {ctrl.lastRead && !ctrl.readError ? (
+            <div className="room-failure-title" data-testid="room-last-read">
+              <SurfaceState error={plainWords("Could not read the Project again", "This is the last read")}
+                onRetry={handleRefresh} retryLabel="Refresh" />
+            </div>
+          ) : null}
           {ctrl.view === "room" ? (
             <>
               <div className="room-section-rise" style={{ animationDelay: "0ms" }}>
@@ -2467,6 +2507,9 @@ function ProjectRoomCoreFor({ hero, scope, scopeLabel }: CoreProps) {
                   <RoomFiledNotes projectId={ctrl.projectId} ctrl={ctrl} request={fileRequest}
                     onRequestHandled={onFileRequestHandled}
                     presentationReady={shown && !place("files").waiting} />
+                </RoomSlot>
+                <RoomSlot id="programs" place={{ waiting: false }} delay="81ms">
+                  <RoomProgramsSection section={ctrl.room.programs} onRefresh={handleRefresh} />
                 </RoomSlot>
                 <RoomSlot id="sources" place={place("sources")} own={{ extras: extrasRead }} delay="82ms">
                   <RoomFold title="Sources" token={sourceCount || undefined}

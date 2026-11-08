@@ -363,3 +363,58 @@ describe("useProjectRoomController — the catch-up list is the visit's baseline
   });
 });
 
+
+describe("useProjectRoomController — HS-S13: the last read is named", () => {
+  it("a failed quiet re-read keeps the Room and says it is the last read; a read that lands clears it", async () => {
+    let fail = false;
+    apiFetchMock.mockImplementation((url: string) => {
+      if (url.includes("/room") && !url.endsWith("/read") && fail) return Promise.reject(new ApiError(503, "down", {}));
+      return Promise.resolve(response(url));
+    });
+    const { result } = renderHook(() => useProjectRoomController("project:p1", "Test"));
+    await waitFor(() => expect(result.current.loadStatus).toBe("ready"));
+    expect(result.current.lastRead).toBe(false);
+
+    fail = true;
+    await act(async () => { await result.current.load(true); });
+    expect(result.current.room?.project.name).toBe("Test project");
+    expect(result.current.lastRead).toBe(true);
+    expect(result.current.readError).toBe("");
+
+    fail = false;
+    await act(async () => { await result.current.load(true); });
+    expect(result.current.lastRead).toBe(false);
+  });
+
+  it("an older read that fails late does not mark the newer read", async () => {
+    let reads = 0;
+    let rejectFirst: (e: unknown) => void = () => undefined;
+    apiFetchMock.mockImplementation((url: string) => {
+      if (url.includes("/room") && !url.endsWith("/read")) {
+        reads += 1;
+        if (reads === 2) return new Promise((_resolve, reject) => { rejectFirst = reject; });
+        return Promise.resolve(response(url));
+      }
+      return Promise.resolve(response(url));
+    });
+    const { result } = renderHook(() => useProjectRoomController("project:p1", "Test"));
+    await waitFor(() => expect(result.current.loadStatus).toBe("ready"));
+    let older: Promise<void> = Promise.resolve();
+    act(() => { older = result.current.load(true); });
+    await act(async () => { await result.current.load(true); });
+    await act(async () => { rejectFirst(new ApiError(503, "down", {})); await older; });
+    expect(reads).toBe(3);
+    expect(result.current.lastRead).toBe(false);
+  });
+
+  it("a failed detail read does not mark the Room as the last read", async () => {
+    apiFetchMock.mockImplementation((url: string) => {
+      if (url.includes("/meetings")) return Promise.reject(new ApiError(503, "down", {}));
+      return Promise.resolve(response(url));
+    });
+    const { result } = renderHook(() => useProjectRoomController("project:p1", "Test"));
+    await waitFor(() => expect(result.current.detailStatus).toBe("ready"));
+    expect(result.current.room).not.toBeNull();
+    expect(result.current.lastRead).toBe(false);
+  });
+});

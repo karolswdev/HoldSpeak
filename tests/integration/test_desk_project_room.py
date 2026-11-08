@@ -2798,3 +2798,244 @@ def test_project_update_line_records_the_real_manual_and_friday_wire(tmp_path, m
             path.write_text(json.dumps({"manual": manual, "scheduled": scheduled,
                 "draft": draft, "friday": friday, "refusal": refused.json(),
                 "completed": completed, "delivered": delivered, "opened": opened, "read": read, "legacy": legacy, "foreign": foreign}, indent=2) + "\n")
+
+
+# ── HS-S13 (D15/G13 = A, 2026-11-07): the Room shows the project's Programs ──
+#
+# The full hub, no lifespan (no engine tick). A Program is created through the
+# real route with only ``{title, template, project_id}`` (the HS-S11 well's
+# tuple); the hub resolves the repository through its own registry and the
+# project's filed ``repository:<source_id>`` row. The Room of that project
+# lists the Program by its exact id; a second project on the same repository
+# with a Program of the same title lists only its own; a third lists none.
+# The sole writer of ``room-wires/programs13.json`` is
+# ``test_project_program_continuity_records_scope_and_reads``.
+
+PROGRAMS13_WIRE = (Path(__file__).resolve().parents[2] / "web" / "src" / "features" / "project-room"
+                   / "__tests__" / "room-wires" / "programs13.json")
+
+
+def _s13_switches(monkeypatch: pytest.MonkeyPatch) -> None:
+    for name in ("HOLDSPEAK_PROGRAMS", "HOLDSPEAK_PHONE", "HOLDSPEAK_TELEGRAM", "HOLDSPEAK_CALLS",
+                 "HOLDSPEAK_LINE", "HOLDSPEAK_RECORDINGS", "HOLDSPEAK_MIC_CHECK", "HOLDSPEAK_CLI_ENGINES",
+                 "HOLDSPEAK_RESTART_CHECK", "HOLDSPEAK_SCREEN_RULES"):
+        monkeypatch.setenv(name, "off")
+    from holdspeak import missioncontrol_bridge
+
+    # No project map on this machine is read.
+    monkeypatch.setattr(missioncontrol_bridge, "load_project_map", lambda path=None: {})
+
+
+def _s13_repo(tmp_path: Path) -> Path:
+    repo = tmp_path / "app"
+    repo.mkdir()
+    env = {"GIT_CONFIG_NOSYSTEM": "1", "HOME": str(tmp_path), "PATH": __import__("os").environ["PATH"]}
+    for args in (["init", "-q", "-b", "main"], ["config", "user.email", "s13@example.invalid"],
+                 ["config", "user.name", "S13"]):
+        subprocess.run(["git", *args], cwd=repo, check=True, env=env)
+    (repo / "README.md").write_text("S13\n")
+    subprocess.run(["git", "add", "README.md"], cwd=repo, check=True, env=env)
+    subprocess.run(["git", "commit", "-q", "-m", "init"], cwd=repo, check=True, env=env)
+    return repo
+
+
+def _s13_gh_never(*args: Any, **kwargs: Any) -> Any:
+    raise AssertionError(f"gh was called: {args!r}")
+
+
+def _s13_seed(hub: Hub, repo: Path) -> dict[str, str]:
+    """Three projects; A and B file the same local repository, C files none."""
+    from holdspeak.runtime import composition
+    from holdspeak.services.agent_hand_service import default_agent_hand_service
+
+    ids = {
+        key: hub.ok("POST", "/api/projects", {"name": name, "command_id": f"s13-{key}"})["project"]["id"]
+        for key, name in (("a", "Ledger cutover"), ("b", "Card vault"), ("c", "Quiet"))
+    }
+    hand = composition.service("agent_hand_service", lambda: default_agent_hand_service(hub.db))
+    source, _ = hand._launch_service()._registry.register(str(repo), label="app")
+    for key in ("a", "b"):
+        hub.ok("PUT", f"/api/projects/{ids[key]}/resources/repository:{source.source_id}", {})
+    return ids
+
+
+def _s13_program_ids(hub: Hub) -> set[str]:
+    from holdspeak.services.program_service import default_program_service
+
+    return {row["id"] for row in default_program_service().store.list_programs()}
+
+
+def _s13_frames(monkeypatch: pytest.MonkeyPatch) -> list[dict[str, Any]]:
+    """Every ``desk_changed`` frame the hub's composition sends."""
+    from holdspeak.runtime import composition
+
+    root = composition.current()
+    frames: list[dict[str, Any]] = []
+    real = root.broadcast
+
+    def record(kind: str, data: Any) -> None:
+        if kind == "desk_changed":
+            frames.append(json.loads(json.dumps(data)))
+        if real is not None:
+            real(kind, data)
+
+    monkeypatch.setattr(root, "broadcast", record)
+    return frames
+
+
+def _s13_capture(method: str, path: str, answer: Any, body: Any = None) -> dict[str, Any]:
+    request: dict[str, Any] = {"method": method, "path": path}
+    if body is not None:
+        request["json"] = body
+    return {"request": request, "response": {"status": answer.status_code, "body": answer.json()}}
+
+
+def _s13_changes(frame: dict[str, Any]) -> list[dict[str, Any]]:
+    """``deskChanges`` (web/src/desk/components/window/dockState.ts): the
+    ``changes`` list when it has entries, else the frame itself."""
+    listed = [c for c in frame.get("changes") or [] if isinstance(c, dict)]
+    return listed or [frame]
+
+
+def test_project_program_continuity_records_scope_and_reads(tmp_path, monkeypatch):
+    _s13_switches(monkeypatch)
+    repo = _s13_repo(tmp_path)
+    with _hub(tmp_path, monkeypatch, gh_runner=_s13_gh_never) as hub:
+        ids = _s13_seed(hub, repo)
+        frames = _s13_frames(monkeypatch)
+        choices = hub.client.get("/api/projects")
+        assert choices.status_code == 200
+        assert set(ids.values()) <= {row["id"] for row in choices.json()["projects"]}
+        room_before = hub.client.get(f"/api/projects/{ids['a']}/room")
+        assert room_before.status_code == 200 and room_before.json()["programs"] == {"programs": [], "state": "ok"}
+        assert _s13_program_ids(hub) == set()
+
+        # The HS-S11 well's tuple: no repository, an explicit project.
+        body = {"title": "New program", "template": "fast-cycle", "project_id": ids["a"]}
+        made = hub.client.post("/api/programs", json=body)
+        assert made.status_code == 201, made.text
+        program = made.json()
+        assert program["project_id"] == ids["a"] and program["state"] == "drafting" and program["steps"] == []
+        assert Path(program["repository"]["root"]).resolve() == repo.resolve()
+        create_frames = list(frames)
+        assert any(c.get("kind") == "program" and c.get("id") == program["id"]
+                   for frame in create_frames for c in _s13_changes(frame)), create_frames
+
+        # The same title for project B on the same repository.
+        other = hub.ok("POST", "/api/programs", {"title": "New program", "template": "fast-cycle", "project_id": ids["b"]})
+        assert other["id"] != program["id"] and other["project_id"] == ids["b"]
+
+        room_after = hub.client.get(f"/api/projects/{ids['a']}/room")
+        assert room_after.status_code == 200
+        section = room_after.json()["programs"]
+        assert section["state"] == "ok"
+        assert [row["id"] for row in section["programs"]] == [program["id"]]
+        assert section["programs"][0]["title"] == "New program" and section["programs"][0]["state"] == "drafting"
+        room_b = hub.ok("GET", f"/api/projects/{ids['b']}/room")
+        assert [row["id"] for row in room_b["programs"]["programs"]] == [other["id"]]
+        room_empty = hub.client.get(f"/api/projects/{ids['c']}/room")
+        assert room_empty.json()["programs"] == {"programs": [], "state": "ok"}
+
+        detail = hub.client.get(f"/api/programs/{program['id']}")
+        assert detail.status_code == 200 and detail.json()["id"] == program["id"]
+        assert detail.json()["project_id"] == ids["a"]
+
+        # One Program filed to A, then moved to C: both Rooms follow; its id
+        # and repository stay.
+        moved = hub.ok("POST", "/api/programs", {"title": "Moves", "template": "fast-cycle", "project_id": ids["a"]})
+        frames.clear()
+        changed = hub.client.patch(f"/api/programs/{moved['id']}", json={"project_id": ids["c"]})
+        assert changed.status_code == 200, changed.text
+        move_frames = list(frames)
+        assert changed.json()["id"] == moved["id"]
+        assert changed.json()["repository"]["root"] == moved["repository"]["root"]
+        assert any(c.get("kind") == "program" and c.get("id") == moved["id"]
+                   for frame in move_frames for c in _s13_changes(frame)), move_frames
+        moved_room_a = hub.ok("GET", f"/api/projects/{ids['a']}/room")["programs"]["programs"]
+        moved_room_c = hub.ok("GET", f"/api/projects/{ids['c']}/room")["programs"]["programs"]
+        assert moved["id"] not in [row["id"] for row in moved_room_a]
+        assert [row["id"] for row in moved_room_c] == [moved["id"]]
+
+        # The Programs read fails: only that section is degraded.
+        from holdspeak.services import project_service
+
+        def boom(self: Any, project_id: str) -> Any:
+            raise RuntimeError("the programs store is gone")
+
+        with monkeypatch.context() as patched:
+            patched.setattr(project_service.ProjectService, "_read_room_programs", boom)
+            degraded = hub.client.get(f"/api/projects/{ids['a']}/room")
+        assert degraded.status_code == 200
+        assert degraded.json()["programs"]["state"] == "degraded"
+        assert degraded.json()["items"]["state"] == "ok" and degraded.json()["project"]["id"] == ids["a"]
+
+        # Reading the Rooms and the detail started nothing.
+        assert {row["state"] for row in hub.ok("GET", "/api/programs")["programs"]} == {"drafting"}
+
+        if __import__("os").environ.get("HOLDSPEAK_WIRE_WRITE") == "1":
+            # The temporary repository path is the one field normalised.
+            text = json.dumps({
+                "_recorded": "tests/integration/test_desk_project_room.py::"
+                             "test_project_program_continuity_records_scope_and_reads "
+                             "(HOLDSPEAK_WIRE_WRITE=1 rewrites this file; never hand-edit a field a test reads)",
+                "projects": ids,
+                "creationHandoff": {
+                    "projects": _s13_capture("GET", "/api/projects", choices),
+                    "roomBefore": room_before.json(),
+                    "create": _s13_capture("POST", "/api/programs", made, body),
+                    "frames": create_frames,
+                    "roomAfter": room_after.json(),
+                    "detail": detail.json(),
+                },
+                "roomOther": room_b,
+                "roomEmpty": room_empty.json(),
+                "roomDegraded": degraded.json(),
+                "move": {"program": moved["id"], "frames": move_frames,
+                         "roomA": moved_room_a, "roomC": moved_room_c},
+            }, indent=1, sort_keys=True) + "\n"
+            for path in sorted({str(repo.resolve()), str(repo)}, key=len, reverse=True):
+                text = text.replace(path, "/tmp/rig/app")
+            PROGRAMS13_WIRE.write_text(text)
+
+
+def test_project_program_continuity_records_failures(tmp_path, monkeypatch):
+    """A save that faults after the write: 500, the Program exists, and the
+    Room finds it by its id on the next read. Never writes the wire."""
+    _s13_switches(monkeypatch)
+    repo = _s13_repo(tmp_path)
+    with _hub(tmp_path, monkeypatch, gh_runner=_s13_gh_never) as hub:
+        ids = _s13_seed(hub, repo)
+        from holdspeak.services.program_service import ProgramService
+
+        before = _s13_program_ids(hub)
+
+        def boom(*args: Any, **kwargs: Any) -> Any:
+            raise RuntimeError("the checkpoint store is gone")
+
+        with monkeypatch.context() as patched:
+            patched.setattr(ProgramService, "_checkpoint", boom)
+            failed = hub.client.post("/api/programs", json={"title": "New program", "template": "fast-cycle",
+                                                           "project_id": ids["a"]})
+        assert failed.status_code == 500, failed.text
+        made = _s13_program_ids(hub) - before
+        assert len(made) == 1
+        program_id = made.pop()
+        room = hub.ok("GET", f"/api/projects/{ids['a']}/room")
+        assert [row["id"] for row in room["programs"]["programs"]] == [program_id]
+        assert hub.ok("GET", f"/api/programs/{program_id}")["project_id"] == ids["a"]
+
+        # An archived project still reads its Programs.
+        hub.ok("DELETE", f"/api/projects/{ids['a']}")
+        archived = hub.client.get(f"/api/projects/{ids['a']}/room")
+        assert archived.status_code == 200, archived.text
+        assert [row["id"] for row in archived.json()["programs"]["programs"]] == [program_id]
+
+        # No session: the Room and the detail refuse.
+        bare = hub.client.__class__(hub.server.app, client=("127.0.0.1", 50001))
+        bare.headers.pop("x-holdspeak-token", None)
+        bare.headers.pop("authorization", None)
+        try:
+            assert bare.get(f"/api/projects/{ids['a']}/room").status_code == 401
+            assert bare.get(f"/api/programs/{program_id}").status_code == 401
+        finally:
+            bare.close()

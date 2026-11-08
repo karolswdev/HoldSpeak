@@ -93,6 +93,10 @@ import createProjectsFixture from "../__fixtures__/program.create_projects.json"
 import createProjectFixture from "../__fixtures__/program.create_project.json";
 import createNoRepositoryFixture from "../__fixtures__/program.create_no_repository.json";
 import createRepositoryRequiredFixture from "../__fixtures__/program.create_repository_required.json";
+// HS-S13 + HS-S11 (the creation-to-Room gate): the full hub's create for a
+// project and that project's Room, recorded by
+// tests/integration/test_desk_project_room.py::test_project_program_continuity_records_scope_and_reads.
+import roomPrograms13 from "../../../features/project-room/__tests__/room-wires/programs13.json";
 
 type Frame = { type: string; data: unknown };
 type Answer = unknown | ((init?: { method?: string; json?: unknown }) => unknown);
@@ -795,6 +799,36 @@ describe("HS-S11: New program is made in the project he chooses (recorded real w
     await act(async () => { settle(clone(madeProgram)); });
     expect(mocks.openPullout).not.toHaveBeenCalled();
     expect(posts()).toHaveLength(1);
+  });
+});
+
+describe("HS-S13 + HS-S11: the Program made for a project is the row its Room lists", () => {
+  type Capture = { request: { method: string; path: string; json?: Record<string, unknown> }; response: { status: number; body: unknown } };
+  const hand = roomPrograms13.creationHandoff;
+  const create = hand.create as unknown as Capture;
+  const madeProgram = create.response.body as Program;
+  const projectId = roomPrograms13.projects.a;
+
+  it("Create in the chosen project sends the recorded tuple, opens its id, and that id is the Room's row and detail", async () => {
+    expect(create.request.json).toEqual({ title: "New program", template: "fast-cycle", project_id: projectId });
+    hub({ "GET /api/programs": list, "GET /api/projects": hand.projects.response.body, "POST /api/programs": madeProgram });
+    render(<ProgramsCore />);
+    await screen.findAllByTestId("programs-band");
+    fireEvent.click(screen.getByTestId("programs-new"));
+    const well = await screen.findByTestId("programs-make");
+    await waitFor(() => expect(within(well).getByLabelText("Project")).toBeTruthy());
+    fireEvent.change(within(well).getByLabelText("Project"), { target: { value: projectId } });
+    fireEvent.click(screen.getByTestId("programs-make-create"));
+    await waitFor(() => expect(mocks.openPullout).toHaveBeenCalledWith(`program:${madeProgram.id}`));
+    const posted = calls.filter((call) => call.startsWith("POST /api/programs"))
+      .map((call) => JSON.parse(call.slice("POST /api/programs ".length)));
+    expect(posted).toEqual([create.request.json]);
+    // The acknowledged id is the project's Room row and the detail it opens.
+    expect(hand.roomBefore.programs.programs).toEqual([]);
+    expect(hand.roomAfter.project_id).toBe(projectId);
+    expect(hand.roomAfter.programs.programs.map((row) => row.id)).toEqual([madeProgram.id]);
+    expect(hand.detail.id).toBe(madeProgram.id);
+    expect(hand.detail.project_id).toBe(projectId);
   });
 });
 
