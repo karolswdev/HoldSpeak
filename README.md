@@ -12,9 +12,9 @@ The hub stores your work locally. You choose local, network, or cloud engines.
 
 Open source · [Apache 2.0](LICENSE) · Version 0.4, pre-alpha
 
-![The HoldSpeak Desk, with project notes behind an Ask answer that cites meetings, decisions, and tasks.](docs/assets/readme/desk-project-room.jpg)
+![The HoldSpeak Desk with the Payments ledger cutover Project Room open. The Room shows its risk, the latest update, and the Programs, People, and Decisions that are open.](docs/assets/readme/desk-project-room.jpg)
 
-*“Is the ledger cutover still on track?” Ask follows the question back to your work. Screenshots show sample workspaces from October 2026 repository captures.*
+*A Project Room on the Desk: what changed, what is open, and what waits on you. Screenshots show sample workspaces on a test hub, from October and November 2026.*
 
 ## Quick start
 
@@ -99,14 +99,20 @@ This needs a project repository, the installed agent CLI, and tmux.
 ### Run a goal as a Program
 
 <p align="center">
-  <img src="docs/assets/programs/program-your-turn-1440.png" width="780" alt="A Program shows implementation steps, check and review results, a merge decision, and findings that need an answer." />
+  <img src="docs/assets/readme/programs.png" width="780" alt="The Programs window: a rail of Programs at the left, and the Program Turn off the ledger dual-write with three steps on one spine. Step 2 waits for a merge decision, with Merge and Not yet." />
 </p>
 
-*One goal, several steps, visible decisions. This capture is from October 2026 and uses a test fixture. Today the Programs window has a rail of Programs at the left, and each Program shows its steps as one spine with the current step on a plate.*
+*One goal, several steps, one decision at a time. The rail at the left lists the Programs. The steps run along one spine, and the current step is on a plate with the decision that waits on you.*
 
 Choose steps, dependencies, agents, and checks. Each step gets its own worktree.
 Configured gates can take a step through work, check, review, pull request, and merge.
 The Control level sets how routine decisions proceed. What only you can decide, such as a merge or a finding, waits on the Program's step plate and in **Needs you**.
+
+<p align="center">
+  <img src="docs/assets/readme/needs-you.png" width="780" alt="Needs you: the Program merge that waits first on a plate with Merge, Open the Program, and Later, and beside it a list of tasks, decisions, and meetings to do." />
+</p>
+
+*Needs you puts the first thing that waits on you on a plate. The other items follow in order of weight.*
 A handover Note retains the state and decisions.
 Read and change a Program as text, shape it by one typed or spoken sentence, or let the engine draft the steps from your goal. Decide what waits on you from a briefing page or from Telegram.
 
@@ -115,10 +121,10 @@ Read and change a Program as text, shape it by one typed or spoken sentence, or 
 ### Lead projects and people from the same place
 
 <p align="center">
-  <img src="docs/assets/readme/project.png" width="780" alt="A Project Room from an October 2026 capture shows its current risk, a late milestone, this week's risks, and an Ask field." />
+  <img src="docs/assets/readme/project.png" width="780" alt="A Project Room: the mast with the at-risk reason, Draft update and History, an Ask field, the latest update under What changed, and Programs, People, and Decisions under What is open." />
 </p>
 
-*An October 2026 capture. Today the Room's mast has **Draft update** and **History**: see what needs you, ask a project question, or have the engine draft the update.*
+*The Room's mast has **Draft update** and **History**. What changed shows the latest update. What is open shows the Programs, what people owe, and the decisions.*
 
 Project Rooms connect open work, decisions, commitments, and recent changes.
 Add GitHub, Jira, or Confluence sources. Review an update and its sources before sending it to a saved destination.

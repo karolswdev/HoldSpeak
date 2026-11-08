@@ -80,7 +80,7 @@ const SAVE_ORDER: OwnerSaveState[] = ["Not saved", "Saving", "Edited", "Saved"];
  * of the acknowledgement that made every field Saved. `useOwnerName(adapter)`
  * owns ACK, refusal, newer draft; in Settings the adapter is the window's one
  * settings writer (`settingsOwnerAdapter`, settings/writer.ts). */
-export function useOwnerPreferences(adapter?: OwnerNameAdapter) {
+export function useOwnerPreferences(adapter: OwnerNameAdapter) {
   const owner = useOwnerName(adapter);
   // Alias text is a local draft until Enter, comma, or blur commits a chip.
   // It cannot carry a Saved receipt from the owner writer before that point.
