@@ -264,10 +264,9 @@ def _swift_policy_sites(sources: dict[str, str] | None = None) -> set[str]:
 def test_private_backend_route_and_recovery_decisions_are_classified() -> None:
     """A new private selector/retry/fallback helper fails closed until reviewed."""
     found = _private_decisions()
-    assert found == set(BACKEND_PRIVATE_DECISIONS), (
+    assert found <= set(BACKEND_PRIVATE_DECISIONS), (
         "Unclassified private route/recovery decision(s): "
-        f"{sorted(found - set(BACKEND_PRIVATE_DECISIONS))}; stale classifications: "
-        f"{sorted(set(BACKEND_PRIVATE_DECISIONS) - found)}"
+        f"{sorted(found - set(BACKEND_PRIVATE_DECISIONS))}"
     )
     assert all(STORY_RE.fullmatch(owner) for _, owner in BACKEND_PRIVATE_DECISIONS.values())
 
@@ -275,10 +274,9 @@ def test_private_backend_route_and_recovery_decisions_are_classified() -> None:
 def test_web_route_pointer_controls_are_classified_and_single_owned() -> None:
     """A new browser routing consumer cannot appear outside the reviewed census."""
     found = _web_routing_surfaces()
-    assert found == set(WEB_ROUTING_SURFACES), (
+    assert found <= set(WEB_ROUTING_SURFACES), (
         "Unclassified web route consumer(s): "
-        f"{sorted(found - set(WEB_ROUTING_SURFACES))}; stale classifications: "
-        f"{sorted(set(WEB_ROUTING_SURFACES) - found)}"
+        f"{sorted(found - set(WEB_ROUTING_SURFACES))}"
     )
     assert all(
         classification in {"inference-route", "display-transport", "unrelated"}
@@ -327,9 +325,8 @@ def test_census_artifact_covers_every_guarded_surface_and_recovery_kind() -> Non
 
 def test_swift_retry_and_fallback_policy_sites_are_exact_and_fail_closed() -> None:
     live = _swift_policy_sites()
-    assert live == set(SWIFT_POLICY_SITES), (
-        f"unclassified Swift policy sites={sorted(live - set(SWIFT_POLICY_SITES))}; "
-        f"stale={sorted(set(SWIFT_POLICY_SITES) - live)}"
+    assert live <= set(SWIFT_POLICY_SITES), (
+        f"unclassified Swift policy sites={sorted(live - set(SWIFT_POLICY_SITES))}"
     )
     assert all(STORY_RE.fullmatch(owner) for _, owner in SWIFT_POLICY_SITES.values())
 

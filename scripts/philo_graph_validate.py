@@ -43,6 +43,17 @@ ID_COLLECTIONS = (
 _DERIVED: dict[tuple[str, str], str | None] = {}
 
 
+def _parked_twin(root: Path, relative: str) -> str | None:
+    """A cited file that a park moved is not missing (scripts/parked_paths.py)."""
+    scripts = str(REPO_ROOT / "scripts")
+    sys.path.insert(0, scripts)
+    try:
+        from parked_paths import parked_twin
+    finally:
+        sys.path.remove(scripts)
+    return parked_twin(root, relative)
+
+
 def _derived_inventory(root: Path, inventory_path: str) -> str | None:
     """The generated views are not in git (2026-11-08): a missing one is
     derived from the live tree, never read from a committed copy."""
@@ -214,6 +225,7 @@ def _source_path_violations(graph: dict, root: Path) -> list[str]:
                 isinstance(source_path, str)
                 and not (root / source_path).is_file()
                 and _derived_inventory(root, source_path) is None
+                and _parked_twin(root, source_path) is None
             ):
                 lines.append(
                     f"source-path-missing: {where}[{position}].path: "

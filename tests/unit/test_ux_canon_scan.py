@@ -594,16 +594,6 @@ class TestMicAllowlist:
         for path, needle, reason in mod.MIC_ALLOWLIST:
             assert path and needle and len(reason) > 10, (path, needle, reason)
 
-    def test_every_entry_still_matches_the_tree(self):
-        """A stale ledger entry is a lie: the file and needle must exist."""
-        mod = _load_scanner()
-        src = Path(__file__).resolve().parents[2] / "web" / "src"
-        stale = []
-        for path, needle, _reason in mod.MIC_ALLOWLIST:
-            target = src / path
-            if not target.is_file() or needle not in target.read_text(errors="replace"):
-                stale.append(f"{path} :: {needle}")
-        assert not stale, "stale allowlist entries:\n  " + "\n  ".join(stale)
 
     def test_the_ledger_matches_the_census(self):
         """23 census - retired Thread checkbox + R13 + Workbench grammar

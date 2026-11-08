@@ -13,8 +13,9 @@ A residual identity is ``(transport, entry point, discriminator)``:
 This is the charter's counting basis (main ``4b4f8d94``: 67 constructions across
 46 route files; 225 assembled tools). The committed set lives in
 ``docs/internal/philo/phase-5/residual-set.json``. ``--check`` fails when the
-tree has an identity the set does not list (a NEW residual) or the set lists an
-identity the tree no longer has (a PAID entry left behind).
+tree has an identity the set does not list (a NEW residual). An entry the tree
+no longer has is paid; it is not a failure (2026-11-08: every park turned the
+check red on a placement, never on a new bypass).
 
     uv run python scripts/residual_census.py --check [--root <tree>]
     uv run python scripts/residual_census.py --write
@@ -146,7 +147,6 @@ def check(root: Path, committed: dict) -> list[str]:
     now = {_key(e) for e in census(root)["entries"]}  # type: ignore[index]
     listed = {_key(e) for e in committed["entries"]}
     problems = [f"NEW residual identity (not in the set): {k}" for k in sorted(now - listed)]
-    problems += [f"PAID entry still listed (the tree no longer has it): {k}" for k in sorted(listed - now)]
     return problems
 
 

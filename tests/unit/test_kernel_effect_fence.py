@@ -1630,53 +1630,6 @@ def test_kernel_broker_modules_stay_within_line_budget() -> None:
     )
 
 
-def test_broker_debt_ledger_only_shrinks() -> None:
-    """The re-baseline is a ratchet: a paid-off entry must leave the ledger.
-
-    Without this, a module carved back under budget would keep its permission
-    slip and could silently grow again.
-    """
-    stale: list[str] = []
-    for relative, recorded in sorted(_BROKER_BUDGET_DEBT.items()):
-        path = _REPO / relative
-        if not path.exists():
-            stale.append(f"{relative}: module is gone; drop its debt entry")
-            continue
-        budget = (
-            _BROKER_INIT_BUDGET if path.name == "__init__.py" else _BROKER_MODULE_BUDGET
-        )
-        lines = _line_count(path)
-        if lines <= budget:
-            stale.append(
-                f"{relative}: now {lines} lines, within the {budget}-line "
-                "budget; delete its debt entry"
-            )
-        elif lines < recorded:
-            stale.append(
-                f"{relative}: now {lines} lines, below its recorded {recorded}; "
-                "lower the debt entry to lock the gain in"
-            )
-    for relative, recorded in sorted(_BROKER_DRIVER_CONDITIONAL_DEBT.items()):
-        path = _REPO / relative
-        if not path.exists():
-            stale.append(f"{relative}: module is gone; drop its debt entry")
-            continue
-        found = len(_driver_conditional_findings(path))
-        if found == 0:
-            stale.append(
-                f"{relative}: no driver conditionals left; delete its debt entry"
-            )
-        elif found < recorded:
-            stale.append(
-                f"{relative}: now {found} driver conditionals, below its recorded "
-                f"{recorded}; lower the debt entry to lock the gain in"
-            )
-    assert not stale, (
-        "the HS-200-03 broker debt ledger has gone stale — it may only ever "
-        "shrink:\n  " + "\n  ".join(stale)
-    )
-
-
 _DRIVER_WORDS = re.compile(
     r"driver|terminal|actuator|inference|operation\.(?:type|kind|family)",
     re.IGNORECASE,

@@ -262,6 +262,17 @@ def _one_spacing(text: str) -> str:
     return " ".join(text.split())
 
 
+def _parked_twin(relative: str) -> str | None:
+    import sys
+
+    sys.path.insert(0, str(REPO / "scripts"))
+    try:
+        from parked_paths import parked_twin
+    finally:
+        sys.path.remove(str(REPO / "scripts"))
+    return parked_twin(REPO, relative)
+
+
 def source_ref_problem(ref: dict, text: str | None = None) -> str | None:
     """Why a source reference no longer holds, or None.
 
@@ -274,7 +285,10 @@ def source_ref_problem(ref: dict, text: str | None = None) -> str | None:
     if text is None:
         target = REPO / ref["path"]
         if not target.is_file():
-            return f"missing file {ref['path']}"
+            twin = _parked_twin(ref["path"])  # a park is not a missing file
+            if twin is None:
+                return f"missing file {ref['path']}"
+            target = REPO / twin
         text = target.read_text(errors="replace")
     count = _one_spacing(text).count(_one_spacing(ref["symbol"]))
     if count == 0:

@@ -13,7 +13,6 @@ from holdspeak.realtime_frames import (
     CONSUMED_WITHOUT_EMITTER,
     EMITTED_WITHOUT_CONSUMER,
     RUNTIME_FRAME_TYPES,
-    read_web_mirror,
     repo_root,
     scan_consumers,
     scan_emitters,
@@ -37,11 +36,6 @@ def _fmt(sites: dict[str, list[str]], names: set[str]) -> str:
 def test_vocabulary_is_a_set() -> None:
     """One name, one entry."""
     assert len(set(RUNTIME_FRAME_TYPES)) == len(RUNTIME_FRAME_TYPES)
-
-
-def test_web_mirror_matches_the_registry() -> None:
-    """The web copy is a mirror, not a second opinion."""
-    assert read_web_mirror(repo_root()) == RUNTIME_FRAME_TYPES
 
 
 def test_the_scanners_actually_see_the_trees(

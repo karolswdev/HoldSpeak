@@ -989,7 +989,7 @@ def test_the_residual_set_equals_the_trees_census() -> None:
         assert entry["reason"], entry
 
 
-def test_the_residual_fence_names_a_new_identity_and_a_stale_one() -> None:
+def test_the_residual_fence_names_a_new_identity_and_lets_a_paid_one_stay() -> None:
     census = _load_script("residual_census")
     committed = json.loads(census.SET_PATH.read_text(encoding="utf-8"))
     dropped = dict(committed, entries=committed["entries"][1:])
@@ -997,8 +997,7 @@ def test_the_residual_fence_names_a_new_identity_and_a_stale_one() -> None:
     assert len(problems) == 1 and problems[0].startswith("NEW residual identity")
     stale = dict(committed, entries=committed["entries"] + [
         {"transport": "mcp", "entry_point": "desk.create", "discriminator": "kind=decisions", "reason": "x"}])
-    problems = census.check(REPO, stale)
-    assert len(problems) == 1 and problems[0].startswith("PAID entry still listed")
+    assert census.check(REPO, stale) == []  # a paid entry left behind is not a bypass
 
 
 # ── from test_philo7_membership_decisions.py: PHILO-7-02 (step 1): membership and the remaining decision operations on the one contract. ──

@@ -129,7 +129,22 @@ def _safe_path(root: Path, raw: Any) -> Path | None:
     candidate = Path(raw)
     if ".." in candidate.parts:
         return None
-    return root / candidate
+    path = root / candidate
+    if not path.exists():
+        # A park is not a missing file (scripts/parked_paths.py, 2026-11-08).
+        twin = _parked_twin(root, raw)
+        if twin is not None:
+            return root / twin
+    return path
+
+
+def _parked_twin(root: Path, relative: str) -> str | None:
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("_parked_paths", ROOT / "scripts" / "parked_paths.py")
+    module = importlib.util.module_from_spec(spec)  # type: ignore[arg-type]
+    spec.loader.exec_module(module)  # type: ignore[union-attr]
+    return module.parked_twin(root, relative)
 
 
 def _python_symbols(text: str) -> set[str]:

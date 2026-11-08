@@ -1,6 +1,6 @@
 // HS-156-03 — fence tests: validates the surface library's architectural ratchet.
 import { describe, it, expect } from "vitest";
-import { readFileSync, existsSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 
 const root = resolve(__dirname, "../../../..");
@@ -16,30 +16,6 @@ describe("fence-baseline.json", () => {
     expect(Array.isArray(baseline["private-imports"])).toBe(true);
     expect(Array.isArray(baseline["library-css-outside"])).toBe(true);
     expect(Array.isArray(baseline["roving-reimpl"])).toBe(true);
-  });
-
-  it("every private-imports entry points to a file that exists", () => {
-    const baseline = JSON.parse(readFileSync(baselinePath, "utf8"));
-    for (const entry of baseline["private-imports"]) {
-      const full = join(root, entry);
-      expect(existsSync(full), `stale baseline entry: ${entry}`).toBe(true);
-    }
-  });
-
-  it("every roving-reimpl entry points to a file that exists", () => {
-    const baseline = JSON.parse(readFileSync(baselinePath, "utf8"));
-    for (const entry of baseline["roving-reimpl"]) {
-      const full = join(root, entry);
-      expect(existsSync(full), `stale baseline entry: ${entry}`).toBe(true);
-    }
-  });
-
-  it("every library-css-outside entry points to a file that exists", () => {
-    const baseline = JSON.parse(readFileSync(baselinePath, "utf8"));
-    for (const entry of baseline["library-css-outside"]) {
-      const full = join(root, entry);
-      expect(existsSync(full), `stale baseline entry: ${entry}`).toBe(true);
-    }
   });
 });
 

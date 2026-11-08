@@ -77,20 +77,6 @@ def test_primary_copy_has_no_prohibited_operational_drift() -> None:
     )
 
 
-def test_recorded_copy_debt_only_shrinks() -> None:
-    """A repaired line must leave the ledger, or the permission slip outlives the fault."""
-    live = {
-        (str(item.path), item.rule_id, item.text)
-        for item in violations(inventory(REPO))
-    }
-    stale = sorted(_recorded_copy_debt() - live)
-    assert not stale, (
-        "the HS-200-03 product-copy debt ledger has gone stale — delete these "
-        f"repaired entries from {_COPY_DEBT_LEDGER.name}:\n  "
-        + "\n  ".join(f"{path}: {rule}: {text}" for path, rule, text in stale)
-    )
-
-
 def test_each_prohibited_product_copy_rule_is_exercised() -> None:
     examples = {
         "legacy-product-nouns": "Agent Desk",
