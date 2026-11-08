@@ -50,6 +50,7 @@ from ..logging_config import get_logger
 from ..principals import Principal, PrincipalKind
 from ..services.observer import current_correlation_id
 from ..services.service_event_ledger import ServiceEventLedger
+from .decision_record_service import DecisionRecordService
 from .project_update_service import (
     INVALIDATION_TEXT_EDITED,
     METHOD_FIELD_MAPPING,
@@ -847,7 +848,11 @@ class ProposalBridgeService:
 
         decision_id = f"dec-{uuid.uuid4().hex[:16]}"
         record_id = f"record-{uuid.uuid4().hex[:16]}"
-        record_source_id = f"record-source-{uuid.uuid4().hex[:16]}"
+        # The People and Project reads come BEFORE the write transaction: a
+        # People read must not hold the database write lock.
+        records = DecisionRecordService(self._db)
+        owner_person_id = records.person_for(final_owner)
+        filed_project = records.live_project([proposal.project_id] if proposal.project_id else [])
         action_id = f"action-{uuid.uuid4().hex[:16]}"
         commitment_id: Optional[str] = f"commitment-{uuid.uuid4().hex[:16]}"
         # PHILO-15 08 (Astra P1): Confirm keeps the proposal's kind. A
@@ -911,44 +916,34 @@ class ProposalBridgeService:
                 ),
             )
 
-            # 2. decision_records row (the durable canon the Room reads).
-            conn.execute(
-                """INSERT INTO decision_records
-                   (id, decision_text, rationale, alternatives, owner,
-                    review_date, lifecycle, source_type, source_id,
-                    created_at, updated_at, kind)
-                   VALUES (?, ?, ?, '', ?, '', 'active', 'meeting', ?,
-                           ?, ?, ?)""",
-                (record_id, final_text, proposal.rationale or "", final_owner, decision_id, now, now,
-                 "action" if is_action else "decision"),
-            )
-
-            # 3. decision_record_sources: the meeting (what every Room read
-            #    joins on), the proposal (the extraction provenance row), and
-            #    the transcript span when the sentence is anchored.
-            conn.execute(
-                """INSERT INTO decision_record_sources
-                   (id, record_id, source_type, source_ref, created_at)
-                   VALUES (?, ?, 'meeting', ?, ?)""",
-                (record_source_id, record_id, proposal.meeting_id, now),
-            )
-            conn.execute(
-                """INSERT INTO decision_record_sources
-                   (id, record_id, source_type, source_ref, created_at)
-                   VALUES (?, ?, 'proposal', ?, ?)""",
-                (f"record-source-{uuid.uuid4().hex[:16]}", record_id, proposal_id, now),
-            )
+            # 2-3. The record (the durable canon the Room reads), through the
+            #    ONE record writer, in this transaction: its sources (the
+            #    meeting every Room read joins on, the proposal as the
+            #    extraction provenance, the transcript span when anchored),
+            #    the owner's Person reference and, for a decision, its
+            #    Project filing.
+            record_sources: list[tuple[str, str]] = [
+                ("meeting", proposal.meeting_id), ("proposal", proposal_id),
+            ]
             if anchored:
-                conn.execute(
-                    """INSERT INTO decision_record_sources
-                       (id, record_id, source_type, source_ref, created_at)
-                       VALUES (?, ?, 'transcript', ?, ?)""",
-                    (
-                        f"record-source-{uuid.uuid4().hex[:16]}", record_id,
-                        f"meeting:{proposal.meeting_id}#segment:{proposal.segment_index}",
-                        now,
-                    ),
+                record_sources.append(
+                    ("transcript", f"meeting:{proposal.meeting_id}#segment:{proposal.segment_index}")
                 )
+            records.create(
+                principal,
+                decision_text=final_text,
+                rationale=proposal.rationale or "",
+                alternatives="",
+                owner=final_owner,
+                source_type="meeting",
+                source_id=decision_id,
+                sources=tuple(record_sources),
+                project_id=None if is_action else filed_project,
+                owner_person_id=owner_person_id,
+                kind="action" if is_action else "decision",
+                record_id=record_id,
+                conn=conn,
+            )
 
             # Betterment D0: the said due becomes the day it names, read
             # against the meeting's own day; the words stay as ``due_said``.

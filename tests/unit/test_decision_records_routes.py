@@ -55,6 +55,7 @@ def test_record_routes_list_search_and_expand_detail(tmp_path, monkeypatch) -> N
 
 def test_from_desk_uses_admitted_create_and_returns_one_canonical_record(tmp_path, monkeypatch) -> None:
     database = Database(tmp_path / "from-desk.db")
+    database.projects.create_project(project_id="project-1", name="P9 canonical project")
     monkeypatch.setattr(record_routes, "get_database", lambda: database)
     app = FastAPI()
 
@@ -84,9 +85,12 @@ def test_from_desk_uses_admitted_create_and_returns_one_canonical_record(tmp_pat
     assert "About: P9 canonical project" in body["record"]["rationale"]
     assert "Why: Keep every surface" in body["record"]["rationale"]
     assert body.get("operation_id") and body.get("receipt")
+    # One writer (2026-11-08): the meeting is a source; the Project is the
+    # record's filing, where every Project reader joins.
     assert {(source["source_type"], source["source_ref"]) for source in body["record"]["sources"]} == {
-        ("project", "project-1"), ("meeting", "meeting-1"),
+        ("meeting", "meeting-1"),
     }
+    assert body["record"]["project_id"] == "project-1"
     assert database.desk_decisions.get(body["decision"]["id"]) is not None
     assert len(database.desk_decisions.list()) == 1
 

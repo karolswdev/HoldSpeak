@@ -1,13 +1,13 @@
 /** PHILO-13-08 (B3) — decide where the meeting is.
  *
  * A desk decision is born with a title he typed, never as a `New decision`
- * placeholder (grounding F9). One made from a meeting carries:
- *   - the meeting: the tag `meeting:<id>` and the meeting in its context;
- *   - the project he chose before Save: the tag `project:<id>` and the
- *     record's member edge (`PUT /api/projects/{id}/resources/decision_record:<id>`).
- * HS-S42: the decision is created once on the canonical route
- * (`POST /api/decision-records/from-desk`) and filed after, on
- * `decision_record:<id>`; an uncertain answer never creates again. */
+ * placeholder (grounding F9). One made from a meeting carries the meeting
+ * (the tag `meeting:<id>`), the project he chose before Save and the
+ * meeting's participants as its deciders.
+ * One decision writer (2026-11-08): ONE call, `POST
+ * /api/decision-records/from-desk`, creates the record AND files it in the
+ * project in the hub's own transaction; the client makes no filing write.
+ * An uncertain answer never creates again. */
 import { ApiError, apiFetch, apiRequest } from "../lib/api";
 import { fromWireDecision } from "./api";
 import type { Decision } from "../lib/primitives";
@@ -76,11 +76,10 @@ export class DecisionUnconfirmed extends Error {
   }
 }
 
-/** The project filing of a created decision record, kept apart from its
- *  creation: `unfiled` is his explicit choice; `refused` a known refusal;
- *  `unknown` a lost answer; `other` a live edge of another kind
- *  (source, output, related), which is not a member filing. */
-export type FilingState = "unfiled" | "filed" | "refused" | "unknown" | "other";
+/** The project filing of a created decision record, as the hub answered
+ *  it: `unfiled` is his explicit choice; `filed` the record names the
+ *  project; `unknown` an answer that does not name it. */
+export type FilingState = "unfiled" | "filed" | "unknown";
 
 export interface MeetingDecision {
   decision: Decision;
@@ -101,58 +100,18 @@ const nonEmpty = (value: unknown): value is string => typeof value === "string" 
 export const isKnownRefusal = (cause: unknown) =>
   cause instanceof ApiError && cause.status >= 400 && cause.status < 500;
 
-/** The canonical project PUT for one created record. Never creates. */
-export async function fileDecisionRecord(recordId: string, projectId: string): Promise<FilingState> {
-  try {
-    const body = await apiFetch<{ resource?: { project_id?: unknown; relationship?: unknown } }>(
-      `/api/projects/${encodeURIComponent(projectId)}/resources/${encodeURIComponent(recordRef(recordId))}`,
-      { method: "PUT", json: { relationship: "member" } },
-    );
-    const resource = body?.resource;
-    if (resource && resource.relationship === "member" && (resource.project_id === undefined || resource.project_id === projectId)) return "filed";
-    return "unknown";
-  } catch (cause) {
-    return isKnownRefusal(cause) ? "refused" : "unknown";
-  }
-}
-
-/** Read the record's current edge to one project: `filed` only for a live
- *  `member` row; `other` for another kind; `absent` for a complete read with
- *  no row; `unknown` when the read failed or its shape is not known. */
-export async function readDecisionFiling(recordId: string, projectId: string): Promise<FilingState | "absent"> {
-  try {
-    const body = await apiFetch<{ resource_ref?: unknown; projects?: unknown }>(
-      `/api/desk/relationships/${encodeURIComponent(recordRef(recordId))}`,
-    );
-    if (!Array.isArray(body?.projects)) return "unknown";
-    const row = (body.projects as Array<{ project_id?: unknown; relationship?: unknown }>)
-      .find((r) => r?.project_id === projectId);
-    if (!row) return "absent";
-    if (row.relationship === "member") return "filed";
-    return ["source", "output", "related"].includes(String(row.relationship)) ? "other" : "unknown";
-  } catch {
-    return "unknown";
-  }
-}
-
-/** One explicit same-ID filing press: read first; write only on a verified
- *  absence. A known edge of another kind is left as it is. */
-export async function fileAgain(recordId: string, projectId: string): Promise<FilingState> {
-  const now = await readDecisionFiling(recordId, projectId);
-  if (now === "absent") return fileDecisionRecord(recordId, projectId);
-  return now;
-}
-
-
 export interface DeskDecisionRecordInput {
   decision: string;
   project?: { id: string; name?: string } | null;
   why?: string;
   meeting?: { id: string; title?: string; summary?: string | null } | null;
   status?: "accepted" | "proposed";
+  /** Who decided, as the meeting names them; the hub resolves each name
+   *  to a Person where one matches. */
+  deciders?: readonly string[];
 }
 
-/** The canonical Desk producer: one POST, no filing and no fallback. It
+/** The canonical Desk producer: one POST (the hub files it) and no fallback. It
  *  returns only when both identities are acknowledged. A known refusal throws
  *  the ApiError; anything else after the send throws DecisionUnconfirmed. */
 export async function createDeskDecisionRecord(input: DeskDecisionRecordInput): Promise<{
@@ -174,6 +133,7 @@ export async function createDeskDecisionRecord(input: DeskDecisionRecordInput): 
         meeting_id: input.meeting?.id,
         meeting_title: input.meeting?.title,
         meeting_summary: input.meeting?.summary,
+        deciders: input.deciders?.length ? [...input.deciders] : undefined,
       },
     });
   } catch (cause) {
@@ -190,9 +150,9 @@ export async function createDeskDecisionRecord(input: DeskDecisionRecordInput): 
   return { record, recordId: String(record.id), decision };
 }
 
-/** Create one named decision from a meeting, then file it to the project he
- *  chose (`null`: deliberately no project). Throws only before both IDs are
- *  acknowledged; a filing that fails after creation is in `filing`. */
+/** Create one named decision from a meeting in the project he chose (`null`:
+ *  deliberately no project), in one call. Throws only before both IDs are
+ *  acknowledged. */
 export async function decideFromMeeting(input: {
   title: string;
   meetingId: string;
@@ -200,6 +160,7 @@ export async function decideFromMeeting(input: {
   startedAt?: string | null;
   summary?: string | null;
   project: { id: string; name: string } | null;
+  deciders?: readonly string[];
 }): Promise<MeetingDecision> {
   const title = input.title.trim();
   if (!title) throw new Error("A decision needs a title");
@@ -218,8 +179,10 @@ export async function decideFromMeeting(input: {
       summary: input.summary,
     },
     status: "accepted",
+    deciders: input.deciders,
   });
-  const filing: FilingState = project ? await fileDecisionRecord(created.recordId, project.id) : "unfiled";
+  const filing: FilingState = !project ? "unfiled"
+    : created.record.project_id === project.id ? "filed" : "unknown";
   return {
     decision: created.decision,
     recordId: created.recordId,

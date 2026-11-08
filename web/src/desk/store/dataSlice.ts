@@ -431,16 +431,8 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => {
       created = data?.[wireKey] ?? null;
       createdId = data?.[wireKey]?.id || null;
       canonicalRecord = data?.record && typeof data.record === "object" ? data.record as Record<string, unknown> : null;
-      if (kind === "decision" && canonicalRecord?.id && overrides.project_id) {
-        await apiRequest(
-          `/api/projects/${encodeURIComponent(String(overrides.project_id))}/resources/${encodeURIComponent(`decision_record:${canonicalRecord.id}`)}`,
-          {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ relationship: "member" }),
-          },
-        ).catch(() => undefined);
-      }
+      // One decision writer (2026-11-08): the hub files the record in its
+      // Project (`project_id`) in the same call; there is no second write.
       clearWriteFailure();
     } catch (cause) {
       release();

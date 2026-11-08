@@ -16,10 +16,11 @@ const hub = vi.hoisted(() => ({
   posts: [] as Array<Record<string, unknown>>,
   resourcePuts: [] as string[],
   projects: [{ project_id: "proj-1", project_name: "Checkout" }] as Array<Record<string, unknown>>,
-  // HS-S42 faults: the meeting's project read, the canonical POST, the PUT.
+  // HS-S42 faults: the meeting's project read, the canonical POST, an
+  // answer that does not name the Project.
   projectsFail: false,
   canonical: "ok" as "ok" | "malformed",
-  putFails: false,
+  answerUnfiled: false,
 }));
 
 function decisionWire(body: Record<string, unknown>, n: number) {
@@ -63,7 +64,10 @@ vi.mock("../../lib/api", async (importOriginal) => {
         ];
         const decision = decisionWire({ title: json.title, status: json.status, tags }, hub.posts.length);
         hub.decisions = [...hub.decisions, decision];
-        return Promise.resolve({ decision, record: { id: `rec_${hub.posts.length}`, source_id: decision.id } });
+        // One decision writer (2026-11-08): the record names the Project the
+        // hub filed it in, in the same call.
+        const project_id = hub.answerUnfiled ? null : (json.project_id ?? null);
+        return Promise.resolve({ decision, record: { id: `rec_${hub.posts.length}`, source_id: decision.id, project_id } });
       }
       if (url === "/api/decisions" && init?.method === "POST")
         return Promise.resolve({ decision: post(init.body) });
@@ -72,12 +76,8 @@ vi.mock("../../lib/api", async (importOriginal) => {
         return hub.projectsFail ? Promise.reject(new TypeError("Failed to fetch")) : Promise.resolve({ projects: hub.projects });
       if (url.startsWith("/api/projects/") && init?.method === "PUT") {
         hub.resourcePuts.push(decodeURIComponent(url));
-        if (hub.putFails) return Promise.reject(new (real.ApiError as typeof Error & (new (s: number, m: string, p: unknown) => Error))(409, "refused", {}));
-        const project_id = decodeURIComponent(url).split("/")[3];
-        return Promise.resolve({ resource: { project_id, relationship: "member" } });
+        return Promise.resolve({});
       }
-      if (url.startsWith("/api/desk/relationships/"))
-        return Promise.resolve({ projects: hub.putFails ? [] : [{ project_id: "proj-1", relationship: "member" }] });
       return Promise.resolve({});
     }),
   };
@@ -97,7 +97,7 @@ beforeEach(() => {
   hub.projects = [{ project_id: "proj-1", project_name: "Checkout" }];
   hub.projectsFail = false;
   hub.canonical = "ok";
-  hub.putFails = false;
+  hub.answerUnfiled = false;
   useNamePrompt.getState().clear();
   usePalette.getState().setOpen(false);
   useDesk.setState({ pullouts: [], editingId: null, newIds: [], windowsById: {}, drafts: {} });
@@ -169,10 +169,11 @@ describe("PHILO-13-08 Decide in the meeting record", () => {
   const well = (meetingId = "m-42") =>
     render(
       <MeetingDecideWell meetingId={meetingId} title="Checkout latency review"
-        startedAt="2026-10-01T09:00:00" summary="p99 doubled after the cache change." />,
+        startedAt="2026-10-01T09:00:00" summary="p99 doubled after the cache change."
+        deciders={["Mira", "Theo"]} />,
     );
 
-  it("Decide, type + Enter: one canonical decision with the meeting and its one project, filed on the record", async () => {
+  it("Decide, type + Enter: ONE call makes the decision with the meeting, its one project and its deciders", async () => {
     well();
     fireEvent.click(screen.getByRole("button", { name: "Decide" }));
     // HS-S42: the one linked project is shown, and chosen, before Save.
@@ -188,9 +189,11 @@ describe("PHILO-13-08 Decide in the meeting record", () => {
     expect(body.project_id).toBe("proj-1");
     expect(String(body.why)).toContain("Meeting: Checkout latency review · 2026-10-01");
     expect(String(body.why)).toContain("p99 doubled");
-    await waitFor(() => expect(hub.resourcePuts).toEqual(["/api/projects/proj-1/resources/decision_record:rec_1"]));
+    expect(body.deciders).toEqual(["Mira", "Theo"]);
     // the receipt is where the click happened: the meeting lists it
     await waitFor(() => expect(screen.getByTestId("decide-receipt").textContent).toMatch(/^Decided \d\d:\d\d · Checkout$/));
+    // The hub filed it: the client makes no second write.
+    expect(hub.resourcePuts).toEqual([]);
     expect(screen.getByText("Roll back the cache change")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Decide" })).toBeTruthy();
   });
@@ -217,8 +220,9 @@ describe("PHILO-13-08 Decide in the meeting record", () => {
     expect((screen.getByRole("button", { name: "Save" }) as HTMLButtonElement).disabled).toBe(true);
     fireEvent.click(screen.getByRole("button", { name: "Ledger" }));
     await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Save" })); });
-    await waitFor(() => expect(hub.resourcePuts).toEqual(["/api/projects/proj-2/resources/decision_record:rec_1"]));
+    await waitFor(() => expect(hub.posts).toHaveLength(1));
     expect(hub.posts[0].project_id).toBe("proj-2");
+    expect(hub.resourcePuts).toEqual([]);
   });
 
   it("a failed project read is not 'no project': Save waits for No project", async () => {
@@ -252,8 +256,8 @@ describe("PHILO-13-08 Decide in the meeting record", () => {
     expect((title as HTMLInputElement).value).toBe("Roll back");
   });
 
-  it("a refused filing keeps the decision and offers File to <project> on the same record", async () => {
-    hub.putFails = true;
+  it("an answer that does not name the Project says Not filed, and writes nothing again", async () => {
+    hub.answerUnfiled = true;
     well();
     fireEvent.click(screen.getByRole("button", { name: "Decide" }));
     await waitFor(() => expect(screen.getByRole("button", { name: "Checkout" }).getAttribute("aria-pressed")).toBe("true"));
@@ -262,11 +266,7 @@ describe("PHILO-13-08 Decide in the meeting record", () => {
     await act(async () => { fireEvent.keyDown(title, { key: "Enter" }); });
     await waitFor(() => expect(screen.getByTestId("decide-filing-state").textContent).toBe("Decided · Not filed to Checkout"));
     expect(screen.queryByRole("textbox", { name: "Decision title" })).toBeNull();
-    hub.putFails = false;
-    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "File to Checkout" })); });
-    await waitFor(() => expect(screen.queryByTestId("decide-filing")).toBeNull());
-    // The read found the member edge: no second PUT, and never a second POST.
-    expect(hub.resourcePuts).toEqual(["/api/projects/proj-1/resources/decision_record:rec_1"]);
+    expect(hub.resourcePuts).toEqual([]);
     expect(hub.posts).toHaveLength(1);
   });
 

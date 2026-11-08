@@ -9,9 +9,10 @@
  *
  * HS-S42: the project is shown and chosen before Save. One linked project is
  * preselected; several wait for his pick; a failed lookup is not "no
- * project". The receipt keeps the record and its filing apart: a filing that
- * failed offers `File to <project>` on the same record, never Save again; an
- * unconfirmed Save keeps Save off for that same title until he edits it.
+ * project". The hub files the record in that project in the same call that
+ * creates it (one decision writer, 2026-11-08); the meeting's participants go
+ * as its deciders. An unconfirmed Save keeps Save off for that same title
+ * until he edits it.
  *
  * Seats: the Meetings record (MeetingDetail) and the meeting window
  * (MeetingPullout).
@@ -25,7 +26,7 @@ import { StringGadget } from "../desk/surface/gadgets";
 import { DotWord } from "../desk/surface/kit";
 import { SurfaceRow, SurfaceRows, SurfaceSection } from "../desk/surface/Surface";
 import {
-  DecisionUnconfirmed, decideFromMeeting, decisionsFromMeeting, fileAgain, meetingScope,
+  DecisionUnconfirmed, decideFromMeeting, decisionsFromMeeting, meetingScope,
   type FilingState, type MeetingScope,
 } from "../desk/decide";
 import { writeFailureReason } from "../desk/hooks/useWriteReceipt";
@@ -55,6 +56,8 @@ interface DecideWellProps {
    *  then. Without it they are filled, as ratified next to SEND (Phase 13 B3). */
   runSummaryOnFace?: boolean;
   defaultOpen?: boolean;
+  /** The meeting's participants, as the meeting names them: the deciders. */
+  deciders?: readonly string[];
 }
 
 /** One well per meeting: keyed by the meeting, so no state crosses meetings. */
@@ -62,7 +65,7 @@ export function MeetingDecideWell(props: DecideWellProps) {
   return <DecideWellFor key={props.meetingId} {...props} />;
 }
 
-function DecideWellFor({ meetingId, title, startedAt, summary, runSummaryOnFace, defaultOpen = false }: DecideWellProps) {
+function DecideWellFor({ meetingId, title, startedAt, summary, runSummaryOnFace, defaultOpen = false, deciders }: DecideWellProps) {
   // PHILO-17 (one filled primary per window): with a summary, the meeting's
   // primary is Send (the foot); Decide is a quieter steel verb then.
   const weight = runSummaryOnFace ? "ghost" : String(summary ?? "").trim() ? "secondary" : "primary";
@@ -115,7 +118,6 @@ function DecideWellFor({ meetingId, title, startedAt, summary, runSummaryOnFace,
     recordId: string; sourceId: string; at: string;
     project: { id: string; name: string } | null; filing: FilingState;
   } | null>(null);
-  const [filingBusy, setFilingBusy] = useState(false);
 
   const abandon = () => {
     setNaming(false);
@@ -138,7 +140,7 @@ function DecideWellFor({ meetingId, title, startedAt, summary, runSummaryOnFace,
     setRefusal("");
     try {
       const made = await decideFromMeeting({
-        title: name, meetingId, meetingTitle: title, startedAt, summary, project,
+        title: name, meetingId, meetingTitle: title, startedAt, summary, project, deciders,
       });
       setReceipt({ recordId: made.recordId, sourceId: made.sourceId, at: clock(new Date()), project: made.project, filing: made.filing });
       // A late answer never clears a newer draft.
@@ -157,14 +159,6 @@ function DecideWellFor({ meetingId, title, startedAt, summary, runSummaryOnFace,
     }
     // The record is known; a failed refresh does not unmake it.
     await useDesk.getState().refresh().catch(() => undefined);
-  };
-  const fileRecord = async () => {
-    if (!receipt?.project || filingBusy) return;
-    const { recordId, project } = receipt;
-    setFilingBusy(true);
-    const filing = await fileAgain(recordId, project.id);
-    setReceipt((current) => (current && current.recordId === recordId ? { ...current, filing } : current));
-    setFilingBusy(false);
   };
   const projectWords = (p: { id: string; name: string } | null) => (p ? p.name : "No project");
 
@@ -189,18 +183,11 @@ function DecideWellFor({ meetingId, title, startedAt, summary, runSummaryOnFace,
           </SurfaceRows>
         </SurfaceSection>
       ) : null}
-      {receipt && receipt.project && !["filed", "unfiled"].includes(receipt.filing) ? (
+      {receipt && receipt.project && receipt.filing === "unknown" ? (
         <div className="meeting-decide-line" data-testid="decide-filing">
-          <DotWord tone={receipt.filing === "other" ? "info" : "warn"} data-testid="decide-filing-state">
-            {receipt.filing === "other"
-              ? `Decided · ${receipt.project.name} links it as a source, not a member`
-              : `Decided · Not filed to ${receipt.project.name}`}
+          <DotWord tone="warn" data-testid="decide-filing-state">
+            {`Decided · Not filed to ${receipt.project.name}`}
           </DotWord>
-          {receipt.filing === "other" ? null : (
-            <Button dense variant="ghost" data-testid="decide-file-again" loading={filingBusy} onClick={() => void fileRecord()}>
-              File to {receipt.project.name}
-            </Button>
-          )}
         </div>
       ) : null}
       {naming ? (

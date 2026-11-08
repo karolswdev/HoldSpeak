@@ -8,7 +8,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError, apiFetch } from "../../lib/api";
 import { createDecision } from "../api";
-import { DecisionUnconfirmed, decideFromMeeting, fileAgain, meetingScope } from "../decide";
+import { DecisionUnconfirmed, decideFromMeeting, meetingScope } from "../decide";
 import { refOpener } from "../openObject";
 import { openPrimitive } from "../shell";
 import { openSourceRef } from "../surface";
@@ -33,31 +33,29 @@ beforeEach(() => {
 });
 
 describe("a desk decision has one ref name", () => {
-  // HS-S42: the meeting decision is the canonical record; it files as
-  // decision_record:<id>, once, after both identities are acknowledged.
+  // One decision writer (2026-11-08): the meeting decision is the canonical
+  // record; the hub files it as decision_record:<id> in the same call.
   const created = {
-    record: { id: "rec_1", source_id: "decision_7ce0" },
+    record: { id: "rec_1", source_id: "decision_7ce0", project_id: "proj-atlas" },
     decision: { id: "decision_7ce0", title: "Adopt quorumdb", status: "accepted", tags: ["meeting:m1", "project:proj-atlas"] },
   };
   const calls = () => vi.mocked(apiFetch).mock.calls.map(([path, init]) =>
     `${(init as { method?: string } | undefined)?.method ?? "GET"} ${decodeURIComponent(String(path))}`);
 
-  it("Decide files the canonical record into the chosen Project as decision_record:<id>", async () => {
-    vi.mocked(apiFetch).mockImplementation(async (path: string, init?: { method?: string }) => {
+  it("Decide makes ONE call: the hub creates the record and files it in the chosen Project", async () => {
+    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
       if (path === "/api/decision-records/from-desk") return created as never;
-      if (init?.method === "PUT") return { resource: { project_id: "proj-atlas", relationship: "member" } } as never;
       throw new Error(`unexpected ${path}`);
     });
 
     const made = await decideFromMeeting({
       title: "Adopt quorumdb", meetingId: "m1", meetingTitle: "Ledger sync",
-      project: { id: "proj-atlas", name: "Atlas" },
+      project: { id: "proj-atlas", name: "Atlas" }, deciders: ["Mira", "Theo"],
     });
 
-    expect(calls()).toEqual([
-      "POST /api/decision-records/from-desk",
-      "PUT /api/projects/proj-atlas/resources/decision_record:rec_1",
-    ]);
+    expect(calls()).toEqual(["POST /api/decision-records/from-desk"]);
+    const sent = (vi.mocked(apiFetch).mock.calls[0][1] as { json: Record<string, unknown> }).json;
+    expect(sent).toMatchObject({ project_id: "proj-atlas", meeting_id: "m1", deciders: ["Mira", "Theo"] });
     expect(made).toMatchObject({ recordId: "rec_1", sourceId: "decision_7ce0", filing: "filed" });
     expect(createDecision).not.toHaveBeenCalled();
   });
@@ -88,18 +86,14 @@ describe("a desk decision has one ref name", () => {
     expect(calls().filter((c) => c.startsWith("POST"))).toEqual(Array(3).fill("POST /api/decision-records/from-desk"));
   });
 
-  it("a refused filing after creation keeps both IDs and does not create again", async () => {
-    vi.mocked(apiFetch).mockImplementation(async (path: string, init?: { method?: string }) => {
-      if (path === "/api/decision-records/from-desk") return created as never;
-      if (init?.method === "PUT") throw new ApiError(409, "refused", {});
-      throw new Error(`unexpected ${path}`);
-    });
+  it("an answer that does not name the Project is not filed, and nothing is written again", async () => {
+    vi.mocked(apiFetch).mockResolvedValue({ ...created, record: { id: "rec_1", source_id: "decision_7ce0" } } as never);
     const made = await decideFromMeeting({
       title: "Adopt quorumdb", meetingId: "m1", meetingTitle: "Ledger sync",
       project: { id: "proj-atlas", name: "Atlas" },
     });
-    expect(made).toMatchObject({ recordId: "rec_1", sourceId: "decision_7ce0", filing: "refused" });
-    expect(calls().filter((c) => c.startsWith("POST"))).toHaveLength(1);
+    expect(made).toMatchObject({ recordId: "rec_1", sourceId: "decision_7ce0", filing: "unknown" });
+    expect(calls()).toEqual(["POST /api/decision-records/from-desk"]);
   });
 
   it("an unfiled decision writes no project edge", async () => {
@@ -107,22 +101,6 @@ describe("a desk decision has one ref name", () => {
     const made = await decideFromMeeting({ title: "Adopt quorumdb", meetingId: "m1", meetingTitle: "Ledger sync", project: null });
     expect(made.filing).toBe("unfiled");
     expect(calls()).toEqual(["POST /api/decision-records/from-desk"]);
-  });
-
-  it("File again reads first: member is filed, another kind is left, absence writes once", async () => {
-    const rows = (relationship?: string) => ({ resource_ref: "decision_record:rec_1",
-      projects: relationship ? [{ project_id: "proj-atlas", relationship }] : [] });
-    vi.mocked(apiFetch).mockResolvedValueOnce(rows("member") as never);
-    expect(await fileAgain("rec_1", "proj-atlas")).toBe("filed");
-    vi.mocked(apiFetch).mockResolvedValueOnce(rows("source") as never);
-    expect(await fileAgain("rec_1", "proj-atlas")).toBe("other");
-    vi.mocked(apiFetch).mockResolvedValueOnce({} as never);
-    expect(await fileAgain("rec_1", "proj-atlas")).toBe("unknown");
-    expect(calls().filter((c) => c.startsWith("PUT"))).toEqual([]);
-    vi.mocked(apiFetch).mockResolvedValueOnce(rows() as never)
-      .mockResolvedValueOnce({ resource: { project_id: "proj-atlas", relationship: "member" } } as never);
-    expect(await fileAgain("rec_1", "proj-atlas")).toBe("filed");
-    expect(calls().filter((c) => c.startsWith("PUT"))).toEqual(["PUT /api/projects/proj-atlas/resources/decision_record:rec_1"]);
   });
 
   it("the meeting scope keeps every linked project and tells a failed read from none", async () => {
