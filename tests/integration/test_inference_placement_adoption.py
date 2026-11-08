@@ -20,14 +20,12 @@ import pytest
 
 from holdspeak.db import Database
 from holdspeak.kernel.inference import InferenceRunCodec
-from holdspeak.kernel.prompt_adapter import CanonicalPromptAdapter
 from holdspeak.kernel.runtime import _configure
 from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.services.agent_turn_service import AgentTurnService
 from holdspeak.services.errors import NotFound
 from holdspeak.services.inference_assignment_service import InferenceAssignmentService
 from holdspeak.services.recipe_service import RecipeService
-from holdspeak.services.sequence_workflow_service import SequenceWorkflowService
 from holdspeak.services.workbench_runner import WorkbenchRunner
 from holdspeak.services.workbench_service import WorkbenchService
 from tests.unit.test_phase143_inference_assignments import _profile, _result_claim
@@ -69,8 +67,6 @@ CASES = (
     _Case("chat-turn", "chat.turn", "recipe", "recipe-matrix"),  # HS-151-02: was recipe.chat
     _Case("workbench-item-and-memory", "workbench.item", "workbench", "workbench-matrix"),
     _Case("voice-resolution", "voice.reference_resolve", "workbench", "workbench-matrix"),
-    _Case("sequence-step", "sequence.step", "recipe", "recipe-matrix"),
-    _Case("workflow-node", "workflow.node"),
 )
 
 
@@ -294,19 +290,6 @@ def _run_voice(db: Database, broker: Any) -> Any:
     return WorkbenchService(db).resolve_voice(OWNER, workbench.id, "matrix", "matrix-voice-request")
 
 
-def _run_sequence(db: Database, broker: Any) -> Any:
-    recipe = db.recipes.upsert(recipe_id="recipe-matrix", name="Matrix", system_prompt="system", user_template="{input}")
-    db.chains.upsert(chain_id="chain-matrix", name="Matrix", steps=[recipe.id])
-    _assign(db, _Case("sequence", "sequence.step", "recipe", recipe.id), "matrix-old", "entry-sequence")
-    return asyncio.run(SequenceWorkflowService(db, broker).run_sequence(OWNER, "chain-matrix", {"input": "sequence"}))
-
-
-def _run_workflow(db: Database, broker: Any) -> Any:
-    db.workflows.upsert(workflow_id="workflow-matrix", name="Matrix", prompt="Do: {input}")
-    _assign(db, _Case("workflow", "workflow.node"), "matrix-old", "entry-workflow")
-    return asyncio.run(SequenceWorkflowService(db, broker).run_workflow(OWNER, "workflow-matrix", {"input": "workflow"}))
-
-
 ENTRY_CASES: tuple[tuple[str, str, Callable[[Database, Any], Any]], ...] = (
     ("recipe-run", "recipe.run", _run_recipe),
     # HS-151-02: recipe.chat retired — both _run_recipe_chat_* helpers call
@@ -315,8 +298,6 @@ ENTRY_CASES: tuple[tuple[str, str, Callable[[Database, Any], Any]], ...] = (
     ("workbench-item-and-memory", "workbench.item", _run_workbench),
     ("agent-turn-facade", "agent.tool_turn", _run_agent_facade),
     ("voice-resolution", "voice.reference_resolve", _run_voice),
-    ("sequence-step", "sequence.step", _run_sequence),
-    ("workflow-node", "workflow.node", _run_workflow),
 )
 
 

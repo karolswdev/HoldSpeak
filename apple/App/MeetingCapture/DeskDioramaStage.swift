@@ -6127,6 +6127,14 @@ struct DioStage: View {
     private func runOnHub(_ run: PendingHubRun) {
         rememberRunTarget(.mac)
         withAnimation { pendingHubRun = nil }
+        if case .workflow(let w) = run.kind {
+            // A Workflow has no hub runner of its own (the Sequence/Workflow runner
+            // is parked, 2026-11-08): it runs as the saved Ask, the same path as
+            // on-device — the prompt (or the input straight through).
+            routeSourceId = run.inputId
+            runRoute(lens: w.name, prompt: w.prompt)
+            return
+        }
         guard let client = desktopClient else {
             routeError = "Pair your desktop first to run on its big model."
             return
@@ -6145,7 +6153,6 @@ struct DioStage: View {
                 let invocationId: String?
                 let resultRef: String?
                 let placement: InferencePlacementReceipt?
-                var warning: String?
                 switch run.kind {
                 case .recipe(let a):
                     let result = try await client.runRecipe(id: a.id, input: input)
@@ -6153,25 +6160,26 @@ struct DioStage: View {
                     invocationId = result.invocationId; resultRef = result.resultRef
                     placement = result.invocation?.attempts.last?.actualPlacement
                 case .chain(let c):
-                    let result = try await client.runChain(id: c.id, input: input)
-                    output = result.output; artifactId = result.artifactId
-                    invocationId = result.invocationId; resultRef = result.resultRef
-                    placement = result.invocation?.attempts.last?.actualPlacement
-                case .workflow(let w):
-                    // HSM-22-04 — the travelling graph runs where it synced to. A
-                    // refused graph's honest `warning` rides onto the card, never
-                    // dropped (the same truth the web run surface shows).
-                    let result = try await client.runWorkflow(id: w.id, input: input)
-                    output = result.output ?? ""; artifactId = result.artifactId
-                    invocationId = result.invocationId; resultRef = result.resultRef
-                    placement = result.invocation?.attempts.last?.actualPlacement
-                    warning = result.warning
+                    // The crew on the hub is the one recipe run, step by step, the
+                    // output of each step the input of the next (the on-device crew
+                    // run's relay). The card keeps the LAST step's run-born artifact.
+                    let steps = c.steps.compactMap { sid in recipes.first { $0.id == sid } }
+                    guard !steps.isEmpty else { throw HTTPDesktopClient.DesktopClientError.http(404) }
+                    var carry = input
+                    var last: HubRunResult?
+                    for ag in steps {
+                        let result = try await client.runRecipe(id: ag.id, input: carry)
+                        carry = result.output
+                        last = result
+                    }
+                    output = carry; artifactId = last?.artifactId
+                    invocationId = last?.invocationId; resultRef = last?.resultRef
+                    placement = last?.invocation?.attempts.last?.actualPlacement
+                case .workflow:
+                    return  // handled above: a Workflow runs as the saved Ask
                 }
                 withAnimation { routing = false }
-                var clean = output.trimmingCharacters(in: .whitespacesAndNewlines)
-                if let warning, !warning.isEmpty {
-                    clean = "⚠ \(warning)\n\n\(clean)"
-                }
+                let clean = output.trimmingCharacters(in: .whitespacesAndNewlines)
                 #if canImport(UIKit)
                 UINotificationFeedbackGenerator().notificationOccurred(.success)
                 #endif
@@ -6207,8 +6215,7 @@ struct DioStage: View {
             switch e {
             case .http(502), .http(503): return "Your desktop has no model loaded — start the desktop runtime and try again."
             case .http(400): return "Your desktop doesn’t have that model — pick another in Runs on."
-            case .http(409): return "That Workflow is not supported on your desktop. Open it in Workbench to choose a compatible host."
-            case .http(404): return "That Persona, Sequence, or Workflow isn’t on your desktop yet — sync first, then run on the hub."
+            case .http(404): return "That Persona or Crew isn’t on your desktop yet — sync first, then run on the hub."
             case .http(let code): return "Your desktop refused the run (status \(code))."
             case .malformed: return "Your desktop sent back something the desk couldn’t read."
             }

@@ -14,7 +14,7 @@ For example, the old meeting Slack-export route returns `slack_moved_to_channel`
 Read the handler and owning guide before treating route presence as feature availability.
 Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
-Routes: 928 (plus static mounts). iOS-consumed: 89. Web-consumed: 590.
+Routes: 924 (plus static mounts). iOS-consumed: 87. Web-consumed: 586.
 
 ## device_audio_ws
 
@@ -509,7 +509,7 @@ Routes: 928 (plus static mounts). iOS-consumed: 89. Web-consumed: 590.
 | Method | Path | Consumers |
 |---|---|---|
 | GET | `/api/door` | web |
-| POST | `/api/door/items` | web |
+| POST | `/api/door/items` | server only |
 
 ## web.routes.follow_through
 
@@ -528,8 +528,8 @@ Routes: 928 (plus static mounts). iOS-consumed: 89. Web-consumed: 590.
 | POST | `/api/inference/assignments/editor` | web |
 | POST | `/api/inference/assignments/preview-use-default` | web |
 | POST | `/api/inference/assignments/set` | web |
-| GET | `/api/inference/defaults` | web |
-| POST | `/api/inference/defaults/use-proposal` | web |
+| GET | `/api/inference/defaults` | server only |
+| POST | `/api/inference/defaults/use-proposal` | server only |
 
 ## web.routes.mcp_http
 
@@ -816,11 +816,9 @@ Routes: 928 (plus static mounts). iOS-consumed: 89. Web-consumed: 590.
 |---|---|---|
 | GET | `/api/chains` | server only |
 | POST | `/api/chains` | server only |
-| POST | `/api/chains/runs/{parent_operation_id}/cancel` | server only |
 | DELETE | `/api/chains/{chain_id}` | server only |
 | GET | `/api/chains/{chain_id}` | server only |
 | PUT | `/api/chains/{chain_id}` | server only |
-| POST | `/api/chains/{chain_id}/run` | ios |
 
 ## web.routes.primitives.decisions
 
@@ -999,11 +997,9 @@ Routes: 928 (plus static mounts). iOS-consumed: 89. Web-consumed: 590.
 |---|---|---|
 | GET | `/api/workflows` | server only |
 | POST | `/api/workflows` | server only |
-| POST | `/api/workflows/runs/{parent_operation_id}/cancel` | server only |
 | DELETE | `/api/workflows/{workflow_id}` | server only |
 | GET | `/api/workflows/{workflow_id}` | server only |
 | PUT | `/api/workflows/{workflow_id}` | server only |
-| POST | `/api/workflows/{workflow_id}/run` | ios |
 
 ## web.routes.programs
 
@@ -1461,7 +1457,7 @@ Routes: 928 (plus static mounts). iOS-consumed: 89. Web-consumed: 590.
 | POST | `/api/threads/{thread_id}/annotations` | web |
 | DELETE | `/api/threads/{thread_id}/annotations/{part_id}` | web |
 | POST | `/api/threads/{thread_id}/branch` | web |
-| POST | `/api/threads/{thread_id}/compact` | web |
+| POST | `/api/threads/{thread_id}/compact` | server only |
 | POST | `/api/threads/{thread_id}/decide` | web |
 | POST | `/api/threads/{thread_id}/interview` | web |
 | GET | `/api/threads/{thread_id}/interview/promotions` | server only |

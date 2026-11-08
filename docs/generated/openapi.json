@@ -7135,43 +7135,6 @@
         "summary": "Create"
       }
     },
-    "/api/chains/runs/{parent_operation_id}/cancel": {
-      "post": {
-        "operationId": "cancel_api_chains_runs__parent_operation_id__cancel_post",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "parent_operation_id",
-            "required": true,
-            "schema": {
-              "title": "Parent Operation Id",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Cancel"
-      }
-    },
     "/api/chains/{chain_id}": {
       "delete": {
         "operationId": "delete_api_chains__chain_id__delete",
@@ -7277,43 +7240,6 @@
           }
         },
         "summary": "Update"
-      }
-    },
-    "/api/chains/{chain_id}/run": {
-      "post": {
-        "operationId": "run_api_chains__chain_id__run_post",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "chain_id",
-            "required": true,
-            "schema": {
-              "title": "Chain Id",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Run"
       }
     },
     "/api/channels/destinations": {
@@ -36029,43 +35955,6 @@
         "summary": "Create"
       }
     },
-    "/api/workflows/runs/{parent_operation_id}/cancel": {
-      "post": {
-        "operationId": "cancel_api_workflows_runs__parent_operation_id__cancel_post",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "parent_operation_id",
-            "required": true,
-            "schema": {
-              "title": "Parent Operation Id",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Cancel"
-      }
-    },
     "/api/workflows/{workflow_id}": {
       "delete": {
         "operationId": "delete_api_workflows__workflow_id__delete",
@@ -36171,43 +36060,6 @@
           }
         },
         "summary": "Update"
-      }
-    },
-    "/api/workflows/{workflow_id}/run": {
-      "post": {
-        "operationId": "run_api_workflows__workflow_id__run_post",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "workflow_id",
-            "required": true,
-            "schema": {
-              "title": "Workflow Id",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Run"
       }
     },
     "/health": {

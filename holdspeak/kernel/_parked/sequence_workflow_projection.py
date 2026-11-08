@@ -1,12 +1,16 @@
-"""Receipt-gated projections for admitted Sequence and Workflow runs."""
+"""Parked 2026-11-08: receipt-gated projections for the parked Sequence and Workflow runs.
+
+The live hub registers `holdspeak.kernel.parked_run_projection` for these four
+kinds instead: a durable stage left by an old run is discarded, never published.
+"""
 from __future__ import annotations
 
 import json
 from holdspeak.timestamps import utc_now_iso
 from typing import Any
 
-from .model import KernelRefused
-from .projection_stager import _PublicationPermit
+from holdspeak.kernel.model import KernelRefused
+from holdspeak.kernel.projection_stager import _PublicationPermit
 
 
 def _permit(conn: Any, permit: Any) -> None:

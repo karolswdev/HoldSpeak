@@ -108,8 +108,6 @@ MEMORY_POLICIES: Mapping[str, MemoryPolicy] = MappingProxyType({
     "workbench.item": _grounding("Workbench grounding with the item."),
     "recipe.run": _grounding("Recipe grounding with the input."),
     "voice.reference_resolve": _off("The answer is a zone id from a closed list; latency is the job."),
-    "sequence.step": _grounding("Sequence grounding with the step's prompt."),
-    "workflow.node": _grounding("Workflow grounding with the node's prompt."),
     "project.update_draft": _drafter("The project's memory, less what the inventory holds."),
     "project.brief_prepare": _drafter("The project's memory for the purpose, less the manifest."),
     # Background

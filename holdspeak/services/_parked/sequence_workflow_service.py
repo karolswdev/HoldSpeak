@@ -1,4 +1,10 @@
-"""Admitted execution services for Sequence and Workflow definitions."""
+"""Parked 2026-11-08: admitted execution services for Sequence and Workflow definitions.
+
+Programs are the one engine for work that runs. A crew on the hub is the iPad
+chaining the one recipe run per step; a Workflow runs as the saved Ask. Kept
+verbatim; not imported. Its projection is parked at
+``holdspeak/kernel/_parked/sequence_workflow_projection.py``.
+"""
 from __future__ import annotations
 
 import asyncio
@@ -9,9 +15,9 @@ import uuid
 from holdspeak.timestamps import utc_now_iso
 from typing import Any
 
-from ..kernel.prompt_adapter import CanonicalPromptAdapter
-from ..principals import Principal, PrincipalKind
-from .errors import ServiceError, ValidationError
+from holdspeak.kernel.prompt_adapter import CanonicalPromptAdapter
+from holdspeak.principals import Principal, PrincipalKind
+from holdspeak.services.errors import ServiceError, ValidationError
 
 
 def _sha(value: Any) -> str:
@@ -38,14 +44,14 @@ class SequenceWorkflowService:
 
     def __init__(self, db: Any, broker: Any) -> None:
         self.db, self.broker = db, broker
-        from ..kernel.sequence_workflow_projection import register
+        from holdspeak.kernel._parked.sequence_workflow_projection import register
 
         register(broker.projection_stager)
 
     def _with_memory(self, prompt: str, capability_id: str) -> tuple[str, dict[str, Any]]:
         """Freeze shared retrieval into one Sequence/Workflow model node."""
-        from ..grounding import hydrate_grounding_blocks_detailed
-        from ..inference_memory_policy import memory_enabled
+        from holdspeak.grounding import hydrate_grounding_blocks_detailed
+        from holdspeak.inference_memory_policy import memory_enabled
 
         if not memory_enabled(capability_id):
             return prompt, {}
@@ -188,7 +194,7 @@ class SequenceWorkflowService:
         self, parent: Any, outcome: str, *, principal: Principal, result_ref: str = ""
     ) -> dict[str, Any]:
         """Use this runner's close if live, otherwise report the elected receipt."""
-        from ..kernel.model import KernelRefused
+        from holdspeak.kernel.model import KernelRefused
 
         try:
             return dict(
@@ -370,7 +376,7 @@ class SequenceWorkflowService:
                     for ordinal, recipe in recipes
                 ],
             )
-            from .support import _render_user_prompt
+            from holdspeak.services.support import _render_user_prompt
 
             current, records, sources, last_route = (
                 str(body.get("input") or ""),
@@ -530,7 +536,7 @@ class SequenceWorkflowService:
             raise ServiceError(
                 "not_found", f"Unknown workflow: {workflow_id}", context={"status": 404}
             )
-        from .support import (
+        from holdspeak.services.support import (
             _MODEL_KINDS,
             _PASSTHROUGH_KINDS,
             _PURE_TRANSFORM_KINDS,

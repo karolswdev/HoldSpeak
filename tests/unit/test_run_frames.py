@@ -113,26 +113,6 @@ def test_agent_run_error_frame_on_502(rig, monkeypatch) -> None:
     assert run[1]["error"] == "failed"
 
 
-def test_chain_and_workflow_bracket_the_whole_run(rig, monkeypatch) -> None:
-    client, db, frames = rig
-    db.recipes.upsert(recipe_id="a1", name="Owl", system_prompt="s",
-                     user_template="{input}")
-    db.chains.upsert(chain_id="c1", name="Pipeline", steps=["a1"])
-    db.workflows.upsert(workflow_id="w1", name="Flow", prompt="Do: {input}")
-    _stub_engine(monkeypatch)
-
-    assert client.post("/api/chains/c1/run", json={"input": "x"}).status_code == 200
-    assert client.post("/api/workflows/w1/run", json={"input": "x"}).status_code == 200
-
-    run = _run_frames(frames)
-    assert [(f["capability"]["kind"], f["state"]) for f in run] == [
-        ("chain", "running"), ("chain", "ready"),
-        ("workflow", "running"), ("workflow", "ready"),
-    ]
-    # ONE bracket per chain run, not one per step (no per-step noise).
-    assert len([f for f in run if f["capability"]["kind"] == "chain"]) == 2
-
-
 def test_no_token_frames_ever(rig, monkeypatch) -> None:
     client, db, frames = rig
     db.recipes.upsert(recipe_id="a1", name="Owl", system_prompt="s")

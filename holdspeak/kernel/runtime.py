@@ -165,13 +165,13 @@ def _build(database: Any, *, clock: Any = None) -> Broker:
     from .recipe_projection import register as register_recipe_projection
     from .meeting_plugin_projection import register as register_meeting_plugin_projection
     from .rails_journal_projection import register as register_rails_journal_projection
-    from .sequence_workflow_projection import register as register_sequence_workflow_projection
+    from .parked_run_projection import register as register_parked_run_projection
     from .workbench_projection import register as register_workbench_projection
     register_ask_projection(broker.projection_stager)
     register_recipe_projection(broker.projection_stager)
     register_rails_journal_projection(broker.projection_stager)
     register_meeting_plugin_projection(broker.projection_stager)
-    register_sequence_workflow_projection(broker.projection_stager)
+    register_parked_run_projection(broker.projection_stager)
     register_workbench_projection(broker.projection_stager)
     # Compose the routed controller before candidate recovery so every staged
     # inference result is interpreted against its logical route winner.

@@ -147,11 +147,11 @@ a run, but it never authorizes a run.
 
 ## Workflows
 
-A Workflow is a saved sequence of supported processing nodes. The sequence service validates the graph and freezes route evidence before each child call.
-It returns a parent receipt, child receipts, steps, and an Artifact projection. A node failure policy can hold, skip, or carry output.
-
-The iPad runs a Sequence or a Workflow on the hub. The Desk and the MCP tools
-do not: use a Program for work that runs. See [Automation](AUTOMATION.md).
+A Sequence (a crew) and a Workflow are saved on the iPad and sync to the hub.
+The hub does not run them. When the iPad runs a crew on your desktop, it runs
+each Mode in turn with `POST /api/recipes/{recipe_id}/run`. The output of one
+Mode is the input of the next. A Workflow runs as its saved prompt. Use a
+Program for work that runs on the hub. See [Automation](AUTOMATION.md).
 
 ## MCP
 
