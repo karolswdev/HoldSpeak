@@ -2,6 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · #1907 A Desk decision's second edit reaches its record: the revisions the sync writes no longer count as hand edits.
 - 2026-11-08 · #1906 One face per decision: every decision ref (decision:, desk_decision:, a Desk decision's open) opens its record in the Decisions window reader, which now has Edit, Retire, Copy, Dictate and Filed in; the Decision pullout is parked.
 - 2026-11-08 · #1905 The desk chunk drops the Program window, the note window and the Room (not on glass at first paint): 2,417 -> 2,042 KiB raw (765 -> 657 KiB gzip); new chunks ProgramWindow 84 KiB, ThoughtWorkspaceWindow 33 + ThoughtDocumentPane 24 KiB, the Room in MemoryCore 9 -> 172 KiB; all JS 9,630 -> 9,636 KiB raw, 2,885 -> 2,894 KiB gzip.
 - 2026-11-08 · #1904 The Program reads move into program_reads.py (1,434 lines; 63 reads: 33 service read methods and the 30 pure reads they use; imports only the Program store, definitions, rules, brief words and errors); program_service.py 5,591 -> 4,370 lines, the service keeps a thin method for each.
