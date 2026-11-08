@@ -4,8 +4,9 @@
 // home and opens the matching desk window at the right scope. Features do
 // not own routes anymore — adding a surface means a SURFACES row in
 // SurfaceWindows plus (optionally) one demoted-path row here.
-import { lazy, type ComponentType, type LazyExoticComponent } from "react";
+import { type ComponentType, type LazyExoticComponent } from "react";
 import { watchChunk } from "./runtime/freshBuild";
+import { preloadable } from "./runtime/preloadable";
 
 export interface ProductRoute {
   path: string;
@@ -14,36 +15,15 @@ export interface ProductRoute {
   immersive?: boolean;
 }
 
-type SurfaceModule = { default: ComponentType };
-
-/** A lazy surface whose chunk can be read before the first render.
- *
- * React 19 holds the reveal of a Suspense boundary until 300 ms after its
- * fallback showed (react-dom's FALLBACK_THROTTLE_MS). A lazy Desk that
- * suspends at boot was drawn about 300 ms late on every open, although its
- * chunk (preloaded by index.html) arrived in some 30 ms (perf lane
- * 2026-11-08). Read first, the lazy resolves at once: its thenable calls back
- * at once, so the first render does not suspend and no fallback shows. */
-function preloadable(load: () => Promise<SurfaceModule>) {
-  let loaded: SurfaceModule | null = null;
-  let pending: Promise<SurfaceModule> | null = null;
-  const preload = () => (pending ??= load().then((module) => (loaded = module)));
-  const component = lazy(() =>
-    loaded
-      ? ({ then: (done: (module: SurfaceModule) => void) => done(loaded as SurfaceModule) } as unknown as Promise<SurfaceModule>)
-      : preload(),
-  );
-  return { component, preload };
-}
-
 const Desk = preloadable(watchChunk(() => import("./desk/DeskApp")));
 const Welcome = preloadable(watchChunk(() => import("./pages/WelcomePage")));
 const Presence = preloadable(watchChunk(() => import("./pages/PresencePage")));
 
-/** Read the chunk of the surface this path draws (every path that is not
- * /welcome or /presence ends on the Desk). main.tsx renders after it, so the
- * first render does not suspend. A failed read still renders: the lazy then
- * reads again and fails into the error boundary, as before. */
+/** Read the chunk of the surface this path draws: every path that is not
+ * /welcome or /presence ends on the Desk. main.tsx renders after it, so the
+ * first render does not suspend (a lazy Desk that suspended at boot was drawn
+ * about 300 ms late; runtime/preloadable.ts). A failed read still renders:
+ * the lazy fails into the error boundary, as before. */
 export function preloadSurface(pathname: string): Promise<unknown> {
   const surface = pathname === "/welcome" ? Welcome : pathname === "/presence" ? Presence : Desk;
   return surface.preload();
