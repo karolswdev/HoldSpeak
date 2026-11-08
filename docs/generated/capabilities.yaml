@@ -4493,7 +4493,6 @@
     },
     {
       "apis": [
-        "/api/action-items/{item_id}",
         "/api/all-action-items"
       ],
       "authority": "Owner action-item route and review authority.",
@@ -8791,8 +8790,7 @@
     },
     {
       "apis": [
-        "POST /api/threads/{thread_id}/interview",
-        "GET /api/threads/{thread_id}/interview/promotions"
+        "POST /api/threads/{thread_id}/interview"
       ],
       "authority": "InterviewService.require_owner and expected revision; People content requires a protected handoff.",
       "configuration": [

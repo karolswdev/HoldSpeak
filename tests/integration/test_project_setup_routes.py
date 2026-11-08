@@ -141,17 +141,6 @@ def _seed_watch(
 
 
 class TestWatchList:
-    def test_list_all(self, rig) -> None:
-        db, client = rig
-        _seed_watch(db, "watch-list-a")
-        _seed_watch(db, "watch-list-b")
-        resp = client.get("/api/watches")
-        assert resp.status_code == 200
-        watches = resp.json()["watches"]
-        ids = [w["id"] for w in watches]
-        assert "watch-list-a" in ids
-        assert "watch-list-b" in ids
-
     def test_list_project_watches(self, rig) -> None:
         db, client = rig
         _seed_watch(db, "watch-proj-a", project_id="proj-x")

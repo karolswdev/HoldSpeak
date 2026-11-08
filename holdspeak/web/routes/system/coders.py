@@ -8,20 +8,16 @@ The steering surface (attach/arm/steer/audit) is a sibling concern in
 from __future__ import annotations
 
 import asyncio
-import json
-import re
-from copy import deepcopy
 from datetime import datetime, timezone
 from typing import Any, Optional
-from urllib.parse import urlparse
 
-from fastapi import APIRouter, Request, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
 from ....logging_config import get_logger
 from ....principals import Principal, PrincipalKind
 from ....services.coder_service import CoderService
-from ....services.errors import NotFound, ValidationError
+from ....services.errors import NotFound
 from ...context import WebContext
 from ...runtime_support import error_500
 
@@ -498,27 +494,5 @@ def build_coders_router(ctx: WebContext) -> APIRouter:
                 status_code=404,
             )
         return JSONResponse({"success": True, "session": session.to_dict()})
-
-    @router.post("/api/coders/clear-stale")
-    def api_companion_clear_stale(payload: Optional[dict[str, Any]] = None) -> Any:
-        """Clear all non-pinned waiting sessions older than the threshold."""
-        from ....agent_context import (
-            DEFAULT_STALE_AGENT_SESSION_SECONDS,
-            clear_stale_agent_sessions,
-        )
-
-        body = payload if isinstance(payload, dict) else {}
-        raw_age = body.get("max_age_seconds")
-        try:
-            max_age_seconds = int(raw_age) if raw_age is not None else DEFAULT_STALE_AGENT_SESSION_SECONDS
-        except (TypeError, ValueError):
-            return JSONResponse({"error": "max_age_seconds must be an integer"}, status_code=400)
-        if max_age_seconds < 0:
-            return JSONResponse({"error": "max_age_seconds must be >= 0"}, status_code=400)
-        cleared = clear_stale_agent_sessions(max_age_seconds=max_age_seconds)
-        return JSONResponse(
-            {"success": True, "cleared": cleared, "max_age_seconds": max_age_seconds}
-        )
-
 
     return router

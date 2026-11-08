@@ -761,44 +761,6 @@ class TestCompanionControlEndpoints:
         assert response.json()["success"] is True
         assert self._status_items(companion.client) == []
 
-    def test_pin_marks_session_and_exempts_from_clear_stale(self, companion):
-        companion.ingest("stale", "Stale?")
-        companion.ingest("kept", "Kept?")
-
-        pin = companion.client.post(
-            "/api/coders/pin",
-            json={"agent": "codex", "session_id": "kept", "pinned": True},
-        )
-        assert pin.status_code == 200
-        assert pin.json()["session"]["pinned"] is True
-
-        kept = next(
-            item
-            for item in self._status_items(companion.client)
-            if item["session"]["session_id"] == "kept"
-        )
-        assert kept["pinned"] is True
-        assert kept["stale"] is False
-
-        # Force everything stale, then clear: only the unpinned session goes.
-        for session_id in ("stale", "kept"):
-            companion.ingest(session_id, "again?", now=companion.old)
-        companion.client.post(
-            "/api/coders/pin",
-            json={"agent": "codex", "session_id": "kept", "pinned": True},
-        )
-        clear = companion.client.post("/api/coders/clear-stale", json={})
-        assert clear.status_code == 200
-        assert clear.json() == {"success": True, "cleared": 1, "max_age_seconds": 120}
-
-        remaining = {
-            item.session_id
-            for item in companion.module.list_recent_awaiting_agent_sessions(
-                state_path=companion.state, max_age_seconds=10**9
-            )
-        }
-        assert remaining == {"kept"}
-
     def test_unpin_via_pin_false(self, companion):
         companion.ingest("abc", "Proceed?")
         companion.client.post(
@@ -818,21 +780,6 @@ class TestCompanionControlEndpoints:
         )
         assert response.status_code == 404
         assert response.json()["error"] == "unknown_session"
-
-    def test_missing_fields_return_400(self, companion):
-        assert companion.client.post("/api/coders/select", json={}).status_code == 400
-        assert (
-            companion.client.post(
-                "/api/coders/pin", json={"agent": "codex"}
-            ).status_code
-            == 400
-        )
-        assert (
-            companion.client.post(
-                "/api/coders/clear-stale", json={"max_age_seconds": "soon"}
-            ).status_code
-            == 400
-        )
 
     # ── HSM-17-02: the live set at GET /api/coders/sessions ─────────────
 
@@ -960,28 +907,6 @@ class TestApiBookmarkEndpoint:
         """Should return error on callback failure."""
         mock_callbacks["on_bookmark"].side_effect = Exception("bookmark error")
         response = test_client.post("/api/bookmark", json={"label": "test"})
-        assert response.status_code == 500
-        data = response.json()
-        assert data["success"] is False
-        assert "error" in data
-
-
-@pytest.mark.integration
-class TestApiStopEndpoint:
-    """Tests for POST /api/stop endpoint."""
-
-    def test_calls_stop_callback(self, test_client, mock_callbacks):
-        """Should call on_stop callback."""
-        response = test_client.post("/api/stop")
-        assert response.status_code == 200
-        assert response.json() == {"success": True, "status": "stopped"}
-
-        mock_callbacks["on_stop"].assert_called_once()
-
-    def test_handles_callback_exception(self, test_client, mock_callbacks):
-        """Should return error on callback failure."""
-        mock_callbacks["on_stop"].side_effect = Exception("stop error")
-        response = test_client.post("/api/stop")
         assert response.status_code == 500
         data = response.json()
         assert data["success"] is False
@@ -1224,50 +1149,6 @@ class TestMirHistoryApiEndpoints:
         missing = test_client.get("/api/meetings/missing/intent-timeline")
         assert missing.status_code == 404
 
-    def test_meeting_plugin_runs_endpoint(self, isolated_db, test_client):
-        now = datetime(2026, 3, 29, 18, 0, 0)
-        isolated_db.meetings.save_meeting(MeetingState(id="m-001", started_at=now))
-        # Recorded oldest-first: `list_plugin_runs` answers newest-first
-        # (ORDER BY created_at DESC, id DESC).
-        isolated_db.plugins.record_plugin_run(
-            meeting_id="m-001",
-            window_id="m-001:w0001",
-            plugin_id="requirements_extractor",
-            plugin_version="1.0.0",
-            status="success",
-            idempotency_key="idem-1",
-            duration_ms=44.2,
-            output={"requirements": 4},
-        )
-        isolated_db.plugins.record_plugin_run(
-            meeting_id="m-001",
-            window_id="m-001:w0002",
-            plugin_id="incident_timeline",
-            plugin_version="preview",
-            status="planned",
-            idempotency_key="idem-2",
-            duration_ms=0.0,
-            output={"source": "route_preview"},
-        )
-
-        response = test_client.get("/api/meetings/m-001/plugin-runs?limit=50")
-        assert response.status_code == 200
-        payload = response.json()
-        assert payload["meeting_id"] == "m-001"
-        assert len(payload["runs"]) == 2
-        assert payload["runs"][0]["plugin_id"] == "incident_timeline"
-        assert payload["runs"][1]["status"] == "success"
-
-        filtered = test_client.get("/api/meetings/m-001/plugin-runs?window_id=m-001:w0001")
-        assert filtered.status_code == 200
-        filtered_payload = filtered.json()
-        assert filtered_payload["window_id"] == "m-001:w0001"
-        assert len(filtered_payload["runs"]) == 1
-        assert filtered_payload["runs"][0]["plugin_id"] == "requirements_extractor"
-
-        missing = test_client.get("/api/meetings/missing/plugin-runs")
-        assert missing.status_code == 404
-
     def test_meeting_artifacts_endpoint(self, isolated_db, test_client):
         now = datetime(2026, 3, 29, 18, 0, 0)
         isolated_db.meetings.save_meeting(MeetingState(id="m-001", started_at=now))
@@ -1372,31 +1253,6 @@ class TestMirHistoryApiEndpoints:
 
         missing = test_client.get("/api/meetings/missing/export")
         assert missing.status_code == 404
-
-    def test_legacy_meeting_without_mir_history_rows_remains_loadable(self, isolated_db, test_client):
-        # A pre-MIR meeting: the row exists, none of the history tables do.
-        isolated_db.meetings.save_meeting(
-            MeetingState(id="m-legacy", started_at=datetime(2026, 3, 29, 18, 0, 0))
-        )
-
-        timeline = test_client.get("/api/meetings/m-legacy/intent-timeline")
-        assert timeline.status_code == 200
-        timeline_payload = timeline.json()
-        assert timeline_payload["meeting_id"] == "m-legacy"
-        assert timeline_payload["windows"] == []
-        assert timeline_payload["transitions"] == []
-
-        runs = test_client.get("/api/meetings/m-legacy/plugin-runs")
-        assert runs.status_code == 200
-        runs_payload = runs.json()
-        assert runs_payload["meeting_id"] == "m-legacy"
-        assert runs_payload["runs"] == []
-
-        artifacts = test_client.get("/api/meetings/m-legacy/artifacts")
-        assert artifacts.status_code == 200
-        artifacts_payload = artifacts.json()
-        assert artifacts_payload["meeting_id"] == "m-legacy"
-        assert artifacts_payload["artifacts"] == []
 
     def test_cli_reroute_persistence_is_visible_in_timeline_api(
         self, monkeypatch, isolated_db, test_client
@@ -1930,201 +1786,6 @@ class TestSettingsApiEndpoints:
         payload = response.json()
         assert payload["success"] is False
         assert "header name" in payload["error"]
-
-
-@pytest.mark.integration
-class TestSpeakerApiEndpoints:
-    """Tests for speaker management endpoints."""
-
-    def test_speaker_endpoints(self, isolated_db, test_client):
-        import numpy as np
-
-        from holdspeak.speaker_intel import SpeakerEmbedding
-
-        def _embedding(seed: int):
-            return np.full(256, float(seed), dtype=np.float32)
-
-        isolated_db.meetings.save_speaker(
-            SpeakerEmbedding(id="spk-1", name="Alice", embedding=_embedding(1), sample_count=4, avatar="👩")
-        )
-        isolated_db.meetings.save_speaker(
-            SpeakerEmbedding(id="spk-2", name="Bob", embedding=_embedding(2), sample_count=2, avatar="🧑")
-        )
-        # spk-1 speaks in TWO meetings so `meeting_count` is a real aggregate;
-        # m-001 is the more recent, so it leads the grouped detail payload.
-        isolated_db.meetings.save_meeting(
-            MeetingState(
-                id="m-000",
-                started_at=datetime(2025, 1, 10, 9, 0, 0),
-                ended_at=datetime(2025, 1, 10, 9, 20, 0),
-                title="Kickoff",
-                segments=[
-                    TranscriptSegment(
-                        text="Kickoff notes", speaker="Alice", start_time=0.0, end_time=10.0, speaker_id="spk-1"
-                    )
-                ],
-            )
-        )
-        isolated_db.meetings.save_meeting(
-            MeetingState(
-                id="m-001",
-                started_at=datetime(2025, 1, 11, 10, 30, 0),
-                ended_at=datetime(2025, 1, 11, 10, 50, 0),
-                title="Weekly sync",
-                segments=[
-                    TranscriptSegment(
-                        text="Action item follow-up",
-                        speaker="Alice",
-                        start_time=42.0,
-                        end_time=48.0,
-                        speaker_id="spk-1",
-                    ),
-                    TranscriptSegment(
-                        text="Agreed", speaker="Bob", start_time=48.0, end_time=52.0, speaker_id="spk-2"
-                    ),
-                ],
-            )
-        )
-
-        list_response = test_client.get("/api/speakers")
-        assert list_response.status_code == 200
-        list_data = list_response.json()
-        assert list_data["total"] == 2
-        assert {speaker["id"] for speaker in list_data["speakers"]} == {"spk-1", "spk-2"}
-
-        detail_response = test_client.get("/api/speakers/spk-1")
-        assert detail_response.status_code == 200
-        detail_data = detail_response.json()
-        assert detail_data["speaker"]["name"] == "Alice"
-        assert detail_data["stats"]["meeting_count"] == 2
-        assert detail_data["meetings"][0]["meeting_id"] == "m-001"
-
-        update_response = test_client.patch(
-            "/api/speakers/spk-1",
-            json={"name": "Alicia", "avatar": "🧠"},
-        )
-        assert update_response.status_code == 200
-        update_data = update_response.json()
-        assert update_data["success"] is True
-        assert update_data["speaker"]["name"] == "Alicia"
-        assert update_data["speaker"]["avatar"] == "🧠"
-
-        invalid_response = test_client.patch(
-            "/api/speakers/spk-1",
-            json={"name": "   "},
-        )
-        assert invalid_response.status_code == 400
-        assert "cannot be empty" in invalid_response.json()["error"]
-
-
-@pytest.mark.integration
-class TestGlobalActionItemsApiEndpoints:
-    """Tests for global action-item list, status, review, and edit endpoints."""
-
-    def test_action_item_endpoints_include_review_and_edit(self, isolated_db, test_client):
-        now = datetime(2025, 1, 12, 9, 0, 0)
-        isolated_db.meetings.save_meeting(
-            MeetingState(
-                id="m-001",
-                started_at=now,
-                ended_at=datetime(2025, 1, 12, 9, 30, 0),
-                title="Weekly sync",
-                intel=IntelSnapshot(
-                    timestamp=10.0,
-                    topics=[],
-                    action_items=[
-                        {
-                            "id": "a-1",
-                            "task": "Initial task",
-                            "owner": "Me",
-                            "due": None,
-                            "status": "pending",
-                            "review_state": "pending",
-                            "source_timestamp": 125.5,
-                        }
-                    ],
-                    summary="Weekly sync",
-                ),
-            )
-        )
-
-        list_response = test_client.get("/api/all-action-items?include_completed=true")
-        assert list_response.status_code == 200
-        payload = list_response.json()["action_items"][0]
-        assert payload["review_state"] == "pending"
-        assert payload["reviewed_at"] is None
-        assert payload["source_timestamp"] == pytest.approx(125.5)
-
-        status_response = test_client.patch(
-            "/api/all-action-items/a-1",
-            json={"status": "done"},
-        )
-        assert status_response.status_code == 200
-        status_item = status_response.json()["action_item"]
-        assert status_item["status"] == "done"
-        assert status_item["source_timestamp"] == pytest.approx(125.5)
-
-        review_response = test_client.patch(
-            "/api/all-action-items/a-1/review",
-            json={"review_state": "accepted"},
-        )
-        assert review_response.status_code == 200
-        reviewed_item = review_response.json()["action_item"]
-        assert reviewed_item["review_state"] == "accepted"
-        assert reviewed_item["reviewed_at"] is not None
-        assert reviewed_item["source_timestamp"] == pytest.approx(125.5)
-
-        pending_review_response = test_client.patch(
-            "/api/all-action-items/a-1/review",
-            json={"review_state": "pending"},
-        )
-        assert pending_review_response.status_code == 200
-        pending_review_item = pending_review_response.json()["action_item"]
-        assert pending_review_item["review_state"] == "pending"
-        assert pending_review_item["reviewed_at"] is None
-        assert pending_review_item["source_timestamp"] == pytest.approx(125.5)
-
-        edit_response = test_client.patch(
-            "/api/all-action-items/a-1/edit",
-            json={"task": "Edited task", "owner": "", "due": "Friday"},
-        )
-        assert edit_response.status_code == 200
-        edited_item = edit_response.json()["action_item"]
-        assert edited_item["task"] == "Edited task"
-        assert edited_item["owner"] is None
-        assert edited_item["due"] == "Friday"
-        assert edited_item["review_state"] == "accepted"
-        assert edited_item["source_timestamp"] == pytest.approx(125.5)
-
-    def test_action_item_review_and_edit_validation(self, monkeypatch, test_client):
-        class FakeDb:
-            meetings = property(lambda self: self)
-            def update_action_item_review_state(self, item_id, review_state):
-                _ = item_id, review_state
-                return False
-
-            def edit_action_item(self, item_id, *, task, owner, due):
-                _ = item_id, task, owner, due
-                return False
-
-            def get_action_item(self, item_id):
-                _ = item_id
-                return None
-
-        import holdspeak.db as db_module
-        monkeypatch.setattr(db_module, "get_database", lambda: FakeDb())
-
-        invalid_review = test_client.patch(
-            "/api/all-action-items/a-1/review",
-            json={"review_state": "approved"},
-        )
-        assert invalid_review.status_code == 400
-
-        invalid_edit = test_client.patch(
-            "/api/all-action-items/a-1/edit",
-            json={"task": "   "},
-        )
-        assert invalid_edit.status_code == 400
 
 
 @pytest.mark.integration

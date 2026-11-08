@@ -18,30 +18,6 @@
       "consumers": []
     },
     {
-      "path": "/api/action-items/{item_id}",
-      "methods": [
-        "PATCH"
-      ],
-      "module": "web.routes.meetings.action_items",
-      "consumers": []
-    },
-    {
-      "path": "/api/action-items/{item_id}/edit",
-      "methods": [
-        "PATCH"
-      ],
-      "module": "web.routes.meetings.action_items",
-      "consumers": []
-    },
-    {
-      "path": "/api/action-items/{item_id}/review",
-      "methods": [
-        "PATCH"
-      ],
-      "module": "web.routes.meetings.action_items",
-      "consumers": []
-    },
-    {
       "path": "/api/activity/briefing",
       "methods": [
         "GET"
@@ -419,14 +395,6 @@
       ]
     },
     {
-      "path": "/api/all-action-items/{item_id}/edit",
-      "methods": [
-        "PATCH"
-      ],
-      "module": "web.routes.meetings.action_items",
-      "consumers": []
-    },
-    {
       "path": "/api/all-action-items/{item_id}/review",
       "methods": [
         "PATCH"
@@ -732,30 +700,6 @@
       "consumers": [
         "web"
       ]
-    },
-    {
-      "path": "/api/cadence/audit",
-      "methods": [
-        "GET"
-      ],
-      "module": "web.routes.cadence",
-      "consumers": []
-    },
-    {
-      "path": "/api/cadence/brief",
-      "methods": [
-        "GET"
-      ],
-      "module": "web.routes.cadence",
-      "consumers": []
-    },
-    {
-      "path": "/api/cadence/closeout",
-      "methods": [
-        "GET"
-      ],
-      "module": "web.routes.cadence",
-      "consumers": []
     },
     {
       "path": "/api/cadence/closeout/apply",
@@ -1244,14 +1188,6 @@
       "consumers": [
         "web"
       ]
-    },
-    {
-      "path": "/api/coders/clear-stale",
-      "methods": [
-        "POST"
-      ],
-      "module": "web.routes.system.coders",
-      "consumers": []
     },
     {
       "path": "/api/coders/dismiss",
@@ -2900,14 +2836,6 @@
       ]
     },
     {
-      "path": "/api/follow-through/commit-decision",
-      "methods": [
-        "POST"
-      ],
-      "module": "web.routes.follow_through",
-      "consumers": []
-    },
-    {
       "path": "/api/follow-through/complete",
       "methods": [
         "POST"
@@ -3024,54 +2952,6 @@
       "consumers": []
     },
     {
-      "path": "/api/inference-targets/{target_id}",
-      "methods": [
-        "DELETE"
-      ],
-      "module": "web.routes.primitives.profiles",
-      "consumers": []
-    },
-    {
-      "path": "/api/inference-targets/{target_id}",
-      "methods": [
-        "GET"
-      ],
-      "module": "web.routes.primitives.profiles",
-      "consumers": []
-    },
-    {
-      "path": "/api/inference-targets/{target_id}",
-      "methods": [
-        "PUT"
-      ],
-      "module": "web.routes.primitives.profiles",
-      "consumers": []
-    },
-    {
-      "path": "/api/inference-targets/{target_id}/probe",
-      "methods": [
-        "POST"
-      ],
-      "module": "web.routes.primitives.profiles",
-      "consumers": []
-    },
-    {
-      "path": "/api/inference-targets/{target_id}/secret",
-      "methods": [
-        "DELETE"
-      ],
-      "module": "web.routes.primitives.profiles",
-      "consumers": []
-    },
-    {
-      "path": "/api/inference-targets/{target_id}/secret",
-      "methods": [
-        "PUT"
-      ],
-      "module": "web.routes.primitives.profiles",
-      "consumers": []
-    },
-    {
       "path": "/api/inference/acquisitions/{job_id}",
       "methods": [
         "GET"
@@ -3080,14 +2960,6 @@
       "consumers": [
         "web"
       ]
-    },
-    {
-      "path": "/api/inference/acquisitions/{job_id}/cancel",
-      "methods": [
-        "POST"
-      ],
-      "module": "web.routes.setup",
-      "consumers": []
     },
     {
       "path": "/api/inference/assignments",
@@ -3140,22 +3012,6 @@
       ]
     },
     {
-      "path": "/api/inference/capabilities",
-      "methods": [
-        "GET"
-      ],
-      "module": "web.routes.setup",
-      "consumers": []
-    },
-    {
-      "path": "/api/inference/capabilities/{capability_id}",
-      "methods": [
-        "GET"
-      ],
-      "module": "web.routes.setup",
-      "consumers": []
-    },
-    {
       "path": "/api/inference/defaults",
       "methods": [
         "GET"
@@ -3190,14 +3046,6 @@
       "consumers": [
         "web"
       ]
-    },
-    {
-      "path": "/api/inference/setup",
-      "methods": [
-        "GET"
-      ],
-      "module": "web.routes.setup",
-      "consumers": []
     },
     {
       "path": "/api/intel/jobs",
@@ -3287,14 +3135,6 @@
       "path": "/api/invocations/{invocation_id}",
       "methods": [
         "GET"
-      ],
-      "module": "web.routes.primitives.invocations",
-      "consumers": []
-    },
-    {
-      "path": "/api/invocations/{invocation_id}/cancel",
-      "methods": [
-        "POST"
       ],
       "module": "web.routes.primitives.invocations",
       "consumers": []
@@ -3697,14 +3537,6 @@
       "consumers": [
         "web"
       ]
-    },
-    {
-      "path": "/api/meetings/{meeting_id}/plugin-runs",
-      "methods": [
-        "GET"
-      ],
-      "module": "web.routes.meetings.insights",
-      "consumers": []
     },
     {
       "path": "/api/meetings/{meeting_id}/prepare",
@@ -4366,14 +4198,6 @@
       "consumers": [
         "web"
       ]
-    },
-    {
-      "path": "/api/people/history",
-      "methods": [
-        "GET"
-      ],
-      "module": "web.routes.people",
-      "consumers": []
     },
     {
       "path": "/api/people/one-on-ones/{session_id}/agenda",
@@ -6576,14 +6400,6 @@
       ]
     },
     {
-      "path": "/api/setup/hub-default-summary",
-      "methods": [
-        "GET"
-      ],
-      "module": "web.routes.setup",
-      "consumers": []
-    },
-    {
       "path": "/api/setup/lan",
       "methods": [
         "POST"
@@ -6640,14 +6456,6 @@
       "consumers": [
         "web"
       ]
-    },
-    {
-      "path": "/api/setup/runtime-options",
-      "methods": [
-        "GET"
-      ],
-      "module": "web.routes.setup",
-      "consumers": []
     },
     {
       "path": "/api/setup/runtime-test",
@@ -6727,22 +6535,6 @@
       ]
     },
     {
-      "path": "/api/speakers/{speaker_id}",
-      "methods": [
-        "GET"
-      ],
-      "module": "web.routes.meetings.speakers",
-      "consumers": []
-    },
-    {
-      "path": "/api/speakers/{speaker_id}",
-      "methods": [
-        "PATCH"
-      ],
-      "module": "web.routes.meetings.speakers",
-      "consumers": []
-    },
-    {
       "path": "/api/state",
       "methods": [
         "GET"
@@ -6778,14 +6570,6 @@
         "POST"
       ],
       "module": "web.routes.steward",
-      "consumers": []
-    },
-    {
-      "path": "/api/stop",
-      "methods": [
-        "POST"
-      ],
-      "module": "web.routes.meetings.live",
       "consumers": []
     },
     {
@@ -7096,14 +6880,6 @@
       ]
     },
     {
-      "path": "/api/threads/{thread_id}/agent",
-      "methods": [
-        "POST"
-      ],
-      "module": "web.routes.threads",
-      "consumers": []
-    },
-    {
       "path": "/api/threads/{thread_id}/annotations",
       "methods": [
         "POST"
@@ -7160,14 +6936,6 @@
       "consumers": [
         "web"
       ]
-    },
-    {
-      "path": "/api/threads/{thread_id}/interview/promotions",
-      "methods": [
-        "GET"
-      ],
-      "module": "web.routes.threads",
-      "consumers": []
     },
     {
       "path": "/api/threads/{thread_id}/keep",
@@ -7423,14 +7191,6 @@
         "GET"
       ],
       "module": "web.routes.walks",
-      "consumers": []
-    },
-    {
-      "path": "/api/watches",
-      "methods": [
-        "GET"
-      ],
-      "module": "web.routes.watches",
       "consumers": []
     },
     {

@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime, timedelta
 from typing import Any
 
 from fastapi import APIRouter, Body, HTTPException, Request
@@ -41,14 +40,6 @@ def build_cadence_router(ctx: WebContext) -> APIRouter:
     def loops(request: Request, all: bool = False) -> dict[str, Any]:
         return service.list_loops(principal(request), include_terminal=all)
 
-    @router.get("/brief")
-    def brief(request: Request) -> dict[str, Any]:
-        return service.brief(principal(request))
-
-    @router.get("/closeout")
-    def closeout(request: Request) -> dict[str, Any]:
-        return service.closeout(principal(request))
-
     @router.post("/closeout/apply")
     def closeout_apply(request: Request, body: dict = Body(default={})) -> dict[str, Any]:
         return service.apply_closeout(principal(request), body)
@@ -56,10 +47,6 @@ def build_cadence_router(ctx: WebContext) -> APIRouter:
     @router.get("/history")
     def history(request: Request, limit: int = 50) -> dict[str, Any]:
         return service.history(principal(request), limit=limit)
-
-    @router.get("/audit")
-    def audit(request: Request) -> dict[str, Any]:
-        return service.audit(principal(request))
 
     @router.get("/loops/{loop_id}")
     async def loop_detail(request: Request, loop_id: str) -> dict[str, Any]:

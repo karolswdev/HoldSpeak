@@ -361,8 +361,7 @@
         "Thread messages"
       ],
       "apis": [
-        "POST /api/threads/{thread_id}/interview",
-        "GET /api/threads/{thread_id}/interview/promotions"
+        "POST /api/threads/{thread_id}/interview"
       ],
       "configuration": [
         "Interview mode recipe",

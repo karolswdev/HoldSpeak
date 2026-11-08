@@ -213,42 +213,6 @@ def _server_for(meeting: _LiveMeeting) -> MeetingWebServer:
     )
 
 
-class TestLiveTriageSurvivesTheSave:
-    def test_triage_during_the_meeting_lands_in_the_session_and_in_the_save(self, tmp_path):
-        meeting = _live_meeting()
-        client = TestClient(_server_for(meeting).app)
-
-        assert client.patch("/api/action-items/item-001", json={"status": "done"}).status_code == 200
-        assert client.patch(
-            "/api/action-items/item-002/edit",
-            json={"task": "Rewritten live", "owner": "", "due": "Friday"},
-        ).status_code == 200
-
-        # Visible in the session the meeting is still running against.
-        session_items = {item.id: item for item in meeting._state.intel.action_items}
-        assert session_items["item-001"].status == "done"
-        assert session_items["item-002"].task == "Rewritten live"
-        assert session_items["item-002"].review_state == "accepted"
-
-        # ...and it survives the meeting's save.
-        db = Database(tmp_path / "saved.db")
-        db.meetings.save_meeting(meeting._state)
-        saved_done = db.meetings.get_action_item("item-001")
-        saved_edit = db.meetings.get_action_item("item-002")
-        assert saved_done.status == "done"
-        assert saved_done.completed_at is not None
-        assert saved_edit.task == "Rewritten live"
-        assert saved_edit.owner is None
-        # Betterment D0 (docs/internal/betterment/daily/RECIPE.md, D0): the save
-        # reads the said due against the meeting's day (Sat 15 Aug -> Fri 21 Aug)
-        # and keeps the said words beside the date.
-        assert saved_edit.due == "2026-08-21"
-        with db._connection() as conn:
-            said = conn.execute("SELECT due_said FROM action_items WHERE id = 'item-002'").fetchone()[0]
-        assert said == "Friday"
-        assert saved_edit.review_state == "accepted"
-
-
 class TestStopWithoutALiveMeeting:
     def test_refusal_answers_a_conflict_not_a_server_fault(self):
         """HS-132-01 made the refusal honest by name; it rode a 500 until now."""
@@ -267,7 +231,7 @@ class TestStopWithoutALiveMeeting:
         )
         client = TestClient(server.app)
 
-        for path in ("/api/meeting/stop", "/api/stop"):
+        for path in ("/api/meeting/stop",):
             response = client.post(path)
             assert response.status_code == 409, path
             assert "No active meeting" in response.json()["error"], path

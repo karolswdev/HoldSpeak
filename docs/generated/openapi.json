@@ -285,67 +285,6 @@
         "title": "WriteFileRequest",
         "type": "object"
       },
-      "_ActionItemEditRequest": {
-        "properties": {
-          "due": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Due"
-          },
-          "owner": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Owner"
-          },
-          "task": {
-            "title": "Task",
-            "type": "string"
-          }
-        },
-        "required": [
-          "task"
-        ],
-        "title": "_ActionItemEditRequest",
-        "type": "object"
-      },
-      "_ActionItemReviewRequest": {
-        "properties": {
-          "review_state": {
-            "title": "Review State",
-            "type": "string"
-          }
-        },
-        "required": [
-          "review_state"
-        ],
-        "title": "_ActionItemReviewRequest",
-        "type": "object"
-      },
-      "_ActionItemUpdateRequest": {
-        "properties": {
-          "status": {
-            "title": "Status",
-            "type": "string"
-          }
-        },
-        "required": [
-          "status"
-        ],
-        "title": "_ActionItemUpdateRequest",
-        "type": "object"
-      },
       "_ActivityExtensionEventsRequest": {
         "properties": {
           "events": {
@@ -753,41 +692,6 @@
           "name"
         ],
         "title": "_DisconnectRequest",
-        "type": "object"
-      },
-      "_GlobalActionItemEditRequest": {
-        "properties": {
-          "due": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Due"
-          },
-          "owner": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Owner"
-          },
-          "task": {
-            "title": "Task",
-            "type": "string"
-          }
-        },
-        "required": [
-          "task"
-        ],
-        "title": "_GlobalActionItemEditRequest",
         "type": "object"
       },
       "_GlobalActionItemReviewRequest": {
@@ -1302,34 +1206,6 @@
         "title": "_ResourcefulPolicyRequest",
         "type": "object"
       },
-      "_SpeakerUpdateRequest": {
-        "properties": {
-          "avatar": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Avatar"
-          },
-          "name": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Name"
-          }
-        },
-        "title": "_SpeakerUpdateRequest",
-        "type": "object"
-      },
       "_StopRequest": {
         "properties": {
           "reason": {
@@ -1535,153 +1411,6 @@
   },
   "openapi": "3.1.0",
   "paths": {
-    "/api/action-items/{item_id}": {
-      "patch": {
-        "operationId": "api_update_action_item_api_action_items__item_id__patch",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "item_id",
-            "required": true,
-            "schema": {
-              "title": "Item Id",
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/_ActionItemUpdateRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Api Update Action Item Api Action Items  Item Id  Patch"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Api Update Action Item"
-      }
-    },
-    "/api/action-items/{item_id}/edit": {
-      "patch": {
-        "operationId": "api_edit_action_item_api_action_items__item_id__edit_patch",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "item_id",
-            "required": true,
-            "schema": {
-              "title": "Item Id",
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/_ActionItemEditRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Api Edit Action Item Api Action Items  Item Id  Edit Patch"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Api Edit Action Item"
-      }
-    },
-    "/api/action-items/{item_id}/review": {
-      "patch": {
-        "operationId": "api_update_action_item_review_api_action_items__item_id__review_patch",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "item_id",
-            "required": true,
-            "schema": {
-              "title": "Item Id",
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/_ActionItemReviewRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Api Update Action Item Review Api Action Items  Item Id  Review Patch"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Api Update Action Item Review"
-      }
-    },
     "/api/activity/briefing": {
       "get": {
         "operationId": "briefing_api_activity_briefing_get",
@@ -3294,55 +3023,6 @@
         "summary": "Api Update Global Action Item"
       }
     },
-    "/api/all-action-items/{item_id}/edit": {
-      "patch": {
-        "operationId": "api_edit_global_action_item_api_all_action_items__item_id__edit_patch",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "item_id",
-            "required": true,
-            "schema": {
-              "title": "Item Id",
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/_GlobalActionItemEditRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Api Edit Global Action Item Api All Action Items  Item Id  Edit Patch"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Api Edit Global Action Item"
-      }
-    },
     "/api/all-action-items/{item_id}/review": {
       "patch": {
         "operationId": "api_review_global_action_item_api_all_action_items__item_id__review_patch",
@@ -4481,75 +4161,6 @@
           }
         },
         "summary": "Api Keep Brief"
-      }
-    },
-    "/api/cadence/audit": {
-      "get": {
-        "operationId": "audit_api_cadence_audit_get",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "additionalProperties": true,
-                  "title": "Response Audit Api Cadence Audit Get",
-                  "type": "object"
-                }
-              }
-            },
-            "description": "Successful Response"
-          }
-        },
-        "summary": "Audit",
-        "tags": [
-          "cadence"
-        ]
-      }
-    },
-    "/api/cadence/brief": {
-      "get": {
-        "operationId": "brief_api_cadence_brief_get",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "additionalProperties": true,
-                  "title": "Response Brief Api Cadence Brief Get",
-                  "type": "object"
-                }
-              }
-            },
-            "description": "Successful Response"
-          }
-        },
-        "summary": "Brief",
-        "tags": [
-          "cadence"
-        ]
-      }
-    },
-    "/api/cadence/closeout": {
-      "get": {
-        "operationId": "closeout_api_cadence_closeout_get",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "additionalProperties": true,
-                  "title": "Response Closeout Api Cadence Closeout Get",
-                  "type": "object"
-                }
-              }
-            },
-            "description": "Successful Response"
-          }
-        },
-        "summary": "Closeout",
-        "tags": [
-          "cadence"
-        ]
       }
     },
     "/api/cadence/closeout/apply": {
@@ -6181,53 +5792,6 @@
           }
         },
         "summary": "Api Channel Save Slack Webhook"
-      }
-    },
-    "/api/coders/clear-stale": {
-      "post": {
-        "description": "Clear all non-pinned waiting sessions older than the threshold.",
-        "operationId": "api_companion_clear_stale_api_coders_clear_stale_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "anyOf": [
-                  {
-                    "additionalProperties": true,
-                    "type": "object"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "title": "Payload"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Api Companion Clear Stale Api Coders Clear Stale Post"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Api Companion Clear Stale"
       }
     },
     "/api/coders/dismiss": {
@@ -12945,51 +12509,6 @@
         ]
       }
     },
-    "/api/follow-through/commit-decision": {
-      "post": {
-        "operationId": "commit_decision_api_follow_through_commit_decision_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "additionalProperties": true,
-                "default": {},
-                "title": "Body",
-                "type": "object"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "additionalProperties": true,
-                  "title": "Response Commit Decision Api Follow Through Commit Decision Post",
-                  "type": "object"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Commit Decision",
-        "tags": [
-          "follow-through"
-        ]
-      }
-    },
     "/api/follow-through/complete": {
       "post": {
         "operationId": "complete_api_follow_through_complete_post",
@@ -13376,235 +12895,6 @@
         "summary": "Api Create Inference Target"
       }
     },
-    "/api/inference-targets/{target_id}": {
-      "delete": {
-        "operationId": "api_delete_inference_target_api_inference_targets__target_id__delete",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "target_id",
-            "required": true,
-            "schema": {
-              "title": "Target Id",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Api Delete Inference Target Api Inference Targets  Target Id  Delete"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Api Delete Inference Target"
-      },
-      "get": {
-        "operationId": "api_get_inference_target_api_inference_targets__target_id__get",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "target_id",
-            "required": true,
-            "schema": {
-              "title": "Target Id",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Api Get Inference Target Api Inference Targets  Target Id  Get"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Api Get Inference Target"
-      },
-      "put": {
-        "operationId": "api_update_inference_target_api_inference_targets__target_id__put",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "target_id",
-            "required": true,
-            "schema": {
-              "title": "Target Id",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Api Update Inference Target Api Inference Targets  Target Id  Put"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Api Update Inference Target"
-      }
-    },
-    "/api/inference-targets/{target_id}/probe": {
-      "post": {
-        "description": "Test this legacy destination without persisting a connection result.",
-        "operationId": "api_probe_target_api_inference_targets__target_id__probe_post",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "target_id",
-            "required": true,
-            "schema": {
-              "title": "Target Id",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Api Probe Target Api Inference Targets  Target Id  Probe Post"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Api Probe Target"
-      }
-    },
-    "/api/inference-targets/{target_id}/secret": {
-      "delete": {
-        "operationId": "api_delete_inference_target_secret_api_inference_targets__target_id__secret_delete",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "target_id",
-            "required": true,
-            "schema": {
-              "title": "Target Id",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Api Delete Inference Target Secret Api Inference Targets  Target Id  Secret Delete"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Api Delete Inference Target Secret"
-      },
-      "put": {
-        "operationId": "api_set_inference_target_secret_api_inference_targets__target_id__secret_put",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "target_id",
-            "required": true,
-            "schema": {
-              "title": "Target Id",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Api Set Inference Target Secret Api Inference Targets  Target Id  Secret Put"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Api Set Inference Target Secret"
-      }
-    },
     "/api/inference/acquisitions/{job_id}": {
       "get": {
         "operationId": "api_inference_acquisition_api_inference_acquisitions__job_id__get",
@@ -13642,45 +12932,6 @@
           }
         },
         "summary": "Api Inference Acquisition"
-      }
-    },
-    "/api/inference/acquisitions/{job_id}/cancel": {
-      "post": {
-        "operationId": "api_inference_cancel_api_inference_acquisitions__job_id__cancel_post",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "job_id",
-            "required": true,
-            "schema": {
-              "title": "Job Id",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Api Inference Cancel Api Inference Acquisitions  Job Id  Cancel Post"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Api Inference Cancel"
       }
     },
     "/api/inference/assignments": {
@@ -13773,63 +13024,6 @@
         "summary": "Set Assignment"
       }
     },
-    "/api/inference/capabilities": {
-      "get": {
-        "operationId": "api_inference_capabilities_api_inference_capabilities_get",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Api Inference Capabilities Api Inference Capabilities Get"
-                }
-              }
-            },
-            "description": "Successful Response"
-          }
-        },
-        "summary": "Api Inference Capabilities"
-      }
-    },
-    "/api/inference/capabilities/{capability_id}": {
-      "get": {
-        "operationId": "api_inference_capability_api_inference_capabilities__capability_id__get",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "capability_id",
-            "required": true,
-            "schema": {
-              "title": "Capability Id",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Api Inference Capability Api Inference Capabilities  Capability Id  Get"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Api Inference Capability"
-      }
-    },
     "/api/inference/defaults": {
       "get": {
         "operationId": "get_defaults_api_inference_defaults_get",
@@ -13900,24 +13094,6 @@
           }
         },
         "summary": "Define Endpoint"
-      }
-    },
-    "/api/inference/setup": {
-      "get": {
-        "operationId": "api_inference_setup_api_inference_setup_get",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Api Inference Setup Api Inference Setup Get"
-                }
-              }
-            },
-            "description": "Successful Response"
-          }
-        },
-        "summary": "Api Inference Setup"
       }
     },
     "/api/intel/jobs": {
@@ -14298,46 +13474,6 @@
           }
         },
         "summary": "Api Get Invocation"
-      }
-    },
-    "/api/invocations/{invocation_id}/cancel": {
-      "post": {
-        "description": "Submit, claim, and receipt an owner cancellation signal.",
-        "operationId": "api_cancel_invocation_api_invocations__invocation_id__cancel_post",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "invocation_id",
-            "required": true,
-            "schema": {
-              "title": "Invocation Id",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Api Cancel Invocation Api Invocations  Invocation Id  Cancel Post"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Api Cancel Invocation"
       }
     },
     "/api/kbs": {
@@ -16069,71 +15205,6 @@
         "tags": [
           "proposals"
         ]
-      }
-    },
-    "/api/meetings/{meeting_id}/plugin-runs": {
-      "get": {
-        "operationId": "api_get_meeting_plugin_runs_api_meetings__meeting_id__plugin_runs_get",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "meeting_id",
-            "required": true,
-            "schema": {
-              "title": "Meeting Id",
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "limit",
-            "required": false,
-            "schema": {
-              "default": 500,
-              "title": "Limit",
-              "type": "integer"
-            }
-          },
-          {
-            "in": "query",
-            "name": "window_id",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Window Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Api Get Meeting Plugin Runs Api Meetings  Meeting Id  Plugin Runs Get"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Api Get Meeting Plugin Runs"
       }
     },
     "/api/meetings/{meeting_id}/prepare": {
@@ -18740,57 +17811,6 @@
           }
         },
         "summary": "Send Commitment To Workbench",
-        "tags": [
-          "people"
-        ]
-      }
-    },
-    "/api/people/history": {
-      "get": {
-        "operationId": "history_api_people_history_get",
-        "parameters": [
-          {
-            "in": "query",
-            "name": "relationship_id",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Relationship Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "additionalProperties": true,
-                  "title": "Response History Api People History Get",
-                  "type": "object"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "History",
         "tags": [
           "people"
         ]
@@ -28026,24 +27046,6 @@
         "summary": "Api Setup Found"
       }
     },
-    "/api/setup/hub-default-summary": {
-      "get": {
-        "operationId": "api_hub_default_summary_api_setup_hub_default_summary_get",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Api Hub Default Summary Api Setup Hub Default Summary Get"
-                }
-              }
-            },
-            "description": "Successful Response"
-          }
-        },
-        "summary": "Api Hub Default Summary"
-      }
-    },
     "/api/setup/lan": {
       "post": {
         "description": "One explicit Setup-open LAN look; the shared found read never scans.",
@@ -28173,24 +27175,6 @@
           }
         },
         "summary": "Api Setup People"
-      }
-    },
-    "/api/setup/runtime-options": {
-      "get": {
-        "operationId": "api_runtime_options_api_setup_runtime_options_get",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Api Runtime Options Api Setup Runtime Options Get"
-                }
-              }
-            },
-            "description": "Successful Response"
-          }
-        },
-        "summary": "Api Runtime Options"
       }
     },
     "/api/setup/runtime-test": {
@@ -28403,102 +27387,6 @@
         "summary": "Api List Speakers"
       }
     },
-    "/api/speakers/{speaker_id}": {
-      "get": {
-        "operationId": "api_get_speaker_api_speakers__speaker_id__get",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "speaker_id",
-            "required": true,
-            "schema": {
-              "title": "Speaker Id",
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "limit",
-            "required": false,
-            "schema": {
-              "default": 500,
-              "title": "Limit",
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Api Get Speaker Api Speakers  Speaker Id  Get"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Api Get Speaker"
-      },
-      "patch": {
-        "operationId": "api_update_speaker_api_speakers__speaker_id__patch",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "speaker_id",
-            "required": true,
-            "schema": {
-              "title": "Speaker Id",
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/_SpeakerUpdateRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Api Update Speaker Api Speakers  Speaker Id  Patch"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Api Update Speaker"
-      }
-    },
     "/api/state": {
       "get": {
         "operationId": "api_state_api_state_get",
@@ -28620,51 +27508,6 @@
         "tags": [
           "steward"
         ]
-      }
-    },
-    "/api/stop": {
-      "post": {
-        "operationId": "api_stop_api_stop_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "anyOf": [
-                  {
-                    "$ref": "#/components/schemas/_StopRequest"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "title": " "
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Api Stop Api Stop Post"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Api Stop"
       }
     },
     "/api/sync/pull": {
@@ -29691,46 +28534,6 @@
         "summary": "Api Abort"
       }
     },
-    "/api/threads/{thread_id}/agent": {
-      "post": {
-        "description": "``/agent <text>``: file the text as an action item, then hand it\nto a coding agent (Conductor K2).",
-        "operationId": "api_agent_api_threads__thread_id__agent_post",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "thread_id",
-            "required": true,
-            "schema": {
-              "title": "Thread Id",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Api Agent Api Threads  Thread Id  Agent Post"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Api Agent"
-      }
-    },
     "/api/threads/{thread_id}/annotations": {
       "post": {
         "description": "Add an owner annotation to the thread's draft message.",
@@ -29975,45 +28778,6 @@
           }
         },
         "summary": "Api Interview Command"
-      }
-    },
-    "/api/threads/{thread_id}/interview/promotions": {
-      "get": {
-        "operationId": "api_interview_promotions_api_threads__thread_id__interview_promotions_get",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "thread_id",
-            "required": true,
-            "schema": {
-              "title": "Thread Id",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Api Interview Promotions Api Threads  Thread Id  Interview Promotions Get"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Api Interview Promotions"
       }
     },
     "/api/threads/{thread_id}/keep": {
@@ -30955,71 +29719,6 @@
           }
         },
         "summary": "Api Walk Read"
-      }
-    },
-    "/api/watches": {
-      "get": {
-        "operationId": "list_watches_api_watches_get",
-        "parameters": [
-          {
-            "in": "query",
-            "name": "state",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "State"
-            }
-          },
-          {
-            "in": "query",
-            "name": "connector",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Connector"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response List Watches Api Watches Get"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "List Watches",
-        "tags": [
-          "watches"
-        ]
       }
     },
     "/api/watches/{watch_id}": {

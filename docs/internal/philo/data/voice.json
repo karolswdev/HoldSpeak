@@ -3128,7 +3128,6 @@
         "review state"
       ],
       "apis": [
-        "/api/action-items/{item_id}",
         "/api/all-action-items"
       ],
       "configuration": [

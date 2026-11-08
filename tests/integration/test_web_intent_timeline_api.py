@@ -165,34 +165,6 @@ def test_intent_timeline_endpoint_404_for_unknown_meeting(client, db) -> None:
 
 
 @pytest.mark.integration
-def test_plugin_runs_endpoint_returns_persisted_runs(client, seeded_meeting) -> None:
-    response = client.get("/api/meetings/m-api/plugin-runs")
-    assert response.status_code == 200
-
-    body = response.json()
-    assert body["meeting_id"] == "m-api"
-    assert len(body["runs"]) == 2
-    statuses = {r["status"] for r in body["runs"]}
-    assert statuses == {"success", "deduped"}
-    # Output payload is preserved.
-    assert all(r["output"]["summary"] == "Define API contract" for r in body["runs"])
-
-
-@pytest.mark.integration
-def test_plugin_runs_endpoint_filters_by_window_id(client, seeded_meeting) -> None:
-    response = client.get(
-        "/api/meetings/m-api/plugin-runs",
-        params={"window_id": "m-api:w0002"},
-    )
-    assert response.status_code == 200
-
-    body = response.json()
-    assert body["window_id"] == "m-api:w0002"
-    assert len(body["runs"]) == 1
-    assert body["runs"][0]["window_id"] == "m-api:w0002"
-
-
-@pytest.mark.integration
 def test_artifacts_endpoint_returns_artifacts_with_lineage(client, seeded_meeting) -> None:
     response = client.get("/api/meetings/m-api/artifacts")
     assert response.status_code == 200

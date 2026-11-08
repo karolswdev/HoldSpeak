@@ -2353,12 +2353,6 @@
     },
     {
       "transport": "http",
-      "entry_point": "holdspeak/web/routes/threads.py::build_threads_router.api_interview_promotions",
-      "discriminator": "InterviewService",
-      "reason": "route builds its own service instance instead of the hub's bound one"
-    },
-    {
-      "transport": "http",
       "entry_point": "holdspeak/web/routes/today.py::build_today_router.service",
       "discriminator": "TodayService",
       "reason": "route builds its own service instance instead of the hub's bound one (only when the context has none: a route test); a read-only desk reader (Since this morning)"
