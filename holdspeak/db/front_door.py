@@ -8,18 +8,10 @@ from __future__ import annotations
 
 import json
 import uuid
-from datetime import datetime, timezone
 from typing import Any, Optional
 
 from .base import BaseRepository
-
-
-def _now() -> str:
-    return (
-        datetime.now(timezone.utc)
-        .isoformat(timespec="microseconds")
-        .replace("+00:00", "Z")
-    )
+from holdspeak.timestamps import utc_now_z_micro as _now
 
 
 class FrontDoorApplyRepository(BaseRepository):

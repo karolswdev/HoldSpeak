@@ -66,6 +66,7 @@ from .project_update_service import (
     _resolve_for_capability,
     _typed_unknowns,
 )
+from holdspeak.timestamps import parse_utc_iso as _parse_iso
 
 PREPARATION_BRIEF_CAPABILITY = "project.brief_prepare"
 
@@ -238,17 +239,6 @@ def _left_out(title: str, ref: str, section: str, bound: int, *, order: str = ""
 
 
 # ── Time helpers ──────────────────────────────────────────────────────
-
-def _parse_iso(value: Any) -> datetime | None:
-    if not value:
-        return None
-    try:
-        parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
-    except (TypeError, ValueError):
-        return None
-    if parsed.tzinfo is None:
-        parsed = parsed.replace(tzinfo=timezone.utc)
-    return parsed
 
 
 def _short_date(value: Any) -> str:

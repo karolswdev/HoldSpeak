@@ -1,0 +1,29 @@
+/* ── Spine (the language, 2026-11-08): a 4 px bar in the meaning colours. */
+.surface-spine {
+  display: flex;
+  width: 100%;
+  height: 4px;
+  gap: 2px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: var(--hs-rule);
+}
+
+.surface-spine[data-mode="fill"] {
+  gap: 0;
+}
+
+.surface-spine-part {
+  flex: 0 1 0;
+  min-width: 0;
+  height: 100%;
+  background: var(--hs-edge);
+  transition: flex-grow var(--motion-slide) var(--desk-ease);
+}
+
+.surface-spine-part[data-tone="steel"] { background: var(--hs-steel); }
+.surface-spine-part[data-tone="brass"] { background: var(--hs-brass); }
+.surface-spine-part[data-tone="moss"] { background: var(--hs-moss); }
+.surface-spine-part[data-tone="coral"] { background: var(--hs-coral); }
+.surface-spine-part[data-tone="graphite"] { background: var(--hs-graphite); }
+.surface-spine-part[data-tone="idle"] { background: var(--hs-edge); }

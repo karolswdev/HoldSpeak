@@ -14,13 +14,10 @@ from holdspeak.timestamps import utc_now_iso
 from holdspeak.db.core import Database
 from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.services.errors import ConflictError, NotFound, ServiceError, ValidationError
+from holdspeak.ids import new_id as _new_id
 
 
 SKILL_BODY_LIMIT = 8192
-
-
-def _new_id(prefix: str) -> str:
-    return f"{prefix}_{uuid.uuid4().hex[:12]}"
 
 
 def _spend_limit(limit: Any) -> float | None:

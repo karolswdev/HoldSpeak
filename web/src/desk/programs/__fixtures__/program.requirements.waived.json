@@ -1506,6 +1506,7 @@
     "search_words": "the hub stops stalling the hub stops stalling. holdspeak fast-cycle alice indexes retention projections off the loop people routes projects routes the fan-out #101 #102 fast cycle",
     "skipped": 0,
     "spend_limit_usd": null,
+    "spend_note": null,
     "state": "waiting",
     "state_word": "Your turn",
     "status_line": "Your turn · 1 of 6 done · 1 waits on you · check: fake_program_check.sh · control Normal",

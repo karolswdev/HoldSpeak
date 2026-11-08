@@ -115,6 +115,25 @@ def test_read_set_is_one_rule() -> None:
     assert not any(is_read_method(m) for m in ROOM_WRITE_METHODS)
 
 
+def test_a_room_write_wins_over_a_read_like_name(monkeypatch) -> None:
+    """HS-S54: the Room's write list is checked before the read rule.
+
+    Today no Room write has a read-like name, so the test above cannot see the
+    override. A Room write named like a read (``list_…``, ``get_…``, ``room``)
+    is kept as a write; the same name outside the list is a read."""
+    from holdspeak.db.pipeline_events_retention import is_read_method
+    from holdspeak.services import project_definitions
+
+    for method in ("list_watch_rules", "get_room_lock", "room"):
+        assert is_read_method(method), method
+    monkeypatch.setattr(
+        project_definitions, "ROOM_WRITE_METHODS",
+        project_definitions.ROOM_WRITE_METHODS | {"list_watch_rules", "get_room_lock", "room"},
+    )
+    for method in ("list_watch_rules", "get_room_lock", "room"):
+        assert not is_read_method(method), method
+
+
 def test_prune_removes_old_reads_and_keeps_writes_and_new_reads(db: Database) -> None:
     from holdspeak.db.pipeline_events_retention import prune_read_events
 

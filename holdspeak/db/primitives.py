@@ -23,7 +23,6 @@ import logging
 import re
 import sqlite3
 import unicodedata
-from datetime import datetime, timezone
 from typing import Any, Optional
 
 from ..logging_config import get_logger
@@ -42,6 +41,7 @@ from .models import (
     ProfileRecord,
     WorkflowRecord,
 )
+from holdspeak.timestamps import utc_now_z as _now_iso
 
 log = get_logger("db.primitives")
 _migration_log = logging.getLogger(__name__)
@@ -67,11 +67,6 @@ def normalize_zone_name(raw: str) -> str:
     s = unicodedata.normalize("NFC", s)
     s = s.casefold()
     return s
-
-
-def _now_iso() -> str:
-    """ISO-8601 UTC with a trailing `Z`, matching the sync wire contract."""
-    return datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
 
 
 class NoteRepository(BaseRepository):

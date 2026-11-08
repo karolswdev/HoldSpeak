@@ -4,7 +4,7 @@ from __future__ import annotations
 import uuid
 from dataclasses import asdict
 from datetime import date, datetime, time, timedelta, timezone, tzinfo
-from holdspeak.timestamps import utc_now_iso
+from holdspeak.timestamps import parse_utc_iso, utc_now_iso
 from typing import TYPE_CHECKING, Any, Callable
 
 from ..config.integrations import validate_calendar_subscription
@@ -551,15 +551,7 @@ class DoorService:
         monday = local_now.date() - timedelta(days=local_now.weekday())
         return self._local_midnight(monday), self._local_midnight(monday + timedelta(days=7))
 
-    @staticmethod
-    def _parse_iso(value: str) -> datetime | None:
-        try:
-            parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
-        except (TypeError, ValueError):
-            return None
-        if parsed.tzinfo is None:
-            parsed = parsed.replace(tzinfo=timezone.utc)
-        return parsed
+    _parse_iso = staticmethod(parse_utc_iso)
 
     def _week_strip(self, now: datetime, has_calendar: bool) -> dict[str, Any]:
         """HS-175-02: build the WEEK strip data for the Door.

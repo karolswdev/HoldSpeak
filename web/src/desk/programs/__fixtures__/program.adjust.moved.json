@@ -312,6 +312,7 @@
   "search_words": "calls on the home box calls on the home box. fast-cycle the call runner the calls window the phone route the loop watch the ring timer fast cycle",
   "skipped": 0,
   "spend_limit_usd": null,
+  "spend_note": null,
   "state": "running",
   "state_word": "Running",
   "status_line": "Running · 0 of 5 done · check: fake_program_check.sh · control Normal",

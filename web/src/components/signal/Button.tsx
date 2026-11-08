@@ -32,7 +32,9 @@ export function Button({
   type = "button",
   ...props
 }: ComponentPropsWithRef<"button"> & {
-  variant?: "primary" | "secondary" | "ghost" | "danger" | "chrome";
+  /** `brass` (the language, 2026-11-08) is the ONE verb that waits on the
+   *  owner: a brass plate, a dark brass edge, white words. One per face. */
+  variant?: "primary" | "secondary" | "ghost" | "danger" | "brass" | "chrome";
   dense?: boolean;
   loading?: boolean;
 }) {

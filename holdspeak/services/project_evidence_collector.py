@@ -46,11 +46,12 @@ from __future__ import annotations
 import hashlib
 import json
 from dataclasses import dataclass, field
-from datetime import date, datetime, timezone
+from datetime import date
 from typing import Any, Protocol
 
 from holdspeak.project_contracts import generate_pobs_id
 from holdspeak.refs import format as format_ref
+from holdspeak.timestamps import utc_now_seconds as _now_iso
 
 
 # ── Adapter protocol ──────────────────────────────────────────────────
@@ -101,10 +102,6 @@ class EvidenceAdapter(Protocol):
 def _content_hash(fact_json: str) -> str:
     """Deterministic SHA-256 prefix of the fact JSON."""
     return hashlib.sha256(fact_json.encode("utf-8")).hexdigest()[:32]
-
-
-def _now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
 
 # ── Five adapters ─────────────────────────────────────────────────────

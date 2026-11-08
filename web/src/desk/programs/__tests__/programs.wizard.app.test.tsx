@@ -107,7 +107,8 @@ describe("New program is a wizard inside the window (owner, live walk 2026-11-08
     expect(within(how).getByRole("button", { name: "Asks at every step" })).toBeTruthy();
     expect(screen.getByTestId("programs-wizard-agent")).toBeTruthy();
     expect(screen.getByTestId("programs-wizard-reviewer")).toBeTruthy();
-    expect(screen.getByTestId("programs-wizard-spending").textContent).toBe("Not capped");
+    // HS-S24: the Spending note is an amount he may type (a note, never a cap); empty sends nothing.
+    expect(within(screen.getByTestId("programs-wizard-spending")).getByLabelText("Spending note")).toBeTruthy();
     fireEvent.click(next());
     expect(screen.getByTestId("programs-wizard-step-4")).toBeTruthy();
     expect(screen.getByTestId("programs-wizard-sum-where").textContent).toBe(nameOf(madeProgram.project_id));
@@ -127,6 +128,25 @@ describe("New program is a wizard inside the window (owner, live walk 2026-11-08
     await waitFor(() => expect(screen.queryByTestId("programs-wizard")).toBeNull());
     expect(await screen.findByTestId("programs-list")).toBeTruthy();
     expect(calls.filter((call) => call === "GET /api/programs").length).toBeGreaterThan(1);
+  });
+
+  // HS-S24 (D20/G24): the amount he typed rides on the body as spend_limit_usd and reads as a note in Go.
+  it("the Spending note he types rides on the body and the summary says spend note · 40 USD", async () => {
+    hub({ "GET /api/programs": list, "GET /api/projects": projects.response.body, "POST /api/programs": made.response.body });
+    renderWindow(<ProgramsCore />);
+    await screen.findAllByTestId("programs-band");
+    fireEvent.click(screen.getByTestId("programs-new"));
+    await ready();
+    choose(madeProgram.project_id as string);
+    fireEvent.click(next());
+    fireEvent.click(next());
+    fireEvent.change(screen.getByLabelText("Spending note"), { target: { value: "$40" } });
+    fireEvent.click(next());
+    expect(screen.getByTestId("programs-wizard-sum-how").textContent).toContain("spend note · 40 USD");
+    expect(screen.getByTestId("programs-wizard-summary").textContent).not.toMatch(/limit|cap/i);
+    fireEvent.click(screen.getByTestId("programs-wizard-create"));
+    await waitFor(() => expect(sent()).toHaveLength(1));
+    expect(sent()[0].spend_limit_usd).toBe(40);
   });
 
   it("what he sets in What and How rides on the body: title, brief, control and template", async () => {
@@ -589,9 +609,11 @@ describe("New program is a wizard inside the window (owner, live walk 2026-11-08
     // The accessible name stays the whole meaning at every width.
     expect(within(levels).getByRole("button", { name: "Asks before it merges or sends" })).toBeTruthy();
     const fold = screen.getByTestId("programs-wizard-fold");
-    expect(fold.textContent).toBe("Check · The repository's · Spending not capped");
+    expect(fold.textContent).toBe("Check · The repository's · No spend note");
     fireEvent.change(screen.getByLabelText("Check"), { target: { value: "make check" } });
-    expect(fold.textContent).toBe("Check · make check · Spending not capped");
+    expect(fold.textContent).toBe("Check · make check · No spend note");
+    fireEvent.change(screen.getByLabelText("Spending note"), { target: { value: "40" } });
+    expect(fold.textContent).toBe("Check · make check · spend note · 40 USD");
     // A press on the folded row opens Check (the phone can still set it).
     expect(runs.querySelector(".pg-wiz-runs")!.hasAttribute("data-check-open")).toBe(false);
     fireEvent.click(fold);

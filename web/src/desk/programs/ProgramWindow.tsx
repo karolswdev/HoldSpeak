@@ -42,7 +42,7 @@ import { ActionNotice } from "../surface/patterns/ActionNotice";
 import { plainFail } from "../surface/plainFailure";
 import { useWindowTitle } from "../surface/title";
 import { stateWords, wireWords } from "../surface/words";
-import { applyProgramText, closeProgram, decide, decideProposal, decideRequirement, dropHeldShape, overturn, planProgram, programVerb, race, readProgram, updateProgram,
+import { applyProgramText, closeProgram, decide, decideProposal, decideRequirement, dropHeldShape, overturn, planProgram, programVerb, race, refreshProgram, updateProgram,
   useProgram, type RequirementChoice } from "./api";
 import { briefable, copyPageLink, pageWords, programRef, revokePage } from "../reach";
 import { LedgerFold, ProposedWord, clock } from "./Ledger";
@@ -194,7 +194,7 @@ export function YourTurnWell({ program, onDecided, onOpenBrief, onOpenText }: {
     try {
       if (verb === "copy") await copyPageLink(programRef(program.id, item.id));
       else if (item.page) await revokePage(item.page.package_id);
-      onDecided(await readProgram(program.id));
+      onDecided(await refreshProgram(program.id));
     } catch (error) {
       setFailed(plainFail(verb === "copy" ? "The page link was not made" : "The page was not revoked", error,
         "The item is unchanged", "Try again"));
@@ -968,7 +968,7 @@ export function ProgramBody({ programId }: { programId: string }) {
     setFailed(null);
     let fresh: Program;
     try {
-      fresh = await readProgram(program.id);
+      fresh = await refreshProgram(program.id);
     } catch (cause) {
       setFailed(plainFail("The agent was not changed", cause, "No step changed", "Try again"));
       setBusy("");
@@ -1006,6 +1006,8 @@ export function ProgramBody({ programId }: { programId: string }) {
     } : null,
     planner.busy ? { key: "planning", lamp: "info" as const, live: true, text: planner.engine ? `Planning · ${planner.engine}` : "Planning", testId: "programs-status-planning" } : null,
     program.check_command ? { key: "check", text: <span>{`check: ${checkName(program)}`}</span> } : null,
+    // HS-S24 (D20/G24): the amount is a note he reads, never a cap.
+    program.spend_note ? { key: "spend", text: <span className="pg-ref">{program.spend_note}</span>, testId: "programs-status-spend" } : null,
     // The ladder's own word (`YOLO` keeps its capitals: an element, not a wire token).
     { key: "control", text: <span>{`control ${program.control_word || controlWord(program.control)}`}</span>, testId: "programs-status-control" },
     ...placeItems(program, fileTo, compact),
