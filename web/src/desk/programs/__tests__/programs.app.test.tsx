@@ -10,6 +10,7 @@
  * outcome: the row leaves the well, the status bar count drops, the row
  * reads Overturned. */
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { useState, type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import listFixture from "../__fixtures__/programs.list.json";
 import runningFixture from "../__fixtures__/program.running.json";
@@ -93,6 +94,8 @@ import createProjectsFixture from "../__fixtures__/program.create_projects.json"
 import createProjectFixture from "../__fixtures__/program.create_project.json";
 import createNoRepositoryFixture from "../__fixtures__/program.create_no_repository.json";
 import createRepositoryRequiredFixture from "../__fixtures__/program.create_repository_required.json";
+// The desk's Control mode, as the hub answered GET /api/authority/policy on the recorded rig.
+import needsYouRecorded from "../../__tests__/fixtures/needsYou.recorded.json";
 // HS-S13 + HS-S11 (the creation-to-Room gate): the full hub's create for a
 // project and that project's Room, recorded by
 // tests/integration/test_desk_project_room.py::test_project_program_continuity_records_scope_and_reads.
@@ -168,6 +171,7 @@ import type { Program, ProgramList, ProgramStep } from "../types";
 import { needFace } from "../../needs/needsFace";
 import type { NeedsYouRoomItem } from "../../needsYou";
 import { DESK_APPLICATIONS } from "../../applications";
+import { BackSlotContext, TitleSlotContext, WingSlotContext, type WindowBack } from "../../surface";
 
 function subscribe(type: string, listener: (frame: Frame) => void) {
   const set = mocks.listeners.get(type) ?? new Set<(frame: Frame) => void>();
@@ -579,6 +583,29 @@ describe("LANG13: the delivery at Done (recorded on the rig: tests/integration/t
   });
 });
 
+/** The window's head as the desk host draws it: the narrow Back (the
+ *  core's step word), the title slot and the wing slot. */
+function InWindow({ children }: { children: ReactNode }) {
+  const [title, setTitle] = useState<string | null>(null);
+  const [wings, setWings] = useState<ReactNode>(null);
+  const [back, setBack] = useState<WindowBack | null>(null);
+  return (
+    <>
+      <header data-testid="window-head">
+        <button type="button" data-testid="window-back" onClick={() => back?.onBack()}>{back?.label ?? "Back"}</button>
+        <span data-testid="window-title">{title ?? "Programs"}</span>
+        {wings}
+      </header>
+      <BackSlotContext.Provider value={setBack}>
+        <TitleSlotContext.Provider value={setTitle}>
+          <WingSlotContext.Provider value={setWings}>{children}</WingSlotContext.Provider>
+        </TitleSlotContext.Provider>
+      </BackSlotContext.Provider>
+    </>
+  );
+}
+const renderWindow = (ui: ReactNode) => render(<InWindow>{ui}</InWindow>);
+
 describe("New program is a wizard inside the window (owner, live walk 2026-11-08; recorded real wire)", () => {
   type Capture = { request: { method: string; path: string; json?: Record<string, unknown> }; response: { status: number; body: unknown } };
   const projects = createProjectsFixture as unknown as Capture;
@@ -617,7 +644,7 @@ describe("New program is a wizard inside the window (owner, live walk 2026-11-08
   // Fails on main: New program there opens the inline "Choose a project" well (programs-make), no wizard.
   it("New program replaces the list with the wizard at step 1 (Where): the projects as rows and a folder row; Next waits for a choice", async () => {
     hub({ "GET /api/programs": list, "GET /api/projects": projects.response.body, "POST /api/programs": made.response.body });
-    render(<ProgramsCore />);
+    renderWindow(<ProgramsCore />);
     await screen.findAllByTestId("programs-band");
     // A Project filter is on: it is never the creation target.
     fireEvent.click(screen.getByTestId("programs-project"));
@@ -641,17 +668,17 @@ describe("New program is a wizard inside the window (owner, live walk 2026-11-08
     fireEvent.click(next());
     expect(screen.getByTestId("programs-wizard-step-1")).toBeTruthy();
     choose(madeProgram.project_id as string);
-    expect(rowOf(madeProgram.project_id as string).hasAttribute("data-selected")).toBe(true);
+    expect(screen.getByTestId("programs-wizard-card-name").textContent).toBe(nameOf(madeProgram.project_id));
     expect(next().disabled).toBe(false);
-    // The progress: four dots, the first is now.
-    const dots = screen.getByTestId("programs-wizard-dots").querySelectorAll(".pg-wiz-dot");
+    // The progress: four dots in the title bar, the first is now; none in the bar.
+    const dots = within(screen.getByTestId("window-head")).getByTestId("programs-wizard-dots").querySelectorAll(".pg-wiz-dot");
     expect([...dots].map((dot) => dot.getAttribute("data-state"))).toEqual(["now", null, null, null]);
     expect(posts()).toEqual([]);
   });
 
   it("the four steps: Where, What (title, brief, templates), How (control in his words, agent, review, check, spending), Go; Create posts the recorded body once and opens it", async () => {
     hub({ "GET /api/programs": list, "GET /api/projects": projects.response.body, "POST /api/programs": made.response.body });
-    render(<ProgramsCore />);
+    renderWindow(<ProgramsCore />);
     await screen.findAllByTestId("programs-band");
     fireEvent.click(screen.getByTestId("programs-new"));
     await ready();
@@ -660,6 +687,9 @@ describe("New program is a wizard inside the window (owner, live walk 2026-11-08
     const what = screen.getByTestId("programs-wizard-step-2");
     expect(within(what).getByLabelText("Title")).toBeTruthy();
     expect(within(what).getByLabelText("Brief")).toBeTruthy();
+    // The default template is a quiet word on the card; one press opens the chips.
+    expect(within(what).queryByRole("group", { name: "Template" })).toBeNull();
+    fireEvent.click(screen.getByTestId("programs-wizard-template"));
     expect(within(what).getByRole("group", { name: "Template" })).toBeTruthy();
     await waitFor(() => expect(document.activeElement).toBe(within(what).getByLabelText("Title")));
     fireEvent.click(next());
@@ -693,13 +723,17 @@ describe("New program is a wizard inside the window (owner, live walk 2026-11-08
 
   it("what he sets in What and How rides on the body: title, brief, control and template", async () => {
     hub({ "GET /api/programs": list, "GET /api/projects": projects.response.body, "POST /api/programs": made.response.body });
-    render(<ProgramsCore />);
+    renderWindow(<ProgramsCore />);
     await screen.findAllByTestId("programs-band");
     fireEvent.click(screen.getByTestId("programs-new"));
     await ready();
     choose(madeProgram.project_id as string);
     fireEvent.click(next());
+    expect(screen.getByTestId("programs-wizard-template").textContent).toBe("Template · Fast cycle");
+    fireEvent.click(screen.getByTestId("programs-wizard-template"));
     fireEvent.click(within(screen.getByRole("group", { name: "Template" })).getByRole("button", { name: /^Build and review/ }));
+    // A template that is not the default keeps its chips above the title.
+    expect(screen.queryByTestId("programs-wizard-template")).toBeNull();
     fireEvent.change(screen.getByLabelText("Title"), { target: { value: "Ship the wizard" } });
     fireEvent.change(screen.getByLabelText("Brief"), { target: { value: "Four steps, one screen each." } });
     fireEvent.click(next());
@@ -717,17 +751,21 @@ describe("New program is a wizard inside the window (owner, live walk 2026-11-08
   it("the only project, or the scope's project, is chosen for him", async () => {
     const one = { projects: [(projects.response.body as { projects: unknown[] }).projects[1]] };
     hub({ "GET /api/programs": list, "GET /api/projects": one });
-    render(<ProgramsCore />);
+    renderWindow(<ProgramsCore />);
     await screen.findAllByTestId("programs-band");
     fireEvent.click(screen.getByTestId("programs-new"));
-    await ready();
-    expect(rowOf(roster[1].id).hasAttribute("data-selected")).toBe(true);
+    // The screen opens on the card: Next is one press.
+    expect((await screen.findByTestId("programs-wizard-card-name")).textContent).toBe(roster[1].name);
+    expect(screen.queryByTestId("programs-wizard-project")).toBeNull();
     expect(next().disabled).toBe(false);
     cleanup();
     hub({ "GET /api/programs": list, "GET /api/projects": projects.response.body });
-    render(<ProgramsCore scope={`project:${roster[1].id}`} />);
+    renderWindow(<ProgramsCore scope={`project:${roster[1].id}`} />);
     await screen.findAllByTestId("programs-band");
     fireEvent.click(screen.getByTestId("programs-new"));
+    expect((await screen.findByTestId("programs-wizard-card-name")).textContent).toBe(roster[1].name);
+    // Change returns to the rows, the scope's project still the selection.
+    fireEvent.click(screen.getByTestId("programs-wizard-change"));
     await ready();
     expect(rowOf(roster[1].id).hasAttribute("data-selected")).toBe(true);
     expect(rowOf(roster[0].id).hasAttribute("data-selected")).toBe(false);
@@ -735,7 +773,7 @@ describe("New program is a wizard inside the window (owner, live walk 2026-11-08
 
   it("A folder on this machine: Next waits for the folder, and the body names the repository, not a project", async () => {
     hub({ "GET /api/programs": list, "GET /api/projects": projects.response.body, "POST /api/programs": made.response.body });
-    render(<ProgramsCore />);
+    renderWindow(<ProgramsCore />);
     await screen.findAllByTestId("programs-band");
     fireEvent.click(screen.getByTestId("programs-new"));
     await ready();
@@ -751,7 +789,7 @@ describe("New program is a wizard inside the window (owner, live walk 2026-11-08
 
   it("Escape, Cancel and New again return to the list with no POST; a template opens the wizard with its template", async () => {
     hub({ "GET /api/programs": list, "GET /api/projects": projects.response.body });
-    render(<ProgramsCore />);
+    renderWindow(<ProgramsCore />);
     fireEvent.click(await screen.findByTestId("programs-templates"));
     fireEvent.click(templateItem("Build and review"));
     expect((await screen.findByTestId("programs-wizard")).getAttribute("data-template")).toBe("build-and-review");
@@ -769,11 +807,14 @@ describe("New program is a wizard inside the window (owner, live walk 2026-11-08
     expect(screen.queryByTestId("programs-wizard")).toBeNull();
     fireEvent.click(screen.getByTestId("programs-new"));
     await ready();
-    fireEvent.click(screen.getByTestId("programs-wizard-cancel"));
+    // The title bar's narrow Back says Cancel while the wizard is open.
+    expect(screen.getByTestId("window-back").textContent).toBe("Cancel");
+    fireEvent.click(screen.getByTestId("window-back"));
     expect(screen.queryByTestId("programs-wizard")).toBeNull();
+    expect(screen.getByTestId("window-back").textContent).toBe("Back");
     cleanup();
     hub({ "GET /api/projects": projects.response.body });
-    render(<ProgramsCore />);
+    renderWindow(<ProgramsCore />);
     await screen.findByText("No program yet");
     // The empty object's own Button (not the toolbar's New program).
     fireEvent.click(screen.getAllByRole("button", { name: /New program/ }).find((node) => node.getAttribute("data-testid") !== "programs-new")!);
@@ -784,7 +825,7 @@ describe("New program is a wizard inside the window (owner, live walk 2026-11-08
   it("the project read: loading, failed with the state species' retry, then the rows", async () => {
     let answer: unknown = new ApiError(503, "down", {});
     hub({ "GET /api/programs": list, "GET /api/projects": () => { if (answer instanceof Error) throw answer; return answer; } });
-    render(<ProgramsCore />);
+    renderWindow(<ProgramsCore />);
     await screen.findAllByTestId("programs-band");
     fireEvent.click(screen.getByTestId("programs-new"));
     expect(screen.getByTestId("programs-wizard-reading")).toBeTruthy();
@@ -799,7 +840,7 @@ describe("New program is a wizard inside the window (owner, live walk 2026-11-08
 
   it("the recorded no_repository refusal names the project; no window opens", async () => {
     hub({ "GET /api/programs": list, "GET /api/projects": projects.response.body, "POST /api/programs": refusal(noRepository) });
-    render(<ProgramsCore />);
+    renderWindow(<ProgramsCore />);
     await screen.findAllByTestId("programs-band");
     fireEvent.click(screen.getByTestId("programs-new"));
     await ready();
@@ -822,7 +863,7 @@ describe("New program is a wizard inside the window (owner, live walk 2026-11-08
     ["a 409 with another code", () => { throw new ApiError(409, "conflict", { code: "changed" }); }],
   ])("%s is not confirmed: no retry, no window, no Nothing changed", async (_name, answer) => {
     hub({ "GET /api/programs": list, "GET /api/projects": projects.response.body, "POST /api/programs": answer });
-    render(<ProgramsCore />);
+    renderWindow(<ProgramsCore />);
     await screen.findAllByTestId("programs-band");
     fireEvent.click(screen.getByTestId("programs-new"));
     await ready();
@@ -850,7 +891,7 @@ describe("New program is a wizard inside the window (owner, live walk 2026-11-08
       if (key === "POST /api/programs") return new Promise((resolve) => { settle = resolve; });
       throw new ApiError(404, "Not Found", {});
     });
-    render(<ProgramsCore />);
+    renderWindow(<ProgramsCore />);
     await screen.findAllByTestId("programs-band");
     fireEvent.click(screen.getByTestId("programs-new"));
     await ready();
@@ -874,7 +915,7 @@ describe("New program is a wizard inside the window (owner, live walk 2026-11-08
   it("a made Program whose window does not open keeps its id: Open the program reveals the same id and never makes another", async () => {
     hub({ "GET /api/programs": list, "GET /api/projects": projects.response.body, "POST /api/programs": made.response.body });
     mocks.openPullout.mockImplementationOnce(() => { throw new Error("the desk did not mount the window"); });
-    render(<ProgramsCore />);
+    renderWindow(<ProgramsCore />);
     await screen.findAllByTestId("programs-band");
     fireEvent.click(screen.getByTestId("programs-new"));
     await ready();
@@ -911,6 +952,102 @@ describe("New program is a wizard inside the window (owner, live walk 2026-11-08
     await act(async () => { settle(clone(madeProgram)); });
     expect(mocks.openPullout).not.toHaveBeenCalled();
     expect(posts()).toHaveLength(1);
+  });
+
+  // Fails on main: there a picked project stays a row (no programs-wizard-card) and the title stays "New program".
+  it("W2: a picked row grows into the card, the title bar reads the project, Change returns to the rows; the dots live in the title bar", async () => {
+    hub({ "GET /api/programs": list, "GET /api/projects": projects.response.body });
+    renderWindow(<ProgramsCore />);
+    await screen.findAllByTestId("programs-band");
+    fireEvent.click(screen.getByTestId("programs-new"));
+    await ready();
+    expect(screen.getByTestId("window-title").textContent).toBe("New program");
+    expect(screen.queryByTestId("programs-wizard-card")).toBeNull();
+    choose(roster[0].id);
+    const card = screen.getByTestId("programs-wizard-card");
+    expect(card.hasAttribute("data-grow")).toBe(true);
+    expect(within(card).getByTestId("programs-wizard-card-name").textContent).toBe(roster[0].name);
+    expect((card.querySelector("img") as HTMLImageElement).width).toBe(44);
+    // The other rows went under it.
+    expect(screen.queryByTestId("programs-wizard-project")).toBeNull();
+    expect(screen.getByTestId("window-title").textContent).toBe(`New program · ${roster[0].name}`);
+    // The dots ride the title bar, not the wizard's bar.
+    expect(within(screen.getByTestId("window-head")).getByTestId("programs-wizard-dots")).toBeTruthy();
+    expect(within(screen.getByTestId("programs-wizard")).queryByTestId("programs-wizard-dots")).toBeNull();
+    // The bar holds the one primary on the first screen: no Cancel, no Back.
+    expect(screen.queryByTestId("programs-wizard-cancel")).toBeNull();
+    expect(screen.queryByTestId("programs-wizard-back")).toBeNull();
+    await waitFor(() => expect(document.activeElement).toBe(next()));
+    fireEvent.click(within(card).getByTestId("programs-wizard-change"));
+    expect(screen.queryByTestId("programs-wizard-card")).toBeNull();
+    const rows = await ready();
+    expect(rows).toHaveLength(roster.length);
+    expect(rowOf(roster[0].id).hasAttribute("data-selected")).toBe(true);
+    choose(roster[1].id);
+    expect(screen.getByTestId("programs-wizard-card-name").textContent).toBe(roster[1].name);
+    expect(screen.getByTestId("window-title").textContent).toBe(`New program · ${roster[1].name}`);
+    expect(posts()).toEqual([]);
+  });
+
+  it("W2: screen 2 keeps the card over the Title and the Brief; the peek row names the next screen and is no Button", async () => {
+    hub({ "GET /api/programs": list, "GET /api/projects": projects.response.body });
+    renderWindow(<ProgramsCore />);
+    await screen.findAllByTestId("programs-band");
+    fireEvent.click(screen.getByTestId("programs-new"));
+    await ready();
+    choose(roster[0].id);
+    const peek = within(screen.getByTestId("programs-wizard-step-1")).getByTestId("programs-wizard-peek");
+    expect(peek.textContent).toContain("Next · the goal");
+    expect(peek.getAttribute("aria-hidden")).toBe("true");
+    expect(peek.hasAttribute("inert")).toBe(true);
+    expect(peek.querySelector("button, input, textarea, [role=button]")).toBeNull();
+    fireEvent.click(next());
+    const goal = screen.getByTestId("programs-wizard-step-2");
+    expect(screen.getByTestId("programs-wizard-card-name").textContent).toBe(roster[0].name);
+    expect((within(goal).getByLabelText("Title") as HTMLInputElement).placeholder).toBe("Title");
+    expect((within(goal).getByLabelText("Brief") as HTMLTextAreaElement).placeholder).toBe("Brief");
+    expect(within(goal).getByRole("button", { name: /^Speak Brief/ })).toBeTruthy();
+    // No step words and no Template label on the face.
+    expect(goal.textContent).not.toMatch(/Template|What|Where|How/);
+    expect(within(goal).getByTestId("programs-wizard-peek").textContent).toContain("Next · how it runs");
+    expect(within(goal).getByTestId("programs-wizard-peek").querySelector("button")).toBeNull();
+    fireEvent.click(next());
+    expect(within(screen.getByTestId("programs-wizard-step-3")).getByTestId("programs-wizard-peek").textContent).toContain("Next · create");
+    fireEvent.click(next());
+    expect(within(screen.getByTestId("programs-wizard-step-4")).queryByTestId("programs-wizard-peek")).toBeNull();
+    expect(screen.getByTestId("programs-wizard-sum-where").textContent).toBe(roster[0].name);
+  });
+
+  it("W2: screen 3 shows the desk's level pressed (the recorded policy) in one segmented control; Create posts the recorded body unchanged", async () => {
+    const policy = (needsYouRecorded as unknown as { calendar: { none: { gets: Record<string, { control_mode: string }> } } })
+      .calendar.none.gets["/api/authority/policy"];
+    expect(policy.control_mode).toBe("yolo");
+    hub({
+      "GET /api/programs": list, "GET /api/projects": projects.response.body, "POST /api/programs": made.response.body,
+      "GET /api/authority/policy": policy,
+    });
+    renderWindow(<ProgramsCore />);
+    await screen.findAllByTestId("programs-band");
+    fireEvent.click(screen.getByTestId("programs-new"));
+    await ready();
+    choose(madeProgram.project_id as string);
+    fireEvent.click(next());
+    fireEvent.click(next());
+    const runs = screen.getByTestId("programs-wizard-step-3");
+    const levels = within(runs).getByRole("group", { name: "Runs" });
+    const segments = within(levels).getAllByRole("button");
+    expect(segments.map((node) => node.textContent)).toEqual(["Runs by itself", "Asks before it merges or sends", "Asks at every step"]);
+    await waitFor(() => expect(within(levels).getByRole("button", { name: "Runs by itself" }).getAttribute("aria-pressed")).toBe("true"));
+    expect(segments.filter((node) => node.getAttribute("aria-pressed") === "true")).toHaveLength(1);
+    expect(screen.getByTestId("programs-wizard-level-line").textContent).toBe("HoldSpeak decides all it can; only core questions come to you");
+    expect(screen.getByTestId("programs-wizard-agent")).toBeTruthy();
+    expect(screen.getByTestId("programs-wizard-reviewer")).toBeTruthy();
+    fireEvent.click(next());
+    expect(screen.getByTestId("programs-wizard-sum-how").textContent).toBe("Runs by itself");
+    fireEvent.click(screen.getByTestId("programs-wizard-create"));
+    await waitFor(() => expect(mocks.openPullout).toHaveBeenCalledWith(`program:${madeProgram.id}`));
+    // The desk's level is not his choice: the body is the recorded one.
+    expect(sent()).toEqual([made.request.json]);
   });
 });
 
