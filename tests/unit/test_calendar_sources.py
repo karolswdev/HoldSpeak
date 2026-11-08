@@ -370,9 +370,11 @@ class TestSnapshotEgress:
         assert _egress_for_scope("mesh", "", "desktop") == {"scope": "mesh", "host": "desktop"}
         assert _egress_for_scope("cloud", "https://api.example.com/v1") == {"scope": "cloud", "host": "api.example.com"}
 
-    def test_route_entries_resolution_is_the_dispatchs(self, tmp_path, monkeypatch):
-        """The routed path and the face share ``_egress_from_route_entries``."""
+    def test_the_assigned_engine_names_its_egress(self, tmp_path, monkeypatch):
+        """The assigned engine decides the face's chip, as it decides the dispatch."""
+        from types import SimpleNamespace
         from holdspeak.services import calendar_snapshot_service as svc
+        from holdspeak.services import engine_door
         db, config = _setup(tmp_path, monkeypatch)
         with db._connection() as conn:
             conn.execute(
@@ -381,9 +383,9 @@ class TestSnapshotEgress:
                    VALUES ('dep1', 'dest', 'private_endpoint', 'openai_compatible', 'vision',
                            '', 'private_network', 'http://192.168.1.43:8080/v1')""",
             )
-        entries = [{"boundary": "private_network", "deployment_revision_id": "dep1"}]
-        assert svc._egress_from_route_entries(entries, db) == {"scope": "private_network", "host": "192.168.1.43"}
-        assert svc._egress_from_route_entries([{"boundary": "local"}], db) == {"scope": "local"}
+        monkeypatch.setattr(svc, "_service", lambda: SimpleNamespace(database=db))
+        monkeypatch.setattr(engine_door, "engine_for", lambda _broker, _job: engine_door.Engine("dep1"))
+        assert svc.resolve_snapshot_egress(db) == {"scope": "private_network", "host": "192.168.1.43"}
 
     def test_payload_carries_snapshot_egress(self, tmp_path, monkeypatch):
         from holdspeak.web.routes.calendar_sources import read_calendar_sources
