@@ -295,9 +295,10 @@ def _step_launch(
     import shlex
 
     from tests.unit._spawn_env import command_of
-    from tests.unit.test_agent_hand import _rig
+    from tests.unit.test_agent_hand import _give_origin, _rig
 
     rig = _rig(tmp_path, database, monkeypatch, agent=agent)
+    _give_origin(rig.repo)  # HS-S22: a Program step starts from origin's base
     rig.service._control_mode = lambda: desk
     rig.service._db = database
     rig.hand._control_mode = lambda: desk

@@ -936,10 +936,25 @@ class ProgramRunner:
             return False
         worktree = answer.get("worktree") or {}
         path = self._worktree_path(program, str(worktree.get("name") or ""))
-        base = self._git(path, "rev-parse", "HEAD") if path else ""
+        head = self._git(path, "rev-parse", "HEAD") if path else ""
         facts = dict(step.get("facts") or {})
         facts.pop("commit_ask", None)
         facts.pop("held_commit", None)
+        # HS-S22: a new worktree's diff base is the commit the launch proved
+        # before the agent started (HEAD now can already have moved). A
+        # continuation in the step's own worktree keeps its diff base; a
+        # launch with no proof (from before HS-S22) reads HEAD as before.
+        start = answer.get("start_input") if isinstance(answer.get("start_input"), Mapping) else {}
+        proved = str(start.get("verified_commit") or "") if (
+            str(start.get("step_id") or "") == str(step["id"])
+            and str(start.get("program_id") or "") in ("", str(program["id"]))
+        ) else ""
+        kept = str(facts.get("base_commit") or "") if path and path == str(step.get("worktree") or "") else ""
+        base = proved or kept or head
+        if proved:
+            facts["start_input"] = {key: start.get(key) for key in (
+                "policy", "base", "ref", "selected_commit", "selected_at", "verified_commit", "verified_at")
+                if start.get(key)}
         facts.update({"base_commit": base or None, "last_turn": None, "nudged": False, "said_done": False,
                       "running_on": {"profile": profile, "engine": engine}})
         who = agent_label(profile)
@@ -948,7 +963,7 @@ class ProgramRunner:
             who += f" on {found.label}" if found is not None else " on the desk's engine"
         self.service.transition(
             program, step, "briefed", launch_id=answer["launch_id"], worktree=path,
-            branch=worktree.get("branch"), head_commit=base or None, facts=facts,
+            branch=worktree.get("branch"), head_commit=head or base or None, facts=facts,
             line=f"Handed to {who} in {worktree.get('name')}",
         )
         return True

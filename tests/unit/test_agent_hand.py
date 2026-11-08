@@ -11,6 +11,7 @@ from __future__ import annotations
 import asyncio
 import json
 import shlex
+import subprocess
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -219,6 +220,19 @@ class _Tmux(FakeTmuxServer):
             pane = self.sessions[argv[argv.index("-s") + 1]][0]
             self.meta[pane]["content"] = self.screen()
         return result
+
+
+def _give_origin(repo) -> None:
+    """A local bare ``origin`` beside the repository, its branch pushed
+    (HS-S22: a new Program worktree starts from the base as origin has it;
+    a repository with no origin is refused by name). Kept when it has one."""
+    has = subprocess.run(["git", "-C", str(repo), "remote", "get-url", "origin"], capture_output=True)
+    if has.returncode == 0:
+        return
+    bare = repo.parent / f"{repo.name}-origin.git"
+    subprocess.run(["git", "init", "-q", "--bare", str(bare)], check=True, capture_output=True)
+    subprocess.run(["git", "-C", str(repo), "remote", "add", "origin", str(bare)], check=True, capture_output=True)
+    subprocess.run(["git", "-C", str(repo), "push", "-q", "origin", "HEAD"], check=True, capture_output=True)
 
 
 def _rig(
