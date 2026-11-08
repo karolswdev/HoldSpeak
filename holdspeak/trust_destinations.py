@@ -252,12 +252,30 @@ def _saved_send_destinations(database: Any) -> list[dict[str, Any]]:
 __all__ = ["REGISTRY_PATH", "destination_inventory", "destination_registry"]
 
 
-def _reach_telegram_paired() -> bool:
-    """PG-DIRECTION DIR5: the reach bot's token is in the keystore and one
-    chat is paired (``services/telegram_reach.py``)."""
-    try:
-        from .services.telegram_reach import bot_token, paired_chat, telegram_on
+#: 2026-11-07: a keystore read can block for good (macOS Keychain holds an
+#: access prompt for a hub binary it has not approved; a background process
+#: never sees it). The owner's hub stalled every /api/setup/status and its
+#: startup nudge on this read. A status read waits this long, then says no.
+KEYSTORE_READ_SECONDS = 2.0
 
-        return telegram_on() and bool(bot_token()) and paired_chat() is not None
-    except Exception:
-        return False
+
+def _reach_telegram_paired(*, timeout: float = KEYSTORE_READ_SECONDS) -> bool:
+    """PG-DIRECTION DIR5: the reach bot's token is in the keystore and one
+    chat is paired (``services/telegram_reach.py``). Bounded: a keystore
+    that does not answer within ``timeout`` counts as not paired."""
+    import threading
+
+    out: list[bool] = []
+
+    def read() -> None:
+        try:
+            from .services.telegram_reach import bot_token, paired_chat, telegram_on
+
+            out.append(bool(telegram_on() and bool(bot_token()) and paired_chat() is not None))
+        except Exception:
+            out.append(False)
+
+    worker = threading.Thread(target=read, name="trust-telegram-paired", daemon=True)
+    worker.start()
+    worker.join(timeout)
+    return bool(out and out[0])
