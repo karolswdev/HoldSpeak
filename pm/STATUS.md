@@ -2,6 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · #1982 The prepared-recipe catalog is parked (recipe_catalog.py, the `practice_recipe` MCP family, three read-only routes with no web caller, the USER_GUIDE section); Agents and Modes (`/api/recipes`) stay; MCP 316 → 313 tools, 50 → 49 families.
 - 2026-11-08 · #1979 Sequences and Workflows parked on the Desk and in MCP (the pullouts, the Workflow editor, the `sequence` family; 320 → 316 tools); the runner and its routes stay for the iPad Crew run.
 - 2026-11-08 · (PR) The engine door: `holdspeak/services/engine_door.py` runs one AI job on its assigned engine and raises one `EngineDoorError`; thread guardrail and compaction, the Program shaper, note task finding and the four memory jobs (embed, extract, consolidate, page) call it instead of eight hand-built runner calls.
 - 2026-11-08 · #1972 Fix forward #1971: the Decisions reader reads the verb registry on use (the speakable desk test mocks the store).
