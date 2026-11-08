@@ -261,8 +261,8 @@ def test_egress_authority_config_and_people_are_refused(hub: Hub) -> None:
     assert _refused_by_palette(_call(agent, "people.relationship.create", {"display_name": "X"}))
     assert _refused_by_palette(_call(agent, "people.owner_alias.link", {"relationship_id": "r", "alias": "a"}))
     # A mixed tool is classed on its arguments: a schedule is authority.
-    assert _refused_by_palette(_call(agent, "workbench.create", {"fields": {"name": "w", "schedule_enabled": True}}))
-    assert not _refused_by_palette(_call(agent, "workbench.create", {"fields": {"name": "w"}}))
+    assert _refused_by_palette(_call(agent, "automation.create", {"fields": {"name": "w", "schedule_enabled": True}}))
+    assert not _refused_by_palette(_call(agent, "automation.create", {"fields": {"name": "w"}}))
     # The People resources are listed and readable (Conductor R7).
     resources = _rpc(agent, "resources/list").json()["result"]
     uris = [r["uri"] for r in resources["resources"]] + [r["uriTemplate"] for r in resources["resourceTemplates"]]
@@ -734,7 +734,7 @@ def test_the_agent_edits_only_what_it_created(hub: Hub) -> None:
     refused("thought.adopt_note", {"request_id": "r", "note_id": owner_id,
                                    "expected_source_content_sha256": "x", "expected_source_last_modified": "x"})
     refused("meeting.delete", {"meeting_id": "m_owner"})
-    refused("workbench.delete", {"workbench_id": "wb_owner"})
+    refused("automation.delete", {"workbench_id": "wb_owner"})
     _err, kept = hub.mcp("desk.get", {"kind": "notes", "id": owner_id})
     assert kept["title"] == "Owner plan" and not kept.get("deleted"), kept
 
@@ -1145,15 +1145,15 @@ def test_r8_launch_create_cannot_replace_owner_workbench(hub: Hub) -> None:
     _reach(hub, False)
     cred = _launch_credential()
     agent = _client(hub, cred.token)
-    err, owner = hub.mcp("workbench.create", {"name": "Owner workbench"})
+    err, owner = hub.mcp("automation.create", {"name": "Owner workbench"})
     assert not err
-    error, answer = _result(_call(agent, "workbench.create", {"name": "Agent replacement", "fields": {"id": owner["id"]}}))
-    current = hub.mcp("workbench.get", {"workbench_id": owner["id"]})[1]
+    error, answer = _result(_call(agent, "automation.create", {"name": "Agent replacement", "fields": {"id": owner["id"]}}))
+    current = hub.mcp("automation.get", {"workbench_id": owner["id"]})[1]
     claimed = agent_credentials.created_by(cred.launch_id, "workbench:" + owner["id"])
     assert error and answer["code"] == "not_this_launch" and current["name"] == "Owner workbench" and not claimed, (
         error, answer, current["name"], claimed)
     # A new Workbench is still made, and is the launch's.
-    error, mine = _result(_call(agent, "workbench.create", {"name": "Agent workbench"}))
+    error, mine = _result(_call(agent, "automation.create", {"name": "Agent workbench"}))
     assert not error and agent_credentials.created_by(cred.launch_id, "workbench:" + mine["id"])
 
 
@@ -1161,17 +1161,17 @@ def test_r8_launch_create_cannot_replace_owner_workbench(hub: Hub) -> None:
 def test_r8_launch_add_cannot_move_owner_item(hub: Hub, path: str) -> None:
     _reach(hub, False)
     agent = _client(hub, _launch_credential().token)
-    err, owner = hub.mcp("workbench.create", {"name": "Owner workbench"})
+    err, owner = hub.mcp("automation.create", {"name": "Owner workbench"})
     err, item = hub.mcp("workbench.add_item", {"workbench_id": owner["id"], "title": "Owner task"})
     assert not err
-    err, mine = _result(_call(agent, "workbench.create", {"name": "Agent workbench"}))
+    err, mine = _result(_call(agent, "automation.create", {"name": "Agent workbench"}))
     assert not err
     args = {"workbench_id": mine["id"], "title": "Hijacked", "data": {"id": item["id"]}}
     if path == "tool":
         error, answer = _result(_call(agent, "workbench.add_item", args))
     else:
         error, answer = _result(_call(agent, "desk.verb", {"verb_id": "workbench.add_item", "arguments": args}))
-    owner_items = hub.mcp("workbench.get", {"workbench_id": owner["id"]})[1]["items"]
+    owner_items = hub.mcp("automation.get", {"workbench_id": owner["id"]})[1]["items"]
     assert error and answer["code"] == "not_this_launch", answer
     assert any(i["id"] == item["id"] and i["title"] == "Owner task" for i in owner_items), owner_items
     # Its own item, new id: added.

@@ -41,20 +41,20 @@ _ALL_TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     "meeting.stop_capture":   ("effect_proposal",   False),
     "meeting.delete":         ("effect_proposal",   False),
     "meeting.export":         ("evidence_read",     False),
-    # --- workbench ---
-    "workbench.run":          ("effect_proposal",   False),
+    # --- automation (the stored kind is workbench) ---
+    "automation.run":          ("effect_proposal",   False),
     "workbench.add_item":     ("effect_proposal",   False),
-    "workbench.list":         ("evidence_read",     False),
-    "workbench.get":          ("evidence_read",     False),
-    "workbench.create":       ("effect_proposal",   False),
-    "workbench.update":       ("effect_proposal",   False),
-    "workbench.delete":       ("effect_proposal",   False),
+    "automation.list":         ("evidence_read",     False),
+    "automation.get":          ("evidence_read",     False),
+    "automation.create":       ("effect_proposal",   False),
+    "automation.update":       ("effect_proposal",   False),
+    "automation.delete":       ("effect_proposal",   False),
     "workbench.update_item":  ("effect_proposal",   False),
     "workbench.delete_item":  ("effect_proposal",   False),
     "workbench.list_runs":    ("evidence_read",     False),
     # Betterment M3 (MCP only: in no seeded thread palette, thread_modes).
-    "workbench.results":      ("evidence_read",     False),
-    "workbench.cancel":       ("effect_proposal",   False),
+    "automation.results":      ("evidence_read",     False),
+    "automation.cancel":       ("effect_proposal",   False),
     # --- recipe ---
     "recipe.list":        ("evidence_read",     False),
     "recipe.get":         ("evidence_read",     False),
@@ -382,11 +382,6 @@ _ALL_TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     # (``palettes.CALL_HELD_AUTHORITY``), the one way it is admitted.
     "program.decide": ("effect_proposal", False),
 }
-# Betterment M3: the ``automation.*`` aliases, each in its Workbench tool's class.
-_ALL_TOOL_CLASSES.update({
-    f"automation.{verb}": _ALL_TOOL_CLASSES[f"workbench.{verb}"]
-    for verb in ("list", "get", "create", "update", "delete", "run", "results", "cancel")
-})
 
 # Public accessors
 #: #694, the owner's ruling (2026-09-29): a thread acting as him does WORK;

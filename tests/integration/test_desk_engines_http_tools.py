@@ -212,7 +212,7 @@ def test_an_automation_on_the_lan_engine_reads_the_meeting_and_its_result_says_s
     offered = {tool["function"]["name"] for tool in tool_requests[0]["tools"]}
     assert {"meeting.get", "memory.page", "door.add_item", "channel.prepare"} <= offered
     assert not offered & {"channel.send", "settings.update", "inference_assignment.set",
-                          "workbench.create", "workbench.update", "heartbeat.set"}, offered
+                          "automation.create", "automation.update", "heartbeat.set"}, offered
     assert tool_requests[0]["stream"] is True
     # The second request carries the hub's own answer to meeting.get (its
     # record, not the recording's), after the assistant's tool calls.

@@ -45,7 +45,7 @@ SECTIONS = (
     InterviewSection("cadences", "Cadences", "Explore recurring preparation, reviews, outputs, and frequency.", PROJECT_READS | frozenset({"cadence.status", "cadence.loops"})),
     InterviewSection("people", "People", "Continue relationship work in the protected People surface.", frozenset(), "people"),
     InterviewSection("decisions", "Decision log", "Recover rationale, unresolved decisions, and review conditions.", PROJECT_READS | DECISION_READS),
-    InterviewSection("delegation", "Delegation", "Explore useful manual agent briefs and explicit execution constraints.", PROJECT_READS | frozenset({"workbench.list", "workbench.get"})),
+    InterviewSection("delegation", "Delegation", "Explore useful manual agent briefs and explicit execution constraints.", PROJECT_READS | frozenset({"automation.list", "automation.get"})),
     InterviewSection("sources", "Sources & models", "Identify the prerequisite that prevents the selected outcome; never collect credentials in chat.", frozenset({"connection.list", "provider.list"})),
 )
 SECTION_BY_ID = {section.id: section for section in SECTIONS}

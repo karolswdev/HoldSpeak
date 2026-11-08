@@ -319,13 +319,13 @@ def test_the_codex_launch_mounts_the_conductor_palette_with_its_mutators() -> No
     # Betterment D6: + people.suggestions (agents read People; owner ruling 2026-10-06).
     assert "people.suggestions" in palette
     # Betterment M3 (#1319): + the run's results and cancel, and the
-    # ``automation.*`` names of the Workbench work tools (``automation.run``
-    # stays out, as ``workbench.run`` does). Each is a work tool, and the
-    # launch rules hold them to the launch's own automations.
-    m3 = {"workbench.results", "workbench.cancel", "automation.list", "automation.get",
-          "automation.create", "automation.update", "automation.delete",
-          "automation.results", "automation.cancel"}
+    # automation work tools (``automation.run`` stays out). One name since
+    # 2026-11-08: the ``workbench.*`` twins left. Each is a work tool, and
+    # the launch rules hold them to the launch's own automations.
+    m3 = {"automation.results", "automation.cancel", "automation.list", "automation.get",
+          "automation.create", "automation.update", "automation.delete"}
     assert m3 <= palette
+    assert not {f"workbench.{verb}" for verb in ("list", "get", "create", "update", "delete", "run", "results", "cancel")} & palette
     # Betterment MCP M6 (#1331): + provider.github_pr_get (a WORK read: the
     # review starter's agent reads the PR it is about).
     assert "provider.github_pr_get" in palette

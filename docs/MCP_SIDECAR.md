@@ -137,12 +137,12 @@ lists every tool name.
 | `people` | The encrypted People ledger. |
 | `cadence`, `heartbeat`, `scheduled_recording`, `door` | The Cadence engine, the Heartbeat sweep, scheduled recordings and the Door. |
 | `model_library`, `inference`, `inference_assignment`, `concierge`, `settings` | Models, assignments and settings. |
-| `workbench`, `automation`, `recipe`, `reaction`, `watch`, `zone`, `kb` | Runs, Workbenches, recipes and Automations. `automation.*` are the `workbench.*` tools by the user's word. |
+| `workbench`, `automation`, `recipe`, `reaction`, `watch`, `zone`, `kb` | Runs, Workbenches, recipes and Automations. An Automation's own tools are `automation.*`; `workbench.*` keeps the item tools. |
 | `memory`, `dictation`, `event`, `pipeline`, `kernel`, `plugin_job`, `coder` | Search, journals, events, receipts, queued jobs and Coder sessions. |
 
 ### Automations
 
-`automation.create` and its `workbench.create` alias create an Automation from the supported sentence fields.
+`automation.create` creates an Automation from the supported sentence fields.
 `automation.update` changes the fields supplied in a request.
 
 | Field | Meaning |
@@ -385,7 +385,7 @@ database, FTS index or Cadence.
 
 <!-- BEGIN MCP TOOL ROSTER (machine-generated -- do not edit) -->
 
-**Registry totals:** 313 tools across 49 families.
+**Registry totals:** 305 tools across 49 families.
 
 #### agent (6)
 
@@ -826,19 +826,11 @@ database, FTS index or Cadence.
 - `watch.refresh`
 - `watch.set_enabled`
 
-#### workbench (12)
+#### workbench (4)
 
 - `workbench.add_item`
-- `workbench.cancel`
-- `workbench.create`
-- `workbench.delete`
 - `workbench.delete_item`
-- `workbench.get`
-- `workbench.list`
 - `workbench.list_runs`
-- `workbench.results`
-- `workbench.run`
-- `workbench.update`
 - `workbench.update_item`
 
 #### zone (3)
@@ -955,7 +947,7 @@ it.
 
 `tools_for_palette(palette)` returns only the tools in the palette. A
 client that lists tools through this filter sees 66 tools
-instead of 313.
+instead of 305.
 
 `dispatch_for_palette(name, arguments, principal, palette)` runs a tool
 only if `name` is in the palette. A name outside the palette gets a typed
