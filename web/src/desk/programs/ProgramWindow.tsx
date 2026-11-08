@@ -38,6 +38,7 @@ import {
 } from "../surface";
 import { useWindowInterior } from "../surface/interior";
 import { Token } from "../surface/Token";
+import { ActionNotice } from "../surface/patterns/ActionNotice";
 import { plainFail } from "../surface/plainFailure";
 import { useWindowTitle } from "../surface/title";
 import { stateWords, wireWords } from "../surface/words";
@@ -684,30 +685,25 @@ function heldWords(program: Program, step: ProgramStep): string | undefined {
   return program.your_turn_items.find((item) => item.step_id === step.id && item.brief?.happened)?.brief?.happened;
 }
 
-/** What Start checks before any agent works (#1686, start_precheck): the
- *  repository, its remote when a step opens a PR, the check's program. */
-export function startWords(program: Program): string {
-  const pushes = program.steps.some((step) => !step.race_of && (step.gate?.merge ?? "level") !== "none");
-  const parts = ["the repository", pushes ? "the remote" : "", program.check_command ? "the check command" : ""].filter(Boolean);
-  const list = parts.length > 1 ? `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}` : parts[0];
-  // JRN1: a Program split from a draft waits on the one before it.
+/** The quiet fact beside Start (no sentence under a verb): a Program split
+ *  from a draft waits on the one before it (JRN1); else its step count; a
+ *  night program with no steps names its window (#1697). */
+export function startFact(program: Program): string {
   const origin = program.place?.origin;
-  if (origin?.kind === "after") {
-    return `It starts after ${origin.title || "the program before it"} is done. Then Start will check ${list}.`;
-  }
+  if (origin?.kind === "after") return `After ${origin.title || "the program before it"}`;
+  const count = countWords(program.steps.filter((step) => !step.race_of).length, "step");
+  if (count) return count;
   const night = program.night;
-  if (night) {
-    // #1697: a night program sleeps until its window, then fills itself.
-    const most = night.max_steps ? `at most ${night.max_steps} small steps` : "small steps";
-    return `Start will check ${list}. Then it sleeps until ${night.start}; from ${night.start} to ${night.end} it takes ${most} from the tasks marked Tonight.`;
-  }
-  return `Start will check ${list}. Then the first steps go to their agents.`;
+  return night ? `Tonight ${night.start} to ${night.end}` : "";
 }
 
 /** PG-WINDOW, Drafting (the definition phase): the headline is the goal,
- *  in his words and edited in place, and the tray: Start (what it will
- *  check), Plan it (the engine drafts the steps), Ask me first (the rounds,
- *  before Start). The tray is the one raised thing. */
+ *  in his words and edited in place, and the tray shows ONE thing from the
+ *  Program's state (Create plans itself, #1878): while the engine plans the
+ *  goal, the working row with the ledger's line and no verb; with steps (or
+ *  a night), Start and the step count; when the engine did not plan, the
+ *  ledger's line as a notice and Plan it; with no goal plan yet, Plan it
+ *  (and Ask me first). No sentence under a verb. */
 function DraftHead({ program, goal, busy, planner, canAsk, askBusy, anyRoundBusy, onGoal, onStart, onPlan, onAskFirst, onOpenText }: {
   program: Program; goal: string; busy: string; planner: ReturnType<typeof usePlanIt>;
   canAsk: boolean; askBusy: boolean; anyRoundBusy: boolean;
@@ -715,6 +711,11 @@ function DraftHead({ program, goal, busy, planner, canAsk, askBusy, anyRoundBusy
 }) {
   const steps = program.steps.filter((step) => !step.race_of);
   const held = Boolean(busy) || planner.busy || anyRoundBusy;
+  const claim = program.checkpoints.find((row) => row.kind === "plan_goal");
+  const ready = Boolean(steps.length || program.night);
+  const planning = !ready && claim?.choice === "pending";
+  const refused = !ready && claim?.choice === "not_planned";
+  const fact = ready ? startFact(program) : "";
   return (
     <section className="pg-turn pg-draft-top" aria-label="Drafting" data-testid="programs-draft-head">
       <article className="pg-brief">
@@ -726,25 +727,27 @@ function DraftHead({ program, goal, busy, planner, canAsk, askBusy, anyRoundBusy
           <EditInPlace label="Goal" multiline value={goal} placeholder="Say what the program is for" onCommit={onGoal} />
         </div>
         <PlanLine planner={planner} onOpenText={onOpenText} />
-        <div className="pg-tray" data-testid="programs-tray">
-          {steps.length || program.night ? (
+        {refused && !planner.busy && !planner.refusal ? (
+          <div className="pg-plan-line" data-testid="programs-plan-claim">
+            <ActionNotice tone="warn">{claim!.line}</ActionNotice>
+          </div>
+        ) : null}
+        <div className="pg-tray" data-testid="programs-tray" data-tray={planning ? "planning" : ready ? "start" : "plan"}>
+          {planning ? (
+            <DotWord tone="info" live className="pg-plan-line" data-testid="programs-planning">{claim!.line}</DotWord>
+          ) : ready ? (
             <span className="pg-choice" data-choice="start">
               <Button variant="primary" loading={busy === "start"} disabled={held} onClick={onStart} data-testid="program-start">Start</Button>
-              <span className="pg-choice-cons" data-testid="programs-start-words">{startWords(program)}</span>
+              {fact ? <span className="pg-choice-cons" data-testid="programs-start-words">{fact}</span> : null}
             </span>
-          ) : null}
-          <span className="pg-choice" data-choice="plan">
-            {/* One primary: Start when it is offered (a night program has it with no steps). */}
-            <Button variant={steps.length || program.night ? "secondary" : "primary"} loading={planner.busy} disabled={held} onClick={onPlan}
-              data-testid="program-plan-it">Plan it</Button>
-            <span className="pg-choice-cons">{steps.length ? "The engine drafts the steps again from the goal. You apply the rows you want." : "The engine drafts the steps from the goal."}</span>
-          </span>
-          {canAsk ? (
-            <span className="pg-choice" data-choice="ask">
-              <Button variant="secondary" loading={askBusy} disabled={held} onClick={onAskFirst} data-testid="program-ask-first">Ask me first</Button>
-              <span className="pg-choice-cons">Five rounds of questions before Start.</span>
-            </span>
-          ) : null}
+          ) : (
+            <>
+              <Button variant="primary" loading={planner.busy} disabled={held} onClick={onPlan} data-testid="program-plan-it">Plan it</Button>
+              {canAsk && !refused ? (
+                <Button variant="secondary" loading={askBusy} disabled={held} onClick={onAskFirst} data-testid="program-ask-first">Ask me first</Button>
+              ) : null}
+            </>
+          )}
         </div>
       </article>
     </section>

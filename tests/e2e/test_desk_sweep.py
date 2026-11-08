@@ -533,11 +533,15 @@ def _seed_draft_program(page: Any, tmp: Path) -> str:
                     "commit", "-q", "--allow-empty", "-m", "start"], check=True)
     from tests.integration.program_plan_seed import J1_GOAL
 
+    # Made with no goal, then the goal set: a goal at create is planned by the
+    # engine (#1878) and the tray shows the planning row; this case is Plan it.
     made = _api(page, "POST", "/api/programs", {
-        "title": "Meeting recap in the Note", "goal": J1_GOAL, "repository": str(repo),
+        "title": "Meeting recap in the Note", "goal": "", "repository": str(repo),
         "template": "build-and-review", "check_command": "true", "control": "normal",
     }, token=TOKEN)
-    return str(made.get("id") or (made.get("program") or {}).get("id"))
+    pid = str(made.get("id") or (made.get("program") or {}).get("id"))
+    _api(page, "PATCH", f"/api/programs/{pid}", {"goal": J1_GOAL}, token=TOKEN)
+    return pid
 
 
 def _seed_rounds_program(page: Any, tmp: Path) -> str:
