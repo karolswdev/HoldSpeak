@@ -735,3 +735,137 @@ def test_the_program_family_lists_step_remove() -> None:
     require = next(tool for tool in family.TOOLS if tool["name"] == "program.require")
     assert "measure" in require["inputSchema"]["properties"]["kind"]["enum"]
     assert {"metric", "op", "bound", "unit", "walk"} <= set(require["inputSchema"]["properties"]["spec"]["properties"])
+
+
+# ── HS-S11 (D13 branch A, 2026-11-07): global New carries a real project ──
+# The face's well sends ``{title, template, project_id}``; the service
+# resolves the repository through the real ``_repository`` → ``_project_source``
+# → ``resolve_project_repository`` chain over a temporary registry and a filed
+# ``repository:<source_id>`` row. The four ``program.create_*`` fixtures are
+# recorded here (one scenario, one writer) as test-only capture records
+# ``{request: {method, path, json?}, response: {status, body}}``: the face
+# replays ``response.body`` with ``response.status`` and reads the refused
+# project id from ``request.json.project_id`` (the refusal body carries none).
+
+
+def _creation_rig(tmp_path: Path, monkeypatch) -> tuple[Rig, TestClient, Any]:
+    from types import SimpleNamespace
+
+    from holdspeak import missioncontrol_bridge
+    from holdspeak.delivery.registry import DeliveryRegistry
+    from holdspeak.runtime import composition
+    from holdspeak.services.agent_hand_service import AgentHandService
+    from holdspeak.web.context import WebContext
+    from holdspeak.web.routes.projects import build_projects_router
+
+    rig = Rig(tmp_path)
+    with rig.db._connection() as conn:
+        conn.execute("INSERT INTO projects (id, name) VALUES ('proj-holdspeak', 'HoldSpeak')")
+        conn.execute("INSERT INTO projects (id, name) VALUES ('proj-notes', 'Notes only')")
+        conn.execute("INSERT INTO projects (id, name, is_archived) VALUES ('proj-old', 'Old', 1)")
+    # The temporary registry: the rig's clone, filed to HoldSpeak as its repository.
+    registry = DeliveryRegistry(tmp_path / "sources.json", map_path=tmp_path / "absent.json")
+    source, _ = registry.register(str(rig.repo), label="app")
+    with rig.db._connection() as conn:
+        conn.execute("INSERT INTO project_resources (project_id, resource_ref) VALUES (?, ?)",
+                     ("proj-holdspeak", f"repository:{source.source_id}"))
+    # No project map on this machine is read: an empty test map.
+    monkeypatch.setattr(missioncontrol_bridge, "load_project_map", lambda path=None: {})
+    hand = AgentHandService(rig.db, launch_service=lambda: SimpleNamespace(_registry=registry), project_map={})
+    root = composition.bare(db=rig.db, label="creation-context")
+    root.agent_hand_service = hand
+    composition.install(root)
+
+    monkeypatch.setattr(program_module, "default_program_service", lambda db=None: rig.service)
+    app = FastAPI()
+
+    @app.middleware("http")
+    async def _owner(request, call_next):  # type: ignore[no-untyped-def]
+        request.state.principal = OWNER
+        return await call_next(request)
+
+    app.include_router(build_programs_router(None))  # type: ignore[arg-type]
+    app.include_router(build_projects_router(WebContext(get_state=lambda: {}, project_service=ProjectService(rig.db))))
+    return rig, TestClient(app), source
+
+
+def _program_ids(rig: Rig) -> set[str]:
+    return {row["id"] for row in rig.service.list(OWNER)["programs"]}
+
+
+def _capture(method: str, path: str, answer: Any, body: Any = None) -> dict[str, Any]:
+    request: dict[str, Any] = {"method": method, "path": path}
+    if body is not None:
+        request["json"] = body
+    return {"request": request, "response": {"status": answer.status_code, "body": answer.json()}}
+
+
+def test_creation_context_project_create_records_real_wire(tmp_path, monkeypatch) -> None:
+    rig, client, source = _creation_rig(tmp_path, monkeypatch)
+
+    # The choices: the active projects, a project with no Program among them; the archived one is out.
+    choices = client.get("/api/projects")
+    assert choices.status_code == 200, choices.text
+    rows = {row["id"]: row for row in choices.json()["projects"]}
+    assert set(rows) == {"proj-holdspeak", "proj-notes"} and not any(row["is_archived"] for row in rows.values())
+    assert _program_ids(rig) == set()
+    _fixture("program.create_projects.json", _capture("GET", "/api/projects", choices), tmp_path)
+
+    # The well's tuple: the default title, the template, the explicit project; no repository.
+    body = {"title": "New program", "template": "fast-cycle", "project_id": "proj-holdspeak"}
+    made = client.post("/api/programs", json=body)
+    assert made.status_code == 201, made.text
+    program = made.json()
+    assert program["id"] and program["state"] == "drafting" and program["steps"] == []
+    assert program["project_id"] == "proj-holdspeak" and program["project"]["id"] == "proj-holdspeak"
+    assert program["template"] == "fast-cycle" and program["title"] == "New program"
+    assert Path(program["repository"]["root"]).resolve() == rig.repo.resolve() == Path(source.primary_path).resolve()
+    stored = rig.service.get(OWNER, program["id"])
+    assert stored["project_id"] == "proj-holdspeak" and Path(stored["repository"]["root"]).resolve() == rig.repo.resolve()
+    assert rig.ledger.list() == []  # nothing started
+    _fixture("program.create_project.json", _capture("POST", "/api/programs", made, body), tmp_path)
+
+    # The same tuple for the project that names no repository: 409 no_repository, no Program.
+    before = _program_ids(rig)
+    refused_body = {"title": "New program", "template": "fast-cycle", "project_id": "proj-notes"}
+    refused = client.post("/api/programs", json=refused_body)
+    assert refused.status_code == 409 and refused.json()["code"] == "no_repository", refused.text
+    assert _program_ids(rig) == before
+    _fixture("program.create_no_repository.json", _capture("POST", "/api/programs", refused, refused_body), tmp_path)
+
+    # The old incomplete body: 400 repository_required, no Program.
+    old_body = {"title": "New program", "template": "fast-cycle"}
+    missing = client.post("/api/programs", json=old_body)
+    assert missing.status_code == 400 and missing.json()["code"] == "repository_required", missing.text
+    assert _program_ids(rig) == before
+    _fixture("program.create_repository_required.json", _capture("POST", "/api/programs", missing, old_body), tmp_path)
+
+
+def test_creation_context_refusals_preserve_outcomes(tmp_path, monkeypatch) -> None:
+    rig, client, _source = _creation_rig(tmp_path, monkeypatch)
+
+    # Both proved pre-write refusals: no Program is saved.
+    assert client.post("/api/programs", json={"title": "New program", "template": "fast-cycle"}).status_code == 400
+    assert client.post("/api/programs", json={"title": "New program", "template": "fast-cycle",
+                                              "project_id": "proj-notes"}).status_code == 409
+    assert _program_ids(rig) == set()
+
+    # A fault after the save: the route answers 500, and the Program EXISTS
+    # (the face must call that unconfirmed, never "nothing changed").
+    before = _program_ids(rig)
+    real_checkpoint = rig.service._checkpoint
+
+    def boom(*args: Any, **kwargs: Any) -> Any:
+        raise RuntimeError("the checkpoint store is gone")
+
+    with monkeypatch.context() as patched:
+        patched.setattr(rig.service, "_checkpoint", boom)
+        failed = client.post("/api/programs", json={"title": "New program", "template": "fast-cycle",
+                                                    "project_id": "proj-holdspeak"})
+    assert failed.status_code == 500 and failed.json()["code"] == "program_failed", failed.text
+    assert rig.service._checkpoint == real_checkpoint
+    new_ids = _program_ids(rig) - before
+    assert len(new_ids) == 1
+    persisted = rig.service.get(OWNER, new_ids.pop())
+    assert persisted["state"] == "drafting" and persisted["project_id"] == "proj-holdspeak" and persisted["steps"] == []
+    assert rig.ledger.list() == []

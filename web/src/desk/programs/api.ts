@@ -55,6 +55,24 @@ export async function createProgram(body: CreateBody): Promise<Program> {
   return "program" in (answer as object) ? (answer as { program: Program }).program : (answer as Program);
 }
 
+/** HS-S11: one project a Program can be made in (GET /api/projects). */
+export interface ProjectChoice {
+  id: string;
+  name: string;
+}
+
+/** HS-S11: the open projects, from the hub's own project list (never from
+ *  the Programs rows). A failed read or a body without `projects` throws:
+ *  it is never an empty list. */
+export async function readProjectChoices(): Promise<ProjectChoice[]> {
+  const answer = await apiFetch<{ projects?: unknown }>("/api/projects");
+  if (!answer || !Array.isArray(answer.projects)) throw new Error("The project list has no projects field");
+  return answer.projects
+    .filter((row): row is Record<string, unknown> => Boolean(row) && typeof row === "object")
+    .filter((row) => typeof row.id === "string" && row.id !== "" && row.is_archived !== true)
+    .map((row) => ({ id: row.id as string, name: typeof row.name === "string" && row.name ? row.name : (row.id as string) }));
+}
+
 function unwrap(answer: Program | { program?: Program }): Program | null {
   // A decide answer may carry its own `steps` count (the fix program: `steps: 2`).
   if (answer && typeof answer === "object" && Array.isArray((answer as Program).steps)) return answer as Program;

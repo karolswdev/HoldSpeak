@@ -1,0 +1,39 @@
+{
+  "request": {
+    "method": "GET",
+    "path": "/api/projects"
+  },
+  "response": {
+    "body": {
+      "projects": [
+        {
+          "context": {},
+          "created_at": "2026-11-07T16:45:04",
+          "description": "",
+          "detection_threshold": 0.4,
+          "id": "proj-holdspeak",
+          "is_archived": false,
+          "keywords": [],
+          "meeting_count": 0,
+          "name": "HoldSpeak",
+          "team_members": [],
+          "updated_at": "2026-11-07T16:45:04"
+        },
+        {
+          "context": {},
+          "created_at": "2026-11-07T16:45:04",
+          "description": "",
+          "detection_threshold": 0.4,
+          "id": "proj-notes",
+          "is_archived": false,
+          "keywords": [],
+          "meeting_count": 0,
+          "name": "Notes only",
+          "team_members": [],
+          "updated_at": "2026-11-07T16:45:04"
+        }
+      ]
+    },
+    "status": 200
+  }
+}

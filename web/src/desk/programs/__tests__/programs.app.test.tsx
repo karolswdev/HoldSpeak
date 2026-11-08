@@ -86,6 +86,13 @@ import splitFixture from "../__fixtures__/program.plan_programs.json";
 // through the hub's runner, recorded through the real routes
 // (tests/integration/test_desk_program_rounds.py), in the face's own walk.
 import roundsFixture from "../__fixtures__/program.rounds.json";
+// HS-S11: one scenario through the real route and resolver, recorded as
+// {request, response} (tests/integration/test_desk_programs.py
+// test_creation_context_project_create_records_real_wire).
+import createProjectsFixture from "../__fixtures__/program.create_projects.json";
+import createProjectFixture from "../__fixtures__/program.create_project.json";
+import createNoRepositoryFixture from "../__fixtures__/program.create_no_repository.json";
+import createRepositoryRequiredFixture from "../__fixtures__/program.create_repository_required.json";
 
 type Frame = { type: string; data: unknown };
 type Answer = unknown | ((init?: { method?: string; json?: unknown }) => unknown);
@@ -260,18 +267,6 @@ describe("the Programs window", () => {
     expect(await screen.findByText("No program yet")).toBeTruthy();
     expect(screen.getByText("A program is a goal cut into steps. An agent does each step.")).toBeTruthy();
     expect(screen.queryByTestId("programs-status")).toBeNull();
-  });
-
-  it("New program makes a Fast cycle Program and opens its window", async () => {
-    hub({
-      "GET /api/programs": list,
-      "POST /api/programs": drafting,
-    });
-    render(<ProgramsCore />);
-    await screen.findAllByTestId("programs-band");
-    fireEvent.click(screen.getByTestId("programs-new"));
-    await waitFor(() => expect(mocks.openPullout).toHaveBeenCalledWith(`program:${drafting.id}`));
-    expect(calls).toContain(`POST /api/programs ${JSON.stringify({ title: "New program", template: "fast-cycle" })}`);
   });
 
   it("re-reads on a program_changed frame, never on a windows-only desk frame", async () => {
@@ -572,6 +567,234 @@ describe("LANG13: the delivery at Done (recorded on the rig: tests/integration/t
     const pr = merged.checkpoints.find((row) => row.kind === "delivery" && row.choice === "delivered")!;
     expect(screen.getByTestId("programs-delivered").textContent).toBe(pr.line);
     expect(pr.line).toMatch(/^Delivered to dw app\/1 \(PR #\d+\)( · phase closed)?$/);
+  });
+});
+
+describe("HS-S11: New program is made in the project he chooses (recorded real wire)", () => {
+  type Capture = { request: { method: string; path: string; json?: Record<string, unknown> }; response: { status: number; body: unknown } };
+  const projects = createProjectsFixture as unknown as Capture;
+  const made = createProjectFixture as unknown as Capture;
+  const noRepository = createNoRepositoryFixture as unknown as Capture;
+  const required = createRepositoryRequiredFixture as unknown as Capture;
+  const madeProgram = made.response.body as Program;
+  const roster = (projects.response.body as { projects: Array<{ id: string; name: string }> }).projects;
+  const nameOf = (id: unknown) => roster.find((row) => row.id === id)!.name;
+  const refusal = (capture: Capture) => () => {
+    const body = capture.response.body as { error?: string };
+    throw new ApiError(capture.response.status, body.error ?? "", capture.response.body);
+  };
+  const posts = () => calls.filter((call) => call.startsWith("POST /api/programs"));
+  /** The bodies he sent, parsed (the recorded fixture sorts its keys). */
+  const sent = () => posts().map((call) => JSON.parse(call.slice("POST /api/programs ".length)));
+  const choose = (id: string) => fireEvent.change(within(screen.getByTestId("programs-make")).getByLabelText("Project"), { target: { value: id } });
+  const create = () => screen.getByTestId("programs-make-create");
+  const templateItem = (name: string) => [...document.querySelectorAll<HTMLElement>("[role=menuitem],[role=menuitemradio]")]
+    .find((node) => node.textContent?.startsWith(`${name} · `))!;
+
+  it("the recorded scenario is one coherent roster: the made Program and the refusal name its members", () => {
+    expect(made.request.json).toEqual({ title: "New program", template: "fast-cycle", project_id: madeProgram.project_id });
+    expect(made.response.status).toBe(201);
+    expect(madeProgram.state).toBe("drafting");
+    expect(roster.map((row) => row.id)).toContain(madeProgram.project_id);
+    expect(roster.map((row) => row.id)).toContain(noRepository.request.json!.project_id);
+    expect(required.request.json).toEqual({ title: "New program", template: "fast-cycle" });
+  });
+
+  it("New opens the well and makes nothing; Create waits for an explicit project, then sends the recorded tuple and opens it", async () => {
+    hub({ "GET /api/programs": list, "GET /api/projects": projects.response.body, "POST /api/programs": made.response.body });
+    render(<ProgramsCore />);
+    await screen.findAllByTestId("programs-band");
+    // A Project filter is on: it is never the creation target.
+    fireEvent.click(screen.getByTestId("programs-project"));
+    fireEvent.click(menuItem("HoldSpeak"));
+    fireEvent.click(screen.getByTestId("programs-new"));
+    const well = await screen.findByTestId("programs-make");
+    expect(well.getAttribute("data-template")).toBe("fast-cycle");
+    expect(screen.getByTestId("programs-make-head").textContent).toBe("New program · Fast cycle");
+    await waitFor(() => expect(within(well).getByLabelText("Project")).toBeTruthy());
+    expect(posts()).toEqual([]);
+    // Every open project is a choice, also one with no Program in the list.
+    const options = [...within(well).getByLabelText<HTMLSelectElement>("Project").options].map((option) => option.textContent);
+    for (const row of roster) expect(options).toContain(row.name);
+    expect(list.programs.some((row) => row.project_id === noRepository.request.json!.project_id)).toBe(false);
+    // No project is chosen for him, also with the filter on.
+    expect((create() as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(create());
+    expect(posts()).toEqual([]);
+    choose(madeProgram.project_id as string);
+    expect(create().textContent).toBe(`Create in ${nameOf(madeProgram.project_id)}`);
+    fireEvent.click(create());
+    await waitFor(() => expect(mocks.openPullout).toHaveBeenCalledWith(`program:${madeProgram.id}`));
+    expect(sent()).toEqual([made.request.json]);
+    await waitFor(() => expect(screen.queryByTestId("programs-make")).toBeNull());
+  });
+
+  it("each template entry and the empty object open the same well with their template; Escape and Cancel make nothing", async () => {
+    hub({ "GET /api/programs": list, "GET /api/projects": projects.response.body });
+    render(<ProgramsCore />);
+    fireEvent.click(await screen.findByTestId("programs-templates"));
+    fireEvent.click(templateItem("Build and review"));
+    const well = await screen.findByTestId("programs-make");
+    expect(well.getAttribute("data-template")).toBe("build-and-review");
+    await waitFor(() => expect(within(well).getByLabelText("Project")).toBeTruthy());
+    choose(roster[0].id);
+    // A different template keeps his project choice.
+    fireEvent.click(screen.getByTestId("programs-templates"));
+    fireEvent.click(templateItem("Race"));
+    expect(screen.getByTestId("programs-make").getAttribute("data-template")).toBe("race");
+    expect(within(screen.getByTestId("programs-make")).getByLabelText<HTMLSelectElement>("Project").value).toBe(roster[0].id);
+    fireEvent.keyDown(within(screen.getByTestId("programs-make")).getByLabelText("Project"), { key: "Escape" });
+    expect(screen.queryByTestId("programs-make")).toBeNull();
+    expect(document.activeElement).toBe(screen.getByTestId("programs-new"));
+    cleanup();
+    calls = [];
+    hub({ "GET /api/projects": projects.response.body });
+    render(<ProgramsCore />);
+    await screen.findByText("No program yet");
+    // The empty object's own Button (not the toolbar's New program).
+    fireEvent.click(screen.getAllByRole("button", { name: /New program/ }).find((node) => node.getAttribute("data-testid") !== "programs-new")!);
+    expect((await screen.findByTestId("programs-make")).getAttribute("data-template")).toBe("fast-cycle");
+    fireEvent.click(screen.getByTestId("programs-make-cancel"));
+    expect(screen.queryByTestId("programs-make")).toBeNull();
+    expect(posts()).toEqual([]);
+  });
+
+  it("the project read: loading, failed with Refresh projects, no project, and a chosen project that leaves the list", async () => {
+    let answer: unknown = new ApiError(503, "down", {});
+    hub({ "GET /api/programs": list, "GET /api/projects": () => { if (answer instanceof Error) throw answer; return answer; } });
+    render(<ProgramsCore />);
+    await screen.findAllByTestId("programs-band");
+    fireEvent.click(screen.getByTestId("programs-new"));
+    expect(screen.getByTestId("programs-make-reading")).toBeTruthy();
+    expect((create() as HTMLButtonElement).disabled).toBe(true);
+    expect(await screen.findByTestId("programs-make-read-failed")).toBeTruthy();
+    expect(screen.queryByTestId("programs-make-no-project")).toBeNull();
+    answer = { projects: [] };
+    fireEvent.click(screen.getByTestId("programs-make-refresh"));
+    expect(await screen.findByTestId("programs-make-no-project")).toBeTruthy();
+    expect((create() as HTMLButtonElement).disabled).toBe(true);
+    answer = projects.response.body;
+    fireEvent.click(screen.getByTestId("programs-make-refresh"));
+    await waitFor(() => expect(within(screen.getByTestId("programs-make")).getByLabelText("Project")).toBeTruthy());
+    choose(roster[0].id);
+    expect((create() as HTMLButtonElement).disabled).toBe(false);
+    // The next read archives his project: Create waits for a new choice.
+    answer = { projects: roster.map((row) => (row.id === roster[0].id ? { ...row, is_archived: true } : row)) };
+    fireEvent.click(screen.getByTestId("programs-make-refresh"));
+    expect(await screen.findByTestId("programs-make-gone")).toBeTruthy();
+    expect((create() as HTMLButtonElement).disabled).toBe(true);
+    expect(posts()).toEqual([]);
+  });
+
+  it("the recorded no_repository refusal names the project and keeps the choice; no window opens", async () => {
+    hub({ "GET /api/programs": list, "GET /api/projects": projects.response.body, "POST /api/programs": refusal(noRepository) });
+    render(<ProgramsCore />);
+    await screen.findAllByTestId("programs-band");
+    fireEvent.click(screen.getByTestId("programs-new"));
+    await waitFor(() => expect(within(screen.getByTestId("programs-make")).getByLabelText("Project")).toBeTruthy());
+    const target = noRepository.request.json!.project_id as string;
+    choose(target);
+    fireEvent.click(create());
+    const words = await screen.findByTestId("programs-make-refused");
+    expect(words.textContent).toBe(`Not made · ${nameOf(target)} has no local repository · Add one in the project, or choose a different project`);
+    expect(sent()).toEqual([noRepository.request.json]);
+    expect(within(screen.getByTestId("programs-make")).getByLabelText<HTMLSelectElement>("Project").value).toBe(target);
+    expect(mocks.openPullout).not.toHaveBeenCalled();
+    expect(document.body.textContent).not.toContain("Nothing changed");
+  });
+
+  it.each([
+    ["a hub failure", () => { throw new ApiError(500, "program_failed", { code: "program_failed" }); }],
+    ["an answer with no id", () => ({})],
+    ["an empty id", () => ({ ...madeProgram, id: "" })],
+    ["an id that is not a string", () => ({ ...madeProgram, id: 7 })],
+    ["a 409 with another code", () => { throw new ApiError(409, "conflict", { code: "changed" }); }],
+  ])("%s is not confirmed: no retry, no window, no Nothing changed", async (_name, answer) => {
+    hub({ "GET /api/programs": list, "GET /api/projects": projects.response.body, "POST /api/programs": answer });
+    render(<ProgramsCore />);
+    await screen.findAllByTestId("programs-band");
+    fireEvent.click(screen.getByTestId("programs-new"));
+    await waitFor(() => expect(within(screen.getByTestId("programs-make")).getByLabelText("Project")).toBeTruthy());
+    choose(madeProgram.project_id as string);
+    fireEvent.click(create());
+    expect((await screen.findByTestId("programs-make-unknown")).textContent)
+      .toBe("Not confirmed · The program can exist · Look at the list before you try again");
+    expect(posts()).toHaveLength(1);
+    expect(mocks.openPullout).not.toHaveBeenCalled();
+    expect(document.body.textContent).not.toContain("Nothing changed");
+    const reads = calls.filter((call) => call === "GET /api/programs").length;
+    fireEvent.click(screen.getByTestId("programs-make-look"));
+    await waitFor(() => expect(calls.filter((call) => call === "GET /api/programs").length).toBe(reads + 1));
+    expect(posts()).toHaveLength(1);
+  });
+
+  it("one press in flight: a second press, Enter or a new choice cannot send or redirect the captured request", async () => {
+    let settle: (value: unknown) => void = () => undefined;
+    mocks.apiFetch.mockImplementation(async (path: string, init?: { method?: string; json?: unknown }) => {
+      const key = `${(init?.method ?? "GET").toUpperCase()} ${path}`;
+      calls.push(init?.json !== undefined ? `${key} ${JSON.stringify(init.json)}` : key);
+      if (key === "GET /api/programs") return clone(list);
+      if (key === "GET /api/projects") return clone(projects.response.body);
+      if (key === "POST /api/programs") return new Promise((resolve) => { settle = resolve; });
+      throw new ApiError(404, "Not Found", {});
+    });
+    render(<ProgramsCore />);
+    await screen.findAllByTestId("programs-band");
+    fireEvent.click(screen.getByTestId("programs-new"));
+    await waitFor(() => expect(within(screen.getByTestId("programs-make")).getByLabelText("Project")).toBeTruthy());
+    choose(madeProgram.project_id as string);
+    fireEvent.click(create());
+    fireEvent.click(create());
+    fireEvent.keyDown(create(), { key: "Enter" });
+    fireEvent.click(create());
+    choose(roster.find((row) => row.id !== madeProgram.project_id)!.id);
+    fireEvent.click(screen.getByTestId("programs-new"));
+    expect((screen.getByTestId("programs-new") as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByTestId("programs-make-cancel") as HTMLButtonElement).disabled).toBe(true);
+    expect(sent()).toEqual([made.request.json]);
+    await act(async () => { settle(clone(madeProgram)); });
+    await waitFor(() => expect(mocks.openPullout).toHaveBeenCalledWith(`program:${madeProgram.id}`));
+    expect(posts()).toHaveLength(1);
+  });
+
+  it("a made Program whose window does not open keeps its id: Open the program reveals the same id and never makes another", async () => {
+    hub({ "GET /api/programs": list, "GET /api/projects": projects.response.body, "POST /api/programs": made.response.body });
+    mocks.openPullout.mockImplementationOnce(() => { throw new Error("the desk did not mount the window"); });
+    render(<ProgramsCore />);
+    await screen.findAllByTestId("programs-band");
+    fireEvent.click(screen.getByTestId("programs-new"));
+    await waitFor(() => expect(within(screen.getByTestId("programs-make")).getByLabelText("Project")).toBeTruthy());
+    choose(madeProgram.project_id as string);
+    fireEvent.click(create());
+    expect((await screen.findByTestId("programs-make-made")).textContent).toBe("Program made · Its window did not open");
+    expect(screen.queryByTestId("programs-make-create")).toBeNull();
+    fireEvent.click(screen.getByTestId("programs-make-open"));
+    expect(mocks.openPullout).toHaveBeenLastCalledWith(`program:${madeProgram.id}`);
+    expect(mocks.openPullout).toHaveBeenCalledTimes(2);
+    expect(posts()).toHaveLength(1);
+    await waitFor(() => expect(screen.queryByTestId("programs-make")).toBeNull());
+  });
+
+  it("closing the window while the create is in flight: the late answer opens nothing and claims no cancel", async () => {
+    let settle: (value: unknown) => void = () => undefined;
+    mocks.apiFetch.mockImplementation(async (path: string, init?: { method?: string; json?: unknown }) => {
+      const key = `${(init?.method ?? "GET").toUpperCase()} ${path}`;
+      calls.push(key);
+      if (key === "GET /api/programs") return clone(list);
+      if (key === "GET /api/projects") return clone(projects.response.body);
+      if (key === "POST /api/programs") return new Promise((resolve) => { settle = resolve; });
+      throw new ApiError(404, "Not Found", {});
+    });
+    const view = render(<ProgramsCore />);
+    await screen.findAllByTestId("programs-band");
+    fireEvent.click(screen.getByTestId("programs-new"));
+    await waitFor(() => expect(within(screen.getByTestId("programs-make")).getByLabelText("Project")).toBeTruthy());
+    choose(madeProgram.project_id as string);
+    fireEvent.click(create());
+    view.unmount();
+    await act(async () => { settle(clone(madeProgram)); });
+    expect(mocks.openPullout).not.toHaveBeenCalled();
+    expect(posts()).toHaveLength(1);
   });
 });
 

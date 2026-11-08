@@ -1,0 +1,19 @@
+{
+  "request": {
+    "json": {
+      "project_id": "proj-notes",
+      "template": "fast-cycle",
+      "title": "New program"
+    },
+    "method": "POST",
+    "path": "/api/programs"
+  },
+  "response": {
+    "body": {
+      "code": "no_repository",
+      "detail": "The project names no local repository. Register one in the project first.",
+      "error": "no_repository"
+    },
+    "status": 409
+  }
+}
