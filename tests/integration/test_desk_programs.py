@@ -927,14 +927,35 @@ def test_create_through_the_route_at_normal_plans_and_offers_only_start(tmp_path
     rig.engine.replies = replies("j1")
     client = _client(rig, monkeypatch)
     pid = client.post("/api/programs", json=_goal_body(rig, "normal")).json()["id"]
+    # The Drafting tray's two faces (the face replays these answers):
+    # planning (the claim pending, no verb) and planned (Start, "4 steps").
+    planning = client.get(f"/api/programs/{pid}").json()
+    claim = next(row for row in planning["checkpoints"] if row.get("kind") == "plan_goal")
+    assert (claim["choice"], claim["line"]) == ("pending", "Planning the steps from the goal")
+    _fixture("program.plan_goal.planning.json", planning, tmp_path)
     rig.tick()
     program = client.get(f"/api/programs/{pid}").json()
     assert program["state"] == "drafting" and len(program["steps"]) == 4
+    claim = next(row for row in program["checkpoints"] if row.get("kind") == "plan_goal")
+    assert claim["choice"] == "planned", claim
+    _fixture("program.plan_goal.planned.json", program, tmp_path)
     assert not [item for item in rig.service.needs_you_items() if item["program_id"] == pid]
     assert rig.hand.calls == []
     started = client.post(f"/api/programs/{pid}/start", json={})
     assert started.status_code == 200, started.text
     assert started.json()["state"] == "running"
+
+
+def test_create_through_the_route_with_no_engine_says_the_steps_were_not_planned(tmp_path, monkeypatch) -> None:
+    rig = Rig(tmp_path)
+    client = _client(rig, monkeypatch)
+    pid = client.post("/api/programs", json=_goal_body(rig, "normal")).json()["id"]
+    rig.tick()
+    program = client.get(f"/api/programs/{pid}").json()
+    assert program["state"] == "drafting" and program["steps"] == []
+    claim = next(row for row in program["checkpoints"] if row.get("kind") == "plan_goal")
+    assert claim["choice"] == "not_planned" and claim["line"].startswith("The steps were not planned · "), claim
+    _fixture("program.plan_goal.not_planned.json", program, tmp_path)
 
 
 # ── Run as a program, one implementation (2026-11-08) ──────────────────

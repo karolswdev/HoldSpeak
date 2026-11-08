@@ -60,6 +60,9 @@ import reachRevokedFixture from "../__fixtures__/reach.revoked.json";
 // on his press, a + line), recorded through the real routes.
 import textFixture from "../__fixtures__/program.text.json";
 import dreamingFixture from "../__fixtures__/program.dreaming.json";
+import planningFixture from "../__fixtures__/program.plan_goal.planning.json";
+import plannedFixture from "../__fixtures__/program.plan_goal.planned.json";
+import notPlannedFixture from "../__fixtures__/program.plan_goal.not_planned.json";
 import deliveryFailedFixture from "../__fixtures__/program.delivery_failed.json";
 import deliveryMergeFixture from "../__fixtures__/program.delivery_merge.json";
 import deliveryMergedFixture from "../__fixtures__/program.delivery_merged.json";
@@ -462,9 +465,9 @@ describe("the Program window (direction C, the ledger)", () => {
     expect(within(screen.getByTestId("programs-draft-goal")).getByText(drafting.goal.split("\n")[0], { exact: false })).toBeTruthy();
     const tray = screen.getByTestId("programs-tray");
     expect(within(tray).getByTestId("program-start").className).toMatch(/primary/);
-    // One primary in the tray (the live walk, 2026-11-01): Plan it is secondary beside Start.
-    expect(within(tray).getByTestId("program-plan-it").className).not.toMatch(/primary/);
-    expect(within(tray).getByTestId("programs-start-words").textContent).toMatch(/^Start will check the repository/);
+    // One thing in the tray: Start and the step count (no sentence, no Plan it beside it).
+    expect(within(tray).queryByTestId("program-plan-it")).toBeNull();
+    expect(within(tray).getByTestId("programs-start-words").textContent).toBe(`${drafting.steps.length} steps`);
     expect(within(screen.getByTestId("program-toolbar")).queryByTestId("program-start")).toBeNull();
     // A press opens the step in place: its title with its mic, its gate as plain words with the pickers.
     const fold = openStep(1);
@@ -1256,11 +1259,60 @@ describe("#1697: the Dreaming template (recorded through the real route, test_de
     render(<ProgramBody programId={dream.id} />);
     const line = await screen.findByTestId("programs-line");
     expect(line.querySelector("[data-station=night]")!.textContent).toContain(`Sleeps until ${dream.night!.start}`);
-    // No steps yet: the night fills itself, so Start is there with what it will do.
+    // No steps yet: the night fills itself, so Start is there with its window as the quiet fact.
     const tray = screen.getByTestId("programs-tray");
     expect(within(tray).getByTestId("program-start").className).toMatch(/primary/);
     expect(within(tray).getByTestId("programs-start-words").textContent)
-      .toBe(`Start will check the repository. Then it sleeps until ${dream.night!.start}; from ${dream.night!.start} to ${dream.night!.end} it takes at most ${dream.night!.max_steps} small steps from the tasks marked Tonight.`);
+      .toBe(`Tonight ${dream.night!.start} to ${dream.night!.end}`);
+  });
+});
+
+describe("Create plans itself (#1878): the Drafting tray reads the Program's state (recorded, test_desk_programs.py)", () => {
+  const trayVerbs = () => within(screen.getByTestId("programs-tray")).queryAllByRole("button").map((node) => node.textContent);
+  // No sentence under a verb: every text in the tray is a verb, a count or the ledger's own line.
+  const noProse = () => {
+    const tray = screen.getByTestId("programs-tray");
+    expect(tray.querySelectorAll(".pg-choice-cons").length).toBeLessThanOrEqual(1);
+    expect(tray.textContent).not.toMatch(/The engine drafts|Five rounds of questions|Start will check|Then the first steps/);
+  };
+
+  it("planning: the working row with the ledger's line, no verb", async () => {
+    const program = planningFixture as unknown as Program;
+    hub({ [`GET /api/programs/${program.id}`]: program });
+    render(<ProgramBody programId={program.id} />);
+    await screen.findByTestId("programs-board");
+    const tray = screen.getByTestId("programs-tray");
+    expect(tray.getAttribute("data-tray")).toBe("planning");
+    expect(trayVerbs()).toEqual([]);
+    const row = within(tray).getByTestId("programs-planning");
+    expect(row.textContent).toBe("Planning the steps from the goal");
+    expect(row.querySelector("[data-live]") ?? row.closest("[data-live]")).toBeTruthy();
+    noProse();
+  });
+
+  it("planned at normal: Start is the one primary, \"4 steps\" the quiet fact", async () => {
+    const program = plannedFixture as unknown as Program;
+    expect(program.control).toBe("normal");
+    hub({ [`GET /api/programs/${program.id}`]: program });
+    render(<ProgramBody programId={program.id} />);
+    await screen.findByTestId("programs-board");
+    expect(trayVerbs()).toEqual(["Start"]);
+    expect(screen.getByTestId("program-start").className).toMatch(/primary/);
+    expect(screen.getByTestId("programs-start-words").textContent).toBe("4 steps");
+    noProse();
+  });
+
+  it("not planned: the ledger's line as the notice and Plan it as the one verb", async () => {
+    const program = notPlannedFixture as unknown as Program;
+    const line = program.checkpoints.find((row) => row.kind === "plan_goal")!.line;
+    expect(line).toMatch(/^The steps were not planned · /);
+    hub({ [`GET /api/programs/${program.id}`]: program });
+    render(<ProgramBody programId={program.id} />);
+    await screen.findByTestId("programs-board");
+    expect(within(screen.getByTestId("programs-plan-claim")).getByRole("status").textContent).toBe(line);
+    expect(trayVerbs()).toEqual(["Plan it"]);
+    expect(screen.getByTestId("program-plan-it").className).toMatch(/primary/);
+    noProse();
   });
 });
 
@@ -2684,8 +2736,7 @@ describe("JRN1: the draft proposes several Programs (the REAL qwen reply to a th
     hub({ [`GET /api/programs/${second.id}`]: second });
     render(<ProgramBody programId={second.id} />);
     await screen.findByTestId("programs-board");
-    expect(screen.getByTestId("programs-start-words").textContent)
-      .toMatch(new RegExp(`^It starts after ${split.draft.programs![0].title} is done\\.`));
+    expect(screen.getByTestId("programs-start-words").textContent).toBe(`After ${split.draft.programs![0].title}`);
     expect(split.start_refused.body.detail).toBe(`It starts after ${split.draft.programs![0].title} is done.`);
   });
 });
@@ -2743,9 +2794,10 @@ describe("LANG7: the planning draft (PROGRAM-LANGUAGE §5, §9.3, §9.7)", () =>
     expect(drafted.every((row) => row.getAttribute("data-landed") === "born")).toBe(true);
     expect(drafted[2].style.getPropertyValue("--i")).toBe("2");
     await waitFor(() => expect(screen.queryByTestId("programs-change-well")).toBeNull());
-    // Steps exist now: Start is the primary verb, Plan it the second.
+    // Steps exist now: Start is the one verb in the tray, with the step count.
     expect(screen.getByTestId("program-start")).not.toBeDisabled();
-    expect(screen.getByTestId("program-plan-it").className).not.toMatch(/primary/);
+    expect(screen.queryByTestId("program-plan-it")).toBeNull();
+    expect(screen.getByTestId("programs-start-words").textContent).toBe("4 steps");
   });
 
   it("while the engine plans, one line and the status bar name it; the window stays usable", async () => {
