@@ -17,7 +17,8 @@
 //
 // Betterment daily D5: Brief and The week retired into Today; the Chair has
 // two windows of its own, Needs you and Capture (chairWindows.ts).
-import { useEffect, useLayoutEffect, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useState, type ReactNode } from "react";
+import { BackSlotContext, type WindowBack } from "../surface/back";
 import { Button } from "../../components/signal/Signal";
 import { DeskWindowFrame } from "../components/DeskWindow";
 import { GadgetGlyph } from "../components/window/GadgetGlyph";
@@ -61,9 +62,15 @@ function ChairWindow({
   title?: string;
   children: ReactNode;
 }) {
+  // A body's own list → detail step (the Needs-you item reader) takes the
+  // compact head's Back, as in an application window (SurfaceWindows).
+  const [coreBack, setCoreBack] = useState<WindowBack | null>(null);
   return (
     <DeskWindowFrame
       id={spec.id}
+      onBack={coreBack?.onBack}
+      backTestId={coreBack?.testId}
+      backLabel={coreBack?.label}
       title={title || spec.title}
       label={spec.title}
       className={`chair-window chair-window--${spec.key}`}
@@ -89,7 +96,7 @@ function ChairWindow({
         className="chair-window-body"
         data-testid={`chair-window-body-${spec.key}`}
       >
-        {children}
+        <BackSlotContext.Provider value={setCoreBack}>{children}</BackSlotContext.Provider>
       </div>
     </DeskWindowFrame>
   );

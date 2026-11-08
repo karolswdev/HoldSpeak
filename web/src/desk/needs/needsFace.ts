@@ -191,6 +191,12 @@ export interface NeedFace {
    *  prefix (`Must fix:`, `Should fix:`, `Noted:`); the prefix leaves the
    *  name. It tints the glyph and sorts the rows (must first). */
   tier?: NeedTier;
+  /** 2026-11-08 (the item reader): an action item's stamp (ISO), when the
+   *  hub has one; the reader says it as `since Sat 23:39`. */
+  since?: string;
+  /** 2026-11-08 (the item reader): where an action item came from, in
+   *  words (`from the meeting Standup`, `from a Program`); absent when none. */
+  origin?: string;
 }
 
 export type NeedTier = "must" | "should" | "noted";
@@ -384,6 +390,12 @@ export function whenWord(at: Date, now: Date = new Date()): string {
   if (days === 1) return `yesterday ${hhmm}`;
   if (days < 7) return `${WEEKDAYS[at.getDay()]} ${hhmm}`;
   return `${MONTHS[at.getMonth()]} ${at.getDate()} ${hhmm}`;
+}
+
+/** `Thu 22 Oct`: a due day as the rows say it. */
+export function dayWord(iso: string | null | undefined): string {
+  const d = iso ? wireDate(iso) : null;
+  return d ? `${WEEKDAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}` : "";
 }
 
 /** A row kept from the last read of a source that failed since: `observed 09:00`. */
@@ -712,7 +724,7 @@ function attentionFace(item: NeedsYouRoomItem, ctx: NeedCtx): NeedFace {
       ?? (item.unknowns?.includes("owner") ? "name_owner"
         : item.unknowns?.includes("due") ? "set_date" : "mark_done");
     const cardId = String(item.actionItemId);
-    return { id, kind: "action", name: title, fact, lamp, group: "rest",
+    return { id, kind: "action", name: title, fact, lamp, group: "rest", ...itemFacts(item, card),
       // Betterment D2: one verb by direction (Done or Nudge); an item with
       // no owner still asks for one (the one Name an owner).
       verbs: next === "name_owner"
@@ -725,7 +737,7 @@ function attentionFace(item: NeedsYouRoomItem, ctx: NeedCtx): NeedFace {
   // same verbs as a Room commitment.
   if (ext._isDoor && source === "action_item" && item.ref && !ext._toReview && !ext._isUnassigned
     && (item.direction === "mine" || item.direction === "theirs" || item.waiting)) {
-    return { id, kind: "action", name: title, fact, lamp, group: "rest",
+    return { id, kind: "action", name: title, fact, lamp, group: "rest", ...itemFacts(item, card),
       verbs: workVerbs(item, String(item.ref), item.dueAt ? "mark_done" : "set_date"), openRef };
   }
   if (ext._toReview && card) {
@@ -749,6 +761,20 @@ function attentionFace(item: NeedsYouRoomItem, ctx: NeedCtx): NeedFace {
   const ref = openRefOf(item, card) || projectRef;
   return { id, kind: item.kind === "decision" ? "decision" : "action", name: title, fact, lamp, group: "rest",
     verbs: ref ? { kind: "open", ref } : { kind: "none" }, openRef: ref || undefined };
+}
+
+/** The item reader (2026-11-08): an action item's stamp and origin, from
+ *  its Door card when it has one. */
+function itemFacts(item: NeedsYouRoomItem, card: DoorCardLike): Pick<NeedFace, "since" | "origin"> {
+  const since = String(card?.created_at ?? item.since ?? "").trim();
+  const provenance = (card?.provenance ?? null) as { source_ref?: unknown; meeting_id?: unknown } | null;
+  const sourceRef = String(provenance?.source_ref ?? "");
+  const meetingTitle = String(item.meetingTitle ?? "").trim();
+  const origin = meetingTitle ? `from the meeting ${meetingTitle}`
+    : /^program(_step)?:/.test(sourceRef) ? "from a Program"
+      : card?.meeting_id || provenance?.meeting_id || item.meetingId ? "from a meeting"
+        : /^note:/.test(sourceRef) ? "from a note" : "";
+  return { ...(since ? { since } : {}), ...(origin ? { origin } : {}) };
 }
 
 /** Betterment D2: an action item's verbs by its direction. */

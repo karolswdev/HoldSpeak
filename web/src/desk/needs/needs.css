@@ -526,3 +526,45 @@
   .desk-next .needs-drawer .needs-scope .needs-chip.btn,
   .desk-next .needs-drawer .needs-people-open.btn { min-height: 44px; }
 }
+
+/* The item reader (2026-11-08): an action item with no other home reads in
+   place, in the Needs-you window (ItemReader.tsx). The whole text wraps;
+   one quiet line of facts under it; the verbs are the toolbar's. */
+.needs-reader-window {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+}
+.needs-reader {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  overflow-y: auto;
+  padding: 20px 24px 24px;
+  color: var(--wb-ink);
+}
+.needs-reader-text {
+  margin: 0;
+  max-width: 68ch;
+  color: var(--wb-ink);
+  font: 600 18px / 1.4 var(--font-sans);
+  text-transform: none;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.needs-reader-facts {
+  margin: 0;
+  max-width: 68ch;
+  color: var(--wb-muted);
+  font: 400 12px / 1.5 var(--font-sans);
+  overflow-wrap: anywhere;
+}
+@container surface (max-width: 520px) {
+  .needs-reader { padding: 16px; }
+  .needs-reader-text { font-size: 16px; }
+}

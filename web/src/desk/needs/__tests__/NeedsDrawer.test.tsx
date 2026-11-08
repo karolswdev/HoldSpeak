@@ -34,7 +34,7 @@ import needsSent from "../../reach/__fixtures__/needs_you.sent.json";
 // one Bea owes; Done on the Must fix row, and the read after).
 import needsRows from "../__fixtures__/needs_you.rows.json";
 import { recordedGet, type Gets } from "../../../test/recordedHub";
-import { openIntelligence } from "../../intelligenceNavigation";
+import { INTELLIGENCE_NAVIGATE, openIntelligence } from "../../intelligenceNavigation";
 import { openProgram } from "../../programs/open";
 import madeFromAction from "../../programs/__fixtures__/program.from_action.json";
 import { markDone, readDoneReceipt } from "../needsApi";
@@ -1646,14 +1646,16 @@ describe("one row, one verb (owner walk 2026-11-08)", () => {
     expect(tiers).toEqual([["must", "Must fix"], ["should", "Should fix"], [null, "Action"], ["noted", "Noted"]]);
   });
 
-  it("a press on the row opens the item where it lives; Done does not", async () => {
+  it("a press on the row reads the item in place; Done does not", async () => {
     render(<NeedsDrawer />);
     await screen.findByText("4 need you");
     fireEvent.click(row(must).querySelector(".needs-row-name")!);
-    expect(openIntelligence).toHaveBeenCalledWith({ view: "follow-through", followThroughId: "rows-must" });
-    vi.mocked(openIntelligence).mockClear();
+    expect(await screen.findByTestId("needs-reader")).toBeTruthy();
+    expect(openIntelligence).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByTestId("needs-reader-back"));
     fireEvent.click(within(row(must)).getByRole("button", { name: `Done: ${must}` }));
     await waitFor(() => expect(posts).toHaveLength(1));
+    expect(screen.queryByTestId("needs-reader")).toBeNull();
     expect(openIntelligence).not.toHaveBeenCalled();
   });
 
@@ -1717,6 +1719,118 @@ describe("one row, one verb (owner walk 2026-11-08)", () => {
     const li = row("Send the vendor contract");
     expect(li.querySelector("[data-testid=needs-row-state]")?.textContent).toBe("Bea");
     expect(screen.getByTestId("needs-people-open")).toBeTruthy();
+  });
+});
+
+// The owner, 2026-11-08, on his phone: "I can't open any of these when double
+// clicking on the title… right clicking and using the open option - still
+// nothing happened." An action item with no other home reads ITSELF in place
+// (ItemReader.tsx). Replays needs_you.rows.json (the recorded hub answers).
+describe("the item reader: an action item opens itself (2026-11-08)", () => {
+  const [before, afterDone] = needsRows.steps as Array<{ gets: Gets; post?: string; body?: unknown }>;
+  const must = "openSystemShade() fires an event nobody hears";
+  let hub: Gets;
+  let posts: Array<{ path: string; json: unknown }>;
+
+  beforeEach(() => {
+    hub = before.gets;
+    posts = [];
+    vi.mocked(openIntelligence).mockClear();
+    vi.mocked(markDone).mockClear();
+    vi.mocked(apiFetch).mockImplementation(async (path: string, init?: unknown) => {
+      const method = (init as { method?: string } | undefined)?.method ?? "GET";
+      if (method !== "GET") {
+        posts.push({ path: String(path), json: (init as { json?: unknown }).json });
+        if (String(path) === afterDone.post) hub = afterDone.gets;
+        return {} as never;
+      }
+      return recordedGet(hub, String(path)) as never;
+    });
+  });
+
+  const reader = () => screen.getByTestId("needs-reader");
+
+  it("a press on a bare action item's row shows the reader: the whole text, the facts in words, the verbs", async () => {
+    render(<NeedsDrawer />);
+    await screen.findByText("4 need you");
+    fireEvent.click(row(must).querySelector(".needs-row-name")!);
+    await screen.findByTestId("needs-reader");
+    // The list gives the window to the reader; nothing opens elsewhere.
+    expect(screen.queryByTestId("needs-list")).toBeNull();
+    expect(openIntelligence).not.toHaveBeenCalled();
+    const text = within(reader()).getByTestId("needs-reader-text");
+    expect(text.textContent).toBe(must);
+    expect(text.tagName).toBe("H2");
+    const facts = within(reader()).getByTestId("needs-reader-facts").textContent ?? "";
+    expect(facts.split(" · ")[0]).toBe("Must fix");
+    expect(facts).toContain("Yours");
+    expect(facts).toMatch(/since \S/);
+    expect(facts).toContain("from a meeting");
+    expect(facts).not.toMatch(/\b0\b|undefined|null/);
+    const verbs = [...within(screen.getByTestId("needs-reader-toolbar")).getAllByRole("button")].map((b) => b.textContent);
+    expect(verbs).toEqual(expect.arrayContaining(["‹ Needs you", "Done", "Later", "Run as a program", "Hand to an agent session"]));
+    // No Project on this item: no Open the Project.
+    expect(verbs.some((v) => /Open the Project/.test(v ?? ""))).toBe(false);
+    expect(within(reader()).getByRole("button", { name: `Done: ${must}` }).className).toContain("btn--primary");
+  });
+
+  it("Open in the row menu shows the reader", async () => {
+    render(<NeedsDrawer />);
+    await screen.findByText("4 need you");
+    fireEvent.contextMenu(row(must), { clientX: 40, clientY: 60 });
+    const menu = await screen.findByRole("menu", { name: must });
+    fireEvent.click(within(menu).getByRole("menuitem", { name: "Open" }));
+    expect((await screen.findByTestId("needs-reader-text")).textContent).toBe(must);
+    expect(openIntelligence).not.toHaveBeenCalled();
+  });
+
+  it("Back returns to the list", async () => {
+    render(<NeedsDrawer />);
+    await screen.findByText("4 need you");
+    fireEvent.click(row(must).querySelector(".needs-row-name")!);
+    await screen.findByTestId("needs-reader");
+    fireEvent.click(screen.getByTestId("needs-reader-back"));
+    expect(screen.queryByTestId("needs-reader")).toBeNull();
+    expect(row(must)).toBeTruthy();
+    expect(posts).toEqual([]);
+  });
+
+  it("Done in the reader is markDone's; the reader returns to the list without the item", async () => {
+    render(<NeedsDrawer />);
+    await screen.findByText("4 need you");
+    fireEvent.click(row(must).querySelector(".needs-row-name")!);
+    await screen.findByTestId("needs-reader");
+    fireEvent.click(within(reader()).getByRole("button", { name: `Done: ${must}` }));
+    await screen.findByText("3 need you");
+    expect(markDone).toHaveBeenCalledTimes(1);
+    expect(posts).toEqual([{ path: afterDone.post, json: afterDone.body }]);
+    expect(screen.queryByTestId("needs-reader")).toBeNull();
+    expect(screen.getByTestId("needs-list")).toBeTruthy();
+    expect(screen.queryByText(must)).toBeNull();
+  });
+
+  it("Later in the reader snoozes the item to tomorrow, as the row menu's Later does", async () => {
+    render(<NeedsDrawer />);
+    await screen.findByText("4 need you");
+    fireEvent.click(row(must).querySelector(".needs-row-name")!);
+    await screen.findByTestId("needs-reader");
+    fireEvent.click(within(reader()).getByRole("button", { name: `Later: ${must}` }));
+    await waitFor(() => expect(posts.map((p) => (p.json as { verb?: string }).verb)).toEqual(["snooze"]));
+    expect((posts[0].json as { card_id?: string }).card_id).toBe("rows-must");
+    await waitFor(() => expect(screen.queryByTestId("needs-reader")).toBeNull());
+  });
+
+  it("an action_item ref (the follow-through request) opens that item in the reader", async () => {
+    render(<NeedsDrawer />);
+    await screen.findByText("4 need you");
+    act(() => {
+      window.dispatchEvent(new CustomEvent(INTELLIGENCE_NAVIGATE, {
+        detail: { view: "follow-through", followThroughId: "rows-plain" },
+      }));
+    });
+    expect((await screen.findByTestId("needs-reader-text")).textContent).toBe("Book the cutover dry run");
+    // A plain item has no weight word: its facts lead with whose it is.
+    expect(within(reader()).getByTestId("needs-reader-facts").textContent).toMatch(/^Yours · since /);
   });
 });
 
