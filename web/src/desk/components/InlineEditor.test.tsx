@@ -6,7 +6,6 @@ import { InlineEditor } from "./InlineEditor";
 import { NotePullout } from "../pullouts/NotePullout";
 import { KbPullout } from "../pullouts/KbPullout";
 import { RecipePullout } from "../pullouts/RecipePullout";
-import { WorkflowPullout } from "../pullouts/WorkflowPullout";
 import { useDebouncedSave } from "../pullouts/editors/useDebouncedSave";
 
 vi.mock("../pullouts/editors", () => {
@@ -84,7 +83,6 @@ describe("HS-129-08 editor windows", () => {
     ["note", NotePullout],
     ["kb", KbPullout],
     ["recipe", RecipePullout],
-    ["workflow", WorkflowPullout],
   ] as const)("hosts %s editing in its open pullout", (kind, Pullout) => {
     const o = object(kind);
     useDesk.setState({ editingId: o.id, pullouts: [{ id: o.id, origin: null }] });

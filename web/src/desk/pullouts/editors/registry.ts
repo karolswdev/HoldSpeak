@@ -6,7 +6,6 @@ import type { InlineEditorContent } from "./types";
 import { SurfaceState } from "../../surface";
 import { watchChunk } from "../../../runtime/freshBuild";
 import { KbEditor } from "./KbEditor";
-import { WorkflowEditor } from "./WorkflowEditor";
 import { RecipeEditor } from "./RecipeEditor";
 
 /** The note editor is not on glass at first paint: it and CodeMirror are
@@ -44,7 +43,7 @@ export const EDITOR_LABELS: Record<PrimitiveKind, string> = {
 export const INLINE_EDITOR_CONTENT: Record<PrimitiveKind, InlineEditorContent | null> = {
   note: NoteEditor,
   kb: KbEditor,
-  workflow: WorkflowEditor,
+  workflow: null,
   recipe: RecipeEditor,
   decision: null,
   meeting: null,

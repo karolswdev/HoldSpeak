@@ -14,7 +14,7 @@ For example, the old meeting Slack-export route returns `slack_moved_to_channel`
 Read the handler and owning guide before treating route presence as feature availability.
 Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
-Routes: 935 (plus static mounts). iOS-consumed: 89. Web-consumed: 612.
+Routes: 935 (plus static mounts). iOS-consumed: 89. Web-consumed: 603.
 
 ## device_audio_ws
 
@@ -826,13 +826,13 @@ Routes: 935 (plus static mounts). iOS-consumed: 89. Web-consumed: 612.
 
 | Method | Path | Consumers |
 |---|---|---|
-| GET | `/api/chains` | web |
+| GET | `/api/chains` | server only |
 | POST | `/api/chains` | server only |
 | POST | `/api/chains/runs/{parent_operation_id}/cancel` | server only |
-| DELETE | `/api/chains/{chain_id}` | web |
+| DELETE | `/api/chains/{chain_id}` | server only |
 | GET | `/api/chains/{chain_id}` | server only |
-| PUT | `/api/chains/{chain_id}` | web |
-| POST | `/api/chains/{chain_id}/run` | ios, web |
+| PUT | `/api/chains/{chain_id}` | server only |
+| POST | `/api/chains/{chain_id}/run` | ios |
 
 ## web.routes.primitives.decisions
 
@@ -1009,13 +1009,13 @@ Routes: 935 (plus static mounts). iOS-consumed: 89. Web-consumed: 612.
 
 | Method | Path | Consumers |
 |---|---|---|
-| GET | `/api/workflows` | web |
-| POST | `/api/workflows` | web |
+| GET | `/api/workflows` | server only |
+| POST | `/api/workflows` | server only |
 | POST | `/api/workflows/runs/{parent_operation_id}/cancel` | server only |
-| DELETE | `/api/workflows/{workflow_id}` | web |
+| DELETE | `/api/workflows/{workflow_id}` | server only |
 | GET | `/api/workflows/{workflow_id}` | server only |
-| PUT | `/api/workflows/{workflow_id}` | web |
-| POST | `/api/workflows/{workflow_id}/run` | ios, web |
+| PUT | `/api/workflows/{workflow_id}` | server only |
+| POST | `/api/workflows/{workflow_id}/run` | ios |
 
 ## web.routes.programs
 
@@ -1529,7 +1529,7 @@ and those routes carry the web tag above.
 
 | Method | Site | Routes | Why |
 |---|---|---|---|
-| DELETE | `web/src/desk/store/dataSlice.ts:738` | `/api/notes/{note_id}`<br>`/api/decisions/{decision_id}`<br>`/api/kbs/{kb_id}`<br>`/api/recipes/{recipe_id}`<br>`/api/directories/{directory_id}`<br>`/api/chains/{chain_id}`<br>`/api/workflows/{workflow_id}` | deletePrimitive fills /api/${path}/${id} from its paths table: note, decision, kb, recipe, directory, chain and workflow. |
+| DELETE | `web/src/desk/store/dataSlice.ts:724` | `/api/notes/{note_id}`<br>`/api/decisions/{decision_id}`<br>`/api/kbs/{kb_id}`<br>`/api/recipes/{recipe_id}`<br>`/api/directories/{directory_id}` | deletePrimitive fills /api/${path}/${id} from its paths table: note, decision, kb, recipe and directory. |
 | PUT | `web/src/desk/components/DeskFilingStrip.tsx:149` | `/api/kbs/{kb_id}/members/{resource_ref:path}`<br>`/api/projects/{project_id}/resources/{resource_ref:path}` | toggleRelationship files an object: base is kbs with members or projects with resources. |
 | DELETE | `web/src/desk/components/DeskFilingStrip.tsx:149` | `/api/kbs/{kb_id}/members/{resource_ref:path}`<br>`/api/projects/{project_id}/resources/{resource_ref:path}` | toggleRelationship unfiles an object: base is kbs with members or projects with resources. |
 | POST | `web/src/pages/cores/history/DoorSection.tsx:167` | `/api/intel/retry/{meeting_id}`<br>`/api/plugin-jobs/{job_id}/retry-now` | Retry on a failed row: a Summary retries its meeting, any other job retries the plugin job. |

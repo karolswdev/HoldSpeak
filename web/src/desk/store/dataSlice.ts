@@ -98,10 +98,8 @@ export function primitiveUpdateUrl(kind: string, id: string): string | null {
     kb: `/api/kbs/${encodeURIComponent(id)}`,
     recipe: `/api/recipes/${encodeURIComponent(id)}`,
     directory: `/api/directories/${encodeURIComponent(id)}`,
-    workflow: `/api/workflows/${encodeURIComponent(id)}`,
     project: `/api/projects/${encodeURIComponent(id)}`,
     // HS-132-07 — routes that existed on the hub but not in this map.
-    chain: `/api/chains/${encodeURIComponent(id)}`,
     workbench: `/api/workbenches/${encodeURIComponent(id)}`,
     // HS-132-07 — the rename route this story added to the hub.
     meeting: `/api/meetings/${encodeURIComponent(id)}`,
@@ -357,16 +355,6 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => {
       recipe: ["/api/recipes", "recipe", { name: "New mode", avatar: "" }],
       zone: ["/api/directories", "directory", { name: "New drawer" }],
       workbench: ["/api/workbenches", "workbench", { name: "New Automation" }],
-      workflow: [
-        "/api/workflows",
-        "workflow",
-        {
-          name: "New workflow",
-          graph_json: buildLinearGraph(crypto.randomUUID(), "New workflow", [
-            { kind: "summarize" },
-          ]) as unknown as Record<string, unknown>,
-        },
-      ],
     } satisfies Record<string, [string, string, Record<string, unknown>]>;
     const [url, wireKey, defaults] = posts[kind];
     // PHILO-8-01 — a zone with no name from the caller takes the first free
@@ -727,8 +715,6 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => {
       kb: "kbs",
       recipe: "recipes",
       directory: "directories",
-      chain: "chains",
-      workflow: "workflows",
     } satisfies Partial<Record<PrimitiveKind, string>>;
     const path = (paths as Partial<Record<string, string>>)[kind];
     if (!path) return false;
@@ -922,14 +908,10 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => {
     }
   },
 
-  async runCapability(kind, id, input) {
-    const routes = {
-      recipe: `/api/recipes/${encodeURIComponent(id)}/run`,
-      chain: `/api/chains/${encodeURIComponent(id)}/run`,
-      workflow: `/api/workflows/${encodeURIComponent(id)}/run`,
-    };
+  async runCapability(_kind, id, input) {
+    // Only a Mode runs here: the Sequence and Workflow faces are parked (2026-11-08).
     try {
-      const res = await apiRequest(routes[kind], {
+      const res = await apiRequest(`/api/recipes/${encodeURIComponent(id)}/run`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ input }),

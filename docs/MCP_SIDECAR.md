@@ -307,12 +307,6 @@ the readable detail and `code` holds the stable service code.
   secrets or inference assignments. Use the Model Library and assignment
   tools for those.
 
-### Sequence
-
-`sequence.run` runs a sequence through the admitted inference path.
-`sequence.cancel` cancels a run by its parent operation id.
-`workflow.run` and `workflow.cancel` do the same for a Workflow.
-
 ### Meetings, decisions and follow-through
 
 `meeting.proposals` returns the pending proposals for a Meeting. It leaves
@@ -391,7 +385,7 @@ database, FTS index or Cadence.
 
 <!-- BEGIN MCP TOOL ROSTER (machine-generated -- do not edit) -->
 
-**Registry totals:** 320 tools across 52 families.
+**Registry totals:** 316 tools across 50 families.
 
 #### agent (6)
 
@@ -786,11 +780,6 @@ database, FTS index or Cadence.
 - `scheduled_recording.list`
 - `scheduled_recording.update`
 
-#### sequence (2)
-
-- `sequence.cancel`
-- `sequence.run`
-
 #### settings (3)
 
 - `settings.get`
@@ -857,11 +846,6 @@ database, FTS index or Cadence.
 - `workbench.run`
 - `workbench.update`
 - `workbench.update_item`
-
-#### workflow (2)
-
-- `workflow.cancel`
-- `workflow.run`
 
 #### zone (3)
 
@@ -977,7 +961,7 @@ it.
 
 `tools_for_palette(palette)` returns only the tools in the palette. A
 client that lists tools through this filter sees 66 tools
-instead of 320.
+instead of 316.
 
 `dispatch_for_palette(name, arguments, principal, palette)` runs a tool
 only if `name` is in the palette. A name outside the palette gets a typed

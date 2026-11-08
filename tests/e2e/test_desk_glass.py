@@ -303,18 +303,19 @@ class TestOneDesk:
         with sync_playwright() as pw:
             browser, page, errors = self._desk(pw, width)
             try:
-                made = _api(page, "POST", "/api/chains", {"name": "One desk sequence", "steps": []}, token=OD_TOKEN)
-                chain_id = made["chain"]["id"]
+                made = _api(page, "POST", "/api/kbs", {"name": "One desk knowledge"}, token=OD_TOKEN)
+                kb_id = made["kb"]["id"]
                 page.reload(wait_until="load")
                 _normal_chair(page)
                 page.locator("[data-testid=desk-screen]").wait_for(timeout=T)
-                # Search is the Sequence's door (it is not on the desk).
+                # Search is Knowledge's door (it is not on the desk). Sequences are
+                # parked (2026-11-08).
                 field = page.locator("[aria-controls=desk-palette-listbox]")
                 if not field.is_visible():
                     page.locator("[aria-controls=desk-tool-shelf]").first.click()
-                field.fill("One desk sequence")
-                self._tap(page, page.locator(f"[id='desk-palette-option-chain:{chain_id}']"), phone, 900)
-                win = f"pullout:sequence:{chain_id}"
+                field.fill("One desk knowledge")
+                self._tap(page, page.locator(f"[id='desk-palette-option-kb:{kb_id}']"), phone, 900)
+                win = f"pullout:knowledge:{kb_id}"
                 page.locator(f"[id='{win}']").wait_for(timeout=T)
                 page.wait_for_timeout(900)
                 self._window_menu(page, win, phone)
@@ -347,7 +348,7 @@ class TestOneDesk:
                 page.wait_for_function(
                     "() => (document.querySelector('.undo-receipt')?.innerText || '').includes('Removal committed')",
                     timeout=20_000)
-                status, _ = _api_allow_error(page, "GET", f"/api/chains/{chain_id}", token=OD_TOKEN)
+                status, _ = _api_allow_error(page, "GET", f"/api/kbs/{kb_id}", token=OD_TOKEN)
                 assert status == 404, status
                 assert not [e for e in errors if "ResizeObserver" not in e and "Failed to fetch" not in e], errors
             finally:
@@ -364,8 +365,8 @@ class TestOneDesk:
         with sync_playwright() as pw:
             browser, page, errors = self._desk(pw, width)
             try:
-                made = _api(page, "POST", "/api/chains", {"name": "Undo sequence", "steps": []}, token=OD_TOKEN)
-                chain_id = made["chain"]["id"]
+                made = _api(page, "POST", "/api/kbs", {"name": "Undo knowledge"}, token=OD_TOKEN)
+                kb_id = made["kb"]["id"]
                 page.reload(wait_until="load")
                 _normal_chair(page)
                 page.locator("[data-testid=desk-screen]").wait_for(state="attached", timeout=T)
@@ -374,9 +375,9 @@ class TestOneDesk:
                 field = page.locator("[aria-controls=desk-palette-listbox]")
                 if not field.is_visible():
                     page.locator("[aria-controls=desk-tool-shelf]").first.click()
-                field.fill("Undo sequence")
-                self._tap(page, page.locator(f"[id='desk-palette-option-chain:{chain_id}']"), phone, 900)
-                win = f"pullout:sequence:{chain_id}"
+                field.fill("Undo knowledge")
+                self._tap(page, page.locator(f"[id='desk-palette-option-kb:{kb_id}']"), phone, 900)
+                win = f"pullout:knowledge:{kb_id}"
                 page.locator(f"[id='{win}']").wait_for(timeout=T)
                 page.wait_for_timeout(900)
                 self._window_menu(page, win, phone)
@@ -412,7 +413,7 @@ class TestOneDesk:
                 page.wait_for_function(
                     "() => (document.querySelector('.undo-receipt')?.innerText || '').includes('Restored')", timeout=T)
                 page.wait_for_timeout(10_000)  # past the 8 s window
-                status, _ = _api_allow_error(page, "GET", f"/api/chains/{chain_id}", token=OD_TOKEN)
+                status, _ = _api_allow_error(page, "GET", f"/api/kbs/{kb_id}", token=OD_TOKEN)
                 assert status == 200, status
                 assert not [e for e in errors if "ResizeObserver" not in e and "Failed to fetch" not in e], errors
             finally:

@@ -7,7 +7,6 @@ import { ApiError, apiFetch } from "../../../lib/api";
 import { editorDraftKey, keptEditorPatch } from "./editorDraft";
 import { useDebouncedSave, useEditorSession } from "./useDebouncedSave";
 import { KbEditor } from "./KbEditor";
-import { WorkflowEditor } from "./WorkflowEditor";
 import { RecipeEditor } from "./RecipeEditor";
 
 vi.mock("../../../lib/api", async (original) => ({ ...(await original<typeof import("../../../lib/api")>()), apiFetch: vi.fn() }));
@@ -125,7 +124,7 @@ describe("editor repair save authority", () => {
   });
 });
 
-describe("Knowledge and Workflow editors", () => {
+describe("Knowledge editor", () => {
   it("Knowledge has no body authoring and adds a real saved Note through the membership route", async () => {
     useDesk.setState({ items: { ...useDesk.getState().items, roadmap: [{ kind: "roadmap", id: "roadmap-1", title: "Architecture roadmap", name: "Architecture roadmap" }] } as any });
     render(<KnowledgeHost />);
@@ -161,26 +160,6 @@ describe("Knowledge and Workflow editors", () => {
     expect(vi.mocked(apiFetch).mock.calls.filter(([path]) => path === "/api/notes")).toHaveLength(1);
     expect(keptEditorPatch("kb", kb.id)).toEqual({});
     expect(screen.queryByRole("button", { name: "Save as Note" })).not.toBeInTheDocument();
-  });
-
-  it("edits a prompt-only Workflow through its existing prompt field", async () => {
-    const object = { kind: "workflow", id: "prompt-flow", title: "Prompt review", ref: { kind: "workflow", id: "prompt-flow", name: "Prompt review", prompt: "Old prompt", graphJson: {} } } as any;
-    render(<WorkflowEditor object={object} onClose={vi.fn()} />);
-    fireEvent.change(screen.getByRole("textbox", { name: "Prompt" }), { target: { value: "Review the design risks\n{input}" } });
-    await act(async () => { await vi.advanceTimersByTimeAsync(450); });
-    expect(useDesk.getState().updatePrimitive).toHaveBeenCalledWith("workflow", "prompt-flow", { prompt: "Review the design risks\n{input}" });
-    expect(screen.queryByText(/iPad/)).not.toBeInTheDocument();
-  });
-
-  it("keeps a branching graph intact while its name is edited", async () => {
-    const graph = { entry: "entry", nodes: [{ id: "entry", kind: { entry: {} } }], exec_edges: [{ from: { node: "entry" }, to: "a" }, { from: { node: "entry" }, to: "b" }], data_edges: [] };
-    const object = { kind: "workflow", id: "branch-flow", title: "Branch review", ref: { kind: "workflow", id: "branch-flow", name: "Branch review", graphJson: graph } } as any;
-    render(<WorkflowEditor object={object} onClose={vi.fn()} />);
-    expect(screen.getByText("Graph editing · iPad")).toBeInTheDocument();
-    fireEvent.change(screen.getByRole("textbox", { name: "Workflow name" }), { target: { value: "Renamed branch review" } });
-    await act(async () => { await vi.advanceTimersByTimeAsync(450); });
-    expect(useDesk.getState().updatePrimitive).toHaveBeenCalledWith("workflow", "branch-flow", { name: "Renamed branch review" });
-    expect(object.ref.graphJson).toEqual(graph);
   });
 });
 

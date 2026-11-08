@@ -32,7 +32,6 @@ _FAMILY_MODULE_NAMES: list[str] = [
     "settings",
     "coder",
     "cadence",
-    "sequence",
     "memory",
     "people",
     "plugin_job",

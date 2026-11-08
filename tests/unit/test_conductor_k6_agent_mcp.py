@@ -925,7 +925,7 @@ def test_r3_people_reach_every_reader(hub: Hub) -> None:
     assert f"note:{note}" in json.dumps(readers["memory.search"])  # the People note is a hit
     assert "zebra agenda" in json.dumps(readers["desk.get"])
     # The model composers stay out of the launch palette (K6's audit).
-    for name in ("ask.run", "recipe.run", "monday_brief.generate", "workflow.run"):
+    for name in ("ask.run", "recipe.run", "monday_brief.generate"):
         assert _refused_by_palette(_call(agent, name, {})), name
 
 

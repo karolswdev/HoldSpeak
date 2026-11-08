@@ -11,8 +11,6 @@ import { ArtifactPullout } from "./ArtifactPullout";
 import { KbPullout } from "./KbPullout";
 import { DecisionToReader } from "./DecisionToReader";
 import { RecipePullout } from "./RecipePullout";
-import { ChainPullout } from "./ChainPullout";
-import { WorkflowPullout } from "./WorkflowPullout";
 import { CoderPullout } from "./CoderPullout";
 import { DirectoryPullout } from "./DirectoryPullout";
 import { IntelligencePullout } from "./IntelligencePullout";
@@ -43,8 +41,9 @@ export const PULLOUT_CONTENT: Record<PrimitiveKind, PulloutContent> = {
   // Decisions window reader; the Decision pullout is parked.
   decision: DecisionToReader,
   recipe: RecipePullout,
-  chain: ChainPullout,
-  workflow: WorkflowPullout,
+  // The Sequence and Workflow faces are parked (2026-11-08).
+  chain: FallbackPullout,
+  workflow: FallbackPullout,
   coder: CoderPullout,
   directory: DirectoryPullout,
   thread: ThreadToAsk,

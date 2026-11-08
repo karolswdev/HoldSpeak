@@ -172,8 +172,6 @@ function duplicateOverrides(o: NonNullable<ReturnType<typeof selected>>) {
       return { name: copyName };
     case "recipe":
       return { name: copyName, avatar: source.avatar ?? "" };
-    case "workflow":
-      return { name: copyName, graph_json: source.graphJson };
     case "workbench":
       return { name: copyName };
   }
@@ -250,8 +248,10 @@ export const VERBS: Verb[] = [
   // Betterment AG1 (DECISIONS #3): New Agent left the Desk menu; parked in
   // desk/_parked/agents/newAgentVerb.ts.
   // Betterment A8 (DECISIONS #2, one way to automate): New Workflow left the
-  // New menu; parked in desk/_parked/automations/newWorkflowVerb.ts. Saved
-  // workflows and their MCP tools stay.
+  // New menu; parked in desk/_parked/automations/newWorkflowVerb.ts. The
+  // Sequence and Workflow desk faces and MCP tools are parked too
+  // (2026-11-08): Programs are the one engine. The iPad's Crew run keeps
+  // the hub's run routes.
   {
     id: "desk.new-workbench",
     label: "New Automation",
@@ -630,7 +630,7 @@ export const VERBS: Verb[] = [
       const overrides = duplicateOverrides(o);
       if (!overrides) return;
       void useDesk.getState().createPrimitive(
-        o.kind as "note" | "decision" | "kb" | "recipe" | "workflow" | "workbench",
+        o.kind as "note" | "decision" | "kb" | "recipe" | "workbench",
         overrides,
       );
     },

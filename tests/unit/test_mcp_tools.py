@@ -23,7 +23,6 @@ REQUIRED_TOOLS = {
     "cadence.status", "cadence.loops", "cadence.get_loop", "cadence.brief",
     "cadence.closeout", "cadence.history", "cadence.audit", "cadence.snooze",
     "cadence.set_status", "cadence.run_now", "cadence.apply_closeout",
-    "sequence.run", "sequence.cancel", "workflow.run", "workflow.cancel",
     "people.readiness", "people.relationship.list", "people.relationship.get",
     "people.grounding.get", "people.note.create",
     "people.relationship.create", "people.one_on_one.create", "people.agenda.add",
@@ -62,6 +61,8 @@ def test_retired_router_tools_are_absent_from_the_catalogue() -> None:
         "model_profile.list", "model_profile.get", "model_profile.create",
         "model_profile.bind", "model_profile.probe", "model_profile.unbind",
         "model_profile.delete",
+        # Sequences and Workflows are parked (2026-11-08): Programs run work.
+        "sequence.run", "sequence.cancel", "workflow.run", "workflow.cancel",
     }
     assert not (names & retired)
     assert "inference.cancel_model_acquisition" in names
@@ -83,8 +84,6 @@ def test_retired_shapes_refuse_before_mcp_dispatch(monkeypatch) -> None:
             mcp_tools.dispatch(name, {}, object())
     for name, arguments in (
         ("ask.run", {"question": "no", "inference_target_id": "retired"}),
-        ("sequence.run", {"chain_id": "chain", "inference_target_id": "retired"}),
-        ("workflow.run", {"workflow_id": "workflow", "inference_target_id": "retired"}),
         ("recipe.run", {"recipe_id": "recipe", "options": {"inference_target_id": "retired"}}),
         # HS-151-02: recipe.chat retired — returns 410 before argument validation.
         ("workbench.create", {"name": "No", "fields": {"profile_id": "retired"}}),

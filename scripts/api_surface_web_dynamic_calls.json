@@ -2,18 +2,16 @@
   "note": "Web calls whose path has no fixed segment after /api, resolved by hand. scripts/gen_api_surface.py tags these routes as web and lists them in the manifest. Update an entry when its call site changes.",
   "web_dynamic_calls": [
     {
-      "site": "web/src/desk/store/dataSlice.ts:738",
+      "site": "web/src/desk/store/dataSlice.ts:724",
       "method": "DELETE",
       "routes": [
         "/api/notes/{note_id}",
         "/api/decisions/{decision_id}",
         "/api/kbs/{kb_id}",
         "/api/recipes/{recipe_id}",
-        "/api/directories/{directory_id}",
-        "/api/chains/{chain_id}",
-        "/api/workflows/{workflow_id}"
+        "/api/directories/{directory_id}"
       ],
-      "why": "deletePrimitive fills /api/${path}/${id} from its paths table: note, decision, kb, recipe, directory, chain and workflow."
+      "why": "deletePrimitive fills /api/${path}/${id} from its paths table: note, decision, kb, recipe and directory."
     },
     {
       "site": "web/src/desk/components/DeskFilingStrip.tsx:149",

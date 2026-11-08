@@ -1347,9 +1347,7 @@
         "GET"
       ],
       "module": "web.routes.primitives.chains",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/chains",
@@ -1373,9 +1371,7 @@
         "DELETE"
       ],
       "module": "web.routes.primitives.chains",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/chains/{chain_id}",
@@ -1391,9 +1387,7 @@
         "PUT"
       ],
       "module": "web.routes.primitives.chains",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/chains/{chain_id}/run",
@@ -1402,8 +1396,7 @@
       ],
       "module": "web.routes.primitives.chains",
       "consumers": [
-        "ios",
-        "web"
+        "ios"
       ]
     },
     {
@@ -8506,9 +8499,7 @@
         "GET"
       ],
       "module": "web.routes.primitives.workflows",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/workflows",
@@ -8516,9 +8507,7 @@
         "POST"
       ],
       "module": "web.routes.primitives.workflows",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/workflows/runs/{parent_operation_id}/cancel",
@@ -8534,9 +8523,7 @@
         "DELETE"
       ],
       "module": "web.routes.primitives.workflows",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/workflows/{workflow_id}",
@@ -8552,9 +8539,7 @@
         "PUT"
       ],
       "module": "web.routes.primitives.workflows",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/workflows/{workflow_id}/run",
@@ -8563,8 +8548,7 @@
       ],
       "module": "web.routes.primitives.workflows",
       "consumers": [
-        "ios",
-        "web"
+        "ios"
       ]
     },
     {
@@ -8822,18 +8806,16 @@
   "web_dynamic_calls": {
     "resolved_by_hand": [
       {
-        "site": "web/src/desk/store/dataSlice.ts:738",
+        "site": "web/src/desk/store/dataSlice.ts:724",
         "method": "DELETE",
         "routes": [
           "/api/notes/{note_id}",
           "/api/decisions/{decision_id}",
           "/api/kbs/{kb_id}",
           "/api/recipes/{recipe_id}",
-          "/api/directories/{directory_id}",
-          "/api/chains/{chain_id}",
-          "/api/workflows/{workflow_id}"
+          "/api/directories/{directory_id}"
         ],
-        "why": "deletePrimitive fills /api/${path}/${id} from its paths table: note, decision, kb, recipe, directory, chain and workflow."
+        "why": "deletePrimitive fills /api/${path}/${id} from its paths table: note, decision, kb, recipe and directory."
       },
       {
         "site": "web/src/desk/components/DeskFilingStrip.tsx:149",

@@ -148,11 +148,6 @@ _ALL_TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     "cadence.set_status":      ("effect_proposal",   False),
     "cadence.run_now":         ("effect_proposal",   False),
     "cadence.apply_closeout":  ("effect_proposal",   False),
-    # --- sequence / workflow ---
-    "sequence.run":     ("effect_proposal",   False),
-    "sequence.cancel":  ("effect_proposal",   False),
-    "workflow.run":     ("effect_proposal",   False),
-    "workflow.cancel":  ("effect_proposal",   False),
     # --- memory ---
     "memory.search":    ("evidence_read",     False),
     "memory.observations": ("evidence_read",  False),
