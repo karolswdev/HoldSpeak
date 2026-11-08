@@ -75,6 +75,7 @@ def test_measure_prints_every_section_on_a_stub(tmp_path: Path) -> None:
     assert "| Web bundle | JS files | 2 |" in text
     assert "Large chunk: desk-abc.js" in text
     assert "| Hub cold start | Skipped | --no-hub |" in text
+    assert "| Desk open (1440 wide, new desk, cold cache) | Skipped | --no-hub |" in text
     assert "| Hours, PR open to merge | Skipped | --no-gh |" in text
     assert "| Hours, first commit to merge (proxy for finding to main) | Skipped | --no-gh |" in text
     assert "| Presses by him, last 24 h | Walks | 0 |" in text

@@ -26,6 +26,7 @@ from datetime import datetime, timezone
 from typing import Any, Callable, Iterable, Mapping, Optional
 
 from ..logging_config import get_logger
+from holdspeak.timestamps import utc_now_z as _now
 
 log = get_logger("services.launch_rebrief")
 
@@ -35,10 +36,6 @@ MID_TURN_EVENTS = frozenset({"UserPromptSubmit", "PreToolUse", "PostToolUse", "S
 LIVE_STATES = frozenset({"launched", "registered"})
 
 QUEUED = "queued"
-
-
-def _now() -> str:
-    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def _field(session: Any, name: str) -> Any:

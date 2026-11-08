@@ -6,7 +6,6 @@ produces receipts.
 """
 from __future__ import annotations
 
-from datetime import datetime, timezone
 from typing import Any, Optional
 
 from ..logging_config import get_logger
@@ -20,12 +19,9 @@ from .models import (
     WorkbenchRecord,
     WorkbenchRunRecord,
 )
+from holdspeak.timestamps import utc_now_z as _now_iso
 
 log = get_logger("db.workbenches")
-
-
-def _now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
 
 
 class WorkbenchRepository(BaseRepository):

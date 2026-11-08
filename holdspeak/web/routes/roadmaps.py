@@ -8,6 +8,7 @@ import re
 import subprocess
 import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any
 
@@ -259,20 +260,51 @@ def _fingerprint(repo_root: Path, slug: str) -> tuple[Any, ...]:
     )
 
 
+_REBUILDING: set[tuple[str, str]] = set()
+
+
+def _rebuild(repo_root: Path, slug: str, key: tuple[str, str], fingerprint: tuple[Any, ...]) -> dict[str, Any] | None:
+    full = _project(repo_root, slug, include_phases=True)
+    with _PROJECT_LOCK:
+        _PROJECT_CACHE[key] = (fingerprint, time.monotonic(), full)
+    return full
+
+
+def _rebuild_in_background(repo_root: Path, slug: str, key: tuple[str, str], fingerprint: tuple[Any, ...]) -> None:
+    def run() -> None:
+        try:
+            _rebuild(repo_root, slug, key, fingerprint)
+        finally:
+            with _PROJECT_LOCK:
+                _REBUILDING.discard(key)
+
+    with _PROJECT_LOCK:
+        if key in _REBUILDING:
+            return
+        _REBUILDING.add(key)
+    threading.Thread(target=run, name=f"roadmap-rebuild-{slug}", daemon=True).start()
+
+
 def _project_cached(repo_root: Path, slug: str, include_phases: bool = True) -> dict[str, Any] | None:
-    """``_project`` with the full answer kept until the roadmap changes on disk."""
+    """``_project`` with the full answer kept until the roadmap changes on disk.
+
+    A change on disk is read again before the answer (the next read shows
+    it). When only _PROJECT_MAX_AGE has passed (for the links ``dw check``
+    follows out of the project), the kept answer is served and read again in
+    the background: the desk read never waits the two seconds of ``dw`` for
+    files that did not change (perf lane 2026-11-08)."""
     if _project_path(repo_root, slug) is None:
         return None
     key = (str(repo_root.resolve()), slug)
     fingerprint = _fingerprint(repo_root, slug)
     with _PROJECT_LOCK:
         cached = _PROJECT_CACHE.get(key)
-    if cached and cached[0] == fingerprint and time.monotonic() - cached[1] < _PROJECT_MAX_AGE:
+    if cached and cached[0] == fingerprint:
         full = cached[2]
+        if time.monotonic() - cached[1] >= _PROJECT_MAX_AGE:
+            _rebuild_in_background(repo_root, slug, key, fingerprint)
     else:
-        full = _project(repo_root, slug, include_phases=True)
-        with _PROJECT_LOCK:
-            _PROJECT_CACHE[key] = (fingerprint, time.monotonic(), full)
+        full = _rebuild(repo_root, slug, key, fingerprint)
     if full is None or include_phases:
         return full
     return {k: v for k, v in full.items() if k not in {"phases", "healthIssues"}}
@@ -290,12 +322,12 @@ def build_roadmaps_router(ctx: WebContext, *, repo_root: Path | None = None) -> 
             roadmap_root = _project_root(root)
             if not roadmap_root.is_dir():
                 return []
-            projects = []
-            for directory in sorted(roadmap_root.iterdir()):
-                project = _project_cached(root, directory.name, include_phases=False)
-                if project:
-                    projects.append(project)
-            return projects
+            # The projects read side by side: a cold read runs `dw check` and
+            # `dw next` per project, and the desk waits for this list.
+            slugs = [directory.name for directory in sorted(roadmap_root.iterdir())]
+            with ThreadPoolExecutor(max_workers=max(1, min(4, len(slugs)))) as pool:
+                read_all = list(pool.map(lambda slug: _project_cached(root, slug, include_phases=False), slugs))
+            return [project for project in read_all if project]
 
         return JSONResponse({"roadmaps": await asyncio.to_thread(read)})
 

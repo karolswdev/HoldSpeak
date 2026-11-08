@@ -34,6 +34,8 @@ from datetime import datetime, timezone
 from typing import Any, Callable, Mapping, Optional
 
 from ..operation_policy import POLICY_VERSION, describe_operation, grant_matches, resolve_policy
+from holdspeak.timestamps import parse_utc_iso as _parse_iso
+from holdspeak.timestamps import utc_now as _utc_now
 
 COMMAND_SCHEMA = 1
 RECEIPT_SCHEMA = 1
@@ -180,22 +182,8 @@ class CommandRefused(ValueError):
         self.reason = reason
 
 
-def _utc_now() -> datetime:
-    return datetime.now(timezone.utc)
-
-
 def _iso_z(instant: datetime) -> str:
     return instant.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-
-
-def _parse_iso(value: Any) -> Optional[datetime]:
-    try:
-        parsed = datetime.fromisoformat(str(value or "").replace("Z", "+00:00"))
-    except ValueError:
-        return None
-    if parsed.tzinfo is None:
-        parsed = parsed.replace(tzinfo=timezone.utc)
-    return parsed
 
 
 def payload_digest(payload: Mapping[str, Any]) -> str:

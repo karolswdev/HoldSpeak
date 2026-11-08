@@ -108,3 +108,33 @@ def test_a_change_on_disk_shows_in_the_next_read(tmp_path: Path) -> None:
     assert after_check["alpha"]["health"] != "green"
     assert any("not done" in issue for issue in after_check["alpha"]["issues"]), after_check["alpha"]
     assert after_check["beta"]["health"] == "green"
+
+
+def test_an_old_answer_is_served_and_read_again_in_the_background(tmp_path: Path, monkeypatch) -> None:
+    """Past the max age with no file changed, the read answers from the kept
+    answer and reads the roadmap again behind it (perf lane 2026-11-08): the
+    desk never waits for `dw` on files that did not change."""
+    import threading
+
+    _seed(tmp_path)
+    client = _client(tmp_path)
+    _, before = _list(client)
+    built: list[str] = []
+    gate = threading.Event()
+    real = roadmaps._project
+
+    def slow_project(repo_root: Path, slug: str, include_phases: bool = True):
+        gate.wait(10)
+        built.append(slug)
+        return real(repo_root, slug, include_phases)
+
+    monkeypatch.setattr(roadmaps, "_project", slow_project)
+    monkeypatch.setattr(roadmaps, "_PROJECT_MAX_AGE", 0.0)
+    _, served = _list(client)
+    assert served == before
+    assert built == []
+    gate.set()
+    deadline = time.monotonic() + 30
+    while time.monotonic() < deadline and any(t.name.startswith("roadmap-rebuild-") for t in threading.enumerate()):
+        time.sleep(0.05)
+    assert sorted(built) == sorted(PROJECTS)

@@ -20,12 +20,12 @@ import json
 import os
 import re
 import subprocess
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Mapping, Optional
 
 from ..timestamps import utc_now
 from .errors import ServiceError
+from holdspeak.timestamps import utc_now_iso as _now
 
 STORE_SCHEMA = 1
 #: The host a clone reads from (the confirm line's egress chip).
@@ -109,10 +109,6 @@ class StoreNotRead(ServiceError):
             "The Project repository registrations cannot be read; nothing was changed.",
             context={"status": 409},
         )
-
-
-def _now() -> str:
-    return datetime.now(timezone.utc).isoformat()
 
 
 class ProjectRepositories:

@@ -679,7 +679,8 @@ class ProgramRunner:
     def _spend_core(self, program: Mapping[str, Any], step: Mapping[str, Any], profile: str,
                     engine: Optional[str]) -> str:
         """Money is a core question (design §6): pi on a hosted (paid) engine
-        with no spend limit set. A local or LAN engine costs nothing; Claude
+        with no spend note set. The note is never a cap (HS-S24): a spend
+        over it stops nothing. A local or LAN engine costs nothing; Claude
         Code and Codex run on his own subscriptions (no per-call spend the
         engine can see)."""
         if profile != "pi-default" or "spend" in set((step.get("facts") or {}).get("core_cleared") or []):

@@ -49,7 +49,7 @@ def test_each_delegating_method_answers_what_the_module_function_answers(tmp_pat
         (svc._state(program, steps), reads._state(db, program, steps)),
         (svc._summary(program, steps), reads._summary(db, program, steps, **seams)),
         (svc._wire(program, steps), reads._wire(db, program, steps, **wire)),
-        (svc.get(OWNER, pid), reads.get(db, OWNER, pid, **wire)),
+        (svc.get(OWNER, pid), reads.get(db, OWNER, pid, **wire, reach=svc.checkpoint_reach)),
         (svc.list(OWNER), reads.program_list(db, OWNER, **seams)),
         (svc.list(OWNER, q="reads"), reads.program_list(db, OWNER, q="reads", **seams)),
         (svc.family(program), reads.family(db, program, **seams)),

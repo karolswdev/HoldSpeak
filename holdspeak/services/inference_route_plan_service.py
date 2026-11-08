@@ -39,6 +39,7 @@ from .tool_capability_service import (
     ToolCapabilityFoundation,
     parse_capability_manifest,
 )
+from holdspeak.timestamps import utc_now as _now
 
 
 ROUTE_PLAN_SCHEMA = "InferenceRoutePlan@1"
@@ -95,10 +96,6 @@ def _canonical(value: Any) -> str:
 
 def _sha256(value: Any) -> str:
     return "sha256:" + hashlib.sha256(_canonical(value).encode()).hexdigest()
-
-
-def _now() -> datetime:
-    return datetime.now(timezone.utc)
 
 
 def _timestamp(value: datetime) -> str:

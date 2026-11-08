@@ -485,6 +485,7 @@
   "search_words": "retire the old ledger retire the old ledger. fast-cycle drop the ledger tidy fast cycle",
   "skipped": 0,
   "spend_limit_usd": null,
+  "spend_note": null,
   "state": "parked",
   "state_word": "Parked",
   "status_line": "Parked · 0 of 2 done · check: fake_program_check.sh · control Normal",

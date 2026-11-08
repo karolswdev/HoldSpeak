@@ -21,7 +21,6 @@ import importlib.metadata
 import json
 import threading
 import uuid
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Optional
 from urllib.request import urlopen
@@ -43,6 +42,7 @@ from ..memory.local_model import (
 from ..principals import Principal, PrincipalKind
 from .errors import ConflictError, ServiceError
 from .tool_capability_service import sha256 as _sha
+from holdspeak.timestamps import utc_now_iso_z as _now
 
 log = get_logger("meaning_search")
 
@@ -63,10 +63,6 @@ _ERRORS = {
     "setup": "Meaning search did not start. Press Try again.",
     "index": "The index stopped. It continues automatically.",
 }
-
-
-def _now() -> str:
-    return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
 def _canonical(value: Any) -> str:
