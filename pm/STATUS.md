@@ -2,6 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · #1888 Fix forward #1885: the Needs-you recorder names private addresses server.local (LAN guard green) and recall.json is re-recorded with the receipt's status and done_at.
 - 2026-11-08 · #1887 Three architecture sources the splits moved (RoomHead, RemoteAccessModule, DestForm) point to their new files, so scripts/gen_docs.sh runs to the end again; a test validates the checked-in shards.
 - 2026-11-08 · #1886 One name for the agent session in the hub: the doctor gate row, the repository-register and hand-preview descriptions and the hub comments say "Hand to an agent session"; generated docs regenerated.
 - 2026-11-08 · #1885 One Done for a promise: Needs you's three client Done copies become one markDone (needsApi.ts), follow-through complete and People's transition answer one receipt (card_id, status, done_at), and the duplicate commitment verb kind goes (26 → 25).

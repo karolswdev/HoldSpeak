@@ -26,6 +26,7 @@ promise, Done on each) under ``done``.
 from __future__ import annotations
 
 import json
+import re
 import sys
 import tempfile
 from datetime import timedelta
@@ -417,11 +418,26 @@ def program_merge() -> dict[str, Any]:
             _close()
 
 
+#: A private IPv4 address (10/8, 172.16/12, 192.168/16): the seeds' model
+#: host is one. A fixture under web/src ships, and no private address ships
+#: (tests/unit/test_lan_address_guard.py): the writer names it server.local.
+_OCTET = r"(?:25[0-5]|2[0-4]\d|1?\d?\d)"
+PRIVATE = re.compile(
+    r"(?<![\d.])(?:10\.{o}\.{o}\.{o}|192\.168\.{o}\.{o}|172\.(?:1[6-9]|2\d|3[01])\.{o}\.{o})(?![\d.]*\d)".format(o=_OCTET)
+)
+
+
+def _write(path: Path, value: Any) -> None:
+    """Write one fixture, every private address named ``server.local``."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    text = json.dumps(value, indent=1, sort_keys=True, default=str) + "\n"
+    path.write_text(PRIVATE.sub("server.local", text), encoding="utf-8")
+
+
 def main() -> int:
     if "--rows" in sys.argv[1:]:
-        ROWS_OUT.parent.mkdir(parents=True, exist_ok=True)
-        ROWS_OUT.write_text(json.dumps({"schema": "needs-you-rows@1", "recordedBy": "scripts/record_needs_you_fixture.py --rows",
-                                        **rows(), "program": program_merge(), "done": done_rows()}, indent=1, sort_keys=True, default=str) + "\n", encoding="utf-8")
+        _write(ROWS_OUT, {"schema": "needs-you-rows@1", "recordedBy": "scripts/record_needs_you_fixture.py --rows",
+                          **rows(), "program": program_merge(), "done": done_rows()})
         print(f"wrote {ROWS_OUT.relative_to(REPO)} ({ROWS_OUT.stat().st_size} bytes)")
         return 0
     fixture = {
@@ -436,8 +452,7 @@ def main() -> int:
         "calendar": calendar(),
         "evalError": eval_error(),
     }
-    OUT.parent.mkdir(parents=True, exist_ok=True)
-    OUT.write_text(json.dumps(fixture, indent=1, sort_keys=True, default=str) + "\n", encoding="utf-8")
+    _write(OUT, fixture)
     print(f"wrote {OUT.relative_to(REPO)} ({OUT.stat().st_size} bytes)")
     return 0
 

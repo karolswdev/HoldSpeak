@@ -4,12 +4,12 @@
   "query": "",
   "recent": true,
   "filter": "all",
-  "searched_at": "2026-10-14T15:00:55.572653+00:00",
+  "searched_at": "2026-11-08T10:46:57.114616+00:00",
   "projects_searched": 1,
   "current": [
    {
-    "id": "record-bd3b9f9204d44089",
-    "ref": "decision_record:record-bd3b9f9204d44089",
+    "id": "record-b083ed1f4ae7487b",
+    "ref": "decision_record:record-b083ed1f4ae7487b",
     "text": "Freeze window is Sunday 02:00, not Saturday",
     "rationale": "Payments cannot drain the queue before 02:00 on a weekday.",
     "lifecycle": "active",
@@ -24,11 +24,11 @@
     "support": "SUPPORTED",
     "acceptance": "ACCEPTED",
     "successor": null,
-    "predecessor_id": "record-5a2d53a2339247d3",
+    "predecessor_id": "record-fb5644a08b704ec8",
     "supersession_reason": null,
     "dispute_reason": null,
     "project": {
-     "id": "proj-706af44c717e",
+     "id": "proj-f173ba43ed17",
      "name": "Q4 Platform"
     },
     "source": {
@@ -47,8 +47,8 @@
   ],
   "superseded": [
    {
-    "id": "record-5a2d53a2339247d3",
-    "ref": "decision_record:record-5a2d53a2339247d3",
+    "id": "record-fb5644a08b704ec8",
+    "ref": "decision_record:record-fb5644a08b704ec8",
     "text": "Freeze window is Saturday 02:00",
     "rationale": "Least traffic on Saturday",
     "lifecycle": "superseded",
@@ -63,7 +63,7 @@
     "support": "SUPPORTED",
     "acceptance": "SUPERSEDED",
     "successor": {
-     "id": "record-bd3b9f9204d44089",
+     "id": "record-b083ed1f4ae7487b",
      "dec_token": "DEC 09-07",
      "text": "Freeze window is Sunday 02:00, not Saturday"
     },
@@ -71,7 +71,7 @@
     "supersession_reason": "moved to Sunday",
     "dispute_reason": null,
     "project": {
-     "id": "proj-706af44c717e",
+     "id": "proj-f173ba43ed17",
      "name": "Q4 Platform"
     },
     "source": {
@@ -91,9 +91,9 @@
   "disputed": [],
   "owed": [
    {
-    "id": "commitment-ec991176375b447d",
-    "ref": "commitment:commitment-ec991176375b447d",
-    "action_item_id": "action-4648242e1d4c4293",
+    "id": "commitment-ef6580e3ece542a8",
+    "ref": "commitment:commitment-ef6580e3ece542a8",
+    "action_item_id": "action-5a7ee7bc80a74f28",
     "text": "Priya confirms the freeze window",
     "owner": null,
     "owner_token": "OWNER · UNKNOWN",
@@ -107,7 +107,7 @@
     ],
     "next_action": "name_owner",
     "project": {
-     "id": "proj-706af44c717e",
+     "id": "proj-f173ba43ed17",
      "name": "Q4 Platform"
     },
     "source": {
@@ -117,7 +117,7 @@
      "started_at": "2026-09-07T11:00:00",
      "scope": "meeting:m-sun"
     },
-    "decision_record_id": "record-337d047516064bed",
+    "decision_record_id": "record-03bb681d84ef46d4",
     "decision_state": null
    }
   ],
@@ -128,7 +128,7 @@
     "title": "Architecture review",
     "snippet": "Let's start with the cut-over sequencing for the payments platform Cut-over runs on the read replica first, then we flip writes Freeze window is Sunday 02:00, not Saturday Priya confirms the freeze window",
     "occurred_at": "2026-09-07T11:00:00",
-    "project_id": "proj-706af44c717e"
+    "project_id": "proj-f173ba43ed17"
    },
    {
     "kind": "meeting",
@@ -136,7 +136,7 @@
     "title": "Cut-over planning",
     "snippet": "Let's start with the cut-over sequencing for the payments platform Cut-over runs on the read replica first, then we flip writes Freeze window is Sunday 02:00, not Saturday Priya confirms the freeze window",
     "occurred_at": "2026-09-02T11:00:00",
-    "project_id": "proj-706af44c717e"
+    "project_id": "proj-f173ba43ed17"
    }
   ],
   "briefs": [],
@@ -148,12 +148,12 @@
   "query": "freeze window",
   "recent": false,
   "filter": "all",
-  "searched_at": "2026-10-14T15:00:55.588874+00:00",
+  "searched_at": "2026-11-08T10:46:57.131614+00:00",
   "projects_searched": 1,
   "current": [
    {
-    "id": "record-bd3b9f9204d44089",
-    "ref": "decision_record:record-bd3b9f9204d44089",
+    "id": "record-b083ed1f4ae7487b",
+    "ref": "decision_record:record-b083ed1f4ae7487b",
     "text": "Freeze window is Sunday 02:00, not Saturday",
     "rationale": "Payments cannot drain the queue before 02:00 on a weekday.",
     "lifecycle": "active",
@@ -168,11 +168,11 @@
     "support": "SUPPORTED",
     "acceptance": "ACCEPTED",
     "successor": null,
-    "predecessor_id": "record-5a2d53a2339247d3",
+    "predecessor_id": "record-fb5644a08b704ec8",
     "supersession_reason": null,
     "dispute_reason": null,
     "project": {
-     "id": "proj-706af44c717e",
+     "id": "proj-f173ba43ed17",
      "name": "Q4 Platform"
     },
     "source": {
@@ -191,8 +191,8 @@
   ],
   "superseded": [
    {
-    "id": "record-5a2d53a2339247d3",
-    "ref": "decision_record:record-5a2d53a2339247d3",
+    "id": "record-fb5644a08b704ec8",
+    "ref": "decision_record:record-fb5644a08b704ec8",
     "text": "Freeze window is Saturday 02:00",
     "rationale": "Least traffic on Saturday",
     "lifecycle": "superseded",
@@ -207,7 +207,7 @@
     "support": "SUPPORTED",
     "acceptance": "SUPERSEDED",
     "successor": {
-     "id": "record-bd3b9f9204d44089",
+     "id": "record-b083ed1f4ae7487b",
      "dec_token": "DEC 09-07",
      "text": "Freeze window is Sunday 02:00, not Saturday"
     },
@@ -215,7 +215,7 @@
     "supersession_reason": "moved to Sunday",
     "dispute_reason": null,
     "project": {
-     "id": "proj-706af44c717e",
+     "id": "proj-f173ba43ed17",
      "name": "Q4 Platform"
     },
     "source": {
@@ -235,9 +235,9 @@
   "disputed": [],
   "owed": [
    {
-    "id": "commitment-ec991176375b447d",
-    "ref": "commitment:commitment-ec991176375b447d",
-    "action_item_id": "action-4648242e1d4c4293",
+    "id": "commitment-ef6580e3ece542a8",
+    "ref": "commitment:commitment-ef6580e3ece542a8",
+    "action_item_id": "action-5a7ee7bc80a74f28",
     "text": "Priya confirms the freeze window",
     "owner": null,
     "owner_token": "OWNER · UNKNOWN",
@@ -251,7 +251,7 @@
     ],
     "next_action": "name_owner",
     "project": {
-     "id": "proj-706af44c717e",
+     "id": "proj-f173ba43ed17",
      "name": "Q4 Platform"
     },
     "source": {
@@ -261,7 +261,7 @@
      "started_at": "2026-09-07T11:00:00",
      "scope": "meeting:m-sun"
     },
-    "decision_record_id": "record-337d047516064bed",
+    "decision_record_id": "record-03bb681d84ef46d4",
     "decision_state": null
    }
   ],
@@ -272,7 +272,7 @@
     "title": "Cut-over planning",
     "snippet": "Priya confirms the <mark>freeze</mark> <mark>window</mark>",
     "occurred_at": "2026-09-02T11:00:00",
-    "project_id": "proj-706af44c717e",
+    "project_id": "proj-f173ba43ed17",
     "bm25": -2.408544726301736e-06,
     "normalized_score": 1.0,
     "kind_rank": 1,
@@ -288,7 +288,7 @@
     "title": "Architecture review",
     "snippet": "Priya confirms the <mark>freeze</mark> <mark>window</mark>",
     "occurred_at": "2026-09-07T11:00:00",
-    "project_id": "proj-706af44c717e",
+    "project_id": "proj-f173ba43ed17",
     "bm25": -2.408544726301736e-06,
     "normalized_score": 1.0,
     "kind_rank": 2,
@@ -305,15 +305,15 @@
   "remembered": 5
  },
  "carry": {
-  "path": "/api/decision-records/record-bd3b9f9204d44089/carry",
+  "path": "/api/decision-records/record-b083ed1f4ae7487b/carry",
   "body": {
-   "project_id": "proj-706af44c717e"
+   "project_id": "proj-f173ba43ed17"
   },
   "answer": {
-   "id": "carry-34eeded5b6714112",
-   "project_id": "proj-706af44c717e",
-   "record_ref": "decision_record:record-bd3b9f9204d44089",
-   "carried_at": "2026-10-14T15:00:55.605277+00:00",
+   "id": "carry-5272445a20a34d08",
+   "project_id": "proj-f173ba43ed17",
+   "record_ref": "decision_record:record-b083ed1f4ae7487b",
+   "carried_at": "2026-11-08T10:46:57.149030+00:00",
    "carried_by": "owner",
    "consumed_at": null,
    "consumed_by": null,
@@ -324,12 +324,12 @@
   "query": "freeze window",
   "recent": false,
   "filter": "all",
-  "searched_at": "2026-10-14T15:00:55.606560+00:00",
+  "searched_at": "2026-11-08T10:46:57.150666+00:00",
   "projects_searched": 1,
   "current": [
    {
-    "id": "record-bd3b9f9204d44089",
-    "ref": "decision_record:record-bd3b9f9204d44089",
+    "id": "record-b083ed1f4ae7487b",
+    "ref": "decision_record:record-b083ed1f4ae7487b",
     "text": "Freeze window is Sunday 02:00, not Saturday",
     "rationale": "Payments cannot drain the queue before 02:00 on a weekday.",
     "lifecycle": "active",
@@ -344,11 +344,11 @@
     "support": "SUPPORTED",
     "acceptance": "ACCEPTED",
     "successor": null,
-    "predecessor_id": "record-5a2d53a2339247d3",
+    "predecessor_id": "record-fb5644a08b704ec8",
     "supersession_reason": null,
     "dispute_reason": null,
     "project": {
-     "id": "proj-706af44c717e",
+     "id": "proj-f173ba43ed17",
      "name": "Q4 Platform"
     },
     "source": {
@@ -367,8 +367,8 @@
   ],
   "superseded": [
    {
-    "id": "record-5a2d53a2339247d3",
-    "ref": "decision_record:record-5a2d53a2339247d3",
+    "id": "record-fb5644a08b704ec8",
+    "ref": "decision_record:record-fb5644a08b704ec8",
     "text": "Freeze window is Saturday 02:00",
     "rationale": "Least traffic on Saturday",
     "lifecycle": "superseded",
@@ -383,7 +383,7 @@
     "support": "SUPPORTED",
     "acceptance": "SUPERSEDED",
     "successor": {
-     "id": "record-bd3b9f9204d44089",
+     "id": "record-b083ed1f4ae7487b",
      "dec_token": "DEC 09-07",
      "text": "Freeze window is Sunday 02:00, not Saturday"
     },
@@ -391,7 +391,7 @@
     "supersession_reason": "moved to Sunday",
     "dispute_reason": null,
     "project": {
-     "id": "proj-706af44c717e",
+     "id": "proj-f173ba43ed17",
      "name": "Q4 Platform"
     },
     "source": {
@@ -411,9 +411,9 @@
   "disputed": [],
   "owed": [
    {
-    "id": "commitment-ec991176375b447d",
-    "ref": "commitment:commitment-ec991176375b447d",
-    "action_item_id": "action-4648242e1d4c4293",
+    "id": "commitment-ef6580e3ece542a8",
+    "ref": "commitment:commitment-ef6580e3ece542a8",
+    "action_item_id": "action-5a7ee7bc80a74f28",
     "text": "Priya confirms the freeze window",
     "owner": null,
     "owner_token": "OWNER · UNKNOWN",
@@ -427,7 +427,7 @@
     ],
     "next_action": "name_owner",
     "project": {
-     "id": "proj-706af44c717e",
+     "id": "proj-f173ba43ed17",
      "name": "Q4 Platform"
     },
     "source": {
@@ -437,7 +437,7 @@
      "started_at": "2026-09-07T11:00:00",
      "scope": "meeting:m-sun"
     },
-    "decision_record_id": "record-337d047516064bed",
+    "decision_record_id": "record-03bb681d84ef46d4",
     "decision_state": null
    }
   ],
@@ -448,7 +448,7 @@
     "title": "Cut-over planning",
     "snippet": "Priya confirms the <mark>freeze</mark> <mark>window</mark>",
     "occurred_at": "2026-09-02T11:00:00",
-    "project_id": "proj-706af44c717e",
+    "project_id": "proj-f173ba43ed17",
     "bm25": -2.408544726301736e-06,
     "normalized_score": 1.0,
     "kind_rank": 1,
@@ -464,7 +464,7 @@
     "title": "Architecture review",
     "snippet": "Priya confirms the <mark>freeze</mark> <mark>window</mark>",
     "occurred_at": "2026-09-07T11:00:00",
-    "project_id": "proj-706af44c717e",
+    "project_id": "proj-f173ba43ed17",
     "bm25": -2.408544726301736e-06,
     "normalized_score": 1.0,
     "kind_rank": 2,
@@ -482,18 +482,20 @@
  },
  "name_owner": {
   "body": {
-   "card_id": "action-4648242e1d4c4293",
+   "card_id": "action-5a7ee7bc80a74f28",
    "verb": "delegate",
    "payload": {
     "to": "Priya"
    }
   },
   "answer": {
-   "card_id": "action-4648242e1d4c4293",
+   "card_id": "action-5a7ee7bc80a74f28",
    "verb": "delegate",
+   "status": "open",
+   "done_at": null,
    "loop_ids": [],
    "commitment_ids": [
-    "commitment-ec991176375b447d"
+    "commitment-ef6580e3ece542a8"
    ]
   }
  },
@@ -501,12 +503,12 @@
   "query": "freeze window",
   "recent": false,
   "filter": "all",
-  "searched_at": "2026-10-14T15:00:55.620740+00:00",
+  "searched_at": "2026-11-08T10:46:57.165754+00:00",
   "projects_searched": 1,
   "current": [
    {
-    "id": "record-bd3b9f9204d44089",
-    "ref": "decision_record:record-bd3b9f9204d44089",
+    "id": "record-b083ed1f4ae7487b",
+    "ref": "decision_record:record-b083ed1f4ae7487b",
     "text": "Freeze window is Sunday 02:00, not Saturday",
     "rationale": "Payments cannot drain the queue before 02:00 on a weekday.",
     "lifecycle": "active",
@@ -521,11 +523,11 @@
     "support": "SUPPORTED",
     "acceptance": "ACCEPTED",
     "successor": null,
-    "predecessor_id": "record-5a2d53a2339247d3",
+    "predecessor_id": "record-fb5644a08b704ec8",
     "supersession_reason": null,
     "dispute_reason": null,
     "project": {
-     "id": "proj-706af44c717e",
+     "id": "proj-f173ba43ed17",
      "name": "Q4 Platform"
     },
     "source": {
@@ -544,8 +546,8 @@
   ],
   "superseded": [
    {
-    "id": "record-5a2d53a2339247d3",
-    "ref": "decision_record:record-5a2d53a2339247d3",
+    "id": "record-fb5644a08b704ec8",
+    "ref": "decision_record:record-fb5644a08b704ec8",
     "text": "Freeze window is Saturday 02:00",
     "rationale": "Least traffic on Saturday",
     "lifecycle": "superseded",
@@ -560,7 +562,7 @@
     "support": "SUPPORTED",
     "acceptance": "SUPERSEDED",
     "successor": {
-     "id": "record-bd3b9f9204d44089",
+     "id": "record-b083ed1f4ae7487b",
      "dec_token": "DEC 09-07",
      "text": "Freeze window is Sunday 02:00, not Saturday"
     },
@@ -568,7 +570,7 @@
     "supersession_reason": "moved to Sunday",
     "dispute_reason": null,
     "project": {
-     "id": "proj-706af44c717e",
+     "id": "proj-f173ba43ed17",
      "name": "Q4 Platform"
     },
     "source": {
@@ -588,9 +590,9 @@
   "disputed": [],
   "owed": [
    {
-    "id": "commitment-ec991176375b447d",
-    "ref": "commitment:commitment-ec991176375b447d",
-    "action_item_id": "action-4648242e1d4c4293",
+    "id": "commitment-ef6580e3ece542a8",
+    "ref": "commitment:commitment-ef6580e3ece542a8",
+    "action_item_id": "action-5a7ee7bc80a74f28",
     "text": "Priya confirms the freeze window",
     "owner": "Priya",
     "owner_token": "OWNER · PRIYA",
@@ -603,7 +605,7 @@
     ],
     "next_action": "set_date",
     "project": {
-     "id": "proj-706af44c717e",
+     "id": "proj-f173ba43ed17",
      "name": "Q4 Platform"
     },
     "source": {
@@ -613,7 +615,7 @@
      "started_at": "2026-09-07T11:00:00",
      "scope": "meeting:m-sun"
     },
-    "decision_record_id": "record-337d047516064bed",
+    "decision_record_id": "record-03bb681d84ef46d4",
     "decision_state": null
    }
   ],
@@ -624,7 +626,7 @@
     "title": "Cut-over planning",
     "snippet": "Priya confirms the <mark>freeze</mark> <mark>window</mark>",
     "occurred_at": "2026-09-02T11:00:00",
-    "project_id": "proj-706af44c717e",
+    "project_id": "proj-f173ba43ed17",
     "bm25": -2.408544726301736e-06,
     "normalized_score": 1.0,
     "kind_rank": 1,
@@ -640,7 +642,7 @@
     "title": "Architecture review",
     "snippet": "Priya confirms the <mark>freeze</mark> <mark>window</mark>",
     "occurred_at": "2026-09-07T11:00:00",
-    "project_id": "proj-706af44c717e",
+    "project_id": "proj-f173ba43ed17",
     "bm25": -2.408544726301736e-06,
     "normalized_score": 1.0,
     "kind_rank": 2,
@@ -660,7 +662,7 @@
   "query": "unfindablequasar",
   "recent": false,
   "filter": "all",
-  "searched_at": "2026-10-14T15:00:55.634587+00:00",
+  "searched_at": "2026-11-08T10:46:57.180952+00:00",
   "projects_searched": 1,
   "current": [],
   "superseded": [],
@@ -679,7 +681,7 @@
   "history": [],
   "launches": {
    "live": 0,
-   "cap": 3
+   "cap": 6
   }
  }
 }
