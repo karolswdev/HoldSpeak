@@ -1,7 +1,8 @@
 import { wireDate } from "../../surface/format";
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { apiFetch, apiRequest, readableError } from "../../../lib/api";
+import { apiFetch, readableError } from "../../../lib/api";
 import { requestDecisionEdit } from "../decisionEdit";
+import { acceptDecision } from "../../decide";
 import { plainReason } from "../../surface/plainFailure";
 import { Button } from "../../../components/signal/Signal";
 import { holdObject, qualifiedRef } from "../../api";
@@ -812,12 +813,7 @@ function DecisionReader({
     setAccepting(true);
     setAcceptFailure("");
     try {
-      const response = await apiRequest(`/api/decisions/${encodeURIComponent(deskId)}/status`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "accepted" }),
-      });
-      if (!response.ok) throw response;
+      await acceptDecision(deskId);
       void useDesk.getState().refresh();
       onRetry();
     } catch (cause) {

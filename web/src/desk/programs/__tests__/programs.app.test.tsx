@@ -1422,7 +1422,9 @@ describe("the seams", () => {
     const face = needFace({ ref: String(item.ref), kind: "attention", item } as never, { now: new Date(), sessions: [], flights: [] } as never);
     expect(face.kind).toBe("program");
     expect(face.direction).toBe("decide");
-    expect(face.openRef).toBe(`program:${(item.program as { programId: string }).programId}`);
+    // The step travels: the row opens the Program at its step.
+    const named = item.program as { programId: string; stepId: string };
+    expect(face.openRef).toBe(`program:${named.programId}:${named.stepId}`);
     // #1854: the row is the Program (its title), the quiet word Decide and
     // one verb Decide; the choices are its context menu, each still pressed
     // on the step's decide route.
@@ -3575,5 +3577,35 @@ describe("HS-S21: Add binds the action to one new step (D14/G21 = A)", () => {
     await waitFor(() => expect(screen.getByTestId("program-failure").textContent).toMatch(/^The hub did not confirm the step · It can be on the program/));
     await waitFor(() => expect(calls.filter((call) => call === `GET /api/programs/${unbound.id}`).length).toBe(readsBefore + 1));
     expect(posts).toBe(2);
+  });
+});
+
+// Glue 2026-11-08: a Needs you row that names a step opens the Program window
+// at that step (`program:<id>:<step>`); `program:<id>` opens it as before.
+describe("the step travels to the Program window", () => {
+  const core = yourTurn.your_turn_items.find((item) => item.kind === "core")!;
+  const ordinal = yourTurn.steps.find((step) => step.id === core.step_id)!.ordinal;
+
+  it("a `program:<id>:<step>` open selects that step when the window mounts", async () => {
+    const { refOpener } = await import("../../openObject");
+    hub({ [`GET /api/programs/${yourTurn.id}`]: yourTurn });
+    refOpener(`program:${yourTurn.id}:${core.step_id}`)!();
+    render(<ProgramBody programId={yourTurn.id} />);
+    await screen.findByTestId("programs-your-turn");
+    await waitFor(() => expect(stepRow(ordinal).hasAttribute("data-selected")).toBe(true));
+    expect(screen.getAllByTestId("programs-step").filter((row) => row.hasAttribute("data-selected"))).toHaveLength(1);
+  });
+
+  it("an open window moves to the step asked for; `program:<id>` leaves the selection as it is", async () => {
+    const { refOpener } = await import("../../openObject");
+    hub({ [`GET /api/programs/${yourTurn.id}`]: yourTurn });
+    render(<ProgramBody programId={yourTurn.id} />);
+    await screen.findByTestId("programs-your-turn");
+    // What waits on him is the headline: no step opens by itself.
+    expect(screen.getAllByTestId("programs-step").some((row) => row.hasAttribute("data-selected"))).toBe(false);
+    act(() => refOpener(`program:${yourTurn.id}`)!());
+    expect(screen.getAllByTestId("programs-step").some((row) => row.hasAttribute("data-selected"))).toBe(false);
+    act(() => refOpener(`program:${yourTurn.id}:${core.step_id}`)!());
+    await waitFor(() => expect(stepRow(ordinal).hasAttribute("data-selected")).toBe(true));
   });
 });

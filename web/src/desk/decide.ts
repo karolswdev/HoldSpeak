@@ -8,7 +8,7 @@
  * HS-S42: the decision is created once on the canonical route
  * (`POST /api/decision-records/from-desk`) and filed after, on
  * `decision_record:<id>`; an uncertain answer never creates again. */
-import { ApiError, apiFetch } from "../lib/api";
+import { ApiError, apiFetch, apiRequest } from "../lib/api";
 import { fromWireDecision } from "./api";
 import type { Decision } from "../lib/primitives";
 
@@ -227,4 +227,23 @@ export async function decideFromMeeting(input: {
     project,
     filing,
   };
+}
+
+/** The one write of a Desk decision's status (`PUT /api/decisions/{id}/status`).
+ *  Confirm on a Needs you row, Accept in the Decisions reader and the status
+ *  in the decision's own window all call it. A refusal throws the hub's
+ *  Response; the answer is the hub's body (`{decision: {status}}`). */
+export async function writeDecisionStatus(decisionId: string, status: string): Promise<{ decision?: { status?: string } }> {
+  const response = await apiRequest(`/api/decisions/${encodeURIComponent(decisionId)}/status`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ status }),
+  });
+  if (!response.ok) throw response;
+  return response.json().catch(() => ({}));
+}
+
+/** Accept a proposed Desk decision (its status `accepted`). */
+export function acceptDecision(decisionId: string): Promise<{ decision?: { status?: string } }> {
+  return writeDecisionStatus(decisionId, "accepted");
 }

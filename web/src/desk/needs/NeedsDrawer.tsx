@@ -32,6 +32,7 @@ import { PeopleReadFailed } from "../people/PeopleReadFailed";
 import { openProjectProposal, refOpener, type Opener } from "../openObject";
 import { openCoderSession, openProjectRoom, openSurfaceOr } from "../shell";
 import { useDesk } from "../store";
+import { acceptDecision } from "../decide";
 import { ConfirmVerb, ScrollHint, StatusBar, StringGadget, SurfaceSection, SurfaceState, TickNumber, Toolbar, type StatusBarItem } from "../surface";
 import { openSourceRef } from "../surface/citations";
 import { NeedsList, NeedsRow } from "../surface/objects";
@@ -277,11 +278,13 @@ function NeedVerbsView({ face, primary, onWell, well, menu = null, onMenu = () =
       // (the briefing page) are the row's context menu.
       const opener = faceOpener(face);
       const decide = (choice: string, label: string, origin?: Element | null) => act(label, () => apiFetch(v.decide, {
-        method: "POST", json: { kind: v.itemKind, choice, ...(v.findingId ? { finding_id: v.findingId } : {}),
-          ...(v.lessonId != null ? { lesson_id: v.lessonId } : {}) },
+        method: "POST", json: programDecideBody(v, choice),
       }), face.id, origin);
       const merges = v.ask === "merge" && v.choices.includes("merge");
-      const leadWord = merges ? "Merge" : v.ask === "decide" ? "Decide" : "Open";
+      // One meaning for Decide on every row: it opens the choices in place.
+      // An ask with no choices is Open (the Program, at its step).
+      const decides = !merges && v.ask === "decide" && v.choices.length > 0;
+      const leadWord = merges ? "Merge" : decides ? "Decide" : "Open";
       const ghost = busy ? "Busy" : undefined;
       const choiceEntries: WorkMenuEntry[] = v.choices.filter((choice) => !(merges && choice === "merge")).map((choice) => {
         const word = PROGRAM_CHOICE_WORDS[choice] ?? choice;
@@ -310,9 +313,11 @@ function NeedVerbsView({ face, primary, onWell, well, menu = null, onMenu = () =
           ] }]) : []),
       ];
       return <>
-        <Button dense variant="secondary" loading={busy} disabled={busy || (!merges && !opener)} aria-label={named(leadWord)}
-          data-testid="needs-row-verb" data-verb={merges ? "program-merge" : v.ask === "decide" ? "program-decide" : "program-open"}
-          onClick={(event) => merges ? void decide("merge", "Done", event.currentTarget) : opener?.()}>{leadWord}</Button>
+        <Button dense variant="secondary" loading={busy} disabled={busy || (!merges && !decides && !opener)} aria-label={named(leadWord)}
+          aria-expanded={decides ? well === "decide" : undefined}
+          data-testid="needs-row-verb" data-verb={merges ? "program-merge" : decides ? "program-decide" : "program-open"}
+          onClick={(event) => merges ? void decide("merge", "Done", event.currentTarget)
+            : decides ? onWell(well === "decide" ? null : "decide") : opener?.()}>{leadWord}</Button>
         {menu ? <WorkMenu label={face.name} x={menu.x} y={menu.y} entries={[...entries, ...extra]} autoFocus onClose={() => onMenu(null)}
           returnFocus={() => menu.row?.querySelector<HTMLElement>("[data-testid=needs-row-verb]")?.focus()} /> : null}
       </>;
@@ -374,14 +379,11 @@ function NeedVerbsView({ face, primary, onWell, well, menu = null, onMenu = () =
         <Button dense variant={lead} aria-label={named("Open the agent")} data-testid="needs-row-verb" data-verb="open"
           onClick={() => openCoderSession(v.sessionKey)}>Open session</Button>
       );
-    case "review": {
-      const label = v.label ?? "Review";
+    case "review":
       return (
-        <Button dense variant={lead} aria-label={named(label)} data-testid="needs-row-verb"
-          data-verb={label === "Decide" ? "decide" : "review"}
-          onClick={() => refOpener(v.ref)?.()}>{label}</Button>
+        <Button dense variant={lead} aria-label={named("Review")} data-testid="needs-row-verb" data-verb="review"
+          onClick={() => refOpener(v.ref)?.()}>Review</Button>
       );
-    }
     case "work": {
       const opener = faceOpener(face);
       const key = `action-item:${v.cardId}`;
@@ -438,10 +440,7 @@ function NeedVerbsView({ face, primary, onWell, well, menu = null, onMenu = () =
       return (
         <Button dense variant={lead} disabled={busy} aria-label={named("Confirm")}
           data-testid="needs-row-verb" data-verb="confirm"
-          onClick={() => void act("Confirm", () => apiFetch(
-            `/api/decisions/${encodeURIComponent(v.decisionId)}/status`,
-            { method: "PUT", json: { status: "accepted" } },
-          ), `decision:${v.decisionId}`)}>Confirm</Button>
+          onClick={() => void act("Confirm", () => acceptDecision(v.decisionId), `decision:${v.decisionId}`)}>Confirm</Button>
       );
     case "commitment": {
       if (v.next === "mark_done") {
@@ -710,41 +709,79 @@ function CommitWell({ face, which, onDone }: { face: NeedFace; which: Well; onDo
   );
 }
 
-/** Betterment D2: Decide, in place: Accept writes the decision (the
- *  proposal's Confirm), Not now holds it back (Defer), Drop removes it
- *  (Decline). Open item shows it where it came from. */
+/** The POST body of one Program choice (the row's `decide` route). */
+function programDecideBody(v: Extract<NeedFace["verbs"], { kind: "program" }>, choice: string) {
+  return { kind: v.itemKind, choice, ...(v.findingId ? { finding_id: v.findingId } : {}),
+    ...(v.lessonId != null ? { lesson_id: v.lessonId } : {}) };
+}
+
+/** One choice in the Decide panel. */
+type DecideChoice = { id: string; label: string; key: string; run(): Promise<unknown>; after?(): void; settles: boolean; quiet?: boolean };
+
+/** The choices Decide opens: a meeting's decision (Accept, Not now, Drop)
+ *  or a Program ask (the hub's choices, each its `decide` route). */
+function decideChoices(face: NeedFace): DecideChoice[] {
+  const v = face.verbs;
+  if (v.kind === "decide") {
+    const key = `proposal:${v.proposalId}`;
+    const post = (path: string, json?: unknown) => () =>
+      apiFetch(`/api/proposals/${encodeURIComponent(v.proposalId)}/${path}`, { method: "POST", ...(json ? { json } : {}) });
+    return [
+      { id: "accept", label: "Accept", key, run: post("confirm"), settles: true },
+      { id: "not_now", label: "Not now", key, run: post("defer", {}), settles: true },
+      { id: "drop", label: "Drop", key, run: post("dismiss"), settles: true, quiet: true,
+        after: () => offerUndo(face.name, () => apiFetch(`/api/proposals/${encodeURIComponent(v.proposalId)}/restore`, { method: "POST" })) },
+    ];
+  }
+  if (v.kind === "program") {
+    return v.choices.map((choice) => ({
+      id: choice, label: PROGRAM_CHOICE_WORDS[choice] ?? choice, key: face.id,
+      run: () => apiFetch(v.decide, { method: "POST", json: programDecideBody(v, choice) }),
+      // Send… prepares the page; the row stays.
+      settles: choice !== "prepare",
+    }));
+  }
+  return [];
+}
+
+/** Decide, in place (Betterment D2; owner rule "the row is the object, one
+ *  verb"): the row's choices under it, the first the lead. A meeting's
+ *  decision: Accept writes it (the proposal's Confirm), Not now holds it back
+ *  (Defer), Drop removes it (Decline). A Program ask: the hub's choices, each
+ *  posted to the step's decide route. On success the row settles out. Open
+ *  item shows it where it came from. */
 function DecideWell({ face, onDone }: { face: NeedFace; onDone(): void }) {
   const [busy, setBusy] = useState(false);
-  const v = face.verbs;
-  if (v.kind !== "decide") return null;
+  const panel = useRef<HTMLLIElement | null>(null);
+  const choices = decideChoices(face);
+  if (!choices.length) return null;
   const opener = faceOpener(face);
-  const run = async (label: string, path: string, json?: unknown): Promise<void> => {
-    if (busy) return Promise.reject(new Error("busy"));
+  const press = async (choice: DecideChoice): Promise<void> => {
+    if (busy) return;
     setBusy(true);
-    const key = `proposal:${v.proposalId}`;
     try {
-      await apiFetch(`/api/proposals/${encodeURIComponent(v.proposalId)}/${path}`, { method: "POST", ...(json ? { json } : {}) });
-      clearWriteFailure(key);
+      await choice.run();
+      clearWriteFailure(choice.key);
+      const settled = choice.settles ? await settleOut(panel.current?.previousElementSibling) : null;
       onDone();
-      void refreshNeedsYou(false);
+      choice.after?.();
+      void Promise.resolve(refreshNeedsYou(false)).finally(() => settled?.removeAttribute("data-settle"));
     } catch (error) {
-      reportWriteFailure(label, error, () => void run(label, path, json), key);
-      throw error;
+      reportWriteFailure(choice.label, error, () => void press(choice), choice.key);
     } finally {
       setBusy(false);
     }
   };
   return (
-    <li className="needs-drawer-well needs-drawer-decide" role="region" aria-label={`Decide: ${face.name}`}
+    <li ref={panel} className="needs-drawer-well needs-drawer-decide" role="region" aria-label={`Decide: ${face.name}`}
       data-testid="needs-decide"
       onKeyDown={(event) => { if (event.key === "Escape") { event.stopPropagation(); onDone(); } }}>
-      <Button dense variant="primary" disabled={busy} aria-label={`Accept: ${face.name}`} data-testid="needs-decide-accept"
-        autoFocus onClick={() => void run("Accept", "confirm").catch(() => undefined)}>Accept</Button>
-      <Button dense variant="secondary" disabled={busy} aria-label={`Not now: ${face.name}`}
-        onClick={() => void run("Not now", "defer", {}).catch(() => undefined)}>Not now</Button>
-      <Button dense variant="ghost" disabled={busy} aria-label={`Drop: ${face.name}`}
-        onClick={() => void run("Drop", "dismiss").then(() => offerUndo(face.name, () => apiFetch(
-          `/api/proposals/${encodeURIComponent(v.proposalId)}/restore`, { method: "POST" }))).catch(() => undefined)}>Drop</Button>
+      {choices.map((choice, index) => (
+        <Button key={choice.id} dense variant={index === 0 ? "primary" : choice.quiet ? "ghost" : "secondary"}
+          disabled={busy} autoFocus={index === 0} aria-label={`${choice.label}: ${face.name}`}
+          data-testid={choice.id === "accept" ? "needs-decide-accept" : "needs-decide-choice"} data-choice={choice.id}
+          onClick={() => void press(choice)}>{choice.label}</Button>
+      ))}
       {opener ? <Button dense variant="ghost" aria-label={`Open item: ${face.name}`} onClick={() => opener()}>Open item</Button> : null}
     </li>
   );
