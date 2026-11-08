@@ -433,8 +433,15 @@ LAUNCH_RULES.update({
         "program.text", "program.text_apply", "program.shape", "program.plan_draft", "program.round",
         # PG-LANG LANG12: a launch adds to tonight only at YOLO (the service's rule).
         "program.add_to_night",
+        # One table (#2017): a Drafting Program from a Door action, a draft's
+        # several Programs applied, a race, and the held shaping rows dropped,
+        # each on a Program the launch made (the service's writer rule).
+        "program.from_action", "program.plan_programs", "program.race", "program.shape_held_drop",
     )
 })
+# One table (#2017): two reads whose verb the shared read classifier does not
+# name: the template list and the engine that shapes a Program.
+LAUNCH_RULES.update({"program.templates": (READ, "", ""), "program.shape_engine": (READ, "", "")})
 # Phone (2026-10-28): a launch reads the owner's replies, and writes one line
 # to his phone, held in PhoneService (500 characters, a step's 3 an hour, no
 # secret); a call is EGRESS and never offered.
