@@ -200,6 +200,68 @@ function isProtectedFailure(cause: unknown): boolean {
   return code.startsWith("people_store_") || code.startsWith("people_key_");
 }
 
+/** HS-S33 (G33 = A): an I owe Add is two writes (the request, then its
+ *  acceptance). The Prep keeps the acknowledged request id with the words
+ *  he submitted while it is mounted, and finishes THAT request; it never
+ *  makes a second request to repair the first. Unknown creation is said,
+ *  never retried. Same mount only: a reload loses the receipt. */
+type OweAttempt =
+  | { phase: "creating"; seq: number; relationshipId: string; body: string }
+  | { phase: "accepting"; seq: number; relationshipId: string; body: string; requestId: string }
+  | { phase: "acceptance_uncertain"; seq: number; relationshipId: string; body: string; requestId: string; note: string; acceptable: boolean }
+  | { phase: "checking"; seq: number; relationshipId: string; body: string; requestId: string }
+  | { phase: "saved"; seq: number; relationshipId: string; body: string; requestId: string; saved: { body: string; state: string } }
+  | { phase: "creation_uncertain"; seq: number; relationshipId: string; body: string };
+
+/** The exact codes the hub returns before any write for this invocation
+ *  (V33). Every other failure of a write is unknown, not "Nothing changed". */
+const CREATE_NO_EFFECT = new Set(["principal_right_required", "people_owner_required", "people_relationship_not_found", "people_payload_required", "people_payload_invalid", "people_payload_too_large", "people_visibility_invalid"]);
+const ACCEPT_NO_EFFECT = new Set(["principal_right_required", "people_owner_required", "people_request_not_found", "people_relationship_not_found", "people_payload_invalid", "people_payload_too_large", "people_request_not_acceptable"]);
+
+function failureCode(cause: unknown): string {
+  if (!(cause instanceof ApiError) || !cause.payload || typeof cause.payload !== "object") return "";
+  const detail = (cause.payload as Record<string, unknown>).detail;
+  if (typeof detail === "string") return detail;
+  if (detail && typeof detail === "object") return String((detail as Record<string, unknown>).code ?? "");
+  return "";
+}
+
+/** An owner-auth or key failure: the private receipt leaves memory. */
+function isAuthOrKeyFailure(cause: unknown): boolean {
+  if (!(cause instanceof ApiError)) return false;
+  if (cause.status === 401 || cause.status === 403) return true;
+  return isProtectedFailure(cause) && !isStoreOutage(cause);
+}
+
+/** Read the person once and say what happened to the held request. A read
+ *  never accepts. Only a complete read with exact ids is an answer. */
+type SavedCheck =
+  | { kind: "saved"; saved: { body: string; state: string } }
+  | { kind: "acceptable" }
+  | { kind: "unresolved"; note: string };
+function checkSavedRequest(read: unknown, relationshipId: string, requestId: string, body: string): SavedCheck {
+  const relationship = read && typeof read === "object" ? (read as { relationship?: unknown }).relationship : null;
+  const record = relationship && typeof relationship === "object" ? relationship as Record<string, unknown> : null;
+  if (!record || record.id !== relationshipId || !Array.isArray(record.requests) || !Array.isArray(record.commitments)) {
+    return { kind: "unresolved", note: "Could not read the saved request · Check again" };
+  }
+  const requests = (record.requests as Array<Record<string, unknown>>).filter((item) => item && item.id === requestId);
+  const matches = (record.commitments as Array<Record<string, unknown>>).filter((item) => item && item.request_id === requestId);
+  if (requests.length !== 1) return { kind: "unresolved", note: "The saved request is not on this person · Look in the list" };
+  const state = String(requests[0].state ?? "");
+  if (state === "accepted" && matches.length === 1) {
+    return { kind: "saved", saved: { body: String(matches[0].body ?? ""), state: String(matches[0].state ?? "open") } };
+  }
+  if (state === "requested" && matches.length === 0) {
+    return String(requests[0].body ?? "") === body
+      ? { kind: "acceptable" }
+      : { kind: "unresolved", note: "The saved words are different · Look in the list" };
+  }
+  // A requested record with a linked commitment can be two reads that
+  // crossed; read again, never accept from it.
+  return { kind: "unresolved", note: "Could not confirm the saved request · Check again" };
+}
+
 /** PHILO-17 (Astra MUST 4): the roster read carries each person's owed
  *  counts (one read of the open commitments on the hub). */
 const ROSTER_READ = "/api/people/relationships?counts=1";
@@ -349,9 +411,13 @@ export function PeopleCore({ hero, scope }: CoreProps) {
       .then(() => load())
       .catch((cause) => protectedFailure(cause));
   };
+  // HS-S33: only the newest person read may land (a late read of the
+  // person he left never draws over the one he is on).
+  const selectSeq = useRef(0);
   const select = async (id: string) => {
     // PHILO-13-04 fix round (Astra counsel P2): a standing failure leaves only
     // when this read lands; it is never cleared before the person is back.
+    const mine = ++selectSeq.current;
     setSelectedId(id); setDetail(null);
     // PHILO-13-07 (B2): the person is this window's place; it returns after
     // a reload and a close.
@@ -361,9 +427,10 @@ export function PeopleCore({ hero, scope }: CoreProps) {
         apiFetch<{ relationship: Relationship }>(`/api/people/relationships/${encodeURIComponent(id)}`),
         apiFetch<{ one_on_ones: Session[] }>(`/api/people/relationships/${encodeURIComponent(id)}/one-on-ones`),
       ]);
+      if (selectSeq.current !== mine || relationship.relationship?.id !== id) return;
       setDetail({ ...relationship.relationship, sessions: sessions.one_on_ones });
       setError("");
-    } catch (cause) { protectedFailure(cause); }
+    } catch (cause) { if (selectSeq.current === mine) protectedFailure(cause); }
   };
   useEffect(() => {
     if (
@@ -417,7 +484,13 @@ export function PeopleCore({ hero, scope }: CoreProps) {
       setSuggestions((rows) => rows.filter((row) => row.key !== suggestion.key));
     } catch (cause) { protectedFailure(cause); } finally { setSuggestionBusy(""); }
   };
-  function protectedFailure(cause: unknown) {
+  function protectedFailure(cause: unknown, mayHaveSaved = false) {
+    if (mayHaveSaved) {
+      // HS-S33: an Add whose write may have landed lost its owner or key.
+      clearProtected(); setReadiness(readinessForError(cause));
+      setError("Could not read the people store · A promise may be saved · Look again when the store is back"); setErrorTitle(failureTitle(cause));
+      return;
+    }
     if (isStoreOutage(cause) && (selectedId || relationships.length)) {
       setError("Could not read the people store · What is on screen stays · Try again"); setErrorTitle(failureTitle(cause));
       return;
@@ -475,7 +548,7 @@ export function PeopleCore({ hero, scope }: CoreProps) {
   if (selected) {
     return <div className="people-surface">
       {renderHeroSlot(hero, null, failureRow)}
-      <RelationshipPane relationship={selected} initialLens={requestedLens} lensRequest={lensRequest} onRefresh={() => void select(selected.id)} onProtectedFailure={protectedFailure} onArchived={() => { clearProtected(); void load(); }} onBack={() => { setSelectedId(null); setDetail(null); keepPlace(PEOPLE_PERSON_PLACE, ""); }} />
+      <RelationshipPane relationship={selected} initialLens={requestedLens} lensRequest={lensRequest} onRefresh={() => void select(selected.id)} onProtectedFailure={protectedFailure} onArchived={() => { clearProtected(); void load(); }} onBack={() => { selectSeq.current += 1; setSelectedId(null); setDetail(null); keepPlace(PEOPLE_PERSON_PLACE, ""); }} />
     </div>;
   }
 
@@ -748,7 +821,13 @@ export function PersonWindowBody({ relationshipId, onClose }: { relationshipId: 
   useOnDeskChanged(() => { if (readiness && stateOf(readiness) === "ready") void read(); }, [
     ...PEOPLE_CHANGE_KINDS, "calendar", "calendar_event",
   ]);
-  const protectedFailure = (cause: unknown) => {
+  const protectedFailure = (cause: unknown, mayHaveSaved = false) => {
+    if (mayHaveSaved) {
+      // HS-S33: an Add whose write may have landed lost its owner or key.
+      setDetail(null); setReadiness(readinessForError(cause));
+      setError("Could not read the people store · A promise may be saved · Look again when the store is back"); setErrorTitle(failureTitle(cause));
+      return;
+    }
     if (isProtectedFailure(cause) && !isStoreOutage(cause)) { setDetail(null); setReadiness(readinessForError(cause)); }
     setError("Could not do that · Nothing changed · Try again"); setErrorTitle(failureTitle(cause));
   };
@@ -801,7 +880,7 @@ function openCount(items?: Array<{ state?: string }> | null): number {
 
 /** PHILO-17 (2b): exported; a person's own window (`pullout:people:<id>`)
  *  hosts it. There the window's close is the way back, so no Back. */
-export function RelationshipPane({ relationship, initialLens, lensRequest = null, onRefresh, onProtectedFailure, onArchived, onBack, lead, noteVerb = false }: { relationship: RelationshipDetail; initialLens?: Lens | null; lensRequest?: { lens: Lens; seq: number } | null; onRefresh(): void; onProtectedFailure(cause: unknown): void; onArchived(): void; onBack?(): void;
+export function RelationshipPane({ relationship, initialLens, lensRequest = null, onRefresh, onProtectedFailure, onArchived, onBack, lead, noteVerb = false }: { relationship: RelationshipDetail; initialLens?: Lens | null; lensRequest?: { lens: Lens; seq: number } | null; onRefresh(): void; onProtectedFailure(cause: unknown, mayHaveSaved?: boolean): void; onArchived(): void; onBack?(): void;
   /** Material under the head (the person window's memory pages). */
   lead?: ReactNode;
   /** The person window: Add note sits on the toolbar (it opens Context's note well). */
@@ -888,7 +967,7 @@ export function RelationshipPane({ relationship, initialLens, lensRequest = null
     {lead}
     {/* Betterment D7: the prep is the page; Context, History and Info are
         folds under it (one open at a time; a door that asks for one opens it). */}
-    <PrepPane relationship={relationship} onRefresh={onRefresh} onProtectedFailure={onProtectedFailure} onRead={() => setPrepRead(true)} onNext={setNext} />
+    <PrepPane key={relationship.id} relationship={relationship} onRefresh={onRefresh} onProtectedFailure={onProtectedFailure} onRead={() => setPrepRead(true)} onNext={setNext} />
     {/* The folds wait for the prep's first read: drawn under a loading prep,
         they moved down when it landed (the desk sweep's still fence). */}
     {prepRead || lens !== "prep" ? <div className="people-folds" data-testid="people-folds">
@@ -988,9 +1067,9 @@ function ConcernDetail({ concern, brief }: { concern: Exclude<NowConcern, null>;
  *  what to raise, add to the agenda), then two plates: what he owes and
  *  what is owed to him, each with its add row. Every fact is the person's
  *  record or the hub's 1:1 brief (`/brief`, read-only). */
-function PrepAddWell({ label, draft, onChange, onAdd, busy, actionLabel = "Add", testId }: {
+function PrepAddWell({ label, draft, onChange, onAdd, busy, blocked = false, actionLabel = "Add", testId }: {
   label: string; draft: string; onChange(value: string): void; onAdd(onSaved: () => void): void;
-  busy: boolean; actionLabel?: string; testId?: string;
+  busy: boolean; blocked?: boolean; actionLabel?: string; testId?: string;
 }) {
   const [open, setOpen] = useState(() => Boolean(draft));
   const inputId = useId();
@@ -1000,8 +1079,8 @@ function PrepAddWell({ label, draft, onChange, onAdd, busy, actionLabel = "Add",
   const add = () => onAdd(() => setOpen(false));
   return open ? <SurfaceWell><div className="people-add">
     <StringGadget label={label} value={draft} onChange={onChange} inputProps={{ id: inputId }}
-      onKeyDown={(event) => { if (event.key === "Enter" && !busy) add(); }} />
-    <Button dense variant="secondary" disabled={!draft.trim() || busy} loading={busy} onClick={add} data-testid={testId}>{actionLabel}</Button>
+      onKeyDown={(event) => { if (event.key === "Enter" && !busy && !blocked) add(); }} />
+    <Button dense variant="secondary" disabled={!draft.trim() || busy || blocked} loading={busy} onClick={add} data-testid={testId}>{actionLabel}</Button>
     <Button dense variant="ghost" disabled={busy} onClick={() => setOpen(false)} aria-expanded={true}>Hide</Button>
   </div></SurfaceWell> : <Button dense variant="ghost" onClick={() => {
     setOpen(true);
@@ -1039,7 +1118,32 @@ function PrepNudge({ task, person, due }: { task: string; person: string; due: s
   </div>;
 }
 
-function PrepPane({ relationship, onRefresh, onProtectedFailure, onRead, onNext }: { relationship: RelationshipDetail; onRefresh(): void; onProtectedFailure(cause: unknown): void; onRead?(): void; onNext?(next: PrepNext): void }) {
+/** HS-S33: what happened to the I owe Add, with the words he submitted
+ *  (the field may already hold newer words). */
+function OweReceipt({ attempt, onCheck, onAccept, onStartAnother }: { attempt: OweAttempt; onCheck(): void; onAccept(): void; onStartAnother(): void }) {
+  const words = <span className="people-plate-title" data-testid="people-owe-submitted">{attempt.phase === "saved" ? attempt.saved.body : attempt.body}</span>;
+  if (attempt.phase === "saved") {
+    return <div className="people-row people-add-line" role="status" data-testid="people-owe-receipt" data-phase="saved">
+      <span className="people-state" data-tone="ok">{attempt.saved.state === "open" ? "Saved" : `Saved · ${attempt.saved.state}`}</span>{words}
+    </div>;
+  }
+  if (attempt.phase === "creation_uncertain") {
+    return <div className="people-row people-add-line" role="status" data-testid="people-owe-receipt" data-phase={attempt.phase}>
+      <span className="people-failure-label">The promise may be saved · Look in the list before you add it again</span>{words}
+      <Button dense variant="ghost" onClick={onStartAnother} data-testid="people-owe-start-another">Start another promise</Button>
+    </div>;
+  }
+  const checking = attempt.phase === "checking";
+  const note = attempt.phase === "acceptance_uncertain" ? attempt.note : "Request saved · Not yet a promise";
+  const acceptable = attempt.phase === "acceptance_uncertain" && attempt.acceptable;
+  return <div className="people-row people-add-line" role="status" data-testid="people-owe-receipt" data-phase={attempt.phase}>
+    <span className="people-failure-label">{note}</span>{words}
+    <Button dense variant="secondary" disabled={!acceptable} onClick={onAccept} data-testid="people-owe-accept-saved">Accept saved request</Button>
+    <Button dense variant="ghost" loading={checking} disabled={checking} onClick={onCheck} data-testid="people-owe-check">Check saved request</Button>
+  </div>;
+}
+
+function PrepPane({ relationship, onRefresh, onProtectedFailure, onRead, onNext }: { relationship: RelationshipDetail; onRefresh(): void; onProtectedFailure(cause: unknown, mayHaveSaved?: boolean): void; onRead?(): void; onNext?(next: PrepNext): void }) {
   const [brief, setBrief] = useState<OneOnOneBrief | null>(null);
   const [failure, setFailure] = useState("");
   const [prepTitle, setPrepTitle] = useState("");
@@ -1077,7 +1181,17 @@ function PrepPane({ relationship, onRefresh, onProtectedFailure, onRead, onNext 
     return () => window.clearInterval(timer);
   }, []);
   const [agendaDraft, setAgendaDraft, forgetAgenda] = useDeskDraft(`people/1on1/${relationship.id}`);
-  const [oweDraft, setOweDraft, forgetOwe] = useDeskDraft(`people/request/${relationship.id}`);
+  const [oweDraft, setOweDraftRaw, forgetOwe] = useDeskDraft(`people/request/${relationship.id}`);
+  // HS-S33: the I owe attempt. The ref is the synchronous guard (a second
+  // Enter cannot start a second request); the state draws it.
+  const oweRef = useRef<OweAttempt | null>(null);
+  const [owe, setOweState] = useState<OweAttempt | null>(null);
+  const setOwe = (next: OweAttempt | null) => { oweRef.current = next; setOweState(next); };
+  const oweSeq = useRef(0);
+  const oweEdits = useRef(0);
+  const mounted = useRef(true);
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; oweRef.current = null; }; }, []);
+  const setOweDraft = (value: string) => { oweEdits.current += 1; setOweDraftRaw(value); };
   const [owedDraft, setOwedDraft, forgetOwed] = useDeskDraft(`people/owed/${relationship.id}`);
   // Betterment D7: Nudge on her row prepares a message; he presses Send.
   const [nudging, setNudging] = useState<{ id: string; task: string; due: string | null } | null>(null);
@@ -1111,14 +1225,107 @@ function PrepPane({ relationship, onRefresh, onProtectedFailure, onRead, onNext 
       await apiFetch(`/api/people/one-on-ones/${encodeURIComponent(session.id)}/agenda`, { method: "POST", json: { body, visibility: "shared_intent", state: "open", source: { kind: "manual" } } });
     }, () => { if ((keptDraft(`people/1on1/${relationship.id}`) ?? "") === submitted) { forgetAgenda(); onSaved?.(); } });
   };
-  // What he owes: the hub's own path (a request he accepts becomes his commitment).
+  // What he owes: the hub's own path (a request he accepts becomes his
+  // commitment). HS-S33: two writes, one held request id.
+  const live = (seq: number) => mounted.current && oweRef.current?.seq === seq;
+  const finishOwe = (attempt: Extract<OweAttempt, { requestId: string }>, mark: { edits: number; drafts: unknown } | null, onSaved?: () => void) => {
+    void (async () => {
+      const { seq, relationshipId, body, requestId } = attempt;
+      setOwe({ phase: "accepting", seq, relationshipId, body, requestId });
+      let made: { commitment?: { id?: unknown; request_id?: unknown; body?: unknown; state?: unknown } };
+      try {
+        made = await apiFetch(`/api/people/requests/${encodeURIComponent(requestId)}/accept`, { method: "POST", json: {} });
+      } catch (cause) {
+        if (!live(seq)) return;
+        await settleFailure(seq, cause, () => setOwe({ phase: "acceptance_uncertain", seq, relationshipId, body, requestId, acceptable: !ACCEPT_NO_EFFECT.has(failureCode(cause)),
+          note: ACCEPT_NO_EFFECT.has(failureCode(cause)) ? "Request saved · Accept was refused" : "Request saved · Not yet a promise" }));
+        return;
+      }
+      if (!live(seq)) return;
+      const commitment = made?.commitment;
+      if (!commitment || typeof commitment.id !== "string" || !commitment.id || commitment.request_id !== requestId) {
+        setOwe({ phase: "acceptance_uncertain", seq, relationshipId, body, requestId, acceptable: true, note: "Request saved · Not yet a promise" });
+        return;
+      }
+      setOwe({ phase: "saved", seq, relationshipId, body, requestId, saved: { body: String(commitment.body ?? body), state: String(commitment.state ?? "open") } });
+      // Clear only the exact unchanged draft of this attempt: same text, no
+      // edit here, no draft write anywhere since the press.
+      const key = `people/request/${relationshipId}`;
+      if (mark && mark.edits === oweEdits.current && mark.drafts === useDesk.getState().drafts && (keptDraft(key) ?? "").trim() === body) {
+        forgetOwe(); setOwe(null); onSaved?.();
+      }
+      onRefresh();
+    })();
+  };
+  /** A failed write of this attempt: a key or owner failure clears the
+   *  private view; a store 503 asks readiness which one it was. */
+  const settleFailure = async (seq: number, cause: unknown, keep: () => void) => {
+    let clear = isAuthOrKeyFailure(cause);
+    if (!clear && cause instanceof ApiError && cause.status === 503) {
+      try {
+        const ready = await apiFetch<Readiness>("/api/people/readiness");
+        clear = stateOf(ready) !== "ready";
+      } catch { clear = true; }
+      if (!live(seq)) return;
+    }
+    if (clear) { setOwe(null); onProtectedFailure(cause, true); return; }
+    keep();
+  };
   const addOwe = (onSaved?: () => void) => {
     const submitted = oweDraft;
-    const body = submitted.trim(); if (!body || busy === "owe") return;
-    void run("owe", async () => {
-      const made = await apiFetch<{ request: { id: string } }>(`${base}/requests`, { method: "POST", json: { body, visibility: "shared_intent", source: { kind: "manual" } } });
-      await apiFetch(`/api/people/requests/${encodeURIComponent(made.request.id)}/accept`, { method: "POST", json: {} });
-    }, () => { if ((keptDraft(`people/request/${relationship.id}`) ?? "") === submitted) { forgetOwe(); onSaved?.(); } });
+    const body = submitted.trim(); if (!body) return;
+    const current = oweRef.current;
+    if (current && current.phase !== "saved") return;
+    const seq = ++oweSeq.current;
+    const relationshipId = relationship.id;
+    const mark = { edits: oweEdits.current, drafts: useDesk.getState().drafts };
+    setOwe({ phase: "creating", seq, relationshipId, body });
+    void (async () => {
+      let made: { request?: { id?: unknown; relationship_id?: unknown } };
+      try {
+        made = await apiFetch(`${base}/requests`, { method: "POST", json: { body, visibility: "shared_intent", source: { kind: "manual" } } });
+      } catch (cause) {
+        if (!live(seq)) return;
+        if (cause instanceof ApiError && CREATE_NO_EFFECT.has(failureCode(cause)) && !isAuthOrKeyFailure(cause)) {
+          setOwe(null); onProtectedFailure(cause); return;
+        }
+        await settleFailure(seq, cause, () => setOwe({ phase: "creation_uncertain", seq, relationshipId, body }));
+        return;
+      }
+      if (!live(seq)) return;
+      const request = made?.request;
+      if (!request || typeof request.id !== "string" || !request.id || (request.relationship_id !== undefined && request.relationship_id !== relationshipId)) {
+        setOwe({ phase: "creation_uncertain", seq, relationshipId, body });
+        return;
+      }
+      finishOwe({ phase: "accepting", seq, relationshipId, body, requestId: request.id }, mark, onSaved);
+    })();
+  };
+  /** Check saved request: one read of the person; it never writes. */
+  const checkOwe = () => {
+    const current = oweRef.current;
+    if (!current || current.phase !== "acceptance_uncertain") return;
+    const { seq, relationshipId, body, requestId } = current;
+    setOwe({ phase: "checking", seq, relationshipId, body, requestId });
+    void apiFetch(`/api/people/relationships/${encodeURIComponent(relationshipId)}`)
+      .then((read) => {
+        if (!live(seq)) return;
+        const found = checkSavedRequest(read, relationshipId, requestId, body);
+        if (found.kind === "saved") { setOwe({ phase: "saved", seq, relationshipId, body, requestId, saved: found.saved }); onRefresh(); return; }
+        setOwe({ phase: "acceptance_uncertain", seq, relationshipId, body, requestId,
+          acceptable: found.kind === "acceptable", note: found.kind === "acceptable" ? "Request saved · Not yet a promise" : found.note });
+      })
+      .catch((cause) => {
+        if (!live(seq)) return;
+        void settleFailure(seq, cause, () => setOwe({ phase: "acceptance_uncertain", seq, relationshipId, body, requestId, acceptable: true, note: "Could not read the saved request · Check again" }));
+      });
+  };
+  /** Accept saved request: the same id again (the store returns the one
+   *  commitment if it was already accepted). */
+  const acceptSavedOwe = () => {
+    const current = oweRef.current;
+    if (!current || current.phase !== "acceptance_uncertain" || !current.acceptable) return;
+    finishOwe(current, null);
   };
   const addOwed = (onSaved?: () => void) => {
     const submitted = owedDraft;
@@ -1129,7 +1336,12 @@ function PrepPane({ relationship, onRefresh, onProtectedFailure, onRead, onNext 
   const done = (id: string) => void run(`done:${id}`, () => apiFetch(`/api/people/commitments/${encodeURIComponent(id)}/transition`, { method: "POST", json: { verb: "done" } }));
   const completeAction = (id: string) => void run(`action-done:${id}`, () => apiFetch("/api/follow-through/complete", { method: "POST", json: { card_id: id, verb: "done", payload: {} } }));
   const removeAgenda = (id: string) => void run(`remove:${id}`, () => apiFetch(`/api/people/agenda/${encodeURIComponent(id)}/transition`, { method: "POST", json: { to: "removed" } }));
-  const accept = (id: string) => void run(`accept:${id}`, () => apiFetch(`/api/people/requests/${encodeURIComponent(id)}/accept`, { method: "POST", json: {} }));
+  // HS-S33: Asked of you for the held request goes through the attempt.
+  const heldRequest = owe && "requestId" in owe && owe.phase !== "saved" ? owe.requestId : null;
+  const accept = (id: string) => {
+    if (id === heldRequest) { acceptSavedOwe(); return; }
+    void run(`accept:${id}`, () => apiFetch(`/api/people/requests/${encodeURIComponent(id)}/accept`, { method: "POST", json: {} }));
+  };
 
   const prep = brief ? composePeoplePrep(brief) : null;
   const nextEvent = prep?.nextOneOnOne ?? null;
@@ -1275,7 +1487,7 @@ function PrepPane({ relationship, onRefresh, onProtectedFailure, onRead, onNext 
           {youOweRows.length || asked.length || myActions.length ? <ul className="people-rows" data-testid="prep-you-owe">
             {asked.map((item) => <PlateRow key={item.id} testId="people-asked" title={item.body}
               meta={<span className="people-state" data-tone="info"><span className="kit-dot" data-tone="info" aria-hidden="true" />Asked of you</span>}
-              verb={<Button dense variant="ghost" loading={busy === `accept:${item.id}`} onClick={() => accept(item.id)}>Accept</Button>} />)}
+              verb={<Button dense variant="ghost" loading={busy === `accept:${item.id}` || (item.id === heldRequest && owe?.phase === "accepting")} disabled={item.id === heldRequest && (owe?.phase !== "acceptance_uncertain" || !owe.acceptable)} onClick={() => accept(item.id)}>Accept</Button>} />)}
             {youOweRows.map((item) => <PlateRow key={item.id} title={item.body}
               onTitle={() => inspectCommitment(item, "you")}
               meta={item.due || item.execution_links?.length ? <>{item.due ? <DuePill due={item.due} /> : null}{item.execution_links?.length ? <span>On an automation</span> : null}</> : undefined}
@@ -1287,8 +1499,9 @@ function PrepPane({ relationship, onRefresh, onProtectedFailure, onRead, onNext 
           </ul> : null}
           {selectedCommitment?.section === "you" ? <CommitmentInspector key={selectedCommitment.commitment.id} commitment={selectedCommitment.commitment} onClose={closeCommitment} onRefresh={() => { onRefresh(); setSelectedCommitment(null); }} onProtectedFailure={onProtectedFailure} /> : null}
           <div className="people-row people-add-line">
-            <PrepAddWell key={relationship.id} label={`I owe ${firstName}`} draft={oweDraft} onChange={setOweDraft} onAdd={addOwe} busy={busy === "owe"} />
+            <PrepAddWell key={relationship.id} label={`I owe ${firstName}`} draft={oweDraft} onChange={setOweDraft} onAdd={addOwe} busy={owe?.phase === "creating" || owe?.phase === "accepting"} blocked={Boolean(owe && owe.phase !== "saved")} />
           </div>
+          {owe && owe.phase !== "creating" && owe.phase !== "accepting" ? <OweReceipt attempt={owe} onCheck={checkOwe} onAccept={acceptSavedOwe} onStartAnother={() => setOwe(null)} /> : null}
         </div>
       </div>
     </section>

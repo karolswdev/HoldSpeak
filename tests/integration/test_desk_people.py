@@ -342,3 +342,61 @@ def test_one_on_one_prep_wire(hub: Any, monkeypatch: pytest.MonkeyPatch) -> None
         text = text.replace(seeded[name], f"rel-{name.lower()}")
     _record("one-on-one-prep", json.loads(text), Path(hub.db.db_path).parent,
             "tests/integration/test_desk_people.py::test_one_on_one_prep_wire", folder=_WIRES)
+
+
+_PEOPLE_WIRES = Path(__file__).resolve().parents[2] / "web" / "src" / "desk" / "__tests__" / "fixtures" / "people-wire"
+
+
+def test_people_add_recovery_wire(hub: Any) -> None:
+    """HS-S33 (G33 = A): an I owe Add is two writes. The same words make a NEW
+    request each time (words are no key); accepting ONE request id again
+    returns its one commitment, also after Done; the person read links them by
+    the commitment's ``request_id``. peopleCore.test.tsx replays these answers."""
+    from datetime import datetime
+
+    from tests.unit.test_desk_speak import _record
+
+    _ok(hub.client.post("/api/people/setup", json={}))
+    rid = _ok(hub.client.post("/api/people/relationships", json={"display_name": "Priya Raman"}), 201)["relationship"]["id"]
+    before = _ok(hub.client.get(f"/api/people/relationships/{rid}"))
+    words = {"body": "Send Priya the rollout plan", "visibility": "shared_intent", "source": {"kind": "manual"}}
+    created = _ok(hub.client.post(f"/api/people/relationships/{rid}/requests", json=words), 201)
+    twin = _ok(hub.client.post(f"/api/people/relationships/{rid}/requests", json=words), 201)
+    qid = created["request"]["id"]
+    assert qid and twin["request"]["id"] and twin["request"]["id"] != qid, "the same words are a new request"
+    assert created["request"]["relationship_id"] == rid
+    requested = _ok(hub.client.get(f"/api/people/relationships/{rid}"))
+    assert [(q["id"], q["state"]) for q in requested["relationship"]["requests"] if q["id"] == qid] == [(qid, "requested")]
+    assert requested["relationship"]["commitments"] == [], "a request alone is not a promise"
+
+    accepted = _ok(hub.client.post(f"/api/people/requests/{qid}/accept", json={}))
+    replay = _ok(hub.client.post(f"/api/people/requests/{qid}/accept", json={}))
+    cid = accepted["commitment"]["id"]
+    assert accepted["commitment"]["request_id"] == qid
+    assert replay["commitment"]["id"] == cid, "the same id again is the same promise"
+    saved = _ok(hub.client.get(f"/api/people/relationships/{rid}"))
+    assert [(q["id"], q["state"]) for q in saved["relationship"]["requests"] if q["id"] == qid] == [(qid, "accepted")]
+    assert [c["id"] for c in saved["relationship"]["commitments"] if c["request_id"] == qid] == [cid]
+    assert all("accepted_commitment_id" not in q for q in saved["relationship"]["requests"])
+
+    _ok(hub.client.post(f"/api/people/commitments/{cid}/transition", json={"verb": "done"}))
+    after_done = _ok(hub.client.post(f"/api/people/requests/{qid}/accept", json={}))
+    assert (after_done["commitment"]["id"], after_done["commitment"]["state"]) == (cid, "done"), "Done stays done"
+    done = _ok(hub.client.get(f"/api/people/relationships/{rid}"))
+    assert [c["id"] for c in done["relationship"]["commitments"] if c["request_id"] == qid] == [cid]
+
+    missing = hub.client.post("/api/people/requests/no-such-request/accept", json={})
+    assert (missing.status_code, missing.json()["detail"]) == (404, "people_request_not_found")
+
+    text = json.dumps({
+        "recordedAt": datetime.now().astimezone().isoformat(),
+        "readiness": _ok(hub.client.get("/api/people/readiness")),
+        "before": before, "created": created, "requested": requested, "accepted": accepted,
+        "saved": saved, "acceptedAfterDone": after_done, "done": done,
+        "acceptMissing": {"status": missing.status_code, "body": missing.json()},
+    })
+    # The ids are minted per run; the stored answers name them one way.
+    for real, name in ((rid, "rel-priya"), (qid, "req-rollout"), (twin["request"]["id"], "req-rollout-twin"), (cid, "com-rollout")):
+        text = text.replace(real, name)
+    _record("people-add-recovery", json.loads(text), Path(hub.db.db_path).parent,
+            "tests/integration/test_desk_people.py::test_people_add_recovery_wire", folder=_PEOPLE_WIRES)
