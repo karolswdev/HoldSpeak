@@ -47,6 +47,15 @@ export function isDrawn(element: HTMLElement): boolean {
   return true;
 }
 
+/** True when this window is the front window of the desk: the highest
+ * z-index among every desk window. On the phone the walk opened Needs you
+ * behind the Programs window and asked about a window he could not see
+ * (owner, 2026-11-08: "Doubt it is the right thing (right window opened…)"). */
+export function isFrontWindow(element: HTMLElement): boolean {
+  const z = zOf(element);
+  return deskWindows().every((other) => other === element || zOf(other) <= z);
+}
+
 /** The first DRAWN match of a selector in a root, or null (a bad selector too). */
 export function lookIn(root: ParentNode, selector: string): HTMLElement | null {
   try {
