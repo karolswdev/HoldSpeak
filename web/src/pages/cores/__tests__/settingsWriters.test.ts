@@ -66,7 +66,8 @@ describe("the subtree-writer allowlist (HS-130-07)", () => {
       .filter((f) => putsToSettings(f.content))
       .map((f) => f.name)
       .sort();
-    // SettingsCore is the canonical full-document writer; CommandsCore writes
+    // Settings (pages/cores/settings/writer.ts, the hook SettingsCore calls)
+    // is the canonical full-document writer; CommandsCore writes
     // ONLY the macro `items`. HS-139-03 moved object-level config home:
     // MeetingsConfig owns the meeting capture/export subtree and DeliveryBoard
     // owns the companion-repo key — each is the ONE writer of its subtree and
@@ -82,15 +83,15 @@ describe("the subtree-writer allowlist (HS-130-07)", () => {
       "desk/components/DeliveryBoard.tsx",
       "desk/firstrun/ownerName.ts",
       "pages/cores/CommandsCore.tsx",
-      "pages/cores/SettingsCore.tsx",
       "pages/cores/history/MeetingsConfig.tsx",
       "pages/cores/history/RecordHome.tsx",
+      "pages/cores/settings/writer.ts",
     ]);
   });
 
   it("no persistent enablement writer exists outside Settings", () => {
     const offenders = files
-      .filter((f) => f.name !== "pages/cores/SettingsCore.tsx")
+      .filter((f) => f.name !== "pages/cores/settings/writer.ts")
       .filter((f) => writesEnablement(f.content).length > 0)
       .map((f) => f.name);
     expect(offenders).toEqual([]);

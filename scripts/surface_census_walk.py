@@ -2065,7 +2065,7 @@ FINDING_SEAMS: dict[str, str] = {
     "M7": "the interior type scale lives in `web/src/styles/tokens.css`; "
           "menu keycaps are `.desk-menu-well` (`web/src/desk/components/DeskMenu.tsx:242`)",
     "M4": "folds are `FoldGadget` (`web/src/desk/surface/gadgets.tsx:417`); "
-          "Settings' wings are `SETTINGS_WINGS` (`web/src/pages/cores/SettingsCore.tsx:233`)",
+          "Settings' wings are `SETTINGS_WINGS` (`web/src/pages/cores/settings/navigation.ts`)",
     "U3": "zone rows carry their count in the aria-label even at zero "
           "(the Floor's zone buttons)",
     "A7": "the empty Floor's prose line is `web/src/desk/components/EmptyDesk.tsx` "

@@ -165,3 +165,20 @@ def test_hard_cut_has_no_parallel_frontend_tree() -> None:
     assert (SRC / "main.tsx").is_file()
     assert (SRC / "routes.tsx").is_file()
     assert (SRC / "runtime/RuntimeBus.tsx").is_file()
+
+
+# The Settings window is a composition (2026-11-08): the frame, the section
+# list and the shared store wiring. Each section lives in
+# web/src/pages/cores/settings/<Section>.tsx and the one settings writer in
+# settings/writer.ts. It was 2,900 lines before that split.
+_SETTINGS_CORE_BUDGET = 600
+
+
+def test_settings_core_stays_a_composition() -> None:
+    n = _lines(SRC / "pages/cores/SettingsCore.tsx")
+    assert n < _SETTINGS_CORE_BUDGET, (
+        f"web/src/pages/cores/SettingsCore.tsx is {n} lines (budget "
+        f"{_SETTINGS_CORE_BUDGET}). It composes the sections only; a section's "
+        "rows, state and reads belong in web/src/pages/cores/settings/<Section>.tsx. "
+        "Carve, don't bump."
+    )
