@@ -2,6 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · #1903 The Programs app tests are split by face: programs.app.test.tsx (3,735 lines) becomes seven programs.<face>.app.test.tsx files (128 to 796 lines) and one shared programs.test-setup.tsx (444 lines); 147 it( and 1 it.each( before and after, 152 cases pass, and the density guard fences the eight files at 900 lines.
 - 2026-11-08 · #1899 The New program wizard has a Person row under Review (the desk's People roster, "Nobody yet" by default) that writes for_person_id on create, and its summary says "<person> reviews".
 - 2026-11-08 · #1898 The Program window's Drafting tray shows one thing from the plan_goal row (the planning row with no verb, Start with "4 steps", or the not-planned notice with Plan it) and no sentence under any of its verbs.
 - 2026-11-08 · #1896 The API surface tags a web route only when the call's path and method match (values followed through tables, path helpers and wrappers; the 3 dynamic calls resolved by hand in scripts/api_surface_web_dynamic_calls.json): web-consumed routes 716 -> 612, routes with any consumer 723 -> 632, unresolved dynamic calls 0.
