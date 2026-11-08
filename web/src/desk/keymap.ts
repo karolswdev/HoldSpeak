@@ -6,7 +6,6 @@
 import { useEffect } from "react";
 import { useDesk } from "./store";
 import { VERBS, type Verb, type VerbContext } from "./verbRegistry";
-import { useSettleState } from "./settleState";
 
 export interface KeySpec {
   meta: boolean;
@@ -148,37 +147,21 @@ export function dispatchKey(e: KeyboardEvent): Verb | null {
 }
 
 /** Refcounted singleton: the chrome and the dock both mount it, the
- * document carries one verb listener and one Escape-only dismissal guard
- * (a verb never runs twice, including when the shelf is quiet). */
+ * document carries one verb listener (a verb never runs twice). */
 let installs = 0;
 const onKey = (e: KeyboardEvent) => void dispatchKey(e);
 
-/** Escape first restores shell chrome. Capture phase protects an open editor
- * or window from also closing on the same keystroke. IME keeps its own Escape. */
-export function dismissSettle(e: KeyboardEvent): boolean {
-  if (e.key !== "Escape" || e.isComposing || !useSettleState.getState().settled)
-    return false;
-  e.preventDefault();
-  e.stopImmediatePropagation();
-  useSettleState.getState().setSettled(false);
-  return true;
-}
-const onDismiss = (e: KeyboardEvent) => {
-  dismissSettle(e);
-};
 
 export function useKeymap(): void {
   useEffect(() => {
     if (installs === 0) {
       document.addEventListener("keydown", onKey);
-      document.addEventListener("keydown", onDismiss, true);
     }
     installs += 1;
     return () => {
       installs -= 1;
       if (installs === 0) {
         document.removeEventListener("keydown", onKey);
-        document.removeEventListener("keydown", onDismiss, true);
       }
     };
   }, []);

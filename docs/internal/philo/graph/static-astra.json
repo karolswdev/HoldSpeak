@@ -1961,7 +1961,7 @@
       "sha256": "47fc205e8270bbc1ddbf081d15681212da4d42070aaad7dd3d14032930434e24"
     },
     {
-      "path": "web/src/pages/cores/ChangePlacesCore.tsx",
+      "path": "web/src/pages/cores/_parked/ChangePlacesCore.tsx",
       "sha256": "442abd06b24505a62be572d2057e7055746f0b4acadcfbf719ce90dcd5b25efd"
     },
     {
@@ -30831,7 +30831,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/ChangePlacesCore.tsx",
+          "path": "web/src/pages/cores/_parked/ChangePlacesCore.tsx",
           "line": 34,
           "symbol": "ChangePlacesCore",
           "claim": "The production JSX source declares onClick at this control site."
@@ -31775,7 +31775,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/ChangePlacesCore.tsx",
+          "path": "web/src/pages/cores/_parked/ChangePlacesCore.tsx",
           "line": 25,
           "symbol": "ChangePlacesCore",
           "claim": "The production JSX source declares onClick at this control site."
@@ -35663,7 +35663,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/ChangePlacesCore.tsx",
+          "path": "web/src/pages/cores/_parked/ChangePlacesCore.tsx",
           "line": 42,
           "symbol": "ChangePlacesCore",
           "claim": "The production JSX source declares onClick at this control site."
@@ -44111,7 +44111,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/ChangePlacesCore.tsx",
+          "path": "web/src/pages/cores/_parked/ChangePlacesCore.tsx",
           "line": 50,
           "symbol": "ChangePlacesCore",
           "claim": "The production JSX source declares onClick at this control site."

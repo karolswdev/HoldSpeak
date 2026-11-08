@@ -14,7 +14,6 @@
 import "./chrome-menus.css";
 import { useEffect, useRef, useState } from "react";
 import { useDesk } from "../store";
-import { useSettleState } from "../settleState";
 import {
   VERBS,
   menuVerbs,
@@ -257,7 +256,6 @@ export function appendOpenWindows(
 }
 
 export function DeskMenuBar() {
-  const settled = useSettleState((s) => s.settled);
   // HS-202-02 — the phone bar has room for ONE navigator. Go is that door
   // (the chrome-menus.css phone block already declared the design), so at
   // phone width Desk, Object and Window are not rendered at all and their
@@ -266,9 +264,6 @@ export function DeskMenuBar() {
   // 393 (03-interaction-walk.md finding 2).
   const compact = useCompactViewport();
   const [open, setOpen] = useState<MenuId | null>(null);
-  useEffect(() => {
-    if (settled) setOpen(null);
-  }, [settled]);
   // HS-148-01: track whether the open was intentional (click/keyboard)
   // vs hover-switch. Only intentional opens autoFocus the first item.
   const [intentional, setIntentional] = useState(false);
@@ -450,7 +445,7 @@ export function DeskMenuBar() {
           >
             {m.label}
           </Button>
-          {!settled && open === m.id && (
+          {open === m.id && (
             <WorkMenu
               className="desk-verbbar-menu"
               label={`${m.label} menu`}

@@ -81,16 +81,11 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     group: "tool",
     // Betterment setup ST1: Wallpaper has one home, Settings ▸ Wallpaper.
     // The row keeps its id and Search words; each opens Settings
-    // there (the `change-places` alias on Settings). ChangePlacesCore stays.
+    // there (the `change-places` alias on Settings). ChangePlacesCore is
+    // parked (2026-11-08): no way opened its window.
     parked: "settings:wallpaper",
     paletteLabel: "Wallpaper, in Settings ▸ Desk",
     mark: 4,
-    surface: {
-      eyebrow: "Places to think",
-      minW: 600,
-      defaultH: 620,
-      load: () => import("../pages/cores/ChangePlacesCore").then((module) => ({ default: module.ChangePlacesCore })),
-    },
   },
   {
     action: "open-intelligence",

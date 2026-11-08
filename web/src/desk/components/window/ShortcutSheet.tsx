@@ -3,7 +3,6 @@
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import { VERBS, verbLabel } from "../../verbRegistry";
-import { useSettleState } from "../../settleState";
 import { KeycapWells } from "../DeskMenu";
 
 /** HS-101 B8 — the shortcut sheet, drawn (never a doc link).
@@ -20,7 +19,6 @@ const SHEET_GROUPS: { title: string; include: (id: string, scope: string, menu?:
 ];
 
 export function ShortcutSheet({ onClose }: { onClose: () => void }) {
-  const settled = useSettleState((state) => state.settled);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -41,7 +39,7 @@ export function ShortcutSheet({ onClose }: { onClose: () => void }) {
   });
   // W4-PHONE (2026-10-27): Esc is ONE row. The registry's Esc verb (Back)
   // takes the convention's words; the sheet never lists Esc twice.
-  const escWords = settled ? "Back to Desk (keep work open)" : "Back, close or cancel";
+  const escWords = "Back, close or cancel";
   const windows = rows[2][1].filter(([cap]) => cap !== "Esc");
   rows[2][1] = [...windows, ["Esc", escWords]];
   return createPortal(
