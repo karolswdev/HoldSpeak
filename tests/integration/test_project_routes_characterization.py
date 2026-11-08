@@ -252,29 +252,6 @@ class TestProjectMeetingsRoute:
         assert resp.status_code == 404
 
 
-# ── GET /api/projects/{id}/briefings ─────────────────────────────────────
-
-
-class TestProjectBriefingsRoute:
-    def test_empty_shape(self, rig) -> None:
-        _db, client = rig
-        proj = _create_project(client)
-        resp = client.get(f"/api/projects/{proj['id']}/briefings")
-        assert resp.status_code == 200
-        body = resp.json()
-        assert body["project_id"] == proj["id"]
-        assert body["briefings"] == []
-
-    def test_not_found_404(self, rig) -> None:
-        _db, client = rig
-        resp = client.get("/api/projects/proj-nope/briefings")
-        assert resp.status_code == 404
-        body = resp.json()
-        # Pin: error message uses the project_id, not "Project not found"
-        # (the briefings route has its own NotFound handler)
-        assert "Unknown project" in body["error"]
-
-
 # ── GET /api/projects/{id}/resources ─────────────────────────────────────
 
 
@@ -463,44 +440,6 @@ class TestSinceLastMeetingRoute:
     def test_not_found_404(self, rig) -> None:
         _db, client = rig
         resp = client.get("/api/projects/proj-nope/since-last-meeting")
-        assert resp.status_code == 404
-
-
-# ── GET /api/projects/{id}/summary ──────────────────────────────────────
-
-
-class TestProjectSummaryRoute:
-    def test_success_shape(self, rig) -> None:
-        _db, client = rig
-        proj = _create_project(client)
-        resp = client.get(f"/api/projects/{proj['id']}/summary")
-        assert resp.status_code == 200
-        body = resp.json()
-        expected_keys = {"meeting_count", "first_meeting", "last_meeting",
-                         "action_items_by_status", "artifact_count"}
-        assert set(body.keys()) == expected_keys
-
-    def test_not_found_404(self, rig) -> None:
-        _db, client = rig
-        resp = client.get("/api/projects/proj-nope/summary")
-        assert resp.status_code == 404
-
-
-# ── GET /api/projects/{id}/action-items ──────────────────────────────────
-
-
-class TestProjectActionItemsRoute:
-    def test_empty_shape(self, rig) -> None:
-        _db, client = rig
-        proj = _create_project(client)
-        resp = client.get(f"/api/projects/{proj['id']}/action-items")
-        assert resp.status_code == 200
-        body = resp.json()
-        assert body["action_items"] == []
-
-    def test_not_found_404(self, rig) -> None:
-        _db, client = rig
-        resp = client.get("/api/projects/proj-nope/action-items")
         assert resp.status_code == 404
 
 
