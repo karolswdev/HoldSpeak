@@ -4,7 +4,7 @@ import { cloneElement, isValidElement, useCallback, useEffect, useRef, useState,
 import { Button } from "../../../components/signal/Signal";
 import { apiFetch } from "../../../lib/api";
 import { openIntelligence } from "../../intelligenceNavigation";
-import { refreshNeedsYou, useNeedsYou } from "../../needsYou";
+import { readNeedsYouOnce, refreshNeedsYou, useNeedsYou } from "../../needsYou";
 import { useNextOneOnOneRead } from "../../screen/nextOneOnOne";
 import { micPhase, subscribeMicPhase } from "../../../lib/micSession";
 import { useOptionalRuntimeBus } from "../../../runtime/RuntimeBus";
@@ -200,9 +200,12 @@ function useDockLiveReads(): {
   const [live, setLive] = useState<DockLiveState>(EMPTY_DOCK_LIVE);
   const [reads, setReads] = useState<DockReadState>(EMPTY_DOCK_READ);
   const lastState = useRef<string | null>(runtimeState);
+  const everConnected = useRef(false);
   const readyReadGeneration = useRef(0);
 
-  const refresh = useCallback(async () => {
+  // `opened`: the Dock's first read; it joins the needs-you read the desk
+  // already has out (one read at open). A frame or a reconnect reads again.
+  const refresh = useCallback(async (opened = false) => {
     if (runtimeState !== "connected") return;
     const requestedReadyGeneration = readyReadGeneration.current;
     const [ready] = await Promise.allSettled([readUnreadReadyMeetings()]);
@@ -210,7 +213,7 @@ function useDockLiveReads(): {
     // event path; the Dock does not start the hook's minute poll. It never
     // forces a rebuild: a hub write that changes the answer marks the hub's
     // cache dirty, so the plain read is current (PERF-DOCK 2026-10-28).
-    await refreshNeedsYou(false).catch(() => undefined);
+    await (opened ? readNeedsYouOnce() : refreshNeedsYou(false)).catch(() => undefined);
     const readAt = Date.now();
     setReads((previous) => ({
       ...previous,
@@ -230,7 +233,7 @@ function useDockLiveReads(): {
 
   useEffect(() => {
     if (!subscribe) {
-      void refresh();
+      void refresh(true);
       return;
     }
     const burst = burstTimer(() => { void refresh(); }, 250);
@@ -265,11 +268,13 @@ function useDockLiveReads(): {
 
   useEffect(() => {
     const state = runtimeState;
-    const reconnected = state === "connected" && lastState.current !== "connected";
+    // The first connection is the open, not a reconnect.
+    const reconnected = state === "connected" && lastState.current !== "connected" && everConnected.current;
     lastState.current = state;
+    if (state === "connected") everConnected.current = true;
     const hasSnapshot = reads.readyReadAt !== null;
     if (state === "connected" && (reconnected || !hasSnapshot)) {
-      void refresh();
+      void refresh(!reconnected);
     }
   }, [reads.readyReadAt, refresh, runtimeState]);
 

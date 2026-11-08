@@ -74,6 +74,7 @@ const mocks = vi.hoisted(() => {
     defaultApiFetch,
     apiRequest: vi.fn(),
     refreshNeedsYou: vi.fn(async () => {}),
+    readNeedsYouOnce: vi.fn(async () => {}),
     useNeedsYou: vi.fn(() => ({
       count: 1,
       unmutedItems: [{ projectId: "p1" }],
@@ -104,6 +105,7 @@ vi.mock("../../needsYou", async (original) => ({
   // this focused fixture intentionally does not provide.
   projectOpenHere: () => false,
   refreshNeedsYou: mocks.refreshNeedsYou,
+  readNeedsYouOnce: mocks.readNeedsYouOnce,
   useNeedsYou: mocks.useNeedsYou,
 }));
 vi.mock("../../../runtime/RuntimeBus", () => ({ useOptionalRuntimeBus: () => mocks.runtime }));
@@ -282,6 +284,7 @@ describe("H-C3 Dock rendering", () => {
     mocks.apiFetch.mockImplementation(mocks.defaultApiFetch);
     mocks.apiRequest.mockReset();
     mocks.refreshNeedsYou.mockClear();
+    mocks.readNeedsYouOnce.mockClear();
     mocks.runtimeListeners.clear();
     mocks.durable.readyRows.length = 0;
     mocks.people.readiness = { readiness: "ready" };
@@ -327,7 +330,8 @@ describe("H-C3 Dock rendering", () => {
   // `windows`; the Dock reads nothing for it, and it never forces a rebuild.
   it("reads nothing on a frame of window changes only, and reads without fresh=1 on others", async () => {
     render(<Dock />);
-    await waitFor(() => expect(mocks.refreshNeedsYou).toHaveBeenCalled());
+    // The open joins the desk's one needs-you read (2026-11-08): never fresh=1.
+    await waitFor(() => expect(mocks.readNeedsYouOnce).toHaveBeenCalledTimes(1));
     expect((mocks.refreshNeedsYou.mock.calls as unknown[][]).every((args) => args[0] === false)).toBe(true);
     await new Promise((resolve) => setTimeout(resolve, 300));
     mocks.refreshNeedsYou.mockClear();

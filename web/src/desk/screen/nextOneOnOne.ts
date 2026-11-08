@@ -7,7 +7,7 @@
  *  Nothing shows when People is not ready, a read fails, or there is no
  *  next 1:1. */
 import { useCallback, useEffect, useRef, useState } from "react";
-import { apiFetch } from "../../lib/api";
+import { readKeyed, readPeopleReadiness, readPeopleRelationships } from "../../lib/keyedRead";
 import { PEOPLE_CHANGE_KINDS, useOnDeskChanged } from "../useDeskChangedRefresh";
 import { formatDockTime, nextOneOnOneLabel, type DockRelationshipRead } from "../components/window/dockState";
 
@@ -44,12 +44,14 @@ function peopleReadinessOf(body: unknown): PeopleReadinessState | null {
     : null;
 }
 
-export async function readPeopleProjection(): Promise<PeopleProjectionRead> {
-  const readinessBody = await apiFetch<unknown>("/api/people/readiness");
+/** `fresh`: a re-read after a People frame; a plain read takes the desk's
+ *  kept readiness and relationships (one read for every reader at open). */
+export async function readPeopleProjection(fresh = false): Promise<PeopleProjectionRead> {
+  const readinessBody = await readPeopleReadiness({ fresh });
   const readiness = peopleReadinessOf(readinessBody);
   if (readiness !== "ready") return { readiness, nextOneOnOne: null, complete: readiness !== null };
 
-  const body = await apiFetch<unknown>("/api/people/relationships");
+  const body = await readPeopleRelationships({ fresh });
   const relationships = wireRows<DockRelationshipRead>(body, "relationships");
   const direct = relationships.filter((relationship) =>
     relationship.next_one_on_one !== undefined || relationship.nextOneOnOne !== undefined,
@@ -58,8 +60,8 @@ export async function readPeopleProjection(): Promise<PeopleProjectionRead> {
     .map((relationship) => relationship.id)
     .filter((id): id is string => Boolean(id));
   const details = await Promise.allSettled(
-    ids.map((id) => apiFetch<unknown>(
-      `/api/people/relationships/${encodeURIComponent(id)}/brief`,
+    ids.map((id) => readKeyed<unknown>(
+      "people", `/api/people/relationships/${encodeURIComponent(id)}/brief`, { fresh },
     )),
   );
   const successfulDetails = details
@@ -100,9 +102,9 @@ export function useNextOneOnOneRead(todayOnly = false): { label: string | null; 
   const [reading, setReading] = useState(true);
   // The newest read wins: an older answer that lands late is dropped.
   const generation = useRef(0);
-  const read = useCallback(() => {
+  const read = useCallback((fresh = false) => {
     const mine = ++generation.current;
-    readPeopleProjection()
+    readPeopleProjection(fresh)
       .then((people) => {
         if (mine !== generation.current) return;
         setReading(false);
@@ -123,7 +125,8 @@ export function useNextOneOnOneRead(todayOnly = false): { label: string | null; 
         setAt(null);
       });
   }, [todayOnly]);
-  useEffect(read, [read]);
-  useOnDeskChanged(read, [...PEOPLE_CHANGE_KINDS, "meeting_summary"]);
+  useEffect(() => read(), [read]);
+  const reread = useCallback(() => read(true), [read]);
+  useOnDeskChanged(reread, [...PEOPLE_CHANGE_KINDS, "meeting_summary"]);
   return { label, at, reading };
 }

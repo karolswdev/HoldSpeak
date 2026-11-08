@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useSyncExternalStore } from "react";
 import { fromWireMeeting } from "./api";
 import { apiFetch } from "../lib/api";
+import { DESK_STALE_MS } from "../lib/queryClient";
 import {
   dedupAttention,
   normalizeTitle,
@@ -996,6 +997,8 @@ let snapshot: NeedsYouSnapshot = {
   room: null,
 };
 let inflight: Promise<void> | null = null;
+/** When the last answer was published (ms since epoch; 0: none yet). */
+let answeredAt = 0;
 /** Bumped by `resetNeedsYou`: a read begun before a reset never publishes. */
 let generation = 0;
 let inflightFresh = false;
@@ -1048,6 +1051,7 @@ async function refreshNeedsYou(fresh = true): Promise<void> {
     for (const [name, text] of Object.entries(value.sourceErrors ?? {})) {
       if (text) errors[name as SourceName] = String(text);
     }
+    answeredAt = Date.now();
     publish({
       ...readNeedsYouAnswer(value),
       roomCounts: readRoomCounts(value.roomCounts),
@@ -1075,11 +1079,20 @@ async function refreshNeedsYou(fresh = true): Promise<void> {
   return request;
 }
 
+/** A face that opened: it joins the read that is out, or takes an answer
+ *  under `DESK_STALE_MS` old, else reads (one read at desk open for every
+ *  face). A change frame reads again with `refreshNeedsYou`. */
+function readNeedsYouOnce(): Promise<void> {
+  if (inflight) return inflight;
+  if (answeredAt && Date.now() - answeredAt < DESK_STALE_MS) return Promise.resolve();
+  return refreshNeedsYou(false);
+}
+
 function subscribe(listener: () => void, poll: boolean): () => void {
   listeners.add(listener);
   if (poll) pollingSubscribers += 1;
   if (listeners.size === 1) {
-    void refreshNeedsYou(false);
+    void readNeedsYouOnce();
   }
   if (poll && pollingSubscribers === 1) {
     pollTimer = setInterval(() => { void refreshNeedsYou(false); }, 60_000);
@@ -1113,11 +1126,11 @@ export function useNeedsYou(
     getSnapshot,
     getSnapshot,
   );
-  useEffect(() => { void refreshNeedsYou(false); }, []);
+  useEffect(() => { void readNeedsYouOnce(); }, []);
   return { ...value, refresh: () => refreshNeedsYou(false) };
 }
 
-export { refreshNeedsYou };
+export { readNeedsYouOnce, refreshNeedsYou };
 
 /** Test seam (the pattern of `deskQueryClient.clear()` in the test setup):
  * one shared snapshot must not carry a prior case's read into the next. */
@@ -1127,6 +1140,7 @@ export function resetNeedsYou(): void {
   listeners.clear();
   inflight = null;
   inflightFresh = false;
+  answeredAt = 0;
   generation += 1;
   snapshot = { ...EMPTY_RESULT, roomCounts: null, projectCounts: null, complete: false, loading: false, errors: {}, room: null };
 }

@@ -447,7 +447,10 @@ interface AgentFlightsState {
   loaded: boolean;
   /** PHILO-17 (phonepass): a first read has ended, read or failed. */
   settled: boolean;
-  load(): Promise<void>;
+  /** `opened`: a window that shows the sessions opened. It joins a read
+   *  that is out (one read at desk open). Without it (a frame), a read
+   *  follows the change. */
+  load(opened?: boolean): Promise<void>;
 }
 
 let inflight: Promise<void> | null = null;
@@ -458,7 +461,8 @@ export const useAgentFlights = create<AgentFlightsState>((set, get) => ({
   flights: [],
   loaded: false,
   settled: false,
-  load() {
+  load(opened = false) {
+    if (opened && inflight) return inflight;
     // A refresh that arrives while a read is out is kept: one trailing read
     // follows it, so a transition that happened mid-read is never lost.
     if (inflight) {
@@ -516,7 +520,7 @@ export async function markLaunchSeen(launchId: string, turnId: string | null): P
  * or the desk changes (a merge closed an item). */
 export function useAgentFlightsLive(): void {
   const reload = useCallback(() => { void useAgentFlights.getState().load(); }, []);
-  useEffect(() => { reload(); }, [reload]);
+  useEffect(() => { void useAgentFlights.getState().load(true); }, []);
   useOnCoderFrame(reload);
   useOnDeskChanged(reload, AGENT_CHANGE_KINDS);
 }

@@ -8,6 +8,7 @@
  * yet" and read nothing more. */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ApiError, apiFetch, readableError } from "../../lib/api";
+import { readHubSettings } from "../../lib/keyedRead";
 import { useOptionalRuntimeBus } from "../../runtime/RuntimeBus";
 import { writeCallsSetting } from "./api";
 import type {
@@ -23,7 +24,7 @@ function notFound(error: unknown): boolean {
  *  faces read nothing there (no 404 on the console). */
 export async function phoneIsOn(): Promise<boolean> {
   try {
-    const body = await apiFetch<{ calls?: { phone_on?: boolean } }>("/api/settings");
+    const body = await readHubSettings<{ calls?: { phone_on?: boolean } }>();
     return Boolean(body?.calls?.phone_on);
   } catch {
     return false;

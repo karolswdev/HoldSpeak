@@ -1,4 +1,5 @@
 import { authenticatedHeaders, forgetAuthToken } from "./auth";
+import { forgetWrittenPath } from "./queryClient";
 
 export type JsonRecord = Record<string, unknown>;
 
@@ -33,6 +34,9 @@ export async function apiRequest(
   // PHILO-17 wayin: a 401 means the hub knows no owner for this token (none,
   // wrong, or rotated). Forget it so the next page load does not reuse it.
   if (response.status === 401) forgetAuthToken(headers.get("X-HoldSpeak-Token") ?? "");
+  // A write the hub accepted: a keyed read of that path is read again.
+  const method = (init.method ?? "GET").toUpperCase();
+  if (response.ok && method !== "GET" && method !== "HEAD") forgetWrittenPath(input);
   return response;
 }
 

@@ -9,6 +9,7 @@ import { fromWireMeeting } from "./api";
 import { apiFetch } from "../lib/api";
 import {
   computeNeedsYou,
+  readNeedsYouOnce,
   refreshNeedsYou,
   useNeedsYou,
   type NeedsYouDoorProjection,
@@ -543,6 +544,24 @@ describe("the shared needs-you read", () => {
     expect(second.result.current.complete).toBe(true);
     first.unmount();
     second.unmount();
+  });
+
+  // Desk open (2026-11-08): a face that opens after the answer landed (the
+  // Dock, the palette) takes it; a change frame still reads again.
+  it("a face that opens after the answer takes the kept answer; a refresh reads again", async () => {
+    const paths = installWire();
+    const first = renderHook(() => useNeedsYou());
+    await waitFor(() => expect(first.result.current.loading).toBe(false));
+    const later = renderHook(() => useNeedsYou({ poll: false }));
+    await act(async () => { await readNeedsYouOnce(); });
+    expect(paths.filter((path) => path.startsWith("/api/desk/needs-you"))).toEqual(["/api/desk/needs-you"]);
+    expect(later.result.current.complete).toBe(first.result.current.complete);
+    await act(async () => { await refreshNeedsYou(false); });
+    expect(paths.filter((path) => path.startsWith("/api/desk/needs-you"))).toEqual([
+      "/api/desk/needs-you", "/api/desk/needs-you",
+    ]);
+    first.unmount();
+    later.unmount();
   });
 });
 
