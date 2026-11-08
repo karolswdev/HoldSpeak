@@ -8,8 +8,12 @@ import type { SettingsResponse } from "../core-types";
 import { ApiError, apiFetch, readableError } from "../../../lib/api";
 import { useFlushOnLeave } from "../../../lib/flushOnLeave";
 import { announceTaskReturn } from "../../../desk/returnToTask";
+import type { OwnerNameAdapter, OwnerSetting } from "../../../desk/firstrun/ownerName";
 
 export type SettingsChanges = Array<[string[], unknown]>;
+
+/** The answer of a leave send: accepted (with the hub's document) or refused. */
+export type LeaveOutcome = { ok: true; settings?: SettingsResponse } | { ok: false; error: unknown };
 
 function clone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
@@ -281,12 +285,15 @@ export function useSettingsWriter(resource: SettingsStore, onSaved: (changes: Se
   // behind the queue (Astra r2 on #1090). It carries no revision, so it
   // applies; an older full-document save still in flight carries the old
   // revision, and the hub refuses it if it lands later.
-  useFlushOnLeave(() => {
+  // `extra` is a change the caller adds to this leave patch (the You fields
+  // send their newest value here when the page hides or the editor closes).
+  // The answer settles after the writer's own bookkeeping and never rejects.
+  const flushLeave = (extra: SettingsChanges = []): Promise<LeaveOutcome> | null => {
     clearTimeout(saveTimer.current);
-    const unsent = debouncedChangesRef.current;
+    const unsent = [...debouncedChangesRef.current, ...extra];
     const coveredJobIds = leaveCoveredJobIds();
     const queuedJobs = pendingJobsRef.current.filter((job) => !coveredJobIds.has(job.id));
-    if (!unsent.length && !queuedJobs.length) return;
+    if (!unsent.length && !queuedJobs.length) return null;
     debouncedChangesRef.current = [];
     const changes = [...queuedJobs.flatMap((job) => job.changes), ...unsent];
     const patch = mergeSettingsChanges({} as SettingsResponse, changes);
@@ -298,11 +305,11 @@ export function useSettingsWriter(resource: SettingsStore, onSaved: (changes: Se
     };
     leaveWritesRef.current.push(leave);
     writerFencedRef.current = true;
-    void apiFetch<{ settings?: SettingsResponse }>("/api/settings", {
+    return apiFetch<{ settings?: SettingsResponse }>("/api/settings", {
       method: "PUT",
       json: patch,
       keepalive: true,
-    }).then((result) => {
+    }).then((result): LeaveOutcome => {
       leave.status = "succeeded";
       // Keep later local jobs ahead of this older leave patch.  A keepalive
       // response can arrive after a new ordinary job has already completed;
@@ -326,7 +333,8 @@ export function useSettingsWriter(resource: SettingsStore, onSaved: (changes: Se
       clearFailedChangesCoveredByLeave(acceptedLeaveChanges);
       repaintPending();
       pruneLeaveWrites();
-    }).catch((error) => {
+      return { ok: true, settings: result?.settings };
+    }).catch((error): LeaveOutcome => {
       leave.status = "failed";
       // The queued jobs retain their own save/error lifecycle.  Only edits
       // which existed solely in this keepalive need to enter Retry now.
@@ -342,8 +350,10 @@ export function useSettingsWriter(resource: SettingsStore, onSaved: (changes: Se
         repaintPending();
       }
       pruneLeaveWrites();
+      return { ok: false, error };
     });
-  });
+  };
+  useFlushOnLeave(() => void flushLeave());
   const commitMany = async (changes: Array<[string[], unknown]>) => {
     installSettingsChanges(resource.data, changes, resource.setData);
     setRefusal("");
@@ -404,9 +414,55 @@ export function useSettingsWriter(resource: SettingsStore, onSaved: (changes: Se
     reconcileSettings,
     beforeCalendarChange,
     hasPendingWrite,
+    flushLeave,
     failedChangesRef,
+    lastFailureRef,
     authoritativeBaseRef,
   };
 }
 
 export type SettingsWriter = ReturnType<typeof useSettingsWriter>;
+
+const isOwnerChange = ([path]: [string[], unknown]) => path[0] === "owner";
+
+/** The You fields of the Settings window write through the window's one
+ *  writer: one revision, one queue, one 409 path. The You face keeps its own
+ *  field words and its own Retry, so a refused owner change leaves the
+ *  writer's Retry list and its refusal goes back to the You fields. A 409
+ *  says the hub's word ("Settings changed in another surface…"). */
+export function settingsOwnerAdapter(writer: () => SettingsWriter): OwnerNameAdapter {
+  const ownerOf = (settings: SettingsResponse | undefined, sent: OwnerSetting): OwnerSetting => {
+    const owner = (settings as { owner?: Partial<OwnerSetting> } | undefined)?.owner;
+    return owner && typeof owner === "object"
+      ? { name: String(owner.name ?? ""), aliases: Array.isArray(owner.aliases) ? owner.aliases.map(String) : [] }
+      : sent;
+  };
+  const refused = (current: SettingsWriter): Error | null => {
+    if (!current.failedChangesRef.current.some(isOwnerChange)) return null;
+    const message = current.lastFailureRef.current || "Not saved";
+    current.failedChangesRef.current = current.failedChangesRef.current.filter((change) => !isOwnerChange(change));
+    current.restoreRefusal();
+    return new Error(message);
+  };
+  return {
+    read: () => apiFetch<{ owner?: Partial<OwnerSetting>; _revision?: string }>("/api/settings"),
+    async write(owner, _revision, options) {
+      const current = writer();
+      const change: SettingsChanges = [[["owner"], owner]];
+      if (options?.keepalive) {
+        const outcome = await current.flushLeave(change);
+        if (outcome && !outcome.ok) {
+          throw refused(current) ?? (outcome.error instanceof Error ? outcome.error : new Error(readableError(outcome.error)));
+        }
+        return { settings: { owner: ownerOf(outcome?.ok ? outcome.settings : undefined, owner) } };
+      }
+      // A false answer with no refused owner change: a leave send carried
+      // this change and the hub accepted it.
+      await current.commitMany(change);
+      const failure = refused(current);
+      if (failure) throw failure;
+      const base = current.authoritativeBaseRef.current;
+      return { settings: { owner: ownerOf(base, owner), _revision: base._revision } };
+    },
+  };
+}
