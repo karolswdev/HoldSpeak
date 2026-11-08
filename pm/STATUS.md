@@ -2,6 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · #1891 A decision with an owner Person and a Project commits once in the record writer (one commit_decision_in_transaction, keyed by the record) and is that Person's row in Needs you; the Room word is left to the project_service lane.
 - 2026-11-08 · #1888 Fix forward #1885: the Needs-you recorder names private addresses server.local (LAN guard green) and recall.json is re-recorded with the receipt's status and done_at.
 - 2026-11-08 · #1887 Three architecture sources the splits moved (RoomHead, RemoteAccessModule, DestForm) point to their new files, so scripts/gen_docs.sh runs to the end again; a test validates the checked-in shards.
 - 2026-11-08 · #1886 One name for the agent session in the hub: the doctor gate row, the repository-register and hand-preview descriptions and the hub comments say "Hand to an agent session"; generated docs regenerated.
