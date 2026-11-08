@@ -378,9 +378,10 @@ def handle_message_for_principal(
     # A project-update CLI run carries its project binding in the durable
     # credential.  Keep this at the dispatcher so native CLI MCP calls and
     # the in-hub HTTP loop share the same palette, scope and P2 response cut.
-    from ..services.engine_tool_loop import (
-        _PROJECT_UPDATE_READ_TOOLS,
-        _filter_project_update_response,
+    from ..services.project_update_policy import (
+        READ_TOOLS as UPDATE_READ_TOOLS,
+        allow_update_draft,
+        filter_response,
         prepare_project_update_call,
         project_update_palette,
         project_update_scope,
@@ -389,12 +390,7 @@ def handle_message_for_principal(
     update_project = project_update_scope(principal)
     effective_palette = project_update_palette(principal, palette)
     if update_project and call_gate is not None:
-        base_call_gate = call_gate
-
-        def call_gate_for_update(name: str, arguments: Any) -> bool:
-            return name == "project.update_draft" or base_call_gate(name, arguments)
-
-        call_gate = call_gate_for_update
+        call_gate = allow_update_draft(call_gate)
 
     request_id = request.get("id")
     method = request.get("method")
@@ -476,7 +472,7 @@ def handle_message_for_principal(
             kernel = refuse_before_invoke(name, arguments, principal, "invalid_arguments") or {}
             return _response(request_id, _tool_result({"error": "Tool arguments must be an object", **kernel}, is_error=True))
         excluded_refs: set[str] | None = None
-        if update_project and (name in _PROJECT_UPDATE_READ_TOOLS or name == "project.update_draft"):
+        if update_project and (name in UPDATE_READ_TOOLS or name == "project.update_draft"):
             try:
                 arguments, excluded_refs, refusal = prepare_project_update_call(
                     principal, name, arguments, update_project,
@@ -518,7 +514,7 @@ def handle_message_for_principal(
             return _response(request_id, _tool_result({"error": str(exc) or type(exc).__name__}, is_error=True))
         response = _response(request_id, _tool_result(value))
         if excluded_refs is not None:
-            response = _filter_project_update_response(response, excluded_refs, name, project_id=update_project, principal=principal)
+            response = filter_response(response, excluded_refs, name, project_id=update_project, principal=principal)
         return response
     if method.startswith("notifications/"):
         return None
