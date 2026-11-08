@@ -2,7 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
-- 2026-11-08 · #PR Fix forward #1906: the screen glass deletes a decision through its one face (the Decisions window); its two 393 cases are strict xfail on the face defect (that window has no Object › Delete).
+- 2026-11-08 · #1970 Fix forward #1906: the screen glass deletes a decision through its one face (the Decisions window); its two 393 cases are strict xfail on the face defect (that window has no Object › Delete).
 - 2026-11-08 · #1969 Fix forward #1966: Today's result rows say Open result and Open session (the product copy guard).
 - 2026-11-08 · #1968 The floor: whole-word labels cut once at the end (128 px at 1440), the kind's sprite (a Program's note wears program.png), no "Program:"/"Note:" prefix in the label (kept in the accessible name), steel hover and selection.
 - 2026-11-08 · #1966 Today in the language: the mast and spine, the next meeting raised first (else Needs you's first plate), the day as kit rows with a mono hour column, three Needs-you rows, brass only for what waits on him; TodayView 934 → 491 lines.
