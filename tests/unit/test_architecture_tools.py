@@ -325,3 +325,10 @@ def test_existing_build_copy_is_not_source_evidence(tmp_path: Path) -> None:
     path.write_text(json.dumps(shard))
     result = validate(root, expected_shards=('runtime',))
     assert any('build or environment artifact' in str(error) for error in result.errors)
+
+
+def test_checked_in_metadata_names_sources_that_exist() -> None:
+    # The live shards, not a scratch copy: a component split that moves a
+    # symbol must repoint its entry, or scripts/gen_docs.sh stops here.
+    result = validate(ROOT)
+    assert result.ok, [str(error) for error in result.errors]
