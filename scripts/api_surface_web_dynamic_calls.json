@@ -1,0 +1,46 @@
+{
+  "note": "Web calls whose path has no fixed segment after /api, resolved by hand. scripts/gen_api_surface.py tags these routes as web and lists them in the manifest. Update an entry when its call site changes.",
+  "web_dynamic_calls": [
+    {
+      "site": "web/src/desk/store/dataSlice.ts:738",
+      "method": "DELETE",
+      "routes": [
+        "/api/notes/{note_id}",
+        "/api/decisions/{decision_id}",
+        "/api/kbs/{kb_id}",
+        "/api/recipes/{recipe_id}",
+        "/api/directories/{directory_id}",
+        "/api/chains/{chain_id}",
+        "/api/workflows/{workflow_id}"
+      ],
+      "why": "deletePrimitive fills /api/${path}/${id} from its paths table: note, decision, kb, recipe, directory, chain and workflow."
+    },
+    {
+      "site": "web/src/desk/components/DeskFilingStrip.tsx:149",
+      "method": "PUT",
+      "routes": [
+        "/api/kbs/{kb_id}/members/{resource_ref:path}",
+        "/api/projects/{project_id}/resources/{resource_ref:path}"
+      ],
+      "why": "toggleRelationship files an object: base is kbs with members or projects with resources."
+    },
+    {
+      "site": "web/src/desk/components/DeskFilingStrip.tsx:149",
+      "method": "DELETE",
+      "routes": [
+        "/api/kbs/{kb_id}/members/{resource_ref:path}",
+        "/api/projects/{project_id}/resources/{resource_ref:path}"
+      ],
+      "why": "toggleRelationship unfiles an object: base is kbs with members or projects with resources."
+    },
+    {
+      "site": "web/src/pages/cores/history/DoorSection.tsx:167",
+      "method": "POST",
+      "routes": [
+        "/api/intel/retry/{meeting_id}",
+        "/api/plugin-jobs/{job_id}/retry-now"
+      ],
+      "why": "Retry on a failed row: a Summary retries its meeting, any other job retries the plugin job."
+    }
+  ]
+}
