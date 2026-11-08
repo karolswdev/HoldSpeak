@@ -7,7 +7,6 @@ and a Database; it never imports FastAPI or touches HTTP request/response types.
 from __future__ import annotations
 from holdspeak.services.observer import NullObserver, PipelineObserver, observe_service
 
-import uuid
 from typing import Any, Callable
 
 from ..db.core import Database
@@ -15,10 +14,7 @@ from ..db.primitives import ZoneNameTaken, normalize_zone_name
 from ..principals import Principal
 from holdspeak.services.errors import ConflictError, NotFound, ValidationError
 from .support import capability_descriptor, linearize
-
-
-def _new_id(prefix: str) -> str:
-    return f"{prefix}_{uuid.uuid4().hex[:12]}"
+from holdspeak.ids import new_id as _new_id
 
 
 # Conductor K6 (Astra round 1 on #903): a launched agent's desk writes are

@@ -22,8 +22,8 @@ from __future__ import annotations
 
 import threading
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime, timezone
 from typing import Any, Callable, Mapping
+from holdspeak.timestamps import utc_now_iso as _now_iso
 
 #: No outbound connect waits longer than this for a host to answer.
 CONNECT_SECONDS = 3.0
@@ -99,10 +99,6 @@ class LastCheck:
             self._seen[key] = (_now_iso(), answer)
             self._busy.pop(key, None)
         busy.set()
-
-
-def _now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
 
 
 #: The endpoint checks of the desk's reads (detection, the front door).

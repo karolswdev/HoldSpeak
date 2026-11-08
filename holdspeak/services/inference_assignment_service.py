@@ -10,7 +10,6 @@ from __future__ import annotations
 import json
 import re
 import uuid
-from datetime import datetime, timezone
 from types import SimpleNamespace
 from typing import Any, Callable, Iterable, Mapping
 
@@ -38,6 +37,7 @@ from .tool_capability_service import (
     ToolCapabilityFoundation,
     parse_capability_manifest,
 )
+from holdspeak.timestamps import utc_now_z_micro as _now
 
 
 PROJECTION_SCHEMA = "InferenceAssignmentProjection@1"
@@ -100,14 +100,6 @@ _MIGRATION_FAMILY_BY_CAPABILITY = {
     "speech.transcribe": "speech-recognition-route-assignments",
 }
 _DEFAULT_MIGRATION_FAMILY = "thoughts-writing-route-assignments"
-
-
-def _now() -> str:
-    return (
-        datetime.now(timezone.utc)
-        .isoformat(timespec="microseconds")
-        .replace("+00:00", "Z")
-    )
 
 
 def _safe_id(value: Any, *, field: str) -> str:

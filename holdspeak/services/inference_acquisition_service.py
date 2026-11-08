@@ -26,6 +26,7 @@ from ..deployment_revisions import DeploymentRevision
 from ..inference_setup_catalog import packaged_catalog
 from ..principals import Principal, PrincipalKind
 from .errors import ServiceError
+from holdspeak.timestamps import utc_now_iso_z as _now
 
 
 _CHUNK_BYTES = 1024 * 1024
@@ -34,10 +35,6 @@ _ALLOWED_STATES = {
     "installing", "ready", "cancelled", "failed", "indeterminate",
 }
 _CANCELLABLE = {"requested", "resolving_source", "downloading"}
-
-
-def _now() -> str:
-    return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
 def _canonical(value: Any) -> str:

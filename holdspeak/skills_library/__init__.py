@@ -6,9 +6,9 @@ and original HoldSpeak skills. Seeded into the DB on first run.
 from __future__ import annotations
 
 import re
-import uuid
 from pathlib import Path
 from typing import Any
+from holdspeak.ids import new_id as _new_id
 
 SKILLS_DIR = Path(__file__).parent
 
@@ -52,10 +52,6 @@ def list_builtin_skills() -> list[dict[str, Any]]:
         except (OSError, ValueError):
             continue
     return skills
-
-
-def _new_id(prefix: str) -> str:
-    return f"{prefix}_{uuid.uuid4().hex[:12]}"
 
 
 def seed_skills_if_empty() -> int:

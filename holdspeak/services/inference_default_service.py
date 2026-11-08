@@ -41,7 +41,6 @@ import os
 import re
 import threading
 import uuid
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Iterable, Optional, Sequence
 from urllib.parse import urlparse
@@ -56,6 +55,7 @@ from ..logging_config import get_logger
 from ..loopback_http import loopback_get
 from ..principals import Principal, PrincipalKind
 from .errors import NotFound, ServiceError, ValidationError
+from holdspeak.timestamps import utc_now_iso as _now
 
 log = get_logger("inference.default")
 
@@ -117,10 +117,6 @@ _UNSIGNED_SOURCES = frozenset({
 
 class LoopbackOnlyError(ValueError):
     """A scan was asked to reach an address that is not on this machine."""
-
-
-def _now() -> str:
-    return datetime.now(timezone.utc).isoformat()
 
 
 def require_loopback(host: str) -> str:
