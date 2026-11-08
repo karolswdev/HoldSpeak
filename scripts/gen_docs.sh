@@ -23,6 +23,7 @@ product scripts/gen_api_surface.py
 product scripts/philo_openapi_reference.py
 product scripts/gen_operations_json.py
 product scripts/gen_mcp_sidecar_doc.py
+product scripts/operation_parity.py | tail -n +2 > docs/generated/operation-parity.md  # drop the "+" line
 # Standard library only.
 run python3 scripts/philo_repository_census.py
 run python3 scripts/philo_api_reference.py
