@@ -386,7 +386,7 @@ export function ProgramWizard({ template: firstTemplate, scopeProjectId, program
           </GadgetRow>
           <GadgetRow label="Spending">
             <span className="pg-wiz-spending" data-testid="programs-wizard-spending">
-              <StringGadget label="Spending note" value={spend} onChange={setSpend} placeholder="No note · USD" mic={false}
+              <StringGadget label="Spending note" value={spend} onChange={setSpend} placeholder="No note · USD"
                 inputProps={{ inputMode: "decimal" }} />
             </span>
           </GadgetRow>

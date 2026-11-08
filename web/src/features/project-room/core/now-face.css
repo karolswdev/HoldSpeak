@@ -203,7 +203,7 @@
 .room-plate-head { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .room-plate-glyph { flex: none; width: 24px; height: 24px; }
 .room-plate-name { flex: 1 1 auto; min-width: 0; font: 600 14px / 18px var(--font-display); color: var(--hs-ink); }
-.room-plate-word { flex: none; font: 500 11px / 16px var(--font-mono); color: var(--hs-ink-2); }
+.room-plate-word { flex: none; font: 500 var(--font-size-xs) / 16px var(--font-mono); color: var(--hs-ink-2); }
 .room-plate-word[data-tone="brass"] { color: var(--hs-brass-ink); }
 .room-plate-spine { display: flex; }
 .room-plate-line { font: 400 12px / 16px var(--font-sans); color: var(--hs-ink-2); overflow-wrap: anywhere; }
