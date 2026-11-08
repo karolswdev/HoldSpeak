@@ -1010,17 +1010,14 @@ class PreparationBriefService:
         attempt_id: str = "",
         memory: Any | None = None,
     ) -> tuple[Draft, str, str | None, str | None]:
-        from ..kernel.inference_runner import InvocationRequest, ServiceContract
-        from ..kernel.prompt_adapter import CanonicalPromptAdapter
-        from ..kernel.runtime import _as_principal
+        from . import engine_door
 
         broker = self._broker
         try:
-            deployment_id, assignment_id, _route_profile = _resolve_for_capability(
-                broker, PREPARATION_BRIEF_CAPABILITY,
-            )
-        except RuntimeError as exc:
+            engine = engine_door.engine_for(broker, PREPARATION_BRIEF_CAPABILITY)
+        except engine_door.EngineDoorError as exc:
             raise _ModelDraftFailed(ROUTE_NOT_SET, str(exc)) from exc
+        assignment_id = engine.assignment
 
         inventory_refs: set[str] = set()
         inventory_texts: dict[str, str] = {}
@@ -1050,28 +1047,20 @@ class PreparationBriefService:
 
         payload = build_model_prompt(purpose, inventory, manifest, memory)
         invocation_id = _invocation_id_for(attempt_id) if attempt_id else ""
-        request = InvocationRequest(
-            deployment_revision=deployment_id,
-            definition_origin=ServiceContract.for_payload("project.brief.prepare", "1", payload),
-            deadline_at=_time.time() + 120,
-            payload=payload,
-            invocation_id=invocation_id,
-        )
-        captured: list[Any] = []
-
-        def _capture(value: Any) -> str:
-            captured.append(value)
-            return f"brief-prepare:{assignment_id}"
-
         host = str(route.get("host") or "")
         if attempt_id:
             with self._lock:
                 self._live[attempt_id] = invocation_id
+        answer: Any = None
+        failure: Any = None
         try:
-            with _as_principal(principal):
-                outcome = broker.inference_runner.invoke(
-                    request, CanonicalPromptAdapter(), publish=_capture,
-                )
+            answer = engine_door.run(
+                broker, principal, PREPARATION_BRIEF_CAPABILITY, payload, engine=engine,
+                contract="project.brief.prepare", deadline=120, invocation_id=invocation_id,
+                result_ref=f"brief-prepare:{assignment_id}",
+            )
+        except engine_door.EngineDoorError as exc:
+            failure = exc
         except Exception as exc:
             raise _ModelDraftFailed(ROUTE_UNREACHABLE, str(exc)) from exc
         finally:
@@ -1083,26 +1072,23 @@ class PreparationBriefService:
         # whenever the runner admitted it, and then a request LEFT unless the
         # kernel refused before dispatch.  The face draws the target's egress
         # from this, never from the absence of a result.
-        operation_id = str(getattr(outcome, "operation_id", "") or "")
-        outcome_state = str(getattr(outcome, "outcome", "") or "")
-        send_phase = str(getattr(outcome, "send_phase", "") or "")
+        done = answer or failure
+        operation_id = done.operation_id
+        outcome_state = done.outcome
         sent = bool(operation_id) and outcome_state != "refused"
         receipt = {"sent": sent, "operation_id": operation_id, "outcome": outcome_state,
-                   "send_phase": send_phase, "host": host if sent else ""}
+                   "send_phase": done.send_phase, "host": host if sent else ""}
 
         if attempt_id and self._was_stopped(attempt_id):
             raise _ModelDraftFailed(ROUTE_STOPPED, "stopped by the owner", receipt)
         raw: str | None = None
-        result = getattr(outcome, "result", None)
-        if isinstance(result, dict) and "output" in result:
-            raw = str(result["output"])
-        elif captured and isinstance(captured[0], dict) and "output" in captured[0]:
-            raw = str(captured[0]["output"])
+        if answer is not None and isinstance(answer.result, dict) and "output" in answer.result:
+            raw = str(answer.result["output"])
         if raw is None:
             # The kernel runner returns a physical failure as an OUTCOME with
             # the destination's own error, not as an exception: name it as the
             # route failure it is, in the engine's words (ruling B5).
-            outcome_error = str(getattr(outcome, "error", "") or "")
+            outcome_error = failure.error if failure is not None else ""
             if outcome_state == "cancelled":
                 raise _ModelDraftFailed(ROUTE_STOPPED, outcome_error or "stopped", receipt)
             if outcome_error or (outcome_state and outcome_state != "succeeded"):
