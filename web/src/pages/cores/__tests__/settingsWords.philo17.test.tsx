@@ -3,7 +3,7 @@
 // gets, the rows say who can do what, the back link says where it goes.
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { PrefsFace, PrefStatusBar, hubHeadline, type SettingsHubWire } from "../settingsPrefs";
+import { PrefsFace, PrefStatusBar, hubHeadline, type SettingsHubWire } from "../settings/prefs";
 
 const hub = (patch: Partial<SettingsHubWire> = {}): SettingsHubWire => ({
   models: { engines: 1, groupsSet: 0, defaultSet: false },

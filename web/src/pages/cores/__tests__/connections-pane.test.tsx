@@ -490,7 +490,7 @@ describe("ConnectionsPane", () => {
 
   describe("Labels", () => {
     it("the integrations tile is labeled Accounts in the roster", async () => {
-      const { PREF_MODULES } = await import("../settingsPrefs");
+      const { PREF_MODULES } = await import("../settings/prefs");
       const tile = PREF_MODULES.find((m) => m.id === "integrations");
       expect(tile?.label).toBe("Accounts");
     });
@@ -509,7 +509,7 @@ describe("ConnectionsPane", () => {
   describe("Deep link", () => {
     it("openSurfaceWindow configure-settings integrations still lands on the tile", async () => {
       // The id stays "integrations" — no deep link breaks.
-      const { PREF_MODULES } = await import("../settingsPrefs");
+      const { PREF_MODULES } = await import("../settings/prefs");
       const ids = PREF_MODULES.map((m) => m.id);
       expect(ids).toContain("integrations");
     });
@@ -671,7 +671,7 @@ describe("ConnectionsPane", () => {
 /* replaces: tests/e2e/test_philo17_needs_you_grouped_glass.py::test_one_row_per_cause_and_repair_on_the_real_hub
    (the leg "Reconnect lands on Settings · Connections, GitHub focused"). Needs you's Reconnect opens
    Settings with scope "integration:github" (NeedsDrawer.test.tsx:961); SettingsCore passes it on as
-   focusProvider (SettingsCore.tsx:2388). Here the pane puts focus on that provider's row. */
+   focusProvider (SettingsCore.tsx:218; settings/Accounts.tsx:114 hands it to the pane). Here the pane puts focus on that provider's row. */
 describe("ConnectionsPane focusProvider", () => {
   it("puts focus inside the named provider's row once the list loads", async () => {
     mockFetchConnections.mockResolvedValue(fullResponse());

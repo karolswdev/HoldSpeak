@@ -403,7 +403,7 @@
 }
 
 /* ST7: one Settings page. The rail, pane and status bar grammar
-   (window grammar 2026-10-24) is settingsWindow.css. */
+   (window grammar 2026-10-24) is settings/window.css. */
 .desk-next .settings-page-content { padding:0; min-width:0; min-height:100%; }
 
 /* CycleGadget remains the native, keyboard-owned select. Settings gives its

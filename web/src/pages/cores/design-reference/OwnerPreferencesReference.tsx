@@ -2,9 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import { ApiError } from "../../../lib/api";
 import { type OwnerNameAdapter, type OwnerSetting } from "../../../desk/firstrun/ownerName";
 import { Button } from "../../../components/signal/Signal";
-import { OwnerNameFields, ownerSaveState, useOwnerPreferences } from "../settingsPeople";
-import { SETTINGS_SECTIONS, SettingsRailGlyph } from "../settingsPrefs";
-import { PrefSection, PrefStatus, PrefWindow } from "../settingsWindow";
+import { OwnerNameFields, ownerSaveState, useOwnerPreferences } from "../settings/People";
+import { SETTINGS_SECTIONS, SettingsRailGlyph } from "../settings/prefs";
+import { PrefSection, PrefStatus, PrefWindow } from "../settings/window";
 
 export type OwnerPreferencesState = "saved" | "edited" | "saving" | "refused" | "retried" | "newer";
 

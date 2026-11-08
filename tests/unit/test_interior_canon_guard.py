@@ -107,7 +107,7 @@ def test_runs_on_room_stays_folded_into_the_models_module() -> None:
     """HS-112-01 — the standalone Runs-on room stays retired.
 
     Story 143-12 lawfully replaced the old target-CRUD Models body with a thin
-    `settingsModels.tsx` host adapter to ModelLibraryCore. The technical
+    `settings/Models.tsx` host adapter to ModelLibraryCore. The technical
     placement facts now live in its folded Runs on disclosure, beside folded
     RAW facts; the library may never recreate a raw Field/Select editor or
     reopen the retired target route.
@@ -115,7 +115,7 @@ def test_runs_on_room_stays_folded_into_the_models_module() -> None:
     assert not (WEB_SRC / "pages" / "cores" / "ProfilesCore.tsx").exists(), (
         "HS-112-01 regression: the standalone Runs-on room must stay retired."
     )
-    adapter = (WEB_SRC / "pages" / "cores" / "settingsModels.tsx").read_text(
+    adapter = (WEB_SRC / "pages" / "cores" / "settings" / "Models.tsx").read_text(
         encoding="utf-8"
     )
     door = (WEB_SRC / "pages" / "cores" / "frontDoor.tsx").read_text(
@@ -128,7 +128,7 @@ def test_runs_on_room_stays_folded_into_the_models_module() -> None:
         encoding="utf-8"
     )
     # HS-156-04: the adapter hosts the front door, which hosts the library
-    # in its Advanced fold. The composition chain: settingsModels -> FrontDoorView -> ModelLibraryCore.
+    # in its Advanced fold. The composition chain: settings/Models -> FrontDoorView -> ModelLibraryCore.
     assert "FrontDoorView" in adapter and "/api/inference-targets" not in adapter, (
         "HS-156-04 regression: the Models slot adapter must host the front "
         "door, never revive target CRUD."

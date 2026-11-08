@@ -32,7 +32,7 @@ vi.mock("../../shell", async (importOriginal) => ({
 vi.mock("../../components/MicButton", () => ({ MicButton: () => null }));
 
 import { ApiError } from "../../../lib/api";
-import { SETTINGS_SECTIONS } from "../../../pages/cores/settingsPrefs";
+import { SETTINGS_SECTIONS } from "../../../pages/cores/settings/prefs";
 import { ReachSettingsPane, TELEGRAM_EGRESS } from "../ReachSettings";
 import { laterWords, pageWords, type LaterMark, type OpenPage } from "../../reach";
 
