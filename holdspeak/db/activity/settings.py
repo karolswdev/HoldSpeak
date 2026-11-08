@@ -4,6 +4,7 @@ Bodies moved verbatim from db/activity.py (HS-79-01, the Phase-63 discipline).
 """
 from __future__ import annotations
 
+import sqlite3
 from datetime import datetime
 from holdspeak.timestamps import parse_wall, utc_iso, utc_now_iso
 from typing import Optional, Any

@@ -158,6 +158,15 @@ def emitted() -> dict[str, dict]:
                         exc_codes[rel].setdefault(fn, set()).add(code)
                         if fn == "ChannelRefused":
                             add(code, "refused", where, template=template)
+                elif fn == "Slots" and len(node.args) >= 2 and getattr(node.args[1], "id", "") in (
+                        "EmailKeyError", "SlackKeyError"):
+                    # #1830: the one keystore raises the key error with the codes it is given
+                    # (keystore.Slots(service, EmailKeyError, missing=..., locked=..., unavailable=...)).
+                    cls = node.args[1].id
+                    for kw in node.keywords:
+                        if kw.arg in ("missing", "locked", "unavailable"):
+                            for code, _t in read(kw.value, where, variable_ok=False):
+                                exc_codes[rel].setdefault(cls, set()).add(code)
                 elif fn in ("ValidationError", "ServiceError", "NotFound"):
                     for kw in node.keywords:
                         if kw.arg == "code":
