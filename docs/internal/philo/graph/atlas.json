@@ -18567,12 +18567,12 @@
       ],
       "sources": [
         {
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "symbol": "type CaptureState =",
           "claim": "idle is the first of the five capture states"
         },
         {
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "symbol": "const [state, setState] = useState<CaptureState>(\"idle\");",
           "claim": "the gate starts idle"
         }
@@ -18595,12 +18595,12 @@
       ],
       "sources": [
         {
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "symbol": "\"idle\" | \"listening\" | \"transcribing\" | \"success\" | \"failed\";",
           "claim": "listening is a capture state"
         },
         {
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "symbol": "Stop listening",
           "claim": "the verb becomes Stop listening while it holds"
         }
@@ -18623,12 +18623,12 @@
       ],
       "sources": [
         {
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "symbol": "\"idle\" | \"listening\" | \"transcribing\" | \"success\" | \"failed\";",
           "claim": "transcribing is a capture state"
         },
         {
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "symbol": "Transcribing",
           "claim": "the verb reads it and is disabled"
         }
@@ -18651,7 +18651,7 @@
       ],
       "sources": [
         {
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "symbol": "\"idle\" | \"listening\" | \"transcribing\" | \"success\" | \"failed\";",
           "claim": "success is the terminal capture state"
         }
@@ -18675,12 +18675,12 @@
       ],
       "sources": [
         {
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "symbol": "setKeptNoteId(createdId);",
           "claim": "Keep as Note stores the created note id"
         },
         {
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "symbol": "setMessage(\"Kept as a note. Continue later when you are ready for your Desk.\");",
           "claim": "the receipt line says so"
         },
@@ -18708,7 +18708,7 @@
       ],
       "sources": [
         {
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "symbol": "{needsDraftCustody ? \"Save draft & continue\" : \"Continue later\"}",
           "claim": "Continue later is the gate's dismissal verb"
         },
@@ -18741,7 +18741,7 @@
           "claim": "needs_help is the third accepted disposition"
         },
         {
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "symbol": "onClick={() => void dismiss(\"needs_help\")}",
           "claim": "the gate offers it only after a failure"
         }
@@ -18765,7 +18765,7 @@
       ],
       "sources": [
         {
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "symbol": "{needsDraftCustody ? \"Save draft & continue\" : \"Continue later\"}",
           "claim": "the dismissal verb renames itself when a draft must be carried"
         }
@@ -18788,12 +18788,12 @@
       ],
       "sources": [
         {
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "symbol": "} = useDurableDraft(\"first-words\");",
           "claim": "the gate's text is a durable draft"
         },
         {
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "symbol": "recovered,",
           "claim": "it reports whether the words were recovered"
         }
@@ -18816,12 +18816,12 @@
       ],
       "sources": [
         {
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "symbol": "const [recoveredAudioAvailable, setRecoveredAudioAvailable] = useState(false);",
           "claim": "retained audio is its own state"
         },
         {
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "symbol": "(!supported && !canRetryRetainedAudio) ||",
           "claim": "it keeps the verb alive when capture itself is unsupported"
         }
@@ -18844,12 +18844,12 @@
       ],
       "sources": [
         {
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "symbol": "const micUnsupportedMessage =",
           "claim": "an unsupported browser gets its own sentence"
         },
         {
-          "path": "web/src/desk/components/FirstWords.tsx",
+          "path": "web/src/desk/components/_parked/FirstWords.tsx",
           "symbol": "<SurfaceState error={micUnsupportedMessage} />",
           "claim": "and its own state on the face"
         }

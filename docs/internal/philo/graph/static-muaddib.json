@@ -71,7 +71,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/FirstWords.tsx",
+     "path": "web/src/desk/components/_parked/FirstWords.tsx",
      "line": 361,
      "claim": "the gate is one section; it is the whole first screen",
      "symbol": "FirstWords"
@@ -106,14 +106,14 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/FirstWords.tsx",
+     "path": "web/src/desk/components/_parked/FirstWords.tsx",
      "line": 370,
      "claim": "the one capture key on the gate, the library Button",
      "symbol": "FirstWords"
     },
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/FirstWords.tsx",
+     "path": "web/src/desk/components/_parked/FirstWords.tsx",
      "line": 393,
      "claim": "the press calls toggle(): begin() when idle, stop() when listening",
      "symbol": "FirstWords"
@@ -141,7 +141,7 @@
     },
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/FirstWords.tsx",
+     "path": "web/src/desk/components/_parked/FirstWords.tsx",
      "line": 156,
      "claim": "the gate's capture rides the same socket every desk mic uses",
      "symbol": "begin"
@@ -162,14 +162,14 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/FirstWords.tsx",
+     "path": "web/src/desk/components/_parked/FirstWords.tsx",
      "line": 189,
      "claim": "stop() resolves with the server's final text",
      "symbol": "stop"
     },
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/FirstWords.tsx",
+     "path": "web/src/desk/components/_parked/FirstWords.tsx",
      "line": 194,
      "claim": "the text becomes the gate's editable draft; empty text fails as no_speech",
      "symbol": "stop"
@@ -189,14 +189,14 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/FirstWords.tsx",
+     "path": "web/src/desk/components/_parked/FirstWords.tsx",
      "line": 325,
      "claim": "the verb, the library Button, disabled until there are words",
      "symbol": "FirstWords"
     },
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/FirstWords.tsx",
+     "path": "web/src/desk/components/_parked/FirstWords.tsx",
      "line": 288,
      "claim": "keep() POSTs the note and stages it to open",
      "symbol": "keep"
@@ -218,7 +218,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/FirstWords.tsx",
+     "path": "web/src/desk/components/_parked/FirstWords.tsx",
      "line": 296,
      "claim": "the gate writes the words as a note through the ordinary primitive route",
      "symbol": "keep"
@@ -239,7 +239,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/FirstWords.tsx",
+     "path": "web/src/desk/components/_parked/FirstWords.tsx",
      "line": 307,
      "claim": "the created note is staged so the desk opens it after the handoff",
      "symbol": "keep"
@@ -259,14 +259,14 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/FirstWords.tsx",
+     "path": "web/src/desk/components/_parked/FirstWords.tsx",
      "line": 493,
      "claim": "one verb, two labels: with a draft it takes custody first",
      "symbol": "FirstWords"
     },
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/FirstWords.tsx",
+     "path": "web/src/desk/components/_parked/FirstWords.tsx",
      "line": 254,
      "claim": "dismiss() keeps any draft, then hands off",
      "symbol": "dismiss"
@@ -287,21 +287,21 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/FirstWords.tsx",
+     "path": "web/src/desk/components/_parked/FirstWords.tsx",
      "line": 213,
      "claim": "the handoff seeds the desk first",
      "symbol": "completeHandoff"
     },
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/FirstWords.tsx",
+     "path": "web/src/desk/components/_parked/FirstWords.tsx",
      "line": 216,
      "claim": "then records the disposition that closes the gate",
      "symbol": "completeHandoff"
     },
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/FirstWords.tsx",
+     "path": "web/src/desk/components/_parked/FirstWords.tsx",
      "line": 233,
      "claim": "a failed handoff keeps the words and offers Retry finishing your Desk",
      "symbol": "completeHandoff"
@@ -322,7 +322,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/FirstWords.tsx",
+     "path": "web/src/desk/components/_parked/FirstWords.tsx",
      "line": 216,
      "claim": "the disposition write that clears arrival_required",
      "symbol": "completeHandoff"
@@ -3670,7 +3670,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/FirstWords.tsx",
+     "path": "web/src/desk/components/_parked/FirstWords.tsx",
      "line": 493,
      "claim": "Continue later is the gate's dismissal verb",
      "symbol": "Continue later"
@@ -3698,7 +3698,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/FirstWords.tsx",
+     "path": "web/src/desk/components/_parked/FirstWords.tsx",
      "line": 493,
      "claim": "the dismissal verb renames itself when a draft must be carried",
      "symbol": "needsDraftCustody"
@@ -3775,14 +3775,14 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/FirstWords.tsx",
+     "path": "web/src/desk/components/_parked/FirstWords.tsx",
      "line": 308,
      "claim": "Keep as Note stores the created note id",
      "symbol": "setKeptNoteId"
     },
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/FirstWords.tsx",
+     "path": "web/src/desk/components/_parked/FirstWords.tsx",
      "line": 310,
      "claim": "the receipt line says so",
      "symbol": "Kept as a note"
@@ -3810,14 +3810,14 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/FirstWords.tsx",
+     "path": "web/src/desk/components/_parked/FirstWords.tsx",
      "line": 34,
      "claim": "listening is a capture state",
      "symbol": "listening"
     },
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/FirstWords.tsx",
+     "path": "web/src/desk/components/_parked/FirstWords.tsx",
      "line": 382,
      "claim": "the verb becomes Stop listening while it holds",
      "symbol": "Stop listening"
@@ -3838,14 +3838,14 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/FirstWords.tsx",
+     "path": "web/src/desk/components/_parked/FirstWords.tsx",
      "line": 35,
      "claim": "an unsupported browser gets its own sentence",
      "symbol": "micUnsupportedMessage"
     },
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/FirstWords.tsx",
+     "path": "web/src/desk/components/_parked/FirstWords.tsx",
      "line": 409,
      "claim": "and its own state on the face",
      "symbol": "supported"
@@ -3866,14 +3866,14 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/FirstWords.tsx",
+     "path": "web/src/desk/components/_parked/FirstWords.tsx",
      "line": 49,
      "claim": "the gate's text is a durable draft",
      "symbol": "useDurableDraft"
     },
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/FirstWords.tsx",
+     "path": "web/src/desk/components/_parked/FirstWords.tsx",
      "line": 47,
      "claim": "it reports whether the words were recovered",
      "symbol": "recovered"
@@ -3894,7 +3894,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/FirstWords.tsx",
+     "path": "web/src/desk/components/_parked/FirstWords.tsx",
      "line": 34,
      "claim": "success is the terminal capture state",
      "symbol": "success"
@@ -9822,7 +9822,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "holdspeak/mcp/families/sequence.py",
+     "path": "holdspeak/mcp/families/_parked/sequence.py",
      "line": 14,
      "anchor": "\"sequence.run\"",
      "claim": "a tool the MCP server advertises in its tools/list answer"
@@ -9843,7 +9843,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "holdspeak/mcp/families/sequence.py",
+     "path": "holdspeak/mcp/families/_parked/sequence.py",
      "line": 31,
      "anchor": "\"sequence.cancel\"",
      "claim": "a tool the MCP server advertises in its tools/list answer"
@@ -9864,7 +9864,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "holdspeak/mcp/families/sequence.py",
+     "path": "holdspeak/mcp/families/_parked/sequence.py",
      "line": 43,
      "anchor": "\"workflow.run\"",
      "claim": "a tool the MCP server advertises in its tools/list answer"
@@ -9885,7 +9885,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "holdspeak/mcp/families/sequence.py",
+     "path": "holdspeak/mcp/families/_parked/sequence.py",
      "line": 60,
      "anchor": "\"workflow.cancel\"",
      "claim": "a tool the MCP server advertises in its tools/list answer"
@@ -12783,7 +12783,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "holdspeak/mcp/families/practice_recipe.py",
+     "path": "holdspeak/mcp/families/_parked/practice_recipe.py",
      "line": 33,
      "anchor": "\"practice_recipe.list\"",
      "claim": "a tool the MCP server advertises in its tools/list answer"
@@ -12804,7 +12804,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "holdspeak/mcp/families/practice_recipe.py",
+     "path": "holdspeak/mcp/families/_parked/practice_recipe.py",
      "line": 48,
      "anchor": "\"practice_recipe.get\"",
      "claim": "a tool the MCP server advertises in its tools/list answer"
@@ -12825,7 +12825,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "holdspeak/mcp/families/practice_recipe.py",
+     "path": "holdspeak/mcp/families/_parked/practice_recipe.py",
      "line": 66,
      "anchor": "\"practice_recipe.compile\"",
      "claim": "a tool the MCP server advertises in its tools/list answer"
@@ -15660,7 +15660,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/CallChip.tsx",
+     "path": "web/src/desk/components/_parked/CallChip.tsx",
      "line": 140,
      "anchor": "onClick",
      "claim": "a raw control's onClick handler on button"
@@ -15681,7 +15681,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/CallChip.tsx",
+     "path": "web/src/desk/components/_parked/CallChip.tsx",
      "line": 141,
      "anchor": "onKeyDown",
      "claim": "a raw control's onKeyDown handler on button"
@@ -15975,7 +15975,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/DeliveryListSection.tsx",
+     "path": "web/src/desk/components/_parked/DeliveryListSection.tsx",
      "line": 55,
      "anchor": "onClick",
      "claim": "a raw control's onClick handler on button"
@@ -16227,7 +16227,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/DeskCreateMenu.tsx",
+     "path": "web/src/desk/components/_parked/DeskCreateMenu.tsx",
      "line": 24,
      "anchor": "onKeyDown",
      "claim": "a unclassified control's onKeyDown handler on HTMLButtonElement"
@@ -16248,7 +16248,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/DeskCreateMenu.tsx",
+     "path": "web/src/desk/components/_parked/DeskCreateMenu.tsx",
      "line": 48,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -16878,7 +16878,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/DeskStartActions.tsx",
+     "path": "web/src/desk/components/_parked/DeskStartActions.tsx",
      "line": 20,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -16899,7 +16899,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/DeskStartActions.tsx",
+     "path": "web/src/desk/components/_parked/DeskStartActions.tsx",
      "line": 32,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -17445,7 +17445,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/FirstWords.tsx",
+     "path": "web/src/desk/components/_parked/FirstWords.tsx",
      "line": 391,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -17466,7 +17466,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/FirstWords.tsx",
+     "path": "web/src/desk/components/_parked/FirstWords.tsx",
      "line": 424,
      "anchor": "onChange",
      "claim": "a library control's onChange handler on PadGadget"
@@ -17487,7 +17487,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/FirstWords.tsx",
+     "path": "web/src/desk/components/_parked/FirstWords.tsx",
      "line": 440,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -17508,7 +17508,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/FirstWords.tsx",
+     "path": "web/src/desk/components/_parked/FirstWords.tsx",
      "line": 450,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -17529,7 +17529,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/FirstWords.tsx",
+     "path": "web/src/desk/components/_parked/FirstWords.tsx",
      "line": 459,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -17550,7 +17550,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/FirstWords.tsx",
+     "path": "web/src/desk/components/_parked/FirstWords.tsx",
      "line": 473,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -17571,7 +17571,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/FirstWords.tsx",
+     "path": "web/src/desk/components/_parked/FirstWords.tsx",
      "line": 489,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -17592,7 +17592,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/FirstWords.tsx",
+     "path": "web/src/desk/components/_parked/FirstWords.tsx",
      "line": 500,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -18096,7 +18096,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/InterviewPanel.tsx",
+     "path": "web/src/desk/components/_parked/InterviewPanel.tsx",
      "line": 61,
      "anchor": "onChange",
      "claim": "a library control's onChange handler on Select"
@@ -18117,7 +18117,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/InterviewPanel.tsx",
+     "path": "web/src/desk/components/_parked/InterviewPanel.tsx",
      "line": 76,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -18138,7 +18138,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/InterviewPanel.tsx",
+     "path": "web/src/desk/components/_parked/InterviewPanel.tsx",
      "line": 86,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -18159,7 +18159,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/InterviewPanel.tsx",
+     "path": "web/src/desk/components/_parked/InterviewPanel.tsx",
      "line": 98,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -18180,7 +18180,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/InterviewPanel.tsx",
+     "path": "web/src/desk/components/_parked/InterviewPanel.tsx",
      "line": 126,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -18201,7 +18201,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/InterviewPanel.tsx",
+     "path": "web/src/desk/components/_parked/InterviewPanel.tsx",
      "line": 166,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -18222,7 +18222,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/InterviewPanel.tsx",
+     "path": "web/src/desk/components/_parked/InterviewPanel.tsx",
      "line": 190,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -18243,7 +18243,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/InterviewPanel.tsx",
+     "path": "web/src/desk/components/_parked/InterviewPanel.tsx",
      "line": 205,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -18264,7 +18264,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/InterviewPanel.tsx",
+     "path": "web/src/desk/components/_parked/InterviewPanel.tsx",
      "line": 220,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -18285,7 +18285,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/InterviewPanel.tsx",
+     "path": "web/src/desk/components/_parked/InterviewPanel.tsx",
      "line": 240,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -18684,7 +18684,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/ModeTabs.tsx",
+     "path": "web/src/desk/components/_parked/ModeTabs.tsx",
      "line": 115,
      "anchor": "onKeyDown",
      "claim": "a raw control's onKeyDown handler on div"
@@ -18705,7 +18705,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/ModeTabs.tsx",
+     "path": "web/src/desk/components/_parked/ModeTabs.tsx",
      "line": 132,
      "anchor": "onClick",
      "claim": "a raw control's onClick handler on button"
@@ -18726,7 +18726,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/PrReceiptsSection.tsx",
+     "path": "web/src/desk/components/_parked/PrReceiptsSection.tsx",
      "line": 74,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -18747,7 +18747,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/PrReceiptsSection.tsx",
+     "path": "web/src/desk/components/_parked/PrReceiptsSection.tsx",
      "line": 106,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -18768,7 +18768,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/PrReceiptsSection.tsx",
+     "path": "web/src/desk/components/_parked/PrReceiptsSection.tsx",
      "line": 107,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -18789,7 +18789,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/PrReceiptsSection.tsx",
+     "path": "web/src/desk/components/_parked/PrReceiptsSection.tsx",
      "line": 114,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -18810,7 +18810,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/PrReceiptsSection.tsx",
+     "path": "web/src/desk/components/_parked/PrReceiptsSection.tsx",
      "line": 130,
      "anchor": "onChange",
      "claim": "a unclassified control's onChange handler on DeskComposer"
@@ -18831,7 +18831,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/PrReceiptsSection.tsx",
+     "path": "web/src/desk/components/_parked/PrReceiptsSection.tsx",
      "line": 154,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -18852,7 +18852,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/PrReceiptsSection.tsx",
+     "path": "web/src/desk/components/_parked/PrReceiptsSection.tsx",
      "line": 170,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -18873,7 +18873,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/PrReceiptsSection.tsx",
+     "path": "web/src/desk/components/_parked/PrReceiptsSection.tsx",
      "line": 171,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -18894,7 +18894,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/PrReceiptsSection.tsx",
+     "path": "web/src/desk/components/_parked/PrReceiptsSection.tsx",
      "line": 202,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -20070,7 +20070,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/SpeakerGlyph.tsx",
+     "path": "web/src/desk/components/_parked/SpeakerGlyph.tsx",
      "line": 63,
      "anchor": "onClick",
      "claim": "a raw control's onClick handler on button"
@@ -20091,7 +20091,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/SpeakerGlyph.tsx",
+     "path": "web/src/desk/components/_parked/SpeakerGlyph.tsx",
      "line": 64,
      "anchor": "onKeyDown",
      "claim": "a raw control's onKeyDown handler on button"
@@ -20427,7 +20427,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/ThreadComposer.tsx",
+     "path": "web/src/desk/components/_parked/ThreadComposer.tsx",
      "line": 63,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -20448,7 +20448,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/ThreadComposer.tsx",
+     "path": "web/src/desk/components/_parked/ThreadComposer.tsx",
      "line": 979,
      "anchor": "onChange",
      "claim": "a raw control's onChange handler on textarea"
@@ -20469,7 +20469,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/ThreadComposer.tsx",
+     "path": "web/src/desk/components/_parked/ThreadComposer.tsx",
      "line": 981,
      "anchor": "onKeyDown",
      "claim": "a raw control's onKeyDown handler on textarea"
@@ -20490,7 +20490,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/ThreadComposer.tsx",
+     "path": "web/src/desk/components/_parked/ThreadComposer.tsx",
      "line": 996,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -20511,7 +20511,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/ThreadComposer.tsx",
+     "path": "web/src/desk/components/_parked/ThreadComposer.tsx",
      "line": 1006,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -20532,7 +20532,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/ThreadComposer.tsx",
+     "path": "web/src/desk/components/_parked/ThreadComposer.tsx",
      "line": 1072,
      "anchor": "onChange",
      "claim": "a raw control's onChange handler on textarea"
@@ -20553,7 +20553,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/ThreadComposer.tsx",
+     "path": "web/src/desk/components/_parked/ThreadComposer.tsx",
      "line": 1073,
      "anchor": "onKeyDown",
      "claim": "a raw control's onKeyDown handler on textarea"
@@ -20574,7 +20574,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/ThreadComposer.tsx",
+     "path": "web/src/desk/components/_parked/ThreadComposer.tsx",
      "line": 1100,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -20595,7 +20595,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/ThreadComposer.tsx",
+     "path": "web/src/desk/components/_parked/ThreadComposer.tsx",
      "line": 1109,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -21666,7 +21666,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/ZoneWindow.tsx",
+     "path": "web/src/desk/components/_parked/ZoneWindow.tsx",
      "line": 124,
      "anchor": "onChange",
      "claim": "a library control's onChange handler on SurfaceWings"
@@ -21687,7 +21687,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/ZoneWindow.tsx",
+     "path": "web/src/desk/components/_parked/ZoneWindow.tsx",
      "line": 145,
      "anchor": "onClick",
      "claim": "a raw control's onClick handler on button"
@@ -21708,7 +21708,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/ZoneWindow.tsx",
+     "path": "web/src/desk/components/_parked/ZoneWindow.tsx",
      "line": 179,
      "anchor": "onClick",
      "claim": "a raw control's onClick handler on button"
@@ -21918,7 +21918,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/window/RoomActions.tsx",
+     "path": "web/src/desk/components/window/_parked/RoomActions.tsx",
      "line": 36,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -21939,7 +21939,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/window/RoomActions.tsx",
+     "path": "web/src/desk/components/window/_parked/RoomActions.tsx",
      "line": 45,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -22149,7 +22149,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/pullouts/ChainPullout.tsx",
+     "path": "web/src/desk/pullouts/_parked/ChainPullout.tsx",
      "line": 66,
      "anchor": "onClick",
      "claim": "a raw control's onClick handler on button"
@@ -22170,7 +22170,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/pullouts/ChainPullout.tsx",
+     "path": "web/src/desk/pullouts/_parked/ChainPullout.tsx",
      "line": 75,
      "anchor": "onClick",
      "claim": "a raw control's onClick handler on button"
@@ -24123,7 +24123,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/pullouts/WorkflowPullout.tsx",
+     "path": "web/src/desk/pullouts/_parked/WorkflowPullout.tsx",
      "line": 49,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -24144,7 +24144,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/pullouts/WorkflowPullout.tsx",
+     "path": "web/src/desk/pullouts/_parked/WorkflowPullout.tsx",
      "line": 50,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -24165,7 +24165,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/pullouts/WorkflowPullout.tsx",
+     "path": "web/src/desk/pullouts/_parked/WorkflowPullout.tsx",
      "line": 55,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -24186,7 +24186,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/pullouts/WorkflowPullout.tsx",
+     "path": "web/src/desk/pullouts/_parked/WorkflowPullout.tsx",
      "line": 64,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -24648,7 +24648,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/pullouts/editors/WorkflowEditor.tsx",
+     "path": "web/src/desk/pullouts/_parked/editors/WorkflowEditor.tsx",
      "line": 53,
      "anchor": "onChange",
      "claim": "a library control's onChange handler on StringGadget"
@@ -24669,7 +24669,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/pullouts/editors/WorkflowEditor.tsx",
+     "path": "web/src/desk/pullouts/_parked/editors/WorkflowEditor.tsx",
      "line": 75,
      "anchor": "onChange",
      "claim": "a library control's onChange handler on StringGadget"
@@ -24690,7 +24690,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/pullouts/editors/WorkflowEditor.tsx",
+     "path": "web/src/desk/pullouts/_parked/editors/WorkflowEditor.tsx",
      "line": 83,
      "anchor": "onChange",
      "claim": "a library control's onChange handler on StringGadget"
@@ -24711,7 +24711,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/pullouts/editors/WorkflowEditor.tsx",
+     "path": "web/src/desk/pullouts/_parked/editors/WorkflowEditor.tsx",
      "line": 91,
      "anchor": "onChange",
      "claim": "a library control's onChange handler on StringGadget"
@@ -24732,7 +24732,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/pullouts/editors/WorkflowEditor.tsx",
+     "path": "web/src/desk/pullouts/_parked/editors/WorkflowEditor.tsx",
      "line": 99,
      "anchor": "onClick",
      "claim": "a raw control's onClick handler on button"
@@ -24753,7 +24753,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/pullouts/editors/WorkflowEditor.tsx",
+     "path": "web/src/desk/pullouts/_parked/editors/WorkflowEditor.tsx",
      "line": 111,
      "anchor": "onClick",
      "claim": "a raw control's onClick handler on button"
@@ -24774,7 +24774,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/pullouts/editors/WorkflowEditor.tsx",
+     "path": "web/src/desk/pullouts/_parked/editors/WorkflowEditor.tsx",
      "line": 125,
      "anchor": "onClick",
      "claim": "a raw control's onClick handler on button"
@@ -25425,7 +25425,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/surface/LedgerFilter.tsx",
+     "path": "web/src/desk/surface/_parked/LedgerFilter.tsx",
      "line": 120,
      "anchor": "onChange",
      "claim": "a raw control's onChange handler on input"
@@ -25446,7 +25446,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/surface/LedgerFilter.tsx",
+     "path": "web/src/desk/surface/_parked/LedgerFilter.tsx",
      "line": 133,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -25467,7 +25467,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/surface/LedgerFilter.tsx",
+     "path": "web/src/desk/surface/_parked/LedgerFilter.tsx",
      "line": 156,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -26412,7 +26412,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/surface/patterns/LedgerRemainder.tsx",
+     "path": "web/src/desk/surface/patterns/_parked/LedgerRemainder.tsx",
      "line": 64,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -26559,7 +26559,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/surface/patterns/TaskResume.tsx",
+     "path": "web/src/desk/surface/patterns/_parked/TaskResume.tsx",
      "line": 220,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -26580,7 +26580,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/surface/patterns/TaskResume.tsx",
+     "path": "web/src/desk/surface/patterns/_parked/TaskResume.tsx",
      "line": 245,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -26685,7 +26685,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/thought-workspace/ThoughtReadsWell.tsx",
+     "path": "web/src/desk/thought-workspace/_parked/ThoughtReadsWell.tsx",
      "line": 121,
      "anchor": "onChange",
      "claim": "a library control's onChange handler on CheckGadget"
@@ -26706,7 +26706,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/thought-workspace/ThoughtReadsWell.tsx",
+     "path": "web/src/desk/thought-workspace/_parked/ThoughtReadsWell.tsx",
      "line": 129,
      "anchor": "onChange",
      "claim": "a library control's onChange handler on StringGadget"
@@ -32565,7 +32565,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/CompanionCore.tsx",
+     "path": "web/src/pages/cores/_parked/CompanionCore.tsx",
      "line": 38,
      "anchor": "onChange",
      "claim": "a library control's onChange handler on SurfaceWings"
@@ -32586,7 +32586,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/CompanionCore.tsx",
+     "path": "web/src/pages/cores/_parked/CompanionCore.tsx",
      "line": 85,
      "anchor": "onToggle",
      "claim": "a library control's onToggle handler on SurfaceLedgerRow"
@@ -32607,7 +32607,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/CompanionCore.tsx",
+     "path": "web/src/pages/cores/_parked/CompanionCore.tsx",
      "line": 112,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -32628,7 +32628,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/CompanionCore.tsx",
+     "path": "web/src/pages/cores/_parked/CompanionCore.tsx",
      "line": 157,
      "anchor": "onToggle",
      "claim": "a library control's onToggle handler on SurfaceLedgerRow"
@@ -37500,7 +37500,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/history/AftercareGadgets.tsx",
+     "path": "web/src/pages/cores/history/_parked/AftercareGadgets.tsx",
      "line": 27,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -37521,7 +37521,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/history/AftercareGadgets.tsx",
+     "path": "web/src/pages/cores/history/_parked/AftercareGadgets.tsx",
      "line": 36,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -37815,7 +37815,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/history/MeetingReview.tsx",
+     "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
      "line": 320,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -37836,7 +37836,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/history/MeetingReview.tsx",
+     "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
      "line": 484,
      "anchor": "onKeyDown",
      "claim": "a raw control's onKeyDown handler on li"
@@ -37857,7 +37857,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/history/MeetingReview.tsx",
+     "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
      "line": 522,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -37878,7 +37878,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/history/MeetingReview.tsx",
+     "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
      "line": 533,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -37899,7 +37899,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/history/MeetingReview.tsx",
+     "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
      "line": 547,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -37920,7 +37920,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/history/MeetingReview.tsx",
+     "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
      "line": 567,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -37941,7 +37941,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/history/MeetingReview.tsx",
+     "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
      "line": 631,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -37962,7 +37962,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/history/MeetingReview.tsx",
+     "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
      "line": 655,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -37983,7 +37983,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/history/MeetingReview.tsx",
+     "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
      "line": 708,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -38004,7 +38004,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/history/MeetingReview.tsx",
+     "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
      "line": 716,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -38025,7 +38025,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/history/MeetingReview.tsx",
+     "path": "web/src/pages/cores/history/_parked/MeetingReview.tsx",
      "line": 788,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -38709,7 +38709,7 @@
    "evidence": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/FirstWords.tsx",
+     "path": "web/src/desk/components/_parked/FirstWords.tsx",
      "line": 391,
      "claim": "the key's onClick is the gate's own handler",
      "symbol": "FirstWords"
@@ -38723,7 +38723,7 @@
    "evidence": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/FirstWords.tsx",
+     "path": "web/src/desk/components/_parked/FirstWords.tsx",
      "line": 156,
      "claim": "begin() opens the real stream session",
      "symbol": "begin"
@@ -38737,7 +38737,7 @@
    "evidence": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/FirstWords.tsx",
+     "path": "web/src/desk/components/_parked/FirstWords.tsx",
      "line": 189,
      "claim": "the socket's final frame carries the text",
      "symbol": "stop"
@@ -38751,7 +38751,7 @@
    "evidence": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/FirstWords.tsx",
+     "path": "web/src/desk/components/_parked/FirstWords.tsx",
      "line": 135,
      "claim": "a non-empty transcript puts the gate in success with the words in the pad",
      "symbol": "acceptTranscript"
@@ -38765,7 +38765,7 @@
    "evidence": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/FirstWords.tsx",
+     "path": "web/src/desk/components/_parked/FirstWords.tsx",
      "line": 411,
      "claim": "every named failure category draws its own contract message",
      "symbol": "FirstWords"
@@ -38786,7 +38786,7 @@
    "evidence": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/FirstWords.tsx",
+     "path": "web/src/desk/components/_parked/FirstWords.tsx",
      "line": 293,
      "claim": "keep() mints a stable id and POSTs it",
      "symbol": "keep"
@@ -38800,7 +38800,7 @@
    "evidence": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/FirstWords.tsx",
+     "path": "web/src/desk/components/_parked/FirstWords.tsx",
      "line": 305,
      "claim": "a 2xx is the confirmation the receipt is built from",
      "symbol": "keep"
@@ -38814,7 +38814,7 @@
    "evidence": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/FirstWords.tsx",
+     "path": "web/src/desk/components/_parked/FirstWords.tsx",
      "line": 310,
      "claim": "the kept state is stated on the face",
      "symbol": "keep"
@@ -38828,7 +38828,7 @@
    "evidence": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/FirstWords.tsx",
+     "path": "web/src/desk/components/_parked/FirstWords.tsx",
      "line": 285,
      "claim": "dismiss() ends in the handoff",
      "symbol": "dismiss"
@@ -38842,7 +38842,7 @@
    "evidence": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/FirstWords.tsx",
+     "path": "web/src/desk/components/_parked/FirstWords.tsx",
      "line": 218,
      "claim": "the disposition travels on the PUT",
      "symbol": "completeHandoff"
@@ -38870,7 +38870,7 @@
    "evidence": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/FirstWords.tsx",
+     "path": "web/src/desk/components/_parked/FirstWords.tsx",
      "line": 225,
      "claim": "the local draft is cleared only after the authoritative refresh",
      "symbol": "completeHandoff"
@@ -38884,7 +38884,7 @@
    "evidence": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/FirstWords.tsx",
+     "path": "web/src/desk/components/_parked/FirstWords.tsx",
      "line": 358,
      "claim": "a draft with no note changes the verb's own words",
      "symbol": "FirstWords"
@@ -46437,7 +46437,7 @@
     },
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/FirstWords.tsx",
+     "path": "web/src/desk/components/_parked/FirstWords.tsx",
      "line": 156,
      "claim": "the first-value gate is a fourth caller of the same speech session",
      "symbol": "begin"
