@@ -282,6 +282,13 @@ def _hub_token(home: Path) -> str:
     return str(json.loads(config.read_text()).get("meeting", {}).get("web_auth_token") or "")
 
 
+#: In the page: the ms from the navigation start to the desk screen in the
+#: DOM (a clock in the browser, so the driver's own waits never count).
+_DESK_PROBE = """(() => { const mark = () => { if (!window.__desk
+  && document.querySelector('[data-testid=desk-screen]')) window.__desk = performance.now(); };
+  new MutationObserver(mark).observe(document, {subtree: true, childList: true}); })();"""
+
+
 def _desk_open(home: Path, _seconds: float, runs: int = 3) -> tuple[list[int], list[float]]:
     """The desk opened in Chromium: the /api requests and the ms from the
     navigation to the desk screen, for each of ``runs`` cold opens (the first
@@ -294,8 +301,10 @@ def _desk_open(home: Path, _seconds: float, runs: int = 3) -> tuple[list[int], l
     with sync_playwright() as pw:
         browser = pw.chromium.launch()
         try:
-            page = browser.new_context(viewport={"width": 1440, "height": 900}).new_page()
-            cdp = page.context.new_cdp_session(page)
+            context = browser.new_context(viewport={"width": 1440, "height": 900})
+            context.add_init_script(_DESK_PROBE)
+            page = context.new_page()
+            cdp = context.new_cdp_session(page)
             page.goto(base, wait_until="load")
             page.locator(".chair").wait_for(timeout=30_000)
             if page.locator(".chair-first-value").count():
@@ -303,18 +312,16 @@ def _desk_open(home: Path, _seconds: float, runs: int = 3) -> tuple[list[int], l
             page.wait_for_selector("[data-testid=desk-screen]", state="attached", timeout=30_000)
             page.wait_for_load_state("networkidle")
             for _ in range(runs):
-                api: list[str] = []
-                listen = lambda request: api.append(request.url) if "/api/" in request.url else None  # noqa: E731
-                page.on("request", listen)
                 cdp.send("Network.clearBrowserCache")
-                started = time.monotonic()
                 page.goto(base, wait_until="load")
                 page.wait_for_selector("[data-testid=desk-screen]", state="attached", timeout=30_000)
-                times.append((time.monotonic() - started) * 1000)
                 page.wait_for_load_state("networkidle")
                 page.wait_for_timeout(1500)
-                page.remove_listener("request", listen)
-                counts.append(len(api))
+                shown, api = page.evaluate(
+                    "() => [window.__desk, performance.getEntriesByType('resource')"
+                    ".filter(e => e.name.includes('/api/')).length]")
+                times.append(float(shown))
+                counts.append(int(api))
         finally:
             browser.close()
     return counts, times
