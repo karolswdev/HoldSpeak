@@ -77,8 +77,9 @@ const SAVE_ORDER: OwnerSaveState[] = ["Not saved", "Saving", "Edited", "Saved"];
 /** Window grammar 2026-10-24: the You fields carry no per-field pill. Each
  * field keeps its truthful word (Edited, Saving, Saved, Not saved) as data;
  * the window's status bar says the worst of them, and Saved with the clock
- * of the acknowledgement that made every field Saved. The writer is
- * unchanged: `useOwnerName(adapter)` owns ACK, refusal, newer draft. */
+ * of the acknowledgement that made every field Saved. `useOwnerName(adapter)`
+ * owns ACK, refusal, newer draft; in Settings the adapter is the window's one
+ * settings writer (`settingsOwnerAdapter`, settings/writer.ts). */
 export function useOwnerPreferences(adapter?: OwnerNameAdapter) {
   const owner = useOwnerName(adapter);
   // Alias text is a local draft until Enter, comma, or blur commits a chip.

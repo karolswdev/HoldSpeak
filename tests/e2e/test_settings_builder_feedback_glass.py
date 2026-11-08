@@ -77,12 +77,6 @@ def _capture(page: Any, window: Any, width: int, stem: str) -> dict[str, Any]:
 
 
 @pytest.mark.e2e
-@pytest.mark.xfail(strict=True, raises=AssertionError, reason=(
-    "Known defect, found when the Language wait started to wait (#1942 follow-up): Settings has two "
-    "/api/settings writers with separate revisions (web/src/desk/firstrun/ownerName.ts for You, "
-    "web/src/pages/cores/settings/writer.ts for the rest). The alias save moves the revision; the next "
-    "Language PUT carries the old _revision, gets 409, and the hub keeps 'auto' while the face shows 'en'. "
-    "Remove this mark with the fix."))
 @pytest.mark.parametrize("width", [1440, 393])
 def test_reported_settings_categories_and_guided_builder_in_firefox(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int,
