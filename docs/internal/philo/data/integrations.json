@@ -1690,17 +1690,6 @@
             "run": "full-python-suite",
             "cases": 1
           }
-        },
-        {
-          "path": "tests/unit/test_connector_fixture_harness.py",
-          "node": "test_fixture_dry_run_matches_expectation",
-          "assertion": "Dry-run fixtures match and leave annotations/candidates unchanged.",
-          "execution": {
-            "status": "passed",
-            "record": "docs/generated/test-execution.json",
-            "run": "full-python-suite",
-            "cases": 6
-          }
         }
       ],
       "docs": [

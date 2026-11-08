@@ -54,7 +54,7 @@ secret is never a tool argument.
 | `channel.prepare` | anyone with WORK (agents, threads, steward) | makes a `prepared` row |
 | `channel.save_destination`, `.remove_destination` | owner (AUTHORITY) | the egress allow-list |
 | `channel.send`, `.discard` | owner only (`owner_press=True`, `:291`) | an agent is refused `owner_principal_required` (observed) |
-| `channel.save_email_key`, `.save_slack_webhook` | owner, HTTP only | key store; `channel_key_file.py` in the rig |
+| `channel.save_email_key`, `.save_slack_webhook` | owner, HTTP only | key store; `HOLDSPEAK_CHANNEL_KEYSTORE_FILE` in the rig (`keystore.py`) |
 
 Authority classes: `holdspeak/mcp/tool_authority.py:269-277`. The Conductor
 launch counts `channel.prepare` as a create of a `send`

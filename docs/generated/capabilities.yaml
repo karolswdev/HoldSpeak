@@ -10178,17 +10178,6 @@
           },
           "node": "test_build_registry_merges_first_party_and_user",
           "path": "tests/unit/test_connector_pack_loader.py"
-        },
-        {
-          "assertion": "Dry-run fixtures match and leave annotations/candidates unchanged.",
-          "execution": {
-            "cases": 6,
-            "record": "docs/generated/test-execution.json",
-            "run": "full-python-suite",
-            "status": "passed"
-          },
-          "node": "test_fixture_dry_run_matches_expectation",
-          "path": "tests/unit/test_connector_fixture_harness.py"
         }
       ],
       "trust_boundary": "First-party packs and user pack Python execute with user permissions; manifest permissions are checked before connector runtime effects."

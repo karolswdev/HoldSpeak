@@ -2,6 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · #2010 scripts/hub_reachable.py: 931 of 938 hub modules reached; parked connector_fixtures.py and services/channel_key_file.py (369 lines); the other five are kept with their reason.
 - 2026-11-08 · #2021 Fix forward #2020: tests/memory_bench is a helper package seven live memory tests import; only its slow benchmark test stays parked.
 - 2026-11-08 · (PR) Programs: the prompt step. A step of kind `prompt` is one model call on the engine assigned to automation work (the engine door), no repository or worktree; its answer is the step report and goes where `deliver` says (project update, Inbox note, Needs you, prepared send) through `automation_runs.deliver_text`, the one delivery an automation result also takes. A Program of only prompt steps needs no repository.
 - 2026-11-08 · The slow tier is parked (owner: "NUKE THAT IMMEDIATELY"): the 14 files that build a venv, restart a real hub, run real Whisper, baresip, Firefox or the memory benchmark move to tests/_parked/slow/; no pipeline stands up an install or a real hub to compare any more; the nightly runs the same tiers as the quick check.

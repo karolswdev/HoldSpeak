@@ -20,6 +20,24 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
+import os
+from typing import Any
+from jsonschema import Draft202012Validator
+from holdspeak.services import onboarding_service
+from holdspeak.services.onboarding_service import (
+    AGENT_STATE_ENV,
+    NOT_READ,
+    OnboardingService,
+    agent_state_read,
+    detect_agents,
+)
+from scripts import graph_walk
+from holdspeak.services import inference_default_service as ids
+from unittest.mock import MagicMock
+from holdspeak.principals import Principal, PrincipalKind
+from holdspeak.runtime import composition
+from scripts import graph_walk as gw
+import ast
 
 
 REPO = Path(__file__).resolve().parents[2]
@@ -500,23 +518,8 @@ def test_real_hub_reads_repository_and_coder_producers(tmp_path: Path) -> None:
 #     before the build and the hub (R2's import_transcriber guard, extended), and
 #     the schema requires ``reply`` on both.
 
-import json
-import os
-from pathlib import Path
-from typing import Any
 
-import pytest
-from jsonschema import Draft202012Validator
 
-from holdspeak.services import onboarding_service
-from holdspeak.services.onboarding_service import (
-    AGENT_STATE_ENV,
-    NOT_READ,
-    OnboardingService,
-    agent_state_read,
-    detect_agents,
-)
-from scripts import graph_walk
 
 REPO = Path(__file__).resolve().parents[2]
 GRAPH = REPO / "docs/internal/philo/graph"
@@ -888,7 +891,7 @@ def test_with_the_file_named_the_channel_keys_never_reach_the_keychain(
     import keyring
 
     from holdspeak.services import channel_email, channel_slack
-    from holdspeak.services.channel_key_file import CHANNEL_KEYSTORE_ENV
+    from holdspeak.keystore import CHANNEL_KEYSTORE_ENV
 
     path = tmp_path / "home" / "channel-keys.json"
     monkeypatch.setenv(CHANNEL_KEYSTORE_ENV, str(path))
@@ -911,7 +914,7 @@ def test_with_the_file_named_the_channel_keys_never_reach_the_keychain(
 
 def test_unset_the_channels_use_the_keychain(monkeypatch: pytest.MonkeyPatch) -> None:
     from holdspeak.services import channel_email, channel_slack
-    from holdspeak.services.channel_key_file import CHANNEL_KEYSTORE_ENV
+    from holdspeak.keystore import CHANNEL_KEYSTORE_ENV
 
     monkeypatch.delenv(CHANNEL_KEYSTORE_ENV, raising=False)
     monkeypatch.setattr(channel_email, "NativeEmailKeyStore", lambda: "email-keychain")
@@ -1128,7 +1131,7 @@ def test_the_channel_key_file_names_its_failures_in_the_channels_codes(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     from holdspeak.services import channel_email, channel_slack
-    from holdspeak.services.channel_key_file import CHANNEL_KEYSTORE_ENV
+    from holdspeak.keystore import CHANNEL_KEYSTORE_ENV
 
     path = tmp_path / "keys.json"
     monkeypatch.setenv(CHANNEL_KEYSTORE_ENV, str(path))
@@ -1162,11 +1165,8 @@ def test_the_channel_key_file_names_its_failures_in_the_channels_codes(
 # PHILO-16 (C), Astra r1 M1/M2: the switches that keep a walk off real engines
 # and off the default writer. Both default to the product's own behaviour.
 
-from typing import Any
 
-import pytest
 
-from holdspeak.services import inference_default_service as ids
 
 
 def test_loopback_ports_default_to_the_four_engines(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -1257,16 +1257,8 @@ def test_off_the_writer_writes_nothing(monkeypatch: pytest.MonkeyPatch) -> None:
 # rig refuses the step by name (``Blocked``) before any request is sent. Never a
 # silent drop.
 
-import json
-from pathlib import Path
-from typing import Any
-from unittest.mock import MagicMock
 
-import pytest
 
-from holdspeak.principals import Principal, PrincipalKind
-from holdspeak.runtime import composition
-from scripts import graph_walk as gw
 
 TOKEN = "philo7-01-rig"
 OWNER = Principal(PrincipalKind.OWNER, "owner")
@@ -1375,8 +1367,6 @@ def test_an_id_only_read_and_delete_still_project() -> None:
 # ── moved from tests/unit/test_philo5_rig_import_boundary.py ──
 # PHILO-5-04: the rig stays outside the operation registry process.
 
-import ast
-from pathlib import Path
 
 
 REPO = Path(__file__).resolve().parents[2]
