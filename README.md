@@ -102,11 +102,11 @@ This needs a project repository, the installed agent CLI, and tmux.
   <img src="docs/assets/programs/program-your-turn-1440.png" width="780" alt="A Program shows implementation steps, check and review results, a merge decision, and findings that need an answer." />
 </p>
 
-*One goal, several steps, visible decisions. Check and pull request states shown here use a test fixture.*
+*One goal, several steps, visible decisions. This capture is from October 2026 and uses a test fixture. Today the Programs window has a rail of Programs at the left, and each Program shows its steps as one spine with the current step on a plate.*
 
 Choose steps, dependencies, agents, and checks. Each step gets its own worktree.
 Configured gates can take a step through work, check, review, pull request, and merge.
-The Control level sets how routine decisions proceed; **Your turn** brings questions and findings back to you.
+The Control level sets how routine decisions proceed. What only you can decide, such as a merge or a finding, waits on the Program's step plate and in **Needs you**.
 A handover Note retains the state and decisions.
 Read and change a Program as text, shape it by one typed or spoken sentence, or let the engine draft the steps from your goal. Decide what waits on you from a briefing page or from Telegram.
 
@@ -115,10 +115,10 @@ Read and change a Program as text, shape it by one typed or spoken sentence, or 
 ### Lead projects and people from the same place
 
 <p align="center">
-  <img src="docs/assets/readme/project.png" width="780" alt="A Project Room shows its current risk, a late milestone, this week's concerns, an Ask field, and Draft update." />
+  <img src="docs/assets/readme/project.png" width="780" alt="A Project Room from an October 2026 capture shows its current risk, a late milestone, this week's risks, and an Ask field." />
 </p>
 
-*See what needs you, ask a project question, or select **Draft update**.*
+*An October 2026 capture. Today the Room's mast has **Draft update** and **History**: see what needs you, ask a project question, or have the engine draft the update.*
 
 Project Rooms connect open work, decisions, commitments, and recent changes.
 Add GitHub, Jira, or Confluence sources. Review an update and its sources before sending it to a saved destination.

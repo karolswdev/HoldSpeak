@@ -9,7 +9,9 @@ For the app structure, see [Desk architecture](DESK_ARCHITECTURE.md).
 
 `PrimitiveKind` in `web/src/lib/primitives.ts` lists the declared shared primitive kinds.
 Other service-backed records can have their own opener contract.
-For example, `program:<id>` opens a Program through `openObject.ts` and the Programs host.
+For example, `program:<id>` opens a Program in its own window (`pullout:program:<id>`, through `openObject.ts`).
+That window shows the same Program body as the right side of the Programs window: the mast, the step spine, the step plate and **Earlier steps** (`web/src/desk/programs/ProgramWindow.tsx`).
+A Needs you row is the object itself; its verbs come from `web/src/desk/needs/NeedVerbs.tsx`, and an action with no other home opens in place in the Needs you window (`web/src/desk/needs/ItemReader.tsx`).
 The `PRIMITIVES` table gives each kind its label, sync class, object verbs, and opening surface.
 The descriptor declares static capabilities.
 The authorable column records that metadata flag, not every current creation flow.

@@ -8,9 +8,59 @@ keeps a note on your desk that tells its state in plain words.
 
 Use a program when one goal is too big for one agent: "make the hub stop stalling", "the words wave", "wave 6 of the atlas".
 
-![The Programs window at 1440: five programs in bands, Your turn first](assets/programs/programs-1440.png)
+## The Programs window
 
-*The Programs window. The programs that wait on you are on top.*
+Open **Go ▸ Programs** (after Agents), or press ⌃7. The window has a rail of
+Programs at the left and one Program at the right.
+
+**The rail.** Each Program is one tile: its icon with a dot at the corner.
+The dot is brass when the Program waits on you, steel when it runs, moss when
+it is done, coral when it failed and graphite when it is parked. A draft has
+a dashed tile and no dot. The tile you picked has a ring. **+** at the top is
+**New program**. Under it are the active Programs: the ones that wait on you,
+then the failed, running, drafting and parked ones. Under them are the
+Programs that finished in the last seven days. When a night
+Program has steps that wait for the night, the night tile is at the foot of
+the rail. It shows the number of those steps; press it to open that Program.
+Point at a tile to read its name and state. ↑ and ↓ move between tiles, and Enter
+picks one. On a phone, the rail is a strip at the bottom of the window.
+
+**The mast.** The top of the Program: its icon, its title and one line of
+facts, for example `HoldSpeak · Claude Code · hands-off · started fri 19:30 ·
+waits on you` (the project, the agent, the control level, the start and the
+state). A finished Program shows **finished** or **finished · needs a
+decision** at the end of the line. The verbs are **Amend** (opens the Program
+text, see "The Program text") and **Park**. A finished Program has **Open
+note** in place of **Park**.
+
+**The step spine.** One bar for each step, with its number and name under it.
+A done step is steel. The step that waits on you is brass. A running step is
+steel and pulses. A failed step is coral, a parked step graphite, and a step
+that has not started is grey. The spine only shows the steps; you do not
+press it. On a phone, it shows only the numbers.
+
+**The step plate.** Under the spine is the step that matters now, for example
+`03 · Merge`, with the time and the agent, the step's brief, and one line of
+evidence (the pull request, the check, the files). The first verb is the one
+to press: **Merge**, **Decide**, **Start** or **Resume**. The other choices
+follow. When nothing waits on you, the plate shows the running step. A
+Program in Drafting shows its plan, for example `planned · 4 steps`, and
+**Start**.
+
+**Earlier steps.** At the right of the plate, **Earlier steps** opens the
+list of all steps under the plate. Its toolbar has **Add step**, **Race**
+(on a step that can race), the view (**Board** or **Text**), the agent
+(**Runs on**), **When idle** and **Control ▾**. Press a step to open it in
+place: **Brief**, **Gate**, **Findings**, **Handoffs** and **Ledger**.
+
+At the bottom of the Program, **Change the program** takes one sentence, typed
+or spoken (see "Shape it by a sentence").
+
+**The status bar** counts the Programs and says what waits on you, what runs
+and the night, for example `6 programs · 1 waits on you · 2 running · tonight
+23:00 · 3 queued`. A count of zero is not shown.
+
+With no Program, the window shows one line and **New program**.
 
 ## What a program has
 
@@ -21,7 +71,7 @@ Use a program when one goal is too big for one agent: "make the hub stop stallin
 | **Gate** | The step's independent check, review (`none`, `agent`, or `person`), and merge (`level`, `owner`, or `none`) settings. A `none` merge gate finishes without a PR. |
 | **Requirement** | One sentence that you want true, on a step, on every step or on the whole program, with the way HoldSpeak proves it: a command, the reviewer's answer, a shot of a window, your word, or a measured number. See "Requirements". |
 | **Checkpoint** | One line that the agent, HoldSpeak or you write on a step at an important moment. |
-| **Your turn** | A thing that only you can do: merge, decide a finding, resume a parked step, answer a core question. |
+| **What waits on you** | A thing that only you can do: merge, decide a finding, resume a parked step, answer a core question. The hub and the handover note call these items "Your turn". |
 | **Handover note** | A desk note named "Program: <title>". HoldSpeak writes it again after each change. |
 
 ## Start a program
@@ -29,11 +79,11 @@ Use a program when one goal is too big for one agent: "make the hub stop stallin
 ### From a goal
 
 1. Open **Go ▸ Programs** (after Agents), or press ⌃7.
-2. Press **New program** (or choose a template in **Templates ▾**). The Programs window shows the New program wizard in four steps. Press **Next** to go to the next step, **Back** to go to the step before, and Escape or **Cancel** to go back to the list. The wizard saves nothing until you press **Create**.
+2. Press **+** (**New program**) at the top of the rail. The right side of the Programs window shows the New program wizard in four steps. Dots in the title bar show the step you are on. Press **Next** to go to the next step, **Back** to go to the step before, and Escape or **Cancel** to leave the wizard. The wizard saves nothing until you press **Create**.
    - **Project**: choose the project. When you open Programs from a project, or when you have only one project, that project is chosen. To use a repository that is not in a project, choose **A folder on this machine** and type its folder. The project you chose stays as a card at the top of each next screen, and the title bar says "New program · <project>".
-   - **Goal**: type the title and the goal (the brief). Each field has a mic. Choose a template here if you want a different one.
-   - **Runs**: choose what the program can do by itself: **Runs by itself** (YOLO), **Asks before it merges or sends** (Normal) or **Asks at every step** (Secure). With no choice, the program uses your desk's level. Choose the agent, the reviewer and the check command if you do not want the template's. Under **Review**, the **Person** row names a person from People who reviews the pull requests ("Nobody yet" is the default). Spending is not capped.
-   - **Create**: read the summary and press **Create**. The Program window opens in **Drafting**.
+   - **Goal**: type the title and the goal (the brief). Each field has a mic. The project card says the template, **Template · Fast cycle**. Press it to choose a different template.
+   - **Runs**: choose what the program can do by itself: **Runs by itself** (YOLO), **Asks before it merges or sends** (Normal) or **Asks at every step** (Secure). With no choice, the program uses your desk's level. Choose the agent, the reviewer and the check command if you do not want the template's. Under **Review**, the **Person** row names a person from People who reviews the pull requests ("Nobody yet" is the default). **Spending note** is an amount that you write for yourself; the Program shows it. It is a note, not a limit: HoldSpeak does not stop a Program at that amount. On a phone, **Check** and **Spending** are one row; press it to open them.
+   - **Create**: read the summary and press **Create**. The new Program opens in **Drafting**, and its tile is picked in the rail.
    - **Create plans the steps.** When you typed a goal, HoldSpeak plans the steps from it by itself, as **Plan it** does, and applies them. You do not press anything. While it plans, the Drafting tray says so. Then it shows **Start** with the number of steps ("4 steps"). When it cannot plan, the tray says why and shows **Plan it**.
    - **Runs by itself starts by itself.** With **Runs by itself**, the program starts after it is planned. With the other levels, **Start** is the one press left.
 3. To change the goal, press it at the top and type.
@@ -166,7 +216,7 @@ company.
 
 A step goes through six stations: BRIEF · WORK · CHECK · REVIEW · PR · MERGE. A step's **Gate** shows its stations. The lit station is the current one.
 
-At the top of the Program window is **the line**: one station for each step, and **Done when** at the end when the program has its own requirements. A merged step is grey with its pull request. A running step has a blue lamp that breathes. The step that waits for you has an orange lamp that breathes. A step that waits for your answer says "Waits on 4". The goal is under the line. At 393 the line shows only the step numbers.
+Under the mast of a Program, the step spine shows each step as one bar (see "The Programs window"). In the step list (**Earlier steps**), each step row says its state:
 
 | The step says | What it means |
 |---|---|
@@ -184,11 +234,11 @@ At the top of the Program window is **the line**: one station for each step, and
 | **Merged** | The pull request merged. |
 | **Parked** | You parked the step, or HoldSpeak parked it after it failed. |
 
-The program is **Drafting**, **Running**, **Your turn**, **Done**, **Parked** or **Failed**. The worst state of its steps shows in the Programs list and on the Dock.
+The program is drafting, running, waits on you, done, parked or failed. The mast says the state at the end of its facts line, and the dot of the Program's rail tile has its colour. The hub and the handover note call the waiting state "Your turn".
 
-A stopped step also says how its work ended, after its state: **Parked · interrupted** (the agent's lane was cut off, the PR was closed without a merge, or the night ended) or **Parked · failed** (the check or a requirement stayed red after the rounds, or the push or the PR failed). The Programs list says it after its line ("Step 2 of 3 waits on you since 21:43 · interrupted").
+A stopped step also says how its work ended, after its state: **Parked · interrupted** (the agent's lane was cut off, the PR was closed without a merge, or the night ended) or **Parked · failed** (the check or a requirement stayed red after the rounds, or the push or the PR failed).
 
-When a step waits on something that does not come by itself, its row and the Programs list say so in one sentence:
+When a step waits on something that does not come by itself, its row says so in one sentence:
 
 | The row says | What happened |
 |---|---|
@@ -200,7 +250,7 @@ When a step waits on something that does not come by itself, its row and the Pro
 
 **Take it over, hand it back.** A running step's row has **Take it over**. It opens the agent's lane and tells HoldSpeak that you have it: the row says "You have the lane", and HoldSpeak types nothing into the lane (no nudge, no amendment, no message after a red check), never parks the step for a turn with no commit, and does not decide or end a held commit. A commit on the step's branch, yours or the agent's, still goes to the check. **Hand it back** gives the lane back; HoldSpeak goes on from the branch head and types what waited. Neither press asks first: each undoes the other.
 
-**The family.** A Program can come from another Program: an audit's fix program, or a Program that a step's agent made. Under the board, **Came from** shows the Program it came from and **It made** shows the Programs it made: each a row with the name, the state, how it ended, and its line. A press opens that Program. A Program with no family shows neither. In the Programs list, the Programs it made fold under it ("2 programs it made", **Show** or **Hide**), and its line ends with the family's worst state ("· its programs: Your turn").
+**The family.** A Program can come from another Program: an audit's fix program, or a Program that a step's agent made. Under the step list, **Came from** shows the Program it came from and **It made** shows the Programs it made: each a row with the name, the state, how it ended, and its line. A press opens that Program. A Program with no family shows neither.
 
 **Since you were last here.** When you come back to the desk after 30 minutes or more away, Today starts with a few lines about the Programs, one for each Program, for example "README touch: 2 steps merged, 1 decided for you". A press opens that Program. A night program's line is its "Since last night" line. When part of the record could not be read, or only the newest 40 rows were read, a line under them says so. When nothing happened, Today shows nothing here.
 
@@ -219,17 +269,9 @@ When a step is Merged, Done, Parked or skipped, open its row to read its report.
 
 HoldSpeak writes a "Checked" line only for a fact that it saw. Each line points to the ledger line that saw it. A part with nothing in it does not show. On the briefing page, **Report** opens the same report, read only.
 
-A Done program says **finished** in the Programs list and under its line. A Done program that still has a decision for you (a delivery to merge or retry, a finding or a proposed step that nobody decided) says **finished · needs a decision**. These words are grey: the program is not stopped, so it does not light the Your turn lamp.
+A Done program says **finished** at the end of its mast's facts line. A Done program that still has a decision for you (a delivery to merge or retry, a finding or a proposed step that nobody decided) says **finished · needs a decision**. These words are grey: the program is not stopped.
 
-![The Program window at 1440: the Gate fold of a step whose check failed, and one agent that asks you](assets/programs/program-running-gate-1440.png)
-
-*A running program at YOLO. Step 3's check failed in the Pytest section; the Gate fold shows the command, the verdict and each section. Step 5 waits for its idle engine.*
-
-On a phone, the board is the screen and each step shows its state as one word:
-
-![The Program window at 393](assets/programs/program-running-393.png)
-
-## Your turn, and what is a core question
+## What waits on you, and what is a core question
 
 HoldSpeak decides what it can decide by rule at the program's control level. A **core question** always comes to you, at every level:
 
@@ -241,11 +283,7 @@ HoldSpeak decides what it can decide by rule at the program's control level. A *
 - **Safety.** A finding about security or data loss, a deleted test, a migration that drops or changes rows.
 - **No rule.** HoldSpeak has no rule for the choice.
 
-Each item of your turn is a row in Needs you, in a group with the program's title. In Needs you, the row is the program: its name, a short word for what it asks, and one verb. The verb is **Merge**, **Decide** or **Open**. **Decide** opens the choices in place, under the row; press a choice and the row goes. A press on the row opens the Program window at its step. Right-press the row for **Later** and **Send**. In the Program window, the first item is under the line, in the words of the briefing page: what the step was doing, what happened, the question, and which steps wait on your answer. Under it, each verb has one line that says what it does ("HoldSpeak merges the PR. The step that waits on it can start."). Under the verbs, one row of words opens more: **Brief** (the step's brief), **Program text** and **Copy page link**. These are not choices. The other items are one line each under the verbs. The verbs are **Merge** / **Not yet**, **Fix now** / **Later** / **Skip**, **Go on** / **Park** for a core question, **Resume** / **Skip**, **Allow the commit** / **Not now** for a held commit, **Answer**. You can also decide most of these items away from the desk (see "Decide from anywhere").
-
-![The Program window at 1440: Your turn with a merge, two findings and a core question](assets/programs/program-your-turn-1440.png)
-
-*Your turn at Secure: a merge, a REQUIRED and a SHOULD finding, and a core question (a step touched a file that no step owns).*
+Each item that waits on you is a row in Needs you. When nothing must be fixed first, a Program that waits on you is the row under **Waits on you first**. In Needs you, the row is the program: its name, a short word for what it asks, and one verb. The verb is **Merge**, **Decide** or **Open**. **Decide** opens the choices in place, under the row; press a choice and the row goes. A press on the row opens the Program window at its step. Right-press the row for **Later** and **Send**. In the Program window, the first item is the step plate, in the words of the briefing page: what the step was doing, what happened, the question, and which steps wait on your answer. Under it, each verb has one line that says what it does ("HoldSpeak merges the PR. The step that waits on it can start."). Under the verbs, one row of words opens more: **Brief** (the step's brief), **Program text** and **Copy page link**. These are not choices. The other items are one line each under the verbs. **Earlier steps** is at the right of the plate. The verbs are **Merge** / **Not yet**, **Fix now** / **Later** / **Skip**, **Go on** / **Park** for a core question, **Resume** / **Skip**, **Allow the commit** / **Not now** for a held commit, **Answer**. You can also decide most of these items away from the desk (see "Decide from anywhere").
 
 **Open lane** on a step opens that agent's lane window. **Open program** in a project's Room or a person's room opens the program. In Agents, the "Step 4 of …" line under an agent opens it too.
 
@@ -412,7 +450,7 @@ A requirement that you add while a step's pull request is open is judged on the 
 | "Step 5 · Projects routes: R4 is unmet after 2 rounds · <the evidence>" | **Send back** · **Waive** |
 | "Codex proposes a requirement on step 4: <sentence>" | **Add** · **Skip** |
 
-The first two rows are also in **Needs you**, in the group with the program's title. An agent's proposal shows only in the Program window's Your turn.
+The first two rows are also in **Needs you**. An agent's proposal shows only on the Program's step plate.
 
 ### What the agent reads
 
@@ -465,24 +503,17 @@ A repository gives HoldSpeak its own defaults in `.holdspeak/program.json`:
 
 HoldSpeak's own file names the desk sweep's shot command. It has no default requirement.
 
-## Find and filter
+## Find a program
 
-In the Programs window:
+The rail of the Programs window shows the active Programs and the Programs
+that finished in the last seven days (see "The Programs window"). A
+Project's Room has a **Programs** plate with the Programs of that Project. A
+person's room has a Programs line for each Program that is for that person.
 
-- Each program is one row: its title, a lamp and one line in plain words ("Step 2 of 3 waits on you since 21:43", "Runs step 4 of 8, Claude Code, 11 min", "Drafting, 4 steps", "Done, 14 PRs, 28 Oct", "Parked at step 1 of 2"; a done program you then parked keeps "Done, 3 merges, 1 Nov · parked"), a small track with one dot for each step, and the Met count. The programs that wait on you are first, then running, drafting, done and parked.
-
-- **Find a program** (with its mic) keeps only the rows that have each word you type. It reads the title, the goal, the project, the persons, the step titles, the pull request numbers (type "#1591") and the template. The window finds locally; each key costs no request.
-- **Project ▾** and **Person ▾** keep only the programs of one project or one person. They list only the projects and persons that have a program. **Any project** and **Anyone** remove the filter.
-- **Group: State ▾** puts the rows in bands by state (Your turn, Running, Drafting, Done, Parked) or by project ("No project" is last). In a band, the worst state is first, then the newest change.
-- The **Met** column says "4 of 5 met" for the required requirements of the program. Each copy of an Every step requirement counts one time, and each requirement of the whole program counts one time. A Waived one counts as met; point to the cell to see "1 waived". Before HoldSpeak judges any of them, it says "7 requirements". A program with no requirement has an empty cell.
-- When a filter is on, the status bar says "3 of 12 programs · HoldSpeak · Alice".
-
-At 393, Templates, Project, Person and Group are in **More ▾**.
-
-In the Program window:
+In the step list of a Program (press **Earlier steps**):
 
 - Each step row on the board has a **Met** cell: "2 of 3", or "3 to meet" before any is met.
-- Press a step to open it under its row. Press it again to close it. When something waits for you, no step opens by itself, so every step stays in view; otherwise the running step is open first. Each step row says the last thing that happened to it, in plain words. An open step shows **What it must prove**: each requirement on one line (a step with none shows only **Add a requirement**), with its lamp, its kind, its proof and its verbs. **Add a requirement** adds one to this step: type the sentence; the kind follows the rule as you type; you can change Where (The program, Every step, Step n); press **Add**.
+- Press a step to open it under its row. Press it again to close it. Each step row says the last thing that happened to it, in plain words. An open step shows **What it must prove**: each requirement on one line (a step with none shows only **Add a requirement**), with its lamp, its kind, its proof and its verbs. **Add a requirement** adds one to this step: type the sentence; the kind follows the rule as you type; you can change Where (The program, Every step, Step n); press **Add**.
 - Under it, **What the agent did**: up to three plain lines from the step's ledger, with their times.
 - Then **Brief**, **Gate**, **Findings**, **Handoffs** and **Ledger**. A part with nothing in it is not shown. Gate opens by itself when the check is red, Findings when the reviewer found problems. Press an open part again to close it.
 - **Done when** is the last row of the board. It has the requirements of the whole program (judged after the last step) and the Every step requirements, and its own **Add a requirement**.
@@ -533,7 +564,7 @@ Your change applies at once. A change from an orchestrating agent follows the Co
 
 Each program has a text: one statement on each line. The text is a view of the program. The record stays the truth, and HoldSpeak prints the text again from the record after each change.
 
-In the Program window's toolbar, press **Board · Text** to change the view. The window keeps your choice. At 393, the choice is in **More ▾**.
+Press **Amend** on the mast to open the text. Or press **Earlier steps** and, in the step list's toolbar, press **Board** or **Text**. At 393, the choice is in **More ▾**.
 
 This is the text of a running program, as the hub prints it:
 
@@ -728,7 +759,7 @@ A program with a `night` line runs only at night, for example `night 23:30-07:00
 
 **The Door task closes.** When a step made from a Door task merges (Add to tonight, the night's backlog, From the desk), HoldSpeak closes the task, with the merge as its evidence. The log says "Closed its Door task with PR #12 as evidence". A parked step leaves its task open.
 
-The Dreaming template is in **New program ▸ Templates**. In Drafting, a night program's first station says "Sleeps until 23:30", and you can press **Start** with no steps. The morning message links one briefing page for all the items that wait on you (see "Decide from anywhere").
+To make a night program, press **New program** and, on the goal screen, choose the **Dreaming** template. In Drafting, a night program's first station says "Sleeps until 23:30", and you can press **Start** with no steps. The morning message links one briefing page for all the items that wait on you (see "Decide from anywhere").
 
 Not yet: the failing tests of the last main run as backlog items, `within` as a core question for the diff, and the Enter guard for answers and re-briefs (only a launch's first brief gets its Enter again when Claude Code dropped it).
 
@@ -765,7 +796,7 @@ A **Race** step gives one brief to two agents in two worktrees.
 
 In Drafting, press **Ask me first** (beside **Plan it**) to answer some questions before the plan. If a draft waits in the change well, **Ask me first** applies it first.
 
-The round strip is above the board. It has five rounds: **Architecture**, **Product**, **Stack**, **Verification** and **Delivery**. Each round has a lamp: open, asking, done ("· 1 change") or skipped (struck through).
+The round strip is under the step plate. It has five rounds: **Architecture**, **Product**, **Stack**, **Verification** and **Delivery**. Each round has a lamp: open, asking, done ("· 1 change") or skipped (struck through).
 
 A round asks **one question at a time**. The question shows under the strip, with why it matters and, when the engine has some, the answers that it offers. Press an offered answer, or type or say your own. HoldSpeak keeps your answer as the `=` line under the question in the Program text, then turns it into change rows. The rows wait in the change well for **Apply**. The next question comes at once. A round asks four questions at most.
 
@@ -877,8 +908,8 @@ Read this note first after a day away. A new chat or a new agent also reads it f
 
 A program is a desk object, like a meeting or a note.
 
-- **Its project.** A program made from a project uses the project's repository. A program without a project goes to the project of its repository. If there is none, the Program window shows **No project**: on a wide screen, press it to file the program. The **Now** tab of the project's Room always shows a **Programs** fold. Each row is a program with its step dots; press it to open the program. With no programs, the fold says "No Programs yet" and has **New program** for this project. The Room also shows the program's Needs you rows. The handover note goes to the project's memory. The project's update draft gets a Programs paragraph, and the Monday brief counts the running programs.
-- **Its origin.** A program can come from a meeting (its actions are the steps), a decision (the pull requests become the decision's work), a note, or a project item. When a step's pull request merges, HoldSpeak leaves the pull request on the origin: a note gets the PR link in its project's Room, with the program; a decision gets the PR link as its work. An action closes only when its own step merges. The status bar of the Program window tells where the program lives and where it came from: "Project ▸ HoldSpeak · From the meeting of Tue 28 Oct · For Alice".
+- **Its project.** A program made from a project uses the project's repository. A program without a project goes to the project of its repository. If there is none, a Program opened in its own window shows **No project** in its status bar: on a wide screen, press it to file the program. The **Now** tab of the project's Room has a **Programs** plate under **What is open**. Its line says what runs and what waits on you, for example "2 running · 1 waits on you"; press it to open the Programs window. With no programs, the plate says "No Programs yet" and has **New program** for this project. The Room also shows the program's Needs you rows. The handover note goes to the project's memory. The project's update draft gets a Programs paragraph, and the Monday brief counts the running programs.
+- **Its origin.** A program can come from a meeting (its actions are the steps), a decision (the pull requests become the decision's work), a note, or a project item. When a step's pull request merges, HoldSpeak leaves the pull request on the origin: a note gets the PR link in its project's Room, with the program; a decision gets the PR link as its work. An action closes only when its own step merges. When a Program opens in its own window, its status bar tells where the program lives and where it came from: "Project ▸ HoldSpeak · From the meeting of Tue 28 Oct · For Alice".
 - **The person it is for.** A program or a step can name a person. The person's room shows the program under their commitments. Your 1:1 brief with that person lists a merged step under "To show them", and a finding they own under "To ask".
 - **A human review.** A step can name a person as its reviewer. Then Needs you shows "Ask Alice to review PR #1591" with **Send…** (a prepared send; you press Send). The merge waits until that person approves the pull request on GitHub. No agent reviewer reads such a step: its Review requirements are your word at the merge (**Met** or **Unmet** in Your turn). When the person asks for changes on GitHub, their comments go to the step's agent as one more round on the same branch and pull request; the log says "Alice asked for changes on GitHub; round 1 goes back to the agent". HoldSpeak reads the review again on each pass while the pull request waits, also after an approval. A later request for changes stops the merge until the person approves again; it gives one round, not one round on each pass. The merge uses the last review that HoldSpeak read completely for that pull request. When HoldSpeak cannot read the review (gh fails, or the answer is not complete), the merge waits and the log says "HoldSpeak could not read the latest review". This does not cancel the earlier approval, and HoldSpeak does not ask the person again. A Merge question that is no longer correct goes back to "PR open". After a merge request goes to GitHub, HoldSpeak does not send a second request; it waits until GitHub shows the merge. A request is not a merge: GitHub can still put it in a queue.
 - **What it leaves.** Today shows one line, such as "Programs: 1 running, 1 waits on you", on a day a Program moved. Each merged step is a result on Today and in the timelines of the project and the person. A **Later** decision makes a task for you, filed to the project and to the person. A **Skip** writes one line with your reason in the note.
