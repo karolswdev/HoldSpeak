@@ -578,6 +578,29 @@ def test_an_apply_lands_each_change_through_its_verb(tmp_path) -> None:
     assert len(text_frames) == 1, rig.frames[frames:]
 
 
+def test_a_step_of_a_title_the_plan_has_folds_into_that_step(tmp_path) -> None:
+    """2026-11-08 (the audit Program added its own steps again): a text
+    that adds a step whose title the plan has (case, spaces and end
+    punctuation aside) adds no step; the new brief line joins that step's
+    brief and the step's history says so."""
+    rig, pid = _running(tmp_path)
+    text = rig.service.text_get(OWNER, pid)["text"]
+    changed = _edit(text, ("\nstep 6 The fan-out", "\nstep + the  FAN-OUT.\n  brief\n  > Name each frame.\n\nstep 6 The fan-out"))
+    answer = rig.service.text_apply(OWNER, pid, changed, dry_run=False)
+    assert answer["applied"] is True
+    steps = answer["program"]["steps"]
+    assert [step["title"] for step in steps] == ["Indexes", "Retention", "People routes", "Projects routes",
+                                                 "Calls routes", "The fan-out"]
+    six = rig.service.store.list_steps(pid)[5]
+    assert six["brief_markdown"] == "One frame per change.\nName each frame."
+    lines = [(row["step_id"], row["line"]) for row in rig.service.store.list_checkpoints(pid)]
+    assert (six["id"], "Folded into step 6") in lines
+    # The same title through the plan verb folds again; a new line only once.
+    rig.service.plan(OWNER, pid, steps=[{"title": "The fan-out!", "brief": "Name each frame."}])
+    assert len(rig.service.store.list_steps(pid)) == 6
+    assert rig.service.store.get_step(six["id"])["brief_markdown"] == "One frame per change.\nName each frame."
+
+
 def test_a_refused_row_or_an_unpassed_lowering_writes_nothing(tmp_path) -> None:
     rig, pid = _running(tmp_path)
     text = rig.service.text_get(OWNER, pid)["text"]

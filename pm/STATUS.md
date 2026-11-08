@@ -3,6 +3,10 @@
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
 - 2026-11-08 · #1859 The desk keeps one startup intent, the latest explicit one (HS-S12): the surface host's one flush opens it, a hub list that lands later does not re-scope or close it, and a Room keeps one latest target (a proposal or a place).
+- 2026-11-08 · #1860 Fix forward #1857: the decide-ask compare is lower case (the lamp-words guard).
+- 2026-11-08 · #1858 Programs: an agent never plans into a running Program (plan_locked_while_running), a hand that wrote nothing goes back once then parks, and a step of a title the plan has folds into that step.
+- 2026-11-08 · #1857 Fix forward #1854: the two Programs seam cases read the Program row by its name, quiet word and ask; the decide routes are still asserted.
+- 2026-11-08 · #1856 The Walk and the New program wizard draw their progress dots with one kit pattern, ProgressDots: the dots seam 21 → 0 lines.
 - 2026-11-08 · #1855 A known delivery PR is checked and merged, never made again (HS-S32): Check, guarded Merge, stage-aware Retry, Skip, each bound to the delivery line it shows.
 - 2026-11-08 · #1854 Needs you: a Program row is the Program, its quiet ask word and one verb (Merge, Decide or Open); Later and Send moved to its context menu, and one rule in needsFace.ts decides each fact line.
 - 2026-11-08 · #1853 Fix forward #1849: compose_hub moves to runtime/hub_composition.py (566 lines), compose_delivery to runtime/delivery_composition.py (56), composition.py back to 583; the density guard is green.

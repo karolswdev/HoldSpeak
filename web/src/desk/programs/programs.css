@@ -1670,26 +1670,12 @@ span.pg-req-thumb { height: 150px; }
 .pg-wiz-bar .btn { min-height: 44px; }
 .pg-wiz-bar .btn.pg-wiz-go { flex: 1 1 auto; }
 
-/* The dots in the title bar, at its right end. */
-.pg-wiz-dots {
-  display: inline-flex;
-  gap: 5px;
-  align-items: center;
-}
-.desk-pullout-head > .pg-wiz-dots { flex: none; align-self: center; margin-left: auto; padding-inline: 10px; }
-.desk-next .desk-window-shell > .desk-pullout-head > .pg-wiz-dots { color: var(--wb-ink); }
-.desk-next .desk-pullout-head > .pg-wiz-dots ~ .desk-gadgets-right { margin-left: 0; }
+/* The dots (the kit ProgressDots) in the title bar, at its right end. */
+.desk-pullout-head > .pg-wiz-progress { align-self: center; margin-left: auto; padding-inline: 10px; }
+.desk-next .desk-window-shell > .desk-pullout-head > .pg-wiz-progress { color: var(--wb-ink); }
+.desk-next .desk-pullout-head > .pg-wiz-progress ~ .desk-gadgets-right { margin-left: 0; }
 /* Paper dots on the deep blue front bar, as its name. */
-.desk-next .desk-window-shell:is([data-plane="front"], .is-front) > .desk-pullout-head > .pg-wiz-dots { color: var(--wb-paper); }
-.pg-wiz-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 3px;
-  background: color-mix(in srgb, currentColor 30%, transparent);
-  transition: width var(--duration-long) var(--ease-standard), background-color var(--duration-long) var(--ease-standard);
-}
-.pg-wiz-dot[data-state="done"] { background: color-mix(in srgb, currentColor 70%, transparent); }
-.pg-wiz-dot[data-state="now"] { width: 16px; background: currentColor; }
+.desk-next .desk-window-shell:is([data-plane="front"], .is-front) > .desk-pullout-head > .pg-wiz-progress { color: var(--wb-paper); }
 /* The phone head keeps its title beside the dots: the frame's own rule
    (pullout.css, data-keeps-title on the wings slot). */
 @media (prefers-reduced-motion: no-preference) {

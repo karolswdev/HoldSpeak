@@ -226,6 +226,20 @@ def test_the_same_item_twice_is_one_step(tmp_path, monkeypatch) -> None:
     assert again["say"] == "It is in tonight already: step 4"
 
 
+def test_an_item_of_a_title_tonight_has_folds_into_that_step(tmp_path, monkeypatch) -> None:
+    """2026-11-08: a second item whose title a step of tonight has adds no
+    step; its words join that step's brief and its history says so."""
+    rig, _clock, _reach = desk(tmp_path, monkeypatch, at(2, 14, 0))
+    pid, _sids = make_night(rig)
+    first = rig.service.add_to_night(OWNER, kind="action", item_id=door_task(rig, "The Notes toolbar wraps at 520."))
+    again = rig.service.add_to_night(OWNER, kind="action", item_id=door_task(rig, "the notes toolbar wraps at 520"))
+    assert again["added"] is False and again["step_id"] == first["step_id"]
+    assert again["say"] == "Folded into step 4"
+    step = rig.service.store.get_step(first["step_id"])
+    assert step["brief_markdown"] == "The Notes toolbar wraps at 520.\nthe notes toolbar wraps at 520"
+    assert [row["line"] for row in rig.service.store.list_checkpoints(pid)][0] == "Folded into step 4"
+
+
 def test_a_note_line_and_a_step_of_another_program(tmp_path, monkeypatch) -> None:
     rig, _clock, _reach = desk(tmp_path, monkeypatch, at(2, 14, 0))
     pid, _sids = make_night(rig)
@@ -273,6 +287,11 @@ def test_an_agent_adds_to_tonight_only_at_yolo_and_it_says_so(tmp_path, monkeypa
         rig.service.add_to_night(AGENT, kind="action", item_id=door_task(rig, "A"))
     assert refused.value.code == "owner_required"
     rig.service.update(OWNER, pid, control="yolo")
+    # 2026-11-08: an agent never plans into a running Program, YOLO too.
+    with pytest.raises(ProgramRefused) as refused:
+        rig.service.add_to_night(AGENT, kind="action", item_id=door_task(rig, "B"))
+    assert refused.value.code == "plan_locked_while_running"
+    rig.service.park(OWNER, pid)
     added = rig.service.add_to_night(AGENT, kind="action", item_id=door_task(rig, "B"))
     (row,) = [row for row in rig.service.decided_for_you(pid) if row["kind"] == "add_step"]
     assert row["line"] == "Added to tonight: step 4 · B" and row["overturnable"]

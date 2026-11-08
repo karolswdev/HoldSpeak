@@ -750,7 +750,7 @@ describe("New program is a wizard inside the window (owner, live walk 2026-11-08
     expect(screen.getByTestId("programs-wizard-card-name").textContent).toBe(nameOf(madeProgram.project_id));
     expect(next().disabled).toBe(false);
     // The progress: four dots in the title bar, the first is now; none in the bar.
-    const dots = within(screen.getByTestId("window-head")).getByTestId("programs-wizard-dots").querySelectorAll(".pg-wiz-dot");
+    const dots = within(screen.getByTestId("window-head")).getByTestId("programs-wizard-dots").querySelectorAll(".surface-progress-dot");
     expect([...dots].map((dot) => dot.getAttribute("data-state"))).toEqual(["now", null, null, null]);
     expect(posts()).toEqual([]);
   });
@@ -784,7 +784,7 @@ describe("New program is a wizard inside the window (owner, live walk 2026-11-08
     expect(screen.getByTestId("programs-wizard-sum-where").textContent).toBe(nameOf(madeProgram.project_id));
     expect(screen.getByTestId("programs-wizard-sum-title").textContent).toBe("New program · Fast cycle");
     expect(screen.queryByTestId("programs-wizard-next")).toBeNull();
-    const dots = screen.getByTestId("programs-wizard-dots").querySelectorAll(".pg-wiz-dot");
+    const dots = screen.getByTestId("programs-wizard-dots").querySelectorAll(".surface-progress-dot");
     expect([...dots].map((dot) => dot.getAttribute("data-state"))).toEqual(["done", "done", "done", "now"]);
     // Back keeps what he chose.
     fireEvent.click(screen.getByTestId("programs-wizard-back"));
@@ -1423,8 +1423,14 @@ describe("the seams", () => {
     expect(face.kind).toBe("program");
     expect(face.direction).toBe("decide");
     expect(face.openRef).toBe(`program:${(item.program as { programId: string }).programId}`);
-    expect(face.verbs).toMatchObject({ kind: "program", choices: ["fix_now", "later", "skip"], itemKind: "finding", findingId: "f1" });
-    expect(face.fact).toContain("The words wave");
+    // #1854: the row is the Program (its title), the quiet word Decide and
+    // one verb Decide; the choices are its context menu, each still pressed
+    // on the step's decide route.
+    expect(face.name).toBe("The words wave");
+    expect(face.name).toBe(String(item.group));
+    expect(face.lamp.label).toBe("Decide");
+    expect(face.verbs).toMatchObject({ kind: "program", ask: "decide", choices: ["fix_now", "later", "skip"], itemKind: "finding", findingId: "f1" });
+    expect((face.verbs as { decide: string }).decide).toMatch(/\/steps\/step-[0-9a-f]+\/decide$/);
   });
 
   it("the Room's Programs fold: one row per recorded Program, its state word and the list's step dots", () => {
@@ -1936,9 +1942,14 @@ describe("REQ10: the Requirements board (direction A, the checklist)", () => {
     const face = needFace({ ref: String((rows[0] as { ref?: string }).ref), kind: "attention", item: rows[0] } as never,
       { now: new Date(), sessions: [], flights: [] } as never);
     expect(face.kind).toBe("program");
-    expect(face.verbs).toMatchObject({ kind: "program", choices: ["met", "unmet"] });
+    expect(face.direction).toBe("decide");
+    // #1854: named by its Program; his word (TO CONFIRM) is a decision: the
+    // quiet word Decide, one verb Decide; Met and Unmet are its context menu,
+    // each pressed on the requirement's route.
+    expect(face.name).toBe(String((rows[0] as { group?: string }).group));
+    expect(face.lamp.label).toBe("Decide");
+    expect(face.verbs).toMatchObject({ kind: "program", ask: "decide", choices: ["met", "unmet"] });
     expect((face.verbs as { decide: string }).decide).toMatch(/\/requirements\/req-[0-9a-f]+\/decide$/);
-    expect(face.fact).toContain(String((rows[0] as { group?: string }).group));
   });
 });
 

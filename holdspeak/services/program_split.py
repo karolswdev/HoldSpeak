@@ -341,7 +341,7 @@ def apply_split(service: Any, program: Mapping[str, Any], step: dict[str, Any], 
     with _LOCK:
         before = {row["id"] for row in service.store.list_steps(program["id"])}
         rows = [_part_row(step, part, last=index == len(parts) - 1) for index, part in enumerate(parts)]
-        service.plan(RUNNER, program["id"], steps=rows, before=step["id"], waits=True, by=by)
+        service.plan(RUNNER, program["id"], steps=rows, before=step["id"], waits=True, by=by, fold=False)
         made = sorted((row for row in service.store.list_steps(program["id"]) if row["id"] not in before),
                       key=lambda row: int(row["ordinal"]))
         # Each part comes after the part before it.
@@ -402,7 +402,7 @@ def overturn_split(service: Any, program: Mapping[str, Any], row: Mapping[str, A
            "budget_tokens": old.get("budget_tokens"), "origin_ref": old.get("origin_ref")}
     parts.sort(key=lambda part: int(part["ordinal"]))
     before = {step["id"] for step in service.store.list_steps(program["id"])}
-    service.plan(RUNNER, program["id"], steps=[raw], before=parts[0]["id"], waits=True, by="owner")
+    service.plan(RUNNER, program["id"], steps=[raw], before=parts[0]["id"], waits=True, by="owner", fold=False)
     back = next(step for step in service.store.list_steps(program["id"]) if step["id"] not in before)
     for req in service.requirements(program["id"]):
         if req.get("step_id") == parts[-1]["id"] and not req.get("parent_id"):

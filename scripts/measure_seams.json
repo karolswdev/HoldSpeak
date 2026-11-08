@@ -3,7 +3,7 @@
   "seams": [
     {
       "name": "Two step-dot implementations (wizard and walk)",
-      "pattern": "pg-wiz-dot|walk-dot",
+      "pattern": "pg-wiz-dot\\b|walk-dot\\b",
       "paths": ["web/src"],
       "exclude": []
     },

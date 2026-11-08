@@ -91,6 +91,7 @@ _STEP = {
         "origin_ref": {"type": ["string", "null"], "description": "The desk item it came from (action:<id>): its merge closes it."},
         "for_person_id": {"type": ["string", "null"], "description": "The person this step is owed to (a People id)."},
         "may_call": {"type": ["boolean", "null"], "description": "The engine may call the owner's phone about this step where the Reach rules allow it."},
+        "no_diff_ok": {"type": ["boolean", "null"], "description": "The step may end with no change (else a step that writes nothing goes back to its agent)."},
         "history": {
             "type": ["object", "null"],
             "description": "A step that merged already (PG17): it is written Merged with this PR and merge time; "
