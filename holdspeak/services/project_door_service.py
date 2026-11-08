@@ -13,13 +13,13 @@ from __future__ import annotations
 
 import re
 import uuid
-from datetime import datetime, timezone
 from typing import Any
 from urllib.parse import urlsplit
 
 from holdspeak.principals import Principal
 from holdspeak.redaction import redact_error
 from holdspeak.services.errors import ServiceError, ValidationError
+from holdspeak.timestamps import utc_now_iso as _iso_now
 
 DOOR_DEFAULTS: dict[str, list[dict[str, Any]]] = {
     "github": [
@@ -117,10 +117,6 @@ def parse_source_text(text: str) -> list[dict[str, Any]]:
             "reason": None,
         })
     return rows
-
-
-def _iso_now() -> str:
-    return datetime.now(timezone.utc).isoformat()
 
 
 def _egress_host(provider: str, scope: Any) -> str:

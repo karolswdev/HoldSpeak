@@ -531,10 +531,11 @@ export const VERBS: Verb[] = [
     run: (ctx) => { askAboutRef(ctx.selectedRef); },
   },
   {
-    // Betterment P4 (projects): the Room's own press, Write update (the
+    // Betterment P4 (projects): the Room's own press, Draft update (the
     // records draft at once, the engine's after), never the update list.
+    // The owner, 2026-11-08: "Write update" read as writing a note.
     id: "object.draft-update",
-    label: "Write update",
+    label: "Draft update",
     menu: "object",
     scope: "object",
     glyph: "✦",
@@ -1200,12 +1201,12 @@ export const VERB_FAMILIES: VerbFamily[] = [
     })),
   },
   {
-    // Betterment P4 (projects): the row writes the update (the Room's own
-    // Write update press); it no longer only opens the update list.
+    // Betterment P4 (projects): the row drafts the update (the Room's own
+    // Draft update press); it no longer only opens the update list.
     id: "week.draft-update",
     rows: (week) => week.projects.map((p) => ({
       id: `week.draft-update.${p.id}`, family: "week.draft-update",
-      label: `Write update for ${p.name}`, keywords: "draft update status weekly project write",
+      label: `Draft update for ${p.name}`, keywords: "draft update status weekly project write",
       run: () => writeProjectUpdate(p.id),
     })),
   },

@@ -88,3 +88,20 @@ def test_desk_reads_stay_under_budget_on_a_big_event_log(hub) -> None:
     slow = {path: round(min(_timed(hub, path) for _ in range(3)), 3) for path in paths}
     assert all(seconds < BUDGET_S for seconds in slow.values()), slow
 
+
+
+def test_the_receipt_events_read_searches_two_indexes(tmp_path: Path) -> None:
+    """The projections' receipt read (remote or heartbeat events) is two
+    index searches, never a walk of the whole log (perf lane 2026-11-08: the
+    OR walked 300 k rows on each desk open)."""
+    import sqlite3
+
+    from holdspeak.db.projections import RECEIPT_EVENTS_SQL
+    from holdspeak.db.schema import SCHEMA_SQL
+
+    conn = sqlite3.connect(tmp_path / "plan.db")
+    conn.executescript(SCHEMA_SQL)
+    plan = " ".join(str(row[-1]) for row in conn.execute(f"EXPLAIN QUERY PLAN {RECEIPT_EVENTS_SQL}"))
+    assert "USING INDEX idx_pipeline_events_origin" in plan, plan
+    assert "USING INDEX idx_pipeline_events_service_method" in plan, plan
+    assert "idx_pipeline_events_timestamp" not in plan, plan

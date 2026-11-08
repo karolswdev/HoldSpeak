@@ -33,362 +33,35 @@ import { useDesk } from "../store";
 import { keepPlace } from "../deskMemory";
 import { useCompactViewport } from "../useCompactViewport";
 import {
-  CheckGadget, DotWord, EditInPlace, ScrollHint, FilterTokens, FoldGadget, ListView, StatusBar, StringGadget, SurfaceState, Toolbar, countWords,
+  CheckGadget, DotWord, ScrollHint, FilterTokens, FoldGadget, ListView, StatusBar, SurfaceState, Toolbar, countWords,
   type StatusBarItem,
 } from "../surface";
 import { useWindowInterior } from "../surface/interior";
 import { Token } from "../surface/Token";
-import { ActionNotice } from "../surface/patterns/ActionNotice";
 import { plainFail } from "../surface/plainFailure";
 import { useWindowTitle } from "../surface/title";
-import { stateWords, wireWords } from "../surface/words";
-import { applyProgramText, closeProgram, decide, decideProposal, decideRequirement, dropHeldShape, overturn, planProgram, programVerb, race, refreshProgram, updateProgram,
-  useProgram, type RequirementChoice } from "./api";
-import { briefable, copyPageLink, pageWords, programRef, revokePage } from "../reach";
+import { applyProgramText, dropHeldShape, overturn, planProgram, programVerb, race, refreshProgram, updateProgram, useProgram } from "./api";
 import { LedgerFold, ProposedWord, clock } from "./Ledger";
-import { DoneWhen, openShot } from "./Requirements";
-import { ProgramLine } from "./ProgramLine";
+import { DoneWhen } from "./Requirements";
 import { ProgramFamilyRows } from "./Family";
 import { StepFold, isPlanned, moveStep, type Part as StepPart } from "./StepFold";
-import { CONTROLS, agentKey, controlValue, controlWord, durationWords, programTone } from "./model";
+import { CONTROLS, controlValue, controlWord, durationWords, programTone } from "./model";
 import { runsOnLabel, StepRow } from "./StepRow";
 import { RunsOnPicker } from "./RunsOn";
 import { ProgramChangeWell, ProgramTextPane, landedSteps, useProgramText, type TextProposal } from "./ProgramText";
 import { ShapeBar, ShapedWell, engineFact } from "./ShapeBar";
-import { PlanLine, ProgramsSplitWell, usePlanIt } from "./PlanDraft";
+import { ProgramsSplitWell, usePlanIt } from "./PlanDraft";
 import { RoundPanel, useRounds } from "./Rounds";
 import type {
-  Control, DecidedRow, DecideBody, PlanAnswer, PlanStep, Program, ProgramStep, RoundAnswer, RunsOnEntry, TextApplyAnswer, YourTurnItem, ShapeAnswer } from "./types";
+  Control, DecidedRow, PlanAnswer, PlanStep, Program, ProgramStep, RoundAnswer, RunsOnEntry, TextApplyAnswer, ShapeAnswer } from "./types";
 import "./programs.css";
 import { openPhoneWing } from "../calls/phoneFocus";
 import { AuditLine, FindingsBoard } from "./Findings";
+import { ProgramMast } from "./ProgramMast";
+import { StepSpine } from "./StepSpine";
+import { CurrentPlate, DraftHead, YourTurnWell, currentStep } from "./StepPlate";
 
-/** The verbs of one your-turn item, in the canvas order. */
-const VERBS: Record<string, { choice: string; word: string; primary?: boolean }[]> = {
-  merge: [{ choice: "merge", word: "Merge", primary: true }, { choice: "not_yet", word: "Not yet" }],
-  finding: [{ choice: "fix_now", word: "Fix now", primary: true }, { choice: "later", word: "Later" }, { choice: "skip", word: "Skip" }],
-  parked: [{ choice: "resume", word: "Resume", primary: true }, { choice: "skip", word: "Skip" }],
-  ask_review: [{ choice: "prepare", word: "Send…", primary: true }],
-  core: [{ choice: "go_on", word: "Go on", primary: true }, { choice: "park", word: "Park" }],
-  // 2026-10-31: the step's agent's commit, held by the gate or not made.
-  commit: [{ choice: "allow", word: "Allow the commit", primary: true }, { choice: "not_now", word: "Not now" }],
-  race: [{ choice: "pick", word: "Pick", primary: true }],
-  add_step: [{ choice: "add", word: "Add", primary: true }, { choice: "skip", word: "Skip" }],
-  close: [{ choice: "close", word: "Close", primary: true }],
-  // PG19: the agent is at its usage limit (the first word names the next agent).
-  limited: [{ choice: "continue", word: "Continue", primary: true }, { choice: "wait", word: "Wait" }],
-  // PG-REQ §9: his word, a requirement left after the rounds, and what an agent proposes.
-  requirement_word: [{ choice: "met", word: "Met", primary: true }, { choice: "unmet", word: "Unmet" }],
-  // PG-IMPORT IMP2 (BroCrew's to-do): a thing the agent asks him to do by hand.
-  todo: [{ choice: "done", word: "Done", primary: true }, { choice: "cant", word: "Can't do it" }],
-  requirement_left: [{ choice: "send_back", word: "Send back", primary: true }, { choice: "waive", word: "Waive" }],
-  requirement_proposed: [{ choice: "add", word: "Add", primary: true }, { choice: "skip", word: "Skip" }],
-  step_change: [{ choice: "apply", word: "Apply", primary: true }, { choice: "skip", word: "Skip" }],
-  step_amend: [{ choice: "send", word: "Send", primary: true }, { choice: "skip", word: "Skip" }],
-  // LANG13, HS-S32: the hub's choices decide which; the first one offered is primary.
-  delivery: [{ choice: "merge", word: "Merge" }, { choice: "retry", word: "Retry" }, { choice: "check", word: "Check" },
-    { choice: "skip", word: "Skip" }],
-  // PG-LANG JRN9 / JRN10: an audit's findings at Secure; its fix program.
-  audit_file: [{ choice: "file", word: "File", primary: true }, { choice: "skip", word: "Skip" }],
-  fix_program: [{ choice: "make", word: "Make", primary: true }, { choice: "skip", word: "Skip" }],
-  // PG-LANG JRN11: a lesson.
-  lesson: [{ choice: "keep_program", word: "Keep for this program", primary: true },
-    { choice: "keep_repo", word: "Keep for HoldSpeak" }, { choice: "skip", word: "Skip" }],
-};
-
-/** The rows about the whole program, not one step (their place is "The program"). */
-const PROGRAM_KINDS = new Set(["audit_file", "fix_program", "lesson"]);
-
-/** The verbs an item offers: its kind's, kept to the choices the hub sent. */
-function verbsFor(item: YourTurnItem): { choice: string; word: string; primary?: boolean }[] {
-  const all = VERBS[item.kind] ?? [];
-  if (item.kind !== "delivery") return all;
-  return all.filter((verb) => item.choices.includes(verb.choice))
-    .map((verb, index) => ({ ...verb, primary: index === 0 && verb.choice !== "skip" }));
-}
-
-const REQUIREMENT_KINDS = new Set(["requirement_word", "requirement_left", "todo"]);
-const PROPOSAL_KINDS = new Set(["requirement_proposed", "step_change", "step_amend"]);
-
-/** The requirement an item is about (its Program's or its step's). */
-function requirementOf(program: Program, item: YourTurnItem) {
-  if (!item.requirement_id) return undefined;
-  return [...(program.requirements ?? []), ...program.steps.flatMap((step) => step.requirements ?? [])]
-    .find((row) => row.id === item.requirement_id);
-}
-
-/** A verb's words on one item (`Continue in Codex`). */
-function verbWord(item: YourTurnItem, verb: { choice: string; word: string }): string {
-  if (item.kind === "limited" && verb.choice === "continue") return `Continue in ${item.next?.label ?? "the next agent"}`;
-  return verb.word;
-}
-
-/** The quiet fact beside an item's verbs (`Check green · review passed`). */
-function itemFact(item: YourTurnItem, step: ProgramStep | undefined, program: Program): string {
-  if (item.kind === "merge") return step?.review.verdict === "pass" ? "Check green · review passed" : "Check green";
-  if (item.kind === "finding") return [item.level ? wireWords(item.level) : "", step?.rounds ? `after ${step.rounds} rounds` : ""].filter(Boolean).join(" · ");
-  if (item.kind === "answer") return "Asks you";
-  if (item.kind === "parked") return step?.parked_reason ? "Parked" : "";
-  if (item.kind === "core") return "A core question";
-  if (item.kind === "limited") return item.warning ? "Near its limit" : "Limited";
-  if (item.kind === "delivery") return item.delivery?.words ?? "The delivery";
-  if (item.kind === "requirement_word") return step ? "Your word · holds the merge" : "Your word";
-  if (item.kind === "todo") return item.head ?? "To do";
-  if (item.kind === "requirement_left") return requirementOf(program, item)?.kind_word ?? "";
-  return "";
-}
-
-/** `Step 3 · Projections off the loop: merge PR #1591?` */
-function itemWords(item: YourTurnItem, step: ProgramStep | undefined): ReactNode {
-  const head = `Step ${item.ordinal} · ${item.step_title}`;
-  let tail = "";
-  if (item.kind === "merge") tail = `merge ${item.pr?.number ? `PR #${item.pr.number}` : "the PR"}?`;
-  else if (item.kind === "finding") tail = (step?.findings.find((finding) => finding.id === item.finding_id)?.text) ?? item.title;
-  else if (item.kind === "parked") tail = step?.parked_reason ?? "it stopped";
-  else if (item.kind === "answer") tail = `${step?.agent ?? "the agent"} asks you`;
-  else if (item.kind === "core") tail = item.reason ?? item.title;
-  else if (item.kind === "limited") tail = item.title;
-  else {
-    // PG-REQ: the hub composes the line (`Step 3 · Projections off the
-    // loop: R4 · I tried it on my desk`); its place is bold.
-    const at = item.title.indexOf(": ");
-    if (at > 0 && /^(Step \d+|The program)/.test(item.title)) return <><b>{item.title.slice(0, at)}:</b> {item.title.slice(at + 2)}</>;
-    return item.title;
-  }
-  return <><b>{head}:</b> {tail}</>;
-}
-
-/** The kind line's words when the hub sent no fact (`Waits on you`). */
-function placeWords(item: YourTurnItem): string {
-  return item.ordinal && !PROGRAM_KINDS.has(item.kind) ? `Step ${item.ordinal}, ${item.step_title}` : "The program";
-}
-
-/** PG-WINDOW W2: what waits on him, as the window's headline. The first
- *  item is the brief (canvas direction A, the briefing page's grammar,
- *  #1684): the kind line with its breathing lamp, the question, what the
- *  step was doing, what happened in plain words, what waits on this answer,
- *  then the tray: each choice a library Button with its consequence under
- *  it. No box around it; the tray is the one raised thing. The other items
- *  are one line each under it. The hub's words (`item.brief`); an item
- *  without them keeps its title. */
-export function YourTurnWell({ program, onDecided, onOpenBrief, onOpenText }: {
-  program: Program; onDecided(next: Program | null): void;
-  /** The words row under the tray: Brief opens the held step's brief. */
-  onOpenBrief?(stepId: string): void;
-  /** … and Program text opens the Text view. */
-  onOpenText?(): void;
-}) {
-  const [busy, setBusy] = useState("");
-  const [failed, setFailed] = useState<{ words: string; title: string } | null>(null);
-  const [ask, setAsk] = useState<{ id: string; choice: string } | null>(null);
-  const [line, setLine] = useState("");
-  // PG-IMPORT IMP2: each to-do's optional note, kept until its press lands.
-  const [notes, setNotes] = useState<Record<string, string>>({});
-  const items = program.your_turn_items;
-  if (!items.length) return null;
-  // PG-DIRECTION DIR3: Copy page link makes the item's briefing page and
-  // copies its link; Revoke ends it. The row's line says the page is open.
-  const page = async (item: YourTurnItem, verb: "copy" | "revoke") => {
-    setBusy(`${item.id}:${verb}`);
-    setFailed(null);
-    try {
-      if (verb === "copy") await copyPageLink(programRef(program.id, item.id));
-      else if (item.page) await revokePage(item.page.package_id);
-      onDecided(await refreshProgram(program.id));
-    } catch (error) {
-      setFailed(plainFail(verb === "copy" ? "The page link was not made" : "The page was not revoked", error,
-        "The item is unchanged", "Try again"));
-    } finally {
-      setBusy("");
-    }
-  };
-  const press = async (item: YourTurnItem, choice: string, line?: string) => {
-    if (item.kind === "answer") return;
-    // Unmet and Waive ask one line, in place.
-    if (REQUIREMENT_KINDS.has(item.kind) && (choice === "waive" || choice === "unmet") && line === undefined) {
-      setAsk((now) => (now?.id === item.id && now.choice === choice ? null : { id: item.id, choice }));
-      return;
-    }
-    if (item.kind === "todo" && line === undefined) line = (notes[item.id] ?? "").trim();
-    setBusy(`${item.id}:${choice}`);
-    setFailed(null);
-    const body: DecideBody = { kind: item.kind as DecideBody["kind"], choice };
-    if (item.finding_id) body.finding_id = item.finding_id;
-    if (item.kind === "add_step" && item.proposal != null) body.finding_id = String(item.proposal);
-    if (item.kind === "lesson" && item.lesson_id != null) body.lesson_id = item.lesson_id;
-    if (item.kind === "delivery" && item.expected_delivery_checkpoint_id != null) {
-      body.expected_delivery_checkpoint_id = item.expected_delivery_checkpoint_id;
-    }
-    try {
-      if (item.kind === "close") onDecided(await closeProgram(program.id));
-      else if (REQUIREMENT_KINDS.has(item.kind) && item.requirement_id) {
-        onDecided(await decideRequirement(program.id, item.requirement_id, choice as RequirementChoice, line || undefined));
-        if (item.kind === "todo") setNotes((now) => { const next = { ...now }; delete next[item.id]; return next; });
-      } else if (PROPOSAL_KINDS.has(item.kind) && item.proposal_id != null) {
-        onDecided(await decideProposal(program.id, item.proposal_id, choice));
-      } else onDecided(await decide(program.id, item.step_id || "program", body));
-      setAsk(null);
-    } catch (error) {
-      setFailed(plainFail("Your answer did not reach the program", error, "The step is unchanged", "Try again"));
-    } finally {
-      setBusy("");
-    }
-  };
-  const verbsOf = (item: YourTurnItem, withCons: boolean) => {
-    const step = program.steps.find((row) => row.id === item.step_id);
-    // His word on a step that has a shot: Open shot beside Met.
-    const shot = item.kind === "requirement_word"
-      ? (step?.requirements ?? []).find((row) => row.kind === "shot" && row.evidence?.url) : undefined;
-    const choice = (key: string, button: ReactNode) => {
-      const cons = withCons ? item.brief?.consequences?.[key] : undefined;
-      return withCons ? (
-        <span key={key} className="pg-choice" data-choice={key}>
-          {button}
-          {cons ? <span className="pg-choice-cons" data-testid="programs-turn-consequence">{cons}</span> : null}
-        </span>
-      ) : button;
-    };
-    return (
-      <>
-        {item.kind === "answer" ? choice("answer", (
-          <Button dense={!withCons} variant="primary" onClick={() => item.launch_id && openRef(`launch:${item.launch_id}`)}
-            disabled={!item.launch_id} data-testid="programs-turn-answer">Answer</Button>
-        )) : verbsFor(item).map((verb) => choice(verb.choice, (
-          <Button key={verb.choice} dense={!withCons} variant={verb.primary ? "primary" : "secondary"}
-            loading={busy === `${item.id}:${verb.choice}`} disabled={Boolean(busy)}
-            onClick={() => void press(item, verb.choice)} data-testid={`programs-turn-${verb.choice.replace("_", "-")}`}>
-            {verbWord(item, verb)}
-          </Button>
-        )))}
-      </>
-    );
-  };
-  /** The words row (the briefing page's evidence row): Brief · Program
-   *  text · Open shot · Copy page link. Not choices: never in the tray. */
-  const wordsOf = (item: YourTurnItem, headline: boolean) => {
-    const step = program.steps.find((row) => row.id === item.step_id);
-    const shot = item.kind === "requirement_word"
-      ? (step?.requirements ?? []).find((row) => row.kind === "shot" && row.evidence?.url) : undefined;
-    return (
-      <>
-          {headline && step && onOpenBrief ? (
-            <Button dense variant="ghost" onClick={() => onOpenBrief(step.id)} data-testid="programs-turn-brief">Brief</Button>
-          ) : null}
-          {headline && onOpenText ? (
-            <Button dense variant="ghost" onClick={onOpenText} data-testid="programs-turn-text">Program text</Button>
-          ) : null}
-          {shot ? (
-            <Button dense variant="secondary" onClick={() => openShot(program.id, shot.id)} data-testid="programs-turn-open-shot">Open shot</Button>
-          ) : null}
-          {briefable(item.kind) ? (
-            <Button dense variant="ghost" loading={busy === `${item.id}:${item.page ? "revoke" : "copy"}`}
-              disabled={Boolean(busy)} onClick={() => void page(item, item.page ? "revoke" : "copy")}
-              data-testid={item.page ? "programs-turn-revoke" : "programs-turn-copy-link"}>
-              {item.page ? "Revoke" : "Copy page link"}
-            </Button>
-          ) : null}
-      </>
-    );
-  };
-  /** PG-IMPORT IMP2: a to-do's walk lines and its optional note. */
-  const todoWell = (item: YourTurnItem) => item.kind !== "todo" ? null : (
-    <div className="pg-todo" data-testid="programs-todo">
-      {/* The hub's brief says the walk in its "what happened" line; a row
-          with no brief lists it here. */}
-      {item.walk?.length && !item.brief?.happened ? (
-        <ol className="pg-todo-walk" data-testid="programs-todo-walk">
-          {item.walk.map((row, index) => <li key={`${index}-${row}`}>{row}</li>)}
-        </ol>
-      ) : null}
-      <span className="pg-todo-note">
-        <StringGadget label="Add a note (optional)" placeholder="Add a note (optional)" value={notes[item.id] ?? ""}
-          onChange={(value) => setNotes((now) => ({ ...now, [item.id]: value }))} />
-      </span>
-    </div>
-  );
-  /** J5: a race parked as one step names each contender's red log. */
-  const raceLogs = (item: YourTurnItem) => item.kind !== "parked" || !item.race || !item.logs?.length ? null : (
-    <ul className="pg-race-logs" data-testid="programs-race-logs">
-      {item.logs.map((row) => (
-        <li key={row.step_id} className="pg-race-log" data-step={row.step_id}>
-          <span className="pg-race-agent">{row.agent}</span>
-          <Button dense variant="secondary" aria-label={`Open ${row.agent}'s log`}
-            onClick={() => openRef(row.log.startsWith("note:") ? row.log : `note:${row.log}`)} data-testid="programs-race-open-log">
-            Open log
-          </Button>
-        </li>
-      ))}
-    </ul>
-  );
-  const askWell = (item: YourTurnItem) => {
-    const asking = ask?.id === item.id ? ask : null;
-    if (!asking) return null;
-    return (
-      <span className="pg-turn-ask" data-testid="programs-turn-ask">
-        <StringGadget label={asking.choice === "waive" ? "Why you waive it" : "What is missing"} value={line} onChange={setLine}
-          placeholder={asking.choice === "waive" ? "Why you waive it" : "What is missing"} autoFocus />
-        <Button dense variant="primary" loading={busy === `${item.id}:${asking.choice}`}
-          disabled={Boolean(busy) || (asking.choice === "waive" && !line.trim())}
-          onClick={() => { void press(item, asking.choice, line.trim()); setLine(""); }} data-testid="programs-turn-ask-send">
-          {asking.choice === "waive" ? "Waive" : "Unmet"}
-        </Button>
-      </span>
-    );
-  };
-  const [first, ...rest] = items;
-  const firstStep = program.steps.find((row) => row.id === first.step_id);
-  const brief = first.brief;
-  const fact = itemFact(first, firstStep, program);
-  return (
-    <section className="pg-turn" aria-label="Waits on you" data-testid="programs-your-turn">
-      <article className="pg-brief" data-kind={first.kind} data-testid="programs-turn-item" data-item={first.id}
-        data-asking={ask?.id === first.id ? "" : undefined}>
-        <p className="pg-brief-kind">
-          <DotWord tone="ask" live>{fact || "Waits on you"}</DotWord>
-          <span className="pg-brief-place">{`· ${placeWords(first)}`}</span>
-        </p>
-        <h3 className="pg-brief-question" data-testid="programs-brief-question">
-          {brief?.question ?? itemWords(first, firstStep)}
-        </h3>
-        {brief ? (
-          <>
-            {brief.doing ? <p className="pg-brief-say">{brief.doing}</p> : null}
-            {brief.happened ? <p className="pg-brief-say pg-brief-happened" data-testid="programs-brief-happened">{brief.happened}</p> : null}
-            {brief.blocked_words ? <p className="pg-brief-blocked" data-testid="programs-brief-blocked">{brief.blocked_words}</p> : null}
-          </>
-        ) : null}
-        {first.page ? <p className="pg-turn-page" data-testid="programs-turn-page">{pageWords(first.page)}</p> : null}
-        {todoWell(first)}
-        {raceLogs(first)}
-        {askWell(first)}
-        <div className="pg-tray" data-testid="programs-tray">{verbsOf(first, true)}</div>
-        <p className="pg-brief-ev" data-testid="programs-turn-words">{wordsOf(first, true)}</p>
-      </article>
-      {rest.length ? (
-        <ul className="pg-turn-items" aria-label={rest.length === 1 ? "One more waits on you" : `${rest.length} more wait on you`}>
-          {rest.map((item) => {
-            const step = program.steps.find((row) => row.id === item.step_id);
-            return (
-              <li key={item.id} className="pg-turn-item" data-kind={item.kind} data-testid="programs-turn-item" data-item={item.id}
-                data-asking={ask?.id === item.id ? "" : undefined}>
-                <span className="pg-turn-words">
-                  <span className="kit-dot" data-tone="ask" aria-hidden="true" />
-                  {item.brief ? <><b>{`${placeWords(item)}:`}</b> {[item.brief.happened, item.brief.question].filter(Boolean).join(" ")}</> : itemWords(item, step)}
-                </span>
-                {item.page ? <span className="pg-turn-page" data-testid="programs-turn-page">{pageWords(item.page)}</span> : null}
-                {todoWell(item)}
-                {raceLogs(item)}
-                {askWell(item)}
-                <span className="pg-turn-verbs">{verbsOf(item, false)}{wordsOf(item, false)}</span>
-              </li>
-            );
-          })}
-        </ul>
-      ) : null}
-      {failed ? <p className="pg-failure" role="status" title={failed.title} data-testid="programs-turn-failure">{failed.words}</p> : null}
-    </section>
-  );
-}
+export { YourTurnWell, startFact } from "./StepPlate";
 
 /** The check's name as the hub's status line says it (`quick_check.sh`). */
 function checkName(program: Program): string {
@@ -685,82 +358,20 @@ function heldWords(program: Program, step: ProgramStep): string | undefined {
   return program.your_turn_items.find((item) => item.step_id === step.id && item.brief?.happened)?.brief?.happened;
 }
 
-/** The quiet fact beside Start (no sentence under a verb): a Program split
- *  from a draft waits on the one before it (JRN1); else its step count; a
- *  night program with no steps names its window (#1697). */
-export function startFact(program: Program): string {
-  const origin = program.place?.origin;
-  if (origin?.kind === "after") return `After ${origin.title || "the program before it"}`;
-  const count = countWords(program.steps.filter((step) => !step.race_of).length, "step");
-  if (count) return count;
-  const night = program.night;
-  return night ? `Tonight ${night.start} to ${night.end}` : "";
-}
-
-/** PG-WINDOW, Drafting (the definition phase): the headline is the goal,
- *  in his words and edited in place, and the tray shows ONE thing from the
- *  Program's state (Create plans itself, #1878): while the engine plans the
- *  goal, the working row with the ledger's line and no verb; with steps (or
- *  a night), Start and the step count; when the engine did not plan, the
- *  ledger's line as a notice and Plan it; with no goal plan yet, Plan it
- *  (and Ask me first). No sentence under a verb. */
-function DraftHead({ program, goal, busy, planner, canAsk, askBusy, anyRoundBusy, onGoal, onStart, onPlan, onAskFirst, onOpenText }: {
-  program: Program; goal: string; busy: string; planner: ReturnType<typeof usePlanIt>;
-  canAsk: boolean; askBusy: boolean; anyRoundBusy: boolean;
-  onGoal(next: string): void; onStart(): void; onPlan(): void; onAskFirst(): void; onOpenText(): void;
-}) {
-  const steps = program.steps.filter((step) => !step.race_of);
-  const held = Boolean(busy) || planner.busy || anyRoundBusy;
-  const claim = program.checkpoints.find((row) => row.kind === "plan_goal");
-  const ready = Boolean(steps.length || program.night);
-  const planning = !ready && claim?.choice === "pending";
-  const refused = !ready && claim?.choice === "not_planned";
-  const fact = ready ? startFact(program) : "";
-  return (
-    <section className="pg-turn pg-draft-top" aria-label="Drafting" data-testid="programs-draft-head">
-      <article className="pg-brief">
-        <p className="pg-brief-kind pg-brief-kind-draft">
-          <DotWord tone="idle">Drafting</DotWord>
-          <span className="pg-brief-place">{`· ${countWords(steps.length, "step") ?? "No steps yet"}`}</span>
-        </p>
-        <div className="pg-draft-goal" data-testid="programs-draft-goal">
-          <EditInPlace label="Goal" multiline value={goal} placeholder="Say what the program is for" onCommit={onGoal} />
-        </div>
-        <PlanLine planner={planner} onOpenText={onOpenText} />
-        {refused && !planner.busy && !planner.refusal ? (
-          <div className="pg-plan-line" data-testid="programs-plan-claim">
-            <ActionNotice tone="warn">{claim!.line}</ActionNotice>
-          </div>
-        ) : null}
-        <div className="pg-tray" data-testid="programs-tray" data-tray={planning ? "planning" : ready ? "start" : "plan"}>
-          {planning ? (
-            <DotWord tone="info" live className="pg-plan-line" data-testid="programs-planning">{claim!.line}</DotWord>
-          ) : ready ? (
-            <span className="pg-choice" data-choice="start">
-              <Button variant="primary" loading={busy === "start"} disabled={held} onClick={onStart} data-testid="program-start">Start</Button>
-              {fact ? <span className="pg-choice-cons" data-testid="programs-start-words">{fact}</span> : null}
-            </span>
-          ) : (
-            <>
-              <Button variant="primary" loading={planner.busy} disabled={held} onClick={onPlan} data-testid="program-plan-it">Plan it</Button>
-              {canAsk && !refused ? (
-                <Button variant="secondary" loading={askBusy} disabled={held} onClick={onAskFirst} data-testid="program-ask-first">Ask me first</Button>
-              ) : null}
-            </>
-          )}
-        </div>
-      </article>
-    </section>
-  );
-}
-
-export function ProgramBody({ programId }: { programId: string }) {
+/** One Program, two hosts (the language, 2026-11-08): the Program window
+ *  `pullout:program:<id>` (host "window": its own status bar and title) and
+ *  the right pane of the Programs window (host "pane": the list window's
+ *  status bar stays). The same object either way. */
+export function ProgramBody({ programId, host = "window" }: { programId: string; host?: "window" | "pane" }) {
   const { loading, error, program, reload, apply } = useProgram(programId);
   const [selected, setSelected] = useState<string | null>(null);
   const bodyRef = useRef<HTMLDivElement | null>(null);
   // The part the headline's Brief asked for (one press opens the step on it).
   const [askPart, setAskPart] = useState<{ step: string; part: StepPart } | null>(null);
   const [checksOpen, setChecksOpen] = useState(false);
+  // Earlier steps: the step list under the plate, folded until he opens it
+  // (a Drafting Program shows its plan rows open).
+  const [stepsShown, setStepsOpen] = useState<boolean | null>(null);
   const [decidedOpen, setDecidedOpen] = useState(true);
   const [allowedOpen, setAllowedOpen] = useState(false);
   const [busy, setBusy] = useState("");
@@ -772,8 +383,10 @@ export function ProgramBody({ programId }: { programId: string }) {
   const [filing, setFiling] = useState<DOMRect | null>(null);
   const fileOpener = useRef<HTMLElement | null>(null);
   const projects = useDesk((s) => s.items.project ?? []);
-  useWindowInterior("list");
-  useWindowTitle(program?.title ?? null, [program?.title]);
+  // In the Programs window the list window owns its interior (a pane that
+  // leaves must not take the window's edge-to-edge body with it).
+  useWindowInterior(host === "pane" ? undefined : "list");
+  useWindowTitle(host === "window" ? program?.title ?? null : null, [program?.title, host]);
   const compact = useCompactViewport();
   // The view he picked, remembered per window (the desk's places).
   const viewKey = `program/view/${programId}`;
@@ -795,6 +408,7 @@ export function ProgramBody({ programId }: { programId: string }) {
   }, [landed]);
 
   const drafting = program?.state === "drafting";
+  const stepsOpen = stepsShown ?? Boolean(drafting);
 
   const steps = program?.steps ?? [];
   const chosen = useMemo(() => {
@@ -817,7 +431,7 @@ export function ProgramBody({ programId }: { programId: string }) {
   useEffect(() => {
     const take = () => {
       const step = takeProgramStepRequest(programId);
-      if (step) { setAskPart(null); setSelected(step); }
+      if (step) { setAskPart(null); setSelected(step); setStepsOpen(true); }
     };
     take();
     const onStep = (event: Event) => { if ((event as CustomEvent<string>).detail === programId) take(); };
@@ -1006,6 +620,8 @@ export function ProgramBody({ programId }: { programId: string }) {
     } : null,
     planner.busy ? { key: "planning", lamp: "info" as const, live: true, text: planner.engine ? `Planning · ${planner.engine}` : "Planning", testId: "programs-status-planning" } : null,
     program.check_command ? { key: "check", text: <span>{`check: ${checkName(program)}`}</span> } : null,
+    // HS-S24 (D20/G24): the amount is a note he reads, never a cap.
+    program.spend_note ? { key: "spend", text: <span className="pg-ref">{program.spend_note}</span>, testId: "programs-status-spend" } : null,
     // The ladder's own word (`YOLO` keeps its capitals: an element, not a wire token).
     { key: "control", text: <span>{`control ${program.control_word || controlWord(program.control)}`}</span>, testId: "programs-status-control" },
     ...placeItems(program, fileTo, compact),
@@ -1039,53 +655,39 @@ export function ProgramBody({ programId }: { programId: string }) {
     })();
   };
 
+  // The plate's right-hand verb: Earlier steps opens the step list below the plate.
+  const earlier = drafting ? undefined : (
+    <Button variant="ghost" className="pg-earlier" aria-expanded={stepsOpen} onClick={() => setStepsOpen(!stepsOpen)}
+      data-testid="program-earlier">Earlier steps</Button>
+  );
+  const resume = verb === "resume" ? (
+    <Button variant="brass" loading={busy === "resume"} disabled={Boolean(busy)}
+      onClick={() => void run("resume", () => programVerb(program.id, "resume"), "The program did not resume")}
+      data-testid="program-resume">Resume</Button>
+  ) : undefined;
+  const amend = () => { setView("text"); setStepsOpen(true); };
+
   return (
-    <div className="pg-window" data-testid="program-window" data-state={program.state} data-program={program.id} onKeyDown={onKeys}>
-      <Toolbar label="Program" data-testid="program-toolbar" trailing={
-        <span className="pg-toolbar-trailing">
-          <FilterTokens label="View" options={VIEWS} value={view} onChange={(next) => setView(next as ProgramView)} className="pg-views" />
-          <RunsOnPicker label={defaultLabel} value={firstChoice}
-            idle={idle} idleLabel="When idle, for every pi step" disabled={!drafting}
-            then={thenRows.map((row) => ({ profile: row.profile, engine: row.engine }))}
-            onThen={(next) => void run("agents", () => updateProgram(program.id, { runs_on: [firstChoice, ...next] }), "The agents were not saved")}
-            onPick={(choice) => void pickAll(choice)}
-            onIdle={(next) => void run("idle", () => updateProgram(program.id, { prefer_idle: next }), "When idle was not changed")}
-            data-testid="program-runs-on" />
-          <CheckGadget variant="token" label="When idle" checked={idle}
-            onChange={(next) => void run("idle", () => updateProgram(program.id, { prefer_idle: next }), "When idle was not changed")} />
-          <ControlPicker value={program.control} disabled={Boolean(busy)}
-            onPick={(control) => void run("control", () => updateProgram(program.id, { control }), "The control was not changed")} />
-        </span>
-      }>
-        {verb && verb !== "start" ? (
-          <Button dense variant="secondary" loading={busy === verb} disabled={Boolean(busy)}
-            onClick={() => void run(verb, () => programVerb(program.id, verb), verb === "park" ? "The program was not parked" : "The program did not resume")}
-            data-testid={`program-${verb}`}>
-            {verb === "park" ? "Park" : "Resume"}
-          </Button>
-        ) : !drafting && (program.note_window || program.note_id) ? (
-          <Button dense variant="secondary" onClick={() => openRef(`note:${program.note_id}`)} data-testid="program-open-note">Open note</Button>
-        ) : null}
-        {program.state !== "done" ? (
-          <Button dense variant="ghost" loading={!adding && (busy === "add" || busy === "plan")} disabled={Boolean(busy) || adding} onClick={addStep}
-            aria-expanded={offerCarry ? adding : undefined} data-testid="program-add-step">Add step</Button>
-        ) : null}
-        {raceTarget ? (
-          <Button dense variant="ghost" disabled={Boolean(busy)} onClick={() => void run("race", () => race(program.id, raceTarget.id, 2), "The race did not start")}
-            data-testid="program-race">Race</Button>
-        ) : null}
-        {view === "text" && text.edited && !proposal ? (
-          <>
-            <Button dense variant={verb === "start" ? "secondary" : "primary"} loading={text.busy === "preview"} disabled={Boolean(text.busy)}
-              onClick={() => void preview()} data-testid="program-text-preview">Preview</Button>
-            <Button dense variant="ghost" disabled={Boolean(text.busy)} onClick={text.revert} data-testid="program-text-revert">Revert</Button>
-          </>
-        ) : null}
-        <ViewMore view={view} onView={setView} />
-      </Toolbar>
+    <div className="pg-window pg-program" data-testid="program-window" data-host={host} data-state={program.state} data-program={program.id} onKeyDown={onKeys}>
       <div className="pg-body" ref={bodyRef}>
         {/* PG-WINDOW: the body says it goes on (the kit's ScrollHint fade). */}
         <ScrollHint axis="y" scrollRef={bodyRef} className="pg-body-scroll">
+        <div className="pg-head">
+          <ProgramMast program={program}>
+            {program.state !== "done" ? (
+              <Button dense variant="secondary" aria-pressed={view === "text"} onClick={amend} data-testid="program-amend">Amend</Button>
+            ) : null}
+            {verb === "park" ? (
+              <Button dense variant="secondary" loading={busy === "park"} disabled={Boolean(busy)}
+                onClick={() => void run("park", () => programVerb(program.id, "park"), "The program was not parked")}
+                data-testid="program-park">Park</Button>
+            ) : program.state === "done" && (program.note_window || program.note_id) ? (
+              <Button dense variant="secondary" onClick={() => openRef(`note:${program.note_id}`)} data-testid="program-open-note">Open note</Button>
+            ) : null}
+          </ProgramMast>
+          <StepSpine program={program} current={program.your_turn_items[0]?.step_id || (drafting ? null : currentStep(program)?.id)} />
+        </div>
+        {failed ? <p className="pg-failure" role="status" title={failed.title} data-testid="program-failure">{failed.words}</p> : null}
         {adding && offerCarry ? (
           <section className="pg-add-well" aria-label="Add step" data-testid="program-add-well">
             <CheckGadget label={`This step carries the action ${actionWords}`} checked={carry} onChange={setCarry} disabled={busy === "add"} />
@@ -1098,23 +700,24 @@ export function ProgramBody({ programId }: { programId: string }) {
             </span>
           </section>
         ) : null}
-        {view === "board" ? <ProgramLine program={program} goal={!drafting} /> : null}
-        {view === "board" && drafting ? <AuditLine program={program} /> : null}
-        {view === "board" ? <DeliveredLine program={program} /> : null}
-        {drafting && view === "board" ? (
+        {drafting ? (
           <DraftHead program={program} goal={goal ?? program.goal} busy={busy} planner={planner}
             canAsk={!(program.rounds ?? []).some((round) => round.asked)} askBusy={rounds.busy === "ask"} anyRoundBusy={Boolean(rounds.busy)}
             onGoal={(next) => { setGoal(next); if (next !== program.goal) void run("goal", () => updateProgram(program.id, { goal: next }), "The goal was not saved"); }}
             onStart={() => void run("start", () => programVerb(program.id, "start"), "The program did not start")}
             onPlan={() => void planner.plan(goal ?? program.goal)}
             onAskFirst={() => void rounds.askFirst(applyDraft)}
-            onOpenText={() => setView("text")} />
-        ) : null}
+            onOpenText={amend} />
+        ) : program.your_turn_items.length ? (
+          <YourTurnWell program={program} onDecided={apply} earlier={earlier}
+            onOpenBrief={(stepId) => { setAskPart({ step: stepId, part: "brief" }); setSelected(stepId); setStepsOpen(true); }}
+            onOpenText={amend} />
+        ) : (
+          <CurrentPlate program={program} doneWord={doneWord} lead={resume} earlier={earlier}>
+            <DeliveredLine program={program} />
+          </CurrentPlate>
+        )}
         <RoundPanel program={program} rounds={rounds} engine={planner.engine} />
-        {failed ? <p className="pg-failure" role="status" title={failed.title} data-testid="program-failure">{failed.words}</p> : null}
-        <YourTurnWell program={program} onDecided={apply}
-          onOpenBrief={(stepId) => { setAskPart({ step: stepId, part: "brief" }); setSelected(stepId); }}
-          onOpenText={() => setView("text")} />
         {shaped ? (
           <ShapedWell key={String(shaped.decision?.id ?? shaped.revision)} program={program} answer={shaped}
             onOverturned={(next) => { apply(next); setShaped(null); setProposal(null); if (next) void text.read(); }}
@@ -1129,48 +732,85 @@ export function ProgramBody({ programId }: { programId: string }) {
             onApplied={applied} onAnswer={setProposal} onDismiss={notThis}
             onSplit={proposal.source === "plan" ? (place) => planner.split(proposal, place) : undefined} />
         ) : null}
-        {view === "text" ? (
-          <ProgramTextPane text={text} proposal={proposal}
-            scrollTo={chosen ? text.lines.findIndex((line) => line.text.startsWith(`step ${chosen.ordinal} `)) : null}
-            onLines={(next) => { text.setLines(next); if (proposal?.source === "text") setProposal(null); }} />
-        ) : steps.length || drafting ? (
-          <ListView label="Steps" className="pg-board" data-testid="programs-board">
-            {steps.length ? <h3 className="pg-board-caption">Steps<span className="pg-fold-sub">{` · ${steps.length}`}</span></h3> : null}
-            <ul className="kit-listrows">
-              {steps.map((step) => (
-                <StepGroup key={step.id} step={step} selected={chosen?.id === step.id} landed={landed[step.id]}
-                  programId={program.id} onApplied={apply}
-                  onSelect={() => { setAskPart(null); setSelected(chosen?.id === step.id ? "" : step.id); }}
-                  his={program.your_turn_items.some((item) => item.kind === "requirement_word" && item.step_id === step.id)}
-                  words={heldWords(program, step)}
-                  open={chosen?.id === step.id && view === "board"
-                    ? <StepFold key={`${step.id}:${askPart?.step === step.id ? askPart.part : ""}`} program={program} step={step} onApplied={apply}
-                      initialPart={askPart?.step === step.id ? askPart.part : undefined} /> : null} />
-              ))}
-              <DoneWhen program={program} onApplied={apply} />
-            </ul>
-          </ListView>
-        ) : (
-          <SurfaceState empty emptyKind="program" emptyImage={spriteUrl("program", program.id)} emptyLabel="No steps yet"
-            emptyHint="Add a step for each brief." actionLabel="Add step" onAction={addStep} />
-        )}
-        {view === "board" ? <FindingsBoard program={program} /> : null}
-        {/* PG-IMPORT IMP7: the Program it came from and the Programs it made. */}
-        {view === "board" ? <ProgramFamilyRows family={program.family} /> : null}
-        {view === "board" && drafting ? (
-          <AllowedFold program={program} open={allowedOpen} onToggle={setAllowedOpen} busy={Boolean(busy)}
-            onChange={(body) => void run("allowed", () => updateProgram(program.id, body), "The allowed agents were not saved")} />
+        {stepsOpen ? (
+          <section className="pg-steps" aria-label={drafting ? "Steps" : "Earlier steps"} data-testid="programs-steps">
+            <Toolbar label="Steps" data-testid="program-toolbar" trailing={
+              <span className="pg-toolbar-trailing">
+                <FilterTokens label="View" options={VIEWS} value={view} onChange={(next) => setView(next as ProgramView)} className="pg-views" />
+                <RunsOnPicker label={defaultLabel} value={firstChoice}
+                  idle={idle} idleLabel="When idle, for every pi step" disabled={!drafting}
+                  then={thenRows.map((row) => ({ profile: row.profile, engine: row.engine }))}
+                  onThen={(next) => void run("agents", () => updateProgram(program.id, { runs_on: [firstChoice, ...next] }), "The agents were not saved")}
+                  onPick={(choice) => void pickAll(choice)}
+                  onIdle={(next) => void run("idle", () => updateProgram(program.id, { prefer_idle: next }), "When idle was not changed")}
+                  data-testid="program-runs-on" />
+                <CheckGadget variant="token" label="When idle" checked={idle}
+                  onChange={(next) => void run("idle", () => updateProgram(program.id, { prefer_idle: next }), "When idle was not changed")} />
+                <ControlPicker value={program.control} disabled={Boolean(busy)}
+                  onPick={(control) => void run("control", () => updateProgram(program.id, { control }), "The control was not changed")} />
+              </span>
+            }>
+              {program.state !== "done" ? (
+                <Button dense variant="ghost" loading={!adding && (busy === "add" || busy === "plan")} disabled={Boolean(busy) || adding} onClick={addStep}
+                  aria-expanded={offerCarry ? adding : undefined} data-testid="program-add-step">Add step</Button>
+              ) : null}
+              {raceTarget ? (
+                <Button dense variant="ghost" disabled={Boolean(busy)} onClick={() => void run("race", () => race(program.id, raceTarget.id, 2), "The race did not start")}
+                  data-testid="program-race">Race</Button>
+              ) : null}
+              {view === "text" && text.edited && !proposal ? (
+                <>
+                  <Button dense variant="primary" loading={text.busy === "preview"} disabled={Boolean(text.busy)}
+                    onClick={() => void preview()} data-testid="program-text-preview">Preview</Button>
+                  <Button dense variant="ghost" disabled={Boolean(text.busy)} onClick={text.revert} data-testid="program-text-revert">Revert</Button>
+                </>
+              ) : null}
+              <ViewMore view={view} onView={setView} />
+            </Toolbar>
+            {view === "board" && drafting ? <AuditLine program={program} /> : null}
+            {view === "text" ? (
+              <ProgramTextPane text={text} proposal={proposal}
+                scrollTo={chosen ? text.lines.findIndex((line) => line.text.startsWith(`step ${chosen.ordinal} `)) : null}
+                onLines={(next) => { text.setLines(next); if (proposal?.source === "text") setProposal(null); }} />
+            ) : steps.length || drafting ? (
+              <ListView label="Steps" className="pg-board" data-testid="programs-board">
+                <ul className="kit-listrows">
+                  {steps.map((step) => (
+                    <StepGroup key={step.id} step={step} selected={chosen?.id === step.id} landed={landed[step.id]}
+                      programId={program.id} onApplied={apply}
+                      onSelect={() => { setAskPart(null); setSelected(chosen?.id === step.id ? "" : step.id); }}
+                      his={program.your_turn_items.some((item) => item.kind === "requirement_word" && item.step_id === step.id)}
+                      words={heldWords(program, step)}
+                      open={chosen?.id === step.id && view === "board"
+                        ? <StepFold key={`${step.id}:${askPart?.step === step.id ? askPart.part : ""}`} program={program} step={step} onApplied={apply}
+                          initialPart={askPart?.step === step.id ? askPart.part : undefined} /> : null} />
+                  ))}
+                  <DoneWhen program={program} onApplied={apply} />
+                </ul>
+              </ListView>
+            ) : (
+              <SurfaceState empty emptyKind="program" emptyImage={spriteUrl("program", program.id)} emptyLabel="No steps yet"
+                emptyHint="Add a step for each brief." actionLabel="Add step" onAction={addStep} />
+            )}
+            {view === "board" ? <FindingsBoard program={program} /> : null}
+            {/* PG-IMPORT IMP7: the Program it came from and the Programs it made. */}
+            {view === "board" ? <ProgramFamilyRows family={program.family} /> : null}
+            {view === "board" && drafting ? (
+              <AllowedFold program={program} open={allowedOpen} onToggle={setAllowedOpen} busy={Boolean(busy)}
+                onChange={(body) => void run("allowed", () => updateProgram(program.id, body), "The allowed agents were not saved")} />
+            ) : null}
+            {view === "board" && !drafting ? <DecidedFold program={program} open={decidedOpen} onToggle={setDecidedOpen} onOverturned={apply} /> : null}
+            {view === "board" && !drafting ? <ReachLine program={program} /> : null}
+            {view === "board" && !drafting ? <LedgerFold program={program} open={checksOpen} onToggle={setChecksOpen} onStarted={apply} /> : null}
+          </section>
         ) : null}
-        {view === "board" && !drafting ? <DecidedFold program={program} open={decidedOpen} onToggle={setDecidedOpen} onOverturned={apply} /> : null}
-        {view === "board" && !drafting ? <ReachLine program={program} /> : null}
-        {view === "board" && !drafting ? <LedgerFold program={program} open={checksOpen} onToggle={setChecksOpen} onStarted={apply} /> : null}
         </ScrollHint>
       </div>
       {program.state !== "done" ? (
         <ShapeBar program={program} pending={proposal?.source === "sentence" ? proposal.text : null}
-          onAnswer={onShaped} onOpenText={() => setView("text")} />
+          onAnswer={onShaped} onOpenText={amend} />
       ) : null}
-      <StatusBar data-testid="program-status" items={status} />
+      {host === "window" ? <StatusBar data-testid="program-status" items={status} /> : null}
       {filing ? (
         <WorkMenu label="File in a project" x={filing.left} y={filing.top} anchor="above" opener={fileOpener.current} autoFocus
           entries={projects.length ? projects.map((project) => ({

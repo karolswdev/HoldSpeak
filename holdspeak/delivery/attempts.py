@@ -35,6 +35,7 @@ from ..db.delivery_attempts import (
     WorkAttempt,
     WorkAttemptRepository,
 )
+from holdspeak.timestamps import parse_utc_iso as _parse_ts
 
 #: Ceiling on heuristic rows created per ingest — the old guessing
 #: stays available but bounded, never a flood of ambiguous cards.
@@ -503,16 +504,6 @@ def _format_ts(value: Optional[datetime] = None) -> str:
     if moment.tzinfo is None:
         moment = moment.replace(tzinfo=timezone.utc)
     return moment.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
-
-
-def _parse_ts(text: str) -> Optional[datetime]:
-    try:
-        parsed = datetime.fromisoformat(str(text).replace("Z", "+00:00"))
-    except ValueError:
-        return None
-    if parsed.tzinfo is None:
-        parsed = parsed.replace(tzinfo=timezone.utc)
-    return parsed
 
 
 __all__ = [

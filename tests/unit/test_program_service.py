@@ -350,10 +350,31 @@ def test_a_hosted_pi_engine_with_no_spend_limit_is_a_core_question(tmp_path) -> 
     rig.service.start(OWNER, pid)
     items = rig.service.needs_you_items()
     assert [item["kind"] for item in items] == ["core"]
-    assert "no spend limit" in items[0]["title"]
+    assert "no spend note" in items[0]["title"]
     assert rig.hand.calls == []
     rig.service.decide(OWNER, pid, rig.step(pid, 1)["id"], kind="core", choice="go_on")
     assert rig.hand.calls and rig.hand.calls[0][2]["engine"] == "engine-hosted"
+
+
+def test_a_program_over_its_spend_note_still_runs_and_reads_the_note(tmp_path) -> None:
+    """HS-S24 (D20/G24, disclosure-only): the amount he typed is stored with
+    the Program and read back as one fact; a Program over it is handed."""
+    hosted = LibraryEngine("engine-hosted", "Hosted model", PiEngine(
+        endpoint="https://api.example.test/v1", model="big-1", context_window=8000, key_slot="slot",
+        host="api.example.test", boundary="hosted"))
+    rig = Rig(tmp_path, engines=lambda engine_id: hosted if engine_id == "engine-hosted" else None)
+    pid = _made(rig, default_profile="pi-default", default_engine="engine-hosted", control="yolo",
+                spend_limit_usd=0)
+    program = rig.service.get(OWNER, pid)
+    assert (program["spend_limit_usd"], program["spend_note"]) == (0, "spend note · 0 USD")
+    rig.service.plan(OWNER, pid, steps=[{"title": "Costs more than the note"}])
+    rig.service.start(OWNER, pid)
+    assert rig.service.needs_you_items() == []
+    assert rig.hand.calls and rig.hand.calls[0][2]["engine"] == "engine-hosted"
+    rig.service.update(OWNER, pid, spend_limit_usd=12.5)
+    assert rig.service.get(OWNER, pid)["spend_note"] == "spend note · 12.50 USD"
+    rig.service.update(OWNER, pid, spend_limit_usd=None)
+    assert rig.service.get(OWNER, pid)["spend_note"] is None
 
 
 def test_yolo_adds_a_step_an_agent_names_and_normal_asks(tmp_path, monkeypatch) -> None:

@@ -14,8 +14,8 @@
  *   3 The card, then the control level as one segmented control of three
  *     (the desk's level pressed), its meaning in one fact line, Agent,
  *     Review, Person (who reviews the person-gated steps; "Nobody yet"
- *     until he picks one), Check, and the Spending fact (HS-S24: a note,
- *     not a cap).
+ *     until he picks one), Check, and the Spending note (HS-S24, D20/G24
+ *     disclosure-only: an amount he reads on the Program, never a cap).
  *   4 The card, then the summary rows; the bar's primary is Create.
  * Under each screen the next screen's first row peeks (dead, muted).
  * The title bar reads "New program · <project>" and carries the progress
@@ -135,6 +135,7 @@ export function ProgramWizard({ template: firstTemplate, scopeProjectId, program
   const [reviewer, setReviewer] = useState<RunsOnChoice | null>(null);
   const [person, setPerson] = useState<PersonChoice | null>(null);
   const [check, setCheck] = useState("");
+  const [spend, setSpend] = useState("");
   // At phone width Check and Spending fold into one row; a press opens Check.
   const [checkOpen, setCheckOpen] = useState(false);
   const [outcome, setOutcome] = useState<Outcome>({ kind: "idle" });
@@ -231,6 +232,7 @@ export function ProgramWizard({ template: firstTemplate, scopeProjectId, program
     ...(reviewer ? { reviewer_profile: reviewer.profile, ...(reviewer.engine ? { reviewer_engine: reviewer.engine } : {}) } : {}),
     ...(person ? { for_person_id: person.id } : {}),
     ...(check.trim() ? { check_command: check.trim() } : {}),
+    ...(spendAmount(spend) !== null ? { spend_limit_usd: spendAmount(spend)! } : {}),
   });
 
   const create = async () => {
@@ -382,10 +384,15 @@ export function ProgramWizard({ template: firstTemplate, scopeProjectId, program
               <StringGadget label="Check" value={check} onChange={setCheck} placeholder="The repository's check" mic={false} />
             </span>
           </GadgetRow>
-          <GadgetRow label="Spending" fact={<span className="pg-wiz-spending" data-testid="programs-wizard-spending">Not capped</span>}>{null}</GadgetRow>
+          <GadgetRow label="Spending">
+            <span className="pg-wiz-spending" data-testid="programs-wizard-spending">
+              <StringGadget label="Spending note" value={spend} onChange={setSpend} placeholder="No note · USD"
+                inputProps={{ inputMode: "decimal" }} />
+            </span>
+          </GadgetRow>
         </GadgetGroup>
         <Button dense variant="ghost" className="pg-wiz-fold" disabled={locked} onClick={() => setCheckOpen(true)} data-testid="programs-wizard-fold">
-          {`Check · ${check.trim() || "The repository's"} · Spending not capped`}
+          {`Check · ${check.trim() || "The repository's"} · ${spendWords(spend) ?? "No spend note"}`}
         </Button>
       </div>
     );
@@ -395,6 +402,7 @@ export function ProgramWizard({ template: firstTemplate, scopeProjectId, program
       agent ? agentWord(agent) : "",
       reviewer && !person ? `${agentWord(reviewer)} reviews` : "",
       check.trim() ? `check: ${check.trim()}` : "",
+      spendWords(spend) ?? "",
     ].filter(Boolean).join(" · ");
     // A person reviews the person-gated steps: the Review row names both.
     const review = person ? `${reviewer ? agentWord(reviewer) : "The template's"} · ${person.name} reviews` : "";
@@ -454,4 +462,19 @@ export function ProgramWizard({ template: firstTemplate, scopeProjectId, program
       </div>
     </section>
   );
+}
+
+/** HS-S24: the amount he typed, or null (empty, not a number, below zero). */
+function spendAmount(text: string): number | null {
+  const words = text.trim().replace(/^\$/, "").replace(/\s*usd$/i, "");
+  if (!words) return null;
+  const value = Number(words);
+  return Number.isFinite(value) && value >= 0 ? value : null;
+}
+
+/** The hub's own words (program_reads.spend_note): "spend note · 40 USD". */
+function spendWords(text: string): string | null {
+  const value = spendAmount(text);
+  if (value === null) return null;
+  return `spend note · ${Number.isInteger(value) ? String(value) : value.toFixed(2)} USD`;
 }

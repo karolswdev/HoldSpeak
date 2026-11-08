@@ -263,7 +263,19 @@ beforeEach(() => {
 afterEach(() => cleanup());
 
 const status = () => screen.getByTestId(/program(s)?-status$/);
-const stepRow = (ordinal: number) => screen.getAllByTestId("programs-step")
+/** The language, 2026-11-08: Earlier steps (the plate's right-hand verb)
+ *  opens the step list under the plate; a Drafting Program shows it open. */
+const openSteps = () => {
+  const earlier = screen.queryByTestId("program-earlier");
+  if (earlier && earlier.getAttribute("aria-expanded") !== "true") fireEvent.click(earlier);
+};
+/** The step list, once the Program has drawn: Earlier steps pressed open. */
+const board = async () => {
+  await screen.findByTestId("programs-mast");
+  openSteps();
+  return screen.findByTestId("programs-board");
+};
+const stepRow = (ordinal: number) => (openSteps(), screen.getAllByTestId("programs-step"))
   .find((row) => within(row).getByTestId("programs-step-select").textContent?.startsWith(String(ordinal)))!;
 /** PG-WINDOW W3: open a step under its row (a press on the open one closes it). */
 const openStep = (ordinal: number) => {
@@ -428,6 +440,8 @@ export {
   status,
   stepRow,
   openStep,
+  openSteps,
+  board,
   doneWhen,
   renderWindow,
   reqProgram,

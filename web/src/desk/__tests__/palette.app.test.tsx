@@ -564,7 +564,7 @@ describe("Betterment AG1: Search \"agent\" finds Agents and Hand to an agent ses
   });
 });
 
-/* ── Betterment P4 (projects): Write update, no dead verb, modes after projects ──
+/* ── Betterment P4 (projects): Draft update, no dead verb, modes after projects ──
  * The hub's own recipe list (the seeded "Project" mode is in it). */
 import { takeRoomWriteRequest } from "../openObject";
 
@@ -572,7 +572,7 @@ describe("Betterment P4: Search writes the update and lists only verbs that work
   const seedModes = () => hubWire<{ recipes: unknown[] }>("recipes.seed").wire.recipes
     .map((r) => fromWireRecipe(r)).filter((r): r is Persona => r !== null);
 
-  it("\"draft update\" lists one row, Write update for the project; Enter writes it in the Room", async () => {
+  it("\"draft update\" lists one row, Draft update for the project; Enter drafts it in the Room", async () => {
     useDesk.setState({ projects: [{ id: "p-pay", name: "Payments migration" }] as never,
       items: { ...EMPTY_ITEMS, recipe: seedModes() } });
     const input = await deck();
@@ -580,8 +580,8 @@ describe("Betterment P4: Search writes the update and lists only verbs that work
     const shown = rows().map((o) => o.textContent ?? "");
     // Every row but the Ask row (Q3: Ask "<what he typed>") that names an update.
     expect(shown.filter((t) => /update/i.test(t) && !t.endsWith("Ask")))
-      .toEqual([expect.stringContaining("Write update for Payments migration")]);
-    for (const t of shown) expect(t).not.toMatch(/Select a Project|No Room has two windows|Draft update/);
+      .toEqual([expect.stringContaining("Draft update for Payments migration")]);
+    for (const t of shown) expect(t).not.toMatch(/Select a Project|No Room has two windows/);
     expect(top()?.id).toBe("desk-palette-option-week.draft-update.p-pay");
     fireEvent.keyDown(input, { key: "Enter" });
     expect(openProjectRoom).toHaveBeenCalledWith("p-pay");

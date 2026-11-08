@@ -12,7 +12,7 @@ import {
   raceRoundAnsweredFixture, raceRoundNextFixture, auditSecureFixture, auditFiledFixture,
   auditFixFixture, lessonProgramFixture, lessonKeptFixture, parkedStepsFixture, mocks, ApiError,
   ProgramBody, stationsOf, clone, running, yourTurn, done, parked, drafting, limited, raced, calls,
-  hub, status, stepRow, openStep, type Program, type ProgramStep,
+  hub, status, stepRow, openStep, openSteps, type Program, type ProgramStep, board,
 } from "./programs.test-setup";
 import { describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
@@ -21,7 +21,7 @@ describe("the Program window (direction C, the ledger)", () => {
   it("YOLO with a question: the board draws every step state, pi on qwen and the held step", async () => {
     hub({ [`GET /api/programs/${running.id}`]: running });
     render(<ProgramBody programId={running.id} />);
-    await screen.findByTestId("programs-board");
+    await board();
     const words = screen.getAllByTestId("programs-step").map((row) => within(row).getByTestId("programs-step-word").textContent);
     expect(words).toEqual(["Done", "PR open", "Check failed · log", "Asks you", "Ready · waiting for qwen", "Planned", "Working"]);
     // PG-IMPORT IMP6: Take it over only where the lane is alive (a working step), never on a done one.
@@ -47,10 +47,27 @@ describe("the Program window (direction C, the ledger)", () => {
     expect(screen.getByTestId("programs-place-person").textContent).toBe("For Alice");
   });
 
+  // HS-S24 (D20/G24): the hub's spend note is one mono fact; never "limit" or "cap".
+  it("the spend note: one mono fact in the status bar, absent when he set none", async () => {
+    const noted = { ...clone(running), spend_limit_usd: 40, spend_note: "spend note · 40 USD" };
+    hub({ [`GET /api/programs/${running.id}`]: noted });
+    render(<ProgramBody programId={running.id} />);
+    await board();
+    const fact = within(status()).getByTestId("programs-status-spend");
+    expect(fact.textContent).toBe("spend note · 40 USD");
+    expect(fact.querySelector(".pg-ref")).toBeTruthy();
+    expect(status().textContent).not.toMatch(/limit|cap/i);
+    cleanup();
+    hub({ [`GET /api/programs/${running.id}`]: running });
+    render(<ProgramBody programId={running.id} />);
+    await board();
+    expect(within(status()).queryByTestId("programs-status-spend")).toBeNull();
+  });
+
   it("the Gate fold of the red step: the verdict the verifier read and the red section", async () => {
     hub({ [`GET /api/programs/${running.id}`]: running });
     render(<ProgramBody programId={running.id} />);
-    await screen.findByTestId("programs-board");
+    await board();
     fireEvent.click(within(stepRow(3)).getByTestId("programs-step-select"));
     const gate = await screen.findByTestId("programs-gate");
     expect(within(gate).getByTestId("programs-gate-verdict").textContent).toMatch(/^Check failed/);
@@ -68,6 +85,7 @@ describe("the Program window (direction C, the ledger)", () => {
       [`POST /api/programs/${running.id}/decisions/${row.id}/overturn`]: { program: after },
     });
     render(<ProgramBody programId={running.id} />);
+    await board();
     const decided = await screen.findByTestId("programs-decided");
     const rows = within(decided).getAllByTestId("programs-decided-row");
     expect(rows).toHaveLength(running.decided_for_you!.length);
@@ -135,7 +153,7 @@ describe("the Program window (direction C, the ledger)", () => {
   it("Done: Open note in place of Start, the MERGE station lit green with the PR number", async () => {
     hub({ [`GET /api/programs/${done.id}`]: done });
     render(<ProgramBody programId={done.id} />);
-    await screen.findByTestId("programs-board");
+    await board();
     expect(screen.queryByTestId("program-start")).toBeNull();
     expect(screen.queryByTestId("program-park")).toBeNull();
     fireEvent.click(screen.getByTestId("program-open-note"));
@@ -152,7 +170,7 @@ describe("the Program window (direction C, the ledger)", () => {
       [`POST /api/programs/${parked.id}/resume`]: { ...clone(parked), state: "running", state_word: "Running" },
     });
     render(<ProgramBody programId={parked.id} />);
-    await screen.findByTestId("programs-board");
+    await board();
     fireEvent.click(screen.getByTestId("program-resume"));
     await waitFor(() => expect(screen.getByTestId("program-window").getAttribute("data-state")).toBe("running"));
     expect(screen.getByTestId("program-park")).toBeTruthy();
@@ -161,18 +179,18 @@ describe("the Program window (direction C, the ledger)", () => {
   it("Drafting (PG-WINDOW A): one row per step that opens in place to its fields with mics; the goal is the headline; Start says what it checks", async () => {
     hub({ [`GET /api/programs/${drafting.id}`]: drafting });
     render(<ProgramBody programId={drafting.id} />);
-    await screen.findByTestId("programs-board");
+    await board();
     // No spreadsheet: one row per step, none open, every step in view.
     expect(screen.queryByTestId("programs-draft-step")).toBeNull();
     expect(screen.getAllByTestId("programs-step")).toHaveLength(drafting.steps.length);
     expect(screen.queryByTestId("programs-step-fold")).toBeNull();
-    // The line: one planned station per step.
-    expect(within(screen.getByTestId("programs-line")).getAllByRole("listitem").filter((node) => node.getAttribute("data-station") !== "end"))
-      .toHaveLength(drafting.steps.length);
+    // The spine: one idle segment per step, numbered.
+    expect(within(screen.getByTestId("programs-spine")).getAllByTestId("programs-spine-step").map((node) => node.getAttribute("data-mark")))
+      .toEqual(drafting.steps.map(() => "ahead"));
     // The headline: the goal in his words, edited in place; Start, with what it checks, in the tray.
     expect(within(screen.getByTestId("programs-draft-goal")).getByText(drafting.goal.split("\n")[0], { exact: false })).toBeTruthy();
     const tray = screen.getByTestId("programs-tray");
-    expect(within(tray).getByTestId("program-start").className).toMatch(/primary/);
+    expect(within(tray).getByTestId("program-start").className).toMatch(/brass/);
     // One thing in the tray: Start and the step count (no sentence, no Plan it beside it).
     expect(within(tray).queryByTestId("program-plan-it")).toBeNull();
     expect(within(tray).getByTestId("programs-start-words").textContent).toBe(`${drafting.steps.length} steps`);
@@ -193,7 +211,7 @@ describe("the Program window (direction C, the ledger)", () => {
     bare.steps = bare.steps.map((step) => ({ ...step, requirements: [] }));
     hub({ [`GET /api/programs/${bare.id}`]: bare });
     render(<ProgramBody programId={bare.id} />);
-    await screen.findByTestId("programs-board");
+    await board();
     const prove = within(openStep(1)).getByTestId("programs-step-requirements");
     expect(prove.querySelector(".pg-sf-cap")).toBeNull();
     expect(prove.textContent).toBe("Add a requirement");
@@ -205,17 +223,19 @@ describe("PG-WINDOW: the Program window as one object (canvas program-window-202
   it("the line lights the held step; the held item is the headline in his terms with the tray; the rest are one line each", async () => {
     hub({ [`GET /api/programs/${held.id}`]: held });
     render(<ProgramBody programId={held.id} />);
-    await screen.findByTestId("programs-board");
+    await board();
     const first = held.your_turn_items[0];
-    // The line: one station per step, the held one current and breathing.
-    const line = screen.getByTestId("programs-line");
-    const stations = [...line.querySelectorAll("[data-station]")].filter((node) => node.getAttribute("data-station") !== "end");
-    expect(stations.map((node) => node.getAttribute("data-station"))).toEqual(held.steps.filter((step) => !step.race_of).map((step) => step.id));
-    const here = line.querySelector("[aria-current=step]")!;
-    expect(here.getAttribute("data-station")).toBe(first.step_id);
-    expect(here.querySelector("[data-live]")).not.toBeNull();
-    expect(line.textContent).toContain(`Goal: ${held.goal}`);
-    // The headline: the kind line, the question, the step, what happened; no tinted box.
+    // The spine: one numbered segment per step, the held one brass and current.
+    const spine = screen.getByTestId("programs-spine");
+    const segments = within(spine).getAllByTestId("programs-spine-step");
+    expect(segments.map((node) => node.getAttribute("data-step"))).toEqual(held.steps.filter((step) => !step.race_of).map((step) => step.id));
+    const here = segments.find((node) => node.hasAttribute("data-current"))!;
+    expect(here.getAttribute("data-step")).toBe(first.step_id);
+    expect(here.getAttribute("data-mark")).toBe("here");
+    expect(here.textContent).toBe(`${String(first.ordinal).padStart(2, "0")}${first.step_title}`);
+    // The mast: the title in the display face and the facts in mono.
+    expect(within(screen.getByTestId("programs-mast")).getByRole("heading").textContent).toBe(held.title);
+    // The plate: the step's number and name, the question, what happened; one raised thing.
     const well = screen.getByTestId("programs-your-turn");
     const [headline, ...rest] = within(well).getAllByTestId("programs-turn-item");
     expect(headline.tagName).toBe("ARTICLE");
@@ -227,7 +247,9 @@ describe("PG-WINDOW: the Program window as one object (canvas program-window-202
     expect([...tray.querySelectorAll("[data-choice]")].map((node) => node.getAttribute("data-choice"))).toEqual(["merge", "not_yet"]);
     expect(within(tray).getAllByTestId("programs-turn-consequence").map((node) => node.textContent))
       .toEqual(["merge", "not_yet"].map((choice) => first.brief!.consequences[choice]));
-    expect(within(tray).getByTestId("programs-turn-merge").className).toMatch(/primary/);
+    expect(within(tray).getByTestId("programs-turn-merge").className).toMatch(/brass/);
+    // Earlier steps sits at the plate's right, outside the tray.
+    expect(within(headline).getByTestId("program-earlier").closest("[data-testid=programs-tray]")).toBeNull();
     // The others: one line each, with the hub's question.
     expect(rest).toHaveLength(held.your_turn_items.length - 1);
     expect(rest[0].textContent).toContain(held.your_turn_items[1].brief!.question);
@@ -236,7 +258,7 @@ describe("PG-WINDOW: the Program window as one object (canvas program-window-202
   it("no step opens by itself while one waits on him (every step in view); Brief opens the held one; rows say the story, never a raw note", async () => {
     hub({ [`GET /api/programs/${held.id}`]: held });
     render(<ProgramBody programId={held.id} />);
-    await screen.findByTestId("programs-board");
+    await board();
     const first = held.your_turn_items[0];
     const step = held.steps.find((row) => row.id === first.step_id)!;
     expect(screen.queryByTestId("programs-step-fold")).toBeNull();
@@ -377,7 +399,7 @@ describe("a race of 2 (the recorded race: Codex wins in 34 min)", () => {
   it("the contender is indented under the step, the loser says Lost the race to Codex · 34 min, no Open lane on an ended lane", async () => {
     hub({ [`GET /api/programs/${raced.id}`]: raced });
     render(<ProgramBody programId={raced.id} />);
-    await screen.findByTestId("programs-board");
+    await board();
     const lead = stepRow(1);
     expect(within(lead).getByTestId("programs-step-word").textContent).toBe("Race of 2");
     // The step's own agent lost: its line and its time.
@@ -436,6 +458,7 @@ describe("PG19: when an agent runs out (canvas handoff-2026-10-28)", () => {
   it("the Checkpoints fold: the handoff divider, and View brief shows the brief, what was redacted and the earlier turns", async () => {
     hub({ [`GET /api/programs/${limited.id}`]: limited });
     render(<ProgramBody programId={limited.id} />);
+    await board();
     const [line] = await screen.findAllByTestId("programs-handoff");
     expect(line.textContent).toContain("Step 1 · Handed to Codex · usage limit");
     expect(screen.queryByTestId("programs-handoff-brief")).toBeNull();
@@ -476,6 +499,7 @@ describe("PG20: hidden-ref checkpoints (recorded on the rig's real git)", () => 
   it("a pinned row shows its commit and Start from here; a line with no pin shows neither", async () => {
     hub({ [`GET /api/programs/${started.id}`]: started });
     render(<ProgramBody programId={started.id} />);
+    await board();
     const ledger = await screen.findByTestId("programs-checkpoints");
     const rows = within(ledger).getAllByRole("listitem");
     const half = rows.find((row) => row.textContent?.includes("Half way: the words are plain"))!;
@@ -503,6 +527,7 @@ describe("PG20: hidden-ref checkpoints (recorded on the rig's real git)", () => 
       [`POST /api/programs/${started.id}/checkpoints/${pinned.id}/start-from`]: { step_id: added.id, ref: pinned.ref, program: started },
     });
     render(<ProgramBody programId={started.id} />);
+    await board();
     const ledger = await screen.findByTestId("programs-checkpoints");
     expect(screen.getAllByTestId("programs-step")).toHaveLength(1);
     const half = within(ledger).getAllByRole("listitem").find((row) => row.textContent?.includes("Half way"))!;
@@ -516,6 +541,7 @@ describe("PG20: hidden-ref checkpoints (recorded on the rig's real git)", () => 
   it("View brief names the ref the next agent continues from", async () => {
     hub({ [`GET /api/programs/${limited.id}`]: limited });
     render(<ProgramBody programId={limited.id} />);
+    await board();
     const [line] = await screen.findAllByTestId("programs-handoff");
     fireEvent.click(within(line).getByTestId("programs-view-brief"));
     const entry = limited.steps[0].handoffs![0];
@@ -540,6 +566,7 @@ describe("Phone: the Reach line under Decided for you (PHONE-DESIGN §9)", () =>
     hub({ [`GET /api/programs/${running.id}`]: reached });
     const { usePhoneFocus } = await import("../../calls/phoneFocus");
     render(<ProgramBody programId={running.id} />);
+    await board();
     const line = await screen.findByTestId("programs-reach");
     expect(line.textContent).toContain("Reached you: a call · YOLO: a core question calls at once when the program may call · it may call you");
     expect(line.getAttribute("data-channel")).toBe("call");
@@ -551,6 +578,7 @@ describe("Phone: the Reach line under Decided for you (PHONE-DESIGN §9)", () =>
   it("no reach, no line", async () => {
     hub({ [`GET /api/programs/${running.id}`]: running });
     render(<ProgramBody programId={running.id} />);
+    await board();
     await screen.findByTestId("programs-decided");
     expect(screen.queryByTestId("programs-reach")).toBeNull();
   });
@@ -632,7 +660,7 @@ describe("PG-JOURNEYS J5: the race in the Program window (recorded: test_program
     const row = race.decided_for_you!.find((entry) => entry.kind === "race_winner")!;
     hub({ [`GET /api/programs/${race.id}`]: race });
     render(<ProgramBody programId={race.id} />);
-    await screen.findByTestId("programs-board");
+    await board();
     const fold = screen.getAllByRole("button").find((button) => button.textContent?.startsWith("Decided for you"));
     if (fold && fold.getAttribute("aria-expanded") === "false") fireEvent.click(fold);
     const line = (await screen.findAllByTestId("programs-decided-row")).find((node) => node.getAttribute("data-decision") === String(row.id))!;
@@ -677,6 +705,7 @@ describe("PG-LANG JRN9 to JRN11: File, Make, and a lesson in Your turn (recorded
     });
     render(<ProgramBody programId={audit.id} />);
     await screen.findByTestId("programs-your-turn");
+    openSteps();
     const row = turnRow("audit_file")!;
     // Close is asked last (the live walk): File the findings is the headline.
     expect(row.textContent).toContain(item.brief!.question);
@@ -700,10 +729,11 @@ describe("PG-LANG JRN9 to JRN11: File, Make, and a lesson in Your turn (recorded
     });
     render(<ProgramBody programId={audit.id} />);
     await screen.findByTestId("programs-your-turn");
-    // The headline: the brief's question, the program as its place, Make and Skip with their consequences.
+    openSteps();
+    // The plate: the brief's question, the program as its place, Make and Skip with their consequences.
     expect(screen.getByTestId("programs-brief-question").textContent).toBe("Make a fix program from the MUST findings?");
     const row = turnRow("fix_program")!;
-    expect(row.textContent).toContain("· The program");
+    expect(within(row).getByTestId("programs-plate-head").textContent).toContain("The program");
     expect(within(screen.getByTestId("programs-tray")).getAllByRole("button").map((button) => button.textContent)).toEqual(["Make", "Skip"]);
     expect(within(row).getAllByTestId("programs-turn-consequence").map((node) => node.textContent))
       .toEqual([item.brief!.consequences.make, item.brief!.consequences.skip]);
@@ -750,7 +780,7 @@ describe("park stops the steps (the live walk's finding)", () => {
     const parked = parkedStepsFixture as unknown as Program;
     hub({ [`GET /api/programs/${parked.id}`]: parked });
     render(<ProgramBody programId={parked.id} />);
-    await screen.findByTestId("programs-board");
+    await board();
     expect(parked.state).toBe("parked");
     for (const ordinal of [2, 3]) {
       const row = stepRow(ordinal);
@@ -786,10 +816,10 @@ describe("the step travels to the Program window", () => {
     hub({ [`GET /api/programs/${yourTurn.id}`]: yourTurn });
     render(<ProgramBody programId={yourTurn.id} />);
     await screen.findByTestId("programs-your-turn");
-    // What waits on him is the headline: no step opens by itself.
-    expect(screen.getAllByTestId("programs-step").some((row) => row.hasAttribute("data-selected"))).toBe(false);
+    // What waits on him is the plate: no step opens by itself, the step list stays folded.
+    expect(screen.queryAllByTestId("programs-step").some((row) => row.hasAttribute("data-selected"))).toBe(false);
     act(() => refOpener(`program:${yourTurn.id}`)!());
-    expect(screen.getAllByTestId("programs-step").some((row) => row.hasAttribute("data-selected"))).toBe(false);
+    expect(screen.queryAllByTestId("programs-step").some((row) => row.hasAttribute("data-selected"))).toBe(false);
     act(() => refOpener(`program:${yourTurn.id}:${core.step_id}`)!());
     await waitFor(() => expect(stepRow(ordinal).hasAttribute("data-selected")).toBe(true));
   });

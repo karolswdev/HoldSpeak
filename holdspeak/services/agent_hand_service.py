@@ -56,6 +56,7 @@ from .agent_brief import (
     parse_item_ref,
     project_for_item,
 )
+from holdspeak.timestamps import utc_now_iso as _iso_now
 
 log = get_logger("agent_hand")
 
@@ -973,12 +974,6 @@ def _resume_answer(record: Mapping[str, Any]) -> dict[str, Any]:
         "state": record.get("state"),
         "resume": {key: resume.get(key) for key in ("state", "at", "command", "outcome")},
     }
-
-
-def _iso_now() -> str:
-    from datetime import datetime, timezone
-
-    return datetime.now(timezone.utc).isoformat()
 
 
 def _reload_registry(registry: Any) -> None:

@@ -115,10 +115,10 @@ Read and change a Program as text, shape it by one typed or spoken sentence, or 
 ### Lead projects and people from the same place
 
 <p align="center">
-  <img src="docs/assets/readme/project.png" width="780" alt="A Project Room shows its current risk, a late milestone, this week's concerns, an Ask field, and Write update." />
+  <img src="docs/assets/readme/project.png" width="780" alt="A Project Room shows its current risk, a late milestone, this week's concerns, an Ask field, and Draft update." />
 </p>
 
-*See what needs you, ask a project question, or select **Write update**.*
+*See what needs you, ask a project question, or select **Draft update**.*
 
 Project Rooms connect open work, decisions, commitments, and recent changes.
 Add GitHub, Jira, or Confluence sources. Review an update and its sources before sending it to a saved destination.

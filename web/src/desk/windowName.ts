@@ -74,8 +74,10 @@ export function windowName(subject: WindowSubject, id?: string | null): string {
     case "thread":
       return named(subject.title) || firstWords(subject.firstMessage ?? "") || "New thread";
     case "meeting": {
+      const title = named(subject.title);
+      if (title) return title;
       const when = wireDayClock(subject.startedAt);
-      return named(subject.title) || (when ? `Meeting, ${when}` : "Meeting");
+      return when ? `Meeting, ${when}` : "Meeting";
     }
     case "decision":
       return named(subject.title) || firstWords(subject.text ?? "") || "New decision";

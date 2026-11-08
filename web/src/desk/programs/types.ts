@@ -279,6 +279,12 @@ export interface ProgramList {
   counts: Partial<Record<ProgramState, number>>;
   worst: ProgramState | null;
   worst_word: string;
+  /** The night (the rail's foot tile and the status bar's "tonight 23:00 ·
+   *  3 queued"): the first night Program with a queued step, its night
+   *  line's start (`HH:MM`, local) and the queued steps of every night
+   *  Program (`program_reads.night_of`). Absent when the engine is off, no
+   *  Program has a night line or nothing is queued: the face draws nothing. */
+  night?: { program_id: string | null; start: string; queued: number } | null;
 }
 
 export interface ProgramFinding {
@@ -552,6 +558,8 @@ export interface Program extends ProgramSummary {
   /** Phone (PHONE-DESIGN §6): the engine may call him for this Program. */
   may_call?: boolean;
   spend_limit_usd?: number | null;
+  /** HS-S24: the hub's one fact, "spend note · 40 USD"; null when none. */
+  spend_note?: string | null;
   /** He closed it (Secure). */
   closed_at?: string | null;
   /** PG-REQ: the Program's own and the every-step parents, in ordinal order. */

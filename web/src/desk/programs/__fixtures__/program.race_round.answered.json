@@ -15,11 +15,11 @@
     "check_command": "sh -c 'echo ok'",
     "checkpoints": [
       {
-        "at": "2026-11-08T06:39:18.849043+00:00",
+        "at": "2026-11-08T17:20:11.910016+00:00",
         "by": "owner",
         "choice": null,
         "decision_record_id": null,
-        "id": 3,
+        "id": 4,
         "kind": null,
         "line": "Changed step 1: review",
         "operation_id": null,
@@ -29,7 +29,7 @@
         "ref": null,
         "ref_commit": null,
         "rule": null,
-        "step_id": "step-8e6e47be133c",
+        "step_id": "step-6490ca76178d",
         "undo": {
           "pin": {
             "note": "No worktree to pin yet"
@@ -37,11 +37,11 @@
         }
       },
       {
-        "at": "2026-11-08T06:39:18.791364+00:00",
+        "at": "2026-11-08T17:20:11.855576+00:00",
         "by": "owner",
         "choice": null,
         "decision_record_id": null,
-        "id": 2,
+        "id": 3,
         "kind": null,
         "line": "Added 1 step",
         "operation_id": null,
@@ -55,7 +55,7 @@
         "undo": {}
       },
       {
-        "at": "2026-11-08T06:39:18.783128+00:00",
+        "at": "2026-11-08T17:20:11.848632+00:00",
         "by": "owner",
         "choice": null,
         "decision_record_id": null,
@@ -76,7 +76,7 @@
     "closed_at": null,
     "control": "normal",
     "control_word": "Normal",
-    "created_at": "2026-11-08T06:39:18.782729+00:00",
+    "created_at": "2026-11-08T17:20:11.848295+00:00",
     "decided_for_you": [],
     "default": {
       "agent": "Claude Code",
@@ -100,14 +100,14 @@
     "for_person": null,
     "for_person_id": null,
     "goal": "Find words in fences.",
-    "id": "program-45af76f196b2",
+    "id": "program-65b8649f6af9",
     "in_state_seconds": 0,
     "last_checkpoint": {
-      "at": "2026-11-08T06:39:18.849043+00:00",
+      "at": "2026-11-08T17:20:11.910016+00:00",
       "by": "owner",
       "choice": null,
       "decision_record_id": null,
-      "id": 3,
+      "id": 4,
       "kind": null,
       "line": "Changed step 1: review",
       "operation_id": null,
@@ -117,7 +117,7 @@
       "ref": null,
       "ref_commit": null,
       "rule": null,
-      "step_id": "step-8e6e47be133c",
+      "step_id": "step-6490ca76178d",
       "undo": {
         "pin": {
           "note": "No worktree to pin yet"
@@ -128,8 +128,8 @@
     "may_call": false,
     "may_handoff": false,
     "night": null,
-    "note_id": "program-program-45af76f196b2",
-    "note_window": "pullout:note:program-program-45af76f196b2",
+    "note_id": "program-program-65b8649f6af9",
+    "note_window": "pullout:note:program-program-65b8649f6af9",
     "origin_ref": null,
     "persons": [],
     "place": {
@@ -152,9 +152,9 @@
         "choices": [
           "waive"
         ],
-        "created_at": "2026-11-08T06:39:18.848395+00:00",
+        "created_at": "2026-11-08T17:20:11.909446+00:00",
         "evidence": {},
-        "id": "req-60cef5554714",
+        "id": "req-53f344cd637a",
         "judged_at": null,
         "judged_commit": null,
         "kind": "review",
@@ -162,7 +162,7 @@
         "label": "R1",
         "ordinal": 1,
         "parent_id": null,
-        "program_id": "program-45af76f196b2",
+        "program_id": "program-65b8649f6af9",
         "required": true,
         "rounds": 0,
         "running": false,
@@ -176,7 +176,7 @@
           {
             "ordinal": 1,
             "state": "not_yet",
-            "step_id": "step-8e6e47be133c"
+            "step_id": "step-6490ca76178d"
           }
         ],
         "text": "The change does only what its brief says.",
@@ -238,7 +238,7 @@
           {
             "answer": "Each reviews the other",
             "answered_by": "owner",
-            "at": "2026-11-08T06:39:18.846947+00:00",
+            "at": "2026-11-08T17:20:11.908017+00:00",
             "became": [
               "step 1 review"
             ],
@@ -246,7 +246,7 @@
               "Each reviews the other",
               "No review"
             ],
-            "id": "q-02dc2bf9c0",
+            "id": "q-e46671e96d",
             "rule": "race_review",
             "skipped": false,
             "text": "Review each contender?",
@@ -271,6 +271,7 @@
     "search_words": "mermaid words in notes search find words in fences. race find words inside mermaid fences race",
     "skipped": 0,
     "spend_limit_usd": null,
+    "spend_note": null,
     "state": "drafting",
     "state_word": "Drafting",
     "status_line": "Drafting · 0 of 1 done · check: echo · control Normal",
@@ -341,13 +342,13 @@
         "handoffs": [],
         "held_reason": null,
         "history": null,
-        "id": "step-8e6e47be133c",
+        "id": "step-6490ca76178d",
         "last_checkpoint": {
-          "at": "2026-11-08T06:39:18.849043+00:00",
+          "at": "2026-11-08T17:20:11.910016+00:00",
           "by": "owner",
           "choice": null,
           "decision_record_id": null,
-          "id": 3,
+          "id": 4,
           "kind": null,
           "line": "Changed step 1: review",
           "operation_id": null,
@@ -357,7 +358,7 @@
           "ref": null,
           "ref_commit": null,
           "rule": null,
-          "step_id": "step-8e6e47be133c",
+          "step_id": "step-6490ca76178d",
           "undo": {
             "pin": {
               "note": "No worktree to pin yet"
@@ -386,17 +387,17 @@
             "choices": [
               "waive"
             ],
-            "created_at": "2026-11-08T06:39:18.848695+00:00",
+            "created_at": "2026-11-08T17:20:11.909739+00:00",
             "evidence": {},
-            "id": "req-964fb1178070",
+            "id": "req-576b88e75abe",
             "judged_at": null,
             "judged_commit": null,
             "kind": "review",
             "kind_word": "Review",
             "label": "R1",
             "ordinal": 1,
-            "parent_id": "req-60cef5554714",
-            "program_id": "program-45af76f196b2",
+            "parent_id": "req-53f344cd637a",
+            "program_id": "program-65b8649f6af9",
             "required": true,
             "rounds": 0,
             "running": false,
@@ -405,7 +406,7 @@
             "stale": false,
             "state": "not_yet",
             "state_word": "Not yet",
-            "step_id": "step-8e6e47be133c",
+            "step_id": "step-6490ca76178d",
             "text": "The change does only what its brief says.",
             "waived_reason": null
           }
@@ -445,13 +446,13 @@
         ],
         "story": [
           {
-            "at": "2026-11-08T06:39:18.849043+00:00",
+            "at": "2026-11-08T17:20:11.910016+00:00",
             "line": "Changed step 1: review."
           }
         ],
         "taken": false,
         "title": "Find words inside Mermaid fences",
-        "updated_at": "2026-11-08T06:39:18.848846+00:00",
+        "updated_at": "2026-11-08T17:20:11.909856+00:00",
         "wait": null,
         "worktree": null
       }
@@ -466,7 +467,7 @@
         "title": "Find words inside Mermaid fences"
       }
     ],
-    "updated_at": "2026-11-08T06:39:18.852714+00:00",
+    "updated_at": "2026-11-08T17:20:11.912593+00:00",
     "usage_warning_share": null,
     "within": [],
     "your_turn": 0,
@@ -476,8 +477,8 @@
   "round_question": {
     "answer": "Each reviews the other",
     "answered_by": "owner",
-    "asked_at": "2026-11-08T06:39:18.801663+00:00",
-    "at": "2026-11-08T06:39:18.846947+00:00",
+    "asked_at": "2026-11-08T17:20:11.865304+00:00",
+    "at": "2026-11-08T17:20:11.908017+00:00",
     "became": [
       "step 1 review"
     ],
@@ -486,7 +487,7 @@
       "No review"
     ],
     "engine": null,
-    "id": "q-02dc2bf9c0",
+    "id": "q-e46671e96d",
     "rule": "race_review",
     "skipped": false,
     "text": "Review each contender?",

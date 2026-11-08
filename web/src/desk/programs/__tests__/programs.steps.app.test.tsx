@@ -10,7 +10,7 @@ import {
   todoDoneFixture, laneFixture, laneTakenFixture, laneBackFixture, mocks, ApiError, ProgramsCore,
   ProgramBody, needFace, useDesk, list, done, calls, hub, status, stepRow, openStep, doneWhen,
   reqProgram, adjust, reqRow, allRequirements, decidePath, type Answered, type NeedsYouRoomItem,
-  type Program,
+  type Program, board, openSteps,
 } from "./programs.test-setup";
 import { describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
@@ -19,7 +19,7 @@ describe("REQ10: the Requirements board (direction A, the checklist)", () => {
   it("PG-WINDOW: each step carries its own as lines with a lamp; Done when holds the program's own and the every-step ones", async () => {
     hub({ [`GET /api/programs/${reqProgram.id}`]: reqProgram });
     render(<ProgramBody programId={reqProgram.id} />);
-    await screen.findByTestId("programs-board");
+    await board();
     const met = reqProgram.requirements_met!;
     // No board above the steps: Done when is the last row.
     expect(screen.queryByTestId("programs-requirements-board")).toBeNull();
@@ -74,7 +74,7 @@ describe("REQ10: the Requirements board (direction A, the checklist)", () => {
       [decidePath(reqProgram, "R3")]: sendBackFixture,
     });
     render(<ProgramBody programId={reqProgram.id} />);
-    await screen.findByTestId("programs-board");
+    await board();
     expect(within(stepRow(2)).getByTestId("programs-step-word").textContent).toBe("Findings");
     openStep(2);
     fireEvent.click(within(reqRow("R3")).getByTestId("programs-req-send-back"));
@@ -90,7 +90,7 @@ describe("REQ10: the Requirements board (direction A, the checklist)", () => {
       [decidePath(reqProgram, "R5")]: waivedFixture,
     });
     render(<ProgramBody programId={reqProgram.id} />);
-    await screen.findByTestId("programs-board");
+    await board();
     openStep(4);
     fireEvent.click(within(reqRow("R5")).getByTestId("programs-req-waive"));
     const ask = within(reqRow("R5")).getByTestId("programs-req-ask");
@@ -111,7 +111,7 @@ describe("REQ10: the Requirements board (direction A, the checklist)", () => {
       [decidePath(reqProgram, "R5")]: () => { throw new ApiError(refused.status, "Bad Request", refused.body); },
     });
     render(<ProgramBody programId={reqProgram.id} />);
-    await screen.findByTestId("programs-board");
+    await board();
     openStep(4);
     fireEvent.click(within(reqRow("R5")).getByTestId("programs-req-waive"));
     fireEvent.change(within(reqRow("R5")).getByRole("textbox", { name: "Why you waive it" }), { target: { value: "x" } });
@@ -127,7 +127,7 @@ describe("REQ10: the Requirements board (direction A, the checklist)", () => {
       [`GET ${r5.evidence.url}`]: evidenceFixture.log.text,
     });
     render(<ProgramBody programId={reqProgram.id} />);
-    await screen.findByTestId("programs-board");
+    await board();
     openStep(4);
     fireEvent.click(within(reqRow("R5")).getByTestId("programs-req-open-log"));
     const log = await within(reqRow("R5")).findByTestId("programs-req-log");
@@ -146,17 +146,19 @@ describe("REQ10: the Requirements board (direction A, the checklist)", () => {
     const well = await screen.findByTestId("programs-your-turn");
     const row = within(well).getByTestId("programs-turn-item");
     expect(row.getAttribute("data-kind")).toBe("requirement_word");
-    // PG-WINDOW: the headline: the kind line, the hub's question and what happened.
-    expect(row.textContent).toContain(`Your word · holds the merge· Step ${item.ordinal}, ${item.step_title}`);
+    // The plate: the step's number and name, the hub's question, what happened, the fact in the evidence line.
+    expect(within(row).getByTestId("programs-plate-head").textContent).toContain(`${String(item.ordinal).padStart(2, "0")}${item.step_title}`);
+    expect(within(row).getByTestId("programs-plate-evidence").textContent).toContain("Your word · holds the merge");
     expect(within(row).getByTestId("programs-brief-question").textContent).toBe(item.brief!.question);
     expect(within(row).getByTestId("programs-brief-happened").textContent).toBe(item.brief!.happened);
     // Each choice says what it does.
     expect(within(row).getAllByTestId("programs-turn-consequence").map((node) => node.textContent))
       .toEqual(["met", "unmet"].map((choice) => item.brief!.consequences[choice]));
-    expect(within(row).getByTestId("programs-turn-met").className).toMatch(/primary/);
+    expect(within(row).getByTestId("programs-turn-met").className).toMatch(/brass/);
     fireEvent.click(within(row).getByTestId("programs-turn-met"));
     await waitFor(() => expect(screen.queryByTestId("programs-your-turn")).toBeNull());
     expect(calls).toContain(`POST /api/programs/${word.id}/requirements/${item.requirement_id}/decide ${JSON.stringify({ choice: "met" })}`);
+    openSteps();
     const r1 = within(screen.getByTestId("programs-step-fold")).getAllByTestId("programs-req").find((node) => node.getAttribute("data-label") === "R1")!;
     expect(within(r1).getByTestId("programs-req-state").textContent).toBe("Met");
   });
@@ -193,8 +195,8 @@ describe("REQ10: the Requirements board (direction A, the checklist)", () => {
       .getAllByRole("button")].map((button) => button.textContent);
     // PG-DIRECTION DIR3: each also makes its briefing page (Copy page link).
     // PG-WINDOW: the headline's Copy page link is on its words row, not in the tray.
-    expect(words("step_change").filter((word) => !["Brief", "Program text"].includes(word ?? ""))).toEqual(["Apply", "Skip", "Copy page link"]);
-    expect(words("step_amend").filter((word) => !["Brief", "Program text"].includes(word ?? ""))).toEqual(["Send", "Skip", "Copy page link"]);
+    expect(words("step_change").filter((word) => !["Brief", "Program text", "Earlier steps"].includes(word ?? ""))).toEqual(["Apply", "Skip", "Copy page link"]);
+    expect(words("step_amend").filter((word) => !["Brief", "Program text", "Earlier steps"].includes(word ?? ""))).toEqual(["Send", "Skip", "Copy page link"]);
     const row = within(well).getAllByTestId("programs-turn-item").find((node) => node.getAttribute("data-kind") === "requirement_proposed")!;
     expect(row.textContent).toContain("The line answers in two rings");
     fireEvent.click(within(row).getByTestId("programs-turn-add"));
@@ -214,7 +216,7 @@ describe("REQ10: the Requirements board (direction A, the checklist)", () => {
     });
     render(<ProgramBody programId={reqProgram.id} />);
     // PG-WINDOW: Add a requirement is a verb on Done when (Where: The program) and on each step.
-    await screen.findByTestId("programs-board");
+    await board();
     fireEvent.click(within(doneWhen()).getByTestId("programs-done-add-requirement"));
     const add = within(doneWhen()).getByTestId("programs-req-add");
     expect((within(add).getByRole("combobox", { name: "Where" }) as HTMLSelectElement).value).toBe("program");
@@ -245,7 +247,7 @@ describe("REQ10: the Requirements board (direction A, the checklist)", () => {
   it("a Shot in a repository with no shot command withholds Add and says why", async () => {
     hub({ [`GET /api/programs/${adjust.id}`]: adjust });
     render(<ProgramBody programId={adjust.id} />);
-    await screen.findByTestId("programs-board");
+    await board();
     // The step's own Add a requirement: its Where is the step.
     const fold = openStep(1);
     fireEvent.click(within(fold).getByTestId("programs-step-add-requirement"));
@@ -276,7 +278,7 @@ describe("REQ11: the step fold, the ledger per step, the Met column, adjust in p
   it("the board's Met column: “1 of 2” with its tone, “1 to meet” while none is met, ok ink when all are met", async () => {
     hub({ [`GET /api/programs/${reqProgram.id}`]: reqProgram });
     render(<ProgramBody programId={reqProgram.id} />);
-    await screen.findByTestId("programs-board");
+    await board();
     const cell = (n: number) => within(stepRow(n)).getByTestId("programs-step-met");
     expect(cell(1).textContent).toBe("2 of 2");
     expect(cell(1).hasAttribute("data-all")).toBe(true);
@@ -289,7 +291,7 @@ describe("REQ11: the step fold, the ledger per step, the Met column, adjust in p
   it("the open step: what it must prove first, then the parts with only what has something behind it; Gate opens on a red check", async () => {
     hub({ [`GET /api/programs/${reqProgram.id}`]: reqProgram });
     render(<ProgramBody programId={reqProgram.id} />);
-    await screen.findByTestId("programs-board");
+    await board();
     const fold = openStep(4);
     // The open step sits under its row (no fold head).
     expect(fold.closest("li")!.previousElementSibling).toBe(stepRow(4));
@@ -318,6 +320,7 @@ describe("REQ11: the step fold, the ledger per step, the Met column, adjust in p
   it("the ledger, folded per step: the Program's own lines first, then one fold per step with its count and its last time", async () => {
     hub({ [`GET /api/programs/${adjust.id}`]: adjust });
     render(<ProgramBody programId={adjust.id} />);
+    await board();
     const ledger = await screen.findByTestId("programs-checkpoints");
     const heads = [...ledger.querySelectorAll(":scope > details > summary")].map((node) => node.textContent);
     expect(heads[0]).toMatch(/^The program · \d+ lines · last /);
@@ -333,7 +336,7 @@ describe("REQ11: the step fold, the ledger per step, the Met column, adjust in p
       [`POST /api/programs/${adjust.id}/steps/${runner.id}/amend`]: amendedFixture,
     });
     render(<ProgramBody programId={adjust.id} />);
-    await screen.findByTestId("programs-board");
+    await board();
     const fold = openStep(1);
     fireEvent.click(within(fold).getByRole("button", { name: "Brief" }));
     expect(within(fold).getByTestId("programs-step-brieftext").textContent).toContain(runner.brief);
@@ -364,7 +367,7 @@ describe("REQ11: the step fold, the ledger per step, the Met column, adjust in p
       [`POST /api/programs/${adjust.id}/plan`]: insertedFixture,
     });
     render(<ProgramBody programId={adjust.id} />);
-    await screen.findByTestId("programs-board");
+    await board();
     const titles = () => screen.getAllByTestId("programs-step").map((row) => row.querySelector(".pg-step-name")!.textContent);
     expect(titles()).toEqual(["The call runner", "The phone route", "The calls window", "The loop watch", "The ring timer"]);
     fireEvent.click(within(stepRow(3)).getByTestId("programs-step-select"));
@@ -395,7 +398,7 @@ describe("REQ11: the step fold, the ledger per step, the Met column, adjust in p
       [`PATCH /api/programs/${adjust.id}/steps/${ring.id}`]: titledFixture,
     });
     render(<ProgramBody programId={adjust.id} />);
-    await screen.findByTestId("programs-board");
+    await board();
     fireEvent.click(within(stepRow(5)).getByTestId("programs-step-select"));
     const fold = await screen.findByTestId("programs-step-fold");
     // The ring timer comes after step 4: Move up is refused with its reason, nothing is sent.
@@ -419,7 +422,7 @@ describe("REQ12: the shot (pullout:program-shot) and the evidence thumbnail", ()
     Object.assign(URL, { createObjectURL: made, revokeObjectURL: vi.fn() });
     hub({ [`GET /api/programs/${reqProgram.id}`]: reqProgram });
     render(<ProgramBody programId={reqProgram.id} />);
-    await screen.findByTestId("programs-board");
+    await board();
     openStep(1);
     fireEvent.click(within(reqRow("R2")).getByTestId("programs-req-select"));
     const thumb = await within(reqRow("R2")).findByTestId("programs-req-thumb");
@@ -453,7 +456,7 @@ describe("PG-IMPORT IMP1: the step report and the second mark (recorded: scripts
   it("a Done step's open row reads its report in four registers, in order, as plain labels", async () => {
     hub({ [`GET /api/programs/${done.id}`]: done });
     render(<ProgramBody programId={done.id} />);
-    await screen.findByTestId("programs-board");
+    await board();
     const fold = openStep(1);
     const report = within(fold).getByTestId("programs-step-report");
     // The registers in BroCrew's order; each a plain label, no chip or badge.
@@ -488,14 +491,16 @@ describe("PG-IMPORT IMP1: the step report and the second mark (recorded: scripts
     expect(mark.querySelector(".kit-dot")).toBeNull();
   });
 
-  it("the list's Done row carries the mark in place of its last line", async () => {
+  it("the rail's Done tile says the mark in its name", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-03T12:00:00Z"));
     hub({ "GET /api/programs": list });
     render(<ProgramsCore />);
-    const row = (await screen.findAllByTestId("programs-row")).find((node) => node.getAttribute("data-state") === "done")!;
-    const summary = list.programs.find((item) => item.id === row.getAttribute("data-program"))!;
+    const tile = (await screen.findAllByTestId("programs-rail-tile")).find((node) => node.getAttribute("data-state") === "done")!;
+    const summary = list.programs.find((item) => item.id === tile.getAttribute("data-program"))!;
     expect(summary.finished_words).toBe("finished");
-    expect(within(row).getByTestId("programs-row-finished").textContent).toBe("finished");
-    expect(within(row).getByTestId("programs-row-state").textContent).toContain(summary.state_word);
+    expect(tile.getAttribute("aria-label")).toBe(`${summary.title}, finished`);
+    vi.useRealTimers();
   });
 });
 
@@ -527,7 +532,7 @@ describe("PG-IMPORT IMP2: the to-do row and the ending word (recorded: scripts/r
     const todo = todoFixture as unknown as Program;
     hub({ [`GET /api/programs/${todo.id}`]: todo });
     render(<ProgramBody programId={todo.id} />);
-    await screen.findByTestId("programs-board");
+    await board();
     const cut = todo.steps.find((step) => step.ending === "interrupted")!;
     expect(stepRow(cut.ordinal).textContent).toContain("Parked · interrupted");
   });
@@ -538,7 +543,7 @@ describe("PG-IMPORT IMP3: what a step waits on (recorded: scripts/record_program
     const todo = todoFixture as unknown as Program;
     hub({ [`GET /api/programs/${todo.id}`]: todo });
     render(<ProgramBody programId={todo.id} />);
-    await screen.findByTestId("programs-board");
+    await board();
     const waiting = todo.steps.find((step) => step.wait?.cause === "target_ended")!;
     expect(waiting.wait!.line).toBe(`Step ${waiting.ordinal} with Claude Code is waiting on something that has ended.`);
     expect(stepRow(waiting.ordinal).textContent).toContain(waiting.wait!.line);
@@ -555,7 +560,7 @@ describe("PG-IMPORT IMP6: take it over, hand it back (recorded: scripts/record_p
       [`POST /api/programs/${lane.id}/steps/${step.id}/hand-back`]: laneBackFixture,
     });
     render(<ProgramBody programId={lane.id} />);
-    await screen.findByTestId("programs-board");
+    await board();
     expect(within(stepRow(1)).queryByTestId("programs-step-hand-back")).toBeNull();
     fireEvent.click(within(stepRow(1)).getByTestId("programs-step-take"));
     await waitFor(() => expect(stepRow(1).textContent).toContain("You have the lane"));

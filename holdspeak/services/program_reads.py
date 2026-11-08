@@ -36,7 +36,7 @@ from .program_definitions import (
     FROZEN_MERGED, FROZEN_READ, FROZEN_SET, NIGHT_ENDED, PARK_KIND, PARKED_BY_ENGINE, PARKED_BY_OWNER,
     PARKED_BY_PROGRAM, PLAN_GOAL_KIND, PROGRAM_BAND, PROGRAM_WORDS, PROPOSAL_KINDS, ProgramRefused, STATIONS,
     STEP_FIELDS, STEP_WORDS, TODO_CHOICES, TODO_STATES, _AUDIT_STATION_OF, _STATION_OF, agent_label,
-    duration_words, history_of,
+    duration_words, history_of, programs_on,
 )
 from .program_rules import level_word
 
@@ -694,8 +694,9 @@ def program_list(db: Any, principal: Any = None, *, q: Any = None, project_id: A
     ``person_id`` narrow the rows; ``of`` is the count before them."""
     rows = []
     programs = ProgramStore(db).list_programs()
+    steps_of: dict[str, list[dict[str, Any]]] = {}
     for program in programs:
-        steps = ProgramStore(db).list_steps(program["id"])
+        steps = steps_of[program["id"]] = ProgramStore(db).list_steps(program["id"])
         rows.append(_summary(db, program, steps, clock=clock, person_name=person_name))
     # PG-IMPORT IMP7: each row names the Program it came from; a parent
     # carries its family's count and one worst state.
@@ -727,13 +728,50 @@ def program_list(db: Any, principal: Any = None, *, q: Any = None, project_id: A
     if words or project_id or person_id:
         out["filter"] = {"q": str(q or "").strip() or None, "project_id": project_id or None,
                          "person_id": person_id or None, "shown": len(rows), "of": everything}
+    tonight = night_of(programs, steps_of)
+    if tonight is not None:
+        out["night"] = tonight
     return out
 
 
-def get(db: Any, principal: Any, program_id: str, *, clock: Clock, person_name: Names, engine: Engines, estimate: Sizer) -> dict[str, Any]:
+#: A step of a night Program that waits for the night (not handed yet).
+NIGHT_QUEUED_STATES = frozenset({"planned", "ready"})
+
+
+def night_of(programs: list[dict[str, Any]], steps_of: Mapping[str, list[dict[str, Any]]]) -> Optional[dict[str, Any]]:
+    """The night, from the rows the list already read: ``{program_id, start,
+    queued}``. ``queued`` counts the steps of the night Programs (a ``night``
+    line, not Drafting or Parked) that wait for the night; ``program_id`` is
+    the first night Program with a queued step, ``start`` its night line's
+    start (``HH:MM``, local). ``None`` when the engine is off
+    (``HOLDSPEAK_PROGRAMS=off``), no Program has a night line, or nothing is
+    queued: the face draws nothing, never a zero."""
+    if not programs_on():
+        return None
+    first: Optional[dict[str, Any]] = None
+    queued = 0
+    for program in programs:
+        night = program.get("night")
+        if not isinstance(night, Mapping) or not night.get("start") or program.get("state") in ("drafting", "parked"):
+            continue
+        waiting = sum(1 for step in steps_of.get(program["id"]) or []
+                      if step.get("state") in NIGHT_QUEUED_STATES and not step.get("race_of"))
+        if waiting and first is None:
+            first = program
+        queued += waiting
+    if first is None:
+        return None
+    return {"program_id": first["id"], "start": str(first["night"]["start"]), "queued": queued}
+
+
+def get(db: Any, principal: Any, program_id: str, *, clock: Clock, person_name: Names, engine: Engines, estimate: Sizer,
+        reach: Optional[Callable[[list[dict[str, Any]], Optional[str]], list[dict[str, Any]]]] = None) -> dict[str, Any]:
     program = require_program(db, program_id)
     steps = ProgramStore(db).list_steps(program["id"])
     wire = _wire(db, program, steps, clock=clock, person_name=person_name, engine=engine, estimate=estimate)
+    if reach is not None:
+        # HS-S35: each pinned checkpoint says whether its ref is reachable now.
+        wire["checkpoints"] = reach(wire["checkpoints"], program.get("repo_root"))
     # LANG5: the rows a call left for his press (only when there are some).
     from .program_spoken import on_desk
 
@@ -1314,12 +1352,27 @@ def _wire(db: Any, program: Mapping[str, Any], steps: list[dict[str, Any]], *, c
                       "shot_reason": shot_reason or None},
         "decided_for_you": decided_for_you(db, program["id"]),
         "control_word": level_word(program.get("control")),
-        "spend_limit_usd": program.get("spend_limit_usd"), "closed_at": program.get("closed_at"),
+        "spend_limit_usd": program.get("spend_limit_usd"), "spend_note": spend_note(program.get("spend_limit_usd")),
+        "closed_at": program.get("closed_at"),
         "revision": int(program.get("revision") or 0),
         "status_line": _status_line(program, summary),
         **_language_wire(db, program, engine=engine),
         **_audit_wire(program, steps, checkpoints),
     }
+
+
+def spend_note(amount: Any) -> Optional[str]:
+    """HS-S24 (D20/G24 ruled 2026-11-07, disclosure-only): the amount he
+    typed is a note he reads on the Program's face, never a cap. ``None``
+    when he set none. ``spend note · 40 USD``; cents only when he typed them."""
+    if amount is None or amount == "":
+        return None
+    try:
+        value = float(amount)
+    except (TypeError, ValueError):
+        return None
+    words = f"{value:.0f}" if value == int(value) else f"{value:.2f}"
+    return f"spend note · {words} USD"
 
 
 def _audit_wire(program: Mapping[str, Any], steps: list[dict[str, Any]],

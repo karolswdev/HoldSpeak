@@ -25,7 +25,6 @@ from __future__ import annotations
 
 import contextvars
 import json
-import os
 import re
 import threading
 import uuid
@@ -46,7 +45,7 @@ from .program_definitions import (  # noqa: F401  re-exported: the same objects,
     REVIEW_DEPTHS, STATIONS, STEP_FIELDS, STEP_STATES, STEP_TRANSITIONS, STEP_WORDS, TODO_CHOICES, TODO_STATES,
     VIA_CHANNELS, VIA_WORDS, _AUDIT_STATION_OF, _GATE_MERGE_ALIASES, _SPOKEN_STATE, _STATE_LINES, _STATION_OF,
     agent_label, duration_words, history_of, spoken_state, triage_effort, via_of,
-    PLAN_GOAL_KIND, PLAN_GOAL_NOT_NEEDED, PLAN_GOAL_PENDING,
+    PLAN_GOAL_KIND, PLAN_GOAL_NOT_NEEDED, PLAN_GOAL_PENDING, PROGRAMS_ENV, programs_on,
 )
 from . import program_reads as reads
 from .program_reads import (  # noqa: F401  re-exported: the reads moved whole (2026-11-08), one owner
@@ -64,18 +63,11 @@ log = get_logger("program_service")
 _VIA: contextvars.ContextVar[Optional[str]] = contextvars.ContextVar("program_decide_via", default=None)
 
 
-#: ``HOLDSPEAK_PROGRAMS=off``: the runner does not tick (every rig hub).
-PROGRAMS_ENV = "HOLDSPEAK_PROGRAMS"
-
 #: The check a repository names (``.holdspeak/program.json``), else this one.
 DEFAULT_CHECK = "scripts/quick_check.sh"
 
 _ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$")
 _LOCK = threading.RLock()
-
-
-def programs_on() -> bool:
-    return os.environ.get(PROGRAMS_ENV, "on").strip().lower() not in {"off", "0", "false", "no"}
 
 
 def _new_id(prefix: str) -> str:
@@ -352,7 +344,17 @@ class ProgramService:
 
     def get(self, principal: Any, program_id: str) -> dict[str, Any]:
         return reads.get(self.db, principal, program_id, clock=self._clock, person_name=self.person_name,
-                         engine=self.engine, estimate=self._estimate)
+                         engine=self.engine, estimate=self._estimate, reach=self.checkpoint_reach)
+
+    def checkpoint_reach(self, rows: list[dict[str, Any]], repo_root: Optional[str]) -> list[dict[str, Any]]:
+        """HS-S35: the reach fact beside each stored ref, through the
+        runner's git function (``program_checkpoint_reach``; a read, so it
+        never joins a step's recorded commands). Never a stop: a failure
+        reads ``not_read``."""
+        from . import program_checkpoint_reach
+        from .program_runner import _default_runner
+
+        return program_checkpoint_reach.project(rows, repo_root, _default_runner)
 
     # ── PG-IMPORT IMP7: the forest ───────────────────────────────────
 
@@ -681,9 +683,9 @@ class ProgramService:
             try:
                 spend_limit_usd = float(spend_limit_usd)
             except (TypeError, ValueError):
-                raise ProgramRefused("spend_limit_invalid", "The spend limit is a number of dollars.", status=400)
+                raise ProgramRefused("spend_limit_invalid", "The spend note is a number of dollars.", status=400)
             if spend_limit_usd < 0:
-                raise ProgramRefused("spend_limit_invalid", "The spend limit is zero or more dollars.", status=400)
+                raise ProgramRefused("spend_limit_invalid", "The spend note is zero or more dollars.", status=400)
         root, project_id = self._repository(repository, project_id or None)
         profile = self._profile(default_profile, "default_profile") or defaults.get("default_profile") or "claude-default"
         # A template's engine is for its pi; a profile he chose instead (Claude
@@ -797,7 +799,7 @@ class ProgramService:
         if "spend_limit_usd" in fields:
             value = fields["spend_limit_usd"]
             program["spend_limit_usd"] = None if value in (None, "") else float(value)
-            changed.append("spend limit")
+            changed.append("spend note")
         if fields.get("default_profile") is not None or fields.get("default_engine") is not None:
             profile = self._profile(fields.get("default_profile"), "default_profile") or program["default_profile"]
             engine = self._engine_id(fields.get("default_engine"), profile, "default_engine")
@@ -3830,10 +3832,14 @@ class ProgramService:
         if not step.get("worktree"):
             return {"note": "No worktree to pin yet"}
         try:
-            return dict(self.runner().pin_checkpoint(step, line) or {}) or None
+            pin = dict(self.runner().pin_checkpoint(step, line) or {}) or None
         except Exception as exc:
             log.debug(f"checkpoint not pinned: {exc}")
-            return {"note": "Not pinned: git is not available"}
+            pin = {"note": "Not pinned: git is not available"}
+        if pin and not pin.get("ref"):
+            # HS-S35: a pin failure is nonblocking; it is logged and the line is written.
+            log.info(f"checkpoint on step {step.get('id')} not pinned: {pin.get('note')}")
+        return pin
 
     def _kernel_record(self, program: Mapping[str, Any], step: Optional[Mapping[str, Any]], line: str) -> Optional[str]:
         """The engine decision as a kernel operation ``program.step``."""

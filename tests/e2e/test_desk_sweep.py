@@ -1528,7 +1528,9 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
             page.get_by_test_id("door-counts-github").wait_for(timeout=T)
             page.mouse.move(2, 2)
         if case_id == "program":
-            # Programs (2026-10-28): the seeded Program's board, read.
+            # Programs (2026-10-28): the seeded Program's board, read (the
+            # language, 2026-11-08: Earlier steps opens it under the plate).
+            page.locator(f'[id="{wid}"] [data-testid=program-earlier]').click()
             page.locator(f'[id="{wid}"] [data-testid=programs-board]').wait_for(timeout=T)
         if case_id == "program-held":
             win = page.locator(f'[id="{wid}"]')
@@ -1539,6 +1541,7 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
             page.mouse.move(2, 2)
         if case_id == "program-done":
             win = page.locator(f'[id="{wid}"]')
+            win.get_by_test_id("program-earlier").click()
             win.locator("[data-testid=programs-board]").wait_for(timeout=T)
             win.locator("[data-testid=programs-step-select]").first.click()
             win.locator("[data-testid=programs-step-report]").wait_for(timeout=T)
@@ -1546,6 +1549,7 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
             page.mouse.move(2, 2)
         if case_id == "program-family":
             win = page.locator(f'[id="{wid}"]')
+            # A Drafting Program shows its steps open: no Earlier steps to press.
             win.locator("[data-testid=programs-family-row]").first.wait_for(timeout=T)
             win.locator("[data-testid=programs-family]").scroll_into_view_if_needed(timeout=T)
             page.mouse.move(2, 2)
@@ -1553,6 +1557,7 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
             # PG-LANG LANG2: Text (in More ▾ at the phone width), a planned
             # step's title changed, Preview: the well over the text.
             win = page.locator(f'[id="{wid}"]')
+            win.get_by_test_id("program-earlier").click()
             win.locator("[data-testid=programs-board]").wait_for(timeout=T)
             if width < 720:
                 win.get_by_test_id("program-more").click()
@@ -1569,6 +1574,7 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
             page.mouse.move(2, 2)
         if case_id == "program-shape":
             win = page.locator(f'[id="{wid}"]')
+            win.get_by_test_id("program-earlier").click()
             win.locator("[data-testid=programs-board]").wait_for(timeout=T)
             bar = win.get_by_test_id("program-shape-bar")
             bar.get_by_role("textbox", name="Change the program").fill("put step 2 on Codex")

@@ -6179,6 +6179,7 @@
       "search_words": "the hub stops stalling make the hub stop stalling. build-and-review indexes #101 build and review",
       "skipped": 0,
       "spend_limit_usd": null,
+      "spend_note": null,
       "state": "waiting",
       "state_word": "Your turn",
       "status_line": "Your turn \u00b7 1 of 1 done \u00b7 1 waits on you \u00b7 check: fake_program_check.sh \u00b7 control Secure",

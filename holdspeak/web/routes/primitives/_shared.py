@@ -1,18 +1,15 @@
 """Shared helpers for the primitives routers (moved verbatim, HS-79-03)."""
 from __future__ import annotations
 
-import uuid
 from typing import Any, Optional
 
 from fastapi import Request
 
 from ....logging_config import get_logger
 from ...context import WebContext
+from holdspeak.ids import new_id as _new_id
 
 log = get_logger("web.routes.primitives")
-
-def _new_id(prefix: str) -> str:
-    return f"{prefix}_{uuid.uuid4().hex[:12]}"
 
 
 # ── Run-response provenance: the canonical `source_type` vocabulary ──────────
