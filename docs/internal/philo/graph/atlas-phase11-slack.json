@@ -9554,7 +9554,7 @@
       "phase1_refs": [],
       "sources": [
         {
-          "path": "web/src/pages/cores/connections/Destinations.tsx",
+          "path": "web/src/features/channels/DestinationForm.tsx",
           "symbol": "data-testid=\"dest-form\"",
           "claim": "The Connections face renders the destination form."
         },
