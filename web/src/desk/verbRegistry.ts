@@ -24,7 +24,6 @@ import { DESK_APPLICATIONS, applicationForAction, applicationVerbId, parkedSetti
 import { primitiveCan } from "../lib/primitives";
 import { handKindOf, openHand } from "./agentHand";
 import { usePalette, useShortcutSheet } from "./chromeState";
-import { useSettleState } from "./settleState";
 import { deleteSeatShown } from "./deleteSeat";
 import {
   closeFrontWindow,
@@ -328,19 +327,6 @@ export const VERBS: Verb[] = [
     run: () => useDesk.getState().openAskThread(null),
   },
   // ── Desk: the floor verbs ───────────────────────────────────────────
-  {
-    id: "desk.settle",
-    // HS-201-06 (Constitution tenet 4, ASD-STE100): "Settle in" is an
-    // idiom. The verb hides the navigation chrome and shows it again.
-    label: () => useSettleState.getState().settled ? "Back to Desk" : "Hide the menus",
-    scope: "floor",
-    group: "view",
-    palette: false,
-    glyph: "◌",
-    keywords: ["focus", "quiet", "zen", "chrome", "settle"],
-    ghost: never,
-    run: () => useSettleState.getState().toggle(),
-  },
   {
     id: "desk.overview",
     label: "Overview",

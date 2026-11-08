@@ -1,7 +1,6 @@
 # Places
 
-Choose the Desk atmosphere in **Settings > Desk > Wallpaper**. Use **Hide the menus**
-when you want fewer navigation controls around open work.
+Choose the Desk atmosphere in **Settings > Desk > Wallpaper**.
 
 ## Change places
 
@@ -9,9 +8,7 @@ when you want fewer navigation controls around open work.
 2. Select an atmosphere with its radio control.
 3. Return to the Desk.
 
-The older **Change places** surface is an alias for the Wallpaper module. Its
-**All places**, **Favorites**, and **Hide the menus** controls remain when that
-surface is available. There is one Desk. Changing the atmosphere does not move
+Search for **Change places** to open the Wallpaper module. There is one Desk. Changing the atmosphere does not move
 records or change the hub's Desk windows.
 
 ## Available places
@@ -64,19 +61,6 @@ sound locally. It reduces sound while the browser microphone is open or the hub
 reports recording. It suspends sound in a hidden tab. **Quiet Desk** has no
 room sound.
 
-## Settle in
-
-1. Select **Hide the menus** in the dock or Desk menu.
-2. Continue work in the open windows.
-3. Select **Back to Desk** to restore navigation controls.
-
-The current Desk has no dedicated keyboard shortcut for this view. The first
-**Escape** restores the Desk without closing the focused window or draft. The
-recorder state and record control remain available.
-
-Settle in is a temporary browser view state. It does not change recording,
-enable sound, or save a new window layout.
-
 ## Troubleshooting
 
 | Problem | Action |
@@ -84,7 +68,6 @@ enable sound, or save a new window layout.
 | An animated scene stays still | Check **Motion** and the operating system reduced-motion setting. |
 | There is no room sound | Enable **Desk sounds** in **Settings > Desk > Sounds & Presence**. Check whether recording or a hidden tab suspended it. |
 | Favorites are absent in another browser | Set favorites in that browser. The preference does not synchronize through the hub. |
-| Navigation controls are absent | Select **Back to Desk** or press **Escape**. |
 | A scene is distracting or slow | Select **Quiet Desk** or pause animation. |
 
 ## See also

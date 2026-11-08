@@ -126,7 +126,7 @@ describe.each([[1440, false], [393, true]] as const)("the HoldSpeak menu at %i",
     }
     fireEvent.click(screen.getByRole("button", { name: /^Desk$/ }), { detail: 0 });
     const menu = screen.getByRole("menu", { name: "Desk menu" });
-    expect(labels(menu).filter((label) => label !== "Hide the menus")).toEqual([
+    expect(labels(menu)).toEqual([
       "New Note", "New Meeting", "New Decision", "New Project", "New Person", "New Automation", "New Drawer",
     ]);
     expect(labels(menu)).not.toContain("New Thread");

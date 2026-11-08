@@ -42,7 +42,6 @@ import { objectWindowStandIn } from "./objectWindows";
 import { holdObject } from "./api";
 import { useProjections } from "./projections";
 import { takeFirstValueNoteOpen } from "./firstValue";
-import { useSettleState } from "./settleState";
 import { useFirstRunOpen } from "./firstrun/reopen";
 import { DeskDeleteHost, DeskDeleteSeat } from "./deleteReceipt";
 import { DrawerWindows } from "./drawer";
@@ -131,8 +130,6 @@ function DeskFaces() {
   const error = useDesk((s) => s.error);
   const { refresh } = useDesk.getState();
   const [refreshFailure, setRefreshFailure] = useState<string | null>(null);
-  const settled = useSettleState((s) => s.settled);
-  useEffect(() => () => useSettleState.getState().setSettled(false), []);
 
   const refreshDesk = useCallback(async () => {
     setRefreshFailure(null);
@@ -180,9 +177,6 @@ function DeskFaces() {
   const arrivalRequired = serverArrival || firstRunOpen;
   const builder = useBuilderTools((state) => state.on);
   useEffect(() => { hydrateBuilderTools(); }, []);
-  useEffect(() => {
-    if (arrivalRequired) useSettleState.getState().setSettled(false);
-  }, [arrivalRequired]);
   const chairOpenCards = pullouts
     // PHILO-17: a meeting or a person window reads its own object; the desk
     // holds the newest meetings only, and a person is not a desk item.
@@ -248,7 +242,7 @@ function DeskFaces() {
   }
 
   return (
-    <div className="desk-next" id="desk-next" data-menu-glyphs={menuGlyphsVariant()} data-settled={settled && !arrivalRequired ? "true" : undefined}>
+    <div className="desk-next" id="desk-next" data-menu-glyphs={menuGlyphsVariant()}>
       {!arrivalRequired && <DeskChrome showDailyStarts={!empty} />}
       {/* PHILO-3-01 — the owner's ruling: at phone width a standing write
           receipt is a full-width row between the bar and the work. */}

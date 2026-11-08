@@ -3,7 +3,6 @@ import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import DeskApp from "./DeskApp";
 import { stageFirstValueNoteOpen } from "./firstValue";
-import { useSettleState } from "./settleState";
 import { useBuilderTools } from "./builderTools";
 import * as deskApi from "./api";
 
@@ -146,7 +145,6 @@ vi.mock("./projections", () => ({
 
 describe("DeskApp arrival state", () => {
   afterEach(() => {
-    useSettleState.setState({ settled: false });
     state.setupResolved = true;
     state.setupAvailable = true;
     state.arrivalRequired = true;
@@ -281,27 +279,6 @@ describe("DeskApp arrival state", () => {
       await waitFor(() => expect(state.openPullout).toHaveBeenCalledWith("artifact:cited-output"));
       expect(new URLSearchParams(window.location.search).get("open")).toBeNull();
     } finally { hold.mockRestore(); }
-  });
-
-  it("keeps work and the empty Desk's recorder mounted while settling, then resets on exit", () => {
-    state.arrivalRequired = false;
-    const view = render(<DeskApp />);
-    const recorder = screen.getByTestId("record-orb");
-    const chair = screen.getByTestId("normal-chair");
-    act(() => useSettleState.getState().setSettled(true));
-    expect(view.container.querySelector("#desk-next")).toHaveAttribute("data-settled", "true");
-    expect(screen.getByTestId("record-orb")).toBe(recorder);
-    expect(screen.getByTestId("normal-chair")).toBe(chair);
-    view.unmount();
-    expect(useSettleState.getState().settled).toBe(false);
-  });
-
-  it("does not carry quiet chrome into first-value arrival", () => {
-    useSettleState.setState({ settled: true });
-    const view = render(<DeskApp />);
-    expect(view.container.querySelector("#desk-next")).not.toHaveAttribute("data-settled");
-    expect(useSettleState.getState().settled).toBe(false);
-    expect(screen.getByTestId("first-value-chair")).toBeInTheDocument();
   });
 
   it("reveals one normal Chair and staged note once after the server flip while preserving a queued deep link", async () => {

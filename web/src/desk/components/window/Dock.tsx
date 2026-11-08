@@ -11,7 +11,6 @@ import { useOptionalRuntimeBus } from "../../../runtime/RuntimeBus";
 import { DOCK_SPRITES, DOCK_SPRITES_48 } from "../../systemSprites";
 import { seatSprite } from "../../sprites";
 import { useDesk } from "../../store";
-import { useSettleState } from "../../settleState";
 import { useShortcutSheet } from "../../chromeState";
 import { useKeymap } from "../../keymap";
 import { WorkMenu } from "../DeskMenu";
@@ -346,10 +345,6 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
     minimized: boolean;
     close: () => void;
   } | null>(null);
-  const settled = useSettleState((s) => s.settled);
-  useEffect(() => {
-    if (settled) setChipMenu(null);
-  }, [settled]);
   useEffect(() => {
     if (!chipMenu) return;
     const close = () => setChipMenu(null);
@@ -397,8 +392,7 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
   }, []);
 
   // 393 (C1-8, Astra on #869): the LAST page of the shelf starts on a whole
-  // item too. The shelf's end is wherever its tail (Hide the menus, Places,
-  // the orb, window chips) happens to end, so scrolled to its end the left
+  // item too. The shelf's end is wherever its tail (the orb, window chips) happens to end, so scrolled to its end the left
   // gutter showed a strip of the item before it. A spacer before More
   // (`--desk-dock-end-pad`, dock.css) moves the end so the gutter lands on
   // an item's left edge. Desktop: no spacer.
@@ -720,7 +714,7 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
           </span>
         );
       })}
-      {!settled && chipMenu ? (
+      {chipMenu ? (
         <WorkMenu
           className="desk-dock-menu"
           label={`${chipMenu.label} dock menu`}

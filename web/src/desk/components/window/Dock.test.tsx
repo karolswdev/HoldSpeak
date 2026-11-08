@@ -43,7 +43,6 @@ const mocks = vi.hoisted(() => {
     ] },
   };
   const shortcut = { open: false, setOpen: vi.fn() };
-  const settle = { settled: false };
   const runtime = { state: "connected", subscribe };
   const focusPanel = vi.fn((id: string) => {
     desk.panelOrder = [...desk.panelOrder.filter((entry) => entry !== id), id];
@@ -82,7 +81,6 @@ const mocks = vi.hoisted(() => {
     useDesk,
     desk,
     shortcut,
-    settle,
     runtime,
     runtimeListeners,
     emitRuntime,
@@ -117,9 +115,6 @@ vi.mock("../../../components/signal/Signal", () => ({
 vi.mock("../../intelligenceNavigation", () => ({ openIntelligence: mocks.openIntelligence }));
 vi.mock("../../systemSprites", () => ({ DOCK_SPRITES: {}, DOCK_SPRITES_48: {}, SYSTEM: { floorGrid: "floor.svg" }, SYSTEM_48: {}, dockSprite48: (url: string) => url }));
 vi.mock("../../store", () => ({ useDesk: mocks.useDesk }));
-vi.mock("../../settleState", () => ({
-  useSettleState: (selector: (state: typeof mocks.settle) => unknown) => selector(mocks.settle),
-}));
 vi.mock("../../chromeState", () => ({
   useShortcutSheet: Object.assign(
     (selector: (state: typeof mocks.shortcut) => unknown) => selector(mocks.shortcut),

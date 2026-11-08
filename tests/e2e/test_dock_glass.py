@@ -293,10 +293,7 @@ class TestDockTap393:
                 window.locator(content).wait_for()
                 assert "is-front" in (window.get_attribute("class") or ""), app
                 presses = page.evaluate("() => window.__presses")
-                settled = page.evaluate(
-                    "() => document.querySelector('.desk-next').getAttribute('data-settled')")
                 assert presses == [label], (app, presses)
-                assert settled != "true", (app, "the tap hid the menus")
                 assert page.locator(".desk-tools-launch").first.is_visible(), (
                     app, "Search is hidden after the tap")
             finally:

@@ -198,7 +198,6 @@ or operating system shortcut takes precedence.
 | A verb is missing | Select the record that the verb needs. Some verbs apply only to one object kind. |
 | Ask cannot answer | Read its engine, source, tool, and permission result. Check **Settings > This Mac > Engines**. |
 | A prepared send did not leave the Desk | Select **Send** after reviewing the target and content. |
-| The menus are hidden | Select **Back to Desk**, or press Escape. |
 | A record is not in About | Open the record and select **Ask about this**, or use **+** in Ask. |
 
 ## See also

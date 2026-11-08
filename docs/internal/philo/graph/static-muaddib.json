@@ -32271,7 +32271,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/ChangePlacesCore.tsx",
+     "path": "web/src/pages/cores/_parked/ChangePlacesCore.tsx",
      "line": 25,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -32292,7 +32292,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/ChangePlacesCore.tsx",
+     "path": "web/src/pages/cores/_parked/ChangePlacesCore.tsx",
      "line": 34,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -32313,7 +32313,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/ChangePlacesCore.tsx",
+     "path": "web/src/pages/cores/_parked/ChangePlacesCore.tsx",
      "line": 42,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -32334,7 +32334,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/ChangePlacesCore.tsx",
+     "path": "web/src/pages/cores/_parked/ChangePlacesCore.tsx",
      "line": 50,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
