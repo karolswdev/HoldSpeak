@@ -48,6 +48,9 @@ const hub = {
   meetingProjects: {} as Record<string, Wire[]>,
   posts: [] as Wire[],
   puts: [] as Array<{ url: string; body: Wire }>,
+  /** HS-S42: canonical records per source decision id; `fail` answers 500. */
+  records: {} as Record<string, Wire[] | "fail">,
+  relationships: {} as Record<string, Wire[]>,
 };
 
 const json = (body: unknown, status = 200) =>
@@ -68,6 +71,37 @@ function hubFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Respons
     return Promise.resolve(json({ decision }, 201));
   }
   if (url === "/api/decisions") return Promise.resolve(json({ decisions: hub.decisions }));
+  // HS-S42: the canonical producer answers `{decision, record}` with 201
+  // (holdspeak/web/routes/decision_records.py, from_desk); the source
+  // decision carries the project and meeting tags.
+  if (url === "/api/decision-records/from-desk" && method === "POST") {
+    hub.posts.push(body);
+    const tags = [
+      ...(body.project_id ? [`project:${body.project_id}`] : []),
+      ...(body.meeting_id ? [`meeting:${body.meeting_id}`] : []),
+    ];
+    const decision = decisionWire({
+      id: `decision_${hub.posts.length}`, title: body.title, status: body.status ?? "accepted", tags,
+      context_markdown: body.project_name ? `About: ${body.project_name}` : "",
+      consequences_markdown: body.why ? `Why: ${body.why}` : "",
+    });
+    hub.decisions = [...hub.decisions, decision];
+    const record = { id: `rec_${hub.posts.length}`, source_type: "desk", source_id: decision.id };
+    hub.records[String(decision.id)] = [record];
+    return Promise.resolve(json({ decision, record }, 201));
+  }
+  const bySource = /^\/api\/decision-records\/source\/desk\/([^/?]+)$/.exec(url);
+  if (bySource) {
+    const records = hub.records[decodeURIComponent(bySource[1])] ?? [];
+    return Promise.resolve(records === "fail" ? json({ error: "boom" }, 500) : json(records));
+  }
+  const rel = /^\/api\/desk\/relationships\/(.+)$/.exec(url);
+  if (rel) {
+    const ref = decodeURIComponent(rel[1]);
+    return Promise.resolve(json({ resource_ref: ref, zone: null, knowledge: [], projects: hub.relationships[ref] ?? [] }));
+  }
+  if (url === "/api/projects" && method === "GET") return Promise.resolve(json({ projects: [{ id: "proj-checkout", name: "Checkout" }] }));
+  if (url === "/api/kbs") return Promise.resolve(json({ kbs: [] }));
   const one = /^\/api\/decisions\/([^/?]+)$/.exec(url);
   if (one && method === "PUT") {
     hub.puts.push({ url, body });
@@ -84,8 +118,11 @@ function hubFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Respons
   const projects = /^\/api\/meetings\/([^/]+)\/projects$/.exec(url);
   if (projects) return Promise.resolve(json({ projects: hub.meetingProjects[decodeURIComponent(projects[1])] ?? [] }));
   if (url.startsWith("/api/projects/") && method === "PUT") {
-    hub.puts.push({ url: decodeURIComponent(url), body });
-    return Promise.resolve(json({}));
+    const path = decodeURIComponent(url);
+    hub.puts.push({ url: path, body });
+    const [, , , projectId, , ref] = path.split("/");
+    hub.relationships[ref] = [{ project_id: projectId, resource_ref: ref, relationship: body.relationship ?? "member" }];
+    return Promise.resolve(json({ resource: { project_id: projectId, resource_ref: ref, relationship: body.relationship ?? "member" } }));
   }
   return Promise.resolve(json({}));
 }
@@ -95,6 +132,8 @@ beforeEach(() => {
   hub.decisions = [];
   hub.posts = [];
   hub.puts = [];
+  hub.records = {};
+  hub.relationships = {};
   // get_meeting_projects rows (holdspeak/db/projects.py:265-273).
   hub.meetingProjects = {
     "p13-checkout": [{
@@ -316,6 +355,8 @@ describe("Decide in a meeting: Decide -> name -> receipt -> the decision window"
     fireEvent.click(screen.getByRole("button", { name: "Decide" }));
     const title = screen.getByRole("textbox", { name: "Decision title" });
     expect(hub.posts).toEqual([]);
+    // HS-S42: the one linked project is shown and chosen before Save.
+    await waitFor(() => expect(screen.getByRole("button", { name: "Checkout" })).toHaveAttribute("aria-pressed", "true"));
 
     // Gesture 2: type the title and press Enter.
     fireEvent.change(title, { target: { value: "Roll back the cache change" } });
@@ -324,16 +365,18 @@ describe("Decide in a meeting: Decide -> name -> receipt -> the decision window"
     expect(hub.posts[0]).toMatchObject({
       title: "Roll back the cache change",
       status: "accepted",
-      tags: ["meeting:p13-checkout", "project:proj-checkout"],
+      meeting_id: "p13-checkout",
+      project_id: "proj-checkout",
     });
-    expect(String(hub.posts[0].context_markdown)).toMatch(/^Meeting: Checkout latency review · 2026-10-01/);
+    expect(String(hub.posts[0].why)).toMatch(/^Meeting: Checkout latency review · 2026-10-01/);
+    // HS-S42: filed on the canonical record, once.
     expect(hub.puts).toEqual([{
-      url: "/api/projects/proj-checkout/resources/desk_decision:decision_1",
+      url: "/api/projects/proj-checkout/resources/decision_record:rec_1",
       body: { relationship: "member" },
     }]);
 
     // The receipt is in the meeting, on the decision's row (read back from the hub).
-    await waitFor(() => expect(screen.getByTestId("decide-receipt").textContent).toMatch(/^Decided \d\d:\d\d$/));
+    await waitFor(() => expect(screen.getByTestId("decide-receipt").textContent).toMatch(/^Decided \d\d:\d\d · Checkout$/));
     expect(screen.queryByRole("textbox", { name: "Decision title" })).toBeNull();
 
     // The row opens the decision in its own window.
@@ -345,12 +388,53 @@ describe("Decide in a meeting: Decide -> name -> receipt -> the decision window"
   it("a meeting with no project files the decision under its meeting only", async () => {
     render(<MeetingDecideWell meetingId="p13-hiring" title="Hiring debrief" startedAt="2026-09-30T14:00:00" />);
     fireEvent.click(screen.getByRole("button", { name: "Decide" }));
+    await waitFor(() => expect(screen.getByTestId("decide-scope-state")).toHaveTextContent("No linked project"));
     fireEvent.change(screen.getByRole("textbox", { name: "Decision title" }), { target: { value: "Typed under B" } });
     await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Save" })); });
     await waitFor(() => expect(hub.posts).toHaveLength(1));
-    expect(hub.posts[0].tags).toEqual(["meeting:p13-hiring"]);
+    expect(hub.posts[0].meeting_id).toBe("p13-hiring");
+    expect(hub.posts[0].project_id).toBeUndefined();
     expect(hub.puts).toEqual([]);
     await waitFor(() => expect(screen.getByTestId("decide-receipt")).toBeTruthy());
+  });
+});
+
+describe("HS-S42 the decision window corrects the canonical record's projects", () => {
+  async function openDecision(sourceId: string) {
+    hub.decisions = [decisionWire({ id: sourceId, title: "Roll back the cache change", tags: ["meeting:m1", "project:proj-checkout"] })];
+    await act(async () => { await useDesk.getState().refresh(); });
+    const object = objectByRef(useDesk.getState().items, `decision:${sourceId}`)!;
+    return render(<DecisionPullout object={object} onClose={() => {}} />);
+  }
+
+  it("one record: Assign writes decision_record:<id>; the source decision keeps its tags", async () => {
+    hub.records = { d1: [{ id: "rec_9", source_type: "desk", source_id: "d1" }] };
+    await openDecision("d1");
+    const assign = await screen.findAllByRole("button", { name: "Assign to Checkout Project", hidden: true });
+    await act(async () => { fireEvent.click(assign[0]); });
+    await waitFor(() => expect(hub.puts).toEqual([{
+      url: "/api/projects/proj-checkout/resources/decision_record:rec_9", body: { relationship: "member" },
+    }]));
+    expect(hub.decisions[0].tags).toEqual(["meeting:m1", "project:proj-checkout"]);
+  });
+
+  it("several records or a failed lookup close the Projects axis; no first record is guessed", async () => {
+    hub.records = { d2: [{ id: "rec_a" }, { id: "rec_b" }], d3: "fail" };
+    const two = await openDecision("d2");
+    expect((await screen.findAllByText("Several decision records · Projects closed", undefined)).length).toBeGreaterThan(0);
+    expect(screen.queryAllByRole("button", { name: /Assign to Checkout Project/, hidden: true })).toEqual([]);
+    two.unmount();
+    await openDecision("d3");
+    expect((await screen.findAllByText("Decision record not read")).length).toBeGreaterThan(0);
+    expect(screen.queryAllByRole("button", { name: /Assign to Checkout Project/, hidden: true })).toEqual([]);
+    expect(hub.puts).toEqual([]);
+  });
+
+  it("no record (a legacy decision) keeps the source ref filing", async () => {
+    await openDecision("d4");
+    const assign = await screen.findAllByRole("button", { name: "Assign to Checkout Project", hidden: true });
+    await act(async () => { fireEvent.click(assign[0]); });
+    await waitFor(() => expect(hub.puts.map((p) => p.url)).toEqual(["/api/projects/proj-checkout/resources/decision:d4"]));
   });
 });
 

@@ -85,18 +85,38 @@ export function DecisionPullout({ object: o }: PulloutContentProps) {
   const { openPullout } = useDesk.getState();
   if (o.ref.kind !== "decision") return null;
   const ir = o.ref;
-  const [canonicalId, setCanonicalId] = useState<string | null>(null);
+  const resourceRef = qualifiedRef(o.kind, o.id);
+  // HS-S42: the canonical record of this source decision, keyed to it. One
+  // record moves the Projects axis to `decision_record:<id>`; none keeps the
+  // source's own filing; several or a failed read close the Projects axis.
+  const [lookup, setLookup] = useState<{ sourceId: string; state: "loading" | "none" | "one" | "several" | "unavailable"; recordId?: string }>(
+    () => ({ sourceId: o.id, state: "loading" }),
+  );
+  const [lookupRead, setLookupRead] = useState(0);
   useEffect(() => {
     let live = true;
-    void apiFetch<Array<{ id?: string }>>(
+    setLookup({ sourceId: o.id, state: "loading" });
+    void apiFetch<unknown>(
       `/api/decision-records/source/desk/${encodeURIComponent(o.id)}`,
     ).then((records) => {
-      const record = Array.isArray(records) ? records[0] : null;
-      if (live && record?.id) setCanonicalId(String(record.id));
-    }).catch(() => undefined);
+      if (!live) return;
+      if (!Array.isArray(records)) { setLookup({ sourceId: o.id, state: "unavailable" }); return; }
+      const ids = records
+        .map((record) => (record as { id?: unknown })?.id)
+        .filter((id): id is string => typeof id === "string" && id.trim() !== "");
+      if (ids.length !== records.length) { setLookup({ sourceId: o.id, state: "unavailable" }); return; }
+      setLookup(ids.length === 1
+        ? { sourceId: o.id, state: "one", recordId: ids[0] }
+        : { sourceId: o.id, state: ids.length ? "several" : "none" });
+    }).catch(() => { if (live) setLookup({ sourceId: o.id, state: "unavailable" }); });
     return () => { live = false; };
-  }, [o.id]);
-  const resourceRef = qualifiedRef(o.kind, o.id);
+  }, [o.id, lookupRead]);
+  const current = lookup.sourceId === o.id ? lookup : { sourceId: o.id, state: "loading" as const };
+  const canonicalId = current.state === "one" ? current.recordId ?? null : null;
+  const projectRef = canonicalId ? `decision_record:${canonicalId}` : current.state === "none" ? undefined : null;
+  const projectNote = current.state === "loading" ? "Reading the decision record"
+    : current.state === "several" ? "Several decision records · Projects closed" : "Decision record not read";
+
   const { copy, receipt: copyReceipt } = useCopyReceipt();
   const decisionContent = [
     `# Background\n\n${String(ir.contextMarkdown || "")}`,
@@ -133,7 +153,10 @@ export function DecisionPullout({ object: o }: PulloutContentProps) {
   const [sending, setSending] = useState(false);
   const [filing, setFiling] = useState(false);
   const [filed, setFiled] = useState("");
-  const writeFailure = useSyncExternalStore(subscribeWriteFailure, currentWriteFailure, currentWriteFailure);
+  const filingProps = {
+    objectRef: resourceRef, objectKind: o.kind, objectId: o.id, bare: true, onSummary: setFiled,
+    projectRef, projectNote, onProjectRetry: () => setLookupRead((n) => n + 1),
+  };  const writeFailure = useSyncExternalStore(subscribeWriteFailure, currentWriteFailure, currentWriteFailure);
   const [savedStatus, setSavedStatus] = useState<string | null>(null);
   const [savingStatus, setSavingStatus] = useState(false);
   const [statusFailure, setStatusFailure] = useState("");
@@ -377,7 +400,7 @@ export function DecisionPullout({ object: o }: PulloutContentProps) {
               ) : null}
               {filing ? (
                 <div className="desk-decision-filing" data-testid="desk-decision-filing">
-                  <DeskFilingStrip objectRef={resourceRef} objectKind={o.kind} objectId={o.id} bare onSummary={setFiled} />
+                  <DeskFilingStrip {...filingProps} />
                 </div>
               ) : null}
             </>
@@ -385,7 +408,7 @@ export function DecisionPullout({ object: o }: PulloutContentProps) {
         </article>
         {filing ? null : (
           <span hidden aria-hidden="true">
-            <DeskFilingStrip objectRef={resourceRef} objectKind={o.kind} objectId={o.id} bare onSummary={setFiled} />
+            <DeskFilingStrip {...filingProps} />
           </span>
         )}
       </div>
