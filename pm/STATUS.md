@@ -2,6 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · #1918 Fix forward #1906 and #1917 in the windows glass: decision openers land in the Decisions window and close to the desk, the Decisions window comes back iconified (1440) or open on its record (393) after a reload, and the Room's kept draft returns through Continue.
 - 2026-11-08 · #1917 The Room always opens on Now; a kept update draft waits on the head as Update draft · <time> with Continue, and no update place is kept or restored.
 - 2026-11-08 · #1916 Fix forward #1906: five more vitest cases read the one decision face (a desk_decision ref, a Needs you decision row and a retried create open the record reader; two pullout identity cases run on a Knowledge pullout); all 153 desk test files that mention decision pass.
 - 2026-11-08 · #1915 The lifespan's background work moves to runtime/background.py (start_background + Stopper.stop; same switches, order and thread names): web_server.py 1,775 -> 1,456 lines, background.py 388, 12 thread start sites moved, cold start median 2.06 -> 1.92 s.
