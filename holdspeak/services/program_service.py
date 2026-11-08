@@ -36,7 +36,7 @@ from ..db.programs import ProgramStore
 from ..logging_config import get_logger
 from ..timestamps import local_now, utc_now_iso
 from .brief_words import REPORT_STATES, WAIT_SENTENCES, step_report, wait_line
-from .errors import NotFound
+from .errors import NotFound, ServiceError
 from .program_definitions import (  # noqa: F401  re-exported: the same objects, one owner (HS-S51)
     ACTIVE_STATES, AGENT_LABELS, AUDIT_STATIONS, CLOSED_STATES, CONTROLS, CONTROL_WORDS, DECIDE_CHOICES,
     DEFAULT_REVIEWER, EFFORTS, ENDINGS, FINISHED_STATES, FINISHED_WORDS, FROZEN_BAR, FROZEN_MERGED, FROZEN_READ,
@@ -136,6 +136,14 @@ _PLAN_LOCKED = ("running", "waiting")
 PLAN_LOCKED_LINE = ("This program runs. An agent cannot add, remove or move its steps. "
                     "Propose a fix, or make a new program.")
 _TITLE_END = re.compile(r"[\s.!?;:,]+$")
+
+#: 2026-11-08 (Create plans itself): a Program made with a goal carries one
+#: engine claim row (``kind`` plan_goal, ``choice`` pending); the runner's
+#: next tick plans the steps from the goal and writes the result on the row
+#: (``planned``, ``not_planned`` or ``skipped``).
+PLAN_GOAL_KIND = "plan_goal"
+PLAN_GOAL_PENDING = "Planning the steps from the goal"
+PLAN_GOAL_NOT_NEEDED = "Not planned from the goal: the program has steps"
 
 
 def same_title(title: Any) -> str:
@@ -1739,7 +1747,11 @@ class ProgramService:
         runs_on: Any = None, allowed_profiles: Any = None, may_handoff: Optional[bool] = None,
         usage_warning_share: Any = None,
         may_call: Optional[bool] = None,
+        plan_goal: Optional[bool] = None,
     ) -> dict[str, Any]:
+        """Make a Program in Drafting. With a goal (and ``plan_goal`` not
+        False: a caller that writes its own steps at once), the runner's next
+        tick plans the steps from the goal; at yolo the Program then starts."""
         from ..program_templates import get_template
         from .program_rules import DESK_MODES
 
@@ -1821,6 +1833,10 @@ class ProgramService:
                 self._checkpoint(program, None, "engine", f"Made at {level_word(control)}: a program runs no wider "
                                                           "than what made it", kernel=False)
             self._plant_requirements(program, shape)
+            if program["goal_markdown"] and plan_goal is not False and not program.get("night"):
+                # A night Program is planned by its backlog, never from its goal.
+                self.store.add_checkpoint(step_id="", program_id=program["id"], at=now, by="engine",
+                                          line=PLAN_GOAL_PENDING, kind=PLAN_GOAL_KIND, choice="pending")
             self.changed(program["id"], verb="create")
         from . import program_dw
 
@@ -2138,9 +2154,23 @@ class ProgramService:
             self._plant_step_requirements(program, made)
             if made or not folds:
                 self._checkpoint(program, None, by, line)
+            if made:
+                # Steps written before the engine planned the goal: it never plans it now.
+                self.settle_plan_claim(program["id"], "skipped", PLAN_GOAL_NOT_NEEDED)
             self._touch(program)
             self.changed(program["id"], verb="plan")
         return self.get(principal, program["id"])
+
+    def settle_plan_claim(self, program_id: str, choice: str, line: str) -> bool:
+        """The pending plan_goal claim row gets its result (``planned``,
+        ``not_planned``, ``skipped``) and line. False: none was pending."""
+        claim = next((row for row in self.store.list_checkpoints(program_id)
+                      if row.get("kind") == PLAN_GOAL_KIND), None)
+        if claim is None or claim.get("choice") != "pending":
+            return False
+        self.store.rewrite_checkpoint(int(claim["id"]), str(line)[:400], {})
+        self.store.decide_checkpoint(int(claim["id"]), choice, {})
+        return True
 
     def from_action(self, principal: Any, action_id: Any, *, project_id: Any = None) -> dict[str, Any]:
         """JRN13, Run as a program on a project's action row: a Drafting
@@ -2190,7 +2220,9 @@ class ProgramService:
                  for item in actions]
         return self.plan(principal, program_id, steps=steps, replace=False)
 
-    def start(self, principal: Any, program_id: str) -> dict[str, Any]:
+    def start(self, principal: Any, program_id: str, *, by: Optional[str] = None) -> dict[str, Any]:
+        """``by`` names who started it on the ledger (``engine``: a yolo
+        Program the engine planned starts with no press)."""
         program = self._program(program_id)
         self._require_writer(principal, program, "start")
         steps = self.store.list_steps(program["id"])
@@ -2205,7 +2237,7 @@ class ProgramService:
         with _LOCK:
             program["state"] = "running"
             self._touch(program)
-            self._checkpoint(program, None, "owner" if _is_owner(principal) else "agent", "Started the program")
+            self._checkpoint(program, None, by or ("owner" if _is_owner(principal) else "agent"), "Started the program")
             self.changed(program["id"], verb="start")
         self._tick_now(program["id"])
         return self.get(principal, program["id"])
@@ -4641,9 +4673,11 @@ class ProgramService:
             return None
 
     def _prepare_review_ask(self, principal: Any, program: Mapping[str, Any], step: dict[str, Any]) -> dict[str, Any]:
-        """The person review gate's press: a send is PREPARED through the
-        channel (his press in the Send preview sends; the engine never
-        sends)."""
+        """The person review gate's press: the ask is a Note, PREPARED through
+        the channel (``channel.prepare``, the kernel path) for the person's
+        destination: the saved destination named as the person is. His press
+        in the Send preview sends; the engine never sends. A refused prepare
+        says why on the ledger and marks nothing prepared."""
         person = step.get("for_person_id") or program.get("for_person_id")
         name = self.person_name(person) or "the reviewer"
         number = step.get("pr_number")
@@ -4651,18 +4685,52 @@ class ProgramService:
                 f"of “{program['title']}”: {step['title']}.")
         prepared: Any = None
         try:
-            from ..runtime import composition
-
-            channel = composition.service("channel_service", lambda: None)
-            if channel is not None and hasattr(channel, "prepare"):
-                prepared = channel.prepare(principal, {"body": text, "title": f"Review PR #{number}",
-                                                       "source_ref": f"program_step:{step['id']}"})
+            prepared = self._prepare_ask_send(principal, step, person, name, number, text)
         except Exception as exc:
-            log.info(f"review ask not prepared through the channel: {exc}")
+            reason = str(getattr(exc, "detail", "") or "") if isinstance(exc, ServiceError) else ""
+            if not reason:
+                log.warning(f"review ask not prepared through the channel: {exc}")
+                reason = "the channel failed"
+            self._checkpoint(program, step, "owner", f"The ask was not prepared · {reason}")
+            return {"prepared": None, "refused": reason, "draft": text, "person": {"id": person, "name": name}}
         step.setdefault("facts", {})["review_ask_at"] = self._clock()
         self._save(step)
         self._checkpoint(program, step, "owner", f"Prepared the review ask for {name}")
         return {"prepared": prepared, "draft": text, "person": {"id": person, "name": name}}
+
+    def _prepare_ask_send(self, principal: Any, step: Mapping[str, Any], person: Optional[str], name: str,
+                          number: Any, text: str) -> dict[str, Any]:
+        from ..principals import Principal, PrincipalKind
+        from ..runtime import composition
+        from . import project_kernel
+        from .channel_service import ChannelService
+        from .primitive_service import PrimitiveService
+
+        names = {name.casefold()} | self.person_logins(person) if person else set()
+        found = [row for row in self.db.channel_destinations.list()
+                 if str(row.get("name") or "").strip().casefold() in names]
+        if len(found) != 1:
+            raise ServiceError("destination_not_saved" if not found else "destination_ambiguous",
+                               f"Save one destination named {name}" if not found
+                               else f"More than one destination is named {name}")
+        destination_id = str(found[0]["id"])
+        note_id = f"program-review-ask-{step['id']}"
+        title = f"Review PR #{number}"
+        notes = PrimitiveService(self.db, on_changed=composition.notify_desk_changed)
+        engine = Principal(PrincipalKind.OWNER, "program-engine")
+        existing = self.db.notes.get(note_id)
+        if existing is None:
+            notes.create_note(engine, note_id=note_id, title=title, body_markdown=text, tags=["program"])
+        elif existing.body_markdown != text or existing.title != title:
+            notes.update_note(engine, note_id, title=title, body_markdown=text)
+        document_ref = f"note:{note_id}"
+        channel = composition.service("channel_service", lambda: ChannelService(self.db))
+        command_id = f"program-review-ask:{step['id']}:{number}:{step.get('head_commit') or ''}"
+        payload = {"document_ref": document_ref, "destination_id": destination_id, "command_id": command_id}
+        answer, _kernel = project_kernel.run(
+            self.db, principal, "channel.prepare", payload,
+            lambda _minted: channel.prepare(principal, document_ref, destination_id, command_id=command_id))
+        return dict(answer or {})
 
     # ── the engine's writes (the runner calls these) ─────────────────
 

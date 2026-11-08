@@ -513,7 +513,8 @@ def apply_programs(service: Any, principal: Any, program_id: str, programs: Any,
         new = service.create(principal, title=title, goal=goal, repository=program.get("repo_root") or None,
                              project_id=program.get("project_id"), template=program.get("template") or None,
                              control=program.get("control"), check_command=program.get("check_command"),
-                             origin_ref=f"after:{before if str(which) == 'all' else program['id']}")
+                             origin_ref=f"after:{before if str(which) == 'all' else program['id']}",
+                             plan_goal=False)  # its steps are the proposal's, written below
         if program.get("budget_tokens"):
             # The budget it was planned for stays with each part.
             service.update(principal, new["id"], budget_tokens=program["budget_tokens"])
@@ -578,5 +579,42 @@ def plan_draft(service: Any, principal: Any, program_id: str, *, goal: Any = Non
     return out
 
 
-__all__ = ["CONTRACT", "DEADLINE_SECONDS", "PLAN_RULES", "PlanResult", "SPLIT_RULES", "apply_programs", "messages", "plan", "plan_draft",
+def plan_from_goal(service: Any, principal: Any, program_id: str, *,
+                   invoke_fn: Optional[Callable[..., tuple[Optional[str], str]]] = None) -> dict[str, Any]:
+    """2026-11-08, Create plans itself: the planner on the goal of a Program
+    in Drafting with no steps, and its draft applied as one text (the same
+    ``text_apply`` of the allowed text as his Apply in the change well; the
+    fold rule holds).
+    ``{"planned": n}``; a refusal raises :class:`ProgramRefused`. A Program
+    that has steps, or left Drafting, is never planned again here."""
+    from .program_definitions import ProgramRefused
+
+    def _open() -> bool:
+        program = service.store.get_program(program_id)
+        return bool(program and program.get("state") == "drafting" and not service.store.list_steps(program_id))
+
+    if not _open():
+        raise ProgramRefused("plan_not_needed", "The program has steps already, or it is not in Drafting.")
+    draft = plan_draft(service, principal, program_id, invoke_fn=invoke_fn)
+    if not int((draft.get("counts") or {}).get("steps") or 0):
+        raise ProgramRefused("plan_empty", "The engine planned no step. Write more of the goal, then press Plan it.")
+    if not _open():
+        raise ProgramRefused("plan_not_needed", "The program has steps already, or it is not in Drafting.")
+    # His Apply in the change well: the allowed text (a refused row put back as
+    # it was). The head stays the Program's own as made (his Control, check,
+    # agents: what he chose at Create); the steps and requirements are the
+    # draft's. A row that lowers the bar is never allowed here: it refuses.
+    from .program_text import parse_program_text, render
+
+    model = parse_program_text(str(draft["allowed_text"]))
+    model.head = parse_program_text(shaper.stripped_text(str(draft["base"]))).head
+    answer = service.text_apply(principal, program_id, render(model), dry_run=False, base=draft["base"])
+    if not answer.get("applied"):
+        reasons = [str(row.get("reason") or "") for row in answer.get("changes") or []
+                   if row.get("verdict") in ("refused", "conflict", "lowers") and row.get("reason")]
+        raise ProgramRefused("plan_not_applied", reasons[0] if reasons else "The draft could not be applied.")
+    return {"planned": len(service.store.list_steps(program_id)), "engine": draft.get("engine")}
+
+
+__all__ = ["CONTRACT", "DEADLINE_SECONDS", "PLAN_RULES", "PlanResult", "SPLIT_RULES", "apply_programs", "messages", "plan", "plan_draft", "plan_from_goal",
            "repo_ground", "response_format", "size_steps", "template_card", "token_cap"]

@@ -87,6 +87,14 @@ export async function readProjectChoices(): Promise<ProjectChoice[]> {
     });
 }
 
+/** The project a new Program is made in when he names none: the window's
+ *  scope's project (when it is one of the choices), else the only project;
+ *  else "" (none). One rule for the wizard and Run as a program. */
+export function defaultProjectId(rows: readonly ProjectChoice[], scopeProjectId?: string | null): string {
+  if (scopeProjectId && rows.some((row) => row.id === scopeProjectId)) return scopeProjectId;
+  return rows.length === 1 ? rows[0].id : "";
+}
+
 function unwrap(answer: Program | { program?: Program }): Program | null {
   // A decide answer may carry its own `steps` count (the fix program: `steps: 2`).
   if (answer && typeof answer === "object" && Array.isArray((answer as Program).steps)) return answer as Program;

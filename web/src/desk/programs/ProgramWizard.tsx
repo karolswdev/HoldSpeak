@@ -36,7 +36,7 @@ import {
 } from "../surface";
 import { readControlMode } from "../hand/begin";
 import { ListRow, ListView } from "../surface/objects/ListView";
-import { TEMPLATES, createProgram, readProjectChoices, type CreateBody, type ProjectChoice } from "./api";
+import { TEMPLATES, createProgram, defaultProjectId, readProjectChoices, type CreateBody, type ProjectChoice } from "./api";
 import { RunsOnPicker, type RunsOnChoice } from "./RunsOn";
 import { runsOnLabel } from "./StepRow";
 import { CONTROLS, controlValue } from "./model";
@@ -183,7 +183,7 @@ export function ProgramWizard({ template: firstTemplate, scopeProjectId, program
         if (!live || !alive.current) return;
         setChoices({ state: "ready", rows });
         // The scope's project, else the only project: chosen for him.
-        setWhere((now) => now || (scopeProjectId && rows.some((row) => row.id === scopeProjectId) ? scopeProjectId : rows.length === 1 ? rows[0].id : ""));
+        setWhere((now) => now || defaultProjectId(rows, scopeProjectId));
       })
       .catch(() => { if (live && alive.current) setChoices({ state: "failed" }); });
     return () => { live = false; };

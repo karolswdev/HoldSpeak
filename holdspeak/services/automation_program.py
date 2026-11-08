@@ -250,6 +250,7 @@ def run_program(db: Any, principal: Any, wb: Any, *, now: Optional[datetime] = N
         may_call=bool(getattr(wb, "program_may_call", False)),
         may_handoff=bool(getattr(wb, "program_may_handoff", False)),
         origin_ref=origin_of(wb.id),
+        plan_goal=False,  # the run writes its own steps and starts at once
     )
     program_id = made["id"]
     if template == FROM_THE_DESK:

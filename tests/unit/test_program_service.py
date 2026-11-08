@@ -494,3 +494,160 @@ def test_no_module_imports_a_definition_through_the_program_service() -> None:
                     wrong.append(f"{path.relative_to(package)}:{node.lineno} {names}")
     assert not wrong, wrong
     assert (package / "services" / "brief_words.py").read_text().count("program_service") == 0
+
+
+# ── Create plans itself (2026-11-08) ──────────────────────────────────
+# The planner's answers are the recorded real replies of the home engine
+# (tests/fixtures/program_plan_reply.json, case j1), replayed through the
+# runner's engine seam, as in tests/unit/test_program_planner.py.
+
+def _goal_desk(tmp_path, monkeypatch, control: str, *, engine: bool = True):
+    from tests.integration.program_plan_seed import CASES, create
+    from tests.integration.program_rig import give_quick_check
+    from tests.unit.test_program_planner import case, replies
+    from tests.unit.test_program_shaper import wire_engine
+
+    rig = Rig(tmp_path)
+    give_quick_check(rig.repo)
+    rig.engine = wire_engine(rig, monkeypatch) if engine else None
+    if engine:
+        rig.engine.replies = replies("j1")
+    rig.pid = create(rig, {**CASES["j1"], "control": control}, file_bytes=case("j1")["file_bytes"])
+    return rig
+
+
+def _claim(rig: Rig, pid: str) -> dict:
+    from holdspeak.services.program_service import PLAN_GOAL_KIND
+
+    rows = [row for row in rig.service.store.list_checkpoints(pid) if row.get("kind") == PLAN_GOAL_KIND]
+    assert len(rows) == 1, rows
+    return rows[0]
+
+
+def test_create_with_a_goal_at_yolo_plans_and_starts_on_one_tick_with_no_press(tmp_path, monkeypatch) -> None:
+    rig = _goal_desk(tmp_path, monkeypatch, "yolo")
+    assert rig.program(rig.pid)["steps"] == [] and _claim(rig, rig.pid)["choice"] == "pending"
+    rig.tick()
+    program = rig.program(rig.pid)
+    assert len(program["steps"]) == 4, program["steps"]
+    assert (program["state"], program["control"]) == ("running", "yolo")  # his Control stays as made
+    assert len(rig.engine.prompts) == 1  # one planner call
+    claim = _claim(rig, rig.pid)
+    assert (claim["choice"], claim["line"], claim["by"]) == ("planned", "Planned 4 steps from the goal", "engine")
+    started = [row for row in rig.service.store.list_checkpoints(rig.pid) if row["line"] == "Started the program"]
+    assert [row["by"] for row in started] == ["engine"]
+    assert rig.hand.calls, "the first step is handed"
+    rig.tick()
+    assert len(rig.engine.prompts) == 1, "never planned again"
+
+
+def test_create_with_a_goal_at_normal_plans_and_leaves_start_to_him(tmp_path, monkeypatch) -> None:
+    rig = _goal_desk(tmp_path, monkeypatch, "normal")
+    rig.tick()
+    program = rig.program(rig.pid)
+    assert len(program["steps"]) == 4 and (program["state"], program["control"]) == ("drafting", "normal")
+    assert _claim(rig, rig.pid)["choice"] == "planned"
+    assert not [row for row in rig.service.store.list_checkpoints(rig.pid) if row["line"] == "Started the program"]
+    assert rig.hand.calls == []
+    # The one press left: Start.
+    assert rig.service.start(OWNER, rig.pid)["state"] == "running"
+
+
+def test_create_with_an_empty_goal_is_not_planned(tmp_path, monkeypatch) -> None:
+    from holdspeak.services.program_service import PLAN_GOAL_KIND
+    from tests.unit.test_program_shaper import wire_engine
+
+    rig = Rig(tmp_path)
+    rig.engine = wire_engine(rig, monkeypatch)
+    pid = _made(rig, control="yolo")
+    rig.tick(2)
+    assert rig.program(pid)["steps"] == [] and rig.program(pid)["state"] == "drafting"
+    assert rig.engine.prompts == []
+    assert not [row for row in rig.service.store.list_checkpoints(pid) if row.get("kind") == PLAN_GOAL_KIND]
+
+
+def test_a_program_with_steps_is_never_planned_from_its_goal(tmp_path, monkeypatch) -> None:
+    from holdspeak.services.program_service import PLAN_GOAL_NOT_NEEDED
+
+    rig = _goal_desk(tmp_path, monkeypatch, "yolo")
+    rig.service.plan(OWNER, rig.pid, steps=[{"title": "By hand", "brief": "x"}])
+    rig.tick(2)
+    program = rig.program(rig.pid)
+    assert [step["title"] for step in program["steps"]] == ["By hand"] and program["state"] == "drafting"
+    assert rig.engine.prompts == []
+    claim = _claim(rig, rig.pid)
+    assert (claim["choice"], claim["line"]) == ("skipped", PLAN_GOAL_NOT_NEEDED)
+
+
+def test_a_goal_the_engine_cannot_plan_says_so_once_and_waits_for_plan_it(tmp_path, monkeypatch) -> None:
+    rig = _goal_desk(tmp_path, monkeypatch, "yolo", engine=False)
+    rig.tick()
+    claim = _claim(rig, rig.pid)
+    assert claim["choice"] == "not_planned" and claim["line"].startswith("The steps were not planned · "), claim
+    program = rig.program(rig.pid)
+    assert program["steps"] == [] and program["state"] == "drafting"
+    rig.tick()
+    assert _claim(rig, rig.pid)["line"] == claim["line"]
+
+
+# ── the person review ask goes through the channel (2026-11-08) ──────
+
+def _person_review_at_pr(tmp_path):
+    class People:
+        def display_names(self):
+            return {"p-alice": "Alice"}
+
+        def get_relationship(self, principal, person_id):
+            return {"display_name": "Alice", "owner_aliases": ["alice-gh"]}
+
+    rig = Rig(tmp_path, people=lambda: People())
+    pid = rig.service.create(OWNER, title="Reviewed", repository=str(rig.repo), check_command=f"sh {FAKE_CHECK}",
+                             template="fast-cycle", for_person_id="p-alice", control="normal")["id"]
+    rig.service.plan(OWNER, pid, steps=[{"title": "Ask Alice", "brief": "x", "gate_review": "person"}])
+    rig.service.start(OWNER, pid)
+    step = rig.step(pid, 1)
+    rig.agent.finish(step["launch_id"], {"b.txt": "b\n"})
+    rig.tick(2)
+    step = rig.step(pid, 1)
+    assert step["state"] == "pr_open", step
+    return rig, pid, step
+
+
+def _save_destination(rig: Rig, name: str, folder) -> str:
+    from holdspeak.db.channels import ChannelDestinationsRepository
+    from holdspeak.services.channel_contract import channel
+
+    target = channel("file").target_at_save(str(folder))
+    with rig.db._connection() as conn:
+        ChannelDestinationsRepository.insert_in_transaction(
+            conn, destination_id=f"dest-{name.lower()}", name=name, channel="file", account={}, target=target,
+            synced=False)
+    return f"dest-{name.lower()}"
+
+
+def test_the_review_ask_is_prepared_through_the_channel_for_the_persons_destination(tmp_path) -> None:
+    rig, pid, step = _person_review_at_pr(tmp_path)
+    folder = tmp_path / "alice-out"
+    folder.mkdir()
+    destination = _save_destination(rig, "Alice", folder)
+    asked = rig.service.decide(OWNER, pid, step["id"], kind="ask_review", choice="prepare")
+    sends = rig.db.channel_sends.list_for_document(f"note:program-review-ask-{step['id']}")
+    assert [(row["destination_id"], row["state"]) for row in sends] == [(destination, "prepared")]
+    assert (asked["prepared"].get("send") or {}).get("id") == sends[0]["id"]
+    note = rig.db.notes.get(f"program-review-ask-{step['id']}")
+    assert note is not None and "could you review PR" in note.body_markdown
+    assert rig.service.store.get_step(step["id"])["facts"].get("review_ask_at")
+    lines = [row["line"] for row in rig.service.store.list_checkpoints(pid)]
+    assert "Prepared the review ask for Alice" in lines
+    assert not list(folder.iterdir()), "prepared, never sent"
+
+
+def test_a_refused_review_ask_prepare_says_why_and_marks_nothing_prepared(tmp_path) -> None:
+    rig, pid, step = _person_review_at_pr(tmp_path)
+    asked = rig.service.decide(OWNER, pid, step["id"], kind="ask_review", choice="prepare")
+    assert asked["prepared"] is None and asked["refused"] == "Save one destination named Alice"
+    lines = [row["line"] for row in rig.service.store.list_checkpoints(pid)]
+    assert "The ask was not prepared · Save one destination named Alice" in lines
+    assert "Prepared the review ask for Alice" not in lines
+    assert not rig.service.store.get_step(step["id"])["facts"].get("review_ask_at")
+    assert [item["kind"] for item in rig.service.needs_you_items()] == ["ask_review"]
