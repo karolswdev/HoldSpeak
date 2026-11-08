@@ -10368,7 +10368,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "holdspeak/mcp/families/reactions.py",
+     "path": "holdspeak/mcp/families/_parked/reactions.py",
      "line": 22,
      "anchor": "\"reaction.presets\"",
      "claim": "a tool the MCP server advertises in its tools/list answer"
@@ -10389,7 +10389,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "holdspeak/mcp/families/reactions.py",
+     "path": "holdspeak/mcp/families/_parked/reactions.py",
      "line": 23,
      "anchor": "\"watch.list\"",
      "claim": "a tool the MCP server advertises in its tools/list answer"
@@ -10410,7 +10410,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "holdspeak/mcp/families/reactions.py",
+     "path": "holdspeak/mcp/families/_parked/reactions.py",
      "line": 24,
      "anchor": "\"watch.create\"",
      "claim": "a tool the MCP server advertises in its tools/list answer"
@@ -10431,7 +10431,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "holdspeak/mcp/families/reactions.py",
+     "path": "holdspeak/mcp/families/_parked/reactions.py",
      "line": 30,
      "anchor": "\"watch.set_enabled\"",
      "claim": "a tool the MCP server advertises in its tools/list answer"
@@ -10452,7 +10452,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "holdspeak/mcp/families/reactions.py",
+     "path": "holdspeak/mcp/families/_parked/reactions.py",
      "line": 33,
      "anchor": "\"watch.refresh\"",
      "claim": "a tool the MCP server advertises in its tools/list answer"
@@ -10473,7 +10473,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "holdspeak/mcp/families/reactions.py",
+     "path": "holdspeak/mcp/families/_parked/reactions.py",
      "line": 37,
      "anchor": "\"watch.preview\"",
      "claim": "a tool the MCP server advertises in its tools/list answer"
@@ -10494,7 +10494,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "holdspeak/mcp/families/reactions.py",
+     "path": "holdspeak/mcp/families/_parked/reactions.py",
      "line": 41,
      "anchor": "\"event.list\"",
      "claim": "a tool the MCP server advertises in its tools/list answer"
@@ -10515,7 +10515,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "holdspeak/mcp/families/reactions.py",
+     "path": "holdspeak/mcp/families/_parked/reactions.py",
      "line": 45,
      "anchor": "\"reaction.list\"",
      "claim": "a tool the MCP server advertises in its tools/list answer"
@@ -10536,7 +10536,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "holdspeak/mcp/families/reactions.py",
+     "path": "holdspeak/mcp/families/_parked/reactions.py",
      "line": 46,
      "anchor": "\"reaction.create\"",
      "claim": "a tool the MCP server advertises in its tools/list answer"
@@ -10557,7 +10557,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "holdspeak/mcp/families/reactions.py",
+     "path": "holdspeak/mcp/families/_parked/reactions.py",
      "line": 52,
      "anchor": "\"reaction.set_enabled\"",
      "claim": "a tool the MCP server advertises in its tools/list answer"
@@ -10578,7 +10578,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "holdspeak/mcp/families/reactions.py",
+     "path": "holdspeak/mcp/families/_parked/reactions.py",
      "line": 55,
      "anchor": "\"reaction.process\"",
      "claim": "a tool the MCP server advertises in its tools/list answer"
