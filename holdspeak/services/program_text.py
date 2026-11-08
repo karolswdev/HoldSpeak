@@ -304,7 +304,7 @@ def _minimal_agents(listed: list[Agent], default: list[Agent]) -> Optional[list[
 
 
 def triage(brief: str, owns: Iterable[str]) -> str:
-    from .program_service import triage_effort
+    from .program_definitions import triage_effort
 
     return triage_effort(brief, owns)
 
