@@ -1597,7 +1597,7 @@ def test_reserved_successor_never_claims_before_old_parent_receipt(tmp_path, mon
 def test_receipted_successor_is_promoted_once_after_process_loss(tmp_path, monkeypatch):
     """A crash after close but before promotion cannot strand or double-run retry work."""
     from holdspeak.intel_queue import process_next_intel_job
-    from holdspeak.meeting_session.deferred_admission import BoundDeferredIntelJob
+    from holdspeak.meeting_session.deferred_bound import BoundDeferredIntelJob
     from holdspeak.services.meeting_deferred_queue_binding import MeetingDeferredQueueBinder
 
     db, broker, engine, _host, _requests = _queue_rig(tmp_path, monkeypatch)

@@ -32,7 +32,7 @@ from holdspeak.kernel.provider_signals import InferenceInvalidTypedOutput
 from holdspeak.kernel.runtime import _configure
 from holdspeak.mcp import tools as mcp_tools
 from holdspeak.meeting_session import IntelSnapshot, MeetingState, TranscriptSegment
-from holdspeak.meeting_session.deferred_admission import queue_service_principal
+from holdspeak.meeting_session.deferred_bound import queue_service_principal
 from holdspeak.people import EncryptedPeopleStore, MemoryKeyStore
 from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.runtime import composition

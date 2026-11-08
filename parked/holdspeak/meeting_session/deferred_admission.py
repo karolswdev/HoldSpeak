@@ -1,3 +1,4 @@
+# PARKED 2026-11-08 (HS-S56): no importer in holdspeak/, scripts/, uat/ or by string; its two test readers now import holdspeak.meeting_session.deferred_bound, which defines all four names.
 """Retired v1 deferred-admission namespace.
 
 New and recovered Meeting queue work binds through
