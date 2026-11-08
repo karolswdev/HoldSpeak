@@ -53,7 +53,8 @@ class _FollowThroughObserver:
 
 #: The evidence a ``done`` may carry into its ``commitment.completed``
 #: receipt (Conductor K4: the merged PR of an agent launch).
-COMPLETION_EVIDENCE_KEYS = ("pr_url", "merged_sha", "merged_at", "attempt_id", "launch_id", "pr_number", "pr_title")
+COMPLETION_EVIDENCE_KEYS = ("pr_url", "merged_sha", "merged_at", "attempt_id", "launch_id", "pr_number", "pr_title",
+                            "program_id")
 
 
 def _completion_evidence(raw: Any) -> dict[str, str]:

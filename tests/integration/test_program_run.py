@@ -437,7 +437,7 @@ def test_from_the_desk_closes_its_action_on_merge(tmp_path) -> None:
     made = rig.service.plan_from_project(OWNER, pid)
     step = made["steps"][0]
     assert step["origin_ref"] == "action:ai_1" and step["title"] == "Fix the login timeout"
-    assert step_origin(rig.db, step["id"]) == ("action", "ai_1")
+    assert step_origin(rig.db, step["id"])[:3] == ("action", "ai_1", True)
     with rig.db._connection() as conn:
         filed = conn.execute("SELECT 1 FROM project_resources WHERE project_id='proj-1' AND resource_ref=?",
                              (f"note:program-{pid}",)).fetchone()
