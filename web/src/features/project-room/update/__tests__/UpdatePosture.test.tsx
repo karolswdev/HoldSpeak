@@ -526,8 +526,16 @@ describe("Source rows: deduplicated refs and open source", () => {
     expect(mockOpenPrimitive).not.toHaveBeenCalledWith("meeting:m-01");
   });
 
-  it("clicking a decision ref opens the primitive", async () => {
+  it("clicking a decision ref opens its record in the Decisions window reader", async () => {
     setupUpdatePosture();
+    // The one decision face (2026-11-08): a Desk decision opens its record
+    // (`/api/decision-records/source/desk/<id>`), never the Decision pullout.
+    const room = apiFetch.getMockImplementation()!;
+    apiFetch.mockImplementation((url: string, init?: Record<string, unknown>) => {
+      if (url === "/api/decisions/d-01") return Promise.resolve({ decision: { id: "d-01", title: "D-01" } });
+      if (url === "/api/decision-records/source/desk/d-01") return Promise.resolve([{ id: "rec-d01" }]);
+      return room(url, init);
+    });
     render(<WindowHarness scope="project:p1" />);
 
     await openUpdateList();
@@ -545,7 +553,8 @@ describe("Source rows: deduplicated refs and open source", () => {
     expect(decisionChip!.textContent).toBe("D-01");
     fireEvent.click(decisionChip!);
 
-    await waitFor(() => expect(mockOpenPrimitive).toHaveBeenCalledWith("decision:d-01"));
+    await waitFor(() => expect(useDesk.getState().windowsById["surface-decisions"]?.scope).toBe("record:rec-d01"));
+    expect(mockOpenPrimitive).not.toHaveBeenCalledWith("decision:d-01");
   });
 });
 

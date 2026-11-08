@@ -1654,8 +1654,8 @@
       "phase1_refs": [],
       "sources": [
         {
-          "path": "web/src/desk/pullouts/DecisionPullout.tsx",
-          "symbol": "export function DecisionPullout",
+          "path": "web/src/desk/pullouts/views/DeskDecisionEdit.tsx",
+          "symbol": "export function useDeskDecisionEdit(deskId: string, onSaved: () => void)",
           "claim": "Decision-first editor saves actual record and shows its document."
         }
       ],
@@ -1726,8 +1726,8 @@
       "phase1_refs": [],
       "sources": [
         {
-          "path": "web/src/desk/pullouts/DecisionPullout.tsx",
-          "symbol": "export function DecisionPullout",
+          "path": "web/src/desk/pullouts/views/DeskDecisionEdit.tsx",
+          "symbol": "export function useDeskDecisionEdit(deskId: string, onSaved: () => void)",
           "claim": "Closing, reopening and reloading restores the exact draft without saving it to the decision."
         }
       ],

@@ -150,10 +150,10 @@
           "line": 332
         },
         {
-          "path": "web/src/desk/pullouts/DecisionPullout.tsx",
-          "symbol": "export function DecisionPullout",
-          "line": 35,
-          "claim": "Decision opens in a focused paper editor before supporting Context/Consequences folds, with compact status and reachable Done/Cancel."
+          "path": "web/src/desk/pullouts/views/DeskDecisionEdit.tsx",
+          "symbol": "export function DeskDecisionEditor",
+          "line": 170,
+          "claim": "Decision opens in a focused paper editor in the Decisions window reader before supporting Background/Consequences folds, with compact status and reachable Save/Cancel."
         },
         {
           "path": "web/src/desk/pullouts/_parked/ThreadPullout.tsx",

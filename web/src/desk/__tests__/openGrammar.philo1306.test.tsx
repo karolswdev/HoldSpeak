@@ -15,6 +15,7 @@ import { ChairHome } from "../chair/ChairHome";
 import { SinceYesterday } from "../pullouts/views/BriefView";
 import { __resetOwnerCache, takeRoomProposalRequest } from "../openObject";
 import { useDrawers } from "../drawer/store";
+import { useDesk } from "../store";
 import { asHub } from "../../test/hubNeedsYou";
 import { openChairWindows } from "../chair/__tests__/fixtures/openChairWindows";
 // The hub's own people_commitment card (its words are `text`, never `title`),
@@ -96,6 +97,8 @@ const NEEDS_YOU = {
 /** GET /api/decisions/{id}: a Desk decision, or one a meeting recorded. */
 function decisionRead(url: string): unknown {
   if (url === "/api/decisions/decision_9458") return { decision: { id: "decision_9458", title: "Freeze the old ledger on Nov 5" } };
+  // Every Desk decision has its record (decision_record_service sync_from_desk).
+  if (url === "/api/decision-records/source/desk/decision_9458") return [{ id: "rec-9458" }];
   if (url === "/api/decisions/mdec-cursor") return { decision: { id: "mdec-cursor", source_meeting_id: "p13-api-review" }, lineage: {} };
   return null;
 }
@@ -236,7 +239,10 @@ describe("PHILO-13-06 / Betterment D4: Today's Since yesterday opens its rows", 
     const row = await screen.findByText("Freeze the old ledger on Nov 5");
     vi.mocked(apiFetch).mockImplementation(asHub(async (path: string) => decisionRead(String(path)) as never));
     fireEvent.click(row);
-    await waitFor(() => expect(openPrimitive).toHaveBeenCalledWith("decision:decision_9458"));
+    // The one decision face (2026-11-08): the decision opens its record in
+    // the Decisions window reader, never the Decision pullout.
+    await waitFor(() => expect(useDesk.getState().windowsById["surface-decisions"]?.scope).toBe("record:rec-9458"));
+    expect(openPrimitive).not.toHaveBeenCalled();
     expect(document.body.textContent).not.toContain("decision_9458");
     // No triage verbs: Acknowledge and Defer left with the Brief wing.
     expect(screen.queryByRole("button", { name: "Acknowledge" })).toBeNull();

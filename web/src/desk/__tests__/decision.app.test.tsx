@@ -1,14 +1,22 @@
 /* The Decision app, rendered over the hub's wire (the test diet, 2026-10-11).
  *
- * Two browser rigs move here: Decide in a meeting (PHILO-13-08) and the
- * decision window's headings (PHILO-8-04). The real well (MeetingDecideWell),
- * the real decision window (DecisionPullout), the real desk store, the real
- * `lib/api` and wire adapters run; only `fetch` is replaced. Its bodies are
- * the hub's own shapes, never invented (SCAR LAW):
+ * The one decision face (2026-11-08): every decision ref opens its record in
+ * the Decisions window reader, and a Desk decision is accepted, retired,
+ * edited, copied and filed there. The Decision pullout is parked
+ * (pullouts/_parked/DecisionPullout.tsx; its cases in
+ * pullouts/_parked/__tests__/decisionPullout.app.test.tsx). The real well
+ * (MeetingDecideWell), the real reader (DecisionsView), the real desk store,
+ * the real `lib/api` and wire adapters run; only `fetch` is replaced. Its
+ * bodies are the hub's own shapes, never invented (SCAR LAW):
  *   - a decision: `DecisionRecord.to_dict` (holdspeak/db/models/__init__.py:609);
  *     `POST /api/decisions` answers `{decision}` with 201
  *     (holdspeak/web/routes/primitives/decisions.py:95), `GET /api/decisions`
  *     `{decisions}`, `GET /api/decisions/{id}` `{decision}`;
+ *   - a record: `DecisionRecordService._decorate` over the record row
+ *     (holdspeak/services/decision_record_service.py): a Desk source's
+ *     status and title, `rationale` = Background then Consequences
+ *     (`create_from_desk`), `GET /api/decision-records/{id}`,
+ *     `GET /api/decision-records/source/{type}/{id}` a list;
  *   - a meeting's projects: `ProjectsRepository.get_meeting_projects`
  *     (holdspeak/db/projects.py:251) under `{projects}`
  *     (holdspeak/web/routes/projects.py:434).
@@ -25,15 +33,25 @@
  */
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { readdirSync, readFileSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { loadDeskWorkspace, useDesk } from "../store";
-import { objectByRef } from "../world";
-import { DecisionPullout } from "../pullouts/DecisionPullout";
+import { DecisionsView } from "../pullouts/views/DecisionsView";
+import { PULLOUT_CONTENT } from "../pullouts/registry";
+import { DecisionToReader } from "../pullouts/DecisionToReader";
+import { openRef } from "../openObject";
 import { MeetingDecideWell } from "../../meetings/MeetingDecideWell";
 import { DeskReceiptRow } from "../components/DeskReceiptRow";
 import { dismissWriteFailure } from "../hooks/useWriteReceipt";
 import { keptEditorPatch } from "../pullouts/editors/editorDraft";
 
 type Wire = Record<string, unknown>;
+
+// The reader re-reads on the desk's change frames; one bus for the file.
+vi.mock("../../runtime/RuntimeBus", () => ({
+  useRuntimeBus: () => ({ subscribe: () => () => undefined }),
+}));
 
 /** DecisionRecord.to_dict (holdspeak/db/models/__init__.py:609-631). */
 const decisionWire = (fields: Wire): Wire => ({
@@ -50,8 +68,23 @@ const hub = {
   puts: [] as Array<{ url: string; body: Wire }>,
   /** HS-S42: canonical records per source decision id; `fail` answers 500. */
   records: {} as Record<string, Wire[] | "fail">,
+  /** Meeting decisions (`decisions` lifecycle rows) by id, and their records. */
+  meetingDecisions: {} as Record<string, Wire>,
+  meetingRecords: {} as Record<string, Wire[]>,
   relationships: {} as Record<string, Wire[]>,
 };
+
+/** The record of a Desk decision, as the hub reads it back. */
+const recordId = (deskId: string) => `record-of-${deskId}`;
+const recordWire = (decision: Wire): Wire => ({
+  id: recordId(String(decision.id)),
+  title: decision.title || null,
+  decision_text: String(decision.decision_markdown || "").trim() || String(decision.title || ""),
+  rationale: [decision.context_markdown, decision.consequences_markdown].map((part) => String(part || "").trim()).filter(Boolean).join("\n\n") || null,
+  alternatives: null, owner: null, review_date: null, lifecycle: "active",
+  status: decision.status, source_type: "desk", source_id: decision.id,
+  created_at: "2026-10-01T09:31:00", sources: [], work: [], revisions: [],
+});
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
@@ -95,8 +128,19 @@ function hubFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Respons
   }
   const bySource = /^\/api\/decision-records\/source\/desk\/([^/?]+)$/.exec(url);
   if (bySource) {
-    const records = hub.records[decodeURIComponent(bySource[1])] ?? [];
+    const id = decodeURIComponent(bySource[1]);
+    // Every Desk decision has its record (primitive_service create_decision
+    // and update_decision `sync_from_desk`).
+    const records = hub.records[id] ?? (hub.decisions.some((d) => d.id === id) ? [{ id: recordId(id) }] : []);
     return Promise.resolve(records === "fail" ? json({ error: "boom" }, 500) : json(records));
+  }
+  const byMeeting = /^\/api\/decision-records\/source\/meeting\/([^/?]+)$/.exec(url);
+  if (byMeeting) return Promise.resolve(json(hub.meetingRecords[decodeURIComponent(byMeeting[1])] ?? []));
+  const record = /^\/api\/decision-records\/(record-of-[^/?]+)$/.exec(url);
+  if (record && method === "GET") {
+    const id = decodeURIComponent(record[1]).slice("record-of-".length);
+    const decision = hub.decisions.find((d) => d.id === id);
+    return Promise.resolve(decision ? json(recordWire(decision)) : json({ detail: "decision record not found" }, 404));
   }
   const rel = /^\/api\/desk\/relationships\/(.+)$/.exec(url);
   if (rel) {
@@ -115,6 +159,8 @@ function hubFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Respons
     return Promise.resolve(json({ decision: saved }));
   }
   if (one && method === "GET") {
+    const meeting = hub.meetingDecisions[decodeURIComponent(one[1])];
+    if (meeting) return Promise.resolve(json({ decision: meeting }));
     const decision = hub.decisions.find((d) => d.id === decodeURIComponent(one[1]));
     return Promise.resolve(decision ? json({ decision }) : json({ error: "Unknown decision" }, 404));
   }
@@ -136,6 +182,8 @@ beforeEach(() => {
   hub.posts = [];
   hub.puts = [];
   hub.records = {};
+  hub.meetingDecisions = {};
+  hub.meetingRecords = {};
   hub.relationships = {};
   // get_meeting_projects rows (holdspeak/db/projects.py:265-273).
   hub.meetingProjects = {
@@ -145,26 +193,84 @@ beforeEach(() => {
     }],
   };
   vi.stubGlobal("fetch", vi.fn(hubFetch));
-  useDesk.setState({ pullouts: [], editingId: null, newIds: [] });
+  useDesk.setState({ pullouts: [], editingId: null, newIds: [], windowsById: {} } as never);
 });
 
-describe("the decision editor keeps its draft until the save is accepted", () => {
-  const ref = "decision:body-decision";
+/** The reader on one Desk decision's record, with the desk's receipt line. */
+function Reader({ deskId }: { deskId: string }) {
+  return <><DecisionsView windowed receiptId={recordId(deskId)} /><DeskReceiptRow /></>;
+}
+const stateText = () => screen.getByTestId("decision-reader-state").textContent ?? "";
+
+describe("every decision ref opens its record in the Decisions window reader", () => {
+  // The one decision face (2026-11-08). Red on main: `decision:<desk id>` and
+  // `desk_decision:<desk id>` opened the Decision pullout (openObject.ts
+  // openSourceRef), a second face of the same decision.
+  const scope = () => useDesk.getState().windowsById["surface-decisions"]?.scope;
+  beforeEach(async () => {
+    hub.decisions = [decisionWire({ id: "d1", title: "Use the shared runners" })];
+    await act(async () => { await useDesk.getState().refresh(); });
+  });
+
+  for (const ref of ["decision:d1", "desk_decision:d1"]) {
+    it(`${ref} opens record:<its record> in the Decisions window, never a pullout`, async () => {
+      await act(async () => { openRef(ref); });
+      await waitFor(() => expect(scope()).toBe("record:record-of-d1"));
+      expect(useDesk.getState().pullouts).toEqual([]);
+    });
+  }
+
+  it("a Desk decision opened as a desk object (openPullout) opens its record too", async () => {
+    await act(async () => { useDesk.getState().openPullout("decision:d1"); });
+    await waitFor(() => expect(scope()).toBe("record:record-of-d1"));
+    expect(useDesk.getState().pullouts).toEqual([]);
+  });
+
+  it("decision:<meeting decision> opens that decision's record", async () => {
+    hub.meetingDecisions = { "m-dec": { id: "m-dec", text: "Cut the release on Friday", source_meeting_id: "m1" } };
+    hub.meetingRecords = { "m-dec": [{ id: "rec-m" }] };
+    await act(async () => { openRef("decision:m-dec"); });
+    await waitFor(() => expect(scope()).toBe("record:rec-m"));
+    expect(useDesk.getState().pullouts).toEqual([]);
+  });
+
+  it("the pullout registry holds no Decision pullout: a decision window opens the reader and closes", async () => {
+    expect(PULLOUT_CONTENT.decision).toBe(DecisionToReader);
+    const onClose = vi.fn();
+    const object = { id: "d1", kind: "decision", title: "Use the shared runners" } as never;
+    await act(async () => { render(<DecisionToReader object={object} onClose={onClose} />); });
+    expect(onClose).toHaveBeenCalled();
+    await waitFor(() => expect(scope()).toBe("record:record-of-d1"));
+  });
+
+  it("no live file imports the parked Decision pullout", () => {
+    const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
+    const live: string[] = [];
+    const walk = (folder: string) => {
+      for (const entry of readdirSync(folder, { withFileTypes: true })) {
+        const path = join(folder, entry.name);
+        if (entry.isDirectory()) { if (entry.name !== "_parked" && entry.name !== "node_modules") walk(path); continue; }
+        if (!/\.(ts|tsx)$/.test(entry.name) || path === fileURLToPath(import.meta.url)) continue;
+        if (/from\s+["'][^"']*\/DecisionPullout["']|import\(["'][^"']*\/DecisionPullout["']\)/.test(readFileSync(path, "utf8"))) live.push(path);
+      }
+    };
+    walk(root);
+    expect(live).toEqual([]);
+  });
+});
+
+describe("the reader's editor keeps its draft until the save is accepted", () => {
+  const deskId = "body-decision";
   const path = "/api/decisions/body-decision";
   const initial = { context_markdown: "Current context", decision_markdown: "Current decision", consequences_markdown: "Current consequences" };
 
-  async function renderEditor(beforeEdit?: () => Promise<void>) {
-    hub.decisions = [decisionWire({ id: "body-decision", title: "Use the shared runners", ...initial })];
+  async function renderEditor() {
+    hub.decisions = [decisionWire({ id: deskId, title: "Use the shared runners", ...initial })];
     await act(async () => { await useDesk.getState().refresh(); });
-    function Face() {
-      const items = useDesk((state) => state.items);
-      const object = objectByRef(items, ref);
-      return <>{object ? <DecisionPullout object={object} onClose={() => {}} /> : null}<DeskReceiptRow /></>;
-    }
-    const view = render(<Face />);
-    if (beforeEdit) await beforeEdit();
-    fireEvent.click(screen.getByRole("button", { name: "Edit" }));
-    return { ...view, reopen: () => render(<Face />) };
+    const view = render(<Reader deskId={deskId} />);
+    fireEvent.click(await screen.findByTestId("decision-reader-edit"));
+    await screen.findByRole("textbox", { name: "Decision" });
+    return { ...view, reopen: () => render(<Reader deskId={deskId} />) };
   }
 
   function fillDraft(suffix: string) {
@@ -179,14 +285,9 @@ describe("the decision editor keeps its draft until the save is accepted", () =>
     }
   }
 
-  it("Save waits for one write and disables conflicting status, Retry and cancel presses", async () => {
+  it("Save waits for one write and disables Save and Cancel; the reader then reads the saved words", async () => {
     let complete!: () => void;
-    let statusWrites = 0;
     vi.mocked(fetch).mockImplementation((input, init) => {
-      if (String(input) === `${path}/status`) {
-        statusWrites += 1;
-        return Promise.resolve(json({ error: "state_refused" }, 403));
-      }
       if (String(input) === path && init?.method === "PUT") {
         hub.puts.push({ url: path, body: JSON.parse(String(init.body)) });
         return new Promise((resolve) => { complete = () => {
@@ -196,27 +297,19 @@ describe("the decision editor keeps its draft until the save is accepted", () =>
       }
       return hubFetch(input, init);
     });
-    // W1-TRUTH: the state changes by a toolbar verb (Accept on an open
-    // decision), never a cycle at the top; a refused write keeps its Retry.
-    await renderEditor(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Accept" }));
-      await screen.findByText("Could not change the status. The decision is unchanged; choose a status again.");
-    });
+    await renderEditor();
+    // An open editor hides the state verbs: one write at a time.
+    expect(screen.queryByTestId("decision-reader-accept")).toBeNull();
     fillDraft("to keep");
-    const statusRetry = screen.getByRole("button", { name: "Try again" });
-    expect(statusRetry).not.toBeDisabled();
     const done = screen.getByRole("button", { name: "Save" });
     act(() => { fireEvent.click(done); fireEvent.click(done); });
     expect(hub.puts).toHaveLength(1);
     expectDraft("to keep");
     expect(done).toBeDisabled();
     expect(screen.getByRole("button", { name: "Cancel" })).toBeDisabled();
-    expect(statusRetry).toBeDisabled();
-    fireEvent.click(statusRetry);
-    expect(statusWrites).toBe(1);
     await act(async () => complete());
     await waitFor(() => expect(screen.queryByRole("textbox", { name: "Decision" })).toBeNull());
-    expect(document.querySelector(".desk-decision-card")?.textContent).toContain("Decision to keep");
+    await waitFor(() => expect(screen.getByTestId("decision-reader").textContent).toContain("Decision to keep"));
   });
 
   it("a refusal keeps all fields; the existing exact Retry cannot replace a newer draft", async () => {
@@ -268,7 +361,7 @@ describe("the decision editor keeps its draft until the save is accepted", () =>
     await act(async () => complete());
     expectDraft("typed later");
     expect(screen.getByRole("button", { name: "Save" })).not.toBeDisabled();
-    expect(useDesk.getState().items.decision.find((d) => d.id === "body-decision")?.decisionMarkdown).toBe("Decision submitted");
+    expect(useDesk.getState().items.decision.find((d) => d.id === deskId)?.decisionMarkdown).toBe("Decision submitted");
   });
 
   it("close and reload restore this object's draft, including emptied fields, without a write", async () => {
@@ -279,7 +372,7 @@ describe("the decision editor keeps its draft until the save is accepted", () =>
     // Rehydrate the same workspace document a fresh page loads.
     useDesk.setState({ drafts: loadDeskWorkspace().drafts ?? {}, newIds: [] });
     face.reopen();
-    expect(screen.getByRole("textbox", { name: "Decision" })).toHaveValue("Decision after reopening");
+    expect(await screen.findByRole("textbox", { name: "Decision" })).toHaveValue("Decision after reopening");
     expect(screen.getByRole("textbox", { name: "Background" })).toHaveValue("Background after reopening");
     expect(screen.getByLabelText("Consequences")).toHaveValue("");
     expect(screen.getByText("Draft kept")).toBeInTheDocument();
@@ -291,12 +384,12 @@ describe("the decision editor keeps its draft until the save is accepted", () =>
     fillDraft("cancelled");
     useDesk.getState().setDraft("editor/decision/another-decision", JSON.stringify({ decision_markdown: "Other work" }));
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
-    expect(keptEditorPatch("decision", "body-decision")).toEqual({});
+    expect(keptEditorPatch("decision", deskId)).toEqual({});
     expect(keptEditorPatch("decision", "another-decision").decision_markdown).toBe("Other work");
     face.unmount();
     face.reopen();
+    expect(await screen.findByText("Current decision")).toBeInTheDocument();
     expect(screen.queryByRole("textbox", { name: "Decision" })).toBeNull();
-    expect(screen.getByText("Current decision")).toBeInTheDocument();
     expect(hub.puts).toEqual([]);
   });
 
@@ -304,15 +397,15 @@ describe("the decision editor keeps its draft until the save is accepted", () =>
     const face = await renderEditor();
     fillDraft("saved");
     await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Save" })); });
-    expect(keptEditorPatch("decision", "body-decision")).toEqual({});
+    expect(keptEditorPatch("decision", deskId)).toEqual({});
     expect(screen.getByText("Saved")).toBeInTheDocument();
     face.unmount();
     face.reopen();
+    expect(await screen.findByText("Decision saved")).toBeInTheDocument();
     expect(screen.queryByRole("textbox", { name: "Decision" })).toBeNull();
-    expect(screen.getByText("Decision saved")).toBeInTheDocument();
   });
 
-  it("a late Save from a closed window cannot erase newer words in the reopened editor", async () => {
+  it("a late Save from a closed reader cannot erase newer words in the reopened editor", async () => {
     const face = await renderEditor();
     fillDraft("submitted");
     let complete!: () => void;
@@ -330,13 +423,13 @@ describe("the decision editor keeps its draft until the save is accepted", () =>
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
     face.unmount();
     const reopened = face.reopen();
-    fireEvent.change(screen.getByRole("textbox", { name: "Decision" }), { target: { value: "Newer reopened words" } });
+    fireEvent.change(await screen.findByRole("textbox", { name: "Decision" }), { target: { value: "Newer reopened words" } });
     await act(async () => complete());
     expect(screen.getByRole("textbox", { name: "Decision" })).toHaveValue("Newer reopened words");
-    expect(keptEditorPatch("decision", "body-decision")).toEqual({ decision_markdown: "Newer reopened words" });
+    expect(keptEditorPatch("decision", deskId)).toEqual({ decision_markdown: "Newer reopened words" });
     reopened.unmount();
     face.reopen();
-    expect(screen.getByRole("textbox", { name: "Decision" })).toHaveValue("Newer reopened words");
+    expect(await screen.findByRole("textbox", { name: "Decision" })).toHaveValue("Newer reopened words");
     expect(hub.puts).toHaveLength(1);
   });
 });
@@ -403,84 +496,41 @@ describe("Decide in a meeting: Decide -> name -> receipt -> the decision window"
   });
 });
 
-describe("HS-S42 the decision window corrects the canonical record's projects", () => {
-  async function openDecision(sourceId: string) {
-    hub.decisions = [decisionWire({ id: sourceId, title: "Roll back the cache change", tags: ["meeting:m1", "project:proj-checkout"] })];
+describe("HS-S42 the reader files the decision's canonical record", () => {
+  it("Assign writes decision_record:<id>; the source decision keeps its tags", async () => {
+    hub.decisions = [decisionWire({ id: "d1", title: "Roll back the cache change", status: "accepted", tags: ["meeting:m1", "project:proj-checkout"] })];
     await act(async () => { await useDesk.getState().refresh(); });
-    const object = objectByRef(useDesk.getState().items, `decision:${sourceId}`)!;
-    return render(<DecisionPullout object={object} onClose={() => {}} />);
-  }
-
-  it("one record: Assign writes decision_record:<id>; the source decision keeps its tags", async () => {
-    hub.records = { d1: [{ id: "rec_9", source_type: "desk", source_id: "d1" }] };
-    await openDecision("d1");
+    render(<Reader deskId="d1" />);
     const assign = await screen.findAllByRole("button", { name: "Assign to Checkout Project", hidden: true });
     await act(async () => { fireEvent.click(assign[0]); });
     await waitFor(() => expect(hub.puts).toEqual([{
-      url: "/api/projects/proj-checkout/resources/decision_record:rec_9", body: { relationship: "member" },
+      url: "/api/projects/proj-checkout/resources/decision_record:record-of-d1", body: { relationship: "member" },
     }]));
     expect(hub.decisions[0].tags).toEqual(["meeting:m1", "project:proj-checkout"]);
   });
-
-  it("several records or a failed lookup close the Projects axis; no first record is guessed", async () => {
-    hub.records = { d2: [{ id: "rec_a" }, { id: "rec_b" }], d3: "fail" };
-    const two = await openDecision("d2");
-    expect((await screen.findAllByText("Several decision records · Projects closed", undefined)).length).toBeGreaterThan(0);
-    expect(screen.queryAllByRole("button", { name: /Assign to Checkout Project/, hidden: true })).toEqual([]);
-    two.unmount();
-    await openDecision("d3");
-    expect((await screen.findAllByText("Decision record not read")).length).toBeGreaterThan(0);
-    expect(screen.queryAllByRole("button", { name: /Assign to Checkout Project/, hidden: true })).toEqual([]);
-    expect(hub.puts).toEqual([]);
-  });
-
-  it("no record (a legacy decision) keeps the source ref filing", async () => {
-    await openDecision("d4");
-    const assign = await screen.findAllByRole("button", { name: "Assign to Checkout Project", hidden: true });
-    await act(async () => { fireEvent.click(assign[0]); });
-    await waitFor(() => expect(hub.puts.map((p) => p.url)).toEqual(["/api/projects/proj-checkout/resources/decision:d4"]));
-  });
 });
 
-describe("the decision window shows a heading only with text under it", () => {
-  /* replaces: tests/e2e/test_philo8_04_empty_decision_heads_glass.py::TestEmptyDecisionHeadsGlass::test_a_heading_shows_only_with_text_under_it
-   * The decisions come from the hub's wire through the store's own adapter
-   * (fromWireDecision), so the fields the window reads are the real ones. */
-  const CASES: Array<[string, Wire, string[]]> = [
-    ["title-only", { title: "Glass title only decision" }, []],
-    ["context-only", { title: "Glass context only decision", context_markdown: "Our own runners are full every night." },
-      ["Background"]],
-    ["context-and-decision", {
-      title: "Move the nightly build to the shared runners",
+describe("the reader's editor: the decision first, support as folds", () => {
+  const CASES: Wire[] = [
+    { id: "decision_title-only", title: "Glass title only decision" },
+    {
+      id: "decision_context-and-decision", title: "Move the nightly build to the shared runners",
       context_markdown: "Our own runners are full every night. The shared runner pool has spare capacity after 8 PM.",
       decision_markdown: "Move the nightly build to the shared runners.",
-    }, ["Background"]],
+    },
   ];
-  const heads = () =>
-    // The decision's own headings. W1-TRUTH (reader grammar): the decision
-    // text reads with no "Decision" heading over it; a support field is a
-    // fold only when it has text.
-    Array.from(document.querySelectorAll(".desk-decision-reader > .gadget-fold > summary > .gadget-fold-title"))
-      .map((h) => (h.textContent ?? "").trim()).filter((label) => label !== "State");
-
   beforeEach(async () => {
-    hub.decisions = CASES.map(([slug, fields]) => decisionWire({ id: `decision_${slug}`, ...fields }));
+    hub.decisions = CASES.map((fields) => decisionWire(fields));
     await act(async () => { await useDesk.getState().refresh(); });
   });
-
-  for (const [slug, , want] of CASES) {
-    it(`${slug}: headings ${JSON.stringify(want)}`, () => {
-      const object = objectByRef(useDesk.getState().items, `decision:decision_${slug}`);
-      expect(object).not.toBeNull();
-      render(<DecisionPullout object={object!} onClose={() => {}} />);
-      expect(heads()).toEqual(want);
-    });
+  async function edit(deskId: string) {
+    render(<Reader deskId={deskId} />);
+    fireEvent.click(await screen.findByTestId("decision-reader-edit"));
+    await screen.findByRole("textbox", { name: "Decision" });
   }
 
-  it("writing starts in Decision; support folds keep their drafts when closed", () => {
-    const object = objectByRef(useDesk.getState().items, "decision:decision_title-only");
-    render(<DecisionPullout object={object!} onClose={() => {}} />);
-    fireEvent.click(screen.getByRole("button", { name: "Edit" }));
+  it("writing starts in Decision; support folds keep their drafts when closed", async () => {
+    await edit("decision_title-only");
     expect(screen.getByRole("textbox", { name: "Decision" })).toHaveFocus();
     const context = screen.getByText("Background", { selector: ".gadget-fold-title" });
     const consequences = screen.getByText("Consequences", { selector: ".gadget-fold-title" });
@@ -492,190 +542,138 @@ describe("the decision window shows a heading only with text under it", () => {
     fireEvent.click(context);
     expect(context.closest("details")).not.toHaveAttribute("open");
     expect(screen.getByLabelText("Background")).toHaveValue("A reason to retain");
-    fireEvent.click(context);
-    expect(screen.getByRole("textbox", { name: "Background" })).toHaveValue("A reason to retain");
     expect(hub.puts).toHaveLength(0);
   });
 
-  it("populated support opens beside the primary decision when editing", () => {
-    const object = objectByRef(useDesk.getState().items, "decision:decision_context-and-decision");
-    render(<DecisionPullout object={object!} onClose={() => {}} />);
-    fireEvent.click(screen.getByRole("button", { name: "Edit" }));
+  it("populated support opens beside the primary decision when editing", async () => {
+    await edit("decision_context-and-decision");
     expect(screen.getByRole("textbox", { name: "Decision" })).toHaveFocus();
     expect(screen.getByText("Background", { selector: ".gadget-fold-title" }).closest("details")).toHaveAttribute("open");
     expect(screen.getByRole("textbox", { name: "Background" })).toHaveValue("Our own runners are full every night. The shared runner pool has spare capacity after 8 PM.");
     expect(screen.getByText("Consequences", { selector: ".gadget-fold-title" }).closest("details")).not.toHaveAttribute("open");
   });
 
-  it("Edit on a title-only decision still offers all three fields", () => {
-    const object = objectByRef(useDesk.getState().items, "decision:decision_title-only");
-    render(<DecisionPullout object={object!} onClose={() => {}} />);
-    fireEvent.click(screen.getByRole("button", { name: "Edit" }));
+  it("Edit on a title-only decision still offers all three fields", async () => {
+    await edit("decision_title-only");
     for (const name of ["Background", "Decision", "Consequences"]) {
       expect(screen.getByLabelText(name, { selector: "textarea" })).toBeTruthy();
     }
   });
 });
 
-describe("the decision window chooses a named state", () => {
-  // W1-TRUTH (atlas 2026-10-27): the state is a dot and a word in the status
-  // bar, and it changes by one toolbar verb (Accept, Retire), never a cycle.
-  async function renderDecision() {
-    hub.decisions = [decisionWire({ id: "state-decision", title: "Use the shared runners", status: "accepted" })];
+describe("PHILO-3-01 the default title yields to the first line", () => {
+  async function saveFirstLine(title: string, words: string) {
+    hub.decisions = [decisionWire({ id: "d-title", title })];
     await act(async () => { await useDesk.getState().refresh(); });
-    function Face() {
-      const items = useDesk((state) => state.items);
-      const object = objectByRef(items, "decision:state-decision");
-      return object ? <DecisionPullout object={object} onClose={() => {}} /> : null;
-    }
-    render(<Face />);
+    render(<Reader deskId="d-title" />);
+    fireEvent.click(await screen.findByTestId("decision-reader-edit"));
+    fireEvent.change(await screen.findByRole("textbox", { name: "Decision" }), { target: { value: words } });
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Save" })); });
+    await waitFor(() => expect(hub.puts).toHaveLength(1));
+    return hub.puts[0].body;
   }
-  const stateText = () => screen.getByTestId("desk-decision-state").textContent ?? "";
 
-  it("reading the state writes nothing; a chosen state renders only after success", async () => {
-    await renderDecision();
-    expect(screen.queryByRole("combobox", { name: "Decision status" })).toBeNull();
-    expect(stateText()).toContain("Accepted");
-    expect(hub.puts).toHaveLength(0);
-    let complete!: () => void;
-    vi.mocked(fetch).mockImplementation((input, init) => {
-      if (String(input).endsWith("/status")) {
-        hub.puts.push({ url: String(input), body: JSON.parse(String(init?.body)) });
-        return new Promise((resolve) => { complete = () => {
-          hub.decisions = [{ ...hub.decisions[0], status: "deprecated" }];
-          resolve(json({ decision: hub.decisions[0] }));
-        }; });
-      }
-      return hubFetch(input, init);
+  it("a New decision is titled by the first line of its words", async () => {
+    expect(await saveFirstLine("New decision", "# Adopt the one bus\nfor every frame")).toMatchObject({
+      title: "Adopt the one bus", decision_markdown: "# Adopt the one bus\nfor every frame",
     });
-    const retire = screen.getByRole("button", { name: "Retire" });
-    fireEvent.click(retire);
-    expect(stateText()).toContain("Saving");
-    expect(retire).toBeDisabled();
-    fireEvent.click(retire);
-    expect(hub.puts).toHaveLength(1);
-    await act(async () => complete());
-    await waitFor(() => expect(stateText()).toContain("Retired"));
   });
 
-  it("a refused status keeps the old state and Retry repeats the exact choice", async () => {
-    await renderDecision();
-    let refuse = true;
-    vi.mocked(fetch).mockImplementation((input, init) => {
-      if (String(input).endsWith("/status")) {
-        const body = JSON.parse(String(init?.body));
-        hub.puts.push({ url: String(input), body });
-        if (refuse) return Promise.resolve(json({ error: "state_refused" }, 403));
-        hub.decisions = [{ ...hub.decisions[0], status: body.status }];
-        return Promise.resolve(json({ decision: hub.decisions[0] }));
-      }
-      return hubFetch(input, init);
-    });
-    fireEvent.click(screen.getByRole("button", { name: "Retire" }));
-    expect(await screen.findByText("Could not change the status. The decision is unchanged; choose a status again.")).toBeInTheDocument();
-    expect(stateText()).toContain("Accepted");
-    refuse = false;
-    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
-    await waitFor(() => expect(stateText()).toContain("Retired"));
-    expect(hub.puts.map((put) => put.body)).toEqual([{ status: "deprecated" }, { status: "deprecated" }]);
+  it("an owner title is never replaced", async () => {
+    expect(await saveFirstLine("Bus choice", "Adopt it")).not.toHaveProperty("title");
   });
 });
 
-describe("DELIGHT 2 small joy: Accept counts what is left", () => {
-  // The hub's `PUT /api/decisions/{id}/status` answers `{decision}`
-  // (holdspeak/web/routes/primitives/decisions.py:142-153).
-  async function renderOpen(others: string[]) {
+describe("the reader changes the state by one verb: Accept, Retire", () => {
+  async function renderDecision(status: string, others: string[] = []) {
     hub.decisions = [
-      decisionWire({ id: "joy-decision", title: "Freeze on Nov 12", status: "proposed" }),
-      ...others.map((status, i) => decisionWire({ id: `joy-other-${i}`, title: `Other ${i}`, status })),
+      decisionWire({ id: "state-decision", title: "Use the shared runners", status }),
+      ...others.map((other, i) => decisionWire({ id: `other-${i}`, title: `Other ${i}`, status: other })),
     ];
+    await act(async () => { await useDesk.getState().refresh(); });
+    render(<Reader deskId="state-decision" />);
+    await screen.findByTestId("decision-reader-edit");
+  }
+  const statusWrites = (refuse: () => boolean, hold?: (resolve: () => void) => void) =>
     vi.mocked(fetch).mockImplementation((input, init) => {
-      const url = String(input);
-      const id = /^\/api\/decisions\/([^/?]+)\/status$/.exec(url)?.[1];
+      const id = /^\/api\/decisions\/([^/?]+)\/status$/.exec(String(input))?.[1];
       if (id && init?.method === "PUT") {
         const body = JSON.parse(String(init.body));
-        hub.decisions = hub.decisions.map((d) => d.id === id ? { ...d, status: body.status } : d);
-        return Promise.resolve(json({ decision: hub.decisions.find((d) => d.id === id) }));
+        hub.puts.push({ url: String(input), body });
+        if (refuse()) return Promise.resolve(json({ error: "state_refused" }, 403));
+        const write = () => {
+          hub.decisions = hub.decisions.map((d) => d.id === id ? { ...d, status: body.status } : d);
+          return json({ decision: hub.decisions.find((d) => d.id === id) });
+        };
+        if (hold) return new Promise((resolve) => hold(() => resolve(write())));
+        return Promise.resolve(write());
       }
       return hubFetch(input, init);
     });
-    await act(async () => { await useDesk.getState().refresh(); });
-    function Face() {
-      const items = useDesk((state) => state.items);
-      const object = objectByRef(items, "decision:joy-decision");
-      return object ? <DecisionPullout object={object} onClose={() => {}} /> : null;
-    }
-    render(<Face />);
-  }
-  const stateText = () => screen.getByTestId("desk-decision-state").textContent ?? "";
 
-  it("Accept makes the status bar say \"Accepted · 3 open\"", async () => {
-    await renderOpen(["proposed", "proposed", "proposed", "accepted"]);
+  it("Retire writes once; the state says Retiring, then Retired", async () => {
+    await renderDecision("accepted");
+    expect(stateText()).toMatch(/^Accepted/);
+    let complete!: () => void;
+    statusWrites(() => false, (resolve) => { complete = resolve; });
+    const retire = screen.getByTestId("decision-reader-retire");
+    fireEvent.click(retire);
+    expect(stateText()).toBe("Retiring");
+    expect(retire).toBeDisabled();
+    fireEvent.click(retire);
+    expect(hub.puts).toHaveLength(1);
+    expect(hub.puts[0]).toEqual({ url: "/api/decisions/state-decision/status", body: { status: "deprecated" } });
+    await act(async () => complete());
+    await waitFor(() => expect(stateText()).toBe("Retired"));
+    expect(screen.queryByTestId("decision-reader-retire")).toBeNull();
+  });
+
+  it("a refused Retire says so and keeps the old state; Retire again repeats the choice", async () => {
+    await renderDecision("accepted");
+    let refuse = true;
+    statusWrites(() => refuse);
+    fireEvent.click(screen.getByTestId("decision-reader-retire"));
+    expect((await screen.findByTestId("decision-reader-failure")).textContent).toMatch(/^Could not retire it · /);
+    expect(stateText()).toMatch(/^Accepted/);
+    refuse = false;
+    fireEvent.click(screen.getByTestId("decision-reader-retire"));
+    await waitFor(() => expect(stateText()).toBe("Retired"));
+    expect(hub.puts.map((put) => put.body)).toEqual([{ status: "deprecated" }, { status: "deprecated" }]);
+  });
+
+  it("DELIGHT 2: Accept makes the status bar say \"Accepted · 3 open\"", async () => {
+    await renderDecision("proposed", ["proposed", "proposed", "proposed", "accepted"]);
+    statusWrites(() => false);
     expect(stateText()).toBe("Open");
-    fireEvent.click(screen.getByRole("button", { name: "Accept" }));
+    fireEvent.click(screen.getByTestId("decision-reader-accept"));
     await waitFor(() => expect(stateText()).toBe("Accepted · 3 open"));
   });
 
-  it("the last open decision reads \"all decided\", never a count of zero", async () => {
-    await renderOpen(["accepted"]);
-    fireEvent.click(screen.getByRole("button", { name: "Accept" }));
+  it("DELIGHT 2: the last open decision reads \"all decided\", never a count of zero", async () => {
+    await renderDecision("proposed", ["accepted"]);
+    statusWrites(() => false);
+    fireEvent.click(screen.getByTestId("decision-reader-accept"));
     await waitFor(() => expect(stateText()).toBe("Accepted · all decided"));
     expect(stateText()).not.toMatch(/\b0\b/);
   });
 });
 
-describe("W6 (atlas pass 3): the decision says its title once; About under About, Why under Why", () => {
-  // The from-desk producer's own shape (holdspeak/web/routes/decision_records.py
-  // create_from_desk): the title is the decision text, `About: …` is the
-  // background, `Why: …` is the consequences.
+describe("W6 (atlas pass 3): every verb of a Desk decision says its word in the reader", () => {
   const kafka = decisionWire({
     id: "decision_kafka", title: "Use Kafka for the settlement events", status: "accepted",
     decision_markdown: "Use Kafka for the settlement events",
     context_markdown: "About: Payments Platform Rewrite",
     consequences_markdown: "Why: It is the team standard and the ops team runs it.",
   });
-  const own = decisionWire({
-    id: "decision_own", title: "Move the nightly build",
-    decision_markdown: "Move the nightly build to the shared runners after 8 PM.",
-    context_markdown: "Our own runners are full every night.",
-    consequences_markdown: "The nightly takes 20 minutes longer.",
-  });
-  const heads = () =>
-    Array.from(document.querySelectorAll(".desk-decision-reader > .gadget-fold > summary > .gadget-fold-title"))
-      .map((h) => (h.textContent ?? "").trim());
-  const body = () => document.querySelector('.desk-decision-reader section[aria-label="Decision"]');
-
   beforeEach(async () => {
-    hub.decisions = [kafka, own];
+    hub.decisions = [kafka];
     await act(async () => { await useDesk.getState().refresh(); });
   });
 
-  it("a body that repeats the title is not drawn; About and Why are their own heads", () => {
-    render(<DecisionPullout object={objectByRef(useDesk.getState().items, "decision:decision_kafka")!} onClose={() => {}} />);
-    expect(body()).toBeNull();
-    expect(heads()).toEqual(["About", "Why"]);
-    const reader = document.querySelector(".desk-decision-reader")!;
-    expect(reader.textContent).toContain("Payments Platform Rewrite");
-    expect(reader.textContent).toContain("It is the team standard and the ops team runs it.");
-    expect(reader.textContent).not.toMatch(/About:|Why:/);
-  });
-
-  it("his own words keep their heads: the decision, Background, Consequences", () => {
-    render(<DecisionPullout object={objectByRef(useDesk.getState().items, "decision:decision_own")!} onClose={() => {}} />);
-    expect(body()?.textContent).toContain("Move the nightly build to the shared runners after 8 PM.");
-    expect(heads()).toEqual(["Background", "Consequences"]);
-  });
-
-  it("Edit still edits the fields as written (nothing is lost)", () => {
-    render(<DecisionPullout object={objectByRef(useDesk.getState().items, "decision:decision_kafka")!} onClose={() => {}} />);
-    fireEvent.click(screen.getByRole("button", { name: "Edit" }));
-    expect(screen.getByRole("textbox", { name: "Background" })).toHaveValue("About: Payments Platform Rewrite");
-    expect(screen.getByRole("textbox", { name: "Consequences" })).toHaveValue("Why: It is the team standard and the ops team runs it.");
-  });
-
-  it("every verb says its word; a narrow window folds Copy and Dictate into More", () => {
-    render(<DecisionPullout object={objectByRef(useDesk.getState().items, "decision:decision_kafka")!} onClose={() => {}} />);
-    const toolbar = screen.getByTestId("desk-decision-toolbar");
+  it("Edit, Retire, Send, Copy, Dictate; Copy and Dictate fold into More", async () => {
+    render(<Reader deskId="decision_kafka" />);
+    const toolbar = await screen.findByTestId("decision-reader-toolbar");
+    await screen.findByTestId("decision-reader-retire");
     for (const name of ["Edit", "Retire", "Send…", "Copy", "Dictate about this"]) {
       expect(within(toolbar).getByRole("button", { name }).textContent).toContain(name.replace("…", ""));
     }
@@ -684,18 +682,10 @@ describe("W6 (atlas pass 3): the decision says its title once; About under About
     expect(within(menu).getAllByRole("menuitem").map((item) => item.textContent?.trim())).toEqual(["Copy", "Dictate about this"]);
   });
 
-  it("the Decisions reader's Edit opens this window in its editor", async () => {
-    const { requestDecisionEdit } = await import("../pullouts/decisionEdit");
-    requestDecisionEdit("decision_own");
-    render(<DecisionPullout object={objectByRef(useDesk.getState().items, "decision:decision_own")!} onClose={() => {}} />);
-    expect(screen.getByRole("textbox", { name: "Decision" })).toHaveValue("Move the nightly build to the shared runners after 8 PM.");
-  });
-
-  it("an open window hears Edit at once", async () => {
-    const { requestDecisionEdit } = await import("../pullouts/decisionEdit");
-    render(<DecisionPullout object={objectByRef(useDesk.getState().items, "decision:decision_own")!} onClose={() => {}} />);
-    expect(screen.queryByRole("textbox", { name: "Decision" })).toBeNull();
-    act(() => { requestDecisionEdit("decision_own"); });
-    expect(screen.getByRole("textbox", { name: "Decision" })).toBeTruthy();
+  it("Edit edits the fields as written (nothing is lost)", async () => {
+    render(<Reader deskId="decision_kafka" />);
+    fireEvent.click(await screen.findByTestId("decision-reader-edit"));
+    expect(await screen.findByRole("textbox", { name: "Background" })).toHaveValue("About: Payments Platform Rewrite");
+    expect(screen.getByRole("textbox", { name: "Consequences" })).toHaveValue("Why: It is the team standard and the ops team runs it.");
   });
 });

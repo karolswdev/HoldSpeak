@@ -7,7 +7,7 @@ import { MeetingWindow } from "./MeetingWindow";
 import { ArtifactPullout } from "./ArtifactPullout";
 import { NotePullout } from "./NotePullout";
 import { KbPullout } from "./KbPullout";
-import { DecisionPullout } from "./DecisionPullout";
+import { DecisionToReader } from "./DecisionToReader";
 import { RecipePullout } from "./RecipePullout";
 import { ChainPullout } from "./ChainPullout";
 import { WorkflowPullout } from "./WorkflowPullout";
@@ -29,7 +29,9 @@ export const PULLOUT_CONTENT: Record<PrimitiveKind, PulloutContent> = {
   artifact: ArtifactPullout,
   note: NotePullout,
   kb: KbPullout,
-  decision: DecisionPullout,
+  // The one decision face (2026-11-08): a decision opens its record in the
+  // Decisions window reader; the Decision pullout is parked.
+  decision: DecisionToReader,
   recipe: RecipePullout,
   chain: ChainPullout,
   workflow: WorkflowPullout,

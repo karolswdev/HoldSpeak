@@ -6542,10 +6542,10 @@
           "symbol": "DeskToolShelf"
         },
         {
-          "claim": "Decision opens in a focused paper editor before supporting Context/Consequences folds, with compact status and reachable Done/Cancel.",
-          "line": 35,
-          "path": "web/src/desk/pullouts/DecisionPullout.tsx",
-          "symbol": "export function DecisionPullout"
+          "claim": "Decision opens in a focused paper editor in the Decisions window reader before supporting Background/Consequences folds, with compact status and reachable Save/Cancel.",
+          "line": 170,
+          "path": "web/src/desk/pullouts/views/DeskDecisionEdit.tsx",
+          "symbol": "export function DeskDecisionEditor"
         },
         {
           "claim": "Thread has bounded source/details controls and a separate composer; completed answers keep one routine action and expose the remaining actions through More.",

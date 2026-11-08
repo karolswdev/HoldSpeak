@@ -650,6 +650,22 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
     expect(agent.getAttribute("data-opens")).toBe("true");
   });
 
+  // The one decision face (2026-11-08): a decision row opens its record in
+  // the Decisions window reader, never the Decision pullout.
+  it("a decision row's body opens its record in the Decisions window reader", async () => {
+    const room = vi.mocked(apiFetch).getMockImplementation()!;
+    vi.mocked(apiFetch).mockImplementation(async (path: string, init?: unknown) => {
+      if (path === "/api/decisions/d-ops") return { decision: { id: "d-ops", title: "Run a second ops interview" } } as never;
+      if (path === "/api/decision-records/source/desk/d-ops") return [{ id: "rec-ops" }] as never;
+      return room(path, init as never);
+    });
+    useDesk.setState({ pullouts: [], windowsById: {} } as never);
+    await mount();
+    fireEvent.click(row("Run a second ops interview").querySelector(".needs-row-name")!);
+    await waitFor(() => expect(useDesk.getState().windowsById["surface-decisions"]?.scope).toBe("record:rec-ops"));
+    expect(useDesk.getState().pullouts).toEqual([]);
+  });
+
   it("the row body opens inside a window region too (the Chair window is role=region)", async () => {
     render(<div role="region" aria-label="Needs you"><NeedsDrawer /></div>);
     await screen.findByText("8 need you");

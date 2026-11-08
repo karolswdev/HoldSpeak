@@ -1,10 +1,12 @@
 /**
  * PHILO-6-05 diagnosis probe. It drives the real dataSlice updatePrimitive
- * through a subscribed host and records the store/render result after Save.
- * One held-WorldObject case remains as an explicit synthetic negative
- * control; it is not a production-host diagnosis.
+ * (the write the reader's Save makes, views/DeskDecisionEdit.tsx) through a
+ * host subscribed to the desk's items and records the store/render result.
+ * The Decision pullout is parked (2026-11-08, the one decision face); its
+ * held-object negative control is parked with it
+ * (pullouts/_parked/__tests__/philo605DecisionBodyDiagnosis.test.tsx).
  */
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const requests = vi.hoisted(() => ({
@@ -103,9 +105,6 @@ vi.mock("../../lib/api", async (importOriginal) => {
 
 import { EMPTY_ITEMS } from "../api";
 import { useDesk } from "../store";
-import { objectByRef, type WorldObject } from "../world";
-import { DecisionPullout } from "../pullouts/DecisionPullout";
-import { Pullout } from "../components/Pullout";
 import { DeskReceiptRow } from "../components/DeskReceiptRow";
 import {
   clearWriteFailure,
@@ -128,22 +127,24 @@ const decision = {
   createdAt: "2026-09-24T00:00:00Z",
 };
 
-function heldObject(): WorldObject {
-  const object = objectByRef(useDesk.getState().items, decision.id);
-  if (!object) throw new Error("diagnosis decision missing from store");
-  return object;
-}
-
-/** The same live host projection used by DeskApp (lines 80, 133–135). */
+/** A host subscribed to the desk's items, as every decision face is: it
+ *  draws the decision body the store holds, beside the desk's receipt line. */
 function ProductionHost() {
-  const items = useDesk((s) => s.items);
-  const object = objectByRef(items, decision.id);
+  const body = useDesk((s) => s.items.decision.find((item) => item.id === decision.id)?.decisionMarkdown ?? "");
   return (
     <>
-      {object ? <Pullout o={object} /> : null}
+      {body ? <section aria-label="Decision">{body}</section> : null}
       <DeskReceiptRow />
     </>
   );
+}
+
+/** The reader's Save: one decision write through the store. The press does
+ *  not wait for the write's answer, so neither does this. */
+async function save(words: string) {
+  await act(async () => {
+    void useDesk.getState().updatePrimitive("decision", decision.id, { decision_markdown: words });
+  });
 }
 
 beforeEach(() => {
@@ -249,12 +250,8 @@ describe("shared collection read truth", () => {
 
 /** The read view's "Decision" paper, found by its accessible name
  * (an empty field draws no heading, so a position is not stable). */
-/** W6 (atlas pass 3, defect 11): Save names a "New decision" by its first
- *  line, and a body that repeats the title is said once, by the title bar. */
 function expectSaid(words: string) {
-  const title = String(useDesk.getState().items.decision[0].title || "");
-  if (title === words) expect(decisionSection()).toBeUndefined();
-  else expect(decisionSection()?.textContent).toContain(words);
+  expect(decisionSection()?.textContent).toContain(words);
 }
 
 function decisionSection(): Element | undefined {
@@ -325,42 +322,10 @@ describe("PHILO-6-05 decision body fences", () => {
     );
   });
 
-  it("negative control: a held pullout prop stays stale after the store write", async () => {
-    const object = heldObject();
-    render(<DecisionPullout object={object} onClose={() => {}} />);
-
-    fireEvent.change(screen.getByRole("textbox", { name: "Decision" }), {
-      target: { value: "Keep the local ledger" },
-    });
-
-    await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Save" }));
-    });
-
-    const stored = useDesk.getState().items.decision[0];
-    // The real store producer has the value before the request resolves.
-    expect(stored.decisionMarkdown).toBe("Keep the local ledger");
-    // The held prop intentionally carries the old record. This synthetic
-    // control stays green and must not be cited as the production cause.
-    // PHILO-8-04: the read view is showing (Save left the editor) and it
-    // draws the OLD record: its decision is empty, so its heading hides.
-    expect(document.querySelector(".desk-decision-editor")).toBeNull();
-    expect(document.querySelector(".desk-decision-card")?.textContent).not.toContain(
-      "Keep the local ledger",
-    );
-    expect(decisionSection()).toBeUndefined();
-  });
-
   it("does not reproduce when the production host derives the object from items", async () => {
     render(<ProductionHost />);
 
-    fireEvent.change(screen.getByRole("textbox", { name: "Decision" }), {
-      target: { value: "Keep the local ledger" },
-    });
-
-    await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Save" }));
-    });
+    await save("Keep the local ledger");
 
     // This is the production-host control: if it fails, inspect refresh or
     // host/window caching rather than assuming a stale prop.
@@ -376,12 +341,7 @@ describe("PHILO-6-05 decision body fences", () => {
       if (!requests.resolveDecisionRead) throw new Error(JSON.stringify(requests.calls));
     });
 
-    fireEvent.change(screen.getByRole("textbox", { name: "Decision" }), {
-      target: { value: "Keep the local ledger" },
-    });
-    await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Save" }));
-    });
+    await save("Keep the local ledger");
     expectSaid("Keep the local ledger");
     expect(useDesk.getState().items.decision[0].decisionMarkdown).toBe("Keep the local ledger");
 
