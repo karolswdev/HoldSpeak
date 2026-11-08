@@ -484,6 +484,40 @@ def test_the_rows_that_lower_the_bar(tmp_path) -> None:
     assert not any(row.lowers_bar for row in diff_program_text(changed, text.replace("control normal", "control secure")))
 
 
+@pytest.mark.parametrize("case, before, after, widens", [
+    ("C01", "", "", False),
+    ("C02", "", "src/", False),                   # a first line narrows the repository
+    ("C03", "src/", "", True),                    # the line removed: the repository
+    ("C04", "src/", "src/, docs/", True),         # a path added
+    ("C05", "src/, docs/", "src/", False),        # a path dropped
+    ("C06", "src/api/", "src/", True),            # up to the parent
+    ("C07", "src/", "src/api/", False),           # down to a child
+    ("C08", "src/", "src/, src/api/", False),     # a redundant child
+    ("C09", "src/, src/api/", "src/", False),     # the redundant child dropped
+    ("C10", "src/, docs/", "docs/, src/", False),  # order only
+    ("C11", "src/", "docs/", True),               # swapped: docs/ is new
+    ("C12", "src/", "src2/", True),               # not a string prefix
+    ("C13", "src", "src/", False),                # the trailing slash
+    ("C13r", "src/", "src", False),
+    ("C14", "src/, src/", "src/", False),         # a duplicate
+    ("C14a", "src/", "src/, src/", False),
+    ("C15", "src/a", "src/ab", True),             # the slash boundary
+])
+def test_within_lowers_the_bar_only_when_its_coverage_widens(case: str, before: str, after: str, widens: bool) -> None:
+    """``within`` is the union of the paths night planning may own; empty
+    is the repository. The guard compares coverage, not the strings."""
+    def text(within: str) -> str:
+        return "program P\n" + (f"  within {within}\n" if within else "")
+
+    rows = {row.id: row for row in diff_program_text(text(before), text(after))}
+    if before == after:
+        assert rows == {}, case
+        return
+    row = rows["program.within"]  # the row keeps its identity; a spelling change is still a change
+    assert (row.op, row.field, row.lowers_bar, row.verdict) == ("change", "within", widens, "lowers" if widens else "allowed"), case
+    assert (row.before, row.after) == (before or "none", after or "none")
+
+
 # ── text_apply through the service ───────────────────────────────────
 
 def test_a_dry_run_writes_nothing(tmp_path) -> None:

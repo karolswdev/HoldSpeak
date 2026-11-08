@@ -292,3 +292,54 @@ def test_at_yolo_a_mixed_answer_applies_the_allowed_row_and_keeps_the_lowering_f
     pressed = desk.service.text_apply(OWNER, desk.pid, answer["proposed_text"], dry_run=False, base=answer["base"],
                                       allow_lower=answer["lowers"])
     assert pressed["applied"] is True and "review agent at glance" in pressed["text"]
+
+
+def _fake_reply(base: str, *pairs: tuple[str, str]) -> str:
+    """A FAKE engine answer, typed here: the stripped text with the pairs
+    replaced (the recorded replies never touch ``within``)."""
+    text = program_shaper.stripped_text(base)
+    for old, new in pairs:
+        assert old in text, old
+        text = text.replace(old, new, 1)
+    return json.dumps({"say": "Widened.", "text": text})
+
+
+def test_at_yolo_a_shaped_wider_within_waits_for_his_press(desk) -> None:
+    """A generated ``within`` that admits a new path lowers the bar like a
+    typed one: withheld at YOLO even when the owner asked for it; his own
+    press with the row named applies it. A narrowing applies at once."""
+    desk.service.update(OWNER, desk.pid, within=["holdspeak/db/"])
+    before = print_program(desk.service.get(OWNER, desk.pid))
+    desk.engine.replies = [_fake_reply(before, ("  within holdspeak/db/", "  within holdspeak/db/, holdspeak/web/"))]
+    answer = desk.service.shape(OWNER, desk.pid, "let the night touch the web too", apply=True)
+    assert _rows(answer) == [("change", "program", "within", "lowers")]
+    assert answer["lowers"] == ["program.within"] and answer["applied"] is False and answer["applied_rows"] == []
+    assert print_program(desk.service.get(OWNER, desk.pid)) == before
+    assert desk.service._program(desk.pid)["within"] == ["holdspeak/db/"]
+    pressed = desk.service.text_apply(OWNER, desk.pid, answer["proposed_text"], dry_run=False, base=answer["base"],
+                                      allow_lower=answer["lowers"])
+    assert pressed["applied"] is True and pressed["program"]["within"] == ["holdspeak/db/", "holdspeak/web/"]
+    # Down to a child: an ordinary row, applied at YOLO with its Decided for you line.
+    now = print_program(desk.service.get(OWNER, desk.pid))
+    desk.engine.replies = [_fake_reply(now, ("  within holdspeak/db/, holdspeak/web/", "  within holdspeak/db/"))]
+    narrowed = desk.service.shape(OWNER, desk.pid, "only the db", apply=True)
+    assert narrowed["applied"] is True and narrowed["lowers"] == []
+    assert [row["id"] for row in narrowed["applied_rows"]] == ["program.within"]
+    assert desk.service._program(desk.pid)["within"] == ["holdspeak/db/"]
+
+
+def test_at_yolo_a_mixed_answer_applies_its_allowed_row_and_keeps_the_wider_within(desk) -> None:
+    desk.service.update(OWNER, desk.pid, within=["holdspeak/db/"])
+    before = print_program(desk.service.get(OWNER, desk.pid))
+    desk.engine.replies = [_fake_reply(before, ("  within holdspeak/db/", "  within holdspeak/db/, docs/"),
+                                       ("step 1 Indexes", "step 1 Indexes, renamed"))]
+    answer = desk.service.shape(OWNER, desk.pid, "rename it and let the night write docs", apply=True)
+    assert answer["applied"] is True and [row["id"] for row in answer["applied_rows"]] == ["step-1.title"]
+    assert answer["program"]["steps"][0]["title"] == "Indexes, renamed"
+    assert desk.service._program(desk.pid)["within"] == ["holdspeak/db/"]
+    # Against the refreshed base, one row waits: the wider within.
+    assert _rows(answer) == [("change", "program", "within", "lowers")] and answer["lowers"] == ["program.within"]
+    assert answer["base"] == answer["text"] and "Indexes, renamed" in answer["base"]
+    pressed = desk.service.text_apply(OWNER, desk.pid, answer["proposed_text"], dry_run=False, base=answer["base"],
+                                      allow_lower=answer["lowers"])
+    assert pressed["applied"] is True and pressed["program"]["within"] == ["holdspeak/db/", "docs/"]

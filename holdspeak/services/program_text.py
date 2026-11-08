@@ -1207,9 +1207,35 @@ def _lowers_head(name: str, before: Any, after: Any) -> bool:
     if name == "rounds_before_start":
         return bool(before) and not bool(after)
     if name == "within":
-        # §4.5: a removed ``within`` line, or a list without a path it had.
-        return bool(before) and (not after or any(path not in after for path in before))
+        return _within_widens(before, after)
     return False
+
+
+def _within_bound(entry: Any) -> str:
+    return str(entry).strip().rstrip("/")
+
+
+def _within_covers(bound: Any, path: Any) -> bool:
+    """``bound`` covers ``path`` as night planning reads a bound: the same
+    name, or a slash-delimited descendant (``src/`` covers ``src/api``,
+    never ``src2``)."""
+    base, name = _within_bound(bound), _within_bound(path)
+    return name == base or name.startswith(base + "/")
+
+
+def _within_widens(before: Any, after: Any) -> bool:
+    """§4.5: the new ``within`` admits a path the old one did not. The list
+    is a union of allowed paths; an empty list is the whole repository. So a
+    removed line widens, a first line narrows, and a changed list widens only
+    when one of its bounds is outside every old bound (order, duplicates and
+    a redundant child change nothing). Spellings are compared as written,
+    bar surrounding whitespace and a trailing slash: no case fold, no glob,
+    no look at the disk."""
+    if not before:
+        return False
+    if not after:
+        return True
+    return any(not any(_within_covers(old, new) for old in before) for new in after)
 
 
 def _lowers_step(name: str, before: Any, after: Any) -> bool:
