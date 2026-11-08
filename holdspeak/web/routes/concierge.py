@@ -166,6 +166,31 @@ def build_concierge_router(ctx: WebContext) -> APIRouter:
         except Exception as exc:
             return error_500(exc, log, "Failed to discover LAN engines")
 
+    @router.post("/retry")
+    async def post_retry(request: Request) -> Any:
+        """Retry on a Needs-you engine row: the same job, run again through
+        the engine door by the caller that registered it (``engine_door.RETRY``)."""
+        try:
+            _owner(request)
+            body = await request.json()
+            if not isinstance(body, dict) or not isinstance(body.get("kind"), str) or not isinstance(body.get("key"), str):
+                raise ServiceError("concierge_retry_invalid", "Retry needs the job's kind and key.", context={"status": 400})
+            from ...services import engine_door
+
+            try:
+                await run_in_threadpool(engine_door.retry, request.state.principal, body["kind"], body["key"])
+            except engine_door.EngineDoorError as exc:
+                if exc.code == "no_retry":
+                    return JSONResponse({"ok": False, "code": exc.code, "message": "This job has no Retry."}, status_code=404)
+                # The engine's own words stay out of the answer (a path or a host).
+                return JSONResponse({"ok": False, "code": exc.code,
+                                     "message": "It did not run again. The row stays."}, status_code=409)
+            return JSONResponse({"ok": True})
+        except ServiceError as exc:
+            return _safe_error(exc)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to retry the job")
+
     @router.post("/propose")
     async def post_propose(request: Request) -> Any:
         try:

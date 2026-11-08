@@ -14,6 +14,9 @@ Run it again when a producer's answer shape changes:
 
 It writes ``web/src/desk/__tests__/fixtures/needsYou.recorded.json``.
 
+``--engine`` records only the engine row scenario (a decision draft whose
+engine does not answer, Retry with it answering) under ``engine``.
+
 ``--rows`` records only the Needs-you rows scenario (the owner's own action
 items an agent titled ``Must fix:``, ``Should fix:``, ``Noted:``, one plain
 and one a person owes; Done on the first) into
@@ -418,6 +421,55 @@ def program_merge() -> dict[str, Any]:
             _close()
 
 
+def engine_failure() -> dict[str, Any]:
+    """The engine row scenario: a decision draft whose engine does not answer
+    (the door's failed receipt), the Needs-you read with its row, Retry on
+    the row with the engine answering again, and the read after (no row)."""
+    sys.path.insert(0, str(REPO))
+    from holdspeak.kernel.runtime import _service
+    from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+    from tests.unit.test_decision_record_service import _accepted_meeting_decision
+    from tests.unit.test_phase143_inference_assignments import OWNER as ASSIGNMENT_OWNER, _profile
+
+    class Engine:
+        down = True
+
+        def run_prompt(self, **_kwargs: Any) -> str:
+            if Engine.down:
+                raise RuntimeError("connection refused")
+            return "# Note\n\nThe decision, drafted."
+
+    with pytest.MonkeyPatch.context() as mp:
+        hub = _boot("engine", mp)
+        try:
+            with hub.db._connection() as conn:
+                conn.execute("INSERT INTO meetings (id, started_at, title) VALUES (?, ?, ?)",
+                             ("meeting-127", "2026-08-07T00:00:00+00:00", "Ledger review"))
+            _accepted_meeting_decision(hub.db, "dec-engine")
+            _profile(hub.db, "drafts")
+            InferenceAssignmentService(hub.db).set_assignment(ASSIGNMENT_OWNER, {
+                "command_id": "assign-drafts", "expected_revision": 0,
+                "scope": {"kind": "capability", "capability_id": "decision.promotion_draft"},
+                "entries": [{"profile_id": "drafts", "profile_revision": 1}],
+            })
+            _service().inference_runner._engine_factory = lambda _revision, **_kw: Engine()
+            failed = hub.client.post("/api/decisions/dec-engine/promote/note/draft-with-model", json={})
+            assert failed.status_code == 409, failed.text
+            before = _gets(hub, COMMON_GETS)
+            row = next(item for item in before["/api/desk/needs-you?fresh=1"]["items"]
+                       if item.get("source") == "engine")
+            verb = row["engine"]["verbs"][0]
+            Engine.down = False
+            answer = _post(hub, verb["href"], verb["body"])
+            return {"title": row["title"], "steps": [
+                {"name": "before", "gets": before},
+                {"name": "retry", "post": verb["href"], "body": verb["body"], "answer": answer,
+                 "gets": _gets(hub, COMMON_GETS)},
+            ]}
+        finally:
+            _close()
+
+
 #: A private IPv4 address (10/8, 172.16/12, 192.168/16): the seeds' model
 #: host is one. A fixture under web/src ships, and no private address ships
 #: (tests/unit/test_lan_address_guard.py): the writer names it server.local.
@@ -435,9 +487,17 @@ def _write(path: Path, value: Any) -> None:
 
 
 def main() -> int:
+    if "--engine" in sys.argv[1:]:
+        # Only the engine row scenario, written beside the other row scenarios.
+        current = json.loads(ROWS_OUT.read_text(encoding="utf-8"))
+        current["engine"] = engine_failure()
+        _write(ROWS_OUT, current)
+        print(f"wrote {ROWS_OUT.relative_to(REPO)} (engine)")
+        return 0
     if "--rows" in sys.argv[1:]:
         _write(ROWS_OUT, {"schema": "needs-you-rows@1", "recordedBy": "scripts/record_needs_you_fixture.py --rows",
-                          **rows(), "program": program_merge(), "done": done_rows()})
+                          **rows(), "program": program_merge(), "done": done_rows(),
+                          "engine": engine_failure()})
         print(f"wrote {ROWS_OUT.relative_to(REPO)} ({ROWS_OUT.stat().st_size} bytes)")
         return 0
     fixture = {

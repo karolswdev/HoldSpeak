@@ -14,7 +14,7 @@ For example, the old meeting Slack-export route returns `slack_moved_to_channel`
 Read the handler and owning guide before treating route presence as feature availability.
 Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
-Routes: 827 (plus static mounts). iOS-consumed: 87. Web-consumed: 586.
+Routes: 828 (plus static mounts). iOS-consumed: 87. Web-consumed: 586.
 
 ## device_audio_ws
 
@@ -239,6 +239,7 @@ Routes: 827 (plus static mounts). iOS-consumed: 87. Web-consumed: 586.
 | POST | `/api/concierge/download` | web |
 | POST | `/api/concierge/probe` | web |
 | POST | `/api/concierge/propose` | web |
+| POST | `/api/concierge/retry` | server only |
 | GET | `/api/concierge/speech` | web |
 | POST | `/api/concierge/summary-selection` | web |
 

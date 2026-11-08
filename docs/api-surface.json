@@ -1530,6 +1530,14 @@
       ]
     },
     {
+      "path": "/api/concierge/retry",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.concierge",
+      "consumers": []
+    },
+    {
       "path": "/api/concierge/speech",
       "methods": [
         "GET"

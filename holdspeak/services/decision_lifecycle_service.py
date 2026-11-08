@@ -125,6 +125,7 @@ class DecisionLifecycleService:
             answer = await asyncio.to_thread(
                 engine_door.run, broker, principal, "decision.promotion_draft", prompt_payload,
                 engine=engine, deadline=180, stage=("decision-promotion-draft", projection),
+                retry=(DECISION_RETRY_KIND, f"{decision.id}|{normalized}"),
             )
         except engine_door.EngineDoorError as exc:
             code = "decision_promotion_cancelled" if exc.outcome == "cancelled" else "decision_promotion_draft_refused"
@@ -190,3 +191,34 @@ class DecisionLifecycleService:
     def _promotion_payload(self, decision_id: str, receipt: Any) -> dict[str, Any]:
         artifact=self._db.plugins.get_artifact(receipt.artifact_id); decision=self._db.decisions.get(decision_id)
         return {"decision":decision.to_dict() if decision else None,"artifact":artifact.to_dict() if artifact else None,"receipt":receipt.to_dict()}
+
+
+#: The retry kind of a decision draft; its key is ``<decision id>|<artifact type>``.
+DECISION_RETRY_KIND = "decision.draft"
+
+
+def _retry_decision_draft(principal: Any, key: str) -> Any:
+    """Retry from Needs you: draft the same decision again (the artifact id
+    is derived from the decision and the type, so a redraft rewrites it)."""
+    import asyncio
+
+    from ..db import get_database
+
+    decision_id, _, artifact_type = key.partition("|")
+    return asyncio.run(DecisionLifecycleService(get_database()).draft_promoted_with_model(
+        principal, decision_id, artifact_type, {},
+    ))
+
+
+def _register_retry() -> None:
+    from . import engine_door
+
+    engine_door.on_retry(DECISION_RETRY_KIND, engine_door.RetryKind(
+        words="the decision draft", object_kind="decision",
+        open_ref=lambda key: "decision:" + key.partition("|")[0],
+        run=_retry_decision_draft,
+    ))
+
+
+_register_retry()
+

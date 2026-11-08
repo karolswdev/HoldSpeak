@@ -44,6 +44,7 @@
 ["POST", "/api/door/items"],
 ["GET", "/api/concierge/detect"],
 ["POST", "/api/concierge/discover-lan"],
+["POST", "/api/concierge/retry"],
 ["POST", "/api/concierge/propose"],
 ["POST", "/api/concierge/probe"],
 ["POST", "/api/concierge/apply"],

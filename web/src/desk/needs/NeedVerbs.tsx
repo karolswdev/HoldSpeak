@@ -219,6 +219,21 @@ export function NeedVerbsView({ face, primary, onWell, well, menu = null, onMenu
           ))}
         </>
       );
+    case "hub":
+      // Engines (2026-11-08): the hub's verbs (Retry), the first the lead.
+      return (
+        <>
+          {v.verbs.map((verb, index) => (
+            <Button key={verb.id} dense variant={index === 0 ? lead : "ghost"} loading={busy && index === 0} disabled={busy}
+              aria-label={named(verb.label)} data-testid="needs-row-verb" data-verb={`hub-${verb.id.replace(/_/g, "-")}`}
+              onClick={(event) => void act(index === 0 ? "Done" : verb.label, () => apiFetch(verb.href, {
+                method: verb.method || "POST", json: verb.body ?? {},
+              }), face.id, (event.currentTarget as Element).closest("li"))}>
+              {verb.label}
+            </Button>
+          ))}
+        </>
+      );
     case "program": {
       // Owner walk 2026-11-08: the row is one verb, the ask's lead (Merge on
       // a merge ask, Decide on a decision, else Open); a press on the row

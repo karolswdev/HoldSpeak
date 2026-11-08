@@ -104,11 +104,20 @@ def summarize_batch(
     """One journal batch: the events + a model summary. When the model
     is unavailable (no fn, or it raises), degrade to an event-only
     entry — a typed absence, never a fabricated summary."""
-    rendered = format_events_for_model(events)
+    return _summarize_rendered(format_events_for_model(events), summarize_fn=summarize_fn, events=events)
+
+
+def _summarize_rendered(
+    rendered: str, *, summarize_fn: Optional[SummarizeFn], events: Optional[list[dict[str, Any]]] = None,
+) -> dict[str, Any]:
+    """The batch for the rendered event lines (``events`` when known; a Retry
+    knows only the lines its journal note kept)."""
+    events = events if events is not None else []
     batch_sha = "sha256:" + hashlib.sha256(rendered.encode()).hexdigest()
     if summarize_fn is None:
         return {
             "events": events,
+            "rendered": rendered,
             "summary": "",
             "degraded": True,
             "event_batch_sha256": batch_sha,
@@ -118,15 +127,17 @@ def summarize_batch(
     except RailsSummaryUnavailable as exc:
         return {
             "events": events,
+            "rendered": rendered,
             "summary": "",
             "degraded": True,
             "event_batch_sha256": batch_sha,
             "route_receipt_id": exc.receipt_id,
         }
     except Exception:
-        return {"events": events, "summary": "", "degraded": True, "event_batch_sha256": batch_sha}
+        return {"events": events, "rendered": rendered, "summary": "", "degraded": True, "event_batch_sha256": batch_sha}
     result = {
         "events": events,
+        "rendered": rendered,
         "summary": summary,
         "degraded": not summary,
         "event_batch_sha256": batch_sha,
@@ -143,10 +154,13 @@ def summarize_batch(
 def journal_body(batch: dict[str, Any]) -> str:
     """The journal note's markdown: a provenance line, the events named
     (receipts), then the model's summary (or an honest degraded note)."""
-    events = batch.get("events") or []
-    n = len(events)
+    rendered = batch.get("rendered")
+    if not isinstance(rendered, str):
+        rendered = format_events_for_model(batch.get("events") or [])
+    lines = rendered.splitlines()
+    n = len(lines)
     header = f"> {n} rail event{'s' if n != 1 else ''} observed"
-    listing = "\n".join(f"- {line}" for line in format_events_for_model(events).splitlines())
+    listing = "\n".join(f"- {line}" for line in lines)
     receipt = str(batch.get("route_receipt_id") or "").strip()
     reference = f"\n\n_(route receipt: {receipt})_" if receipt else ""
     egress = str(batch.get("egress") or "").strip()
@@ -166,9 +180,10 @@ def record_journal_entry(db: Any, batch: dict[str, Any], *, title: str) -> Any:
     primitive). The ONLY write the observer makes — never to the rails."""
     batch_sha = str(batch.get("event_batch_sha256") or "")
     if not batch_sha.startswith("sha256:") or len(batch_sha) != 71:
-        batch_sha = "sha256:" + hashlib.sha256(
-            format_events_for_model(list(batch.get("events") or [])).encode()
-        ).hexdigest()
+        rendered = batch.get("rendered")
+        if not isinstance(rendered, str):
+            rendered = format_events_for_model(list(batch.get("events") or []))
+        batch_sha = "sha256:" + hashlib.sha256(rendered.encode()).hexdigest()
     # The batch hash is the observer's durable materializer identity. A process
     # restart replays this one note rather than a second note or provider call.
     note = db.notes.upsert(
@@ -329,6 +344,7 @@ def build_profile_summarizer(
             answer = engine_door.run(
                 broker, principal, RAILS_SUMMARY_JOB, payload, engine=engine,
                 result_ref="rails-summary:" + batch_sha.removeprefix("sha256:"),
+                retry=(RAILS_RETRY_KIND, batch_sha.removeprefix("sha256:")),
             )
         except engine_door.EngineDoorError as exc:
             summarize.last_receipt_id = exc.operation_id
@@ -346,6 +362,61 @@ def build_profile_summarizer(
 
 
 RAILS_SUMMARY_JOB = "background.rails_summary"
+#: The retry kind of a journal batch; its key is the batch digest (hex).
+RAILS_RETRY_KIND = "rails.journal"
+
+
+def observer_principal() -> Any:
+    """The observer's own SERVICE principal: it may only summarize a batch
+    into its journal note (never an owner)."""
+    from .principals import Principal, PrincipalKind
+
+    return Principal(
+        PrincipalKind.SERVICE,
+        "rails-observer",
+        frozenset({("rails.observer-batch", 1), ("inference.invoke", 1), ("inference.cancel", 1)}),
+        "rails-observer:journal-only",
+    )
+
+
+def _journal_note_id(digest: str) -> str:
+    return "rails-journal-" + digest[:32]
+
+
+def retry_journal(_principal: Any, digest: str, *, db: Any = None, broker: Any = None) -> Any:
+    """Retry from Needs you: summarize the batch its journal note kept, again,
+    and write the note once more. Raises ``EngineDoorError`` when it fails."""
+    from .services import engine_door
+
+    db = db or __import__("holdspeak.db", fromlist=["get_database"]).get_database()
+    note = db.notes.get(_journal_note_id(digest))
+    if note is None:
+        raise engine_door.EngineDoorError("no_retry", "The journal note is gone")
+    blocks = str(note.body_markdown or "").split("\n\n")
+    listing = next(
+        (block for block in blocks if block and all(line.startswith("- ") for line in block.splitlines())), "",
+    )
+    rendered = "\n".join(line[2:] for line in listing.splitlines())
+    if hashlib.sha256(rendered.encode()).hexdigest() != digest:
+        raise engine_door.EngineDoorError("no_retry", "The journal note no longer holds its batch")
+    summarizer = build_profile_summarizer(db=db, broker=broker, principal=observer_principal())
+    batch = _summarize_rendered(rendered, summarize_fn=summarizer)
+    if batch.get("degraded"):
+        raise engine_door.EngineDoorError("failed", "The journal summary did not run")
+    return record_journal_entry(db, batch, title=str(note.title or "Rails journal"))
+
+
+def _register_retry() -> None:
+    from .services import engine_door
+
+    engine_door.on_retry(RAILS_RETRY_KIND, engine_door.RetryKind(
+        words="the journal summary", object_kind="note",
+        open_ref=lambda digest: "note:" + _journal_note_id(digest),
+        run=retry_journal,
+    ))
+
+
+_register_retry()
 
 
 def _record_local_readiness(broker: Any, principal: Any, engine: Any) -> None:

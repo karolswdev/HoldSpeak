@@ -184,6 +184,7 @@ def run(
     result_ref: Optional[str] = None,
     invocation_id: str = "",
     stage: Optional[tuple[str, Callable[[Any], Mapping[str, Any]]]] = None,
+    retry: Optional[tuple[str, str]] = None,
 ) -> Answer:
     """Run ``job`` once on its assigned engine (or on ``engine`` when the
     caller already holds one) and return the answer.
@@ -195,10 +196,16 @@ def run(
     once the runner's receipt says the job succeeded. When the engine fails
     plainly (``failed`` or ``refused``) and the assignment names a next engine,
     the job runs once more on it; ``Answer.engine`` is the one that answered.
+    ``retry`` is ``(kind, key)``: the caller's own name for this job. A job
+    that fails waits on the owner in Needs you (``failure_items``); when
+    ``kind`` is registered (``on_retry``) its row has Retry. A caller that
+    names its own ``invocation_id`` (a Stop handle) is not tracked.
     Raises ``EngineDoorError``.
     """
     if engine is None:
         engine = engine_for(broker, job)
+    if not invocation_id:
+        invocation_id = _door_invocation_id(job, retry)
     try:
         return _run_once(
             broker, principal, job, payload, engine=engine, contract=contract,
@@ -281,4 +288,181 @@ def _answer(outcome: Any, captured: list[Any], engine: Engine, job: str) -> Answ
             operation_id=operation_id, outcome=state, send_phase=send_phase, error=error,
         )
     return Answer(result=result, operation_id=operation_id, engine=engine, outcome=state, send_phase=send_phase)
+
+
+# ── A failed job waits on the owner (Needs you), and Retry ───────────────
+#
+# The record is the runner's receipt: every door job without a caller-made
+# id runs under ``door_<job>_<kind>_<key>_<nonce>`` (each part hex, so the
+# kernel's alphanumeric rule holds and the parts split back). A job whose
+# LATEST receipt for its (job, kind, key) is not a success waits on him.
+# Nothing else is written.
+
+_DOOR_PREFIX = "door_"
+
+
+def _hex(text: str) -> str:
+    return text.encode("utf-8").hex()
+
+
+def _door_invocation_id(job: str, retry: Optional[tuple[str, str]]) -> str:
+    kind, key = retry if retry else ("", "")
+    return f"{_DOOR_PREFIX}{_hex(job)}_{_hex(kind)}_{_hex(key)}_{uuid.uuid4().hex[:12]}"
+
+
+def _parse_door_id(native_id: str) -> Optional[tuple[str, str, str]]:
+    parts = native_id.split("_")
+    if len(parts) < 5 or parts[0] != "door":
+        return None
+    try:
+        return tuple(bytes.fromhex(part).decode("utf-8") for part in parts[1:4])  # type: ignore[return-value]
+    except ValueError:
+        return None
+
+
+@dataclass(frozen=True)
+class RetryKind:
+    """What a caller registers for its jobs: the words of the job ("the
+    journal summary"), the kind of object the row shows (its sprite), the
+    ref the row opens, and the callable that runs the same job again."""
+
+    words: str
+    object_kind: str
+    open_ref: Callable[[str], str]
+    run: Optional[Callable[[Any, str], Any]] = None
+
+
+#: The one registry: retry kind -> RetryKind. Callers register at import.
+RETRY: dict[str, RetryKind] = {}
+
+#: Words for a job that names no retry kind (its capability id).
+JOB_WORDS = {
+    "background.rails_summary": "the journal summary",
+    "decision.promotion_draft": "the decision draft",
+    "delivery.pr_review_draft": "the review draft",
+    "calendar.snapshot_extract": "the calendar picture",
+    "background.cadence_draft": "the next action",
+    "chat.guardrail": "the thread check",
+    "chat.compact": "the thread summary",
+    "memory.embed": "memory search",
+    "memory.extract": "memory notes",
+    "memory.consolidate": "memory",
+    "memory.page": "a memory page",
+    "agent.plan": "the program plan",
+    "ask.answer": "an answer",
+    "meeting.deferred_analysis": "the note's tasks",
+    "project.brief.prepare": "the brief",
+}
+
+ENGINES_REF = "window:surface-engines"
+
+
+def on_retry(kind: str, entry: RetryKind) -> None:
+    RETRY[kind] = entry
+
+
+#: The callers that register a Retry at import; read before the registry is.
+_RETRY_CALLERS = (
+    "holdspeak.rails_observer",
+    "holdspeak.services.decision_lifecycle_service",
+    "holdspeak.web.routes.delivery_prs",
+)
+
+
+def _load_retry_callers() -> None:
+    import importlib
+
+    for name in _RETRY_CALLERS:
+        try:
+            importlib.import_module(name)
+        except Exception:  # a caller that cannot load has no Retry
+            continue
+
+
+def _reason(state: str, send_phase: str) -> str:
+    """One line in the owner's words; never a path, a host or a trace."""
+    if state == "refused":
+        return "it was not ready"
+    if state == "indeterminate":
+        return "no answer came back"
+    if state == "cancelled":
+        return "it was stopped"
+    if send_phase == "pre_send":
+        return "it could not be reached"
+    return "it gave no answer"
+
+
+def _engine_name(conn: Any, target_ref: str) -> str:
+    revision_id = target_ref.removeprefix("deployment-revision:")
+    row = conn.execute(
+        "SELECT destination_id, model FROM deployment_revisions WHERE id=?", (revision_id,),
+    ).fetchone()
+    if row is None:
+        return "Your engine"
+    label = conn.execute(
+        "SELECT label FROM model_profile_revisions WHERE profile_id=? ORDER BY revision DESC LIMIT 1",
+        (row["destination_id"],),
+    ).fetchone()
+    return str((label["label"] if label else "") or row["model"] or "Your engine").strip()
+
+
+def failure_items(db: Any) -> list[dict[str, Any]]:
+    """Every door job whose latest receipt for its (job, kind, key) failed.
+
+    ``{key, job, kind, retry_key, engine, words, reason, since, object_kind,
+    open_ref, can_retry}``, newest first. A read of the kernel's receipts.
+    """
+    import json
+    from datetime import datetime, timezone
+
+    _load_retry_callers()
+    latest: dict[tuple[str, str, str], dict[str, Any]] = {}
+    with db._connection() as conn:
+        rows = conn.execute(
+            """SELECT o.native_id, o.target_ref, o.created_at, r.state, a.material_json
+                 FROM kernel_operations o
+                 JOIN kernel_receipts r ON r.operation_id = o.operation_id
+                 LEFT JOIN kernel_inference_receipt_attestations a ON a.operation_id = o.operation_id
+                WHERE o.name = 'inference.invoke' AND o.native_id LIKE 'door\\_%' ESCAPE '\\'
+                ORDER BY o.created_at""",
+        ).fetchall()
+        for row in rows:
+            parsed = _parse_door_id(str(row["native_id"]))
+            if parsed is None:
+                continue
+            latest[parsed] = {**dict(row), "engine": ""}
+        failed = {k: v for k, v in latest.items() if str(v["state"]) != "succeeded"}
+        for value in failed.values():
+            value["engine"] = _engine_name(conn, str(value["target_ref"] or ""))
+    out: list[dict[str, Any]] = []
+    for (job, kind, key), row in failed.items():
+        try:
+            evidence = json.loads(row["material_json"] or "{}")
+        except ValueError:
+            evidence = {}
+        entry = RETRY.get(kind)
+        since = datetime.fromtimestamp(float(row["created_at"]), tz=timezone.utc).isoformat(timespec="seconds")
+        out.append({
+            "key": f"{job}:{kind}:{key}" if kind else job,
+            "job": job, "kind": kind, "retry_key": key,
+            "engine": row["engine"],
+            "words": entry.words if entry else JOB_WORDS.get(job, "an AI job"),
+            "reason": _reason(str(row["state"]), str(evidence.get("send_phase") or "")),
+            "since": since,
+            "object_kind": entry.object_kind if entry else "engine",
+            "open_ref": entry.open_ref(key) if entry else ENGINES_REF,
+            "can_retry": bool(entry and entry.run and key),
+        })
+    out.sort(key=lambda item: item["since"], reverse=True)
+    return out
+
+
+def retry(principal: Any, kind: str, key: str) -> Any:
+    """Run the same job again through its caller's registered callable.
+    Raises ``EngineDoorError('no_retry')`` for a kind with no Retry."""
+    _load_retry_callers()
+    entry = RETRY.get(kind)
+    if entry is None or entry.run is None or not key:
+        raise EngineDoorError("no_retry", f"{kind or 'This job'} has no Retry")
+    return entry.run(principal, key)
 

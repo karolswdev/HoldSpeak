@@ -7141,6 +7141,28 @@
         ]
       }
     },
+    "/api/concierge/retry": {
+      "post": {
+        "description": "Retry on a Needs-you engine row: the same job, run again through\nthe engine door by the caller that registered it (``engine_door.RETRY``).",
+        "operationId": "post_retry_api_concierge_retry_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Post Retry Api Concierge Retry Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Post Retry",
+        "tags": [
+          "concierge"
+        ]
+      }
+    },
     "/api/concierge/speech": {
       "get": {
         "description": "The Line's speech models (RECIPE LINE-6): the Engines window's\n\"Phone speech\" rows, with each download's progress.",
