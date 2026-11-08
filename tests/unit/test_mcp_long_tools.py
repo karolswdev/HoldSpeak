@@ -32,7 +32,7 @@ def test_a_cli_run_call_takes_no_object_lock_but_keeps_the_provider_key() -> Non
     the whole run; the agent's read of that automation must not wait on it."""
     from holdspeak.mcp.long_tools import lock_keys, run_lock_keys
 
-    assert lock_keys("workbench.get", {"workbench_id": "wb1"}) == ["workbench_id=wb1"]
-    assert run_lock_keys("workbench.get", {"workbench_id": "wb1"}) == []
+    assert lock_keys("automation.get", {"workbench_id": "wb1"}) == ["workbench_id=wb1"]
+    assert run_lock_keys("automation.get", {"workbench_id": "wb1"}) == []
     assert run_lock_keys("project.watch.test", {"watch_id": "w1"}) == ["providers"]
 

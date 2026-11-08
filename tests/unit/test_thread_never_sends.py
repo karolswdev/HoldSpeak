@@ -413,24 +413,24 @@ def test_a_yolo_thread_cannot_mint_a_workbench_delegation(hub: Any) -> None:
         "scope": {"kind": "capability", "capability_id": "workbench.item"},
         "entries": [{"profile_id": "p694-bench", "profile_revision": 1}],
     })
-    _one_call(h, "workbench.create", {"name": "Scheduled bench", "fields": {
+    _one_call(h, "automation.create", {"name": "Scheduled bench", "fields": {
         "recipe_id": recipe_id, "schedule": "0 9 * * 2", "schedule_enabled": True}}, assign=True)
     assert _schedules(h)[1] == [], "the model minted a schedule delegation as the owner"
-    assert not [w for w in dispatch("workbench.list", {}, OWNER) if w["name"] == "Scheduled bench"]
+    assert not [w for w in dispatch("automation.list", {}, OWNER) if w["name"] == "Scheduled bench"]
 
-    bench = dispatch("workbench.create", {"name": "Plain bench", "fields": {
+    bench = dispatch("automation.create", {"name": "Plain bench", "fields": {
         "recipe_id": recipe_id, "schedule": "0 9 * * 2"}}, OWNER)
-    _one_call(h, "workbench.update", {"workbench_id": bench["id"], "fields": {"schedule_enabled": True}}, assign=False)
+    _one_call(h, "automation.update", {"workbench_id": bench["id"], "fields": {"schedule_enabled": True}}, assign=False)
     assert _schedules(h)[1] == [], "the model enabled a workbench schedule as the owner"
 
     # Ordinary content stays work.
-    _one_call(h, "workbench.update", {"workbench_id": bench["id"], "fields": {"name": "Renamed bench"}}, assign=False)
-    _one_call(h, "workbench.create", {"name": "Content bench"}, assign=False)
-    names = {w["name"] for w in dispatch("workbench.list", {}, OWNER)}
+    _one_call(h, "automation.update", {"workbench_id": bench["id"], "fields": {"name": "Renamed bench"}}, assign=False)
+    _one_call(h, "automation.create", {"name": "Content bench"}, assign=False)
+    names = {w["name"] for w in dispatch("automation.list", {}, OWNER)}
     assert {"Renamed bench", "Content bench"} <= names, names
     assert _schedules(h)[1] == []
     # The producer is real: the owner's own press mints the LIVE delegation.
-    dispatch("workbench.update", {"workbench_id": bench["id"], "fields": {"schedule_enabled": True}}, OWNER)
+    dispatch("automation.update", {"workbench_id": bench["id"], "fields": {"schedule_enabled": True}}, OWNER)
     assert [d["state"] for d in _schedules(h)[1]] == ["LIVE"]
 
 

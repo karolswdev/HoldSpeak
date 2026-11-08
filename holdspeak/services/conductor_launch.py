@@ -292,7 +292,7 @@ LAUNCH_RULES: dict[str, tuple[str, str, str]] = {
     # create
     "door.add_item": (CREATE, "action", "id"),
     "thought.create": (CREATE, "thought", "id"),
-    "workbench.create": (CREATE, "", ""),  # insert-only and recorded in WorkbenchService
+    "automation.create": (CREATE, "", ""),  # insert-only and recorded in WorkbenchService
     "scheduled_recording.create": (CREATE, "schedule", "id"),
     "ask.keep": (CREATE, "artifact", "id"),
     "channel.prepare": (CREATE, "send", "id"),
@@ -326,8 +326,8 @@ LAUNCH_RULES: dict[str, tuple[str, str, str]] = {
     "thought.stop_refinement": (OWN, "thought", "thought_id"),
     "thought.update_working": (OWN, "thought", "thought_id"),
     "workbench.add_item": (OWN, "workbench", "workbench_id"),
-    "workbench.update": (OWN, "workbench", "workbench_id"),
-    "workbench.delete": (OWN, "workbench", "workbench_id"),
+    "automation.update": (OWN, "workbench", "workbench_id"),
+    "automation.delete": (OWN, "workbench", "workbench_id"),
     "workbench.update_item": (OWN, "workbench", "workbench_id"),
     "workbench.delete_item": (OWN, "workbench", "workbench_id"),
     "scheduled_recording.update": (OWN, "schedule", "schedule_id"),
@@ -404,7 +404,7 @@ LAUNCH_RULES: dict[str, tuple[str, str, str]] = {
     "ask.run": (COMPOSER, "", ""),
     "recipe.run": (COMPOSER, "", ""),
     "recipe.chat": (COMPOSER, "", ""),
-    "workbench.run": (COMPOSER, "", ""),
+    "automation.run": (COMPOSER, "", ""),
     "monday_brief.generate": (COMPOSER, "", ""),
     "cadence.brief": (COMPOSER, "", ""),
     "meeting.run_intelligence": (COMPOSER, "", ""),
@@ -416,7 +416,7 @@ LAUNCH_RULES: dict[str, tuple[str, str, str]] = {
 # Betterment M3: a run that is running is cancelled only on an automation the
 # launch made (the kernel cancels only its caller's own run as well); the
 # ``automation.*`` aliases keep their Workbench tool's rule.
-LAUNCH_RULES["workbench.cancel"] = (OWN, "workbench", "workbench_id")
+LAUNCH_RULES["automation.cancel"] = (OWN, "workbench", "workbench_id")
 # Calls (2026-10-28): the owner's phone call is never a launch's to end.
 LAUNCH_RULES["calls.hangup"] = (NEVER, "", "")
 # Programs (2026-10-28): held in ProgramService, the one boundary every
@@ -457,11 +457,6 @@ LAUNCH_RULES.update({
     "agent.read": (OWN, "launch", "launch_id"),
     "agent.answer": (OWN, "launch", "launch_id"),
 })
-LAUNCH_RULES.update({
-    name.replace("workbench.", "automation.", 1): rule
-    for name, rule in list(LAUNCH_RULES.items())
-    if name in {"workbench.create", "workbench.update", "workbench.delete", "workbench.run", "workbench.cancel"}
-})
 
 #: Not offered to a launch at all (the palette leaves them out).
 NOT_OFFERED: frozenset[str] = frozenset(n for n, (rule, _k, _a) in LAUNCH_RULES.items() if rule in (NEVER, COMPOSER))
@@ -475,7 +470,7 @@ _IDEMPOTENCY_KEYS = ("command_id", "request_id")
 #: desk.verb server verbs, and the tool each one is.
 _VERB_TOOLS = {"desk.create": "desk.create", "desk.update": "desk.update",
                "desk.delete": "desk.delete", "workbench.add_item": "workbench.add_item",
-               "workbench.run": "workbench.run"}
+               "workbench.run": "automation.run"}
 
 
 def _ref_id(value: Any) -> str:

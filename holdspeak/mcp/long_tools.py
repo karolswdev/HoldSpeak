@@ -42,7 +42,7 @@ from typing import Any, Mapping
 LONG_TOOLS: dict[str, str] = {
     # A model call.
     "ask.run": "model",
-    "workbench.run": "model",
+    "automation.run": "model",
     "recipe.run": "model",
     "thought.refine": "model",
     "thought.answer_and_continue": "model",

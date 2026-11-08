@@ -57,7 +57,7 @@ if sys.argv[2] == "slow":  # ask.run (a long tool) takes 4 s; every other tool i
             if name == "ask.run":
                 time.sleep(4)
                 return {"slept": 4}
-            if name == "workbench.run":  # a long tool with a key
+            if name == "automation.run":  # a long tool with a key
                 time.sleep(1.5)
                 return {"slept": 1.5}
             return real(name, *args, **kwargs)
@@ -353,7 +353,7 @@ def test_long_tools_on_one_key_run_one_at_a_time_and_on_two_keys_in_parallel(slo
 
         def call(workbench_id: str) -> None:
             gate.wait(10)
-            answers.append(hub.mcp("tools/call", {"name": "workbench.run",
+            answers.append(hub.mcp("tools/call", {"name": "automation.run",
                                                   "arguments": {"workbench_id": workbench_id}}))
 
         began = time.monotonic()

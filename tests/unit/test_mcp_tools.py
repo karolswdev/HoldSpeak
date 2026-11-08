@@ -11,8 +11,8 @@ from holdspeak.mcp.server import handle_message
 
 
 REQUIRED_TOOLS = {
-    "workbench.list", "workbench.get", "workbench.create", "workbench.update",
-    "workbench.delete", "workbench.update_item", "workbench.delete_item",
+    "automation.list", "automation.get", "automation.create", "automation.update",
+    "automation.delete", "workbench.update_item", "workbench.delete_item",
     "workbench.list_runs", "recipe.list", "recipe.get", "recipe.run", "recipe.chat",
     "zone.file", "zone.unfile", "zone.list_members", "kb.add_member",
     "kb.remove_member", "kb.list_members",
@@ -63,6 +63,9 @@ def test_retired_router_tools_are_absent_from_the_catalogue() -> None:
         "model_profile.delete",
         # Sequences and Workflows are parked (2026-11-08): Programs run work.
         "sequence.run", "sequence.cancel", "workflow.run", "workflow.cancel",
+        # One name (2026-11-08): the automation tools are automation.* only.
+        "workbench.list", "workbench.get", "workbench.create", "workbench.update",
+        "workbench.delete", "workbench.run", "workbench.results", "workbench.cancel",
     }
     assert not (names & retired)
     assert "inference.cancel_model_acquisition" in names
@@ -86,8 +89,8 @@ def test_retired_shapes_refuse_before_mcp_dispatch(monkeypatch) -> None:
         ("ask.run", {"question": "no", "inference_target_id": "retired"}),
         ("recipe.run", {"recipe_id": "recipe", "options": {"inference_target_id": "retired"}}),
         # HS-151-02: recipe.chat retired — returns 410 before argument validation.
-        ("workbench.create", {"name": "No", "fields": {"profile_id": "retired"}}),
-        ("workbench.update", {"workbench_id": "wb", "fields": {"resolver_profile_id": "retired"}}),
+        ("automation.create", {"name": "No", "fields": {"profile_id": "retired"}}),
+        ("automation.update", {"workbench_id": "wb", "fields": {"resolver_profile_id": "retired"}}),
     ):
         with pytest.raises(mcp_tools.ToolError, match="Invalid arguments"):
             mcp_tools.dispatch(name, arguments, object())
@@ -135,8 +138,8 @@ def test_pipeline_tools_dispatch_through_mcp_protocol(monkeypatch) -> None:
         assert result["isError"] is False
         return json.loads(result["content"][0]["text"])
 
-    assert call("workbench.create", {"name": "Morning", "fields": {"id": "wb"}})["id"] == "wb"
-    assert call("workbench.update", {"workbench_id": "wb", "fields": {"name": "Later"}})["id"] == "wb"
+    assert call("automation.create", {"name": "Morning", "fields": {"id": "wb"}})["id"] == "wb"
+    assert call("automation.update", {"workbench_id": "wb", "fields": {"name": "Later"}})["id"] == "wb"
     assert call("workbench.update_item", {"workbench_id": "wb", "item_id": "item", "fields": {"status": "done"}})["id"] == "item"
     assert call("workbench.list_runs", {"workbench_id": "wb"}) == [{"workbench_id": "wb"}]
     assert call("recipe.list", {}) == [{"id": "recipe"}]

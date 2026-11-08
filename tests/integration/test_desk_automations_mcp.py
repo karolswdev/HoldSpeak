@@ -140,7 +140,7 @@ def test_one_owner_call_makes_the_friday_update_and_results_reads_each_run(hub: 
     set_claude_answer(fake_bin, "## Friday update\n\n- The cutover moves to Friday.")
     _value(_mcp(hub, "automation.run", {"workbench_id": made["id"]}))
 
-    [done] = _value(_mcp(hub, "workbench.results", {"workbench_id": made["id"]}))["results"]
+    [done] = _value(_mcp(hub, "automation.results", {"workbench_id": made["id"]}))["results"]
     assert done["status"] == "done" and done["text"].startswith("## Friday update"), done
     assert [row["ref"] for row in done["used"]["looked_at"]] == [f"note:{note}"], done["used"]
     runs = calls(fake_bin, "claude")
@@ -163,7 +163,7 @@ def test_one_owner_call_makes_the_friday_update_and_results_reads_each_run(hub: 
 def test_a_schedule_without_an_engine_is_made_and_kept_off_with_its_reason(hub: str) -> None:
     """The automation exists after the one call (no duplicate on a retry);
     its schedule is stored, off, and the answer says why."""
-    made = _value(_mcp(hub, "workbench.create", {"name": "Friday update", "do": "Write it.", "when": FRIDAY}))
+    made = _value(_mcp(hub, "automation.create", {"name": "Friday update", "do": "Write it.", "when": FRIDAY}))
     assert (made["schedule"], made["schedule_enabled"]) == ("0 15 * * 5", False)
     assert "choose an engine" in made["notice"]
     # A bad When refuses before anything is written.
@@ -183,7 +183,7 @@ def test_an_agent_run_drafts_an_automation_but_never_turns_it_on_or_picks_its_en
     spend_limit (config) stop for the owner's press; so does a change to the
     owner's own automation."""
     token = _conductor_token()
-    owners = _value(_mcp(hub, "workbench.create", {"name": "Owner's update", "do": "Mine."}))["id"]
+    owners = _value(_mcp(hub, "automation.create", {"name": "Owner's update", "do": "Mine."}))["id"]
 
     for words in ({"when": FRIDAY}, {"with": "agent-claude"}, {"spend_limit": 1.0}):
         refused = _mcp(hub, "automation.create", {"name": "Agent's", **words}, token=token)
@@ -203,12 +203,12 @@ def test_an_agent_run_drafts_an_automation_but_never_turns_it_on_or_picks_its_en
 def test_cancel_cancels_the_newest_running_run_by_its_parent_operation(
     hub: str, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """workbench.cancel finds the run that is running and hands its parent
+    """automation.cancel finds the run that is running and hands its parent
     operation to the kernel's cancel (the same seam as the window's Cancel)."""
     from holdspeak.db import get_database
     from holdspeak.services.workbench_service import WorkbenchService
 
-    bench = _value(_mcp(hub, "workbench.create", {"name": "Long one", "do": "Take a while."}))["id"]
+    bench = _value(_mcp(hub, "automation.create", {"name": "Long one", "do": "Take a while."}))["id"]
     with get_database()._connection() as conn:
         for run_id, started, status, op in (("run-old", "2026-10-01T09:00:00", "running", "op-old"),
                                             ("run-new", "2026-10-02T09:00:00", "running", "op-new"),
@@ -222,6 +222,6 @@ def test_cancel_cancels_the_newest_running_run_by_its_parent_operation(
 
     assert _value(_mcp(hub, "automation.cancel", {"workbench_id": bench})) == {
         "run_id": "run-new", "disposition": "cancelled"}
-    assert _value(_mcp(hub, "workbench.cancel", {"workbench_id": bench, "run_id": "run-old"}))["run_id"] == "run-old"
+    assert _value(_mcp(hub, "automation.cancel", {"workbench_id": bench, "run_id": "run-old"}))["run_id"] == "run-old"
     assert cancelled == ["op-new", "op-old"]
-    assert "Nothing is running" in _refused(_mcp(hub, "workbench.cancel", {"workbench_id": bench, "run_id": "run-done"}))
+    assert "Nothing is running" in _refused(_mcp(hub, "automation.cancel", {"workbench_id": bench, "run_id": "run-done"}))

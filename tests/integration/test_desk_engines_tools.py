@@ -135,7 +135,7 @@ def test_a_run_reads_real_rows_and_is_refused_a_send_and_the_owners_records(
     set_tool_plan(fake_bin, preset, [
         {"name": "meeting.list", "arguments": {}},
         {"name": "channel.send", "arguments": {"send_id": "send-x"}},
-        {"name": "workbench.delete", "arguments": {"workbench_id": owners}},
+        {"name": "automation.delete", "arguments": {"workbench_id": owners}},
     ])
 
     _ok(hub, "POST", "/api/ask", {"prompt": "Which meetings did I have?"})
@@ -170,11 +170,11 @@ def test_a_run_whose_agent_reads_its_own_automation_does_not_hang(hub: str, fake
     _ok(hub, "POST", f"/api/workbenches/{bench}/items", {"title": "Draft the runbook"})
     _assign(hub, "workbench.item", _connect(hub, "claude"))
     set_tool_plan(fake_bin, "claude", [
-        {"name": "workbench.get", "arguments": {"workbench_id": bench}},
+        {"name": "automation.get", "arguments": {"workbench_id": bench}},
         {"name": "workbench.list_runs", "arguments": {"workbench_id": bench}},
     ], timeout=20.0)
 
-    status, ran = _mcp(hub, "workbench.run", {"workbench_id": bench})
+    status, ran = _mcp(hub, "automation.run", {"workbench_id": bench})
 
     assert status == 200, ran
     runs = mcp_runs(fake_bin, "claude")

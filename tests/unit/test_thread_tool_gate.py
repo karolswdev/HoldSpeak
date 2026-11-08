@@ -378,12 +378,12 @@ class TestClassificationCensus:
         # the workbench schedule delegation (ScheduleDelegationService)
         ("holdspeak/services/schedule_delegation.py", "enable_from_owner"): frozenset(),  # no caller today
         ("holdspeak/services/schedule_delegation.py", "enable_from_owner_in_transaction"):
-            frozenset({"workbench.create", "workbench.update", "automation.create", "automation.update"}),
-        # Betterment M3: automation.* are the same tools by the user's word.
+            frozenset({"automation.create", "automation.update"}),
+        # One name since 2026-11-08: automation.* (the workbench.* twins left).
         ("holdspeak/services/workbench_service.py", "create_workbench"):
-            frozenset({"workbench.create", "automation.create"}),
+            frozenset({"automation.create"}),
         ("holdspeak/services/workbench_service.py", "update_workbench"):
-            frozenset({"workbench.update", "automation.update", "workbench.create", "automation.create"}),
+            frozenset({"automation.update", "automation.create"}),
         # Betterment A4 (#1304): a new engine for an automation re-freezes its
         # live schedule. Its one caller is InferenceAssignmentService's
         # _after_subject_write (set_assignment, clear_assignment); the MCP tools
@@ -394,8 +394,8 @@ class TestClassificationCensus:
         # (create_automation, update_automation), which their predicates make
         # config or authority.
         ("holdspeak/services/workbench_service.py", "refreeze_schedule"):
-            frozenset({"inference_assignment.set", "inference_assignment.clear", "workbench.create",
-                       "workbench.update", "automation.create", "automation.update"}),
+            frozenset({"inference_assignment.set", "inference_assignment.clear", "automation.create",
+                       "automation.update"}),
         # the recording delegation receipt
         ("holdspeak/services/scheduled_recording_service.py", "create_schedule"):
             frozenset({"scheduled_recording.create"}),
@@ -460,9 +460,9 @@ class TestClassificationCensus:
 
     #: A call that would turn on a schedule or change an automation's engine.
     SCHEDULE_OR_ENGINE_CALLS: tuple[tuple[str, dict[str, Any]], ...] = (
-        ("workbench.update", {"workbench_id": "w", "fields": {"schedule": "0 9 * * 1", "schedule_enabled": True}}),
-        ("workbench.update", {"workbench_id": "w", "fields": {"schedule_enabled": True}}),
-        ("workbench.create", {"name": "x", "fields": {"schedule": "0 9 * * 1", "schedule_enabled": True}}),
+        ("automation.update", {"workbench_id": "w", "fields": {"schedule": "0 9 * * 1", "schedule_enabled": True}}),
+        ("automation.update", {"workbench_id": "w", "fields": {"schedule_enabled": True}}),
+        ("automation.create", {"name": "x", "fields": {"schedule": "0 9 * * 1", "schedule_enabled": True}}),
         ("inference_assignment.set", {"scope": {"kind": "subject", "subject_kind": "workbench",
                                                 "subject_id": "w", "capability_id": "workbench.item"},
                                       "entries": [{"profile_id": "p"}]}),
@@ -471,10 +471,10 @@ class TestClassificationCensus:
         ("concierge.apply", {}),
         # Betterment M3: the sentence words. when turns a start on; with and
         # spend_limit choose the engine and what a run may spend.
-        ("workbench.create", {"name": "x", "do": "Write my update.",
+        ("automation.create", {"name": "x", "do": "Write my update.",
                               "when": {"schedule": {"every": "week", "day": "friday", "time": "15:00"}}}),
         ("automation.create", {"name": "x", "when": {"event": "github-review-requested", "repository": "o/r"}}),
-        ("workbench.update", {"workbench_id": "w", "when": {"manual": True}}),
+        ("automation.update", {"workbench_id": "w", "when": {"manual": True}}),
         ("automation.update", {"workbench_id": "w", "with": "agent-claude"}),
         ("automation.update", {"workbench_id": "w", "spend_limit": 0.5}),
         ("automation.update", {"workbench_id": "w", "fields": {"schedule_enabled": True}}),
@@ -500,7 +500,7 @@ class TestClassificationCensus:
                 assert f".{writer}(" not in text, (path.name, writer)
         for name in ("inference_assignment.set", "inference_assignment.clear", "concierge.apply"):
             assert TOOL_AUTHORITY[name] == "config", name
-        for name in ("workbench.create", "automation.create", "workbench.update", "automation.update"):
+        for name in ("automation.create", "automation.update"):
             assert call_class(name, {"when": {"manual": True}}) == "authority", name
             assert call_class(name, {"with": "p"}) == "config", name
             assert call_class(name, {"spend_limit": None}) == "config", name
@@ -547,10 +547,10 @@ class TestClassificationCensus:
     def test_the_mixed_tools_decide_by_their_arguments(self) -> None:
         from holdspeak.mcp.tool_authority import call_class
 
-        assert call_class("workbench.create", {"name": "x", "fields": {"schedule_enabled": True}}) == "authority"
-        assert call_class("workbench.create", {"name": "x", "fields": {"recipe_id": "r"}}) == "work"
-        assert call_class("workbench.update", {"workbench_id": "w", "fields": {"schedule": "0 9 * * 1"}}) == "authority"
-        assert call_class("workbench.update", {"workbench_id": "w", "fields": {"name": "y"}}) == "work"
+        assert call_class("automation.create", {"name": "x", "fields": {"schedule_enabled": True}}) == "authority"
+        assert call_class("automation.create", {"name": "x", "fields": {"recipe_id": "r"}}) == "work"
+        assert call_class("automation.update", {"workbench_id": "w", "fields": {"schedule": "0 9 * * 1"}}) == "authority"
+        assert call_class("automation.update", {"workbench_id": "w", "fields": {"name": "y"}}) == "work"
         assert call_class("scheduled_recording.create", {"cron_expr": "0 9 * * 1", "enabled": True}) == "authority"
         assert call_class("scheduled_recording.create", {"calendar_event_id": "e"}) == "authority"
         assert call_class("scheduled_recording.create", {"cron_expr": "0 9 * * 1"}) == "work"
