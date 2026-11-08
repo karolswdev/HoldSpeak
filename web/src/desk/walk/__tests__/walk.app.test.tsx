@@ -146,7 +146,8 @@ describe("The Walk", () => {
     render(<WalkRunner />);
 
     // Step 1 opens Programs through the surface opener and goes on by itself.
-    await waitFor(() => expect(mocks.openSurface).toHaveBeenCalledWith("open-programs", undefined));
+    // The walk moves one 900 ms beat after the desk is ready.
+    await waitFor(() => expect(mocks.openSurface).toHaveBeenCalledWith("open-programs", undefined), { timeout: 3000 });
     // Step 2: a mark with words and Next.
     expect(await screen.findByTestId("walk-words", {}, { timeout: 3000 })).toHaveTextContent(
       "Press New program. The well opens.");
