@@ -27,3 +27,4 @@
 .surface-spine-part[data-tone="coral"] { background: var(--hs-coral); }
 .surface-spine-part[data-tone="graphite"] { background: var(--hs-graphite); }
 .surface-spine-part[data-tone="idle"] { background: var(--hs-edge); }
+.surface-spine-part[data-tone="person"] { background: var(--kind-person); }

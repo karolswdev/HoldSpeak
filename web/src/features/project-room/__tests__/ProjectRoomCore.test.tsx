@@ -218,10 +218,10 @@ describe("ProjectRoomCore — room head (was: orientation band, WEB-NOW-001)", (
     });
   }
 
-  // R1 "the brief" (owner 2026-11-08): Write update is the toolbar's one
+  // R1 "the brief" (owner 2026-11-08): Draft update is the mast's one
   // primary; pending Review is said in the status line ("2 need you") and
   // its Review verb opens under it.
-  it("keeps Write update the one primary and says pending Review in the status line", async () => {
+  it("keeps Draft update the one primary and says pending Review in the status line", async () => {
     headReads({ ...recorded.review, pending_count: 2 });
     render(<WindowHarness scope="project:p1" />);
     expect(await screen.findByTestId("room-status-need")).toHaveTextContent("need you");
@@ -251,7 +251,7 @@ describe("ProjectRoomCore — room head (was: orientation band, WEB-NOW-001)", (
     { ...recorded.review, pending_count: 0 },
     { state: "absent", reason: "not_yet_built" },
     { state: "degraded", error_code: "review_read_failed", pending_count: 2 },
-  ])("keeps Write update as lead without verified positive Review: %j", async (review) => {
+  ])("keeps Draft update as lead without verified positive Review: %j", async (review) => {
     headReads(review);
     render(<WindowHarness scope="project:p1" />);
     const draft = await screen.findByTestId("updates-verb");
@@ -259,7 +259,7 @@ describe("ProjectRoomCore — room head (was: orientation band, WEB-NOW-001)", (
     expect(draft.className).toContain("btn--primary");
   });
 
-  it("keeps Write update quiet while the existing Add source well owns the primary", async () => {
+  it("keeps Draft update quiet while the existing Add source well owns the primary", async () => {
     headReads({ ...recorded.review, pending_count: 2 });
     render(<WindowHarness scope="project:p1" />);
     await screen.findByTestId("room-status-need");

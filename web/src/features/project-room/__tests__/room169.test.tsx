@@ -379,10 +379,10 @@ describe("HS-169-03: Room head", () => {
     expect(screen.getByText("Archived")).toBeTruthy();
   });
 
-  it("renders Write update button (Betterment P1)", async () => {
+  it("renders the Draft update button (Betterment P1; the owner 2026-11-08: never Write update)", async () => {
     render(<WindowHarness scope="project:p1" />);
     const btn = await screen.findByTestId("updates-verb");
-    expect(btn.textContent).toBe("Write update");
+    expect(btn.textContent).toBe("Draft update");
   });
 });
 
@@ -411,9 +411,10 @@ describe("HS-169-03: display step", () => {
     await screen.findByTestId("room-body");
 
     expect(document.querySelectorAll(".room-body .surface-display")).toHaveLength(0);
-    // The one primary verb sits on the toolbar under the title bar.
-    const toolbar = screen.getByRole("toolbar", { name: "Project actions" });
-    expect(toolbar).toContainElement(screen.getByTestId("updates-verb"));
+    // The language (2026-11-08): the one primary verb sits in the mast's
+    // verbs, beside the project's name in the display face.
+    const mast = screen.getByTestId("room-mast");
+    expect(mast.querySelector(".surface-mast-verbs")).toContainElement(screen.getByTestId("updates-verb"));
   });
 });
 
@@ -437,10 +438,11 @@ describe("HS-169-03: wings", () => {
 describe("HS-169-03: Ask well", () => {
   // R1 (owner 2026-11-08): the Ask is a plain field with its mic in the
   // toolbar: no card, no Answer verb, no engine chip.
-  it("draws the Ask as a toolbar field with its mic, no Answer and no engine chip", async () => {
+  it("draws the Ask as a plain field with its mic under the mast, no Answer and no engine chip", async () => {
     render(<WindowHarness scope="project:p1" />);
     const well = await screen.findByTestId("room-ask-well");
-    expect(well.closest("[role=toolbar]")).not.toBeNull();
+    const mast = screen.getByTestId("room-mast");
+    expect(mast.compareDocumentPosition(well) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     const input = well.querySelector("input[aria-label='Ask this project']");
     expect(input).not.toBeNull();
     expect(input?.getAttribute("placeholder")).toBe("Ask this project");

@@ -9,16 +9,17 @@ import { useDesk } from "../../../desk/store";
 import { Button } from "../../../components/signal/Signal";
 import type { RoomSnapshot } from "../model";
 
-/** `Updates every Friday at 15:00 · Gemini CLI`, or `Updates only when
- *  pressed · …`. Null with no update automation. */
+/** `updates every friday 15:00 · Gemini CLI`, or `updates only when
+ *  pressed · …` (the mono status bar of the bold canvas). Null with no
+ *  update automation. */
 export function cadenceWords(room: RoomSnapshot): string | null {
   if (room.updates.state !== "ok" || !room.updates.automation) return null;
   const automation = room.updates.automation;
-  const when = automation.scheduleEnabled ? "Updates every Friday at 15:00" : "Updates only when pressed";
+  const when = automation.scheduleEnabled ? "updates every friday 15:00" : "updates only when pressed";
   return `${when} · ${automation.engineLabel}`;
 }
 
-/** The newest save of any update of the Project (`Saved 18:39`). */
+/** The newest save of any update of the Project (`saved 18:39`). */
 export function savedWords(room: RoomSnapshot): string | null {
   if (room.updates.state !== "ok") return null;
   let newest = "";
@@ -27,7 +28,7 @@ export function savedWords(room: RoomSnapshot): string | null {
     if (at > newest) newest = at;
   }
   const clock = newest ? wireClock(newest) : "";
-  return clock ? `Saved ${clock}` : null;
+  return clock ? `saved ${clock}` : null;
 }
 
 export function cadenceItems(room: RoomSnapshot): StatusBarItem[] {

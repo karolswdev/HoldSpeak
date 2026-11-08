@@ -118,7 +118,7 @@ export function AskComposer({ className, railOpen, onRail, scope, field, capture
 }
 
 /** Ask ⏎: the one primary verb, with its key. A host whose window has its
- *  own primary (the Room's Write update) passes `secondary`: one filled
+ *  own primary (the Room's Draft update) passes `secondary`: one filled
  *  primary per face. */
 export function AskSendButton({ disabled, onClick, variant = "primary" }: {
   disabled: boolean;

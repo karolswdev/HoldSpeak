@@ -188,7 +188,7 @@ export function useUpdateController(
   // ── Step aside (PHILO-14 A5b, Muad'Dib's ruling on Astra r2) ──
   // A proposal request shows the Room: the posture steps aside and NEVER
   // writes. The editor's update, its unsaved text (and the kept draft), its
-  // failure and Try again stay as they are. `Write update` brings the editor
+  // failure and Try again stay as they are. `Draft update` brings the editor
   // back as he left it.
   const stepAside = useCallback(() => {
     setPosture("off");
@@ -337,7 +337,7 @@ export function useUpdateController(
     }
   }, [current, onRoomRefresh, posture, projectId]);
 
-  // ── Betterment P1: the engine pass (Write update) ──
+  // ── Betterment P1: the engine pass (Draft update) ──
   // The records draft opens at once; the engine improves it on the hub, off
   // its request loop. The face polls the job. Its draft replaces the records
   // draft (a new revision, with Undo) only while he has not edited; after an
@@ -424,7 +424,7 @@ export function useUpdateController(
     pollTimer.current = window.setTimeout(() => void poll(), ENGINE_POLL_MS);
   }, [automationId, projectId, takeEngineDraft]);
 
-  /** Write update: the records draft at once, then (with an engine) the pass. */
+  /** Draft update: the records draft at once, then (with an engine) the pass. */
   const write = useCallback(async (withEngine: boolean) => {
     const stepBack = posture === "off" && current;
     if (!stepBack) {

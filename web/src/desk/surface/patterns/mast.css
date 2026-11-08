@@ -57,6 +57,10 @@
   .surface-mast-row {
     flex-wrap: wrap;
   }
+  /* The words keep their place beside the sprite; only the verbs wrap. */
+  .surface-mast-words {
+    flex-basis: 0;
+  }
   .surface-mast-verbs {
     flex-basis: 100%;
   }

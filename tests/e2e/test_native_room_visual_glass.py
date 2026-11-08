@@ -137,7 +137,9 @@ def _columns(scope: Any) -> dict[str, Any]:
 
 def _hierarchy(room: Any) -> dict[str, Any]:
     result = room.evaluate("""root => {
-      const selectors = ['[data-testid=room-head]', '[data-testid=room-ask-well]',
+      // The language (2026-11-08): the spine under the mast; on the phone
+      // the Ask field steps aside for the mast's Ask Button.
+      const selectors = ['[data-testid=room-head]', '[data-testid=room-spine]',
         '[data-testid=room-fold-files]', '[data-testid=room-fold-sources]'];
       const nodes = selectors.map(s => root.querySelector(s));
       return {present:nodes.map(Boolean), order:nodes.map(n => n?.getBoundingClientRect().top),

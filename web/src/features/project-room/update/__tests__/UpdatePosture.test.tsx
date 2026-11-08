@@ -270,7 +270,7 @@ function setupUpdatePosture(opts: {
       const generator = (init?.json as { generator?: string } | undefined)?.generator;
       return Promise.resolve({ success: true, update: generator === "model" ? modelDraftResult : draftResult });
     }
-    // Betterment P1: the engine pass behind Write update (typed double; the
+    // Betterment P1: the engine pass behind Draft update (typed double; the
     // recorded hub answers are replayed in room.app.test.tsx).
     if (url.includes("/engine-pass")) {
       return Promise.resolve({ success: true, job: { id: "pujob-1", base_update_id: draftResult.id, state: "running" } });
@@ -742,7 +742,7 @@ describe("Draft update picks its generator from the engine read", () => {
     expect(screen.getByTestId("update-generator-label").textContent).toBe("From the Room's facts");
   });
 
-  it("an engine set: Write update saves the records draft, then the engine's draft replaces it", async () => {
+  it("an engine set: Draft update saves the records draft, then the engine's draft replaces it", async () => {
     setupUpdatePosture({ listUpdates: [] });
     withAssignment(LAN);
     render(<WindowHarness scope="project:p1" />);
