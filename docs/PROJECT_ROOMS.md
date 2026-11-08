@@ -72,6 +72,7 @@ Open a Project to enter its Room. The Room has **ROOM** and **HISTORY** wings.
 | **SOURCES** | Sources, Watch state, counts, last check, host, and source controls. |
 | **SINCE YOU LOOKED** | Source changes since the last Room read marker. |
 | **DECISIONS & COMMITMENTS** | Decisions and commitments from linked Project work. |
+| **Programs** fold | Always shown on the Now tab. Each Program of the Project with its step dots; press a row to open it. With none: "No Programs yet" and **New program** for this Project. |
 | Ask field | **Ask this project**, with an answer or brief result and a model chip. |
 
 Open a source item to read its original record. Read a proposal before you

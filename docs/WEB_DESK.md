@@ -15,6 +15,22 @@ On a phone, **Go** lists the apps and a window fills the screen. **Back**
 returns to the previous window. The same hub can serve another browser or a
 configured MCP client.
 
+## Needs you
+
+**Needs you** lists what waits on you. Each row is the thing itself: an
+action, a decision, a Program or a held send. A row has one verb, for example
+**Done**, **Nudge**, **Merge** or **Decide**. **Decide** opens the choices in
+place, under the row. Press the row to open the thing.
+
+Right-press a row for its other verbs. An action's menu has **Later**,
+**Drop**, **Run as a program** and **Hand to an agent session**. A Program's
+row has **Later** and **Send**. **Run as a program** makes a Program.
+**Hand to an agent session** starts one live agent session.
+
+The control at the left of the toolbar is **Mine · People**. **Mine** is your
+own work, with its count. **People** is what other people owe you. Findings
+show as **Must fix**, **Should fix** or **Noted**, and **Must fix** comes first.
+
 ## Create work
 
 The **Desk** menu offers **New Note**, **New Decision**, **New Automation**,

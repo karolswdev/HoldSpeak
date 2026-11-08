@@ -132,6 +132,15 @@ the saved record. It is not a universal approval gate for later sends or tools.
 Use **Decide** to save a decision linked to the meeting and its Project. The
 decision is a Desk record and remains available to later Threads and agents.
 
+**Decide** files the decision in its Project in one step. The row then says
+"Decided HH:MM", and the Project row under it says "Filed". Press the decision
+row to open its record in the Decisions window. When the hub refuses the save,
+the well shows the hub's reason and **Retry**.
+
+When the decision names an owner, it is committed to that person one time. The
+person's row shows in Needs you. The Room's Decided line and the record's head
+line say "Committed · <name>".
+
 ### Send
 
 Aftercare can prepare **Summary**, **Digest**, or **Follow-up** documents. The

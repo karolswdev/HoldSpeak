@@ -71,9 +71,9 @@ Restore validates the backup, saves a safety copy of the current database,
 replaces the file, and removes stale `-wal` and `-shm` files. If validation
 fails, it stops without changing the database.
 
-The main backup does not include the encrypted People store, operating-system
-keychain credentials, config files, or audio files. Back up or reconnect those
-separately. See [Security and privacy](SECURITY.md).
+The main backup does not include the encrypted People store, the keystore
+(`keystore.enc` and its master key in the OS keychain), config files, or audio
+files. Back up or reconnect those separately. See [Security and privacy](SECURITY.md).
 
 ## Restart behavior
 
