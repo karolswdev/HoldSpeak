@@ -1,7 +1,7 @@
 /** Shared Markdown reading species. Lezer owns the grammar; React owns the DOM.
  * HTML stays text and images stay alt text. No content is fetched on render. */
 import { createElement, useMemo, useRef, type ReactNode } from "react";
-import { markdownLanguage } from "@codemirror/lang-markdown";
+import { parser as commonmark, Emoji, GFM, Subscript, Superscript } from "@lezer/markdown";
 import type { SyntaxNode } from "@lezer/common";
 import { Button } from "../../components/signal/Signal";
 import { refOpener } from "../openObject";
@@ -9,8 +9,13 @@ import { ScrollHint } from "./Surface";
 import { FoldGadget } from "./gadgets";
 import "./reading-document.css";
 
+/** The grammar of the editor's markdownLanguage (@codemirror/lang-markdown):
+ *  the same parser and extensions, without the editor's fold and indent props
+ *  and without CodeMirror, so reading stays out of the editor's chunk. */
+const readingParser = commonmark.configure([GFM, Subscript, Superscript, Emoji]);
+
 export function parseReading(source: string): SyntaxNode {
-  return markdownLanguage.parser.parse(source).topNode;
+  return readingParser.parse(source).topNode;
 }
 
 export function readingChildren(node: SyntaxNode): SyntaxNode[] {

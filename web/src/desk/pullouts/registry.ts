@@ -1,11 +1,13 @@
 /** Kind-keyed pullout content registry (HS-117-15).
  * The `satisfies` gate ensures compile-time completeness —
  * adding a new PrimitiveKind without a registry entry is a type error. */
+import { createElement, lazy, Suspense } from "react";
 import type { PrimitiveKind } from "../../lib/primitives";
 import type { PulloutContent } from "./types";
+import { SurfaceState } from "../surface";
+import { watchChunk } from "../../runtime/freshBuild";
 import { MeetingWindow } from "./MeetingWindow";
 import { ArtifactPullout } from "./ArtifactPullout";
-import { NotePullout } from "./NotePullout";
 import { KbPullout } from "./KbPullout";
 import { DecisionToReader } from "./DecisionToReader";
 import { RecipePullout } from "./RecipePullout";
@@ -18,6 +20,14 @@ import { FallbackPullout } from "./FallbackPullout";
 import { ThreadToAsk } from "./ThreadToAsk";
 import { ProjectToRoom } from "./ProjectToRoom";
 import { PeoplePullout } from "./PeoplePullout";
+
+/** The note pullout is not on glass at first paint: it and its CodeMirror
+ *  editor are their own chunk (measure 2026-11-08), loaded when a note opens,
+ *  with the surface's loading face until it arrives. */
+const NoteCore = lazy(watchChunk(() => import("./NotePullout").then((m) => ({ default: m.NotePullout }))));
+
+const NotePullout: PulloutContent = (props) =>
+  createElement(Suspense, { fallback: createElement(SurfaceState, { loading: true }) }, createElement(NoteCore, props));
 
 /**
  * Pullout-capable kinds use their own content. Window and surface kinds are

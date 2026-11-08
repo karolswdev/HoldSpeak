@@ -1,11 +1,21 @@
 /** Kind-keyed inline editor content registry (HS-117-15).
  * The `satisfies` gate ensures compile-time completeness. */
+import { createElement, lazy, Suspense } from "react";
 import type { PrimitiveKind } from "../../../lib/primitives";
 import type { InlineEditorContent } from "./types";
-import { NoteEditor } from "./NoteEditor";
+import { SurfaceState } from "../../surface";
+import { watchChunk } from "../../../runtime/freshBuild";
 import { KbEditor } from "./KbEditor";
 import { WorkflowEditor } from "./WorkflowEditor";
 import { RecipeEditor } from "./RecipeEditor";
+
+/** The note editor is not on glass at first paint: it and CodeMirror are
+ *  their own chunk (measure 2026-11-08), loaded when a note opens, with the
+ *  surface's loading face until it arrives. */
+const NoteEditorCore = lazy(watchChunk(() => import("./NoteEditor").then((m) => ({ default: m.NoteEditor }))));
+
+const NoteEditor: InlineEditorContent = (props) =>
+  createElement(Suspense, { fallback: createElement(SurfaceState, { loading: true }) }, createElement(NoteEditorCore, props));
 
 /** The eyebrow label shown in the editor header for each kind. */
 export const EDITOR_LABELS: Record<PrimitiveKind, string> = {
