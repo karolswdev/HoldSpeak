@@ -17,11 +17,15 @@ export function fitName(
   /** The label's real measure (a proportional face): true when the line
    *  fits. Absent: a line fits at `perLine` characters (monospaced). */
   fits: (line: string) => boolean = (line) => line.length <= perLine,
+  /** `end` (the floor, owner 2026-11-08): whole words, then ONE ellipsis at
+   *  the end; never a cut in the middle. Default `middle`, as above. */
+  cut: "middle" | "end" = "middle",
 ): string[] {
   const text = name.replace(/\s+/g, " ").trim();
   if (!text || perLine < 4 || lines < 1) return [text];
   const whole = layout(text, fits);
   if (whole && whole.length <= lines) return whole;
+  if (cut === "end") return endCut(text, lines, fits);
 
   // The end that must stay: the last word, or the end of one long word.
   const words = text.split(" ");
@@ -49,9 +53,9 @@ export function fitName(
     if (set && set.length <= lines) return set;
   }
   // Nothing of the start fits beside the end: the end alone, cut.
-  let cut = `…${tail}`.slice(0, perLine);
-  while (cut.length > 2 && !fits(cut)) cut = cut.slice(0, -1);
-  return [cut];
+  let endOnly = `…${tail}`.slice(0, perLine);
+  while (endOnly.length > 2 && !fits(endOnly)) endOnly = endOnly.slice(0, -1);
+  return [endOnly];
 }
 
 /** A word's pieces: it may break after each `_ - . /` join (the join stays
@@ -93,4 +97,21 @@ function layout(text: string, fits: (line: string) => boolean): string[] | null 
   }
   push();
   return out;
+}
+
+/** The end cut: the most whole words that fit `lines` lines with `…` after
+ *  the last one. A first word too long for every line is cut by letters. */
+function endCut(text: string, lines: number, fits: (line: string) => boolean): string[] {
+  const words = text.split(" ");
+  for (let k = words.length - 1; k >= 1; k--) {
+    const head = words.slice(0, k).join(" ").replace(/[\s,;:·–—-]+$/, "");
+    if (!head) continue;
+    const set = layout(`${head}…`, fits);
+    if (set && set.length <= lines) return set;
+  }
+  for (let n = text.length - 1; n >= 1; n--) {
+    const set = layout(`${text.slice(0, n).trimEnd()}…`, fits);
+    if (set && set.length <= lines) return set;
+  }
+  return ["…"];
 }

@@ -47,6 +47,12 @@ export interface DeskIconProps {
   name: string;
   /** The KIND word in the accessible name; default from `kind`. */
   kindWord?: string;
+  /** The accessible name in place of `name` and the kind word, when the
+   *  label leaves a kind prefix to the sprite (`Program: Wave 6`). */
+  ariaName?: string;
+  /** Where a label too long for its lines is cut: `end` (the floor: whole
+   *  words, one ellipsis at the end) or `middle` (default: start … end). */
+  labelCut?: "middle" | "end";
   /** A sprite URL in place of the mold's (lane A0's new mold). */
   sprite?: string;
   /** The selected sprite URL, when `sprite` is given. */
@@ -89,6 +95,8 @@ export function DeskIcon({
   kind,
   name,
   kindWord,
+  ariaName,
+  labelCut,
   sprite,
   spriteSelected,
   selected,
@@ -116,7 +124,7 @@ export function DeskIcon({
       ? spriteSelected
       : sprite
     : objectSprite(kind, id, lit ? "sel" : "rest");
-  const label = [name, kindWord ?? objectKindWord(kind), lamp?.label, caption, ariaExtra]
+  const label = [ariaName ?? name, ariaName ? null : kindWord ?? objectKindWord(kind), lamp?.label, caption, ariaExtra]
     .filter(Boolean)
     .join(", ");
   // Enter OPENS: handled on keydown, whose default (the native click) is
@@ -163,7 +171,7 @@ export function DeskIcon({
           </span>
         ) : null}
       </span>
-      <IconName name={name} />
+      <IconName name={name} cut={labelCut} />
       {caption ? <span className="desk-icon-caption" data-testid={`desk-icon-caption-${id}`}>{caption}</span> : null}
     </Button>
   );
@@ -175,7 +183,7 @@ export function DeskIcon({
  *  the middle so its end stays. An unclamped label (a drawer: a name is
  *  never clipped) is set by CSS from `nameBreaks`. The full name is the
  *  title either way. */
-function IconName({ name }: { name: string }) {
+function IconName({ name, cut }: { name: string; cut?: "middle" | "end" }) {
   const ref = useRef<HTMLSpanElement>(null);
   const [lines, setLines] = useState<string[] | null>(null);
   // The face may land after the first layout: measure again once it has.
@@ -197,12 +205,14 @@ function IconName({ name }: { name: string }) {
     }
     const max = parseFloat(st.maxWidth);
     const room = el.parentElement?.clientWidth || max;
-    const box = Math.min(Number.isFinite(max) ? max : room, room || max);
+    // The floor label (an end cut) may overhang its 112 px icon, centred, up
+    // to its own max-width (128 px at 1440); elsewhere the icon bounds it.
+    const box = cut === "end" && Number.isFinite(max) ? max : Math.min(Number.isFinite(max) ? max : room, room || max);
     const inner = box - parseFloat(st.paddingLeft || "0") - parseFloat(st.paddingRight || "0") - 1;
     // The floor label is set in the sans: each line is measured in its own
     // face, so a name keeps every letter that fits (no fixed per-character cap).
-    setLines(fitName(name, Math.floor(inner / measure.average), clamp, (line) => measure.width(line) <= inner));
-  }, [name, fonts]);
+    setLines(fitName(name, Math.floor(inner / measure.average), clamp, (line) => measure.width(line) <= inner, cut));
+  }, [name, fonts, cut]);
   return (
     <span ref={ref} className="desk-icon-name" title={name} data-fitted={lines ? "" : undefined}>
       {lines ? lines.join("\n") : nameBreaks(name)}

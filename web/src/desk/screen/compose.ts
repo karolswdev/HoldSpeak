@@ -32,6 +32,9 @@ export interface ScreenObject {
   kind: string;
   kindWord?: string;
   name: string;
+  /** The accessible name in place of `name` when the label drops a kind
+   *  prefix the sprite carries (`Program: Wave 6 of the atlas`). */
+  ariaName?: string;
   sprite: string;
   spriteSelected: string;
   lamp?: { tone: ObjectTone; count?: number; label?: string };
@@ -219,6 +222,23 @@ function sprites(kind: string, id: string, agent?: string) {
   };
 }
 
+/** The floor face of a loose object (owner 2026-11-08): the sprite says the
+ *  kind, so the label drops the `Program: ` and `Note: ` prefix and the
+ *  accessible name keeps it. A Program's handover note (`note:program-<id>`,
+ *  written by the Program engine) wears the Program sprite. */
+const KIND_PREFIX = /^(Program|Note):\s+/;
+function floorFace(kind: string, id: string, title: string) {
+  const program = kind === "note" && id.startsWith("program-");
+  const prefix = KIND_PREFIX.exec(title);
+  const name = prefix && title.slice(prefix[0].length).trim() ? title.slice(prefix[0].length).trim() : title;
+  const word = program ? "Program" : prefix?.[1];
+  return {
+    name,
+    ...(name !== title || program ? { ariaName: `${word ?? "Note"}: ${name}` } : {}),
+    ...sprites(program ? "program" : kind, id),
+  };
+}
+
 const AGENT_TITLE: Record<string, string> = { claude: "Claude Code", codex: "Codex" };
 
 /** The item's short name: the imperative and its article go
@@ -336,8 +356,7 @@ export function composeScreen(input: ScreenInputs): ScreenObject[] {
           key: ref,
           role: "loose",
           kind: o.kind,
-          name: o.title,
-          ...sprites(o.kind, o.id),
+          ...floorFace(o.kind, o.id, o.title),
           lamp: needs ? { tone: "warn", label: "NEEDS YOU" } : undefined,
           target: { type: "ref", ref },
         },
@@ -382,8 +401,7 @@ export function composeScreen(input: ScreenInputs): ScreenObject[] {
         key: ref,
         role: "loose",
         kind: object.kind,
-        name: object.title,
-        ...sprites(object.kind, object.id),
+        ...floorFace(object.kind, object.id, object.title),
         lamp: needs ? { tone: "warn", label: "NEEDS YOU" } : undefined,
         target: { type: "ref", ref },
       },

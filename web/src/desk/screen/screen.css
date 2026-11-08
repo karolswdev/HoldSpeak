@@ -54,6 +54,22 @@
 .desk-screen .desk-icon {
   color: var(--wb-ink);
 }
+/* The floor label (owner 2026-11-08): whole words, at most two lines at
+   1440 (three at 393), one ellipsis at the end (DeskIcon labelCut="end").
+   The label is 128 px, centred under its 112 px icon; the grid stays. Hover
+   and selection wear steel, never a warm plate. */
+.desk-screen[data-layout="free"] .desk-icon-name {
+  width: max-content;
+  max-width: 128px;
+  flex-shrink: 0;
+}
+.desk-screen .desk-icon:hover:not([data-selected="true"]) .desk-icon-name {
+  background: color-mix(in srgb, var(--hs-steel) 55%, transparent);
+}
+.desk-screen .desk-icon[data-selected="true"] .desk-icon-name,
+.desk-screen .desk-icon[data-drop="true"] .desk-icon-name {
+  background: var(--hs-steel);
+}
 .desk-go-home {
   min-height: 100%;
   padding: 12px 12px calc(var(--desk-dock-h, var(--desk-snap-bottom)) + 16px);
@@ -116,6 +132,7 @@
 }
 .desk-screen[data-layout="grid"] .desk-icon-name {
   max-width: 86px;
+  -webkit-line-clamp: 3;
 }
 /* The one true line of an empty desk (UX-CANON A.3 exception). */
 .desk-screen-empty {
