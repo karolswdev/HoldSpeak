@@ -1263,6 +1263,9 @@ class ProgramRunner:
     # ── 3. the check ─────────────────────────────────────────────────
 
     def _check(self, program: dict[str, Any], step: dict[str, Any]) -> None:
+        if self._wrote_nothing(program, step):
+            self._empty_round(program, step)
+            return
         facts = dict(step.get("facts") or {})
         core = facts.get("core")
         if isinstance(core, Mapping):
@@ -1528,6 +1531,34 @@ class ProgramRunner:
             f"{program['title']}, step {step['ordinal']}: {reason}. It waits for you on the desk.",
             reason=f"{program['title']}, step {step['ordinal']} has a requirement left",
         )
+
+    def _wrote_nothing(self, program: Mapping[str, Any], step: Mapping[str, Any]) -> bool:
+        """2026-11-08 (steps ended Done with no diff): the step's commits
+        change no file against its starting commit, and the step does not
+        declare ``no_diff_ok``. ``False`` when git cannot say."""
+        if (step.get("facts") or {}).get("no_diff_ok"):
+            return False
+        return self.step_files(program, step) == []
+
+    def _empty_round(self, program: dict[str, Any], step: dict[str, Any]) -> None:
+        """A hand that wrote nothing never passes: the first time the step
+        goes back to its agent (the red path), the second time it fails as a
+        red step does (Secure: his; Normal and YOLO park it)."""
+        facts = dict(step.get("facts") or {})
+        empty = int(facts.get("empty_rounds") or 0) + 1
+        facts["empty_rounds"] = empty
+        step["facts"] = facts
+        if empty >= 2:
+            outcome = decide(program.get("control"), "step_failed", {"replanned": True})
+            self.fail_step(program, step, "The step wrote nothing twice", outcome)
+            return
+        self.service.transition(program, step, "check_failed", line="The step wrote nothing")
+        try:
+            self.prompt_builder(step, f"HoldSpeak on step {step['ordinal']}: the step wrote nothing. Its commits "
+                                      "change no file. Make the change the brief asks for, commit on this branch, "
+                                      "and end your turn.")
+        except Exception as exc:
+            log.info(f"empty round not typed: {exc}")
 
     def _verdict(self, program: dict[str, Any], step: dict[str, Any], check: dict[str, Any]) -> None:
         if not check.get("gate", True):

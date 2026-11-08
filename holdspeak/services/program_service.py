@@ -130,6 +130,26 @@ def _creator(principal: Any) -> str:
     return f"agent:{getattr(principal, 'identity', '') or 'unknown'}"
 
 
+#: 2026-11-08 (the audit Program planned into itself): a Program in these
+#: states runs; only the owner changes its plan.
+_PLAN_LOCKED = ("running", "waiting")
+PLAN_LOCKED_LINE = ("This program runs. An agent cannot add, remove or move its steps. "
+                    "Propose a fix, or make a new program.")
+_TITLE_END = re.compile(r"[\s.!?;:,]+$")
+
+
+def same_title(title: Any) -> str:
+    """A step title as a fold compares it: one space, no case, no end punctuation."""
+    return _TITLE_END.sub("", " ".join(str(title or "").split())).casefold()
+
+
+def fold_target(steps: Iterable[Mapping[str, Any]], title: Any) -> Optional[Mapping[str, Any]]:
+    """The step of ``steps`` whose title is ``title`` (a contender is never one)."""
+    key = same_title(title)
+    return next((step for step in steps if not step.get("race_of") and key and same_title(step.get("title")) == key),
+                None)
+
+
 def _seconds_between(start: Optional[str], end: Optional[str] = None) -> Optional[int]:
     from datetime import datetime, timezone
 
@@ -1507,6 +1527,24 @@ class ProgramService:
             status=403,
         )
 
+    def _require_plan_open(self, principal: Any, program: Mapping[str, Any]) -> None:
+        """2026-11-08: an agent never changes the plan of a running Program
+        (its own included); it proposes a fix or makes a new Program."""
+        if not _is_owner(principal) and program.get("state") in _PLAN_LOCKED:
+            raise ProgramRefused("plan_locked_while_running", PLAN_LOCKED_LINE, status=409)
+
+    def _fold(self, program: Mapping[str, Any], step: dict[str, Any], brief: str, *, by: str) -> None:
+        """A step whose title the plan has already: no new step; its new
+        brief lines join the step's brief while the step has not started."""
+        if step.get("state") in ("planned", "ready"):
+            have = str(step.get("brief_markdown") or "")
+            known = {line.strip() for line in have.splitlines() if line.strip()}
+            new = [line for line in brief.splitlines() if line.strip() and line.strip() not in known]
+            if new:
+                step["brief_markdown"] = "\n".join([have.rstrip(), *new]).strip()
+                self._save(step)
+        self._checkpoint(program, step, by, f"Folded into step {step['ordinal']}")
+
     def _require_owner(self, principal: Any, verb: str) -> None:
         if not _is_owner(principal):
             raise ProgramRefused("owner_required", f"Only the owner may {verb}.", status=403)
@@ -1938,7 +1976,7 @@ class ProgramService:
     def plan(
         self, principal: Any, program_id: str, *, steps: list[Mapping[str, Any]],
         size: Optional[str] = None, replace: bool = False, before: Optional[str] = None, waits: bool = True,
-        by: Optional[str] = None,
+        by: Optional[str] = None, fold: bool = True,
     ) -> dict[str, Any]:
         """Replace or append steps. A step: ``title``, ``brief``, ``owns``,
         ``after`` (ordinals), ``profile``, ``engine``, ``prefer_idle``,
@@ -1947,11 +1985,15 @@ class ProgramService:
         ``for_person_id``, ``history`` (PG17: ``pr_number``, ``merged_at``,
         ``pr_url``, ``head_commit``: work that merged already; it is written
         Merged, no agent runs it). ``size: auto`` sets effort by rule. A
-        Program whose steps are all history is Done at once."""
+        Program whose steps are all history is Done at once. A step whose
+        title the plan has already folds into that step (``fold``; the
+        engine's own steps pass ``False``). ``no_diff_ok``: a step that may
+        end with no change."""
         from ..program_templates import get_template
 
         program = self._program(program_id)
         self._require_writer(principal, program, "plan")
+        self._require_plan_open(principal, program)
         if not isinstance(steps, list) or not steps and not replace:
             raise ProgramRefused("steps_required", "Give at least one step.", status=400)
         existing = self.store.list_steps(program["id"])
@@ -1972,6 +2014,7 @@ class ProgramService:
         start = 0 if replace else max((int(step["ordinal"]) for step in existing), default=0)
         now = self._clock()
         made: list[dict[str, Any]] = []
+        folds: list[tuple[Mapping[str, Any], str]] = []
         for index, raw in enumerate(steps, start=1):
             if not isinstance(raw, Mapping):
                 raise ProgramRefused("step_invalid", f"Step {index} is not an object.", status=400)
@@ -1980,8 +2023,12 @@ class ProgramService:
                 raise ProgramRefused("step_title_required", f"Step {index} needs a title.", status=400)
             owns = [str(item) for item in raw.get("owns") or [] if str(item).strip()]
             brief = str(raw.get("brief") or raw.get("brief_markdown") or "").strip()
+            same = fold_target([] if replace else existing, title) if fold and not raw.get("history") else None
+            if same is not None:
+                folds.append((same, brief))
+                continue
             after = [int(value) for value in raw.get("after") or [] if str(value).strip().lstrip("-").isdigit()]
-            ordinal = start + index
+            ordinal = start + len(made) + 1
             if target is not None:
                 # It comes after what the step it precedes came after.
                 if any(value >= int(target["ordinal"]) or value < 1 for value in after):
@@ -2044,6 +2091,8 @@ class ProgramService:
                 "runs_on": listed if len(listed) > 1 else [], "handoffs": [],
                 "budget_tokens": _budget(raw.get("budget_tokens"), f"Step {index}: the budget"),
             })
+            if raw.get("no_diff_ok"):
+                made[-1]["facts"] = {"no_diff_ok": True}
             if history:
                 # PG17: the merged PR it stands for; no worktree, no hand,
                 # no checkpoint of its own; the runner never moves it.
@@ -2069,6 +2118,8 @@ class ProgramService:
             for step in made:
                 self.store.save_step(step)
             by = by or ("owner" if _is_owner(principal) else "agent")
+            for same, brief in folds:
+                self._fold(program, dict(self.store.get_step(same["id"]) or same), brief, by=by)
             line = f"{'Planned' if replace else 'Added'} {len(made)} step{'s' if len(made) != 1 else ''}"
             if imported:
                 line += f"; imported {len(imported)} merged PR{'s' if len(imported) != 1 else ''}"
@@ -2085,7 +2136,8 @@ class ProgramService:
                        f"{(self.store.get_step(target['id']) or target)['ordinal']}"
             self._copy_parents(program, made)
             self._plant_step_requirements(program, made)
-            self._checkpoint(program, None, by, line)
+            if made or not folds:
+                self._checkpoint(program, None, by, line)
             self._touch(program)
             self.changed(program["id"], verb="plan")
         return self.get(principal, program["id"])
@@ -2310,6 +2362,10 @@ class ProgramService:
             self._checkpoint(program, step, "engine",
                              f"The agent asks to start a step from {start_from['ref']}; it is yours to add" if start_from
                              else f"The agent names a missing step: {title}; it is yours to add")
+            return
+        same = None if start_from else fold_target(self.store.list_steps(program["id"]), title)
+        if same is not None:
+            self._fold(program, dict(same), brief, by="engine")
             return
         added = self._added_step(program, step, title, brief, start_from=start_from)
         line = (f"Added step {added['ordinal']} \u201c{title}\u201d from {start_from['ref']} (asked by step {step['ordinal']})"
@@ -2768,10 +2824,11 @@ class ProgramService:
             self._checkpoint(program, added, "owner", f"Started step {added['ordinal']} from {proposal['start_from']['ref']}")
             return {"added": added["id"]}
         if choice == "add":
+            same = fold_target(self.store.list_steps(program["id"]), proposal["title"])
             made = self.plan(principal, program["id"], steps=[{"title": proposal["title"],
                                                                "brief": proposal.get("brief") or proposal["title"],
                                                                "after": [int(step["ordinal"])]}])
-            return {"added": made["steps"][-1]["id"]}
+            return {"added": same["id"] if same is not None else made["steps"][-1]["id"]}
         self._checkpoint(program, step, "owner", f"Did not add: {proposal['title']}")
         return {}
 
@@ -3434,6 +3491,7 @@ class ProgramService:
             self._tick_now(program["id"])
             return self.get(principal, program["id"])
         self._require_writer(principal, program, "change")
+        self._require_plan_open(principal, program)
         outcome = decide(program.get("control"), "step_change", {})
         # §4.5, §7.2: an agent's lower gate goes to him at every level, YOLO too.
         lowered = _lowered_step_fields(step, fields)
@@ -3608,6 +3666,7 @@ class ProgramService:
             self._tick_now(program["id"])
             return self.get(principal, program["id"])
         self._require_writer(principal, program, "change")
+        self._require_plan_open(principal, program)
         outcome = decide(program.get("control"), "step_change", {})
         title = f"The orchestrator removes step {step['ordinal']}, {step['title']}"
         with _LOCK:
@@ -3942,6 +4001,8 @@ class ProgramService:
         if not isinstance(text, str) or not text.strip():
             raise ProgramRefused("text_required", "Give the program text.", status=400)
         program = self._program(program_id)
+        if not dry_run:
+            self._require_plan_open(principal, program)
         wire = self.get(principal, program_id)
         current = print_program(wire)
         base_text = str(base) if isinstance(base, str) and base.strip() else current
@@ -4057,6 +4118,7 @@ class ProgramService:
 
         self._held.on = True
         done = 0
+        folded: set[str] = set()
         try:
             with _LOCK:
                 # 1. The Program.
@@ -4089,10 +4151,17 @@ class ProgramService:
                 # 2. New steps, appended in their order, then placed.
                 added = kinds("add_step")
                 if added:
-                    before = {step["id"] for step in self.store.list_steps(pid)}
-                    raws = []
+                    there = self.store.list_steps(pid)
+                    before = {step["id"] for step in there}
+                    raws, new_rows = [], []
                     for row in added:
                         step = row.data["step"]
+                        same = fold_target(there, step.title) if not step.merged else None
+                        if same is not None:
+                            keys[row.data["key"]] = same["id"]  # ``plan`` folds it into that step
+                            folded.add(row.data["key"])
+                        else:
+                            new_rows.append(row)
                         raw: dict[str, Any] = {"title": step.title, "brief": step.brief, "owns": list(step.owns),
                                                "after": list(step.after), "prefer_idle": step.when_idle,
                                                "may_call": step.may_call, "origin_ref": step.origin}
@@ -4111,7 +4180,7 @@ class ProgramService:
                     self.plan(principal, pid, steps=raws)
                     made = sorted((step for step in self.store.list_steps(pid) if step["id"] not in before
                                    and not step.get("race_of")), key=lambda step: int(step["ordinal"]))
-                    for row, step in zip(added, made):
+                    for row, step in zip(new_rows, made):
                         keys[row.data["key"]] = step["id"]
                     done += len(added)
                 # 3. Field changes of the steps that were there.
@@ -4153,14 +4222,15 @@ class ProgramService:
                 for row in kinds("remove_step"):
                     self.remove_step(principal, pid, keys.pop(f"s{row.data['number']}"))
                     done += 1
-                moves = kinds("move")
+                moves = [row for row in kinds("move") if row.data.get("key") not in folded]
                 if moves:
                     top = max((step.number for step in base_model.steps if step.number is not None), default=0)
                     order, counter = [], top
                     for step in new_model.steps:
                         if step.number is None:
                             counter += 1
-                            order.append(keys.get(f"n{counter}"))
+                            if f"n{counter}" not in folded:  # a folded step keeps its own place
+                                order.append(keys.get(f"n{counter}"))
                         elif f"s{step.number}" in keys:
                             order.append(keys[f"s{step.number}"])
                     order = [sid for sid in order if sid]
