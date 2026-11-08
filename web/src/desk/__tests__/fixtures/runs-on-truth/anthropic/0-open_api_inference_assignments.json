@@ -1,6 +1,6 @@
 {
   "_": "The hub's own answer, captured by tests/integration/test_desk_runs_on_hub.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
-  "captured_at": "2026-10-28T04:13:27.089171Z",
+  "captured_at": "2026-11-08T22:51:20.653864Z",
   "wire": {
     "issue_count": 1,
     "rows": [
@@ -836,24 +836,6 @@
       {
         "effective": {
           "assignment": null,
-          "capability_id": "sequence.step",
-          "inherited_from": null,
-          "repair": "Choose default",
-          "status": "no_assignment"
-        },
-        "group": {
-          "id": "agents_tools",
-          "label": "Agents & tools"
-        },
-        "has_override": false,
-        "id": "sequence.step",
-        "issues": [],
-        "label": "Sequence step",
-        "queue": null
-      },
-      {
-        "effective": {
-          "assignment": null,
           "capability_id": "speech.intent_classify",
           "inherited_from": null,
           "repair": "Choose default",
@@ -908,7 +890,7 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-28T04:13:26.868209Z",
+            "created_at": "2026-11-08T22:51:20.396923Z",
             "effective_retry_policy_id": "retry.audio.transcription",
             "entries": [
               {
@@ -921,7 +903,7 @@
                 "readiness": "unavailable"
               }
             ],
-            "id": "ia_5b93c790be4449b28515c2bfdef3cc88",
+            "id": "ia_e925e556985d42058ecfa8ce624cf87b",
             "issues": [
               {
                 "code": "binding_not_ready",
@@ -938,7 +920,7 @@
               "capability_id": "speech.transcribe",
               "kind": "capability"
             },
-            "sha256": "sha256:c4e35b3c8112c80e1b0cd7b27511af014fefe839d7f1aed81beee5e61b8a8cae"
+            "sha256": "sha256:24ccb0046b0c1538cfa631e2f7ab264295fa7a3e79a4a4a221f84a4787d1ca40"
           },
           "capability_id": "speech.transcribe",
           "inherited_from": "capability",
@@ -1014,24 +996,6 @@
         "id": "workbench.item",
         "issues": [],
         "label": "Automation item",
-        "queue": null
-      },
-      {
-        "effective": {
-          "assignment": null,
-          "capability_id": "workflow.node",
-          "inherited_from": null,
-          "repair": "Choose default",
-          "status": "no_assignment"
-        },
-        "group": {
-          "id": "agents_tools",
-          "label": "Agents & tools"
-        },
-        "has_override": false,
-        "id": "workflow.node",
-        "issues": [],
-        "label": "Workflow node",
         "queue": null
       }
     ]

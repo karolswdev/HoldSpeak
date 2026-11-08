@@ -361,7 +361,9 @@ def _probe_task_once(page: Any, job: str, capability: str, profile_id: str, fake
     assert len(pressed) == 1 and pressed[0].post_data_json == expected, [request.post_data_json for request in pressed]
     answer = tried.value.json()
     assert answer["ok"] is True and answer["state"] == "READY" and answer["outcome"] == "succeeded", answer
-    assert answer["operationId"] and answer["executionId"] and answer["routePlanId"], answer
+    # The probe runs through the engine door (9183f78ba): no route plan or
+    # execution row, so routePlanId and executionId are empty strings.
+    assert answer["operationId"], answer
     assert answer["legs"] and all(leg["profileId"] == profile_id for leg in answer["legs"]), answer
     assert answer["sampleInput"] and answer["sampleOutput"] and not answer["emptyOutput"], answer
     assert answer["latencyMs"] > 0, answer
