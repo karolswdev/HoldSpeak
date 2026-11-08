@@ -12,6 +12,8 @@ import { openIntelligence } from "../intelligenceNavigation";
 import { openRef, refOpener } from "../openObject";
 import { openPrimitive, openSurfaceOr } from "../shell";
 import { NO_WINDOW_REF_KINDS, refOpensWindow } from "../surface/citations";
+import { apiFetch } from "../../lib/api";
+import { useDesk } from "../store";
 
 vi.mock("../shell", async (original) => ({
   ...(await original<typeof import("../shell")>()),
@@ -28,7 +30,12 @@ vi.mock("../../lib/api", async (original) => ({
   apiFetch: vi.fn(async () => ({ decision: {} })),
 }));
 
+// The one decision face (2026-11-08): a decision opens its record in the
+// Decisions window (the store's openSurfaceWindow), never the pullout.
+const openSurfaceWindow = vi.fn();
 beforeEach(() => {
+  openSurfaceWindow.mockClear();
+  useDesk.setState({ openSurfaceWindow } as never);
   vi.mocked(openPrimitive).mockClear();
   vi.mocked(openSurfaceOr).mockClear();
   vi.mocked(openIntelligence).mockClear();
@@ -61,13 +68,20 @@ describe("every ref the drafters' memory helper returns opens on the Desk", () =
     const opened =
       vi.mocked(openPrimitive).mock.calls.length +
       vi.mocked(openSurfaceOr).mock.calls.length +
-      vi.mocked(openIntelligence).mock.calls.length;
+      vi.mocked(openIntelligence).mock.calls.length +
+      openSurfaceWindow.mock.calls.length;
     expect(opened).toBe(1);
   });
 
-  it("a desk decision opens the Desk's decision window, under the name the store keeps", () => {
+  it("a desk decision opens its record in the Decisions window, found by the id the store keeps", async () => {
+    vi.mocked(apiFetch).mockImplementationOnce(async () => [{ id: "rec-7ce0" }] as never);
     openRef("desk_decision:decision_7ce0");
-    expect(openPrimitive).toHaveBeenCalledWith("decision:decision_7ce0");
+    await new Promise((done) => setTimeout(done, 0));
+    // The store keeps the Desk decision as `decision:decision_7ce0`; the
+    // record is looked up by that id, without the citation's prefix.
+    expect(apiFetch).toHaveBeenCalledWith("/api/decision-records/source/desk/decision_7ce0");
+    expect(openSurfaceWindow).toHaveBeenCalledWith("open-decisions", "record:rec-7ce0");
+    expect(openPrimitive).not.toHaveBeenCalled();
   });
 
   it("the helper and the Desk hold ONE list of refs with no window", () => {
