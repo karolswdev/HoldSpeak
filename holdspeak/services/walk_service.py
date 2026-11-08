@@ -34,6 +34,9 @@ _STEP_KEYS = frozenset({"open", "verb", "highlight", "ask"})
 MAX_STEPS = 60
 MAX_WORDS = 2000
 SKIP = "skip"
+# Words he sent without pressing a choice (first run 2026-11-07: every answer
+# came back "Keep" while his words said no). Words never imply a choice.
+WORDS = "words"
 # The storage bound of one walk (Codex review of #1808). The token routes are
 # reachable over Tailscale, so repeated valid answers must not fill the disk:
 # - one PNG per question: a later image of the same ref replaces the earlier
@@ -225,9 +228,11 @@ class WalkService:
             ask = asks.get(ref) if isinstance(ref, str) else None
             if ask is None:
                 raise WalkRefused("walk_unknown_ask", "This walk has no such question.", status=422)
-            if not isinstance(choice, str) or (choice not in ask["choices"] and choice != SKIP):
+            if not isinstance(choice, str) or (choice not in ask["choices"] and choice not in (SKIP, WORDS)):
                 raise WalkRefused("walk_unknown_choice", "That choice is not on this question.", status=422)
             said = _text(words, "words", MAX_WORDS, required=False)
+            if choice == WORDS and choice not in ask["choices"] and not said:
+                raise WalkRefused("walk_words_empty", "Send the words, or press a choice.", status=422)
             answer: dict[str, Any] = {"choice": choice, "at": utc_now_iso()}
             if said:
                 answer["words"] = said
@@ -267,4 +272,4 @@ def default_walk_service() -> WalkService:
     return _DEFAULT
 
 
-__all__ = ["MAX_EARLIER", "PAGE_PREFIX", "WALK_BYTES", "WalkRefused", "WalkService", "default_walk_service", "validate_script"]
+__all__ = ["MAX_EARLIER", "PAGE_PREFIX", "SKIP", "WALK_BYTES", "WORDS", "WalkRefused", "WalkService", "default_walk_service", "validate_script"]

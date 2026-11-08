@@ -35,6 +35,8 @@ export class WalkError extends Error {
 }
 
 export const SKIP = "skip";
+/** The answer's choice when he sends words and presses no choice. */
+export const WORDS = "words";
 
 /** The walk token on this address (`?walk=`), or "". */
 export function walkTokenFromLocation(): string {
@@ -148,9 +150,26 @@ function zOf(element: Element): number {
   return Number.isFinite(z) ? z : 0;
 }
 
-/** The target inside the newest window of the app (the front one first),
- * then in any window, then anywhere on the desk. */
-export function findWalkTarget(target: string, app?: string): HTMLElement | null {
+/** The window element of an app (the front one when it has several), or
+ * null when that window is not open. */
+export function findWalkWindow(app: string): HTMLElement | null {
+  const id = walkWindowId(app);
+  const own = Array.from(document.querySelectorAll<HTMLElement>("[data-layer='window']"))
+    .filter((element) => element.id === id || element.id.startsWith(`${id}:`))
+    .sort((left, right) => zOf(right) - zOf(left));
+  return own[0] ?? null;
+}
+
+export interface WalkPart {
+  /** The step's window; null when the step names no app. */
+  window: HTMLElement | null;
+  target: HTMLElement | null;
+}
+
+/** The target ONLY inside the window of the step's app, never in another
+ * window (first run 2026-11-07: "the newest window" was an Update draft).
+ * A step with no app looks on the desk outside the walk. */
+export function findWalkTarget(target: string, app?: string): WalkPart {
   const selector = selectorFor(target);
   const look = (root: ParentNode): HTMLElement | null => {
     try {
@@ -159,23 +178,40 @@ export function findWalkTarget(target: string, app?: string): HTMLElement | null
       return null;
     }
   };
-  const id = app ? walkWindowId(app) : "";
-  const windows = Array.from(document.querySelectorAll<HTMLElement>("[data-layer='window']"))
-    .sort((left, right) => zOf(right) - zOf(left));
-  const own = windows.filter((element) => id && (element.id === id || element.id.startsWith(`${id}:`)));
-  for (const root of [...own, ...windows]) {
-    const found = look(root);
-    if (found) return found;
+  if (!app) {
+    const anywhere = look(document);
+    return { window: null, target: anywhere && !anywhere.closest("[data-walk]") ? anywhere : null };
   }
-  const anywhere = look(document);
-  return anywhere && !anywhere.closest("[data-walk]") ? anywhere : null;
+  const root = findWalkWindow(app);
+  return { window: root, target: root ? look(root) : null };
 }
 
 /** Wait for the target: a window paints its core after a lazy load. */
-export async function waitForWalkTarget(target: string, app: string | undefined, ms = 6000): Promise<HTMLElement | null> {
+export async function waitForWalkTarget(target: string, app: string | undefined, ms = 6000): Promise<WalkPart> {
   const until = Date.now() + ms;
   for (;;) {
     const found = findWalkTarget(target, app);
+    if (found.target || Date.now() >= until) return found;
+    await wait(150);
+  }
+}
+
+/** The app's name for a plain line: "Meetings", "Needs you". The Chair
+ * module loads on first use, as the registry does (it reads the store). */
+export async function walkAppName(app: string): Promise<string> {
+  if (app.startsWith("chair:")) {
+    const { chairWindowSpec } = await import("../chair/chairWindows");
+    return chairWindowSpec(app)?.title ?? app.slice("chair:".length);
+  }
+  const application = DESK_APPLICATIONS.find((row) => row.action === app || row.windowId === app);
+  return application?.label ?? app;
+}
+
+/** Wait for the window of an app (a step that asks without a mark). */
+export async function waitForWalkWindow(app: string, ms = 6000): Promise<HTMLElement | null> {
+  const until = Date.now() + ms;
+  for (;;) {
+    const found = findWalkWindow(app);
     if (found || Date.now() >= until) return found;
     await wait(150);
   }

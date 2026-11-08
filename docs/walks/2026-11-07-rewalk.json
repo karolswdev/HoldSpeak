@@ -1,0 +1,21 @@
+{
+  "title": "Rewalk · 2026-11-07",
+  "steps": [
+    {"open": {"app": "surface-programs"},
+     "highlight": {"target": "programs-new", "words": "Press New program."}},
+    {"highlight": {"target": "programs-make-rows", "window": "surface-programs", "words": "The project rows in the New program well."},
+     "ask": {"ref": "programs-project-rows", "question": "Is the project choice now the obvious first step?", "choices": ["Keep", "Redo"]}},
+    {"open": {"app": "chair:needs"},
+     "highlight": {"target": "needs-open-people", "words": "People, in the Needs you toolbar."},
+     "ask": {"ref": "needs-toolbar-people", "question": "Does the toolbar read as one band, and is People clear?", "choices": ["Keep", "Redo"]}},
+    {"open": {"app": "open-project-memory", "scope": "@first-project"},
+     "highlight": {"target": "room-fold-programs", "words": "The Programs filed to this project."},
+     "ask": {"ref": "room-programs", "question": "Does the Programs fold read clearly?", "choices": ["Keep", "Redo"]}},
+    {"highlight": {"target": "room-people-row", "window": "open-project-memory", "words": "Press a name, then Link."},
+     "ask": {"ref": "room-people-link", "question": "Does Link work and read right?", "choices": ["Keep", "Redo"]}},
+    {"open": {"app": "review-meetings", "scope": "@first-meeting"},
+     "highlight": {"target": "meeting-decide", "words": "Press Decide."}},
+    {"highlight": {"target": "decide-scope", "window": "review-meetings", "words": "The project line: where the decision is filed."},
+     "ask": {"ref": "decide-project-line", "question": "Do you see the project before Save?", "choices": ["Keep", "Redo"]}}
+  ]
+}

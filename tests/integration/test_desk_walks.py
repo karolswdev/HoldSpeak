@@ -40,10 +40,10 @@ SCRIPT = {
     "steps": [
         {"open": {"app": "surface-programs"}},
         {"highlight": {"target": "programs-new", "words": "Press New program. The well opens."}},
-        {"highlight": {"target": "[data-testid='programs-make'] .gadget-row", "words": "The project choice."},
+        {"highlight": {"target": "programs-make-rows", "words": "The project rows."},
          "ask": {"ref": "s11-well", "question": "Does the well read clearly?", "choices": ["Keep", "Redo"]}},
         {"open": {"app": "chair:needs"},
-         "highlight": {"target": "needs-people-coverage", "words": "Whose obligations the list shows."},
+         "highlight": {"target": "needs-open-people", "words": "People, in the toolbar."},
          "ask": {"ref": "needs-coverage", "question": "Is the line clear?", "choices": ["Keep", "Redo"]}},
     ],
 }
@@ -143,6 +143,23 @@ def test_a_walk_is_made_served_by_its_token_and_answered(tmp_path, monkeypatch) 
     assert full["answers"]["needs-coverage"]["choice"] == "skip"
     assert full["directory"].endswith(walk_id) and "token_sha256" not in full
     assert client.get(f"/api/w/{token}").json()["answers"]["s11-well"]["choice"] == "Keep"
+
+
+def test_words_without_a_pressed_choice_are_stored_as_words_never_as_a_choice(tmp_path, monkeypatch) -> None:
+    # First run 2026-11-07: every answer came back "Keep" while his words said
+    # no. Words he sends without a choice are stored as the choice "words".
+    client, _service = _client(tmp_path, monkeypatch)
+    made = client.post("/api/walks", json=SCRIPT).json()
+    token, walk_id = made["token"], made["id"]
+    sent = client.post(f"/api/w/{token}/answer", json={"ref": "s11-well", "choice": "words",
+                                                       "words": "No, broken."})
+    assert sent.status_code == 200, sent.text
+    assert sent.json()["choice"] == "words" and sent.json()["words"] == "No, broken."
+    assert client.get(f"/api/walks/{walk_id}").json()["answers"]["s11-well"] == {
+        "choice": "words", "words": "No, broken.", "at": sent.json()["at"]}
+    # "words" with no words is no answer.
+    empty = client.post(f"/api/w/{token}/answer", json={"ref": "needs-coverage", "choice": "words", "words": " "})
+    assert empty.status_code == 422 and empty.json()["code"] == "walk_words_empty"
 
 
 def test_a_wrong_token_reads_nothing_and_a_bad_answer_is_refused(tmp_path, monkeypatch) -> None:
