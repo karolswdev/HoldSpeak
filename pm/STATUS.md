@@ -2,6 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · #1912 Fix forward #1906: the pullout identity cases run on a Knowledge pullout, and New decision's type + Enter opens its one record in the Decisions window reader.
 - 2026-11-08 · #1910 The user docs follow the night: the New program wizard plans on Create, Needs you rows and their right-press menu, Run as a program vs Hand to an agent session, one decision face, the one keystore, the walk link, the Room's Programs fold.
 - 2026-11-08 · #1909 Fix forward #1906: the memory-ref opener test expects a desk_decision citation to open its record in the Decisions window, and the graph snapshots cite the parked Decision pullout (19 paths, one script).
 - 2026-11-08 · #1908 CodeMirror leaves the desk chunk (the note pullout and note editor load lazily; reading parses with @lezer/markdown directly): 2,038 -> 1,537 KiB raw (659 -> 486 KiB gzip), CodeMirror+Lezer in it 513 -> 69 KiB; new chunks DeskEditor 458 KiB, NotePullout 28 KiB, NoteEditor 8 KiB, useThoughtNoteWriter 6 KiB; all JS 9,639 -> 9,639 KiB raw, 2,911 -> 2,912 KiB gzip.
