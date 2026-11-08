@@ -72,8 +72,9 @@ describe("the subtree-writer allowlist (HS-130-07)", () => {
     // MeetingsConfig owns the meeting capture/export subtree and DeliveryBoard
     // owns the companion-repo key — each is the ONE writer of its subtree and
     // those rows no longer render in SettingsCore. No other writer is
-    // permitted. First run C1: the You card writes ONLY the `owner`
-    // subtree (his name and aliases), from desk/firstrun/ownerName.ts.
+    // permitted. The You fields (first-run card, People, Settings) write
+    // the `owner` subtree through a Settings writer of their own window
+    // (writer.ts `useOwnerWriter` / `settingsOwnerAdapter`), never their own PUT.
     // Betterment C7 explicitly projects meeting.auto_record on Record as
     // well as Settings; RecordHome owns that narrow projection. Calls
     // (2026-10-28): desk/calls/api.ts is the ONE writer of the `calls`
@@ -81,7 +82,6 @@ describe("the subtree-writer allowlist (HS-130-07)", () => {
     expect(writers).toEqual([
       "desk/calls/api.ts",
       "desk/components/DeliveryBoard.tsx",
-      "desk/firstrun/ownerName.ts",
       "pages/cores/CommandsCore.tsx",
       "pages/cores/history/MeetingsConfig.tsx",
       "pages/cores/history/RecordHome.tsx",

@@ -39,6 +39,7 @@ import { useWindowInterior } from "../../desk/surface/interior";
 import { ObjectList, type ObjectListRow, type ObjectListSort } from "../../desk/surface/objects/ObjectList";
 import { renderHeroSlot } from "./core-layout";
 import { useOwnerName } from "../../desk/firstrun/ownerName";
+import { useOwnerWriter } from "./settings/writer";
 import { nudgeText } from "../../desk/needs/NeedsDrawer";
 import { NoteSendWells } from "../../desk/documentSendsLazy";
 import { PeopleNotHere, PeopleReadFailed } from "../../desk/people/PeopleReadFailed";
@@ -742,7 +743,7 @@ function nameAsked(): boolean {
 }
 
 function WhoAreYou() {
-  const owner = useOwnerName();
+  const owner = useOwnerName(useOwnerWriter());
   const [asked, setAsked] = useState(false);
   const [seen] = useState(nameAsked);
   useEffect(() => {

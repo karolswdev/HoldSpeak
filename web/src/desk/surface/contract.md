@@ -111,9 +111,11 @@ write authority stay with RepoWindow/provider services. The reference is not a
 second production application. Durable view-history restoration and shared
 collection adoption are follow-on work, not claims made by this first consumer.
 
-The preference pattern shares `OwnerNameFields` and `useOwnerName(adapter?)`,
-not a generic form engine. The production adapter keeps the existing settings
-endpoint, revision guard, serialized autosave and leave keepalive policy.
+The preference pattern shares `OwnerNameFields` and `useOwnerName(adapter)`,
+not a generic form engine. The production adapter is the window's one
+Settings writer (`settingsOwnerAdapter`, or `useOwnerWriter` in a window
+without a Settings document): one revision, one 409 word, serialized autosave
+and the leave keepalive.
 Fields show Edited immediately, Saving for the captured in-flight value,
 Saved only for an acknowledged current value, and Not saved with retained
 input plus one Retry. Window grammar (2026-10-24): no pill per field. Each
