@@ -136,7 +136,7 @@ def decide(service: Any, principal: Any, program: dict[str, Any], lesson_id: Any
     """His press on a Lesson row: Keep for this program (an every-step Review
     requirement), Keep for HoldSpeak (a tiny step that edits the repository
     file), or Skip (the cause is not proposed again here)."""
-    from .program_service import ProgramRefused
+    from .program_definitions import ProgramRefused
 
     row = next((item for item in service.store.list_checkpoints(program["id"])
                 if item.get("kind") == KIND and str(item["id"]) == str(lesson_id)), None)
@@ -173,7 +173,8 @@ def keep_step(service: Any, program: dict[str, Any], row: Mapping[str, Any], hit
     """JRN12: a tiny step of this Program whose diff is one JSON change: one
     ``requirements`` item in ``.holdspeak/program.json``. It has no ``after``
     and the gates of any step (check, review, merge by the level)."""
-    from .program_service import _new_id, triage_effort
+    from .program_service import _new_id
+    from .program_definitions import triage_effort
 
     item = {"text": hit["requirement"], "kind": "review", "each_step": True, "required": True}
     brief = (f"Keep a lesson for the repository. Edit `{REPO_FILE}` (make it, with `{{}}`, if it is not there): "

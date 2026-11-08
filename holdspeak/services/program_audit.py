@@ -289,7 +289,7 @@ def _count(n: int, word: str) -> str:
 
 def decide(service: Any, principal: Any, program: dict[str, Any], kind: str, choice: str) -> dict[str, Any]:
     """His press on ``audit_file`` (file · skip) or ``fix_program`` (make · skip)."""
-    from .program_service import ProgramRefused
+    from .program_definitions import ProgramRefused
 
     marks = marks_of(service.store.list_checkpoints(program["id"]))
     if kind == "audit_file":
@@ -339,7 +339,8 @@ def propose_fix(service: Any, principal: Any, program_id: str) -> dict[str, Any]
     MUST finding, each with a Review requirement that it is fixed, linked to
     the audit (``origin_ref program:<audit id>``). It is never started here:
     his Start (or an orchestrating agent's, on a Program it made) starts it."""
-    from .program_service import ProgramRefused, _is_owner
+    from .program_service import _is_owner
+    from .program_definitions import ProgramRefused
 
     program = service._program(program_id)
     if not is_audit(program):
