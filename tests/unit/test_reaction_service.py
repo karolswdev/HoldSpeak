@@ -196,18 +196,18 @@ def test_due_watch_pump_uses_35_minute_default_and_isolates_failures(tmp_path) -
     ) == []
 
 
-def test_conductor_pumps_due_watches(tmp_path, monkeypatch) -> None:
+def test_the_conductor_no_longer_pumps_legacy_watches_or_reactions(tmp_path, monkeypatch) -> None:
+    """Watch fold 3 (2026-11-08): the heartbeat sweep is the one watch
+    scheduler; the conductor tick calls neither legacy pump."""
     db = Database(tmp_path / "conductor-watch-pump.db")
-    calls = {"refresh": [], "process": []}
+    calls: list[str] = []
 
     async def pump(self, principal, **kwargs):  # noqa: ANN001
-        del self, kwargs
-        calls["refresh"].append(principal)
-        return [{"watch_id": "watch-1", "status": "refreshed"}]
+        calls.append("refresh")
+        return []
 
     async def process(self, principal, **kwargs):  # noqa: ANN001
-        del self
-        calls["process"].append((principal, kwargs["limit"]))
+        calls.append("process")
         return []
 
     monkeypatch.setattr("holdspeak.db.get_database", lambda: db)
@@ -216,9 +216,7 @@ def test_conductor_pumps_due_watches(tmp_path, monkeypatch) -> None:
 
     WorkbenchConductor()._tick()
 
-    assert len(calls["refresh"]) == 1
-    assert calls["refresh"][0].kind is PrincipalKind.OWNER
-    assert calls["process"] == [(calls["refresh"][0], 500)]
+    assert calls == []
 
 
 def test_reaction_mutations_require_owner(tmp_path) -> None:
