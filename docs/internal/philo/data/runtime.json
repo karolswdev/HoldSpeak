@@ -764,9 +764,9 @@
       "kernel_operations": [],
       "sources": [
         {
-          "path": "holdspeak/db/schema.py",
+          "path": "holdspeak/db/schema/__init__.py",
           "symbol": "SCHEMA_SQL",
-          "line": 1,
+          "line": 59,
           "claim": "Defines the declared schema and informational version 79."
         },
         {
@@ -1737,9 +1737,9 @@
       "purpose": "Own a captured or imported session and its transcript-linked records.",
       "sources": [
         {
-          "path": "holdspeak/db/schema.py",
-          "symbol": "SCHEMA_SQL",
-          "line": 24,
+          "path": "holdspeak/db/schema/meetings.py",
+          "symbol": "SQL",
+          "line": 16,
           "claim": "Defines meeting capture fields and timed transcript segment relationships."
         }
       ],
@@ -1775,9 +1775,9 @@
       "purpose": "Hold a candidate external effect across review, authorization and execution.",
       "sources": [
         {
-          "path": "holdspeak/db/schema.py",
-          "symbol": "SCHEMA_SQL",
-          "line": 424,
+          "path": "holdspeak/db/schema/decisions_projects.py",
+          "symbol": "SQL",
+          "line": 55,
           "claim": "Stores proposal content/destination hashes and separate lifecycle axes."
         }
       ],
@@ -1810,9 +1810,9 @@
       "purpose": "Represent one bounded operation, its parent/child relationship, journal evidence and terminal receipt.",
       "sources": [
         {
-          "path": "holdspeak/db/schema.py",
-          "symbol": "SCHEMA_SQL",
-          "line": 2118,
+          "path": "holdspeak/db/schema/kernel_journal.py",
+          "symbol": "SQL",
+          "line": 11,
           "claim": "Defines operation identity, envelope, principal, state, warrant and claim fields."
         }
       ],
@@ -1878,9 +1878,9 @@
       "purpose": "Record one physical model attempt, including deployment binding, disposition and result evidence.",
       "sources": [
         {
-          "path": "holdspeak/db/schema.py",
-          "symbol": "SCHEMA_SQL",
-          "line": 3060,
+          "path": "holdspeak/db/schema/cadence_agents.py",
+          "symbol": "SQL",
+          "line": 229,
           "claim": "Defines attempt state, outcome, disposition and result/receipt references."
         }
       ],

@@ -72,7 +72,7 @@ a declaration such as `Admission.enforced` as execution proof.
   Do not call a provider directly from a route or invent another resolver.
   Specialist runtimes, such as the Line speech process, have a separate
   explicit contract; do not claim the core runner already covers them.
-- Canonical schema lives in `db/schema.py`; upgrades use `db/reconcile.py`.
+- Canonical schema lives in `db/schema/` (one module per domain); upgrades use `db/reconcile.py`.
   Preserve data and follow its shape-based policy. Do not add a separate
   version migration chain, wipe rows to make an upgrade pass or rely on a
   schema-stamp bump alone. Test fresh and existing DB shapes for an upgrade.
