@@ -357,14 +357,14 @@
 }
 /* The verbs are the quiet secondary form: no plate at rest, a fine rule
    and the hover wash on approach; the ONE primary keeps its blue. */
-.desk-next .kit-toolbar .kit-toolbar-verbs .btn:not(.btn--primary):not(.btn--danger) {
+.desk-next .kit-toolbar .kit-toolbar-verbs .btn:not(.btn--primary):not(.btn--danger):not(.btn--brass) {
   border-color: transparent;
   background: transparent;
   box-shadow: none;
   color: var(--wb-ink);
   font-weight: 500;
 }
-.desk-next .kit-toolbar .kit-toolbar-verbs .btn:not(.btn--primary):not(.btn--danger):hover:not(:disabled) {
+.desk-next .kit-toolbar .kit-toolbar-verbs .btn:not(.btn--primary):not(.btn--danger):not(.btn--brass):hover:not(:disabled) {
   border-color: var(--wb-rule-soft);
   background: var(--wb-hover);
 }
@@ -590,7 +590,7 @@
   padding-inline: 10px;
   font-size: 13px;
 }
-.desk-next .kit-statusbar .kit-statusbar-verbs .btn:not(.btn--primary):not(.btn--danger) {
+.desk-next .kit-statusbar .kit-statusbar-verbs .btn:not(.btn--primary):not(.btn--danger):not(.btn--brass) {
   background: var(--wb-paper);
 }
 .kit-statusbar:has(> .kit-statusbar-verbs) {
@@ -891,7 +891,7 @@
 .btn--primary .kit-toolglyph-dot {
   fill: currentColor;
 }
-.desk-next .kit-toolbar .kit-toolbar-verbs .btn:not(.btn--primary):not(.btn--danger):active:not(:disabled) {
+.desk-next .kit-toolbar .kit-toolbar-verbs .btn:not(.btn--primary):not(.btn--danger):not(.btn--brass):active:not(:disabled) {
   background: var(--wb-press);
   transform: translateY(1px);
 }

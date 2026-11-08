@@ -72,6 +72,7 @@ from ..project_contracts import (
     generate_pupd_id,
 )
 from ..refs import format as format_ref, parse as parse_ref
+from . import project_update_policy
 from .meeting_kind import is_one_on_one, meeting_speakers, title_says_one_on_one
 from .memory_grounding import memory_for, project_pages
 # Betterment P3: one risk rule for the update and the project window's head.
@@ -3033,173 +3034,32 @@ class ProjectUpdateService:
             raise NotFound("delivery", operation_id)
         return {"success": True, "delivery": existing}
 
+    # ── P2: the update's source scope lives in project_update_policy (HS-S55);
+    # these names stay for the Workbench runner, the drafter and the tool gate.
+
     def _project_update_meeting_ids(
         self, principal: Principal, project_id: str,
     ) -> tuple[set[str], set[str]]:
-        """Return linked meeting ids split by the existing P2 rule.
-
-        The project ref is a broad container for ordinary grounding callers.
-        An update automation has a narrower contract: it uses the same
-        meeting-kind classifier as the records drafter, before any source
-        text is hydrated. The second set is the eligible ids; keeping this
-        decision here lets the Workbench and tool response paths share P2.
-        """
-        excluded: set[str] = set()
-        eligible: set[str] = set()
-        people_names: list[str] = []
-        if self._people_names is not None:
-            try:
-                people_names = [str(name) for name in self._people_names(principal) if str(name).strip()]
-            except Exception:
-                _log.debug("update grounding: People names not read; title rule only", exc_info=True)
-        if self._people_names is None:
-            # The Workbench delivery path is composed from its database only.
-            # Reuse the same People-name read used by the Room when that
-            # composition does not inject the web server's callback.
-            try:
-                from .needs_you_membership import _read_people_names
-
-                people_names = [str(name) for name in (_read_people_names(principal) or ()) if str(name).strip()]
-            except Exception:
-                people_names = []
-
-        try:
-            offset = 0
-            while True:
-                page = self._project_service.list_meetings(
-                    principal, project_id, limit=500, offset=offset,
-                )
-                if not page:
-                    break
-                for row in page:
-                    meeting_id = str(row.get("id") or "").strip()
-                    if not meeting_id:
-                        continue
-                    title = str(row.get("title") or "")
-                    private = title_says_one_on_one(title)
-                    try:
-                        meeting = self._db.meetings.get_meeting(meeting_id)
-                    except Exception:
-                        meeting = None
-                    if meeting is not None:
-                        title = str(getattr(meeting, "title", None) or title)
-                        private = private or is_one_on_one(
-                            title, meeting_speakers(meeting), people_names,
-                        )
-                    (excluded if private else eligible).add(meeting_id)
-                if len(page) < 500:
-                    break
-                offset += len(page)
-        except Exception:
-            # A missing meeting projection must not turn into broad project
-            # hydration. The caller still has any explicit safe refs.
-            _log.debug("update grounding: linked meetings not read", exc_info=True)
-
-        return excluded, eligible
+        """Linked meeting ids as (private, eligible): ``project_update_policy.meeting_ids``."""
+        return project_update_policy.meeting_ids(
+            self._db, self._project_service, self._people_names, principal, project_id,
+        )
 
     def project_update_excluded_refs(
         self, principal: Principal, project_id: str,
     ) -> set[str]:
-        """Return canonical refs P2 withholds from an update automation.
-
-        This is deliberately a predicate over the existing project source
-        records. It does not change generic project grounding or unlink a
-        source. A private meeting's descendants are withheld unless the
-        owner explicitly filed that descendant as a project resource; that
-        hand-filed edge is an intentional P2 exception for owed work and
-        owner-added project material.
-        """
-        excluded_meetings, _eligible_meetings = self._project_update_meeting_ids(
-            principal, project_id,
+        """Refs P2 withholds from an update run: ``project_update_policy.excluded_refs``."""
+        return project_update_policy.excluded_refs(
+            self._db, self._project_service, self._people_names, principal, project_id,
         )
-        excluded = {f"meeting:{meeting_id}" for meeting_id in excluded_meetings}
-        excluded.update(f"transcript:{meeting_id}" for meeting_id in excluded_meetings)
-        try:
-            project_resources = self._project_service.list_resources(principal, project_id)
-        except Exception:
-            project_resources = []
-        explicit_refs = {
-            str(resource.get("resource_ref") or "").strip().casefold()
-            for resource in project_resources
-            if str(resource.get("resource_ref") or "").strip()
-        }
-        try:
-            for action in self._project_service.list_action_items(principal, project_id):
-                if str(action.get("meeting_id") or "") in excluded_meetings:
-                    action_id = str(action.get("id") or "").strip()
-                    if action_id and not (
-                        f"action:{action_id}".casefold() in explicit_refs
-                        or f"action_item:{action_id}".casefold() in explicit_refs
-                    ):
-                        excluded.update({f"action:{action_id}", f"action_item:{action_id}"})
-            for artifact in self._project_service.list_artifacts(principal, project_id):
-                if str(artifact.get("meeting_id") or "") in excluded_meetings:
-                    artifact_id = str(artifact.get("id") or "").strip()
-                    if artifact_id and f"artifact:{artifact_id}".casefold() not in explicit_refs:
-                        excluded.add(f"artifact:{artifact_id}")
-            for record_id in self._records_from_meetings(excluded_meetings):
-                if not (
-                    f"decision:{record_id}".casefold() in explicit_refs
-                    or f"decision_record:{record_id}".casefold() in explicit_refs
-                    or f"desk_decision:{record_id}".casefold() in explicit_refs
-                ):
-                    excluded.update({f"decision:{record_id}", f"decision_record:{record_id}"})
-        except Exception:
-            _log.debug("update grounding: meeting descendants not read", exc_info=True)
-
-        # People notes live in their own encrypted store. A regular note can
-        # still be linked to a project by hand; only explicit People/1:1
-        # markers are withheld here, preserving ordinary project notes.
-        for resource in project_resources:
-            raw = str(resource.get("resource_ref") or "").strip()
-            kind, _, resource_id = raw.partition(":")
-            kind = kind.casefold()
-            resource_id = resource_id.split("#", 1)[0].strip()
-            if not kind or not resource_id:
-                continue
-            if kind in {
-                "people", "person", "people_note", "grounding_note", "relationship",
-                "one_on_one", "one-on-one",
-            }:
-                excluded.add(f"{kind}:{resource_id}")
-                continue
-            if kind not in {"note", "notes"}:
-                continue
-            note = self._db.notes.get(resource_id)
-            tags = {str(tag).strip().casefold() for tag in (getattr(note, "tags", None) or [])}
-            title = str(getattr(note, "title", "") or "") if note is not None else ""
-            people_note = (
-                title_says_one_on_one(title)
-                or any(
-                    tag in {"people", "people_note", "people-note", "person", "1:1", "one-on-one"}
-                    or tag.startswith(("people:", "person:"))
-                    for tag in tags
-                )
-            )
-            if people_note:
-                excluded.update({f"note:{resource_id}", f"notes:{resource_id}"})
-        return excluded
 
     def project_update_grounding_refs(
         self, principal: Principal, project_id: str,
     ) -> list[str]:
-        """Expand one project ref to P2-eligible refs for an update run."""
-        excluded = {ref.casefold() for ref in self.project_update_excluded_refs(principal, project_id)}
-        _excluded_meetings, eligible_meetings = self._project_update_meeting_ids(
-            principal, project_id,
+        """P2-eligible refs for an update run: ``project_update_policy.grounding_refs``."""
+        return project_update_policy.grounding_refs(
+            self._db, self._project_service, self._people_names, principal, project_id,
         )
-        refs = [f"meeting:{meeting_id}" for meeting_id in eligible_meetings]
-        try:
-            resources = self._project_service.list_resources(principal, project_id)
-        except Exception:
-            resources = []
-        for resource in resources:
-            ref = str(resource.get("resource_ref") or "").strip().split("#", 1)[0]
-            if not ref or ref.casefold().startswith("project:"):
-                continue
-            if ref.casefold() not in excluded:
-                refs.append(ref)
-        return sorted(set(refs))
 
     def _read_week_sources(
         self,
@@ -3463,21 +3323,9 @@ class ProjectUpdateService:
         }
 
     def _records_from_meetings(self, meeting_ids: set[str]) -> set[str]:
-        """The decision records whose source is one of these meetings."""
-        if not meeting_ids:
-            return set()
-        try:
-            with self._db._connection() as conn:
-                rows = conn.execute(
-                    "SELECT record_id FROM decision_record_sources "
-                    "WHERE source_type = 'meeting' "
-                    "AND source_ref IN (SELECT value FROM json_each(?))",
-                    (json.dumps(sorted(meeting_ids)),),
-                ).fetchall()
-        except Exception:
-            _log.debug("update draft: 1:1 decision records not read", exc_info=True)
-            return set()
-        return {str(row["record_id"]) for row in rows}
+        """The decision records whose source is one of these meetings
+        (``project_update_policy.records_from_meetings``)."""
+        return project_update_policy.records_from_meetings(self._db, meeting_ids)
 
     def publish_update(
         self,

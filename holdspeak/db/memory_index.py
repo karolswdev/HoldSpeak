@@ -16,12 +16,9 @@ from typing import Any, Iterable, Optional, Sequence
 import numpy as np
 
 from .base import BaseRepository
+from holdspeak.timestamps import utc_now_seconds as _now
 
 CHUNK_ITEM_KIND = "chunk"
-
-
-def _now() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
 
 class MemoryIndexRepository(BaseRepository):

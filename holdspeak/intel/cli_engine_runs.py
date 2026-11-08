@@ -1,6 +1,6 @@
 """What each agent CLI engine run cost, and how it ended (Betterment E2).
 
-One row per run in ``cli_engine_runs`` (``holdspeak/db/schema.py``): the
+One row per run in ``cli_engine_runs`` (``holdspeak/db/schema/programs.py``): the
 engine's profile id, when it ran, how it ended and the cost the CLI reported.
 The Engines window reads two sums from it (today and this week, in the hub's
 own time zone) and NOT SIGNED IN from the last run.

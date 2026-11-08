@@ -58,6 +58,8 @@ from pathlib import Path
 from typing import Any, Callable, Mapping, Optional
 
 from ..logging_config import get_logger
+from holdspeak.timestamps import parse_utc_iso as _parse
+from holdspeak.timestamps import utc_now as _now
 
 log = get_logger("delivery.follow_through")
 
@@ -117,18 +119,6 @@ POLL_MAX_PRS = 10
 POLLED_PR_STATES = frozenset({"open", "draft"})
 
 _SWEEP_LOCK = threading.Lock()
-
-
-def _now() -> datetime:
-    return datetime.now(timezone.utc)
-
-
-def _parse(text: Any) -> Optional[datetime]:
-    try:
-        stamp = datetime.fromisoformat(str(text or "").replace("Z", "+00:00"))
-    except ValueError:
-        return None
-    return stamp if stamp.tzinfo else stamp.replace(tzinfo=timezone.utc)
 
 
 def _config_control_mode() -> str:

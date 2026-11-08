@@ -45,7 +45,7 @@ SANCTIONED_WRITERS: list[str] = [
 # Non-runtime files excluded from scanning (schema definitions,
 # reconcile logic, and test fixtures are not runtime write paths).
 EXCLUDED_PATTERNS: list[str] = [
-    "holdspeak/db/schema.py",
+    "holdspeak/db/schema/",
     "holdspeak/db/reconcile.py",
     "holdspeak/db/migrations/",
     "tests/",

@@ -47,6 +47,7 @@ from holdspeak.project_contracts import (
 from holdspeak.refs import format as format_ref, parse as parse_ref
 from holdspeak.services.errors import ConflictError, NotFound, ValidationError
 from holdspeak.services.service_event_ledger import ServiceEventLedger
+from holdspeak.timestamps import utc_now_seconds as _now_iso
 
 
 # ── Materiality formula version ──────────────────────────────────────
@@ -549,10 +550,6 @@ def _envelope_to_dict(env: CommandResultEnvelope) -> dict[str, Any]:
 
 
 # ── The service ──────────────────────────────────────────────────────
-
-
-def _now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
 
 def _parse_utc(value: str) -> datetime:

@@ -14,6 +14,7 @@ from typing import Any
 
 from ..principals import PrincipalKind
 from .follow_through_service import CardProvenance, FollowThroughCard
+from holdspeak.timestamps import utc_now_z as _now
 
 
 # The 1:1 brief reads memory for at most this many linked projects, and this
@@ -70,10 +71,6 @@ _REPORT_OWES = "report_owes"
 def _owed_by_leader(record: dict[str, Any]) -> bool:
     return str(record.get("direction") or _LEADER_OWES) != _REPORT_OWES
 _WORD_RE = re.compile(r"[a-z0-9]+")
-
-
-def _now() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
 
 
 class UnavailablePeopleStore:

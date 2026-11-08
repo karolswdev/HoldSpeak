@@ -73,6 +73,26 @@ def dumps(value: object) -> str:
     return json.dumps(value, indent=2, ensure_ascii=False, sort_keys=True) + "\n"
 
 
+def literal(text: str, name: str) -> object:
+    for node in ast.parse(text).body:
+        if isinstance(node, ast.Assign) and any(isinstance(t, ast.Name) and t.id == name for t in node.targets):
+            return ast.literal_eval(node.value)
+    return None
+
+
+def schema_sql(revision: str, paths: list[str]) -> object:
+    """SCHEMA_SQL at the revision: one literal in schema.py, or (since 2026-11-08)
+    the `SQL` literal of each module in holdspeak/db/schema/, joined in PARTS order."""
+    if "holdspeak/db/schema.py" in paths:
+        return literal(source(revision, "holdspeak/db/schema.py"), "SCHEMA_SQL")
+    init = ast.parse(source(revision, "holdspeak/db/schema/__init__.py"))
+    for node in init.body:
+        if isinstance(node, ast.Assign) and any(isinstance(t, ast.Name) and t.id == "PARTS" for t in node.targets):
+            names = [elt.id for elt in node.value.elts]
+            return "".join(literal(source(revision, f"holdspeak/db/schema/{n}.py"), "SQL") for n in names)
+    return None
+
+
 def collect(revision: str) -> dict[str, str]:
     revision = git("rev-parse", revision).strip()
     paths = git("ls-tree", "-r", "--name-only", revision).splitlines()
@@ -90,11 +110,7 @@ def collect(revision: str) -> dict[str, str]:
         "node_manifests": {p: json.loads(source(revision, p)) for p in manifests if p.endswith("package.json")},
         "manifest_paths": manifests,
     }
-    schema_tree = ast.parse(source(revision, "holdspeak/db/schema.py"))
-    schema = None
-    for node in schema_tree.body:
-        if isinstance(node, ast.Assign) and any(isinstance(t, ast.Name) and t.id == "SCHEMA_SQL" for t in node.targets):
-            schema = ast.literal_eval(node.value)
+    schema = schema_sql(revision, paths)
     if not isinstance(schema, str):
         raise ValueError("SCHEMA_SQL is no longer a literal; inspect the new schema contract")
     conn = sqlite3.connect(":memory:")

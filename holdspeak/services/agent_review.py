@@ -10,11 +10,11 @@ from __future__ import annotations
 import hashlib
 import re
 from copy import deepcopy
-from datetime import datetime, timezone
 from typing import Any, Callable, Mapping, Optional
 
 from ..logging_config import get_logger
 from .errors import ServiceError
+from holdspeak.timestamps import utc_now_iso as _now
 
 log = get_logger("agent_review")
 
@@ -177,10 +177,6 @@ def initial_review(value: Any) -> Optional[dict[str, Any]]:
 #: Empty reads of a finished reviewer's words before its result is unclear
 #: (one per review tick, about 30 s each).
 EMPTY_READS_WAIT = 4
-
-
-def _now() -> str:
-    return datetime.now(timezone.utc).isoformat()
 
 
 def _copy_review(value: Any) -> dict[str, Any]:

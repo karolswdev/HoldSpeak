@@ -35,9 +35,9 @@ import time
 import uuid
 from pathlib import Path
 from dataclasses import dataclass
-from datetime import datetime, timezone
 from typing import Any, Callable, Optional
 from urllib.parse import urlparse
+from holdspeak.timestamps import utc_now_z as _utc_now
 
 GH_TIMEOUT_SECONDS = 30
 GIT_TIMEOUT_SECONDS = 30
@@ -88,10 +88,6 @@ def _default_runner(argv: list[str], cwd: Optional[str] = None):
         errors="replace",
         timeout=GH_TIMEOUT_SECONDS,
     )
-
-
-def _utc_now() -> str:
-    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def rollup_conclusion(status_check_rollup: Any) -> str:
