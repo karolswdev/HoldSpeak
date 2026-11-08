@@ -99,6 +99,8 @@ import createProjectsFixture from "../__fixtures__/program.create_projects.json"
 import createProjectFixture from "../__fixtures__/program.create_project.json";
 import createNoRepositoryFixture from "../__fixtures__/program.create_no_repository.json";
 import createRepositoryRequiredFixture from "../__fixtures__/program.create_repository_required.json";
+import createPersonFixture from "../__fixtures__/program.create_person.json";
+import { resetScreenMembers } from "../../screen/members";
 // The desk's Control mode, as the hub answered GET /api/authority/policy on the recorded rig.
 import needsYouRecorded from "../../__tests__/fixtures/needsYou.recorded.json";
 // HS-S13 + HS-S11 (the creation-to-Room gate): the full hub's create for a
@@ -825,6 +827,76 @@ describe("New program is a wizard inside the window (owner, live walk 2026-11-08
     expect(sent()).toEqual([{
       ...made.request.json, title: "Ship the wizard", template: "build-and-review", goal: "Four steps, one screen each.", control: "yolo",
     }]);
+  });
+
+  describe("Person: who reviews the person-gated steps (recorded People roster and create body)", () => {
+    const scene = createPersonFixture as unknown as { readiness: Capture; people: Capture; made: Capture };
+    const persons = (scene.people.response.body as { relationships: Array<{ id: string; display_name: string }> }).relationships;
+    const picked = scene.made.request.json!.for_person_id as string;
+    const pickedName = persons.find((row) => row.id === picked)!.display_name;
+    const personHub = () => hub({
+      "GET /api/programs": list, "GET /api/projects": projects.response.body,
+      "GET /api/people/readiness": scene.readiness.response.body,
+      "GET /api/people/relationships": scene.people.response.body,
+      "POST /api/programs": scene.made.response.body,
+    });
+    const toHow = async () => {
+      renderWindow(<ProgramsCore />);
+      await screen.findAllByTestId("programs-band");
+      fireEvent.click(screen.getByTestId("programs-new"));
+      await ready();
+      choose(scene.made.request.json!.project_id as string);
+      fireEvent.click(next());
+      fireEvent.click(next());
+    };
+    beforeEach(() => resetScreenMembers());
+
+    it("the recorded scene: the made Program carries the person the body names", () => {
+      expect((scene.made.response.body as Program).for_person_id).toBe(picked);
+      expect(persons.length).toBeGreaterThan(1);
+    });
+
+    // Fails on main: the How screen has Agent and Review only, no Person row.
+    it("the How screen has a Person row under Review: Nobody yet, then the People roster when it opens; no People read before", async () => {
+      personHub();
+      await toHow();
+      const how = screen.getByTestId("programs-wizard-step-3");
+      const person = within(how).getByTestId("programs-wizard-person");
+      expect(person.textContent).toBe("Nobody yet");
+      const labels = [...how.querySelectorAll(".gadget-row")].map((row) => row.querySelector(".gadget-row-label")?.textContent?.trim());
+      expect(labels.indexOf("Person")).toBe(labels.indexOf("Review") + 1);
+      expect(calls.some((call) => call.startsWith("GET /api/people"))).toBe(false);
+      fireEvent.click(person);
+      await waitFor(() => expect(menuItem(pickedName)).toBeTruthy());
+      expect(persons.every((row) => menuItem(row.display_name))).toBe(true);
+      expect(menuItem("Nobody yet").getAttribute("aria-checked")).toBe("true");
+    });
+
+    it("a picked person rides on the body as for_person_id and the summary names her; Nobody yet sends no field", async () => {
+      personHub();
+      await toHow();
+      fireEvent.click(screen.getByTestId("programs-wizard-person"));
+      await waitFor(() => expect(menuItem(pickedName)).toBeTruthy());
+      fireEvent.click(menuItem(pickedName));
+      expect(screen.getByTestId("programs-wizard-person").textContent).toBe(pickedName);
+      fireEvent.click(next());
+      expect(screen.getByTestId("programs-wizard-sum-review").textContent).toBe(`The template's · ${pickedName} reviews`);
+      fireEvent.click(screen.getByTestId("programs-wizard-create"));
+      await waitFor(() => expect(posts()).toHaveLength(1));
+      expect(sent()).toEqual([scene.made.request.json]);
+      cleanup();
+      calls = [];
+      resetScreenMembers();
+      // No pick: no field, and no Review row on the summary.
+      personHub();
+      await toHow();
+      fireEvent.click(next());
+      expect(screen.queryByTestId("programs-wizard-sum-review")).toBeNull();
+      fireEvent.click(screen.getByTestId("programs-wizard-create"));
+      await waitFor(() => expect(posts()).toHaveLength(1));
+      expect(sent()[0]).not.toHaveProperty("for_person_id");
+      expect(sent()).toEqual([made.request.json]);
+    });
   });
 
   it("the only project, or the scope's project, is chosen for him", async () => {
