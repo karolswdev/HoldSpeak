@@ -309,7 +309,7 @@ def red_main_filter(runner: Any, program: Mapping[str, Any], ready: list[dict[st
             "title": f"Make {base} green",
             "brief": (f"The base branch {base} is red: {red}. Find the cause in that run's log and make it green. "
                       "Change only what the red run names; add no feature."),
-        }], before=first["id"] if first else None, waits=False, by="engine")
+        }], before=first["id"] if first else None, waits=False, by="engine", fold=False)
         green = next(row for row in service.store.list_steps(program["id"]) if row["id"] not in before)
         facts = dict(green.get("facts") or {})
         facts["night_green"] = {"night": key, "red": red}
@@ -860,13 +860,22 @@ def add_to_night(service: Any, principal: Any, *, kind: Any, item_id: Any, line:
     """Mark one item for tonight's planning (a Planned step of the night Program)."""
     from ..kernel.program_ops import RUNNER
     from .program_rules import decide
-    from .program_service import _LOCK, CLOSED_STATES, ProgramRefused, _is_owner
+    from .program_service import _LOCK, CLOSED_STATES, ProgramRefused, _is_owner, fold_target
 
     item = _item(service, str(kind or "").strip(), str(item_id or "").strip(), line)
     program = night_program(service, program_id)
-    for step in service.store.list_steps(program["id"]):
-        if ((step.get("facts") or {}).get("night_item") or {}).get("ref") == item["ref"] \
-                and step.get("state") not in CLOSED_STATES:
+    steps = [step for step in service.store.list_steps(program["id"]) if step.get("state") not in CLOSED_STATES]
+    same = fold_target(steps, item["title"])
+    if same is not None and ((same.get("facts") or {}).get("night_item") or {}).get("ref") != item["ref"]:
+        # The night has a step of that title: the item folds into it.
+        service._require_plan_open(principal, program)
+        with _LOCK:
+            service._fold(program, dict(same), str(item["brief"] or ""), by="owner" if _is_owner(principal) else "agent")
+            service.changed(program["id"], same["id"], verb="night")
+        return {"added": False, "program_id": program["id"], "step_id": same["id"], "ordinal": same["ordinal"],
+                "say": f"Folded into step {same['ordinal']}", "program": service.get(principal, program["id"])}
+    for step in steps:
+        if ((step.get("facts") or {}).get("night_item") or {}).get("ref") == item["ref"]:
             return {"added": False, "program_id": program["id"], "step_id": step["id"], "ordinal": step["ordinal"],
                     "say": f"It is in tonight already: step {step['ordinal']}", "program": service.get(principal, program["id"])}
     outcome = None
@@ -876,11 +885,12 @@ def add_to_night(service: Any, principal: Any, *, kind: Any, item_id: Any, line:
         if outcome.to_owner:
             raise ProgramRefused("owner_required", "Only you add to tonight at Normal and Secure; at YOLO the "
                                                    "engine adds it and says so.", status=403)
+        service._require_plan_open(principal, program)  # 2026-11-08: never into a running Program
     with _LOCK:
         before = {row["id"] for row in service.store.list_steps(program["id"])}
         service.plan(RUNNER, program["id"], steps=[{"title": item["title"], "brief": item["brief"], "owns": item["owns"],
                                                     "origin_ref": item["origin_ref"]}],
-                     by="owner" if outcome is None else "engine")
+                     by="owner" if outcome is None else "engine", fold=False)
         step = next(row for row in service.store.list_steps(program["id"]) if row["id"] not in before)
         facts = dict(step.get("facts") or {})
         facts.update(night_plan="pending", night_item={"ref": item["ref"], "kind": str(kind), "from": item["from"],

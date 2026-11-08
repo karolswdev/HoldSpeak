@@ -2,6 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · #1858 Programs: an agent never plans into a running Program (plan_locked_while_running), a hand that wrote nothing goes back once then parks, and a step of a title the plan has folds into that step.
 - 2026-11-08 · #1857 Fix forward #1854: the two Programs seam cases read the Program row by its name, quiet word and ask; the decide routes are still asserted.
 - 2026-11-08 · #1856 The Walk and the New program wizard draw their progress dots with one kit pattern, ProgressDots: the dots seam 21 → 0 lines.
 - 2026-11-08 · #1855 A known delivery PR is checked and merged, never made again (HS-S32): Check, guarded Merge, stage-aware Retry, Skip, each bound to the delivery line it shows.

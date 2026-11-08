@@ -159,6 +159,78 @@ def test_mcp_authority_rules(tmp_path, monkeypatch) -> None:
     assert "20 of 31 done" in lines
 
 
+def test_an_agent_never_plans_into_a_running_program(tmp_path, monkeypatch) -> None:
+    """2026-11-08 (the audit Program added 13 steps to itself): an agent,
+    its maker included, may not add, remove or move the steps of a running
+    Program; the owner may. A new Program and a proposed fix stay open."""
+    from holdspeak.mcp.families import program as family
+
+    rig = _rig(tmp_path)
+    monkeypatch.setattr("holdspeak.services.program_service.default_program_service", lambda db=None: rig.service)
+    pid = _made(rig, control="yolo")
+    rig.service.plan(OWNER, pid, steps=[{"title": "A"}, {"title": "B", "after": [1]}])
+    rig.service.start(OWNER, pid)
+    one, two = rig.step(pid, 1), rig.step(pid, 2)
+    agent = _launch_principal(monkeypatch, one["launch_id"])
+    # The agent that made a Program is its writer; the lock holds it too.
+    rig.service.store.save_program({**rig.service.store.get_program(pid), "created_by": f"launch:{one['launch_id']}"})
+    text = rig.service.text_get(OWNER, pid)["text"]
+    calls = [
+        ("program.plan", {"program_id": pid, "steps": [{"title": "C"}]}),
+        ("program.step_update", {"program_id": pid, "step_id": two["id"], "title": "B2"}),
+        ("program.step_remove", {"program_id": pid, "step_id": two["id"]}),
+        ("program.text_apply", {"program_id": pid, "text": text + "\nstep + C\n", "dry_run": False}),
+    ]
+    for name, args in calls:
+        with pytest.raises(ProgramRefused) as refused:
+            family.dispatch(name, dict(args), agent)
+        assert refused.value.code == "plan_locked_while_running", name
+        assert "Propose a fix, or make a new program." in str(refused.value.detail), name
+    assert [row["title"] for row in rig.service.get(OWNER, pid)["steps"]] == ["A", "B"]
+    # A dry run reads; the owner keeps every edit.
+    family.dispatch("program.text_apply", {"program_id": pid, "text": text + "\nstep + C\n"}, agent)
+    rig.service.plan(OWNER, pid, steps=[{"title": "C"}])
+    rig.service.change_step(OWNER, pid, two["id"], title="B2")
+    assert [row["title"] for row in rig.service.get(OWNER, pid)["steps"]] == ["A", "B2", "C"]
+    # The audit-to-fix path: a new Program of its own.
+    own = family.dispatch("program.create", {"title": "Fix", "repository": str(rig.repo),
+                                             "check_command": f"sh {FAKE_CHECK}"}, agent)
+    family.dispatch("program.plan", {"program_id": own["id"], "steps": [{"title": "X"}]}, agent)
+
+
+def test_a_hand_that_wrote_nothing_never_ends_done(tmp_path) -> None:
+    """2026-11-08 (steps ended Done with no diff): a commit that changes no
+    file goes back to the agent once with the line; the second empty round
+    parks the step (YOLO). A step that declares ``no_diff_ok`` passes."""
+    from pathlib import Path
+
+    from tests.integration.program_rig import git
+
+    rig = _rig(tmp_path)
+    pid = _made(rig, control="yolo")
+    rig.service.plan(OWNER, pid, steps=[{"title": "A", "gate_merge": "none"},
+                                        {"title": "B", "gate_merge": "none", "no_diff_ok": True}])
+    rig.service.start(OWNER, pid)
+
+    def empty(ordinal: int) -> None:
+        launch = rig.step(pid, ordinal)["launch_id"]
+        git(Path(rig.ledger.get(launch)["worktree_path"]), "commit", "--allow-empty", "-m", "nothing")
+        rig.agent.end_turn(launch)
+        rig.tick(3)
+
+    empty(1)
+    step = rig.step(pid, 1)
+    assert step["state"] == "check_failed"
+    lines = [row["line"] for row in rig.service.store.list_checkpoints(pid) if row["step_id"] == step["id"]]
+    assert "The step wrote nothing" in lines
+    assert any("the step wrote nothing" in text for _launch, text in rig.prompts)
+    empty(1)
+    step = rig.step(pid, 1)
+    assert step["state"] == "parked" and step["parked_reason"] == "The step wrote nothing twice"
+    empty(2)
+    assert rig.step(pid, 2)["state"] == "done"
+
+
 # ── Needs you ────────────────────────────────────────────────────────
 
 def test_program_items_carry_only_his_kinds(tmp_path) -> None:
