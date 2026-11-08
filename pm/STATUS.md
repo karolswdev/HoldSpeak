@@ -2,6 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · #1964 Fix forward #1963: the Fraunces twin and package leave; the guard now fences 'no display face'; the canon says so.
 - 2026-11-08 · #1963 No display face: titles, masts and the wordmark are Inter (owner: Fraunces 'I loathe this font'; the display-face idea is closed).
 - 2026-11-08 · #1962 Fix forward #1961: the write check compares the HTTP method case-free (the lamp-words guard counts toUpperCase).
 - 2026-11-08 · #1961 Desk open: 51 → 45 /api requests seeded, 45 → 39 empty (306 → 255 ms, 379 → 257 ms to the desk screen); settings, People readiness, needs-you and coder sessions are each one read (keyed desk cache, web/src/lib/keyedRead.ts); the palette reads its counts from the needs-you store.

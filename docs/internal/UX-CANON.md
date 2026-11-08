@@ -35,11 +35,7 @@ differ. The tokens are in `web/design-tokens.json` (`--hs-*`).
 - **Three material tiers.** Ground `#e6ebf3` (the window), plate `#f7f9fc`,
   raised `#ffffff` with `--hs-raised-shadow` (a soft drop and a 1 px top
   highlight). Title bar tint `#d9e3f2`, edges `#b3c0d3`, row lines `#d6dde8`.
-- **The display face is Fraunces**, a soft serif, with the metric twin
-  "Fraunces Fallback" so the swap moves no line. Weight 600 for masts and
-  section heads; 700 only for the HoldSpeak wordmark; letter-spacing
-  -0.01em at 20 px and more. Body stays Inter; facts stay JetBrains Mono.
-  A geometric or neo-grotesque display face is rejected.
+- **No display face.** Titles, masts and the wordmark are the text face, Inter, by weight (600; the wordmark the one 700), size and tracking. Space Grotesk, Bricolage Grotesque, Archivo, Schibsted Grotesk and Fraunces were rejected by the owner on 2026-11-08: do not propose another display face.
 - **Kind hues are cool.** A kind is a glyph seat, a row wash, a card rule
   and a kind word, never a state: project `#3460bf`, meeting `#16699a`,
   person `#176c5f`, decision violet `#6a4bc4`, note slate `#4a5d7a`, pull

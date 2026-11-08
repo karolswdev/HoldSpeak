@@ -49,33 +49,6 @@
   line-gap-override: 0%;
 }
 
-/* The language (2026-11-08): the metric twin of Fraunces, the same idea as
-   the mono twin above. Until the display webfont lands the stack falls back
-   to Georgia; the twin is Georgia with Fraunces' own vertical metrics
-   (ascent 1956, descent 510, line gap 0 per 2000) and its width (size-adjust
-   from the advance of a sample line), so the swap moves no line. The
-   overrides are divided by size-adjust because the browser scales them by
-   it. Every display stack names the twin second
-   (tests/unit/test_css_display_font_fallback.py). */
-@font-face {
-  font-family: "Fraunces Fallback";
-  font-weight: 100 500;
-  src: local("Georgia"), local("Times New Roman");
-  size-adjust: 107.5%;
-  ascent-override: 90.9%;
-  descent-override: 23.7%;
-  line-gap-override: 0%;
-}
-@font-face {
-  font-family: "Fraunces Fallback";
-  font-weight: 600 900;
-  src: local("Georgia Bold"), local("Georgia-Bold"), local("Times New Roman Bold");
-  size-adjust: 95.3%;
-  ascent-override: 102.6%;
-  descent-override: 26.8%;
-  line-gap-override: 0%;
-}
-
 *,
 *::before,
 *::after {
@@ -652,7 +625,6 @@ pre {
   justify-content: center;
   margin-top: var(--space-2);
 }
-
 
 /* ============================================================
  * HS-99-03 — the OS skins EVERY control (DESIGN_SYSTEM.md, the chrome
