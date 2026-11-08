@@ -6,8 +6,12 @@ hub on an isolated HOME at 1440 x 900. The keys go to the window from the
 selected step's row (focus, keys); the order comes back from the hub
 (``PATCH /api/programs/{id}/steps/{sid}`` with ``before``), and the board
 draws it. Every other face of the requirements and the adjust verbs is T2
-(web/src/desk/programs/__tests__/programs.app.test.tsx, from recorded
-answers); fit, clip and the 12 px floor are the desk sweep's ``program`` case.
+(web/src/desk/programs/__tests__/, from recorded answers: programs.list.app.test.tsx,
+programs.needs.app.test.tsx, programs.wizard.app.test.tsx,
+programs.window.app.test.tsx, programs.steps.app.test.tsx,
+programs.text.app.test.tsx and programs.plan.app.test.tsx, with the shared
+programs.test-setup.tsx); fit, clip and the 12 px floor are the desk sweep's
+``program`` case.
 """
 
 from __future__ import annotations
