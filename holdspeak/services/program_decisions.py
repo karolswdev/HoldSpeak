@@ -5,7 +5,8 @@ engine made **by rule** each become one *proposed* decision record: a Desk
 decision in status ``proposed`` with its canonical record
 (``DecisionRecordService.create_from_desk``), the reason, the rule and the
 level in its context, linked to the Program and to the step's PR
-(``link_work``), and filed to the Program's Project. He accepts it in the
+(``link_work``), and filed to the Program's Project (by its ``project:``
+tag: the record's writer files it). He accepts it in the
 Decisions window (no auto-confirm in this slice).
 
 One record per checkpoint: the Desk decision id is derived from the step and
@@ -107,8 +108,8 @@ def _propose(
     records.link_work(principal, record_id, WORK_PROGRAM, str(program["id"]))
     if step.get("pr_url"):
         records.link_work(principal, record_id, WORK_PR, str(step["pr_url"]))
-    if project_id:
-        store.file_to_project(project_id, f"decision_record:{record_id}", now)
+    # The record's Project filing is the writer's (``DecisionRecordService.create``
+    # files it from the ``project:`` tag), never a second write here.
     _announce(record_id)
     return record_id
 

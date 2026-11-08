@@ -935,3 +935,25 @@ def test_create_through_the_route_at_normal_plans_and_offers_only_start(tmp_path
     started = client.post(f"/api/programs/{pid}/start", json={})
     assert started.status_code == 200, started.text
     assert started.json()["state"] == "running"
+
+
+# ── Run as a program, one implementation (2026-11-08) ──────────────────
+
+def test_create_through_the_route_with_a_decision_origin_binds_the_decision(tmp_path, monkeypatch) -> None:
+    """The decision reader's Run as a program: POST /api/programs with the
+    record as ``origin_ref`` (the field MCP's program.create takes); the
+    Program's place line names the decision by its words."""
+    rig = Rig(tmp_path)
+    client = _client(rig, monkeypatch)
+    record = DecisionRecordService(rig.db).create(
+        OWNER, decision_text="Drop the nightly export", rationale="The event bus replaces it.",
+        source_type="desk", source_id="d-export")
+    made = client.post("/api/programs", json={
+        "title": "Drop the nightly export", "goal": "Drop the nightly export\n\nThe event bus replaces it.",
+        "template": "fast-cycle", "repository": str(rig.repo), "check_command": f"sh {FAKE_CHECK}",
+        "origin_ref": f"decision_record:{record['id']}"})
+    assert made.status_code == 201, made.text
+    program = client.get(f"/api/programs/{made.json()['id']}").json()
+    assert program["state"] == "drafting" and program["origin_ref"] == f"decision_record:{record['id']}"
+    assert program["place"]["origin"] == {"ref": f"decision_record:{record['id']}", "kind": "decision_record",
+                                          "id": record["id"], "title": "Drop the nightly export"}

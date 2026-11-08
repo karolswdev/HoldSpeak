@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DecisionsView } from "./DecisionsView";
 import { useDesk } from "../../store";
 import HONEST_DECISIONS from "../../../test/wire/decisions.honest-faces.wire.json";
+import CREATED_PROGRAM from "../../programs/__fixtures__/program.create_project.json";
 
 const apiFetch = vi.hoisted(() => vi.fn());
 const apiRequest = vi.hoisted(() => vi.fn());
@@ -24,6 +25,8 @@ vi.mock("../../../runtime/RuntimeBus", () => ({
 }));
 
 const openRef = vi.hoisted(() => vi.fn());
+const openProgram = vi.hoisted(() => vi.fn());
+vi.mock("../../programs/open", () => ({ openProgram }));
 vi.mock("../../openObject", async (importOriginal) => ({
   ...await importOriginal<typeof import("../../openObject")>(),
   openRef,
@@ -423,5 +426,38 @@ describe("W6 (atlas pass 3): an open decision's reader has its verbs", () => {
     await waitFor(() => expect(openRef).toHaveBeenCalledWith("desk_decision:d-open"));
     expect(hasDecisionEditRequest("d-open")).toBe(true);
     takeDecisionEditRequest("d-open");
+  });
+
+  // One verb, one name (2026-11-08): an accepted decision runs as a program
+  // beside Send, through the one Run as a program: POST /api/programs with
+  // the record as its origin, filed in the decision's own Project.
+  it("Run as a program beside Send makes a program from the decision and opens it", async () => {
+    status = "accepted";
+    openProgram.mockReset();
+    const filed = { ...open, sources: [{ source_type: "project", source_ref: "proj-holdspeak" }] };
+    apiFetch.mockImplementation((path: string, init?: { method?: string }) => {
+      if (path === "/api/decision-records/rec-open") return Promise.resolve({ ...filed, status });
+      if (path === "/api/programs" && init?.method === "POST") return Promise.resolve(CREATED_PROGRAM.response.body);
+      return hub(path);
+    });
+    render(<DecisionsView windowed receiptId="rec-open" />);
+    const toolbar = await screen.findByTestId("decision-reader-toolbar");
+    await screen.findByTestId("decision-reader-send");
+    const verb = await screen.findByRole("button", { name: "Run as a program: Drop the nightly export" });
+    expect(verb.textContent).toBe("Run as a program");
+    expect(toolbar.contains(verb)).toBe(true);
+    fireEvent.click(verb);
+    await waitFor(() => expect(openProgram).toHaveBeenCalledWith(CREATED_PROGRAM.response.body.id));
+    const posted = apiFetch.mock.calls.filter(([path, init]) => path === "/api/programs" && init?.method === "POST");
+    expect(posted.map(([, init]) => init.json)).toEqual([{
+      title: "Drop the nightly export", goal: `Drop the nightly export\n\n${open.rationale}`, template: "fast-cycle",
+      origin_ref: "decision_record:rec-open", project_id: "proj-holdspeak",
+    }]);
+  });
+
+  it("a proposed decision has no Run as a program (Accept first)", async () => {
+    render(<DecisionsView windowed receiptId="rec-open" />);
+    await screen.findByTestId("decision-reader-accept");
+    expect(screen.queryByTestId("decision-reader-program")).toBeNull();
   });
 });
