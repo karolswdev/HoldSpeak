@@ -112,7 +112,13 @@ def test_each_row_declares_its_admission_by_effect_and_story_02_enforces_it(name
     assert admission.condition
     # PHILO-9-02: every Room row is enforced (story 01 declared them false).
     assert admission.enforced is True, f"{name}: PHILO-9-02 enforces the Room's admission"
-    exported = json.loads((Path(__file__).resolve().parents[2] / "docs" / "generated" / "operations.json").read_text())
+    scripts = str(Path(__file__).resolve().parents[2] / "scripts")
+    sys.path.insert(0, scripts)
+    try:
+        from gen_operations_json import render
+    finally:
+        sys.path.remove(scripts)
+    exported = json.loads(render())
     row = next(op for op in exported["operations"] if op["name"] == name)
     assert row["admission"]["rule"] == admission.rule and row["admission"]["enforced"] is admission.enforced
 

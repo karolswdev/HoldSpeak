@@ -40,13 +40,52 @@ ID_COLLECTIONS = (
 )
 
 
+_DERIVED: dict[tuple[str, str], str | None] = {}
+
+
+def _derived_inventory(root: Path, inventory_path: str) -> str | None:
+    """The generated views are not in git (2026-11-08): a missing one is
+    derived from the live tree, never read from a committed copy."""
+    if not inventory_path.startswith("docs/generated/"):
+        return None
+    key = (str(root), inventory_path)
+    if key not in _DERIVED:
+        _DERIVED[key] = _derive(root, inventory_path)
+    return _DERIVED[key]
+
+
+def _derive(root: Path, inventory_path: str) -> str | None:
+    scripts = str(root / "scripts")
+    sys.path.insert(0, scripts)
+    try:
+        if inventory_path == "docs/generated/openapi.json":
+            from gen_api_surface import build_reference_app
+
+            return json.dumps(build_reference_app().openapi())
+        if inventory_path == "docs/generated/operations.json":
+            from gen_operations_json import render
+
+            return render()
+        from generate_capability_docs import generate
+
+        return generate(root).get(inventory_path)
+    except Exception:  # noqa: BLE001 - an underivable view is "does not exist"
+        return None
+    finally:
+        sys.path.remove(scripts)
+
+
 def _load_inventory(root: Path, inventory_path: str) -> tuple[Any, str | None]:
     """Read an inventory file.  Generated views are a strict YAML subset, so
     JSON is tried first and YAML only as a fallback."""
     target = root / inventory_path
-    if not target.is_file():
-        return None, "does not exist in the tree"
-    text = target.read_text(encoding="utf-8")
+    if target.is_file():
+        text = target.read_text(encoding="utf-8")
+    else:
+        derived = _derived_inventory(root, inventory_path)
+        if derived is None:
+            return None, "does not exist in the tree"
+        text = derived
     try:
         return json.loads(text), None
     except ValueError:
@@ -171,7 +210,11 @@ def _source_path_violations(graph: dict, root: Path) -> list[str]:
             if not isinstance(ref, dict):
                 continue
             source_path = ref.get("path")
-            if isinstance(source_path, str) and not (root / source_path).is_file():
+            if (
+                isinstance(source_path, str)
+                and not (root / source_path).is_file()
+                and _derived_inventory(root, source_path) is None
+            ):
                 lines.append(
                     f"source-path-missing: {where}[{position}].path: "
                     f"{source_path!r} does not exist in the tree"

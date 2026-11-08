@@ -34,7 +34,17 @@ ATLAS_FILES = sorted(
     if path.name != SCHEMA_PATH.name
 )
 GRAPH_SCHEMA_PATH = REPO / "docs/internal/philo/graph/graph.schema.json"
-OPENAPI_PATH = REPO / "docs/generated/openapi.json"
+@__import__("functools").lru_cache(maxsize=1)
+def _live_openapi() -> dict:
+    """The app's OpenAPI, built from the tree (the generated view is not in git)."""
+    import sys
+
+    sys.path.insert(0, str(REPO / "scripts"))
+    try:
+        from gen_api_surface import build_reference_app
+    finally:
+        sys.path.remove(str(REPO / "scripts"))
+    return build_reference_app().openapi()
 
 # The seven families brief section 4 rules the initial atlas must cover.
 RIG_PATH = REPO / "scripts/graph_walk.py"
@@ -128,7 +138,7 @@ def schema() -> dict:
 
 @pytest.fixture(scope="module")
 def openapi() -> dict:
-    return json.loads(OPENAPI_PATH.read_text())
+    return _live_openapi()
 
 
 def test_schema_is_a_valid_2020_12_schema(schema: dict) -> None:
@@ -1112,7 +1122,7 @@ def test_philo603_placement_fence_checks_every_matching_clear_target() -> None:
 
 
 def _openapi_fence(atlas: dict) -> None:
-    test_every_api_setup_step_exists_in_the_generated_openapi(atlas, json.loads(OPENAPI_PATH.read_text()))
+    test_every_api_setup_step_exists_in_the_generated_openapi(atlas, _live_openapi())
 
 
 def _graph_case_fence(atlas: dict) -> None:

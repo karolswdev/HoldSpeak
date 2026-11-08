@@ -202,7 +202,7 @@ def test_a_mapping_kb_update_changes_memberships_and_is_admitted(tmp_path: Path,
 
 
 def test_the_export_carries_the_admission() -> None:
-    exported = {op["name"]: op for op in json.loads((REPO / "docs/generated/operations.json").read_text())["operations"]}
+    exported = {op["name"]: op for op in json.loads(_load_script("gen_operations_json").render())["operations"]}
     for name in SLICE:
         rule, arguments = ADMISSION_TABLE[name]
         assert exported[name]["admission"]["rule"] == rule

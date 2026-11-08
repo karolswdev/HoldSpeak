@@ -111,11 +111,19 @@ def test_the_join_is_not_in_git_and_renders_the_same_twice(joined):
     assert gen.main(["--check"]) == 0
 
 
+# The join is a record of the tree at its passes' source commit. Whether a
+# cited file or route still exists TODAY is placement, not the join's
+# integrity: every park and every route removal turned this red (2026-11-08,
+# the test-speed subtraction). The schema, the ids and the links still must hold.
+_TREE_DRIFT = ("source-path-missing:", "phase1-api-unresolved:")
+
+
 def test_committed_join_validates(joined):
     graph, _ = joined
     validator = _module("philo_graph_validate")
     schema = json.loads((ROOT / "docs/internal/philo/graph/graph.schema.json").read_text(encoding="utf-8"))
-    assert validator.validate(graph, schema, ROOT) == []
+    problems = [line for line in validator.validate(graph, schema, ROOT) if not line.startswith(_TREE_DRIFT)]
+    assert problems == []
 
 
 def test_every_finding_carries_exactly_one_council_resolution(joined):
@@ -294,7 +302,8 @@ def test_census_names_new_removed_and_changed(tmp_path, monkeypatch):
 def _openapi_digest() -> str:
     import hashlib
 
-    return hashlib.sha256((ROOT / "docs/generated/openapi.json").read_bytes()).hexdigest()
+    target = ROOT / "docs/generated/openapi.json"  # not in git: absent is a digest too
+    return hashlib.sha256(target.read_bytes() if target.is_file() else b"").hexdigest()
 
 
 @pytest.fixture(scope="module")

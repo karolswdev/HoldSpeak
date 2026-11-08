@@ -91,6 +91,13 @@ test-results/
 docs/generated/api-reference.json
 docs/generated/boundary-candidates.json
 docs/generated/graph.json
+# 2026-11-08 (the test-speed subtraction): every generated view is on demand.
+# Every park or move made them stale, and every PR conflicted on them. The
+# tests derive what they need from the live tree.
+docs/generated/
+docs/api-surface.json
+docs/API_SURFACE.md
+docs/API_REFERENCE.md
 
 # SQLite lock state: a reader that opens a tracked proof database writes these.
 *.sqlite-shm
