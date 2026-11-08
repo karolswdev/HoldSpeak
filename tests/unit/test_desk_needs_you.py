@@ -1451,3 +1451,26 @@ def test_send_needs_membership_leaves_once_for_discard_failed_and_unknown_replay
         / "fixtures" / "send-needs",
     )
     monkeypatch.setattr(FileChannel, "dispatch", real_dispatch)
+
+
+# ── 2026-11-08: a decision with an owner is that Person's row ────────────────
+
+
+def test_a_decision_with_an_owner_is_one_row_for_that_person(hub: Hub) -> None:
+    """The Decide well names Mira and files in a Project: the hub commits it,
+    and Needs you has one row about Mira (theirs), the Room's commitment."""
+    _ok(hub.client.post("/api/people/setup", json={}))
+    mira = _ok(hub.client.post("/api/people/relationships", json={
+        "display_name": "Mira Okafor", "relationship_kind": "direct_report"}), 201)["relationship"]["id"]
+    project = _ok(hub.client.post("/api/projects", json={
+        "name": "Ledger", "command_id": "decision-commit-project"}))["project"]["id"]
+
+    made = _ok(hub.client.post("/api/decision-records/from-desk", json={
+        "title": "Adopt quorumdb", "status": "accepted",
+        "project_id": project, "owner_person_id": mira}), 201)
+
+    assert made["record"]["committed_to"] == "Mira Okafor"
+    rows = _rows_titled(_needs(hub), "Adopt quorumdb")
+    assert [(row["direction"], row["person_id"], row.get("person_name")) for row in rows] == [
+        ("theirs", mira, "Mira Okafor")], rows
+    assert _titles(_ok(hub.client.get(f"/api/desk/needs-you?fresh=1&person={mira}"))) == ["Adopt quorumdb"]
