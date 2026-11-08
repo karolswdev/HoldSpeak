@@ -6238,9 +6238,7 @@
         "DELETE"
       ],
       "module": "web.routes.projects",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/projects/{project_id}/resources/{resource_ref:path}",
@@ -6248,9 +6246,7 @@
         "PUT"
       ],
       "module": "web.routes.projects",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/projects/{project_id}/restore",
