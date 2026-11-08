@@ -397,6 +397,115 @@ describe("the meeting's Decisions through Confirm (the hook and the ledger, rend
     expect(screen.queryByTestId("proposal-person-btn")).toBeNull();
   });
 
+  // HS-S41 (D16/G41 ruling 2026-11-07): an owner is a NAME. The picker
+  // never offers two same-looking names as a choice of person, and Confirm
+  // sends the name text only.
+  it("two people with one name are one owner name; Confirm sends the name only", async () => {
+    apiFetch.mockReset();
+    apiFetch.mockImplementation(async (url: string) => {
+      if (url === "/api/people/relationships") {
+        return { relationships: [
+          { id: "rel-one", display_name: "Jordan" },
+          { id: "rel-two", display_name: "Jordan" },
+          { id: "rel-three", display_name: "jordan" },
+        ] };
+      }
+      return {};
+    });
+    const confirmProposal = vi.fn(async () => undefined);
+    const data = {
+      ftProposals: [{
+        id: "p-name", meeting_id: "m-name", kind: "action" as const, text: "Name the owner",
+        owner: null, due: "2026-11-05", state: "proposed" as const, created_at: "",
+      }],
+      openActions: [], settledActions: [], segments: [], busy: false,
+      outcomeRefreshFailed: false, retryOutcomeReview: async () => undefined,
+      confirmProposal, dismissProposal: async () => undefined,
+      deferProposal: async () => undefined, confirmAll: async () => undefined,
+      completeAction: async () => undefined,
+    };
+    render(<MeetingOutcomes data={data as never} meeting={{ id: "m-name" }} />);
+    const who = await screen.findByLabelText("Who?");
+    await waitFor(() => expect(Array.from((who as HTMLSelectElement).options).map((o) => o.text))
+      .toEqual(["Who?", "Me", "Jordan", "jordan"]));
+    fireEvent.change(who, { target: { value: "Jordan" } });
+    const line = screen.getByText("Name the owner").closest(".surface-ledger-line") as HTMLElement;
+    fireEvent.click(within(line).getByRole("button", { name: "Confirm: Name the owner" }));
+    await waitFor(() => expect(confirmProposal).toHaveBeenCalledWith("p-name", {
+      text: undefined, owner: "Jordan", due: "2026-11-05",
+    }));
+    expect(apiFetch.mock.calls.some(([url]) => String(url).includes("owner-aliases"))).toBe(false);
+  });
+
+  it("a failed Door read says so; Check reads the Door again and nothing else", async () => {
+    apiFetch.mockReset();
+    let doorReads = 0;
+    apiFetch.mockImplementation(async (url: string) => {
+      if (url === "/api/people/relationships") return { relationships: [{ id: "rel-jordan", display_name: "Jordan" }] };
+      if (url === "/api/door") {
+        doorReads += 1;
+        if (doorReads === 1) throw new Error("door unavailable");
+        return { board: { now: [{ id: "action-check", source: "action_item", person_relationship_id: "rel-jordan" }] } };
+      }
+      return {};
+    });
+    const data = {
+      ftProposals: [{
+        id: "p-check", meeting_id: "m-check", kind: "action" as const,
+        text: "Keep the person honest", owner: "Jordan", due: "2026-11-05", state: "confirmed" as const,
+        created_at: "", action_item_id: "action-check",
+      }],
+      openActions: [], settledActions: [], segments: [], busy: false,
+      outcomeRefreshFailed: false, retryOutcomeReview: async () => undefined,
+      confirmProposal: vi.fn(), dismissProposal: vi.fn(),
+      deferProposal: vi.fn(), confirmAll: vi.fn(),
+      completeAction: vi.fn(),
+    };
+    render(<MeetingOutcomes data={data as never} meeting={{ id: "m-check" }} />);
+    expect(await screen.findByTestId("meeting-door-read-failed")).toHaveTextContent("Could not read who these are");
+    const line = screen.getByText("Keep the person honest").closest(".surface-ledger-line") as HTMLElement;
+    fireEvent.click(within(line).getByTestId("proposal-more-btn"));
+    expect(screen.queryByRole("menuitem", { name: "People" })).toBeNull();
+    fireEvent.click(screen.getByRole("menuitem", { name: "Check person" }));
+    await waitFor(() => expect(doorReads).toBe(2));
+    await waitFor(() => expect(screen.queryByTestId("meeting-door-read-failed")).toBeNull());
+    fireEvent.click(within(line).getByTestId("proposal-more-btn"));
+    expect(await screen.findByRole("menuitem", { name: "People" })).toBeTruthy();
+    expect(apiFetch.mock.calls.filter(([, init]) => (init as { method?: string } | undefined)?.method).map(([url, init]) => `${(init as { method?: string }).method} ${url}`)).toEqual([]);
+    expect(data.confirmProposal).not.toHaveBeenCalled();
+    expect(data.completeAction).not.toHaveBeenCalled();
+  });
+
+  it("a late Door answer for an older read never overwrites the newer one", async () => {
+    apiFetch.mockReset();
+    const answers: Array<(value: unknown) => void> = [];
+    apiFetch.mockImplementation((url: string) => {
+      if (url === "/api/people/relationships") return Promise.resolve({ relationships: [] });
+      if (url === "/api/door") return new Promise((resolve) => { answers.push(resolve); });
+      return Promise.resolve({});
+    });
+    const row = (actionId: string, text: string) => ({
+      id: `p-${actionId}`, meeting_id: "m-race", kind: "action" as const, text, owner: "Jordan", due: "2026-11-05",
+      state: "confirmed" as const, created_at: "", action_item_id: actionId,
+    });
+    const base = {
+      openActions: [], settledActions: [], segments: [], busy: false,
+      outcomeRefreshFailed: false, retryOutcomeReview: async () => undefined,
+      confirmProposal: vi.fn(), dismissProposal: vi.fn(), deferProposal: vi.fn(), confirmAll: vi.fn(), completeAction: vi.fn(),
+    };
+    const { rerender } = render(<MeetingOutcomes data={{ ...base, ftProposals: [row("a", "Row A")] } as never} meeting={{ id: "m-race" }} />);
+    await waitFor(() => expect(answers).toHaveLength(1));
+    rerender(<MeetingOutcomes data={{ ...base, ftProposals: [row("b", "Row B")] } as never} meeting={{ id: "m-race" }} />);
+    await waitFor(() => expect(answers).toHaveLength(2));
+    await act(async () => { answers[1]({ board: { now: [] } }); });
+    // The older read answers last, naming a person for its own action.
+    await act(async () => { answers[0]({ board: { now: [{ id: "b", source: "action_item", person_relationship_id: "rel-stale" }] } }); });
+    const line = screen.getByText("Row B").closest(".surface-ledger-line") as HTMLElement;
+    fireEvent.click(within(line).getByTestId("proposal-more-btn"));
+    expect(screen.queryByRole("menuitem", { name: "People" })).toBeNull();
+    expect(screen.getByRole("menuitem", { name: "Check person" })).toBeTruthy();
+  });
+
   it("withholds People when the Door projection is unavailable", async () => {
     apiFetch.mockImplementation(async (url: string) => {
       if (url === "/api/people/relationships") {

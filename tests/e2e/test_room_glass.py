@@ -1126,11 +1126,16 @@ def _run_ready_resolve_and_people(tmp_path: Path, monkeypatch: pytest.MonkeyPatc
             _settle(page)
             assert page.locator("[role='dialog']").count() == 0, "no modals (A.4)"
             well = page.get_by_test_id("room-people-resolve")
-            names = [t.strip() for t in well.get_by_test_id("room-people-candidate").all_inner_texts()]
+            # HS-S41: each candidate names its kind and role from the People
+            # list; a candidate press selects, and Link is the separate write.
+            well.get_by_test_id("room-people-candidate").filter(has_text="Priya Nair").wait_for(timeout=5000)
+            names = [t.strip().split(" · ")[0] for t in well.get_by_test_id("room-people-candidate").all_inner_texts()]
             assert sorted(names) == ["Priya Nair", "Priya Sharma"], names
             _people_body_check(page, width)
             _shot(page, "people-resolve", width)
             well.get_by_test_id("room-people-candidate").filter(has_text="Priya Sharma").click()
+            assert "in all projects" in well.get_by_test_id("room-people-confirm-scope").inner_text()
+            well.get_by_test_id("room-people-link").click()
             # PHILO-17 refit (room): inside its fold the section's own caption
             # is not drawn (the fold's title names it); it still counts 2.
             page.locator("section.surface-section h3", has_text="PEOPLE 2").first.wait_for(state="attached", timeout=10000)

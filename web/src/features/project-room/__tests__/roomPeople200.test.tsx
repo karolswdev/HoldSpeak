@@ -11,7 +11,8 @@
 //      a Project that names nobody draws nothing.
 // Every verb is the library Button; no counters of zero.
 
-import { render, screen, fireEvent, waitFor, within } from "@testing-library/react";
+import { act, render, screen, fireEvent, waitFor, within } from "@testing-library/react";
+import { ApiError } from "../../../lib/api";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   RoomPeopleSection,
@@ -27,6 +28,12 @@ const apiFetch = vi.fn();
 vi.mock("../../../lib/api", async () => {
   const actual = await vi.importActual<typeof import("../../../lib/api")>("../../../lib/api");
   return { ...actual, apiFetch: (...args: unknown[]) => apiFetch(...args) };
+});
+
+const openPersonSpy = vi.fn();
+vi.mock("../../../desk/openObject", async () => {
+  const actual = await vi.importActual<typeof import("../../../desk/openObject")>("../../../desk/openObject");
+  return { ...actual, openPerson: (...a: unknown[]) => openPersonSpy(...a) };
 });
 
 const openSurfaceOr = vi.fn();
@@ -70,13 +77,26 @@ function ready(): RoomPeoplePreparation {
   });
 }
 
+/** The owner-only People list the well reads (in memory only). */
+function people() {
+  return [
+    { id: "rel-sharma", display_name: "Priya Sharma", relationship_kind: "peer", role_context: "Platform lead", owner_aliases: [] },
+    { id: "rel-nair", display_name: "Priya Nair", relationship_kind: "direct_report", role_context: "Data lead", owner_aliases: [] },
+    { id: "rel-other", display_name: "Someone Unrelated", relationship_kind: "peer", role_context: "", owner_aliases: [] },
+  ];
+}
+
+function posts() {
+  return apiFetch.mock.calls.filter(([, init]) => (init as { method?: string } | undefined)?.method === "POST");
+}
+
 function rawButtons(): string[] {
   return Array.from(document.querySelectorAll("button"))
     .filter((b) => !b.className.includes("btn") && !b.className.includes("surface-ledger-line"))
     .map((b) => `${b.className} :: ${b.textContent}`);
 }
 
-beforeEach(() => { apiFetch.mockReset(); openSurfaceOr.mockReset(); openPrimitive.mockReset(); forgetTaskFocus(); });
+beforeEach(() => { apiFetch.mockReset(); openSurfaceOr.mockReset(); openPrimitive.mockReset(); openPersonSpy.mockReset(); forgetTaskFocus(); });
 afterEach(() => { vi.restoreAllMocks(); });
 
 describe("the pure token builders", () => {
@@ -116,23 +136,31 @@ describe("RoomPeopleSection (HS-200-14)", () => {
     expect(within(priyaRow).getByText("Confirm the freeze window")).toBeTruthy();
     expect(screen.queryByText("Priya Sharma")).toBeNull();
     // Resolve unfolds the candidates under the row; no dialog anywhere.
+    // HS-S41: a candidate press selects; the write is the separate Link.
+    let roomReads = 0;
+    apiFetch.mockImplementation(async (url: string, init?: { method?: string }) => {
+      if (url === "/api/people/relationships") return { relationships: people() };
+      if (init?.method === "POST") return {};
+      roomReads += 1;
+      return prep({ expected: 3, resolved: 2, gaps: { ambiguous: 0, not_linked: 1, unreadable: 0 }, people: [
+        { relationship_id: "rel-sharma", display_name: "Priya Sharma", link: "linked", commitments: [commitment], facts: [] },
+      ], unresolved: [{ owner: "Zbigniew", link: "not_linked", commitments: [], candidates: [] }] });
+    });
     fireEvent.click(screen.getByRole("button", { name: "Resolve: Priya" }));
     const well = screen.getByTestId("room-people-resolve");
-    expect(within(well).getByRole("button", { name: "Link: Priya Sharma" })).toBeTruthy();
-    expect(within(well).getByRole("button", { name: "Link: Priya Nair" })).toBeTruthy();
+    expect(await within(well).findByRole("button", { name: "Select: Priya Sharma · Peer · Platform lead" })).toBeTruthy();
+    expect(within(well).getByRole("button", { name: "Select: Priya Nair · Direct report · Data lead" })).toBeTruthy();
     expect(document.querySelector("[role='dialog']")).toBeNull();
-    // A pick links the alias through the ledger's own write, then re-reads.
-    apiFetch.mockResolvedValueOnce({});
-    apiFetch.mockResolvedValueOnce(prep({ expected: 3, resolved: 2, gaps: { ambiguous: 0, not_linked: 1, unreadable: 0 }, people: [
-      { relationship_id: "rel-sharma", display_name: "Priya Sharma", link: "linked", commitments: [commitment], facts: [] },
-    ], unresolved: [{ owner: "Zbigniew", link: "not_linked", commitments: [], candidates: [] }] }));
-    fireEvent.click(within(well).getByRole("button", { name: "Link: Priya Sharma" }));
+    fireEvent.click(within(well).getByRole("button", { name: "Select: Priya Sharma · Peer · Platform lead" }));
+    expect(posts()).toHaveLength(0);
+    fireEvent.click(within(well).getByTestId("room-people-link"));
     await waitFor(() => expect(apiFetch).toHaveBeenCalledWith(
       "/api/people/relationships/rel-sharma/owner-aliases",
       expect.objectContaining({ method: "POST", json: { alias: "Priya" } }),
     ));
-    expect(await screen.findByText("Priya Sharma")).toBeTruthy();
+    expect(await screen.findAllByText("Priya Sharma")).toBeTruthy();
     expect(screen.getByText("People 2 of 3")).toBeTruthy();
+    expect(roomReads).toBe(1);
     expect(rawButtons()).toEqual([]);
   });
 
@@ -239,5 +267,130 @@ describe("RoomPeopleSection (HS-200-14)", () => {
     fireEvent.click(link);
     expect(openSurfaceOr).toHaveBeenCalledWith("open-people", "/", "people:project:p1");
     expect(taskFocusPending()).toBe(true);
+  });
+});
+
+// HS-S41 (D16/G41 ruling 2026-11-07): an informed, separate, reusable-alias
+// link. Select, Inspect, Cancel and Check never write; Link writes once.
+describe("HS-S41: deliberate reusable alias resolution", () => {
+  function route(over: {
+    list?: () => Promise<unknown>;
+    post?: () => Promise<unknown>;
+    room?: () => Promise<unknown>;
+  } = {}) {
+    apiFetch.mockImplementation((url: string, init?: { method?: string }) => {
+      if (url === "/api/people/relationships") return over.list ? over.list() : Promise.resolve({ relationships: people() });
+      if (init?.method === "POST") return over.post ? over.post() : Promise.resolve({});
+      return over.room ? over.room() : Promise.resolve(ready());
+    });
+  }
+
+  async function openWell() {
+    render(<RoomPeopleSection projectId="p1" />);
+    fireEvent.click(await screen.findByRole("button", { name: "Resolve: Priya" }));
+    const well = screen.getByTestId("room-people-resolve");
+    await within(well).findByRole("button", { name: "Select: Priya Sharma · Peer · Platform lead" });
+    return well;
+  }
+
+  it("selecting, inspecting, cancelling and checking write nothing; the scope is shown before Link", async () => {
+    route();
+    const well = await openWell();
+    // Only the exact current candidates are joined; nobody else is drawn.
+    expect(well.textContent).not.toContain("Someone Unrelated");
+    expect(within(well).queryByTestId("room-people-link")).toBeNull();
+    fireEvent.click(within(well).getByRole("button", { name: "Select: Priya Sharma · Peer · Platform lead" }));
+    expect(within(well).getByTestId("room-people-confirm-scope")).toHaveTextContent(
+      'Link the name "Priya" to Priya Sharma · Peer · Platform lead. Every owner named "Priya", in all projects, then goes to this person.',
+    );
+    fireEvent.click(within(well).getByTestId("room-people-inspect"));
+    expect(openPersonSpy).toHaveBeenCalledWith("rel-sharma");
+    expect(taskFocusPending()).toBe(false);
+    fireEvent.click(within(well).getByTestId("room-people-check"));
+    fireEvent.click(within(well).getByTestId("room-people-cancel"));
+    expect(within(well).queryByTestId("room-people-confirm")).toBeNull();
+    await waitFor(() => expect(apiFetch.mock.calls.filter(([u]) => u === "/api/people/relationships")).toHaveLength(2));
+    expect(posts()).toHaveLength(0);
+  });
+
+  it("candidates with the same details keep Link off, also after Inspect", async () => {
+    route({ list: async () => ({ relationships: [
+      { id: "rel-sharma", display_name: "Priya", relationship_kind: "peer", role_context: "", owner_aliases: [] },
+      { id: "rel-nair", display_name: "Priya", relationship_kind: "peer", role_context: "", owner_aliases: [] },
+    ] }) });
+    render(<RoomPeopleSection projectId="p1" />);
+    fireEvent.click(await screen.findByRole("button", { name: "Resolve: Priya" }));
+    const well = screen.getByTestId("room-people-resolve");
+    const same = await within(well).findAllByRole("button", { name: "Select: Priya · Peer" });
+    expect(same).toHaveLength(2);
+    fireEvent.click(same[1]);
+    expect(within(well).getByTestId("room-people-confirm-same")).toHaveTextContent("another match has the same details");
+    expect(within(well).queryByTestId("room-people-link")).toBeNull();
+    fireEvent.click(within(well).getByTestId("room-people-inspect"));
+    expect(openPersonSpy).toHaveBeenCalledWith("rel-nair");
+    expect(within(well).queryByTestId("room-people-link")).toBeNull();
+    expect(posts()).toHaveLength(0);
+  });
+
+  it("a candidate missing from the current People list cannot be selected", async () => {
+    route({ list: async () => ({ relationships: [people()[0]] }) });
+    render(<RoomPeopleSection projectId="p1" />);
+    fireEvent.click(await screen.findByRole("button", { name: "Resolve: Priya" }));
+    const well = screen.getByTestId("room-people-resolve");
+    await within(well).findByRole("button", { name: "Select: Priya Sharma · Peer · Platform lead" });
+    expect(within(well).getByRole("button", { name: "Select: Priya Nair" })).toBeDisabled();
+  });
+
+  it("a known conflict names the holder from the structured answer and changes nothing", async () => {
+    route({ post: async () => { throw new ApiError(409, "x", { detail: { code: "owner_alias_taken", holder_id: "rel-x", holder_name: "Priya Patel" } }); } });
+    const well = await openWell();
+    fireEvent.click(within(well).getByRole("button", { name: "Select: Priya Sharma · Peer · Platform lead" }));
+    fireEvent.click(within(well).getByTestId("room-people-link"));
+    const result = await screen.findByTestId("room-people-link-result");
+    expect(result).toHaveAttribute("data-status", "conflict");
+    expect(result).toHaveTextContent('"Priya" is already linked to Priya Patel. Nothing changed.');
+    expect(posts()).toHaveLength(1);
+  });
+
+  it("a 503 is not known: Link stays off, nothing repeats, and Check finds the exact saved name", async () => {
+    let aliases: string[] = [];
+    route({
+      post: async () => { aliases = ["Priya"]; throw new ApiError(503, "x", { detail: "people_store_unavailable" }); },
+      list: async () => ({ relationships: people().map((p) => p.id === "rel-sharma" ? { ...p, owner_aliases: aliases } : p) }),
+    });
+    const well = await openWell();
+    fireEvent.click(within(well).getByRole("button", { name: "Select: Priya Sharma · Peer · Platform lead" }));
+    fireEvent.click(within(well).getByTestId("room-people-link"));
+    const result = await screen.findByTestId("room-people-link-result");
+    expect(result).toHaveAttribute("data-status", "uncertain");
+    expect(result).toHaveTextContent('The link result for "Priya" is not known. Check before you try again.');
+    expect(within(well).getByTestId("room-people-link")).toBeDisabled();
+    fireEvent.click(within(well).getByTestId("room-people-check"));
+    await waitFor(() => expect(screen.getByTestId("room-people-link-result")).toHaveAttribute("data-status", "current"));
+    expect(screen.getByTestId("room-people-link-result")).toHaveTextContent('"Priya" is linked to Priya Sharma · Peer · Platform lead now.');
+    expect(posts()).toHaveLength(1);
+  });
+
+  it("an acknowledged link stays acknowledged when the Room read after it fails", async () => {
+    let roomReads = 0;
+    route({ room: async () => { roomReads += 1; if (roomReads > 1) throw new Error("room down"); return ready(); } });
+    const well = await openWell();
+    fireEvent.click(within(well).getByRole("button", { name: "Select: Priya Sharma · Peer · Platform lead" }));
+    await act(async () => { fireEvent.click(within(well).getByTestId("room-people-link")); });
+    const result = await screen.findByTestId("room-people-link-result");
+    await waitFor(() => expect(result).toHaveTextContent("Could not read the Room again."));
+    expect(result).toHaveAttribute("data-status", "linked");
+    expect(result).toHaveTextContent('Linked "Priya" to Priya Sharma · Peer · Platform lead.');
+    expect(posts()).toHaveLength(1);
+  });
+
+  it("another project retires the well and its private context", async () => {
+    route();
+    const { rerender } = render(<RoomPeopleSection projectId="p1" />);
+    fireEvent.click(await screen.findByRole("button", { name: "Resolve: Priya" }));
+    await screen.findByRole("button", { name: "Select: Priya Sharma · Peer · Platform lead" });
+    rerender(<RoomPeopleSection projectId="p2" />);
+    await waitFor(() => expect(screen.queryByTestId("room-people-resolve")).toBeNull());
+    expect(document.body.textContent).not.toContain("Platform lead");
   });
 });

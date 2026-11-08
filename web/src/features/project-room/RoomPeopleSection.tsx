@@ -14,14 +14,21 @@
 //     source`) and their observable facts, each with its Watch (AC2);
 //   * an owner two people could be meant by is `OWNER · AMBIGUOUS · 2
 //     MATCHES` with `Resolve`, which unfolds the candidates under the row
-//     (no modal); one click links the alias through the ledger's own
-//     write and NEVER attributes on its own (AC1);
+//     (no modal) and NEVER attributes on its own (AC1);
+//   * HS-S41: a candidate press only SELECTS. The well reads the People
+//     list (owner-only, in memory) to show kind and role beside each name,
+//     says that the name links for every matching owner, and writes only on
+//     a separate `Link`. Candidates with the same details keep `Link` off:
+//     `Inspect` opens that exact person, and `Check` reads again;
 //   * `People` on the section head opens PeopleCore scoped to this
 //     Project and remembers the verb for the way back (AC4).
 // Every verb is the library Button; no prose; no counters of zero; one
 // verb per row (the way into the ledger sits on the head, once).
 import { useRoomRead } from "./roomReads";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { ApiError, apiFetch } from "../../lib/api";
+import { openPerson } from "../../desk/openObject";
+import { ActionNotice } from "../../desk/surface/patterns/ActionNotice";
 import {
   SurfaceSection,
   SurfaceLedger,
@@ -263,43 +270,218 @@ function PersonDetail({
 
 /* ── The resolve well: candidates under the row, no modal ── */
 
+/** HS-S41: what the owner-only People list says about one candidate. Held in
+ *  memory for the open well only; never on the Room wire, a draft or a log. */
+export type CandidateContext = { name: string; kind: string; role: string; aliases: string[] };
+
+type PeopleListRow = {
+  id?: unknown; display_name?: unknown; relationship_kind?: unknown;
+  role_context?: unknown; owner_aliases?: unknown;
+};
+
+/** The words that tell one candidate from another: name, kind, role. */
+export function candidateLabel(context: CandidateContext): string {
+  return [context.name, wireWords(context.kind), context.role].filter(Boolean).join(" · ");
+}
+
+/** The candidates this read can tell apart: present in the current list,
+ *  with a label no other candidate has. An id or list order is not proof. */
+export function distinguishableCandidates(
+  candidates: readonly { relationship_id: string }[],
+  byId: Readonly<Record<string, CandidateContext>>,
+): Set<string> {
+  const labels = new Map<string, number>();
+  for (const c of candidates) {
+    const context = byId[c.relationship_id];
+    if (!context) continue;
+    const label = candidateLabel(context);
+    labels.set(label, (labels.get(label) ?? 0) + 1);
+  }
+  const out = new Set<string>();
+  for (const c of candidates) {
+    const context = byId[c.relationship_id];
+    if (context && labels.get(candidateLabel(context)) === 1) out.add(c.relationship_id);
+  }
+  return out;
+}
+
+export type LinkResult =
+  | { status: "conflict"; holder: string }
+  | { status: "reserved" | "missing" | "forbidden" | "uncertain" };
+
+/** The alias POST's refusal, by its known class. A 503 or a lost answer can
+ *  come after the encrypted write, so it is NOT a refusal: it is unknown. */
+export function linkResult(error: unknown): LinkResult {
+  if (!(error instanceof ApiError)) return { status: "uncertain" };
+  const payload = (error.payload ?? {}) as { detail?: unknown };
+  const detail = payload.detail;
+  if (error.status === 409 && detail && typeof detail === "object"
+    && (detail as { code?: unknown }).code === "owner_alias_taken") {
+    const holder = (detail as { holder_name?: unknown }).holder_name;
+    return { status: "conflict", holder: typeof holder === "string" ? holder.trim() : "" };
+  }
+  if (error.status === 422 && detail === "owner_alias_reserved") return { status: "reserved" };
+  if (error.status === 404) return { status: "missing" };
+  if (error.status === 403) return { status: "forbidden" };
+  return { status: "uncertain" };
+}
+
+type WellRead = { key: string; status: "loading" | "ready" | "failed"; byId: Record<string, CandidateContext> };
+
+type LinkAttempt = {
+  seq: number;
+  openGen: number;
+  projectId: string;
+  owner: string;
+  relationshipId: string;
+  personLabel: string;
+  commitmentIds: string[];
+  status: "pending" | "linked" | "current" | "conflict" | "reserved" | "missing" | "forbidden" | "uncertain";
+  holder?: string;
+  refreshFailed?: boolean;
+};
+
 function ResolveWell({
   row,
-  busy,
-  onPick,
+  read,
+  selectedId,
+  linkBlocked,
+  linking,
+  onSelect,
+  onLink,
+  onCancel,
+  onCheck,
   onElsewhere,
 }: {
   row: RoomUnresolvedOwner;
-  busy: boolean;
-  onPick: (relationshipId: string) => void;
+  read: WellRead | null;
+  selectedId: string | null;
+  linkBlocked: boolean;
+  linking: boolean;
+  onSelect: (relationshipId: string | null) => void;
+  onLink: (relationshipId: string, personLabel: string) => void;
+  onCancel: () => void;
+  onCheck: () => void;
   onElsewhere: (from: HTMLElement) => void;
 }) {
+  // While Check reads again, the same well keeps its last context; Link
+  // waits for the fresh answer.
+  const ready = read?.status === "ready";
+  const byId = read?.byId ?? {};
+  const clear = distinguishableCandidates(row.candidates, byId);
+  const selected = selectedId && byId[selectedId] ? byId[selectedId] : null;
+  const selectedLabel = selected ? candidateLabel(selected) : "";
   return (
     <div className="room-people-resolve" role="group" aria-label={`Resolve: ${row.owner}`} data-testid="room-people-resolve">
-      {row.candidates.map((c) => (
-        <Button
-          key={c.relationship_id}
-          dense
-          disabled={busy}
-          aria-label={`Link: ${c.display_name}`}
-          onClick={() => onPick(c.relationship_id)}
-          data-testid="room-people-candidate"
-        >
-          {c.display_name}
-        </Button>
-      ))}
+      {row.candidates.map((c) => {
+        const context = byId[c.relationship_id];
+        const label = context ? candidateLabel(context) : c.display_name;
+        const isSelected = selectedId === c.relationship_id;
+        return (
+          <Button
+            key={c.relationship_id}
+            dense
+            variant={isSelected ? "secondary" : "ghost"}
+            disabled={linking || !context}
+            aria-pressed={isSelected}
+            aria-label={`Select: ${label}`}
+            onClick={() => onSelect(isSelected ? null : c.relationship_id)}
+            data-testid="room-people-candidate"
+          >
+            {label}
+          </Button>
+        );
+      })}
       <Button
         dense
         variant="ghost"
-        disabled={busy}
+        disabled={linking}
         aria-label="Someone else: open People"
         onClick={(e) => onElsewhere(e.currentTarget)}
         data-testid="room-people-elsewhere"
       >
         Someone else
       </Button>
+      <Button
+        dense
+        variant="ghost"
+        loading={read?.status === "loading"}
+        aria-label={`Check: ${row.owner}`}
+        onClick={onCheck}
+        data-testid="room-people-check"
+      >
+        Check
+      </Button>
+      {read?.status === "failed" ? (
+        <span className="room-people-resolve-note" role="alert" data-testid="room-people-resolve-read-failed">
+          Could not read People.
+        </span>
+      ) : null}
+      {selected && selectedId ? (
+        <div className="room-people-resolve-confirm" data-testid="room-people-confirm"
+          style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 6, flexBasis: "100%" }}>
+          {clear.has(selectedId) ? (
+            <span className="room-people-resolve-note" style={{ flexBasis: "100%" }} data-testid="room-people-confirm-scope">
+              {`Link the name "${row.owner}" to ${selectedLabel}. Every owner named "${row.owner}", in all projects, then goes to this person.`}
+            </span>
+          ) : (
+            <span className="room-people-resolve-note" style={{ flexBasis: "100%" }} data-testid="room-people-confirm-same">
+              {`${selectedLabel}: another match has the same details. Open the person to make sure.`}
+            </span>
+          )}
+          {clear.has(selectedId) ? (
+            <Button
+              dense
+              variant="secondary"
+              loading={linking}
+              disabled={linkBlocked || linking || !ready}
+              aria-label={`Link "${row.owner}" to ${selectedLabel}`}
+              onClick={() => onLink(selectedId, selectedLabel)}
+              data-testid="room-people-link"
+            >
+              Link
+            </Button>
+          ) : null}
+          <Button
+            dense
+            variant="ghost"
+            aria-label={`Inspect: ${selectedLabel}`}
+            onClick={() => openPerson(selectedId)}
+            data-testid="room-people-inspect"
+          >
+            Inspect
+          </Button>
+          <Button
+            dense
+            variant="ghost"
+            disabled={linking}
+            aria-label="Cancel"
+            onClick={onCancel}
+            data-testid="room-people-cancel"
+          >
+            Cancel
+          </Button>
+        </div>
+      ) : null}
     </div>
   );
+}
+
+/** The one line a link attempt leaves, kept apart from the reads after it. */
+function attemptWords(attempt: LinkAttempt): string {
+  const name = `"${attempt.owner}"`;
+  switch (attempt.status) {
+    case "pending": return `Linking ${name}`;
+    case "linked": return `Linked ${name} to ${attempt.personLabel}.`;
+    case "current": return `${name} is linked to ${attempt.personLabel} now.`;
+    case "conflict": return attempt.holder
+      ? `${name} is already linked to ${attempt.holder}. Nothing changed.`
+      : `${name} is already linked to another person. Nothing changed.`;
+    case "reserved": return `${name} is a reserved name. You cannot link it.`;
+    case "missing": return `This person is not in People now. Nothing changed.`;
+    case "forbidden": return `Only the owner can link a name. Nothing changed.`;
+    default: return `The link result for ${name} is not known. Check before you try again.`;
+  }
 }
 
 /* ── Component ── */
@@ -311,16 +493,33 @@ export function RoomPeopleSection({
 }) {
   const [prep, setPrep] = useState<RoomPeoplePreparation | null>(null);
   const [openOwner, setOpenOwner] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+  const [openGen, setOpenGen] = useState(0);
+  const [wellRead, setWellRead] = useState<WellRead | null>(null);
+  const [selected, setSelected] = useState<{ key: string; id: string } | null>(null);
+  const [attempt, setAttempt] = useState<LinkAttempt | null>(null);
+  const readSeq = useRef(0);
+  const attemptSeq = useRef(0);
+  const projectRef = useRef(projectId);
+  projectRef.current = projectId;
   useRoomRead("people", prep !== null);
 
-  const load = useCallback(() => {
-    return fetchRoomPeoplePreparation(projectId)
-      .then(setPrep)
-      .catch(() => setPrep({
-        state: "unavailable", expected: 0, resolved: 0,
-        gaps: { ambiguous: 0, not_linked: 0, unreadable: 0 }, people: [], unresolved: [],
-      }));
+  /** The Room read. Resolves true on a fresh answer for THIS project.
+   *  `keep`: a failed read after a write keeps the rows it had, so the
+   *  write's receipt stays on the face beside the read failure. */
+  const load = useCallback((keep = false): Promise<boolean> => {
+    const asked = projectId;
+    return fetchRoomPeoplePreparation(asked)
+      .then((next) => {
+        if (projectRef.current === asked) setPrep(next);
+        return true;
+      })
+      .catch(() => {
+        if (projectRef.current === asked) setPrep((current) => keep && current ? current : {
+          state: "unavailable", expected: 0, resolved: 0,
+          gaps: { ambiguous: 0, not_linked: 0, unreadable: 0 }, people: [], unresolved: [],
+        });
+        return false;
+      });
   }, [projectId]);
 
   useEffect(() => {
@@ -333,6 +532,14 @@ export function RoomPeopleSection({
           gaps: { ambiguous: 0, not_linked: 0, unreadable: 0 }, people: [], unresolved: [],
         });
       });
+    // HS-S41: another project retires the well, its private context and any
+    // receipt; a late answer for the old project is dropped by its sequence.
+    readSeq.current += 1;
+    attemptSeq.current += 1;
+    setOpenOwner(null);
+    setWellRead(null);
+    setSelected(null);
+    setAttempt(null);
     return () => { cancelled = true; };
   }, [projectId]);
 
@@ -346,20 +553,92 @@ export function RoomPeopleSection({
     openSurfaceOr("open-people", "/", `people:project:${projectId}`);
   }, [projectId]);
 
-  const pick = useCallback(async (row: RoomUnresolvedOwner, relationshipId: string) => {
-    setBusy(true);
-    try {
-      await linkOwnerAlias(relationshipId, row.owner);
-      setOpenOwner(null);
-      await load();
-    } catch {
-      // A clash (409, the holder named) or a locked store: the row stays
-      // as it was; the next read names the state.
-      await load();
-    } finally {
-      setBusy(false);
+  const openRow = prep?.unresolved.find((row) => row.owner === openOwner && row.candidates.length > 0) ?? null;
+  const wellKey = openRow
+    ? `${projectId}\u0000${openRow.owner}\u0000${openRow.candidates.map((c) => c.relationship_id).join(",")}`
+    : "";
+
+  /** The owner-only People list, joined by the exact current candidate ids.
+   *  Only name, kind, role and the owner names stay, in memory. */
+  const readCandidates = useCallback((key: string, ids: readonly string[]) => {
+    const seq = ++readSeq.current;
+    setWellRead((current) => ({ key, status: "loading", byId: current?.key === key ? current.byId : {} }));
+    void apiFetch<{ relationships?: PeopleListRow[] }>("/api/people/relationships")
+      .then((body) => {
+        if (seq !== readSeq.current) return;
+        const wanted = new Set(ids);
+        const byId: Record<string, CandidateContext> = {};
+        for (const item of body.relationships ?? []) {
+          const id = String(item.id ?? "");
+          if (!wanted.has(id)) continue;
+          byId[id] = {
+            name: String(item.display_name ?? "").trim(),
+            kind: String(item.relationship_kind ?? "").trim(),
+            role: String(item.role_context ?? "").trim(),
+            aliases: Array.isArray(item.owner_aliases) ? item.owner_aliases.map(String) : [],
+          };
+        }
+        setWellRead({ key, status: "ready", byId });
+        // Exact saved literal on the attempt's person: current evidence only.
+        setAttempt((current) => current && current.status === "uncertain"
+          && key.startsWith(`${current.projectId}\u0000${current.owner}\u0000`)
+          && byId[current.relationshipId]?.aliases.includes(current.owner)
+          ? { ...current, status: "current" } : current);
+      })
+      .catch(() => {
+        if (seq !== readSeq.current) return;
+        setWellRead({ key, status: "failed", byId: {} });
+        setSelected(null);
+      });
+  }, []);
+
+  const candidateIds = openRow ? openRow.candidates.map((c) => c.relationship_id) : [];
+  const candidateIdsKey = candidateIds.join(",");
+  useEffect(() => {
+    if (!wellKey) {
+      readSeq.current += 1;
+      setWellRead(null);
+      setSelected(null);
+      return;
     }
-  }, [load]);
+    readCandidates(wellKey, candidateIdsKey.split(","));
+  }, [wellKey, candidateIdsKey, readCandidates, openGen]);
+
+  const check = useCallback(() => {
+    void load(true);
+    if (wellKey) readCandidates(wellKey, candidateIdsKey.split(","));
+  }, [load, wellKey, candidateIdsKey, readCandidates]);
+
+  const link = useCallback(async (row: RoomUnresolvedOwner, relationshipId: string, personLabel: string) => {
+    const captured: LinkAttempt = {
+      seq: ++attemptSeq.current,
+      openGen,
+      projectId,
+      owner: row.owner,
+      relationshipId,
+      personLabel,
+      commitmentIds: row.commitments.map((c) => c.id),
+      status: "pending",
+    };
+    const same = (current: LinkAttempt | null) => Boolean(current && current.seq === captured.seq);
+    setAttempt(captured);
+    try {
+      await linkOwnerAlias(captured.relationshipId, captured.owner);
+    } catch (error) {
+      const result = linkResult(error);
+      setAttempt((current) => same(current) ? { ...captured, ...result } : current);
+      if (result.status === "missing" || result.status === "forbidden") {
+        readSeq.current += 1;
+        setSelected(null);
+      }
+      return;
+    }
+    // The write is acknowledged; a failed read after it does not undo that.
+    setAttempt((current) => same(current) ? { ...captured, status: "linked" } : current);
+    setSelected(null);
+    const fresh = await load(true);
+    if (!fresh) setAttempt((current) => same(current) ? { ...current!, refreshFailed: true } : current);
+  }, [load, openGen, projectId]);
 
   if (!prep) return null;
   // Nothing named, nothing to say: absent (UX-CANON A.8). A ledger state
@@ -368,6 +647,27 @@ export function RoomPeopleSection({
 
   const gapTokens = peopleGapTokens(prep);
   const verb = headVerbLabel(prep.state);
+  const shown = attempt && attempt.projectId === projectId ? attempt : null;
+  // Current attribution of the captured commitments, from THIS Room read.
+  const attributed = shown && shown.status !== "pending"
+    ? (prep.people.find((p) => p.relationship_id === shown.relationshipId)?.commitments ?? [])
+      .filter((c) => shown.commitmentIds.includes(c.id)).length
+    : 0;
+  const attemptNotice = shown && shown.status !== "pending" ? (
+    <div data-testid="room-people-link-result" data-status={shown.status}>
+      <ActionNotice
+        tone={shown.status === "linked" || shown.status === "current" ? (shown.refreshFailed ? "warn" : "ok") : "warn"}
+        role={shown.status === "linked" || shown.status === "current" ? "status" : "alert"}
+        action={shown.status === "uncertain" || shown.refreshFailed ? { label: "Check", onClick: check } : undefined}
+      >
+        {[
+          attemptWords(shown),
+          shown.refreshFailed ? "Could not read the Room again." : "",
+          attributed ? `${(countToken(attributed, "COMMITMENT", "COMMITMENTS") ?? "").toLowerCase()} now with ${shown.personLabel}.` : "",
+        ].filter(Boolean).join(" ")}
+      </ActionNotice>
+    </div>
+  ) : null;
 
   return (
     <SurfaceSection
@@ -390,6 +690,7 @@ export function RoomPeopleSection({
         ) : ""}
         cols="room"
       >
+        {attemptNotice}
         <ul className="surface-ledger-rows">
           {prep.people.map((person: RoomLinkedPerson) => {
             // One object drawn once (D1, N2): the per-source fact rows below
@@ -488,6 +789,8 @@ export function RoomPeopleSection({
                           openPeople(e.currentTarget);
                           return;
                         }
+                        setSelected(null);
+                        setOpenGen((gen) => gen + 1);
                         setOpenOwner(isOpen ? null : row.owner);
                       }}
                       data-testid="room-people-resolve-verb"
@@ -501,8 +804,15 @@ export function RoomPeopleSection({
                 {isOpen && row.candidates.length > 0 ? (
                   <ResolveWell
                     row={row}
-                    busy={busy}
-                    onPick={(id) => void pick(row, id)}
+                    read={wellRead && wellRead.key === wellKey ? wellRead : null}
+                    selectedId={selected && selected.key === wellKey ? selected.id : null}
+                    linking={Boolean(shown && shown.status === "pending" && shown.owner === row.owner)}
+                    linkBlocked={Boolean(shown && shown.owner === row.owner && shown.openGen === openGen
+                      && (shown.status === "pending" || shown.status === "uncertain"))}
+                    onSelect={(id) => setSelected(id ? { key: wellKey, id } : null)}
+                    onLink={(id, label) => void link(row, id, label)}
+                    onCancel={() => setSelected(null)}
+                    onCheck={check}
                     onElsewhere={(from) => openPeople(from)}
                   />
                 ) : null}
