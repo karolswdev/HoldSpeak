@@ -922,63 +922,30 @@ def test_project_write_runs_its_existing_workbench_and_keeps_one_delivered_updat
             refused = hub.client.post(f"/api/update-jobs/{job['id']}/apply", json={})
             assert refused.status_code == 409 and refused.json()["code"] == "draft_changed", refused.text
             assert hub.ok("GET", f"/api/updates/{records['id']}")["update"]["body_md"] == "My own Friday words."
-        diagnostic_items = hub.db.workbench_items.list_for_workbench(automation.id)
-        diagnostic_runs = hub.db.workbench_runs.list_for_workbench(automation.id)
-        assert done["state"] == "succeeded", (
-            f"job={done!r}; calls={calls!r}; item={diagnostic_items[0].to_dict() if diagnostic_items else None!r}; "
-            f"run={diagnostic_runs[0].to_dict() if diagnostic_runs else None!r}"
-        )
+        # 2026-11-08: the run is a Program of one prompt step on the
+        # automation's engine; its delivery writes the one update.
+        from holdspeak.db.programs import ProgramStore
+        from holdspeak.services.automation_runs import program_runs
+
+        programs = program_runs(hub.db, automation.id)
+        steps = ProgramStore(hub.db).list_steps(programs[0]["id"]) if programs else []
+        assert done["state"] == "succeeded", f"job={done!r}; calls={calls!r}; steps={steps!r}"
         assert len(calls) == 1, calls
         assert "The ordinary project sync confirms" in calls[0]["user"]
         assert "PRIVATE_ONE_ON_ONE_TEXT" not in calls[0]["user"]
         assert private_one_on_one.id not in calls[0]["user"]
 
-        # The Workbench produced exactly one terminal run, one occurrence and
-        # one minted artifact before the project delivery was applied.
-        runs = hub.db.workbench_runs.list_for_workbench(automation.id)
-        assert len(runs) == 1 and runs[0].status == "completed", runs
-        items = hub.db.workbench_items.list_for_workbench(automation.id)
-        assert len(items) == 1 and items[0].status == "done", items
-        assert items[0].result_artifact_id
-        artifact = hub.db.plugins.get_artifact(items[0].result_artifact_id)
-        assert artifact is not None, items[0]
-        assert json.loads(items[0].grounding_json) == {"refs": [f"project:{project_id}"]}
+        # One Program, one prompt step, done, with the source it read.
+        assert len(programs) == 1, programs
+        assert len(steps) == 1 and steps[0]["kind"] == "prompt" and steps[0]["state"] == "done", steps
+        assert steps[0]["facts"]["prompt"]["refs"] == [f"project:{project_id}"]
+        assert hub.db.workbench_items.list_for_workbench(automation.id) == []
 
         delivered = hub.db.project_updates.list_updates(project_id)[0]
         assert delivered["id"] != records["id"]
         assert delivered["body_md"].rstrip() == fixture
         assert delivered["generator"].startswith("agent:")
-        # Delivery records the exact update on the existing artifact.  The
-        # original Workbench metadata stays present for the ordinary result
-        # reader and for read-state transitions.
-        artifact_metadata = artifact.structured_json
-        assert artifact_metadata["project_update_id"] == delivered["id"]
-        assert artifact_metadata["parent_operation_id"]
-        room = hub.ok("GET", f"/api/projects/{project_id}/room")
-        latest_result = room["updates"]["automation"]["latest_result"]
-        assert latest_result == {
-            "artifact_id": items[0].result_artifact_id,
-            "update_id": delivered["id"],
-            "new": True,
-        }
-        # Opening the mapped result uses the canonical Workbench endpoint,
-        # then the same Room read sees the durable artifact state.
-        opened = hub.ok(
-            "POST", f"/api/workbenches/{automation.id}/results/{items[0].result_artifact_id}/open",
-        )
-        assert opened["result"]["status"] == "read"
-        assert hub.db.plugins.get_artifact(items[0].result_artifact_id).status == "read"
-        assert hub.ok("GET", f"/api/projects/{project_id}/room")["updates"]["automation"]["latest_result"] == {
-            "artifact_id": items[0].result_artifact_id,
-            "update_id": delivered["id"],
-            "new": False,
-        }
-        # The canonical open is idempotent and does not change the update or
-        # the owner's separate draft.
-        again = hub.ok(
-            "POST", f"/api/workbenches/{automation.id}/results/{items[0].result_artifact_id}/open",
-        )
-        assert again["result"]["status"] == "read"
+        assert steps[0]["facts"]["delivered"]["update_id"] == delivered["id"]
         assert hub.db.project_updates.get_update(records["id"])["body_md"] == (
             "My own Friday words." if owner_edits else records["body_md"]
         )
@@ -993,15 +960,14 @@ def test_project_write_runs_its_existing_workbench_and_keeps_one_delivered_updat
             ).fetchone()["result_json"]
         result = json.loads(result_json)
         assert result["automation_id"] == automation.id
-        assert result["automation_run_id"] == runs[0].id
+        assert result["automation_run_id"] == programs[0]["id"]
         print("P7P8_REAL_ROUTE_PROOF", json.dumps({
             "automation_id": automation.id,
-            "run_id": runs[0].id,
-            "artifact_id": items[0].result_artifact_id,
+            "program_id": programs[0]["id"],
+            "step_id": steps[0]["id"],
             "job_id": job["id"],
             "update_id": delivered["id"],
             "source_refs": manifest["agent_sources"],
-            "grounding_refs": json.loads(items[0].grounding_json)["refs"],
         }, sort_keys=True))
 
         applied = hub.ok("POST", f"/api/update-jobs/{job['id']}/apply", {"force": True} if owner_edits else {})["update"]
@@ -2814,26 +2780,24 @@ def test_project_update_line_records_the_real_manual_and_friday_wire(tmp_path, m
         read = hub.ok("GET", f"/api/projects/{project_id}/room")
         assert read["updates"]["automation"]["latest_result"]["new"] is False
         assert hub.db.project_updates.get_update(draft["id"])["body_md"] == draft["body_md"]
-        # Legacy and foreign metadata never cause an older or foreign update
-        # to masquerade as this automation's latest project result.
-        artifact = hub.db.plugins.get_artifact(result["artifact_id"])
-        original_metadata = dict(artifact.structured_json)
-        with hub.db._connection() as conn:
-            legacy_metadata = {key: value for key, value in original_metadata.items() if key != "project_update_id"}
-            conn.execute("UPDATE artifacts SET structured_json=? WHERE id=?", (json.dumps(legacy_metadata), artifact.id))
-        legacy = hub.ok("GET", f"/api/projects/{project_id}/room")
-        assert legacy["updates"]["automation"]["latest_result"]["update_id"] is None
+        # A foreign update never masquerades as this automation's latest
+        # project result (2026-11-08: the run is a Program; its step names
+        # the delivered update).
+        from holdspeak.db.programs import ProgramStore
+
+        store = ProgramStore(hub.db)
+        step = store.get_step(result["artifact_id"])
         other_id = hub.ok("POST", "/api/projects", {"name": "Other private fixture project"})["project"]["id"]
         other_draft = hub.ok("POST", f"/api/projects/{other_id}/updates/draft", {"generator": "deterministic"})["update"]
-        with hub.db._connection() as conn:
-            conn.execute("UPDATE artifacts SET structured_json=? WHERE id=?", (json.dumps({**original_metadata, "project_update_id": other_draft["id"]}), artifact.id))
+        step["facts"]["delivered"]["update_id"] = other_draft["id"]
+        store.save_step(step)
         foreign = hub.ok("GET", f"/api/projects/{project_id}/room")
         assert foreign["updates"]["automation"]["latest_result"]["update_id"] is None
         if os.environ.get("HOLDSPEAK_WIRE_WRITE") == "1":
             path = Path(__file__).resolve().parents[2] / "web/src/features/project-room/__tests__/room-wires/updateAutomationP7.json"
             path.write_text(json.dumps({"manual": manual, "scheduled": scheduled,
                 "draft": draft, "friday": friday, "refusal": refused.json(),
-                "completed": completed, "delivered": delivered, "opened": opened, "read": read, "legacy": legacy, "foreign": foreign}, indent=2) + "\n")
+                "completed": completed, "delivered": delivered, "opened": opened, "read": read, "foreign": foreign}, indent=2) + "\n")
 
 
 # ── HS-S13 (D15/G13 = A, 2026-11-07): the Room shows the project's Programs ──

@@ -113,3 +113,44 @@ def test_an_agent_step_still_needs_a_repository(rig) -> None:
     with pytest.raises(ProgramRefused) as caught:
         rig.service.create(OWNER, title="Fix it", steps=[{"title": "Fix", "brief": "Fix the bug."}])
     assert caught.value.code == "repository_required"
+
+
+# ── Morning prep runs as a Program of one prompt step (PR 2) ──────────
+
+
+def _morning_prep(rig: Rig):
+    from holdspeak.services.workbench_service import WorkbenchService
+    from holdspeak.workbench_templates import MORNING_PREP_ID, MORNING_PREP_STARTER, get_starter
+
+    WorkbenchService(rig.db).make_from_starter(OWNER, get_starter(MORNING_PREP_STARTER), workbench_id=MORNING_PREP_ID)
+    return rig.db.workbenches.get(MORNING_PREP_ID)
+
+
+def test_morning_prep_runs_as_a_program_and_today_reads_its_report(rig, monkeypatch) -> None:
+    from holdspeak.services import automation_runs
+    from holdspeak.services.heartbeat_service import HeartbeatService
+
+    notices: list[tuple] = []
+    monkeypatch.setattr(HeartbeatService, "finished_notice", lambda _self, *args: notices.append(args) or {})
+    engine = _Engine("## 09:00 Standup\n- Raise: the login page")
+    _engine(rig, engine)
+    wb = _morning_prep(rig)
+    assert automation_runs.runs_as_program(wb)
+
+    ran = automation_runs.run_as_program(rig.db, OWNER, wb, key="schedule:29000000")
+    again = automation_runs.run_as_program(rig.db, OWNER, wb, key="schedule:29000000")
+    assert again == {**ran, "started": False}  # one Program per due minute
+
+    program = rig.program(ran["program_id"])
+    assert program["title"].startswith("Morning prep, ")
+    assert program["state"] == "done"
+    assert program["automation_id"] == wb.id
+    assert len(engine.calls) == 1
+    assert "Prepare my day" in engine.calls[0].payload["user_prompt"]
+    prepared = automation_runs.prepared_for_today(rig.db, OWNER)
+    assert prepared["workbench_id"] == wb.id
+    assert prepared["result"]["text"] == "## 09:00 Standup\n- Raise: the login page"
+    assert prepared["result"]["program"]["id"] == ran["program_id"]
+    assert notices == [(wb.id, "Morning prep", 1)]
+    # The automation window lists the run among its results.
+    assert automation_runs.results_of(rig.db, wb.id)[0]["item_id"] == program["steps"][0]["id"]

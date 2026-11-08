@@ -3892,8 +3892,10 @@ class ProgramService:
         if state == "done" and not program.get("closed_at"):
             from .program_rules import decide
 
-            self.reach_phone(program, None, "program_done",
-                             f"{program['title']} is finished: every step is done.")
+            if not str(program.get("origin_ref") or "").startswith("workbench:"):
+                # An automation's run says it once, as the automation's quiet finished notice.
+                self.reach_phone(program, None, "program_done",
+                                 f"{program['title']} is finished: every step is done.")
 
             outcome = decide(program.get("control"), "program_done", {})
             if not outcome.to_owner:

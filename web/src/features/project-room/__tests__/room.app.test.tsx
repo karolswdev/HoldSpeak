@@ -1756,7 +1756,7 @@ describe("R1: the Now face is the brief", () => {
     render(<WindowHarness scope={`project:${pid}`} />);
     const changed = await screen.findByTestId("room-what-changed");
     const row = within(changed).getByTestId("room-head-update-draft");
-    expect(row.textContent).toMatch(/^Update draft · Nov 1, \d\d:\d\dContinue$/);
+    expect(row.textContent).toMatch(/^Update draft · [A-Z][a-z]{2} \d{1,2}, \d\d:\d\dContinue$/);
     expect(within(row).getByTestId("room-head-update-continue").className).toContain("btn--secondary");
     fireEvent.click(within(row).getByTestId("room-head-update-continue"));
     const editor = (await screen.findByTestId("update-plain-text")) as HTMLTextAreaElement;

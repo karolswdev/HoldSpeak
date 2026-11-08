@@ -76,9 +76,20 @@ class Answer:
         return str(self.result.get("model") or "") if isinstance(self.result, dict) else ""
 
 
-def engine_for(broker: Any, job: str) -> Engine:
-    """The engine assigned to ``job``. Raises ``EngineDoorError('no_engine')``."""
-    from .project_update_service import _resolve_for_capability
+def engine_for(broker: Any, job: str, *, subject: Optional[tuple[str, str]] = None) -> Engine:
+    """The engine assigned to ``job``. Raises ``EngineDoorError('no_engine')``.
+
+    ``subject`` (``(kind, id)``, for one ``("workbench", <id>)``): the
+    assignment made for that subject (an automation's With line), resolved
+    by the same route planner; with none of its own, the job's."""
+    from .project_update_service import _resolve_for_capability, _route_plan_deployment
+
+    if subject is not None:
+        revision, assignment, profile = _route_plan_deployment(
+            broker, job, subject_kind=subject[0], subject_id=subject[1])
+        if revision:
+            engine = Engine(str(revision), str(assignment or ""), str(profile or ""))
+            return replace(engine, fallback=_next_in_chain(broker, job, engine))
 
     try:
         revision, assignment, profile = _resolve_for_capability(broker, job)

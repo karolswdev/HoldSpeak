@@ -158,6 +158,17 @@ def _read_room_updates(db: Any, principal: Principal, project_id: str) -> dict[s
         artifact_id = str(result.get("artifact_id") or "").strip()
         if not artifact_id:
             continue
+        if result.get("program"):
+            # 2026-11-08: a run that is a Program names its delivered update itself.
+            update_id = str(result.get("update_id") or "")
+            update = db.project_updates.get_update(update_id) if update_id else None
+            latest_result = {
+                "artifact_id": artifact_id,
+                "update_id": update_id if update is not None and str(update.get("project_id") or "") == project_id
+                else None,
+                "new": bool(result.get("new")),
+            }
+            break
         artifact = db.plugins.get_artifact(artifact_id)
         if artifact is None:
             continue

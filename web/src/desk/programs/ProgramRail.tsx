@@ -25,9 +25,22 @@ const STATE_WORDS: Record<string, string> = {
 
 const byNewest = (a: ProgramSummary, b: ProgramSummary) => String(b.updated_at).localeCompare(String(a.updated_at));
 
+/** An automation's runs are Programs (2026-11-08): the rail keeps one tile
+ *  per automation, its latest run, so a daily run does not fill the rail. */
+export function latestRuns(programs: readonly ProgramSummary[]): ProgramSummary[] {
+  const newest = new Map<string, ProgramSummary>();
+  for (const row of programs) {
+    if (!row.automation_id) continue;
+    const seen = newest.get(row.automation_id);
+    if (!seen || String(row.created_at).localeCompare(String(seen.created_at)) > 0) newest.set(row.automation_id, row);
+  }
+  return programs.filter((row) => !row.automation_id || newest.get(row.automation_id) === row);
+}
+
 /** The rail's two groups: the active Programs (waiting first) and the
  *  ones done in the last seven days. */
-export function railGroups(programs: readonly ProgramSummary[], now = Date.now()): { active: ProgramSummary[]; done: ProgramSummary[] } {
+export function railGroups(all: readonly ProgramSummary[], now = Date.now()): { active: ProgramSummary[]; done: ProgramSummary[] } {
+  const programs = latestRuns(all);
   // A Program parked with a reason (a proof, done with it: #1707) is done with: no tile.
   const active = ORDER.flatMap((state) => programs.filter((row) => row.state === state && !row.parked_as).sort(byNewest));
   const done = programs.filter((row) => row.state === "done" && now - Date.parse(row.updated_at) <= WEEK_MS).sort(byNewest);
