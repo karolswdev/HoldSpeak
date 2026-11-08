@@ -17,6 +17,8 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
+from holdspeak.delivery.pi_launch import LibraryEngine, PiEngine
+from holdspeak.program_templates import HOME_ENGINE_PROFILE
 from holdspeak.services import program_night
 from tests.integration.program_night_seed import BACKLOG_ITEMS, door_task, make_dreaming
 from tests.integration.program_plan_seed import seed_files
@@ -44,9 +46,18 @@ class Clock:
         return self.now.astimezone(timezone.utc).isoformat()
 
 
-def dream_desk(tmp_path: Path, monkeypatch, moment: datetime) -> tuple[Rig, Clock]:
+#: The home engine in the model library (#1768: a night template's pi with
+#: no home engine waits by name, never on the desk's assignment).
+HOME = LibraryEngine(HOME_ENGINE_PROFILE, "qwen3.8-27b on karol", PiEngine(
+    endpoint="http://karol:8080/v1", model="qwen3.8-27b", context_window=65536, key_slot="",
+    host="karol:8080", boundary="private"))
+
+
+def dream_desk(tmp_path: Path, monkeypatch, moment: datetime, *, home: bool = False) -> tuple[Rig, Clock]:
+    """``home``: the library has the home engine, as the night templates expect."""
     clock = Clock(moment)
-    rig = Rig(tmp_path, clock=clock.iso, idle=lambda _engine: (True, "qwen"))
+    rig = Rig(tmp_path, clock=clock.iso, idle=lambda _engine: (True, "qwen"),
+              engines=(lambda engine_id: HOME if engine_id == HOME_ENGINE_PROFILE else None) if home else None)
     rig.runner._now = lambda: clock.now
     rig.runner._reach = lambda: _NoReach()
     seed_files(rig, RECORDED["file_bytes"])  # the recorded files, so `within` keeps its folders
@@ -84,7 +95,7 @@ def test_the_dreaming_template_is_the_designs_night(tmp_path, monkeypatch) -> No
 # ── (b) the backlog by rule, at the window's start ───────────────────
 
 def test_at_the_window_start_the_backlog_becomes_tonights_steps(tmp_path, monkeypatch) -> None:
-    rig, clock = dream_desk(tmp_path, monkeypatch, at(0, 14))
+    rig, clock = dream_desk(tmp_path, monkeypatch, at(0, 14), home=True)
     door_task(rig, "Buy milk")  # no "dream": not the night's
     pid = make_dreaming(rig)
     rig.tick()
@@ -108,7 +119,7 @@ def test_at_the_window_start_the_backlog_becomes_tonights_steps(tmp_path, monkey
 # ── (c) JRN3: a red main holds the night until a step makes it green ─
 
 def test_a_red_main_plans_one_green_step_first_and_holds_the_rest(tmp_path, monkeypatch) -> None:
-    rig, clock = dream_desk(tmp_path, monkeypatch, at(0, 14))
+    rig, clock = dream_desk(tmp_path, monkeypatch, at(0, 14), home=True)
     pid = make_dreaming(rig)
     rig.gh.runs = [RED]
     clock.now = at(0, 23, 31)
@@ -170,7 +181,7 @@ def test_two_red_steps_in_a_row_stop_the_night_and_the_digest_says_so(tmp_path, 
 # ── (d) the window's end: a working step commits what it has and parks ─
 
 def test_at_the_window_end_a_working_step_parks_with_its_commit_and_goes_on_the_next_night(tmp_path, monkeypatch) -> None:
-    rig, clock = dream_desk(tmp_path, monkeypatch, at(0, 14))
+    rig, clock = dream_desk(tmp_path, monkeypatch, at(0, 14), home=True)
     pid = make_dreaming(rig)
     clock.now = at(0, 23, 31)
     rig.tick()

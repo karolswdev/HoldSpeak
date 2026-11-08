@@ -40,7 +40,7 @@ def test_the_window_is_read_again_right_before_each_hand(tmp_path, monkeypatch) 
 
 
 def test_a_resumed_step_is_tonights_and_counts(tmp_path, monkeypatch) -> None:
-    rig, clock = dream_desk(tmp_path, monkeypatch, dream_at(0, 14))
+    rig, clock = dream_desk(tmp_path, monkeypatch, dream_at(0, 14), home=True)
     pid = rig.service.create(OWNER, title="Night", repository=str(rig.repo), check_command=f"sh {FAKE_CHECK}",
                              template="dreaming")["id"]
     rig.service.update(OWNER, pid, night="23:30–07:00 · at most 1 step")
