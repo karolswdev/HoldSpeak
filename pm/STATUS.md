@@ -2,6 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · perf hot paths: desk drawn in 303 ms, was 674 (median of 15 cold opens, seeded desk); Needs you build 104 → 39 ms; projections 80 → 6 ms; Room 17 → 8 ms; roadmaps cold 2.3 → 1.0 s and never again on the 5-minute expiry; no loop hold over 100 ms; desk open still 51 API requests.
 - 2026-11-08 · #1924 Fix forward #1923: the Needs you → Room proposal case presses the status line's n need you before it reads the rows.
 - 2026-11-08 · #1923 The Room's Now face is the brief (R1): the toolbar (Write update, History, the Ask field with its mic), the status line (state, last update, n need you that opens Needs you in place), What changed (the latest update's first lines, Open the update, the kept draft's Continue), What is open (Programs, People, Decisions rows), Files and Sources on one line, the status bar (Updates every Friday at 15:00 · engine, Saved time); the Update chips and the Programs fold are parked.
 - 2026-11-08 · #1922 An action item with no other home opens itself in Needs you (the item reader: the whole text, whose · since · due · origin in words, Done, Later, Run as a program, Hand to an agent session, Open the Project; Back returns): a press on the row, its menu's Open and an action_item ref (the follow-through request now names the item) all reach it; before, all three did nothing.
