@@ -9,7 +9,7 @@ engine path.
 
 1. Open an action, decision, Project item, Note, Meeting, Artifact, or eligible
    Project issue.
-2. Select **Hand to agent**.
+2. Select **Hand to an agent session**.
 3. Inspect the preview. It shows the item, sources, People cut, acceptance
    checks, repository, branch, worktree, Control mode, and egress host.
 4. Choose Claude Code, Codex, or pi. Choose **Review by** when a separate
@@ -37,7 +37,7 @@ stays in place and the refusal remains visible if registration fails. A
 subfolder is refused before anything is persisted. After registration, select
 a Project in the inventory and press **Use repository in project**. This binds
 the registered source to the Project; it does not clone the checkout. A later
-**Hand to agent** uses that source and creates the agent worktree from it.
+**Hand to an agent session** uses that source and creates the agent worktree from it.
 
 If no local checkout is registered, use the Project Info window to name a
 GitHub repository as `owner/name`. Press **Register** when the Project Room has

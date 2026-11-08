@@ -253,7 +253,7 @@ describe("Hand to coder: where the verb reaches", () => {
       <HandRowVerb item={{ title: "PAY-418 Reconciliation job slow", source: "jira", kind: "issue", watchId: "watch-r4-jira", entityId: "PAY-418" }} />,
     );
     expect(container.querySelectorAll("[data-testid=hand-row-verb]").length).toBe(1);
-    fireEvent.click(screen.getByRole("button", { name: "Hand to agent: PAY-418 Reconciliation job slow" }));
+    fireEvent.click(screen.getByRole("button", { name: "Hand to an agent session: PAY-418 Reconciliation job slow" }));
     expect(useAgentHand.getState().origin).toMatchObject({ kind: "issue", id: "watch-r4-jira.PAY-418" });
   });
 
@@ -263,7 +263,7 @@ describe("Hand to coder: where the verb reaches", () => {
       <HandRowVerb item={{ title: "#418", source: "github" }} />
     </>);
     expect(container.querySelectorAll("[data-testid=hand-row-verb]").length).toBe(1);
-    fireEvent.click(screen.getByRole("button", { name: "Hand to agent: Write the rollback runbook" }));
+    fireEvent.click(screen.getByRole("button", { name: "Hand to an agent session: Write the rollback runbook" }));
     expect(useAgentHand.getState().origin).toMatchObject({ kind: "action", id: "ai_1" });
   });
 

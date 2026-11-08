@@ -11,11 +11,11 @@ export function HandRowVerb({ item }: { item: HandRowItem }) {
     <Button
       dense
       variant="ghost"
-      aria-label={`Hand to agent: ${origin.title}`}
+      aria-label={`Hand to an agent session: ${origin.title}`}
       data-testid="hand-row-verb"
       onClick={() => openHand(origin)}
     >
-      Hand to agent
+      Hand to an agent session
     </Button>
   );
 }

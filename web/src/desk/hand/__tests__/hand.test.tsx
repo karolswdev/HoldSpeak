@@ -467,10 +467,10 @@ describe("PHILO-14 C3 at 393: no drag; the verb reaches the line", () => {
     const row = await within(drawer()).findByRole("button", { name: /^Write the cutover comms, Action item/ });
     for (const el of document.querySelectorAll(".desk-screen .desk-icon")) expect(el).not.toHaveAttribute("draggable", "true");
     // The verb is withheld until a handable object is selected.
-    expect(within(drawer()).queryByRole("button", { name: "Hand to agent" })).toBeNull();
+    expect(within(drawer()).queryByRole("button", { name: "Hand to an agent session" })).toBeNull();
     fireEvent.click(row);
     fireEvent.click(within(drawer()).getByRole("button", { name: "More" }));
-    fireEvent.click(screen.getByRole("menuitem", { name: "Hand to agent" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Hand to an agent session" }));
     const line = await within(drawer()).findByTestId("hand-confirm");
     await factIs(line, "Claude Code · Open throttle · hs/write-the-cutover-comms");
     // Over the list (the line comes before it).
@@ -507,7 +507,7 @@ describe("PHILO-15 16 B39: the line's agent is a token the owner flips", () => {
     render(<DrawerWindow drawer={{ projectId: "p-ledger", origin: null }} />);
     fireEvent.click(await within(drawer()).findByRole("button", { name: /^Write the cutover comms, Action item/ }));
     fireEvent.click(within(drawer()).getByRole("button", { name: "More" }));
-    fireEvent.click(screen.getByRole("menuitem", { name: "Hand to agent" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Hand to an agent session" }));
     const line = await within(drawer()).findByTestId("hand-confirm");
     await factIs(line, "Claude Code · Open throttle · hs/write-the-cutover-comms");
     fireEvent.click(within(line).getByTestId("hand-confirm-agent"));

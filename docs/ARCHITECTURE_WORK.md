@@ -77,7 +77,7 @@ Its protected store and access rules differ from an ordinary Note.
 
 1. Create a task from a Note or an Ask answer using its supported task control.
 2. Associate the work with the Project and repository.
-3. Select **Hand to agent** on the supported source item.
+3. Select **Hand to an agent session** on the supported source item.
 4. Inspect the brief, source context, repository, branch, and worktree.
 5. Choose the installed agent and optional reviewer.
 6. Launch the work, or queue it when the concurrency limit is full.

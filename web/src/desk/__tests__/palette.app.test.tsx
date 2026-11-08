@@ -398,14 +398,14 @@ describe("Enter on the first row opens the note it names", () => {
     expect(writes()).toEqual(["/api/thoughts/open-note"]);
   });
 
-  it("Betterment AG4: the selected note offers Hand to agent; one press opens the sheet on it and closes Search", async () => {
+  it("Betterment AG4: the selected note offers Hand to an agent session; one press opens the sheet on it and closes Search", async () => {
     const { useAgentHand } = await import("../agentHand");
     useAgentHand.setState({ origin: null });
     await replay(enterHub.before);
     const input = await deck();
     await type(input, "ledger");
     expect(rows()[0]?.getAttribute("aria-selected")).toBe("true");
-    // One Hand to agent, on the selected row only.
+    // One Hand to an agent session, on the selected row only.
     expect(screen.getAllByTestId("palette-hand")).toHaveLength(1);
     fireEvent.click(screen.getByTestId("palette-hand"));
     expect(useAgentHand.getState().origin).toEqual({ kind: "note", id: enterHub.note_id, title: enterHub.title });
@@ -538,8 +538,8 @@ import { fromWireNote, fromWireRecipe } from "../api";
 import type { Persona } from "../../lib/primitives";
 import { hubWire } from "./wire/hubWire";
 
-describe("Betterment AG1: Search \"agent\" finds Agents and Hand to agent, never the thread modes", () => {
-  it("a saved persona is a Mode; the Agents app and Hand to agent (on the selected note) lead", async () => {
+describe("Betterment AG1: Search \"agent\" finds Agents and Hand to an agent session, never the thread modes", () => {
+  it("a saved persona is a Mode; the Agents app and Hand to an agent session (on the selected note) lead", async () => {
     // The hub's own recipe list (the product seed: Chase, Desk, Draft, ...).
     const recipes = hubWire<{ recipes: unknown[] }>("recipes.seed").wire.recipes
       .map((r) => fromWireRecipe(r)).filter((r): r is Persona => r !== null);
@@ -550,7 +550,7 @@ describe("Betterment AG1: Search \"agent\" finds Agents and Hand to agent, never
     await type(input, "agent");
     const shown = rows().map((o) => o.textContent ?? "");
     expect(shown.some((t) => /^Agents/.test(t.replace(/^\W+/, "")) || t.includes("Agents"))).toBe(true);
-    expect(shown.some((t) => t.includes("Hand to agent"))).toBe(true);
+    expect(shown.some((t) => t.includes("Hand to an agent session"))).toBe(true);
     // No row names a saved persona an AGENT, and no row says coder or Conductor.
     for (const recipe of recipes) {
       const row = shown.find((t) => t.includes(recipe.name));

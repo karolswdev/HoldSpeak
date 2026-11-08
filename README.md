@@ -77,7 +77,7 @@ The conversation is saved as a Thread from its first answer, ready for a follow-
 
 *Keep the task, agent, and latest state together.*
 
-Select **Hand to agent** on a task or Desk item.
+Select **Hand to an agent session** on a task or Desk item.
 Inspect the brief, repository, branch, and worktree before launching Claude Code, Codex, or pi in a separate Git worktree.
 Follow progress, read terminal output, answer questions by text or voice, and review the result.
 Use [Terminals](docs/TERMINALS.md) to keep live sessions beside their files, changes, and Project context.
