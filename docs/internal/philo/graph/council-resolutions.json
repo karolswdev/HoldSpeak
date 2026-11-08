@@ -339,7 +339,7 @@
         },
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 342,
           "claim": "the control the case should press",
           "anchor": "onClick={() => void store.present(row.id, \"acknowledge\")}"

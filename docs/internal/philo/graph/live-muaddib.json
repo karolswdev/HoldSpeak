@@ -477,7 +477,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/SystemShade.tsx",
+     "path": "web/src/desk/_parked/attention/SystemShade.tsx",
      "line": 342,
      "claim": "the row's own verb",
      "symbol": "SystemShade"
@@ -498,7 +498,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/SystemShade.tsx",
+     "path": "web/src/desk/_parked/attention/SystemShade.tsx",
      "line": 349,
      "claim": "the row's own verb",
      "symbol": "SystemShade"
@@ -519,14 +519,14 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/AttentionDrawer.tsx",
+     "path": "web/src/desk/_parked/attention/AttentionDrawer.tsx",
      "line": 79,
      "claim": "the dock launcher carries the label and the needs-attention badge",
      "symbol": "AttentionDrawer"
     },
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/AttentionDrawer.tsx",
+     "path": "web/src/desk/_parked/attention/AttentionDrawer.tsx",
      "line": 83,
      "claim": "activating it opens the shade, not the drawer window",
      "symbol": "AttentionDrawer"
@@ -547,14 +547,14 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/SystemShade.tsx",
+     "path": "web/src/desk/_parked/attention/SystemShade.tsx",
      "line": 192,
      "claim": "a verb is drawn only where a door exists",
      "symbol": "SystemShade"
     },
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/SystemShade.tsx",
+     "path": "web/src/desk/_parked/attention/SystemShade.tsx",
      "line": 385,
      "claim": "the Finished row's Open",
      "symbol": "SystemShade"
@@ -2334,14 +2334,14 @@
     },
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/SystemShade.tsx",
+     "path": "web/src/desk/_parked/attention/SystemShade.tsx",
      "line": 192,
      "claim": "an empty detail_url draws no Open verb",
      "symbol": "hasDoor"
     },
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/SystemShade.tsx",
+     "path": "web/src/desk/_parked/attention/SystemShade.tsx",
      "line": 385,
      "claim": "the Finished section withholds Open when there is no door",
      "symbol": "hasDoor"
@@ -2369,14 +2369,14 @@
     },
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/SystemShade.tsx",
+     "path": "web/src/desk/_parked/attention/SystemShade.tsx",
      "line": 192,
      "claim": "the shade draws Open only for a non-empty detail_url that is not /",
      "symbol": "hasDoor"
     },
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/SystemShade.tsx",
+     "path": "web/src/desk/_parked/attention/SystemShade.tsx",
      "line": 199,
      "claim": "the /cadence door opens the configure-cadence surface",
      "symbol": "configure-cadence"
@@ -2411,7 +2411,7 @@
     },
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/SystemShade.tsx",
+     "path": "web/src/desk/_parked/attention/SystemShade.tsx",
      "line": 197,
      "claim": "the shade opens review-meetings on that subject_ref regardless of whether it resolves",
      "symbol": "review-meetings"
