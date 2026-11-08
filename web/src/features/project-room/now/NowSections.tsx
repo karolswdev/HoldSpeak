@@ -130,7 +130,9 @@ export function WaitingOnSection({
 /** `riskRef`: an open risk item of the project. The line opens it, and its
  *  state is a dot and a word (`● At risk`), never a grey `Risk` token under
  *  the Risks caption (W3-B, atlas 2026-10-27). */
-type Line = { key: string; text: string; refs: MemoryRefToken[]; decisionId?: string; riskRef?: string };
+type Line = { key: string; text: string; refs: MemoryRefToken[]; decisionId?: string; riskRef?: string;
+  /** A Decided line's Person (#1891): `Committed · <name>` at the line's right. */
+  committedTo?: string | null };
 
 function pageLines(pages: StandingPageWire[], slug: string): Line[] {
   const page = pages.find((p) => p.slug === slug);
@@ -144,6 +146,7 @@ export function thisWeekGroups(now: RoomNowData | null, pages: StandingPageWire[
     text: d.text,
     refs: d.sourceRef ? [{ ref: d.sourceRef, token: d.source || "MTG", opens: true }] : [],
     decisionId: d.id,
+    committedTo: d.committedTo,
   }));
   const open = pageLines(pages, "what-is-open");
   const pageRisks = pageLines(pages, "risks-and-disputes");
@@ -209,6 +212,11 @@ export function ThisWeekSection({
                     )}
                     {line.riskRef ? <DotWord tone="warn" className="room-now-state">At risk</DotWord> : null}
                     <RefTokens refs={line.refs} onOpen={openRef} />
+                    {line.committedTo ? (
+                      <DotWord tone="ok" className="room-now-committed" data-testid="this-week-committed">
+                        {`Committed · ${line.committedTo}`}
+                      </DotWord>
+                    ) : null}
                   </li>
                 ))}
               </ul>

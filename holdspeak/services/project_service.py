@@ -2211,6 +2211,8 @@ class ProjectService:
                     "ref": f"decision_record:{item.get('id')}",
                     "source": item.get("meeting_title") or "",
                     "source_ref": source_ref,
+                    # 2026-11-08: the Person the decision is committed to (#1891).
+                    "committed_to": item.get("committed_to"),
                 })
         return {
             "next_date": next_date,

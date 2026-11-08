@@ -22,7 +22,7 @@ import { Material } from "../../surface/Material";
 import { FoldGadget, GadgetGroup, GadgetRow } from "../../surface/gadgets";
 import { StateChip } from "../../surface";
 import { CheckGadget } from "../../surface/gadgets";
-import { Loading, StatusBar, ToolGlyph, Toolbar, countWords } from "../../surface/kit";
+import { DotWord, Loading, StatusBar, ToolGlyph, Toolbar, countWords } from "../../surface/kit";
 import { useWindowInterior } from "../../surface/interior";
 import { useHasWindowBack, useWindowBack } from "../../surface/back";
 import { useCompactViewport } from "../../useCompactViewport";
@@ -69,6 +69,8 @@ type Receipt = {
   source_type?: string;
   source_id?: string;
   created_at?: string | null;
+  /** #1891: the Person the record is committed to, when any. */
+  committed_to?: string | null;
 };
 
 function receiptStatus(receipt: Receipt): "governing" | "superseded" | "related" {
@@ -911,9 +913,16 @@ function DecisionReader({
           <DecisionRecordSendSheet id={receipt.id} text={receipt.decision_text} onBack={() => setSending(false)} />
         ) : (
           <>
-            <h2 id={`decision-reader-title-${receipt.id}`} className="decision-reader-title" data-testid="decision-reader-title">
-              {(receipt.title || "").trim() || receipt.decision_text}
-            </h2>
+            <div className="decision-reader-head">
+              <h2 id={`decision-reader-title-${receipt.id}`} className="decision-reader-title" data-testid="decision-reader-title">
+                {(receipt.title || "").trim() || receipt.decision_text}
+              </h2>
+              {receipt.committed_to ? (
+                <DotWord tone="ok" className="decision-reader-committed" data-testid="decision-reader-committed">
+                  {`Committed · ${receipt.committed_to}`}
+                </DotWord>
+              ) : null}
+            </div>
             {(receipt.title || "").trim() && receipt.title!.trim() !== receipt.decision_text.trim() ? (
               <Material className="decision-reader-why">{receipt.decision_text}</Material>
             ) : null}
