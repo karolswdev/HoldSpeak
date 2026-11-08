@@ -5,29 +5,32 @@ import pytest
 from holdspeak.people.keys import NativeKeyStore, PeopleKeyError
 
 
-def test_native_key_store_refuses_unknown_or_file_backends() -> None:
-    class FileBackend:
-        pass
+class _Master:
+    """The one Keychain item, faked."""
 
-    with pytest.raises(PeopleKeyError, match="not_native"):
-        NativeKeyStore(backend=FileBackend())
+    value: str | None = None
+
+    def read(self) -> str | None:
+        return self.value
+
+    def write(self, value: str) -> None:
+        self.value = value
 
 
-def test_native_key_store_accepts_only_allowlisted_backend_and_round_trips() -> None:
-    class Keyring:
-        values: dict[tuple[str, str], str] = {}
+def test_native_key_store_is_unavailable_when_the_master_key_is(tmp_path) -> None:
+    from holdspeak.keystore import Keystore
 
-        def get_password(self, service: str, key_id: str) -> str | None:
-            return self.values.get((service, key_id))
+    store = NativeKeyStore(store=Keystore(tmp_path / "keystore.enc", master=None))
+    with pytest.raises(PeopleKeyError, match="people_key_store_unavailable"):
+        store.get("people-key-v1:test")
+    with pytest.raises(PeopleKeyError, match="people_key_store_unavailable"):
+        store.put("people-key-v1:test", b"a" * 32)
 
-        def set_password(self, service: str, key_id: str, value: str) -> None:
-            self.values[(service, key_id)] = value
 
-        def delete_password(self, service: str, key_id: str) -> None:
-            self.values.pop((service, key_id), None)
+def test_native_key_store_round_trips_through_the_one_keystore(tmp_path) -> None:
+    from holdspeak.keystore import Keystore
 
-    Keyring.__module__ = "keyring.backends.macOS"
-    store = NativeKeyStore(backend=Keyring())
+    store = NativeKeyStore(store=Keystore(tmp_path / "keystore.enc", master=_Master()))
     key = b"a" * 32
     store.put("people-key-v1:test", key)
     assert store.get("people-key-v1:test") == key
@@ -55,6 +58,7 @@ def test_a_home_with_no_keychain_never_asks_the_keychain(tmp_path, monkeypatch):
     for name in ("get_password", "set_password", "delete_password"):
         monkeypatch.setattr(macOS.Keyring, name, asked)
     monkeypatch.setattr("keyring.get_keyring", lambda: macOS.Keyring())
+    monkeypatch.delenv("HOLDSPEAK_CHANNEL_KEYSTORE_FILE", raising=False)
 
     people = NativeKeyStore()  # building a store asks nothing; only a read or write would
     for call in (lambda: people.get("k"), lambda: people.put("k", b"x" * 32), lambda: people.delete("k")):

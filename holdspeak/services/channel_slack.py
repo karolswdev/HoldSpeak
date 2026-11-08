@@ -1,7 +1,7 @@
 """PHILO-11-02: the Slack incoming-webhook channel.
 
 Slack is one declared transport.  The complete webhook URL is held in the
-native keyring and is read for local checks and dispatch.  The operation plan
+one keystore (``holdspeak/keystore.py``) and is read for local checks and dispatch.  The operation plan
 contains the frozen request bytes, the exact Slack host, the payload digest,
 and no credential.  The HTTP edge is injectable for the recording HTTPS rig;
 the default edge never follows redirects and does not print request material.
@@ -67,7 +67,7 @@ class SlackKeyError(RuntimeError):
 
 
 class MemorySlackKeyStore:
-    """Test-only in-memory key store; production wiring uses the native keyring."""
+    """Test-only in-memory key store; production wiring uses the one keystore."""
 
     def __init__(self) -> None:
         self.values: dict[str, str] = {}
@@ -83,79 +83,30 @@ class MemorySlackKeyStore:
 
 
 class NativeSlackKeyStore:
-    """The OS keychain only: macOS Keychain, Secret Service, or Windows vault."""
+    """The Slack slots of the one keystore (``holdspeak/keystore.py``)."""
 
     service_name = "HoldSpeak Slack"
-    ALLOWED_BACKENDS = frozenset({
-        "keyring.backends.macOS.Keyring",
-        "keyring.backends.SecretService.Keyring",
-        "keyring.backends.Windows.WinVaultKeyring",
-    })
-    CHAINER = "keyring.backends.chainer.ChainerBackend"
 
-    def __init__(self, backend: Any = None) -> None:
-        from holdspeak.people.keys import home_has_a_keychain
+    def __init__(self, store: Any = None) -> None:
+        from holdspeak import keystore
 
-        # No keychain in HOME (a rig's scratch HOME): never make macOS ask.
-        self._no_keychain = backend is None and not home_has_a_keychain()
-        if backend is None:
-            import keyring
-
-            backend = keyring.get_keyring()
-        self._backend = self.native(backend)
-
-    @classmethod
-    def native(cls, backend: Any) -> Any:
-        name = _backend_name(backend)
-        if name in cls.ALLOWED_BACKENDS:
-            return backend
-        if name == cls.CHAINER:
-            for inner in getattr(backend, "backends", None) or ():
-                if _backend_name(inner) in cls.ALLOWED_BACKENDS:
-                    return inner
-        raise SlackKeyError("slack_key_store_not_native")
+        self._slots = keystore.Slots(self.service_name, SlackKeyError, missing="slack_webhook_missing",
+                                     locked="slack_key_store_locked", unavailable="slack_key_store_unavailable",
+                                     store=store)
 
     def get(self, key_ref: str) -> str:
-        if self._no_keychain:
-            raise SlackKeyError("slack_key_store_unavailable")
-        try:
-            value = self._backend.get_password(self.service_name, str(key_ref))
-        except Exception:
-            value, locked = None, True
-        else:
-            locked = False
-        if locked:
-            raise SlackKeyError("slack_key_store_locked")
-        if not value:
-            raise SlackKeyError("slack_webhook_missing")
-        return str(value)
+        return self._slots.get(str(key_ref))
 
     def put(self, key_ref: str, key: str) -> None:
-        if self._no_keychain:
-            raise SlackKeyError("slack_key_store_unavailable")
-        try:
-            self._backend.set_password(self.service_name, str(key_ref), str(key))
-        except Exception:
-            raise SlackKeyError("slack_key_store_locked") from None
+        self._slots.put(str(key_ref), str(key))
 
 
 def default_key_store() -> Any:
-    """The keychain; a file store when ``HOLDSPEAK_CHANNEL_KEYSTORE_FILE`` is set (a rig hub)."""
-    from .channel_key_file import FileChannelKeyStore, channel_keystore_path
-
-    path = channel_keystore_path()
-    if path is not None:
-        return FileChannelKeyStore(path, NativeSlackKeyStore.service_name, SlackKeyError, "slack_webhook_missing",
-                                   "slack_key_store_locked")
+    """The one keystore (the rig's plain file when ``HOLDSPEAK_CHANNEL_KEYSTORE_FILE`` is set)."""
     return NativeSlackKeyStore()
 
 
 KEY_STORE: Callable[[], Any] = default_key_store
-
-
-def _backend_name(backend: Any) -> str:
-    kind = type(backend)
-    return f"{kind.__module__}.{kind.__qualname__}"
 
 
 def key_slot(key_ref: str) -> str:

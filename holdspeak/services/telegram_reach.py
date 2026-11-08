@@ -5,8 +5,8 @@
   that sends ``/pair <code>`` is the one owner chat; a second chat cannot pair
   while one is paired. **Unpair** removes it.
 - **The secret in the keystore.** The bot token is in the keystore slot
-  ``reach.telegram.bot_token`` (the macOS Keychain or the Secret Service, or
-  the rig's ``HOLDSPEAK_CHANNEL_KEYSTORE_FILE``), and so is the paired chat.
+  ``reach.telegram.bot_token`` (the one keystore, ``holdspeak/keystore.py``,
+  or the rig's ``HOLDSPEAK_CHANNEL_KEYSTORE_FILE``), and so is the paired chat.
   :func:`repair_token` moves a token found in the config file into the
   keystore once and blanks it in the file, with one log line.
 - **The message.** At most ten lines of plain text (no Markdown): the
@@ -127,41 +127,11 @@ class _Missing(Exception):
 
 
 def _store() -> Any:
-    """The keystore (the rig's key file, else the native keychain), or None."""
-    from .channel_key_file import FileChannelKeyStore, channel_keystore_path
+    """The one keystore's Reach slots (``holdspeak/keystore.py``), or None when it is not open."""
+    from .. import keystore
 
-    path = channel_keystore_path()
-    if path is not None:
-        return FileChannelKeyStore(path, SERVICE, _Missing, "missing", "locked")
-    from ..people.keys import home_has_a_keychain
-
-    if not home_has_a_keychain():
-        return None
-    try:
-        import keyring
-
-        backend = keyring.get_keyring()
-    except Exception as exc:
-        log.info(f"telegram: no keychain ({type(exc).__name__})")
-        return None
-
-    class _Chain:
-        def get(self, slot: str) -> str:
-            value = backend.get_password(SERVICE, slot)
-            if not value:
-                raise _Missing("missing")
-            return value
-
-        def put(self, slot: str, value: str) -> None:
-            if value:
-                backend.set_password(SERVICE, slot, value)
-            else:
-                try:
-                    backend.delete_password(SERVICE, slot)
-                except Exception:
-                    pass
-
-    return _Chain()
+    slots = keystore.Slots(SERVICE, _Missing, missing="missing", locked="locked", unavailable="unavailable")
+    return slots if slots.available() else None
 
 
 def _read(slot: str) -> str:

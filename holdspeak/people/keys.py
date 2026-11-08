@@ -1,7 +1,8 @@
 """Key custody boundary for the encrypted People sidecar.
 
 The memory implementation is intentionally injectable for tests only.  Runtime
-code must use :class:`NativeKeyStore`, which refuses every fallback backend.
+code must use :class:`NativeKeyStore`: the one keystore (``holdspeak/keystore.py``),
+whose master key lives only in a native keychain backend.
 :class:`FileKeyStore` is the deliberate dev-only bypass (HS-149-01).
 """
 
@@ -11,7 +12,6 @@ import base64
 import json
 import os
 import secrets
-import sys
 import threading
 import uuid
 from pathlib import Path
@@ -53,34 +53,28 @@ class MemoryKeyStore:
 
 def home_has_a_keychain() -> bool:
     """On macOS, True only when HOME holds a login keychain; True elsewhere."""
-    if sys.platform != "darwin":
-        return True
-    keychains = Path.home() / "Library" / "Keychains"
-    return any((keychains / name).exists() for name in ("login.keychain-db", "login.keychain"))
+    from ..keystore import home_has_a_keychain as _has
+
+    return _has()
 
 
 class NativeKeyStore:
-    """macOS Keychain / Linux Secret Service only; no file or env fallback."""
+    """The People slots of the one keystore (``holdspeak/keystore.py``): the
+    master key in the native keychain, the People keys in the sealed file. No
+    rig file and no env fallback: the dev bypass is :class:`FileKeyStore`."""
 
     service_name = "HoldSpeak People"
-    _ALLOWED_BACKENDS = {
-        "keyring.backends.macOS.Keyring",
-        "keyring.backends.SecretService.Keyring",
-    }
 
-    def __init__(self, backend: object | None = None) -> None:
-        try:
-            import keyring
-        except ImportError as exc:  # pragma: no cover - dependency packaging proof
-            raise PeopleKeyError("people_key_store_unavailable") from exc
-        self._keyring = keyring
+    def __init__(self, store: object | None = None) -> None:
+        from .. import keystore
+
         # A HOME with no keychain (a test rig's scratch HOME): asking would
         # make macOS show "A keychain cannot be found" on the owner's screen.
-        self._no_keychain = backend is None and not home_has_a_keychain()
-        self._backend = backend if backend is not None else keyring.get_keyring()
-        backend_name = f"{type(self._backend).__module__}.{type(self._backend).__name__}"
-        if backend_name not in self._ALLOWED_BACKENDS:
-            raise PeopleKeyError("people_key_store_not_native")
+        self._no_keychain = store is None and not home_has_a_keychain()
+        self._slots = keystore.Slots(
+            self.service_name, PeopleKeyError, missing="people_key_missing", locked="people_key_store_locked",
+            unavailable="people_key_store_unavailable", store=store, rig_file=False,
+        )
 
     def usable(self) -> bool:
         """Betterment daily D8: False when this HOME has no keychain to hold
@@ -90,12 +84,7 @@ class NativeKeyStore:
     def get(self, key_id: str) -> bytes:
         if self._no_keychain:
             raise PeopleKeyError("people_key_store_unavailable")
-        try:
-            encoded = self._backend.get_password(self.service_name, key_id)
-        except Exception as exc:
-            raise PeopleKeyError("people_key_store_locked") from exc
-        if not encoded:
-            raise PeopleKeyError("people_key_missing")
+        encoded = self._slots.get(key_id)
         try:
             key = base64.b64decode(encoded.encode("ascii"), validate=True)
         except (UnicodeEncodeError, ValueError) as exc:
@@ -109,20 +98,12 @@ class NativeKeyStore:
             raise PeopleKeyError("people_key_store_unavailable")
         if len(key) != KEY_BYTES:
             raise PeopleKeyError("people_key_invalid")
-        try:
-            self._backend.set_password(
-                self.service_name, key_id, base64.b64encode(key).decode("ascii")
-            )
-        except Exception as exc:
-            raise PeopleKeyError("people_key_store_locked") from exc
+        self._slots.put(key_id, base64.b64encode(key).decode("ascii"))
 
     def delete(self, key_id: str) -> None:
         if self._no_keychain:
             raise PeopleKeyError("people_key_store_unavailable")
-        try:
-            self._backend.delete_password(self.service_name, key_id)
-        except Exception as exc:
-            raise PeopleKeyError("people_key_store_locked") from exc
+        self._slots.delete(key_id)
 
 
 class FileKeyStore:

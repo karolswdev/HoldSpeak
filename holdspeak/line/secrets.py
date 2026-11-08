@@ -7,8 +7,8 @@
 - ``calls.line.telnyx_api_key``: the Telnyx provisioning key. Only the
   Telnyx setup flow (LINE-3b) reads it; a Telnyx API key is not a SIP password.
 
-The keystore is the one the channel keys use: the macOS Keychain or the
-Linux Secret Service, or the rig's ``HOLDSPEAK_CHANNEL_KEYSTORE_FILE``.
+The keystore is the one keystore (``holdspeak/keystore.py``), or the rig's
+``HOLDSPEAK_CHANNEL_KEYSTORE_FILE``.
 
 Dev only: when a slot is empty, ``TELNYX_API_KEY`` and
 ``HOLDSPEAK_LINE_SIP_PASSWORD`` are read from the environment, with one log
@@ -41,41 +41,11 @@ class _Missing(Exception):
 
 
 def _store() -> Any:
-    """The keystore (the rig's key file, else the native keychain), or None."""
-    from ..services.channel_key_file import FileChannelKeyStore, channel_keystore_path
+    """The one keystore's Line slots (``holdspeak/keystore.py``), or None when it is not open."""
+    from .. import keystore
 
-    path = channel_keystore_path()
-    if path is not None:
-        return FileChannelKeyStore(path, SERVICE, _Missing, "missing", "locked")
-    from ..people.keys import home_has_a_keychain
-
-    if not home_has_a_keychain():
-        return None
-    try:
-        import keyring
-
-        backend = keyring.get_keyring()
-    except Exception as exc:
-        log.info(f"line secrets: no keychain ({exc})")
-        return None
-
-    class _Chain:
-        def get(self, slot: str) -> str:
-            value = backend.get_password(SERVICE, slot)
-            if not value:
-                raise _Missing("missing")
-            return value
-
-        def put(self, slot: str, value: str) -> None:
-            if value:
-                backend.set_password(SERVICE, slot, value)
-            else:
-                try:
-                    backend.delete_password(SERVICE, slot)
-                except Exception:
-                    pass
-
-    return _Chain()
+    slots = keystore.Slots(SERVICE, _Missing, missing="missing", locked="locked", unavailable="unavailable")
+    return slots if slots.available() else None
 
 
 def _from_keystore(slot: str) -> str:

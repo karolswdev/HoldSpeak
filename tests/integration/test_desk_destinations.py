@@ -155,8 +155,7 @@ def _invented(fixture: Any, live: Any, path: str = "$") -> list[str]:
 
 
 def _live_wire(hub: Hub, home: Path, monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
-    import keyring.backends.fail
-
+    from holdspeak.keystore import Keystore
     from holdspeak.services import channel_email
 
     c = hub.client
@@ -171,10 +170,10 @@ def _live_wire(hub: Hub, home: Path, monkeypatch: pytest.MonkeyPatch) -> dict[st
         "email": "owner@acme.example", "key": "PAY-118 PAY-119"})
     assert refused.status_code == 400, refused.text
     wire["save-refused-jira.json"] = _json(refused)
-    # The email key: first a store that is not the OS keychain (refused), then the memory store.
+    # The email key: first a keystore that is not open (refused), then the memory store.
     real_store = channel_email.KEY_STORE
-    monkeypatch.setattr(channel_email, "KEY_STORE",
-                        lambda: channel_email.NativeEmailKeyStore(backend=keyring.backends.fail.Keyring()))
+    closed = Keystore(home / "closed-keystore.enc", master=None)
+    monkeypatch.setattr(channel_email, "KEY_STORE", lambda: channel_email.NativeEmailKeyStore(store=closed))
     key_refused = c.put("/api/channels/email-keys/sendgrid-karol-acme.io",
                         json={"api_key": "SG.glassKEY", "provider": "sendgrid"})
     assert key_refused.status_code == 400, key_refused.text

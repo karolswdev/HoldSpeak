@@ -584,86 +584,49 @@ def test_c4_the_key_is_never_planning_material(hub: Hub, wire: Wire, monkeypatch
 # ── 5: key custody ─────────────────────────────────────────────────────────
 
 
-def _backend(module: str, name: str, **attrs: Any) -> Any:
-    kind = type(name, (), {"__module__": module, "__qualname__": name})
-    backend = kind()
-    for key, value in attrs.items():
-        setattr(backend, key, value)
-    return backend
+class _Master:
+    """The one Keychain item, faked (holdspeak/keystore.py)."""
 
-
-class _Vault:
     def __init__(self) -> None:
-        self.values: dict[tuple[str, str], str] = {}
+        self.value: Optional[str] = None
 
-    def set_password(self, service: str, user: str, value: str) -> None:
-        self.values[(service, user)] = value
+    def read(self) -> Optional[str]:
+        return self.value
 
-    def get_password(self, service: str, user: str) -> Optional[str]:
-        return self.values.get((service, user))
-
-
-def _native_stub(module: str = "keyring.backends.macOS", name: str = "Keyring") -> Any:
-    vault = _Vault()
-    return _backend(module, name, set_password=vault.set_password, get_password=vault.get_password, vault=vault)
+    def write(self, value: str) -> None:
+        self.value = value
 
 
-@pytest.mark.parametrize("module,name", [("keyring.backends.macOS", "Keyring"),
-                                         ("keyring.backends.SecretService", "Keyring"),
-                                         ("keyring.backends.Windows", "WinVaultKeyring")])
-def test_c5_a_native_backend_stores_and_reads_the_key(store: Any, module: str, name: str) -> None:
+def test_c5_the_key_lives_sealed_in_the_one_keystore(store: Any, tmp_path: Path) -> None:
+    from holdspeak.keystore import Keystore
     from holdspeak.services.channel_email import NativeEmailKeyStore
 
-    backend = _native_stub(module, name)
-    native_store = NativeEmailKeyStore(backend=backend)
+    one = Keystore(tmp_path / "keystore.enc", master=_Master())
+    native_store = NativeEmailKeyStore(store=one)
     native_store.put("sendgrid", KEY)
     assert native_store.get("sendgrid") == KEY
-    assert backend.vault.values == {("HoldSpeak Email", "sendgrid"): KEY}
-    chained = NativeEmailKeyStore(backend=_backend("keyring.backends.chainer", "ChainerBackend",
-                                                   backends=[_backend("keyring.backends.fail", "Keyring"), backend]))
-    assert chained.get("sendgrid") == KEY
-
-
-@pytest.mark.parametrize("backend", [
-    "fail", "chainer-without-native", "keyrings.alt-file", "keyrings.alt-encrypted", "null",
-])
-def test_c5_every_other_backend_is_refused_not_native(store: Any, backend: str) -> None:
-    import keyring.backends.fail
-
-    from holdspeak.services.channel_email import EmailKeyError, NativeEmailKeyStore
-
-    chosen = {
-        "fail": keyring.backends.fail.Keyring(),
-        "chainer-without-native": _backend("keyring.backends.chainer", "ChainerBackend",
-                                           backends=[keyring.backends.fail.Keyring()]),
-        "keyrings.alt-file": _backend("keyrings.alt.file", "PlaintextKeyring"),
-        "keyrings.alt-encrypted": _backend("keyrings.alt.file", "EncryptedKeyring"),
-        "null": _backend("keyring.backends.null", "Keyring"),
-    }[backend]
-    with pytest.raises(EmailKeyError) as refused:
-        NativeEmailKeyStore(backend=chosen)
-    assert refused.value.code == "email_key_store_not_native"
+    assert one._load() == {"HoldSpeak Email": {"sendgrid": KEY}}
+    assert KEY.encode() not in one.path.read_bytes()
 
 
 @pytest.mark.parametrize("form", FORMS)
-def test_c5_a_store_that_is_not_native_refuses_the_save_and_the_send_before_anything_leaves(
-    hub: Hub, wire: Wire, store: Any, monkeypatch: pytest.MonkeyPatch, form: str,
+def test_c5_a_store_that_is_not_open_refuses_the_save_and_the_send_before_anything_leaves(
+    hub: Hub, wire: Wire, store: Any, monkeypatch: pytest.MonkeyPatch, form: str, tmp_path: Path,
 ) -> None:
-    import keyring.backends.fail
-
+    from holdspeak.keystore import Keystore
     from holdspeak.services import channel_email
 
     update, dest = ready(hub)
     body = press(hub, form, update, dest, f"c5-{form}")
-    monkeypatch.setattr(channel_email, "KEY_STORE",
-                        lambda: channel_email.NativeEmailKeyStore(backend=keyring.backends.fail.Keyring()))
+    closed = Keystore(tmp_path / "closed.enc", master=None)  # no master key: the keystore is not open
+    monkeypatch.setattr(channel_email, "KEY_STORE", lambda: channel_email.NativeEmailKeyStore(store=closed))
     saved = save_key(hub)
-    assert (saved.status_code, saved.json()["code"]) == (400, "email_key_store_not_native")
+    assert (saved.status_code, saved.json()["code"]) == (400, "email_key_store_unavailable")
     refused = send(hub, body)
-    assert refused.json()["code"] == "email_key_store_not_native", refused.text
+    assert refused.json()["code"] == "email_key_store_unavailable", refused.text
     assert wire.requests == [] and egress_ops(hub) == [] and history(hub, update) == []
     assert all(r["state"] == "prepared" for r in sends(hub))
-    assert (_send_op(hub)["state"], _send_op(hub)["outcome"]) == ("refused", "email_key_store_not_native")
+    assert (_send_op(hub)["state"], _send_op(hub)["outcome"]) == ("refused", "email_key_store_unavailable")
 
 
 def test_c5_a_missing_key_refuses_by_name_and_the_check_says_so(hub: Hub, wire: Wire, store: Any) -> None:
