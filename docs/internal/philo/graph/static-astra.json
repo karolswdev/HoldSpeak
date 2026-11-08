@@ -969,7 +969,7 @@
       "sha256": "ed02b0c9fe829ca6324f7d6f277cbebb6c2b31fad935045488704575616447a7"
     },
     {
-      "path": "holdspeak/web/routes/front_door.py",
+      "path": "holdspeak/web/routes/_parked/front_door.py",
       "sha256": "ee252975a0a3d3f8f331b7e74e903c7c3f972a8fcea20594250ae3199f77a1c7"
     },
     {
@@ -1809,7 +1809,7 @@
       "sha256": "dbbf29373e77c7c538f7e9ee502263b34c235257e76d0c922d973ad07949e3ee"
     },
     {
-      "path": "web/src/features/concierge/ConciergeCore.tsx",
+      "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
       "sha256": "f6447e98806636a7b96acf288f1ab6318e05261e0ff1bd8a0db13901bdf7e3e8"
     },
     {
@@ -1937,11 +1937,11 @@
       "sha256": "d669d9006e3ebcf31333d61a104f52d86fb8e55357b6f9da32e12a8206ba6021"
     },
     {
-      "path": "web/src/pages/cores/AssignmentEditor.tsx",
+      "path": "web/src/pages/cores/_parked/AssignmentEditor.tsx",
       "sha256": "9b180f011ff52a542e4eb54c13237683921cd1d2310b7b9ca6aa8f53dc29a9d0"
     },
     {
-      "path": "web/src/pages/cores/AssignmentModelChooser.tsx",
+      "path": "web/src/pages/cores/_parked/AssignmentModelChooser.tsx",
       "sha256": "6105a8643afcb52487bc525c3058ed3b03e9b27ca545d25a56ad7116319c3053"
     },
     {
@@ -1957,7 +1957,7 @@
       "sha256": "c0fd6e5ca81cef752742d1ee58f4500eea18694be02f0f76ab6437e060de4446"
     },
     {
-      "path": "web/src/pages/cores/CapabilityAssignmentsCore.tsx",
+      "path": "web/src/pages/cores/_parked/CapabilityAssignmentsCore.tsx",
       "sha256": "47fc205e8270bbc1ddbf081d15681212da4d42070aaad7dd3d14032930434e24"
     },
     {
@@ -1997,7 +1997,7 @@
       "sha256": "d914cb89bdfa8dca8c23b3e88fedf47cf7a1a84b17ad06a8721a2fb656182079"
     },
     {
-      "path": "web/src/pages/cores/ModelLibraryCore.tsx",
+      "path": "web/src/pages/cores/_parked/ModelLibraryCore.tsx",
       "sha256": "3a798a835e75f028630e2bea1bbe2eea930d65e2f14c9d5c57f99626e9c791e7"
     },
     {
@@ -2025,7 +2025,7 @@
       "sha256": "5c1739b8ffd1083ea8a13bd136468215c7edfab347777cfed1fb126d9a62efc7"
     },
     {
-      "path": "web/src/pages/cores/TopologyMapView.tsx",
+      "path": "web/src/pages/cores/_parked/TopologyMapView.tsx",
       "sha256": "e30176802c47d44a931f5a25b4aba8499ab3e2d4dc4445b694c6bac686a48fc9"
     },
     {
@@ -2101,7 +2101,7 @@
       "sha256": "7118684fc0ffe4a517e8c51b4a4485e272ed8827a8ca976758a35fd0e93d51c7"
     },
     {
-      "path": "web/src/pages/cores/frontDoor.tsx",
+      "path": "web/src/pages/cores/_parked/frontDoor.tsx",
       "sha256": "142ff8aa24b229fc111a28ed918933587323ec1fe15d1f4fc41348cb4cf04612"
     },
     {
@@ -3087,7 +3087,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 535,
           "symbol": "ConciergeCore",
           "claim": "Engine row exposes Check or Add."
@@ -3124,7 +3124,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 535,
           "symbol": "ConciergeCore",
           "claim": "Engine row exposes Check or Add."
@@ -3147,7 +3147,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 589,
           "symbol": "ConciergeCore",
           "claim": "Concierge exposes adjust."
@@ -3170,7 +3170,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 611,
           "symbol": "SurfaceFooter",
           "claim": "Concierge exposes Use these."
@@ -3207,7 +3207,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 604,
           "symbol": "SurfaceFooter",
           "claim": "Concierge exposes Cancel."
@@ -3230,7 +3230,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 535,
           "symbol": "ConciergeCore",
           "claim": "Engine row exposes Check or Add."
@@ -3260,7 +3260,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 107,
           "symbol": "FoundEngineRow",
           "claim": "Configured cloud engine exposes Check."
@@ -3290,7 +3290,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 113,
           "symbol": "FoundEngineRow",
           "claim": "Preset exposes Download."
@@ -3327,7 +3327,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 224,
           "symbol": "PickerWell",
           "claim": "Picker exposes choose Buttons."
@@ -3350,7 +3350,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 170,
           "symbol": "SetGroupRow",
           "claim": "Assignment row exposes picker."
@@ -3373,7 +3373,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 388,
           "symbol": "ProbeRow",
           "claim": "Probe row exposes Test."
@@ -3403,7 +3403,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 310,
           "symbol": "RepairRow",
           "claim": "Repair row exposes repair."
@@ -7794,7 +7794,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 535,
           "symbol": "ConciergeCore",
           "claim": "Engine row exposes Check or Add."
@@ -7831,7 +7831,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 535,
           "symbol": "ConciergeCore",
           "claim": "Engine row exposes Check or Add."
@@ -7854,7 +7854,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 589,
           "symbol": "ConciergeCore",
           "claim": "Concierge exposes adjust."
@@ -7877,7 +7877,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 611,
           "symbol": "SurfaceFooter",
           "claim": "Concierge exposes Use these."
@@ -7914,7 +7914,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 604,
           "symbol": "SurfaceFooter",
           "claim": "Concierge exposes Cancel."
@@ -7937,7 +7937,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 535,
           "symbol": "ConciergeCore",
           "claim": "Engine row exposes Check or Add."
@@ -7967,7 +7967,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 107,
           "symbol": "FoundEngineRow",
           "claim": "Configured cloud engine exposes Check."
@@ -7997,7 +7997,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 113,
           "symbol": "FoundEngineRow",
           "claim": "Preset exposes Download."
@@ -8034,7 +8034,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 224,
           "symbol": "PickerWell",
           "claim": "Picker exposes choose Buttons."
@@ -8057,7 +8057,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 170,
           "symbol": "SetGroupRow",
           "claim": "Assignment row exposes picker."
@@ -8080,7 +8080,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 388,
           "symbol": "ProbeRow",
           "claim": "Probe row exposes Test."
@@ -8110,7 +8110,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 310,
           "symbol": "RepairRow",
           "claim": "Repair row exposes repair."
@@ -15311,7 +15311,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/frontDoor.tsx",
+          "path": "web/src/pages/cores/_parked/frontDoor.tsx",
           "line": 586,
           "anchor": "onOpenAssignments={() => setAdvancedView(\"table\")}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -15359,7 +15359,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/frontDoor.tsx",
+          "path": "web/src/pages/cores/_parked/frontDoor.tsx",
           "line": 506,
           "anchor": "onOpenAssignments={() => setAdvancedView(\"table\")}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -15615,7 +15615,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/TopologyMapView.tsx",
+          "path": "web/src/pages/cores/_parked/TopologyMapView.tsx",
           "line": 562,
           "anchor": "onRepoint={startRepoint}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -16143,7 +16143,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/TopologyMapView.tsx",
+          "path": "web/src/pages/cores/_parked/TopologyMapView.tsx",
           "line": 438,
           "anchor": "onText={(t: string) => setEndpoint((c) => ({ ...c, label: t }))}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -16799,7 +16799,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/TopologyMapView.tsx",
+          "path": "web/src/pages/cores/_parked/TopologyMapView.tsx",
           "line": 540,
           "anchor": "onRetry={() => void load()}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -17503,7 +17503,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/CapabilityAssignmentsCore.tsx",
+          "path": "web/src/pages/cores/_parked/CapabilityAssignmentsCore.tsx",
           "line": 103,
           "anchor": "onSaved={saved}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -18111,7 +18111,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/AssignmentEditor.tsx",
+          "path": "web/src/pages/cores/_parked/AssignmentEditor.tsx",
           "line": 209,
           "anchor": "onChoose={choose}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -18511,7 +18511,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/TopologyMapView.tsx",
+          "path": "web/src/pages/cores/_parked/TopologyMapView.tsx",
           "line": 571,
           "anchor": "onOpenChange={setAddOpen}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -18623,7 +18623,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/CapabilityAssignmentsCore.tsx",
+          "path": "web/src/pages/cores/_parked/CapabilityAssignmentsCore.tsx",
           "line": 101,
           "anchor": "onClose={close}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -18751,7 +18751,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/TopologyMapView.tsx",
+          "path": "web/src/pages/cores/_parked/TopologyMapView.tsx",
           "line": 573,
           "anchor": "onAdded={() => void load()}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -18975,7 +18975,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/AssignmentModelChooser.tsx",
+          "path": "web/src/pages/cores/_parked/AssignmentModelChooser.tsx",
           "line": 65,
           "anchor": "onKeyDownCapture={moveSelection}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -19023,7 +19023,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/frontDoor.tsx",
+          "path": "web/src/pages/cores/_parked/frontDoor.tsx",
           "line": 577,
           "anchor": "onOpenChange={setShowAdvanced}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -19071,7 +19071,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/frontDoor.tsx",
+          "path": "web/src/pages/cores/_parked/frontDoor.tsx",
           "line": 456,
           "anchor": "onConfirm={() => void confirmPack()}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -19167,7 +19167,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/TopologyMapView.tsx",
+          "path": "web/src/pages/cores/_parked/TopologyMapView.tsx",
           "line": 555,
           "anchor": "onDone={finishRepoint}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -19199,7 +19199,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/CapabilityAssignmentsCore.tsx",
+          "path": "web/src/pages/cores/_parked/CapabilityAssignmentsCore.tsx",
           "line": 105,
           "anchor": "onRetry={() => void open(selected)}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -20703,7 +20703,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/CapabilityAssignmentsCore.tsx",
+          "path": "web/src/pages/cores/_parked/CapabilityAssignmentsCore.tsx",
           "line": 102,
           "anchor": "onRefresh={() => open(selected)}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -20783,7 +20783,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/TopologyMapView.tsx",
+          "path": "web/src/pages/cores/_parked/TopologyMapView.tsx",
           "line": 548,
           "anchor": "onSelect={setSelectedId}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -21103,7 +21103,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/CapabilityAssignmentsCore.tsx",
+          "path": "web/src/pages/cores/_parked/CapabilityAssignmentsCore.tsx",
           "line": 73,
           "anchor": "onRetry={() => void reload()}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -21279,7 +21279,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 199,
           "anchor": "onToggle={() => { row.pickerOpen ? ctrl.closePicker(row.group) : ctrl.openPicker(row.group); }}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -21407,7 +21407,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/ModelLibraryCore.tsx",
+          "path": "web/src/pages/cores/_parked/ModelLibraryCore.tsx",
           "line": 417,
           "anchor": "onRetry={() => void reload()}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -22015,7 +22015,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/CapabilityAssignmentsCore.tsx",
+          "path": "web/src/pages/cores/_parked/CapabilityAssignmentsCore.tsx",
           "line": 91,
           "anchor": "onToggle={(event) => setShowOverrides((event.currentTarget as HTMLDetailsElement).open)}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -24543,7 +24543,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/frontDoor.tsx",
+          "path": "web/src/pages/cores/_parked/frontDoor.tsx",
           "line": 444,
           "anchor": "onRetry={() => void load()}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -25103,7 +25103,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/ModelLibraryCore.tsx",
+          "path": "web/src/pages/cores/_parked/ModelLibraryCore.tsx",
           "line": 411,
           "symbol": "ModelLibraryCore",
           "claim": "The production JSX source declares onKeyDown at this control site."
@@ -25567,7 +25567,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 248,
           "symbol": "PickerWell",
           "claim": "The production JSX source declares onClick at this control site."
@@ -25887,7 +25887,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/CapabilityAssignmentsCore.tsx",
+          "path": "web/src/pages/cores/_parked/CapabilityAssignmentsCore.tsx",
           "line": 93,
           "symbol": "CapabilityAssignmentsCore",
           "claim": "The production JSX source declares onClick at this control site."
@@ -25935,7 +25935,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 313,
           "symbol": "RepairRow",
           "claim": "The production JSX source declares onClick at this control site."
@@ -26767,7 +26767,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/CapabilityAssignmentsCore.tsx",
+          "path": "web/src/pages/cores/_parked/CapabilityAssignmentsCore.tsx",
           "line": 88,
           "symbol": "CapabilityAssignmentsCore",
           "claim": "The production JSX source declares onChange at this control site."
@@ -27071,7 +27071,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/ModelLibraryCore.tsx",
+          "path": "web/src/pages/cores/_parked/ModelLibraryCore.tsx",
           "line": 395,
           "symbol": "addFace",
           "claim": "The production JSX source declares onChange at this control site."
@@ -27119,7 +27119,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/ModelLibraryCore.tsx",
+          "path": "web/src/pages/cores/_parked/ModelLibraryCore.tsx",
           "line": 430,
           "symbol": "ModelLibraryCore",
           "claim": "The production JSX source declares onKeyDown at this control site."
@@ -27231,7 +27231,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/ModelLibraryCore.tsx",
+          "path": "web/src/pages/cores/_parked/ModelLibraryCore.tsx",
           "line": 394,
           "symbol": "addFace",
           "claim": "The production JSX source declares onChange at this control site."
@@ -27887,7 +27887,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/AssignmentEditor.tsx",
+          "path": "web/src/pages/cores/_parked/AssignmentEditor.tsx",
           "line": 205,
           "symbol": "AssignmentEditor",
           "claim": "The production JSX source declares onClick at this control site."
@@ -27983,7 +27983,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/AssignmentEditor.tsx",
+          "path": "web/src/pages/cores/_parked/AssignmentEditor.tsx",
           "line": 201,
           "symbol": "AssignmentEditor",
           "claim": "The production JSX source declares onClick at this control site."
@@ -28063,7 +28063,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 172,
           "symbol": "SetGroupRow",
           "claim": "The production JSX source declares onClick at this control site."
@@ -28287,7 +28287,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/TopologyMapView.tsx",
+          "path": "web/src/pages/cores/_parked/TopologyMapView.tsx",
           "line": 439,
           "symbol": "AddNodePanel",
           "claim": "The production JSX source declares onChange at this control site."
@@ -28415,7 +28415,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/ModelLibraryCore.tsx",
+          "path": "web/src/pages/cores/_parked/ModelLibraryCore.tsx",
           "line": 434,
           "symbol": "ModelLibraryCore",
           "claim": "The production JSX source declares onChange at this control site."
@@ -28687,7 +28687,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 593,
           "symbol": "ConciergeCore",
           "claim": "The production JSX source declares onClick at this control site."
@@ -28847,7 +28847,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/AssignmentEditor.tsx",
+          "path": "web/src/pages/cores/_parked/AssignmentEditor.tsx",
           "line": 194,
           "symbol": "AssignmentEditor",
           "claim": "The production JSX source declares onDragStart at this control site."
@@ -28911,7 +28911,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/AssignmentEditor.tsx",
+          "path": "web/src/pages/cores/_parked/AssignmentEditor.tsx",
           "line": 175,
           "symbol": "AssignmentEditor",
           "claim": "The production JSX source declares onKeyDown at this control site."
@@ -29439,7 +29439,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 393,
           "symbol": "ProbeRow",
           "claim": "The production JSX source declares onClick at this control site."
@@ -29663,7 +29663,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/TopologyMapView.tsx",
+          "path": "web/src/pages/cores/_parked/TopologyMapView.tsx",
           "line": 437,
           "symbol": "AddNodePanel",
           "claim": "The production JSX source declares onChange at this control site."
@@ -29903,7 +29903,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/ModelLibraryCore.tsx",
+          "path": "web/src/pages/cores/_parked/ModelLibraryCore.tsx",
           "line": 413,
           "symbol": "ModelLibraryCore",
           "claim": "The production JSX source declares onClick at this control site."
@@ -30207,7 +30207,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/TopologyMapView.tsx",
+          "path": "web/src/pages/cores/_parked/TopologyMapView.tsx",
           "line": 241,
           "symbol": "NodeInspector",
           "claim": "The production JSX source declares onClick at this control site."
@@ -30303,7 +30303,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/ModelLibraryCore.tsx",
+          "path": "web/src/pages/cores/_parked/ModelLibraryCore.tsx",
           "line": 361,
           "symbol": "addChoices",
           "claim": "The production JSX source declares onClick at this control site."
@@ -30383,7 +30383,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/ModelLibraryCore.tsx",
+          "path": "web/src/pages/cores/_parked/ModelLibraryCore.tsx",
           "line": 393,
           "symbol": "addFace",
           "claim": "The production JSX source declares onChange at this control site."
@@ -30415,7 +30415,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/ModelLibraryCore.tsx",
+          "path": "web/src/pages/cores/_parked/ModelLibraryCore.tsx",
           "line": 371,
           "symbol": "addFace",
           "claim": "The production JSX source declares onClick at this control site."
@@ -30591,7 +30591,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/frontDoor.tsx",
+          "path": "web/src/pages/cores/_parked/frontDoor.tsx",
           "line": 454,
           "symbol": "FrontDoorView",
           "claim": "The production JSX source declares onChange at this control site."
@@ -30623,7 +30623,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/AssignmentEditor.tsx",
+          "path": "web/src/pages/cores/_parked/AssignmentEditor.tsx",
           "line": 204,
           "symbol": "AssignmentEditor",
           "claim": "The production JSX source declares onClick at this control site."
@@ -31183,7 +31183,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/TopologyMapView.tsx",
+          "path": "web/src/pages/cores/_parked/TopologyMapView.tsx",
           "line": 430,
           "symbol": "AddNodePanel",
           "claim": "The production JSX source declares onClick at this control site."
@@ -31247,7 +31247,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/AssignmentModelChooser.tsx",
+          "path": "web/src/pages/cores/_parked/AssignmentModelChooser.tsx",
           "line": 79,
           "symbol": "AssignmentModelChooser",
           "claim": "The production JSX source declares onClick at this control site."
@@ -31679,7 +31679,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/ModelLibraryCore.tsx",
+          "path": "web/src/pages/cores/_parked/ModelLibraryCore.tsx",
           "line": 360,
           "symbol": "addChoices",
           "claim": "The production JSX source declares onClick at this control site."
@@ -32063,7 +32063,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/TopologyMapView.tsx",
+          "path": "web/src/pages/cores/_parked/TopologyMapView.tsx",
           "line": 454,
           "symbol": "AddNodePanel",
           "claim": "The production JSX source declares onChange at this control site."
@@ -32335,7 +32335,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/frontDoor.tsx",
+          "path": "web/src/pages/cores/_parked/frontDoor.tsx",
           "line": 582,
           "symbol": "FrontDoorView",
           "claim": "The production JSX source declares onClick at this control site."
@@ -32623,7 +32623,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/TopologyMapView.tsx",
+          "path": "web/src/pages/cores/_parked/TopologyMapView.tsx",
           "line": 329,
           "symbol": "RepointPanel",
           "claim": "The production JSX source declares onClick at this control site."
@@ -32847,7 +32847,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 581,
           "symbol": "ConciergeCore",
           "claim": "The production JSX source declares onClick at this control site."
@@ -33519,7 +33519,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/AssignmentEditor.tsx",
+          "path": "web/src/pages/cores/_parked/AssignmentEditor.tsx",
           "line": 203,
           "symbol": "AssignmentEditor",
           "claim": "The production JSX source declares onClick at this control site."
@@ -33551,7 +33551,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 223,
           "symbol": "PickerWell",
           "claim": "The production JSX source declares onClick at this control site."
@@ -33935,7 +33935,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/TopologyMapView.tsx",
+          "path": "web/src/pages/cores/_parked/TopologyMapView.tsx",
           "line": 444,
           "symbol": "AddNodePanel",
           "claim": "The production JSX source declares onClick at this control site."
@@ -34559,7 +34559,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 615,
           "symbol": "ConciergeCore",
           "claim": "The production JSX source declares onClick at this control site."
@@ -34943,7 +34943,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/ModelLibraryCore.tsx",
+          "path": "web/src/pages/cores/_parked/ModelLibraryCore.tsx",
           "line": 377,
           "symbol": "addFace",
           "claim": "The production JSX source declares onClick at this control site."
@@ -35567,7 +35567,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/ModelLibraryCore.tsx",
+          "path": "web/src/pages/cores/_parked/ModelLibraryCore.tsx",
           "line": 384,
           "symbol": "addFace",
           "claim": "The production JSX source declares onClick at this control site."
@@ -35711,7 +35711,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/ModelLibraryCore.tsx",
+          "path": "web/src/pages/cores/_parked/ModelLibraryCore.tsx",
           "line": 392,
           "symbol": "addFace",
           "claim": "The production JSX source declares onChange at this control site."
@@ -36031,7 +36031,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/AssignmentEditor.tsx",
+          "path": "web/src/pages/cores/_parked/AssignmentEditor.tsx",
           "line": 177,
           "symbol": "AssignmentEditor",
           "claim": "The production JSX source declares onClick at this control site."
@@ -37231,7 +37231,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/TopologyMapView.tsx",
+          "path": "web/src/pages/cores/_parked/TopologyMapView.tsx",
           "line": 455,
           "symbol": "AddNodePanel",
           "claim": "The production JSX source declares onChange at this control site."
@@ -37375,7 +37375,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/frontDoor.tsx",
+          "path": "web/src/pages/cores/_parked/frontDoor.tsx",
           "line": 502,
           "symbol": "FrontDoorView",
           "claim": "The production JSX source declares onClick at this control site."
@@ -37471,7 +37471,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/ModelLibraryCore.tsx",
+          "path": "web/src/pages/cores/_parked/ModelLibraryCore.tsx",
           "line": 380,
           "symbol": "addFace",
           "claim": "The production JSX source declares onChange at this control site."
@@ -37551,7 +37551,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/ModelLibraryCore.tsx",
+          "path": "web/src/pages/cores/_parked/ModelLibraryCore.tsx",
           "line": 389,
           "symbol": "addFace",
           "claim": "The production JSX source declares onClick at this control site."
@@ -38287,7 +38287,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/TopologyMapView.tsx",
+          "path": "web/src/pages/cores/_parked/TopologyMapView.tsx",
           "line": 459,
           "symbol": "AddNodePanel",
           "claim": "The production JSX source declares onClick at this control site."
@@ -38783,7 +38783,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/ModelLibraryCore.tsx",
+          "path": "web/src/pages/cores/_parked/ModelLibraryCore.tsx",
           "line": 382,
           "symbol": "addFace",
           "claim": "The production JSX source declares onChange at this control site."
@@ -38863,7 +38863,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/ModelLibraryCore.tsx",
+          "path": "web/src/pages/cores/_parked/ModelLibraryCore.tsx",
           "line": 363,
           "symbol": "addChoices",
           "claim": "The production JSX source declares onClick at this control site."
@@ -39023,7 +39023,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/TopologyMapView.tsx",
+          "path": "web/src/pages/cores/_parked/TopologyMapView.tsx",
           "line": 445,
           "symbol": "AddNodePanel",
           "claim": "The production JSX source declares onClick at this control site."
@@ -39855,7 +39855,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/AssignmentEditor.tsx",
+          "path": "web/src/pages/cores/_parked/AssignmentEditor.tsx",
           "line": 196,
           "symbol": "AssignmentEditor",
           "claim": "The production JSX source declares onDrop at this control site."
@@ -40079,7 +40079,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/AssignmentEditor.tsx",
+          "path": "web/src/pages/cores/_parked/AssignmentEditor.tsx",
           "line": 214,
           "symbol": "AssignmentEditor",
           "claim": "The production JSX source declares onClick at this control site."
@@ -40303,7 +40303,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/ModelLibraryCore.tsx",
+          "path": "web/src/pages/cores/_parked/ModelLibraryCore.tsx",
           "line": 402,
           "symbol": "addFace",
           "claim": "The production JSX source declares onClick at this control site."
@@ -40559,7 +40559,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 566,
           "symbol": "ConciergeCore",
           "claim": "The production JSX source declares onClick at this control site."
@@ -40623,7 +40623,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/AssignmentEditor.tsx",
+          "path": "web/src/pages/cores/_parked/AssignmentEditor.tsx",
           "line": 182,
           "symbol": "AssignmentEditor",
           "claim": "The production JSX source declares onClick at this control site."
@@ -40687,7 +40687,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/CapabilityAssignmentsCore.tsx",
+          "path": "web/src/pages/cores/_parked/CapabilityAssignmentsCore.tsx",
           "line": 93,
           "symbol": "CapabilityAssignmentsCore",
           "claim": "The production JSX source declares onClick at this control site."
@@ -40703,7 +40703,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 521,
           "symbol": "ConciergeCore",
           "claim": "The production JSX source declares onChange at this control site."
@@ -40799,7 +40799,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/TopologyMapView.tsx",
+          "path": "web/src/pages/cores/_parked/TopologyMapView.tsx",
           "line": 322,
           "symbol": "RepointPanel",
           "claim": "The production JSX source declares onChange at this control site."
@@ -40895,7 +40895,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/AssignmentEditor.tsx",
+          "path": "web/src/pages/cores/_parked/AssignmentEditor.tsx",
           "line": 214,
           "symbol": "AssignmentEditor",
           "claim": "The production JSX source declares onClick at this control site."
@@ -41007,7 +41007,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/TopologyMapView.tsx",
+          "path": "web/src/pages/cores/_parked/TopologyMapView.tsx",
           "line": 427,
           "symbol": "AddNodePanel",
           "claim": "The production JSX source declares onClick at this control site."
@@ -41071,7 +41071,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/TopologyMapView.tsx",
+          "path": "web/src/pages/cores/_parked/TopologyMapView.tsx",
           "line": 440,
           "symbol": "AddNodePanel",
           "claim": "The production JSX source declares onChange at this control site."
@@ -41087,7 +41087,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/ModelLibraryCore.tsx",
+          "path": "web/src/pages/cores/_parked/ModelLibraryCore.tsx",
           "line": 427,
           "symbol": "ModelLibraryCore",
           "claim": "The production JSX source declares onClick at this control site."
@@ -41119,7 +41119,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 610,
           "symbol": "ConciergeCore",
           "claim": "The production JSX source declares onClick at this control site."
@@ -41263,7 +41263,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/ModelLibraryCore.tsx",
+          "path": "web/src/pages/cores/_parked/ModelLibraryCore.tsx",
           "line": 381,
           "symbol": "addFace",
           "claim": "The production JSX source declares onChange at this control site."
@@ -41343,7 +41343,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 115,
           "symbol": "FoundEngineRow",
           "claim": "The production JSX source declares onClick at this control site."
@@ -41935,7 +41935,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/AssignmentEditor.tsx",
+          "path": "web/src/pages/cores/_parked/AssignmentEditor.tsx",
           "line": 195,
           "symbol": "AssignmentEditor",
           "claim": "The production JSX source declares onDragOver at this control site."
@@ -42031,7 +42031,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/ModelLibraryCore.tsx",
+          "path": "web/src/pages/cores/_parked/ModelLibraryCore.tsx",
           "line": 405,
           "symbol": "addFace",
           "claim": "The production JSX source declares onClick at this control site."
@@ -42287,7 +42287,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/frontDoor.tsx",
+          "path": "web/src/pages/cores/_parked/frontDoor.tsx",
           "line": 473,
           "symbol": "FrontDoorView",
           "claim": "The production JSX source declares onChange at this control site."
@@ -42479,7 +42479,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/AssignmentEditor.tsx",
+          "path": "web/src/pages/cores/_parked/AssignmentEditor.tsx",
           "line": 179,
           "symbol": "AssignmentEditor",
           "claim": "The production JSX source declares onClick at this control site."
@@ -43071,7 +43071,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/frontDoor.tsx",
+          "path": "web/src/pages/cores/_parked/frontDoor.tsx",
           "line": 490,
           "symbol": "FrontDoorView",
           "claim": "The production JSX source declares onClick at this control site."
@@ -43167,7 +43167,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/ModelLibraryCore.tsx",
+          "path": "web/src/pages/cores/_parked/ModelLibraryCore.tsx",
           "line": 397,
           "symbol": "addFace",
           "claim": "The production JSX source declares onClick at this control site."
@@ -43311,7 +43311,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 538,
           "symbol": "ConciergeCore",
           "claim": "The production JSX source declares onClick at this control site."
@@ -43359,7 +43359,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/ModelLibraryCore.tsx",
+          "path": "web/src/pages/cores/_parked/ModelLibraryCore.tsx",
           "line": 362,
           "symbol": "addChoices",
           "claim": "The production JSX source declares onClick at this control site."
@@ -43999,7 +43999,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/frontDoor.tsx",
+          "path": "web/src/pages/cores/_parked/frontDoor.tsx",
           "line": 583,
           "symbol": "FrontDoorView",
           "claim": "The production JSX source declares onClick at this control site."
@@ -44607,7 +44607,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/ModelLibraryCore.tsx",
+          "path": "web/src/pages/cores/_parked/ModelLibraryCore.tsx",
           "line": 344,
           "symbol": "detail",
           "claim": "The production JSX source declares onClick at this control site."
@@ -44751,7 +44751,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 109,
           "symbol": "FoundEngineRow",
           "claim": "The production JSX source declares onClick at this control site."
@@ -44879,7 +44879,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/TopologyMapView.tsx",
+          "path": "web/src/pages/cores/_parked/TopologyMapView.tsx",
           "line": 460,
           "symbol": "AddNodePanel",
           "claim": "The production JSX source declares onClick at this control site."
@@ -45023,7 +45023,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/AssignmentEditor.tsx",
+          "path": "web/src/pages/cores/_parked/AssignmentEditor.tsx",
           "line": 182,
           "symbol": "AssignmentEditor",
           "claim": "The production JSX source declares onClick at this control site."
@@ -45103,7 +45103,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/frontDoor.tsx",
+          "path": "web/src/pages/cores/_parked/frontDoor.tsx",
           "line": 503,
           "symbol": "FrontDoorView",
           "claim": "The production JSX source declares onClick at this control site."
@@ -45311,7 +45311,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/ModelLibraryCore.tsx",
+          "path": "web/src/pages/cores/_parked/ModelLibraryCore.tsx",
           "line": 404,
           "symbol": "addFace",
           "claim": "The production JSX source declares onChange at this control site."
@@ -57279,7 +57279,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 535,
           "symbol": "ConciergeCore",
           "claim": "Engine row exposes Check or Add."
@@ -57295,7 +57295,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 535,
           "symbol": "ConciergeCore",
           "claim": "Engine row exposes Check or Add."
@@ -57311,7 +57311,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 589,
           "symbol": "ConciergeCore",
           "claim": "Concierge exposes adjust."
@@ -57327,7 +57327,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 611,
           "symbol": "SurfaceFooter",
           "claim": "Concierge exposes Use these."
@@ -57343,7 +57343,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 604,
           "symbol": "SurfaceFooter",
           "claim": "Concierge exposes Cancel."
@@ -57359,7 +57359,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 107,
           "symbol": "FoundEngineRow",
           "claim": "Configured cloud engine exposes Check."
@@ -57375,7 +57375,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 107,
           "symbol": "FoundEngineRow",
           "claim": "Configured cloud engine exposes Check."
@@ -57391,7 +57391,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 113,
           "symbol": "FoundEngineRow",
           "claim": "Preset exposes Download."
@@ -57407,7 +57407,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 224,
           "symbol": "PickerWell",
           "claim": "Picker exposes choose Buttons."
@@ -57423,7 +57423,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 170,
           "symbol": "SetGroupRow",
           "claim": "Assignment row exposes picker."
@@ -57439,7 +57439,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 388,
           "symbol": "ProbeRow",
           "claim": "Probe row exposes Test."
@@ -57455,7 +57455,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 310,
           "symbol": "RepairRow",
           "claim": "Repair row exposes repair."
@@ -61481,72 +61481,6 @@
           "line": 97,
           "symbol": "board",
           "claim": "board receives GET /api/follow-through/board; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.get.api_front_door_apply",
-      "kind": "edge",
-      "label": "GET /api/front-door/apply [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "GET",
-          "path": "/api/front-door/apply"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/front_door.py",
-          "line": 313,
-          "symbol": "get_apply",
-          "claim": "get_apply receives GET /api/front-door/apply; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.get.api_front_door_recommendation",
-      "kind": "edge",
-      "label": "GET /api/front-door/recommendation [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "GET",
-          "path": "/api/front-door/recommendation"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/front_door.py",
-          "line": 30,
-          "symbol": "get_recommendation",
-          "claim": "get_recommendation receives GET /api/front-door/recommendation; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.get.api_front_door_topology",
-      "kind": "edge",
-      "label": "GET /api/front-door/topology [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "GET",
-          "path": "/api/front-door/topology"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/front_door.py",
-          "line": 345,
-          "symbol": "get_topology",
-          "claim": "get_topology receives GET /api/front-door/topology; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
         }
       ]
     },
@@ -66479,50 +66413,6 @@
       ]
     },
     {
-      "id": "edge.http.post.api_chains_chain_id_run",
-      "kind": "edge",
-      "label": "POST /api/chains/{chain_id}/run [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "POST",
-          "path": "/api/chains/{chain_id}/run"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/primitives/chains.py",
-          "line": 49,
-          "symbol": "run",
-          "claim": "run receives POST /api/chains/{chain_id}/run; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.post.api_chains_runs_parent_operation_id_cancel",
-      "kind": "edge",
-      "label": "POST /api/chains/runs/{parent_operation_id}/cancel [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "POST",
-          "path": "/api/chains/runs/{parent_operation_id}/cancel"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/primitives/chains.py",
-          "line": 69,
-          "symbol": "cancel",
-          "claim": "cancel receives POST /api/chains/runs/{parent_operation_id}/cancel; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
       "id": "edge.http.post.api_coders_clear_stale",
       "kind": "edge",
       "label": "POST /api/coders/clear-stale [exposure=conditional]",
@@ -68286,28 +68176,6 @@
           "line": 111,
           "symbol": "complete",
           "claim": "complete receives POST /api/follow-through/complete; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.post.api_front_door_apply",
-      "kind": "edge",
-      "label": "POST /api/front-door/apply [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "POST",
-          "path": "/api/front-door/apply"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/front_door.py",
-          "line": 154,
-          "symbol": "post_apply",
-          "claim": "post_apply receives POST /api/front-door/apply; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
         }
       ]
     },
@@ -72290,50 +72158,6 @@
           "line": 27,
           "symbol": "create",
           "claim": "create receives POST /api/workflows; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.post.api_workflows_runs_parent_operation_id_cancel",
-      "kind": "edge",
-      "label": "POST /api/workflows/runs/{parent_operation_id}/cancel [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "POST",
-          "path": "/api/workflows/runs/{parent_operation_id}/cancel"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/primitives/workflows.py",
-          "line": 67,
-          "symbol": "cancel",
-          "claim": "cancel receives POST /api/workflows/runs/{parent_operation_id}/cancel; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.post.api_workflows_workflow_id_run",
-      "kind": "edge",
-      "label": "POST /api/workflows/{workflow_id}/run [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "POST",
-          "path": "/api/workflows/{workflow_id}/run"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/primitives/workflows.py",
-          "line": 47,
-          "symbol": "run",
-          "claim": "run receives POST /api/workflows/{workflow_id}/run; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
         }
       ]
     },
@@ -85802,7 +85626,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 404,
           "symbol": "ConciergeCore",
           "claim": "Concierge renders engine controls."
@@ -86244,7 +86068,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 535,
           "symbol": "ConciergeCore",
           "claim": "Engine row exposes Check or Add."
@@ -86260,7 +86084,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 535,
           "symbol": "ConciergeCore",
           "claim": "Engine row exposes Check or Add."
@@ -86276,7 +86100,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 589,
           "symbol": "ConciergeCore",
           "claim": "Concierge exposes adjust."
@@ -86292,7 +86116,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 611,
           "symbol": "SurfaceFooter",
           "claim": "Concierge exposes Use these."
@@ -86308,7 +86132,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 604,
           "symbol": "SurfaceFooter",
           "claim": "Concierge exposes Cancel."
@@ -86324,7 +86148,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 535,
           "symbol": "ConciergeCore",
           "claim": "Engine row exposes Check or Add."
@@ -86340,7 +86164,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 107,
           "symbol": "FoundEngineRow",
           "claim": "Configured cloud engine exposes Check."
@@ -86356,7 +86180,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 113,
           "symbol": "FoundEngineRow",
           "claim": "Preset exposes Download."
@@ -86372,7 +86196,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 224,
           "symbol": "PickerWell",
           "claim": "Picker exposes choose Buttons."
@@ -86388,7 +86212,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 170,
           "symbol": "SetGroupRow",
           "claim": "Assignment row exposes picker."
@@ -86404,7 +86228,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 388,
           "symbol": "ProbeRow",
           "claim": "Probe row exposes Test."
@@ -86420,7 +86244,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 310,
           "symbol": "RepairRow",
           "claim": "Repair row exposes repair."
@@ -90065,14 +89889,14 @@
       ],
       "sources": [
         {
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "symbol": "addEngineState",
           "line": 567,
           "claim": "Use this for summaries is enabled only when the added engine checked READY",
           "revision": "1cd55bc829c1291cad661f93b2d90e61f001f179"
         },
         {
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "symbol": "concierge-add-model",
           "line": 550,
           "claim": "the checked model name is shown beside it",
@@ -90100,7 +89924,7 @@
       ],
       "sources": [
         {
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "symbol": "concierge-add-reason",
           "line": 558,
           "claim": "a refused check states its reason in an alert beside the field",
@@ -90527,14 +90351,14 @@
       ],
       "sources": [
         {
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "symbol": "isUnreachable",
           "line": 84,
           "claim": "the concierge row knows an UNREACHABLE engine",
           "revision": "1cd55bc829c1291cad661f93b2d90e61f001f179"
         },
         {
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "symbol": "UNREACHABLE",
           "line": 127,
           "claim": "it draws a failure chip for it",
@@ -93057,7 +92881,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 535,
           "symbol": "ConciergeCore",
           "claim": "Engine row exposes Check or Add. Conditional transition: When endpoint discovery succeeds with a model and the address still matches, the controller sets addEngineState READY."
@@ -93092,7 +92916,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 535,
           "symbol": "ConciergeCore",
           "claim": "Engine row exposes Check or Add. Conditional transition: Discovery refusal or missing model has a separate refused state and reason in the controller."
@@ -93841,7 +93665,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 535,
           "symbol": "ConciergeCore",
           "claim": "Engine row exposes Check or Add."
@@ -93855,7 +93679,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 611,
           "symbol": "SurfaceFooter",
           "claim": "Concierge exposes Use these."
@@ -93869,7 +93693,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 604,
           "symbol": "SurfaceFooter",
           "claim": "Concierge exposes Cancel."
@@ -93883,7 +93707,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 224,
           "symbol": "PickerWell",
           "claim": "Picker exposes choose Buttons."
@@ -93897,7 +93721,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 310,
           "symbol": "RepairRow",
           "claim": "Repair row exposes repair."
@@ -93911,7 +93735,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 589,
           "symbol": "ConciergeCore",
           "claim": "Concierge exposes adjust."
@@ -93925,7 +93749,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 170,
           "symbol": "SetGroupRow",
           "claim": "Assignment row exposes picker."
@@ -93939,7 +93763,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 535,
           "symbol": "ConciergeCore",
           "claim": "Engine row exposes Check or Add."
@@ -93953,7 +93777,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 535,
           "symbol": "ConciergeCore",
           "claim": "Engine row exposes Check or Add."
@@ -93967,7 +93791,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 107,
           "symbol": "FoundEngineRow",
           "claim": "Configured cloud engine exposes Check."
@@ -93981,7 +93805,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 113,
           "symbol": "FoundEngineRow",
           "claim": "Preset exposes Download."
@@ -93995,7 +93819,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 388,
           "symbol": "ProbeRow",
           "claim": "Probe row exposes Test."
@@ -95164,7 +94988,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 535,
           "symbol": "ConciergeCore",
           "claim": "Engine row exposes Check or Add."
@@ -95199,7 +95023,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 535,
           "symbol": "ConciergeCore",
           "claim": "Engine row exposes Check or Add."
@@ -95220,7 +95044,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 589,
           "symbol": "ConciergeCore",
           "claim": "Concierge exposes adjust."
@@ -95241,7 +95065,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 611,
           "symbol": "SurfaceFooter",
           "claim": "Concierge exposes Use these."
@@ -95276,7 +95100,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 604,
           "symbol": "SurfaceFooter",
           "claim": "Concierge exposes Cancel."
@@ -95297,7 +95121,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 535,
           "symbol": "ConciergeCore",
           "claim": "Engine row exposes Check or Add."
@@ -95325,7 +95149,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 107,
           "symbol": "FoundEngineRow",
           "claim": "Configured cloud engine exposes Check."
@@ -95353,7 +95177,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 113,
           "symbol": "FoundEngineRow",
           "claim": "Preset exposes Download."
@@ -95388,7 +95212,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 224,
           "symbol": "PickerWell",
           "claim": "Picker exposes choose Buttons."
@@ -95409,7 +95233,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 170,
           "symbol": "SetGroupRow",
           "claim": "Assignment row exposes picker."
@@ -95430,7 +95254,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 388,
           "symbol": "ProbeRow",
           "claim": "Probe row exposes Test."
@@ -95458,7 +95282,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 310,
           "symbol": "RepairRow",
           "claim": "Repair row exposes repair."
@@ -98286,7 +98110,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 535,
           "symbol": "ConciergeCore",
           "claim": "Engine row exposes Check or Add."
@@ -98300,7 +98124,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 535,
           "symbol": "ConciergeCore",
           "claim": "Engine row exposes Check or Add."
@@ -98314,7 +98138,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 589,
           "symbol": "ConciergeCore",
           "claim": "Concierge exposes adjust."
@@ -98328,7 +98152,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 611,
           "symbol": "SurfaceFooter",
           "claim": "Concierge exposes Use these."
@@ -98342,7 +98166,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 604,
           "symbol": "SurfaceFooter",
           "claim": "Concierge exposes Cancel."
@@ -98356,7 +98180,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 535,
           "symbol": "ConciergeCore",
           "claim": "Engine row exposes Check or Add."
@@ -98370,7 +98194,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 107,
           "symbol": "FoundEngineRow",
           "claim": "Configured cloud engine exposes Check."
@@ -98384,7 +98208,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 113,
           "symbol": "FoundEngineRow",
           "claim": "Preset exposes Download."
@@ -98398,7 +98222,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 224,
           "symbol": "PickerWell",
           "claim": "Picker exposes choose Buttons."
@@ -98412,7 +98236,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 170,
           "symbol": "SetGroupRow",
           "claim": "Assignment row exposes picker."
@@ -98426,7 +98250,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 388,
           "symbol": "ProbeRow",
           "claim": "Probe row exposes Test."
@@ -98440,7 +98264,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 310,
           "symbol": "RepairRow",
           "claim": "Repair row exposes repair."
@@ -100078,7 +99902,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 535,
           "symbol": "ConciergeCore",
           "claim": "Engine row exposes Check or Add."
@@ -100582,7 +100406,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 535,
           "symbol": "ConciergeCore",
           "claim": "Engine row exposes Check or Add."
@@ -100596,7 +100420,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 589,
           "symbol": "ConciergeCore",
           "claim": "Concierge exposes adjust."
@@ -101415,7 +101239,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 535,
           "symbol": "ConciergeCore",
           "claim": "Engine row exposes Check or Add."
@@ -101450,7 +101274,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 535,
           "symbol": "ConciergeCore",
           "claim": "Engine row exposes Check or Add."
@@ -101471,7 +101295,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 589,
           "symbol": "ConciergeCore",
           "claim": "Concierge exposes adjust."
@@ -101492,7 +101316,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 611,
           "symbol": "SurfaceFooter",
           "claim": "Concierge exposes Use these."
@@ -101527,7 +101351,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 604,
           "symbol": "SurfaceFooter",
           "claim": "Concierge exposes Cancel."
@@ -101548,7 +101372,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 535,
           "symbol": "ConciergeCore",
           "claim": "Engine row exposes Check or Add."
@@ -101576,7 +101400,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 107,
           "symbol": "FoundEngineRow",
           "claim": "Configured cloud engine exposes Check."
@@ -101604,7 +101428,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 113,
           "symbol": "FoundEngineRow",
           "claim": "Preset exposes Download."
@@ -101639,7 +101463,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 224,
           "symbol": "PickerWell",
           "claim": "Picker exposes choose Buttons."
@@ -101660,7 +101484,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 170,
           "symbol": "SetGroupRow",
           "claim": "Assignment row exposes picker."
@@ -101681,7 +101505,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 388,
           "symbol": "ProbeRow",
           "claim": "Probe row exposes Test."
@@ -101709,7 +101533,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 310,
           "symbol": "RepairRow",
           "claim": "Repair row exposes repair."
@@ -111917,7 +111741,7 @@
         },
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "line": 120,
           "symbol": "EngineRow",
           "claim": "The face renders received / total from that map."

@@ -138,7 +138,7 @@
           "claim": "Get Info resolves canonical qualified identities through the shared Desk object resolver, narrows qualified kinds, retains legacy IDs and opens the resolved canonical action reference."
         },
         {
-          "path": "web/src/desk/thought-workspace/ThoughtReadsWell.tsx",
+          "path": "web/src/desk/thought-workspace/_parked/ThoughtReadsWell.tsx",
           "symbol": "ThoughtReadsWell",
           "line": 39,
           "claim": "The active Thought Add a note well keeps local request IDs through storage refusal, applies accepted receipts despite cleanup refusal, and distinguishes loading, failure and empty listing states."
@@ -162,7 +162,7 @@
           "claim": "Thread has bounded source/details controls and a separate composer; completed answers keep one routine action and expose the remaining actions through More."
         },
         {
-          "path": "web/src/desk/components/ThreadComposer.tsx",
+          "path": "web/src/desk/components/_parked/ThreadComposer.tsx",
           "symbol": "export function ThreadComposer",
           "line": 370,
           "claim": "Sources and Commands open explicit pickers without clearing draft text; picker completion returns focus and Enter during streaming edits the draft rather than stopping the reply."
@@ -244,7 +244,7 @@
           "execution": "passed"
         },
         {
-          "path": "web/src/desk/thought-workspace/ThoughtReadsWell.test.tsx",
+          "path": "web/src/desk/thought-workspace/__tests__/_parked/ThoughtReadsWell.test.tsx",
           "node": "keeps the new action ID across set denial after accepted cleanup left an older stored ID",
           "assertion": "The active Reads well uses its new in-memory retry identity rather than the stale accepted stored ID.",
           "execution": "passed"
@@ -761,7 +761,7 @@
         "GlassDropLayer"
       ],
       "entry_points": [
-        "web/src/desk/dropMatrix.ts::DROP_MATRIX",
+        "web/src/desk/_parked/dropMatrix.ts::DROP_MATRIX",
         "web/src/desk/_parked/floor/components/GlassDropLayer.tsx::GlassDropLayer"
       ],
       "platforms": {
@@ -815,7 +815,7 @@
       "kernel_operations": [],
       "sources": [
         {
-          "path": "web/src/desk/dropMatrix.ts",
+          "path": "web/src/desk/_parked/dropMatrix.ts",
           "symbol": "DROP_MATRIX",
           "line": 22,
           "claim": "The matrix enumerates supported kind pairs and named effects."
@@ -829,12 +829,12 @@
       ],
       "tests": [
         {
-          "path": "web/src/desk/__tests__/dropMatrix.test.ts",
+          "path": "web/src/desk/__tests__/_parked/dropMatrix.test.ts",
           "node": "unlisted pairs refuse (inert, never a guess)",
           "assertion": "Unlisted source/target pairs return no effect."
         },
         {
-          "path": "web/src/desk/__tests__/glassDrop.test.tsx",
+          "path": "web/src/desk/__tests__/_parked/glassDrop.test.tsx",
           "node": "every hub-supported suffix imports; junk refuses by name",
           "assertion": "The inspected suite asserts external dragover/drop handling.",
           "execution": "not_run"
@@ -1535,7 +1535,7 @@
           "line": 15
         },
         {
-          "path": "web/src/desk/thought-workspace/TaskWell.tsx",
+          "path": "web/src/desk/thought-workspace/_parked/TaskWell.tsx",
           "symbol": "TaskWell",
           "claim": "The Task well writes the accepted task from the saved note and reports the result.",
           "line": 8

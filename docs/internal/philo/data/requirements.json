@@ -349,7 +349,7 @@
           "claim": "The registry comment assigns slash triggers to the composer and handlers to the pullout."
         },
         {
-          "path": "web/src/desk/components/ThreadComposer.tsx",
+          "path": "web/src/desk/components/_parked/ThreadComposer.tsx",
           "line": 603,
           "symbol": "executeSlashCommand",
           "claim": "The switch invokes keep/fork/stop/new callbacks and typed todo/compact requests."
@@ -409,13 +409,13 @@
       "rationale": "Drop effects are domain operations and must not be inferred from a generic browser drop.",
       "sources": [
         {
-          "path": "web/src/desk/dropMatrix.ts",
+          "path": "web/src/desk/_parked/dropMatrix.ts",
           "line": 9,
           "symbol": "DROP_MATRIX",
           "claim": "The drop matrix enumerates supported source and target kinds."
         },
         {
-          "path": "web/src/desk/__tests__/dropMatrix.test.ts",
+          "path": "web/src/desk/__tests__/_parked/dropMatrix.test.ts",
           "line": 6,
           "symbol": "unlisted pairs refuse (inert, never a guess)",
           "claim": "Tests assert allowed pairs and null for unlisted pairs."
@@ -433,7 +433,7 @@
       "rationale": "Dragging is a pointer convenience and cannot be the only route to a domain operation.",
       "sources": [
         {
-          "path": "web/src/desk/dropMatrix.ts",
+          "path": "web/src/desk/_parked/dropMatrix.ts",
           "line": 9,
           "symbol": "DROP_MATRIX",
           "claim": "The current matrix describes drag effects only."
@@ -463,7 +463,7 @@
           "claim": "External file drops are accepted only over a registered release target."
         },
         {
-          "path": "web/src/desk/dropMatrix.ts",
+          "path": "web/src/desk/_parked/dropMatrix.ts",
           "line": 25,
           "symbol": "DROP_MATRIX",
           "claim": "Allowed drops carry named effects such as Hold or Add to Knowledge."
@@ -487,7 +487,7 @@
           "claim": "The brief requires drag/drop exceptions and recovery to be specified."
         },
         {
-          "path": "web/src/desk/dropMatrix.ts",
+          "path": "web/src/desk/_parked/dropMatrix.ts",
           "line": 9,
           "symbol": "DROP_MATRIX",
           "claim": "The current matrix has no multi-select, cross-window or orb entries."
@@ -697,7 +697,7 @@
       "rationale": "Pointer drag is not an accessible interaction by itself.",
       "sources": [
         {
-          "path": "web/src/desk/dropMatrix.ts",
+          "path": "web/src/desk/_parked/dropMatrix.ts",
           "line": 9,
           "symbol": "DROP_MATRIX",
           "claim": "The current interaction matrix only defines drag pairs."
@@ -1147,7 +1147,7 @@
           "claim": "Unavailable verbs expose a reason."
         },
         {
-          "path": "web/src/desk/dropMatrix.ts",
+          "path": "web/src/desk/_parked/dropMatrix.ts",
           "line": 9,
           "symbol": "DROP_MATRIX",
           "claim": "Unsupported drop pairs return null."
@@ -1213,7 +1213,7 @@
           "claim": "Shell tests assert numerical geometry and snap behavior."
         },
         {
-          "path": "web/src/desk/__tests__/dropMatrix.test.ts",
+          "path": "web/src/desk/__tests__/_parked/dropMatrix.test.ts",
           "line": 6,
           "symbol": "every rule names a verb and an action (no silent drops)",
           "claim": "Drop tests assert allowed and rejected effects."

@@ -778,8 +778,8 @@
       "sources": [
         {
           "claim": "Defines the declared schema and informational version 79.",
-          "line": 1,
-          "path": "holdspeak/db/schema.py",
+          "line": 59,
+          "path": "holdspeak/db/schema/__init__.py",
           "symbol": "SCHEMA_SQL"
         },
         {
@@ -2865,7 +2865,7 @@
         {
           "claim": "The Models window add-engine verb \"Use\" writes the summary assignment (useConciergeController.useNewEngineForSummaries).",
           "line": 571,
-          "path": "web/src/features/concierge/ConciergeCore.tsx",
+          "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
           "symbol": "ConciergeCore"
         },
         {
@@ -6532,7 +6532,7 @@
         {
           "claim": "The active Thought Add a note well keeps local request IDs through storage refusal, applies accepted receipts despite cleanup refusal, and distinguishes loading, failure and empty listing states.",
           "line": 39,
-          "path": "web/src/desk/thought-workspace/ThoughtReadsWell.tsx",
+          "path": "web/src/desk/thought-workspace/_parked/ThoughtReadsWell.tsx",
           "symbol": "ThoughtReadsWell"
         },
         {
@@ -6556,7 +6556,7 @@
         {
           "claim": "Sources and Commands open explicit pickers without clearing draft text; picker completion returns focus and Enter during streaming edits the draft rather than stopping the reply.",
           "line": 370,
-          "path": "web/src/desk/components/ThreadComposer.tsx",
+          "path": "web/src/desk/components/_parked/ThreadComposer.tsx",
           "symbol": "export function ThreadComposer"
         }
       ],
@@ -6648,7 +6648,7 @@
           "assertion": "The active Reads well uses its new in-memory retry identity rather than the stale accepted stored ID.",
           "execution": "passed",
           "node": "keeps the new action ID across set denial after accepted cleanup left an older stored ID",
-          "path": "web/src/desk/thought-workspace/ThoughtReadsWell.test.tsx"
+          "path": "web/src/desk/thought-workspace/__tests__/_parked/ThoughtReadsWell.test.tsx"
         },
         {
           "assertion": "Software wire fixtures keep both meeting rows and open each canonical identity; root separately walks the real isolated meeting reads and window scopes.",
@@ -7121,9 +7121,9 @@
           "path": "web/src/desk/__tests__/keymap.test.ts"
         },
         {
-          "assertion": "Header Review enters the exact recorded review/task and Close returns to the same Room.",
+          "assertion": "The status line's Review enters the exact recorded review/task and Close returns to the same Room.",
           "execution": "passed",
-          "node": "the head Review opens the recorded real task in the existing posture and returns to the Room",
+          "node": "the status line's Review opens the recorded real task in the existing posture and returns to the Room",
           "path": "web/src/features/project-room/__tests__/ProjectRoomCore.test.tsx"
         }
       ],
@@ -7152,7 +7152,7 @@
       "egress": "An importer may send the accepted file/content to a backend; the matrix itself does not.",
       "egress_possible": true,
       "entry_points": [
-        "web/src/desk/dropMatrix.ts::DROP_MATRIX",
+        "web/src/desk/_parked/dropMatrix.ts::DROP_MATRIX",
         "web/src/desk/_parked/floor/components/GlassDropLayer.tsx::GlassDropLayer"
       ],
       "evidence_level": "source_and_assertions_inspected",
@@ -7210,7 +7210,7 @@
         {
           "claim": "The matrix enumerates supported kind pairs and named effects.",
           "line": 22,
-          "path": "web/src/desk/dropMatrix.ts",
+          "path": "web/src/desk/_parked/dropMatrix.ts",
           "symbol": "DROP_MATRIX"
         },
         {
@@ -7231,13 +7231,13 @@
         {
           "assertion": "Unlisted source/target pairs return no effect.",
           "node": "unlisted pairs refuse (inert, never a guess)",
-          "path": "web/src/desk/__tests__/dropMatrix.test.ts"
+          "path": "web/src/desk/__tests__/_parked/dropMatrix.test.ts"
         },
         {
           "assertion": "The inspected suite asserts external dragover/drop handling.",
           "execution": "not_run",
           "node": "every hub-supported suffix imports; junk refuses by name",
-          "path": "web/src/desk/__tests__/glassDrop.test.tsx"
+          "path": "web/src/desk/__tests__/_parked/glassDrop.test.tsx"
         }
       ],
       "trust_boundary": "Browser drag payload is classified by a local matrix before an importer or domain effect is invoked."
@@ -7929,7 +7929,7 @@
         {
           "claim": "The Task well writes the accepted task from the saved note and reports the result.",
           "line": 8,
-          "path": "web/src/desk/thought-workspace/TaskWell.tsx",
+          "path": "web/src/desk/thought-workspace/_parked/TaskWell.tsx",
           "symbol": "TaskWell"
         }
       ],
@@ -8623,13 +8623,13 @@
         {
           "claim": "Group focus keeps Send/Cancel reachable; shared Pad editors retain existing draft and speech append contracts.",
           "line": 1030,
-          "path": "web/src/desk/components/ThreadComposer.tsx",
+          "path": "web/src/desk/components/_parked/ThreadComposer.tsx",
           "symbol": "InlineEditor"
         },
         {
           "claim": "Only an actual pending task blocks duplicate dispatch; unknown preserves words and allows a new explicit Send.",
           "line": 370,
-          "path": "web/src/desk/components/ThreadComposer.tsx",
+          "path": "web/src/desk/components/_parked/ThreadComposer.tsx",
           "symbol": "export function ThreadComposer"
         },
         {
@@ -8684,13 +8684,13 @@
           "assertion": "A new deliberate Send is possible after unknown; pending blocks another dispatch.",
           "execution": "passed",
           "node": "allows an explicit new Send of retained words after unknown, blocking only the actual pending command",
-          "path": "web/src/desk/__tests__/ThreadComposer.test.tsx"
+          "path": "web/src/desk/__tests__/_parked/ThreadComposer.test.tsx"
         },
         {
           "assertion": "Transport ambiguity retains original command and newer typed/spoken draft without replay.",
           "execution": "passed",
           "node": "names an unknown task outcome without automatic replay and retains newer typing and speech",
-          "path": "web/src/desk/__tests__/ThreadComposer.test.tsx"
+          "path": "web/src/desk/__tests__/_parked/ThreadComposer.test.tsx"
         }
       ],
       "trust_boundary": "Owner thread input is persisted and frozen before an admitted model child; kept output is a separate local write."
@@ -9413,9 +9413,7 @@
     {
       "apis": [
         "GET/POST /api/workflows",
-        "GET/PUT/DELETE /api/workflows/{workflow_id}",
-        "POST /api/workflows/{workflow_id}/run",
-        "POST /api/workflows/runs/{parent_operation_id}/cancel"
+        "GET/PUT/DELETE /api/workflows/{workflow_id}"
       ],
       "authority": "Authenticated principal, workflow definition and kernel parent context; cancellation fences late children.",
       "configuration": [
@@ -9436,9 +9434,9 @@
       "egress": "Each model node uses its frozen destination; pure transform nodes stay local.",
       "egress_possible": true,
       "entry_points": [
-        "holdspeak/services/sequence_workflow_service.py::SequenceWorkflowService",
+        "holdspeak/services/_parked/sequence_workflow_service.py::SequenceWorkflowService",
         "holdspeak/web/routes/primitives/workflows.py::build_workflows_router",
-        "holdspeak/mcp/families/sequence.py::dispatch"
+        "holdspeak/mcp/families/_parked/sequence.py::dispatch"
       ],
       "evidence_level": "source_and_assertions_inspected",
       "exposure": "user",
@@ -9501,7 +9499,7 @@
         {
           "claim": "The service runs only trusted admitted children and stages a result artifact.",
           "line": 36,
-          "path": "holdspeak/services/sequence_workflow_service.py",
+          "path": "holdspeak/services/_parked/sequence_workflow_service.py",
           "symbol": "SequenceWorkflowService"
         },
         {
@@ -9539,7 +9537,7 @@
             "status": "passed"
           },
           "node": "test_three_step_sequence_has_three_admitted_children_and_terminal_receipts",
-          "path": "tests/unit/test_sequence_workflow_runner_migration.py"
+          "path": "tests/_parked/unit/test_sequence_workflow_runner_migration.py"
         },
         {
           "assertion": "Restart reuses the same frozen route and operation plan.",
@@ -9550,7 +9548,7 @@
             "status": "passed"
           },
           "node": "test_restart_reconstructs_the_same_frozen_sequence_node_attempt",
-          "path": "tests/integration/test_sequence_workflow_restart.py"
+          "path": "tests/_parked/integration/test_sequence_workflow_restart.py"
         }
       ],
       "trust_boundary": "A parent run freezes all future routes before child admission; every child and the parent close with receipts."

@@ -146,10 +146,9 @@ def test_no_host_literal_is_written_in_caps():
     assert not hits, "write a host as typed (github.com, not GITHUB.COM):\n" + "\n".join(hits)
 
 
-ENGINES_FILES = (
-    WEB / "features" / "runson" / "RunsOnCore.tsx",
-    WEB / "pages" / "cores" / "ModelLibraryCore.tsx",
-)
+# The Engines window is the runson feature (every face file in it);
+# ModelLibraryCore was parked with the unreached Models chain (#1992).
+ENGINES_FILES = tuple(sorted((WEB / "features" / "runson").glob("*.tsx")))
 STATE_LITERAL = re.compile(r"<StateChip\b[^>]*?\blabel=\"([^\"]*)\"", re.S)
 TOKEN_LITERAL = re.compile(r"<Token\b[^>]*>([^<{]*)<")
 

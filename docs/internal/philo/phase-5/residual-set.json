@@ -748,10 +748,10 @@
     }
   ],
   "measurements": {
-    "residual_identities": 281,
+    "residual_identities": 277,
     "residual_mcp": 225,
-    "residual_http": 56,
-    "http_constructions": 57,
+    "residual_http": 52,
+    "http_constructions": 53,
     "public_tools": 305
   },
   "entries": [
@@ -2137,12 +2137,6 @@
     },
     {
       "transport": "http",
-      "entry_point": "holdspeak/web/routes/delivery_prs.py::build_delivery_prs_router.api_delivery_pr_draft_review",
-      "discriminator": "InferenceParentRouteBundleService",
-      "reason": "route builds its own service instance instead of the hub's bound one"
-    },
-    {
-      "transport": "http",
       "entry_point": "holdspeak/web/routes/delivery_terminal.py::build_delivery_terminal_router",
       "discriminator": "DeliveryService",
       "reason": "route builds its own service instance instead of the hub's bound one"
@@ -2175,12 +2169,6 @@
       "transport": "http",
       "entry_point": "holdspeak/web/routes/follow_through.py::build_follow_through_router",
       "discriminator": "FollowThroughService",
-      "reason": "route builds its own service instance instead of the hub's bound one"
-    },
-    {
-      "transport": "http",
-      "entry_point": "holdspeak/web/routes/front_door.py::build_front_door_router._topology",
-      "discriminator": "InferenceAssignmentService",
       "reason": "route builds its own service instance instead of the hub's bound one"
     },
     {
@@ -2251,12 +2239,6 @@
     },
     {
       "transport": "http",
-      "entry_point": "holdspeak/web/routes/primitives/chains.py::build_chains_router.run",
-      "discriminator": "SequenceWorkflowService",
-      "reason": "route builds its own service instance instead of the hub's bound one"
-    },
-    {
-      "transport": "http",
       "entry_point": "holdspeak/web/routes/primitives/model_profiles.py::build_model_profiles_router._service",
       "discriminator": "ModelProfileService",
       "reason": "route builds its own service instance instead of the hub's bound one"
@@ -2289,12 +2271,6 @@
       "transport": "http",
       "entry_point": "holdspeak/web/routes/primitives/workbenches.py::build_workbenches_router._svc",
       "discriminator": "WorkbenchService",
-      "reason": "route builds its own service instance instead of the hub's bound one"
-    },
-    {
-      "transport": "http",
-      "entry_point": "holdspeak/web/routes/primitives/workflows.py::build_workflows_router.run",
-      "discriminator": "SequenceWorkflowService",
       "reason": "route builds its own service instance instead of the hub's bound one"
     },
     {

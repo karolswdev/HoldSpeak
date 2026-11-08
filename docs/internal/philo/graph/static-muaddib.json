@@ -653,7 +653,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/features/concierge/ConciergeCore.tsx",
+     "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
      "line": 465,
      "claim": "the engine door: repairs, found engines, add an engine, the set",
      "symbol": "ConciergeCore"
@@ -681,7 +681,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/features/concierge/ConciergeCore.tsx",
+     "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
      "line": 582,
      "claim": "the verb that opens the address row",
      "symbol": "ConciergeCore"
@@ -709,7 +709,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/features/concierge/ConciergeCore.tsx",
+     "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
      "line": 541,
      "claim": "the verb beside the address field",
      "symbol": "ConciergeCore"
@@ -786,7 +786,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/features/concierge/ConciergeCore.tsx",
+     "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
      "line": 569,
      "claim": "the one gesture that finishes setup",
      "symbol": "ConciergeCore"
@@ -885,7 +885,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/features/concierge/ConciergeCore.tsx",
+     "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
      "line": 109,
      "claim": "the per-engine probe verb, drawn only for a cloud engine with a key",
      "symbol": "FoundEngineRow"
@@ -942,7 +942,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/features/concierge/ConciergeCore.tsx",
+     "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
      "line": 115,
      "claim": "the verb on a preset row",
      "symbol": "FoundEngineRow"
@@ -1019,7 +1019,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/features/concierge/ConciergeCore.tsx",
+     "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
      "line": 617,
      "claim": "the footer's primary: apply the whole proposed set",
      "symbol": "ConciergeCore"
@@ -3348,14 +3348,14 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/features/concierge/ConciergeCore.tsx",
+     "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
      "line": 567,
      "claim": "Use this for summaries is enabled only when the added engine checked READY",
      "symbol": "addEngineState"
     },
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/features/concierge/ConciergeCore.tsx",
+     "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
      "line": 550,
      "claim": "the checked model name is shown beside it",
      "symbol": "concierge-add-model"
@@ -3376,7 +3376,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/features/concierge/ConciergeCore.tsx",
+     "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
      "line": 558,
      "claim": "a refused check states its reason in an alert beside the field",
      "symbol": "concierge-add-reason"
@@ -3642,14 +3642,14 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/features/concierge/ConciergeCore.tsx",
+     "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
      "line": 84,
      "claim": "the concierge row knows an UNREACHABLE engine",
      "symbol": "isUnreachable"
     },
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/features/concierge/ConciergeCore.tsx",
+     "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
      "line": 127,
      "claim": "it draws a failure chip for it",
      "symbol": "UNREACHABLE"
@@ -15650,7 +15650,7 @@
   {
    "id": "edge.ui.web_src_desk_components_callchip_tsx.l140.onclick",
    "kind": "edge",
-   "label": "<button> onClick · web/src/desk/components/CallChip.tsx:140 [active] (raw)",
+   "label": "<button> onClick · web/src/desk/components/_parked/CallChip.tsx:140 [active] (raw)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -15671,7 +15671,7 @@
   {
    "id": "edge.ui.web_src_desk_components_callchip_tsx.l141.onkeydown",
    "kind": "edge",
-   "label": "<button> onKeyDown · web/src/desk/components/CallChip.tsx:141 [active] (raw)",
+   "label": "<button> onKeyDown · web/src/desk/components/_parked/CallChip.tsx:141 [active] (raw)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -15965,7 +15965,7 @@
   {
    "id": "edge.ui.web_src_desk_components_deliverylistsection_tsx.l55.onclick",
    "kind": "edge",
-   "label": "<button> onClick · web/src/desk/components/DeliveryListSection.tsx:55 [active] (raw)",
+   "label": "<button> onClick · web/src/desk/components/_parked/DeliveryListSection.tsx:55 [active] (raw)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -16217,7 +16217,7 @@
   {
    "id": "edge.ui.web_src_desk_components_deskcreatemenu_tsx.l24.onkeydown",
    "kind": "edge",
-   "label": "<HTMLButtonElement> onKeyDown · web/src/desk/components/DeskCreateMenu.tsx:24 [active] (unclassified)",
+   "label": "<HTMLButtonElement> onKeyDown · web/src/desk/components/_parked/DeskCreateMenu.tsx:24 [active] (unclassified)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -16238,7 +16238,7 @@
   {
    "id": "edge.ui.web_src_desk_components_deskcreatemenu_tsx.l48.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/components/DeskCreateMenu.tsx:48 [active] (library)",
+   "label": "<Button> onClick · web/src/desk/components/_parked/DeskCreateMenu.tsx:48 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -16868,7 +16868,7 @@
   {
    "id": "edge.ui.web_src_desk_components_deskstartactions_tsx.l20.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/components/DeskStartActions.tsx:20 [active] (library)",
+   "label": "<Button> onClick · web/src/desk/components/_parked/DeskStartActions.tsx:20 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -16889,7 +16889,7 @@
   {
    "id": "edge.ui.web_src_desk_components_deskstartactions_tsx.l32.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/components/DeskStartActions.tsx:32 [active] (library)",
+   "label": "<Button> onClick · web/src/desk/components/_parked/DeskStartActions.tsx:32 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -17435,7 +17435,7 @@
   {
    "id": "edge.ui.web_src_desk_components_firstwords_tsx.l391.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/components/FirstWords.tsx:391 [active] (library)",
+   "label": "<Button> onClick · web/src/desk/components/_parked/FirstWords.tsx:391 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -17456,7 +17456,7 @@
   {
    "id": "edge.ui.web_src_desk_components_firstwords_tsx.l424.onchange",
    "kind": "edge",
-   "label": "<PadGadget> onChange · web/src/desk/components/FirstWords.tsx:424 [active] (library)",
+   "label": "<PadGadget> onChange · web/src/desk/components/_parked/FirstWords.tsx:424 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -17477,7 +17477,7 @@
   {
    "id": "edge.ui.web_src_desk_components_firstwords_tsx.l440.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/components/FirstWords.tsx:440 [active] (library)",
+   "label": "<Button> onClick · web/src/desk/components/_parked/FirstWords.tsx:440 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -17498,7 +17498,7 @@
   {
    "id": "edge.ui.web_src_desk_components_firstwords_tsx.l450.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/components/FirstWords.tsx:450 [active] (library)",
+   "label": "<Button> onClick · web/src/desk/components/_parked/FirstWords.tsx:450 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -17519,7 +17519,7 @@
   {
    "id": "edge.ui.web_src_desk_components_firstwords_tsx.l459.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/components/FirstWords.tsx:459 [active] (library)",
+   "label": "<Button> onClick · web/src/desk/components/_parked/FirstWords.tsx:459 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -17540,7 +17540,7 @@
   {
    "id": "edge.ui.web_src_desk_components_firstwords_tsx.l473.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/components/FirstWords.tsx:473 [active] (library)",
+   "label": "<Button> onClick · web/src/desk/components/_parked/FirstWords.tsx:473 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -17561,7 +17561,7 @@
   {
    "id": "edge.ui.web_src_desk_components_firstwords_tsx.l489.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/components/FirstWords.tsx:489 [active] (library)",
+   "label": "<Button> onClick · web/src/desk/components/_parked/FirstWords.tsx:489 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -17582,7 +17582,7 @@
   {
    "id": "edge.ui.web_src_desk_components_firstwords_tsx.l500.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/components/FirstWords.tsx:500 [active] (library)",
+   "label": "<Button> onClick · web/src/desk/components/_parked/FirstWords.tsx:500 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -18086,7 +18086,7 @@
   {
    "id": "edge.ui.web_src_desk_components_interviewpanel_tsx.l61.onchange",
    "kind": "edge",
-   "label": "<Select> onChange · web/src/desk/components/InterviewPanel.tsx:61 [active] (library)",
+   "label": "<Select> onChange · web/src/desk/components/_parked/InterviewPanel.tsx:61 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -18107,7 +18107,7 @@
   {
    "id": "edge.ui.web_src_desk_components_interviewpanel_tsx.l76.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/components/InterviewPanel.tsx:76 [active] (library)",
+   "label": "<Button> onClick · web/src/desk/components/_parked/InterviewPanel.tsx:76 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -18128,7 +18128,7 @@
   {
    "id": "edge.ui.web_src_desk_components_interviewpanel_tsx.l86.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/components/InterviewPanel.tsx:86 [active] (library)",
+   "label": "<Button> onClick · web/src/desk/components/_parked/InterviewPanel.tsx:86 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -18149,7 +18149,7 @@
   {
    "id": "edge.ui.web_src_desk_components_interviewpanel_tsx.l98.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/components/InterviewPanel.tsx:98 [active] (library)",
+   "label": "<Button> onClick · web/src/desk/components/_parked/InterviewPanel.tsx:98 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -18170,7 +18170,7 @@
   {
    "id": "edge.ui.web_src_desk_components_interviewpanel_tsx.l126.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/components/InterviewPanel.tsx:126 [active] (library)",
+   "label": "<Button> onClick · web/src/desk/components/_parked/InterviewPanel.tsx:126 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -18191,7 +18191,7 @@
   {
    "id": "edge.ui.web_src_desk_components_interviewpanel_tsx.l166.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/components/InterviewPanel.tsx:166 [active] (library)",
+   "label": "<Button> onClick · web/src/desk/components/_parked/InterviewPanel.tsx:166 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -18212,7 +18212,7 @@
   {
    "id": "edge.ui.web_src_desk_components_interviewpanel_tsx.l190.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/components/InterviewPanel.tsx:190 [active] (library)",
+   "label": "<Button> onClick · web/src/desk/components/_parked/InterviewPanel.tsx:190 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -18233,7 +18233,7 @@
   {
    "id": "edge.ui.web_src_desk_components_interviewpanel_tsx.l205.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/components/InterviewPanel.tsx:205 [active] (library)",
+   "label": "<Button> onClick · web/src/desk/components/_parked/InterviewPanel.tsx:205 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -18254,7 +18254,7 @@
   {
    "id": "edge.ui.web_src_desk_components_interviewpanel_tsx.l220.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/components/InterviewPanel.tsx:220 [active] (library)",
+   "label": "<Button> onClick · web/src/desk/components/_parked/InterviewPanel.tsx:220 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -18275,7 +18275,7 @@
   {
    "id": "edge.ui.web_src_desk_components_interviewpanel_tsx.l240.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/components/InterviewPanel.tsx:240 [active] (library)",
+   "label": "<Button> onClick · web/src/desk/components/_parked/InterviewPanel.tsx:240 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -18674,7 +18674,7 @@
   {
    "id": "edge.ui.web_src_desk_components_modetabs_tsx.l115.onkeydown",
    "kind": "edge",
-   "label": "<div> onKeyDown · web/src/desk/components/ModeTabs.tsx:115 [active] (raw)",
+   "label": "<div> onKeyDown · web/src/desk/components/_parked/ModeTabs.tsx:115 [active] (raw)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -18695,7 +18695,7 @@
   {
    "id": "edge.ui.web_src_desk_components_modetabs_tsx.l132.onclick",
    "kind": "edge",
-   "label": "<button> onClick · web/src/desk/components/ModeTabs.tsx:132 [active] (raw)",
+   "label": "<button> onClick · web/src/desk/components/_parked/ModeTabs.tsx:132 [active] (raw)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -18716,7 +18716,7 @@
   {
    "id": "edge.ui.web_src_desk_components_prreceiptssection_tsx.l74.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/components/PrReceiptsSection.tsx:74 [active] (library)",
+   "label": "<Button> onClick · web/src/desk/components/_parked/PrReceiptsSection.tsx:74 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -18737,7 +18737,7 @@
   {
    "id": "edge.ui.web_src_desk_components_prreceiptssection_tsx.l106.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/components/PrReceiptsSection.tsx:106 [active] (library)",
+   "label": "<Button> onClick · web/src/desk/components/_parked/PrReceiptsSection.tsx:106 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -18758,7 +18758,7 @@
   {
    "id": "edge.ui.web_src_desk_components_prreceiptssection_tsx.l107.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/components/PrReceiptsSection.tsx:107 [active] (library)",
+   "label": "<Button> onClick · web/src/desk/components/_parked/PrReceiptsSection.tsx:107 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -18779,7 +18779,7 @@
   {
    "id": "edge.ui.web_src_desk_components_prreceiptssection_tsx.l114.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/components/PrReceiptsSection.tsx:114 [active] (library)",
+   "label": "<Button> onClick · web/src/desk/components/_parked/PrReceiptsSection.tsx:114 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -18800,7 +18800,7 @@
   {
    "id": "edge.ui.web_src_desk_components_prreceiptssection_tsx.l130.onchange",
    "kind": "edge",
-   "label": "<DeskComposer> onChange · web/src/desk/components/PrReceiptsSection.tsx:130 [active] (unclassified)",
+   "label": "<DeskComposer> onChange · web/src/desk/components/_parked/PrReceiptsSection.tsx:130 [active] (unclassified)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -18821,7 +18821,7 @@
   {
    "id": "edge.ui.web_src_desk_components_prreceiptssection_tsx.l154.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/components/PrReceiptsSection.tsx:154 [active] (library)",
+   "label": "<Button> onClick · web/src/desk/components/_parked/PrReceiptsSection.tsx:154 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -18842,7 +18842,7 @@
   {
    "id": "edge.ui.web_src_desk_components_prreceiptssection_tsx.l170.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/components/PrReceiptsSection.tsx:170 [active] (library)",
+   "label": "<Button> onClick · web/src/desk/components/_parked/PrReceiptsSection.tsx:170 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -18863,7 +18863,7 @@
   {
    "id": "edge.ui.web_src_desk_components_prreceiptssection_tsx.l171.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/components/PrReceiptsSection.tsx:171 [active] (library)",
+   "label": "<Button> onClick · web/src/desk/components/_parked/PrReceiptsSection.tsx:171 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -18884,7 +18884,7 @@
   {
    "id": "edge.ui.web_src_desk_components_prreceiptssection_tsx.l202.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/components/PrReceiptsSection.tsx:202 [active] (library)",
+   "label": "<Button> onClick · web/src/desk/components/_parked/PrReceiptsSection.tsx:202 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -20060,7 +20060,7 @@
   {
    "id": "edge.ui.web_src_desk_components_speakerglyph_tsx.l63.onclick",
    "kind": "edge",
-   "label": "<button> onClick · web/src/desk/components/SpeakerGlyph.tsx:63 [active] (raw)",
+   "label": "<button> onClick · web/src/desk/components/_parked/SpeakerGlyph.tsx:63 [active] (raw)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -20081,7 +20081,7 @@
   {
    "id": "edge.ui.web_src_desk_components_speakerglyph_tsx.l64.onkeydown",
    "kind": "edge",
-   "label": "<button> onKeyDown · web/src/desk/components/SpeakerGlyph.tsx:64 [active] (raw)",
+   "label": "<button> onKeyDown · web/src/desk/components/_parked/SpeakerGlyph.tsx:64 [active] (raw)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -20417,7 +20417,7 @@
   {
    "id": "edge.ui.web_src_desk_components_threadcomposer_tsx.l63.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/components/ThreadComposer.tsx:63 [active] (library)",
+   "label": "<Button> onClick · web/src/desk/components/_parked/ThreadComposer.tsx:63 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -20438,7 +20438,7 @@
   {
    "id": "edge.ui.web_src_desk_components_threadcomposer_tsx.l979.onchange",
    "kind": "edge",
-   "label": "<textarea> onChange · web/src/desk/components/ThreadComposer.tsx:979 [active] (raw)",
+   "label": "<textarea> onChange · web/src/desk/components/_parked/ThreadComposer.tsx:979 [active] (raw)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -20459,7 +20459,7 @@
   {
    "id": "edge.ui.web_src_desk_components_threadcomposer_tsx.l981.onkeydown",
    "kind": "edge",
-   "label": "<textarea> onKeyDown · web/src/desk/components/ThreadComposer.tsx:981 [active] (raw)",
+   "label": "<textarea> onKeyDown · web/src/desk/components/_parked/ThreadComposer.tsx:981 [active] (raw)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -20480,7 +20480,7 @@
   {
    "id": "edge.ui.web_src_desk_components_threadcomposer_tsx.l996.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/components/ThreadComposer.tsx:996 [active] (library)",
+   "label": "<Button> onClick · web/src/desk/components/_parked/ThreadComposer.tsx:996 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -20501,7 +20501,7 @@
   {
    "id": "edge.ui.web_src_desk_components_threadcomposer_tsx.l1006.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/components/ThreadComposer.tsx:1006 [active] (library)",
+   "label": "<Button> onClick · web/src/desk/components/_parked/ThreadComposer.tsx:1006 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -20522,7 +20522,7 @@
   {
    "id": "edge.ui.web_src_desk_components_threadcomposer_tsx.l1072.onchange",
    "kind": "edge",
-   "label": "<textarea> onChange · web/src/desk/components/ThreadComposer.tsx:1072 [active] (raw)",
+   "label": "<textarea> onChange · web/src/desk/components/_parked/ThreadComposer.tsx:1072 [active] (raw)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -20543,7 +20543,7 @@
   {
    "id": "edge.ui.web_src_desk_components_threadcomposer_tsx.l1073.onkeydown",
    "kind": "edge",
-   "label": "<textarea> onKeyDown · web/src/desk/components/ThreadComposer.tsx:1073 [active] (raw)",
+   "label": "<textarea> onKeyDown · web/src/desk/components/_parked/ThreadComposer.tsx:1073 [active] (raw)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -20564,7 +20564,7 @@
   {
    "id": "edge.ui.web_src_desk_components_threadcomposer_tsx.l1100.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/components/ThreadComposer.tsx:1100 [active] (library)",
+   "label": "<Button> onClick · web/src/desk/components/_parked/ThreadComposer.tsx:1100 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -20585,7 +20585,7 @@
   {
    "id": "edge.ui.web_src_desk_components_threadcomposer_tsx.l1109.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/components/ThreadComposer.tsx:1109 [active] (library)",
+   "label": "<Button> onClick · web/src/desk/components/_parked/ThreadComposer.tsx:1109 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -21656,7 +21656,7 @@
   {
    "id": "edge.ui.web_src_desk_components_zonewindow_tsx.l124.onchange",
    "kind": "edge",
-   "label": "<SurfaceWings> onChange · web/src/desk/components/ZoneWindow.tsx:124 [active] (library)",
+   "label": "<SurfaceWings> onChange · web/src/desk/components/_parked/ZoneWindow.tsx:124 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -21677,7 +21677,7 @@
   {
    "id": "edge.ui.web_src_desk_components_zonewindow_tsx.l145.onclick",
    "kind": "edge",
-   "label": "<button> onClick · web/src/desk/components/ZoneWindow.tsx:145 [active] (raw)",
+   "label": "<button> onClick · web/src/desk/components/_parked/ZoneWindow.tsx:145 [active] (raw)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -21698,7 +21698,7 @@
   {
    "id": "edge.ui.web_src_desk_components_zonewindow_tsx.l179.onclick",
    "kind": "edge",
-   "label": "<button> onClick · web/src/desk/components/ZoneWindow.tsx:179 [active] (raw)",
+   "label": "<button> onClick · web/src/desk/components/_parked/ZoneWindow.tsx:179 [active] (raw)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -21908,7 +21908,7 @@
   {
    "id": "edge.ui.web_src_desk_components_window_roomactions_tsx.l36.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/components/window/RoomActions.tsx:36 [active] (library)",
+   "label": "<Button> onClick · web/src/desk/components/window/_parked/RoomActions.tsx:36 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -21929,7 +21929,7 @@
   {
    "id": "edge.ui.web_src_desk_components_window_roomactions_tsx.l45.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/components/window/RoomActions.tsx:45 [active] (library)",
+   "label": "<Button> onClick · web/src/desk/components/window/_parked/RoomActions.tsx:45 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -22139,7 +22139,7 @@
   {
    "id": "edge.ui.web_src_desk_pullouts_chainpullout_tsx.l66.onclick",
    "kind": "edge",
-   "label": "<button> onClick · web/src/desk/pullouts/ChainPullout.tsx:66 [active] (raw)",
+   "label": "<button> onClick · web/src/desk/pullouts/_parked/ChainPullout.tsx:66 [active] (raw)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -22160,7 +22160,7 @@
   {
    "id": "edge.ui.web_src_desk_pullouts_chainpullout_tsx.l75.onclick",
    "kind": "edge",
-   "label": "<button> onClick · web/src/desk/pullouts/ChainPullout.tsx:75 [active] (raw)",
+   "label": "<button> onClick · web/src/desk/pullouts/_parked/ChainPullout.tsx:75 [active] (raw)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -22307,7 +22307,7 @@
   {
    "id": "edge.ui.web_src_desk_pullouts_decisionpullout_tsx.l68.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/pullouts/DecisionPullout.tsx:68 [active] (library)",
+   "label": "<Button> onClick · web/src/desk/pullouts/_parked/DecisionPullout.tsx:68 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -22328,7 +22328,7 @@
   {
    "id": "edge.ui.web_src_desk_pullouts_decisionpullout_tsx.l89.onchange",
    "kind": "edge",
-   "label": "<PadGadget> onChange · web/src/desk/pullouts/DecisionPullout.tsx:89 [active] (library)",
+   "label": "<PadGadget> onChange · web/src/desk/pullouts/_parked/DecisionPullout.tsx:89 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -22349,7 +22349,7 @@
   {
    "id": "edge.ui.web_src_desk_pullouts_decisionpullout_tsx.l109.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/pullouts/DecisionPullout.tsx:109 [active] (library)",
+   "label": "<Button> onClick · web/src/desk/pullouts/_parked/DecisionPullout.tsx:109 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -22370,7 +22370,7 @@
   {
    "id": "edge.ui.web_src_desk_pullouts_decisionpullout_tsx.l114.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/pullouts/DecisionPullout.tsx:114 [active] (library)",
+   "label": "<Button> onClick · web/src/desk/pullouts/_parked/DecisionPullout.tsx:114 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -22391,7 +22391,7 @@
   {
    "id": "edge.ui.web_src_desk_pullouts_decisionpullout_tsx.l129.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/pullouts/DecisionPullout.tsx:129 [active] (library)",
+   "label": "<Button> onClick · web/src/desk/pullouts/_parked/DecisionPullout.tsx:129 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -22412,7 +22412,7 @@
   {
    "id": "edge.ui.web_src_desk_pullouts_decisionpullout_tsx.l136.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/pullouts/DecisionPullout.tsx:136 [active] (library)",
+   "label": "<Button> onClick · web/src/desk/pullouts/_parked/DecisionPullout.tsx:136 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -22433,7 +22433,7 @@
   {
    "id": "edge.ui.web_src_desk_pullouts_decisionpullout_tsx.l144.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/pullouts/DecisionPullout.tsx:144 [active] (library)",
+   "label": "<Button> onClick · web/src/desk/pullouts/_parked/DecisionPullout.tsx:144 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -22454,7 +22454,7 @@
   {
    "id": "edge.ui.web_src_desk_pullouts_decisionpullout_tsx.l145.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/pullouts/DecisionPullout.tsx:145 [active] (library)",
+   "label": "<Button> onClick · web/src/desk/pullouts/_parked/DecisionPullout.tsx:145 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -22475,7 +22475,7 @@
   {
    "id": "edge.ui.web_src_desk_pullouts_decisionpullout_tsx.l148.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/pullouts/DecisionPullout.tsx:148 [active] (library)",
+   "label": "<Button> onClick · web/src/desk/pullouts/_parked/DecisionPullout.tsx:148 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -24113,7 +24113,7 @@
   {
    "id": "edge.ui.web_src_desk_pullouts_workflowpullout_tsx.l49.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/pullouts/WorkflowPullout.tsx:49 [active] (library)",
+   "label": "<Button> onClick · web/src/desk/pullouts/_parked/WorkflowPullout.tsx:49 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -24134,7 +24134,7 @@
   {
    "id": "edge.ui.web_src_desk_pullouts_workflowpullout_tsx.l50.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/pullouts/WorkflowPullout.tsx:50 [active] (library)",
+   "label": "<Button> onClick · web/src/desk/pullouts/_parked/WorkflowPullout.tsx:50 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -24155,7 +24155,7 @@
   {
    "id": "edge.ui.web_src_desk_pullouts_workflowpullout_tsx.l55.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/pullouts/WorkflowPullout.tsx:55 [active] (library)",
+   "label": "<Button> onClick · web/src/desk/pullouts/_parked/WorkflowPullout.tsx:55 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -24176,7 +24176,7 @@
   {
    "id": "edge.ui.web_src_desk_pullouts_workflowpullout_tsx.l64.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/pullouts/WorkflowPullout.tsx:64 [active] (library)",
+   "label": "<Button> onClick · web/src/desk/pullouts/_parked/WorkflowPullout.tsx:64 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -24638,7 +24638,7 @@
   {
    "id": "edge.ui.web_src_desk_pullouts_editors_workfloweditor_tsx.l53.onchange",
    "kind": "edge",
-   "label": "<StringGadget> onChange · web/src/desk/pullouts/editors/WorkflowEditor.tsx:53 [active] (library)",
+   "label": "<StringGadget> onChange · web/src/desk/pullouts/_parked/editors/WorkflowEditor.tsx:53 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -24659,7 +24659,7 @@
   {
    "id": "edge.ui.web_src_desk_pullouts_editors_workfloweditor_tsx.l75.onchange",
    "kind": "edge",
-   "label": "<StringGadget> onChange · web/src/desk/pullouts/editors/WorkflowEditor.tsx:75 [active] (library)",
+   "label": "<StringGadget> onChange · web/src/desk/pullouts/_parked/editors/WorkflowEditor.tsx:75 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -24680,7 +24680,7 @@
   {
    "id": "edge.ui.web_src_desk_pullouts_editors_workfloweditor_tsx.l83.onchange",
    "kind": "edge",
-   "label": "<StringGadget> onChange · web/src/desk/pullouts/editors/WorkflowEditor.tsx:83 [active] (library)",
+   "label": "<StringGadget> onChange · web/src/desk/pullouts/_parked/editors/WorkflowEditor.tsx:83 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -24701,7 +24701,7 @@
   {
    "id": "edge.ui.web_src_desk_pullouts_editors_workfloweditor_tsx.l91.onchange",
    "kind": "edge",
-   "label": "<StringGadget> onChange · web/src/desk/pullouts/editors/WorkflowEditor.tsx:91 [active] (library)",
+   "label": "<StringGadget> onChange · web/src/desk/pullouts/_parked/editors/WorkflowEditor.tsx:91 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -24722,7 +24722,7 @@
   {
    "id": "edge.ui.web_src_desk_pullouts_editors_workfloweditor_tsx.l99.onclick",
    "kind": "edge",
-   "label": "<button> onClick · web/src/desk/pullouts/editors/WorkflowEditor.tsx:99 [active] (raw)",
+   "label": "<button> onClick · web/src/desk/pullouts/_parked/editors/WorkflowEditor.tsx:99 [active] (raw)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -24743,7 +24743,7 @@
   {
    "id": "edge.ui.web_src_desk_pullouts_editors_workfloweditor_tsx.l111.onclick",
    "kind": "edge",
-   "label": "<button> onClick · web/src/desk/pullouts/editors/WorkflowEditor.tsx:111 [active] (raw)",
+   "label": "<button> onClick · web/src/desk/pullouts/_parked/editors/WorkflowEditor.tsx:111 [active] (raw)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -24764,7 +24764,7 @@
   {
    "id": "edge.ui.web_src_desk_pullouts_editors_workfloweditor_tsx.l125.onclick",
    "kind": "edge",
-   "label": "<button> onClick · web/src/desk/pullouts/editors/WorkflowEditor.tsx:125 [active] (raw)",
+   "label": "<button> onClick · web/src/desk/pullouts/_parked/editors/WorkflowEditor.tsx:125 [active] (raw)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -25415,7 +25415,7 @@
   {
    "id": "edge.ui.web_src_desk_surface_ledgerfilter_tsx.l120.onchange",
    "kind": "edge",
-   "label": "<input> onChange · web/src/desk/surface/LedgerFilter.tsx:120 [internal] (raw)",
+   "label": "<input> onChange · web/src/desk/surface/_parked/LedgerFilter.tsx:120 [internal] (raw)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -25436,7 +25436,7 @@
   {
    "id": "edge.ui.web_src_desk_surface_ledgerfilter_tsx.l133.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/surface/LedgerFilter.tsx:133 [internal] (library)",
+   "label": "<Button> onClick · web/src/desk/surface/_parked/LedgerFilter.tsx:133 [internal] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -25457,7 +25457,7 @@
   {
    "id": "edge.ui.web_src_desk_surface_ledgerfilter_tsx.l156.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/surface/LedgerFilter.tsx:156 [internal] (library)",
+   "label": "<Button> onClick · web/src/desk/surface/_parked/LedgerFilter.tsx:156 [internal] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -26402,7 +26402,7 @@
   {
    "id": "edge.ui.web_src_desk_surface_patterns_ledgerremainder_tsx.l64.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/surface/patterns/LedgerRemainder.tsx:64 [internal] (library)",
+   "label": "<Button> onClick · web/src/desk/surface/patterns/_parked/LedgerRemainder.tsx:64 [internal] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -26549,7 +26549,7 @@
   {
    "id": "edge.ui.web_src_desk_surface_patterns_taskresume_tsx.l220.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/surface/patterns/TaskResume.tsx:220 [internal] (library)",
+   "label": "<Button> onClick · web/src/desk/surface/patterns/_parked/TaskResume.tsx:220 [internal] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -26570,7 +26570,7 @@
   {
    "id": "edge.ui.web_src_desk_surface_patterns_taskresume_tsx.l245.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/desk/surface/patterns/TaskResume.tsx:245 [internal] (library)",
+   "label": "<Button> onClick · web/src/desk/surface/patterns/_parked/TaskResume.tsx:245 [internal] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -26675,7 +26675,7 @@
   {
    "id": "edge.ui.web_src_desk_thought_workspace_thoughtreadswell_tsx.l121.onchange",
    "kind": "edge",
-   "label": "<CheckGadget> onChange · web/src/desk/thought-workspace/ThoughtReadsWell.tsx:121 [active] (library)",
+   "label": "<CheckGadget> onChange · web/src/desk/thought-workspace/_parked/ThoughtReadsWell.tsx:121 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -26696,7 +26696,7 @@
   {
    "id": "edge.ui.web_src_desk_thought_workspace_thoughtreadswell_tsx.l129.onchange",
    "kind": "edge",
-   "label": "<StringGadget> onChange · web/src/desk/thought-workspace/ThoughtReadsWell.tsx:129 [active] (library)",
+   "label": "<StringGadget> onChange · web/src/desk/thought-workspace/_parked/ThoughtReadsWell.tsx:129 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -27053,7 +27053,7 @@
   {
    "id": "edge.ui.web_src_features_concierge_conciergecore_tsx.l109.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/features/concierge/ConciergeCore.tsx:109 [active] (library)",
+   "label": "<Button> onClick · web/src/features/concierge/_parked/ConciergeCore.tsx:109 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -27063,7 +27063,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/features/concierge/ConciergeCore.tsx",
+     "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
      "line": 109,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -27074,7 +27074,7 @@
   {
    "id": "edge.ui.web_src_features_concierge_conciergecore_tsx.l115.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/features/concierge/ConciergeCore.tsx:115 [active] (library)",
+   "label": "<Button> onClick · web/src/features/concierge/_parked/ConciergeCore.tsx:115 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -27084,7 +27084,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/features/concierge/ConciergeCore.tsx",
+     "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
      "line": 115,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -27095,7 +27095,7 @@
   {
    "id": "edge.ui.web_src_features_concierge_conciergecore_tsx.l172.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/features/concierge/ConciergeCore.tsx:172 [active] (library)",
+   "label": "<Button> onClick · web/src/features/concierge/_parked/ConciergeCore.tsx:172 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -27105,7 +27105,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/features/concierge/ConciergeCore.tsx",
+     "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
      "line": 172,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -27116,7 +27116,7 @@
   {
    "id": "edge.ui.web_src_features_concierge_conciergecore_tsx.l199.ontoggle",
    "kind": "edge",
-   "label": "<EgressChip> onToggle · web/src/features/concierge/ConciergeCore.tsx:199 [active] (library)",
+   "label": "<EgressChip> onToggle · web/src/features/concierge/_parked/ConciergeCore.tsx:199 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -27126,7 +27126,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/features/concierge/ConciergeCore.tsx",
+     "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
      "line": 199,
      "anchor": "onToggle",
      "claim": "a library control's onToggle handler on EgressChip"
@@ -27137,7 +27137,7 @@
   {
    "id": "edge.ui.web_src_features_concierge_conciergecore_tsx.l223.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/features/concierge/ConciergeCore.tsx:223 [active] (library)",
+   "label": "<Button> onClick · web/src/features/concierge/_parked/ConciergeCore.tsx:223 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -27147,7 +27147,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/features/concierge/ConciergeCore.tsx",
+     "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
      "line": 223,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -27158,7 +27158,7 @@
   {
    "id": "edge.ui.web_src_features_concierge_conciergecore_tsx.l248.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/features/concierge/ConciergeCore.tsx:248 [active] (library)",
+   "label": "<Button> onClick · web/src/features/concierge/_parked/ConciergeCore.tsx:248 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -27168,7 +27168,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/features/concierge/ConciergeCore.tsx",
+     "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
      "line": 248,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -27179,7 +27179,7 @@
   {
    "id": "edge.ui.web_src_features_concierge_conciergecore_tsx.l313.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/features/concierge/ConciergeCore.tsx:313 [active] (library)",
+   "label": "<Button> onClick · web/src/features/concierge/_parked/ConciergeCore.tsx:313 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -27189,7 +27189,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/features/concierge/ConciergeCore.tsx",
+     "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
      "line": 313,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -27200,7 +27200,7 @@
   {
    "id": "edge.ui.web_src_features_concierge_conciergecore_tsx.l393.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/features/concierge/ConciergeCore.tsx:393 [active] (library)",
+   "label": "<Button> onClick · web/src/features/concierge/_parked/ConciergeCore.tsx:393 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -27210,7 +27210,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/features/concierge/ConciergeCore.tsx",
+     "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
      "line": 393,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -27221,7 +27221,7 @@
   {
    "id": "edge.ui.web_src_features_concierge_conciergecore_tsx.l521.onchange",
    "kind": "edge",
-   "label": "<StringGadget> onChange · web/src/features/concierge/ConciergeCore.tsx:521 [active] (library)",
+   "label": "<StringGadget> onChange · web/src/features/concierge/_parked/ConciergeCore.tsx:521 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -27231,7 +27231,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/features/concierge/ConciergeCore.tsx",
+     "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
      "line": 521,
      "anchor": "onChange",
      "claim": "a library control's onChange handler on StringGadget"
@@ -27242,7 +27242,7 @@
   {
    "id": "edge.ui.web_src_features_concierge_conciergecore_tsx.l538.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/features/concierge/ConciergeCore.tsx:538 [active] (library)",
+   "label": "<Button> onClick · web/src/features/concierge/_parked/ConciergeCore.tsx:538 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -27252,7 +27252,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/features/concierge/ConciergeCore.tsx",
+     "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
      "line": 538,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -27263,7 +27263,7 @@
   {
    "id": "edge.ui.web_src_features_concierge_conciergecore_tsx.l566.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/features/concierge/ConciergeCore.tsx:566 [active] (library)",
+   "label": "<Button> onClick · web/src/features/concierge/_parked/ConciergeCore.tsx:566 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -27273,7 +27273,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/features/concierge/ConciergeCore.tsx",
+     "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
      "line": 566,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -27284,7 +27284,7 @@
   {
    "id": "edge.ui.web_src_features_concierge_conciergecore_tsx.l581.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/features/concierge/ConciergeCore.tsx:581 [active] (library)",
+   "label": "<Button> onClick · web/src/features/concierge/_parked/ConciergeCore.tsx:581 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -27294,7 +27294,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/features/concierge/ConciergeCore.tsx",
+     "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
      "line": 581,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -27305,7 +27305,7 @@
   {
    "id": "edge.ui.web_src_features_concierge_conciergecore_tsx.l593.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/features/concierge/ConciergeCore.tsx:593 [active] (library)",
+   "label": "<Button> onClick · web/src/features/concierge/_parked/ConciergeCore.tsx:593 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -27315,7 +27315,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/features/concierge/ConciergeCore.tsx",
+     "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
      "line": 593,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -27326,7 +27326,7 @@
   {
    "id": "edge.ui.web_src_features_concierge_conciergecore_tsx.l610.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/features/concierge/ConciergeCore.tsx:610 [active] (library)",
+   "label": "<Button> onClick · web/src/features/concierge/_parked/ConciergeCore.tsx:610 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -27336,7 +27336,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/features/concierge/ConciergeCore.tsx",
+     "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
      "line": 610,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -27347,7 +27347,7 @@
   {
    "id": "edge.ui.web_src_features_concierge_conciergecore_tsx.l615.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/features/concierge/ConciergeCore.tsx:615 [active] (library)",
+   "label": "<Button> onClick · web/src/features/concierge/_parked/ConciergeCore.tsx:615 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -27357,7 +27357,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/features/concierge/ConciergeCore.tsx",
+     "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
      "line": 615,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -31610,7 +31610,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_assignmenteditor_tsx.l175.onkeydown",
    "kind": "edge",
-   "label": "<section> onKeyDown · web/src/pages/cores/AssignmentEditor.tsx:175 [active] (raw)",
+   "label": "<section> onKeyDown · web/src/pages/cores/_parked/AssignmentEditor.tsx:175 [active] (raw)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -31620,7 +31620,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/AssignmentEditor.tsx",
+     "path": "web/src/pages/cores/_parked/AssignmentEditor.tsx",
      "line": 175,
      "anchor": "onKeyDown",
      "claim": "a raw control's onKeyDown handler on section"
@@ -31631,7 +31631,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_assignmenteditor_tsx.l177.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/pages/cores/AssignmentEditor.tsx:177 [active] (library)",
+   "label": "<Button> onClick · web/src/pages/cores/_parked/AssignmentEditor.tsx:177 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -31641,7 +31641,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/AssignmentEditor.tsx",
+     "path": "web/src/pages/cores/_parked/AssignmentEditor.tsx",
      "line": 177,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -31652,7 +31652,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_assignmenteditor_tsx.l179.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/pages/cores/AssignmentEditor.tsx:179 [active] (library)",
+   "label": "<Button> onClick · web/src/pages/cores/_parked/AssignmentEditor.tsx:179 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -31662,7 +31662,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/AssignmentEditor.tsx",
+     "path": "web/src/pages/cores/_parked/AssignmentEditor.tsx",
      "line": 179,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -31673,7 +31673,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_assignmenteditor_tsx.l182.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/pages/cores/AssignmentEditor.tsx:182 [active] (library)",
+   "label": "<Button> onClick · web/src/pages/cores/_parked/AssignmentEditor.tsx:182 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -31683,7 +31683,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/AssignmentEditor.tsx",
+     "path": "web/src/pages/cores/_parked/AssignmentEditor.tsx",
      "line": 182,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -31694,7 +31694,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_assignmenteditor_tsx.l201.onclick",
    "kind": "edge",
-   "label": "<HTMLElement> onClick · web/src/pages/cores/AssignmentEditor.tsx:201 [active] (unclassified)",
+   "label": "<HTMLElement> onClick · web/src/pages/cores/_parked/AssignmentEditor.tsx:201 [active] (unclassified)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -31704,7 +31704,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/AssignmentEditor.tsx",
+     "path": "web/src/pages/cores/_parked/AssignmentEditor.tsx",
      "line": 201,
      "anchor": "onClick",
      "claim": "a unclassified control's onClick handler on HTMLElement"
@@ -31715,7 +31715,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_assignmenteditor_tsx.l203.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/pages/cores/AssignmentEditor.tsx:203 [active] (library)",
+   "label": "<Button> onClick · web/src/pages/cores/_parked/AssignmentEditor.tsx:203 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -31725,7 +31725,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/AssignmentEditor.tsx",
+     "path": "web/src/pages/cores/_parked/AssignmentEditor.tsx",
      "line": 203,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -31736,7 +31736,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_assignmenteditor_tsx.l204.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/pages/cores/AssignmentEditor.tsx:204 [active] (library)",
+   "label": "<Button> onClick · web/src/pages/cores/_parked/AssignmentEditor.tsx:204 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -31746,7 +31746,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/AssignmentEditor.tsx",
+     "path": "web/src/pages/cores/_parked/AssignmentEditor.tsx",
      "line": 204,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -31757,7 +31757,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_assignmenteditor_tsx.l205.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/pages/cores/AssignmentEditor.tsx:205 [active] (library)",
+   "label": "<Button> onClick · web/src/pages/cores/_parked/AssignmentEditor.tsx:205 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -31767,7 +31767,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/AssignmentEditor.tsx",
+     "path": "web/src/pages/cores/_parked/AssignmentEditor.tsx",
      "line": 205,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -31778,7 +31778,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_assignmenteditor_tsx.l214.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/pages/cores/AssignmentEditor.tsx:214 [active] (library)",
+   "label": "<Button> onClick · web/src/pages/cores/_parked/AssignmentEditor.tsx:214 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -31788,7 +31788,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/AssignmentEditor.tsx",
+     "path": "web/src/pages/cores/_parked/AssignmentEditor.tsx",
      "line": 214,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -31799,7 +31799,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_assignmentmodelchooser_tsx.l79.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/pages/cores/AssignmentModelChooser.tsx:79 [active] (library)",
+   "label": "<Button> onClick · web/src/pages/cores/_parked/AssignmentModelChooser.tsx:79 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -31809,7 +31809,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/AssignmentModelChooser.tsx",
+     "path": "web/src/pages/cores/_parked/AssignmentModelChooser.tsx",
      "line": 79,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -32198,7 +32198,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_capabilityassignmentscore_tsx.l88.onchange",
    "kind": "edge",
-   "label": "<AssignmentSummary> onChange · web/src/pages/cores/CapabilityAssignmentsCore.tsx:88 [active] (unclassified)",
+   "label": "<AssignmentSummary> onChange · web/src/pages/cores/_parked/CapabilityAssignmentsCore.tsx:88 [active] (unclassified)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -32208,7 +32208,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/CapabilityAssignmentsCore.tsx",
+     "path": "web/src/pages/cores/_parked/CapabilityAssignmentsCore.tsx",
      "line": 88,
      "anchor": "onChange",
      "claim": "a unclassified control's onChange handler on AssignmentSummary"
@@ -32219,7 +32219,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_capabilityassignmentscore_tsx.l91.ontoggle",
    "kind": "edge",
-   "label": "<details> onToggle · web/src/pages/cores/CapabilityAssignmentsCore.tsx:91 [active] (raw)",
+   "label": "<details> onToggle · web/src/pages/cores/_parked/CapabilityAssignmentsCore.tsx:91 [active] (raw)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -32229,7 +32229,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/CapabilityAssignmentsCore.tsx",
+     "path": "web/src/pages/cores/_parked/CapabilityAssignmentsCore.tsx",
      "line": 91,
      "anchor": "onToggle",
      "claim": "a raw control's onToggle handler on details"
@@ -32240,7 +32240,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_capabilityassignmentscore_tsx.l93.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/pages/cores/CapabilityAssignmentsCore.tsx:93 [active] (library)",
+   "label": "<Button> onClick · web/src/pages/cores/_parked/CapabilityAssignmentsCore.tsx:93 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -32250,7 +32250,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/CapabilityAssignmentsCore.tsx",
+     "path": "web/src/pages/cores/_parked/CapabilityAssignmentsCore.tsx",
      "line": 93,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -32261,7 +32261,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_changeplacescore_tsx.l25.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/pages/cores/ChangePlacesCore.tsx:25 [active] (library)",
+   "label": "<Button> onClick · web/src/pages/cores/_parked/ChangePlacesCore.tsx:25 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -32282,7 +32282,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_changeplacescore_tsx.l34.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/pages/cores/ChangePlacesCore.tsx:34 [active] (library)",
+   "label": "<Button> onClick · web/src/pages/cores/_parked/ChangePlacesCore.tsx:34 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -32303,7 +32303,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_changeplacescore_tsx.l42.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/pages/cores/ChangePlacesCore.tsx:42 [active] (library)",
+   "label": "<Button> onClick · web/src/pages/cores/_parked/ChangePlacesCore.tsx:42 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -32324,7 +32324,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_changeplacescore_tsx.l50.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/pages/cores/ChangePlacesCore.tsx:50 [active] (library)",
+   "label": "<Button> onClick · web/src/pages/cores/_parked/ChangePlacesCore.tsx:50 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -32555,7 +32555,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_companioncore_tsx.l38.onchange",
    "kind": "edge",
-   "label": "<SurfaceWings> onChange · web/src/pages/cores/CompanionCore.tsx:38 [active] (library)",
+   "label": "<SurfaceWings> onChange · web/src/pages/cores/_parked/CompanionCore.tsx:38 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -32576,7 +32576,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_companioncore_tsx.l85.ontoggle",
    "kind": "edge",
-   "label": "<SurfaceLedgerRow> onToggle · web/src/pages/cores/CompanionCore.tsx:85 [active] (library)",
+   "label": "<SurfaceLedgerRow> onToggle · web/src/pages/cores/_parked/CompanionCore.tsx:85 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -32597,7 +32597,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_companioncore_tsx.l112.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/pages/cores/CompanionCore.tsx:112 [active] (library)",
+   "label": "<Button> onClick · web/src/pages/cores/_parked/CompanionCore.tsx:112 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -32618,7 +32618,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_companioncore_tsx.l157.ontoggle",
    "kind": "edge",
-   "label": "<SurfaceLedgerRow> onToggle · web/src/pages/cores/CompanionCore.tsx:157 [active] (library)",
+   "label": "<SurfaceLedgerRow> onToggle · web/src/pages/cores/_parked/CompanionCore.tsx:157 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -33521,7 +33521,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_modellibrarycore_tsx.l344.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/pages/cores/ModelLibraryCore.tsx:344 [active] (library)",
+   "label": "<Button> onClick · web/src/pages/cores/_parked/ModelLibraryCore.tsx:344 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -33531,7 +33531,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/ModelLibraryCore.tsx",
+     "path": "web/src/pages/cores/_parked/ModelLibraryCore.tsx",
      "line": 344,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -33542,7 +33542,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_modellibrarycore_tsx.l360.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/pages/cores/ModelLibraryCore.tsx:360 [active] (library)",
+   "label": "<Button> onClick · web/src/pages/cores/_parked/ModelLibraryCore.tsx:360 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -33552,7 +33552,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/ModelLibraryCore.tsx",
+     "path": "web/src/pages/cores/_parked/ModelLibraryCore.tsx",
      "line": 360,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -33563,7 +33563,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_modellibrarycore_tsx.l361.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/pages/cores/ModelLibraryCore.tsx:361 [active] (library)",
+   "label": "<Button> onClick · web/src/pages/cores/_parked/ModelLibraryCore.tsx:361 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -33573,7 +33573,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/ModelLibraryCore.tsx",
+     "path": "web/src/pages/cores/_parked/ModelLibraryCore.tsx",
      "line": 361,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -33584,7 +33584,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_modellibrarycore_tsx.l362.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/pages/cores/ModelLibraryCore.tsx:362 [active] (library)",
+   "label": "<Button> onClick · web/src/pages/cores/_parked/ModelLibraryCore.tsx:362 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -33594,7 +33594,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/ModelLibraryCore.tsx",
+     "path": "web/src/pages/cores/_parked/ModelLibraryCore.tsx",
      "line": 362,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -33605,7 +33605,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_modellibrarycore_tsx.l363.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/pages/cores/ModelLibraryCore.tsx:363 [active] (library)",
+   "label": "<Button> onClick · web/src/pages/cores/_parked/ModelLibraryCore.tsx:363 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -33615,7 +33615,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/ModelLibraryCore.tsx",
+     "path": "web/src/pages/cores/_parked/ModelLibraryCore.tsx",
      "line": 363,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -33626,7 +33626,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_modellibrarycore_tsx.l371.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/pages/cores/ModelLibraryCore.tsx:371 [active] (library)",
+   "label": "<Button> onClick · web/src/pages/cores/_parked/ModelLibraryCore.tsx:371 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -33636,7 +33636,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/ModelLibraryCore.tsx",
+     "path": "web/src/pages/cores/_parked/ModelLibraryCore.tsx",
      "line": 371,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -33647,7 +33647,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_modellibrarycore_tsx.l377.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/pages/cores/ModelLibraryCore.tsx:377 [active] (library)",
+   "label": "<Button> onClick · web/src/pages/cores/_parked/ModelLibraryCore.tsx:377 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -33657,7 +33657,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/ModelLibraryCore.tsx",
+     "path": "web/src/pages/cores/_parked/ModelLibraryCore.tsx",
      "line": 377,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -33668,7 +33668,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_modellibrarycore_tsx.l380.onchange",
    "kind": "edge",
-   "label": "<StringGadget> onChange · web/src/pages/cores/ModelLibraryCore.tsx:380 [active] (library)",
+   "label": "<StringGadget> onChange · web/src/pages/cores/_parked/ModelLibraryCore.tsx:380 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -33678,7 +33678,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/ModelLibraryCore.tsx",
+     "path": "web/src/pages/cores/_parked/ModelLibraryCore.tsx",
      "line": 380,
      "anchor": "onChange",
      "claim": "a library control's onChange handler on StringGadget"
@@ -33689,7 +33689,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_modellibrarycore_tsx.l381.onchange",
    "kind": "edge",
-   "label": "<StringGadget> onChange · web/src/pages/cores/ModelLibraryCore.tsx:381 [active] (library)",
+   "label": "<StringGadget> onChange · web/src/pages/cores/_parked/ModelLibraryCore.tsx:381 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -33699,7 +33699,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/ModelLibraryCore.tsx",
+     "path": "web/src/pages/cores/_parked/ModelLibraryCore.tsx",
      "line": 381,
      "anchor": "onChange",
      "claim": "a library control's onChange handler on StringGadget"
@@ -33710,7 +33710,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_modellibrarycore_tsx.l382.onchange",
    "kind": "edge",
-   "label": "<CycleGadget> onChange · web/src/pages/cores/ModelLibraryCore.tsx:382 [active] (library)",
+   "label": "<CycleGadget> onChange · web/src/pages/cores/_parked/ModelLibraryCore.tsx:382 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -33720,7 +33720,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/ModelLibraryCore.tsx",
+     "path": "web/src/pages/cores/_parked/ModelLibraryCore.tsx",
      "line": 382,
      "anchor": "onChange",
      "claim": "a library control's onChange handler on CycleGadget"
@@ -33731,7 +33731,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_modellibrarycore_tsx.l384.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/pages/cores/ModelLibraryCore.tsx:384 [active] (library)",
+   "label": "<Button> onClick · web/src/pages/cores/_parked/ModelLibraryCore.tsx:384 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -33741,7 +33741,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/ModelLibraryCore.tsx",
+     "path": "web/src/pages/cores/_parked/ModelLibraryCore.tsx",
      "line": 384,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -33752,7 +33752,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_modellibrarycore_tsx.l389.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/pages/cores/ModelLibraryCore.tsx:389 [active] (library)",
+   "label": "<Button> onClick · web/src/pages/cores/_parked/ModelLibraryCore.tsx:389 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -33762,7 +33762,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/ModelLibraryCore.tsx",
+     "path": "web/src/pages/cores/_parked/ModelLibraryCore.tsx",
      "line": 389,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -33773,7 +33773,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_modellibrarycore_tsx.l392.onchange",
    "kind": "edge",
-   "label": "<StringGadget> onChange · web/src/pages/cores/ModelLibraryCore.tsx:392 [active] (library)",
+   "label": "<StringGadget> onChange · web/src/pages/cores/_parked/ModelLibraryCore.tsx:392 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -33783,7 +33783,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/ModelLibraryCore.tsx",
+     "path": "web/src/pages/cores/_parked/ModelLibraryCore.tsx",
      "line": 392,
      "anchor": "onChange",
      "claim": "a library control's onChange handler on StringGadget"
@@ -33794,7 +33794,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_modellibrarycore_tsx.l393.onchange",
    "kind": "edge",
-   "label": "<StringGadget> onChange · web/src/pages/cores/ModelLibraryCore.tsx:393 [active] (library)",
+   "label": "<StringGadget> onChange · web/src/pages/cores/_parked/ModelLibraryCore.tsx:393 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -33804,7 +33804,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/ModelLibraryCore.tsx",
+     "path": "web/src/pages/cores/_parked/ModelLibraryCore.tsx",
      "line": 393,
      "anchor": "onChange",
      "claim": "a library control's onChange handler on StringGadget"
@@ -33815,7 +33815,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_modellibrarycore_tsx.l394.onchange",
    "kind": "edge",
-   "label": "<StringGadget> onChange · web/src/pages/cores/ModelLibraryCore.tsx:394 [active] (library)",
+   "label": "<StringGadget> onChange · web/src/pages/cores/_parked/ModelLibraryCore.tsx:394 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -33825,7 +33825,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/ModelLibraryCore.tsx",
+     "path": "web/src/pages/cores/_parked/ModelLibraryCore.tsx",
      "line": 394,
      "anchor": "onChange",
      "claim": "a library control's onChange handler on StringGadget"
@@ -33836,7 +33836,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_modellibrarycore_tsx.l395.onchange",
    "kind": "edge",
-   "label": "<CycleGadget> onChange · web/src/pages/cores/ModelLibraryCore.tsx:395 [active] (library)",
+   "label": "<CycleGadget> onChange · web/src/pages/cores/_parked/ModelLibraryCore.tsx:395 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -33846,7 +33846,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/ModelLibraryCore.tsx",
+     "path": "web/src/pages/cores/_parked/ModelLibraryCore.tsx",
      "line": 395,
      "anchor": "onChange",
      "claim": "a library control's onChange handler on CycleGadget"
@@ -33857,7 +33857,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_modellibrarycore_tsx.l397.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/pages/cores/ModelLibraryCore.tsx:397 [active] (library)",
+   "label": "<Button> onClick · web/src/pages/cores/_parked/ModelLibraryCore.tsx:397 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -33867,7 +33867,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/ModelLibraryCore.tsx",
+     "path": "web/src/pages/cores/_parked/ModelLibraryCore.tsx",
      "line": 397,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -33878,7 +33878,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_modellibrarycore_tsx.l402.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/pages/cores/ModelLibraryCore.tsx:402 [active] (library)",
+   "label": "<Button> onClick · web/src/pages/cores/_parked/ModelLibraryCore.tsx:402 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -33888,7 +33888,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/ModelLibraryCore.tsx",
+     "path": "web/src/pages/cores/_parked/ModelLibraryCore.tsx",
      "line": 402,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -33899,7 +33899,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_modellibrarycore_tsx.l404.onchange",
    "kind": "edge",
-   "label": "<input> onChange · web/src/pages/cores/ModelLibraryCore.tsx:404 [active] (raw)",
+   "label": "<input> onChange · web/src/pages/cores/_parked/ModelLibraryCore.tsx:404 [active] (raw)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -33909,7 +33909,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/ModelLibraryCore.tsx",
+     "path": "web/src/pages/cores/_parked/ModelLibraryCore.tsx",
      "line": 404,
      "anchor": "onChange",
      "claim": "a raw control's onChange handler on input"
@@ -33920,7 +33920,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_modellibrarycore_tsx.l405.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/pages/cores/ModelLibraryCore.tsx:405 [active] (library)",
+   "label": "<Button> onClick · web/src/pages/cores/_parked/ModelLibraryCore.tsx:405 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -33930,7 +33930,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/ModelLibraryCore.tsx",
+     "path": "web/src/pages/cores/_parked/ModelLibraryCore.tsx",
      "line": 405,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -33941,7 +33941,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_modellibrarycore_tsx.l411.onkeydown",
    "kind": "edge",
-   "label": "<div> onKeyDown · web/src/pages/cores/ModelLibraryCore.tsx:411 [active] (raw)",
+   "label": "<div> onKeyDown · web/src/pages/cores/_parked/ModelLibraryCore.tsx:411 [active] (raw)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -33951,7 +33951,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/ModelLibraryCore.tsx",
+     "path": "web/src/pages/cores/_parked/ModelLibraryCore.tsx",
      "line": 411,
      "anchor": "onKeyDown",
      "claim": "a raw control's onKeyDown handler on div"
@@ -33962,7 +33962,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_modellibrarycore_tsx.l413.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/pages/cores/ModelLibraryCore.tsx:413 [active] (library)",
+   "label": "<Button> onClick · web/src/pages/cores/_parked/ModelLibraryCore.tsx:413 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -33972,7 +33972,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/ModelLibraryCore.tsx",
+     "path": "web/src/pages/cores/_parked/ModelLibraryCore.tsx",
      "line": 413,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -33983,7 +33983,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_modellibrarycore_tsx.l427.onclick",
    "kind": "edge",
-   "label": "<span> onClick · web/src/pages/cores/ModelLibraryCore.tsx:427 [active] (raw)",
+   "label": "<span> onClick · web/src/pages/cores/_parked/ModelLibraryCore.tsx:427 [active] (raw)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -33993,7 +33993,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/ModelLibraryCore.tsx",
+     "path": "web/src/pages/cores/_parked/ModelLibraryCore.tsx",
      "line": 427,
      "anchor": "onClick",
      "claim": "a raw control's onClick handler on span"
@@ -34004,7 +34004,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_modellibrarycore_tsx.l430.onkeydown",
    "kind": "edge",
-   "label": "<div> onKeyDown · web/src/pages/cores/ModelLibraryCore.tsx:430 [active] (raw)",
+   "label": "<div> onKeyDown · web/src/pages/cores/_parked/ModelLibraryCore.tsx:430 [active] (raw)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -34014,7 +34014,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/ModelLibraryCore.tsx",
+     "path": "web/src/pages/cores/_parked/ModelLibraryCore.tsx",
      "line": 430,
      "anchor": "onKeyDown",
      "claim": "a raw control's onKeyDown handler on div"
@@ -34025,7 +34025,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_modellibrarycore_tsx.l434.onchange",
    "kind": "edge",
-   "label": "<input> onChange · web/src/pages/cores/ModelLibraryCore.tsx:434 [active] (raw)",
+   "label": "<input> onChange · web/src/pages/cores/_parked/ModelLibraryCore.tsx:434 [active] (raw)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -34035,7 +34035,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/ModelLibraryCore.tsx",
+     "path": "web/src/pages/cores/_parked/ModelLibraryCore.tsx",
      "line": 434,
      "anchor": "onChange",
      "claim": "a raw control's onChange handler on input"
@@ -35495,7 +35495,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_topologymapview_tsx.l241.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/pages/cores/TopologyMapView.tsx:241 [active] (library)",
+   "label": "<Button> onClick · web/src/pages/cores/_parked/TopologyMapView.tsx:241 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -35505,7 +35505,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/TopologyMapView.tsx",
+     "path": "web/src/pages/cores/_parked/TopologyMapView.tsx",
      "line": 241,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -35516,7 +35516,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_topologymapview_tsx.l322.onchange",
    "kind": "edge",
-   "label": "<MxRadio> onChange · web/src/pages/cores/TopologyMapView.tsx:322 [active] (library)",
+   "label": "<MxRadio> onChange · web/src/pages/cores/_parked/TopologyMapView.tsx:322 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -35526,7 +35526,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/TopologyMapView.tsx",
+     "path": "web/src/pages/cores/_parked/TopologyMapView.tsx",
      "line": 322,
      "anchor": "onChange",
      "claim": "a library control's onChange handler on MxRadio"
@@ -35537,7 +35537,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_topologymapview_tsx.l329.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/pages/cores/TopologyMapView.tsx:329 [active] (library)",
+   "label": "<Button> onClick · web/src/pages/cores/_parked/TopologyMapView.tsx:329 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -35547,7 +35547,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/TopologyMapView.tsx",
+     "path": "web/src/pages/cores/_parked/TopologyMapView.tsx",
      "line": 329,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -35558,7 +35558,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_topologymapview_tsx.l427.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/pages/cores/TopologyMapView.tsx:427 [active] (library)",
+   "label": "<Button> onClick · web/src/pages/cores/_parked/TopologyMapView.tsx:427 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -35568,7 +35568,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/TopologyMapView.tsx",
+     "path": "web/src/pages/cores/_parked/TopologyMapView.tsx",
      "line": 427,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -35579,7 +35579,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_topologymapview_tsx.l430.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/pages/cores/TopologyMapView.tsx:430 [active] (library)",
+   "label": "<Button> onClick · web/src/pages/cores/_parked/TopologyMapView.tsx:430 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -35589,7 +35589,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/TopologyMapView.tsx",
+     "path": "web/src/pages/cores/_parked/TopologyMapView.tsx",
      "line": 430,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -35600,7 +35600,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_topologymapview_tsx.l437.onchange",
    "kind": "edge",
-   "label": "<StringGadget> onChange · web/src/pages/cores/TopologyMapView.tsx:437 [active] (library)",
+   "label": "<StringGadget> onChange · web/src/pages/cores/_parked/TopologyMapView.tsx:437 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -35610,7 +35610,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/TopologyMapView.tsx",
+     "path": "web/src/pages/cores/_parked/TopologyMapView.tsx",
      "line": 437,
      "anchor": "onChange",
      "claim": "a library control's onChange handler on StringGadget"
@@ -35621,7 +35621,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_topologymapview_tsx.l439.onchange",
    "kind": "edge",
-   "label": "<StringGadget> onChange · web/src/pages/cores/TopologyMapView.tsx:439 [active] (library)",
+   "label": "<StringGadget> onChange · web/src/pages/cores/_parked/TopologyMapView.tsx:439 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -35631,7 +35631,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/TopologyMapView.tsx",
+     "path": "web/src/pages/cores/_parked/TopologyMapView.tsx",
      "line": 439,
      "anchor": "onChange",
      "claim": "a library control's onChange handler on StringGadget"
@@ -35642,7 +35642,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_topologymapview_tsx.l440.onchange",
    "kind": "edge",
-   "label": "<StringGadget> onChange · web/src/pages/cores/TopologyMapView.tsx:440 [active] (library)",
+   "label": "<StringGadget> onChange · web/src/pages/cores/_parked/TopologyMapView.tsx:440 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -35652,7 +35652,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/TopologyMapView.tsx",
+     "path": "web/src/pages/cores/_parked/TopologyMapView.tsx",
      "line": 440,
      "anchor": "onChange",
      "claim": "a library control's onChange handler on StringGadget"
@@ -35663,7 +35663,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_topologymapview_tsx.l444.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/pages/cores/TopologyMapView.tsx:444 [active] (library)",
+   "label": "<Button> onClick · web/src/pages/cores/_parked/TopologyMapView.tsx:444 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -35673,7 +35673,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/TopologyMapView.tsx",
+     "path": "web/src/pages/cores/_parked/TopologyMapView.tsx",
      "line": 444,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -35684,7 +35684,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_topologymapview_tsx.l445.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/pages/cores/TopologyMapView.tsx:445 [active] (library)",
+   "label": "<Button> onClick · web/src/pages/cores/_parked/TopologyMapView.tsx:445 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -35694,7 +35694,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/TopologyMapView.tsx",
+     "path": "web/src/pages/cores/_parked/TopologyMapView.tsx",
      "line": 445,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -35705,7 +35705,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_topologymapview_tsx.l454.onchange",
    "kind": "edge",
-   "label": "<StringGadget> onChange · web/src/pages/cores/TopologyMapView.tsx:454 [active] (library)",
+   "label": "<StringGadget> onChange · web/src/pages/cores/_parked/TopologyMapView.tsx:454 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -35715,7 +35715,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/TopologyMapView.tsx",
+     "path": "web/src/pages/cores/_parked/TopologyMapView.tsx",
      "line": 454,
      "anchor": "onChange",
      "claim": "a library control's onChange handler on StringGadget"
@@ -35726,7 +35726,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_topologymapview_tsx.l455.onchange",
    "kind": "edge",
-   "label": "<StringGadget> onChange · web/src/pages/cores/TopologyMapView.tsx:455 [active] (library)",
+   "label": "<StringGadget> onChange · web/src/pages/cores/_parked/TopologyMapView.tsx:455 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -35736,7 +35736,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/TopologyMapView.tsx",
+     "path": "web/src/pages/cores/_parked/TopologyMapView.tsx",
      "line": 455,
      "anchor": "onChange",
      "claim": "a library control's onChange handler on StringGadget"
@@ -35747,7 +35747,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_topologymapview_tsx.l459.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/pages/cores/TopologyMapView.tsx:459 [active] (library)",
+   "label": "<Button> onClick · web/src/pages/cores/_parked/TopologyMapView.tsx:459 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -35757,7 +35757,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/TopologyMapView.tsx",
+     "path": "web/src/pages/cores/_parked/TopologyMapView.tsx",
      "line": 459,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -35768,7 +35768,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_topologymapview_tsx.l460.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/pages/cores/TopologyMapView.tsx:460 [active] (library)",
+   "label": "<Button> onClick · web/src/pages/cores/_parked/TopologyMapView.tsx:460 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -35778,7 +35778,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/TopologyMapView.tsx",
+     "path": "web/src/pages/cores/_parked/TopologyMapView.tsx",
      "line": 460,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -37343,7 +37343,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_frontdoor_tsx.l454.onchange",
    "kind": "edge",
-   "label": "<ChoiceCardGroup> onChange · web/src/pages/cores/frontDoor.tsx:454 [active] (library)",
+   "label": "<ChoiceCardGroup> onChange · web/src/pages/cores/_parked/frontDoor.tsx:454 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -37353,7 +37353,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/frontDoor.tsx",
+     "path": "web/src/pages/cores/_parked/frontDoor.tsx",
      "line": 454,
      "anchor": "onChange",
      "claim": "a library control's onChange handler on ChoiceCardGroup"
@@ -37364,7 +37364,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_frontdoor_tsx.l473.onchange",
    "kind": "edge",
-   "label": "<ChoiceCard> onChange · web/src/pages/cores/frontDoor.tsx:473 [active] (library)",
+   "label": "<ChoiceCard> onChange · web/src/pages/cores/_parked/frontDoor.tsx:473 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -37374,7 +37374,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/frontDoor.tsx",
+     "path": "web/src/pages/cores/_parked/frontDoor.tsx",
      "line": 473,
      "anchor": "onChange",
      "claim": "a library control's onChange handler on ChoiceCard"
@@ -37385,7 +37385,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_frontdoor_tsx.l490.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/pages/cores/frontDoor.tsx:490 [active] (library)",
+   "label": "<Button> onClick · web/src/pages/cores/_parked/frontDoor.tsx:490 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -37395,7 +37395,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/frontDoor.tsx",
+     "path": "web/src/pages/cores/_parked/frontDoor.tsx",
      "line": 490,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -37406,7 +37406,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_frontdoor_tsx.l502.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/pages/cores/frontDoor.tsx:502 [active] (library)",
+   "label": "<Button> onClick · web/src/pages/cores/_parked/frontDoor.tsx:502 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -37416,7 +37416,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/frontDoor.tsx",
+     "path": "web/src/pages/cores/_parked/frontDoor.tsx",
      "line": 502,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -37427,7 +37427,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_frontdoor_tsx.l503.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/pages/cores/frontDoor.tsx:503 [active] (library)",
+   "label": "<Button> onClick · web/src/pages/cores/_parked/frontDoor.tsx:503 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -37437,7 +37437,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/frontDoor.tsx",
+     "path": "web/src/pages/cores/_parked/frontDoor.tsx",
      "line": 503,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -37448,7 +37448,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_frontdoor_tsx.l582.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/pages/cores/frontDoor.tsx:582 [active] (library)",
+   "label": "<Button> onClick · web/src/pages/cores/_parked/frontDoor.tsx:582 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -37458,7 +37458,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/frontDoor.tsx",
+     "path": "web/src/pages/cores/_parked/frontDoor.tsx",
      "line": 582,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -37469,7 +37469,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_frontdoor_tsx.l583.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/pages/cores/frontDoor.tsx:583 [active] (library)",
+   "label": "<Button> onClick · web/src/pages/cores/_parked/frontDoor.tsx:583 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -37479,7 +37479,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/frontDoor.tsx",
+     "path": "web/src/pages/cores/_parked/frontDoor.tsx",
      "line": 583,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -37490,7 +37490,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_history_aftercaregadgets_tsx.l27.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/pages/cores/history/AftercareGadgets.tsx:27 [active] (library)",
+   "label": "<Button> onClick · web/src/pages/cores/history/_parked/AftercareGadgets.tsx:27 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -37511,7 +37511,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_history_aftercaregadgets_tsx.l36.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/pages/cores/history/AftercareGadgets.tsx:36 [active] (library)",
+   "label": "<Button> onClick · web/src/pages/cores/history/_parked/AftercareGadgets.tsx:36 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -37805,7 +37805,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_history_meetingreview_tsx.l320.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/pages/cores/history/MeetingReview.tsx:320 [active] (library)",
+   "label": "<Button> onClick · web/src/pages/cores/history/_parked/shims/MeetingReview.tsx:320 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -37826,7 +37826,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_history_meetingreview_tsx.l484.onkeydown",
    "kind": "edge",
-   "label": "<li> onKeyDown · web/src/pages/cores/history/MeetingReview.tsx:484 [active] (raw)",
+   "label": "<li> onKeyDown · web/src/pages/cores/history/_parked/shims/MeetingReview.tsx:484 [active] (raw)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -37847,7 +37847,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_history_meetingreview_tsx.l522.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/pages/cores/history/MeetingReview.tsx:522 [active] (library)",
+   "label": "<Button> onClick · web/src/pages/cores/history/_parked/shims/MeetingReview.tsx:522 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -37868,7 +37868,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_history_meetingreview_tsx.l533.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/pages/cores/history/MeetingReview.tsx:533 [active] (library)",
+   "label": "<Button> onClick · web/src/pages/cores/history/_parked/shims/MeetingReview.tsx:533 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -37889,7 +37889,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_history_meetingreview_tsx.l547.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/pages/cores/history/MeetingReview.tsx:547 [active] (library)",
+   "label": "<Button> onClick · web/src/pages/cores/history/_parked/shims/MeetingReview.tsx:547 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -37910,7 +37910,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_history_meetingreview_tsx.l567.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/pages/cores/history/MeetingReview.tsx:567 [active] (library)",
+   "label": "<Button> onClick · web/src/pages/cores/history/_parked/shims/MeetingReview.tsx:567 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -37931,7 +37931,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_history_meetingreview_tsx.l631.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/pages/cores/history/MeetingReview.tsx:631 [active] (library)",
+   "label": "<Button> onClick · web/src/pages/cores/history/_parked/shims/MeetingReview.tsx:631 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -37952,7 +37952,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_history_meetingreview_tsx.l655.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/pages/cores/history/MeetingReview.tsx:655 [active] (library)",
+   "label": "<Button> onClick · web/src/pages/cores/history/_parked/shims/MeetingReview.tsx:655 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -37973,7 +37973,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_history_meetingreview_tsx.l708.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/pages/cores/history/MeetingReview.tsx:708 [active] (library)",
+   "label": "<Button> onClick · web/src/pages/cores/history/_parked/shims/MeetingReview.tsx:708 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -37994,7 +37994,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_history_meetingreview_tsx.l716.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/pages/cores/history/MeetingReview.tsx:716 [active] (library)",
+   "label": "<Button> onClick · web/src/pages/cores/history/_parked/shims/MeetingReview.tsx:716 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -38015,7 +38015,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_history_meetingreview_tsx.l788.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/pages/cores/history/MeetingReview.tsx:788 [active] (library)",
+   "label": "<Button> onClick · web/src/pages/cores/history/_parked/shims/MeetingReview.tsx:788 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -39157,7 +39157,7 @@
    "evidence": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/features/concierge/ConciergeCore.tsx",
+     "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
      "line": 558,
      "claim": "the refusal sits BESIDE its verb, with the server's own words",
      "symbol": "ConciergeCore"
@@ -39171,7 +39171,7 @@
    "evidence": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/features/concierge/ConciergeCore.tsx",
+     "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
      "line": 127,
      "claim": "a found engine that answered nothing wears UNREACHABLE",
      "symbol": "FoundEngineRow"
@@ -46579,7 +46579,7 @@
    "evidence": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/features/concierge/ConciergeCore.tsx",
+     "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
      "line": 569,
      "claim": "a USER verb, Use this for summaries, writes the assignment",
      "symbol": "ConciergeCore"
@@ -46858,7 +46858,7 @@
     },
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/features/concierge/ConciergeCore.tsx",
+     "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
      "line": 113,
      "claim": "the verb is drawn only while the row is NOT downloading, so it cannot be pressed again",
      "symbol": "FoundEngineRow"
@@ -47295,7 +47295,7 @@
    "evidence": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/features/concierge/ConciergeCore.tsx",
+     "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
      "line": 569,
      "claim": "the user verb",
      "symbol": "ConciergeCore"

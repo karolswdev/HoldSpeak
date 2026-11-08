@@ -105,13 +105,13 @@
           "line": 1094
         },
         {
-          "path": "web/src/desk/components/ThreadComposer.tsx",
+          "path": "web/src/desk/components/_parked/ThreadComposer.tsx",
           "symbol": "InlineEditor",
           "claim": "Group focus keeps Send/Cancel reachable; shared Pad editors retain existing draft and speech append contracts.",
           "line": 1030
         },
         {
-          "path": "web/src/desk/components/ThreadComposer.tsx",
+          "path": "web/src/desk/components/_parked/ThreadComposer.tsx",
           "symbol": "export function ThreadComposer",
           "line": 370,
           "claim": "Only an actual pending task blocks duplicate dispatch; unknown preserves words and allows a new explicit Send."
@@ -159,13 +159,13 @@
           "execution": "passed"
         },
         {
-          "path": "web/src/desk/__tests__/ThreadComposer.test.tsx",
+          "path": "web/src/desk/__tests__/_parked/ThreadComposer.test.tsx",
           "node": "allows an explicit new Send of retained words after unknown, blocking only the actual pending command",
           "assertion": "A new deliberate Send is possible after unknown; pending blocks another dispatch.",
           "execution": "passed"
         },
         {
-          "path": "web/src/desk/__tests__/ThreadComposer.test.tsx",
+          "path": "web/src/desk/__tests__/_parked/ThreadComposer.test.tsx",
           "node": "names an unknown task outcome without automatic replay and retains newer typing and speech",
           "assertion": "Transport ambiguity retains original command and newer typed/spoken draft without replay.",
           "execution": "passed"
@@ -921,9 +921,9 @@
         "iPad workflow client"
       ],
       "entry_points": [
-        "holdspeak/services/sequence_workflow_service.py::SequenceWorkflowService",
+        "holdspeak/services/_parked/sequence_workflow_service.py::SequenceWorkflowService",
         "holdspeak/web/routes/primitives/workflows.py::build_workflows_router",
-        "holdspeak/mcp/families/sequence.py::dispatch"
+        "holdspeak/mcp/families/_parked/sequence.py::dispatch"
       ],
       "platforms": {
         "macos": "supported_with_setup",
@@ -952,9 +952,7 @@
       ],
       "apis": [
         "GET/POST /api/workflows",
-        "GET/PUT/DELETE /api/workflows/{workflow_id}",
-        "POST /api/workflows/{workflow_id}/run",
-        "POST /api/workflows/runs/{parent_operation_id}/cancel"
+        "GET/PUT/DELETE /api/workflows/{workflow_id}"
       ],
       "configuration": [
         "node failure policy",
@@ -984,7 +982,7 @@
       ],
       "sources": [
         {
-          "path": "holdspeak/services/sequence_workflow_service.py",
+          "path": "holdspeak/services/_parked/sequence_workflow_service.py",
           "symbol": "SequenceWorkflowService",
           "line": 36,
           "claim": "The service runs only trusted admitted children and stages a result artifact."
@@ -1009,7 +1007,7 @@
           }
         },
         {
-          "path": "tests/unit/test_sequence_workflow_runner_migration.py",
+          "path": "tests/_parked/unit/test_sequence_workflow_runner_migration.py",
           "node": "test_three_step_sequence_has_three_admitted_children_and_terminal_receipts",
           "assertion": "A three-step run has three parent-linked succeeded child receipts.",
           "execution": {
@@ -1020,7 +1018,7 @@
           }
         },
         {
-          "path": "tests/integration/test_sequence_workflow_restart.py",
+          "path": "tests/_parked/integration/test_sequence_workflow_restart.py",
           "node": "test_restart_reconstructs_the_same_frozen_sequence_node_attempt",
           "assertion": "Restart reuses the same frozen route and operation plan.",
           "execution": {

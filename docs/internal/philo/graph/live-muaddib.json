@@ -281,7 +281,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/features/concierge/ConciergeCore.tsx",
+     "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
      "line": 541,
      "claim": "the verb beside the address field",
      "symbol": "ConciergeCore"
@@ -309,7 +309,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/features/concierge/ConciergeCore.tsx",
+     "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
      "line": 582,
      "claim": "the verb that opens the address row",
      "symbol": "ConciergeCore"
@@ -337,7 +337,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/features/concierge/ConciergeCore.tsx",
+     "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
      "line": 109,
      "claim": "the per-engine probe verb, drawn only for a cloud engine with a key",
      "symbol": "FoundEngineRow"
@@ -365,7 +365,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/features/concierge/ConciergeCore.tsx",
+     "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
      "line": 569,
      "claim": "the one gesture that finishes setup",
      "symbol": "ConciergeCore"
@@ -1333,14 +1333,14 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/features/concierge/ConciergeCore.tsx",
+     "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
      "line": 567,
      "claim": "Use this for summaries is enabled only when the added engine checked READY",
      "symbol": "addEngineState"
     },
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/features/concierge/ConciergeCore.tsx",
+     "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
      "line": 550,
      "claim": "the checked model name is shown beside it",
      "symbol": "concierge-add-model"
@@ -1361,7 +1361,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/features/concierge/ConciergeCore.tsx",
+     "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
      "line": 558,
      "claim": "a refused check states its reason in an alert beside the field",
      "symbol": "concierge-add-reason"
@@ -1627,14 +1627,14 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/features/concierge/ConciergeCore.tsx",
+     "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
      "line": 84,
      "claim": "the concierge row knows an UNREACHABLE engine",
      "symbol": "isUnreachable"
     },
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/features/concierge/ConciergeCore.tsx",
+     "path": "web/src/features/concierge/_parked/ConciergeCore.tsx",
      "line": 127,
      "claim": "it draws a failure chip for it",
      "symbol": "UNREACHABLE"
