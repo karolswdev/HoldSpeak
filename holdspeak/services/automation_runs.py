@@ -251,14 +251,17 @@ def run_as_program(
     db: Any, principal: Any, wb: Any, *, now: Optional[datetime] = None,
     event: Optional[dict[str, Any]] = None, title: Optional[str] = None,
     start: bool = True, wait: bool = False, key: Optional[str] = None,
+    context: Optional[dict[str, Any]] = None,
 ) -> dict[str, Any]:
-    """Start one run of an instruction automation: a Program titled
-    "<name>, <date>" (or the event's title) with one prompt step that does
-    the instruction about the automation's sources and delivers where Put
-    it in says. One Program per minute: a second start in the same minute
-    returns the first. ``key`` names the run (a scheduled minute): a second
-    start with the same key returns the first Program and starts nothing.
-    ``wait``: the step's call runs in this thread before the return.
+    """Start one run of an automation: a Program titled "<name>, <date>"
+    (or the event's title) with one prompt step that does the instruction
+    about the automation's sources and delivers where Put it in says. An
+    event start adds the event to the brief; an automation with no
+    instruction gets the event's words as its brief. ``key`` names the run
+    (a scheduled minute, one event): a second start with the same key
+    returns the first Program and starts nothing. ``context`` is kept on
+    the step (``facts.run_context``: the watch and event a start came
+    from). ``wait``: the step's call runs in this thread before the return.
     ``{"program_id", "run_id", "started"}``."""
     from ..db.programs import ProgramStore
     from .program_service import default_program_service
@@ -270,7 +273,9 @@ def run_as_program(
                 return {"program_id": row["id"], "run_id": row["id"], "started": False}
     brief = str(wb.instruction or "").strip()
     if event is not None:
-        brief = f"{brief}\n\n{_event_block(event)}"
+        # With no instruction, the event's own words are the brief.
+        words = brief or f"Something happened: {title or event.get('event_type') or 'an event'}. Say what it means for me."
+        brief = f"{words}\n\n{_event_block(event)}"
     target = str(wb.output_target or "inbox")
     project_id = target[len(PROJECT_UPDATES_PREFIX):] if target.startswith(PROJECT_UPDATES_PREFIX) else None
     service = default_program_service(db)
@@ -284,10 +289,11 @@ def run_as_program(
         steps=[{"title": str(wb.name or "Automation"), "brief": brief, "kind": "prompt",
                 "deliver": target, "sources": sources_of(wb)}],
     )
-    if key:
+    if key or context:
         store = ProgramStore(db)
         for step in store.list_steps(made["id"]):
-            step["facts"] = {**(step.get("facts") or {}), "run_key": key}
+            step["facts"] = {**(step.get("facts") or {}), **({"run_key": key} if key else {}),
+                             **({"run_context": dict(context)} if context else {})}
             store.save_step(step)
     if wait:
         # A caller waits on the answer (the Room's Draft update): the step's

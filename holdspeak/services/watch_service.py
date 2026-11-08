@@ -57,31 +57,6 @@ def _automation_event_pattern(rules: list[dict[str, Any]]) -> str:
     return ""
 
 
-def _run_now(coro: Any) -> Any:
-    """Run one coroutine to its end from sync code, on or off an event loop."""
-    import asyncio
-    import threading
-
-    try:
-        asyncio.get_running_loop()
-    except RuntimeError:
-        return asyncio.run(coro)
-    box: dict[str, Any] = {}
-
-    def target() -> None:
-        try:
-            box["value"] = asyncio.run(coro)
-        except BaseException as exc:  # handed back to the caller's thread
-            box["error"] = exc
-
-    thread = threading.Thread(target=target, name="watch-automation-run")
-    thread.start()
-    thread.join()
-    if "error" in box:
-        raise box["error"]
-    return box.get("value")
-
-
 # Material fields on connector_watches.  Changing any of these
 # triggers revision+1 and stales test_state + baseline_state (ACT-008).
 _MATERIAL_FIELDS: frozenset[str] = frozenset({
@@ -1619,17 +1594,20 @@ class WatchService:
         watch = self._repo.get_watch(watch_id)
         if not watch or watch.get("intent") != AUTOMATION_INTENT_PREFIX + workbench_id:
             raise NotFound("automation event", watch_id)
+        from holdspeak.db.programs import ProgramStore
+        from holdspeak.services.automation_runs import program_runs
+
+        store = ProgramStore(self._db)
         out: list[dict[str, Any]] = []
-        for item in self._db.workbench_items.list_for_workbench(workbench_id, limit=2000):
-            try:
-                context = json.loads(item.context_json or "{}")
-            except (TypeError, ValueError):
-                continue
-            if not isinstance(context, dict) or context.get("watch_id") != watch_id:
-                continue
-            out.append({"item_id": item.id, "created_at": item.created_at,
-                        "event_type": context.get("event_type", ""),
-                        "entity_ref": context.get("entity_ref", "")})
+        for program in program_runs(self._db, workbench_id):
+            for step in store.list_steps(program["id"]):
+                context = (step.get("facts") or {}).get("run_context") or {}
+                if context.get("watch_id") != watch_id:
+                    continue
+                out.append({"item_id": step["id"], "program_id": program["id"],
+                            "created_at": program.get("created_at"),
+                            "event_type": context.get("event_type", ""),
+                            "entity_ref": context.get("entity_ref", "")})
         out.sort(key=lambda row: str(row.get("created_at") or ""), reverse=True)
         return out[: max(1, int(limit))]
 
@@ -1689,13 +1667,13 @@ class WatchService:
         action: dict[str, Any],
         transitions: list[dict[str, Any]],
     ) -> list[dict[str, Any]]:
-        """One occurrence per matching transition, made once and run at once.
+        """One Program per matching transition, made once and run at once
+        (2026-11-08: an automation's run is a Program of one prompt step).
 
-        The item id is derived from the rule and the entity's revision, so a
-        replayed evaluation finds the item it made and runs nothing twice.
+        The run key is derived from the rule and the entity's revision, so a
+        replayed evaluation finds the Program it made and runs nothing twice.
         """
-        from holdspeak.services.automation_runs import mint_occurrence
-        from holdspeak.services.workbench_service import WorkbenchService
+        from holdspeak.services.automation_runs import run_as_program
 
         workbench_id = str(action.get("workbench_id") or "")
         wb = self._db.workbenches.get(workbench_id) if workbench_id else None
@@ -1703,18 +1681,15 @@ class WatchService:
             return []
         watch = self._repo.get_watch(watch_id) or {}
         owner = Principal(PrincipalKind.OWNER, "watch-automation")
-        workbenches = WorkbenchService(self._db)
         results: list[dict[str, Any]] = []
         for transition in transitions:
             if not match_condition(condition, [transition]):
                 continue
             facts = dict(transition.get("facts") or {})
             entity_ref = str(transition.get("entity_ref") or "")
-            item_id = "wbi_watch_" + hashlib.sha256(
+            key = "watch:" + hashlib.sha256(
                 f"{rule_id}:{entity_ref}:{transition.get('source_revision', '')}".encode()
             ).hexdigest()[:20]
-            if self._db.workbench_items.get(item_id, include_parked=True) is not None:
-                continue
             event = {
                 "event_type": transition.get("event_type", ""),
                 "subject_ref": f"{watch.get('connector_id', '')}:{watch.get('query_kind', '')}:{entity_ref}",
@@ -1724,22 +1699,13 @@ class WatchService:
                        "event_type": event["event_type"], "entity_ref": entity_ref}
             title = str(facts.get("entity_title") or "").strip() or str(event["event_type"])
             try:
-                if str(wb.instruction or "").strip():
-                    item = mint_occurrence(self._db, wb, item_id=item_id, title=title,
-                                           event=event, context=context)
-                else:
-                    item = self._db.workbench_items.upsert(
-                        item_id=item_id, workbench_id=wb.id, title=title,
-                        body=json.dumps({"event": event}, sort_keys=True, indent=2),
-                        context=context,
-                    )
-                run = _run_now(workbenches.run_item(
-                    owner, workbench_id, item.id, request_id=f"watch:{watch_id}:{item_id}",
-                ))
-                results.append({"item_id": item.id, "status": "ran",
-                                "operation_id": (run or {}).get("parent_operation_id")})
+                ran = run_as_program(self._db, owner, wb, event=event, title=title, key=key,
+                                     context=context, wait=True)
+                if not ran["started"]:
+                    continue  # this event ran already
+                results.append({"program_id": ran["program_id"], "status": "ran"})
             except Exception as exc:  # one failed run never stops the sweep
-                results.append({"item_id": item_id, "status": "failed", "error": str(exc)})
+                results.append({"key": key, "status": "failed", "error": str(exc)})
         return results
 
     # ── Rules ───────────────────────────────────────────────────────
