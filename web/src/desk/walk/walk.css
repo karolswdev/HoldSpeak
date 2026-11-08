@@ -1,4 +1,5 @@
-/* The Walk (2026-11-07): a dim backdrop with the part cut out, a 2 px accent
+/* The Walk (2026-11-07): a dim of four rectangles around the part (nothing
+   over the part: it takes the pointer, also while it moves), a 2 px accent
    ring that pulses once and stays, and one card in kit material beside the
    part. Over the windows, the dock and the popovers; under the feedback strip. */
 .walk-layer {
@@ -10,10 +11,8 @@
 
 .walk-backdrop {
   position: fixed;
-  inset: 0;
   background: color-mix(in srgb, var(--wb-ink, #0f1a22) 46%, transparent);
   pointer-events: auto;
-  transition: clip-path 180ms ease-out;
 }
 
 .walk-ring {
@@ -131,5 +130,4 @@
 
 @media (prefers-reduced-motion: reduce) {
   .walk-ring { animation: none; }
-  .walk-backdrop { transition: none; }
 }
