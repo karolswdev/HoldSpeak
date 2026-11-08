@@ -51,7 +51,7 @@ vi.mock("../openObject", async (importOriginal) => ({
 import { ApiError } from "../../lib/api";
 import { CallsCore } from "../calls/CallsWindow";
 import { CallsSettingsPane, EGRESS_SENTENCE, INSTALL_COMMAND, RUN_COMMAND, TELNYX_COMMAND, TWILIO_COMMAND } from "../calls/CallsSettings";
-import { SETTINGS_SECTIONS } from "../../pages/cores/settingsPrefs";
+import { SETTINGS_SECTIONS } from "../../pages/cores/settings/prefs";
 import { DESK_APPLICATIONS, goRows } from "../applications";
 
 function subscribe(type: string, listener: (frame: Frame) => void) {

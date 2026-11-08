@@ -253,13 +253,6 @@ export async function updateDecision(id: string, input: DecisionInput): Promise<
   return fromWireDecision(wireRaw(response, "decision"));
 }
 
-export async function updateDecisionStatus(id: string, status: DecisionInput["status"]): Promise<Decision | null> {
-  const response = await apiFetch<Record<string, unknown>>(`/api/decisions/${encodeURIComponent(id)}/status`, {
-    method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status }),
-  });
-  return fromWireDecision(wireRaw(response, "decision"));
-}
-
 export async function supersedeDecision(id: string): Promise<Decision | null> {
   const response = await apiFetch<Record<string, unknown>>(`/api/decisions/${encodeURIComponent(id)}/supersede`, { method: "POST" });
   return fromWireDecision(wireRaw(response, "decision"));

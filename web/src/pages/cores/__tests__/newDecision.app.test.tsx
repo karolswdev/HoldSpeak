@@ -179,7 +179,8 @@ describe("New Decision opens a window of its own", () => {
       project_name: PROJECT.name,
       status: "accepted",
     });
-    expect(hub.puts).toEqual([`/api/projects/${PROJECT.id}/resources/decision_record:${RECORD.wire.id}`]);
+    // One decision writer (2026-11-08): the hub files it in the same call.
+    expect(hub.puts).toEqual([]);
 
     // The New decision window is gone; the Decisions window holds the record.
     await waitFor(() => expect(useDesk.getState().windowsById[NEW_WINDOW]).toBeUndefined());

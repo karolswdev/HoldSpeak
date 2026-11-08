@@ -1,8 +1,9 @@
 /** Decision pullout content (HS-117-15). */
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { apiFetch, apiRequest } from "../../lib/api";
+import { apiFetch } from "../../lib/api";
 import { Button } from "../../components/signal/Signal";
 import { useDesk } from "../store";
+import { writeDecisionStatus } from "../decide";
 import { openSurfaceOr } from "../shell";
 import { openIntelligence } from "../intelligenceNavigation";
 import { qualifiedRef } from "../api";
@@ -254,13 +255,7 @@ export function DecisionPullout({ object: o }: PulloutContentProps) {
     setStatusFailure("");
     setAcceptedHere(false);
     try {
-      const response = await apiRequest(`/api/decisions/${encodeURIComponent(o.id)}/status`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: next }),
-      });
-      if (!response.ok) throw response;
-      const body = await response.json();
+      const body = await writeDecisionStatus(o.id, next);
       if (generation !== statusWrite.current.generation) return;
       const saved = String(body?.decision?.status ?? next);
       setSavedStatus(saved);

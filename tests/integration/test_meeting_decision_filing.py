@@ -2,8 +2,9 @@
 canonical project axis; source tags, record provenance and the meeting stay.
 
 The bounded producer chain the Meeting Decide well and the decision's filing
-strip drive: POST /api/decision-records/from-desk, then the member PUT,
-the relationship GET and the DELETE against ``decision_record:<id>``.
+strip drive: POST /api/decision-records/from-desk (which files the record),
+then the relationship GET, the DELETE and a correcting PUT against
+``decision_record:<id>``.
 """
 from __future__ import annotations
 
@@ -79,11 +80,8 @@ def test_meeting_decision_files_and_corrects_on_the_canonical_axis_only(tmp_path
     # The source keeps a drawer; correction must never move it.
     assert client.put(f"/api/kbs/drawer/members/{quote(source_ref, safe='')}").status_code == 200
 
-    filed = client.put(
-        f"/api/projects/atlas/resources/{quote(record_ref, safe='')}", json={"relationship": "member"},
-    )
-    assert filed.status_code == 200, filed.text
-    assert filed.json()["resource"]["relationship"] == "member"
+    # One writer (2026-11-08): the create filed it; there is no second write.
+    assert body["record"]["project_id"] == "atlas"
     assert [(r["project_id"], r["relationship"]) for r in _rows(client, record_ref)] == [("atlas", "member")]
 
     # Correction: Atlas out, Ledger in, on the canonical ref only.
@@ -103,9 +101,7 @@ def test_meeting_decision_files_and_corrects_on_the_canonical_axis_only(tmp_path
     tags = source["tags"] if isinstance(source, dict) else source.tags
     assert "project:atlas" in tags and "meeting:m1" in tags
     record = client.get(f"/api/decision-records/{record_id}").json()
-    assert {("project", "atlas"), ("meeting", "m1")} <= {
-        (s["source_type"], s["source_ref"]) for s in record["sources"]
-    }
+    assert ("meeting", "m1") in {(s["source_type"], s["source_ref"]) for s in record["sources"]}
     source_axes = client.get(f"/api/desk/relationships/{quote(source_ref, safe='')}").json()
     assert [row["knowledge_id"] for row in source_axes["knowledge"]] == ["drawer"]
     assert len(db.desk_decisions.list()) == 1

@@ -6,7 +6,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useDesk } from "../../../desk/store";
-import { DeskModule, PREF_MODULES } from "../settingsPrefs";
+import { DeskModule, PREF_MODULES } from "../settings/prefs";
 
 describe("DeskModule (HS-112-03)", () => {
   const resetDesk = vi.fn(async () => ({ tombstoned: 7, seeded: 8 }));

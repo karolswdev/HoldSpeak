@@ -30,7 +30,7 @@ export type NeedVerbs =
   | { kind: "gate-cut"; proposalId: string; sessionKey: string }
   | { kind: "pr"; url: string; number: number | null }
   | { kind: "session"; sessionKey: string }
-  | { kind: "review"; ref: string; label?: string }
+  | { kind: "review"; ref: string }
   | { kind: "commitment"; next: "name_owner" | "set_date" | "mark_done"; cardId: string }
   /** Betterment D2: an action item by its direction. *mine*: Done; *theirs*:
    *  Nudge (it prepares a message; he presses Send). More holds Open, Set a
@@ -533,7 +533,8 @@ function attentionFace(item: NeedsYouRoomItem, ctx: NeedCtx): NeedFace {
         lessonId: program.lessonId ?? null,
         ask,
       },
-      openRef: `program:${program.programId}`,
+      // The step travels: the Program window opens with this step selected.
+      openRef: `program:${program.programId}${program.stepId ? `:${program.stepId}` : ""}`,
       kindWord: "Program",
       ...(item.projectId ? { projectId: String(item.projectId) } : {}),
     };
@@ -671,7 +672,8 @@ function attentionFace(item: NeedsYouRoomItem, ctx: NeedCtx): NeedFace {
         }, openRef: String(item.openRef) };
     }
     return { id, kind: "decision", name: title, fact: factProject, lamp, group: "rest",
-      verbs: { kind: "review", ref: String(item.openRef), label: "Decide" }, openRef: String(item.openRef) };
+      // One meaning for Decide (it opens the choices): this row only opens.
+      verbs: { kind: "open", ref: String(item.openRef) }, openRef: String(item.openRef) };
   }
   // A proposal from a meeting: Confirm.
   if (item.proposalId) {

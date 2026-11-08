@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { EMPTY_ITEMS } from "../../api";
 import { useDesk } from "../../store";
-import { WallpaperModule } from "../../../pages/cores/settingsWallpaper";
+import { WallpaperModule } from "../../../pages/cores/settings/Wallpaper";
 
 const { load, factory, release, mountAtmosphereScene, activityDispose, compact } = vi.hoisted(() => ({
   load: vi.fn(),

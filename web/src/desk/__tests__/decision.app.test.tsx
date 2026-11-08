@@ -86,8 +86,11 @@ function hubFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Respons
       consequences_markdown: body.why ? `Why: ${body.why}` : "",
     });
     hub.decisions = [...hub.decisions, decision];
-    const record = { id: `rec_${hub.posts.length}`, source_type: "desk", source_id: decision.id };
+    // One decision writer (2026-11-08): the hub files the record in the
+    // Project in the same call; the record names it.
+    const record = { id: `rec_${hub.posts.length}`, source_type: "desk", source_id: decision.id, project_id: body.project_id ?? null };
     hub.records[String(decision.id)] = [record];
+    if (body.project_id) hub.relationships[`decision_record:${record.id}`] = [{ project_id: body.project_id, resource_ref: `decision_record:${record.id}`, relationship: "member" }];
     return Promise.resolve(json({ decision, record }, 201));
   }
   const bySource = /^\/api\/decision-records\/source\/desk\/([^/?]+)$/.exec(url);
@@ -369,11 +372,9 @@ describe("Decide in a meeting: Decide -> name -> receipt -> the decision window"
       project_id: "proj-checkout",
     });
     expect(String(hub.posts[0].why)).toMatch(/^Meeting: Checkout latency review · 2026-10-01/);
-    // HS-S42: filed on the canonical record, once.
-    expect(hub.puts).toEqual([{
-      url: "/api/projects/proj-checkout/resources/decision_record:rec_1",
-      body: { relationship: "member" },
-    }]);
+    // One decision writer (2026-11-08): the hub filed it in that call; the
+    // client makes no second write.
+    expect(hub.puts).toEqual([]);
 
     // The receipt is in the meeting, on the decision's row (read back from the hub).
     await waitFor(() => expect(screen.getByTestId("decide-receipt").textContent).toMatch(/^Decided \d\d:\d\d · Checkout$/));

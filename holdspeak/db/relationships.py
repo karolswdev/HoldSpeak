@@ -191,36 +191,54 @@ class ProjectRelationshipRepository(BaseRepository):
                confidence: float = 1.0, last_modified: Optional[str] = None,
                deleted: bool = False, created_at: Optional[str] = None,
                ) -> ProjectRelationshipRecord:
+        with self._connection() as conn:
+            pid, ref = self.upsert_in(
+                conn, project_id=project_id, resource_ref=resource_ref,
+                relationship=relationship, source=source, confidence=confidence,
+                last_modified=last_modified, deleted=deleted, created_at=created_at,
+            )
+        return self.get(pid, ref, include_deleted=True)  # type: ignore[return-value]
+
+    @staticmethod
+    def upsert_in(conn: Any, *, project_id: str, resource_ref: str,
+                  relationship: str = "member", source: str = "manual",
+                  confidence: float = 1.0, last_modified: Optional[str] = None,
+                  deleted: bool = False, created_at: Optional[str] = None,
+                  ) -> tuple[str, str]:
+        """The one project filing write, inside the caller's transaction.
+
+        A writer that files what it creates (a decision record) calls this on
+        its own connection, so the object and its filing commit together.
+        """
         pid, ref, now = str(project_id or "").strip(), qualified_ref(resource_ref), _now()
         relation = str(relationship or "member").strip().lower()
         if not pid:
             raise ValueError("project_id is required")
         if relation not in {"member", "source", "output", "related"}:
             raise ValueError(f"unknown project relationship: {relation}")
-        with self._connection() as conn:
-            if not deleted and conn.execute(
-                "SELECT 1 FROM projects WHERE id=? AND is_archived=0", (pid,)
-            ).fetchone() is None:
-                raise ValueError(f"Unknown Project: {pid}")
-            prior = conn.execute(
-                "SELECT created_at FROM project_resources WHERE project_id=? AND resource_ref=?",
-                (pid, ref),
-            ).fetchone()
-            conn.execute(
-                """INSERT INTO project_resources
-                   (project_id, resource_ref, relationship, source, confidence,
-                    created_at, last_modified, deleted)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                   ON CONFLICT(project_id, resource_ref) DO UPDATE SET
-                     relationship=excluded.relationship, source=excluded.source,
-                     confidence=excluded.confidence, last_modified=excluded.last_modified,
-                     deleted=excluded.deleted""",
-                (pid, ref, relation, str(source or "manual").strip().lower(),
-                 max(0.0, min(1.0, float(confidence))),
-                 created_at or (prior[0] if prior else now),
-                 last_modified or now, int(deleted)),
-            )
-        return self.get(pid, ref, include_deleted=True)  # type: ignore[return-value]
+        if not deleted and conn.execute(
+            "SELECT 1 FROM projects WHERE id=? AND is_archived=0", (pid,)
+        ).fetchone() is None:
+            raise ValueError(f"Unknown Project: {pid}")
+        prior = conn.execute(
+            "SELECT created_at FROM project_resources WHERE project_id=? AND resource_ref=?",
+            (pid, ref),
+        ).fetchone()
+        conn.execute(
+            """INSERT INTO project_resources
+               (project_id, resource_ref, relationship, source, confidence,
+                created_at, last_modified, deleted)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+               ON CONFLICT(project_id, resource_ref) DO UPDATE SET
+                 relationship=excluded.relationship, source=excluded.source,
+                 confidence=excluded.confidence, last_modified=excluded.last_modified,
+                 deleted=excluded.deleted""",
+            (pid, ref, relation, str(source or "manual").strip().lower(),
+             max(0.0, min(1.0, float(confidence))),
+             created_at or (prior[0] if prior else now),
+             last_modified or now, int(deleted)),
+        )
+        return pid, ref
 
     def get(self, project_id: str, resource_ref: str, *,
             include_deleted: bool = False) -> Optional[ProjectRelationshipRecord]:

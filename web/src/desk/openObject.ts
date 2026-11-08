@@ -170,6 +170,34 @@ export function takeRoomUpdatesRequest(projectId: string | null | undefined): bo
   return !!projectId && roomUpdates.delete(projectId);
 }
 
+/** A Program window keeps ONE step target per Program, the latest explicit
+ * one (HS-S12): a Needs you row that names a step opens the Program window
+ * (`pullout:program:<id>`) with that step selected. The window takes the
+ * request once, when it mounts or, if it is open, on the event. */
+export const PROGRAM_STEP_EVENT = "holdspeak:program-step";
+const programSteps = new Map<string, string>();
+
+export function openProgramStep(programId: string, stepId = ""): void {
+  const id = programId.trim();
+  if (!id) return;
+  const step = stepId.trim();
+  if (step) {
+    programSteps.set(id, step);
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent<string>(PROGRAM_STEP_EVENT, { detail: id }));
+    }
+  }
+  void import("./store").then(({ useDesk }) => useDesk.getState().openPullout(`program:${id}`));
+}
+
+/** The step to select in `programId`'s window, once per request. */
+export function takeProgramStepRequest(programId: string | null | undefined): string | null {
+  if (!programId) return null;
+  const step = programSteps.get(programId) ?? null;
+  programSteps.delete(programId);
+  return step;
+}
+
 /** Refs the citation species opens in a window of their own. */
 const WINDOW_REF = /^(meeting|decision|note|artifact|thread):\S/;
 // `action:` is memory's name for the same action item (a recall hit, a chat citation).
@@ -209,11 +237,10 @@ export function refOpener(ref: string | null | undefined, navigation?: DeskNavig
       void import("./store").then(({ useDesk }) => useDesk.getState().openWorkbenchWindow(id));
     } : null;
   }
+  // `program:<id>:<step>` opens the same window with that step selected.
   if (clean.startsWith("program:")) {
-    const id = clean.slice("program:".length).split(":", 1)[0];
-    return id ? () => {
-      void import("./store").then(({ useDesk }) => useDesk.getState().openPullout(`program:${id}`));
-    } : null;
+    const [id, step = ""] = clean.slice("program:".length).split(":");
+    return id ? () => openProgramStep(id, step) : null;
   }
   if (clean.startsWith("launch:")) {
     const id = clean.slice("launch:".length);
