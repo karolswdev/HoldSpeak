@@ -501,7 +501,7 @@
       "sha256": "994b3c1ea9a1216d692669ef15686a52da677203a28f2239d8d747c6f980f7e8"
     },
     {
-      "path": "holdspeak/mcp/families/reactions.py",
+      "path": "holdspeak/mcp/families/_parked/reactions.py",
       "sha256": "61746e9a1ec4555732390ed0416e28a7b7a005844e501a29954e55544465b25a"
     },
     {
@@ -73784,7 +73784,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/mcp/families/reactions.py",
+          "path": "holdspeak/mcp/families/_parked/reactions.py",
           "line": 41,
           "symbol": "source_census",
           "claim": "MCP catalogue calls _tool to declare event.list; family aggregation and palette/principal admission determine availability. No downstream trace implied."
@@ -76367,7 +76367,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/mcp/families/reactions.py",
+          "path": "holdspeak/mcp/families/_parked/reactions.py",
           "line": 46,
           "symbol": "source_census",
           "claim": "MCP catalogue calls _tool to declare reaction.create; family aggregation and palette/principal admission determine availability. No downstream trace implied."
@@ -76388,7 +76388,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/mcp/families/reactions.py",
+          "path": "holdspeak/mcp/families/_parked/reactions.py",
           "line": 45,
           "symbol": "source_census",
           "claim": "MCP catalogue calls _tool to declare reaction.list; family aggregation and palette/principal admission determine availability. No downstream trace implied."
@@ -76409,7 +76409,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/mcp/families/reactions.py",
+          "path": "holdspeak/mcp/families/_parked/reactions.py",
           "line": 22,
           "symbol": "source_census",
           "claim": "MCP catalogue calls _tool to declare reaction.presets; family aggregation and palette/principal admission determine availability. No downstream trace implied."
@@ -76430,7 +76430,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/mcp/families/reactions.py",
+          "path": "holdspeak/mcp/families/_parked/reactions.py",
           "line": 55,
           "symbol": "source_census",
           "claim": "MCP catalogue calls _tool to declare reaction.process; family aggregation and palette/principal admission determine availability. No downstream trace implied."
@@ -76451,7 +76451,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/mcp/families/reactions.py",
+          "path": "holdspeak/mcp/families/_parked/reactions.py",
           "line": 52,
           "symbol": "source_census",
           "claim": "MCP catalogue calls _tool to declare reaction.set_enabled; family aggregation and palette/principal admission determine availability. No downstream trace implied."
@@ -77186,7 +77186,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/mcp/families/reactions.py",
+          "path": "holdspeak/mcp/families/_parked/reactions.py",
           "line": 24,
           "symbol": "source_census",
           "claim": "MCP catalogue calls _tool to declare watch.create; family aggregation and palette/principal admission determine availability. No downstream trace implied."
@@ -77207,7 +77207,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/mcp/families/reactions.py",
+          "path": "holdspeak/mcp/families/_parked/reactions.py",
           "line": 23,
           "symbol": "source_census",
           "claim": "MCP catalogue calls _tool to declare watch.list; family aggregation and palette/principal admission determine availability. No downstream trace implied."
@@ -77228,7 +77228,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/mcp/families/reactions.py",
+          "path": "holdspeak/mcp/families/_parked/reactions.py",
           "line": 37,
           "symbol": "source_census",
           "claim": "MCP catalogue calls _tool to declare watch.preview; family aggregation and palette/principal admission determine availability. No downstream trace implied."
@@ -77249,7 +77249,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/mcp/families/reactions.py",
+          "path": "holdspeak/mcp/families/_parked/reactions.py",
           "line": 33,
           "symbol": "source_census",
           "claim": "MCP catalogue calls _tool to declare watch.refresh; family aggregation and palette/principal admission determine availability. No downstream trace implied."
@@ -77270,7 +77270,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/mcp/families/reactions.py",
+          "path": "holdspeak/mcp/families/_parked/reactions.py",
           "line": 30,
           "symbol": "source_census",
           "claim": "MCP catalogue calls _tool to declare watch.set_enabled; family aggregation and palette/principal admission determine availability. No downstream trace implied."
