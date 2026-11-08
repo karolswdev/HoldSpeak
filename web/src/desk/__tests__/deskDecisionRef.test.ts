@@ -12,6 +12,7 @@ import { DecisionUnconfirmed, decideFromMeeting, meetingScope } from "../decide"
 import { refOpener } from "../openObject";
 import { openPrimitive } from "../shell";
 import { openSourceRef } from "../surface";
+import { useDesk } from "../store";
 
 vi.mock("../../lib/api", async (original) => ({
   ...(await original<typeof import("../../lib/api")>()),
@@ -116,11 +117,18 @@ describe("a desk decision has one ref name", () => {
     expect((await meetingScope("m1")).state).toBe("unavailable");
   });
 
-  it("a desk_decision ref opens the decision window", () => {
+  // The one decision face (2026-11-08): the ref opens the decision's record
+  // in the Decisions window, found by the id the Desk keeps.
+  it("a desk_decision ref opens the decision's record in the Decisions window", async () => {
+    const openSurfaceWindow = vi.fn();
+    useDesk.setState({ openSurfaceWindow } as never);
+    vi.mocked(apiFetch).mockResolvedValueOnce([{ id: "rec_1" }] as never);
     refOpener("desk_decision:decision_7ce0")?.();
-    expect(openPrimitive).toHaveBeenCalledWith("decision:decision_7ce0");
+    await vi.waitFor(() => expect(openSurfaceWindow).toHaveBeenCalledWith("open-decisions", "record:rec_1"));
+    expect(calls()).toEqual(["GET /api/decision-records/source/desk/decision_7ce0"]);
+    expect(openPrimitive).not.toHaveBeenCalled();
 
-    vi.mocked(openPrimitive).mockReset();
+    // The window dispatch under it still names the store's own ref.
     openSourceRef("desk_decision:decision_7ce0");
     expect(openPrimitive).toHaveBeenCalledWith("decision:decision_7ce0");
   });
