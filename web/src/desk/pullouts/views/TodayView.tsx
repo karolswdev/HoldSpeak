@@ -361,7 +361,7 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
       name={newsWords(row)}
       verb={(
         <Button dense variant="secondary" data-testid="today-open-result" aria-label={`Open ${row.name}`}
-          onClick={() => useDesk.getState().openWorkbenchWindow(row.workbench_id)}>Open</Button>
+          onClick={() => useDesk.getState().openWorkbenchWindow(row.workbench_id)}>Open result</Button>
       )} />
   ));
 
@@ -370,7 +370,7 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
       name={agentResultWords(flight)}
       verb={(
         <Button dense variant="secondary" data-testid="today-open-agent-result" aria-label={`Open ${flight.title}`}
-          onClick={() => openAgentLane(String(flight.launchId))}>Open</Button>
+          onClick={() => openAgentLane(String(flight.launchId))}>Open session</Button>
       )} />
   ));
 
