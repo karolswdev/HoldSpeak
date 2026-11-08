@@ -5,7 +5,7 @@ import { useDesk } from "../../desk/store";
 import { useSettleState } from "../../desk/settleState";
 import { useAtmospherePreference } from "../../desk/gl/atmospherePreference";
 import { resolveAtmosphere } from "../../desk/gl/atmosphereRegistry";
-import { WallpaperModule } from "./settingsWallpaper";
+import { WallpaperModule } from "./settings/Wallpaper";
 import type { CoreProps } from "./core-types";
 
 /** One native window over the same browser-local picker used by Settings. */

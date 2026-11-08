@@ -122,7 +122,7 @@ Use these as examples of the named responsibility, not whole-file approval:
 
 - `src/desk/programs/ProgramsWindow.tsx`: Toolbar/list/StatusBar composition;
   `programs/api.ts` and `model.ts`: typed app boundary and wire-to-face mapping.
-- `src/pages/cores/settingsWindow.tsx`: shared preference rail/pane and compact
+- `src/pages/cores/settings/window.tsx`: shared preference rail/pane and compact
   Back; `surface/contract.md`: acknowledged save and captured editor patterns.
 - `src/desk/calls/CallsWindow.tsx`: readiness words, shared Calls/Phone hosting
   and app-local interaction state.

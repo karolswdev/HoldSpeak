@@ -5,7 +5,7 @@ import {
   PREF_MODULES,
   SETTINGS_SECTIONS,
   type SettingsSectionId,
-} from "../settingsPrefs";
+} from "./prefs";
 
 /* ── HS-172: egress helper (shared) ── */
 // intelHostLabel / intelHostScope collapsed into egressFor (desk/surface/egress.ts).

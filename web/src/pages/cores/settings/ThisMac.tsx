@@ -7,7 +7,7 @@ import { documentBuildId } from "../../../lib/buildId";
 import { FoldGadget, GadgetGroup, GadgetRow } from "../../../desk/surface/gadgets";
 import { humanTime, StateChip, SurfaceColumns } from "../../../desk/surface";
 import { openSurfaceOr } from "../../../desk/shell";
-import { BuilderToolsModule, DeskModule } from "../settingsPrefs";
+import { BuilderToolsModule, DeskModule } from "./prefs";
 import { Token } from "../../../desk/surface/Token";
 import { RemoteAccessModule } from "./RemoteAccess";
 import type { GrantAct } from "./grants";

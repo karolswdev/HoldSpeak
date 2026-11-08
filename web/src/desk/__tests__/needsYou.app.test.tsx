@@ -355,7 +355,7 @@ describe("Needs you: Reconnect opens Settings on the GitHub row", () => {
     // and the Settings window's own reads, recorded (`grouped`). Nothing mocks the
     // opener: NeedsDrawer's Reconnect -> shell.ts openSurfaceOr -> the surface
     // SurfaceWindows registered -> SettingsCore (scope integration:github, its
-    // focusProvider at SettingsCore.tsx:2388) -> ConnectionsPane's focus.
+    // focusProvider at SettingsCore.tsx:218, handed on at settings/Accounts.tsx:114) -> ConnectionsPane's focus.
     const misses: string[] = [];
     vi.mocked(apiFetch).mockImplementation(async (path: string) =>
       recordedGet(RECORDED.grouped.gets, path, misses) as never);

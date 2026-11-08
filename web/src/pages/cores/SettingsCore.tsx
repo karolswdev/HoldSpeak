@@ -15,18 +15,18 @@ import { useResource } from "../pageSupport";
 import { SurfaceState } from "../../desk/surface/Surface";
 import { SurfaceWell } from "../../desk/surface";
 import { openSurfaceOr } from "../../desk/shell";
-import { OwnerNameGroup, ownerSaveState, useOwnerPreferences } from "./settingsPeople";
-import { PrefSection, PrefWindow, clockWord } from "./settingsWindow";
+import { OwnerNameGroup, ownerSaveState, useOwnerPreferences } from "./settings/People";
+import { PrefSection, PrefWindow, clockWord } from "./settings/window";
 import type { ConnectionsFoot } from "./connections";
 import { CallsSettingsPane } from "../../desk/calls/CallsSettings";
-import "./settingsSurfaceRepair.css";
+import "./settings/surfaceRepair.css";
 import {
   SETTINGS_SECTIONS,
   type SettingsSectionId,
   PrefStatusBar,
   SettingsRailGlyph,
   type SettingsHubWire,
-} from "./settingsPrefs";
+} from "./settings/prefs";
 import { SECTION_ALIASES, SETTINGS_FOCUS_PATHS, settingsPageScope } from "./settings/navigation";
 import { useSettingsWriter, type SettingsChanges } from "./settings/writer";
 import { settingsBindings } from "./settings/bindings";

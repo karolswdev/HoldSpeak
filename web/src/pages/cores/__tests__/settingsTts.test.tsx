@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { TtsSettingsBlock } from "../settingsTts";
+import { TtsSettingsBlock } from "../settings/Desk";
 
 let unavailable: boolean;
 let installed: boolean;

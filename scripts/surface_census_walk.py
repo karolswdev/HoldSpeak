@@ -408,7 +408,7 @@ SETTINGS_SECTIONS: list[Surface] = [
 # ── the faces INSIDE a window: wings, gear doors, modules, views ──────
 #
 # A window is not one face. Settings alone carries nine module bodies behind
-# a hub ledger (`web/src/pages/cores/settingsPrefs.tsx:40`), and five cores
+# a hub ledger (`web/src/pages/cores/settings/prefs.tsx:40`), and five cores
 # carry wings and a gear door (`useCoreWings`). Each is measured on its own.
 
 SETTINGS_MODULES = [
@@ -449,7 +449,7 @@ def inner_surfaces() -> list[Surface]:
                 f"custom:settings-module:{label}",
                 "#surface-settings",
                 f"Go > Settings > the hub ledger row '{label}' > Open "
-                "(web/src/pages/cores/settingsPrefs.tsx:430)",
+                "(web/src/pages/cores/settings/prefs.tsx:430)",
                 cold=True,
             )
         )
@@ -1405,7 +1405,7 @@ class Walker:
             if result != "ok":
                 return False, None, (
                     f"the Settings hub has no '{label}' row with an Open verb (probe: {result}; "
-                    "the module roster is web/src/pages/cores/settingsPrefs.tsx:40)"
+                    "the module roster is web/src/pages/cores/settings/prefs.tsx:40)"
                 )
             page.wait_for_timeout(1400)
             return True, "#surface-settings", f"module '{label}'"

@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it } from "vitest";
 import { ATMOSPHERE_STORAGE_KEY } from "../../../desk/gl/atmospherePreference";
 import { ATMOSPHERE_MOTION_KEY, ATMOSPHERE_SOUND_KEY } from "../../../desk/gl/atmosphereControls";
-import { WallpaperModule } from "../settingsWallpaper";
+import { WallpaperModule } from "../settings/Wallpaper";
 
 beforeEach(() => {
   localStorage.clear();

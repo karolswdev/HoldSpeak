@@ -16,7 +16,7 @@ import { pickDefaultAgent } from "../agentHand";
 import { fitName } from "../surface/objects/fitName";
 import type { AgentsDetect } from "../firstrun/agentsStep";
 import { dismissAftercare, publishAftercare, refreshAftercare, useAftercare } from "../intelligenceAttention";
-import { PrefsFace, type SettingsHubWire } from "../../pages/cores/settingsPrefs";
+import { PrefsFace, type SettingsHubWire } from "../../pages/cores/settings/prefs";
 import { chipLabel, stateWords } from "../../pages/cores/connections/ConnectionsPane";
 
 const agent = (id: "claude" | "codex", signedIn: "yes" | "unknown", installed = true) => ({
