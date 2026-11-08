@@ -16,7 +16,7 @@ vi.mock("./DeskWindow", () => ({ DeskWindowFrame: ({ children, actions, onClose,
     try { if (!beforeClose || await beforeClose()) onClose(); } finally { waiting.current = false; }
   }}>Close window</button>{actions}{children}</section>;
 } }));
-vi.mock("../pullouts", () => ({ PULLOUT_CONTENT: { note: () => null, workflow: ({ object, registerClose }: { object: { id: string }; registerClose?: RegisterCloseGuard }) => {
+vi.mock("../pullouts", () => ({ PULLOUT_CONTENT: { note: () => null, recipe: ({ object, registerClose }: { object: { id: string }; registerClose?: RegisterCloseGuard }) => {
   const editing = useDesk((s) => s.editingId === object.id);
   useEffect(() => editing ? registerClose?.(editorGuard) : undefined, [editing, registerClose]);
   return <div>Workflow editor</div>;
@@ -57,13 +57,13 @@ describe("Pullout: every note opens in the one note window (Betterment Q8)", () 
 });
 
 describe("Pullout editor chrome close", () => {
-  const workflow = { kind: "workflow", id: "workflow-guard", title: "Review", ref: { kind: "workflow" } } as never;
+  const recipe = { kind: "recipe", id: "recipe-guard", title: "Review", ref: { kind: "recipe" } } as never;
   it("awaits the local writer and keeps the actual pullout open after a refused flush", async () => {
     let resolve!: (value: boolean) => void;
     editorGuard.mockImplementationOnce(() => new Promise<boolean>((done) => { resolve = done; }));
     const closePullout = vi.fn();
-    useDesk.setState({ profiles: [], editingId: "workflow-guard", closePullout });
-    render(<Pullout o={workflow} pulloutId="workflow:workflow-guard" />);
+    useDesk.setState({ profiles: [], editingId: "recipe-guard", closePullout });
+    render(<Pullout o={recipe} pulloutId="recipe:recipe-guard" />);
     fireEvent.click(screen.getByRole("button", { name: "Close window" }));
     fireEvent.click(screen.getByRole("button", { name: "Close window" }));
     expect(editorGuard).toHaveBeenCalledTimes(1);
@@ -72,18 +72,18 @@ describe("Pullout editor chrome close", () => {
     expect(closePullout).not.toHaveBeenCalled();
     editorGuard.mockResolvedValueOnce(true);
     await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Close window" })); });
-    expect(closePullout).toHaveBeenCalledWith("workflow:workflow-guard");
+    expect(closePullout).toHaveBeenCalledWith("recipe:recipe-guard");
   });
 
   it("removes the guard when its editor unmounts", async () => {
     editorGuard.mockResolvedValue(false);
     const closePullout = vi.fn();
-    useDesk.setState({ profiles: [], editingId: "workflow-guard", closePullout });
-    render(<Pullout o={workflow} />);
+    useDesk.setState({ profiles: [], editingId: "recipe-guard", closePullout });
+    render(<Pullout o={recipe} />);
     act(() => useDesk.setState({ editingId: null }));
     await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Close window" })); });
     expect(editorGuard).not.toHaveBeenCalled();
-    expect(closePullout).toHaveBeenCalledWith("workflow-guard");
+    expect(closePullout).toHaveBeenCalledWith("recipe-guard");
   });
 });
 

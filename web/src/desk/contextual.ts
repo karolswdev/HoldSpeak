@@ -15,7 +15,7 @@ export interface SelectedMaterial {
 
 export interface ContextualCapabilityAction {
   id: string;
-  kind: "recipe" | "chain" | "workflow";
+  kind: "recipe";
   label: string;
   input: string;
   selected: SelectedMaterial[];
@@ -35,7 +35,7 @@ export interface ContextualCoderAction {
   source: SelectedMaterial;
 }
 
-const CAPABILITY_KINDS = new Set<PrimitiveKind>(["recipe", "chain", "workflow"]);
+const CAPABILITY_KINDS = new Set<PrimitiveKind>(["recipe"]);
 const TEXT_MATERIAL_KINDS = new Set<PrimitiveKind>(["note", "artifact"]);
 /* PHILO-11-05 (design section 6, D1): the free-text desk Slack send is PARKED.
  * Its endpoint refuses `slack_moved_to_channel`, so no verb offers it; Slack is
@@ -107,7 +107,7 @@ export function contextualCapabilityActions(
     })
     .map((object) => ({
       id: object.id,
-      kind: object.kind as "recipe" | "chain" | "workflow",
+      kind: "recipe" as const,
       label:
         object.kind === "recipe"
           ? `Ask ${object.title} about ${selected.length === 1 ? selected[0].title : `${selected.length} items`}`

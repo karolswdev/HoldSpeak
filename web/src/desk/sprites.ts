@@ -60,8 +60,6 @@ export const VARIANTS: Record<string, string[]> = {
   // Capability kinds: one neutral object until they get their own icon.
   model: ["cartridge"],
   recipe: ["cartridge"],
-  chain: ["cartridge"],
-  workflow: ["cartridge"],
   workbench: ["cartridge"],
   intelligence: ["cartridge"],
 };

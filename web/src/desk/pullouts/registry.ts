@@ -41,9 +41,6 @@ export const PULLOUT_CONTENT: Record<PrimitiveKind, PulloutContent> = {
   // Decisions window reader; the Decision pullout is parked.
   decision: DecisionToReader,
   recipe: RecipePullout,
-  // The Sequence and Workflow faces are parked (2026-11-08).
-  chain: FallbackPullout,
-  workflow: FallbackPullout,
   coder: CoderPullout,
   directory: DirectoryPullout,
   thread: ThreadToAsk,

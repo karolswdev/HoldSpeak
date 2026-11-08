@@ -64,7 +64,7 @@ function resetStore() {
       meeting: [], artifact: [], note: [{ kind: "note", id: "n1", title: "T", bodyMarkdown: "", tags: [], createdAt: "" }],
       decision: [], recipe: [], kb: [], directory: [{ kind: "directory", id: "d1", name: "Z", parentId: null, memberIds: [], nameNormalized: "", createdAt: "" }],
       project: [{ kind: "project", id: "p1", name: "P", description: "", keywords: [], teamMembers: [], meetingCount: 0, createdAt: "", updatedAt: "" }],
-      chain: [], workflow: [], coder: [], game: [], layout: [], roadmap: [],
+      coder: [], game: [], layout: [], roadmap: [],
       story: [], repository: [{ kind: "repository", id: "r1", name: "R", sourceId: "s1", branch: "main", createdAt: "" }],
       workbench: [{ kind: "workbench", id: "wb1", name: "WB", createdAt: "" }],
       intelligence: [{ kind: "intelligence", id: "desk", name: "Intelligence" }],

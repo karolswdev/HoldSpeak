@@ -28,10 +28,7 @@ const EXPECTED: Record<PrimitiveKind, string | null> = {
   kb: null,
   directory: null,
   recipe: null,
-  // The Sequence and Workflow faces are parked (2026-11-08): no rename.
-  workflow: "No rename path",
   project: null,
-  chain: "No rename path",
   workbench: null,
   meeting: null,
   artifact: "Named by the run that minted it",

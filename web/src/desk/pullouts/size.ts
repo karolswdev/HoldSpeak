@@ -31,8 +31,6 @@ export const PULLOUT_SIZE: Partial<Record<string, { w: number; h: number }>> = {
   // W2-BUILDER (atlas 2026-10-27): the builder windows on the grammar; the
   // toolbar's verbs fit one row, the material and its Run below.
   recipe: { w: 560, h: 640 },
-  chain: { w: 560, h: 560 },
-  workflow: { w: 560, h: 520 },
   kb: { w: 560, h: 420 },
   // W3-ZONE (atlas 2026-10-27): a zone drawer opens wide enough that its
   // list rows stay one line (Name · Kind · When).

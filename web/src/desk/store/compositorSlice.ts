@@ -730,7 +730,6 @@ const REF_PREFIX_TO_KIND: Record<string, PrimitiveKind> = {
   knowledge: "kb",
   zone: "directory",
   persona: "recipe",
-  sequence: "chain",
 };
 
 /** Resolve a raw id string to a primitive kind + the id to pass downstream. */

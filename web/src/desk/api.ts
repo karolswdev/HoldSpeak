@@ -8,7 +8,6 @@
 import { ApiError, apiFetch, readableError } from "../lib/api";
 import type {
   Artifact,
-  Chain,
   Coder,
   Decision,
   Directory,
@@ -27,7 +26,6 @@ import type {
   Story,
   Thread,
   Workbench,
-  Workflow,
   IntelJob,
 } from "../lib/primitives";
 import {
@@ -133,7 +131,6 @@ export function qualifiedRef(kind: string, id: string): string {
     kb: "knowledge",
     directory: "zone",
     recipe: "persona",
-    chain: "sequence",
   };
   return `${canonical[kind] || kind}:${id}`;
 }
@@ -147,8 +144,6 @@ export const EMPTY_ITEMS = {
   kb: [],
   directory: [],
   project: [],
-  chain: [],
-  workflow: [],
   coder: [],
   roadmap: [],
   story: [],
@@ -384,34 +379,6 @@ export const fromWireRepository = (repository: unknown): Repository | null => {
   };
 };
 
-export const fromWireChain = (c: unknown): Chain | null => {
-  const id = wireString(c, "id");
-  if (!id) { warnMissingId("chain", c, "id"); return null; }
-  return {
-    kind: "chain",
-    id,
-    name: wireString(c, "name"),
-    steps: wireArray(c, "steps").filter((s): s is string => typeof s === "string"),
-    capability: wireRaw(c, "capability") ?? null,
-  };
-};
-
-export const fromWireWorkflow = (w: unknown): Workflow | null => {
-  const id = wireString(w, "id");
-  if (!id) { warnMissingId("workflow", w, "id"); return null; }
-  const graph = wireRaw(w, "graph_json");
-  const hasGraph =
-    graph != null && typeof graph === "object" && Object.keys(graph as Record<string, unknown>).length > 0;
-  return {
-    kind: "workflow",
-    id,
-    name: wireString(w, "name"),
-    prompt: wireString(w, "prompt"),
-    hasGraph: Boolean(hasGraph),
-    graphJson: hasGraph ? (graph as Workflow["graphJson"]) : undefined,
-    capability: wireRaw(w, "capability") ?? null,
-  };
-};
 
 export const fromWireThread = (t: unknown): Thread | null => {
   const id = wireString(t, "id");
@@ -619,8 +586,6 @@ const WIRE_MAPPERS = {
   project: fromWireProject,
   repository: fromWireRepository,
   recipe: fromWireRecipe,
-  chain: fromWireChain,
-  workflow: fromWireWorkflow,
   coder: fromCoderStatus, // returns Coder[] (batch mapper)
   roadmap: fromWireRoadmap,
   workbench: fromWireWorkbench,
@@ -637,7 +602,6 @@ const CREATED_MAPPERS = {
   kb: fromWireKb,
   recipe: fromWireRecipe,
   directory: fromWireDirectory,
-  workflow: fromWireWorkflow,
   thread: fromWireThread,
 } as const;
 
@@ -718,8 +682,8 @@ async function loadHeld(kind: HeldKind, id: string): Promise<Primitive | null> {
 /** Load every kind — the same allSettled sweep the original desk ran. */
 /** The order the Desk names a failed read in (the reads' own order). */
 const LOAD_ORDER: readonly string[] = [
-  "meeting", "artifact", "note", "decision", "recipe", "kb", "directory", "chain",
-  "workflow", "workbench", "project", "thread", "roadmap", "repository",
+  "meeting", "artifact", "note", "decision", "recipe", "kb", "directory",
+  "workbench", "project", "thread", "roadmap", "repository",
 ];
 
 export async function loadAll(): Promise<LoadResult> {
@@ -819,9 +783,8 @@ export async function loadAll(): Promise<LoadResult> {
         status.directory = "live";
       })
       .catch((e) => fail("directory", "Zones", e)),
-    // The Sequence and Workflow faces are parked (2026-11-08): Programs are
-    // the one engine for work that runs. The desk reads no chain or workflow;
-    // the iPad's Crew run keeps the hub's run routes.
+    // Sequences and Workflows are not Desk objects (parked 2026-11-08): the
+    // iPad keeps them and runs a crew as one Mode run per step.
     apiFetch<Record<string, unknown>>("/api/workbenches")
       .then((d) => {
         items.workbench = wireArray(d, "workbenches")

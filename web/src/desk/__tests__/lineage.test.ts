@@ -10,7 +10,6 @@ const items = {
   project: [{ kind: "project", id: "shared", name: "Project" }],
   directory: [{ kind: "directory", id: "shared", name: "Zone" }],
   recipe: [{ kind: "recipe", id: "shared", name: "Agent" }],
-  chain: [{ kind: "chain", id: "shared", name: "Sequence" }],
 } as unknown as Items;
 
 describe("lineage resolves the Desk's canonical identities", () => {
@@ -28,8 +27,6 @@ describe("lineage resolves the Desk's canonical identities", () => {
     ["zone:shared", "zone:shared", "directory", "Zone"],
     ["recipe:shared", "persona:shared", "recipe", "Agent"],
     ["persona:shared", "persona:shared", "recipe", "Agent"],
-    ["chain:shared", "sequence:shared", "chain", "Sequence"],
-    ["sequence:shared", "sequence:shared", "chain", "Sequence"],
   ])("resolves %s through the shared canonical alias", (ref, actionRef, kind, label) => {
     expect(resolveRef(items, ref)).toEqual({ kind, label, resolved: true, actionRef });
   });

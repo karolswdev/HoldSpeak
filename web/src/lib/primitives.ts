@@ -35,8 +35,6 @@ export type PrimitiveKind =
   | "kb"
   | "project"
   | "recipe"
-  | "chain"
-  | "workflow"
   | "coder"
   | "game"
   | "layout"
@@ -270,42 +268,6 @@ export interface Persona {
   recipeKind?: string;
 }
 
-export interface Chain {
-  kind: "chain";
-  id: string;
-  name: string;
-  steps: string[]; // agentId[]
-  capability?: unknown | null;
-}
-
-/** The canonical `graph_json` wire (HSM-22-01 golden fixtures): Swift
- * tagged-union node kinds + the two edge sets, snake_case keys. An OBJECT on
- * the wire — never a string (the HSM-22-03 type fix; the old
- * `graphJson?: string` drifted from every producer and parser). */
-export interface WorkflowGraphJson {
-  id: string;
-  name: string;
-  entry: string;
-  nodes: Array<{
-    id: string;
-    kind: Record<string, Record<string, unknown>>;
-    failure_policy?: string | null;
-    runs_on?: string;
-  }>;
-  exec_edges: Array<{ from: { node: string; name: string }; to: string }>;
-  data_edges: unknown[];
-}
-
-export interface Workflow {
-  kind: "workflow";
-  id: string;
-  name: string;
-  prompt?: string;
-  graphJson?: WorkflowGraphJson;
-  hasGraph?: boolean;
-  capability?: unknown | null;
-}
-
 // ── presence / stream ──────────────────────────────────────────────────
 
 export type CoderEventKind =
@@ -451,8 +413,6 @@ export type Primitive = (
   | Project
   | Repository
   | Persona
-  | Chain
-  | Workflow
   | Coder
   | Game
   | Layout
@@ -573,29 +533,6 @@ export const PRIMITIVES = {
     capabilities: ["ask", "edit", "rename", "duplicate", "delete"],
     surface: { type: "pullout" },
   },
-  chain: {
-    kind: "chain",
-    label: productLabel("sequence"),
-    plural: productLabel("sequence", true),
-    syncClass: "capability",
-    blurb:
-      "An advanced linear Workflow whose output flows through ordered steps.",
-    icon: "M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1",
-    authorable: true,
-    capabilities: ["delete"],
-    surface: { type: "pullout" },
-  },
-  workflow: {
-    kind: "workflow",
-    label: "Workflow",
-    plural: "Workflows",
-    syncClass: "capability",
-    blurb: "Saved multi-step behavior that runs on selected material.",
-    icon: "M6 3v12M18 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM6 21a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM6 15a9 9 0 0 0 9 9",
-    authorable: true,
-    capabilities: ["ask", "edit", "rename", "duplicate", "delete"],
-    surface: { type: "pullout" },
-  },
   coder: {
     kind: "coder",
     label: productLabel("coder_session"),
@@ -709,8 +646,6 @@ export type PrimitiveMap = {
   project: Project;
   repository: Repository;
   recipe: Persona;
-  chain: Chain;
-  workflow: Workflow;
   coder: Coder;
   game: Game;
   layout: Layout;
@@ -749,7 +684,7 @@ export type Agent = Persona;
 /** Order of the Desk's primitive sections, grouped by sync class. */
 export const DESK_GROUPS = [
   { label: "Content", kinds: ["meeting", "artifact", "note", "decision", "thread"] },
-  { label: "Capabilities", kinds: ["recipe", "chain", "workflow", "workbench"] },
+  { label: "Capabilities", kinds: ["recipe", "workbench"] },
   { label: "Organization", kinds: ["directory", "kb", "project", "repository"] },
   { label: "Live", kinds: ["coder"] },
   { label: "Delivery", kinds: ["roadmap", "story"] },
