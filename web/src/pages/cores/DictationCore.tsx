@@ -13,7 +13,7 @@ import { useCoreWings } from "./core-hooks";
 import { renderHeroSlot } from "./core-layout";
 import { Button } from "../../components/signal/Signal";
 import { StatusBar, ToolGlyph, Toolbar, countWords, type StatusBarItem } from "../../desk/surface/kit";
-import "./settingsWindow.css";
+import "./settings/window.css";
 import { useWindowInterior } from "../../desk/surface/interior";
 import { openSurfaceOr } from "../../desk/shell";
 import { FoldGadget } from "../../desk/surface";

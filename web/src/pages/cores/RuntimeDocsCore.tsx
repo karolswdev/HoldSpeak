@@ -17,7 +17,7 @@ import { asRows, useResource } from "../pageSupport";
 import { SpeechSetup, useSpeechSetup } from "../../desk/firstrun/SpeechSetup";
 import { CommandWell } from "./connections/ConnectionsPane";
 import { openFirstRun } from "../../desk/firstrun/reopen";
-import "./settings.css";
+import "./settings/settings.css";
 import { Token } from "../../desk/surface/Token";
 
 const CHECK_RANK: Record<string, number> = { fail: 0, warn: 1 };

@@ -2,7 +2,7 @@
 // peer Assignments room has no /api/settings key because it consumes its own
 // closed assignment projection. Module aliases from the retired roster resolve.
 import { describe, expect, it } from "vitest";
-import { MODULE_ALIASES, PREF_MODULES } from "../settingsPrefs";
+import { MODULE_ALIASES, PREF_MODULES } from "../settings/prefs";
 
 describe("Settings face roster", () => {
   it("has one Engines destination (PHILO-16 C: Models + Assignments merged)", () => {

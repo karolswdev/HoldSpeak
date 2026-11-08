@@ -483,7 +483,7 @@ export interface MemorySearchResponse {
   [key: string]: unknown;
 }
 
-/** settingsModels.tsx endpoints */
+/** settings/Models.tsx endpoints */
 export interface InferenceTargetsResponse {
   targets?: Record<string, unknown>[];
   [key: string]: unknown;

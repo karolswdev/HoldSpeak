@@ -53,7 +53,7 @@ FACE_DIRS = ("features/", "pages/cores/", "desk/")
 # meets weekly come first.
 TUESDAY_USE: dict[str, int] = {
     # Tier 1 -- weekly contact surfaces
-    "settingsModels": 8,
+    "Models": 8,           # pages/cores/settings/Models.tsx
     "ConnectionsPane": 8,
     "SettingsCore": 7,
     "DoorCore": 7,
@@ -94,9 +94,9 @@ TUESDAY_USE: dict[str, int] = {
     "ComponentsCore": 1,
     "ConstitutionalContextCore": 1,
     "CapabilityAssignmentsCore": 1,
-    "settingsTts": 1,
-    "settingsBespoke": 1,
-    "settingsPrefs": 1,
+    "Desk": 1,             # settings/Desk.tsx (was settingsTts)
+    "Speak": 1,            # settings/Speak.tsx (was settingsBespoke)
+    "prefs": 1,            # settings/prefs.tsx
 }
 
 # Weights per rule class for debt scoring.
@@ -267,7 +267,7 @@ MIC_HOST_AUTHORITIES: tuple[tuple[str, str, str], ...] = (
      "The Thread composer MicButton appends to the latest draft"),
     ("desk/components/ThreadComposer.tsx", 'label={placeholder ?? "Edit message"}',
      "The inline editor MicButton appends inside its editor focus group"),
-    ("features/project-room/ProjectRoomCore.tsx", 'label="Ask this project"',
+    ("features/project-room/core/Ask.tsx", 'label="Ask this project"',
      "The Room's Ask composer row (askFace AskComposer) carries its host MicButton in the capture slot"),
     ("pages/cores/MemoryCore.tsx", 'label="Find or ask your desk"',
      "Memory's Ask composer row (askFace AskComposer) carries its host MicButton in the capture slot"),

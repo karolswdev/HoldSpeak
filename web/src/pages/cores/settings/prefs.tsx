@@ -1,8 +1,8 @@
-import { wireWords } from "../../desk/surface/words";
-import { wireClock } from "../../desk/surface/format";
-import { PeopleHubCells } from "./settingsPeople";
-import { spriteUrl } from "../../desk/sprites";
-import { PrefStatus, stampDate, type PrefSaveState } from "./settingsWindow";
+import { wireWords } from "../../../desk/surface/words";
+import { wireClock } from "../../../desk/surface/format";
+import { PeopleHubCells } from "./People";
+import { spriteUrl } from "../../../desk/sprites";
+import { PrefStatus, stampDate, type PrefSaveState } from "./window";
 // HS-111-01 — the Prefs program's face (audit §3.1-§3.4): a drawer of
 // pref modules, authored — never wire-derived. The module registry is a
 // CODE CONSTANT: a new wire key never mints a pane again (unmapped keys
@@ -10,30 +10,30 @@ import { PrefStatus, stampDate, type PrefSaveState } from "./settingsWindow";
 // HS-170-04: the drawer face is now a hub of SurfaceLedgerRows showing
 // state tokens from GET /api/settings/hub. The tile grid is retired.
 import { useState, type ReactNode } from "react";
-import { Button } from "../../components/signal/Signal";
-import { CONTROL_MODES, controlModeLabel } from "../../lib/productLanguage";
+import { Button } from "../../../components/signal/Signal";
+import { CONTROL_MODES, controlModeLabel } from "../../../lib/productLanguage";
 import {
   CheckGadget,
   CycleGadget,
   FoldGadget,
   GadgetGroup,
   GadgetRow,
-} from "../../desk/surface/gadgets";
+} from "../../../desk/surface/gadgets";
 import {
   SurfaceLedger,
   SurfaceLedgerRow,
   StateChip,
   countToken,
   Receipt,
-} from "../../desk/surface";
-import { ConfirmVerb, SurfaceSection } from "../../desk/surface/Surface";
-import { DotWord } from "../../desk/surface/kit";
-import { useDesk } from "../../desk/store";
+} from "../../../desk/surface";
+import { ConfirmVerb, SurfaceSection } from "../../../desk/surface/Surface";
+import { DotWord } from "../../../desk/surface/kit";
+import { useDesk } from "../../../desk/store";
 import "./settings.css";
-import { useAtmospherePreference } from "../../desk/gl/atmospherePreference";
-import { resolveAtmosphere } from "../../desk/gl/atmosphereRegistry";
-import { useBuilderTools } from "../../desk/builderTools";
-import { Token } from "../../desk/surface/Token";
+import { useAtmospherePreference } from "../../../desk/gl/atmospherePreference";
+import { resolveAtmosphere } from "../../../desk/gl/atmosphereRegistry";
+import { useBuilderTools } from "../../../desk/builderTools";
+import { Token } from "../../../desk/surface/Token";
 
 /* ── the roster (owner-named destinations, including the Models/Assignments pair) ── */
 

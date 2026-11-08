@@ -3,7 +3,7 @@
 // while HOLDSPEAK_MCP_PEOPLE_ACCESS overrides the setting.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { PeopleAccessModule, PeopleHubCells } from "../settingsPeople";
+import { PeopleAccessModule, PeopleHubCells } from "../settings/People";
 
 type Answer = { status: number; body: unknown };
 let getAnswer: () => Answer;

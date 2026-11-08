@@ -74,7 +74,7 @@ def test_settings_page_language_list_matches_the_registry():
     CycleGadget options; this pins the vendored TS copy code-for-code to
     `holdspeak/languages.py`, so the UI can never offer a language the
     backend would refuse (validation stays in the one Python registry)."""
-    prefs = (_REPO / "web/src/pages/cores/settingsPrefs.tsx").read_text()
+    prefs = (_REPO / "web/src/pages/cores/settings/prefs.tsx").read_text()
     match = re.search(r"WHISPER_LANGUAGES[^=]*=\s*\[(.*?)\];", prefs, re.S)
     assert match, "the vendored WHISPER_LANGUAGES roster is gone"
     vendored = dict(re.findall(r'\["([a-z]+)", "([^"]+)"\]', match.group(1)))

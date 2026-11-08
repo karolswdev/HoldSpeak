@@ -3,6 +3,10 @@
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
 - 2026-11-08 · #1876 Needs you: Decide on a Program row opens the choices in place (one panel with the meeting decision), the row opens the Program at its step, and one function writes a decision's status.
+- 2026-11-08 · #1875 The graph join snapshots cite the folded Settings files (#1872), so the committed join validates.
+- 2026-11-08 · #1874 Fix forward #1873: the density guard parses again (a merge dropped the Room fence's closing bracket).
+- 2026-11-08 · #1873 The Room is a composition: each section moves to features/project-room/core/ (12 files), ProjectRoomCore.tsx 2,591 → 488 lines, desk chunk 2,470,344 → 2,470,448 bytes, fenced under 600 lines.
+- 2026-11-08 · #1872 The older Settings files fold into pages/cores/settings/ (pure move; three merged into Speak, Reach and Desk): top-level settings* files 11 → 0, the folder 13 → 21 files, 5,691 → 5,683 lines, fenced by the density guard.
 - 2026-11-08 · #1871 Atlas citations follow the Settings split (#1870) to the section files.
 - 2026-11-08 · #1870 Settings is a composition: each section moves to pages/cores/settings/ (one writer, one file per section), SettingsCore.tsx 2,900 → 272 lines, Settings chunk 142.5 → 143.9 kB, fenced under 600 lines.
 - 2026-11-08 · #1868 Fix forward #1855: a delivery pushes, opens or merges only with a 40-hex head, a GitHub PR URL and git ref names; a thrown command leaves its class and stage, never its text.
