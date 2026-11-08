@@ -6,7 +6,7 @@
 // sections VERBS / PROGRAMS / OBJECTS / SETTINGS / MEETINGS - fed from
 // the ONE verb registry plus the same stores every face reads.
 // Deferred riders (named, not built): Settings deep-pane search plugs
-// in as more SETTINGS rows once settingsPrefs exports its module
+// in as more SETTINGS rows once settings/prefs exports its module
 // index. Content search (inventory gap 9, 2026-10-03) is the MEMORY
 // band: `/api/memory/search`, debounced, after the local matches; each
 // row opens its object through `refOpener`.
@@ -46,7 +46,7 @@ import { handKindOf, handRefOf, openHand, type HandOrigin } from "../agentHand";
 import { primitiveCan } from "../../lib/primitives";
 import { primeSendTo, sendChoices, useSendToTick } from "../windowSend";
 import { useAllOpenWindows, useFrontWindowId } from "./window/windowRegistry";
-import { SETTINGS_PALETTE_ROWS } from "../../pages/cores/settingsPrefs";
+import { SETTINGS_PALETTE_ROWS } from "../../pages/cores/settings/prefs";
 import { useLaunchers } from "./DeskWindow";
 import type { CoverageRecord } from "../coverage";
 import { readProjectCounts } from "../needsYou";

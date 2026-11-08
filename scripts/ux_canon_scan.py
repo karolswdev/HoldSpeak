@@ -53,7 +53,7 @@ FACE_DIRS = ("features/", "pages/cores/", "desk/")
 # meets weekly come first.
 TUESDAY_USE: dict[str, int] = {
     # Tier 1 -- weekly contact surfaces
-    "settingsModels": 8,
+    "Models": 8,           # pages/cores/settings/Models.tsx
     "ConnectionsPane": 8,
     "SettingsCore": 7,
     "DoorCore": 7,
@@ -94,9 +94,9 @@ TUESDAY_USE: dict[str, int] = {
     "ComponentsCore": 1,
     "ConstitutionalContextCore": 1,
     "CapabilityAssignmentsCore": 1,
-    "settingsTts": 1,
-    "settingsBespoke": 1,
-    "settingsPrefs": 1,
+    "Desk": 1,             # settings/Desk.tsx (was settingsTts)
+    "Speak": 1,            # settings/Speak.tsx (was settingsBespoke)
+    "prefs": 1,            # settings/prefs.tsx
 }
 
 # Weights per rule class for debt scoring.

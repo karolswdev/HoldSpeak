@@ -36,7 +36,7 @@ describe("Settings' Saved stamp (a writer's HH:MM:SS) in the repeated hour", () 
   it.each([["the first 01:30", FIRST], ["the second 01:30", SECOND]])("saved at %s says Saved just now", async (_, now) => {
     vi.useFakeTimers();
     vi.setSystemTime(now);
-    const { sinceWord, stampDate } = await import("../../../pages/cores/settingsWindow");
+    const { sinceWord, stampDate } = await import("../../../pages/cores/settings/window");
     expect(sinceWord(stampDate("01:30:00")!)).toBe("just now");
   });
 });

@@ -198,4 +198,20 @@ def test_room_core_stays_a_composition() -> None:
         f"{_ROOM_CORE_BUDGET}). It composes the sections only; a section's rows, "
         "state and reads belong in web/src/features/project-room/core/<Section>.tsx. "
         "Carve, don't bump."
+def test_settings_files_live_in_the_settings_folder() -> None:
+    """Every Settings file is in web/src/pages/cores/settings/ (2026-11-08).
+
+    SettingsCore.tsx is the one Settings file at the top of pages/cores/; the
+    older settingsPrefs, settingsWindow, settingsPeople (and the rest) moved
+    into the folder beside the sections that use them. A new Settings file goes
+    in the folder too.
+    """
+    cores = SRC / "pages/cores"
+    strays = sorted(
+        p.name for p in cores.iterdir()
+        if p.is_file() and p.name.lower().startswith("settings") and p.name != "SettingsCore.tsx"
+    )
+    assert not strays, (
+        f"Settings files at the top of web/src/pages/cores/: {strays}. "
+        "Put them in web/src/pages/cores/settings/."
     )

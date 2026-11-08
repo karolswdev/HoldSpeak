@@ -14,7 +14,7 @@ import { StateChip, SurfaceColumns } from "../../../desk/surface";
 import { egressFor } from "../../../desk/surface/egress";
 import { openSurfaceOr } from "../../../desk/shell";
 import { LiveMeetingTools } from "../LiveMeetingTools";
-import { INTELLIGENCE_AUTO_OPTIONS, MIR_PROFILE_OPTIONS, type SettingsHubWire } from "../settingsPrefs";
+import { INTELLIGENCE_AUTO_OPTIONS, MIR_PROFILE_OPTIONS, type SettingsHubWire } from "./prefs";
 import type { SettingsBindings } from "./bindings";
 
 /* ── Meetings: display fact + intel row + capture + calendar + RAW (incl. actuators) ── */

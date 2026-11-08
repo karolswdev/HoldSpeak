@@ -9,15 +9,15 @@
  * content width of 520 px or less the rail is the first view and a pane opens
  * with a Back verb. `PrefStatus` composes the kit `StatusBar`: the one status
  * bar in the product. */
-import { latestPast } from "../../desk/surface/format";
+import { latestPast } from "../../../desk/surface/format";
 import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
-import { Button } from "../../components/signal/Signal";
-import { StatusBar, type StatusBarItem } from "../../desk/surface/kit";
-import { FootSlotContext } from "../../desk/surface/foot";
-import { useHasWindowBack, useWindowBack } from "../../desk/surface/back";
-import { useWindowTitle } from "../../desk/surface/title";
-import { useCompactViewport } from "../../desk/useCompactViewport";
-import "./settingsWindow.css";
+import { Button } from "../../../components/signal/Signal";
+import { StatusBar, type StatusBarItem } from "../../../desk/surface/kit";
+import { FootSlotContext } from "../../../desk/surface/foot";
+import { useHasWindowBack, useWindowBack } from "../../../desk/surface/back";
+import { useWindowTitle } from "../../../desk/surface/title";
+import { useCompactViewport } from "../../../desk/useCompactViewport";
+import "./window.css";
 
 export type PrefRailItem = {
   id: string;

@@ -14,7 +14,7 @@
  */
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { PrefsFace, type SettingsHubWire } from "../settingsPrefs";
+import { PrefsFace, type SettingsHubWire } from "../settings/prefs";
 
 const hub = (intelligence: boolean): SettingsHubWire => ({
   models: { engines: 1, groupsSet: 1, defaultSet: true },

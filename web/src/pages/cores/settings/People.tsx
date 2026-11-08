@@ -9,14 +9,14 @@
  * operation's receipt after a press. No prose (UX-CANON).
  */
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ApiError, apiFetch } from "../../lib/api";
-import { Button } from "../../components/signal/Signal";
-import { FilterTokens, FoldGadget, GadgetGroup, GadgetRow, StateChip, StringGadget, SurfaceState } from "../../desk/surface";
-import { useOwnerName, type OwnerFieldStatus, type OwnerNameAdapter } from "../../desk/firstrun/ownerName";
-import { OwnerAliasField } from "../../desk/firstrun/OwnerAliasField";
-import type { PrefSaveState } from "./settingsWindow";
-import { Token } from "../../desk/surface/Token";
-import { wireWords } from "../../desk/surface/words";
+import { ApiError, apiFetch } from "../../../lib/api";
+import { Button } from "../../../components/signal/Signal";
+import { FilterTokens, FoldGadget, GadgetGroup, GadgetRow, StateChip, StringGadget, SurfaceState } from "../../../desk/surface";
+import { useOwnerName, type OwnerFieldStatus, type OwnerNameAdapter } from "../../../desk/firstrun/ownerName";
+import { OwnerAliasField } from "../../../desk/firstrun/OwnerAliasField";
+import type { PrefSaveState } from "./window";
+import { Token } from "../../../desk/surface/Token";
+import { wireWords } from "../../../desk/surface/words";
 
 export type PeopleAccess = {
   mode: string;
@@ -239,7 +239,7 @@ export function PeopleAccessModule({ highlight }: { highlight?: string | null } 
   );
 }
 
-/** The Settings hub row's cell (the row is in settingsPrefs). PHILO-17 U35:
+/** The Settings hub row's cell (the row is in settings/prefs). PHILO-17 U35:
  *  one plain fact (was MCP · <effective> · AGENTS · <mode>). */
 export function PeopleHubCells() {
   const { access } = usePeopleAccess();
