@@ -2,6 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · #1942 Fix forward #1926/#1939: the two spend-note vitest cases read the Programs window's new face (the rail and Earlier steps).
 - 2026-11-08 · #1941 Fix forward #1936 (Codex): the observer's stored summary is byte-identical to the old one (no head read; same 1 MB guard and marker; kept answers of the leaf and whole-text redaction); fresh Needs-you build 90 → 61 ms median (the head read was 43, not exact).
 - 2026-11-08 · #1939 The Programs window is the Program: a 64 px rail of Programs (New program, waiting first, done this week, the night tile when the hub sends one), the picked Program in the right pane as the same ProgramBody the Program window hosts (kit Mast with Amend and Park, the numbered step spine, the raised step plate with the brass lead verb and Earlier steps), the wizard in the pane, a strip at the foot at 393; the list's bands and filter menus left; ProgramLine parked.
 - 2026-11-08 · #1940 Fix forward #1926/#1935/#1936/#1937: the wizard's Spending note takes the mic (ratchet), the projections atlas citation follows the two-branch query, the Room plate word rides --font-size-xs, the race wire fixtures re-recorded with the checkpoint reach fact.
