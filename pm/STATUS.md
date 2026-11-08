@@ -2,7 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
-- 2026-11-08 · #1896 The API surface tags a web route only when the call's path and method match and comments are not calls: web-consumed routes 716 -> 589, routes with any consumer 723 -> 613, and 4 unresolved dynamic calls (3 call sites) are listed in their own section.
+- 2026-11-08 · #1896 The API surface tags a web route only when the call's path and method match (values followed through tables, path helpers and wrappers; the 3 dynamic calls resolved by hand in scripts/api_surface_web_dynamic_calls.json): web-consumed routes 716 -> 612, routes with any consumer 723 -> 632, unresolved dynamic calls 0.
 - 2026-11-08 · #1894 The Project vocabulary has one owner, project_definitions.py (669 lines, imports only refs and errors); project_service.py 5,994 -> 5,457 lines, its importers 23 -> 19, definition-only importers 0; the Room's decision rows carry committed_to.
 - 2026-11-08 · #1893 Fix forward #1891: the eight decision record wires the face fences compare are re-recorded with committed_to (fences and newDecision.app.test.tsx green).
 - 2026-11-08 · #1892 Fix forward #1877/#1889: the one-decision-record browser case reads the Project as the record's filing (project_id) and checks the Decide well's one face (Decided HH:MM, the Project row with Filed, the row opens the record reader).

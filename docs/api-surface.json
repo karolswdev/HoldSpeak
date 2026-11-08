@@ -1373,14 +1373,6 @@
         "DELETE"
       ],
       "module": "web.routes.primitives.chains",
-      "consumers": []
-    },
-    {
-      "path": "/api/chains/{chain_id}",
-      "methods": [
-        "GET"
-      ],
-      "module": "web.routes.primitives.chains",
       "consumers": [
         "web"
       ]
@@ -1388,10 +1380,20 @@
     {
       "path": "/api/chains/{chain_id}",
       "methods": [
-        "PUT"
+        "GET"
       ],
       "module": "web.routes.primitives.chains",
       "consumers": []
+    },
+    {
+      "path": "/api/chains/{chain_id}",
+      "methods": [
+        "PUT"
+      ],
+      "module": "web.routes.primitives.chains",
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/chains/{chain_id}/run",
@@ -1589,7 +1591,8 @@
       ],
       "module": "web.routes.system.coder_relay_routes",
       "consumers": [
-        "ios"
+        "ios",
+        "web"
       ]
     },
     {
@@ -1599,7 +1602,8 @@
       ],
       "module": "web.routes.system.coder_relay_routes",
       "consumers": [
-        "ios"
+        "ios",
+        "web"
       ]
     },
     {
@@ -1609,7 +1613,8 @@
       ],
       "module": "web.routes.system.coder_relay_routes",
       "consumers": [
-        "ios"
+        "ios",
+        "web"
       ]
     },
     {
@@ -1630,7 +1635,8 @@
       ],
       "module": "web.routes.system.coder_relay_routes",
       "consumers": [
-        "ios"
+        "ios",
+        "web"
       ]
     },
     {
@@ -1673,8 +1679,7 @@
       ],
       "module": "web.routes.system.coder_steering_routes",
       "consumers": [
-        "ios",
-        "web"
+        "ios"
       ]
     },
     {
@@ -2069,7 +2074,9 @@
         "DELETE"
       ],
       "module": "web.routes.primitives.decisions",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/decisions/{decision_id}",
@@ -3061,7 +3068,9 @@
         "PUT"
       ],
       "module": "web.routes.dictation.project_docs",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/dictation/project-kb",
@@ -3159,7 +3168,9 @@
         "POST"
       ],
       "module": "web.routes.primitives.directories",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/directories/{directory_id}",
@@ -3167,7 +3178,9 @@
         "DELETE"
       ],
       "module": "web.routes.primitives.directories",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/directories/{directory_id}",
@@ -3175,9 +3188,7 @@
         "GET"
       ],
       "module": "web.routes.primitives.directories",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/directories/{directory_id}",
@@ -3673,7 +3684,9 @@
         "POST"
       ],
       "module": "web.routes.meetings.intel",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/intel/summary",
@@ -3763,20 +3776,14 @@
         "POST"
       ],
       "module": "web.routes.primitives.kbs",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/kbs/{kb_id}",
       "methods": [
         "DELETE"
-      ],
-      "module": "web.routes.primitives.kbs",
-      "consumers": []
-    },
-    {
-      "path": "/api/kbs/{kb_id}",
-      "methods": [
-        "GET"
       ],
       "module": "web.routes.primitives.kbs",
       "consumers": [
@@ -3786,10 +3793,20 @@
     {
       "path": "/api/kbs/{kb_id}",
       "methods": [
-        "PUT"
+        "GET"
       ],
       "module": "web.routes.primitives.kbs",
       "consumers": []
+    },
+    {
+      "path": "/api/kbs/{kb_id}",
+      "methods": [
+        "PUT"
+      ],
+      "module": "web.routes.primitives.kbs",
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/kbs/{kb_id}/members",
@@ -3805,7 +3822,9 @@
         "DELETE"
       ],
       "module": "web.routes.primitives.kbs",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/kbs/{kb_id}/members/{resource_ref:path}",
@@ -3999,7 +4018,8 @@
       ],
       "module": "web.routes.meetings.crud",
       "consumers": [
-        "ios"
+        "ios",
+        "web"
       ]
     },
     {
@@ -4564,7 +4584,9 @@
         "DELETE"
       ],
       "module": "web.routes.primitives.notes",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/notes/{note_id}",
@@ -4582,7 +4604,9 @@
         "PUT"
       ],
       "module": "web.routes.primitives.notes",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/notes/{note_id}/outcomes",
@@ -5274,7 +5298,9 @@
         "POST"
       ],
       "module": "web.routes.activity.plugin_jobs",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/principals/agents",
@@ -5390,7 +5416,9 @@
         "PATCH"
       ],
       "module": "web.routes.programs",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/programs/{program_id}/checkpoints/{checkpoint_id}/start-from",
@@ -5838,7 +5866,9 @@
         "PATCH"
       ],
       "module": "web.routes.projects",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/projects/{project_id}/action-items",
@@ -5976,9 +6006,7 @@
         "DELETE"
       ],
       "module": "web.routes.projects",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/projects/{project_id}/meetings/{meeting_id}",
@@ -6036,7 +6064,9 @@
         "POST"
       ],
       "module": "web.routes.agent_hand",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/projects/{project_id}/resources",
@@ -6054,7 +6084,9 @@
         "DELETE"
       ],
       "module": "web.routes.projects",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/projects/{project_id}/resources/{resource_ref:path}",
@@ -6562,20 +6594,14 @@
         "POST"
       ],
       "module": "web.routes.primitives.recipes",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/recipes/{recipe_id}",
       "methods": [
         "DELETE"
-      ],
-      "module": "web.routes.primitives.recipes",
-      "consumers": []
-    },
-    {
-      "path": "/api/recipes/{recipe_id}",
-      "methods": [
-        "GET"
       ],
       "module": "web.routes.primitives.recipes",
       "consumers": [
@@ -6585,10 +6611,20 @@
     {
       "path": "/api/recipes/{recipe_id}",
       "methods": [
-        "PUT"
+        "GET"
       ],
       "module": "web.routes.primitives.recipes",
       "consumers": []
+    },
+    {
+      "path": "/api/recipes/{recipe_id}",
+      "methods": [
+        "PUT"
+      ],
+      "module": "web.routes.primitives.recipes",
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/recipes/{recipe_id}/chat",
@@ -7222,7 +7258,9 @@
         "POST"
       ],
       "module": "web.routes.setup",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/setup/local-ai/cancel",
@@ -8478,7 +8516,9 @@
         "POST"
       ],
       "module": "web.routes.primitives.workflows",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/workflows/runs/{parent_operation_id}/cancel",
@@ -8494,14 +8534,6 @@
         "DELETE"
       ],
       "module": "web.routes.primitives.workflows",
-      "consumers": []
-    },
-    {
-      "path": "/api/workflows/{workflow_id}",
-      "methods": [
-        "GET"
-      ],
-      "module": "web.routes.primitives.workflows",
       "consumers": [
         "web"
       ]
@@ -8509,10 +8541,20 @@
     {
       "path": "/api/workflows/{workflow_id}",
       "methods": [
-        "PUT"
+        "GET"
       ],
       "module": "web.routes.primitives.workflows",
       "consumers": []
+    },
+    {
+      "path": "/api/workflows/{workflow_id}",
+      "methods": [
+        "PUT"
+      ],
+      "module": "web.routes.primitives.workflows",
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/workflows/{workflow_id}/run",
@@ -8777,28 +8819,52 @@
     "ios": [],
     "web": []
   },
-  "unresolved_dynamic_calls": {
-    "web": [
+  "web_dynamic_calls": {
+    "resolved_by_hand": [
       {
-        "file": "web/src/desk/components/DeskFilingStrip.tsx",
+        "site": "web/src/desk/store/dataSlice.ts:738",
         "method": "DELETE",
-        "path": "/api/*/*/*/*"
+        "routes": [
+          "/api/notes/{note_id}",
+          "/api/decisions/{decision_id}",
+          "/api/kbs/{kb_id}",
+          "/api/recipes/{recipe_id}",
+          "/api/directories/{directory_id}",
+          "/api/chains/{chain_id}",
+          "/api/workflows/{workflow_id}"
+        ],
+        "why": "deletePrimitive fills /api/${path}/${id} from its paths table: note, decision, kb, recipe, directory, chain and workflow."
       },
       {
-        "file": "web/src/desk/components/DeskFilingStrip.tsx",
+        "site": "web/src/desk/components/DeskFilingStrip.tsx:149",
         "method": "PUT",
-        "path": "/api/*/*/*/*"
+        "routes": [
+          "/api/kbs/{kb_id}/members/{resource_ref:path}",
+          "/api/projects/{project_id}/resources/{resource_ref:path}"
+        ],
+        "why": "toggleRelationship files an object: base is kbs with members or projects with resources."
       },
       {
-        "file": "web/src/desk/store/dataSlice.ts",
+        "site": "web/src/desk/components/DeskFilingStrip.tsx:149",
         "method": "DELETE",
-        "path": "/api/*/*"
+        "routes": [
+          "/api/kbs/{kb_id}/members/{resource_ref:path}",
+          "/api/projects/{project_id}/resources/{resource_ref:path}"
+        ],
+        "why": "toggleRelationship unfiles an object: base is kbs with members or projects with resources."
       },
       {
-        "file": "web/src/pages/cores/history/DoorSection.tsx",
+        "site": "web/src/pages/cores/history/DoorSection.tsx:167",
         "method": "POST",
-        "path": "/api/*/*"
+        "routes": [
+          "/api/intel/retry/{meeting_id}",
+          "/api/plugin-jobs/{job_id}/retry-now"
+        ],
+        "why": "Retry on a failed row: a Summary retries its meeting, any other job retries the plugin job."
       }
     ]
+  },
+  "unresolved_dynamic_calls": {
+    "web": []
   }
 }

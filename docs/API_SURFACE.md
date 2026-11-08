@@ -14,7 +14,7 @@ For example, the old meeting Slack-export route returns `slack_moved_to_channel`
 Read the handler and owning guide before treating route presence as feature availability.
 Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
-Routes: 935 (plus static mounts). iOS-consumed: 89. Web-consumed: 589.
+Routes: 935 (plus static mounts). iOS-consumed: 89. Web-consumed: 612.
 
 ## device_audio_ws
 
@@ -90,7 +90,7 @@ Routes: 935 (plus static mounts). iOS-consumed: 89. Web-consumed: 589.
 | POST | `/api/plugin-jobs/process` | web |
 | GET | `/api/plugin-jobs/summary` | web |
 | POST | `/api/plugin-jobs/{job_id}/cancel` | server only |
-| POST | `/api/plugin-jobs/{job_id}/retry-now` | server only |
+| POST | `/api/plugin-jobs/{job_id}/retry-now` | web |
 
 ## web.routes.activity.rules
 
@@ -123,7 +123,7 @@ Routes: 935 (plus static mounts). iOS-consumed: 89. Web-consumed: 589.
 | POST | `/api/agent/launches/{launch_id}/resume` | web |
 | POST | `/api/agent/launches/{launch_id}/seen` | web |
 | GET | `/api/projects/{project_id}/repository` | web |
-| POST | `/api/projects/{project_id}/repository` | server only |
+| POST | `/api/projects/{project_id}/repository` | web |
 
 ## web.routes.authority
 
@@ -505,7 +505,7 @@ Routes: 935 (plus static mounts). iOS-consumed: 89. Web-consumed: 589.
 | POST | `/api/dictation/project-doc-suggestion/apply` | server only |
 | POST | `/api/dictation/project-doc-suggestion/dismiss` | server only |
 | GET | `/api/dictation/project-hs` | web |
-| PUT | `/api/dictation/project-hs` | server only |
+| PUT | `/api/dictation/project-hs` | web |
 
 ## web.routes.door
 
@@ -596,7 +596,7 @@ Routes: 935 (plus static mounts). iOS-consumed: 89. Web-consumed: 589.
 | GET | `/api/meetings/ready` | web |
 | DELETE | `/api/meetings/{meeting_id}` | ios, web |
 | GET | `/api/meetings/{meeting_id}` | ios, web |
-| PUT | `/api/meetings/{meeting_id}` | ios |
+| PUT | `/api/meetings/{meeting_id}` | ios, web |
 | POST | `/api/meetings/{meeting_id}/capture/recover` | web |
 | GET | `/api/meetings/{meeting_id}/export` | web |
 | POST | `/api/meetings/{meeting_id}/ready/read` | web |
@@ -619,7 +619,7 @@ Routes: 935 (plus static mounts). iOS-consumed: 89. Web-consumed: 589.
 |---|---|---|
 | GET | `/api/intel/jobs` | web |
 | POST | `/api/intel/process` | server only |
-| POST | `/api/intel/retry/{meeting_id}` | server only |
+| POST | `/api/intel/retry/{meeting_id}` | web |
 | GET | `/api/intel/summary` | server only |
 | GET | `/api/meetings/{meeting_id}/intel-recovery` | web |
 | POST | `/api/meetings/{meeting_id}/intel-recovery/retry` | web |
@@ -829,9 +829,9 @@ Routes: 935 (plus static mounts). iOS-consumed: 89. Web-consumed: 589.
 | GET | `/api/chains` | web |
 | POST | `/api/chains` | server only |
 | POST | `/api/chains/runs/{parent_operation_id}/cancel` | server only |
-| DELETE | `/api/chains/{chain_id}` | server only |
-| GET | `/api/chains/{chain_id}` | web |
-| PUT | `/api/chains/{chain_id}` | server only |
+| DELETE | `/api/chains/{chain_id}` | web |
+| GET | `/api/chains/{chain_id}` | server only |
+| PUT | `/api/chains/{chain_id}` | web |
 | POST | `/api/chains/{chain_id}/run` | ios, web |
 
 ## web.routes.primitives.decisions
@@ -839,7 +839,7 @@ Routes: 935 (plus static mounts). iOS-consumed: 89. Web-consumed: 589.
 | Method | Path | Consumers |
 |---|---|---|
 | POST | `/api/decisions` | web |
-| DELETE | `/api/decisions/{decision_id}` | server only |
+| DELETE | `/api/decisions/{decision_id}` | web |
 | GET | `/api/decisions/{decision_id}` | web |
 | PUT | `/api/decisions/{decision_id}` | web |
 | PUT | `/api/decisions/{decision_id}/status` | web |
@@ -850,9 +850,9 @@ Routes: 935 (plus static mounts). iOS-consumed: 89. Web-consumed: 589.
 | Method | Path | Consumers |
 |---|---|---|
 | GET | `/api/directories` | web |
-| POST | `/api/directories` | server only |
-| DELETE | `/api/directories/{directory_id}` | server only |
-| GET | `/api/directories/{directory_id}` | web |
+| POST | `/api/directories` | web |
+| DELETE | `/api/directories/{directory_id}` | web |
+| GET | `/api/directories/{directory_id}` | server only |
 | PUT | `/api/directories/{directory_id}` | web |
 | GET | `/api/directories/{directory_id}/members` | server only |
 | DELETE | `/api/directories/{directory_id}/members/{primitive_id:path}` | web |
@@ -871,12 +871,12 @@ Routes: 935 (plus static mounts). iOS-consumed: 89. Web-consumed: 589.
 | Method | Path | Consumers |
 |---|---|---|
 | GET | `/api/kbs` | web |
-| POST | `/api/kbs` | server only |
-| DELETE | `/api/kbs/{kb_id}` | server only |
-| GET | `/api/kbs/{kb_id}` | web |
-| PUT | `/api/kbs/{kb_id}` | server only |
+| POST | `/api/kbs` | web |
+| DELETE | `/api/kbs/{kb_id}` | web |
+| GET | `/api/kbs/{kb_id}` | server only |
+| PUT | `/api/kbs/{kb_id}` | web |
 | GET | `/api/kbs/{kb_id}/members` | server only |
-| DELETE | `/api/kbs/{kb_id}/members/{resource_ref:path}` | server only |
+| DELETE | `/api/kbs/{kb_id}/members/{resource_ref:path}` | web |
 | PUT | `/api/kbs/{kb_id}/members/{resource_ref:path}` | web |
 
 ## web.routes.primitives.model_profiles
@@ -908,9 +908,9 @@ Routes: 935 (plus static mounts). iOS-consumed: 89. Web-consumed: 589.
 |---|---|---|
 | GET | `/api/notes` | web |
 | POST | `/api/notes` | web |
-| DELETE | `/api/notes/{note_id}` | server only |
+| DELETE | `/api/notes/{note_id}` | web |
 | GET | `/api/notes/{note_id}` | web |
-| PUT | `/api/notes/{note_id}` | server only |
+| PUT | `/api/notes/{note_id}` | web |
 
 ## web.routes.primitives.profiles
 
@@ -933,10 +933,10 @@ Routes: 935 (plus static mounts). iOS-consumed: 89. Web-consumed: 589.
 | Method | Path | Consumers |
 |---|---|---|
 | GET | `/api/recipes` | web |
-| POST | `/api/recipes` | server only |
-| DELETE | `/api/recipes/{recipe_id}` | server only |
-| GET | `/api/recipes/{recipe_id}` | web |
-| PUT | `/api/recipes/{recipe_id}` | server only |
+| POST | `/api/recipes` | web |
+| DELETE | `/api/recipes/{recipe_id}` | web |
+| GET | `/api/recipes/{recipe_id}` | server only |
+| PUT | `/api/recipes/{recipe_id}` | web |
 | POST | `/api/recipes/{recipe_id}/chat` | server only |
 | POST | `/api/recipes/{recipe_id}/invocations/{invocation_id}/cancel` | server only |
 | POST | `/api/recipes/{recipe_id}/keep` | web |
@@ -1010,11 +1010,11 @@ Routes: 935 (plus static mounts). iOS-consumed: 89. Web-consumed: 589.
 | Method | Path | Consumers |
 |---|---|---|
 | GET | `/api/workflows` | web |
-| POST | `/api/workflows` | server only |
+| POST | `/api/workflows` | web |
 | POST | `/api/workflows/runs/{parent_operation_id}/cancel` | server only |
-| DELETE | `/api/workflows/{workflow_id}` | server only |
-| GET | `/api/workflows/{workflow_id}` | web |
-| PUT | `/api/workflows/{workflow_id}` | server only |
+| DELETE | `/api/workflows/{workflow_id}` | web |
+| GET | `/api/workflows/{workflow_id}` | server only |
+| PUT | `/api/workflows/{workflow_id}` | web |
 | POST | `/api/workflows/{workflow_id}/run` | ios, web |
 
 ## web.routes.programs
@@ -1027,7 +1027,7 @@ Routes: 935 (plus static mounts). iOS-consumed: 89. Web-consumed: 589.
 | GET | `/api/programs/templates` | web |
 | POST | `/api/programs/tonight` | web |
 | GET | `/api/programs/{program_id}` | web |
-| PATCH | `/api/programs/{program_id}` | server only |
+| PATCH | `/api/programs/{program_id}` | web |
 | POST | `/api/programs/{program_id}/checkpoints/{checkpoint_id}/start-from` | server only |
 | POST | `/api/programs/{program_id}/close` | server only |
 | POST | `/api/programs/{program_id}/decisions/{decision_id}/overturn` | server only |
@@ -1152,7 +1152,7 @@ Routes: 935 (plus static mounts). iOS-consumed: 89. Web-consumed: 589.
 | POST | `/api/projects` | server only |
 | DELETE | `/api/projects/{project_id}` | web |
 | GET | `/api/projects/{project_id}` | web |
-| PATCH | `/api/projects/{project_id}` | server only |
+| PATCH | `/api/projects/{project_id}` | web |
 | GET | `/api/projects/{project_id}/action-items` | server only |
 | GET | `/api/projects/{project_id}/artifacts` | web |
 | POST | `/api/projects/{project_id}/ask-tasks` | web |
@@ -1162,11 +1162,11 @@ Routes: 935 (plus static mounts). iOS-consumed: 89. Web-consumed: 589.
 | PATCH | `/api/projects/{project_id}/items/{item_id}` | server only |
 | POST | `/api/projects/{project_id}/items/{item_id}/transition` | server only |
 | GET | `/api/projects/{project_id}/meetings` | web |
-| DELETE | `/api/projects/{project_id}/meetings/{meeting_id}` | web |
+| DELETE | `/api/projects/{project_id}/meetings/{meeting_id}` | server only |
 | POST | `/api/projects/{project_id}/meetings/{meeting_id}` | web |
 | GET | `/api/projects/{project_id}/people` | web |
 | GET | `/api/projects/{project_id}/resources` | web |
-| DELETE | `/api/projects/{project_id}/resources/{resource_ref:path}` | server only |
+| DELETE | `/api/projects/{project_id}/resources/{resource_ref:path}` | web |
 | PUT | `/api/projects/{project_id}/resources/{resource_ref:path}` | web |
 | POST | `/api/projects/{project_id}/restore` | web |
 | GET | `/api/projects/{project_id}/room` | web |
@@ -1285,7 +1285,7 @@ Routes: 935 (plus static mounts). iOS-consumed: 89. Web-consumed: 589.
 | GET | `/api/setup/hub-default-summary` | server only |
 | POST | `/api/setup/lan` | web |
 | GET | `/api/setup/local-ai` | web |
-| POST | `/api/setup/local-ai` | server only |
+| POST | `/api/setup/local-ai` | web |
 | POST | `/api/setup/local-ai/cancel` | server only |
 | PUT | `/api/setup/onboarding` | web |
 | POST | `/api/setup/people` | web |
@@ -1334,17 +1334,17 @@ Routes: 935 (plus static mounts). iOS-consumed: 89. Web-consumed: 589.
 
 | Method | Path | Consumers |
 |---|---|---|
-| POST | `/api/coders/relay/{node}/arm` | ios |
-| POST | `/api/coders/relay/{node}/disarm` | ios |
-| POST | `/api/coders/relay/{node}/keys` | ios |
+| POST | `/api/coders/relay/{node}/arm` | ios, web |
+| POST | `/api/coders/relay/{node}/disarm` | ios, web |
+| POST | `/api/coders/relay/{node}/keys` | ios, web |
 | GET | `/api/coders/relay/{node}/peek` | ios, web |
-| POST | `/api/coders/relay/{node}/steer` | ios |
+| POST | `/api/coders/relay/{node}/steer` | ios, web |
 
 ## web.routes.system.coder_steering_routes
 
 | Method | Path | Consumers |
 |---|---|---|
-| GET | `/api/coders/steering/audit` | ios, web |
+| GET | `/api/coders/steering/audit` | ios |
 | GET | `/api/coders/steering/grants` | web |
 | GET | `/api/coders/steering/nodes` | ios, web |
 | GET | `/api/coders/steering/panes` | ios, web |
@@ -1521,14 +1521,15 @@ Routes: 935 (plus static mounts). iOS-consumed: 89. Web-consumed: 589.
 | PUT | `/api/watches/{watch_id}/rules` | server only |
 | POST | `/api/watches/{watch_id}/test` | server only |
 
-## Unresolved dynamic calls
+## Dynamic web calls resolved by hand
 
-These web calls have no fixed segment after `/api`, so they name no route
-and tag none. Read the call site to know which routes they reach.
+These web calls have no fixed segment after `/api`.
+`scripts/api_surface_web_dynamic_calls.json` names the routes each one reaches,
+and those routes carry the web tag above.
 
-| Method | Path | File |
-|---|---|---|
-| DELETE | `/api/*/*/*/*` | `web/src/desk/components/DeskFilingStrip.tsx` |
-| PUT | `/api/*/*/*/*` | `web/src/desk/components/DeskFilingStrip.tsx` |
-| DELETE | `/api/*/*` | `web/src/desk/store/dataSlice.ts` |
-| POST | `/api/*/*` | `web/src/pages/cores/history/DoorSection.tsx` |
+| Method | Site | Routes | Why |
+|---|---|---|---|
+| DELETE | `web/src/desk/store/dataSlice.ts:738` | `/api/notes/{note_id}`<br>`/api/decisions/{decision_id}`<br>`/api/kbs/{kb_id}`<br>`/api/recipes/{recipe_id}`<br>`/api/directories/{directory_id}`<br>`/api/chains/{chain_id}`<br>`/api/workflows/{workflow_id}` | deletePrimitive fills /api/${path}/${id} from its paths table: note, decision, kb, recipe, directory, chain and workflow. |
+| PUT | `web/src/desk/components/DeskFilingStrip.tsx:149` | `/api/kbs/{kb_id}/members/{resource_ref:path}`<br>`/api/projects/{project_id}/resources/{resource_ref:path}` | toggleRelationship files an object: base is kbs with members or projects with resources. |
+| DELETE | `web/src/desk/components/DeskFilingStrip.tsx:149` | `/api/kbs/{kb_id}/members/{resource_ref:path}`<br>`/api/projects/{project_id}/resources/{resource_ref:path}` | toggleRelationship unfiles an object: base is kbs with members or projects with resources. |
+| POST | `web/src/pages/cores/history/DoorSection.tsx:167` | `/api/intel/retry/{meeting_id}`<br>`/api/plugin-jobs/{job_id}/retry-now` | Retry on a failed row: a Summary retries its meeting, any other job retries the plugin job. |

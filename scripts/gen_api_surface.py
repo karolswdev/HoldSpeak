@@ -19,8 +19,15 @@ web sources. This generator makes the surface a committed artifact:
   path serves no GET goes through a wrapper (``perform(path)``, an exported
   path constant); it tags the routes of its path whatever their method.
 - Comments in web sources are not calls; they are read as blank.
+- A path value is followed to the call that sends it: through a ``const``, a
+  table row (``paths[kind]``, with a ``method:`` ternary on the row key), a
+  function that returns it, and a local wrapper's parameter. A ``${verb}``
+  parameter that every caller passes as a literal is filled with each one.
 - A web call with no fixed segment after ``/api`` (``/api/${path}/${id}``)
-  names no route. It tags nothing and is listed under
+  names no route by itself. ``api_surface_web_dynamic_calls.json`` (next to
+  this script) names the routes each one reaches, by hand; those routes are
+  tagged and the entries are listed under ``web_dynamic_calls``. A dynamic
+  call with no entry (same file and method) tags nothing and is listed under
   ``unresolved_dynamic_calls`` so it is not lost.
 - Each route is tagged ``web`` / ``ios`` / both / neither (server-only).
 
@@ -46,6 +53,8 @@ REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO))
 MANIFEST_JSON = REPO / "docs" / "api-surface.json"
 MANIFEST_MD = REPO / "docs" / "API_SURFACE.md"
+# Web calls with no fixed segment after /api, resolved by hand.
+WEB_DYNAMIC_CALLS = Path(__file__).resolve().parent / "api_surface_web_dynamic_calls.json"
 
 # A wildcard segment: a route path param or a client-side interpolation.
 WILD = "*"
@@ -68,7 +77,6 @@ _VERBS = ("GET", "POST", "PUT", "PATCH", "DELETE")
 _METHOD_KEY = re.compile(r"\bmethod\s*:")
 _VERB_LITERAL = re.compile(r"[\"'`](GET|POST|PUT|PATCH|DELETE)[\"'`]", re.IGNORECASE)
 _CALLEE = re.compile(r"([A-Za-z_$][\w$]*)\s*\(\s*$")
-_ASSIGNED = re.compile(r"\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*$")
 # How far after a path literal the call's options are looked for.
 _REGION_LIMIT = 2000
 
@@ -282,16 +290,26 @@ def _call_region(text: str, i: int) -> tuple[str, bool]:
     return text[start:i], False
 
 
-def _methods_in(region: str) -> set[str] | None:
+def _methods_in(region: str, key: str | None = None) -> set[str] | None:
     """The verbs a ``method:`` key names in a call's options.
 
     Returns None when the region has no ``method:`` key, and an empty set when
-    the key holds no quoted verb (a value read at run time).
+    the key holds no quoted verb (a value read at run time). A ternary on the
+    table key (``kind === "project" ? "PATCH" : "PUT"``) picks one verb when
+    the value came from a table row whose key is known.
     """
     match = _METHOD_KEY.search(region)
     if match is None:
         return None
     value = re.split(r"[,}\n]", region[match.end():], maxsplit=1)[0]
+    ternary = re.fullmatch(
+        r"\s*([^?]*)\?\s*[\"'`](\w+)[\"'`]\s*:\s*[\"'`](\w+)[\"'`]\s*", value
+    )
+    if key is not None and ternary is not None:
+        compared = re.findall(r"===?\s*[\"'](\w+)[\"']", ternary.group(1))
+        if compared:
+            verb = ternary.group(2) if key in compared else ternary.group(3)
+            return {verb.upper()} if verb.upper() in _VERBS else set()
     return {verb.upper() for verb in _VERB_LITERAL.findall(value)}
 
 
@@ -307,33 +325,304 @@ def _helper_verb(text: str, start: int) -> str | None:
     return name.upper() if name.upper() in _VERBS else None
 
 
-def _call_methods(text: str, start: int, end: int) -> set[str]:
-    """The HTTP methods of the call that sends the literal at ``text[start:end]``.
+# The calls that send a request; a value passed to one with no ``method:`` is
+# a GET (or reaches a path through a wrapper, see ``_method_matches``).
+_REQUEST_CALLS = frozenset({
+    "apiFetch", "apiRequest", "apiBlob", "fetch", "fetchJson", "readJson",
+    "useResource", "EventSource", "WebSocket", "sendBeacon",
+})
+_NOT_FUNCTIONS = frozenset({"if", "for", "while", "switch", "catch", "return", "function"})
+_IDENT = r"[A-Za-z_$][\w$]*"
+# A type argument list on one line (one level of nesting): ``<Record<string, X>>``.
+_GENERIC = r"<(?:[^<>()\n;]|<[^<>()\n;]*>)*>"
+_FOLLOW_DEPTH = 8
 
-    The ``method:`` in the call's options wins, then the helper's name. A path
-    assigned to a variable (``const url = `/api/…`;``) takes the method of the
-    first call that passes that variable. ``UNNAMED`` when nothing names a
-    method (GET, unless the path serves no GET; see ``_method_matches``).
+
+class _Source:
+    """One web source with its bracket pairs, for following a path value."""
+
+    def __init__(self, text: str) -> None:
+        self.text = text
+        self._pairs: dict[int, int] | None = None
+
+    @property
+    def pairs(self) -> dict[int, int]:
+        """Each bracket's partner (both ways), outside strings and templates."""
+        if self._pairs is None:
+            pairs: dict[int, int] = {}
+            stack: list[int] = []
+            text = self.text
+            i = 0
+            while i < len(text):
+                ch = text[i]
+                if ch in "'\"":
+                    i = _skip_quoted(text, i)
+                    continue
+                if ch == "`":
+                    _, i = _read_template(text, i)
+                    continue
+                if ch in "([{":
+                    stack.append(i)
+                elif ch in ")]}" and stack:
+                    opener = stack.pop()
+                    pairs[opener] = i
+                    pairs[i] = opener
+                i += 1
+            self._pairs = pairs
+        return self._pairs
+
+    def block_of(self, i: int) -> tuple[int, int]:
+        """The span of the innermost ``{…}`` around ``i`` (the file at the top)."""
+        best = (0, len(self.text))
+        for opener, close in self.pairs.items():
+            if opener < i < close and self.text[opener] == "{" and opener > best[0]:
+                best = (opener, close)
+        return best
+
+    def function_of_params(self, params_close: int) -> tuple[str, int] | None:
+        """The function whose parameter list closes at ``params_close``."""
+        params_open = self.pairs.get(params_close)
+        if params_open is None or params_open > params_close:
+            return None
+        head = self.text[max(0, params_open - 160) : params_open]
+        match = (
+            re.search(rf"\bfunction\s*\*?\s*({_IDENT})\s*(?:{_GENERIC})?\s*$", head)
+            or re.search(rf"\b({_IDENT})\s*(?::[^=;]*)?=\s*(?:useCallback\(\s*)?(?:async\s*)?$", head)
+            or re.search(rf"(?:^|[\s,;{{}}])(?:async\s+)?({_IDENT})\s*$", head)
+        )
+        if match is None or match.group(1) in _NOT_FUNCTIONS:
+            return None
+        return match.group(1), params_open
+
+    def _params_close_before(self, i: int) -> int | None:
+        """The ``)`` of a parameter list just before ``i`` (over a return type)."""
+        text = self.text
+        j = i - 1
+        while j >= 0 and text[j].isspace():
+            j -= 1
+        if text[max(0, j - 1) : j + 1] == "=>":
+            j -= 2
+            while j >= 0 and text[j].isspace():
+                j -= 1
+        if j >= 0 and text[j] == "}" and j in self.pairs:  # ): { url: string } {
+            k = self.pairs[j] - 1
+            while k >= 0 and text[k].isspace():
+                k -= 1
+            j = k - 1 if k >= 0 and text[k] == ":" else j
+            while j >= 0 and text[j].isspace():
+                j -= 1
+        else:  # ): string | null {
+            typed = re.search(r"\)\s*:\s*[\w$<>\[\]|.,\s]+$", text[max(0, j - 120) : j + 1])
+            if typed is not None:
+                j = max(0, j - 120) + typed.start()
+        return j if j >= 0 and text[j] == ")" else None
+
+    def function_around(self, i: int) -> tuple[str, int] | None:
+        """The innermost named function whose body holds ``i``."""
+        openers = sorted(
+            (o for o, c in self.pairs.items() if o < i < c and self.text[o] == "{"),
+            reverse=True,
+        )
+        for opener in openers:
+            close = self._params_close_before(opener)
+            found = self.function_of_params(close) if close is not None else None
+            if found is not None:
+                return found
+        return None
+
+    def params(self, params_open: int) -> list[str]:
+        """The parameter names of the list that opens at ``params_open``."""
+        inner = self.text[params_open + 1 : self.pairs[params_open]]
+        names = []
+        for part in _split_top(inner):
+            match = re.match(rf"\s*(?:\.\.\.)?({_IDENT})", part)
+            names.append(match.group(1) if match else "")
+        return names
+
+    def calls_of(self, name: str, *, start: int = 0, end: int | None = None):
+        """Each call ``name(…)`` in the range: (name start, paren open, paren close)."""
+        for use in re.finditer(rf"(?<![\w$.])({re.escape(name)})\s*(?:{_GENERIC})?\s*\(", self.text[: end or len(self.text)]):
+            if use.start() < start:
+                continue
+            paren = use.end() - 1
+            if paren not in self.pairs:
+                continue  # inside a template interpolation
+            if re.search(r"\bfunction\s*$", self.text[max(0, use.start() - 12) : use.start()]):
+                continue
+            yield use.start(), paren, self.pairs[paren]
+
+
+def _split_top(text: str) -> list[str]:
+    """Split on commas outside brackets and angle brackets."""
+    parts, depth, current = [], 0, []
+    for ch in text:
+        if ch in "([{<":
+            depth += 1
+        elif ch in ")]}>":
+            depth -= 1
+        if ch == "," and depth == 0:
+            parts.append("".join(current))
+            current = []
+        else:
+            current.append(ch)
+    if "".join(current).strip():
+        parts.append("".join(current))
+    return parts
+
+
+def _arg_index(src: _Source, paren_open: int, at: int) -> int:
+    """Which argument of the call opening at ``paren_open`` holds ``at``."""
+    return src.text[paren_open + 1 : at].count(",") and len(
+        _split_top(src.text[paren_open + 1 : at] + "x")
+    ) - 1
+
+
+def _assigned_names(before: str) -> list[str]:
+    """The names a ``const x =`` or a destructuring ``const [a, b] =`` binds."""
+    single = re.search(rf"\b(?:const|let|var)\s+({_IDENT})\s*(?::[^=;]*)?=\s*$", before)
+    if single is not None:
+        return [single.group(1)]
+    many = re.search(r"\b(?:const|let|var)\s*[\[{]([^\]}=;]*)[\]}]\s*(?::[^=;]*)?=\s*$", before)
+    if many is None:
+        return []
+    names = [n for n in re.findall(_IDENT, many.group(1))]
+    # The path is the url/path field; the rest of the tuple is its body.
+    preferred = [n for n in names if re.search("url|path|href|endpoint|route", n, re.I)]
+    return preferred or names
+
+
+def _value_methods(
+    src: _Source, start: int, end: int, depth: int = 0, key: str | None = None
+) -> set[str]:
+    """The HTTP methods of the calls that send the value at ``text[start:end]``.
+
+    The ``method:`` in the call's options wins, then the helper's name. Else
+    the value is followed: through a ``const`` (each use in its block), a table
+    (``paths[kind]``), a returned value (each call of the function), and a
+    local wrapper (each use of the parameter it lands in). A request call
+    with no method gives ``UNNAMED``; an empty set means nothing sends it.
     """
+    if depth > _FOLLOW_DEPTH:
+        return set()
+    text = src.text
     region, statement = _call_region(text, end)
-    found = _methods_in(region)
-    if found is None and statement:
-        assigned = _ASSIGNED.search(text[max(0, start - 120) : start])
-        if assigned is not None:
-            use = re.compile(r"\b" + re.escape(assigned.group(1)) + r"\b\s*[,)]")
-            later = use.search(text, end)
-            if later is not None:
-                name_end = later.end() - 1
-                found = _methods_in(_call_region(text, name_end)[0])
-                if found is None:
-                    verb = _helper_verb(text, later.start())
-                    found = {verb} if verb else None
-    if found is None:
-        verb = _helper_verb(text, start)
-        found = {verb} if verb else None
-    if found is None:
-        return {UNNAMED}
-    return found
+    found = _methods_in(region, key)
+    if found is not None:
+        return found or {WILD}
+    verb = _helper_verb(text, start)
+    if verb:
+        return {verb}
+    close = end + len(region)
+    before = text[max(0, start - 300) : start]
+    methods: set[str] = set()
+    if not statement and close < len(text) and close in src.pairs:
+        opener = src.pairs[close]
+        if text[close] == ")":
+            callee = re.search(rf"({_IDENT})\s*(?:{_GENERIC})?\s*$", text[max(0, opener - 80) : opener])
+            name = callee.group(1) if callee else ""
+            if name in _REQUEST_CALLS or re.search(r"\bnew\s+" + re.escape(name) + r"\s*$", text[max(0, opener - 90) : opener]):
+                return {UNNAMED}
+            return _wrapper_methods(src, name, _arg_index(src, opener, start), depth)
+        # A value in a table or an object: follow the whole container, and
+        # keep the row's key for a method chosen by key.
+        if key is None:
+            row = re.search(rf"[\"']?({_IDENT})[\"']?\s*:\s*$", before)
+            key = row.group(1) if row else None
+        return _value_methods(src, opener, close + 1, depth + 1, key)
+    # A returned value: each call of the function that returns it.
+    if re.search(r"(?:\breturn|=>)\s*\(?\s*$", before):
+        if re.search(r"=>\s*\(?\s*$", before):
+            arrow = src._params_close_before(start - len(before) + len(before.rstrip().rstrip("(").rstrip()))
+            owner = src.function_of_params(arrow) if arrow is not None else None
+        else:
+            owner = src.function_around(start)
+        if owner is not None:
+            for name_at, _, paren_close in src.calls_of(owner[0]):
+                if name_at != start:
+                    methods |= _value_methods(src, name_at, paren_close + 1, depth + 1, key)
+        return methods
+    # A const: each use of its name in its block.
+    names = _assigned_names(before)
+    if names:
+        block_start, block_end = src.block_of(start)
+        for name in names:
+            methods |= _uses_methods(src, name, end, block_end, depth, key)
+    return methods
+
+
+def _uses_methods(
+    src: _Source, name: str, start: int, end: int, depth: int, key: str | None = None
+) -> set[str]:
+    """The methods of each use of ``name`` as a value in ``text[start:end]``."""
+    text = src.text
+    methods: set[str] = set()
+    for use in re.finditer(rf"\(\s*{re.escape(name)}\s+as\b", text[:end]):  # (name as T)[key]
+        at = use.start()
+        if at < start or at not in src.pairs:
+            continue
+        after = src.pairs[at] + 1
+        if text[after : after + 1] == "[" and after in src.pairs:
+            methods |= _value_methods(src, at, src.pairs[after] + 1, depth + 1, key)
+    for use in re.finditer(rf"(?<![\w$.]){re.escape(name)}\b", text[:end]):
+        at, after = use.start(), use.end()
+        if at < start:
+            continue
+        if text[after : after + 1] == "[" and after in src.pairs:  # name[key]
+            methods |= _value_methods(src, at, src.pairs[after] + 1, depth + 1, key)
+        elif re.match(r"\s*[,)]", text[after : after + 8]):
+            methods |= _value_methods(src, at, after, depth + 1, key)
+    return methods
+
+
+def _wrapper_methods(src: _Source, name: str, index: int, depth: int) -> set[str]:
+    """The methods a local function sends the value in its ``index`` argument with."""
+    if not name or name in _NOT_FUNCTIONS:
+        return set()
+    text = src.text
+    definition = re.search(
+        rf"(?:\bfunction\s+{re.escape(name)}\s*(?:{_GENERIC})?\s*|(?<![\w$.]){re.escape(name)}\s*(?::[^=;]*)?=\s*(?:useCallback\(\s*)?(?:async\s*)?)\(",
+        text,
+    )
+    if definition is None or definition.end() - 1 not in src.pairs:
+        return set()
+    params_open = definition.end() - 1
+    params = src.params(params_open)
+    if index >= len(params) or not params[index]:
+        return set()
+    params_close = src.pairs[params_open]
+    body = re.compile(r"[^{;]*?\{").match(text, params_close + 1)
+    body_open = body.end() - 1 if body else None
+    body_end = src.pairs.get(body_open, len(text)) if body_open is not None else len(text)
+    return _uses_methods(src, params[index], params_close, body_end, depth + 1)
+
+
+def _param_variants(src: _Source, start: int, end: int) -> list[str]:
+    """A template's source with a ``${param}`` filled by each literal passed.
+
+    ``url: `/api/coders/relay/${node}/${verb}``` inside ``verbEndpoint(node,
+    key, verb)`` becomes one source per ``verbEndpoint(…, "arm")`` call. Only
+    a parameter every call passes as a string literal is filled.
+    """
+    source = src.text[start:end]
+    owner = src.function_around(start)
+    if owner is None:
+        return [source]
+    params = src.params(owner[1])
+    for ident in re.findall(rf"\$\{{\s*({_IDENT})\s*\}}", source):
+        if ident not in params:
+            continue
+        index = params.index(ident)
+        values = []
+        for _, paren_open, paren_close in src.calls_of(owner[0]):
+            args = _split_top(src.text[paren_open + 1 : paren_close])
+            literal = re.fullmatch(r"\s*[\"']([\w-]+)[\"']\s*", args[index]) if index < len(args) else None
+            if literal is None:
+                values = []
+                break
+            values.append(literal.group(1))
+        if values:
+            return [source.replace("${" + ident + "}", v) for v in sorted(set(values))]
+    return [source]
 
 
 def _is_dynamic(path: str) -> bool:
@@ -347,16 +636,23 @@ def _is_dynamic(path: str) -> bool:
 def web_call_sites(text: str) -> set[tuple[str, str]]:
     """Every web call in one source text as (method, path template).
 
-    A call whose method is read at run time carries ``*`` as its method.
+    A call whose method is read at run time carries ``*`` as its method; a
+    call that names none carries ``UNNAMED``.
     """
     sites: set[tuple[str, str]] = set()
-    text = _blank_comments(text)
-    for raw, start, end in _web_literals(text):
-        path = _normalize(raw)
-        if not path:
-            continue
-        for method in _call_methods(text, start, end) or {WILD}:
-            sites.add((method, path))
+    src = _Source(_blank_comments(text))
+    for raw, start, end in _web_literals(src.text):
+        raws = [raw]
+        if src.text[start] == "`" and _read_template(src.text, start)[1] == end:
+            variants = (_read_template(v, 0)[0] for v in _param_variants(src, start, end))
+            raws = [v for v in variants if v is not None] or [raw]
+        methods = _value_methods(src, start, end) or {UNNAMED}
+        for one in raws:
+            path = _normalize(one)
+            if not path:
+                continue
+            for method in methods:
+                sites.add((method, path))
     return sites
 
 
@@ -540,11 +836,42 @@ def match_consumers(
     }
 
 
+def load_web_dynamic_calls() -> list[dict[str, Any]]:
+    """The dynamic web calls resolved by hand."""
+    return json.loads(WEB_DYNAMIC_CALLS.read_text(encoding="utf-8"))["web_dynamic_calls"]
+
+
+def apply_web_dynamic_calls(
+    routes: list[dict[str, Any]],
+    hand: list[dict[str, Any]],
+    unresolved: list[dict[str, str]],
+) -> list[dict[str, str]]:
+    """Tag the routes the hand entries name; return the calls still unresolved.
+
+    An entry that names a route the app does not serve with its method fails.
+    """
+    served = {(r["path"], m): r for r in routes for m in r["methods"]}
+    for entry in hand:
+        for path in entry["routes"]:
+            route = served.get((path, entry["method"]))
+            if route is None:
+                raise ValueError(
+                    f"{WEB_DYNAMIC_CALLS.name}: {entry['site']} names "
+                    f"{entry['method']} {path}, which the app does not serve"
+                )
+            if "web" not in route["consumers"]:
+                route["consumers"].append("web")
+    covered = {(e["site"].split(":", 1)[0], e["method"]) for e in hand}
+    return [c for c in unresolved if (c["file"], c["method"]) not in covered]
+
+
 def build_manifest() -> dict[str, Any]:
     routes = build_app_routes()
     ios = extract_ios_calls()
     web, unresolved = extract_web_call_sites()
     routes, unmatched_ios, unmatched_web = match_consumers(routes, ios, web)
+    hand = load_web_dynamic_calls()
+    unresolved = apply_web_dynamic_calls(routes, hand, unresolved)
     return {
         "note": "Generated by scripts/gen_api_surface.py. Do not edit by hand.",
         "routes": routes,
@@ -552,6 +879,7 @@ def build_manifest() -> dict[str, Any]:
             "ios": sorted(unmatched_ios),
             "web": sorted(unmatched_web),
         },
+        "web_dynamic_calls": {"resolved_by_hand": hand},
         "unresolved_dynamic_calls": {"web": unresolved},
     }
 
@@ -597,6 +925,22 @@ def render_markdown(manifest: dict[str, Any]) -> str:
             lines.append(
                 f"| {' '.join(r['methods'])} | `{r['path']}` | {consumer_cell(r)} |"
             )
+        lines.append("")
+    hand = manifest.get("web_dynamic_calls", {}).get("resolved_by_hand", [])
+    if hand:
+        lines += [
+            "## Dynamic web calls resolved by hand",
+            "",
+            "These web calls have no fixed segment after `/api`.",
+            "`scripts/api_surface_web_dynamic_calls.json` names the routes each one reaches,",
+            "and those routes carry the web tag above.",
+            "",
+            "| Method | Site | Routes | Why |",
+            "|---|---|---|---|",
+        ]
+        for call in hand:
+            reached = "<br>".join(f"`{path}`" for path in call["routes"])
+            lines.append(f"| {call['method']} | `{call['site']}` | {reached} | {call['why']} |")
         lines.append("")
     unresolved = manifest.get("unresolved_dynamic_calls", {}).get("web", [])
     if unresolved:
