@@ -539,11 +539,16 @@ def test_memory_never_turns_a_fitting_rails_batch_into_a_failing_one(rig):
 
     assert not batch["degraded"], batch
     assert len(engine.prompts) == 1
-    (execution,) = _executions(rig, "background.rails_summary")
-    assert execution["tokens_reserved"] <= execution["token_budget"] == 16384
-    full = memory_for("background.rails_summary", rig, query=rails_observer.format_events_for_model(events)[:2000])
+    from holdspeak.services import engine_door
+    from holdspeak.services.memory_grounding import with_memory
+
+    rendered = rails_observer.format_events_for_model(events)
+    full = memory_for("background.rails_summary", rig, query=rendered[:2000])
     assert full.excerpts and _memory_block(engine.prompts[0]).count("\n- ") < len(full.excerpts)
-    assert _full_memory_would_not_fit(rig, "background.rails_summary", full, 220)
+    door_engine = engine_door.engine_for(broker, "background.rails_summary")
+    whole = {"system_prompt": rails_observer._SYSTEM_PROMPT, "user_prompt": with_memory(rendered, full), "temperature": 0.2,
+             "max_tokens": 220, "event_batch_sha256": "sha256:" + "0" * 64}
+    assert engine_door.room(broker, door_engine, whole, reserved_output_tokens=220) < 0
 
 
 def test_a_replay_rebuilds_the_reviews_own_material(rig, tmp_path, monkeypatch):

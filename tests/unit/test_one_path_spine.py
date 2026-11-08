@@ -420,7 +420,7 @@ def _drive_workbench_scheduled(tmp_path, monkeypatch) -> SurfaceRun:
 
 
 def _drive_rails(tmp_path, monkeypatch) -> SurfaceRun:
-    """Run Rails through the real SERVICE bundle, route, and controller path."""
+    """Run Rails through the engine door: one root invoke under its SERVICE principal."""
     from holdspeak import rails_observer
     from holdspeak.services.inference_assignment_service import InferenceAssignmentService
     from tests.unit.test_phase143_inference_assignments import OWNER as ASSIGNMENT_OWNER, _profile
@@ -465,13 +465,7 @@ def _drive_rails(tmp_path, monkeypatch) -> SurfaceRun:
         [{"ts": "t1", "event": "gate_pass", "story": "", "repo": "code"}], summarize_fn=summarizer,
     )
     assert not batch["degraded"], batch
-    return SurfaceRun(
-        db,
-        principal,
-        _parent_run_operation_id(db, "rails.observer-batch"),
-        THIS_MACHINE_ID,
-        parent_kind="rails.observer-batch",
-    )
+    return SurfaceRun(db, principal, None, THIS_MACHINE_ID)
 
 
 def _drive_decision(tmp_path, monkeypatch) -> SurfaceRun:
@@ -843,10 +837,10 @@ assert len(SURFACE_DRIVERS) == 15, "every named surface form is proven here; non
 #: the sanity test below) because ``test_one_path_provenance.py`` imports these
 #: to cross-check the DECLARED shape against the shape the stored row actually
 #: shows — the two files cannot drift apart without one of them failing.
-ROOT_SHAPED_SURFACES = frozenset({"Ask", "Recipe run"})  # HS-151-02: Recipe chat removed
+ROOT_SHAPED_SURFACES = frozenset({"Ask", "Recipe run", "Rails"})  # HS-151-02: Recipe chat removed
 CHILD_SHAPED_SURFACES = frozenset({
     "Sequence", "Workflow", "manual Workbench", "scheduled Workbench",
-    "memory writeback", "Rails", "Decision promotion", "Delivery review", "voice",
+    "memory writeback", "Decision promotion", "Delivery review", "voice",
     "meeting live", "meeting deferred", "dictation pipeline", "cadence next action",
 })
 
