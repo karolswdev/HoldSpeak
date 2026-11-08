@@ -197,7 +197,7 @@ function PersonDetail({
               <span className="room-people-cells">
                 {due ? (
                   <Token
-                    className={`surface-token room-people-tok${due === "OVERDUE" || due === "DUE TODAY" ? " room-people-warn" : ""}`}
+                    className={`surface-token room-people-tok${due === "OVERDUE" ? " room-people-fail" : due === "DUE TODAY" ? " room-people-warn" : ""}`}
                   >
                     {due}
                   </Token>
@@ -235,7 +235,7 @@ function PersonDetail({
             cells={
               <span className="room-people-cells">
                 <Token
-                  className={`surface-token room-people-tok${f.kind === "assignments_overdue" ? " room-people-warn" : ""}`}
+                  className={`surface-token room-people-tok${f.kind === "assignments_overdue" ? " room-people-fail" : ""}`}
                 >
                   {token}
                 </Token>
@@ -719,7 +719,7 @@ export function RoomPeopleSection({
                       </Token>
                     ) : null}
                     {tokens.assignmentsOverdue ? (
-                      <Token className="surface-token room-people-tok room-people-overdue" data-tone="warn">
+                      <Token className="surface-token room-people-tok room-people-overdue" data-tone="fail">
                         {tokens.assignmentsOverdue}
                       </Token>
                     ) : null}

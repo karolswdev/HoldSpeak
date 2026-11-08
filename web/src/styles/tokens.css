@@ -50,17 +50,17 @@
   --p-color-cyan-400: #1f448c; /* info strong, deep steel (the language 2026-11-08) */
   --p-color-glowpool-meeting: #56C7F5; /* desk glow: meetings (cassettes) */
   --p-color-glowpool-note: #34D399; /* desk glow: notes */
-  --p-color-glowpool-kb: #FBBF24; /* desk glow: knowledge crystals */
-  --p-color-glowpool-recipe: #FF6B35; /* desk glow: personas / coders */
-  --p-color-glowpool-artifact: #FF9E64; /* desk glow: artifacts */
+  --p-color-glowpool-kb: #818CF8; /* desk glow: knowledge crystals (indigo; the language 2026-11-08: brass is the only warm colour) */
+  --p-color-glowpool-recipe: #C7D2FE; /* desk glow: personas / coders (ice periwinkle; the language 2026-11-08) */
+  --p-color-glowpool-artifact: #2DD4BF; /* desk glow: artifacts (teal; the language 2026-11-08) */
   --p-color-glowpool-chain: #A78BFA; /* desk glow: sequences / workflows */
-  --p-color-glowpool-directory: #E0A458; /* desk glow: zones */
-  --p-color-zonetint-1: #E0A458; /* zone tray tint pool (stable-hash pick) */
+  --p-color-glowpool-directory: #94A3B8; /* desk glow: zones (slate; the language 2026-11-08) */
+  --p-color-zonetint-1: #94A3B8; /* zone tray tint pool (stable-hash pick) */
   --p-color-zonetint-2: #56C7F5;
   --p-color-zonetint-3: #34D399;
   --p-color-zonetint-4: #A78BFA;
-  --p-color-zonetint-5: #FF9E64;
-  --p-color-zonetint-6: #FBBF24;
+  --p-color-zonetint-5: #2DD4BF;
+  --p-color-zonetint-6: #818CF8;
   --p-color-shadow-34: rgba(0, 0, 0, 0.34);
   --p-color-shadow-42: rgba(0, 0, 0, 0.42);
   --p-color-shadow-50: rgba(0, 0, 0, 0.5);
@@ -119,7 +119,7 @@
   --accent-ink-press: color-mix(in srgb, var(--accent-ink) 86%, var(--black)); /* the primary pressed fill */
   --accent-text: #2b55a7; /* blue text on a light shell */
   --accent-tint: rgba(43, 85, 167, 0.12);
-  --mark-bg: #ffe14d; /* ⌘K two-line hit (2026-10-05): the matched words in a memory snippet; 14.7:1 with --mark-fg, on the plain row and on the selected plate */
+  --mark-bg: #c9d8f6; /* ⌘K two-line hit (2026-10-05): the matched words in a memory snippet, a steel highlight (the language 2026-11-08: brass is the only warm colour); 13.3:1 with --mark-fg, on the plain row and on the selected plate */
   --mark-fg: #0e0f13; /* ⌘K two-line hit (2026-10-05): the ink of the matched words */
   --accent-glow: rgba(43, 85, 167, 0.20);
   --accent-gradient: linear-gradient( 135deg, #d9e3f2 0%, #2b55a7 100% );
@@ -310,17 +310,17 @@
   --desk-work-bottom: var(--desk-snap-bottom); /* the working band ends above the dock */
   --glow-meeting: #56C7F5;
   --glow-note: #34D399;
-  --glow-kb: #FBBF24;
-  --glow-recipe: #FF6B35;
-  --glow-artifact: #FF9E64;
+  --glow-kb: #818CF8;
+  --glow-recipe: #C7D2FE;
+  --glow-artifact: #2DD4BF;
   --glow-chain: #A78BFA;
-  --glow-directory: #E0A458;
-  --zone-tint-1: #E0A458;
+  --glow-directory: #94A3B8;
+  --zone-tint-1: #94A3B8;
   --zone-tint-2: #56C7F5;
   --zone-tint-3: #34D399;
   --zone-tint-4: #A78BFA;
-  --zone-tint-5: #FF9E64;
-  --zone-tint-6: #FBBF24;
+  --zone-tint-5: #2DD4BF;
+  --zone-tint-6: #818CF8;
   --desk-z-stage: -1; /* the fixed atmosphere behind the document */
   --desk-atmosphere-sky-grade: rgba(5, 14, 25, 0.12); /* shared atmosphere skyline depth grade */
   --desk-atmosphere-edge: rgba(2, 6, 12, 0.28); /* shared atmosphere focus vignette */
@@ -398,6 +398,7 @@
   --wb-backdrop: #0f1829; /* quiet slate desktop floor */
   --wb-dither: #0f1829; /* legacy floor pattern value, unused by the plain modern floor */
   --wb-rec: #c23a26; /* PHILO-13-11 (C1) Workbench Steel: REC on paper (5.73:1) */
+  --wb-rec-lamp: #ff5a4f; /* the live REC lamp: a bright coral dot that glows on the coral REC plate (a mark, never text) */
   --wb-hover: rgba(16, 25, 43, 0.06); /* quiet control hover wash */
   --wb-press: color-mix(in srgb, var(--wb-blue) 70%, var(--wb-sel)); /* opaque modern pressed gadget fill */
   --wb-frame: 1px; /* fine window frame border */
@@ -408,14 +409,14 @@
   --wb-sel-vivid: #2b55a7; /* vivid Workbench blue for a selected list row (paper ink 5.3:1) */
   --wb-link-ink: #2b55a7; /* an object named in a note's text: a Project, a pull request, a Jira key, a decision (Note canvas A, 2026-10-27; paper ink 5.3:1) */
   --wb-person-ink: #1f7a6b; /* a person named in a note's text (Note canvas A, 2026-10-27; paper ink 5.6:1) */
-  --kind-project: #3b62c4; /* DELIGHT 2026-10-27, the kind hue of a Project: the Workbench blue of its folder (5.4:1 on paper); used only as a glyph seat, a row wash and a card rule, never on a Button */
-  --kind-meeting: #1c78a8; /* DELIGHT 2026-10-27, the kind hue of a meeting: the sky blue of the floor's meeting glow (4.7:1 on paper); used only as a glyph seat, a row wash and a card rule, never on a Button */
-  --kind-person: #1f7a6b; /* DELIGHT 2026-10-27, the kind hue of a person: the teal of the person object and the note's person ink (5.0:1 on paper); used only as a glyph seat, a row wash and a card rule, never on a Button */
-  --kind-decision: #6a4bc4; /* DELIGHT 2026-10-27, the kind hue of a decision: the violet of its check seal (5.9:1 on paper); used only as a glyph seat, a row wash and a card rule, never on a Button */
-  --kind-note: #94620f; /* DELIGHT 2026-10-27, the kind hue of a note: the amber line on its paper (5.1:1 on paper); used only as a glyph seat, a row wash and a card rule, never on a Button */
-  --kind-pr: #2b7a4a; /* DELIGHT 2026-10-27, the kind hue of a pull request: merge green (5.1:1 on paper); used only as a glyph seat, a row wash and a card rule, never on a Button */
-  --kind-action: #8a5a3d; /* DELIGHT 2026-10-27, the kind hue of an action item: the ember ink (5.6:1 on paper); used only as a glyph seat, a row wash and a card rule, never on a Button */
-  --kind-agent: #a84a1c; /* DELIGHT 2026-10-27, the kind hue of an agent: the coder orange (5.5:1 on paper); used only as a glyph seat, a row wash and a card rule, never on a Button */
+  --kind-project: #3460bf; /* DELIGHT 2026-10-27, cool by the language 2026-11-08 (brass is the only warm colour): the kind hue of a Project: the Workbench blue of its folder, a step lighter than steel (4.9:1 on the window ground); used only as a glyph seat, a row wash, a card rule and a kind word, never on a Button */
+  --kind-meeting: #16699a; /* DELIGHT 2026-10-27, cool by the language 2026-11-08 (brass is the only warm colour): the kind hue of a meeting: sky blue (5.0:1 on the window ground); used only as a glyph seat, a row wash, a card rule and a kind word, never on a Button */
+  --kind-person: #176c5f; /* DELIGHT 2026-10-27, cool by the language 2026-11-08 (brass is the only warm colour): the kind hue of a person: teal (5.2:1 on the window ground); used only as a glyph seat, a row wash, a card rule and a kind word, never on a Button */
+  --kind-decision: #6a4bc4; /* DELIGHT 2026-10-27, cool by the language 2026-11-08 (brass is the only warm colour): the kind hue of a decision: the violet of its check seal (5.1:1 on the window ground); used only as a glyph seat, a row wash, a card rule and a kind word, never on a Button */
+  --kind-note: #4a5d7a; /* DELIGHT 2026-10-27, cool by the language 2026-11-08 (brass is the only warm colour): the kind hue of a note: slate, the ink on its paper (5.6:1 on the window ground); used only as a glyph seat, a row wash, a card rule and a kind word, never on a Button */
+  --kind-pr: #226b40; /* DELIGHT 2026-10-27, cool by the language 2026-11-08 (brass is the only warm colour): the kind hue of a pull request: merge green (5.4:1 on the window ground); used only as a glyph seat, a row wash, a card rule and a kind word, never on a Button */
+  --kind-action: #8a3b86; /* DELIGHT 2026-10-27, cool by the language 2026-11-08 (brass is the only warm colour): the kind hue of an action item: plum (5.8:1 on the window ground); used only as a glyph seat, a row wash, a card rule and a kind word, never on a Button */
+  --kind-agent: #3d3a9c; /* DELIGHT 2026-10-27, cool by the language 2026-11-08 (brass is the only warm colour): the kind hue of an agent: deep indigo, the darkest kind (7.7:1 on the window ground); used only as a glyph seat, a row wash, a card rule and a kind word, never on a Button */
   --kind-other: var(--wb-sel); /* DELIGHT 2026-10-27: the kind hue of any other object (the Workbench blue) */
   --depth-paper: 0 22px 48px rgba(16, 25, 43, 0.28), 0 4px 12px rgba(16, 25, 43, 0.14); /* DELIGHT 2026-10-27, the depth scale, step 1 of 5: the front window's paper over the floor */
   --depth-row: 0 1px 3px rgba(16, 25, 43, 0.14); /* DELIGHT 2026-10-27, the depth scale, step 2 of 5: a lifted row or a card that sits in its column (the Note's margin card) */

@@ -306,7 +306,7 @@ describe("HS-169-03: Room head", () => {
     expect(headline.textContent).toBe("At risk");
     expect(headline.classList.contains("surface-display")).toBe(false);
     expect(headline.querySelector(".room-state-word")).toHaveTextContent("At risk");
-    expect(headline.getAttribute("data-tone")).toBe("warn");
+    expect(headline.getAttribute("data-tone")).toBe("danger"); // At risk is coral, never brass (STATE_TONES)
   });
 
   it("says On track when nothing is at risk", async () => {

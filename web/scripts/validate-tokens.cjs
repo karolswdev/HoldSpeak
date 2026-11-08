@@ -61,9 +61,15 @@ function main() {
   for (const file of cssFiles(SRC)) {
     const rel = path.relative(ROOT, file);
     const text = fs.readFileSync(file, "utf-8");
-    const lines = text.split("\n");
+    // A comment is not a value: blank every comment, the multi-line ones
+    // too (a PR number such as `#1497` in a comment is not a colour), and
+    // keep its newlines so the line numbers stay true.
+    const code = text.replace(/\/\*[\s\S]*?\*\//g, (comment) =>
+      comment.replace(/[^\n]/g, " "),
+    );
+    const lines = code.split("\n");
     lines.forEach((line, index) => {
-      const noComment = line.replace(/\/\*.*?\*\//g, "");
+      const noComment = line;
       if (noComment.includes("var(--")) {
         // A declaration may mix a var() with a literal fallback — still
         // scan the remainder after removing var() bodies.
@@ -90,9 +96,7 @@ function main() {
 
   if (violations.length) {
     console.error(`token gate: ${violations.length} raw value(s) in component CSS\n`);
-    for (const v of violations.slice(0, 40)) console.error("  " + v);
-    if (violations.length > 40)
-      console.error(`  … and ${violations.length - 40} more`);
+    for (const v of violations) console.error("  " + v);
     process.exit(1);
   }
   if (stale.length) {

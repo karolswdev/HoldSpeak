@@ -21,9 +21,9 @@
   --sb-ok-ink: var(--wb-ok-ink, #1f6b3a);
   --sb-warn-ink: var(--wb-warn-ink, #7a5300);
   --sb-danger-ink: var(--wb-danger-ink, #8f2018);
-  --sb-raised: var(--wb-raised, inset 1px 1px 0 rgba(255,255,255,.72), inset -1px -1px 0 rgba(0,0,0,.5));
-  --sb-raised-soft: var(--wb-raised-soft, inset 1px 1px 0 rgba(255,255,255,.36), inset -1px -1px 0 rgba(0,0,0,.25));
-  --sb-sunken: var(--wb-sunken, inset 1px 1px 0 rgba(0,0,0,.5), inset -1px -1px 0 rgba(255,255,255,.72));
+  --sb-raised: var(--wb-raised);
+  --sb-raised-soft: var(--wb-raised-soft);
+  --sb-sunken: var(--wb-sunken);
   --sb-mono: var(--font-mono, "JetBrains Mono", "JetBrains Mono Fallback", "SF Mono", Consolas, monospace);
   --sb-sans: var(--font-sans, "Inter", system-ui, -apple-system, sans-serif);
   position: relative;
