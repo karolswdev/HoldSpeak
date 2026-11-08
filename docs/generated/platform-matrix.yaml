@@ -3246,7 +3246,7 @@
       "source_ids": [
         "web/src/desk/verbRegistry.ts",
         "web/src/desk/verbRegistry.ts",
-        "web/src/features/project-room/ProjectRoomCore.tsx"
+        "web/src/features/project-room/core/RoomHead.tsx"
       ],
       "status": "partial"
     },
@@ -3258,7 +3258,7 @@
       "source_ids": [
         "web/src/desk/verbRegistry.ts",
         "web/src/desk/verbRegistry.ts",
-        "web/src/features/project-room/ProjectRoomCore.tsx"
+        "web/src/features/project-room/core/RoomHead.tsx"
       ],
       "status": "partial"
     },
@@ -3270,7 +3270,7 @@
       "source_ids": [
         "web/src/desk/verbRegistry.ts",
         "web/src/desk/verbRegistry.ts",
-        "web/src/features/project-room/ProjectRoomCore.tsx"
+        "web/src/features/project-room/core/RoomHead.tsx"
       ],
       "status": "partial"
     },
@@ -3282,7 +3282,7 @@
       "source_ids": [
         "web/src/desk/verbRegistry.ts",
         "web/src/desk/verbRegistry.ts",
-        "web/src/features/project-room/ProjectRoomCore.tsx"
+        "web/src/features/project-room/core/RoomHead.tsx"
       ],
       "status": "partial"
     },
@@ -3294,7 +3294,7 @@
       "source_ids": [
         "web/src/desk/verbRegistry.ts",
         "web/src/desk/verbRegistry.ts",
-        "web/src/features/project-room/ProjectRoomCore.tsx"
+        "web/src/features/project-room/core/RoomHead.tsx"
       ],
       "status": "partial"
     },
@@ -3858,7 +3858,7 @@
         "web/src/desk/firstrun/CalendarCard.tsx",
         "web/src/pages/cores/ConstitutionalContextCore.tsx",
         "web/src/pages/cores/CalendarSnapshotReviewCore.tsx",
-        "web/src/pages/cores/SettingsCore.tsx"
+        "web/src/pages/cores/settings/RemoteAccess.tsx"
       ],
       "status": "experimental"
     },
@@ -3872,7 +3872,7 @@
         "web/src/desk/firstrun/CalendarCard.tsx",
         "web/src/pages/cores/ConstitutionalContextCore.tsx",
         "web/src/pages/cores/CalendarSnapshotReviewCore.tsx",
-        "web/src/pages/cores/SettingsCore.tsx"
+        "web/src/pages/cores/settings/RemoteAccess.tsx"
       ],
       "status": "experimental"
     },
@@ -3886,7 +3886,7 @@
         "web/src/desk/firstrun/CalendarCard.tsx",
         "web/src/pages/cores/ConstitutionalContextCore.tsx",
         "web/src/pages/cores/CalendarSnapshotReviewCore.tsx",
-        "web/src/pages/cores/SettingsCore.tsx"
+        "web/src/pages/cores/settings/RemoteAccess.tsx"
       ],
       "status": "experimental"
     },
@@ -3900,7 +3900,7 @@
         "web/src/desk/firstrun/CalendarCard.tsx",
         "web/src/pages/cores/ConstitutionalContextCore.tsx",
         "web/src/pages/cores/CalendarSnapshotReviewCore.tsx",
-        "web/src/pages/cores/SettingsCore.tsx"
+        "web/src/pages/cores/settings/RemoteAccess.tsx"
       ],
       "status": "experimental"
     },
@@ -3914,7 +3914,7 @@
         "web/src/desk/firstrun/CalendarCard.tsx",
         "web/src/pages/cores/ConstitutionalContextCore.tsx",
         "web/src/pages/cores/CalendarSnapshotReviewCore.tsx",
-        "web/src/pages/cores/SettingsCore.tsx"
+        "web/src/pages/cores/settings/RemoteAccess.tsx"
       ],
       "status": "experimental"
     },
@@ -5052,7 +5052,7 @@
         "holdspeak/services/document_sources.py",
         "holdspeak/services/channel_service.py",
         "holdspeak/services/document_sources.py",
-        "web/src/pages/cores/connections/Destinations.tsx",
+        "web/src/features/channels/DestinationForm.tsx",
         "web/src/desk/surface/send/SendWell.tsx",
         "web/src/desk/documentSends.tsx",
         "web/src/desk/surface/send/pendingCommand.ts"
@@ -5068,7 +5068,7 @@
         "holdspeak/services/document_sources.py",
         "holdspeak/services/channel_service.py",
         "holdspeak/services/document_sources.py",
-        "web/src/pages/cores/connections/Destinations.tsx",
+        "web/src/features/channels/DestinationForm.tsx",
         "web/src/desk/surface/send/SendWell.tsx",
         "web/src/desk/documentSends.tsx",
         "web/src/desk/surface/send/pendingCommand.ts"
@@ -5084,7 +5084,7 @@
         "holdspeak/services/document_sources.py",
         "holdspeak/services/channel_service.py",
         "holdspeak/services/document_sources.py",
-        "web/src/pages/cores/connections/Destinations.tsx",
+        "web/src/features/channels/DestinationForm.tsx",
         "web/src/desk/surface/send/SendWell.tsx",
         "web/src/desk/documentSends.tsx",
         "web/src/desk/surface/send/pendingCommand.ts"
@@ -5100,7 +5100,7 @@
         "holdspeak/services/document_sources.py",
         "holdspeak/services/channel_service.py",
         "holdspeak/services/document_sources.py",
-        "web/src/pages/cores/connections/Destinations.tsx",
+        "web/src/features/channels/DestinationForm.tsx",
         "web/src/desk/surface/send/SendWell.tsx",
         "web/src/desk/documentSends.tsx",
         "web/src/desk/surface/send/pendingCommand.ts"
@@ -5116,7 +5116,7 @@
         "holdspeak/services/document_sources.py",
         "holdspeak/services/channel_service.py",
         "holdspeak/services/document_sources.py",
-        "web/src/pages/cores/connections/Destinations.tsx",
+        "web/src/features/channels/DestinationForm.tsx",
         "web/src/desk/surface/send/SendWell.tsx",
         "web/src/desk/documentSends.tsx",
         "web/src/desk/surface/send/pendingCommand.ts"
