@@ -4,8 +4,8 @@ import { useDesk } from "./store";
  *  yesterday open; `receipts` opens the Decisions window (2026-10-25; only an ask by
  *  `decisionId` or `receiptWorkRef` still shows the Decisions page in Today's
  *  window; no door of the desk asks that way now);
- *  `follow-through` (parked) opens the Needs-you window, where its rows and
- *  verbs live. */
+ *  `follow-through` opens the Needs-you window, where its rows and verbs
+ *  live, with the named action item (`followThroughId`) in its item reader. */
 export type IntelligenceView = "today" | "brief" | "follow-through" | "receipts";
 
 export type IntelligenceNavigation = {
@@ -29,12 +29,26 @@ export const INTELLIGENCE_NAVIGATE = "holdspeak:intelligence-navigate";
 /** Open the one Intelligence pullout and deliver its requested focus after it mounts. */
 let requests = 0;
 
+/** 2026-11-08 (the item reader): the action item a follow-through request
+ *  names. The Needs-you window can mount after the request's event fires,
+ *  so the id also waits here until that window takes it. */
+let pendingFollowThrough: string | null = null;
+
+/** The action item a follow-through request named, once (null when none). */
+export function takeFollowThrough(): string | null {
+  const id = pendingFollowThrough;
+  pendingFollowThrough = null;
+  return id;
+}
+
 export function openIntelligence(navigation: IntelligenceNavigation): void {
   if (navigation.view === "follow-through") {
     // Loaded on use: chairWindows reaches the window registry, which must
     // not load while this module (imported by openObject) is loading.
-    // The request is still announced (its listeners name the card); the
-    // Today window ignores it.
+    // The Needs-you window opens the named action item in its item reader
+    // (the event when it is mounted, `takeFollowThrough` when it mounts
+    // after). The Today window ignores the event.
+    pendingFollowThrough = navigation.followThroughId?.trim() || null;
     void import("./chair/chairWindows").then((m) => m.openChairWindow("chair:needs"));
     window.setTimeout(() => {
       window.dispatchEvent(new CustomEvent<IntelligenceNavigation>(INTELLIGENCE_NAVIGATE, { detail: navigation }));
