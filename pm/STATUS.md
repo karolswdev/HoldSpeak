@@ -2,6 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · #1991 Watch fold 1: `normalize_snapshot` and `diff_snapshots` have one home, `holdspeak/services/snapshot_diff.py`; WatchService, project setup and the evidence collector import it (no behaviour change).
 - 2026-11-08 · (PR) Park the `chain`/`workflow` Desk kinds: the Desk read none since #1979 and the floor draws neither; types, mappers, sprites, labels, sizes and the dead "Run <crew> on …" palette verb go; the hub keeps the synced rows for the iPad.
 - 2026-11-08 · #2003 The frame guard counts no parked code; five thread frames only the parked Thread window read are parked; the Ask's four in-process frames and the Dock's three are named; scheduled_recording arming/cancelled/missed flagged as a defect (no subscription since CaptureHero).
 - 2026-11-08 · (PR) Park six Model Library HTTP handlers no face called (read, download, add a detected model, connect hosted, connect paired device, use a model file); the service and its MCP family keep every command.
