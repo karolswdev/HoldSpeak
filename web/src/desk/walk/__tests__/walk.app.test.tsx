@@ -258,6 +258,38 @@ describe("The Walk", () => {
     expect(document.querySelectorAll(".walk-halo")).toHaveLength(0);
   }, 20000);
 
+  it("brings the part's window to the front before it marks it (the phone showed Programs over Needs you)", async () => {
+    vi.stubGlobal("fetch", hub());
+    const { useDesk } = await import("../../store");
+    const raised: string[] = [];
+    const state = useDesk.getState();
+    const real = state.focusPanel;
+    state.focusPanel = (id: string) => { raised.push(id); };
+    try {
+      // Programs is in front (z 40); Needs you opens behind it (z 10).
+      mocks.openSurface.mockImplementation((key: string) => {
+        if (key === "open-programs") {
+          mountWindow("surface-programs", `<button data-testid="programs-new">New program</button>
+            <section data-testid="programs-make"><ul data-testid="programs-make-rows"><li>Project</li></ul></section>`, 40);
+        }
+        return true;
+      });
+      mocks.verbById.mockImplementation((id: string) => id === "chair.window.needs"
+        ? { id, ghost: () => null, run: () => mountWindow("chair:needs", `<button data-testid="needs-open-people">People</button>`, 10) }
+        : undefined);
+      render(<WalkRunner />);
+      fireEvent.click(await screen.findByTestId("walk-next", {}, { timeout: 3000 }));
+      fireEvent.click(await screen.findByRole("button", { name: "Keep" }));
+      await waitFor(() => expect(posts).toHaveLength(1));
+      // Step 4 is in Needs you: the walk raises that window before the question.
+      await screen.findByTestId("walk-question", {}, { timeout: 9000 });
+      expect(raised).toContain("chair:needs");
+      expect(raised).not.toContain("surface-programs");
+    } finally {
+      state.focusPanel = real;
+    }
+  }, 20000);
+
   it("says the step's window is not open and skips the step", async () => {
     vi.stubGlobal("fetch", hub());
     // Needs you does not open (its verb runs, no window comes).

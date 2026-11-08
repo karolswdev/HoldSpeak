@@ -51,6 +51,7 @@ import {
   deskReady,
   noneWords,
   openWalkApp,
+  raiseWalkWindow,
   postWalkAnswer,
   readWalk,
   resolveWalkScope,
@@ -66,7 +67,7 @@ import {
   type WalkPart,
   type WalkView,
 } from "./walk";
-import { dockHeight, markPart } from "./dom";
+import { dockHeight, isFrontWindow, markPart } from "./dom";
 
 interface Rect { left: number; top: number; width: number; height: number }
 
@@ -534,6 +535,13 @@ function WalkSession({ token }: { token: string }) {
       if (!part.target) {
         await skipWith(noneWords(thing));
         return null;
+      }
+      // The part's window comes to the front before the guide marks it: on
+      // the phone Needs you opened behind Programs and the shot was Programs.
+      if (part.window && !isFrontWindow(part.window)) {
+        await raiseWalkWindow(part.window);
+        await frame();
+        await frame();
       }
       revealAbove(part.target, part.window, clearBottom(), clearTop());
       await frame();

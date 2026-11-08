@@ -208,6 +208,18 @@ export function findWalkWindow(app: string): HTMLElement | null {
   return frontWindow(walkWindowId(app));
 }
 
+/** Bring a desk window to the front (the store's raise, the same the Dock
+ * and the Window menu run). The store loads lazily: a static import makes a
+ * cycle at module load, as hubWindows does. */
+export async function raiseWalkWindow(element: HTMLElement): Promise<void> {
+  try {
+    const { useDesk } = await import("../store");
+    useDesk.getState().focusPanel(element.id);
+  } catch {
+    // A page without the desk store has nothing to raise.
+  }
+}
+
 /** The window a step's part is in: the part's own `window`, else the app
  * the walk opened last. */
 export function stepWindow(step: WalkStep, last: string | undefined): string | undefined {
