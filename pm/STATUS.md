@@ -2,6 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · #1996 Park settle mode (Hide the menus / Back to Desk): no menu, palette row or shortcut turned it on, and its one button sat in the Change places window nothing opens; Escape runs Back as on any desk.
 - 2026-11-08 · #1995 Fix forward: the residual set, the graph evidence and the frame mirror name the tree after the parkings (six census reds on c67a1a2d5); runtime/frames.ts is back at its path.
 - 2026-11-08 · (PR) Park the unreached Models chain: 13 web files (desk/firstrun LanServer, ConciergeCore, settings/Models, frontDoor, ModelLibraryCore, TopologyMapView, CapabilityAssignmentsCore, AssignmentEditor, AssignmentModelChooser, modelLibrary, topologyService, two CSS) and the hub routes only it read (`/api/front-door/*`, 4 routes, with `front_door_service`); the API surface scan skips parked web code.
 - 2026-11-08 · (PR) The Engines task probe ("Try it") runs through the engine door: the assigned engine and its chain's next one, one real sample, the answering engine's model and boundary; no route admission or frozen plan.
