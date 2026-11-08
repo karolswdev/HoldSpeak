@@ -1590,6 +1590,20 @@ span.pg-req-thumb { height: 150px; }
 .pg-wiz-levels .btn.pg-wiz-level + .btn.pg-wiz-level { border-inline-start: 1px solid var(--field-border); }
 .pg-wiz-fact { font: 400 13px/1.4 var(--font-sans); color: var(--wb-muted); }
 .pg-wiz-runs .gadget-row { min-height: 44px; }
+/* The short level words and the folded Check · Spending row wait for the phone. */
+.pg-wiz-level-short,
+.btn.pg-wiz-fold { display: none; }
+.btn.pg-wiz-fold { align-self: stretch; min-height: 44px; justify-content: flex-start; color: var(--wb-muted); }
+/* The phone (430×932): screen 3 fits without a scroll. The levels say their
+   short words; Check and Spending fold into one quiet row until a press
+   opens Check. */
+@container surface (max-width: 480px) {
+  .pg-wiz-levels .pg-wiz-level-word { display: none; }
+  .pg-wiz-levels .pg-wiz-level-short { display: inline; }
+  .pg-wiz-runs:not([data-check-open]) .gadget-row:has(.pg-wiz-check),
+  .pg-wiz-runs:not([data-check-open]) .gadget-row:has(.pg-wiz-spending) { display: none; }
+  .pg-wiz-runs:not([data-check-open]) > .btn.pg-wiz-fold { display: flex; }
+}
 
 .pg-wiz-step .gadget-group { max-width: 720px; }
 
