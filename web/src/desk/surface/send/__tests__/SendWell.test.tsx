@@ -391,6 +391,26 @@ describe("the SEND well species on a brief (not an update)", () => {
     } finally { openSettings.mockRestore(); }
   });
 
+  it("inline Add then Set up account calls the host's own action and keeps the draft, with no Settings on the page", async () => {
+    routes["GET /api/channels/destinations"] = () => ({ destinations: [folder({ builtin: true })] });
+    const openSettings = vi.spyOn(useDesk.getState(), "openSurfaceWindow").mockImplementation(() => {});
+    try {
+      render(<SendWells doc={{ ...BRIEF, ref: "note:set-up-account" }} />);
+      await screen.findByTestId("send-preview");
+      fireEvent.click(screen.getByTestId("send-add-destination"));
+      const form = await screen.findByTestId("dest-form");
+      fireEvent.change(within(form).getByLabelText("Channel"), { target: { value: "jira" } });
+      fireEvent.change(await screen.findByTestId("dest-key"), { target: { value: "PAY-118" } });
+      expect(document.querySelector(".prefs-module")).toBeNull();
+      fireEvent.click(await within(screen.getByTestId("dest-form")).findByRole("button", { name: "Set up account" }));
+      expect(openSettings).toHaveBeenCalledOnce();
+      expect(openSettings).toHaveBeenCalledWith("configure-settings", "integrations");
+      expect(screen.getByTestId("send-inline-destination")).toBeInTheDocument();
+      expect(screen.getByTestId("dest-key")).toHaveValue("PAY-118");
+      expect(apiFetch.mock.calls.some(([path]) => path === "/api/channels/send")).toBe(false);
+    } finally { openSettings.mockRestore(); }
+  });
+
   it("shows one shared loading state while destination and send reads wait, then removes it", async () => {
     let destinationsReady!: (value: unknown) => void;
     let sendsReady!: (value: unknown) => void;
