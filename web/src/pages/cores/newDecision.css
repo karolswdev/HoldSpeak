@@ -4,7 +4,7 @@
    between rows); the verbs live in the status bar. Tokens only. */
 
 .new-decision {
-  --nd-paper: color-mix(in srgb, var(--wb-paper) 94%, var(--p-color-orange-300));
+  --nd-paper: color-mix(in srgb, var(--wb-paper) 94%, var(--kind-decision));
   display: grid;
   grid-template-columns: 64px minmax(0, 1fr);
   align-items: start;

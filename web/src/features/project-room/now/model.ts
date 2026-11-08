@@ -66,7 +66,8 @@ export function stateLine(room: RoomSnapshot, sourceStale = false): StateLine {
   const reason = (health.stateReason ?? "").trim();
   return {
     text: state !== "on_track" && reason ? `${word}: ${reason}` : word,
-    tone: state === "blocked" ? "danger" : state === "at_risk" ? "warn" : "ok",
+    // At risk and Blocked are coral, never brass (the kit's STATE_TONES).
+    tone: state === "on_track" ? "ok" : "danger",
     ref: state !== "on_track" ? health.stateRef ?? null : null,
   };
 }

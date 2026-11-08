@@ -455,9 +455,49 @@ export function StatusBar({
   return target ? createPortal(bar, target) : <footer className="kit-statusbar-foot">{bar}</footer>;
 }
 
+/** The tone of a DotWord: the object tones, `idle` (the plain grey dot) and
+ *  `parked` (graphite). */
+export type DotTone = ObjectTone | "idle" | "parked";
+
+/** The language, 2026-11-08: THE one table of state words and their
+ *  meaning colours. At risk, Blocked, Late, Overdue and Failed are coral ink;
+ *  Done and On track are moss; Parked is graphite; Waits on you is brass. A
+ *  face never picks a tone for these words: DotWord reads this table, and a
+ *  face that draws its own state word asks {@link stateTone}. Longer phrases
+ *  come first, so `On track` is not read as `On`. */
+export const STATE_TONES: ReadonlyArray<readonly [string, DotTone]> = [
+  ["waits on you", "ask"],
+  ["waiting on you", "ask"],
+  ["asks you", "ask"],
+  ["on track", "ok"],
+  ["off track", "fail"],
+  ["at risk", "fail"],
+  ["blocked", "fail"],
+  ["overdue", "fail"],
+  ["failed", "fail"],
+  ["late", "fail"],
+  ["done", "ok"],
+  ["merged", "ok"],
+  ["parked", "parked"],
+];
+
+/** The table's tone for a state word or a line that starts with one
+ *  (`At risk: the API is late` → `fail`), else undefined. */
+export function stateTone(text: string | null | undefined): DotTone | undefined {
+  const clean = (text ?? "").trim().toLowerCase();
+  if (!clean) return undefined;
+  for (const [word, tone] of STATE_TONES) {
+    if (clean === word) return tone;
+    if (clean.startsWith(word) && !/[a-z0-9]/.test(clean.charAt(word.length))) return tone;
+  }
+  return undefined;
+}
+
 /** Window grammar: a state fact as a dot and a sentence-case word
  *  (`● No engine for answers`), sans 12, no plate. `idle` (default) is the
- *  plain grey dot. The word names the state; the dot is never colour alone. */
+ *  plain grey dot. The word names the state; the dot is never colour alone.
+ *  A state word in {@link STATE_TONES} takes the table's tone, whatever the
+ *  face passed: the meaning colours are set in one place. */
 export function DotWord({
   tone,
   children,
@@ -466,7 +506,7 @@ export function DotWord({
   live,
   "data-testid": testId,
 }: {
-  tone?: ObjectTone | "idle";
+  tone?: DotTone;
   children: ReactNode;
   className?: string;
   /** The raw reason (a code, the hub's words) for the hover only. */
@@ -476,9 +516,10 @@ export function DotWord({
   live?: boolean;
   "data-testid"?: string;
 }) {
+  const shown = (typeof children === "string" ? stateTone(children) : undefined) ?? tone ?? "idle";
   return (
-    <span className={className ? `kit-dotword ${className}` : "kit-dotword"} data-tone={tone ?? "idle"} data-testid={testId} title={title || undefined}>
-      <span className="kit-dot" data-tone={tone ?? "idle"} data-live={live ? "" : undefined} aria-hidden="true" />
+    <span className={className ? `kit-dotword ${className}` : "kit-dotword"} data-tone={shown} data-testid={testId} title={title || undefined}>
+      <span className="kit-dot" data-tone={shown} data-live={live ? "" : undefined} aria-hidden="true" />
       {children}
     </span>
   );

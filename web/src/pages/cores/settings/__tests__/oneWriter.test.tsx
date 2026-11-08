@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SettingsCore } from "../../SettingsCore";
 import type { SettingsResponse } from "../../core-types";
 import hubWire from "../../../../desk/__tests__/fixtures/settings-wire/hub.json";
+import { fakeSettingsHub, STALE } from "./fakeSettingsHub";
 
 const apiFetch = vi.hoisted(() => vi.fn());
 const ApiError = vi.hoisted(() => class TestApiError extends Error {
@@ -47,37 +48,7 @@ vi.mock("../../core-hooks", () => ({
 }));
 vi.mock("../../ContextualAssignment", () => ({ ContextualAssignment: () => null }));
 
-const STALE = "Settings changed in another surface since you loaded them. Reload and reapply your edit.";
-
-/** A hub that keeps one document and refuses a stale `_revision` with 409. */
-function fakeHub() {
-  let doc = JSON.parse(JSON.stringify(initial)) as Record<string, unknown>;
-  let revision = 1;
-  const merge = (target: Record<string, unknown>, patch: Record<string, unknown>) => {
-    for (const [key, value] of Object.entries(patch)) {
-      const current = target[key];
-      if (value && typeof value === "object" && !Array.isArray(value) && current && typeof current === "object" && !Array.isArray(current)) {
-        merge(current as Record<string, unknown>, value as Record<string, unknown>);
-      } else target[key] = value;
-    }
-  };
-  apiFetch.mockImplementation(async (url: string, init?: { method?: string; json?: Record<string, unknown> }) => {
-    if (url !== "/api/settings") return {};
-    if (init?.method !== "PUT") return JSON.parse(JSON.stringify(doc));
-    const { _revision, ...patch } = init.json ?? {};
-    if (_revision !== undefined && _revision !== doc._revision) {
-      throw new ApiError(409, STALE, { success: false, error: STALE, revision: doc._revision });
-    }
-    merge(doc, patch);
-    revision += 1;
-    doc = { ...doc, _revision: `r${revision}` };
-    return { success: true, settings: JSON.parse(JSON.stringify(doc)) };
-  });
-  return {
-    get doc() { return doc; },
-    moveElsewhere() { revision += 1; doc = { ...doc, _revision: `r${revision}` }; },
-  };
-}
+const fakeHub = () => fakeSettingsHub(apiFetch, ApiError, initial as unknown as Record<string, unknown>);
 
 const puts = () => apiFetch.mock.calls.filter(([url, init]) => url === "/api/settings" && init?.method === "PUT");
 

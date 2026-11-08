@@ -475,8 +475,9 @@
 .room-people-tok {
   flex: none;
 }
+/* Overdue is a late word: coral ink, never brass (the language, 2026-11-08). */
 .room-people-overdue {
-  color: var(--desk-warning, #fbbf24);
+  color: var(--hs-coral-ink);
 }
 .room-people-sep {
   color: var(--text-faint);
@@ -634,10 +635,10 @@
 
 /* ── HS-200-14: PEOPLE preparation (sub-ledger, tokens, resolve well) ── */
 .room-people-warn {
-  color: var(--desk-warning, #fbbf24);
+  color: var(--wb-warn-ink);
 }
 .room-people-fail {
-  color: var(--desk-danger, #f87171);
+  color: var(--wb-danger-ink);
 }
 .room-people-cells {
   display: inline-flex;
@@ -896,7 +897,7 @@
   transition: background-color 120ms ease, box-shadow 120ms ease;
 }
 .room-plan-row:hover {
-  background: #ffffff;
+  background: var(--hs-raised);
   box-shadow: var(--alive-lift);
 }
 .room-row-title {

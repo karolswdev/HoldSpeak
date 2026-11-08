@@ -40,6 +40,17 @@ differ. The tokens are in `web/design-tokens.json` (`--hs-*`).
   section heads; 700 only for the HoldSpeak wordmark; letter-spacing
   -0.01em at 20 px and more. Body stays Inter; facts stay JetBrains Mono.
   A geometric or neo-grotesque display face is rejected.
+- **Kind hues are cool.** A kind is a glyph seat, a row wash, a card rule
+  and a kind word, never a state: project `#3460bf`, meeting `#16699a`,
+  person `#176c5f`, decision violet `#6a4bc4`, note slate `#4a5d7a`, pull
+  request `#226b40`, action plum `#8a3b86`, agent indigo `#3d3a9c`; a
+  Program takes the steel of `--kind-other`. Each is 4.5:1 or more on the
+  window ground. The floor glows and the zone tints are cool too.
+- **State words take one table.** At risk, Blocked, Late, Overdue and
+  Failed are coral ink; Done and On track are moss; Parked is graphite;
+  Waits on you is brass. The table is `STATE_TONES` in the kit
+  (`web/src/desk/surface/kit.tsx`); `DotWord` reads it, so a face does not
+  pick the tone of a state word.
 - **The brass Button** (`variant="brass"`) is the one verb that waits on
   him: a deep brass plate (`--hs-brass-deep`, white words 4.6:1) with a
   dark brass edge. One for each face.
@@ -393,7 +404,7 @@ documented in contract.md, then used — never invented inline.
 
 ## C. The type steps (the interior canon)
 
-display 26/650 `--font-display` — ONCE per face, the one big fact ·
+display 26/600 `--font-display` — ONCE per face, the one big fact ·
 primary 15/600 `--font-sans` — the thing's name · body 14 · secondary
 12 mono — counts, times, hosts · caption 12 mono uppercase 0.06em —
 section labels, chips. A face uses at least three steps; a face that
@@ -413,8 +424,10 @@ replace the earlier 11 px caption allowance.
   Caption and secondary share 12 px; weight and letter-spacing keep
   them apart.
 - **Contrast.** Small text makes 4.5:1 on the background that it is
-  really on. Faint gray is `--text-faint` (`#8b93a3`); muted gray
-  stays `#9ba2b0`. A disabled control stays different through its
+  really on. The ink values are in "The language, 2026-11-08" above:
+  secondary ink is `--text-muted` (`#44536b`, 6.5:1 on the window
+  ground) and faint ink is `--text-faint` (`#56657c`, 4.9:1). A word is
+  never a mid grey. A disabled control stays different through its
   disabled state and its flat treatment, not through gray alone.
 - **Hit ownership at 393.** Each PLATED library Button — the Button
   that wears a face of its own — owns a 44 × 44 px area

@@ -758,7 +758,7 @@
   /* the button's own text colour: ink when closed, paper when open (the
      open title is drawn ink, so a fixed ink mark read 1:1 there) */
   color: inherit;
-  font: 700 13px var(--font-display);
+  font: 600 13px var(--font-display);
 }
 .desk-next .desk-screen-switcher-mark::before {
   content: "\25BE"; /* ▾ */
