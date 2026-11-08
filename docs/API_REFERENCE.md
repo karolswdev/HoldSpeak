@@ -4,7 +4,7 @@ This reference supplements [API surface](API_SURFACE.md). The existing real-app
 generator owns the route roster; this census adds static handler evidence.
 It does not invent request/response schemas for raw `Request` handlers.
 
-Census baseline snapshot: `675401a857b85336d4acaa8c65383dfc9636e4c8`. Handler evidence and test candidates are read from the current working tree at generation. **827 method/route entries**.
+Census baseline snapshot: `675401a857b85336d4acaa8c65383dfc9636e4c8`. Handler evidence and test candidates are read from the current working tree at generation. **828 method/route entries**.
 
 **Verification boundary:** inspect the full endpoint ledger, `docs/generated/api-reference.json` (not in git; run `scripts/gen_docs.sh` to write it),
 and the [declared OpenAPI schemas](generated/openapi.json) for transport models.
@@ -49,7 +49,7 @@ the shared RuntimeBus. Companion client tags come from the existing generator.
 | `web.routes.calendar_sources` | 1 |
 | `web.routes.calls` | 20 |
 | `web.routes.channels` | 11 |
-| `web.routes.concierge` | 8 |
+| `web.routes.concierge` | 9 |
 | `web.routes.connections` | 4 |
 | `web.routes.constitutional` | 3 |
 | `web.routes.core` | 2 |
