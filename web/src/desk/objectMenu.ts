@@ -13,6 +13,7 @@ import { askAboutRef } from "./askAbout";
 import { openPerson } from "./openObject";
 import { useScreenMembersStore } from "./screen/members";
 import { normalizeRef, SEED_DESK_DIRECTORY_ID } from "./screen/compose";
+import { decisionReaderObject } from "./decisionReaderObject";
 
 const KEEPABLE_KINDS = new Set(["meeting", "person", "people", "decision", "artifact", "repository", "thread"]);
 
@@ -163,6 +164,13 @@ export function windowObjectRef(winId: string | null): string | null {
   if (winId === "surface-meetings") {
     const scope = String(useDesk.getState().windowsById?.[winId]?.scope ?? "");
     return scope.startsWith("meeting:") && scope.length > "meeting:".length ? scope : null;
+  }
+  // The one decision face (2026-11-08): the Decisions window reader shows a
+  // record; a record made from a Desk decision carries that decision's object
+  // verbs (Delete). A meeting's record has none.
+  if (winId === "surface-decisions") {
+    const ref = decisionReaderObject();
+    return ref && objectByRef(useDesk.getState().items, ref) ? ref : null;
   }
   if (!winId.startsWith("pullout:")) return null;
   const ref = winId.slice("pullout:".length);

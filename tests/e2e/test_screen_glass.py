@@ -184,19 +184,6 @@ def _undo_phone_delete(page: Any, decision_id: str) -> None:
     assert _status(page, decision_id) == 200
 
 
-
-# Face defect since #1906 (2026-11-08, "one face per decision"): a decision
-# opens its record in the Decisions window, and that window carries no
-# Object menu (windowObjectRef in web/src/desk/objectMenu.ts maps no
-# `surface-decisions` scope to the record's desk decision) and its reader
-# offers Retire, not Delete. At 393 nothing deletes a decision. Strict: when
-# the one face gains Delete these cases pass and the marker must go.
-NO_PHONE_DELETE = pytest.mark.xfail(
-    strict=True,
-    reason="#1906 face defect: the Decisions window has no Object > Delete for its record",
-)
-
-
 class TestScreenDeleteGlass:
     @pytest.fixture(autouse=True)
     def setup(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
@@ -228,7 +215,7 @@ class TestScreenDeleteGlass:
         assert not real, real
 
     @pytest.mark.e2e
-    @pytest.mark.parametrize("width", [1440, pytest.param(393, marks=NO_PHONE_DELETE)])
+    @pytest.mark.parametrize("width", [1440, 393])
     def test_the_delete_receipt_is_readable_in_the_viewport(self, width: int) -> None:
         from playwright.sync_api import sync_playwright
 
@@ -296,7 +283,6 @@ class TestScreenDeleteGlass:
                 browser.close()
 
     @pytest.mark.e2e
-    @NO_PHONE_DELETE
     def test_the_receipt_is_readable_on_a_long_desk_at_393(self) -> None:
         from playwright.sync_api import sync_playwright
 
