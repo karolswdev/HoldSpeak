@@ -2,6 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · #1865 Five faces never draw a count of zero (the Update footer drew "0 updates"): A8 5 → 0, A1 81 → 2.
 - 2026-11-08 · #1864 Every module imports a Program definition from program_definitions, never through the service (HS-S51 repoint): modules importing program_service 28 → 27, definition-only importers 1 → 0, definition imports through the service 24 → 0.
 - 2026-11-08 · #1863 The desk declares viewport-fit=cover, so the iPhone's safe-area insets the walk, the dock and the pullouts already read are no longer 0.
 - 2026-11-08 · #1862 The UX canon scanner counts A8 (no counter of zero) only in drawn JSX text, never in a prop, aria-label, title or data-* value, and files each hit under its file stem: A8 26 → 5.

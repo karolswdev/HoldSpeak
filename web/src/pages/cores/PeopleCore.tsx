@@ -1377,7 +1377,7 @@ function PrepPane({ relationship, onRefresh, onProtectedFailure, onRead, onNext 
     <Button dense variant="ghost" onClick={() => toggle("assignments")} aria-expanded={concern === "assignments"} data-testid="prep-assignments-open">{concern === "assignments" ? "Hide" : "Show"}</Button>
   </li>);
   if (overdue.length) concernRows.push(<li key="overdue" className="people-work-row" data-testid="prep-commitments-row">
-    <span className="people-pill" data-tone="danger" data-testid="prep-commitments-label">{overdue.length} {overdue.length === 1 ? "COMMITMENT" : "COMMITMENTS"} OVERDUE</span>
+    <span className="people-pill" data-tone="danger" data-testid="prep-commitments-label">{countToken(overdue.length, "COMMITMENT")} OVERDUE</span>
     <span className="people-raise-tokens"><span className="people-prep-token">{overdue[0].body.length > 30 ? overdue[0].body.slice(0, 30) : overdue[0].body}</span></span>
   </li>);
   const agenda = prep?.agenda ?? [];
