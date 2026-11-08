@@ -1,0 +1,1592 @@
+{
+ "_recorded": "tests/integration/test_desk_project_room.py::test_project_program_continuity_records_scope_and_reads (HOLDSPEAK_WIRE_WRITE=1 rewrites this file; never hand-edit a field a test reads)",
+ "creationHandoff": {
+  "create": {
+   "request": {
+    "json": {
+     "project_id": "proj-14d08c6c6222",
+     "template": "fast-cycle",
+     "title": "New program"
+    },
+    "method": "POST",
+    "path": "/api/programs"
+   },
+   "response": {
+    "body": {
+     "allowed_profiles": [],
+     "asks": 0,
+     "budget_tokens": null,
+     "can_prove": {
+      "check": true,
+      "review": true,
+      "shot": false,
+      "shot_reason": "No shot command in this repository",
+      "word": true
+     },
+     "check_command": null,
+     "checkpoints": [
+      {
+       "at": "2026-11-08T00:41:56.258117+00:00",
+       "by": "owner",
+       "choice": null,
+       "decision_record_id": null,
+       "id": 1,
+       "kind": null,
+       "line": "Made the program from the Fast cycle template",
+       "operation_id": null,
+       "overturnable": false,
+       "overturned_at": null,
+       "pin_note": null,
+       "ref": null,
+       "ref_commit": null,
+       "rule": null,
+       "step_id": "",
+       "undo": {}
+      }
+     ],
+     "closed_at": null,
+     "control": "yolo",
+     "control_word": "YOLO",
+     "created_at": "2026-11-08T00:41:56.257828+00:00",
+     "decided_for_you": [],
+     "default": {
+      "agent": "Claude Code",
+      "engine": null,
+      "profile": "claude-default",
+      "runs_on": [
+       {
+        "agent": "Claude Code",
+        "engine": null,
+        "label": "Claude Code",
+        "profile": "claude-default"
+       }
+      ]
+     },
+     "delivery": null,
+     "done": 0,
+     "family": {
+      "children": [],
+      "parent": null
+     },
+     "for_person": null,
+     "for_person_id": null,
+     "goal": "",
+     "id": "program-ea36de920016",
+     "in_state_seconds": 0,
+     "last_checkpoint": {
+      "at": "2026-11-08T00:41:56.258117+00:00",
+      "by": "owner",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 1,
+      "kind": null,
+      "line": "Made the program from the Fast cycle template",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": null,
+      "ref_commit": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+     },
+     "line": "Drafting, no steps yet",
+     "may_call": false,
+     "may_handoff": false,
+     "night": null,
+     "note_id": "program-program-ea36de920016",
+     "note_window": "pullout:note:program-program-ea36de920016",
+     "origin_ref": null,
+     "persons": [],
+     "place": {
+      "origin": null,
+      "person": null,
+      "project": {
+       "id": "proj-14d08c6c6222",
+       "name": "Ledger cutover"
+      }
+     },
+     "planner": null,
+     "prefer_idle": false,
+     "project": {
+      "id": "proj-14d08c6c6222",
+      "name": "Ledger cutover"
+     },
+     "project_id": "proj-14d08c6c6222",
+     "repository": {
+      "base_branch": "main",
+      "label": "app",
+      "root": "/tmp/rig/app"
+     },
+     "requirements": [],
+     "review_depth": null,
+     "reviewer": {
+      "agent": null,
+      "engine": null,
+      "profile": null
+     },
+     "revision": 0,
+     "rounds": [],
+     "rounds_before_start": false,
+     "search_words": "new program ledger cutover fast-cycle fast cycle",
+     "skipped": 0,
+     "spend_limit_usd": null,
+     "state": "drafting",
+     "state_word": "Drafting",
+     "status_line": "Drafting \u00b7 0 of 0 done \u00b7 control YOLO",
+     "steps": [],
+     "template": "fast-cycle",
+     "title": "New program",
+     "total": 0,
+     "track": [],
+     "updated_at": "2026-11-08T00:41:56.257828+00:00",
+     "usage_warning_share": null,
+     "within": [],
+     "your_turn": 0,
+     "your_turn_items": []
+    },
+    "status": 201
+   }
+  },
+  "detail": {
+   "allowed_profiles": [],
+   "asks": 0,
+   "budget_tokens": null,
+   "can_prove": {
+    "check": true,
+    "review": true,
+    "shot": false,
+    "shot_reason": "No shot command in this repository",
+    "word": true
+   },
+   "check_command": null,
+   "checkpoints": [
+    {
+     "at": "2026-11-08T00:41:56.258117+00:00",
+     "by": "owner",
+     "choice": null,
+     "decision_record_id": null,
+     "id": 1,
+     "kind": null,
+     "line": "Made the program from the Fast cycle template",
+     "operation_id": null,
+     "overturnable": false,
+     "overturned_at": null,
+     "pin_note": null,
+     "ref": null,
+     "ref_commit": null,
+     "rule": null,
+     "step_id": "",
+     "undo": {}
+    }
+   ],
+   "closed_at": null,
+   "control": "yolo",
+   "control_word": "YOLO",
+   "created_at": "2026-11-08T00:41:56.257828+00:00",
+   "decided_for_you": [],
+   "default": {
+    "agent": "Claude Code",
+    "engine": null,
+    "profile": "claude-default",
+    "runs_on": [
+     {
+      "agent": "Claude Code",
+      "engine": null,
+      "label": "Claude Code",
+      "profile": "claude-default"
+     }
+    ]
+   },
+   "delivery": null,
+   "done": 0,
+   "family": {
+    "children": [],
+    "parent": null
+   },
+   "for_person": null,
+   "for_person_id": null,
+   "goal": "",
+   "id": "program-ea36de920016",
+   "in_state_seconds": 0,
+   "last_checkpoint": {
+    "at": "2026-11-08T00:41:56.258117+00:00",
+    "by": "owner",
+    "choice": null,
+    "decision_record_id": null,
+    "id": 1,
+    "kind": null,
+    "line": "Made the program from the Fast cycle template",
+    "operation_id": null,
+    "overturnable": false,
+    "overturned_at": null,
+    "pin_note": null,
+    "ref": null,
+    "ref_commit": null,
+    "rule": null,
+    "step_id": "",
+    "undo": {}
+   },
+   "line": "Drafting, no steps yet",
+   "may_call": false,
+   "may_handoff": false,
+   "night": null,
+   "note_id": "program-program-ea36de920016",
+   "note_window": "pullout:note:program-program-ea36de920016",
+   "origin_ref": null,
+   "persons": [],
+   "place": {
+    "origin": null,
+    "person": null,
+    "project": {
+     "id": "proj-14d08c6c6222",
+     "name": "Ledger cutover"
+    }
+   },
+   "planner": null,
+   "prefer_idle": false,
+   "project": {
+    "id": "proj-14d08c6c6222",
+    "name": "Ledger cutover"
+   },
+   "project_id": "proj-14d08c6c6222",
+   "repository": {
+    "base_branch": "main",
+    "label": "app",
+    "root": "/tmp/rig/app"
+   },
+   "requirements": [],
+   "review_depth": null,
+   "reviewer": {
+    "agent": null,
+    "engine": null,
+    "profile": null
+   },
+   "revision": 0,
+   "rounds": [],
+   "rounds_before_start": false,
+   "search_words": "new program ledger cutover fast-cycle fast cycle",
+   "skipped": 0,
+   "spend_limit_usd": null,
+   "state": "drafting",
+   "state_word": "Drafting",
+   "status_line": "Drafting \u00b7 0 of 0 done \u00b7 control YOLO",
+   "steps": [],
+   "template": "fast-cycle",
+   "title": "New program",
+   "total": 0,
+   "track": [],
+   "updated_at": "2026-11-08T00:41:56.257828+00:00",
+   "usage_warning_share": null,
+   "within": [],
+   "your_turn": 0,
+   "your_turn_items": []
+  },
+  "frames": [
+   {
+    "changes": [
+     {
+      "id": "program-program-ea36de920016",
+      "kind": "note",
+      "op": "create"
+     },
+     {
+      "id": "program-ea36de920016",
+      "kind": "program",
+      "op": "create"
+     }
+    ],
+    "id": "program-program-ea36de920016",
+    "kind": "note",
+    "op": "create",
+    "origin": "hub"
+   }
+  ],
+  "projects": {
+   "request": {
+    "method": "GET",
+    "path": "/api/projects"
+   },
+   "response": {
+    "body": {
+     "projects": [
+      {
+       "context": {},
+       "created_at": "2026-11-07T17:41:56.117211",
+       "description": "",
+       "detection_threshold": 0.4,
+       "id": "proj-9ed177031be2",
+       "is_archived": false,
+       "keywords": [],
+       "meeting_count": 0,
+       "name": "Card vault",
+       "team_members": [],
+       "updated_at": "2026-11-07T17:41:56.240170"
+      },
+      {
+       "context": {},
+       "created_at": "2026-11-07T17:41:56.110012",
+       "description": "",
+       "detection_threshold": 0.4,
+       "id": "proj-14d08c6c6222",
+       "is_archived": false,
+       "keywords": [],
+       "meeting_count": 0,
+       "name": "Ledger cutover",
+       "team_members": [],
+       "updated_at": "2026-11-07T17:41:56.235487"
+      },
+      {
+       "context": {},
+       "created_at": "2026-11-07T17:41:56.119699",
+       "description": "",
+       "detection_threshold": 0.4,
+       "id": "proj-9e142155d2fc",
+       "is_archived": false,
+       "keywords": [],
+       "meeting_count": 0,
+       "name": "Quiet",
+       "team_members": [],
+       "updated_at": "2026-11-07T17:41:56.119699"
+      }
+     ]
+    },
+    "status": 200
+   }
+  },
+  "roomAfter": {
+   "changes": {
+    "recent": [
+     {
+      "actor_ref": "principal:owner-session",
+      "after_hash": null,
+      "before_hash": null,
+      "change_kind": "project.resource.linked",
+      "command_id": "pcmd_44366738da6040ad95237d5fe02a4e3e",
+      "created_at": "2026-11-08T00:41:56.235487+00:00",
+      "id": "pchg_1160f9ced3b2cf634d354646e00de42d",
+      "project_id": "proj-14d08c6c6222",
+      "project_revision": 2,
+      "summary_json": "{\"resource_ref\": \"repository:src_8e7a86e3eb9f6e90\"}",
+      "target_ref": "repository:src_8e7a86e3eb9f6e90"
+     },
+     {
+      "actor_ref": "principal:owner-session",
+      "after_hash": "a306157a978e5d310a2e9886afe798d1",
+      "before_hash": null,
+      "change_kind": "project.created",
+      "command_id": "s13-a",
+      "created_at": "2026-11-08T00:41:56.110012+00:00",
+      "id": "pchg_e3d8fd0d3a669003e0acfd33a29c9c40",
+      "project_id": "proj-14d08c6c6222",
+      "project_revision": 1,
+      "summary_json": "{\"name\": \"Ledger cutover\"}",
+      "target_ref": "project:proj-14d08c6c6222"
+     }
+    ],
+    "state": "ok"
+   },
+   "commitments": {
+    "items": [],
+    "state": "ok"
+   },
+   "decisions": {
+    "items": [],
+    "proposed": [],
+    "state": "ok"
+   },
+   "health": {
+    "assessment": "on_track",
+    "checked_at": null,
+    "inputs": {
+     "ciFailing": false,
+     "overdue": 0,
+     "overdueMilestones": 0,
+     "reviewWaitingDays": null,
+     "targetPassed": false
+    },
+    "merge_queue_depth": 0,
+    "people": [],
+    "project_state": "on_track",
+    "reason": null,
+    "signals": {
+     "ci": {
+      "failures_last_3": 0,
+      "flaky_branch_count": 0,
+      "present": false,
+      "queue": 0,
+      "tone": "green"
+     },
+     "issue_aging": {
+      "aged_count": 0,
+      "present": false,
+      "threshold_days": 14,
+      "tone": "green"
+     },
+     "release": {
+      "blockers": [],
+      "blockers_count": 0,
+      "composite": "green",
+      "present": false,
+      "signals": {
+       "blockers": "green",
+       "ci": "green",
+       "overdue": "green",
+       "review_wait": "green"
+      },
+      "tone": "green"
+     },
+     "review_wait": {
+      "median_days": 0.0,
+      "per_reviewer": [],
+      "present": false,
+      "tone": "green",
+      "waiting_count": 0
+     }
+    },
+    "state": "ok",
+    "state_reason": null,
+    "state_ref": null
+   },
+   "items": {
+    "focus": [],
+    "state": "ok",
+    "total": 0,
+    "totals_by_type": {}
+   },
+   "meetings": {
+    "count": 0,
+    "latest": null,
+    "state": "ok"
+   },
+   "needsYou": {
+    "count": 0,
+    "items": [],
+    "state": "ok"
+   },
+   "nextCheckAt": null,
+   "now": {
+    "decided": [],
+    "last_update_at": null,
+    "meetings_this_week": 0,
+    "next_date": null,
+    "risks": [],
+    "state": "ok"
+   },
+   "observed_at": "2026-11-07T17:41:56.235487",
+   "programs": {
+    "programs": [
+     {
+      "done": 0,
+      "id": "program-ea36de920016",
+      "state": "drafting",
+      "state_word": "Drafting",
+      "title": "New program",
+      "total": 0,
+      "updated_at": "2026-11-08T00:41:56.257828+00:00",
+      "your_turn": 0
+     }
+    ],
+    "state": "ok"
+   },
+   "project": {
+    "context": {},
+    "created_at": "2026-11-07T17:41:56.110012",
+    "description": "",
+    "detection_threshold": 0.4,
+    "id": "proj-14d08c6c6222",
+    "is_archived": false,
+    "keywords": [],
+    "last_review_at": null,
+    "last_review_id": null,
+    "lifecycle": "active",
+    "meeting_count": 0,
+    "modules_json": null,
+    "name": "Ledger cutover",
+    "next_review_at": null,
+    "outcome_text": null,
+    "owner_ref": null,
+    "posture": null,
+    "posture_reason": null,
+    "purpose": null,
+    "review_cadence_json": null,
+    "revision": 2,
+    "start_at": null,
+    "target_at": null,
+    "team_members": [],
+    "template_key": null,
+    "updated_at": "2026-11-07T17:41:56.235487"
+   },
+   "project_id": "proj-14d08c6c6222",
+   "receipts": {
+    "items": [
+     {
+      "at": 1794098516.235248,
+      "caller": null,
+      "id": "18b5355f-08c8-4462-a2a3-e7302a1570e8",
+      "identity": null,
+      "label": "ProjectService.add_resource",
+      "op": "add_resource",
+      "origin": null,
+      "outcome": "ok",
+      "reason": null,
+      "timestamp": 1794098516.235248,
+      "title": "ProjectService.add_resource"
+     },
+     {
+      "at": 1794098516.107111,
+      "caller": null,
+      "id": "d9429e48-8828-49ad-b7d2-2ba3997c57b8",
+      "identity": null,
+      "label": "ProjectService.create_project",
+      "op": "create_project",
+      "origin": null,
+      "outcome": "ok",
+      "reason": null,
+      "timestamp": 1794098516.107111,
+      "title": "ProjectService.create_project"
+     }
+    ],
+    "state": "ok"
+   },
+   "resources": {
+    "count": 2,
+    "latest": {
+     "confidence": 1.0,
+     "created_at": "2026-11-08T00:41:56.260913+00:00",
+     "deleted": false,
+     "id": "proj-14d08c6c6222|note:program-program-ea36de920016",
+     "last_modified": "2026-11-08T00:41:56.260913+00:00",
+     "project_id": "proj-14d08c6c6222",
+     "relationship": "member",
+     "resource_ref": "note:program-program-ea36de920016",
+     "source": "program"
+    },
+    "state": "ok"
+   },
+   "review": {
+    "last_accepted_at": null,
+    "open_review_id": null,
+    "pending_count": 0,
+    "state": "ok"
+   },
+   "revision": 2,
+   "sinceRead": {
+    "groups": [],
+    "readAt": null,
+    "state": "ok"
+   },
+   "sources": {
+    "count": 0,
+    "items": [],
+    "nextCheckAt": null,
+    "quietUntil": null,
+    "state": "ok"
+   },
+   "steward": {
+    "enabled": false,
+    "latest_run": null,
+    "state": "ok",
+    "unattended_enabled": false
+   },
+   "target": {
+    "daysLeft": null,
+    "passed": false,
+    "state": "ok",
+    "targetAt": null
+   },
+   "updates": {
+    "automation": null,
+    "count": 0,
+    "counts": {},
+    "latest_published": null,
+    "recent": [],
+    "state": "ok"
+   }
+  },
+  "roomBefore": {
+   "changes": {
+    "recent": [
+     {
+      "actor_ref": "principal:owner-session",
+      "after_hash": null,
+      "before_hash": null,
+      "change_kind": "project.resource.linked",
+      "command_id": "pcmd_44366738da6040ad95237d5fe02a4e3e",
+      "created_at": "2026-11-08T00:41:56.235487+00:00",
+      "id": "pchg_1160f9ced3b2cf634d354646e00de42d",
+      "project_id": "proj-14d08c6c6222",
+      "project_revision": 2,
+      "summary_json": "{\"resource_ref\": \"repository:src_8e7a86e3eb9f6e90\"}",
+      "target_ref": "repository:src_8e7a86e3eb9f6e90"
+     },
+     {
+      "actor_ref": "principal:owner-session",
+      "after_hash": "a306157a978e5d310a2e9886afe798d1",
+      "before_hash": null,
+      "change_kind": "project.created",
+      "command_id": "s13-a",
+      "created_at": "2026-11-08T00:41:56.110012+00:00",
+      "id": "pchg_e3d8fd0d3a669003e0acfd33a29c9c40",
+      "project_id": "proj-14d08c6c6222",
+      "project_revision": 1,
+      "summary_json": "{\"name\": \"Ledger cutover\"}",
+      "target_ref": "project:proj-14d08c6c6222"
+     }
+    ],
+    "state": "ok"
+   },
+   "commitments": {
+    "items": [],
+    "state": "ok"
+   },
+   "decisions": {
+    "items": [],
+    "proposed": [],
+    "state": "ok"
+   },
+   "health": {
+    "assessment": "on_track",
+    "checked_at": null,
+    "inputs": {
+     "ciFailing": false,
+     "overdue": 0,
+     "overdueMilestones": 0,
+     "reviewWaitingDays": null,
+     "targetPassed": false
+    },
+    "merge_queue_depth": 0,
+    "people": [],
+    "project_state": "on_track",
+    "reason": null,
+    "signals": {
+     "ci": {
+      "failures_last_3": 0,
+      "flaky_branch_count": 0,
+      "present": false,
+      "queue": 0,
+      "tone": "green"
+     },
+     "issue_aging": {
+      "aged_count": 0,
+      "present": false,
+      "threshold_days": 14,
+      "tone": "green"
+     },
+     "release": {
+      "blockers": [],
+      "blockers_count": 0,
+      "composite": "green",
+      "present": false,
+      "signals": {
+       "blockers": "green",
+       "ci": "green",
+       "overdue": "green",
+       "review_wait": "green"
+      },
+      "tone": "green"
+     },
+     "review_wait": {
+      "median_days": 0.0,
+      "per_reviewer": [],
+      "present": false,
+      "tone": "green",
+      "waiting_count": 0
+     }
+    },
+    "state": "ok",
+    "state_reason": null,
+    "state_ref": null
+   },
+   "items": {
+    "focus": [],
+    "state": "ok",
+    "total": 0,
+    "totals_by_type": {}
+   },
+   "meetings": {
+    "count": 0,
+    "latest": null,
+    "state": "ok"
+   },
+   "needsYou": {
+    "count": 0,
+    "items": [],
+    "state": "ok"
+   },
+   "nextCheckAt": null,
+   "now": {
+    "decided": [],
+    "last_update_at": null,
+    "meetings_this_week": 0,
+    "next_date": null,
+    "risks": [],
+    "state": "ok"
+   },
+   "observed_at": "2026-11-07T17:41:56.235487",
+   "programs": {
+    "programs": [],
+    "state": "ok"
+   },
+   "project": {
+    "context": {},
+    "created_at": "2026-11-07T17:41:56.110012",
+    "description": "",
+    "detection_threshold": 0.4,
+    "id": "proj-14d08c6c6222",
+    "is_archived": false,
+    "keywords": [],
+    "last_review_at": null,
+    "last_review_id": null,
+    "lifecycle": "active",
+    "meeting_count": 0,
+    "modules_json": null,
+    "name": "Ledger cutover",
+    "next_review_at": null,
+    "outcome_text": null,
+    "owner_ref": null,
+    "posture": null,
+    "posture_reason": null,
+    "purpose": null,
+    "review_cadence_json": null,
+    "revision": 2,
+    "start_at": null,
+    "target_at": null,
+    "team_members": [],
+    "template_key": null,
+    "updated_at": "2026-11-07T17:41:56.235487"
+   },
+   "project_id": "proj-14d08c6c6222",
+   "receipts": {
+    "items": [
+     {
+      "at": 1794098516.235248,
+      "caller": null,
+      "id": "18b5355f-08c8-4462-a2a3-e7302a1570e8",
+      "identity": null,
+      "label": "ProjectService.add_resource",
+      "op": "add_resource",
+      "origin": null,
+      "outcome": "ok",
+      "reason": null,
+      "timestamp": 1794098516.235248,
+      "title": "ProjectService.add_resource"
+     },
+     {
+      "at": 1794098516.107111,
+      "caller": null,
+      "id": "d9429e48-8828-49ad-b7d2-2ba3997c57b8",
+      "identity": null,
+      "label": "ProjectService.create_project",
+      "op": "create_project",
+      "origin": null,
+      "outcome": "ok",
+      "reason": null,
+      "timestamp": 1794098516.107111,
+      "title": "ProjectService.create_project"
+     }
+    ],
+    "state": "ok"
+   },
+   "resources": {
+    "count": 1,
+    "latest": {
+     "confidence": 1.0,
+     "created_at": "2026-11-08T00:41:56.235487+00:00",
+     "deleted": false,
+     "id": "proj-14d08c6c6222|repository:src_8e7a86e3eb9f6e90",
+     "last_modified": "2026-11-08T00:41:56.235487+00:00",
+     "project_id": "proj-14d08c6c6222",
+     "relationship": "member",
+     "resource_ref": "repository:src_8e7a86e3eb9f6e90",
+     "source": "manual"
+    },
+    "state": "ok"
+   },
+   "review": {
+    "last_accepted_at": null,
+    "open_review_id": null,
+    "pending_count": 0,
+    "state": "ok"
+   },
+   "revision": 2,
+   "sinceRead": {
+    "groups": [],
+    "readAt": null,
+    "state": "ok"
+   },
+   "sources": {
+    "count": 0,
+    "items": [],
+    "nextCheckAt": null,
+    "quietUntil": null,
+    "state": "ok"
+   },
+   "steward": {
+    "enabled": false,
+    "latest_run": null,
+    "state": "ok",
+    "unattended_enabled": false
+   },
+   "target": {
+    "daysLeft": null,
+    "passed": false,
+    "state": "ok",
+    "targetAt": null
+   },
+   "updates": {
+    "automation": null,
+    "count": 0,
+    "counts": {},
+    "latest_published": null,
+    "recent": [],
+    "state": "ok"
+   }
+  }
+ },
+ "move": {
+  "frames": [
+   {
+    "changes": [
+     {
+      "id": "program-program-bf53f1bcc501",
+      "kind": "note",
+      "op": "update"
+     },
+     {
+      "id": "program-bf53f1bcc501",
+      "kind": "program",
+      "op": "update"
+     }
+    ],
+    "id": "program-program-bf53f1bcc501",
+    "kind": "note",
+    "op": "update",
+    "origin": "hub"
+   }
+  ],
+  "program": "program-bf53f1bcc501",
+  "roomA": [
+   {
+    "done": 0,
+    "id": "program-ea36de920016",
+    "state": "drafting",
+    "state_word": "Drafting",
+    "title": "New program",
+    "total": 0,
+    "updated_at": "2026-11-08T00:41:56.257828+00:00",
+    "your_turn": 0
+   }
+  ],
+  "roomC": [
+   {
+    "done": 0,
+    "id": "program-bf53f1bcc501",
+    "state": "drafting",
+    "state_word": "Drafting",
+    "title": "Moves",
+    "total": 0,
+    "updated_at": "2026-11-08T00:41:56.288934+00:00",
+    "your_turn": 0
+   }
+  ]
+ },
+ "projects": {
+  "a": "proj-14d08c6c6222",
+  "b": "proj-9ed177031be2",
+  "c": "proj-9e142155d2fc"
+ },
+ "roomDegraded": {
+  "changes": {
+   "recent": [
+    {
+     "actor_ref": "principal:owner-session",
+     "after_hash": null,
+     "before_hash": null,
+     "change_kind": "project.resource.linked",
+     "command_id": "pcmd_44366738da6040ad95237d5fe02a4e3e",
+     "created_at": "2026-11-08T00:41:56.235487+00:00",
+     "id": "pchg_1160f9ced3b2cf634d354646e00de42d",
+     "project_id": "proj-14d08c6c6222",
+     "project_revision": 2,
+     "summary_json": "{\"resource_ref\": \"repository:src_8e7a86e3eb9f6e90\"}",
+     "target_ref": "repository:src_8e7a86e3eb9f6e90"
+    },
+    {
+     "actor_ref": "principal:owner-session",
+     "after_hash": "a306157a978e5d310a2e9886afe798d1",
+     "before_hash": null,
+     "change_kind": "project.created",
+     "command_id": "s13-a",
+     "created_at": "2026-11-08T00:41:56.110012+00:00",
+     "id": "pchg_e3d8fd0d3a669003e0acfd33a29c9c40",
+     "project_id": "proj-14d08c6c6222",
+     "project_revision": 1,
+     "summary_json": "{\"name\": \"Ledger cutover\"}",
+     "target_ref": "project:proj-14d08c6c6222"
+    }
+   ],
+   "state": "ok"
+  },
+  "commitments": {
+   "items": [],
+   "state": "ok"
+  },
+  "decisions": {
+   "items": [],
+   "proposed": [],
+   "state": "ok"
+  },
+  "health": {
+   "assessment": "on_track",
+   "checked_at": null,
+   "inputs": {
+    "ciFailing": false,
+    "overdue": 0,
+    "overdueMilestones": 0,
+    "reviewWaitingDays": null,
+    "targetPassed": false
+   },
+   "merge_queue_depth": 0,
+   "people": [],
+   "project_state": "on_track",
+   "reason": null,
+   "signals": {
+    "ci": {
+     "failures_last_3": 0,
+     "flaky_branch_count": 0,
+     "present": false,
+     "queue": 0,
+     "tone": "green"
+    },
+    "issue_aging": {
+     "aged_count": 0,
+     "present": false,
+     "threshold_days": 14,
+     "tone": "green"
+    },
+    "release": {
+     "blockers": [],
+     "blockers_count": 0,
+     "composite": "green",
+     "present": false,
+     "signals": {
+      "blockers": "green",
+      "ci": "green",
+      "overdue": "green",
+      "review_wait": "green"
+     },
+     "tone": "green"
+    },
+    "review_wait": {
+     "median_days": 0.0,
+     "per_reviewer": [],
+     "present": false,
+     "tone": "green",
+     "waiting_count": 0
+    }
+   },
+   "state": "ok",
+   "state_reason": null,
+   "state_ref": null
+  },
+  "items": {
+   "focus": [],
+   "state": "ok",
+   "total": 0,
+   "totals_by_type": {}
+  },
+  "meetings": {
+   "count": 0,
+   "latest": null,
+   "state": "ok"
+  },
+  "needsYou": {
+   "count": 0,
+   "items": [],
+   "state": "ok"
+  },
+  "nextCheckAt": null,
+  "now": {
+   "decided": [],
+   "last_update_at": null,
+   "meetings_this_week": 0,
+   "next_date": null,
+   "risks": [],
+   "state": "ok"
+  },
+  "observed_at": "2026-11-07T17:41:56.235487",
+  "programs": {
+   "error_code": "programs_read_failed",
+   "state": "degraded"
+  },
+  "project": {
+   "context": {},
+   "created_at": "2026-11-07T17:41:56.110012",
+   "description": "",
+   "detection_threshold": 0.4,
+   "id": "proj-14d08c6c6222",
+   "is_archived": false,
+   "keywords": [],
+   "last_review_at": null,
+   "last_review_id": null,
+   "lifecycle": "active",
+   "meeting_count": 0,
+   "modules_json": null,
+   "name": "Ledger cutover",
+   "next_review_at": null,
+   "outcome_text": null,
+   "owner_ref": null,
+   "posture": null,
+   "posture_reason": null,
+   "purpose": null,
+   "review_cadence_json": null,
+   "revision": 2,
+   "start_at": null,
+   "target_at": null,
+   "team_members": [],
+   "template_key": null,
+   "updated_at": "2026-11-07T17:41:56.235487"
+  },
+  "project_id": "proj-14d08c6c6222",
+  "receipts": {
+   "items": [
+    {
+     "at": 1794098516.235248,
+     "caller": null,
+     "id": "18b5355f-08c8-4462-a2a3-e7302a1570e8",
+     "identity": null,
+     "label": "ProjectService.add_resource",
+     "op": "add_resource",
+     "origin": null,
+     "outcome": "ok",
+     "reason": null,
+     "timestamp": 1794098516.235248,
+     "title": "ProjectService.add_resource"
+    },
+    {
+     "at": 1794098516.107111,
+     "caller": null,
+     "id": "d9429e48-8828-49ad-b7d2-2ba3997c57b8",
+     "identity": null,
+     "label": "ProjectService.create_project",
+     "op": "create_project",
+     "origin": null,
+     "outcome": "ok",
+     "reason": null,
+     "timestamp": 1794098516.107111,
+     "title": "ProjectService.create_project"
+    }
+   ],
+   "state": "ok"
+  },
+  "resources": {
+   "count": 3,
+   "latest": {
+    "confidence": 1.0,
+    "created_at": "2026-11-08T00:41:56.283244+00:00",
+    "deleted": false,
+    "id": "proj-14d08c6c6222|note:program-program-bf53f1bcc501",
+    "last_modified": "2026-11-08T00:41:56.283244+00:00",
+    "project_id": "proj-14d08c6c6222",
+    "relationship": "member",
+    "resource_ref": "note:program-program-bf53f1bcc501",
+    "source": "program"
+   },
+   "state": "ok"
+  },
+  "review": {
+   "last_accepted_at": null,
+   "open_review_id": null,
+   "pending_count": 0,
+   "state": "ok"
+  },
+  "revision": 2,
+  "sinceRead": {
+   "groups": [],
+   "readAt": null,
+   "state": "ok"
+  },
+  "sources": {
+   "count": 0,
+   "items": [],
+   "nextCheckAt": null,
+   "quietUntil": null,
+   "state": "ok"
+  },
+  "steward": {
+   "enabled": false,
+   "latest_run": null,
+   "state": "ok",
+   "unattended_enabled": false
+  },
+  "target": {
+   "daysLeft": null,
+   "passed": false,
+   "state": "ok",
+   "targetAt": null
+  },
+  "updates": {
+   "automation": null,
+   "count": 0,
+   "counts": {},
+   "latest_published": null,
+   "recent": [],
+   "state": "ok"
+  }
+ },
+ "roomEmpty": {
+  "changes": {
+   "recent": [
+    {
+     "actor_ref": "principal:owner-session",
+     "after_hash": "65de17f5346c75089d22f4589ea244cd",
+     "before_hash": null,
+     "change_kind": "project.created",
+     "command_id": "s13-c",
+     "created_at": "2026-11-08T00:41:56.119699+00:00",
+     "id": "pchg_fe2094cddd80bfa8f8dbb9520bd03d85",
+     "project_id": "proj-9e142155d2fc",
+     "project_revision": 1,
+     "summary_json": "{\"name\": \"Quiet\"}",
+     "target_ref": "project:proj-9e142155d2fc"
+    }
+   ],
+   "state": "ok"
+  },
+  "commitments": {
+   "items": [],
+   "state": "ok"
+  },
+  "decisions": {
+   "items": [],
+   "proposed": [],
+   "state": "ok"
+  },
+  "health": {
+   "assessment": "on_track",
+   "checked_at": null,
+   "inputs": {
+    "ciFailing": false,
+    "overdue": 0,
+    "overdueMilestones": 0,
+    "reviewWaitingDays": null,
+    "targetPassed": false
+   },
+   "merge_queue_depth": 0,
+   "people": [],
+   "project_state": "on_track",
+   "reason": null,
+   "signals": {
+    "ci": {
+     "failures_last_3": 0,
+     "flaky_branch_count": 0,
+     "present": false,
+     "queue": 0,
+     "tone": "green"
+    },
+    "issue_aging": {
+     "aged_count": 0,
+     "present": false,
+     "threshold_days": 14,
+     "tone": "green"
+    },
+    "release": {
+     "blockers": [],
+     "blockers_count": 0,
+     "composite": "green",
+     "present": false,
+     "signals": {
+      "blockers": "green",
+      "ci": "green",
+      "overdue": "green",
+      "review_wait": "green"
+     },
+     "tone": "green"
+    },
+    "review_wait": {
+     "median_days": 0.0,
+     "per_reviewer": [],
+     "present": false,
+     "tone": "green",
+     "waiting_count": 0
+    }
+   },
+   "state": "ok",
+   "state_reason": null,
+   "state_ref": null
+  },
+  "items": {
+   "focus": [],
+   "state": "ok",
+   "total": 0,
+   "totals_by_type": {}
+  },
+  "meetings": {
+   "count": 0,
+   "latest": null,
+   "state": "ok"
+  },
+  "needsYou": {
+   "count": 0,
+   "items": [],
+   "state": "ok"
+  },
+  "nextCheckAt": null,
+  "now": {
+   "decided": [],
+   "last_update_at": null,
+   "meetings_this_week": 0,
+   "next_date": null,
+   "risks": [],
+   "state": "ok"
+  },
+  "observed_at": "2026-11-07T17:41:56.119699",
+  "programs": {
+   "programs": [],
+   "state": "ok"
+  },
+  "project": {
+   "context": {},
+   "created_at": "2026-11-07T17:41:56.119699",
+   "description": "",
+   "detection_threshold": 0.4,
+   "id": "proj-9e142155d2fc",
+   "is_archived": false,
+   "keywords": [],
+   "last_review_at": null,
+   "last_review_id": null,
+   "lifecycle": "active",
+   "meeting_count": 0,
+   "modules_json": null,
+   "name": "Quiet",
+   "next_review_at": null,
+   "outcome_text": null,
+   "owner_ref": null,
+   "posture": null,
+   "posture_reason": null,
+   "purpose": null,
+   "review_cadence_json": null,
+   "revision": 1,
+   "start_at": null,
+   "target_at": null,
+   "team_members": [],
+   "template_key": null,
+   "updated_at": "2026-11-07T17:41:56.119699"
+  },
+  "project_id": "proj-9e142155d2fc",
+  "receipts": {
+   "items": [
+    {
+     "at": 1794098516.119673,
+     "caller": null,
+     "id": "2e7464d5-405c-4044-a680-d8f2f7fdd179",
+     "identity": null,
+     "label": "ProjectService.create_project",
+     "op": "create_project",
+     "origin": null,
+     "outcome": "ok",
+     "reason": null,
+     "timestamp": 1794098516.119673,
+     "title": "ProjectService.create_project"
+    }
+   ],
+   "state": "ok"
+  },
+  "resources": {
+   "count": 0,
+   "latest": null,
+   "state": "ok"
+  },
+  "review": {
+   "last_accepted_at": null,
+   "open_review_id": null,
+   "pending_count": 0,
+   "state": "ok"
+  },
+  "revision": 1,
+  "sinceRead": {
+   "groups": [],
+   "readAt": null,
+   "state": "ok"
+  },
+  "sources": {
+   "count": 0,
+   "items": [],
+   "nextCheckAt": null,
+   "quietUntil": null,
+   "state": "ok"
+  },
+  "steward": {
+   "enabled": false,
+   "latest_run": null,
+   "state": "ok",
+   "unattended_enabled": false
+  },
+  "target": {
+   "daysLeft": null,
+   "passed": false,
+   "state": "ok",
+   "targetAt": null
+  },
+  "updates": {
+   "automation": null,
+   "count": 0,
+   "counts": {},
+   "latest_published": null,
+   "recent": [],
+   "state": "ok"
+  }
+ },
+ "roomOther": {
+  "changes": {
+   "recent": [
+    {
+     "actor_ref": "principal:owner-session",
+     "after_hash": null,
+     "before_hash": null,
+     "change_kind": "project.resource.linked",
+     "command_id": "pcmd_de40c80c26b4450c96d1e1f8eaf318c4",
+     "created_at": "2026-11-08T00:41:56.240170+00:00",
+     "id": "pchg_833dc58ebdb2994089c98630b282a824",
+     "project_id": "proj-9ed177031be2",
+     "project_revision": 2,
+     "summary_json": "{\"resource_ref\": \"repository:src_8e7a86e3eb9f6e90\"}",
+     "target_ref": "repository:src_8e7a86e3eb9f6e90"
+    },
+    {
+     "actor_ref": "principal:owner-session",
+     "after_hash": "09bdaa5fa377208e3e12bef03f213610",
+     "before_hash": null,
+     "change_kind": "project.created",
+     "command_id": "s13-b",
+     "created_at": "2026-11-08T00:41:56.117211+00:00",
+     "id": "pchg_856aec3841e6ca06fdc017ab1d025bde",
+     "project_id": "proj-9ed177031be2",
+     "project_revision": 1,
+     "summary_json": "{\"name\": \"Card vault\"}",
+     "target_ref": "project:proj-9ed177031be2"
+    }
+   ],
+   "state": "ok"
+  },
+  "commitments": {
+   "items": [],
+   "state": "ok"
+  },
+  "decisions": {
+   "items": [],
+   "proposed": [],
+   "state": "ok"
+  },
+  "health": {
+   "assessment": "on_track",
+   "checked_at": null,
+   "inputs": {
+    "ciFailing": false,
+    "overdue": 0,
+    "overdueMilestones": 0,
+    "reviewWaitingDays": null,
+    "targetPassed": false
+   },
+   "merge_queue_depth": 0,
+   "people": [],
+   "project_state": "on_track",
+   "reason": null,
+   "signals": {
+    "ci": {
+     "failures_last_3": 0,
+     "flaky_branch_count": 0,
+     "present": false,
+     "queue": 0,
+     "tone": "green"
+    },
+    "issue_aging": {
+     "aged_count": 0,
+     "present": false,
+     "threshold_days": 14,
+     "tone": "green"
+    },
+    "release": {
+     "blockers": [],
+     "blockers_count": 0,
+     "composite": "green",
+     "present": false,
+     "signals": {
+      "blockers": "green",
+      "ci": "green",
+      "overdue": "green",
+      "review_wait": "green"
+     },
+     "tone": "green"
+    },
+    "review_wait": {
+     "median_days": 0.0,
+     "per_reviewer": [],
+     "present": false,
+     "tone": "green",
+     "waiting_count": 0
+    }
+   },
+   "state": "ok",
+   "state_reason": null,
+   "state_ref": null
+  },
+  "items": {
+   "focus": [],
+   "state": "ok",
+   "total": 0,
+   "totals_by_type": {}
+  },
+  "meetings": {
+   "count": 0,
+   "latest": null,
+   "state": "ok"
+  },
+  "needsYou": {
+   "count": 0,
+   "items": [],
+   "state": "ok"
+  },
+  "nextCheckAt": null,
+  "now": {
+   "decided": [],
+   "last_update_at": null,
+   "meetings_this_week": 0,
+   "next_date": null,
+   "risks": [],
+   "state": "ok"
+  },
+  "observed_at": "2026-11-07T17:41:56.240170",
+  "programs": {
+   "programs": [
+    {
+     "done": 0,
+     "id": "program-5a6771bfcc69",
+     "state": "drafting",
+     "state_word": "Drafting",
+     "title": "New program",
+     "total": 0,
+     "updated_at": "2026-11-08T00:41:56.264607+00:00",
+     "your_turn": 0
+    }
+   ],
+   "state": "ok"
+  },
+  "project": {
+   "context": {},
+   "created_at": "2026-11-07T17:41:56.117211",
+   "description": "",
+   "detection_threshold": 0.4,
+   "id": "proj-9ed177031be2",
+   "is_archived": false,
+   "keywords": [],
+   "last_review_at": null,
+   "last_review_id": null,
+   "lifecycle": "active",
+   "meeting_count": 0,
+   "modules_json": null,
+   "name": "Card vault",
+   "next_review_at": null,
+   "outcome_text": null,
+   "owner_ref": null,
+   "posture": null,
+   "posture_reason": null,
+   "purpose": null,
+   "review_cadence_json": null,
+   "revision": 2,
+   "start_at": null,
+   "target_at": null,
+   "team_members": [],
+   "template_key": null,
+   "updated_at": "2026-11-07T17:41:56.240170"
+  },
+  "project_id": "proj-9ed177031be2",
+  "receipts": {
+   "items": [
+    {
+     "at": 1794098516.240053,
+     "caller": null,
+     "id": "7be5afb0-74ea-42a7-a315-243516027cf5",
+     "identity": null,
+     "label": "ProjectService.add_resource",
+     "op": "add_resource",
+     "origin": null,
+     "outcome": "ok",
+     "reason": null,
+     "timestamp": 1794098516.240053,
+     "title": "ProjectService.add_resource"
+    },
+    {
+     "at": 1794098516.117158,
+     "caller": null,
+     "id": "27e76f71-ddeb-424c-ba1d-ee0e83396898",
+     "identity": null,
+     "label": "ProjectService.create_project",
+     "op": "create_project",
+     "origin": null,
+     "outcome": "ok",
+     "reason": null,
+     "timestamp": 1794098516.117158,
+     "title": "ProjectService.create_project"
+    }
+   ],
+   "state": "ok"
+  },
+  "resources": {
+   "count": 2,
+   "latest": {
+    "confidence": 1.0,
+    "created_at": "2026-11-08T00:41:56.265619+00:00",
+    "deleted": false,
+    "id": "proj-9ed177031be2|note:program-program-5a6771bfcc69",
+    "last_modified": "2026-11-08T00:41:56.265619+00:00",
+    "project_id": "proj-9ed177031be2",
+    "relationship": "member",
+    "resource_ref": "note:program-program-5a6771bfcc69",
+    "source": "program"
+   },
+   "state": "ok"
+  },
+  "review": {
+   "last_accepted_at": null,
+   "open_review_id": null,
+   "pending_count": 0,
+   "state": "ok"
+  },
+  "revision": 2,
+  "sinceRead": {
+   "groups": [],
+   "readAt": null,
+   "state": "ok"
+  },
+  "sources": {
+   "count": 0,
+   "items": [],
+   "nextCheckAt": null,
+   "quietUntil": null,
+   "state": "ok"
+  },
+  "steward": {
+   "enabled": false,
+   "latest_run": null,
+   "state": "ok",
+   "unattended_enabled": false
+  },
+  "target": {
+   "daysLeft": null,
+   "passed": false,
+   "state": "ok",
+   "targetAt": null
+  },
+  "updates": {
+   "automation": null,
+   "count": 0,
+   "counts": {},
+   "latest_published": null,
+   "recent": [],
+   "state": "ok"
+  }
+ }
+}

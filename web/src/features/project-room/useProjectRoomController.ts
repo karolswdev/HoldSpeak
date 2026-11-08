@@ -66,6 +66,10 @@ export function useProjectRoomController(
   const [successors, setSuccessors] = useState<Record<string, string>>({});
   const [readAt, setReadAt] = useState<string | null>(null);
   const loadSeq = useRef(0);
+  // HS-S13: the Room on the glass is the last read: the newest /room read
+  // failed. Only a newer /room read that lands clears it; the detail and
+  // extras reads never set it.
+  const [lastRead, setLastRead] = useState(false);
   const fullLoads = useRef(0);
   const quietWaiting = useRef(false);
 
@@ -129,6 +133,7 @@ export function useProjectRoomController(
       // Phase 1: one /room request gives orientation + focus + counts
       const snapshot = await api.fetchProjectRoom(projectId);
       if (stale()) return;
+      setLastRead(false);
       // The catch-up list ("since you looked") is the visit's baseline. The
       // Room marks itself read after its first paint, so a quiet re-read
       // would get an empty list and a new marker. A quiet re-read keeps the
@@ -151,6 +156,9 @@ export function useProjectRoomController(
         setReadAt(snapshot.sinceRead.readAt);
       }
     } catch (reason) {
+      // An older read that fails late says nothing about the newer one.
+      if (stale()) return;
+      setLastRead(true);
       if (quiet) return;
       const failure = plainWords("Could not load the Project");
       setError(failure);
@@ -374,6 +382,7 @@ export function useProjectRoomController(
     error,
     readError,
     errorTitle,
+    lastRead,
     // Data
     project,
     room,

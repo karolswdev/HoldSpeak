@@ -644,6 +644,47 @@ function decodeSection<T>(
   return { state: "ok", ...decodeData(section) };
 }
 
+const PROGRAM_COUNT = (value: unknown): number | null =>
+  value == null ? 0 : typeof value === "number" && Number.isInteger(value) && value >= 0 ? value : null;
+
+/** HS-S13 (G13-A): the Room's Programs section, read strictly. A row with no
+ *  id, a repeated id, a count that is not a whole number, a `programs` that is
+ *  not a list or a state the Room does not know makes the section
+ *  `degraded` ("malformed"): never a smaller list or a convincing zero. The
+ *  producer's order, its rows and an unknown state word stay as sent. */
+export function decodeRoomPrograms(raw: unknown): RoomSection<{ programs: RoomProgramRow[] }> {
+  const malformed = { state: "degraded" as const, error_code: "malformed" };
+  if (raw == null) return { state: "absent", reason: "missing" };
+  if (typeof raw !== "object" || Array.isArray(raw)) return malformed;
+  const section = raw as Record<string, unknown>;
+  if (section.state === "absent" || section.state === "degraded") return decodeSection(raw, () => ({ programs: [] }));
+  if (section.state !== "ok" || !Array.isArray(section.programs)) return malformed;
+  const seen = new Set<string>();
+  const programs: RoomProgramRow[] = [];
+  for (const entry of section.programs as unknown[]) {
+    if (!entry || typeof entry !== "object" || Array.isArray(entry)) return malformed;
+    const r = entry as Record<string, unknown>;
+    const id = typeof r.id === "string" ? r.id : "";
+    if (!id || seen.has(id)) return malformed;
+    seen.add(id);
+    const done = PROGRAM_COUNT(r.done);
+    const total = PROGRAM_COUNT(r.total);
+    const yourTurn = PROGRAM_COUNT(r.your_turn);
+    if (done === null || total === null || yourTurn === null) return malformed;
+    const state = typeof r.state === "string" ? r.state : "";
+    programs.push({
+      id,
+      title: typeof r.title === "string" && r.title ? r.title : id,
+      state,
+      state_word: typeof r.state_word === "string" && r.state_word ? r.state_word : state,
+      done,
+      total,
+      your_turn: yourTurn,
+    });
+  }
+  return { state: "ok", programs };
+}
+
 /** Decode a raw /room JSON response into a typed RoomSnapshot (WEB-ARC-004). */
 export function decodeRoomSnapshot(raw: Record<string, unknown>): RoomSnapshot {
   const project = (raw.project ?? {}) as Record<string, unknown>;
@@ -893,19 +934,7 @@ export function decodeRoomSnapshot(raw: Record<string, unknown>): RoomSnapshot {
           }))
         : [],
     })),
-    programs: decodeSection<{ programs: RoomProgramRow[] }>(raw.programs, (s) => ({
-      programs: Array.isArray(s.programs)
-        ? (s.programs as Record<string, unknown>[]).map((r) => ({
-            id: String(r.id ?? ""),
-            title: String(r.title ?? ""),
-            state: String(r.state ?? ""),
-            state_word: String(r.state_word ?? r.state ?? ""),
-            done: Number(r.done ?? 0) || 0,
-            total: Number(r.total ?? 0) || 0,
-            your_turn: Number(r.your_turn ?? 0) || 0,
-          })).filter((r) => r.id)
-        : [],
-    })),
+    programs: decodeRoomPrograms(raw.programs),
     decisions: decodeSection<{ items: RoomDecisionItem[]; proposed?: RoomProposedDecision[] }>(raw.decisions, (s) => ({
       // PG16: the Program's proposed decisions (the Room's proposed fold).
       proposed: Array.isArray(s.proposed)
