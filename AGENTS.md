@@ -58,9 +58,11 @@ Two Brains and the Luna lanes are retired (owner ruling 2026-11-07).
 
 A worker brief is the Program step: the job, the settled design, exact owned
 paths, other steps' do-not-touch paths, the focused test files, and the
-isolated-state rule. A worker runs `scripts/quick_check.sh`, commits, opens
-the PR and reports; the test that fails on main is in the PR. The
-orchestrator merges on green and owns the done call.
+isolated-state rule. A worker runs ONLY its focused test files (seconds; never
+`scripts/quick_check.sh`, never the desk sweep), commits, pushes, opens the PR
+and reports; the test that fails on main is in the PR. The orchestrator merges,
+runs one quick check on main after the batch, fixes a red forward, and owns the
+done call.
 
 ## Worktree and change discipline
 

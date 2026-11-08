@@ -25,8 +25,13 @@ They replace the 2026-10-12 fast cycle where the two differ; its mechanics
    security surface: the gate boundary, token pages, egress, Telegram,
    credentials. Everything else gets no second model.
 3. **Verification is exactly three checks; nothing else gates.** A test that
-   fails on main. `scripts/quick_check.sh` (2–4 min). His desk on main. A red
-   after the merge is fixed forward in the next Program, not debated.
+   fails on main. `scripts/quick_check.sh`, run ONCE by the orchestrator on
+   main after a merge batch, never per PR (owner, 2026-11-07 evening: "Why is
+   there sooo much waiting?": five workers each ran the whole check and the
+   desk sweep, serialized on the lock, 40 min of queue for one proof). A
+   worker runs only its focused test files (seconds), commits, pushes, opens
+   the PR. His desk on main. A red after the merge is fixed forward at once,
+   not debated.
 4. **Plans are Programs, never documents.** No contract tasks, completion
    reports or planning packages. The brief is the step text.
    `docs/internal/holdspeak-execution-plan/` (#1788) is reference; its slices
