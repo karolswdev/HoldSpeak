@@ -259,6 +259,7 @@ export function SurfaceWindowHost({
           : undefined)
       }
       backTestId={coreBack?.testId}
+      backLabel={coreBack?.label}
       className={
         row.key === "configure-settings"
           ? "desk-surface-window desk-settings-window"
