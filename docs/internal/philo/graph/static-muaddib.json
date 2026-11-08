@@ -1976,14 +1976,14 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/AttentionDrawer.tsx",
+     "path": "web/src/desk/_parked/attention/AttentionDrawer.tsx",
      "line": 79,
      "claim": "the dock launcher carries the label and the needs-attention badge",
      "symbol": "AttentionDrawer"
     },
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/AttentionDrawer.tsx",
+     "path": "web/src/desk/_parked/attention/AttentionDrawer.tsx",
      "line": 83,
      "claim": "activating it opens the shade, not the drawer window",
      "symbol": "AttentionDrawer"
@@ -2004,14 +2004,14 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/SystemShade.tsx",
+     "path": "web/src/desk/_parked/attention/SystemShade.tsx",
      "line": 206,
      "claim": "one surface behind the launcher: Projects, Coverage, Brief, People, Needs you, Finished, Learned",
      "symbol": "SystemShade"
     },
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/SystemShade.tsx",
+     "path": "web/src/desk/_parked/attention/SystemShade.tsx",
      "line": 180,
      "claim": "the shade exists only while it is open",
      "symbol": "SystemShade"
@@ -2134,14 +2134,14 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/SystemShade.tsx",
+     "path": "web/src/desk/_parked/attention/SystemShade.tsx",
      "line": 192,
      "claim": "a verb is drawn only where a door exists",
      "symbol": "SystemShade"
     },
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/SystemShade.tsx",
+     "path": "web/src/desk/_parked/attention/SystemShade.tsx",
      "line": 385,
      "claim": "the Finished row's Open",
      "symbol": "SystemShade"
@@ -2162,21 +2162,21 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/SystemShade.tsx",
+     "path": "web/src/desk/_parked/attention/SystemShade.tsx",
      "line": 194,
      "claim": "close the shade, then dispatch on detail_url",
      "symbol": "SystemShade"
     },
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/SystemShade.tsx",
+     "path": "web/src/desk/_parked/attention/SystemShade.tsx",
      "line": 196,
      "claim": "a /history door opens the Meetings window with the row's subject_ref",
      "symbol": "SystemShade"
     },
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/SystemShade.tsx",
+     "path": "web/src/desk/_parked/attention/SystemShade.tsx",
      "line": 199,
      "claim": "a /cadence door opens the Rhythm face",
      "symbol": "SystemShade"
@@ -2244,7 +2244,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/SystemShade.tsx",
+     "path": "web/src/desk/_parked/attention/SystemShade.tsx",
      "line": 342,
      "claim": "the row's own verb",
      "symbol": "SystemShade"
@@ -2265,7 +2265,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/SystemShade.tsx",
+     "path": "web/src/desk/_parked/attention/SystemShade.tsx",
      "line": 349,
      "claim": "the row's own verb",
      "symbol": "SystemShade"
@@ -2446,14 +2446,14 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/SystemShade.tsx",
+     "path": "web/src/desk/_parked/attention/SystemShade.tsx",
      "line": 212,
      "claim": "the shade's head verb",
      "symbol": "SystemShade"
     },
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/AttentionDrawer.tsx",
+     "path": "web/src/desk/_parked/attention/AttentionDrawer.tsx",
      "line": 94,
      "claim": "it opens the Project memory window, a third face with the same name",
      "symbol": "AttentionDrawer"
@@ -2474,14 +2474,14 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/AttentionDrawer.tsx",
+     "path": "web/src/desk/_parked/attention/AttentionDrawer.tsx",
      "line": 101,
      "claim": "the drawer window: search, filters, receipt detail, Acknowledge, Dismiss card, Load older",
      "symbol": "AttentionDrawer"
     },
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/AttentionDrawer.tsx",
+     "path": "web/src/desk/_parked/attention/AttentionDrawer.tsx",
      "line": 103,
      "claim": "it is drawn only while the projection store's `open` is true",
      "symbol": "AttentionDrawer"
@@ -4377,14 +4377,14 @@
     },
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/SystemShade.tsx",
+     "path": "web/src/desk/_parked/attention/SystemShade.tsx",
      "line": 192,
      "claim": "an empty detail_url draws no Open verb",
      "symbol": "hasDoor"
     },
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/SystemShade.tsx",
+     "path": "web/src/desk/_parked/attention/SystemShade.tsx",
      "line": 385,
      "claim": "the Finished section withholds Open when there is no door",
      "symbol": "hasDoor"
@@ -4412,14 +4412,14 @@
     },
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/SystemShade.tsx",
+     "path": "web/src/desk/_parked/attention/SystemShade.tsx",
      "line": 192,
      "claim": "the shade draws Open only for a non-empty detail_url that is not /",
      "symbol": "hasDoor"
     },
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/SystemShade.tsx",
+     "path": "web/src/desk/_parked/attention/SystemShade.tsx",
      "line": 199,
      "claim": "the /cadence door opens the configure-cadence surface",
      "symbol": "configure-cadence"
@@ -4454,7 +4454,7 @@
     },
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/SystemShade.tsx",
+     "path": "web/src/desk/_parked/attention/SystemShade.tsx",
      "line": 197,
      "claim": "the shade opens review-meetings on that subject_ref regardless of whether it resolves",
      "symbol": "review-meetings"
@@ -15366,7 +15366,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/AttentionDrawer.tsx",
+     "path": "web/src/desk/_parked/attention/AttentionDrawer.tsx",
      "line": 119,
      "anchor": "onSubmit",
      "claim": "a raw control's onSubmit handler on form"
@@ -15387,7 +15387,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/AttentionDrawer.tsx",
+     "path": "web/src/desk/_parked/attention/AttentionDrawer.tsx",
      "line": 129,
      "anchor": "onChange",
      "claim": "a library control's onChange handler on StringGadget"
@@ -15408,7 +15408,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/AttentionDrawer.tsx",
+     "path": "web/src/desk/_parked/attention/AttentionDrawer.tsx",
      "line": 142,
      "anchor": "onChange",
      "claim": "a library control's onChange handler on CycleGadget"
@@ -15429,7 +15429,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/AttentionDrawer.tsx",
+     "path": "web/src/desk/_parked/attention/AttentionDrawer.tsx",
      "line": 155,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -15450,7 +15450,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/AttentionDrawer.tsx",
+     "path": "web/src/desk/_parked/attention/AttentionDrawer.tsx",
      "line": 162,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -15471,7 +15471,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/AttentionDrawer.tsx",
+     "path": "web/src/desk/_parked/attention/AttentionDrawer.tsx",
      "line": 170,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -15492,7 +15492,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/AttentionDrawer.tsx",
+     "path": "web/src/desk/_parked/attention/AttentionDrawer.tsx",
      "line": 171,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -15513,7 +15513,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/AttentionDrawer.tsx",
+     "path": "web/src/desk/_parked/attention/AttentionDrawer.tsx",
      "line": 172,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -15534,7 +15534,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/AttentionDrawer.tsx",
+     "path": "web/src/desk/_parked/attention/AttentionDrawer.tsx",
      "line": 191,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -15555,7 +15555,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/AttentionDrawer.tsx",
+     "path": "web/src/desk/_parked/attention/AttentionDrawer.tsx",
      "line": 254,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -15576,7 +15576,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/AttentionDrawer.tsx",
+     "path": "web/src/desk/_parked/attention/AttentionDrawer.tsx",
      "line": 262,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -15597,7 +15597,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/AttentionDrawer.tsx",
+     "path": "web/src/desk/_parked/attention/AttentionDrawer.tsx",
      "line": 272,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -15618,7 +15618,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/AttentionDrawer.tsx",
+     "path": "web/src/desk/_parked/attention/AttentionDrawer.tsx",
      "line": 286,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -15639,7 +15639,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/AttentionDrawer.tsx",
+     "path": "web/src/desk/_parked/attention/AttentionDrawer.tsx",
      "line": 316,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -20112,7 +20112,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/SystemShade.tsx",
+     "path": "web/src/desk/_parked/attention/SystemShade.tsx",
      "line": 213,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -20133,7 +20133,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/SystemShade.tsx",
+     "path": "web/src/desk/_parked/attention/SystemShade.tsx",
      "line": 269,
      "anchor": "onChange",
      "claim": "a library control's onChange handler on StringGadget"
@@ -20154,7 +20154,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/SystemShade.tsx",
+     "path": "web/src/desk/_parked/attention/SystemShade.tsx",
      "line": 270,
      "anchor": "onKeyDown",
      "claim": "a library control's onKeyDown handler on StringGadget"
@@ -20175,7 +20175,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/SystemShade.tsx",
+     "path": "web/src/desk/_parked/attention/SystemShade.tsx",
      "line": 283,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -20196,7 +20196,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/SystemShade.tsx",
+     "path": "web/src/desk/_parked/attention/SystemShade.tsx",
      "line": 294,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -20217,7 +20217,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/SystemShade.tsx",
+     "path": "web/src/desk/_parked/attention/SystemShade.tsx",
      "line": 304,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -20238,7 +20238,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/SystemShade.tsx",
+     "path": "web/src/desk/_parked/attention/SystemShade.tsx",
      "line": 311,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -20259,7 +20259,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/SystemShade.tsx",
+     "path": "web/src/desk/_parked/attention/SystemShade.tsx",
      "line": 335,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -20280,7 +20280,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/SystemShade.tsx",
+     "path": "web/src/desk/_parked/attention/SystemShade.tsx",
      "line": 342,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -20301,7 +20301,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/SystemShade.tsx",
+     "path": "web/src/desk/_parked/attention/SystemShade.tsx",
      "line": 349,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -20322,7 +20322,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/SystemShade.tsx",
+     "path": "web/src/desk/_parked/attention/SystemShade.tsx",
      "line": 387,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -20343,7 +20343,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/SystemShade.tsx",
+     "path": "web/src/desk/_parked/attention/SystemShade.tsx",
      "line": 488,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -20364,7 +20364,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/SystemShade.tsx",
+     "path": "web/src/desk/_parked/attention/SystemShade.tsx",
      "line": 592,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -20385,7 +20385,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/SystemShade.tsx",
+     "path": "web/src/desk/_parked/attention/SystemShade.tsx",
      "line": 649,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -20406,7 +20406,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/SystemShade.tsx",
+     "path": "web/src/desk/_parked/attention/SystemShade.tsx",
      "line": 805,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -39948,7 +39948,7 @@
    "evidence": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/AttentionDrawer.tsx",
+     "path": "web/src/desk/_parked/attention/AttentionDrawer.tsx",
      "line": 91,
      "claim": "the launcher's activate mounts the shade with open=true",
      "symbol": "AttentionDrawer"
@@ -39962,7 +39962,7 @@
    "evidence": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/SystemShade.tsx",
+     "path": "web/src/desk/_parked/attention/SystemShade.tsx",
      "line": 116,
      "claim": "opening the shade re-reads the projections",
      "symbol": "SystemShade"
@@ -40102,7 +40102,7 @@
    "evidence": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/SystemShade.tsx",
+     "path": "web/src/desk/_parked/attention/SystemShade.tsx",
      "line": 193,
      "claim": "no door, no verb",
      "symbol": "SystemShade"
@@ -40116,7 +40116,7 @@
    "evidence": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/SystemShade.tsx",
+     "path": "web/src/desk/_parked/attention/SystemShade.tsx",
      "line": 387,
      "claim": "Open calls openSource with that row",
      "symbol": "SystemShade"
@@ -40130,7 +40130,7 @@
    "evidence": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/SystemShade.tsx",
+     "path": "web/src/desk/_parked/attention/SystemShade.tsx",
      "line": 199,
      "claim": "the /cadence branch",
      "symbol": "SystemShade"
@@ -40158,7 +40158,7 @@
    "evidence": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/SystemShade.tsx",
+     "path": "web/src/desk/_parked/attention/SystemShade.tsx",
      "line": 197,
      "claim": "every /history door opens the Meetings window",
      "symbol": "SystemShade"
@@ -40270,7 +40270,7 @@
    "evidence": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/AttentionDrawer.tsx",
+     "path": "web/src/desk/_parked/attention/AttentionDrawer.tsx",
      "line": 94,
      "claim": "the shade's Desk memory does NOT open this window; it opens open-project-memory",
      "symbol": "AttentionDrawer"
@@ -46954,7 +46954,7 @@
     },
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/SystemShade.tsx",
+     "path": "web/src/desk/_parked/attention/SystemShade.tsx",
      "line": 196,
      "claim": "the shade's branch",
      "symbol": "SystemShade"
@@ -47107,21 +47107,21 @@
    "evidence": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/AttentionDrawer.tsx",
+     "path": "web/src/desk/_parked/attention/AttentionDrawer.tsx",
      "line": 79,
      "claim": "the launcher",
      "symbol": "AttentionDrawer"
     },
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/AttentionDrawer.tsx",
+     "path": "web/src/desk/_parked/attention/AttentionDrawer.tsx",
      "line": 101,
      "claim": "the drawer window",
      "symbol": "AttentionDrawer"
     },
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/SystemShade.tsx",
+     "path": "web/src/desk/_parked/attention/SystemShade.tsx",
      "line": 212,
      "claim": "the shade's verb",
      "symbol": "SystemShade"
@@ -47195,7 +47195,7 @@
     },
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/desk/components/SystemShade.tsx",
+     "path": "web/src/desk/_parked/attention/SystemShade.tsx",
      "line": 342,
      "claim": "the control the case should press",
      "anchor": "onClick={() => void store.present(row.id, \"acknowledge\")}"

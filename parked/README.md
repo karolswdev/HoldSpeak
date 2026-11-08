@@ -23,8 +23,9 @@ module name and the file name, on branch `chore/finish-housekeeping`.
 | `holdspeak/kernel/voice_resolve.py` | 78 | none | No importer, no string reference (the live voice resolver is `holdspeak/voice_resolver.py`) |
 | `holdspeak/web/routes/meetings/_shared.py` | 24 | none | No importer, no string reference |
 | `holdspeak/workrooms.py` | 114 | its own test only | HS-93-02 workroom context; no product caller. Its test is parked at `tests/_parked/dead-code/tests/unit/test_workroom_context.py` |
+| `holdspeak/db/models/mixins.py` | 16 | none | `Serializable`, the base class of the six model copies parked above. No class in `holdspeak/db/models/__init__.py` inherits it; only its own definition named it (parked 2026-11-07) |
 
-Total: 1,363 lines.
+Total: 1,379 lines.
 
 To bring a file back: `git mv parked/<path> <path>` (and its test from
 `tests/_parked/dead-code/`).

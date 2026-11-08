@@ -51,7 +51,7 @@ vi.mock("../intelligenceAttention", async () => {
 import { EMPTY_ITEMS } from "../api";
 import { __resetSurfaces } from "../shell";
 import { useDesk } from "../store";
-import { ProjectMemoryCore } from "../../pages/cores/ProjectMemoryCore";
+import { ProjectRoomCore } from "../../features/project-room/ProjectRoomCore";
 import { SinceYesterday } from "../pullouts/views/BriefView";
 
 // ── the hub's answers ───────────────────────────────────────────────────
@@ -195,7 +195,7 @@ async function search(query: string) {
 describe("Desk memory (HS-526): relationship-aware recall", () => {
   it("a transcript hit recalls its Meeting; the Artifact arrives over the edge, named; the marks are rendered, never injected", async () => {
     // replaces: tests/e2e/test_hs526_desk_memory_glass.py::test_desk_memory_results (face half)
-    const { container } = render(<ProjectMemoryCore />);
+    const { container } = render(<ProjectRoomCore />);
     await search("zephyr");
     expect(await screen.findByText("Launch review")).toBeTruthy();
     expect(screen.getByText("Rollout checklist")).toBeTruthy();
@@ -209,7 +209,7 @@ describe("Desk memory (HS-526): relationship-aware recall", () => {
 
   it("nothing behind the query: Nothing matches, no row, and Search memory is the library Button", async () => {
     // replaces: tests/e2e/test_hs526_desk_memory_glass.py::test_desk_memory_empty (face half)
-    const { container } = render(<ProjectMemoryCore />);
+    const { container } = render(<ProjectRoomCore />);
     await search("unfindablequasar");
     await screen.findByTestId("recall-miss");
     expect(screen.getByTestId("recall-display").textContent).toBe("Nothing matches");
@@ -224,7 +224,7 @@ describe("Memory on the Desk: standing pages where the work lives", () => {
     // replaces: tests/e2e/test_memory_faces_glass.py::test_memory_on_the_desk (face half: pages)
     // Betterment P3: the pages are promoted into the Now wing's This week
     // (Decided comes from the decision records, the one store for decisions).
-    render(<ProjectMemoryCore scope="project:atlas" />);
+    render(<ProjectRoomCore scope="project:atlas" />);
     const section = await screen.findByTestId("room-this-week");
     const groups = within(section).getAllByTestId("this-week-group");
     expect(groups.map((g) => g.getAttribute("aria-label"))).toEqual(["Open", "Risks", "Changed"]);
@@ -304,7 +304,7 @@ describe("Desk memory: the quiet open read says busy (PHILO-17 held read)", () =
     let land: (v: unknown) => void = () => {};
     apiFetch.mockImplementation((url: string) => String(url).startsWith("/api/memory/recall")
       ? new Promise((r) => { land = r; }) : Promise.resolve(hub(String(url))));
-    const { container } = render(<ProjectMemoryCore />);
+    const { container } = render(<ProjectRoomCore />);
     await waitFor(() => expect(apiFetch).toHaveBeenCalledWith(expect.stringContaining("recent=1")));
     expect(container.querySelector('[data-testid=recall-reading][aria-busy="true"]')).not.toBeNull();
     expect(screen.queryByTestId("recall-display")).toBeNull();
@@ -320,7 +320,7 @@ describe("Desk memory (HS-200-13): the current decision first, carried; the owed
     //   the computed opacity, the type steps, the 393 filter fold and the viewport measures, which stay in
     //   the browser file; the "recall minute" is a measurement, not a fence)
     const { presses, misses } = replayRecall();
-    render(<ProjectMemoryCore />);
+    render(<ProjectRoomCore />);
     // Opened with no query, the face reads the desk's recent memory.
     const results = await screen.findByTestId("recall-results");
     expect(results.getAttribute("aria-label")).toBe("Recent on this desk");

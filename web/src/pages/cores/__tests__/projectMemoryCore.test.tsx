@@ -1,4 +1,6 @@
-// HS-158-05 → HS-169-03 — ProjectMemoryCore (re-export) tests.
+// HS-158-05 → HS-169-03 — ProjectRoomCore tests (written against the
+// ProjectMemoryCore re-export, parked 2026-11-07; the Memory window's
+// MemoryCore hosts this core).
 // SELECTOR EDITS for the 169 rebuild:
 //   - "Since Kickoff" (SinceLastMeeting) → removed; the Room's SINCE YOU LOOKED replaces it
 //   - Timeline wing (decisions, lifecycle chips) → removed
@@ -26,9 +28,9 @@ import {
 } from "../../../desk/surface/citations";
 import {
   LifecycleChip,
-  ProjectMemoryCore,
-  composeProjectTimeline,
-} from "../ProjectMemoryCore";
+  ProjectRoomCore,
+} from "../../../features/project-room/ProjectRoomCore";
+import { composeProjectTimeline } from "../../../features/project-room/model";
 
 const mockRunAsk = vi.fn();
 vi.mock("../../../desk/ask", async () => {
@@ -61,7 +63,7 @@ function WindowHarness() {
     <TitleSlotContext.Provider value={() => {}}>
       <WingSlotContext.Provider value={setWings}>
         <div>{wings}</div>
-        <ProjectMemoryCore scope="project:p1" />
+        <ProjectRoomCore scope="project:p1" />
       </WingSlotContext.Provider>
     </TitleSlotContext.Provider>
   );
@@ -288,7 +290,7 @@ describe("Project Memory", () => {
     );
     // HS-169-03 keeps the Room at its four questions, so memory search
     // lives on the unscoped Desk memory surface.
-    render(<ProjectMemoryCore />);
+    render(<ProjectRoomCore />);
 
     fireEvent.change(
       await screen.findByRole("searchbox", { name: "Search the Desk" }),
@@ -324,7 +326,7 @@ describe("Project Memory", () => {
   // HS-157-04: WEB-ARC-006 gap coverage — load error state
   it("shows an error state when the project load fails", async () => {
     apiFetch.mockRejectedValue(new Error("Network failure"));
-    render(<ProjectMemoryCore scope="project:p1" />);
+    render(<ProjectRoomCore scope="project:p1" />);
 
     // PHILO-13-06 (B1, the A3 ledger): a plain failure name, never the hub's text.
     expect(await screen.findByText("Could not load the Project · Nothing changed")).toBeTruthy();
@@ -332,7 +334,7 @@ describe("Project Memory", () => {
   });
 
   it("turns the unscoped surface into the Desk memory recall face", async () => {
-    render(<ProjectMemoryCore />);
+    render(<ProjectRoomCore />);
     const input = screen.getByRole("searchbox", { name: "Search the Desk" });
     fireEvent.change(input, { target: { value: "connected evidence" } });
     fireEvent.click(screen.getByRole("button", { name: "Search memory" }));

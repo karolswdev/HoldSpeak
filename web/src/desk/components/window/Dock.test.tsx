@@ -522,8 +522,8 @@ describe("the Missed launcher (HS-200-07)", () => {
 
   it("does not duplicate the Missed launcher in the Dock", () => {
     // replaces: tests/e2e/test_hs200_coverage_glass.py::TestCoverageGlass::test_shade_coverage_1440 (the open-the-shade leg;
-    // AttentionDrawer announces `activate: () => setShadeOpen(true)`, and
-    // shadeCoverage.test.tsx draws the shade that activation opens)
+    // AttentionDrawer announced `activate: () => setShadeOpen(true)`; both it
+    // and shadeCoverage.test.tsx are parked in desk/_parked/attention/)
     dockLaunchers.list = [{ id: "attention", label: "Missed", glyph: "◎", open: false, activate: vi.fn() }];
     try {
       render(<Dock />);

@@ -106,8 +106,10 @@ RESOLUTIONS = f"{GRAPH_DIR}/council-resolutions.json"
 # commit, regenerate.  tests/unit/test_philo_graph_reference.py proves the file
 # at this revision hashes to the input the join used.  2026-10-18: the file
 # moved one evidence path to pullouts/_parked (Q4 parked ThreadPullout); the
-# rulings did not change.
-COUNCIL_REVISION = "89e4001956c375d2beba09c02fb7b924078d8812"
+# rulings did not change.  2026-11-07: three evidence paths moved to the
+# parked SystemShade, AttentionDrawer and ProjectMemoryCore; the rulings did
+# not change.
+COUNCIL_REVISION = "3c5aaaa315ac1a790bd2a2fa73df76daed4b8073"
 # Subtype normalization: the whole table.  Two different subtypes for one node
 # are one classification only when a row below relates them; the node then
 # gets the finer (right-hand) value.  Anything else is a conflict and stays

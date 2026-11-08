@@ -1321,7 +1321,7 @@
       "sha256": "87f4668e00a175c3a8758ca4e1578e03dd071fb7aefb128a5259f193f16cb9d7"
     },
     {
-      "path": "web/src/desk/components/AttentionDrawer.tsx",
+      "path": "web/src/desk/_parked/attention/AttentionDrawer.tsx",
       "sha256": "ab78b4b372434bcf2ecac37bf579ce0637efdfa2ff8c6b48dfa4eec59bd418d9"
     },
     {
@@ -1489,7 +1489,7 @@
       "sha256": "f76d3fd33f0885a6c4fff36e017127be856240d71bcfb15341d360c5776b4412"
     },
     {
-      "path": "web/src/desk/components/SystemShade.tsx",
+      "path": "web/src/desk/_parked/attention/SystemShade.tsx",
       "sha256": "3be014820570504851a0ca9259c7cfb714fd1286d0a8dc7100a297551bc4d699"
     },
     {
@@ -2009,7 +2009,7 @@
       "sha256": "919dc649b02affd29123c60200a051fd684547272dc9a6e0a6ca66aceb25b102"
     },
     {
-      "path": "web/src/pages/cores/ProjectMemoryCore.tsx",
+      "path": "web/src/pages/cores/_parked/ProjectMemoryCore.tsx",
       "sha256": "c948954cde7ecfec3dfe3f40a06324158525c4d58551987e9561c17f4b1fa922"
     },
     {
@@ -3477,7 +3477,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 339,
           "symbol": "SystemShade",
           "claim": "Projection row exposes Acknowledge."
@@ -3514,7 +3514,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 645,
           "symbol": "ShadeBrief",
           "claim": "Shade brief exposes Open."
@@ -3530,7 +3530,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 483,
           "symbol": "ShadeCoverage",
           "claim": "Coverage gap exposes repair."
@@ -3546,7 +3546,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 346,
           "symbol": "SystemShade",
           "claim": "Projection row exposes Dismiss."
@@ -3583,14 +3583,14 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 385,
           "symbol": "SystemShade",
           "claim": "Finished row exposes Open."
         },
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 194,
           "symbol": "openSource",
           "claim": "Closes shade; /history opens Meetings, /cadence opens Rhythm, otherwise passes source_id to openPrimitive. Wrong source identity for invocation/steering is ledgered."
@@ -3613,7 +3613,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 301,
           "symbol": "SystemShade",
           "claim": "Held gate exposes Approve."
@@ -3629,7 +3629,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 308,
           "symbol": "SystemShade",
           "claim": "Held gate exposes Deny."
@@ -3645,7 +3645,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 291,
           "symbol": "SystemShade",
           "claim": "Denial form exposes Back."
@@ -3661,7 +3661,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 280,
           "symbol": "SystemShade",
           "claim": "Denial form exposes Send deny."
@@ -3677,7 +3677,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 209,
           "symbol": "SystemShade",
           "claim": "Shade title opens memory."
@@ -3693,7 +3693,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/AttentionDrawer.tsx",
+          "path": "web/src/desk/_parked/attention/AttentionDrawer.tsx",
           "line": 91,
           "symbol": "AttentionDrawer",
           "claim": "Launcher opens shade."
@@ -3709,7 +3709,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 588,
           "symbol": "ShadeProjects",
           "claim": "Project row exposes Open."
@@ -3725,14 +3725,14 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 334,
           "symbol": "SystemShade",
           "claim": "Projection row exposes Open."
         },
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 194,
           "symbol": "openSource",
           "claim": "Closes shade; /history opens Meetings, /cadence opens Rhythm, otherwise passes source_id to openPrimitive. Wrong source identity for invocation/steering is ledgered."
@@ -8563,7 +8563,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 339,
           "symbol": "SystemShade",
           "claim": "Projection row exposes Acknowledge."
@@ -8600,7 +8600,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 645,
           "symbol": "ShadeBrief",
           "claim": "Shade brief exposes Open."
@@ -8616,7 +8616,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 483,
           "symbol": "ShadeCoverage",
           "claim": "Coverage gap exposes repair."
@@ -8632,7 +8632,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 346,
           "symbol": "SystemShade",
           "claim": "Projection row exposes Dismiss."
@@ -8669,14 +8669,14 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 385,
           "symbol": "SystemShade",
           "claim": "Finished row exposes Open."
         },
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 194,
           "symbol": "openSource",
           "claim": "Closes shade; /history opens Meetings, /cadence opens Rhythm, otherwise passes source_id to openPrimitive. Wrong source identity for invocation/steering is ledgered."
@@ -8699,7 +8699,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 301,
           "symbol": "SystemShade",
           "claim": "Held gate exposes Approve."
@@ -8715,7 +8715,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 308,
           "symbol": "SystemShade",
           "claim": "Held gate exposes Deny."
@@ -8731,7 +8731,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 291,
           "symbol": "SystemShade",
           "claim": "Denial form exposes Back."
@@ -8747,7 +8747,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 280,
           "symbol": "SystemShade",
           "claim": "Denial form exposes Send deny."
@@ -8763,7 +8763,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 209,
           "symbol": "SystemShade",
           "claim": "Shade title opens memory."
@@ -8779,7 +8779,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/AttentionDrawer.tsx",
+          "path": "web/src/desk/_parked/attention/AttentionDrawer.tsx",
           "line": 91,
           "symbol": "AttentionDrawer",
           "claim": "Launcher opens shade."
@@ -8795,7 +8795,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 588,
           "symbol": "ShadeProjects",
           "claim": "Project row exposes Open."
@@ -8811,14 +8811,14 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 334,
           "symbol": "SystemShade",
           "claim": "Projection row exposes Open."
         },
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 194,
           "symbol": "openSource",
           "claim": "Closes shade; /history opens Meetings, /cadence opens Rhythm, otherwise passes source_id to openPrimitive. Wrong source identity for invocation/steering is ledgered."
@@ -16575,7 +16575,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/AttentionDrawer.tsx",
+          "path": "web/src/desk/_parked/attention/AttentionDrawer.tsx",
           "line": 94,
           "anchor": "onOpenMemory={() => openSurfaceWhenReady(\"open-project-memory\")}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -16767,7 +16767,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/AttentionDrawer.tsx",
+          "path": "web/src/desk/_parked/attention/AttentionDrawer.tsx",
           "line": 179,
           "anchor": "onRetry={() => void store.refresh(true)}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -17439,7 +17439,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/AttentionDrawer.tsx",
+          "path": "web/src/desk/_parked/attention/AttentionDrawer.tsx",
           "line": 93,
           "anchor": "onClose={() => setShadeOpen(false)}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -17807,7 +17807,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/AttentionDrawer.tsx",
+          "path": "web/src/desk/_parked/attention/AttentionDrawer.tsx",
           "line": 104,
           "anchor": "onClose={() => store.setOpen(false)}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -18543,7 +18543,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 236,
           "anchor": "onClose={onClose}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -19503,7 +19503,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 224,
           "anchor": "onClose={onClose}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -23695,7 +23695,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 279,
           "anchor": "onText={(t: string) => setDenyReason(t)}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -23775,7 +23775,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/AttentionDrawer.tsx",
+          "path": "web/src/desk/_parked/attention/AttentionDrawer.tsx",
           "line": 148,
           "anchor": "onText={(t: string) => store.setQuery(t)}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -23807,7 +23807,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 241,
           "anchor": "onClose={onClose}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -24175,7 +24175,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 231,
           "anchor": "onClose={onClose}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -24895,7 +24895,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/AttentionDrawer.tsx",
+          "path": "web/src/desk/_parked/attention/AttentionDrawer.tsx",
           "line": 147,
           "anchor": "<Button dense variant=\"ghost\" type=\"submit\">",
           "claim": "Button source site has no local onX event attribute. Form submission, spread props, containing event delegation or disabled/presentation conditions may own the gesture; absence of a local handler alone is not a product defect. Census only."
@@ -25855,7 +25855,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 805,
           "symbol": "ShadePeople",
           "claim": "The production JSX source declares onClick at this control site."
@@ -26175,7 +26175,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 213,
           "symbol": "SystemShade",
           "claim": "The production JSX source declares onClick at this control site."
@@ -26431,7 +26431,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 270,
           "symbol": "SystemShade",
           "claim": "The production JSX source declares onKeyDown at this control site."
@@ -27135,7 +27135,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 488,
           "symbol": "ShadeCoverage",
           "claim": "The production JSX source declares onClick at this control site."
@@ -27487,7 +27487,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 304,
           "symbol": "SystemShade",
           "claim": "The production JSX source declares onClick at this control site."
@@ -28319,7 +28319,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 335,
           "symbol": "SystemShade",
           "claim": "The production JSX source declares onClick at this control site."
@@ -28783,7 +28783,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/AttentionDrawer.tsx",
+          "path": "web/src/desk/_parked/attention/AttentionDrawer.tsx",
           "line": 170,
           "symbol": "AttentionDrawer",
           "claim": "The production JSX source declares onClick at this control site."
@@ -29247,7 +29247,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/AttentionDrawer.tsx",
+          "path": "web/src/desk/_parked/attention/AttentionDrawer.tsx",
           "line": 254,
           "symbol": "AttentionDrawer",
           "claim": "The production JSX source declares onClick at this control site."
@@ -31439,7 +31439,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/AttentionDrawer.tsx",
+          "path": "web/src/desk/_parked/attention/AttentionDrawer.tsx",
           "line": 142,
           "symbol": "AttentionDrawer",
           "claim": "The production JSX source declares onChange at this control site."
@@ -32207,7 +32207,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/AttentionDrawer.tsx",
+          "path": "web/src/desk/_parked/attention/AttentionDrawer.tsx",
           "line": 172,
           "symbol": "AttentionDrawer",
           "claim": "The production JSX source declares onClick at this control site."
@@ -33295,7 +33295,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 649,
           "symbol": "ShadeBrief",
           "claim": "The production JSX source declares onClick at this control site."
@@ -35023,7 +35023,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 592,
           "symbol": "ShadeProjects",
           "claim": "The production JSX source declares onClick at this control site."
@@ -35887,7 +35887,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 269,
           "symbol": "SystemShade",
           "claim": "The production JSX source declares onChange at this control site."
@@ -37055,7 +37055,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 349,
           "symbol": "SystemShade",
           "claim": "The production JSX source declares onClick at this control site."
@@ -37519,7 +37519,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/AttentionDrawer.tsx",
+          "path": "web/src/desk/_parked/attention/AttentionDrawer.tsx",
           "line": 171,
           "symbol": "AttentionDrawer",
           "claim": "The production JSX source declares onClick at this control site."
@@ -37599,7 +37599,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 311,
           "symbol": "SystemShade",
           "claim": "The production JSX source declares onClick at this control site."
@@ -37951,7 +37951,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/AttentionDrawer.tsx",
+          "path": "web/src/desk/_parked/attention/AttentionDrawer.tsx",
           "line": 162,
           "symbol": "AttentionDrawer",
           "claim": "The production JSX source declares onClick at this control site."
@@ -38207,7 +38207,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/AttentionDrawer.tsx",
+          "path": "web/src/desk/_parked/attention/AttentionDrawer.tsx",
           "line": 286,
           "symbol": "AttentionDrawer",
           "claim": "The production JSX source declares onClick at this control site."
@@ -38335,7 +38335,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/AttentionDrawer.tsx",
+          "path": "web/src/desk/_parked/attention/AttentionDrawer.tsx",
           "line": 119,
           "symbol": "AttentionDrawer",
           "claim": "The production JSX source declares onSubmit at this control site."
@@ -38559,7 +38559,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/AttentionDrawer.tsx",
+          "path": "web/src/desk/_parked/attention/AttentionDrawer.tsx",
           "line": 155,
           "symbol": "AttentionDrawer",
           "claim": "The production JSX source declares onClick at this control site."
@@ -39311,7 +39311,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 283,
           "symbol": "SystemShade",
           "claim": "The production JSX source declares onClick at this control site."
@@ -39919,7 +39919,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/AttentionDrawer.tsx",
+          "path": "web/src/desk/_parked/attention/AttentionDrawer.tsx",
           "line": 272,
           "symbol": "AttentionDrawer",
           "claim": "The production JSX source declares onClick at this control site."
@@ -40751,7 +40751,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 387,
           "symbol": "SystemShade",
           "claim": "The production JSX source declares onClick at this control site."
@@ -41551,7 +41551,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/AttentionDrawer.tsx",
+          "path": "web/src/desk/_parked/attention/AttentionDrawer.tsx",
           "line": 316,
           "symbol": "AttentionDrawer",
           "claim": "The production JSX source declares onClick at this control site."
@@ -41791,7 +41791,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/AttentionDrawer.tsx",
+          "path": "web/src/desk/_parked/attention/AttentionDrawer.tsx",
           "line": 262,
           "symbol": "AttentionDrawer",
           "claim": "The production JSX source declares onClick at this control site."
@@ -44031,7 +44031,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/AttentionDrawer.tsx",
+          "path": "web/src/desk/_parked/attention/AttentionDrawer.tsx",
           "line": 191,
           "symbol": "AttentionDrawer",
           "claim": "The production JSX source declares onClick at this control site."
@@ -44639,7 +44639,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 294,
           "symbol": "SystemShade",
           "claim": "The production JSX source declares onClick at this control site."
@@ -44703,7 +44703,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/AttentionDrawer.tsx",
+          "path": "web/src/desk/_parked/attention/AttentionDrawer.tsx",
           "line": 129,
           "symbol": "AttentionDrawer",
           "claim": "The production JSX source declares onChange at this control site."
@@ -44895,7 +44895,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 342,
           "symbol": "SystemShade",
           "claim": "The production JSX source declares onClick at this control site."
@@ -57950,7 +57950,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 339,
           "symbol": "SystemShade",
           "claim": "Projection row exposes Acknowledge."
@@ -57966,7 +57966,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 645,
           "symbol": "ShadeBrief",
           "claim": "Shade brief exposes Open."
@@ -57982,7 +57982,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 483,
           "symbol": "ShadeCoverage",
           "claim": "Coverage gap exposes repair."
@@ -57998,7 +57998,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 346,
           "symbol": "SystemShade",
           "claim": "Projection row exposes Dismiss."
@@ -58014,7 +58014,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 385,
           "symbol": "SystemShade",
           "claim": "Finished row exposes Open."
@@ -58030,7 +58030,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 301,
           "symbol": "SystemShade",
           "claim": "Held gate exposes Approve."
@@ -58046,7 +58046,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 308,
           "symbol": "SystemShade",
           "claim": "Held gate exposes Deny."
@@ -58062,7 +58062,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 291,
           "symbol": "SystemShade",
           "claim": "Denial form exposes Back."
@@ -58078,7 +58078,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 280,
           "symbol": "SystemShade",
           "claim": "Denial form exposes Send deny."
@@ -58094,7 +58094,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 209,
           "symbol": "SystemShade",
           "claim": "Shade title opens memory."
@@ -58110,7 +58110,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/AttentionDrawer.tsx",
+          "path": "web/src/desk/_parked/attention/AttentionDrawer.tsx",
           "line": 91,
           "symbol": "AttentionDrawer",
           "claim": "Launcher opens shade."
@@ -58126,7 +58126,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 588,
           "symbol": "ShadeProjects",
           "claim": "Project row exposes Open."
@@ -58142,7 +58142,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 334,
           "symbol": "SystemShade",
           "claim": "Projection row exposes Open."
@@ -74405,7 +74405,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/AttentionDrawer.tsx",
+          "path": "web/src/desk/_parked/attention/AttentionDrawer.tsx",
           "line": 70,
           "symbol": "document",
           "claim": "Source registers the browser keydown listener on document; static census records the registration site."
@@ -74645,7 +74645,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 172,
           "symbol": "document",
           "claim": "Source registers the browser keydown listener on document; static census records the registration site."
@@ -74677,7 +74677,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 173,
           "symbol": "document",
           "claim": "Source registers the browser pointerdown listener on document; static census records the registration site."
@@ -85969,7 +85969,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 205,
           "symbol": "SystemShade",
           "claim": "SystemShade renders sections."
@@ -86947,7 +86947,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 339,
           "symbol": "SystemShade",
           "claim": "Projection row exposes Acknowledge."
@@ -86963,7 +86963,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 645,
           "symbol": "ShadeBrief",
           "claim": "Shade brief exposes Open."
@@ -86979,7 +86979,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 483,
           "symbol": "ShadeCoverage",
           "claim": "Coverage gap exposes repair."
@@ -86995,7 +86995,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 346,
           "symbol": "SystemShade",
           "claim": "Projection row exposes Dismiss."
@@ -87011,7 +87011,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 385,
           "symbol": "SystemShade",
           "claim": "Finished row exposes Open."
@@ -87027,7 +87027,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 301,
           "symbol": "SystemShade",
           "claim": "Held gate exposes Approve."
@@ -87043,7 +87043,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 308,
           "symbol": "SystemShade",
           "claim": "Held gate exposes Deny."
@@ -87059,7 +87059,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 291,
           "symbol": "SystemShade",
           "claim": "Denial form exposes Back."
@@ -87075,7 +87075,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 280,
           "symbol": "SystemShade",
           "claim": "Denial form exposes Send deny."
@@ -87091,7 +87091,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 209,
           "symbol": "SystemShade",
           "claim": "Shade title opens memory."
@@ -87107,7 +87107,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/AttentionDrawer.tsx",
+          "path": "web/src/desk/_parked/attention/AttentionDrawer.tsx",
           "line": 91,
           "symbol": "AttentionDrawer",
           "claim": "Launcher opens shade."
@@ -87123,7 +87123,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 588,
           "symbol": "ShadeProjects",
           "claim": "Project row exposes Open."
@@ -87139,7 +87139,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 334,
           "symbol": "SystemShade",
           "claim": "Projection row exposes Open."
@@ -89429,7 +89429,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/ProjectMemoryCore.tsx",
+          "path": "web/src/pages/cores/_parked/ProjectMemoryCore.tsx",
           "line": 1,
           "symbol": "ProjectMemoryCore",
           "claim": "ProjectMemoryCore re-exports ProjectRoomCore for the Desk memory window."
@@ -89942,7 +89942,7 @@
       ],
       "sources": [
         {
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "symbol": "if (!open) return null",
           "line": 180,
           "claim": "the shade renders nothing when closed",
@@ -89963,14 +89963,14 @@
       ],
       "sources": [
         {
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "symbol": "needs",
           "line": 183,
           "claim": "the open shade splits needs_attention from finished",
           "revision": "1cd55bc829c1291cad661f93b2d90e61f001f179"
         },
         {
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "symbol": "finished",
           "line": 186,
           "claim": "and shows at most four of each",
@@ -89991,7 +89991,7 @@
       ],
       "sources": [
         {
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "symbol": "openPrimitive",
           "line": 201,
           "claim": "a door that is neither /history nor /cadence falls through to a pull-out opener keyed by source_id",
@@ -90012,21 +90012,21 @@
       ],
       "sources": [
         {
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "symbol": "hasDoor",
           "line": 192,
           "claim": "a verb is drawn only where a door exists",
           "revision": "1cd55bc829c1291cad661f93b2d90e61f001f179"
         },
         {
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "symbol": "hasDoor",
           "line": 334,
           "claim": "the needs section withholds Open",
           "revision": "1cd55bc829c1291cad661f93b2d90e61f001f179"
         },
         {
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "symbol": "hasDoor",
           "line": 385,
           "claim": "the finished section withholds Open",
@@ -91435,7 +91435,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 301,
           "symbol": "SystemShade",
           "claim": "Approve invokes gate decision."
@@ -91451,7 +91451,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 280,
           "symbol": "SystemShade",
           "claim": "Send deny submits reason."
@@ -91467,7 +91467,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 308,
           "symbol": "SystemShade",
           "claim": "Deny opens reason input."
@@ -92363,14 +92363,14 @@
           "revision": "1cd55bc829c1291cad661f93b2d90e61f001f179"
         },
         {
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "symbol": "hasDoor",
           "line": 192,
           "claim": "an empty detail_url draws no Open verb",
           "revision": "1cd55bc829c1291cad661f93b2d90e61f001f179"
         },
         {
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "symbol": "hasDoor",
           "line": 385,
           "claim": "the Finished section withholds Open when there is no door",
@@ -92405,14 +92405,14 @@
           "revision": "1cd55bc829c1291cad661f93b2d90e61f001f179"
         },
         {
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "symbol": "hasDoor",
           "line": 192,
           "claim": "the shade draws Open only for a non-empty detail_url that is not /",
           "revision": "1cd55bc829c1291cad661f93b2d90e61f001f179"
         },
         {
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "symbol": "configure-cadence",
           "line": 199,
           "claim": "the /cadence door opens the configure-cadence surface",
@@ -92454,7 +92454,7 @@
           "revision": "1cd55bc829c1291cad661f93b2d90e61f001f179"
         },
         {
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "symbol": "review-meetings",
           "line": 197,
           "claim": "the shade opens review-meetings on that subject_ref regardless of whether it resolves",
@@ -92791,7 +92791,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 645,
           "symbol": "ShadeBrief",
           "claim": "Brief opens intelligence."
@@ -92807,7 +92807,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 483,
           "symbol": "ShadeCoverage",
           "claim": "Coverage repair opens recovery."
@@ -92823,7 +92823,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/AttentionDrawer.tsx",
+          "path": "web/src/desk/_parked/attention/AttentionDrawer.tsx",
           "line": 91,
           "symbol": "AttentionDrawer",
           "claim": "Launcher opens shade."
@@ -92839,7 +92839,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 588,
           "symbol": "ShadeProjects",
           "claim": "Project opens project room."
@@ -93242,7 +93242,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 339,
           "symbol": "SystemShade",
           "claim": "Projection row exposes Acknowledge. Conditional transition: On successful acknowledge, repository presentation state persists acknowledged attention for this projection."
@@ -93277,7 +93277,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 346,
           "symbol": "SystemShade",
           "claim": "Projection row exposes Dismiss. Conditional transition: On successful dismiss, repository presentation state persists dismissed_at for this projection."
@@ -94509,7 +94509,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 339,
           "symbol": "SystemShade",
           "claim": "Projection row exposes Acknowledge."
@@ -94523,7 +94523,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 645,
           "symbol": "ShadeBrief",
           "claim": "Shade brief exposes Open."
@@ -94537,7 +94537,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 483,
           "symbol": "ShadeCoverage",
           "claim": "Coverage gap exposes repair."
@@ -94551,7 +94551,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 346,
           "symbol": "SystemShade",
           "claim": "Projection row exposes Dismiss."
@@ -94565,7 +94565,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 385,
           "symbol": "SystemShade",
           "claim": "Finished row exposes Open."
@@ -94579,7 +94579,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 301,
           "symbol": "SystemShade",
           "claim": "Held gate exposes Approve."
@@ -94593,7 +94593,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 308,
           "symbol": "SystemShade",
           "claim": "Held gate exposes Deny."
@@ -94607,7 +94607,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 291,
           "symbol": "SystemShade",
           "claim": "Denial form exposes Back."
@@ -94621,7 +94621,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 280,
           "symbol": "SystemShade",
           "claim": "Denial form exposes Send deny."
@@ -94635,7 +94635,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 209,
           "symbol": "SystemShade",
           "claim": "Shade title opens memory."
@@ -94649,7 +94649,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/AttentionDrawer.tsx",
+          "path": "web/src/desk/_parked/attention/AttentionDrawer.tsx",
           "line": 91,
           "symbol": "AttentionDrawer",
           "claim": "Launcher opens shade."
@@ -94663,7 +94663,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 588,
           "symbol": "ShadeProjects",
           "claim": "Project row exposes Open."
@@ -94677,7 +94677,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 334,
           "symbol": "SystemShade",
           "claim": "Projection row exposes Open."
@@ -95930,7 +95930,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 339,
           "symbol": "SystemShade",
           "claim": "Projection row exposes Acknowledge."
@@ -95965,7 +95965,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 645,
           "symbol": "ShadeBrief",
           "claim": "Shade brief exposes Open."
@@ -95979,7 +95979,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 483,
           "symbol": "ShadeCoverage",
           "claim": "Coverage gap exposes repair."
@@ -95993,7 +95993,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 346,
           "symbol": "SystemShade",
           "claim": "Projection row exposes Dismiss."
@@ -96028,14 +96028,14 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 385,
           "symbol": "SystemShade",
           "claim": "Finished row exposes Open."
         },
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 194,
           "symbol": "openSource",
           "claim": "Closes shade; /history opens Meetings, /cadence opens Rhythm, otherwise passes source_id to openPrimitive. Wrong source identity for invocation/steering is ledgered."
@@ -96056,7 +96056,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 301,
           "symbol": "SystemShade",
           "claim": "Held gate exposes Approve."
@@ -96070,7 +96070,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 308,
           "symbol": "SystemShade",
           "claim": "Held gate exposes Deny."
@@ -96084,7 +96084,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 291,
           "symbol": "SystemShade",
           "claim": "Denial form exposes Back."
@@ -96098,7 +96098,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 280,
           "symbol": "SystemShade",
           "claim": "Denial form exposes Send deny."
@@ -96112,7 +96112,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 209,
           "symbol": "SystemShade",
           "claim": "Shade title opens memory."
@@ -96126,7 +96126,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/AttentionDrawer.tsx",
+          "path": "web/src/desk/_parked/attention/AttentionDrawer.tsx",
           "line": 91,
           "symbol": "AttentionDrawer",
           "claim": "Launcher opens shade."
@@ -96140,7 +96140,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 588,
           "symbol": "ShadeProjects",
           "claim": "Project row exposes Open."
@@ -96154,14 +96154,14 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 334,
           "symbol": "SystemShade",
           "claim": "Projection row exposes Open."
         },
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 194,
           "symbol": "openSource",
           "claim": "Closes shade; /history opens Meetings, /cadence opens Rhythm, otherwise passes source_id to openPrimitive. Wrong source identity for invocation/steering is ledgered."
@@ -98884,7 +98884,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 339,
           "symbol": "SystemShade",
           "claim": "Projection row exposes Acknowledge."
@@ -98898,7 +98898,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 645,
           "symbol": "ShadeBrief",
           "claim": "Shade brief exposes Open."
@@ -98912,7 +98912,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 483,
           "symbol": "ShadeCoverage",
           "claim": "Coverage gap exposes repair."
@@ -98926,7 +98926,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 346,
           "symbol": "SystemShade",
           "claim": "Projection row exposes Dismiss."
@@ -98940,7 +98940,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 385,
           "symbol": "SystemShade",
           "claim": "Finished row exposes Open."
@@ -98954,7 +98954,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 301,
           "symbol": "SystemShade",
           "claim": "Held gate exposes Approve."
@@ -98968,7 +98968,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 308,
           "symbol": "SystemShade",
           "claim": "Held gate exposes Deny."
@@ -98982,7 +98982,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 291,
           "symbol": "SystemShade",
           "claim": "Denial form exposes Back."
@@ -98996,7 +98996,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 280,
           "symbol": "SystemShade",
           "claim": "Denial form exposes Send deny."
@@ -99010,7 +99010,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 209,
           "symbol": "SystemShade",
           "claim": "Shade title opens memory."
@@ -99024,7 +99024,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/AttentionDrawer.tsx",
+          "path": "web/src/desk/_parked/attention/AttentionDrawer.tsx",
           "line": 91,
           "symbol": "AttentionDrawer",
           "claim": "Launcher opens shade."
@@ -99038,7 +99038,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 588,
           "symbol": "ShadeProjects",
           "claim": "Project row exposes Open."
@@ -99052,7 +99052,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 180,
           "symbol": "SystemShade",
           "claim": "Shade treats non-root detail URL as a door."
@@ -99066,7 +99066,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 334,
           "symbol": "SystemShade",
           "claim": "Projection row exposes Open."
@@ -101012,7 +101012,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 339,
           "symbol": "SystemShade",
           "claim": "Projection row exposes Acknowledge."
@@ -102181,7 +102181,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 339,
           "symbol": "SystemShade",
           "claim": "Projection row exposes Acknowledge."
@@ -102216,7 +102216,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 339,
           "symbol": "SystemShade",
           "claim": "Projection row exposes Acknowledge."
@@ -102230,7 +102230,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 339,
           "symbol": "SystemShade",
           "claim": "Projection row exposes Acknowledge."
@@ -102244,7 +102244,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 346,
           "symbol": "SystemShade",
           "claim": "Projection row exposes Dismiss."
@@ -102279,14 +102279,14 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 385,
           "symbol": "SystemShade",
           "claim": "Finished row exposes Open."
         },
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 194,
           "symbol": "openSource",
           "claim": "Closes shade; /history opens Meetings, /cadence opens Rhythm, otherwise passes source_id to openPrimitive. Wrong source identity for invocation/steering is ledgered."
@@ -102307,7 +102307,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 339,
           "symbol": "SystemShade",
           "claim": "Projection row exposes Acknowledge."
@@ -102321,7 +102321,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 339,
           "symbol": "SystemShade",
           "claim": "Projection row exposes Acknowledge."
@@ -102335,7 +102335,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 339,
           "symbol": "SystemShade",
           "claim": "Projection row exposes Acknowledge."
@@ -102349,7 +102349,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 339,
           "symbol": "SystemShade",
           "claim": "Projection row exposes Acknowledge."
@@ -102363,7 +102363,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 339,
           "symbol": "SystemShade",
           "claim": "Projection row exposes Acknowledge."
@@ -102377,7 +102377,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 339,
           "symbol": "SystemShade",
           "claim": "Projection row exposes Acknowledge."
@@ -102391,7 +102391,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 339,
           "symbol": "SystemShade",
           "claim": "Projection row exposes Acknowledge."
@@ -102405,14 +102405,14 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 334,
           "symbol": "SystemShade",
           "claim": "Projection row exposes Open."
         },
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 194,
           "symbol": "openSource",
           "claim": "Closes shade; /history opens Meetings, /cadence opens Rhythm, otherwise passes source_id to openPrimitive. Wrong source identity for invocation/steering is ledgered."
@@ -104337,7 +104337,7 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 209,
           "symbol": "SystemShade",
           "claim": "The shade title opens Desk memory."
@@ -112212,14 +112212,14 @@
       "evidence": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 180,
           "symbol": "SystemShade",
           "claim": "Shade treats non-root detail URL as a door."
         },
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "line": 334,
           "symbol": "SystemShade",
           "claim": "Open rendered solely from hasDoor."

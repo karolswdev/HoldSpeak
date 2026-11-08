@@ -6770,13 +6770,13 @@
           "claim": "a HeartbeatService event carries /cadence as its door"
         },
         {
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "symbol": "hasDoor",
           "line": 192,
           "claim": "the shade draws Open only for a non-empty detail_url that is not /"
         },
         {
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "symbol": "configure-cadence",
           "line": 199,
           "claim": "the /cadence door opens the configure-cadence surface"
@@ -6807,13 +6807,13 @@
           "claim": "a non-HeartbeatService pipeline event carries no door"
         },
         {
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "symbol": "hasDoor",
           "line": 192,
           "claim": "an empty detail_url draws no Open verb"
         },
         {
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "symbol": "hasDoor",
           "line": 385,
           "claim": "the Finished section withholds Open when there is no door"
@@ -6850,7 +6850,7 @@
           "claim": "the job projection's door still points at the deleted meeting"
         },
         {
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "symbol": "review-meetings",
           "line": 197,
           "claim": "the shade opens review-meetings on that subject_ref regardless of whether it resolves"
@@ -9279,7 +9279,7 @@
       ],
       "sources": [
         {
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "symbol": "if (!open) return null",
           "line": 180,
           "claim": "the shade renders nothing when closed"
@@ -9305,13 +9305,13 @@
       ],
       "sources": [
         {
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "symbol": "needs",
           "line": 183,
           "claim": "the open shade splits needs_attention from finished"
         },
         {
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "symbol": "finished",
           "line": 186,
           "claim": "and shows at most four of each"
@@ -9337,19 +9337,19 @@
       ],
       "sources": [
         {
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "symbol": "hasDoor",
           "line": 192,
           "claim": "a verb is drawn only where a door exists"
         },
         {
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "symbol": "hasDoor",
           "line": 334,
           "claim": "the needs section withholds Open"
         },
         {
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "symbol": "hasDoor",
           "line": 385,
           "claim": "the finished section withholds Open"
@@ -9374,7 +9374,7 @@
       ],
       "sources": [
         {
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "symbol": "openPrimitive",
           "line": 201,
           "claim": "a door that is neither /history nor /cadence falls through to a pull-out opener keyed by source_id"

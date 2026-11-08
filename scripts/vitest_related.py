@@ -123,8 +123,8 @@ class Graph:
 
     def __init__(self, root: Path) -> None:
         self.root = root
-        # Parked modules are in the graph (live code re-exports some of them,
-        # desk/components/SystemShade.tsx); parked TESTS never run (vitest
+        # Parked modules are in the graph (live code may re-export one of
+        # them); parked TESTS never run (vitest
         # excludes **/_parked/**), see is_test().
         self.files = [p for p in root.rglob("*") if p.suffix in EXTS and p.is_file()
                       and "node_modules" not in p.parts]

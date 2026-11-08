@@ -40,14 +40,14 @@
       "sources": [
         {
           "revision": "1cd55bc829c1291cad661f93b2d90e61f001f179",
-          "path": "web/src/desk/components/AttentionDrawer.tsx",
+          "path": "web/src/desk/_parked/attention/AttentionDrawer.tsx",
           "symbol": "announceLauncher",
           "line": 79,
           "claim": "The dock launcher carries the label \"Desk memory\" and the needs-attention badge."
         },
         {
           "revision": "1cd55bc829c1291cad661f93b2d90e61f001f179",
-          "path": "web/src/desk/components/AttentionDrawer.tsx",
+          "path": "web/src/desk/_parked/attention/AttentionDrawer.tsx",
           "symbol": "announceLauncher",
           "line": 83,
           "claim": "Activating the launcher calls setShadeOpen(true); this is the trigger's execution owner."
@@ -68,7 +68,7 @@
       "sources": [
         {
           "revision": "1cd55bc829c1291cad661f93b2d90e61f001f179",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "anchor": "aria-label=\"Missed\"",
           "line": 206,
           "claim": "The shade is one group named Missed; it holds the Needs you and Finished receipt rows."
@@ -166,14 +166,14 @@
       "sources": [
         {
           "revision": "1cd55bc829c1291cad661f93b2d90e61f001f179",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "symbol": "hasDoor",
           "line": 385,
           "claim": "The Open verb is drawn only where detail_url exists and is not \"/\"."
         },
         {
           "revision": "1cd55bc829c1291cad661f93b2d90e61f001f179",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "symbol": "openSource",
           "line": 387,
           "claim": "The Finished row's Open button calls openSource with that row."
@@ -193,7 +193,7 @@
       "sources": [
         {
           "revision": "1cd55bc829c1291cad661f93b2d90e61f001f179",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "symbol": "openSource",
           "line": 198,
           "claim": "detail_url \"/cadence\" branches to openSurfaceWhenReady(\"configure-cadence\", row.subject_ref); it never reaches the pull-out opener."
@@ -279,7 +279,7 @@
       "evidence": [
         {
           "revision": "1cd55bc829c1291cad661f93b2d90e61f001f179",
-          "path": "web/src/desk/components/AttentionDrawer.tsx",
+          "path": "web/src/desk/_parked/attention/AttentionDrawer.tsx",
           "symbol": "announceLauncher",
           "line": 83,
           "claim": "activate sets shadeOpen, which mounts SystemShade with open=true."
@@ -335,7 +335,7 @@
       "evidence": [
         {
           "revision": "1cd55bc829c1291cad661f93b2d90e61f001f179",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "anchor": "aria-label=\"Finished\"",
           "line": 361,
           "claim": "Resolved receipts are drawn in the Finished group of the shade."
@@ -349,7 +349,7 @@
       "evidence": [
         {
           "revision": "1cd55bc829c1291cad661f93b2d90e61f001f179",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "symbol": "openSource",
           "line": 194,
           "claim": "Open calls openSource, which closes the shade and dispatches on detail_url."
@@ -363,7 +363,7 @@
       "evidence": [
         {
           "revision": "1cd55bc829c1291cad661f93b2d90e61f001f179",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "symbol": "openSource",
           "line": 199,
           "claim": "openSurfaceWhenReady(\"configure-cadence\", row.subject_ref) is the call that opens the face."
@@ -640,7 +640,7 @@
         },
         {
           "revision": "dd61c252524c18a6e1dc97961544e42a8353aaae",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "symbol": "openSource",
           "line": 380,
           "claim": "The Finished row drew Open unconditionally; there was no door test."
@@ -679,7 +679,7 @@
         },
         {
           "revision": "1cd55bc829c1291cad661f93b2d90e61f001f179",
-          "path": "web/src/desk/components/SystemShade.tsx",
+          "path": "web/src/desk/_parked/attention/SystemShade.tsx",
           "symbol": "hasDoor",
           "line": 192,
           "claim": "The shade draws a verb only where a door exists."
