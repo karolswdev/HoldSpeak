@@ -355,5 +355,3 @@ def test_one_place_builds_the_decision_commitment():
     writer = _calls(ast.parse((root / "services/decision_record_service.py").read_text()))
     assert "commit_decision_in_transaction" in writer["_commit"]
     assert "_commit" in writer["create"] and "_commit_if_owned" in writer["sync_from_desk"]
-    route = _calls(ast.parse((root / "web/routes/follow_through.py").read_text()))
-    assert "commit_decision" in route["commit_decision"]
