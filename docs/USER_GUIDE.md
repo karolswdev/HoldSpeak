@@ -337,44 +337,6 @@ the provider has no work.
 The reviewer nudge identifies work that needs your review. It does not approve,
 send, or schedule the work. Use the linked source and proposal controls.
 
-## Prepared work: preparation, review, and the weekly update
-
-Three prepared procedures ship: meeting preparation, decision and commitment review, and the weekly project update.
-They are versioned descriptors in `holdspeak/services/recipe_catalog.py` that bind existing services.
-A descriptor declares a limit only where one is real.
-It reads a cap from the executing service rather than duplicating an unenforced number.
-
-**None of the three fires on a schedule yet.**
-This limitation applies to those prepared-procedure descriptors.
-Ordinary Automations and scheduled recordings have their own supported triggers.
-Read [Automation](AUTOMATION.md) for those paths.
-
-A prepared result names its output, target, route, and next owner action.
-It does not establish completed external work.
-
-### Running one
-
-The prepared-procedure catalogue is read-only.
-Its APIs describe a procedure and compile a plan. They do not execute that plan.
-Use the current feature that owns the result:
-
-| Result | Current path |
-| --- | --- |
-| Meeting or 1:1 preparation | Open the person's preparation view in People and inspect the available brief. |
-| Decision review | Open Ask, select decision evidence through the scope menu, and request a review. This is ordinary Ask. |
-| Weekly Project update | Open the Project Room and select **Draft update**. |
-
-Inspect the sources and result before keeping or using the output.
-Review any **Wrote** changes and **Prepared** actions.
-Select **Send** only when the destination and exact content are correct.
-
-### Finding them
-
-Use **Today**, **Needs you**, the Project Room **History** tab, Memory, or the source
-record's receipt. Search can find a kept Note, Artifact, Thread, or Meeting.
-A prepared item can remain pending until you send it or discard it through its
-own control.
-
 ## Programs
 
 A **Program** is a goal cut into steps. An agent can do each step, while the

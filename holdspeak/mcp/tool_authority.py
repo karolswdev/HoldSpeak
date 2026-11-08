@@ -310,9 +310,6 @@ TOOL_AUTHORITY: dict[str, str] = {
     "interview.change_section": WORK,
     "interview.record_fact": WORK,
     "interview.suggest": WORK,
-    "practice_recipe.list": WORK,
-    "practice_recipe.get": WORK,
-    "practice_recipe.compile": WORK,
     # Programs (2026-10-28, design §7): an orchestrating agent makes, plans
     # and runs the Programs it created; a step's agent writes its own lines.
     # The engine hands each step through agent.hand's service (the Start is

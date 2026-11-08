@@ -372,7 +372,6 @@ LAUNCH_RULES: dict[str, tuple[str, str, str]] = {
     "connection.recheck": (NEVER, "", ""),
     "watch.refresh": (NEVER, "", ""),
     "project.watch.test": (NEVER, "", ""),
-    "practice_recipe.compile": (NEVER, "", ""),
     # window: the owner's desk windows (PHILO-16 16b). A launch composes the
     # desk beside him (open, raise, arrange, seat, close); nothing leaves the
     # machine and no authority changes. Its gate still holds each one in

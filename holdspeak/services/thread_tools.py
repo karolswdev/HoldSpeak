@@ -306,13 +306,6 @@ _ALL_TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     "interview.record_fact": ("effect_proposal", False),
     "interview.suggest": ("effect_proposal", False),
     "interview.change_section": ("effect_proposal", False),
-    # HS-200-17: the prepared-recipe catalog (C5).  Reads only -- the
-    # catalog is versioned code and compiling a plan writes nothing.  They
-    # are classified but deliberately NOT in CHAT_PALETTE below: ruling
-    # R17-3 forbids widening the ordinary Thread palette for this story.
-    "practice_recipe.list": ("evidence_read", False),
-    "practice_recipe.get": ("evidence_read", False),
-    "practice_recipe.compile": ("evidence_read", False),
     # PHILO-16 (16b): the owner's desk windows. The list reads; every other
     # tool changes what he sees, so Secure and Normal hold it (a proposal).
     "desk_window.list": ("evidence_read", False),

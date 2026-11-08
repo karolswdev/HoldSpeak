@@ -137,7 +137,7 @@ lists every tool name.
 | `people` | The encrypted People ledger. |
 | `cadence`, `heartbeat`, `scheduled_recording`, `door` | The Cadence engine, the Heartbeat sweep, scheduled recordings and the Door. |
 | `model_library`, `inference`, `inference_assignment`, `concierge`, `settings` | Models, assignments and settings. |
-| `workbench`, `automation`, `recipe`, `practice_recipe`, `reaction`, `watch`, `zone`, `kb` | Runs, Workbenches, recipes and Automations. `automation.*` are the `workbench.*` tools by the user's word. |
+| `workbench`, `automation`, `recipe`, `reaction`, `watch`, `zone`, `kb` | Runs, Workbenches, recipes and Automations. `automation.*` are the `workbench.*` tools by the user's word. |
 | `memory`, `dictation`, `event`, `pipeline`, `kernel`, `plugin_job`, `coder` | Search, journals, events, receipts, queued jobs and Coder sessions. |
 
 ### Automations
@@ -385,7 +385,7 @@ database, FTS index or Cadence.
 
 <!-- BEGIN MCP TOOL ROSTER (machine-generated -- do not edit) -->
 
-**Registry totals:** 316 tools across 50 families.
+**Registry totals:** 313 tools across 49 families.
 
 #### agent (6)
 
@@ -647,12 +647,6 @@ database, FTS index or Cadence.
 - `plugin_job.list`
 - `plugin_job.retry`
 - `plugin_job.summary`
-
-#### practice_recipe (3)
-
-- `practice_recipe.compile`
-- `practice_recipe.get`
-- `practice_recipe.list`
 
 #### program (25)
 
@@ -961,7 +955,7 @@ it.
 
 `tools_for_palette(palette)` returns only the tools in the palette. A
 client that lists tools through this filter sees 66 tools
-instead of 316.
+instead of 313.
 
 `dispatch_for_palette(name, arguments, principal, palette)` runs a tool
 only if `name` is in the palette. A name outside the palette gets a typed
