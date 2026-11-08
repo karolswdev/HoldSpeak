@@ -13,6 +13,8 @@ import dataclasses
 import subprocess
 import sys
 
+import pytest
+
 from holdspeak.web.context import WebContext
 
 FIELDS_BEFORE_THE_MOVE = [
@@ -146,7 +148,8 @@ BUILT_ONCE = {
 }
 
 
-def test_compose_hub_builds_each_shared_service_once(tmp_path, monkeypatch) -> None:
+@pytest.mark.parametrize("acli_runner", [None, lambda *_a, **_k: None], ids=["bare", "acli"])
+def test_compose_hub_builds_each_shared_service_once(tmp_path, monkeypatch, acli_runner) -> None:
     import importlib
 
     from holdspeak.db import get_database, reset_database
@@ -175,6 +178,7 @@ def test_compose_hub_builds_each_shared_service_once(tmp_path, monkeypatch) -> N
                 get_state=lambda: {},
             ),
             host="127.0.0.1",
+            acli_runner=acli_runner,
         )
         counts.clear()  # the server composed once already; count one call
         hub = compose_delivery(
