@@ -1,0 +1,98 @@
+/* R1 "the brief" (owner 2026-11-08): the Now face. The toolbar with the Ask
+   as a plain field, the status line, What changed, What is open, the folds
+   on one line. Kit material only; 393 is one column in the same order. */
+
+/* The Ask field takes the toolbar's free width. */
+.room-toolbar .kit-toolbar-trailing { flex: 1 1 240px; min-width: 0; }
+.room-toolbar .room-ask-field { display: flex; flex: 1 1 auto; min-width: 0; }
+.room-toolbar .room-ask-field > * { flex: 1 1 auto; min-width: 0; }
+.room-toolbar .kit-toolbar-trailing > .room-ask-field { max-width: none; }
+
+/* A link: a chrome Button that reads as a word in the line. */
+.room-link.btn--chrome,
+.room-link {
+  display: inline;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  font: inherit;
+  color: var(--wb-link-ink, var(--wb-text));
+  cursor: pointer;
+}
+.room-link:hover { text-decoration: underline; text-underline-offset: 3px; }
+.room-link:focus-visible { outline: 2px solid var(--wb-focus, currentColor); outline-offset: 2px; }
+
+/* The status line: the state as a dot and a word, then the facts. */
+.room-head .room-status-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  margin: 0;
+  font: 400 14px / 1.4 var(--font-sans);
+  color: var(--wb-muted);
+}
+.desk-next .room-body .room-head .room-status-line .room-headline,
+.room-head .room-status-line .room-headline { flex: 0 1 auto; font-size: 14px; }
+.room-head .room-status-line .room-headline .room-link { color: inherit; }
+/* On the phone the state takes its own line; the facts follow on the next. */
+@container surface (max-width: 520px) {
+  .room-head .room-status-line .room-headline { flex: 1 1 100%; }
+  .room-status-line > .room-headline + .room-status-part > .room-status-sep { display: none; }
+}
+.room-status-part { display: inline-flex; align-items: center; gap: 8px; }
+.room-status-sep { color: var(--wb-muted); }
+
+/* What changed: the update's first lines, then one quiet line. */
+.room-brief-card {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 14px;
+  border: 1px solid var(--wb-rule-soft);
+  border-radius: 6px;
+  background: var(--wb-field-hi, var(--wb-paper));
+}
+.room-brief-line { margin: 0; font: 400 14px / 1.5 var(--font-sans); color: var(--wb-text); }
+.room-brief-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  margin: 4px 0 0;
+  font: 400 12px / 1.4 var(--font-sans);
+  color: var(--wb-muted);
+}
+.room-brief-draft { margin: 6px 0 0; }
+
+/* What is open: three object rows in one list. */
+.room-open-rows .kit-listrows {
+  border: 1px solid var(--wb-rule-soft);
+  border-radius: 6px;
+  background: var(--wb-field-hi, var(--wb-paper));
+  overflow: hidden;
+}
+.room-open-people { display: flex; flex-direction: column; gap: 8px; padding: 6px 0; }
+
+/* Files and Sources side by side; an open fold takes the whole line. A
+   slot whose fold draws nothing takes no place (the .room-fold rule). */
+.room-folds.room-folds-line {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 4px 16px;
+}
+.room-folds-line > [data-room-slot] { flex: 1 1 240px; min-width: 0; }
+.room-folds-line > [data-room-slot]:not(:has(.surface-section, [data-testid="room-files"], .room-late-line)) { display: none; }
+.room-folds-line > [data-room-slot]:has(.gadget-fold[open]) { flex-basis: 100%; }
+@container surface (max-width: 520px) {
+  .room-folds-line > [data-room-slot] { flex-basis: 100%; }
+}
+
+/* The People row names the People section: its own caption is not said
+   twice (its verbs stay), as the fold did. */
+.room-open-people .surface-section:has([data-testid="room-people-head-verb"]) > .surface-section-head > h3 { display: none; }
+.room-open-people .surface-section:has([data-testid="room-people-head-verb"]) > .surface-section-head::after { display: none; }
+.room-open-people .surface-section:has([data-testid="room-people-head-verb"]) > .surface-section-head { justify-content: flex-end; flex-wrap: wrap; }

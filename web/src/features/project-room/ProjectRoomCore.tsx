@@ -8,13 +8,11 @@
 // the postures' routing and the shared read and store wiring. Each section
 // lives in ./core/<Section>.tsx; each posture in its own folder.
 import { useCallback, useEffect, useRef, useState } from "react";
-import { DotWord, StatusBar, SurfaceSection, SurfaceState, countWords } from "../../desk/surface";
+import { DotWord, StatusBar, SurfaceSection, SurfaceState } from "../../desk/surface";
 import { Loading } from "../../desk/surface/kit";
 import { useWindowTitle } from "../../desk/surface/title";
-import { useCompactViewport } from "../../desk/useCompactViewport";
 import { useOnDeskChanged } from "../../desk/useDeskChangedRefresh";
 import { useEngine } from "../../desk/hooks/useEngine";
-import { useStandingPagesRead } from "../../desk/standingPages";
 import {
   ROOM_AT_EVENT, ROOM_PROPOSAL_EVENT, ROOM_UPDATES_EVENT, ROOM_WRITE_EVENT, takeRoomAtRequest,
   takeRoomProposalRequest, takeRoomUpdatesRequest, takeRoomWriteRequest, type RoomPlace,
@@ -25,7 +23,7 @@ import { mergeReceipt, useAgentFlights, useAgentFlightsLive } from "../../desk/a
 import { FlightVerbs } from "../../desk/components/AgentFlight";
 import { Button } from "../../components/signal/Signal";
 import type { CoreProps } from "../../pages/cores/core-types";
-import type { RoomNowData, RoomReviewData } from "./model";
+import type { RoomReviewData } from "./model";
 import { RoomReadsContext } from "./roomReads";
 import { useProjectRoomController } from "./useProjectRoomController";
 import { useReviewController } from "./review/useReviewController";
@@ -33,20 +31,20 @@ import { useUpdateController } from "./update/useUpdateController";
 import { fetchUpdates } from "./update/api";
 import { useStewardController } from "./steward/useStewardController";
 import { usePrepareController } from "./prepare/usePrepareController";
-import { RoomPeopleSection } from "./RoomPeopleSection";
 import type { FiledNoteRequest } from "./RoomFiledNotesSection";
 import { RecallFace } from "./recall/RecallFace";
-import { ThisWeekSection, WaitingOnSection } from "./now/NowSections";
 import "./project-room.css";
 import { formatTimeShort } from "./core/format";
 import { HealthNotRead, RoomHead } from "./core/RoomHead";
 import { NeedsYouSection } from "./core/NeedsYou";
 import { ItemsSection, useRoomItems } from "./core/Plan";
 import { SourcesSection } from "./core/Sources";
-import { UpdateLine } from "./core/UpdateLine";
+import { BriefSection } from "./core/Brief";
+import { OpenSection } from "./core/Open";
+import { cadenceItems } from "./core/Cadence";
 import { HistoryWing, ReceiptsSection, historyEventsWords } from "./core/History";
-import { RoomAskWell, useRoomAsk } from "./core/Ask";
-import { ROOM_PROGRAM_CHANGE_KINDS, RoomFiledNotes, RoomFold, RoomProgramsSection } from "./core/Folds";
+import { useRoomAsk } from "./core/Ask";
+import { ROOM_PROGRAM_CHANGE_KINDS, RoomFiledNotes, RoomFold } from "./core/Folds";
 import { RoomSlot, useRoomReadsGate } from "./core/slots";
 import { roomPosture } from "./core/Postures";
 
@@ -69,8 +67,8 @@ function ProjectRoomCoreFor({ hero, scope, scopeLabel }: CoreProps) {
   const ctrl = useProjectRoomController(scope, scopeLabel);
   const [addingSources, setAddingSources] = useState(false);
   useAgentFlightsLive();
-  // Betterment P3: on the phone This week shows each group's first line.
-  const compact = useCompactViewport();
+  // R1 (owner 2026-11-08): the Needs you rows open under the status line.
+  const [needsOpen, setNeedsOpen] = useState(false);
   const agentFlights = useAgentFlights((s) => s.flights);
   const loading = ctrl.loadStatus === "loading";
   // A write in another window (a meeting filed, an update published, an
@@ -167,7 +165,6 @@ function ProjectRoomCoreFor({ hero, scope, scopeLabel }: CoreProps) {
   // section, the well stays sticky at the foot (F5).
   const askCtrl = useRoomAsk(ctrl.projectId, ctrl.projectName);
   const itemsRead = useRoomItems(ctrl.projectId ?? "", ctrl.room?.revision ?? 0);
-  const { pages: standingPages, loaded: pagesLoaded } = useStandingPagesRead("project", ctrl.projectId);
 
   // HS-200-11 — the Prepare posture: one manual preparation path over the
   // Room's read sources, its carried decisions and its open commitments.
@@ -192,6 +189,7 @@ function ProjectRoomCoreFor({ hero, scope, scopeLabel }: CoreProps) {
   revealProposal.current = (id: string) => {
     leavePostures();
     if (ctrl.view !== "room") ctrl.setView("room");
+    setNeedsOpen(true);
     setProposalRequest((prev) => ({ id, seq: prev.seq + 1 }));
   };
   // Phase 16 (Astra r1 M3): the Room window's History and Steward verbs
@@ -329,19 +327,20 @@ function ProjectRoomCoreFor({ hero, scope, scopeLabel }: CoreProps) {
   // Window grammar (2026-10-24): the foot is the kit StatusBar, in warm
   // sentence-case words with a lamp; the merged PR's Open PR (and its
   // egress chip) are the bar's verbs.
-  const footerItems = ctrl.view !== "history" && merged ? [
-    {
+  const footerItems = ctrl.view !== "history" ? [
+    merged ? {
       key: "merged",
       lamp: "ok" as const,
       testId: "room-merge-receipt",
       // PHILO-15 B51/B52: the PR by its own title and number (the item's
       // title only when the hub has not read the PR's yet).
       text: `${merged.pr?.title || merged.title} · PR #${merged.pr?.number ?? ""} merged ${formatTimeShort(merged.mergedAt ?? "")}`.trim(),
-    },
-    { key: "sources", text: countWords(sourceCount, "source") },
-  ] : ctrl.view === "history" ? [
+    } : null,
+    // R1: when the update runs and with which engine, and the saved time.
+    ...(ctrl.room ? cadenceItems(ctrl.room) : []),
+  ] : [
     { key: "history", testId: "room-footer-receipt", text: historyReceipt },
-  ] : null;
+  ];
   // Betterment P3: the Now wing has no READ · NEXT CHECK receipt and no
   // Refresh (the window refreshes itself on every desk change).
 
@@ -362,81 +361,55 @@ function ProjectRoomCoreFor({ hero, scope, scopeLabel }: CoreProps) {
           ) : null}
           {ctrl.view === "room" ? (
             <>
+              {/* R1 "the brief" (owner 2026-11-08): the toolbar, the status
+                  line, What changed, What is open, the folds, the status bar.
+                  On the phone, one column in that order. */}
               <div className="room-section-rise" style={{ animationDelay: "0ms" }}>
                 <RoomHead
                   room={ctrl.room}
                   updateCtrl={updateCtrl}
-                  reviewCtrl={reviewCtrl}
+                  ask={askCtrl}
                   pendingCount={pendingCount}
+                  needsOpen={needsOpen}
+                  onNeeds={() => setNeedsOpen((open) => !open)}
+                  onHistory={() => ctrl.setView("history")}
                   quiet={addingSources}
                 />
               </div>
               {ctrl.room.health.state === "degraded" ? <HealthNotRead onRetry={handleRefresh} /> : null}
-              {/* Betterment P3, the Now wing: what needs him and who he waits
-                  on beside what happened this week; on the phone, one column
-                  in that order. */}
-              <div className="room-now-grid" data-testid="room-now">
-                <div className="room-now-col room-main">
-                  <RoomSlot id="needs" place={place("needs")} own={{ extras: extrasRead }} delay="40ms">
-                    <NeedsYouSection
-                      room={ctrl.room}
-                      ctrl={ctrl}
-                      reviewCtrl={reviewCtrl}
-                      selectedProposalId={selectedProposalId}
-                      pendingCount={pendingCount}
-                    />
-                  </RoomSlot>
-                  {ctrl.room.needsYou.state === "ok" ? (
-                    <div className="room-section-rise" style={{ animationDelay: "50ms" }}>
-                      <WaitingOnSection
-                        items={ctrl.room.needsYou.items}
-                        nudges={ctrl.nudges}
-                        onReload={() => void ctrl.load()}
-                      />
-                    </div>
-                  ) : null}
-                </div>
-                <div className="room-now-col">
-                  <RoomSlot id="pages" place={place("pages")} own={{ pages: pagesLoaded }} delay="60ms">
-                    <ThisWeekSection
-                      now={ctrl.room.now?.state === "ok" ? (ctrl.room.now as RoomNowData & { state: "ok" }) : null}
-                      pages={standingPages}
-                      compact={compact}
-                    />
-                  </RoomSlot>
-                </div>
-              </div>
-              {/* PHILO-17 refit: the ask is in the flow under what he reads
-                  first (Betterment Q5: it opens the one Ask window). */}
-              <div className="room-section-rise room-ask-container" style={{ animationDelay: "70ms" }}>
-                <RoomAskWell
-                  ask={askCtrl}
-                  projectId={ctrl.projectId}
-                  onOpenRef={ctrl.openProjectRef}
-                  onPrepare={(purpose) => prepareCtrl.enterPrepare(purpose)}
-                />
-              </div>
-              {/* Filed work comes before optional source setup. Sources still
-                  discloses its existing Add source and watch controls. Keep
-                  Files' place even if its read resolves after the Room cap. */}
-              <div className="room-folds" data-testid="room-folds">
+              <RoomSlot id="needs" place={place("needs")} own={{ extras: extrasRead }} delay="40ms"
+                empty={!needsOpen}>
+                {needsOpen ? (
+                  <NeedsYouSection
+                    room={ctrl.room}
+                    ctrl={ctrl}
+                    reviewCtrl={reviewCtrl}
+                    selectedProposalId={selectedProposalId}
+                    pendingCount={pendingCount}
+                  />
+                ) : null}
+              </RoomSlot>
+              <RoomSlot id="brief" place={place("brief")} delay="50ms">
+                <BriefSection room={ctrl.room} updateCtrl={updateCtrl} />
+              </RoomSlot>
+              <RoomSlot id="open" place={place("open")} delay="60ms">
+                <OpenSection room={ctrl.room} projectId={ctrl.projectId} nudges={ctrl.nudges}
+                  onReload={() => void ctrl.load()} onRefresh={handleRefresh} />
+              </RoomSlot>
+              {/* Filed work and Sources as two quiet folds on one line (stacked
+                  on the phone); the Plan, when the Project has items, beside
+                  them. Keep Files' place even if its read resolves after the
+                  Room cap. */}
+              <div className="room-folds room-folds-line" data-testid="room-folds">
                 <RoomSlot id="files" place={{ waiting: place("files").waiting }} delay="80ms">
                   <RoomFiledNotes projectId={ctrl.projectId} ctrl={ctrl} request={fileRequest}
                     onRequestHandled={onFileRequestHandled}
                     presentationReady={shown && !place("files").waiting} />
                 </RoomSlot>
-                <RoomSlot id="programs" place={{ waiting: false }} delay="81ms">
-                  <RoomProgramsSection section={ctrl.room.programs} projectId={ctrl.projectId} onRefresh={handleRefresh} />
-                </RoomSlot>
                 <RoomSlot id="sources" place={place("sources")} own={{ extras: extrasRead }} delay="82ms">
                   <RoomFold title="Sources" token={sourceCount || undefined}
                     open={addingSources || ctrl.room.sources.state === "degraded" || undefined} testId="room-fold-sources">
                     <SourcesSection room={ctrl.room} onReload={() => ctrl.load()} stewardCtrl={stewardCtrl} ctrl={ctrl} onAdding={setAddingSources} />
-                  </RoomFold>
-                </RoomSlot>
-                <RoomSlot id="people" place={place("people")} delay="83ms">
-                  <RoomFold title="People" testId="room-fold-people">
-                    <RoomPeopleSection projectId={ctrl.projectId} />
                   </RoomFold>
                 </RoomSlot>
                 <RoomSlot id="items" place={place("items")} delay="85ms" data-section="items">
@@ -445,7 +418,6 @@ function ProjectRoomCoreFor({ hero, scope, scopeLabel }: CoreProps) {
                   </RoomFold>
                 </RoomSlot>
               </div>
-              <UpdateLine room={ctrl.room} updateCtrl={updateCtrl} onReload={() => ctrl.load()} />
             </>
           ) : (
             <>

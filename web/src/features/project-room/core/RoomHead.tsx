@@ -1,41 +1,34 @@
-// The Room's head: the state line, the toolbar (Review, Write update), the
-// facts, the draft's run and the outcome. A failed health read is named.
-import { useEffect, useRef, useState } from "react";
-import { DotWord, RunLine, StateChip, SurfaceRow, SurfaceRows, SurfaceSection, Toolbar, ToolGlyph, wireDayClock } from "../../../desk/surface";
-import { spriteUrl } from "../../../desk/sprites";
+// The Room's head (R1 "the brief", owner 2026-11-08): the window toolbar
+// (Write update, History, the Ask field with its mic), the status line (the
+// state as a dot and a word, the last update, what needs him) and the
+// draft's run. A failed health read is named.
+import type { ReactNode } from "react";
+import { DotWord, RunLine, StateChip, SurfaceSection, Toolbar } from "../../../desk/surface";
+import { StringGadget } from "../../../desk/surface/gadgets";
 import { refOpener } from "../../../desk/openObject";
 import { openSurfaceOr } from "../../../desk/shell";
 import { useEngine } from "../../../desk/hooks/useEngine";
 import { Button } from "../../../components/signal/Signal";
 import type { RoomNowData, RoomSnapshot } from "../model";
-import { headFacts, stateLine, type StateLine } from "../now/model";
-import type { useReviewController } from "../review/useReviewController";
+import { dayWords, isMine, stateLine, type StateLine } from "../now/model";
 import type { useUpdateController } from "../update/useUpdateController";
+import type { RoomAsk } from "./Ask";
 import { sourcesWord } from "./format";
+import "./now-face.css";
 
-/** The newest update draft the Room read holds (its recent updates), or
- *  null: the draft he was writing, offered on the Now head with Continue. */
-function newestDraft(room: RoomSnapshot): { id: string; when: string } | null {
-  if (room.updates.state !== "ok") return null;
-  let best: Record<string, unknown> | null = null;
-  for (const row of room.updates.recent) {
-    if (row.lifecycle !== "draft" || !row.id) continue;
-    const at = String(row.updated_at ?? row.created_at ?? "");
-    if (!best || at > String(best.updated_at ?? best.created_at ?? "")) best = row;
-  }
-  if (!best) return null;
-  return { id: String(best.id), when: wireDayClock(best.updated_at ?? best.created_at) };
+/** What needs him on this Project: his own Needs you rows, or the claims
+ *  that wait on his review when he has no row. Never a zero (the caller
+ *  omits the part). */
+export function needCount(room: RoomSnapshot, pendingCount: number): number {
+  const mine = room.needsYou.state === "ok" ? room.needsYou.items.filter(isMine).length : 0;
+  return mine || pendingCount;
 }
 
-/* ── the head (Betterment P3: where it stands in ten seconds) ── */
-
-/** The head's one big fact: the state and its reason, in his words
- *  ("At risk: tokenization waits on the HSM ceremony"). The reason's source
- *  opens from it. */
+/** The state as a lamp and a word ("At risk: tokenization waits on the HSM
+ *  ceremony"): the state word leads in its colour with its lamp (the Room's
+ *  own .room-state-word), the reason follows in ink; its source opens from it. */
 function RoomHeadline({ line }: { line: StateLine }) {
   const open = line.ref ? refOpener(line.ref) : null;
-  // Window grammar (2026-10-24): the state word leads in its colour with a
-  // lamp; the reason follows in ink. The words stay one line of text.
   const split = line.text.indexOf(": ");
   const words = split > 0
     ? <><span className="room-state-word">{line.text.slice(0, split + 1)}</span>{" "}<span className="room-state-reason">{line.text.slice(split + 2)}</span></>
@@ -43,7 +36,7 @@ function RoomHeadline({ line }: { line: StateLine }) {
   return (
     <span className="room-headline" data-testid="room-headline" data-tone={line.tone}>
       {open ? (
-        <Button variant="chrome" className="room-headline-open" data-testid="room-headline-open"
+        <Button variant="chrome" className="room-headline-open room-link" data-testid="room-headline-open"
           aria-label={`${line.text}. Open the source`} onClick={open}>
           {words}
         </Button>
@@ -55,14 +48,21 @@ function RoomHeadline({ line }: { line: StateLine }) {
 export function RoomHead({
   room,
   updateCtrl,
-  reviewCtrl,
+  ask,
   pendingCount,
+  needsOpen,
+  onNeeds,
+  onHistory,
   quiet = false,
 }: {
   room: RoomSnapshot;
   updateCtrl: ReturnType<typeof useUpdateController>;
-  reviewCtrl: ReturnType<typeof useReviewController>;
+  ask: RoomAsk;
   pendingCount: number;
+  /** The Needs you rows are open under the status line. */
+  needsOpen: boolean;
+  onNeeds: () => void;
+  onHistory: () => void;
   /** PHILO-17: another well holds the face's one primary (Add source's Add). */
   quiet?: boolean;
 }) {
@@ -70,85 +70,76 @@ export function RoomHead({
   const sources = room.sources.state === "ok" ? room.sources.items : [];
   const sourceWord = sourcesWord(sources, room.sources.state === "ok" ? room.sources.quietUntil : null);
   const now = room.now?.state === "ok" ? (room.now as RoomNowData & { state: "ok" }) : null;
-  const facts = headFacts(now);
+  const lastUpdate = now?.lastUpdateAt ? dayWords(now.lastUpdateAt) : "";
   // PHILO-15 B69/B60: a STALE source, or quiet hours holding the sweep, is
-  // said on the head (a plain CHECKED time is not: the window reads itself).
+  // said on the line (a plain Checked time is not: the window reads itself).
   const sourceFact = sourceWord && !/^Checked /.test(sourceWord.word) ? sourceWord : null;
-
-  const nameRef = useRef<HTMLSpanElement>(null);
-  const [showOutcome, setShowOutcome] = useState(false);
-  useEffect(() => {
-    const el = nameRef.current;
-    if (!el) return;
-    const check = () => {
-      const overflows = el.scrollWidth > el.clientWidth;
-      const outcome = room.project.outcomeText || room.project.name;
-      setShowOutcome(overflows || outcome.length > 80);
-    };
-    check();
-    const ro = new ResizeObserver(check);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [room.project.name, room.project.outcomeText]);
-
+  const need = needCount(room, pendingCount);
   const draftRun = updateCtrl.draftRun;
-  const keptDraft = newestDraft(room);
+  const parts: ReactNode[] = [];
+  if (lastUpdate) parts.push(<span key="last" data-testid="room-status-last-update">{`last update ${lastUpdate}`}</span>);
+  if (need > 0) {
+    parts.push(
+      <Button key="need" variant="chrome" className="room-link" aria-expanded={needsOpen}
+        onClick={onNeeds} data-testid="room-status-need">
+        {`${need} need you`}
+      </Button>,
+    );
+  }
+  if (sourceFact) {
+    parts.push(<DotWord key="src" tone={sourceFact.stale ? "warn" : "idle"} data-testid="room-sources-word">{sourceFact.word}</DotWord>);
+  }
 
   return (
     <div className="room-head" data-testid="room-head">
-      <span ref={nameRef} className="room-head-name-measure" aria-hidden="true">
-        {room.project.name}
-      </span>
-      {/* Window grammar (2026-10-24): the window's verbs are the kit
-          Toolbar under the title bar, Write update the one primary. */}
-      <Toolbar label="Project actions" className="room-toolbar">
-          {pendingCount > 0 ? <Button dense variant={quiet ? "secondary" : "primary"}
-            loading={reviewCtrl.loading} onClick={() => void reviewCtrl.enterReview()} data-testid="room-head-review">
-            <ToolGlyph kind="tasks" />
-            Review {pendingCount}
-          </Button> : null}
-          <Button
-            dense
-            variant={quiet || pendingCount > 0 ? "secondary" : "primary"}
-            loading={updateCtrl.loading || updateCtrl.draftBusy}
-            disabled={updateEngine.state === "unread"}
-            // Betterment P1: the records draft at once; the engine's after.
-            onClick={() => void updateCtrl.write(updateEngine.state === "set")}
-            data-testid="updates-verb"
-          >
-            <ToolGlyph kind="edit" />
-            Write update
-          </Button>
+      {/* The Project's name, unseen: the title bar says it; the desk rigs
+          read which Project this Room holds here. */}
+      <span className="room-head-name-measure" aria-hidden="true">{room.project.name}</span>
+      {/* R1: one primary, History, and the Ask as a plain field with its mic. */}
+      <Toolbar label="Project actions" className="room-toolbar" trailing={(
+        <span className="room-ask-field" data-testid="room-ask-well">
+          <StringGadget
+            label="Ask this project"
+            value={ask.prompt}
+            onChange={ask.setPrompt}
+            placeholder="Ask this project"
+            inputRef={ask.inputRef}
+            micDraftScope={`project-ask-${room.project.id}`}
+            inputProps={{ className: "room-ask-input" }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
+                e.preventDefault();
+                ask.ask();
+              }
+            }}
+          />
+        </span>
+      )}>
+        <Button
+          dense
+          variant={quiet ? "secondary" : "primary"}
+          loading={updateCtrl.loading || updateCtrl.draftBusy}
+          disabled={updateEngine.state === "unread"}
+          // Betterment P1: the records draft at once; the engine's after.
+          onClick={() => void updateCtrl.write(updateEngine.state === "set")}
+          data-testid="updates-verb"
+        >
+          Write update
+        </Button>
+        <Button dense variant="secondary" onClick={onHistory} data-testid="room-head-history">History</Button>
       </Toolbar>
-      <div className="room-head-line">
-        <img className="room-head-glyph desk-chrome-sprite" src={spriteUrl("project", room.project.id, "rest", null, 32)}
-          alt="" width={28} height={28} draggable={false} />
+      <p className="room-status-line" data-testid="room-status-line">
         <RoomHeadline line={stateLine(room, Boolean(sourceWord?.stale))} />
         {room.project.isArchived ? (
           <span className="kit-pill" data-tone="danger" data-dot="">Archived</span>
         ) : null}
-      </div>
-      {facts.length || sourceFact ? (
-        <p className="room-now-facts" data-testid="room-head-facts">
-          {facts.map((fact) => <span key={fact}>{fact}</span>)}
-          {sourceFact ? (
-            <DotWord tone={sourceFact.stale ? "warn" : "idle"} data-testid="room-sources-word">{sourceFact.word}</DotWord>
-          ) : null}
-        </p>
-      ) : null}
-      {/* Owner ruling 2026-11-07: the Room opens on Now; the update draft
-          he was writing waits here, one quiet row, and Continue opens it. */}
-      {updateCtrl.posture === "off" && keptDraft ? (
-        <div className="room-head-draft" data-testid="room-head-update-draft">
-          <SurfaceRows>
-            <SurfaceRow quiet
-              title={keptDraft.when ? `Update draft · ${keptDraft.when}` : "Update draft"}
-              verbs={<Button dense variant="secondary" loading={updateCtrl.loading}
-                onClick={() => void updateCtrl.continueDraft(keptDraft.id)}
-                data-testid="room-head-update-continue">Continue</Button>} />
-          </SurfaceRows>
-        </div>
-      ) : null}
+        {parts.map((part, index) => (
+          <span key={index} className="room-status-part">
+            <span className="room-status-sep" aria-hidden="true">·</span>
+            {part}
+          </span>
+        ))}
+      </p>
       {/* P0 (betterment/projects): the draft's run where he pressed it.
           The Update posture draws its own line once it is open. */}
       {updateCtrl.posture === "off" && (draftRun.phase === "running" || draftRun.phase === "failure") ? (
@@ -173,11 +164,6 @@ export function RoomHead({
             </Button>
           ) : null}
         </div>
-      ) : null}
-      {showOutcome ? (
-        <p className="room-head-outcome" data-testid="room-head-outcome">
-          {room.project.outcomeText || room.project.name}
-        </p>
       ) : null}
     </div>
   );

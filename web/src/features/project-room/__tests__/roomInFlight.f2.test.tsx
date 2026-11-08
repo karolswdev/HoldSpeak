@@ -11,6 +11,7 @@ import { WingSlotContext } from "../../../desk/surface/wings";
 import { useDesk } from "../../../desk/store";
 import { openSurfaceOr } from "../../../desk/shell";
 import { ProjectRoomCore } from "../ProjectRoomCore";
+import { openNeedsYou } from "./openNeeds";
 
 vi.mock("../../../desk/ask", async () => {
   const actual =
@@ -266,6 +267,7 @@ describe("Conductor F2 K4b: OPEN HERE rows wear their agent", () => {
         pr: { number: 412, url: "https://github.com/acme/ledger/pull/412", state: "open" } }),
     ]);
     render(<WindowHarness scope="project:p1" />);
+    await openNeedsYou();
     await waitFor(() => expect(screen.getAllByTestId("flight-chip")).toHaveLength(3), DRAWN);
     const rows = screen.getAllByTestId("needs-you-row");
     expect(within(rows[0]).getByTestId("flight-chip").textContent).toContain("Claude Code · Waiting");
@@ -286,6 +288,7 @@ describe("Conductor F2 K4b: OPEN HERE rows wear their agent", () => {
   it("a row with no flight wears no chip and keeps Hand to coder (F1)", async () => {
     wire([]);
     render(<WindowHarness scope="project:p1" />);
+    await openNeedsYou();
     const rows = await screen.findAllByTestId("needs-you-row", {}, DRAWN);
     expect(screen.queryByTestId("flight-chip")).toBeNull();
     expect(within(rows[0]).getByRole("button", { name: "Hand to an agent session: Write the rollback runbook" })).toBeTruthy();
@@ -300,6 +303,7 @@ describe("Conductor F2 K4b: OPEN HERE rows wear their agent", () => {
         pr: { number: 412, url: "https://github.com/acme/ledger/pull/412", state: "open" } }),
     ]);
     render(<WindowHarness scope="project:p1" />);
+    await openNeedsYou();
     await waitFor(() => expect(screen.getAllByTestId("flight-chip")).toHaveLength(3), DRAWN);
     expect(screen.queryAllByRole("button", { name: /^Hand to an agent session/ })).toHaveLength(0);
     expect(screen.getAllByTestId("flight-chip")[0].textContent).toContain("Claude Code · Starting");
@@ -342,6 +346,7 @@ describe("Conductor F2 K6: the merge receipt", () => {
       flight({ origin_ref: "action:ai-flag", state: "merged", close: "awaiting_confirm", merged_at: MERGED_AT, pr: { number: 10, url: "u", state: "merged" } }),
     ]);
     render(<WindowHarness scope="project:p1" />);
+    await openNeedsYou();
     await screen.findAllByTestId("needs-you-row");
     expect(screen.queryByTestId("room-merge-receipt")).toBeNull();
     // Betterment P3: the Now wing has no READ · NEXT CHECK receipt either.
@@ -362,6 +367,7 @@ describe("Conductor F2 K6 on a mounted Room (Astra finding 5)", () => {
       return Promise.resolve(detailResponse(url));
     });
     render(<WindowHarness scope="project:p1" />);
+    await openNeedsYou();
     await waitFor(() => expect(screen.getAllByTestId("flight-chip")).toHaveLength(1));
     expect(screen.queryByTestId("room-merge-receipt")).toBeNull();
 
@@ -394,6 +400,7 @@ describe("Honest faces: a meeting's unowned action is an OPEN HERE row with its 
     useDesk.setState({ openPullout } as never);
     try {
       render(<WindowHarness scope="project:p1" />);
+      await openNeedsYou();
       const rows = await screen.findAllByTestId("needs-you-row", {}, DRAWN);
       expect(rows).toHaveLength(3);
       for (const row of rows) expect(row.textContent).toContain("Owner · unknown");

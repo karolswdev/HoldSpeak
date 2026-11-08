@@ -19,6 +19,7 @@ import { TitleSlotContext } from "../../../desk/surface/title";
 import { WingSlotContext } from "../../../desk/surface/wings";
 import { useDesk } from "../../../desk/store";
 import { ProjectRoomCore, sentenceToken } from "../ProjectRoomCore";
+import { findInNeeds, openNeedsYou } from "./openNeeds";
 import { RoomPeopleSection } from "../RoomPeopleSection";
 import { ApiError } from "../../../lib/api";
 // The final diet lane's recorded wires (scripts/record_room_wires.py: the real
@@ -222,6 +223,7 @@ describe("HS-172: proposals in NEEDS YOU, Confirm, suggested sources", () => {
   it("draws both proposals with their verbs, the suggested source, no raw button, no zero, no LOCAL", async () => {
     wire(table());
     render(<WindowHarness scope={`project:${pid}`} />);
+    await openNeedsYou();
     await waitFor(() => expect(screen.getAllByTestId("proposal-row")).toHaveLength(2));
     const body = screen.getByTestId("room-body");
     expect(screen.getAllByTestId("proposal-confirm")).toHaveLength(2);
@@ -236,6 +238,7 @@ describe("HS-172: proposals in NEEDS YOU, Confirm, suggested sources", () => {
   it("Edit unfolds the edit well under the row", async () => {
     wire(table());
     render(<WindowHarness scope={`project:${pid}`} />);
+    await openNeedsYou();
     await waitFor(() => expect(screen.getAllByTestId("proposal-row")).toHaveLength(2));
     fireEvent.click(screen.getAllByTestId("proposal-edit")[0]);
     expect(await screen.findByTestId("proposal-edit-well")).toBeTruthy();
@@ -253,6 +256,7 @@ describe("HS-172: proposals in NEEDS YOU, Confirm, suggested sources", () => {
       },
     });
     render(<WindowHarness scope={`project:${pid}`} />);
+    await openNeedsYou();
     await waitFor(() => expect(screen.getAllByTestId("proposal-row")).toHaveLength(2));
     const first = screen.getAllByTestId("proposal-row")
       .find((r) => r.textContent?.includes("Marek owns the PostgreSQL migration"))!;
@@ -388,6 +392,7 @@ describe("HS-173-04: Nudge unfolds the card; Send leaves a SENT receipt", () => 
   it("the bottleneck row has Nudge; the card names who, PR #612, github.com, Send and Dismiss", async () => {
     wire(table());
     render(<WindowHarness scope={`project:${pid}`} />);
+    await openNeedsYou();
     expect(await screen.findByTestId("bottleneck-row")).toBeTruthy();
     fireEvent.click(await screen.findByTestId("nudge-verb"));
     const card = await screen.findByTestId("nudge-card");
@@ -404,6 +409,7 @@ describe("HS-173-04: Nudge unfolds the card; Send leaves a SENT receipt", () => 
   it("Send posts the comment and leaves SENT · name · #612 (no host: owner ruling 2026-10-25), no Undo; the row says NUDGED JUST NOW", async () => {
     wire(table());
     render(<WindowHarness scope={`project:${pid}`} />);
+    await openNeedsYou();
     fireEvent.click(await screen.findByTestId("nudge-verb"));
     fireEvent.click(await screen.findByTestId("nudge-send"));
     const receipt = await screen.findByTestId("nudge-receipt-row");
@@ -464,58 +470,6 @@ describe("PHILO-10-01: an UNKNOWN send is not counted as a delivery", () => {
 
 /* ── HS-200-11: Prepare states its coverage before the run ─────────── */
 
-describe("HS-200-11: the Prepare face states coverage, sources and the route before the run", () => {
-  // replaces: tests/e2e/test_hs200_preparation_brief_glass.py::test_prepare_face_states_coverage_before_the_run
-  // (the purpose textarea's no-clip box is the generic sweep's, T3)
-  const pid = PREP_ROOM.project_id;
-
-  it("COVERAGE · 2 OF 4, SOURCES 4 with both gaps and their repairs, CARRIED FORWARD 1, the route READY on THIS DEVICE", async () => {
-    wire({
-      [room(pid)]: () => clone(PREP_ROOM),
-      [`GET /api/projects/${pid}/briefs/route`]: () => clone(PREP_ROUTE),
-      [`GET /api/projects/${pid}/briefs/manifest`]: () => clone(PREP_MANIFEST),
-      [`GET /api/projects/${pid}/briefs`]: () => ({ briefs: [] }),
-    });
-    render(<WindowHarness scope={`project:${pid}`} />);
-    const result = await screen.findByTestId("room-ask-result");
-    fireEvent.change(within(result).getByRole("combobox"), { target: { value: "brief" } });
-    const coverage = await screen.findByTestId("prepare-coverage");
-    const posture = screen.getByTestId("prepare-posture");
-    const words = (el: Element) => el.querySelector(".surface-state-chip")?.getAttribute("aria-label");
-    expect(screen.getByTestId("prepare-head-name").textContent?.trim()).toBe("Prepare a brief");
-    expect(words(coverage)).toBe("Coverage · 2 of 4");
-    expect(coverage.getAttribute("data-complete")).toBe("false");
-    expect(screen.getByTestId("prepare-purpose-by-hand").textContent?.trim()).toBe("Purpose set by hand");
-    expect(screen.getByTestId("prepare-no-calendar").textContent?.trim()).toBe("No calendar");
-    const route = await screen.findByTestId("prepare-route");
-    expect(route.getAttribute("data-state")).toBe("ready");
-    expect(screen.getByTestId("prepare-route-model").textContent?.trim()).toBe("QWEN3 35B");
-    // Same-device work has no passive egress badge on the face.
-    expect(route.textContent).not.toContain("This device");
-
-    const captions = Array.from(posture.querySelectorAll(".surface-section-head h3")).map((h) => h.textContent?.trim());
-    expect(captions[0]).toBe("Sources 4");
-    expect(captions).toContain("Carried forward 1");
-    const states = screen.getAllByTestId("prepare-source-state");
-    expect(states.map((s) => s.getAttribute("data-state")).sort()).toEqual(["available", "available", "failed", "stale"]);
-    expect(states.map(words)).toContain("Credential expired · Confluence");
-    expect(screen.getAllByTestId("prepare-source-repair").map((b) => b.textContent?.trim()).sort()).toEqual(["Reconnect", "Retry"]);
-    const observed = screen.getAllByTestId("prepare-source-observed").map((o) => o.textContent?.trim() ?? "");
-    expect(observed).toHaveLength(4);
-    expect(observed.every((t) => t.startsWith("Observed "))).toBe(true);
-
-    // An empty purpose: Prepare is refused; the purpose is a textarea that persists.
-    expect((screen.getByTestId("prepare-verb") as HTMLButtonElement).disabled).toBe(true);
-    const purpose = screen.getByRole("textbox", { name: "Purpose" });
-    expect(purpose.tagName).toBe("TEXTAREA");
-    fireEvent.change(purpose, { target: { value: "Architecture review, cut-over sequencing, rollback rehearsal" } });
-    await waitFor(() => expect((screen.getByTestId("prepare-verb") as HTMLButtonElement).disabled).toBe(false));
-    expect(sessionStorage.getItem("hs.room.prepareDrafts")).toContain("rollback rehearsal");
-    // The route probe sends nothing: no prepare request left the face.
-    expect(calls.filter((c) => c.key.endsWith("/briefs/prepare"))).toEqual([]);
-    expect(Array.from(posture.querySelectorAll("button")).filter((b) => !(b.getAttribute("aria-label") || b.textContent || "").trim())).toEqual([]);
-  });
-});
 
 /* ── PHILO-17 sources: Add source, sign in, Park receipt, Register ───── */
 
@@ -638,6 +592,7 @@ describe("PHILO-14 A5b: a proposal request over the Room", () => {
         },
       });
       render(<WindowHarness scope={`project:${pid}`} />);
+      await openNeedsYou();
       await waitFor(() => expect(screen.getAllByTestId("proposal-row")).toHaveLength(2));
       let editor = await openEditor();
       fireEvent.change(editor, { target: { value: `${editor.value} AAA-saved-words` } });
@@ -675,6 +630,7 @@ describe("PHILO-14 A5b: a proposal request over the Room", () => {
       try {
         wire(base());
         render(<WindowHarness scope={`project:${pid}`} />);
+        await openNeedsYou();
         await waitFor(() => expect(screen.getAllByTestId("proposal-row")).toHaveLength(2));
         act(() => openProjectProposal(pid, proposalId));
         await waitFor(() => expect(selected()).not.toBeNull());
@@ -718,6 +674,7 @@ describe("PHILO-14 A5b: a proposal request over the Room", () => {
     try {
       wire(base());
       render(<WindowHarness scope={`project:${pid}`} />);
+      await openNeedsYou();
       await waitFor(() => expect(screen.getAllByTestId("proposal-row")).toHaveLength(2));
       act(() => openProjectProposal(pid, proposalId));
       await waitFor(() => expect(selected()).not.toBeNull());
@@ -779,7 +736,8 @@ describe("the Room opens on Now; the update draft waits with Continue", () => {
     const row = await screen.findByTestId("room-head-update-draft");
     expect(row.textContent).toMatch(/^Update draft · Oct 11, \d\d:\d\d/);
     expect(screen.queryByTestId("update-posture")).toBeNull();
-    fireEvent.click(within(row).getByRole("button", { name: "Continue" }));
+    // The body is drawn once its sections' first reads land (core/slots.tsx).
+    fireEvent.click(await within(row).findByRole("button", { name: "Continue" }));
     await screen.findByTestId("update-posture");
     const editor = (await screen.findByTestId("update-plain-text")) as HTMLTextAreaElement;
     expect(editor.value).toBe("Kept words he was writing");
@@ -829,99 +787,6 @@ const LOOP_ROUTE = {"route": {"state": "ready", "token": "READY", "host": "127.0
 
 /* ── HS-200-11 round 2: Prepare pressed, through to its outcomes ───── */
 
-describe("HS-200-11: Prepare pressed — sent, kept, refused and stopped as the hub answers", () => {
-  const pid = PREP2_ROOM.project_id;
-  const PURPOSE = "Architecture review, cut-over sequencing";
-  const prepareKey = `POST /api/projects/${pid}/briefs/prepare`;
-  const table = (prepare: Answer): Record<string, Answer> => ({
-    [room(pid)]: () => clone(PREP2_ROOM),
-    [`GET /api/projects/${pid}/briefs/route`]: () => clone(PREP2_ROUTE),
-    [`GET /api/projects/${pid}/briefs/manifest`]: () => clone(PREP2_MANIFEST),
-    [`GET /api/projects/${pid}/briefs`]: (_init, url) => (url.includes("lifecycle=kept") && kept ? clone(BRIEFS_KEPT) : { briefs: [] }),
-    [prepareKey]: prepare,
-    [`POST /api/briefs/${PREPARE_OK.brief.id}/keep`]: () => { kept = true; return clone(KEEP); },
-    [`POST /api/projects/${pid}/briefs/stop`]: () => clone(STOP),
-  });
-  let kept = false;
-  const refuse = async (payload: unknown) => {
-    const { ApiError } = await import("../../../lib/api");
-    return new ApiError(409, String((payload as { error: string }).error), clone(payload));
-  };
-  async function pressPrepare() {
-    render(<WindowHarness scope={`project:${pid}`} />);
-    fireEvent.change(within(await screen.findByTestId("room-ask-result")).getByRole("combobox"), { target: { value: "brief" } });
-    await screen.findByTestId("prepare-coverage");
-    await waitFor(() => expect(screen.getByTestId("prepare-route").getAttribute("data-state")).toBe("ready"));
-    fireEvent.change(screen.getByRole("textbox", { name: "Purpose" }), { target: { value: PURPOSE } });
-    await waitFor(() => expect((screen.getByTestId("prepare-verb") as HTMLButtonElement).disabled).toBe(false));
-    fireEvent.click(screen.getByTestId("prepare-verb"));
-  }
-  beforeEach(() => { kept = false; });
-
-  // replaces: tests/e2e/_parked/test_hs200_preparation_brief_glass.py::test_running_then_kept_brief_with_claims_and_not_read
-  // (the face's receipt, egress and Keep legs at :754-:771; the claims ledger is the T1 successor's)
-  it("a sent and answered request: Brief ready, the receipt names the model, Keep keeps it and the receipt stays", async () => {
-    wire(table(() => clone(PREPARE_OK)));
-    await pressPrepare();
-    expect(calls.find((c) => c.key === prepareKey)?.json).toMatchObject({ purpose: PURPOSE, generator: "model" });
-    await screen.findByTestId("prepare-document");
-    expect(screen.getByTestId("prepare-head-name").textContent?.trim()).toBe("Brief ready");
-    const lifecycle = () => screen.getByTestId("prepare-lifecycle").querySelector(".surface-state-chip")?.getAttribute("aria-label");
-    expect(lifecycle()).toBe("Draft");
-    expect(screen.queryByTestId("prepare-footer-egress")).toBeNull();
-    const receipt = screen.getByTestId("prepare-footer-receipt").textContent?.trim() ?? "";
-    expect(receipt.startsWith("QWEN3 35B")).toBe(true);
-    expect(screen.getByTestId("prepare-head").textContent).not.toContain("NOTHING SENT");
-    expect(screen.getAllByTestId("prepare-discard")).toHaveLength(1);
-
-    const keep = screen.getByTestId("prepare-keep");
-    fireEvent.click(keep);
-    await waitFor(() => expect(lifecycle()).toBe("Kept"));
-    expect(screen.getByTestId("prepare-head-name").textContent?.trim()).toBe("Brief ready");
-    expect(screen.getByTestId("prepare-keep").getAttribute("aria-disabled")).toBe("true");
-    expect(screen.queryByTestId("prepare-discard")).toBeNull();
-    expect(screen.getByTestId("prepare-footer-receipt").textContent?.trim()).toBe(receipt);
-    fireEvent.click(screen.getByTestId("prepare-keep"));
-    expect(calls.filter((c) => c.key.endsWith("/keep"))).toHaveLength(1); // a second press writes nothing
-  });
-
-  // replaces: tests/e2e/_parked/test_hs200_preparation_brief_glass.py::test_a_sent_and_answered_request_is_never_reported_as_nothing_sent
-  // (the prose leg, :933-:945; the HTTP 500 leg reads NOT ANSWERED by the same refusalReceipt)
-  it("P0: a kernel success with a prose answer reads SENT · QWEN3 35B · NOTHING USABLE RECEIVED, never NOTHING SENT", async () => {
-    const error = await refuse(PREPARE_PROSE_409);
-    wire(table(() => { throw error; }));
-    await pressPrepare();
-    const sent = await screen.findByTestId("prepare-sent-token");
-    expect(screen.getByTestId("prepare-head").textContent).not.toContain("Nothing sent");
-    // Owner ruling 2026-10-25: the engine by name; never its address.
-    expect(sent.textContent?.trim()).toBe("Sent · QWEN3 35B · Nothing usable received");
-    expect(screen.queryByTestId("prepare-footer-egress")).toBeNull();
-    expect(screen.getByTestId("prepare-footer-receipt").textContent?.trim()).toBe("Sent · QWEN3 35B · Nothing usable received");
-    expect(screen.getByTestId("prepare-route").querySelector(".surface-state-chip")?.getAttribute("aria-label")).toBe("Output unusable");
-    expect(screen.getByTestId("prepare-purpose-kept").textContent?.trim()).toBe("Purpose kept");
-    expect((screen.getByRole("textbox", { name: "Purpose" }) as HTMLTextAreaElement).value).toBe(PURPOSE);
-    expect(screen.queryByTestId("prepare-document")).toBeNull();
-  });
-
-  // replaces: tests/e2e/_parked/test_hs200_preparation_brief_glass.py::test_stop_leaves_no_orphan_draft (the face half, :1030-:1040)
-  it("Stop: the request had left, the face is back on Prepare with his purpose, and no draft is drawn", async () => {
-    let answer!: () => void;
-    const error = await refuse(PREPARE_STOPPED_409);
-    wire(table(() => new Promise((_resolve, reject) => { answer = () => reject(error); })));
-    await pressPrepare();
-    await screen.findByTestId("prepare-running");
-    fireEvent.click(screen.getByRole("button", { name: "Stop" }));
-    await waitFor(() => expect(screen.getByTestId("prepare-posture").getAttribute("data-posture")).toBe("prepare"));
-    const stopped = await screen.findByTestId("prepare-stopped");
-    expect(stopped.textContent?.trim().startsWith("Stopped · Request had left")).toBe(true);
-    const stopCall = calls.find((c) => c.key.endsWith("/briefs/stop"));
-    expect(stopCall?.json?.attempt_id).toBe(calls.find((c) => c.key === prepareKey)?.json?.attempt_id);
-    await act(async () => { answer(); await Promise.resolve(); });
-    expect(screen.queryByTestId("prepare-document")).toBeNull();
-    expect(screen.getByTestId("prepare-posture").getAttribute("data-posture")).toBe("prepare");
-    expect((screen.getByRole("textbox", { name: "Purpose" }) as HTMLTextAreaElement).value).toBe(PURPOSE);
-  });
-});
 
 /* ── HS-200-16: the daily loop's dates and record kinds on the face ── */
 
@@ -939,6 +804,7 @@ describe("HS-200-16: a meeting from an earlier day, its decision and its commitm
       [`GET /api/projects/${pid}/proposals`]: () => clone(LOOP_PROPOSALS),
     });
     render(<WindowHarness scope={`project:${pid}`} />);
+    await openNeedsYou();
     await waitFor(() => expect(screen.getAllByTestId("proposal-caption")).toHaveLength(2));
     for (const caption of screen.getAllByTestId("proposal-caption")) {
       expect(caption.textContent).toContain(`Architecture review ${meetingDay}`);
@@ -948,36 +814,7 @@ describe("HS-200-16: a meeting from an earlier day, its decision and its commitm
 
   // replaces: tests/e2e/_parked/test_phase200_daily_loop.py::test_a_project_carries_work_across_two_working_days
   // (the CARRIED FORWARD fences, :1571 due DATE and :1609 record kinds)
-  it("CARRIED FORWARD: the due is a DATE (DUE MM-DD, never a clock); the commitment is CMT, never DEC or CURRENT", async () => {
-    wire({
-      [room(pid)]: () => clone(LOOP_ROOM),
-      [`GET /api/projects/${pid}/proposals`]: () => clone(LOOP_PROPOSALS),
-      [`GET /api/projects/${pid}/briefs/route`]: () => clone(LOOP_ROUTE),
-      [`GET /api/projects/${pid}/briefs/manifest`]: () => clone(LOOP_MANIFEST),
-      [`GET /api/projects/${pid}/briefs`]: () => ({ briefs: [] }),
-    });
-    render(<WindowHarness scope={`project:${pid}`} />);
-    fireEvent.change(within(await screen.findByTestId("room-ask-result")).getByRole("combobox"), { target: { value: "brief" } });
-    const carried = await screen.findByTestId("prepare-carried");
-    const posture = screen.getByTestId("prepare-posture");
-    const captions = Array.from(posture.querySelectorAll(".surface-section-head h3")).map((h) => h.textContent?.trim());
-    expect(captions.filter((c) => c?.startsWith("Carried forward"))).toEqual(["Carried forward 2"]);
-    const due = LOOP_MANIFEST.manifest.commitments[0].due_at; // "YYYY-MM-DD"
-    const dueTokens = Array.from(carried.querySelectorAll(".surface-token")).map((t) => t.textContent?.trim() ?? "")
-      .filter((t) => t.startsWith("Due"));
-    expect(dueTokens).toEqual([`Due ${due.slice(5)}`]);
-    expect(dueTokens.join(" ")).not.toMatch(/\d\d:\d\d/);
-    const rows = Array.from(carried.querySelectorAll("li")).map((li) => ({
-      emblem: li.querySelector(".prepare-emblem")?.textContent?.trim(),
-      text: li.querySelector(".surface-primary")?.textContent?.trim(),
-      chips: Array.from(li.querySelectorAll(".surface-state-chip")).map((c) => c.getAttribute("aria-label") || c.textContent?.trim()),
-    }));
-    const decision = rows.find((r) => r.text === LOOP_MANIFEST.manifest.decisions[0].text)!;
-    const commitment = rows.find((r) => r.text === LOOP_MANIFEST.manifest.commitments[0].text)!;
-    expect(decision.emblem).toBe("DEC");
-    expect(commitment.emblem).toBe("CMT");
-    expect(commitment.chips).not.toContain("Current");
-  });
+
 });
 
 /* ── The final diet lane: replays of whole recorded Rooms ─────────────
@@ -1146,6 +983,7 @@ describe("PHILO-10-02: a nudge whose answer never came back is never offered aga
       [sendKey]: () => inFlight.then(() => { hubGets = after; return send.answer; }),
     });
     const view = render(<WindowHarness scope={`project:${pid}`} />);
+    await openNeedsYou();
     fireEvent.click(await screen.findByTestId("nudge-verb"));
     fireEvent.click(await screen.findByTestId("nudge-send"));
     fireEvent.click(screen.getByTestId("nudge-verb")); // close
@@ -1165,6 +1003,7 @@ describe("PHILO-10-02: a nudge whose answer never came back is never offered aga
     // The reload: a fresh Room over the hub's reads after the send.
     replay(after);
     render(<WindowHarness scope={`project:${pid}`} />);
+    await openNeedsYou();
     fireEvent.click(await screen.findByTestId("nudge-verb"));
     await screen.findByTestId("nudge-unknown-row");
     unknownAndNoSend();
@@ -1601,16 +1440,27 @@ describe("Betterment P3: the Now wing says where the project stands", () => {
     [`GET /api/projects/${pid}/proposals`]: () => clone(P3.proposals),
   });
 
-  it("the head says At risk and why; Needs you holds his rows; Waiting on groups the others' by person", async () => {
+  it("the status line says At risk and why; n need you opens his rows; the People row opens Waiting on by person", async () => {
     wire(table());
     render(<WindowHarness scope={`project:${pid}`} />);
     const head = await screen.findByTestId("room-headline");
     expect(head.textContent).toBe("At risk: Card tokenization is blocked on the HSM key ceremony");
+    // R1: what needs him is one word in the status line; its press opens the rows.
+    expect(screen.queryByTestId("room-needs-you")).toBeNull();
+    await openNeedsYou();
     const needs = await screen.findByTestId("room-needs-you");
     expect(needs.textContent).toContain("Put Mira on the guild agenda (Nov)");
     expect(needs.textContent).toContain("Kafka for ledger events");
     expect(needs.textContent).not.toContain("Review PLAT-212");
     expect(needs.textContent).not.toContain("Write the ledger ADR");
+    // R1: the People row says what others owe; its press opens Waiting on.
+    const peopleRow = screen.getByTestId("room-open-people");
+    expect(peopleRow.textContent).toContain("Theo owes 2");
+    expect(peopleRow.textContent).toContain("Jun owes 2");
+    expect(peopleRow.textContent).toContain("Mira owes");
+    expect(screen.queryByTestId("room-waiting-on")).toBeNull();
+    fireEvent.click(screen.getByTestId("room-open-people-open"));
+    await screen.findByTestId("room-waiting-on");
     const people = screen.getAllByTestId("waiting-on-row").map((row) => [
       within(row).getByTestId("waiting-on-person").textContent,
       within(row).getByTestId("waiting-on-items").children.length,
@@ -1621,23 +1471,42 @@ describe("Betterment P3: the Now wing says where the project stands", () => {
     expect(rawButtons(screen.getByTestId("room-body"))).toEqual([]);
   });
 
-  it("This week shows the decision and the risks with their sources; the folds and the footer receipt are gone", async () => {
+  // R1 "the brief" (owner 2026-11-08): the Now face is the toolbar, the
+  // status line, What is open and the folds; This week, the chips and the
+  // Programs fold left it.
+  it("R1: the Now face draws the brief in its order; This week, the chips and the Programs fold are gone", async () => {
     wire(table());
     render(<WindowHarness scope={`project:${pid}`} />);
-    const week = await screen.findByTestId("room-this-week");
-    const groups = within(week).getAllByTestId("this-week-group").map((g) => g.getAttribute("aria-label"));
-    expect(groups).toEqual(["Decided", "Risks"]);
-    expect(within(week).getByTestId("this-week-decided").textContent).toBe("Keep the old ledger read-only for 30 days");
-    const runbook = within(week).getAllByTestId("this-week-line")
-      .find((l) => l.textContent?.includes("Rollback runbook is still a draft"))!;
-    expect(within(runbook).getByTestId("memory-ref").textContent).toBe("Note");
-    expect(week.textContent).not.toContain("burnout");
-    for (const gone of ["room-fold-decisions", "room-fold-since", "room-fold-files",
-      "room-fold-briefs", "room-fold-pages", "room-refresh", "room-footer-receipt", "room-health"]) {
+    const open = await screen.findByTestId("room-what-is-open");
+    const order = ["room-head", "room-status-line", "room-what-is-open", "room-folds"]
+      .map((id) => screen.getByTestId(id));
+    for (let i = 1; i < order.length; i += 1) {
+      expect(order[i - 1].compareDocumentPosition(order[i]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    }
+    // The Decisions row names the latest decision and its day.
+    expect(within(open).getByTestId("room-open-decisions").textContent).toContain("Keep the old ledger read-only for 30 days");
+    for (const gone of ["room-this-week", "room-update-line", "room-fold-programs", "room-fold-people",
+      "room-fold-decisions", "room-fold-since", "room-fold-briefs", "room-fold-pages", "room-refresh",
+      "room-footer-receipt", "room-health", "room-head-review", "room-ask-input-well"]) {
       expect(screen.queryByTestId(gone)).toBeNull();
     }
     expect(screen.getByTestId("room-fold-sources")).toBeTruthy();
     expect(screen.getByTestId("wing-slot").textContent).toContain("Now");
+    // The toolbar: Write update the one primary, History, the Ask field.
+    const toolbar = within(screen.getByTestId("room-head")).getByRole("toolbar");
+    expect(within(toolbar).getAllByRole("button").filter((b) => b.className.includes("btn--primary"))
+      .map((b) => b.textContent)).toEqual(["Write update"]);
+    expect(within(toolbar).getByTestId("room-head-history")).toHaveTextContent("History");
+    expect(within(toolbar).getByLabelText("Ask this project")).toBeTruthy();
+    expect(rawButtons(screen.getByTestId("room-body"))).toEqual([]);
+  });
+
+  it("R1: History in the toolbar opens the History tab", async () => {
+    wire(table());
+    render(<WindowHarness scope={`project:${pid}`} />);
+    fireEvent.click(await screen.findByTestId("room-head-history"));
+    await screen.findByTestId("room-history");
+    expect(within(screen.getByTestId("wing-slot")).getByRole("tab", { name: "History" }).getAttribute("aria-selected")).toBe("true");
   });
 
   it("takes an exact filed Note return once, unfolds Files and selects its freshly read row", async () => {
@@ -1673,11 +1542,11 @@ describe("Betterment P3: the Now wing says where the project stands", () => {
     expect(takeRoomAtRequest("another-project")).toEqual({ kind: "file", ref: "note:api-boundary" });
   });
 
-  it("a Decided line opens its record in the Decisions window reader (the owner, 2026-10-25)", async () => {
+  it("R1: the Decisions row opens the latest decision in the Decisions window reader (the owner, 2026-10-25)", async () => {
     const recordId = (P3.room as { now: { decided: { id: string }[] } }).now.decided[0].id;
     wire(table());
     render(<WindowHarness scope={`project:${pid}`} />);
-    const decided = await screen.findByTestId("this-week-decided");
+    const decided = await screen.findByTestId("room-open-decisions-open");
     const before = calls.length;
     fireEvent.click(decided);
     expect(useDesk.getState().windowsById["surface-decisions"]?.scope).toBe(`record:${recordId}`);
@@ -1689,180 +1558,94 @@ describe("Betterment P3: the Now wing says where the project stands", () => {
 });
 
 
-describe("#1891: a committed decision names its Person on the Decided line", () => {
-  const pid = (COMMITTED.room as { project_id: string }).project_id;
-  const table = (): Record<string, Answer> => ({
-    [room(pid)]: () => clone(COMMITTED.room),
-    [`GET /api/projects/${pid}/proposals`]: () => clone(COMMITTED.proposals),
-  });
-
-  it("draws Committed · <name> at the committed line's right, and nothing on the other", async () => {
-    wire(table());
-    render(<WindowHarness scope={`project:${pid}`} />);
-    const week = await screen.findByTestId("room-this-week");
-    const lines = within(week).getAllByTestId("this-week-line");
-    const committed = lines.find((l) => l.textContent?.includes("Adopt quorumdb"))!;
-    const quiet = lines.find((l) => l.textContent?.includes("Keep the nightly export"))!;
-    const word = within(committed).getByTestId("this-week-committed");
-    expect(word.textContent).toBe("Committed · Mira Okafor");
-    expect(committed.lastElementChild).toBe(word);
-    expect(within(quiet).queryByTestId("this-week-committed")).toBeNull();
-    expect(quiet.textContent).not.toContain("Committed");
-  });
-});
 
 
-describe("P7: the project update automation line", () => {
-  const pid = P7.manual.project_id;
-  const automation = P7.manual.updates.automation!;
-
-  it("keeps manual state after a refused Friday press, then retries the same automation", async () => {
-    let enabled = false;
-    let refused = true;
-    wire({
-      [room(pid)]: () => clone(enabled ? P7.scheduled : P7.manual),
-      [`PUT /api/workbenches/${automation.id}`]: () => {
-        if (refused) throw new ApiError(400, P7.refusal.error, clone(P7.refusal));
-        enabled = true;
-        return clone(P7.friday);
-      },
-    });
-    render(<WindowHarness scope={`project:${pid}`} />);
-    const line = await screen.findByTestId("room-update-line");
-    expect(within(line).getByTestId("room-update-with")).toHaveTextContent(automation.engine_label);
-    fireEvent.click(within(line).getByTestId("room-update-friday"));
-    await within(line).findByText(P7.refusal.error);
-    expect(within(line).getByTestId("room-update-when")).toHaveTextContent("Only when pressed");
-    refused = false;
-    fireEvent.click(within(line).getByRole("button", { name: "Try again" }));
-    await waitFor(() => expect(within(line).getByTestId("room-update-when")).toHaveTextContent("Fridays 15:00"));
-    expect(within(line).getByTestId("room-update-with")).toHaveTextContent(P7.scheduled.updates.automation!.engine_label);
-    expect(calls.filter((call) => call.key === `PUT /api/workbenches/${automation.id}`)).toEqual([
-      { key: `PUT /api/workbenches/${automation.id}`, json: { schedule: "0 15 * * 5", schedule_enabled: true } },
-      { key: `PUT /api/workbenches/${automation.id}`, json: { schedule: "0 15 * * 5", schedule_enabled: true } },
-    ]);
-  });
-
-  it("opens the exact newest stored update from the line", async () => {
-    const { plainUpdateText } = await import("../update/model");
-    const result = P7.completed.updates.automation.latest_result;
-    let read = false;
-    wire({
-      [room(pid)]: () => clone(read ? P7.read : P7.completed),
-      [`GET /api/updates/${result.update_id}`]: () => clone(P7.delivered),
-      [`POST /api/workbenches/${automation.id}/results/${result.artifact_id}/open`]: () => {
-        read = true;
-        return clone(P7.opened);
-      },
-    });
-    render(<WindowHarness scope={`project:${pid}`} />);
-    const line = await screen.findByTestId("room-update-line");
-    expect(within(line).getByTestId("room-update-new")).toHaveTextContent("New");
-    fireEvent.click(within(line).getByTestId("room-update-open"));
-    await screen.findByTestId("update-editor");
-    expect(screen.getByLabelText("Update body")).toHaveValue(plainUpdateText(P7.delivered.update.body_md));
-    await waitFor(() => expect(within(line).queryByText("NEW")).not.toBeInTheDocument());
-    expect(calls).toContainEqual({ key: `GET /api/updates/${result.update_id}` });
-    expect(calls).toContainEqual({
-      key: `POST /api/workbenches/${automation.id}/results/${result.artifact_id}/open`,
-      json: undefined,
-    });
-  });
-});
 
 /* ── HS-S13 (D15/G13 = A): the project's Programs in the Room ────────── */
 
 
-describe("HS-S13: the Room lists the Programs filed to its project", () => {
+describe("HS-S13: the Room's Programs row says the Programs filed to its project", () => {
+  // R1 (owner 2026-11-08): the Programs fold left the Now face; one row of
+  // What is open says them, and a press opens the Programs window scoped to
+  // the Project (the one list of Programs).
   const hand = P13.creationHandoff;
   const projectA = P13.projects.a;
-  const made = hand.create.response.body as { id: string; title: string };
   const deliver = (data: unknown) => act(() => {
     for (const h of bus.handlers.get("desk_changed") ?? []) h({ type: "desk_changed", data });
   });
   const roomReads = (id: string) => calls.filter((c) => c.key === room(id)).length;
+  const meta = () => screen.getByTestId("room-open-programs").textContent ?? "";
+  let opened: Array<[string, string | undefined]> = [];
+  const real = useDesk.getState().openSurfaceWindow;
 
   beforeEach(() => {
     bus.handlers.clear();
-    useDesk.setState({ pullouts: [] });
+    opened = [];
+    useDesk.setState({ pullouts: [], openSurfaceWindow: (key: string, scope?: string) => { opened.push([key, scope]); } });
   });
+  afterEach(() => { useDesk.setState({ openSurfaceWindow: real }); });
 
-  it("draws the recorded rows in the Room and Open opens that exact Program", async () => {
-    wire({ [room(projectA)]: () => clone(hand.roomAfter) });
+  it("says the recorded Programs in words and opens the Programs window scoped to the project", async () => {
+    wire({ [room(projectA)]: () => ({ ...clone(hand.roomAfter), programs: clone(roomProgramsFixture) }) });
     render(<WindowHarness scope={`project:${projectA}`} />);
-    const fold = await screen.findByTestId("room-fold-programs");
-    const rows = within(fold).getAllByTestId("room-program-row");
-    expect(rows).toHaveLength(1);
-    expect(rows[0].textContent).toContain("New program");
-    expect(rows[0].textContent).toContain("Drafting");
-    // The fold sits after Files and before Sources.
-    const folds = screen.getByTestId("room-folds");
-    const order = Array.from(folds.querySelectorAll("[data-room-slot]")).map((el) => el.getAttribute("data-room-slot"));
-    expect(order.indexOf("programs")).toBe(order.indexOf("files") + 1);
-    expect(order.indexOf("sources")).toBe(order.indexOf("programs") + 1);
-    fireEvent.click(within(rows[0]).getByTestId("room-program-open"));
-    expect(useDesk.getState().pullouts.map((p) => p.id)).toEqual([`program:${made.id}`]);
-    expect(hand.detail.id).toBe(made.id);
+    const row = await screen.findByTestId("room-open-programs");
+    expect(row.textContent).toContain("Programs");
+    expect(row.textContent).toContain("2 running · 1 waits on you");
+    expect(screen.queryByTestId("room-fold-programs")).toBeNull();
+    fireEvent.click(within(row).getByTestId("room-open-programs-open"));
+    expect(opened).toEqual([["open-programs", `project:${projectA}`]]);
     // Reading and opening sent no Program write.
     expect(calls.filter((c) => c.key.includes("/api/programs"))).toEqual([]);
     expect(rawButtons(document.body)).toEqual([]);
   });
 
-  it("another project on the same repository shows only its own Program of the same title", async () => {
-    const other = P13.roomOther as { project_id: string; programs: { programs: { id: string }[] } };
-    wire({ [room(other.project_id)]: () => clone(other) });
-    render(<WindowHarness scope={`project:${other.project_id}`} />);
-    const rows = await screen.findAllByTestId("room-program-row");
-    expect(rows).toHaveLength(1);
-    fireEvent.click(within(rows[0]).getByTestId("room-program-open"));
-    expect(useDesk.getState().pullouts.map((p) => p.id)).toEqual([`program:${other.programs.programs[0].id}`]);
-    expect(other.programs.programs[0].id).not.toBe(made.id);
-  });
-
-  it("an empty list says none is filed; a failed read and an older hub never say zero", async () => {
+  it("no Programs: the row says No Programs yet and New program opens Programs scoped to the project", async () => {
     const empty = P13.roomEmpty as { project_id: string };
     wire({ [room(empty.project_id)]: () => clone(empty) });
-    const first = render(<WindowHarness scope={`project:${empty.project_id}`} />);
-    expect((await screen.findByTestId("room-programs-empty")).textContent).toBe("No Programs yet");
-    expect(screen.queryByTestId("room-programs-unavailable")).toBeNull();
-    first.unmount();
+    render(<WindowHarness scope={`project:${empty.project_id}`} />);
+    const row = await screen.findByTestId("room-open-programs");
+    expect(row.textContent).toContain("No Programs yet");
+    expect(row.textContent).not.toMatch(/\b0\b/);
+    fireEvent.click(within(row).getByTestId("room-programs-new"));
+    expect(opened).toEqual([["open-programs", `project:${empty.project_id}`]]);
+  });
 
+  it("a failed or malformed read says Not read with Refresh; an older hub draws no row; never a zero", async () => {
     const degraded = P13.roomDegraded as { project_id: string };
     let reads = 0;
     wire({ [room(degraded.project_id)]: () => (++reads === 1 ? clone(degraded) : clone(hand.roomAfter)) });
-    const second = render(<WindowHarness scope={`project:${degraded.project_id}`} />);
-    expect((await screen.findByTestId("room-programs-unavailable")).textContent).toContain("Programs not read");
-    expect(screen.queryByTestId("room-programs-empty")).toBeNull();
-    expect(screen.queryByTestId("room-program-row")).toBeNull();
+    const first = render(<WindowHarness scope={`project:${degraded.project_id}`} />);
+    expect((await screen.findByTestId("room-programs-unavailable")).textContent).toContain("Not read");
     fireEvent.click(screen.getByTestId("room-programs-refresh"));
-    expect(await screen.findByTestId("room-program-row")).toBeTruthy();
-    second.unmount();
+    await waitFor(() => expect(meta()).toContain("1 Program"));
+    first.unmount();
 
     // A malformed list (a repeated id) is the same failure, not a shorter list.
     const row = hand.roomAfter.programs.programs[0];
     wire({ [room(projectA)]: () => ({ ...clone(hand.roomAfter), programs: { state: "ok", programs: [row, row] } }) });
-    const third = render(<WindowHarness scope={`project:${projectA}`} />);
-    expect((await screen.findByTestId("room-programs-unavailable")).getAttribute("data-reason")).toBe("malformed");
-    expect(screen.queryByTestId("room-program-row")).toBeNull();
-    third.unmount();
+    const second = render(<WindowHarness scope={`project:${projectA}`} />);
+    expect((await screen.findByTestId("room-programs-unavailable")).textContent).toContain("Not read");
+    second.unmount();
 
     wire({ [room(BARE_ROOM.project_id)]: () => clone(BARE_ROOM) });
     render(<WindowHarness scope={`project:${BARE_ROOM.project_id}`} />);
-    expect((await screen.findByTestId("room-programs-unavailable")).textContent).toContain("Not read by this hub");
+    await screen.findByTestId("room-status-line");
+    expect(screen.queryByTestId("room-open-programs")).toBeNull();
   });
 
-  it("the create's recorded frame reads the Room again: the new Program appears by its id", async () => {
+  it("the create's recorded frame reads the Room again: the row says the new Program", async () => {
     let created = false;
     wire({ [room(projectA)]: () => clone(created ? hand.roomAfter : hand.roomBefore) });
     render(<WindowHarness scope={`project:${projectA}`} />);
-    expect(await screen.findByTestId("room-programs-empty")).toBeTruthy();
+    await screen.findByTestId("room-open-programs");
+    expect(meta()).toContain("No Programs yet");
     const before = roomReads(projectA);
 
     // No notification: the Room keeps its read and invents no row.
     created = true;
     await new Promise((r) => setTimeout(r, 400));
     expect(roomReads(projectA)).toBe(before);
-    expect(screen.queryByTestId("room-program-row")).toBeNull();
+    expect(meta()).toContain("No Programs yet");
 
     // A windows-only frame is not a read.
     deliver({ kind: "windows", id: "today", op: "open", changes: [{ kind: "windows", id: "today", op: "open" }] });
@@ -1871,10 +1654,8 @@ describe("HS-S13: the Room lists the Programs filed to its project", () => {
 
     // The hub's own coalesced frame (top-level `note`, the Program in `changes`).
     for (const frame of hand.frames) deliver(frame);
-    await waitFor(() => expect(screen.getAllByTestId("room-program-row")).toHaveLength(1));
+    await waitFor(() => expect(meta()).toContain("1 Program"));
     expect(roomReads(projectA)).toBe(before + 1);
-    fireEvent.click(screen.getByTestId("room-program-open"));
-    expect(useDesk.getState().pullouts.map((p) => p.id)).toEqual([`program:${made.id}`]);
   });
 
   it("a Program frame in the legacy single-change shape reads the Room again", async () => {
@@ -1884,121 +1665,124 @@ describe("HS-S13: the Room lists the Programs filed to its project", () => {
       ...P13.move.roomA, ...P13.move.roomC] } };
     wire({ [room(projectA)]: () => clone(moved ? after : withMoved) });
     render(<WindowHarness scope={`project:${projectA}`} />);
-    await waitFor(() => expect(screen.getAllByTestId("room-program-row")).toHaveLength(2));
+    await waitFor(() => expect(meta()).toContain("2 Programs"));
     moved = true;
     deliver({ kind: "program", id: P13.move.program, op: "update" });
-    await waitFor(() => expect(screen.getAllByTestId("room-program-row")).toHaveLength(1));
-    expect(screen.getByTestId("room-program-row").textContent).toContain("New program");
+    await waitFor(() => expect(meta()).toContain("1 Program"));
   });
 
-  it("a failed re-read keeps the rows and says this is the last read, until a read lands", async () => {
+  it("a failed re-read keeps the row and says this is the last read, until a read lands", async () => {
     let fail = false;
     wire({ [room(projectA)]: () => {
       if (fail) throw new ApiError(503, "down", {});
       return clone(hand.roomAfter);
     } });
     render(<WindowHarness scope={`project:${projectA}`} />);
-    expect(await screen.findByTestId("room-program-row")).toBeTruthy();
+    expect(await screen.findByTestId("room-open-programs")).toBeTruthy();
     expect(screen.queryByTestId("room-last-read")).toBeNull();
     fail = true;
     for (const frame of P13.move.frames) deliver(frame);
     expect(await screen.findByTestId("room-last-read")).toBeTruthy();
     expect(screen.getByTestId("room-last-read").textContent).toContain("The last read stays");
-    expect(screen.getByTestId("room-program-row")).toBeTruthy();
+    expect(screen.getByTestId("room-open-programs")).toBeTruthy();
     fail = false;
     fireEvent.click(within(screen.getByTestId("room-last-read")).getByRole("button", { name: "Refresh" }));
     await waitFor(() => expect(screen.queryByTestId("room-last-read")).toBeNull());
-    expect(screen.getByTestId("room-program-row")).toBeTruthy();
+    expect(screen.getByTestId("room-open-programs")).toBeTruthy();
   });
 });
 
-/* ── Room fold 2026-11-08: the Now tab always has its Programs fold ──── */
 
-describe("Room fold 2026-11-08: the Programs fold is always on the Now tab", () => {
-  const hand = P13.creationHandoff;
-  const projectA = P13.projects.a;
-  const made = hand.create.response.body as { id: string };
-  // The Room read with the recorded Programs section that has step dots.
-  const withDots = { ...clone(hand.roomAfter), programs: clone(roomProgramsFixture) };
 
-  /** The fold draws: neither it nor a parent is display: none (the project
-   *  CSS is loaded; vitest `css: true`). */
-  const drawn = (el: Element) => {
-    for (let node: Element | null = el; node; node = node.parentElement) {
-      if (getComputedStyle(node).display === "none") return false;
-    }
-    return true;
+/* ── R1 "the brief" (owner 2026-11-08): the Now face ───────────────────
+ * "Not really. I feel like the design of this needs to be refactored by quite
+ * a bit. Looks like shit." The canvas R1: the toolbar, the status line, What
+ * changed, What is open, the folds on one line, the status bar. The Room read
+ * is P7's recorded scheduled automation (its kept draft) with the recorded
+ * published update of UPDATES_AFTER_SENDS as its latest published. */
+
+describe("R1: the Now face is the brief", () => {
+  const pid = P7.scheduled.project_id;
+  const automation = P7.scheduled.updates.automation!;
+  const published = (JSON.parse(JSON.stringify(UPDATES_AFTER_SENDS)) as { updates: Record<string, unknown>[] }).updates[0];
+  const publishedId = String(published.id);
+  const withPublished = () => {
+    const r = clone(P7.scheduled) as Record<string, unknown> & { updates: Record<string, unknown>; now: Record<string, unknown> };
+    r.updates = { ...r.updates, latest_published: { ...published, project_id: pid } };
+    r.now = { ...r.now, last_update_at: published.published_at };
+    return r;
   };
-
+  const table = (): Record<string, Answer> => ({
+    [room(pid)]: () => withPublished(),
+    [`GET /api/updates/${publishedId}`]: () => ({ update: { ...published, project_id: pid } }),
+    [`GET /api/updates/${P7.draft.id}`]: () => ({ update: clone(P7.draft) }),
+  });
+  let workbenches: string[] = [];
+  const realWorkbench = useDesk.getState().openWorkbenchWindow;
   beforeEach(() => {
-    useDesk.setState({ pullouts: [] });
+    workbenches = [];
+    useDesk.setState({ openWorkbenchWindow: (id: string) => { workbenches.push(id); } });
+  });
+  afterEach(() => { useDesk.setState({ openWorkbenchWindow: realWorkbench }); });
+
+  it("What changed: the latest update's first lines as text, then its time, who wrote it and Open the update", async () => {
+    wire(table());
+    render(<WindowHarness scope={`project:${pid}`} />);
+    const changed = await screen.findByTestId("room-what-changed");
+    await waitFor(() => expect(within(changed).getAllByTestId("room-brief-line").map((l) => l.textContent))
+      .toEqual(["The ledger cutover is on track."]));
+    const meta = within(changed).getByTestId("room-brief-meta");
+    expect(meta.textContent).toMatch(/^Sun 11 Oct \d\d:\d\d · by your records·Open the update$/);
+    // The status line says the same update's day.
+    expect(screen.getByTestId("room-status-last-update")).toHaveTextContent("last update Sun 11 Oct");
+    fireEvent.click(within(meta).getByTestId("room-brief-open"));
+    await screen.findByTestId("update-posture");
+    expect(calls).toContainEqual({ key: `GET /api/updates/${publishedId}` });
+    expect(calls.filter((c) => c.key.startsWith("PUT ") || c.key.startsWith("POST "))
+      .filter((c) => c.key.includes("/updates"))).toEqual([]);
   });
 
-  it("a project with Programs: the fold is drawn and open, rows carry the step dots, a press opens the Program", async () => {
-    wire({ [room(projectA)]: () => clone(withDots) });
-    render(<WindowHarness scope={`project:${projectA}`} />);
-    const fold = await screen.findByTestId("room-fold-programs");
-    expect(drawn(fold)).toBe(true);
-    const details = fold.querySelector("details")!;
-    expect(details.open).toBe(true);
-    const summary = details.querySelector("summary")!;
-    expect(summary.textContent).toContain("Programs");
-    expect(summary.textContent).toContain(String(roomProgramsFixture.programs.length));
-    const rows = within(fold).getAllByTestId("room-program-row");
-    expect(rows).toHaveLength(roomProgramsFixture.programs.length);
-    const first = roomProgramsFixture.programs[0];
-    expect(rows[0].textContent).toContain(first.title);
-    expect(within(rows[0]).getByTestId("room-program-state").textContent).toContain(first.state_word);
-    const track = within(rows[0]).getByTestId("room-program-track");
-    expect(track.querySelectorAll(".pg-station")).toHaveLength(first.track.length);
-    fireEvent.click(within(rows[0]).getByTestId("room-program-open"));
-    expect(useDesk.getState().pullouts.map((p) => p.id)).toEqual([`program:${first.id}`]);
-    expect(calls.filter((c) => c.key.includes("/api/programs"))).toEqual([]);
-    expect(rawButtons(document.body)).toEqual([]);
-    expect(made.id).toBeTruthy();
+  it("the kept update draft waits in What changed with Continue", async () => {
+    useDesk.getState().setDraft(`room/update-body/${P7.draft.id}`, "Kept words he was writing");
+    wire(table());
+    render(<WindowHarness scope={`project:${pid}`} />);
+    const changed = await screen.findByTestId("room-what-changed");
+    const row = within(changed).getByTestId("room-head-update-draft");
+    expect(row.textContent).toMatch(/^Update draft · Nov 1, \d\d:\d\d·Continue$/);
+    fireEvent.click(within(row).getByTestId("room-head-update-continue"));
+    const editor = (await screen.findByTestId("update-plain-text")) as HTMLTextAreaElement;
+    expect(editor.value).toBe("Kept words he was writing");
   });
 
-  it("a project with none: the fold is drawn, says No Programs yet, and New program opens Programs scoped to the project", async () => {
-    const empty = P13.roomEmpty as { project_id: string };
-    const opened: Array<[string, string | undefined]> = [];
-    const real = useDesk.getState().openSurfaceWindow;
-    useDesk.setState({ openSurfaceWindow: (key: string, scope?: string) => { opened.push([key, scope]); } });
-    try {
-      wire({ [room(empty.project_id)]: () => clone(empty) });
-      render(<WindowHarness scope={`project:${empty.project_id}`} />);
-      const fold = await screen.findByTestId("room-fold-programs");
-      expect(drawn(fold)).toBe(true);
-      const summary = fold.querySelector("summary")!;
-      expect(summary.textContent).toContain("Programs");
-      expect(summary.querySelector(".gadget-fold-token")).toBeNull();
-      expect(within(fold).getByTestId("room-programs-empty").textContent).toBe("No Programs yet");
-      fireEvent.click(within(fold).getByTestId("room-programs-new"));
-      expect(opened).toEqual([["open-programs", `project:${empty.project_id}`]]);
-      expect(calls.filter((c) => c.key.includes("/api/programs"))).toEqual([]);
-      expect(rawButtons(document.body)).toEqual([]);
-    } finally {
-      useDesk.setState({ openSurfaceWindow: real });
+  it("the status bar says when the update runs and with which engine, and the saved time; a press opens the automation", async () => {
+    wire(table());
+    render(<WindowHarness scope={`project:${pid}`} />);
+    const cadence = await screen.findByTestId("room-status-cadence");
+    expect(cadence.textContent).toBe(`Updates every Friday at 15:00 · ${automation.engine_label}`);
+    expect(screen.getByTestId("room-status-saved").textContent).toMatch(/^Saved \d\d:\d\d$/);
+    fireEvent.click(within(cadence).getByTestId("room-status-cadence-open"));
+    expect(workbenches).toEqual([automation.id]);
+  });
+
+  it("no Update chips on Now: Only when pressed, the engine, Open latest and Every Friday are words in the status bar only", async () => {
+    wire({ ...table(), [room(pid)]: () => clone(P7.manual) });
+    render(<WindowHarness scope={`project:${pid}`} />);
+    const cadence = await screen.findByTestId("room-status-cadence");
+    expect(cadence.textContent).toBe(`Updates only when pressed · ${P7.manual.updates.automation!.engine_label}`);
+    const body = screen.getByTestId("room-body");
+    for (const gone of ["room-update-line", "room-update-when", "room-update-with", "room-update-open",
+      "room-update-friday", "room-update-new"]) {
+      expect(screen.queryByTestId(gone)).toBeNull();
     }
+    expect(body.textContent).not.toContain("Every Friday at 15:00");
+    expect(body.textContent).not.toContain("Open automation");
   });
 
-  it.each([[1440, false], [393, true]])("at %i the fold is in the Now tab's DOM, after Files", async (_width, compactView) => {
-    const media = vi.spyOn(window, "matchMedia").mockImplementation((query: string) => ({
-      matches: compactView && query.includes("max-width"), media: query, onchange: null,
-      addListener: () => {}, removeListener: () => {}, addEventListener: () => {}, removeEventListener: () => {},
-      dispatchEvent: () => false,
-    }) as MediaQueryList);
-    try {
-      const empty = P13.roomEmpty as { project_id: string };
-      wire({ [room(empty.project_id)]: () => clone(empty) });
-      render(<WindowHarness scope={`project:${empty.project_id}`} />);
-      const fold = await screen.findByTestId("room-fold-programs");
-      expect(within(screen.getByTestId("room-folds")).getByTestId("room-fold-programs")).toBe(fold);
-      expect(drawn(fold)).toBe(true);
-      const order = Array.from(screen.getByTestId("room-folds").querySelectorAll("[data-room-slot]"))
-        .map((el) => el.getAttribute("data-room-slot"));
-      expect(order.indexOf("programs")).toBe(order.indexOf("files") + 1);
-    } finally {
-      media.mockRestore();
-    }
+  it("no counter of zero: a Project with nothing that needs him says no need word", async () => {
+    wire(table());
+    render(<WindowHarness scope={`project:${pid}`} />);
+    const line = await screen.findByTestId("room-status-line");
+    expect(screen.queryByTestId("room-status-need")).toBeNull();
+    expect(line.textContent).not.toMatch(/\b0\b/);
   });
 });

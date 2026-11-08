@@ -2,7 +2,7 @@
 // Six sections' states, POST /room/read timing, one display step,
 // no <button> outside __tests__ in the project-room tree.
 
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import { useState, type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { EMPTY_ITEMS } from "../../../desk/api";
@@ -10,6 +10,7 @@ import { TitleSlotContext } from "../../../desk/surface/title";
 import { WingSlotContext } from "../../../desk/surface/wings";
 import { useDesk } from "../../../desk/store";
 import { ProjectRoomCore } from "../ProjectRoomCore";
+import { openNeedsYou } from "./openNeeds";
 
 vi.mock("../../../desk/ask", async () => {
   const actual =
@@ -209,6 +210,10 @@ afterEach(() => {
 describe("HS-169-03: NEEDS YOU section", () => {
   it("renders needs-you rows with correct titles and WHY tokens", async () => {
     render(<WindowHarness scope="project:p1" />);
+    // R1: the status line says "3 need you"; its press opens the rows.
+    expect(await screen.findByTestId("room-status-need")).toHaveTextContent("3 need you");
+    expect(screen.queryByTestId("room-needs-you")).toBeNull();
+    await openNeedsYou();
 
     expect(await screen.findByText("#612 Rig settles animations before every shot")).toBeTruthy();
     expect(screen.getByText("CI failing on main")).toBeTruthy();
@@ -228,8 +233,10 @@ describe("HS-169-03: NEEDS YOU section", () => {
 
     render(<WindowHarness scope="project:p1" />);
     await screen.findByTestId("room-body");
-    // Betterment P3: Needs you is absent when it holds nothing (no "Nothing open").
+    // Betterment P3: Needs you is absent when it holds nothing (no "Nothing open");
+    // R1: and the status line says no count of zero.
     expect(screen.queryByTestId("room-needs-you")).toBeNull();
+    expect(screen.queryByTestId("room-status-need")).toBeNull();
     expect(screen.queryByTestId("needs-you-empty")).toBeNull();
   });
 });
@@ -315,7 +322,7 @@ describe("HS-169-03: Room head", () => {
     expect(headline.getAttribute("data-tone")).toBe("ok");
   });
 
-  it("says At risk with the hub's reason in words, and the next date and the week under it", async () => {
+  it("says At risk with the hub's reason in words; R1's status line says the last update, never the week's facts", async () => {
     apiFetch.mockImplementation((url: string) => {
       if (url.includes("/room/read")) return Promise.resolve({ read_at: new Date().toISOString() });
       if (url.includes("/room")) {
@@ -327,7 +334,7 @@ describe("HS-169-03: Room head", () => {
               inputs: { overdue: 3, ciFailing: true, reviewWaitingDays: 3, targetPassed: false },
             },
           }),
-          now: { state: "ok", next_date: { at: "2026-10-15", label: "Target" }, last_update_at: null,
+          now: { state: "ok", next_date: { at: "2026-10-15", label: "Target" }, last_update_at: "2026-10-12",
             meetings_this_week: 2, risks: [], decided: [] },
         });
       }
@@ -336,10 +343,10 @@ describe("HS-169-03: Room head", () => {
     render(<WindowHarness scope="project:p1" />);
     const headline = await screen.findByTestId("room-headline");
     expect(headline.textContent).toBe("At risk: 3 Jira issues past the due date");
-    const facts = screen.getByTestId("room-head-facts");
-    expect(facts.textContent).toContain("Target Thu 15 Oct");
-    expect(facts.textContent).toContain("2 meetings this week");
-    expect(facts.textContent).not.toContain("last update");
+    const line = screen.getByTestId("room-status-line");
+    expect(screen.getByTestId("room-status-last-update")).toHaveTextContent("last update Mon 12 Oct");
+    expect(line.textContent).not.toContain("Target");
+    expect(line.textContent).not.toContain("meetings this week");
   });
 
 
@@ -428,14 +435,19 @@ describe("HS-169-03: wings", () => {
 /* ── Ask well ── */
 
 describe("HS-169-03: Ask well", () => {
-  it("renders the ask well with model egress chip", async () => {
+  // R1 (owner 2026-11-08): the Ask is a plain field with its mic in the
+  // toolbar: no card, no Answer verb, no engine chip.
+  it("draws the Ask as a toolbar field with its mic, no Answer and no engine chip", async () => {
     render(<WindowHarness scope="project:p1" />);
     const well = await screen.findByTestId("room-ask-well");
-    expect(well).toBeTruthy();
-
+    expect(well.closest("[role=toolbar]")).not.toBeNull();
     const input = well.querySelector("input[aria-label='Ask this project']");
     expect(input).not.toBeNull();
-    expect(input?.getAttribute("placeholder")).toBe("Ask this project…");
+    expect(input?.getAttribute("placeholder")).toBe("Ask this project");
+    expect(within(well).getByRole("button", { name: /speak/i })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /^answer/i })).toBeNull();
+    expect(screen.queryByTestId("room-ask-engine")).toBeNull();
+    expect(screen.queryByTestId("room-ask-no-engine")).toBeNull();
   });
 });
 

@@ -630,11 +630,11 @@ class TestOneDecisionRecord:
                 # `project` source row.
                 assert canonical_detail.get("project_id") == P9_PROJECT_ID, canonical_detail
 
-                # The Project's real This week reads the canonical record and opens it.
+                # The Project's real Decisions row (R1 "the brief", 2026-11-08:
+                # What is open names the latest decision) reads the canonical
+                # record and opens it.
                 room = self._open_room_again(page, phone)
-                this_week = room.get_by_test_id("room-this-week")
-                this_week.wait_for(timeout=T)
-                decided = this_week.get_by_test_id("this-week-decided").filter(has_text=P9_DECISION_TEXT)
+                decided = room.get_by_test_id("room-open-decisions-open").filter(has_text=P9_DECISION_TEXT)
                 decided.wait_for(timeout=T)
                 geometry = self._hit_and_focus(decided)
                 assert geometry["in_view"] and geometry["owns_hit"] and geometry["focused"], geometry

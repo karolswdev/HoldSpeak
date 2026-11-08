@@ -56,7 +56,11 @@ WORKING_FACES = (
     "features/project-room/core/Sources.tsx",
     "features/project-room/core/Plan.tsx",
     "features/project-room/core/History.tsx",
-    "features/project-room/core/UpdateLine.tsx",
+    # R1 (2026-11-08): the "Update" chips line is parked; its words are the
+    # status bar's (core/Cadence.tsx). What changed and What is open are new.
+    "features/project-room/core/Cadence.tsx",
+    "features/project-room/core/Brief.tsx",
+    "features/project-room/core/Open.tsx",
     "features/project-room/core/Ask.tsx",
     "features/project-room/core/Folds.tsx",
     "features/project-room/prepare/PreparePosture.tsx",
