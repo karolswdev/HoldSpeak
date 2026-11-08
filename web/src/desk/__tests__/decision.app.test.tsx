@@ -377,13 +377,16 @@ describe("Decide in a meeting: Decide -> name -> receipt -> the decision window"
     expect(hub.puts).toEqual([]);
 
     // The receipt is in the meeting, on the decision's row (read back from the hub).
-    await waitFor(() => expect(screen.getByTestId("decide-receipt").textContent).toMatch(/^Decided \d\d:\d\d · Checkout$/));
+    await waitFor(() => expect(screen.getByTestId("decide-receipt").textContent).toMatch(/^Decided \d\d:\d\d$/));
+    expect(screen.getByTestId("decide-project").textContent).toBe("CheckoutFiled");
     expect(screen.queryByRole("textbox", { name: "Decision title" })).toBeNull();
 
-    // The row opens the decision in its own window.
+    // One face (2026-11-08): the row opens the record in the Decisions
+    // window reader, never the Decision pullout.
     const row = screen.getByRole("button", { name: /Roll back the cache change/ });
     await act(async () => { fireEvent.click(row); });
-    await waitFor(() => expect(useDesk.getState().pullouts.map((p) => p.id)).toContain("decision:decision_1"));
+    await waitFor(() => expect(useDesk.getState().windowsById["surface-decisions"]?.scope).toBe("record:rec_1"));
+    expect(useDesk.getState().pullouts.map((p) => p.id)).not.toContain("decision:decision_1");
   });
 
   it("a meeting with no project files the decision under its meeting only", async () => {
