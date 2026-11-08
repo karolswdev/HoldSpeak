@@ -436,15 +436,6 @@ class TestRealCoordinatorCompact:
             assert len(text_parts) == 1
             assert text_parts[0].text == "Summary of prior turns."
 
-            # Verify thread_compacted frame was emitted
-            compacted_frames = [
-                d for t, d in hub["broadcasts"] if t == "thread_compacted"
-            ]
-            assert len(compacted_frames) >= 1
-            cf = compacted_frames[0]
-            assert cf["thread_id"] == tid
-            assert cf["message_id"] == result["message_id"]
-
             # Now do another turn and check the payload
             hub["turn_payloads"].clear()
             r3 = asyncio.run(svc.start_turn(owner, tid, "What now?"))

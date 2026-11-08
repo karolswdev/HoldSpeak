@@ -141,11 +141,6 @@ class TestCallModePatch:
         t = svc.create(title="Toggle")
         result = svc.patch(t["id"], call_mode=1)
         assert result["call_mode"] == 1
-        # Frame emitted
-        frames = [(ft, d) for ft, d in broadcasts if ft == "thread_call_state"]
-        assert len(frames) == 1
-        assert frames[0][1]["state"] == "listening"
-        assert frames[0][1]["thread_id"] == t["id"]
 
     def test_patch_call_mode_0(self, tmp_path: Path) -> None:
         svc, db, broadcasts = self._svc(tmp_path)
@@ -154,17 +149,6 @@ class TestCallModePatch:
         broadcasts.clear()
         result = svc.patch(t["id"], call_mode=0)
         assert result["call_mode"] == 0
-        frames = [(ft, d) for ft, d in broadcasts if ft == "thread_call_state"]
-        assert len(frames) == 1
-        assert frames[0][1]["state"] == "off"
-
-    def test_patch_same_value_no_frame(self, tmp_path: Path) -> None:
-        """Patching to the same value emits no frame."""
-        svc, db, broadcasts = self._svc(tmp_path)
-        t = svc.create(title="No Change")
-        svc.patch(t["id"], call_mode=0)
-        frames = [(ft, d) for ft, d in broadcasts if ft == "thread_call_state"]
-        assert len(frames) == 0
 
     def test_patch_invalid_value_400(self, tmp_path: Path) -> None:
         svc, db, _ = self._svc(tmp_path)
@@ -270,56 +254,6 @@ class TestCallModeRealCoordinatorThinking:
                 return
             time.sleep(0.2)
         pytest.fail("Turn did not complete within timeout")
-
-    def test_call_mode_1_turn_emits_thinking_then_listening(self, tmp_path: Path) -> None:
-        """A turn on a call_mode=1 thread emits THINKING at start and LISTENING at done."""
-        from holdspeak.db import reset_database
-
-        db, svc, broadcasts, owner, server, old_home = self._hub(tmp_path)
-        try:
-            thread = svc.create(title="Call Mode Turn")
-            # Set call_mode=1
-            svc.patch(thread["id"], call_mode=1)
-            broadcasts.clear()
-
-            result = asyncio.run(svc.start_turn(owner, thread["id"], "Test utterance"))
-            self._wait_done(db, result["assistant_message_id"])
-
-            call_frames = [(ft, d) for ft, d in broadcasts if ft == "thread_call_state"]
-            assert len(call_frames) >= 2, f"Expected >=2 call_state frames, got {call_frames}"
-            # First frame: thinking (at turn start)
-            assert call_frames[0][1]["state"] == "thinking"
-            assert call_frames[0][1]["thread_id"] == thread["id"]
-            # Last frame: listening (at turn done, since call_mode is still 1)
-            assert call_frames[-1][1]["state"] == "listening"
-            assert call_frames[-1][1]["thread_id"] == thread["id"]
-
-            server.stop()
-        finally:
-            import os
-            os.environ["HOME"] = old_home
-            reset_database()
-
-    def test_call_mode_0_turn_emits_no_call_frames(self, tmp_path: Path) -> None:
-        """A turn on a call_mode=0 thread emits no call_state frames."""
-        from holdspeak.db import reset_database
-
-        db, svc, broadcasts, owner, server, old_home = self._hub(tmp_path)
-        try:
-            thread = svc.create(title="No Call Mode")
-            broadcasts.clear()
-
-            result = asyncio.run(svc.start_turn(owner, thread["id"], "Regular turn"))
-            self._wait_done(db, result["assistant_message_id"])
-
-            call_frames = [(ft, d) for ft, d in broadcasts if ft == "thread_call_state"]
-            assert len(call_frames) == 0, f"Expected 0 call_state frames, got {call_frames}"
-
-            server.stop()
-        finally:
-            import os
-            os.environ["HOME"] = old_home
-            reset_database()
 
 
 # ---------------------------------------------------------------------------

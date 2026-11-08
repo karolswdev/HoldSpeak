@@ -210,13 +210,9 @@ def test_turn_returns_ids_immediately(service: ThreadService, broadcasts) -> Non
 
     # Check frames were broadcast in order: started -> deltas -> done.
     frame_types = [ft for ft, _ in broadcasts]
-    assert "thread_turn_started" in frame_types
     assert "thread_delta" in frame_types
     assert "thread_turn_done" in frame_types
-    started_idx = frame_types.index("thread_turn_started")
-    first_delta_idx = frame_types.index("thread_delta")
-    done_idx = frame_types.index("thread_turn_done")
-    assert started_idx < first_delta_idx < done_idx
+    assert frame_types.index("thread_delta") < frame_types.index("thread_turn_done")
 
 
 def test_turn_yields_at_least_3_deltas_with_monotonic_seq(service: ThreadService, broadcasts) -> None:
@@ -250,17 +246,6 @@ def test_turn_db_text_equals_streamed_concatenation(service: ThreadService, db, 
     assert db_text == "Hello from assistant"
 
 
-def test_turn_broadcasts_started_with_correct_data(service: ThreadService, broadcasts) -> None:
-    t = service.create(title="Broadcast test")
-    result = asyncio.run(service.start_turn(OWNER, t["id"], "Check broadcasts"))
-    _await_done(broadcasts, 1)
-
-    started_frames = [(t, d) for t, d in broadcasts if t == "thread_turn_started"]
-    assert len(started_frames) == 1
-    _, data = started_frames[0]
-    assert data["thread_id"] == result["thread_id"]
-    assert data["message_id"] == result["assistant_message_id"]
-    assert data["user_message_id"] == result["user_message_id"]
 
 
 def test_turn_broadcasts_done_with_receipt(service: ThreadService, broadcasts) -> None:

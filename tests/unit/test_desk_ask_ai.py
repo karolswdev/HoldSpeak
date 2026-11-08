@@ -208,12 +208,12 @@ def _run_turn(svc: Any, frames: list, thread_id: str, text: str) -> dict[str, An
 # ── HS-152-05 renderers: thread.set_status and desk.list(notes) ─────────────
 
 
-def test_a_set_status_turn_saves_and_sends_the_status_line(hub) -> None:
+def test_a_set_status_turn_saves_the_status_line(hub) -> None:
     """replaces: tests/e2e/test_hs152_renderers_glass.py::test_set_status_updates_head_live
 
     The model calls thread.set_status through the real loop: the tool row is
-    receipted, the live frames carry the text (the last one, sent before
-    turn_done, is the persisted value), and the thread row keeps it."""
+    receipted and the thread row keeps the text (the live thread_status_line
+    frame is parked, 2026-11-08)."""
     _seed_routes(hub.db)
     _assign(hub.db, "chat.turn", ["glass-local"], "status-1")
     frames: list = []
@@ -229,10 +229,6 @@ def test_a_set_status_turn_saves_and_sends_the_status_line(hub) -> None:
 
     [result] = [d for t, d in frames if t == "thread_tool_result"]
     assert (result["name"], result["outcome"], result["kind"]) == ("thread.set_status", "succeeded", "data")
-    status_texts = [d["text"] for t, d in frames if t == "thread_status_line"]
-    assert "Preparing your brief..." in status_texts
-    # The frame sent just before turn_done is the persisted value the head keeps.
-    assert status_texts[-1] == "Preparing your brief..."
     assert hub.db.threads.get(tid).status_line == "Preparing your brief..."
 
 

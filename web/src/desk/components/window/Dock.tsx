@@ -41,7 +41,7 @@ import { NEEDS_YOU_CHANGE_KINDS } from "../../useDeskChangedRefresh";
 import { burstTimer } from "../../burstTimer";
 import { DOCK_HEIGHT_EVENT } from "./windowGeometry";
 
-const DOCK_LIVE_FRAMES = [
+const DOCK_LIVE_FRAME_TYPES = [
   "aftercare_ready",
   "desk_changed",
   "intel_complete",
@@ -236,7 +236,7 @@ function useDockLiveReads(): {
       return;
     }
     const burst = burstTimer(() => { void refresh(); }, 250);
-    const unsubscribers = DOCK_LIVE_FRAMES.map((type) =>
+    const unsubscribers = DOCK_LIVE_FRAME_TYPES.map((type) =>
       subscribe(type, (frame) => {
         setLive((previous) => reduceDockFrame(previous, frame));
         // A window open, close or move changes nothing the Dock reads.

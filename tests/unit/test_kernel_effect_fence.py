@@ -1591,7 +1591,6 @@ def _line_count(path: Path) -> int:
 _BROKER_BUDGET_DEBT: dict[str, int] = {
     "holdspeak/kernel/broker.py": 344,
     "holdspeak/kernel/inference_runner.py": 830,  # the Q2 lane gate went to engine_lanes.lane, request-cancel to inference_cancel_signal
-    "holdspeak/kernel/inference_stream.py": 311,
     "holdspeak/kernel/journal.py": 485,  # PHILO-9-02 carved create_operation into journal_atomic
     "holdspeak/kernel/meeting_plugin_projection.py": 355,  # Betterment D0 carved the summary action write
     "holdspeak/kernel/parent_run.py": 353,
