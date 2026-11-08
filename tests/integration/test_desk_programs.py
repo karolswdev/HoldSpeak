@@ -843,6 +843,47 @@ def test_creation_context_project_create_records_real_wire(tmp_path, monkeypatch
     _fixture("program.create_repository_required.json", _capture("POST", "/api/programs", missing, old_body), tmp_path)
 
 
+def test_creation_with_a_person_records_real_wire(tmp_path, monkeypatch) -> None:
+    """The wizard's Person row (2026-11-08): the People roster it reads and the
+    create body with ``for_person_id``; the made Program names that person."""
+    from holdspeak.people import EncryptedPeopleStore, MemoryKeyStore
+    from holdspeak.services.people_service import PeopleService
+    from holdspeak.web.context import WebContext
+    from holdspeak.web.routes.people import build_people_router
+
+    rig, client, _source = _creation_rig(tmp_path, monkeypatch)
+    people = PeopleService(EncryptedPeopleStore(tmp_path / "people.sqlite3", MemoryKeyStore()),
+                           setup_runner=lambda *, initialize, principal: initialize())
+    rig.service._people = lambda: people
+    client.app.include_router(build_people_router(WebContext(get_state=lambda: {}, people_service=people)))
+    assert client.post("/api/people/setup").json()["state"] == "ready"
+    ids = {}
+    for name, kind in (("Mira Okafor", "direct_report"), ("Theo Park", "peer")):
+        answer = client.post("/api/people/relationships", json={"display_name": name, "relationship_kind": kind})
+        assert answer.status_code == 201, answer.text
+        ids[name] = answer.json()["relationship"]["id"]
+
+    readiness = client.get("/api/people/readiness")
+    assert readiness.status_code == 200 and readiness.json()["state"] == "ready", readiness.text
+    roster = client.get("/api/people/relationships")
+    assert roster.status_code == 200, roster.text
+    assert {row["display_name"] for row in roster.json()["relationships"]} == {"Mira Okafor", "Theo Park"}
+
+    # The wizard's body with a person picked: for_person_id beside the project.
+    body = {"title": "New program", "template": "fast-cycle", "project_id": "proj-holdspeak",
+            "for_person_id": ids["Mira Okafor"]}
+    made = client.post("/api/programs", json=body)
+    assert made.status_code == 201, made.text
+    assert made.json()["for_person_id"] == ids["Mira Okafor"]
+    stored = rig.service.get(OWNER, made.json()["id"])
+    assert stored["for_person_id"] == ids["Mira Okafor"]
+    _fixture("program.create_person.json", {
+        "readiness": _capture("GET", "/api/people/readiness", readiness),
+        "people": _capture("GET", "/api/people/relationships", roster),
+        "made": _capture("POST", "/api/programs", made, body),
+    }, tmp_path)
+
+
 def test_creation_context_refusals_preserve_outcomes(tmp_path, monkeypatch) -> None:
     rig, client, _source = _creation_rig(tmp_path, monkeypatch)
 

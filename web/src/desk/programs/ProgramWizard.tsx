@@ -13,7 +13,9 @@
  *     not the default; else the card's quiet line holds Template · Fast cycle.
  *   3 The card, then the control level as one segmented control of three
  *     (the desk's level pressed), its meaning in one fact line, Agent,
- *     Review, Check, and the Spending fact (HS-S24: a note, not a cap).
+ *     Review, Person (who reviews the person-gated steps; "Nobody yet"
+ *     until he picks one), Check, and the Spending fact (HS-S24: a note,
+ *     not a cap).
  *   4 The card, then the summary rows; the bar's primary is Create.
  * Under each screen the next screen's first row peeks (dead, muted).
  * The title bar reads "New program · <project>" and carries the progress
@@ -37,6 +39,7 @@ import {
 import { readControlMode } from "../hand/begin";
 import { ListRow, ListView } from "../surface/objects/ListView";
 import { TEMPLATES, createProgram, defaultProjectId, readProjectChoices, type CreateBody, type ProjectChoice } from "./api";
+import { PersonPicker, type PersonChoice } from "./PersonPicker";
 import { RunsOnPicker, type RunsOnChoice } from "./RunsOn";
 import { runsOnLabel } from "./StepRow";
 import { CONTROLS, controlValue } from "./model";
@@ -130,6 +133,7 @@ export function ProgramWizard({ template: firstTemplate, scopeProjectId, program
   const [deskLevel, setDeskLevel] = useState<Control | null>(null);
   const [agent, setAgent] = useState<RunsOnChoice | null>(null);
   const [reviewer, setReviewer] = useState<RunsOnChoice | null>(null);
+  const [person, setPerson] = useState<PersonChoice | null>(null);
   const [check, setCheck] = useState("");
   // At phone width Check and Spending fold into one row; a press opens Check.
   const [checkOpen, setCheckOpen] = useState(false);
@@ -225,6 +229,7 @@ export function ProgramWizard({ template: firstTemplate, scopeProjectId, program
     ...(control ? { control } : {}),
     ...(agent ? { default_profile: agent.profile, ...(agent.engine ? { default_engine: agent.engine } : {}) } : {}),
     ...(reviewer ? { reviewer_profile: reviewer.profile, ...(reviewer.engine ? { reviewer_engine: reviewer.engine } : {}) } : {}),
+    ...(person ? { for_person_id: person.id } : {}),
     ...(check.trim() ? { check_command: check.trim() } : {}),
   });
 
@@ -369,6 +374,9 @@ export function ProgramWizard({ template: firstTemplate, scopeProjectId, program
             <RunsOnPicker label={reviewer ? agentWord(reviewer) : "The template's"} value={reviewer}
               onPick={setReviewer} data-testid="programs-wizard-reviewer" />
           </GadgetRow>
+          <GadgetRow label="Person">
+            <PersonPicker value={person} onPick={setPerson} disabled={locked} data-testid="programs-wizard-person" />
+          </GadgetRow>
           <GadgetRow label="Check">
             <span className="pg-wiz-check">
               <StringGadget label="Check" value={check} onChange={setCheck} placeholder="The repository's check" mic={false} />
@@ -385,14 +393,19 @@ export function ProgramWizard({ template: firstTemplate, scopeProjectId, program
     const how = [
       level ? LEVELS.find((row) => row.value === level)!.word : "Your desk's level",
       agent ? agentWord(agent) : "",
-      reviewer ? `${agentWord(reviewer)} reviews` : "",
+      reviewer && !person ? `${agentWord(reviewer)} reviews` : "",
       check.trim() ? `check: ${check.trim()}` : "",
     ].filter(Boolean).join(" · ");
+    // A person reviews the person-gated steps: the Review row names both.
+    const review = person ? `${reviewer ? agentWord(reviewer) : "The template's"} · ${person.name} reviews` : "";
     page = (
       <GadgetGroup material="inset">
         <div className="pg-wiz-summary" data-testid="programs-wizard-summary">
           <GadgetRow label="Title" fact={<span data-testid="programs-wizard-sum-title">{`${title.trim() || DEFAULT_TITLE} · ${templateName(template)}`}</span>}>{null}</GadgetRow>
           <GadgetRow label="Runs" fact={<span data-testid="programs-wizard-sum-how">{how}</span>}>{null}</GadgetRow>
+          {review ? (
+            <GadgetRow label="Review" fact={<span data-testid="programs-wizard-sum-review">{review}</span>}>{null}</GadgetRow>
+          ) : null}
         </div>
       </GadgetGroup>
     );
