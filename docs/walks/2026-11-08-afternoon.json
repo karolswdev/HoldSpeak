@@ -1,0 +1,21 @@
+{
+  "title": "The language · 2026-11-08 afternoon",
+  "steps": [
+    {"open": {"app": "open-project-memory", "scope": "@first-project"},
+     "say": {"words": "Four questions on the day's work. First, the face itself."},
+     "highlight": {"target": "room-mast", "window": "open-project-memory", "thing": "the mast",
+                   "words": "The new face: the serif for every title, ink for words, one colour per meaning, the bar under the mast is the state."},
+     "ask": {"ref": "face", "question": "Is this the face?", "choices": ["Keep", "Redo"]}},
+    {"highlight": {"target": "room-mast", "window": "open-project-memory", "thing": "Draft update",
+                   "words": "Draft update: the engine drafts from the sources, you send. The old Write update is gone."},
+     "ask": {"ref": "draft-update", "question": "Does the verb say what it does now?", "choices": ["Keep", "Redo"]}},
+    {"open": {"app": "chair:needs"},
+     "highlight": {"target": "needs-first", "window": "chair:needs", "thing": "the one thing that waits first",
+                   "words": "Needs you: the mast says the day and what must be fixed; the one thing that waits most is a raised plate with its verb; the ledger by weight beside it."},
+     "ask": {"ref": "needs-bold", "question": "Is Needs you a native app now?", "choices": ["Keep", "Redo"]}},
+    {"open": {"app": "surface-programs"},
+     "highlight": {"target": "programs-spine", "window": "surface-programs", "thing": "the step spine",
+                   "words": "The Programs window is the Program: a rail of Programs on the left, the mast, the numbered steps, the current step as a plate with its verb."},
+     "ask": {"ref": "programs-bold", "question": "Is this the bigger jump?", "choices": ["Keep", "Redo"]}}
+  ]
+}
