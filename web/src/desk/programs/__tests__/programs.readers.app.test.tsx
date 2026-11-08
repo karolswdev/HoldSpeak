@@ -11,7 +11,7 @@ import { act, fireEvent, render, screen, waitFor, within } from "@testing-librar
 import { describe, expect, it, vi } from "vitest";
 import {
   wordFixture, wordMetFixture, mocks, ApiError, ProgramBody, ProgramsCore, clone, calls, emit, hub,
-  done, list, yourTurn, createProjectFixture, deliveryMergeFixture, deliveryMergedFixture, type Program,
+  done, list, yourTurn, createProjectFixture, deliveryMergeFixture, deliveryMergedFixture, type Program, board,
 } from "./programs.test-setup";
 import { createProgram } from "../api";
 import { ProgramShotBody } from "../ProgramShot";
@@ -103,7 +103,7 @@ describe("HS-S14: one Program, one keyed read", () => {
   it("two Programs side by side never share a read", async () => {
     hub({ [`GET /api/programs/${word.id}`]: word, [`GET /api/programs/${done.id}`]: done });
     render(<><ProgramBody programId={word.id} /><ProgramBody programId={done.id} /></>);
-    await waitFor(() => expect(screen.getAllByTestId("programs-board")).toHaveLength(2));
+    await waitFor(() => expect(screen.getAllByTestId("programs-mast")).toHaveLength(2));
     expect(detailGets(word.id)).toBe(1);
     expect(detailGets(done.id)).toBe(1);
     expect(screen.getAllByTestId("programs-your-turn")).toHaveLength(1);
@@ -112,8 +112,8 @@ describe("HS-S14: one Program, one keyed read", () => {
   it("the list and the window are two reads; a frame for the Program reads each once", async () => {
     hub({ "GET /api/programs": list, [`GET /api/programs/${yourTurn.id}`]: yourTurn });
     render(<><ProgramsCore /><ProgramBody programId={yourTurn.id} /></>);
-    await screen.findByTestId("programs-board");
-    await waitFor(() => expect(screen.getAllByTestId("programs-row").length).toBeGreaterThan(0));
+    await screen.findAllByTestId("programs-mast");
+    await waitFor(() => expect(screen.getAllByTestId("programs-rail-tile").length).toBeGreaterThan(0));
     expect(calls.filter((call) => call === "GET /api/programs")).toHaveLength(1);
     expect(detailGets(yourTurn.id)).toBe(1);
     emit("program_changed", { program_id: yourTurn.id });
@@ -124,10 +124,10 @@ describe("HS-S14: one Program, one keyed read", () => {
   it("a window opened again reads the Program again", async () => {
     hub({ [`GET /api/programs/${word.id}`]: word });
     const first = render(<ProgramBody programId={word.id} />);
-    await screen.findByTestId("programs-board");
+    await board();
     first.unmount();
     render(<ProgramBody programId={word.id} />);
-    await screen.findByTestId("programs-board");
+    await board();
     await waitFor(() => expect(detailGets(word.id)).toBe(2));
   });
 

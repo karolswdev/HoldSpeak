@@ -8,7 +8,7 @@ import {
   sinceMorningPrograms, mocks, ProgramBody, RoomPrograms, RoomDecisions, decodeRoomSnapshot,
   PersonPrograms, personProgramsOf, ProgramStepLine, flightProgramOf, programsLampOf,
   programsTodayLine, worseLamp, runNoteAsProgram, needFace, list, running, done, drafting, calls,
-  hub, type NeedsYouRoomItem, type Program, type RoomProgram,
+  hub, board, type NeedsYouRoomItem, type Program, type RoomProgram,
 } from "./programs.test-setup";
 import { describe, expect, it } from "vitest";
 import { fireEvent, render, screen, within } from "@testing-library/react";
@@ -90,6 +90,7 @@ describe("PG16: decisions from a Program (the recorded Skip)", () => {
   it("the checkpoint row of his Skip says Proposed as a decision; an overturned row does not", async () => {
     hub({ [`GET /api/programs/${skipped.id}`]: skipped });
     render(<ProgramBody programId={skipped.id} />);
+    await board();
     const checks = await screen.findByTestId("programs-checkpoints");
     const rows = within(checks).getAllByRole("listitem");
     const skip = rows.find((row) => row.textContent?.startsWith("You") && row.textContent.includes("Skip: sentence case the title"))!;

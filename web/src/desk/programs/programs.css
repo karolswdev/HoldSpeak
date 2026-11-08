@@ -1724,3 +1724,247 @@ span.pg-req-thumb { height: 150px; }
   overflow-wrap: anywhere;
   font: 400 12px / 1.4 var(--font-sans);
 }
+
+/* ══ The language, 2026-11-08 (ProgramsBold canvas): the window IS the
+   Program. The rail of Programs, the mast, the numbered step spine, the
+   raised step plate, Earlier steps. Ground, plate and raised tiers; six
+   meaning colours; container queries only. ══ */
+
+.pg-programs,
+.pg-program {
+  background: var(--hs-ground);
+  color: var(--hs-ink);
+}
+.kit-statusbar.pg-status-mono { font-family: var(--font-mono); color: var(--hs-ink-2); }
+/* The mast keeps its title beside the sprite at every width. */
+.pg-program .pg-mast .surface-mast-words { flex-basis: 0; }
+.pg-frame {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+}
+.pg-pane {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+.pg-pane > .pg-window { flex: 1 1 auto; height: auto; min-height: 0; }
+.pg-pane > .surface-state,
+.pg-pane > .pg-wiz { flex: 1 1 auto; }
+
+/* ── the rail ── */
+.pg-rail {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 64px;
+  padding: 12px 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  background: var(--hs-rule);
+  border-right: 1px solid var(--hs-edge);
+}
+.pg-rail-tile {
+  position: relative;
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 44px;
+  height: 40px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--hs-ink);
+  cursor: pointer;
+  transition: background-color var(--motion-settle) var(--desk-ease), box-shadow var(--motion-settle) var(--desk-ease);
+}
+.pg-rail-tile:hover { background: var(--hs-plate); }
+.pg-rail-tile:focus-visible { outline: 2px solid var(--hs-steel); outline-offset: 2px; }
+.pg-rail-tile[data-picked] {
+  background: var(--hs-raised);
+  box-shadow: 0 0 0 2px var(--hs-raised), 0 0 0 3px var(--hs-steel);
+}
+.pg-rail-tile[data-picked][data-state="waiting"] { box-shadow: 0 0 0 2px var(--hs-raised), 0 0 0 3px var(--hs-brass); }
+.pg-rail-sprite { width: 32px; height: 32px; object-fit: contain; }
+.pg-rail-tile[data-state="done"] .pg-rail-sprite { opacity: 0.55; }
+.pg-rail-tile[data-state="drafting"] { width: 40px; height: 32px; border: 2px dashed var(--hs-ink-2); opacity: 0.7; }
+.pg-rail-dot {
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  width: 9px;
+  height: 9px;
+  border: 1px solid var(--hs-raised);
+  border-radius: 50%;
+  background: var(--hs-edge);
+}
+.pg-rail-dot[data-state="waiting"] { background: var(--hs-brass); }
+.pg-rail-dot[data-state="running"] { background: var(--hs-steel); }
+.pg-rail-dot[data-state="done"] { background: var(--hs-moss); }
+.pg-rail-dot[data-state="failed"] { background: var(--hs-coral); }
+.pg-rail-dot[data-state="parked"] { background: var(--hs-graphite); }
+.pg-rail-new {
+  width: 40px;
+  height: 32px;
+  border: 2px dashed var(--hs-steel);
+  color: var(--hs-steel);
+  font: 700 18px / 1 var(--font-display);
+}
+.pg-rail-new[aria-expanded="true"] { background: var(--hs-steel-tint); border-style: solid; }
+.pg-rail-rule { display: block; flex: none; width: 28px; height: 1px; margin: 4px 0; background: var(--hs-edge); }
+.pg-rail-fill { flex: 1 1 auto; }
+.pg-rail-night {
+  width: 40px;
+  height: 32px;
+  background: var(--hs-navy);
+  box-shadow: inset 0 3px 0 rgb(255 255 255 / 20%), inset 0 -1px 0 rgb(0 0 0 / 40%);
+  color: #dbe6ff;
+  font: 500 12px / 1 var(--font-mono);
+}
+.pg-rail-night:hover { background: var(--hs-navy); }
+
+/* ── the head: the mast and the step spine ── */
+.pg-head {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 22px 0;
+}
+.pg-spine {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.pg-spine-step { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.pg-spine-bar { display: block; height: 6px; border-radius: 3px; background: var(--hs-edge); }
+.pg-spine-step[data-mark="done"] .pg-spine-bar,
+.pg-spine-step[data-mark="running"] .pg-spine-bar { background: var(--hs-steel); }
+.pg-spine-step[data-mark="here"] .pg-spine-bar { background: var(--hs-brass); box-shadow: 0 0 0 2px var(--hs-brass-tint); }
+.pg-spine-step[data-mark="red"] .pg-spine-bar { background: var(--hs-coral); }
+.pg-spine-step[data-mark="parked"] .pg-spine-bar { background: var(--hs-graphite); }
+.pg-spine-words { display: flex; align-items: baseline; gap: 6px; min-width: 0; }
+.pg-spine-number { flex: none; color: var(--hs-ink-2); font: 700 12px / 16px var(--font-mono); }
+.pg-spine-name {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--hs-ink-2);
+  font: 500 12px / 16px var(--font-sans);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pg-spine-step[data-mark="here"] .pg-spine-number { color: var(--hs-brass-ink); }
+.pg-spine-step[data-current] .pg-spine-name { color: var(--hs-ink); font-weight: 700; }
+@media (prefers-reduced-motion: no-preference) {
+  .pg-spine-step[data-mark="running"] .pg-spine-bar { animation: pg-spine-breathe var(--motion-breathe) ease-in-out infinite; }
+}
+@keyframes pg-spine-breathe { 50% { opacity: 0.5; } }
+
+/* ── the step plate: the one raised thing ── */
+.pg-program .pg-turn { padding: 0; border-bottom: 0; }
+.pg-program .pg-plate {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 14px 22px 0;
+  padding: 16px 18px;
+  border: 1px solid var(--hs-edge);
+  border-radius: 10px;
+  background: var(--hs-raised);
+  box-shadow: var(--hs-raised-shadow);
+}
+.pg-plate-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; margin: 0; }
+.pg-plate-number { color: var(--hs-ink-2); font: 700 12px / 16px var(--font-mono); }
+.pg-program .pg-brief .pg-plate-number { color: var(--hs-brass-ink); }
+.pg-plate-title { margin: 0; color: var(--hs-ink); font: 600 18px / 22px var(--font-display); letter-spacing: -0.005em; }
+.pg-plate-facts { color: var(--hs-ink-2); font: 400 12px / 16px var(--font-mono); }
+.pg-program .pg-plate .pg-brief-question { margin: 0; color: var(--hs-ink); font: 600 15px / 22px var(--font-sans); letter-spacing: 0; }
+.pg-program .pg-plate .pg-brief-say,
+.pg-plate-body { max-width: 78ch; margin: 0; color: var(--hs-ink); font: 400 14px / 22px var(--font-sans); }
+.pg-plate-evidence {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  margin: 0;
+  color: var(--hs-ink-2);
+  font: 400 12px / 16px var(--font-mono);
+}
+.pg-plate-lamp { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--hs-edge); }
+.pg-plate-lamp[data-tone="moss"] { background: var(--hs-moss); }
+.pg-plate-lamp[data-tone="coral"] { background: var(--hs-coral); }
+.desk-next .pg-plate-evidence .btn.pg-plate-open-pr { min-height: 24px; padding: 0 4px; color: var(--hs-steel); font: 400 12px / 16px var(--font-mono); }
+.pg-plate-verbs { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 8px; margin-top: 4px; }
+.pg-program .pg-plate .pg-tray {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  background: none;
+  box-shadow: none;
+}
+.pg-program .pg-plate .pg-choice { flex: 0 1 auto; }
+.desk-next .pg-program .pg-plate .pg-choice > .btn { min-height: 38px; padding: 0 16px; }
+.desk-next .pg-program .btn.pg-earlier { flex: none; min-height: 38px; margin-left: auto; }
+.pg-program .pg-plate .pg-brief-ev:empty { display: none; }
+.pg-program .pg-turn-items { margin: 8px 22px 0; }
+.pg-program .pg-draft-goal { margin: 0; }
+
+/* ── Earlier steps: the step list under the plate ── */
+.pg-steps {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  margin: 14px 0 0;
+  border-top: 1px solid var(--hs-rule);
+  background: var(--hs-plate);
+}
+
+/* ── 393: the rail is a strip at the foot; the mast 18/22; numbers only ── */
+@container surface (max-width: 520px) {
+  .pg-frame { flex-direction: column-reverse; }
+  .pg-rail {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px 10px;
+    width: auto;
+    height: auto;
+    max-height: 112px;
+    padding: 6px 12px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    border-top: 1px solid var(--hs-edge);
+    border-right: 0;
+  }
+  /* Every tile is a 44 px target on the phone strip. */
+  .pg-rail-tile,
+  .pg-rail-new,
+  .pg-rail-night,
+  .pg-rail-tile[data-state="drafting"] { width: 44px; height: 44px; border-radius: 3px; }
+  .pg-rail-rule { width: 1px; height: 24px; margin: 0 4px; }
+  .pg-rail-fill { display: none; }
+  .pg-head { gap: 10px; padding: 14px 16px 0; }
+  .pg-program .pg-mast .surface-mast-title { font-size: 18px; line-height: 22px; }
+  .pg-spine { gap: 6px; }
+  .pg-spine-name { display: none; }
+  .pg-program .pg-plate { margin: 12px 12px 0; padding: 14px; }
+  .pg-plate-verbs { flex-direction: column; align-items: stretch; }
+  .pg-program .pg-plate .pg-tray { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pg-program .pg-plate .pg-tray > :first-child { grid-column: 1 / -1; }
+  .desk-next .pg-program .pg-plate .pg-tray .btn { width: 100%; min-height: 44px; }
+  .desk-next .pg-program .btn.pg-earlier { width: 100%; min-height: 44px; margin-left: 0; }
+  .pg-program .pg-turn-items { margin: 8px 12px 0; }
+}
