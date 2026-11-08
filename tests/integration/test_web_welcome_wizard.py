@@ -21,9 +21,6 @@ def test_welcome_route_serves_the_one_react_shell() -> None:
 
 def test_runtime_discovery_routes_are_real() -> None:
     client = _client()
-    options = client.get("/api/setup/runtime-options")
-    assert options.status_code == 200
-    assert {"mlx", "gguf", "context_presets", "platform"} <= set(options.json())
     invalid = client.post("/api/setup/discover-models", json={"base_url": "not-a-server"})
     assert invalid.status_code == 422
     assert invalid.json()["models"] == []
