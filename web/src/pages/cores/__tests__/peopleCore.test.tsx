@@ -6,6 +6,7 @@ import RECORDED_RELATIONSHIP from "../../../desk/__tests__/fixtures/people-wire/
 import RECORDED_PREP from "../../../desk/__tests__/fixtures/people-wire/brief.json";
 import RECORDED_OWED from "../../../desk/__tests__/fixtures/people-wire/owed-created.json";
 import RECORDED_SESSIONS from "../../../desk/__tests__/fixtures/people-agenda-wire/one-on-ones.json";
+import RECORDED_ADD from "../../../desk/__tests__/fixtures/people-wire/people-add-recovery.json";
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
@@ -43,7 +44,10 @@ describe("Prep owns each obligation and pending Add draft", () => {
     // to satisfy the narrower component annotation.
     return render(<RelationshipPane relationship={relationship as unknown as Parameters<typeof RelationshipPane>[0]["relationship"]} initialLens="prep" onRefresh={refresh} onProtectedFailure={failure} onArchived={vi.fn()} />);
   }
-  function readers(write: (path: string, opts?: { method?: string; body?: string }) => Response | Promise<Response> = () => json({ commitment: report }, 201)) {
+  // HS-S33: the I owe acceptance answers with the leader's commitment that
+  // names the accepted request (the recorded pair); the others with theirs.
+  const saved = (path: string) => json({ commitment: path.endsWith("/accept") ? leader : report }, 201);
+  function readers(write: (path: string, opts?: { method?: string; body?: string }) => Response | Promise<Response> = saved) {
     vi.stubGlobal("fetch", vi.fn(async (input: string, opts?: { method?: string; body?: string }) => {
       const path = String(input);
       if (opts?.method === "POST") {
@@ -136,7 +140,7 @@ describe("Prep owns each obligation and pending Add draft", () => {
     expect(within(area).getByRole("button", { name: button })).toBeDisabled();
     expect(input).not.toBeDisabled();
     fireEvent.change(input, { target: { value: "Newer task for the next Add" } });
-    await act(async () => finish(accepted ? json({ commitment: report }, 201) : json({ error: "Writer refused" }, 409)));
+    await act(async () => finish(accepted ? saved(path) : json({ error: "Writer refused" }, 409)));
     await waitFor(() => expect(accepted ? refresh : failure).toHaveBeenCalledOnce());
     expect(screen.getByLabelText(label)).toHaveValue("Newer task for the next Add");
     fireEvent.click(screen.getByRole("button", { name: "History" }));
@@ -152,6 +156,157 @@ describe("Prep owns each obligation and pending Add draft", () => {
     mount();
     expect(await screen.findByLabelText(label)).toHaveValue("Newer task for the next Add");
     expect(submitted).toHaveLength(1);
+  });
+});
+
+describe("HS-S33: I owe keeps the saved request and finishes that one", () => {
+  beforeEach(() => useDesk.setState({ drafts: {}, places: {} }));
+  afterEach(() => useDesk.setState({ drafts: {}, places: {} }));
+  const person = RECORDED_ADD.before.relationship;
+  const words = RECORDED_ADD.created.request.body;
+  const qid = RECORDED_ADD.created.request.id;
+  const createPath = `/api/people/relationships/${person.id}/requests`;
+  const acceptPath = `/api/people/requests/${qid}/accept`;
+  type Handler = (opts?: { method?: string; body?: string }) => Response | Promise<Response>;
+  function hub(post: Record<string, Handler>, get: Record<string, Handler> = {}) {
+    vi.stubGlobal("fetch", vi.fn(async (input: string, opts?: { method?: string; body?: string }) => {
+      const path = String(input);
+      if (opts?.method === "POST") {
+        const handler = post[path];
+        if (!handler) throw new Error(`Unexpected write: ${path}`);
+        return handler(opts);
+      }
+      if (get[path]) return get[path](opts);
+      if (path.endsWith("/brief")) return json({ brief: { open_commitments: [], agenda_items: [] } });
+      if (path === "/api/door") return json({ upcoming: [] });
+      if (path === "/api/projects") return json({ projects: [] });
+      throw new Error(`Unexpected request: ${path}`);
+    }));
+  }
+  const posts = (path: string) => vi.mocked(fetch).mock.calls.filter(([url, options]) => String(url) === path && options?.method === "POST");
+  function mount(refresh = vi.fn(), failure = vi.fn(), relationship: unknown = person) {
+    const view = render(<RelationshipPane relationship={relationship as Parameters<typeof RelationshipPane>[0]["relationship"]} initialLens="prep" onRefresh={refresh} onProtectedFailure={failure} onArchived={vi.fn()} />);
+    return { view, refresh, failure };
+  }
+  async function press() {
+    const area = await screen.findByTestId("people-you-owe");
+    fireEvent.click(within(area).getByRole("button", { name: "Add" }));
+    fireEvent.change(screen.getByLabelText("I owe Priya"), { target: { value: words } });
+    fireEvent.click(within(area).getByRole("button", { name: "Add" }));
+    return area;
+  }
+
+  it("a lost acceptance keeps the request id; Check only reads; Accept saved request posts that id and never a second request", async () => {
+    let accepts = 0;
+    hub({
+      [createPath]: () => json(RECORDED_ADD.created, 201),
+      [acceptPath]: () => (++accepts === 1 ? Promise.reject(new TypeError("Failed to fetch")) : json(RECORDED_ADD.accepted)),
+    }, { [`/api/people/relationships/${person.id}`]: () => json(RECORDED_ADD.requested) });
+    const { refresh, failure } = mount();
+    const area = await press();
+    const receipt = await screen.findByTestId("people-owe-receipt");
+    expect(receipt).toHaveAttribute("data-phase", "acceptance_uncertain");
+    expect(within(receipt).getByTestId("people-owe-submitted")).toHaveTextContent(words);
+    expect(failure).not.toHaveBeenCalled();
+    // Add cannot start a second request while this one is open.
+    expect(within(area).getByRole("button", { name: "Add" })).toBeDisabled();
+    fireEvent.keyDown(screen.getByLabelText("I owe Priya"), { key: "Enter" });
+    fireEvent.click(within(receipt).getByRole("button", { name: "Check saved request" }));
+    await waitFor(() => expect(screen.getByTestId("people-owe-receipt")).toHaveAttribute("data-phase", "acceptance_uncertain"));
+    expect(posts(acceptPath)).toHaveLength(1);
+    fireEvent.click(within(screen.getByTestId("people-owe-receipt")).getByRole("button", { name: "Accept saved request" }));
+    await waitFor(() => expect(refresh).toHaveBeenCalledOnce());
+    expect(posts(createPath)).toHaveLength(1);
+    expect(posts(acceptPath)).toHaveLength(2);
+    // The saved promise is said; the draft he did not change is not cleared
+    // by a recovery press, so the receipt names what was saved.
+    expect(screen.getByTestId("people-owe-receipt")).toHaveAttribute("data-phase", "saved");
+    expect(screen.getByTestId("people-owe-submitted")).toHaveTextContent(RECORDED_ADD.accepted.commitment.body);
+  });
+
+  it("Check finds the promise already saved (the response was lost) and does not write", async () => {
+    hub({
+      [createPath]: () => json(RECORDED_ADD.created, 201),
+      [acceptPath]: () => json({ detail: "people_store_unavailable" }, 503),
+    }, {
+      "/api/people/readiness": () => json(RECORDED_ADD.readiness),
+      [`/api/people/relationships/${person.id}`]: () => json(RECORDED_ADD.done),
+    });
+    const { failure } = mount();
+    await press();
+    const receipt = await screen.findByTestId("people-owe-receipt");
+    expect(failure).not.toHaveBeenCalled();
+    fireEvent.click(within(receipt).getByRole("button", { name: "Check saved request" }));
+    await waitFor(() => expect(screen.getByTestId("people-owe-receipt")).toHaveAttribute("data-phase", "saved"));
+    // Done stays done: the read is the answer, never a new acceptance.
+    expect(screen.getByTestId("people-owe-receipt")).toHaveTextContent("Saved · done");
+    expect(posts(acceptPath)).toHaveLength(1);
+  });
+
+  it("a create with no answer is unknown: no Retry, Add waits for Start another promise", async () => {
+    hub({ [createPath]: () => Promise.reject(new TypeError("Failed to fetch")) });
+    const { failure } = mount();
+    const area = await press();
+    const receipt = await screen.findByTestId("people-owe-receipt");
+    expect(receipt).toHaveAttribute("data-phase", "creation_uncertain");
+    expect(within(receipt).queryByRole("button", { name: /Retry|Try again/ })).toBeNull();
+    expect(failure).not.toHaveBeenCalled();
+    expect(screen.getByLabelText("I owe Priya")).toHaveValue(words);
+    fireEvent.keyDown(screen.getByLabelText("I owe Priya"), { key: "Enter" });
+    expect(posts(createPath)).toHaveLength(1);
+    fireEvent.click(within(receipt).getByRole("button", { name: "Start another promise" }));
+    expect(posts(createPath)).toHaveLength(1);
+    fireEvent.click(within(area).getByRole("button", { name: "Add" }));
+    await waitFor(() => expect(posts(createPath)).toHaveLength(2));
+  });
+
+  it("rapid presses make one request; a key loss clears the receipt and says a promise may be saved", async () => {
+    let answer!: (response: Response) => void;
+    hub({
+      [createPath]: () => new Promise<Response>((resolve) => { answer = resolve; }),
+      [acceptPath]: () => json({ detail: "people_store_unavailable" }, 503),
+    }, { "/api/people/readiness": () => json({ readiness: "key_unavailable", state: "key_unavailable" }) });
+    const { failure } = mount();
+    const area = await press();
+    fireEvent.click(within(area).getByRole("button", { name: "Add" }));
+    fireEvent.keyDown(screen.getByLabelText("I owe Priya"), { key: "Enter" });
+    await waitFor(() => expect(posts(createPath)).toHaveLength(1));
+    await act(async () => answer(json(RECORDED_ADD.created, 201)));
+    await waitFor(() => expect(failure).toHaveBeenCalledOnce());
+    expect(failure.mock.calls[0][1]).toBe(true);
+    expect(screen.queryByTestId("people-owe-receipt")).toBeNull();
+    expect(posts(createPath)).toHaveLength(1);
+  });
+
+  it("a late create answer after the pane closed starts no acceptance", async () => {
+    let answer!: (response: Response) => void;
+    hub({ [createPath]: () => new Promise<Response>((resolve) => { answer = resolve; }), [acceptPath]: () => json(RECORDED_ADD.accepted) });
+    const { view } = mount();
+    await press();
+    await waitFor(() => expect(posts(createPath)).toHaveLength(1));
+    view.unmount();
+    await act(async () => answer(json(RECORDED_ADD.created, 201)));
+    expect(posts(acceptPath)).toHaveLength(0);
+  });
+
+  it("Asked of you on the held request goes through the same attempt", async () => {
+    hub({
+      [createPath]: () => json(RECORDED_ADD.created, 201),
+      [acceptPath]: () => (posts(acceptPath).length === 1 ? Promise.reject(new TypeError("Failed to fetch")) : json(RECORDED_ADD.accepted)),
+    });
+    const { view, refresh } = mount();
+    await press();
+    await screen.findByTestId("people-owe-receipt");
+    view.rerender(<RelationshipPane relationship={RECORDED_ADD.requested.relationship as unknown as Parameters<typeof RelationshipPane>[0]["relationship"]} initialLens="prep" onRefresh={refresh} onProtectedFailure={vi.fn()} onArchived={vi.fn()} />);
+    // The twin request (same words, its own id) is another row; the held
+    // one is found by its id's place in the recorded read.
+    const requested = RECORDED_ADD.requested.relationship.requests.filter((item) => item.state === "requested");
+    const rows = await screen.findAllByTestId("people-asked");
+    expect(rows).toHaveLength(requested.length);
+    fireEvent.click(within(rows[requested.findIndex((item) => item.id === qid)]).getByRole("button", { name: "Accept" }));
+    await waitFor(() => expect(screen.getByTestId("people-owe-receipt")).toHaveAttribute("data-phase", "saved"));
+    expect(posts(acceptPath)).toHaveLength(2);
+    expect(posts(createPath)).toHaveLength(1);
   });
 });
 

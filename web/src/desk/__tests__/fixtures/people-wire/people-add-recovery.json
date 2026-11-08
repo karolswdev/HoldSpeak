@@ -1,0 +1,351 @@
+{
+ "_source": "The hub's own answers, captured by tests/integration/test_desk_people.py::test_people_add_recovery_wire (MeetingWebServer + TestClient, isolated HOME, the browser rigs' seeds). HOLDSPEAK_WIRE_WRITE=1 rewrites this file; never hand-edit a field a test reads.",
+ "recordedAt": "2026-11-07T17:40:53.753596-07:00",
+ "readiness": {
+  "readiness": "ready",
+  "state": "ready",
+  "store": "encrypted",
+  "sync": "local_only",
+  "capture": "notes_only"
+ },
+ "before": {
+  "relationship": {
+   "id": "rel-priya",
+   "display_name": "Priya Raman",
+   "relationship_kind": "direct_report",
+   "role_context": "",
+   "timezone": "",
+   "cadence": "",
+   "project_refs": null,
+   "calendar_links": null,
+   "owner_aliases": null,
+   "state": "active",
+   "created_at": "2026-11-08T00:40:53Z",
+   "updated_at": "2026-11-08T00:40:53Z",
+   "sessions": [],
+   "requests": [],
+   "commitments": [],
+   "owed_to_you": [],
+   "notes": [],
+   "programs": [],
+   "next_one_on_one": null,
+   "next_one_on_one_event": null
+  }
+ },
+ "created": {
+  "request": {
+   "id": "req-rollout",
+   "relationship_id": "rel-priya",
+   "request_id": null,
+   "topic": null,
+   "body": "Send Priya the rollout plan",
+   "visibility": "shared_intent",
+   "direction": null,
+   "state": "requested",
+   "commitment_id": null,
+   "source": null,
+   "execution_links": null,
+   "history": null,
+   "created_at": "2026-11-08T00:40:53Z",
+   "updated_at": "2026-11-08T00:40:53Z",
+   "accepted_at": null
+  }
+ },
+ "requested": {
+  "relationship": {
+   "id": "rel-priya",
+   "display_name": "Priya Raman",
+   "relationship_kind": "direct_report",
+   "role_context": "",
+   "timezone": "",
+   "cadence": "",
+   "project_refs": null,
+   "calendar_links": null,
+   "owner_aliases": null,
+   "state": "active",
+   "created_at": "2026-11-08T00:40:53Z",
+   "updated_at": "2026-11-08T00:40:53Z",
+   "sessions": [],
+   "requests": [
+    {
+     "id": "req-rollout",
+     "relationship_id": "rel-priya",
+     "request_id": null,
+     "topic": null,
+     "body": "Send Priya the rollout plan",
+     "visibility": "shared_intent",
+     "direction": null,
+     "state": "requested",
+     "commitment_id": null,
+     "source": null,
+     "execution_links": null,
+     "history": null,
+     "created_at": "2026-11-08T00:40:53Z",
+     "updated_at": "2026-11-08T00:40:53Z",
+     "accepted_at": null
+    },
+    {
+     "id": "req-rollout-twin",
+     "relationship_id": "rel-priya",
+     "request_id": null,
+     "topic": null,
+     "body": "Send Priya the rollout plan",
+     "visibility": "shared_intent",
+     "direction": null,
+     "state": "requested",
+     "commitment_id": null,
+     "source": null,
+     "execution_links": null,
+     "history": null,
+     "created_at": "2026-11-08T00:40:53Z",
+     "updated_at": "2026-11-08T00:40:53Z",
+     "accepted_at": null
+    }
+   ],
+   "commitments": [],
+   "owed_to_you": [],
+   "notes": [],
+   "programs": [],
+   "next_one_on_one": null,
+   "next_one_on_one_event": null
+  }
+ },
+ "accepted": {
+  "commitment": {
+   "id": "com-rollout",
+   "relationship_id": "rel-priya",
+   "request_id": "req-rollout",
+   "topic": null,
+   "body": "Send Priya the rollout plan",
+   "visibility": "shared_intent",
+   "direction": "leader_owes",
+   "state": "open",
+   "commitment_id": null,
+   "source": null,
+   "execution_links": [],
+   "history": [
+    {
+     "event": "accepted",
+     "state": "open",
+     "at": "2026-11-08T00:40:53Z",
+     "source": "people"
+    }
+   ],
+   "created_at": "2026-11-08T00:40:53+00:00",
+   "updated_at": "2026-11-08T00:40:53+00:00",
+   "accepted_at": null
+  }
+ },
+ "saved": {
+  "relationship": {
+   "id": "rel-priya",
+   "display_name": "Priya Raman",
+   "relationship_kind": "direct_report",
+   "role_context": "",
+   "timezone": "",
+   "cadence": "",
+   "project_refs": null,
+   "calendar_links": null,
+   "owner_aliases": null,
+   "state": "active",
+   "created_at": "2026-11-08T00:40:53Z",
+   "updated_at": "2026-11-08T00:40:53Z",
+   "sessions": [],
+   "requests": [
+    {
+     "id": "req-rollout",
+     "relationship_id": "rel-priya",
+     "request_id": null,
+     "topic": null,
+     "body": "Send Priya the rollout plan",
+     "visibility": "shared_intent",
+     "direction": null,
+     "state": "accepted",
+     "commitment_id": null,
+     "source": null,
+     "execution_links": null,
+     "history": null,
+     "created_at": "2026-11-08T00:40:53Z",
+     "updated_at": "2026-11-08T00:40:53+00:00",
+     "accepted_at": null
+    },
+    {
+     "id": "req-rollout-twin",
+     "relationship_id": "rel-priya",
+     "request_id": null,
+     "topic": null,
+     "body": "Send Priya the rollout plan",
+     "visibility": "shared_intent",
+     "direction": null,
+     "state": "requested",
+     "commitment_id": null,
+     "source": null,
+     "execution_links": null,
+     "history": null,
+     "created_at": "2026-11-08T00:40:53Z",
+     "updated_at": "2026-11-08T00:40:53Z",
+     "accepted_at": null
+    }
+   ],
+   "commitments": [
+    {
+     "id": "com-rollout",
+     "relationship_id": "rel-priya",
+     "request_id": "req-rollout",
+     "topic": null,
+     "body": "Send Priya the rollout plan",
+     "visibility": "shared_intent",
+     "direction": "leader_owes",
+     "state": "open",
+     "commitment_id": null,
+     "source": null,
+     "execution_links": [],
+     "history": [
+      {
+       "at": "2026-11-08T00:40:53Z",
+       "event": "accepted",
+       "source": "people",
+       "state": "open"
+      }
+     ],
+     "created_at": "2026-11-08T00:40:53+00:00",
+     "updated_at": "2026-11-08T00:40:53+00:00",
+     "accepted_at": null
+    }
+   ],
+   "owed_to_you": [],
+   "notes": [],
+   "programs": [],
+   "next_one_on_one": null,
+   "next_one_on_one_event": null
+  }
+ },
+ "acceptedAfterDone": {
+  "commitment": {
+   "id": "com-rollout",
+   "relationship_id": "rel-priya",
+   "request_id": "req-rollout",
+   "topic": null,
+   "body": "Send Priya the rollout plan",
+   "visibility": "shared_intent",
+   "direction": "leader_owes",
+   "state": "done",
+   "commitment_id": null,
+   "source": null,
+   "execution_links": [],
+   "history": [
+    {
+     "at": "2026-11-08T00:40:53Z",
+     "event": "accepted",
+     "source": "people",
+     "state": "open"
+    },
+    {
+     "at": "2026-11-08T00:40:53Z",
+     "event": "satisfied",
+     "source": "follow_through",
+     "state": "done"
+    }
+   ],
+   "created_at": "2026-11-08T00:40:53+00:00",
+   "updated_at": "2026-11-08T00:40:53+00:00",
+   "accepted_at": null
+  }
+ },
+ "done": {
+  "relationship": {
+   "id": "rel-priya",
+   "display_name": "Priya Raman",
+   "relationship_kind": "direct_report",
+   "role_context": "",
+   "timezone": "",
+   "cadence": "",
+   "project_refs": null,
+   "calendar_links": null,
+   "owner_aliases": null,
+   "state": "active",
+   "created_at": "2026-11-08T00:40:53Z",
+   "updated_at": "2026-11-08T00:40:53Z",
+   "sessions": [],
+   "requests": [
+    {
+     "id": "req-rollout",
+     "relationship_id": "rel-priya",
+     "request_id": null,
+     "topic": null,
+     "body": "Send Priya the rollout plan",
+     "visibility": "shared_intent",
+     "direction": null,
+     "state": "accepted",
+     "commitment_id": null,
+     "source": null,
+     "execution_links": null,
+     "history": null,
+     "created_at": "2026-11-08T00:40:53Z",
+     "updated_at": "2026-11-08T00:40:53+00:00",
+     "accepted_at": null
+    },
+    {
+     "id": "req-rollout-twin",
+     "relationship_id": "rel-priya",
+     "request_id": null,
+     "topic": null,
+     "body": "Send Priya the rollout plan",
+     "visibility": "shared_intent",
+     "direction": null,
+     "state": "requested",
+     "commitment_id": null,
+     "source": null,
+     "execution_links": null,
+     "history": null,
+     "created_at": "2026-11-08T00:40:53Z",
+     "updated_at": "2026-11-08T00:40:53Z",
+     "accepted_at": null
+    }
+   ],
+   "commitments": [
+    {
+     "id": "com-rollout",
+     "relationship_id": "rel-priya",
+     "request_id": "req-rollout",
+     "topic": null,
+     "body": "Send Priya the rollout plan",
+     "visibility": "shared_intent",
+     "direction": "leader_owes",
+     "state": "done",
+     "commitment_id": null,
+     "source": null,
+     "execution_links": [],
+     "history": [
+      {
+       "at": "2026-11-08T00:40:53Z",
+       "event": "accepted",
+       "source": "people",
+       "state": "open"
+      },
+      {
+       "at": "2026-11-08T00:40:53Z",
+       "event": "satisfied",
+       "source": "follow_through",
+       "state": "done"
+      }
+     ],
+     "created_at": "2026-11-08T00:40:53+00:00",
+     "updated_at": "2026-11-08T00:40:53+00:00",
+     "accepted_at": null
+    }
+   ],
+   "owed_to_you": [],
+   "notes": [],
+   "programs": [],
+   "next_one_on_one": null,
+   "next_one_on_one_event": null
+  }
+ },
+ "acceptMissing": {
+  "status": 404,
+  "body": {
+   "detail": "people_request_not_found"
+  }
+ }
+}
