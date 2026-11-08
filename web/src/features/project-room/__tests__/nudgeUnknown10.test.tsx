@@ -20,6 +20,7 @@ import { TitleSlotContext } from "../../../desk/surface/title";
 import { WingSlotContext } from "../../../desk/surface/wings";
 import { useDesk } from "../../../desk/store";
 import { ProjectRoomCore } from "../ProjectRoomCore";
+import { findInNeeds } from "./openNeeds";
 
 vi.mock("../../../desk/ask", async () => {
   const actual =
@@ -168,7 +169,7 @@ function installNudgeWire(persisted = false) {
 afterEach(() => cleanup());
 it('UNKNOWN survives closing and reopening the card', async () => {
   installNudgeWire();render(<WindowHarness scope="project:p1" />);
-  fireEvent.click(await screen.findByTestId('nudge-verb'));
+  fireEvent.click(await findInNeeds('nudge-verb'));
   fireEvent.click(await screen.findByTestId('nudge-send'));
   await screen.findByTestId('nudge-unknown-row');
   fireEvent.click(screen.getByTestId('nudge-verb'));
@@ -178,7 +179,7 @@ it('UNKNOWN survives closing and reopening the card', async () => {
 });
 it('UNKNOWN survives a Room reload using its persisted wire state', async () => {
   installNudgeWire(true);render(<WindowHarness scope="project:p1" />);
-  fireEvent.click(await screen.findByTestId('nudge-verb'));
+  fireEvent.click(await findInNeeds('nudge-verb'));
   expect(screen.queryByTestId('nudge-send')).toBeNull();
   expect(screen.queryByTestId('nudge-unknown-row')).not.toBeNull();
 });
@@ -192,7 +193,7 @@ it('UNKNOWN survives a close and reopen while Send is still in flight', async ()
   const pending = new Promise((resolve) => { settle = resolve; });
   apiFetch.mockImplementation((url: string) => url.includes('/nudges/') && url.endsWith('/send') ? pending : previous(url));
   render(<WindowHarness scope="project:p1" />);
-  fireEvent.click(await screen.findByTestId('nudge-verb'));
+  fireEvent.click(await findInNeeds('nudge-verb'));
   fireEvent.click(await screen.findByTestId('nudge-send'));
   fireEvent.click(screen.getByTestId('nudge-verb'));
   fireEvent.click(screen.getByTestId('nudge-verb'));
@@ -212,7 +213,7 @@ it('a known failed Send keeps the edited comment for retry', async () => {
   const failure = {"success": false, "error": "send_failed", "code": "send_failed", "message": "send failed", "operation_id": "op_327d743f2ae44115a84f61be0385e6e3", "receipt": {"receipt_id": "rcpt_fef15332582b464eac48954234fda0c3", "operation_id": "op_327d743f2ae44115a84f61be0385e6e3", "state": "failed", "outcome": "github_not_authenticated", "result_ref": "steward_step:pststep_53a0fde0497548c8b4911d03e8068901", "created_at": 1790652993.0891871, "actor_kind": "owner", "actor_identity": "owner-session", "delegator_kind": "", "delegator_identity": "", "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy", "target_ref": "steward_step:pststep_53a0fde0497548c8b4911d03e8068901"}};
   apiFetch.mockImplementation((url: string) => url.includes('/nudges/') && url.endsWith('/send') ? Promise.reject(new Error(failure.message)) : previous(url));
   render(<WindowHarness scope="project:p1" />);
-  fireEvent.click(await screen.findByTestId('nudge-verb'));
+  fireEvent.click(await findInNeeds('nudge-verb'));
   fireEvent.change(screen.getByLabelText('Comment'), {target: {value: 'Please review the rollback plan before 15:00.'}});
   fireEvent.click(screen.getByTestId('nudge-send'));
   await screen.findByText('Failed');
@@ -228,7 +229,7 @@ it('retry sends the edited comment after the real API reports a known failure', 
   apiFetch.mockImplementation((url: string, options: any) => url.includes('/nudges/') && url.endsWith('/send') ? realApi.apiFetch(url, options) : previous(url));
   try {
     render(<WindowHarness scope="project:p1" />);
-    fireEvent.click(await screen.findByTestId('nudge-verb'));
+    fireEvent.click(await findInNeeds('nudge-verb'));
     fireEvent.change(screen.getByLabelText('Comment'), {target: {value: 'Please review the rollback plan before 15:00.'}});
     fireEvent.click(screen.getByTestId('nudge-send'));
     await screen.findByText('Failed');

@@ -11,6 +11,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TitleSlotContext } from "../../../desk/surface/title";
 import { WingSlotContext } from "../../../desk/surface/wings";
 import { ProjectRoomCore } from "../ProjectRoomCore";
+import { openNeedsYou } from "./openNeeds";
 
 vi.mock("../../../desk/ask", async () => {
   const actual =
@@ -248,6 +249,7 @@ afterEach(() => {
 describe("HS-172-03: Proposals in NEEDS YOU", () => {
   it("renders proposal rows with MTG emblem and prefix by kind", async () => {
     render(<WindowHarness scope="project:p1" />);
+    await openNeedsYou();
     await waitFor(() => expect(screen.queryAllByTestId("proposal-row")).toHaveLength(2));
 
     const rows = screen.getAllByTestId("proposal-row");
@@ -269,6 +271,7 @@ describe("HS-172-03: Proposals in NEEDS YOU", () => {
 
   it("shows Confirm and Dismiss on proposal rows; the title press edits", async () => {
     render(<WindowHarness scope="project:p1" />);
+    await openNeedsYou();
     await waitFor(() => expect(screen.queryAllByTestId("proposal-row")).toHaveLength(2));
 
     const verbs = screen.getAllByTestId("proposal-verbs");
@@ -284,6 +287,7 @@ describe("HS-172-03: Proposals in NEEDS YOU", () => {
 
   it("shows caption with BY FRI, meeting title and date", async () => {
     render(<WindowHarness scope="project:p1" />);
+    await openNeedsYou();
     await waitFor(() => expect(screen.queryAllByTestId("proposal-row")).toHaveLength(2));
 
     const captions = screen.getAllByTestId("proposal-caption");
@@ -295,6 +299,7 @@ describe("HS-172-03: Proposals in NEEDS YOU", () => {
 
   it("a proposal row wears no host chip, even for a private network host (owner ruling 2026-10-25)", async () => {
     render(<WindowHarness scope="project:p1" />);
+    await openNeedsYou();
     await waitFor(() => expect(screen.queryAllByTestId("proposal-row")).toHaveLength(2));
     for (const row of screen.getAllByTestId("proposal-row")) {
       expect(row.querySelector(".gadget-chip-egress")).toBeNull();
@@ -304,6 +309,7 @@ describe("HS-172-03: Proposals in NEEDS YOU", () => {
 
   it("never shows LOCAL in egress text", async () => {
     render(<WindowHarness scope="project:p1" />);
+    await openNeedsYou();
     await waitFor(() => expect(screen.queryAllByTestId("proposal-row")).toHaveLength(2));
 
     const body = screen.getByTestId("room-body");
@@ -312,6 +318,7 @@ describe("HS-172-03: Proposals in NEEDS YOU", () => {
 
   it("NEEDS YOU holds the proposals beside his other rows (Betterment P3: no count on the head)", async () => {
     render(<WindowHarness scope="project:p1" />);
+    await openNeedsYou();
     const needs = await screen.findByTestId("room-needs-you");
     await waitFor(() => expect(within(needs).getAllByTestId("proposal-row")).toHaveLength(2));
     expect(within(needs).getAllByTestId("needs-you-row")).toHaveLength(1);
@@ -322,6 +329,7 @@ describe("HS-172-03: Proposals in NEEDS YOU", () => {
 describe("HS-172-03: Edit unfolds EditInPlace", () => {
   it("clicking Edit shows the edit well with StringGadget fields", async () => {
     render(<WindowHarness scope="project:p1" />);
+    await openNeedsYou();
     await waitFor(() => expect(screen.queryAllByTestId("proposal-row")).toHaveLength(2));
 
     // Click Edit on the first proposal
@@ -342,6 +350,7 @@ describe("HS-172-03: Edit unfolds EditInPlace", () => {
 
   it("Cancel closes the edit well", async () => {
     render(<WindowHarness scope="project:p1" />);
+    await openNeedsYou();
     await waitFor(() => expect(screen.queryAllByTestId("proposal-row")).toHaveLength(2));
 
     fireEvent.click(screen.getAllByTestId("proposal-edit")[0]);
@@ -398,6 +407,7 @@ describe("HS-172-06: Suggested sources in SOURCES", () => {
 describe("HS-172: No violations", () => {
   it("no raw <button> in proposal/suggestion rows", async () => {
     render(<WindowHarness scope="project:p1" />);
+    await openNeedsYou();
     await waitFor(() => expect(screen.queryAllByTestId("proposal-row")).toHaveLength(2));
 
     // All buttons in proposal verbs must have .btn class (library Button)

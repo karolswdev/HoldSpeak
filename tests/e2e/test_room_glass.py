@@ -89,6 +89,15 @@ LINES = [
 ENDS = ["end to end.", "cutover sync).", "Due: 2026-10-06.", "Due: 2026-10-07."]
 
 
+def _open_needs(page: Any, timeout: int = 20_000) -> None:
+    """R1 "the brief" (owner 2026-11-08): the Needs you rows open under the
+    status line from its "<n> need you" word; press it as he does."""
+    need = page.get_by_test_id("room-status-need").first
+    need.wait_for(timeout=timeout)
+    if need.get_attribute("aria-expanded") != "true":
+        need.click()
+
+
 def _open_update_history(page: Any, project_id: str) -> None:
     """The palette's project command opens saved updates without drafting.
 
@@ -451,6 +460,8 @@ def test_delta_review_loop(
             page.get_by_test_id("room-body").wait_for(timeout=15000)
 
             # The review verb appears in NEEDS YOU caption because pending_count > 0
+            # (R1: the status line's "<n> need you" opens it).
+            _open_needs(page, 10000)
             review_verb = page.get_by_test_id("review-verb")
             review_verb.wait_for(timeout=10000)
             assert review_verb.is_visible()
@@ -981,16 +992,19 @@ def _people_open_room(page: Any, project_id: str) -> None:
     )
     page.reload(wait_until="load")
     _normal_chair(page)
-    # PHILO-17 refit (room): People is a fold in the Room; open it.
-    fold = page.locator("[data-testid=room-fold-people] details").first
-    fold.wait_for(state="attached", timeout=15000)
-    if fold.get_attribute("open") is None:
-        page.locator("[data-testid=room-fold-people] summary").first.click()
+    # R1 "the brief" (2026-11-08): People is a row of What is open; its
+    # press opens the People section under it.
+    row = page.get_by_test_id("room-open-people-open").first
+    row.wait_for(timeout=15000)
+    if row.get_attribute("aria-expanded") != "true":
+        row.click()
     page.get_by_test_id("room-people-head-verb").wait_for(timeout=15000)
     _settle(page)
 
 def _people_section(page: Any) -> Any:
-    return page.locator("section.surface-section").filter(has=page.get_by_test_id("room-people-head-verb")).first
+    # R1: the People section opens inside What is open's People row; the
+    # innermost section that holds the head verb is the People section.
+    return page.locator("section.surface-section").filter(has=page.get_by_test_id("room-people-head-verb")).last
 
 def _scroll_people_into_view(page: Any) -> None:
     """Put the section HEAD at the top of the body: the ask well is sticky
@@ -1636,6 +1650,58 @@ class TestRoomFaceGlass:
         _assert_room_named(page, width, name)
         return facts
 
+    # ── R1 "the brief" (owner 2026-11-08): the Now face ──────────────────
+
+    @pytest.mark.e2e
+    @pytest.mark.parametrize("width", WIDTHS)
+    def test_the_now_face_is_the_brief(self, width: int) -> None:
+        """R1 (owner 2026-11-08, on the phone: "Looks like shit"): the toolbar
+        (Write update, History, the Ask field), the status line, What changed,
+        What is open, the folds, the status bar; on the phone one column in
+        that order, inside the window. No Update chips, no raw button."""
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            browser, page, errors = self._open(pw, width)
+            try:
+                pid = self._project(page)
+                _api(page, "POST", f"/api/projects/{pid}/items",
+                     {"item_type": "milestone", "title": "Cutover rehearsal",
+                      "due_at": (date.today() - timedelta(days=7)).isoformat()}, token=RF_TOKEN)
+                self._published(page, pid)
+                self._room(page, pid)
+                page.get_by_test_id("room-brief-line").first.wait_for(timeout=T)
+                page.get_by_test_id("room-what-is-open").wait_for(timeout=T)
+                _rf_shot(page, "r1-now-face", width)
+                order = ["room-head", "room-status-line", "room-what-changed", "room-what-is-open", "room-folds"]
+                boxes = [page.get_by_test_id(t).first.bounding_box() for t in order]
+                assert all(boxes), dict(zip(order, boxes))
+                tops = [b["y"] for b in boxes]
+                assert tops == sorted(tops), dict(zip(order, tops))
+                win = page.locator(".desk-window:has([data-testid=room-body])").first.bounding_box()
+                for name, box in zip(order, boxes):
+                    assert box["x"] >= win["x"] - 1 and box["x"] + box["width"] <= win["x"] + win["width"] + 1, (name, box, win)
+                assert page.get_by_test_id("room-brief-line").first.inner_text().strip() == "The ledger cutover is on track."
+                assert page.get_by_test_id("room-status-need").inner_text().strip() == "1 need you"
+                assert page.get_by_test_id("room-headline").inner_text().strip().startswith("At risk")
+                toolbar = page.get_by_test_id("room-head").get_by_role("toolbar")
+                assert toolbar.get_by_test_id("updates-verb").inner_text().strip() == "Write update"
+                assert toolbar.get_by_test_id("room-head-history").inner_text().strip() == "History"
+                assert toolbar.get_by_role("textbox", name="Ask this project").count() == 1
+                for gone in ("room-update-line", "room-fold-programs", "room-this-week", "room-needs-you"):
+                    assert page.get_by_test_id(gone).count() == 0, gone
+                # The status line's word opens the rows in place, no modal.
+                _open_needs(page)
+                page.get_by_test_id("room-needs-you").wait_for(timeout=T)
+                assert page.locator("dialog[open]").count() == 0
+                _rf_shot(page, "r1-now-face-needs", width)
+                facts = self._facts(page)
+                assert facts["raw_buttons"] == [], facts["raw_buttons"]
+                assert not facts["h_overflow"]
+                assert not errors, errors
+            finally:
+                browser.close()
+
     # ── F2: the items section, as the ratified canvas draws it ───────────
 
     @pytest.mark.e2e
@@ -1656,6 +1722,7 @@ class TestRoomFaceGlass:
                 except Exception:
                     pass  # asserted below, as rendered
                 room = _api(page, "GET", f"/api/projects/{pid}/room", token=RF_TOKEN)
+                _open_needs(page)
                 first = self._facts(page)
                 _rf_shot(page, "items-late-first-view", width)
                 assert first["items_head"].upper() == "PLAN 5", first["items_head"]
@@ -1745,6 +1812,7 @@ class TestRoomFaceGlass:
                       "due_at": (date.today() - timedelta(days=7)).isoformat()}, token=RF_TOKEN)
                 self._room(page, pid)
                 room = _api(page, "GET", f"/api/projects/{pid}/room", token=RF_TOKEN)
+                _open_needs(page, T)
                 page.locator("[data-testid=needs-you-why]").first.wait_for(timeout=T)
                 # The head's tokens (the same locator on the base and the branch).
                 reason = page.get_by_test_id("room-headline").inner_text().strip()

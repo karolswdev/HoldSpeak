@@ -2,6 +2,7 @@
 // keyboard law, comparison, conflict both-sources, no-delta state.
 
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { findInNeeds } from "../../__tests__/openNeeds";
 import { useState, type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TitleSlotContext } from "../../../../desk/surface/title";
@@ -177,7 +178,7 @@ describe("Review verb in orientation (WEB-NOW-002)", () => {
     });
 
     render(<WindowHarness scope="project:p1" />);
-    const btn = await screen.findByTestId("review-verb");
+    const btn = await findInNeeds("review-verb");
     // HS-169-03 SELECTOR EDIT: the Room's review verb is "Review N".
     expect(btn.textContent).toContain("Review");
   });
@@ -241,7 +242,7 @@ describe("Posture swap", () => {
     });
 
     render(<WindowHarness scope="project:p1" />);
-    const btn = await screen.findByTestId("review-verb");
+    const btn = await findInNeeds("review-verb");
     fireEvent.click(btn);
 
     await waitFor(() => {
@@ -265,7 +266,7 @@ describe("Empty review (DELIGHT slice 3)", () => {
       return Promise.resolve(detailResponse(url));
     });
     render(<WindowHarness scope="project:p1" />);
-    fireEvent.click(await screen.findByTestId("review-verb"));
+    fireEvent.click(await findInNeeds("review-verb"));
     const line = await screen.findByText("No proposals to review");
     expect(line.closest('.surface-state[data-object="decision"]')?.querySelector("img")).toBeTruthy();
     // UX-CANON A8: no kind count of zero is drawn.
@@ -294,7 +295,7 @@ describe("Review grouping with count chips (WEB-NOW-004)", () => {
     });
 
     render(<WindowHarness scope="project:p1" />);
-    const btn = await screen.findByTestId("review-verb");
+    const btn = await findInNeeds("review-verb");
     fireEvent.click(btn);
 
     await waitFor(() => {
@@ -332,7 +333,7 @@ describe("Conflict both-sources (WEB-STA-006)", () => {
     });
 
     render(<WindowHarness scope="project:p1" />);
-    const btn = await screen.findByTestId("review-verb");
+    const btn = await findInNeeds("review-verb");
     fireEvent.click(btn);
 
     await waitFor(() => {
@@ -366,7 +367,7 @@ describe("Room review section decode", () => {
 
     render(<WindowHarness scope="project:p1" />);
     // When pending > 0, the review verb appears
-    const btn = await screen.findByTestId("review-verb");
+    const btn = await findInNeeds("review-verb");
     // HS-169-03 SELECTOR EDIT: the Room's review verb is "Review N".
     expect(btn.textContent).toContain("Review");
   });
@@ -401,7 +402,7 @@ describe("Plain-words card anchor (defect 1)", () => {
   it("shows human headline instead of machine 'kind: ref' string", async () => {
     enterReviewPosture();
     render(<WindowHarness scope="project:p1" />);
-    const btn = await screen.findByTestId("review-verb");
+    const btn = await findInNeeds("review-verb");
     fireEvent.click(btn);
 
     await waitFor(() => {
@@ -421,7 +422,7 @@ describe("Plain-words card anchor (defect 1)", () => {
   it("shows the human subject as the card description", async () => {
     enterReviewPosture();
     render(<WindowHarness scope="project:p1" />);
-    const btn = await screen.findByTestId("review-verb");
+    const btn = await findInNeeds("review-verb");
     fireEvent.click(btn);
 
     await waitFor(() => {
@@ -441,7 +442,7 @@ describe("Human queue rows (defect 2)", () => {
   it("shows human text in queue rows, not truncated kind strings", async () => {
     enterReviewPosture();
     render(<WindowHarness scope="project:p1" />);
-    const btn = await screen.findByTestId("review-verb");
+    const btn = await findInNeeds("review-verb");
     fireEvent.click(btn);
 
     await waitFor(() => {
@@ -462,7 +463,7 @@ describe("Hidden machine keys (defect 4)", () => {
   it("omits card_id from visible field rows", async () => {
     enterReviewPosture();
     render(<WindowHarness scope="project:p1" />);
-    const btn = await screen.findByTestId("review-verb");
+    const btn = await findInNeeds("review-verb");
     fireEvent.click(btn);
 
     await waitFor(() => {
@@ -484,7 +485,7 @@ describe("Hidden machine keys (defect 4)", () => {
   it("stores machine ids in data-attrs on the fields container", async () => {
     enterReviewPosture();
     render(<WindowHarness scope="project:p1" />);
-    const btn = await screen.findByTestId("review-verb");
+    const btn = await findInNeeds("review-verb");
     fireEvent.click(btn);
 
     await waitFor(() => {
@@ -502,7 +503,7 @@ describe("Materiality temperature token (defect 6)", () => {
   it("shows High/Medium/Low instead of raw float", async () => {
     enterReviewPosture();
     render(<WindowHarness scope="project:p1" />);
-    const btn = await screen.findByTestId("review-verb");
+    const btn = await findInNeeds("review-verb");
     fireEvent.click(btn);
 
     await waitFor(() => {
@@ -525,7 +526,7 @@ describe("Materiality temperature token (defect 6)", () => {
   it("shows Medium for 0.5 materiality with no tone", async () => {
     enterReviewPosture();
     render(<WindowHarness scope="project:p1" />);
-    const btn = await screen.findByTestId("review-verb");
+    const btn = await findInNeeds("review-verb");
     fireEvent.click(btn);
 
     await waitFor(() => {
@@ -546,7 +547,7 @@ describe("Single position source (defect 7)", () => {
   it("header shows position, footer shows disposition tally not position", async () => {
     enterReviewPosture();
     render(<WindowHarness scope="project:p1" />);
-    const btn = await screen.findByTestId("review-verb");
+    const btn = await findInNeeds("review-verb");
     fireEvent.click(btn);
 
     await waitFor(() => {
@@ -570,7 +571,7 @@ describe("Defer two-step (defect 5)", () => {
   it("clicking Defer button arms the defer (shows date + confirm)", async () => {
     enterReviewPosture();
     render(<WindowHarness scope="project:p1" />);
-    const btn = await screen.findByTestId("review-verb");
+    const btn = await findInNeeds("review-verb");
     fireEvent.click(btn);
 
     await waitFor(() => {
@@ -598,7 +599,7 @@ describe("Defer two-step (defect 5)", () => {
   it("Cancel defer keeps Edit and submits the latest draft", async () => {
     enterReviewPosture();
     render(<WindowHarness scope="project:p1" />);
-    fireEvent.click(await screen.findByTestId("review-verb"));
+    fireEvent.click(await findInNeeds("review-verb"));
     fireEvent.click(await screen.findByRole("button", { name: /^Edit / }));
     const text = screen.getByRole("textbox", { name: "Edit Text" });
     fireEvent.change(text, { target: { value: "Draft before defer" } });
@@ -625,7 +626,7 @@ describe("Defer two-step (defect 5)", () => {
   it("Escape cancels armed Defer before Edit and Review without making a decision", async () => {
     enterReviewPosture();
     render(<WindowHarness scope="project:p1" />);
-    fireEvent.click(await screen.findByTestId("review-verb"));
+    fireEvent.click(await findInNeeds("review-verb"));
     fireEvent.click(await screen.findByRole("button", { name: /^Edit / }));
     const text = screen.getByRole("textbox", { name: "Edit Text" });
     fireEvent.change(text, { target: { value: "Retained through Escape" } });
@@ -644,7 +645,7 @@ describe("Defer two-step (defect 5)", () => {
   it("Enter on the native defer date confirms the exact date once", async () => {
     enterReviewPosture();
     render(<WindowHarness scope="project:p1" />);
-    fireEvent.click(await screen.findByTestId("review-verb"));
+    fireEvent.click(await findInNeeds("review-verb"));
     fireEvent.click(await screen.findByRole("button", { name: /^Edit / }));
     fireEvent.click(screen.getByRole("button", { name: /^Defer / }));
     const date = screen.getByLabelText("Defer until date");

@@ -17,6 +17,7 @@ import { TitleSlotContext } from "../../../desk/surface/title";
 import { WingSlotContext } from "../../../desk/surface/wings";
 import { useDesk } from "../../../desk/store";
 import { ProjectRoomCore } from "../ProjectRoomCore";
+import { findInNeeds, openNeedsYou } from "./openNeeds";
 import { ApiError } from "../../../lib/api";
 import RECORDED_ROOM from "./room-wires/hs175.json";
 // Root's isolated daily_tour.py POST /reviews capture, 2026-10-16,
@@ -154,7 +155,7 @@ describe("Room proposal correction retains a refused write", () => {
       return Promise.resolve(response(url));
     });
     render(<WindowHarness scope="project:p1" />);
-    fireEvent.click(await screen.findByTestId("proposal-edit"));
+    fireEvent.click(await findInNeeds("proposal-edit"));
     fireEvent.change(screen.getByLabelText("Text"), { target: { value: "Write the release rollback runbook" } });
     fireEvent.change(screen.getByLabelText("Owner"), { target: { value: "Jordan" } });
     fireEvent.click(screen.getByTestId("proposal-save-confirm"));
@@ -183,7 +184,7 @@ describe("Room proposal correction retains a refused write", () => {
       return Promise.resolve(response(url));
     });
     render(<WindowHarness scope="project:p1" />);
-    fireEvent.click(await screen.findByTestId("proposal-edit"));
+    fireEvent.click(await findInNeeds("proposal-edit"));
     fireEvent.change(screen.getByLabelText("Text"), { target: { value: "Write the release rollback runbook" } });
     fireEvent.change(screen.getByLabelText("Owner"), { target: { value: "Jordan" } });
     fireEvent.change(screen.getByLabelText("Due"), { target: { value: "2026-10-22" } });
@@ -217,57 +218,59 @@ describe("ProjectRoomCore — room head (was: orientation band, WEB-NOW-001)", (
     });
   }
 
-  it("gives actual pending Review the head lead and keeps Draft update secondary", async () => {
+  // R1 "the brief" (owner 2026-11-08): Write update is the toolbar's one
+  // primary; pending Review is said in the status line ("2 need you") and
+  // its Review verb opens under it.
+  it("keeps Write update the one primary and says pending Review in the status line", async () => {
     headReads({ ...recorded.review, pending_count: 2 });
     render(<WindowHarness scope="project:p1" />);
-    expect(await screen.findByTestId("room-head-review")).toHaveTextContent("Review 2");
-    expect(screen.getByTestId("room-head-review").className).toContain("btn--primary");
-    expect(screen.getByTestId("updates-verb").className).toContain("btn--secondary");
+    expect(await screen.findByTestId("room-status-need")).toHaveTextContent("need you");
+    expect(screen.getByTestId("updates-verb").className).toContain("btn--primary");
     expect(document.querySelectorAll(".btn--primary")).toHaveLength(1);
+    expect(await findInNeeds("review-verb")).toHaveTextContent("Review 2");
   });
 
-  it("the head Review opens the recorded real task in the existing posture and returns to the Room", async () => {
+  it("the status line's Review opens the recorded real task in the existing posture and returns to the Room", async () => {
     apiFetch.mockImplementation((url: string) => {
       if (url === "/api/projects/p1/room") return Promise.resolve(roomResponse({ review: { ...recorded.review, pending_count: RECORDED_REVIEW.proposals.length }, sources: recorded.sources }));
       if (url === "/api/projects/p1/reviews") return Promise.resolve({ ...RECORDED_REVIEW, project_id: "p1" });
       return Promise.resolve(response(url));
     });
     render(<WindowHarness scope="project:p1" />);
-    fireEvent.click(await screen.findByTestId("room-head-review"));
+    fireEvent.click(await findInNeeds("review-verb"));
     expect(await screen.findByTestId("review-posture")).toHaveAttribute("data-review-id", RECORDED_REVIEW.review_id);
     expect(screen.getByTestId("review-posture")).toHaveAttribute("data-review-status", "open");
     expect(screen.getByTestId("review-detail-subject")).toHaveTextContent(JSON.parse(RECORDED_REVIEW.proposals[0].patch_json).text);
     expect(screen.getAllByTestId("review-queue-item")).toHaveLength(RECORDED_REVIEW.proposals.length);
     expect(screen.queryByTestId("room-head")).toBeNull();
     fireEvent.click(within(screen.getByTestId("review-posture").querySelector(".surface-verbs") as HTMLElement).getByRole("button", { name: "Close" }));
-    expect(await screen.findByTestId("room-head-review")).toHaveTextContent("Review 1");
+    expect(await findInNeeds("review-verb")).toHaveTextContent("Review 1");
   });
 
   it.each([
     { ...recorded.review, pending_count: 0 },
     { state: "absent", reason: "not_yet_built" },
     { state: "degraded", error_code: "review_read_failed", pending_count: 2 },
-  ])("keeps Draft update as lead without verified positive Review: %j", async (review) => {
+  ])("keeps Write update as lead without verified positive Review: %j", async (review) => {
     headReads(review);
     render(<WindowHarness scope="project:p1" />);
     const draft = await screen.findByTestId("updates-verb");
-    expect(screen.queryByTestId("room-head-review")).toBeNull();
+    expect(screen.queryByTestId("review-verb")).toBeNull();
     expect(draft.className).toContain("btn--primary");
   });
 
-  it("keeps both head actions quiet while the existing Add source well owns the primary", async () => {
+  it("keeps Write update quiet while the existing Add source well owns the primary", async () => {
     headReads({ ...recorded.review, pending_count: 2 });
     render(<WindowHarness scope="project:p1" />);
-    await screen.findByTestId("room-head-review");
+    await screen.findByTestId("room-status-need");
     fireEvent.click(screen.getByTestId("room-fold-sources").querySelector("summary")!);
     fireEvent.click(await screen.findByTestId("room-add-source"));
     await screen.findByTestId("room-add-sources");
-    await waitFor(() => expect(screen.getByTestId("room-head-review").className).toContain("btn--secondary"));
-    expect(screen.getByTestId("updates-verb").className).toContain("btn--secondary");
+    await waitFor(() => expect(screen.getByTestId("updates-verb").className).toContain("btn--secondary"));
     expect(screen.getByTestId("room-add-sources-add").className).toContain("btn--primary");
     expect(document.querySelectorAll(".btn--primary")).toHaveLength(1);
     fireEvent.click(screen.getByTestId("room-add-sources-cancel"));
-    await waitFor(() => expect(screen.getByTestId("room-head-review").className).toContain("btn--primary"));
+    await waitFor(() => expect(screen.getByTestId("updates-verb").className).toContain("btn--primary"));
   });
 
   it("renders the headline (was: Project name in orientation band)", async () => {
@@ -320,6 +323,7 @@ describe("ProjectRoomCore — NEEDS YOU (was: focus block)", () => {
 
     render(<WindowHarness scope="project:p1" />);
     await screen.findByTestId("room-body");
+    await openNeedsYou();
     expect(screen.getByText("PR needs review")).toBeTruthy();
   });
 

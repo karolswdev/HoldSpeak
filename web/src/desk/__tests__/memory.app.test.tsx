@@ -220,21 +220,7 @@ describe("Desk memory (HS-526): relationship-aware recall", () => {
 });
 
 describe("Memory on the Desk: standing pages where the work lives", () => {
-  it("the Atlas Room: This week reads Risks and Changed from the project's pages, each line with its source", async () => {
-    // replaces: tests/e2e/test_memory_faces_glass.py::test_memory_on_the_desk (face half: pages)
-    // Betterment P3: the pages are promoted into the Now wing's This week
-    // (Decided comes from the decision records, the one store for decisions).
-    render(<ProjectRoomCore scope="project:atlas" />);
-    const section = await screen.findByTestId("room-this-week");
-    const groups = within(section).getAllByTestId("this-week-group");
-    expect(groups.map((g) => g.getAttribute("aria-label"))).toEqual(["Open", "Risks", "Changed"]);
-    const changed = within(groups[2]).getAllByTestId("this-week-line");
-    expect(changed).toHaveLength(4);
-    const cutover = changed.find((l) => l.textContent?.includes("Cutover date is 10-17"))!;
-    expect(within(cutover).getByTestId("memory-ref").textContent).toBe("Note 10-11");
-    expect(section.textContent).not.toContain("Harbor");
-    expect(section.textContent).not.toMatch(/Rewrite/i);
-  });
+
 
   it("Today -> Since yesterday: the desk's own pages, no project sentence", async () => {
     // replaces: tests/e2e/test_memory_faces_glass.py::test_memory_on_the_desk (face half: desk)

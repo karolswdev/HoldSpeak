@@ -1,3 +1,8 @@
+// PARKED 2026-11-08 (R1 "the brief", owner: the Room's Now face "looks like
+// shit"): the "Update" chips block left the Now face. Its words are the Now
+// status bar's (core/Cadence.tsx); a press there opens the automation. Its
+// imports point at ../core/ paths as they were; not compiled (tsconfig
+// excludes _parked).
 // The update schedule row: when the project update runs, with which engine,
 // its latest result and Every Friday at 15:00.
 import { useState } from "react";
