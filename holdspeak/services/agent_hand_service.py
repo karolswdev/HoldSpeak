@@ -179,7 +179,7 @@ def worktree_spec(kind: str, item_id: str, round_: int = 1, title: str = "") -> 
 _MAX_ROUNDS = 50
 
 
-def program_step_spec(db: Any, step_id: str) -> Optional[dict[str, str]]:
+def program_step_spec(db: Any, step_id: str) -> Optional[dict[str, Any]]:
     """Programs (design §11): a step's worktree ``hs-program-<step id>`` on the
     branch ``program/<program slug>/<ordinal>-<step slug>``, from the
     Program's base branch."""
@@ -195,13 +195,20 @@ def program_step_spec(db: Any, step_id: str) -> Optional[dict[str, str]]:
     branch = f"program/{branch_slug(program['title'], 32) or 'program'}/{int(step['ordinal'])}-{words}"
     if step.get("race_of"):
         branch += f"-{_NAME_UNSAFE.sub('-', step_id)[-6:]}"
-    spec = {"mode": "new", "name": name, "branch": branch}
-    if program.get("base_branch"):
-        spec["start_point"] = str(program["base_branch"])
+    spec: dict[str, Any] = {"mode": "new", "name": name, "branch": branch}
+    base = str(program.get("base_branch") or "main")
+    spec["start_point"] = base
+    # HS-S22 (D25/G22 A): the launch picks the step's starting commit after
+    # its claim, before the agent starts: the base as the remote has it now
+    # (one fetch), or the checkpoint's own commit. The launch records it.
+    start = {"policy": "remote_base", "program_id": str(program["id"]), "step_id": str(step_id), "base": base}
     # PG20: a step started from a checkpoint starts at its pinned ref.
-    start_from = ((step.get("facts") or {}).get("start_from") or {}).get("ref")
-    if start_from:
-        spec["start_point"] = str(start_from)
+    pinned = (step.get("facts") or {}).get("start_from") or {}
+    if pinned.get("ref"):
+        spec["start_point"] = str(pinned["ref"])
+        start = {"policy": "checkpoint", "program_id": str(program["id"]), "step_id": str(step_id),
+                 "ref": str(pinned["ref"]), **({"commit": str(pinned["commit"])} if pinned.get("commit") else {})}
+    spec["program_start"] = start
     return spec
 
 
@@ -776,8 +783,12 @@ class AgentHandService:
             "origin_ref": {"kind": kind, "id": item_id},
             "project_id": project_id,
             "control_mode": mode,
+            # HS-S22: the launch's own record of the commit the new worktree
+            # started at, read before the agent started (None: an existing
+            # worktree, a helper, or a launch from before this record).
+            "start_input": dict(launch["start_input"]) if isinstance(launch.get("start_input"), Mapping) else None,
             "brief": {
-                "bytes": brief["bytes"],
+                "bytes": int((launch.get("start_input") or {}).get("first_text_bytes") or brief["bytes"]),
                 "refs": brief["refs"],
                 "people_cut": brief["people_cut"],
             } if brief else None,

@@ -329,6 +329,52 @@ def valid_branch(branch: str) -> bool:
     return bool(_BRANCH_RE.match(text)) and ".." not in text and "//" not in text
 
 
+_OID_RE = re.compile(r"^(?:[0-9a-f]{40}|[0-9a-f]{64})$")
+_START_POLICIES = ("remote_base", "checkpoint")
+
+
+class _StartRefused(Exception):
+    """HS-S22: the step's starting commit could not be chosen or proved."""
+
+    def __init__(self, outcome: str, detail: str = "") -> None:
+        super().__init__(outcome)
+        self.outcome = outcome
+        self.detail = detail
+
+
+def _program_start(request: Mapping[str, Any]) -> Optional[dict[str, str]]:
+    """HS-S22 (D25/G22 A): the new Program worktree's start descriptor
+    (``worktree.program_start``), checked for shape and for the step the
+    request is for. ``None``: the request names none (every other launch)."""
+    spec = request.get("worktree") if isinstance(request.get("worktree"), Mapping) else {}
+    start = spec.get("program_start")
+    if start is None:
+        return None
+    if not isinstance(start, Mapping) or str(spec.get("mode") or "") != "new":
+        raise LaunchRefused("program_start_invalid", "program_start is for a new worktree")
+    policy = str(start.get("policy") or "")
+    step_id = str(start.get("step_id") or "")
+    origin = request.get("origin_ref") if isinstance(request.get("origin_ref"), Mapping) else {}
+    if policy not in _START_POLICIES:
+        raise LaunchRefused("program_start_invalid", f"unknown start policy {policy!r}")
+    if origin.get("kind") != "program_step" or str(origin.get("id") or "") != step_id or not step_id:
+        raise LaunchRefused("program_start_invalid", "program_start names another step")
+    out = {"policy": policy, "program_id": str(start.get("program_id") or ""), "step_id": step_id}
+    if policy == "remote_base":
+        base = str(start.get("base") or "")
+        if not valid_branch(base):
+            raise LaunchRefused("program_start_invalid", f"invalid base branch {base!r}")
+        out["base"] = base
+        return out
+    ref, commit = str(start.get("ref") or ""), str(start.get("commit") or "")
+    if not valid_branch(ref) or (commit and not _OID_RE.match(commit)):
+        raise LaunchRefused("program_start_invalid", "invalid checkpoint ref or commit")
+    out["ref"] = ref
+    if commit:
+        out["commit"] = commit
+    return out
+
+
 def _default_git_runner(argv: list[str], cwd: Optional[str] = None):
     return subprocess.run(
         argv,
@@ -1247,6 +1293,7 @@ class LaunchService:
                 raise LaunchRefused(
                     "worktree_duplicate", f"worktree {name!r} is already registered"
                 )
+            _program_start(request)  # HS-S22: shape and origin only; no git here
             return "", str(candidate), {
                 "name": name,
                 "branch": branch,
@@ -1381,7 +1428,18 @@ class LaunchService:
         self, request: Any, *, launch_id: str = "", parent_operation_id: str = "",
         principal: Any = None,
     ) -> dict[str, Any]:
-        """§9 agent.launch. All refusals are typed and pre-execution;
+        """§9 agent.launch (see :meth:`_launch`)."""
+        return self._launch(
+            request, launch_id=launch_id, parent_operation_id=parent_operation_id, principal=principal,
+        )[0]
+
+    def _launch(
+        self, request: Any, *, launch_id: str = "", parent_operation_id: str = "",
+        principal: Any = None, instruction: Optional[str] = None,
+    ) -> tuple[dict[str, Any], Optional[str]]:
+        """§9 agent.launch, and the first instruction as the agent will get
+        it (HS-S22: a new Program worktree's brief names the commit it
+        started at, finalized and size-checked before the spawn). All refusals are typed and pre-execution;
         the execution order (and what each failure leaves behind) is:
 
         1. worktree.create envelope (mode=new only) → its OWN receipt;
@@ -1474,6 +1532,26 @@ class LaunchService:
         # worktree or process side effect. Subsequent updates retain this row.
         self._ledger.record(record)
 
+        # HS-S22 (D25/G22 A): the new Program worktree's starting commit is
+        # chosen now, after the claim and before the worktree: the base as
+        # the remote has it (one advertised commit, fetched by its id) or the
+        # checkpoint's own commit. Recorded before the worktree is made.
+        text = instruction
+        start = _program_start(request) if pending_create is not None else None
+        if start is not None:
+            try:
+                start = self._select_start(str(source.primary_path), start)
+            except _StartRefused as exc:
+                record["state"] = "failed"
+                record["failure"] = {"stage": "start_input", "outcome": exc.outcome,
+                                     **({"detail": _scrub(exc.detail, source.primary_path)} if exc.detail else {})}
+                self._release_mcp(launch_id)
+                self._ledger.record(record)
+                return record, None
+            record["start_input"] = start
+            self._ledger.record(record)
+            pending_create = {**pending_create, "start_point": start["selected_commit"]}
+
         # 1. the DISTINCT worktree-create op, through the envelope.
         if pending_create is not None:
             created = self._commands.submit(
@@ -1493,10 +1571,33 @@ class LaunchService:
                 }
                 self._release_mcp(launch_id)
                 self._ledger.record(record)
-                return record
+                return record, None
             registered_source, registered = self._registry.register(worktree_path)
             assert registered_source.source_id == source_id
             worktree_id = record["worktree_id"] = registered.worktree_id
+            if start is not None:
+                # HS-S22: the new worktree's HEAD is the chosen commit, read
+                # before any agent runs; the brief names it, sized now.
+                failure = self._verify_start(worktree_path, start)
+                if failure is None and text is not None:
+                    from ..services.agent_brief import AGENT_BRIEF_CAP_BYTES
+                    from ..services.program_brief import start_context
+
+                    text = start_context(text, start)
+                    size = len(text.strip().encode("utf-8"))
+                    start["first_text_bytes"] = size
+                    if size > min(AGENT_BRIEF_CAP_BYTES, 32768):
+                        failure = "brief_over_cap"
+                record["start_input"] = start
+                if failure is not None:
+                    record["state"] = "failed"
+                    record["failure"] = {"stage": "start_input", "outcome": failure}
+                    record["rollback"] = {"worktree": "retained",
+                                          "worktree_command_id": record["commands"]["worktree_create"]}
+                    self._release_mcp(launch_id)
+                    self._ledger.record(record)
+                    return record, None
+                self._ledger.record(record)
 
         # 2. spawn through the envelope: the node launch receipt.
         if executable == "codex":
@@ -1548,7 +1649,7 @@ class LaunchService:
                 }
             self._release_mcp(launch_id)
             self._ledger.record(record)
-            return record
+            return record, None
 
         # 3. the immutable target from the pane the spawn created.
         pane_id = self._first_pane(session_name)
@@ -1566,7 +1667,7 @@ class LaunchService:
             }
             self._release_mcp(launch_id)
             self._ledger.record(record)
-            return record
+            return record, None
         record["target"] = {
             "target_id": issued["target_id"],
             "target_generation": issued["target_generation"],
@@ -1612,7 +1713,7 @@ class LaunchService:
             }
             self._release_mcp(launch_id)
             self._ledger.record(record)
-            return record
+            return record, None
 
         record["attempt_id"] = attempt.attempt_id
         record["state"] = "launched"
@@ -1625,7 +1726,80 @@ class LaunchService:
             "not_granted" if read_only else (self._grant(principal, launch_id, launch_project) if launch_project else "no_project")
         )
         self._ledger.record(record)
-        return record
+        return record, text
+
+    def _git_checked(self, *argv: str) -> str:
+        """One git command whose exit code decides; stdout, stripped."""
+        try:
+            completed = self._git(["git", *argv])
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            raise _StartRefused("git_failed", str(exc)) from exc
+        if completed.returncode != 0:
+            raise _StartRefused("git_failed", (completed.stderr or "").strip()[:300])
+        return str(completed.stdout or "").strip()
+
+    def _select_start(self, repo: str, start: Mapping[str, str]) -> dict[str, Any]:
+        """HS-S22: the commit a new Program worktree starts at, with its
+        proof. ``remote_base``: the one commit ``origin`` advertises for the
+        base branch now, fetched by its id and checked to be a commit; a
+        repository with no ``origin`` or a base the remote lacks is refused
+        by name (no local fallback). ``checkpoint``: the pinned ref's commit,
+        which must still be the saved one (no fetch)."""
+        proof: dict[str, Any] = dict(start)
+        if start["policy"] == "checkpoint":
+            try:
+                commit = self._git_checked("-C", repo, "rev-parse", "--verify", "--end-of-options",
+                                           f"{start['ref']}^{{commit}}")
+            except _StartRefused as exc:
+                raise _StartRefused("checkpoint_missing", exc.detail) from exc
+            saved = start.get("commit") or ""
+            if saved and commit != saved:
+                raise _StartRefused("checkpoint_moved", f"{start['ref']} is at {commit[:12]}, not {saved[:12]}")
+            proof.update(selected_commit=saved or commit, selected_at=_iso_now(self._wall_now()))
+            return proof
+        try:
+            self._git_checked("-C", repo, "remote", "get-url", "origin")
+        except _StartRefused as exc:
+            raise _StartRefused("no_remote", "the repository has no origin remote") from exc
+        ref = f"refs/heads/{start['base']}"
+        try:
+            completed = self._git(["git", "-C", repo, "ls-remote", "--exit-code", "origin", ref])
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            raise _StartRefused("remote_unreachable", str(exc)) from exc
+        if completed.returncode == 2:
+            raise _StartRefused("base_not_on_remote", f"origin has no branch {start['base']}")
+        if completed.returncode != 0:
+            raise _StartRefused("remote_unreachable", (completed.stderr or "").strip()[:300])
+        rows = [line.split("\t") for line in str(completed.stdout or "").splitlines() if line.strip()]
+        found = [row[0] for row in rows if len(row) == 2 and row[1] == ref]
+        if len(found) != 1 or not _OID_RE.match(found[0]):
+            raise _StartRefused("base_ambiguous", f"origin advertises {len(found)} commits for {start['base']}")
+        commit = found[0]
+        try:
+            self._git_checked("-C", repo, "fetch", "--quiet", "--no-tags", "--no-write-fetch-head", "origin", commit)
+        except _StartRefused as exc:
+            raise _StartRefused("fetch_failed", exc.detail) from exc
+        try:
+            resolved = self._git_checked("-C", repo, "rev-parse", "--verify", "--end-of-options", f"{commit}^{{commit}}")
+        except _StartRefused as exc:
+            raise _StartRefused("not_a_commit", exc.detail) from exc
+        if resolved != commit:
+            raise _StartRefused("not_a_commit", f"{commit[:12]} is not a commit")
+        proof.update(remote="origin", selected_commit=commit, selected_at=_iso_now(self._wall_now()))
+        return proof
+
+    def _verify_start(self, worktree: str, start: dict[str, Any]) -> Optional[str]:
+        """HS-S22: the new worktree's HEAD before the spawn; the failure
+        outcome, or None when it is the chosen commit (recorded in ``start``)."""
+        try:
+            head = self._git_checked("-C", worktree, "rev-parse", "--verify", "HEAD")
+        except _StartRefused:
+            return "start_commit_unread"
+        if head != start.get("selected_commit"):
+            start["observed_head"] = head
+            return "start_commit_mismatch"
+        start.update(verified_commit=head, verified_at=_iso_now(self._wall_now()))
+        return None
 
     @staticmethod
     def _grant(principal: Any, launch_id: str, project_id: Optional[str]) -> str:
@@ -1708,10 +1882,12 @@ class LaunchService:
             raise LaunchRefused(reason)
         operation_id = str(handle["operation_id"])
         try:
-            record = self.launch(
+            record, final = self._launch(
                 request, launch_id=launch_id, parent_operation_id=operation_id,
-                principal=principal,
+                principal=principal, instruction=text,
             )
+            # HS-S22: the text finalized before the spawn is the one held/sent.
+            text = str(final or text).strip()
             if record.get("state") != "launched":
                 self._kernel.receipt(operation_id, "failed", f"launch:{launch_id}", node)
                 return {"operation_id": operation_id, "launch": record}

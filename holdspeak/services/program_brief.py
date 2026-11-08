@@ -235,4 +235,25 @@ def compose(
     }
 
 
-__all__ = ["REVIEW_DIFF_BYTES", "acceptance", "compose", "compose_review", "requirement_lines", "step_diff", "theirs"]
+def start_context(text: str, start_input: Mapping[str, Any]) -> str:
+    """HS-S22: the brief with the commit its new worktree started at, from
+    the launch's own proof (read before the agent started; no git here).
+    The line goes under the Branch line; a brief without one gets it last."""
+    commit = str(start_input.get("verified_commit") or "")
+    if not commit:
+        return text
+    if start_input.get("policy") == "checkpoint":
+        where = f"the checkpoint {start_input.get('ref') or ''}".rstrip()
+    else:
+        where = f"{start_input.get('base') or 'main'} as origin had it at {start_input.get('selected_at') or 'launch'}"
+    line = f"- Starts at: commit {commit} ({where})"
+    lines = text.rstrip("\n").split("\n")
+    at = next((index for index, row in enumerate(lines) if row.startswith("- Branch: ")), None)
+    if at is None:
+        lines += ["", line]
+    else:
+        lines.insert(at + 1, line)
+    return "\n".join(lines) + "\n"
+
+
+__all__ = ["REVIEW_DIFF_BYTES", "acceptance", "compose", "start_context", "compose_review", "requirement_lines", "step_diff", "theirs"]
