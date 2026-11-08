@@ -34,6 +34,10 @@ import { startSignin as startSigninApi, signinStatus, type SigninStatusResponse,
 import { sameTarget, useDeliveryTerminal, type OpenTarget } from "../../../desk/deliveryTerminal";
 import { PROVIDER_NAME, useConnectionsStep, type ConnectionCandidate } from "../../../desk/firstrun/connectionsStep";
 import "./connections.css";
+// HS-S53: the account state words have one owner, next to the destination
+// form that also shows them; re-exported here for older callers.
+import { chipLabel } from "../../../features/channels/accountChip";
+export { chipLabel };
 import { CalendarCard as CalendarSetupCard } from "../../../desk/firstrun/CalendarCard";
 import { useCalendarStep } from "../../../desk/firstrun/calendarStep";
 import "../../../desk/firstrun/firstrun.css";
@@ -57,30 +61,6 @@ function chipState(state: ConnectionState): ChipState {
  *  reads that state, never the error text. */
 export function notSignedIn(state: ConnectionState): boolean {
   return state === "owner_action_required";
-}
-
-/** Betterment ST2: a row's state in words: Works, Not signed in, Signed in
- *  as another account, Could not check: <reason>.  The reason is the hub's
- *  own words (`reason`); the face never reads the error text. */
-export function chipLabel(
-  state: ConnectionState,
-  providerId: string,
-  words: { reason?: string; other_account?: boolean } = {},
-): string {
-  const cli = providerId === "jira" || providerId === "confluence" ? "acli" : "gh";
-  switch (state) {
-    case "connected": return "Works";
-    case "owner_action_required": return "Not signed in";
-    case "unavailable": return `Could not check: ${words.reason ?? `${cli} is not installed`}`;
-    case "degraded":
-      if (words.other_account) return "Signed in as another account";
-      return `Could not check: ${words.reason ?? `${cli} gave no answer`}`;
-    case "not_configured":
-      if (providerId === "jira" || providerId === "confluence") return "Not set up";
-      return "Off";
-    case "never_checked": return "Not checked";
-    case "signed_in": return "Signed in";
-  }
 }
 
 /** PHILO-9-02 B1: the age of this row's own stored check, as words. */
