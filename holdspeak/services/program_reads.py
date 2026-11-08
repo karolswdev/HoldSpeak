@@ -36,7 +36,7 @@ from .program_definitions import (
     FROZEN_MERGED, FROZEN_READ, FROZEN_SET, NIGHT_ENDED, PARK_KIND, PARKED_BY_ENGINE, PARKED_BY_OWNER,
     PARKED_BY_PROGRAM, PLAN_GOAL_KIND, PROGRAM_BAND, PROGRAM_WORDS, PROPOSAL_KINDS, ProgramRefused, STATIONS,
     STEP_FIELDS, STEP_WORDS, TODO_CHOICES, TODO_STATES, _AUDIT_STATION_OF, _STATION_OF, agent_label,
-    duration_words, history_of,
+    duration_words, history_of, programs_on,
 )
 from .program_rules import level_word
 
@@ -694,8 +694,9 @@ def program_list(db: Any, principal: Any = None, *, q: Any = None, project_id: A
     ``person_id`` narrow the rows; ``of`` is the count before them."""
     rows = []
     programs = ProgramStore(db).list_programs()
+    steps_of: dict[str, list[dict[str, Any]]] = {}
     for program in programs:
-        steps = ProgramStore(db).list_steps(program["id"])
+        steps = steps_of[program["id"]] = ProgramStore(db).list_steps(program["id"])
         rows.append(_summary(db, program, steps, clock=clock, person_name=person_name))
     # PG-IMPORT IMP7: each row names the Program it came from; a parent
     # carries its family's count and one worst state.
@@ -727,7 +728,40 @@ def program_list(db: Any, principal: Any = None, *, q: Any = None, project_id: A
     if words or project_id or person_id:
         out["filter"] = {"q": str(q or "").strip() or None, "project_id": project_id or None,
                          "person_id": person_id or None, "shown": len(rows), "of": everything}
+    tonight = night_of(programs, steps_of)
+    if tonight is not None:
+        out["night"] = tonight
     return out
+
+
+#: A step of a night Program that waits for the night (not handed yet).
+NIGHT_QUEUED_STATES = frozenset({"planned", "ready"})
+
+
+def night_of(programs: list[dict[str, Any]], steps_of: Mapping[str, list[dict[str, Any]]]) -> Optional[dict[str, Any]]:
+    """The night, from the rows the list already read: ``{program_id, start,
+    queued}``. ``queued`` counts the steps of the night Programs (a ``night``
+    line, not Drafting or Parked) that wait for the night; ``program_id`` is
+    the first night Program with a queued step, ``start`` its night line's
+    start (``HH:MM``, local). ``None`` when the engine is off
+    (``HOLDSPEAK_PROGRAMS=off``), no Program has a night line, or nothing is
+    queued: the face draws nothing, never a zero."""
+    if not programs_on():
+        return None
+    first: Optional[dict[str, Any]] = None
+    queued = 0
+    for program in programs:
+        night = program.get("night")
+        if not isinstance(night, Mapping) or not night.get("start") or program.get("state") in ("drafting", "parked"):
+            continue
+        waiting = sum(1 for step in steps_of.get(program["id"]) or []
+                      if step.get("state") in NIGHT_QUEUED_STATES and not step.get("race_of"))
+        if waiting and first is None:
+            first = program
+        queued += waiting
+    if first is None:
+        return None
+    return {"program_id": first["id"], "start": str(first["night"]["start"]), "queued": queued}
 
 
 def get(db: Any, principal: Any, program_id: str, *, clock: Clock, person_name: Names, engine: Engines, estimate: Sizer,

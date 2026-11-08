@@ -6,7 +6,7 @@
  * in brass when it waits on him. "+" (New program) at the top, a rule, the
  * active Programs (waiting first), a rule, the ones done this week, and
  * at the foot the night tile (navy) with the queued count in mono, when
- * the hub names a night. Hover and focus say the name (title and
+ * the hub names a night; a press opens the night Program. Hover and focus say the name (title and
  * aria-label); ↑ and ↓ (← and → on the phone strip) move the focus, Enter
  * picks. At 393 the rail is a strip at the window's foot (programs.css). */
 import { useRef, type KeyboardEvent } from "react";
@@ -66,6 +66,9 @@ export function ProgramRail({ list, picked, making, busy = false, onPick, onNew 
   const ref = useRef<HTMLElement | null>(null);
   const { active, done } = railGroups(list.programs);
   const night = list.night ?? null;
+  // The night tile opens the night Program (the rail's own pick); with no
+  // Program to open there is no tile (never a dead verb).
+  const nightId = night?.queued ? night.program_id : null;
   // ↑ ↓ (and ← → on the strip) move the focus along the tiles; Enter is the Button's own press.
   const onKeys = (event: KeyboardEvent<HTMLElement>) => {
     const step = event.key === "ArrowDown" || event.key === "ArrowRight" ? 1 : event.key === "ArrowUp" || event.key === "ArrowLeft" ? -1 : 0;
@@ -85,10 +88,10 @@ export function ProgramRail({ list, picked, making, busy = false, onPick, onNew 
       {done.length ? <i className="pg-rail-rule" aria-hidden="true" /> : null}
       {done.map((row) => <Tile key={row.id} row={row} picked={!making && row.id === picked} onPick={onPick} />)}
       <span className="pg-rail-fill" aria-hidden="true" />
-      {night && night.queued ? (
+      {night && nightId ? (
         <Button variant="chrome" className="pg-rail-tile pg-rail-night" aria-label={`Tonight ${night.start}, ${night.queued} queued`}
           title={`Tonight ${night.start}, ${night.queued} queued`} tabIndex={-1}
-          onClick={() => night.program_id && onPick(night.program_id)} data-testid="programs-rail-night">{night.queued}</Button>
+          onClick={() => onPick(nightId)} data-program={nightId} data-testid="programs-rail-night">{night.queued}</Button>
       ) : null}
     </nav>
   );
