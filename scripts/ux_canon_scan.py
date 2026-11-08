@@ -226,6 +226,11 @@ MIC_ALLOWLIST: tuple[tuple[str, str, str], ...] = (
      "HH:MM time field — a clock value, not dictatable prose"),
     ("pages/cores/SettingsCore.tsx", 'key="symbol"',
      "Glyph field (a single symbol such as →) — not dictatable prose"),
+    # -- the Programs wizard (#1833), 2026-11-08 ------------------------------
+    ("desk/programs/ProgramWizard.tsx", 'label="Folder"',
+     "Repository folder path (~/dev/my-repo) — a file system path, not dictatable prose"),
+    ("desk/programs/ProgramWizard.tsx", 'label="Check"',
+     "The repository's check command — a shell command, not dictatable prose"),
     # -- the 24th, ruling R13 (HS-176-05) ----------------------------------
     ("pages/cores/dictation/SpeakFace.tsx", 'label="Utterance"',
      "The Talk transport is this face's mic authority (Article IV.3, R13)"),
