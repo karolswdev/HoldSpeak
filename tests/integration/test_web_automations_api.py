@@ -110,10 +110,25 @@ def test_owner_can_test_and_baseline_a_watch_without_client_snapshots(
 def test_workbench_preset_facade_baselines_enables_tests_and_shows_history(
     client: TestClient, automations_db: Database, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    """The workbench automation routes, since 2026-11-08 over WatchService:
+    a new event start is a watch, read (the quiet baseline) and on at once;
+    test reads without moving the baseline; a new PR in the review queue is
+    one review request, one occurrence and one history row."""
+    from holdspeak.services.watch_service import AUTOMATION_INTENT_PREFIX
+    from holdspeak.services.workbench_service import WorkbenchService
+
+    rows = {"now": [{"number": 23, "title": "Review me", "state": "open"}]}
     monkeypatch.setattr(
         "holdspeak.services.watch_sources.fetch_watch_snapshot",
-        lambda *args, **kwargs: [{"number": 23, "title": "Review me", "state": "open"}],
+        lambda *args, **kwargs: rows["now"],
     )
+    ran: list = []
+
+    async def fake_run(self, principal, workbench_id, item_id, **kwargs):  # noqa: ANN001
+        ran.append(item_id)
+        return {"parent_operation_id": "op-review"}
+
+    monkeypatch.setattr(WorkbenchService, "run_item", fake_run)
     presets = client.get("/api/automations/presets")
     assert presets.status_code == 200
     assert presets.json()["presets"][0]["id"] == "github-review-requested"
@@ -126,45 +141,44 @@ def test_workbench_preset_facade_baselines_enables_tests_and_shows_history(
     created = client.post("/api/workbenches/wb-review/automations", json={
         "preset_id": "github-review-requested", "repository": "acme/widget",
     })
-    assert created.status_code == 201
+    assert created.status_code == 201, created.text
     automation = created.json()["automation"]
     automation_id = automation["id"]
-    stored_reaction = automations_db.automations.get_reaction(automation_id)
-    assert stored_reaction is not None
-    watch_id = stored_reaction["watch_id"]
-    assert stored_reaction["auto_run"] is False
-    assert automation["enabled"] is False
+    watch = automations_db.automations.get_watch(automation_id)
+    assert watch["intent"] == AUTOMATION_INTENT_PREFIX + "wb-review"
+    assert automations_db.automations.list_reactions() == []
+    assert (automation["enabled"], automation["status"]) == (True, "active")
     assert automation["provider"] == "github"
     assert automation["repository"] == "acme/widget"
+    assert automation["event_kind"] == "github.pr.review_requested"
+    baseline = watch["snapshot"]
 
     tested = client.post(f"/api/workbenches/wb-review/automations/{automation_id}/test")
-    assert tested.status_code == 200
-    assert tested.json()["baseline"] is True
-    assert automations_db.automations.get_watch(watch_id)["snapshot"] == {}
+    assert tested.status_code == 200, tested.text
+    assert automations_db.automations.get_watch(automation_id)["snapshot"] == baseline
 
+    listed = client.get("/api/workbenches/wb-review/automations").json()["automations"]
+    assert [row["id"] for row in listed] == [automation_id]
+
+    paused = client.patch(
+        f"/api/workbenches/wb-review/automations/{automation_id}", json={"enabled": False},
+    )
+    assert paused.status_code == 200 and paused.json()["automation"]["enabled"] is False
     enabled = client.patch(
         f"/api/workbenches/wb-review/automations/{automation_id}", json={"enabled": True},
     )
     assert enabled.status_code == 200
-    assert enabled.json()["automation"]["enabled"] is True
     assert enabled.json()["automation"]["status"] == "active"
-    assert automations_db.automations.get_watch(watch_id)["enabled"] is True
-    assert automations_db.automations.get_reaction(automation_id)["enabled"] is True
 
-    event = ServiceEventLedger(automations_db).append(
-        Principal(PrincipalKind.OWNER, "test-owner"),
-        event_type="github.pr.review_requested", producer="connector.gh.watch",
-        subject_ref="gh:pull_requests:23", source_revision="v2",
-        facts={"entity_title": "Review me"}, refs=[f"watch:{watch_id}"],
-    )
-    processed = client.post("/api/automations/reactions/process")
-    assert processed.status_code == 200
-    assert processed.json()["projections"][0]["reaction_id"] == automation_id
+    rows["now"] = rows["now"] + [{"number": 24, "title": "Second review", "state": "open"}]
+    evaluated = client.post(f"/api/watches/{automation_id}/evaluate")
+    assert evaluated.status_code == 200, evaluated.text
+    assert len(ran) == 1
 
     history = client.get(f"/api/workbenches/wb-review/automations/{automation_id}/history")
     assert history.status_code == 200
-    entry = history.json()["history"][0]
-    assert event["id"] in entry["id"]
+    [entry] = history.json()["history"]
+    assert entry["id"] == ran[0]
     assert entry["outcome"] == "added"
     assert entry["event_kind"] == "github.pr.review_requested"
 

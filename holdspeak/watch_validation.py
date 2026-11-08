@@ -56,11 +56,15 @@ ACTION_SCHEMA = "WatchAction@1"
 ACTION_KINDS: frozenset[str] = frozenset({
     "project.observe",
     "project.steward.run_once",
+    # 2026-11-08: an Automation's "when something happens" start. Each
+    # matching transition mints one occurrence of the named automation
+    # and runs it (WatchService._run_automation).
+    "automation.run",
 })
 
-# Keys allowed in an action node (kind-specific config may extend
-# later; V0 accepts only schema + kind).
-_ACTION_KEYS: frozenset[str] = frozenset({"schema", "kind"})
+# Keys allowed in an action node. ``workbench_id`` belongs to
+# ``automation.run`` only, and that kind requires it.
+_ACTION_KEYS: frozenset[str] = frozenset({"schema", "kind", "workbench_id"})
 
 
 # ------------------------------------------------------------------
@@ -232,6 +236,12 @@ def validate_action(action: Any, *, _path: str = "") -> list[WatchValidationErro
         errors.append(WatchValidationError(
             _path, f"unknown action kind {kind!r}; allowed: {sorted(ACTION_KINDS)}",
         ))
+    elif kind == "automation.run":
+        target = action.get("workbench_id")
+        if not isinstance(target, str) or not target.strip():
+            errors.append(WatchValidationError(_path, "automation.run requires a 'workbench_id'"))
+    elif "workbench_id" in action:
+        errors.append(WatchValidationError(_path, f"'workbench_id' belongs to automation.run, not {kind!r}"))
 
     return errors
 

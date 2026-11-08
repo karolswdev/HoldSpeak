@@ -676,7 +676,9 @@ class TestConditionValidation:
 class TestActionValidation:
     @pytest.mark.parametrize("kind", sorted(ACTION_KINDS))
     def test_all_closed_kinds_accepted(self, kind) -> None:
-        errors = validate_action({"schema": "WatchAction@1", "kind": kind})
+        # automation.run names the automation it runs (2026-11-08).
+        extra = {"workbench_id": "wb"} if kind == "automation.run" else {}
+        errors = validate_action({"schema": "WatchAction@1", "kind": kind, **extra})
         assert errors == [], f"{kind} should be accepted: {errors}"
 
     def test_unknown_kind_refused(self) -> None:
