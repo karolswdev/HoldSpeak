@@ -154,7 +154,7 @@ export function arcFrames(from: Point, to: Point, tilt: number, steps = 12): str
  * edge, one specular pixel under the tip. Its tip is (0, 0). */
 function DartArt() {
   return (
-    <svg className="walk-dart" viewBox="0 0 12 16" width="12" height="16" shapeRendering="crispEdges" aria-hidden="true">
+    <svg className="walk-dart" viewBox="0 0 12 16" width="24" height="32" shapeRendering="crispEdges" aria-hidden="true">
       <path className="walk-dart-edge" d="M0 0h1v1H0zM0 1h2v1H0zM0 2h1v1H0zM2 2h1v1H2zM0 3h1v1H0zM3 3h1v1H3zM0 4h1v1H0zM4 4h1v1H4zM0 5h1v1H0zM5 5h1v1H5zM0 6h1v1H0zM6 6h1v1H6zM0 7h1v1H0zM7 7h1v1H7zM0 8h1v1H0zM8 8h1v1H8zM0 9h1v1H0zM9 9h1v1H9zM0 10h1v1H0zM10 10h1v1H10zM0 11h1v1H0zM6 11h6v1H6zM0 12h1v1H0zM5 12h1v1H5zM0 13h1v1H0zM4 13h1v1H4zM0 14h1v1H0zM3 14h1v1H3zM0 15h3v1H0z" />
       <path className="walk-dart-lit" d="M1 3h1v1H1zM1 4h1v1H1zM1 5h2v1H1zM1 6h2v1H1zM1 7h3v1H1zM1 8h3v1H1zM1 9h4v1H1zM1 10h4v1H1zM1 11h4v1H1zM1 12h3v1H1zM1 13h2v1H1zM1 14h1v1H1z" />
       <path className="walk-dart-shade" d="M2 3h1v1H2zM2 4h2v1H2zM3 5h2v1H3zM3 6h3v1H3zM4 7h3v1H4zM4 8h4v1H4zM5 9h4v1H5zM5 10h5v1H5zM5 11h1v1H5zM4 12h1v1H4zM3 13h1v1H3zM2 14h1v1H2z" />
