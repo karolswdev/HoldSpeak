@@ -1650,7 +1650,7 @@ describe("one row, one verb (owner walk 2026-11-08)", () => {
     fireEvent.contextMenu(row(must), { clientX: 40, clientY: 60 });
     const menu = await screen.findByRole("menu", { name: must });
     expect(within(menu).getAllByRole("menuitem").map((m) => m.textContent)).toEqual(
-      expect.arrayContaining(["Open", "Later", "Drop", "Run as a program"]),
+      expect.arrayContaining(["Open", "Later", "Drop", "Run as a program", "Hand to an agent session"]),
     );
     fireEvent.click(within(menu).getByRole("menuitem", { name: /Later/ }));
     await waitFor(() => expect(posts.map((p) => (p.json as { verb?: string }).verb)).toEqual(["snooze"]));
@@ -1669,7 +1669,7 @@ describe("one row, one verb (owner walk 2026-11-08)", () => {
     await screen.findByText("4 need you");
     fireEvent.contextMenu(row(must), { clientX: 40, clientY: 60 });
     const menu = await screen.findByRole("menu", { name: must });
-    expect(within(menu).queryByRole("menuitem", { name: /Hand to agent/ })).toBeNull();
+    expect(within(menu).queryByRole("menuitem", { name: "Hand to agent" })).toBeNull();
     fireEvent.click(within(menu).getByRole("menuitem", { name: "Run as a program" }));
     await waitFor(() => expect(openProgram).toHaveBeenCalledWith(String((madeFromAction as { id?: string }).id)));
     expect(posts).toEqual([{ path: "/api/programs/from-action", json: { action_id: "rows-must" } }]);

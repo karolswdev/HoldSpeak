@@ -21,6 +21,10 @@ vi.mock("../shell", async (importOriginal) => ({
   openSurfaceOr: vi.fn(),
 }));
 vi.mock("../components/MicButton", () => ({ MicButton: () => null }));
+vi.mock("../programs/open", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../programs/open")>()),
+  openProgram: vi.fn(),
+}));
 // The Send well species has its own app test (send.app.test.tsx); here it is
 // the seat Nudge opens, named by the note it sends.
 vi.mock("../documentSendsLazy", () => ({
@@ -111,6 +115,7 @@ describe("a held call on Needs you (Conductor R1, PHILO-14 A5)", () => {
 
 // ── Betterment daily D2: the chips and one verb per row, on the recorded week ──
 import dailyWeek from "./fixtures/daily-week/needs-you.json";
+import madeFromAction from "../programs/__fixtures__/program.from_action.json";
 import { recordedGet, type Gets } from "../../test/recordedHub";
 import notesCreate from "../../test/wire/notes-create.wire.json";
 import destinationsTwo from "./fixtures/destinations-wire/list-two.json";
@@ -134,6 +139,7 @@ describe("Needs you on the daily week: the chips and one verb per row (Bettermen
       if (init?.method === "POST") {
         posts.push({ url: String(url), json: init.json });
         if (url === "/api/notes") return structuredClone(notesCreate.wire);
+        if (url === "/api/programs/from-action") return structuredClone(madeFromAction);
         return {};
       }
       return recordedGet(gets, String(url));
@@ -168,14 +174,31 @@ describe("Needs you on the daily week: the chips and one verb per row (Bettermen
     await waitFor(() => expect(weekRows().length).toBe(4));
   });
 
-  it("the row's context menu ▸ Hand to agent opens the launch sheet on the row's action (Betterment AG4)", async () => {
+  // One verb, one name (2026-11-08, #1882): the row menu's Program entry is
+  // the one Run as a program; it makes the Program from the row's action.
+  it("the row's context menu ▸ Run as a program makes the Program from the row's action and opens it", async () => {
+    const { openProgram } = await import("../programs/open");
+    render(<NeedsDrawer />);
+    await waitFor(() => expect(weekRows().length).toBe(4));
+    const row = weekRows().find((li) => li.textContent?.includes("Email Dana about the cutover window"))!;
+    fireEvent.contextMenu(row, { clientX: 40, clientY: 40 });
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Run as a program" }));
+    const card = (dailyWeek.needsYou.items as Array<{ title: string; actionItemId?: string }>)
+      .find((i) => i.title === "Email Dana about the cutover window")!.actionItemId;
+    await waitFor(() => expect(posts).toContainEqual({ url: "/api/programs/from-action", json: { action_id: card } }));
+    await waitFor(() => expect(openProgram).toHaveBeenCalledWith(String((madeFromAction as { id?: string }).id)));
+  });
+
+  // Betterment AG4: one agent session on the action (the launch sheet) is a
+  // different thing from a Program; the row keeps it under its honest name.
+  it("the row's context menu ▸ Hand to an agent session opens the launch sheet on the row's action (Betterment AG4)", async () => {
     const { useAgentHand } = await import("../agentHand");
     useAgentHand.setState({ origin: null });
     render(<NeedsDrawer />);
     await waitFor(() => expect(weekRows().length).toBe(4));
     const row = weekRows().find((li) => li.textContent?.includes("Email Dana about the cutover window"))!;
     fireEvent.contextMenu(row, { clientX: 40, clientY: 40 });
-    fireEvent.click(await screen.findByRole("menuitem", { name: "Hand to agent" }));
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Hand to an agent session" }));
     const card = (dailyWeek.needsYou.items as Array<{ title: string; actionItemId?: string }>)
       .find((i) => i.title === "Email Dana about the cutover window")!.actionItemId;
     expect(useAgentHand.getState().origin).toEqual({ kind: "action", id: card, title: "Email Dana about the cutover window" });
