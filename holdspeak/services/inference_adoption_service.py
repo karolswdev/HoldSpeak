@@ -14,7 +14,7 @@ import json
 import time
 import uuid
 from pathlib import Path
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Any, Callable, Mapping, Sequence
 
 from ..deployment_revisions import DeploymentRevision
@@ -37,6 +37,7 @@ from .inference_route_plan_service import (
     InferenceRoutePlanService,
     RouteAdmissionEvidenceProvider,
 )
+from holdspeak.timestamps import utc_now_z_micro as _now
 
 
 ADOPTED_CAPABILITIES = (
@@ -128,12 +129,6 @@ def _canonical(value: Any) -> str:
 
 def _sha256(value: Any) -> str:
     return "sha256:" + hashlib.sha256(_canonical(value).encode()).hexdigest()
-
-
-def _now() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="microseconds").replace(
-        "+00:00", "Z"
-    )
 
 
 def _safe(value: Any, *, field: str) -> str:

@@ -8,11 +8,11 @@ from __future__ import annotations
 import hashlib
 import json
 import time
-import uuid
 from dataclasses import dataclass
 from typing import Any, Optional
 
 from .base import BaseRepository
+from holdspeak.ids import new_id as _new_id
 
 
 # ---------------------------------------------------------------------------
@@ -176,10 +176,6 @@ def _row_to_ref(row: Any) -> ThreadRef:
         # answers honestly there is UNKNOWN -- which the L4 allow-list fences.
         origin=str(row["origin"] or "") if "origin" in row.keys() else "",
     )
-
-
-def _new_id(prefix: str) -> str:
-    return f"{prefix}_{uuid.uuid4().hex[:12]}"
 
 
 # ---------------------------------------------------------------------------

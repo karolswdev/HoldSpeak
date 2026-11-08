@@ -618,7 +618,7 @@ the one `/ws` bus.
 ## Storage
 
 On every open, `reconcile_schema` (`holdspeak/db/reconcile.py`) brings the
-database to the shape in `SCHEMA_SQL` (`holdspeak/db/schema.py`).
+database to the shape in `SCHEMA_SQL` (`holdspeak/db/schema/`).
 
 - It creates missing tables, indexes and triggers.
 - It adds missing columns with `ALTER TABLE ADD COLUMN`.

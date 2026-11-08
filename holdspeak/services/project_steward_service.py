@@ -29,6 +29,7 @@ from holdspeak.project_contracts import generate_pstrun_id, generate_pststep_id
 from holdspeak.services.service_event_ledger import ServiceEventLedger
 
 from ..logging_config import get_logger
+from holdspeak.timestamps import utc_now_seconds as _now_iso
 
 log = get_logger("project_steward")
 
@@ -2525,5 +2526,3 @@ def _door_idempotency_key(project_id: str, watermark: str) -> str:
     return f"door:{digest}"
 
 
-def _now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="seconds")

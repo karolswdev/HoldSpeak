@@ -231,8 +231,9 @@ class TestSchemaGrepPin:
         plaintext DB schema. This test fails if anyone adds a person_id,
         people_id, relationship_id, or display_name column to schema.py.
         """
-        schema_path = Path(__file__).resolve().parents[2] / "holdspeak" / "db" / "schema.py"
-        schema_text = schema_path.read_text()
+        from holdspeak.db.schema import SCHEMA_SQL
+
+        schema_text = SCHEMA_SQL
 
         # Extract only CREATE TABLE / column definitions (skip comments).
         lines = []

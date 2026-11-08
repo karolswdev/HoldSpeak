@@ -7,7 +7,7 @@ checks, and data boundaries. For first installation, read
 ## Versions
 
 - `pyproject.toml` owns the package version. `holdspeak.__version__` reads it.
-- `SCHEMA_VERSION` in `holdspeak/db/schema.py` is an informational database
+- `SCHEMA_VERSION` in `holdspeak/db/schema/` is an informational database
   stamp.
 - `CONFIG_VERSION` owns the config stamp.
 

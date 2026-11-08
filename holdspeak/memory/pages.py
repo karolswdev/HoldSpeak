@@ -175,10 +175,6 @@ class PageOutputError(ValueError):
     attempt; nothing is written."""
 
 
-def _now() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="seconds")
-
-
 def spec_for(scope_kind: str, slug: str) -> PageSpec:
     for spec in PAGE_SET.get(str(scope_kind), ()):
         if spec.slug == slug:

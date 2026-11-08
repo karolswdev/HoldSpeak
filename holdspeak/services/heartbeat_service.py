@@ -31,6 +31,7 @@ from typing import Any
 from holdspeak.db import Database
 from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.services.observer import NullObserver, PipelineObserver
+from holdspeak.timestamps import utc_now_seconds as _now_iso
 
 log = logging.getLogger(__name__)
 
@@ -40,10 +41,6 @@ _DEFAULT_QUIET_START = 22       # hour
 _DEFAULT_QUIET_END = 8          # hour
 _DEFAULT_NOTIFY = "edge"        # off | edge | every_sweep
 _HEARTBEAT_POLICY_ID = "heartbeat"
-
-
-def _now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
 
 def _as_item_map(value: Any) -> dict[str, dict[str, str]]:

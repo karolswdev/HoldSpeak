@@ -147,7 +147,7 @@ function generate(tokens) {
   out.push("");
   out.push("@media (prefers-reduced-motion: reduce) {");
   out.push("  :root {");
-  for (const { name } of tokens.semantic.groups.filter(({ name }) => name && name.startsWith("--duration-"))) {
+  for (const { name } of tokens.semantic.groups.filter(({ name }) => name && (name.startsWith("--duration-") || name.startsWith("--motion-")))) {
     out.push(`    ${name}: 0ms;`);
   }
   out.push("  }");

@@ -426,8 +426,9 @@ class TestSchemaGrepPin:
     def test_delegated_at_present_and_no_person_reference(self) -> None:
         """delegated_at must exist in the schema and be a bare timestamp
         with no person/relationship reference (the 138 law)."""
-        schema_path = Path(__file__).resolve().parents[2] / "holdspeak" / "db" / "schema.py"
-        schema_text = schema_path.read_text()
+        from holdspeak.db.schema import SCHEMA_SQL
+
+        schema_text = SCHEMA_SQL
 
         # delegated_at must be present.
         assert "delegated_at" in schema_text, "delegated_at column missing from schema.py"
