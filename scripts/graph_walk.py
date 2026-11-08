@@ -675,7 +675,7 @@ _PLACEMENT_ARM_JS = r"""([cardSelector, clearSelectors, slotSelector, scrollTarg
     },
   };
   return window.__graphPlacementProbe.snapshot();
-}""";
+}"""
 
 _PLACEMENT_SNAPSHOT_JS = r"""() =>
   window.__graphPlacementProbe ? window.__graphPlacementProbe.snapshot() : null"""
@@ -5144,7 +5144,7 @@ def _isolated_hub_env(
         # GH_CONFIG_DIR/XDG_CONFIG_HOME; nothing posts to the owner's
         # Notification Center (holdspeak/desktop_notify.py); the email and
         # Slack keys live in a file in this HOME, not the Keychain
-        # (holdspeak/services/channel_key_file.py).
+        # (holdspeak/keystore.py, HOLDSPEAK_CHANNEL_KEYSTORE_FILE).
         "GIT_CONFIG_NOSYSTEM": "1",
         "HOLDSPEAK_TEST_NO_REAL_CLI": "1",
         "GH_CONFIG_DIR": str(isolated_home / ".config" / "gh"),
