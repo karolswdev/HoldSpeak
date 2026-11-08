@@ -74,52 +74,32 @@ class DecisionLifecycleService:
         except Exception as exc:
             raise self._promotion_error(exc, decision_id) from exc
         from ..kernel.runtime import _service
-        from .inference_owner_draft import run_owner_draft
-        from .inference_parent_route_bundle_service import InferenceParentRouteBundleService
+        from . import engine_door
 
         normalized = str(artifact_type).strip().lower()
-        definition_revision = str(decision.updated_at)
-        identity = f"{decision.id}:{definition_revision}:{normalized}"
-        import hashlib
-        command_id = "decision-promotion:" + hashlib.sha256(identity.encode()).hexdigest()
-        input_snapshot = {
-            "decision_id": decision.id,
-            "meeting_revision": decision.decided_at,
-            "artifact_type": normalized,
-        }
         broker = self._kernel or _service()
-        # E3: the v1 override is not a second routing plane.  It gets the same
-        # durable, content-free E2 refusal accounting as a missing assignment.
-        requested = str(payload.get("inference_target_id") or "").strip()
-        if requested:
-            refusal = InferenceParentRouteBundleService(
-                broker, broker.inference_adoption_service
-            ).record_pre_route_refusal(
-                principal,
-                command_id=command_id,
-                parent_kind="decision.promotion-draft",
-                definition_ref=f"decision:{decision.id}",
-                definition_revision=definition_revision,
-                input_snapshot=input_snapshot,
-                deadline_at=4_102_444_800.0,
-                reason="inference_request_target_override_retired",
-            )
+        # E3: the v1 per-request engine override is retired; the assignment names the engine.
+        if str(payload.get("inference_target_id") or "").strip():
             raise ConflictError(
                 "inference_request_target_override_retired",
                 code="inference_request_target_override_retired",
-                context={
-                    "operation_id": refusal["parent"].operation_id,
-                    "parent_receipt": refusal["receipt"],
-                },
             )
-
-        def prompt_payload() -> dict[str, Any]:
-            prompt = (
-                f"Artifact type: {normalized}\nDecision: {decision.text}\n"
-                f"Rationale: {decision.rationale or 'Not recorded'}\n"
-                f"Decided at: {decision.decided_at}\nMeeting: {decision.source_meeting_id}"
-            )
-            return {
+        try:
+            engine = engine_door.engine_for(broker, "decision.promotion_draft")
+        except engine_door.EngineDoorError as exc:
+            raise ConflictError(
+                "decision_promotion_draft_refused",
+                code="decision_promotion_draft_refused",
+                context={"reason": "inference_no_engine", "operation_id": ""},
+            ) from exc
+        prompt = (
+            f"Artifact type: {normalized}\nDecision: {decision.text}\n"
+            f"Rationale: {decision.rationale or 'Not recorded'}\n"
+            f"Decided at: {decision.decided_at}\nMeeting: {decision.source_meeting_id}"
+        )
+        prompt_payload = engine_door.with_memory(
+            broker, engine,
+            {
                 "system_prompt": "Draft one concise artifact from the accepted decision. Preserve the decision's meaning. Return Markdown only and do not invent approval.",
                 "user_prompt": prompt,
                 "max_tokens": 1200,
@@ -127,53 +107,33 @@ class DecisionLifecycleService:
                 "decision_revision": decision.updated_at,
                 "meeting_revision": decision.decided_at,
                 "artifact_type": normalized,
-            }
-
-        routed = await asyncio.to_thread(
-            run_owner_draft,
-            broker,
-            principal,
-            command_id=command_id,
-            parent_kind="decision.promotion-draft",
-            definition_ref=f"decision:{decision.id}",
-            definition_revision=definition_revision,
-            input_snapshot=input_snapshot,
-            capability_id="decision.promotion_draft",
-            route_key="decision-promotion-draft",
-            operation_id="decision-draft:" + hashlib.sha256(identity.encode()).hexdigest(),
+            },
+            lambda: self._decision_memory(decision),
             reserved_output_tokens=1200,
-            payload_factory=prompt_payload,
-            memory=lambda: self._decision_memory(decision),
-            projection_kind="decision-promotion-draft",
-            projection_factory=lambda value: {
-                "output": str(value.get("draft") or ""),
+        )
+
+        def projection(value: Any) -> dict[str, Any]:
+            text = value.get("output") if isinstance(value, dict) else value
+            return {
+                "output": str(text or ""),
                 "decision_id": decision.id,
                 "artifact_type": normalized,
                 "actor": principal.identity,
-            },
-            result_is_usable=lambda value: bool(
-                str(value.get("output") or "").strip()
-                and str(value.get("artifact_id") or "")
-            ),
-            parent_result_ref=lambda value: str(value["artifact_id"]),
-        )
-        if routed.get("outcome") != "succeeded" or not isinstance(routed.get("published"), dict):
-            parent_outcome = str(routed["parent_receipt"].get("outcome") or "")
-            code = (
-                "decision_promotion_cancelled"
-                if parent_outcome == "cancelled"
-                else "decision_promotion_draft_refused"
+            }
+
+        try:
+            answer = await asyncio.to_thread(
+                engine_door.run, broker, principal, "decision.promotion_draft", prompt_payload,
+                engine=engine, deadline=180, stage=("decision-promotion-draft", projection),
             )
+        except engine_door.EngineDoorError as exc:
+            code = "decision_promotion_cancelled" if exc.outcome == "cancelled" else "decision_promotion_draft_refused"
             raise ConflictError(
                 code,
                 code=code,
-                context={
-                    "reason": routed.get("reason") or "inference_draft_unavailable",
-                    "operation_id": routed["parent"].operation_id,
-                    "parent_receipt": routed["parent_receipt"],
-                },
-            )
-        published = routed["published"]
+                context={"reason": "inference_" + (exc.outcome or exc.code), "operation_id": exc.operation_id},
+            ) from exc
+        published = answer.published if isinstance(answer.published, dict) else {}
         artifact_id = str(published.get("artifact_id") or "")
         output = str(published.get("output") or "").strip()
         if not artifact_id or not output:
@@ -193,15 +153,11 @@ class DecisionLifecycleService:
             "decision": current.to_dict() if current else None,
             "artifact": artifact.to_dict() if artifact else None,
             "receipt": receipt,
-            "operation_id": routed["parent"].operation_id,
-            "invocation_id": str((routed.get("routed") or {}).get("winning_reservation", {}).get("child_invocation_id") or ""),
-            "invocation": {
-                "operation_id": str((routed.get("routed") or {}).get("winning_reservation", {}).get("child_operation_id") or ""),
-                "outcome": "succeeded",
-                "receipt": dict((routed.get("routed") or {}).get("receipt") or {}),
-            },
-            "parent_receipt": dict(routed["parent_receipt"]),
-            "placement": {"source": "frozen_owner_assignment", "egress": routed["egress"]},
+            # The runner's kernel operation is the one receipt for the draft.
+            "operation_id": answer.operation_id,
+            "invocation_id": answer.invocation_id,
+            "invocation": {"operation_id": answer.operation_id, "outcome": "succeeded"},
+            "placement": {"source": "owner_assignment", "egress": {"scope": engine_door.egress_of(broker, answer.engine)}},
         }
     def _decision_memory(self, decision: Any) -> Any:
         """Earlier decisions and notes on the same subject.

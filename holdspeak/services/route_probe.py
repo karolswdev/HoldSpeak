@@ -2,17 +2,12 @@
 
 A reachability read proves a socket answered.  It does not prove that the route
 this product will actually use can complete a task, and it cannot name the model
-that answered.  This module runs one bounded, real request through the frozen
-route the assignment resolves to, and records what actually served it: the
-deployment's engine and model, the boundary the frozen route named, and the host
-the EgressChip shows.
+that answered.  This module runs one bounded, real request on the engine the assignment
+names, through the engine door, and records what actually served it: the
+deployment's engine and model, its boundary, and the host the EgressChip shows.
 
 It borrows an already registered OWNER capability and runs a fixed public
-sample through its existing admit/execute pair and closed result adapter.
-The coordinator freezes the plan and the shared fallback
-controller owns every physical attempt, so the frozen-route contract holds here
-unchanged: no leg outside the frozen plan is ever dispatched, and a failure
-returns the receipt that names the route.
+sample. A failure names the engine it tried.
 """
 from __future__ import annotations
 
@@ -104,12 +99,6 @@ _OFF_MACHINE = frozenset({"private_network", "mesh", "cloud"})
 _PAID = frozenset({"cloud"})
 
 
-def _authority() -> Principal:
-    from .inference_route_plan_service import ROUTE_PLANNING_AUTHORITY
-
-    return ROUTE_PLANNING_AUTHORITY
-
-
 def _sample_facts(capability_id: str) -> dict[str, Any]:
     sample = _SAMPLES[capability_id]
     return {
@@ -118,60 +107,37 @@ def _sample_facts(capability_id: str) -> dict[str, Any]:
     }
 
 
-def _sample_adapter(capability_id: str) -> Any:
-    from ..kernel.prompt_adapter import CanonicalPromptAdapter
-    from ..kernel.provider_signals import InferenceInvalidTypedOutput
-    from .ask_service import _AskAnswerAdapter
-    from .inference_semantic_adapters import adapter_for
+def _engine_leg(broker: Any, engine: Any, ordinal: int) -> dict[str, Any]:
+    """One engine of the chain, with the boundary its deployment names."""
+    from ..inference_locality import deployment_lamp
 
-    prompt = CanonicalPromptAdapter()
-    if capability_id == "ask.answer":
-        return _AskAnswerAdapter(prompt)
-    if capability_id == "background.rails_summary":
-        return adapter_for(capability_id, prompt.dispatch)
-    if capability_id in _MEETING_JSON:
-        def meeting_sample(engine: Any, payload: Mapping[str, Any], cancellation: Any) -> Any:
-            raw = prompt.dispatch(engine, dict(payload), cancellation)
-            try:
-                return json.loads(raw["output"])
-            except (KeyError, TypeError, ValueError):
-                raise InferenceInvalidTypedOutput() from None
-
-        return adapter_for(capability_id, meeting_sample)
-    return prompt
+    revision = broker.database.deployment_revisions.get(engine.revision)
+    return {
+        "ordinal": ordinal,
+        "profileId": engine.profile,
+        "deploymentRevisionId": engine.revision,
+        "boundary": deployment_lamp(getattr(revision, "boundary", "")) if revision is not None else "",
+    }
 
 
 def preview_route(broker: Any, *, capability_id: str = DEFAULT_PROBE_CAPABILITY, db: Any = None) -> dict[str, Any]:
-    """Pure resolution of the route a probe WOULD use.  No writes, no dispatch.
+    """The engine a probe WOULD use and its boundary.  No dispatch.
 
-    Returns the ordered frozen-plan legs with the boundary each names, so a
-    caller can refuse a paid probe before any byte leaves the machine.
+    A caller can refuse a paid probe before any byte leaves the machine.
     """
+    from . import engine_door
+
     if capability_id not in PROBE_CAPABILITIES:
         raise ValidationError(
             "Route probe capability is not probeable.",
             code="route_probe_capability_invalid",
         )
-    adoption = broker.inference_adoption_service
-    plan = adoption.plans.resolve_route_plan(_authority(), capability_id=capability_id)
-    legs = [
-        {
-            "ordinal": int(entry.get("ordinal") or 0),
-            "profileId": str(entry.get("profile_id") or ""),
-            "deploymentRevisionId": str(entry.get("deployment_revision_id") or ""),
-            "boundary": str(entry.get("boundary") or ""),
-        }
-        for entry in (plan.get("entries") or ())
-    ]
-    # Endpoint profiles store loopback under private_network. Use the same
-    # classifier as the desk lamp without changing the frozen leg facts.
-    from ..inference_locality import deployment_lamp
-
-    boundaries = {
-        deployment_lamp(leg["boundary"], _deployment_facts(db, leg["deploymentRevisionId"])["endpoint"])
-        if db is not None else leg["boundary"]
-        for leg in legs
-    }
+    engine = engine_door.engine_for(broker, capability_id)
+    chain = [engine] + ([engine.fallback] if engine.fallback is not None else [])
+    legs = [_engine_leg(broker, item, ordinal) for ordinal, item in enumerate(chain, start=1)]
+    # Endpoint profiles store loopback under private_network: the lamp reads
+    # the endpoint, so a loopback engine is not "off machine".
+    boundaries = {engine_door.egress_of(broker, item) for item in chain}
     return {
         "capabilityId": capability_id,
         "group": _SAMPLES[capability_id]["group"],
@@ -216,21 +182,6 @@ def host_for(boundary: str, facts: Mapping[str, str]) -> str:
     if endpoint:
         return urlparse(endpoint).hostname or endpoint
     return str(facts.get("node") or "")
-
-
-def _receipt_legs(receipt: Mapping[str, Any]) -> list[dict[str, Any]]:
-    """Every frozen leg the controller considered, with what became of it."""
-    return [
-        {
-            "ordinal": int(item.get("route_leg_ordinal") or 0),
-            "profileId": str(item.get("profile_id") or ""),
-            "deploymentRevisionId": str(item.get("deployment_revision_id") or ""),
-            "boundary": str(item.get("boundary") or ""),
-            "status": str(item.get("status") or ""),
-            "disposition": str(item.get("disposition") or ""),
-        }
-        for item in (receipt.get("considerations") or ())
-    ]
 
 
 def _unresolved(capability_id: str, exc: Exception) -> dict[str, Any]:
@@ -297,7 +248,8 @@ def task_probe(
             "legs": preview["legs"],
         }
 
-    adoption = broker.inference_adoption_service
+    from . import engine_door
+
     identity = f"{capability_id}:{nonce or time.time_ns()}"
     digest = hashlib.sha256(identity.encode()).hexdigest()
     invocation_id = "routeprobe" + digest[:24]
@@ -307,66 +259,34 @@ def task_probe(
         "schema_version": 2,
         "system_prompt": sample["system"],
         "user_prompt": sample["input"],
-        "lens": "Probe",
-        "context_ids": [],
-        "context_titles": [],
-        "grounding": None,
-        "source_text": "",
         "temperature": None,
         "max_tokens": PROBE_MAX_TOKENS,
     }
     if capability_id in _MEETING_JSON:
         payload["response_format"] = {"type": "json_object"}
 
+    engine = engine_door.engine_for(broker, capability_id)
     started = time.monotonic()
+    output, outcome, operation_id, answer = "", "succeeded", "", None
     try:
-        admitted = adoption.admit(
-            principal,
-            command_id=f"admit-{invocation_id}",
-            capability_id=capability_id,
-            operation_id=invocation_id,
-            payload=payload,
-            invocation_id=invocation_id,
-            reserved_output_tokens=PROBE_MAX_TOKENS,
+        answer = engine_door.run(
+            broker, principal, capability_id, payload, engine=engine,
+            contract="route.probe", invocation_id=invocation_id, deadline=60,
         )
-    except Exception as exc:
-        # A missing or incompatible assignment cannot create a route, and this
-        # probe does not invent one.  It names why, and the planned legs.
-        return {
-            "state": "UNREACHABLE",
-            "ok": False,
-            "capabilityId": capability_id,
-            **_sample_facts(capability_id),
-            "outcome": "refused",
-            "reasonCode": str(getattr(exc, "code", "") or type(exc).__name__),
-            "routePlanId": "",
-            "executionId": "",
-            "legs": preview["legs"],
-            "allModelsFailed": False,
-        }
-    routed = adoption.execute(
-        principal,
-        execution_id=str(admitted["execution"]["id"]),
-        adapter=_sample_adapter(capability_id),
-    )
+        output, operation_id = answer.output, answer.operation_id
+    except engine_door.EngineDoorError as exc:
+        outcome, operation_id = exc.outcome or "failed", exc.operation_id
+    if outcome == "succeeded" and capability_id in _MEETING_JSON:
+        try:
+            output = str(json.loads(output).get("summary") or "")
+        except (AttributeError, TypeError, ValueError):
+            outcome = "invalid_typed_output"
     latency_ms = int((time.monotonic() - started) * 1000)
-
-    receipt = dict(routed.get("receipt") or {})
-    outcome = str(receipt.get("outcome") or routed.get("outcome") or "indeterminate")
-    winning = dict(routed.get("winning_reservation") or {})
-    deployment_id = str(
-        receipt.get("winning_deployment_revision_id")
-        or winning.get("deployment_revision_id")
-        or ""
+    served = answer.engine if outcome == "succeeded" else engine
+    facts = _deployment_facts(db, served.revision)
+    boundary = next(
+        (leg["boundary"] for leg in preview["legs"] if leg["deploymentRevisionId"] == served.revision), "",
     )
-    facts = _deployment_facts(db, deployment_id)
-    boundary = str(receipt.get("winning_boundary") or winning.get("boundary") or "")
-    result = routed.get("result") if isinstance(routed.get("result"), Mapping) else {}
-    output_field = "summary" if capability_id in {*_MEETING_JSON, "background.rails_summary"} else "output"
-    output = str((result or {}).get(output_field) or "")
-    # The runner has already validated the frozen result schema and the
-    # controller has settled its receipt. Preserve that terminal truth even
-    # when a valid text result is empty; expose that separate fact to the face.
     ok = outcome == "succeeded"
 
     return {
@@ -384,18 +304,12 @@ def task_probe(
         "boundary": boundary,
         "host": host_for(boundary, facts) if boundary else "",
         "latencyMs": latency_ms,
-        # The route, named. A failure carries the same identity as a success.
-        "routePlanId": str(
-            receipt.get("route_plan_id") or admitted["route_plan"]["id"] or ""
-        ),
-        # The route execution's durable identity. The controller's receipt has
-        # no separate id of its own; this is the row every attempt hangs off.
-        "executionId": str(
-            receipt.get("execution_id") or admitted["execution"]["id"] or ""
-        ),
-        "operationId": invocation_id,
-        "legs": _receipt_legs(receipt) or preview["legs"],
-        "allModelsFailed": bool(receipt.get("all_models_physically_failed")),
+        # The runner's kernel operation is the probe's one receipt.
+        "operationId": operation_id or invocation_id,
+        "routePlanId": "",
+        "executionId": "",
+        "legs": preview["legs"],
+        "allModelsFailed": not ok and len(preview["legs"]) > 1,
     }
 
 

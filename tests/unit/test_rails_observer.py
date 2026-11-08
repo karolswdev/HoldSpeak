@@ -172,11 +172,8 @@ def test_admitted_summary_stamps_journal_observer_provenance_and_degrades_honest
     batch = rails_observer.summarize_batch([_event("t1", "gate_pass")], summarize_fn=summarizer)
     assert not batch["degraded"], batch
     note = rails_observer.record_journal_entry(db, batch, title="Rails journal")
-    with db._connection() as conn:
-        operation_id = conn.execute(
-            "SELECT operation_id FROM kernel_operations WHERE native_id LIKE 'rails_%'"
-        ).fetchone()[0]
-    receipt = broker.store.receipt(operation_id)
+    # The journal's route receipt is the runner's kernel operation.
+    receipt = broker.store.receipt(batch["route_receipt_id"])
     assert batch["events"] == [_event("t1", "gate_pass")]
     assert batch["summary"] == "Only the observed facts."
     assert batch["degraded"] is False and batch["route_receipt_id"]
@@ -184,13 +181,6 @@ def test_admitted_summary_stamps_journal_observer_provenance_and_degrades_honest
     assert (receipt["actor_kind"], receipt["actor_identity"], receipt["authority_basis"]) == (
         "service", "rails-observer", "rails-observer:journal-only",
     )
-    with db._connection() as conn:
-        parent_input = conn.execute(
-            "SELECT input_json FROM kernel_parent_runs WHERE operation_id=?",
-            (operation_id,),
-        ).fetchone()["input_json"]
-    assert "observer_config_source_sha256" not in parent_input
-    assert "profile_id" not in parent_input
 
     broker.inference_runner._engine_factory = lambda _revision, **_kw: (_ for _ in ()).throw(RuntimeError("model down"))
     degraded = rails_observer.summarize_batch([_event("t2", "gate_refusal")], summarize_fn=summarizer)
@@ -202,8 +192,8 @@ def test_admitted_summary_stamps_journal_observer_provenance_and_degrades_honest
     assert "summary unavailable" in degraded_note.body_markdown
 
 
-def test_routed_rails_replay_freezes_assignment_and_dedupes_journal(db) -> None:
-    """One frozen batch survives assignment edits and process-style replay."""
+def test_rails_batch_keeps_its_engine_when_the_assignment_changes_mid_run(db) -> None:
+    """The engine is read once per batch: an edit during the run takes the next batch."""
     from holdspeak.kernel.runtime import _configure
     from holdspeak.services.inference_assignment_service import InferenceAssignmentService
     from tests.unit.test_phase143_inference_assignments import OWNER, _profile
@@ -221,47 +211,38 @@ def test_routed_rails_replay_freezes_assignment_and_dedupes_journal(db) -> None:
         },
     )
     broker = _configure(db)
-    calls: list[str] = []
+    revisions: list[str] = []
 
     class Engine:
         def run_prompt(self, **_):
-            calls.append("physical")
-            # This edit is deliberately after route freeze and before the model
-            # returns; the running batch must retain rails-one.
-            assignments.set_assignment(
-                OWNER,
-                {
-                    "command_id": "rails-retarget",
-                    "expected_revision": 1,
-                    "scope": {"kind": "capability", "capability_id": "background.rails_summary"},
-                    "entries": [{"profile_id": "rails-two", "profile_revision": 1}],
-                },
-            )
-            return "Frozen route answer."
+            if len(revisions) == 1:
+                assignments.set_assignment(
+                    OWNER,
+                    {
+                        "command_id": "rails-retarget",
+                        "expected_revision": 1,
+                        "scope": {"kind": "capability", "capability_id": "background.rails_summary"},
+                        "entries": [{"profile_id": "rails-two", "profile_revision": 1}],
+                    },
+                )
+            return "Route answer."
 
-    broker.inference_runner._engine_factory = lambda _revision, **_kw: Engine()
+    def factory(revision, **_kw):
+        revisions.append(revision.id)
+        return Engine()
+
+    broker.inference_runner._engine_factory = factory
     summarizer = rails_observer.build_profile_summarizer(
         db=db, broker=broker, principal=_rails_principal()
     )
-    events = [_event("t3", "story_status", "HS-143", to="done")]
-    first = rails_observer.summarize_batch(events, summarize_fn=summarizer)
+    first = rails_observer.summarize_batch([_event("t3", "story_status", "HS-143", to="done")], summarize_fn=summarizer)
     first_note = rails_observer.record_journal_entry(db, first, title="Rails journal")
-    # Same deterministic batch identity performs no second physical dispatch and
-    # reuses the same materialized note.
-    replay = rails_observer.summarize_batch(events, summarize_fn=summarizer)
-    replay_note = rails_observer.record_journal_entry(db, replay, title="Rails journal")
-    assert first["summary"] == replay["summary"] == "Frozen route answer."
+    replay_note = rails_observer.record_journal_entry(db, first, title="Rails journal")
+    second = rails_observer.summarize_batch([_event("t4", "gate_pass", "HS-143")], summarize_fn=summarizer)
+    assert first["summary"] == second["summary"] == "Route answer."
     assert first["egress"] == "local"
-    assert calls == ["physical"]
     assert replay_note.id == first_note.id
-    with db._connection() as conn:
-        plan = conn.execute(
-            """SELECT e.profile_id FROM inference_route_plan_entries e
-                 JOIN inference_parent_route_bundle_members m ON m.route_plan_id=e.plan_id
-                WHERE m.capability_id='background.rails_summary'"""
-        ).fetchone()
-        assert plan["profile_id"] == "rails-one"
-        assert conn.execute("SELECT COUNT(*) FROM kernel_receipts").fetchone()[0] >= 2
+    assert len(revisions) == 2 and revisions[0] != revisions[1]
 
 
 def test_routed_rails_persists_one_frozen_egress_badge_for_local_and_cloud(tmp_path) -> None:
@@ -311,28 +292,19 @@ def test_routed_rails_persists_one_frozen_egress_badge_for_local_and_cloud(tmp_p
         events = [_event(f"egress-{name}", "gate_pass", "HS-143")]
         first = rails_observer.summarize_batch(events, summarize_fn=summarizer)
         first_note = rails_observer.record_journal_entry(db, first, title="Rails journal")
-        replay = rails_observer.summarize_batch(events, summarize_fn=summarizer)
-        replay_note = rails_observer.record_journal_entry(db, replay, title="Rails journal")
+        replay_note = rails_observer.record_journal_entry(db, first, title="Rails journal")
         badge = f"[egress: {expected_badge}]"
         assert calls == ["physical"]
-        assert first["egress"] == replay["egress"] == expected_badge
+        assert first["egress"] == expected_badge
         assert first_note.id == replay_note.id
         assert first_note.body_markdown.count(badge) == 1
-        assert "[egress:" in first_note.body_markdown
         with db._connection() as conn:
-            route = conn.execute(
-                "SELECT terminal_outcome FROM inference_route_executions"
-            ).fetchone()
-            attempt = conn.execute(
-                "SELECT boundary FROM inference_route_attempts"
-            ).fetchone()
             assert conn.execute("SELECT COUNT(*) FROM notes").fetchone()[0] == 1
-        assert route["terminal_outcome"] == "succeeded"
-        assert attempt["boundary"] == expected_badge
+        assert broker.store.receipt(first["route_receipt_id"])["outcome"] == "succeeded"
 
 
-def test_routed_rails_missing_assignment_records_one_parent_refusal(db) -> None:
-    """E2: pre-route failure is event-only with no route/model child."""
+def test_rails_with_no_engine_journals_the_events_only(db) -> None:
+    """No engine assigned: event-only, no model call, no receipt."""
     from holdspeak.kernel.runtime import _configure
     broker = _configure(db)
     # The default observer is disabled, so startup creates no inferred Rails
@@ -342,14 +314,10 @@ def test_routed_rails_missing_assignment_records_one_parent_refusal(db) -> None:
     )
     batch = rails_observer.summarize_batch([_event("t4", "gate_refusal")], summarize_fn=summarizer)
     note = rails_observer.record_journal_entry(db, batch, title="Rails journal")
-    assert batch["degraded"] is True and batch["route_receipt_id"]
+    assert batch["degraded"] is True and not batch.get("route_receipt_id")
     assert "summary unavailable" in note.body_markdown
     with db._connection() as conn:
-        assert conn.execute("SELECT COUNT(*) FROM inference_parent_route_bundles").fetchone()[0] == 0
-        assert conn.execute("SELECT COUNT(*) FROM inference_route_plans").fetchone()[0] == 0
-        assert conn.execute("SELECT COUNT(*) FROM inference_route_executions").fetchone()[0] == 0
-        receipts = conn.execute("SELECT outcome FROM kernel_receipts").fetchall()
-    assert [row["outcome"] for row in receipts] == ["refused"]
+        assert conn.execute("SELECT COUNT(*) FROM kernel_operations WHERE name='inference.invoke'").fetchone()[0] == 0
 
 
 def test_routed_rails_known_preflight_failure_stays_failed_at_parent(db) -> None:
@@ -374,21 +342,9 @@ def test_routed_rails_known_preflight_failure_stays_failed_at_parent(db) -> None
             db=db, broker=broker, principal=_rails_principal()
         ),
     )
-    # The adopter's event-only degradation occurs after its parent receipt.
-    assert batch["degraded"] is True and batch["route_receipt_id"]
-    with db._connection() as conn:
-        route = conn.execute(
-            "SELECT id,terminal_outcome FROM inference_route_executions"
-        ).fetchone()
-        parent = conn.execute(
-            "SELECT operation_id FROM kernel_parent_runs WHERE kind='rails.observer-batch'"
-        ).fetchone()
-        assert conn.execute(
-            "SELECT COUNT(*) FROM inference_route_attempts WHERE execution_id=?", (route["id"],)
-        ).fetchone()[0] == 0
-        assert conn.execute("SELECT COUNT(*) FROM kernel_operations WHERE name='inference.invoke'").fetchone()[0] == 0
-    parent_receipt = broker.store.receipt(parent["operation_id"])
-    assert route["terminal_outcome"] == parent_receipt["outcome"] == "failed"
+    # An engine that is not ready never answers: the events are journaled alone.
+    assert batch["degraded"] is True
+    assert batch["summary"] == ""
 
 
 def test_routed_rails_genuine_dispatch_uncertainty_stays_indeterminate(db) -> None:
@@ -421,13 +377,7 @@ def test_routed_rails_genuine_dispatch_uncertainty_stays_indeterminate(db) -> No
         ),
     )
     assert batch["degraded"] is True and batch["route_receipt_id"]
-    with db._connection() as conn:
-        route = conn.execute("SELECT terminal_outcome FROM inference_route_executions").fetchone()
-        parent = conn.execute(
-            "SELECT operation_id FROM kernel_parent_runs WHERE kind='rails.observer-batch'"
-        ).fetchone()
-    parent_receipt = broker.store.receipt(parent["operation_id"])
-    assert route["terminal_outcome"] == parent_receipt["outcome"] == "indeterminate"
+    assert broker.store.receipt(batch["route_receipt_id"])["outcome"] == "indeterminate"
 
 
 def test_rails_blank_sentinel_migrates_one_visible_local_assignment(db) -> None:
@@ -509,7 +459,6 @@ def test_rails_blank_sentinel_migrates_one_visible_local_assignment(db) -> None:
     assert batch["summary"] == "Migrated local route answered."
     assert "Migrated local route answered." in note.body_markdown
     with db._connection() as conn:
-        assert conn.execute("SELECT COUNT(*) FROM inference_route_attempts").fetchone()[0] == 1
         assert conn.execute("SELECT COUNT(*) FROM kernel_operations WHERE name='inference.invoke'").fetchone()[0] == 1
         assert conn.execute("SELECT COUNT(*) FROM notes WHERE id=?", (note.id,)).fetchone()[0] == 1
         readiness = conn.execute(
@@ -579,15 +528,10 @@ def test_rails_unmappable_sentinel_writes_no_partial_migration(db, monkeypatch) 
         ),
     )
     note = rails_observer.record_journal_entry(db, batch, title="Rails journal")
-    assert batch["degraded"] is True and batch["route_receipt_id"]
+    assert batch["degraded"] is True and not batch.get("route_receipt_id")
     assert "summary unavailable" in note.body_markdown
     with db._connection() as conn:
-        assert conn.execute("SELECT COUNT(*) FROM inference_parent_route_bundles").fetchone()[0] == 0
-        assert conn.execute("SELECT COUNT(*) FROM inference_route_plans").fetchone()[0] == 0
-        assert conn.execute("SELECT COUNT(*) FROM inference_route_executions").fetchone()[0] == 0
-        assert conn.execute("SELECT COUNT(*) FROM inference_route_attempts").fetchone()[0] == 0
-        receipts = conn.execute("SELECT outcome FROM kernel_receipts").fetchall()
-    assert [row["outcome"] for row in receipts] == ["refused"]
+        assert conn.execute("SELECT COUNT(*) FROM kernel_operations WHERE name='inference.invoke'").fetchone()[0] == 0
 
 
 def test_marker_gated_settings_retire_only_meeting_and_rails_selectors(

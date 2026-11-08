@@ -555,156 +555,92 @@ def extract_via_router(
     principal: Any,
     payload: dict[str, Any],
 ) -> dict[str, Any]:
-    """Production extraction: dispatch through the real inference machinery.
+    """Production extraction: one job through the engine door.
 
-    Template: AskService (ask_service.py:209+) — dual-path: the routed admission
-    path (Phase 143 assignments) when configured, falling back to a direct
-    InferenceRunner dispatch (the same path the ask spine test exercises) when
-    no assignment exists.
-
-    Returns {"output": str, "egress": {...}} where output is the raw model
-    JSON and egress carries the resolved boundary truth.
+    The engine is the one assigned to ``calendar.snapshot_extract``; with no
+    assignment, the nearest ready vision-capable engine (local and LAN before
+    cloud). Returns ``{"output": str, "egress": {...}}``: the raw model JSON
+    and where the image went. The egress is known before the image leaves and
+    is returned on failure too.
     """
-    from ..kernel.runtime import _as_principal
     from ..kernel.vision_prompt_adapter import VisionPromptAdapter
-    from ..kernel.inference_runner import InvocationRequest, ServiceContract
-    from ..kernel.model import KernelRefused
-    from .errors import ServiceError
+    from . import engine_door
 
     broker = _service()
-    adoption = broker.inference_adoption_service
-
-    invocation_id = "snapshot_" + uuid.uuid4().hex
-    command_id = f"admit-{invocation_id}"
-
-    # Try the routed admission path first (Phase 143 assignments)
-    try:
-        admitted = adoption.admit(
-            principal,
-            command_id=command_id,
-            capability_id="calendar.snapshot_extract",
-            operation_id=invocation_id,
-            payload=payload,
-            invocation_id=invocation_id,
-            reserved_output_tokens=4096,
-        )
-    except Exception as exc:
-        code = getattr(exc, "code", "")
-        log.info("Snapshot routed admission unavailable (code=%s), trying direct dispatch", code)
-        # Fall through to the direct dispatch path below
-        admitted = None
-
-    if admitted is not None:
-        # --- Routed path: assignment found, dispatch through the controller ---
-        route_plan = admitted.get("route_plan", {})
-        entries = route_plan.get("entries", ())
-        # C10: the same resolution the face read before the upload.
-        egress: dict[str, Any] = _egress_from_route_entries(entries)
-
-        adapter = VisionPromptAdapter()
-        routed = adoption.execute(
-            principal,
-            execution_id=str(admitted["execution"]["id"]),
-            adapter=adapter,
-        )
-        if routed["outcome"] != "succeeded" or not isinstance(routed.get("result"), dict):
-            receipt = routed.get("receipt", {})
-            receipt_outcome = str(receipt.get("outcome", ""))
-            return {
-                "output": json.dumps({
-                    "error": f"vision_extraction_failed:{receipt_outcome}",
-                    "events": [],
-                }),
-                "egress": egress,
-            }
-        raw_output = str(routed["result"].get("output", ""))
-        return {"output": raw_output, "egress": egress}
-
-    # --- Direct dispatch path: no assignment, use the runner directly ---
-    # Template: AskService legacy path (ask_service.py:307-356) — resolve
-    # placement, capture deployment, dispatch through the runner with the
-    # VisionPromptAdapter.
-    import time
-    from ..deployment_revisions import capture_deployment_revision
-
-    runner = broker.inference_runner
-    adapter = VisionPromptAdapter()
-    # C10: egress is known the moment the revision is captured -- BEFORE
-    # the image leaves -- and is returned on failure too (counsel H2-1:
-    # a cloud dispatch that failed used to return egress None after the
-    # bytes had already been sent).
     egress: dict[str, Any] | None = None
     try:
         from ..db import get_database
-        db = get_database()
-        # Pre-filter to vision-capable profiles BEFORE dispatching
-        # (HS-147-05) and rank local/LAN before cloud (HS-175 N4) -- the
-        # ONE ranking ``resolve_snapshot_egress`` reads for the face.
-        # Constitution Art. III + UX-CANON A.9: egress where it happens.
-        targets = _rank_vision_targets(db)
-        target = targets[0] if targets else None
-        if target is None:
-            return {
-                "output": json.dumps({
-                    "error": "no_vision_model_assigned",
-                    "events": [],
-                }),
-                "egress": None,
-            }
-        revision = capture_deployment_revision(db, target)
-        egress = _egress_for_scope(
-            _TARGET_BOUNDARY_SCOPE.get(revision.boundary, "cloud"),
-            revision.endpoint or "",
-            getattr(revision, "node", "") or "",
+
+        engine, egress = _snapshot_engine(broker, get_database(), capture=True)
+        if engine is None:
+            return _no_vision(None)
+        answer = engine_door.run(
+            broker, principal, SNAPSHOT_CAPABILITY_ID, payload, engine=engine,
+            contract="calendar.snapshot.extract", adapter=VisionPromptAdapter(),
+            invocation_id="snapshot_" + uuid.uuid4().hex,
         )
-        captured_result: list[dict[str, Any]] = []
-
-        def publish_capture(output: Any) -> str:
-            if isinstance(output, dict):
-                captured_result.append(dict(output))
-            return f"snapshot:{invocation_id}"
-
-        with _as_principal(principal):
-            outcome = runner.invoke(
-                InvocationRequest(
-                    revision.id,
-                    ServiceContract.for_payload(
-                        "calendar.snapshot.extract", "1", payload,
-                    ),
-                    time.time() + 120,
-                    payload,
-                    invocation_id,
-                ),
-                adapter,
-                publish=publish_capture,
-            )
-    except (KernelRefused, Exception) as exc:
-        log.warning("Snapshot direct dispatch failed: %s", exc)
+    except engine_door.EngineDoorError as exc:
         return {
-            "output": json.dumps({
-                "error": "no_vision_model_assigned",
-                "events": [],
-            }),
-            # The revision was captured (and the image may have left):
-            # the egress truth rides the refusal.  None only when no
-            # target was ever resolved.
+            "output": json.dumps({"error": f"vision_extraction_failed:{exc.outcome or exc.code}", "events": []}),
             "egress": egress,
         }
+    except Exception as exc:
+        log.warning("Snapshot dispatch failed: %s", exc)
+        return _no_vision(egress)
+    if answer.engine is not engine:  # the chain's next engine answered
+        egress = _engine_egress(broker, answer.engine)
+    return {"output": answer.output, "egress": egress}
 
-    if outcome.outcome == "succeeded" and captured_result:
-        raw_output = str(captured_result[0].get("output", ""))
-        # HS-175 N4: scope from the revision boundary (the truth), host
-        # for every non-local boundary -- the same helper the routed path
-        # and the face use.
-        return {"output": raw_output, "egress": egress}
 
-    return {
-        "output": json.dumps({
-            "error": "no_vision_model_assigned",
-            "events": [],
-        }),
-        "egress": egress,
-    }
+def _no_vision(egress: dict[str, Any] | None) -> dict[str, Any]:
+    return {"output": json.dumps({"error": "no_vision_model_assigned", "events": []}), "egress": egress}
+
+
+def _engine_egress(broker: Any, engine: Any) -> dict[str, Any]:
+    from . import engine_door
+
+    revision = broker.database.deployment_revisions.get(engine.revision)
+    return _egress_for_scope(
+        engine_door.egress_of(broker, engine),
+        getattr(revision, "endpoint", "") or "", getattr(revision, "node", "") or "",
+    )
+
+
+def _snapshot_engine(broker: Any, db: Any, *, capture: bool) -> tuple[Any, dict[str, Any] | None]:
+    """The engine a Snapshot runs on and where its image goes: the assigned
+    engine, else the first ranked vision target. ``(None, None)`` when there
+    is none. ``capture=False`` reads the vision ranking without writing a
+    deployment revision (the face's egress chip)."""
+    from . import engine_door
+
+    engine = None
+    if broker is not None:
+        try:
+            engine = engine_door.engine_for(broker, SNAPSHOT_CAPABILITY_ID)
+        except Exception:  # no assignment, or no broker to read it: the ranking decides
+            engine = None
+    if engine is not None:
+        return engine, _engine_egress(broker, engine)
+    targets = _rank_vision_targets(db)
+    if not targets:
+        return None, None
+    target = targets[0]
+    scope = _TARGET_BOUNDARY_SCOPE.get(target.boundary, "cloud")
+    if not capture:
+        deployment = getattr(target, "deployment", None)
+        return None, _egress_for_scope(
+            scope,
+            getattr(deployment, "endpoint", "") if deployment else "",
+            getattr(deployment, "node", "") if deployment else "",
+        )
+    from ..deployment_revisions import capture_deployment_revision
+
+    revision = capture_deployment_revision(db, target)
+    return engine_door.Engine(revision.id), _egress_for_scope(
+        _TARGET_BOUNDARY_SCOPE.get(revision.boundary, "cloud"),
+        revision.endpoint or "",
+        getattr(revision, "node", "") or "",
+    )
 
 
 # ── HS-175 counsel C10: ONE egress resolution, read before the upload ──
@@ -717,7 +653,6 @@ def extract_via_router(
 # host; every other scope names the host bytes leave for (a paired
 # device names its endpoint host or node).
 
-_ROUTE_BOUNDARY_RANK = {"local": 0, "mesh": 1, "private_network": 2, "cloud": 3}
 _TARGET_BOUNDARY_RANK = {
     "same_device": 0, "paired_device": 1,
     "private_network": 2, "external_service": 3,
@@ -746,39 +681,6 @@ def _egress_for_scope(scope: str, endpoint: str = "", node: str = "") -> dict[st
     return egress
 
 
-def _egress_from_route_entries(entries: Any, db: Any = None) -> dict[str, Any]:
-    """Egress truth from a route plan's entries (the routed path)."""
-    boundaries = [str(e.get("boundary", "")) for e in entries]
-    widest = (
-        max(boundaries, key=lambda b: _ROUTE_BOUNDARY_RANK.get(b, 0))
-        if boundaries else "local"
-    )
-    if widest == "local":
-        return {"scope": "local"}
-    endpoint, node = "", ""
-    for entry in entries:
-        if str(entry.get("boundary", "")) != widest:
-            continue
-        dep_id = str(entry.get("deployment_revision_id", ""))
-        if dep_id:
-            try:
-                if db is None:
-                    from ..db import get_database
-                    db = get_database()
-                with db._connection() as conn:
-                    row = conn.execute(
-                        "SELECT endpoint, node FROM deployment_revisions WHERE id=?",
-                        (dep_id,),
-                    ).fetchone()
-                    if row:
-                        endpoint = str(row["endpoint"] or "")
-                        node = str(row["node"] or "")
-            except Exception:
-                pass
-        break
-    return _egress_for_scope(widest, endpoint, node)
-
-
 def _rank_vision_targets(db: Any) -> list[Any]:
     """Ready, vision-capable targets, nearest boundary first (direct path).
 
@@ -805,40 +707,22 @@ def resolve_snapshot_egress(db: Any = None) -> dict[str, Any] | None:
     """Read-only: where the NEXT Snapshot upload's image would go.
 
     Returns ``{"scope": "local"}`` / ``{"scope": ..., "host": ...}`` from the
-    same resolution ``extract_via_router`` dispatches through, or ``None``
-    when no vision model is resolvable (the upload would refuse by name,
-    ``no_vision_model_assigned``).  No admission, no execution, no write.
+    same resolution ``extract_via_router`` runs on, or ``None`` when no
+    vision model is resolvable (the upload would refuse by name,
+    ``no_vision_model_assigned``).
     """
-    # Routed path: the Phase 143 assignment's route plan (pure resolution).
-    try:
-        broker = _service()
-        plans = getattr(broker.inference_adoption_service, "plans", None)
-        if plans is not None:
-            from .inference_route_plan_service import ROUTE_PLANNING_AUTHORITY
-
-            plan = plans.resolve_route_plan(
-                ROUTE_PLANNING_AUTHORITY, capability_id=SNAPSHOT_CAPABILITY_ID,
-            )
-            entries = plan.get("entries") or ()
-            if entries:
-                return _egress_from_route_entries(entries, db)
-    except Exception as exc:
-        log.info("Snapshot egress: routed resolution unavailable (%s)", exc)
-
-    # Direct path: the vision-capable profile ranking.
     try:
         if db is None:
             from ..db import get_database
             db = get_database()
-        targets = _rank_vision_targets(db)
-        if targets:
-            target = targets[0]
-            deployment = getattr(target, "deployment", None)
-            return _egress_for_scope(
-                _TARGET_BOUNDARY_SCOPE.get(target.boundary, "cloud"),
-                getattr(deployment, "endpoint", "") if deployment else "",
-                getattr(deployment, "node", "") if deployment else "",
-            )
+        try:
+            broker = _service()
+        except Exception:
+            broker = None
+        _engine, egress = _snapshot_engine(broker, db, capture=False)
+        return egress
     except Exception as exc:
-        log.info("Snapshot egress: direct resolution unavailable (%s)", exc)
-    return None
+        log.info("Snapshot egress unavailable (%s)", exc)
+        return None
+
+

@@ -420,7 +420,7 @@ def _drive_workbench_scheduled(tmp_path, monkeypatch) -> SurfaceRun:
 
 
 def _drive_rails(tmp_path, monkeypatch) -> SurfaceRun:
-    """Run Rails through the real SERVICE bundle, route, and controller path."""
+    """Run Rails through the engine door: one root invoke under its SERVICE principal."""
     from holdspeak import rails_observer
     from holdspeak.services.inference_assignment_service import InferenceAssignmentService
     from tests.unit.test_phase143_inference_assignments import OWNER as ASSIGNMENT_OWNER, _profile
@@ -465,13 +465,7 @@ def _drive_rails(tmp_path, monkeypatch) -> SurfaceRun:
         [{"ts": "t1", "event": "gate_pass", "story": "", "repo": "code"}], summarize_fn=summarizer,
     )
     assert not batch["degraded"], batch
-    return SurfaceRun(
-        db,
-        principal,
-        _parent_run_operation_id(db, "rails.observer-batch"),
-        THIS_MACHINE_ID,
-        parent_kind="rails.observer-batch",
-    )
+    return SurfaceRun(db, principal, None, THIS_MACHINE_ID)
 
 
 def _drive_decision(tmp_path, monkeypatch) -> SurfaceRun:
@@ -504,10 +498,7 @@ def _drive_decision(tmp_path, monkeypatch) -> SurfaceRun:
     asyncio.run(
         service.draft_promoted_with_model(OWNER, "dec-spine", "note", {})
     )
-    return SurfaceRun(
-        db, OWNER, _parent_run_operation_id(db, "decision.promotion-draft"), THIS_MACHINE_ID,
-        parent_kind="decision.promotion-draft",
-    )
+    return SurfaceRun(db, OWNER, None, THIS_MACHINE_ID)
 
 
 def _drive_delivery_review(tmp_path, monkeypatch) -> SurfaceRun:
@@ -565,23 +556,16 @@ def _drive_delivery_review(tmp_path, monkeypatch) -> SurfaceRun:
             "/api/delivery/prs/spine-source/1/draft-review",
             json={},
         )
-        replay = client.post(
-            "/api/delivery/prs/spine-source/1/draft-review",
-            json={},
-        )
-        assert response.status_code == replay.status_code == 200, (response.text, replay.text)
-        assert response.json()["artifact_id"] == replay.json()["artifact_id"]
+        assert response.status_code == 200, response.text
+        assert response.json()["artifact_id"]
         assert response.json()["placement"]["egress"] == {"scope": "local"}
     with db._connection() as conn:
         assert conn.execute("SELECT COUNT(*) FROM kernel_operations WHERE name='inference.invoke'").fetchone()[0] == 1
-    return SurfaceRun(
-        db, OWNER, _parent_run_operation_id(db, "delivery.pr-review-draft"), THIS_MACHINE_ID,
-        parent_kind="delivery.pr-review-draft",
-    )
+    return SurfaceRun(db, OWNER, None, THIS_MACHINE_ID)
 
 
 def test_delivery_http_refusal_identity_keeps_valid_pr_retries_executable(tmp_path, monkeypatch) -> None:
-    """E-F2 through the real delivery route and product bundle/controller path."""
+    """The retired override is refused by name; a valid request still drafts; no engine is named."""
     import holdspeak.db as hsdb
     from fastapi import FastAPI, Request
     from fastapi.testclient import TestClient
@@ -644,10 +628,7 @@ def test_delivery_http_refusal_identity_keeps_valid_pr_retries_executable(tmp_pa
         repaired = client.post("/api/delivery/prs/source-a/1/draft-review", json={})
         assert override_first.status_code == 409
         assert override_first.json()["error"] == "inference_request_target_override_retired"
-        assert override_first.json()["parent_receipt"]["outcome"] == "refused"
         assert repaired.status_code == 200, repaired.text
-        assert repaired.json()["parent_receipt"]["outcome"] == "succeeded"
-        assert repaired.json()["parent_receipt"]["receipt_id"] != override_first.json()["parent_receipt"]["receipt_id"]
 
         # Success first likewise gets a separate stale-override refusal rather
         # than re-labeling its succeeded receipt or falling through to 500.
@@ -659,8 +640,6 @@ def test_delivery_http_refusal_identity_keeps_valid_pr_retries_executable(tmp_pa
         assert succeeded.status_code == 200, succeeded.text
         assert stale.status_code == 409, stale.text
         assert stale.json()["error"] == "inference_request_target_override_retired"
-        assert stale.json()["parent_receipt"]["outcome"] == "refused"
-        assert stale.json()["parent_receipt"]["receipt_id"] != succeeded.json()["parent_receipt"]["receipt_id"]
 
         # Removing then restoring the exact assignment repairs a fresh request.
         current = assignments.get_assignment(
@@ -672,7 +651,7 @@ def test_delivery_http_refusal_identity_keeps_valid_pr_retries_executable(tmp_pa
             "capability_id": "delivery.pr_review_draft",
         })
         missing = client.post("/api/delivery/prs/source-c/3/draft-review", json={})
-        assert missing.status_code == 409 and missing.json()["parent_receipt"]["outcome"] == "refused"
+        assert missing.status_code == 409 and missing.json()["reason"] == "inference_no_engine"
         assignments.set_assignment(ASSIGNMENT_OWNER, {
             "command_id": "restore-delivery-assignment", "expected_revision": cleared["revision"],
             "scope": {"kind": "capability", "capability_id": "delivery.pr_review_draft"},
@@ -681,15 +660,8 @@ def test_delivery_http_refusal_identity_keeps_valid_pr_retries_executable(tmp_pa
         recovered = client.post("/api/delivery/prs/source-c/3/draft-review", json={})
         assert recovered.status_code == 200, recovered.text
 
-        # Same PR material is a replay, so no second physical call/artifact.
-        replay = client.post("/api/delivery/prs/source-a/1/draft-review", json={})
-        assert replay.status_code == 200
-        assert replay.json()["artifact_id"] == repaired.json()["artifact_id"]
-
     assert physical == ["physical", "physical", "physical"]
     with db._connection() as conn:
-        assert conn.execute("SELECT COUNT(*) FROM inference_parent_route_bundles").fetchone()[0] == 3
-        assert conn.execute("SELECT COUNT(*) FROM inference_route_attempts").fetchone()[0] == 3
         assert conn.execute("SELECT COUNT(*) FROM kernel_operations WHERE name='inference.invoke'").fetchone()[0] == 3
         assert conn.execute("SELECT COUNT(*) FROM artifacts").fetchone()[0] == 3
 
@@ -807,10 +779,7 @@ def _drive_cadence(tmp_path, monkeypatch) -> SurfaceRun:
     service = CadenceService(db, CadenceConfig(use_llm=True), kernel=broker)
     detail = asyncio.run(service.get_loop(WEB_OWNER_SESSION, loop.id))
     assert detail["next_action"]["generated_by"] == "llm", detail["next_action"]
-    return SurfaceRun(
-        db, WEB_OWNER_SESSION, _parent_run_operation_id(db, "cadence.next-action-draft"),
-        THIS_MACHINE_ID, parent_kind="cadence.next-action-draft",
-    )
+    return SurfaceRun(db, WEB_OWNER_SESSION, None, THIS_MACHINE_ID)
 
 
 SURFACE_DRIVERS: dict[str, Callable[[Any, Any], SurfaceRun]] = {
@@ -843,11 +812,11 @@ assert len(SURFACE_DRIVERS) == 15, "every named surface form is proven here; non
 #: the sanity test below) because ``test_one_path_provenance.py`` imports these
 #: to cross-check the DECLARED shape against the shape the stored row actually
 #: shows — the two files cannot drift apart without one of them failing.
-ROOT_SHAPED_SURFACES = frozenset({"Ask", "Recipe run"})  # HS-151-02: Recipe chat removed
+ROOT_SHAPED_SURFACES = frozenset({"Ask", "Recipe run", "Rails", "Decision promotion", "Delivery review", "cadence next action"})  # HS-151-02: Recipe chat removed
 CHILD_SHAPED_SURFACES = frozenset({
     "Sequence", "Workflow", "manual Workbench", "scheduled Workbench",
-    "memory writeback", "Rails", "Decision promotion", "Delivery review", "voice",
-    "meeting live", "meeting deferred", "dictation pipeline", "cadence next action",
+    "memory writeback", "voice",
+    "meeting live", "meeting deferred", "dictation pipeline",
 })
 
 
