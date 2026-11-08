@@ -38,13 +38,24 @@ vi.mock("../../../lib/api", async (importOriginal) => {
 
 import { WalkRunner } from "../WalkRunner";
 
-function mountWindow(id: string, html: string): void {
+function mountWindow(id: string, html: string, z?: number): HTMLElement {
   const element = document.createElement("div");
   element.id = id;
   element.dataset.layer = "window";
+  if (z !== undefined) element.style.zIndex = String(z);
   element.innerHTML = html;
   document.body.appendChild(element);
+  return element;
 }
+
+type Box = { left: number; top: number; width: number; height: number };
+/** Layout jsdom does not do: the rects a case sets on its elements. */
+const rects = new Map<Element, () => Box>();
+function rectOf(box: Box): DOMRect {
+  return { ...box, x: box.left, y: box.top, right: box.left + box.width, bottom: box.top + box.height,
+    toJSON: () => box } as DOMRect;
+}
+const realRect = HTMLElement.prototype.getBoundingClientRect;
 
 let posts: Array<Record<string, unknown>> = [];
 
@@ -67,22 +78,30 @@ function hub(status = 200) {
 
 beforeEach(() => {
   posts = [];
+  HTMLElement.prototype.getBoundingClientRect = function (this: HTMLElement) {
+    const box = rects.get(this);
+    return box ? rectOf(box()) : realRect.call(this);
+  };
   window.history.replaceState({}, "", `/?walk=${TOKEN}`);
   mocks.openSurface.mockImplementation((key: string) => {
     if (key === "open-programs") {
       mountWindow("surface-programs", `<button data-testid="programs-new">New program</button>
-        <section data-testid="programs-make"><div class="gadget-row">Project</div></section>`);
+        <section data-testid="programs-make"><ul data-testid="programs-make-rows"><li>Project</li></ul></section>`);
     }
     return true;
   });
   mocks.verbById.mockImplementation((id: string) => id === "chair.window.needs"
-    ? { id, ghost: () => null, run: () => mountWindow("chair:needs", `<p data-testid="needs-people-coverage">Yours</p>`) }
+    ? { id, ghost: () => null, run: () => mountWindow("chair:needs", `<button data-testid="needs-open-people">People</button>`) }
     : undefined);
   mocks.captureWindowPng.mockResolvedValue("iVBORw0KGgo=");
 });
 
 afterEach(() => {
   cleanup();
+  rects.clear();
+  HTMLElement.prototype.getBoundingClientRect = realRect;
+  document.documentElement.style.removeProperty("--desk-dock-h");
+  Object.assign(window, { innerWidth: 1024, innerHeight: 768 });
   document.body.innerHTML = "";
   vi.unstubAllGlobals();
   vi.clearAllMocks();
@@ -105,7 +124,7 @@ describe("The Walk", () => {
 
     // Step 3: the words, the question and the choices as library Buttons.
     expect(await screen.findByTestId("walk-question")).toHaveTextContent("Does the well read clearly?");
-    expect(screen.getByTestId("walk-words")).toHaveTextContent("The project choice.");
+    expect(screen.getByTestId("walk-words")).toHaveTextContent("The project rows.");
     expect(screen.getByTestId("walk-count")).toHaveTextContent("2 of 3");
     const redo = screen.getByRole("button", { name: "Redo" });
     expect(redo.className).toMatch(/\bbtn\b/);
@@ -131,6 +150,111 @@ describe("The Walk", () => {
     expect(screen.queryByTestId("walk-end")).toBeNull();
     // The windows the walk opened stay open.
     expect(document.getElementById("chair:needs")).not.toBeNull();
+  });
+
+  it("records the words as \"words\" when he presses Send and no choice; no choice is the default", async () => {
+    vi.stubGlobal("fetch", hub());
+    render(<WalkRunner />);
+    fireEvent.click(await screen.findByTestId("walk-next", {}, { timeout: 3000 }));
+    expect(await screen.findByTestId("walk-question")).toHaveTextContent("Does the well read clearly?");
+    // Every choice is the same weight: none reads as the default.
+    for (const name of ["Keep", "Redo"]) {
+      expect(screen.getByRole("button", { name }).className).not.toMatch(/primary/);
+    }
+    expect(screen.queryByTestId("walk-send")).toBeNull();
+    fireEvent.click(screen.getByTestId("walk-say-more"));
+    expect(screen.queryByTestId("walk-send")).toBeNull();
+    fireEvent.change(screen.getByRole("textbox", { name: "Say more" }), { target: { value: "No, broken." } });
+    fireEvent.click(screen.getByTestId("walk-send"));
+
+    await waitFor(() => expect(posts).toHaveLength(1));
+    expect(posts[0]).toEqual({ ref: "s11-well", choice: "words", words: "No, broken.", window_png: "iVBORw0KGgo=" });
+    expect(await screen.findByTestId("walk-question")).toHaveTextContent("Is the line clear?");
+  });
+
+  it("marks and shoots only the step's window, never a newer window of another app", async () => {
+    vi.stubGlobal("fetch", hub());
+    // A newer window of another app holds a part that matches the selector.
+    const other = mountWindow("surface-project-memory",
+      `<section data-testid="programs-make"><ul data-testid="programs-make-rows"><li>Update draft</li></ul></section>`, 30);
+    rects.set(other.querySelector("[data-testid='programs-make-rows']")!, () => ({ left: 700, top: 400, width: 200, height: 30 }));
+    render(<WalkRunner />);
+    const next = await screen.findByTestId("walk-next", {}, { timeout: 3000 });
+    // The Programs well paints a moment after the press (a lazy core).
+    const programs = document.getElementById("surface-programs")!;
+    programs.style.zIndex = "10";
+    programs.querySelector("[data-testid='programs-make']")!.remove();
+    fireEvent.click(next);
+    setTimeout(() => {
+      programs.insertAdjacentHTML("beforeend",
+        `<section data-testid="programs-make"><ul data-testid="programs-make-rows"><li>Project</li></ul></section>`);
+      rects.set(programs.querySelector("[data-testid='programs-make-rows']")!, () => ({ left: 40, top: 120, width: 260, height: 32 }));
+    }, 300);
+
+    expect(await screen.findByTestId("walk-question")).toHaveTextContent("Does the well read clearly?");
+    await waitFor(() => expect(screen.getByTestId("walk-ring").style.left).toBe("34px"));
+    expect(screen.getByTestId("walk-ring").style.top).toBe("114px");
+    fireEvent.click(screen.getByRole("button", { name: "Redo" }));
+    await waitFor(() => expect(posts).toHaveLength(1));
+    expect(mocks.captureWindowPng).toHaveBeenCalledTimes(1);
+    expect(mocks.captureWindowPng).toHaveBeenCalledWith(programs);
+  });
+
+  it("says the step's window is not open and skips the step", async () => {
+    vi.stubGlobal("fetch", hub());
+    // Needs you does not open (its verb runs, no window comes).
+    mocks.verbById.mockImplementation((id: string) => ({ id, ghost: () => null, run: () => undefined }));
+    // A People button in another window must not be marked.
+    mountWindow("surface-meetings", `<button data-testid="needs-open-people">Elsewhere</button>`, 40);
+    render(<WalkRunner />);
+    fireEvent.click(await screen.findByTestId("walk-next", {}, { timeout: 3000 }));
+    fireEvent.click(await screen.findByRole("button", { name: "Keep" }));
+    await waitFor(() => expect(posts).toHaveLength(1));
+    expect(await screen.findByTestId("walk-line", {}, { timeout: 9000 }))
+      .toHaveTextContent("The Needs you window is not open · This step is skipped");
+    expect(screen.queryByTestId("walk-ring")).toBeNull();
+    expect(await screen.findByTestId("walk-end", {}, { timeout: 4000 })).toHaveTextContent("Thanks · 1 answer");
+    expect(posts).toHaveLength(1);
+  }, 20000);
+
+  it("docks the card as one sheet above the dock on a 390 x 844 phone and keeps the part above it", async () => {
+    vi.stubGlobal("fetch", hub());
+    document.documentElement.style.setProperty("--desk-dock-h", "64px");
+    act(() => {
+      Object.assign(window, { innerWidth: 390, innerHeight: 844 });
+      window.dispatchEvent(new Event("resize"));
+    });
+    // Programs paints its New program press low in a scrolling body.
+    let scrolled = 0;
+    mocks.openSurface.mockImplementation(() => {
+      const element = mountWindow("surface-programs",
+        `<div data-testid="body" style="overflow-y: auto"><button data-testid="programs-new">New program</button></div>`);
+      const body = element.querySelector<HTMLElement>("[data-testid='body']")!;
+      Object.defineProperty(body, "scrollTop", { get: () => scrolled, set: (value: number) => { scrolled = value; } });
+      rects.set(body, () => ({ left: 0, top: 60, width: 390, height: 720 }));
+      rects.set(element.querySelector("[data-testid='programs-new']")!,
+        () => ({ left: 16, top: 700 - scrolled, width: 120, height: 40 }));
+      return true;
+    });
+    render(<WalkRunner />);
+    const card = await screen.findByTestId("walk-card", {}, { timeout: 3000 });
+    rects.set(card, () => ({ left: 0, top: 844 - 64 - 200, width: 390, height: 200 }));
+    act(() => { window.dispatchEvent(new Event("resize")); });
+
+    // One full-width sheet above the dock, at most 40 % of the height.
+    expect(card).toHaveAttribute("data-sheet");
+    expect(card.style.left).toBe("0px");
+    expect(card.style.right).toBe("0px");
+    expect(card.style.bottom).toBe("64px");
+    expect(card.style.maxHeight).toBe("337px");
+    // The part scrolled into the band above the sheet: not covered.
+    const target = screen.getByTestId("programs-new");
+    await waitFor(() => expect(target.getBoundingClientRect().bottom).toBeLessThanOrEqual(844 - 64 - 200));
+    expect(target.getBoundingClientRect().top).toBeGreaterThanOrEqual(60);
+    // The backdrop and the ring still mark it, where it is now.
+    expect(screen.getByTestId("walk-backdrop")).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByTestId("walk-ring").style.top)
+      .toBe(`${target.getBoundingClientRect().top - 6}px`));
   });
 
   it("shows one plain line and gets out of the way when the hub refuses the token", async () => {

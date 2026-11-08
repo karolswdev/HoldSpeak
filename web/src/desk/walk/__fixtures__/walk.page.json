@@ -22,8 +22,8 @@
         "ref": "s11-well"
       },
       "highlight": {
-        "target": "[data-testid='programs-make'] .gadget-row",
-        "words": "The project choice."
+        "target": "programs-make-rows",
+        "words": "The project rows."
       }
     },
     {
@@ -36,8 +36,8 @@
         "ref": "needs-coverage"
       },
       "highlight": {
-        "target": "needs-people-coverage",
-        "words": "Whose obligations the list shows."
+        "target": "needs-open-people",
+        "words": "People, in the toolbar."
       },
       "open": {
         "app": "chair:needs"
