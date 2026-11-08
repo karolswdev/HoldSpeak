@@ -1344,6 +1344,9 @@ describe("A2b: a proposal row in Needs you opens the Room with the proposal sele
     });
     render(<><NeedsDrawer /><Room /></>);
     await screen.findByText("2 need you");
+    // R1 (#1923): the Room's rows wait behind the status line's "n need you".
+    expect(screen.queryByTestId("proposal-row")).toBeNull();
+    fireEvent.click(screen.getByTestId("room-status-need"));
     await waitFor(() => expect(screen.getAllByTestId("proposal-row")).toHaveLength(2));
     expect(document.querySelector("li[data-selected] [data-testid=proposal-row]")).toBeNull();
 
