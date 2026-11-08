@@ -77,7 +77,6 @@ class HeartbeatMixin:
 
     def _heartbeat_loop(self) -> None:
         """Tick every 60 seconds; on each tick, check if a sweep is due."""
-        import time
 
         from ..db import get_database, get_observer
         from ..principals import Principal, PrincipalKind

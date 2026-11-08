@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from typing import Optional
 
-import numpy as np
 
 from ..logging_config import get_logger
 from ..plugins.queue import drain_plugin_run_queue, process_next_plugin_run_job

@@ -36,7 +36,6 @@ with tempfile.TemporaryDirectory(prefix="holdspeak-live-interview-") as director
         from holdspeak.services.project_service import ProjectService
         from holdspeak.services.thread_modes import seed_modes
         from holdspeak.services.interview_contracts import INTERVIEW_MODE_ID
-        from holdspeak.services.thread_service import ThreadService
         from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
         owner = Principal(PrincipalKind.OWNER, "live-interview-proof")
         reset_database()
@@ -126,6 +125,6 @@ with tempfile.TemporaryDirectory(prefix="holdspeak-live-interview-") as director
                     (root / ".tmp/interview-live-evidence.json").write_text(json.dumps(evidence, indent=2))
                     print(json.dumps({"result": "pass", "kept": kept.json(), "revisit": "same facts and suggestion disposition"}), flush=True)
             finally:
-                for event in list(ThreadService._active_turns.values()): event.set()
+                from holdspeak.services import thread_turns; [t.cancel() for t in thread_turns.live()]
                 runtime._dispose(broker)
                 reset_database()

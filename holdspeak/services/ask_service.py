@@ -1126,7 +1126,7 @@ class AskService:
             thread_id = threads.create_thread(title=thread_title(text)).id
         refs = [ref for ref, _title in self._about_refs(context, grounding, [])]
         service = self._thread_service(system_prompt=ask_desk.DESK_PROMPT, palette=resolve_palette(ASK))
-        self._tap_loop_text(service, thread_id, invocation_id)
+        untap = self._tap_loop_text(service, thread_id, invocation_id)
         try:
             turn = await ask_desk.run_loop(
                 service, principal, thread_id=thread_id, question=text, refs=refs,
@@ -1136,6 +1136,9 @@ class AskService:
             if new_thread:
                 threads.soft_delete(thread_id)
             raise
+        finally:
+            # HS-S34: a detached Ask gets no late words; the turn saves them.
+            untap()
         if turn["aborted"] or turn["error"] or not turn["text"]:
             if new_thread:
                 threads.soft_delete(thread_id)
@@ -1169,20 +1172,22 @@ class AskService:
         self._facts_and_claims(result, about=refs)
         return result
 
-    def _tap_loop_text(self, service: Any, thread_id: str, invocation_id: str) -> None:
+    def _tap_loop_text(self, service: Any, thread_id: str, invocation_id: str) -> Callable[[], None]:
         """Ask hub gap 1 on the tool loop: its ``thread_delta`` text becomes
         this Ask's ``ask_text`` frames.  A pass that calls a tool starts the
-        words again: the answer is the last pass's text."""
+        words again: the answer is the last pass's text. Returns the detach:
+        after it, no frame goes to this Ask (HS-S34)."""
         original = getattr(service, "_broadcast", None)
         if original is None:
-            return
+            return lambda: None
+        attached = [True]
         parts: list[str] = []
         frames = _TextFrames(lambda text: self.send_text(invocation_id, text))
 
         def tap(kind: str, data: Any = None, *args: Any, **kwargs: Any) -> Any:
             out = original(kind, data, *args, **kwargs)
             try:
-                if isinstance(data, dict) and data.get("thread_id") == thread_id:
+                if attached[0] and isinstance(data, dict) and data.get("thread_id") == thread_id:
                     if kind == "thread_delta" and data.get("kind") == "text" and data.get("text"):
                         parts.append(str(data["text"]))
                         frames.feed("".join(parts))
@@ -1195,6 +1200,13 @@ class AskService:
             return out
 
         service._broadcast = tap
+
+        def untap() -> None:
+            attached[0] = False
+            if getattr(service, "_broadcast", None) is tap:
+                service._broadcast = original
+
+        return untap
 
     def engine_tools(self) -> dict[str, str]:
         """Betterment Q7: whether the Answers engine can use the desk's tools

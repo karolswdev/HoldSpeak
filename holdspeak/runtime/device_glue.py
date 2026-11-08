@@ -6,64 +6,14 @@ of WebRuntime.
 
 from __future__ import annotations
 
-import hashlib
-import os
-import signal
-import sys
-import threading
-import time
-import webbrowser
-from datetime import datetime
-from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Optional
 
 import numpy as np
 
-from ..audio import AudioRecorder
-from ..config import Config
 from ..agent_context.models import DEFAULT_RECENT_MAX_AGE_SECONDS
 from ..audio import AudioSource
-from ..device_audio import DeviceRegistry, ensure_device_psk
-from ..web_auth import ensure_web_token
-from ..device_recording_tick import RecordingTicker
 from ..device_meeting_stats import pick_next_view
-from ..device_status import (
-    DeviceStatusEmitter,
-    push_intel_to_devices,
-    push_segment_to_devices,
-)
-from ..desktop_presence import DesktopPresenceHost, build_desktop_presence_host
-from ..hotkey import HotkeyListener
-from ..voice_typing import VoiceTypingSession
 from ..logging_config import get_logger
-from ..meeting_session import MeetingSession
-from ..plugins.router import (
-    DEFAULT_INTENT_THRESHOLD,
-    SUPPORTED_INTENTS,
-    available_profiles,
-    normalize_override_intents,
-    normalize_profile,
-    preview_route,
-)
-from ..plugins.builtin import register_builtin_plugins
-from ..plugins.host import PluginHost, build_idempotency_key
-from ..plugins.project_detector import ProjectDetectorPlugin
-from ..plugins.queue import drain_plugin_run_queue, process_next_plugin_run_job
-from ..plugins.signals import extract_intent_signals
-from ..activity_tracker import RuntimeActivityTracker
-from ..text_processor import TextProcessor
-from ..transcribe import Transcriber
-from ..typer import TextTyper
-
-log = get_logger("web_runtime")
-
-# HS-32-03: the owner string a meeting uses to hold the shared
-# ``VoiceTypingSession`` audio floor. One arbiter for hotkey / device /
-# meeting capture; while a meeting holds this, hotkey/device ``begin()``
-# is rejected, and a meeting can't start while either holds the floor.
-_MEETING_AUDIO_OWNER = "meeting"
-
-
 
 log = get_logger("web_runtime")
 

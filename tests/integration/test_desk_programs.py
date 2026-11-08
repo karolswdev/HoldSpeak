@@ -724,6 +724,27 @@ def test_the_step_remove_route_and_the_new_program_fields(tmp_path, monkeypatch)
         "code": "step_stays", "field": "position", "reason": "The worktree and the agent are set"}
 
 
+def test_the_list_names_the_night_when_steps_are_queued_and_nothing_when_the_engine_is_off(tmp_path, monkeypatch) -> None:
+    """The rail's night tile and the status bar's "tonight 23:30 · 3 queued"
+    read ``night`` from the list: the night Program, its start and its
+    queued steps. No night line, or the engine off: no ``night`` at all."""
+    from datetime import datetime, timedelta
+
+    monkeypatch.setenv("HOLDSPEAK_PROGRAMS", "on")
+    rig, client, pid = _req_rig(tmp_path, monkeypatch)
+    assert "night" not in client.get("/api/programs").json()
+    # A window that starts in three hours: every step waits for it.
+    start = (datetime.now() + timedelta(hours=3)).strftime("%H:%M")
+    end = (datetime.now() + timedelta(hours=4)).strftime("%H:%M")
+    assert client.patch(f"/api/programs/{pid}", json={"night": f"{start}–{end}"}).status_code == 200
+    assert "night" not in client.get("/api/programs").json()  # Drafting: it does not run tonight
+    assert client.post(f"/api/programs/{pid}/start").status_code == 200
+    listed = client.get("/api/programs").json()
+    assert listed["night"] == {"program_id": pid, "start": start, "queued": 3}, listed.get("night")
+    monkeypatch.setenv("HOLDSPEAK_PROGRAMS", "off")
+    assert "night" not in client.get("/api/programs").json()
+
+
 def test_the_program_family_lists_step_remove() -> None:
     from holdspeak.mcp import palettes
     from holdspeak.mcp.families import program as family

@@ -1,1102 +1,57 @@
-/** PHILO-14 A5 — Needs you as a smart drawer (board A-5; canvas README,
- *  RATIFIED A; PROPOSAL §3 Movement A: "Needs you is a smart drawer over
- *  the same objects").
+/** Needs you, the desk of today (the bold language, 2026-11-08; canvas NB
+ *  "Needs you: the desk of today", the first phone in "The three on the
+ *  phone"). Owner, on the face before it: "way too cluttered… 'more'
+ *  doesn't even look like a button".
  *
- *  The head is the number, once (`6 need you`). The body is a NeedsList of
- *  NeedsRows: each row IS the object (its icon by kind, its name, one fact
- *  line, ONE lamp and its word, its own verbs). The data is the hub's one
- *  answer (`useNeedsYou`, #788): the head speaks the same number as the
- *  Dock badge and the bell, and the rows are the members.
+ *  Top to bottom: the mast (NeedsMast.tsx: the lamp, the day and what must
+ *  be fixed, the counts in mono, Mine · People and Later, the spine); the
+ *  one thing that waits most, raised (FirstPlate.tsx); the ledger by weight
+ *  (Ledger.tsx: Must fix, Should fix, To do, Noted); the status bar. At the
+ *  phone width it is one column: the plate first, then the ledger.
  *
- *  No ⚠, no AgentFlight chip, no filter strip, no coverage chip: a question
- *  is the `ask` lamp; an item an agent works names the agent on its fact
- *  line and never reads UNASSIGNED. Hand to coder is not a Needs row verb
- *  (ruling in the PR body): the object's own window and the Object menu
- *  carry it.
+ *  The rows are the one row (NeedRow.tsx, Today draws it too); their verbs
+ *  and the wells they open are NeedVerbs.tsx. The data is the hub's one
+ *  answer (`useNeedsYou`, #788): the status bar speaks the same number as
+ *  the Dock badge and the bell, and the rows are the members.
  */
-import { TonightVerb } from "../programs/TonightVerb";
-import { AgentRow as AgentRowFace } from "../agents/AgentRow";
-import { conductorMembers, type ConductorMember } from "../conductor/members";
-import { answerMember, openMember } from "../conductor/open";
-import { openAgentLane } from "../shell";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { create } from "zustand";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Button } from "../../components/signal/Signal";
-import { apiFetch, readableError } from "../../lib/api";
-import { doneRoute, followThrough, markDone, tomorrowDay } from "./needsApi";
+import { apiFetch } from "../../lib/api";
 import { useAgentFlights } from "../agentFlights";
-import { commandForDoorVerb, labelFor, supportsDoorVerb, type DoorVerb } from "../chair/doorVerbs";
-import { useGate } from "../gate";
-import { clearWriteFailure, reportWriteFailure } from "../hooks/useWriteReceipt";
+import { reportWriteFailure } from "../hooks/useWriteReceipt";
 import { refreshNeedsYou, useNeedsYou } from "../needsYou";
 import { PeopleReadFailed } from "../people/PeopleReadFailed";
-import { openProjectProposal, refOpener, type Opener } from "../openObject";
-import { openCoderSession, openProjectRoom, openSurfaceOr } from "../shell";
+import { openSurfaceOr } from "../shell";
 import { useDesk } from "../store";
-import { acceptDecision } from "../decide";
-import { ConfirmVerb, ScrollHint, StatusBar, StringGadget, SurfaceSection, SurfaceState, TickNumber, Toolbar, type StatusBarItem } from "../surface";
-import { openSourceRef } from "../surface/citations";
-import { NeedsList, NeedsRow } from "../surface/objects";
-import { spriteUrl } from "../sprites";
-import { discardPrepared, PreviewWell, retryInline, sendPrepared } from "../surface/send";
-import { egressOf, farSide, previewOf, type Channel, type Send as ChannelSend } from "../../features/channels/channels";
+import { ScrollHint, StatusBar, SurfaceSection, SurfaceState, type StatusBarItem } from "../surface";
+import { NeedsList } from "../surface/objects";
+import { wireDate } from "../surface/format";
 import { groupGaps, readCoverage } from "../coverage";
-import {
-  armingFace,
-  chipsOn,
-  coverageGroupFace,
-  needFace,
-  needFaces,
-  foldMatches,
-  matchWords,
-  type NeedEntry,
-  needsHead,
-  nextWord,
-  NO_CHIPS,
-  passesChips,
-  plateOf,
-  tierWord,
-  urlHost,
-  type NeedFace,
-  type NeedsChips,
-  dayWord,
-} from "./needsFace";
-import { NoteSendWells } from "../documentSendsLazy";
-import { cancelArming, useArmingOutcome } from "./arming";
-import { WorkMenu, type WorkMenuEntry } from "../components/DeskMenu";
-import { openHand } from "../agentHand";
-import { runAsProgram } from "../programs/RunAsProgram";
+import { armingFace, coverageGroupFace, dayWord, needFace, needFaces, needsHead, nextWord, type NeedFace } from "./needsFace";
+import { useArmingOutcome } from "./arming";
 import { Disclosure } from "../surface/patterns/Disclosure";
-import { AddToProject } from "../AddToProject";
-import "./needs.css";
-import { briefable, copyPageLink, deferItem, LATER_TIMES, revokePage, sendToTelegram } from "../reach";
-import { openPhoneWing } from "../calls/phoneFocus";
 import { Token } from "../surface/Token";
-import { ItemReader, ItemReaderContext, readsInPlace, useReadInPlace } from "./ItemReader";
+import { ItemReader, ItemReaderContext, readsInPlace } from "./ItemReader";
 import { INTELLIGENCE_NAVIGATE, takeFollowThrough, type IntelligenceNavigation } from "../intelligenceNavigation";
+import { faceOpener, hhmm, useDropped, useSourceReceipt } from "./NeedVerbs";
+import { NeedRow, useRowMarks } from "./NeedRow";
+import { inScope, NeedsMast, weightsOf, type NeedsScope } from "./NeedsMast";
+import { FirstPlate, pickFirst } from "./FirstPlate";
+import { Ledger, ledgerGroups } from "./Ledger";
+import "./needs.css";
 
-/** Answer: the agent's window with the answer field focused. Lane C2 builds
- *  the agent window and honors the hint; today the session opener opens the
- *  answer well (Conductor F2 K5b). */
-/** A Needs row's sprite: an agent row wears its OWN agent (Codex keeps its
- *  face; PHILO-14 A0c r2); any other row takes its kind's sprite. */
-export function needsRowSprite(face: { id: string; agent?: string | null }): string | undefined {
-  return face.agent ? spriteUrl("agent", face.id, "rest", face.agent) : undefined;
-}
-
-export function openAgentAnswer(sessionKey: string): void {
-  openCoderSession(sessionKey, { answer: true });
-}
-
-/** What a press on the row body opens (A2b): a proposal opens the Room with
- *  THAT proposal selected; every other row its ref in the one open grammar
- *  (a Project's ref opens its drawer). Null: the body opens nothing. */
-export function faceOpener(face: NeedFace): Opener | null {
-  const proposal = face.proposal;
-  if (proposal) return () => openProjectProposal(proposal.projectId, proposal.proposalId);
-  return refOpener(face.openRef);
-}
-
-type Well = "owner" | "date" | "detail" | "project" | "nudge" | "decide" | "whose" | "send";
-
-/** Betterment D3: Drop says what went and offers Undo for 8 s. */
-type Dropped = { name: string; undo(): Promise<unknown>; id: number };
-const UNDO_MS = 8000;
-export const useDropped = create<{ dropped: Dropped | null; set(d: Dropped | null): void }>(
-  (setState) => ({ dropped: null, set: (dropped) => setState({ dropped }) }),
-);
-let dropSeq = 0;
-
-/** Drop, then the Undo receipt in the foot (8 s). */
-export function offerUndo(name: string, undo: () => Promise<unknown>): void {
-  const id = ++dropSeq;
-  useDropped.getState().set({ name, undo, id });
-  window.setTimeout(() => {
-    if (useDropped.getState().dropped?.id === id) useDropped.getState().set(null);
-  }, UNDO_MS);
-}
-
+// The row, its verbs and the mast live in their own files; these names
+// stay importable from here.
+export {
+  faceOpener, needsRowSprite, openAgentAnswer, offerUndo, useDropped, nudgeText, useSourceReceipt, recheckSource, hasRowMenu,
+} from "./NeedVerbs";
+export { NeedRow, quietState, glyphWord, useRowMarks } from "./NeedRow";
+export { inScope, type NeedsScope } from "./NeedsMast";
 export { dayWord };
-
-/** Betterment D2: the short message Nudge drafts. He reads it, can change
- *  it in the note, and presses Send himself. */
-export function nudgeText(task: string, person: string, due: string | null | undefined): string {
-  const first = person.trim().split(/\s+/)[0] || "Hi";
-  const when = dayWord(due);
-  return `${first}, is "${task}" on track${when ? ` for ${when}` : ""}? Tell me if you need help.`;
-}
-
-/** PHILO-15 B61: the receipt a source Retry leaves in the drawer. */
-/** W6-H words: `title` is the raw reason of a failed check (the hover only). */
-type SourceReceipt = { tone: "ok" | "fail"; text: string; title?: string };
-export const useSourceReceipt = create<{ receipt: SourceReceipt | null; set(r: SourceReceipt | null): void }>(
-  (setState) => ({ receipt: null, set: (receipt) => setState({ receipt }) }),
-);
-
-function hhmm(d: Date): string {
-  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
-}
-
-/** PHILO-15 B61: Retry on a source re-checks THAT source (each of its
- *  Watches, through the hub's single-Watch check) and leaves a receipt;
- *  then the one number is read again. */
-export async function recheckSource(name: string, watchIds: readonly string[]): Promise<SourceReceipt> {
-  try {
-    for (const id of watchIds) {
-      await apiFetch(`/api/watches/${encodeURIComponent(id)}/evaluate`, { method: "POST" });
-    }
-    return { tone: "ok", text: `Checked ${name} at ${hhmm(new Date())}` };
-  } catch (error) {
-    return { tone: "fail", text: `Could not check ${name} · Nothing changed · Try again`, title: readableError(error) };
-  } finally {
-    void refreshNeedsYou(true);
-  }
-}
-
-/** DELIGHT: mark the pressed verb's row to settle out, and wait the 180 ms
- *  it takes. Nothing under reduced motion (or with no media query). */
-async function settleOut(origin?: Element | null): Promise<Element | null> {
-  const row = origin?.closest(".needs-row") ?? null;
-  if (!row || !window.matchMedia?.("(prefers-reduced-motion: no-preference)")?.matches) return null;
-  row.setAttribute("data-settle", "done");
-  await new Promise((resolve) => window.setTimeout(resolve, 180));
-  return row;
-}
-
-/** Programs (2026-10-28): the words of a your-turn choice. */
-const PROGRAM_CHOICE_WORDS: Record<string, string> = {
-  merge: "Merge", not_yet: "Not yet", fix_now: "Fix now", later: "Make a task", skip: "Skip", resume: "Resume", prepare: "Send…",
-  // PG19: an agent at its usage limit.
-  continue: "Continue", wait: "Wait",
-  // PG-REQ: his word on a requirement, and one unmet after the rounds.
-  met: "Met", unmet: "Unmet", send_back: "Send back",
-  // PG-IMPORT IMP2: a to-do (a thing the agent asks him to do by hand).
-  done: "Done", cant: "Can't do it",
-  // PG-DIRECTION DIR3: a core question, a race winner, an added step, what an
-  // agent proposed (they read as raw wire keys before).
-  go_on: "Go on", park: "Park", pick: "Pick", add: "Add", apply: "Apply", send: "Send",
-  // 2026-10-31: the step's agent's commit.
-  allow: "Allow the commit", not_now: "Not now",
-  // PG-LANG JRN9 to JRN11: an audit's findings, its fix program, a lesson.
-  file: "File", make: "Make", keep_program: "Keep for this program", keep_repo: "Keep for HoldSpeak",
-  // A Program whose every step is finished.
-  close: "Close",
-};
-
-/** Owner walk 2026-11-08: where the row's context menu opens (a right
- *  press, a long press, Shift+F10), and the row it is for. */
-type RowMenu = { x: number; y: number; row: Element | null };
-
-/** The rows whose other verbs live in the row's context menu (the More
- *  Button is gone: one verb on the row, the rest on a right press). */
-export function hasRowMenu(face: Pick<NeedFace, "verbs">): boolean {
-  return face.verbs.kind === "work" || face.verbs.kind === "confirm" || face.verbs.kind === "program";
-}
-
-/** The context menu's Project entry: `Open the Project: <name>` opens the
- *  Project's Room (PHILO-17 U30: one home, never a drawer). */
-function projectEntries(project: { id: string; name: string } | null): WorkMenuEntry[] {
-  return project
-    ? [{ type: "item", id: "project-room", label: `Open the Project: ${project.name}`, onSelect: () => openProjectRoom(project.id) }]
-    : [];
-}
-
-function NeedVerbsView({ face, primary, onWell, well, menu = null, onMenu = () => undefined, extra = [] }: {
-  face: NeedFace;
-  primary: boolean;
-  well: Well | null;
-  onWell(next: Well | null): void;
-  menu?: RowMenu | null;
-  onMenu?(next: RowMenu | null): void;
-  /** Entries every row's menu carries after its own (the Project). */
-  extra?: WorkMenuEntry[];
-}) {
-  const [busy, setBusy] = useState(false);
-  const projects = useDesk((state) => state.projects);
-  const setSourceReceipt = useSourceReceipt((st) => st.set);
-  // The item reader (2026-11-08): in the Needs-you window, Open on an item
-  // with no other home reads it in place.
-  const readHere = useReadInPlace(face);
-  const lead = primary ? "primary" : "secondary";
-  const v = face.verbs;
-  const named = (verb: string) => `${verb}: ${face.name}`;
-
-  /* DELIGHT (2026-10-27): `origin` is the pressed verb. When the hub says a
-     Done is done, the row settles out (a green wash that fades, 180 ms,
-     opacity and colour only), then the list reads again and the row is
-     gone. If the row is still there after the read, it shows again. */
-  const act = async (label: string, run: () => Promise<unknown>, key: string, origin?: Element | null) => {
-    if (busy) return;
-    setBusy(true);
-    try {
-      await run();
-      clearWriteFailure(key);
-      const settled = label === "Done" ? await settleOut(origin) : null;
-      void Promise.resolve(refreshNeedsYou(false)).finally(() => settled?.removeAttribute("data-settle"));
-    } catch (error) {
-      reportWriteFailure(label, error, () => void act(label, run, key, origin), key);
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  switch (v.kind) {
-    case "phone":
-      // Phone (2026-10-28): the hub's verbs, the first the lead. Call now /
-      // Call again ring his phone (his press is the egress); Answer here
-      // needs his words, so it opens the Phone wing set to reply.
-      return (
-        <>
-          {v.verbs.map((verb, index) => (
-            <Button key={verb.id} dense variant={index === 0 ? lead : "ghost"} loading={busy && index === 0} disabled={busy}
-              aria-label={named(verb.label)} data-testid="needs-row-verb" data-verb={`phone-${verb.id.replace(/_/g, "-")}`}
-              onClick={(event) => verb.needs_text
-                ? openPhoneWing(String((verb.body as { reply_to?: unknown } | undefined)?.reply_to ?? v.msgId ?? "") || null)
-                : void act(index === 0 ? "Done" : verb.label, () => apiFetch(verb.href, {
-                  method: verb.method || "POST", json: verb.body ?? {},
-                }), face.id, (event.currentTarget as Element).closest("li"))}>
-              {verb.label}
-            </Button>
-          ))}
-        </>
-      );
-    case "program": {
-      // Owner walk 2026-11-08: the row is one verb, the ask's lead (Merge on
-      // a merge ask, Decide on a decision, else Open); a press on the row
-      // opens the Program. Its other choices, Later (the times) and Send
-      // (the briefing page) are the row's context menu.
-      const opener = faceOpener(face);
-      const decide = (choice: string, label: string, origin?: Element | null) => act(label, () => apiFetch(v.decide, {
-        method: "POST", json: programDecideBody(v, choice),
-      }), face.id, origin);
-      const merges = v.ask === "merge" && v.choices.includes("merge");
-      // One meaning for Decide on every row: it opens the choices in place.
-      // An ask with no choices is Open (the Program, at its step).
-      const decides = !merges && v.ask === "decide" && v.choices.length > 0;
-      const leadWord = merges ? "Merge" : decides ? "Decide" : "Open";
-      const ghost = busy ? "Busy" : undefined;
-      const choiceEntries: WorkMenuEntry[] = v.choices.filter((choice) => !(merges && choice === "merge")).map((choice) => {
-        const word = PROGRAM_CHOICE_WORDS[choice] ?? choice;
-        return { type: "item" as const, id: `choice-${choice}`, label: word, ghost,
-          onSelect: () => void decide(choice, choice === "prepare" ? word : "Done", menu?.row) };
-      });
-      const briefs = Boolean(v.ref && briefable(v.itemKind));
-      const entries: WorkMenuEntry[] = [
-        ...(opener ? [{ type: "item" as const, id: "open", label: "Open", onSelect: opener }] : []),
-        ...choiceEntries,
-        // PG-DIRECTION DIR4: Later is an answer (the times). A row he
-        // deferred already sits in the Later group with its time.
-        ...(briefs && !v.later ? [{ type: "sub" as const, id: "later", label: "Later",
-          entries: LATER_TIMES.map((time) => ({ type: "item" as const, id: `later-${time.id}`, label: time.label, ghost,
-            onSelect: () => void act("Later", () => deferItem(String(v.ref), time.id), face.id) })) }] : []),
-        // PG-DIRECTION DIR3/DIR5: the item's briefing page. Revoke ends the
-        // token, not the item.
-        ...(briefs ? (v.page
-          ? [{ type: "item" as const, id: "revoke-page", label: "Revoke the page", ghost,
-            onSelect: () => void act("Revoke", () => revokePage(String(v.page?.package_id)), face.id) }]
-          : [{ type: "sub" as const, id: "send", label: "Send", entries: [
-            { type: "item" as const, id: "copy-link", label: "Copy page link", ghost,
-              onSelect: () => void act("Copy page link", () => copyPageLink(String(v.ref)), face.id) },
-            { type: "item" as const, id: "send-telegram", label: "Send to Telegram", ghost,
-              onSelect: () => void act("Send to Telegram", () => sendToTelegram(String(v.ref)), face.id) },
-          ] }]) : []),
-      ];
-      return <>
-        <Button dense variant="secondary" loading={busy} disabled={busy || (!merges && !decides && !opener)} aria-label={named(leadWord)}
-          aria-expanded={decides ? well === "decide" : undefined}
-          data-testid="needs-row-verb" data-verb={merges ? "program-merge" : decides ? "program-decide" : "program-open"}
-          onClick={(event) => merges ? void decide("merge", "Done", event.currentTarget)
-            : decides ? onWell(well === "decide" ? null : "decide") : opener?.()}>{leadWord}</Button>
-        {menu ? <WorkMenu label={face.name} x={menu.x} y={menu.y} entries={[...entries, ...extra]} autoFocus onClose={() => onMenu(null)}
-          returnFocus={() => menu.row?.querySelector<HTMLElement>("[data-testid=needs-row-verb]")?.focus()} /> : null}
-      </>;
-    }
-    case "allow-helper":
-      return <Button dense variant={lead} loading={busy} disabled={busy}
-        aria-label={named("Allow helper")} data-testid="needs-row-verb" data-verb="allow-helper"
-        onClick={() => void act("Allow helper", () => apiFetch(
-          `/api/agent/launches/${encodeURIComponent(v.launchId)}/helper/allow`,
-          { method: "POST", json: { request_id: v.requestId } },
-        ), face.id)}>Allow helper</Button>;
-    case "answer":
-      return (
-        <>
-          <Button dense variant="ghost" aria-label={named("Open")} data-testid="needs-row-verb" data-verb="open"
-            onClick={() => openCoderSession(v.sessionKey)}>Open session</Button>
-          <Button dense variant={lead} aria-label={named("Answer")} data-testid="needs-row-verb" data-verb="answer"
-            onClick={() => openAgentAnswer(v.sessionKey)}>Answer</Button>
-        </>
-      );
-    case "gate": {
-      const decide = (decision: "approved" | "denied") =>
-        act(decision === "approved" ? "Approve" : "Deny",
-          () => useGate.getState().decide(v.proposalId, decision), `gate:${v.proposalId}`);
-      const deny = () => void decide("denied");
-      const approve = () => void decide("approved");
-      return (
-        <>
-          <Button dense variant="ghost" disabled={busy} aria-label={named("Deny")} data-testid="needs-row-verb" data-verb="deny"
-            onClick={deny}>Deny</Button>
-          <Button dense variant={lead} disabled={busy} aria-label={named("Approve")} data-testid="needs-row-verb" data-verb="approve"
-            onClick={approve}>Approve</Button>
-        </>
-      );
-    }
-    case "gate-cut": {
-      const deny = () => void act("Deny",
-        () => useGate.getState().decide(v.proposalId, "denied"), `gate:${v.proposalId}`);
-      return (
-        <>
-          <Button dense variant="ghost" disabled={busy} aria-label={named("Deny")} data-testid="needs-row-verb" data-verb="deny"
-            onClick={deny}>Deny</Button>
-          {v.sessionKey ? (
-            <Button dense variant={lead} aria-label={named("Open the agent's lane on Raw")} data-testid="needs-row-verb" data-verb="open"
-              onClick={() => openCoderSession(v.sessionKey, { raw: true })}>Open raw lane</Button>
-          ) : null}
-        </>
-      );
-    }
-    case "pr":
-      return (
-        <>
-          <Button dense variant={lead} aria-label={named(`Open PR #${v.number ?? ""}`)} data-testid="needs-row-verb" data-verb="open-pr"
-            title={v.url} onClick={() => window.open(v.url, "_blank", "noopener")}>Open PR</Button>
-        </>
-      );
-    case "session":
-      return (
-        <Button dense variant={lead} aria-label={named("Open the agent")} data-testid="needs-row-verb" data-verb="open"
-          onClick={() => openCoderSession(v.sessionKey)}>Open session</Button>
-      );
-    case "review":
-      return (
-        <Button dense variant={lead} aria-label={named("Review")} data-testid="needs-row-verb" data-verb="review"
-          onClick={() => refOpener(v.ref)?.()}>Review</Button>
-      );
-    case "work": {
-      const opener = readHere ?? faceOpener(face);
-      const key = `action-item:${v.cardId}`;
-      // Betterment D3: Drop removes it; Undo (8 s) opens it again.
-      const drop = () => act("Drop", async () => {
-        await followThrough(v.cardId, "dismiss");
-        offerUndo(face.name, () => followThrough(v.cardId, "reopen"));
-      }, key);
-      // Owner walk 2026-11-08: the row is one verb; the rest is the row's
-      // context menu. Open is first there for the keyboard (a press on the
-      // row opens it too).
-      const entries: WorkMenuEntry[] = [
-        ...(opener ? [{ type: "item" as const, id: "open", label: "Open", onSelect: opener }] : []),
-        ...(v.direction === "theirs"
-          ? [{ type: "item" as const, id: "done", label: "Done", ghost: busy ? "Busy" : undefined,
-            onSelect: () => void act("Done", () => markDone(v), key, menu?.row) }]
-          : []),
-        ...(v.next === "set_date"
-          ? [{ type: "item" as const, id: "date", label: "Set a date", onSelect: () => onWell("date") }]
-          : []),
-        { type: "item", id: "later", label: "Later", ghost: busy ? "Busy" : undefined,
-          onSelect: () => void act("Later", () => followThrough(v.cardId, "snooze", { until: tomorrowDay() }), key) },
-        { type: "item", id: "drop", label: "Drop", ghost: busy ? "Busy" : undefined, onSelect: () => void drop() },
-        // One verb, one name (2026-11-08): the action becomes a Program from
-        // where he reads it, through the one Run as a program.
-        { type: "item", id: "program", label: "Run as a program", ghost: busy ? "Busy" : undefined,
-          onSelect: () => void act("Run as a program", () => runAsProgram({ kind: "action", id: v.cardId }), key) },
-        // Betterment AG4, under its honest name: one agent session on the
-        // action (the launch sheet), not a Program.
-        { type: "item", id: "hand", label: "Hand to an agent session",
-          onSelect: () => openHand({ kind: "action", id: v.cardId, title: face.name }) },
-      ];
-      return <>
-        {v.direction === "theirs" ? (
-          <Button dense variant={lead} aria-label={named("Nudge")} aria-expanded={well === "nudge"}
-            data-testid="needs-row-verb" data-verb="nudge"
-            onClick={() => onWell(well === "nudge" ? null : "nudge")}>Nudge</Button>
-        ) : (
-          <Button dense variant="secondary" disabled={busy} aria-label={named("Done")} data-testid="needs-row-verb" data-verb="done"
-            onClick={(event) => void act("Done", () => markDone(v), key, event.currentTarget)}>Done</Button>
-        )}
-        {menu ? <WorkMenu label={face.name} x={menu.x} y={menu.y} entries={[...entries, ...extra]} autoFocus onClose={() => onMenu(null)}
-          returnFocus={() => menu.row?.querySelector<HTMLElement>("[data-testid=needs-row-verb]")?.focus()} /> : null}
-      </>;
-    }
-    case "whose":
-      return (
-        <Button dense variant={lead} aria-label={named("Whose?")} aria-expanded={well === "whose"}
-          data-testid="needs-row-verb" data-verb="whose"
-          onClick={() => onWell(well === "whose" ? null : "whose")}>Whose?</Button>
-      );
-    case "decide":
-      return (
-        <Button dense variant={lead} aria-label={named("Decide")} aria-expanded={well === "decide"}
-          data-testid="needs-row-verb" data-verb="decide"
-          onClick={() => onWell(well === "decide" ? null : "decide")}>Decide</Button>
-      );
-    case "decision-confirm":
-      return (
-        <Button dense variant={lead} disabled={busy} aria-label={named("Confirm")}
-          data-testid="needs-row-verb" data-verb="confirm"
-          onClick={() => void act("Confirm", () => acceptDecision(v.decisionId), `decision:${v.decisionId}`)}>Confirm</Button>
-      );
-    case "name-owner":
-      if (!v.cardId && !v.openRef) return null;
-      return (
-        <Button dense variant={lead} aria-label={named("Name an owner")}
-          aria-expanded={v.cardId ? well === "owner" : undefined} data-testid="needs-row-verb" data-verb="name-owner"
-          onClick={() => {
-            if (v.cardId) onWell(well ? null : "owner");
-            else if (v.openRef) useDesk.getState().openPullout(v.openRef);
-          }}>Name an owner</Button>
-      );
-    case "confirm": {
-      const opener = faceOpener(face);
-      const entries: WorkMenuEntry[] = [
-        ...(opener ? [{ type: "item" as const, id: "open", label: "Open", onSelect: opener }] : []),
-        ...(!v.projectId && v.meetingId && projects.some((project) => !project.is_archived)
-          ? [{ type: "item" as const, id: "project", label: "Add to Project", onSelect: () => onWell("project") }] : []),
-        { type: "item", id: "defer", label: "Defer", ghost: busy ? "Busy" : undefined,
-          onSelect: () => void act("Defer", () => apiFetch(
-            `/api/proposals/${encodeURIComponent(v.proposalId)}/defer`, { method: "POST", json: {} },
-          ), `proposal:${v.proposalId}`) },
-        { type: "item", id: "decline", label: "Decline", ghost: busy ? "Busy" : undefined,
-          onSelect: () => void act("Decline", () => apiFetch(
-            `/api/proposals/${encodeURIComponent(v.proposalId)}/dismiss`, { method: "POST" },
-          ), `proposal:${v.proposalId}`) },
-      ];
-      return <>
-        <Button dense variant={lead} disabled={busy} aria-label={named("Confirm")} data-testid="needs-row-verb" data-verb="confirm"
-          onClick={() => void act("Confirm", () => apiFetch(
-            `/api/proposals/${encodeURIComponent(v.proposalId)}/confirm`, { method: "POST" },
-          ), `proposal:${v.proposalId}`)}>Confirm</Button>
-        {menu ? <WorkMenu label={face.name} x={menu.x} y={menu.y} entries={[...entries, ...extra]} autoFocus onClose={() => onMenu(null)}
-          returnFocus={() => menu.row?.querySelector<HTMLElement>("[data-testid=needs-row-verb]")?.focus()} /> : null}
-      </>;
-    }
-    case "door": {
-      const verb = (v.card.lawful_verbs ?? []).find((x) => supportsDoorVerb(x as DoorVerb)) as DoorVerb | undefined;
-      const cmd = verb ? commandForDoorVerb(verb) : null;
-      if (!verb || !cmd) return null;
-      const label = labelFor(verb);
-      // One Done (2026-11-08): a Done on a Door card is markDone's.
-      const run = verb.arguments.verb === "done" && doneRoute(v)
-        ? () => markDone(v)
-        : () => apiFetch(cmd.endpoint, { method: "POST", json: cmd.body });
-      // JRN2: a Door task can go to tonight's program (a Planned step).
-      const actionId = String(v.card.target_ref ?? "").startsWith("action_item:") ? String(v.card.target_ref).slice("action_item:".length) : "";
-      return (
-        <>
-          {actionId ? <TonightVerb kind="action" itemId={actionId} name={String(v.card.title ?? v.card.text ?? actionId)} /> : null}
-          <Button dense variant={lead} disabled={busy} aria-label={named(label)} data-testid="needs-row-verb" data-verb="door-verb"
-            onClick={(event) => void act(label, run, `door:${cmd.endpoint}`, event.currentTarget)}>{label}</Button>
-        </>
-      );
-    }
-    case "link":
-      return (
-        /* Owner 2026-10-25: the host chip on every row is "an ancient relic";
-           the browser shows where the link goes. The host stays on the verb's
-           title for the pointer. */
-        <Button dense variant={lead} aria-label={named("Open")} title={urlHost(v.url).toLowerCase() || undefined}
-          data-testid="needs-row-verb" data-verb="open"
-          onClick={() => window.open(v.url, "_blank", "noopener")}>Open link</Button>
-      );
-    case "summarize":
-      // The summary route (where the text goes) is disclosed on the meeting,
-      // before the run: Summarize opens it there.
-      return (
-        <>
-          <AddToProject meetingId={v.meetingId} />
-          <Button dense variant={lead} aria-label={named("Summarize")} data-testid="needs-row-verb" data-verb="summarize"
-            onClick={() => openSourceRef(`meeting:${v.meetingId}`)}>Summarize</Button>
-        </>
-      );
-    case "setup":
-      return (
-        <Button dense variant={lead} aria-label={named(v.verb)} data-testid="needs-row-verb" data-verb="setup"
-          onClick={() => (v.key === "unknown"
-            ? void refreshNeedsYou(true)
-            : openSurfaceOr("open-concierge", "/models", v.key))}>{v.verb}</Button>
-      );
-    case "repair":
-      return (
-        <>
-        {face.detail?.length ? (
-          <Button dense variant="ghost" aria-label={named("Details")} aria-expanded={well === "detail"}
-            data-testid="needs-row-verb" data-verb="details"
-            onClick={() => onWell(well === "detail" ? null : "detail")}>Details</Button>
-        ) : null}
-        {/* Owner ruling 2026-10-25: no host chip on the row. A Retry that
-            re-checks a remote source names the host in its hover title. */}
-        <Button dense variant="secondary" disabled={busy} aria-label={named(v.verb)} data-testid="needs-row-verb" data-verb="repair"
-          title={v.verb === "Retry" && v.watchIds?.length && v.host ? `Checks ${v.host.toLowerCase()} again` : undefined}
-          onClick={() => {
-            if (v.verb === "Retry" && v.watchIds?.length) {
-              const ids = v.watchIds;
-              setBusy(true);
-              void recheckSource(face.name, ids).then((r) => { setSourceReceipt(r); setBusy(false); });
-            } else if (v.verb === "Retry") void refreshNeedsYou(true);
-            // PHILO-17 (needsyou): Settings · Connections, the provider focused.
-            else if (v.href.startsWith("/settings")) openSurfaceOr("configure-settings", "/settings", `integration:${v.provider ?? "connections"}`);
-            else openProjectRoom(v.projectId);
-          }}>{v.verb}</Button>
-        </>
-      );
-    case "arming":
-      return (
-        <>
-          {v.failed ? (
-            <Button dense variant="secondary" aria-label={named("Record now")}
-              data-testid="needs-row-verb" data-verb="record"
-              onClick={() => void useDesk.getState().startRecording(
-                v.calendarEventId ? { calendarEventId: v.calendarEventId } : undefined,
-              )}>Record now</Button>
-          ) : (
-            <Button dense variant="danger" aria-label={named(v.refused ? "Retry cancel" : "Cancel")}
-              data-testid="needs-row-verb" data-verb={v.refused ? "retry" : "cancel"}
-              onClick={() => void cancelArming(v.scheduleId)}>{v.refused ? "Retry" : "Cancel"}</Button>
-          )}
-          <Button dense variant="ghost" aria-label={named("Open")} data-testid="needs-row-verb" data-verb="open"
-            onClick={() => openSurfaceOr("review-meetings", "/history", v.failed ? "record" : undefined)}>Open meetings</Button>
-        </>
-      );
-    case "calendar":
-      return (
-        <Button dense variant="secondary" aria-label="Connect calendar" data-testid="needs-row-verb" data-verb="connect-calendar"
-          onClick={() => openSurfaceOr("configure-settings", "/settings", "integration:calendar")}>Connect calendar</Button>
-      );
-    case "send": {
-      const s = v.send as unknown as ChannelSend;
-      const channel = String(s.channel || "file") as Channel;
-      const account = (s.account || {}) as Record<string, string | boolean>;
-      const target = (s.target || {}) as Record<string, string | number>;
-      const eg = egressOf({ channel, account, synced: false, target });
-      const check = () => {
-        const url = farSide(channel, target, account);
-        if (url) window.open(url, "_blank", "noopener");
-        return apiFetch(`/api/channels/sends?send_id=${encodeURIComponent(v.sendId)}`);
-      };
-      const run = v.state === "failed"
-        ? () => retryInline(v.documentRef, v.destinationId, s.payload_digest, () => {}, () => void refreshNeedsYou(false))
-        : () => sendPrepared(v.documentRef, v.sendId, () => {}, () => void refreshNeedsYou(false),
-          v.state === "unknown" ? s.retry_command : undefined);
-      // A settled UNKNOWN can be inspected without being replayable. The
-      // hub withholds retry_command for legacy or foreign rows, so do not draw
-      // a dead Try again verb that cannot name the original operation.
-      const canRetry = v.state !== "unknown" || Boolean(s.retry_command);
-      return (
-        <>
-          {/* Owner ruling 2026-10-25: no host chip on the row. The fact names
-              the destination; Look opens the preview; Send names the
-              address in its hover title. */}
-          {v.state === "unknown" ? (
-            <Button dense variant="ghost" disabled={busy} aria-label={named("Check")} data-testid="needs-row-verb" data-verb="check"
-              onClick={() => void act("Check", check, face.id)}>Check</Button>
-          ) : null}
-          {canRetry ? (
-            <Button dense variant={lead} loading={busy} disabled={busy} aria-label={named(v.state === "prepared" ? "Send" : "Try again")}
-              data-testid="needs-row-verb" data-verb={v.state === "prepared" ? "send" : "try-again"}
-              title={eg.title || eg.label || undefined}
-              onClick={() => void act(v.state === "prepared" ? "Send" : "Try again", run, face.id)}>
-              {v.state === "prepared" ? "Send" : "Try again"}
-            </Button>
-          ) : null}
-          {v.state === "prepared" ? (
-            <>
-              <Button dense variant="ghost" aria-label={named("Look")} aria-expanded={well === "send"}
-                data-testid="needs-row-verb" data-verb="look" onClick={() => onWell(well === "send" ? null : "send")}>Look</Button>
-              <ConfirmVerb label="Discard" confirmLabel="Discard?" busy={busy}
-                data-testid="needs-send-discard" onConfirm={() => void act("Discard", () => discardPrepared(v.sendId), face.id)} />
-            </>
-          ) : null}
-        </>
-      );
-    }
-    case "open": {
-      const open = refOpener(v.ref);
-      if (!open) return null;
-      return (
-        <Button dense variant={lead} aria-label={named("Open")} data-testid="needs-row-verb" data-verb="open"
-          onClick={() => open()}>Open item</Button>
-      );
-    }
-    default:
-      return null;
-  }
-}
-
-function SendNeedWell({ face, onDone }: { face: NeedFace; onDone(): void }) {
-  const v = face.verbs;
-  if (v.kind !== "send") return null;
-  const s = v.send as unknown as ChannelSend;
-  const channel = String(s.channel || "file") as Channel;
-  const account = (s.account || {}) as Record<string, string | boolean>;
-  const target = (s.target || {}) as Record<string, string | number>;
-  const frozen = previewOf(channel, target, account, s.preview, s.file_path);
-  return (
-    <li className="needs-drawer-well" role="region" aria-label={`Preview: ${face.name}`} data-testid="needs-send-preview">
-      <PreviewWell preview={frozen} testid="needs-send-preview-well" verbs={
-        <Button dense variant="ghost" aria-label="Close preview" onClick={onDone}>Close</Button>
-      } />
-    </li>
-  );
-}
-
-function CommitWell({ face, which, onDone }: { face: NeedFace; which: Well; onDone(): void }) {
-  const [draft, setDraft] = useState("");
-  const [busy, setBusy] = useState(false);
-  const v = face.verbs;
-  const cardId = v.kind === "name-owner" || v.kind === "work" ? v.cardId : null;
-  const save = async () => {
-    const value = draft.trim();
-    if (!value || !cardId || busy) return;
-    setBusy(true);
-    const verb = which === "owner" ? "delegate" : "due";
-    const label = which === "owner" ? "Name an owner" : "Set a date";
-    try {
-      await followThrough(cardId, verb, verb === "delegate" ? { to: value } : { due_at: value });
-      clearWriteFailure(`action-item:${cardId}`);
-      onDone();
-      void refreshNeedsYou(false);
-    } catch (error) {
-      reportWriteFailure(label, error, () => void save(), `action-item:${cardId}`);
-    } finally {
-      setBusy(false);
-    }
-  };
-  return (
-    <li
-      className="needs-drawer-well"
-      role="region"
-      aria-label={`${which === "owner" ? "Owner" : "Due"}: ${face.name}`}
-      data-testid="needs-well"
-      onKeyDown={(event) => {
-        if (event.key === "Escape") { event.stopPropagation(); onDone(); }
-      }}
-    >
-      <StringGadget
-        label={which === "owner" ? "Owner" : "Due"}
-        type={which === "owner" ? "text" : "date"}
-        value={draft}
-        onChange={setDraft}
-        autoFocus
-        onKeyDown={(event) => { if (event.key === "Enter") void save(); }}
-      />
-      <Button dense variant="secondary" disabled={!draft.trim() || busy}
-        aria-label={`Save ${which === "owner" ? "owner" : "date"}: ${face.name}`}
-        data-testid="needs-well-save" onClick={() => void save()}>Save</Button>
-    </li>
-  );
-}
-
-/** The POST body of one Program choice (the row's `decide` route). */
-function programDecideBody(v: Extract<NeedFace["verbs"], { kind: "program" }>, choice: string) {
-  return { kind: v.itemKind, choice, ...(v.findingId ? { finding_id: v.findingId } : {}),
-    ...(v.lessonId != null ? { lesson_id: v.lessonId } : {}) };
-}
-
-/** One choice in the Decide panel. */
-type DecideChoice = { id: string; label: string; key: string; run(): Promise<unknown>; after?(): void; settles: boolean; quiet?: boolean };
-
-/** The choices Decide opens: a meeting's decision (Accept, Not now, Drop)
- *  or a Program ask (the hub's choices, each its `decide` route). */
-function decideChoices(face: NeedFace): DecideChoice[] {
-  const v = face.verbs;
-  if (v.kind === "decide") {
-    const key = `proposal:${v.proposalId}`;
-    const post = (path: string, json?: unknown) => () =>
-      apiFetch(`/api/proposals/${encodeURIComponent(v.proposalId)}/${path}`, { method: "POST", ...(json ? { json } : {}) });
-    return [
-      { id: "accept", label: "Accept", key, run: post("confirm"), settles: true },
-      { id: "not_now", label: "Not now", key, run: post("defer", {}), settles: true },
-      { id: "drop", label: "Drop", key, run: post("dismiss"), settles: true, quiet: true,
-        after: () => offerUndo(face.name, () => apiFetch(`/api/proposals/${encodeURIComponent(v.proposalId)}/restore`, { method: "POST" })) },
-    ];
-  }
-  if (v.kind === "program") {
-    return v.choices.map((choice) => ({
-      id: choice, label: PROGRAM_CHOICE_WORDS[choice] ?? choice, key: face.id,
-      run: () => apiFetch(v.decide, { method: "POST", json: programDecideBody(v, choice) }),
-      // Send… prepares the page; the row stays.
-      settles: choice !== "prepare",
-    }));
-  }
-  return [];
-}
-
-/** Decide, in place (Betterment D2; owner rule "the row is the object, one
- *  verb"): the row's choices under it, the first the lead. A meeting's
- *  decision: Accept writes it (the proposal's Confirm), Not now holds it back
- *  (Defer), Drop removes it (Decline). A Program ask: the hub's choices, each
- *  posted to the step's decide route. On success the row settles out. Open
- *  item shows it where it came from. */
-function DecideWell({ face, onDone }: { face: NeedFace; onDone(): void }) {
-  const [busy, setBusy] = useState(false);
-  const panel = useRef<HTMLLIElement | null>(null);
-  const choices = decideChoices(face);
-  if (!choices.length) return null;
-  const opener = faceOpener(face);
-  const press = async (choice: DecideChoice): Promise<void> => {
-    if (busy) return;
-    setBusy(true);
-    try {
-      await choice.run();
-      clearWriteFailure(choice.key);
-      const settled = choice.settles ? await settleOut(panel.current?.previousElementSibling) : null;
-      onDone();
-      choice.after?.();
-      void Promise.resolve(refreshNeedsYou(false)).finally(() => settled?.removeAttribute("data-settle"));
-    } catch (error) {
-      reportWriteFailure(choice.label, error, () => void press(choice), choice.key);
-    } finally {
-      setBusy(false);
-    }
-  };
-  return (
-    <li ref={panel} className="needs-drawer-well needs-drawer-decide" role="region" aria-label={`Decide: ${face.name}`}
-      data-testid="needs-decide"
-      onKeyDown={(event) => { if (event.key === "Escape") { event.stopPropagation(); onDone(); } }}>
-      {choices.map((choice, index) => (
-        <Button key={choice.id} dense variant={index === 0 ? "primary" : choice.quiet ? "ghost" : "secondary"}
-          disabled={busy} autoFocus={index === 0} aria-label={`${choice.label}: ${face.name}`}
-          data-testid={choice.id === "accept" ? "needs-decide-accept" : "needs-decide-choice"} data-choice={choice.id}
-          onClick={() => void press(choice)}>{choice.label}</Button>
-      ))}
-      {opener ? <Button dense variant="ghost" aria-label={`Open item: ${face.name}`} onClick={() => opener()}>Open item</Button> : null}
-    </li>
-  );
-}
-
-/** Betterment D3: Whose? The meeting's speakers, one press each: the press
- *  keeps the promise with that owner (Confirm with the owner). */
-function WhoseWell({ face, onDone }: { face: NeedFace; onDone(): void }) {
-  const [busy, setBusy] = useState(false);
-  const v = face.verbs;
-  if (v.kind !== "whose") return null;
-  const keep = async (owner: string) => {
-    if (busy) return;
-    setBusy(true);
-    const key = `proposal:${v.proposalId}`;
-    try {
-      await apiFetch(`/api/proposals/${encodeURIComponent(v.proposalId)}/confirm`, { method: "POST", json: { owner } });
-      clearWriteFailure(key);
-      onDone();
-      void refreshNeedsYou(false);
-    } catch (error) {
-      reportWriteFailure("Whose?", error, () => void keep(owner), key);
-    } finally {
-      setBusy(false);
-    }
-  };
-  return (
-    <li className="needs-drawer-well" role="region" aria-label={`Whose: ${face.name}`} data-testid="needs-whose"
-      onKeyDown={(event) => { if (event.key === "Escape") { event.stopPropagation(); onDone(); } }}>
-      {v.speakers.map((speaker, i) => (
-        <Button key={speaker} dense variant={i === 0 ? "secondary" : "ghost"} disabled={busy} autoFocus={i === 0}
-          aria-label={`${speaker}: ${face.name}`} onClick={() => void keep(speaker)}>{speaker}</Button>
-      ))}
-    </li>
-  );
-}
-
-/** Betterment D2: Nudge prepares; it never sends. The drafted message is
- *  kept as a note and its Send well opens here, on his saved destination for
- *  that person when exactly one has the person's name. He presses Send. */
-function NudgeWell({ face }: { face: NeedFace }) {
-  const v = face.verbs;
-  const [note, setNote] = useState<{ id: string; title: string } | null>(null);
-  const [failed, setFailed] = useState(false);
-  const started = useRef(false);
-  const person = v.kind === "work" ? v.person : "";
-  const text = v.kind === "work" ? nudgeText(face.name, person, v.due) : "";
-  useEffect(() => {
-    if (started.current || v.kind !== "work") return;
-    started.current = true;
-    const title = `Nudge: ${face.name}`;
-    void (async () => {
-      try {
-        const made = await apiFetch<{ note?: { id?: string } }>("/api/notes", {
-          method: "POST", json: { title, body_markdown: text, tags: ["nudge"] },
-        });
-        const id = String(made.note?.id ?? "");
-        if (!id) { setFailed(true); return; }
-        const first = person.split(/\s+/)[0]?.toLowerCase();
-        try {
-          const read = await apiFetch<{ destinations?: Array<{ id: string; name: string; state?: string }> }>("/api/channels/destinations");
-          const theirs = (read?.destinations ?? []).filter((d) => d.state !== "parked" && first && d.name.toLowerCase().includes(first));
-          if (theirs.length === 1) {
-            const { pickDestination } = await import("../surface/send");
-            pickDestination(`note:${id}`, theirs[0].id);
-          }
-        } catch { /* no saved destination read: he picks one in the well */ }
-        setNote({ id, title });
-      } catch (error) {
-        setFailed(true);
-        reportWriteFailure("Nudge", error);
-      }
-    })();
-  }, [face.name, person, text, v.kind]);
-  return (
-    <li className="needs-drawer-well needs-drawer-nudge" role="region" aria-label={`Nudge: ${face.name}`}
-      data-testid="needs-nudge">
-      <p className="needs-nudge-text" data-testid="needs-nudge-text">{text}</p>
-      {failed ? <SurfaceState error="The message was not prepared." />
-        : note ? <NoteSendWells id={note.id} title={note.title} />
-          : <SurfaceState loading />}
-    </li>
-  );
-}
-
-/** PHILO-17 (needsyou): a source row's detail: each source and the hub's
- *  own reason, one line each. */
-function DetailWell({ face }: { face: NeedFace }) {
-  return (
-    <li className="needs-drawer-well needs-drawer-detail" role="region" aria-label={`Details: ${face.name}`}
-      data-testid="needs-detail">
-      <ul>
-        {(face.detail ?? []).map((line, i) => (
-          <li key={`${line.name}:${i}`}>
-            <span className="needs-detail-name">{line.name}</span>
-            <span className="needs-detail-reason">{line.reason}</span>
-          </li>
-        ))}
-      </ul>
-    </li>
-  );
-}
-
-/** Betterment AG9: an agent's ask on Needs you is the agent's own row (the
- *  Agents row: the question, its choices, Answer, Allow / Deny inline). One
- *  row per piece of work: when the ask rides an item, this row stands for
- *  the item. Null until the agents read knows the session (the plain row
- *  draws meanwhile). */
-function useAskMember(sessionKey: string | undefined): ConductorMember | null {
-  const sessions = useAgentFlights((s) => s.sessions);
-  const flights = useAgentFlights((s) => s.flights);
-  return useMemo(() => {
-    if (!sessionKey) return null;
-    const members = conductorMembers({ detect: null, sessions, flights, launchedAt: {} });
-    return members.find((m) => m.sessionKey === sessionKey && (m.live === "ask" || m.live === "held")) ?? null;
-  }, [sessionKey, sessions, flights]);
-}
-
-export function NeedRow({ face, primary, projects, plates = true }: {
-  face: NeedFace;
-  primary: boolean;
-  projects: boolean;
-  /** Window grammar: false leads each row with its object glyph and a
-   *  DotWord state (the Needs-you window and Today's Needs you); true keeps
-   *  the kind plate and the lamp. */
-  plates?: boolean;
-}) {
-  const member = useAskMember(face.askOf);
-  if (member) {
-    const question = useAgentFlights.getState().sessions.find((row) => row.key === member.sessionKey)?.question ?? "";
-    return (
-      <li className="needs-agent-row" data-testid="needs-agent-row" data-need-id={face.id}>
-        <AgentRowFace
-          member={member}
-          question={question}
-          lead={primary}
-          selected={false}
-          onSelect={() => { if (member.launchId) openAgentLane(member.launchId); }}
-          onTerminal={() => { if (member.launchId) openAgentLane(member.launchId, { sessionKey: member.sessionKey, raw: true }); }}
-          onOpenAnswer={() => answerMember(member)}
-          onOpen={() => openMember(member)}
-        />
-      </li>
-    );
-  }
-  return <PlainNeedRow face={face} primary={primary} projects={projects} plates={plates} />;
-}
-
-/** The lamp words that say nothing on a row (owner walk 2026-11-08: "the
- *  'Yours' (well, duh, of course it's going to be mine…)"). */
-const DEFAULT_STATES = new Set(["yours", "needs you"]);
-
-/** The row's one quiet word, only when it is not the default: nothing on
- *  his own row; the person's name on a row a person owes (`Bea`, `Bea ·
- *  OVERDUE`); any other state as the hub says it. */
-export function quietState(face: Pick<NeedFace, "lamp" | "direction" | "personName">): NeedFace["lamp"] | null {
-  const label = String(face.lamp.label ?? "").trim();
-  if (!label || DEFAULT_STATES.has(label.toLowerCase())) return null;
-  if (face.direction === "theirs") {
-    // `WAITING ON BEA · OVERDUE` → `Bea · Overdue`; `TO REVIEW` → `Dana · To review`.
-    const parts = label.split(" · ");
-    const waiting = /^WAITING ON\s+(.+)$/i.exec(parts[0].trim());
-    const person = face.personName || waiting?.[1] || "";
-    const rest = waiting ? parts.slice(1) : parts;
-    if (person) return { label: [person, ...rest].join(" · "), tone: face.lamp.tone };
-  }
-  return face.lamp;
-}
-
-const LONG_PRESS_MS = 500;
-
-function PlainNeedRow({ face, primary, projects, plates }: { face: NeedFace; primary: boolean; projects: boolean; plates: boolean }) {
-  const [well, setWell] = useState<Well | null>(null);
-  const [menu, setMenu] = useState<RowMenu | null>(null);
-  const press = useRef<{ timer: number; held: boolean } | null>(null);
-  const project = projects && face.project ? face.project : null;
-  // The row's own menu (work, confirm), or for any other row that names its
-  // Project: Open and Open the Project.
-  const extra = projectEntries(project);
-  const own = hasRowMenu(face);
-  const opener = faceOpener(face);
-  const menuable = own || extra.length > 0;
-  const clearPress = () => { if (press.current) window.clearTimeout(press.current.timer); };
-  // Owner walk 2026-11-08: the row's other verbs are its context menu (a
-  // right press, a long press on touch, the ContextMenu key or Shift+F10).
-  const rowProps: React.LiHTMLAttributes<HTMLLIElement> | undefined = menuable ? {
-    onContextMenu: (event) => {
-      event.preventDefault();
-      setMenu({ x: event.clientX, y: event.clientY, row: event.currentTarget });
-    },
-    onKeyDown: (event) => {
-      if (event.key !== "ContextMenu" && !(event.shiftKey && event.key === "F10")) return;
-      event.preventDefault();
-      const box = event.currentTarget.getBoundingClientRect();
-      setMenu({ x: box.left + 32, y: box.bottom, row: event.currentTarget });
-    },
-    onPointerDown: (event) => {
-      if (event.pointerType !== "touch") return;
-      const row = event.currentTarget;
-      const { clientX: x, clientY: y } = event;
-      clearPress();
-      press.current = { held: false, timer: window.setTimeout(() => {
-        if (press.current) press.current.held = true;
-        setMenu({ x, y, row });
-      }, LONG_PRESS_MS) };
-    },
-    onPointerUp: clearPress,
-    onPointerCancel: clearPress,
-    onPointerLeave: clearPress,
-    // A long press is not also a press on the row (it would open the item).
-    onClickCapture: (event) => {
-      if (!press.current?.held) return;
-      press.current = null;
-      event.stopPropagation();
-      event.preventDefault();
-    },
-  } : undefined;
-  return (
-    <>
-      <NeedsRow
-        id={face.id}
-        rowProps={rowProps}
-        kind={face.kind}
-        name={face.name}
-        fact={face.fact || undefined}
-        factTitle={face.factTitle}
-        factCode={face.factCode}
-        factWords={face.factWords}
-        lamp={plates ? face.lamp : quietState(face)}
-        sprite={needsRowSprite(face)}
-        plate={plates ? plateOf(face) : undefined}
-        glyphLabel={plates ? undefined : face.tier ? tierWord(face.tier) : glyphWord(face)}
-        dotState={!plates}
-        // A2b: the Project button is a generic open: the Project's drawer.
-        project={project ? { name: project.name, onOpen: () => openProjectRoom(project.id) } : undefined}
-        verbs={(
-          <>
-            {face.moreAsks ? (
-              <Token className="surface-token" data-testid="needs-more-asks">{`+${face.moreAsks} MORE`}</Token>
-            ) : null}
-            <NeedVerbsView face={face} primary={primary} well={well} onWell={setWell} menu={own ? menu : null} onMenu={setMenu} extra={extra} />
-            {!own && menu ? <WorkMenu label={face.name} x={menu.x} y={menu.y} autoFocus onClose={() => setMenu(null)}
-              returnFocus={() => menu.row?.querySelector<HTMLElement>("[data-testid=needs-row-verb]")?.focus()}
-              entries={[...(opener ? [{ type: "item" as const, id: "open", label: "Open", onSelect: opener }] : []), ...extra]} /> : null}
-          </>
-        )}
-      />
-      {well === "project" && face.verbs.kind === "confirm" ? <li className="needs-drawer-well"><AddToProject meetingId={face.verbs.meetingId} /></li>
-        : well === "detail" ? <DetailWell face={face} />
-          : well === "nudge" ? <NudgeWell face={face} />
-            : well === "decide" ? <DecideWell face={face} onDone={() => setWell(null)} />
-              : well === "whose" ? <WhoseWell face={face} onDone={() => setWell(null)} />
-                : well === "send" ? <SendNeedWell face={face} onDone={() => setWell(null)} />
-              : well === "owner" || well === "date" ? <CommitWell face={face} which={well} onDone={() => setWell(null)} /> : null}
-    </>
-  );
-}
-
-/** Window Program W4 (the words): the meetings that say one Project's word
- *  are one row (`13 mentions of cutover`); Show lists each meeting under it
- *  by its own title, Hide folds them again. */
-function MatchRows({ entry, firstId, projects }: {
-  entry: Extract<NeedEntry, { kind: "match" }>;
-  firstId: string | null;
-  projects: boolean;
-}) {
-  const [open, setOpen] = useState(false);
-  const name = matchWords(entry.faces.length, entry.word);
-  const project = projects && entry.project ? entry.project : null;
-  return (
-    <>
-      <NeedsRow
-        id={`match:${entry.key}`}
-        kind="meeting"
-        name={name}
-        lamp={{ label: "Not in the Project", tone: entry.faces[0]?.lamp.tone ?? "info" }}
-        sprite={needsRowSprite(entry.faces[0])}
-        glyphLabel="Meetings"
-        dotState
-        project={project ? { name: project.name, onOpen: () => openProjectRoom(project.id) } : undefined}
-        verbs={(
-          <Button dense variant="secondary" aria-label={`${open ? "Hide" : "Show"}: ${name}`} aria-expanded={open}
-            data-testid="needs-match-toggle" onClick={() => setOpen((was) => !was)}>
-            {open ? "Hide" : "Show"}
-          </Button>
-        )}
-      />
-      {open ? entry.faces.map((face) => (
-        <NeedRow key={face.id} face={face} primary={face.id === firstId} projects={projects} plates={false} />
-      )) : null}
-    </>
-  );
-}
-
-/** PHILO-15-09 (B12): every row says what it is. With the glyph leading
- *  (window grammar) the word is the glyph's name: its alt and its title. */
-const GLYPH_WORDS: Record<string, string> = {
-  CC: "Claude Code", CX: "Codex", PI: "pi", AGT: "Agent", PR: "Pull request",
-  DEC: "Decision", ACT: "Action", MTG: "Meeting", SRC: "Source", REC: "Recording",
-};
-export function glyphWord(face: NeedFace): string | undefined {
-  const plate = plateOf(face);
-  if (!plate) return undefined;
-  return GLYPH_WORDS[plate] ?? plate.charAt(0) + plate.slice(1).toLowerCase();
-}
 
 interface DoorRead {
   upcoming?: Array<{ title?: string; starts_at?: string; source?: string }>;
   calendar_configured?: boolean;
-}
-
-/** Stamp the stable testids and the row-open mark on the species' rows
- *  (NeedsRow takes no testid prop; B1 owns it): `needs-row` on a member,
- *  `needs-source-row` on a source row, `data-opens` where the body opens. */
-export function useRowMarks(
-  ref: React.RefObject<HTMLDivElement | null>,
-  faces: readonly NeedFace[],
-  members: ReadonlySet<string>,
-) {
-  useLayoutEffect(() => {
-    const byId = new Map(faces.map((f) => [f.id, f]));
-    for (const li of ref.current?.querySelectorAll<HTMLElement>("li.needs-row") ?? []) {
-      const face = byId.get(li.getAttribute("data-object-id") ?? "");
-      if (!face) continue;
-      li.setAttribute("data-testid", face.source ? "needs-source-row" : "needs-row");
-      // A row the hub counts (one member): the head, the Dock and the notch
-      // say the number of these rows.
-      li.setAttribute("data-counted", members.has(face.memberRef ?? face.id) ? "true" : "false");
-      if (face.verbs.kind === "confirm" || face.verbs.kind === "decide" || face.verbs.kind === "whose") li.setAttribute("data-proposal", "true");
-      if (face.arrival) li.setAttribute("data-new", "true");
-      else li.removeAttribute("data-new");
-      if (face.direction) li.setAttribute("data-direction", face.direction);
-      if (face.tier) li.setAttribute("data-tier", face.tier);
-      else li.removeAttribute("data-tier");
-      if (faceOpener(face)) li.setAttribute("data-opens", "true");
-      else li.removeAttribute("data-opens");
-    }
-  });
 }
 
 /** `Checked just now`, `Checked 4 min ago`, `Checked 09:14`. */
@@ -1109,135 +64,18 @@ export function checkedWord(at: string | null | undefined, now: Date = new Date(
   return `Checked ${hhmm(d)}`;
 }
 
-/** Betterment D2: one chip of the row. Pressed = on; a second press clears
- *  it. The count is what the list shows with the chip on. */
-function Chip({ label, count, on, onPress, menu, testId }: {
-  label: string;
-  count?: number | null;
-  on: boolean;
-  onPress(event: React.MouseEvent<HTMLButtonElement>): void;
-  menu?: boolean;
-  testId: string;
-}) {
-  return (
-    <Button dense variant={on ? "secondary" : "ghost"} className="surface-filter-token needs-chip"
-      data-filter-active={on || undefined} aria-pressed={menu ? undefined : on}
-      aria-haspopup={menu ? "menu" : undefined} data-testid={testId}
-      aria-label={count != null ? `${label} · ${count}` : label}
-      onClick={onPress}>
-      {label}{count != null ? <TickNumber className="needs-chip-count" value={count} /> : null}{menu && !on ? " ▾" : ""}
-    </Button>
-  );
+/** The rows for a later day (Later shows them): his own rows the count
+ *  leaves out because they wait for a day to come (a due date after today,
+ *  a Later he said). A proposal to confirm and a source stay on today. */
+export function isLater(face: Pick<NeedFace, "uncounted" | "source" | "direction" | "due" | "verbs">, now: Date = new Date()): boolean {
+  if (!face.uncounted || face.source || face.direction === "theirs") return false;
+  if (face.verbs.kind === "program" && face.verbs.later) return true;
+  const due = face.due ? wireDate(face.due) : null;
+  if (!due) return false;
+  const day = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  return day(due) > day(now);
 }
 
-type PickRow = { key: string; name: string; count: number };
-
-/** Betterment D2: the chips over the one list (Mine, They owe me, To decide,
- *  This week, a person, a Project; More holds the muted projects). Chips
- *  combine; one at zero is not drawn unless it is on. At the phone width the
- *  row scrolls in one line. */
-/** Owner walk 2026-11-08: the list's scope. Mine is his own (everything a
- *  person does not owe him); People is what people owe him. */
-export type NeedsScope = "mine" | "people";
-
-export function inScope(face: Pick<NeedFace, "direction">, scope: NeedsScope): boolean {
-  return scope === "people" ? face.direction === "theirs" : face.direction !== "theirs";
-}
-
-function NeedsChipRow({ scope, setScope, count, chips, setChips, counts, people, projects, muted, showMuted, setShowMuted }: {
-  scope: NeedsScope;
-  setScope(next: NeedsScope): void;
-  /** The hub's one number: the quiet count in the Mine segment. */
-  count: number;
-  chips: NeedsChips;
-  setChips(next: NeedsChips): void;
-  counts: { decide: number; week: number };
-  people: PickRow[];
-  projects: PickRow[];
-  muted: number;
-  showMuted: boolean;
-  setShowMuted(next: boolean): void;
-}) {
-  const [menu, setMenu] = useState<{ kind: "person" | "project" | "more"; x: number; y: number } | null>(null);
-  const anchors = useRef<Record<string, HTMLButtonElement | null>>({});
-  const at = (kind: "person" | "project" | "more", event: React.MouseEvent<HTMLButtonElement>) => {
-    const box = event.currentTarget.getBoundingClientRect();
-    anchors.current[kind] = event.currentTarget;
-    setMenu({ kind, x: box.left, y: box.bottom });
-  };
-  const person = people.find((p) => p.key === chips.person);
-  const project = projects.find((p) => p.key === chips.project);
-  const entries: WorkMenuEntry[] = !menu ? [] : menu.kind === "more"
-    ? [{ type: "item", id: "muted", label: `Muted projects · ${muted}`, checked: showMuted, onSelect: () => setShowMuted(!showMuted) }]
-    : (menu.kind === "person" ? people : projects).map((p) => ({
-      type: "item" as const, id: `${menu.kind}-${p.key}`, label: `${p.name} · ${p.count}`,
-      onSelect: () => setChips({ ...chips, [menu.kind]: p.key }),
-    }));
-  return (
-    <span className="needs-chips" data-testid="needs-filter">
-      <span className="surface-filter-tokens needs-chip-row" role="group" aria-label="Needs you filter">
-        {/* Owner walk 2026-11-08: ONE segmented control, Mine · People, at
-            the band's left; the count is a quiet number in Mine. The other
-            chips narrow the scope and show only when they hold rows. */}
-        <span className="needs-scope" role="group" aria-label="Whose" data-testid="needs-scope">
-          <Button dense variant={scope === "mine" ? "secondary" : "ghost"} className="surface-filter-token needs-chip"
-            data-filter-active={scope === "mine" || undefined} aria-pressed={scope === "mine"} data-testid="needs-chip-mine"
-            aria-label={count > 0 ? `Mine · ${count}` : "Mine"} onClick={() => setScope("mine")}>
-            Mine{count > 0 ? <TickNumber className="needs-chip-count" value={count} /> : null}
-          </Button>
-          <Button dense variant={scope === "people" ? "secondary" : "ghost"} className="surface-filter-token needs-chip"
-            data-filter-active={scope === "people" || undefined} aria-pressed={scope === "people"} data-testid="needs-open-people"
-            onClick={() => setScope("people")}>People</Button>
-        </span>
-        {scope === "mine" && (counts.decide > 0 || chips.direction === "decide") ? (
-          <Chip label="To decide" count={counts.decide > 0 ? counts.decide : null} on={chips.direction === "decide"} testId="needs-chip-decide"
-            onPress={() => setChips({ ...chips, direction: chips.direction === "decide" ? null : "decide" })} />
-        ) : null}
-        {counts.week > 0 || chips.week ? (
-          <Chip label="This week" count={counts.week > 0 ? counts.week : null} on={chips.week} testId="needs-chip-week"
-            onPress={() => setChips({ ...chips, week: !chips.week })} />
-        ) : null}
-        {people.length > 0 || person ? (
-          <Chip label={person?.name ?? "Person"} on={Boolean(person)} menu testId="needs-chip-person"
-            onPress={(event) => (person ? setChips({ ...chips, person: null }) : at("person", event))} />
-        ) : null}
-        {projects.length > 1 || project ? (
-          <Chip label={project?.name ?? "Project"} on={Boolean(project)} menu testId="needs-chip-project"
-            onPress={(event) => (project ? setChips({ ...chips, project: null }) : at("project", event))} />
-        ) : null}
-        {muted > 0 ? (
-          <Chip label="More" on={showMuted} menu testId="needs-chip-more" onPress={(event) => at("more", event)} />
-        ) : null}
-      </span>
-      {menu ? (
-        <WorkMenu label={menu.kind === "person" ? "Person" : menu.kind === "project" ? "Project" : "More"}
-          x={menu.x} y={menu.y} entries={entries} autoFocus onClose={() => setMenu(null)}
-          returnFocus={() => anchors.current[menu.kind]?.focus()} />
-      ) : null}
-    </span>
-  );
-}
-
-/** The person and Project choices of the rows, with how many rows each has. */
-function picksOf(faces: readonly NeedFace[], key: (f: NeedFace) => [string, string] | null): PickRow[] {
-  const out = new Map<string, PickRow>();
-  for (const face of faces) {
-    const hit = key(face);
-    if (!hit) continue;
-    const [k, name] = hit;
-    const row = out.get(k) ?? { key: k, name, count: 0 };
-    row.count += 1;
-    out.set(k, row);
-  }
-  return [...out.values()].sort((a, b) => a.name.localeCompare(b.name));
-}
-
-/** The Needs-you window body. Window grammar (2026-10-24): the Toolbar (the
- *  filter toggles, the calendar offer) → the rows edge to edge, each led by
- *  its object glyph → the StatusBar (`N need you` with its lamp, the next
- *  event, `Checked hh:mm`). Every row is drawn (HS-200-15: no cap; B11: the head
- *  number is the rows drawn); the Ledger scrolls inside the window and
- *  ScrollHint says so (UX-CANON §B). */
 /** The drawer is drawn after this long even when a read is still out (the
  *  Room's cap, roomReads.ts ROOM_READS_CAP_MS). */
 const NEEDS_READS_CAP_MS = 8000;
@@ -1355,15 +193,10 @@ export function NeedsDroppedReceipt() {
 }
 
 export function NeedsDrawer() {
-  const { needs, now, ctx, coverage, multipleProjects, outcome, faces } = useNeedFaces();
+  const { needs, now, coverage, multipleProjects, outcome, faces, ctx } = useNeedFaces();
   const [door, setDoor] = useState<DoorRead | null>(null);
-  const [chips, setChips] = useState<NeedsChips>(NO_CHIPS);
-  const [scope, setScopeState] = useState<NeedsScope>("mine");
-  // To decide narrows Mine only: People drops it.
-  const setScope = (next: NeedsScope) => {
-    setScopeState(next);
-    if (next === "people" && chips.direction) setChips({ ...chips, direction: null });
-  };
+  const [scope, setScope] = useState<NeedsScope>("mine");
+  const [showLater, setShowLater] = useState(false);
   const [showMuted, setShowMuted] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
   // The item reader (2026-11-08): the action item read in place, by a press
@@ -1395,8 +228,8 @@ export function NeedsDrawer() {
   }, [computedAt, needs.count]);
   // PHILO-17 (the desk sweep, sweepreds r2): the drawer is drawn once its
   // first reads end (the hub's answer and the Door read), or at the cap: the
-  // strip, the filter and the rows never move under his eye (UX-CANON D; the
-  // Room's pattern). Once drawn it stays drawn.
+  // mast and the rows never move under his eye (UX-CANON D). Once drawn it
+  // stays drawn.
   const needsRead = needs.room !== null || Object.keys(needs.errors).length > 0;
   const [capped, setCapped] = useState(false);
   useEffect(() => {
@@ -1409,26 +242,18 @@ export function NeedsDrawer() {
   const settling = !(drawn || ready);
 
   const noCalendar = Boolean(door && door.calendar_configured === false);
-  const asFace = (item: (typeof needs.mutedItems)[number]) =>
-    needFace({ ref: String(item.id ?? item.ref ?? ""), kind: "attention", item }, ctx);
-  // Listed, never counted: the muted (More ▸ Muted projects).
-  const muted = needs.mutedItems.map(asFace);
+  // Listed, never counted: the muted (the mast's Muted · N).
+  const muted = needs.mutedItems.map((item) =>
+    needFace({ ref: String(item.id ?? item.ref ?? ""), kind: "attention", item }, ctx));
   // PHILO-15-09 (B11, the A5 ruling): the head is the hub's one number, the
-  // number the Dock badge and the bell say, and it counts every row under
-  // it: a member, a source the hub could not read, a recording that arms.
+  // number the Dock badge and the bell say.
   const head = needsHead(needs.count, needs.complete && coverage.complete);
-  // Betterment D2: the chips narrow the one ranked list. Each chip's count
-  // is what the list shows with that chip on (the others as they are).
-  const base = (showMuted ? muted : faces).filter((face) => inScope(face, scope));
-  const shown = base.filter((face) => passesChips(face, chips, now));
-  const countWith = (next: Partial<NeedsChips>) =>
-    base.filter((face) => passesChips(face, { ...chips, ...next }, now)).length;
-  const counts = { decide: countWith({ direction: "decide" }), week: countWith({ week: true }) };
-  const narrowed = base.filter((face) => passesChips(face, { ...chips, person: null, project: null }, now));
-  const people = picksOf(narrowed.filter((f) => !chips.project || f.projectId === chips.project),
-    (f) => (f.personKey ? [f.personKey, f.personName ?? f.personKey] : null));
-  const projects = picksOf(narrowed.filter((f) => !chips.person || f.personKey === chips.person),
-    (f) => (f.projectId ? [f.projectId, f.project?.name ?? f.projectId] : null));
+  const scoped = faces.filter((face) => inScope(face, scope));
+  // The desk of today: the rows for a later day wait behind Later (Mine).
+  const later = scope === "mine" ? scoped.filter((face) => isLater(face, now)) : [];
+  const shown = showMuted ? muted.filter((face) => inScope(face, scope))
+    : showLater && later.length ? later
+      : scoped.filter((face) => scope !== "mine" || !isLater(face, now));
   // Betterment D3: promises kept on arrival, NEW under their meeting at the
   // top. The hub is told they were seen once they are drawn; this window
   // keeps them grouped until it closes, so no row moves under his eye.
@@ -1444,9 +269,11 @@ export function NeedsDrawer() {
     else groups.push({ arrival, faces: [{ ...face, arrival }] });
   }
   const rest = shown.filter((face) => !arrivalOf(face));
-  // One filled primary on a face with work: the first row drawn (a group's
-  // row leads); a SETUP, repair or offer verb is never filled (HS-201-01).
-  const firstId = showMuted ? null
+  // The one thing that waits most (the plate), then the ledger by weight.
+  const first = showMuted || showLater ? null : pickFirst(rest);
+  // One lead verb on the face: the plate's brass Button; with no plate the
+  // first row drawn (a SETUP, repair or offer verb is never filled, HS-201-01).
+  const firstId = first ? first.id : showMuted ? null
     : [...groups.flatMap((g) => g.faces), ...rest].find((f) => !f.source && f.verbs.kind !== "setup")?.id ?? null;
   const groupKey = groups.map((g) => g.arrival.meetingId).sort().join("|");
   const told = useRef(new Set<string>());
@@ -1474,7 +301,11 @@ export function NeedsDrawer() {
     ? { label: upcoming.title, at: upcoming.starts_at }
     : (needs.room?.next as { label?: string; at?: string } | null | undefined));
   const ranked = computedAt ? new Date(computedAt) : null;
-  const checked = ranked && !Number.isNaN(ranked.getTime()) ? `Checked ${hhmm(ranked)}` : null;
+  const checked = ranked && !Number.isNaN(ranked.getTime()) ? `checked ${hhmm(ranked)}` : null;
+  // The weights the mast and the status bar say: his own rows of today.
+  const today = faces.filter((face) => inScope(face, "mine") && !isLater(face, now) && !face.source);
+  const weights = weightsOf(today);
+  const count = needsRead ? Number(needs.count ?? 0) : 0;
 
   // The row body is the Open (the verb Open stays for the keyboard and 393).
   const onRowPress = (event: React.MouseEvent<HTMLDivElement>) => {
@@ -1488,12 +319,8 @@ export function NeedsDrawer() {
     else faceOpener(face)?.();
   };
 
-
-  // Window grammar (2026-10-24): title bar → toolbar (the filter toggles and
-  // the calendar offer) → the rows edge to edge → the status bar, which says
-  // the one number (`14 need you`) in warm words with a lamp.
   // W1-DOORS (atlas 2026-10-27): one truth. A next 1:1 in the status bar
-  // means there is a calendar; the toolbar does not say "No calendar" then.
+  // means there is a calendar; the mast does not say "No calendar" then.
   const offer = noCalendar && !next ? (
     <span className="needs-calendar-offer" data-testid="needs-no-calendar">
       <span className="needs-calendar-word">No calendar</span>
@@ -1501,29 +328,20 @@ export function NeedsDrawer() {
         onClick={() => openSurfaceOr("configure-settings", "/settings", "integration:calendar")}>Connect calendar</Button>
     </span>
   ) : null;
-  // Owner walk 2026-11-08: the toolbar is one band: the Mine · People
-  // control at its left, nothing floating at its right. HS-S43 (D22/G43):
-  // People's commitments to him live in People; the People scope ends with
-  // Open People, so the coverage stays one press away.
-  // The Mine segment's number: the hub's one number once read (the segment
-  // draws no number at zero).
-  const mineCount = needsRead && needs.count ? Number(needs.count) : 0;
-  const chipRow = (
-    <NeedsChipRow scope={scope} setScope={setScope} count={mineCount}
-      chips={chips} setChips={setChips} counts={counts} people={people} projects={projects}
-      muted={muted.length > 0 ? muted.length : 0} showMuted={showMuted} setShowMuted={setShowMuted} />
-  );
+  // HS-S43 (D22/G43): People's commitments to him live in People; the People
+  // scope ends with Open People, so the coverage stays one press away.
   const openPeople = (
     <Button dense variant="ghost" className="needs-people-open" data-testid="needs-people-open"
       onClick={() => openSurfaceOr("open-people", "/")}>Open People</Button>
   );
   const counted = Number(needs.count ?? 0) > 0;
-  // DELIGHT slice 2: the head's number ticks (with the dock's badge and the
-  // chips' counts) when a Done lands. Before the hub's first answer there is
-  // no number yet, so its arrival is not a tick.
+  // DELIGHT slice 2: the head's number ticks (with the dock's badge) when a
+  // Done lands. Before the hub's first answer there is no number yet.
   const statusItems: StatusBarItem[] = [
     { key: "head", lamp: counted ? "ask" : coverage.complete ? "ok" : "warn", text: head,
       tick: needsRead ? Number(needs.count ?? 0) : null, testId: "arrival-display" },
+    weights.must > 0 ? { key: "must", text: `${weights.must} must fix`, testId: "needs-must" } : null,
+    weights.should > 0 ? { key: "should", text: `${weights.should} should`, testId: "needs-should" } : null,
     next ? { key: "next", text: next, testId: "needs-next" } : null,
     outcome.receipt ? { key: "receipt", text: outcome.receipt, testId: "needs-receipt" } : null,
     !outcome.receipt && sourceReceipt
@@ -1537,11 +355,11 @@ export function NeedsDrawer() {
       data-settling={settling ? "true" : undefined} aria-busy={settling ? true : undefined}>
       {settling ? <div className="needs-drawer-settling"><SurfaceState loading /></div> : null}
       {readerFace ? <ItemReader face={readerFace} onBack={() => setReaderId(null)} /> : <ItemReaderContext.Provider value={setReaderId}>
-      <Toolbar label="Needs you" data-testid="needs-toolbar" trailing={offer}>
-        {chipRow}
-      </Toolbar>
-      {/* W5-WORDS: every source read is no row (`16 of 16 available` was a
-          count that said nothing); a gap names how many and which. */}
+      <NeedsMast now={now} head={head} count={count} weights={weights} total={today.length} checked={checked}
+        scope={scope} setScope={(next) => { setScope(next); setShowLater(false); }}
+        later={later.length} showLater={showLater} setShowLater={setShowLater}
+        muted={muted.length} showMuted={showMuted} setShowMuted={setShowMuted} offer={offer} />
+      {/* W5-WORDS: every source read is no row; a gap names how many and which. */}
       {!coverage.complete && coverage.expected > 0 ? (() => {
         const missing = Math.max(coverage.expected - coverage.available, coverage.gaps.length, 1);
         return <Disclosure label={`${missing} ${missing === 1 ? "source" : "sources"} not checked`} ariaLabel="Coverage">
@@ -1553,7 +371,7 @@ export function NeedsDrawer() {
       {needs.peopleUnread ? <PeopleReadFailed testId="needs-people-read-failed" onRetry={() => void refreshNeedsYou()} /> : null}
       {/* A press on a row body opens it; each row's verbs carry the keyboard. */}
       <div ref={listRef} onClick={onRowPress} data-testid="needs-list" className="needs-drawer-list">
-        <ScrollHint axis="y" scrollRef={listRef}>
+        <ScrollHint axis="y" scrollRef={listRef} className="needs-desk">
           {showMuted && shown.length > 0 ? (
             <SurfaceSection label="Muted" count={shown.length || null} data-testid="needs-muted" className="needs-drawer-muted">
               <NeedsList label="Muted">
@@ -1562,28 +380,14 @@ export function NeedsDrawer() {
             </SurfaceSection>
           ) : shown.length > 0 ? (
             <>
-              {groups.map((group) => (
-                <SurfaceSection key={group.arrival.meetingId} className="needs-arrival" data-testid="needs-arrival"
-                  label={`New from ${group.arrival.meetingTitle || "a meeting"}${dayWord(group.arrival.startedAt) ? ` · ${dayWord(group.arrival.startedAt)}` : ""}`}>
-                  <NeedsList label={`New from ${group.arrival.meetingTitle || "a meeting"}`}>
-                    {group.faces.map((face) => (
-                      <NeedRow key={face.id} face={face} primary={face.id === firstId} projects={multipleProjects} plates={false} />
-                    ))}
-                  </NeedsList>
-                </SurfaceSection>
-              ))}
-              {rest.length > 0 ? (
-                <NeedsList label="Needs you">
-                  {foldMatches(rest).map((entry) => entry.kind === "face" ? (
-                    <NeedRow key={entry.face.id} face={entry.face} primary={entry.face.id === firstId} projects={multipleProjects} plates={false} />
-                  ) : (
-                    <MatchRows key={entry.key} entry={entry} firstId={firstId} projects={multipleProjects} />
-                  ))}
-                </NeedsList>
-              ) : null}
+              {first ? <FirstPlate face={first} projects={multipleProjects} /> : null}
+              <Ledger groups={ledgerGroups(rest, first?.id ?? null)} firstId={firstId} projects={multipleProjects}
+                arrivals={groups.map((group) => {
+                  const label = `New from ${group.arrival.meetingTitle || "a meeting"}`;
+                  const day = dayWord(group.arrival.startedAt);
+                  return { key: group.arrival.meetingId, label: day ? `${label} · ${day}` : label, faces: group.faces };
+                })} />
             </>
-          ) : chipsOn(chips) ? (
-            <p className="needs-drawer-none" data-testid="needs-none">Nothing matches these filters.</p>
           ) : scope === "people" && !settling ? (
             <p className="needs-drawer-none" data-testid="needs-none">Nothing waits on people here.</p>
           ) : null}

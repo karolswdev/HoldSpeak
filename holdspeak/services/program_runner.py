@@ -52,8 +52,9 @@ from ..logging_config import get_logger
 from .program_definitions import (
     ACTIVE_STATES, PARKED_BY_ENGINE, PARKED_BY_RACE, RACE_PROFILES,
     ProgramRefused, agent_label, duration_words, history_of,
+    programs_on,
 )
-from .program_service import ProgramService, programs_on
+from .program_service import ProgramService
 from . import program_night, program_split
 from .program_rules import HANDOFF_AFTER_MINUTES, decide, is_core, level_of
 from .program_verifier import log_tail, verify_log, verify_measure_log, verify_requirement_log

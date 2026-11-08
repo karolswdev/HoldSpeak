@@ -19,7 +19,6 @@ from holdspeak.services.thread_modes import (
     _DRAFT_TOOLS,
     _PLAN_TOOLS,
     _warned_modes,
-    allowed_tools_for_thread,
     mode_for_thread,
     palette_for,
     seed_modes,
@@ -179,7 +178,7 @@ class TestAllowLists:
 
 
 # ---------------------------------------------------------------------------
-# mode_for_thread and allowed_tools_for_thread
+# mode_for_thread
 # ---------------------------------------------------------------------------
 
 class TestModeForThread:
@@ -204,44 +203,6 @@ class TestModeForThread:
 
     def test_nonexistent_thread_returns_none(self, db: Database) -> None:
         assert mode_for_thread(db, "nonexistent") is None
-
-
-class TestAllowedToolsForThread:
-    def test_no_mode_defaults_to_desk(self, db: Database) -> None:
-        thread = db.threads.create_thread(title="Default")
-        tools = allowed_tools_for_thread(db, thread.id)
-        # Desk intersected with TOOL_NAMES = Desk (all Desk names are in TOOL_NAMES)
-        assert tools == _DESK_TOOLS & TOOL_NAMES
-
-    def test_chase_mode_includes_effects(self, db: Database) -> None:
-        seed_modes(db)
-        thread = db.threads.create_thread(
-            title="Chase", recipe_id="hs-seed-mode-chase"
-        )
-        tools = allowed_tools_for_thread(db, thread.id)
-        assert "people.commitment.transition" in tools
-        assert "follow_through.complete" in tools
-        # door.add_item landed in HS-153-05
-        assert "door.add_item" in tools
-
-    def test_draft_mode_empty(self, db: Database) -> None:
-        seed_modes(db)
-        thread = db.threads.create_thread(
-            title="Draft", recipe_id="hs-seed-mode-draft"
-        )
-        tools = allowed_tools_for_thread(db, thread.id)
-        assert tools == frozenset()
-
-    def test_plan_mode_subset(self, db: Database) -> None:
-        seed_modes(db)
-        thread = db.threads.create_thread(
-            title="Plan", recipe_id="hs-seed-mode-plan"
-        )
-        tools = allowed_tools_for_thread(db, thread.id)
-        assert "thought.get_default_context" in tools
-        assert "door.get" in tools
-        assert "memory.search" in tools
-        assert "desk.list" not in tools
 
 
 # ---------------------------------------------------------------------------
@@ -272,6 +233,18 @@ class TestPaletteFor:
         palette = palette_for(db, thread.id)
         assert palette is not None
         assert palette == frozenset()
+
+    def test_plan_mode_subset(self, db: Database) -> None:
+        seed_modes(db)
+        thread = db.threads.create_thread(
+            title="Plan", recipe_id="hs-seed-mode-plan"
+        )
+        palette = palette_for(db, thread.id)
+        assert palette is not None
+        assert "thought.get_default_context" in palette
+        assert "door.get" in palette
+        assert "memory.search" in palette
+        assert "desk.list" not in palette
 
     def test_chase_contains_effects_not_desk_delete(self, db: Database) -> None:
         seed_modes(db)

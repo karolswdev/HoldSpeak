@@ -223,14 +223,14 @@ describe("Needs you: the head counts what needs him; Waiting lists the rest", ()
     expect(counted).toHaveLength(6);
     expect(counted.some((t) => t.includes("A3 wait for Priya's review") || /waiting on/i.test(t))).toBe(false);
 
-    fireEvent.click(within(screen.getByTestId("needs-filter")).getByTestId("needs-open-people"));
+    fireEvent.click(screen.getByTestId("needs-open-people"));
     await waitFor(() => expect(needsRows().every((r) => r.getAttribute("data-direction") === "theirs")).toBe(true));
     const waitingRows = needsRows().map((r) => `${r.textContent ?? ""}|${lampOf(r)}`);
     expect(waitingRows.some((t) => t.includes("A3 wait for Priya's review") && /\|Priya/.test(t))).toBe(true);
     expect(waitingRows.some((t) => t.includes("A4 assign the owner"))).toBe(false);
     expect(head()).toMatch(/^6 need you/);
 
-    fireEvent.click(within(screen.getByTestId("needs-filter")).getByTestId("needs-chip-mine"));
+    fireEvent.click(screen.getByTestId("needs-chip-mine"));
     await waitFor(() => expect(rowNamed("R1 adopt the release checklist")).toBeTruthy());
     const decision = rowNamed("R1 adopt the release checklist")!;
     expect(within(decision).getByRole("button", { name: "Confirm: R1 adopt the release checklist" })).toBeEnabled();
