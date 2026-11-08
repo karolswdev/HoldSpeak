@@ -2,6 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · #1935 HS-S35 a checkpoint's ref says whether it is reachable now (`reach`, `reach_words`) beside its stored ref, never rewriting it; a pin failure logs and the line is written.
 - 2026-11-08 · #1929 HS-S31 the shared queue outcome contract: `queue_outcome` answers waiting/launched/failed/cancelled/unknown from retained records; Waiting Automation occurrences read it; a cancelled entry is never revived, an unknown never repeated.
 - 2026-11-08 · #1926 HS-S24 the Program's spend amount is a note, never a cap: stored, read as `spend note · 40 USD`, one mono fact in the Program window; over the note still runs.
 - 2026-11-08 · #1924 Fix forward #1923: the Needs you → Room proposal case presses the status line's n need you before it reads the rows.
