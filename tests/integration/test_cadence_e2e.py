@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 
 from holdspeak.cadence.audit import export_audit
-from holdspeak.cadence.brief import build_brief
+from holdspeak.services.monday_brief_service import todays_brief
 from holdspeak.cadence.closeout import apply_decision, build_closeout
 from holdspeak.cadence.service import CadenceService
 from holdspeak.config import CadenceConfig
@@ -36,9 +36,8 @@ def test_full_chief_of_staff_flow(db):
     result = CadenceService(db, CadenceConfig()).tick(NOON)
     assert result.projected == 2 and result.open_loops == 2
 
-    # 2. the morning brief leads with the top move
-    brief = build_brief(db, now=NOON)
-    assert not brief.is_empty and brief.items[0].next_action.title
+    # 2. the morning brief is the day's brief (the one morning brief, 2026-11-08)
+    assert todays_brief(db).headline
 
     # 3. the end-of-day closeout recommends a decision per loop
     co = build_closeout(db, now=NOON)

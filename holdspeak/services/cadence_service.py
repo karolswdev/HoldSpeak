@@ -67,13 +67,10 @@ class CadenceService:
         return {"loops": [self._loop_dict(loop) for loop in self._db.cadence.list_loops(include_terminal=include_terminal)], "egress": _LOCAL_EGRESS}
 
     def brief(self, principal: Principal) -> dict[str, Any]:
-        from ..cadence.brief import build_brief
-        brief = build_brief(self._db)
-        return {"date": brief.date, "headline": brief.headline, "open_count": brief.open_count,
-                "generated_by": brief.generated_by,
-                "items": [{"loop": self._loop_dict(item.loop, with_next_action=False),
-                           "next_action": {"kind": item.next_action.kind, "title": item.next_action.title,
-                                           "body_markdown": item.next_action.body_markdown}} for item in brief.items],
+        # The one morning brief (2026-11-08): the day's brief, not a second one.
+        from .monday_brief_service import brief_lines, todays_brief
+        brief = todays_brief(self._db)
+        return {"id": brief.id, "headline": brief.headline, "lines": brief_lines(brief),
                 "egress": _LOCAL_EGRESS}
 
     def closeout(self, principal: Principal) -> dict[str, Any]:

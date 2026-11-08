@@ -622,20 +622,21 @@ class ReachService:
     # ── PG-DIRECTION DIR7: the Cadence brief's one line ──────────────
 
     def cadence_line(self) -> Optional[str]:
-        """The Cadence brief's one line when a loop is due (the loops its
-        morning push names), else None: "Cadence: Reply to Ana. 3 open loops." """
+        """The day's brief's open loops in one line when a loop is due, else
+        None: "Brief: Open loop: Reply to Ana. 3 open loops." The rest of what
+        waits rides in the digest itself (the one morning brief, 2026-11-08)."""
         try:
-            from ..cadence.brief import build_brief
+            from .monday_brief_service import brief_lines, todays_brief
 
-            brief = build_brief(self.db, now=self.now())
+            loops = brief_lines(todays_brief(self.db), limit=50, source="cadence_loop:")
         except Exception as exc:
-            log.debug(f"reach: no cadence brief: {exc}")
+            log.debug(f"reach: no brief: {exc}")
             return None
-        if brief.is_empty:
+        if not loops:
             return None
-        loops = "1 open loop" if brief.open_count == 1 else f"{brief.open_count} open loops"
-        head = str(brief.headline or "").strip().rstrip(".")
-        return f"Cadence: {head}. {loops}."[:300]
+        count = "1 open loop" if len(loops) == 1 else f"{len(loops)} open loops"
+        head = loops[0].strip().rstrip(".")
+        return f"Brief: {head}. {count}."[:300]
 
     def _cadence_today(self, now: datetime) -> Optional[str]:
         """The line, once a day, at or after the digest hour."""

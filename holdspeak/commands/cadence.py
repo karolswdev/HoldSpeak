@@ -75,17 +75,16 @@ def _cmd_closeout(out: TextIO, db, *, as_json: bool) -> int:
 
 
 def _cmd_brief(out: TextIO, db, *, as_json: bool) -> int:
-    from ..cadence.brief import build_brief, render_brief_text
+    from ..services.monday_brief_service import brief_lines, todays_brief
 
-    brief = build_brief(db)
+    brief = todays_brief(db)
+    lines = brief_lines(brief)
     if as_json:
-        print(json.dumps({
-            "date": brief.date, "headline": brief.headline, "open_count": brief.open_count,
-            "items": [{"title": it.loop.title, "next_action": it.next_action.title}
-                      for it in brief.items],
-        }, indent=2), file=out)
+        print(json.dumps({"id": brief.id, "headline": brief.headline, "lines": lines}, indent=2), file=out)
         return 0
-    print(render_brief_text(brief), file=out)
+    print(brief.headline, file=out)
+    for i, line in enumerate(lines, 1):
+        print(f"  {i}. {line}", file=out)
     return 0
 
 

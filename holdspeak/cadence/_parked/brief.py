@@ -1,4 +1,9 @@
-"""The daily push brief (CAD-5).
+"""Parked 2026-11-08: the Cadence push brief (CAD-5), a second morning brief.
+
+Telegram /brief, the morning push, Reach's morning line, the CLI and MCP
+`cadence.brief` read the day's brief (`monday_brief_service.todays_brief`).
+`should_send_daily_brief` moved to `holdspeak/runtime/cadence.py`. The original
+first line: The daily push brief (CAD-5).
 
 Deterministic by default: rank the open loops, take the top few, attach each one's
 prepared next move, and lead with the single highest-leverage move. An LLM may
@@ -12,8 +17,8 @@ from datetime import datetime
 from holdspeak.timestamps import aware, local_now
 from typing import Callable, Optional
 
-from .models import NextBestAction, OpenLoop
-from .next_action import generate_next_action
+from holdspeak.cadence.models import NextBestAction, OpenLoop
+from holdspeak.cadence.next_action import generate_next_action
 
 
 @dataclass

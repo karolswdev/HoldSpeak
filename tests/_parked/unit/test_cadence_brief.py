@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from holdspeak.cadence.brief import (
+from holdspeak.cadence._parked.brief import (
     build_brief,
     polish_headline,
     render_brief_markdown,
