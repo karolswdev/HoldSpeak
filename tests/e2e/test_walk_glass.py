@@ -217,3 +217,116 @@ def test_on_his_iphone_the_frame_holds_the_safe_area_the_guide_presses_and_the_s
                 browser.close()
     finally:
         server.stop()
+
+
+# The desk's first reads are slow (owner, 2026-11-07, on his iPhone: "the
+# click happened only shortly after the web page loaded… only launch when all
+# is loaded"). The page's own fetch holds the hub's window list and the
+# Programs list 2.5 s on their first read, and every project read 4 s. The
+# rig notes when the walk's ready marker, cursor and rings first appear, and
+# the guide's own click (an untrusted one: every press of the rig is trusted).
+_SLOW_DESK_JS = """
+(() => {
+  const delays = { "/api/desk/windows": 2500, "/api/programs": 2500, "/api/projects": 4000 };
+  const held = new Set();
+  const real = window.fetch.bind(window);
+  window.fetch = async (input, init) => {
+    const url = new URL(typeof input === "string" ? input : input.url, location.href);
+    const method = String((init && init.method) || (typeof input === "string" ? "GET" : input.method) || "GET").toUpperCase();
+    const ms = method === "GET" ? delays[url.pathname] : undefined;
+    if (ms && (url.pathname === "/api/projects" || !held.has(url.pathname))) {
+      held.add(url.pathname);
+      await new Promise((resolve) => setTimeout(resolve, ms));
+    }
+    const answer = await real(input, init);
+    // The hub's window list landed: the compositor restores from it.
+    if (url.pathname === "/api/desk/windows" && method === "GET" && !("windows" in seen)) seen.windows = performance.now();
+    return answer;
+  };
+  const seen = (window.__walkSeen = {});
+  const mark = (key, selector) => {
+    if (!(key in seen) && document.querySelector(selector)) seen[key] = performance.now();
+  };
+  new MutationObserver(() => {
+    mark("ready", "[data-desk-ready]");
+    mark("cursor", '[data-testid="walk-cursor"]');
+    mark("pressRing", '[data-testid="walk-press-ring"]');
+    mark("ring", '[data-testid="walk-ring"]');
+    mark("programs", "[data-layer='window'][id='surface-programs'], [data-layer='window'][id^='surface-programs:']");
+  }).observe(document, { subtree: true, childList: true, attributes: true, attributeFilter: ["data-desk-ready"] });
+  document.addEventListener("click", (event) => {
+    if (event.isTrusted || window.__walkClick) return;
+    const target = event.target instanceof Element ? event.target : null;
+    const win = target && target.closest("[data-layer='window']");
+    const named = target && target.closest("[data-testid]");
+    window.__walkClick = {
+      t: performance.now(),
+      testid: named && named.getAttribute("data-testid"),
+      busy: !!(win && win.querySelector("[aria-busy='true']")),
+      ready: !!document.querySelector("[data-desk-ready]"),
+    };
+  }, true);
+})();
+"""
+
+
+def test_the_walk_starts_only_when_the_desk_is_ready_and_moves_one_beat_later(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    from playwright.sync_api import sync_playwright
+
+    _ensure_build()
+    server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
+    try:
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=True)
+            ctx = browser.new_context(viewport={"width": 1440, "height": 900}, device_scale_factor=1)
+            prep = ctx.new_page()
+            prep.set_default_timeout(45_000)
+            try:
+                prep.goto(f"{base}/?token={TOKEN}", wait_until="load")
+                _api(prep, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
+                _api(prep, "POST", "/api/projects", {"name": "Walk glass"}, token=TOKEN)
+                made: dict[str, Any] = _api(prep, "POST", "/api/walks", {"title": "Slow desk", "steps": [
+                    {"open": {"app": "surface-programs"}},
+                    {"press": {"target": "programs-new", "words": "I press New program."},
+                     "highlight": {"target": "programs-make-rows", "words": "The project rows."},
+                     "ask": {"ref": "s-ready", "question": "Does the well read clearly?",
+                             "choices": ["Keep", "Redo"]}},
+                ]}, token=TOKEN)
+                prep.goto(f"{base}/?token={TOKEN}", wait_until="load")
+                _normal_chair(prep)
+                prep.close()
+
+                page = ctx.new_page()
+                page.set_default_timeout(45_000)
+                errors: list[str] = []
+                page.on("pageerror", lambda e: errors.append(str(e)[:200]))
+                page.add_init_script(_SLOW_DESK_JS)
+                page.goto(f"{base}{made['url_path']}", wait_until="load")
+
+                # The project rows are found after the slow project read.
+                page.get_by_test_id("walk-question").wait_for(timeout=30_000)
+                assert page.locator('[data-testid="programs-make-rows"]').is_visible()
+                assert page.get_by_test_id("walk-line").count() == 0
+
+                seen: dict[str, float] = page.evaluate("window.__walkSeen")
+                click: dict[str, Any] | None = page.evaluate("window.__walkClick || null")
+                assert click is not None, "the guide never pressed"
+                # The walk opens nothing before the hub's window list landed.
+                assert seen["programs"] >= seen["windows"], (seen, click)
+                # The press waits for the Programs window's first read.
+                assert click["testid"] == "programs-new" and not click["busy"], (seen, click)
+                # The guide moves one beat after the hub's window list landed.
+                first_move = min(seen[key] for key in ("cursor", "pressRing", "ring") if key in seen)
+                assert first_move - seen["windows"] >= 900, (seen, click)
+                # No press and no ring before the desk is ready.
+                assert "ready" in seen and click["ready"], (seen, click)
+                # The first move comes at least one 900 ms beat after the marker.
+                assert first_move - seen["ready"] >= 900, (seen, click)
+                assert click["t"] - seen["ready"] >= 900, (seen, click)
+                assert errors == [], errors
+            finally:
+                ctx.close()
+                browser.close()
+    finally:
+        server.stop()

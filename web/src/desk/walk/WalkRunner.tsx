@@ -41,9 +41,13 @@ import { onStateChange, speak, stop as stopVoice } from "../../lib/tts";
 import { play } from "../../lib/sfx";
 import { useCompactViewport } from "../useCompactViewport";
 import {
+  READY_BEAT_MS,
+  READY_CEILING_MS,
   SKIP,
+  STILL_LOADING,
   WORDS,
   clearWalkFromLocation,
+  deskReady,
   noneWords,
   openWalkApp,
   postWalkAnswer,
@@ -51,6 +55,7 @@ import {
   resolveWalkScope,
   runWalkVerb,
   stepWindow,
+  waitForDeskReady,
   waitForWalkTarget,
   waitForWalkWindow,
   walkAgent,
@@ -339,6 +344,12 @@ function WalkSession({ token }: { token: string }) {
   // The voice, and (with the voice on) the one tap that lets it play.
   const [voice, setVoice] = useState(voiceDefault);
   const [begun, setBegun] = useState(() => !voiceDefault());
+  // The desk's own readiness: "seen" when the predicate first held (the
+  // `data-desk-ready` marker), "go" one beat later, "late" when it did not
+  // hold within the ceiling (the guide says so and waits for a tap).
+  const [deskState, setDeskState] = useState<"wait" | "seen" | "go" | "late">("wait");
+  // He tapped through "still loading": no step waits for the desk again.
+  const tappedRef = useRef(false);
   const voiceRef = useRef(voice);
   voiceRef.current = voice;
   const saidRef = useRef("");
@@ -367,9 +378,35 @@ function WalkSession({ token }: { token: string }) {
     return () => clearTimeout(timer);
   }, [refused]);
 
+  // The walk starts only when the desk is ready, and moves one beat later.
+  const loaded = !!page;
+  useEffect(() => {
+    if (!loaded) return;
+    let alive = true;
+    const started = Date.now();
+    void (async () => {
+      for (;;) {
+        const ready = await waitForDeskReady(Math.max(0, started + READY_CEILING_MS - Date.now()));
+        if (!alive) return;
+        if (!ready) {
+          // Late: the line stays and readiness is still watched; a tap starts.
+          setDeskState((now) => (now === "go" ? now : "late"));
+          while (alive && !deskReady()) await wait(100);
+          if (!alive) return;
+        }
+        setDeskState((now) => (now === "go" ? now : "seen"));
+        await wait(READY_BEAT_MS);
+        if (!alive) return;
+        if (deskReady()) break;
+      }
+      setDeskState("go");
+    })();
+    return () => { alive = false; };
+  }, [loaded]);
+
   const steps = page?.steps ?? [];
   const done = !!page && index >= steps.length;
-  const step = page && !done && begun ? steps[index] : undefined;
+  const step = page && !done && begun && deskState === "go" ? steps[index] : undefined;
 
   const advance = useCallback(() => {
     setStage(EMPTY);
@@ -427,6 +464,9 @@ function WalkSession({ token }: { token: string }) {
       return part;
     };
     void (async () => {
+      // A later step's open, press and mark wait for the desk as the first does.
+      if ((step.open || step.press || step.highlight) && !tappedRef.current && !deskReady()) await waitForDeskReady();
+      if (!alive) return;
       setSpoken(step.say?.words ?? step.press?.words ?? step.highlight?.words ?? "");
       if (step.open) {
         const scope = await resolveWalkScope(step.open.scope);
@@ -697,7 +737,8 @@ function WalkSession({ token }: { token: string }) {
   const bubble = bubbleNow;
 
   return (
-    <div className="walk-layer" data-walk="" data-testid="walk" data-capturing={capturing ? "" : undefined}>
+    <div className="walk-layer" data-walk="" data-testid="walk" data-capturing={capturing ? "" : undefined}
+      data-desk-ready={deskState === "seen" || deskState === "go" ? "" : undefined}>
       <WalkFrame />
       <div ref={guideRef} className="walk-guide" data-testid="walk-guide"
         data-talking={talking ? "" : undefined} data-done={done ? "" : undefined}>
@@ -705,6 +746,12 @@ function WalkSession({ token }: { token: string }) {
         {!begun ? (
           <Button variant="secondary" className="walk-bubble walk-begin" onClick={begin} data-testid="walk-begin">
             Tap to begin
+          </Button>
+        ) : deskState === "late" && !done ? (
+          // The desk did not get ready: one plain line; a tap starts the walk.
+          <Button variant="secondary" className="walk-bubble walk-begin" onClick={() => { tappedRef.current = true; setDeskState("go"); }}
+            data-testid="walk-still-loading">
+            {STILL_LOADING}
           </Button>
         ) : bubble ? (
           <p className="walk-bubble" role="status" aria-live="polite"
