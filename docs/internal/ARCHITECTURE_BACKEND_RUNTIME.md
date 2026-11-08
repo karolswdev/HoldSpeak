@@ -190,7 +190,7 @@ reconciliation pass. This section documents the canonical anchors.
 ### Link columns and the L1 index
 
 `scheduled_recordings` carries three additive link columns
-(`holdspeak/db/schema.py`, declarative reconcile):
+(`holdspeak/db/schema/`, declarative reconcile):
 
 | Column | Purpose |
 |---|---|
@@ -285,8 +285,9 @@ reappears (pending work is never hidden).
 
 ## Named watch items
 
-- `holdspeak/db/schema.py`: the canonical schema DDL (`SCHEMA_SQL`),
-  pinned by the schema snapshot test. `holdspeak/db/reconcile.py` applies
+- `holdspeak/db/schema/`: the canonical schema DDL (`SCHEMA_SQL`), one
+  module per domain under the 600-line module budget
+  (`tests/unit/test_density_guard.py`), pinned by the schema snapshot test. `holdspeak/db/reconcile.py` applies
   it declaratively on every open (additive-only, no version gate).
 - The old item, `web/routes/meetings.py`, was resolved by Phase 72's
   split into the meetings package.
