@@ -404,8 +404,8 @@
   --wb-frame: 1px; /* fine window frame border */
   --wb-bar-h: 30px; /* desktop window title bar (window grammar 2026-10-24: 28-32px); narrow shell keeps 44px elsewhere */
   --wb-bar-front: var(--wb-sel); /* front window title bar: the deep Workbench blue, flat (paper ink on it; the faint shine is an inset highlight) */
-  --wb-toolbar-h: 36px; /* window toolbar band under the title bar */
-  --wb-statusbar-h: 24px; /* window status bar band at the foot */
+  --wb-toolbar-h: 48px; /* window toolbar band under the title bar (the language in every window 2026-11-08: 48 px, the plate tier) */
+  --wb-statusbar-h: 26px; /* window status bar band at the foot (the language in every window 2026-11-08: 26 px, mono 11) */
   --wb-sel-vivid: #2b55a7; /* vivid Workbench blue for a selected list row (paper ink 5.3:1) */
   --wb-link-ink: #2b55a7; /* an object named in a note's text: a Project, a pull request, a Jira key, a decision (Note canvas A, 2026-10-27; paper ink 5.3:1) */
   --wb-person-ink: #1f7a6b; /* a person named in a note's text (Note canvas A, 2026-10-27; paper ink 5.6:1) */
@@ -426,7 +426,7 @@
   --today-light-warm: rgba(236, 160, 64, 0.06); /* DELIGHT 2026-10-27: Today's morning light, a warm wash from the toolbar (6 % at the top, gone by 120 px) */
   --today-light-cool: rgba(64, 112, 196, 0.06); /* DELIGHT 2026-10-27: Today's evening light, a cool wash from the toolbar (6 % at the top, gone by 120 px) */
   --wb-row-hover: color-mix(in srgb, var(--wb-sel) 8%, var(--wb-paper)); /* a list row lifted under the pointer */
-  --wb-row-dense: 30px; /* dense list view row on the desktop; narrow rows stay 44px */
+  --wb-row-dense: 44px; /* dense list view row on the desktop (the language in every window 2026-11-08: 44 px, a name and its facts) */
   --desk-floor-label-halo: 0 1px 2px rgba(12, 20, 32, 0.9), 0 0 1px rgba(12, 20, 32, 0.95), 0 0 8px rgba(12, 20, 32, 0.55); /* a floor label's soft dark halo: paper ink reads on the slate floor and on a wallpaper, with no plate */
   --desk-floor-icon-lift: drop-shadow(0 3px 6px rgba(8, 14, 24, 0.45)); /* a floor icon lifted under the pointer (a filter, never a transform) */
   --desk-badge-h: 16px; /* the one count badge height (floor icons, dock, bell) */
@@ -474,7 +474,7 @@
   --desk-lamp-pulse: var(--motion-breathe); /* PHILO-16 (A1) the title-bar lamp: an asking window pulses once every 1.6 s (reduced motion: static) */
   --wb-ember-ink: #7a5408; /* PHILO-16 (A1) the interior: ember as TEXT or a filled verb on slate ; the accent remaps to it inside a window (the language 2026-11-08: rides the language ink) */
   --wb-ok-ink: #155c39; /* PHILO-16 (A1) the interior: an ok word on slate (the language 2026-11-08: rides the language ink) */
-  --wb-warn-ink: #7a5408; /* PHILO-16 (A1) the interior: a warn word on slate (the language 2026-11-08: rides the language ink) */
+  --wb-warn-ink: #4a5568; /* the interior: a warn word is quiet graphite ink (the language in every window 2026-11-08: brass means only waits on you) */
   --wb-danger-ink: #9e2a18; /* PHILO-16 (A1) the interior: a danger word on slate (the language 2026-11-08: rides the language ink) */
   --wb-info-ink: #2b55a7; /* PHILO-16 (A1) the interior: an info word on slate (the language 2026-11-08: rides the language ink) */
   --bevel-raised: none; /* modern controls use a fine border and soft depth */
@@ -482,7 +482,7 @@
   --bevel-raised-soft: none; /* modern controls have no bevel box */
   --bevel-sunken-soft: none; /* modern fields have no bevel box */
   --lamp-ok: var(--ok); /* PHILO-14 B1 (the object species): IconLamp tone ok: done, checks pass */
-  --lamp-warn: var(--warn-signal); /* PHILO-14 B1 (the object species): IconLamp tone warn: a held call, due, to review */
+  --lamp-warn: #4a5568; /* IconLamp tone warn: quiet graphite (to review, no engine, not set, stale); brass is only the ask tone (the language in every window 2026-11-08) */
   --lamp-fail: var(--danger); /* PHILO-14 B1 (the object species): IconLamp tone fail: a failed check, a stopped agent */
   --lamp-info: var(--accent-cool); /* PHILO-14 B1 (the object species): IconLamp tone info: in progress (an agent at work, a PR open) */
   --lamp-ask: #b8800f; /* IconLamp tone ask: it waits on you; brass, the one warm colour (the language 2026-11-08) */

@@ -36,7 +36,8 @@ describe("Signal component gallery", () => {
     fireEvent.click(within(grid).getByRole("button", { name: /Ledger cutover sync/ }), { detail: 1 });
     expect(screen.getByTestId("reference-window-opened").textContent).toBe("Opened locally · Ledger cutover sync");
     const people = within(screen.getByTestId("reference-window-people")).getByRole("grid", { name: "Specimen people" });
-    expect([...people.querySelectorAll(".object-list-avatar")].map((disc) => disc.textContent)).toEqual(["AC", "PN", "SR"]);
+    expect(people.querySelectorAll(".object-list-avatar")).toHaveLength(0);
+    expect(people.querySelectorAll(".object-list-open img")).toHaveLength(3);
     expect(people.querySelector(".object-list-dot-word[data-tone='idle']")?.textContent).toBe("Quiet");
 
     for (const [preset, expectation] of [["empty", "Record or import a meeting"], ["busy", ""], ["failed", "Meetings not read"]] as const) {

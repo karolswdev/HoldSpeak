@@ -154,8 +154,14 @@ export type SinceKind = "meeting" | "decision" | "promise" | "failed" | "unread"
 
 /** A Since row's kind as a dot and a word: its colour by what changed. */
 const SINCE_TONE: Record<SinceKind, "ok" | "warn" | "fail" | "info" | "ask" | "idle"> = {
-  meeting: "info", decision: "ok", promise: "warn", failed: "fail", unread: "ask", other: "idle",
+  meeting: "info", decision: "ok", promise: "ask", failed: "fail", unread: "ask", other: "idle",
 };
+/** The language (2026-11-08): each row of Since … leads with its kind's
+ *  20 px sprite (the kit row grammar). */
+const SINCE_SPRITE: Record<SinceKind, string> = {
+  meeting: "meeting", decision: "decision", promise: "action-item", failed: "meeting", unread: "note", other: "note",
+};
+const SINCE_GLYPHS = `${import.meta.env.BASE_URL || "/_built/"}desk/sprites/20/`;
 
 export function sinceKind(item: Pick<BriefItem, "section" | "text"> & { source_ref?: string | null }): SinceKind {
   if (String(item.source_ref ?? "").startsWith(NOT_READ_REF)) return "unread";
@@ -274,6 +280,7 @@ export function SinceYesterday({ brief, failed, now, defaultOpen = false, openRe
             const opener = refOpener(item.source_ref);
             return (
               <div key={item.id} className="today-fold-row" data-testid="brief-sf-row" data-kind={sinceKind(item)}>
+                <img className="today-fold-glyph" src={`${SINCE_GLYPHS}${SINCE_SPRITE[sinceKind(item)]}.png`} alt="" width={20} height={20} draggable={false} />
                 {opener ? (
                   <Button variant="chrome" className="today-fold-primary" onClick={() => opener()}>{parsed.primary}</Button>
                 ) : <span className="today-fold-primary">{parsed.primary}</span>}

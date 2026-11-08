@@ -15,12 +15,12 @@
   top: 0;
   z-index: 1;
   margin: 0;
-  padding: 10px 12px 4px;
-  border-bottom: 1px solid var(--wb-rule-soft);
+  padding: 12px 12px 4px;
+  border-bottom: 1px solid var(--hs-rule, var(--wb-rule-soft));
   background: var(--wb-paper);
-  color: var(--wb-muted);
+  color: var(--hs-ink-2, var(--wb-muted));
   font: 600 12px / 1.3 var(--font-sans);
-  letter-spacing: 0;
+  letter-spacing: 0.04em;
   text-transform: none;
 }
 .kit-listrows {
@@ -34,12 +34,12 @@
   align-items: center;
   gap: 10px;
   min-width: 0;
-  min-height: 32px;
+  min-height: 44px;
   padding: 0 12px 0 0;
   border-bottom: 1px solid color-mix(in srgb, var(--wb-rule-soft) 60%, transparent);
   transition: background-color var(--duration-short, 120ms) var(--ease-standard, ease);
 }
-.kit-listrow[data-open]:hover { background: var(--wb-row-hover); }
+.kit-listrow[data-open]:hover { background: color-mix(in srgb, var(--hs-steel, var(--wb-sel)) 7%, var(--wb-paper)); }
 @media (prefers-reduced-motion: reduce) {
   .kit-listrow { transition: none; }
 }
@@ -48,9 +48,9 @@
   display: flex;
   flex: 1 1 auto;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   min-width: 0;
-  min-height: 32px;
+  min-height: 44px;
   padding: 4px 0 4px 12px;
   border: 0;
   border-radius: 0;
@@ -71,8 +71,8 @@
 }
 .kit-listrow-glyph {
   flex: none;
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   display: inline-grid;
   place-items: center;
   filter: drop-shadow(0 1px 0 color-mix(in srgb, var(--wb-ink) 18%, transparent));
@@ -88,8 +88,8 @@
   flex: 0 1 auto;
   min-width: 0;
   overflow: hidden;
-  color: var(--wb-text, var(--wb-ink));
-  font: 500 13px / 1.35 var(--font-sans);
+  color: var(--hs-ink, var(--wb-ink));
+  font: 600 14px / 1.3 var(--font-sans);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -97,16 +97,30 @@
   flex: 0 1 auto;
   min-width: 0;
   overflow: hidden;
-  color: var(--wb-muted);
+  color: var(--hs-ink-2, var(--wb-muted));
   font: 400 12px / 1.35 var(--font-sans);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* The facts line: 12 px mono in secondary ink, under the name. A row with
+   facts is two lines. */
+.kit-listrow-facts {
+  flex: 1 0 100%;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--hs-ink-2, var(--wb-muted));
+  font: 400 12px / 16px var(--font-mono);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.kit-listrow[data-facts] .kit-listrow-text { flex-wrap: wrap; row-gap: 1px; }
+.kit-listrow[data-facts],
+.kit-listrow[data-facts] .kit-listrow-main { min-height: 52px; }
 .kit-listrow-state { flex: none; }
 .kit-listrow-age {
   flex: none;
-  color: var(--wb-muted);
-  font: 400 12px / 1.35 var(--font-sans);
+  color: var(--hs-ink-2, var(--wb-muted));
+  font: 400 12px / 16px var(--font-mono);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
@@ -141,12 +155,16 @@
    ink; a partner of the selection in another list wears a blue edge (the
    job lights its engine). A row's own fold (`li.kit-listfold`) sits under it
    on the field. A download or a run draws a 2 px bar along the row's foot. */
-.kit-listrow[data-selected] { background: var(--wb-sel-vivid, var(--wb-sel)); }
-.kit-listrow[data-selected][data-open]:hover { background: var(--wb-sel-vivid, var(--wb-sel)); }
-.kit-listrow[data-selected] .kit-listrow-main,
-.kit-listrow[data-selected] .kit-listrow-name,
-.kit-listrow[data-selected] .kit-listrow-meta,
-.kit-listrow[data-selected] .kit-listrow-state .kit-dotword { color: var(--wb-paper, #fafbfc); }
+/* The language in every window (2026-11-08): the selected row is a steel
+   tint with a 3 px steel bar at its left; its words stay ink. */
+.kit-listrow[data-selected],
+.kit-listrow[data-selected][data-open]:hover {
+  background: var(--hs-steel-tint, color-mix(in srgb, var(--wb-sel) 14%, var(--wb-paper)));
+  box-shadow: inset 3px 0 0 var(--hs-steel, var(--wb-sel));
+}
+/* The dense list: 36 px rows (44 px at 520 px or less, below). */
+.kit-listview--dense .kit-listrow,
+.kit-listview--dense .kit-listrow .kit-listrow-main { min-height: 36px; }
 .kit-listrow[data-lit] {
   background: color-mix(in srgb, var(--wb-sel-vivid, var(--wb-sel)) 9%, var(--wb-paper));
   box-shadow: inset 3px 0 0 var(--wb-sel-vivid, var(--wb-sel));
@@ -171,4 +189,8 @@
 }
 @container surface (max-width: 520px) {
   .kit-listrow-fold { padding-left: 12px; }
+}
+@container surface (max-width: 520px) {
+  .kit-listview--dense .kit-listrow,
+  .kit-listview--dense .kit-listrow .kit-listrow-main { min-height: 44px; }
 }

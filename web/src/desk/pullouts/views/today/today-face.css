@@ -1,0 +1,176 @@
+/* ── Today in the language (2026-11-08): the mast, the first plate, the day
+   as a plain list, the tracked labels. Container queries only. ── */
+.today .today-mast-band {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px 12px;
+  border-bottom: 1px solid var(--hs-edge);
+  background: var(--hs-plate);
+}
+.today .today-mast-spine { width: 100%; }
+.today .today-mast .surface-mast-facts { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 8px; }
+.today .today-mast-day { font: inherit; color: inherit; }
+.desk-next .today .today-scroll > * { flex-shrink: 0; }
+.desk-next .today .today-mast-needs.btn,
+.desk-next .today .today-mast-needs.btn:hover {
+  display: inline;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--hs-edge);
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.today .today-mast-needs.btn:hover { color: var(--hs-ink); text-decoration-color: currentColor; }
+.today .today-mast-needs .today-needs-count { font-weight: 600; color: var(--hs-ink); }
+
+/* The tracked 11 px label of a section (the day, Needs you, Since …). */
+.desk-next .today .today-label,
+.desk-next .today .today-section-cap,
+.desk-next .today .today-fold-label,
+.today .today-plate-label {
+  margin: 0 0 6px;
+  padding: 0;
+  border: 0;
+  color: var(--hs-ink-2);
+  font: 600 12px / 16px var(--font-sans, inherit);
+  letter-spacing: 0.08em;
+}
+
+/* ── The first plate: raised, the one thing first. ── */
+.today .today-plate {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0 0 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--hs-edge);
+  border-radius: 10px;
+  background: var(--hs-raised);
+  box-shadow: var(--hs-raised-shadow);
+  animation: today-plate-raise var(--motion-raise, 220ms) ease-out both;
+}
+@keyframes today-plate-raise {
+  from { transform: translateY(4px); box-shadow: none; }
+  to { transform: none; box-shadow: var(--hs-raised-shadow); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .today .today-plate { animation: none; }
+}
+.today .today-plate-label { margin: 0; color: var(--hs-brass-ink); }
+.today .today-plate-row { display: flex; align-items: center; gap: 12px; min-width: 0; flex-wrap: wrap; }
+.today .today-plate-glyph { flex: none; width: 32px; height: 32px; }
+.today .today-plate-words { flex: 1 1 220px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.today .today-plate-title {
+  color: var(--hs-ink);
+  font: 600 20px / 24px var(--font-display);
+  overflow-wrap: anywhere;
+}
+.today .today-plate-facts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 8px;
+  color: var(--hs-ink-2);
+  font: 400 12px / 16px var(--font-mono);
+}
+.today .today-plate-facts > span:not(.kit-dotword) { white-space: nowrap; }
+.today .today-plate-verbs { display: flex; flex: none; flex-wrap: wrap; gap: 8px; align-items: center; }
+.today .today-plate-steps { display: flex; flex-direction: column; gap: 4px; }
+.today .today-plate-stepwords {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--hs-ink-2);
+  font: 400 12px / 16px var(--font-mono);
+}
+.today .today-plate-stepwords li[data-state="now"] { color: var(--hs-brass-ink); font-weight: 600; }
+.today .today-plate-stepwords li[data-state="done"] { color: var(--hs-moss-ink); }
+.today .today-plate-spine { display: flex; gap: 2px; }
+
+/* When no meeting is ahead the plate is Needs you's own first plate. */
+.today .today-first-need { margin: 0 0 16px; }
+.today .today-first-need .needs-first { flex: none; position: static; width: 100%; }
+
+/* ── The day: kit rows, the hour as an 11 px mono column. ── */
+.today .today-daylist { margin: 0; padding: 0; list-style: none; }
+.today .today-dayrow { min-height: 44px; padding-left: 0; }
+.today .today-dayrow .today-dayrow-main { padding-left: 0; }
+.today .today-hour {
+  flex: none;
+  width: 44px;
+  color: var(--hs-ink-2);
+  font: 400 12px / 16px var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.today .today-nowrow { min-height: 28px; }
+.today .today-now-word {
+  color: var(--hs-steel);
+  font: 600 12px / 16px var(--font-mono);
+  letter-spacing: 0.08em;
+}
+.today .today-dayrow-facts { display: flex; flex-wrap: wrap; gap: 0 8px; align-items: baseline; font-family: var(--font-mono); font-size: 12px; }
+.today .today-dayrow .today-row-title.btn {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  color: var(--hs-ink);
+  font: inherit;
+  text-align: left;
+}
+.today .today-dayrow-failed { list-style: none; padding: 6px 0 6px 44px; }
+
+/* Needs you's preview: the quiet states are graphite, never amber; brass
+   stays the plate's and the verbs'. */
+.today .today-needs .kit-dot[data-tone="warn"] { background: var(--hs-graphite); box-shadow: none; }
+
+/* Since …: kit rows with a mono facts line. */
+.desk-next .today .today-fold-row { min-height: 44px; }
+.desk-next .today .today-fold-facts { font-family: var(--font-mono); font-size: 12px; color: var(--hs-ink-2); }
+
+/* 393 and every narrow window: one column, the plate first. */
+@container surface (max-width: 559.9px) {
+  .today .today-mast-band { padding: 12px; }
+  .today .today-plate { padding: 12px; }
+  .today .today-plate-verbs { width: 100%; }
+  .today .today-hour { width: 38px; }
+}
+.desk-next .today .today-fold-row { align-items: center; border-bottom: 1px solid var(--wb-rule-soft); }
+.today .today-fold-glyph { flex: none; width: 20px; height: 20px; align-self: center; }
+.desk-next .today .today-mast-needs .today-needs-count {
+  margin: 0;
+  padding: 0;
+  background: none;
+  color: var(--hs-ink);
+  font: 600 12px / 16px var(--font-mono);
+}
+/* The 12 px floor at 393: the tracked labels, the hour and the facts. */
+@container surface (max-width: 559.9px) {
+  .desk-next .today .today-label,
+  .desk-next .today .today-section-cap,
+  .desk-next .today .today-fold-label,
+  .today .today-plate-label,
+  .today .today-hour,
+  .today .today-now-word,
+  .today .today-plate-stepwords,
+  .today .today-dayrow-facts { font-size: 12px; line-height: 16px; }
+}
+@container surface (max-width: 559.9px) {
+  /* A row's verb takes its own line under the name: two targets never
+     share a point at 393. */
+  .today .today-dayrow { flex-wrap: wrap; padding-bottom: 6px; }
+  .today .today-dayrow .today-dayrow-main { flex: 1 1 calc(100% - 52px); }
+  .today .today-dayrow .kit-listrow-verbs { margin-left: 46px; }
+}
