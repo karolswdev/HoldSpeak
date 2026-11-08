@@ -2,6 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · #1848 The walk asks in one toolbar bar above the dock (direction S3): Keep primary, Redo secondary, the mic, Skip; no sheet, no tinted pills, no swipe.
 - 2026-11-08 · #1846 `scripts/measure.py` prints the rule 7 numbers as one table each night; `docs/internal/measure/2026-11-08.md` is the baseline.
 - 2026-11-08 · #1847 Fix forward #1844: the wizard's phone-head rule lives in the frame (data-keeps-title), no viewport media in a window body.
 - 2026-11-08 · #1845 The Program vocabulary and ProgramRefused have one owner, services/program_definitions.py (HS-S51): program_service 5670 → 5406 lines, the new module reaches only errors and program_rules, definition-only service importers 3 → 2.

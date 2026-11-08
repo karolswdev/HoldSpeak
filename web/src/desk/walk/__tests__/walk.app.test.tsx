@@ -190,15 +190,15 @@ describe("The Walk", () => {
     expect(document.getElementById("chair:needs")).not.toBeNull();
   });
 
-  it("records the words as \"words\" when he presses Send and no choice; no choice is the default", async () => {
+  it("records the words as \"words\" when he presses Send and no choice; no choice is pressed for him", async () => {
     vi.stubGlobal("fetch", hub());
     render(<WalkRunner />);
     fireEvent.click(await screen.findByTestId("walk-next", {}, { timeout: 3000 }));
     expect(await screen.findByTestId("walk-question")).toHaveTextContent("Does the well read clearly?");
-    // Every choice is the same weight: none reads as the default.
-    for (const name of ["Keep", "Redo"]) {
-      expect(screen.getByRole("button", { name }).className).not.toMatch(/primary/);
-    }
+    // Keep is the bar's primary, Redo its secondary; focus is on the bar, not on a choice.
+    expect(screen.getByRole("button", { name: "Keep" })).toHaveClass("btn--primary");
+    expect(screen.getByRole("button", { name: "Redo" })).toHaveClass("btn--secondary");
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByTestId("walk-card")));
     expect(screen.queryByTestId("walk-send")).toBeNull();
     fireEvent.click(screen.getByTestId("walk-say-more"));
     expect(screen.queryByTestId("walk-send")).toBeNull();
@@ -308,7 +308,7 @@ describe("The Walk", () => {
     expect(posts).toHaveLength(1);
   }, 20000);
 
-  it("docks the card as one sheet above the dock on a 390 x 844 phone and keeps the part above it", async () => {
+  it("asks in one toolbar band on the dock on a 390 x 844 phone: Keep primary, Redo secondary, the mic, Skip; the part stays above it", async () => {
     vi.stubGlobal("fetch", hub());
     document.documentElement.style.setProperty("--desk-dock-h", "64px");
     act(() => {
@@ -319,7 +319,8 @@ describe("The Walk", () => {
     let scrolled = 0;
     mocks.openSurface.mockImplementation(() => {
       const element = mountWindow("surface-programs",
-        `<div data-testid="body" style="overflow-y: auto"><button data-testid="programs-new">New program</button></div>`);
+        `<div data-testid="body" style="overflow-y: auto"><button data-testid="programs-new">New program</button>
+        <section data-testid="programs-make"><ul data-testid="programs-make-rows"><li>Project</li></ul></section></div>`);
       const body = element.querySelector<HTMLElement>("[data-testid='body']")!;
       Object.defineProperty(body, "scrollTop", { get: () => scrolled, set: (value: number) => { scrolled = value; } });
       rects.set(body, () => ({ left: 0, top: 60, width: 390, height: 720 }));
@@ -329,25 +330,44 @@ describe("The Walk", () => {
     });
     render(<WalkRunner />);
     const card = await screen.findByTestId("walk-card", {}, { timeout: 3000 });
-    rects.set(card, () => ({ left: 0, top: 844 - 64 - 200, width: 390, height: 200 }));
+    // The band's two rows as the browser draws them (tests/e2e/test_walk_glass.py measures it).
+    rects.set(card, () => ({ left: 0, top: 844 - 64 - 112, width: 390, height: 112 }));
     act(() => { window.dispatchEvent(new Event("resize")); });
 
-    // One full-width sheet above the dock, at most 40 % of the height.
+    // One full-width band on the dock, at most 40 % of the height; no grip, no handle.
     expect(card).toHaveAttribute("data-sheet");
     expect(card.style.left).toBe("0px");
     expect(card.style.right).toBe("0px");
     expect(card.style.bottom).toBe("64px");
     expect(card.style.maxHeight).toBe("337px");
-    // The part scrolled into the band above the sheet: not covered.
+    expect(card.querySelectorAll(".walk-grip, .walk-handle, .walk-choice-glyph, [data-tone]")).toHaveLength(0);
+    // The part scrolled into the clear area above the band: not covered.
     const target = screen.getByTestId("programs-new");
-    await waitFor(() => expect(target.getBoundingClientRect().bottom).toBeLessThanOrEqual(844 - 64 - 200));
+    await waitFor(() => expect(target.getBoundingClientRect().bottom).toBeLessThanOrEqual(844 - 64 - 112));
     expect(target.getBoundingClientRect().top).toBeGreaterThanOrEqual(60);
     // The part itself is marked (the halo), and nothing dims around it.
     expect(target).toHaveClass("walk-halo");
     expect(document.querySelectorAll(".walk-backdrop")).toHaveLength(0);
-    // The caption rides over the sheet, never under it.
+    // The caption rides over the band, never under it.
     const slot = document.querySelector<HTMLElement>(".walk-caption-slot")!;
-    expect(parseFloat(slot.style.getPropertyValue("--walk-caption-bottom"))).toBeGreaterThanOrEqual(64 + 200);
+    expect(parseFloat(slot.style.getPropertyValue("--walk-caption-bottom"))).toBeGreaterThanOrEqual(64 + 112);
+
+    // The question: Keep is the library primary, Redo the secondary; Skip is a button.
+    fireEvent.click(screen.getByTestId("walk-next"));
+    expect(await screen.findByTestId("walk-question")).toHaveTextContent("Does the well read clearly?");
+    expect(screen.getByTestId("walk-choice-0")).toHaveClass("btn--primary");
+    expect(screen.getByTestId("walk-choice-1")).toHaveClass("btn--secondary");
+    expect(screen.getByTestId("walk-skip").tagName).toBe("BUTTON");
+    expect(screen.getByTestId("walk-card").style.bottom).toBe("64px");
+    // The mic opens the words pad as a third row; Send shows with words.
+    const mic = screen.getByTestId("walk-say-more");
+    expect(mic).toHaveAccessibleName("Say more");
+    expect(mic).toHaveClass("btn--secondary");
+    expect(screen.queryByRole("textbox", { name: "Say more" })).toBeNull();
+    fireEvent.click(mic);
+    expect(mic).toHaveAttribute("aria-expanded", "true");
+    fireEvent.change(screen.getByRole("textbox", { name: "Say more" }), { target: { value: "Too tall." } });
+    expect(screen.getByTestId("walk-send")).toHaveClass("btn--primary");
   });
 
   it("shows one plain line and gets out of the way when the hub refuses the token", async () => {
@@ -427,9 +447,10 @@ describe("The Walk", () => {
     expect(await screen.findByTestId("walk-question", {}, { timeout: 4000 })).toHaveTextContent("Does the well read clearly?");
     await waitFor(() => expect(screen.getByTestId("programs-make-rows")).toHaveClass("walk-halo"));
     await waitFor(() => expect(mocks.speak).toHaveBeenCalledWith(expect.stringContaining("Does the well read clearly?")));
-    // Keep in the confirm hue, Redo in the attention hue; neither is primary.
-    expect(screen.getByTestId("walk-choice-0")).toHaveAttribute("data-tone", "ok");
-    expect(screen.getByTestId("walk-choice-1")).toHaveAttribute("data-tone", "warn");
+    // Keep is the primary, Redo the secondary: no tinted pills.
+    expect(screen.getByTestId("walk-choice-0")).toHaveClass("btn--primary");
+    expect(screen.getByTestId("walk-choice-1")).toHaveClass("btn--secondary");
+    expect(screen.getByTestId("walk-choice-0")).not.toHaveAttribute("data-tone");
     expect(screen.getByTestId("walk-dots").children).toHaveLength(3);
     fireEvent.click(screen.getByRole("button", { name: "Keep" }));
     await waitFor(() => expect(posts).toHaveLength(1));
@@ -463,7 +484,7 @@ describe("The Walk", () => {
     expect(screen.queryByTestId("walk-edge")).toBeNull();
   }, 30000);
 
-  it("swipes the sheet's handle down to skip, and keeps focus inside the sheet", async () => {
+  it("skips with the Skip button (no swipe), and keeps focus inside the bar", async () => {
     vi.stubGlobal("fetch", hub());
     act(() => {
       Object.assign(window, { innerWidth: 430, innerHeight: 932 });
@@ -475,18 +496,23 @@ describe("The Walk", () => {
     const card = screen.getByTestId("walk-card");
     expect(card).toHaveAttribute("data-sheet");
     await waitFor(() => expect(document.activeElement).toBe(card));
-    // Tab from the last verb wraps to the first one in the sheet.
+    // Tab from the last verb wraps to the first one in the bar.
     const verbs = Array.from(card.querySelectorAll<HTMLElement>("button:not([disabled])"));
     verbs[verbs.length - 1].focus();
     fireEvent.keyDown(card, { key: "Tab" });
     expect(document.activeElement).toBe(verbs[0]);
-    const handle = screen.getByTestId("walk-handle");
-    // jsdom has no PointerEvent: a MouseEvent carries the clientY of the swipe.
+    // No swipe: a drag down the bar does nothing.
+    expect(screen.queryByTestId("walk-handle")).toBeNull();
     if (typeof window.PointerEvent === "undefined") {
       vi.stubGlobal("PointerEvent", class extends MouseEvent { pointerId = 1; });
     }
-    fireEvent.pointerDown(handle, { clientY: 500, pointerId: 1 });
-    fireEvent.pointerUp(handle, { clientY: 580, pointerId: 1 });
+    fireEvent.pointerDown(card, { clientY: 500, pointerId: 1 });
+    fireEvent.pointerUp(card, { clientY: 580, pointerId: 1 });
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(posts).toHaveLength(0);
+    // Skip is the last verb of the bar.
+    expect(verbs[verbs.length - 1]).toBe(screen.getByTestId("walk-skip"));
+    fireEvent.click(screen.getByTestId("walk-skip"));
     await waitFor(() => expect(posts).toHaveLength(1));
     expect(posts[0]).toEqual({ ref: "s11-well", choice: "skip" });
   });
