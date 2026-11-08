@@ -147,7 +147,10 @@ describe("PHILO-13-08 New Decision writes nothing before it is named", () => {
     expect(hub.posts[0].title).toBe("Adopt feature flags");
     // PHILO-15-09 (B12): the owner's own decision is DECIDED, not to review.
     expect(hub.posts[0].status).toBe("accepted");
-    await waitFor(() => expect(useDesk.getState().pullouts.map((p) => p.id)).toContain("decision_1"));
+    // The one decision face (2026-11-08): the one decision opens its record
+    // in the Decisions window reader, never a Decision pullout.
+    await waitFor(() => expect(useDesk.getState().windowsById["surface-decisions"]?.scope).toBe("record:rec_of_decision_1"));
+    expect(useDesk.getState().pullouts.map((p) => p.id)).not.toContain("decision_1");
     expect(useDesk.getState().windowsById["surface-new-decision"]).toBeUndefined();
   });
 

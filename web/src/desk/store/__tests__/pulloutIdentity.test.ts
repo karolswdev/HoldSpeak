@@ -3,29 +3,31 @@ import { useDesk } from "../../store";
 import { EMPTY_ITEMS } from "../../api";
 import { windowObjectEntry } from "../../objectMenu";
 import type { WorkMenuEntry } from "../../components/DeskMenu";
-import type { Decision, Note } from "../../../lib/primitives";
+import type { KB, Note } from "../../../lib/primitives";
 
-const decision: Decision = {
-  kind: "decision", id: "same-id", title: "Freeze the old ledger", status: "proposed",
-  deciders: [], contextMarkdown: "", decisionMarkdown: "Freeze writes on Nov 5.",
-  alternatives: [], consequencesMarkdown: "", tags: [], createdAt: "2026-10-16T12:00:00Z",
+// A Knowledge item is the pullout kind under test. A decision opens its
+// record in the Decisions window (the one decision face, 2026-11-08), so it
+// no longer has a pullout whose identity two doors could share.
+const knowledge: KB = {
+  kind: "kb", id: "same-id", name: "Freeze the old ledger", memberIds: [],
+  createdAt: "2026-10-16T12:00:00Z",
 };
 let previous: ReturnType<typeof useDesk.getState>;
 
 beforeEach(() => {
   previous = useDesk.getState();
   useDesk.setState({
-    items: { ...EMPTY_ITEMS, decision: [decision] },
+    items: { ...EMPTY_ITEMS, kb: [knowledge] },
     pullouts: [], panelMin: [], panelOrder: [], panelDepth: {}, panelRects: {}, panelSaved: [],
-    drafts: { "decision:same-id": "Owner's unsaved words" },
+    drafts: { "kb:same-id": "Owner's unsaved words" },
   });
 });
 afterEach(() => useDesk.setState(previous, true));
 
 describe("pullout identity across bare and qualified doors", () => {
   it.each([
-    { initial: "same-id", next: "decision:same-id", objectOpen: true },
-    { initial: "decision:same-id", next: "same-id", objectOpen: false },
+    { initial: "same-id", next: "kb:same-id", objectOpen: true },
+    { initial: "kb:same-id", next: "same-id", objectOpen: false },
   ])("retains $initial when the second door requests $next", ({ initial, next, objectOpen }) => {
     const panelId = `pullout:${initial}`;
     const rect = { x: 120, y: 90, w: 640, h: 480 };
@@ -53,26 +55,26 @@ describe("pullout identity across bare and qualified doors", () => {
     expect(useDesk.getState().panelRects).toEqual({ [panelId]: rect });
     expect(useDesk.getState().panelSaved).toEqual([panelId]);
     expect(useDesk.getState().drafts).toBe(drafts);
-    expect(useDesk.getState().items.decision).toEqual([decision]);
+    expect(useDesk.getState().items.kb).toEqual([knowledge]);
   });
 
   it("keeps two different kinds with the same bare id in distinct windows", () => {
     const note: Note = {
-      kind: "note", id: decision.id, title: "Rollback notes", bodyMarkdown: "Retain this note.",
-      tags: [], createdAt: decision.createdAt,
+      kind: "note", id: knowledge.id, title: "Rollback notes", bodyMarkdown: "Retain this note.",
+      tags: [], createdAt: knowledge.createdAt,
     };
-    useDesk.setState({ items: { ...EMPTY_ITEMS, decision: [decision], note: [note] } });
+    useDesk.setState({ items: { ...EMPTY_ITEMS, kb: [knowledge], note: [note] } });
     useDesk.getState().openPullout("note:same-id");
-    useDesk.getState().openPullout("decision:same-id");
+    useDesk.getState().openPullout("kb:same-id");
 
-    expect(useDesk.getState().pullouts.map((window) => window.id)).toEqual(["note:same-id", "decision:same-id"]);
-    expect(useDesk.getState().panelOrder.at(-1)).toBe("pullout:decision:same-id");
+    expect(useDesk.getState().pullouts.map((window) => window.id)).toEqual(["note:same-id", "kb:same-id"]);
+    expect(useDesk.getState().panelOrder.at(-1)).toBe("pullout:kb:same-id");
   });
 
   it("reuses a bare Note only after its live open confirmed the Note ref", () => {
     const note: Note = {
-      kind: "note", id: decision.id, title: "Rollback notes", bodyMarkdown: "Retain this note.",
-      tags: [], createdAt: decision.createdAt,
+      kind: "note", id: knowledge.id, title: "Rollback notes", bodyMarkdown: "Retain this note.",
+      tags: [], createdAt: knowledge.createdAt,
     };
     const fromA = { projectId: "project-a", resourceRef: "note:same-id" as const };
     useDesk.setState({ items: { ...EMPTY_ITEMS, note: [note] } });
@@ -89,13 +91,13 @@ describe("pullout identity across bare and qualified doors", () => {
   it("leaves an unknown bare window and its draft alone when a Note has the same id", () => {
     const fromA = { projectId: "project-a", resourceRef: "note:same-id" as const };
     useDesk.getState().openPullout("same-id", { x: 18, y: 27 });
-    const decisionWindow = useDesk.getState().pullouts[0];
+    const knowledgeWindow = useDesk.getState().pullouts[0];
     const drafts = useDesk.getState().drafts;
     useDesk.setState({ items: EMPTY_ITEMS });
 
     useDesk.getState().openPullout("note:same-id", undefined, { projectReturn: fromA });
     expect(useDesk.getState().pullouts.map((row) => row.id)).toEqual(["same-id", "note:same-id"]);
-    expect(useDesk.getState().pullouts[0]).toBe(decisionWindow);
+    expect(useDesk.getState().pullouts[0]).toBe(knowledgeWindow);
     expect(useDesk.getState().pullouts[0].sourceRef).toBeUndefined();
     expect(useDesk.getState().pullouts[0].projectReturn).toBeNull();
     expect(useDesk.getState().pullouts[1].projectReturn).toEqual(fromA);
