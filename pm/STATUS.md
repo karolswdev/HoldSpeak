@@ -2,6 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · #1846 `scripts/measure.py` prints the rule 7 numbers as one table each night; `docs/internal/measure/2026-11-08.md` is the baseline.
 - 2026-11-08 · #1843 The New program wizard has no step words on its face (Where/What/How/Go gone): Project, Goal, Runs, the summary.
 - 2026-11-08 · #1842 A field on a touch phone is 16 px, so iOS Safari never zooms the desk (the cropped walk shots).
 - 2026-11-08 · #1841 The walk brings a part's window to the front before it marks it (the phone showed Programs over Needs you).
