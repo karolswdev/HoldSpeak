@@ -732,6 +732,79 @@ describe("PHILO-14 A5b: a proposal request over the Room", () => {
   });
 });
 
+/* ── Owner ruling 2026-11-07: the Room opens on Now ──────────────── */
+
+describe("the Room opens on Now; the update draft waits with Continue", () => {
+  const pid = P172_ROOM_BEFORE.project_id;
+  const draft = () => ({ ...clone(DRAFT.update), project_id: pid });
+  // The Room read's updates section: its recent rows carry the hub's fields
+  // (holdspeak/services/project_room_reads.py, `fields`), the draft's here.
+  const recentRow = () => {
+    const d = draft();
+    return { id: d.id, project_id: pid, lifecycle: d.lifecycle, draft_revision: d.draft_revision,
+      generator: d.generator, created_at: d.created_at, updated_at: d.updated_at,
+      published_at: d.published_at, review_id: d.review_id, deliveries: [] };
+  };
+  const roomWithDraft = (withDraft: boolean) => {
+    const r = clone(P172_ROOM_BEFORE) as Record<string, unknown> & { updates: Record<string, unknown> };
+    if (withDraft) r.updates = { ...r.updates, count: 1, counts: { draft: 1 }, recent: [recentRow()] };
+    return r;
+  };
+  const base = (withDraft: boolean): Record<string, Answer> => ({
+    [room(pid)]: () => roomWithDraft(withDraft),
+    [`GET /api/projects/${pid}/proposals`]: () => clone(P172_PROPOSALS),
+    [`GET /api/projects/${pid}/updates`]: () => ({ updates: withDraft ? [draft()] : [], latest_published_update_id: null }),
+    [`GET /api/updates/${DRAFT.update.id}`]: () => ({ update: draft() }),
+    [`POST /api/projects/${pid}/updates/draft`]: () => ({ success: true, update: draft() }),
+  });
+
+  it("a Room with a kept update place opens on Now, never on the update posture", async () => {
+    // The place an earlier visit kept (desk memory, synced with the hub).
+    useDesk.getState().setPlace(`room/update/${pid}`, `editor:${DRAFT.update.id}`);
+    wire(base(true));
+    render(<WindowHarness scope={`project:${pid}`} />);
+    await screen.findByTestId("room-head");
+    await waitFor(() => expect(calls.some((c) => c.key === room(pid))).toBe(true));
+    // Give a restore (main before this change) its read and its render.
+    await act(async () => { await new Promise((r) => setTimeout(r, 50)); });
+    expect(screen.queryByTestId("update-posture")).toBeNull();
+    expect(screen.getByTestId("room-head-update-draft")).toBeTruthy();
+    expect(within(screen.getByTestId("wing-slot")).getByRole("tab", { name: "Now" }).getAttribute("aria-selected")).toBe("true");
+  });
+
+  it("the draft row says Update draft and its time; Continue opens the posture with the kept draft", async () => {
+    useDesk.getState().setDraft(`room/update-body/${DRAFT.update.id}`, "Kept words he was writing");
+    wire(base(true));
+    render(<WindowHarness scope={`project:${pid}`} />);
+    const row = await screen.findByTestId("room-head-update-draft");
+    expect(row.textContent).toMatch(/^Update draft · Oct 11, \d\d:\d\d/);
+    expect(screen.queryByTestId("update-posture")).toBeNull();
+    fireEvent.click(within(row).getByRole("button", { name: "Continue" }));
+    await screen.findByTestId("update-posture");
+    const editor = (await screen.findByTestId("update-plain-text")) as HTMLTextAreaElement;
+    expect(editor.value).toBe("Kept words he was writing");
+    expect(screen.queryByTestId("room-head-update-draft")).toBeNull();
+    expect(calls.filter((c) => c.key.startsWith("PUT ") || c.key.startsWith("POST "))
+      .filter((c) => c.key.includes("/updates"))).toEqual([]);
+  });
+
+  it("Write update still opens the update posture", async () => {
+    wire(base(false));
+    render(<WindowHarness scope={`project:${pid}`} />);
+    await waitFor(() => expect(screen.getByTestId("updates-verb")).not.toBeDisabled());
+    fireEvent.click(screen.getByTestId("updates-verb"));
+    await screen.findByTestId("update-posture");
+  });
+
+  it("a Room with no update draft shows no draft row", async () => {
+    wire(base(false));
+    render(<WindowHarness scope={`project:${pid}`} />);
+    await screen.findByTestId("room-head");
+    expect(screen.queryByTestId("room-head-update-draft")).toBeNull();
+    expect(screen.queryByTestId("update-posture")).toBeNull();
+  });
+});
+
 /* ── round 2: recorded wire (2026-10-11, scratch rig dump_hub3.py on a booted hub) ──
  * Prepare: the parked test_hs200_preparation_brief_glass seeds (_seed_decisions, _seed_sources,
  * _define_route to its FakeLLM): a board answer (_board_reply) then Keep; a prose answer (409);

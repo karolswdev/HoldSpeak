@@ -83,6 +83,8 @@ The head is the first line of **Now**.
   configured engine then writes its own draft. The draft opens in the
   update posture.
 - **Review N** shows when proposals wait. It opens the review posture.
+- **Update draft** shows the time of the newest update draft. **Continue**
+  opens the draft in the update posture, with the text you did not save.
 
 ### Needs you
 
@@ -206,8 +208,9 @@ goes back to **Now**.
 ### The update posture
 
 The update posture holds the Project updates and one update editor. It
-opens from **Write update**, from **Open latest**, from the palette's
-**Draft update**, and from a Send link to an update.
+opens from **Write update**, from **Open latest**, from **Continue**, from
+the palette's **Draft update**, and from a Send link to an update. The Room
+does not open in the update posture from an earlier visit.
 
 - **Save** keeps the draft. **Publish** publishes it.
 - **Regenerate** writes a new draft.
