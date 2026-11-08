@@ -116,6 +116,8 @@
   cursor: pointer;
 }
 .room-now-decided:hover { text-decoration: underline; text-underline-offset: 3px; }
+/* A Decided line's Person (#1891): the dot and word at the line's right. */
+.room-now-committed { margin-left: auto; white-space: nowrap; }
 
 /* 393: Write update spans the width under the state (the first screen). */
 @container surface (max-width: 559.9px) {

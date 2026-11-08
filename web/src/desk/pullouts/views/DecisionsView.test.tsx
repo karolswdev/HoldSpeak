@@ -4,6 +4,9 @@ import { DecisionsView } from "./DecisionsView";
 import { useDesk } from "../../store";
 import HONEST_DECISIONS from "../../../test/wire/decisions.honest-faces.wire.json";
 import CREATED_PROGRAM from "../../programs/__fixtures__/program.create_project.json";
+// Recorded by tests/integration/test_desk_project_room.py::
+// test_a_committed_decision_names_its_person_on_the_decided_line (HOLDSPEAK_WIRE_WRITE=1).
+import COMMITTED from "../../../features/project-room/__tests__/room-wires/committedWord.json";
 
 const apiFetch = vi.hoisted(() => vi.fn());
 const apiRequest = vi.hoisted(() => vi.fn());
@@ -366,6 +369,30 @@ describe("Decisions rows on the recorded hub", () => {
     expect(text).toContain("Ledger cutover sync");
     expect(text).not.toMatch(/D-[0-9a-f]{6,}/i);
     expect(text).not.toMatch(/dec-[0-9a-f]{6,}|record-[0-9a-f]{6,}/);
+  });
+});
+
+describe("#1891: the reader's head line names the Person the decision is committed to", () => {
+  beforeEach(() => { apiFetch.mockReset(); });
+
+  it("draws Committed · <name> beside the title", async () => {
+    const id = COMMITTED.record.id;
+    apiFetch.mockImplementation((path: string) => path === `/api/decision-records/${id}`
+      ? Promise.resolve(structuredClone(COMMITTED.record)) : hub(path));
+    render(<DecisionsView windowed receiptId={id} />);
+    const title = await screen.findByTestId("decision-reader-title");
+    expect(title.textContent).toBe("Adopt quorumdb");
+    const word = screen.getByTestId("decision-reader-committed");
+    expect(word.textContent).toBe("Committed · Mira Okafor");
+    expect(word.parentElement).toBe(title.parentElement);
+  });
+
+  it("draws no word for a record committed to nobody", async () => {
+    apiFetch.mockImplementation((path: string) => path === "/api/decision-records/receipt-abcdef0123456789"
+      ? Promise.resolve(detail) : hub(path));
+    render(<DecisionsView windowed receiptId="receipt-abcdef0123456789" />);
+    await screen.findByTestId("decision-reader-title");
+    expect(screen.queryByTestId("decision-reader-committed")).toBeNull();
   });
 });
 

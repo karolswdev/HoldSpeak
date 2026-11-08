@@ -64,6 +64,16 @@
   text-transform: none;
   overflow-wrap: anywhere;
 }
+/* The head line: the decision, and its Person at the right (#1891). */
+.decision-reader-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  min-width: 0;
+}
+.decision-reader-head > .decision-reader-title { flex: 1 1 16rem; min-width: 0; }
+.decision-reader-committed { white-space: nowrap; }
 .decision-reader-why {
   max-width: 68ch;
   color: var(--wb-ink);

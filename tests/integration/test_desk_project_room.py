@@ -2569,6 +2569,42 @@ def test_the_now_wing_says_where_it_stands_from_this_weeks_meetings_and_notes(tm
             }, indent=1, sort_keys=True) + "\n")
 
 
+COMMITTED_WIRE = P3_WIRE.with_name("committedWord.json")
+
+
+def test_a_committed_decision_names_its_person_on_the_decided_line(tmp_path, monkeypatch):
+    """#1891 commits a decision with an owner Person and a Project; the Room's
+    Decided line and the record read name that Person (``committed_to``)."""
+    with _hub(tmp_path, monkeypatch) as hub:
+        hub.ok("POST", "/api/people/setup", {})
+        mira = hub.ok("POST", "/api/people/relationships", {
+            "display_name": "Mira Okafor", "relationship_kind": "direct_report"})["relationship"]["id"]
+        project_id = hub.ok("POST", "/api/projects", {
+            "name": "Ledger", "command_id": f"committed-{uuid.uuid4().hex[:8]}"})["project"]["id"]
+        made = hub.ok("POST", "/api/decision-records/from-desk", {
+            "title": "Adopt quorumdb", "status": "accepted",
+            "project_id": project_id, "owner_person_id": mira})
+        quiet = hub.ok("POST", "/api/decision-records/from-desk", {
+            "title": "Keep the nightly export", "status": "accepted", "project_id": project_id})
+        room = hub.ok("GET", f"/api/projects/{project_id}/room")
+        record = hub.ok("GET", f"/api/decision-records/{made['record']['id']}")
+
+        decided = {d["text"]: d.get("committed_to") for d in room["now"]["decided"]}
+        assert decided == {"Adopt quorumdb": "Mira Okafor", "Keep the nightly export": None}
+        assert quiet["record"]["committed_to"] is None
+        assert record["committed_to"] == "Mira Okafor"
+
+        if __import__("os").environ.get("HOLDSPEAK_WIRE_WRITE") == "1":
+            COMMITTED_WIRE.write_text(json.dumps({
+                "_recorded": "tests/integration/test_desk_project_room.py::"
+                             "test_a_committed_decision_names_its_person_on_the_decided_line "
+                             "(HOLDSPEAK_WIRE_WRITE=1 rewrites this file; never hand-edit a field a test reads)",
+                "room": room,
+                "proposals": hub.ok("GET", f"/api/projects/{project_id}/proposals"),
+                "record": record,
+            }, indent=1, sort_keys=True) + "\n")
+
+
 def test_a_quiet_project_is_on_track_with_no_reason(tmp_path, monkeypatch):
     with _hub(tmp_path, monkeypatch) as hub:
         project_id = hub.ok("POST", "/api/projects", {"name": "Quiet", "command_id": "p3-quiet"})["project"]["id"]
