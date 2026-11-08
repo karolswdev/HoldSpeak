@@ -15,17 +15,17 @@
  * 12" in ok ink) · the last checkpoint. At 393 the toolbar keeps New
  * program and Find; Templates, Project, Person and Group fold into More ▾.
  * Empty: the 64 px program object, one line, one Button. */
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { ApiError } from "../../lib/api";
 import { Button } from "../../components/signal/Signal";
 import type { CoreProps } from "../../pages/cores/core-types";
 import { WorkMenu } from "../components/DeskMenu";
 import { spriteUrl } from "../sprites";
 import { openProgram } from "./open";
-import { DotWord, FoldGadget, ListView, StatusBar, StringGadget, SurfaceState, ToolGlyph, Toolbar, countWords, type StatusBarItem } from "../surface";
+import { ActionNotice, CycleGadget, DotWord, FoldGadget, GadgetRow, ListView, StatusBar, StringGadget, SurfaceState, ToolGlyph, Toolbar, countWords, type StatusBarItem } from "../surface";
 import type { WorkMenuEntry } from "../components/DeskMenu";
 import { useWindowInterior } from "../surface/interior";
-import { plainFail } from "../surface/plainFailure";
-import { TEMPLATES, createProgram, usePrograms } from "./api";
+import { TEMPLATES, createProgram, readProjectChoices, usePrograms, type CreateBody, type ProjectChoice } from "./api";
 import { banded, bandedByProject, durationWords, matchesFind, metWords, personsOf, programTone } from "./model";
 import type { ListMark, ProgramState, ProgramSummary } from "./types";
 import { StationTrack, type TrackStation } from "./StationTrack";
@@ -129,6 +129,156 @@ const CARET = (
 );
 
 type Group = "state" | "project";
+
+/* HS-S11 (D13 A, G11): New program, a template and the empty object open one
+ * in-flow well. He chooses the project from the hub's project list (never a
+ * guess, never the Project filter); Create sends one captured
+ * `{title, template, project_id}`. Only the two refusals the hub proves
+ * before a save (400 repository_required, 409 no_repository) say "Not
+ * made"; any other failure is "not confirmed", never retried. */
+type Choices = { state: "loading" } | { state: "failed" } | { state: "ready"; rows: ProjectChoice[] };
+type Outcome =
+  | { kind: "idle" }
+  | { kind: "pending"; tuple: Readonly<CreateBody> }
+  | { kind: "refused"; words: string }
+  | { kind: "unknown" }
+  | { kind: "made"; id: string };
+
+const DEFAULT_TITLE = "New program";
+
+function refusalWords(cause: unknown, projectName: string): string | null {
+  if (!(cause instanceof ApiError)) return null;
+  const code = cause.payload && typeof cause.payload === "object" ? (cause.payload as { code?: unknown }).code : undefined;
+  if (cause.status === 409 && code === "no_repository") return `Not made · ${projectName} has no local repository · Add one in the project, or choose a different project`;
+  if (cause.status === 400 && code === "repository_required") return "Not made · Choose a project";
+  return null;
+}
+
+function templateName(id: string): string {
+  return TEMPLATES.find((template) => template.id === id)?.name ?? id;
+}
+
+function CreateWell({ template, onClose, onMade, onPending, reload }: {
+  template: string;
+  onClose(): void;
+  onMade(id: string): void;
+  onPending(pending: boolean): void;
+  reload(): Promise<void>;
+}) {
+  const [choices, setChoices] = useState<Choices>({ state: "loading" });
+  const [readNonce, setReadNonce] = useState(0);
+  const [pick, setPick] = useState("");
+  const [outcome, setOutcome] = useState<Outcome>({ kind: "idle" });
+  const inFlight = useRef(false);
+  const alive = useRef(true);
+  const wellRef = useRef<HTMLElement>(null);
+  useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
+  const pendingNow = outcome.kind === "pending";
+  useEffect(() => { onPending(pendingNow); }, [onPending, pendingNow]);
+  useEffect(() => () => onPending(false), [onPending]);
+
+  useEffect(() => {
+    let live = true;
+    setChoices({ state: "loading" });
+    readProjectChoices()
+      .then((rows) => { if (live && alive.current) setChoices({ state: "ready", rows }); })
+      .catch(() => { if (live && alive.current) setChoices({ state: "failed" }); });
+    return () => { live = false; };
+  }, [readNonce]);
+
+  useEffect(() => {
+    if (choices.state === "ready") wellRef.current?.querySelector<HTMLSelectElement>("select")?.focus();
+  }, [choices.state]);
+
+  const rows = choices.state === "ready" ? choices.rows : [];
+  const chosen = rows.find((row) => row.id === pick) ?? null;
+  const gone = Boolean(pick) && choices.state === "ready" && !chosen;
+  const pending = outcome.kind === "pending";
+  const made = outcome.kind === "made" ? outcome.id : "";
+  const canCreate = Boolean(chosen) && !pending && !made;
+
+  const create = async () => {
+    if (inFlight.current || !chosen || made) return;
+    inFlight.current = true;
+    const tuple: Readonly<CreateBody> = Object.freeze({ title: DEFAULT_TITLE, template, project_id: chosen.id });
+    const name = chosen.name;
+    setOutcome({ kind: "pending", tuple });
+    try {
+      const answer = await createProgram({ ...tuple });
+      const id = answer && typeof answer === "object" ? (answer as { id?: unknown }).id : undefined;
+      if (typeof id !== "string" || !id) {
+        if (alive.current) setOutcome({ kind: "unknown" });
+        return;
+      }
+      // The made Program is a fact from here on: keep its id before any reveal.
+      if (!alive.current) { void reload(); return; }
+      setOutcome({ kind: "made", id });
+      onMade(id);
+      void reload();
+    } catch (cause) {
+      if (!alive.current) return;
+      const refused = refusalWords(cause, name);
+      setOutcome(refused ? { kind: "refused", words: refused } : { kind: "unknown" });
+    } finally {
+      inFlight.current = false;
+    }
+  };
+
+  let project: ReactNode;
+  if (choices.state === "loading") {
+    project = <span className="pg-make-note" data-testid="programs-make-reading">Reading the projects</span>;
+  } else if (choices.state === "failed") {
+    project = <span className="pg-make-note" role="alert" data-testid="programs-make-read-failed">The projects did not load</span>;
+  } else if (!rows.length) {
+    project = <span className="pg-make-note" data-testid="programs-make-no-project">No project yet · A program needs a project</span>;
+  } else {
+    project = (
+      <CycleGadget label="Project" value={pick} disabled={pending || Boolean(made)}
+        options={rows.map((row) => ({ value: row.id, label: row.name }))}
+        onChange={(next) => { setPick(next); if (outcome.kind === "refused" || outcome.kind === "unknown") setOutcome({ kind: "idle" }); }} />
+    );
+  }
+
+  return (
+    <section ref={wellRef} className="pg-make" aria-label="New program" data-testid="programs-make" data-template={template}
+      onKeyDown={(event) => { if (event.key === "Escape" && !pending) { event.preventDefault(); event.stopPropagation(); onClose(); } }}>
+      <h3 className="pg-make-head" data-testid="programs-make-head">{`${DEFAULT_TITLE} · ${templateName(template)}`}</h3>
+      <GadgetRow label="Project">{project}</GadgetRow>
+      {gone ? (
+        <ActionNotice tone="warn" role="alert"><span data-testid="programs-make-gone">That project is not open now · Choose a project</span></ActionNotice>
+      ) : null}
+      {outcome.kind === "refused" ? (
+        <ActionNotice tone="danger" role="alert"><span data-testid="programs-make-refused">{outcome.words}</span></ActionNotice>
+      ) : null}
+      {outcome.kind === "unknown" ? (
+        <ActionNotice tone="warn" role="alert">
+          <span data-testid="programs-make-unknown">Not confirmed · The program can exist · Look at the list before you try again</span>
+        </ActionNotice>
+      ) : null}
+      {made ? (
+        <ActionNotice tone="ok" role="status"><span data-testid="programs-make-made">Program made · Its window did not open</span></ActionNotice>
+      ) : null}
+      <div className="pg-make-verbs">
+        {outcome.kind === "unknown" ? (
+          <Button dense variant="ghost" onClick={() => void reload()} data-testid="programs-make-look">Look at the list</Button>
+        ) : null}
+        {choices.state !== "loading" && !made ? (
+          <Button dense variant="ghost" disabled={pending} onClick={() => setReadNonce((value) => value + 1)} data-testid="programs-make-refresh">
+            Refresh projects
+          </Button>
+        ) : null}
+        <Button dense variant="ghost" disabled={pending} onClick={onClose} data-testid="programs-make-cancel">{made ? "Close" : "Cancel"}</Button>
+        {made ? (
+          <Button dense variant="primary" onClick={() => onMade(made)} data-testid="programs-make-open">Open the program</Button>
+        ) : (
+          <Button dense variant="primary" loading={pending} disabled={!canCreate} onClick={() => void create()} data-testid="programs-make-create">
+            {chosen ? `Create in ${chosen.name}` : "Create"}
+          </Button>
+        )}
+      </div>
+    </section>
+  );
+}
 type MenuKey = "templates" | "project" | "person" | "group" | "more";
 
 /** The counts a status bar says for the rows shown (no zero). */
@@ -142,8 +292,12 @@ const WORST: readonly ProgramState[] = ["waiting", "failed", "running", "draftin
 
 export function ProgramsCore(_props: CoreProps) {
   const { loading, error, list, reload } = usePrograms();
-  const [busy, setBusy] = useState("");
-  const [failed, setFailed] = useState<{ words: string; title: string } | null>(null);
+  // HS-S11: the open creation well (its template), or null.
+  const [making, setMaking] = useState<{ template: string; flow: number } | null>(null);
+  const [revealFailed, setRevealFailed] = useState("");
+  const [busy, setBusy] = useState(false);
+  const flows = useRef(0);
+  const newRef = useRef<HTMLButtonElement>(null);
   const [menu, setMenu] = useState<{ key: MenuKey; rect: DOMRect; opener: HTMLElement } | null>(null);
   const [query, setQuery] = useState("");
   const [projectId, setProjectId] = useState<string | null>(null);
@@ -151,17 +305,28 @@ export function ProgramsCore(_props: CoreProps) {
   const [group, setGroup] = useState<Group>("state");
   useWindowInterior("list");
 
-  const make = async (template: string) => {
-    setBusy(template);
-    setFailed(null);
+  // A template press opens the well (or changes its template); it never makes a Program.
+  const make = (template: string) => {
+    if (busy) return;
+    // A well that already made its Program starts a fresh flow.
+    const fresh = !making || Boolean(revealFailed);
+    setRevealFailed("");
+    setMaking({ template, flow: fresh ? ++flows.current : making.flow });
+  };
+  const closeWell = () => {
+    setMaking(null);
+    setRevealFailed("");
+    newRef.current?.focus();
+  };
+  // An acknowledged Program: open its window. A failed open keeps the well
+  // with the same id (Open the program), never a second create.
+  const reveal = (id: string) => {
     try {
-      const made = await createProgram({ title: "New program", template });
-      if (made?.id) openProgram(made.id);
-      void reload();
-    } catch (cause) {
-      setFailed(plainFail("The program was not made", cause, "Nothing changed", "Try again"));
-    } finally {
-      setBusy("");
+      openProgram(id);
+      setMaking(null);
+      setRevealFailed("");
+    } catch {
+      setRevealFailed(id);
     }
   };
 
@@ -199,9 +364,7 @@ export function ProgramsCore(_props: CoreProps) {
   const worst = filtered ? WORST.find((state) => counts[state]) ?? null : list.worst;
   const worstWord = filtered ? (worst ? shown.find((row) => row.state === worst)?.state_word ?? "" : "") : list.worst_word;
   const worstTone = programTone(worst ?? "");
-  const status: Array<StatusBarItem | null> = failed ? [
-    { key: "failed", lamp: "warn", text: failed.words, testId: "programs-failure" },
-  ] : [
+  const status: Array<StatusBarItem | null> = [
     worst ? { key: "worst", lamp: worstTone === "idle" ? undefined : worstTone, live: worst === "running", text: worstWord, testId: "programs-status-worst" } : null,
     filtered && shown.length ? { key: "shown", text: `${shown.length || ""} of ${countWords(list.programs.length, "program")}`, testId: "programs-status-shown" } : null,
     filtered && query.trim() ? { key: "q", text: <span>{`“${query.trim()}”`}</span> } : null,
@@ -223,7 +386,7 @@ export function ProgramsCore(_props: CoreProps) {
     body = (
       <SurfaceState empty emptyKind="program" emptyImage={spriteUrl("program", "programs")} emptyLabel="No program yet"
         emptyHint="A program is a goal cut into steps. An agent does each step."
-        actionLabel="New program" onAction={() => void make("fast-cycle")} />
+        actionLabel="New program" onAction={() => make("fast-cycle")} />
     );
   } else if (!shown.length) {
     body = <SurfaceState empty emptyKind="program" emptyLabel="No program matches" actionLabel="Clear the filter" onAction={clear} />;
@@ -258,7 +421,7 @@ export function ProgramsCore(_props: CoreProps) {
   const templateEntries: WorkMenuEntry[] = TEMPLATES.map((template) => ({
     type: "item" as const, id: template.id, label: `${template.name} · ${template.line}`,
     glyph: <img src={template.agent ? spriteUrl("coder", template.agent, "rest", template.agent, 20) : spriteUrl("project", template.id, "rest", null, 20)} alt="" width={20} height={20} />,
-    onSelect: () => void make(template.id),
+    onSelect: () => make(template.id),
   }));
   const projectEntries: WorkMenuEntry[] = [
     { type: "item", id: "any", label: "Any project", checked: projectId == null ? "exclusive" : undefined, onSelect: () => setProjectId(null) },
@@ -295,7 +458,7 @@ export function ProgramsCore(_props: CoreProps) {
     },
   };
   const menuButton = (key: MenuKey, words: ReactNode, testId: string, className = "pg-wide") => (
-    <Button dense variant="ghost" className={className} aria-haspopup="menu" aria-expanded={menu?.key === key} disabled={Boolean(busy)}
+    <Button dense variant="ghost" className={className} aria-haspopup="menu" aria-expanded={menu?.key === key} disabled={busy && (key === "templates" || key === "more")}
       onClick={open(key)} data-testid={testId}>
       {words}
       {CARET}
@@ -305,7 +468,7 @@ export function ProgramsCore(_props: CoreProps) {
   return (
     <div className="pg-window" data-testid="programs-window">
       <Toolbar label="Programs" data-testid="programs-toolbar" trailing={menuButton("group", `Group: ${group === "state" ? "State" : "Project"}`, "programs-group")}>
-        <Button dense variant="primary" loading={busy === "fast-cycle"} disabled={Boolean(busy)} onClick={() => void make("fast-cycle")}
+        <Button ref={newRef} dense variant="primary" disabled={busy} onClick={() => make("fast-cycle")}
           data-testid="programs-new">
           <ToolGlyph kind="new" />
           New program
@@ -320,6 +483,9 @@ export function ProgramsCore(_props: CoreProps) {
         {persons.length ? menuButton("person", personName ? `Person: ${personName}` : "Person", "programs-person") : null}
         {menuButton("more", "More", "programs-more", "pg-narrow")}
       </Toolbar>
+      {making ? (
+        <CreateWell key={making.flow} template={making.template} onClose={closeWell} onMade={reveal} onPending={setBusy} reload={reload} />
+      ) : null}
       <div className="pg-body">{body}</div>
       <StatusBar data-testid="programs-status" items={status} />
       {menu ? (

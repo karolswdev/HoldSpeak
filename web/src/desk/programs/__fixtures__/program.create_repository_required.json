@@ -1,0 +1,18 @@
+{
+  "request": {
+    "json": {
+      "template": "fast-cycle",
+      "title": "New program"
+    },
+    "method": "POST",
+    "path": "/api/programs"
+  },
+  "response": {
+    "body": {
+      "code": "repository_required",
+      "detail": "Name a repository or a project.",
+      "error": "repository_required"
+    },
+    "status": 400
+  }
+}
