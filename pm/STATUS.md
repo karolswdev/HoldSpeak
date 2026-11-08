@@ -2,7 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
-- 2026-11-08 · #PR Fix forward #1844: the wizard's phone-head rule lives in the frame (data-keeps-title), no viewport media in a window body.
+- 2026-11-08 · #1847 Fix forward #1844: the wizard's phone-head rule lives in the frame (data-keeps-title), no viewport media in a window body.
 - 2026-11-08 · #1845 The Program vocabulary and ProgramRefused have one owner, services/program_definitions.py (HS-S51): program_service 5670 → 5406 lines, the new module reaches only errors and program_rules, definition-only service importers 3 → 2.
 - 2026-11-08 · #1844 The New program wizard leads with the object: the picked project is a card on every screen, the title bar names it and holds the dots.
 - 2026-11-08 · #1843 The New program wizard has no step words on its face (Where/What/How/Go gone): Project, Goal, Runs, the summary.
