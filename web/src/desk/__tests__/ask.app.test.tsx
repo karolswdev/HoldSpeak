@@ -22,7 +22,6 @@ import TOOLS from "../../test/wire/ask.tools.wire.json";
 import HOLD from "../../test/wire/ask.hold.wire.json";
 import STREAM from "../../test/wire/ask.stream.wire.json";
 import NO_ENGINE from "../../test/wire/ask.no-engine.wire.json";
-import { verbById } from "../verbRegistry";
 import { durableDraftKey } from "../../lib/durableDraft";
 
 const bus = vi.hoisted(() => ({ handlers: new Map<string, Set<(frame: unknown) => void>>() }));
@@ -390,8 +389,8 @@ describe("Betterment Q4: one Ask window, every Ask kept as a thread", () => {
     render(<AskPanel />);
     await waitFor(() => expect(screen.getAllByTestId("ask-turn")).toHaveLength(2));
 
-    // Desk ▸ New Thread opens a new Ask, not a thread window.
-    verbById("desk.new-thread")!.run({} as never);
+    // A new Ask (openAskThread(null)) opens no thread window.
+    act(() => useDesk.getState().openAskThread(null));
     await waitFor(() => expect(screen.queryAllByTestId("ask-turn")).toHaveLength(0));
     expect(calls.some((c) => c.method === "POST" && c.url.endsWith("/api/threads"))).toBe(false);
   });
@@ -750,12 +749,12 @@ describe("saved Ask thread reads keep the latest selection authoritative", () =>
     expect(screen.queryByText("This ask was not read")).toBeNull();
   });
 
-  it("New Thread invalidates a pending saved-thread read", async () => {
+  it("a new Ask invalidates a pending saved-thread read", async () => {
     const readA = deferred<Response>();
     delayedThreadFetch(["A"], { A: readA });
     render(<AskPanel />);
     await openRecentThread("A");
-    verbById("desk.new-thread")!.run({} as never);
+    act(() => useDesk.getState().openAskThread(null));
     await act(async () => { readA.resolve(reply(delayedThreadDetail("A", "Answer A", "Note A"))); });
     expect(screen.queryByText("Answer A")).toBeNull();
     expect(screen.queryByTestId("ask-turn")).toBeNull();

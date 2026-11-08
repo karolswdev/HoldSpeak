@@ -53,7 +53,7 @@ import { normalizeRef, SEED_DESK_DIRECTORY_ID, SEED_INBOX_DIRECTORY_ID } from ".
 import { requestUiFeedback, uiFeedbackGhost } from "./feedback/runtime";
 
 export type MenuId = "desk" | "object" | "go" | "window";
-export type VerbScope = "floor" | "object" | "go" | "window" | "system" | "thread";
+export type VerbScope = "floor" | "object" | "go" | "window" | "system";
 
 export interface VerbContext {
   /** The single selected object ref, when exactly one is selected. */
@@ -312,19 +312,6 @@ export const VERBS: Verb[] = [
     // free name, posts the authenticated directory route, adopts the answer,
     // and focuses the floor name field after the read lands.
     run: () => void useDesk.getState().createPrimitive("zone"),
-  },
-  // Betterment Q4: a new thread is a new Ask; the thread is kept when the
-  // first question is answered. The registry verb remains for old callers,
-  // but is parked from every menu face.
-  {
-    id: "desk.new-thread",
-    label: "New Thread",
-    scope: "floor",
-    glyph: KIND_GLYPH.thread,
-    palette: false,
-    keywords: ["create", "chat", "conversation"],
-    ghost: never,
-    run: () => useDesk.getState().openAskThread(null),
   },
   // ── Desk: the floor verbs ───────────────────────────────────────────
   {
@@ -987,95 +974,6 @@ export const VERBS: Verb[] = [
     keywords: ["keys", "help"],
     ghost: never,
     run: () => useShortcutSheet.getState().toggle(),
-  },
-  // ── Thread slash verbs (HS-153-02) ─────────────────────────────────
-  // These are the verb-ids for the ThreadComposer's / commands.
-  // The composer owns the trigger; the pullout owns the handler.
-  {
-    id: "thread.keep",
-    label: "Keep as note",
-    scope: "thread",
-    palette: false,
-    ghost: never,
-    run: () => {},
-  },
-  {
-    id: "thread.fork",
-    label: "Fork from here",
-    scope: "thread",
-    palette: false,
-    ghost: never,
-    run: () => {},
-  },
-  {
-    id: "thread.stop",
-    label: "Stop generation",
-    scope: "thread",
-    palette: false,
-    ghost: never,
-    run: () => {},
-  },
-  {
-    id: "thread.new",
-    label: "New thread",
-    scope: "thread",
-    palette: false,
-    ghost: never,
-    run: () => {},
-  },
-  {
-    id: "thread.mode",
-    label: "Switch mode",
-    scope: "thread",
-    palette: false,
-    keywords: ["desk", "chase", "draft", "plan"],
-    ghost: never,
-    run: () => {},
-  },
-  {
-    id: "thread.prompt",
-    label: "Insert prompt",
-    scope: "thread",
-    palette: false,
-    keywords: ["saved", "template"],
-    ghost: never,
-    run: () => {},
-  },
-  {
-    id: "thread.tools",
-    label: "Show tools",
-    scope: "thread",
-    palette: false,
-    keywords: ["palette", "capabilities"],
-    ghost: never,
-    run: () => {},
-  },
-  {
-    id: "thread.todo",
-    label: "Add todo",
-    scope: "thread",
-    palette: false,
-    keywords: ["task", "action"],
-    ghost: never,
-    run: () => {},
-  },
-  {
-    id: "thread.compact",
-    label: "Compact thread",
-    scope: "thread",
-    palette: false,
-    keywords: ["summarize", "compress"],
-    ghost: never,
-    run: () => {},
-  },
-  {
-    id: "thread.guardrail",
-    label: "Toggle guardrail",
-    scope: "thread",
-    palette: false,
-    keywords: ["guard", "safety"],
-    ghost: never,
-    run: () => {},
   },
 ];
 
