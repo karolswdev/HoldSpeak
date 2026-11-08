@@ -25,7 +25,6 @@ from __future__ import annotations
 
 import contextvars
 import json
-import os
 import re
 import threading
 import uuid
@@ -46,7 +45,7 @@ from .program_definitions import (  # noqa: F401  re-exported: the same objects,
     REVIEW_DEPTHS, STATIONS, STEP_FIELDS, STEP_STATES, STEP_TRANSITIONS, STEP_WORDS, TODO_CHOICES, TODO_STATES,
     VIA_CHANNELS, VIA_WORDS, _AUDIT_STATION_OF, _GATE_MERGE_ALIASES, _SPOKEN_STATE, _STATE_LINES, _STATION_OF,
     agent_label, duration_words, history_of, spoken_state, triage_effort, via_of,
-    PLAN_GOAL_KIND, PLAN_GOAL_NOT_NEEDED, PLAN_GOAL_PENDING,
+    PLAN_GOAL_KIND, PLAN_GOAL_NOT_NEEDED, PLAN_GOAL_PENDING, PROGRAMS_ENV, programs_on,
 )
 from . import program_reads as reads
 from .program_reads import (  # noqa: F401  re-exported: the reads moved whole (2026-11-08), one owner
@@ -64,18 +63,11 @@ log = get_logger("program_service")
 _VIA: contextvars.ContextVar[Optional[str]] = contextvars.ContextVar("program_decide_via", default=None)
 
 
-#: ``HOLDSPEAK_PROGRAMS=off``: the runner does not tick (every rig hub).
-PROGRAMS_ENV = "HOLDSPEAK_PROGRAMS"
-
 #: The check a repository names (``.holdspeak/program.json``), else this one.
 DEFAULT_CHECK = "scripts/quick_check.sh"
 
 _ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$")
 _LOCK = threading.RLock()
-
-
-def programs_on() -> bool:
-    return os.environ.get(PROGRAMS_ENV, "on").strip().lower() not in {"off", "0", "false", "no"}
 
 
 def _new_id(prefix: str) -> str:

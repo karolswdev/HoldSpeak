@@ -15,6 +15,7 @@ the default service and runner, their caches) stays in the service.
 """
 from __future__ import annotations
 
+import os
 import re
 from typing import Any, Iterable, Mapping, Optional
 
@@ -22,6 +23,15 @@ from .errors import ServiceError
 from .program_rules import LEVEL_WORDS
 
 # ── vocabulary ───────────────────────────────────────────────────────
+
+#: ``HOLDSPEAK_PROGRAMS=off``: the runner does not tick (every rig hub), and
+#: the list names no night.
+PROGRAMS_ENV = "HOLDSPEAK_PROGRAMS"
+
+
+def programs_on() -> bool:
+    return os.environ.get(PROGRAMS_ENV, "on").strip().lower() not in {"off", "0", "false", "no"}
+
 
 PROGRAM_STATES = ("drafting", "running", "waiting", "done", "parked", "failed")
 STEP_STATES = (
@@ -310,6 +320,8 @@ PLAN_GOAL_NOT_NEEDED = "Not planned from the goal: the program has steps"
 
 
 __all__ = [
+    "PROGRAMS_ENV",
+    "programs_on",
     "PLAN_GOAL_KIND",
     "PLAN_GOAL_NOT_NEEDED",
     "PLAN_GOAL_PENDING",
