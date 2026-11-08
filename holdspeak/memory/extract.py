@@ -35,7 +35,6 @@ from __future__ import annotations
 
 import hashlib
 import re
-import time
 from collections import deque
 from datetime import datetime
 from typing import Any, Callable, Optional, Protocol
@@ -508,43 +507,29 @@ class RouterExtractor:
             return False
 
     def extract(self, payload: dict[str, Any]) -> Any:
-        from ..kernel.inference_runner import InvocationRequest, ServiceContract
-        from ..kernel.prompt_adapter import CanonicalPromptAdapter
-        from ..kernel.runtime import _as_principal
+        from ..services import engine_door
         from ..services.thread_practice import _extract_structured_json
         from .engine import MemoryEngineError, MemoryEngineUnassigned
 
         if not self.live():
             raise MemoryEngineUnassigned("memory.extract is not assigned to this engine now")
-        request = InvocationRequest(
-            deployment_revision=self.revision_id,
-            definition_origin=ServiceContract.for_payload(
-                EXTRACT_CONTRACT, EXTRACT_CONTRACT_REVISION, payload
-            ),
-            deadline_at=time.time() + EXTRACT_DEADLINE_SECONDS,
-            payload=payload,
-        )
-        captured: list[Any] = []
-
-        def _capture(value: Any) -> str:
-            captured.append(value)
-            return f"memory-extract:{self.assignment_id or self.revision_id}"
-
-        with _as_principal(self._principal):
-            outcome = self._broker.inference_runner.invoke(
-                request, CanonicalPromptAdapter(), publish=_capture
+        try:
+            answer = engine_door.run(
+                self._broker, self._principal, EXTRACT_CAPABILITY, payload,
+                engine=engine_door.Engine(self.revision_id, self.assignment_id or ""),
+                contract=EXTRACT_CONTRACT, contract_revision=EXTRACT_CONTRACT_REVISION,
+                deadline=EXTRACT_DEADLINE_SECONDS,
+                result_ref=f"memory-extract:{self.assignment_id or self.revision_id}",
             )
-        self.last_operation_id = str(getattr(outcome, "operation_id", "") or "")
-        if self.last_operation_id:
-            self.operation_ids.append(self.last_operation_id)
-        if str(getattr(outcome, "outcome", "")) != "succeeded" or not captured:
-            raise MemoryEngineError(
-                "memory.extract did not complete: "
-                + str(getattr(outcome, "error", "") or getattr(outcome, "outcome", ""))
-            )
-        result = captured[0]
-        raw = result.get("output") if isinstance(result, dict) else result
-        parsed = _extract_structured_json(str(raw or ""))
+        except engine_door.EngineDoorError as exc:
+            self.last_operation_id = exc.operation_id
+            if exc.operation_id:
+                self.operation_ids.append(exc.operation_id)
+            raise MemoryEngineError(exc.detail) from exc
+        self.last_operation_id = answer.operation_id
+        if answer.operation_id:
+            self.operation_ids.append(answer.operation_id)
+        parsed = _extract_structured_json(answer.output)
         if parsed is None:
             raise ExtractionOutputError("the engine gave no JSON object")
         return parsed

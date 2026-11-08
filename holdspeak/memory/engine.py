@@ -18,7 +18,6 @@ module's adapter runs the batch, and the runner writes the receipt.
 from __future__ import annotations
 
 import threading
-import time
 from collections import OrderedDict
 from concurrent.futures import Future, ThreadPoolExecutor
 from concurrent.futures import TimeoutError as FutureTimeout
@@ -413,35 +412,24 @@ class RouterEmbedder:
         return self._principal
 
     def _invoke(self, prefixed: Sequence[str], principal: Any) -> np.ndarray:
-        from ..kernel.inference_runner import InvocationRequest, ServiceContract
-        from ..kernel.runtime import _as_principal
+        from ..services import engine_door
 
         if not self.live():
             raise MemoryEngineUnassigned("memory.embed is not assigned to this engine now")
         payload = {"texts": list(prefixed), "dim": self.dim}
-        request = InvocationRequest(
-            deployment_revision=self.revision_id,
-            definition_origin=ServiceContract.for_payload(
-                MEMORY_EMBED_CONTRACT, MEMORY_EMBED_CONTRACT_REVISION, payload
-            ),
-            deadline_at=time.time() + EMBED_DEADLINE_SECONDS,
-            payload=payload,
-        )
-        captured: list[Any] = []
-
-        def _capture(value: Any) -> str:
-            captured.append(value)
-            return f"memory-embed:{self.assignment_id or self.revision_id}"
-
-        with _as_principal(principal):
-            outcome = self._broker.inference_runner.invoke(request, EmbeddingAdapter(), publish=_capture)
-        self.last_operation_id = str(getattr(outcome, "operation_id", "") or "")
-        if str(getattr(outcome, "outcome", "")) != "succeeded" or not captured:
-            raise MemoryEngineError(
-                "memory.embed did not complete: "
-                + str(getattr(outcome, "error", "") or getattr(outcome, "outcome", ""))
+        try:
+            answer = engine_door.run(
+                self._broker, principal, MEMORY_EMBED_CAPABILITY, payload,
+                engine=engine_door.Engine(self.revision_id, self.assignment_id or ""),
+                contract=MEMORY_EMBED_CONTRACT, contract_revision=MEMORY_EMBED_CONTRACT_REVISION,
+                deadline=EMBED_DEADLINE_SECONDS, adapter=EmbeddingAdapter(),
+                result_ref=f"memory-embed:{self.assignment_id or self.revision_id}",
             )
-        vectors = np.asarray(captured[0]["vectors"], dtype=np.float32)
+        except engine_door.EngineDoorError as exc:
+            self.last_operation_id = exc.operation_id
+            raise MemoryEngineError(exc.detail) from exc
+        self.last_operation_id = answer.operation_id
+        vectors = np.asarray(answer.result["vectors"], dtype=np.float32)
         if vectors.shape != (len(prefixed), self.dim):
             raise MemoryEngineError("memory.embed gave the wrong number of values")
         return vectors

@@ -19,7 +19,6 @@ the confirmed ones.
 from __future__ import annotations
 
 import re
-import time
 import uuid
 from typing import Any
 
@@ -111,15 +110,12 @@ class NoteOutcomesService:
             _coerce_action_items, _coerce_decisions, _extract_json,
             _json_only_messages, intel_response_format,
         )
-        from ..kernel.inference_runner import InvocationRequest, ServiceContract
-        from ..kernel.prompt_adapter import CanonicalPromptAdapter
-        from ..kernel.runtime import _as_principal
-        from .project_update_service import _resolve_for_capability
+        from . import engine_door
 
         broker = self._broker_for_db()
         try:
-            revision, _assignment, _profile = _resolve_for_capability(broker, CAPABILITY)
-        except RuntimeError as exc:
+            engine = engine_door.engine_for(broker, CAPABILITY)
+        except engine_door.EngineDoorError as exc:
             raise NoteFindRefused(
                 "no_engine", "No engine is set for meeting analysis. Choose one in Engines.") from exc
         system, user = _json_only_messages(text)
@@ -128,24 +124,16 @@ class NoteOutcomesService:
             "temperature": 0.2, "max_tokens": 1200,
             "response_format": intel_response_format(),
         }
-        request = InvocationRequest(
-            deployment_revision=revision,
-            definition_origin=ServiceContract.for_payload(CONTRACT, CONTRACT_REVISION, payload),
-            deadline_at=time.time() + DEADLINE_SECONDS,
-            payload=payload,
-        )
-        captured: list[Any] = []
-
-        def _capture(value: Any) -> str:
-            captured.append(value)
-            return f"note-find-tasks:{revision}"
-
-        with _as_principal(principal):
-            outcome = broker.inference_runner.invoke(request, CanonicalPromptAdapter(), publish=_capture)
-        if str(getattr(outcome, "outcome", "")) != "succeeded" or not captured:
+        try:
+            answer = engine_door.run(
+                broker, principal, CAPABILITY, payload, engine=engine,
+                contract=CONTRACT, contract_revision=CONTRACT_REVISION, deadline=DEADLINE_SECONDS,
+                result_ref=f"note-find-tasks:{engine.revision}",
+            )
+        except engine_door.EngineDoorError as exc:
             raise NoteFindRefused(
-                "engine_failed", "The engine did not answer. The note is unchanged. Try again.", status=502)
-        result = captured[0] if isinstance(captured[0], dict) else {"output": captured[0]}
+                "engine_failed", "The engine did not answer. The note is unchanged. Try again.", status=502) from exc
+        result = answer.result if isinstance(answer.result, dict) else {"output": answer.result}
         data = _extract_json(str(result.get("output") or ""))
         if data is None:
             raise NoteFindRefused(
