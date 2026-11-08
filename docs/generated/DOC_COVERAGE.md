@@ -14,10 +14,10 @@ Validation errors at generation: **0**.
 | Measure | Present / total or count |
 | --- | ---: |
 | Source paths | 326 / 326 |
-| Test paths | 273 / 273 |
+| Test paths | 272 / 272 |
 | Documentation paths | 262 / 262 |
-| Assertions inspected | 273 |
-| Tests executed | 234 |
+| Assertions inspected | 272 |
+| Tests executed | 233 |
 | Records with an executed assertion | 85 |
 | Semantic records unresolved | 72 |
 
@@ -111,7 +111,7 @@ Validation errors at generation: **0**.
 | `coder.observation` | capabilities | 7/7 | 8/8 | 8 | 8 | 0 | partially_evidenced |
 | `coder.reply_and_draft` | capabilities | 2/2 | 2/2 | 2 | 2 | 0 | partially_evidenced |
 | `coder.gate` | capabilities | 3/3 | 4/4 | 4 | 4 | 0 | partially_evidenced |
-| `integration.activity_connectors` | capabilities | 4/4 | 3/3 | 3 | 3 | 0 | partially_evidenced |
+| `integration.activity_connectors` | capabilities | 4/4 | 2/2 | 2 | 2 | 0 | partially_evidenced |
 | `integration.github_readonly` | capabilities | 2/2 | 1/1 | 1 | 1 | 0 | partially_evidenced |
 | `integration.jira_confluence_calendar` | capabilities | 3/3 | 3/3 | 3 | 2 | 0 | partially_evidenced |
 | `integration.actuators` | capabilities | 3/3 | 3/3 | 3 | 2 | 0 | partially_evidenced |
