@@ -202,13 +202,9 @@ def _unknown(command: Callable[[Side], dict[str, Any]]) -> Callable[[Side], dict
 # so their invalid-payload column is explicitly N/A rather than inventing HTTP
 # glass that the shipped owner API does not parse.
 VECTORS = (
-    Vector("model_library.get", "model_library.get", "GET", "/api/inference/model-library", "library", _none, lambda _s: {}, None),
-    Vector("model_library.download", "model_library.download", "POST", "/api/inference/model-library/download", "library", _none, _catalog_command, _unknown(_catalog_command), replay=True),
-    Vector("model_library.add_to_library", "model_library.add_to_library", "POST", "/api/inference/model-library/add-to-library", "library", _detected, _detected_command, _unknown(_detected_command), replay=True),
-    Vector("model_library.use_model_file", "model_library.use_model_file", "POST", "/api/inference/model-library/use-model-file", "library", _none, _upload_command, _unknown(_upload_command), replay=True),
-    Vector("model_library.connect_hosted_model", "model_library.connect_hosted_model", "POST", "/api/inference/model-library/connect-hosted-model", "library", _none, _hosted_command, _unknown(_hosted_command), replay=True),
+    # 2026-11-08: the six Model Library commands with no web or iOS caller left
+    # HTTP (holdspeak/web/routes/_parked/model_library_handlers.py); MCP keeps them.
     Vector("model_library.define_endpoint", "model_library.define_endpoint", "POST", "/api/inference/model-library/define-endpoint", "library", _none, _endpoint_command, _unknown(_endpoint_command), replay=True),
-    Vector("model_library.connect_paired_device", "model_library.connect_paired_device", "POST", "/api/inference/model-library/connect-paired-device", "library", _paired, _paired_command, _unknown(_paired_command), replay=True),
     Vector("inference_assignment.summary", "inference_assignment.summary", "GET", "/api/inference/assignments", "assignment", _none, lambda _s: {}, None),
     Vector("inference_assignment.editor", "inference_assignment.editor", "POST", "/api/inference/assignments/editor", "assignment", _none, _editor_command, _unknown(_editor_command)),
     Vector("inference_assignment.set", "inference_assignment.set", "POST", "/api/inference/assignments/set", "assignment", _profile_seed, _set_command, _unknown(_set_command), replay=True, cas=True),

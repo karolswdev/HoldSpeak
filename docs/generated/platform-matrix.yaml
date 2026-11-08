@@ -2159,7 +2159,6 @@
       "id": "model.inventory@aipi",
       "platform": "aipi",
       "source_ids": [
-        "holdspeak/web/routes/model_library.py",
         "holdspeak/mcp/families/model_library.py"
       ],
       "status": "experimental"
@@ -2170,7 +2169,6 @@
       "id": "model.inventory@ipad",
       "platform": "ipad",
       "source_ids": [
-        "holdspeak/web/routes/model_library.py",
         "holdspeak/mcp/families/model_library.py"
       ],
       "status": "experimental"
@@ -2181,7 +2179,6 @@
       "id": "model.inventory@linux_wayland",
       "platform": "linux_wayland",
       "source_ids": [
-        "holdspeak/web/routes/model_library.py",
         "holdspeak/mcp/families/model_library.py"
       ],
       "status": "experimental"
@@ -2192,7 +2189,6 @@
       "id": "model.inventory@linux_x11",
       "platform": "linux_x11",
       "source_ids": [
-        "holdspeak/web/routes/model_library.py",
         "holdspeak/mcp/families/model_library.py"
       ],
       "status": "experimental"
@@ -2203,7 +2199,6 @@
       "id": "model.inventory@macos",
       "platform": "macos",
       "source_ids": [
-        "holdspeak/web/routes/model_library.py",
         "holdspeak/mcp/families/model_library.py"
       ],
       "status": "experimental"

@@ -400,12 +400,16 @@ def _assignment_snapshot(payload: dict[str, Any]) -> str:
 
 
 def _library_profile_ids(page: Any) -> list[str]:
-    library = _api(page, "GET", "/api/inference/model-library", token=TOKEN)
-    return sorted(
-        str(row.get("id"))
-        for row in library.get("rows", [])
-        if str(row.get("id", "")).startswith("profile:")
+    # The Model Library read is MCP-only now; the profile list names the same
+    # profiles (the library's ``profile:<id>`` rows).
+    from holdspeak.db import get_database
+    from holdspeak.principals import Principal, PrincipalKind
+    from holdspeak.services.model_profile_service import ModelProfileService
+
+    profiles = ModelProfileService(get_database()).list_profiles(
+        Principal(PrincipalKind.OWNER, "glass-owner"), include_legacy=False,
     )
+    return sorted(f"profile:{row.get('profile_id') or row.get('id')}" for row in profiles.get("profiles", []))
 
 
 def _install_lan_scanner_double(monkeypatch: Any) -> tuple[str, list[str], list[str]]:

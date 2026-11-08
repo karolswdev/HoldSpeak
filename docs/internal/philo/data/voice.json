@@ -3193,12 +3193,12 @@
       "status_reason": "Model Library and inference acquisition services provide a durable download boundary with replay-safe receipts.",
       "exposure": "operator",
       "surfaces": [
-        "Model Library",
-        "setup readiness"
+        "setup readiness",
+        "MCP model_library family"
       ],
       "entry_points": [
         "holdspeak/services/inference_acquisition_service.py::InferenceAcquisitionApplicationService.download",
-        "holdspeak/web/routes/model_library.py::build_model_library_router"
+        "holdspeak/mcp/families/model_library.py::dispatch"
       ],
       "platforms": {
         "macos": "supported_with_setup",
@@ -3220,9 +3220,7 @@
         "inference_model_acquisitions",
         "model library metadata"
       ],
-      "apis": [
-        "/api/inference/model-library/download"
-      ],
+      "apis": [],
       "configuration": [
         "model catalog",
         "local model directory"
@@ -3253,17 +3251,6 @@
         }
       ],
       "tests": [
-        {
-          "path": "tests/unit/test_web_model_library_routes.py",
-          "node": "test_library_http_is_owner_before_body_and_closed",
-          "assertion": "Model Library download authorization is owner-first and the projection is closed.",
-          "execution": {
-            "status": "passed",
-            "record": "docs/generated/test-execution.json",
-            "run": "full-python-suite",
-            "cases": 1
-          }
-        },
         {
           "path": "tests/unit/test_mcp_model_library_tools.py",
           "node": "test_model_library_mcp_stages_base64_and_never_returns_secret_or_paths",
@@ -3303,11 +3290,10 @@
       "status_reason": "The Model Library projection and destination target contract expose inventory metadata; no owner surface was observed.",
       "exposure": "operator",
       "surfaces": [
-        "Model Library",
-        "destination settings"
+        "destination settings",
+        "MCP model_library family"
       ],
       "entry_points": [
-        "holdspeak/web/routes/model_library.py::build_model_library_router",
         "holdspeak/mcp/families/model_library.py::dispatch"
       ],
       "platforms": {
@@ -3329,9 +3315,7 @@
         "model profiles",
         "model library metadata"
       ],
-      "apis": [
-        "/api/inference/model-library"
-      ],
+      "apis": [],
       "configuration": [
         "model profiles",
         "destination targets"
@@ -3350,12 +3334,6 @@
       "kernel_operations": [],
       "sources": [
         {
-          "path": "holdspeak/web/routes/model_library.py",
-          "symbol": "get_model_library",
-          "line": 73,
-          "claim": "The Model Library GET route returns its inventory projection."
-        },
-        {
           "path": "holdspeak/mcp/families/model_library.py",
           "symbol": "dispatch",
           "line": 221,
@@ -3363,17 +3341,6 @@
         }
       ],
       "tests": [
-        {
-          "path": "tests/unit/test_web_model_library_routes.py",
-          "node": "test_library_http_is_owner_before_body_and_closed",
-          "assertion": "The route test inspects owner authority and the closed inventory projection.",
-          "execution": {
-            "status": "passed",
-            "record": "docs/generated/test-execution.json",
-            "run": "full-python-suite",
-            "cases": 1
-          }
-        },
         {
           "path": "tests/unit/test_mcp_model_library_tools.py",
           "node": "test_model_library_mcp_catalogue_is_closed_and_contains_all_http_twins",

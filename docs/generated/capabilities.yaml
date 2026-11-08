@@ -4588,9 +4588,7 @@
       "trust_boundary": "Action item lifecycle changes are local owner actions; external follow-through is a separate actuator."
     },
     {
-      "apis": [
-        "/api/inference/model-library/download"
-      ],
+      "apis": [],
       "authority": "Owner Model Library command and acquisition receipt.",
       "configuration": [
         "model catalog",
@@ -4609,7 +4607,7 @@
       "egress_possible": true,
       "entry_points": [
         "holdspeak/services/inference_acquisition_service.py::InferenceAcquisitionApplicationService.download",
-        "holdspeak/web/routes/model_library.py::build_model_library_router"
+        "holdspeak/mcp/families/model_library.py::dispatch"
       ],
       "evidence_level": "source_and_assertions_inspected",
       "exposure": "operator",
@@ -4668,21 +4666,10 @@
       "status": "experimental",
       "status_reason": "Model Library and inference acquisition services provide a durable download boundary with replay-safe receipts.",
       "surfaces": [
-        "Model Library",
-        "setup readiness"
+        "setup readiness",
+        "MCP model_library family"
       ],
       "tests": [
-        {
-          "assertion": "Model Library download authorization is owner-first and the projection is closed.",
-          "execution": {
-            "cases": 1,
-            "record": "docs/generated/test-execution.json",
-            "run": "full-python-suite",
-            "status": "passed"
-          },
-          "node": "test_library_http_is_owner_before_body_and_closed",
-          "path": "tests/unit/test_web_model_library_routes.py"
-        },
         {
           "assertion": "Model Library acquisition output does not expose secrets or paths.",
           "execution": {
@@ -4698,9 +4685,7 @@
       "trust_boundary": "Owner-authorized acquisition crosses from the local hub to a model artifact source; downloaded files remain local until separately assigned."
     },
     {
-      "apis": [
-        "/api/inference/model-library"
-      ],
+      "apis": [],
       "authority": "Owner read authority for model library metadata.",
       "configuration": [
         "model profiles",
@@ -4717,7 +4702,6 @@
       "egress": "Inventory reads local catalog and profile state without provider inference.",
       "egress_possible": false,
       "entry_points": [
-        "holdspeak/web/routes/model_library.py::build_model_library_router",
         "holdspeak/mcp/families/model_library.py::dispatch"
       ],
       "evidence_level": "source_and_assertions_inspected",
@@ -4762,12 +4746,6 @@
       "side_effect": "none",
       "sources": [
         {
-          "claim": "The Model Library GET route returns its inventory projection.",
-          "line": 73,
-          "path": "holdspeak/web/routes/model_library.py",
-          "symbol": "get_model_library"
-        },
-        {
           "claim": "MCP dispatch enforces owner authority before model library operations.",
           "line": 221,
           "path": "holdspeak/mcp/families/model_library.py",
@@ -4777,21 +4755,10 @@
       "status": "experimental",
       "status_reason": "The Model Library projection and destination target contract expose inventory metadata; no owner surface was observed.",
       "surfaces": [
-        "Model Library",
-        "destination settings"
+        "destination settings",
+        "MCP model_library family"
       ],
       "tests": [
-        {
-          "assertion": "The route test inspects owner authority and the closed inventory projection.",
-          "execution": {
-            "cases": 1,
-            "record": "docs/generated/test-execution.json",
-            "run": "full-python-suite",
-            "status": "passed"
-          },
-          "node": "test_library_http_is_owner_before_body_and_closed",
-          "path": "tests/unit/test_web_model_library_routes.py"
-        },
         {
           "assertion": "The model library catalogue is closed and matches HTTP twins.",
           "execution": {

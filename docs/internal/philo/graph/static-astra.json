@@ -61661,28 +61661,6 @@
       ]
     },
     {
-      "id": "edge.http.get.api_inference_model_library",
-      "kind": "edge",
-      "label": "GET /api/inference/model-library [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "GET",
-          "path": "/api/inference/model-library"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/model_library.py",
-          "line": 74,
-          "symbol": "get_model_library",
-          "claim": "get_model_library receives GET /api/inference/model-library; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
       "id": "edge.http.get.api_inference_setup",
       "kind": "edge",
       "label": "GET /api/inference/setup [exposure=conditional]",
@@ -68400,72 +68378,6 @@
       ]
     },
     {
-      "id": "edge.http.post.api_inference_model_library_add_to_library",
-      "kind": "edge",
-      "label": "POST /api/inference/model-library/add-to-library [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "POST",
-          "path": "/api/inference/model-library/add-to-library"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/model_library.py",
-          "line": 93,
-          "symbol": "add_detected_model",
-          "claim": "add_detected_model receives POST /api/inference/model-library/add-to-library; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.post.api_inference_model_library_connect_hosted_model",
-      "kind": "edge",
-      "label": "POST /api/inference/model-library/connect-hosted-model [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "POST",
-          "path": "/api/inference/model-library/connect-hosted-model"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/model_library.py",
-          "line": 102,
-          "symbol": "connect_hosted_model",
-          "claim": "connect_hosted_model receives POST /api/inference/model-library/connect-hosted-model; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.post.api_inference_model_library_connect_paired_device",
-      "kind": "edge",
-      "label": "POST /api/inference/model-library/connect-paired-device [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "POST",
-          "path": "/api/inference/model-library/connect-paired-device"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/model_library.py",
-          "line": 126,
-          "symbol": "connect_paired_device",
-          "claim": "connect_paired_device receives POST /api/inference/model-library/connect-paired-device; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
       "id": "edge.http.post.api_inference_model_library_define_endpoint",
       "kind": "edge",
       "label": "POST /api/inference/model-library/define-endpoint [exposure=conditional]",
@@ -68484,50 +68396,6 @@
           "line": 114,
           "symbol": "define_endpoint",
           "claim": "define_endpoint receives POST /api/inference/model-library/define-endpoint; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.post.api_inference_model_library_download",
-      "kind": "edge",
-      "label": "POST /api/inference/model-library/download [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "POST",
-          "path": "/api/inference/model-library/download"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/model_library.py",
-          "line": 84,
-          "symbol": "download_model",
-          "claim": "download_model receives POST /api/inference/model-library/download; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
-        }
-      ]
-    },
-    {
-      "id": "edge.http.post.api_inference_model_library_use_model_file",
-      "kind": "edge",
-      "label": "POST /api/inference/model-library/use-model-file [exposure=conditional]",
-      "subtype": "http.request",
-      "phase1_refs": [
-        {
-          "inventory_path": "docs/generated/openapi.json",
-          "method": "POST",
-          "path": "/api/inference/model-library/use-model-file"
-        }
-      ],
-      "sources": [
-        {
-          "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "holdspeak/web/routes/model_library.py",
-          "line": 138,
-          "symbol": "use_model_file",
-          "claim": "use_model_file receives POST /api/inference/model-library/use-model-file; route authentication, configuration and input preconditions apply. Census proves source declaration, not registration or endpoint semantics."
         }
       ]
     },

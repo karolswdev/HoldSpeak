@@ -75,7 +75,7 @@ def test_secret_is_absent_from_json_exceptions_logs_receipts_and_assignment_head
     response = client.post("/api/inference/model-library/define-endpoint", headers={"x-owner": "yes"}, json=body)
     assert response.status_code == 200
     receipt = response.json()
-    projection = client.get("/api/inference/model-library", headers={"x-owner": "yes"}).json()
+    projection = service.get_library(OWNER)
     after = json.dumps(service.assignment_heads(OWNER), sort_keys=True, separators=(",", ":"))
 
     # A known invalid secret produces a content-free exception; validation never
