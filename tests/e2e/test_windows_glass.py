@@ -2086,6 +2086,18 @@ class TestCloseMeansGone:
         assert _on_the_desk(hit), f"the old centre hits {hit}"
         return proof
 
+    def _close_decision(self, page: Any, width: int, name: str) -> dict[str, Any]:
+        """The one decision face (2026-11-08): a decision opens its record in
+        the Decisions window reader. At 393 the title-bar Back first returns
+        the reader to the list (the window's own Back); its Back then closes."""
+        decisions = page.locator("#surface-decisions")
+        decisions.get_by_test_id("decision-reader-title").filter(has_text=CLOSE_DECISION).wait_for()
+        if width < 720:
+            self._press(page, _close_control(page, width, "Decisions"), width)
+            decisions.get_by_test_id("decisions-toolbar").wait_for()
+        _close_control(page, width, "Decisions").wait_for()
+        return self._close_and_prove(page, width, "Decisions", name)
+
     # ── the fences ───────────────────────────────────────────────────────
 
     @pytest.mark.parametrize("width", list(CLOSE_SIZES))
@@ -2101,8 +2113,7 @@ class TestCloseMeansGone:
                 option = page.locator("[id^='desk-palette-option-decision:']").first
                 option.wait_for()
                 self._press(page, option, width)
-                _close_control(page, width, CLOSE_DECISION).wait_for()
-                self._close_and_prove(page, width, CLOSE_DECISION, "palette-decision")
+                self._close_decision(page, width, "palette-decision")
 
                 # 2. the Dock: `intelligence:desk`.
                 self._press(page, page.locator(".desk-dock-launch[aria-label^='Today']"), width)
@@ -2142,19 +2153,17 @@ class TestCloseMeansGone:
                     _settle(page)
                     self._press(page, note_option, width)
                     _close_control(page, width, NOTE).wait_for()
-                    self._close_and_prove(page, width, NOTE, "find-note")
-
-                    self._press(page, page.locator("[aria-controls=desk-tool-shelf]").first, width)
-                    page.locator("[aria-controls=desk-palette-listbox]").fill("freeze")
-                    option.wait_for()
-                    page.wait_for_timeout(900)
+                    # Object Open on an open object window raises that one
+                    # window, never a second. A note stands for the object
+                    # window: a decision opens its record in the Decisions
+                    # window (the one decision face, 2026-11-08).
+                    note = page.locator(f".desk-window-shell[aria-label='{NOTE}']")
+                    page.wait_for_timeout(600)
                     _settle(page)
-                    self._press(page, option, width)
-                    decision = page.locator(f".desk-window-shell[aria-label='{CLOSE_DECISION}']")
-                    head = decision.locator(".desk-pullout-title").bounding_box()
+                    head = note.locator(".desk-pullout-title").bounding_box()
                     assert head
                     TestThePhoneDesk._long_press(page, head["x"] + head["width"] / 2, head["y"] + head["height"] / 2)
-                    window_menu = page.get_by_role("menu", name=f"{CLOSE_DECISION} window menu", exact=True)
+                    window_menu = page.get_by_role("menu", name=f"{NOTE} window menu", exact=True)
                     object_menu = page.get_by_role("menu", name="Object submenu", exact=True)
                     # Betterment daily D5: the phone's window menu is shorter
                     # (no Brief, no The week in the ring), so the finger that
@@ -2162,9 +2171,18 @@ class TestCloseMeansGone:
                     if not object_menu.count():
                         self._press(page, window_menu.get_by_role("menuitem", name="Object", exact=True), width)
                     self._press(page, object_menu.get_by_role("menuitem", name="Open", exact=True), width)
-                    _close_control(page, width, CLOSE_DECISION).wait_for()
-                    assert decision.count() == 1, "Object Open duplicated the existing decision"
-                    self._close_and_prove(page, width, CLOSE_DECISION, "window-menu-bare-decision")
+                    _close_control(page, width, NOTE).wait_for()
+                    assert note.count() == 1, "Object Open duplicated the existing note"
+                    self._close_and_prove(page, width, NOTE, "find-note")
+
+                    # Find opens the decision's record in the Decisions window.
+                    self._press(page, page.locator("[aria-controls=desk-tool-shelf]").first, width)
+                    page.locator("[aria-controls=desk-palette-listbox]").fill("freeze")
+                    option.wait_for()
+                    page.wait_for_timeout(900)
+                    _settle(page)
+                    self._press(page, option, width)
+                    self._close_decision(page, width, "find-decision")
                 else:
                     # 4. the one desk (PHILO-17): a Screen icon, Enter -> `note:<id>` (qualified).
                     icon = page.locator(f"[data-testid=desk-screen] .desk-icon[aria-label^='{NOTE}']").first
@@ -2191,8 +2209,7 @@ class TestCloseMeansGone:
                     item = page.get_by_role("menuitem", name="Open", exact=True)
                     item.wait_for()
                     self._press(page, item, width)
-                    _close_control(page, width, CLOSE_DECISION).wait_for()
-                    self._close_and_prove(page, width, CLOSE_DECISION, "icon-menu-bare-decision")
+                    self._close_decision(page, width, "icon-menu-bare-decision")
                 assert not errors, errors
             finally:
                 browser.close()
@@ -2346,9 +2363,11 @@ class TestTheDeskRemembers(_Rig):
                 self._press(page, close, width)
                 close.wait_for(state="detached")
 
-                # 1. the decision window
+                # 1. the decision: its record in the Decisions window reader
+                #    (the one decision face, 2026-11-08)
                 self._palette(page, "freeze", "decision:d-freeze", width)
-                page.locator(f".desk-pullout[aria-label='{DECISION}']").wait_for()
+                page.locator("#surface-decisions").get_by_test_id("decision-reader-title").filter(
+                    has_text=DECISION).wait_for()
                 _settle(page)
 
                 # 2. the Room: Updates -> Draft -> typed words, not saved
@@ -2384,14 +2403,14 @@ class TestTheDeskRemembers(_Rig):
                     page.wait_for_timeout(500)
                 room_rect = next(w["rect"] for w in self._windows(page) if w["id"] == "surface-project-memory")
 
-                # 5. at 1440 the decision is iconified (393 has no Iconify gadget)
+                # 5. at 1440 the Decisions window is iconified (393 has no Iconify gadget)
                 if width >= 720:
-                    # The moved Room can cover the decision's header. Raise
+                    # The moved Room can cover the window's header. Raise
                     # that same record through Find before its real Iconify
                     # press; the Room's unsent words and measured seat stay.
                     self._palette(page, "freeze", "decision:d-freeze", width)
-                    deck = page.locator(f".desk-pullout[aria-label='{DECISION}']")
-                    self._press(page, deck.locator(f"[aria-label='Iconify {DECISION}']"), width)
+                    deck = page.locator("#surface-decisions")
+                    self._press(page, deck.get_by_role("button", name="Iconify Decisions", exact=True), width)
                     page.wait_for_timeout(900)
                 _settle(page)
                 page.screenshot(path=str(_h1_SHOTS / f"B2-01-before-reload-{width}.png"))
@@ -2402,6 +2421,16 @@ class TestTheDeskRemembers(_Rig):
                 page.reload(wait_until="load")
                 _normal_chair(page)
                 room = page.locator("#surface-project-memory")
+                # #1917 (owner ruling 2026-11-07): the Room comes back on Now;
+                # the kept draft waits on its head, and Continue opens it with
+                # the unsent words.
+                if width < 720:
+                    # One window fills the phone; Find raises the Room.
+                    room.wait_for(state="attached", timeout=20_000)
+                    self._palette(page, "Payments", "project.open.p-ledger", width)
+                cont = room.get_by_test_id("room-head-update-continue")
+                cont.wait_for(timeout=20_000)
+                self._press(page, cont, width)
                 editor = room.get_by_test_id("update-plain-text")
                 editor.wait_for(timeout=20_000)
                 page.wait_for_function(
@@ -2426,10 +2455,10 @@ class TestTheDeskRemembers(_Rig):
                 person = people.locator(".people-detail-head .people-name").inner_text().strip()
                 room_after = next((w["rect"] for w in after_windows if w["id"] == "surface-project-memory"), None)
                 titles = [w["title"] for w in after_windows]
-                decision_drawn = any(DECISION in t for t in titles)
-                # PHILO-16 (A1) §5: the window chips are parked; a seated window
-                # with no application tile (a decision pullout) has its own seat tile.
-                chips = page.evaluate("() => [...document.querySelectorAll('.desk-dock .desk-dock-seat-tile')].map(b => (b.getAttribute('aria-label') || b.textContent || '').trim())")
+                decision_drawn = any(w["id"] == "surface-decisions" for w in after_windows)
+                # PHILO-16 (A1) §5: the window chips are parked; an iconified
+                # window says so on its Dock tile (Decisions, iconified).
+                chips = page.evaluate("() => [...document.querySelectorAll('.desk-dock .desk-dock-seat-tile, .desk-dock .desk-dock-launch')].map(b => (b.getAttribute('aria-label') || b.textContent || '').trim())")
                 proof = {"width": width, "before": before, "after_windows": after_windows,
                          "people": {"person": person, "tab": tab, "agenda": agenda},
                          "room_rect_after": room_after, "dock_seats": chips,
@@ -2461,11 +2490,14 @@ class TestTheDeskRemembers(_Rig):
                         x, y, w, h = other["rect"]
                         hides = pr[0] <= x and pr[0] + pr[2] >= x + w and pr[1] <= y and pr[1] + pr[3] >= y + 44
                         assert not hides, (people_id, pr, other)
-                    assert not decision_drawn, "the iconified decision came back drawn"
-                    assert "pullout:decision:d-freeze" in self._workspace(page)["panel"]["min"]
-                    assert any(DECISION in c for c in chips), chips
+                    assert not decision_drawn, "the iconified Decisions window came back drawn"
+                    assert "surface-decisions" in self._workspace(page)["panel"]["min"]
+                    assert "Decisions, iconified" in chips, chips
                 else:
-                    assert "decision:d-freeze" in self._workspace(page)["windows"]["pullouts"]
+                    # The Decisions window comes back open on the same record.
+                    assert decision_drawn, after_windows
+                    page.locator("#surface-decisions").get_by_test_id("decision-reader-title").filter(
+                        has_text=DECISION).wait_for()
                 assert not errors, errors
             finally:
                 browser.close()
