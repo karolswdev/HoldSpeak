@@ -602,7 +602,9 @@ function InlineDestinationForm({ onDone, onCancel, onSetUpAccount }: {
 
 /** Open the new Note and deliver the existing window Send signal after its
  * pullout has mounted. The bounded retry is only for the asynchronous
- * arrival path; the note editor remains the owner of the Send state. */
+ * arrival path; the note editor remains the owner of the Send state. The
+ * retry stops at the first request the window takes (it cancels the event):
+ * a later tick must not open Send again after the owner pressed Cancel. */
 function openNoteSend(noteRef: string) {
   openRef(noteRef);
   if (typeof window === "undefined") return;
@@ -611,7 +613,8 @@ function openNoteSend(noteRef: string) {
   const request = () => {
     const root = document.getElementById(winId);
     if (root?.querySelector("[data-testid=thought-send]")) return;
-    window.dispatchEvent(new CustomEvent(SEND_OPEN, { detail: { winId } }));
+    const taken = !window.dispatchEvent(new CustomEvent(SEND_OPEN, { detail: { winId }, cancelable: true }));
+    if (taken) return;
     tries += 1;
     if (tries < 30) window.setTimeout(request, 50);
   };
