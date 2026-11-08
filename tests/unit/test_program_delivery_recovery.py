@@ -147,3 +147,45 @@ def test_the_adapters_carry_the_delivery_line() -> None:
                               "--kind", "delivery", "--choice", "skip", "--expected-delivery-checkpoint-id", "9"])
     run_program_command(args, out=io.StringIO(), opener=lambda req, timeout=0: _Answer(req))
     assert sent[-1] == {"kind": "delivery", "choice": "skip", "expected_delivery_checkpoint_id": 9}
+
+
+# ── Codex on #1855: nothing malformed reaches gh; no raw exception text ──
+
+def test_known_pr_takes_only_a_full_head_a_github_url_and_git_ref_names() -> None:
+    for head in ("", "a" * 39, "a" * 41, "A" * 40, "g" * 40, "a" * 39 + " "):
+        assert delivery.known_pr(_receipt(pr={**PR, "head": head})) is None, head
+    for url in ("http://github.com/acme/app/pull/12", "https://evil.example/acme/app/pull/12",
+                "https://github.com/acme/app/pull/12/files", "https://github.com/acme/app/pull/012",
+                "https://github.com/acme/app/pull/12 --admin"):
+        assert delivery.known_pr(_receipt(pr={**PR, "url": url})) is None, url
+    for ref in ("-x", "--upload-pack=x", "a..b", "a//b", "a b", "a/", "a.lock", "a@{1}", ".a", "a;rm"):
+        assert delivery.known_pr(_receipt(pr={**PR, "branch": ref})) is None, ref
+        assert delivery.known_pr(_receipt(pr={**PR, "base": ref})) is None, ref
+
+
+def test_a_malformed_url_is_never_read_and_a_bad_base_stops_before_any_command() -> None:
+    runner = _Runner(_gh())
+    assert delivery._read(runner, {}, {**PR, "url": "https://github.com/acme/app/pull/12 --web"})["result"] == "unavailable"
+    assert runner.calls == []
+    track: dict[str, Any] = {"stage": "", "remote": False, "pr": {}}
+    try:
+        delivery._write(runner, {"id": "p1", "title": "T", "repo_root": "/r", "base_branch": "--upload-pack=x"},
+                        {"project": "app", "phase": "1", "words": "dw app/1"}, {}, track)
+    except delivery.DeliveryFailed:
+        pass
+    else:
+        raise AssertionError("a bad base reached the delivery")
+    assert runner.calls == [] and track["stage"] == "refs" and track["remote"] is False
+
+
+def test_a_thrown_command_keeps_its_class_and_stage_never_its_text() -> None:
+    exc = OSError("[Errno 2] No such file: '/Users/karol/secret/app' ghp_abcdef123456 --token x")
+    detail = delivery._exc_detail("push", exc)
+    assert detail == "OSError at the push stage: the command stopped before it answered."
+    runner = _Runner(exc)
+    try:
+        delivery._run_or_fail(runner, ["git", "push"], "/r", "push")
+    except delivery.DeliveryFailed as failed:
+        assert failed.detail == detail and "/Users" not in failed.words and "ghp_" not in failed.words
+    else:
+        raise AssertionError("a thrown command did not fail the stage")
