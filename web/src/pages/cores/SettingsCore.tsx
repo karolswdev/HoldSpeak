@@ -8,7 +8,7 @@
 // This file is the composition: the window frame, the section list and the
 // shared store wiring. Each section lives in `./settings/<Section>.tsx`; the
 // one settings writer lives in `./settings/writer.ts`.
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { CoreProps, SettingsResponse, AuthorityPolicyResponse } from "./core-types";
 import { Button } from "../../components/signal/Signal";
 import { useResource } from "../pageSupport";
@@ -28,7 +28,7 @@ import {
   type SettingsHubWire,
 } from "./settings/prefs";
 import { SECTION_ALIASES, SETTINGS_FOCUS_PATHS, settingsPageScope } from "./settings/navigation";
-import { useSettingsWriter, type SettingsChanges } from "./settings/writer";
+import { settingsOwnerAdapter, useSettingsWriter, type SettingsChanges, type SettingsWriter } from "./settings/writer";
 import { settingsBindings } from "./settings/bindings";
 import { GrantFootReceipt, type GrantAct } from "./settings/grants";
 import { useCalendarSources } from "./settings/Calendar";
@@ -93,8 +93,12 @@ function SettingsFace({ hero, scope }: CoreProps) {
       if (next.module) setPaneOpen(true);
     }
   }, [scope]);
-  // The You writer lives with the window: its state is the status bar's.
-  const ownerPrefs = useOwnerPreferences();
+  // The You fields write through the window's one settings writer (below):
+  // one revision, one queue. The adapter is stable; it reads the newest writer.
+  const writerRef = useRef<SettingsWriter | null>(null);
+  const ownerAdapter = useMemo(() => settingsOwnerAdapter(() => writerRef.current!), []);
+  // The You state lives with the window: its state is the status bar's.
+  const ownerPrefs = useOwnerPreferences(ownerAdapter);
   // Settings opens on the owner's identity category. A legacy "settings"
   // scope still lands on the same face; it never restores the old all-page
   // document.
@@ -156,6 +160,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
     void hub.reload();
     if (changes.some(([path]) => path[0] === "calendar" || path[0] === "meeting")) void cal.loadCalSources();
   });
+  writerRef.current = writer;
   const { saving, refusal, failedChangesRef, retryFailedChanges } = writer;
   const symbolsDraft = useSpokenSymbolsDraft(resource.data, writer);
   const secretChanges = useSecretChanges(writer, () => {
@@ -185,7 +190,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
         defined in render, which would remount and drop focus) ── */
   const b = settingsBindings(resource.data, writer.update, highlight);
 
-  // You has its own owner writer and field receipts: while a You field is
+  // You writes through the same writer but keeps its own field receipts: while a You field is
   // Edited, Saving or Not saved, the bar says that word (ownerSaveState), and
   // a success of the general writer cannot acknowledge it. With no You state
   // to say, the bar says the window's last write (Saved counts per window).
