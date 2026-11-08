@@ -325,7 +325,7 @@ def build_delivery_prs_router(
                 # The runner's kernel operation is the review's one receipt.
                 "operation_id": answer.operation_id,
                 "invocation": {"operation_id": answer.operation_id, "outcome": "succeeded"},
-                "placement": {"source": "owner_assignment", "egress": {"scope": engine_door.egress_of(broker, engine)}},
+                "placement": {"source": "owner_assignment", "egress": {"scope": engine_door.egress_of(broker, answer.engine)}},
             })
         except Exception as exc:
             return _classified_500(exc, "pr review draft failed")

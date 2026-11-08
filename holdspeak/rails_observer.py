@@ -336,7 +336,7 @@ def build_profile_summarizer(
                 "rails_summary_" + (exc.outcome or exc.code), exc.operation_id
             ) from exc
         summarize.last_receipt_id = answer.operation_id
-        summarize.last_egress = engine_door.egress_of(broker, engine)
+        summarize.last_egress = engine_door.egress_of(broker, answer.engine)
         _record_local_readiness(broker, principal, engine)
         return answer.output
 

@@ -248,7 +248,7 @@ class CadenceService:
         action = next_action_from_output(loop, answer.output)
         if action.generated_by != "llm":
             return None
-        return action, {"source": "owner_assignment", "egress": {"scope": engine_door.egress_of(broker, engine)}}
+        return action, {"source": "owner_assignment", "egress": {"scope": engine_door.egress_of(broker, answer.engine)}}
 
     def _loop_memory(self, loop: Any) -> Any:
         """Memory for one loop's draft: its words, less the loop and its source.
