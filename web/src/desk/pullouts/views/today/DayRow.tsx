@@ -1,0 +1,41 @@
+/** One row of Today's day (the language, 2026-11-08): the kit row grammar
+ *  (kit-listrow) with the hour as an 11 px mono column at the left, the
+ *  20 px sprite (a 1:1 wears the person's disc), the name, a mono facts
+ *  line, a state word and one verb at the right. */
+import type { ReactNode } from "react";
+import { Avatar, DotWord, type DotTone } from "../../../surface/kit";
+import { GLYPHS } from "./time";
+
+export function DayRow({ time, kind, sprite, person, name, facts, state, extra, verb, testId }: {
+  time: ReactNode;
+  kind: string;
+  sprite?: string;
+  person?: string;
+  name: ReactNode;
+  facts?: ReactNode;
+  state?: { word: string; tone: DotTone } | null;
+  /** The run's attempts and route words (To finish). */
+  extra?: ReactNode;
+  verb?: ReactNode;
+  testId?: string;
+}) {
+  return (
+    <li className="kit-listrow today-dayrow" data-kind={kind} data-testid={testId}>
+      <span className="today-hour">{time}</span>
+      <span className="kit-listrow-main today-dayrow-main">
+        {person || sprite ? (
+          <span className="kit-listrow-glyph" aria-hidden="true">
+            {person ? <Avatar name={person} /> : <img src={`${GLYPHS}${sprite}.png`} alt="" width={20} height={20} draggable={false} />}
+          </span>
+        ) : null}
+        <span className="kit-listrow-text">
+          <span className="kit-listrow-name">{name}</span>
+          {facts ? <span className="kit-listrow-meta today-dayrow-facts">{facts}</span> : null}
+        </span>
+      </span>
+      {state ? <span className="kit-listrow-state"><DotWord tone={state.tone}>{state.word}</DotWord></span> : null}
+      {extra ? <span className="today-row-route">{extra}</span> : null}
+      {verb ? <span className="kit-listrow-verbs">{verb}</span> : null}
+    </li>
+  );
+}
