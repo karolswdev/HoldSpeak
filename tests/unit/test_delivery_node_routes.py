@@ -166,40 +166,6 @@ class TestLinkOrdering:
         assert body["offline_after_seconds"] == 30.0
 
 
-class TestCommandsLeg:
-    def test_empty_envelope_for_a_compatible_node(self, client, state):
-        token = _pair(state)
-        _hello(client, token)
-        response = client.get(
-            "/api/delivery/node/commands",
-            params={"name": "studio-mac"},
-            headers={"X-HoldSpeak-Node-Token": token},
-        )
-        assert response.status_code == 200
-        body = response.json()
-        assert body["commands_schema"] == 1
-        assert body["commands"] == []
-
-    def test_capability_mismatch_disables_commands_only(self, client, state):
-        token = _pair(state)
-        _hello(client, token, caps=["delivery.source"])
-        refused = client.get(
-            "/api/delivery/node/commands",
-            params={"name": "studio-mac"},
-            headers={"X-HoldSpeak-Node-Token": token},
-        )
-        assert refused.status_code == 409
-        assert refused.json()["error"] == "commands_disabled"
-        # Observation unaffected: the heartbeat leg still answers.
-        beat = client.post(
-            "/api/delivery/node/heartbeat",
-            json={"name": "studio-mac", "events": [{"seq": 1, "kind": "rail.cursor"}]},
-            headers={"X-HoldSpeak-Node-Token": token},
-        )
-        assert beat.status_code == 200
-        assert beat.json()["cursor"] == 1
-
-
 class TestEventWire:
     def test_smuggled_field_refused_over_http(self, client, state):
         token = _pair(state)

@@ -14,7 +14,7 @@ For example, the old meeting Slack-export route returns `slack_moved_to_channel`
 Read the handler and owning guide before treating route presence as feature availability.
 Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
-Routes: 897 (plus static mounts). iOS-consumed: 89. Web-consumed: 603.
+Routes: 882 (plus static mounts). iOS-consumed: 89. Web-consumed: 603.
 
 ## device_audio_ws
 
@@ -312,7 +312,6 @@ Routes: 897 (plus static mounts). iOS-consumed: 89. Web-consumed: 603.
 
 | Method | Path | Consumers |
 |---|---|---|
-| GET | `/api/delivery/events` | server only |
 | GET | `/api/delivery/snapshot` | ios, web |
 | GET | `/api/delivery/sources` | ios |
 | POST | `/api/delivery/sources` | ios |
@@ -344,7 +343,6 @@ Routes: 897 (plus static mounts). iOS-consumed: 89. Web-consumed: 603.
 
 | Method | Path | Consumers |
 |---|---|---|
-| GET | `/api/delivery/node/commands` | server only |
 | POST | `/api/delivery/node/disconnect` | server only |
 | POST | `/api/delivery/node/heartbeat` | server only |
 | POST | `/api/delivery/node/hello` | server only |
@@ -355,7 +353,6 @@ Routes: 897 (plus static mounts). iOS-consumed: 89. Web-consumed: 603.
 | Method | Path | Consumers |
 |---|---|---|
 | GET | `/api/delivery/prs` | web |
-| POST | `/api/delivery/prs/launches/{launch_id}/input` | server only |
 | POST | `/api/delivery/prs/proposals/{proposal_id}/decide` | web |
 | POST | `/api/delivery/prs/refresh` | web |
 | GET | `/api/delivery/prs/{source_id}/{number}/diff` | web |
@@ -371,7 +368,6 @@ Routes: 897 (plus static mounts). iOS-consumed: 89. Web-consumed: 603.
 | POST | `/api/delivery/terminal/commands` | web |
 | GET | `/api/delivery/terminal/commands/{command_id}` | server only |
 | POST | `/api/delivery/terminal/live` | web |
-| POST | `/api/delivery/terminal/node/results` | server only |
 | GET | `/api/delivery/terminal/sessions` | web |
 | POST | `/api/delivery/terminal/subscriptions` | web |
 | POST | `/api/delivery/terminal/targets` | server only |
@@ -415,9 +411,6 @@ Routes: 897 (plus static mounts). iOS-consumed: 89. Web-consumed: 603.
 
 | Method | Path | Consumers |
 |---|---|---|
-| GET | `/api/dictation/agent-context` | server only |
-| POST | `/api/dictation/agent-context/clear` | server only |
-| POST | `/api/dictation/agent-context/summarize` | server only |
 | GET | `/api/dictation/agent-hooks` | web |
 | GET | `/api/dictation/project-context` | ios |
 
@@ -436,7 +429,6 @@ Routes: 897 (plus static mounts). iOS-consumed: 89. Web-consumed: 603.
 
 | Method | Path | Consumers |
 |---|---|---|
-| GET | `/api/dictation/floor` | server only |
 | POST | `/api/dictation/floor/claim` | web |
 | POST | `/api/dictation/floor/release` | web |
 
@@ -481,9 +473,6 @@ Routes: 897 (plus static mounts). iOS-consumed: 89. Web-consumed: 603.
 
 | Method | Path | Consumers |
 |---|---|---|
-| GET | `/api/dictation/project-doc-suggestion` | server only |
-| POST | `/api/dictation/project-doc-suggestion/apply` | server only |
-| POST | `/api/dictation/project-doc-suggestion/dismiss` | server only |
 | GET | `/api/dictation/project-hs` | web |
 | PUT | `/api/dictation/project-hs` | web |
 
@@ -1160,11 +1149,7 @@ Routes: 897 (plus static mounts). iOS-consumed: 89. Web-consumed: 603.
 | GET | `/api/providers` | web |
 | GET | `/api/providers/confluence/connections` | server only |
 | POST | `/api/providers/confluence/connections` | web |
-| POST | `/api/providers/confluence/connections/{ref}/recheck` | server only |
-| GET | `/api/providers/confluence/discover` | server only |
 | POST | `/api/providers/confluence/validate` | server only |
-| GET | `/api/providers/github/connection` | server only |
-| POST | `/api/providers/github/connection/recheck` | server only |
 | GET | `/api/providers/github/discover` | server only |
 | POST | `/api/providers/github/validate-repo` | server only |
 | GET | `/api/providers/jira/connections` | server only |

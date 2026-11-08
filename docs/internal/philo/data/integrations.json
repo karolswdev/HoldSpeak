@@ -1874,7 +1874,6 @@
         "POST /api/providers/jira/connections",
         "GET /api/providers/confluence/connections",
         "POST /api/providers/jira/connections/{ref}/recheck",
-        "POST /api/providers/confluence/connections/{ref}/recheck",
         "GET /api/calendar/events"
       ],
       "configuration": [

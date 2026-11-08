@@ -198,47 +198,6 @@ def build_delivery_prs_router(
             reason = getattr(exc, "reason", "process_spawn_failed")
             return JSONResponse({"error": reason, "detail": str(exc)}, status_code=409)
 
-    @router.post("/api/delivery/prs/launches/{launch_id}/input")
-    async def api_delivery_pr_launch_input(launch_id: str, request: Request) -> Any:
-        """Send bounded follow-up text to the exact spawned PR agent.
-
-        This is intentionally not a fourth visible verb: it is the transport
-        leg used by the in-place agent conversation, and remains a child
-        ``process.input`` of the running ``process.spawn`` operation.
-        """
-        body = await request.json()
-        body = body if isinstance(body, dict) else {}
-        text = str(body.get("text") or "").strip()
-        if not text or len(text) > 1600:
-            return JSONResponse({"error": "input_invalid"}, status_code=400)
-        service = delivery_service.default_launch_service()
-        record = service.launch_record(launch_id)
-        if record is None:
-            return JSONResponse({"error": "launch_unknown"}, status_code=404)
-        target = record.get("target") or {}
-        try:
-            result = await asyncio.to_thread(
-                service._commands.submit_process_input,
-                {
-                    "node_id": str(record.get("node_id") or "local"),
-                    "target_id": target.get("target_id"),
-                    "target_generation": target.get("target_generation"),
-                    "operation": {"family": "coder_steering", "verb": "terminal.text"},
-                    "payload": {
-                        "text": text,
-                        "submit": True,
-                        "session_key": record.get("session"),
-                        "agent": str(record.get("profile_id") or "agent"),
-                    },
-                    "parent_operation_id": str(record.get("operation_id") or ""),
-                },
-                request.state.principal,
-            )
-            return JSONResponse(result, status_code=202)
-        except Exception as exc:
-            reason = getattr(exc, "reason", "process_input_failed")
-            return JSONResponse({"error": reason, "detail": str(exc)}, status_code=409)
-
     @router.post("/api/delivery/prs/{source_id}/{number}/draft-review")
     async def api_delivery_pr_draft_review(
         source_id: str, number: int, request: Request,

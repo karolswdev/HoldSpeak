@@ -129,7 +129,6 @@ Use the Dictation face or these routes:
 - `GET/PUT /api/dictation/project-kb`
 - `GET/PUT /api/dictation/project-hs`
 - `GET /api/dictation/project-context`
-- `GET /api/dictation/agent-context`
 
 ### Facts
 
