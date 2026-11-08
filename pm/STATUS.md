@@ -2,6 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · Fix forward #1975: the doc audit links the parked InterviewPanel (dangling-link guard).
 - 2026-11-08 · #1988 One name for the automation tools: `automation.*` (the eight `workbench.*` twins left; the item tools stay `workbench.*`); MCP 313 → 305 tools.
 - 2026-11-08 · #1986 Park seven kit species no face draws (874 lines + 2 tests): LedgerFilterBar, LedgerRemainder, ReadyStrip, StartVerb, TaskResume, SettledList, StateTokenSpan; the barrels lose their lines.
 - 2026-11-08 · #1976 Park 7 unreached web modules (317 lines + 2 tests): the pages/cores barrel, liveEgress, AftercareGadgets, two history shims over parked files, the runtime/frames mirror, features/workbench/model.
