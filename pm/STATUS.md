@@ -2,6 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · #PRNUM Fix forward test_send_glass s5_s6[1440]: the send sheet's Cancel keeps the note open; openNoteSend (SendWell.tsx) stops its 50 ms SEND_OPEN retry at the first request the note window takes (it cancels the event), so a later tick no longer reopens Send after Cancel (latent since 07f28fb7e; red on main at 1440).
 - 2026-11-08 · #1952 One writer of /api/settings: in Settings the You fields write through settings/writer.ts (settingsOwnerAdapter), so an alias save no longer makes the Language save 409; the Settings glass xfail is removed.
 - 2026-11-08 · #1949 Four browser waits that never waited (an async check in wait_for_function returns at once): one helper, glass_infra.wait_for_hub, polls the hub from Python; a unit guard keeps the shape out; the Settings Language wait now finds a real 409 (two /api/settings writers, ownerName.ts and settings/writer.ts), strict xfail until the fix.
 - 2026-11-08 · #1950 Fix forward #1945: the held-call Approve exception follows the verbs to NeedVerbs.tsx (product copy guard).

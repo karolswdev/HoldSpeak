@@ -20,6 +20,7 @@ import { ThoughtWorkspaceWindow } from "./ThoughtWorkspaceWindow";
 import { latchAskSelection, takeAskSelection } from "../ask";
 import { requestAskReturn } from "./askReturn";
 import { WindowIdContext } from "../components/window/windowIdContext";
+import { SEND_OPEN } from "../windowSend";
 import { createHash } from "node:crypto";
 
 const restoreSelectionMock = vi.hoisted(() => vi.fn());
@@ -688,6 +689,27 @@ describe("ThoughtWorkspaceWindow — PHILO-17 U08: the thought is sendable", () 
     expect(screen.getByRole("textbox", { name: "Note body" })).toHaveValue(thought.working_note.body_markdown);
     expect(screen.getByRole("region", { name: "Thought" })).toHaveAttribute("data-frame-min-height", "360");
     await waitFor(() => expect(screen.getByRole("button", { name: "Send…" })).toHaveFocus());
+  });
+
+  it("takes a retried Send request once, so Cancel keeps the note open (fix forward 2026-11-08)", async () => {
+    vi.mocked(thoughtWorkbench).mockResolvedValue(projection());
+    render(<WindowIdContext.Provider value="pullout:note:note-1">
+      <ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} />
+    </WindowIdContext.Provider>);
+    await screen.findByRole("button", { name: "Send…" });
+    const ask = () => new CustomEvent(SEND_OPEN, { detail: { winId: "pullout:note:note-1" }, cancelable: true });
+
+    const other = new CustomEvent(SEND_OPEN, { detail: { winId: "pullout:note:other" }, cancelable: true });
+    act(() => { window.dispatchEvent(other); });
+    expect(other.defaultPrevented).toBe(false);
+
+    const first = ask();
+    act(() => { window.dispatchEvent(first); });
+    expect(first.defaultPrevented).toBe(true);
+    await screen.findByTestId("send-well");
+    fireEvent.click(screen.getByTestId("send-back"));
+    await waitFor(() => expect(screen.queryByTestId("send-well")).not.toBeInTheDocument());
+    expect(screen.getByRole("textbox", { name: "Note body" })).toBeInTheDocument();
   });
 
   it("Back, edit, reopen waits for the saved revision before mounting the send body", async () => {

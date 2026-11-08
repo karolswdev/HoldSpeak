@@ -251,7 +251,10 @@ function WorkspaceReady({
 
   useEffect(() => {
     const onOpen = (event: Event) => {
-      if ((event as CustomEvent<{ winId?: string }>).detail?.winId === winId) void openSend();
+      if ((event as CustomEvent<{ winId?: string }>).detail?.winId !== winId) return;
+      // Taken: a sender that retries stops here (SendWell openNoteSend).
+      if (!busy) event.preventDefault();
+      void openSend();
     };
     window.addEventListener(SEND_OPEN, onOpen);
     return () => window.removeEventListener(SEND_OPEN, onOpen);
