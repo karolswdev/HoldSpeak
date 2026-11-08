@@ -2,6 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · #1836 Needs you: one row, one verb (Done; the rest on a right press), no "Yours", Mine · People as one control, Must/Should/Noted as kinds sorted must first.
 - 2026-11-08 · #1830 One keystore: one master key in the Keychain (read through /usr/bin/security, 2 s deadline), every secret sealed in keystore.enc; old per-secret items move in on first start.
 - 2026-11-08 · #1829 A person review gate reads the current review, not the remembered approval (HS-S25, G25 branch A).
 - 2026-11-08 · #1828 The destination form and its account words have one owner in features/channels; Settings and the inline Send consume it, and inline Set up account opens Settings itself.
