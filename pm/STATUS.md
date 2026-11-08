@@ -2,6 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · #1849 The hub builds its services in runtime/composition.py (compose_hub); _create_app only mounts and registers the lifespan: web_server.py 2500 → 1975 lines, 197 → 134 imports, cold start 1.8 → 1.7 s.
 - 2026-11-08 · #1843 The New program wizard has no step words on its face (Where/What/How/Go gone): Project, Goal, Runs, the summary.
 - 2026-11-08 · #1842 A field on a touch phone is 16 px, so iOS Safari never zooms the desk (the cropped walk shots).
 - 2026-11-08 · #1841 The walk brings a part's window to the front before it marks it (the phone showed Programs over Needs you).
