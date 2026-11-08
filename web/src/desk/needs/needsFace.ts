@@ -31,7 +31,6 @@ export type NeedVerbs =
   | { kind: "pr"; url: string; number: number | null }
   | { kind: "session"; sessionKey: string }
   | { kind: "review"; ref: string }
-  | { kind: "commitment"; next: "name_owner" | "set_date" | "mark_done"; cardId: string }
   /** Betterment D2: an action item by its direction. *mine*: Done; *theirs*:
    *  Nudge (it prepares a message; he presses Send). More holds Open, Set a
    *  date, Done (theirs), Later and Drop. */
@@ -715,9 +714,9 @@ function attentionFace(item: NeedsYouRoomItem, ctx: NeedCtx): NeedFace {
     const cardId = String(item.actionItemId);
     return { id, kind: "action", name: title, fact, lamp, group: "rest",
       // Betterment D2: one verb by direction (Done or Nudge); an item with
-      // no owner still asks for one.
+      // no owner still asks for one (the one Name an owner).
       verbs: next === "name_owner"
-        ? { kind: "commitment", next, cardId }
+        ? { kind: "name-owner", cardId, openRef: null }
         : workVerbs(item, cardId, next),
       openRef: openRef ?? `action_item:${cardId}` };
   }

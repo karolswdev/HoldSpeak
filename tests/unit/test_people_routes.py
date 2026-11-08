@@ -181,10 +181,15 @@ def test_commitment_transition_http_is_a_parity_twin_of_mcp(
     )
 
     assert http.status_code == 200
-    assert mcp_result == {"card_id": f"people:{mcp_commitment['id']}", "verb": "done"}
-    assert http.json() == {
-        "transition": {"card_id": f"people:{http_commitment['id']}", "verb": "done"},
-    }
+    # One done receipt (2026-11-08): the route answers what MCP answers, in
+    # the shape /api/follow-through/complete answers (card_id, status, done_at).
+    shape = ("card_id", "verb", "status")
+    assert {k: mcp_result[k] for k in shape} == {
+        "card_id": f"people:{mcp_commitment['id']}", "verb": "done", "status": "done"}
+    assert {k: http.json()[k] for k in shape} == {
+        "card_id": f"people:{http_commitment['id']}", "verb": "done", "status": "done"}
+    assert set(http.json()) == set(mcp_result) == {"card_id", "verb", "status", "done_at"}
+    assert http.json()["done_at"] and mcp_result["done_at"]
     assert service.get_commitment(owner, mcp_commitment["id"])["state"] == "done"
     assert service.get_commitment(owner, http_commitment["id"])["state"] == "done"
 
