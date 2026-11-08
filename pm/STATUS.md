@@ -2,6 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · #1955 The user docs follow the day: Needs you (mast, Waits on you first, the ledger, the item reader), the Programs window (rail, mast, step spine, step plate, Earlier steps, the night tile; Spending note is a note, never a cap) and the Room (Now, History, Draft update, Prepare a brief, Pages) in WEB_DESK, USER_GUIDE, programs.md, PROJECT_ROOMS, DESK_OBJECT_MODEL and README; old-face shots no longer embedded in programs.md.
 - 2026-11-08 · #1949 Four browser waits that never waited (an async check in wait_for_function returns at once): one helper, glass_infra.wait_for_hub, polls the hub from Python; a unit guard keeps the shape out; the Settings Language wait now finds a real 409 (two /api/settings writers, ownerName.ts and settings/writer.ts), strict xfail until the fix.
 - 2026-11-08 · #1949 Fix forward #1945: the held-call Approve exception follows the verbs to NeedVerbs.tsx (product copy guard).
 - 2026-11-08 · #1948 HS-S56 retire proven-obsolete compatibility surface: deferred_admission namespace and allowed_tools_for_thread parked, the shadowed _backfill_directory_name_normalized copy and 67 dead runtime imports/re-exports gone (−185 product lines); the history MeetingReview shim stays (the Philo graph cites it).
