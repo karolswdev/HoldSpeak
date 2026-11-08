@@ -131,8 +131,9 @@ describe("Arrival attention (HS-200-15)", () => {
       expect(open.getAttribute("title")).toBe("x");
       expect(r.textContent).not.toContain("X");
     }
-    // One filled primary per face: the top member's verb.
-    expect(within(rows[1]).getByRole("button", { name: /^Open: / }).className).toContain("btn--primary");
+    // One filled verb per face: the top member's, the first plate's brass Button.
+    expect(rows[1].closest("[data-testid='needs-first']")).toBeTruthy();
+    expect(within(rows[1]).getByRole("button", { name: /^Open: / }).className).toContain("btn--brass");
     expect(within(rows[2]).getByRole("button", { name: /^Open: / }).className).toContain("btn--secondary");
     // No cap, no filter strip.
     expect(screen.queryByRole("group", { name: "Ranking" })).toBeNull();
@@ -158,12 +159,13 @@ describe("Arrival attention (HS-200-15)", () => {
     expect(screen.queryByRole("button", { name: /^Sources: / })).toBeNull();
   });
 
-  it("draws exactly ONE filled primary on the whole face", async () => {
+  it("draws exactly ONE filled verb on the whole face (the plate's brass Button)", async () => {
     wire({ count: 17, projects: ["p1", "p2", "p3"], items: SEVENTEEN, next: null,
            coverage: [AVAILABLE("p1", "Q4 Platform")], complete: true });
     const { container } = render(<ChairHome />);
     await waitFor(() => expect(needsRows().length).toBe(17), { timeout: 5000 });
-    expect(container.querySelectorAll("[data-testid='needs-drawer'] .btn--primary")).toHaveLength(1);
+    expect(container.querySelectorAll("[data-testid='needs-drawer'] .btn--primary")).toHaveLength(0);
+    expect(container.querySelectorAll("[data-testid='needs-drawer'] .btn--brass")).toHaveLength(1);
   });
 
   it("keeps an unreadable source AFTER the answer as its own row: cause, token, verb (PHILO-17)", async () => {

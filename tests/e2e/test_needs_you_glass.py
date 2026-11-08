@@ -236,8 +236,9 @@ def _shot(page: Any, name: str, width: int) -> Path | None:
 
 
 def _primaries(page: Any) -> list[str]:
-    """Every filled primary on the WHOLE face (counsel P1-2): exactly one."""
-    return page.evaluate("""() => [...document.querySelectorAll('.btn--primary')]
+    """Every filled verb on the WHOLE face (counsel P1-2): exactly one. The
+    bold language (2026-11-08): the verb that waits on him is the brass one."""
+    return page.evaluate("""() => [...document.querySelectorAll('.btn--primary, .btn--brass')]
         .map(b => (b.className + ' :: ' + (b.textContent || '').trim()))""")
 
 
@@ -308,21 +309,28 @@ def _run_long_row(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int) -
             assert LONG_TITLE in (row.text_content() or "")
             assert page.locator(MEMBERS).filter(has_text=LONG_TITLE).count() == 1
             _no_horizontal_scroll(page, width)
+            # The bold face (2026-11-08): the long row is the first plate; the
+            # row grammar is read on the ledger's first row.
+            assert page.locator("[data-testid='needs-first']").filter(has_text=LONG_TITLE).count() == 1
             boxes = page.evaluate("""() => {
-                const row = document.querySelector('[data-testid="needs-row"]');
+                const row = document.querySelector('[data-testid="needs-ledger"] [data-testid="needs-row"]');
                 const verb = row.querySelector('.needs-row-verbs .btn').getBoundingClientRect();
                 const name = row.querySelector('.needs-row-name').getBoundingClientRect();
                 const r = row.getBoundingClientRect();
+                // On a pointer the bold row's verb rises over the row's end on
+                // hover or focus only (hidden at rest): the name then has the line.
+                const shown = getComputedStyle(row.querySelector('.needs-row-verbs')).visibility !== 'hidden';
                 return {verbTop: verb.top, verbLeft: verb.left, verbRight: verb.right, nameBottom: name.bottom,
-                        nameRight: name.right, rowHeight: r.height};
+                        nameRight: name.right, rowHeight: r.height, shown};
             }""")
             assert boxes["verbRight"] <= width + 0.5, boxes
             if width <= 480:
-                # Window grammar (2026-10-24): the narrow row is one 44 px line
-                # pair (the name over its state), the verb at its right; the
-                # long name is cut, never run under the verb.
-                assert boxes["rowHeight"] <= 44.5, f"the row is taller than 44 px at 393: {boxes}"
-                assert boxes["verbLeft"] >= boxes["nameRight"] - 1, f"the name runs under the verb at 393: {boxes}"
+                # The bold row at the phone chair (2026-11-08, the phone canvas):
+                # one 52 px line pair (the name over its facts), the verb at its
+                # right; a long name is cut, never run under the verb.
+                assert boxes["rowHeight"] <= 52.5, f"the row is taller than 52 px at 393: {boxes}"
+                if boxes["shown"]:
+                    assert boxes["verbLeft"] >= boxes["nameRight"] - 1, f"the name runs under the verb at 393: {boxes}"
             assert len(_primaries(page)) == 1, _primaries(page)
 
             _shot(page, "long-row", width)

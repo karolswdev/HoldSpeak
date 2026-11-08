@@ -18,6 +18,9 @@ export type MastProps = {
   id?: string;
   /** The agent name of a coder or agent object (picks its sprite). */
   agent?: string | null;
+  /** A system sprite's URL in place of the kind's (a window that is not an
+   *  object kind, e.g. Needs you wears the Dock's lamp). */
+  glyph?: string;
   /** The verbs: library Buttons. */
   children?: ReactNode;
   className?: string;
@@ -25,13 +28,13 @@ export type MastProps = {
   [data: `data-${string}`]: string | undefined;
 };
 
-export function Mast({ kind, title, facts, id, agent, children, className, ...data }: MastProps) {
+export function Mast({ kind, title, facts, id, agent, glyph, children, className, ...data }: MastProps) {
   return (
     <header {...data} className={className ? `surface-mast ${className}` : "surface-mast"} data-kind={kind}>
       <div className="surface-mast-row">
         <img
           className="surface-mast-glyph"
-          src={spriteUrl(kind, id ?? kind, "rest", agent, 32)}
+          src={glyph ?? spriteUrl(kind, id ?? kind, "rest", agent, 32)}
           width={32}
           height={32}
           alt=""
