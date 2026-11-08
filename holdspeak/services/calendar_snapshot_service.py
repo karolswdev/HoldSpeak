@@ -587,11 +587,23 @@ def extract_via_router(
     except Exception as exc:
         log.warning("Snapshot dispatch failed: %s", exc)
         return _no_vision(egress)
+    if answer.engine is not engine:  # the chain's next engine answered
+        egress = _engine_egress(broker, answer.engine)
     return {"output": answer.output, "egress": egress}
 
 
 def _no_vision(egress: dict[str, Any] | None) -> dict[str, Any]:
     return {"output": json.dumps({"error": "no_vision_model_assigned", "events": []}), "egress": egress}
+
+
+def _engine_egress(broker: Any, engine: Any) -> dict[str, Any]:
+    from . import engine_door
+
+    revision = broker.database.deployment_revisions.get(engine.revision)
+    return _egress_for_scope(
+        engine_door.egress_of(broker, engine),
+        getattr(revision, "endpoint", "") or "", getattr(revision, "node", "") or "",
+    )
 
 
 def _snapshot_engine(broker: Any, db: Any, *, capture: bool) -> tuple[Any, dict[str, Any] | None]:
@@ -608,11 +620,7 @@ def _snapshot_engine(broker: Any, db: Any, *, capture: bool) -> tuple[Any, dict[
         except Exception:  # no assignment, or no broker to read it: the ranking decides
             engine = None
     if engine is not None:
-        revision = db.deployment_revisions.get(engine.revision)
-        scope = engine_door.egress_of(broker, engine)
-        return engine, _egress_for_scope(
-            scope, getattr(revision, "endpoint", "") or "", getattr(revision, "node", "") or "",
-        )
+        return engine, _engine_egress(broker, engine)
     targets = _rank_vision_targets(db)
     if not targets:
         return None, None

@@ -157,7 +157,7 @@ class DecisionLifecycleService:
             "operation_id": answer.operation_id,
             "invocation_id": answer.invocation_id,
             "invocation": {"operation_id": answer.operation_id, "outcome": "succeeded"},
-            "placement": {"source": "owner_assignment", "egress": {"scope": engine_door.egress_of(broker, engine)}},
+            "placement": {"source": "owner_assignment", "egress": {"scope": engine_door.egress_of(broker, answer.engine)}},
         }
     def _decision_memory(self, decision: Any) -> Any:
         """Earlier decisions and notes on the same subject.

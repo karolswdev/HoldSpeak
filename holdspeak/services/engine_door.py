@@ -14,7 +14,7 @@ from __future__ import annotations
 import time
 import uuid
 from collections.abc import Callable, Mapping
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from typing import Any, Optional
 
 DEFAULT_DEADLINE_SECONDS = 120.0
@@ -47,6 +47,8 @@ class Engine:
     revision: str
     assignment: str = ""
     profile: str = ""
+    #: The next engine in the assignment's chain: one retry when this one fails.
+    fallback: Optional["Engine"] = field(default=None, compare=False)
 
 
 @dataclass(frozen=True)
@@ -84,7 +86,32 @@ def engine_for(broker: Any, job: str) -> Engine:
         raise EngineDoorError("no_engine", str(exc)) from exc
     if not revision:
         raise EngineDoorError("no_engine", f"No engine is assigned to {job}")
-    return Engine(str(revision), str(assignment or ""), str(profile or ""))
+    engine = Engine(str(revision), str(assignment or ""), str(profile or ""))
+    return replace(engine, fallback=_next_in_chain(broker, job, engine))
+
+
+def _next_in_chain(broker: Any, job: str, first: Engine) -> Optional[Engine]:
+    """The second engine of the job's assignment chain, or ``None``."""
+    try:
+        from .inference_route_plan_service import ROUTE_PLANNING_AUTHORITY
+        from .project_update_service import _captured_deployment_revision
+
+        plan = broker.inference_adoption_service.plans.resolve_route_plan(
+            ROUTE_PLANNING_AUTHORITY, capability_id=job,
+        )
+        entries = sorted((e for e in (plan.get("entries") or ()) if e), key=lambda e: int(e.get("ordinal") or 0))
+        for entry in entries:
+            revision = str(entry.get("deployment_revision_id") or "")
+            profile = str(entry.get("profile_id") or "")
+            if not revision or revision == first.revision or (profile and profile == first.profile):
+                continue
+            if broker.database.deployment_revisions.get(revision) is None:
+                revision = _captured_deployment_revision(broker.database, profile)
+            if revision:
+                return Engine(revision, first.assignment, profile)
+    except Exception:
+        return None
+    return None
 
 
 def egress_of(broker: Any, engine: Engine) -> str:
@@ -165,13 +192,40 @@ def run(
     ``adapter`` turns the payload into the provider call (default: a
     system/user prompt). ``stage`` is ``(kind, encoder)``: the answer is
     staged as that projection kind and published (``Answer.published``) only
-    once the runner's receipt says the job succeeded. Raises ``EngineDoorError``.
+    once the runner's receipt says the job succeeded. When the engine fails
+    plainly (``failed`` or ``refused``) and the assignment names a next engine,
+    the job runs once more on it; ``Answer.engine`` is the one that answered.
+    Raises ``EngineDoorError``.
     """
+    if engine is None:
+        engine = engine_for(broker, job)
+    try:
+        return _run_once(
+            broker, principal, job, payload, engine=engine, contract=contract,
+            contract_revision=contract_revision, deadline=deadline, adapter=adapter,
+            result_ref=result_ref, invocation_id=invocation_id, stage=stage,
+        )
+    except EngineDoorError as exc:
+        # One retry on the next engine of the chain, only when the first one
+        # said plainly that it did not answer.
+        if engine.fallback is None or exc.outcome not in {"failed", "refused"}:
+            raise
+        return _run_once(
+            broker, principal, job, payload, engine=engine.fallback, contract=contract,
+            contract_revision=contract_revision, deadline=deadline, adapter=adapter,
+            result_ref=result_ref, invocation_id=(invocation_id + "_r2") if invocation_id else "",
+            stage=stage,
+        )
+
+
+def _run_once(
+    broker: Any, principal: Any, job: str, payload: Any, *, engine: Engine, contract: str,
+    contract_revision: str, deadline: float, adapter: Any, result_ref: Optional[str],
+    invocation_id: str, stage: Any,
+) -> Answer:
     from ..kernel.inference_runner import InvocationRequest, ServiceContract
     from ..kernel.runtime import _as_principal
 
-    if engine is None:
-        engine = engine_for(broker, job)
     if adapter is None:
         from ..kernel.prompt_adapter import CanonicalPromptAdapter
 
