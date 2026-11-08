@@ -53,17 +53,14 @@ describe("New program is a wizard inside the window (owner, live walk 2026-11-08
   it("New program replaces the list with the wizard at step 1 (Where): the projects as rows and a folder row; Next waits for a choice", async () => {
     hub({ "GET /api/programs": list, "GET /api/projects": projects.response.body, "POST /api/programs": made.response.body });
     renderWindow(<ProgramsCore />);
-    await screen.findAllByTestId("programs-band");
-    // A Project filter is on: it is never the creation target.
-    fireEvent.click(screen.getByTestId("programs-project"));
-    fireEvent.click(menuItem("HoldSpeak"));
+    await screen.findAllByTestId("programs-rail-tile");
     fireEvent.click(screen.getByTestId("programs-new"));
     const wizard = await screen.findByTestId("programs-wizard");
     expect(wizard.getAttribute("data-template")).toBe("fast-cycle");
     expect(screen.getByTestId("programs-wizard-step-1")).toBeTruthy();
-    // The body is the wizard: the list is gone, the toolbar and the status bar stay.
-    expect(screen.queryByTestId("programs-list")).toBeNull();
-    expect(screen.getByTestId("programs-toolbar")).toBeTruthy();
+    // The right pane is the wizard: no Program in it; the rail and the status bar stay.
+    expect(screen.queryByTestId("programs-mast")).toBeNull();
+    expect(screen.getByTestId("programs-rail")).toBeTruthy();
     expect(screen.getByTestId("programs-status")).toBeTruthy();
     expect(screen.queryByTestId("programs-make")).toBeNull();
     const rows = await ready();
@@ -87,7 +84,7 @@ describe("New program is a wizard inside the window (owner, live walk 2026-11-08
   it("the four steps: Where, What (title, brief, templates), How (control in his words, agent, review, check, spending), Go; Create posts the recorded body once and opens it", async () => {
     hub({ "GET /api/programs": list, "GET /api/projects": projects.response.body, "POST /api/programs": made.response.body });
     renderWindow(<ProgramsCore />);
-    await screen.findAllByTestId("programs-band");
+    await screen.findAllByTestId("programs-rail-tile");
     fireEvent.click(screen.getByTestId("programs-new"));
     await ready();
     choose(madeProgram.project_id as string);
@@ -122,11 +119,11 @@ describe("New program is a wizard inside the window (owner, live walk 2026-11-08
     fireEvent.click(next());
     expect(posts()).toEqual([]);
     fireEvent.click(screen.getByTestId("programs-wizard-create"));
-    await waitFor(() => expect(mocks.openPullout).toHaveBeenCalledWith(`program:${madeProgram.id}`));
+    await waitFor(() => expect(screen.getByTestId("programs-pane").getAttribute("data-program")).toBe(madeProgram.id));
     expect(sent()).toEqual([made.request.json]);
-    // Back to the list, which reads again.
+    // The made Program is the picked one in the right pane; the list reads again.
     await waitFor(() => expect(screen.queryByTestId("programs-wizard")).toBeNull());
-    expect(await screen.findByTestId("programs-list")).toBeTruthy();
+    expect(mocks.openPullout).not.toHaveBeenCalled();
     expect(calls.filter((call) => call === "GET /api/programs").length).toBeGreaterThan(1);
   });
 
@@ -134,7 +131,7 @@ describe("New program is a wizard inside the window (owner, live walk 2026-11-08
   it("the Spending note he types rides on the body and the summary says spend note · 40 USD", async () => {
     hub({ "GET /api/programs": list, "GET /api/projects": projects.response.body, "POST /api/programs": made.response.body });
     renderWindow(<ProgramsCore />);
-    await screen.findAllByTestId("programs-band");
+    await screen.findAllByTestId("programs-rail-tile");
     fireEvent.click(screen.getByTestId("programs-new"));
     await ready();
     choose(madeProgram.project_id as string);
@@ -152,7 +149,7 @@ describe("New program is a wizard inside the window (owner, live walk 2026-11-08
   it("what he sets in What and How rides on the body: title, brief, control and template", async () => {
     hub({ "GET /api/programs": list, "GET /api/projects": projects.response.body, "POST /api/programs": made.response.body });
     renderWindow(<ProgramsCore />);
-    await screen.findAllByTestId("programs-band");
+    await screen.findAllByTestId("programs-rail-tile");
     fireEvent.click(screen.getByTestId("programs-new"));
     await ready();
     choose(madeProgram.project_id as string);
@@ -170,7 +167,7 @@ describe("New program is a wizard inside the window (owner, live walk 2026-11-08
     expect(screen.getByTestId("programs-wizard-sum-title").textContent).toBe("Ship the wizard · Build and review");
     expect(screen.getByTestId("programs-wizard-sum-how").textContent).toBe("Runs by itself");
     fireEvent.click(screen.getByTestId("programs-wizard-create"));
-    await waitFor(() => expect(mocks.openPullout).toHaveBeenCalledWith(`program:${madeProgram.id}`));
+    await waitFor(() => expect(screen.getByTestId("programs-pane").getAttribute("data-program")).toBe(madeProgram.id));
     expect(sent()).toEqual([{
       ...made.request.json, title: "Ship the wizard", template: "build-and-review", goal: "Four steps, one screen each.", control: "yolo",
     }]);
@@ -189,7 +186,7 @@ describe("New program is a wizard inside the window (owner, live walk 2026-11-08
     });
     const toHow = async () => {
       renderWindow(<ProgramsCore />);
-      await screen.findAllByTestId("programs-band");
+      await screen.findAllByTestId("programs-rail-tile");
       fireEvent.click(screen.getByTestId("programs-new"));
       await ready();
       choose(scene.made.request.json!.project_id as string);
@@ -250,7 +247,7 @@ describe("New program is a wizard inside the window (owner, live walk 2026-11-08
     const one = { projects: [(projects.response.body as { projects: unknown[] }).projects[1]] };
     hub({ "GET /api/programs": list, "GET /api/projects": one });
     renderWindow(<ProgramsCore />);
-    await screen.findAllByTestId("programs-band");
+    await screen.findAllByTestId("programs-rail-tile");
     fireEvent.click(screen.getByTestId("programs-new"));
     // The screen opens on the card: Next is one press.
     expect((await screen.findByTestId("programs-wizard-card-name")).textContent).toBe(roster[1].name);
@@ -259,7 +256,7 @@ describe("New program is a wizard inside the window (owner, live walk 2026-11-08
     cleanup();
     hub({ "GET /api/programs": list, "GET /api/projects": projects.response.body });
     renderWindow(<ProgramsCore scope={`project:${roster[1].id}`} />);
-    await screen.findAllByTestId("programs-band");
+    await screen.findAllByTestId("programs-rail-tile");
     fireEvent.click(screen.getByTestId("programs-new"));
     expect((await screen.findByTestId("programs-wizard-card-name")).textContent).toBe(roster[1].name);
     // Change returns to the rows, the scope's project still the selection.
@@ -272,7 +269,7 @@ describe("New program is a wizard inside the window (owner, live walk 2026-11-08
   it("A folder on this machine: Next waits for the folder, and the body names the repository, not a project", async () => {
     hub({ "GET /api/programs": list, "GET /api/projects": projects.response.body, "POST /api/programs": made.response.body });
     renderWindow(<ProgramsCore />);
-    await screen.findAllByTestId("programs-band");
+    await screen.findAllByTestId("programs-rail-tile");
     fireEvent.click(screen.getByTestId("programs-new"));
     await ready();
     fireEvent.click(screen.getByTestId("programs-wizard-folder"));
@@ -285,18 +282,17 @@ describe("New program is a wizard inside the window (owner, live walk 2026-11-08
     expect(sent()).toEqual([{ title: "New program", template: "fast-cycle", repository: "~/dev/tools/HoldSpeak" }]);
   });
 
-  it("Escape, Cancel and New again return to the list with no POST; a template opens the wizard with its template", async () => {
+  it("Escape, Cancel and New again close the wizard with no POST; New opens it on the default template", async () => {
     hub({ "GET /api/programs": list, "GET /api/projects": projects.response.body });
     renderWindow(<ProgramsCore />);
-    fireEvent.click(await screen.findByTestId("programs-templates"));
-    fireEvent.click(templateItem("Build and review"));
-    expect((await screen.findByTestId("programs-wizard")).getAttribute("data-template")).toBe("build-and-review");
+    fireEvent.click(await screen.findByTestId("programs-new"));
+    expect((await screen.findByTestId("programs-wizard")).getAttribute("data-template")).toBe("fast-cycle");
     await ready();
     choose(roster[0].id);
     fireEvent.click(next());
     fireEvent.keyDown(screen.getByLabelText("Title"), { key: "Escape" });
     expect(screen.queryByTestId("programs-wizard")).toBeNull();
-    expect(screen.getByTestId("programs-list")).toBeTruthy();
+    expect(screen.getByTestId("programs-rail")).toBeTruthy();
     expect(document.activeElement).toBe(screen.getByTestId("programs-new"));
     // New program pressed again closes the wizard (a toggle).
     fireEvent.click(screen.getByTestId("programs-new"));
@@ -324,7 +320,7 @@ describe("New program is a wizard inside the window (owner, live walk 2026-11-08
     let answer: unknown = new ApiError(503, "down", {});
     hub({ "GET /api/programs": list, "GET /api/projects": () => { if (answer instanceof Error) throw answer; return answer; } });
     renderWindow(<ProgramsCore />);
-    await screen.findAllByTestId("programs-band");
+    await screen.findAllByTestId("programs-rail-tile");
     fireEvent.click(screen.getByTestId("programs-new"));
     expect(screen.getByTestId("programs-wizard-reading")).toBeTruthy();
     const failed = await screen.findByTestId("programs-wizard-read-failed");
@@ -339,7 +335,7 @@ describe("New program is a wizard inside the window (owner, live walk 2026-11-08
   it("the recorded no_repository refusal names the project; no window opens", async () => {
     hub({ "GET /api/programs": list, "GET /api/projects": projects.response.body, "POST /api/programs": refusal(noRepository) });
     renderWindow(<ProgramsCore />);
-    await screen.findAllByTestId("programs-band");
+    await screen.findAllByTestId("programs-rail-tile");
     fireEvent.click(screen.getByTestId("programs-new"));
     await ready();
     const target = noRepository.request.json!.project_id as string;
@@ -362,7 +358,7 @@ describe("New program is a wizard inside the window (owner, live walk 2026-11-08
   ])("%s is not confirmed: no retry, no window, no Nothing changed", async (_name, answer) => {
     hub({ "GET /api/programs": list, "GET /api/projects": projects.response.body, "POST /api/programs": answer });
     renderWindow(<ProgramsCore />);
-    await screen.findAllByTestId("programs-band");
+    await screen.findAllByTestId("programs-rail-tile");
     fireEvent.click(screen.getByTestId("programs-new"));
     await ready();
     choose(madeProgram.project_id as string);
@@ -390,7 +386,7 @@ describe("New program is a wizard inside the window (owner, live walk 2026-11-08
       throw new ApiError(404, "Not Found", {});
     });
     renderWindow(<ProgramsCore />);
-    await screen.findAllByTestId("programs-band");
+    await screen.findAllByTestId("programs-rail-tile");
     fireEvent.click(screen.getByTestId("programs-new"));
     await ready();
     choose(madeProgram.project_id as string);
@@ -406,27 +402,8 @@ describe("New program is a wizard inside the window (owner, live walk 2026-11-08
     expect((screen.getByTestId("programs-new") as HTMLButtonElement).disabled).toBe(true);
     expect(sent()).toEqual([made.request.json]);
     await act(async () => { settle(clone(madeProgram)); });
-    await waitFor(() => expect(mocks.openPullout).toHaveBeenCalledWith(`program:${madeProgram.id}`));
+    await waitFor(() => expect(screen.getByTestId("programs-pane").getAttribute("data-program")).toBe(madeProgram.id));
     expect(posts()).toHaveLength(1);
-  });
-
-  it("a made Program whose window does not open keeps its id: Open the program reveals the same id and never makes another", async () => {
-    hub({ "GET /api/programs": list, "GET /api/projects": projects.response.body, "POST /api/programs": made.response.body });
-    mocks.openPullout.mockImplementationOnce(() => { throw new Error("the desk did not mount the window"); });
-    renderWindow(<ProgramsCore />);
-    await screen.findAllByTestId("programs-band");
-    fireEvent.click(screen.getByTestId("programs-new"));
-    await ready();
-    choose(madeProgram.project_id as string);
-    toGo();
-    fireEvent.click(screen.getByTestId("programs-wizard-create"));
-    expect((await screen.findByTestId("programs-wizard-made")).textContent).toBe("Program made · Its window did not open");
-    expect(screen.queryByTestId("programs-wizard-create")).toBeNull();
-    fireEvent.click(screen.getByTestId("programs-wizard-open"));
-    expect(mocks.openPullout).toHaveBeenLastCalledWith(`program:${madeProgram.id}`);
-    expect(mocks.openPullout).toHaveBeenCalledTimes(2);
-    expect(posts()).toHaveLength(1);
-    await waitFor(() => expect(screen.queryByTestId("programs-wizard")).toBeNull());
   });
 
   it("closing the window while the create is in flight: the late answer opens nothing", async () => {
@@ -440,7 +417,7 @@ describe("New program is a wizard inside the window (owner, live walk 2026-11-08
       throw new ApiError(404, "Not Found", {});
     });
     const view = render(<ProgramsCore />);
-    await screen.findAllByTestId("programs-band");
+    await screen.findAllByTestId("programs-rail-tile");
     fireEvent.click(screen.getByTestId("programs-new"));
     await ready();
     choose(madeProgram.project_id as string);
@@ -456,7 +433,7 @@ describe("New program is a wizard inside the window (owner, live walk 2026-11-08
   it("W2: a picked row grows into the card, the title bar reads the project, Change returns to the rows; the dots live in the title bar", async () => {
     hub({ "GET /api/programs": list, "GET /api/projects": projects.response.body });
     renderWindow(<ProgramsCore />);
-    await screen.findAllByTestId("programs-band");
+    await screen.findAllByTestId("programs-rail-tile");
     fireEvent.click(screen.getByTestId("programs-new"));
     await ready();
     expect(screen.getByTestId("window-title").textContent).toBe("New program");
@@ -490,7 +467,7 @@ describe("New program is a wizard inside the window (owner, live walk 2026-11-08
   it("W2: screen 2 keeps the card over the Title and the Brief; the peek row names the next screen and is no Button", async () => {
     hub({ "GET /api/programs": list, "GET /api/projects": projects.response.body });
     renderWindow(<ProgramsCore />);
-    await screen.findAllByTestId("programs-band");
+    await screen.findAllByTestId("programs-rail-tile");
     fireEvent.click(screen.getByTestId("programs-new"));
     await ready();
     choose(roster[0].id);
@@ -525,7 +502,7 @@ describe("New program is a wizard inside the window (owner, live walk 2026-11-08
       "GET /api/authority/policy": policy,
     });
     renderWindow(<ProgramsCore />);
-    await screen.findAllByTestId("programs-band");
+    await screen.findAllByTestId("programs-rail-tile");
     fireEvent.click(screen.getByTestId("programs-new"));
     await ready();
     choose(madeProgram.project_id as string);
@@ -543,7 +520,7 @@ describe("New program is a wizard inside the window (owner, live walk 2026-11-08
     fireEvent.click(next());
     expect(screen.getByTestId("programs-wizard-sum-how").textContent).toBe("Runs by itself");
     fireEvent.click(screen.getByTestId("programs-wizard-create"));
-    await waitFor(() => expect(mocks.openPullout).toHaveBeenCalledWith(`program:${madeProgram.id}`));
+    await waitFor(() => expect(screen.getByTestId("programs-pane").getAttribute("data-program")).toBe(madeProgram.id));
     // The desk's level is not his choice: the body is the recorded one.
     expect(sent()).toEqual([made.request.json]);
   });
@@ -557,14 +534,14 @@ describe("New program is a wizard inside the window (owner, live walk 2026-11-08
     const row: SurfaceRow = { key: "open-programs", id: "surface-programs", title: "Programs", glyph: "▦", eyebrow: "Orchestration", Core: lazy(async () => ({ default: ProgramsCore })) };
     try {
       render(<div className="desk-next"><SurfaceWindowHost row={row} scope={undefined} items={EMPTY_ITEMS} /></div>);
-      await screen.findAllByTestId("programs-band");
+      await screen.findAllByTestId("programs-rail-tile");
       fireEvent.click(screen.getByTestId("programs-new"));
       await ready();
       choose(roster[0].id);
       const close = () => document.querySelector<HTMLButtonElement>(".desk-gadget-close")!;
       fireEvent.click(close());
       await waitFor(() => expect(screen.queryByTestId("programs-wizard")).toBeNull());
-      expect(screen.getByTestId("programs-list")).toBeTruthy();
+      expect(screen.getByTestId("programs-rail")).toBeTruthy();
       expect(closeSurfaceWindow).not.toHaveBeenCalled();
       expect(posts()).toEqual([]);
       // With the list back, the frame's close closes the window again.
@@ -597,7 +574,7 @@ describe("New program is a wizard inside the window (owner, live walk 2026-11-08
   it("screen 3 on the phone: the short level words and one folded Check · Spending row under a 480 surface container", async () => {
     hub({ "GET /api/programs": list, "GET /api/projects": projects.response.body });
     renderWindow(<ProgramsCore />);
-    await screen.findAllByTestId("programs-band");
+    await screen.findAllByTestId("programs-rail-tile");
     fireEvent.click(screen.getByTestId("programs-new"));
     await ready();
     choose(roster[0].id);
@@ -644,7 +621,7 @@ describe("HS-S13 + HS-S11: the Program made for a project is the row its Room li
     expect(create.request.json).toEqual({ title: "New program", template: "fast-cycle", project_id: projectId });
     hub({ "GET /api/programs": list, "GET /api/projects": hand.projects.response.body, "POST /api/programs": madeProgram });
     render(<ProgramsCore />);
-    await screen.findAllByTestId("programs-band");
+    await screen.findAllByTestId("programs-rail-tile");
     fireEvent.click(screen.getByTestId("programs-new"));
     const rows = await screen.findAllByTestId("programs-wizard-project");
     const name = (hand.projects.response.body as { projects: Array<{ id: string; name: string }> }).projects.find((project) => project.id === projectId)!.name;
@@ -652,7 +629,7 @@ describe("HS-S13 + HS-S11: the Program made for a project is the row its Room li
     fireEvent.click(within(row).getByTestId("programs-wizard-pick"));
     for (let step = 0; step < 3; step += 1) fireEvent.click(screen.getByTestId("programs-wizard-next"));
     fireEvent.click(screen.getByTestId("programs-wizard-create"));
-    await waitFor(() => expect(mocks.openPullout).toHaveBeenCalledWith(`program:${madeProgram.id}`));
+    await waitFor(() => expect(screen.getByTestId("programs-pane").getAttribute("data-program")).toBe(madeProgram.id));
     const posted = calls.filter((call) => call.startsWith("POST /api/programs"))
       .map((call) => JSON.parse(call.slice("POST /api/programs ".length)));
     expect(posted).toEqual([create.request.json]);
@@ -666,20 +643,25 @@ describe("HS-S13 + HS-S11: the Program made for a project is the row its Room li
 });
 
 describe("#1697: the Dreaming template (recorded through the real route, test_desk_program_night.py)", () => {
-  it("is in Templates with its meaning; a night program in Drafting sleeps until its window and Start says what the night does", async () => {
+  it("is in the wizard's templates with its meaning; a night program in Drafting plans for its window and Start says what the night does", async () => {
     const dream = dreamingFixture as unknown as Program;
-    hub({ "GET /api/programs": list });
-    render(<ProgramsCore />);
-    fireEvent.click(await screen.findByTestId("programs-templates"));
-    expect(menuWords()).toContain("Dreaming · Runs at night on the idle home engine; fills itself from tasks marked Tonight");
+    const projects = createProjectsFixture as unknown as { response: { body: { projects: Array<{ id: string }> } } };
+    hub({ "GET /api/programs": list, "GET /api/projects": projects.response.body });
+    renderWindow(<ProgramsCore />);
+    fireEvent.click(await screen.findByTestId("programs-new"));
+    const rows = await screen.findAllByTestId("programs-wizard-project");
+    fireEvent.click(within(rows[0]).getByTestId("programs-wizard-pick"));
+    fireEvent.click(screen.getByTestId("programs-wizard-next"));
+    fireEvent.click(screen.getByTestId("programs-wizard-template"));
+    expect(within(screen.getByRole("group", { name: "Template" })).getByRole("button", { name: /^Dreaming/ })).toBeTruthy();
     cleanup();
     hub({ [`GET /api/programs/${dream.id}`]: dream });
     render(<ProgramBody programId={dream.id} />);
-    const line = await screen.findByTestId("programs-line");
-    expect(line.querySelector("[data-station=night]")!.textContent).toContain(`Sleeps until ${dream.night!.start}`);
+    const head = await screen.findByTestId("programs-plate-head");
+    expect(head.textContent).toContain(`planned · Tonight ${dream.night!.start} to ${dream.night!.end}`);
     // No steps yet: the night fills itself, so Start is there with its window as the quiet fact.
     const tray = screen.getByTestId("programs-tray");
-    expect(within(tray).getByTestId("program-start").className).toMatch(/primary/);
+    expect(within(tray).getByTestId("program-start").className).toMatch(/brass/);
     expect(within(tray).getByTestId("programs-start-words").textContent)
       .toBe(`Tonight ${dream.night!.start} to ${dream.night!.end}`);
   });

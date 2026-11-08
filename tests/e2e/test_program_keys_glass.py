@@ -78,6 +78,8 @@ def test_alt_arrows_move_the_selected_planned_step_and_the_board_follows_the_hub
                 page.goto(f"{base}/?token={TOKEN}", wait_until="load")
                 _normal_chair(page)
                 wid = f"pullout:program:{pid}"
+                # The language, 2026-11-08: the step list folds under the plate; Earlier steps opens it.
+                page.locator(f'[id="{wid}"] [data-testid=program-earlier]').click()
                 page.locator(f'[id="{wid}"] [data-testid=programs-board]').wait_for(timeout=T)
                 assert _titles(page, wid) == ["Indexes", "Retention", "The fan-out"]
 

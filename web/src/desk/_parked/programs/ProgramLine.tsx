@@ -1,4 +1,4 @@
-/* Programs PG-WINDOW W2 (PROGRAM-WINDOW-2026-10-31, canvas
+/* PARKED 2026-11-08 (the language: the step spine, StepSpine.tsx, replaced the line). Programs PG-WINDOW W2 (PROGRAM-WINDOW-2026-10-31, canvas
  * program-window-2026-10-31.html, direction A "the line and the note").
  *
  * The line: the program's steps as one station track (the surface

@@ -8,7 +8,7 @@ import {
   planningFixture, plannedFixture, notPlannedFixture, planFixture, splitFixture, roundsFixture,
   bindingUnboundFixture, bindingBoundFixture, auditDraftingFixture, auditBoardFixture, mocks,
   ApiError, ProgramBody, clone, done, drafting, calls, hub, status, stepRow, openStep,
-  type Program,
+  type Program, board,
 } from "./programs.test-setup";
 import { describe, expect, it } from "vitest";
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
@@ -26,7 +26,7 @@ describe("Create plans itself (#1878): the Drafting tray reads the Program's sta
     const program = planningFixture as unknown as Program;
     hub({ [`GET /api/programs/${program.id}`]: program });
     render(<ProgramBody programId={program.id} />);
-    await screen.findByTestId("programs-board");
+    await board();
     const tray = screen.getByTestId("programs-tray");
     expect(tray.getAttribute("data-tray")).toBe("planning");
     expect(trayVerbs()).toEqual([]);
@@ -36,14 +36,14 @@ describe("Create plans itself (#1878): the Drafting tray reads the Program's sta
     noProse();
   });
 
-  it("planned at normal: Start is the one primary, \"4 steps\" the quiet fact", async () => {
+  it("planned at normal: Start is the one brass verb, \"4 steps\" the quiet fact", async () => {
     const program = plannedFixture as unknown as Program;
     expect(program.control).toBe("normal");
     hub({ [`GET /api/programs/${program.id}`]: program });
     render(<ProgramBody programId={program.id} />);
-    await screen.findByTestId("programs-board");
+    await board();
     expect(trayVerbs()).toEqual(["Start"]);
-    expect(screen.getByTestId("program-start").className).toMatch(/primary/);
+    expect(screen.getByTestId("program-start").className).toMatch(/brass/);
     expect(screen.getByTestId("programs-start-words").textContent).toBe("4 steps");
     noProse();
   });
@@ -54,10 +54,10 @@ describe("Create plans itself (#1878): the Drafting tray reads the Program's sta
     expect(line).toMatch(/^The steps were not planned · /);
     hub({ [`GET /api/programs/${program.id}`]: program });
     render(<ProgramBody programId={program.id} />);
-    await screen.findByTestId("programs-board");
+    await board();
     expect(within(screen.getByTestId("programs-plan-claim")).getByRole("status").textContent).toBe(line);
     expect(trayVerbs()).toEqual(["Plan it"]);
-    expect(screen.getByTestId("program-plan-it").className).toMatch(/primary/);
+    expect(screen.getByTestId("program-plan-it").className).toMatch(/brass/);
     noProse();
   });
 });
@@ -78,7 +78,7 @@ describe("JRN1: the draft proposes several Programs (the REAL qwen reply to a th
       [`POST /api/programs/${id}/plan/programs`]: split.applied,
     });
     render(<ProgramBody programId={id} />);
-    await screen.findByTestId("programs-board");
+    await board();
     await waitFor(() => expect(calls).toContain(`GET /api/programs/${id}/shape`));
     fireEvent.click(screen.getByTestId("program-plan-it"));
     const well = await screen.findByTestId("programs-split-well");
@@ -106,7 +106,7 @@ describe("JRN1: the draft proposes several Programs (the REAL qwen reply to a th
     const second = split.second;
     hub({ [`GET /api/programs/${second.id}`]: second });
     render(<ProgramBody programId={second.id} />);
-    await screen.findByTestId("programs-board");
+    await board();
     expect(screen.getByTestId("programs-start-words").textContent).toBe(`After ${split.draft.programs![0].title}`);
     expect(split.start_refused.body.detail).toBe(`It starts after ${split.draft.programs![0].title} is done.`);
   });
@@ -130,10 +130,10 @@ describe("LANG7: the planning draft (PROGRAM-LANGUAGE §5, §9.3, §9.7)", () =>
       [`POST /api/programs/${id}/text`]: j1.applied,
     });
     render(<ProgramBody programId={id} />);
-    await screen.findByTestId("programs-board");
+    await board();
     // Drafting with no steps: Plan it is the primary verb; Start waits for steps.
     const planIt = screen.getByTestId("program-plan-it");
-    expect(planIt.className).toMatch(/primary/);
+    expect(planIt.className).toMatch(/brass/);
     expect(screen.queryByTestId("program-start")).toBeNull();
     fireEvent.click(planIt);
     const well = await screen.findByTestId("programs-change-well");
@@ -182,7 +182,7 @@ describe("LANG7: the planning draft (PROGRAM-LANGUAGE §5, §9.3, §9.7)", () =>
     mocks.apiFetch.mockImplementation((path: string, init?: { method?: string; json?: unknown }) =>
       (init?.method === "POST" && path.endsWith("/plan/draft") ? new Promise((resolve) => { answer = resolve; }) : table(path, init)));
     render(<ProgramBody programId={id} />);
-    await screen.findByTestId("programs-board");
+    await board();
     await waitFor(() => expect(calls).toContain(`GET /api/programs/${id}/shape`));
     fireEvent.click(screen.getByTestId("program-plan-it"));
     const reading = await screen.findByTestId("program-plan-reading");
@@ -205,7 +205,7 @@ describe("LANG7: the planning draft (PROGRAM-LANGUAGE §5, §9.3, §9.7)", () =>
       [`POST /api/programs/${id}/plan/draft`]: j1.draft,
     });
     render(<ProgramBody programId={id} />);
-    await screen.findByTestId("programs-board");
+    await board();
     // Words until he presses them: no textarea on the face.
     expect(screen.queryByRole("textbox", { name: "Goal" })).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Edit Goal" }));
@@ -226,7 +226,7 @@ describe("LANG7: the planning draft (PROGRAM-LANGUAGE §5, §9.3, §9.7)", () =>
       [`POST /api/programs/${id}/plan/draft`]: (init?: { json?: { split?: number } }) => (init?.json?.split ? big.split : big.draft),
     });
     render(<ProgramBody programId={id} />);
-    await screen.findByTestId("programs-board");
+    await board();
     fireEvent.click(screen.getByTestId("program-plan-it"));
     const well = await screen.findByTestId("programs-change-well");
     expect(within(well).getByText("2 steps · 1 requirement · 1 too big", { selector: ".kit-changewell-say" })).toBeInTheDocument();
@@ -253,7 +253,7 @@ describe("LANG7: the planning draft (PROGRAM-LANGUAGE §5, §9.3, §9.7)", () =>
       [`GET /api/programs/${id}/text`]: { program_id: id, text: j1.draft.base, revision: 1, version: 1 },
     });
     render(<ProgramBody programId={id} />);
-    await screen.findByTestId("programs-board");
+    await board();
     await waitFor(() => expect(calls).toContain(`GET /api/programs/${id}/shape`));
     fireEvent.click(screen.getByTestId("program-plan-it"));
     const refusal = await screen.findByTestId("program-plan-refusal");
@@ -278,7 +278,7 @@ describe("LANG7: the planning draft (PROGRAM-LANGUAGE §5, §9.3, §9.7)", () =>
       [`POST /api/programs/${id}/plan/draft`]: () => { throw new ApiError(none.status, String(none.body.detail), none.body); },
     });
     render(<ProgramBody programId={id} />);
-    await screen.findByTestId("programs-board");
+    await board();
     fireEvent.click(screen.getByTestId("program-plan-it"));
     const refusal = await screen.findByTestId("program-plan-refusal");
     expect(refusal.textContent).toContain("No engine is set for planning");
@@ -329,7 +329,7 @@ describe("LANG10: the interview rounds, one question in place (PROGRAM-LANGUAGE 
   it("Plan it, then Ask me first: the draft lands, the five rounds open, Architecture asks one question", async () => {
     walkHub();
     render(<ProgramBody programId={id} />);
-    await screen.findByTestId("programs-board");
+    await board();
     // No strip before the rounds open; Ask me first sits beside Plan it.
     expect(screen.queryByTestId("program-round-strip")).toBeNull();
     expect(screen.getByTestId("program-ask-first").textContent).toBe("Ask me first");
@@ -368,7 +368,7 @@ describe("LANG10: the interview rounds, one question in place (PROGRAM-LANGUAGE 
   it("an offered answer becomes rows in the well, the question folds, the next one rises; Apply lands step 3", async () => {
     walkHub();
     render(<ProgramBody programId={id} />);
-    await screen.findByTestId("programs-board");
+    await board();
     fireEvent.click(screen.getByTestId("program-ask-first"));
     const question = await screen.findByTestId("program-question");
     const q1 = steps["architecture.next"].question!;
@@ -397,7 +397,7 @@ describe("LANG10: the interview rounds, one question in place (PROGRAM-LANGUAGE 
   it("Skip question, Done with Architecture (it keeps its count), Product asks; Skip round strikes it and Stack asks", async () => {
     walkHub();
     render(<ProgramBody programId={id} />);
-    await screen.findByTestId("programs-board");
+    await board();
     fireEvent.click(screen.getByTestId("program-ask-first"));
     let question = await screen.findByTestId("program-question");
     fireEvent.click(within(question).getAllByTestId("kit-question-choice")[0]);
@@ -458,7 +458,7 @@ describe("PG-LANG JRN8 to JRN10: an audit in the Program window (recorded: test_
     const audit = auditDraftingFixture as unknown as Program;
     hub({ [`GET /api/programs/${audit.id}`]: audit });
     render(<ProgramBody programId={audit.id} />);
-    await screen.findByTestId("programs-board");
+    await board();
     expect(screen.getByTestId("programs-audit-line").textContent).toBe("Reviewer only: nothing is written");
     expect(within(stepRow(1)).getByTestId("programs-step-words").textContent).toBe("Reads web/src/desk/notes/");
     expect(within(stepRow(2)).getByTestId("programs-step-words").textContent).toBe("Reads web/src/desk/programs/");
@@ -482,11 +482,11 @@ describe("PG-LANG JRN8 to JRN10: an audit in the Program window (recorded: test_
     const audit = auditBoardFixture as unknown as Program;
     hub({ [`GET /api/programs/${audit.id}`]: audit });
     render(<ProgramBody programId={audit.id} />);
-    await screen.findByTestId("programs-board");
+    await board();
     expect(screen.queryByTestId("programs-audit-line")).toBeNull();
-    const board = screen.getByTestId("programs-findings");
-    expect(within(board).getByRole("heading").textContent).toBe("Findings · 4 findings · 2 MUST");
-    const rows = within(board).getAllByTestId("programs-finding");
+    const findings = screen.getByTestId("programs-findings");
+    expect(within(findings).getByRole("heading").textContent).toBe("Findings · 4 findings · 2 MUST");
+    const rows = within(findings).getAllByTestId("programs-finding");
     expect(rows.map((row) => row.querySelector(".pg-finding-text")!.textContent)).toEqual([
       "Must fix: The Notes toolbar wraps at 520",
       "Must fix: The Programs list cuts the title at 393",
