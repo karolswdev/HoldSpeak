@@ -231,6 +231,7 @@ export function SurfaceWindowHost({
       : null;
   const scopedName = project ? windowName({ kind: "project", name: project.title }, project.id) : null;
   const bodyRef = useSurfaceScrollPlace(row.id, scope);
+  const closeRequest = coreBack?.onCloseRequest;
   return (
     <DeskWindowFrame
       id={row.id}
@@ -251,6 +252,9 @@ export function SurfaceWindowHost({
       open
       unmountOnMinimize
       onClose={() => useDesk.getState().closeSurfaceWindow(row.key)}
+      // A core step can take the frame's close (the Programs wizard: close
+      // is its Cancel, the window stays).
+      beforeClose={closeRequest ? async () => !closeRequest() : undefined}
       // Settings scopes select an anchor on its one page, not a child face.
       // Phone Back returns to the caller instead of scrolling Settings to top.
       onBack={

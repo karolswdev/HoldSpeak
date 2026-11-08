@@ -6,7 +6,7 @@
  * character and no bubble (owner, 2026-11-08: the robot, the bubbles and the
  * pixel frame were "cringe", "terrible", "sterile"; "DIRECTION C, BUT PLEASE
  * MAKE THE CURSOR INTERESTING"). The step's words are one caption line at
- * the bottom edge, above the sheet and the dock; the voice says the same.
+ * the bottom edge, above the bar and the dock; the voice says the same.
  *
  * A step opens a window (the desk's own openers), runs a verb, PRESSES a
  * part itself (the guide's cursor travels to it on an arc with a comet
@@ -16,23 +16,26 @@
  * step and wears a warm breathing halo; nothing is over it (it stays live)
  * and nothing dims. A part is searched ONLY in the window of the step's app;
  * when the window is not open, or holds no such part, the guide says so and
- * the step is skipped without a question. The question is a card beside the
- * part, or at phone width one sheet above the dock (Keep and Redo side by
- * side, Say more with the mic inline, Skip; swipe the handle down to skip).
+ * the step is skipped without a question. The question is one kit toolbar
+ * band above the dock (direction S3 "the bar", 2026-11-08: the sheet was "so
+ * ugly and unprofessional"): row 1 the voice, the question on one line and
+ * the dots; row 2 Keep (primary), Redo (secondary), the mic (Say more opens
+ * the words pad as a third row) and Skip. At desk width the same band is at
+ * most 720 px wide, centred at the bottom edge.
  * A choice captures the WHOLE viewport as he sees it (the walk's chrome and
  * the halo hidden for that frame) with the viewport, the pixel ratio, the
  * browser and the part's box, posts the answer and goes on. Words never
  * choose: Send with words and no choice stores the choice "words". Esc skips.
  * The guide speaks its words and each question through the desk's one TTS
  * seam (lib/tts: the hub voice, else the browser voice). The voice is on by
- * default on a touch device and off on the desk (the sheet's speaker
+ * default on a touch device and off on the desk (the bar's speaker
  * toggle, kept per device); with the voice on, the walk waits for one tap
  * (iOS plays audio only after a gesture).
  * A token the hub refuses gives one plain line, then the desk as usual. */
 import "./walk.css";
 import {
   useCallback, useEffect, useLayoutEffect, useRef, useState,
-  type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent,
+  type CSSProperties, type KeyboardEvent as ReactKeyboardEvent,
 } from "react";
 import { Button } from "../../components/signal/Signal";
 import { PadGadget } from "../surface/gadgets";
@@ -41,6 +44,7 @@ import { VerbGlyph } from "../components/window/VerbGlyph";
 import { speak, stop as stopVoice } from "../../lib/tts";
 import { play } from "../../lib/sfx";
 import { useCompactViewport } from "../useCompactViewport";
+import { SYSTEM } from "../systemSprites";
 import {
   READY_BEAT_MS,
   READY_CEILING_MS,
@@ -254,31 +258,15 @@ function Caption({ text, testId }: { text: string; testId: string }) {
   );
 }
 
-/** A tiny pixel mark on a choice: a check for Keep, a turn for Redo. */
-function ChoiceGlyph({ tone }: { tone: string }) {
-  const d = tone === "ok" ? "M1 4h1v1h1v1h1V5h1V4h1V3h1V2h1v2H7v1H6v1H5v1H4v1H3V7H2V6H1z"
-    : tone === "warn" ? "M3 0h1v1h4v1h1v5H8v1H3V7h5V2H4v1H3V2H2V1h1z"
-      : "M3 1h2v2h2v2H5v2H3V5H1V3h2z";
-  return (
-    <svg className="walk-choice-glyph" viewBox="0 0 9 9" width="18" height="18" shapeRendering="crispEdges"
-      aria-hidden="true"><path d={d} /></svg>
-  );
-}
-
-/** The hue of a choice: Keep confirms, Redo asks for attention. */
-function choiceTone(choice: string): "ok" | "warn" | "accent" {
-  const word = choice.trim().toLowerCase();
-  if (["keep", "yes", "good", "ok"].includes(word)) return "ok";
-  if (["redo", "no", "fix", "change"].includes(word)) return "warn";
-  return "accent";
-}
-
-/** The phone sheet: at this width or less (or at the desk's compact
- * breakpoint) the card is one full-width sheet at the bottom. */
+/** The phone bar: at this width or less (or at the desk's compact
+ * breakpoint) the band is full width above the dock; wider, it is at most
+ * 720 px wide, centred at the bottom edge. */
 export const SHEET_MAX_WIDTH = 480;
-/** The sheet is at most this part of the viewport height. */
+/** The band is at most this part of the viewport height (the words pad). */
 const SHEET_HEIGHT = 0.4;
-/** The space between the part and a card beside it. */
+/** The band's two rows before it is drawn (its real height wins after). */
+const BAND_PX = 112;
+/** The space the part keeps from the band's edge. */
 const RING = 6;
 const GAP = 16;
 
@@ -290,8 +278,6 @@ const PRESS_LOOK_MS = 120;
 const SETTLE_MS = 600;
 /** The caption's fade out. */
 const CAPTION_OUT_MS = 200;
-/** A swipe down on the sheet's handle this far skips the step. */
-const SWIPE_PX = 48;
 
 /** How long the guide speaks a `say` step: about a reading pace. */
 function readingMs(words: string): number {
@@ -320,24 +306,6 @@ function rectOf(element: Element): Rect {
   return { left: box.left, top: box.top, width: box.width, height: box.height };
 }
 
-function sameRect(a: Rect | null, b: Rect | null): boolean {
-  return !!a && !!b && a.left === b.left && a.top === b.top && a.width === b.width && a.height === b.height;
-}
-
-/** Beside the part: right, else left, else under it, else over it. */
-export function placeCard(rect: Rect, card: { width: number; height: number }, width: number, height: number):
-  { left: number; top: number; side: "right" | "left" | "below" | "above" } {
-  const clampTop = (top: number) => Math.max(8, Math.min(top, height - card.height - 8));
-  const clampLeft = (left: number) => Math.max(8, Math.min(left, width - card.width - 8));
-  const right = rect.left + rect.width + RING + GAP;
-  if (right + card.width <= width - 8) return { left: right, top: clampTop(rect.top), side: "right" };
-  const left = rect.left - RING - GAP - card.width;
-  if (left >= 8) return { left, top: clampTop(rect.top), side: "left" };
-  const below = rect.top + rect.height + RING + GAP;
-  if (below + card.height <= height - 8) return { left: clampLeft(rect.left), top: below, side: "below" };
-  return { left: clampLeft(rect.left), top: clampTop(rect.top - RING - GAP - card.height), side: "above" };
-}
-
 /** The nearest scrolling box of the part inside its window, or null. */
 function scrollerOf(element: HTMLElement, root: HTMLElement | null): HTMLElement | null {
   for (let node = element.parentElement; node; node = node.parentElement) {
@@ -349,7 +317,7 @@ function scrollerOf(element: HTMLElement, root: HTMLElement | null): HTMLElement
 }
 
 /** Scroll the part into the clear band between `floor` (under the guide)
- * and `limit` (the sheet's top): centred in the band, or its top edge when
+ * and `limit` (the bar's top): centred in the band, or its top edge when
  * it is taller. A part already in the band does not move. */
 export function revealAbove(target: HTMLElement, root: HTMLElement | null, limit: number, floor = 0): void {
   const box = target.getBoundingClientRect();
@@ -394,21 +362,17 @@ function WalkSession({ token }: { token: string }) {
   const compact = useCompactViewport();
   const viewport = useViewport();
   const sheet = compact || viewport.width <= SHEET_MAX_WIDTH;
-  // Read once per step: a resize does not run the step again.
-  const sheetRef = useRef(sheet);
-  sheetRef.current = sheet;
   const [page, setPage] = useState<WalkPage | null>(null);
   const [refused, setRefused] = useState("");
   const [index, setIndex] = useState(0);
   const [stage, setStage] = useState<Stage>(EMPTY);
-  const [rect, setRect] = useState<Rect | null>(null);
   const [answered, setAnswered] = useState(0);
   const [closed, setClosed] = useState(false);
   const [busy, setBusy] = useState("");
   const [failure, setFailure] = useState("");
   const [sayMore, setSayMore] = useState(false);
   const [words, setWords] = useState("");
-  const [cardSize, setCardSize] = useState({ width: 340, height: 220 });
+  const [cardSize, setCardSize] = useState({ width: 0, height: BAND_PX });
   // The guide's words, its cursor and the ripple of its tap.
   const [spoken, setSpoken] = useState("");
   const [cursor, setCursor] = useState<Cursor | null>(null);
@@ -435,7 +399,6 @@ function WalkSession({ token }: { token: string }) {
   // Where the cursor rests: the next journey starts here.
   const restRef = useRef<Point | null>(null);
   const appRef = useRef<string | undefined>(undefined);
-  const swipeRef = useRef<number | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -489,7 +452,6 @@ function WalkSession({ token }: { token: string }) {
 
   const advance = useCallback(() => {
     setStage(EMPTY);
-    setRect(null);
     setFailure("");
     setSayMore(false);
     setWords("");
@@ -499,16 +461,15 @@ function WalkSession({ token }: { token: string }) {
 
   /** The top of the clear band: the viewport's top (no guide sits there). */
   const clearTop = () => 0;
-  /** The bottom of the clear band: over the caption, and over the sheet's
-   * top (an estimate before it is drawn), else the viewport's foot. */
+  /** The bottom of the clear band: over the caption, and over the bar's
+   * top (its two rows before it is drawn), else the viewport's foot. */
   const clearBottom = () => {
     const height = window.innerHeight;
     const caption = captionRef.current?.getBoundingClientRect();
     const words = caption && caption.height ? caption.top - GAP / 2 : height;
-    if (!sheetRef.current) return words;
     const card = cardRef.current?.getBoundingClientRect();
     if (card && card.height) return Math.min(words, card.top - GAP / 2);
-    return Math.min(words, height - dockHeight() - Math.floor(height * SHEET_HEIGHT) - GAP / 2);
+    return Math.min(words, height - dockHeight() - BAND_PX - GAP / 2);
   };
 
   // Run one step: open, verb, press, scroll, say, then find the part to mark.
@@ -635,28 +596,6 @@ function WalkSession({ token }: { token: string }) {
     return () => { alive = false; };
   }, [step, advance]);
 
-  // Follow the part while windows move, scroll or resize.
-  useEffect(() => {
-    const target = stage.target;
-    if (!target) return;
-    let handle = 0;
-    let last: Rect | null = null;
-    const tick = () => {
-      if (!target.isConnected) {
-        setRect(null);
-        return;
-      }
-      const next = rectOf(target);
-      if (!sameRect(last, next)) {
-        last = next;
-        setRect(next);
-      }
-      handle = requestAnimationFrame(tick);
-    };
-    tick();
-    return () => cancelAnimationFrame(handle);
-  }, [stage.target]);
-
   // The mark: the part itself lifts one step and wears the warm halo while
   // the guide asks about it (not in the shot: he sees the screen as is).
   const haloOn = !done && !!step && stage.ready && !stage.line && !!(step.highlight || step.ask) && !capturing;
@@ -676,17 +615,17 @@ function WalkSession({ token }: { token: string }) {
     }
   });
 
-  // The sheet: full width above the dock, at most 40 % of the height.
-  const dock = sheet ? dockHeight() : 0;
+  // The bar: on the dock, its real height, at most 40 % of the height.
+  const dock = dockHeight();
   const sheetMax = Math.floor(viewport.height * SHEET_HEIGHT);
   const sheetTop = viewport.height - dock - Math.min(cardSize.height, sheetMax);
 
-  // At phone width the part scrolls into the band above the sheet.
+  // The part scrolls into the clear area above the bar.
   useLayoutEffect(() => {
     const target = stage.target;
-    if (!sheet || !target || !cardRef.current) return;
+    if (!target || !cardRef.current) return;
     revealAbove(target, stage.window, sheetTop - GAP / 2, clearTop());
-  }, [sheet, stage.target, stage.window, sheetTop]);
+  }, [stage.target, stage.window, sheetTop]);
 
   // Focus goes to the card when it asks; it never jumps out (Tab wraps).
   useEffect(() => {
@@ -714,7 +653,7 @@ function WalkSession({ token }: { token: string }) {
     setBusy(choice);
     setFailure("");
     // The shot is the whole viewport as he sees it: the walk's frame, guide,
-    // dim and sheet step out for one frame, then come back.
+    // and bar step out for one frame, then come back.
     const view = viewNow(stage.target);
     setCapturing(true);
     await frame();
@@ -772,19 +711,8 @@ function WalkSession({ token }: { token: string }) {
     }
   };
 
-  // Swipe the sheet's handle down: Skip.
-  const onHandleDown = (event: ReactPointerEvent<HTMLElement>) => {
-    swipeRef.current = event.clientY;
-    event.currentTarget.setPointerCapture?.(event.pointerId);
-  };
-  const onHandleUp = (event: ReactPointerEvent<HTMLElement>) => {
-    const from = swipeRef.current;
-    swipeRef.current = null;
-    if (from !== null && event.clientY - from >= SWIPE_PX && !busy) skip();
-  };
-
   // The guide speaks. A step that will ask says its words with the question
-  // when the sheet opens (one utterance: the question never cuts the words).
+  // when the bar opens (one utterance: the question never cuts the words).
   const sheetOpen = !done && !!step?.ask && stage.ready && !stage.line;
   const bubbleNow = !done && stage.ready && stage.line ? stage.line : done ? "" : spoken;
   useEffect(() => {
@@ -828,24 +756,20 @@ function WalkSession({ token }: { token: string }) {
   const cards = steps.map((row, at) => (row.highlight || row.ask ? at : -1)).filter((at) => at >= 0);
   const count = stepCount(cards.indexOf(index) + 1, cards.length);
   const asking = !done && !!step && stage.ready && !stage.line && !!(step.highlight || step.ask);
-  const marked = asking && stage.target && rect ? rect : null;
-  const width = typeof window === "undefined" ? 1440 : window.innerWidth;
-  const height = typeof window === "undefined" ? 900 : window.innerHeight;
-  const docked = sheet || !marked;
-  const placed = marked && !docked ? placeCard(marked, cardSize, width, height) : null;
-  const cardStyle: CSSProperties | undefined = sheet
-    // Over the dock, the dock keeps the home bar's inset; the sheet does not.
-    ? { left: 0, right: 0, bottom: dock, maxHeight: sheetMax, ...(dock ? { paddingBottom: 12 } : {}) }
-    : placed ? { left: placed.left, top: placed.top } : undefined;
+  // The bar: full width on the phone, at most 720 px centred at desk width;
+  // on the dock, the dock keeps the home bar's inset and the bar does not.
+  const bandStyle: CSSProperties = {
+    bottom: dock,
+    maxHeight: sheetMax,
+    ...(sheet ? { left: 0, right: 0 } : {}),
+    ...(dock ? { paddingBottom: 12 } : {}),
+  };
   const ask = step?.ask;
   const said = words.trim();
   const line = !done && stage.ready ? stage.line : "";
-  // The caption sits at the bottom edge: over the dock, over the sheet or a
-  // docked card when one is up.
-  const deskDock = dockHeight();
-  const captionBottom = asking && sheet ? dock + Math.min(cardSize.height, sheetMax) + 10
-    : asking && docked ? deskDock + 12 + cardSize.height + 10
-      : deskDock + 12;
+  // The caption sits at the bottom edge: over the dock, over the bar when
+  // it is up.
+  const captionBottom = asking ? dock + Math.min(cardSize.height, sheetMax) + 10 : dock + 12;
 
   return (
     <div className="walk-layer" data-walk="" data-testid="walk" data-capturing={capturing ? "" : undefined}
@@ -870,12 +794,11 @@ function WalkSession({ token }: { token: string }) {
         )}
       </div>
       {done ? (
-        <div className="walk-card walk-card-end" data-docked="" data-sheet={sheet ? "" : undefined}
-          style={sheet ? { left: 0, right: 0, bottom: dock } : undefined} role="status" data-testid="walk-end">
-          <p className="walk-title">{thanksWords(answered)}</p>
-          <p className="walk-next-line" data-testid="walk-next-line">Next · Muad&apos;Dib · this morning</p>
-          <div className="walk-verbs">
-            <Button variant="primary" data-testid="walk-back"
+        <div className="walk-card walk-card-end" data-sheet={sheet ? "" : undefined}
+          style={bandStyle} role="status" data-testid="walk-end">
+          <div className="walk-ask">
+            <p className="walk-question walk-title">{thanksWords(answered)}</p>
+            <Button variant="primary" className="walk-back" data-testid="walk-back"
               onClick={() => { stopVoice(); clearWalkFromLocation(); setClosed(true); }}>
               Back to the desk
             </Button>
@@ -884,13 +807,17 @@ function WalkSession({ token }: { token: string }) {
       ) : null}
       {asking ? (
         <section ref={cardRef} className="walk-card" aria-label={page.title} tabIndex={-1} onKeyDown={keepFocus}
-          data-docked={docked ? "" : undefined} data-sheet={sheet ? "" : undefined} data-side={placed?.side}
-          style={cardStyle} data-testid="walk-card">
-          <div className="walk-handle" data-testid="walk-handle"
-            onPointerDown={onHandleDown} onPointerUp={onHandleUp}
-            onPointerCancel={() => { swipeRef.current = null; }}>
-            {sheet ? <span className="walk-grip" aria-hidden="true" /> : null}
-            <span className="walk-name">{page.title}</span>
+          data-sheet={sheet ? "" : undefined} style={bandStyle} data-testid="walk-card">
+          <div className="walk-ask">
+            <Button variant="ghost" dense className="walk-voice" aria-pressed={voice}
+              aria-label={voice ? "Voice on" : "Voice off"} title={voice ? "Voice on" : "Voice off"}
+              onClick={toggleVoice} data-testid="walk-voice">
+              <VerbGlyph kind={voice ? "voice" : "voice-off"} />
+            </Button>
+            {/* One line: the voice says the question in full. */}
+            <p className="walk-question" title={ask?.question} data-testid={ask ? "walk-question" : undefined}>
+              {ask?.question ?? ""}
+            </p>
             {cards.length > 1 ? (
               <span className="walk-dots" aria-hidden="true" data-testid="walk-dots">
                 {cards.map((at) => (
@@ -899,44 +826,41 @@ function WalkSession({ token }: { token: string }) {
                 ))}
               </span>
             ) : null}
-            {count ? (
-              <span className="walk-count" data-testid="walk-count" data-quiet={cards.length > 1 ? "" : undefined}>
-                {count}
-              </span>
-            ) : null}
-            <Button variant="ghost" dense className="walk-voice" aria-pressed={voice}
-              aria-label={voice ? "Voice on" : "Voice off"} title={voice ? "Voice on" : "Voice off"}
-              onPointerDown={(event) => event.stopPropagation()} onClick={toggleVoice} data-testid="walk-voice">
-              <VerbGlyph kind={voice ? "voice" : "voice-off"} />
-            </Button>
+            {count ? <span className="walk-count" data-testid="walk-count">{count}</span> : null}
           </div>
-          {ask ? <p className="walk-question" data-testid="walk-question">{ask.question}</p> : null}
           <div className="walk-choices">
             {ask
               ? ask.choices.map((choice, at) => (
-                // No choice is the default: words never imply one.
-                <Button key={choice} variant="secondary" className="walk-choice" data-tone={choiceTone(choice)}
+                // Keep (the first choice) is the primary; words never imply one.
+                <Button key={choice} variant={at === 0 ? "primary" : "secondary"} className="walk-choice"
                   loading={busy === choice} disabled={!!busy} onClick={() => void answer(choice)}
                   data-testid={`walk-choice-${at}`}>
-                  <ChoiceGlyph tone={choiceTone(choice)} />
                   {choice}
                 </Button>
               ))
               : (
-                <Button variant="primary" onClick={advance} data-testid="walk-next">Next</Button>
+                <Button variant="primary" className="walk-choice" onClick={advance} data-testid="walk-next">
+                  Next
+                </Button>
               )}
-          </div>
-          {ask ? (
-            <div className="walk-more">
-              <Button variant="ghost" aria-expanded={sayMore} disabled={!!busy}
+            {ask ? (
+              <Button variant="secondary" className="walk-mic" aria-label="Say more" title="Say more"
+                aria-expanded={sayMore} disabled={!!busy}
                 onClick={() => setSayMore((value) => !value)} data-testid="walk-say-more">
-                Say more
+                <img src={SYSTEM.micGlyph} alt="" width={16} height={16} className="desk-chrome-sprite"
+                  draggable={false} />
               </Button>
-              {sayMore ? (
-                <PadGadget label="Say more" value={words} onChange={setWords} rows={3} autoFocus
-                  micDraftScope={`walk-${ask.ref}`} />
-              ) : null}
-              {sayMore && said ? (
+            ) : null}
+            <Button variant="ghost" dense className="walk-skip" disabled={!!busy} onClick={skip}
+              data-testid="walk-skip">
+              Skip
+            </Button>
+          </div>
+          {ask && sayMore ? (
+            <div className="walk-more">
+              <PadGadget label="Say more" value={words} onChange={setWords} rows={2} autoFocus
+                micDraftScope={`walk-${ask.ref}`} />
+              {said ? (
                 <Button variant="primary" loading={busy === WORDS} disabled={!!busy}
                   onClick={() => void answer(WORDS)} data-testid="walk-send">
                   Send
@@ -945,10 +869,6 @@ function WalkSession({ token }: { token: string }) {
             </div>
           ) : null}
           {failure ? <p className="walk-line" role="alert" data-testid="walk-failure">{failure}</p> : null}
-          <Button variant="ghost" dense className="walk-skip" disabled={!!busy} onClick={skip}
-            data-testid="walk-skip">
-            Skip
-          </Button>
         </section>
       ) : null}
     </div>

@@ -17,7 +17,11 @@
  *   4 The card, then the summary rows; the bar's primary is Create.
  * Under each screen the next screen's first row peeks (dead, muted).
  * The title bar reads "New program · <project>" and carries the progress
- * dots; the frame's narrow Back says Cancel; Escape cancels on the desk.
+ * dots; the frame's narrow Back says Cancel; the frame's close and Escape
+ * cancel on the desk (back to the list; the window stays).
+ * At phone width (the surface container under 480) the levels say their
+ * short words and Check and Spending fold into one quiet row; a press on
+ * it opens Check.
  * The bar: Back · Next / Create. Create posts one captured body to POST
  * /api/programs (only the fields he set, beside title and template) and
  * opens the made Program in Drafting. Only the two refusals the hub
@@ -51,10 +55,10 @@ const STEP_TOTAL = STEPS.length;
 const DEFAULT_TEMPLATE = "fast-cycle";
 
 /** The control ladder in his words, hands-off first. */
-const LEVELS: readonly { value: Control; word: string }[] = [
-  { value: "yolo", word: "Runs by itself" },
-  { value: "normal", word: "Asks before it merges or sends" },
-  { value: "secure", word: "Asks at every step" },
+const LEVELS: readonly { value: Control; word: string; short: string }[] = [
+  { value: "yolo", word: "Runs by itself", short: "By itself" },
+  { value: "normal", word: "Asks before it merges or sends", short: "Asks to merge" },
+  { value: "secure", word: "Asks at every step", short: "Asks each step" },
 ];
 
 type Choices = { state: "loading" } | { state: "failed" } | { state: "ready"; rows: ProjectChoice[] };
@@ -127,6 +131,8 @@ export function ProgramWizard({ template: firstTemplate, scopeProjectId, program
   const [agent, setAgent] = useState<RunsOnChoice | null>(null);
   const [reviewer, setReviewer] = useState<RunsOnChoice | null>(null);
   const [check, setCheck] = useState("");
+  // At phone width Check and Spending fold into one row; a press opens Check.
+  const [checkOpen, setCheckOpen] = useState(false);
   const [outcome, setOutcome] = useState<Outcome>({ kind: "idle" });
   const inFlight = useRef(false);
   const alive = useRef(true);
@@ -157,7 +163,11 @@ export function ProgramWizard({ template: firstTemplate, scopeProjectId, program
   // The title bar reads the picked object.
   useWindowTitle(placeName ? `${DEFAULT_TITLE} · ${placeName}` : DEFAULT_TITLE, [placeName]);
   const leave = () => { if (!pending) onClose(); };
-  useWindowBack({ onBack: leave, testId: "programs-wizard-back-frame", label: "Cancel" }, [pending]);
+  // The frame's close is Cancel too: back to the list, the window stays.
+  useWindowBack({
+    onBack: leave, testId: "programs-wizard-back-frame", label: "Cancel",
+    onCloseRequest: () => { leave(); return true; },
+  }, [pending]);
   // The progress dots ride the title bar's right end.
   useWindowWings(
     <span className="pg-wiz-dots" data-keeps-title="" aria-label={`Step ${step + 1} of ${STEP_TOTAL}`} role="img" data-testid="programs-wizard-dots">
@@ -197,6 +207,10 @@ export function ProgramWizard({ template: firstTemplate, scopeProjectId, program
       if (first) { first.focus(); break; }
     }
   }, [step, choices.state, carded, last]);
+
+  useEffect(() => {
+    if (checkOpen) rootRef.current?.querySelector<HTMLElement>(".pg-wiz-check input")?.focus();
+  }, [checkOpen]);
 
   const go = (next: number) => {
     if (locked || next < 0 || next > last) return;
@@ -338,12 +352,13 @@ export function ProgramWizard({ template: firstTemplate, scopeProjectId, program
     );
   } else if (step === 2) {
     page = (
-      <div className="pg-wiz-runs">
+      <div className="pg-wiz-runs" data-check-open={checkOpen ? "" : undefined}>
         <span className="pg-wiz-levels" role="group" aria-label="Runs" data-testid="programs-wizard-levels">
           {LEVELS.map((row) => (
             <Button key={row.value} variant={row.value === level ? "secondary" : "ghost"} aria-pressed={row.value === level}
-              className="pg-wiz-level" disabled={locked} onClick={() => setControl(row.value)} data-testid={`programs-wizard-level-${row.value}`}>
-              {row.word}
+              aria-label={row.word} className="pg-wiz-level" disabled={locked} onClick={() => setControl(row.value)} data-testid={`programs-wizard-level-${row.value}`}>
+              <span className="pg-wiz-level-word">{row.word}</span>
+              <span className="pg-wiz-level-short" aria-hidden="true">{row.short}</span>
             </Button>
           ))}
         </span>
@@ -358,10 +373,15 @@ export function ProgramWizard({ template: firstTemplate, scopeProjectId, program
               onPick={setReviewer} data-testid="programs-wizard-reviewer" />
           </GadgetRow>
           <GadgetRow label="Check">
-            <StringGadget label="Check" value={check} onChange={setCheck} placeholder="The repository's check" mic={false} />
+            <span className="pg-wiz-check">
+              <StringGadget label="Check" value={check} onChange={setCheck} placeholder="The repository's check" mic={false} />
+            </span>
           </GadgetRow>
-          <GadgetRow label="Spending" fact={<span data-testid="programs-wizard-spending">Not capped</span>}>{null}</GadgetRow>
+          <GadgetRow label="Spending" fact={<span className="pg-wiz-spending" data-testid="programs-wizard-spending">Not capped</span>}>{null}</GadgetRow>
         </GadgetGroup>
+        <Button dense variant="ghost" className="pg-wiz-fold" disabled={locked} onClick={() => setCheckOpen(true)} data-testid="programs-wizard-fold">
+          {`Check · ${check.trim() || "The repository's"} · Spending not capped`}
+        </Button>
       </div>
     );
   } else {

@@ -3,6 +3,11 @@
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
 - 2026-11-08 · #1854 Needs you: a Program row is the Program, its quiet ask word and one verb (Merge, Decide or Open); Later and Send moved to its context menu, and one rule in needsFace.ts decides each fact line.
+- 2026-11-08 · #1853 Fix forward #1849: compose_hub moves to runtime/hub_composition.py (566 lines), compose_delivery to runtime/delivery_composition.py (56), composition.py back to 583; the density guard is green.
+- 2026-11-08 · #1852 The New program wizard's frame close is its Cancel (back to the list, the window stays), and screen 3 fits the phone (short level words, Check · Spending folded).
+- 2026-11-08 · #1851 The fold-grammar fence reads Today's word on ::before, as #1757 placed it (a red on main the quick check never ran).
+- 2026-11-08 · #1849 The hub builds its services in runtime/composition.py (compose_hub); _create_app only mounts and registers the lifespan: web_server.py 2500 → 1975 lines, 197 → 134 imports, cold start 1.8 → 1.7 s.
+- 2026-11-08 · #1848 The walk asks in one toolbar bar above the dock (direction S3): Keep primary, Redo secondary, the mic, Skip; no sheet, no tinted pills, no swipe.
 - 2026-11-08 · #1846 `scripts/measure.py` prints the rule 7 numbers as one table each night; `docs/internal/measure/2026-11-08.md` is the baseline.
 - 2026-11-08 · #1847 Fix forward #1844: the wizard's phone-head rule lives in the frame (data-keeps-title), no viewport media in a window body.
 - 2026-11-08 · #1845 The Program vocabulary and ProgramRefused have one owner, services/program_definitions.py (HS-S51): program_service 5670 → 5406 lines, the new module reaches only errors and program_rules, definition-only service importers 3 → 2.
