@@ -2,6 +2,19 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-07 · #1822 The walk starts only when the desk is ready, and moves one beat later.
+- 2026-11-07 · #1821 #1820 The walk link opens the desk by itself (carries the desk bootstrap token).
+- 2026-11-07 · #1819 #1817 SIGUSR1 dumps every hub thread's stack into the log (no chain).
+- 2026-11-07 · #1818 A keystore read that does not answer cannot hang the setup status (the Keychain prompt wedge).
+- 2026-11-07 · #1816 One hub voice: /api/tts speaks through the Line's Pocket TTS; kokoro deleted by the owner's ruling.
+- 2026-11-07 · #1815 The Walk holds the phone (frame, guide, press/scroll/say, whole-viewport shots, voice); face superseded by direction C.
+- 2026-11-07 · #1814 The walk's dim never covers the highlighted part.
+- 2026-11-07 · #1813 The walk records the choice he pressed, docks as a sheet on the phone, marks only the step's window.
+- 2026-11-07 · #1812 New program: the project list is the well; pressing a project creates there.
+- 2026-11-07 · #1811 Needs you: the coverage is a People button in the toolbar, not a sentence.
+- 2026-11-07 · #1810 The Walk's token routes are bounded (Codex review: body size, misses before reads, storage per walk).
+- 2026-11-07 · #1808 The Walk: a guided feedback walk on the desk from one link.
+- 2026-11-07 · #1807 STATUS one-liners.
 - 2026-11-07 · #1806 The Room's last-read line is one literal; the API manifest names the web as a resources DELETE consumer (batch guard red).
 - 2026-11-07 · #1805 Five failure lines say what stayed and what to do next (batch guard red).
 - 2026-11-07 · #1804 Meeting decisions show their project before Save, are created once, corrected on the canonical record (HS-S42).
