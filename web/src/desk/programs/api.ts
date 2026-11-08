@@ -6,7 +6,9 @@
  * never re-reads (#1584). A hub without the Programs slice answers 404 on
  * the list: the faces draw the empty list, never a console error. */
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { ApiError, apiFetch } from "../../lib/api";
+import { deskQueryClient, deskResourceKey } from "../../lib/queryClient";
 import { useOptionalRuntimeBus } from "../../runtime/RuntimeBus";
 import { frameChanges } from "../compositor/windowFrames";
 import type {
@@ -59,7 +61,11 @@ export interface CreateBody {
 /** The hub answers the new Program's wire (or `{program}`). */
 export async function createProgram(body: CreateBody): Promise<Program> {
   const answer = await apiFetch<Program | { program: Program }>("/api/programs", { method: "POST", json: body });
-  return "program" in (answer as object) ? (answer as { program: Program }).program : (answer as Program);
+  const made = "program" in (answer as object) ? (answer as { program: Program }).program : (answer as Program);
+  // HS-S14: the new Program's window draws the hub's answer at once (it
+  // still reads the Program when it opens).
+  if (made && Array.isArray(made.steps)) applyProgram(made);
+  return made;
 }
 
 /** HS-S11: one project a Program can be made in (GET /api/projects). */
@@ -325,26 +331,74 @@ export function usePrograms() {
   return { ...state, reload: load };
 }
 
+/* HS-S14: one Program, one keyed read. Every reader of a Program's detail
+ * (the Program window, a Shot window, a fresh read before a rebuild) goes
+ * through the desk's query cache under `deskResourceKey("program", id)`:
+ * one copy per Program id, one request in flight per id, one invalidation
+ * path (the Program frames below). `deskQueryClient`'s defaults stay; only
+ * retry is off here, as the read was before. */
+export const programKey = (id: string) => deskResourceKey("program", id);
+
+/* The ordering guard: a write he pressed (`applyProgram`) bumps the
+ * Program's count. A read that started before it answers the acknowledged
+ * Program, never the older state it fetched. The request is not aborted. */
+const applied = new Map<string, number>();
+
+async function fetchProgram(id: string): Promise<Program> {
+  const before = applied.get(id) ?? 0;
+  const program = await readProgram(id);
+  if ((applied.get(id) ?? 0) !== before) {
+    const kept = deskQueryClient.getQueryData<Program>(programKey(id));
+    if (kept) return kept;
+  }
+  return program;
+}
+
+const programQuery = (id: string) => ({ queryKey: programKey(id), queryFn: () => fetchProgram(id), retry: false as const });
+
+/** Write an acknowledged Program to its own key (null: nothing). */
+export function applyProgram(program: Program | null): void {
+  if (!program?.id) return;
+  applied.set(program.id, (applied.get(program.id) ?? 0) + 1);
+  deskQueryClient.setQueryData(programKey(program.id), program);
+}
+
+/** A fresh read after a write, through the shared key: a read in flight
+ *  started before the write, so it gives way to this one. */
+export async function refreshProgram(id: string): Promise<Program> {
+  await deskQueryClient.cancelQueries({ queryKey: programKey(id) });
+  return deskQueryClient.fetchQuery({ ...programQuery(id), staleTime: 0 });
+}
+
+/** A Program frame: the named Program's key, or every Program key when the
+ *  frame names none. An open window reads again (one request however many
+ *  windows show it); a closed one is marked stale. */
+export function invalidateProgram(id: string): void {
+  void deskQueryClient.invalidateQueries(
+    { queryKey: id ? programKey(id) : ["desk-resource", "program"] },
+    { cancelRefetch: false },
+  );
+}
+
 export function useProgram(id: string) {
-  const [state, setState] = useState<{ loading: boolean; error: unknown; program: Program | null }>({
-    loading: true, error: null, program: null,
-  });
-  const alive = useRef(true);
-  useEffect(() => () => { alive.current = false; }, []);
-  const load = useCallback(async () => {
-    try {
-      const program = await readProgram(id);
-      if (alive.current) setState({ loading: false, error: null, program });
-    } catch (error) {
-      if (alive.current) setState((now) => ({ ...now, loading: false, error }));
-    }
-  }, [id]);
-  useEffect(() => { void load(); }, [load]);
-  useProgramFrames((named) => { if (!named || named === id) void load(); });
-  const apply = useCallback((program: Program | null) => {
-    if (program && alive.current) setState({ loading: false, error: null, program });
-  }, []);
-  return { ...state, reload: load, apply };
+  const query = useQuery<Program, unknown>({
+    ...programQuery(id),
+    enabled: Boolean(id),
+    // A window opened (the first reader) reads the Program again; a second
+    // reader joins the copy the frames keep fresh.
+    refetchOnMount: (current) => (current.getObserversCount() <= 1 ? "always" : true),
+  }, deskQueryClient);
+  const refetch = useRef(query.refetch);
+  refetch.current = query.refetch;
+  useProgramFrames(invalidateProgram);
+  const reload = useCallback(async () => { if (id) await refetch.current({ cancelRefetch: false }); }, [id]);
+  return {
+    loading: Boolean(id) && query.isPending,
+    error: query.error ?? null,
+    program: query.data ?? null,
+    reload,
+    apply: applyProgram,
+  };
 }
 
 /** The Program's own fields (title, goal, control, the default Runs on,

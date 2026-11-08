@@ -27,27 +27,27 @@
    * ============================================================ */
 
   --p-color-ink-0: #f7f9fc; /* near-white application paper */
-  --p-color-ink-1: #eef2f7; /* cool pale steel surface */
-  --p-color-ink-2: #e5ebf3; /* raised cool steel surface */
-  --p-color-ink-3: #d9e2ee; /* hover steel surface */
+  --p-color-ink-1: #e6ebf3; /* window ground (the language 2026-11-08) */
+  --p-color-ink-2: #dde4ee; /* a ground one step down (the language 2026-11-08) */
+  --p-color-ink-3: #d9e3f2; /* the title bar tint, steel tint (the language 2026-11-08) */
   --p-color-ink-4: #f2f5f9; /* light paper wash */
-  --p-color-paper-0: #253449; /* dark ink on near-white paper */
-  --p-color-paper-1: #53647a; /* quiet ink on light shell */
-  --p-color-paper-2: #63758b; /* faint text on light paper (at least 4.5:1) */
+  --p-color-paper-0: #10192b; /* ink: every word (the language 2026-11-08; 14.7:1 on the window ground) */
+  --p-color-paper-1: #44536b; /* secondary ink (the language 2026-11-08; 6.5:1 on the window ground) */
+  --p-color-paper-2: #56657c; /* faint ink (the language 2026-11-08; 4.9:1 on the window ground, 4.6:1 on the title tint) */
   --p-color-orange-300: #da9868; /* gradient amber head (HS-115-08: forge ember family) */
   --p-color-orange-400: #bc8058; /* accent hover */
   --p-color-orange-500: #a86e4a; /* forge ember (~3.1:1 on ink.0; system patina, not signal) */
   --p-color-orange-600: #936041; /* accent pressed */
   --p-color-orange-650: #8a5a3d; /* ember ink (HS-202-05): the accent plate that CARRIES TEXT — 5.24:1 with paper.0, where orange.500 reads 3.79:1 */
   --p-color-orange-700: #834f32; /* gradient ember tail */
-  --p-color-green-400: #34d399; /* ok */
-  --p-color-green-500: #10b981; /* ok strong */
-  --p-color-amber-400: #fbbf24; /* warn */
-  --p-color-amber-500: #f59e0b; /* warn strong */
-  --p-color-red-400: #f87171; /* danger */
-  --p-color-red-600: #dc2626; /* danger fill */
-  --p-color-cyan-300: #56c7f5; /* info / local */
-  --p-color-cyan-400: #38bdf8; /* info strong */
+  --p-color-green-400: #1d7a4c; /* moss: done, on track (the language 2026-11-08) */
+  --p-color-green-500: #155c39; /* moss ink: an ok word on any ground (the language 2026-11-08; 6.7:1 on the window ground) */
+  --p-color-amber-400: #b8800f; /* brass: waits on you (the language 2026-11-08); a fill or a mark, never small text */
+  --p-color-amber-500: #7a5408; /* brass ink: a waits-on-you word, the brass Button edge (the language 2026-11-08; 5.7:1 on the window ground) */
+  --p-color-red-400: #c23a26; /* coral: at risk (the language 2026-11-08) */
+  --p-color-red-600: #b0321f; /* coral fill under white text (the language 2026-11-08; 6.2:1) */
+  --p-color-cyan-300: #2b55a7; /* info rides steel (the language 2026-11-08) */
+  --p-color-cyan-400: #1f448c; /* info strong, deep steel (the language 2026-11-08) */
   --p-color-glowpool-meeting: #56C7F5; /* desk glow: meetings (cassettes) */
   --p-color-glowpool-note: #34D399; /* desk glow: notes */
   --p-color-glowpool-kb: #FBBF24; /* desk glow: knowledge crystals */
@@ -67,12 +67,31 @@
   --p-color-shadow-55: rgba(0, 0, 0, 0.55);
   --p-color-shadow-60: rgba(0, 0, 0, 0.6);
   --p-color-shadow-70: rgba(0, 0, 0, 0.7);
-  --p-color-wash-035: rgba(37, 52, 73, 0.035);
-  --p-color-wash-05: rgba(37, 52, 73, 0.05);
+  --p-color-wash-035: rgba(16, 25, 43, 0.035);
+  --p-color-wash-05: rgba(16, 25, 43, 0.05);
   --p-color-wash-08: rgba(255, 255, 255, 0.08);
-  --p-color-blue-450: #3b5d93; /* the Workbench blue primary and selection */
-  --p-font-display: "Space Grotesk", "Inter", system-ui, -apple-system, BlinkMacSystemFont,
-    "Segoe UI", sans-serif;
+  --p-color-blue-450: #2b55a7; /* steel: ours, running, the primary Button (the language 2026-11-08) */
+  --p-color-hs-steel: #2b55a7; /* ours, running; the primary Button (the language 2026-11-08) */
+  --p-color-hs-brass: #b8800f; /* the ONLY warm colour: waits on you (the language 2026-11-08) */
+  --p-color-hs-brass-deep: #9c6b0b; /* the brass Button fill under white text (the language 2026-11-08; 4.6:1) */
+  --p-color-hs-brass-ink: #7a5408; /* brass as a word and the brass Button edge (the language 2026-11-08) */
+  --p-color-hs-moss: #1d7a4c; /* done, on track (the language 2026-11-08) */
+  --p-color-hs-moss-ink: #155c39; /* moss as a word (the language 2026-11-08) */
+  --p-color-hs-coral: #c23a26; /* at risk (the language 2026-11-08) */
+  --p-color-hs-coral-ink: #9e2a18; /* coral as a word (the language 2026-11-08) */
+  --p-color-hs-graphite: #4a5568; /* parked, quiet (the language 2026-11-08) */
+  --p-color-hs-navy: #0f1829; /* the desk at night, the floor (the language 2026-11-08) */
+  --p-color-hs-tint-steel: #d9e3f2; /* steel tint (the language 2026-11-08) */
+  --p-color-hs-tint-brass: #fcefcf; /* brass tint (the language 2026-11-08) */
+  --p-color-hs-tint-moss: #dff3e8; /* moss tint (the language 2026-11-08) */
+  --p-color-hs-tint-coral: #fbe3df; /* coral tint (the language 2026-11-08) */
+  --p-color-hs-ground: #e6ebf3; /* material tier 1: the window ground (the language 2026-11-08) */
+  --p-color-hs-plate: #f7f9fc; /* material tier 2: a plate on the ground (the language 2026-11-08) */
+  --p-color-hs-raised: #ffffff; /* material tier 3: a raised object (the language 2026-11-08) */
+  --p-color-hs-title: #d9e3f2; /* the title bar tint (the language 2026-11-08) */
+  --p-color-hs-edge: #b3c0d3; /* edges (the language 2026-11-08) */
+  --p-color-hs-rule: #d6dde8; /* row lines (the language 2026-11-08) */
+  --p-font-display: "Fraunces", "Fraunces Fallback", Georgia, "Times New Roman", serif;
   --p-font-ui: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
   --p-font-mono: "JetBrains Mono", "JetBrains Mono Fallback", "SFMono-Regular", "SF Mono", Consolas, "Liberation Mono",
@@ -83,49 +102,48 @@
    * ============================================================ */
 
   --bg: #f7f9fc;
-  --surface-1: #eef2f7;
-  --surface-2: #e5ebf3;
-  --surface-3: #d9e2ee;
-  --surface-hover: rgba(37, 52, 73, 0.06);
-  --surface-active: rgba(37, 52, 73, 0.10);
-  --text: #253449;
-  --text-muted: #53647a;
-  --text-faint: #63758b;
+  --surface-1: #e6ebf3;
+  --surface-2: #dde4ee;
+  --surface-3: #d9e3f2;
+  --surface-hover: rgba(16, 25, 43, 0.06);
+  --surface-active: rgba(16, 25, 43, 0.10);
+  --text: #10192b;
+  --text-muted: #44536b;
+  --text-faint: #56657c;
   --text-on-accent: #f7f9fc; /* light text on the deep Workbench blue */
-  --accent: #3b5d93;
+  --accent: #2b55a7;
   --accent-hover: color-mix(in srgb, var(--accent) 86%, var(--white));
   --accent-press: color-mix(in srgb, var(--accent) 86%, var(--black));
-  --accent-ink: #3b5d93; /* the blue fill under light Button text */
+  --accent-ink: #2b55a7; /* the blue fill under light Button text */
   --accent-ink-hover: color-mix(in srgb, var(--accent-ink) 86%, var(--white)); /* the primary hover fill */
   --accent-ink-press: color-mix(in srgb, var(--accent-ink) 86%, var(--black)); /* the primary pressed fill */
-  --accent-text: #3b5d93; /* blue text on a light shell */
-  --accent-tint: rgba(59, 93, 147, 0.12);
+  --accent-text: #2b55a7; /* blue text on a light shell */
+  --accent-tint: rgba(43, 85, 167, 0.12);
   --mark-bg: #ffe14d; /* ⌘K two-line hit (2026-10-05): the matched words in a memory snippet; 14.7:1 with --mark-fg, on the plain row and on the selected plate */
   --mark-fg: #0e0f13; /* ⌘K two-line hit (2026-10-05): the ink of the matched words */
-  --accent-glow: rgba(59, 93, 147, 0.20);
-  --accent-gradient: linear-gradient( 135deg, #e6eef9 0%, #3b5d93 100% );
-  --bg-gradient: linear-gradient( 180deg, #f7f9fc 0%, #eef2f7 100% );
-  --ok: #34d399;
-  --ok-strong: #10b981;
-  --ok-soft: rgba(52, 211, 153, 0.12);
-  --warn-signal: #fbbf24;
-  --warn-strong: #f59e0b;
-  --warn-soft: rgba(251, 191, 36, 0.12);
-  --danger-signal: #f87171;
-  --danger-fill: #dc2626;
-  --danger-soft: rgba(248, 113, 113, 0.12);
-  --info: #56c7f5;
-  --info-strong: #38bdf8;
-  --info-soft: rgba(86, 199, 245, 0.12);
-  --border-subtle: #d9e1eb;
-  --border: #bbc7d6; /* fine cool border */
-  --border-strong: #8fa4bd; /* focused / front-window border */
+  --accent-glow: rgba(43, 85, 167, 0.20);
+  --accent-gradient: linear-gradient( 135deg, #d9e3f2 0%, #2b55a7 100% );
+  --bg-gradient: linear-gradient( 180deg, #f7f9fc 0%, #e6ebf3 100% );
+  --ok: #1d7a4c;
+  --ok-strong: #155c39;
+  --ok-soft: #dff3e8;
+  --warn-signal: #b8800f;
+  --warn-strong: #7a5408;
+  --warn-soft: #fcefcf;
+  --danger-signal: #c23a26;
+  --danger-fill: #b0321f;
+  --danger-soft: #fbe3df;
+  --info: #2b55a7;
+  --info-strong: #1f448c;
+  --info-soft: #d9e3f2;
+  --border-subtle: #d6dde8;
+  --border: #b3c0d3; /* fine cool border */
+  --border-strong: #7f90a8; /* focused / front-window border */
   --bevel-light: transparent; /* retired hard bevel highlight in the modern shell */
   --bevel-dark: transparent; /* retired hard bevel shade in the modern shell */
   --etch-light: transparent; /* retired hard etch highlight in the modern shell */
   --etch-dark: transparent; /* retired hard etch shade in the modern shell */
-  --font-display: "Space Grotesk", "Inter", system-ui, -apple-system, BlinkMacSystemFont,
-    "Segoe UI", sans-serif;
+  --font-display: "Fraunces", "Fraunces Fallback", Georgia, "Times New Roman", serif;
   --font-ui: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
   --font-mono: "JetBrains Mono", "JetBrains Mono Fallback", "SFMono-Regular", "SF Mono", Consolas, "Liberation Mono",
@@ -152,7 +170,7 @@
   --danger-strong: var(--danger-fill);
   --info-soft-legacy: var(--info-soft);
   --disabled-bg: var(--surface-1);
-  --disabled-fg: #5e7086;
+  --disabled-fg: #56657c;
   --disabled-border: var(--border);
   --selected-bg: var(--accent-tint);
   --selected-fg: var(--text);
@@ -160,8 +178,8 @@
   --selection-bg: var(--accent); /* PHILO-9-04 (the owner ratified, 2026-09-27): the text selection ground, desk-wide. 4.26:1 against the field (--accent-tint read 1.13:1). */
   --selection-ink: var(--bg); /* PHILO-9-04: the selected text, the page ink on the accent ground: 4.56:1. */
   --field-bg: #ffffff;
-  --field-border: #bbc7d6;
-  --field-focus-border: #3b5d93;
+  --field-border: #b3c0d3;
+  --field-focus-border: #2b55a7;
   --local: var(--info);
   --local-soft: var(--info-soft);
   --font-size-xs: 0.75rem; /* PHILO-13-18 (C8): the 12 px floor. The smallest readable size; a caption, chip, meta or label under it rides this token (UX-CANON, the 12 px floor). Only a nontext glyph goes below it. */
@@ -205,11 +223,11 @@
   --radius-3: var(--radius-md);
   --radius-4: var(--radius-lg);
   --elev-0: none;
-  --elev-1: 0 1px 2px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  --elev-1: 0 1px 2px rgba(16, 25, 43, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.04);
   --elev-2: 0 8px 24px rgba(0, 0, 0, 0.5);
   --elev-3: 0 16px 48px rgba(0, 0, 0, 0.6);
   --elev-4: 0 24px 64px rgba(0, 0, 0, 0.7);
-  --glow-accent: 0 0 0 1px rgba(168, 110, 74, 0.4), 0 4px 18px var(--accent-glow);
+  --glow-accent: 0 0 0 1px rgba(43, 85, 167, 0.4), 0 4px 18px var(--accent-glow);
   --duration-micro: 60ms; /* immediate input feedback */
   --duration-short: 120ms;
   --duration-medium: 200ms;
@@ -228,20 +246,48 @@
   --z-toast: 300;
   --black: #000; /* absolute ink (shadow/scrim compositing) */
   --white: #fff; /* absolute paper (rare highlight compositing) */
-  --accent-cool: #3b5d93; /* the cool blue counterweight to the signal orange */
-  --accent-glow-strong: rgba(168, 110, 74, 0.5); /* the stronger accent glow (recording/attention) */
+  --accent-cool: #2b55a7; /* the cool blue counterweight to the signal orange */
+  --accent-glow-strong: rgba(184, 128, 15, 0.5); /* the stronger accent glow (recording/attention) */
   --shadow-ink-1: rgba(0, 0, 0, 0.34);
   --shadow-ink-2: rgba(0, 0, 0, 0.42);
   --shadow-ink-3: rgba(0, 0, 0, 0.5);
   --shadow-ink-4: rgba(0, 0, 0, 0.55);
   --shadow-ink-5: rgba(0, 0, 0, 0.6);
   --shadow-ink-6: rgba(0, 0, 0, 0.7);
-  --wash-1: rgba(37, 52, 73, 0.035); /* faint ink wash (hairline fills) */
-  --wash-2: rgba(37, 52, 73, 0.05); /* quiet ink hover wash */
+  --wash-1: rgba(16, 25, 43, 0.035); /* faint ink wash (hairline fills) */
+  --wash-2: rgba(16, 25, 43, 0.05); /* quiet ink hover wash */
   --bevel-light-strong: transparent; /* retired hard bevel highlight */
   --bevel-light-hover: transparent; /* retired hard bevel hover highlight */
   --bevel-dark-soft: transparent; /* retired soft bevel shade */
-  --accent-tint-faint: rgba(168, 110, 74, 0.08); /* Faint accent wash for project controls. */
+  --accent-tint-faint: rgba(43, 85, 167, 0.08); /* Faint accent wash for project controls. */
+  /* The language, 2026-11-08 (owner: "more contrast… don't make it so bland"): six meaning colours, their tints, three material tiers, four motion words. UX-CANON "The language, 2026-11-08". */
+  --hs-ink: #10192b; /* every word */
+  --hs-ink-2: #44536b; /* secondary words */
+  --hs-steel: #2b55a7; /* ours, running; the primary Button */
+  --hs-brass: #b8800f; /* the ONLY warm colour: waits on you */
+  --hs-brass-deep: #9c6b0b; /* the brass Button fill (white text 4.6:1) */
+  --hs-brass-ink: #7a5408; /* brass as a word; the brass Button edge */
+  --hs-moss: #1d7a4c; /* done, on track */
+  --hs-moss-ink: #155c39; /* moss as a word */
+  --hs-coral: #c23a26; /* at risk */
+  --hs-coral-ink: #9e2a18; /* coral as a word */
+  --hs-graphite: #4a5568; /* parked, quiet */
+  --hs-navy: #0f1829; /* the desk at night */
+  --hs-steel-tint: #d9e3f2;
+  --hs-brass-tint: #fcefcf;
+  --hs-moss-tint: #dff3e8;
+  --hs-coral-tint: #fbe3df;
+  --hs-ground: #e6ebf3; /* material tier 1: the window ground */
+  --hs-plate: #f7f9fc; /* material tier 2: a plate */
+  --hs-raised: #ffffff; /* material tier 3: a raised object */
+  --hs-raised-shadow: 0 4px 14px rgba(16, 25, 43, 0.18), inset 0 1px 0 #ffffff; /* the raised tier: a soft drop and a top highlight */
+  --hs-title: #d9e3f2; /* the title bar tint */
+  --hs-edge: #b3c0d3; /* edges */
+  --hs-rule: #d6dde8; /* row lines */
+  --motion-settle: 160ms; /* a thing comes to rest (reduced motion: 0) */
+  --motion-raise: 220ms; /* a thing comes forward (reduced motion: 0) */
+  --motion-breathe: 1600ms; /* a thing that waits on you breathes once a cycle (reduced motion: still) */
+  --motion-slide: 200ms; /* a thing moves along its track (reduced motion: 0) */
 
   /* ============================================================
    * 3. COMPONENT TOKENS (the Desk OS chrome — HS-95 values)
@@ -282,13 +328,13 @@
   --desk-atmosphere-garden-edge: #020706; /* Lantern Garden outer shade */
   --desk-z-dock-under: 40; /* the dock on compact viewports — sheets own the phone's bottom */
   --desk-z-popover: 82; /* popovers/toasts above even the transient band */
-  --desk-glass: #e9edf3; /* cool pale shell chrome */
+  --desk-glass: #e6ebf3; /* cool pale shell chrome */
   --desk-expose-veil: rgba(18, 27, 38, 0.42); /* W7 2026-10-28: the overview veil, slate over the wallpaper (window-chrome.css .desk-expose-scrim) */
   --desk-window-fill: var(--wb-paper); /* near-white window paper */
   --desk-panel-fill: var(--wb-field); /* secondary cool slate panel fill */
   --desk-window-radius: 8px; /* modern window radius */
   --desk-window-shadow: var(--depth-paper); /* the front window floats: a soft, deep shadow (window grammar 2026-10-24) */
-  --desk-window-shadow-rest: 0 5px 14px rgba(22, 40, 62, 0.10), 0 0 0 1px var(--wb-rule-soft); /* reduced depth for a resting window */
+  --desk-window-shadow-rest: 0 5px 14px rgba(16, 25, 43, 0.12), 0 0 0 1px var(--wb-rule-soft); /* reduced depth for a resting window */
   --desk-window-keyline: var(--wb-sel); /* fine blue edge for the front window */
   --desk-window-blur: none; /* HS-110-01: no backdrop-filter — opaque surfaces */
   --desk-window-bevel: none; /* modern shell uses fine borders and soft depth */
@@ -312,8 +358,8 @@
   --desk-window-rail: var(--wb-steel); /* cool pale steel rail */
   --desk-window-well: var(--wb-well); /* white field well with a fine border */
   --desk-terminal-screen: #0f1115; /* HS-111-11: the terminal screen — the well tone composited OPAQUE over the window fill (xterm paints an opaque canvas; a translucent well would flash white on mount) */
-  --desk-scrollbar-thumb: rgba(83, 100, 122, 0.35); /* quiet scrollbar thumb */
-  --desk-scrollbar-thumb-hover: rgba(83, 100, 122, 0.55); /* quiet scrollbar thumb under the pointer */
+  --desk-scrollbar-thumb: rgba(68, 83, 107, 0.4); /* quiet scrollbar thumb */
+  --desk-scrollbar-thumb-hover: rgba(68, 83, 107, 0.6); /* quiet scrollbar thumb under the pointer */
   --desk-control-h: 32px; /* shared desktop control height */
   --ease-quart: cubic-bezier(0.76, 0, 0.24, 1); /* HS-99: the default chrome easing (in-out-quart) */
   --ease-expo: cubic-bezier(0.87, 0, 0.13, 1); /* HS-99: the emphatic easing for large moves */
@@ -327,7 +373,7 @@
   --gleam-2: rgba(255, 255, 255, 0.09); /* hover lift on fabricated secondary faces */
   --gleam-3: rgba(255, 255, 255, 0.22); /* inner top highlight on the primary (accent) face */
   --desk-type-display-size: 1.625rem; /* HS-101: the interior display step — the one big fact a surface leads with (26px; matches --font-size-2xl) */
-  --desk-type-display-weight: 650; /* HS-101: display step weight (rides --font-display) */
+  --desk-type-display-weight: 600; /* HS-101: display step weight (rides --font-display) */
   --desk-type-display-lh: 1.15; /* HS-101: display step line height (numbers sit tight) */
   --desk-type-primary-size: 0.9375rem; /* HS-101: the primary line — what the material IS (15px; a deliberate step above --desk-surface-body-size) */
   --desk-type-primary-weight: 600; /* HS-101: primary line weight */
@@ -336,31 +382,31 @@
   --desk-aerogel-edge: var(--border); /* HS-110-01: aerogel border — solid 1px, not a soft wash */
   --desk-aerogel-blur: none; /* HS-110-01: no backdrop-filter — opaque receipt */
   --desk-aerogel-shadow: none; /* HS-110-01: no float shadow — bevel-depth only */
-  --desk-pill-neutral: #edf1f6; /* neutral status chip ground */
-  --desk-pill-ok: #e3f3ea; /* ok status chip ground */
-  --desk-pill-warn: #fff2cf; /* amber status chip ground */
-  --desk-pill-danger: #fde6e4; /* danger status chip ground */
-  --desk-pill-info: #e6eef9; /* info status chip ground */
-  --desk-pill-accent: #fff0df; /* attention status chip ground */
-  --wb-steel: #e7ecf3; /* cool pale steel for bars and controls */
-  --wb-steel-2: #f0f3f8; /* light hover steel */
-  --wb-ink: #253449; /* dark Workbench ink for lines and words */
-  --wb-paper: #fafbfc; /* near-white window paper */
-  --wb-blue: #e6eef9; /* pale blue active head and selection tint */
+  --desk-pill-neutral: #e8edf4; /* neutral status chip ground */
+  --desk-pill-ok: #dff3e8; /* ok status chip ground */
+  --desk-pill-warn: #fcefcf; /* amber status chip ground */
+  --desk-pill-danger: #fbe3df; /* danger status chip ground */
+  --desk-pill-info: #d9e3f2; /* info status chip ground */
+  --desk-pill-accent: #fcefcf; /* attention status chip ground */
+  --wb-steel: #edf1f7; /* cool pale steel for bars and controls */
+  --wb-steel-2: #f5f7fb; /* light hover steel */
+  --wb-ink: #10192b; /* dark Workbench ink for lines and words */
+  --wb-paper: #f7f9fc; /* near-white window paper */
+  --wb-blue: #d9e3f2; /* pale blue active head and selection tint */
   --wb-hi: transparent; /* retired hard bevel highlight */
   --wb-lo: transparent; /* retired hard bevel shade */
-  --wb-backdrop: #293847; /* quiet slate desktop floor */
-  --wb-dither: #293847; /* legacy floor pattern value, unused by the plain modern floor */
-  --wb-rec: #b3261e; /* PHILO-13-11 (C1) Workbench Steel: REC on paper (5.73:1) */
-  --wb-hover: rgba(37, 52, 73, 0.06); /* quiet control hover wash */
+  --wb-backdrop: #0f1829; /* quiet slate desktop floor */
+  --wb-dither: #0f1829; /* legacy floor pattern value, unused by the plain modern floor */
+  --wb-rec: #c23a26; /* PHILO-13-11 (C1) Workbench Steel: REC on paper (5.73:1) */
+  --wb-hover: rgba(16, 25, 43, 0.06); /* quiet control hover wash */
   --wb-press: color-mix(in srgb, var(--wb-blue) 70%, var(--wb-sel)); /* opaque modern pressed gadget fill */
   --wb-frame: 1px; /* fine window frame border */
   --wb-bar-h: 30px; /* desktop window title bar (window grammar 2026-10-24: 28-32px); narrow shell keeps 44px elsewhere */
   --wb-bar-front: var(--wb-sel); /* front window title bar: the deep Workbench blue, flat (paper ink on it; the faint shine is an inset highlight) */
   --wb-toolbar-h: 36px; /* window toolbar band under the title bar */
   --wb-statusbar-h: 24px; /* window status bar band at the foot */
-  --wb-sel-vivid: #2f67c8; /* vivid Workbench blue for a selected list row (paper ink 5.3:1) */
-  --wb-link-ink: #2f67c8; /* an object named in a note's text: a Project, a pull request, a Jira key, a decision (Note canvas A, 2026-10-27; paper ink 5.3:1) */
+  --wb-sel-vivid: #2b55a7; /* vivid Workbench blue for a selected list row (paper ink 5.3:1) */
+  --wb-link-ink: #2b55a7; /* an object named in a note's text: a Project, a pull request, a Jira key, a decision (Note canvas A, 2026-10-27; paper ink 5.3:1) */
   --wb-person-ink: #1f7a6b; /* a person named in a note's text (Note canvas A, 2026-10-27; paper ink 5.6:1) */
   --kind-project: #3b62c4; /* DELIGHT 2026-10-27, the kind hue of a Project: the Workbench blue of its folder (5.4:1 on paper); used only as a glyph seat, a row wash and a card rule, never on a Button */
   --kind-meeting: #1c78a8; /* DELIGHT 2026-10-27, the kind hue of a meeting: the sky blue of the floor's meeting glow (4.7:1 on paper); used only as a glyph seat, a row wash and a card rule, never on a Button */
@@ -371,11 +417,11 @@
   --kind-action: #8a5a3d; /* DELIGHT 2026-10-27, the kind hue of an action item: the ember ink (5.6:1 on paper); used only as a glyph seat, a row wash and a card rule, never on a Button */
   --kind-agent: #a84a1c; /* DELIGHT 2026-10-27, the kind hue of an agent: the coder orange (5.5:1 on paper); used only as a glyph seat, a row wash and a card rule, never on a Button */
   --kind-other: var(--wb-sel); /* DELIGHT 2026-10-27: the kind hue of any other object (the Workbench blue) */
-  --depth-paper: 0 22px 48px rgba(22, 40, 62, 0.24), 0 4px 12px rgba(22, 40, 62, 0.12); /* DELIGHT 2026-10-27, the depth scale, step 1 of 5: the front window's paper over the floor */
-  --depth-row: 0 1px 3px rgba(22, 40, 62, 0.12); /* DELIGHT 2026-10-27, the depth scale, step 2 of 5: a lifted row or a card that sits in its column (the Note's margin card) */
-  --depth-card: 0 10px 28px rgba(8, 14, 22, 0.22); /* DELIGHT 2026-10-27, the depth scale, step 3 of 5: a card that floats over the text (the peek card, the completion list, the feedback strip) */
-  --depth-menu: 0 8px 22px rgba(22, 40, 62, 0.12); /* DELIGHT 2026-10-27, the depth scale, step 4 of 5: a menu, a popover or a sheet */
-  --depth-dock: 0 10px 30px rgba(8, 14, 22, 0.45), 0 2px 6px rgba(8, 14, 22, 0.3); /* DELIGHT 2026-10-27, the depth scale, step 5 of 5: the dock glass over the floor */
+  --depth-paper: 0 22px 48px rgba(16, 25, 43, 0.28), 0 4px 12px rgba(16, 25, 43, 0.14); /* DELIGHT 2026-10-27, the depth scale, step 1 of 5: the front window's paper over the floor */
+  --depth-row: 0 1px 3px rgba(16, 25, 43, 0.14); /* DELIGHT 2026-10-27, the depth scale, step 2 of 5: a lifted row or a card that sits in its column (the Note's margin card) */
+  --depth-card: 0 10px 28px rgba(16, 25, 43, 0.24); /* DELIGHT 2026-10-27, the depth scale, step 3 of 5: a card that floats over the text (the peek card, the completion list, the feedback strip) */
+  --depth-menu: 0 8px 22px rgba(16, 25, 43, 0.16); /* DELIGHT 2026-10-27, the depth scale, step 4 of 5: a menu, a popover or a sheet */
+  --depth-dock: 0 10px 30px rgba(6, 10, 18, 0.5), 0 2px 6px rgba(6, 10, 18, 0.34); /* DELIGHT 2026-10-27, the depth scale, step 5 of 5: the dock glass over the floor */
   --today-light-warm: rgba(236, 160, 64, 0.06); /* DELIGHT 2026-10-27: Today's morning light, a warm wash from the toolbar (6 % at the top, gone by 120 px) */
   --today-light-cool: rgba(64, 112, 196, 0.06); /* DELIGHT 2026-10-27: Today's evening light, a cool wash from the toolbar (6 % at the top, gone by 120 px) */
   --wb-row-hover: color-mix(in srgb, var(--wb-sel) 8%, var(--wb-paper)); /* a list row lifted under the pointer */
@@ -390,8 +436,8 @@
   --desk-dock-shine: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 -1px 0 rgba(22, 40, 62, 0.10), 0 -6px 18px rgba(12, 20, 32, 0.18); /* the dock's faint top shine, its 1 px soft top rule and the soft shade it casts on the floor */
   --desk-dock-tile-lift: 0 2px 8px rgba(22, 40, 62, 0.16), 0 0 0 1px var(--wb-rule); /* a dock tile lifted under the pointer (a shadow and a ring, never a transform) */
   --desk-dock-active: color-mix(in srgb, var(--wb-sel-vivid) 14%, var(--wb-paper)); /* the soft blue plate under the active app's dock label */
-  --desk-dock-glass: rgba(30, 43, 58, 0.72); /* the floating dock (2026-10-26): the floor's slate as glass, not paper */
-  --desk-dock-glass-solid: #222f3e; /* the dock glass as one opaque tone, for the phone shelf's sticky gutter cover */
+  --desk-dock-glass: rgba(15, 24, 41, 0.76); /* the floating dock (2026-10-26): the floor's slate as glass, not paper */
+  --desk-dock-glass-solid: #131d31; /* the dock glass as one opaque tone, for the phone shelf's sticky gutter cover */
   --desk-dock-glass-rule: rgba(233, 238, 245, 0.16); /* the dock plate's 1 px rim and the rule before the seated windows */
   --desk-dock-glass-shade: var(--depth-dock), inset 0 1px 0 rgba(255, 255, 255, 0.1); /* the dock plate's shadow on the floor and its top shine */
   --desk-dock-glass-ink: #e9eef5; /* paper ink on the dock glass (the running dot, the offline tag) */
@@ -405,31 +451,31 @@
   --wb-drop: var(--depth-menu); /* soft shell depth */
   --wb-stipple: none; /* modern bars have a quiet solid fill */
   --wb-stipple-fine: none; /* modern bars have no title hatching */
-  --wb-ink-dim: #4d5e75; /* quiet inactive title ink on light steel */
-  --wb-rule: #c5cfdd; /* fine chrome hairline */
+  --wb-ink-dim: #44536b; /* quiet inactive title ink on light steel */
+  --wb-rule: #b3c0d3; /* fine chrome hairline */
   --wb-raised-soft: none; /* modern controls have no bevel box */
-  --wb-steel-dim: #d9e0ea; /* resting window steel */
-  --wb-umbra: 0 16px 36px rgba(22, 40, 62, 0.16); /* soft front-window depth */
-  --wb-umbra-near: 0 8px 18px rgba(22, 40, 62, 0.10); /* reduced resting-window depth */
-  --desk-veil-near: rgba(37, 52, 73, 0.03); /* quiet near-window wash */
-  --desk-veil-far: rgba(37, 52, 73, 0.07); /* quiet far-window wash */
-  --wb-field: #edf1f6; /* cool pale slate window ground */
+  --wb-steel-dim: #dde4ee; /* resting window steel */
+  --wb-umbra: 0 16px 36px rgba(16, 25, 43, 0.2); /* soft front-window depth */
+  --wb-umbra-near: 0 8px 18px rgba(16, 25, 43, 0.12); /* reduced resting-window depth */
+  --desk-veil-near: rgba(16, 25, 43, 0.03); /* quiet near-window wash */
+  --desk-veil-far: rgba(16, 25, 43, 0.07); /* quiet far-window wash */
+  --wb-field: #e6ebf3; /* cool pale slate window ground */
   --wb-field-hi: #f7f9fc; /* light window ground */
   --wb-well: #ffffff; /* white input and ledger well */
-  --wb-text: #253449; /* dark ink inside a window */
-  --wb-muted: #53647a; /* quiet ink on the light window ground */
-  --wb-rule-soft: #d9e1eb; /* fine hairline between rows */
-  --wb-sel: #3b5d93; /* deep Workbench blue for primary, focus and front accents */
+  --wb-text: #10192b; /* dark ink inside a window */
+  --wb-muted: #44536b; /* quiet ink on the light window ground */
+  --wb-rule-soft: #d6dde8; /* fine hairline between rows */
+  --wb-sel: #2b55a7; /* deep Workbench blue for primary, focus and front accents */
   --desk-window-fall: linear-gradient(180deg, var(--wb-field-hi) 0%, var(--wb-field) 100%); /* quiet slate window ground */
-  --desk-floor: radial-gradient(1200px 700px at 8% 0%, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0) 65%), linear-gradient(180deg, #33495f 0%, var(--wb-backdrop) 100%); /* plain quiet slate floor with subtle tonal depth; no checker */
+  --desk-floor: radial-gradient(1200px 700px at 8% 0%, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0) 65%), linear-gradient(180deg, #1b2a45 0%, var(--wb-backdrop) 100%); /* plain quiet slate floor with subtle tonal depth; no checker */
   --desk-ease: cubic-bezier(0.2, 0.8, 0.2, 1); /* PHILO-16 (A1) the motion grammar: the one easing for every compositor moment */
-  --desk-raise-duration: 180ms; /* PHILO-16 (A1) the motion grammar: Raise, the frame and the umbra change plane */
-  --desk-lamp-pulse: 1.6s; /* PHILO-16 (A1) the title-bar lamp: an asking window pulses once every 1.6 s (reduced motion: static) */
-  --wb-ember-ink: #7a4a2c; /* PHILO-16 (A1) the interior: ember as TEXT or a filled verb on slate (4.9:1 on --wb-field; 6.6:1 under --text-on-accent); the accent remaps to it inside a window */
-  --wb-ok-ink: #1d5c2e; /* PHILO-16 (A1) the interior: an ok word on slate (5.3:1 on --wb-field; the C1 dock tag tone) */
-  --wb-warn-ink: #6b4a00; /* PHILO-16 (A1) the interior: a warn word on slate (5.3:1 on --wb-field; the C1 dock tag tone) */
-  --wb-danger-ink: #9b2219; /* PHILO-16 (A1) the interior: a danger word on slate (5.5:1 on --wb-field) */
-  --wb-info-ink: #2f4f86; /* PHILO-16 (A1) the interior: an info word on slate (5.4:1 on --wb-field) */
+  --desk-raise-duration: var(--motion-raise); /* PHILO-16 (A1) the motion grammar: Raise, the frame and the umbra change plane */
+  --desk-lamp-pulse: var(--motion-breathe); /* PHILO-16 (A1) the title-bar lamp: an asking window pulses once every 1.6 s (reduced motion: static) */
+  --wb-ember-ink: #7a5408; /* PHILO-16 (A1) the interior: ember as TEXT or a filled verb on slate ; the accent remaps to it inside a window (the language 2026-11-08: rides the language ink) */
+  --wb-ok-ink: #155c39; /* PHILO-16 (A1) the interior: an ok word on slate (the language 2026-11-08: rides the language ink) */
+  --wb-warn-ink: #7a5408; /* PHILO-16 (A1) the interior: a warn word on slate (the language 2026-11-08: rides the language ink) */
+  --wb-danger-ink: #9e2a18; /* PHILO-16 (A1) the interior: a danger word on slate (the language 2026-11-08: rides the language ink) */
+  --wb-info-ink: #2b55a7; /* PHILO-16 (A1) the interior: an info word on slate (the language 2026-11-08: rides the language ink) */
   --bevel-raised: none; /* modern controls use a fine border and soft depth */
   --bevel-sunken: none; /* modern fields use a fine border */
   --bevel-raised-soft: none; /* modern controls have no bevel box */
@@ -438,7 +484,7 @@
   --lamp-warn: var(--warn-signal); /* PHILO-14 B1 (the object species): IconLamp tone warn: a held call, due, to review */
   --lamp-fail: var(--danger); /* PHILO-14 B1 (the object species): IconLamp tone fail: a failed check, a stopped agent */
   --lamp-info: var(--accent-cool); /* PHILO-14 B1 (the object species): IconLamp tone info: in progress (an agent at work, a PR open) */
-  --lamp-ask: var(--p-color-orange-300); /* PHILO-14 B1 (the object species): IconLamp tone ask: it asks you (an agent's question); the ember of the A boards */
+  --lamp-ask: #b8800f; /* IconLamp tone ask: it waits on you; brass, the one warm colour (the language 2026-11-08) */
   --desk-ghost-shadow: drop-shadow(4px 4px 0 rgba(0, 0, 0, 0.45)); /* PHILO-14 B1 (the object species): the DragGhost's hard offset shadow (no blur, the Workbench drop) */
 }
 
@@ -449,6 +495,10 @@
     --duration-medium: 0ms;
     --duration-long: 0ms;
     --duration-slow: 0ms;
+    --motion-settle: 0ms;
+    --motion-raise: 0ms;
+    --motion-breathe: 0ms;
+    --motion-slide: 0ms;
   }
 
   *,

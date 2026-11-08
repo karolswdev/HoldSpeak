@@ -23,6 +23,7 @@ from typing import Any, Optional
 __all__ = [
     "utc_now", "utc_now_iso", "utc_iso", "local_now", "local_wall", "parse_stamp", "aware",
     "sql_window", "in_window", "parse_wall", "sql_instant", "naive_local", "parse_iso_datetime",
+    "utc_now_seconds", "utc_now_z", "utc_now_z_micro", "utc_now_iso_z", "parse_utc_iso",
 ]
 
 
@@ -34,6 +35,39 @@ def utc_now() -> datetime:
 def utc_now_iso() -> str:
     """Now, as an aware UTC ISO string (``...+00:00``)."""
     return datetime.now(timezone.utc).isoformat()
+
+
+def _utc_text(timespec: str, zulu: bool) -> str:
+    text = datetime.now(timezone.utc).isoformat(timespec=timespec)
+    return text.replace("+00:00", "Z") if zulu else text
+
+
+# The four other stored text shapes of "now" (HS-S54). Each is a wire or
+# table contract of the rows that hold it, so the shapes stay apart: a module
+# imports the one its rows hold (``from holdspeak.timestamps import utc_now_z
+# as _now``), never a copy of its body.
+
+
+def utc_now_seconds() -> str:
+    """Now, UTC, seconds precision, ``+00:00`` (``2026-11-08T12:00:00+00:00``)."""
+    return _utc_text("seconds", False)
+
+
+def utc_now_z() -> str:
+    """Now, UTC, seconds precision, ``Z`` (``2026-11-08T12:00:00Z``): the sync
+    wire's form, the same text as ``strftime("%Y-%m-%dT%H:%M:%SZ")``."""
+    return _utc_text("seconds", True)
+
+
+def utc_now_z_micro() -> str:
+    """Now, UTC, microseconds always, ``Z`` (``2026-11-08T12:00:00.000000Z``)."""
+    return _utc_text("microseconds", True)
+
+
+def utc_now_iso_z() -> str:
+    """Now, UTC, ``isoformat()`` precision (microseconds only when not zero),
+    ``Z``: ``utc_now_iso()`` with a ``Z``."""
+    return _utc_text("auto", True)
 
 
 def utc_iso(value: Optional[datetime] = None) -> str:
@@ -83,6 +117,22 @@ def parse_iso_datetime(value: Any) -> Optional[datetime]:
         return datetime.fromisoformat(value)
     except Exception:
         return None
+
+
+def parse_utc_iso(value: Any) -> Optional[datetime]:
+    """An ISO string read as an aware time, else None (HS-S54).
+
+    ``Z`` reads as ``+00:00``; a value without a zone is UTC (unlike
+    ``parse_stamp``, which reads a bare ISO string as hub-local wall time);
+    the zone of an aware value is kept. An empty, missing or unreadable value
+    is None, never an error. A ``datetime`` reads through its ``str`` form."""
+    if not value:
+        return None
+    try:
+        parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except (TypeError, ValueError):
+        return None
+    return parsed if parsed.tzinfo is not None else parsed.replace(tzinfo=timezone.utc)
 
 
 def parse_stamp(value: Any) -> Optional[datetime]:

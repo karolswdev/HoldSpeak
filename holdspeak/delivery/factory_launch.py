@@ -53,6 +53,7 @@ from .. import coder_factory, coder_steering
 from ..coder_steering import Runner
 from ..logging_config import get_logger
 from .attempts import resolver_from_registry
+from holdspeak.timestamps import parse_utc_iso as _parse_ts
 
 log = get_logger("delivery.factory_launch")
 
@@ -275,16 +276,6 @@ def _iso_now(now: Optional[datetime] = None) -> str:
     if moment.tzinfo is None:
         moment = moment.replace(tzinfo=timezone.utc)
     return moment.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-
-
-def _parse_ts(text: Any) -> Optional[datetime]:
-    try:
-        parsed = datetime.fromisoformat(str(text or "").replace("Z", "+00:00"))
-    except ValueError:
-        return None
-    if parsed.tzinfo is None:
-        parsed = parsed.replace(tzinfo=timezone.utc)
-    return parsed
 
 
 def _stale_claim(row: Mapping[str, Any], claim: Mapping[str, Any], launch: Optional[Mapping[str, Any]]) -> bool:

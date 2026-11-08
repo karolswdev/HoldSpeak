@@ -41,7 +41,6 @@ unchanged.  The run SOURCE for the first op is the request `input` (rendered thr
 from __future__ import annotations
 
 from dataclasses import dataclass
-import uuid
 from typing import Any, Optional
 
 from ..grounding import (
@@ -53,14 +52,13 @@ from ..grounding import (
 )
 from ..intel.providers import run_egress as _run_egress
 from ..logging_config import get_logger
+from holdspeak.ids import new_id as _new_id
 
 log = get_logger("services.support")
 
 CANONICAL_SOURCE_TYPES: frozenset[str] = frozenset({"recipe", "input", "chain", "workflow", "invocation", "attempt"})
 _SOURCE_TYPE_ALIASES: dict[str, str] = {"card": "input", "agent": "recipe"}
 
-def _new_id(prefix: str) -> str:
-    return f"{prefix}_{uuid.uuid4().hex[:12]}"
 
 def canonical_source_type(raw: Any) -> str:
     val = str(raw or "").strip().lower()

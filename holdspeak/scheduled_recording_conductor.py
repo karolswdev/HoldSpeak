@@ -29,6 +29,7 @@ from typing import Any, Callable, Optional
 from .cron import cron_is_due, next_cron_fire, next_cron_fire_in_zone
 from .logging_config import get_logger
 from .principals import Principal, PrincipalKind
+from holdspeak.timestamps import utc_now_z as _now_iso
 
 log = get_logger("scheduled_recording_conductor")
 
@@ -79,10 +80,6 @@ def broadcast(event_type: str, data: dict) -> None:
             _broadcast(event_type, data)
         except Exception as exc:
             log.debug(f"Broadcast emit failed: {exc}")
-
-
-def _now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
 
 
 def _resolve_tz(tz_name: str) -> timezone:

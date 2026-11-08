@@ -27,11 +27,11 @@ from __future__ import annotations
 import json
 import threading
 import uuid
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Mapping, Optional
 
 from ..logging_config import get_logger
+from holdspeak.timestamps import utc_now_iso_z as _now
 
 log = get_logger("agent_hand_queue")
 
@@ -48,10 +48,6 @@ def default_queue_path() -> Path:
     from ..delivery import factory_launch
 
     return Path(factory_launch.DEFAULT_LAUNCHES_PATH).with_name("agent_hand_queue.json")
-
-
-def _now() -> str:
-    return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
 class HandQueue:

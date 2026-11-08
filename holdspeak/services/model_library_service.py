@@ -17,7 +17,6 @@ import json
 import re
 import uuid
 from dataclasses import replace as _replace
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -27,6 +26,7 @@ from .errors import ConflictError, NotFound, ServiceError, ValidationError
 from .model_profile_service import ModelProfileService
 from .profile_key_service import ProfileKeyService
 from .profile_service import ProfileService
+from holdspeak.timestamps import utc_now_z_micro as _now
 
 MODEL_LIBRARY_SCHEMA = "ModelLibraryProjection@1"
 _SUCCESS_COPY = "Added to the Model Library. Assignments are unchanged."
@@ -64,10 +64,6 @@ def _canonical(value: Any) -> str:
 
 def _digest(value: Any) -> str:
     return "sha256:" + hashlib.sha256(_canonical(value).encode("utf-8")).hexdigest()
-
-
-def _now() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="microseconds").replace("+00:00", "Z")
 
 
 def _text(value: Any, fallback: str = "Model") -> str:

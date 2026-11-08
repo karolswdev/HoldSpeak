@@ -2,6 +2,8 @@
 
 export { StateChip, type ChipState } from "./StateChip";
 export { ProgressDots, type ProgressDotsProps } from "./ProgressDots";
+export { Mast, type MastProps } from "./Mast";
+export { Spine, spineSegments, type SpineProps, type SpineSegment, type SpineTone } from "./Spine";
 export { ActionNotice } from "./ActionNotice";
 export { Disclosure } from "./Disclosure";
 export { ProgressPlan, type PlanStep } from "./ProgressPlan";

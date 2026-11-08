@@ -24,10 +24,10 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
-from datetime import datetime, timezone
 from typing import Any, Optional
 
 from .base import BaseRepository
+from holdspeak.timestamps import utc_now_z_micro as _now
 
 # The states a row can hold.  The full posture-6 vocabulary is in the CHECK so
 # the `TaskResume` species can draw rows from every owner (ruling B8); the
@@ -44,10 +44,6 @@ UNFINISHED_ASK_TASK_STATES = ("saved", "running", "waiting", "failed", "incomple
 # The named reason a row carries when the process that was running it died.
 # A code, not a composed sentence (ruling B5).
 HOST_LOST_CODE = "ask_task_host_lost"
-
-
-def _now() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="microseconds").replace("+00:00", "Z")
 
 
 @dataclass(frozen=True)
