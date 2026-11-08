@@ -362,3 +362,20 @@ export function isOldQueue(detail: AutomationDetail): boolean {
   if (detail.instruction_from === "automation") return false;
   return Boolean(detail.recipe_id) || (detail.items ?? []).length > (detail.results ?? []).length;
 }
+
+
+/** 2026-11-08 (owner: "sequences and workflows are programs"): an old queue
+ *  automation is set up as a program. Its waiting tasks become the steps,
+ *  each brief its agent's prompt and the task; the agent's prompt is the
+ *  goal. Nothing is converted until he presses Create in New program. */
+export function oldQueuePrefill(detail: AutomationDetail): { title: string; goal: string; steps: Array<{ title: string; brief: string }> } {
+  const instruction = String(detail.instruction_shown ?? "").trim();
+  const steps = (detail.items ?? [])
+    .filter((item) => !item.parked && item.status !== "done")
+    .map((item) => ({
+      title: item.title,
+      brief: [instruction, String(item.body ?? "").trim()].filter(Boolean).join("\n\n"),
+    }));
+  return { title: detail.name || "Automation", goal: instruction, steps };
+}
+

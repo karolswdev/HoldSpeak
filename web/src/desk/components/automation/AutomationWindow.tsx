@@ -72,6 +72,7 @@ import { useDropHand } from "../../hand";
 import { useBuilderTools } from "../../builderTools";
 import { ResultBody, ResultCard } from "./ResultCard";
 import { ProgramAgent, ProgramDo, programDraft, programFields, sameProgram, type ProgramDraft } from "./ProgramDo";
+import { openNewProgram } from "../../programs/newProgram";
 import { openProgram } from "../../programs/open";
 import {
   canMakeOne,
@@ -80,6 +81,7 @@ import {
   failureWords,
   hasStarts,
   isOldQueue,
+  oldQueuePrefill,
   isOn,
   lessonWords,
   nextWords,
@@ -607,6 +609,9 @@ export function AutomationWindow({
   const builder = useBuilderTools((state) => state.on);
   const name = detail?.name || "Automation";
   const isProgram = detail?.do_kind === "run_program";
+  // An old queue (an agent and no Do text of its own): Programs run it now.
+  const oldQueue = Boolean(detail && (detail.do_kind ?? "run") === "run" && detail.instruction_from !== "automation"
+    && isOldQueue(detail));
   const doText = detail?.do_kind === "hand_to_agent"
     ? "Hand to an agent session"
     : detail && isProgram ? programDoWords(detail) : detail?.instruction_shown ?? "";
@@ -711,16 +716,25 @@ export function AutomationWindow({
             one primary; Edit opens the guided setup; Send… sends the result
             the reader shows. */}
         <Toolbar label={name} data-testid="automation-toolbar">
-          <Button
-            dense
-            variant="primary"
-            onClick={() => void runNow()}
-            disabled={!detail || Boolean(working) || showBuilder}
-            data-testid="automation-run-now"
-          >
-            <ToolGlyph kind="run" />
-            Run now
-          </Button>
+          {detail && oldQueue ? (
+            // An old queue automation is set up as a program: its tasks are the steps.
+            <Button dense variant="primary" onClick={() => openNewProgram(oldQueuePrefill(detail))}
+              data-testid="automation-set-up-program">
+              <ToolGlyph kind="run" />
+              Set this up as a program
+            </Button>
+          ) : (
+            <Button
+              dense
+              variant="primary"
+              onClick={() => void runNow()}
+              disabled={!detail || Boolean(working) || showBuilder}
+              data-testid="automation-run-now"
+            >
+              <ToolGlyph kind="run" />
+              Run now
+            </Button>
+          )}
           <Button dense variant="secondary" disabled={!detail || showBuilder} onClick={() => {
             setWizardOpen(true);
             setWizardAutoStarted(false);

@@ -938,6 +938,28 @@ describe("an old automation (A9)", () => {
     expect(screen.getByTestId("automation-do-more")).toHaveTextContent("less");
   });
 
+  it("an old queue is set up as a program: New program opens with its waiting tasks as the steps", async () => {
+    hub.step = oldQueue as Step;
+    const opened: unknown[] = [];
+    const before = useDesk.getState().openSurfaceWindow;
+    useDesk.setState({ openSurfaceWindow: ((...args: unknown[]) => { opened.push(args); }) as typeof before });
+    try {
+      render(<AutomationWindow workbenchId={(oldQueue as Step).workbench_id} onRaw={() => undefined} />);
+      await screen.findByTestId("automation-sentence");
+      // Programs run it now: no Run now for an old queue.
+      expect(screen.queryByTestId("automation-run-now")).toBeNull();
+      fireEvent.click(screen.getByTestId("automation-set-up-program"));
+      expect(opened).toEqual([["open-programs"]]);
+      const asked = JSON.parse(useDesk.getState().places["programs/new"] ?? "{}");
+      expect(asked.goal).toBe(doOf(oldQueue).trim());
+      expect(asked.steps.map((row: { title: string }) => row.title)).toEqual(itemsOf(oldQueue).map((item) => item.title));
+      expect(asked.steps[0].brief.startsWith(doOf(oldQueue).trim())).toBe(true);
+      expect(hub.calls.filter((call) => call.method === "POST")).toEqual([]);  // nothing made until Create
+    } finally {
+      useDesk.setState({ openSurfaceWindow: before });
+    }
+  });
+
   it("its done tasks open in place to their answers, and one press makes it one automation; nothing is lost", async () => {
     hub.step = oldQueueRan as Step;
     render(<AutomationWindow workbenchId={(oldQueueRan as Step).workbench_id} onRaw={() => undefined} />);
