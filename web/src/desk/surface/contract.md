@@ -131,6 +131,8 @@ viewport the window's own title-bar Back is that Back: `useWindowBack`
 (`surface/back.tsx`, a slot like `useWindowTitle`) hands the hosted frame's
 compact Back and its test id to the open pane, and the title bar names the
 pane; a narrow window off the phone, or a specimen, keeps the pane's Back.
+A step that is a way out, not a way back (the New program wizard), names
+the Back with its `label` (`Cancel`).
 A newer edit cannot inherit an older write's
 Saved receipt. Raw alias text is an edit until committed and must survive
 section leave. The local Forms adapter cannot write configuration or start

@@ -9,6 +9,8 @@ export type WindowBack = {
   onBack: () => void;
   /** The test id the frame's Back carries while this step owns it. */
   testId?: string;
+  /** The Back's word while this step owns it (a wizard says Cancel). */
+  label?: string;
 };
 
 /** The host provides a setter; null means no host (pullouts, tests). */

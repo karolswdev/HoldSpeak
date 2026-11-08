@@ -477,7 +477,7 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
                              question_id=args.get("question_id"), names=args.get("names"),
                              apply=args.get("apply") is True)
     if name == "program.shape":
-        from holdspeak.services.program_service import ProgramRefused
+        from holdspeak.services.program_definitions import ProgramRefused
 
         try:
             found = service.find(principal, program_id=args.get("program_id"), name=args.get("name"))
@@ -534,7 +534,7 @@ def _by_name(service: Any, name: str, args: dict[str, Any], principal: Principal
     a Program that runs already are answers, not errors: ``spoken`` says what
     is so, and nothing starts. By ``program_id`` alone the refusals stay.
     Each answer carries ``spoken``: the state in one or two sentences."""
-    from holdspeak.services.program_service import ProgramRefused, spoken_state
+    from holdspeak.services.program_definitions import ProgramRefused, spoken_state
 
     def said(wire: dict[str, Any], **more: Any) -> dict[str, Any]:
         return {**wire, **more, "spoken": spoken_state(wire)}
