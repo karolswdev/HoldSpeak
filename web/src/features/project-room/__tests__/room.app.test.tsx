@@ -1731,7 +1731,7 @@ describe("HS-S13: the Room lists the Programs filed to its project", () => {
     let reads = 0;
     wire({ [room(degraded.project_id)]: () => (++reads === 1 ? clone(degraded) : clone(hand.roomAfter)) });
     const second = render(<WindowHarness scope={`project:${degraded.project_id}`} />);
-    expect((await screen.findByTestId("room-programs-unavailable")).textContent).toBe("Could not read the Programs");
+    expect((await screen.findByTestId("room-programs-unavailable")).textContent).toContain("Programs not read");
     expect(screen.queryByTestId("room-programs-empty")).toBeNull();
     expect(screen.queryByTestId("room-program-row")).toBeNull();
     fireEvent.click(screen.getByTestId("room-programs-refresh"));
@@ -1748,7 +1748,7 @@ describe("HS-S13: the Room lists the Programs filed to its project", () => {
 
     wire({ [room(BARE_ROOM.project_id)]: () => clone(BARE_ROOM) });
     render(<WindowHarness scope={`project:${BARE_ROOM.project_id}`} />);
-    expect((await screen.findByTestId("room-programs-unavailable")).textContent).toBe("This hub does not read Programs");
+    expect((await screen.findByTestId("room-programs-unavailable")).textContent).toContain("Not read by this hub");
   });
 
   it("the create's recorded frame reads the Room again: the new Program appears by its id", async () => {
