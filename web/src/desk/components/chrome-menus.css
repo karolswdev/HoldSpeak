@@ -793,8 +793,11 @@
   background: var(--wb-blue);
   color: var(--wb-ink);
 }
+/* The wordmark rides the display face at 700, the one 700 on the desk
+   (the language, 2026-11-08). */
 .desk-next .desk-menubar .desk-mark {
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-weight: 700;
 }
 .desk-next .desk-clock {
   display: inline-flex;

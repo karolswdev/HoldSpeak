@@ -8,7 +8,7 @@ This page groups the main tables and explains keys, JSON columns, projections, a
 [STORAGE_AND_MIGRATIONS.md](STORAGE_AND_MIGRATIONS.md) covers backup and schema repair.
 
 The [schema inventory](generated/schema-inventory.json) lists every table, column, index, and trigger.
-It comes from `SCHEMA_SQL` in `holdspeak/db/schema.py`.
+It comes from `SCHEMA_SQL` in `holdspeak/db/schema/`.
 It shows the declared base schema.
 It does not show the exact shape of your database.
 
@@ -33,7 +33,7 @@ erDiagram
 ```
 
 Some lines are concepts and not SQLite foreign keys.
-`holdspeak/db/schema.py` has the exact constraints.
+`holdspeak/db/schema/` has the exact constraints.
 
 ## Table groups
 

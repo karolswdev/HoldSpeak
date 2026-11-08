@@ -629,7 +629,7 @@ CLAIMS: list[Claim] = [
         story="",
     ),
     Claim(
-        doc="holdspeak/db/schema.py",
+        doc="holdspeak/db/schema/working_context.py",
         anchor="1. `unavailable` -> `stale` on an undelete is DELIBERATE.",
         sentence=(
             "`unavailable` -> `stale` on an undelete is DELIBERATE. The AU branch "
