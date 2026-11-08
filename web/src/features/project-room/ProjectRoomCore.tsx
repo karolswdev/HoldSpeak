@@ -1957,9 +1957,9 @@ function RoomProgramsSection({ section, onRefresh }: {
   const failed = section?.state === "degraded";
   return (
     <RoomFold title="Programs" open={failed || undefined} testId="room-fold-programs">
-      <p className="room-empty-line" data-testid="room-programs-unavailable" data-reason={failed ? section.error_code : "absent"}>
-        {failed ? "Could not read the Programs" : "This hub does not read Programs"}
-      </p>
+      <span data-testid="room-programs-unavailable" data-reason={failed ? section.error_code : "absent"}>
+        <StateChip state="unreachable" label={failed ? "PROGRAMS NOT READ" : "NOT READ BY THIS HUB"} />
+      </span>
       {failed ? <Button dense variant="secondary" onClick={onRefresh} data-testid="room-programs-refresh">Refresh</Button> : null}
     </RoomFold>
   );
