@@ -23,6 +23,15 @@ log = get_logger("runtime.cadence")
 BRIEF_PRINCIPAL_IDENTITY = "brief-conductor"
 
 
+def should_send_daily_brief(now, *, last_sent_date, earliest_hour: int = 7) -> bool:
+    """Once per local day, only after the earliest hour, never twice the same
+    day. ``last_sent_date`` is the YYYY-MM-DD last done (moved here from the
+    parked Cadence push brief, 2026-11-08)."""
+    if now.hour < earliest_hour:
+        return False
+    return now.strftime("%Y-%m-%d") != (last_sent_date or "")
+
+
 class CadenceMixin:
     def _cadence_enabled(self) -> bool:
         configured = bool(getattr(getattr(self.config, "cadence", None), "enabled", False))
@@ -109,7 +118,6 @@ class CadenceMixin:
             log.debug("cadence: reach not read: %s", exc)
         try:
 
-            from ..cadence.brief import should_send_daily_brief
             from ..cadence.models import CadencePolicy
             from ..cadence_telegram import TelegramSurface
             from ..db import get_database
@@ -203,8 +211,6 @@ class CadenceMixin:
     def _brief_due(self, db, now) -> bool:
         """True when the day's scheduled Brief is not made yet and its hour
         (``brief_hour``) has come."""
-        from ..cadence.brief import should_send_daily_brief
-
         policy = db.cadence.get_policy("brief_regeneration")
         last_regen = (policy.config.get("last_regen_date") if policy else None)
         earliest = int(getattr(self.config.cadence, "brief_hour", 6)) % 24

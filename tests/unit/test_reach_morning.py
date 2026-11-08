@@ -28,7 +28,8 @@ def _morning(tmp_path, *, mode: str = "digest") -> Desk:
 
 def _loop(desk: Desk) -> None:
     desk.rig.db.cadence.upsert_loop(OpenLoop(source_type="proposal", source_id="p1",
-                                             title="Create issue: watchdog", stale_score=16.0))
+                                             title="Create issue: watchdog", stale_score=16.0,
+                                             priority="high"))
 
 
 def _texts(desk: Desk) -> list[str]:
@@ -40,12 +41,12 @@ def _carried(desk: Desk) -> str | None:
     return (policy.config or {}).get("last_sent_date") if policy else None
 
 
-def test_the_cadence_line_names_the_top_move_only_when_a_loop_is_due(tmp_path) -> None:
+def test_the_morning_line_is_the_days_brief_only_when_it_holds_anything(tmp_path) -> None:
     desk = _morning(tmp_path)
     assert desk.reach.cadence_line() is None
     _loop(desk)
     line = desk.reach.cadence_line()
-    assert line.startswith("Cadence: ") and line.endswith(" 1 open loop.")
+    assert line.startswith("Brief: ") and line.endswith(" 1 open loop.")
 
 
 def test_the_nights_line_carries_the_cadence_line_in_one_message(tmp_path) -> None:
@@ -54,7 +55,7 @@ def test_the_nights_line_carries_the_cadence_line_in_one_message(tmp_path) -> No
     sent = desk.reach.night_line("program:p1:night:2026-11-02", "Dreaming · HoldSpeak\nSince last night: 1 step done")
     assert sent["sent"] is True
     (text,) = _texts(desk)
-    assert "Since last night: 1 step done" in text and "\nCadence: " in text
+    assert "Since last night: 1 step done" in text and "\nBrief: " in text
     assert _carried(desk) == local_noon().strftime("%Y-%m-%d")
     # The tick at the same hour sends no second message: no digest, no Cadence line again.
     desk.reach.tick()
@@ -69,7 +70,7 @@ def test_the_digest_carries_what_waits_and_the_cadence_line_once(tmp_path) -> No
     assert desk.reach.tick()["digest"] is not None
     (text,) = _texts(desk)
     assert text.startswith("1 waits on you") and "step 1" in text
-    assert text.rstrip().splitlines()[-1].startswith("Cadence: ")
+    assert text.rstrip().splitlines()[-1].startswith("Brief: ")
     desk.reach.tick()
     assert len(_texts(desk)) == 1
 
@@ -80,7 +81,7 @@ def test_only_a_due_loop_is_one_plain_line_and_nothing_due_sends_nothing(tmp_pat
     _loop(desk)
     desk.reach.tick()
     (text,) = _texts(desk)
-    assert text.startswith("Cadence: ") and "wait on you" not in text
+    assert text.startswith("Brief: ") and "wait on you" not in text
 
 
 def test_cadences_own_push_stays_quiet_while_reach_carries_it(tmp_path, monkeypatch) -> None:
@@ -140,4 +141,4 @@ def test_the_night_line_and_the_digest_never_both_carry_the_cadence_line(tmp_pat
         thread.start()
     for thread in threads:
         thread.join(10)
-    assert sum(text.count("Cadence: ") for text in _texts(desk)) == 1, _texts(desk)
+    assert sum(text.count("Brief: ") for text in _texts(desk)) == 1, _texts(desk)

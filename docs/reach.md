@@ -53,7 +53,7 @@ The digest is a plain list: "3 wait on you", one line for each item ("Finding ·
 
 - After a night program, the message is the night's "Since last night" line, with how many of the night's items wait on you and their page link.
 - Else it is the digest, when something waits on you.
-- When a Cadence loop is due, the same message ends with the Cadence brief's line, for example "Cadence: Create issue: watchdog. 3 open loops." When nothing waits, that line goes alone.
+- When the day's brief names a high or urgent open loop, the same message ends with one line, for example "Brief: Open loop: Create issue: watchdog. 3 open loops." When nothing waits, that line goes alone.
 
 While Telegram is not **Off**, Cadence sends no morning brief of its own. Send `/brief` to the bot for the whole brief with its buttons.
 

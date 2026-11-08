@@ -215,13 +215,15 @@ class TelegramSurface:
                        buttons=self._loop_buttons(loop))
 
     def send_brief(self, chat_id: str) -> None:
-        """The morning push brief — the headline + the top moves, with action buttons
-        on the #1 loop."""
-        from .cadence.brief import build_brief, render_brief_markdown
+        """The morning brief: the day's brief (its headline and first lines),
+        with the action buttons of the first open loop (the channel's verbs)."""
+        from .services.monday_brief_service import brief_lines, todays_brief
 
-        brief = build_brief(self._db)
-        self._send(chat_id, render_brief_markdown(brief),
-                   buttons=self._loop_buttons(brief.items[0].loop) if brief.items else None)
+        brief = todays_brief(self._db)
+        lines = [f"🧷 *{brief.headline}*"]
+        lines += [f"{i}. {line}" for i, line in enumerate(brief_lines(brief), 1)]
+        loops = [loop for loop in self._db.cadence.list_loops() if not loop.needs_review]
+        self._send(chat_id, "\n".join(lines), buttons=self._loop_buttons(loops[0]) if loops else None)
 
     def _render_status(self) -> str:
         counts: dict[str, int] = {}

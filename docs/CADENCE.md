@@ -23,6 +23,8 @@ holdspeak cadence audit --out audit.json
 ```
 
 `run-now` performs one evaluation even when the background loop is disabled.
+`brief` prints the day's brief, the same brief that Today shows. A high or
+urgent open loop is a line in its Waiting section.
 The Web surface is available through **Rhythm** or `/cadence`.
 
 ## Understand the records
@@ -76,6 +78,7 @@ and needs a bot token plus `allowed_chat_ids`, or a `pairing_code`. A chat can
 pair with `/pair <code>`. Only paired, allowed chats receive delivery.
 
 The available commands include `/brief`, `/loops`, `/closeout`, and `/status`.
+`/brief` sends the day's brief, with the action buttons of the first open loop.
 Inline controls can record a decision about presented work. Telegram does not
 replace the operation authority for an external effect.
 

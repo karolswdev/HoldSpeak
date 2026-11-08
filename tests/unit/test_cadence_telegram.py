@@ -117,11 +117,15 @@ def test_unpaired_callback_rejected(db):
     assert db.cadence.get_loop(loop_id).status != "killed"
 
 
-def test_brief_command_renders_morning_push(db):
+def test_brief_command_sends_the_days_brief_with_the_first_loops_buttons(db):
+    from holdspeak.services.monday_brief_service import todays_brief
+
     s, caller = _surface(db, allowed_chat_ids=["42"])
     s.handle_update(msg("42", "/brief"))
     texts = caller.sent_texts()
-    assert any("Morning Push" in t and "watchdog" in t for t in texts)
+    assert any(todays_brief(db).headline in t for t in texts)
+    first = [l for l in db.cadence.list_loops() if not l.needs_review][0]
+    assert f"done:{first.id}" in str(caller.calls)
 
 
 def test_push_due_nudges_sends_and_records(db):

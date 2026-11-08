@@ -555,21 +555,21 @@ class TestBriefRegeneration:
 
     def test_brief_regenerates_when_stale(self):
         """Simulates the _maybe_regenerate_brief logic path."""
-        from holdspeak.cadence.brief import should_send_daily_brief
+        from holdspeak.runtime.cadence import should_send_daily_brief
 
         now = datetime(2026, 9, 5, 9, 0)  # 09:00, after quiet hours
         last_regen = "2026-09-04"  # yesterday
         assert should_send_daily_brief(now, last_sent_date=last_regen, earliest_hour=8) is True
 
     def test_brief_does_not_regenerate_when_fresh(self):
-        from holdspeak.cadence.brief import should_send_daily_brief
+        from holdspeak.runtime.cadence import should_send_daily_brief
 
         now = datetime(2026, 9, 5, 9, 0)
         last_regen = "2026-09-05"  # today, already done
         assert should_send_daily_brief(now, last_sent_date=last_regen, earliest_hour=8) is False
 
     def test_brief_suppressed_during_quiet_hours(self):
-        from holdspeak.cadence.brief import should_send_daily_brief
+        from holdspeak.runtime.cadence import should_send_daily_brief
 
         now = datetime(2026, 9, 5, 6, 0)  # 06:00, before earliest_hour=8
         last_regen = "2026-09-04"
@@ -767,7 +767,7 @@ class TestBriefCadenceTickIntegration:
     def test_one_generate_call_across_quiet_hours_boundary(self):
         """Drive _maybe_regenerate_brief with a fake clock crossing the
         quiet-hours boundary. Assert exactly one generate() call, not two."""
-        from holdspeak.cadence.brief import should_send_daily_brief
+        from holdspeak.runtime.cadence import should_send_daily_brief
 
         # 06:00 -- still in quiet hours (earliest_hour=8)
         before = datetime(2026, 9, 5, 6, 0)
@@ -790,7 +790,7 @@ class TestBriefCadenceTickIntegration:
     def test_quiet_hours_suppress_until_window_closes(self):
         """HS-171-06 box 3: quiet hours suppress regeneration until the
         window closes."""
-        from holdspeak.cadence.brief import should_send_daily_brief
+        from holdspeak.runtime.cadence import should_send_daily_brief
 
         # Walk the clock from 00:00 to 07:59 -- all suppressed.
         for hour in range(0, 8):

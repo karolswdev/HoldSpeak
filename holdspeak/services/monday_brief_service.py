@@ -2421,6 +2421,8 @@ class MondayBriefService:
             "SELECT MAX(created_at) FROM decision_records",
             "SELECT MAX(updated_at) FROM inference_assignment_heads",
             "SELECT MAX(set_at) FROM inference_capability_off",
+            # The one morning brief (2026-11-08): its Waiting names open loops.
+            "SELECT MAX(updated_at) FROM cadence_loops",
         )
         with self._db._connection() as conn:
             for sql in queries:
@@ -2532,3 +2534,34 @@ class MondayBriefService:
             is_empty=not any(sections.values()),
             shelf=MondayBriefService._load_shelf(conn, str(row["id"])),
         )
+
+
+# ── The one morning brief on a text channel (2026-11-08) ──────────────────
+# Telegram /brief, the morning push, Reach's morning line, the CLI and the
+# MCP ``cadence.brief`` read the day's brief here; the Cadence push brief
+# (holdspeak/cadence/brief.py) is parked.
+
+
+def todays_brief(db: Any) -> MondayBrief:
+    """The day's brief as it stands: the stored one while it is current, else
+    made again now (the rule the Today face reads, ``is_stale``). Read as the
+    brief conductor (READ only); no People key is asked for, because nobody
+    needs to be at the desk."""
+    from holdspeak.principals import Principal, PrincipalKind
+
+    service = MondayBriefService(db)
+    brief = service.get_latest(None)
+    if brief is not None and not service.is_stale(brief):
+        return brief
+    return service.generate(
+        Principal(PrincipalKind.BRIEF_CONDUCTOR, "brief-conductor"),
+        regenerate=True, people_reads=False,
+    )
+
+
+def brief_lines(brief: MondayBrief, *, limit: int = 5, source: str | None = None) -> list[str]:
+    """The brief's first items, in section order, one line each; ``source``
+    keeps the items whose ``source_ref`` starts with it (``cadence_loop:``)."""
+    items = [item for section in _SECTIONS for item in brief.sections.get(section, [])
+             if source is None or str(item.source_ref or "").startswith(source)]
+    return [item.text for item in items[:limit]]

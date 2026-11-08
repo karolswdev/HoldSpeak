@@ -50,7 +50,7 @@ TOOLS: list[dict[str, Any]] = [
     },
     {
         "name": "cadence.brief",
-        "description": "Read the deterministic Cadence morning brief.",
+        "description": "Read the day's brief: its headline and first lines (the brief Today shows).",
         "inputSchema": {
             "type": "object",
             "properties": {},
