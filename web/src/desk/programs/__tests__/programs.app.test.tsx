@@ -1943,12 +1943,12 @@ describe("REQ10: the Requirements board (direction A, the checklist)", () => {
       { now: new Date(), sessions: [], flights: [] } as never);
     expect(face.kind).toBe("program");
     expect(face.direction).toBe("decide");
-    // #1854: named by its Program; the hub says TO CONFIRM, so the quiet word
-    // is Your turn (the row's verb opens the Program; Met and Unmet are its
-    // context menu, each pressed on the requirement's route).
+    // #1854: named by its Program; his word (TO CONFIRM) is a decision: the
+    // quiet word Decide, one verb Decide; Met and Unmet are its context menu,
+    // each pressed on the requirement's route.
     expect(face.name).toBe(String((rows[0] as { group?: string }).group));
-    expect(face.lamp.label).toBe("Your turn");
-    expect(face.verbs).toMatchObject({ kind: "program", ask: "turn", choices: ["met", "unmet"] });
+    expect(face.lamp.label).toBe("Decide");
+    expect(face.verbs).toMatchObject({ kind: "program", ask: "decide", choices: ["met", "unmet"] });
     expect((face.verbs as { decide: string }).decide).toMatch(/\/requirements\/req-[0-9a-f]+\/decide$/);
   });
 });
