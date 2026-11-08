@@ -148,7 +148,7 @@ function DoEditor({
         </Button>
         <Button dense variant={draftKind === "hand_to_agent" ? "secondary" : "ghost"}
           aria-pressed={draftKind === "hand_to_agent"} onClick={() => setDraftKind("hand_to_agent")}>
-          Hand to an agent
+          Hand to an agent session
         </Button>
         <Button dense variant={draftKind === "run_program" ? "secondary" : "ghost"}
           aria-pressed={draftKind === "run_program"} onClick={() => setDraftKind("run_program")}
@@ -608,7 +608,7 @@ export function AutomationWindow({
   const name = detail?.name || "Automation";
   const isProgram = detail?.do_kind === "run_program";
   const doText = detail?.do_kind === "hand_to_agent"
-    ? "Hand to an agent"
+    ? "Hand to an agent session"
     : detail && isProgram ? programDoWords(detail) : detail?.instruction_shown ?? "";
   const doLong = doText.split("\n").length > 3 || doText.length > 180;
   const sources = detail?.sources_shown ?? [];

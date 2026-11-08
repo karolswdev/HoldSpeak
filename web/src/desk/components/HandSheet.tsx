@@ -479,7 +479,7 @@ function Sheet({ origin }: { origin: HandOrigin }) {
     <DeskWindowFrame
       id={HAND_WINDOW_ID}
       glyph="⇥"
-      label="Hand to agent"
+      label="Hand to an agent session"
       kindWord="Agent"
       className="desk-pullout desk-hand"
       defaultW={560}

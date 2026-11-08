@@ -107,7 +107,7 @@ def test_hand_automation_do_with_review_controls_are_real_and_saved(
                 review_line = page.get_by_test_id("automation-line-review")
                 do_line.get_by_role("button").first.click()
                 do_editor = page.get_by_test_id("automation-do-editor")
-                do_editor.get_by_role("button", name="Hand to an agent", exact=True).click()
+                do_editor.get_by_role("button", name="Hand to an agent session", exact=True).click()
                 do_editor.get_by_role("textbox", name="Agent brief").fill(
                     "Complete the action and report the result."
                 )
@@ -117,7 +117,7 @@ def test_hand_automation_do_with_review_controls_are_real_and_saved(
                 ) as do_saved:
                     do_editor.get_by_test_id("automation-do-save").click()
                 assert (do_saved.value.request.post_data_json or {}).get("do_kind") == "hand_to_agent"
-                do_line.get_by_text("Hand to an agent", exact=False).wait_for(timeout=10_000)
+                do_line.get_by_text("Hand to an agent session", exact=False).wait_for(timeout=10_000)
 
                 with_line.get_by_role("button").first.click()
                 native_editor = page.get_by_test_id("automation-native-with-editor")

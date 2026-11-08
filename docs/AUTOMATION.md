@@ -13,7 +13,7 @@ Use the path that owns your trigger and result:
 | **Run now** | You press **Run now** | One run record and one result |
 | Schedule | The hub reaches the saved time | One run record for that occurrence |
 | Event | A supported source event matches | One run record for that event |
-| Agent handoff | The Automation's **Do** is **Hand to agent** | A brief and a coding-agent launch |
+| Agent handoff | The Automation's **Do** is **Hand to an agent session** | A brief and a coding-agent launch |
 | Sequence or Workflow | You start a saved sequence | Parent and child receipts |
 | Project Watch and Steward | A configured Project source changes | Observation, review, and permitted follow-up |
 | Heartbeat | A supported unattended sweep runs | A Heartbeat evaluation |

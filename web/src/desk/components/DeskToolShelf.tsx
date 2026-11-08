@@ -1297,7 +1297,7 @@ export function DeskToolShelf() {
                             dense
                             variant="secondary"
                             className="desk-deck-hand"
-                            aria-label={`Hand to agent: ${row.hand.title}`}
+                            aria-label={`Hand to an agent session: ${row.hand.title}`}
                             data-testid="palette-hand"
                             onClick={() => {
                               const origin = row.hand!;
@@ -1305,7 +1305,7 @@ export function DeskToolShelf() {
                               openHand(origin);
                             }}
                           >
-                            Hand to agent
+                            Hand to an agent session
                           </Button>
                         ) : null}
                       </li>

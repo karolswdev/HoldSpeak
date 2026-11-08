@@ -407,7 +407,7 @@ export function DeskMenuBar() {
   const entries = (id: MenuId): WorkMenuEntry[] => {
     // Betterment shell S1: Go is the manifest's groups at both widths.
     // Betterment AG4: the phone has no Object menu: Go opens with the front
-    // window's object rows (Note ▸ Hand to agent), as the windowSend canon says.
+    // window's object rows (Note ▸ Hand to an agent session), as the windowSend canon says.
     if (compact && id === "go") {
       const go = phoneGo(goInputs());
       return objectTarget && objectRows.length

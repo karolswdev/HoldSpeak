@@ -69,7 +69,7 @@ The available backends for model stages are:
 The intent router and rewriter need a model. The `kb-enricher` stage does not.
 
 The engine route is not the same as a coding-agent launch. A CLI can be an
-inference engine for one request; **Hand to agent** starts a separate process
+inference engine for one request; **Hand to an agent session** starts a separate process
 with its own worktree and brief.
 
 ## 3. Choose the stages

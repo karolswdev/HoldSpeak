@@ -107,7 +107,7 @@ current folder. Press **Register folder** to register it. The field stays in
 place and the refusal remains visible if registration fails. The path must be
 the exact Git top folder; a subfolder is refused before anything is persisted.
 After registration, select a Project in the inventory and press **Use
-repository in project**. A later **Hand to agent** uses this registered source
+repository in project**. A later **Hand to an agent session** uses this registered source
 and creates its worktree; no API or Automation setup is needed.
 
 The layout uses existing Desk windows, repository records, launch records and

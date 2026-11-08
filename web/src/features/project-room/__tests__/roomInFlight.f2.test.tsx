@@ -288,7 +288,7 @@ describe("Conductor F2 K4b: OPEN HERE rows wear their agent", () => {
     render(<WindowHarness scope="project:p1" />);
     const rows = await screen.findAllByTestId("needs-you-row", {}, DRAWN);
     expect(screen.queryByTestId("flight-chip")).toBeNull();
-    expect(within(rows[0]).getByRole("button", { name: "Hand to agent: Write the rollback runbook" })).toBeTruthy();
+    expect(within(rows[0]).getByRole("button", { name: "Hand to an agent session: Write the rollback runbook" })).toBeTruthy();
   });
 
   it("an in-flight row (STARTING, WAITING, PR OPEN, MERGED awaiting confirm) shows no Hand to coder", async () => {
@@ -301,7 +301,7 @@ describe("Conductor F2 K4b: OPEN HERE rows wear their agent", () => {
     ]);
     render(<WindowHarness scope="project:p1" />);
     await waitFor(() => expect(screen.getAllByTestId("flight-chip")).toHaveLength(3), DRAWN);
-    expect(screen.queryAllByRole("button", { name: /^Hand to agent/ })).toHaveLength(0);
+    expect(screen.queryAllByRole("button", { name: /^Hand to an agent session/ })).toHaveLength(0);
     expect(screen.getAllByTestId("flight-chip")[0].textContent).toContain("Claude Code · Starting");
   });
 });

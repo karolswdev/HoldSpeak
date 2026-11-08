@@ -31,7 +31,7 @@ matches:
    ```
 
 Claude Code and Codex use their configured hook file. pi uses its HoldSpeak
-extension. A Hand to agent launch can arm its new worktree for the launch
+extension. A Hand to an agent session launch can arm its new worktree for the launch
 without changing the global master switch.
 
 | Command | Effect |
