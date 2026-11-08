@@ -49,8 +49,8 @@ Program in Drafting shows its plan, for example `planned · 4 steps`, and
 
 **Earlier steps.** At the right of the plate, **Earlier steps** opens the
 list of all steps under the plate. Its toolbar has **Add step**, **Race**
-(on a step that can race), the view (**Board** or **Text**), the agent
-(**Runs on**), **When idle** and **Control ▾**. Press a step to open it in
+(on a step that can race), the view (**Board** or **Text**), the engine
+that runs the step, **When idle** and **Control ▾**. Press a step to open it in
 place: **Brief**, **Gate**, **Findings**, **Handoffs** and **Ledger**.
 
 At the bottom of the Program, **Change the program** takes one sentence, typed

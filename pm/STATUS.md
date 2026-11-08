@@ -2,6 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · #1957 Fix forward #1955: docs/programs.md names the engine, not the old Runs on word (engines name guard).
 - 2026-11-08 · #1956 Fix forward test_send_glass s5_s6[1440]: the send sheet's Cancel keeps the note open; openNoteSend (SendWell.tsx) stops its 50 ms SEND_OPEN retry at the first request the note window takes (it cancels the event), so a later tick no longer reopens Send after Cancel (latent since 07f28fb7e; red on main at 1440).
 - 2026-11-08 · #1955 The user docs follow the day: Needs you (mast, Waits on you first, the ledger, the item reader), the Programs window (rail, mast, step spine, step plate, Earlier steps, the night tile; Spending note is a note, never a cap) and the Room (Now, History, Draft update, Prepare a brief, Pages) in WEB_DESK, USER_GUIDE, programs.md, PROJECT_ROOMS, DESK_OBJECT_MODEL and README; old-face shots no longer embedded in programs.md.
 - 2026-11-08 · #1954 Two reds on main: the face-words derivation reads the codes keystore.Slots raises as EmailKeyError/SlackKeyError (#1830 moved email_key_store_locked out of a literal raise; the runtime was still refused); ruff F821 cleared in holdspeak with imports only (17 sites, two were runtime NameErrors: SESSION_CLOSED in deferred_bound, InferenceSetupApplicationService in mcp/resources).
