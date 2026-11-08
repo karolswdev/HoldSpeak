@@ -1,5 +1,5 @@
-import { readFileSync, readdirSync, statSync } from "node:fs";
-import { extname, join, relative } from "node:path";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+import { dirname, extname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
@@ -111,6 +111,65 @@ for (const file of files) {
   const text = readFileSync(file, "utf8");
   if (LIBRARY_CSS_RE.test(text) && !baselineCss.has(name))
     failures.push(`surface fence: library-css-outside: ${name}`);
+}
+
+/* ── HS-S53 destination owner closure ──
+ * The one destination form and the destination account words live in
+ * src/features/channels. Their import closure (static imports, re-exports
+ * and dynamic import(), type imports included) must not reach the Settings
+ * screen or the stateful Send module. The surface library (src/desk/surface,
+ * not its send/ sub-barrel) is the public material and a boundary: the walk
+ * does not enter it, because its barrel reaches the desk store and through
+ * the app registry every core. This is a lexical check of the source graph,
+ * not a runtime or bundle measurement. */
+const DESTINATION_OWNERS = [
+  "src/features/channels/DestinationForm.tsx",
+  "src/features/channels/accountChip.ts",
+];
+const DESTINATION_FORBIDDEN = new Set([
+  "src/pages/cores/connections/ConnectionsPane.tsx",
+  "src/pages/cores/connections/Destinations.tsx",
+  "src/desk/surface/send/SendWell.tsx",
+  "src/desk/surface/send/index.ts",
+]);
+const IMPORT_SPEC_RE =
+  /(?:\bfrom\s*|\bimport\s*\(\s*|^\s*import\s+)["'](\.{1,2}\/[^"']+)["']/gm;
+const resolveSource = (fromName, spec) => {
+  const base = join(root, dirname(fromName), spec);
+  for (const candidate of [base, `${base}.ts`, `${base}.tsx`, join(base, "index.ts"), join(base, "index.tsx")]) {
+    if (/\.(?:tsx?|mjs|js)$/.test(candidate) && existsSync(candidate) && statSync(candidate).isFile())
+      return relative(root, candidate);
+  }
+  return null; // CSS, JSON and assets carry no imports to follow
+};
+const closureFrom = (start) => {
+  const via = new Map([[start, null]]);
+  const queue = [start];
+  while (queue.length) {
+    const name = queue.shift();
+    const text = readFileSync(join(root, name), "utf8");
+    for (const match of text.matchAll(IMPORT_SPEC_RE)) {
+      const next = resolveSource(name, match[1]);
+      if (!next || via.has(next)) continue;
+      via.set(next, name);
+      const material = next.startsWith("src/desk/surface/") && !next.startsWith("src/desk/surface/send/");
+      if (!material) queue.push(next);
+    }
+  }
+  return via;
+};
+for (const owner of DESTINATION_OWNERS) {
+  if (!existsSync(join(root, owner))) {
+    failures.push(`destination owner missing: ${owner}`);
+    continue;
+  }
+  const via = closureFrom(owner);
+  for (const forbidden of DESTINATION_FORBIDDEN) {
+    if (!via.has(forbidden)) continue;
+    const path = [];
+    for (let at = forbidden; at; at = via.get(at)) path.unshift(at);
+    failures.push(`destination owner reaches ${forbidden}: ${path.join(" -> ")}`);
+  }
 }
 
 if (failures.length) {

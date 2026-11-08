@@ -726,6 +726,9 @@ so it stays out of the main barrel, which is wire-free.
 - Pieces for other channel faces: `PreviewWell`, `ProofCell`, `Unreadable`,
   `accountChip`, `useDestinations`, `useConnections`, `latestFor`,
   `mergeKnown`, `resetSendStore` (test seam).
+  `accountChip` forwards to its one owner, `features/channels/accountChip.ts`;
+  the inline Add destination seats the one form,
+  `features/channels/DestinationForm.tsx`, with its own `onSetUpAccount`.
 
 Rules the species holds (they are not the host's business):
 

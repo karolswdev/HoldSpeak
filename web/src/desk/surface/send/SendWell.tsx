@@ -39,8 +39,12 @@ import { EgressChip } from "../gadgets";
 import { Material } from "../Material";
 import { StateChip } from "../patterns";
 import { DotWord, ToolGlyph, Toolbar } from "../kit";
-import { fetchConnections, type ConnectionsResponse, type ConnectionState } from "../../../pages/cores/connections/api";
-import { chipLabel } from "../../../pages/cores/connections/ConnectionsPane";
+import { fetchConnections, type ConnectionsResponse } from "../../../pages/cores/connections/api";
+// HS-S53: the destination warning has one owner (features/channels); this
+// module keeps its public name for the Send barrel.
+import { accountChip } from "../../../features/channels/accountChip";
+export { accountChip };
+import { useDesk } from "../../store";
 import {
   CHANNEL_WORD, DEST_CHANGED, SEND_WORDS, syncEgress, commandId, egressOf, failedWord, farSide, noAnswerWords, previewOf,
   refusalSize, refusedWord, sentWord, stamp, targetName, targetToken, unknownWord, wire, Refusal,
@@ -55,15 +59,15 @@ import { openRef } from "../../openObject";
 import { SEND_OPEN } from "../../windowSend";
 import { Token } from "../Token";
 
-// Settings owns the admitted destination form. It is loaded only when the
-// sheet asks for Add destination, which keeps the shared Send species free of
-// a second form implementation and avoids a static Settings import cycle.
+// The admitted destination form has one owner (features/channels/
+// DestinationForm.tsx). It is loaded only when the sheet asks for Add
+// destination, so the Send species carries no form until then.
 /** W4-PHONE: the channel as a plain word on a destination row (`Folder`,
  *  `GitHub`); the menus keep CHANNEL_WORD. */
 const CHANNEL_NAME: Record<string, string> = {
   file: "Folder", github: "GitHub", jira: "Jira", confluence: "Confluence", email: "Email", slack: "Slack",
 };
-const AdmittedDestinationForm = lazy(() => import("../../../pages/cores/connections/Destinations").then((m) => ({ default: m.DestForm })));
+const AdmittedDestinationForm = lazy(() => import("../../../features/channels/DestinationForm").then((m) => ({ default: m.DestForm })));
 
 /** The one document a well sends: `ref` is `<kind>:<id>` (the wire's
  *  `document_ref`), `title` its name, `label` the short token a prepared row
@@ -200,49 +204,6 @@ export function useConnections(): ConnectionsResponse | null {
     return () => { live = false; window.removeEventListener("focus", read); };
   }, []);
   return c;
-}
-
-/** The account states that say "this account did not sign in". */
-const SIGN_IN_FAILED = new Set<string>(["owner_action_required", "unavailable", "degraded"]);
-
-/** The account warning a destination row shows (the Phase 9 B1 words, the
- *  Connections chip words), or null. Betterment send S1: a chip shows ONLY
- *  when the newest word on that account (a check or a send: the hub's
- *  `connection`, where a good send counts as a good check) says it failed to
- *  sign in. Never CONNECTED, NEVER CHECKED or KEY SET beside a good send.
- *  Null for a folder. Email and Slack: only a key known to be absent. */
-export function accountChip(
-  d: Pick<Destination, "channel" | "account"> & { connection?: Destination["connection"] },
-  c: ConnectionsResponse | null,
-): { state: "success" | "warning" | "idle" | "failure"; label: string; code: string } | null {
-  if (d.channel === "file") return null;
-  if (d.channel === "email" || d.channel === "slack") {
-    // Present or absent only, and only when known (the list read does not open the keychain).
-    if (d.account.key_present !== false) return null;
-    return d.channel === "slack"
-      ? { state: "warning", label: "NO WEBHOOK", code: "slack_webhook_missing" }
-      : { state: "warning", label: "NO KEY", code: "email_key_missing" };
-  }
-  const tool = c?.tools.find((t) => t.provider_id === d.channel);
-  let state: ConnectionState = "not_configured";
-  // Betterment ST2: the Accounts row's own words (its reason) name the chip.
-  let words: { reason?: string; other_account?: boolean } | undefined = tool;
-  if (d.channel === "github") {
-    state = (d.connection?.state ?? tool?.state ?? "not_configured") as ConnectionState;
-    const login = tool?.account?.login;
-    if (state === "connected" && login && d.account.login && login !== d.account.login) {
-      return { state: "failure", label: "Account changed", code: "github_identity_changed" };
-    }
-  } else {
-    const conn = tool?.connections?.find((x) => x.account.site === d.account.site && x.account.email === d.account.email);
-    state = (d.connection?.state ?? conn?.state ?? "not_configured") as ConnectionState;
-    words = conn;
-  }
-  if (!SIGN_IN_FAILED.has(state)) return null;
-  const map: Record<string, "warning" | "failure"> = {
-    owner_action_required: "warning", unavailable: "failure", degraded: "warning",
-  };
-  return { state: map[state] ?? "warning", label: chipLabel(state, d.channel, words ?? {}), code: state };
 }
 
 /* ── pieces ────────────────────────────────────────────────────────── */
@@ -590,18 +551,13 @@ function PreviewFailed({ pv, eg, onRetry }: {
  *  no report. */
 export const SendWellReadContext = createContext<((resolved: boolean) => void) | null>(null);
 
-const EMPTY_DESTINATION_DRAFT = {
-  channel: "file" as Channel, name: "", nameTouched: false,
-  folder: "", synced: false, repo: "", kind: "issue" as const, number: "",
-  jiraAccount: "", key: "", confAccount: "", space: "",
-  provider: "resend" as EmailProvider, fromEmail: "", fromName: "", emailRef: "", to: "", cc: "",
-  slackLabel: "", slackRef: "",
-};
-
-/** Settings' admitted form, seated inside the Send sheet. The destination
- * controller stays in Destinations.tsx; this component only supplies the
- * same account/key callbacks and returns the saved row to the sheet. */
-function InlineDestinationForm({ onDone, onCancel }: { onDone: (saved?: Destination) => void; onCancel: () => void }) {
+/** The one destination form, seated inside the Send sheet. This host
+ * supplies its own account read and key callbacks, and returns the saved
+ * row to the sheet. Set up account is the host's: it opens Settings ->
+ * Connections in its own window; the sheet and the draft stay mounted. */
+function InlineDestinationForm({ onDone, onCancel, onSetUpAccount }: {
+  onDone: (saved?: Destination) => void; onCancel: () => void; onSetUpAccount: (channel: Channel) => void;
+}) {
   const [conns, setConns] = useState<ConnectionsResponse | null>(null);
   const [accountsReadError, setAccountsReadError] = useState(false);
   const [accountsLoading, setAccountsLoading] = useState(true);
@@ -632,13 +588,13 @@ function InlineDestinationForm({ onDone, onCancel }: { onDone: (saved?: Destinat
         accountsLoading={accountsLoading}
         accountsReadError={accountsReadError}
         onAccountsRetry={reloadAccounts}
-        initial={EMPTY_DESTINATION_DRAFT}
         keys={keys}
         onKey={onKey}
         onSlackKey={onSlackKey}
         onKeyKnown={onKeyKnown}
         onDone={onDone}
         onCancel={onCancel}
+        onSetUpAccount={onSetUpAccount}
       />
     </Suspense>
   );
@@ -694,6 +650,9 @@ export function SendWell({ doc, sendsRead, onSettled, head, destinationIds, onBa
   const [preview, setPreview] = useState<PreviewState | null>(null);
   const [previewTry, setPreviewTry] = useState(0);
   const [addingDestination, setAddingDestination] = useState(false);
+  // Set up account from the inline form: open Settings -> Connections, where
+  // the accounts live. The sheet stays open, so the draft is kept.
+  const openAccounts = useCallback(() => { useDesk.getState().openSurfaceWindow("configure-settings", "integrations"); }, []);
   const [editingPreview, setEditingPreview] = useState<string | null>(null);
   const [editFailure, setEditFailure] = useState<string | null>(null);
   const [verbSlot, setVerbSlot] = useState<HTMLSpanElement | null>(null);
@@ -829,6 +788,7 @@ export function SendWell({ doc, sendsRead, onSettled, head, destinationIds, onBa
                     dests.reload();
                   }}
                   onCancel={() => setAddingDestination(false)}
+                  onSetUpAccount={openAccounts}
                 />
               </div>
             ) : null}
