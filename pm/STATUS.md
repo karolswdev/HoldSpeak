@@ -2,6 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · #1862 The UX canon scanner counts A8 (no counter of zero) only in drawn JSX text, never in a prop, aria-label, title or data-* value, and files each hit under its file stem: A8 26 → 5.
 - 2026-11-08 · #1859 The desk keeps one startup intent, the latest explicit one (HS-S12): the surface host's one flush opens it, a hub list that lands later does not re-scope or close it, and a Room keeps one latest target (a proposal or a place).
 - 2026-11-08 · #1860 Fix forward #1857: the decide-ask compare is lower case (the lamp-words guard).
 - 2026-11-08 · #1858 Programs: an agent never plans into a running Program (plan_locked_while_running), a hand that wrote nothing goes back once then parks, and a step of a title the plan has folds into that step.
