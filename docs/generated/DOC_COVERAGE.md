@@ -13,11 +13,11 @@ Validation errors at generation: **0**.
 
 | Measure | Present / total or count |
 | --- | ---: |
-| Source paths | 327 / 327 |
-| Test paths | 276 / 276 |
+| Source paths | 326 / 326 |
+| Test paths | 274 / 274 |
 | Documentation paths | 262 / 262 |
-| Assertions inspected | 276 |
-| Tests executed | 237 |
+| Assertions inspected | 274 |
+| Tests executed | 235 |
 | Records with an executed assertion | 85 |
 | Semantic records unresolved | 72 |
 
@@ -69,8 +69,8 @@ Validation errors at generation: **0**.
 | `voice.browser_remote_dictation` | capabilities | 2/2 | 2/2 | 2 | 2 | 2 | partially_evidenced |
 | `meeting.decision_lifecycle` | capabilities | 3/3 | 8/8 | 8 | 8 | 0 | partially_evidenced |
 | `meeting.action_lifecycle` | capabilities | 1/1 | 1/1 | 1 | 1 | 0 | partially_evidenced |
-| `model.download` | capabilities | 1/1 | 2/2 | 2 | 2 | 1 | partially_evidenced |
-| `model.inventory` | capabilities | 2/2 | 2/2 | 2 | 2 | 1 | partially_evidenced |
+| `model.download` | capabilities | 1/1 | 1/1 | 1 | 1 | 1 | partially_evidenced |
+| `model.inventory` | capabilities | 1/1 | 1/1 | 1 | 1 | 1 | partially_evidenced |
 | `meeting.plugin.requirements_extractor` | capabilities | 2/2 | 2/2 | 2 | 2 | 0 | partially_evidenced |
 | `meeting.plugin.action_owner_enforcer` | capabilities | 2/2 | 2/2 | 2 | 2 | 0 | partially_evidenced |
 | `meeting.plugin.mermaid_architecture` | capabilities | 2/2 | 2/2 | 2 | 2 | 0 | partially_evidenced |

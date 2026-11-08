@@ -15810,42 +15810,6 @@
         "summary": "Use Proposal"
       }
     },
-    "/api/inference/model-library": {
-      "get": {
-        "operationId": "get_model_library_api_inference_model_library_get",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Get Model Library Api Inference Model Library Get"
-                }
-              }
-            },
-            "description": "Successful Response"
-          }
-        },
-        "summary": "Get Model Library"
-      }
-    },
-    "/api/inference/model-library/add-to-library": {
-      "post": {
-        "operationId": "add_detected_model_api_inference_model_library_add_to_library_post",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Add Detected Model Api Inference Model Library Add To Library Post"
-                }
-              }
-            },
-            "description": "Successful Response"
-          }
-        },
-        "summary": "Add Detected Model"
-      }
-    },
     "/api/inference/model-library/connect-cli-engine": {
       "post": {
         "operationId": "connect_cli_engine_api_inference_model_library_connect_cli_engine_post",
@@ -15864,42 +15828,6 @@
         "summary": "Connect Cli Engine"
       }
     },
-    "/api/inference/model-library/connect-hosted-model": {
-      "post": {
-        "operationId": "connect_hosted_model_api_inference_model_library_connect_hosted_model_post",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Connect Hosted Model Api Inference Model Library Connect Hosted Model Post"
-                }
-              }
-            },
-            "description": "Successful Response"
-          }
-        },
-        "summary": "Connect Hosted Model"
-      }
-    },
-    "/api/inference/model-library/connect-paired-device": {
-      "post": {
-        "operationId": "connect_paired_device_api_inference_model_library_connect_paired_device_post",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Connect Paired Device Api Inference Model Library Connect Paired Device Post"
-                }
-              }
-            },
-            "description": "Successful Response"
-          }
-        },
-        "summary": "Connect Paired Device"
-      }
-    },
     "/api/inference/model-library/define-endpoint": {
       "post": {
         "operationId": "define_endpoint_api_inference_model_library_define_endpoint_post",
@@ -15916,42 +15844,6 @@
           }
         },
         "summary": "Define Endpoint"
-      }
-    },
-    "/api/inference/model-library/download": {
-      "post": {
-        "operationId": "download_model_api_inference_model_library_download_post",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Download Model Api Inference Model Library Download Post"
-                }
-              }
-            },
-            "description": "Successful Response"
-          }
-        },
-        "summary": "Download Model"
-      }
-    },
-    "/api/inference/model-library/use-model-file": {
-      "post": {
-        "operationId": "use_model_file_api_inference_model_library_use_model_file_post",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Use Model File Api Inference Model Library Use Model File Post"
-                }
-              }
-            },
-            "description": "Successful Response"
-          }
-        },
-        "summary": "Use Model File"
       }
     },
     "/api/inference/setup": {

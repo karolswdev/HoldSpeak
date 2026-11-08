@@ -228,7 +228,9 @@ def seed_extra(hub: Hub) -> dict[str, Any]:
     log["people"] = {"status": "NOT SEEDED",
                      "reply": "people/setup touches the Keychain; a walk never does"}
     # A LAN engine — define-endpoint against a real profile head.
-    lib = call("model_library", "GET", "/api/inference/model-library")
+    # The Model Library read is MCP-only now (model_library_get); the profile
+    # list names the same heads.
+    lib = call("model_profiles", "GET", "/api/model-profiles")
     profile_id, revision = None, None
     if isinstance(lib, dict):
         profiles = lib.get("profiles") or lib.get("library", {}).get("profiles") or []
