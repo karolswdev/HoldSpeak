@@ -411,6 +411,16 @@ function StepProve({ program, step, onApplied }: { program: Program; step: Progr
   );
 }
 
+/** HS-S21: the action a step carries, as the hub recorded it. Words only:
+ *  it names the link, not the action's state now (no badge, no opener). */
+function CarriesLine({ program, step }: { program: Program; step: ProgramStep }) {
+  const ref = String(step.origin_ref ?? "");
+  if (!ref.startsWith("action:") || ref.length <= 7) return null;
+  const origin = program.place?.origin;
+  const name = origin?.ref === ref && origin.title ? origin.title : ref.slice(7);
+  return <p className="pg-sf-carries" data-testid="programs-step-carries" data-origin={ref}>{`Carries the action ${name}`}</p>;
+}
+
 export function StepFold({ program, step, onApplied, initialPart }: {
   program: Program; step: ProgramStep; onApplied(next: Program | null): void;
   /** A part the window asked for (the headline's Brief). */
@@ -514,6 +524,7 @@ export function StepFold({ program, step, onApplied, initialPart }: {
       <StepProve program={program} step={step} onApplied={onApplied} />
       {/* A finished step reads its report; the story is the running one's. */}
       {step.report ? <StepReport step={step} /> : <StepStory step={step} />}
+      <CarriesLine program={program} step={step} />
       <div className="pg-sf-head">
         <FilterTokens label={`Step ${step.ordinal}`} value={shown} emptyLabel="Parts"
           onChange={(next) => setPart((now) => (now === next ? "" : next as Part))}

@@ -1,0 +1,366 @@
+{
+  "allowed_profiles": [],
+  "asks": 0,
+  "budget_tokens": null,
+  "can_prove": {
+    "check": true,
+    "review": true,
+    "shot": false,
+    "shot_reason": "No shot command in this repository",
+    "word": true
+  },
+  "check_command": null,
+  "checkpoints": [
+    {
+      "at": "2026-11-08T00:37:36.410315+00:00",
+      "by": "owner",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 3,
+      "kind": "requirement",
+      "line": "Added R1 on step 1 · No handler holds the loop",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": null,
+      "ref_commit": null,
+      "rule": null,
+      "step_id": "step-8e9e2c9e1ab1",
+      "undo": {
+        "requirement_id": "req-19c7ed6fbb44"
+      }
+    },
+    {
+      "at": "2026-11-08T00:37:36.402411+00:00",
+      "by": "owner",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 2,
+      "kind": null,
+      "line": "Added 1 step",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": null,
+      "ref_commit": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    },
+    {
+      "at": "2026-11-08T00:37:36.397426+00:00",
+      "by": "owner",
+      "choice": null,
+      "decision_record_id": null,
+      "id": 1,
+      "kind": null,
+      "line": "Made the program from the Fast cycle template",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "pin_note": null,
+      "ref": null,
+      "ref_commit": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    }
+  ],
+  "closed_at": null,
+  "control": "yolo",
+  "control_word": "YOLO",
+  "created_at": "2026-11-08T00:37:36.397134+00:00",
+  "decided_for_you": [],
+  "default": {
+    "agent": "Claude Code",
+    "engine": null,
+    "profile": "claude-default",
+    "runs_on": [
+      {
+        "agent": "Claude Code",
+        "engine": null,
+        "label": "Claude Code",
+        "profile": "claude-default"
+      }
+    ]
+  },
+  "delivery": null,
+  "done": 0,
+  "family": {
+    "children": [],
+    "parent": null
+  },
+  "for_person": null,
+  "for_person_id": null,
+  "goal": "Move the People routes off the event loop",
+  "id": "program-943e369629d6",
+  "in_state_seconds": 0,
+  "last_checkpoint": {
+    "at": "2026-11-08T00:37:36.410315+00:00",
+    "by": "owner",
+    "choice": null,
+    "decision_record_id": null,
+    "id": 3,
+    "kind": "requirement",
+    "line": "Added R1 on step 1 · No handler holds the loop",
+    "operation_id": null,
+    "overturnable": false,
+    "overturned_at": null,
+    "pin_note": null,
+    "ref": null,
+    "ref_commit": null,
+    "rule": null,
+    "step_id": "step-8e9e2c9e1ab1",
+    "undo": {
+      "requirement_id": "req-19c7ed6fbb44"
+    }
+  },
+  "line": "Drafting, 1 step",
+  "may_call": false,
+  "may_handoff": false,
+  "night": null,
+  "note_id": "program-program-943e369629d6",
+  "note_window": "pullout:note:program-program-943e369629d6",
+  "origin_ref": "action:ai_runme",
+  "persons": [],
+  "place": {
+    "origin": {
+      "id": "ai_runme",
+      "kind": "action",
+      "ref": "action:ai_runme",
+      "title": "Move the People routes off the event loop"
+    },
+    "person": null,
+    "project": {
+      "id": "proj-holdspeak",
+      "name": "HoldSpeak"
+    }
+  },
+  "planner": null,
+  "prefer_idle": false,
+  "project": {
+    "id": "proj-holdspeak",
+    "name": "HoldSpeak"
+  },
+  "project_id": "proj-holdspeak",
+  "repository": {
+    "base_branch": "main",
+    "label": "app",
+    "root": "/tmp/rig/app"
+  },
+  "requirements": [],
+  "requirements_met": {
+    "his": 0,
+    "met": 0,
+    "total": 1,
+    "unmet": 0,
+    "waived": 0
+  },
+  "review_depth": null,
+  "reviewer": {
+    "agent": null,
+    "engine": null,
+    "profile": null
+  },
+  "revision": 2,
+  "rounds": [],
+  "rounds_before_start": false,
+  "search_words": "move the people routes off the event loop move the people routes off the event loop holdspeak fast-cycle step 1 fast cycle",
+  "skipped": 0,
+  "spend_limit_usd": null,
+  "state": "drafting",
+  "state_word": "Drafting",
+  "status_line": "Drafting · 0 of 1 done · control YOLO",
+  "steps": [
+    {
+      "after": [],
+      "agent": "Claude Code",
+      "amendments": [],
+      "branch": null,
+      "brief": "",
+      "budget_tokens": null,
+      "check": {
+        "command": null,
+        "commit": null,
+        "log": null,
+        "minutes": null,
+        "reasons": [],
+        "running": false,
+        "sections": [],
+        "verdict": null
+      },
+      "contenders": [],
+      "editable": [
+        "title",
+        "brief",
+        "owns",
+        "after",
+        "effort",
+        "agent",
+        "runs_on_then",
+        "race",
+        "gate_check",
+        "gate_review",
+        "review_depth",
+        "gate_merge",
+        "requirements",
+        "position",
+        "for_person",
+        "may_call",
+        "prefer_idle",
+        "budget"
+      ],
+      "effort": "medium",
+      "elapsed": "",
+      "elapsed_seconds": null,
+      "ended_at": null,
+      "ending": "none",
+      "engine": null,
+      "estimate": {
+        "budget": null,
+        "code": null,
+        "engine": "Claude Code",
+        "fits": null,
+        "share": null,
+        "tokens": 390,
+        "words": "1k"
+      },
+      "findings": [],
+      "for_person": null,
+      "for_person_id": null,
+      "frozen": {},
+      "gate": {
+        "check": true,
+        "merge": "none",
+        "review": "none",
+        "review_depth": "delta"
+      },
+      "handoffs": [],
+      "held_reason": null,
+      "history": null,
+      "id": "step-8e9e2c9e1ab1",
+      "last_checkpoint": {
+        "at": "2026-11-08T00:37:36.410315+00:00",
+        "by": "owner",
+        "choice": null,
+        "decision_record_id": null,
+        "id": 3,
+        "kind": "requirement",
+        "line": "Added R1 on step 1 · No handler holds the loop",
+        "operation_id": null,
+        "overturnable": false,
+        "overturned_at": null,
+        "pin_note": null,
+        "ref": null,
+        "ref_commit": null,
+        "rule": null,
+        "step_id": "step-8e9e2c9e1ab1",
+        "undo": {
+          "requirement_id": "req-19c7ed6fbb44"
+        }
+      },
+      "launch_id": null,
+      "limit": null,
+      "may_call": false,
+      "ordinal": 1,
+      "origin_ref": null,
+      "owns": [],
+      "parked_by": null,
+      "parked_reason": null,
+      "pr": null,
+      "prefer_idle": false,
+      "profile": "claude-default",
+      "race": 0,
+      "race_both_red": false,
+      "race_of": null,
+      "report": null,
+      "report_text": null,
+      "requirements": [
+        {
+          "by": "owner",
+          "choices": [
+            "waive"
+          ],
+          "created_at": "2026-11-08T00:37:36.410130+00:00",
+          "evidence": {},
+          "id": "req-19c7ed6fbb44",
+          "judged_at": null,
+          "judged_commit": null,
+          "kind": "review",
+          "kind_word": "Review",
+          "label": "R1",
+          "ordinal": 1,
+          "parent_id": null,
+          "program_id": "program-943e369629d6",
+          "required": true,
+          "rounds": 0,
+          "running": false,
+          "scope": "step",
+          "spec": {},
+          "stale": false,
+          "state": "not_yet",
+          "state_word": "Not yet",
+          "step_id": "step-8e9e2c9e1ab1",
+          "text": "No handler holds the loop",
+          "waived_reason": null
+        }
+      ],
+      "requirements_met": {
+        "his": 0,
+        "met": 0,
+        "total": 1,
+        "unmet": 0,
+        "waived": 0
+      },
+      "review": {
+        "reviewer": null,
+        "round": null,
+        "verdict": null
+      },
+      "rounds": 0,
+      "runs_on": [
+        {
+          "agent": "Claude Code",
+          "engine": null,
+          "label": "Claude Code",
+          "profile": "claude-default"
+        }
+      ],
+      "started_at": null,
+      "state": "planned",
+      "state_word": "Planned",
+      "station": -1,
+      "stations": [
+        "brief",
+        "work",
+        "check",
+        "review",
+        "pr",
+        "merge"
+      ],
+      "story": [],
+      "taken": false,
+      "title": "Step 1",
+      "updated_at": "2026-11-08T00:37:36.402056+00:00",
+      "wait": null,
+      "worktree": null
+    }
+  ],
+  "template": "fast-cycle",
+  "title": "Move the People routes off the event loop",
+  "total": 1,
+  "track": [
+    {
+      "mark": "planned",
+      "ordinal": 1,
+      "title": "Step 1"
+    }
+  ],
+  "updated_at": "2026-11-08T00:37:36.410429+00:00",
+  "usage_warning_share": null,
+  "within": [],
+  "your_turn": 0,
+  "your_turn_items": []
+}

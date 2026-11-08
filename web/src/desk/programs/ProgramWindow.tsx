@@ -24,6 +24,7 @@
  * of Park / Resume. */
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { Button } from "../../components/signal/Signal";
+import { ApiError } from "../../lib/api";
 import { WorkMenu } from "../components/DeskMenu";
 import { openRef } from "../openObject";
 import { openProjectRoom } from "../shell";
@@ -545,6 +546,24 @@ function listWords(first: string, then: readonly RunsOnEntry[]): string {
   return [first, ...then.map((row) => `then ${row.label}`)].join(", ");
 }
 
+/** HS-S21: the action a Program was made from (`action:<id>`), else null. */
+function actionOf(program: Program): string | null {
+  const ref = String(program.origin_ref ?? "");
+  return /^action:./.test(ref) ? ref : null;
+}
+
+/** Every row of the board, the race contenders too. */
+function everyStep(program: Program): ProgramStep[] {
+  return program.steps.flatMap((step) => [step, ...(step.contenders ?? [])]);
+}
+
+/** HS-S21: a Program that carries an action (made from one, or a step with an
+ *  `action:` origin) in rows that exist. A bulk agent change rebuilds every row, so it is held. */
+function carriesAction(program: Program): boolean {
+  if (!program.steps.length) return false;
+  return Boolean(actionOf(program)) || everyStep(program).some((step) => String(step.origin_ref ?? "").startsWith("action:"));
+}
+
 function toPlan(step: ProgramStep): PlanStep {
   return {
     id: step.id, title: step.title, brief: step.brief, owns: step.owns, after: step.after,
@@ -734,7 +753,9 @@ export function ProgramBody({ programId }: { programId: string }) {
   const [allowedOpen, setAllowedOpen] = useState(false);
   const [busy, setBusy] = useState("");
   const [failed, setFailed] = useState<{ words: string; title: string } | null>(null);
-  const [draft, setDraft] = useState<PlanStep[] | null>(null);
+  // HS-S21: the Add well of a Program made from an action (carry it: off).
+  const [adding, setAdding] = useState(false);
+  const [carry, setCarry] = useState(false);
   const [goal, setGoal] = useState<string | null>(null);
   const [filing, setFiling] = useState<DOMRect | null>(null);
   const fileOpener = useRef<HTMLElement | null>(null);
@@ -762,11 +783,6 @@ export function ProgramBody({ programId }: { programId: string }) {
   }, [landed]);
 
   const drafting = program?.state === "drafting";
-  useEffect(() => {
-    if (!program) return;
-    if (program.state === "drafting") setDraft(program.steps.map(toPlan));
-    else setDraft(null);
-  }, [program?.revision, program?.state]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const steps = program?.steps ?? [];
   const chosen = useMemo(() => {
@@ -875,14 +891,68 @@ export function ProgramBody({ programId }: { programId: string }) {
     return <SurfaceState loading={loading} error={error ? "The program did not load. Nothing on it changed. Try again." : undefined} onRetry={() => void reload()} />;
   }
 
-  const savePlan = (next: PlanStep[]) => {
-    setDraft(next);
-    void run("plan", () => planProgram(program.id, next.map((step) => ({ ...step, id: undefined })), true), "The steps were not saved");
+  // HS-S21: the action this Program was made from, when no row carries it yet.
+  const action = actionOf(program);
+  const actionWords = program.place?.origin?.ref === action && program.place?.origin?.title ? program.place.origin.title : action?.slice(7) ?? "";
+  const offerCarry = Boolean(action) && !everyStep(program).some((step) => step.origin_ref === action);
+  // Add appends one row, in Drafting too: the rows there keep their ids,
+  // origins, gates and requirements (never a rebuild of the plan).
+  const append = async (bind: boolean) => {
+    if (busy) return;
+    const step: PlanStep = {
+      title: `Step ${steps.length + 1}`, brief: "", profile: program.default.profile, engine: program.default.engine?.id ?? null,
+      ...(bind && action ? { origin_ref: action } : {}),
+    };
+    setBusy("add");
+    setFailed(null);
+    try {
+      const next = await planProgram(program.id, [step], false);
+      if (!next) throw new Error("The answer has no program");
+      apply(next);
+      setAdding(false);
+      setCarry(false);
+    } catch (cause) {
+      if (cause instanceof ApiError && cause.status >= 400 && cause.status < 500) {
+        setFailed(plainFail("The step was not added", cause, "The program is unchanged", "Try again"));
+      } else {
+        // The hub can have added it: read the steps, never send it again.
+        setFailed(plainFail("The hub did not confirm the step", cause, "It can be on the program", "Look at the steps before you add it again"));
+        void reload();
+      }
+    } finally {
+      setBusy("");
+    }
   };
   const addStep = () => {
-    const step: PlanStep = { title: `Step ${steps.length + 1}`, brief: "", profile: program.default.profile, engine: program.default.engine?.id ?? null };
-    if (drafting) savePlan([...(draft ?? []), step]);
-    else void run("add", () => planProgram(program.id, [step], false), "The step was not added");
+    if (offerCarry) setAdding(true);
+    else void append(false);
+  };
+  // HS-S21: the bulk agent change rebuilds every row. A Program that carries
+  // an action keeps its rows: change the agent on each step. It reads the
+  // Program again first; no read, no rebuild.
+  const pickAll = async (choice: { profile: string; engine: string | null }) => {
+    if (busy || !drafting) return;
+    const held = { words: "The steps carry an action · No step changed · Change the agent in each step's brief", title: "Each step keeps its id" };
+    if (carriesAction(program)) { setFailed(held); return; }
+    setBusy("plan");
+    setFailed(null);
+    let fresh: Program;
+    try {
+      fresh = await readProgram(program.id);
+    } catch (cause) {
+      setFailed(plainFail("The agent was not changed", cause, "No step changed", "Try again"));
+      setBusy("");
+      return;
+    }
+    apply(fresh);
+    if (fresh.state !== "drafting" || carriesAction(fresh)) {
+      setFailed(fresh.state !== "drafting" ? { words: "The program started · No step changed", title: fresh.state } : held);
+      setBusy("");
+      return;
+    }
+    setBusy("");
+    const next = fresh.steps.map((step) => ({ ...toPlan(step), id: undefined, profile: choice.profile, engine: choice.engine }));
+    void run("plan", () => planProgram(program.id, next, true), "The steps were not saved");
   };
   const verb = program.state === "parked" || program.state === "failed" ? "resume" : program.state === "drafting" ? "start" : program.state === "done" ? null : "park";
   const raceTarget = chosen && !chosen.race_of && ["planned", "ready"].includes(chosen.state) ? chosen : null;
@@ -948,7 +1018,7 @@ export function ProgramBody({ programId }: { programId: string }) {
             idle={idle} idleLabel="When idle, for every pi step" disabled={!drafting}
             then={thenRows.map((row) => ({ profile: row.profile, engine: row.engine }))}
             onThen={(next) => void run("agents", () => updateProgram(program.id, { runs_on: [firstChoice, ...next] }), "The agents were not saved")}
-            onPick={(choice) => drafting && savePlan((draft ?? []).map((step) => ({ ...step, profile: choice.profile, engine: choice.engine })))}
+            onPick={(choice) => void pickAll(choice)}
             onIdle={(next) => void run("idle", () => updateProgram(program.id, { prefer_idle: next }), "When idle was not changed")}
             data-testid="program-runs-on" />
           <CheckGadget variant="token" label="When idle" checked={idle}
@@ -967,7 +1037,8 @@ export function ProgramBody({ programId }: { programId: string }) {
           <Button dense variant="secondary" onClick={() => openRef(`note:${program.note_id}`)} data-testid="program-open-note">Open note</Button>
         ) : null}
         {program.state !== "done" ? (
-          <Button dense variant="ghost" loading={busy === "add" || busy === "plan"} disabled={Boolean(busy)} onClick={addStep} data-testid="program-add-step">Add step</Button>
+          <Button dense variant="ghost" loading={!adding && (busy === "add" || busy === "plan")} disabled={Boolean(busy) || adding} onClick={addStep}
+            aria-expanded={offerCarry ? adding : undefined} data-testid="program-add-step">Add step</Button>
         ) : null}
         {raceTarget ? (
           <Button dense variant="ghost" disabled={Boolean(busy)} onClick={() => void run("race", () => race(program.id, raceTarget.id, 2), "The race did not start")}
@@ -985,6 +1056,21 @@ export function ProgramBody({ programId }: { programId: string }) {
       <div className="pg-body" ref={bodyRef}>
         {/* PG-WINDOW: the body says it goes on (the kit's ScrollHint fade). */}
         <ScrollHint axis="y" scrollRef={bodyRef} className="pg-body-scroll">
+        {adding && offerCarry ? (
+          <section className="pg-add-well" aria-label="Add step" data-testid="program-add-well">
+            <CheckGadget label={`This step carries the action ${actionWords}`} checked={carry} onChange={setCarry} disabled={busy === "add"} />
+            <p className="pg-add-words" data-testid="program-add-words">
+              {carry ? "When this step is done, the action is done." : "The step does not carry the action."}
+              {program.state === "running" ? " The program runs: the step can start without Start." : ""}
+            </p>
+            <span className="pg-add-verbs">
+              <Button dense variant="primary" loading={busy === "add"} disabled={Boolean(busy)} onClick={() => void append(carry)}
+                data-testid="program-add-confirm">Add step</Button>
+              <Button dense variant="ghost" disabled={busy === "add"} onClick={() => { setAdding(false); setCarry(false); }}
+                data-testid="program-add-cancel">Cancel</Button>
+            </span>
+          </section>
+        ) : null}
         {view === "board" ? <ProgramLine program={program} goal={!drafting} /> : null}
         {view === "board" && drafting ? <AuditLine program={program} /> : null}
         {view === "board" ? <DeliveredLine program={program} /> : null}

@@ -97,6 +97,11 @@ import createRepositoryRequiredFixture from "../__fixtures__/program.create_repo
 // project and that project's Room, recorded by
 // tests/integration/test_desk_project_room.py::test_project_program_continuity_records_scope_and_reads.
 import roomPrograms13 from "../../../features/project-room/__tests__/room-wires/programs13.json";
+// HS-S21: a Program made from an action, before and after the Add that binds
+// a row to it (tests/integration/test_desk_program_from_action.py
+// test_action_binding_wire, through the real routes).
+import bindingUnboundFixture from "../__fixtures__/program.action_binding.unbound.json";
+import bindingBoundFixture from "../__fixtures__/program.action_binding.bound.json";
 
 type Frame = { type: string; data: unknown };
 type Answer = unknown | ((init?: { method?: string; json?: unknown }) => unknown);
@@ -3036,5 +3041,120 @@ describe("a split chain in the list", () => {
       const node = screen.getAllByTestId("programs-row").find((el) => el.getAttribute("data-program") === row.id)!;
       expect(within(node).getByTestId("programs-row-state").textContent).toContain(row.line!);
     }
+  });
+});
+
+describe("HS-S21: Add binds the action to one new step (D14/G21 = A)", () => {
+  const unbound = bindingUnboundFixture as unknown as Program;
+  const bound = bindingBoundFixture as unknown as Program;
+  const plans = () => calls.filter((call) => call.startsWith(`POST /api/programs/`) && call.includes("/plan "));
+  const newRow = (program: Program, extra: Record<string, unknown> = {}) => ({
+    title: `Step ${program.steps.length + 1}`, brief: "", profile: program.default.profile, engine: program.default.engine?.id ?? null, ...extra,
+  });
+
+  it("Add in Drafting appends only the new row; the rows there are not sent again", async () => {
+    hub({ [`GET /api/programs/${drafting.id}`]: drafting, [`POST /api/programs/${drafting.id}/plan`]: { program: drafting } });
+    render(<ProgramBody programId={drafting.id} />);
+    fireEvent.click(await screen.findByTestId("program-add-step"));
+    // No action: no well, one press appends.
+    expect(screen.queryByTestId("program-add-well")).toBeNull();
+    await waitFor(() => expect(plans()).toHaveLength(1));
+    expect(plans()[0]).toBe(`POST /api/programs/${drafting.id}/plan ${JSON.stringify({ steps: [newRow(drafting)], replace: false, size: null })}`);
+  });
+
+  it("a Program made from an action: the choice is off, Cancel sends nothing, the bound Add carries only the new row", async () => {
+    hub({ [`GET /api/programs/${unbound.id}`]: unbound, [`POST /api/programs/${unbound.id}/plan`]: { program: bound } });
+    render(<ProgramBody programId={unbound.id} />);
+    fireEvent.click(await screen.findByTestId("program-add-step"));
+    const well = screen.getByTestId("program-add-well");
+    const title = unbound.place.origin!.title;
+    const box = within(well).getByLabelText(`This step carries the action ${title}`) as HTMLInputElement;
+    expect(box.checked).toBe(false);
+    expect(within(well).getByTestId("program-add-words").textContent).toBe("The step does not carry the action.");
+    fireEvent.click(within(well).getByTestId("program-add-cancel"));
+    expect(screen.queryByTestId("program-add-well")).toBeNull();
+    expect(plans()).toEqual([]);
+
+    fireEvent.click(screen.getByTestId("program-add-step"));
+    fireEvent.click(screen.getByLabelText(`This step carries the action ${title}`));
+    expect(screen.getByTestId("program-add-words").textContent).toBe("When this step is done, the action is done.");
+    fireEvent.click(screen.getByTestId("program-add-confirm"));
+    await waitFor(() => expect(screen.queryByTestId("program-add-well")).toBeNull());
+    expect(plans()).toEqual([`POST /api/programs/${unbound.id}/plan ${JSON.stringify({
+      steps: [newRow(unbound, { origin_ref: unbound.origin_ref })], replace: false, size: null })}`]);
+    // The answer's rows: step 1 is as it was, step 2 says what it carries (words, no opener).
+    expect(screen.getAllByTestId("programs-step")).toHaveLength(2);
+    expect(within(openStep(1)).queryByTestId("programs-step-carries")).toBeNull();
+    const line = within(openStep(2)).getByTestId("programs-step-carries");
+    expect(line.textContent).toBe(`Carries the action ${title}`);
+    expect(line.getAttribute("data-origin")).toBe(unbound.origin_ref);
+    expect(within(line).queryByRole("button")).toBeNull();
+    expect(line.textContent).not.toMatch(/done|closed/i);
+    // A row carries it now: the next Add is ordinary (no second binding offered).
+    fireEvent.click(screen.getByTestId("program-add-step"));
+    expect(screen.queryByTestId("program-add-well")).toBeNull();
+    await waitFor(() => expect(plans()).toHaveLength(2));
+    expect(plans()[1]).toBe(`POST /api/programs/${unbound.id}/plan ${JSON.stringify({ steps: [newRow(bound)], replace: false, size: null })}`);
+  });
+
+  it("the bulk agent change holds a Program that carries an action; no plan is sent", async () => {
+    hub({ [`GET /api/programs/${bound.id}`]: bound });
+    render(<ProgramBody programId={bound.id} />);
+    fireEvent.click(await screen.findByTestId("program-runs-on"));
+    fireEvent.click(await screen.findByText("Codex · Ready"));
+    const failure = await screen.findByTestId("program-failure");
+    expect(failure.textContent).toBe("The steps carry an action · No step changed · Change the agent in each step's brief");
+    expect(plans()).toEqual([]);
+    // The step's own agent stays a per-step change.
+    const fold = openStep(2);
+    expect(within(fold).getByLabelText("Step 2 agent")).toBeTruthy();
+  });
+
+  it("the bulk agent change reads the Program first; a failed read or a new action row sends no plan", async () => {
+    let reads = 0;
+    hub({
+      [`GET /api/programs/${drafting.id}`]: () => {
+        reads += 1;
+        if (reads === 2) throw new ApiError(503, "Service Unavailable", {});
+        if (reads === 3) {
+          const now = clone(drafting);
+          now.steps[1].origin_ref = "action:ai_elsewhere";
+          return now;
+        }
+        return drafting;
+      },
+      [`POST /api/programs/${drafting.id}/plan`]: { program: drafting },
+    });
+    render(<ProgramBody programId={drafting.id} />);
+    fireEvent.click(await screen.findByTestId("program-runs-on"));
+    fireEvent.click(await screen.findByText("Codex · Ready"));
+    expect((await screen.findByTestId("program-failure")).textContent).toMatch(/^The agent was not changed · No step changed/);
+    fireEvent.click(screen.getByTestId("program-runs-on"));
+    fireEvent.click(await screen.findByText("Codex · Ready"));
+    await waitFor(() => expect(screen.getByTestId("program-failure").textContent).toMatch(/^The steps carry an action/));
+    expect(plans()).toEqual([]);
+  });
+
+  it("an Add the hub refused says so; an Add with no answer reads the steps and is not sent again", async () => {
+    let posts = 0;
+    hub({
+      [`GET /api/programs/${unbound.id}`]: unbound,
+      [`POST /api/programs/${unbound.id}/plan`]: () => {
+        posts += 1;
+        if (posts === 1) throw new ApiError(409, "Conflict", { detail: "Steps that started cannot be replaced." });
+        throw new TypeError("Failed to fetch");
+      },
+    });
+    render(<ProgramBody programId={unbound.id} />);
+    fireEvent.click(await screen.findByTestId("program-add-step"));
+    fireEvent.click(screen.getByTestId("program-add-confirm"));
+    expect((await screen.findByTestId("program-failure")).textContent).toMatch(/^The step was not added · The program is unchanged/);
+    // The well stays, with his choice, for a deliberate press.
+    expect(screen.getByTestId("program-add-well")).toBeTruthy();
+    const readsBefore = calls.filter((call) => call === `GET /api/programs/${unbound.id}`).length;
+    fireEvent.click(screen.getByTestId("program-add-confirm"));
+    await waitFor(() => expect(screen.getByTestId("program-failure").textContent).toMatch(/^The hub did not confirm the step · It can be on the program/));
+    await waitFor(() => expect(calls.filter((call) => call === `GET /api/programs/${unbound.id}`).length).toBe(readsBefore + 1));
+    expect(posts).toBe(2);
   });
 });

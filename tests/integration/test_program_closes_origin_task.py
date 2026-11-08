@@ -49,3 +49,33 @@ def test_a_parked_step_leaves_its_door_task_open(tmp_path) -> None:
     rig.tick()
     rig.service.park(OWNER, pid)
     assert _status(rig, task) == "open"
+
+
+def test_only_the_step_bound_to_the_action_closes_it(tmp_path, monkeypatch) -> None:
+    """HS-S21 (D14/G21 = A): a Program made from an action closes it through
+    the one row that carries it (the Add well's bound append), never through
+    an ordinary row or the Program's own origin."""
+    from types import SimpleNamespace
+
+    rig = Rig(tmp_path, github=False)
+    monkeypatch.setattr(rig.service, "_project_source", lambda project_id: SimpleNamespace(primary_path=str(rig.repo)))
+    task = door_task(rig, "dream: add docs/glossary.md and docs/terms.md")
+    with rig.db._connection() as conn:
+        conn.execute("INSERT INTO projects (id, name) VALUES ('proj-docs', 'Docs')")
+    pid = rig.service.from_action(OWNER, task, project_id="proj-docs")["id"]
+    with rig.db._connection() as conn:
+        conn.execute("UPDATE programs SET check_command=?, control='yolo' WHERE id=?", (f"sh {FAKE_CHECK}", pid))
+    rig.service.plan(OWNER, pid, steps=[{"title": "Terms", "brief": "Add docs/terms.md."}])
+    rig.service.plan(OWNER, pid, steps=[{"title": "Glossary", "brief": "Add docs/glossary.md.", "origin_ref": f"action:{task}"}])
+    assert [step["origin_ref"] for step in rig.service.store.list_steps(pid)] == [None, f"action:{task}"]
+    rig.service.start(OWNER, pid)
+    rig.tick()
+    rig.agent.finish(rig.step(pid, 1)["launch_id"], {"docs/terms.md": "Terms.\n"})
+    rig.tick(4)
+    assert rig.step(pid, 1)["state"] in ("merged", "done")
+    assert _status(rig, task) == "open"  # the ordinary row and the Program's origin close nothing
+    rig.tick()
+    rig.agent.finish(rig.step(pid, 2)["launch_id"], {"docs/glossary.md": "A program is a goal in steps.\n"})
+    rig.tick(4)
+    assert rig.step(pid, 2)["state"] in ("merged", "done")
+    assert _status(rig, task) == "done"

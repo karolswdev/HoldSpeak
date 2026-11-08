@@ -1487,3 +1487,30 @@ span.pg-req-thumb { height: 150px; }
   flex-wrap: wrap;
   gap: 6px;
 }
+
+/* ── HS-S21: the Add well of a Program made from an action, and the
+   line a step that carries the action shows in its fold ── */
+.pg-add-well {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  margin: 8px 12px 0;
+  padding: 8px 10px;
+  border: 1px solid var(--wb-rule-soft);
+  border-radius: 6px;
+  min-width: 0;
+}
+.pg-add-words {
+  flex: 1 1 220px;
+  margin: 0;
+  min-width: 0;
+  font: 400 12px / 1.4 var(--font-sans);
+}
+.pg-add-verbs { display: inline-flex; gap: 6px; }
+.pg-sf-carries {
+  margin: 2px 0 6px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font: 400 12px / 1.4 var(--font-sans);
+}

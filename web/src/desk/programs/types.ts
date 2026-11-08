@@ -646,6 +646,8 @@ export interface PlanStep {
   prefer_idle?: boolean;
   effort?: "low" | "medium" | "high";
   race?: number;
+  /** HS-S21: the row carries this action (`action:<id>`); its finish closes it. */
+  origin_ref?: string;
 }
 
 /** The Programs room line of a person or a project (§9b). */
