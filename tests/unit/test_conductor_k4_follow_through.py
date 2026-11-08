@@ -617,13 +617,13 @@ def test_worktree_remove_refuses_by_name(tmp_path) -> None:
 def _watch_merge(db) -> dict[str, Any]:
     """A real WatchService github.pr.merged observation (GitHubWatchSource,
     gh faked at its process boundary) on an explicit merged-state watch."""
-    from holdspeak.services.reaction_service import ReactionService
+    from tests.watch_seed import seed_watch
     from holdspeak.services.watch_service import WatchService
     from holdspeak.services.watch_sources import fetch_watch_snapshot
 
     watch_id = "watch-k4-merge"
-    ReactionService(db).create_watch(
-        OWNER, connector_id="gh", query_kind="pull_requests", name="PR watch",
+    seed_watch(db,
+        connector_id="gh", query_kind="pull_requests", name="PR watch",
         query={"repository": "acme/railsproj", "state": "all"}, watch_id=watch_id,
     )
     db.automations.update_watch_spec(watch_id, project_id=PROJECT, revision=1)
@@ -732,7 +732,7 @@ def test_watch_carries_the_branch_and_room_prs_stay_open(tmp_path) -> None:
         OWNER, query_kind="pull_requests", query={"repository": "acme/app", "state": "open"},
     )
     assert entities[0]["headRefName"] == "hs/a"
-    from holdspeak.services.reaction_service import normalize_snapshot
+    from holdspeak.services.snapshot_diff import normalize_snapshot
 
     assert normalize_snapshot("gh", entities)["entities"]["1"]["head_ref"] == "hs/a"
 

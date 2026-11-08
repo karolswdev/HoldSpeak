@@ -317,6 +317,17 @@ describe("the sentence on top", () => {
     expect(screen.queryByTestId("automation-on")).toBeNull();
   });
 
+  it("an event start saved before the watch fold says it must be set again", async () => {
+    // The recorded empty answer plus the hub's one flag (workbench_service
+    // payload ``when_needs_reset``, fenced by tests/integration/
+    // test_desk_workbenches.py::test_a_legacy_event_start_needs_setting_again).
+    const step = empty as Step;
+    const detail = (step.gets[DETAIL] as { workbench: AutomationDetail }).workbench;
+    await open({ ...step, gets: { ...step.gets, [DETAIL]: { workbench: { ...detail, when_needs_reset: true } } } });
+    expect(line("when")).toHaveTextContent("The event start must be set again");
+    expect(screen.queryByTestId("automation-on")).toBeNull();
+  });
+
   it("the window opens at no less than 880 x 640 at 1440", () => {
     expect(AUTOMATION_WINDOW_SIZE.w).toBeGreaterThanOrEqual(880);
     expect(AUTOMATION_WINDOW_SIZE.h).toBeGreaterThanOrEqual(640);

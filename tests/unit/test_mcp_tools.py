@@ -27,9 +27,6 @@ REQUIRED_TOOLS = {
     "people.grounding.get", "people.note.create",
     "people.relationship.create", "people.one_on_one.create", "people.agenda.add",
     "people.request.create", "people.request.accept", "people.commitment.transition",
-    "watch.list", "watch.create", "watch.set_enabled", "watch.refresh", "watch.preview",
-    "event.list", "reaction.presets", "reaction.list", "reaction.create", "reaction.set_enabled",
-    "reaction.process",
     "model_library.get", "model_library.download", "model_library.add_to_library",
     "model_library.use_model_file", "model_library.connect_hosted_model",
     "model_library.define_endpoint", "model_library.connect_paired_device",
@@ -63,6 +60,10 @@ def test_retired_router_tools_are_absent_from_the_catalogue() -> None:
         "model_profile.delete",
         # Sequences and Workflows are parked (2026-11-08): Programs run work.
         "sequence.run", "sequence.cancel", "workflow.run", "workflow.cancel",
+        # The watch fold (2026-11-08): the reactions family is parked.
+        "watch.list", "watch.create", "watch.set_enabled", "watch.refresh", "watch.preview",
+        "event.list", "reaction.presets", "reaction.list", "reaction.create",
+        "reaction.set_enabled", "reaction.process",
         # One name (2026-11-08): the automation tools are automation.* only.
         "workbench.list", "workbench.get", "workbench.create", "workbench.update",
         "workbench.delete", "workbench.run", "workbench.results", "workbench.cancel",

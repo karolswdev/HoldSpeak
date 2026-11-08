@@ -169,17 +169,6 @@ TOOL_AUTHORITY: dict[str, str] = {
     "plugin_job.summary": WORK,
     "plugin_job.retry": WORK,
     "plugin_job.cancel": WORK,
-    "reaction.presets": WORK,
-    "watch.list": WORK,
-    "watch.create": CONFIG,  # a connector watch
-    "watch.set_enabled": CONFIG,  # a connector watch
-    "watch.refresh": WORK,
-    "watch.preview": WORK,
-    "event.list": WORK,
-    "reaction.list": WORK,
-    "reaction.create": CONFIG,  # an automatic reaction
-    "reaction.set_enabled": CONFIG,  # an automatic reaction
-    "reaction.process": WORK,
     "thought.create": WORK,
     "thought.adopt_note": WORK,
     "thought.get_default_context": WORK,

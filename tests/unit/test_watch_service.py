@@ -22,7 +22,7 @@ import pytest
 from holdspeak.db.core import Database
 from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.services.errors import NotFound, ServiceError, ValidationError
-from holdspeak.services.reaction_service import ReactionService
+from tests.watch_seed import seed_watch
 from holdspeak.services.watch_service import WatchService
 from holdspeak.watch_validation import (
     ACTION_KINDS,
@@ -41,10 +41,8 @@ OWNER = Principal(PrincipalKind.OWNER, "test-watch-owner")
 # ── Helpers ──────────────────────────────────────────────────────────
 
 def _make_watch(db: Database, watch_id: str = "watch-01", **kwargs: Any) -> dict[str, Any]:
-    """Create a watch via ReactionService (the legacy creator)."""
-    svc = ReactionService(db)
-    return svc.create_watch(
-        OWNER,
+    """Create a watch via tests/watch_seed.py (the legacy row creator)."""
+    return seed_watch(db,
         connector_id=kwargs.get("connector_id", "gh"),
         query_kind=kwargs.get("query_kind", "pull_requests"),
         name=kwargs.get("name", "Test watch"),
@@ -676,7 +674,9 @@ class TestConditionValidation:
 class TestActionValidation:
     @pytest.mark.parametrize("kind", sorted(ACTION_KINDS))
     def test_all_closed_kinds_accepted(self, kind) -> None:
-        errors = validate_action({"schema": "WatchAction@1", "kind": kind})
+        # automation.run names the automation it runs (2026-11-08).
+        extra = {"workbench_id": "wb"} if kind == "automation.run" else {}
+        errors = validate_action({"schema": "WatchAction@1", "kind": kind, **extra})
         assert errors == [], f"{kind} should be accepted: {errors}"
 
     def test_unknown_kind_refused(self) -> None:
@@ -913,10 +913,8 @@ class TestEvaluateOnce:
                            0.4, 1, datetime('now'), datetime('now'))""",
                 (project_id,),
             )
-        from holdspeak.services.reaction_service import ReactionService
-        rs = ReactionService(db)
-        rs.create_watch(
-            OWNER, connector_id="gh", query_kind="pull_requests",
+        from tests.watch_seed import seed_watch
+        seed_watch(db, connector_id="gh", query_kind="pull_requests",
             name="Eval Watch",
             query={"repository": "acme/app"},
             watch_id=watch_id,

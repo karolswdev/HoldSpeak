@@ -269,16 +269,17 @@ class WorkbenchService:
             raise ValidationError("when must be a choice")
         kind = str(when.get("kind") or "")
         from .automation_when import cron_for, event_choices
-        from .reaction_service import ReactionService
+        from .watch_service import WatchService
 
-        reactions = ReactionService(self._db, observer=self._observer, on_changed=self._on_changed)
-        own = [r for r in self._db.automations.list_reactions() if r.get("workbench_id") == workbench_id]
+        # 2026-11-08: an event start is a watch (WatchService). A legacy
+        # Watch + Reaction row runs nothing any more (it needs setting again).
+        watches = WatchService(self._db, observer=self._observer)
 
         def stop_events(keep: str = "") -> None:
-            for reaction in own:
-                if reaction["id"] != keep and reaction.get("enabled"):
-                    reactions.set_workbench_automation_enabled(
-                        principal, workbench_id=workbench_id, reaction_id=reaction["id"], enabled=False)
+            for watch in watches.automation_event_watches(workbench_id):
+                if watch["id"] != keep and watch.get("state") in {"active", "tested"}:
+                    watches.set_automation_event_enabled(
+                        principal, workbench_id=workbench_id, watch_id=watch["id"], enabled=False)
 
         if kind == "manual":
             self.update_workbench(principal, workbench_id, schedule=None, schedule_enabled=False)
@@ -313,20 +314,14 @@ class WorkbenchService:
                 raise ValidationError("Choose one of the events the hub can deliver")
             repository = str(when.get("repository") or "").strip()
             # The same event on the same repository is turned back on, not
-            # made again.
-            same = next((r for r in own if r.get("event_pattern") == choice["event_pattern"]
-                         and ((self._db.automations.get_watch(r["watch_id"]) or {}).get("query") or {})
-                         .get("repository") == repository), None) if repository else None
-            reaction_id = same["id"] if same else reactions.create_preset_automation(
+            # made again. Turning it on reads the source now (the quiet
+            # baseline): a source that cannot be read refuses here, before
+            # anything else changes.
+            watch_id = watches.start_automation_event(
                 principal, workbench_id=workbench_id, preset_id=event_id, repository=repository)["id"]
-            # Turning it on reads the source now (the quiet baseline): a
-            # source that cannot be read refuses here, before anything else
-            # changes.
-            reactions.set_workbench_automation_enabled(
-                principal, workbench_id=workbench_id, reaction_id=reaction_id, enabled=True)
-            stop_events(keep=reaction_id)
+            stop_events(keep=watch_id)
             self.update_workbench(principal, workbench_id, schedule=None, schedule_enabled=False)
-            self._db.workbenches.set_when_json(workbench_id, {"kind": "event", "reaction_id": reaction_id})
+            self._db.workbenches.set_when_json(workbench_id, {"kind": "event", "watch_id": watch_id})
         else:
             raise ValidationError("when.kind must be schedule, event or manual")
         return self.get_workbench(principal, workbench_id)
@@ -1264,12 +1259,22 @@ class WorkbenchService:
             chosen = {}
         payload.pop("when_json", None)
         payload["when_kind"] = str(chosen.get("kind") or "") or None
+        # 2026-11-08: an event start is a watch (WatchService).
+        from .watch_service import WatchService
+
         payload["event_starts"] = [
-            {"id": str(r.get("id") or ""), "name": str(r.get("name") or ""), "enabled": bool(r.get("enabled")),
-             "event_pattern": str(r.get("event_pattern") or "")}
-            for r in self._db.automations.list_reactions() if r.get("workbench_id") == wb.id
-            and (not chosen or r.get("id") == chosen.get("reaction_id"))
+            {"id": str(w.get("id") or ""), "name": str(w.get("name") or ""),
+             "enabled": w.get("state") in {"active", "tested"},
+             "event_pattern": str(w.get("event_pattern") or "")}
+            for w in WatchService(self._db).automation_event_watches(wb.id)
+            if not chosen or w.get("id") == chosen.get("watch_id")
         ]
+        # Watch fold 4 (2026-11-08): an event start saved before the fold (a
+        # legacy Reaction) runs nothing. No migration: the When line says it
+        # must be set again until he saves a When choice.
+        payload["when_needs_reset"] = bool(chosen.get("reaction_id")) or (
+            not chosen and any(r.get("workbench_id") == wb.id and r.get("enabled")
+                               for r in self._db.automations.list_reactions()))
         # Betterment A4: when the schedule fires next (only while it is on),
         # and the events the When editor can offer.
         from .automation_when import event_choices, next_run_at

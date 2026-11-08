@@ -1,8 +1,8 @@
 """HS-159-02: No-third-door fence for connector_watches writes.
 
 This inventory test asserts that every runtime write path to
-connector_watches flows through WatchService or the pinned
-ReactionService methods.  No other module in holdspeak/ may INSERT,
+connector_watches flows through WatchService (ReactionService, the
+legacy path, is parked since the watch fold of 2026-11-08).  No other module in holdspeak/ may INSERT,
 UPDATE, or DELETE from connector_watches at runtime.
 
 The sanctioned modules are:
@@ -10,8 +10,6 @@ The sanctioned modules are:
    primitives only, never called from outside the two sanctioned
    services except for reads).
 2. holdspeak/services/watch_service.py -- the universal facade.
-3. holdspeak/services/reaction_service.py -- legacy compatibility path,
-   pinned by the 31 legacy compat tests.
 
 HOW A MODULE JOINS THIS LIST: add its repo-relative path to
 SANCTIONED_WRITERS below and document the reason.  The fence then
@@ -32,11 +30,9 @@ import pytest
 
 
 # Modules that are allowed to contain SQL writes to connector_watches.
-# ReactionService is a sanctioned APPLICATION-LEVEL writer (it calls
-# repo methods in automations.py) but does not contain raw SQL writes
-# to the table, so it is not listed here.  The two-tier boundary:
+# The two-tier boundary:
 #   SQL tier: automations.py + watch_service.py (listed below)
-#   Service tier: WatchService + ReactionService (pinned by 31 tests)
+#   Service tier: WatchService (ReactionService is parked, 2026-11-08)
 SANCTIONED_WRITERS: list[str] = [
     "holdspeak/db/automations.py",       # Persistence primitives (the repo)
     "holdspeak/services/watch_service.py",   # Universal facade (HS-159-02)
@@ -67,7 +63,7 @@ def test_no_third_door_connector_watches_writes() -> None:
     """Every runtime write to connector_watches flows through sanctioned modules.
 
     If this test fails, either:
-    1. The new write belongs inside WatchService or ReactionService and
+    1. The new write belongs inside WatchService and
        should be moved there.
     2. The module has a legitimate reason to write to connector_watches
        and should be added to SANCTIONED_WRITERS with a documented reason.
@@ -108,8 +104,8 @@ def test_no_third_door_connector_watches_writes() -> None:
 
     assert not violations, (
         "Unsanctioned writes to connector_watches detected.  "
-        "All runtime writes must flow through WatchService or "
-        "ReactionService (sanctioned in SANCTIONED_WRITERS):\n"
+        "All runtime writes must flow through WatchService "
+        "(sanctioned in SANCTIONED_WRITERS):\n"
         + "\n".join(f"  {v}" for v in violations)
     )
 

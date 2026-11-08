@@ -126,7 +126,6 @@ class RuntimeServices:
     door_service: Optional[Any] = None
     actuator_service: Optional[Any] = None         # broadcast=
     mission_control_service: Optional[Any] = None
-    reaction_service: Optional[Any] = None
     memory_service: Optional[Any] = None
     coder_service: Optional[Any] = None
     settings_service: Optional[Any] = None         # on_settings_applied=

@@ -29,7 +29,7 @@ from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.services.errors import NotFound
 from holdspeak.services.project_service import ProjectService
 from holdspeak.services.project_setup_service import ProjectSetupService
-from holdspeak.services.reaction_service import ReactionService
+from tests.watch_seed import seed_watch
 from holdspeak.services.watch_service import WatchService
 from holdspeak.web.context import WebContext
 from holdspeak.web.routes import (
@@ -352,10 +352,8 @@ def _seed_watch(
     watch_id: str = "watch-rt-01",
     project_id: str | None = None,
 ) -> str:
-    """Seed a graduated watch via ReactionService (the legacy creator)."""
-    svc = ReactionService(db)
-    svc.create_watch(
-        OWNER,
+    """Seed a graduated watch via tests/watch_seed.py (the legacy row creator)."""
+    seed_watch(db,
         connector_id="gh",
         query_kind="pull_requests",
         name="Route test watch",

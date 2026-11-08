@@ -35,7 +35,6 @@ _FAMILY_MODULE_NAMES: list[str] = [
     "memory",
     "people",
     "plugin_job",
-    "reactions",
     "thought",
     "inference",
     "model_library",

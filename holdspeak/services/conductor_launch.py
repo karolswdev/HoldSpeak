@@ -365,12 +365,10 @@ LAUNCH_RULES: dict[str, tuple[str, str, str]] = {
     "nudge.dismiss": (NEVER, "", ""),
     "plugin_job.cancel": (NEVER, "", ""),
     "plugin_job.retry": (NEVER, "", ""),
-    "reaction.process": (NEVER, "", ""),
     "heartbeat.run_now": (NEVER, "", ""),
     "heartbeat.notify_test": (NEVER, "", ""),
     "concierge.propose": (NEVER, "", ""),
     "connection.recheck": (NEVER, "", ""),
-    "watch.refresh": (NEVER, "", ""),
     "project.watch.test": (NEVER, "", ""),
     # window: the owner's desk windows (PHILO-16 16b). A launch composes the
     # desk beside him (open, raise, arrange, seat, close); nothing leaves the

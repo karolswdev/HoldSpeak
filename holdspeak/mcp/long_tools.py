@@ -49,7 +49,6 @@ LONG_TOOLS: dict[str, str] = {
     "project.draft_update": "model (generator llm)",
     "memory.search": "embedding model",
     # The network or a CLI subprocess (gh, acli).
-    "watch.preview": "network",
     "project.watch.test": "network",
     "project.watch.evaluate": "network",
     "connection.recheck": "subprocess (gh / acli)",
@@ -73,7 +72,7 @@ KEY_ARGUMENTS: tuple[str, ...] = (
 
 #: Tools that drive gh or acli (acli switches one global active account).
 PROVIDER_TOOLS: frozenset[str] = frozenset({
-    "connection.recheck", "watch.preview", "watch.refresh",
+    "connection.recheck",
     "project.watch.test", "project.watch.evaluate",
 }) | frozenset(name for name in LONG_TOOLS if name.startswith("provider."))
 

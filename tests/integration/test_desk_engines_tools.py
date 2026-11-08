@@ -356,12 +356,11 @@ def test_an_agent_works_in_the_chosen_folder_read_only_for_a_press_and_a_review_
     in the same folder. Claude Code gets its read tools only, never the
     folder's own settings, and only HoldSpeak's MCP server; the egress chip
     names the vendor; the folder is unchanged."""
-    import asyncio
     import subprocess
 
     import holdspeak.delivery.registry as registry
     from holdspeak.db import get_database
-    from holdspeak.services.reaction_service import ReactionService
+    from holdspeak.services.watch_service import WatchService
     from holdspeak.services.watch_sources import GitHubWatchSource
     from tests.fixtures.fake_agent_cli import set_mode
 
@@ -409,14 +408,14 @@ def test_an_agent_works_in_the_chosen_folder_read_only_for_a_press_and_a_review_
             owner, query_kind="pull_requests", query={"repository": wire["repository"]})
 
     owner = Principal(PrincipalKind.OWNER, "desk-engines-a10")
-    reactions = ReactionService(get_database())
-    watch = reactions.create_watch(owner, connector_id="gh", query_kind="pull_requests",
-                                   query={"repository": wire["repository"]}, watch_id="watch-a10")
-    reactions.create_reaction(owner, watch_id=watch["id"], event_pattern="github.pr.review_requested",
-                              workbench_id=bench, reaction_id="reaction-a10", enabled=True, auto_run=True)
-    asyncio.run(reactions.refresh_watch(owner, watch["id"], snapshot(wire["before"])))
+    # The watch fold (2026-11-08): the event start is a watch.
+    rows = {"now": wire["before"]}
+    watches = WatchService(get_database(), snapshot_fetcher=lambda *_a, **_k: snapshot(rows["now"]))
+    watch = watches.start_automation_event(
+        owner, workbench_id=bench, preset_id="github-review-requested", repository=wire["repository"])
     seen = len(calls(fake_bin, "claude"))
-    asyncio.run(reactions.refresh_watch(owner, watch["id"], snapshot(wire["after"])))
+    rows["now"] = wire["after"]
+    watches.evaluate_once(owner, watch["id"])
     event_run = calls(fake_bin, "claude")[seen]
     assert event_run["cwd"] == str(folder.resolve())
     assert "https://github.com/acme/ledger/pull/418" in event_run["prompt"]

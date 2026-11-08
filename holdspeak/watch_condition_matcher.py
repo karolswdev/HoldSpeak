@@ -2,7 +2,7 @@
 
 PURE: no DB, no IO, no side-effects.  Matches the closed condition
 vocabulary from watch_validation.py against the transition dicts
-produced by diff_snapshots (reaction_service.py).
+produced by diff_snapshots (services/snapshot_diff.py).
 
 A transition has::
 
@@ -191,6 +191,21 @@ def _compare_against_transition(
     facts = transition.get("facts", {})
     changed = facts.get("changed", {})
     current = facts.get("current", {})
+
+    # ── The transition's own kind (2026-11-08) ─────────────────────
+    # ``event_type`` names the transition itself (github.pr.merged, ...),
+    # not an entity field: an Automation's "when something happens" rule
+    # matches on it. A trailing ".*" in an equals value matches a family.
+    if field == "event_type":
+        kind = str(transition.get("event_type") or "")
+        if comparison == "equals":
+            text = str(value or "")
+            return kind == text or (text.endswith(".*") and kind.startswith(text[:-1]))
+        if comparison == "in":
+            return isinstance(value, list) and kind in value
+        if comparison == "exists":
+            return bool(kind)
+        return False
 
     # ── Snapshot-level comparisons (read current entity) ───────────
     # These do NOT require the field in changed.  They inspect the

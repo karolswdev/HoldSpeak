@@ -183,18 +183,6 @@ _ALL_TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     "plugin_job.summary": ("evidence_read",     False),
     "plugin_job.retry":   ("effect_proposal",   False),
     "plugin_job.cancel":  ("effect_proposal",   False),
-    # --- reactions / watches / events ---
-    "reaction.presets":     ("evidence_read",     False),
-    "watch.list":           ("evidence_read",     False),
-    "watch.create":         ("effect_proposal",   False),
-    "watch.set_enabled":    ("effect_proposal",   False),
-    "watch.refresh":        ("effect_proposal",   False),
-    "watch.preview":        ("evidence_read",     False),
-    "event.list":           ("evidence_read",     False),
-    "reaction.list":        ("evidence_read",     False),
-    "reaction.create":      ("effect_proposal",   False),
-    "reaction.set_enabled": ("effect_proposal",   False),
-    "reaction.process":     ("effect_proposal",   False),
     # --- thought family ---
     "thought.create":                ("effect_proposal",   False),
     "thought.adopt_note":            ("effect_proposal",   False),

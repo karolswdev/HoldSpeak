@@ -137,8 +137,8 @@ lists every tool name.
 | `people` | The encrypted People ledger. |
 | `cadence`, `heartbeat`, `scheduled_recording`, `door` | The Cadence engine, the Heartbeat sweep, scheduled recordings and the Door. |
 | `model_library`, `inference`, `inference_assignment`, `concierge`, `settings` | Models, assignments and settings. |
-| `workbench`, `automation`, `recipe`, `reaction`, `watch`, `zone`, `kb` | Runs, Workbenches, recipes and Automations. An Automation's own tools are `automation.*`; `workbench.*` keeps the item tools. |
-| `memory`, `dictation`, `event`, `pipeline`, `kernel`, `plugin_job`, `coder` | Search, journals, events, receipts, queued jobs and Coder sessions. |
+| `workbench`, `automation`, `recipe`, `zone`, `kb` | Runs, Workbenches, recipes and Automations. An Automation's own tools are `automation.*`; `workbench.*` keeps the item tools. |
+| `memory`, `dictation`, `pipeline`, `kernel`, `plugin_job`, `coder` | Search, journals, events, receipts, queued jobs and Coder sessions. |
 
 ### Automations
 
@@ -385,7 +385,7 @@ database, FTS index or Cadence.
 
 <!-- BEGIN MCP TOOL ROSTER (machine-generated -- do not edit) -->
 
-**Registry totals:** 305 tools across 49 families.
+**Registry totals:** 294 tools across 46 families.
 
 #### agent (6)
 
@@ -508,10 +508,6 @@ database, FTS index or Cadence.
 
 - `door.add_item`
 - `door.get`
-
-#### event (1)
-
-- `event.list`
 
 #### follow_through (3)
 
@@ -751,14 +747,6 @@ database, FTS index or Cadence.
 - `provider.jira_validate_scope`
 - `provider.list`
 
-#### reaction (5)
-
-- `reaction.create`
-- `reaction.list`
-- `reaction.presets`
-- `reaction.process`
-- `reaction.set_enabled`
-
 #### recipe (4)
 
 - `recipe.chat`
@@ -817,14 +805,6 @@ database, FTS index or Cadence.
 #### today (1)
 
 - `today.get`
-
-#### watch (5)
-
-- `watch.create`
-- `watch.list`
-- `watch.preview`
-- `watch.refresh`
-- `watch.set_enabled`
 
 #### workbench (4)
 
@@ -947,7 +927,7 @@ it.
 
 `tools_for_palette(palette)` returns only the tools in the palette. A
 client that lists tools through this filter sees 66 tools
-instead of 305.
+instead of 294.
 
 `dispatch_for_palette(name, arguments, principal, palette)` runs a tool
 only if `name` is in the palette. A name outside the palette gets a typed
@@ -1007,11 +987,9 @@ effects.
 
 ## Legacy Watches
 
-Two Watch surfaces exist. The `watch.*` and `reaction.*` families own
-legacy Watches. The `project.watch.*` tools own graduated Watches. A
-graduated tool refuses a legacy Watch. A legacy tool does not refuse a
-graduated Watch. A legacy refresh of a graduated Watch wastes work and
-destroys nothing.
+One Watch surface exists: the `project.watch.*` tools. An Automation's
+event start is a Watch too; set it in the Automation's When line. A legacy
+Watch from before 2026-11-08 does not run, and a graduated tool refuses it.
 
 ## Example: the project lifecycle
 

@@ -23,8 +23,8 @@
     "schedule_enabled": false,
     "schedule_revision": 1,
     "item_order": [],
-    "created_at": "2026-11-01T20:24:26Z",
-    "last_modified": "2026-11-01T20:24:26Z",
+    "created_at": "2026-11-08T22:38:36Z",
+    "last_modified": "2026-11-08T22:38:36Z",
     "deleted": false,
     "items": [],
     "item_count": 0,
@@ -50,6 +50,7 @@
     "blanks": {},
     "when_kind": "schedule",
     "event_starts": [],
+    "when_needs_reset": false,
     "next_run_at": null,
     "when_events": [
      {

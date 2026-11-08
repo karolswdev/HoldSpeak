@@ -325,44 +325,18 @@ class TestArmOnEnable:
 
         `list_due_watches` filters on `enabled = 1`, so the column is left
         as it is on disable -- this test is the proof the filter is real,
-        not an assumption.
+        not an assumption. (The legacy enable path that re-armed a row is
+        parked with ReactionService, 2026-11-08.)
         """
-        from holdspeak.services.reaction_service import ReactionService
-
         watch_id = _seed_watch(
             db, "w-toggle", state="active",
             next_evaluation_at=_now_iso(-5),
         )
         assert watch_id in _due_ids(db)
 
-        ReactionService(db).set_watch_enabled(OWNER, watch_id, False)
+        db.automations.set_watch_enabled(watch_id, False)
         assert watch_id not in _due_ids(db), (
             "a disabled watch is still selectable by the scheduler"
-        )
-
-        # Re-enabling ARMS it (the legacy enable path, graduated row).
-        # The column is cleared first so the assertion cannot pass on a
-        # value the seed left behind.
-        db.automations.update_watch_spec(watch_id, state="active")
-        with db._connection() as conn:
-            conn.execute(
-                "UPDATE connector_watches SET next_evaluation_at=NULL "
-                "WHERE id=?", (watch_id,),
-            )
-        ReactionService(db).set_watch_enabled(OWNER, watch_id, True)
-        assert _next_eval(db, watch_id) is not None, (
-            "enabling left the watch unarmed -- it can never be selected"
-        )
-
-    def test_enable_does_not_arm_a_legacy_row(self, db: Any) -> None:
-        """A legacy (state='') watch stays owned by refresh_due_watches."""
-        from holdspeak.services.reaction_service import ReactionService
-
-        watch_id = _seed_watch(db, "w-legacy", state="", enabled=0)
-        ReactionService(db).set_watch_enabled(OWNER, watch_id, True)
-
-        assert _next_eval(db, watch_id) is None, (
-            "enabling a legacy row armed it -- two schedulers on one row"
         )
 
     def test_paused_and_retired_are_never_selected(self, db: Any) -> None:

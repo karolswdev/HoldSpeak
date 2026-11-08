@@ -31,7 +31,7 @@ from holdspeak.services.observer import (
     PipelineObserver,
     observe_service,
 )
-from holdspeak.services.reaction_service import diff_snapshots, normalize_snapshot
+from holdspeak.services.snapshot_diff import diff_snapshots, normalize_snapshot
 from holdspeak.watch_condition_matcher import match_condition
 from holdspeak.watch_validation import (
     validate_action,
@@ -42,6 +42,44 @@ from holdspeak.watch_validation import (
 
 def _rule_id() -> str:
     return f"wrule_{uuid.uuid4().hex[:12]}"
+
+
+#: An Automation's event-start watch carries ``intent = automation:<id>``.
+AUTOMATION_INTENT_PREFIX = "automation:"
+
+
+def _automation_event_pattern(rules: list[dict[str, Any]]) -> str:
+    """The event an automation watch's rule matches (its ``event_type`` leaf)."""
+    for rule in rules:
+        condition = rule.get("condition") or {}
+        if condition.get("field") == "event_type":
+            return str(condition.get("value") or "")
+    return ""
+
+
+def _run_now(coro: Any) -> Any:
+    """Run one coroutine to its end from sync code, on or off an event loop."""
+    import asyncio
+    import threading
+
+    try:
+        asyncio.get_running_loop()
+    except RuntimeError:
+        return asyncio.run(coro)
+    box: dict[str, Any] = {}
+
+    def target() -> None:
+        try:
+            box["value"] = asyncio.run(coro)
+        except BaseException as exc:  # handed back to the caller's thread
+            box["error"] = exc
+
+    thread = threading.Thread(target=target, name="watch-automation-run")
+    thread.start()
+    thread.join()
+    if "error" in box:
+        raise box["error"]
+    return box.get("value")
 
 
 # Material fields on connector_watches.  Changing any of these
@@ -318,7 +356,7 @@ class WatchService:
             raise ServiceError(
                 "legacy_watch_boundary",
                 f"Watch {watch_id!r} is a legacy row (state={state!r}). "
-                "Use the reactions family tools (watch.list / watch.refresh) instead.",
+                "Legacy watches are parked (2026-11-08); set the watch up again.",
                 context={"watch_id": watch_id, "state": state, "status": 409},
             )
 
@@ -856,6 +894,9 @@ class WatchService:
         baseline = watch.get("snapshot") or {}
         transitions = diff_snapshots(
             connector_id, baseline, snapshot, query_kind=str(watch.get("query_kind") or ""),
+            # An Automation's watch names the event a newly seen entity is
+            # (a PR that enters "review requested of me" is a review request).
+            discovery_event=str((watch.get("query") or {}).get("discovery_event") or ""),
         )
 
         # 5. Persist: evaluation + observations + baseline in one txn.
@@ -1118,9 +1159,9 @@ class WatchService:
 
         Boundary rule: evaluate_due owns graduated watches (state IN
         ('active','tested')) with a real next_evaluation_at column.
-        ReactionService.refresh_due_watches owns legacy watches
-        (state='') that read cadence from query JSON + updated_at.
-        Never two schedulers on one row.
+        A legacy watch (state='') has no scheduler since the watch fold
+        (2026-11-08; ReactionService is parked). Never two schedulers on
+        one row.
 
         Manual evaluate_once on a circuit-open watch: the OWNER's hand
         overrides — manual evaluation still runs (and its success closes
@@ -1418,6 +1459,15 @@ class WatchService:
                 if not action_kind:
                     continue
 
+                # 2026-11-08: an Automation's event start. Each transition
+                # that matches mints one occurrence of the automation and
+                # runs it; no steward effect row is made.
+                if action_kind == "automation.run":
+                    self._run_automation(
+                        watch_id, rule_id, condition, action, transitions,
+                    )
+                    continue
+
                 # An observation is the durable result of the evaluation.
                 # It is already written by _evaluate_core, so project.observe
                 # must never create a second pending effect row.  Keep this
@@ -1480,6 +1530,217 @@ class WatchService:
                 pass  # Non-critical; effects are already durable.
 
         return effects
+
+    # ── Automation event starts (2026-11-08) ─────────────────────────
+    #
+    # An Automation's "when something happens" is a graduated watch whose
+    # intent names the automation (``automation:<workbench id>``) and whose
+    # one rule matches the event and runs ``automation.run``. It replaces
+    # the legacy Watch + Reaction pair (ReactionService).
+
+    def automation_event_watches(self, workbench_id: str) -> list[dict[str, Any]]:
+        """The event-start watches of one automation, oldest first."""
+        intent = AUTOMATION_INTENT_PREFIX + workbench_id
+        rows = [w for w in self._repo.list_watches() if w.get("intent") == intent]
+        for row in rows:
+            row["event_pattern"] = _automation_event_pattern(self._repo.list_rules(row["id"]))
+        return rows
+
+    def start_automation_event(
+        self,
+        principal: Principal,
+        *,
+        workbench_id: str,
+        preset_id: str,
+        repository: str = "",
+    ) -> dict[str, Any]:
+        """Make (or find) this automation's watch for one preset event, read
+        its source now as the quiet baseline, and turn it on. A source that
+        cannot be read refuses here, before anything is on."""
+        self._owner(principal)
+        from holdspeak.automation_presets import get_automation_preset
+
+        if self._db.workbenches.get(workbench_id) is None:
+            raise NotFound("workbench", workbench_id)
+        preset = get_automation_preset(preset_id)
+        if preset is None:
+            raise NotFound("automation preset", preset_id)
+        query = dict(preset["query"])
+        if preset["connector_id"] == "gh":
+            repo = str(repository or "").strip()
+            if not repo:
+                raise ValidationError("GitHub automation presets require repository as owner/name")
+            if "/" not in repo or repo.startswith("/") or repo.endswith("/"):
+                raise ValidationError("repository must be owner/name")
+            query["repository"] = repo
+        pattern = str(preset["event_pattern"])
+        same = next((w for w in self.automation_event_watches(workbench_id)
+                     if w.get("event_pattern") == pattern
+                     and (w.get("query") or {}).get("repository") == query.get("repository")), None)
+        watch_id = same["id"] if same else self._create_automation_watch(
+            workbench_id, preset, query, pattern,
+        )
+        self.baseline_watch(principal, watch_id)
+        self._repo.update_watch_spec(watch_id, state="active")
+        self._arm_watch(watch_id)
+        return self.get_watch(principal, watch_id)
+
+    def set_automation_event_enabled(
+        self,
+        principal: Principal,
+        *,
+        workbench_id: str,
+        watch_id: str,
+        enabled: bool,
+    ) -> dict[str, Any]:
+        """On reads the source again (a quiet baseline); off pauses."""
+        self._owner(principal)
+        watch = self._repo.get_watch(watch_id)
+        if not watch or watch.get("intent") != AUTOMATION_INTENT_PREFIX + workbench_id:
+            raise NotFound("automation event", watch_id)
+        if enabled:
+            self.baseline_watch(principal, watch_id)
+            self._repo.update_watch_spec(watch_id, state="active")
+            self._arm_watch(watch_id)
+        else:
+            self._repo.update_watch_spec(watch_id, state="paused")
+        return self.get_watch(principal, watch_id)
+
+    def automation_event_history(
+        self,
+        principal: Principal,
+        *,
+        workbench_id: str,
+        watch_id: str,
+        limit: int = 100,
+    ) -> list[dict[str, Any]]:
+        """The occurrences this event start made, newest first."""
+        self._owner(principal)
+        watch = self._repo.get_watch(watch_id)
+        if not watch or watch.get("intent") != AUTOMATION_INTENT_PREFIX + workbench_id:
+            raise NotFound("automation event", watch_id)
+        out: list[dict[str, Any]] = []
+        for item in self._db.workbench_items.list_for_workbench(workbench_id, limit=2000):
+            try:
+                context = json.loads(item.context_json or "{}")
+            except (TypeError, ValueError):
+                continue
+            if not isinstance(context, dict) or context.get("watch_id") != watch_id:
+                continue
+            out.append({"item_id": item.id, "created_at": item.created_at,
+                        "event_type": context.get("event_type", ""),
+                        "entity_ref": context.get("entity_ref", "")})
+        out.sort(key=lambda row: str(row.get("created_at") or ""), reverse=True)
+        return out[: max(1, int(limit))]
+
+    def _create_automation_watch(
+        self,
+        workbench_id: str,
+        preset: dict[str, Any],
+        query: dict[str, Any],
+        pattern: str,
+    ) -> str:
+        watch_id = f"w_{uuid.uuid4().hex[:12]}"
+        now_iso = datetime.now(timezone.utc).isoformat(timespec="seconds")
+        condition = {"schema": "WatchCondition@1", "field": "event_type",
+                     "comparison": "equals", "value": pattern}
+        actions = [{"schema": "WatchAction@1", "kind": "automation.run",
+                    "workbench_id": workbench_id}]
+        with self._db._connection() as conn:
+            self._repo.create_watch_in_transaction(
+                conn,
+                watch_id=watch_id,
+                connector_id=str(preset["connector_id"]),
+                query_kind=str(preset["query_kind"]),
+                name=str(preset.get("label") or pattern),
+                query_json=json.dumps(query, sort_keys=True, separators=(",", ":")),
+                enabled=True,
+                schema_version="WatchSpec@1",
+                intent=AUTOMATION_INTENT_PREFIX + workbench_id,
+                subject_kind=str(preset["query_kind"]),
+                trigger_kind="poll",
+                mode="yolo",
+                # Paused until the caller has read its baseline.
+                state="paused",
+                created_at=now_iso,
+                updated_at=now_iso,
+            )
+            self._repo.create_rule_in_transaction(
+                conn,
+                rule_id=_rule_id(),
+                watch_id=watch_id,
+                ordinal=0,
+                condition_schema="WatchCondition@1",
+                condition_json=json.dumps(condition, sort_keys=True, separators=(",", ":")),
+                action_schema="WatchAction@1",
+                action_json=json.dumps(actions, sort_keys=True, separators=(",", ":")),
+                enabled=True,
+                revision=0,
+                created_at=now_iso,
+                updated_at=now_iso,
+            )
+        return watch_id
+
+    def _run_automation(
+        self,
+        watch_id: str,
+        rule_id: str,
+        condition: dict[str, Any],
+        action: dict[str, Any],
+        transitions: list[dict[str, Any]],
+    ) -> list[dict[str, Any]]:
+        """One occurrence per matching transition, made once and run at once.
+
+        The item id is derived from the rule and the entity's revision, so a
+        replayed evaluation finds the item it made and runs nothing twice.
+        """
+        from holdspeak.services.automation_runs import mint_occurrence
+        from holdspeak.services.workbench_service import WorkbenchService
+
+        workbench_id = str(action.get("workbench_id") or "")
+        wb = self._db.workbenches.get(workbench_id) if workbench_id else None
+        if wb is None:
+            return []
+        watch = self._repo.get_watch(watch_id) or {}
+        owner = Principal(PrincipalKind.OWNER, "watch-automation")
+        workbenches = WorkbenchService(self._db)
+        results: list[dict[str, Any]] = []
+        for transition in transitions:
+            if not match_condition(condition, [transition]):
+                continue
+            facts = dict(transition.get("facts") or {})
+            entity_ref = str(transition.get("entity_ref") or "")
+            item_id = "wbi_watch_" + hashlib.sha256(
+                f"{rule_id}:{entity_ref}:{transition.get('source_revision', '')}".encode()
+            ).hexdigest()[:20]
+            if self._db.workbench_items.get(item_id, include_parked=True) is not None:
+                continue
+            event = {
+                "event_type": transition.get("event_type", ""),
+                "subject_ref": f"{watch.get('connector_id', '')}:{watch.get('query_kind', '')}:{entity_ref}",
+                "facts": facts,
+            }
+            context = {"watch_id": watch_id, "rule_id": rule_id,
+                       "event_type": event["event_type"], "entity_ref": entity_ref}
+            title = str(facts.get("entity_title") or "").strip() or str(event["event_type"])
+            try:
+                if str(wb.instruction or "").strip():
+                    item = mint_occurrence(self._db, wb, item_id=item_id, title=title,
+                                           event=event, context=context)
+                else:
+                    item = self._db.workbench_items.upsert(
+                        item_id=item_id, workbench_id=wb.id, title=title,
+                        body=json.dumps({"event": event}, sort_keys=True, indent=2),
+                        context=context,
+                    )
+                run = _run_now(workbenches.run_item(
+                    owner, workbench_id, item.id, request_id=f"watch:{watch_id}:{item_id}",
+                ))
+                results.append({"item_id": item.id, "status": "ran",
+                                "operation_id": (run or {}).get("parent_operation_id")})
+            except Exception as exc:  # one failed run never stops the sweep
+                results.append({"item_id": item_id, "status": "failed", "error": str(exc)})
+        return results
 
     # ── Rules ───────────────────────────────────────────────────────
 
