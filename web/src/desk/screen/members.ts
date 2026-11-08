@@ -17,6 +17,7 @@
 import { useCallback, useEffect, useMemo } from "react";
 import { create } from "zustand";
 import { apiFetch } from "../../lib/api";
+import { readPeopleReadiness, readPeopleRelationships } from "../../lib/keyedRead";
 import { PEOPLE_CHANGE_KINDS, ROOM_CHANGE_KINDS, useOnDeskChanged } from "../useDeskChangedRefresh";
 import { normalizeRef, type ScreenPerson } from "./compose";
 
@@ -91,19 +92,21 @@ export function loadProject(projectId: string, key: string, which: MemberRead[] 
   return run;
 }
 
-export function loadPeople(): Promise<void> {
+/** `fresh`: a re-read after a People frame or a retry; a plain read takes
+ *  the desk's kept answer (one read for every reader at open). */
+export function loadPeople(fresh = false): Promise<void> {
   const out = inflight.get("people");
   if (out) return out;
   const run = (async () => {
     let entry: PeopleEntry;
     try {
-      const ready = await apiFetch<{ state?: string; readiness?: string } | null>("/api/people/readiness");
+      const ready = await readPeopleReadiness<{ state?: string; readiness?: string } | null>({ fresh });
       const state = ready?.state ?? ready?.readiness;
       if (!state) entry = { state: "failed", persons: [] };
       else if (state !== "ready") entry = { state: "locked", persons: [] };
       else {
-        const body = await apiFetch<{ relationships?: Array<{ id?: string; display_name?: string }> } | null>(
-          "/api/people/relationships",
+        const body = await readPeopleRelationships<{ relationships?: Array<{ id?: string; display_name?: string }> } | null>(
+          { fresh },
         );
         if (!body || !Array.isArray(body.relationships)) entry = { state: "failed", persons: [] };
         else
@@ -132,7 +135,7 @@ export function retryProject(projectId: string): void {
 }
 
 export function retryPeople(): void {
-  void loadPeople();
+  void loadPeople(true);
 }
 
 /** Test seam. */
@@ -172,7 +175,7 @@ export function useScreenMembers(projects: readonly { id: string; updatedAt?: st
 
   const rereadAll = useCallback(() => {
     for (const p of keyed) void loadProject(p.id, p.key);
-    void loadPeople();
+    void loadPeople(true);
   }, [keyed]);
   useOnDeskChanged(rereadAll, [...ROOM_CHANGE_KINDS, ...PEOPLE_CHANGE_KINDS]);
 

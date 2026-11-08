@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { apiFetch, readableError, type JsonRecord } from "../lib/api";
+import { readHubSettings } from "../lib/keyedRead";
 import { useRuntimeBus, useRuntimeFrame } from "../runtime/RuntimeBus";
 import { useProjections, type DeskProjection } from "../desk/projections";
 import {
@@ -325,7 +326,7 @@ function Qlippy() {
   const dismissing = useRef(false);
   useEffect(() => {
     let current = true;
-    void apiFetch<JsonRecord>("/api/settings")
+    void readHubSettings<JsonRecord>()
       .then((settings) => {
         const presence = settings.presence;
         if (!current || !presence || typeof presence !== "object") return;

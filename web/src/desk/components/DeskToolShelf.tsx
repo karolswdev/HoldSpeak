@@ -48,8 +48,7 @@ import { primeSendTo, sendChoices, useSendToTick } from "../windowSend";
 import { useAllOpenWindows, useFrontWindowId } from "./window/windowRegistry";
 import { SETTINGS_PALETTE_ROWS } from "../../pages/cores/settings/prefs";
 import { useLaunchers } from "./DeskWindow";
-import type { CoverageRecord } from "../coverage";
-import { readProjectCounts } from "../needsYou";
+import { projectOpenHere, refreshNeedsYou, useNeedsYou } from "../needsYou";
 import { NEEDS_YOU_CHANGE_KINDS, useOnDeskChanged } from "../useDeskChangedRefresh";
 import { Button } from "../../components/signal/Signal";
 import type { WorkMenuEntry } from "./DeskMenu";
@@ -377,37 +376,34 @@ export function DeskToolShelf() {
   // Inventory gap 9: the hits of the content search, with the query they answer.
   const [memory, setMemory] = useState<{ query: string; hits: MemoryHit[] }>({ query: "", hits: [] });
 
-  // HS-171-07: needs-you counts per project for the PROJECTS section.
-  // Read on mount, each time the palette opens, and after a desk_changed
-  // burst (Astra, #872: a mute made the hub drop a Room while a reopened
-  // palette still showed "1 OPEN"). The server cache is <= 50 ms.
-  const [projectNeedsYou, setProjectNeedsYou] = useState<Record<string, number>>({});
+  // HS-171-07: needs-you counts per project for the PROJECTS section, from
+  // the desk's one needs-you answer (2026-11-08: the palette kept a second
+  // copy of the answer for these counts). Each opening refreshes that one
+  // answer, and so does a desk_changed burst (Astra, #872: a mute made the
+  // hub drop a Room while a reopened palette still showed "1 OPEN").
+  const needsYou = useNeedsYou({ poll: false });
+  // One count everywhere: the badge is the hub's one rule split by Project,
+  // so a muted Room or a row the owner waits on someone else for never
+  // inflates it.
+  const { projectCounts: hubProjectCounts, unmutedItems } = needsYou;
+  const projectNeedsYou = useMemo(
+    () => projectOpenHere({ projectCounts: hubProjectCounts, unmutedItems }),
+    [hubProjectCounts, unmutedItems],
+  );
   // HS-200-07 (C4): a Room whose coverage is not `available` shows its
   // repair token instead of a silent zero — no fake all-clear on the deck.
-  const [projectCoverage, setProjectCoverage] = useState<Record<string, string>>({});
-  const readNeedsYou = useCallback(() => {
-    return apiFetch<{
-      items?: Array<{ projectId?: string; muted?: boolean; waiting?: boolean }>;
-      /** The hub's members by Project: a project badge ("N open"). */
-      projectCounts?: Record<string, number>;
-      coverage?: CoverageRecord[];
-    }>("/api/desk/needs-you")
-      .then((payload) => {
-        // One count everywhere: the badge is the hub's one rule split by
-        // Project, so a muted Room or a row the owner waits on someone else
-        // for never inflates it.
-        setProjectNeedsYou(readProjectCounts(payload));
-        const gaps: Record<string, string> = {};
-        for (const row of payload?.coverage ?? []) {
-          if (row.state === "available" || !row.project_id) continue;
-          if (!gaps[row.project_id]) {
-            gaps[row.project_id] = row.repair?.token ? stateWords(row.repair.token) : wireWords(row.state);
-          }
-        }
-        setProjectCoverage(gaps);
-      })
-      .catch(() => null);
-  }, []);
+  const coverageRows = needsYou.room?.coverage;
+  const projectCoverage = useMemo(() => {
+    const gaps: Record<string, string> = {};
+    for (const row of coverageRows ?? []) {
+      if (row.state === "available" || !row.project_id) continue;
+      if (!gaps[row.project_id]) {
+        gaps[row.project_id] = row.repair?.token ? stateWords(row.repair.token) : wireWords(row.state);
+      }
+    }
+    return gaps;
+  }, [coverageRows]);
+  const readNeedsYou = useCallback(() => refreshNeedsYou(false).catch(() => undefined), []);
   // PHILO-17 (palette-rank): the rows rank on the needs-you counts and the
   // people read; the list is not drawn until both have resolved (read or
   // failed), or PALETTE_RANK_CAP_MS has passed (then it draws unranked).

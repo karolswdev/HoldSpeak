@@ -128,7 +128,7 @@ export function LaneWindow() {
 
   // The flights tell which session is a launch's: read once if no face has.
   useEffect(() => {
-    if (!useAgentFlights.getState().loaded) void useAgentFlights.getState().load();
+    if (!useAgentFlights.getState().loaded) void useAgentFlights.getState().load(true);
   }, []);
 
   if (!launchId) return null;
