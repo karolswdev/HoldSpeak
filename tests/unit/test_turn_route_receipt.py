@@ -248,8 +248,6 @@ def test_thread_cancel_before_dispatch_has_no_route(tmp_path) -> None:
     done, msg, wire = _turn(svc, db, frames, before=lambda kw: kw["cancel_event"].set())
     assert done["egress"] == "" and done["route_receipt_id"] == ""
     assert (msg.egress_scope, msg.egress_receipt_id) == ("", "")
-    started = [d for t, d in frames if t == "thread_turn_started"][-1]
-    assert started["egress"] == ""
 
 
 def test_thread_partial_cancel_keeps_the_real_receipt(tmp_path) -> None:

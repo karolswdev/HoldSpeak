@@ -94,17 +94,8 @@ RUNTIME_FRAME_TYPES: tuple[str, ...] = (
     "scheduled_recording.stopped",   # a scheduled capture stopped (auto-stop or manual)
     "segment",                  # one finalized transcript segment
     "stopped",                  # the meeting stopped
-    "thread_call_state",         # call mode state transition (HS-154-03)
-                                 # payload: {thread_id, state}
-    "thread_compacted",          # a compaction cut was committed (HS-153-05)
-                                # payload: {thread_id, message_id, cut_at, count}
     "thread_delta",             # a streaming token/reasoning delta for a thread turn
                                 # payload: {thread_id, message_id, ordinal, kind, text, seq}
-    "thread_guardrail",         # a guardrail evaluation completed (HS-153-03)
-                                # payload: {thread_id, message_id, violations, warnings,
-                                #           guardrails, raw}
-    "thread_status_line",       # in-progress turn status text (HS-152-01)
-                                # payload: {thread_id, text}
     "thread_tool_pending",      # a tool call awaits resolution (HS-152-01)
                                 # payload: {thread_id, message_id, call_id, name, args_head,
                                 #           class, decision_required, elicitation?}
@@ -113,8 +104,6 @@ RUNTIME_FRAME_TYPES: tuple[str, ...] = (
                                 #           outcome, kind, summary, sensitive}
     "thread_turn_done",         # a thread turn completed (succeeded, aborted, or errored)
                                 # payload: {thread_id, message_id, receipt_id, outcome, egress, stats}
-    "thread_turn_started",      # a thread turn began streaming
-                                # payload: {thread_id, message_id, user_message_id, model_id, egress}
     "transcript_pass",          # the live meeting's engine writes or listens
                                 #   (Live slice 3): payload {meeting_id, state:
                                 #   writing|listening, saved_through, saved_at, every}
@@ -134,6 +123,42 @@ EMITTED_WITHOUT_CONSUMER: dict[str, str] = {
         "Dormant desktop wake-word leg: arming is a host-side hotkey window "
         "with no web affordance; the web consumes only its result "
         "(wake_preview)."
+    ),
+    # The Ask reads these four in process: AskService._tap_loop_text wraps the
+    # thread service's broadcast and turns them into the Ask's ask_text frames
+    # (holdspeak/services/ask_service.py). No web face subscribes to them since
+    # the Thread window was parked (Betterment Q4).
+    "thread_delta": (
+        "Consumed in process by AskService._tap_loop_text: its text deltas "
+        "become the Ask's ask_text frames."
+    ),
+    "thread_tool_pending": (
+        "Consumed in process by AskService._tap_loop_text: a tool pass starts "
+        "the Ask's words again."
+    ),
+    "thread_tool_result": (
+        "Consumed in process by AskService._tap_loop_text: a tool pass starts "
+        "the Ask's words again."
+    ),
+    "thread_turn_done": (
+        "Consumed in process by AskService._tap_loop_text: it finishes the "
+        "Ask's last ask_text frame."
+    ),
+    # DEFECT (2026-11-08): the Needs you arming row (desk/needs/arming.ts) and
+    # Coming up read the store that applyScheduledRecordingEvent fills; its
+    # only live caller was CaptureHero, parked with the Chair hero, so these
+    # three reach no face. The fix is a subscription, not a park.
+    "scheduled_recording.arming": (
+        "DEFECT: Needs you's arming row should read it; the subscription left "
+        "with the parked CaptureHero."
+    ),
+    "scheduled_recording.cancelled": (
+        "DEFECT: Needs you's arming row should read it; the subscription left "
+        "with the parked CaptureHero."
+    ),
+    "scheduled_recording.missed": (
+        "DEFECT: Needs you's arming row should read it; the subscription left "
+        "with the parked CaptureHero."
     ),
 }
 
@@ -186,6 +211,8 @@ def scan_emitters(root: Path | None = None) -> dict[str, list[str]]:
     for path in sorted(base.rglob("*.py")):
         if path.resolve() == Path(__file__).resolve():
             continue  # the registry documents the idioms; it emits nothing
+        if "_parked" in path.parts:
+            continue  # parked code is out of the hub: it emits nothing
         text = path.read_text(encoding="utf-8", errors="ignore")
         for pattern in _EMIT_PATTERNS:
             for match in pattern.finditer(text):
@@ -205,6 +232,8 @@ def scan_consumers(root: Path | None = None) -> dict[str, list[str]]:
             continue  # the registry mirror names every frame; it consumes none
         if ".test." in path.name or "__tests__" in path.parts:
             continue  # a test that fabricates a frame is not a consumer
+        if "_parked" in path.parts:
+            continue  # parked code is out of the build: it consumes nothing
         text = path.read_text(encoding="utf-8", errors="ignore")
         rel = path.relative_to(repo)
         for pattern in _CONSUME_PATTERNS:

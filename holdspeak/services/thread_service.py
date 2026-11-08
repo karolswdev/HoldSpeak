@@ -26,15 +26,10 @@ from ..kernel.inference_runner import InvocationRequest, ServiceContract
 from ..kernel.inference_stream import (
     Delta,
     StreamCadence,
-    emit_thread_call_state,
-    emit_thread_compacted,
     emit_thread_delta,
-    emit_thread_guardrail,
-    emit_thread_status_line,
     emit_thread_tool_pending,
     emit_thread_tool_result,
     emit_thread_turn_done,
-    emit_thread_turn_started,
 )
 from ..kernel.prompt_adapter import StreamingPromptAdapter
 from ..inference_locality import least_private, served_route
@@ -484,11 +479,6 @@ class ThreadService:
                 code="invalid_call_mode",
                 context={"status": 400},
             )
-        old_call_mode: Optional[int] = None
-        if call_mode is not None:
-            old_thread = self._threads.get(thread_id)
-            if old_thread is not None:
-                old_call_mode = old_thread.call_mode
         thread = self._threads.patch(
             thread_id,
             title=title,
@@ -498,14 +488,6 @@ class ThreadService:
         )
         if thread is None:
             raise ServiceError("thread_not_found", f"Thread {thread_id} not found", context={"status": 404})
-        # HS-154-03: emit thread_call_state frame on ON/OFF transitions.
-        if call_mode is not None and old_call_mode is not None and call_mode != old_call_mode:
-            state = "listening" if call_mode == 1 else "off"
-            emit_thread_call_state(
-                self._broadcast,
-                thread_id=thread_id,
-                state=state,
-            )
         return self._thread_dict(thread)
 
     def soft_delete(self, thread_id: str) -> bool:
@@ -805,25 +787,6 @@ class ThreadService:
         )
         self._threads.mark_streaming(assistant_msg.id)
 
-        # -- Broadcast thread_turn_started --
-        emit_thread_turn_started(
-            self._broadcast,
-            thread_id=thread_id,
-            message_id=assistant_msg.id,
-            user_message_id=user_msg.id,
-            model_id=model_id,
-            egress="",
-        )
-
-        # HS-154-03: if the thread is in call mode, emit THINKING transition.
-        thread_obj = self._threads.get(thread_id)
-        if thread_obj is not None and thread_obj.call_mode == 1:
-            emit_thread_call_state(
-                self._broadcast,
-                thread_id=thread_id,
-                state="thinking",
-            )
-
         # -- Run streaming turn in a daemon thread --
         # HS-S34: the turn is in ``thread_turns`` (every ThreadService
         # instance sees it, so POST /abort can cancel a turn of POST /turns).
@@ -970,14 +933,6 @@ class ThreadService:
                 "cut_at": cut_at,
                 "count": count,
             }),
-        )
-
-        emit_thread_compacted(
-            self._broadcast,
-            thread_id=thread_id,
-            message_id=compact_msg.id,
-            cut_at=cut_at,
-            count=count,
         )
 
         return {
@@ -1500,12 +1455,6 @@ class ThreadService:
                         error_code = "execute_stream_failed"
                         break
 
-                    emit_thread_status_line(
-                        self._broadcast,
-                        thread_id=thread_id,
-                        text=f"Processing (pass {pass_num + 1})...",
-                    )
-
                 # -- Reset per-pass state --
                 tool_calls_this_pass.clear()
 
@@ -1639,16 +1588,6 @@ class ThreadService:
                                         for pname in pending_names:
                                             if _guardrail_matches(pname, all_triggers):
                                                 guardrail_violations.setdefault(pname, []).append(v_str)
-                                # Emit thread_guardrail frame
-                                emit_thread_guardrail(
-                                    self._broadcast,
-                                    thread_id=thread_id,
-                                    message_id=assistant_msg_id,
-                                    violations=guardrail_result.get("violations", []),
-                                    warnings=guardrail_result.get("warnings", []),
-                                    guardrails=[g["id"] for g in matched_guardrails],
-                                    raw=guardrail_result,
-                                )
                                 # Persist guardrail part on the assistant message
                                 self._threads.append_part(
                                     assistant_msg_id,
@@ -1661,11 +1600,6 @@ class ThreadService:
                                 )
                         except Exception as guardrail_exc:
                             # Guardrail failure = warning row, never a block
-                            emit_thread_status_line(
-                                self._broadcast,
-                                thread_id=thread_id,
-                                text="Guardrail evaluation failed",
-                            )
                             self._threads.append_part(
                                 assistant_msg_id,
                                 kind="guardrail_failed",
@@ -1673,16 +1607,6 @@ class ThreadService:
                                     "error": str(guardrail_exc),
                                     "guardrails": [g["id"] for g in matched_guardrails],
                                 }, separators=(",", ":")),
-                            )
-                            # Emit a thread_guardrail frame with empty results
-                            emit_thread_guardrail(
-                                self._broadcast,
-                                thread_id=thread_id,
-                                message_id=assistant_msg_id,
-                                violations=[],
-                                warnings=[],
-                                guardrails=[g["id"] for g in matched_guardrails],
-                                raw={"error": str(guardrail_exc)},
                             )
 
                 assistant_tc_openai: list[dict[str, Any]] = []
@@ -1840,11 +1764,6 @@ class ThreadService:
                         if cancel_event.is_set():
                             outcome = "aborted"
                             break
-                        emit_thread_status_line(
-                            self._broadcast,
-                            thread_id=thread_id,
-                            text=f"Running {name}...",
-                        )
                         result = tool_executor.execute(handle)
                         # Check cancel after execution (M5: discard in-flight)
                         if cancel_event.is_set():
@@ -1963,15 +1882,6 @@ class ThreadService:
                         summary=result_text[:200] if result_text else "",
                         sensitive=result.sensitive,
                     )
-
-                    # -- HS-152-05: thread.set_status — broadcast after dispatch --
-                    if name == "thread.set_status" and not is_error:
-                        status_text = str(handle.args.get("text", ""))
-                        emit_thread_status_line(
-                            self._broadcast,
-                            thread_id=thread_id,
-                            text=status_text,
-                        )
 
                     # -- D3 hook: collect sensitive result text --
                     if result.sensitive and result_text:
@@ -2101,20 +2011,6 @@ class ThreadService:
         if token_in or token_out:
             self._threads.add_token_totals(thread_id, token_in=token_in, token_out=token_out)
 
-        # -- HS-152-05: emit persisted status_line before turn_done so the
-        #    client clears the transient "Processing..." and falls back to the
-        #    correct value. Only when tool calls happened (tool_executor exists).
-        if tool_executor is not None:
-            try:
-                thread_row = self._threads.get(thread_id)
-                persisted_status = thread_row.status_line if thread_row else ""
-            except Exception:
-                persisted_status = ""
-            emit_thread_status_line(
-                self._broadcast,
-                thread_id=thread_id,
-                text=persisted_status,
-            )
 
         # -- Broadcast thread_turn_done --
         done_stats = dict(stats)
@@ -2137,15 +2033,6 @@ class ThreadService:
             route_receipt_id=route_receipt,
             fallback=fallback,
         )
-
-        # HS-154-03: if the thread is still in call mode, transition back to LISTENING.
-        thread_after = self._threads.get(thread_id)
-        if thread_after is not None and thread_after.call_mode == 1:
-            emit_thread_call_state(
-                self._broadcast,
-                thread_id=thread_id,
-                state="listening",
-            )
 
         # -- Clean up: the caller (``_run_streaming_turn``) closes the turn. --
 

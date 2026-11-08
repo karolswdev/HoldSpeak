@@ -1,8 +1,8 @@
 """Thread MCP family — HS-152-05.
 
 One tool: ``thread.set_status`` writes the thread's persisted status line
-and returns the written value.  The loop in ThreadService handles the
-broadcast (``emit_thread_status_line``) after dispatch — the family
+and returns the written value.  The live ``thread_status_line`` frame the
+ThreadService loop sent after dispatch is parked (2026-11-08); the family
 touches only the database, no global broadcast seam.
 """
 from __future__ import annotations

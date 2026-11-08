@@ -276,18 +276,16 @@ class TestTwoPassHappyPath:
 
         # -- Frames in order --
         frame_types = [ft for ft, _ in broadcasts]
-        assert "thread_turn_started" in frame_types
         assert "thread_tool_pending" in frame_types
         assert "thread_tool_result" in frame_types
         assert "thread_delta" in frame_types
         assert "thread_turn_done" in frame_types
 
-        started_idx = frame_types.index("thread_turn_started")
         pending_idx = frame_types.index("thread_tool_pending")
         result_idx = frame_types.index("thread_tool_result")
         first_delta_idx = frame_types.index("thread_delta")
         done_idx = frame_types.index("thread_turn_done")
-        assert started_idx < pending_idx < result_idx < first_delta_idx < done_idx
+        assert pending_idx < result_idx < first_delta_idx < done_idx
 
         # -- thread_tool_pending payload --
         pending_frame = next(d for ft, d in broadcasts if ft == "thread_tool_pending")
@@ -321,20 +319,6 @@ class TestTwoPassHappyPath:
         # -- thread_turn_done outcome --
         done_frame = next(d for ft, d in broadcasts if ft == "thread_turn_done")
         assert done_frame["outcome"] == "succeeded"
-
-    def test_status_line_emitted_on_second_pass(self, db, broadcast_fn, broadcasts):
-        svc = ThreadService(
-            db, broadcast=broadcast_fn,
-            broker=_ToolCallBroker(),
-            tool_dispatch_fn=_fake_dispatch,
-        )
-        t = svc.create(title="Status test")
-        asyncio.run(svc.start_turn(OWNER, t["id"], "Test"))
-        _wait_done(broadcasts)
-
-        status_frames = [d for ft, d in broadcasts if ft == "thread_status_line"]
-        assert len(status_frames) >= 1
-
 
 class TestHeldApprove:
     """AC: held -> approve executes the tool."""
@@ -597,7 +581,6 @@ class TestNoToolsTurnByteIdentical:
 
         # Same frame order as DC-01
         frame_types = [ft for ft, _ in broadcasts]
-        assert "thread_turn_started" in frame_types
         assert "thread_delta" in frame_types
         assert "thread_turn_done" in frame_types
 

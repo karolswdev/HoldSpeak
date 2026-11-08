@@ -416,17 +416,6 @@ class TestRealCoordinatorGuardrail:
             ))
             self._wait_done(hub["db"], result["assistant_message_id"])
 
-            # Check for thread_guardrail frame
-            guardrail_frames = [
-                d for t, d in hub["broadcasts"] if t == "thread_guardrail"
-            ]
-            assert len(guardrail_frames) >= 1, (
-                f"Expected thread_guardrail frame, got: "
-                f"{[t for t, _ in hub['broadcasts']]}"
-            )
-            gf = guardrail_frames[0]
-            assert len(gf["violations"]) > 0
-
             # Check for guardrail part on the assistant message
             msg = hub["db"].threads.get_message(result["assistant_message_id"])
             parts = hub["db"].threads.get_parts(msg.id)
@@ -503,11 +492,9 @@ class TestRealCoordinatorGuardrail:
             tool_call_meta = json.loads(tool_call_parts[0].meta_json)
             assert tool_call_meta.get("default_decision") == "deny"
 
-            # Also check the guardrail frame was emitted
-            guardrail_frames = [
-                d for t, d in hub["broadcasts"] if t == "thread_guardrail"
-            ]
-            assert len(guardrail_frames) >= 1
+            # The guardrail result is persisted on the assistant message
+            # (the live thread_guardrail frame is parked, 2026-11-08).
+            assert any(p.kind == "guardrail" for p in parts)
 
         finally:
             self._cleanup(hub)
@@ -721,15 +708,13 @@ class TestRealRunnerGuardrailCloudRedaction:
             # profile's assignment.  A local profile gets boundary
             # "same_device" → no redaction.  So we verify that:
             # (a) the guardrail was invoked through the real runner, and
-            # (b) the guardrail frame was emitted with violations.
-            guardrail_frames = [
-                d for t, d in hub["broadcasts"] if t == "thread_guardrail"
-            ]
-            assert len(guardrail_frames) >= 1, (
-                f"thread_guardrail frame not emitted; broadcasts: "
-                f"{[t for t, _ in hub['broadcasts']]}"
+            # (b) the guardrail part was persisted with violations.
+            parts = hub["db"].threads.get_parts(result["assistant_message_id"])
+            guardrail_parts = [p for p in parts if p.kind == "guardrail"]
+            assert len(guardrail_parts) >= 1, (
+                f"Expected guardrail part, got: {[p.kind for p in parts]}"
             )
-            assert len(guardrail_frames[0]["violations"]) > 0
+            assert len(json.loads(guardrail_parts[0].meta_json)["violations"]) > 0
 
             # The guardrail engine's run_prompt received kwargs — confirm
             # the call went through the real runner (user_prompt present).
@@ -745,8 +730,7 @@ class TestRealRunnerGuardrailCloudRedaction:
 
     def test_local_route_guardrail_through_real_runner(self, tmp_path: Path) -> None:
         """The guardrail runs through the real runner on a local route and
-        the violation reaches the thread_guardrail frame and the guardrail
-        part on the assistant message."""
+        the violation reaches the guardrail part on the assistant message."""
         hub = self._hub(tmp_path, egress="same_device")
         try:
             thread = hub["svc"].create(
@@ -762,13 +746,6 @@ class TestRealRunnerGuardrailCloudRedaction:
                 if any(t == "thread_turn_done" for t, _ in hub["broadcasts"]):
                     break
                 time.sleep(0.1)
-
-            # Guardrail frame emitted
-            guardrail_frames = [
-                d for t, d in hub["broadcasts"] if t == "thread_guardrail"
-            ]
-            assert len(guardrail_frames) >= 1
-            assert len(guardrail_frames[0]["violations"]) > 0
 
             # Guardrail part persisted on the assistant message
             msg = hub["db"].threads.get_message(result["assistant_message_id"])

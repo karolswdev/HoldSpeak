@@ -108,28 +108,12 @@ def _default_clock() -> float:
 
 
 # ------------------------------------------------- frame broadcast helpers
-# Canonical emit points for the three thread frames (HS-151-03).
+# Canonical emit points for the thread frames (HS-151-03).
 # The thread service (HS-151-04) calls these; the realtime frame scanner
-# reads them to prove the frames are wired.
-
-
-def emit_thread_turn_started(
-    broadcast: Callable[..., Any],
-    *,
-    thread_id: str,
-    message_id: str,
-    user_message_id: str,
-    model_id: str,
-    egress: str,
-) -> None:
-    """Broadcast ``thread_turn_started`` when the assistant row is committed."""
-    broadcast("thread_turn_started", {
-        "thread_id": thread_id,
-        "message_id": message_id,
-        "user_message_id": user_message_id,
-        "model_id": model_id,
-        "egress": egress,
-    })
+# reads them to prove the frames are wired. The Ask reads four of them in
+# process (AskService._tap_loop_text). The five no face read (turn_started,
+# guardrail, compacted, status_line, call_state) are parked in
+# holdspeak/kernel/_parked/thread_frames.py (2026-11-08).
 
 
 def emit_thread_delta(
@@ -236,76 +220,4 @@ def emit_thread_tool_result(
         "kind": kind,
         "summary": summary,
         "sensitive": sensitive,
-    })
-
-
-def emit_thread_guardrail(
-    broadcast: Callable[..., Any],
-    *,
-    thread_id: str,
-    message_id: str,
-    violations: list[str],
-    warnings: list[str],
-    guardrails: list[str],
-    raw: dict[str, Any] | None = None,
-) -> None:
-    """Broadcast ``thread_guardrail`` when a guardrail evaluation completes (HS-153-03)."""
-    payload: dict[str, Any] = {
-        "thread_id": thread_id,
-        "message_id": message_id,
-        "violations": violations,
-        "warnings": warnings,
-        "guardrails": guardrails,
-    }
-    if raw is not None:
-        payload["raw"] = raw
-    broadcast("thread_guardrail", payload)
-
-
-def emit_thread_compacted(
-    broadcast: Callable[..., Any],
-    *,
-    thread_id: str,
-    message_id: str,
-    cut_at: str,
-    count: int,
-) -> None:
-    """Broadcast ``thread_compacted`` when a compaction cut is committed (HS-153-05)."""
-    broadcast("thread_compacted", {
-        "thread_id": thread_id,
-        "message_id": message_id,
-        "cut_at": cut_at,
-        "count": count,
-    })
-
-
-def emit_thread_status_line(
-    broadcast: Callable[..., Any],
-    *,
-    thread_id: str,
-    text: str,
-) -> None:
-    """Broadcast ``thread_status_line`` for in-progress turn status."""
-    broadcast("thread_status_line", {
-        "thread_id": thread_id,
-        "text": text,
-    })
-
-
-def emit_thread_call_state(
-    broadcast: Callable[..., Any],
-    *,
-    thread_id: str,
-    state: str,
-) -> None:
-    """Broadcast ``thread_call_state`` on call mode transitions (HS-154-03).
-
-    ``state`` is one of: ``off``, ``listening``, ``thinking``, ``speaking``.
-    Only ``off`` / ``listening`` (the persisted ON/OFF) are emitted from the
-    server; ``thinking`` / ``speaking`` are derived client-side from the
-    existing turn-streaming and TTS state.
-    """
-    broadcast("thread_call_state", {
-        "thread_id": thread_id,
-        "state": state,
     })
