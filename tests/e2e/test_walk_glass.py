@@ -5,8 +5,8 @@ ring marked New program, but a press on it went to the dim backdrop (a
 clip-path cut-out Chromium's hit test did not honour). Only a real browser
 proves the hit test, so this is T4: a walk made through the hub
 (``POST /api/walks``) marks ``programs-new``; the part takes the pointer two
-frames after its window moves; a plain press (no force) on it opens the well
-(the project rows show). Direction C (2026-11-08): the mark is the part's own
+frames after its window moves; a plain press (no force) on it opens the wizard
+(its first step shows). Direction C (2026-11-08): the mark is the part's own
 warm halo and nothing dims, so a point far from the part is the desk's, not
 the walk's. At 1440 x 900 and 393 x 844.
 
@@ -113,7 +113,7 @@ def test_the_marked_part_takes_a_plain_press_and_the_desk_stays_live(
                 # A plain press: Playwright refuses it when another element
                 # would take the pointer at the part's centre.
                 target.click(timeout=10_000)
-                page.locator('[data-testid="programs-make-rows"]').wait_for(state="visible", timeout=T)
+                page.locator('[data-testid="programs-wizard-step-1"]').wait_for(state="visible", timeout=T)
 
                 far = page.evaluate(_FAR_HIT_JS)
                 assert far is not None, "no point outside the part and the card"
@@ -171,7 +171,7 @@ def test_on_his_iphone_the_edge_holds_the_safe_area_the_guide_presses_and_the_sh
                 made: dict[str, Any] = _api(page, "POST", "/api/walks", {"title": "Hand-held", "steps": [
                     {"open": {"app": "surface-programs"}},
                     {"press": {"target": "programs-new", "words": "I press New program."},
-                     "highlight": {"target": "programs-make-rows", "words": "The project rows."},
+                     "highlight": {"target": "programs-wizard-step-1", "words": "The project rows."},
                      "ask": {"ref": "s11-well", "question": "Does the well read clearly?",
                              "choices": ["Keep", "Redo"]}},
                 ]}, token=TOKEN)
@@ -200,16 +200,16 @@ def test_on_his_iphone_the_edge_holds_the_safe_area_the_guide_presses_and_the_sh
                              ).first.wait_for(state="attached", timeout=T)
                 page.screenshot(path=str(shots / "walk-c-tap-430.png"))
 
-                # The guide presses New program itself: the well opens.
+                # The guide presses New program itself: the wizard opens.
                 page.get_by_test_id("walk-question").wait_for(timeout=T)
-                assert page.locator('[data-testid="programs-make-rows"]').is_visible()
+                assert page.locator('[data-testid="programs-wizard-step-1"]').is_visible()
                 sheet = page.evaluate(_BOX_JS, "walk-card")
                 assert sheet["bottom"] <= height and sheet["left"] == 0 and sheet["right"] == width, sheet
                 keep = page.get_by_test_id("walk-choice-0").bounding_box()
                 redo = page.get_by_test_id("walk-choice-1").bounding_box()
                 assert keep and redo and keep["height"] >= 56 and abs(keep["width"] - redo["width"]) < 1
                 page.wait_for_timeout(500)
-                assert page.locator('[data-testid="programs-make-rows"].walk-halo').count() == 1
+                assert page.locator('[data-testid="programs-wizard-step-1"].walk-halo').count() == 1
                 caption = page.evaluate(_BOX_JS, "walk-words")
                 assert caption and caption["bottom"] <= sheet["top"], (caption, sheet)
                 page.screenshot(path=str(shots / "walk-c-ask-430.png"))
@@ -302,7 +302,7 @@ def test_the_walk_starts_only_when_the_desk_is_ready_and_moves_one_beat_later(
                 made: dict[str, Any] = _api(prep, "POST", "/api/walks", {"title": "Slow desk", "steps": [
                     {"open": {"app": "surface-programs"}},
                     {"press": {"target": "programs-new", "words": "I press New program."},
-                     "highlight": {"target": "programs-make-rows", "words": "The project rows."},
+                     "highlight": {"target": "programs-wizard-step-1", "words": "The project rows."},
                      "ask": {"ref": "s-ready", "question": "Does the well read clearly?",
                              "choices": ["Keep", "Redo"]}},
                 ]}, token=TOKEN)
@@ -317,9 +317,9 @@ def test_the_walk_starts_only_when_the_desk_is_ready_and_moves_one_beat_later(
                 page.add_init_script(_SLOW_DESK_JS)
                 page.goto(f"{base}{made['url_path']}", wait_until="load")
 
-                # The project rows are found after the slow project read.
+                # The wizard is found after the slow project read.
                 page.get_by_test_id("walk-question").wait_for(timeout=30_000)
-                assert page.locator('[data-testid="programs-make-rows"]').is_visible()
+                assert page.locator('[data-testid="programs-wizard-step-1"]').is_visible()
                 assert page.get_by_test_id("walk-line").count() == 0
 
                 seen: dict[str, float] = page.evaluate("window.__walkSeen")

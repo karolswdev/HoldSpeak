@@ -45,6 +45,11 @@ export interface CreateBody {
   control?: Control;
   check_command?: string;
   template?: string;
+  /** The New program wizard's How step: the agent and the reviewer. */
+  default_profile?: string;
+  default_engine?: string;
+  reviewer_profile?: string;
+  reviewer_engine?: string;
   origin_ref?: string;
   for_person_id?: string;
 }
