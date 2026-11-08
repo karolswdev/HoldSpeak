@@ -5,7 +5,7 @@
  * programs.test-setup.tsx, shared by every programs.*.app.test.tsx. */
 import {
   textFixture, textApplyFixture, shapeFixture, mocks, mic, ApiError, ProgramBody, useDesk, clone,
-  done, calls, hub, status, stepRow, type Answer, type Program,
+  done, calls, hub, status, stepRow, type Answer, type Program, board,
 } from "./programs.test-setup";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
@@ -48,7 +48,7 @@ describe("LANG2: the Text view beside the board, the change well and diff rows (
       [`POST /api/programs/${id}/text`]: (init?: { json?: unknown }) => ((init?.json as { dry_run?: boolean })?.dry_run === false ? done : dry),
     });
     render(<ProgramBody programId={id} />);
-    await screen.findByTestId("programs-board");
+    await board();
     fireEvent.click(within(screen.getByRole("group", { name: "View" })).getByRole("button", { name: "Text" }));
     await screen.findByTestId("programs-text");
   }
@@ -111,7 +111,7 @@ describe("LANG2: the Text view beside the board, the change well and diff rows (
     const lowers = within(well).getAllByTestId("programs-diff-row").find((row) => row.getAttribute("data-row") === "program.control")!;
     fireEvent.click(within(lowers).getByRole("button", { name: "Apply this" }));
     fireEvent.click(within(well).getByTestId("programs-well-apply"));
-    await screen.findByTestId("programs-board");
+    await board();
     const sent = posts()[1];
     expect(sent).toEqual({ text: dry.allowed_text, base: textFixture.text, dry_run: false, allow_lower: ["program.control"] });
     // The rows landed: the new step on the board, in its place, marked born.
@@ -164,7 +164,7 @@ describe("LANG2: the Text view beside the board, the change well and diff rows (
   it("at 393 the view switch is in More ▾", async () => {
     hub({ [`GET /api/programs/${id}`]: before, [`GET /api/programs/${id}/text`]: textFixture });
     render(<ProgramBody programId={id} />);
-    await screen.findByTestId("programs-board");
+    await board();
     fireEvent.click(screen.getByTestId("program-more"));
     fireEvent.click(await screen.findByRole("menuitem", { name: "Text" }));
     await screen.findByTestId("programs-text");
@@ -195,7 +195,7 @@ describe("LANG4: shaping by a typed sentence (PROGRAM-LANGUAGE §4, §9.2, §14)
       [`POST /api/programs/${id}/text`]: normal.applied,
     });
     render(<ProgramBody programId={id} />);
-    await screen.findByTestId("programs-board");
+    await board();
     say(normal.shape.sentence);
     const well = await screen.findByTestId("programs-change-well");
     // Normal: nothing applies at once.
@@ -234,7 +234,7 @@ describe("LANG4: shaping by a typed sentence (PROGRAM-LANGUAGE §4, §9.2, §14)
     mocks.apiFetch.mockImplementation((path: string, init?: { method?: string; json?: unknown }) =>
       (init?.method === "POST" && path.endsWith("/shape") ? new Promise((resolve) => { answer = resolve; }) : table(path, init)));
     render(<ProgramBody programId={id} />);
-    await screen.findByTestId("programs-board");
+    await board();
     await waitFor(() => expect(calls).toContain(`GET /api/programs/${id}/shape`));
     say("put step 2 on Codex");
     const reading = await screen.findByTestId("program-shape-reading");
@@ -257,7 +257,7 @@ describe("LANG4: shaping by a typed sentence (PROGRAM-LANGUAGE §4, §9.2, §14)
       [`GET /api/programs/${id}/text`]: { program_id: id, text: yolo.shape.text, revision: yolo.shape.revision, version: 1 },
     });
     render(<ProgramBody programId={id} />);
-    await screen.findByTestId("programs-board");
+    await board();
     say(yolo.shape.sentence);
     const shaped = await screen.findByTestId("programs-shaped-well");
     expect(posts(id, "shape")[0]).toEqual({ sentence: yolo.shape.sentence, apply: true });
@@ -284,7 +284,7 @@ describe("LANG4: shaping by a typed sentence (PROGRAM-LANGUAGE §4, §9.2, §14)
       [`GET /api/programs/${id}/text`]: { program_id: id, text: normal.shape.base, revision: 1, version: 1 },
     });
     render(<ProgramBody programId={id} />);
-    await screen.findByTestId("programs-board");
+    await board();
     await waitFor(() => expect(calls).toContain(`GET /api/programs/${id}/shape`));
     say("put step 2 on Codex");
     const refusal = await screen.findByTestId("program-shape-refusal");
@@ -309,7 +309,7 @@ describe("LANG4: shaping by a typed sentence (PROGRAM-LANGUAGE §4, §9.2, §14)
       [`POST /api/programs/${id}/shape`]: question,
     });
     render(<ProgramBody programId={id} />);
-    await screen.findByTestId("programs-board");
+    await board();
     say(question.sentence);
     const asked = await screen.findByTestId("program-shape-question");
     expect(asked.textContent).toBe(question.question);
@@ -356,7 +356,7 @@ describe("LANG5: shaping by voice (PROGRAM-LANGUAGE §4.2, §10; PROGRAM-JOURNEY
       return table(path, init);
     });
     render(<ProgramBody programId={id} />);
-    await screen.findByTestId("programs-board");
+    await board();
     await waitFor(() => expect(calls).toContain(`GET /api/programs/${id}/shape`));
     await speak(voice.shapes[0].sentence);
     // No Shape press: the capture's end sent it.
@@ -383,7 +383,7 @@ describe("LANG5: shaping by voice (PROGRAM-LANGUAGE §4.2, §10; PROGRAM-JOURNEY
       [`POST /api/programs/${id}/shape`]: () => clone(voice.shapes[0]),
     });
     render(<ProgramBody programId={id} />);
-    await screen.findByTestId("programs-board");
+    await board();
     await waitFor(() => expect(calls).toContain(`GET /api/programs/${id}/shape`));
     await speak(`Program: ${voice.shapes[0].sentence}`);
     await waitFor(() => expect(posts(id, "shape")).toHaveLength(1));
@@ -401,7 +401,7 @@ describe("LANG5: shaping by voice (PROGRAM-LANGUAGE §4.2, §10; PROGRAM-JOURNEY
       [`POST /api/programs/${id}/text`]: voice.applied,
     });
     render(<ProgramBody programId={id} />);
-    await screen.findByTestId("programs-board");
+    await board();
     await waitFor(() => expect(calls).toContain(`GET /api/programs/${id}/shape`));
     for (const [index, shape] of voice.shapes.entries()) {
       await speak(shape.sentence);
@@ -440,7 +440,7 @@ describe("LANG5: shaping by voice (PROGRAM-LANGUAGE §4.2, §10; PROGRAM-JOURNEY
       [`POST /api/programs/${id}/shape`]: question,
     });
     render(<ProgramBody programId={id} />);
-    await screen.findByTestId("programs-board");
+    await board();
     await waitFor(() => expect(calls).toContain(`GET /api/programs/${id}/shape`));
     await speak(question.sentence);
     const asked = await screen.findByTestId("program-shape-question");

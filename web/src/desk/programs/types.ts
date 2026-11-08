@@ -279,6 +279,10 @@ export interface ProgramList {
   counts: Partial<Record<ProgramState, number>>;
   worst: ProgramState | null;
   worst_word: string;
+  /** The night (the rail's foot tile and the status bar's "tonight 23:00 ·
+   *  3 queued"): the night Program, its start and its queued steps. Absent
+   *  until the hub's list sends it; the face draws nothing then. */
+  night?: { program_id: string | null; start: string; queued: number } | null;
 }
 
 export interface ProgramFinding {
