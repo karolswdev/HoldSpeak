@@ -110,6 +110,8 @@ def _enclosing(tree: ast.AST) -> dict[int, str]:
 def _http(root: Path) -> list[dict[str, str]]:
     seen: dict[tuple[str, str], int] = {}
     for path in sorted((root / "holdspeak" / "web" / "routes").rglob("*.py")):
+        if "_parked" in path.parts:  # parked handlers are not imported
+            continue
         tree = ast.parse(path.read_text(encoding="utf-8"))
         scopes = _enclosing(tree)
         rel = path.relative_to(root).as_posix()
