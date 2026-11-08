@@ -3,10 +3,11 @@
 import { act, cleanup, render } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useOwnerName } from "../ownerName";
+import { useOwnerWriter } from "../../../pages/cores/settings/writer";
 
 let owner: ReturnType<typeof useOwnerName>;
 function Probe() {
-  owner = useOwnerName();
+  owner = useOwnerName(useOwnerWriter());
   return null;
 }
 
@@ -115,7 +116,9 @@ describe("Astra r2 on #1090: owner saves are newest-wins", () => {
     expect(puts()).toHaveLength(1);
     act(() => { owner.setName("Karol B"); });
     await act(async () => { window.dispatchEvent(new Event("pagehide")); }); // B sent now
-    expect(puts()[1]).toMatchObject({ body: { owner: { name: "Karol B" } }, keepalive: true });
+    // The window writer's own leave send carries A (in flight) first; the You
+    // leave send carries B after it. Both are keepalive; B is the last.
+    expect(puts().at(-1)).toMatchObject({ body: { owner: { name: "Karol B" } }, keepalive: true });
     expect(hub.owner.name).toBe("Karol B");
 
     await act(async () => { held[0](); await vi.advanceTimersByTimeAsync(0); }); // A lands after B
