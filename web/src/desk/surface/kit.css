@@ -829,6 +829,8 @@
 }
 /* Idle: nothing is happening; a quiet grey, legible on paper. */
 .kit-dot[data-tone="idle"] { background: color-mix(in srgb, var(--wb-muted) 55%, var(--wb-paper)); }
+/* Parked: graphite, quiet and still (the language, 2026-11-08). */
+.kit-dot[data-tone="parked"] { background: var(--hs-graphite); --dot-tone: var(--hs-graphite); }
 
 /* DotWord: a state fact is a dot and a sentence-case word (`● No engine
    for answers`), sans 12, no plate, no border. */
@@ -846,7 +848,8 @@
 .kit-dotword[data-tone="warn"] { color: var(--wb-warn-ink); }
 .kit-dotword[data-tone="fail"] { color: var(--wb-danger-ink); }
 .kit-dotword[data-tone="info"] { color: var(--wb-info-ink); }
-.kit-dotword[data-tone="ask"] { color: var(--wb-ember-ink); }
+.kit-dotword[data-tone="ask"] { color: var(--hs-brass-ink); }
+.kit-dotword[data-tone="parked"] { color: var(--hs-graphite); }
 
 /* The body inset: a list view or an editor runs edge to edge (the host sets
    `data-interior`); the list fills the window and scrolls inside it. */

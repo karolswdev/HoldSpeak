@@ -23,20 +23,20 @@ export const DESK_WINDOW = {
 export const GLOW_POOL: Record<string, string> = {
   meeting: "#56C7F5",
   note: "#34D399",
-  kb: "#FBBF24",
-  recipe: "#FF6B35",
-  artifact: "#FF9E64",
+  kb: "#818CF8",
+  recipe: "#C7D2FE",
+  artifact: "#2DD4BF",
   chain: "#A78BFA",
   workflow: "#56C7F5",
-  directory: "#E0A458",
-  coder: "#FF6B35",
+  directory: "#94A3B8",
+  coder: "#C7D2FE",
 };
 
 export const ZONE_TINT_POOL = [
-  "#E0A458",
+  "#94A3B8",
   "#56C7F5",
   "#34D399",
   "#A78BFA",
-  "#FF9E64",
-  "#FBBF24",
+  "#2DD4BF",
+  "#818CF8",
 ] as const;

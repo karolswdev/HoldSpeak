@@ -1217,7 +1217,7 @@ button.surface-edit-in-place:hover {
   width: 64px;
   height: 64px;
   opacity: 1;
-  filter: drop-shadow(0 2px 3px rgba(22, 40, 62, 0.22));
+  filter: drop-shadow(0 2px 3px color-mix(in srgb, var(--hs-ink) 22%, transparent));
 }
 .surface-state-line {
   font: 600 15px / 1.3 var(--font-display);
@@ -4679,7 +4679,7 @@ button.surface-edit-in-place:hover {
   --alive-ease: cubic-bezier(0.2, 0.7, 0.3, 1);
   --alive-lift: 1px 2px 0 color-mix(in srgb, var(--wb-ink) 10%, transparent),
     2px 5px 14px color-mix(in srgb, var(--wb-ink) 16%, transparent);
-  --alive-hover-bg: color-mix(in srgb, #ffffff 62%, var(--wb-well));
+  --alive-hover-bg: color-mix(in srgb, var(--white) 62%, var(--wb-well));
 }
 
 /* ── Verbs: every library Button answers the pointer ── */
@@ -5032,7 +5032,7 @@ button.surface-edit-in-place:hover {
   to { background-position: 220% 0; }
 }
 .desk-next .desk-window-shell .btn--primary:not(:disabled):hover {
-  background-image: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, 0.28) 50%, transparent 70%);
+  background-image: linear-gradient(100deg, transparent 30%, color-mix(in srgb, var(--white) 28%, transparent) 50%, transparent 70%);
   background-size: 60% 100%;
   background-repeat: no-repeat;
   animation: alive-sheen 900ms var(--alive-ease) 1;
@@ -5047,7 +5047,7 @@ button.surface-edit-in-place:hover {
   border-radius: 5px;
   background: hsl(var(--app-hue, 210) 80% 84%);
   box-shadow:
-    inset 1px 1px 0 rgba(255, 255, 255, 0.7),
+    inset 1px 1px 0 color-mix(in srgb, var(--white) 70%, transparent),
     inset -1px -1px 0 hsl(var(--app-hue, 210) 40% 55%),
     0 0 0 1px color-mix(in srgb, var(--wb-ink) 35%, transparent),
     1px 2px 0 color-mix(in srgb, var(--wb-ink) 14%, transparent);
@@ -5216,8 +5216,8 @@ button.surface-edit-in-place:hover {
   color: var(--wb-paper);
 }
 .desk-next .live-deck[data-active] .live-rec-lamp {
-  background: #ff5a4f;
-  box-shadow: 0 0 0 3px color-mix(in srgb, #ff5a4f 35%, transparent), 0 0 10px 2px color-mix(in srgb, #ff5a4f 55%, transparent);
+  background: var(--wb-rec-lamp);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--wb-rec-lamp) 35%, transparent), 0 0 10px 2px color-mix(in srgb, var(--wb-rec-lamp) 55%, transparent);
   animation: live-rec-breathe 1.4s ease-in-out infinite alternate;
 }
 @keyframes live-rec-breathe {
@@ -5303,7 +5303,7 @@ button.surface-edit-in-place:hover {
   transition: background-color 120ms ease;
 }
 .desk-next .meetings-import-plates .surface-dropwell:hover {
-  background: #ffffff;
+  background: var(--hs-raised);
 }
 @container surface (max-width: 559.9px) {
   .desk-next .meetings-import-plates {

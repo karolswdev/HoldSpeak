@@ -114,29 +114,29 @@
           "doc": "desk glow: notes"
         },
         "kb": {
-          "value": "#FBBF24",
-          "doc": "desk glow: knowledge crystals"
+          "value": "#818CF8",
+          "doc": "desk glow: knowledge crystals (indigo; the language 2026-11-08: brass is the only warm colour)"
         },
         "recipe": {
-          "value": "#FF6B35",
-          "doc": "desk glow: personas / coders"
+          "value": "#C7D2FE",
+          "doc": "desk glow: personas / coders (ice periwinkle; the language 2026-11-08)"
         },
         "artifact": {
-          "value": "#FF9E64",
-          "doc": "desk glow: artifacts"
+          "value": "#2DD4BF",
+          "doc": "desk glow: artifacts (teal; the language 2026-11-08)"
         },
         "chain": {
           "value": "#A78BFA",
           "doc": "desk glow: sequences / workflows"
         },
         "directory": {
-          "value": "#E0A458",
-          "doc": "desk glow: zones"
+          "value": "#94A3B8",
+          "doc": "desk glow: zones (slate; the language 2026-11-08)"
         }
       },
       "zonetint": {
         "1": {
-          "value": "#E0A458",
+          "value": "#94A3B8",
           "doc": "zone tray tint pool (stable-hash pick)"
         },
         "2": {
@@ -149,10 +149,10 @@
           "value": "#A78BFA"
         },
         "5": {
-          "value": "#FF9E64"
+          "value": "#2DD4BF"
         },
         "6": {
-          "value": "#FBBF24"
+          "value": "#818CF8"
         }
       },
       "shadow": {
@@ -371,8 +371,8 @@
       },
       {
         "name": "--mark-bg",
-        "value": "#ffe14d",
-        "doc": "⌘K two-line hit (2026-10-05): the matched words in a memory snippet; 14.7:1 with --mark-fg, on the plain row and on the selected plate"
+        "value": "#c9d8f6",
+        "doc": "⌘K two-line hit (2026-10-05): the matched words in a memory snippet, a steel highlight (the language 2026-11-08: brass is the only warm colour); 13.3:1 with --mark-fg, on the plain row and on the selected plate"
       },
       {
         "name": "--mark-fg",
@@ -1611,6 +1611,11 @@
         "doc": "PHILO-13-11 (C1) Workbench Steel: REC on paper (5.73:1)"
       },
       {
+        "name": "--wb-rec-lamp",
+        "value": "#ff5a4f",
+        "doc": "the live REC lamp: a bright coral dot that glows on the coral REC plate (a mark, never text)"
+      },
+      {
         "name": "--wb-hover",
         "value": "rgba(16, 25, 43, 0.06)",
         "doc": "quiet control hover wash"
@@ -1662,43 +1667,43 @@
       },
       {
         "name": "--kind-project",
-        "value": "#3b62c4",
-        "doc": "DELIGHT 2026-10-27, the kind hue of a Project: the Workbench blue of its folder (5.4:1 on paper); used only as a glyph seat, a row wash and a card rule, never on a Button"
+        "value": "#3460bf",
+        "doc": "DELIGHT 2026-10-27, cool by the language 2026-11-08 (brass is the only warm colour): the kind hue of a Project: the Workbench blue of its folder, a step lighter than steel (4.9:1 on the window ground); used only as a glyph seat, a row wash, a card rule and a kind word, never on a Button"
       },
       {
         "name": "--kind-meeting",
-        "value": "#1c78a8",
-        "doc": "DELIGHT 2026-10-27, the kind hue of a meeting: the sky blue of the floor's meeting glow (4.7:1 on paper); used only as a glyph seat, a row wash and a card rule, never on a Button"
+        "value": "#16699a",
+        "doc": "DELIGHT 2026-10-27, cool by the language 2026-11-08 (brass is the only warm colour): the kind hue of a meeting: sky blue (5.0:1 on the window ground); used only as a glyph seat, a row wash, a card rule and a kind word, never on a Button"
       },
       {
         "name": "--kind-person",
-        "value": "#1f7a6b",
-        "doc": "DELIGHT 2026-10-27, the kind hue of a person: the teal of the person object and the note's person ink (5.0:1 on paper); used only as a glyph seat, a row wash and a card rule, never on a Button"
+        "value": "#176c5f",
+        "doc": "DELIGHT 2026-10-27, cool by the language 2026-11-08 (brass is the only warm colour): the kind hue of a person: teal (5.2:1 on the window ground); used only as a glyph seat, a row wash, a card rule and a kind word, never on a Button"
       },
       {
         "name": "--kind-decision",
         "value": "#6a4bc4",
-        "doc": "DELIGHT 2026-10-27, the kind hue of a decision: the violet of its check seal (5.9:1 on paper); used only as a glyph seat, a row wash and a card rule, never on a Button"
+        "doc": "DELIGHT 2026-10-27, cool by the language 2026-11-08 (brass is the only warm colour): the kind hue of a decision: the violet of its check seal (5.1:1 on the window ground); used only as a glyph seat, a row wash, a card rule and a kind word, never on a Button"
       },
       {
         "name": "--kind-note",
-        "value": "#94620f",
-        "doc": "DELIGHT 2026-10-27, the kind hue of a note: the amber line on its paper (5.1:1 on paper); used only as a glyph seat, a row wash and a card rule, never on a Button"
+        "value": "#4a5d7a",
+        "doc": "DELIGHT 2026-10-27, cool by the language 2026-11-08 (brass is the only warm colour): the kind hue of a note: slate, the ink on its paper (5.6:1 on the window ground); used only as a glyph seat, a row wash, a card rule and a kind word, never on a Button"
       },
       {
         "name": "--kind-pr",
-        "value": "#2b7a4a",
-        "doc": "DELIGHT 2026-10-27, the kind hue of a pull request: merge green (5.1:1 on paper); used only as a glyph seat, a row wash and a card rule, never on a Button"
+        "value": "#226b40",
+        "doc": "DELIGHT 2026-10-27, cool by the language 2026-11-08 (brass is the only warm colour): the kind hue of a pull request: merge green (5.4:1 on the window ground); used only as a glyph seat, a row wash, a card rule and a kind word, never on a Button"
       },
       {
         "name": "--kind-action",
-        "value": "#8a5a3d",
-        "doc": "DELIGHT 2026-10-27, the kind hue of an action item: the ember ink (5.6:1 on paper); used only as a glyph seat, a row wash and a card rule, never on a Button"
+        "value": "#8a3b86",
+        "doc": "DELIGHT 2026-10-27, cool by the language 2026-11-08 (brass is the only warm colour): the kind hue of an action item: plum (5.8:1 on the window ground); used only as a glyph seat, a row wash, a card rule and a kind word, never on a Button"
       },
       {
         "name": "--kind-agent",
-        "value": "#a84a1c",
-        "doc": "DELIGHT 2026-10-27, the kind hue of an agent: the coder orange (5.5:1 on paper); used only as a glyph seat, a row wash and a card rule, never on a Button"
+        "value": "#3d3a9c",
+        "doc": "DELIGHT 2026-10-27, cool by the language 2026-11-08 (brass is the only warm colour): the kind hue of an agent: deep indigo, the darkest kind (7.7:1 on the window ground); used only as a glyph seat, a row wash, a card rule and a kind word, never on a Button"
       },
       {
         "name": "--kind-other",

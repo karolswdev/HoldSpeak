@@ -2,6 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · #1960 The language, polish: brass is the only warm colour (kind hues note slate, action plum, agent indigo; floor glows, zone tints and the ⌘K mark cool; every kind 4.5:1 on the window ground); one display 700 (the wordmark); STATE_TONES in the kit (DotWord: At risk/Blocked/Late/Overdue coral, Done/On track moss, Parked graphite, Waits on you brass; Room head, Room people overdue and Programs blocked follow); UX-CANON §C points at the language; the token gate ignores comments (208 → 166, still red outside the three apps).
 - 2026-11-08 · #1959 README shows the faces as they are today: the Room's Now face on the Desk (desk-project-room.jpg) and alone (project.png), the new programs.png (rail, mast, spine, a step plate waiting on Merge) and needs-you.png (Waits on you first, the ledger); retaken at 1440 on an isolated rig hub; captions and alt text say what is on the glass.
 - 2026-11-08 · #1958 One writer of the owner's name: ownerName.ts has no PUT of its own; the first-run You card and People write through useOwnerWriter (one Settings writer per window: the read's revision, the hub's 409 word, one queue); off the settingsWriters allowlist.
 - 2026-11-08 · #1957 Fix forward #1955: docs/programs.md names the engine, not the old Runs on word (engines name guard).

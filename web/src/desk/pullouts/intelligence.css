@@ -336,7 +336,7 @@
   color: var(--text);
   font-family: var(--font-display);
   font-size: 2rem;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: -0.035em;
   line-height: 1.05;
 }

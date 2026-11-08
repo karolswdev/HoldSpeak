@@ -47,7 +47,7 @@
 /* The pressed segment is the steel plate (ours, chosen). */
 .desk-next .needs-drawer .needs-scope .btn[aria-pressed="true"] {
   background: var(--hs-steel);
-  color: #ffffff;
+  color: var(--text-on-accent);
 }
 .needs-calendar-offer {
   display: inline-flex;

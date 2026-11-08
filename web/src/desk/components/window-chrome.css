@@ -239,7 +239,7 @@
 }
 .desk-next .desk-panel-title {
   margin: 0;
-  font: 700 var(--font-size-lg) var(--font-display);
+  font: 600 var(--font-size-lg) var(--font-display);
 }
 .desk-next .desk-panel-eyebrow {
   display: block;
