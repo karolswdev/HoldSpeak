@@ -127,3 +127,71 @@ def test_importing_the_compositions_does_not_import_the_web_server() -> None:
     )
     result = subprocess.run([sys.executable, "-c", probe], capture_output=True, text=True)
     assert result.returncode == 0, result.stderr
+
+
+# Each class compose_hub built more than once with the same inputs before
+# 2026-11-08, and how many it builds now. ProjectService and ConnectionsService
+# keep two: the Room's copy says ``review_available=True`` and the Setup/Door
+# copy does not; the Connections copy on the WebContext holds the Confluence
+# adapter and the Setup copy does not.
+BUILT_ONCE = {
+    ("holdspeak.services.github_provider", "GitHubProviderAdapter"): 1,
+    ("holdspeak.services.jira_provider", "JiraProviderAdapter"): 1,
+    ("holdspeak.services.confluence_provider", "ConfluenceProviderAdapter"): 1,
+    ("holdspeak.services.watch_service", "WatchService"): 1,
+    ("holdspeak.services.project_evidence_collector", "ProjectEvidenceCollector"): 1,
+    ("holdspeak.services.project_service", "ProjectService"): 2,
+    ("holdspeak.services.connections_service", "ConnectionsService"): 2,
+    ("holdspeak.delivery.node_link", "NodeTokenStore"): 1,
+}
+
+
+def test_compose_hub_builds_each_shared_service_once(tmp_path, monkeypatch) -> None:
+    import importlib
+
+    from holdspeak.db import get_database, reset_database
+    from holdspeak.runtime.delivery_composition import compose_delivery
+    from holdspeak.runtime.hub_composition import compose_hub
+    from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
+
+    counts: dict[str, int] = {}
+    for (module_name, class_name) in BUILT_ONCE:
+        module = importlib.import_module(module_name)
+        real = getattr(module, class_name)
+
+        def counted(*args, _real=real, _name=class_name, **kwargs):
+            counts[_name] = counts.get(_name, 0) + 1
+            return _real(*args, **kwargs)
+
+        monkeypatch.setattr(module, class_name, counted)
+
+    reset_database()
+    get_database(tmp_path / "hub-composition-once.db")
+    try:
+        server = MeetingWebServer(
+            WebRuntimeCallbacks(
+                on_bookmark=lambda *_: None,
+                on_stop=lambda: None,
+                get_state=lambda: {},
+            ),
+            host="127.0.0.1",
+        )
+        counts.clear()  # the server composed once already; count one call
+        hub = compose_delivery(
+            compose_hub(server, on_launch_hold=lambda _key: None), auth_token=None
+        )
+        built = sorted(
+            field.name
+            for field in dataclasses.fields(WebContext)
+            if getattr(hub.web_ctx, field.name) is not None
+        )
+        assert built == FIELDS_BEFORE_THE_MOVE
+        ctx = hub.web_ctx
+        setup, door = ctx.project_setup_service, ctx.project_door_service
+        assert hub.delivery_link.token_store is hub.node_token_store
+        assert setup._project_service is door._project_service is not ctx.project_service
+        assert setup._watch_service is door._watch_service is ctx.watch_service
+        assert setup._github_adapter is door._github_adapter is ctx.github_provider
+    finally:
+        reset_database()
+    assert counts == {name: n for (_m, name), n in BUILT_ONCE.items()}

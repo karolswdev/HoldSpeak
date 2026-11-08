@@ -21,15 +21,14 @@ def compose_delivery(hub: HubComposition, *, auth_token: Optional[str]) -> HubCo
     command_source. ``_create_app`` calls this at the point it built them
     before, between the router mounts.
     """
-    from holdspeak.delivery.node_link import NodeLinkState, NodeTokenStore
+    from holdspeak.delivery.node_link import NodeLinkState
     from holdspeak.delivery.commands import HubCommandService, NodeCommandProcessor
     from holdspeak.delivery.terminal import TerminalTargetRegistry
     from holdspeak.db import get_database as _get_delivery_db
     from holdspeak.db.delivery_receipts import NodeReceiptLedger
 
-    _delivery_link = NodeLinkState(
-        NodeTokenStore(None), web_token=auth_token
-    )
+    # The pairing store compose_hub gave the mesh service: one custody handle.
+    _delivery_link = NodeLinkState(hub.node_token_store, web_token=auth_token)
     _delivery_targets = TerminalTargetRegistry()
     hub.signin_targets["targets"] = _delivery_targets
     _delivery_live = hub.web_ctx.delivery_service.terminal_live_service(

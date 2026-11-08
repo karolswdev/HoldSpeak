@@ -34,6 +34,7 @@ class HubComposition:
     delivery_targets: Any = None
     delivery_cmd: Any = None
     delivery_live: Any = None
+    node_token_store: Any = None
 
 
 def compose_hub(host: Any, *, on_launch_hold: Callable[[str], Any]) -> HubComposition:
@@ -90,6 +91,7 @@ def compose_hub(host: Any, *, on_launch_hold: Callable[[str], Any]) -> HubCompos
     from holdspeak.services.watch_service import WatchService
     from holdspeak.services.github_provider import GitHubProviderAdapter
     from holdspeak.services.jira_provider import JiraProviderAdapter
+    from holdspeak.services.confluence_provider import ConfluenceProviderAdapter
     from holdspeak.services.project_door_service import ProjectDoorService
     from holdspeak.services.project_setup_service import ProjectSetupService
     from holdspeak.services.project_evidence_collector import ProjectEvidenceCollector
@@ -100,23 +102,22 @@ def compose_hub(host: Any, *, on_launch_hold: Callable[[str], Any]) -> HubCompos
     from holdspeak.services.refinement_coordinator import RefinementCoordinator
     from holdspeak.services.refinement_application_service import RefinementApplicationService
 
-    from holdspeak.delivery.node_link import NodeTokenStore as _MeshNodeTokenStore
-
-    def _mesh_token_store() -> Any:
-        return _MeshNodeTokenStore(None)
+    from holdspeak.delivery.node_link import NodeTokenStore
 
     obs = get_observer()
+    # The database singleton; the factories below re-read it at call time.
+    db = get_database()
     # HS-200-45 R4: the services the hub holds that write BELOW the two
     # primitive services (reaction projections, coder-materialized notes)
     # get the same desk_changed callback. Late-bound through the root the
     # block below installs.
-    meeting_service = MeetingService(get_database(), observer=obs)
+    meeting_service = MeetingService(db, observer=obs)
     notify = lambda message_type, data: host.broadcast(message_type, data)
-    meeting_intel_service = MeetingIntelService(get_database(), notify=notify, observer=obs)
-    meeting_aftercare_service = MeetingAftercareService(get_database(), notify=notify, observer=obs)
-    refinement_coordinator = RefinementCoordinator(get_database(), host_kind="web")
+    meeting_intel_service = MeetingIntelService(db, notify=notify, observer=obs)
+    meeting_aftercare_service = MeetingAftercareService(db, notify=notify, observer=obs)
+    refinement_coordinator = RefinementCoordinator(db, host_kind="web")
     refinement_service = RefinementApplicationService(
-        get_database(), coordinator=refinement_coordinator
+        db, coordinator=refinement_coordinator
     )
 
     def _update_meeting(*, title: Optional[str], tags: Optional[list[str]]) -> Any:
@@ -183,24 +184,24 @@ def compose_hub(host: Any, *, on_launch_hold: Callable[[str], Any]) -> HubCompos
     meeting_service.bind_person_resolver(_resolve_person_label)
 
     follow_through_service = FollowThroughService(
-        get_database(), observer=obs, people_projection=people_service
+        db, observer=obs, people_projection=people_service
     )
     door_service = DoorService(
         follow_through_service,
-        RefinementThoughtService(get_database()),
-        get_database().scheduled_recordings,
-        get_database().calendar_events,
-        db=get_database(),
+        RefinementThoughtService(db),
+        db.scheduled_recordings,
+        db.calendar_events,
+        db=db,
         config_loader=Config.load,
         people_service=people_service,
     )
 
-    inference_setup_service = InferenceSetupApplicationService(get_database())
+    inference_setup_service = InferenceSetupApplicationService(db)
     inference_acquisition_service = InferenceAcquisitionApplicationService(
-        get_database(), setup_service=inference_setup_service
+        db, setup_service=inference_setup_service
     )
     model_library_service = ModelLibraryApplicationService(
-        get_database(), setup_service=inference_setup_service,
+        db, setup_service=inference_setup_service,
         acquisition_service=inference_acquisition_service,
     )
     # The same frozen broker registry backs web and MCP.  Construction is
@@ -208,12 +209,12 @@ def compose_hub(host: Any, *, on_launch_hold: Callable[[str], Any]) -> HubCompos
     # process from serving rather than become a lazy route-time surprise.
     from holdspeak.kernel.runtime import _configure
 
-    broker = _configure(get_database())
+    broker = _configure(db)
     inference_capability_service = InferenceCapabilityApplicationService(
         broker.inference_capability_registry
     )
     inference_assignment_service = InferenceAssignmentService(
-        get_database(),
+        db,
         registry=broker.inference_capability_registry,
         tool_capability_foundation=getattr(
             getattr(broker, "tool_turn_foundation", None), "_foundation", None
@@ -223,9 +224,9 @@ def compose_hub(host: Any, *, on_launch_hold: Callable[[str], Any]) -> HubCompos
     # assigns it to ``memory.embed`` and wakes the memory conductor.
     from holdspeak.services.meaning_search_service import MeaningSearchService
 
-    memory_service = MemoryService(get_database(), observer=obs)
+    memory_service = MemoryService(db, observer=obs)
     memory_service.meaning = MeaningSearchService(
-        get_database(),
+        db,
         assignment_service=inference_assignment_service,
         broker_provider=lambda: broker,
     )
@@ -234,7 +235,7 @@ def compose_hub(host: Any, *, on_launch_hold: Callable[[str], Any]) -> HubCompos
     from holdspeak.services.inference_default_service import InferenceDefaultService
 
     inference_default_service = InferenceDefaultService(
-        get_database(),
+        db,
         assignment_service=inference_assignment_service,
         model_library_service=model_library_service,
         meaning_search=memory_service.meaning,
@@ -243,7 +244,7 @@ def compose_hub(host: Any, *, on_launch_hold: Callable[[str], Any]) -> HubCompos
     from holdspeak.services.local_ai_setup_service import LocalAISetupService
 
     local_ai_setup_service = LocalAISetupService(
-        get_database(),
+        db,
         meaning_search=memory_service.meaning,
         broker_provider=lambda: broker,
     )
@@ -251,9 +252,9 @@ def compose_hub(host: Any, *, on_launch_hold: Callable[[str], Any]) -> HubCompos
     # Room's review section does not hold it: ProjectService reads the
     # open review through the repository and is told the capability
     # exists (``review_available=True`` below).
+    project_evidence_collector = ProjectEvidenceCollector(db)
     _project_delta_service = ProjectDeltaService(
-        get_database(),
-        collector=ProjectEvidenceCollector(get_database()),
+        db, collector=project_evidence_collector
     )
     # ST8 binds the Accounts sign-in process to the terminal target
     # registry created with the delivery routes below.  The indirection is
@@ -261,6 +262,21 @@ def compose_hub(host: Any, *, on_launch_hold: Callable[[str], Any]) -> HubCompos
     # before the delivery transport is mounted.
     from holdspeak.services.connection_signin_service import ConnectionSigninService
     _signin_targets: dict[str, Any] = {}
+    node_token_store = NodeTokenStore(None)
+    # One instance of each provider adapter, watch service and evidence
+    # collector; every consumer below receives the same one (2026-11-08).
+    github_provider = GitHubProviderAdapter(db=db, runner=host._gh_runner)
+    jira_provider = JiraProviderAdapter(db=db, runner=host._acli_runner)
+    # HS-174-07: the host's adapter when it has an acli runner, else a bare one.
+    confluence_provider = host._build_confluence_adapter() or ConfluenceProviderAdapter(
+        db=db, runner=host._acli_runner
+    )
+    watch_service = WatchService(
+        db, observer=obs, **host._gh_watch_service_kwargs()
+    )
+    # Setup and the Door read projects without the review capability, so they
+    # share one ProjectService apart from the Room's (``review_available``).
+    setup_project_service = ProjectService(db, observer=obs)
     web_ctx = WebContext(
         get_state=host.get_state,
         meeting_service=meeting_service,
@@ -288,28 +304,28 @@ def compose_hub(host: Any, *, on_launch_hold: Callable[[str], Any]) -> HubCompos
         on_set_title=host.on_set_title,
         on_set_tags=host.on_set_tags,
         project_service=(_project_service := ProjectService(
-            get_database(), observer=obs,
+            db, observer=obs,
             review_available=True,
         )),
-        projection_service=ProjectionService(get_database(), observer=obs),
-        authority_service=AuthorityService(get_database(), observer=obs),
+        projection_service=ProjectionService(db, observer=obs),
+        authority_service=AuthorityService(db, observer=obs),
         credential_service=CredentialService(
-            get_database(), on_settings_applied=host.on_settings_applied, observer=obs
+            db, on_settings_applied=host.on_settings_applied, observer=obs
         ),
-        cadence_service=CadenceService(get_database(), Config.load().cadence, observer=obs),
+        cadence_service=CadenceService(db, Config.load().cadence, observer=obs),
         follow_through_service=follow_through_service,
         door_service=door_service,
         people_service=people_service,
-        sync_service=SyncService(get_database(), observer=obs),
+        sync_service=SyncService(db, observer=obs),
         gate_service=GateService(
-            get_database(), observer=obs,
+            db, observer=obs,
             # Conductor R1: a held call of a launch notifies at once.
             on_launch_hold=on_launch_hold,
         ),
         # The Trust read states the bind and the token this runtime REALLY
         # serves with; the config alone cannot say where the hub listens.
         setup_service=SetupService(
-            get_database(), observer=obs,
+            db, observer=obs,
             web_bind=host.host, auth_token_set=bool(host.auth_token),
         ),
         inference_setup_service=inference_setup_service,
@@ -319,58 +335,26 @@ def compose_hub(host: Any, *, on_launch_hold: Callable[[str], Any]) -> HubCompos
         inference_assignment_service=inference_assignment_service,
         inference_default_service=inference_default_service,
         inference_capability_service=inference_capability_service,
-        delivery_service=DeliveryService(get_database(), observer=obs),
+        delivery_service=DeliveryService(db, observer=obs),
         # HS-131-16: the relay legs sign and revalidate dispatch offers, so
-        # the service needs the hub's pairing custody. A separate
-        # `NodeTokenStore` handle is deliberate and safe: the store keeps no
-        # cached state and re-reads under lock on every verb, so this handle
-        # and the node link's see the same rotation and revocation without a
-        # restart (Sol Amendment 3).
-        mesh_service=MeshService(
-            get_database(), observer=obs, token_store=_mesh_token_store()
-        ),
+        # the service needs the hub's pairing custody: the one store the node
+        # link also reads (compose_delivery). It caches nothing (Sol Amendment 3).
+        mesh_service=MeshService(db, observer=obs, token_store=node_token_store),
         memory_service=memory_service,
-        mission_control_service=MissionControlService(get_database(), observer=obs),
+        mission_control_service=MissionControlService(db, observer=obs),
         reaction_service=ReactionService(
-            get_database(), observer=obs,
+            db, observer=obs,
             on_changed=lambda kind, obj_id, op: notify_desk_changed(kind, obj_id, op),
         ),
-        watch_service=WatchService(
-            get_database(), observer=obs,
-            **host._gh_watch_service_kwargs(),
-        ),
-        github_provider=GitHubProviderAdapter(
-            db=get_database(), runner=host._gh_runner,
-        ),
-        jira_provider=JiraProviderAdapter(
-            db=get_database(), runner=host._acli_runner,
-        ),
-        # HS-174-07 declared this field "construction only here" and then
-        # never constructed it; the MCP `provider.confluence.*` family
-        # built a bare adapter in the hub as a result. Same shape as the
-        # Jira adapter above (counsel P1-3, caught by the asked-names fence).
-        confluence_provider=(
-            host._build_confluence_adapter()
-            or __import__(
-                "holdspeak.services.confluence_provider", fromlist=["ConfluenceProviderAdapter"]
-            ).ConfluenceProviderAdapter(db=get_database(), runner=host._acli_runner)
-        ),
+        watch_service=watch_service,
+        github_provider=github_provider,
+        jira_provider=jira_provider,
+        confluence_provider=confluence_provider,
+        # PHILO-9-02 (B1): the Confluence row and its Recheck need the adapter.
         connections_service=ConnectionsService(
-            github_adapter=GitHubProviderAdapter(
-                db=get_database(), runner=host._gh_runner,
-            ),
-            jira_adapter=JiraProviderAdapter(
-                db=get_database(), runner=host._acli_runner,
-            ),
-            # PHILO-9-02 (B1): the Confluence row and its real Recheck
-            # probe need the adapter; the bare builder returns None
-            # unless a test injects a runner, so fall back as :1004 does.
-            confluence_adapter=(
-                host._build_confluence_adapter()
-                or __import__(
-                    "holdspeak.services.confluence_provider", fromlist=["ConfluenceProviderAdapter"]
-                ).ConfluenceProviderAdapter(db=get_database(), runner=host._acli_runner)
-            ),
+            github_adapter=github_provider,
+            jira_adapter=jira_provider,
+            confluence_adapter=confluence_provider,
             config_loader=Config.load,
             inference_assignment_service=inference_assignment_service,
         ),
@@ -378,60 +362,38 @@ def compose_hub(host: Any, *, on_launch_hold: Callable[[str], Any]) -> HubCompos
             target_provider=lambda: _signin_targets.get("targets"),
         ),
         project_setup_service=ProjectSetupService(
-            get_database(),
-            project_service=ProjectService(get_database(), observer=obs),
-            watch_service=WatchService(
-                get_database(), observer=obs,
-                **host._gh_watch_service_kwargs(),
-            ),
-            github_adapter=GitHubProviderAdapter(
-                db=get_database(), runner=host._gh_runner,
-            ),
-            jira_adapter=JiraProviderAdapter(
-                db=get_database(), runner=host._acli_runner,
-            ),
+            db,
+            project_service=setup_project_service,
+            watch_service=watch_service,
+            github_adapter=github_provider,
+            jira_adapter=jira_provider,
+            # Setup's Connections has no Confluence adapter, as before.
             connections_service=ConnectionsService(
-                github_adapter=GitHubProviderAdapter(
-                    db=get_database(), runner=host._gh_runner,
-                ),
-                jira_adapter=JiraProviderAdapter(
-                    db=get_database(), runner=host._acli_runner,
-                ),
+                github_adapter=github_provider,
+                jira_adapter=jira_provider,
                 config_loader=Config.load,
                 inference_assignment_service=inference_assignment_service,
             ),
         ),
         project_door_service=ProjectDoorService(
-            project_service=ProjectService(get_database(), observer=obs),
-            watch_service=WatchService(
-                get_database(), observer=obs,
-                **host._gh_watch_service_kwargs(),
-            ),
+            project_service=setup_project_service,
+            watch_service=watch_service,
             gh_runner=host._gh_runner,
-            github_adapter=GitHubProviderAdapter(
-                db=get_database(), runner=host._gh_runner,
-            ),
-            jira_adapter=JiraProviderAdapter(
-                db=get_database(), runner=host._acli_runner,
-            ),
-            confluence_adapter=(
-                host._build_confluence_adapter()
-                or __import__(
-                    "holdspeak.services.confluence_provider", fromlist=["ConfluenceProviderAdapter"]
-                ).ConfluenceProviderAdapter(db=get_database(), runner=host._acli_runner)
-            ),
-            db=get_database(),
+            github_adapter=github_provider,
+            jira_adapter=jira_provider,
+            confluence_adapter=confluence_provider,
+            db=db,
             meeting_service=meeting_service,
             primitive_service=None,
         ),
-        project_evidence_collector=ProjectEvidenceCollector(get_database()),
+        project_evidence_collector=project_evidence_collector,
         # PHILO-9-02: one suggested-source service over the hub's ProjectService.
         suggested_source_service=__import__(
             "holdspeak.services.suggested_source_service", fromlist=["SuggestedSourceService"]
-        ).SuggestedSourceService(get_database(), project_service=_project_service),
+        ).SuggestedSourceService(db, project_service=_project_service),
         project_delta_service=_project_delta_service,
         project_update_service=(_project_update_service := ProjectUpdateService(
-            get_database(),
+            db,
             project_service=_project_service,
             delta_service=_project_delta_service,
             broker=broker,
@@ -442,13 +404,13 @@ def compose_hub(host: Any, *, on_launch_hold: Callable[[str], Any]) -> HubCompos
             ] if people_reads_allowed() else [],
         )),
         project_brief_service=PreparationBriefService(
-            get_database(),
+            db,
             project_service=_project_service,
             broker=broker,
         ),
         project_steward_service=ProjectStewardService(
-            get_database(),
-            ProjectEvidenceCollector(get_database()),
+            db,
+            project_evidence_collector,
             _project_delta_service,
             update_service=_project_update_service,
             project_service=_project_service,
@@ -457,9 +419,9 @@ def compose_hub(host: Any, *, on_launch_hold: Callable[[str], Any]) -> HubCompos
         refinement_coordinator=refinement_coordinator,
         refinement_service=refinement_service,
         settings_service=SettingsService(
-            get_database(), on_settings_applied=host.on_settings_applied, observer=obs
+            db, on_settings_applied=host.on_settings_applied, observer=obs
         ),
-        profile_key_service=ProfileKeyService(get_database()),
+        profile_key_service=ProfileKeyService(db),
         on_get_intent_controls=host.on_get_intent_controls,
         on_set_intent_profile=host.on_set_intent_profile,
         on_set_intent_override=host.on_set_intent_override,
@@ -467,11 +429,11 @@ def compose_hub(host: Any, *, on_launch_hold: Callable[[str], Any]) -> HubCompos
         on_dictation_config_changed=host.on_dictation_config_changed,
         on_remote_dictation=host.on_remote_dictation,
         coder_service=CoderService(
-            get_database(), observer=obs,
+            db, observer=obs,
             on_changed=lambda kind, obj_id, op: notify_desk_changed(kind, obj_id, op),
         ),
         dictation_service=DictationService(
-            get_database(), observer=obs,
+            db, observer=obs,
             journal_repository=getattr(host.dictation_journal, "repository", None),
             journal_available=host.dictation_journal is not None,
         ),
@@ -532,7 +494,7 @@ def compose_hub(host: Any, *, on_launch_hold: Callable[[str], Any]) -> HubCompos
     # their own bare copy, so a write from anywhere but the acting browser
     # reached no open desk.
     _runtime_services = install_from_web_context(
-        web_ctx, db=get_database(), observer=obs
+        web_ctx, db=db, observer=obs
     )
 
     # Conductor R2: the hub's agent credentials, their targets and launch
@@ -543,17 +505,17 @@ def compose_hub(host: Any, *, on_launch_hold: Callable[[str], Any]) -> HubCompos
     from holdspeak.services.conductor_launch import install_revoke_hook, reconcile_launch_grants
 
     install_revoke_hook()
-    agent_credentials.attach(get_database(), follow_hub=True)
+    agent_credentials.attach(db, follow_hub=True)
     try:
-        reconcile_launch_grants(get_database())
+        reconcile_launch_grants(db)
     except Exception:  # a start never fails on the sweep; it runs again next start
         log.warning("launch grant reconcile failed", exc_info=True)
 
     from holdspeak.web.routes.actuator_shared import DeskActuatorLifecycle
     web_ctx.actuator_service = ActuatorProposalService(
-        get_database(), config_provider=lambda: Config.load(path=__import__("holdspeak.config", fromlist=["CONFIG_FILE"]).CONFIG_FILE),
+        db, config_provider=lambda: Config.load(path=__import__("holdspeak.config", fromlist=["CONFIG_FILE"]).CONFIG_FILE),
         broadcast=lambda message_type, data: host.broadcast(message_type, data),
-        lifecycle=DeskActuatorLifecycle(web_ctx, get_database()),
+        lifecycle=DeskActuatorLifecycle(web_ctx, db),
     )
     _runtime_services.actuator_service = web_ctx.actuator_service
 
@@ -563,4 +525,5 @@ def compose_hub(host: Any, *, on_launch_hold: Callable[[str], Any]) -> HubCompos
         refinement_coordinator=refinement_coordinator,
         project_service=_project_service,
         signin_targets=_signin_targets,
+        node_token_store=node_token_store,
     )

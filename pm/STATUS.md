@@ -2,6 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · #1866 compose_hub builds each shared adapter and service once (GitHub and Jira adapters 5 → 1, Confluence, WatchService and the evidence collector 3 → 1, the pairing token store 2 → 1); hub_composition.py 566 → 529 lines, cold start 1.69 → 1.64 s (noise).
 - 2026-11-08 · #1862 The UX canon scanner counts A8 (no counter of zero) only in drawn JSX text, never in a prop, aria-label, title or data-* value, and files each hit under its file stem: A8 26 → 5.
 - 2026-11-08 · #1861 The night backlog read adds again (the engine is not locked out as an agent, a #1858 regression), and the four night tests run with the home engine #1768 requires.
 - 2026-11-08 · #1859 The desk keeps one startup intent, the latest explicit one (HS-S12): the surface host's one flush opens it, a hub list that lands later does not re-scope or close it, and a Room keeps one latest target (a proposal or a place).
