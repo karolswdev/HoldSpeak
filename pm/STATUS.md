@@ -2,6 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · #PR The desk declares viewport-fit=cover, so the iPhone's safe-area insets the walk, the dock and the pullouts already read are no longer 0.
 - 2026-11-08 · #1862 The UX canon scanner counts A8 (no counter of zero) only in drawn JSX text, never in a prop, aria-label, title or data-* value, and files each hit under its file stem: A8 26 → 5.
 - 2026-11-08 · #1861 The night backlog read adds again (the engine is not locked out as an agent, a #1858 regression), and the four night tests run with the home engine #1768 requires.
 - 2026-11-08 · #1859 The desk keeps one startup intent, the latest explicit one (HS-S12): the surface host's one flush opens it, a hub list that lands later does not re-scope or close it, and a Room keeps one latest target (a proposal or a place).
