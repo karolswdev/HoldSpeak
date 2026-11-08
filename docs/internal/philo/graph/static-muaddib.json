@@ -38288,7 +38288,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_settingsbespoke_tsx.l88.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/pages/cores/settingsBespoke.tsx:88 [active] (library)",
+   "label": "<Button> onClick · web/src/pages/cores/settings/Speak.tsx:88 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -38298,7 +38298,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/settingsBespoke.tsx",
+     "path": "web/src/pages/cores/settings/Speak.tsx",
      "line": 88,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -38309,7 +38309,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_settingsprefs_tsx.l432.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/pages/cores/settingsPrefs.tsx:432 [active] (library)",
+   "label": "<Button> onClick · web/src/pages/cores/settings/prefs.tsx:432 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -38319,7 +38319,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/settingsPrefs.tsx",
+     "path": "web/src/pages/cores/settings/prefs.tsx",
      "line": 432,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -38330,7 +38330,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_settingsprefs_tsx.l450.ontoggle",
    "kind": "edge",
-   "label": "<SurfaceLedgerRow> onToggle · web/src/pages/cores/settingsPrefs.tsx:450 [active] (library)",
+   "label": "<SurfaceLedgerRow> onToggle · web/src/pages/cores/settings/prefs.tsx:450 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -38340,7 +38340,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/settingsPrefs.tsx",
+     "path": "web/src/pages/cores/settings/prefs.tsx",
      "line": 450,
      "anchor": "onToggle",
      "claim": "a library control's onToggle handler on SurfaceLedgerRow"
@@ -38351,7 +38351,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_settingsprefs_tsx.l466.ontoggle",
    "kind": "edge",
-   "label": "<SurfaceLedgerRow> onToggle · web/src/pages/cores/settingsPrefs.tsx:466 [active] (library)",
+   "label": "<SurfaceLedgerRow> onToggle · web/src/pages/cores/settings/prefs.tsx:466 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -38361,7 +38361,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/settingsPrefs.tsx",
+     "path": "web/src/pages/cores/settings/prefs.tsx",
      "line": 466,
      "anchor": "onToggle",
      "claim": "a library control's onToggle handler on SurfaceLedgerRow"
@@ -38372,7 +38372,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_settingsprefs_tsx.l481.ontoggle",
    "kind": "edge",
-   "label": "<SurfaceLedgerRow> onToggle · web/src/pages/cores/settingsPrefs.tsx:481 [active] (library)",
+   "label": "<SurfaceLedgerRow> onToggle · web/src/pages/cores/settings/prefs.tsx:481 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -38382,7 +38382,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/settingsPrefs.tsx",
+     "path": "web/src/pages/cores/settings/prefs.tsx",
      "line": 481,
      "anchor": "onToggle",
      "claim": "a library control's onToggle handler on SurfaceLedgerRow"
@@ -38393,7 +38393,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_settingsprefs_tsx.l493.ontoggle",
    "kind": "edge",
-   "label": "<SurfaceLedgerRow> onToggle · web/src/pages/cores/settingsPrefs.tsx:493 [active] (library)",
+   "label": "<SurfaceLedgerRow> onToggle · web/src/pages/cores/settings/prefs.tsx:493 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -38403,7 +38403,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/settingsPrefs.tsx",
+     "path": "web/src/pages/cores/settings/prefs.tsx",
      "line": 493,
      "anchor": "onToggle",
      "claim": "a library control's onToggle handler on SurfaceLedgerRow"
@@ -38414,7 +38414,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_settingsprefs_tsx.l512.ontoggle",
    "kind": "edge",
-   "label": "<SurfaceLedgerRow> onToggle · web/src/pages/cores/settingsPrefs.tsx:512 [active] (library)",
+   "label": "<SurfaceLedgerRow> onToggle · web/src/pages/cores/settings/prefs.tsx:512 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -38424,7 +38424,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/settingsPrefs.tsx",
+     "path": "web/src/pages/cores/settings/prefs.tsx",
      "line": 512,
      "anchor": "onToggle",
      "claim": "a library control's onToggle handler on SurfaceLedgerRow"
@@ -38435,7 +38435,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_settingsprefs_tsx.l524.ontoggle",
    "kind": "edge",
-   "label": "<SurfaceLedgerRow> onToggle · web/src/pages/cores/settingsPrefs.tsx:524 [active] (library)",
+   "label": "<SurfaceLedgerRow> onToggle · web/src/pages/cores/settings/prefs.tsx:524 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -38445,7 +38445,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/settingsPrefs.tsx",
+     "path": "web/src/pages/cores/settings/prefs.tsx",
      "line": 524,
      "anchor": "onToggle",
      "claim": "a library control's onToggle handler on SurfaceLedgerRow"
@@ -38456,7 +38456,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_settingsprefs_tsx.l551.ontoggle",
    "kind": "edge",
-   "label": "<SurfaceLedgerRow> onToggle · web/src/pages/cores/settingsPrefs.tsx:551 [active] (library)",
+   "label": "<SurfaceLedgerRow> onToggle · web/src/pages/cores/settings/prefs.tsx:551 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -38466,7 +38466,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/settingsPrefs.tsx",
+     "path": "web/src/pages/cores/settings/prefs.tsx",
      "line": 551,
      "anchor": "onToggle",
      "claim": "a library control's onToggle handler on SurfaceLedgerRow"
@@ -38477,7 +38477,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_settingsprefs_tsx.l562.ontoggle",
    "kind": "edge",
-   "label": "<SurfaceLedgerRow> onToggle · web/src/pages/cores/settingsPrefs.tsx:562 [active] (library)",
+   "label": "<SurfaceLedgerRow> onToggle · web/src/pages/cores/settings/prefs.tsx:562 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -38487,7 +38487,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/settingsPrefs.tsx",
+     "path": "web/src/pages/cores/settings/prefs.tsx",
      "line": 562,
      "anchor": "onToggle",
      "claim": "a library control's onToggle handler on SurfaceLedgerRow"
@@ -38498,7 +38498,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_settingsprefs_tsx.l570.ontoggle",
    "kind": "edge",
-   "label": "<SurfaceLedgerRow> onToggle · web/src/pages/cores/settingsPrefs.tsx:570 [active] (library)",
+   "label": "<SurfaceLedgerRow> onToggle · web/src/pages/cores/settings/prefs.tsx:570 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -38508,7 +38508,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/settingsPrefs.tsx",
+     "path": "web/src/pages/cores/settings/prefs.tsx",
      "line": 570,
      "anchor": "onToggle",
      "claim": "a library control's onToggle handler on SurfaceLedgerRow"
@@ -38519,7 +38519,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_settingsprefs_tsx.l592.onchange",
    "kind": "edge",
-   "label": "<CycleGadget> onChange · web/src/pages/cores/settingsPrefs.tsx:592 [active] (library)",
+   "label": "<CycleGadget> onChange · web/src/pages/cores/settings/prefs.tsx:592 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -38529,7 +38529,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/settingsPrefs.tsx",
+     "path": "web/src/pages/cores/settings/prefs.tsx",
      "line": 592,
      "anchor": "onChange",
      "claim": "a library control's onChange handler on CycleGadget"
@@ -38540,7 +38540,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_settingsprefs_tsx.l649.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/pages/cores/settingsPrefs.tsx:649 [active] (library)",
+   "label": "<Button> onClick · web/src/pages/cores/settings/prefs.tsx:649 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -38550,7 +38550,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/settingsPrefs.tsx",
+     "path": "web/src/pages/cores/settings/prefs.tsx",
      "line": 649,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -38561,7 +38561,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_settingstts_tsx.l115.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/pages/cores/settingsTts.tsx:115 [active] (library)",
+   "label": "<Button> onClick · web/src/pages/cores/settings/Desk.tsx:115 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -38571,7 +38571,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/settingsTts.tsx",
+     "path": "web/src/pages/cores/settings/Desk.tsx",
      "line": 115,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -38582,7 +38582,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_settingswallpaper_tsx.l51.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/pages/cores/settingsWallpaper.tsx:51 [active] (library)",
+   "label": "<Button> onClick · web/src/pages/cores/settings/Wallpaper.tsx:51 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -38592,7 +38592,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/settingsWallpaper.tsx",
+     "path": "web/src/pages/cores/settings/Wallpaper.tsx",
      "line": 51,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -38603,7 +38603,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_settingswallpaper_tsx.l52.onkeydown",
    "kind": "edge",
-   "label": "<Button> onKeyDown · web/src/pages/cores/settingsWallpaper.tsx:52 [active] (library)",
+   "label": "<Button> onKeyDown · web/src/pages/cores/settings/Wallpaper.tsx:52 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -38613,7 +38613,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/settingsWallpaper.tsx",
+     "path": "web/src/pages/cores/settings/Wallpaper.tsx",
      "line": 52,
      "anchor": "onKeyDown",
      "claim": "a library control's onKeyDown handler on Button"
@@ -38624,7 +38624,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_settingswallpaper_tsx.l97.onclick",
    "kind": "edge",
-   "label": "<Button> onClick · web/src/pages/cores/settingsWallpaper.tsx:97 [active] (library)",
+   "label": "<Button> onClick · web/src/pages/cores/settings/Wallpaper.tsx:97 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -38634,7 +38634,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/settingsWallpaper.tsx",
+     "path": "web/src/pages/cores/settings/Wallpaper.tsx",
      "line": 97,
      "anchor": "onClick",
      "claim": "a library control's onClick handler on Button"
@@ -38645,7 +38645,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_settingswallpaper_tsx.l132.onchange",
    "kind": "edge",
-   "label": "<CheckGadget> onChange · web/src/pages/cores/settingsWallpaper.tsx:132 [active] (library)",
+   "label": "<CheckGadget> onChange · web/src/pages/cores/settings/Wallpaper.tsx:132 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -38655,7 +38655,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/settingsWallpaper.tsx",
+     "path": "web/src/pages/cores/settings/Wallpaper.tsx",
      "line": 132,
      "anchor": "onChange",
      "claim": "a library control's onChange handler on CheckGadget"
@@ -38666,7 +38666,7 @@
   {
    "id": "edge.ui.web_src_pages_cores_settingswallpaper_tsx.l139.onchange",
    "kind": "edge",
-   "label": "<CheckGadget> onChange · web/src/pages/cores/settingsWallpaper.tsx:139 [active] (library)",
+   "label": "<CheckGadget> onChange · web/src/pages/cores/settings/Wallpaper.tsx:139 [active] (library)",
    "phase1_refs": [
     {
      "inventory_path": "docs/internal/philo/data/desk.json",
@@ -38676,7 +38676,7 @@
    "sources": [
     {
      "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-     "path": "web/src/pages/cores/settingsWallpaper.tsx",
+     "path": "web/src/pages/cores/settings/Wallpaper.tsx",
      "line": 139,
      "anchor": "onChange",
      "claim": "a library control's onChange handler on CheckGadget"

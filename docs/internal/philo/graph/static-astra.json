@@ -2145,19 +2145,19 @@
       "sha256": "48adabdef4eb4e61a5e09abf90c885f4618a05338f20c29e6b912a8ed38134a1"
     },
     {
-      "path": "web/src/pages/cores/settingsBespoke.tsx",
+      "path": "web/src/pages/cores/settings/Speak.tsx",
       "sha256": "a7ae0ba4afe900c0382d14e0046b34fad1148d0949008c286cc9cf2665653ebe"
     },
     {
-      "path": "web/src/pages/cores/settingsPrefs.tsx",
+      "path": "web/src/pages/cores/settings/prefs.tsx",
       "sha256": "e47f57a69aeae61add1acd5135786e80f6b3b1dfffac68c663eab4c4f7e08903"
     },
     {
-      "path": "web/src/pages/cores/settingsTts.tsx",
+      "path": "web/src/pages/cores/settings/Desk.tsx",
       "sha256": "5d8c86c0788a8b8c874fb0f3de3d41c9edc1e2c322d294a58599358629a240bb"
     },
     {
-      "path": "web/src/pages/cores/settingsWallpaper.tsx",
+      "path": "web/src/pages/cores/settings/Wallpaper.tsx",
       "sha256": "42fcd0d02f53147005a7d43809ee7459a5d4104a81c84d8b2699a4ab72a599c4"
     },
     {
@@ -15343,7 +15343,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/settingsPrefs.tsx",
+          "path": "web/src/pages/cores/settings/prefs.tsx",
           "line": 466,
           "anchor": "onToggle={() => onOpen(\"assignments\")}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -16639,7 +16639,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/settingsPrefs.tsx",
+          "path": "web/src/pages/cores/settings/prefs.tsx",
           "line": 512,
           "anchor": "onToggle={() => onOpen(\"meetings\")}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -19919,7 +19919,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/settingsPrefs.tsx",
+          "path": "web/src/pages/cores/settings/prefs.tsx",
           "line": 562,
           "anchor": "onToggle={() => onOpen(\"wallpaper\")}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -20495,7 +20495,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/settingsPrefs.tsx",
+          "path": "web/src/pages/cores/settings/prefs.tsx",
           "line": 481,
           "anchor": "onToggle={() => onOpen(\"integrations\")}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -20655,7 +20655,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/settingsPrefs.tsx",
+          "path": "web/src/pages/cores/settings/prefs.tsx",
           "line": 551,
           "anchor": "onToggle={() => onOpen(\"sounds\")}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -21167,7 +21167,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/settingsPrefs.tsx",
+          "path": "web/src/pages/cores/settings/prefs.tsx",
           "line": 493,
           "anchor": "onToggle={() => onOpen(\"voice\")}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -21919,7 +21919,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/settingsPrefs.tsx",
+          "path": "web/src/pages/cores/settings/prefs.tsx",
           "line": 570,
           "anchor": "onToggle={() => onOpen(\"system\")}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -22623,7 +22623,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/settingsPrefs.tsx",
+          "path": "web/src/pages/cores/settings/prefs.tsx",
           "line": 524,
           "anchor": "onToggle={() => onOpen(\"rhythm\")}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -23375,7 +23375,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/settingsPrefs.tsx",
+          "path": "web/src/pages/cores/settings/prefs.tsx",
           "line": 320,
           "anchor": "onConfirm={() => void fire()}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -24527,7 +24527,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/settingsPrefs.tsx",
+          "path": "web/src/pages/cores/settings/prefs.tsx",
           "line": 450,
           "anchor": "onToggle={() => onOpen(\"models\")}",
           "claim": "JSX declares this event/callback input. Includes custom component callbacks: invocation and mounting depend on the child contract. Census only; no runtime gesture or downstream result inferred."
@@ -26399,7 +26399,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/settingsPrefs.tsx",
+          "path": "web/src/pages/cores/settings/prefs.tsx",
           "line": 432,
           "symbol": "openVerb",
           "claim": "The production JSX source declares onClick at this control site."
@@ -27023,7 +27023,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/settingsWallpaper.tsx",
+          "path": "web/src/pages/cores/settings/Wallpaper.tsx",
           "line": 51,
           "symbol": "WallpaperModule",
           "claim": "The production JSX source declares onClick at this control site."
@@ -28863,7 +28863,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/settingsWallpaper.tsx",
+          "path": "web/src/pages/cores/settings/Wallpaper.tsx",
           "line": 139,
           "symbol": "WallpaperModule",
           "claim": "The production JSX source declares onChange at this control site."
@@ -32255,7 +32255,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/settingsBespoke.tsx",
+          "path": "web/src/pages/cores/settings/Speak.tsx",
           "line": 88,
           "symbol": "HotkeyCapture",
           "claim": "The production JSX source declares onClick at this control site."
@@ -32783,7 +32783,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/settingsWallpaper.tsx",
+          "path": "web/src/pages/cores/settings/Wallpaper.tsx",
           "line": 97,
           "symbol": "WallpaperModule",
           "claim": "The production JSX source declares onClick at this control site."
@@ -33151,7 +33151,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/settingsWallpaper.tsx",
+          "path": "web/src/pages/cores/settings/Wallpaper.tsx",
           "line": 52,
           "symbol": "WallpaperModule",
           "claim": "The production JSX source declares onKeyDown at this control site."
@@ -34479,7 +34479,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/settingsTts.tsx",
+          "path": "web/src/pages/cores/settings/Desk.tsx",
           "line": 115,
           "symbol": "TtsSettingsBlock",
           "claim": "The production JSX source declares onClick at this control site."
@@ -35151,7 +35151,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/settingsPrefs.tsx",
+          "path": "web/src/pages/cores/settings/prefs.tsx",
           "line": 592,
           "symbol": "PrefsFace",
           "claim": "The production JSX source declares onChange at this control site."
@@ -35295,7 +35295,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/settingsWallpaper.tsx",
+          "path": "web/src/pages/cores/settings/Wallpaper.tsx",
           "line": 132,
           "symbol": "WallpaperModule",
           "claim": "The production JSX source declares onChange at this control site."
@@ -37615,7 +37615,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/settingsPrefs.tsx",
+          "path": "web/src/pages/cores/settings/prefs.tsx",
           "line": 649,
           "symbol": "PrefStatusBar",
           "claim": "The production JSX source declares onClick at this control site."
@@ -74277,7 +74277,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/settingsBespoke.tsx",
+          "path": "web/src/pages/cores/settings/Speak.tsx",
           "line": 73,
           "symbol": "window",
           "claim": "Source registers the browser keydown listener on window; static census records the registration site."
