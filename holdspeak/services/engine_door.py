@@ -423,6 +423,8 @@ def failure_items(db: Any) -> list[dict[str, Any]]:
     ``{key, job, kind, retry_key, engine, words, reason, since, object_kind,
     open_ref, can_retry}``, newest first. A read of the kernel's receipts.
     """
+    if db is None:
+        return []
     import json
     from datetime import datetime, timezone
 

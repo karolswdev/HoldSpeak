@@ -2,6 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · Fix forward #2020/#2011: the three CLI-channel cases that boot a real HubProcess join the parked slow tier; an absent registry gives Needs you no engine failures (k3).
 - 2026-11-08 · (PR) Automations run as Programs: a scheduled instruction automation (Morning prep) and the Room's Draft update each start a Program of one prompt step on the automation's own engine (engine_for takes a subject); the update job runs it inline and still writes its update_id; Today's Prepared block, the automation's results, Runs, NEW and the Room's latest result read the Program runs; the rail keeps one tile per automation. Stacked on the prompt step PR.
 - 2026-11-08 · #2016 A park never turns a guard red: ledgers refuse new faults only, cited paths read their parked twin (scripts/parked_paths.py); the recorded route list and the frame mirror are parked (no shadowed route is the live invariant).
 - 2026-11-08 · #2015 Generated docs leave git (docs/generated/, api-surface.json, API_SURFACE.md, API_REFERENCE.md: 25 files, 156,597 lines); the tests derive OpenAPI, the operations export and the views from the tree.
