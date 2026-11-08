@@ -853,6 +853,9 @@ export interface DeskWindowFrameProps {
   onBack?: () => void;
   /** The test id the compact Back carries while `onBack` is a core's step. */
   backTestId?: string;
+  /** The compact Back's word while `onBack` is a core's step (a wizard's
+   *  Cancel); default Back. */
+  backLabel?: string;
   /** Heavy content may unmount while minimized (default: stays mounted). */
   unmountOnMinimize?: boolean;
   /** Entrance spring (the Phase 93 slide-in). Default true. */
@@ -901,6 +904,7 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
     beforeClose,
     onBack,
     backTestId,
+    backLabel,
     unmountOnMinimize,
     entrance = true,
     rootStyle,
@@ -1360,12 +1364,12 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
           <Button
             variant="chrome"
             className="desk-gadget desk-gadget-close"
-            aria-label={compact ? `Back from ${name}` : `Close ${name}`}
-            title={compact ? "Back" : `Close ${name}`}
+            aria-label={compact ? (onBack && backLabel ? backLabel : `Back from ${name}`) : `Close ${name}`}
+            title={compact ? (onBack && backLabel ? backLabel : "Back") : `Close ${name}`}
             onClick={compact ? (onBack ?? requestClose) : requestClose}
             data-testid={compact && onBack && backTestId ? backTestId : undefined}
           >
-            {compact ? "‹ Back" : <GadgetGlyph kind="close" />}
+            {compact ? (onBack && backLabel ? backLabel : "‹ Back") : <GadgetGlyph kind="close" />}
           </Button>
         </span>
         {leading}
