@@ -2,6 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · #2008 Needs you's arming row reads the hub's arming frame again: the Dock passes every scheduled_recording.* frame to the store (the subscription had left with the parked CaptureHero).
 - 2026-11-08 · #1998 Park 18 more routes no client reads (action-item aliases, cadence reads, speakers, the /api/stop alias, …): hub routes 872 → 854, live holdspeak+tests −930/+14 lines.
 - 2026-11-08 · #1993 Park 13 inference target, setup and model-library routes no client reads: hub routes 885 → 872, live holdspeak+tests −516/+9 lines; the residual census skips parked route files.
 - 2026-11-08 · #1989 Park 15 provider, delivery and dictation routes no client reads: hub routes 900 → 885, live holdspeak+tests −960/+7 lines.
