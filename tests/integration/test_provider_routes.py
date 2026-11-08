@@ -362,11 +362,9 @@ class TestWatchEvaluate:
     def test_evaluate_existing_watch(self, rig) -> None:
         """Seed a watch, baseline it, then evaluate through the route."""
         db, client, _log, _ctx = rig
-        from holdspeak.services.reaction_service import ReactionService
+        from tests.watch_seed import seed_watch
 
-        rs = ReactionService(db)
-        rs.create_watch(
-            OWNER,
+        seed_watch(db,
             connector_id="gh",
             query_kind="pull_requests",
             name="Eval Test Watch",

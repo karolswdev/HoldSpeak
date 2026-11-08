@@ -117,6 +117,9 @@ export interface AutomationDetail extends WorkbenchDetail {
   results?: AutomationResult[];
   sources_shown?: AutomationSource[];
   event_starts?: Array<{ id?: string; name: string; enabled: boolean; event_pattern?: string }>;
+  /** Watch fold 4 (2026-11-08): an event start saved before the fold runs
+   *  nothing until he chooses a When again. */
+  when_needs_reset?: boolean;
 }
 
 const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -169,6 +172,7 @@ export function whenWords(detail: AutomationDetail): string {
   const events = (detail.event_starts ?? [])
     .map((e) => words.get(e.event_pattern ?? "") ?? e.name).filter(Boolean);
   const parts = [schedule, ...events].filter(Boolean) as string[];
+  if (!parts.length && detail.when_needs_reset) return "The event start must be set again";
   return parts.length ? parts.join(" · ") : "Only when I press Run now";
 }
 

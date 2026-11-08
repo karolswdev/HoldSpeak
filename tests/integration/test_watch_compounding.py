@@ -37,7 +37,7 @@ from holdspeak.services.project_evidence_collector import (
 )
 from holdspeak.services.project_service import ProjectService
 from holdspeak.services.project_setup_service import ProjectSetupService
-from holdspeak.services.reaction_service import ReactionService
+from tests.watch_seed import seed_watch
 from holdspeak.services.watch_service import WatchService
 
 
@@ -78,9 +78,7 @@ class TestWatchToDeltaCompounding:
 
         # 1. Create a watch + project_sources binding.
         watch_id = "watch-compound-01"
-        rs = ReactionService(db)
-        rs.create_watch(
-            OWNER,
+        seed_watch(db,
             connector_id="gh",
             query_kind="pull_requests",
             name="CI Health Watch",
@@ -204,9 +202,7 @@ class TestWatchToDeltaCompounding:
         project_id = _seed_project(db)
 
         watch_id = "watch-compound-noop"
-        rs = ReactionService(db)
-        rs.create_watch(
-            OWNER,
+        seed_watch(db,
             connector_id="gh",
             query_kind="pull_requests",
             name="Noop Watch",

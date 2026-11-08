@@ -8,17 +8,13 @@
 """
 from __future__ import annotations
 
-import asyncio
 import json
-from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
 
 import pytest
 
 from holdspeak.db import Database, reset_database
 from holdspeak.principals import Principal, PrincipalKind
-from holdspeak.services.reaction_service import ReactionService
 
 OWNER = Principal(PrincipalKind.OWNER, "test-168-05")
 
@@ -379,150 +375,3 @@ class TestTestEvalParity:
 # ── (d) HS-168 legacy-side watch guard ──────────────────────────────
 
 
-class TestLegacyWatchGuard:
-    """refresh_due_watches must not evaluate watches that are paused,
-    retired, or bound to an archived project.
-
-    The guard lives in the repo query (list_enabled_legacy_watches); the
-    service's _GRADUATED_STATES belt is defense-in-depth.
-    """
-
-    @staticmethod
-    def _make_svc(db, *, fetcher=None):
-        if fetcher is None:
-            def fetcher(principal, **kwargs):
-                return [{"number": 1, "state": "open", "title": "PR"}]
-        return ReactionService(db, snapshot_fetcher=fetcher)
-
-    @staticmethod
-    def _make_watch_due(db, watch_id: str, minutes_ago: int = 60):
-        """Push updated_at back so a legacy watch is due."""
-        from datetime import timedelta as _td
-        old = (datetime.now(timezone.utc) - _td(minutes=minutes_ago)).isoformat(
-            timespec="seconds"
-        )
-        with db._connection() as conn:
-            conn.execute(
-                "UPDATE connector_watches SET updated_at=? WHERE id=?",
-                (old, watch_id),
-            )
-
-    @staticmethod
-    def _insert_project(db, project_id: str, *, archived: bool = False):
-        """Insert a minimal project row."""
-        lifecycle = "archived" if archived else "active"
-        is_archived = 1 if archived else 0
-        with db._connection() as conn:
-            conn.execute(
-                "INSERT INTO projects (id, name, is_archived, lifecycle) "
-                "VALUES (?, ?, ?, ?)",
-                (project_id, f"proj-{project_id}", is_archived, lifecycle),
-            )
-
-    @staticmethod
-    def _set_watch_state(db, watch_id: str, state: str):
-        with db._connection() as conn:
-            conn.execute(
-                "UPDATE connector_watches SET state=? WHERE id=?",
-                (state, watch_id),
-            )
-
-    @staticmethod
-    def _set_watch_project(db, watch_id: str, project_id: str):
-        with db._connection() as conn:
-            conn.execute(
-                "UPDATE connector_watches SET project_id=? WHERE id=?",
-                (project_id, watch_id),
-            )
-
-    def test_paused_watch_active_project_not_evaluated(self, db):
-        """A paused watch on an active project must NOT be returned by
-        the due selection and NOT evaluated by refresh_due_watches."""
-        import asyncio
-        from datetime import timezone as _tz
-
-        svc = self._make_svc(db)
-        svc.create_watch(
-            OWNER, connector_id="gh", query_kind="pull_requests",
-            watch_id="watch-paused-active",
-            query={"repository": "acme/app", "refresh_interval_minutes": 15},
-        )
-        self._insert_project(db, "proj-active-1", archived=False)
-        self._set_watch_project(db, "watch-paused-active", "proj-active-1")
-        self._set_watch_state(db, "watch-paused-active", "paused")
-        self._make_watch_due(db, "watch-paused-active")
-
-        # Repo level: list_enabled_legacy_watches must exclude it
-        repo_watches = db.automations.list_enabled_legacy_watches()
-        repo_ids = [w["id"] for w in repo_watches]
-        assert "watch-paused-active" not in repo_ids, (
-            "list_enabled_legacy_watches must exclude paused watches"
-        )
-
-        # Service level: refresh_due_watches must produce no outcome
-        outcomes = asyncio.run(svc.refresh_due_watches(OWNER))
-        outcome_ids = [o["watch_id"] for o in outcomes]
-        assert "watch-paused-active" not in outcome_ids, (
-            "refresh_due_watches must not evaluate a paused watch"
-        )
-
-    def test_active_watch_archived_project_not_evaluated(self, db):
-        """An enabled legacy watch (state='') on an archived project
-        must NOT be evaluated by refresh_due_watches."""
-        import asyncio
-
-        svc = self._make_svc(db)
-        svc.create_watch(
-            OWNER, connector_id="gh", query_kind="pull_requests",
-            watch_id="watch-on-archived",
-            query={"repository": "acme/app", "refresh_interval_minutes": 15},
-        )
-        self._insert_project(db, "proj-archived-1", archived=True)
-        self._set_watch_project(db, "watch-on-archived", "proj-archived-1")
-        # state stays '' (legacy); enabled stays 1
-        self._make_watch_due(db, "watch-on-archived")
-
-        # Repo level
-        repo_watches = db.automations.list_enabled_legacy_watches()
-        repo_ids = [w["id"] for w in repo_watches]
-        assert "watch-on-archived" not in repo_ids, (
-            "list_enabled_legacy_watches must exclude watches on archived projects"
-        )
-
-        # Service level
-        outcomes = asyncio.run(svc.refresh_due_watches(OWNER))
-        outcome_ids = [o["watch_id"] for o in outcomes]
-        assert "watch-on-archived" not in outcome_ids, (
-            "refresh_due_watches must not evaluate a watch on an archived project"
-        )
-
-    def test_active_watch_active_project_still_evaluated(self, db):
-        """Regression: an enabled legacy watch (state='') on an active
-        project must still be evaluated normally."""
-        import asyncio
-
-        svc = self._make_svc(db)
-        svc.create_watch(
-            OWNER, connector_id="gh", query_kind="pull_requests",
-            watch_id="watch-healthy",
-            query={"repository": "acme/app", "refresh_interval_minutes": 15},
-        )
-        self._insert_project(db, "proj-active-2", archived=False)
-        self._set_watch_project(db, "watch-healthy", "proj-active-2")
-        self._make_watch_due(db, "watch-healthy")
-
-        # Repo level: must appear
-        repo_watches = db.automations.list_enabled_legacy_watches()
-        repo_ids = [w["id"] for w in repo_watches]
-        assert "watch-healthy" in repo_ids, (
-            "list_enabled_legacy_watches must include active watches on active projects"
-        )
-
-        # Service level: must be refreshed
-        outcomes = asyncio.run(svc.refresh_due_watches(OWNER))
-        outcome_ids = [o["watch_id"] for o in outcomes]
-        assert "watch-healthy" in outcome_ids, (
-            "refresh_due_watches must evaluate a healthy legacy watch"
-        )
-        status = {o["watch_id"]: o["status"] for o in outcomes}
-        assert status["watch-healthy"] == "refreshed"

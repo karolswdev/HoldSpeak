@@ -87,7 +87,6 @@ def compose_hub(host: Any, *, on_launch_hold: Callable[[str], Any]) -> HubCompos
     from holdspeak.services.people_service import PeopleService, UnavailablePeopleStore
     from holdspeak.people.key_free import people_reads_allowed
     from holdspeak.people import production_people_store
-    from holdspeak.services.reaction_service import ReactionService
     from holdspeak.services.watch_service import WatchService
     from holdspeak.services.github_provider import GitHubProviderAdapter
     from holdspeak.services.jira_provider import JiraProviderAdapter
@@ -350,10 +349,6 @@ def compose_hub(host: Any, *, on_launch_hold: Callable[[str], Any]) -> HubCompos
         mesh_service=MeshService(db, observer=obs, token_store=node_token_store),
         memory_service=memory_service,
         mission_control_service=MissionControlService(db, observer=obs),
-        reaction_service=ReactionService(
-            db, observer=obs,
-            on_changed=lambda kind, obj_id, op: notify_desk_changed(kind, obj_id, op),
-        ),
         watch_service=watch_service,
         github_provider=github_provider,
         jira_provider=jira_provider,

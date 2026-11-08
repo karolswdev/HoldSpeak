@@ -25,7 +25,7 @@ import pytest
 
 from holdspeak.db.core import Database
 from holdspeak.principals import Principal, PrincipalKind
-from holdspeak.services.reaction_service import ReactionService
+from tests.watch_seed import seed_watch
 from holdspeak.services.project_service import ProjectService
 from holdspeak.services.watch_service import (
     CIRCUIT_COOLDOWN_SECONDS,
@@ -44,10 +44,8 @@ def _make_watch(
     watch_id: str = "watch-due-01",
     **kwargs: Any,
 ) -> dict[str, Any]:
-    """Create a watch via ReactionService (the legacy creator)."""
-    svc = ReactionService(db)
-    return svc.create_watch(
-        OWNER,
+    """Create a watch via tests/watch_seed.py (the legacy row creator)."""
+    return seed_watch(db,
         connector_id=kwargs.get("connector_id", "gh"),
         query_kind=kwargs.get("query_kind", "pull_requests"),
         name=kwargs.get("name", "Due watch"),

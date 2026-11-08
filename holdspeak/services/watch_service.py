@@ -356,7 +356,7 @@ class WatchService:
             raise ServiceError(
                 "legacy_watch_boundary",
                 f"Watch {watch_id!r} is a legacy row (state={state!r}). "
-                "Use the reactions family tools (watch.list / watch.refresh) instead.",
+                "Legacy watches are parked (2026-11-08); set the watch up again.",
                 context={"watch_id": watch_id, "state": state, "status": 409},
             )
 
@@ -1159,9 +1159,9 @@ class WatchService:
 
         Boundary rule: evaluate_due owns graduated watches (state IN
         ('active','tested')) with a real next_evaluation_at column.
-        ReactionService.refresh_due_watches owns legacy watches
-        (state='') that read cadence from query JSON + updated_at.
-        Never two schedulers on one row.
+        A legacy watch (state='') has no scheduler since the watch fold
+        (2026-11-08; ReactionService is parked). Never two schedulers on
+        one row.
 
         Manual evaluate_once on a circuit-open watch: the OWNER's hand
         overrides — manual evaluation still runs (and its success closes

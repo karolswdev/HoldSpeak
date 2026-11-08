@@ -120,13 +120,13 @@ class FakeAcli:
 def _jira_watch(db) -> FakeAcli:
     """A real Room Jira Watch whose snapshot WatchService baselines through
     the real JiraWatchSource and JiraProviderAdapter (acli faked)."""
-    from holdspeak.services.reaction_service import ReactionService
+    from tests.watch_seed import seed_watch
     from holdspeak.services.watch_service import WatchService
     from holdspeak.services.watch_sources import fetch_watch_snapshot
 
     acli = FakeAcli()
-    ReactionService(db).create_watch(
-        OWNER, connector_id="jira", query_kind="issues", name="Ledger issues",
+    seed_watch(db,
+        connector_id="jira", query_kind="issues", name="Ledger issues",
         query={"connection_ref": CONNECTION, "projects": ["PAY"]}, watch_id=WATCH,
     )
     db.automations.update_watch_spec(WATCH, project_id=PROJECT, revision=1)
@@ -453,10 +453,9 @@ def test_kept_worktree_stays_registered(tmp_path, db, monkeypatch) -> None:
 
 
 def _room_pr_watch(db) -> None:
-    from holdspeak.services.reaction_service import ReactionService
-
-    ReactionService(db).create_watch(
-        OWNER, connector_id="gh", query_kind="pull_requests", name="PR watch",
+    from tests.watch_seed import seed_watch
+    seed_watch(db,
+        connector_id="gh", query_kind="pull_requests", name="PR watch",
         query={"repository": "acme/railsproj", "state": "open"}, watch_id="watch-r4-prs",
     )
     db.automations.update_watch_spec("watch-r4-prs", project_id=PROJECT, revision=1)
@@ -563,13 +562,13 @@ class FakeGhIssues:
 def _gh_issue_watch(db) -> tuple[FakeGhIssues, Any]:
     """A real Room GitHub issues Watch, baselined by WatchService through the
     real GitHubWatchSource (gh faked at its process boundary)."""
-    from holdspeak.services.reaction_service import ReactionService
+    from tests.watch_seed import seed_watch
     from holdspeak.services.watch_service import WatchService
     from holdspeak.services.watch_sources import fetch_watch_snapshot
 
     gh = FakeGhIssues()
-    ReactionService(db).create_watch(
-        OWNER, connector_id="gh", query_kind="issues", name="Open issues",
+    seed_watch(db,
+        connector_id="gh", query_kind="issues", name="Open issues",
         query={"repository": "acme/railsproj", "state": "open"}, watch_id=GH_WATCH,
     )
     db.automations.update_watch_spec(GH_WATCH, project_id=PROJECT, revision=1)

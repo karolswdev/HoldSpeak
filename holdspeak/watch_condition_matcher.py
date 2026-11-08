@@ -2,7 +2,7 @@
 
 PURE: no DB, no IO, no side-effects.  Matches the closed condition
 vocabulary from watch_validation.py against the transition dicts
-produced by diff_snapshots (reaction_service.py).
+produced by diff_snapshots (services/snapshot_diff.py).
 
 A transition has::
 

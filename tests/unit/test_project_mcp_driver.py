@@ -729,21 +729,6 @@ def test_watch_inspect_not_found(db: Database) -> None:
     assert is_error is True
 
 
-def test_legacy_family_untouched() -> None:
-    """The reactions family tools list is unchanged by this story."""
-    from holdspeak.mcp.families import reactions
-    legacy_names = {t["name"] for t in reactions.TOOLS}
-    # The legacy family must still own these names
-    assert "watch.list" in legacy_names
-    assert "watch.create" in legacy_names
-    assert "watch.refresh" in legacy_names
-    assert "reaction.list" in legacy_names
-    assert "reaction.create" in legacy_names
-    # The graduated tools must NOT be in the legacy family
-    assert "project.watch.inspect" not in legacy_names
-    assert "project.watch.pause" not in legacy_names
-
-
 # ────────────────────────────────────────────────────────────────────
 # Tool count verification
 # ────────────────────────────────────────────────────────────────────

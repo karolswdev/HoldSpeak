@@ -74,7 +74,6 @@ FIELDS_BEFORE_THE_MOVE = [
     "project_steward_service",
     "project_update_service",
     "projection_service",
-    "reaction_service",
     "refinement_coordinator",
     "refinement_service",
     "settings_service",

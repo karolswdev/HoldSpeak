@@ -10,7 +10,6 @@ and its answer is the tools' results. No test calls GitHub.
 """
 from __future__ import annotations
 
-import asyncio
 import json
 import subprocess
 from pathlib import Path
@@ -71,7 +70,7 @@ def test_when_github_asks_me_to_review_the_summary_names_the_changed_files(rig) 
     hub, under his gh sign-in); a refused number is a plain error."""
     from holdspeak.db import get_database
     from holdspeak.principals import Principal, PrincipalKind
-    from holdspeak.services.reaction_service import ReactionService
+    from holdspeak.services.watch_service import WatchService
     from holdspeak.services.watch_sources import GitHubWatchSource
 
     base, gh, bin_dir = rig
@@ -93,13 +92,13 @@ def test_when_github_asks_me_to_review_the_summary_names_the_changed_files(rig) 
             owner, query_kind="pull_requests", query={"repository": PR["repository"]})
 
     owner = Principal(PrincipalKind.OWNER, "desk-github-pr-read")
-    reactions = ReactionService(get_database())
-    watch = reactions.create_watch(owner, connector_id="gh", query_kind="pull_requests",
-                                   query={"repository": PR["repository"]}, watch_id="watch-m6")
-    reactions.create_reaction(owner, watch_id=watch["id"], event_pattern="github.pr.review_requested",
-                              workbench_id=bench, reaction_id="reaction-m6", enabled=True, auto_run=True)
-    asyncio.run(reactions.refresh_watch(owner, watch["id"], snapshot(_pr_rows(EVENT["before"]))))
-    asyncio.run(reactions.refresh_watch(owner, watch["id"], snapshot(_pr_rows(EVENT["after"]))))
+    # The watch fold (2026-11-08): the event start is a watch.
+    rows = {"now": _pr_rows(EVENT["before"])}
+    watches = WatchService(get_database(), snapshot_fetcher=lambda *_a, **_k: snapshot(rows["now"]))
+    watch = watches.start_automation_event(
+        owner, workbench_id=bench, preset_id="github-review-requested", repository=PR["repository"])
+    rows["now"] = _pr_rows(EVENT["after"])
+    watches.evaluate_once(owner, watch["id"])
 
     (event_run,) = calls(bin_dir, "claude")[:1]
     assert PR["stdout"]["url"] in event_run["prompt"], event_run["prompt"]

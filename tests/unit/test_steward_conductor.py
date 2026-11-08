@@ -529,15 +529,13 @@ class TestCircuitOpenIntervention:
             CIRCUIT_FAILURE_THRESHOLD,
             WatchService,
         )
-        from holdspeak.services.reaction_service import ReactionService
+        from tests.watch_seed import seed_watch
 
         db = Database(tmp_path / "circuit-int.db")
         p = Principal(PrincipalKind.OWNER, "test-circuit")
 
         # Create a watch
-        svc = ReactionService(db)
-        svc.create_watch(
-            p,
+        seed_watch(db,
             connector_id="gh",
             query_kind="pull_requests",
             name="Circuit watch",

@@ -269,20 +269,13 @@ class WorkbenchService:
             raise ValidationError("when must be a choice")
         kind = str(when.get("kind") or "")
         from .automation_when import cron_for, event_choices
-        from .reaction_service import ReactionService
         from .watch_service import WatchService
 
         # 2026-11-08: an event start is a watch (WatchService). A legacy
-        # Watch + Reaction pair of this automation is only ever turned off.
+        # Watch + Reaction row runs nothing any more (it needs setting again).
         watches = WatchService(self._db, observer=self._observer)
-        reactions = ReactionService(self._db, observer=self._observer, on_changed=self._on_changed)
-        legacy = [r for r in self._db.automations.list_reactions() if r.get("workbench_id") == workbench_id]
 
         def stop_events(keep: str = "") -> None:
-            for reaction in legacy:
-                if reaction.get("enabled"):
-                    reactions.set_workbench_automation_enabled(
-                        principal, workbench_id=workbench_id, reaction_id=reaction["id"], enabled=False)
             for watch in watches.automation_event_watches(workbench_id):
                 if watch["id"] != keep and watch.get("state") in {"active", "tested"}:
                     watches.set_automation_event_enabled(
@@ -1276,14 +1269,12 @@ class WorkbenchService:
             for w in WatchService(self._db).automation_event_watches(wb.id)
             if not chosen or w.get("id") == chosen.get("watch_id")
         ]
-        if chosen.get("reaction_id"):
-            # An event start saved before 2026-11-08: its legacy Reaction row.
-            payload["event_starts"] = [
-                {"id": str(r.get("id") or ""), "name": str(r.get("name") or ""),
-                 "enabled": bool(r.get("enabled")), "event_pattern": str(r.get("event_pattern") or "")}
-                for r in self._db.automations.list_reactions()
-                if r.get("workbench_id") == wb.id and r.get("id") == chosen.get("reaction_id")
-            ]
+        # Watch fold 4 (2026-11-08): an event start saved before the fold (a
+        # legacy Reaction) runs nothing. No migration: the When line says it
+        # must be set again until he saves a When choice.
+        payload["when_needs_reset"] = bool(chosen.get("reaction_id")) or (
+            not chosen and any(r.get("workbench_id") == wb.id and r.get("enabled")
+                               for r in self._db.automations.list_reactions()))
         # Betterment A4: when the schedule fires next (only while it is on),
         # and the events the When editor can offer.
         from .automation_when import event_choices, next_run_at

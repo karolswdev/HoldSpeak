@@ -23,14 +23,14 @@
     "schedule_enabled": false,
     "schedule_revision": 1,
     "item_order": [],
-    "created_at": "2026-10-20T06:05:43Z",
-    "last_modified": "2026-10-20T06:05:43Z",
+    "created_at": "2026-11-08T22:38:35Z",
+    "last_modified": "2026-11-08T22:38:35Z",
     "deleted": false,
     "items": [
      {
-      "id": "wbocc_7223ba784c424288",
+      "id": "wbocc_ad5fa50cf4634c5f",
       "workbench_id": "wb-friday",
-      "title": "Friday team update, Tue 20 Oct 2026",
+      "title": "Friday team update, Sun 8 Nov 2026",
       "body": "Write my weekly update from these notes.",
       "priority": 3,
       "status": "done",
@@ -44,23 +44,23 @@
        "occurrence": true
       },
       "result": "## Weekly update\n\n- Platform sync: the cutover moves to Thursday.\n- Hiring: two loops are booked for next week.",
-      "result_artifact_id": "artifact_95a369f1f5f2",
+      "result_artifact_id": "artifact_f5d3c3d792b7",
       "result_egress": {
        "boundary": "cloud",
        "model": "stub-profile"
       },
       "mint_attempted": true,
       "tokens_consumed": 40,
-      "created_at": "2026-10-20T06:05:43Z",
-      "last_modified": "2026-10-20T06:05:43.491672+00:00",
-      "claimed_at": "2026-10-20T06:05:43.398004+00:00",
-      "completed_at": "2026-10-20T06:05:43.491672+00:00",
+      "created_at": "2026-11-08T22:38:35Z",
+      "last_modified": "2026-11-08T22:38:35.757091+00:00",
+      "claimed_at": "2026-11-08T22:38:35.673826+00:00",
+      "completed_at": "2026-11-08T22:38:35.757091+00:00",
       "parked": false
      },
      {
-      "id": "wbocc_d0a278545e4d421c",
+      "id": "wbocc_e4f18de9d5b145ac",
       "workbench_id": "wb-friday",
-      "title": "Friday team update, Tue 20 Oct 2026",
+      "title": "Friday team update, Sun 8 Nov 2026",
       "body": "Refuse this one.",
       "priority": 3,
       "status": "failed",
@@ -78,16 +78,16 @@
       "result_egress": null,
       "mint_attempted": false,
       "tokens_consumed": 0,
-      "created_at": "2026-10-20T06:05:43Z",
-      "last_modified": "2026-10-20T06:05:43Z",
+      "created_at": "2026-11-08T22:38:35Z",
+      "last_modified": "2026-11-08T22:38:35Z",
       "claimed_at": null,
-      "completed_at": "2026-10-20T06:05:43.765763+00:00",
+      "completed_at": "2026-11-08T22:38:35.983456+00:00",
       "parked": false
      },
      {
-      "id": "wbocc_ca7d8e745a394703",
+      "id": "wbocc_528e5594cd964ab1",
       "workbench_id": "wb-friday",
-      "title": "Friday team update, Tue 20 Oct 2026",
+      "title": "Friday team update, Sun 8 Nov 2026",
       "body": "Write my weekly update from these notes.",
       "priority": 3,
       "status": "done",
@@ -101,27 +101,27 @@
        "occurrence": true
       },
       "result": "## Weekly update\n\n- Platform sync: the cutover moves to Thursday.\n- Hiring: two loops are booked for next week.",
-      "result_artifact_id": "artifact_508483185bc4",
+      "result_artifact_id": "artifact_461bb0fd0b5a",
       "result_egress": {
        "boundary": "cloud",
        "model": "stub-profile"
       },
       "mint_attempted": true,
       "tokens_consumed": 40,
-      "created_at": "2026-10-20T06:05:43Z",
-      "last_modified": "2026-10-20T06:05:43.932754+00:00",
-      "claimed_at": "2026-10-20T06:05:43.849107+00:00",
-      "completed_at": "2026-10-20T06:05:43.932754+00:00",
+      "created_at": "2026-11-08T22:38:35Z",
+      "last_modified": "2026-11-08T22:38:36.129009+00:00",
+      "claimed_at": "2026-11-08T22:38:36.048957+00:00",
+      "completed_at": "2026-11-08T22:38:36.129009+00:00",
       "parked": false
      }
     ],
     "item_count": 3,
     "pending_count": 0,
     "last_run": {
-     "id": "wbrun_d0ab7aaf8694",
+     "id": "wbrun_969b4dff5daa",
      "workbench_id": "wb-friday",
-     "started_at": "2026-10-20T06:05:43.848461+00:00",
-     "completed_at": "2026-10-20T06:05:44.023319+00:00",
+     "started_at": "2026-11-08T22:38:36.048661+00:00",
+     "completed_at": "2026-11-08T22:38:36.212910+00:00",
      "items_attempted": 1,
      "items_completed": 1,
      "items_failed": 0,
@@ -138,30 +138,30 @@
     "instruction_from": "automation",
     "results": [
      {
-      "item_id": "wbocc_ca7d8e745a394703",
-      "title": "Friday team update, Tue 20 Oct 2026",
+      "item_id": "wbocc_528e5594cd964ab1",
+      "title": "Friday team update, Sun 8 Nov 2026",
       "status": "done",
-      "artifact_id": "artifact_508483185bc4",
+      "artifact_id": "artifact_461bb0fd0b5a",
       "new": true,
       "error": null,
       "text": "## Weekly update\n\n- Platform sync: the cutover moves to Thursday.\n- Hiring: two loops are booked for next week.",
-      "completed_at": "2026-10-20T06:05:43.932754+00:00",
+      "completed_at": "2026-11-08T22:38:36.129009+00:00",
       "seconds": 0,
       "model": "stub-model-7b",
       "boundary": "cloud",
-      "note_id": "note_result_50ebecfef3fa0141",
+      "note_id": "note_result_d5dc883e2e7441c9",
       "cost_usd": null,
       "used": null
      },
      {
-      "item_id": "wbocc_d0a278545e4d421c",
-      "title": "Friday team update, Tue 20 Oct 2026",
+      "item_id": "wbocc_e4f18de9d5b145ac",
+      "title": "Friday team update, Sun 8 Nov 2026",
       "status": "failed",
       "artifact_id": null,
       "new": false,
       "error": "the stub refuses: no source is attached",
       "text": null,
-      "completed_at": "2026-10-20T06:05:43.765763+00:00",
+      "completed_at": "2026-11-08T22:38:35.983456+00:00",
       "seconds": null,
       "model": "",
       "boundary": "",
@@ -170,18 +170,18 @@
       "used": null
      },
      {
-      "item_id": "wbocc_7223ba784c424288",
-      "title": "Friday team update, Tue 20 Oct 2026",
+      "item_id": "wbocc_ad5fa50cf4634c5f",
+      "title": "Friday team update, Sun 8 Nov 2026",
       "status": "done",
-      "artifact_id": "artifact_95a369f1f5f2",
+      "artifact_id": "artifact_f5d3c3d792b7",
       "new": true,
       "error": null,
       "text": "## Weekly update\n\n- Platform sync: the cutover moves to Thursday.\n- Hiring: two loops are booked for next week.",
-      "completed_at": "2026-10-20T06:05:43.491672+00:00",
+      "completed_at": "2026-11-08T22:38:35.757091+00:00",
       "seconds": 0,
       "model": "stub-model-7b",
       "boundary": "cloud",
-      "note_id": "note_result_8bb5eb206857bb2c",
+      "note_id": "note_result_3d71498b3688fba0",
       "cost_usd": null,
       "used": null
      }
@@ -203,6 +203,7 @@
     "blanks": {},
     "when_kind": null,
     "event_starts": [],
+    "when_needs_reset": false,
     "next_run_at": null,
     "when_events": [
      {
@@ -242,25 +243,25 @@
   "/api/workbenches/wb-friday/memory": {
    "entries": [
     {
-     "run_id": "wbrun_d0ab7aaf8694",
-     "timestamp": "2026-10-20T06:05:44Z",
+     "run_id": "wbrun_969b4dff5daa",
+     "timestamp": "2026-11-08T22:38:36Z",
      "kind": "observation",
      "content": "Keep the update under ten lines.",
-     "item_title": "Friday team update, Tue 20 Oct 2026",
+     "item_title": "Friday team update, Sun 8 Nov 2026",
      "provenance": {
-      "operation_id": "op_8259c999c70e4e80a9f80a2313b19a6f",
-      "receipt_id": "rcpt_600e102e64a540debfc4523c921044f6"
+      "operation_id": "op_ea85f10c4b2f4842900dc1d8747858e0",
+      "receipt_id": "rcpt_819fdf2ff59d4d449f628034d735b9ca"
      }
     },
     {
-     "run_id": "wbrun_8399fd7904ea",
-     "timestamp": "2026-10-20T06:05:43Z",
+     "run_id": "wbrun_688f248050a5",
+     "timestamp": "2026-11-08T22:38:35Z",
      "kind": "observation",
      "content": "Mira owns the rollback runbook; name her first.",
-     "item_title": "Friday team update, Tue 20 Oct 2026",
+     "item_title": "Friday team update, Sun 8 Nov 2026",
      "provenance": {
-      "operation_id": "op_1416eafed5834cd59745c7fa637bf094",
-      "receipt_id": "rcpt_ddb53827a0ea408792aee36941658cc1"
+      "operation_id": "op_594fb8b6bfb841aa96a0dbe16b3371a4",
+      "receipt_id": "rcpt_0feaa05fe7f94c8ebd324644913afab8"
      }
     }
    ]

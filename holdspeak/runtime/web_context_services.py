@@ -39,7 +39,6 @@ SERVICE_NAMES = (
     "door_service",
     "actuator_service",
     "mission_control_service",
-    "reaction_service",
     "memory_service",
     "coder_service",
     "settings_service",

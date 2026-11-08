@@ -248,7 +248,7 @@ def test_item_rerun_runs_only_that_item_and_gives_a_new_result(tmp_path: Path, m
 
 # ── A2 "One automation = one instruction + sources; each run = one result" ──
 # (betterment/workbench/RECIPE.md, slice A2). The real routes, the real runner,
-# the real conductor tick and the real ReactionService; only the provider
+# the real conductor tick and the real WatchService; only the provider
 # constructor is a stub, and it replies from tests/fixtures/automations.
 
 import json as _json  # noqa: E402
@@ -391,10 +391,9 @@ def test_a_review_request_event_makes_one_result_about_that_pr(tmp_path: Path, m
     """Done when (A2): an event (a GitHub review-request answer) gives one
     result about that PR. The gh answers are replayed through the real
     GitHubWatchSource; no process runs and nothing leaves the machine."""
-    import asyncio
     import subprocess
 
-    from holdspeak.services.reaction_service import ReactionService
+    from holdspeak.services.watch_service import WatchService
     from holdspeak.services.watch_sources import GitHubWatchSource
 
     db, client, prompts, _ = _instruction_rig(tmp_path, monkeypatch, "wb-review")
@@ -408,17 +407,16 @@ def test_a_review_request_event_makes_one_result_about_that_pr(tmp_path: Path, m
         return GitHubWatchSource(runner=replay).snapshot(
             OWNER, query_kind="pull_requests", query={"repository": wire["repository"]})
 
-    reactions = ReactionService(db)
-    watch = reactions.create_watch(OWNER, connector_id="gh", query_kind="pull_requests",
-                                   query={"repository": wire["repository"]}, watch_id="watch-ledger")
-    reactions.create_reaction(OWNER, watch_id=watch["id"], event_pattern="github.pr.review_requested",
-                              workbench_id=wb, reaction_id="reaction-review", enabled=True, auto_run=True)
-    asyncio.run(reactions.refresh_watch(OWNER, watch["id"], snapshot(wire["before"])))
-    changed = asyncio.run(reactions.refresh_watch(OWNER, watch["id"], snapshot(wire["after"])))
+    # The watch fold (2026-11-08): the event start is a watch.
+    rows = {"now": wire["before"]}
+    watches = WatchService(db, snapshot_fetcher=lambda *_a, **_k: snapshot(rows["now"]))
+    watch = watches.start_automation_event(
+        OWNER, workbench_id=wb, preset_id="github-review-requested", repository=wire["repository"])
+    rows["now"] = wire["after"]
+    changed = watches.evaluate_once(OWNER, watch["id"])
 
     # gh also reports the review decision change; only the review request starts it.
-    assert "github.pr.review_requested" in [e["event_type"] for e in changed["events"]]
-    assert [p["status"] for p in changed["projections"]] == ["projected"]
+    assert changed["transitions"] >= 1
     assert len(prompts) == 1
     assert "https://github.com/acme/ledger/pull/418" in prompts[0] and DO in prompts[0]
     results = client.get(f"/api/workbenches/{wb}").json()["workbench"]["results"]
@@ -430,8 +428,8 @@ def test_a_review_request_event_makes_one_result_about_that_pr(tmp_path: Path, m
     assert "PR 418" in notes[0].body_markdown
 
     # The same answer again is no new event and no second result.
-    again = asyncio.run(reactions.refresh_watch(OWNER, watch["id"], snapshot(wire["after"])))
-    assert again["events"] == [] and len(_inbox_notes(db)) == 1
+    again = watches.evaluate_once(OWNER, watch["id"])
+    assert again.get("transitions", 0) == 0 and len(_inbox_notes(db)) == 1 and len(prompts) == 1
 
 
 def test_an_old_template_automation_still_runs_its_queue(tmp_path: Path, monkeypatch) -> None:
@@ -849,6 +847,28 @@ def test_an_event_choice_turns_its_start_on_and_its_occurrence_runs_without_a_pr
     assert [s["id"] for s in again.json()["workbench"]["event_starts"]] == [start["id"]]
     manual = client.put(f"/api/workbenches/{wb}/when", json={"kind": "manual"}).json()["workbench"]
     assert manual["event_starts"] == [] and db.automations.get_watch(start["id"])["state"] == "paused"
+
+
+def test_a_legacy_event_start_needs_setting_again(tmp_path: Path, monkeypatch) -> None:
+    """Watch fold 4 (2026-11-08): an event start saved as a legacy Reaction
+    runs nothing; there is no migration. The window's When line says it must
+    be set again (``when_needs_reset``) until he saves a When choice."""
+    import holdspeak.workbench_memory as memory
+
+    monkeypatch.setattr(memory, "WORKBENCH_DIR", tmp_path / "workbenches")
+    db, client, _prompts, _ = _instruction_rig(tmp_path, monkeypatch, "wb-legacy")
+    wb = _make_automation(client, "wb-legacy")
+    db.automations.create_reaction(
+        reaction_id="reaction-old", name="PR review requested", watch_id=None,
+        event_pattern="github.pr.review_requested", workbench_id=wb,
+        title_template="{entity_title}", auto_run=False, enabled=True,
+    )
+    db.workbenches.set_when_json(wb, {"kind": "event", "reaction_id": "reaction-old"})
+    old = client.get(f"/api/workbenches/{wb}").json()["workbench"]
+    assert (old["when_needs_reset"], old["event_starts"]) == (True, [])
+    saved = client.put(f"/api/workbenches/{wb}/when", json={"kind": "manual"})
+    assert saved.status_code == 200, saved.text
+    assert saved.json()["workbench"]["when_needs_reset"] is False
 
 
 def test_a_schedule_with_no_engine_is_kept_off_and_says_why(tmp_path: Path) -> None:
