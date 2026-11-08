@@ -13,6 +13,7 @@ import {
   snapForPointer,
 } from "../components/DeskWindow";
 import {
+  flushStartupIntent,
   openSurface,
   openPrimitive,
   openSurfaceWhenReady,
@@ -335,11 +336,13 @@ describe("the surface dispatcher", () => {
     expect(openSurface("dictate")).toBe(false);
   });
 
-  it("flushes a Meetings deep-link queued before the normal registry exists", () => {
+  it("opens a Meetings deep-link kept before the normal registry exists at the host's one flush", () => {
     const opened: Array<string | undefined> = [];
     openSurfaceWhenReady("review-meetings", "meeting:door-proof");
     const off = registerSurface("review-meetings", (scope) => opened.push(scope));
-
+    // HS-S12: registration replays nothing; the host's flush decides.
+    expect(opened).toEqual([]);
+    expect(flushStartupIntent("normal")).toBe(true);
     expect(opened).toEqual(["meeting:door-proof"]);
     off();
   });

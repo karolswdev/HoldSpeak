@@ -3,6 +3,8 @@
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
 - 2026-11-08 · #1861 The night backlog read adds again (the engine is not locked out as an agent, a #1858 regression), and the four night tests run with the home engine #1768 requires.
+- 2026-11-08 · #1859 The desk keeps one startup intent, the latest explicit one (HS-S12): the surface host's one flush opens it, a hub list that lands later does not re-scope or close it, and a Room keeps one latest target (a proposal or a place).
+- 2026-11-08 · #1860 Fix forward #1857: the decide-ask compare is lower case (the lamp-words guard).
 - 2026-11-08 · #1858 Programs: an agent never plans into a running Program (plan_locked_while_running), a hand that wrote nothing goes back once then parks, and a step of a title the plan has folds into that step.
 - 2026-11-08 · #1857 Fix forward #1854: the two Programs seam cases read the Program row by its name, quiet word and ask; the decide routes are still asserted.
 - 2026-11-08 · #1856 The Walk and the New program wizard draw their progress dots with one kit pattern, ProgressDots: the dots seam 21 → 0 lines.

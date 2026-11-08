@@ -13,52 +13,68 @@ export type SurfaceOpenOptions = { origin?: "dock" | "menu" | "route" };
 export type SurfaceOpener = (scope?: string, options?: SurfaceOpenOptions) => void;
 
 const surfaces = new Map<string, SurfaceOpener>();
-const pendingOpens: Array<{ key: string; scope?: string; options?: SurfaceOpenOptions }> = [];
 const STAGED_SURFACE_OPEN_KEY = "hs.desk.staged-surface-open";
 
 type StagedSurfaceOpen = { key: string; scope?: string };
 
+/** HS-S12 (D12 / G-OPEN, ruled 2026-11-07: one explicit latest startup
+ * intent). Before the normal Desk host is ready the desk keeps ONE intent:
+ * the latest explicit open (a `openSurfaceWhenReady` request, a staged route
+ * arrival, a press on a key that already opened). It is not a queue: a newer
+ * request replaces an older one, so an older request never replays after a
+ * newer one and takes the front. `staged` marks a route arrival: recovery
+ * (first run) never consumes it. The intent is transient: not stored as a
+ * window, not sent to the hub. */
+type StartupIntent = { key: string; scope?: string; options?: SurfaceOpenOptions; staged: boolean };
+let startupIntent: StartupIntent | null = null;
+/** The stored arrival this runtime already consumed (a storage that cannot
+ * remove it must not replay it on a host remount). */
+let consumedStoredArrival: string | null = null;
+/** The mode the surface host last flushed in: during first-run recovery a
+ * pressed door does not spend the normal Desk's staged arrival. */
+let hostMode: "none" | "recovery" | "normal" = "none";
+
 /** Register a window opener for a surface key. Returns the unregister.
- * Registration flushes any queued deep-link opens for the key (a demoted
- * route can ask before the desk has mounted its windows). */
+ * Registration replays nothing: the host's one `flushStartupIntent` decides
+ * what opens first. */
 export function registerSurface(key: string, opener: SurfaceOpener) {
   surfaces.set(key, opener);
-  for (let i = pendingOpens.length - 1; i >= 0; i--) {
-    if (pendingOpens[i].key === key) {
-      const [queued] = pendingOpens.splice(i, 1);
-      opener(queued.scope, queued.options);
-    }
-  }
   return () => {
     if (surfaces.get(key) === opener) surfaces.delete(key);
   };
 }
 
-/** Open now if registered, else queue until the surface registers (the
- * demoted-route arrival path). */
+/** Open now if the key is admitted; else keep it as THE startup intent
+ * (it replaces an older one). Not a receipt that a window mounted. */
 export function openSurfaceWhenReady(key: string, scope?: string, options?: SurfaceOpenOptions): void {
-  if (!openSurface(key, scope, options)) pendingOpens.push({ key, scope, options });
+  if (!openSurface(key, scope, options)) startupIntent = { key, scope, options, staged: false };
 }
 
-/** Stage one demoted-route intent until normal SurfaceWindows has finished
- * registering. Session storage survives the route hand-off but is consumed
- * exactly once by the normal registry; first-value recovery deliberately
- * leaves it alone because it only registers Setup. */
+/** Stage one demoted-route arrival. It is the latest startup intent at once
+ * (in memory); session storage also keeps it across a reload before the
+ * Desk is ready. A failed storage write changes reliability, not order. */
 export function stageSurfaceOpen(key: string, scope?: string): void {
+  startupIntent = { key, scope, staged: true };
   try {
-    sessionStorage.setItem(STAGED_SURFACE_OPEN_KEY, JSON.stringify({ key, scope }));
+    const raw = JSON.stringify({ key, scope });
+    sessionStorage.setItem(STAGED_SURFACE_OPEN_KEY, raw);
+    consumedStoredArrival = null;
   } catch {
-    // Storage can be unavailable; the legacy in-memory dispatcher is still
-    // preferable to abandoning a lawful deep link.
-    openSurfaceWhenReady(key, scope);
+    // Storage can be unavailable; the in-memory intent still lands.
   }
 }
 
+/** The stored arrival (a reload between the route and the Desk), removed. */
 export function consumeStagedSurfaceOpen(): StagedSurfaceOpen | null {
   try {
     const raw = sessionStorage.getItem(STAGED_SURFACE_OPEN_KEY);
-    sessionStorage.removeItem(STAGED_SURFACE_OPEN_KEY);
-    if (!raw) return null;
+    try {
+      sessionStorage.removeItem(STAGED_SURFACE_OPEN_KEY);
+    } catch {
+      // Not removable: the runtime remembers it was consumed (below).
+    }
+    if (!raw || raw === consumedStoredArrival) return null;
+    consumedStoredArrival = raw;
     const parsed: unknown = JSON.parse(raw);
     if (
       typeof parsed === "object" &&
@@ -72,6 +88,40 @@ export function consumeStagedSurfaceOpen(): StagedSurfaceOpen | null {
     // An invalid/stale browser value must not block ordinary Desk startup.
   }
   return null;
+}
+
+/** HS-S12: the ONE place that decides what opens first. The surface host
+ * calls it once its keys are registered. `normal`: the latest intent (in
+ * memory, else the stored arrival) opens; a key no host admits stays the
+ * intent. `recovery`: only a request (never a staged route arrival) whose
+ * key a recovery door admits opens; everything else waits for the normal
+ * Desk. Returns true when an intent opened. */
+export function flushStartupIntent(mode: "normal" | "recovery"): boolean {
+  hostMode = mode;
+  if (mode === "recovery") {
+    const intent = startupIntent;
+    if (!intent || intent.staged || !surfaces.has(intent.key)) return false;
+    startupIntent = null;
+    return openSurface(intent.key, intent.scope, intent.options);
+  }
+  const stored = consumeStagedSurfaceOpen();
+  // The in-memory intent is always this runtime's latest (a stage writes it
+  // too); the stored one is used only after a reload.
+  const intent = startupIntent ?? (stored ? { ...stored, staged: true } : null);
+  startupIntent = null;
+  if (!intent) return false;
+  if (openSurface(intent.key, intent.scope, intent.options)) return true;
+  startupIntent = intent;
+  return false;
+}
+
+function supersedeRequest(): void {
+  if (startupIntent && (!startupIntent.staged || hostMode !== "recovery")) startupIntent = null;
+}
+
+/** The startup intent still waiting (test and readiness seam). */
+export function pendingStartupIntent(): Readonly<StartupIntent> | null {
+  return startupIntent;
 }
 
 /** PHILO-13-11 (C1, slice two) — a mounted screen may answer a surface key
@@ -89,11 +139,19 @@ export function answerSurfaceFirst(
   };
 }
 
-/** Open a surface in-world. False = not yet registered (legacy fallback). */
+/** Open a surface in-world. False = not yet registered (legacy fallback).
+ * An open that lands is the latest explicit intent: an older waiting request
+ * is dropped, so it never replays over this one (HS-S12). A staged route
+ * arrival stays while first-run recovery holds the host: a recovery door
+ * pressed there does not spend the normal Desk's arrival. */
 export function openSurface(key: string, scope?: string, options?: SurfaceOpenOptions): boolean {
-  if (firstAnswers.get(key)?.(scope, options)) return true;
+  if (firstAnswers.get(key)?.(scope, options)) {
+    supersedeRequest();
+    return true;
+  }
   const opener = surfaces.get(key);
   if (!opener) return false;
+  supersedeRequest();
   opener(scope, options);
   return true;
 }
@@ -102,6 +160,9 @@ export function openSurface(key: string, scope?: string, options?: SurfaceOpenOp
 export function __resetSurfaces(): void {
   surfaces.clear();
   firstAnswers.clear();
+  startupIntent = null;
+  consumedStoredArrival = null;
+  hostMode = "none";
 }
 
 /** The router's navigate, delegated once by the app shell so cores and
@@ -129,7 +190,14 @@ export function openSurfaceOr(
 export const PROJECT_ROOM_KEY = "open-project-memory";
 export function openProjectRoom(projectId: string | null | undefined): void {
   const id = (projectId ?? "").trim();
-  openSurfaceOr(PROJECT_ROOM_KEY, "/project-memory", id ? `project:${id}` : undefined);
+  const scope = id ? `project:${id}` : undefined;
+  if (openSurface(PROJECT_ROOM_KEY, scope)) return;
+  // HS-S12: before the Desk is ready the Room is the startup intent, scope
+  // and all (a proposal target keeps its project); off the desk, walk home.
+  // The old fallback `/project-memory` is no route: it landed on `/` and
+  // lost the project.
+  openSurfaceWhenReady(PROJECT_ROOM_KEY, scope);
+  if (typeof window !== "undefined" && window.location.pathname !== "/") shellNavigate?.("/");
 }
 
 /** Open a desk primitive's pull-out. On the desk this opens in place; on

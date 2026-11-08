@@ -495,6 +495,12 @@ export function createHubWindows(options: HubWindowsOptions = {}): HubWindows {
   /** The stacking the cache restored at boot (to tell this load's raises). */
   const bootDepth: Record<string, number> = { ...(options.bootDepth ?? BOOT_DEPTH) };
   let seeding = false;
+  /** HS-S12: during the first seed, the windows this load raised before the
+   * hub answered (the startup intent: a link, a proposal, a staged route).
+   * The hub's list landing after the intent does not close them, re-scope
+   * them or seat them: the latest explicit intent keeps the front, and goes
+   * to the hub as this view's open. */
+  let seedOwn = new Set<string>();
   /** The list revision at which this view applied a window's close. */
   const closedAt = new Map<string, number>();
   /** Ids whose write FAILED: the next read restores the hub's row for them. */
@@ -612,7 +618,12 @@ export function createHubWindows(options: HubWindowsOptions = {}): HubWindows {
     const newer = (r: HubWindowRow) =>
       (restore.has(r.id) ? r.revision >= (applied.get(r.id) ?? -1) : r.revision > (applied.get(r.id) ?? -1)) &&
       r.revision >= (closedAt.get(r.id) ?? -1);
-    const accepted = list.windows.filter((r) => free(r.id) && newer(r));
+    // HS-S12: a hub row that would re-scope or seat a window this load's
+    // intent opened is not applied on the first seed; the window goes to the
+    // hub as this view's open instead (`unsent` below).
+    const overridesIntent = (r: HubWindowRow) => seeding && seedOwn.has(r.id) && isOpenHere(r.id) && (
+      r.minimized || (r.object_ref != null && (adapterFor(r.id)?.object?.() ?? "") !== r.object_ref));
+    const accepted = list.windows.filter((r) => free(r.id) && newer(r) && !overridesIntent(r));
     const ids = scope === "all" ? new Set([...rows.keys(), ...adapterOpenIds(), ...Object.keys(useDesk.getState().panelDepth)]) : scope;
     // Missing from a list is a close only when the list is STRICTLY newer
     // than the row this view applied (the list is one snapshot, L2).
@@ -622,7 +633,7 @@ export function createHubWindows(options: HubWindowsOptions = {}): HubWindows {
     // surface, a link) is this view's own open: it goes to the hub.
     const gone = [...ids].filter(
       (id) => !migratedTo.has(id) && free(id) && known(id) && !byId.has(id) && list.revision > (applied.get(id) ?? -1)
-        && list.revision > (closedAt.get(id) ?? -1) && (!seeding || cacheOpen.has(id)),
+        && list.revision > (closedAt.get(id) ?? -1) && (!seeding || (cacheOpen.has(id) && !seedOwn.has(id))),
     );
     for (const r of list.windows) if (free(r.id)) restore.delete(r.id);
     for (const id of gone) restore.delete(id);
@@ -1132,10 +1143,13 @@ export function createHubWindows(options: HubWindowsOptions = {}): HubWindows {
             .filter((id) => !(id in bootDepth) || byRaise.has(id))
             .sort((a, b) => now[a] - now[b]);
           seeding = true;
+          // Every window this load opened or raised, also one already on top.
+          seedOwn = new Set([...raised, ...byRaise]);
           try {
             apply(list, "all");
           } finally {
             seeding = false;
+            seedOwn = new Set();
           }
           for (const id of raised) if (isOpenHere(id)) useDesk.getState().focusPanel(id);
         })
