@@ -334,3 +334,15 @@ exists and the owner did not assign `calls.turn` himself. It writes nothing
 and adds no route law: the pick rides the call thread's `profile_override`,
 the existing invocation-scoped next-run override (143-03); without it the
 `calls.turn` assignment (following Answers) decides.
+
+**2026-11-08, Engines: a job that did not run, and Retry.**
+A door job whose last run failed is one Needs-you row, read from the runner's
+own receipts (`holdspeak/services/engine_door.py::failure_items`; no other
+write). Retry on the row is the owner's press: it re-runs the SAME job through
+the engine door on the assignment's engine (one retry on the chain's next
+engine, as every door job), never a different route. Its callers register it
+at import: `holdspeak/rails_observer.py::_register_retry`,
+`holdspeak/services/decision_lifecycle_service.py::_register_retry` with
+`_retry_decision_draft`, `holdspeak/web/routes/delivery_prs.py::_register_retry`
+with `_retry_review`; `engine_door.py::_load_retry_callers` imports them.
+None selects a model.

@@ -457,6 +457,38 @@ def phone_items(items: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
     return rows
 
 
+# ── Engines (2026-11-08): an AI job that did not run ─────────────────
+
+
+ENGINE_SOURCE = "engine"
+
+
+def engine_items(items: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Each door job whose last run failed (``engine_door.failure_items``):
+    "<engine> could not run <job words> · <reason>". Retry re-runs the same
+    job through the door (``POST /api/concierge/retry``) when its caller
+    registered one; every row opens the caller's own face."""
+    rows: list[dict[str, Any]] = []
+    for item in items:
+        key = str(item.get("key") or "")
+        if not key:
+            continue
+        ref = f"{ENGINE_SOURCE}:{key}"
+        since = str(item.get("since") or "")
+        line = f"{item.get('engine') or 'Your engine'} could not run {item.get('words') or 'an AI job'} · {item.get('reason') or 'it gave no answer'}"
+        verbs = [{"id": "retry", "label": "Retry", "method": "POST", "href": "/api/concierge/retry",
+                  "body": {"kind": item.get("kind"), "key": item.get("retry_key")}}] if item.get("can_retry") else []
+        rows.append({
+            "id": ref, "ref": ref, "projectId": "", "projectName": "", "title": line[:160], "why": "DID NOT RUN",
+            "ageToken": since, "since": since, "dueAt": None, "dueWord": "now", "kind": ENGINE_SOURCE,
+            "source": ENGINE_SOURCE, "verbHref": None, "openRef": str(item.get("open_ref") or ""),
+            "severity": "warning", "group": "Engines",
+            "engine": {"line": line, "objectKind": str(item.get("object_kind") or "engine"), "verbs": verbs},
+            "personId": None,
+        })
+    return rows
+
+
 # ── R5: the coding agents that wait for the owner's answer ──────────
 
 
@@ -1264,6 +1296,7 @@ def compute_needs_you(
     send_items: Iterable[dict[str, Any]] = (),
     programs: Iterable[dict[str, Any]] = (),
     phones: Iterable[dict[str, Any]] = (),
+    engine_failures: Iterable[dict[str, Any]] = (),
     self_names: Iterable[str] = SELF_OWNER_NAMES,
     personal_names: Iterable[str] = (),
     known_people: Iterable[str] | None = None,
@@ -1360,7 +1393,7 @@ def compute_needs_you(
     )
     helper_rows = helper_request_items(flights, clock)
     singles = (people + decision_items(decisions) + coder_rows + gate_rows + helper_rows + program_items(programs)
-               + phone_items(phones))
+               + phone_items(phones) + engine_items(engine_failures))
     for row in singles:
         row["waiting"] = other(row)
     ranked = rank_items(merged + singles, clock)
@@ -2147,6 +2180,16 @@ def compose(
         log.warning("needs-you: the phone read failed: %s", exc)
         errors["phone"] = _reason(exc)
 
+    # Engines (2026-11-08): the AI jobs whose last run failed.
+    engine_failures: list[dict[str, Any]] = []
+    try:
+        from .engine_door import failure_items
+
+        engine_failures = failure_items(db)
+    except Exception as exc:
+        log.warning("needs-you: the engine read failed: %s", exc)
+        errors["engines"] = _reason(exc)
+
     result = compute_needs_you(
         door=door,
         room_items=room_items,
@@ -2162,6 +2205,7 @@ def compose(
         send_items=send_items,
         programs=programs,
         phones=phones,
+        engine_failures=engine_failures,
         self_names=names,
         personal_names=personal,
         known_people=known_people,

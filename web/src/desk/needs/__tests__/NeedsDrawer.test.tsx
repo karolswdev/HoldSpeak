@@ -2079,3 +2079,45 @@ describe("one Done for a promise (2026-11-08)", () => {
     expect(posting).toEqual(["needsApi.ts"]);
   });
 });
+
+// Engines 2026-11-08: an AI job that did not run waits on him. Replays the
+// hub's recorded answers (needs_you.rows.json `engine`, recorded by
+// scripts/record_needs_you_fixture.py --engine): a decision draft whose engine
+// did not answer, Retry with the engine answering, the read after.
+describe("an engine row: the job that did not run, and Retry (engines 2026-11-08)", () => {
+  const engine = (needsRows as unknown as { engine: { title: string; steps: Array<{ gets: Gets; post?: string; body?: unknown }> } }).engine;
+  const [before, afterRetry] = engine.steps;
+  const title = engine.title;
+  let hub: Gets;
+  let posts: Array<{ path: string; json: unknown }>;
+
+  beforeEach(() => {
+    hub = before.gets;
+    posts = [];
+    vi.mocked(apiFetch).mockImplementation(async (path: string, init?: unknown) => {
+      const method = (init as { method?: string } | undefined)?.method ?? "GET";
+      if (method !== "GET") {
+        posts.push({ path: String(path), json: (init as { json?: unknown }).json });
+        if (String(path) === afterRetry.post) hub = afterRetry.gets;
+        return {} as never;
+      }
+      return recordedGet(hub, String(path)) as never;
+    });
+  });
+
+  it("names the engine, the job and why in one line, with the kind's sprite and one verb, Retry", async () => {
+    render(<NeedsDrawer />);
+    const li = await waitFor(() => row(title));
+    expect(title).toMatch(/^drafts could not run the decision draft · /);
+    expect(face(li).kind).toBe("decision");
+    expect(face(li).verbs).toEqual(["Retry"]);
+    expect(li.textContent).not.toMatch(/refused|Traceback|\//);
+  });
+
+  it("Retry runs the same job again through the door, and the row leaves when it answers", async () => {
+    render(<NeedsDrawer />);
+    fireEvent.click(within(await waitFor(() => row(title))).getByRole("button", { name: `Retry: ${title}` }));
+    await waitFor(() => expect(posts).toEqual([{ path: afterRetry.post, json: afterRetry.body }]));
+    await waitFor(() => expect(() => row(title)).toThrow());
+  });
+});

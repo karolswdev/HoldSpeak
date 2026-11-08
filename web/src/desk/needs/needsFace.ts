@@ -71,6 +71,9 @@ export type NeedVerbs =
    *  Let it wait, Call again / Answer here, Call / Not now); a verb that
    *  needs words (Answer here) opens the Phone wing to reply. */
   | { kind: "phone"; item: string; verbs: PhoneVerb[]; msgId: string | null }
+  /** Engines (2026-11-08): an AI job that did not run; the hub's verbs
+   *  (Retry re-runs the same job through the engine door). */
+  | { kind: "hub"; verbs: PhoneVerb[] }
   | { kind: "none" };
 
 /** Owner walk 2026-11-08: the four asks a Program row makes. */
@@ -502,6 +505,23 @@ function attentionFace(item: NeedsYouRoomItem, ctx: NeedCtx): NeedFace {
       verbs: { kind: "phone", item: phone.kind, verbs: [...(phone.verbs ?? [])], msgId: phone.msgId ? String(phone.msgId) : null },
       openRef: undefined,
       kindWord: "Phone",
+    };
+  }
+
+  // Engines (2026-11-08): "<engine> could not run <job> · <reason>". Retry
+  // when its caller registered one, else the row opens the caller's face.
+  const engine = item.engine as { line?: string; objectKind?: string; verbs?: PhoneVerb[] } | undefined;
+  if (source === "engine" && engine?.line) {
+    const ref = String(item.openRef ?? "");
+    return {
+      id, kind: String(engine.objectKind || "engine"), name: String(engine.line),
+      fact: "",
+      lamp: { label: why || "DID NOT RUN", tone: "fail" },
+      group: "rest", direction: "decide",
+      verbs: (engine.verbs ?? []).length > 0 ? { kind: "hub", verbs: [...(engine.verbs ?? [])] }
+        : ref ? { kind: "open", ref } : { kind: "none" },
+      openRef: ref || undefined,
+      kindWord: "Engine",
     };
   }
 

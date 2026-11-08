@@ -10,6 +10,7 @@ Phase-85 rule); assembly is lazy (the delivery-router precedent).
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import uuid
 from pathlib import Path
 from typing import Any, Optional
@@ -180,22 +181,10 @@ def build_delivery_prs_router(
     ) -> Any:
         body = await request.json()
         body = body if isinstance(body, dict) else {}
-        context = _service().action_context(source_id, number)
-        refused = _available(context, "draft_review")
-        if refused:
-            return refused
-        material = _service().review_material(source_id, number)
-        if material.get("status") != "ok":
-            return JSONResponse(
-                {"error": "diff_unavailable", "reason": material.get("detail") or material.get("status")},
-                status_code=409,
-            )
         try:
             from ...kernel.runtime import _service as kernel_service
             from ...principals import PrincipalKind, PrincipalRight
-            from ...services import engine_door
 
-            broker = kernel_service()
             principal = request.state.principal
             if principal.kind is not PrincipalKind.OWNER or not principal.permits(PrincipalRight.OWNER):
                 return JSONResponse({"error": "delivery_pr_review_owner_required"}, status_code=403)
@@ -203,89 +192,10 @@ def build_delivery_prs_router(
             # sends no PR material anywhere; the assignment names the engine.
             if str(body.get("inference_target_id") or "").strip():
                 return JSONResponse({"error": "inference_request_target_override_retired"}, status_code=409)
-            try:
-                engine = engine_door.engine_for(broker, "delivery.pr_review_draft")
-            except engine_door.EngineDoorError:
-                return JSONResponse({
-                    "error": "delivery_pr_review_draft_refused", "reason": "inference_no_engine",
-                }, status_code=409)
-            material_revision = str(material.get("revision") or "unversioned")
-            diff_sha256 = __import__("hashlib").sha256(
-                str(material.get("diff") or "").encode()
-            ).hexdigest()
-            linked = material.get("linked") or []
-            linked_text = "\n\n".join(str(item.get("text") or "") for item in linked)
-            prompt = (
-                f"Review PR #{number}. Return a concise GitHub review draft with concrete findings. "
-                "Do not claim to have posted, approved, merged, or run checks.\n\n"
-                f"Linked story and evidence:\n{linked_text[:48000]}\n\n"
-                f"Diff:\n{str(material.get('diff') or '')[:120000]}"
+            status, payload = await asyncio.to_thread(
+                draft_review, _service(), kernel_service(), principal, source_id, number,
             )
-
-            def review_memory() -> Any:
-                """Decisions and notes on the PR's subject (title, branch, story).
-
-                The diff and the story are already in the prompt.
-                """
-                from ...db import get_database
-                from ...services.memory_grounding import memory_for
-
-                row = context.get("row") or {}
-                return memory_for(
-                    "delivery.pr_review_draft",
-                    get_database(),
-                    query=" ".join(str(part or "") for part in (
-                        row.get("title"), row.get("head_ref"), material.get("story_id"),
-                    )),
-                )
-
-            payload = engine_door.with_memory(
-                broker, engine,
-                {
-                    "system_prompt": "You are a precise code reviewer. Findings first; cite files and lines when possible.",
-                    "user_prompt": prompt,
-                    "max_tokens": 1800,
-                    "temperature": None,
-                    "source_id": source_id,
-                    "number": number,
-                    "material_revision": material_revision,
-                    "diff_sha256": diff_sha256,
-                    "linked_revisions": [str(item.get("revision") or "") for item in linked],
-                },
-                review_memory,
-                reserved_output_tokens=1800,
-            )
-
-            def projection(value: Any) -> dict[str, Any]:
-                text = value.get("output") if isinstance(value, dict) else value
-                return {"output": str(text or ""), "source_id": source_id, "number": number}
-
-            try:
-                answer = await asyncio.to_thread(
-                    engine_door.run, broker, principal, "delivery.pr_review_draft", payload,
-                    engine=engine, deadline=300, stage=("delivery-pr-review", projection),
-                )
-            except engine_door.EngineDoorError as exc:
-                return JSONResponse({
-                    "error": "delivery_pr_review_draft_refused",
-                    "reason": "inference_" + (exc.outcome or exc.code),
-                    "operation_id": exc.operation_id,
-                }, status_code=409)
-            published = answer.published if isinstance(answer.published, dict) else {}
-            output = str(published.get("output") or "")
-            artifact_id = str(published.get("artifact_id") or "")
-            if not artifact_id or not output.strip():
-                return JSONResponse({"error": "delivery_pr_review_draft_refused"}, status_code=409)
-            return JSONResponse({
-                "output": output,
-                "artifact_id": artifact_id,
-                "result_ref": f"artifact:{artifact_id}",
-                "invocation_id": answer.invocation_id,
-                # The runner's kernel operation is the review's one receipt.
-                "operation_id": answer.operation_id,
-                "invocation": {"operation_id": answer.operation_id, "outcome": "succeeded"},
-                "placement": {"source": "owner_assignment", "egress": {"scope": engine_door.egress_of(broker, answer.engine)}},
-            })
+            return JSONResponse(payload, status_code=status)
         except Exception as exc:
             return _classified_500(exc, "pr review draft failed")
 
@@ -389,3 +299,129 @@ def build_delivery_prs_router(
         return JSONResponse({**handle, "proposal": proposal_to_dict(executed)})
 
     return router
+
+#: The retry kind of a PR review draft; its key is ``<source id>|<number>``.
+REVIEW_RETRY_KIND = "delivery.review"
+
+
+def draft_review(service: Any, broker: Any, principal: Any, source_id: str, number: int) -> tuple[int, dict[str, Any]]:
+    """Draft one PR review on the engine assigned to ``delivery.pr_review_draft``,
+    through the engine door; ``(status, body)`` for the route (and for Retry)."""
+    from ...services import engine_door
+
+    context = service.action_context(source_id, number)
+    if context.get("status") != "ok":
+        return 404, {"error": "unknown_pr"}
+    availability = ((context.get("row") or {}).get("verbs") or {}).get("draft_review") or {}
+    if not availability.get("available"):
+        return 409, {"error": "verb_unavailable", "verb": "draft_review",
+                     "reason": availability.get("reason") or "unavailable"}
+    material = service.review_material(source_id, number)
+    if material.get("status") != "ok":
+        return 409, {"error": "diff_unavailable", "reason": material.get("detail") or material.get("status")}
+    try:
+        engine = engine_door.engine_for(broker, "delivery.pr_review_draft")
+    except engine_door.EngineDoorError:
+        return 409, {"error": "delivery_pr_review_draft_refused", "reason": "inference_no_engine"}
+    material_revision = str(material.get("revision") or "unversioned")
+    diff_sha256 = hashlib.sha256(str(material.get("diff") or "").encode()).hexdigest()
+    linked = material.get("linked") or []
+    linked_text = "\n\n".join(str(item.get("text") or "") for item in linked)
+    prompt = (
+        f"Review PR #{number}. Return a concise GitHub review draft with concrete findings. "
+        "Do not claim to have posted, approved, merged, or run checks.\n\n"
+        f"Linked story and evidence:\n{linked_text[:48000]}\n\n"
+        f"Diff:\n{str(material.get('diff') or '')[:120000]}"
+    )
+
+    def review_memory() -> Any:
+        """Decisions and notes on the PR's subject (title, branch, story).
+
+        The diff and the story are already in the prompt.
+        """
+        from ...db import get_database
+        from ...services.memory_grounding import memory_for
+
+        row = context.get("row") or {}
+        return memory_for(
+            "delivery.pr_review_draft",
+            get_database(),
+            query=" ".join(str(part or "") for part in (
+                row.get("title"), row.get("head_ref"), material.get("story_id"),
+            )),
+        )
+
+    payload = engine_door.with_memory(
+        broker, engine,
+        {
+            "system_prompt": "You are a precise code reviewer. Findings first; cite files and lines when possible.",
+            "user_prompt": prompt,
+            "max_tokens": 1800,
+            "temperature": None,
+            "source_id": source_id,
+            "number": number,
+            "material_revision": material_revision,
+            "diff_sha256": diff_sha256,
+            "linked_revisions": [str(item.get("revision") or "") for item in linked],
+        },
+        review_memory,
+        reserved_output_tokens=1800,
+    )
+
+    def projection(value: Any) -> dict[str, Any]:
+        text = value.get("output") if isinstance(value, dict) else value
+        return {"output": str(text or ""), "source_id": source_id, "number": number}
+
+    try:
+        answer = engine_door.run(
+            broker, principal, "delivery.pr_review_draft", payload,
+            engine=engine, deadline=300, stage=("delivery-pr-review", projection),
+            retry=(REVIEW_RETRY_KIND, f"{source_id}|{number}"),
+        )
+    except engine_door.EngineDoorError as exc:
+        return 409, {
+            "error": "delivery_pr_review_draft_refused",
+            "reason": "inference_" + (exc.outcome or exc.code),
+            "operation_id": exc.operation_id,
+        }
+    published = answer.published if isinstance(answer.published, dict) else {}
+    output = str(published.get("output") or "")
+    artifact_id = str(published.get("artifact_id") or "")
+    if not artifact_id or not output.strip():
+        return 409, {"error": "delivery_pr_review_draft_refused"}
+    return 200, {
+        "output": output,
+        "artifact_id": artifact_id,
+        "result_ref": f"artifact:{artifact_id}",
+        "invocation_id": answer.invocation_id,
+        # The runner's kernel operation is the review's one receipt.
+        "operation_id": answer.operation_id,
+        "invocation": {"operation_id": answer.operation_id, "outcome": "succeeded"},
+        "placement": {"source": "owner_assignment", "egress": {"scope": engine_door.egress_of(broker, answer.engine)}},
+    }
+
+
+def _retry_review(principal: Any, key: str) -> Any:
+    """Retry from Needs you: draft the same PR's review again."""
+    from ...delivery.pr_receipts import default_pr_receipts
+    from ...kernel.runtime import _service as kernel_service
+    from ...services import engine_door
+
+    source_id, _, number = key.rpartition("|")
+    status, body = draft_review(default_pr_receipts(), kernel_service(), principal, source_id, int(number))
+    if status != 200:
+        raise engine_door.EngineDoorError("failed", "The review draft did not run")
+    return body
+
+
+def _register_retry() -> None:
+    from ...services import engine_door
+
+    engine_door.on_retry(REVIEW_RETRY_KIND, engine_door.RetryKind(
+        words="the review draft", object_kind="pr", open_ref=lambda _key: engine_door.ENGINES_REF,
+        run=_retry_review,
+    ))
+
+
+_register_retry()
+

@@ -577,7 +577,6 @@ def extract_via_router(
         answer = engine_door.run(
             broker, principal, SNAPSHOT_CAPABILITY_ID, payload, engine=engine,
             contract="calendar.snapshot.extract", adapter=VisionPromptAdapter(),
-            invocation_id="snapshot_" + uuid.uuid4().hex,
         )
     except engine_door.EngineDoorError as exc:
         return {

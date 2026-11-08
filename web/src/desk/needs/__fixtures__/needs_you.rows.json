@@ -4383,6 +4383,2275 @@
    }
   ]
  },
+ "engine": {
+  "steps": [
+   {
+    "gets": {
+     "/api/desk/needs-you?fresh=1": {
+      "arming": [],
+      "blockers": [],
+      "complete": true,
+      "computedAt": "2026-11-08T15:52:44.622133-07:00",
+      "count": 1,
+      "coverage": [
+       {
+        "kind": "coder",
+        "label": "Agents",
+        "observed_at": "2026-11-08T22:52:44.646749+00:00",
+        "project_id": "",
+        "reason": null,
+        "repair": null,
+        "source_id": "coders",
+        "state": "available"
+       },
+       {
+        "kind": "send",
+        "label": "Sends",
+        "observed_at": "2026-11-08T22:52:44.644617+00:00",
+        "project_id": "",
+        "reason": null,
+        "repair": null,
+        "source_id": "sends",
+        "state": "available"
+       }
+      ],
+      "failedMeetings": [],
+      "items": [
+       {
+        "ageToken": "2026-11-08T22:52:44+00:00",
+        "counted": true,
+        "direction": "mine",
+        "dueAt": null,
+        "dueWord": "now",
+        "engine": {
+         "line": "drafts could not run the decision draft \u00b7 it gave no answer",
+         "objectKind": "decision",
+         "verbs": [
+          {
+           "body": {
+            "key": "dec-engine|note",
+            "kind": "decision.draft"
+           },
+           "href": "/api/concierge/retry",
+           "id": "retry",
+           "label": "Retry",
+           "method": "POST"
+          }
+         ]
+        },
+        "group": "Engines",
+        "id": "engine:decision.promotion_draft:decision.draft:dec-engine|note",
+        "kind": "engine",
+        "muted": false,
+        "openRef": "decision:dec-engine",
+        "personId": null,
+        "person_id": "",
+        "projectId": "",
+        "projectName": "",
+        "rank": 1,
+        "rankClass": "no_due_date",
+        "ref": "engine:decision.promotion_draft:decision.draft:dec-engine|note",
+        "severity": "warning",
+        "since": "2026-11-08T22:52:44+00:00",
+        "source": "engine",
+        "title": "drafts could not run the decision draft \u00b7 it gave no answer",
+        "verbHref": null,
+        "waiting": false,
+        "why": "DID NOT RUN"
+       }
+      ],
+      "members": [
+       {
+        "kind": "attention",
+        "ref": "engine:decision.promotion_draft:decision.draft:dec-engine|note"
+       }
+      ],
+      "mutedCount": 0,
+      "next": null,
+      "ownerNames": [
+       "manager",
+       "me",
+       "you"
+      ],
+      "peopleStoreState": "unconfigured",
+      "projectCounts": {},
+      "projects": [],
+      "roomComplete": true,
+      "roomCounts": {},
+      "roomItems": [],
+      "sourceErrors": {},
+      "stale": false,
+      "sweepId": null,
+      "waitingCount": 0
+     },
+     "/api/door": {
+      "board": {
+       "active": [],
+       "now": [],
+       "overdue": [],
+       "unassigned": [],
+       "waiting": []
+      },
+      "calendar_configured": false,
+      "counts": {
+       "active": 0,
+       "now": 0,
+       "overdue": 0,
+       "upcoming_today": 0,
+       "waiting": 0
+      },
+      "people_store_state": "unconfigured",
+      "upcoming": [],
+      "week": {
+       "days": [],
+       "ends_at": "2026-11-09T07:00:00+00:00",
+       "has_calendar": false,
+       "starts_at": "2026-11-02T07:00:00+00:00",
+       "total": 0
+      }
+     },
+     "/api/inference/assignments": {
+      "issue_count": 1,
+      "rows": [
+       {
+        "assignment": null,
+        "editor_capability_id": "agent.code",
+        "expected_revision": 0,
+        "id": "global",
+        "inherited_from": null,
+        "label": "Default for AI work",
+        "repair": "Choose default",
+        "status": "no_assignment"
+       },
+       {
+        "assignment": null,
+        "editor_capability_id": "ask.answer",
+        "expected_revision": 0,
+        "id": "thoughts_notes",
+        "inherited_from": null,
+        "label": "Thoughts & notes",
+        "repair": null,
+        "status": "no_assignment"
+       },
+       {
+        "assignment": null,
+        "editor_capability_id": "speech.intent_classify",
+        "expected_revision": 0,
+        "id": "writing_dictation",
+        "inherited_from": null,
+        "label": "Writing & dictation",
+        "repair": null,
+        "status": "no_assignment"
+       },
+       {
+        "assignment": null,
+        "editor_capability_id": "speech.transcribe",
+        "expected_revision": 0,
+        "id": "speech_recognition",
+        "inherited_from": null,
+        "label": "Speech recognition",
+        "repair": null,
+        "status": "no_assignment"
+       },
+       {
+        "assignment": null,
+        "editor_capability_id": "meeting.auto_title",
+        "expected_revision": 0,
+        "id": "meetings",
+        "inherited_from": null,
+        "label": "Meetings",
+        "repair": null,
+        "status": "no_assignment"
+       },
+       {
+        "assignment": null,
+        "editor_capability_id": "agent.code",
+        "expected_revision": 0,
+        "id": "agents_tools",
+        "inherited_from": null,
+        "label": "Agents & tools",
+        "repair": null,
+        "status": "no_assignment"
+       },
+       {
+        "assignment": null,
+        "editor_capability_id": "background.cadence_draft",
+        "expected_revision": 0,
+        "id": "background",
+        "inherited_from": null,
+        "label": "Background",
+        "repair": null,
+        "status": "no_assignment"
+       }
+      ],
+      "schema": "InferenceAssignmentSummary@1",
+      "task_overrides": [
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "agent.code",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "agents_tools",
+         "label": "Agents & tools"
+        },
+        "has_override": false,
+        "id": "agent.code",
+        "issues": [],
+        "label": "Agent code",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "agent.plan",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "agents_tools",
+         "label": "Agents & tools"
+        },
+        "has_override": false,
+        "id": "agent.plan",
+        "issues": [],
+        "label": "Agent plan",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "agent.tool_turn",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "agents_tools",
+         "label": "Agents & tools"
+        },
+        "has_override": false,
+        "id": "agent.tool_turn",
+        "issues": [],
+        "label": "Agent tool turn",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "ask.answer",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "thoughts_notes",
+         "label": "Thoughts & notes"
+        },
+        "has_override": false,
+        "id": "ask.answer",
+        "issues": [],
+        "label": "Ask answer",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "background.cadence_draft",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "background",
+         "label": "Background"
+        },
+        "has_override": false,
+        "id": "background.cadence_draft",
+        "issues": [],
+        "label": "Cadence draft",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "background.rails_summary",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "background",
+         "label": "Background"
+        },
+        "has_override": false,
+        "id": "background.rails_summary",
+        "issues": [],
+        "label": "Rails summary",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "calendar.snapshot_extract",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "background",
+         "label": "Background"
+        },
+        "has_override": false,
+        "id": "calendar.snapshot_extract",
+        "issues": [],
+        "label": "Calendar snapshot extraction",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "calls.turn",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "thoughts_notes",
+         "label": "Thoughts & notes"
+        },
+        "has_override": false,
+        "id": "calls.turn",
+        "issues": [],
+        "label": "Phone calls",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "chat.turn",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "thoughts_notes",
+         "label": "Thoughts & notes"
+        },
+        "has_override": false,
+        "id": "chat.turn",
+        "issues": [],
+        "label": "Desk chat",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": {
+          "created_at": "2026-11-08T22:52:44.575384Z",
+          "effective_retry_policy_id": "retry.background.standard",
+          "entries": [
+           {
+            "boundary": "local",
+            "label": "Drafts",
+            "ordinal": 1,
+            "profile_id": "drafts",
+            "profile_revision": 1,
+            "profile_schema_version": 2,
+            "readiness": "ready"
+           }
+          ],
+          "id": "ia_6ee2d82bdabe4319b5f5c243f13ad1ca",
+          "issues": [],
+          "retry_policy_id": null,
+          "retry_policy_source": "capability_default",
+          "revision": 1,
+          "schema": "InferenceAssignmentProjection@1",
+          "scope": {
+           "capability_id": "decision.promotion_draft",
+           "kind": "capability"
+          },
+          "sha256": "sha256:0b64ea447a27b0e298be7cd6e115cada96e18e92accc66fe3df3c1ddda106377"
+         },
+         "capability_id": "decision.promotion_draft",
+         "inherited_from": "capability",
+         "repair": null,
+         "status": "assigned"
+        },
+        "group": {
+         "id": "background",
+         "label": "Background"
+        },
+        "has_override": true,
+        "id": "decision.promotion_draft",
+        "issues": [],
+        "label": "Decision promotion draft",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "delivery.pr_review_draft",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "background",
+         "label": "Background"
+        },
+        "has_override": false,
+        "id": "delivery.pr_review_draft",
+        "issues": [],
+        "label": "Pull request review draft",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.auto_title",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.auto_title",
+        "issues": [],
+        "label": "Meeting title",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.bookmark_label",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.bookmark_label",
+        "issues": [],
+        "label": "Meeting bookmark label",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.deferred_analysis",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.deferred_analysis",
+        "issues": [],
+        "label": "Deferred meeting analysis",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.live_analysis",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.live_analysis",
+        "issues": [],
+        "label": "Live meeting analysis",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.plugin.action_owner_enforcer",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.plugin.action_owner_enforcer",
+        "issues": [],
+        "label": "Meeting plugin: action owner enforcer",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.plugin.adr_drafter",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.plugin.adr_drafter",
+        "issues": [],
+        "label": "Meeting plugin: adr drafter",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.plugin.customer_signal_extractor",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.plugin.customer_signal_extractor",
+        "issues": [],
+        "label": "Meeting plugin: customer signal extractor",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.plugin.decision_announcement_drafter",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.plugin.decision_announcement_drafter",
+        "issues": [],
+        "label": "Meeting plugin: decision announcement drafter",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.plugin.decision_capture",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.plugin.decision_capture",
+        "issues": [],
+        "label": "Meeting plugin: decision capture",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.plugin.dependency_mapper",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.plugin.dependency_mapper",
+        "issues": [],
+        "label": "Meeting plugin: dependency mapper",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.plugin.incident_timeline",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.plugin.incident_timeline",
+        "issues": [],
+        "label": "Meeting plugin: incident timeline",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.plugin.mermaid_architecture",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.plugin.mermaid_architecture",
+        "issues": [],
+        "label": "Meeting plugin: mermaid architecture",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.plugin.milestone_planner",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.plugin.milestone_planner",
+        "issues": [],
+        "label": "Meeting plugin: milestone planner",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.plugin.project_detector",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.plugin.project_detector",
+        "issues": [],
+        "label": "Meeting plugin: project detector",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.plugin.requirements_extractor",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.plugin.requirements_extractor",
+        "issues": [],
+        "label": "Meeting plugin: requirements extractor",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.plugin.risk_heatmap",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.plugin.risk_heatmap",
+        "issues": [],
+        "label": "Meeting plugin: risk heatmap",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.plugin.runbook_delta",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.plugin.runbook_delta",
+        "issues": [],
+        "label": "Meeting plugin: runbook delta",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.plugin.scope_guard",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.plugin.scope_guard",
+        "issues": [],
+        "label": "Meeting plugin: scope guard",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.plugin.stakeholder_update_drafter",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.plugin.stakeholder_update_drafter",
+        "issues": [],
+        "label": "Meeting plugin: stakeholder update drafter",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "memory.consolidate",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "background",
+         "label": "Background"
+        },
+        "has_override": false,
+        "id": "memory.consolidate",
+        "issues": [],
+        "label": "Memory observations",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "memory.embed",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "background",
+         "label": "Background"
+        },
+        "has_override": false,
+        "id": "memory.embed",
+        "issues": [],
+        "label": "Memory embedding",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "memory.extract",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "background",
+         "label": "Background"
+        },
+        "has_override": false,
+        "id": "memory.extract",
+        "issues": [],
+        "label": "Memory facts",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "memory.page",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "background",
+         "label": "Background"
+        },
+        "has_override": false,
+        "id": "memory.page",
+        "issues": [],
+        "label": "Memory pages",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "project.brief_prepare",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "agents_tools",
+         "label": "Agents & tools"
+        },
+        "has_override": false,
+        "id": "project.brief_prepare",
+        "issues": [],
+        "label": "Project preparation brief",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "project.update_draft",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "agents_tools",
+         "label": "Agents & tools"
+        },
+        "has_override": false,
+        "id": "project.update_draft",
+        "issues": [],
+        "label": "Project update draft",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "project_doc.suggest_update",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "agents_tools",
+         "label": "Agents & tools"
+        },
+        "has_override": false,
+        "id": "project_doc.suggest_update",
+        "issues": [],
+        "label": "Project document suggestion",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "recipe.run",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "agents_tools",
+         "label": "Agents & tools"
+        },
+        "has_override": false,
+        "id": "recipe.run",
+        "issues": [],
+        "label": "Recipe run",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "speech.intent_classify",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "writing_dictation",
+         "label": "Writing & dictation"
+        },
+        "has_override": false,
+        "id": "speech.intent_classify",
+        "issues": [],
+        "label": "Dictation intent",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "speech.rewrite",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "writing_dictation",
+         "label": "Writing & dictation"
+        },
+        "has_override": false,
+        "id": "speech.rewrite",
+        "issues": [],
+        "label": "Dictation rewrite",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "speech.target_classify",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "writing_dictation",
+         "label": "Writing & dictation"
+        },
+        "has_override": false,
+        "id": "speech.target_classify",
+        "issues": [],
+        "label": "Dictation target",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": {
+          "created_at": "2026-11-08T22:52:44.055220Z",
+          "effective_retry_policy_id": "retry.audio.transcription",
+          "entries": [
+           {
+            "boundary": "local",
+            "label": "Whisper mlx base",
+            "ordinal": 1,
+            "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+            "profile_revision": 1,
+            "profile_schema_version": 2,
+            "readiness": "unavailable"
+           }
+          ],
+          "id": "ia_d9275f0bcdc341a985da7c8059568122",
+          "issues": [
+           {
+            "code": "binding_not_ready",
+            "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+            "profile_revision": 1,
+            "severity": "repair"
+           }
+          ],
+          "retry_policy_id": null,
+          "retry_policy_source": "capability_default",
+          "revision": 1,
+          "schema": "InferenceAssignmentProjection@1",
+          "scope": {
+           "capability_id": "speech.transcribe",
+           "kind": "capability"
+          },
+          "sha256": "sha256:7929e2e45d963015550122c0316922f3bc203e3f811f5f470bf103c80a681b8b"
+         },
+         "capability_id": "speech.transcribe",
+         "inherited_from": "capability",
+         "repair": null,
+         "status": "assigned"
+        },
+        "group": {
+         "id": "speech_recognition",
+         "label": "Speech recognition"
+        },
+        "has_override": true,
+        "id": "speech.transcribe",
+        "issues": [
+         {
+          "code": "binding_not_ready",
+          "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+          "profile_revision": 1,
+          "severity": "repair"
+         }
+        ],
+        "label": "Speech transcription",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "thought.interview",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "thoughts_notes",
+         "label": "Thoughts & notes"
+        },
+        "has_override": false,
+        "id": "thought.interview",
+        "issues": [],
+        "label": "Thought development",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "voice.reference_resolve",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "agents_tools",
+         "label": "Agents & tools"
+        },
+        "has_override": false,
+        "id": "voice.reference_resolve",
+        "issues": [],
+        "label": "Voice reference resolution",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "workbench.item",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "agents_tools",
+         "label": "Agents & tools"
+        },
+        "has_override": false,
+        "id": "workbench.item",
+        "issues": [],
+        "label": "Automation item",
+        "queue": null
+       }
+      ]
+     }
+    },
+    "name": "before"
+   },
+   {
+    "answer": {
+     "ok": true
+    },
+    "body": {
+     "key": "dec-engine|note",
+     "kind": "decision.draft"
+    },
+    "gets": {
+     "/api/desk/needs-you?fresh=1": {
+      "arming": [],
+      "blockers": [],
+      "complete": true,
+      "computedAt": "2026-11-08T15:52:44.668581-07:00",
+      "count": 0,
+      "coverage": [
+       {
+        "kind": "coder",
+        "label": "Agents",
+        "observed_at": "2026-11-08T22:52:44.674252+00:00",
+        "project_id": "",
+        "reason": null,
+        "repair": null,
+        "source_id": "coders",
+        "state": "available"
+       },
+       {
+        "kind": "send",
+        "label": "Sends",
+        "observed_at": "2026-11-08T22:52:44.672229+00:00",
+        "project_id": "",
+        "reason": null,
+        "repair": null,
+        "source_id": "sends",
+        "state": "available"
+       }
+      ],
+      "failedMeetings": [],
+      "items": [],
+      "members": [],
+      "mutedCount": 0,
+      "next": null,
+      "ownerNames": [
+       "manager",
+       "me",
+       "you"
+      ],
+      "peopleStoreState": "unconfigured",
+      "projectCounts": {},
+      "projects": [],
+      "roomComplete": true,
+      "roomCounts": {},
+      "roomItems": [],
+      "sourceErrors": {},
+      "stale": false,
+      "sweepId": null,
+      "waitingCount": 0
+     },
+     "/api/door": {
+      "board": {
+       "active": [],
+       "now": [],
+       "overdue": [],
+       "unassigned": [],
+       "waiting": []
+      },
+      "calendar_configured": false,
+      "counts": {
+       "active": 0,
+       "now": 0,
+       "overdue": 0,
+       "upcoming_today": 0,
+       "waiting": 0
+      },
+      "people_store_state": "unconfigured",
+      "upcoming": [],
+      "week": {
+       "days": [],
+       "ends_at": "2026-11-09T07:00:00+00:00",
+       "has_calendar": false,
+       "starts_at": "2026-11-02T07:00:00+00:00",
+       "total": 0
+      }
+     },
+     "/api/inference/assignments": {
+      "issue_count": 1,
+      "rows": [
+       {
+        "assignment": null,
+        "editor_capability_id": "agent.code",
+        "expected_revision": 0,
+        "id": "global",
+        "inherited_from": null,
+        "label": "Default for AI work",
+        "repair": "Choose default",
+        "status": "no_assignment"
+       },
+       {
+        "assignment": null,
+        "editor_capability_id": "ask.answer",
+        "expected_revision": 0,
+        "id": "thoughts_notes",
+        "inherited_from": null,
+        "label": "Thoughts & notes",
+        "repair": null,
+        "status": "no_assignment"
+       },
+       {
+        "assignment": null,
+        "editor_capability_id": "speech.intent_classify",
+        "expected_revision": 0,
+        "id": "writing_dictation",
+        "inherited_from": null,
+        "label": "Writing & dictation",
+        "repair": null,
+        "status": "no_assignment"
+       },
+       {
+        "assignment": null,
+        "editor_capability_id": "speech.transcribe",
+        "expected_revision": 0,
+        "id": "speech_recognition",
+        "inherited_from": null,
+        "label": "Speech recognition",
+        "repair": null,
+        "status": "no_assignment"
+       },
+       {
+        "assignment": null,
+        "editor_capability_id": "meeting.auto_title",
+        "expected_revision": 0,
+        "id": "meetings",
+        "inherited_from": null,
+        "label": "Meetings",
+        "repair": null,
+        "status": "no_assignment"
+       },
+       {
+        "assignment": null,
+        "editor_capability_id": "agent.code",
+        "expected_revision": 0,
+        "id": "agents_tools",
+        "inherited_from": null,
+        "label": "Agents & tools",
+        "repair": null,
+        "status": "no_assignment"
+       },
+       {
+        "assignment": null,
+        "editor_capability_id": "background.cadence_draft",
+        "expected_revision": 0,
+        "id": "background",
+        "inherited_from": null,
+        "label": "Background",
+        "repair": null,
+        "status": "no_assignment"
+       }
+      ],
+      "schema": "InferenceAssignmentSummary@1",
+      "task_overrides": [
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "agent.code",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "agents_tools",
+         "label": "Agents & tools"
+        },
+        "has_override": false,
+        "id": "agent.code",
+        "issues": [],
+        "label": "Agent code",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "agent.plan",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "agents_tools",
+         "label": "Agents & tools"
+        },
+        "has_override": false,
+        "id": "agent.plan",
+        "issues": [],
+        "label": "Agent plan",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "agent.tool_turn",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "agents_tools",
+         "label": "Agents & tools"
+        },
+        "has_override": false,
+        "id": "agent.tool_turn",
+        "issues": [],
+        "label": "Agent tool turn",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "ask.answer",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "thoughts_notes",
+         "label": "Thoughts & notes"
+        },
+        "has_override": false,
+        "id": "ask.answer",
+        "issues": [],
+        "label": "Ask answer",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "background.cadence_draft",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "background",
+         "label": "Background"
+        },
+        "has_override": false,
+        "id": "background.cadence_draft",
+        "issues": [],
+        "label": "Cadence draft",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "background.rails_summary",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "background",
+         "label": "Background"
+        },
+        "has_override": false,
+        "id": "background.rails_summary",
+        "issues": [],
+        "label": "Rails summary",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "calendar.snapshot_extract",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "background",
+         "label": "Background"
+        },
+        "has_override": false,
+        "id": "calendar.snapshot_extract",
+        "issues": [],
+        "label": "Calendar snapshot extraction",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "calls.turn",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "thoughts_notes",
+         "label": "Thoughts & notes"
+        },
+        "has_override": false,
+        "id": "calls.turn",
+        "issues": [],
+        "label": "Phone calls",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "chat.turn",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "thoughts_notes",
+         "label": "Thoughts & notes"
+        },
+        "has_override": false,
+        "id": "chat.turn",
+        "issues": [],
+        "label": "Desk chat",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": {
+          "created_at": "2026-11-08T22:52:44.575384Z",
+          "effective_retry_policy_id": "retry.background.standard",
+          "entries": [
+           {
+            "boundary": "local",
+            "label": "Drafts",
+            "ordinal": 1,
+            "profile_id": "drafts",
+            "profile_revision": 1,
+            "profile_schema_version": 2,
+            "readiness": "ready"
+           }
+          ],
+          "id": "ia_6ee2d82bdabe4319b5f5c243f13ad1ca",
+          "issues": [],
+          "retry_policy_id": null,
+          "retry_policy_source": "capability_default",
+          "revision": 1,
+          "schema": "InferenceAssignmentProjection@1",
+          "scope": {
+           "capability_id": "decision.promotion_draft",
+           "kind": "capability"
+          },
+          "sha256": "sha256:0b64ea447a27b0e298be7cd6e115cada96e18e92accc66fe3df3c1ddda106377"
+         },
+         "capability_id": "decision.promotion_draft",
+         "inherited_from": "capability",
+         "repair": null,
+         "status": "assigned"
+        },
+        "group": {
+         "id": "background",
+         "label": "Background"
+        },
+        "has_override": true,
+        "id": "decision.promotion_draft",
+        "issues": [],
+        "label": "Decision promotion draft",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "delivery.pr_review_draft",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "background",
+         "label": "Background"
+        },
+        "has_override": false,
+        "id": "delivery.pr_review_draft",
+        "issues": [],
+        "label": "Pull request review draft",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.auto_title",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.auto_title",
+        "issues": [],
+        "label": "Meeting title",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.bookmark_label",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.bookmark_label",
+        "issues": [],
+        "label": "Meeting bookmark label",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.deferred_analysis",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.deferred_analysis",
+        "issues": [],
+        "label": "Deferred meeting analysis",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.live_analysis",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.live_analysis",
+        "issues": [],
+        "label": "Live meeting analysis",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.plugin.action_owner_enforcer",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.plugin.action_owner_enforcer",
+        "issues": [],
+        "label": "Meeting plugin: action owner enforcer",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.plugin.adr_drafter",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.plugin.adr_drafter",
+        "issues": [],
+        "label": "Meeting plugin: adr drafter",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.plugin.customer_signal_extractor",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.plugin.customer_signal_extractor",
+        "issues": [],
+        "label": "Meeting plugin: customer signal extractor",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.plugin.decision_announcement_drafter",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.plugin.decision_announcement_drafter",
+        "issues": [],
+        "label": "Meeting plugin: decision announcement drafter",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.plugin.decision_capture",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.plugin.decision_capture",
+        "issues": [],
+        "label": "Meeting plugin: decision capture",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.plugin.dependency_mapper",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.plugin.dependency_mapper",
+        "issues": [],
+        "label": "Meeting plugin: dependency mapper",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.plugin.incident_timeline",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.plugin.incident_timeline",
+        "issues": [],
+        "label": "Meeting plugin: incident timeline",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.plugin.mermaid_architecture",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.plugin.mermaid_architecture",
+        "issues": [],
+        "label": "Meeting plugin: mermaid architecture",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.plugin.milestone_planner",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.plugin.milestone_planner",
+        "issues": [],
+        "label": "Meeting plugin: milestone planner",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.plugin.project_detector",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.plugin.project_detector",
+        "issues": [],
+        "label": "Meeting plugin: project detector",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.plugin.requirements_extractor",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.plugin.requirements_extractor",
+        "issues": [],
+        "label": "Meeting plugin: requirements extractor",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.plugin.risk_heatmap",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.plugin.risk_heatmap",
+        "issues": [],
+        "label": "Meeting plugin: risk heatmap",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.plugin.runbook_delta",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.plugin.runbook_delta",
+        "issues": [],
+        "label": "Meeting plugin: runbook delta",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.plugin.scope_guard",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.plugin.scope_guard",
+        "issues": [],
+        "label": "Meeting plugin: scope guard",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "meeting.plugin.stakeholder_update_drafter",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "meetings",
+         "label": "Meetings"
+        },
+        "has_override": false,
+        "id": "meeting.plugin.stakeholder_update_drafter",
+        "issues": [],
+        "label": "Meeting plugin: stakeholder update drafter",
+        "queue": {
+         "inherited_from": null,
+         "policy_id": "meeting-intel-queue@2",
+         "status": "no_assignment"
+        }
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "memory.consolidate",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "background",
+         "label": "Background"
+        },
+        "has_override": false,
+        "id": "memory.consolidate",
+        "issues": [],
+        "label": "Memory observations",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "memory.embed",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "background",
+         "label": "Background"
+        },
+        "has_override": false,
+        "id": "memory.embed",
+        "issues": [],
+        "label": "Memory embedding",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "memory.extract",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "background",
+         "label": "Background"
+        },
+        "has_override": false,
+        "id": "memory.extract",
+        "issues": [],
+        "label": "Memory facts",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "memory.page",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "background",
+         "label": "Background"
+        },
+        "has_override": false,
+        "id": "memory.page",
+        "issues": [],
+        "label": "Memory pages",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "project.brief_prepare",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "agents_tools",
+         "label": "Agents & tools"
+        },
+        "has_override": false,
+        "id": "project.brief_prepare",
+        "issues": [],
+        "label": "Project preparation brief",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "project.update_draft",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "agents_tools",
+         "label": "Agents & tools"
+        },
+        "has_override": false,
+        "id": "project.update_draft",
+        "issues": [],
+        "label": "Project update draft",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "project_doc.suggest_update",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "agents_tools",
+         "label": "Agents & tools"
+        },
+        "has_override": false,
+        "id": "project_doc.suggest_update",
+        "issues": [],
+        "label": "Project document suggestion",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "recipe.run",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "agents_tools",
+         "label": "Agents & tools"
+        },
+        "has_override": false,
+        "id": "recipe.run",
+        "issues": [],
+        "label": "Recipe run",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "speech.intent_classify",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "writing_dictation",
+         "label": "Writing & dictation"
+        },
+        "has_override": false,
+        "id": "speech.intent_classify",
+        "issues": [],
+        "label": "Dictation intent",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "speech.rewrite",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "writing_dictation",
+         "label": "Writing & dictation"
+        },
+        "has_override": false,
+        "id": "speech.rewrite",
+        "issues": [],
+        "label": "Dictation rewrite",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "speech.target_classify",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "writing_dictation",
+         "label": "Writing & dictation"
+        },
+        "has_override": false,
+        "id": "speech.target_classify",
+        "issues": [],
+        "label": "Dictation target",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": {
+          "created_at": "2026-11-08T22:52:44.055220Z",
+          "effective_retry_policy_id": "retry.audio.transcription",
+          "entries": [
+           {
+            "boundary": "local",
+            "label": "Whisper mlx base",
+            "ordinal": 1,
+            "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+            "profile_revision": 1,
+            "profile_schema_version": 2,
+            "readiness": "unavailable"
+           }
+          ],
+          "id": "ia_d9275f0bcdc341a985da7c8059568122",
+          "issues": [
+           {
+            "code": "binding_not_ready",
+            "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+            "profile_revision": 1,
+            "severity": "repair"
+           }
+          ],
+          "retry_policy_id": null,
+          "retry_policy_source": "capability_default",
+          "revision": 1,
+          "schema": "InferenceAssignmentProjection@1",
+          "scope": {
+           "capability_id": "speech.transcribe",
+           "kind": "capability"
+          },
+          "sha256": "sha256:7929e2e45d963015550122c0316922f3bc203e3f811f5f470bf103c80a681b8b"
+         },
+         "capability_id": "speech.transcribe",
+         "inherited_from": "capability",
+         "repair": null,
+         "status": "assigned"
+        },
+        "group": {
+         "id": "speech_recognition",
+         "label": "Speech recognition"
+        },
+        "has_override": true,
+        "id": "speech.transcribe",
+        "issues": [
+         {
+          "code": "binding_not_ready",
+          "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+          "profile_revision": 1,
+          "severity": "repair"
+         }
+        ],
+        "label": "Speech transcription",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "thought.interview",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "thoughts_notes",
+         "label": "Thoughts & notes"
+        },
+        "has_override": false,
+        "id": "thought.interview",
+        "issues": [],
+        "label": "Thought development",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "voice.reference_resolve",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "agents_tools",
+         "label": "Agents & tools"
+        },
+        "has_override": false,
+        "id": "voice.reference_resolve",
+        "issues": [],
+        "label": "Voice reference resolution",
+        "queue": null
+       },
+       {
+        "effective": {
+         "assignment": null,
+         "capability_id": "workbench.item",
+         "inherited_from": null,
+         "repair": "Choose default",
+         "status": "no_assignment"
+        },
+        "group": {
+         "id": "agents_tools",
+         "label": "Agents & tools"
+        },
+        "has_override": false,
+        "id": "workbench.item",
+        "issues": [],
+        "label": "Automation item",
+        "queue": null
+       }
+      ]
+     }
+    },
+    "name": "retry",
+    "post": "/api/concierge/retry"
+   }
+  ],
+  "title": "drafts could not run the decision draft \u00b7 it gave no answer"
+ },
  "must": "Must fix: openSystemShade() fires an event nobody hears",
  "program": {
   "steps": [
