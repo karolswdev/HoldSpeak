@@ -36,7 +36,8 @@ import { Popover } from "../patterns/Popover";
 import { Button } from "../../../components/signal/Signal";
 import { LampGadget } from "../gadgets";
 import { useRovingRows } from "../roving";
-import { glyphSprite, listSprite } from "../../sprites";
+import { listSprite } from "../../sprites";
+import { stateTone } from "../kit";
 import { lampGadgetTone, objectKindWord, objectSprite, type ObjectTone } from "./kinds";
 import { nameBreaks } from "./DeskIcon";
 import "./objects.css";
@@ -299,7 +300,7 @@ export function ObjectList({
               data-selected={selected ? "true" : undefined}
               data-object-id={row.id}
               data-kind={row.kind}
-              data-avatar={row.avatar ? "" : undefined}
+              data-avatar={row.avatar && !dense ? "" : undefined}
               {...(rowProps ? rowProps(row) : {})}
             >
               <div role="gridcell" className="object-list-name" data-col="name">
@@ -315,13 +316,13 @@ export function ObjectList({
                   onDoubleClick={onOpen && !opensOnPress ? () => onOpen(row.id) : undefined}
                   onKeyDown={keyDown(row.id)}
                 >
-                  {row.avatar ? (
+                  {row.avatar && !dense ? (
                     <span className="object-list-avatar" data-hue={row.avatar.hue} aria-hidden="true">
                       {row.avatar.initials}
                     </span>
                   ) : (
                     <img
-                      src={(dense ? glyphSprite : listSprite)(row.sprite ?? objectSprite(row.kind, row.id))}
+                      src={listSprite(row.sprite ?? objectSprite(row.kind, row.id))}
                       alt=""
                       draggable={false}
                     />
@@ -348,8 +349,8 @@ export function ObjectList({
                       <div key="state" role="gridcell" className="object-list-state" data-col="state">
                         {row.state ? (
                           dense ? (
-                            <span className="object-list-dot-word" data-tone={row.state.tone} data-live={row.state.live ? "" : undefined} data-testid={row.state.testId}>
-                              <span className="kit-dot" data-tone={row.state.tone} aria-hidden="true" />
+                            <span className="object-list-dot-word" data-tone={stateTone(row.state.label) ?? row.state.tone} data-live={row.state.live ? "" : undefined} data-testid={row.state.testId}>
+                              <span className="kit-dot" data-tone={stateTone(row.state.label) ?? row.state.tone} aria-hidden="true" />
                               {row.state.label}
                             </span>
                           ) : (

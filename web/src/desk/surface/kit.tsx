@@ -436,7 +436,7 @@ export function StatusBar({
       <span className="kit-statusbar-items" role="status">
         {shown.map((item, index) => (
           <span key={item.key ?? index} className="kit-statusbar-item" data-testid={item.testId}>
-            {item.lamp ? <StatusLamp tone={item.lamp} pulse={item.pulse} live={item.live} /> : null}
+            {item.lamp ? <StatusLamp tone={statusLampTone(item) ?? item.lamp} pulse={item.pulse} live={item.live} /> : null}
             {item.tick != null ? <TickNumber value={item.tick}>{item.text}</TickNumber> : sentenceChildren(item.text)}
             {item.value != null ? (
               <>
@@ -455,6 +455,15 @@ export function StatusBar({
   return target ? createPortal(bar, target) : <footer className="kit-statusbar-foot">{bar}</footer>;
 }
 
+/** A status-bar lamp's tone: a state word in {@link STATE_TONES} wins over
+ *  the face's lamp, after a leading count (`1 to review` → graphite). */
+function statusLampTone(item: StatusBarItem): StatusBarItem["lamp"] {
+  if (typeof item.text !== "string") return item.lamp;
+  const table = stateTone(item.text.replace(/^\d+\s+/, ""));
+  if (!table || table === "idle") return item.lamp;
+  return table === "parked" ? "warn" : table;
+}
+
 /** The tone of a DotWord: the object tones, `idle` (the plain grey dot) and
  *  `parked` (graphite). */
 export type DotTone = ObjectTone | "idle" | "parked";
@@ -469,6 +478,7 @@ export const STATE_TONES: ReadonlyArray<readonly [string, DotTone]> = [
   ["waits on you", "ask"],
   ["waiting on you", "ask"],
   ["asks you", "ask"],
+  ["your turn", "ask"],
   ["on track", "ok"],
   ["off track", "fail"],
   ["at risk", "fail"],
@@ -479,6 +489,18 @@ export const STATE_TONES: ReadonlyArray<readonly [string, DotTone]> = [
   ["done", "ok"],
   ["merged", "ok"],
   ["parked", "parked"],
+  // The language in every window (2026-11-08): the quiet states are
+  // graphite (`warn` draws graphite ink and a graphite dot). Brass is only
+  // what waits on him; a thing to look at some day is not amber.
+  ["your name is not set", "warn"],
+  ["to review", "warn"],
+  ["to decide", "warn"],
+  ["unassigned", "warn"],
+  ["no engine", "warn"],
+  ["not set", "warn"],
+  ["not read", "warn"],
+  ["stale", "warn"],
+  ["offline", "warn"],
 ];
 
 /** The table's tone for a state word or a line that starts with one

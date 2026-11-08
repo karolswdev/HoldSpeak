@@ -100,6 +100,9 @@
   /* Owner 2026-10-27: the verbs are ONE row at every width. A narrow window
      drops the secondary verbs to their glyphs (below), never a second row. */
   flex-wrap: nowrap;
+  /* Five labelled verbs and the mic on one row: the band keeps its old 8 px
+     inset (the kit band's 12 px pushes the mic onto the last verb). */
+  padding-inline: 8px;
 }
 
 .desk-next .thought-note-toolbar .kit-toolbar-verbs {
