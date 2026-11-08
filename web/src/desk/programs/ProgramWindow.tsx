@@ -923,6 +923,10 @@ export function ProgramBody({ programId }: { programId: string }) {
       setBusy("");
     }
   };
+  const addWords = [
+    carry ? "When this step is done, the action is done." : "The step does not carry the action.",
+    program.state === "running" ? "The program runs: the step can start without Start." : "",
+  ].filter(Boolean).join(" ");
   const addStep = () => {
     if (offerCarry) setAdding(true);
     else void append(false);
@@ -1059,10 +1063,7 @@ export function ProgramBody({ programId }: { programId: string }) {
         {adding && offerCarry ? (
           <section className="pg-add-well" aria-label="Add step" data-testid="program-add-well">
             <CheckGadget label={`This step carries the action ${actionWords}`} checked={carry} onChange={setCarry} disabled={busy === "add"} />
-            <p className="pg-add-words" data-testid="program-add-words">
-              {carry ? "When this step is done, the action is done." : "The step does not carry the action."}
-              {program.state === "running" ? " The program runs: the step can start without Start." : ""}
-            </p>
+            <p className="pg-add-words" data-testid="program-add-words">{addWords}</p>
             <span className="pg-add-verbs">
               <Button dense variant="primary" loading={busy === "add"} disabled={Boolean(busy)} onClick={() => void append(carry)}
                 data-testid="program-add-confirm">Add step</Button>
