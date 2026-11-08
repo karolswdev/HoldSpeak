@@ -370,7 +370,7 @@ Select **Send** only when the destination and exact content are correct.
 
 ### Finding them
 
-Use **Today**, **Needs you**, Project Room **HISTORY**, Memory, or the source
+Use **Today**, **Needs you**, the Project Room **History** tab, Memory, or the source
 record's receipt. Search can find a kept Note, Artifact, Thread, or Meeting.
 A prepared item can remain pending until you send it or discard it through its
 own control.
@@ -380,24 +380,32 @@ own control.
 A **Program** is a goal cut into steps. An agent can do each step, while the
 owner keeps the decisions that affect scope, authority, and delivery.
 
-1. Open **Programs** from **Go** or Search.
-2. Select **New program** or choose **Templates**. The wizard has four
+1. Open **Programs** from **Go**, or press ⌃7. The rail at the left has one
+   tile for each Program. A brass dot means that the Program waits on you.
+2. Press **+** (**New program**) at the top of the rail. The wizard has four
    screens: the project, the goal, how it runs, and the summary.
 3. Press **Create**. HoldSpeak plans the steps from the goal by itself.
 4. With **Runs by itself**, the Program starts with no press. With the other
    levels, read the plan and press **Start**.
-5. Read each checkpoint and answer the **Your turn** item when the Program
-   asks. The item is also a row in **Needs you**.
+5. When the Program waits on you, its step plate shows the question and the
+   verb to press, for example **Merge** or **Decide**. The same item is also a
+   row in **Needs you**.
+
+The Program has a mast (its title and one line of facts), a step spine (one
+bar for each step) and the step plate. **Earlier steps** opens the list of all
+steps. **Amend** opens the Program text. **Park** stops the Program, and
+**Resume** starts it again.
 
 **Run as a program** on a note, a decision or an action makes a Program from
 it. **Hand to an agent session** starts one live agent session instead.
 
-The Program window can **Park** a run, **Resume** it, add a step, and show
-handoff notes and decisions. **Race** is available only where the service
-allows parallel work. **Secure**, **Normal**, and **YOLO** are control
-presets for the Program. Its step gates and Control level govern routine decisions and merge.
-Core questions, held owner operations, and security or data-loss findings still return to you.
-Read [Programs](programs.md) for the exact ladder and merge-gate choices.
+**Race** is available only where the service allows parallel work.
+**Secure**, **Normal**, and **YOLO** are control presets for the Program. Its
+step gates and Control level govern routine decisions and merge. Core
+questions, held owner operations, and security or data-loss findings still
+return to you. The wizard's **Spending note** is a note for you, not a limit.
+Read [Programs](programs.md) for the window, the exact ladder and the
+merge-gate choices.
 
 Programs are different from the prepared-procedure catalogue above. The
 catalogue contains read-only procedure descriptors; it is not an executable
@@ -450,6 +458,15 @@ completed run.
 The arrival shows current work, **Needs you**, unfinished Notes, a brief, and
 recent Meetings. Select an item to open its owning surface. A badge tells you
 that a source has state to inspect. It does not explain the state by itself.
+
+### Needs you
+
+**Needs you** (⌃J) lists what waits on you. The mast says the day and how
+many rows you must fix. **Waits on you first** shows the one row to do now,
+with its verb, for example **Merge**, **Decide** or **Done**. The other rows
+are in groups: **Must fix**, **Should fix**, **To do** and **Noted**.
+**Mine · People** switches between your own work and what people owe you.
+See [Needs you](WEB_DESK.md#needs-you).
 
 ### When a source was not observed
 
@@ -516,14 +533,21 @@ creates Watches only for the selected source and templates.
 
 ## Project Room
 
-The Project Room has **ROOM** and **HISTORY** wings. Read **NEEDS YOU**,
-**PLAN**, **SOURCES**, **SINCE YOU LOOKED**, and **DECISIONS & COMMITMENTS**.
-Use **Add source**, **Pause**, **Resume**, **Remove**, and suggested-source
-**Add** or **Dismiss** according to the source scope.
+The Project Room has two tabs: **Now** and **History**. The top of **Now** is
+the mast: the Project name and one line with the state (for example **On
+track** or **At risk**), the last update and **N need you**. Press **N need
+you** to show the Needs you rows under the mast. The mast has **Draft update**
+and **History**.
 
-The Ask field is **Ask this project**. Choose an answer or brief result and
-check the model chip. **Draft update** prepares a Project update. A Project
-Room run is narrower than whole-Desk Ask. See [Project Rooms](PROJECT_ROOMS.md).
+**Draft update** has the update engine draft a Project update from the
+sources. You review the draft and you send it. Under the mast is the **Ask
+this project** field. Then **What changed** shows the latest update, and
+**What is open** shows the **Programs**, **People** and **Decisions** plates.
+
+On **History**, **Prepare a brief** builds a brief from the Room's sources,
+decisions and open commitments. **Pages** lists the Project's standing pages.
+A Project Room run is narrower than whole-Desk Ask. See
+[Project Rooms](PROJECT_ROOMS.md).
 
 ## Settings
 
