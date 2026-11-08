@@ -2,6 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · #1986 Park seven kit species no face draws (874 lines + 2 tests): LedgerFilterBar, LedgerRemainder, ReadyStrip, StartVerb, TaskResume, SettledList, StateTokenSpan; the barrels lose their lines.
 - 2026-11-08 · #1976 Park 7 unreached web modules (317 lines + 2 tests): the pages/cores barrel, liveEgress, AftercareGadgets, two history shims over parked files, the runtime/frames mirror, features/workbench/model.
 - 2026-11-08 · #1975 Park 33 web modules no entry point reaches (6,914 lines + 19 tests): the old WebGL floor engine, ThreadComposer, FirstWords, ZoneWindow, CallChip, CompanionCore and kin; `scripts/web_reachable.py` lists what no entry reaches.
 - 2026-11-08 · #1982 The prepared-recipe catalog is parked (recipe_catalog.py, the `practice_recipe` MCP family, three read-only routes with no web caller, the USER_GUIDE section); Agents and Modes (`/api/recipes`) stay; MCP 316 → 313 tools, 50 → 49 families.
