@@ -31,6 +31,10 @@ CURRENT_LIFECYCLES = frozenset({"active", "published"})
 #: A supersession may seal an active OR a disputed predecessor (the usual
 #: way a dispute ends is a newer decision).
 _SUPERSEDABLE = frozenset({"active", "disputed"})
+#: The id prefix of a revision ``sync_from_desk`` writes: a copy of a Desk
+#: edit, not a hand edit of the record (the sync guard ignores these rows).
+_SYNC_REVISION = "record-sync-revision-"
+
 _EDITABLE_FIELDS = frozenset(
     {"decision_text", "rationale", "alternatives", "owner", "review_date"}
 )
@@ -365,12 +369,15 @@ class DecisionRecordService:
         if str(decision.status or "").lower() == "accepted":
             self._commit_if_owned(principal, record["id"])
         # The legacy row remains for compatibility. Once the canonical record
-        # has an authored revision, reopening the old editor must not replace
-        # canonical words with its stale projection.
+        # has a HAND revision, reopening the old editor must not replace
+        # canonical words with its stale projection. The revisions this sync
+        # writes carry the ``_SYNC_REVISION`` id prefix and do not count, so
+        # every later Desk edit still reaches the record.
         with self._db._connection() as conn:
             authored = conn.execute(
-                "SELECT 1 FROM decision_record_revisions WHERE record_id = ? LIMIT 1",
-                (record["id"],),
+                "SELECT 1 FROM decision_record_revisions WHERE record_id = ? "
+                "AND id NOT LIKE ? LIMIT 1",
+                (record["id"], f"{_SYNC_REVISION}%"),
             ).fetchone()
             named = conn.execute(
                 "SELECT 1 FROM decision_record_sources WHERE record_id = ? "
@@ -394,6 +401,7 @@ class DecisionRecordService:
             principal,
             record["id"],
             {field: value for field, value in fields.items() if record.get(field) != value},
+            revision_prefix=_SYNC_REVISION,
         ))
 
     def add_source(self, principal: Any, record_id: str, source_type: str, source_ref: str) -> None:
@@ -419,7 +427,12 @@ class DecisionRecordService:
                 )
 
     def update_record(
-        self, principal: Any, record_id: str, fields: dict[str, Any]
+        self,
+        principal: Any,
+        record_id: str,
+        fields: dict[str, Any],
+        *,
+        revision_prefix: str = "record-revision-",
     ) -> dict[str, Any]:
         """Update record facts and record every changed field as a revision."""
         unknown_fields = set(fields) - _EDITABLE_FIELDS
@@ -454,7 +467,7 @@ class DecisionRecordService:
                        (id, record_id, field_name, old_value, new_value, created_at)
                        VALUES (?, ?, ?, ?, ?, ?)""",
                     (
-                        f"record-revision-{uuid4().hex}",
+                        f"{revision_prefix}{uuid4().hex}",
                         record_id,
                         field,
                         row[field],

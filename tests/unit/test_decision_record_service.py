@@ -389,6 +389,32 @@ def test_sync_from_desk_reconciles_title_then_about_and_why(tmp_path):
     assert updated["owner"] == "Karol"
 
 
+def test_sync_from_desk_follows_every_desk_edit_until_a_hand_edit(tmp_path):
+    db = Database(tmp_path / "records.db")
+    db.desk_decisions.upsert(decision_id="desk-twice", title="First words")
+    service = DecisionRecordService(db)
+    record = service.sync_from_desk(None, "desk-twice")
+
+    db.desk_decisions.update("desk-twice", decision_markdown="Second words.")
+    first = service.sync_from_desk(None, "desk-twice")
+    db.desk_decisions.update(
+        "desk-twice", decision_markdown="Third words.", context_markdown="About it."
+    )
+    second = service.sync_from_desk(None, "desk-twice")
+
+    assert first["decision_text"] == "Second words."
+    # The revisions the first sync wrote do not stop the second edit.
+    assert second["decision_text"] == "Third words."
+    assert second["rationale"] == "About it."
+    assert service.get(None, record["id"])["decision_text"] == "Third words."
+
+    # A hand edit of the record wins over a later stale Desk projection.
+    service.update_record(None, record["id"], {"decision_text": "Hand words."})
+    db.desk_decisions.update("desk-twice", decision_markdown="Fourth words.")
+    after_hand = service.sync_from_desk(None, "desk-twice")
+    assert after_hand["decision_text"] == "Hand words."
+
+
 def test_records_from_each_origin_have_the_same_shape(tmp_path):
     db = Database(tmp_path / "records.db")
     _accepted_meeting_decision(db)
