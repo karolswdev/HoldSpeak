@@ -1,7 +1,7 @@
 """The hub's services are built in ONE runtime composition module.
 
 ``MeetingWebServer._create_app`` mounts routers and registers the lifespan;
-``holdspeak.runtime.composition.compose_hub`` builds the WebContext and every
+``holdspeak.runtime.hub_composition.compose_hub`` builds the WebContext and every
 service on it. The field set below was snapshotted from ``_create_app`` on
 main 5ca166897 before the move (the WebContext fields that are not None once
 the composition is installed and the actuator service is set).
@@ -92,6 +92,7 @@ FIELDS_BEFORE_THE_MOVE = [
 def test_compose_hub_builds_the_same_web_context_field_set(tmp_path) -> None:
     from holdspeak.db import get_database, reset_database
     from holdspeak.runtime import composition
+    from holdspeak.runtime.hub_composition import compose_hub
     from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
 
     reset_database()
@@ -105,7 +106,7 @@ def test_compose_hub_builds_the_same_web_context_field_set(tmp_path) -> None:
             ),
             host="127.0.0.1",
         )
-        hub = composition.compose_hub(server, on_launch_hold=lambda _key: None)
+        hub = compose_hub(server, on_launch_hold=lambda _key: None)
         built = sorted(
             field.name
             for field in dataclasses.fields(WebContext)
@@ -118,10 +119,10 @@ def test_compose_hub_builds_the_same_web_context_field_set(tmp_path) -> None:
         reset_database()
 
 
-def test_importing_the_composition_does_not_import_the_web_server() -> None:
+def test_importing_the_compositions_does_not_import_the_web_server() -> None:
     probe = (
-        "import sys, holdspeak.runtime.composition as c; "
-        "assert callable(c.compose_hub); "
+        "import sys, holdspeak.runtime.composition, holdspeak.runtime.delivery_composition as d, holdspeak.runtime.hub_composition as c; "
+        "assert callable(c.compose_hub) and callable(d.compose_delivery); "
         "assert 'holdspeak.web_server' not in sys.modules, 'web_server imported'"
     )
     result = subprocess.run([sys.executable, "-c", probe], capture_output=True, text=True)

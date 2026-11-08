@@ -1143,9 +1143,10 @@ class MeetingWebServer:
         # Bootstrap move (2026-11-08): every service is built in the ONE
         # runtime composition module; this method mounts the routers with it
         # and registers the lifespan.
-        from .runtime import composition as _composition
+        from .runtime.delivery_composition import compose_delivery
+        from .runtime.hub_composition import compose_hub
 
-        hub = _composition.compose_hub(
+        hub = compose_hub(
             self,
             # Conductor R1: a held call of a launch notifies at once.
             on_launch_hold=lambda key: _coder_awaiting_edge([key]),
@@ -1253,7 +1254,7 @@ class MeetingWebServer:
 
         mount_router(app, build_agent_hand_router(web_ctx))  # Conductor K2: Hand to agent
         mount_router(app, build_repositories_router(web_ctx))
-        _composition.compose_delivery(hub, auth_token=self.auth_token)
+        compose_delivery(hub, auth_token=self.auth_token)
         _delivery_link = hub.delivery_link
         _delivery_targets = hub.delivery_targets
         _delivery_cmd = hub.delivery_cmd
