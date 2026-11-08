@@ -2,6 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · #1945 Needs you is the desk of today: the kit mast (the lamp, "Sunday · 3 must fix", mono counts, Mine · People, Later) and spine, the one thing that waits most as a raised plate with the brass Button, the ledger by weight in 46 px bold rows (Today draws the same row), one column at 393; NeedsDrawer.tsx 1,599 → 403 lines.
 - 2026-11-08 · #1944 The Programs list carries the night (`night {program_id, start, queued}` from the rows the list already read; absent when the engine is off, no night line or nothing queued); the rail's night tile opens the night Program.
 - 2026-11-08 · #1942 Fix forward #1937: the Room glass waits for a completed steward run from Python (Playwright's wait_for_function returned at once on an async predicate; the run now takes 70 ms, not 18).
 - 2026-11-08 · #1942 Fix forward #1926/#1939: the two spend-note vitest cases read the Programs window's new face (the rail and Earlier steps).
