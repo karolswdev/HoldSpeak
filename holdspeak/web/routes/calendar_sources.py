@@ -23,7 +23,7 @@ from ...config.integrations import (
 )
 from ...db import get_database
 from ...logging_config import get_logger
-from ...services.project_service import local_week_bounds, utc_z
+from ...services.project_definitions import local_week_bounds, utc_z
 from ..context import WebContext
 from ..runtime_support import error_500
 

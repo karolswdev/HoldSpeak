@@ -444,7 +444,7 @@ class FollowThroughObserver:
         a Room (``repository:<source_id>``, by the clone's GitHub origin)."""
         import json
 
-        from ..services.project_service import _PROVIDER_TO_CONNECTOR
+        from ..services.project_definitions import _PROVIDER_TO_CONNECTOR
 
         repos: dict[str, set[str]] = {}
         with self._db._connection() as conn:

@@ -794,9 +794,9 @@ def _watch_coverage(
 
 
 def _plain_reasons() -> frozenset[str]:
-    from .project_service import ProjectService
+    from .project_definitions import PLAIN_REASONS
 
-    return ProjectService.PLAIN_REASONS
+    return PLAIN_REASONS
 
 
 #: PHILO-15 B74: a provider's name as a person reads it.

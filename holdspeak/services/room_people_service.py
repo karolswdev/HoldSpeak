@@ -29,6 +29,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any
 
+from .project_definitions import snapshot_entities
 from .project_service import ProjectService
 
 #: The ledger states the projection can name.  ``ready`` is the only one
@@ -98,7 +99,7 @@ def _extract_identities(project_service: ProjectService, project_id: str) -> dic
         snapshot = watch.get("snapshot")
         if not snapshot:
             continue
-        entities = ProjectService._entities(snapshot)
+        entities = snapshot_entities(snapshot)
         live = _watch_state(watch) in LIVE_WATCH_STATES
         if not live:
             # A revoked source still NAMES its people (the identity is a

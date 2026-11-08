@@ -269,6 +269,9 @@ def test_a_from_desk_decision_with_an_owner_commits_once(tmp_path, monkeypatch):
     with db._connection() as conn:
         action = conn.execute("SELECT task, owner, due, status FROM action_items").fetchall()
     assert [tuple(row) for row in action] == [("Adopt quorumdb", "Mira Okafor", None, "open")]
+    # The Room's decision row names the same person (#1891 follow-up).
+    room = ProjectService(db)._read_room_decisions("atlas")
+    assert [(i["id"], i["committed_to"]) for i in room["items"]] == [(record["id"], "Mira Okafor")]
 
 
 def test_a_second_accept_makes_no_second_commitment(tmp_path, monkeypatch):
