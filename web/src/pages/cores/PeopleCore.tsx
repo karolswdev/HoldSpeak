@@ -488,7 +488,7 @@ export function PeopleCore({ hero, scope }: CoreProps) {
     if (mayHaveSaved) {
       // HS-S33: an Add whose write may have landed lost its owner or key.
       clearProtected(); setReadiness(readinessForError(cause));
-      setError("Could not read the people store · A promise may be saved · Look again when the store is back"); setErrorTitle(failureTitle(cause));
+      setError("Could not read the people store · A promise may be saved · Check again when the store is back"); setErrorTitle(failureTitle(cause));
       return;
     }
     if (isStoreOutage(cause) && (selectedId || relationships.length)) {
@@ -825,7 +825,7 @@ export function PersonWindowBody({ relationshipId, onClose }: { relationshipId: 
     if (mayHaveSaved) {
       // HS-S33: an Add whose write may have landed lost its owner or key.
       setDetail(null); setReadiness(readinessForError(cause));
-      setError("Could not read the people store · A promise may be saved · Look again when the store is back"); setErrorTitle(failureTitle(cause));
+      setError("Could not read the people store · A promise may be saved · Check again when the store is back"); setErrorTitle(failureTitle(cause));
       return;
     }
     if (isProtectedFailure(cause) && !isStoreOutage(cause)) { setDetail(null); setReadiness(readinessForError(cause)); }
