@@ -736,24 +736,6 @@ class MeetingWebServer:
 
         self.app = self._create_app()
 
-    def _gh_watch_service_kwargs(self) -> dict[str, Any]:
-        """HS-161-06 / HS-166-03 rider-a: extra kwargs for WatchService.
-        Uses default_snapshot_fetcher so gh AND jira share the same
-        injection shape.  HS-166-04: pass the composed Jira adapter
-        (with runner) so test/evaluate on a Jira Watch reaches the
-        fixture runner, not a lazy db-only adapter."""
-        from .db import get_database
-        from .services.jira_provider import JiraProviderAdapter
-        from .services.watch_sources import default_snapshot_fetcher
-        jira = JiraProviderAdapter(
-            db=get_database(), runner=self._acli_runner,
-        ) if self._acli_runner else None
-        fetcher = default_snapshot_fetcher(
-            github_runner=self._gh_runner,
-            jira_adapter=jira,
-        )
-        return {"snapshot_fetcher": fetcher}
-
     def _build_confluence_adapter(self) -> Any:
         """HS-174-07: build the Confluence adapter if acli runner is available."""
         if not self._acli_runner:
