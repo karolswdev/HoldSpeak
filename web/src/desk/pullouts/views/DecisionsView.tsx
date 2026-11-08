@@ -8,6 +8,8 @@ import { DeskFilingStrip } from "../../components/DeskFilingStrip";
 import { plainReason } from "../../surface/plainFailure";
 import { Button } from "../../../components/signal/Signal";
 import { RunAsProgramVerb } from "../../programs/RunAsProgram";
+import { verbById } from "../../verbRegistry";
+import { setDecisionReaderObject } from "../../decisionReaderObject";
 import { qualifiedRef } from "../../api";
 import { decisionRecordSourceRef, openRef } from "../../openObject";
 import { useDesk } from "../../store";
@@ -826,6 +828,22 @@ function DecisionReader({
   // decision's status, and Edit edits its words in this reader.
   const deskId = receipt?.source_type === "desk" && receipt.source_id ? String(receipt.source_id) : "";
   const edit = useDeskDecisionEdit(deskId, onReread);
+  // The window's Object menu is this decision's while the reader shows it.
+  useEffect(() => {
+    setDecisionReaderObject(deskId || null);
+    return () => setDecisionReaderObject(null);
+  }, [deskId]);
+  // Delete is the desk's one delete (`object.delete`, the one undo receipt):
+  // offered only where it can run. The window closes first, so the receipt on
+  // the desk is in view (as the window's Object ▸ Delete does).
+  const deleteVerb = verbById("object.delete");
+  const deleteCtx = { selectedRef: deskId ? `decision:${deskId}` : null };
+  const canDelete = Boolean(deskId && deleteVerb && !deleteVerb.ghost(deleteCtx));
+  const deleteDecision = () => {
+    if (!deleteVerb || !canDelete) return;
+    useDesk.getState().closeSurfaceWindow("open-decisions");
+    deleteVerb.run(deleteCtx);
+  };
   const { copy, receipt: copyReceipt } = useCopyReceipt();
   const items = useDesk((state) => state.items);
   const [writing, setWriting] = useState<"" | "accepted" | "deprecated">("");
@@ -902,6 +920,11 @@ function DecisionReader({
         <Button dense variant="ghost" loading={writing === "deprecated"} disabled={Boolean(writing)} onClick={() => void writeStatus("deprecated")}
           data-testid="decision-reader-retire">
           Retire
+        </Button>
+      ) : null}
+      {receipt && !edit.editing && canDelete ? (
+        <Button dense variant="ghost" onClick={deleteDecision} data-testid="decision-reader-delete">
+          Delete
         </Button>
       ) : null}
       {receipt && !edit.editing ? (

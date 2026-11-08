@@ -9,6 +9,7 @@ import type { Meeting, Note, Project } from "../../lib/primitives";
 import { useDesk } from "../store";
 import type { WorkMenuEntry } from "../components/DeskMenu";
 import { useScreenMembersStore } from "../screen/members";
+import { setDecisionReaderObject } from "../decisionReaderObject";
 
 beforeEach(() => {
   useDesk.setState({
@@ -185,6 +186,44 @@ describe("PHILO-17: a window carries its object's verbs (off-desk kinds)", () =>
   it("a window with no desk object has no Object ▸", () => {
     expect(windowObjectEntry("surface-settings", vi.fn())).toBeNull();
     expect(windowObjectEntry("pullout:persona:missing", vi.fn())).toBeNull();
+  });
+});
+
+describe("the one decision face (2026-11-08): the Decisions window carries its Desk decision", () => {
+  const decision = { kind: "decision", id: "d1", title: "Use SQLite" };
+
+  it("Object ▸ Delete deletes the Desk decision the reader shows and closes the window", () => {
+    useDesk.setState({ items: { ...EMPTY_ITEMS, decision: [decision] } as never });
+    setDecisionReaderObject("d1");
+    const seat = seatMounted();
+    const asked: string[] = [];
+    const listen = (e: Event) => asked.push(String((e as CustomEvent<{ ref?: string }>).detail?.ref));
+    window.addEventListener(OBJECT_DELETE_REQUEST, listen);
+    try {
+      const close = vi.fn();
+      const entry = windowObjectEntry("surface-decisions", close);
+      expect(entry?.type).toBe("sub");
+      const del = (entry as Extract<WorkMenuEntry, { type: "sub" }>).entries.find(
+        (e) => e.id === "object.delete",
+      ) as Extract<WorkMenuEntry, { type: "item" }>;
+      expect(del.ghost).toBeNull();
+      del.onSelect();
+      expect(close).toHaveBeenCalledOnce();
+      expect(asked).toEqual(["decision:d1"]);
+    } finally {
+      window.removeEventListener(OBJECT_DELETE_REQUEST, listen);
+      if (seat) seatUnmounted();
+      setDecisionReaderObject(null);
+    }
+  });
+
+  it("a meeting's record (no Desk decision) has no Object ▸", () => {
+    useDesk.setState({ items: { ...EMPTY_ITEMS, decision: [decision] } as never });
+    setDecisionReaderObject(null);
+    expect(windowObjectEntry("surface-decisions", vi.fn())).toBeNull();
+    setDecisionReaderObject("gone");
+    expect(windowObjectEntry("surface-decisions", vi.fn())).toBeNull();
+    setDecisionReaderObject(null);
   });
 });
 

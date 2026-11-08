@@ -37,6 +37,8 @@ import { readdirSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadDeskWorkspace, useDesk } from "../store";
+import { seatMounted, seatUnmounted } from "../deleteSeat";
+import { OBJECT_DELETE_REQUEST } from "../verbRegistry";
 import { DecisionsView } from "../pullouts/views/DecisionsView";
 import { PULLOUT_CONTENT } from "../pullouts/registry";
 import { DecisionToReader } from "../pullouts/DecisionToReader";
@@ -680,6 +682,23 @@ describe("W6 (atlas pass 3): every verb of a Desk decision says its word in the 
     fireEvent.click(within(toolbar).getByRole("button", { name: "More" }));
     const menu = screen.getByRole("menu", { name: "More" });
     expect(within(menu).getAllByRole("menuitem").map((item) => item.textContent?.trim())).toEqual(["Copy", "Dictate about this"]);
+  });
+
+  it("Delete is the desk's one delete: the window closes, the request names the Desk decision", async () => {
+    const seat = seatMounted();
+    const asked: string[] = [];
+    const listen = (e: Event) => asked.push(String((e as CustomEvent<{ ref?: string }>).detail?.ref));
+    window.addEventListener(OBJECT_DELETE_REQUEST, listen);
+    try {
+      render(<Reader deskId="decision_kafka" />);
+      const del = await screen.findByTestId("decision-reader-delete");
+      expect(del.textContent).toBe("Delete");
+      fireEvent.click(del);
+      expect(asked).toEqual(["decision:decision_kafka"]);
+    } finally {
+      window.removeEventListener(OBJECT_DELETE_REQUEST, listen);
+      if (seat) seatUnmounted();
+    }
   });
 
   it("Edit edits the fields as written (nothing is lost)", async () => {
