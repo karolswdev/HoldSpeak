@@ -1798,13 +1798,12 @@ class TestRoomFaceGlass:
                 assert after_copy["delivery_head"] == "Sent"
                 # He leaves and returns (R4-3): Copy's 2 s feedback is gone and
                 # no clipboard state is stored; Mark delivered is still offered.
-                # The Desk remembers (PHILO-13-07 B2): the Room returns on the
-                # update he left, not on its front face.
-                self._stage(page, "open-project-memory", f"project:{pid}")
-                page.locator("[data-testid=update-editor]").wait_for(timeout=T)
-                page.wait_for_timeout(900)
-                _settle(page)
-                assert page.locator("[data-testid=room-body]").count() == 0
+                # The Room always opens on Now (#1917, owner ruling 2026-11-07):
+                # no update posture is restored; he opens the update again.
+                self._room(page, pid)
+                assert page.locator("[data-testid=update-editor]").count() == 0
+                self._updates(page, pid)
+                self._open_update(page, uid)
                 page.evaluate(FETCH_SEAM)
                 returned = self._facts(page)
                 _rf_shot(page, "deliver-2-returned", width)

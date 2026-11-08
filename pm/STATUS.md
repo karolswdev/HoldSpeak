@@ -126,3 +126,4 @@ One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Ne
 - 2026-11-02 · #1785 The Enter guard decides at its 10 s mark.
 - 2026-11-02 · #1784 The Enter guard reads a wrapped brief; the brief waits 2 s after the composer shows.
 - 2026-11-02 · #1783 A new launch binds only a live session that began after it.
+- #1919 fix forward #1917: the Room glass deliver-twice case reopens the update after the Room comes back on Now
