@@ -26,8 +26,10 @@ async function reload() {
 
 const fetchUpdates = vi.fn();
 const saveUpdate = vi.fn();
+const fetchUpdate = vi.fn();
 vi.mock("../../features/project-room/update/api", () => ({
   fetchUpdates: (...args: unknown[]) => fetchUpdates(...args),
+  fetchUpdate: (...args: unknown[]) => fetchUpdate(...args),
   saveUpdate: (...args: unknown[]) => saveUpdate(...args),
 }));
 
@@ -265,7 +267,7 @@ describe("B2: unsent drafts return, per object, and clear on save", () => {
   });
 
   const update = (id: string, body: string) =>
-    ({ id, lifecycle: "draft", bodyMd: body, deliveries: [] }) as unknown as ProjectUpdate;
+    ({ id, projectId: "p1", lifecycle: "draft", bodyMd: body, deliveries: [] }) as unknown as ProjectUpdate;
 
   // Astra's B2 condition (slice one check): an EMPTIED draft is its own
   // state. Red on 22287ab1: setDraft("") deleted the key and the Room fell
@@ -283,7 +285,12 @@ describe("B2: unsent drafts return, per object, and clear on save", () => {
     vi.resetModules(); // reload
     ({ useUpdateController } = await import("../../features/project-room/update/useUpdateController"));
     const second = renderHook(() => useUpdateController("p1", () => {}));
-    await waitFor(() => expect(second.result.current.posture).toBe("editor"));
+    // Owner ruling 2026-11-07: the Room opens on Now; Continue opens the draft.
+    await act(async () => { await Promise.resolve(); });
+    expect(second.result.current.posture).toBe("off");
+    fetchUpdate.mockResolvedValueOnce(update("u1", "No focus items"));
+    await act(async () => { await second.result.current.continueDraft("u1"); });
+    expect(second.result.current.posture).toBe("editor");
     expect(second.result.current.editBody).toBe("");
     expect(second.result.current.dirty).toBe(true);
     // close (back to the list) and reopen the same update
@@ -311,7 +318,7 @@ describe("B2: unsent drafts return, per object, and clear on save", () => {
     expect(stored().drafts).toEqual({});
   });
 
-  it("Room: the update editor and its 111 unsaved characters return after a reload; restore never saves; Save clears", async () => {
+  it("Room: the update editor and its 111 unsaved characters return after a reload through Continue; the read never saves; Save clears", async () => {
     const typed = "Ledger cutover: dry run passed Tuesday; EU shard backup plan due Friday; Priya owns the rollback runbook draft.";
     expect(typed.length).toBe(111);
     fetchUpdates.mockResolvedValue([update("u1", "No focus items"), update("u2", "Other update")]);
@@ -322,12 +329,17 @@ describe("B2: unsent drafts return, per object, and clear on save", () => {
     act(() => first.result.current.handleEditBody(typed));
     first.unmount();
     expect(stored().drafts).toEqual({ "room/update-body/u1": typed });
-    expect(stored().places).toEqual({ "room/update/p1": "editor:u1" });
+    // Owner ruling 2026-11-07: no Update place is kept; the Room opens on Now.
+    expect(stored().places ?? {}).toEqual({});
 
     vi.resetModules();
     ({ useUpdateController } = await import("../../features/project-room/update/useUpdateController"));
     const second = renderHook(() => useUpdateController("p1", () => {}));
-    await waitFor(() => expect(second.result.current.posture).toBe("editor"));
+    await act(async () => { await Promise.resolve(); });
+    expect(second.result.current.posture).toBe("off");
+    fetchUpdate.mockResolvedValueOnce(update("u1", "No focus items"));
+    await act(async () => { await second.result.current.continueDraft("u1"); });
+    expect(second.result.current.posture).toBe("editor");
     expect(second.result.current.current?.id).toBe("u1");
     expect(second.result.current.editBody).toBe(typed);
     expect(second.result.current.dirty).toBe(true);

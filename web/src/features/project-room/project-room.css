@@ -729,6 +729,10 @@
   gap: 4px 8px;
   min-width: 0;
 }
+/* The kept update draft: one quiet row; its Continue stays in sight (a
+   row's verbs otherwise wait for hover). */
+.room-head-draft { min-width: 0; }
+.room-head-draft .surface-row-verbs { opacity: 1; transform: none; }
 .room-head .room-head-outcome {
   margin: 0;
   font: 500 13px / 1.4 var(--font-sans);

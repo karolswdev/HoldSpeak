@@ -1,7 +1,7 @@
 // The Room's head: the state line, the toolbar (Review, Write update), the
 // facts, the draft's run and the outcome. A failed health read is named.
 import { useEffect, useRef, useState } from "react";
-import { DotWord, RunLine, StateChip, SurfaceSection, Toolbar, ToolGlyph } from "../../../desk/surface";
+import { DotWord, RunLine, StateChip, SurfaceRow, SurfaceRows, SurfaceSection, Toolbar, ToolGlyph, wireDayClock } from "../../../desk/surface";
 import { spriteUrl } from "../../../desk/sprites";
 import { refOpener } from "../../../desk/openObject";
 import { openSurfaceOr } from "../../../desk/shell";
@@ -12,6 +12,20 @@ import { headFacts, stateLine, type StateLine } from "../now/model";
 import type { useReviewController } from "../review/useReviewController";
 import type { useUpdateController } from "../update/useUpdateController";
 import { sourcesWord } from "./format";
+
+/** The newest update draft the Room read holds (its recent updates), or
+ *  null: the draft he was writing, offered on the Now head with Continue. */
+function newestDraft(room: RoomSnapshot): { id: string; when: string } | null {
+  if (room.updates.state !== "ok") return null;
+  let best: Record<string, unknown> | null = null;
+  for (const row of room.updates.recent) {
+    if (row.lifecycle !== "draft" || !row.id) continue;
+    const at = String(row.updated_at ?? row.created_at ?? "");
+    if (!best || at > String(best.updated_at ?? best.created_at ?? "")) best = row;
+  }
+  if (!best) return null;
+  return { id: String(best.id), when: wireDayClock(best.updated_at ?? best.created_at) };
+}
 
 /* ── the head (Betterment P3: where it stands in ten seconds) ── */
 
@@ -78,6 +92,7 @@ export function RoomHead({
   }, [room.project.name, room.project.outcomeText]);
 
   const draftRun = updateCtrl.draftRun;
+  const keptDraft = newestDraft(room);
 
   return (
     <div className="room-head" data-testid="room-head">
@@ -120,6 +135,19 @@ export function RoomHead({
             <DotWord tone={sourceFact.stale ? "warn" : "idle"} data-testid="room-sources-word">{sourceFact.word}</DotWord>
           ) : null}
         </p>
+      ) : null}
+      {/* Owner ruling 2026-11-07: the Room opens on Now; the update draft
+          he was writing waits here, one quiet row, and Continue opens it. */}
+      {updateCtrl.posture === "off" && keptDraft ? (
+        <div className="room-head-draft" data-testid="room-head-update-draft">
+          <SurfaceRows>
+            <SurfaceRow quiet
+              title={keptDraft.when ? `Update draft · ${keptDraft.when}` : "Update draft"}
+              verbs={<Button dense variant="secondary" loading={updateCtrl.loading}
+                onClick={() => void updateCtrl.continueDraft(keptDraft.id)}
+                data-testid="room-head-update-continue">Continue</Button>} />
+          </SurfaceRows>
+        </div>
       ) : null}
       {/* P0 (betterment/projects): the draft's run where he pressed it.
           The Update posture draws its own line once it is open. */}

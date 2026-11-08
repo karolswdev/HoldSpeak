@@ -11,7 +11,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ApiError } from "../../../lib/api";
 import { openAutomationResult as markAutomationResultRead } from "../../../desk/api";
 import { plainFailure } from "../../../desk/surface/plainFailure";
-import { forgetDraft, keepDraft, keepPlace, keptDraft, keptPlace } from "../../../desk/deskMemory";
+import { forgetDraft, keepDraft, keptDraft } from "../../../desk/deskMemory";
 import type { ProjectUpdate, UpdateLifecycle } from "./model";
 import { bodyFromPlain, plainUpdateText } from "./model";
 import * as updateApi from "./api";
@@ -45,10 +45,9 @@ function draftCommandId(): string {
   return `draft-${Date.now()}-${entropy}`;
 }
 
-/* PHILO-13-07 (B2) — the Room's update place (`list` or `editor:<update>`)
-   per project, and the unsaved body per update (never per project, so the
-   text typed for one update never shows in another). Save clears it. */
-const updatePlaceKey = (projectId: string) => `room/update/${projectId}`;
+/* PHILO-13-07 (B2) — the unsaved body per update (never per project, so the
+   text typed for one update never shows in another). Save clears it. The
+   Room keeps no update place: it always opens on Now (owner, 2026-11-07). */
 const updateDraftKey = (updateId: string) => `room/update-body/${updateId}`;
 
 /** W6-F words: each update failure as one plain sentence (what failed ·
@@ -171,7 +170,6 @@ export function useUpdateController(
     // failure), never a fresh list over unsaved words.
     if (posture === "off" && current) {
       setPosture("editor");
-      keepPlace(updatePlaceKey(projectId), `editor:${current.id}`);
       return;
     }
     setLoading(true);
@@ -180,7 +178,6 @@ export function useUpdateController(
       const list = await updateApi.fetchUpdates(projectId);
       setUpdates(list);
       setPosture("list");
-      keepPlace(updatePlaceKey(projectId), "list");
     } catch (reason) {
       fail("UPDATES DID NOT LOAD", reason);
     } finally {
@@ -191,19 +188,16 @@ export function useUpdateController(
   // ── Step aside (PHILO-14 A5b, Muad'Dib's ruling on Astra r2) ──
   // A proposal request shows the Room: the posture steps aside and NEVER
   // writes. The editor's update, its unsaved text (and the kept draft), its
-  // failure and Try again stay as they are; the kept place is cleared so a
-  // just-mounted Room does not restore the posture over the proposal.
-  // `Draft update` brings the editor back as he left it.
+  // failure and Try again stay as they are. `Write update` brings the editor
+  // back as he left it.
   const stepAside = useCallback(() => {
-    if (projectId) keepPlace(updatePlaceKey(projectId), "");
     setPosture("off");
-  }, [projectId]);
+  }, []);
 
   // ── Exit update posture ──
   const exitUpdates = useCallback(() => {
     stopPollingRef.current();
     setEnginePassRef.current({ phase: "idle" });
-    if (projectId) keepPlace(updatePlaceKey(projectId), "");
     setPosture("off");
     setUpdates([]);
     setCurrent(null);
@@ -223,7 +217,6 @@ export function useUpdateController(
     setDirty(kept !== null && kept !== plain);
     setPosture("editor");
     setError("");
-    if (projectId) keepPlace(updatePlaceKey(projectId), `editor:${update.id}`);
   }, [projectId]);
 
   // The Room's Update line is a direct doorway to the newest update. Keep
@@ -239,7 +232,6 @@ export function useUpdateController(
       if (list[0]) openUpdate(list[0]);
       else {
         setPosture("list");
-        keepPlace(updatePlaceKey(projectId), "list");
       }
     } catch (reason) {
       fail("UPDATES DID NOT LOAD", reason);
@@ -292,7 +284,6 @@ export function useUpdateController(
       setLoading(false);
     }
     setPosture("list");
-    keepPlace(updatePlaceKey(projectId), "list");
   }, [projectId]);
 
   // ── Draft verb ──
@@ -303,7 +294,6 @@ export function useUpdateController(
     // it does not mint a second draft or discard the owner's words.
     if (posture === "off" && current) {
       setPosture("editor");
-      keepPlace(updatePlaceKey(projectId), `editor:${current.id}`);
       return null;
     }
     const startedAt = Date.now();
@@ -316,7 +306,6 @@ export function useUpdateController(
       setEditBody(plainUpdateText(update.bodyMd));
       setDirty(false);
       setPosture("editor");
-      keepPlace(updatePlaceKey(projectId), `editor:${update.id}`);
       setDraftRun({
         phase: "success",
         startedAt,
@@ -375,7 +364,6 @@ export function useUpdateController(
       setCurrent(update);
       setEditBody(plainUpdateText(update.bodyMd));
       setDirty(false);
-      if (projectId) keepPlace(updatePlaceKey(projectId), `editor:${update.id}`);
       setEnginePass({ phase: "written", seconds: seconds(startedAt), model: update.generatorModel || model });
       if (projectId) updateApi.fetchUpdates(projectId).then(setUpdates).catch(() => {});
     } catch (reason) {
@@ -525,7 +513,6 @@ export function useUpdateController(
       setCurrent(newDraft);
       setEditBody(plainUpdateText(newDraft.bodyMd));
       setDirty(false);
-      if (projectId) keepPlace(updatePlaceKey(projectId), `editor:${newDraft.id}`);
     } catch (reason) {
       fail("DRAFT NOT MADE", reason, () => void regenerate(generator));
     } finally {
@@ -633,30 +620,30 @@ export function useUpdateController(
   dirtyNow.current = dirty;
   currentId.current = current?.lifecycle === "draft" ? current.id : null;
 
-  // PHILO-13-07 (B2): the Room comes back where it was — on the update list,
-  // or in the editor on the same update with its unsaved text. Restore only
-  // reads; it never saves or publishes.
-  const restored = useRef("");
-  useEffect(() => {
-    if (!projectId || restored.current === projectId) return;
-    restored.current = projectId;
-    const place = keptPlace(updatePlaceKey(projectId));
-    if (!place) return;
-    let live = true;
+  // Owner ruling 2026-11-07: the Room always opens on Now. The Update
+  // posture is never restored at open; it is a place he chooses (Write
+  // update, Open latest, or Continue on the Now head's draft row).
+  /** Continue: the Update posture opens on that draft, with the unsaved
+   *  text the desk kept for it. It reads; it never saves or publishes. */
+  const continueDraft = useCallback(async (updateId: string) => {
+    if (!projectId || !updateId) return;
+    if (current?.id === updateId) {
+      // A step aside left this editor as he left it: come back to it.
+      setPosture("editor");
+      return;
+    }
     setLoading(true);
-    void updateApi.fetchUpdates(projectId).then((list) => {
-      if (!live) return;
-      // A5b: the Room left the posture while the list loaded (a proposal
-      // request reveals OPEN HERE): the kept place is gone, so stay out.
-      if (keptPlace(updatePlaceKey(projectId)) !== place) return;
-      setUpdates(list);
-      const updateId = place.startsWith("editor:") ? place.slice("editor:".length) : "";
-      const update = updateId ? list.find((u) => u.id === updateId) : undefined;
-      if (update) openUpdate(update);
-      else setPosture("list");
-    }).catch(() => undefined).finally(() => { if (live) setLoading(false); });
-    return () => { live = false; };
-  }, [projectId, openUpdate]);
+    setError("");
+    try {
+      const update = await updateApi.fetchUpdate(updateId);
+      if (update.projectId !== projectId) throw new Error("The update belongs to another project.");
+      openUpdate(update);
+    } catch (reason) {
+      fail("UPDATE DID NOT OPEN", reason);
+    } finally {
+      setLoading(false);
+    }
+  }, [projectId, current, openUpdate]);
   editBodyNow.current = editBody;
 
   // ── Derived ──
@@ -675,6 +662,7 @@ export function useUpdateController(
     exitUpdates,
     stepAside,
     openUpdate,
+    continueDraft,
     backToList,
 
     // List

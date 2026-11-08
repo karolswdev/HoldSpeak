@@ -176,14 +176,12 @@ function ProjectRoomCoreFor({ hero, scope, scopeLabel }: CoreProps) {
   // PHILO-14 A5b (Astra r1 on #965): a proposal request REVEALS the
   // proposal, whatever the Room shows. Every posture (Review, Update,
   // Steward, Prepare) closes the way its own Close does, except Update,
-  // which steps aside with no write (a kept Update place is not restored
-  // over the request), the Room goes to its ROOM wing (not History),
-  // and the selected row scrolls into view.
+  // which steps aside with no write, the Room goes to its ROOM wing (not
+  // History), and the selected row scrolls into view.
   // Every posture steps aside the way its own Close does; the Update posture
   // NEVER writes (Muad'Dib's ruling on Astra r2): its text, kept draft and
-  // failure stay; Draft update brings the editor back. Always: it also
-  // forgets a kept Update place that a just-mounted Room is still restoring
-  // (393 opens a fresh Room window). `keepSteward`: the Steward request.
+  // failure stay; Write update brings the editor back. `keepSteward`: the
+  // Steward request.
   const leavePostures = (keepSteward = false) => {
     if (reviewCtrl.posture !== "off") reviewCtrl.exitReview();
     updateCtrl.stepAside();
