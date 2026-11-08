@@ -2,6 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · #1928 Fix forward #1923: the desk architecture metadata cites the status line's Review test (the head Review left Now).
 - 2026-11-08 · #1927 holdspeak/db/schema.py 5,436 lines → holdspeak/db/schema/, 17 domain modules of ≤474 lines and a 61-line __init__ that joins them; SCHEMA_SQL byte-identical (sha256 6f6b3b19…), same sqlite_master in the same order, same importers (4 in holdspeak, 30 tests); the package joins the density guard.
 - 2026-11-08 · #1924 Fix forward #1923: the Needs you → Room proposal case presses the status line's n need you before it reads the rows.
 - 2026-11-08 · #1923 The Room's Now face is the brief (R1): the toolbar (Write update, History, the Ask field with its mic), the status line (state, last update, n need you that opens Needs you in place), What changed (the latest update's first lines, Open the update, the kept draft's Continue), What is open (Programs, People, Decisions rows), Files and Sources on one line, the status bar (Updates every Friday at 15:00 · engine, Saved time); the Update chips and the Programs fold are parked.
