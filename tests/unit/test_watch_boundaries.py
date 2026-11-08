@@ -82,7 +82,7 @@ def test_provider_and_steward_helpers_have_one_wire_source() -> None:
     from holdspeak.mcp import resources
     from holdspeak.services import provider_manifest_service as provider_service
     from holdspeak.services import steward_serialization_service as steward_service
-    from holdspeak.services import project_service
+    from holdspeak.services import project_room_reads
     from holdspeak.services import steward_contract
     from holdspeak.web.routes import providers as provider_route
     from holdspeak.web.routes import steward as steward_route
@@ -97,7 +97,7 @@ def test_provider_and_steward_helpers_have_one_wire_source() -> None:
     assert steward_route._serialize_runs is steward_service._serialize_runs
     assert resources._serialize_run is steward_service._serialize_run
     assert resources._serialize_steps is steward_service._serialize_steps
-    assert project_service._serialize_run is steward_service._serialize_run
+    assert project_room_reads._serialize_run is steward_service._serialize_run
     assert steward_contract._serialize_policy is steward_service._serialize_policy
     assert steward_contract._serialize_run is steward_service._serialize_run
     assert steward_contract._serialize_steps is steward_service._serialize_steps
