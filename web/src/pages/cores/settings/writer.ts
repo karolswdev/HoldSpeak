@@ -3,7 +3,7 @@
 // repaints only the writes still pending, retries a refused write and flushes
 // unsent edits when the page hides. Moved out of SettingsCore.tsx; the face
 // calls `useSettingsWriter` once and hands its verbs to the sections.
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { SettingsResponse } from "../core-types";
 import { ApiError, apiFetch, readableError } from "../../../lib/api";
 import { useFlushOnLeave } from "../../../lib/flushOnLeave";
@@ -465,4 +465,26 @@ export function settingsOwnerAdapter(writer: () => SettingsWriter): OwnerNameAda
       return { settings: { owner: ownerOf(base, owner), _revision: base._revision } };
     },
   };
+}
+
+/** A window with no Settings document of its own (the first-run You card,
+ *  the People window) gets its own one writer for the You fields: the store
+ *  is the document the owner read fills, so the writer threads that read's
+ *  revision. A 409 says the hub's word, as in Settings. */
+export function useOwnerWriter(): OwnerNameAdapter {
+  const [data, setData] = useState<SettingsResponse>({} as SettingsResponse);
+  const writer = useSettingsWriter({ data, setData }, () => {});
+  const writerRef = useRef(writer);
+  writerRef.current = writer;
+  return useMemo(() => {
+    const adapter = settingsOwnerAdapter(() => writerRef.current);
+    return {
+      ...adapter,
+      async read() {
+        const settings = await adapter.read();
+        setData(settings as SettingsResponse);
+        return settings;
+      },
+    };
+  }, []);
 }

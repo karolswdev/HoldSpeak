@@ -21,6 +21,7 @@ import { KEEP_CAPS } from "../surface/objects/NeedsRow";
 import { DICTATION_FAILURES, needsMicrophoneDoctor, type DictationFailure } from "../../lib/dictationRecovery";
 import "./setupFace.css";
 import { useOwnerName } from "./ownerName";
+import { useOwnerWriter } from "../../pages/cores/settings/writer";
 import { SetupMicrophoneCheck } from "./SetupMicrophoneCheck";
 import { Token } from "../surface/Token";
 
@@ -272,7 +273,7 @@ export function SetupFace({ initial, standalone = false }: { initial: SetupInven
   const [peopleBusy, setPeopleBusy] = useState(false);
   const [notice, setNotice] = useState("");
   const [microphoneRequest, setMicrophoneRequest] = useState(0);
-  const owner = useOwnerName();
+  const owner = useOwnerName(useOwnerWriter());
 
   const handoff = useCallback(async (disposition: "completed" | "dismissed") => {
     await apiFetch("/api/desk/seed", { method: "POST" });

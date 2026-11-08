@@ -1,10 +1,13 @@
 /* First run C1 — the You card: his name and the other names for him.
  *
- * Stored in `config.owner` through the settings API (`GET/PUT
- * /api/settings`, section `owner: { name, aliases }`). The needs-you rule
- * reads them as "me" (holdspeak/services/needs_you_membership.py). */
+ * Stored in `config.owner` through the settings API (section `owner: { name,
+ * aliases }`). The needs-you rule reads them as "me"
+ * (holdspeak/services/needs_you_membership.py). This file has no request of
+ * its own: every window passes an adapter over its one Settings writer
+ * (`useOwnerWriter` / `settingsOwnerAdapter`, pages/cores/settings/writer.ts),
+ * so a window has one revision, one 409 word and one queue. */
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ApiError, apiFetch, readableError } from "../../lib/api";
+import { ApiError, readableError } from "../../lib/api";
 import { useFlushOnLeave } from "../../lib/flushOnLeave";
 
 export interface OwnerSetting {
@@ -21,16 +24,6 @@ export interface OwnerNameAdapter {
 
 export type OwnerField = "name" | "aliases";
 export type OwnerFieldStatus = "Edited" | "Saving" | "Saved" | "Not saved";
-
-/** The production IO remains the current settings endpoint and payload. */
-export const apiOwnerNameAdapter: OwnerNameAdapter = {
-  read: () => apiFetch<{ owner?: Partial<OwnerSetting>; _revision?: string }>("/api/settings"),
-  write: (owner, revision, options) => apiFetch<{ settings?: { owner?: OwnerSetting; _revision?: string } }>("/api/settings", {
-    method: "PUT",
-    json: revision ? { owner, _revision: revision } : { owner },
-    keepalive: options?.keepalive,
-  }),
-};
 
 function sameField(field: OwnerField, a: OwnerSetting, b: OwnerSetting): boolean {
   return field === "name"
@@ -58,7 +51,7 @@ export function splitAliases(raw: string, existing: string[], name: string): str
   return out;
 }
 
-export function useOwnerName(adapter: OwnerNameAdapter = apiOwnerNameAdapter) {
+export function useOwnerName(adapter: OwnerNameAdapter) {
   const [name, setNameState] = useState("");
   const [aliases, setAliases] = useState<string[]>([]);
   const [aliasDraft, setAliasDraftState] = useState("");
