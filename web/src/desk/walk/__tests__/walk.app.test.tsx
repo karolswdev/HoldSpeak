@@ -3,7 +3,7 @@
  * The walk and the answer are the hub's own recorded answers
  * (tests/integration/test_desk_walks.py writes __fixtures__). */
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import page from "../__fixtures__/walk.page.json";
 import answer from "../__fixtures__/walk.answer.json";
 import handheld from "../__fixtures__/walk.handheld.page.json";
@@ -49,8 +49,11 @@ vi.mock("../../../lib/api", async (importOriginal) => {
   };
 });
 
-import { WalkRunner } from "../WalkRunner";
-import { READY_BEAT_MS, deskReady } from "../walk";
+import { GHOSTS, WalkRunner, arcFrames, tiltFor, travelMs } from "../WalkRunner";
+import { READY_BEAT_MS, deskReady, deskSignals } from "../walk";
+
+// The compositor's flag loads lazily (no import cycle through the registry).
+beforeAll(async () => { await deskSignals; });
 
 /** The desk as it stands after its first read: `#desk-next` and the Dock. */
 function mountDesk(): { desk: HTMLElement; dock: HTMLElement } {
@@ -143,13 +146,15 @@ describe("The Walk", () => {
     render(<WalkRunner />);
 
     // Step 1 opens Programs through the surface opener and goes on by itself.
-    await waitFor(() => expect(mocks.openSurface).toHaveBeenCalledWith("open-programs", undefined));
+    // The walk moves one 900 ms beat after the desk is ready.
+    await waitFor(() => expect(mocks.openSurface).toHaveBeenCalledWith("open-programs", undefined), { timeout: 3000 });
     // Step 2: a mark with words and Next.
     expect(await screen.findByTestId("walk-words", {}, { timeout: 3000 })).toHaveTextContent(
       "Press New program. The well opens.");
-    expect(await screen.findByTestId("walk-ring")).toBeInTheDocument();
-    // The dim is four sides around the part; none is over it.
-    expect(screen.getAllByTestId(/^walk-backdrop-/)).toHaveLength(4);
+    // The mark is the part itself: it lifts and wears the warm halo; nothing
+    // dims and nothing is drawn over it.
+    await waitFor(() => expect(screen.getByTestId("programs-new")).toHaveClass("walk-halo"));
+    expect(document.querySelectorAll(".walk-backdrop, .walk-ring")).toHaveLength(0);
     expect(screen.getByTestId("walk-count")).toHaveTextContent("1 of 3");
     fireEvent.click(screen.getByTestId("walk-next"));
 
@@ -225,8 +230,9 @@ describe("The Walk", () => {
     }, 300);
 
     expect(await screen.findByTestId("walk-question")).toHaveTextContent("Does the well read clearly?");
-    await waitFor(() => expect(screen.getByTestId("walk-ring").style.left).toBe("34px"));
-    expect(screen.getByTestId("walk-ring").style.top).toBe("114px");
+    // The halo lands on the step's window's part, never on the other one.
+    await waitFor(() => expect(programs.querySelector("[data-testid='programs-make-rows']")).toHaveClass("walk-halo"));
+    expect(other.querySelector("[data-testid='programs-make-rows']")).not.toHaveClass("walk-halo");
     fireEvent.click(screen.getByRole("button", { name: "Redo" }));
     await waitFor(() => expect(posts).toHaveLength(1));
     expect(mocks.captureViewportPng).toHaveBeenCalledTimes(1);
@@ -245,9 +251,8 @@ describe("The Walk", () => {
     await waitFor(() => expect(posts).toHaveLength(1));
     expect(await screen.findByTestId("walk-line", {}, { timeout: 9000 }))
       .toHaveTextContent("The Needs you window is not open · This step is skipped");
-    expect(screen.queryByTestId("walk-ring")).toBeNull();
     // Nothing marked, nothing dimmed: the desk stays live.
-    expect(screen.queryAllByTestId(/^walk-backdrop-/)).toHaveLength(0);
+    expect(document.querySelectorAll(".walk-halo, .walk-backdrop")).toHaveLength(0);
     expect(await screen.findByTestId("walk-end", {}, { timeout: 4000 })).toHaveTextContent("Thanks · 1 answer");
     expect(posts).toHaveLength(1);
   }, 20000);
@@ -286,16 +291,12 @@ describe("The Walk", () => {
     const target = screen.getByTestId("programs-new");
     await waitFor(() => expect(target.getBoundingClientRect().bottom).toBeLessThanOrEqual(844 - 64 - 200));
     expect(target.getBoundingClientRect().top).toBeGreaterThanOrEqual(60);
-    // The dim and the ring still mark it, where it is now: the dim ends at
-    // the ring on each side, nothing of it over the part.
-    await waitFor(() => expect(screen.getByTestId("walk-ring").style.top)
-      .toBe(`${target.getBoundingClientRect().top - 6}px`));
-    const ring = screen.getByTestId("walk-ring").style;
-    const dim = (side: string) => screen.getByTestId(`walk-backdrop-${side}`).style;
-    expect(dim("top").height).toBe(ring.top);
-    expect(dim("bottom").top).toBe(`${parseFloat(ring.top) + parseFloat(ring.height)}px`);
-    expect(dim("left").width).toBe(ring.left);
-    expect(dim("right").left).toBe(`${parseFloat(ring.left) + parseFloat(ring.width)}px`);
+    // The part itself is marked (the halo), and nothing dims around it.
+    expect(target).toHaveClass("walk-halo");
+    expect(document.querySelectorAll(".walk-backdrop")).toHaveLength(0);
+    // The caption rides over the sheet, never under it.
+    const slot = document.querySelector<HTMLElement>(".walk-caption-slot")!;
+    expect(parseFloat(slot.style.getPropertyValue("--walk-caption-bottom"))).toBeGreaterThanOrEqual(64 + 200);
   });
 
   it("shows one plain line and gets out of the way when the hub refuses the token", async () => {
@@ -318,7 +319,7 @@ describe("The Walk", () => {
     expect(fetcher).not.toHaveBeenCalled();
   });
 
-  it("holds his hand: the frame and the guide, a say, a press it makes itself, a scroll, an empty part skipped", async () => {
+  it("holds his hand: the edge and the caption, a say, a press it makes itself, a scroll, an empty part skipped", async () => {
     vi.stubGlobal("fetch", hub(200, handheld));
     window.localStorage.setItem("hs:walk-voice", "on");
     // Programs: New program opens the well when it is PRESSED; its foot is
@@ -351,15 +352,18 @@ describe("The Walk", () => {
     watch.observe(document.body, { childList: true, subtree: true });
     render(<WalkRunner />);
 
-    // The frame and the guide are up before anything moves; with the voice
-    // on, the walk waits for one tap (iOS plays audio after a gesture).
-    expect(await screen.findByTestId("walk-frame")).toBeInTheDocument();
-    expect(screen.getByTestId("walk-guide").querySelector("img")!.getAttribute("src")).toContain("dock-agents.png");
+    // The edge is up before anything moves; no robot, no bubble, no frame.
+    // With the voice on, the walk waits for one tap (iOS plays audio after
+    // a gesture).
+    expect(await screen.findByTestId("walk-edge")).toBeInTheDocument();
+    expect(document.querySelectorAll(".walk-guide, .walk-guide-bot, .walk-bubble, .walk-frame, .walk-ring, img"))
+      .toHaveLength(0);
     expect(mocks.openSurface).not.toHaveBeenCalled();
     fireEvent.click(screen.getByTestId("walk-begin"));
 
-    // Step 1 says its words in the bubble and the voice, and dims nothing.
+    // Step 1 says its words in the caption and the voice, and dims nothing.
     expect(await screen.findByTestId("walk-words")).toHaveTextContent("We start in Programs.");
+    expect(screen.getByTestId("walk-words")).toHaveClass("walk-caption");
     await waitFor(() => expect(mocks.speak).toHaveBeenCalledWith("We start in Programs."));
     expect(screen.queryAllByTestId(/^walk-backdrop-/)).toHaveLength(0);
     expect(screen.queryByTestId("walk-card")).toBeNull();
@@ -370,7 +374,7 @@ describe("The Walk", () => {
     expect(cursorSeen).toBe(true);
     watch.disconnect();
     expect(await screen.findByTestId("walk-question", {}, { timeout: 4000 })).toHaveTextContent("Does the well read clearly?");
-    expect(await screen.findByTestId("walk-ring")).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByTestId("programs-make-rows")).toHaveClass("walk-halo"));
     await waitFor(() => expect(mocks.speak).toHaveBeenCalledWith(expect.stringContaining("Does the well read clearly?")));
     // Keep in the confirm hue, Redo in the attention hue; neither is primary.
     expect(screen.getByTestId("walk-choice-0")).toHaveAttribute("data-tone", "ok");
@@ -401,11 +405,11 @@ describe("The Walk", () => {
     expect(screen.queryByTestId("walk-question")).toBeNull();
     expect(await screen.findByTestId("walk-end", {}, { timeout: 4000 })).toHaveTextContent("Thanks · 1 answer");
     expect(posts).toHaveLength(2);
-    // The frame holds to the end and goes with the walk.
-    expect(screen.getByTestId("walk-frame")).toBeInTheDocument();
+    // The edge holds to the end and goes with the walk; no halo is left.
+    expect(screen.getByTestId("walk-edge")).toBeInTheDocument();
+    expect(document.querySelectorAll(".walk-halo")).toHaveLength(0);
     fireEvent.click(screen.getByTestId("walk-back"));
-    expect(screen.queryByTestId("walk-frame")).toBeNull();
-    expect(screen.queryByTestId("walk-guide")).toBeNull();
+    expect(screen.queryByTestId("walk-edge")).toBeNull();
   }, 30000);
 
   it("swipes the sheet's handle down to skip, and keeps focus inside the sheet", async () => {
@@ -565,7 +569,74 @@ describe("The walk waits for the desk (owner 2026-11-07: \"only launch when all 
     expect(pressed).toHaveBeenCalledTimes(1);
     await run(9000);
     expect(screen.getByTestId("walk-question")).toHaveTextContent("Does the well read clearly?");
-    expect(screen.getByTestId("walk-ring")).toBeInTheDocument();
+    expect(screen.getByTestId("programs-make-rows")).toHaveClass("walk-halo");
     expect(screen.queryByTestId("walk-line")).toBeNull();
+  });
+
+  it("presses like a hand: travels with a comet trail, hovers, taps with a ripple, then the real click", async () => {
+    fakeTimers();
+    vi.stubGlobal("fetch", hub(200, pressWalk));
+    const pressed = vi.fn();
+    let pressedLook = false;
+    mocks.openSurface.mockImplementation(() => {
+      const win = mountWindow("surface-programs", `<button data-testid="programs-new">New program</button>`);
+      const button = win.querySelector<HTMLElement>("[data-testid='programs-new']")!;
+      rects.set(button, () => ({ left: 900, top: 100, width: 120, height: 40 }));
+      button.addEventListener("click", () => {
+        pressed();
+        pressedLook = button.hasAttribute("data-walk-pressed");
+        win.insertAdjacentHTML("beforeend", `<ul data-testid="programs-make-rows"><li>Project</li></ul>`);
+      });
+      return true;
+    });
+    render(<WalkRunner />);
+    await walkRead();
+    await run(READY_BEAT_MS + 200);
+    expect(mocks.openSurface).toHaveBeenCalled();
+    // On its way: the cursor and its five ghosts, the click not yet.
+    for (let step = 0; step < 100 && !screen.queryByTestId("walk-cursor"); step += 1) await run(10);
+    await run(100);
+    const cursor = screen.getByTestId("walk-cursor");
+    expect(cursor).toHaveAttribute("data-phase", "travel");
+    expect(screen.getAllByTestId("walk-cursor-ghost")).toHaveLength(GHOSTS);
+    // The tip lands on the part's centre.
+    expect(cursor.style.transform).toBe("translate(960px, 120px)");
+    expect(screen.getByTestId("walk-words")).toHaveTextContent("I press New program.");
+    expect(pressed).not.toHaveBeenCalled();
+    // Arrived (650 ms at most): one beat of hover, still no click.
+    await run(600);
+    expect(screen.getByTestId("walk-cursor")).toHaveAttribute("data-phase", "hover");
+    expect(pressed).not.toHaveBeenCalled();
+    // The tap: the squash, the ripple at the tap point, the pressed look.
+    await run(250);
+    expect(screen.getByTestId("walk-cursor")).toHaveAttribute("data-phase", "tap");
+    expect(screen.getByTestId("walk-ripple").style.transform).toBe("translate(960px, 120px)");
+    expect(screen.getByTestId("programs-new")).toHaveAttribute("data-walk-pressed");
+    expect(pressed).not.toHaveBeenCalled();
+    // 120 ms later the real click lands; the cursor rests, the trail is gone.
+    await run(150);
+    expect(pressed).toHaveBeenCalledTimes(1);
+    expect(pressedLook).toBe(false);
+    expect(screen.getByTestId("walk-cursor")).toHaveAttribute("data-phase", "rest");
+    expect(screen.queryAllByTestId("walk-cursor-ghost")).toHaveLength(0);
+    // The asked part wears the halo; the caption carries the step's words.
+    await run(2000);
+    expect(screen.getByTestId("walk-question")).toHaveTextContent("Does the well read clearly?");
+    expect(screen.getByTestId("programs-make-rows")).toHaveClass("walk-halo");
+    expect(screen.getByTestId("walk-words")).toHaveTextContent("The project rows.");
+  });
+});
+
+describe("The guide's cursor (direction C)", () => {
+  it("travels 450 to 650 ms by distance, leans 8 to 12 degrees its way, and bows upward", () => {
+    expect(travelMs({ x: 0, y: 0 }, { x: 10, y: 0 })).toBeGreaterThanOrEqual(450);
+    expect(travelMs({ x: 0, y: 0 }, { x: 2000, y: 2000 })).toBe(650);
+    expect(tiltFor({ x: 0, y: 0 }, { x: 600, y: 0 })).toBe(12);
+    expect(tiltFor({ x: 600, y: 0 }, { x: 590, y: 300 })).toBe(-8);
+    const frames = arcFrames({ x: 0, y: 500 }, { x: 400, y: 500 }, 10);
+    expect(frames[0]).toBe("translate(0.0px, 500.0px) rotate(0.00deg)");
+    expect(frames[frames.length - 1]).toMatch(/^translate\(400\.0px, 500\.0px\) rotate\(0\.00deg\)$/);
+    // Mid-way it is above the straight line and leans the full 10 degrees.
+    expect(frames[6]).toMatch(/translate\(200\.0px, (4[0-9]{2})\.\dpx\) rotate\(10\.00deg\)/);
   });
 });

@@ -1,26 +1,28 @@
-/** The Walk (2026-11-07; hand-held 2026-11-08): the desk runs a walk script
- * step by step.
+/** The Walk (2026-11-07; direction C 2026-11-08, "the cursor is the hero"):
+ * the desk runs a walk script step by step.
  *
- * For the whole walk a thin pixel frame marches around the viewport inside
- * the safe area, and the guide (the Dock's pixel robot) sits at its top-left
- * corner with one bubble that carries the step's words: the one constant
- * signal "the guide holds this" (owner, 2026-11-07, on his iPhone: "a lot
- * more obvious we are being hand-held, with a very thin pixely AI border").
+ * For the whole walk a slow warm glow breathes at the viewport's edge inside
+ * the safe area: the one constant signal "the guide holds this". There is no
+ * character and no bubble (owner, 2026-11-08: the robot, the bubbles and the
+ * pixel frame were "cringe", "terrible", "sterile"; "DIRECTION C, BUT PLEASE
+ * MAKE THE CURSOR INTERESTING"). The step's words are one caption line at
+ * the bottom edge, above the sheet and the dock; the voice says the same.
  *
  * A step opens a window (the desk's own openers), runs a verb, PRESSES a
- * part itself (a pixel cursor travels to it, the ring pulses, the real click
- * lands), scrolls a part into the clear area, says words, marks one part
- * and asks one question. The mark is a dim of four rectangles around the
- * part (nothing over the part: it stays live) and a 2 px accent ring. A
- * part is searched ONLY in the window of the step's app; when the window is
- * not open, or holds no such part, the guide says so and the step is
- * skipped without a question. The question is a card beside the part, or
- * at phone width one sheet above the dock (Keep and Redo side by side, Say
- * more with the mic inline, Skip; swipe the handle down to skip). A choice
- * captures the WHOLE viewport as he sees it (the walk's chrome hidden for
- * that frame) with the viewport, the pixel ratio, the browser and the part's
- * box, posts the answer and goes on. Words never choose: Send with words and
- * no choice stores the choice "words". Esc skips.
+ * part itself (the guide's cursor travels to it on an arc with a comet
+ * trail, hovers one beat, taps with a ripple, the part settles pressed, the
+ * real click lands), scrolls a part into the clear area, says words, marks
+ * one part and asks one question. The mark is the part itself: it lifts one
+ * step and wears a warm breathing halo; nothing is over it (it stays live)
+ * and nothing dims. A part is searched ONLY in the window of the step's app;
+ * when the window is not open, or holds no such part, the guide says so and
+ * the step is skipped without a question. The question is a card beside the
+ * part, or at phone width one sheet above the dock (Keep and Redo side by
+ * side, Say more with the mic inline, Skip; swipe the handle down to skip).
+ * A choice captures the WHOLE viewport as he sees it (the walk's chrome and
+ * the halo hidden for that frame) with the viewport, the pixel ratio, the
+ * browser and the part's box, posts the answer and goes on. Words never
+ * choose: Send with words and no choice stores the choice "words". Esc skips.
  * The guide speaks its words and each question through the desk's one TTS
  * seam (lib/tts: the hub voice, else the browser voice). The voice is on by
  * default on a touch device and off on the desk (the sheet's speaker
@@ -35,9 +37,8 @@ import {
 import { Button } from "../../components/signal/Signal";
 import { PadGadget } from "../surface/gadgets";
 import { captureScale, captureViewportPng } from "../feedback/capture";
-import { SYSTEM } from "../systemSprites";
 import { VerbGlyph } from "../components/window/VerbGlyph";
-import { onStateChange, speak, stop as stopVoice } from "../../lib/tts";
+import { speak, stop as stopVoice } from "../../lib/tts";
 import { play } from "../../lib/sfx";
 import { useCompactViewport } from "../useCompactViewport";
 import {
@@ -65,6 +66,7 @@ import {
   type WalkPart,
   type WalkView,
 } from "./walk";
+import { dockHeight, markPart } from "./dom";
 
 interface Rect { left: number; top: number; width: number; height: number }
 
@@ -100,51 +102,154 @@ function keepVoice(on: boolean): void {
   }
 }
 
-interface Cursor { from: { x: number; y: number }; to: { x: number; y: number }; pressing: boolean }
+interface Point { x: number; y: number }
 
-/** The 16 x 16 pixel arrow the guide presses with (two px a pixel). It
- * travels from the bubble to the part on a slight arc in 500 ms, then
- * presses with a two-frame squash. */
-function PixelCursor({ cursor }: { cursor: Cursor }) {
-  const ref = useRef<SVGSVGElement | null>(null);
-  const { from, to } = cursor;
-  useLayoutEffect(() => {
-    const element = ref.current;
-    if (!element || typeof element.animate !== "function") return;
-    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
-    const lift = Math.min(80, Math.hypot(to.x - from.x, to.y - from.y) / 4);
-    const at = (x: number, y: number) => `translate(${x}px, ${y}px)`;
-    element.animate([
-      { transform: at(from.x, from.y) },
-      { transform: at((from.x + to.x) / 2 + lift / 2, (from.y + to.y) / 2 - lift), offset: 0.5 },
-      { transform: at(to.x, to.y) },
-    ], { duration: 500, easing: "cubic-bezier(0.16, 1, 0.3, 1)" });
-  }, [from.x, from.y, to.x, to.y]);
+/** The guide's cursor. `travel`: on its way along an arc; `hover`: 2 px over
+ * the tap point for one beat; `tap`: the squash; `rest`: idle on the part;
+ * `out`: fading away (a step with no press). `trip` counts the journeys. */
+interface Cursor { from: Point; to: Point; phase: "travel" | "hover" | "tap" | "rest" | "out"; ms: number; tilt: number; trip: number }
+
+/** The comet trail: this many ghosts, this far apart in time. */
+export const GHOSTS = 5;
+const GHOST_MS = 60;
+
+function stillMotion(): boolean {
+  return typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+/** The travel time: 450 ms for a short hop, up to 650 ms across the screen. */
+export function travelMs(from: Point, to: Point): number {
+  return Math.round(450 + 200 * Math.min(1, Math.hypot(to.x - from.x, to.y - from.y) / 900));
+}
+
+/** The lean into the travel: 8 to 12 degrees, the way it goes. */
+export function tiltFor(from: Point, to: Point): number {
+  const dx = to.x - from.x;
+  return (dx < 0 ? -1 : 1) * Math.round(8 + 4 * Math.min(1, Math.abs(dx) / 400));
+}
+
+/** The arc: a quadratic curve bowed upward by a fifth of the distance (at
+ * most 64 px), sampled in `steps`, with the lean rising and settling. */
+export function arcFrames(from: Point, to: Point, tilt: number, steps = 12): string[] {
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  const distance = Math.hypot(dx, dy) || 1;
+  const lift = Math.min(64, distance / 5);
+  // The normal of the travel that points up the screen.
+  let nx = -dy / distance;
+  let ny = dx / distance;
+  if (ny > 0) { nx = -nx; ny = -ny; }
+  const cx = (from.x + to.x) / 2 + nx * lift;
+  const cy = (from.y + to.y) / 2 + ny * lift;
+  return Array.from({ length: steps + 1 }, (_, at) => {
+    const t = at / steps;
+    const x = (1 - t) ** 2 * from.x + 2 * (1 - t) * t * cx + t ** 2 * to.x;
+    const y = (1 - t) ** 2 * from.y + 2 * (1 - t) * t * cy + t ** 2 * to.y;
+    return `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) rotate(${(tilt * Math.sin(Math.PI * t)).toFixed(2)}deg)`;
+  });
+}
+
+/** The art: a 12 x 16 dart on whole pixels. The ember face is lit on its
+ * left and shaded on its right of the fold (tip to notch), a 1 px ember-ink
+ * edge, one specular pixel under the tip. Its tip is (0, 0). */
+function DartArt() {
   return (
-    <svg ref={ref} className="walk-cursor" aria-hidden="true" data-testid="walk-cursor" viewBox="0 0 16 16"
-      width="32" height="32" shapeRendering="crispEdges" data-pressing={cursor.pressing ? "" : undefined}
-      style={{ transform: `translate(${to.x}px, ${to.y}px)` }}>
-      <g className="walk-cursor-body">
-        <path className="walk-cursor-edge"
-          d="M0 0h2v1h1v1h1v1h1v1h1v1h1v1h1v1h1v1h1v1h1v2H8v1h1v2h1v2H8v-1H7v-2H6v-1H5v1H4v1H3v1H2v1H0z" />
-        <path className="walk-cursor-fill"
-          d="M1 2h1v1h1v1h1v1h1v1h1v1h1v1h1v1h1v1H7v1h1v2h1v1H8v-1H7v-2H6v-1H5v1H4v1H3v1H2v1H1z" />
-      </g>
+    <svg className="walk-dart" viewBox="0 0 12 16" width="24" height="32" shapeRendering="crispEdges" aria-hidden="true">
+      <path className="walk-dart-edge" d="M0 0h1v1H0zM0 1h2v1H0zM0 2h1v1H0zM2 2h1v1H2zM0 3h1v1H0zM3 3h1v1H3zM0 4h1v1H0zM4 4h1v1H4zM0 5h1v1H0zM5 5h1v1H5zM0 6h1v1H0zM6 6h1v1H6zM0 7h1v1H0zM7 7h1v1H7zM0 8h1v1H0zM8 8h1v1H8zM0 9h1v1H0zM9 9h1v1H9zM0 10h1v1H0zM10 10h1v1H10zM0 11h1v1H0zM6 11h6v1H6zM0 12h1v1H0zM5 12h1v1H5zM0 13h1v1H0zM4 13h1v1H4zM0 14h1v1H0zM3 14h1v1H3zM0 15h3v1H0z" />
+      <path className="walk-dart-lit" d="M1 3h1v1H1zM1 4h1v1H1zM1 5h2v1H1zM1 6h2v1H1zM1 7h3v1H1zM1 8h3v1H1zM1 9h4v1H1zM1 10h4v1H1zM1 11h4v1H1zM1 12h3v1H1zM1 13h2v1H1zM1 14h1v1H1z" />
+      <path className="walk-dart-shade" d="M2 3h1v1H2zM2 4h2v1H2zM3 5h2v1H3zM3 6h3v1H3zM4 7h3v1H4zM4 8h4v1H4zM5 9h4v1H5zM5 10h5v1H5zM5 11h1v1H5zM4 12h1v1H4zM3 13h1v1H3zM2 14h1v1H2z" />
+      <path className="walk-dart-shine" d="M1 2h1v1H1z" />
     </svg>
   );
 }
 
-/** The ring: an accent outline that draws itself in, breathes twice and
- * settles. The element is over no part: it only draws. */
-function Ring({ box, press }: { box: Rect; press?: boolean }) {
+/** The guide's cursor, the walk's one hero: it travels on an arc leaning
+ * into its way with a comet trail of five shrinking ghosts, hovers, taps,
+ * then breathes at rest. Transforms only; reduced motion: no trail, no
+ * lean, it is simply there. */
+function GuideCursor({ cursor }: { cursor: Cursor }) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const ghostRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const still = stillMotion();
+  // The trail lives through the travel, the hover and the tap: its last
+  // ghost lands 300 ms after the cursor.
+  const trailing = !still && (cursor.phase === "travel" || cursor.phase === "hover" || cursor.phase === "tap");
+  useLayoutEffect(() => {
+    if (!trailing || cursor.phase !== "travel") return;
+    const frames = arcFrames(cursor.from, cursor.to, cursor.tilt).map((transform) => ({ transform }));
+    const running: Animation[] = [];
+    const lead = ref.current;
+    if (lead && typeof lead.animate === "function") {
+      running.push(lead.animate(frames, { duration: cursor.ms, easing: "cubic-bezier(0.45, 0, 0.55, 1)" }));
+    }
+    ghostRefs.current.forEach((ghost, at) => {
+      if (!ghost || typeof ghost.animate !== "function") return;
+      const strength = 0.35 * (1 - at / GHOSTS);
+      running.push(ghost.animate(
+        frames.map((frame, step) => ({ ...frame, opacity: strength * (1 - step / (frames.length - 1)) })),
+        { duration: cursor.ms, delay: (at + 1) * GHOST_MS, easing: "cubic-bezier(0.45, 0, 0.55, 1)", fill: "backwards" },
+      ));
+    });
+    return () => running.forEach((animation) => animation.cancel());
+    // One journey a trip; the phase change after it does not run it again.
+  }, [cursor.trip, trailing]);
+  const at = `translate(${Math.round(cursor.to.x)}px, ${Math.round(cursor.to.y)}px)`;
   return (
-    <div className="walk-ring" aria-hidden="true" data-press={press ? "" : undefined}
-      data-testid={press ? "walk-press-ring" : "walk-ring"}
-      style={{ left: box.left - RING, top: box.top - RING, width: box.width + RING * 2, height: box.height + RING * 2 }}>
-      <svg className="walk-ring-line" width="100%" height="100%">
-        <rect x="1" y="1" width="100%" height="100%" rx="8" pathLength={100} />
-      </svg>
-    </div>
+    <>
+      {trailing ? Array.from({ length: GHOSTS }, (_, index) => (
+        <div key={`${cursor.trip}-${index}`} ref={(element) => { ghostRefs.current[index] = element; }}
+          className="walk-cursor walk-cursor-ghost" aria-hidden="true" data-testid="walk-cursor-ghost"
+          style={{ transform: at, "--walk-ghost-scale": String(1 - (index + 1) * 0.1) } as CSSProperties}>
+          <DartArt />
+        </div>
+      )) : null}
+      <div ref={ref} className="walk-cursor" aria-hidden="true" data-testid="walk-cursor" data-phase={cursor.phase}
+        style={{ transform: at }}>
+        <div className="walk-cursor-body"><DartArt /></div>
+      </div>
+    </>
+  );
+}
+
+/** The tap's soft warm ripple: one ring from 0.4 to 1.6 in 600 ms. */
+function Ripple({ at }: { at: Point }) {
+  return (
+    <div className="walk-ripple" aria-hidden="true" data-testid="walk-ripple"
+      style={{ transform: `translate(${Math.round(at.x)}px, ${Math.round(at.y)}px)` }} />
+  );
+}
+
+/** The edge: a slow warm glow breathing inside the safe area for the whole
+ * walk. No line, no pixels; it takes no pointer. */
+function WalkEdge() {
+  return <div className="walk-edge" aria-hidden="true" data-testid="walk-edge" />;
+}
+
+/** The caption: the step's words at the bottom edge, fading in with the
+ * step; the words before fade out over them. */
+function Caption({ text, testId }: { text: string; testId: string }) {
+  const [leaving, setLeaving] = useState("");
+  const last = useRef(text);
+  useEffect(() => {
+    if (last.current === text) return;
+    const before = last.current;
+    last.current = text;
+    if (!before) return;
+    setLeaving(before);
+    const timer = setTimeout(() => setLeaving(""), CAPTION_OUT_MS);
+    return () => clearTimeout(timer);
+  }, [text]);
+  return (
+    <>
+      {leaving && leaving !== text ? (
+        <p className="walk-caption" data-leaving="" aria-hidden="true">{leaving}</p>
+      ) : null}
+      {text ? (
+        <p key={text} className="walk-caption" role="status" aria-live="polite" data-testid={testId}>
+          {text}
+        </p>
+      ) : null}
+    </>
   );
 }
 
@@ -167,30 +272,23 @@ function choiceTone(choice: string): "ok" | "warn" | "accent" {
   return "accent";
 }
 
-/** The frame: four pixel edges inside the safe area, marching calmly. */
-function WalkFrame() {
-  return (
-    <div className="walk-frame" aria-hidden="true" data-testid="walk-frame">
-      <span className="walk-frame-edge" data-edge="top" />
-      <span className="walk-frame-edge" data-edge="right" />
-      <span className="walk-frame-edge" data-edge="bottom" />
-      <span className="walk-frame-edge" data-edge="left" />
-    </div>
-  );
-}
 /** The phone sheet: at this width or less (or at the desk's compact
  * breakpoint) the card is one full-width sheet at the bottom. */
 export const SHEET_MAX_WIDTH = 480;
 /** The sheet is at most this part of the viewport height. */
 const SHEET_HEIGHT = 0.4;
+/** The space between the part and a card beside it. */
 const RING = 6;
 const GAP = 16;
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 const frame = () => new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
-/** The cursor's travel and the face's settle after a press (the brief). */
-const TRAVEL_MS = 500;
+/** The press: one beat of hover, the pressed look, the face's settle. */
+const HOVER_MS = 240;
+const PRESS_LOOK_MS = 120;
 const SETTLE_MS = 600;
+/** The caption's fade out. */
+const CAPTION_OUT_MS = 200;
 /** A swipe down on the sheet's handle this far skips the step. */
 const SWIPE_PX = 48;
 
@@ -223,23 +321,6 @@ function rectOf(element: Element): Rect {
 
 function sameRect(a: Rect | null, b: Rect | null): boolean {
   return !!a && !!b && a.left === b.left && a.top === b.top && a.width === b.width && a.height === b.height;
-}
-
-/** The dim as four rectangles around the part (top, bottom, left, right).
- * No element is over the part, so it takes the pointer at once, also in the
- * frame it moves (first run 2026-11-07: a clip-path cut-out lagged its part
- * and took the press). Each side is clamped to the viewport. */
-export function dimRects(rect: Rect, width: number, height: number): Record<"top" | "bottom" | "left" | "right", Rect> {
-  const x = Math.max(0, Math.min(width, rect.left - RING));
-  const y = Math.max(0, Math.min(height, rect.top - RING));
-  const right = Math.max(x, Math.min(width, rect.left + rect.width + RING));
-  const bottom = Math.max(y, Math.min(height, rect.top + rect.height + RING));
-  return {
-    top: { left: 0, top: 0, width, height: y },
-    bottom: { left: 0, top: bottom, width, height: height - bottom },
-    left: { left: 0, top: y, width: x, height: bottom - y },
-    right: { left: right, top: y, width: width - right, height: bottom - y },
-  };
 }
 
 /** Beside the part: right, else left, else under it, else over it. */
@@ -279,11 +360,6 @@ export function revealAbove(target: HTMLElement, root: HTMLElement | null, limit
   const delta = Math.round(box.top - want);
   if (scroller) scroller.scrollTop += delta;
   else target.scrollIntoView?.({ block: "start", inline: "nearest" });
-}
-
-function dockHeight(): number {
-  if (typeof document === "undefined") return 0;
-  return parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--desk-dock-h")) || 0;
 }
 
 function useViewport(): { width: number; height: number } {
@@ -332,13 +408,12 @@ function WalkSession({ token }: { token: string }) {
   const [sayMore, setSayMore] = useState(false);
   const [words, setWords] = useState("");
   const [cardSize, setCardSize] = useState({ width: 340, height: 220 });
-  // The guide's words, its cursor and the ring of a press.
+  // The guide's words, its cursor and the ripple of its tap.
   const [spoken, setSpoken] = useState("");
   const [cursor, setCursor] = useState<Cursor | null>(null);
-  const [talking, setTalking] = useState(false);
+  const [ripple, setRipple] = useState<Point | null>(null);
   // The steps he answered (the progress dots): index → choice.
   const [answeredAt, setAnsweredAt] = useState<Record<number, true>>({});
-  const [pressed, setPressed] = useState<Rect | null>(null);
   // One frame without the walk's chrome: the shot is the screen he sees.
   const [capturing, setCapturing] = useState(false);
   // The voice, and (with the voice on) the one tap that lets it play.
@@ -350,11 +425,14 @@ function WalkSession({ token }: { token: string }) {
   const [deskState, setDeskState] = useState<"wait" | "seen" | "go" | "late">("wait");
   // He tapped through "still loading": no step waits for the desk again.
   const tappedRef = useRef(false);
+  const trip = useRef(0);
   const voiceRef = useRef(voice);
   voiceRef.current = voice;
   const saidRef = useRef("");
   const cardRef = useRef<HTMLElement | null>(null);
-  const guideRef = useRef<HTMLDivElement | null>(null);
+  const captionRef = useRef<HTMLDivElement | null>(null);
+  // Where the cursor rests: the next journey starts here.
+  const restRef = useRef<Point | null>(null);
   const appRef = useRef<string | undefined>(undefined);
   const swipeRef = useRef<number | null>(null);
 
@@ -414,24 +492,22 @@ function WalkSession({ token }: { token: string }) {
     setFailure("");
     setSayMore(false);
     setWords("");
-    setCursor(null);
-    setPressed(null);
+    setRipple(null);
     setIndex((value) => value + 1);
   }, []);
 
-  /** The top of the clear band: under the guide and its bubble. */
-  const clearTop = () => {
-    const guide = guideRef.current?.getBoundingClientRect();
-    return guide && guide.height ? guide.bottom + GAP / 2 : 0;
-  };
-  /** The bottom of the clear band: the sheet's top (an estimate before it
-   * is drawn), else the viewport's foot. */
+  /** The top of the clear band: the viewport's top (no guide sits there). */
+  const clearTop = () => 0;
+  /** The bottom of the clear band: over the caption, and over the sheet's
+   * top (an estimate before it is drawn), else the viewport's foot. */
   const clearBottom = () => {
     const height = window.innerHeight;
-    if (!sheetRef.current) return height;
+    const caption = captionRef.current?.getBoundingClientRect();
+    const words = caption && caption.height ? caption.top - GAP / 2 : height;
+    if (!sheetRef.current) return words;
     const card = cardRef.current?.getBoundingClientRect();
-    if (card && card.height) return card.top - GAP / 2;
-    return height - dockHeight() - Math.floor(height * SHEET_HEIGHT) - GAP / 2;
+    if (card && card.height) return Math.min(words, card.top - GAP / 2);
+    return Math.min(words, height - dockHeight() - Math.floor(height * SHEET_HEIGHT) - GAP / 2);
   };
 
   // Run one step: open, verb, press, scroll, say, then find the part to mark.
@@ -467,6 +543,8 @@ function WalkSession({ token }: { token: string }) {
       // A later step's open, press and mark wait for the desk as the first does.
       if ((step.open || step.press || step.highlight) && !tappedRef.current && !deskReady()) await waitForDeskReady();
       if (!alive) return;
+      // A step with no press: the cursor fades away where it rests.
+      if (!step.press) setCursor((now) => (now && now.phase !== "out" ? { ...now, phase: "out" } : now));
       setSpoken(step.say?.words ?? step.press?.words ?? step.highlight?.words ?? "");
       if (step.open) {
         const scope = await resolveWalkScope(step.open.scope);
@@ -486,23 +564,35 @@ function WalkSession({ token }: { token: string }) {
       }
       const app = stepWindow(step, appRef.current);
       if (step.press) {
-        // The guide presses; he watches. The cursor leaves the bubble.
+        // The guide presses; he watches. The cursor comes from where it
+        // rests (first: over the caption), hovers, taps, then the click lands.
         const part = await partOf(step.press.target, step.press.window ?? appRef.current, step.press.thing);
         if (!part?.target || !alive) return;
-        const guide = guideRef.current?.getBoundingClientRect();
-        const from = guide ? { x: guide.left + 24, y: guide.top + 24 } : { x: 24, y: 24 };
-        const box = rectOf(part.target);
-        const to = { x: box.left + box.width / 2, y: box.top + box.height / 2 };
-        setCursor({ from, to, pressing: false });
-        await wait(TRAVEL_MS);
+        const target = part.target;
+        const box = rectOf(target);
+        const to = { x: Math.round(box.left + box.width / 2), y: Math.round(box.top + box.height / 2) };
+        const from = restRef.current ?? { x: Math.round(window.innerWidth / 2), y: Math.round(clearBottom()) };
+        const still = stillMotion();
+        const ms = still ? 0 : travelMs(from, to);
+        trip.current += 1;
+        setCursor({ from, to, phase: "travel", ms, tilt: still ? 0 : tiltFor(from, to), trip: trip.current });
+        await wait(ms);
         if (!alive) return;
-        setCursor({ from: to, to, pressing: true });
-        setPressed(rectOf(part.target));
-        part.target.click();
+        setCursor((now) => (now ? { ...now, phase: "hover" } : now));
+        await wait(HOVER_MS);
+        if (!alive) return;
+        setCursor((now) => (now ? { ...now, phase: "tap" } : now));
+        if (!still) setRipple(to);
+        markPart(target, "pressed", true);
+        await wait(PRESS_LOOK_MS);
+        markPart(target, "pressed", false);
+        if (!alive) return;
+        target.click();
+        restRef.current = to;
+        setCursor((now) => (now ? { ...now, phase: "rest" } : now));
         await wait(SETTLE_MS);
         if (!alive) return;
-        setCursor(null);
-        setPressed(null);
+        setRipple(null);
       }
       if (step.scroll) {
         const part = await partOf(step.scroll.target, step.scroll.window ?? appRef.current, step.scroll.thing);
@@ -558,6 +648,16 @@ function WalkSession({ token }: { token: string }) {
     tick();
     return () => cancelAnimationFrame(handle);
   }, [stage.target]);
+
+  // The mark: the part itself lifts one step and wears the warm halo while
+  // the guide asks about it (not in the shot: he sees the screen as is).
+  const haloOn = !done && !!step && stage.ready && !stage.line && !!(step.highlight || step.ask) && !capturing;
+  useEffect(() => {
+    const target = haloOn ? stage.target : null;
+    if (!target) return;
+    markPart(target, "halo", true);
+    return () => markPart(target, "halo", false);
+  }, [haloOn, stage.target]);
 
   useLayoutEffect(() => {
     const card = cardRef.current;
@@ -695,8 +795,6 @@ function WalkSession({ token }: { token: string }) {
   // The walk's end (or the walk going away) stops the voice.
   useEffect(() => { if (done || closed) stopVoice(); }, [done, closed]);
   useEffect(() => () => stopVoice(), []);
-  // The robot bobs while the voice speaks.
-  useEffect(() => onStateChange((state) => setTalking(state === "speaking")), []);
 
   const toggleVoice = () => {
     const next = !voice;
@@ -734,41 +832,35 @@ function WalkSession({ token }: { token: string }) {
   const ask = step?.ask;
   const said = words.trim();
   const line = !done && stage.ready ? stage.line : "";
-  const bubble = bubbleNow;
+  // The caption sits at the bottom edge: over the dock, over the sheet or a
+  // docked card when one is up.
+  const deskDock = dockHeight();
+  const captionBottom = asking && sheet ? dock + Math.min(cardSize.height, sheetMax) + 10
+    : asking && docked ? deskDock + 12 + cardSize.height + 10
+      : deskDock + 12;
 
   return (
     <div className="walk-layer" data-walk="" data-testid="walk" data-capturing={capturing ? "" : undefined}
       data-desk-ready={deskState === "seen" || deskState === "go" ? "" : undefined}>
-      <WalkFrame />
-      <div ref={guideRef} className="walk-guide" data-testid="walk-guide"
-        data-talking={talking ? "" : undefined} data-done={done ? "" : undefined}>
-        <img className="walk-guide-bot" src={SYSTEM.dockAgents} alt="" width={32} height={32} draggable={false} />
+      <WalkEdge />
+      {cursor && !done ? <GuideCursor cursor={cursor} /> : null}
+      {ripple ? <Ripple at={ripple} /> : null}
+      <div ref={captionRef} className="walk-caption-slot"
+        style={{ "--walk-caption-bottom": `${captionBottom}px` } as CSSProperties}>
         {!begun ? (
-          <Button variant="secondary" className="walk-bubble walk-begin" onClick={begin} data-testid="walk-begin">
+          <Button variant="secondary" className="walk-begin" onClick={begin} data-testid="walk-begin">
             Tap to begin
           </Button>
         ) : deskState === "late" && !done ? (
           // The desk did not get ready: one plain line; a tap starts the walk.
-          <Button variant="secondary" className="walk-bubble walk-begin" onClick={() => { tappedRef.current = true; setDeskState("go"); }}
-            data-testid="walk-still-loading">
+          <Button variant="secondary" className="walk-begin"
+            onClick={() => { tappedRef.current = true; setDeskState("go"); }} data-testid="walk-still-loading">
             {STILL_LOADING}
           </Button>
-        ) : bubble ? (
-          <p className="walk-bubble" role="status" aria-live="polite"
-            data-testid={line ? "walk-line" : "walk-words"}>{bubble}</p>
-        ) : null}
+        ) : (
+          <Caption text={bubbleNow} testId={line ? "walk-line" : "walk-words"} />
+        )}
       </div>
-      {cursor ? <PixelCursor cursor={cursor} /> : null}
-      {pressed ? <Ring box={pressed} press /> : null}
-      {marked ? (
-        <>
-          {Object.entries(dimRects(marked, width, height)).map(([side, box]) => (
-            <div key={side} className="walk-backdrop" aria-hidden="true" data-testid={`walk-backdrop-${side}`}
-              style={{ left: box.left, top: box.top, width: box.width, height: box.height }} />
-          ))}
-          <Ring box={marked} />
-        </>
-      ) : null}
       {done ? (
         <div className="walk-card walk-card-end" data-docked="" data-sheet={sheet ? "" : undefined}
           style={sheet ? { left: 0, right: 0, bottom: dock } : undefined} role="status" data-testid="walk-end">
@@ -799,7 +891,11 @@ function WalkSession({ token }: { token: string }) {
                 ))}
               </span>
             ) : null}
-            {count ? <span className="walk-count" data-testid="walk-count">{count}</span> : null}
+            {count ? (
+              <span className="walk-count" data-testid="walk-count" data-quiet={cards.length > 1 ? "" : undefined}>
+                {count}
+              </span>
+            ) : null}
             <Button variant="ghost" dense className="walk-voice" aria-pressed={voice}
               aria-label={voice ? "Voice on" : "Voice off"} title={voice ? "Voice on" : "Voice off"}
               onPointerDown={(event) => event.stopPropagation()} onClick={toggleVoice} data-testid="walk-voice">

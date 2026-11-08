@@ -1,15 +1,19 @@
-/* The Walk (2026-11-07; hand-held 2026-11-08: the frame, the guide, the
-   cursor and the phone sheet below): a dim of four rectangles around the part (nothing
-   over the part: it takes the pointer, also while it moves), a 2 px accent
-   ring that pulses once and stays, and one card in kit material beside the
-   part. Over the windows, the dock and the popovers; under the feedback strip. */
+/* The Walk (2026-11-07; direction C 2026-11-08, "the cursor is the hero"):
+   a warm glow breathing at the viewport's edge, the guide's cursor (a
+   two-tone ember dart that travels on an arc with a comet trail, hovers,
+   taps with a ripple and breathes at rest), one caption line at the bottom
+   edge, the part itself lifted with a warm halo, and one card in kit
+   material beside the part (at phone width a sheet above the dock). No
+   character, no bubble, no ring, no dim. Over the windows, the dock and the
+   popovers; under the feedback strip. Motion is transforms and opacity. */
 .walk-layer {
   /* The safe area (the Dynamic Island, the home bar). A rig may set these. */
   --walk-safe-top: env(safe-area-inset-top, 0px);
   --walk-safe-right: env(safe-area-inset-right, 0px);
   --walk-safe-bottom: env(safe-area-inset-bottom, 0px);
   --walk-safe-left: env(safe-area-inset-left, 0px);
-  --walk-px: 3px;
+  /* The warm accent: the ember the kit gives what asks him (IconLamp ask). */
+  --walk-warm: var(--lamp-ask);
   position: fixed;
   inset: 0;
   z-index: 95;
@@ -21,10 +25,9 @@
   visibility: hidden;
 }
 
-/* The hand-held frame (owner 2026-11-07: "a very thin pixely AI border"):
-   3 px blocks of the accent with one block gap, inside the safe area,
-   marching one block every 400 ms, clockwise. It takes no pointer. */
-.walk-frame {
+/* The edge (2026-11-08): a slow warm glow breathing inside the safe area
+   for the whole walk; no line, no pixels. Only its opacity moves. */
+.walk-edge {
   position: fixed;
   z-index: 2;
   top: var(--walk-safe-top);
@@ -32,197 +35,203 @@
   bottom: var(--walk-safe-bottom);
   left: var(--walk-safe-left);
   pointer-events: none;
-  image-rendering: pixelated;
-}
-
-.walk-frame-edge {
-  position: absolute;
-  --walk-run: repeating-linear-gradient(var(--walk-dir), var(--accent) 0 var(--walk-px),
-    transparent var(--walk-px) calc(var(--walk-px) * 2));
-  background-image: var(--walk-run);
-  animation: walk-march 800ms steps(2, end) infinite;
-}
-
-.walk-frame-edge[data-edge="top"],
-.walk-frame-edge[data-edge="bottom"] {
-  --walk-dir: 90deg;
-  left: 0;
-  right: 0;
-  height: var(--walk-px);
-}
-
-.walk-frame-edge[data-edge="left"],
-.walk-frame-edge[data-edge="right"] {
-  --walk-dir: 180deg;
-  top: 0;
-  bottom: 0;
-  width: var(--walk-px);
-}
-
-.walk-frame-edge[data-edge="top"] { top: 0; --walk-to: calc(var(--walk-px) * 2) 0; }
-.walk-frame-edge[data-edge="right"] { right: 0; --walk-to: 0 calc(var(--walk-px) * 2); }
-.walk-frame-edge[data-edge="bottom"] { bottom: 0; --walk-to: calc(var(--walk-px) * -2) 0; }
-.walk-frame-edge[data-edge="left"] { left: 0; --walk-to: 0 calc(var(--walk-px) * -2); }
-
-@keyframes walk-march {
-  from { background-position: 0 0; }
-  to { background-position: var(--walk-to); }
-}
-
-/* The guide: the Dock's pixel robot at the frame's top-left corner, and one
-   bubble in kit material with the step's words. */
-.walk-guide {
-  position: fixed;
-  z-index: 2;
-  top: calc(var(--walk-safe-top) + 8px);
-  left: calc(var(--walk-safe-left) + 8px);
-  right: calc(var(--walk-safe-right) + 8px);
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  pointer-events: none;
-}
-
-/* The robot blinks at idle (a one-frame squint), bobs 2 px while the voice
-   speaks, and waves at the end. */
-.walk-guide-bot {
-  flex: none;
-  width: 32px;
-  height: 32px;
-  image-rendering: pixelated;
-  transform-origin: 50% 100%;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--walk-warm) 22%, transparent),
+    inset 0 0 28px 4px color-mix(in srgb, var(--walk-warm) 42%, transparent),
+    inset 0 0 72px 12px color-mix(in srgb, var(--walk-warm) 16%, transparent);
+  opacity: 0.7;
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .walk-guide-bot { animation: walk-blink 4200ms steps(1, end) infinite; }
-  .walk-guide[data-talking] .walk-guide-bot { animation: walk-bob 400ms steps(2, end) infinite; }
-  .walk-guide[data-done] .walk-guide-bot { animation: walk-wave 300ms var(--ease-standard, ease-out) 3; }
+  .walk-edge { animation: walk-edge-breathe 3.2s ease-in-out infinite alternate; }
 }
 
-@keyframes walk-blink {
-  0%, 96% { scale: 1 1; }
-  97% { scale: 1 0.88; }
+@keyframes walk-edge-breathe {
+  from { opacity: 0.5; }
+  to { opacity: 0.9; }
 }
 
-@keyframes walk-bob {
-  50% { translate: 0 -2px; }
-}
-
-@keyframes walk-wave {
-  25% { rotate: -10deg; }
-  75% { rotate: 10deg; }
-}
-
-.walk-bubble {
-  position: relative;
-  margin: 0;
-  max-width: min(520px, 100%);
-  padding: 7px 11px;
-  color: var(--wb-ink);
-  border: 1px solid var(--wb-rule, #22313b);
-  border-radius: var(--desk-window-radius, 8px);
-  background: var(--wb-paper);
-  box-shadow: var(--depth-card), var(--depth-row);
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 1.35;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
-  overflow: hidden;
-  animation: walk-bubble-in 160ms steps(3, end) 1;
-}
-
-.walk-bubble.walk-begin {
-  display: inline-flex;
-  min-height: 44px;
-  pointer-events: auto;
-}
-
-@keyframes walk-bubble-in {
-  from { opacity: 0; translate: -6px 0; }
-}
-
-/* The guide's cursor: a 16 x 16 pixel arrow at two px a pixel; it travels
-   from the bubble to the part in 500 ms. Its tip is its top-left corner. */
+/* The guide's cursor: a 12 x 16 ember dart on whole pixels, its tip the
+   element's top-left corner. The layer moves it with transforms only. */
 .walk-cursor {
   position: fixed;
   left: 0;
   top: 0;
   z-index: 3;
   pointer-events: none;
-  image-rendering: pixelated;
-  transition: transform 500ms cubic-bezier(0.3, 0, 0.2, 1);
-  filter: drop-shadow(1px 1px 0 color-mix(in srgb, var(--wb-ink, #0f1a22) 40%, transparent));
+  transform-origin: 0 0;
+  will-change: transform;
+  transition: opacity var(--duration-medium) var(--ease-standard);
 }
 
-.walk-cursor-edge { fill: var(--wb-ink, #0f1a22); }
-.walk-cursor-fill { fill: var(--wb-paper, #fff); }
+.walk-dart {
+  display: block;
+  overflow: visible;
+  filter: drop-shadow(0 1px 1px color-mix(in srgb, var(--wb-ember-ink) 45%, transparent))
+    drop-shadow(0 3px 6px color-mix(in srgb, var(--wb-ink) 22%, transparent));
+}
 
-/* The press: a two-frame squash at the tip. */
-.walk-cursor-body { transform-origin: 2px 2px; }
+.walk-dart-edge { fill: var(--wb-ember-ink); }
+.walk-dart-lit { fill: var(--walk-warm); }
+.walk-dart-shade { fill: color-mix(in srgb, var(--walk-warm) 70%, var(--wb-ember-ink)); }
+.walk-dart-shine { fill: var(--wb-paper); }
+
+/* The comet trail: shrinking ghosts that fade from 0.35 to nothing. */
+.walk-cursor-ghost {
+  opacity: 0;
+  z-index: 2;
+}
+
+.walk-cursor-ghost .walk-dart {
+  scale: var(--walk-ghost-scale, 1);
+  transform-origin: 0 0;
+  filter: none;
+}
+
+.walk-cursor-body {
+  transform-origin: 0 0;
+}
+
+/* Travel and hover: the tip rides 2 px over the tap point. */
+.walk-cursor[data-phase="travel"] .walk-cursor-body,
+.walk-cursor[data-phase="hover"] .walk-cursor-body { translate: 0 -2px; }
+.walk-cursor[data-phase="out"] { opacity: 0; }
+
 @media (prefers-reduced-motion: no-preference) {
-  .walk-cursor[data-pressing] .walk-cursor-body {
-    animation: walk-squash 160ms steps(2, end) 1;
-  }
+  /* The tap: down the 2 px and a squash to 0.9 in 80 ms. */
+  .walk-cursor[data-phase="tap"] .walk-cursor-body { animation: walk-tap 80ms var(--ease-standard) 1 both; }
+  /* At rest it breathes: 1 px every 2 s. */
+  .walk-cursor[data-phase="rest"] .walk-cursor-body { animation: walk-idle 2s ease-in-out infinite; }
 }
 
-@keyframes walk-squash {
-  50% { transform: scale(1.15, 0.8); }
+@keyframes walk-tap {
+  0% { translate: 0 -2px; scale: 1; }
+  50% { translate: 0 0; scale: 0.9; }
+  100% { translate: 0 0; scale: 1; }
 }
 
-.walk-backdrop {
+@keyframes walk-idle {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -1px; }
+}
+
+/* The tap's ripple: one soft warm ring from 0.4 to 1.6 in 600 ms. */
+.walk-ripple {
   position: fixed;
-  background: color-mix(in srgb, var(--wb-ink, #0f1a22) 46%, transparent);
-  pointer-events: auto;
-}
-
-/* The ring (2026-11-08): the accent line draws itself in (320 ms), breathes
-   twice and settles. */
-.walk-ring {
-  position: fixed;
-  box-sizing: border-box;
+  left: -22px;
+  top: -22px;
+  z-index: 2;
+  width: 44px;
+  height: 44px;
   pointer-events: none;
 }
 
-.walk-ring-line {
+.walk-ripple::after {
+  content: "";
   position: absolute;
   inset: 0;
-  overflow: visible;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--walk-warm) 70%, transparent),
+    0 0 14px 2px color-mix(in srgb, var(--walk-warm) 40%, transparent);
+  opacity: 0;
+  animation: walk-ripple 600ms var(--ease-decelerate) 1 both;
 }
 
-.walk-ring-line rect {
-  fill: none;
-  stroke: var(--accent);
-  stroke-width: 2;
-  stroke-dasharray: 100;
-  stroke-dashoffset: 0;
-  width: calc(100% - 2px);
-  height: calc(100% - 2px);
+@keyframes walk-ripple {
+  from { scale: 0.4; opacity: 0.9; }
+  to { scale: 1.6; opacity: 0; }
+}
+
+/* The caption: the step's words at the bottom edge, over the dock and the
+   sheet, at most two lines, fading in with the step and out with it. */
+.walk-caption-slot {
+  position: fixed;
+  z-index: 2;
+  left: calc(var(--walk-safe-left) + 16px);
+  right: calc(var(--walk-safe-right) + 16px);
+  bottom: calc(var(--walk-caption-bottom, 12px) + var(--walk-safe-bottom));
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.walk-caption {
+  margin: 0;
+  max-width: min(560px, 100%);
+  padding: 6px 14px;
+  color: var(--desk-dock-glass-ink);
+  background: var(--desk-dock-glass);
+  border-radius: var(--radius-lg);
+  -webkit-backdrop-filter: blur(14px) saturate(1.4);
+  backdrop-filter: blur(14px) saturate(1.4);
+  font-size: var(--font-size-md);
+  font-weight: 500;
+  line-height: 1.4;
+  text-align: center;
+  text-wrap: balance;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.walk-caption[data-leaving] {
+  position: absolute;
+  bottom: 0;
+  opacity: 0;
+}
+
+.walk-begin {
+  min-height: 44px;
+  pointer-events: auto;
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .walk-ring-line rect {
-    animation: walk-ring-draw 320ms var(--ease-standard, ease-out) 1 both;
-  }
-  .walk-ring {
-    animation: walk-ring-breathe 700ms var(--ease-standard, ease-out) 320ms 2;
-  }
-  .walk-ring[data-press] {
-    animation: walk-ring-breathe 300ms var(--ease-standard, ease-out) 0ms 2;
-  }
-  .walk-ring[data-press] .walk-ring-line rect { animation-duration: 160ms; }
+  .walk-caption { animation: walk-caption-in var(--duration-long) var(--ease-standard) 1 both; }
+  .walk-caption[data-leaving] { animation: walk-caption-out 200ms var(--ease-standard) 1 both; }
 }
 
-@keyframes walk-ring-draw {
-  from { stroke-dashoffset: 100; }
-  to { stroke-dashoffset: 0; }
+@keyframes walk-caption-in {
+  from { opacity: 0; translate: 0 4px; }
 }
 
-@keyframes walk-ring-breathe {
-  0% { filter: drop-shadow(0 0 0 color-mix(in srgb, var(--accent) 55%, transparent)); }
-  50% { filter: drop-shadow(0 0 7px color-mix(in srgb, var(--accent) 55%, transparent)); }
-  100% { filter: drop-shadow(0 0 0 color-mix(in srgb, var(--accent) 0%, transparent)); }
+@keyframes walk-caption-out {
+  from { opacity: 1; }
+  to { opacity: 0; translate: 0 -4px; }
+}
+
+/* The mark (2026-11-08): the part itself lifts one step and wears a soft
+   warm halo that breathes; nothing is over it and nothing dims. The halo's
+   animation outranks the part's own shadow while it is up. */
+.walk-halo.walk-halo {
+  --walk-warm: var(--lamp-ask);
+  translate: 0 -1px;
+  box-shadow: var(--depth-card),
+    0 0 0 3px color-mix(in srgb, var(--walk-warm) 90%, transparent),
+    0 0 24px 6px color-mix(in srgb, var(--walk-warm) 45%, transparent);
+  transition: translate var(--duration-medium) var(--ease-standard);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .walk-halo.walk-halo { animation: walk-halo-breathe 2.4s ease-in-out infinite; }
+}
+
+@keyframes walk-halo-breathe {
+  0%, 100% {
+    box-shadow: var(--depth-card),
+      0 0 0 3px color-mix(in srgb, var(--walk-warm) 90%, transparent),
+      0 0 24px 6px color-mix(in srgb, var(--walk-warm) 45%, transparent);
+  }
+  50% {
+    box-shadow: var(--depth-card),
+      0 0 0 3px color-mix(in srgb, var(--walk-warm) 90%, transparent),
+      0 0 32px 9px color-mix(in srgb, var(--walk-warm) 30%, transparent);
+  }
+}
+
+/* The guide's tap: the kit's pressed settle on the part for 120 ms. */
+[data-walk-pressed] {
+  translate: 0 1px;
 }
 
 .walk-card {
@@ -287,25 +296,26 @@
   from { opacity: 0; translate: 0 6px; }
 }
 
-/* The progress: one pixel dot a question; filled = answered, ring = now. */
+/* The progress: one round dot a question; answered dots fill, the step
+   now stretches into a short pill. */
 .walk-dots {
   display: inline-flex;
-  gap: 4px;
+  gap: 5px;
   align-items: center;
 }
 
 .walk-dot {
   width: 6px;
   height: 6px;
-  box-sizing: border-box;
-  border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--text-muted) 30%, transparent);
+  transition: width var(--duration-long) var(--ease-standard), background-color var(--duration-long) var(--ease-standard);
 }
 
-.walk-dot[data-state="done"] { background: var(--accent); border-color: var(--accent); }
+.walk-dot[data-state="done"] { background: color-mix(in srgb, var(--accent) 70%, transparent); }
 .walk-dot[data-state="now"] {
-  border: 2px solid var(--accent);
-  width: 8px;
-  height: 8px;
+  width: 16px;
+  background: var(--accent);
 }
 
 /* Keep in the confirm hue, Redo in the attention hue: equal, large. */
@@ -334,8 +344,9 @@
   color: var(--text-muted, var(--wb-ink));
 }
 
-/* The handle row: the grip, the walk's name, "n of m", the voice. Swipe it
-   down to skip the step. */
+/* The handle row: the walk's name quietly on the left, the dots, the
+   voice. Swipe it down to skip the step. "n of m" is read out, not shown,
+   when the dots show it. */
 .walk-handle {
   display: flex;
   align-items: center;
@@ -364,8 +375,20 @@
 
 .walk-handle .walk-count { align-self: center; }
 
+.walk-handle .walk-count[data-quiet] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 .walk-name {
   flex: 1 1 auto;
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  letter-spacing: 0.01em;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -464,10 +487,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .walk-ring,
-  .walk-ring[data-press],
-  .walk-frame-edge,
-  .walk-guide-bot,
-  .walk-bubble { animation: none; }
-  .walk-cursor { transition: none; }
+  .walk-cursor,
+  .walk-dot { transition: none; }
 }
