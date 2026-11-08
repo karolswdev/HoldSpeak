@@ -1,26 +1,115 @@
 {
   "title": "Hand-held · 2026-11-08",
   "steps": [
-    {"open": {"app": "surface-programs"},
-     "say": {"words": "We start in Programs. Watch: I press for you."}},
-    {"press": {"target": "programs-new", "words": "I press New program."},
-     "highlight": {"target": "programs-wizard-step-1", "window": "surface-programs", "thing": "the New program wizard",
-                   "words": "Step 1 of the New program wizard: where it runs."},
-     "ask": {"ref": "programs-wizard", "question": "Does the wizard read as the obvious first step?", "choices": ["Keep", "Redo"]}},
-    {"open": {"app": "chair:needs"},
-     "highlight": {"target": "needs-toolbar", "words": "The Needs you toolbar, with People at its end."},
-     "ask": {"ref": "needs-toolbar", "question": "Does the toolbar read as one band?", "choices": ["Keep", "Redo"]}},
-    {"open": {"app": "open-project-memory", "scope": "@first-project"},
-     "scroll": {"target": "room-fold-programs"},
-     "highlight": {"target": "room-fold-programs", "words": "The Programs filed to this project."},
-     "ask": {"ref": "room-programs", "question": "Does the Programs fold read clearly?", "choices": ["Keep", "Redo"]}},
-    {"scroll": {"target": "room-people-row", "window": "open-project-memory", "thing": "people in this project"},
-     "highlight": {"target": "room-people-row", "window": "open-project-memory", "thing": "people in this project",
-                   "words": "The people of this project."},
-     "ask": {"ref": "room-people", "question": "Do the people rows read clearly?", "choices": ["Keep", "Redo"]}},
-    {"open": {"app": "review-meetings", "scope": "@first-meeting"},
-     "press": {"target": "meeting-decide", "words": "I press Decide."},
-     "highlight": {"target": "decide-scope", "window": "review-meetings", "words": "The project line: where the decision is filed."},
-     "ask": {"ref": "decide-project-line", "question": "Do you see the project before Save?", "choices": ["Keep", "Redo"]}}
+    {
+      "open": {
+        "app": "surface-programs"
+      },
+      "say": {
+        "words": "We start in Programs. Watch: I press for you."
+      }
+    },
+    {
+      "press": {
+        "target": "programs-new",
+        "words": "I press New program."
+      },
+      "highlight": {
+        "target": "programs-wizard-step-1",
+        "window": "surface-programs",
+        "thing": "the New program wizard",
+        "words": "Step 1 of the New program wizard: where it runs."
+      },
+      "ask": {
+        "ref": "programs-wizard",
+        "question": "Does the wizard read as the obvious first step?",
+        "choices": [
+          "Keep",
+          "Redo"
+        ]
+      }
+    },
+    {
+      "open": {
+        "app": "chair:needs"
+      },
+      "highlight": {
+        "target": "needs-toolbar",
+        "words": "The Needs you toolbar: Mine and People as one control, the rows under it."
+      },
+      "ask": {
+        "ref": "needs-toolbar",
+        "question": "Does Needs you read as one native list now?",
+        "choices": [
+          "Keep",
+          "Redo"
+        ]
+      }
+    },
+    {
+      "open": {
+        "app": "open-project-memory",
+        "scope": "@first-project"
+      },
+      "scroll": {
+        "target": "room-fold-programs"
+      },
+      "highlight": {
+        "target": "room-fold-programs",
+        "words": "The Programs fold of this project: its Programs, or New program when there are none."
+      },
+      "ask": {
+        "ref": "room-programs",
+        "question": "Does the Programs fold read clearly?",
+        "choices": [
+          "Keep",
+          "Redo"
+        ]
+      }
+    },
+    {
+      "scroll": {
+        "target": "room-people-row",
+        "window": "open-project-memory",
+        "thing": "people in this project"
+      },
+      "highlight": {
+        "target": "room-people-row",
+        "window": "open-project-memory",
+        "thing": "people in this project",
+        "words": "The people of this project."
+      },
+      "ask": {
+        "ref": "room-people",
+        "question": "Do the people rows read clearly?",
+        "choices": [
+          "Keep",
+          "Redo"
+        ]
+      }
+    },
+    {
+      "open": {
+        "app": "review-meetings",
+        "scope": "@first-meeting"
+      },
+      "press": {
+        "target": "meeting-decide",
+        "words": "I press Decide."
+      },
+      "highlight": {
+        "target": "decide-scope",
+        "window": "review-meetings",
+        "words": "The project line: where the decision is filed."
+      },
+      "ask": {
+        "ref": "decide-project-line",
+        "question": "Do you see the project before Save?",
+        "choices": [
+          "Keep",
+          "Redo"
+        ]
+      }
+    }
   ]
 }

@@ -1,69 +1,63 @@
-# Handover (2026-11-07, one brain)
+# Handover (2026-11-08, one brain)
 
 This is the ONE handover. It replaces every numbered handover before it (the owner, 2026-11-07: "kill all the previous handovers… default the latest one to just handover.md"). Rewrite it in place at each handover; history is in git.
 
-Read first, in order: `CLAUDE.md` "How we work now" (the seven lines of 2026-11-07 and the evening amendment to rule 3), this file, `pm/STATUS.md` (one line per merge), `docs/walks.md`. Two Brains is retired; nothing in `docs/internal/TWO-BRAINS.md` is current process.
+Read first, in order: `CLAUDE.md` "How we work now" (the seven lines of 2026-11-07), this file, `pm/STATUS.md` (one line per merge), `docs/walks.md`. Two Brains is retired; nothing in `docs/internal/TWO-BRAINS.md` is current process.
 
 ## Part 0: how we think (the mentality, written down)
 
 - **Move fast, with three checks and no ceremony.** A change is one concern, a few files, a worker in a worktree, a PR within the hour. A test that fails on main, one quick check per merge batch, his desk on main. Nothing else gates. A red is fixed forward at once, never debated; a revert is for security or data loss only.
 - **One brain decides; workers build.** No mutual checks, no counsel rounds, no planning packages, no completion reports, no status paragraphs. A brief is the step text: the job, the settled decision, the owned files, the focused tests. The owner makes a ruling in one sentence; we do not ask twice.
-- **The owner judges faces live, hand-held.** Every wave ends with a walk link to his phone. His answers, with the screen he saw, are the ruling and seed the next slices. A face rejected twice is not patched a third time: it goes to a canvas with directions, he picks, then one build.
-- **Subtract.** Every change removes a seam or a second implementation; it never adds one. Two implementations of one thing (two voices, two TTS engines, two keystores, two planners) are a defect by definition. "Retaining a facade" is allowed only when the dependency is honestly one-way afterwards.
-- **Effortless and powerful, native, delightful.** The desk is strong; the glue and the core workflows are not. Pick work by core workflow, not by finding. A control that needs explaining has failed. No prose on faces, no modals, no counter of zero, no grey; the kit's material, motion with intent, the library Button for every verb.
-- **Truth over comfort.** Say what failed, with the output. Say what was skipped. A flake is proven by a rerun, not assumed. Measure: merges per day, presses by him, hours from finding to main.
-- **Diagnose before you theorize.** When the hub wedges, `kill -USR1` and read the stack; when a check is slow, read the step it sits on. Guessing cost an hour tonight; the stack dump took two minutes.
-- **Never touch his real state.** Tests never see his HOME, DB or Keychain. Park, don't delete (two owner-ruled exceptions tonight: kokoro, the old handovers). Never change the hub's binary path without expecting the Keychain to ask.
+- **The owner judges faces live, hand-held.** Every wave ends with a walk link. His answers, with the screen he saw, are the ruling and seed the next slices. When he says "apply my feedback", the orchestrator settles the design in the brief and builds at once; the canvas is for a face he rejected twice without a direction.
+- **Subtract.** Every change removes a seam or a second implementation; it never adds one. Two implementations of one thing are a defect by definition.
+- **Effortless and powerful, native, delightful.** The desk is strong; the glue and the core workflows are not. Pick work by core workflow, not by finding. A control that needs explaining has failed. No prose on faces, no modals, no counter of zero, no grey; the kit's material, the library Button for every verb.
+- **Truth over comfort.** Say what failed, with the output. Say what was skipped. A flake is proven by a rerun, not assumed.
+- **Diagnose before you theorize.** `kill -USR1` the hub and read the stack; `host` the link before blaming the phone; read the failing assertion before guessing the cause.
+- **Never touch his real state.** Tests never see his HOME, DB or Keychain. Park, don't delete.
 
-## Part I: the rulings of the day (owner, verbatim where it matters)
+## Part I: the rulings (owner, verbatim where it matters)
 
-1. **One brain, one loop, three checks** ("I can't afford to have so much ceremony… the whole 'two-mind' thing… caused massive delays"). Muad'Dib decides; Opus 5.5 `opus-worker`s build in sibling worktrees; a worker runs ONLY its focused tests and opens its PR; the orchestrator merges, runs `scripts/quick_check.sh` ONCE on main per merge batch (base = the last checked head), fixes a red forward at once, redeploys his hub. Codex is one reviewer profile inside Programs for security-surface steps only, after the merge (used once tonight: three real findings on the Walk's token routes, fixed forward in #1810).
-2. **No dogfooding our development through HoldSpeak Programs** ("massive waste of time… there will be a time and place"). The one attempt proved him right: an Audit Program's agents appended 13 steps to their own Program, writes refused, steps Done with no diff (engine defects to fix later: an agent can plan into its running Program; a refused write still ends Done; duplicates not folded).
-3. **Plans are Programs or briefs, never documents.** `docs/internal/holdspeak-execution-plan/` (#1788, 100 files from an outside planner) merged as REFERENCE; every pending gate ruled in its `DECISIONS.md` (2026-11-07 section). Its slices ran as Opus lanes.
-4. **The direction:** "an effortless system, a powerful system at the same time… our desktop environment… is really powerful now… we're not gluing everything together properly… the flows are not frictionless… nail the core workflows and adapt the architecture and the design around them… not an overcomplicated architecture with multiple implementations of the same thing." Every wave carries architecture subtractions (measured) AND experience slices.
-5. **Automate feedback: The Walk** ("open a tailscale link from you pointing to a script and I give feedback in this hand-held way"). Every wave ends with a walk link. iPhone 18 Pro Max portrait (~430×932) is his primary device for walks.
-6. **Delete, not park, kokoro** (explicit exception to the park rule): the desk's voice is the Line's Pocket TTS; one hub voice.
-7. **Verdicts on faces (two walks):** Programs well "yes but expected a bigger jump"; Needs you "looks like a shitty webpage… totally rethought… OS native apps"; the Room opened in its update posture "UX absolutely sucks". → STOP patching Needs you, the Project Room and the Programs window; redesign each as a native app on a CANVAS first, he picks, then build. The Walk's own face was rejected twice (robot, bubbles, marching pixels "cringe… sterile"); he picked **direction C, "the cursor is the hero"** from the canvas https://claude.ai/artifact/7drB7ysqd6gxj5zmZpKmbg, "but make the cursor interesting".
+1. **One brain, one loop, three checks** (2026-11-07). Muad'Dib decides; Opus 5.5 `opus-worker`s build in sibling worktrees and open PRs; the orchestrator merges, runs `scripts/quick_check.sh <last checked head>` once per batch on main, fixes a red forward, redeploys his hub. Codex is one bounded reviewer after a merge that touches a security surface (`scripts/astra check <brief.md> --tag <t> --effort high`; used on #1830: five real findings, fixed forward in #1834).
+2. **No dogfooding our development through HoldSpeak Programs.**
+3. **Plans are Programs or briefs, never documents.** `docs/internal/holdspeak-execution-plan/` is reference; its gates are ruled in its `DECISIONS.md` (2026-11-07). Waves 1 and 2 merged 2026-11-07; of wave 3, S25 merged 2026-11-08 (#1829); S32 and S12 open. Consolidation: S53 merged (#1828); S51, the bootstrap move, S24 disclosure-only open.
+4. **The direction:** "an effortless system, a powerful system at the same time… not gluing everything together properly… nail the core workflows… not an overcomplicated architecture with multiple implementations of the same thing."
+5. **Automate feedback: The Walk.** Every wave ends with a walk link. **The tailnet has no MagicDNS**: `karols-macbook-pro.tailad9943.ts.net` is NXDOMAIN; links are `http://<tailscale ip -4>:8765` (100.66.207.100), which `scripts/walk.py` prints since #1827, then 127.0.0.1, each in its own code block.
+6. **The walk of 2026-11-08 (three answers, all Redo in words):** Programs' New program "I expected… some kind of a wizard… add effects… keep making UX better"; Needs you "way too cluttered, 'more' doesn't even look like a button… the 'Done', the 'Yours' (of course it's mine)"; the Room's Programs fold "not even a mention of anything like 'programs'" (it was in the DOM at display:none). Then: "apply my feedback, I was serious about it looking like shit and not being glued together." All three were built the same night (Part II).
+7. **Still open from him:** the ask sheet pick (S1 two plates / S2 Keep leads / S3 the bar) on the canvas https://claude.ai/artifact/7drB7ysqd6gxj5zmZpKmbg; my recommendation is S2. The cursor (direction C) and the edge glow stand.
 
-## Part II: what landed (main 765a46ab1 → bd850d2bd and on; 38 merges on 2026-11-07)
+## Part II: what landed on 2026-11-08 (main 92a0c4a98 → bb138505b)
 
-| PRs | What |
+| PR | What |
 |---|---|
-| #1788 #1789 #1800 | The execution plan as reference (gates ruled); CLAUDE.md/AGENTS.md on one brain; the batch-check rule |
-| #1791 #1795 #1807 | Doc-link red on main fixed; STATUS one-liners |
-| #1790 #1792 #1793 #1794 | HS-S52 Room reads the open review through the repository; HS-S23 `within` lowers the bar only when coverage widens; HS-S43 Needs you coverage; HS-S11 global New creates in a chosen project |
-| #1796 | Dead code parked (ProjectMemoryCore wrapper, SystemShade/AttentionDrawer shims, Serializable mixin), three web-layer imports cut from services, a new guard `tests/unit/test_services_import_no_web.py` |
-| #1797 #1798 #1799 #1801 #1802 #1804 | HS-S22 a new step starts at origin's base, proved; HS-S13 the Room lists its Programs; HS-S33 People Add keeps the saved request; HS-S21 Add binds an action to one step; HS-S41 Meeting owner name + Room informed Link; HS-S42 decision filing scope/correction |
-| #1803 #1805 #1806 | Batch-check reds fixed forward (a prose line, five failure strings, the API manifest) |
-| #1808 #1810 #1811 #1812 #1813 #1814 #1815 | The Walk (hub `/w/<token>` + desk runner + `scripts/walk.py`); its token routes bounded (Codex findings); Needs you coverage as a toolbar People button; the Programs well as a project list; walk records the pressed choice / phone sheet / own-window targeting; the dim never covers the target; the hand-held rebuild (frame, robot, press/scroll/say, whole-viewport shots, voice) — face superseded by direction C |
-| #1816 | ONE HUB VOICE: `/api/tts` speaks through the Line's Pocket TTS; kokoro deleted (owner ruling) |
-| #1817 #1819 #1818 | SIGUSR1 dumps every hub thread's stack to the log (chain=False); a keystore read that does not answer is bounded (2 s) |
-| #1820 #1821 | The walk link opens the desk by itself (carries the desk bootstrap token, read at request time) |
-| #1822 | The walk starts only when the desk is ready (hubSeeded, `#desk-next` not busy, Dock drawn, no window loading) and moves one beat later |
+| #1827 | The walk link is the Tailscale IP (MagicDNS dead) |
+| #1828 | HS-S53: the destination form and its account words have one owner in `features/channels`; Settings and inline Send consume it |
+| #1829 | HS-S25 branch A: a person-gated step merges on the latest review read, not a remembered approval; `facts.person_review`; `merge_requested_at` prevents a second dispatch |
+| #1830 #1834 | ONE KEYSTORE: one master key in the Keychain via `/usr/bin/security`, every secret AES-GCM in `~/.local/share/holdspeak/keystore.enc`; migration from the old per-item entries; after Codex: key on stdin, tombstones, migration under the store lock, flock across processes, fsync and disk read-back before an old item is deleted |
+| #1831 | Atlas citations follow #1828; the walk treats an undrawn part as missing and skips the step |
+| #1832 | The Room's Now tab always shows its Programs fold (a CSS fold rule hid it live); rows share the list's step dots (`listStations`); none → "No Programs yet · New program" scoped to the project |
+| #1833 | New program is a four-step wizard inside the Programs window (Where · What · How · Go); the inline project rows are gone; the scope `project:<id>` preselects |
+| #1835 | Race fixtures re-recorded after #1829 widened the Program's shape |
+| #1836 #1838 | Needs you: the row is the object (glyph · name · Done; press opens; the context menu carries Later/Drop/Hand/Open the Project); Mine · People one segmented control; Must fix/Should fix/Noted become the row's kind and order; then the open-grammar tests, the lamp word, A8 and mic ratchets fixed forward |
+| #1837 | The iPhone walk browser case measures the sheet at rest (a flake under load) |
 
-The test lock is reentrant (`HOLDSPEAK_TEST_LOCK_HELD`), `quick_check.sh` is proportional (docs-only 27 s; build/web guards only when `web/` changed; sweep only when `web/` or `holdspeak/` changed). `/Users/karol/dev/tools/.metadata_never_index` keeps Spotlight off the worktrees.
+Quick check: green at 1f43a469f and at 336a6d87d; red once at d2438b793 (atlas, fixed #1831), once at 336a6d87d's batch (race fixture, fixed #1835), once at 17747e9c4 (#1836's four reds, fixed #1838); the check on bb138505b was running at handover.
 
 ## Part III: the hub, as it stands
 
-- Served checkout `/Users/karol/dev/tools/wt-desk-main-20261025`, detached on main; venv is **Python 3.13** (`uv sync --python 3.13 --extra dev --extra line`; 3.14 has no onnxruntime wheel). Start: `HOME=/Users/karol HOLDSPEAK_WEB_HOST=0.0.0.0 HOLDSPEAK_UI_FEEDBACK=1 nohup .venv/bin/python -m holdspeak.cli_entry web --no-open >> ~/.local/state/holdspeak/hub-main-20261107.log 2>&1 &`; wait on the old PID, not the port. Links: `http://karols-macbook-pro.tailad9943.ts.net:8765` and `http://127.0.0.1:8765` (both, each in its own code block, always).
-- **The Keychain lesson (2026-11-07 ~21:00):** changing the hub's Python binary made macOS Keychain prompt for every keyring item (Telegram token, paired chat, People key…); a background hub never sees the prompt; 15 threads wedged in `find_generic_password`; the desk went empty. He pressed Always Allow on each. Diagnose a wedge with `kill -USR1 <hub pid>` and read the log; `pgrep SecurityAgent` says whether a prompt is pending. Slice owed: ONE master key in the Keychain + one encrypted keystore file, read once at startup with a deadline, and a stable launcher path.
-- Voice: `/api/tts/status` → `{installed, model_ready, engine: "pocket", voice: "alba"}`; the Pocket weights are fetched (`holdspeak/line/models.py`, preset `speech_line_pocket_tts_en`, ~/.holdspeak/line/models). First synthesis ~1.3–2.3 s.
-- Programs on his hub from the dogfood attempt are PARKED (5); leave them.
+- Served checkout `/Users/karol/dev/tools/wt-desk-main-20261025`, detached on main; venv Python 3.13 (`uv sync --python 3.13 --extra dev --extra line`). Redeploy: `git fetch && git checkout --detach origin/main && uv sync … && (cd web && npm ci && npm run build)`; `P=$(lsof -nP -iTCP:8765 -sTCP:LISTEN -t); kill $P; while kill -0 $P; do sleep 1; done`; start `HOME=/Users/karol HOLDSPEAK_WEB_HOST=0.0.0.0 HOLDSPEAK_UI_FEEDBACK=1 nohup .venv/bin/python -m holdspeak.cli_entry web --no-open >> ~/.local/state/holdspeak/hub-main-20261107.log 2>&1 &`. Never run `quick_check.sh` in the served checkout while he walks (it rebuilds the bundle under him); run it in `/Users/karol/dev/tools/HoldSpeak`.
+- **The first start after #1830/#1834 migrates his secrets** into the one keystore file: expect log lines `keystore: made the master key`, `keystore: open`, one `keystore: moved …` per secret; at most one Keychain dialog (a delete of an old item); Allow or Deny both keep the secret. The `security -i` add has not run against a real Keychain yet: if it misparses, secrets read as unavailable and nothing is overwritten. Watch `/api/setup/status` and Telegram after the restart.
+- Voice: `/api/tts/status` → pocket/alba, model ready.
+- His Programs from the dogfood attempt are PARKED (5); leave them. "AI SDLC" has no Programs filed (all six have an empty project_id), so its Room shows "No Programs yet".
 
-## Part IV: in flight at handover
+## Part IV: open, in the order I would run it
 
-- **Direction C build** (`face/walk-direction-c-20261107`, opus-worker): the living cursor (two-tone pixel-crisp arrow: arc, tilt, comet trail, hover a beat, squash-tap, warm ripple), warm edge glow, one caption + voice, target lifts with a halo, no dim by default; robot/bubble/frame/ring removed. It also carries two main reds from #1822: `DeskApp.test.tsx` import cycle (walk.ts imports `hubSeeded` at load → make it lazy) and `test_web_null_read_guard::test_product_components_do_not_mutate_global_dom_or_inject_html` (walk.ts `document.querySelector` → one sanctioned `walk/dom.ts`). When it lands: merge, `scripts/quick_check.sh 765a46ab1` in the served checkout, rebuild web, restart the hub, `scripts/walk.py new docs/walks/2026-11-08-handheld.json`, send him both links. His last walk link (mP-9HIQ…) stays valid.
-- Main is red until that PR merges (the two items above). His hub runs the last green build.
+0. Redeploy his hub on bb138505b (after the running check) and send the hand-held walk (`scripts/walk.py new docs/walks/2026-11-08-handheld.json`, words sharpened for the wizard, Needs you and the fold); read his answers (`scripts/walk.py read <id>`, shots in `~/.local/share/holdspeak/feedback/walks/<id>/`).
+1. His ask-sheet pick → one build (`web/src/desk/walk/WalkRunner.tsx`, `walk.css`: handle row grip·dots·Skip·voice, question 20 px, Keep/Redo/mic row, no title line, no tints, no glyphs).
+2. Wizard follow-ups the builder named: the frame's close drops the wizard unsaved (make it return to the list); the Walk's dots copied into `programs.css` (one kit dots component); the new row's settle unverified; the How step's agent/review defaults read "the template's".
+3. Needs you follow-ups: Program rows (Later ▾ / Send ▾) are unchanged; the Today top rows share the component (verify live); `fold.grammar.test.tsx` "the CSS says Show and Hide" may be red on main (`today.css` `::before` vs `::after`), unverified.
+4. Wave three rest: S32 delivery recovery (after S25; shares program_service), S12 startup intent last; S51 Program vocabulary out of program_service with aliases; bootstrap out of `web_server._create_app`.
+5. Engine defects from the dogfood night (an agent can plan into its running Program; a refused write still ends Done; duplicates not folded).
+6. Test lock: a worker reported `test_lock.py` exits 0 after a red pytest under `env …` (unverified; `subprocess.call` returns the code; check the reentrant path).
+7. Canvases for Needs you, the Room and the Programs window as native apps remain the ruling device for the NEXT round if he rejects tonight's builds.
 
-## Part V: open, in the order I would run it
-
-0. **FIRST: the walk's ask sheet is rejected** (owner, 22:50, with a screenshot: "so ugly and unprofessional"): pastel tinted Keep/Redo pills with pixel glyphs, two bare stacked text links, a flat handle row. Make it the kit's native sheet: the two choices as the library's solid primary pair in the kit's real button material (no tints, no glyph gimmicks), Say more a proper mic Button beside them, Skip quiet in the handle row, no title line, progress as the kit's dots. Canvas it next to the cursor shots; he picks; then one build. The cursor and the edge glow stand.
-1. Read his walk answers (`scripts/walk.py read 196b529096f6f6754636b2ef36a832d9`); read his answers with `scripts/walk.py read <id>` (the shots: `~/.local/share/holdspeak/feedback/walks/<id>/`).
-2. **Canvases before builds** for Needs you, the Project Room, the Programs window as native apps (his words: OS-native, no web-page look). The canvas is the ruling device now; the Design artifact type works (see the walk canvas).
-3. **Architecture subtractions, measured** (bundle size, hub start, files per change): service construction out of `web_server._create_app` into runtime composition; Program vocabulary + `ProgramRefused` + `_LOCK` out of `program_service.py` with aliases (plan HS-S51); the destination form to `features/channels` (HS-S53); the opener registry → one startup intent (HS-S12, last, touches everything). Keychain slice (Part III).
-4. **Plan wave three**: HS-S25 current-review eligibility, HS-S32 delivery recovery; HS-S24 spending = disclosure-only (ruled; no code yet).
-5. Walk gaps: `viewport-fit=cover` not set (iPhone safe-area insets may read 0); iPhone Safari full-viewport capture and post-tap audio unverified; a Room step must open the Room proper (done in #1815, verify live).
-6. Engine defects from the dogfood night (Part I.2).
-7. STATUS lines for #1796–#1822 are in this PR's `pm/STATUS.md`.
-
-Measure weekly (rule 7): merges/day (38 today), presses by him (0 until the walks), hours finding→main (minutes tonight).
+Measure (rule 7): 2026-11-07 38 merges; 2026-11-08 12 merges by 00:30 (#1827–#1838), 3 presses by him (the walk), finding→main minutes to two hours.
