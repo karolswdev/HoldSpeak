@@ -172,6 +172,7 @@ function start(rows: HubWindowRow[], adopted = true, cacheOpen: string[] = [], b
 }
 
 const CHAIR = ["chair:capture", "drawer:parked", "chair:needs"];
+const ROOM_ID = "surface-project-memory";
 
 describe("hubWindows", () => {
   it("restores a terminal descriptor as one native frame and closes only that view", async () => {
@@ -730,6 +731,48 @@ describe("hubWindows", () => {
     await flush(hub);
     expect(order(["chair:capture", "chair:needs"])).toEqual(["chair:capture", "chair:needs"]);
     expect(fake.calls.map((c) => [c.verb, c.id])).toEqual([["raise", "chair:needs"]]);
+  });
+
+  it("HS-S12: the hub's list landing after a startup intent does not re-scope the intent's Room", async () => {
+    // The cache had the Room open; a proposal link opened it at p-a before
+    // the hub answered. The hub's row still holds p-b (another view's last
+    // open). Red on main: the seed put the Room back on p-b.
+    const boot = { [ROOM_ID]: 1 };
+    useDesk.setState({ panelDepth: boot });
+    useDesk.getState().openSurfaceWindow("open-project-memory", "project:p-a");
+    const { fake, hub } = start(
+      [row(ROOM_ID, { app: "surface", object_ref: "project:p-b", depth: 1 })], true, [ROOM_ID], boot);
+    await hub.start();
+    await flush(hub);
+    expect(useDesk.getState().windowsById[ROOM_ID]?.scope).toBe("project:p-a");
+    // The intent goes to the hub as this view's open.
+    expect(fake.calls.filter((c) => c.id === ROOM_ID && c.verb === "open").map((c) => c.body.object_ref))
+      .toEqual(["project:p-a"]);
+    expect(fake.state.windows.find((w) => w.id === ROOM_ID)?.object_ref).toBe("project:p-a");
+  });
+
+  it("HS-S12: a window the cache restored and the intent opened is not closed by the hub's first list", async () => {
+    const boot = { [ROOM_ID]: 1 };
+    useDesk.setState({ panelDepth: boot });
+    useDesk.getState().openSurfaceWindow("open-project-memory", "project:p-a");
+    const { fake, hub } = start([], true, [ROOM_ID], boot);
+    fake.state.desk = 3;
+    await hub.start();
+    await flush(hub);
+    expect(useDesk.getState().windowsById[ROOM_ID]?.scope).toBe("project:p-a");
+    expect(fake.calls.map((c) => [c.verb, c.id])).toEqual([["open", ROOM_ID]]);
+  });
+
+  it("HS-S12: with no intent this load, the hub's list restores the set as it holds it", async () => {
+    const boot = { [ROOM_ID]: 1 };
+    useDesk.setState({ panelDepth: boot, windowsById: { [ROOM_ID]: {
+      id: ROOM_ID, kind: "surface", applicationKey: "open-project-memory", scope: "project:p-a", persistence: "workspace" } } });
+    const { fake, hub } = start(
+      [row(ROOM_ID, { app: "surface", object_ref: "project:p-b", depth: 1 })], true, [ROOM_ID], boot);
+    await hub.start();
+    await flush(hub);
+    expect(useDesk.getState().windowsById[ROOM_ID]?.scope).toBe("project:p-b");
+    expect(fake.calls).toEqual([]);
   });
 
   it("the Chair's mount restack before the hub answered is not a raise (a reload keeps the hub's order)", async () => {

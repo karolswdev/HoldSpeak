@@ -17,11 +17,7 @@ import {
   composeApplicationScope,
   SURFACE_APPLICATIONS,
 } from "../applications";
-import {
-  consumeStagedSurfaceOpen,
-  openSurfaceWhenReady,
-  registerSurface,
-} from "../shell";
+import { flushStartupIntent, registerSurface } from "../shell";
 import { useDesk } from "../store";
 import { objectByRef } from "../world";
 import { DeskWindowFrame } from "./DeskWindow";
@@ -149,14 +145,17 @@ export function SurfaceWindows({
       .filter(([, , row]) => Boolean(row))
       .map(([key, alias, row]) => registerSurface(key, (scope) =>
         reveal(row!, composeApplicationScope(alias.scope, scope))));
-    // This runs only after every normal row and applicable alias is present in
-    // the dispatcher. Consume a demoted-route intent only here, then publish
-    // the fact the /meetings proof awaits; first-value recovery has no normal
-    // registry and must not claim or consume either.
+    // HS-S12: this runs only after every row and applicable alias is present
+    // in the dispatcher (the Drawer and Conductor keys register in earlier
+    // sibling effects). The ONE startup intent (the latest explicit open,
+    // or the staged route arrival) opens here, then the fact the /meetings
+    // proof awaits is published. First-value recovery admits only a request
+    // for its own doors and never consumes the normal Desk's arrival.
     if (!firstValueRecoveryOnly) {
-      const staged = consumeStagedSurfaceOpen();
-      if (staged) openSurfaceWhenReady(staged.key, staged.scope);
+      flushStartupIntent("normal");
       setRegistryState("registered");
+    } else {
+      flushStartupIntent("recovery");
     }
     return () => {
       offs.forEach((off) => off());

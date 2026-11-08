@@ -96,12 +96,19 @@ export function takeRoomRenameRequest(projectId: string | null | undefined): boo
  *  the destination that contains it, the Room with that proposal selected.
  *  The Room takes the request once (a reload does not replay it). */
 export const ROOM_PROPOSAL_EVENT = "holdspeak:room-proposal";
-const roomProposals = new Map<string, string>();
+
+/** HS-S12 (D12 / G-OPEN): a Room keeps ONE target per project, the latest
+ * explicit one: a proposal to reveal or a place to open at. A newer request
+ * replaces an older one, so a Room that mounts late never applies a stale
+ * target over the latest (a proposal never loses to an older History). The
+ * same proposal asked again is the same reveal in the same Room window. */
+type RoomTarget = { kind: "proposal"; proposalId: string } | { kind: "at"; place: RoomPlace };
+const roomTargets = new Map<string, RoomTarget>();
 
 export function openProjectProposal(projectId: string, proposalId: string): void {
   const id = projectId.trim();
   if (!id) return;
-  if (proposalId.trim()) roomProposals.set(id, proposalId.trim());
+  if (proposalId.trim()) roomTargets.set(id, { kind: "proposal", proposalId: proposalId.trim() });
   openProjectRoom(id);
   if (typeof window !== "undefined") {
     window.dispatchEvent(new CustomEvent<string>(ROOM_PROPOSAL_EVENT, { detail: id }));
@@ -115,7 +122,6 @@ export function openProjectProposal(projectId: string, proposalId: string): void
  *  not replay it), as with Draft update. */
 export const ROOM_AT_EVENT = "holdspeak:room-at";
 export type RoomPlace = "room" | "history" | "steward" | { kind: "file"; ref: `note:${string}` };
-const roomPlaces = new Map<string, RoomPlace>();
 
 export function openProjectRoomAt(projectId: string, place: RoomPlace): void {
   const id = projectId.trim();
@@ -129,7 +135,7 @@ export function openProjectRoomAt(projectId: string, place: RoomPlace): void {
 export function requestRoomAt(projectId: string, place: RoomPlace): void {
   const id = projectId.trim();
   if (!id) return;
-  roomPlaces.set(id, place);
+  roomTargets.set(id, { kind: "at", place });
   if (typeof window !== "undefined") {
     window.dispatchEvent(new CustomEvent<string>(ROOM_AT_EVENT, { detail: id }));
   }
@@ -144,17 +150,19 @@ export function openProjectRoomAtResource(projectId: string, resourceRef: `note:
 /** The place to open `projectId`'s Room at, once per request. */
 export function takeRoomAtRequest(projectId: string | null | undefined): RoomPlace | null {
   if (!projectId) return null;
-  const place = roomPlaces.get(projectId) ?? null;
-  roomPlaces.delete(projectId);
-  return place;
+  const target = roomTargets.get(projectId);
+  if (target?.kind !== "at") return null;
+  roomTargets.delete(projectId);
+  return target.place;
 }
 
 /** The proposal to select in `projectId`'s Room, once per request. */
 export function takeRoomProposalRequest(projectId: string | null | undefined): string | null {
   if (!projectId) return null;
-  const proposal = roomProposals.get(projectId) ?? null;
-  roomProposals.delete(projectId);
-  return proposal;
+  const target = roomTargets.get(projectId);
+  if (target?.kind !== "proposal") return null;
+  roomTargets.delete(projectId);
+  return target.proposalId;
 }
 
 /** True once for each request to open `projectId`'s Room in its Update posture. */
