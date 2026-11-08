@@ -118,21 +118,4 @@ def build_delivery_router(
         except Exception as exc:
             return _classified_500(exc, "delivery source registration failed")
 
-    @router.get("/api/delivery/events")
-    async def api_delivery_events(after: str = "") -> Any:
-        """Replay rail events from the composed cursor — served from
-        the collector's retained buffers, never a fresh dw run per
-        poll. The first read after boot performs the initial
-        collection."""
-        try:
-            def _read() -> Any:
-                c = _collector()
-                if not c.has_collected:
-                    c.snapshot()  # initial collection only
-                return c.events_after(after)
-
-            return await asyncio.to_thread(_read)
-        except Exception as exc:
-            return _classified_500(exc, "delivery events read failed")
-
     return router

@@ -1941,14 +1941,6 @@
       ]
     },
     {
-      "path": "/api/delivery/events",
-      "methods": [
-        "GET"
-      ],
-      "module": "web.routes.delivery",
-      "consumers": []
-    },
-    {
       "path": "/api/delivery/evidence/{bundle_id}/{asset_id}",
       "methods": [
         "GET"
@@ -1987,14 +1979,6 @@
       "consumers": [
         "web"
       ]
-    },
-    {
-      "path": "/api/delivery/node/commands",
-      "methods": [
-        "GET"
-      ],
-      "module": "web.routes.delivery_node",
-      "consumers": []
     },
     {
       "path": "/api/delivery/node/disconnect",
@@ -2050,14 +2034,6 @@
       "consumers": [
         "web"
       ]
-    },
-    {
-      "path": "/api/delivery/prs/launches/{launch_id}/input",
-      "methods": [
-        "POST"
-      ],
-      "module": "web.routes.delivery_prs",
-      "consumers": []
     },
     {
       "path": "/api/delivery/prs/proposals/{proposal_id}/decide",
@@ -2198,14 +2174,6 @@
       "consumers": [
         "web"
       ]
-    },
-    {
-      "path": "/api/delivery/terminal/node/results",
-      "methods": [
-        "POST"
-      ],
-      "module": "web.routes.delivery_terminal",
-      "consumers": []
     },
     {
       "path": "/api/delivery/terminal/sessions",
@@ -2462,30 +2430,6 @@
       ]
     },
     {
-      "path": "/api/dictation/agent-context",
-      "methods": [
-        "GET"
-      ],
-      "module": "web.routes.dictation.agent",
-      "consumers": []
-    },
-    {
-      "path": "/api/dictation/agent-context/clear",
-      "methods": [
-        "POST"
-      ],
-      "module": "web.routes.dictation.agent",
-      "consumers": []
-    },
-    {
-      "path": "/api/dictation/agent-context/summarize",
-      "methods": [
-        "POST"
-      ],
-      "module": "web.routes.dictation.agent",
-      "consumers": []
-    },
-    {
       "path": "/api/dictation/agent-hooks",
       "methods": [
         "GET"
@@ -2607,14 +2551,6 @@
         "ios",
         "web"
       ]
-    },
-    {
-      "path": "/api/dictation/floor",
-      "methods": [
-        "GET"
-      ],
-      "module": "web.routes.dictation.floor",
-      "consumers": []
     },
     {
       "path": "/api/dictation/floor/claim",
@@ -2758,30 +2694,6 @@
       "consumers": [
         "ios"
       ]
-    },
-    {
-      "path": "/api/dictation/project-doc-suggestion",
-      "methods": [
-        "GET"
-      ],
-      "module": "web.routes.dictation.project_docs",
-      "consumers": []
-    },
-    {
-      "path": "/api/dictation/project-doc-suggestion/apply",
-      "methods": [
-        "POST"
-      ],
-      "module": "web.routes.dictation.project_docs",
-      "consumers": []
-    },
-    {
-      "path": "/api/dictation/project-doc-suggestion/dismiss",
-      "methods": [
-        "POST"
-      ],
-      "module": "web.routes.dictation.project_docs",
-      "consumers": []
     },
     {
       "path": "/api/dictation/project-hs",
@@ -5836,39 +5748,7 @@
       ]
     },
     {
-      "path": "/api/providers/confluence/connections/{ref}/recheck",
-      "methods": [
-        "POST"
-      ],
-      "module": "web.routes.providers",
-      "consumers": []
-    },
-    {
-      "path": "/api/providers/confluence/discover",
-      "methods": [
-        "GET"
-      ],
-      "module": "web.routes.providers",
-      "consumers": []
-    },
-    {
       "path": "/api/providers/confluence/validate",
-      "methods": [
-        "POST"
-      ],
-      "module": "web.routes.providers",
-      "consumers": []
-    },
-    {
-      "path": "/api/providers/github/connection",
-      "methods": [
-        "GET"
-      ],
-      "module": "web.routes.providers",
-      "consumers": []
-    },
-    {
-      "path": "/api/providers/github/connection/recheck",
       "methods": [
         "POST"
       ],

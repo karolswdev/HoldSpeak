@@ -233,48 +233,7 @@ class TestListProviders:
 # ── GET /api/providers/github/connection ─────────────────────────────
 
 
-class TestGitHubConnection:
-    def test_connected_state(self, rig) -> None:
-        _db, client, _log, _ctx = rig
-        resp = client.get("/api/providers/github/connection")
-        assert resp.status_code == 200
-        body = resp.json()
-        assert body["state"] == "connected"
-        assert body["display"]["account"] == "testuser"
-
-    def test_connection_failure_state(self, unauth_rig) -> None:
-        _db, client = unauth_rig
-        resp = client.get("/api/providers/github/connection")
-        assert resp.status_code == 200
-        body = resp.json()
-        assert body["state"] == "owner_action_required"
-        assert body["error_code"] == "authentication_required"
-
-
 # ── POST /api/providers/github/connection/recheck ────────────────────
-
-
-class TestGitHubRecheck:
-    def test_recheck_re_probes(self, rig) -> None:
-        """Recheck calls connection_status again; probe count observable."""
-        _db, client, call_log, _ctx = rig
-        # First probe
-        client.get("/api/providers/github/connection")
-        auth_count_before = sum(
-            1 for c in call_log if c[:3] == ["gh", "auth", "status"]
-        )
-
-        # Recheck
-        resp = client.post("/api/providers/github/connection/recheck")
-        assert resp.status_code == 200
-        assert resp.json()["state"] == "connected"
-
-        auth_count_after = sum(
-            1 for c in call_log if c[:3] == ["gh", "auth", "status"]
-        )
-        assert auth_count_after > auth_count_before, (
-            "recheck must call connection_status again (observable via probe count)"
-        )
 
 
 # ── GET /api/providers/github/discover ───────────────────────────────
@@ -399,26 +358,6 @@ class TestWatchEvaluate:
 class TestAuthDegradedPath:
     """The auth-degraded wire proof: unauthenticated probe ->
     owner_action_required ON THE WIRE with typed body + correct status."""
-
-    def test_unauthenticated_probe_returns_owner_action_required(
-        self, unauth_rig,
-    ) -> None:
-        _db, client = unauth_rig
-        resp = client.get("/api/providers/github/connection")
-        assert resp.status_code == 200
-        body = resp.json()
-        assert body["state"] == "owner_action_required"
-        assert body["error_code"] == "authentication_required"
-        assert body["error_detail"] == "gh auth login"
-        assert body["display"]["recovery_hint"] == "gh auth login"
-
-    def test_recheck_also_degraded(self, unauth_rig) -> None:
-        _db, client = unauth_rig
-        resp = client.post("/api/providers/github/connection/recheck")
-        assert resp.status_code == 200
-        body = resp.json()
-        assert body["state"] == "owner_action_required"
-        assert body["error_code"] == "authentication_required"
 
     def test_discover_fails_when_unauthed(self, unauth_rig) -> None:
         _db, client = unauth_rig

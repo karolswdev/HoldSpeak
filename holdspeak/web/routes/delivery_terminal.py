@@ -15,8 +15,6 @@ The hub HTTP surface over PLATFORM-CONTRACT §7/§8:
   chokepoints, or queues for the remote node's claim leg.
 - ``GET  /api/delivery/terminal/commands/{command_id}`` — the aggregate
   Receipt, reconciled by command_id (never a blind retry).
-- ``POST /api/delivery/terminal/node/results`` — the node-authenticated
-  results leg joining node receipts/reconcile answers into the hub half.
 
 Assembly is in-test/lazy (the delivery-router precedent); production
 wiring happens in the web server, not here. Blocking work (tmux, SQLite)
@@ -31,7 +29,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 import anyio
-from fastapi import APIRouter, Header, Request
+from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
 
@@ -80,11 +78,6 @@ class _LiveRequest(BaseModel):
     target_generation: str
     stream_id: Optional[str] = None
     resume_sequence: Optional[int] = None
-
-
-class _ResultsRequest(BaseModel):
-    name: str
-    results: list[dict[str, Any]] = []
 
 
 def build_delivery_terminal_router(
@@ -341,39 +334,6 @@ def build_delivery_terminal_router(
         if out is None:
             return JSONResponse(
                 {"error": "unknown_command_id"}, status_code=404
-            )
-        return JSONResponse(out)
-
-    @router.post("/api/delivery/terminal/node/results")
-    async def api_terminal_node_results(
-        body: _ResultsRequest,
-        x_holdspeak_node_token: Optional[str] = Header(default=None),
-    ) -> Any:
-        """The node's results leg: receipts and reconcile answers for
-        claimed commands. Authenticated with the node's OWN token via
-        the shared node-link token store — never the browser token."""
-        from ...delivery.node_link import NodeLinkError
-
-        if holder["link"] is None:
-            return JSONResponse(
-                {"ok": False, "error": "node_link_unwired"}, status_code=503
-            )
-        try:
-            # The link's own auth seam: per-node token, browser-token
-            # equality refused first (§12.1 distinctness).
-            node_id = holder["link"]._verify(body.name, x_holdspeak_node_token)
-            out = await asyncio.to_thread(
-                _service().record_results, node_id, body.results
-            )
-        except NodeLinkError as exc:
-            return JSONResponse(
-                {"ok": False, "error": exc.reason, "detail": str(exc)},
-                status_code=401,
-            )
-        except Exception as exc:
-            log.error(f"terminal node results failure: {exc}")
-            return JSONResponse(
-                {"ok": False, "error": "terminal_results_failure"}, status_code=500
             )
         return JSONResponse(out)
 

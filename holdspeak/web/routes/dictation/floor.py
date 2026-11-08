@@ -9,7 +9,6 @@ and an open mic could both hold the microphone and neither would know.
 These three routes put the browser on the existing model rather than building
 a second one:
 
-* ``GET  /api/dictation/floor``          — who holds it (a lamp, not a lock).
 * ``POST /api/dictation/floor/claim``    — claim it as ``open_mic``, on a
   LEASE, so a closed tab cannot wedge the hotkey; re-claiming renews.
 * ``POST /api/dictation/floor/release``  — drop it.
@@ -56,15 +55,6 @@ def build_floor_router(ctx: WebContext) -> APIRouter:
         if requested is None or requested <= 0:
             return DEFAULT_LEASE_SECONDS
         return min(float(requested), MAX_LEASE_SECONDS)
-
-    @router.get("/api/dictation/floor")
-    def api_audio_floor() -> Any:
-        """Who holds the audio floor right now."""
-        session = _session()
-        if session is None:
-            return {"arbitrated": False, "held": False, "owner": None}
-        owner = session.active_owner
-        return {"arbitrated": True, "held": owner is not None, "owner": owner}
 
     @router.post("/api/dictation/floor/claim")
     def api_audio_floor_claim(payload: FloorClaim | None = None) -> Any:

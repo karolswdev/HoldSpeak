@@ -156,16 +156,6 @@ def build_delivery_node_router(
             lambda: _link().disconnect(body.name, x_holdspeak_node_token)
         )
 
-    @router.get("/api/delivery/node/commands")
-    def api_node_commands(
-        name: str = "",
-        x_holdspeak_node_token: Optional[str] = Header(default=None),
-    ) -> Any:
-        """The command claim leg. HS-94-03 returns the empty envelope;
-        the capability/protocol gate already refuses mismatched nodes
-        by name while their observation keeps flowing."""
-        return _guarded(lambda: _link().poll_commands(name, x_holdspeak_node_token))
-
     @router.get("/api/delivery/nodes")
     def api_delivery_nodes() -> Any:
         """Browser-facing liveness projection: typed status with

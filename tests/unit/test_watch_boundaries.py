@@ -89,7 +89,6 @@ def test_provider_and_steward_helpers_have_one_wire_source() -> None:
 
     assert provider_route.collect_provider_manifests is provider_service.collect_provider_manifests
     assert project_family.collect_provider_manifests is provider_service.collect_provider_manifests
-    assert provider_route._NATIVE_PROVIDERS is provider_service._NATIVE_PROVIDERS
 
     for name in ("_serialize_policy", "_serialize_run", "_serialize_step", "_serialize_steps"):
         assert getattr(steward_route, name) is getattr(steward_service, name)

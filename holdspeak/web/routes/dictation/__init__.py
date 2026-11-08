@@ -10,14 +10,14 @@ identical** and `build_dictation_router` stays the public entry point
 
 Domains:
 - `intents`       — `/api/intents/*`
-- `agent`         — `/api/dictation/project-context`, `agent-context*`, `agent-hooks`
-- `project_docs`  — `/api/dictation/project-hs`, `project-doc-suggestion*`
+- `agent`         — `/api/dictation/project-context`, `agent-hooks`
+- `project_docs`  — `/api/dictation/project-hs`
 - `blocks`        — `/api/dictation/block-templates`, `blocks*`
 - `kb`            — `/api/dictation/project-kb*`
 - `pipeline`      — `/api/dictation/readiness`, `dry-run`
 
 `project_docs`, `blocks`, and `pipeline` share one in-memory project-doc-suggestion
-store (a dry-run detects a suggestion; the project-doc-suggestion GET reads it).
+store (a dry-run detects a suggestion; its GET route is parked 2026-11-08).
 That store is created here, once per router build (per app), and passed to the
 groups that touch it — preserving the original closure-scoped lifetime.
 """

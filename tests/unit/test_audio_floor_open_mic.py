@@ -122,24 +122,6 @@ def test_lease_seconds_must_be_positive() -> None:
 # ── the routes ───────────────────────────────────────────────────────
 
 
-def test_floor_route_reports_the_active_owner_by_name() -> None:
-    session = VoiceTypingSession()
-    client = _client(session)
-
-    assert client.get("/api/dictation/floor").json() == {
-        "arbitrated": True,
-        "held": False,
-        "owner": None,
-    }
-
-    session.acquire("meeting")
-    assert client.get("/api/dictation/floor").json() == {
-        "arbitrated": True,
-        "held": True,
-        "owner": "meeting",
-    }
-
-
 def test_claim_takes_the_floor_and_a_meeting_is_then_refused() -> None:
     session = VoiceTypingSession()
     client = _client(session)
@@ -194,7 +176,6 @@ def test_a_lease_is_capped_so_a_client_cannot_hold_the_floor_forever() -> None:
 def test_without_an_arbiter_the_routes_say_so_instead_of_inventing_a_floor() -> None:
     client = _client(None)
 
-    assert client.get("/api/dictation/floor").json()["arbitrated"] is False
     claimed = client.post("/api/dictation/floor/claim", json={})
     assert claimed.status_code == 200
     assert claimed.json()["arbitrated"] is False

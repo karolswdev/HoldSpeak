@@ -32,7 +32,6 @@ from ...logging_config import get_logger
 from ...principals import UNAUTHENTICATED
 from ...services.errors import NotFound, ServiceError, ValidationError
 from ...services.provider_manifest_service import (
-    _NATIVE_PROVIDERS,
     collect_provider_manifests,
 )
 from ..context import WebContext
@@ -65,42 +64,7 @@ def build_providers_router(ctx: WebContext) -> APIRouter:
 
     # ── GET /api/providers/github/connection ─────────────────────────
 
-    @router.get("/api/providers/github/connection")
-    async def github_connection(request: Request) -> Any:
-        """The persisted connection status (adapter.connection_status)."""
-        try:
-            adapter = ctx.github_provider
-            if adapter is None:
-                return JSONResponse(
-                    {"code": "provider_not_configured",
-                     "message": "GitHub provider is not configured"},
-                    status_code=404,
-                )
-            result = await run_in_threadpool(adapter.connection_status, principal(request))
-            return JSONResponse(result)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to get GitHub connection status")
-
     # ── POST /api/providers/github/connection/recheck ────────────────
-
-    @router.post("/api/providers/github/connection/recheck")
-    async def github_connection_recheck(request: Request) -> Any:
-        """Re-probe live (calls connection_status fresh)."""
-        try:
-            adapter = ctx.github_provider
-            if adapter is None:
-                return JSONResponse(
-                    {"code": "provider_not_configured",
-                     "message": "GitHub provider is not configured"},
-                    status_code=404,
-                )
-            from starlette.concurrency import run_in_threadpool
-
-            # PHILO-10-02: the probe runs gh -- off the event loop.
-            result = await run_in_threadpool(adapter.connection_status, principal(request))
-            return JSONResponse(result)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to recheck GitHub connection")
 
     # ── GET /api/providers/github/discover ───────────────────────────
 
@@ -480,69 +444,7 @@ def build_providers_router(ctx: WebContext) -> APIRouter:
 
     # ── POST /api/providers/confluence/connections/{ref}/recheck ────────
 
-    @router.post("/api/providers/confluence/connections/{ref}/recheck")
-    def confluence_connection_recheck(ref: str, request: Request) -> Any:
-        """Recheck one Confluence connection (switch + status probe)."""
-        try:
-            adapter = ctx.confluence_provider
-            if adapter is None:
-                return JSONResponse(
-                    {"code": "provider_not_configured",
-                     "message": "Confluence provider is not configured"},
-                    status_code=404,
-                )
-            result = adapter.connection_status(principal(request), ref)
-            return JSONResponse(result)
-        except ValidationError as exc:
-            return JSONResponse(
-                {"code": exc.code, "message": exc.detail},
-                status_code=400,
-            )
-        except Exception as exc:
-            return error_500(exc, log, "Failed to recheck Confluence connection")
-
     # ── GET /api/providers/confluence/discover ────────────────────────
-
-    @router.get("/api/providers/confluence/discover")
-    def confluence_discover(
-        request: Request,
-        connection_ref: str = "",
-        kind: str = "spaces",
-        query: str = "",
-        cursor: int | None = None,
-        limit: int = 30,
-    ) -> Any:
-        """Bounded Confluence discovery (spaces)."""
-        try:
-            adapter = ctx.confluence_provider
-            if adapter is None:
-                return JSONResponse(
-                    {"code": "provider_not_configured",
-                     "message": "Confluence provider is not configured"},
-                    status_code=404,
-                )
-            if not connection_ref:
-                return JSONResponse(
-                    {"code": "validation_error",
-                     "message": "connection_ref is required"},
-                    status_code=400,
-                )
-            result = adapter.discover(
-                principal(request),
-                connection_ref,
-                kind=kind,
-                query=query,
-                cursor=cursor,
-                limit=limit,
-            )
-            return JSONResponse(result)
-        except ValidationError as exc:
-            return JSONResponse(
-                {"code": exc.code, "message": exc.detail},
-                status_code=400,
-            )
-        except Exception as exc:
-            return error_500(exc, log, "Failed to discover Confluence resources")
 
     # ── POST /api/providers/confluence/validate ───────────────────────
 

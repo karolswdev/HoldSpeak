@@ -43,9 +43,9 @@ payloads or Desk records.
 | Provider | Main routes |
 | --- | --- |
 | Calendar | `/api/calendar/sources`, `/api/calendar/events`, link and snapshot routes |
-| GitHub | `/api/providers/github/connection`, recheck, discover, and repository validation |
+| GitHub | `/api/providers/github/discover` and repository validation |
 | Jira | Connection, recheck, discover, search, and scope validation routes |
-| Confluence | Connection, recheck, discover, and validation routes |
+| Confluence | Connection and validation routes |
 | Project sources | Project resources, watches, and activity-rule routes |
 | People | The encrypted People store. See [People integration](PEOPLE_INTEGRATION.md). |
 
