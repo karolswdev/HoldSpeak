@@ -2,7 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
-- 2026-11-08 · #PR The New program wizard has no step words on its face (Where/What/How/Go gone): Project, Goal, Runs, the summary.
+- 2026-11-08 · #1843 The New program wizard has no step words on its face (Where/What/How/Go gone): Project, Goal, Runs, the summary.
 - 2026-11-08 · #1842 A field on a touch phone is 16 px, so iOS Safari never zooms the desk (the cropped walk shots).
 - 2026-11-08 · #1841 The walk brings a part's window to the front before it marks it (the phone showed Programs over Needs you).
 - 2026-11-08 · #1840 The walk link is the tailnet name over https (Tailscale Serve), not the IP: the owner's ruling, and a secure context.
