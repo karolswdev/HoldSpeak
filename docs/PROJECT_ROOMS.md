@@ -103,7 +103,7 @@ on the mast.
 
 | Row | One press |
 | --- | --- |
-| A proposal from a meeting | **Confirm** records it. **Edit** changes its text, owner or due date, then **Save & confirm**. |
+| A proposal from a meeting | **Confirm** records it. **Dismiss** removes it. Press its text to change the text, owner or due date, then press **Save & confirm**. |
 | A meeting that names this Project | **Add** files the meeting to the Project. |
 | A review that waits on someone | **Nudge** opens the nudge card. **Open** opens that person in People. |
 | Your open item or action | **Hand to an agent session**, **Run as a program**, **Open source** or **Open**. |

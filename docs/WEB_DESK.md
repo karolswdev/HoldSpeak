@@ -18,18 +18,50 @@ configured MCP client.
 ## Needs you
 
 **Needs you** lists what waits on you. Each row is the thing itself: an
-action, a decision, a Program or a held send. A row has one verb, for example
-**Done**, **Nudge**, **Merge** or **Decide**. **Decide** opens the choices in
-place, under the row. Press the row to open the thing.
+action, a decision, a Program, a proposal or a held send.
+
+The top of the window is the mast. It says the day and how many rows you
+must fix, for example `Sunday · 3 must fix`. When nothing must be fixed, it
+says how many rows need you, or **Nothing needs you**. Under the title, one
+line gives the other counts and the time of the last check, for example
+`53 need you · 12 should · 38 noted · checked 07:29`. A count of zero is not
+shown. A bar under the mast shows the share that you must fix and the share
+that you should fix.
+
+The mast has these verbs:
+
+- **Mine · People**: **Mine** is your own work. **People** is what other
+  people owe you.
+- **Later**: shows the rows that you moved to a later day. It is shown only
+  when there are such rows.
+- **Muted · N**: shows the rows of muted Projects. It is shown only when
+  there are such rows.
+- **Connect calendar**: shown when no calendar is connected.
+
+Under the mast, **Waits on you first** holds the one row that waits on you
+most: a row that you must fix, then a Program that waits on you, then the
+oldest row. It shows the row's name, its facts, its Project, its first lines
+and its verbs. The first verb is the one to press, for example **Merge**,
+**Decide** or **Done**. **Open** or **Open the Program** opens the row's
+home. **Later** moves it to a later day. **More** shows a long text in full.
+
+Under it, the other rows are in groups: **Must fix**, **Should fix**,
+**To do** and **Noted**. A group head says its count, for example
+`Must fix · 2 more` when the first row is from that group. A group with no
+row is not shown.
+
+A row has one verb, for example **Done**, **Nudge**, **Merge**, **Decide** or
+**Confirm**. **Decide** opens the choices in place, under the row. Press the
+row to open the thing. An action that has no other home opens in place, in
+the Needs you window: you read its whole text, its facts, and the verbs
+**Done**, **Later** (it comes back tomorrow), **Run as a program**,
+**Hand to an agent session** and, when it has a Project, **Open the Project**.
+**Back** returns to the list.
 
 Right-press a row for its other verbs. An action's menu has **Later**,
 **Drop**, **Run as a program** and **Hand to an agent session**. A Program's
 row has **Later** and **Send**. **Run as a program** makes a Program.
 **Hand to an agent session** starts one live agent session.
-
-The control at the left of the toolbar is **Mine · People**. **Mine** is your
-own work, with its count. **People** is what other people owe you. Findings
-show as **Must fix**, **Should fix** or **Noted**, and **Must fix** comes first.
 
 ## Create work
 
