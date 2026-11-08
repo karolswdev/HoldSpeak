@@ -1,0 +1,29 @@
+{
+  "about": "Named seams we are removing: a second implementation of one thing. Each count must go to zero over the nights. scripts/measure.py reads this file.",
+  "seams": [
+    {
+      "name": "Two step-dot implementations (wizard and walk)",
+      "pattern": "pg-wiz-dot|walk-dot",
+      "paths": ["web/src"],
+      "exclude": []
+    },
+    {
+      "name": "ProgramRefused definitions",
+      "pattern": "class ProgramRefused",
+      "paths": ["holdspeak"],
+      "exclude": []
+    },
+    {
+      "name": "_create_app lines in web_server.py",
+      "pattern": "_create_app",
+      "paths": ["holdspeak/web_server.py"],
+      "exclude": []
+    },
+    {
+      "name": "Keystore readers outside keystore.py",
+      "pattern": "keyring\\.",
+      "paths": ["holdspeak"],
+      "exclude": ["keystore.py"]
+    }
+  ]
+}

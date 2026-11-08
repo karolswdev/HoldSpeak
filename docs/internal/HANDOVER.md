@@ -61,3 +61,4 @@ Quick check: green at 1f43a469f and at 336a6d87d; red once at d2438b793 (atlas, 
 7. Canvases for Needs you, the Room and the Programs window as native apps remain the ruling device for the NEXT round if he rejects tonight's builds.
 
 Measure (rule 7): 2026-11-07 38 merges; 2026-11-08 12 merges by 00:30 (#1827–#1838), 3 presses by him (the walk), finding→main minutes to two hours.
+Measure each night with `uv run python scripts/measure.py` (one table: merges per day, PR open to merge, bundle, hub cold start, code shape, seams in `scripts/measure_seams.json`); the baseline is `docs/internal/measure/2026-11-08.md`.
