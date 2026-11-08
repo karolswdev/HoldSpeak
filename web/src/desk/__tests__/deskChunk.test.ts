@@ -5,6 +5,12 @@
  * import into the "desk" chunk (vite.config.ts chunkFor), so a static path
  * from DeskApp to one of these cores puts it back in that chunk.
  *
+ * The editor is not on glass at first paint either: CodeMirror loads with the
+ * note window's chunk. Reading keeps its Markdown grammar in the desk chunk
+ * (@lezer/markdown with @lezer/common and @lezer/highlight, 69 KiB), because
+ * the first paint reads agent words with it; no other @lezer grammar and no
+ * @codemirror module is reached.
+ *
  * This is a lexical walk of the source graph: static imports and re-exports
  * are followed; dynamic import() and type-only imports are not (the build
  * erases type imports and splits at import()). */
@@ -19,6 +25,8 @@ const LAZY_CORES = [
   "desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
   "features/project-room/ProjectRoomCore.tsx",
 ];
+
+const READING_GRAMMAR = new Set(["@lezer/markdown", "@lezer/common", "@lezer/highlight"]);
 
 const STATIC_RE = /^\s*(import|export)\s+(?!type\b)([\s\S]*?)\s*from\s*["']([^"']+)["']|^\s*import\s+["']([^"']+)["']/gm;
 
@@ -39,6 +47,8 @@ function resolve(from: string, spec: string): string | null {
   return null;
 }
 
+const editorImports = new Map<string, string>();
+
 function staticClosure(entry: string): Map<string, string | null> {
   const via = new Map<string, string | null>([[entry, null]]);
   const queue = [entry];
@@ -47,7 +57,9 @@ function staticClosure(entry: string): Map<string, string | null> {
     const text = fs.readFileSync(path.join(SRC, name), "utf8");
     for (const match of text.matchAll(STATIC_RE)) {
       if (match[2] !== undefined && typeOnly(match[2])) continue;
-      const next = resolve(name, match[3] ?? match[4]);
+      const spec = match[3] ?? match[4];
+      if (/^@(codemirror|lezer)\//.test(spec) && !READING_GRAMMAR.has(spec) && !editorImports.has(name)) editorImports.set(name, spec);
+      const next = resolve(name, spec);
       if (!next || via.has(next)) continue;
       via.set(next, name);
       queue.push(next);
@@ -64,9 +76,17 @@ describe("the desk chunk", () => {
     expect(closure.has("desk/drawer/DrawerWindow.tsx")).toBe(true);
   });
 
-  it.each(LAZY_CORES)("does not statically import %s", (core) => {
+  const chainTo = (file: string) => {
     const chain: string[] = [];
-    for (let at: string | null | undefined = core; at; at = closure.get(at)) chain.unshift(at);
-    expect(closure.has(core) ? chain.join(" -> ") : "not in the desk chunk").toBe("not in the desk chunk");
+    for (let at: string | null | undefined = file; at; at = closure.get(at)) chain.unshift(at);
+    return chain.join(" -> ");
+  };
+
+  it.each(LAZY_CORES)("does not statically import %s", (core) => {
+    expect(closure.has(core) ? chainTo(core) : "not in the desk chunk").toBe("not in the desk chunk");
+  });
+
+  it("reaches no CodeMirror module and no Lezer grammar but Markdown", () => {
+    expect([...editorImports].map(([file, spec]) => `${spec}: ${chainTo(file)}`)).toEqual([]);
   });
 });
