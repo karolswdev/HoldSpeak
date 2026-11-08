@@ -1462,7 +1462,7 @@ span.pg-req-thumb { height: 150px; }
 
 /* ── New program, the wizard (owner 2026-11-08): the window's body is the
    wizard page; the toolbar and the status bar stay. One step a screen
-   (Where · What · How · Go), the step slides in on the motion tokens; the
+   (project · goal · runs · create; no step words on the face), the step slides in on the motion tokens; the
    bar holds the progress dots (the Walk's: 6 px, now a 16 px pill, done
    filled) and Back · Next / Create. ── */
 .pg-wiz {
