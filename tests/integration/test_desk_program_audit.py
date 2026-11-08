@@ -13,11 +13,14 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+import pytest
+
 from holdspeak.mcp import palettes
 from holdspeak.mcp.families import program as program_family
 from holdspeak.mcp.tool_authority import TOOL_AUTHORITY, WORK
 from holdspeak.services.needs_you_membership import compose, program_items
 from holdspeak.services.program_audit import RULES, parse
+from holdspeak.services.program_definitions import ProgramRefused
 from tests.integration.program_rig import OWNER, Rig, git
 from tests.integration.test_desk_programs import _client, _fixture
 from tests.unit.test_program_service import _launch_principal
@@ -129,8 +132,9 @@ def test_audit_files_findings_dedupes_and_proposes_a_fix_program(tmp_path, monke
     assert rig.program(fix["id"])["state"] == "drafting"
     after = rig.program(pid)
     assert after["fix_program_id"] == fix["id"] and after["your_turn_items"] == []
-    again = client.post(f"/api/programs/{pid}/propose_fix")
-    assert again.status_code == 409 and again.json()["code"] == "fix_made"
+    with pytest.raises(ProgramRefused) as again:
+        rig.service.propose_fix(OWNER, pid)
+    assert again.value.code == "fix_made"
 
 
 def test_an_audit_in_drafting_reads_its_surfaces(tmp_path, monkeypatch) -> None:
@@ -161,15 +165,16 @@ def test_propose_fix_over_mcp_and_its_refusals(tmp_path, monkeypatch) -> None:
     assert TOOL_AUTHORITY["program.propose_fix"] == WORK
     assert "program.propose_fix" in palettes.resolve_palette(palettes.CONDUCTOR)
     pid = _audit(rig, steps=1)
-    client = _client(rig, monkeypatch)
-    none = client.post(f"/api/programs/{pid}/propose_fix")
-    assert none.status_code == 409 and none.json()["code"] == "no_must_findings"
+    with pytest.raises(ProgramRefused) as none:
+        rig.service.propose_fix(OWNER, pid)
+    assert none.value.code == "no_must_findings"
     _report(rig, monkeypatch, pid, 1, REPORT_1)
     answer = program_family.dispatch("program.propose_fix", {"program_id": pid}, OWNER)
     assert answer["steps"] == 1 and answer["fix_program"]["state"] == "drafting"
     other = rig.service.create(OWNER, title="Build", repository=str(rig.repo), template="fast-cycle")["id"]
-    refused = client.post(f"/api/programs/{other}/propose_fix")
-    assert refused.status_code == 409 and refused.json()["code"] == "not_an_audit"
+    with pytest.raises(ProgramRefused) as refused:
+        rig.service.propose_fix(OWNER, other)
+    assert refused.value.code == "not_an_audit"
 
 
 def test_audit_levels_file_by_rule_or_ask(tmp_path, monkeypatch) -> None:
