@@ -1,12 +1,174 @@
-/* The Walk (2026-11-07): a dim of four rectangles around the part (nothing
+/* The Walk (2026-11-07; hand-held 2026-11-08: the frame, the guide, the
+   cursor and the phone sheet below): a dim of four rectangles around the part (nothing
    over the part: it takes the pointer, also while it moves), a 2 px accent
    ring that pulses once and stays, and one card in kit material beside the
    part. Over the windows, the dock and the popovers; under the feedback strip. */
 .walk-layer {
+  /* The safe area (the Dynamic Island, the home bar). A rig may set these. */
+  --walk-safe-top: env(safe-area-inset-top, 0px);
+  --walk-safe-right: env(safe-area-inset-right, 0px);
+  --walk-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --walk-safe-left: env(safe-area-inset-left, 0px);
+  --walk-px: 3px;
   position: fixed;
   inset: 0;
   z-index: 95;
   pointer-events: none;
+}
+
+/* One frame without the walk's chrome: the shot is the screen he sees. */
+.walk-layer[data-capturing] {
+  visibility: hidden;
+}
+
+/* The hand-held frame (owner 2026-11-07: "a very thin pixely AI border"):
+   3 px blocks of the accent with one block gap, inside the safe area,
+   marching one block every 400 ms, clockwise. It takes no pointer. */
+.walk-frame {
+  position: fixed;
+  z-index: 2;
+  top: var(--walk-safe-top);
+  right: var(--walk-safe-right);
+  bottom: var(--walk-safe-bottom);
+  left: var(--walk-safe-left);
+  pointer-events: none;
+  image-rendering: pixelated;
+}
+
+.walk-frame-edge {
+  position: absolute;
+  --walk-run: repeating-linear-gradient(var(--walk-dir), var(--accent) 0 var(--walk-px),
+    transparent var(--walk-px) calc(var(--walk-px) * 2));
+  background-image: var(--walk-run);
+  animation: walk-march 800ms steps(2, end) infinite;
+}
+
+.walk-frame-edge[data-edge="top"],
+.walk-frame-edge[data-edge="bottom"] {
+  --walk-dir: 90deg;
+  left: 0;
+  right: 0;
+  height: var(--walk-px);
+}
+
+.walk-frame-edge[data-edge="left"],
+.walk-frame-edge[data-edge="right"] {
+  --walk-dir: 180deg;
+  top: 0;
+  bottom: 0;
+  width: var(--walk-px);
+}
+
+.walk-frame-edge[data-edge="top"] { top: 0; --walk-to: calc(var(--walk-px) * 2) 0; }
+.walk-frame-edge[data-edge="right"] { right: 0; --walk-to: 0 calc(var(--walk-px) * 2); }
+.walk-frame-edge[data-edge="bottom"] { bottom: 0; --walk-to: calc(var(--walk-px) * -2) 0; }
+.walk-frame-edge[data-edge="left"] { left: 0; --walk-to: 0 calc(var(--walk-px) * -2); }
+
+@keyframes walk-march {
+  from { background-position: 0 0; }
+  to { background-position: var(--walk-to); }
+}
+
+/* The guide: the Dock's pixel robot at the frame's top-left corner, and one
+   bubble in kit material with the step's words. */
+.walk-guide {
+  position: fixed;
+  z-index: 2;
+  top: calc(var(--walk-safe-top) + 8px);
+  left: calc(var(--walk-safe-left) + 8px);
+  right: calc(var(--walk-safe-right) + 8px);
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  pointer-events: none;
+}
+
+/* The robot blinks at idle (a one-frame squint), bobs 2 px while the voice
+   speaks, and waves at the end. */
+.walk-guide-bot {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  image-rendering: pixelated;
+  transform-origin: 50% 100%;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .walk-guide-bot { animation: walk-blink 4200ms steps(1, end) infinite; }
+  .walk-guide[data-talking] .walk-guide-bot { animation: walk-bob 400ms steps(2, end) infinite; }
+  .walk-guide[data-done] .walk-guide-bot { animation: walk-wave 300ms var(--ease-standard, ease-out) 3; }
+}
+
+@keyframes walk-blink {
+  0%, 96% { scale: 1 1; }
+  97% { scale: 1 0.88; }
+}
+
+@keyframes walk-bob {
+  50% { translate: 0 -2px; }
+}
+
+@keyframes walk-wave {
+  25% { rotate: -10deg; }
+  75% { rotate: 10deg; }
+}
+
+.walk-bubble {
+  position: relative;
+  margin: 0;
+  max-width: min(520px, 100%);
+  padding: 7px 11px;
+  color: var(--wb-ink);
+  border: 1px solid var(--wb-rule, #22313b);
+  border-radius: var(--desk-window-radius, 8px);
+  background: var(--wb-paper);
+  box-shadow: var(--depth-card), var(--depth-row);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+  animation: walk-bubble-in 160ms steps(3, end) 1;
+}
+
+.walk-bubble.walk-begin {
+  display: inline-flex;
+  min-height: 44px;
+  pointer-events: auto;
+}
+
+@keyframes walk-bubble-in {
+  from { opacity: 0; translate: -6px 0; }
+}
+
+/* The guide's cursor: a 16 x 16 pixel arrow at two px a pixel; it travels
+   from the bubble to the part in 500 ms. Its tip is its top-left corner. */
+.walk-cursor {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 3;
+  pointer-events: none;
+  image-rendering: pixelated;
+  transition: transform 500ms cubic-bezier(0.3, 0, 0.2, 1);
+  filter: drop-shadow(1px 1px 0 color-mix(in srgb, var(--wb-ink, #0f1a22) 40%, transparent));
+}
+
+.walk-cursor-edge { fill: var(--wb-ink, #0f1a22); }
+.walk-cursor-fill { fill: var(--wb-paper, #fff); }
+
+/* The press: a two-frame squash at the tip. */
+.walk-cursor-body { transform-origin: 2px 2px; }
+@media (prefers-reduced-motion: no-preference) {
+  .walk-cursor[data-pressing] .walk-cursor-body {
+    animation: walk-squash 160ms steps(2, end) 1;
+  }
+}
+
+@keyframes walk-squash {
+  50% { transform: scale(1.15, 0.8); }
 }
 
 .walk-backdrop {
@@ -15,18 +177,52 @@
   pointer-events: auto;
 }
 
+/* The ring (2026-11-08): the accent line draws itself in (320 ms), breathes
+   twice and settles. */
 .walk-ring {
   position: fixed;
   box-sizing: border-box;
-  border: 2px solid var(--accent);
-  border-radius: 8px;
   pointer-events: none;
-  animation: walk-ring-pulse 900ms ease-out 1;
 }
 
-@keyframes walk-ring-pulse {
-  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 55%, transparent); }
-  100% { box-shadow: 0 0 0 14px color-mix(in srgb, var(--accent) 0%, transparent); }
+.walk-ring-line {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+}
+
+.walk-ring-line rect {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-dasharray: 100;
+  stroke-dashoffset: 0;
+  width: calc(100% - 2px);
+  height: calc(100% - 2px);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .walk-ring-line rect {
+    animation: walk-ring-draw 320ms var(--ease-standard, ease-out) 1 both;
+  }
+  .walk-ring {
+    animation: walk-ring-breathe 700ms var(--ease-standard, ease-out) 320ms 2;
+  }
+  .walk-ring[data-press] {
+    animation: walk-ring-breathe 300ms var(--ease-standard, ease-out) 0ms 2;
+  }
+  .walk-ring[data-press] .walk-ring-line rect { animation-duration: 160ms; }
+}
+
+@keyframes walk-ring-draw {
+  from { stroke-dashoffset: 100; }
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes walk-ring-breathe {
+  0% { filter: drop-shadow(0 0 0 color-mix(in srgb, var(--accent) 55%, transparent)); }
+  50% { filter: drop-shadow(0 0 7px color-mix(in srgb, var(--accent) 55%, transparent)); }
+  100% { filter: drop-shadow(0 0 0 color-mix(in srgb, var(--accent) 0%, transparent)); }
 }
 
 .walk-card {
@@ -67,16 +263,155 @@
   width: auto;
   max-width: none;
   margin: 0;
+  gap: 10px;
   overflow-y: auto;
   overscroll-behavior: contain;
+  box-shadow: var(--depth-menu), var(--depth-row);
   border-width: 1px 0 0;
   border-radius: var(--desk-window-radius, 8px) var(--desk-window-radius, 8px) 0 0;
-  padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+  padding: 6px 16px calc(12px + var(--walk-safe-bottom));
 }
 
-.walk-card[data-sheet] .walk-verbs .btn {
-  flex: 1 1 96px;
+.walk-card:focus { outline: none; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .walk-card[data-sheet] { animation: walk-sheet-up 320ms cubic-bezier(0.34, 1.4, 0.64, 1) 1; }
+  .walk-card:not([data-sheet]) { animation: walk-card-in 200ms var(--ease-standard, ease-out) 1; }
+}
+
+@keyframes walk-sheet-up {
+  from { translate: 0 100%; }
+}
+
+@keyframes walk-card-in {
+  from { opacity: 0; translate: 0 6px; }
+}
+
+/* The progress: one pixel dot a question; filled = answered, ring = now. */
+.walk-dots {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.walk-dot {
+  width: 6px;
+  height: 6px;
+  box-sizing: border-box;
+  border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
+}
+
+.walk-dot[data-state="done"] { background: var(--accent); border-color: var(--accent); }
+.walk-dot[data-state="now"] {
+  border: 2px solid var(--accent);
+  width: 8px;
+  height: 8px;
+}
+
+/* Keep in the confirm hue, Redo in the attention hue: equal, large. */
+.walk-choice {
+  gap: 8px;
+  font-weight: 650;
+}
+
+.walk-choice[data-tone="ok"] {
+  color: color-mix(in srgb, var(--ok-strong, #10b981) 70%, var(--wb-ink, #0f1a22));
+  background: color-mix(in srgb, var(--ok, #34d399) 16%, var(--wb-paper, #fff));
+  border-color: color-mix(in srgb, var(--ok-strong, #10b981) 45%, transparent);
+}
+
+.walk-choice[data-tone="warn"] {
+  color: color-mix(in srgb, var(--warn-strong, #f59e0b) 60%, var(--wb-ink, #0f1a22));
+  background: color-mix(in srgb, var(--warn-signal, #fbbf24) 18%, var(--wb-paper, #fff));
+  border-color: color-mix(in srgb, var(--warn-strong, #f59e0b) 45%, transparent);
+}
+
+.walk-choice-glyph { flex: none; fill: currentColor; }
+
+.walk-next-line {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-muted, var(--wb-ink));
+}
+
+/* The handle row: the grip, the walk's name, "n of m", the voice. Swipe it
+   down to skip the step. */
+.walk-handle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  color: var(--text-muted, var(--wb-ink));
+  font-size: 12px;
+  touch-action: none;
+}
+
+.walk-card[data-sheet] .walk-handle {
+  position: relative;
+  padding-top: 10px;
+}
+
+.walk-grip {
+  position: absolute;
+  top: 2px;
+  left: 50%;
+  width: 36px;
+  height: 4px;
+  translate: -50% 0;
+  border-radius: 2px;
+  background: var(--wb-rule, #22313b);
+}
+
+.walk-handle .walk-count { align-self: center; }
+
+.walk-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.walk-voice svg {
+  width: 14px;
+  height: 14px;
+}
+
+.walk-choices {
+  display: flex;
+  gap: 8px;
+}
+
+.walk-choices .btn {
+  flex: 1 1 0;
   min-height: 44px;
+}
+
+.walk-card[data-sheet] .walk-question {
+  font-size: 20px;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+/* On the phone Keep and Redo are two equal big buttons side by side. */
+.walk-card[data-sheet] .walk-choices .btn {
+  min-height: 56px;
+  font-size: 16px;
+}
+
+.walk-more {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.walk-card[data-sheet] .walk-more > .btn {
+  min-height: 44px;
+}
+
+.walk-skip {
+  align-self: center;
 }
 
 .walk-words,
@@ -129,5 +464,10 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .walk-ring { animation: none; }
+  .walk-ring,
+  .walk-ring[data-press],
+  .walk-frame-edge,
+  .walk-guide-bot,
+  .walk-bubble { animation: none; }
+  .walk-cursor { transition: none; }
 }

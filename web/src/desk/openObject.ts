@@ -114,14 +114,22 @@ export function openProjectProposal(projectId: string, proposalId: string): void
  *  the sources are kept). The Room takes the request once (a reload does
  *  not replay it), as with Draft update. */
 export const ROOM_AT_EVENT = "holdspeak:room-at";
-export type RoomPlace = "history" | "steward" | { kind: "file"; ref: `note:${string}` };
+export type RoomPlace = "room" | "history" | "steward" | { kind: "file"; ref: `note:${string}` };
 const roomPlaces = new Map<string, RoomPlace>();
 
 export function openProjectRoomAt(projectId: string, place: RoomPlace): void {
   const id = projectId.trim();
   if (!id) return;
-  roomPlaces.set(id, place);
   openProjectRoom(id);
+  requestRoomAt(id, place);
+}
+
+/** Ask `projectId`'s Room (open now or about to open) to show `place`;
+ * `room` is the Room itself, every posture stepped aside (the Walk). */
+export function requestRoomAt(projectId: string, place: RoomPlace): void {
+  const id = projectId.trim();
+  if (!id) return;
+  roomPlaces.set(id, place);
   if (typeof window !== "undefined") {
     window.dispatchEvent(new CustomEvent<string>(ROOM_AT_EVENT, { detail: id }));
   }

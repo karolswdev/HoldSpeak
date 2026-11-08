@@ -131,7 +131,7 @@ def build_walks_router(ctx: WebContext) -> APIRouter:
             return _too_large(PAGE_HEADERS)
         return await _page(request, lambda: _service().answer(
             token, body.get("ref"), body.get("choice"), words=body.get("words"),
-            window_png=body.get("window_png"),
+            window_png=body.get("window_png"), view=body.get("view"),
         ), what="answer")
 
     return router

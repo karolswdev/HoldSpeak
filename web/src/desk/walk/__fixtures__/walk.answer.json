@@ -1,7 +1,20 @@
 {
-  "at": "2026-11-08T01:49:14.124850+00:00",
+  "at": "2026-11-08T03:42:00.765115+00:00",
   "choice": "Redo",
   "ref": "s11-well",
   "shot": "s11-well.png",
+  "view": {
+    "agent": "iPhone · Safari 26",
+    "dpr": 3.0,
+    "height": 932,
+    "rect": {
+      "height": 120.0,
+      "left": 16.0,
+      "top": 220.0,
+      "width": 398.0
+    },
+    "scale": 2.0,
+    "width": 430
+  },
   "words": "The project name is cut."
 }

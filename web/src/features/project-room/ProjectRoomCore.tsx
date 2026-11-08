@@ -2200,6 +2200,11 @@ function ProjectRoomCoreFor({ hero, scope, scopeLabel }: CoreProps) {
       setFileRequest({ ref: place.ref, seq: ++fileSeq.current });
       return;
     }
+    if (place === "room") {
+      leavePostures();
+      if (ctrl.view !== "room") ctrl.setView("room");
+      return;
+    }
     if (place === "history") {
       leavePostures();
       if (ctrl.view !== "history") ctrl.setView("history");

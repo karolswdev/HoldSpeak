@@ -8,11 +8,33 @@ import { ApiError, apiFetch } from "../../lib/api";
 import { DESK_APPLICATIONS, applicationVerbId } from "../applications";
 import { openSurface, openSurfaceOr } from "../shell";
 
+/** One step. The keys run in this order: open, verb, press, scroll, say,
+ * highlight, ask. `thing` names what the target is ("people rows"): when the
+ * window holds none, the guide says "No <thing> here yet" and skips. */
 export interface WalkStep {
   open?: { app: string; scope?: string };
   verb?: { verb: string; window?: string };
-  highlight?: { target: string; words?: string; window?: string };
+  /** The guide presses the target itself: the cursor travels, the ring
+   * pulses, the real click lands, the face settles for 600 ms. */
+  press?: { target: string; words?: string; window?: string; thing?: string };
+  /** The guide scrolls the target into the clear area above the sheet. */
+  scroll?: { target: string; window?: string; thing?: string };
+  /** The guide speaks; nothing is dimmed. */
+  say?: { words: string };
+  highlight?: { target: string; words?: string; window?: string; thing?: string };
   ask?: { ref: string; question: string; choices: string[] };
+}
+
+/** What he saw when he answered: the viewport, its pixel ratio, the image
+ * scale, the browser (platform and name only) and the step's part, so the
+ * orchestrator can crop the shot. */
+export interface WalkView {
+  width: number;
+  height: number;
+  dpr: number;
+  scale: number;
+  agent: string;
+  rect?: { left: number; top: number; width: number; height: number };
 }
 
 export interface WalkPage {
@@ -26,6 +48,7 @@ export interface WalkAnswer {
   choice: string;
   words?: string;
   window_png?: string;
+  view?: WalkView;
 }
 
 export class WalkError extends Error {
@@ -37,6 +60,30 @@ export class WalkError extends Error {
 export const SKIP = "skip";
 /** The answer's choice when he sends words and presses no choice. */
 export const WORDS = "words";
+
+/** The browser as platform and name only ("iPhone · Safari 26"): no build
+ * numbers, no device model beyond the platform. */
+export function walkAgent(ua: string): string {
+  const platform = /iPhone/.test(ua) ? "iPhone"
+    : /iPad/.test(ua) ? "iPad"
+      : /Android/.test(ua) ? "Android"
+        : /Mac OS X|Macintosh/.test(ua) ? "Mac"
+          : /Windows/.test(ua) ? "Windows"
+            : /Linux/.test(ua) ? "Linux" : "Other";
+  const major = (pattern: RegExp) => ua.match(pattern)?.[1] ?? "";
+  const browser = /Edg\//.test(ua) ? `Edge ${major(/Edg\/(\d+)/)}`
+    : /Firefox\/|FxiOS\//.test(ua) ? `Firefox ${major(/(?:Firefox|FxiOS)\/(\d+)/)}`
+      : /CriOS\/|Chrome\//.test(ua) ? `Chrome ${major(/(?:CriOS|Chrome)\/(\d+)/)}`
+        : /Safari\//.test(ua) ? `Safari ${major(/Version\/(\d+)/)}`
+          : "Browser";
+  return `${platform} · ${browser.trim()}`;
+}
+
+/** The guide's words when the window holds no such part. */
+export function noneWords(thing: string | undefined): string {
+  const name = (thing ?? "").trim();
+  return name ? `No ${name} here yet` : "This part is not here yet";
+}
 
 /** The walk token on this address (`?walk=`), or "". */
 export function walkTokenFromLocation(): string {
@@ -125,11 +172,24 @@ export async function openWalkApp(app: string, scope?: string): Promise<boolean>
     return true;
   }
   for (let attempt = 0; attempt < 30; attempt += 1) {
-    if (openSurface(application.action, scope)) return true;
+    if (openSurface(application.action, scope)) {
+      await showRoomProper(application.action, scope);
+      return true;
+    }
     await wait(200);
   }
   openSurfaceOr(application.action, application.href, scope);
+  await showRoomProper(application.action, scope);
   return true;
+}
+
+/** A Project Room opens on the Room itself, never on the Update posture it
+ * kept from an earlier visit (walk 2026-11-07: the Room opened on its update
+ * document). The Room takes the request once, as its History verb does. */
+async function showRoomProper(action: string, scope: string | undefined): Promise<void> {
+  if (action !== "open-project-memory" || !scope?.startsWith("project:")) return;
+  const { requestRoomAt } = await import("../openObject");
+  requestRoomAt(scope.slice("project:".length), "room");
 }
 
 /** Run one registry verb (the Dock, Go and ⌘K run the same). */
@@ -158,6 +218,12 @@ export function findWalkWindow(app: string): HTMLElement | null {
     .filter((element) => element.id === id || element.id.startsWith(`${id}:`))
     .sort((left, right) => zOf(right) - zOf(left));
   return own[0] ?? null;
+}
+
+/** The window a step's part is in: the part's own `window`, else the app
+ * the walk opened last. */
+export function stepWindow(step: WalkStep, last: string | undefined): string | undefined {
+  return step.highlight?.window ?? step.press?.window ?? step.scroll?.window ?? last;
 }
 
 export interface WalkPart {

@@ -8,16 +8,26 @@ proves the hit test, so this is T4: a walk made through the hub
 frames after its window moves (the cut-out lagged it by its 180 ms
 transition: the press Playwright retried went to the dim); a plain press (no
 force) on it opens the well (the project rows show); and a point far from
-the part is the dim's. At 1440 x 900 and 393 x 844. Every other face of the walk is T2
+the part is the dim's. At 1440 x 900 and 393 x 844.
+
+The hand-held walk (2026-11-08, the owner on his iPhone: "a lot more obvious
+we are being hand-held… it doesn't feel like it really captured the
+screens"): on an iPhone viewport (430 x 932, scale 3, touch) the pixel frame
+sits inside the safe area, a ``press`` step really opens the well (no hand of
+the test presses New program), and the stored shot is the whole viewport at
+the capture scale. Every other face of the walk is T2
 (``web/src/desk/walk/__tests__/walk.app.test.tsx``).
 """
 
 from __future__ import annotations
 
+import struct
 from pathlib import Path
 from typing import Any
 
 import pytest
+
+from tests._evidence import evidence_dir
 
 from .glass_infra import _api, _boot, _ensure_build, _normal_chair
 
@@ -109,6 +119,98 @@ def test_the_highlighted_part_takes_a_plain_press_and_the_dim_blocks_the_rest(
                 far = page.evaluate(_FAR_HIT_JS)
                 assert far is not None, "no point outside the part and the card"
                 assert str(far["testid"] or "").startswith("walk-backdrop"), far
+                assert errors == [], errors
+            finally:
+                ctx.close()
+                browser.close()
+    finally:
+        server.stop()
+
+
+# The Dynamic Island and the home bar: Chromium reports no safe area, so the
+# rig sets the two insets the frame reads (an iPhone 18 Pro Max in portrait).
+_SAFE_TOP, _SAFE_BOTTOM = 59, 34
+_SAFE_CSS = f".walk-layer {{ --walk-safe-top: {_SAFE_TOP}px; --walk-safe-bottom: {_SAFE_BOTTOM}px; }}"
+
+_BOX_JS = """
+(testid) => {
+  const element = document.querySelector(`[data-testid="${testid}"]`);
+  if (!element) return null;
+  const box = element.getBoundingClientRect();
+  return { left: box.left, top: box.top, right: box.right, bottom: box.bottom };
+}
+"""
+
+
+def _png_size(path: Path) -> tuple[int, int]:
+    head = path.read_bytes()[:24]
+    assert head[:8] == b"\x89PNG\r\n\x1a\n", path
+    return struct.unpack(">II", head[16:24])
+
+
+def test_on_his_iphone_the_frame_holds_the_safe_area_the_guide_presses_and_the_shot_is_the_screen(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    from playwright.sync_api import sync_playwright
+
+    _ensure_build()
+    server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
+    width, height = 430, 932
+    try:
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=True)
+            ctx = browser.new_context(viewport={"width": width, "height": height}, device_scale_factor=3,
+                                      is_mobile=True, has_touch=True)
+            page = ctx.new_page()
+            page.set_default_timeout(45_000)
+            errors: list[str] = []
+            page.on("pageerror", lambda e: errors.append(str(e)[:200]))
+            try:
+                page.goto(f"{base}/?token={TOKEN}", wait_until="load")
+                _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
+                _api(page, "POST", "/api/projects", {"name": "Walk glass"}, token=TOKEN)
+                made: dict[str, Any] = _api(page, "POST", "/api/walks", {"title": "Hand-held", "steps": [
+                    {"open": {"app": "surface-programs"}},
+                    {"press": {"target": "programs-new", "words": "I press New program."},
+                     "highlight": {"target": "programs-make-rows", "words": "The project rows."},
+                     "ask": {"ref": "s11-well", "question": "Does the well read clearly?",
+                             "choices": ["Keep", "Redo"]}},
+                ]}, token=TOKEN)
+                page.goto(f"{base}/?token={TOKEN}", wait_until="load")
+                _normal_chair(page)
+                page.goto(f"{base}{made['url_path']}", wait_until="load")
+                page.add_style_tag(content=_SAFE_CSS)
+
+                # The frame is inside the safe area, edge to edge between them.
+                page.get_by_test_id("walk-frame").wait_for(state="attached", timeout=T)
+                frame = page.evaluate(_BOX_JS, "walk-frame")
+                assert frame == {"left": 0, "top": _SAFE_TOP, "right": width, "bottom": height - _SAFE_BOTTOM}, frame
+                assert page.evaluate("getComputedStyle(document.querySelector('.walk-frame')).pointerEvents") == "none"
+                guide = page.evaluate(_BOX_JS, "walk-guide")
+                assert guide["top"] >= _SAFE_TOP, guide
+                # A touch device starts the voice from one tap (iOS).
+                page.get_by_test_id("walk-begin").tap()
+
+                # The guide presses New program itself: the well opens.
+                page.get_by_test_id("walk-question").wait_for(timeout=T)
+                assert page.locator('[data-testid="programs-make-rows"]').is_visible()
+                sheet = page.evaluate(_BOX_JS, "walk-card")
+                assert sheet["bottom"] <= height and sheet["left"] == 0 and sheet["right"] == width, sheet
+                keep = page.get_by_test_id("walk-choice-0").bounding_box()
+                redo = page.get_by_test_id("walk-choice-1").bounding_box()
+                assert keep and redo and keep["height"] >= 56 and abs(keep["width"] - redo["width"]) < 1
+                page.wait_for_timeout(500)
+                page.screenshot(path=str(evidence_dir("walk-handheld") / "walk-handheld-430.png"))
+
+                page.get_by_test_id("walk-choice-0").tap()
+                page.get_by_test_id("walk-end").wait_for(timeout=T)
+                read: dict[str, Any] = _api(page, "GET", f"/api/walks/{made['id']}", token=TOKEN)
+                stored = read["answers"]["s11-well"]
+                assert stored["choice"] == "Keep" and stored["shot"] == "s11-well.png", stored
+                view = stored["view"]
+                assert (view["width"], view["height"], view["dpr"], view["scale"]) == (width, height, 3.0, 2.0), view
+                assert view["rect"]["width"] > 0 and view["agent"], view
+                # The shot is the whole viewport at the capture scale.
+                assert _png_size(Path(read["directory"]) / "s11-well.png") == (width * 2, height * 2)
                 assert errors == [], errors
             finally:
                 ctx.close()
