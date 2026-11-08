@@ -1,6 +1,7 @@
 """The Walk: a guided feedback walk on the desk from one link (2026-11-07).
 
-The orchestrator writes a short JSON script (open, verb, highlight, ask).
+The orchestrator writes a short JSON script (open, verb, press, scroll,
+say, highlight, ask).
 The owner opens one link; the desk runs the script and he answers each ask.
 A walk is one folder under the feedback folder (``ui_feedback.walks_root``):
 ``walk.json`` holds the script, the token's hash and the answers; each
@@ -30,7 +31,7 @@ PAGE_PREFIX = "/w/"
 WALK_FILE = "walk.json"
 _ID_RE = re.compile(r"^[0-9a-f]{32}$")
 _REF_RE = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
-_STEP_KEYS = frozenset({"open", "verb", "highlight", "ask"})
+_STEP_KEYS = frozenset({"open", "verb", "press", "scroll", "say", "highlight", "ask"})
 MAX_STEPS = 60
 MAX_WORDS = 2000
 SKIP = "skip"
@@ -67,10 +68,52 @@ def _text(value: Any, name: str, maximum: int, *, required: bool = True) -> str:
     return value.strip()
 
 
+def _part(raw: Any, where: str, key: str, *, words: bool) -> dict[str, Any]:
+    """A step key that names one part: ``target``, and ``window``, ``thing``
+    (and ``words``) when given."""
+    if not isinstance(raw, dict):
+        raise WalkRefused("walk_invalid", f"{where}: {key} must be an object.", status=422)
+    part: dict[str, Any] = {"target": _text(raw.get("target"), f"{where} {key}.target", 400)}
+    if words:
+        part["words"] = _text(raw.get("words"), f"{where} {key}.words", 240, required=False)
+    for name, maximum in (("window", 120), ("thing", 60)):
+        value = _text(raw.get(name), f"{where} {key}.{name}", maximum, required=False)
+        if value:
+            part[name] = value
+    return part
+
+
+def _view(raw: Any) -> Optional[dict[str, Any]]:
+    """What he saw when he answered (the viewport, its pixel ratio, the image
+    scale, the browser and the step's part), or None when it is not sound."""
+    if not isinstance(raw, dict):
+        return None
+
+    def number(value: Any, low: float, high: float) -> Optional[float]:
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or not low <= value <= high:
+            return None
+        return round(float(value), 2)
+
+    width, height = number(raw.get("width"), 1, 20000), number(raw.get("height"), 1, 20000)
+    dpr, scale = number(raw.get("dpr"), 0.1, 10), number(raw.get("scale"), 0.1, 10)
+    agent = raw.get("agent")
+    if None in (width, height, dpr, scale) or not isinstance(agent, str) or len(agent) > 80:
+        return None
+    view: dict[str, Any] = {"width": int(width), "height": int(height), "dpr": dpr, "scale": scale,
+                            "agent": agent.strip()}
+    rect = raw.get("rect")
+    if isinstance(rect, dict):
+        box = {key: number(rect.get(key), -20000, 20000) for key in ("left", "top", "width", "height")}
+        if None not in box.values():
+            view["rect"] = box
+    return view
+
+
 def _step(raw: Any, index: int, refs: set[str]) -> dict[str, Any]:
     where = f"Step {index + 1}"
     if not isinstance(raw, dict) or not raw or set(raw) - _STEP_KEYS:
-        raise WalkRefused("walk_invalid", f"{where} must hold only open, verb, highlight or ask.", status=422)
+        raise WalkRefused("walk_invalid",
+                          f"{where} must hold only open, verb, press, scroll, say, highlight or ask.", status=422)
     step: dict[str, Any] = {}
     if "open" in raw:
         opened = raw["open"]
@@ -88,15 +131,17 @@ def _step(raw: Any, index: int, refs: set[str]) -> dict[str, Any]:
         window = _text(verb.get("window"), f"{where} verb.window", 120, required=False)
         if window:
             step["verb"]["window"] = window
+    if "press" in raw:
+        step["press"] = _part(raw["press"], where, "press", words=True)
+    if "scroll" in raw:
+        step["scroll"] = _part(raw["scroll"], where, "scroll", words=False)
+    if "say" in raw:
+        say = raw["say"]
+        if not isinstance(say, dict):
+            raise WalkRefused("walk_invalid", f"{where}: say must be an object.", status=422)
+        step["say"] = {"words": _text(say.get("words"), f"{where} say.words", 240)}
     if "highlight" in raw:
-        mark = raw["highlight"]
-        if not isinstance(mark, dict):
-            raise WalkRefused("walk_invalid", f"{where}: highlight must be an object.", status=422)
-        step["highlight"] = {"target": _text(mark.get("target"), f"{where} highlight.target", 400),
-                             "words": _text(mark.get("words"), f"{where} highlight.words", 240, required=False)}
-        window = _text(mark.get("window"), f"{where} highlight.window", 120, required=False)
-        if window:
-            step["highlight"]["window"] = window
+        step["highlight"] = _part(raw["highlight"], where, "highlight", words=True)
     if "ask" in raw:
         ask = raw["ask"]
         if not isinstance(ask, dict):
@@ -221,7 +266,7 @@ class WalkService:
         return {"title": record["title"], "steps": record["steps"], "answers": record.get("answers") or {}}
 
     def answer(self, token: Any, ref: Any, choice: Any, *, words: Any = None,
-               window_png: Any = None) -> dict[str, Any]:
+               window_png: Any = None, view: Any = None) -> dict[str, Any]:
         with self._lock:
             record = self._by_token(token)
             asks = {step["ask"]["ref"]: step["ask"] for step in record["steps"] if "ask" in step}
@@ -236,6 +281,9 @@ class WalkService:
             answer: dict[str, Any] = {"choice": choice, "at": utc_now_iso()}
             if said:
                 answer["words"] = said
+            seen = _view(view)
+            if seen:
+                answer["view"] = seen
             refused: Optional[dict[str, str]] = None
             if window_png:
                 directory = self.root / record["id"]
@@ -251,7 +299,7 @@ class WalkService:
             if previous:
                 # A second answer keeps the first answer's text (the image is replaced).
                 earlier = list(previous.pop("earlier", []) or [])
-                kept = {key: value for key, value in previous.items() if key != "shot"}
+                kept = {key: value for key, value in previous.items() if key not in ("shot", "view")}
                 answer["earlier"] = [*earlier, kept][-MAX_EARLIER:]
             answers[ref] = answer
             record["answers"] = answers

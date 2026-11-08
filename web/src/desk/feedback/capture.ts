@@ -346,7 +346,14 @@ function clearPositionOffsets(style: CSSStyleDeclaration): void {
   ]) style.removeProperty(property);
 }
 
-function frozenClone(root: Element, signal?: AbortSignal): {
+interface FreezeOptions {
+  /** Elements that leave the image (the Walk's own chrome). */
+  skip?: string;
+  /** The image size in CSS px (the viewport); default the root's box. */
+  size?: { width: number; height: number };
+}
+
+function frozenClone(root: Element, signal?: AbortSignal, options: FreezeOptions = {}): {
   wrapper: HTMLDivElement;
   clone: HTMLElement;
 } {
@@ -410,7 +417,8 @@ function frozenClone(root: Element, signal?: AbortSignal): {
       dropped.add(element);
       return;
     }
-    if (element.matches("[data-ui-feedback], [data-ui-feedback] *") || isSensitiveElement(element)) {
+    if (element.matches("[data-ui-feedback], [data-ui-feedback] *") || isSensitiveElement(element)
+      || (options.skip && element.matches(options.skip))) {
       copy.remove();
       dropped.add(element);
       return;
@@ -459,7 +467,7 @@ function frozenClone(root: Element, signal?: AbortSignal): {
     clone.appendChild(pseudoStyle);
   }
   const wrapper = document.createElement("div");
-  const rect = root.getBoundingClientRect();
+  const rect = options.size ?? root.getBoundingClientRect();
   const shell = root.closest(".desk-next");
   if (shell instanceof HTMLElement) {
     wrapper.className = shell.className;
@@ -495,10 +503,29 @@ function frozenClone(root: Element, signal?: AbortSignal): {
 }
 
 export async function captureWindowPng(root: Element, signal?: AbortSignal): Promise<string> {
+  return capturePng(root, signal);
+}
+
+/** The image scale of a capture: the device pixel ratio, at most 2. */
+export function captureScale(): number {
+  return Math.min(window.devicePixelRatio || 1, 2);
+}
+
+/** The Walk (2026-11-08): the WHOLE viewport as he sees it, every window,
+ * the dock and the floor, without the walk's own chrome (`[data-walk]`). */
+export async function captureViewportPng(signal?: AbortSignal): Promise<string> {
+  const root = document.getElementById("root") ?? document.body;
+  return capturePng(root, signal, {
+    skip: "[data-walk]",
+    size: { width: window.innerWidth, height: window.innerHeight },
+  });
+}
+
+async function capturePng(root: Element, signal?: AbortSignal, options: FreezeOptions = {}): Promise<string> {
   let frozen: ReturnType<typeof frozenClone> | null = null;
   try {
     throwIfCaptureAborted(signal);
-    frozen = frozenClone(root, signal);
+    frozen = frozenClone(root, signal, options);
     throwIfCaptureAborted(signal);
     const { toPng } = await captureStep(import("html-to-image"), signal);
     throwIfCaptureAborted(signal);
@@ -509,7 +536,7 @@ export async function captureWindowPng(root: Element, signal?: AbortSignal): Pro
       cacheBust: true,
       fetchRequestInit: signal ? { signal } : undefined,
       includeStyleProperties: [],
-      pixelRatio: Math.min(window.devicePixelRatio || 1, 2),
+      pixelRatio: captureScale(),
       filter: (node) => {
         throwIfCaptureAborted(signal);
         return !(node instanceof Element && (isSensitiveElement(node) || node.closest("[data-ui-feedback]")));

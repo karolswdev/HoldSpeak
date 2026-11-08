@@ -1,0 +1,67 @@
+{
+  "answers": {},
+  "steps": [
+    {
+      "open": {
+        "app": "surface-programs"
+      },
+      "say": {
+        "words": "We start in Programs."
+      }
+    },
+    {
+      "ask": {
+        "choices": [
+          "Keep",
+          "Redo"
+        ],
+        "question": "Does the well read clearly?",
+        "ref": "s11-well"
+      },
+      "highlight": {
+        "target": "programs-make-rows",
+        "words": "The project rows."
+      },
+      "press": {
+        "target": "programs-new",
+        "words": "I press New program."
+      }
+    },
+    {
+      "ask": {
+        "choices": [
+          "Keep",
+          "Redo"
+        ],
+        "question": "Is the foot clear?",
+        "ref": "programs-foot"
+      },
+      "highlight": {
+        "target": "programs-foot",
+        "words": "The foot of Programs."
+      },
+      "scroll": {
+        "target": "programs-foot"
+      }
+    },
+    {
+      "ask": {
+        "choices": [
+          "Keep",
+          "Redo"
+        ],
+        "question": "Do the people read clearly?",
+        "ref": "needs-people"
+      },
+      "highlight": {
+        "target": "needs-person-row",
+        "thing": "people rows",
+        "words": "The people."
+      },
+      "open": {
+        "app": "chair:needs"
+      }
+    }
+  ],
+  "title": "Hand-held"
+}

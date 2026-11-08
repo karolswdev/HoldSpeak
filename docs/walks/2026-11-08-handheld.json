@@ -1,0 +1,26 @@
+{
+  "title": "Hand-held · 2026-11-08",
+  "steps": [
+    {"open": {"app": "surface-programs"},
+     "say": {"words": "We start in Programs. Watch: I press for you."}},
+    {"press": {"target": "programs-new", "words": "I press New program."},
+     "highlight": {"target": "programs-make-rows", "window": "surface-programs", "thing": "project rows",
+                   "words": "The project rows in the New program well."},
+     "ask": {"ref": "programs-project-rows", "question": "Is the project choice the obvious first step?", "choices": ["Keep", "Redo"]}},
+    {"open": {"app": "chair:needs"},
+     "highlight": {"target": "needs-toolbar", "words": "The Needs you toolbar, with People at its end."},
+     "ask": {"ref": "needs-toolbar", "question": "Does the toolbar read as one band?", "choices": ["Keep", "Redo"]}},
+    {"open": {"app": "open-project-memory", "scope": "@first-project"},
+     "scroll": {"target": "room-fold-programs"},
+     "highlight": {"target": "room-fold-programs", "words": "The Programs filed to this project."},
+     "ask": {"ref": "room-programs", "question": "Does the Programs fold read clearly?", "choices": ["Keep", "Redo"]}},
+    {"scroll": {"target": "room-people-row", "window": "open-project-memory", "thing": "people in this project"},
+     "highlight": {"target": "room-people-row", "window": "open-project-memory", "thing": "people in this project",
+                   "words": "The people of this project."},
+     "ask": {"ref": "room-people", "question": "Do the people rows read clearly?", "choices": ["Keep", "Redo"]}},
+    {"open": {"app": "review-meetings", "scope": "@first-meeting"},
+     "press": {"target": "meeting-decide", "words": "I press Decide."},
+     "highlight": {"target": "decide-scope", "window": "review-meetings", "words": "The project line: where the decision is filed."},
+     "ask": {"ref": "decide-project-line", "question": "Do you see the project before Save?", "choices": ["Keep", "Redo"]}}
+  ]
+}

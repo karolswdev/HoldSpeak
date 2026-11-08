@@ -48,6 +48,28 @@ SCRIPT = {
     ],
 }
 
+# What he saw (2026-11-08): the viewport, its pixel ratio, the image scale,
+# the browser (platform and name only) and the part's box for the crop.
+VIEW = {"width": 430, "height": 932, "dpr": 3.0, "scale": 2.0, "agent": "iPhone · Safari 26",
+        "rect": {"left": 16.0, "top": 220.0, "width": 398.0, "height": 120.0}}
+
+# The hand-held walk: the guide says, presses and scrolls itself.
+HANDHELD = {
+    "title": "Hand-held",
+    "steps": [
+        {"open": {"app": "surface-programs"}, "say": {"words": "We start in Programs."}},
+        {"press": {"target": "programs-new", "words": "I press New program."},
+         "highlight": {"target": "programs-make-rows", "words": "The project rows."},
+         "ask": {"ref": "s11-well", "question": "Does the well read clearly?", "choices": ["Keep", "Redo"]}},
+        {"scroll": {"target": "programs-foot"},
+         "highlight": {"target": "programs-foot", "words": "The foot of Programs."},
+         "ask": {"ref": "programs-foot", "question": "Is the foot clear?", "choices": ["Keep", "Redo"]}},
+        {"open": {"app": "chair:needs"},
+         "highlight": {"target": "needs-person-row", "thing": "people rows", "words": "The people."},
+         "ask": {"ref": "needs-people", "question": "Do the people read clearly?", "choices": ["Keep", "Redo"]}},
+    ],
+}
+
 
 def _png() -> bytes:
     def chunk(kind: bytes, data: bytes) -> bytes:
@@ -116,11 +138,12 @@ def test_a_walk_is_made_served_by_its_token_and_answered(tmp_path, monkeypatch) 
     png = _png()
     answered = client.post(f"/api/w/{token}/answer", json={
         "ref": "s11-well", "choice": "Redo", "words": "The project name is cut.",
-        "window_png": base64.b64encode(png).decode("ascii"),
+        "window_png": base64.b64encode(png).decode("ascii"), "view": VIEW,
     })
     assert answered.status_code == 200, answered.text
     receipt = answered.json()
     assert receipt["ref"] == "s11-well" and receipt["choice"] == "Redo" and receipt["shot"] == "s11-well.png"
+    assert receipt["view"] == VIEW
     _fixture("walk.answer.json", receipt, token)
 
     # The PNG lands where feedback bundles land: the feedback folder.
@@ -140,9 +163,36 @@ def test_a_walk_is_made_served_by_its_token_and_answered(tmp_path, monkeypatch) 
     assert full["answers"]["s11-well"]["choice"] == "Keep"
     assert full["answers"]["s11-well"]["earlier"][0]["words"] == "The project name is cut."
     assert "shot" not in full["answers"]["s11-well"]["earlier"][0]
+    assert "view" not in full["answers"]["s11-well"]["earlier"][0]
     assert full["answers"]["needs-coverage"]["choice"] == "skip"
     assert full["directory"].endswith(walk_id) and "token_sha256" not in full
     assert client.get(f"/api/w/{token}").json()["answers"]["s11-well"]["choice"] == "Keep"
+
+
+def test_a_hand_held_walk_keeps_press_scroll_say_and_the_view_he_saw(tmp_path, monkeypatch) -> None:
+    client, _service = _client(tmp_path, monkeypatch)
+    made = client.post("/api/walks", json=HANDHELD)
+    assert made.status_code == 201, made.text
+    token, walk_id = made.json()["token"], made.json()["id"]
+    read = client.get(f"/api/w/{token}").json()
+    steps = read["steps"]
+    assert steps[0]["say"] == {"words": "We start in Programs."}
+    assert steps[1]["press"] == {"target": "programs-new", "words": "I press New program."}
+    assert steps[2]["scroll"] == {"target": "programs-foot"}
+    assert steps[3]["highlight"]["thing"] == "people rows"
+    _fixture("walk.handheld.page.json", read, token)
+
+    # A view that is not sound is left out; the answer still lands.
+    odd = client.post(f"/api/w/{token}/answer", json={"ref": "programs-foot", "choice": "Keep",
+                                                      "view": {"width": "wide", "agent": "x"}})
+    assert odd.status_code == 200 and "view" not in odd.json()
+    kept = client.post(f"/api/w/{token}/answer", json={"ref": "s11-well", "choice": "Keep", "view": VIEW})
+    assert kept.json()["view"] == VIEW
+    assert client.get(f"/api/walks/{walk_id}").json()["answers"]["s11-well"]["view"]["agent"] == "iPhone · Safari 26"
+
+    for bad in ({"press": {"words": "no target"}}, {"say": {}}, {"scroll": "programs-foot"},
+                {"highlight": {"target": "x", "thing": "t" * 61}}):
+        assert client.post("/api/walks", json={"title": "x", "steps": [bad]}).status_code == 422, bad
 
 
 def test_words_without_a_pressed_choice_are_stored_as_words_never_as_a_choice(tmp_path, monkeypatch) -> None:

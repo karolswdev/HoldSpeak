@@ -24,6 +24,9 @@ export function VerbGlyph({ kind }: { kind: string }) {
     // HS-148-01 — checkable lane marks (the Amiga toggle grammar):
     // square-check for boolean toggles, circle-dot for mutual-exclude.
     check: "M3 3h8v8H3Z M5.2 7l1.6 1.6 2.4-3.2",
+    // The Walk (2026-11-08): the guide's voice, on and off.
+    voice: "M2.5 5.5h2.2L8 3v8L4.7 8.5H2.5Z M10 5.2a2.6 2.6 0 0 1 0 3.6",
+    "voice-off": "M2.5 5.5h2.2L8 3v8L4.7 8.5H2.5Z M10 5.6l2.4 2.8M12.4 5.6L10 8.4",
   };
   // HS-148-01: circle-dot needs a filled inner dot — special-cased.
   if (kind === "dot") {
