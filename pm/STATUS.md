@@ -2,6 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · #1849 The hub builds its services in runtime/composition.py (compose_hub); _create_app only mounts and registers the lifespan: web_server.py 2500 → 1975 lines, 197 → 134 imports, cold start 1.8 → 1.7 s.
 - 2026-11-08 · #1848 The walk asks in one toolbar bar above the dock (direction S3): Keep primary, Redo secondary, the mic, Skip; no sheet, no tinted pills, no swipe.
 - 2026-11-08 · #1846 `scripts/measure.py` prints the rule 7 numbers as one table each night; `docs/internal/measure/2026-11-08.md` is the baseline.
 - 2026-11-08 · #1847 Fix forward #1844: the wizard's phone-head rule lives in the frame (data-keeps-title), no viewport media in a window body.

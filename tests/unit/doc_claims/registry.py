@@ -438,7 +438,8 @@ CLAIMS: list[Claim] = [
             "``tools.dispatch`` and every MCP family read that root."
         ),
         predicate=lambda: (
-            "composition.install_from_web_context(" in _read("holdspeak/web_server.py")
+            "_composition.compose_hub(" in _read("holdspeak/web_server.py")
+            and "= install_from_web_context(" in _read("holdspeak/runtime/composition.py")
             and "get_database()" not in _read("holdspeak/mcp/tools.py")
             and not [
                 path
@@ -448,8 +449,9 @@ CLAIMS: list[Claim] = [
         ),
         state="holds",
         truth=(
-            "web_server.py installs the hub's services through "
-            "holdspeak.runtime.composition.install_from_web_context; tools.py and "
+            "web_server.py builds the hub's services through "
+            "holdspeak.runtime.composition.compose_hub, which installs them through "
+            "install_from_web_context; tools.py and "
             "every families/*.py resolve db/observer/services through that root "
             "(db_or/observer_or/runtime_service) and call get_database() nowhere"
         ),
