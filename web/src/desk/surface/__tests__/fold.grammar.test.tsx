@@ -31,7 +31,9 @@ describe("the fold grammar", () => {
     expect(disclosure).toContain('content: "Show"');
     expect(disclosure).toContain('content: "Hide"');
     const today = css("pullouts/views/today.css");
-    expect(today).toContain('.today-fold-head[aria-expanded="true"]::after { content: "Hide"; }');
+    // Today's word is the ::before: the library Button's ::after is its hit
+    // face (#1757), so the fold word cannot ride it.
+    expect(today).toContain('.today-fold-head[aria-expanded="true"]::before { content: "Hide"; }');
     for (const sheet of [gadgets, disclosure, today]) expect(sheet).not.toMatch(/content: "[▸▾▴▶›]"/);
   });
 });
