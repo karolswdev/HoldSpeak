@@ -2,6 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · #1882 One Run as a program: the decision reader gets the verb beside Send, the Needs you menu's Hand to agent becomes the same call under the one name, and a program's skip record is filed once (by its writer).
 - 2026-11-08 · #1880 Fix forward #1878: a plan claim made unneeded by hand-planned steps is no ledger line (the voice test's recorded prompt is whole again); spoken rows waiting on a Program are never planned over.
 - 2026-11-08 · #1879 Fix forward #1877: the Programs skip test reads the Project as the record's filing, and the committed API surface and OpenAPI are regenerated for the from-desk change.
 - 2026-11-08 · #1878 Create plans itself: a goal is planned on the next tick and a Runs-by-itself Program starts with no press; the person-review ask is prepared through the channel (no swallowed TypeError); Run as a program from a Note takes the wizard's default project.
