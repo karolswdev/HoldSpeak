@@ -271,8 +271,16 @@ def compose_hub(host: Any, *, on_launch_hold: Callable[[str], Any]) -> HubCompos
     confluence_provider = host._build_confluence_adapter() or ConfluenceProviderAdapter(
         db=db, runner=host._acli_runner
     )
+    # HS-166-04: gh and Jira Watches fetch through the one fetcher; a Jira
+    # Watch reaches the adapter above only when the host has an acli runner.
+    from holdspeak.services.watch_sources import default_snapshot_fetcher
     watch_service = WatchService(
-        db, observer=obs, **host._gh_watch_service_kwargs()
+        db,
+        observer=obs,
+        snapshot_fetcher=default_snapshot_fetcher(
+            github_runner=host._gh_runner,
+            jira_adapter=jira_provider if host._acli_runner else None,
+        ),
     )
     # Setup and the Door read projects without the review capability, so they
     # share one ProjectService apart from the Room's (``review_available``).
