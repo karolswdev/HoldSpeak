@@ -1803,7 +1803,7 @@ describe("HS-S13: the Room lists the Programs filed to its project", () => {
     fail = true;
     for (const frame of P13.move.frames) deliver(frame);
     expect(await screen.findByTestId("room-last-read")).toBeTruthy();
-    expect(screen.getByTestId("room-last-read").textContent).toContain("This is the last read");
+    expect(screen.getByTestId("room-last-read").textContent).toContain("The last read stays");
     expect(screen.getByTestId("room-program-row")).toBeTruthy();
     fail = false;
     fireEvent.click(within(screen.getByTestId("room-last-read")).getByRole("button", { name: "Refresh" }));

@@ -2439,7 +2439,7 @@ function ProjectRoomCoreFor({ hero, scope, scopeLabel }: CoreProps) {
           {ctrl.readError ? <div className="room-failure-title" title={ctrl.errorTitle || undefined}><SurfaceState error={ctrl.readError} onRetry={handleRefresh} /></div> : null}
           {ctrl.lastRead && !ctrl.readError ? (
             <div className="room-failure-title" data-testid="room-last-read">
-              <SurfaceState error={plainWords("Could not read the Project again", "This is the last read")}
+              <SurfaceState error={plainWords("Could not read the Project again", "The last read stays", "Refresh")}
                 onRetry={handleRefresh} retryLabel="Refresh" />
             </div>
           ) : null}

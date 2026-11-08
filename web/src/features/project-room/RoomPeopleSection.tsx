@@ -414,7 +414,7 @@ function ResolveWell({
       </Button>
       {read?.status === "failed" ? (
         <span className="room-people-resolve-note" role="alert" data-testid="room-people-resolve-read-failed">
-          Could not read People.
+          Could not read People · Nothing changed · Check
         </span>
       ) : null}
       {selected && selectedId ? (

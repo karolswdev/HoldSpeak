@@ -566,7 +566,7 @@ export function MeetingOutcomes({ data, meeting, onDecide }: {
       ) : null}
       {confirmedActionIds && doorCurrent.status === "failed" ? (
         <ActionNotice tone="warn" role="alert" action={{ label: "Check", onClick: checkPerson }}>
-          <span data-testid="meeting-door-read-failed">Could not read who these are</span>
+          <span data-testid="meeting-door-read-failed">Could not read who these are · Nothing changed · Check</span>
         </ActionNotice>
       ) : null}
     </>
