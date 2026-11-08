@@ -22,9 +22,10 @@ import type { CoreProps } from "../../pages/cores/core-types";
 import { WorkMenu } from "../components/DeskMenu";
 import { spriteUrl } from "../sprites";
 import { openProgram } from "./open";
-import { ActionNotice, CycleGadget, DotWord, FoldGadget, GadgetRow, ListView, StatusBar, StringGadget, SurfaceState, ToolGlyph, Toolbar, countWords, type StatusBarItem } from "../surface";
+import { ActionNotice, DotWord, FoldGadget, ListRow, ListView, StatusBar, StringGadget, SurfaceState, ToolGlyph, Toolbar, countWords, type StatusBarItem } from "../surface";
 import type { WorkMenuEntry } from "../components/DeskMenu";
 import { useWindowInterior } from "../surface/interior";
+import { Token } from "../surface/Token";
 import { TEMPLATES, createProgram, readProjectChoices, usePrograms, type CreateBody, type ProjectChoice } from "./api";
 import { banded, bandedByProject, durationWords, matchesFind, metWords, personsOf, programTone } from "./model";
 import type { ListMark, ProgramState, ProgramSummary } from "./types";
@@ -130,12 +131,16 @@ const CARET = (
 
 type Group = "state" | "project";
 
-/* HS-S11 (D13 A, G11): New program, a template and the empty object open one
- * in-flow well. He chooses the project from the hub's project list (never a
- * guess, never the Project filter); Create sends one captured
- * `{title, template, project_id}`. Only the two refusals the hub proves
- * before a save (400 repository_required, 409 no_repository) say "Not
- * made"; any other failure is "not confirmed", never retried. */
+/* HS-S11 (D13 A, G11), redrawn 2026-11-07 (the owner: "not quite obvious
+ * that the project choice is the next immediate step"): New program, a
+ * template and the empty object open one in-flow well whose content IS the
+ * project choice, one list row per open project (the hub's project list,
+ * never a guess, never the Project filter). A row press chooses; its
+ * trailing "Create here" sends one captured `{title, template, project_id}`.
+ * At 393 the whole row is the press and one "Create in <project>" sits at
+ * the well's foot. Only the two refusals the hub proves before a save (400
+ * repository_required, 409 no_repository) say "Not made"; any other failure
+ * is "not confirmed", never retried. */
 type Choices = { state: "loading" } | { state: "failed" } | { state: "ready"; rows: ProjectChoice[] };
 type Outcome =
   | { kind: "idle" }
@@ -171,7 +176,7 @@ function CreateWell({ template, onClose, onMade, onPending, reload }: {
   const [outcome, setOutcome] = useState<Outcome>({ kind: "idle" });
   const inFlight = useRef(false);
   const alive = useRef(true);
-  const wellRef = useRef<HTMLElement>(null);
+  const listRef = useRef<HTMLUListElement>(null);
   useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
   const pendingNow = outcome.kind === "pending";
   useEffect(() => { onPending(pendingNow); }, [onPending, pendingNow]);
@@ -186,22 +191,29 @@ function CreateWell({ template, onClose, onMade, onPending, reload }: {
     return () => { live = false; };
   }, [readNonce]);
 
+  // Focus goes into the list: the first project row.
   useEffect(() => {
-    if (choices.state === "ready") wellRef.current?.querySelector<HTMLSelectElement>("select")?.focus();
+    if (choices.state === "ready") listRef.current?.querySelector<HTMLButtonElement>("[data-testid=programs-make-pick]")?.focus();
   }, [choices.state]);
 
   const rows = choices.state === "ready" ? choices.rows : [];
   const chosen = rows.find((row) => row.id === pick) ?? null;
-  const gone = Boolean(pick) && choices.state === "ready" && !chosen;
   const pending = outcome.kind === "pending";
+  const pendingId = outcome.kind === "pending" ? outcome.tuple.project_id : "";
   const made = outcome.kind === "made" ? outcome.id : "";
-  const canCreate = Boolean(chosen) && !pending && !made;
+  const locked = pending || Boolean(made);
 
-  const create = async () => {
-    if (inFlight.current || !chosen || made) return;
+  const choose = (id: string) => {
+    if (locked) return;
+    setPick(id);
+    if (id !== pick && (outcome.kind === "refused" || outcome.kind === "unknown")) setOutcome({ kind: "idle" });
+  };
+
+  const create = async (target: ProjectChoice) => {
+    if (inFlight.current || made) return;
     inFlight.current = true;
-    const tuple: Readonly<CreateBody> = Object.freeze({ title: DEFAULT_TITLE, template, project_id: chosen.id });
-    const name = chosen.name;
+    setPick(target.id);
+    const tuple: Readonly<CreateBody> = Object.freeze({ title: DEFAULT_TITLE, template, project_id: target.id });
     setOutcome({ kind: "pending", tuple });
     try {
       const answer = await createProgram({ ...tuple });
@@ -217,36 +229,62 @@ function CreateWell({ template, onClose, onMade, onPending, reload }: {
       void reload();
     } catch (cause) {
       if (!alive.current) return;
-      const refused = refusalWords(cause, name);
+      const refused = refusalWords(cause, target.name);
       setOutcome(refused ? { kind: "refused", words: refused } : { kind: "unknown" });
     } finally {
       inFlight.current = false;
     }
   };
 
-  let project: ReactNode;
+  let content: ReactNode;
   if (choices.state === "loading") {
-    project = <span className="pg-make-note" data-testid="programs-make-reading">Reading the projects</span>;
+    content = <div className="pg-make-state" data-testid="programs-make-reading"><SurfaceState loading /></div>;
   } else if (choices.state === "failed") {
-    project = <span className="pg-make-note" role="alert" data-testid="programs-make-read-failed">The projects did not load</span>;
+    content = (
+      <div className="pg-make-state" data-testid="programs-make-read-failed">
+        <SurfaceState error="The projects did not load" onRetry={() => setReadNonce((value) => value + 1)} />
+      </div>
+    );
   } else if (!rows.length) {
-    project = <span className="pg-make-note" data-testid="programs-make-no-project">No project yet · A program needs a project</span>;
+    content = (
+      <div className="pg-make-state" data-testid="programs-make-no-project">
+        <SurfaceState empty emptyKind="project" emptyImage={spriteUrl("project", "programs")} emptyLabel="No project yet"
+          emptyHint="A program needs a project" />
+      </div>
+    );
   } else {
-    project = (
-      <CycleGadget label="Project" value={pick} disabled={pending || Boolean(made)}
-        options={rows.map((row) => ({ value: row.id, label: row.name }))}
-        onChange={(next) => { setPick(next); if (outcome.kind === "refused" || outcome.kind === "unknown") setOutcome({ kind: "idle" }); }} />
+    content = (
+      <ul ref={listRef} className="kit-listrows pg-make-rows" aria-label="Projects" data-testid="programs-make-rows">
+        {rows.map((row) => {
+          const selected = row.id === pick;
+          const busyHere = pendingId === row.id;
+          return (
+            <ListRow key={row.id} data-testid="programs-make-row" openTestId="programs-make-pick" nameTestId="programs-make-name" openLabel={row.name}
+              glyph={spriteUrl("project", row.id, "rest", null, 20)} name={row.name}
+              meta={row.line ? <span data-testid="programs-make-line">{row.line}</span> : undefined}
+              lit={selected} onOpen={locked ? undefined : () => choose(row.id)}
+              verbs={(
+                <span className="pg-make-here">
+                  <Button dense variant={selected ? "primary" : "ghost"} loading={busyHere} disabled={locked && !busyHere}
+                    onClick={() => void create(row)} aria-label={`Create in ${row.name}`} data-testid="programs-make-here">
+                    Create here
+                  </Button>
+                </span>
+              )} />
+          );
+        })}
+      </ul>
     );
   }
 
   return (
-    <section ref={wellRef} className="pg-make" aria-label="New program" data-testid="programs-make" data-template={template}
+    <section className="pg-make" aria-label="New program" data-testid="programs-make" data-template={template}
       onKeyDown={(event) => { if (event.key === "Escape" && !pending) { event.preventDefault(); event.stopPropagation(); onClose(); } }}>
-      <h3 className="pg-make-head" data-testid="programs-make-head">{`${DEFAULT_TITLE} · ${templateName(template)}`}</h3>
-      <GadgetRow label="Project">{project}</GadgetRow>
-      {gone ? (
-        <ActionNotice tone="warn" role="alert"><span data-testid="programs-make-gone">That project is not open now · Choose a project</span></ActionNotice>
-      ) : null}
+      <div className="pg-make-top">
+        {rows.length && !made ? <h3 className="kit-listday-label pg-make-ask">Choose a project</h3> : null}
+        <Token className="surface-token pg-make-template" data-testid="programs-make-template">{templateName(template)}</Token>
+      </div>
+      {content}
       {outcome.kind === "refused" ? (
         <ActionNotice tone="danger" role="alert"><span data-testid="programs-make-refused">{outcome.words}</span></ActionNotice>
       ) : null}
@@ -262,19 +300,15 @@ function CreateWell({ template, onClose, onMade, onPending, reload }: {
         {outcome.kind === "unknown" ? (
           <Button dense variant="ghost" onClick={() => void reload()} data-testid="programs-make-look">Look at the list</Button>
         ) : null}
-        {choices.state !== "loading" && !made ? (
-          <Button dense variant="ghost" disabled={pending} onClick={() => setReadNonce((value) => value + 1)} data-testid="programs-make-refresh">
-            Refresh projects
-          </Button>
-        ) : null}
         <Button dense variant="ghost" disabled={pending} onClick={onClose} data-testid="programs-make-cancel">{made ? "Close" : "Cancel"}</Button>
         {made ? (
           <Button dense variant="primary" onClick={() => onMade(made)} data-testid="programs-make-open">Open the program</Button>
-        ) : (
-          <Button dense variant="primary" loading={pending} disabled={!canCreate} onClick={() => void create()} data-testid="programs-make-create">
-            {chosen ? `Create in ${chosen.name}` : "Create"}
+        ) : chosen ? (
+          <Button dense variant="primary" className="pg-make-commit" loading={pending} disabled={pending}
+            onClick={() => void create(chosen)} data-testid="programs-make-create">
+            {`Create in ${chosen.name}`}
           </Button>
-        )}
+        ) : null}
       </div>
     </section>
   );
@@ -312,6 +346,12 @@ export function ProgramsCore(_props: CoreProps) {
     const fresh = !making || Boolean(revealFailed);
     setRevealFailed("");
     setMaking({ template, flow: fresh ? ++flows.current : making.flow });
+  };
+  // The toolbar's New program toggles the well.
+  const toggle = () => {
+    if (busy) return;
+    if (making) closeWell();
+    else make("fast-cycle");
   };
   const closeWell = () => {
     setMaking(null);
@@ -468,7 +508,7 @@ export function ProgramsCore(_props: CoreProps) {
   return (
     <div className="pg-window" data-testid="programs-window">
       <Toolbar label="Programs" data-testid="programs-toolbar" trailing={menuButton("group", `Group: ${group === "state" ? "State" : "Project"}`, "programs-group")}>
-        <Button ref={newRef} dense variant="primary" disabled={busy} onClick={() => make("fast-cycle")}
+        <Button ref={newRef} dense variant="primary" disabled={busy} onClick={toggle} aria-expanded={Boolean(making)}
           data-testid="programs-new">
           <ToolGlyph kind="new" />
           New program

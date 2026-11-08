@@ -595,8 +595,15 @@ describe("HS-S11: New program is made in the project he chooses (recorded real w
   const posts = () => calls.filter((call) => call.startsWith("POST /api/programs"));
   /** The bodies he sent, parsed (the recorded fixture sorts its keys). */
   const sent = () => posts().map((call) => JSON.parse(call.slice("POST /api/programs ".length)));
-  const choose = (id: string) => fireEvent.change(within(screen.getByTestId("programs-make")).getByLabelText("Project"), { target: { value: id } });
+  const rowOf = (id: string) => screen.getAllByTestId("programs-make-row")
+    .find((node) => within(node).getByTestId("programs-make-name").textContent === nameOf(id))!;
+  /** A press on the project row: the choice. */
+  const choose = (id: string) => fireEvent.click(within(rowOf(id)).getByTestId("programs-make-pick"));
+  /** The row's own trailing verb. */
+  const here = (id: string) => within(rowOf(id)).getByTestId("programs-make-here");
+  /** The well's foot verb (the narrow form; drawn once a project is chosen). */
   const create = () => screen.getByTestId("programs-make-create");
+  const ready = () => screen.findAllByTestId("programs-make-row");
   const templateItem = (name: string) => [...document.querySelectorAll<HTMLElement>("[role=menuitem],[role=menuitemradio]")]
     .find((node) => node.textContent?.startsWith(`${name} · `))!;
 
@@ -609,7 +616,7 @@ describe("HS-S11: New program is made in the project he chooses (recorded real w
     expect(required.request.json).toEqual({ title: "New program", template: "fast-cycle" });
   });
 
-  it("New opens the well and makes nothing; Create waits for an explicit project, then sends the recorded tuple and opens it", async () => {
+  it("New opens the well with the projects as its rows (no cycle gadget, focus on the first row); Create here sends the recorded tuple once and opens it", async () => {
     hub({ "GET /api/programs": list, "GET /api/projects": projects.response.body, "POST /api/programs": made.response.body });
     render(<ProgramsCore />);
     await screen.findAllByTestId("programs-band");
@@ -619,42 +626,87 @@ describe("HS-S11: New program is made in the project he chooses (recorded real w
     fireEvent.click(screen.getByTestId("programs-new"));
     const well = await screen.findByTestId("programs-make");
     expect(well.getAttribute("data-template")).toBe("fast-cycle");
-    expect(screen.getByTestId("programs-make-head").textContent).toBe("New program · Fast cycle");
-    await waitFor(() => expect(within(well).getByLabelText("Project")).toBeTruthy());
-    expect(posts()).toEqual([]);
-    // Every open project is a choice, also one with no Program in the list.
-    const options = [...within(well).getByLabelText<HTMLSelectElement>("Project").options].map((option) => option.textContent);
-    for (const row of roster) expect(options).toContain(row.name);
+    expect(screen.getByTestId("programs-new").getAttribute("aria-expanded")).toBe("true");
+    // The template is a quiet token, not a title line.
+    expect(screen.getByTestId("programs-make-template").textContent).toBe("Fast cycle");
+    const rows = await ready();
+    // The project choice IS the content: no select, no dash, no dead Create.
+    expect(within(well).queryByRole("combobox")).toBeNull();
+    expect(well.querySelector("select")).toBeNull();
+    expect(well.textContent).not.toContain("—");
+    expect(screen.queryByTestId("programs-make-create")).toBeNull();
+    expect(screen.queryByTestId("programs-make-refresh")).toBeNull();
+    // Every open project is a row, also one with no Program in the list; none is chosen for him.
+    expect(rows.map((row) => within(row).getByTestId("programs-make-pick").textContent)).toEqual(roster.map((row) => row.name));
     expect(list.programs.some((row) => row.project_id === noRepository.request.json!.project_id)).toBe(false);
-    // No project is chosen for him, also with the filter on.
-    expect((create() as HTMLButtonElement).disabled).toBe(true);
-    fireEvent.click(create());
+    expect(rows.some((row) => row.hasAttribute("data-lit"))).toBe(false);
+    for (const row of rows) expect(within(row).getByTestId("programs-make-here").className).toContain("btn--ghost");
+    await waitFor(() => expect(document.activeElement).toBe(within(rows[0]).getByTestId("programs-make-pick")));
     expect(posts()).toEqual([]);
-    choose(madeProgram.project_id as string);
-    expect(create().textContent).toBe(`Create in ${nameOf(madeProgram.project_id)}`);
-    fireEvent.click(create());
+    // One press on the row's own verb makes it there and opens it.
+    const target = madeProgram.project_id as string;
+    fireEvent.click(here(target));
     await waitFor(() => expect(mocks.openPullout).toHaveBeenCalledWith(`program:${madeProgram.id}`));
     expect(sent()).toEqual([made.request.json]);
     await waitFor(() => expect(screen.queryByTestId("programs-make")).toBeNull());
   });
 
-  it("each template entry and the empty object open the same well with their template; Escape and Cancel make nothing", async () => {
+  it("a row press chooses it: the row lights, its Create here turns primary, and the foot says Create in <project>", async () => {
+    hub({ "GET /api/programs": list, "GET /api/projects": projects.response.body, "POST /api/programs": made.response.body });
+    render(<ProgramsCore />);
+    await screen.findAllByTestId("programs-band");
+    fireEvent.click(screen.getByTestId("programs-new"));
+    await ready();
+    const target = madeProgram.project_id as string;
+    choose(target);
+    expect(rowOf(target).hasAttribute("data-lit")).toBe(true);
+    expect(here(target).className).toContain("btn--primary");
+    const other = roster.find((row) => row.id !== target)!.id;
+    expect(here(other).className).toContain("btn--ghost");
+    expect(posts()).toEqual([]);
+    expect(create().textContent).toBe(`Create in ${nameOf(target)}`);
+    fireEvent.click(create());
+    await waitFor(() => expect(mocks.openPullout).toHaveBeenCalledWith(`program:${madeProgram.id}`));
+    expect(sent()).toEqual([made.request.json]);
+  });
+
+  it("a project row carries its one line: the outcome, else the first line of its description", async () => {
+    const body = clone(projects.response.body) as { projects: Array<Record<string, unknown>> };
+    body.projects[0].outcome_text = "Ship the desk he uses every day";
+    body.projects[1].description = "Notes for the week\nsecond line";
+    hub({ "GET /api/programs": list, "GET /api/projects": body });
+    render(<ProgramsCore />);
+    await screen.findAllByTestId("programs-band");
+    fireEvent.click(screen.getByTestId("programs-new"));
+    await ready();
+    expect(within(rowOf(roster[0].id)).getByTestId("programs-make-line").textContent).toBe("Ship the desk he uses every day");
+    expect(within(rowOf(roster[1].id)).getByTestId("programs-make-line").textContent).toBe("Notes for the week");
+  });
+
+  it("each template entry and the empty object open the same well with their template; Escape, Cancel and New again make nothing", async () => {
     hub({ "GET /api/programs": list, "GET /api/projects": projects.response.body });
     render(<ProgramsCore />);
     fireEvent.click(await screen.findByTestId("programs-templates"));
     fireEvent.click(templateItem("Build and review"));
     const well = await screen.findByTestId("programs-make");
     expect(well.getAttribute("data-template")).toBe("build-and-review");
-    await waitFor(() => expect(within(well).getByLabelText("Project")).toBeTruthy());
+    expect(screen.getByTestId("programs-make-template").textContent).toBe("Build and review");
+    await ready();
     choose(roster[0].id);
     // A different template keeps his project choice.
     fireEvent.click(screen.getByTestId("programs-templates"));
     fireEvent.click(templateItem("Race"));
     expect(screen.getByTestId("programs-make").getAttribute("data-template")).toBe("race");
-    expect(within(screen.getByTestId("programs-make")).getByLabelText<HTMLSelectElement>("Project").value).toBe(roster[0].id);
-    fireEvent.keyDown(within(screen.getByTestId("programs-make")).getByLabelText("Project"), { key: "Escape" });
+    expect(rowOf(roster[0].id).hasAttribute("data-lit")).toBe(true);
+    fireEvent.keyDown(within(rowOf(roster[0].id)).getByTestId("programs-make-pick"), { key: "Escape" });
     expect(screen.queryByTestId("programs-make")).toBeNull();
     expect(document.activeElement).toBe(screen.getByTestId("programs-new"));
+    // New program pressed again closes the well (a toggle).
+    fireEvent.click(screen.getByTestId("programs-new"));
+    expect(await screen.findByTestId("programs-make")).toBeTruthy();
+    fireEvent.click(screen.getByTestId("programs-new"));
+    expect(screen.queryByTestId("programs-make")).toBeNull();
+    expect(screen.getByTestId("programs-new").getAttribute("aria-expanded")).toBe("false");
     cleanup();
     calls = [];
     hub({ "GET /api/projects": projects.response.body });
@@ -668,30 +720,25 @@ describe("HS-S11: New program is made in the project he chooses (recorded real w
     expect(posts()).toEqual([]);
   });
 
-  it("the project read: loading, failed with Refresh projects, no project, and a chosen project that leaves the list", async () => {
+  it("the project read: loading, failed with the state species' retry, no project (no Create), then the rows", async () => {
     let answer: unknown = new ApiError(503, "down", {});
     hub({ "GET /api/programs": list, "GET /api/projects": () => { if (answer instanceof Error) throw answer; return answer; } });
     render(<ProgramsCore />);
     await screen.findAllByTestId("programs-band");
     fireEvent.click(screen.getByTestId("programs-new"));
     expect(screen.getByTestId("programs-make-reading")).toBeTruthy();
-    expect((create() as HTMLButtonElement).disabled).toBe(true);
-    expect(await screen.findByTestId("programs-make-read-failed")).toBeTruthy();
+    expect(screen.queryByTestId("programs-make-create")).toBeNull();
+    const failed = await screen.findByTestId("programs-make-read-failed");
+    expect(failed.textContent).toContain("The projects did not load");
     expect(screen.queryByTestId("programs-make-no-project")).toBeNull();
+    expect(screen.queryByTestId("programs-make-refresh")).toBeNull();
     answer = { projects: [] };
-    fireEvent.click(screen.getByTestId("programs-make-refresh"));
-    expect(await screen.findByTestId("programs-make-no-project")).toBeTruthy();
-    expect((create() as HTMLButtonElement).disabled).toBe(true);
-    answer = projects.response.body;
-    fireEvent.click(screen.getByTestId("programs-make-refresh"));
-    await waitFor(() => expect(within(screen.getByTestId("programs-make")).getByLabelText("Project")).toBeTruthy());
-    choose(roster[0].id);
-    expect((create() as HTMLButtonElement).disabled).toBe(false);
-    // The next read archives his project: Create waits for a new choice.
-    answer = { projects: roster.map((row) => (row.id === roster[0].id ? { ...row, is_archived: true } : row)) };
-    fireEvent.click(screen.getByTestId("programs-make-refresh"));
-    expect(await screen.findByTestId("programs-make-gone")).toBeTruthy();
-    expect((create() as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(within(failed).getByRole("button"));
+    const none = await screen.findByTestId("programs-make-no-project");
+    expect(none.textContent).toContain("No project yet");
+    expect(none.textContent).toContain("A program needs a project");
+    expect(screen.queryByTestId("programs-make-create")).toBeNull();
+    expect(screen.queryByTestId("programs-make-here")).toBeNull();
     expect(posts()).toEqual([]);
   });
 
@@ -700,14 +747,13 @@ describe("HS-S11: New program is made in the project he chooses (recorded real w
     render(<ProgramsCore />);
     await screen.findAllByTestId("programs-band");
     fireEvent.click(screen.getByTestId("programs-new"));
-    await waitFor(() => expect(within(screen.getByTestId("programs-make")).getByLabelText("Project")).toBeTruthy());
+    await ready();
     const target = noRepository.request.json!.project_id as string;
-    choose(target);
-    fireEvent.click(create());
+    fireEvent.click(here(target));
     const words = await screen.findByTestId("programs-make-refused");
     expect(words.textContent).toBe(`Not made · ${nameOf(target)} has no local repository · Add one in the project, or choose a different project`);
     expect(sent()).toEqual([noRepository.request.json]);
-    expect(within(screen.getByTestId("programs-make")).getByLabelText<HTMLSelectElement>("Project").value).toBe(target);
+    expect(rowOf(target).hasAttribute("data-lit")).toBe(true);
     expect(mocks.openPullout).not.toHaveBeenCalled();
     expect(document.body.textContent).not.toContain("Nothing changed");
   });
@@ -723,11 +769,13 @@ describe("HS-S11: New program is made in the project he chooses (recorded real w
     render(<ProgramsCore />);
     await screen.findAllByTestId("programs-band");
     fireEvent.click(screen.getByTestId("programs-new"));
-    await waitFor(() => expect(within(screen.getByTestId("programs-make")).getByLabelText("Project")).toBeTruthy());
+    await ready();
     choose(madeProgram.project_id as string);
     fireEvent.click(create());
     expect((await screen.findByTestId("programs-make-unknown")).textContent)
       .toBe("Not confirmed · The program can exist · Look at the list before you try again");
+    // The row stays.
+    expect(rowOf(madeProgram.project_id as string).hasAttribute("data-lit")).toBe(true);
     expect(posts()).toHaveLength(1);
     expect(mocks.openPullout).not.toHaveBeenCalled();
     expect(document.body.textContent).not.toContain("Nothing changed");
@@ -737,7 +785,7 @@ describe("HS-S11: New program is made in the project he chooses (recorded real w
     expect(posts()).toHaveLength(1);
   });
 
-  it("one press in flight: a second press, Enter or a new choice cannot send or redirect the captured request", async () => {
+  it("one press in flight: the pressed row is busy; a second press, Enter, another row or New cannot send or redirect the captured request", async () => {
     let settle: (value: unknown) => void = () => undefined;
     mocks.apiFetch.mockImplementation(async (path: string, init?: { method?: string; json?: unknown }) => {
       const key = `${(init?.method ?? "GET").toUpperCase()} ${path}`;
@@ -750,16 +798,23 @@ describe("HS-S11: New program is made in the project he chooses (recorded real w
     render(<ProgramsCore />);
     await screen.findAllByTestId("programs-band");
     fireEvent.click(screen.getByTestId("programs-new"));
-    await waitFor(() => expect(within(screen.getByTestId("programs-make")).getByLabelText("Project")).toBeTruthy());
-    choose(madeProgram.project_id as string);
+    await ready();
+    const target = madeProgram.project_id as string;
+    const other = roster.find((row) => row.id !== target)!.id;
+    fireEvent.click(here(target));
+    expect(here(target).getAttribute("aria-busy")).toBe("true");
+    fireEvent.click(here(target));
+    fireEvent.keyDown(here(target), { key: "Enter" });
     fireEvent.click(create());
-    fireEvent.click(create());
-    fireEvent.keyDown(create(), { key: "Enter" });
-    fireEvent.click(create());
-    choose(roster.find((row) => row.id !== madeProgram.project_id)!.id);
+    // No row is a choice while the create is in flight.
+    expect(screen.queryAllByTestId("programs-make-pick")).toEqual([]);
+    fireEvent.click(here(other));
+    expect((here(other) as HTMLButtonElement).disabled).toBe(true);
+    expect(rowOf(other).hasAttribute("data-lit")).toBe(false);
     fireEvent.click(screen.getByTestId("programs-new"));
     expect((screen.getByTestId("programs-new") as HTMLButtonElement).disabled).toBe(true);
     expect((screen.getByTestId("programs-make-cancel") as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.getByTestId("programs-make")).toBeTruthy();
     expect(sent()).toEqual([made.request.json]);
     await act(async () => { settle(clone(madeProgram)); });
     await waitFor(() => expect(mocks.openPullout).toHaveBeenCalledWith(`program:${madeProgram.id}`));
@@ -772,11 +827,11 @@ describe("HS-S11: New program is made in the project he chooses (recorded real w
     render(<ProgramsCore />);
     await screen.findAllByTestId("programs-band");
     fireEvent.click(screen.getByTestId("programs-new"));
-    await waitFor(() => expect(within(screen.getByTestId("programs-make")).getByLabelText("Project")).toBeTruthy());
-    choose(madeProgram.project_id as string);
-    fireEvent.click(create());
+    await ready();
+    fireEvent.click(here(madeProgram.project_id as string));
     expect((await screen.findByTestId("programs-make-made")).textContent).toBe("Program made · Its window did not open");
     expect(screen.queryByTestId("programs-make-create")).toBeNull();
+    expect((here(madeProgram.project_id as string) as HTMLButtonElement).disabled).toBe(true);
     fireEvent.click(screen.getByTestId("programs-make-open"));
     expect(mocks.openPullout).toHaveBeenLastCalledWith(`program:${madeProgram.id}`);
     expect(mocks.openPullout).toHaveBeenCalledTimes(2);
@@ -797,9 +852,8 @@ describe("HS-S11: New program is made in the project he chooses (recorded real w
     const view = render(<ProgramsCore />);
     await screen.findAllByTestId("programs-band");
     fireEvent.click(screen.getByTestId("programs-new"));
-    await waitFor(() => expect(within(screen.getByTestId("programs-make")).getByLabelText("Project")).toBeTruthy());
-    choose(madeProgram.project_id as string);
-    fireEvent.click(create());
+    await ready();
+    fireEvent.click(here(madeProgram.project_id as string));
     view.unmount();
     await act(async () => { settle(clone(madeProgram)); });
     expect(mocks.openPullout).not.toHaveBeenCalled();
@@ -814,16 +868,16 @@ describe("HS-S13 + HS-S11: the Program made for a project is the row its Room li
   const madeProgram = create.response.body as Program;
   const projectId = roomPrograms13.projects.a;
 
-  it("Create in the chosen project sends the recorded tuple, opens its id, and that id is the Room's row and detail", async () => {
+  it("Create here in the chosen project sends the recorded tuple, opens its id, and that id is the Room's row and detail", async () => {
     expect(create.request.json).toEqual({ title: "New program", template: "fast-cycle", project_id: projectId });
     hub({ "GET /api/programs": list, "GET /api/projects": hand.projects.response.body, "POST /api/programs": madeProgram });
     render(<ProgramsCore />);
     await screen.findAllByTestId("programs-band");
     fireEvent.click(screen.getByTestId("programs-new"));
-    const well = await screen.findByTestId("programs-make");
-    await waitFor(() => expect(within(well).getByLabelText("Project")).toBeTruthy());
-    fireEvent.change(within(well).getByLabelText("Project"), { target: { value: projectId } });
-    fireEvent.click(screen.getByTestId("programs-make-create"));
+    const rows = await screen.findAllByTestId("programs-make-row");
+    const name = (hand.projects.response.body as { projects: Array<{ id: string; name: string }> }).projects.find((project) => project.id === projectId)!.name;
+    const row = rows.find((node) => within(node).getByTestId("programs-make-name").textContent === name)!;
+    fireEvent.click(within(row).getByTestId("programs-make-here"));
     await waitFor(() => expect(mocks.openPullout).toHaveBeenCalledWith(`program:${madeProgram.id}`));
     const posted = calls.filter((call) => call.startsWith("POST /api/programs"))
       .map((call) => JSON.parse(call.slice("POST /api/programs ".length)));

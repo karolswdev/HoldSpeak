@@ -1460,32 +1460,58 @@ span.pg-req-thumb { height: 150px; }
 .pg-race-agent { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pg-findings-fix { margin: 0; padding: 2px 12px 6px; }
 
-/* ── HS-S11: the New program well (in flow, under the toolbar) ── */
+/* ── HS-S11: the New program well (in flow, under the toolbar). Its content
+   is the project choice: one kit list row per open project, the row grammar
+   of the Programs list below. A row press chooses (the lit row); its
+   trailing Create here makes. At 393 the row is the press and one Create in
+   <project> sits at the foot. ── */
 .pg-make {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 10px 12px;
+  min-width: 0;
   border-bottom: 1px solid var(--wb-rule-soft);
   background: var(--wb-paper);
+  box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--wb-ink) 6%, transparent);
+}
+.pg-make-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   min-width: 0;
+  padding: 8px 12px 4px;
 }
-.pg-make-head {
-  margin: 0;
-  font: 600 13px / 1.3 var(--font-sans);
-  color: var(--wb-ink);
+.pg-make .pg-make-ask {
+  position: static;
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
 }
-.pg-make-note {
-  font: 400 12px / 1.4 var(--font-sans);
-  color: var(--wb-muted);
+.pg-make .pg-make-template { flex: none; margin-left: auto; }
+.pg-make-rows {
+  max-height: 264px;
+  overflow-y: auto;
+  border-top: 1px solid color-mix(in srgb, var(--wb-rule-soft) 60%, transparent);
 }
-.pg-make .gadget-cycle,
-.pg-make .gadget-cycle select { max-width: 100%; }
+.pg-make-rows .kit-listrow-main { cursor: pointer; }
+.pg-make-rows .kit-listrow[data-lit] .kit-listrow-name { font-weight: 600; }
+.pg-make-state .surface-state { padding: 10px 12px; }
+.pg-make > .surface-action-notice { margin: 6px 12px 0; }
 .pg-make-verbs {
   display: flex;
   justify-content: flex-end;
   flex-wrap: wrap;
   gap: 6px;
+  padding: 8px 12px;
+}
+/* The foot's Create in <project> is the narrow form only. */
+.desk-next .pg-make .btn.pg-make-commit { display: none; }
+@container surface (max-width: 520px) {
+  .pg-make-here { display: none; }
+  .desk-next .pg-make .btn.pg-make-commit { display: inline-flex; flex: 1 1 100%; justify-content: center; }
+  .pg-make-rows { max-height: none; }
+  .pg-make-verbs .btn { min-height: 44px; }
 }
 
 /* ── HS-S21: the Add well of a Program made from an action, and the
