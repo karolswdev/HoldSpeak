@@ -112,9 +112,6 @@
     "ProgressPlan": {
       "emoji": 2
     },
-    "ProjectRoomCore": {
-      "A3-prose": 1
-    },
     "PutEditor": {
       "A3-prose": 1
     },
@@ -127,6 +124,9 @@
     "ReviewPosture": {
       "A3-prose": 1,
       "B": 2
+    },
+    "RoomHead": {
+      "A3-prose": 1
     },
     "RunsOnCore": {
       "A3-prose": 1

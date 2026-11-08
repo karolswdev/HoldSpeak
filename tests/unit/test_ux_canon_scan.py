@@ -622,7 +622,7 @@ _MIC_HOST_FIELDS = (
     ("desk/components/ThreadComposer.tsx", "PadGadget", 'label="Thread message"'),
     ("desk/components/ThreadComposer.tsx", "PadGadget", 'label={placeholder ?? "Edit message"}'),
     # Window Program W2: the Room's and Memory's Ask composer rows.
-    ("features/project-room/ProjectRoomCore.tsx", "StringGadget", 'label="Ask this project"'),
+    ("features/project-room/core/Ask.tsx", "StringGadget", 'label="Ask this project"'),
     ("pages/cores/MemoryCore.tsx", "StringGadget", 'label="Find or ask your desk"'),
 )  # Betterment Q4: the Thread window's Comment field is parked with it.
 

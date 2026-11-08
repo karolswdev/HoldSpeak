@@ -246,7 +246,7 @@
       "phase1_refs": [],
       "sources": [
         {
-          "path": "web/src/features/project-room/ProjectRoomCore.tsx",
+          "path": "web/src/features/project-room/core/Plan.tsx",
           "symbol": "function ItemsSection",
           "claim": "the ITEMS section, after NEEDS YOU, omitted when empty, UNAVAILABLE + Retry on a failed read"
         },
