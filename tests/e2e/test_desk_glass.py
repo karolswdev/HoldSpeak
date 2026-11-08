@@ -625,8 +625,10 @@ class TestOneDecisionRecord:
                 assert P9_ABOUT in str(source_records[0]["rationale"])
                 assert P9_WHY in str(source_records[0]["rationale"])
                 canonical_detail = self._json(page, "GET", f"/api/decision-records/{record_id}")
-                assert any(s.get("source_type") == "project" and s.get("source_ref") == P9_PROJECT_ID
-                           for s in canonical_detail.get("sources", [])), canonical_detail
+                # One decision writer (#1877): the record is filed in the
+                # Project (its `decision_record:<id>` member edge), not a
+                # `project` source row.
+                assert canonical_detail.get("project_id") == P9_PROJECT_ID, canonical_detail
 
                 # The Project's real This week reads the canonical record and opens it.
                 room = self._open_room_again(page, phone)
@@ -730,9 +732,29 @@ class TestOneDecisionRecord:
                 assert str(meeting_record[0]["id"]) == str(meeting_body["record"]["id"])
                 assert any(s.get("source_type") == "meeting" and s.get("source_ref") == P9_MEETING_ID
                            for s in meeting_detail.get("sources", [])), meeting_detail
-                page.get_by_test_id("decide-receipt").wait_for(timeout=T)
-                assert page.get_by_test_id("decide-receipt").count() == 1
+                assert meeting_detail.get("project_id") == P9_PROJECT_ID, meeting_detail
+                receipt = page.get_by_test_id("decide-receipt")
+                receipt.wait_for(timeout=T)
+                assert receipt.count() == 1
+                # One face (#1889): the receipt is the time; the Project is
+                # its own object row with the quiet word Filed.
+                assert re.fullmatch(r"Decided \d\d:\d\d", receipt.inner_text().strip()), receipt.inner_text()
+                project_row = meeting_window.get_by_test_id("decide-project")
+                project_row.wait_for(timeout=T)
+                assert P9_PROJECT_NAME in project_row.inner_text()
+                assert project_row.get_by_test_id("decide-filed").inner_text() == "Filed"
                 page.screenshot(path=str(P9_SHOTS / f"meeting-decide-{width}.png"))
+                # The row opens the record in the Decisions window reader,
+                # never the Decision pullout.
+                made_row = meeting_window.get_by_test_id("meeting-decide-well").get_by_role(
+                    "button", name=re.compile(re.escape(P9_MEETING_DECISION)),
+                )
+                self._tap(page, made_row, phone)
+                page.locator("[id='surface-decisions'].is-front").wait_for(timeout=T)
+                page.locator("#surface-decisions").get_by_test_id("decision-reader").filter(
+                    has_text=P9_MEETING_DECISION,
+                ).wait_for(timeout=T)
+                assert page.locator(f"[id='pullout:decision:{meeting_decision_id}']").count() == 0
 
                 # A proposed desk decision is offered as Confirm and reads back accepted.
                 proposed = _api(page, "POST", "/api/decisions", {
