@@ -51,12 +51,12 @@ module and a build script in the tree. We do not vendor baresip's source.
 The spike found GPL code that HoldSpeak loads today. Neither is the Line's;
 both need a ruling and a small lane.
 
-1. **The `tts` extra (Kokoro) loads GPL-3.0 code.** `kokoro-onnx` 0.6.1
+1. **The old `tts` extra loads GPL-3.0 code.** Its ONNX TTS package
    imports `phonemizer` (GPL-3.0-or-later) and `espeakng_loader`, which
    ships `libespeak-ng.1.52.0.dylib` (espeak-ng, GPL-3.0-or-later), at
-   import time (`kokoro_onnx/tokenizer.py`, lines 8–10). With the extra in,
+   import time (its tokenizer, lines 8–10). With the extra in,
    that code is in the hub process (`holdspeak/web/routes/tts.py`).
-   Every English G2P we checked for Kokoro routes through espeak-ng: misaki's
+   Every English G2P we checked for that model routes through espeak-ng: misaki's
    `en` extra needs `phonemizer-fork` (GPL-3.0+) and `espeakng-loader`;
    `piper-tts` 1.8.0 is GPL-3.0-or-later; `kittentts` needs `phonemizer`.
    Pocket TTS has no phonemizer (it reads text with sentencepiece); a grep of
@@ -262,7 +262,7 @@ defaults; a carrier line may need more (§12).
 | STT | Parakeet TDT 0.6B v2 int8, `onnx-asr`, CPU, 4 threads, no spinning: 101–114 ms per 4 s utterance | the same: 145–189 ms |
 | TTS | Pocket TTS, 4 torch threads, streamed, lead silence trimmed: first sound at the caller in 224–254 ms | the same (torch CPU build): 192–259 ms |
 | Why not mlx whisper on the Mac | it is fast (92–160 ms) and in HoldSpeak already; Parakeet is as fast, was the only one right on "Tomás", and is one engine on both machines. mlx stays for dictation. |
-| Why not Kokoro | GPL espeak-ng (§2) |
+| Why not the old `tts` extra | GPL espeak-ng (§2) |
 
 One engine pair on both machines means one code path and one set of tests.
 The models come through the concierge (the Engines window's download path):
@@ -395,7 +395,7 @@ models, the build). Not measured: memory, and the Python bridge's own CPU
 
 1. A ruling on the SIP password custody (§8): HoldSpeak holds the carrier
    password for its own line.
-2. A ruling on the two GPL findings (§2): the Kokoro `tts` extra and
+2. A ruling on the two GPL findings (§2): the old `tts` extra and
    faster-whisper's PyAV.
 3. Later, his phone: a SIP app with Tailscale on, dialling the address in
    Settings ▸ Calls ▸ Line.

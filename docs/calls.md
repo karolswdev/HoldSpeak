@@ -154,6 +154,9 @@ The Line is the HoldSpeak-owned adapter. It runs baresip for SIP and audio,
 speech recognition and speech output on the Line machine, and a text-only wire
 to the hub. The audio does not travel over the hub wire.
 
+The Desk's voice and the Line's voice are the same engine and the same
+weights: Kyutai Pocket TTS (MIT code, CC-BY-4.0 weights), downloaded once.
+
 **Settings > Calls > Line** shows where the Line runs, its state, the address,
 the selected account, the adapter, the rules from Calls, and **Test call**.
 A status such as Not installed, Not set up, Offline, or Not running is a

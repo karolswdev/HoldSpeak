@@ -698,10 +698,10 @@ class TestSpeechAndTTSBuiltIn:
             principal=OWNER,
             catalog_revision=4,
         )
-        # Find the whisper and kokoro items
+        # Find the whisper and TTS items
         for item in result["items"]:
             entry_kind = item.get("entry", {}).get("kind", "")
-            if entry_kind in ("whisper_model", "kokoro_tts"):
+            if entry_kind in ("whisper_model", "line_tts"):
                 assert item["status"] == ITEM_DONE
                 assert item["receipt"] is not None
 

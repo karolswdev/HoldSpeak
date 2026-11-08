@@ -31,7 +31,7 @@ ai-phone (read at commit `436f9f1b`, 2026-10-28) already is the phone half:
 |---|---|---|
 | Line | PJSIP: a SIP address (free), a SIP trunk, Telnyx or Twilio (a real number) | The Mac |
 | Speech in | Parakeet on MLX, 300 ms end-of-speech wait | The Mac |
-| Speech out | Phonon (TTS stage 52 ms p50) or Kokoro | The Mac |
+| Speech out | Phonon (TTS stage 52 ms p50) or ai-phone's second engine | The Mac |
 | Turn control | **Relay mode**: `call --relay`, `listen`, `say`, `hangup --say`, one JSON object per command (`--json`), exit codes 0–14 | A CLI to its daemon |
 | Fill while thinking | "One moment." after 1.5 s, "Still with you, one moment." at 10 s, hangs up at 25 s | The daemon |
 | Guards | AI disclosure on every outbound call; emergency numbers never dialled; `calls.daily_limit` | The daemon |
@@ -93,7 +93,7 @@ licence decision for the owner, not a lane.
 
 | # | Channel | What it needs | Money | Who presses | Order |
 |---|---|---|---|---|---|
-| 0 | **Voice in the phone web app** over Tailscale (the hub at `https://karols-macbook-pro.tailad9943.ts.net`): mic → the hub's Whisper → the same call turn → browser speech | Nothing new. The parts exist: `lib/callLoop.ts` (energy VAD → 16 kHz WAV → `/api/transcribe`), `lib/tts.ts` (the hub's Kokoro when the `tts` extra is in, else `speechSynthesis`). Today they serve only the parked Thread pullout's call chip. | 0 | nobody | Slice 5: nearly free, but it is not a call: the screen must stay on, the phone app must be open. |
+| 0 | **Voice in the phone web app** over Tailscale (the hub at `https://karols-macbook-pro.tailad9943.ts.net`): mic → the hub's Whisper → the same call turn → browser speech | Nothing new. The parts exist: `lib/callLoop.ts` (energy VAD → 16 kHz WAV → `/api/transcribe`), `lib/tts.ts` (the hub's server voice when its extra is in, else `speechSynthesis`). Today they serve only the parked Thread pullout's call chip. | 0 | nobody | Slice 5: nearly free, but it is not a call: the screen must stay on, the phone app must be open. |
 | 1 | **ai-phone, a SIP address on the tailnet**: a SIP softphone on the iPhone (Linphone, Groundwire, Acrobits) with Tailscale on dials `sip:holdspeak@<the Mac's tailnet name>` | ai-phone installed on the Mac (Homebrew `pjproject`, `swig`, `pkgconf`; `uv sync`; `ai-phone setup` downloads Parakeet and the voice: some GB); one softphone app | 0. No carrier, no number, no account. RTP stays inside the tailnet. | **The owner: CONFIG** (an install on his Mac, model downloads) | **First real call.** |
 | 2 | **ai-phone with a real number**: Telnyx or Twilio SIP trunk → ai-phone. He dials a normal number from the Phone app or CarPlay; HoldSpeak can call him (`call +1… --relay`) | A carrier account, a number, the trunk password in ai-phone's `secrets.env`; NAT for SIP/RTP (ai-phone's `docs/nat-checklist.md`) | Carrier list prices (check at sign-up; these are what we know, not a quote): a US number about $1–1.15 a month; inbound about $0.002–0.0085 a minute; outbound about $0.005–0.014 a minute. 30 one-minute calls a day ≈ $2–8 a month plus the number. | **The owner: CONFIG + EGRESS** (account, keys, audio crosses the carrier) | Second. |
 | 3 | **iPhone Shortcuts / Siri as a door**: "Hey Siri, call HoldSpeak" runs a Shortcut that dials channel 1's SIP URI (or channel 2's number), or opens channel 0's page | A Shortcut on his phone | 0 | the owner (on his phone) | With 1 or 2: a door, not a channel. |
@@ -230,7 +230,7 @@ ai-phone does both on the Mac, so the hub's Whisper is not on the call path.
 | | Choice | Why |
 |---|---|---|
 | STT | ai-phone's Parakeet (MLX, Mac) | 96 ms p50 STT stage in its baseline; endpointing and barge-in are its job. whisper.cpp on the home box would add a network hop for audio and gain nothing. |
-| TTS | ai-phone's **Phonon** (52 ms p50 TTS stage, 2026-10-27) | The fastest; Kokoro (more voices, ~164 ms) is the owner's pick in `ai-phone setup`. `say` on macOS has no streaming into RTP. |
+| TTS | ai-phone's **Phonon** (52 ms p50 TTS stage, 2026-10-27) | The fastest; ai-phone's second engine (more voices, ~164 ms) is the owner's pick in `ai-phone setup`. `say` on macOS has no streaming into RTP. |
 | Its own brain | `brain.kind: openai_compatible` at the home box | Used only for a call nobody relays (the hub is down). Points at the same box, so the Mac downloads no LLM. |
 
 ## 5. Authority on a call

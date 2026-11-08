@@ -69,14 +69,17 @@ _WHISPER_MODELS: dict[str, dict[str, Any]] = {
     "medium": {"name": "medium", "label": "Whisper medium", "download_bytes": 1_530_000_000},
 }
 
-# ── TTS models (kokoro-onnx) ──────────────────────────────────────────────
+# ── TTS model: the Line's Pocket TTS (the hub's one voice) ─────────────────
 
-_TTS_MODEL: dict[str, Any] = {
-    "id": "kokoro_v1_fp16",
-    "label": "Kokoro TTS (fp16)",
-    "download_bytes": 156_000_000,
-    "voices_bytes": 50_000_000,
-}
+
+def _tts_model() -> dict[str, Any]:
+    """The signed catalogue's TTS preset: the desk and the Line speak with it."""
+    from ..inference_setup_catalog import speech_presets
+
+    for row in speech_presets():
+        if row["role"] == "tts":
+            return {"id": row["id"], "label": "Pocket TTS", "download_bytes": int(row["source"]["download_bytes"])}
+    return {"id": "", "label": "Pocket TTS", "download_bytes": 0}
 
 
 # ── Memory thresholds (bytes) ────────────────────────────────────────────
@@ -443,17 +446,18 @@ def _speech_line(whisper_name: str) -> tuple[dict[str, Any], dict[str, Any]]:
 
 def _tts_line() -> tuple[dict[str, Any], dict[str, Any]]:
     """Build the TTS line for a pack."""
-    total = _TTS_MODEL["download_bytes"] + _TTS_MODEL["voices_bytes"]
+    model = _tts_model()
+    total = model["download_bytes"]
     return (
         {
             "group_label": "Text-to-speech",
-            "source_label": f"{_TTS_MODEL['label']} ({_human_size(total)})",
-            "provenance": "builtin_kokoro",
+            "source_label": f"{model['label']} ({_human_size(total)})",
+            "provenance": "builtin_line",
             "job": "tts",
         },
         {
             "job": "tts",
-            "kind": "kokoro_tts",
+            "kind": "line_tts",
             "download_bytes": total,
         },
     )
@@ -617,7 +621,7 @@ def _build_pack(
     plan_entries.append(speech_plan)
     total_download += speech_plan.get("download_bytes", 0)
 
-    # TTS (kokoro)
+    # TTS (the Line's Pocket TTS)
     tts_line, tts_plan = _tts_line()
     display_lines.append(tts_line)
     plan_entries.append(tts_plan)
@@ -937,7 +941,7 @@ def _run_plan(
         kind = entry.get("kind", "")
 
         # Speech/TTS items are built-in and need no provisioning action
-        if kind in ("whisper_model", "kokoro_tts"):
+        if kind in ("whisper_model", "line_tts"):
             item["status"] = ITEM_DONE
             item["receipt"] = {"kind": kind, "message": "Built-in, no provisioning needed."}
             db.front_door.update_plan(plan_id, status=PLAN_RUNNING, items=items)

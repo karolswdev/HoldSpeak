@@ -736,7 +736,7 @@ describe("Settings › Sounds without the speech extra", () => {
   it("browser voice names observed support and server installation opens in Details", async () => {
     // replaces: tests/e2e/test_hs154_call_glass.py::test_tts_settings_glass
     // The answer is the hub's own: GET /api/tts/status without the extra
-    // (holdspeak/web/routes/tts.py; tests/unit/test_tts_route.py::TestTtsNotInstalled).
+    // (holdspeak/web/routes/tts.py; tests/unit/test_tts_route.py::test_post_without_the_line_extra_is_404).
     const base = hub.fetchStub;
     vi.stubGlobal("fetch", vi.fn(async (input: string, init?: RequestInit) =>
       new URL(String(input), "http://hub.test").pathname === "/api/tts/status"
@@ -751,10 +751,10 @@ describe("Settings › Sounds without the speech extra", () => {
     const details = within(group).getByText("Details").closest("details")!;
     expect(details).not.toHaveAttribute("open");
     expect(within(details).getByRole("button", { name: "Copy", hidden: true })).not.toBeVisible();
-    expect(within(details).getByText("pip install 'holdspeak[tts]'")).not.toBeVisible();
+    expect(within(details).getByText("pip install 'holdspeak[line]'")).not.toBeVisible();
     fireEvent.click(within(group).getByText("Details"));
     expect(details).toHaveAttribute("open");
-    expect(within(details).getByText("pip install 'holdspeak[tts]'")).toBeInTheDocument();
+    expect(within(details).getByText("pip install 'holdspeak[line]'")).toBeInTheDocument();
     expect(within(details).getByRole("button", { name: "Copy" })).toBeVisible();
     expect(within(group).queryByRole("checkbox")).toBeNull();
   });

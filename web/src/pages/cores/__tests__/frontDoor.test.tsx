@@ -50,7 +50,7 @@ const DISPLAY_LINES = [
   { group_id: "agents_tools", group_label: "Agents & tools", source_label: "Qwen 4B (Q4_K_M)" },
   { group_id: "background", group_label: "Background", source_label: "Qwen 4B (Q4_K_M)" },
   { group_id: "speech_recognition", group_label: "Speech recognition", source_label: "Whisper small (444 MB)", job: "speech" },
-  { group_label: "Text-to-speech", source_label: "Kokoro TTS (fp16) (197 MB)", job: "tts" },
+  { group_label: "Text-to-speech", source_label: "Pocket TTS (215 MB)", job: "tts" },
 ];
 
 const PLAN_ENTRIES = [

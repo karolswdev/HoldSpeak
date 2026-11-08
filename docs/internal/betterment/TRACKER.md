@@ -401,4 +401,4 @@ claim aesthetic acceptance or closure of the remaining full-tape failures.
 | LINE-4 | The faces and the docs | Done #1607 (canvas) + the LINE-4b PR | Engines rows are LINE-6. |
 | LINE-5 | Barge-in, measured | Open |  |
 | LINE-6 | The concierge rows | Open | The Engines catalog is a signed LLM preset envelope. |
-| LICENCE | The hub's own GPL pulls (Kokoro, faster-whisper's PyAV) | Open | Needs his ruling. |
+| LICENCE | The hub's own GPL pulls (the `tts` extra, faster-whisper's PyAV) | Half done | 2026-11-07: the owner's ruling removed the `tts` extra; `/api/tts` speaks through the Line's Pocket TTS. PyAV is open. |

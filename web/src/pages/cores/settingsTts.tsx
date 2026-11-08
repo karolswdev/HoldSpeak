@@ -1,10 +1,11 @@
 /**
  * HS-154-01 — the TTS settings block.
  *
- * Browser voice availability comes from this browser. When the holdspeak[tts] extra is
- * installed, shows the GPL-3.0 note (phonemizer /
- * espeak-ng) + the weights download with egress badge. When the extra
- * is absent, shows ONE line with the install command — no dead switch.
+ * Browser voice availability comes from this browser. The server voice is
+ * the Line's Pocket TTS (holdspeak[line]): the desk and a call speak with
+ * one engine and one set of weights. When the extra is installed, shows the
+ * licence note (MIT code, CC-BY-4.0 weights) + the weights download with
+ * egress badge. When it is absent, shows ONE line with the install command.
  */
 import { useState, useEffect, useRef, useCallback } from "react";
 import { apiFetch, readableError } from "../../lib/api";
@@ -87,7 +88,7 @@ export function TtsSettingsBlock() {
           <span className="prefs-value">{browserAvailable ? "Available" : "Not available"}</span>
         </GadgetRow>
         <GadgetRow label="Server voice"><span className="prefs-value">Not installed</span></GadgetRow>
-        <FoldGadget title="Details"><CommandWell hint="pip install 'holdspeak[tts]'"/></FoldGadget>
+        <FoldGadget title="Details"><CommandWell hint="pip install 'holdspeak[line]'"/></FoldGadget>
       </GadgetGroup>
     );
   }
@@ -98,7 +99,7 @@ export function TtsSettingsBlock() {
       {!status.model_ready ? (
         <>
           <EgressChip
-            label="DOWNLOADS huggingface.co · ~90 MB"
+            label="DOWNLOADS huggingface.co · ~226 MB"
             title="One-time model download from Hugging Face."
             scope="cloud"
           />
@@ -128,7 +129,7 @@ export function TtsSettingsBlock() {
       </GadgetRow>
       <FoldGadget title="Details">
         <span className="gadget-fact">
-          GPL-3.0 · phonemizer + espeak-ng
+          Pocket TTS · MIT · weights CC-BY-4.0
         </span>
       </FoldGadget>
     </GadgetGroup>

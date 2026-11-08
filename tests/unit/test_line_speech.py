@@ -54,9 +54,9 @@ def test_the_lead_silence_of_the_first_chunk_is_trimmed() -> None:
 
 
 def test_the_line_imports_no_gpl_code() -> None:
-    """Design §2: kokoro-onnx, phonemizer, espeak-ng and faster-whisper pull
+    """Design §2: phonemizer, espeak-ng, faster-whisper and piper pull
     GPL code; the Line imports none of them, in its source or its process."""
-    banned = re.compile(r"^\s*(import|from)\s+(kokoro_onnx|phonemizer|espeakng_loader|faster_whisper|piper|pjsua2?|av)\b", re.M)
+    banned = re.compile(r"^\s*(import|from)\s+(phonemizer|espeakng_loader|faster_whisper|piper|pjsua2?|av)\b", re.M)
     for path in (ROOT / "holdspeak" / "line").rglob("*.py"):
         assert not banned.search(path.read_text()), path
     probe = ("import sys, holdspeak.line.node, holdspeak.line.adapter, holdspeak.line.speech as s; "

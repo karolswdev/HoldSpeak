@@ -10,8 +10,8 @@
 - **End of speech**: the energy rule the spike measured (start above 600
   RMS, end after 300 ms below 250 RMS).
 
-Licence rule: nothing here imports ``kokoro_onnx``, ``phonemizer``,
-``espeakng_loader`` or ``faster_whisper`` (each pulls GPL code; design §2).
+Licence rule: nothing here imports ``phonemizer``, ``espeakng_loader``,
+``faster_whisper`` or ``piper`` (each pulls GPL code; design §2).
 The engines load only when the Line starts; the tests use their own.
 """
 from __future__ import annotations
@@ -49,7 +49,7 @@ TTS_VOICE = "alba"
 # catalogue's (``speech_model_preset``, RECIPE LINE-6); ``line/models.py``
 # fetches them into the Line's model folder and says their state.
 #: Modules the Line's process must never load (design §2).
-GPL_MODULES = ("kokoro_onnx", "phonemizer", "espeakng_loader", "faster_whisper", "piper")
+GPL_MODULES = ("phonemizer", "espeakng_loader", "faster_whisper", "piper")
 
 
 class STT(Protocol):
