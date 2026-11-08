@@ -1,0 +1,25 @@
+{
+  "title": "Morning · 2026-11-08",
+  "steps": [
+    {"open": {"app": "surface-programs"},
+     "say": {"words": "Good morning. Four questions on the night's work. First, Programs."}},
+    {"press": {"target": "programs-new", "words": "I press New program."},
+     "highlight": {"target": "programs-wizard-step-1", "window": "surface-programs", "thing": "the New program wizard",
+                   "words": "The project leads: pick it, it grows into the card, the title bar reads it."},
+     "ask": {"ref": "wizard-w2", "question": "Does the wizard lead with the object now?", "choices": ["Keep", "Redo"]}},
+    {"open": {"app": "chair:needs"},
+     "highlight": {"target": "needs-list", "window": "chair:needs", "thing": "rows",
+                   "words": "Needs you: each row is the thing, one verb; Decide decides in place; the rest is on a right press."},
+     "ask": {"ref": "needs-rows", "question": "Does each row read as one object with one verb?", "choices": ["Keep", "Redo"]}},
+    {"open": {"app": "open-project-memory", "scope": "@first-project"},
+     "scroll": {"target": "room-fold-programs"},
+     "highlight": {"target": "room-fold-programs", "window": "open-project-memory", "thing": "the Programs fold",
+                   "words": "The Room's Programs fold, or New program when there are none."},
+     "ask": {"ref": "room-programs", "question": "Does the Programs fold read clearly?", "choices": ["Keep", "Redo"]}},
+    {"open": {"app": "review-meetings", "scope": "@first-meeting"},
+     "press": {"target": "meeting-decide", "words": "I press Decide."},
+     "highlight": {"target": "decide-project", "window": "review-meetings", "thing": "the project row",
+                   "words": "The project is the object row: the decision files there in one call, no sentence."},
+     "ask": {"ref": "decide-project-row", "question": "Is the project the object, no words to read?", "choices": ["Keep", "Redo"]}}
+  ]
+}
