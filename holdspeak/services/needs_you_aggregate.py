@@ -487,7 +487,7 @@ def build_aggregate(
         for item in needs.get("items") or []:
             if item.get("kind") == "issue" and item.get("source") == "github":
                 # Conductor R4: a repository's open issues are the Room's
-                # OPEN HERE list (Hand to agent takes them), not the owner's
+                # OPEN HERE list (Hand to an agent session takes them), not the owner's
                 # asks: a busy repository would flood Needs you.
                 continue
             if item.get("kind") == "action_item":

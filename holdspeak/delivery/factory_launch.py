@@ -185,7 +185,7 @@ def _codex_read_only_argv(argv: list[str]) -> list[str]:
         index += 1
     return _replace_option(out, "--sandbox", "read-only")
 
-#: The desk objects a launch may name as its origin (Hand to agent): the
+#: The desk objects a launch may name as its origin (Hand to an agent session): the
 #: item the agent works on. Optional; carried on the launch record and the
 #: Work attempt so a later merge can close the item it came from.
 ORIGIN_KINDS = (

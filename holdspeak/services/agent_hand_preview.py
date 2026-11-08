@@ -1,4 +1,4 @@
-"""The launch sheet's preview: what Hand to agent would send, with no launch.
+"""The launch sheet's preview: what Hand to an agent session would send, with no launch.
 
 docs/internal/CONDUCTOR.md, the F faces (K3a/K3b): the sheet shows the brief
 (its sources, bytes, the People cut, the acceptance checks), the repository,

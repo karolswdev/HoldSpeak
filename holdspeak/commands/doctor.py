@@ -1561,7 +1561,7 @@ def _check_tool_call_gate() -> DoctorCheck:
         return DoctorCheck(
             name="Tool-call gate",
             status="PASS",
-            detail=f"held for {len(config.repos)} agent worktree(s) launched by Hand to agent; master switch off",
+            detail=f"held for {len(config.repos)} agent worktree(s) launched by Hand to an agent session; master switch off",
         )
     if config.armed and config.repos:
         held = "; ".join(

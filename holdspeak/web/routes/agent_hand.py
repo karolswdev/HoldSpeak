@@ -1,4 +1,4 @@
-"""Hand to agent (docs/internal/CONDUCTOR.md, step 2).
+"""Hand to an agent session (docs/internal/CONDUCTOR.md, step 2).
 
 ``POST /api/agent/hand {kind, id, instruction?, profile?, project_id?}``
 (``POST /api/agent/hand/preview``, the same body: the launch sheet's preview,
@@ -123,7 +123,8 @@ def build_agent_hand_router(ctx: WebContext) -> APIRouter:
     @router.post("/api/agent/hand/preview")
     async def api_agent_hand_preview(request: Request) -> Any:
         """The launch sheet's preview (K3): the brief, the repository and
-        the branch Hand to agent would use, with no side effect. Owner only."""
+        the branch Hand to an agent session would use, with no side effect.
+        Owner only."""
         from ...services.agent_hand_preview import preview_hand
         from ...services.agent_hand_service import default_agent_hand_service
 

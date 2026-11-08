@@ -346,7 +346,7 @@ def build_coders_router(ctx: WebContext) -> APIRouter:
             log.warning(f"agent screens unread: {e}")
         # PHILO-14 C4: the Conductor drawer's history (every launch that ended
         # in the last 24 h, each once) and the hub's own launch count against
-        # its cap (`live_launches`, the count Hand to agent refuses at).
+        # its cap (`live_launches`, the count Hand to an agent session refuses at).
         extra: dict[str, Any] = {}
         try:
             from ....db import get_database

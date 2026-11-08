@@ -1234,7 +1234,7 @@ class MeetingWebServer:
         mount_router(app, build_delivery_prs_router(web_ctx))
         from .web.routes.agent_hand import build_agent_hand_router
 
-        mount_router(app, build_agent_hand_router(web_ctx))  # Conductor K2: Hand to agent
+        mount_router(app, build_agent_hand_router(web_ctx))  # Conductor K2: Hand to an agent session
         mount_router(app, build_repositories_router(web_ctx))
         compose_delivery(hub, auth_token=self.auth_token)
         _delivery_link = hub.delivery_link

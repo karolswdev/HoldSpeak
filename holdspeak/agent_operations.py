@@ -1,4 +1,4 @@
-"""Conductor K2: Hand to agent on the one declared contract (the descriptor row).
+"""Conductor K2: Hand to an agent session on the one declared contract (the descriptor row).
 
 Carved beside ``holdspeak/operations.py`` (which imports it into
 ``DESCRIPTORS``), the way ``channel_operations.py`` carries the Send. The row
@@ -90,7 +90,7 @@ PROJECT_REPOSITORY_REGISTER = OperationDescriptor(
     name="project.repository.register",
     version=1,
     description=(
-        "Register a GitHub repository (owner/name) for a Project, so Hand to agent can work in it. Nothing is "
+        "Register a GitHub repository (owner/name) for a Project, so Hand to an agent session can work in it. Nothing is "
         "cloned now: the first hand of an item in the Project clones it from github.com into the HoldSpeak "
         "clone folder (its own receipt). Only the owner registers."
     ),

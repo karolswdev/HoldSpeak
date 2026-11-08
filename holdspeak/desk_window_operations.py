@@ -1,7 +1,7 @@
 """PHILO-16 (16b): the desk's windows on the one declared contract (the MCP rows).
 
 Carved beside ``holdspeak/operations.py`` (which imports it into
-``DESCRIPTORS``), the way ``agent_operations.py`` carries Hand to agent. Each
+``DESCRIPTORS``), the way ``agent_operations.py`` carries Hand to an agent session. Each
 row names its method on the hub's ``DeskWindowService``
 (``services/desk_window_service.py``); the MCP family
 ``mcp/families/desk_windows.py`` invokes them, so an agent and the owner reach

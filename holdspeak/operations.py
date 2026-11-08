@@ -2269,7 +2269,7 @@ from holdspeak.channel_operations import CHANNEL_OPERATIONS  # noqa: E402
 from holdspeak.onboarding_operations import ONBOARDING_OPERATIONS  # noqa: E402
 # Betterment ST3-ST5/ST9: Setup's HTTP and MCP operations share one registry.
 from holdspeak.setup_operations import SETUP_OPERATIONS  # noqa: E402
-# Conductor K2: Hand to agent.
+# Conductor K2: Hand to an agent session.
 from holdspeak.agent_operations import AGENT_OPERATIONS  # noqa: E402
 # PHILO-16 (16b): the desk's windows (the MCP rows).
 from holdspeak.desk_window_operations import DESK_WINDOW_OPERATIONS  # noqa: E402

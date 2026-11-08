@@ -1,6 +1,6 @@
 """The agent brief: what HoldSpeak hands a coding agent with one item.
 
-Hand to agent (docs/internal/CONDUCTOR.md, step 3). This module adds no
+Hand to an agent session (docs/internal/CONDUCTOR.md, step 3). This module adds no
 hydration of its own. It composes parts that exist:
 
 - the item, through the grounding resolver Ask and steer use

@@ -20,7 +20,7 @@ PROJECT_GRANT_OPERATIONS: frozenset[str] = frozenset({
 })
 
 #: Conductor K6 (ruling on #903, round 4): what a LAUNCH may do in its own
-#: Project under the grant the owner's press on Hand to agent makes: add a
+#: Project under the grant the owner's press on Hand to an agent session makes: add a
 #: link or a resource, and remove a resource (the MCP gate allows that only
 #: for a resource the agent added). Only a launch identity is granted these.
 LAUNCH_GRANT_OPERATIONS: frozenset[str] = frozenset({
