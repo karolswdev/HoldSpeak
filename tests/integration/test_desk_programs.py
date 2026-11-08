@@ -141,7 +141,9 @@ def test_a_skip_is_a_proposed_decision_in_the_room_with_its_program_and_pr(tmp_p
     assert record["title"] == "Skip: sentence case the title"
     assert {(w["work_type"], w["work_ref"]) for w in record["work"]} == {
         ("program", pid), ("pr", step["pr"]["url"])}
-    assert {(s["source_type"], s["source_ref"]) for s in record["sources"]} == {("project", "proj-holdspeak")}
+    # One decision writer (#1877): the Project is the record's filing (where
+    # the Room joins), not a record source row.
+    assert record["sources"] == [] and record["project_id"] == "proj-holdspeak"
 
     # The checkpoint row of his Skip names the record.
     lines = {c["line"]: c for c in rig.program(pid)["checkpoints"]}
