@@ -61,9 +61,13 @@ CHOICES_MERGE = ("merge", "skip")
 RECEIPT_V = 1
 _READ_FIELDS = "url,number,state,headRefOid,baseRefName,headRefName,isCrossRepository"
 _READ_MAX = 20000
-_PR_URL = re.compile(r"^https://[^/\s]+/[^/\s]+/[^/\s]+/pull/(\d+)$")
+#: Codex on #1855: the canonical PR URL, a prepared head (40 hex) and a git
+#: ref name are checked before any of them reaches ``gh`` or ``git push``.
+_PR_URL = re.compile(r"^https://github\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/pull/([1-9][0-9]*)$")
+_HEAD = re.compile(r"^[0-9a-f]{40}$")
+_REF = re.compile(r"^(?![-/.])(?!.*\.\.)(?!.*//)(?!.*@\{)[A-Za-z0-9._/-]{1,200}(?<![/.])(?<!\.lock)$")
 #: Stages before any remote write (a Retry repeats nothing remote).
-_LOCAL_STAGES = ("worktree", "rails", "create", "evidence", "status", "commit")
+_LOCAL_STAGES = ("refs", "worktree", "rails", "create", "evidence", "status", "commit", "head")
 _STORY = re.compile(r"story-(\d+)-[^/]*\.md\s*$")
 
 
@@ -146,7 +150,26 @@ def _words_of(stage: str, raw: str) -> str:
         "commit": "the delivery had nothing to commit",
         "pr": "could not open the delivery PR on GitHub",
         "merge": "GitHub did not merge the delivery PR",
+        "refs": "the delivery branch name is not one git takes",
+        "head": "HoldSpeak could not read the delivery commit",
     }.get(stage, "the delivery stopped")
+
+
+def is_ref(value: Any) -> bool:
+    """A git branch name HoldSpeak may put on a ``git``/``gh`` command line."""
+    return bool(_REF.match(str(value or "")))
+
+
+def is_head(value: Any) -> bool:
+    """A prepared head: a full 40-hex commit id."""
+    return bool(_HEAD.match(str(value or "")))
+
+
+def _exc_detail(stage: str, exc: BaseException) -> str:
+    """Codex on #1855: a thrown command is kept as its class and stage only
+    (never its text: paths, arguments or tokens stay out of the ledger)."""
+    name = re.sub(r"[^A-Za-z0-9_]", "", type(exc).__name__)[:60] or "Exception"
+    return f"{name} at the {stage} stage: the command stopped before it answered."
 
 
 def deliver(runner: Any, program: Mapping[str, Any]) -> Optional[dict[str, Any]]:
@@ -203,7 +226,7 @@ def merge(runner: Any, program: Mapping[str, Any], number: Any, branch: str = ""
         proc = runner._run(["gh", "pr", "merge", str(number), "--squash"], cwd=cwd)
         code, raw = proc.returncode, " ".join(f"{proc.stderr or ''} {proc.stdout or ''}".split())
     except Exception as exc:  # a thrown transport is an unknown result, not a safe repeat
-        code, raw = -1, str(exc)
+        code, raw = -1, _exc_detail("merge", exc)
     if code != 0:
         receipt.update(merge_requested_at=service._clock(), merge_requested_by=by)
         return _line(service, program, FAILED, f"Could not deliver to {where['words']}: {_words_of('merge', raw)}",
@@ -243,7 +266,7 @@ def _run_or_fail(runner: Any, argv: list[str], cwd: str, stage: str,
     try:
         proc = runner._run(argv, cwd=cwd)
     except Exception as exc:
-        raise DeliveryFailed(_words_of(stage, str(exc)), str(exc)) from exc
+        raise DeliveryFailed(_words_of(stage, ""), _exc_detail(stage, exc)) from exc
     if proc.returncode != 0:
         raw = " ".join(f"{proc.stderr or ''} {proc.stdout or ''}".split())
         raise DeliveryFailed(_words_of(stage, raw), raw[:2000])
@@ -261,6 +284,9 @@ def _write(runner: Any, program: Mapping[str, Any], where: Mapping[str, str],
     base = str(program.get("base_branch") or "main")
     branch = f"program/{branch_slug(program['title'], 32) or 'program'}/delivery"
     track["pr"].update(branch=branch, base=base)
+    if not is_ref(branch) or not is_ref(base):
+        track["stage"] = "refs"
+        raise DeliveryFailed(_words_of("refs", ""), "the branch or the base is not a git branch name")
     path = Path(root).parent / f"hs-program-{program['id']}-delivery"
     track["stage"] = "worktree"
     runner._git(root, "fetch", "-q", "origin", base)
@@ -299,9 +325,12 @@ def _write(runner: Any, program: Mapping[str, Any], where: Mapping[str, str],
     _run_or_fail(runner, ["git", "-C", tree, "add", "-A", "--", "pm/roadmap"], tree, "commit", track)
     title = f"Delivery: {program['title']} done"[:200]
     _run_or_fail(runner, ["git", "-C", tree, "commit", "-q", "-m", title], tree, "commit", track)
+    track["stage"] = "head"
     head = runner._git(tree, "rev-parse", "HEAD")
-    if head:
-        track["pr"]["head"] = head
+    if not is_head(head):
+        # Codex on #1855: no push, create or merge without the prepared commit.
+        raise DeliveryFailed(_words_of("head", ""), "git did not name the delivery commit")
+    track["pr"]["head"] = head
     # HS-S32: from here a failure is not known to be free of remote effects.
     track["remote"] = True
     _run_or_fail(runner, ["git", "-C", tree, "push", "-u", "origin", branch], tree, "push", track)
@@ -331,7 +360,7 @@ def known_pr(receipt: Mapping[str, Any]) -> Optional[dict[str, Any]]:
     url, number = str(pr.get("url") or ""), pr.get("number")
     found = _PR_URL.match(url)
     if (found is None or not isinstance(number, int) or int(found.group(1)) != number
-            or not all(str(pr.get(key) or "") for key in ("branch", "base", "head"))):
+            or not is_ref(pr.get("branch")) or not is_ref(pr.get("base")) or not is_head(pr.get("head"))):
         return None
     return {"url": url, "number": number, "branch": str(pr["branch"]), "base": str(pr["base"]),
             "head": str(pr["head"])}
@@ -419,6 +448,8 @@ def _read(runner: Any, program: Mapping[str, Any], pr: Mapping[str, Any]) -> dic
     ``{result, words, observed}``; result is merged, open, closed,
     mismatch or unavailable. Nothing but a whole match is ever a yes."""
     cwd = str(program.get("repo_root") or "")
+    if not _PR_URL.match(str(pr.get("url") or "")):
+        return {"result": "unavailable", "words": "HoldSpeak could not read the PR on GitHub", "observed": {}}
     try:
         proc = runner._run(["gh", "pr", "view", pr["url"], "--json", _READ_FIELDS], cwd=cwd)
     except Exception:
@@ -509,11 +540,13 @@ def owner_merge(runner: Any, program: Mapping[str, Any], row: Mapping[str, Any])
     if read["result"] != "open":
         return _observed_line(runner, program, held, requested, read, by="owner")
     cwd = str(program.get("repo_root") or "")
+    if not _PR_URL.match(pr["url"]) or not is_head(pr["head"]):  # known_pr checked both; checked again at argv
+        raise ValueError("the delivery PR's URL or head is not well formed")
     try:
         proc = runner._run(["gh", "pr", "merge", pr["url"], "--squash", "--match-head-commit", pr["head"]], cwd=cwd)
         code, raw = proc.returncode, " ".join(f"{proc.stderr or ''} {proc.stdout or ''}".split())
     except Exception as exc:
-        code, raw = -1, str(exc)
+        code, raw = -1, _exc_detail("merge", exc)
     if code != 0:
         return _line(service, program, FAILED, f"Could not deliver to {where}: {_words_of('merge', raw)}",
                      detail=raw[:2000], words=_words_of("merge", raw), pr_number=pr["number"], branch=pr["branch"],
