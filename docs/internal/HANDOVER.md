@@ -57,7 +57,8 @@ The test lock is reentrant (`HOLDSPEAK_TEST_LOCK_HELD`), `quick_check.sh` is pro
 
 ## Part V: open, in the order I would run it
 
-1. Finish Part IV; one walk link; read his answers with `scripts/walk.py read <id>` (the shots: `~/.local/share/holdspeak/feedback/walks/<id>/`).
+0. **FIRST: the walk's ask sheet is rejected** (owner, 22:50, with a screenshot: "so ugly and unprofessional"): pastel tinted Keep/Redo pills with pixel glyphs, two bare stacked text links, a flat handle row. Make it the kit's native sheet: the two choices as the library's solid primary pair in the kit's real button material (no tints, no glyph gimmicks), Say more a proper mic Button beside them, Skip quiet in the handle row, no title line, progress as the kit's dots. Canvas it next to the cursor shots; he picks; then one build. The cursor and the edge glow stand.
+1. Read his walk answers (`scripts/walk.py read 196b529096f6f6754636b2ef36a832d9`); read his answers with `scripts/walk.py read <id>` (the shots: `~/.local/share/holdspeak/feedback/walks/<id>/`).
 2. **Canvases before builds** for Needs you, the Project Room, the Programs window as native apps (his words: OS-native, no web-page look). The canvas is the ruling device now; the Design artifact type works (see the walk canvas).
 3. **Architecture subtractions, measured** (bundle size, hub start, files per change): service construction out of `web_server._create_app` into runtime composition; Program vocabulary + `ProgramRefused` + `_LOCK` out of `program_service.py` with aliases (plan HS-S51); the destination form to `features/channels` (HS-S53); the opener registry → one startup intent (HS-S12, last, touches everything). Keychain slice (Part III).
 4. **Plan wave three**: HS-S25 current-review eligibility, HS-S32 delivery recovery; HS-S24 spending = disclosure-only (ruled; no code yet).
