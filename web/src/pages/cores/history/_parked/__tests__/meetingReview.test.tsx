@@ -1,3 +1,4 @@
+// PARKED 2026-11-08 (HS-S56): the only reader of the history/MeetingReview + reviewModel shims; Outcomes owns the review; tsconfig and vitest exclude _parked.
 // HS-200-12 — the review wing: five proposals on three axes, one verb per
 // row, MORE holding Edit / Dismiss / Open evidence, Confirm rendering the
 // durable result the canonical route returns, and the processing face's
@@ -6,14 +7,14 @@ import { act, fireEvent, render, screen, waitFor, within } from "@testing-librar
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { apiFetch } = vi.hoisted(() => ({ apiFetch: vi.fn() }));
-vi.mock("../../../../lib/api", () => ({
+vi.mock("../../../../../lib/api", () => ({
   apiFetch,
   readableError: (e: unknown) => String((e as Error)?.message ?? e),
 }));
-vi.mock("../../../../runtime/RuntimeBus", () => ({
+vi.mock("../../../../../runtime/RuntimeBus", () => ({
   useRuntimeBus: () => ({ subscribe: () => () => undefined }),
 }));
-vi.mock("../../../../desk/shell", () => ({ openSurfaceOr: vi.fn() }));
+vi.mock("../../../../../desk/shell", () => ({ openSurfaceOr: vi.fn() }));
 
 import { MeetingReview } from "../MeetingReview";
 
