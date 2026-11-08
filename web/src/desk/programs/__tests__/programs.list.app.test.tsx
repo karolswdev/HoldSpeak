@@ -106,6 +106,29 @@ describe("the Programs window (the language, 2026-11-08: the window is the Progr
     expect(tile.getAttribute("aria-label")).toBe("Tonight 23:00, 3 queued");
     expect(status().textContent).toContain("tonight 23:00");
     expect(status().textContent).toContain("3 queued");
+    // "tonight 23:00 · 3 queued": the two words side by side at the bar's end.
+    const words = [...status().querySelectorAll(".kit-statusbar-item")].map((item) => item.textContent);
+    expect(words.slice(-2)).toEqual(["tonight 23:00", "3 queued"]);
+  });
+
+  it("the night tile opens the night Program in the pane; a night with no Program to open draws no tile", async () => {
+    onRecordedDay();
+    const first = list.programs[0];
+    const other = list.programs.find((row) => row.id !== first.id && row.state !== "drafting")!;
+    const night = { ...list, night: { program_id: other.id, start: "23:00", queued: 3 } } as ProgramList;
+    hub({ "GET /api/programs": night, [`GET /api/programs/${first.id}`]: detailOf(first.id, first.title),
+      [`GET /api/programs/${other.id}`]: detailOf(other.id, other.title) });
+    render(<ProgramsCore />);
+    const tile = await screen.findByTestId("programs-rail-night");
+    await waitFor(() => expect(screen.getByTestId("programs-pane").getAttribute("data-program")).toBe(first.id));
+    fireEvent.click(tile);
+    await waitFor(() => expect(screen.getByTestId("programs-pane").getAttribute("data-program")).toBe(other.id));
+    cleanup();
+    hub({ "GET /api/programs": { ...list, night: { program_id: null, start: "23:00", queued: 3 } } as ProgramList,
+      [`GET /api/programs/${first.id}`]: detailOf(first.id, first.title) });
+    render(<ProgramsCore />);
+    await screen.findAllByTestId("programs-rail-tile");
+    expect(screen.queryByTestId("programs-rail-night")).toBeNull();
   });
 
   it("a hub without Programs draws the empty object with one Button, and no count of zero", async () => {
