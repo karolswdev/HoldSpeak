@@ -30,10 +30,14 @@ export function DayRow({ time, kind, sprite, person, name, facts, state, extra, 
         ) : null}
         <span className="kit-listrow-text">
           <span className="kit-listrow-name">{name}</span>
-          {facts ? <span className="kit-listrow-meta today-dayrow-facts">{facts}</span> : null}
+          {facts || state ? (
+            <span className="kit-listrow-meta today-dayrow-facts">
+              {state ? <DotWord tone={state.tone}>{state.word}</DotWord> : null}
+              {facts ? <span>{facts}</span> : null}
+            </span>
+          ) : null}
         </span>
       </span>
-      {state ? <span className="kit-listrow-state"><DotWord tone={state.tone}>{state.word}</DotWord></span> : null}
       {extra ? <span className="today-row-route">{extra}</span> : null}
       {verb ? <span className="kit-listrow-verbs">{verb}</span> : null}
     </li>

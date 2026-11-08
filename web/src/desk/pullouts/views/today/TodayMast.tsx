@@ -58,11 +58,11 @@ export function TodayMast({ now, ahead, needsCount, nextWords, held, waits, reco
         className="today-mast"
         data-testid="today-toolbar"
         title={(
-          <span className="today-date" data-testid="today-day" title={`${SHORT_DAYS[now.getDay()]} ${now.getDate()} ${SHORT_MONTHS[now.getMonth()]}`}>
-            <span className="today-greeting" data-testid="today-greeting">{dayGreeting(now)}</span>
+          <span className="today-mast-day" data-testid="today-day" title={`${SHORT_DAYS[now.getDay()]} ${now.getDate()} ${SHORT_MONTHS[now.getMonth()]}`}>
+            <span data-testid="today-greeting">{dayGreeting(now)}</span>
           </span>
         )}
-        facts={facts.length ? facts.flatMap((fact, index) => (index ? [<span key={`dot${index}`} aria-hidden="true">{" · "}</span>, fact] : [fact])) : undefined}
+        facts={facts.length ? facts.flatMap((fact, index) => (index ? [<span key={`dot${index}`} className="today-mast-sep" aria-hidden="true">·</span>, fact] : [fact])) : undefined}
       >
         <Button dense variant={recordLead ? "primary" : "secondary"} onClick={onRecord} data-testid="today-record-now">Record now</Button>
         {prepare ? (
