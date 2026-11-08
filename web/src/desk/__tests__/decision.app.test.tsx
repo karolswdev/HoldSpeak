@@ -694,7 +694,7 @@ describe("W6 (atlas pass 3): every verb of a Desk decision says its word in the 
       const del = await screen.findByTestId("decision-reader-delete");
       expect(del.textContent).toBe("Delete");
       fireEvent.click(del);
-      expect(asked).toEqual(["decision:decision_kafka"]);
+      await waitFor(() => expect(asked).toEqual(["decision:decision_kafka"]));
     } finally {
       window.removeEventListener(OBJECT_DELETE_REQUEST, listen);
       if (seat) seatUnmounted();
