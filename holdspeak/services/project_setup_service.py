@@ -590,7 +590,7 @@ class ProjectSetupService:
                 from holdspeak.services.watch_service import (
                     _jira_conditions_summary, _JIRA_TRANSITION_KINDS,
                 )
-                from holdspeak.services.reaction_service import normalize_snapshot
+                from holdspeak.services.snapshot_diff import normalize_snapshot
                 normalized = normalize_snapshot("jira", entities)
                 test_result["provider"] = "jira"
                 test_result["connection"] = {
@@ -1335,7 +1335,7 @@ class ProjectSetupService:
             # HS-161-04: GitHub PR subjects test through the adapter's
             # snapshot path -- a real bounded read returning representative
             # PRs (id/title/state/head_sha), not validation placeholders.
-            from holdspeak.services.reaction_service import normalize_snapshot
+            from holdspeak.services.snapshot_diff import normalize_snapshot
 
             adapter = self._github_adapter
             if adapter is None:

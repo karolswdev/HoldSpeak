@@ -293,7 +293,7 @@ STEWARD_EFFECT_KINDS = [
 
 def _normalize_baseline(entities: list[dict[str, Any]]) -> str:
     """Normalize entities into the watch snapshot_json format."""
-    from holdspeak.services.reaction_service import normalize_snapshot
+    from holdspeak.services.snapshot_diff import normalize_snapshot
     snapshot = normalize_snapshot("gh", entities)
     return json.dumps(snapshot, sort_keys=True, separators=(",", ":"))
 

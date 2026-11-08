@@ -414,7 +414,7 @@ class WatchAdapter:
         self._db = db
 
     def collect(self, project_id: str, source: dict[str, Any]) -> AdapterResult:
-        from holdspeak.services.reaction_service import diff_snapshots
+        from holdspeak.services.snapshot_diff import diff_snapshots
 
         now = _now_iso()
         # source_ref is "watch:<watch_id>" -- extract the watch_id

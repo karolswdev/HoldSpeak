@@ -732,7 +732,7 @@ def test_watch_carries_the_branch_and_room_prs_stay_open(tmp_path) -> None:
         OWNER, query_kind="pull_requests", query={"repository": "acme/app", "state": "open"},
     )
     assert entities[0]["headRefName"] == "hs/a"
-    from holdspeak.services.reaction_service import normalize_snapshot
+    from holdspeak.services.snapshot_diff import normalize_snapshot
 
     assert normalize_snapshot("gh", entities)["entities"]["1"]["head_ref"] == "hs/a"
 
