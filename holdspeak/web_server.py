@@ -19,7 +19,6 @@ from holdspeak.timestamps import aware, local_now
 from typing import Any, Callable, Optional, TYPE_CHECKING
 
 from .logging_config import get_logger
-from .web.routes._mount import mount_router
 from .web.runtime_support import _parse_iso_datetime
 
 if TYPE_CHECKING:
@@ -1123,8 +1122,9 @@ class MeetingWebServer:
         )
 
         # Bootstrap move (2026-11-08): every service is built in the ONE
-        # runtime composition module; this method mounts the routers with it
-        # and registers the lifespan.
+        # runtime composition module and every router is mounted by
+        # runtime/web_mount.py; this method composes, mounts and registers
+        # the lifespan.
         from .runtime.delivery_composition import compose_delivery
         from .runtime.hub_composition import compose_hub
 
@@ -1137,196 +1137,13 @@ class MeetingWebServer:
         web_ctx = hub.web_ctx
         refinement_coordinator = hub.refinement_coordinator
         _project_service = hub.project_service
-        from .web.routes import (
-            build_activity_router,
-            build_automations_router,
-            build_authority_router,
-            build_cadence_router,
-            build_calendar_events_router,
-            build_calendar_snapshot_router,
-            build_calendar_sources_router,
-            build_core_router,
-            build_decisions_router,
-            build_delivery_router,
-            build_delivery_attempts_router,
-            build_delivery_dossiers_router,
-            build_delivery_prs_router,
-            build_delivery_node_router,
-            build_delivery_terminal_router,
-            build_delivery_factory_router,
-            build_dictation_router,
-            build_door_router,
-            build_concierge_router,
-            build_front_door_router,
-            build_follow_through_router,
-            build_proposal_router,
-            build_people_router,
-            build_desk_actuators_router,
-            build_desk_seed_router,
-            build_desk_parked_router,
-            build_desk_windows_router,
-            build_meeting_import_router,
-            build_meetings_router,
-            build_memory_router,
-            build_model_library_router,
-            build_inference_assignments_router,
-            build_monday_brief_router,
-            build_today_router,
-            build_mesh_router,
-            build_missioncontrol_router,
-            build_constitutional_router,
-            build_pages_router,
-            build_primitives_router,
-            build_projections_router,
-            build_projects_router,
-            build_roadmaps_router,
-            build_repositories_router,
-            build_decision_records_router,
-            build_scheduled_recordings_router,
-            build_setup_router,
-            build_sync_router,
-            build_system_router,
-            build_threads_router,
-            build_tts_router,
-            build_project_reviews_router,
-            build_project_door_router,
-            build_project_setup_router,
-            build_project_updates_router,
-            build_channels_router,
-            build_project_briefs_router,
-            build_providers_router,
-            build_connections_router,
-            build_steward_router,
-            build_watches_router,
-            build_mcp_http_router,
-        )
-        mount_router(app, build_core_router(web_ctx))
-        mount_router(app, build_authority_router(web_ctx))
-        mount_router(app, build_cadence_router(web_ctx))
-        mount_router(app, build_calendar_events_router(web_ctx))
-        mount_router(app, build_calendar_snapshot_router(web_ctx))
-        mount_router(app, build_calendar_sources_router(web_ctx))
-        mount_router(app, build_follow_through_router(web_ctx))
-        mount_router(app, build_proposal_router(web_ctx))
-        mount_router(app, build_door_router(web_ctx))
-        mount_router(app, build_concierge_router(web_ctx))
-        mount_router(app, build_front_door_router(web_ctx))
-        mount_router(app, build_people_router(web_ctx))
-        mount_router(app, build_automations_router(web_ctx))
-        mount_router(app, build_decision_records_router(web_ctx))
-        mount_router(app, build_decisions_router(web_ctx))
-        mount_router(app, build_memory_router(web_ctx))
-        mount_router(app, build_model_library_router(web_ctx))
-        mount_router(app, build_inference_assignments_router(web_ctx))
-        mount_router(app, build_monday_brief_router(web_ctx))
-        mount_router(app, build_today_router(web_ctx))
-        mount_router(app, build_meetings_router(web_ctx))
-        mount_router(app, build_desk_actuators_router(web_ctx))
-        mount_router(app, build_desk_seed_router(web_ctx))
-        mount_router(app, build_desk_parked_router(web_ctx))
-        mount_router(app, build_desk_windows_router(web_ctx))
-        mount_router(app, build_meeting_import_router(web_ctx))
-        mount_router(app, build_mesh_router(web_ctx))
-        mount_router(app, build_missioncontrol_router(web_ctx))
-        mount_router(app, build_delivery_router(web_ctx))
-        mount_router(app, build_delivery_attempts_router(web_ctx))
-        mount_router(app, build_delivery_dossiers_router(web_ctx))
-        mount_router(app, build_delivery_prs_router(web_ctx))
-        from .web.routes.agent_hand import build_agent_hand_router
-
-        mount_router(app, build_agent_hand_router(web_ctx))  # Conductor K2: Hand to an agent session
-        mount_router(app, build_repositories_router(web_ctx))
         compose_delivery(hub, auth_token=self.auth_token)
-        _delivery_link = hub.delivery_link
-        _delivery_targets = hub.delivery_targets
-        _delivery_cmd = hub.delivery_cmd
         self._delivery_live = hub.delivery_live
-        app.state.node_token_store = _delivery_link.token_store
+        app.state.node_token_store = hub.delivery_link.token_store
         from .kernel.runtime import _service as _kernel_service
+        from .runtime.web_mount import mount_routers
 
-        mount_router(app, 
-            build_delivery_node_router(
-                web_ctx, link=_delivery_link, web_token=self.auth_token
-            )
-        )
-        mount_router(app, 
-            build_delivery_terminal_router(
-                web_ctx,
-                service=_delivery_cmd,
-                targets=_delivery_targets,
-                link=_delivery_link,
-                live=self._delivery_live,
-            )
-        )
-        # The factory shares the terminal command service and target
-        # registry so a launch issues its worktree.create/spawn envelopes
-        # and pins the spawned pane's immutable target on the same spine.
-        mount_router(app, 
-            build_delivery_factory_router(
-                web_ctx, commands=_delivery_cmd, targets=_delivery_targets
-            )
-        )
-        mount_router(app, build_dictation_router(web_ctx))
-        mount_router(app, build_activity_router(web_ctx))
-        mount_router(app, build_pages_router(web_ctx))
-        mount_router(app, 
-            build_system_router(
-                web_ctx, commands=_delivery_cmd, targets=_delivery_targets
-            )
-        )
-        mount_router(app, build_projects_router(web_ctx))
-        mount_router(app, build_roadmaps_router(web_ctx))
-        mount_router(app, build_primitives_router(web_ctx))
-        mount_router(app, build_projections_router(web_ctx))
-        mount_router(app, build_constitutional_router())
-        mount_router(app, build_scheduled_recordings_router(web_ctx))
-        mount_router(app, build_setup_router(web_ctx))
-        from .web.routes.onboarding import build_onboarding_router
-
-        mount_router(app, build_onboarding_router(web_ctx))
-        mount_router(app, build_sync_router(web_ctx))
-        mount_router(app, build_threads_router(web_ctx))
-        mount_router(app, build_tts_router(web_ctx))
-        # Calls (2026-10-28): HoldSpeak drives ai-phone and owns each turn.
-        from .web.routes.calls import build_calls_router
-
-        mount_router(app, build_calls_router(web_ctx))
-        # Programs (2026-10-28): a goal cut into steps, each handed to an agent.
-        from .web.routes.programs import build_programs_router
-
-        mount_router(app, build_programs_router(web_ctx))
-        # PG-DIRECTION DIR1 (2026-10-31): the briefing page for a held item,
-        # tokened, read over the tailnet (no switch: it reads nothing of the machine).
-        from .web.routes.briefing import build_briefing_router
-
-        mount_router(app, build_briefing_router(web_ctx))
-        # The Walk (2026-11-07): a guided feedback walk on the desk from one link.
-        from .web.routes.walks import build_walks_router
-
-        mount_router(app, build_walks_router(web_ctx))
-        # Phone (2026-10-28): the desk reaches him on his phone and he reaches
-        # it. HOLDSPEAK_PHONE=off (every rig) mounts nothing.
-        from .phone import phone_on
-
-        if phone_on():
-            from .web.routes.phone import build_phone_router
-
-            mount_router(app, build_phone_router(web_ctx))
-        # Recordings (2026-10-28): a desk session as a video for the iPhone.
-        from .web.routes.recordings import build_recordings_router
-
-        mount_router(app, build_recordings_router(web_ctx))
-        mount_router(app, build_project_reviews_router(web_ctx))
-        mount_router(app, build_project_door_router(web_ctx))
-        mount_router(app, build_project_setup_router(web_ctx))
-        mount_router(app, build_project_updates_router(web_ctx))
-        mount_router(app, build_channels_router(web_ctx))  # PHILO-10-01: the Send
-        mount_router(app, build_project_briefs_router(web_ctx))
-        mount_router(app, build_providers_router(web_ctx))
-        mount_router(app, build_connections_router(web_ctx))
-        mount_router(app, build_steward_router(web_ctx))
-        mount_router(app, build_watches_router(web_ctx))
-        mount_router(app, build_mcp_http_router(web_ctx))
+        mount_routers(app, hub, auth_token=self.auth_token)
 
         @app.on_event("startup")
         async def _startup() -> None:
