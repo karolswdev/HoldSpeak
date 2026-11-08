@@ -4,7 +4,7 @@
 // Two wings: ROOM · HISTORY. Ask well at the foot. No counters of zero,
 // no REV, no raw field names, the name said once.
 import { RunAsProgramVerb } from "../../desk/programs/RunAsProgram";
-import { RoomPrograms } from "../../desk/programs/RoomPrograms";
+import { RoomProgramRows } from "../../desk/programs/RoomPrograms";
 import { HandRowVerb } from "../../desk/components/HandRowVerb";
 import { wireDate } from "../../desk/surface/format";
 import React, { useEffect, useLayoutEffect, useRef, useState, useMemo, useCallback, useReducer } from "react";
@@ -1934,33 +1934,49 @@ function HistoryEntryRow({ entry, itemIds, onOpenItem }: {
 
 /* ── PHILO-17 refit: a folded section ── */
 
-/** HS-S13 (G13-A): the Programs filed to this Project, as the hub returned
- *  them. Rows reuse the Programs fold (`desk/programs/RoomPrograms`); an
- *  empty list, a hub that does not read Programs and a failed or malformed
- *  read each say what they are, never a zero. */
+/** HS-S13 (G13-A), Room fold 2026-11-08: the Programs filed to this
+ *  Project, always one fold in the grammar of Files and Sources (the count
+ *  only when there is one; open when there are rows). Rows reuse the
+ *  Programs list's row (`desk/programs/RoomProgramRows`). None: one muted
+ *  line and New program, which opens the Programs window scoped to this
+ *  Project. A hub that does not read Programs and a failed or malformed read
+ *  each say what they are, never a zero. */
 const ROOM_PROGRAM_CHANGE_KINDS = Object.freeze([...ROOM_CHANGE_KINDS, "program"]);
 
-function RoomProgramsSection({ section, onRefresh }: {
+function RoomProgramsSection({ section, projectId, onRefresh }: {
   section: RoomSection<{ programs: RoomProgramRow[] }> | undefined;
+  projectId: string;
   onRefresh: () => void;
 }) {
-  if (section?.state === "ok" && section.programs.length) {
-    return <div className="room-fold" data-testid="room-fold-programs"><RoomPrograms programs={section.programs} /></div>;
-  }
-  if (section?.state === "ok") {
-    return (
-      <RoomFold title="Programs" testId="room-fold-programs">
-        <p className="room-empty-line" data-testid="room-programs-empty">No Programs filed to this project</p>
-      </RoomFold>
+  const rows = section?.state === "ok" ? section.programs : [];
+  const failed = section?.state === "degraded";
+  let body: React.ReactNode;
+  if (rows.length) {
+    body = <RoomProgramRows programs={rows} />;
+  } else if (section?.state === "ok") {
+    body = (
+      <div className="room-programs-none">
+        <span className="room-empty-line" data-testid="room-programs-empty">No Programs yet</span>
+        <Button dense variant="secondary" data-testid="room-programs-new"
+          onClick={() => useDesk.getState().openSurfaceWindow("open-programs", `project:${projectId}`)}>
+          New program
+        </Button>
+      </div>
+    );
+  } else {
+    body = (
+      <div className="room-programs-none">
+        <span data-testid="room-programs-unavailable" data-reason={failed ? section.error_code : "absent"}>
+          <StateChip state="unreachable" label={failed ? "PROGRAMS NOT READ" : "NOT READ BY THIS HUB"} />
+        </span>
+        {failed ? <Button dense variant="secondary" onClick={onRefresh} data-testid="room-programs-refresh">Refresh</Button> : null}
+      </div>
     );
   }
-  const failed = section?.state === "degraded";
   return (
-    <RoomFold title="Programs" open={failed || undefined} testId="room-fold-programs">
-      <span data-testid="room-programs-unavailable" data-reason={failed ? section.error_code : "absent"}>
-        <StateChip state="unreachable" label={failed ? "PROGRAMS NOT READ" : "NOT READ BY THIS HUB"} />
-      </span>
-      {failed ? <Button dense variant="secondary" onClick={onRefresh} data-testid="room-programs-refresh">Refresh</Button> : null}
+    <RoomFold title="Programs" token={rows.length || undefined} open={rows.length > 0 || failed || undefined}
+      testId="room-fold-programs">
+      <div className="room-programs">{body}</div>
     </RoomFold>
   );
 }
@@ -2514,7 +2530,7 @@ function ProjectRoomCoreFor({ hero, scope, scopeLabel }: CoreProps) {
                     presentationReady={shown && !place("files").waiting} />
                 </RoomSlot>
                 <RoomSlot id="programs" place={{ waiting: false }} delay="81ms">
-                  <RoomProgramsSection section={ctrl.room.programs} onRefresh={handleRefresh} />
+                  <RoomProgramsSection section={ctrl.room.programs} projectId={ctrl.projectId} onRefresh={handleRefresh} />
                 </RoomSlot>
                 <RoomSlot id="sources" place={place("sources")} own={{ extras: extrasRead }} delay="82ms">
                   <RoomFold title="Sources" token={sourceCount || undefined}

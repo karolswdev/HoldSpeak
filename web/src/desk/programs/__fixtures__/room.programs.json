@@ -2,42 +2,115 @@
   "programs": [
     {
       "done": 0,
-      "id": "program-cc6e7857ddc8",
+      "id": "program-bf5097d5b3eb",
       "state": "waiting",
       "state_word": "Your turn",
       "title": "The words wave",
       "total": 3,
-      "updated_at": "2026-11-02T01:01:02.431562+00:00",
+      "track": [
+        {
+          "mark": "here",
+          "ordinal": 1,
+          "title": "Settings words"
+        },
+        {
+          "mark": "here",
+          "ordinal": 2,
+          "title": "Dock words"
+        },
+        {
+          "mark": "here",
+          "ordinal": 3,
+          "title": "Door words"
+        }
+      ],
+      "updated_at": "2026-11-08T06:26:47.667597+00:00",
       "your_turn": 4
     },
     {
       "done": 1,
-      "id": "program-0e0bab4e2970",
+      "id": "program-3d7cd9be5d99",
       "state": "waiting",
       "state_word": "Your turn",
       "title": "The hub stops stalling",
       "total": 7,
-      "updated_at": "2026-11-02T01:00:59.246030+00:00",
+      "track": [
+        {
+          "mark": "done",
+          "ordinal": 1,
+          "title": "Indexes"
+        },
+        {
+          "mark": "running",
+          "ordinal": 2,
+          "title": "Retention"
+        },
+        {
+          "mark": "red",
+          "ordinal": 3,
+          "title": "Projections off the loop"
+        },
+        {
+          "mark": "here",
+          "ordinal": 4,
+          "title": "People routes"
+        },
+        {
+          "mark": "planned",
+          "ordinal": 5,
+          "title": "Overnight sweep on qwen"
+        },
+        {
+          "mark": "planned",
+          "ordinal": 6,
+          "title": "The fan-out"
+        },
+        {
+          "mark": "running",
+          "ordinal": 7,
+          "title": "Write the docs"
+        }
+      ],
+      "updated_at": "2026-11-08T06:26:44.876730+00:00",
       "your_turn": 0
     },
     {
       "done": 0,
-      "id": "program-822d6091fc98",
+      "id": "program-d2e5ca00f9c6",
       "state": "drafting",
       "state_word": "Drafting",
       "title": "Calls on the home box",
       "total": 2,
-      "updated_at": "2026-11-02T01:01:07.296604+00:00",
+      "track": [
+        {
+          "mark": "planned",
+          "ordinal": 1,
+          "title": "The call runner"
+        },
+        {
+          "mark": "planned",
+          "ordinal": 2,
+          "title": "The calls window"
+        }
+      ],
+      "updated_at": "2026-11-08T06:26:53.108326+00:00",
       "your_turn": 0
     },
     {
       "done": 1,
-      "id": "program-bbe92c9a125b",
+      "id": "program-1469e84aeddb",
       "state": "done",
       "state_word": "Done",
       "title": "Wave 6 of the atlas",
       "total": 1,
-      "updated_at": "2026-11-02T01:01:05.916576+00:00",
+      "track": [
+        {
+          "mark": "done",
+          "ordinal": 1,
+          "title": "Atlas anchors"
+        }
+      ],
+      "updated_at": "2026-11-08T06:26:51.344768+00:00",
       "your_turn": 0
     }
   ],

@@ -1009,7 +1009,16 @@
   gap: 4px;
 }
 /* A fold whose section draws nothing is not drawn. */
-.room-fold:not(:has(.surface-section, [data-testid="room-files"], .standing-pages, .room-writes)) { display: none; }
+/* Room fold 2026-11-08: the Programs fold always draws (.room-programs); the
+   rule hid it on his desk, rows and all. */
+.room-fold:not(:has(.surface-section, [data-testid="room-files"], .standing-pages, .room-writes, .room-programs)) { display: none; }
+.room-programs-none {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0 10px;
+}
 .room-fold > .gadget-fold > summary {
   width: 100%;
   min-height: 28px;
