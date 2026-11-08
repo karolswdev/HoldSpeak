@@ -5,7 +5,7 @@ import Contracts
 /// HSM-15-02 — the per-step mesh dispatch client: `runStep` rides the hub's ask
 /// route (`POST /api/ask`) with an EMPTY context (the runner already resolved the
 /// step's input into the prompt), decodes the output + the run's honest egress,
-/// Bearer rides, non-2xx throws. Mirrors WorkflowRunClientTests' stub posture.
+/// Bearer rides, non-2xx throws. The same stub posture as the other client tests.
 final class AskClientTests: XCTestCase {
 
     final class StubProtocol: URLProtocol {

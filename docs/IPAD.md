@@ -15,7 +15,7 @@ The app connects to the runtime over your own network (LAN or Tailscale) with a 
 | See and select coding sessions | `GET /api/coders/status`, `POST /api/coders/select`, `POST /api/coders/dismiss`, `POST /api/coders/pin`, `GET /api/coders/sessions` |
 | Reply to or steer a coding session | `POST /api/coders/{key}/steer`, `arm`, `disarm`, `keys`, `kill`, and `GET /api/coders/{key}/peek` |
 | Review activity nudges and the briefing | `GET /api/activity/nudges`, `POST /api/activity/nudges/select`, `POST /api/activity/nudges/{nudge_id}/dismiss`, `GET /api/activity/briefing` |
-| Run saved Modes and Sequences | `POST /api/recipes/{recipe_id}/run`, `POST /api/chains/{chain_id}/run` |
+| Run saved Modes and crews | `POST /api/recipes/{recipe_id}/run` (a crew runs each Mode in turn; the output of one is the input of the next) |
 
 The client is `HTTPDesktopClient` in `apple/Sources/Providers/Desktop/`. A response that is not 2xx raises a typed HTTP error. A payload that does not parse is reported as malformed.
 

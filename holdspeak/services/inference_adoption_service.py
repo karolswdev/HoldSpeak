@@ -71,8 +71,6 @@ ADOPTED_CAPABILITIES = (
     "calls.turn",  # Calls (2026-10-28): one turn of a phone call
     "workbench.item",
     "voice.reference_resolve",
-    "sequence.step",
-    "workflow.node",
     # C2 plugin membership comes only from the composed registry.  The closed
     # evidence provider must nevertheless list every installed exact capability
     # before a frozen bundle child may stage its private material.
@@ -2966,7 +2964,7 @@ class RoutedInferenceCoordinator:
             })
             if value:
                 profile = entry_for(value)
-                for capability_id in ("recipe.run", "chat.turn", "sequence.step"):  # HS-151-02: recipe.chat → chat.turn
+                for capability_id in ("recipe.run", "chat.turn"):  # HS-151-02: recipe.chat → chat.turn; sequence.step parked 2026-11-08
                     subject_entries.append({
                         "subject_kind": "recipe", "subject_id": str(recipe.id),
                         "capability_id": capability_id, "entry": profile,

@@ -1737,7 +1737,6 @@ def test_phase143_placement_adopters_name_no_model_execution_door() -> None:
         "holdspeak/services/recipe_service.py",
         "holdspeak/services/workbench_runner.py",
         "holdspeak/services/workbench_service.py",
-        "holdspeak/services/sequence_workflow_service.py",
         "holdspeak/services/support.py",
     }
     sites = [site for site in census() if site.path in adopters]

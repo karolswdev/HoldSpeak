@@ -1330,14 +1330,6 @@
       "consumers": []
     },
     {
-      "path": "/api/chains/runs/{parent_operation_id}/cancel",
-      "methods": [
-        "POST"
-      ],
-      "module": "web.routes.primitives.chains",
-      "consumers": []
-    },
-    {
       "path": "/api/chains/{chain_id}",
       "methods": [
         "DELETE"
@@ -1360,16 +1352,6 @@
       ],
       "module": "web.routes.primitives.chains",
       "consumers": []
-    },
-    {
-      "path": "/api/chains/{chain_id}/run",
-      "methods": [
-        "POST"
-      ],
-      "module": "web.routes.primitives.chains",
-      "consumers": [
-        "ios"
-      ]
     },
     {
       "path": "/api/channels/destinations",
@@ -3209,9 +3191,7 @@
         "POST"
       ],
       "module": "web.routes.door",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/follow-through/board",
@@ -3485,9 +3465,7 @@
         "GET"
       ],
       "module": "web.routes.inference_assignments",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/inference/defaults/use-proposal",
@@ -3495,9 +3473,7 @@
         "POST"
       ],
       "module": "web.routes.inference_assignments",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/inference/model-library",
@@ -7699,9 +7675,7 @@
         "POST"
       ],
       "module": "web.routes.threads",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/threads/{thread_id}/decide",
@@ -8428,14 +8402,6 @@
       "consumers": []
     },
     {
-      "path": "/api/workflows/runs/{parent_operation_id}/cancel",
-      "methods": [
-        "POST"
-      ],
-      "module": "web.routes.primitives.workflows",
-      "consumers": []
-    },
-    {
       "path": "/api/workflows/{workflow_id}",
       "methods": [
         "DELETE"
@@ -8458,16 +8424,6 @@
       ],
       "module": "web.routes.primitives.workflows",
       "consumers": []
-    },
-    {
-      "path": "/api/workflows/{workflow_id}/run",
-      "methods": [
-        "POST"
-      ],
-      "module": "web.routes.primitives.workflows",
-      "consumers": [
-        "ios"
-      ]
     },
     {
       "path": "/b/{token}",

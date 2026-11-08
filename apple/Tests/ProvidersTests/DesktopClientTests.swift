@@ -286,11 +286,11 @@ final class DesktopClientTests: XCTestCase {
         XCTAssertEqual(result.artifactId, "art_run_1")
     }
 
-    func testRunChainWithoutArtifactIdStillDecodes() async throws {
+    func testRunRecipeWithoutArtifactIdStillDecodes() async throws {
         // An older hub omits artifact_id — the decode stays tolerant.
-        StubProtocol.routes = ["/api/chains/c1/run": (200,
+        StubProtocol.routes = ["/api/recipes/scout/run": (200,
             Data(#"{"output":"crew says hi","steps":["Scout: hi"]}"#.utf8))]
-        let result = try await client().runChain(id: "c1", input: "go")
+        let result = try await client().runRecipe(id: "scout", input: "go")
         XCTAssertEqual(result.output, "crew says hi")
         XCTAssertEqual(result.steps, [.string("Scout: hi")])
         XCTAssertNil(result.artifactId)

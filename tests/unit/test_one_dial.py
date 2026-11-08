@@ -350,7 +350,6 @@ def test_phase143_adopters_have_no_direct_one_dial_resolver() -> None:
         "holdspeak/services/recipe_service.py",
         "holdspeak/services/workbench_runner.py",
         "holdspeak/services/workbench_service.py",
-        "holdspeak/services/sequence_workflow_service.py",
         "holdspeak/services/support.py",
     ):
         text = (REPO / rel).read_text()

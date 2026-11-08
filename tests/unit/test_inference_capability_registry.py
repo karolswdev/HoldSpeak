@@ -79,8 +79,6 @@ def test_registry_names_the_semantic_capabilities() -> None:
         "ask.answer",
         "agent.plan",
         "agent.code",
-        "sequence.step",
-        "workflow.node",
         "project_doc.suggest_update",
         "speech.target_classify",
         "internal.semantic_dispatch",

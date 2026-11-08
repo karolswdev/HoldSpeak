@@ -100,10 +100,6 @@ BACKEND_PRIVATE_DECISIONS: dict[tuple[str, str], tuple[str, str]] = {
     ("holdspeak/services/recipe_service.py", "_reject_retired_selector"): ("legacy selector refusal fence", "143-10"),
     ("holdspeak/services/recipe_service.py", "_route_summary"): ("canonical frozen route summary projection", "143-10"),
     ("holdspeak/services/recipe_service.py", "_refuse_post_marker_profile_pointer"): ("post-marker retired pointer refusal fence", "143-11"),
-    ("holdspeak/services/sequence_workflow_service.py", "_freeze_parent_routes"): ("canonical parent route-freeze façade", "143-10"),
-    ("holdspeak/services/sequence_workflow_service.py", "_reject_retired_selector"): ("legacy selector refusal fence", "143-10"),
-    ("holdspeak/services/sequence_workflow_service.py", "_route_placement"): ("frozen route placement projection", "143-10"),
-    ("holdspeak/services/sequence_workflow_service.py", "_route_target"): ("frozen route egress projection", "143-10"),
     ("holdspeak/services/support.py", "_norm_run_target"): ("workflow placement normalization", "143-10"),
     ("holdspeak/services/workbench_runner.py", "_route_target"): ("frozen route egress projection", "143-10"),
     ("holdspeak/services/calendar_snapshot_service.py", "_rank_vision_targets"): ("vision-capable profile ordering by boundary (local first) for the direct-dispatch fallback; the pick is receipted with its host, never silent", "175-07"),
@@ -286,17 +282,12 @@ def test_web_route_pointer_controls_are_classified_and_single_owned() -> None:
 def test_story143_workflow_aliases_decode_once_and_no_adopter_reopens_fake_fallback() -> None:
     """The old wire words survive only at the boundary, never as execution law."""
     support = (REPO / "holdspeak/services/support.py").read_text(encoding="utf-8")
-    workflow = (REPO / "holdspeak/services/sequence_workflow_service.py").read_text(encoding="utf-8")
     assert '"fallbackOnDevice": "carry"' in support
     assert '"retryThenQueue": "hold"' in support
-    assert "fallbackOnDevice" not in workflow
-    assert "retryThenQueue" not in workflow
-    assert "fell_back" not in workflow
     for relative in (
         "holdspeak/services/recipe_service.py",
         "holdspeak/services/workbench_runner.py",
         "holdspeak/services/workbench_service.py",
-        "holdspeak/services/sequence_workflow_service.py",
     ):
         source = (REPO / relative).read_text(encoding="utf-8")
         assert "def _target(" not in source and "def _invoke(" not in source, relative

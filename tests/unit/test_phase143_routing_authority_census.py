@@ -239,7 +239,6 @@ PLACEMENT_ADOPTER_MODULES = frozenset({
     "holdspeak/services/recipe_service.py",
     "holdspeak/services/workbench_runner.py",
     "holdspeak/services/workbench_service.py",
-    "holdspeak/services/sequence_workflow_service.py",
     "holdspeak/services/support.py",
 })
 RETIRED_ADOPTER_HELPERS = frozenset({"_target", "_invoke"})

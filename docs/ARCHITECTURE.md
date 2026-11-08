@@ -160,7 +160,7 @@ so those calls do not enter this core inference contract.
 
 - A parent run or session is causation and a finite budget. It does not replace
   the receipt of each attempt.
-- Sequence, Workflow, Workbench, Cadence drafting, Decision promotion,
+- Workbench, Cadence drafting, Decision promotion,
   Delivery review, voice resolution, Meetings, dictation and wake captures use
   typed parents. Each model step under a parent is its own child.
 - A parent receipt says how the run ended. A child receipt says how that
@@ -307,7 +307,7 @@ flowchart TD
   HOST -. "intel attempt" .-> IR["Inference runner"]
   IR --> LLM(["Model backend"])
   HOST --> ART["Typed artifacts:<br/>decisions, action items, ADRs, risk registers"]
-  RUNB["An Agent, chain or workflow run<br/>(web/routes/primitives/)"] --> ART
+  RUNB["An Agent run<br/>(web/routes/primitives/)"] --> ART
   ART --> AFT["Aftercare digest<br/>(meeting_aftercare.py)"]
   AFT --> ISSUE["An accepted action becomes<br/>a GitHub issue proposal"]
   AFT --> SLACK["Digest or follow-up document<br/>(slack_export.py)"]

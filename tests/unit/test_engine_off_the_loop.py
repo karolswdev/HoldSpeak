@@ -131,39 +131,3 @@ def test_recipe_run_and_chat_run_the_engine_off_the_loop(env, spy) -> None:
     _assert_off_loop(spy)
 
 
-def test_chain_runs_the_engine_off_the_loop(env, spy) -> None:
-    _, client = env
-    rid = client.post(
-        "/api/recipes",
-        json={"name": "Step", "system_prompt": "Answer.", "user_template": "Q: {input}"},
-    ).json()["recipe"]["id"]
-    cid = client.post(
-        "/api/chains", json={"name": "Loop", "steps": [rid]}
-    ).json()["chain"]["id"]
-
-    assert client.post(f"/api/chains/{cid}/run", json={"input": "hi"}).status_code == 200
-    _assert_off_loop(spy)
-
-
-def test_workflow_runs_the_engine_off_the_loop(env, spy) -> None:
-    _, client = env
-    # The admitted Workflow runner executes its frozen graph, not the retired
-    # ``recipe_ids`` convenience payload.
-    graph = {
-        "entry": "entry",
-        "nodes": [
-            {"id": "entry", "kind": {"entry": {}}},
-            {"id": "model", "kind": {"summarize": {}}},
-            {"id": "out", "kind": {"output": {}}},
-        ],
-        "exec_edges": [
-            {"from": {"node": "entry", "name": "then"}, "to": "model"},
-            {"from": {"node": "model", "name": "then"}, "to": "out"},
-        ],
-    }
-    wid = client.post(
-        "/api/workflows", json={"id": "wf_loop", "name": "Loop", "graph_json": graph}
-    ).json()["workflow"]["id"]
-
-    assert client.post(f"/api/workflows/{wid}/run", json={"input": "hi"}).status_code == 200
-    _assert_off_loop(spy)

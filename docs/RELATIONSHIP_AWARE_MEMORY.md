@@ -155,7 +155,7 @@ A tool-capable Ask can still retrieve additional permitted records during its tu
 Its **About** selection is a starting point, not a general read-access boundary.
 The caller, tool palette, and service-specific scope govern those reads.
 A Thread leaves out its own messages and freezes the recalled sources on the user message.
-The applicable grounding path is shared by Ask, Thread, Mode, Sequence, Workflow, Automation, and Coder preparation.
+The applicable grounding path is shared by Ask, Thread, Mode, Automation, and Coder preparation.
 Drafters also use `services/memory_grounding.py` and the per-capability memory policy for bounded excerpts.
 A narrow service scope, such as a project-update run, adds its own source checks.
 A provider never searches memory itself.

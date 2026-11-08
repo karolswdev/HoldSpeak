@@ -126,15 +126,11 @@ public protocol IDesktopClient: Sendable {
     /// the Mac, not on-device, so the result lands with a cloud/LAN egress badge.
     /// Throws on an unreachable hub or a 502 (no model loaded) — never silent.
     func runRecipe(id: String, input: String) async throws -> HubRunResult
-    /// Run a synced Chain (crew) on the desktop hub (`POST /api/chains/{id}/run` body
-    /// `{input}` → `{output, steps}`), threading the input through each recipe on the
-    /// Mac. Returns the final output plus the per-step trail.
-    func runChain(id: String, input: String) async throws -> HubRunResult
 }
 
-/// The desktop hub's response to running an Agent or Chain (`/api/agents/{id}/run`,
-/// `/api/chains/{id}/run`). Decoded loosely — only `output` is load-bearing; `steps`
-/// is the chain's per-recipe trail when the hub returns it. Keys arrive snake_case.
+/// The desktop hub's response to running a Persona (`/api/recipes/{id}/run`). A crew
+/// on the hub is this run once per step. Decoded loosely — only `output` is
+/// load-bearing. Keys arrive snake_case.
 public struct HubRunResult: Sendable, Equatable, Decodable {
     public var output: String
     /// Sequence steps are objects on current hubs; older hubs returned strings.
@@ -184,11 +180,8 @@ public extension IDesktopClient {
 
     /// Default hub-run stubs so non-HTTP conformers (test fakes) keep compiling without
     /// claiming a capability they don't have. `HTTPDesktopClient` overrides both with
-    /// the real routes; an unimplemented client honestly reports "unsupported".
+    /// the real route; an unimplemented client honestly reports "unsupported".
     func runRecipe(id: String, input: String) async throws -> HubRunResult {
-        throw HubRunUnsupported.notImplemented
-    }
-    func runChain(id: String, input: String) async throws -> HubRunResult {
         throw HubRunUnsupported.notImplemented
     }
 
