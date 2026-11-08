@@ -79,3 +79,5 @@ Each walk is one folder: `~/.local/share/holdspeak/feedback/walks/<id>/`.
   image and shows `walk_shot_budget`. One answer 24 MiB or less (else 413).
 - An unknown link gets 404 and counts as a wrong try. Too many wrong tries
   from one address in one minute get 429.
+
+The walk link opens the desk by itself: the redirect carries the desk's own bootstrap token, as the address `holdspeak web` prints does. Send a walk link only to the owner, over the tailnet.

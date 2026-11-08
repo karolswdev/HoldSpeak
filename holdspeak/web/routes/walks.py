@@ -2,8 +2,11 @@
 
 POST /api/walks                 the script → {id, token, url_path: "/w/<token>"}        OWNER
 GET  /api/walks/{id}            the script, the answers and the shot folder              OWNER
-GET  /w/{token}                 a known token: 303 to the desk with ``?walk=<token>``;
-                                an unknown token: the desk shell with 404
+GET  /w/{token}                 a known token: 303 to the desk, armed with ``?walk=<token>`` AND
+                                the desk's own bootstrap ``?token=`` (2026-11-07: the walk link
+                                is the owner's, sent to him over his tailnet, the same class as the
+                                address ``holdspeak web`` prints; a fresh phone browser must not land
+                                on the door); an unknown token: the desk shell with 404
 GET  /api/w/{token}             {title, steps, answers}                                  WALK TOKEN
 POST /api/w/{token}/answer      {ref, choice, words?, window_png?} → {ref, choice, …}    WALK TOKEN
 
@@ -89,7 +92,7 @@ async def _page(request: Request, fn: Callable[[], Any], *, what: str) -> JSONRe
 
 
 def build_walks_router(ctx: WebContext) -> APIRouter:
-    del ctx
+    desk_token = str(getattr(ctx, "web_auth_token", "") or "")
     router = APIRouter()
 
     @router.post("/api/walks")
@@ -105,7 +108,8 @@ def build_walks_router(ctx: WebContext) -> APIRouter:
     async def walk_page(token: str, request: Request) -> Any:
         address = _address(request)
         if not _misses().blocked(address) and await run_in_threadpool(_service().known, token):
-            return RedirectResponse(f"/?walk={token}", status_code=303, headers=PAGE_HEADERS)
+            armed = f"/?token={desk_token}&walk={token}" if desk_token else f"/?walk={token}"
+            return RedirectResponse(armed, status_code=303, headers=PAGE_HEADERS)
         _misses().miss(address)
         shell = await run_in_threadpool(_react_shell)
         return HTMLResponse(shell.body, status_code=404, headers=SHELL_HEADERS)

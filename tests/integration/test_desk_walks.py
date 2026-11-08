@@ -372,3 +372,25 @@ def test_the_walk_token_through_the_real_edge_reaches_only_its_two_routes(tmp_pa
     over = client.post(f"/api/w/{token}/answer", content=b"{" + b" " * (25 * 1024 * 1024) + b"}",
                        headers={"Content-Type": "application/json"})
     assert over.status_code == 413 and over.json()["code"] == "body_too_large"
+
+
+def test_the_walk_link_opens_the_desk_with_its_own_bootstrap_token(tmp_path, monkeypatch):
+    """2026-11-07, the owner on a fresh phone browser landed on the door: the
+    walk redirect carries the desk's bootstrap token, as ``holdspeak web``'s
+    printed address does."""
+    from types import SimpleNamespace
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+    from holdspeak.web.routes.walks import build_walks_router
+    import holdspeak.web.routes.walks as walks_module
+
+    class Known:
+        def known(self, token):
+            return token == "t" * 43
+    monkeypatch.setattr(walks_module, "_service", lambda: Known())
+    app = FastAPI()
+    app.include_router(build_walks_router(SimpleNamespace(web_auth_token="desk-secret")))  # type: ignore[arg-type]
+    client = TestClient(app)
+    served = client.get("/w/" + "t" * 43, follow_redirects=False)
+    assert served.status_code == 303
+    assert served.headers["location"] == "/?token=desk-secret&walk=" + "t" * 43
