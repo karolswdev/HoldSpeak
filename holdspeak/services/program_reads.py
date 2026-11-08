@@ -730,10 +730,14 @@ def program_list(db: Any, principal: Any = None, *, q: Any = None, project_id: A
     return out
 
 
-def get(db: Any, principal: Any, program_id: str, *, clock: Clock, person_name: Names, engine: Engines, estimate: Sizer) -> dict[str, Any]:
+def get(db: Any, principal: Any, program_id: str, *, clock: Clock, person_name: Names, engine: Engines, estimate: Sizer,
+        reach: Optional[Callable[[list[dict[str, Any]], Optional[str]], list[dict[str, Any]]]] = None) -> dict[str, Any]:
     program = require_program(db, program_id)
     steps = ProgramStore(db).list_steps(program["id"])
     wire = _wire(db, program, steps, clock=clock, person_name=person_name, engine=engine, estimate=estimate)
+    if reach is not None:
+        # HS-S35: each pinned checkpoint says whether its ref is reachable now.
+        wire["checkpoints"] = reach(wire["checkpoints"], program.get("repo_root"))
     # LANG5: the rows a call left for his press (only when there are some).
     from .program_spoken import on_desk
 

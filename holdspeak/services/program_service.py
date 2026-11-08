@@ -352,7 +352,17 @@ class ProgramService:
 
     def get(self, principal: Any, program_id: str) -> dict[str, Any]:
         return reads.get(self.db, principal, program_id, clock=self._clock, person_name=self.person_name,
-                         engine=self.engine, estimate=self._estimate)
+                         engine=self.engine, estimate=self._estimate, reach=self.checkpoint_reach)
+
+    def checkpoint_reach(self, rows: list[dict[str, Any]], repo_root: Optional[str]) -> list[dict[str, Any]]:
+        """HS-S35: the reach fact beside each stored ref, through the
+        runner's git function (``program_checkpoint_reach``; a read, so it
+        never joins a step's recorded commands). Never a stop: a failure
+        reads ``not_read``."""
+        from . import program_checkpoint_reach
+        from .program_runner import _default_runner
+
+        return program_checkpoint_reach.project(rows, repo_root, _default_runner)
 
     # ── PG-IMPORT IMP7: the forest ───────────────────────────────────
 
@@ -3830,10 +3840,14 @@ class ProgramService:
         if not step.get("worktree"):
             return {"note": "No worktree to pin yet"}
         try:
-            return dict(self.runner().pin_checkpoint(step, line) or {}) or None
+            pin = dict(self.runner().pin_checkpoint(step, line) or {}) or None
         except Exception as exc:
             log.debug(f"checkpoint not pinned: {exc}")
-            return {"note": "Not pinned: git is not available"}
+            pin = {"note": "Not pinned: git is not available"}
+        if pin and not pin.get("ref"):
+            # HS-S35: a pin failure is nonblocking; it is logged and the line is written.
+            log.info(f"checkpoint on step {step.get('id')} not pinned: {pin.get('note')}")
+        return pin
 
     def _kernel_record(self, program: Mapping[str, Any], step: Optional[Mapping[str, Any]], line: str) -> Optional[str]:
         """The engine decision as a kernel operation ``program.step``."""
