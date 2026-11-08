@@ -452,7 +452,7 @@ counts must not exceed the committed ceiling file
 `tests/ux_canon_ceiling.json`; a regression names the rule, the delta,
 and the faces that rose.  (ii) *Hard zeros*: DS6 (accent rail) and A9
 (missing egress) must stay at 0; A1 (raw `<button>`) is held to a
-dated, down-only ratchet of 81, set on 2026-10-06 by Conductor R6 (#913)
+dated, down-only ratchet of 2, set on 2026-11-08 by the night's A8 pass (#1865; 81 on 2026-10-06 by Conductor R6, #913)
 (the session window's raw buttons became the library Button; 90 on
 2026-10-02 by PHILO-13-18, the Workbench's raw buttons; 102 on 2026-09-28 by
 #694, the live count once the Phase 9 and 10 faces landed; 105 the same day by

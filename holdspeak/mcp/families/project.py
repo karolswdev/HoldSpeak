@@ -1877,7 +1877,7 @@ def _setup_service():
 
 # HS-200-45 R1: _watch_service now asks the ONE composition root first. Inside the hub
 # that returns the instance the HTTP routes use -- the one composed with
-# the hub's gh watch kwargs (_gh_watch_service_kwargs). Outside a hub (a unit test's bare root, or the
+# the hub's gh watch kwargs (compose_hub's watch fetcher). Outside a hub (a unit test's bare root, or the
 # standalone diagnosis hatch) the root holds nothing and the bare builder above
 # runs, which is the same object the pre-HS-200-45 code produced.
 def _watch_service():
