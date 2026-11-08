@@ -478,7 +478,7 @@ class BriefingService:
         now = self._now()
         since = _parse(item.get("since"))
         started = _parse((step or {}).get("started_at"))
-        from .program_service import duration_words
+        from .program_definitions import duration_words
 
         place = [f"Step {ordinal} of {len(steps)}" if ordinal else "The program"]
         if started:

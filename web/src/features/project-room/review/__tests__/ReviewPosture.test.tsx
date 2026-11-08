@@ -268,6 +268,8 @@ describe("Empty review (DELIGHT slice 3)", () => {
     fireEvent.click(await screen.findByTestId("review-verb"));
     const line = await screen.findByText("No proposals to review");
     expect(line.closest('.surface-state[data-object="decision"]')?.querySelector("img")).toBeTruthy();
+    // UX-CANON A8: no kind count of zero is drawn.
+    expect(screen.queryAllByTestId("review-kind-count")).toHaveLength(0);
   });
 });
 

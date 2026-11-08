@@ -44,6 +44,7 @@ import { openSurfaceOr } from "../../../desk/shell";
 import { useEngine, refreshEngine } from "../../../desk/hooks/useEngine";
 import { spriteUrl } from "../../../desk/sprites";
 import { Token } from "../../../desk/surface/Token";
+import { countToken } from "../../../desk/surface/count";
 
 /** The capability that drafts a project update (`project_update_service`). */
 const UPDATE_DRAFT_CAPABILITY = "project.update_draft";
@@ -563,6 +564,8 @@ export function UpdatePosture({ ctrl }: { ctrl: UpdateController }) {
 
   // ── List view ──
   if (ctrl.posture === "list") {
+    // UX-CANON A8: the receipt is gone at zero; the empty object says it.
+    const updateCount = countToken(ctrl.updates.length, "update", "updates");
     return (
       <div className="update-posture" data-testid="update-posture" data-phase="list">
         <SurfaceVerbs>
@@ -622,11 +625,11 @@ export function UpdatePosture({ ctrl }: { ctrl: UpdateController }) {
         )}
 
         <SurfaceFooter
-          receipt={
+          receipt={updateCount ? (
             <Token className="surface-footer-receipt-line update-footer-words" data-testid="update-footer-receipt" role="status">
-              {`${ctrl.updates.length} ${ctrl.updates.length === 1 ? "update" : "updates"}`}
+              {updateCount}
             </Token>
-          }
+          ) : undefined}
         />
       </div>
     );

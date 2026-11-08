@@ -115,7 +115,7 @@ class PlanResult:
 
 
 def _refused(code: str, detail: str, status: int = 409, **more: Any) -> Exception:
-    from .program_service import ProgramRefused
+    from .program_definitions import ProgramRefused
 
     return ProgramRefused(code, detail, status=status, **more)
 

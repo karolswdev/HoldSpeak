@@ -7,6 +7,7 @@
 
 import { wireDate } from "../../desk/surface/format";
 import { stateWords } from "../../desk/surface/words";
+import { countLabel } from "../../desk/surface/count";
 import { useContext, useEffect } from "react";
 import {
   SurfaceLedgerRow,
@@ -663,7 +664,7 @@ export function ConciergeCore({ scope }: CoreProps) {
           <div className="concierge-section-header">
             <span className="concierge-section-label" data-testid="concierge-repairs-label">
               {/* PHILO-13-03: the repairs, narrower than the Desk's "needs you". */}
-              {`TO REPAIR ${ctrl.repairs.length}`}
+              {countLabel("TO REPAIR", ctrl.repairs.length)}
             </span>
           </div>
           <ul className="concierge-repair-list" data-testid="concierge-repair-list">

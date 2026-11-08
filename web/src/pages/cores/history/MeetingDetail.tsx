@@ -5,7 +5,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNo
 import { Button } from "../../../components/signal/Signal";
 import { failureTitle, plainWords } from "../../../desk/surface/plainFailure";
 import { ActionNotice } from "../../../desk/surface/patterns/ActionNotice";
-import { SurfaceSection, SurfaceState } from "../../../desk/surface";
+import { SurfaceSection, SurfaceState, countLabel } from "../../../desk/surface";
 import { MeetingRunVerb } from "../../../meetings/runSlot";
 import { MeetingConflictRecovery } from "../../../meetings/MeetingConflictRecovery";
 import { MeetingIntelRecovery } from "../../../meetings/MeetingIntelRecovery";
@@ -555,7 +555,7 @@ export function MeetingOutcomes({ data, meeting, onDecide }: {
     <>
       {eligible.length ? (
         <Button dense variant={bulkBlocked ? "ghost" : "primary"} disabled={bulkBlocked} loading={data.busy} data-testid="proposal-confirm-all-btn" onClick={() => void data.confirmAll()}>
-          Confirm all {eligible.length}
+          {countLabel("Confirm all", eligible.length)}
         </Button>
       ) : null}
       {data.outcomeRefreshFailed ? (

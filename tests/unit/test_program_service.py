@@ -472,3 +472,25 @@ def test_the_definitions_module_does_not_reach_the_program_runtime() -> None:
     loaded = subprocess.run([sys.executable, "-c", probe], capture_output=True, text=True, check=True).stdout.split()
     for runtime in ("program_service", "program_runner", "program_text"):
         assert f"holdspeak.services.{runtime}" not in loaded, loaded
+
+
+def test_no_module_imports_a_definition_through_the_program_service() -> None:
+    # HS-S51 repoint: a definition comes from program_definitions; the service
+    # import carries only runtime names (_LOCK, ProgramService, ...).
+    import ast
+    from pathlib import Path
+
+    from holdspeak.services import program_definitions as definitions
+
+    package = Path(definitions.__file__).resolve().parents[1]
+    wrong = []
+    for path in sorted(package.rglob("*.py")):
+        if path == package / "services" / "program_service.py":
+            continue
+        for node in ast.walk(ast.parse(path.read_text())):
+            if isinstance(node, ast.ImportFrom) and (node.module or "").endswith("program_service"):
+                names = sorted({alias.name for alias in node.names} & set(definitions.__all__))
+                if names:
+                    wrong.append(f"{path.relative_to(package)}:{node.lineno} {names}")
+    assert not wrong, wrong
+    assert (package / "services" / "brief_words.py").read_text().count("program_service") == 0
