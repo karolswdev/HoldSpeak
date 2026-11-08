@@ -336,3 +336,67 @@ def test_spoken_state_says_steps_your_turn_and_the_last_decision() -> None:
         "decided_for_you": [{"line": "Skipped the lint finding."}, {"line": "Older"}],
     }) == "Phone app waits on you: 1 of 3 steps are done. 2 things wait on you, and the last decision: Skipped the lint finding."
     assert spoken_state({"title": "X", "state": "running", "total": 1, "done": 0, "your_turn": 0}) == "X runs: 0 of 1 step is done."
+
+
+# ── HS-S51: one owner of the Program vocabulary and its refusal ───────
+
+def test_old_and_new_import_paths_give_the_same_objects() -> None:
+    from holdspeak.services import program_definitions as definitions
+    from holdspeak.services import program_service as service
+    from holdspeak.services.errors import ServiceError
+
+    for name in definitions.__all__:
+        assert getattr(service, name) is getattr(definitions, name), name
+    assert service.ProgramRefused is definitions.ProgramRefused
+    assert issubclass(definitions.ProgramRefused, ServiceError)
+    refused = definitions.ProgramRefused("step_frozen", "No.", field="brief")
+    assert (refused.code, refused.detail, refused.context) == ("step_frozen", "No.", {"status": 409, "field": "brief"})
+    with pytest.raises(service.ProgramRefused):
+        raise refused
+    with pytest.raises(definitions.ProgramRefused):
+        definitions.via_of("pigeon")
+
+
+def test_the_http_envelope_of_a_refusal_from_the_new_module_is_unchanged() -> None:
+    import asyncio
+    import json
+
+    from holdspeak.services.program_definitions import ProgramRefused as Refused
+    from holdspeak.web.routes.programs import _call
+
+    def refuse() -> None:
+        raise Refused("step_frozen", "The brief is frozen.", field="brief", reason="The agent has read it")
+
+    answer = asyncio.run(_call(refuse))
+    assert answer.status_code == 409
+    assert json.loads(answer.body) == {"error": "step_frozen", "code": "step_frozen",
+                                       "detail": "The brief is frozen.", "field": "brief",
+                                       "reason": "The agent has read it"}
+    answer = asyncio.run(_call(lambda: (_ for _ in ()).throw(Refused("via_invalid", "No.", status=400))))
+    assert answer.status_code == 400
+
+
+def test_the_mcp_by_name_refusal_is_an_answer_through_the_new_module(tmp_path, monkeypatch) -> None:
+    from holdspeak.mcp.families import program as family
+    from holdspeak.services import program_definitions as definitions
+
+    rig = _rig(tmp_path)
+    monkeypatch.setattr("holdspeak.services.program_service.default_program_service", lambda db=None: rig.service)
+    _made(rig)
+    said = family.dispatch("program.start", {"name": "the garden program"}, OWNER)
+    assert said == {"found": False, "started": False,
+                    "spoken": "There is no program with the name the garden program. I did not start a program."}
+    with pytest.raises(definitions.ProgramRefused) as refused:
+        family.dispatch("program.get", {"program_id": "program-missing"}, OWNER)
+    assert refused.value.code == "program_not_found"
+
+
+def test_the_definitions_module_does_not_reach_the_program_runtime() -> None:
+    import subprocess
+    import sys
+
+    probe = ("import sys, holdspeak.services.program_definitions; "
+             "print(' '.join(sorted(m for m in sys.modules if m.startswith('holdspeak'))))")
+    loaded = subprocess.run([sys.executable, "-c", probe], capture_output=True, text=True, check=True).stdout.split()
+    for runtime in ("program_service", "program_runner", "program_text"):
+        assert f"holdspeak.services.{runtime}" not in loaded, loaded

@@ -49,10 +49,11 @@ from pathlib import Path
 from typing import Any, Callable, Mapping, Optional
 
 from ..logging_config import get_logger
-from .program_service import (
+from .program_definitions import (
     ACTIVE_STATES, PARKED_BY_ENGINE, PARKED_BY_RACE, RACE_PROFILES,
-    ProgramRefused, ProgramService, agent_label, duration_words, history_of, programs_on,
+    ProgramRefused, agent_label, duration_words, history_of,
 )
+from .program_service import ProgramService, programs_on
 from . import program_night, program_split
 from .program_rules import HANDOFF_AFTER_MINUTES, decide, is_core, level_of
 from .program_verifier import log_tail, verify_log, verify_measure_log, verify_requirement_log
@@ -1694,7 +1695,7 @@ class ProgramRunner:
                 if row.get("kind") == "review" and row.get("state") != "waived"]
 
     def _reviewer(self, program: Mapping[str, Any], step: Mapping[str, Any]) -> tuple[str, Optional[str]]:
-        from .program_service import DEFAULT_REVIEWER
+        from .program_definitions import DEFAULT_REVIEWER
 
         builder = self._profile_of(program, step)
         profile = str(program.get("reviewer_profile") or DEFAULT_REVIEWER.get(builder, "codex-default"))
