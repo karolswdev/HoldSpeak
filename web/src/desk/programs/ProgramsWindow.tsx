@@ -187,6 +187,16 @@ export function ProgramsCore({ scope }: CoreProps) {
     }
   };
 
+  // The wizard's project card says how many Programs its project has.
+  const programsOf = useMemo(() => {
+    const out: Record<string, number> = {};
+    for (const row of list.programs) {
+      const id = row.project?.id ?? row.project_id;
+      if (id) out[id] = (out[id] ?? 0) + 1;
+    }
+    return out;
+  }, [list.programs]);
+
   // Project ▾ and Person ▾ list only what has a Program (no item of zero).
   const projects = useMemo(() => {
     const out = new Map<string, string>();
@@ -341,7 +351,7 @@ export function ProgramsCore({ scope }: CoreProps) {
         {menuButton("more", "More", "programs-more", "pg-narrow")}
       </Toolbar>
       {making ? (
-        <ProgramWizard key={making.flow} template={making.template} scopeProjectId={scopeProjectId}
+        <ProgramWizard key={making.flow} template={making.template} scopeProjectId={scopeProjectId} programsOf={programsOf}
           onClose={closeWell} onMade={reveal} onPending={setBusy} reload={reload} />
       ) : <div className="pg-body">{body}</div>}
       <StatusBar data-testid="programs-status" items={status} />

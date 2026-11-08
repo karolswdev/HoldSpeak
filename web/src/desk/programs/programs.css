@@ -1460,11 +1460,14 @@ span.pg-req-thumb { height: 150px; }
 .pg-race-agent { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pg-findings-fix { margin: 0; padding: 2px 12px 6px; }
 
-/* ── New program, the wizard (owner 2026-11-08): the window's body is the
-   wizard page; the toolbar and the status bar stay. One step a screen
-   (project · goal · runs · create; no step words on the face), the step slides in on the motion tokens; the
-   bar holds the progress dots (the Walk's: 6 px, now a 16 px pill, done
-   filled) and Back · Next / Create. ── */
+/* ── New program, the wizard (owner 2026-11-08; direction W2 "the object
+   leads"): the window's body is the wizard page; the toolbar and the
+   status bar stay. The picked project is a card at the top of every
+   screen; one screen of content under it slides in on the motion tokens;
+   the next screen's first row peeks under a hairline; the bar is Back ·
+   Next / Create. The progress dots ride the title bar (the Walk's: 6 px,
+   now a 16 px pill, done filled). Nothing scrolls but the Brief pad and a
+   long project list. ── */
 .pg-wiz {
   flex: 1 1 auto;
   display: flex;
@@ -1488,6 +1491,46 @@ span.pg-req-thumb { height: 150px; }
   border: 0;
   background: transparent;
 }
+
+/* The object: the picked project, grown from its row. */
+.pg-wiz-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  margin: 12px 16px 0;
+  padding: 10px 12px;
+  border: 1px solid var(--wb-rule-soft);
+  border-radius: 8px;
+  background: var(--wb-well);
+  transform-origin: top center;
+}
+.pg-wiz-card-glyph { flex: none; width: 44px; height: 44px; image-rendering: auto; }
+.pg-wiz-card-text {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.pg-wiz-card-name {
+  overflow: hidden;
+  font: 600 17px/1.3 var(--font-sans);
+  color: var(--wb-ink);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pg-wiz-card-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  min-width: 0;
+  font: 400 13px/1.4 var(--font-sans);
+  color: var(--wb-muted);
+}
+.pg-wiz-card-line .pg-wiz-card-template { margin-left: -6px; }
+
+/* Screen 1: the rows. */
 .pg-wiz-where {
   display: flex;
   flex-direction: column;
@@ -1499,59 +1542,164 @@ span.pg-req-thumb { height: 150px; }
   background: var(--wb-paper);
 }
 .pg-wiz-where .kit-listrow-main { cursor: pointer; }
-.pg-wiz-folder { padding: 8px 12px; border-top: 1px solid var(--wb-rule-soft); }
+.pg-wiz-folder { max-width: 720px; }
 .pg-wiz-state .surface-state { padding: 10px 12px; }
-.pg-wiz-what {
+
+/* Screen 2: the goal. The title is the big field; the Brief fills the rest. */
+.pg-wiz-goal {
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   gap: 10px;
   min-width: 0;
+  min-height: 0;
+}
+.pg-wiz-title .gadget-string { min-height: 52px; }
+.pg-wiz-title .gadget-string input { font: 600 18px/1.3 var(--font-sans); }
+.pg-wiz-goal .gadget-pad { flex: 1 1 auto; min-height: 120px; }
+.pg-wiz-goal .gadget-pad textarea { height: 100%; min-height: 0; resize: none; overflow-y: auto; }
+.pg-wiz-goal .gadget-pad .desk-mic,
+.desk-next .pg-wiz-goal .gadget-pad .desk-mic { top: 2px; bottom: auto; }
+
+/* Screen 3: how it runs. One segmented control of three, full width. */
+.pg-wiz-runs {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
   max-width: 720px;
 }
-.pg-wiz-what .gadget-pad textarea { min-height: 120px; }
+.pg-wiz-levels {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border: 1px solid var(--field-border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--wb-well);
+}
+.pg-wiz-levels .btn.pg-wiz-level {
+  min-height: 44px;
+  min-width: 0;
+  padding: 4px 8px;
+  border: 0;
+  border-radius: 0;
+  white-space: normal;
+  line-height: 1.25;
+  text-align: center;
+}
+.pg-wiz-levels .btn.pg-wiz-level + .btn.pg-wiz-level { border-inline-start: 1px solid var(--field-border); }
+.pg-wiz-fact { font: 400 13px/1.4 var(--font-sans); color: var(--wb-muted); }
+.pg-wiz-runs .gadget-row { min-height: 44px; }
+
 .pg-wiz-step .gadget-group { max-width: 720px; }
+
+/* The next screen's first row: dead, muted, under a hairline. */
+.pg-wiz-peek {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 720px;
+  margin-top: 4px;
+  padding-top: 10px;
+  border-top: 1px solid var(--wb-rule-soft);
+  color: var(--wb-muted);
+  pointer-events: none;
+  user-select: none;
+}
+.pg-wiz-goal + .pg-wiz-peek { margin-top: 0; }
+.pg-wiz-peek-words { font: 500 12px/1.4 var(--font-sans); }
+.pg-wiz-peek-field {
+  display: flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 10px;
+  border: 1px dashed var(--field-border);
+  border-radius: var(--radius-sm);
+  font: 600 15px/1 var(--font-sans);
+  opacity: 0.6;
+}
+.pg-wiz-peek-levels {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border: 1px solid var(--field-border);
+  border-radius: var(--radius-sm);
+  opacity: 0.6;
+}
+.pg-wiz-peek-levels > span {
+  overflow: hidden;
+  padding: 6px 8px;
+  font: 500 12px/1.3 var(--font-sans);
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pg-wiz-peek-levels > span + span { border-inline-start: 1px solid var(--field-border); }
+.pg-wiz-peek-plate {
+  align-self: flex-start;
+  padding: 6px 16px;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--accent) 60%, transparent);
+  color: var(--wb-paper);
+  font: 600 13px/1.3 var(--font-sans);
+  opacity: 0.6;
+}
+
 .pg-wiz > .surface-action-notice { margin: 0 16px 8px; }
+/* The bar: Back at the left, Next / Create fills the rest. */
 .pg-wiz-bar {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   padding: 8px 16px;
   border-top: 1px solid var(--wb-rule-soft);
 }
-.pg-wiz-verbs {
-  display: flex;
-  gap: 6px;
-  margin-left: auto;
-}
+.pg-wiz-bar .btn { min-height: 44px; }
+.pg-wiz-bar .btn.pg-wiz-go { flex: 1 1 auto; }
+
+/* The dots in the title bar, at its right end. */
 .pg-wiz-dots {
   display: inline-flex;
   gap: 5px;
   align-items: center;
 }
+.desk-pullout-head > .pg-wiz-dots { flex: none; align-self: center; margin-left: auto; padding-inline: 10px; }
+.desk-next .desk-window-shell > .desk-pullout-head > .pg-wiz-dots { color: var(--wb-ink); }
+.desk-next .desk-pullout-head > .pg-wiz-dots ~ .desk-gadgets-right { margin-left: 0; }
+/* Paper dots on the deep blue front bar, as its name. */
+.desk-next .desk-window-shell:is([data-plane="front"], .is-front) > .desk-pullout-head > .pg-wiz-dots { color: var(--wb-paper); }
 .pg-wiz-dot {
   width: 6px;
   height: 6px;
   border-radius: 3px;
-  background: color-mix(in srgb, var(--text-muted) 30%, transparent);
+  background: color-mix(in srgb, currentColor 30%, transparent);
   transition: width var(--duration-long) var(--ease-standard), background-color var(--duration-long) var(--ease-standard);
 }
-.pg-wiz-dot[data-state="done"] { background: color-mix(in srgb, var(--accent) 70%, transparent); }
-.pg-wiz-dot[data-state="now"] { width: 16px; background: var(--accent); }
+.pg-wiz-dot[data-state="done"] { background: color-mix(in srgb, currentColor 70%, transparent); }
+.pg-wiz-dot[data-state="now"] { width: 16px; background: currentColor; }
+/* The phone head keeps its title beside the dots (the head's one row). */
+@media (max-width: 720px) {
+  .desk-next .desk-window.desk-window-shell > .desk-pullout-head.has-wings:has(> .pg-wiz-dots) .desk-pullout-title { display: block; }
+  .desk-next .desk-window.desk-window-shell > .desk-pullout-head > .pg-wiz-dots { order: 1; }
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .pg-wiz-step[data-dir="on"] { animation: pg-wiz-on var(--duration-medium) var(--ease-decelerate); }
   .pg-wiz-step[data-dir="back"] { animation: pg-wiz-back var(--duration-medium) var(--ease-decelerate); }
+  /* The picked row grows into the card (240 ms); the rows go under it. */
+  .pg-wiz-card[data-grow] { animation: pg-wiz-grow calc(var(--duration-short) * 2) var(--ease-standard); }
   /* The made Program's row settles into the list. */
   .pg-row[data-fresh] { animation: pg-row-settle var(--duration-long) var(--ease-decelerate); }
 }
 @keyframes pg-wiz-on { from { opacity: 0; translate: 16px 0; } }
 @keyframes pg-wiz-back { from { opacity: 0; translate: -16px 0; } }
+@keyframes pg-wiz-grow { from { opacity: 0.4; scale: 0.96 0.6; } }
 @keyframes pg-row-settle {
   from { opacity: 0; translate: 0 -8px; background-color: color-mix(in srgb, var(--accent) 14%, transparent); }
 }
 @container surface (max-width: 520px) {
   .pg-wiz-step { padding: 10px 12px; }
+  .pg-wiz-card { margin: 10px 12px 0; }
   .pg-wiz-bar { padding: 8px 12px; }
-  .pg-wiz-verbs .btn { min-height: 44px; }
 }
 
 /* ── HS-S21: the Add well of a Program made from an action, and the
