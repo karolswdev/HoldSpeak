@@ -16,6 +16,10 @@ const hub = vi.hoisted(() => ({
   posts: [] as Array<Record<string, unknown>>,
   resourcePuts: [] as string[],
   projects: [{ project_id: "proj-1", project_name: "Checkout" }] as Array<Record<string, unknown>>,
+  // HS-S42 faults: the meeting's project read, the canonical POST, the PUT.
+  projectsFail: false,
+  canonical: "ok" as "ok" | "malformed",
+  putFails: false,
 }));
 
 function decisionWire(body: Record<string, unknown>, n: number) {
@@ -46,15 +50,34 @@ vi.mock("../../lib/api", async (importOriginal) => {
       return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve({}) });
     }),
     apiFetch: vi.fn((url: string, init?: RequestInit & { json?: unknown }) => {
+      // HS-S42: the canonical producer, shaped as the real route answers
+      // (tests/integration/test_meeting_decision_filing.py): the source
+      // decision carries the meeting and project tags, the record its id.
+      if (url === "/api/decision-records/from-desk" && init?.method === "POST") {
+        const json = init.json as Record<string, unknown>;
+        hub.posts.push(json);
+        if (hub.canonical === "malformed") return Promise.resolve({});
+        const tags = [
+          ...(json.project_id ? [`project:${json.project_id}`] : []),
+          ...(json.meeting_id ? [`meeting:${json.meeting_id}`] : []),
+        ];
+        const decision = decisionWire({ title: json.title, status: json.status, tags }, hub.posts.length);
+        hub.decisions = [...hub.decisions, decision];
+        return Promise.resolve({ decision, record: { id: `rec_${hub.posts.length}`, source_id: decision.id } });
+      }
       if (url === "/api/decisions" && init?.method === "POST")
         return Promise.resolve({ decision: post(init.body) });
       if (url === "/api/decisions") return Promise.resolve({ decisions: hub.decisions });
       if (/^\/api\/meetings\/[^/]+\/projects$/.test(url))
-        return Promise.resolve({ projects: hub.projects });
+        return hub.projectsFail ? Promise.reject(new TypeError("Failed to fetch")) : Promise.resolve({ projects: hub.projects });
       if (url.startsWith("/api/projects/") && init?.method === "PUT") {
         hub.resourcePuts.push(decodeURIComponent(url));
-        return Promise.resolve({ resource: {} });
+        if (hub.putFails) return Promise.reject(new (real.ApiError as typeof Error & (new (s: number, m: string, p: unknown) => Error))(409, "refused", {}));
+        const project_id = decodeURIComponent(url).split("/")[3];
+        return Promise.resolve({ resource: { project_id, relationship: "member" } });
       }
+      if (url.startsWith("/api/desk/relationships/"))
+        return Promise.resolve({ projects: hub.putFails ? [] : [{ project_id: "proj-1", relationship: "member" }] });
       return Promise.resolve({});
     }),
   };
@@ -72,6 +95,9 @@ beforeEach(() => {
   hub.posts = [];
   hub.resourcePuts = [];
   hub.projects = [{ project_id: "proj-1", project_name: "Checkout" }];
+  hub.projectsFail = false;
+  hub.canonical = "ok";
+  hub.putFails = false;
   useNamePrompt.getState().clear();
   usePalette.getState().setOpen(false);
   useDesk.setState({ pullouts: [], editingId: null, newIds: [], windowsById: {}, drafts: {} });
@@ -138,15 +164,19 @@ describe("PHILO-13-08 New Decision writes nothing before it is named", () => {
 });
 
 describe("PHILO-13-08 Decide in the meeting record", () => {
-  const well = () =>
+  // An unconfirmed title stays in its meeting's well: a case that leaves one
+  // names its own meeting.
+  const well = (meetingId = "m-42") =>
     render(
-      <MeetingDecideWell meetingId="m-42" title="Checkout latency review"
+      <MeetingDecideWell meetingId={meetingId} title="Checkout latency review"
         startedAt="2026-10-01T09:00:00" summary="p99 doubled after the cache change." />,
     );
 
-  it("Decide, type + Enter: one decision with the meeting and its project", async () => {
+  it("Decide, type + Enter: one canonical decision with the meeting and its one project, filed on the record", async () => {
     well();
     fireEvent.click(screen.getByRole("button", { name: "Decide" }));
+    // HS-S42: the one linked project is shown, and chosen, before Save.
+    await waitFor(() => expect(screen.getByRole("button", { name: "Checkout" }).getAttribute("aria-pressed")).toBe("true"));
     const title = screen.getByRole("textbox", { name: "Decision title" });
     fireEvent.change(title, { target: { value: "Roll back the cache change" } });
     await act(async () => { fireEvent.keyDown(title, { key: "Enter" }); });
@@ -154,25 +184,90 @@ describe("PHILO-13-08 Decide in the meeting record", () => {
     const body = hub.posts[0];
     expect(body.status).toBe("accepted");
     expect(body.title).toBe("Roll back the cache change");
-    expect(body.tags).toEqual(["meeting:m-42", "project:proj-1"]);
-    expect(String(body.context_markdown)).toContain("Meeting: Checkout latency review · 2026-10-01");
-    expect(String(body.context_markdown)).toContain("p99 doubled");
-    await waitFor(() => expect(hub.resourcePuts).toEqual(["/api/projects/proj-1/resources/desk_decision:decision_1"]));
+    expect(body.meeting_id).toBe("m-42");
+    expect(body.project_id).toBe("proj-1");
+    expect(String(body.why)).toContain("Meeting: Checkout latency review · 2026-10-01");
+    expect(String(body.why)).toContain("p99 doubled");
+    await waitFor(() => expect(hub.resourcePuts).toEqual(["/api/projects/proj-1/resources/decision_record:rec_1"]));
     // the receipt is where the click happened: the meeting lists it
-    await waitFor(() => expect(screen.getByTestId("decide-receipt").textContent).toMatch(/^Decided \d\d:\d\d$/));
+    await waitFor(() => expect(screen.getByTestId("decide-receipt").textContent).toMatch(/^Decided \d\d:\d\d · Checkout$/));
     expect(screen.getByText("Roll back the cache change")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Decide" })).toBeTruthy();
   });
 
-  it("a meeting with no project still decides; no project tag, no edge", async () => {
+  it("a meeting with no project still decides; no project, no edge", async () => {
     hub.projects = [];
     well();
     fireEvent.click(screen.getByRole("button", { name: "Decide" }));
+    await waitFor(() => expect(screen.getByTestId("decide-scope-state").textContent).toContain("No linked project"));
     fireEvent.change(screen.getByRole("textbox", { name: "Decision title" }), { target: { value: "Ship it" } });
     await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Save" })); });
     await waitFor(() => expect(hub.posts).toHaveLength(1));
-    expect(hub.posts[0].tags).toEqual(["meeting:m-42"]);
+    expect(hub.posts[0].project_id).toBeUndefined();
     expect(hub.resourcePuts).toEqual([]);
+  });
+
+  it("several linked projects: Save waits for his pick; never the first", async () => {
+    hub.projects = [{ project_id: "proj-1", project_name: "Checkout" }, { project_id: "proj-2", project_name: "Ledger" }];
+    well();
+    fireEvent.click(screen.getByRole("button", { name: "Decide" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Ledger" })).toBeTruthy());
+    fireEvent.change(screen.getByRole("textbox", { name: "Decision title" }), { target: { value: "Split the ledger" } });
+    expect(screen.getByRole("button", { name: "Checkout" }).getAttribute("aria-pressed")).toBe("false");
+    expect((screen.getByRole("button", { name: "Save" }) as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(screen.getByRole("button", { name: "Ledger" }));
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Save" })); });
+    await waitFor(() => expect(hub.resourcePuts).toEqual(["/api/projects/proj-2/resources/decision_record:rec_1"]));
+    expect(hub.posts[0].project_id).toBe("proj-2");
+  });
+
+  it("a failed project read is not 'no project': Save waits for No project", async () => {
+    hub.projectsFail = true;
+    well();
+    fireEvent.click(screen.getByRole("button", { name: "Decide" }));
+    await waitFor(() => expect(screen.getByTestId("decide-scope-state").textContent).toContain("Projects not read"));
+    expect(screen.getByRole("button", { name: "Read again" })).toBeTruthy();
+    fireEvent.change(screen.getByRole("textbox", { name: "Decision title" }), { target: { value: "Ship it" } });
+    expect((screen.getByRole("button", { name: "Save" }) as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(screen.getByRole("button", { name: "No project" }));
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Save" })); });
+    await waitFor(() => expect(hub.posts).toHaveLength(1));
+    expect(hub.resourcePuts).toEqual([]);
+  });
+
+  it("an unconfirmed Save never creates again: no legacy POST, Save off for that title", async () => {
+    hub.canonical = "malformed";
+    well("m-unconfirmed");
+    fireEvent.click(screen.getByRole("button", { name: "Decide" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Checkout" })).toBeTruthy());
+    const title = screen.getByRole("textbox", { name: "Decision title" });
+    fireEvent.change(title, { target: { value: "Roll back" } });
+    await act(async () => { fireEvent.keyDown(title, { key: "Enter" }); });
+    await waitFor(() => expect(screen.getByTestId("decide-unconfirmed")).toBeTruthy());
+    expect(hub.posts).toHaveLength(1);
+    expect(hub.decisions).toEqual([]);
+    expect((screen.getByRole("button", { name: "Save" }) as HTMLButtonElement).disabled).toBe(true);
+    await act(async () => { fireEvent.keyDown(title, { key: "Enter" }); });
+    expect(hub.posts).toHaveLength(1);
+    expect((title as HTMLInputElement).value).toBe("Roll back");
+  });
+
+  it("a refused filing keeps the decision and offers File to <project> on the same record", async () => {
+    hub.putFails = true;
+    well();
+    fireEvent.click(screen.getByRole("button", { name: "Decide" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Checkout" }).getAttribute("aria-pressed")).toBe("true"));
+    const title = screen.getByRole("textbox", { name: "Decision title" });
+    fireEvent.change(title, { target: { value: "Roll back" } });
+    await act(async () => { fireEvent.keyDown(title, { key: "Enter" }); });
+    await waitFor(() => expect(screen.getByTestId("decide-filing-state").textContent).toBe("Decided · Not filed to Checkout"));
+    expect(screen.queryByRole("textbox", { name: "Decision title" })).toBeNull();
+    hub.putFails = false;
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "File to Checkout" })); });
+    await waitFor(() => expect(screen.queryByTestId("decide-filing")).toBeNull());
+    // The read found the member edge: no second PUT, and never a second POST.
+    expect(hub.resourcePuts).toEqual(["/api/projects/proj-1/resources/decision_record:rec_1"]);
+    expect(hub.posts).toHaveLength(1);
   });
 
   it("Cancel abandons: nothing is written", async () => {
@@ -238,21 +333,23 @@ describe("PHILO-13-08 a draft belongs to its meeting (Astra's single pass)", () 
     expect(hub.posts).toEqual([]);
 
     fireEvent.click(screen.getByRole("button", { name: "Decide" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Checkout" }).getAttribute("aria-pressed")).toBe("true"));
     const b = screen.getByRole("textbox", { name: "Decision title" });
     fireEvent.change(b, { target: { value: "Typed under B" } });
     await act(async () => { fireEvent.keyDown(b, { key: "Enter" }); });
     await waitFor(() => expect(hub.posts).toHaveLength(1));
     expect(hub.posts[0].title).toBe("Typed under B");
-    expect(hub.posts[0].tags).toEqual(["meeting:m-B", "project:proj-1"]);
-    expect(String(hub.posts[0].context_markdown)).toContain("Meeting: Meeting m-B");
+    expect([hub.posts[0].meeting_id, hub.posts[0].project_id]).toEqual(["m-B", "proj-1"]);
+    expect(String(hub.posts[0].why)).toContain("Meeting: Meeting m-B");
 
     // Back on A: A's own draft, and it files under A.
     view.rerender(<MeetingDecideWell {...props("m-A")} />);
     const a = screen.getByRole("textbox", { name: "Decision title" }) as HTMLInputElement;
     expect(a.value).toBe("Typed under A");
+    await waitFor(() => expect(screen.getByRole("button", { name: "Checkout" }).getAttribute("aria-pressed")).toBe("true"));
     await act(async () => { fireEvent.keyDown(a, { key: "Enter" }); });
     await waitFor(() => expect(hub.posts).toHaveLength(2));
     expect(hub.posts[1].title).toBe("Typed under A");
-    expect(hub.posts[1].tags).toEqual(["meeting:m-A", "project:proj-1"]);
+    expect([hub.posts[1].meeting_id, hub.posts[1].project_id]).toEqual(["m-A", "proj-1"]);
   });
 });

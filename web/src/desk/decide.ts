@@ -3,13 +3,13 @@
  * A desk decision is born with a title he typed, never as a `New decision`
  * placeholder (grounding F9). One made from a meeting carries:
  *   - the meeting: the tag `meeting:<id>` and the meeting in its context;
- *   - the meeting's project: the tag `project:<id>` and the project's
- *     membership edge (`PUT /api/projects/{id}/resources/desk_decision:<id>`,
- *     the same edge the filing strip writes).
- * Both go through the existing routes (`POST /api/decisions`, the project
- * resource route); no backend field is added (story Notes, Tenet 1). */
-import { apiFetch } from "../lib/api";
-import { createDecision, fromWireDecision, type DecisionInput } from "./api";
+ *   - the project he chose before Save: the tag `project:<id>` and the
+ *     record's member edge (`PUT /api/projects/{id}/resources/decision_record:<id>`).
+ * HS-S42: the decision is created once on the canonical route
+ * (`POST /api/decision-records/from-desk`) and filed after, on
+ * `decision_record:<id>`; an uncertain answer never creates again. */
+import { ApiError, apiFetch } from "../lib/api";
+import { fromWireDecision } from "./api";
 import type { Decision } from "../lib/primitives";
 
 export const meetingTag = (meetingId: string) => `meeting:${meetingId}`;
@@ -26,19 +26,33 @@ export function decisionsFromMeeting(
     .sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
 }
 
-/** The meeting's project: the highest-confidence link, or none. */
-export async function meetingProject(
-  meetingId: string,
-): Promise<{ id: string; name: string } | null> {
+/** HS-S42: what the meeting says about a decision's project, before Save.
+ *  `known` holds every linked project in rank order; never only the first.
+ *  `none` is a meeting with no linked project; `unavailable` is a failed
+ *  lookup, which is not "no project". */
+export type MeetingScope =
+  | { state: "known"; projects: Array<{ id: string; name: string }> }
+  | { state: "none" }
+  | { state: "unavailable"; reason: string };
+
+export async function meetingScope(meetingId: string): Promise<MeetingScope> {
+  let body: unknown;
   try {
-    const body = await apiFetch<{ projects?: Array<{ project_id?: string; project_name?: string }> }>(
-      `/api/meetings/${encodeURIComponent(meetingId)}/projects`,
-    );
-    const first = (body.projects ?? []).find((p) => String(p.project_id ?? "").trim());
-    return first ? { id: String(first.project_id), name: String(first.project_name ?? "") } : null;
-  } catch {
-    return null;
+    body = await apiFetch<unknown>(`/api/meetings/${encodeURIComponent(meetingId)}/projects`);
+  } catch (cause) {
+    return { state: "unavailable", reason: String((cause as Error)?.message ?? cause) };
   }
+  const rows = (body as { projects?: unknown })?.projects;
+  if (!Array.isArray(rows)) return { state: "unavailable", reason: "The hub answered no project list" };
+  const seen = new Set<string>();
+  const projects: Array<{ id: string; name: string }> = [];
+  for (const row of rows as Array<{ project_id?: unknown; project_name?: unknown }>) {
+    const id = typeof row?.project_id === "string" ? row.project_id.trim() : "";
+    if (!id || seen.has(id)) continue;
+    seen.add(id);
+    projects.push({ id, name: String(row.project_name ?? "").trim() || id });
+  }
+  return projects.length ? { state: "known", projects } : { state: "none" };
 }
 
 /** The decision's context: the meeting it came from, then its summary. */
@@ -53,10 +67,82 @@ export function meetingContext(meeting: {
   return summary ? `${head}\n\n${summary}` : head;
 }
 
+/** HS-S42: the canonical POST answered nothing usable (a malformed 2xx, a
+ *  5xx or a lost response). The decision may exist: never create again. */
+export class DecisionUnconfirmed extends Error {
+  constructor(reason: string) {
+    super(reason);
+    this.name = "DecisionUnconfirmed";
+  }
+}
+
+/** The project filing of a created decision record, kept apart from its
+ *  creation: `unfiled` is his explicit choice; `refused` a known refusal;
+ *  `unknown` a lost answer; `other` a live edge of another kind
+ *  (source, output, related), which is not a member filing. */
+export type FilingState = "unfiled" | "filed" | "refused" | "unknown" | "other";
+
 export interface MeetingDecision {
   decision: Decision;
+  /** The canonical record every face opens. */
+  recordId: string;
+  /** The retained source (`desk_decision`) the meeting lists. */
+  sourceId: string;
   project: { id: string; name: string } | null;
+  filing: FilingState;
 }
+
+export const recordRef = (recordId: string) => `decision_record:${recordId}`;
+
+const nonEmpty = (value: unknown): value is string => typeof value === "string" && value.trim() !== "";
+
+/** A refusal the hub stated before it wrote (HTTP 4xx). Anything else after
+ *  the POST was sent is unconfirmed. */
+export const isKnownRefusal = (cause: unknown) =>
+  cause instanceof ApiError && cause.status >= 400 && cause.status < 500;
+
+/** The canonical project PUT for one created record. Never creates. */
+export async function fileDecisionRecord(recordId: string, projectId: string): Promise<FilingState> {
+  try {
+    const body = await apiFetch<{ resource?: { project_id?: unknown; relationship?: unknown } }>(
+      `/api/projects/${encodeURIComponent(projectId)}/resources/${encodeURIComponent(recordRef(recordId))}`,
+      { method: "PUT", json: { relationship: "member" } },
+    );
+    const resource = body?.resource;
+    if (resource && resource.relationship === "member" && (resource.project_id === undefined || resource.project_id === projectId)) return "filed";
+    return "unknown";
+  } catch (cause) {
+    return isKnownRefusal(cause) ? "refused" : "unknown";
+  }
+}
+
+/** Read the record's current edge to one project: `filed` only for a live
+ *  `member` row; `other` for another kind; `absent` for a complete read with
+ *  no row; `unknown` when the read failed or its shape is not known. */
+export async function readDecisionFiling(recordId: string, projectId: string): Promise<FilingState | "absent"> {
+  try {
+    const body = await apiFetch<{ resource_ref?: unknown; projects?: unknown }>(
+      `/api/desk/relationships/${encodeURIComponent(recordRef(recordId))}`,
+    );
+    if (!Array.isArray(body?.projects)) return "unknown";
+    const row = (body.projects as Array<{ project_id?: unknown; relationship?: unknown }>)
+      .find((r) => r?.project_id === projectId);
+    if (!row) return "absent";
+    if (row.relationship === "member") return "filed";
+    return ["source", "output", "related"].includes(String(row.relationship)) ? "other" : "unknown";
+  } catch {
+    return "unknown";
+  }
+}
+
+/** One explicit same-ID filing press: read first; write only on a verified
+ *  absence. A known edge of another kind is left as it is. */
+export async function fileAgain(recordId: string, projectId: string): Promise<FilingState> {
+  const now = await readDecisionFiling(recordId, projectId);
+  if (now === "absent") return fileDecisionRecord(recordId, projectId);
+  return now;
+}
+
 
 export interface DeskDecisionRecordInput {
   decision: string;
@@ -66,56 +152,59 @@ export interface DeskDecisionRecordInput {
   status?: "accepted" | "proposed";
 }
 
-/** The one Desk producer. The legacy decision is retained as the source row,
- * but the returned identity is the canonical record that every face opens. */
+/** The canonical Desk producer: one POST, no filing and no fallback. It
+ *  returns only when both identities are acknowledged. A known refusal throws
+ *  the ApiError; anything else after the send throws DecisionUnconfirmed. */
 export async function createDeskDecisionRecord(input: DeskDecisionRecordInput): Promise<{
   record: Record<string, unknown>;
+  recordId: string;
   decision: Decision;
-} | null> {
-  const response = await apiFetch<Record<string, unknown>>("/api/decision-records/from-desk", {
-    method: "POST",
-    json: {
-      decision_text: input.decision.trim(),
-      title: input.decision.trim(),
-      status: input.status ?? "accepted",
-      project_id: input.project?.id,
-      project_name: input.project?.name,
-      why: input.why,
-      meeting_id: input.meeting?.id,
-      meeting_title: input.meeting?.title,
-      meeting_summary: input.meeting?.summary,
-    },
-  });
-  const record = response?.record;
-  const decision = fromWireDecision(response?.decision);
-  // Older isolated hubs (and the compatibility unit harness) answer no
-  // canonical envelope. Let their existing producer remain available until
-  // the hub has the record route; a live hub always takes the branch above.
-  if (!record || typeof record !== "object" || !decision) return null;
-  const canonical = record as Record<string, unknown>;
-  if (input.project?.id && canonical.id) {
-    await apiFetch(
-      `/api/projects/${encodeURIComponent(input.project.id)}/resources/${encodeURIComponent(`decision_record:${canonical.id}`)}`,
-      { method: "PUT", json: { relationship: "member" } },
-    );
+}> {
+  let response: Record<string, unknown>;
+  try {
+    response = await apiFetch<Record<string, unknown>>("/api/decision-records/from-desk", {
+      method: "POST",
+      json: {
+        decision_text: input.decision.trim(),
+        title: input.decision.trim(),
+        status: input.status ?? "accepted",
+        project_id: input.project?.id,
+        project_name: input.project?.name,
+        why: input.why,
+        meeting_id: input.meeting?.id,
+        meeting_title: input.meeting?.title,
+        meeting_summary: input.meeting?.summary,
+      },
+    });
+  } catch (cause) {
+    if (isKnownRefusal(cause)) throw cause;
+    throw new DecisionUnconfirmed(String((cause as Error)?.message ?? cause));
   }
-  return { record: canonical, decision };
+  const record = response?.record as Record<string, unknown> | undefined;
+  const wire = response?.decision as Record<string, unknown> | undefined;
+  if (!record || typeof record !== "object" || !nonEmpty(record.id) || !nonEmpty(wire?.id)) {
+    throw new DecisionUnconfirmed("The hub answered no decision record");
+  }
+  const decision = fromWireDecision(wire);
+  if (!decision) throw new DecisionUnconfirmed("The hub answered no decision record");
+  return { record, recordId: String(record.id), decision };
 }
 
-/** Create one named decision from a meeting. Throws when the hub refuses
- * the decision; a refused project edge leaves the decision and its project
- * tag (the tag still names the project). */
+/** Create one named decision from a meeting, then file it to the project he
+ *  chose (`null`: deliberately no project). Throws only before both IDs are
+ *  acknowledged; a filing that fails after creation is in `filing`. */
 export async function decideFromMeeting(input: {
   title: string;
   meetingId: string;
   meetingTitle: string;
   startedAt?: string | null;
   summary?: string | null;
+  project: { id: string; name: string } | null;
 }): Promise<MeetingDecision> {
   const title = input.title.trim();
   if (!title) throw new Error("A decision needs a title");
-  const project = await meetingProject(input.meetingId);
-  const canonical = await createDeskDecisionRecord({
+  const project = input.project;
+  const created = await createDeskDecisionRecord({
     decision: title,
     project,
     why: meetingContext({
@@ -130,27 +219,12 @@ export async function decideFromMeeting(input: {
     },
     status: "accepted",
   });
-  if (canonical) return { decision: canonical.decision, project };
-  const body: DecisionInput = {
-    title,
-    // PHILO-15-09 (B12): a decision he makes himself is DECIDED, never one
-    // he must review (an agent's launch still proposes; the hub refuses it
-    // any other status).
-    status: "accepted",
-    context_markdown: meetingContext({
-      title: input.meetingTitle,
-      startedAt: input.startedAt,
-      summary: input.summary,
-    }),
-    tags: [meetingTag(input.meetingId), ...(project ? [projectTag(project.id)] : [])],
+  const filing: FilingState = project ? await fileDecisionRecord(created.recordId, project.id) : "unfiled";
+  return {
+    decision: created.decision,
+    recordId: created.recordId,
+    sourceId: created.decision.id,
+    project,
+    filing,
   };
-  const decision = await createDecision(body);
-  if (!decision) throw new Error("The hub returned no decision");
-  if (project) {
-    await apiFetch(
-      `/api/projects/${encodeURIComponent(project.id)}/resources/${encodeURIComponent(`desk_decision:${decision.id}`)}`,
-      { method: "PUT", json: { relationship: "member" } },
-    ).catch(() => undefined);
-  }
-  return { decision, project };
 }
