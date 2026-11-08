@@ -203,6 +203,9 @@ def test_on_his_iphone_the_edge_holds_the_safe_area_the_guide_presses_and_the_sh
                 # The guide presses New program itself: the wizard opens.
                 page.get_by_test_id("walk-question").wait_for(timeout=T)
                 assert page.locator('[data-testid="programs-wizard-step-1"]').is_visible()
+                # The sheet slides up for 320 ms; measure it at rest (a red under
+                # load on 2026-11-08 caught it mid-slide at bottom 1058 of 932).
+                page.wait_for_timeout(450)
                 sheet = page.evaluate(_BOX_JS, "walk-card")
                 assert sheet["bottom"] <= height and sheet["left"] == 0 and sheet["right"] == width, sheet
                 keep = page.get_by_test_id("walk-choice-0").bounding_box()
