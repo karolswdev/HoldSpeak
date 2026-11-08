@@ -216,7 +216,7 @@ def still_inside(runner: Any, program: Mapping[str, Any]) -> bool:
 
 
 def _red(step: Mapping[str, Any]) -> bool:
-    from .program_service import PARKED_BY_ENGINE
+    from .program_definitions import PARKED_BY_ENGINE
 
     return step.get("state") == "failed" or (step.get("state") == "parked" and step.get("parked_by") == PARKED_BY_ENGINE
                                              and not str(step.get("parked_reason") or "").startswith("Night ended"))
@@ -225,7 +225,7 @@ def _red(step: Mapping[str, Any]) -> bool:
 def _red_in_a_row(runner: Any, program: Mapping[str, Any], start: datetime, end: datetime) -> bool:
     """The night's last ``RED_IN_A_ROW`` finished steps are all red; the
     first time, one ``night_stop`` line says so."""
-    from .program_service import CLOSED_STATES
+    from .program_definitions import CLOSED_STATES
 
     ended = sorted((step for step in _night_rows(runner, program, start, end)
                     if step.get("state") in CLOSED_STATES or step.get("state") == "failed"),
@@ -274,7 +274,7 @@ def base_red(runner: Any, program: Mapping[str, Any]) -> Optional[str]:
 
 
 def _green_step(steps: list[Mapping[str, Any]], key: str) -> Optional[Mapping[str, Any]]:
-    from .program_service import CLOSED_STATES
+    from .program_definitions import CLOSED_STATES
 
     return next((step for step in steps if ((step.get("facts") or {}).get("night_green") or {}).get("night") == key
                  and step.get("state") not in CLOSED_STATES), None)
@@ -343,7 +343,7 @@ def end_working(runner: Any, program: Mapping[str, Any], start: datetime, end: d
     to commit what it has; at its turn's end, or ``END_MINUTES`` after the
     ask, the engine commits what is left and parks it. The steps still
     waiting for their agent."""
-    from .program_service import PARKED_BY_ENGINE
+    from .program_definitions import PARKED_BY_ENGINE
 
     service = runner.service
     waiting = 0
@@ -417,7 +417,7 @@ def backlog_items(service: Any, program: Mapping[str, Any]) -> list[dict[str, st
 def wake_parked(runner: Any, program: Mapping[str, Any]) -> int:
     """At the window's start, a step the last night parked at its end goes
     on from its checkpoint, in its own worktree (Resume's path)."""
-    from .program_service import NIGHT_ENDED
+    from .program_definitions import NIGHT_ENDED
 
     service = runner.service
     woke = 0
@@ -444,7 +444,7 @@ def read_backlog(runner: Any, program: Mapping[str, Any], start: datetime, end: 
     tonight. The count added."""
     from ..principals import Principal, PrincipalKind
     from .program_rules import level_of
-    from .program_service import CLOSED_STATES
+    from .program_definitions import CLOSED_STATES
 
     service = runner.service
     key = night_key(start)
@@ -663,7 +663,7 @@ def _plural(n: int, one: str, many: str) -> str:
 def digest_lines(service: Any, program: Mapping[str, Any], start: datetime, end: datetime) -> list[str]:
     """``["Since last night: 4 steps done, 1 waits on you, 1 split", "Merged: #1710 · #1711"]``;
     ``[]`` when the night did nothing (no counter of zero is written)."""
-    from .program_service import FINISHED_STATES
+    from .program_definitions import FINISHED_STATES
 
     steps = service.store.list_steps(program["id"])
     done = [step for step in steps if not step.get("race_of") and step.get("state") in FINISHED_STATES
@@ -690,7 +690,7 @@ def digest_lines(service: Any, program: Mapping[str, Any], start: datetime, end:
         green = next((row for row in red_rows if row.get("choice") == "green"), None)
         until = _parse(green.get("at")) if green else end
         if began and until:
-            from .program_service import duration_words
+            from .program_definitions import duration_words
 
             waited = f"waited {duration_words(int((until - began).total_seconds()))} for a green main"
     parts = [part for part in (
@@ -807,7 +807,7 @@ def tick_nights(runner: Any) -> list[str]:
 def night_program(service: Any, program_id: Any = None) -> dict[str, Any]:
     """The Program the item goes to: the one named, else the one Program with
     a night line."""
-    from .program_service import ProgramRefused
+    from .program_definitions import ProgramRefused
 
     if program_id:
         program = service._program(str(program_id))
@@ -827,7 +827,7 @@ def night_program(service: Any, program_id: Any = None) -> dict[str, Any]:
 
 def _item(service: Any, kind: str, item_id: str, line: Any) -> dict[str, Any]:
     """``{ref, title, brief, owns, origin_ref, from}`` of the item."""
-    from .program_service import ProgramRefused
+    from .program_definitions import ProgramRefused
 
     if kind not in ITEM_KINDS:
         raise ProgramRefused("night_kind_invalid", "Add to tonight takes a Door task (action), a note line (note) "
@@ -868,7 +868,8 @@ def add_to_night(service: Any, principal: Any, *, kind: Any, item_id: Any, line:
     """Mark one item for tonight's planning (a Planned step of the night Program)."""
     from ..kernel.program_ops import RUNNER
     from .program_rules import decide
-    from .program_service import _LOCK, CLOSED_STATES, ProgramRefused, _is_owner, fold_target
+    from .program_service import _LOCK, _is_owner, fold_target
+    from .program_definitions import CLOSED_STATES, ProgramRefused
 
     item = _item(service, str(kind or "").strip(), str(item_id or "").strip(), line)
     program = night_program(service, program_id)
