@@ -64,12 +64,50 @@ export type NeedVerbs =
       /** PG-DIRECTION DIR3: the row id (the page's ref) and its open page. */
       ref?: string; page?: OpenPage | null; later?: LaterMark | null;
       /** JRN11: the lesson a Lesson row answers (`lesson_id`). */
-      lessonId?: number | null }
+      lessonId?: number | null;
+      /** Owner walk 2026-11-08: what the step asks of him (its quiet word
+       *  and its one verb). */
+      ask: ProgramAsk }
   /** Phone (2026-10-28): the hub's own verbs for a phone item (Call now /
    *  Let it wait, Call again / Answer here, Call / Not now); a verb that
    *  needs words (Answer here) opens the Phone wing to reply. */
   | { kind: "phone"; item: string; verbs: PhoneVerb[]; msgId: string | null }
   | { kind: "none" };
+
+/** Owner walk 2026-11-08: the four asks a Program row makes. */
+export type ProgramAsk = "merge" | "decide" | "review" | "turn";
+
+/** The ask of a Program your-turn item: a merge, a person to ask for a
+ *  review, a decision (the hub says TO DECIDE), or else his turn. */
+export function programAsk(kind: string, why: string): ProgramAsk {
+  if (kind === "merge") return "merge";
+  if (kind === "ask_review") return "review";
+  if (why.toUpperCase() === "TO DECIDE") return "decide";
+  return "turn";
+}
+
+/** The ask's one quiet word on the row. */
+export const PROGRAM_ASK_WORDS: Record<ProgramAsk, string> = {
+  merge: "Merge", decide: "Decide", review: "Review", turn: "Your turn",
+};
+
+/** One part of a row's fact line, and what it says. */
+export type FactPart = { text: string; is: "number" | "name" | "time" | "words" | "kind" | "state" };
+
+/** THE ONE RULE of a row's fact line (owner walk 2026-11-08): it keeps only
+ *  what the row's name and quiet word do not say: a number, a name, a time,
+ *  or the ask's own words (an agent's question, a held command). A part
+ *  that says the kind or the state goes, and so does a part the name or the
+ *  quiet word already says. Nothing left: no fact line. */
+export function factLine(parts: readonly FactPart[], said: { name: string; word?: string; kind?: string }): string {
+  const name = said.name.toLowerCase();
+  const repeats = new Set([said.word, said.kind].filter(Boolean).map((w) => String(w).toLowerCase()));
+  return parts
+    .filter((part) => part.is !== "kind" && part.is !== "state")
+    .map((part) => part.text.trim())
+    .filter((text) => text && !repeats.has(text.toLowerCase()) && !name.includes(text.toLowerCase()))
+    .join(" · ");
+}
 
 export type PhoneVerb = { id: string; label: string; method: string; href: string; body?: Record<string, unknown>; needs_text?: boolean };
 
@@ -415,13 +453,21 @@ function attentionFace(item: NeedsYouRoomItem, ctx: NeedCtx): NeedFace {
     const state = String((item.send as { state?: string }).state || "prepared") as "prepared" | "failed" | "unknown";
     const created = item.since ? wireDate(String(item.since)) : null;
     const createdWord = created ? whenWord(created, ctx.now) : "";
+    const name = String(item.documentTitle || title);
+    const lamp = state === "prepared" ? { label: "READY TO SEND", tone: "ask" as const }
+      : state === "failed" ? { label: "NOT SENT", tone: "fail" as const }
+        : { label: "NO ANSWER", tone: "warn" as const };
     return {
-      id, kind: "send", name: String(item.documentTitle || title),
-      fact: [String(item.documentLabel || "DOCUMENT"), "→", String(item.destinationName || "Destination"),
-        item.preparedBy ? `by ${item.preparedBy}` : "", createdWord].filter(Boolean).join(" · "),
-      lamp: state === "prepared" ? { label: "READY TO SEND", tone: "ask" }
-        : state === "failed" ? { label: "NOT SENT", tone: "fail" }
-          : { label: "NO ANSWER", tone: "warn" },
+      id, kind: "send", name,
+      // The one rule: the document's kind goes; where, who and when stay.
+      fact: factLine([
+        // `REV 1` is a number; `DOCUMENT` only says the kind.
+        { text: String(item.documentLabel || "DOCUMENT"), is: /\d/.test(String(item.documentLabel ?? "")) ? "number" : "kind" },
+        { text: item.destinationName ? `To ${String(item.destinationName)}` : "", is: "name" },
+        { text: item.preparedBy ? `by ${String(item.preparedBy)}` : "", is: "name" },
+        { text: createdWord, is: "time" },
+      ], { name, word: lamp.label, kind: "send" }),
+      lamp,
       group: "rest", direction: "mine",
       verbs: { kind: "send", sendId: String(item.sendId), documentRef: String(item.documentRef),
         destinationId: String(item.destinationId), state, send: item.send },
@@ -455,15 +501,25 @@ function attentionFace(item: NeedsYouRoomItem, ctx: NeedCtx): NeedFace {
   } | undefined;
   // PG-REQ: his word and a requirement left after the rounds decide through
   // the requirement's own route; the Program's own have no step.
-  if (source === "program" && program?.programId && (program.stepId || program.requirementId) && program.decide) {
-    const step = program.ordinal ? `Step ${program.ordinal}` : "";
+  // A Program's Close has no step (its decide is the Program's own close).
+  if (source === "program" && program?.programId && (program.stepId || program.requirementId || program.kind === "close")
+    && program.decide) {
+    // Owner walk 2026-11-08: the row is the Program (its title), the ask's
+    // one quiet word (Merge, Decide, Review, Your turn) and one verb.
+    const ask = programAsk(String(program.kind ?? ""), why || "TO DECIDE");
+    const name = String(item.group ?? "") || title;
     return {
-      id, kind: "program", name: title,
-      // PG-DIRECTION DIR3: the line says the page is open (no chip, A.9).
-      // DIR4/DIR5: "Later · back at 13:00", or "Sent to Telegram 06:30 · …".
-      fact: [String(item.group ?? ""), step, laterWords(item.later as LaterMark | undefined) || pageWords(program.page)]
-        .filter(Boolean).join(" · "),
-      lamp: { label: why || "TO DECIDE", tone: "ask" }, group: "rest", direction: "decide",
+      id, kind: "program", name,
+      // The one rule: the step's number and a time stay. PG-DIRECTION DIR3:
+      // the line says the page is open (no chip, A.9). DIR4/DIR5: "Later ·
+      // back at 13:00", or "Sent to Telegram 06:30 · …".
+      fact: factLine([
+        { text: program.ordinal ? `Step ${program.ordinal}` : "", is: "number" },
+        { text: laterWords(item.later as LaterMark | undefined) || pageWords(program.page), is: "time" },
+      ], { name, word: PROGRAM_ASK_WORDS[ask], kind: "program" }),
+      // The step's own question is the hover of the line.
+      factTitle: title,
+      lamp: { label: PROGRAM_ASK_WORDS[ask], tone: "ask" }, group: "rest", direction: "decide",
       verbs: {
         kind: "program", programId: program.programId, stepId: program.stepId ?? "", decide: program.decide,
         itemKind: String(program.kind ?? ""), ref: id, page: program.page ?? null,
@@ -473,6 +529,7 @@ function attentionFace(item: NeedsYouRoomItem, ctx: NeedCtx): NeedFace {
         findingId: program.findingId ?? null,
         // JRN11: a Lesson row names its lesson.
         lessonId: program.lessonId ?? null,
+        ask,
       },
       openRef: `program:${program.programId}`,
       kindWord: "Program",
@@ -488,7 +545,8 @@ function attentionFace(item: NeedsYouRoomItem, ctx: NeedCtx): NeedFace {
     const agent = String(item.agent || "agent");
     return {
       id, kind: "agent", name: agentRowName(agent, project || "Helper"),
-      fact: String(item.question || item.title || ""), factWords: true,
+      fact: factLine([{ text: String(item.question || item.title || ""), is: "words" }],
+        { name: agentRowName(agent, project || "Helper"), word: "TO APPROVE", kind: "agent" }), factWords: true,
       lamp: { label: "TO APPROVE", tone: "ask" }, group: "agents", agent,
       verbs: { kind: "allow-helper", launchId, requestId: helper.requestId },
       openRef: `launch:${launchId}`,
@@ -504,7 +562,8 @@ function attentionFace(item: NeedsYouRoomItem, ctx: NeedCtx): NeedFace {
       id,
       kind: "agent",
       name: agentRowName(agent, label),
-      fact: String(item.question || item.title || ""),
+      fact: factLine([{ text: String(item.question || item.title || ""), is: "words" }],
+        { name: agentRowName(agent, label), kind: "agent" }),
       factWords: true,
       lamp: { label: `${approve ? "TO APPROVE" : "ASKS"} · ${waitAgeWord(item, ctx.now)}`, tone: "ask" },
       group: "agents",
@@ -529,11 +588,13 @@ function attentionFace(item: NeedsYouRoomItem, ctx: NeedCtx): NeedFace {
     const reason = String(item.holdReason ?? "").trim();
     const command = reason ? `${reason}\n${shown}` : shown;
     const proposalId = String(item.ref ?? id).replace(/^gate:/, "");
+    const name = agentRowName(agent, sessionName(key, ctx.sessions, ctx.flights, project));
     return {
       id,
       kind: "agent",
-      name: agentRowName(agent, sessionName(key, ctx.sessions, ctx.flights, project)),
-      fact: command,
+      name,
+      // The one rule: the held command is the ask's own words.
+      fact: factLine([{ text: command, is: "words" }], { name, kind: "agent" }),
       factCode: true,
       // PHILO-15 15: the hub keeps 120 chars (Phase 14 law): a cut call is
       // approved in the pane (Raw), and the row says so.
@@ -566,7 +627,8 @@ function attentionFace(item: NeedsYouRoomItem, ctx: NeedCtx): NeedFace {
         id,
         kind: "pr",
         name: number != null ? `#${number} ${title}` : title,
-        fact: [who, named ? "" : flight.projectName || project].filter(Boolean).join(" · "),
+        fact: factLine([{ text: who, is: "name" }, { text: named ? "" : flight.projectName || project, is: "name" }],
+          { name: number != null ? `#${number} ${title}` : title }),
         lamp: flight.state === "merged"
           ? { label: "MERGED · TO SECURE", tone: "warn" }
           : { label: "PR OPEN", tone: "ok" },
@@ -581,7 +643,7 @@ function attentionFace(item: NeedsYouRoomItem, ctx: NeedCtx): NeedFace {
       id,
       kind: item.source === "decision" ? "decision" : "action",
       name: title,
-      fact: [who, named ? "" : flight.projectName || project].filter(Boolean).join(" · "),
+      fact: factLine([{ text: who, is: "name" }, { text: named ? "" : flight.projectName || project, is: "name" }], { name: title }),
       // The fact line names the agent; the lamp says what it does (one word).
       lamp: { label: state, tone: flight.state === "waiting" ? "ask" : flight.state === "done" ? "ok" : "info" },
       group: "agents",

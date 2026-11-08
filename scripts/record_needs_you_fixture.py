@@ -17,7 +17,10 @@ It writes ``web/src/desk/__tests__/fixtures/needsYou.recorded.json``.
 ``--rows`` records only the Needs-you rows scenario (the owner's own action
 items an agent titled ``Must fix:``, ``Should fix:``, ``Noted:``, one plain
 and one a person owes; Done on the first) into
-``web/src/desk/needs/__fixtures__/needs_you.rows.json``.
+``web/src/desk/needs/__fixtures__/needs_you.rows.json``, and beside it the
+Program row scenario (a Program step that waits for his Merge, on the
+Programs rig behind the same hub; Merge pressed, the read after) under
+``program``.
 """
 from __future__ import annotations
 
@@ -327,11 +330,58 @@ def rows() -> dict[str, Any]:
             _close()
 
 
+def program_merge() -> dict[str, Any]:
+    """The Program row scenario: the hub of the rows scenario, its Program
+    service the Programs rig (real git, a fake agent and reviewer at the
+    process edge): one secure step built, checked and reviewed waits for his
+    Merge. The read, Merge on the row (its one verb), the read after."""
+    sys.path.insert(0, str(REPO))
+    from holdspeak.services import program_service as program_module
+    from tests.integration.program_rig import FAKE_CHECK, OWNER, Rig
+
+    with pytest.MonkeyPatch.context() as mp:
+        hub = _boot("program", mp)
+        try:
+            rig = Rig(Path(tempfile.mkdtemp(prefix="needs-you-program-rig-")))
+            mp.setattr(program_module, "default_program_service", lambda db=None: rig.service)
+            pid = rig.service.create(OWNER, title="The hub stops stalling", goal="Make the hub stop stalling.",
+                                     repository=str(rig.repo), check_command=f"sh {FAKE_CHECK}",
+                                     template="build-and-review", control="secure",
+                                     reviewer_profile="codex-default")["id"]
+            rig.service.plan(OWNER, pid, steps=[
+                {"title": "Indexes", "brief": "Add the three indexes.", "owns": ["holdspeak/db/schema.py"]}])
+            rig.service.start(OWNER, pid)
+            rig.agent.finish(rig.step(pid, 1)["launch_id"], {"holdspeak/db/schema.py": "-- indexes\n"})
+            rig.tick(2)
+            for reviewer in [record for record in rig.ledger.list() if record.get("helper_of")]:
+                rig.words[reviewer["launch_id"]] = "MUST: none"
+                rig.states[reviewer["launch_id"]] = {"state": "done", "turn_id": "r"}
+            rig.tick(2)
+            step = rig.step(pid, 1)
+            assert step["state"] == "merge_ask", step["state"]
+            before = _gets(hub, COMMON_GETS)
+            merge = next(row for row in before["/api/desk/needs-you?fresh=1"]["items"]
+                         if row.get("source") == "program")
+            body = {"kind": merge["program"]["kind"], "choice": "merge"}
+            answer = _post(hub, merge["program"]["decide"], body)
+            rig.tick(2)
+            text = json.dumps({"title": merge["group"], "steps": [
+                {"name": "before", "gets": before},
+                {"name": "merge", "post": merge["program"]["decide"], "body": body, "answer": answer,
+                 "gets": _gets(hub, COMMON_GETS)},
+            ]}, default=str)
+            # The rig's temporary paths are not the face's business.
+            root = rig.repo.parent
+            return json.loads(text.replace(str(root.resolve()), "/tmp/rig").replace(str(root), "/tmp/rig"))
+        finally:
+            _close()
+
+
 def main() -> int:
     if "--rows" in sys.argv[1:]:
         ROWS_OUT.parent.mkdir(parents=True, exist_ok=True)
         ROWS_OUT.write_text(json.dumps({"schema": "needs-you-rows@1", "recordedBy": "scripts/record_needs_you_fixture.py --rows",
-                                        **rows()}, indent=1, sort_keys=True, default=str) + "\n", encoding="utf-8")
+                                        **rows(), "program": program_merge()}, indent=1, sort_keys=True, default=str) + "\n", encoding="utf-8")
         print(f"wrote {ROWS_OUT.relative_to(REPO)} ({ROWS_OUT.stat().st_size} bytes)")
         return 0
     fixture = {

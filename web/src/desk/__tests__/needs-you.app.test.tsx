@@ -388,7 +388,8 @@ describe("Needs you with a prepared Send row (Send S3)", () => {
     render(<NeedsDrawer />);
     const row = await screen.findByText("S3 private delivery — update r1 (2026-10-20)");
     const li = row.closest("li.needs-row") as HTMLElement;
-    expect(li.textContent).toContain("REV 1 · → · Private team folder · by Claude Code");
+    // The one rule (owner walk 2026-11-08): the revision, where, who, when.
+    expect(li.querySelector(".needs-row-fact")?.textContent).toMatch(/^REV 1 · To Private team folder · by Claude Code · \d{2}:\d{2}$/);
     expect(li.textContent).toMatch(/\d{2}:\d{2}/);
     expect([...li.querySelectorAll<HTMLElement>("[data-testid='needs-row-verb']")].map((button) => button.dataset.verb))
       .toEqual(["send", "look"]);
@@ -543,22 +544,33 @@ describe("Needs you: File, Make and a lesson are TO DECIDE rows that press the s
       throw new Error(`no recorded answer for ${path}`);
     });
   };
-  const rowOf = async (title: string) => (await screen.findByText(title)).closest("li.needs-row") as HTMLElement;
+  // Owner walk 2026-11-08: a Program row is named by its Program; the step's
+  // question is the hover of its line. The row is found by its item.
+  const rowOf = (item: any) => waitFor(() => {
+    const li = document.querySelector<HTMLElement>(`li.needs-row[data-object-id="${item.id}"]`);
+    if (!li) throw new Error(`no row ${item.id}`);
+    return li;
+  });
   const verbs = (li: HTMLElement) => [...li.querySelectorAll<HTMLElement>("[data-testid='needs-row-verb']")].map((b) => b.textContent);
+  const menuOf = async (li: HTMLElement) => {
+    fireEvent.contextMenu(li, { clientX: 40, clientY: 60 });
+    return [...(await screen.findByRole("menu")).querySelectorAll<HTMLElement>("[role='menuitem']")];
+  };
 
   it("File · Skip and Make · Skip, each sent to the step's decide route with its kind", async () => {
     serve(structuredClone(needsAudit));
     render(<NeedsDrawer />);
-    const file = await rowOf("3 findings to file as Door tasks");
+    const file = await rowOf((needsAudit.items as any[]).find((row) => row.program?.kind === "audit_file"));
     expect((needsAudit.items as any[]).filter((row) => row.source === "program" && row.program.kind !== "close").map((row) => row.why))
       .toEqual(["TO DECIDE", "TO DECIDE"]);
-    // The choices, then Later and Send (the briefing page takes these rows too).
-    expect(verbs(file).slice(0, 2)).toEqual(["File", "Skip"]);
-    expect(verbs(file).slice(2).map((word) => word?.replace(/\s*▾$/, ""))).toEqual(["Later", "Send"]);
-    const make = await rowOf("A fix program from 1 MUST finding");
-    expect(verbs(make).slice(0, 2)).toEqual(["Make", "Skip"]);
+    // One verb, Decide; the choices, Later and Send are the row's menu.
+    expect(verbs(file)).toEqual(["Decide"]);
+    expect((await menuOf(file)).map((m) => m.textContent)).toEqual(["Open", "File", "Skip", "Later»", "Send»"]);
+    fireEvent.keyDown(screen.getByRole("menu"), { key: "Escape" });
     const item = needsAudit.items.find((row: any) => row.program?.kind === "fix_program") as any;
-    fireEvent.click(make.querySelector("[data-verb='program-make']")!);
+    const make = await rowOf(item);
+    expect(verbs(make)).toEqual(["Decide"]);
+    fireEvent.click((await menuOf(make)).find((m) => m.textContent === "Make")!);
     await waitFor(() => expect(posts).toContainEqual({ url: item.program.decide, json: { kind: "fix_program", choice: "make" } }));
   });
 
@@ -566,9 +578,11 @@ describe("Needs you: File, Make and a lesson are TO DECIDE rows that press the s
     serve(structuredClone(needsLesson));
     const item = needsLesson.items.find((row: any) => row.program?.kind === "lesson") as any;
     render(<NeedsDrawer />);
-    const li = await rowOf(item.title);
-    expect(verbs(li).slice(0, 3)).toEqual(["Keep for this program", "Keep for HoldSpeak", "Skip"]);
-    fireEvent.click(li.querySelector("[data-verb='program-keep-repo']")!);
+    const li = await rowOf(item);
+    expect(verbs(li)).toEqual(["Decide"]);
+    const entries = await menuOf(li);
+    expect(entries.map((m) => m.textContent).slice(1, 4)).toEqual(["Keep for this program", "Keep for HoldSpeak", "Skip"]);
+    fireEvent.click(entries.find((m) => m.textContent === "Keep for HoldSpeak")!);
     await waitFor(() => expect(posts).toContainEqual({
       url: item.program.decide, json: { kind: "lesson", choice: "keep_repo", lesson_id: item.program.lessonId } }));
   });
