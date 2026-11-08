@@ -6,7 +6,7 @@
  * registry and the registry verbs the Dock and Go run), never a new path. */
 import { ApiError, apiFetch } from "../../lib/api";
 import { DESK_APPLICATIONS, applicationVerbId } from "../applications";
-import { hubSeeded } from "../compositor/hubWindows";
+import { deskReady, frontWindow, lookIn, lookOnDesk, selectorFor, walkLoading } from "./dom";
 import { openSurface, openSurfaceOr } from "../shell";
 
 /** One step. The keys run in this order: open, verb, press, scroll, say,
@@ -15,8 +15,8 @@ import { openSurface, openSurfaceOr } from "../shell";
 export interface WalkStep {
   open?: { app: string; scope?: string };
   verb?: { verb: string; window?: string };
-  /** The guide presses the target itself: the cursor travels, the ring
-   * pulses, the real click lands, the face settles for 600 ms. */
+  /** The guide presses the target itself: the cursor travels, hovers and
+   * taps, the real click lands, the face settles for 600 ms. */
   press?: { target: string; words?: string; window?: string; thing?: string };
   /** The guide scrolls the target into the clear area above the sheet. */
   scroll?: { target: string; window?: string; thing?: string };
@@ -202,23 +202,10 @@ export async function runWalkVerb(id: string): Promise<boolean> {
   return true;
 }
 
-function selectorFor(target: string): string {
-  return /^[A-Za-z][A-Za-z0-9_-]*$/.test(target) ? `[data-testid="${target}"]` : target;
-}
-
-function zOf(element: Element): number {
-  const z = Number.parseInt(getComputedStyle(element).zIndex, 10);
-  return Number.isFinite(z) ? z : 0;
-}
-
 /** The window element of an app (the front one when it has several), or
  * null when that window is not open. */
 export function findWalkWindow(app: string): HTMLElement | null {
-  const id = walkWindowId(app);
-  const own = Array.from(document.querySelectorAll<HTMLElement>("[data-layer='window']"))
-    .filter((element) => element.id === id || element.id.startsWith(`${id}:`))
-    .sort((left, right) => zOf(right) - zOf(left));
-  return own[0] ?? null;
+  return frontWindow(walkWindowId(app));
 }
 
 /** The window a step's part is in: the part's own `window`, else the app
@@ -238,33 +225,15 @@ export interface WalkPart {
  * A step with no app looks on the desk outside the walk. */
 export function findWalkTarget(target: string, app?: string): WalkPart {
   const selector = selectorFor(target);
-  const look = (root: ParentNode): HTMLElement | null => {
-    try {
-      return root.querySelector<HTMLElement>(selector);
-    } catch {
-      return null;
-    }
-  };
-  if (!app) {
-    const anywhere = look(document);
-    return { window: null, target: anywhere && !anywhere.closest("[data-walk]") ? anywhere : null };
-  }
+  if (!app) return { window: null, target: lookOnDesk(selector) };
   const root = findWalkWindow(app);
-  return { window: root, target: root ? look(root) : null };
+  return { window: root, target: root ? lookIn(root, selector) : null };
 }
 
 /** The ceiling of the target wait, and the ceiling while the step's window
  * still reads its first answers (its loading markers are on). */
 export const TARGET_MS = 6000;
 export const TARGET_LOADING_MS = 12000;
-
-/** True while a part of the desk reads its first answer. The desk's own
- * marker: a region that reads says `aria-busy` (the loading face of the
- * kit, the Surface state, a pullout that opens a note); the desk sweep
- * settles on the same marker. */
-export function walkLoading(root: ParentNode | null): boolean {
-  return !!root?.querySelector("[aria-busy='true']");
-}
 
 /** The desk is ready for the guide (owner, 2026-11-07, on his iPhone: "the
  * click happened only shortly after the web page loaded… only launch when
@@ -275,14 +244,7 @@ export function walkLoading(root: ParentNode | null): boolean {
  *   `aria-busy` (the "Preparing HoldSpeak" face);
  * - the Dock has drawn (`.desk-dock` has a box);
  * - no window reads its first answer (no `aria-busy` in a window). */
-export function deskReady(): boolean {
-  if (typeof document === "undefined" || !hubSeeded()) return false;
-  const desk = document.getElementById("desk-next");
-  if (!desk || desk.getAttribute("aria-busy") === "true") return false;
-  const dock = document.querySelector(".desk-dock");
-  if (!dock || dock.getBoundingClientRect().height <= 0) return false;
-  return !Array.from(document.querySelectorAll("[data-layer='window']")).some(walkLoading);
-}
+export { deskReady, deskSignals, walkLoading } from "./dom";
 
 /** The one deliberate beat after the desk is ready: the eye lands before
  * the guide moves. */

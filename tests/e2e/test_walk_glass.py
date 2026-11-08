@@ -1,21 +1,20 @@
-"""The Walk, AS RENDERED: the highlighted part takes the pointer.
+"""The Walk, AS RENDERED: the marked part takes the pointer.
 
 The first walk on the owner's desk (2026-11-07, "totally doesn't work"): the
 ring marked New program, but a press on it went to the dim backdrop (a
 clip-path cut-out Chromium's hit test did not honour). Only a real browser
 proves the hit test, so this is T4: a walk made through the hub
 (``POST /api/walks``) marks ``programs-new``; the part takes the pointer two
-frames after its window moves (the cut-out lagged it by its 180 ms
-transition: the press Playwright retried went to the dim); a plain press (no
-force) on it opens the well (the project rows show); and a point far from
-the part is the dim's. At 1440 x 900 and 393 x 844.
+frames after its window moves; a plain press (no force) on it opens the well
+(the project rows show). Direction C (2026-11-08): the mark is the part's own
+warm halo and nothing dims, so a point far from the part is the desk's, not
+the walk's. At 1440 x 900 and 393 x 844.
 
-The hand-held walk (2026-11-08, the owner on his iPhone: "a lot more obvious
-we are being hand-held… it doesn't feel like it really captured the
-screens"): on an iPhone viewport (430 x 932, scale 3, touch) the pixel frame
-sits inside the safe area, a ``press`` step really opens the well (no hand of
-the test presses New program), and the stored shot is the whole viewport at
-the capture scale. Every other face of the walk is T2
+The hand-held walk (2026-11-08, the owner on his iPhone): on an iPhone
+viewport (430 x 932, scale 3, touch) the warm edge sits inside the safe
+area, a ``press`` step really opens the well (the guide's cursor travels with
+its trail; no hand of the test presses New program), and the stored shot is
+the whole viewport at the capture scale. Every other face of the walk is T2
 (``web/src/desk/walk/__tests__/walk.app.test.tsx``).
 """
 
@@ -43,7 +42,7 @@ T = 20_000
 _FAR_HIT_JS = """
 () => {
   const pad = 12;
-  const part = document.querySelector('[data-testid="walk-ring"]').getBoundingClientRect();
+  const part = document.querySelector('.walk-halo').getBoundingClientRect();
   const card = document.querySelector('[data-testid="walk-card"]').getBoundingClientRect();
   const inside = (box, x, y) => x >= box.left - pad && x <= box.right + pad && y >= box.top - pad && y <= box.bottom + pad;
   const w = window.innerWidth, h = window.innerHeight;
@@ -51,7 +50,7 @@ _FAR_HIT_JS = """
   for (const [x, y] of points) {
     if (inside(part, x, y) || inside(card, x, y)) continue;
     const hit = document.elementFromPoint(x, y);
-    return { x, y, testid: hit && hit.getAttribute('data-testid'), cls: hit && hit.className };
+    return { x, y, testid: hit && hit.getAttribute('data-testid'), walk: !!(hit && hit.closest('[data-walk]')) };
   }
   return null;
 }
@@ -80,7 +79,7 @@ async () => {
 
 
 @pytest.mark.parametrize("size", [(1440, 900), (393, 844)], ids=["1440", "393"])
-def test_the_highlighted_part_takes_a_plain_press_and_the_dim_blocks_the_rest(
+def test_the_marked_part_takes_a_plain_press_and_the_desk_stays_live(
         tmp_path: Path, monkeypatch: pytest.MonkeyPatch, size: tuple[int, int]) -> None:
     from playwright.sync_api import sync_playwright
 
@@ -108,7 +107,7 @@ def test_the_highlighted_part_takes_a_plain_press_and_the_dim_blocks_the_rest(
                 _normal_chair(page)
                 page.goto(f"{base}{made['url_path']}", wait_until="load")
 
-                page.get_by_test_id("walk-ring").wait_for(timeout=T)
+                page.locator('[data-testid="programs-new"].walk-halo').wait_for(timeout=T)
                 target = page.locator('[data-testid="programs-new"]')
                 assert page.evaluate(_HIT_AFTER_MOVE_JS) == {"moved": "programs-new", "back": "programs-new"}
                 # A plain press: Playwright refuses it when another element
@@ -118,7 +117,8 @@ def test_the_highlighted_part_takes_a_plain_press_and_the_dim_blocks_the_rest(
 
                 far = page.evaluate(_FAR_HIT_JS)
                 assert far is not None, "no point outside the part and the card"
-                assert str(far["testid"] or "").startswith("walk-backdrop"), far
+                # No dim: the walk takes no pointer away from the desk.
+                assert not far["walk"] and not str(far["testid"] or "").startswith("walk-"), far
                 assert errors == [], errors
             finally:
                 ctx.close()
@@ -128,7 +128,7 @@ def test_the_highlighted_part_takes_a_plain_press_and_the_dim_blocks_the_rest(
 
 
 # The Dynamic Island and the home bar: Chromium reports no safe area, so the
-# rig sets the two insets the frame reads (an iPhone 18 Pro Max in portrait).
+# rig sets the two insets the edge reads (an iPhone 18 Pro Max in portrait).
 _SAFE_TOP, _SAFE_BOTTOM = 59, 34
 _SAFE_CSS = f".walk-layer {{ --walk-safe-top: {_SAFE_TOP}px; --walk-safe-bottom: {_SAFE_BOTTOM}px; }}"
 
@@ -148,7 +148,7 @@ def _png_size(path: Path) -> tuple[int, int]:
     return struct.unpack(">II", head[16:24])
 
 
-def test_on_his_iphone_the_frame_holds_the_safe_area_the_guide_presses_and_the_shot_is_the_screen(
+def test_on_his_iphone_the_edge_holds_the_safe_area_the_guide_presses_and_the_shot_is_the_screen(
         tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     from playwright.sync_api import sync_playwright
 
@@ -180,15 +180,25 @@ def test_on_his_iphone_the_frame_holds_the_safe_area_the_guide_presses_and_the_s
                 page.goto(f"{base}{made['url_path']}", wait_until="load")
                 page.add_style_tag(content=_SAFE_CSS)
 
-                # The frame is inside the safe area, edge to edge between them.
-                page.get_by_test_id("walk-frame").wait_for(state="attached", timeout=T)
-                frame = page.evaluate(_BOX_JS, "walk-frame")
-                assert frame == {"left": 0, "top": _SAFE_TOP, "right": width, "bottom": height - _SAFE_BOTTOM}, frame
-                assert page.evaluate("getComputedStyle(document.querySelector('.walk-frame')).pointerEvents") == "none"
-                guide = page.evaluate(_BOX_JS, "walk-guide")
-                assert guide["top"] >= _SAFE_TOP, guide
+                # The warm edge is inside the safe area, edge to edge between them.
+                page.get_by_test_id("walk-edge").wait_for(state="attached", timeout=T)
+                edge = page.evaluate(_BOX_JS, "walk-edge")
+                assert edge == {"left": 0, "top": _SAFE_TOP, "right": width, "bottom": height - _SAFE_BOTTOM}, edge
+                assert page.evaluate("getComputedStyle(document.querySelector('.walk-edge')).pointerEvents") == "none"
+                # No robot, no bubble, no pixel frame.
+                assert page.locator(".walk-guide, .walk-bubble, .walk-frame, .walk-ring").count() == 0
                 # A touch device starts the voice from one tap (iOS).
                 page.get_by_test_id("walk-begin").tap()
+
+                # The guide's cursor travels with its comet trail (the shots
+                # for the owner's eye), then presses New program itself.
+                shots = evidence_dir("walk-c")
+                page.locator('[data-testid="walk-cursor-ghost"]').first.wait_for(state="attached", timeout=T)
+                page.wait_for_timeout(180)
+                page.screenshot(path=str(shots / "walk-c-press-430.png"))
+                page.locator('[data-testid="walk-cursor"][data-phase="tap"], [data-testid="walk-cursor"][data-phase="rest"]'
+                             ).first.wait_for(state="attached", timeout=T)
+                page.screenshot(path=str(shots / "walk-c-tap-430.png"))
 
                 # The guide presses New program itself: the well opens.
                 page.get_by_test_id("walk-question").wait_for(timeout=T)
@@ -199,7 +209,10 @@ def test_on_his_iphone_the_frame_holds_the_safe_area_the_guide_presses_and_the_s
                 redo = page.get_by_test_id("walk-choice-1").bounding_box()
                 assert keep and redo and keep["height"] >= 56 and abs(keep["width"] - redo["width"]) < 1
                 page.wait_for_timeout(500)
-                page.screenshot(path=str(evidence_dir("walk-handheld") / "walk-handheld-430.png"))
+                assert page.locator('[data-testid="programs-make-rows"].walk-halo').count() == 1
+                caption = page.evaluate(_BOX_JS, "walk-words")
+                assert caption and caption["bottom"] <= sheet["top"], (caption, sheet)
+                page.screenshot(path=str(shots / "walk-c-ask-430.png"))
 
                 page.get_by_test_id("walk-choice-0").tap()
                 page.get_by_test_id("walk-end").wait_for(timeout=T)
@@ -223,7 +236,7 @@ def test_on_his_iphone_the_frame_holds_the_safe_area_the_guide_presses_and_the_s
 # click happened only shortly after the web page loaded… only launch when all
 # is loaded"). The page's own fetch holds the hub's window list and the
 # Programs list 2.5 s on their first read, and every project read 4 s. The
-# rig notes when the walk's ready marker, cursor and rings first appear, and
+# rig notes when the walk's ready marker, cursor, ripple and halo first appear, and
 # the guide's own click (an untrusted one: every press of the rig is trusted).
 _SLOW_DESK_JS = """
 (() => {
@@ -250,10 +263,10 @@ _SLOW_DESK_JS = """
   new MutationObserver(() => {
     mark("ready", "[data-desk-ready]");
     mark("cursor", '[data-testid="walk-cursor"]');
-    mark("pressRing", '[data-testid="walk-press-ring"]');
-    mark("ring", '[data-testid="walk-ring"]');
+    mark("ripple", '[data-testid="walk-ripple"]');
+    mark("halo", ".walk-halo");
     mark("programs", "[data-layer='window'][id='surface-programs'], [data-layer='window'][id^='surface-programs:']");
-  }).observe(document, { subtree: true, childList: true, attributes: true, attributeFilter: ["data-desk-ready"] });
+  }).observe(document, { subtree: true, childList: true, attributes: true, attributeFilter: ["data-desk-ready", "class"] });
   document.addEventListener("click", (event) => {
     if (event.isTrusted || window.__walkClick) return;
     const target = event.target instanceof Element ? event.target : null;
@@ -317,9 +330,9 @@ def test_the_walk_starts_only_when_the_desk_is_ready_and_moves_one_beat_later(
                 # The press waits for the Programs window's first read.
                 assert click["testid"] == "programs-new" and not click["busy"], (seen, click)
                 # The guide moves one beat after the hub's window list landed.
-                first_move = min(seen[key] for key in ("cursor", "pressRing", "ring") if key in seen)
+                first_move = min(seen[key] for key in ("cursor", "ripple", "halo") if key in seen)
                 assert first_move - seen["windows"] >= 900, (seen, click)
-                # No press and no ring before the desk is ready.
+                # No press and no mark before the desk is ready.
                 assert "ready" in seen and click["ready"], (seen, click)
                 # The first move comes at least one 900 ms beat after the marker.
                 assert first_move - seen["ready"] >= 900, (seen, click)
