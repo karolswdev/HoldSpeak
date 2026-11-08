@@ -12,7 +12,9 @@ publish capture and its own outcome check (eight copies).
 from __future__ import annotations
 
 import time
-from dataclasses import dataclass
+import uuid
+from collections.abc import Callable, Mapping
+from dataclasses import dataclass, replace
 from typing import Any, Optional
 
 DEFAULT_DEADLINE_SECONDS = 120.0
@@ -58,6 +60,8 @@ class Answer:
     engine: Engine
     outcome: str = "succeeded"
     send_phase: str = ""
+    published: Any = None
+    invocation_id: str = ""
 
     @property
     def output(self) -> str:
@@ -152,13 +156,16 @@ def run(
     adapter: Any = None,
     result_ref: Optional[str] = None,
     invocation_id: str = "",
+    stage: Optional[tuple[str, Callable[[Any], Mapping[str, Any]]]] = None,
 ) -> Answer:
     """Run ``job`` once on its assigned engine (or on ``engine`` when the
     caller already holds one) and return the answer.
 
     ``contract`` names the payload shape in the receipt (default: the job).
     ``adapter`` turns the payload into the provider call (default: a
-    system/user prompt). Raises ``EngineDoorError``.
+    system/user prompt). ``stage`` is ``(kind, encoder)``: the answer is
+    staged as that projection kind and published (``Answer.published``) only
+    once the runner's receipt says the job succeeded. Raises ``EngineDoorError``.
     """
     from ..kernel.inference_runner import InvocationRequest, ServiceContract
     from ..kernel.runtime import _as_principal
@@ -170,6 +177,8 @@ def run(
 
         adapter = CanonicalPromptAdapter()
     contract = contract or job
+    if stage is not None and not invocation_id:
+        invocation_id = "door_" + uuid.uuid4().hex
     request = InvocationRequest(
         deployment_revision=engine.revision,
         definition_origin=ServiceContract.for_payload(contract, contract_revision, payload),
@@ -184,9 +193,24 @@ def run(
         captured.append(value)
         return ref
 
+    publish: Any = _capture
+    if stage is not None:
+        kind, encode = stage
+
+        def _encode(value: Any) -> Mapping[str, Any]:
+            captured.append(value)
+            return encode(value)
+
+        # The stager's publisher follows a dialect retry onto the attempt that ran.
+        publish = broker.projection_stager.publisher(invocation_id, kind, _encode)
     with _as_principal(principal):
-        outcome = broker.inference_runner.invoke(request, adapter, publish=_capture)
-    return _answer(outcome, captured, engine, job)
+        outcome = broker.inference_runner.invoke(request, adapter, publish=publish)
+    answer = _answer(outcome, captured, engine, job)
+    if stage is not None:
+        answer = replace(
+            answer, published=broker.projection_stager.finalize(invocation_id), invocation_id=invocation_id,
+        )
+    return answer
 
 
 def _answer(outcome: Any, captured: list[Any], engine: Engine, job: str) -> Answer:

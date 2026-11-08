@@ -375,21 +375,13 @@ def test_model_promotion_admits_before_generation_and_leaves_receipt(
     assert payload["artifact"]["status"] == "draft"
     assert payload["artifact"]["body_markdown"].startswith("# Draft ADR")
     assert payload["placement"] == {
-        "source": "frozen_owner_assignment", "egress": {"scope": "local"}
+        "source": "owner_assignment", "egress": {"scope": "local"}
     }
-    # The promotion's own (parent) operation carries the run's receipt …
-    parent = broker.store.operation(payload["operation_id"])
-    parent_receipt = broker.store.receipt(payload["operation_id"])
-    assert parent["name"] == "decision.promotion-draft"
-    assert parent_receipt["outcome"] == "succeeded"
-    # The receipt points at the artifact the admitted run actually produced.
-    assert parent_receipt["result_ref"] == payload["artifact"]["id"]
-    # … and the model call rode as its admitted inference child.
-    child_id = payload["invocation"]["operation_id"]
-    child = broker.store.operation(child_id)
-    assert child["name"] == "inference.invoke"
-    assert child["parent_operation_id"] == payload["operation_id"]
-    assert broker.store.receipt(child_id)["outcome"] == "succeeded"
+    # The draft's one receipt is the runner's kernel operation: the model call.
+    operation = broker.store.operation(payload["operation_id"])
+    assert operation["name"] == "inference.invoke"
+    assert broker.store.receipt(payload["operation_id"])["outcome"] == "succeeded"
+    assert payload["invocation"]["operation_id"] == payload["operation_id"]
 
 
 def _superseded_promotion_rig(db: Database):

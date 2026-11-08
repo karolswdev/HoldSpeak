@@ -475,89 +475,8 @@ def test_search_finds_kafka_in_decision_text_and_linked_work(tmp_path):
 # --- admitted promotion fence (HS-131-07) -----------------------------------
 
 
-@pytest.mark.parametrize("order", ["parent_closes_first", "signal_first"])
-def test_promotion_cancellation_after_provider_return_never_publishes_artifact(tmp_path, monkeypatch, order):
-    from tests._cancel_after_return import force_cancel_order
-
-    force_cancel_order(monkeypatch, order)
-    db = Database(tmp_path / "promotion.db")
-    _accepted_meeting_decision(db, "dec-fence")
-    from holdspeak.services.inference_assignment_service import InferenceAssignmentService
-    from tests.unit.test_phase143_inference_assignments import OWNER as ASSIGNMENT_OWNER, _profile
-    _profile(db, "promotion")
-    InferenceAssignmentService(db).set_assignment(ASSIGNMENT_OWNER, {
-        "command_id": "assign-promotion", "expected_revision": 0,
-        "scope": {"kind": "capability", "capability_id": "decision.promotion_draft"},
-        "entries": [{"profile_id": "promotion", "profile_revision": 1}],
-    })
-    from holdspeak.kernel.runtime import _configure
-    broker = _configure(db)
-    owner = Principal(PrincipalKind.OWNER, "promotion-owner")
-
-    class CancellingIntel:
-        def run_prompt(self, **_):
-            with db._connection() as conn:
-                parent_id = conn.execute(
-                    "SELECT operation_id FROM kernel_parent_runs WHERE kind='decision.promotion-draft'"
-                ).fetchone()[0]
-            # The durable parent cancellation lands while the provider call is
-            # in flight, before the runner can elect a successful child receipt.
-            broker.parent_run_controller.cancel_by_operation_id(owner, parent_id)
-            return "late draft that must not publish"
-
-    broker.inference_runner._engine_factory = lambda _revision, **_kw: CancellingIntel()
-    service = DecisionLifecycleService(db, kernel=broker)
-    # The child's provider work completed, so its receipt is EARNED
-    # (succeeded); the cancellation election fences PUBLICATION instead —
-    # the finalize discard refuses the artifact by name.
-    with pytest.raises(ConflictError, match="decision_promotion_cancelled"):
-        asyncio.run(service.draft_promoted_with_model(owner, "dec-fence", "note", {}))
-
-    with db._connection() as conn:
-        parent_id = conn.execute(
-            "SELECT operation_id FROM kernel_parent_runs WHERE kind='decision.promotion-draft'"
-        ).fetchone()[0]
-        child_id = conn.execute(
-            "SELECT operation_id FROM kernel_operations WHERE parent_operation_id=? AND name='inference.invoke'",
-            (parent_id,),
-        ).fetchone()[0]
-        artifact_count = conn.execute("SELECT COUNT(*) FROM artifacts").fetchone()[0]
-    parent_receipt = broker.store.receipt(parent_id)
-    assert artifact_count == 0
-    from tests._cancel_after_return import assert_provider_return_on_record
-
-    assert_provider_return_on_record(db, child_id, fenced=order == "signal_first")
-    assert parent_receipt is not None and parent_receipt["outcome"] == "cancelled"
-
-
-def test_promotion_cancelled_after_child_is_eligible_discards_artifact(tmp_path):
-    db = Database(tmp_path / "promotion-late.db")
-    _accepted_meeting_decision(db, "dec-late")
-    from holdspeak.services.inference_assignment_service import InferenceAssignmentService
-    from tests.unit.test_phase143_inference_assignments import OWNER as ASSIGNMENT_OWNER, _profile
-    _profile(db, "promotion-late")
-    InferenceAssignmentService(db).set_assignment(ASSIGNMENT_OWNER, {
-        "command_id": "assign-promotion-late", "expected_revision": 0,
-        "scope": {"kind": "capability", "capability_id": "decision.promotion_draft"},
-        "entries": [{"profile_id": "promotion-late", "profile_revision": 1}],
-    })
-    from holdspeak.kernel.runtime import _configure
-    broker = _configure(db); owner = Principal(PrincipalKind.OWNER, "promotion-owner")
-    broker.inference_runner._engine_factory = lambda _revision, **_kw: type("Intel", (), {"run_prompt": lambda self, **_: "eligible draft"})()
-    finalize = broker.projection_stager.finalize
-    def cancel_before_finalize(invocation_id):
-        parent_id = broker.store.operation(broker.projection_stager.get(invocation_id).operation_id)["parent_operation_id"]
-        broker.parent_run_controller.cancel_by_operation_id(owner, parent_id)
-        return finalize(invocation_id)
-    broker.projection_stager.finalize = cancel_before_finalize
-    with pytest.raises(ConflictError, match="decision_promotion_cancelled"):
-        asyncio.run(DecisionLifecycleService(db, kernel=broker).draft_promoted_with_model(owner, "dec-late", "note", {}))
-    with db._connection() as conn:
-        assert conn.execute("SELECT COUNT(*) FROM artifacts").fetchone()[0] == 0
-
-
 def test_promotion_missing_assignment_records_one_refusal_and_no_artifact(tmp_path):
-    """E2: no exact OWNER assignment still leaves a terminal parent receipt."""
+    """No engine assigned: a named refusal, no model call, no artifact."""
     db = Database(tmp_path / "promotion-missing-assignment.db")
     _accepted_meeting_decision(db, "dec-missing")
     from holdspeak.kernel.runtime import _configure
@@ -570,16 +489,12 @@ def test_promotion_missing_assignment_records_one_refusal_and_no_artifact(tmp_pa
         ))
 
     assert refused.value.code == "decision_promotion_draft_refused"
-    assert refused.value.context["parent_receipt"]["outcome"] == "refused"
+    assert refused.value.context["reason"] == "inference_no_engine"
     with db._connection() as conn:
-        assert conn.execute("SELECT COUNT(*) FROM kernel_parent_runs").fetchone()[0] == 1
-        assert conn.execute("SELECT COUNT(*) FROM inference_parent_route_bundles").fetchone()[0] == 0
-        assert conn.execute("SELECT COUNT(*) FROM inference_route_plans").fetchone()[0] == 0
         assert conn.execute("SELECT COUNT(*) FROM kernel_operations WHERE name='inference.invoke'").fetchone()[0] == 0
         assert conn.execute("SELECT COUNT(*) FROM artifacts").fetchone()[0] == 0
 
-    # E-F2: creating exact authority after a refusal repairs the same decision
-    # revision instead of replaying its zero-budget refusal parent.
+    # Assigning an engine afterwards drafts the same decision revision.
     from holdspeak.services.inference_assignment_service import InferenceAssignmentService
     from tests.unit.test_phase143_inference_assignments import OWNER as ASSIGNMENT_OWNER, _profile
     with db._connection() as conn:
@@ -606,11 +521,11 @@ def test_promotion_missing_assignment_records_one_refusal_and_no_artifact(tmp_pa
     ))
     assert calls == ["physical"]
     assert recovered["artifact"] is not None
-    assert recovered["parent_receipt"]["outcome"] == "succeeded"
+    assert broker.store.receipt(recovered["operation_id"])["outcome"] == "succeeded"
 
 
 def test_promotion_known_preflight_failure_stays_failed_at_owner_parent(tmp_path):
-    """E-F4 through a shared OWNER adopter: only uncertainty is indeterminate."""
+    """An engine that is not ready: a named refusal and no artifact."""
     from holdspeak.kernel.runtime import _configure
     from holdspeak.services.inference_assignment_service import InferenceAssignmentService
     from tests.unit.test_phase143_inference_assignments import OWNER as ASSIGNMENT_OWNER, _profile
@@ -635,14 +550,8 @@ def test_promotion_known_preflight_failure_stays_failed_at_owner_parent(tmp_path
             owner, "dec-known-unavailable", "note", {}
         ))
     assert refused.value.code == "decision_promotion_draft_refused"
-    assert refused.value.context["parent_receipt"]["outcome"] == "failed"
     with db._connection() as conn:
-        route = conn.execute(
-            "SELECT terminal_outcome FROM inference_route_executions"
-        ).fetchone()
-        assert conn.execute("SELECT COUNT(*) FROM inference_route_attempts").fetchone()[0] == 0
-        assert conn.execute("SELECT COUNT(*) FROM kernel_operations WHERE name='inference.invoke'").fetchone()[0] == 0
-    assert route["terminal_outcome"] == "failed"
+        assert conn.execute("SELECT COUNT(*) FROM artifacts").fetchone()[0] == 0
 
 
 def test_promotion_request_target_override_is_named_terminal_refusal(tmp_path):
@@ -659,15 +568,12 @@ def test_promotion_request_target_override_is_named_terminal_refusal(tmp_path):
         ))
 
     assert refused.value.code == "inference_request_target_override_retired"
-    assert refused.value.context["parent_receipt"]["outcome"] == "refused"
     with db._connection() as conn:
-        assert conn.execute("SELECT COUNT(*) FROM inference_parent_route_bundles").fetchone()[0] == 0
-        assert conn.execute("SELECT COUNT(*) FROM inference_route_plans").fetchone()[0] == 0
         assert conn.execute("SELECT COUNT(*) FROM kernel_operations WHERE name='inference.invoke'").fetchone()[0] == 0
 
 
 def test_promotion_refusal_identity_never_seals_or_relabels_the_routed_request(tmp_path):
-    """E-F2 via the product service: refusal and executable identities diverge."""
+    """A retired override is refused; a blank retry drafts; a redraft keeps one artifact."""
     from holdspeak.kernel.runtime import _configure
     from holdspeak.services.inference_assignment_service import InferenceAssignmentService
     from tests.unit.test_phase143_inference_assignments import OWNER as ASSIGNMENT_OWNER, _profile
@@ -706,43 +612,34 @@ def test_promotion_refusal_identity_never_seals_or_relabels_the_routed_request(t
         ))
     repaired = asyncio.run(service.draft_promoted_with_model(owner, "dec-repair", "note", {}))
     assert first_refusal.value.code == "inference_request_target_override_retired"
-    assert first_refusal.value.context["parent_receipt"]["outcome"] == "refused"
-    assert repaired["parent_receipt"]["outcome"] == "succeeded"
-    assert repaired["parent_receipt"]["receipt_id"] != first_refusal.value.context["parent_receipt"]["receipt_id"]
+    assert broker.store.receipt(repaired["operation_id"])["outcome"] == "succeeded"
 
-    # Conversely an already succeeded execution cannot be returned as a stale
-    # override's refusal receipt.
     succeeded = asyncio.run(service.draft_promoted_with_model(owner, "dec-success", "note", {}))
     with pytest.raises(ConflictError) as stale_refusal:
         asyncio.run(service.draft_promoted_with_model(
             owner, "dec-success", "note", {"inference_target_id": "retired"}
         ))
     assert stale_refusal.value.code == "inference_request_target_override_retired"
-    assert stale_refusal.value.context["parent_receipt"]["outcome"] == "refused"
-    assert stale_refusal.value.context["parent_receipt"]["receipt_id"] != succeeded["parent_receipt"]["receipt_id"]
-    # Exact valid replay preserves the single physical operation/artifact.
-    replay = asyncio.run(service.draft_promoted_with_model(owner, "dec-success", "note", {}))
-    assert replay["artifact"]["id"] == succeeded["artifact"]["id"]
-    assert physical == ["physical", "physical"]
+    # A redraft runs the engine again and rewrites the same artifact.
+    again = asyncio.run(service.draft_promoted_with_model(owner, "dec-success", "note", {}))
+    assert again["artifact"]["id"] == succeeded["artifact"]["id"]
+    assert physical == ["physical", "physical", "physical"]
     with db._connection() as conn:
         assert conn.execute("SELECT COUNT(*) FROM artifacts").fetchone()[0] == 2
-        assert conn.execute("SELECT COUNT(*) FROM inference_route_attempts").fetchone()[0] == 2
 
 
-def test_promotion_assignment_freeze_uses_elected_draft_only(tmp_path, monkeypatch):
-    db = Database(tmp_path / "promotion-frozen-assignment.db")
+def test_promotion_drafts_on_the_assigned_engine_and_names_its_egress(tmp_path):
+    db = Database(tmp_path / "promotion-assigned.db")
     with db._connection() as conn:
         conn.execute(
             "INSERT INTO meetings (id, started_at, title) VALUES (?, ?, ?)",
-            ("meeting-127", "2026-08-07T00:00:00+00:00", "Frozen assignment"),
+            ("meeting-127", "2026-08-07T00:00:00+00:00", "Assigned engine"),
         )
-    _accepted_meeting_decision(db, "dec-frozen")
+    _accepted_meeting_decision(db, "dec-assigned")
     from holdspeak.services.inference_assignment_service import InferenceAssignmentService
     from tests.unit.test_phase143_inference_assignments import OWNER as ASSIGNMENT_OWNER, _profile
     _profile(db, "promotion-initial")
-    _profile(db, "promotion-edited")
-    assignments = InferenceAssignmentService(db)
-    assignments.set_assignment(ASSIGNMENT_OWNER, {
+    InferenceAssignmentService(db).set_assignment(ASSIGNMENT_OWNER, {
         "command_id": "assign-promotion-initial", "expected_revision": 0,
         "scope": {"kind": "capability", "capability_id": "decision.promotion_draft"},
         "entries": [{"profile_id": "promotion-initial", "profile_revision": 1}],
@@ -753,27 +650,12 @@ def test_promotion_assignment_freeze_uses_elected_draft_only(tmp_path, monkeypat
         "Intel", (), {"run_prompt": lambda self, **_: "only elected draft"}
     )()
     owner = Principal(PrincipalKind.OWNER, "promotion-owner")
-    real_admit = broker.inference_adoption_service.admit_on_frozen_route
-
-    def admit_after_edit(*args, **kwargs):
-        assignments.set_assignment(ASSIGNMENT_OWNER, {
-            "command_id": "replace-promotion-route", "expected_revision": 1,
-            "scope": {"kind": "capability", "capability_id": "decision.promotion_draft"},
-            "entries": [{"profile_id": "promotion-edited", "profile_revision": 1}],
-        })
-        return real_admit(*args, **kwargs)
-
-    monkeypatch.setattr(broker.inference_adoption_service, "admit_on_frozen_route", admit_after_edit)
     result = asyncio.run(DecisionLifecycleService(db, kernel=broker).draft_promoted_with_model(
-        owner, "dec-frozen", "note", {}
+        owner, "dec-assigned", "note", {}
     ))
 
     assert result["artifact"]["body_markdown"] == "only elected draft"
     assert result["placement"]["egress"] == {"scope": "local"}
-    with db._connection() as conn:
-        assert [row[0] for row in conn.execute(
-            "SELECT profile_id FROM inference_route_plan_entries"
-        ).fetchall()] == ["promotion-initial"]
 
 
 def test_a_desk_record_in_the_list_carries_its_decision_title(tmp_path):

@@ -498,10 +498,7 @@ def _drive_decision(tmp_path, monkeypatch) -> SurfaceRun:
     asyncio.run(
         service.draft_promoted_with_model(OWNER, "dec-spine", "note", {})
     )
-    return SurfaceRun(
-        db, OWNER, _parent_run_operation_id(db, "decision.promotion-draft"), THIS_MACHINE_ID,
-        parent_kind="decision.promotion-draft",
-    )
+    return SurfaceRun(db, OWNER, None, THIS_MACHINE_ID)
 
 
 def _drive_delivery_review(tmp_path, monkeypatch) -> SurfaceRun:
@@ -837,10 +834,10 @@ assert len(SURFACE_DRIVERS) == 15, "every named surface form is proven here; non
 #: the sanity test below) because ``test_one_path_provenance.py`` imports these
 #: to cross-check the DECLARED shape against the shape the stored row actually
 #: shows — the two files cannot drift apart without one of them failing.
-ROOT_SHAPED_SURFACES = frozenset({"Ask", "Recipe run", "Rails"})  # HS-151-02: Recipe chat removed
+ROOT_SHAPED_SURFACES = frozenset({"Ask", "Recipe run", "Rails", "Decision promotion"})  # HS-151-02: Recipe chat removed
 CHILD_SHAPED_SURFACES = frozenset({
     "Sequence", "Workflow", "manual Workbench", "scheduled Workbench",
-    "memory writeback", "Decision promotion", "Delivery review", "voice",
+    "memory writeback", "Delivery review", "voice",
     "meeting live", "meeting deferred", "dictation pipeline", "cadence next action",
 })
 
