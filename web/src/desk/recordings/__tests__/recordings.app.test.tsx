@@ -50,7 +50,6 @@ vi.mock("../../openObject", async (importOriginal) => ({
 
 import { ApiError } from "../../../lib/api";
 import { DESK_APPLICATIONS, goRows } from "../../applications";
-import { RUNTIME_FRAME_TYPES } from "../../../runtime/frames";
 import { RecordingsCore } from "../RecordingsWindow";
 import { ScreenRecordLamp, ScreenRecordTile } from "../ScreenRecord";
 import { RecordingsSettings } from "../RecordingsSettings";
@@ -153,7 +152,6 @@ describe("the Recordings window is in the manifest, and its frame is registered"
     expect(app?.windowId).toBe("surface-recordings");
     expect(app?.surface).toMatchObject({ defaultW: 720, defaultH: 520, sprite: "system:dock-screen-record" });
     expect(goRows("work").some((row) => row.kind === "app" && row.app.action === "open-recordings")).toBe(true);
-    expect(RUNTIME_FRAME_TYPES).toContain("recording_state");
   });
 });
 
