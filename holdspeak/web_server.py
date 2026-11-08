@@ -1879,7 +1879,7 @@ class MeetingWebServer:
             try:
                 import faulthandler, signal
 
-                faulthandler.register(signal.SIGUSR1, all_threads=True, chain=True)
+                faulthandler.register(signal.SIGUSR1, all_threads=True, chain=False)
             except Exception as exc:  # pragma: no cover - platform without SIGUSR1
                 log.info(f"thread dump signal not registered: {exc}")
 
