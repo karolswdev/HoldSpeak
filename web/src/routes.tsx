@@ -4,8 +4,9 @@
 // home and opens the matching desk window at the right scope. Features do
 // not own routes anymore — adding a surface means a SURFACES row in
 // SurfaceWindows plus (optionally) one demoted-path row here.
-import { lazy, type ComponentType, type LazyExoticComponent } from "react";
+import { type ComponentType, type LazyExoticComponent } from "react";
 import { watchChunk } from "./runtime/freshBuild";
+import { preloadable } from "./runtime/preloadable";
 
 export interface ProductRoute {
   path: string;
@@ -14,17 +15,27 @@ export interface ProductRoute {
   immersive?: boolean;
 }
 
-const Desk = lazy(watchChunk(() => import("./desk/DeskApp")));
-const Welcome = lazy(watchChunk(() => import("./pages/WelcomePage")));
-const Presence = lazy(watchChunk(() => import("./pages/PresencePage")));
+const Desk = preloadable(watchChunk(() => import("./desk/DeskApp")));
+const Welcome = preloadable(watchChunk(() => import("./pages/WelcomePage")));
+const Presence = preloadable(watchChunk(() => import("./pages/PresencePage")));
+
+/** Read the chunk of the surface this path draws: every path that is not
+ * /welcome or /presence ends on the Desk. main.tsx renders after it, so the
+ * first render does not suspend (a lazy Desk that suspended at boot was drawn
+ * about 300 ms late; runtime/preloadable.ts). A failed read still renders:
+ * the lazy fails into the error boundary, as before. */
+export function preloadSurface(pathname: string): Promise<unknown> {
+  const surface = pathname === "/welcome" ? Welcome : pathname === "/presence" ? Presence : Desk;
+  return surface.preload();
+}
 
 export const PRODUCT_ROUTES: ProductRoute[] = [
-  { path: "/", label: "Desk", component: Desk, immersive: true },
-  { path: "/welcome", label: "Welcome", component: Welcome, immersive: true },
+  { path: "/", label: "Desk", component: Desk.component, immersive: true },
+  { path: "/welcome", label: "Welcome", component: Welcome.component, immersive: true },
   {
     path: "/presence",
     label: "Presence",
-    component: Presence,
+    component: Presence.component,
     immersive: true,
   },
 ];

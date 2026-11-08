@@ -2,7 +2,7 @@
 // owner is in America/Denver and three faces printed UTC. vitest runs in
 // the zone the process has, so this file pins it.
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { humanTime, wireClock, wireDate } from "../format";
+import { humanTime, wireClock, wireDate, wireDayClock } from "../format";
 
 const previous = process.env.TZ;
 beforeAll(() => {
@@ -50,5 +50,18 @@ describe("wireDate", () => {
   it("humanTime measures a bare SQLite stamp from UTC", () => {
     const stamp = new Date(Date.now() - 5 * 60_000).toISOString().slice(0, 19).replace("T", " ");
     expect(humanTime(stamp)).toBe("5m ago");
+  });
+});
+
+describe("wireDayClock", () => {
+  it("says the local day as en-US short month and day, then the clock", () => {
+    // 03:06 UTC on Oct 4 is Oct 3, 21:06 in Denver.
+    expect(wireDayClock("2026-10-04T03:06:10Z")).toBe("Oct 3, 21:06");
+    for (let month = 0; month < 12; month += 1) {
+      const date = new Date(2026, month, 9, 12, 0);
+      const day = date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+      expect(wireDayClock(date.toISOString())).toBe(`${day}, 12:00`);
+    }
+    expect(wireDayClock("not a time")).toBe("");
   });
 });
