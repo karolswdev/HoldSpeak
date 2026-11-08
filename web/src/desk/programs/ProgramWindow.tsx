@@ -26,7 +26,7 @@ import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNod
 import { Button } from "../../components/signal/Signal";
 import { ApiError } from "../../lib/api";
 import { WorkMenu } from "../components/DeskMenu";
-import { openRef } from "../openObject";
+import { openRef, PROGRAM_STEP_EVENT, takeProgramStepRequest } from "../openObject";
 import { openProjectRoom } from "../shell";
 import { spriteUrl } from "../sprites";
 import { useDesk } from "../store";
@@ -807,6 +807,20 @@ export function ProgramBody({ programId }: { programId: string }) {
     return steps.find((step) => ["briefed", "working", "checking", "review", "pr_open"].includes(step.state))
       ?? steps.find((step) => step.state === "check_failed") ?? null;
   }, [program, steps, selected]);
+
+  // A Needs you row that names a step (`program:<id>:<step>`) opens the
+  // window with that step selected: on mount, and on the event when the
+  // window is open already. The latest request wins.
+  useEffect(() => {
+    const take = () => {
+      const step = takeProgramStepRequest(programId);
+      if (step) { setAskPart(null); setSelected(step); }
+    };
+    take();
+    const onStep = (event: Event) => { if ((event as CustomEvent<string>).detail === programId) take(); };
+    window.addEventListener(PROGRAM_STEP_EVENT, onStep);
+    return () => window.removeEventListener(PROGRAM_STEP_EVENT, onStep);
+  }, [programId]);
 
   // PG-WINDOW: the step his eye went to stays open (the board never moves
   // under him when the held item leaves); a press picks another.
