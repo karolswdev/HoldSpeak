@@ -6,6 +6,7 @@
  * registry and the registry verbs the Dock and Go run), never a new path. */
 import { ApiError, apiFetch } from "../../lib/api";
 import { DESK_APPLICATIONS, applicationVerbId } from "../applications";
+import { hubSeeded } from "../compositor/hubWindows";
 import { openSurface, openSurfaceOr } from "../shell";
 
 /** One step. The keys run in this order: open, verb, press, scroll, say,
@@ -252,12 +253,71 @@ export function findWalkTarget(target: string, app?: string): WalkPart {
   return { window: root, target: root ? look(root) : null };
 }
 
-/** Wait for the target: a window paints its core after a lazy load. */
-export async function waitForWalkTarget(target: string, app: string | undefined, ms = 6000): Promise<WalkPart> {
+/** The ceiling of the target wait, and the ceiling while the step's window
+ * still reads its first answers (its loading markers are on). */
+export const TARGET_MS = 6000;
+export const TARGET_LOADING_MS = 12000;
+
+/** True while a part of the desk reads its first answer. The desk's own
+ * marker: a region that reads says `aria-busy` (the loading face of the
+ * kit, the Surface state, a pullout that opens a note); the desk sweep
+ * settles on the same marker. */
+export function walkLoading(root: ParentNode | null): boolean {
+  return !!root?.querySelector("[aria-busy='true']");
+}
+
+/** The desk is ready for the guide (owner, 2026-11-07, on his iPhone: "the
+ * click happened only shortly after the web page loaded… only launch when
+ * all is loaded"). All four of the desk's own signals:
+ * - the compositor restored its windows: the hub's window list landed
+ *   (`hubSeeded`, the flag the Chair's mount rules read);
+ * - the desk's first read landed: `#desk-next` is drawn and does not say
+ *   `aria-busy` (the "Preparing HoldSpeak" face);
+ * - the Dock has drawn (`.desk-dock` has a box);
+ * - no window reads its first answer (no `aria-busy` in a window). */
+export function deskReady(): boolean {
+  if (typeof document === "undefined" || !hubSeeded()) return false;
+  const desk = document.getElementById("desk-next");
+  if (!desk || desk.getAttribute("aria-busy") === "true") return false;
+  const dock = document.querySelector(".desk-dock");
+  if (!dock || dock.getBoundingClientRect().height <= 0) return false;
+  return !Array.from(document.querySelectorAll("[data-layer='window']")).some(walkLoading);
+}
+
+/** The one deliberate beat after the desk is ready: the eye lands before
+ * the guide moves. */
+export const READY_BEAT_MS = 900;
+/** After this long without a ready desk the guide says so and waits. */
+export const READY_CEILING_MS = 15000;
+export const STILL_LOADING = "The desk is still loading";
+
+/** Wait until the desk is ready; false when the ceiling came first. */
+export async function waitForDeskReady(ms = READY_CEILING_MS): Promise<boolean> {
   const until = Date.now() + ms;
   for (;;) {
+    if (deskReady()) return true;
+    if (Date.now() >= until) return false;
+    await wait(100);
+  }
+}
+
+/** Wait for the target: a window paints its core after a lazy load and
+ * reads its first answers after that. The target counts when it is there
+ * and its window reads nothing, two looks in a row (a window that mounts
+ * says `aria-busy` one frame after its toolbar). The ceiling is 6 s, and
+ * 12 s while the window still reads; at the ceiling the part is taken as
+ * it is. */
+export async function waitForWalkTarget(target: string, app: string | undefined, ms = TARGET_MS,
+  loadingMs = TARGET_LOADING_MS): Promise<WalkPart> {
+  const start = Date.now();
+  let calm = 0;
+  for (;;) {
     const found = findWalkTarget(target, app);
-    if (found.target || Date.now() >= until) return found;
+    const loading = walkLoading(found.window);
+    calm = found.target && !loading ? calm + 1 : 0;
+    if (calm >= 2) return found;
+    const spent = Date.now() - start;
+    if (spent >= (loading ? Math.max(ms, loadingMs) : ms)) return found;
     await wait(150);
   }
 }

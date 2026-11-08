@@ -20,6 +20,7 @@ const mocks = vi.hoisted(() => ({
   stop: vi.fn(),
   play: vi.fn(),
   requestRoomAt: vi.fn(),
+  hubSeeded: vi.fn(() => true),
 }));
 
 vi.mock("../../shell", () => ({ openSurface: mocks.openSurface, openSurfaceOr: mocks.openSurfaceOr }));
@@ -30,6 +31,8 @@ vi.mock("../../../lib/tts", () => ({ speak: mocks.speak, stop: mocks.stop, enque
   onStateChange: () => () => undefined }));
 vi.mock("../../../lib/sfx", () => ({ play: mocks.play }));
 vi.mock("../../openObject", () => ({ requestRoomAt: mocks.requestRoomAt }));
+// The compositor's own flag: the hub's window list landed.
+vi.mock("../../compositor/hubWindows", () => ({ hubSeeded: mocks.hubSeeded }));
 // The walk's wire is the typed client (the null-read guard); here it rides
 // the stubbed global fetch so each case keeps its recorded hub answers.
 vi.mock("../../../lib/api", async (importOriginal) => {
@@ -47,6 +50,19 @@ vi.mock("../../../lib/api", async (importOriginal) => {
 });
 
 import { WalkRunner } from "../WalkRunner";
+import { READY_BEAT_MS, deskReady } from "../walk";
+
+/** The desk as it stands after its first read: `#desk-next` and the Dock. */
+function mountDesk(): { desk: HTMLElement; dock: HTMLElement } {
+  const desk = document.createElement("div");
+  desk.id = "desk-next";
+  const dock = document.createElement("div");
+  dock.className = "desk-dock";
+  desk.appendChild(dock);
+  document.body.appendChild(desk);
+  rects.set(dock, () => ({ left: 0, top: 700, width: 600, height: 56 }));
+  return { desk, dock };
+}
 
 function mountWindow(id: string, html: string, z?: number): HTMLElement {
   const element = document.createElement("div");
@@ -94,6 +110,8 @@ beforeEach(() => {
     return box ? rectOf(box()) : realRect.call(this);
   };
   window.history.replaceState({}, "", `/?walk=${TOKEN}`);
+  mocks.hubSeeded.mockReturnValue(true);
+  mountDesk();
   mocks.openSurface.mockImplementation((key: string) => {
     if (key === "open-programs") {
       mountWindow("surface-programs", `<button data-testid="programs-new">New program</button>
@@ -431,5 +449,123 @@ describe("The Walk", () => {
       .toBe("iPhone · Safari 26");
     expect(walkAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"))
       .toBe("Mac · Chrome 142");
+  });
+});
+
+describe("The walk waits for the desk (owner 2026-11-07: \"only launch when all is loaded\")", () => {
+  afterEach(() => { vi.useRealTimers(); });
+
+  const pressWalk = {
+    title: "Ready",
+    answers: {},
+    steps: [
+      { open: { app: "surface-programs" } },
+      { press: { target: "programs-new", words: "I press New program." },
+        highlight: { target: "programs-make-rows", words: "The project rows." },
+        ask: { ref: "s-ready", question: "Does the well read clearly?", choices: ["Keep", "Redo"] } },
+    ],
+  };
+  const run = (ms: number) => act(async () => { await vi.advanceTimersByTimeAsync(ms); });
+  // The clock and the timers are fake; the fetch's own I/O ticks stay real.
+  /** The walk's own read lands (real I/O ticks; the fake clock stands). */
+  const walkRead = async () => {
+    for (let tick = 0; tick < 200 && !screen.queryByTestId("walk"); tick += 1) {
+      await act(async () => { await new Promise((resolve) => setImmediate(resolve)); });
+    }
+    expect(screen.getByTestId("walk")).toBeInTheDocument();
+  };
+  const fakeTimers = () => vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "setInterval", "clearInterval", "Date"] });
+
+  it("is ready only on the desk's own signals: windows restored, desk read, Dock drawn, no window reading", () => {
+    expect(deskReady()).toBe(true);
+    mocks.hubSeeded.mockReturnValue(false);
+    expect(deskReady()).toBe(false);
+    mocks.hubSeeded.mockReturnValue(true);
+    const desk = document.getElementById("desk-next")!;
+    desk.setAttribute("aria-busy", "true");
+    expect(deskReady()).toBe(false);
+    desk.removeAttribute("aria-busy");
+    const dock = document.querySelector(".desk-dock")!;
+    rects.set(dock, () => ({ left: 0, top: 0, width: 0, height: 0 }));
+    expect(deskReady()).toBe(false);
+    rects.set(dock, () => ({ left: 0, top: 700, width: 600, height: 56 }));
+    const reading = mountWindow("surface-meetings", `<div role="status" aria-busy="true"></div>`);
+    expect(deskReady()).toBe(false);
+    reading.remove();
+    expect(deskReady()).toBe(true);
+    document.querySelector(".desk-dock")!.remove();
+    expect(deskReady()).toBe(false);
+  });
+
+  it("opens nothing before the desk is ready, then moves one 900 ms beat later", async () => {
+    fakeTimers();
+    vi.stubGlobal("fetch", hub(200, pressWalk));
+    mocks.hubSeeded.mockReturnValue(false);
+    render(<WalkRunner />);
+    await walkRead();
+    await run(5000);
+    expect(screen.getByTestId("walk")).not.toHaveAttribute("data-desk-ready");
+    expect(mocks.openSurface).not.toHaveBeenCalled();
+    // The hub's window list lands: the marker, then the beat.
+    mocks.hubSeeded.mockReturnValue(true);
+    await run(100);
+    expect(screen.getByTestId("walk")).toHaveAttribute("data-desk-ready");
+    await run(READY_BEAT_MS - 150);
+    expect(mocks.openSurface).not.toHaveBeenCalled();
+    await run(200);
+    expect(mocks.openSurface).toHaveBeenCalledWith("open-programs", undefined);
+  });
+
+  it("says the desk is still loading after 15 s and starts on his tap", async () => {
+    fakeTimers();
+    vi.stubGlobal("fetch", hub(200, pressWalk));
+    mocks.hubSeeded.mockReturnValue(false);
+    render(<WalkRunner />);
+    await walkRead();
+    await run(14_000);
+    expect(screen.queryByTestId("walk-still-loading")).toBeNull();
+    await run(1200);
+    expect(screen.getByTestId("walk-still-loading")).toHaveTextContent("The desk is still loading");
+    expect(mocks.openSurface).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByTestId("walk-still-loading"));
+    await run(100);
+    expect(mocks.openSurface).toHaveBeenCalledWith("open-programs", undefined);
+  });
+
+  it("presses only after the window's first read, and finds rows that land after 6 s", async () => {
+    fakeTimers();
+    vi.stubGlobal("fetch", hub(200, pressWalk));
+    const pressed = vi.fn();
+    let win: HTMLElement | null = null;
+    mocks.openSurface.mockImplementation(() => {
+      // The toolbar draws at once; the body reads for 2.5 s.
+      win = mountWindow("surface-programs", `<button data-testid="programs-new">New program</button>
+        <div data-testid="body"><div role="status" aria-busy="true"></div></div>`);
+      win.querySelector("[data-testid='programs-new']")!.addEventListener("click", () => {
+        pressed();
+        // The well reads its projects for 8 s (past the 6 s target wait).
+        win!.querySelector("[data-testid='body']")!.innerHTML =
+          `<section data-testid="programs-make"><div role="status" aria-busy="true"></div></section>`;
+        setTimeout(() => {
+          win!.querySelector("[data-testid='programs-make']")!.innerHTML =
+            `<ul data-testid="programs-make-rows"><li>Project</li></ul>`;
+        }, 8000);
+      });
+      return true;
+    });
+    render(<WalkRunner />);
+    await walkRead();
+    await run(READY_BEAT_MS + 1000);
+    expect(mocks.openSurface).toHaveBeenCalled();
+    await run(2000);
+    expect(pressed).not.toHaveBeenCalled();
+    expect(screen.queryByTestId("walk-cursor")).toBeNull();
+    win!.querySelector("[data-testid='body']")!.innerHTML = "";
+    await run(1500);
+    expect(pressed).toHaveBeenCalledTimes(1);
+    await run(9000);
+    expect(screen.getByTestId("walk-question")).toHaveTextContent("Does the well read clearly?");
+    expect(screen.getByTestId("walk-ring")).toBeInTheDocument();
+    expect(screen.queryByTestId("walk-line")).toBeNull();
   });
 });
