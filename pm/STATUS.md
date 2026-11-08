@@ -2,6 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · #1923 The Room's Now face is the brief (R1): the toolbar (Write update, History, the Ask field with its mic), the status line (state, last update, n need you that opens Needs you in place), What changed (the latest update's first lines, Open the update, the kept draft's Continue), What is open (Programs, People, Decisions rows), Files and Sources on one line, the status bar (Updates every Friday at 15:00 · engine, Saved time); the Update chips and the Programs fold are parked.
 - 2026-11-08 · #1921 scripts/measure.py reads only the current build's chunks (_built keeps every build): JS files 369 → 145; the night's measure is on top of the day file (desk chunk 2,417 → 1,537 KiB, program_service 5,591 → 4,370, project_service 5,459 → 3,404, cold start 2.34 → 1.53 s).
 - 2026-11-08 · #1919 Fix forward #1917: the Room glass deliver-twice case reopens the update after the Room comes back on Now.
 - 2026-11-08 · #1918 Fix forward #1906 and #1917 in the windows glass: decision openers land in the Decisions window and close to the desk, the Decisions window comes back iconified (1440) or open on its record (393) after a reload, and the Room's kept draft returns through Continue.
