@@ -2616,10 +2616,10 @@
           "line": 572
         },
         {
-          "path": "web/src/pages/cores/connections/Destinations.tsx",
+          "path": "web/src/features/channels/DestinationForm.tsx",
           "symbol": "function DestForm({",
           "claim": "Recipient edits parse commas/newlines, retain the saved email key ref and scope local presence knowledge to provider plus exact ref.",
-          "line": 119
+          "line": 106
         },
         {
           "path": "web/src/desk/surface/send/SendWell.tsx",

@@ -702,9 +702,9 @@
           "claim": "The registry enumerates Desk verbs."
         },
         {
-          "path": "web/src/features/project-room/ProjectRoomCore.tsx",
-          "symbol": "function RoomHead",
-          "line": 319,
+          "path": "web/src/features/project-room/core/RoomHead.tsx",
+          "symbol": "function RoomHead({",
+          "line": 41,
           "claim": "Healthy pending Review leads the header and opens the existing canonical review; Draft update remains secondary."
         }
       ],
@@ -1845,9 +1845,9 @@
           "claim": "Calendar review uses readable library fields and stable local row identities. Pending Confirm keeps the draft mounted; refusal retains it for exact retry and accepted receipts use the returned source/count."
         },
         {
-          "path": "web/src/pages/cores/SettingsCore.tsx",
+          "path": "web/src/pages/cores/settings/RemoteAccess.tsx",
           "symbol": "export function RemoteAccessModule",
-          "line": 723,
+          "line": 118,
           "claim": "Remote and Projects Retry target their own GET; Reload reads current state without replaying or confirming the failed writer."
         }
       ],

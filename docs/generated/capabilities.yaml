@@ -7095,9 +7095,9 @@
         },
         {
           "claim": "Healthy pending Review leads the header and opens the existing canonical review; Draft update remains secondary.",
-          "line": 319,
-          "path": "web/src/features/project-room/ProjectRoomCore.tsx",
-          "symbol": "function RoomHead"
+          "line": 41,
+          "path": "web/src/features/project-room/core/RoomHead.tsx",
+          "symbol": "function RoomHead({"
         }
       ],
       "status": "partial",
@@ -8242,8 +8242,8 @@
         },
         {
           "claim": "Remote and Projects Retry target their own GET; Reload reads current state without replaying or confirming the failed writer.",
-          "line": 723,
-          "path": "web/src/pages/cores/SettingsCore.tsx",
+          "line": 118,
+          "path": "web/src/pages/cores/settings/RemoteAccess.tsx",
           "symbol": "export function RemoteAccessModule"
         }
       ],
@@ -11138,8 +11138,8 @@
         },
         {
           "claim": "Recipient edits parse commas/newlines, retain the saved email key ref and scope local presence knowledge to provider plus exact ref.",
-          "line": 119,
-          "path": "web/src/pages/cores/connections/Destinations.tsx",
+          "line": 106,
+          "path": "web/src/features/channels/DestinationForm.tsx",
           "symbol": "function DestForm({"
         },
         {
