@@ -2,6 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · #1905 The desk chunk drops the Program window, the note window and the Room (not on glass at first paint): 2,417 -> 2,042 KiB raw (765 -> 657 KiB gzip); new chunks ProgramWindow 84 KiB, ThoughtWorkspaceWindow 33 + ThoughtDocumentPane 24 KiB, the Room in MemoryCore 9 -> 172 KiB; all JS 9,630 -> 9,636 KiB raw, 2,885 -> 2,894 KiB gzip.
 - 2026-11-08 · #1904 The Program reads move into program_reads.py (1,434 lines; 63 reads: 33 service read methods and the 30 pure reads they use; imports only the Program store, definitions, rules, brief words and errors); program_service.py 5,591 -> 4,370 lines, the service keeps a thin method for each.
 - 2026-11-08 · #1903 The Programs app tests are split by face: programs.app.test.tsx (3,735 lines) becomes seven programs.<face>.app.test.tsx files (128 to 796 lines) and one shared programs.test-setup.tsx (450 lines); 147 it( and 1 it.each( before and after, 152 cases pass, and the density guard fences the eight files at 900 lines.
 - 2026-11-08 · #1902 The Room's reads move into project_room_reads.py (2,234 lines; 15 _read_room_* reads and 15 helpers, imports only definitions, errors and steward serialization); project_service.py 5,459 -> 3,404 lines, the service keeps a thin method for each.

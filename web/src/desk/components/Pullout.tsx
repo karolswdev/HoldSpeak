@@ -16,10 +16,12 @@ import { useThreadStore } from "../threads";
 import { PULLOUT_CONTENT } from "../pullouts";
 import { PULLOUT_FAMILIES } from "../pullouts/families";
 import { PULLOUT_SIZE } from "../pullouts/size";
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { Suspense, lazy, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { watchChunk } from "../../runtime/freshBuild";
 import type { RegisterCloseGuard } from "../pullouts/types";
 import { openNoteThought, type Thought } from "../thoughts";
-import { ThoughtWorkspaceWindow } from "../thought-workspace/ThoughtWorkspaceWindow";
+// The note's opening face is styled there; the window's code is its own chunk.
+import "../thought-workspace/thought-workspace.css";
 import { FootSlotContext, TitleSlotContext, WingSlotContext } from "../surface";
 import type { ProjectReturn } from "../store/types";
 
@@ -151,6 +153,12 @@ function PulloutFrame({
  *  resumes a finished one, so no note needs a "Develop" press to open, and
  *  no note moves to another drawer. The ordinary note face (NotePullout) and
  *  its form editor are no longer reached from here. */
+/** The note window is not on glass at first paint (measure 2026-11-08): its
+ *  code (the editor and CodeMirror) is its own chunk. The chunk loads while
+ *  the hub reads the note's thought, so the window opens no later. */
+const loadThoughtWorkspace = watchChunk(() => import("../thought-workspace/ThoughtWorkspaceWindow"));
+const ThoughtWorkspaceWindow = lazy(() => loadThoughtWorkspace().then((module) => ({ default: module.ThoughtWorkspaceWindow })));
+
 function NoteWindowRouter({ o, pulloutId, origin, projectReturn }: { o: WorldObject; pulloutId: string; origin?: { x: number; y: number } | null; projectReturn?: ProjectReturn | null }) {
   const [thought, setThought] = useState<Thought | null>(null);
   const [failed, setFailed] = useState(false);
@@ -162,12 +170,14 @@ function NoteWindowRouter({ o, pulloutId, origin, projectReturn }: { o: WorldObj
   useEffect(() => {
     let live = true;
     setThought(null); setFailed(false);
+    void loadThoughtWorkspace().catch(() => undefined);
     void openNoteThought(o.id).then((next) => { if (live) setThought(next); }).catch(() => { if (live) setFailed(true); });
     return () => { live = false; };
   }, [o.id]);
 
-  if (thought) return <ThoughtWorkspaceWindow object={o} pulloutId={pulloutId} thought={thought} origin={origin} projectReturn={projectReturn} onClose={close} />;
-  return <PulloutFrame o={o} pulloutId={pulloutId} origin={origin} overrideContent={<div className="desk-pullout-body desk-surface-body surface-host-body thought-workspace-opening" data-surface-host={o.kind} aria-busy={!failed}>{failed ? <><span>The note did not open. It is unchanged. Try again.</span><Button variant="primary" onClick={load}>Try again</Button></> : <span>Opening note…</span>}</div>} />;
+  const opening = <PulloutFrame o={o} pulloutId={pulloutId} origin={origin} overrideContent={<div className="desk-pullout-body desk-surface-body surface-host-body thought-workspace-opening" data-surface-host={o.kind} aria-busy={!failed}>{failed ? <><span>The note did not open. It is unchanged. Try again.</span><Button variant="primary" onClick={load}>Try again</Button></> : <span>Opening note…</span>}</div>} />;
+  if (thought) return <Suspense fallback={opening}><ThoughtWorkspaceWindow object={o} pulloutId={pulloutId} thought={thought} origin={origin} projectReturn={projectReturn} onClose={close} /></Suspense>;
+  return opening;
 }
 
 export function Pullout({
