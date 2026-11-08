@@ -1400,7 +1400,10 @@ class ProgramService:
     def _wire(self, program: Mapping[str, Any], steps: list[dict[str, Any]]) -> dict[str, Any]:
         from .program_requirements import provable, repository_config
 
-        checkpoints = self.store.list_checkpoints(program["id"])
+        # A plan_goal claim the steps made unneeded (planned by hand first)
+        # did nothing: it is no line of the ledger he reads (nor the shaper's).
+        checkpoints = [row for row in self.store.list_checkpoints(program["id"])
+                       if not (row.get("kind") == PLAN_GOAL_KIND and row.get("choice") == "skipped")]
         reqs = self.requirements(program["id"])
         summary = self._summary(program, steps, requirements=reqs, checkpoints=checkpoints)
         turn = self._turn(program, steps, requirements=reqs, checkpoints=checkpoints)

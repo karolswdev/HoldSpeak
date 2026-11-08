@@ -579,6 +579,21 @@ def test_a_program_with_steps_is_never_planned_from_its_goal(tmp_path, monkeypat
     assert (claim["choice"], claim["line"]) == ("skipped", PLAN_GOAL_NOT_NEEDED)
 
 
+def test_spoken_rows_waiting_on_the_desk_are_never_planned_over(tmp_path, monkeypatch) -> None:
+    from holdspeak.services import program_spoken
+
+    rig = _goal_desk(tmp_path, monkeypatch, "yolo")
+    program_spoken.put_on_desk(rig.service, rig.pid, {"changes": [], "base": ""}, "add a step for the indexes")
+    try:
+        rig.tick()
+        assert rig.engine.prompts == [] and rig.program(rig.pid)["steps"] == []
+        assert program_spoken.on_desk(rig.pid) is not None, "his spoken rows stay in the well"
+        assert _claim(rig, rig.pid)["choice"] == "skipped"
+        assert not [row for row in rig.program(rig.pid)["checkpoints"] if row.get("kind") == "plan_goal"]
+    finally:
+        program_spoken.reset()
+
+
 def test_a_goal_the_engine_cannot_plan_says_so_once_and_waits_for_plan_it(tmp_path, monkeypatch) -> None:
     rig = _goal_desk(tmp_path, monkeypatch, "yolo", engine=False)
     rig.tick()

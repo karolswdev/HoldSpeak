@@ -207,6 +207,13 @@ def on_desk(program_id: Any) -> Optional[dict[str, Any]]:
         return dict(found) if found else None
 
 
+def waiting(program_id: Any) -> bool:
+    """Spoken rows wait for this Program (held on a call, or on the desk)."""
+    pid = str(program_id or "")
+    with _LOCK:
+        return pid in _DESK or any(key[0] == pid for key in _HELD)
+
+
 def drop(program_id: Any) -> bool:
     """Not this, or Apply: the call's rows leave the well."""
     with _LOCK:
