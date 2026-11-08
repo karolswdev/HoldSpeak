@@ -441,6 +441,42 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
     expect(document.querySelectorAll(".needs-row").length).toBe(0);
   });
 
+  // HS-S43 (D22/G43 = A): the People overlay shows what he owes his people and
+  // leaves out what they owe him. One static line says so in every settled
+  // state, and its one verb opens the ordinary People place, unscoped.
+  it("S43: one line names what the overlay leaves out; Open People opens People plain, in every settled state", async () => {
+    vi.mocked(openSurfaceOr).mockClear();
+    const calls = () => vi.mocked(apiFetch).mock.calls.map((c) => String(c[0]));
+    await mount();
+    const note = screen.getByTestId("needs-people-coverage");
+    expect(note.textContent).toContain("They owe me does not show People commitments to you.");
+    expect(note.textContent).not.toMatch(/\b0\b/);
+    expect(note.closest("li.needs-row")).toBeNull();
+    expect(screen.getByText("8 need you")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Open People" }));
+    expect(openSurfaceOr).toHaveBeenCalledTimes(1);
+    expect(openSurfaceOr).toHaveBeenCalledWith("open-people", "/");
+    // No People read is made to draw the line or on the press.
+    expect(calls().some((p) => p.startsWith("/api/people"))).toBe(false);
+
+    // Filtered: the line stays, outside the chip conditions.
+    const rowsBefore = screen.getByTestId("needs-list").querySelectorAll("li.needs-row").length;
+    fireEvent.click(within(screen.getByTestId("needs-filter")).getByTestId("needs-chip-project"));
+    fireEvent.click(screen.getAllByRole("menuitem")[0]);
+    expect(within(screen.getByTestId("needs-filter")).getByTestId("needs-chip-project").getAttribute("data-filter-active")).toBe("true");
+    expect(screen.getByTestId("needs-list").querySelectorAll("li.needs-row").length).toBeLessThan(rowsBefore);
+    expect(screen.getByTestId("needs-people-coverage")).toBeTruthy();
+
+    // Empty and People unread: the line stays and the warning stays.
+    vi.mocked(apiFetch).mockImplementation(async () =>
+      ({ count: 0, items: [], coverage: [], complete: true, peopleStoreState: "locked" }) as never);
+    (globalThis as { __resetNeedsYou?: () => void }).__resetNeedsYou?.();
+    render(<NeedsDrawer />);
+    await screen.findByText("Nothing needs you");
+    await screen.findByTestId("needs-people-read-failed");
+    expect(screen.getAllByTestId("needs-people-coverage").length).toBeGreaterThan(0);
+  });
+
   it("one object, one row: the item an agent works carries its agent's question", async () => {
     const asking: AgentFlight = { ...WORKING, state: "waiting", sessionKey: "claude:s-run" };
     useAgentFlights.setState({ flights: [FLIGHT, asking], sessions: [] } as never);
