@@ -204,13 +204,23 @@ export function hasRowMenu(face: Pick<NeedFace, "verbs">): boolean {
   return face.verbs.kind === "work" || face.verbs.kind === "confirm";
 }
 
-function NeedVerbsView({ face, primary, onWell, well, menu = null, onMenu = () => undefined }: {
+/** The context menu's Project entry: `Open the Project: <name>` opens the
+ *  Project's Room (PHILO-17 U30: one home, never a drawer). */
+function projectEntries(project: { id: string; name: string } | null): WorkMenuEntry[] {
+  return project
+    ? [{ type: "item", id: "project-room", label: `Open the Project: ${project.name}`, onSelect: () => openProjectRoom(project.id) }]
+    : [];
+}
+
+function NeedVerbsView({ face, primary, onWell, well, menu = null, onMenu = () => undefined, extra = [] }: {
   face: NeedFace;
   primary: boolean;
   well: Well | null;
   onWell(next: Well | null): void;
   menu?: RowMenu | null;
   onMenu?(next: RowMenu | null): void;
+  /** Entries every row's menu carries after its own (the Project). */
+  extra?: WorkMenuEntry[];
 }) {
   const [busy, setBusy] = useState(false);
   const moreRef = useRef<HTMLButtonElement>(null);
@@ -421,7 +431,7 @@ function NeedVerbsView({ face, primary, onWell, well, menu = null, onMenu = () =
           <Button dense variant="secondary" disabled={busy} aria-label={named("Done")} data-testid="needs-row-verb" data-verb="done"
             onClick={(event) => void act("Done", () => followThrough(v.cardId, "done"), key, event.currentTarget)}>Done</Button>
         )}
-        {menu ? <WorkMenu label={face.name} x={menu.x} y={menu.y} entries={entries} autoFocus onClose={() => onMenu(null)}
+        {menu ? <WorkMenu label={face.name} x={menu.x} y={menu.y} entries={[...entries, ...extra]} autoFocus onClose={() => onMenu(null)}
           returnFocus={() => menu.row?.querySelector<HTMLElement>("[data-testid=needs-row-verb]")?.focus()} /> : null}
       </>;
     }
@@ -493,7 +503,7 @@ function NeedVerbsView({ face, primary, onWell, well, menu = null, onMenu = () =
           onClick={() => void act("Confirm", () => apiFetch(
             `/api/proposals/${encodeURIComponent(v.proposalId)}/confirm`, { method: "POST" },
           ), `proposal:${v.proposalId}`)}>Confirm</Button>
-        {menu ? <WorkMenu label={face.name} x={menu.x} y={menu.y} entries={entries} autoFocus onClose={() => onMenu(null)}
+        {menu ? <WorkMenu label={face.name} x={menu.x} y={menu.y} entries={[...entries, ...extra]} autoFocus onClose={() => onMenu(null)}
           returnFocus={() => menu.row?.querySelector<HTMLElement>("[data-testid=needs-row-verb]")?.focus()} /> : null}
       </>;
     }
@@ -898,14 +908,14 @@ export function NeedRow({ face, primary, projects, plates = true }: {
 
 /** The lamp words that say nothing on a row (owner walk 2026-11-08: "the
  *  'Yours' (well, duh, of course it's going to be mine…)"). */
-const DEFAULT_STATES = new Set(["YOURS", "NEEDS YOU"]);
+const DEFAULT_STATES = new Set(["yours", "needs you"]);
 
 /** The row's one quiet word, only when it is not the default: nothing on
  *  his own row; the person's name on a row a person owes (`Bea`, `Bea ·
  *  OVERDUE`); any other state as the hub says it. */
 export function quietState(face: Pick<NeedFace, "lamp" | "direction" | "personName">): NeedFace["lamp"] | null {
   const label = String(face.lamp.label ?? "").trim();
-  if (!label || DEFAULT_STATES.has(label.toUpperCase())) return null;
+  if (!label || DEFAULT_STATES.has(label.toLowerCase())) return null;
   if (face.direction === "theirs") {
     // `WAITING ON BEA · OVERDUE` → `Bea · Overdue`; `TO REVIEW` → `Dana · To review`.
     const parts = label.split(" · ");
@@ -924,7 +934,12 @@ function PlainNeedRow({ face, primary, projects, plates }: { face: NeedFace; pri
   const [menu, setMenu] = useState<RowMenu | null>(null);
   const press = useRef<{ timer: number; held: boolean } | null>(null);
   const project = projects && face.project ? face.project : null;
-  const menuable = hasRowMenu(face);
+  // The row's own menu (work, confirm), or for any other row that names its
+  // Project: Open and Open the Project.
+  const extra = projectEntries(project);
+  const own = hasRowMenu(face);
+  const opener = faceOpener(face);
+  const menuable = own || extra.length > 0;
   const clearPress = () => { if (press.current) window.clearTimeout(press.current.timer); };
   // Owner walk 2026-11-08: the row's other verbs are its context menu (a
   // right press, a long press on touch, the ContextMenu key or Shift+F10).
@@ -983,7 +998,10 @@ function PlainNeedRow({ face, primary, projects, plates }: { face: NeedFace; pri
             {face.moreAsks ? (
               <Token className="surface-token" data-testid="needs-more-asks">{`+${face.moreAsks} MORE`}</Token>
             ) : null}
-            <NeedVerbsView face={face} primary={primary} well={well} onWell={setWell} menu={menu} onMenu={setMenu} />
+            <NeedVerbsView face={face} primary={primary} well={well} onWell={setWell} menu={own ? menu : null} onMenu={setMenu} extra={extra} />
+            {!own && menu ? <WorkMenu label={face.name} x={menu.x} y={menu.y} autoFocus onClose={() => setMenu(null)}
+              returnFocus={() => menu.row?.querySelector<HTMLElement>("[data-testid=needs-row-verb]")?.focus()}
+              entries={[...(opener ? [{ type: "item" as const, id: "open", label: "Open", onSelect: opener }] : []), ...extra]} /> : null}
           </>
         )}
       />
@@ -1461,8 +1479,11 @@ export function NeedsDrawer() {
   // control at its left, nothing floating at its right. HS-S43 (D22/G43):
   // People's commitments to him live in People; the People scope ends with
   // Open People, so the coverage stays one press away.
+  // The Mine segment's number: the hub's one number once read (the segment
+  // draws no number at zero).
+  const mineCount = needsRead && needs.count ? Number(needs.count) : 0;
   const chipRow = (
-    <NeedsChipRow scope={scope} setScope={setScope} count={needsRead ? Number(needs.count ?? 0) : 0}
+    <NeedsChipRow scope={scope} setScope={setScope} count={mineCount}
       chips={chips} setChips={setChips} counts={counts} people={people} projects={projects}
       muted={muted.length > 0 ? muted.length : 0} showMuted={showMuted} setShowMuted={setShowMuted} />
   );

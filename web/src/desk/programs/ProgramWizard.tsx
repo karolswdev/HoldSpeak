@@ -35,6 +35,8 @@ export const DEFAULT_TITLE = "New program";
 /** The "A folder on this machine" row's value. */
 const FOLDER = "folder";
 const STEPS = ["Where", "What", "How", "Go"] as const;
+/** The wizard always has its four steps (never a count of zero). */
+const STEP_TOTAL = STEPS.length;
 
 /** The control ladder in his words, hands-off first. */
 const LEVELS: readonly { value: Control; word: string }[] = [
@@ -293,7 +295,7 @@ export function ProgramWizard({ template: firstTemplate, scopeProjectId, onClose
         <ActionNotice tone="ok" role="status"><span data-testid="programs-wizard-made">Program made · Its window did not open</span></ActionNotice>
       ) : null}
       <div className="pg-wiz-bar">
-        <span className="pg-wiz-dots" aria-label={`Step ${step + 1} of ${STEPS.length}`} role="img" data-testid="programs-wizard-dots">
+        <span className="pg-wiz-dots" aria-label={`Step ${step + 1} of ${STEP_TOTAL}`} role="img" data-testid="programs-wizard-dots">
           {STEPS.map((word, at) => (
             <span key={word} className="pg-wiz-dot" data-state={at === step ? "now" : at < step ? "done" : undefined} />
           ))}

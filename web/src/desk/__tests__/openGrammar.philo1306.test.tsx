@@ -171,17 +171,21 @@ describe("PHILO-17 U30: every generic open of a Project opens its Room (one home
     projects: ["proj-ledger", "proj-infra"],
   };
 
-  it("the Needs you row's Project button opens the Room, never a drawer", async () => {
+  it("the Needs you row's Open the Project opens the Room, never a drawer", async () => {
     chairNeeds = twoProjects;
     useDrawers.setState({ drawers: [], infos: [] });
     render(<ChairHome />);
-    const button = await screen.findByRole("button", { name: "Open the Project: Payments ledger cutover" });
-    fireEvent.click(button);
+    // Owner walk 2026-11-08: Priya owes this one, so it is under People; the
+    // row's context menu carries Open the Project.
+    fireEvent.click(await screen.findByTestId("needs-open-people"));
+    const row = (await screen.findByText("Send the dry-run report")).closest(".needs-row") as HTMLElement;
+    fireEvent.contextMenu(row, { clientX: 40, clientY: 40 });
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Open the Project: Payments ledger cutover" }));
     expect(openProjectRoom).toHaveBeenCalledWith("proj-ledger");
     expect(useDrawers.getState().drawers).toEqual([]);
   });
 
-  it("a proposal row opens the Room with that proposal selected; More carries Open", async () => {
+  it("a proposal row opens the Room with that proposal selected; its context menu carries Open and Open the Project", async () => {
     chairNeeds = {
       ...twoProjects,
       items: [...twoProjects.items, { id: "pr1", projectId: "proj-ledger", projectName: "Payments ledger cutover",
@@ -201,10 +205,15 @@ describe("PHILO-17 U30: every generic open of a Project opens its Room (one home
     expect(useDrawers.getState().drawers).toEqual([]);
     // The row's Room verb is the explicit Room path, with the proposal.
     vi.mocked(openProjectRoom).mockClear();
-    fireEvent.click(within(row).getByRole("button", { name: "More: Run the dry run" }));
-    fireEvent.click(screen.getByRole("menuitem", { name: "Open" }));
+    fireEvent.contextMenu(row, { clientX: 40, clientY: 40 });
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Open" }));
     expect(openProjectRoom).toHaveBeenCalledWith("proj-ledger");
     expect(takeRoomProposalRequest("proj-ledger")).toBe("prop-7");
+    expect(useDrawers.getState().drawers).toEqual([]);
+    vi.mocked(openProjectRoom).mockClear();
+    fireEvent.contextMenu(row, { clientX: 40, clientY: 40 });
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Open the Project: Payments ledger cutover" }));
+    expect(openProjectRoom).toHaveBeenCalledWith("proj-ledger");
     expect(useDrawers.getState().drawers).toEqual([]);
   });
 
