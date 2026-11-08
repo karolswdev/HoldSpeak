@@ -188,6 +188,12 @@ def bundle(repo: Path) -> list[Row]:
     chunks = sorted((built / "assets").glob("*.js")) if (built / "assets").is_dir() else []
     if not chunks:
         return [(label, "Build id", build_id), (label, "JS files", "0 (run npm run build in web/)")]
+    # vite never empties _built (an open tab still asks for the last builds'
+    # chunks), so the folder holds every build since the clone. One build
+    # writes all its files within seconds: the current build is the newest
+    # file and everything written in the three minutes before it.
+    newest = max(p.stat().st_mtime for p in chunks)
+    chunks = [p for p in chunks if p.stat().st_mtime >= newest - 180]
     sizes = {p.name: p.stat().st_size for p in chunks}
     gz = sum(len(gzip.compress(p.read_bytes(), compresslevel=6)) for p in chunks)
     rows: list[Row] = [
