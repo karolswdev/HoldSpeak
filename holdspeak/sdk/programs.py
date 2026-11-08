@@ -65,10 +65,13 @@ class Programs:
         return self._call("GET", f"/api/programs/{program_id}")
 
     def decide(self, program_id: str, step_id: str, *, kind: str, choice: str, finding_id: Optional[str] = None,
-               lesson_id: Optional[int] = None, reason: Optional[str] = None) -> dict[str, Any]:
-        """Answer one of his Your turn rows (the owner only; the hub refuses an agent)."""
+               lesson_id: Optional[int] = None, reason: Optional[str] = None,
+               expected_delivery_checkpoint_id: Optional[int] = None) -> dict[str, Any]:
+        """Answer one of his Your turn rows (the owner only; the hub refuses an agent).
+        A delivery row's press sends its ``expected_delivery_checkpoint_id``."""
         body: dict[str, Any] = {"kind": kind, "choice": choice}
-        for key, value in (("finding_id", finding_id), ("lesson_id", lesson_id), ("reason", reason)):
+        for key, value in (("finding_id", finding_id), ("lesson_id", lesson_id), ("reason", reason),
+                           ("expected_delivery_checkpoint_id", expected_delivery_checkpoint_id)):
             if value is not None:
                 body[key] = value
         return self._call("POST", f"/api/programs/{program_id}/steps/{step_id}/decide", body)

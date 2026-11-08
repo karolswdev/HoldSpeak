@@ -154,8 +154,10 @@ CHOICE_WORDS: dict[str, dict[str, tuple[str, str]]] = {
     "step_change": {"apply": ("Apply", "The step changes."), "skip": ("Skip", "The step stays as it is.")},
     "step_amend": {"send": ("Send", "The agent gets the line."), "skip": ("Skip", "Nothing is sent.")},
     # LANG13: the delivery at Done (Merge at Secure; Retry after a failure).
-    "delivery": {"merge": ("Merge", "The delivery PR merges."), "retry": ("Retry", "The delivery runs again."),
-                 "skip": ("Skip", "The program stays Done, not delivered.")},
+    "delivery": {"merge": ("Merge", "HoldSpeak asks GitHub to merge the delivery PR."),
+                 "retry": ("Retry", "The delivery runs again."),
+                 "check": ("Check", "HoldSpeak reads the delivery PR on GitHub."),
+                 "skip": ("Skip", "The program stays Done.")},
     # PG-LANG JRN9 to JRN11 (the consequence lines are brief_words').
     "audit_file": {"file": ("File", "Each finding becomes a Door task."),
                    "skip": ("Skip", "No task is made.")},
@@ -515,6 +517,9 @@ class BriefingService:
             **({"text": {"id": "answer", "label": "Your answer", "max": ANSWER_MAX_CHARS,
                          "consequence": "HoldSpeak types your answer to the agent. The step goes on."}}
                if kind in TEXT_KINDS else {}),
+            # HS-S32: the delivery line this page shows, frozen with it.
+            **({"expected_delivery_checkpoint_id": item.get("expected_delivery_checkpoint_id")}
+               if kind == "delivery" else {}),
         }
 
     # ── DIR10: a held item outside Programs ───────────────────────────
@@ -710,10 +715,13 @@ class BriefingService:
         except BriefingRefused:
             return None
 
-    def decide_item(self, principal: Any, ref: str, choice: str, *, via: str) -> dict[str, Any]:
+    def decide_item(self, principal: Any, ref: str, choice: str, *, via: str,
+                    expected_delivery_checkpoint_id: Any = None) -> dict[str, Any]:
         """His choice on one held item from a channel (``via``), through the
         item's own verb. Refused by name when nothing waits there now or the
-        choice is not one the package offers (a waive stays on the desk)."""
+        choice is not one the package offers (a waive stays on the desk).
+        HS-S32: a delivery press carries the line the channel read to him;
+        without it the Program refuses (never a fresh line in its place)."""
         self._require_owner(principal)
         source = self._source(ref)
         if source is not None:
@@ -735,8 +743,11 @@ class BriefingService:
             raise BriefingRefused("not_usable", NOT_USABLE, status=400, refusal="not_usable", words=NOT_USABLE)
         if str(choice) not in {row["id"] for row in body["choices"]}:
             raise BriefingRefused("not_offered", NOT_OFFERED, status=400, refusal="not_offered", words=NOT_OFFERED)
+        args = _decide_args(item)
+        if args["kind"] == "delivery":
+            args["expected_delivery_checkpoint_id"] = expected_delivery_checkpoint_id
         return self.programs().decide(principal, str(program["id"]), str(item.get("step_id") or ""), via=via,
-                                      choice=str(choice), **_decide_args(item))
+                                      choice=str(choice), **args)
 
     @staticmethod
     def _decide_source(source: Any, ref: str, item: Mapping[str, Any], choice: str, via: str) -> dict[str, Any]:
@@ -990,8 +1001,11 @@ class BriefingService:
                 _program, _step, item = self._held(ref)
                 if item is None:
                     raise not_pending(*self._decided_where(ref, package))
+                args = _decide_args(item)
+                if args["kind"] == "delivery":  # HS-S32: the page's frozen line, never the latest
+                    args["expected_delivery_checkpoint_id"] = body.get("expected_delivery_checkpoint_id")
                 self.programs().decide(PAGE_OWNER, str(body["program_id"]), str(item.get("step_id") or ""),
-                                       via=via, choice=choice, reason=reason, **_decide_args(item))
+                                       via=via, choice=choice, reason=reason, **args)
             answers[ref] = {"choice": choice, "via": via, "at": _utc(now)}
             self.store.answer(package["id"], answers)
             self._changed(package["id"], "answered")

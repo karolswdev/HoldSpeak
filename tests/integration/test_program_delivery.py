@@ -77,14 +77,19 @@ def _rails(repo: Path) -> None:
     git(repo, "push", "origin", "main")
 
 
-def _done(tmp_path: Path, *, control: str = "yolo", delivery: str = "dw app/1") -> tuple[Rig, str]:
+def _done(tmp_path: Path, *, control: str = "yolo", delivery: str = "dw app/1", edge: Any = None,
+          merge_mode: str = "merged") -> tuple[Rig, str]:
     rig = Rig(tmp_path)
     _rails(rig.repo)
+    if edge is not None:
+        # HS-S32: a test's process edge over the rig's (a push or a create that fails).
+        rig.runner._run = lambda argv, cwd=None, **kw: edge(rig.gh, argv, cwd=cwd, **kw)
     pid = rig.service.create(OWNER, title="The hub stops stalling", goal="Stop the stalls.", repository=str(rig.repo),
                              check_command=f"sh {FAKE_CHECK}", template="fast-cycle", control=control)["id"]
     rig.service.update(OWNER, pid, delivery=delivery)
     rig.service.plan(OWNER, pid, steps=[{"title": "Indexes", "brief": "Add the indexes."}])
     rig.service.start(OWNER, pid)
+    rig.gh.merge_mode = merge_mode  # the delivery PR's merge only
     rig.agent.finish(rig.step(pid, 1)["launch_id"], {"a.py": "1\n"})
     rig.tick(3)
     if control == "secure":
@@ -92,6 +97,16 @@ def _done(tmp_path: Path, *, control: str = "yolo", delivery: str = "dw app/1") 
         rig.tick(2)
         rig.service.close(OWNER, pid)
     return rig, pid
+
+
+def _press(rig: Rig, pid: str, choice: str) -> dict:
+    """His press on the delivery row, naming the line the row shows."""
+    [item] = [row for row in rig.program(pid)["your_turn_items"] if row["kind"] == "delivery"]
+    return rig.service.decide(OWNER, pid, "", kind="delivery", choice=choice,
+                              expected_delivery_checkpoint_id=item["expected_delivery_checkpoint_id"])
+
+
+
 
 
 def _delivery_lines(rig: Rig, pid: str) -> list[dict]:
@@ -145,14 +160,33 @@ def test_a_dw_refusal_is_his_row_in_words_and_retry_or_skip_answers_it(tmp_path,
     assert line["choice"] == "failed"
     assert line["line"] == "Could not deliver to dw app/1/07: Delivery Workbench did not take the evidence"
     assert line["undo"]["detail"]  # dw's own words, for the evidence fold
+    # HS-S32 C32-02: the stage it stopped at, before any remote write.
+    receipt = line["undo"]["receipt"]
+    assert receipt["stage"] == "evidence" and receipt["remote"] is False
+    assert receipt["target"] == {"ref": "dw:app/1/07", "words": "dw app/1/07"}
     [item] = rig.program(pid)["your_turn_items"]
     assert item["kind"] == "delivery" and item["choices"] == ["retry", "skip"]
+    assert item["expected_delivery_checkpoint_id"] == line["id"]
+    assert item["delivery"] == {"state": "retry", "words": "Not delivered"}
     assert item["title"] == ("Deliver “The hub stops stalling” to dw app/1/07: "
                              "it Delivery Workbench did not take the evidence")
-    rig.service.decide(OWNER, pid, "", kind="delivery", choice="retry")
+    # C32-10/11: a press that names no line, or another line, changes nothing.
+    for expected, code in ((None, "delivery_binding_required"), (line["id"] - 1, "delivery_changed")):
+        try:
+            rig.service.decide(OWNER, pid, "", kind="delivery", choice="retry", expected_delivery_checkpoint_id=expected)
+        except program_module.ProgramRefused as exc:
+            assert exc.code == code
+        else:
+            raise AssertionError(f"a delivery press with {expected!r} was taken")
+    assert len(_delivery_lines(rig, pid)) == 1
+    _press(rig, pid, "retry")
     assert [row["choice"] for row in _delivery_lines(rig, pid)] == ["failed", "failed"]
-    rig.service.decide(OWNER, pid, "", kind="delivery", choice="skip")
-    assert _delivery_lines(rig, pid)[0]["line"] == "Skipped the delivery"
+    # Retry never touches his working tree.
+    assert not (rig.repo / "pm" / "roadmap" / "app" / "phase-1-the-first" / "evidence-story-01.md").exists()
+    calls = len(rig.gh.calls)
+    _press(rig, pid, "skip")
+    assert _delivery_lines(rig, pid)[0]["line"] == "Skipped the delivery: Done, not delivered"
+    assert rig.gh.calls[calls:] == []  # Skip calls nothing
     assert rig.program(pid)["your_turn_items"] == [] and rig.program(pid)["state"] == "done"
 
 
@@ -162,21 +196,43 @@ def test_at_secure_the_delivery_pr_waits_for_his_merge(tmp_path, monkeypatch) ->
     wire = _fixture("program.delivery_merge.json", client.get(f"/api/programs/{pid}").json(), tmp_path)
     brief = wire["your_turn_items"][0]["brief"]
     assert brief["question"] == "Merge the delivery pull request, or skip the delivery?"
-    assert brief["consequences"]["merge"] == "Merge the delivery pull request. The program is then delivered."
+    assert brief["consequences"]["merge"] == (
+        "Merge the delivery pull request. HoldSpeak then reads the result on GitHub.")
     assert brief["doing"] == "It delivers its record to dw app/1."
     [line] = _delivery_lines(rig, pid)
     number = max(rig.gh.prs)
+    pr = rig.gh.prs[number]
     assert line["choice"] == "pr_open" and line["line"] == (
         f"The delivery PR #{number} to dw app/1 waits for your merge · it closes the phase")
-    assert ["gh", "pr", "merge", str(number), "--squash"] not in rig.gh.calls
+    # HS-S32 C32-04: the acknowledged identity, kept on the line.
+    assert line["undo"]["receipt"]["pr"] == {"url": pr["url"], "number": number, "branch": pr["branch"],
+                                             "base": "main", "head": pr["head_sha"]}
+    assert line["undo"]["pr_number"] == number and line["undo"]["branch"] == pr["branch"]
+    assert [call for call in rig.gh.calls if call[1:3] == ["pr", "merge"] and call[3] in (str(number), pr["url"])] == []
     [item] = rig.program(pid)["your_turn_items"]
-    assert item["kind"] == "delivery" and item["choices"] == ["merge", "skip"] and item["pr"]["number"] == number
+    assert item["kind"] == "delivery" and item["choices"] == ["merge", "check", "skip"]
+    assert item["pr"] == {"number": number, "url": pr["url"]}
+    assert item["delivery"]["words"] == f"PR #{number} open"
+    # A press without the line it answers is refused by the route too.
+    refused = client.post(f"/api/programs/{pid}/steps/program/decide", json={"kind": "delivery", "choice": "merge"})
+    assert refused.status_code == 409 and len(_delivery_lines(rig, pid)) == 1
     # His Merge, through the window's route (the step id is not read for a delivery).
-    answer = client.post(f"/api/programs/{pid}/steps/program/decide", json={"kind": "delivery", "choice": "merge"})
+    calls = len(rig.gh.calls)
+    answer = client.post(f"/api/programs/{pid}/steps/program/decide", json={
+        "kind": "delivery", "choice": "merge", "expected_delivery_checkpoint_id": item["expected_delivery_checkpoint_id"]})
     assert answer.status_code == 200, answer.text
     _fixture("program.delivery_merged.json", answer.json(), tmp_path)
-    assert ["gh", "pr", "merge", str(number), "--squash"] in rig.gh.calls
-    assert _delivery_lines(rig, pid)[0]["line"] == f"Delivered to dw app/1 (PR #{number}) · phase closed"
+    # C32-10/16: read, one head-guarded merge by URL, read; the request line first.
+    assert [call[1:4] for call in rig.gh.calls[calls:]] == [["pr", "view", pr["url"]], ["pr", "merge", pr["url"]],
+                                                             ["pr", "view", pr["url"]]]
+    assert rig.gh.calls[calls + 1] == ["gh", "pr", "merge", pr["url"], "--squash", "--match-head-commit",
+                                       pr["head_sha"]]
+    delivered, asked, _opened = _delivery_lines(rig, pid)
+    assert asked["choice"] == "pr_open" and asked["by"] == "owner"
+    assert asked["undo"]["receipt"]["merge_requested_at"] and asked["undo"]["receipt"]["merge_requested_by"] == "owner"
+    assert delivered["line"] == f"Delivered to dw app/1 (PR #{number}) · phase closed"
+    assert "merge_requested_at" not in delivered["undo"]["receipt"]  # merged: the request is answered
+    assert delivered["undo"]["phase"] == {"project": "app", "phase": "1", "closed": True}
     assert rig.program(pid)["your_turn_items"] == []
 
 
@@ -196,10 +252,301 @@ def test_the_briefing_page_reads_the_delivery_in_the_same_words(tmp_path) -> Non
         ("Retry", "Try the delivery again."), ("Skip", "Skip it. The program stays Done, not delivered.")]
     for line in [*body["note"], body["question"], *(row["consequence"] for row in body["choices"])]:
         assert words.fence_hits(line) == [], line
+    # HS-S32: the page freezes the delivery line it shows.
+    assert body["expected_delivery_checkpoint_id"] == item["expected_delivery_checkpoint_id"]
     made = briefing.make(OWNER, [f"program:{pid}:{item['id']}"])
     done = briefing.answer(made["token"], f"program:{pid}:{item['id']}", "skip")["item"]
-    assert done["state"] == "decided" and "The program stays Done, not delivered." in done["outcome"]["words"]
+    assert done["state"] == "decided" and "The program stays Done." in done["outcome"]["words"]
     assert rig.program(pid)["your_turn_items"] == []
+
+
+def test_a_briefing_page_made_before_a_newer_delivery_line_is_refused(tmp_path) -> None:
+    """HS-S32 C32-10: the page answers the line it froze, never the latest."""
+    from holdspeak.services.briefing_service import BriefingService
+
+    rig, pid = _done(tmp_path, delivery="dw app/1/07")
+    [item] = rig.program(pid)["your_turn_items"]
+    briefing = BriefingService(rig.db, programs=lambda: rig.service)
+    made = briefing.make(OWNER, [f"program:{pid}:{item['id']}"])
+    _press(rig, pid, "retry")  # a newer failed line now holds the row
+    try:
+        briefing.answer(made["token"], f"program:{pid}:{item['id']}", "retry")
+    except program_module.ProgramRefused as exc:
+        assert exc.code == "delivery_changed"
+    else:
+        raise AssertionError("an older page answered a newer delivery line")
+    assert [row["choice"] for row in _delivery_lines(rig, pid)] == ["failed", "failed"]
+    # A channel with no line (a direct call) is refused, never given the latest.
+    try:
+        briefing.decide_item(OWNER, f"program:{pid}:{item['id']}", "retry", via="call")
+    except program_module.ProgramRefused as exc:
+        assert exc.code == "delivery_binding_required"
+    else:
+        raise AssertionError("a delivery press with no line was taken")
+
+
+# ── HS-S32: continue a known delivery without making its PR again ─────
+
+def test_a_failed_delivery_merge_keeps_its_pr_and_offers_check_not_retry(tmp_path, monkeypatch) -> None:
+    """C32-04, C32-06, C32-13: the merge fails after the PR is open; the
+    row offers Check (never Retry); Check reads the PR merged on GitHub and
+    records the delivery, with no push, create, merge or dw command."""
+    rig, pid = _done(tmp_path, merge_mode="fail")
+    client = _client(rig, monkeypatch)
+    [line] = _delivery_lines(rig, pid)
+    number = max(rig.gh.prs)
+    pr = rig.gh.prs[number]
+    receipt = line["undo"]["receipt"]
+    assert line["choice"] == "failed" and receipt["stage"] == "merge" and receipt["remote"] is True
+    assert receipt["pr"] == {"url": pr["url"], "number": number, "branch": pr["branch"], "base": "main",
+                             "head": pr["head_sha"]}
+    assert receipt["merge_requested_at"] and receipt["merge_requested_by"] == "engine"
+    assert line["undo"]["phase"] == {"project": "app", "phase": "1", "closed": True}  # kept through the failure
+    wire = _fixture("program.delivery_check.json", client.get(f"/api/programs/{pid}").json(), tmp_path)
+    [item] = wire["your_turn_items"]
+    assert item["choices"] == ["check", "skip"] and item["delivery"]["state"] == "requested"
+    assert item["brief"]["question"] == "Check the delivery pull request on GitHub, or skip the delivery?"
+    assert item["brief"]["happened"] == f"A merge of the delivery PR #{number} is requested. GitHub has not confirmed it."
+    # The merge went through on GitHub after all (someone pressed it there).
+    pr["state"] = "merged"
+    calls = len(rig.gh.calls)
+    commands: list[list[str]] = []
+    edge = rig.runner._run
+    rig.runner._run = lambda argv, cwd=None, **kw: (commands.append(list(argv)), edge(argv, cwd=cwd, **kw))[1]
+    _press(rig, pid, "check")
+    assert commands == [["gh", "pr", "view", pr["url"], "--json",
+                         "url,number,state,headRefOid,baseRefName,headRefName,isCrossRepository"]]
+    assert rig.gh.calls[calls:] == commands
+    checked = _delivery_lines(rig, pid)[0]
+    assert checked["choice"] == "delivered" and checked["line"] == f"Delivered to dw app/1 (PR #{number}) · phase closed"
+    assert checked["undo"]["receipt"]["reconciled"] is True and checked["undo"]["receipt"]["pr"]["number"] == number
+    assert checked["undo"]["phase"] == line["undo"]["phase"]
+    program = rig.program(pid)
+    assert program["state"] == "done" and program["your_turn_items"] == []
+
+
+def test_a_queued_merge_stays_not_confirmed_and_never_offers_merge_again(tmp_path, monkeypatch) -> None:
+    """C32-05, C32-11, C32-17: GitHub answers yes and the PR stays open (a
+    merge queue): not Delivered; the request stays; Check reads it again
+    and never offers Merge."""
+    rig, pid = _done(tmp_path, control="secure", merge_mode="queued")
+    client = _client(rig, monkeypatch)
+    number = max(rig.gh.prs)
+    _press(rig, pid, "merge")
+    merges = [call for call in rig.gh.calls if call[1:3] == ["pr", "merge"] and call[3].endswith(f"/{number}")]
+    assert len(merges) == 1
+    line = _delivery_lines(rig, pid)[0]
+    assert line["choice"] == "pr_open" and line["line"] == (
+        f"The delivery PR #{number} to dw app/1 is open on GitHub · a merge is requested, not confirmed")
+    assert line["undo"]["receipt"]["merge_requested_at"]
+    wire = _fixture("program.delivery_queued.json", client.get(f"/api/programs/{pid}").json(), tmp_path)
+    [item] = wire["your_turn_items"]
+    assert item["choices"] == ["check", "skip"] and item["delivery"]["words"] == f"PR #{number} · Not confirmed"
+    for _ in range(2):  # Check again: read only, the request stays
+        _press(rig, pid, "check")
+        again = _delivery_lines(rig, pid)[0]
+        assert again["choice"] == "pr_open" and again["undo"]["receipt"]["merge_requested_at"]
+        assert rig.program(pid)["your_turn_items"][0]["choices"] == ["check", "skip"]
+    assert len([call for call in rig.gh.calls if call[1:3] == ["pr", "merge"] and call[3].endswith(f"/{number}")]) == 1
+    try:
+        _press(rig, pid, "merge")
+    except program_module.ProgramRefused as exc:
+        assert exc.code == "choice_invalid"
+    else:
+        raise AssertionError("Merge was offered again over an unconfirmed request")
+
+
+def test_check_of_an_open_secure_pr_offers_merge(tmp_path, monkeypatch) -> None:
+    """C32-05: a matching open PR with no request: Check keeps Merge."""
+    rig, pid = _done(tmp_path, control="secure")
+    client = _client(rig, monkeypatch)
+    number = max(rig.gh.prs)
+    [item] = rig.program(pid)["your_turn_items"]
+    # His Check, through the window's route; its answer is the window's next state.
+    answer = client.post(f"/api/programs/{pid}/steps/program/decide", json={
+        "kind": "delivery", "choice": "check", "expected_delivery_checkpoint_id": item["expected_delivery_checkpoint_id"]})
+    assert answer.status_code == 200, answer.text
+    wire = _fixture("program.delivery_checked_open.json", answer.json(), tmp_path)
+    line = _delivery_lines(rig, pid)[0]
+    assert line["choice"] == "pr_open" and line["line"] == f"The delivery PR #{number} to dw app/1 is open on GitHub"
+    assert line["undo"]["receipt"]["observed"]["state"] == "OPEN"
+    [after] = wire["program"]["your_turn_items"]
+    assert after["choices"] == ["merge", "check", "skip"] and after["expected_delivery_checkpoint_id"] == line["id"]
+    assert [call for call in rig.gh.calls if call[1:3] == ["pr", "merge"] and call[3].endswith(f"/{number}")] == []
+
+
+def test_a_read_that_does_not_match_is_never_a_yes(tmp_path, monkeypatch) -> None:
+    """C32-07, C32-08: a failed or unreadable read, a changed head, a fork,
+    a closed PR: not confirmed, no merge, Check or Skip; Skip calls nothing
+    and keeps the PR's identity and its uncertainty."""
+    rig, pid = _done(tmp_path, control="secure")
+    client = _client(rig, monkeypatch)
+    number = max(rig.gh.prs)
+    pr = rig.gh.prs[number]
+    words = []
+    for change in ("fail", "garbage", "head", "fork", "closed"):
+        rig.gh.view_mode = change if change in ("fail", "garbage") else "live"
+        saved = dict(pr)
+        if change == "head":
+            pr["head_sha"] = "0" * 40
+        elif change == "fork":
+            pr["fork"] = True
+        elif change == "closed":
+            pr["state"] = "closed"
+        _press(rig, pid, "check")
+        line = _delivery_lines(rig, pid)[0]
+        assert line["choice"] == "failed" and line["undo"]["receipt"]["stage"] == "check", change
+        assert line["undo"]["receipt"]["pr"]["number"] == number
+        assert rig.program(pid)["your_turn_items"][0]["choices"] == ["check", "skip"], change
+        words.append(line["undo"]["words"])
+        if change != "closed":
+            pr.clear()
+            pr.update(saved)
+    assert words == ["HoldSpeak could not read the PR on GitHub", "GitHub's answer was not readable",
+                     "the PR on GitHub has commits HoldSpeak did not prepare",
+                     "the PR on GitHub is not the delivery PR HoldSpeak opened",
+                     "GitHub shows the PR closed, not merged"]
+    assert [call for call in rig.gh.calls if call[1:3] == ["pr", "merge"] and call[3].endswith(f"/{number}")] == []
+    wire = _fixture("program.delivery_unknown.json", client.get(f"/api/programs/{pid}").json(), tmp_path)
+    [item] = wire["your_turn_items"]
+    assert item["delivery"] == {"state": "unknown", "words": f"PR #{number} · Not confirmed",
+                                "happened": f"HoldSpeak could not confirm the delivery PR #{number}: "
+                                            "GitHub shows the PR closed, not merged"}
+    assert item["brief"]["consequences"]["skip"] == "Skip it. The program stays Done. The delivery stays not confirmed."
+    calls = len(rig.gh.calls)
+    _press(rig, pid, "skip")
+    assert rig.gh.calls[calls:] == []
+    skipped = _delivery_lines(rig, pid)[0]
+    assert skipped["line"] == f"Skipped the delivery: PR #{number} not confirmed"
+    assert skipped["undo"]["receipt"]["pr"]["number"] == number and skipped["undo"]["pr_number"] == number
+    assert rig.program(pid)["state"] == "done" and rig.program(pid)["your_turn_items"] == []
+
+
+def _failing(stage: str):
+    def edge(gh: Any, argv: list[str], cwd: Any = None, **kw: Any) -> Any:
+        from types import SimpleNamespace
+
+        if stage == "push" and argv[:2] == ["git", "-C"] and "push" in argv and argv[-1].endswith("/delivery"):
+            return SimpleNamespace(returncode=1, stdout="", stderr="fatal: the remote end hung up unexpectedly")
+        if stage == "pr" and argv[1:3] == ["pr", "create"] and "Delivery:" in " ".join(argv):
+            gh.calls.append(list(argv))
+            return SimpleNamespace(returncode=0, stdout="Creating pull request…\n", stderr="")
+        return gh(argv, cwd=cwd, **kw)
+    return edge
+
+
+def test_a_push_or_create_with_no_answer_stays_not_confirmed(tmp_path) -> None:
+    """C32-03: after a push or a create was attempted, no answer is not a
+    safe repeat: no Retry, no adoption by branch; Skip only."""
+    for stage in ("push", "pr"):
+        rig, pid = _done(tmp_path / stage, edge=_failing(stage))
+        [line] = _delivery_lines(rig, pid)
+        receipt = line["undo"]["receipt"]
+        assert line["choice"] == "failed" and receipt["stage"] == stage and receipt["remote"] is True, stage
+        assert "url" not in receipt["pr"] and "number" not in receipt["pr"]
+        [item] = rig.program(pid)["your_turn_items"]
+        assert item["choices"] == ["skip"] and item["delivery"]["state"] == "blocked", stage
+        assert item["brief"]["happened"] == "HoldSpeak cannot confirm what reached GitHub for this delivery."
+        creates = len([call for call in rig.gh.calls if call[1:3] == ["pr", "create"]])
+        try:
+            _press(rig, pid, "retry")
+        except program_module.ProgramRefused as exc:
+            assert exc.code == "choice_invalid"
+        else:
+            raise AssertionError("Retry was taken after a remote write")
+        assert len([call for call in rig.gh.calls if call[1:3] == ["pr", "create"]]) == creates
+        _press(rig, pid, "skip")
+        assert _delivery_lines(rig, pid)[0]["line"] == "Skipped the delivery: not confirmed"
+
+
+def test_an_old_delivery_line_stays_visible_and_blocked(tmp_path, monkeypatch) -> None:
+    """C32-09: a line written before HS-S32 (a PR number and a branch, no
+    receipt) is never read as a fresh safe attempt: Skip only."""
+    rig, pid = _done(tmp_path, control="secure")
+    client = _client(rig, monkeypatch)
+    rig.service.store.add_checkpoint(step_id="", program_id=pid, at=rig.service._clock(), by="engine",
+                                     line="Could not deliver to dw app/1: GitHub did not merge the delivery PR",
+                                     kind="delivery", choice="failed",
+                                     undo={"words": "GitHub did not merge the delivery PR", "pr_number": 7,
+                                           "branch": "program/the-hub-stops-stalling/delivery"})
+    wire = _fixture("program.delivery_legacy_blocked.json", client.get(f"/api/programs/{pid}").json(), tmp_path)
+    [item] = wire["your_turn_items"]
+    assert item["choices"] == ["skip"] and item["delivery"]["state"] == "blocked"
+    assert item["pr"] == {"number": 7, "url": None}
+    assert item["brief"]["question"] == "Skip the delivery? HoldSpeak cannot confirm it."
+    calls = len(rig.gh.calls)
+    _press(rig, pid, "skip")
+    assert rig.gh.calls[calls:] == [] and _delivery_lines(rig, pid)[0]["line"] == "Skipped the delivery: PR #7 not confirmed"
+
+
+def test_retry_refuses_a_changed_target_and_check_keeps_the_recorded_one(tmp_path) -> None:
+    """C32-14: a new target on a closed Program keeps the delivery line's id;
+    Retry refuses, and the row names the recorded target."""
+    rig, pid = _done(tmp_path, delivery="dw app/1/07")
+    rig.service.update(OWNER, pid, delivery="dw app/1")
+    [item] = rig.program(pid)["your_turn_items"]
+    assert item["title"].startswith("Deliver “The hub stops stalling” to dw app/1/07:")
+    try:
+        _press(rig, pid, "retry")
+    except program_module.ProgramRefused as exc:
+        assert exc.code == "delivery_target_changed"
+    else:
+        raise AssertionError("Retry moved the delivery to a new target")
+    assert len(_delivery_lines(rig, pid)) == 1
+
+
+def test_his_merge_writes_the_request_before_any_merge_command(tmp_path, monkeypatch) -> None:
+    """C32-16, C32-17: an append that fails sends nothing; a request line
+    whose command never ran reads back as Check or Skip, never Merge."""
+    from holdspeak.services import program_delivery
+
+    rig, pid = _done(tmp_path, control="secure")
+    number = max(rig.gh.prs)
+    add = rig.service.store.add_checkpoint
+
+    def refuse(**kw: Any) -> int:
+        if ((kw.get("undo") or {}).get("receipt") or {}).get("merge_requested_at"):
+            raise RuntimeError("database is locked")
+        return add(**kw)
+
+    rig.service.store.add_checkpoint = refuse
+    calls = len(rig.gh.calls)
+    try:
+        _press(rig, pid, "merge")
+    except RuntimeError:
+        pass
+    else:
+        raise AssertionError("the merge ran without its request line")
+    assert rig.gh.calls[calls:] == []
+    rig.service.store.add_checkpoint = add
+    # The request is written; the process stops before any command.
+    monkeypatch.setattr(program_delivery, "_read", lambda *a, **kw: (_ for _ in ()).throw(SystemError("stopped")))
+    try:
+        _press(rig, pid, "merge")
+    except SystemError:
+        pass
+    assert rig.gh.calls[calls:] == []
+    line = _delivery_lines(rig, pid)[0]
+    assert line["choice"] == "pr_open" and line["undo"]["receipt"]["merge_requested_at"]
+    [item] = rig.program(pid)["your_turn_items"]
+    assert item["choices"] == ["check", "skip"] and item["delivery"]["words"] == f"PR #{number} · Not confirmed"
+
+
+def test_an_agent_cannot_press_the_delivery(tmp_path) -> None:
+    """C32-10: the decision stays the owner's."""
+    from holdspeak.principals import Principal, PrincipalKind
+
+    rig, pid = _done(tmp_path, control="secure")
+    [item] = rig.program(pid)["your_turn_items"]
+    agent = Principal(PrincipalKind.AGENT, "agent-1")
+    try:
+        rig.service.decide(agent, pid, "", kind="delivery", choice="merge",
+                           expected_delivery_checkpoint_id=item["expected_delivery_checkpoint_id"])
+    except Exception as exc:
+        assert "owner" in str(exc).lower() or getattr(exc, "code", "")
+    else:
+        raise AssertionError("an agent pressed the delivery")
+    assert len(_delivery_lines(rig, pid)) == 1
 
 
 # ── JRN5: dw context at create, never on HoldSpeak itself ────────────

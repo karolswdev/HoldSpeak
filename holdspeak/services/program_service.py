@@ -788,7 +788,9 @@ class ProgramService:
         items = [item for item in items if item["kind"] != "close"] + [item for item in items if item["kind"] == "close"]
         if program.get("closed_at") and program_delivery.target(program) is not None:
             # LANG13: a delivery that failed, or that waits for his merge.
-            item = program_delivery.turn_item(program, program_delivery.last_line(self, program["id"]))
+            rows = [row for row in (checkpoints if checkpoints is not None
+                                    else self.store.list_checkpoints(program["id"])) if row.get("kind") == "delivery"]
+            item = program_delivery.turn_item(program, rows[0] if rows else None, rows)
             if item is not None:
                 items.append(item)
         return _with_pages(self.db, program["id"], items, now=self._clock())
@@ -2431,23 +2433,27 @@ class ProgramService:
         self, principal: Any, program_id: str, step_id: str, *, kind: str, choice: str,
         finding_id: Optional[str] = None, reason: Optional[str] = None,
         requirement_id: Optional[str] = None, proposal_id: Any = None, via: Any = None,
+        expected_delivery_checkpoint_id: Any = None,
     ) -> dict[str, Any]:
         """His press on a your-turn item (owner only). PG-REQ: ``requirement``
         (with ``requirement_id``) and the proposal kinds (with
         ``proposal_id``) go to their own verbs. PG-DIRECTION: ``via`` names
         the channel (desk by default); each owner line the call writes says it
-        ("Go on: … · decided from the briefing page") and stores it."""
+        ("Go on: … · decided from the briefing page") and stores it. HS-S32:
+        a ``delivery`` press names the delivery line it answers
+        (``expected_delivery_checkpoint_id``); other kinds ignore it."""
         token = _VIA.set(via_of(via))
         try:
             return self._decide(principal, program_id, step_id, kind=kind, choice=choice, finding_id=finding_id,
-                                reason=reason, requirement_id=requirement_id, proposal_id=proposal_id)
+                                reason=reason, requirement_id=requirement_id, proposal_id=proposal_id,
+                                expected_delivery_checkpoint_id=expected_delivery_checkpoint_id)
         finally:
             _VIA.reset(token)
 
     def _decide(
         self, principal: Any, program_id: str, step_id: str, *, kind: str, choice: str,
         finding_id: Optional[str] = None, reason: Optional[str] = None,
-        requirement_id: Optional[str] = None, proposal_id: Any = None,
+        requirement_id: Optional[str] = None, proposal_id: Any = None, expected_delivery_checkpoint_id: Any = None,
     ) -> dict[str, Any]:
         self._require_owner(principal, "decide")
         program = self._program(program_id)
@@ -2458,7 +2464,9 @@ class ProgramService:
             from . import program_delivery
 
             with _LOCK:
-                answer = program_delivery.decide(self.runner(), program, choice)
+                # HS-S32: read the Program and its delivery line again inside the lock.
+                program = self._program(program_id)
+                answer = program_delivery.decide(self.runner(), program, choice, expected_delivery_checkpoint_id)
                 self.changed(program["id"], verb="delivery")
             return {"delivery": answer, "program": self.get(principal, program["id"])}
         if kind == "requirement":
