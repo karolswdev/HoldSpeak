@@ -1642,13 +1642,13 @@
       },
       {
         "name": "--wb-toolbar-h",
-        "value": "36px",
-        "doc": "window toolbar band under the title bar"
+        "value": "48px",
+        "doc": "window toolbar band under the title bar (the language in every window 2026-11-08: 48 px, the plate tier)"
       },
       {
         "name": "--wb-statusbar-h",
-        "value": "24px",
-        "doc": "window status bar band at the foot"
+        "value": "26px",
+        "doc": "window status bar band at the foot (the language in every window 2026-11-08: 26 px, mono 11)"
       },
       {
         "name": "--wb-sel-vivid",
@@ -1752,8 +1752,8 @@
       },
       {
         "name": "--wb-row-dense",
-        "value": "30px",
-        "doc": "dense list view row on the desktop; narrow rows stay 44px"
+        "value": "44px",
+        "doc": "dense list view row on the desktop (the language in every window 2026-11-08: 44 px, a name and its facts)"
       },
       {
         "name": "--desk-floor-label-halo",
@@ -1992,8 +1992,8 @@
       },
       {
         "name": "--wb-warn-ink",
-        "value": "{primitive.color.hs.brass-ink}",
-        "doc": "PHILO-16 (A1) the interior: a warn word on slate (the language 2026-11-08: rides the language ink)"
+        "value": "{primitive.color.hs.graphite}",
+        "doc": "the interior: a warn word is quiet graphite ink (the language in every window 2026-11-08: brass means only waits on you)"
       },
       {
         "name": "--wb-danger-ink",
@@ -2032,8 +2032,8 @@
       },
       {
         "name": "--lamp-warn",
-        "value": "var(--warn-signal)",
-        "doc": "PHILO-14 B1 (the object species): IconLamp tone warn: a held call, due, to review"
+        "value": "{primitive.color.hs.graphite}",
+        "doc": "IconLamp tone warn: quiet graphite (to review, no engine, not set, stale); brass is only the ask tone (the language in every window 2026-11-08)"
       },
       {
         "name": "--lamp-fail",

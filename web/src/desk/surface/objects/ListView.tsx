@@ -3,11 +3,13 @@
  *  of Meetings, Activity and Live), where ObjectList's sortable columns are
  *  more than the job needs.
  *
- *  One row: a 20 px glyph · the name (sans 13, ink) · the meta (sans 12,
- *  muted: who, where, what kind) · a state as a dot and a word · the age or
- *  the time at the right (sans 12, muted, tabular) · the row's verbs. Rows
- *  are 32 px on the desktop and fold the meta under the name at 520 px or
- *  less (44 px). `onOpen` makes the row's body one library Button.
+ *  One row (the language in every window, 2026-11-08): the object's 22 px
+ *  sprite (`kind`, or a `glyph`) · the name (sans 14/600, ink) · the meta
+ *  (sans 12, secondary ink) · a facts line under the name (`facts`, mono 12,
+ *  secondary ink) · a state as a dot and a word · the age or the time at the
+ *  right (mono 12) · the row's verbs. Rows are 44 px (36 px in a
+ *  `kit-listview--dense` list) and fold the meta under the name at 520 px
+ *  or less. `onOpen` makes the row's body one library Button.
  *  `ListDay` groups rows under a quiet sentence-case day caption (Today,
  *  Yesterday, Mon 20 Oct).
  *
@@ -17,7 +19,8 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { DotWord } from "../kit";
-import type { ObjectTone } from "./kinds";
+import { listSprite } from "../../sprites";
+import { objectSprite, type ObjectTone } from "./kinds";
 import "./list-view.css";
 
 export function ListView({
@@ -58,8 +61,11 @@ export type ListRowState = { word: string; tone?: ObjectTone | "idle"; testId?: 
 
 export function ListRow({
   glyph,
+  kind,
+  kindId,
   name,
   meta,
+  facts,
   state,
   age,
   verbs,
@@ -76,8 +82,18 @@ export function ListRow({
 }: {
   /** A 20 px sprite URL, or a node. */
   glyph?: string | ReactNode;
+  /** The language in every window (2026-11-08): the row's object kind
+   *  (`meeting`, `person`, `decision` …). With no `glyph` the row leads with
+   *  the kind's 22 px sprite (sprites.ts). A row without a kind or a glyph
+   *  keeps its leading cell empty. */
+  kind?: string;
+  /** The object's id, for the kind's sprite variant. */
+  kindId?: string;
   name: ReactNode;
   meta?: ReactNode;
+  /** One 12 px mono line of facts under the name (`14:02 · 42 min · 3
+   *  people`). A row with facts grows to two lines. */
+  facts?: ReactNode;
   state?: ListRowState | null;
   /** The age or the time (`14:02`, `2 h ago`). */
   age?: ReactNode;
@@ -100,10 +116,11 @@ export function ListRow({
   fold?: ReactNode;
   "data-testid"?: string;
 }) {
-  const lead = glyph == null ? null : typeof glyph === "string" ? (
-    <img className="kit-listrow-glyph" src={glyph} alt="" width={20} height={20} draggable={false} />
+  const sprite = glyph ?? (kind ? listSprite(objectSprite(kind, kindId ?? "")) : null);
+  const lead = sprite == null ? null : typeof sprite === "string" ? (
+    <img className="kit-listrow-glyph" src={sprite} alt="" width={22} height={22} draggable={false} />
   ) : (
-    <span className="kit-listrow-glyph" aria-hidden="true">{glyph}</span>
+    <span className="kit-listrow-glyph" aria-hidden="true">{sprite}</span>
   );
   const body = (
     <>
@@ -111,6 +128,7 @@ export function ListRow({
       <span className="kit-listrow-text">
         <span className="kit-listrow-name" data-testid={nameTestId}>{name}</span>
         {meta ? <span className="kit-listrow-meta">{meta}</span> : null}
+        {facts ? <span className="kit-listrow-facts">{facts}</span> : null}
       </span>
     </>
   );
@@ -121,6 +139,8 @@ export function ListRow({
       data-selected={selected ? "" : undefined}
       data-lit={lit ? "" : undefined}
       data-folded={fold ? "" : undefined}
+      data-facts={facts ? "" : undefined}
+      data-kind={kind}
       aria-current={selected ? "true" : undefined}
       data-testid={testId}
     >

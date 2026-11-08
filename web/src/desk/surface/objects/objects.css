@@ -505,22 +505,26 @@
 .object-list[data-density="dense"] .object-list-head {
   flex: none;
   background: var(--wb-paper);
-  border-bottom: 1px solid var(--wb-rule-soft);
+  border-bottom: 1px solid var(--hs-rule, var(--wb-rule-soft));
 }
+/* The language in every window (2026-11-08): a column header is a quiet
+   tracked caption in secondary ink (12 px, the type floor), not a grey
+   table bar with dividers. */
 .object-list[data-density="dense"] .object-list-sort {
-  min-height: 26px;
-  padding: 0 10px;
-  border-right: 1px solid var(--wb-rule-soft);
-  color: var(--wb-muted);
+  min-height: 28px;
+  padding: 0 12px;
+  border-right: 0;
+  background: transparent;
+  color: var(--hs-ink-2, var(--wb-muted));
   font: 600 12px / 1 var(--font-sans);
-  letter-spacing: 0;
+  letter-spacing: 0.04em;
   text-transform: none;
 }
 .object-list[data-density="dense"] .object-list-th:last-child .object-list-sort {
   border-right: 0;
 }
 .object-list[data-density="dense"] .object-list-th[data-col="name"] .object-list-sort {
-  padding-left: 40px;
+  padding-left: 46px;
 }
 .object-list[data-density="dense"] .object-list-sort:hover {
   background: var(--wb-hover);
@@ -548,41 +552,37 @@
 }
 /* A row lifts under the pointer: a blue tint and a 1 px ink rule. */
 .object-list[data-density="dense"] .object-list-row:hover {
-  background: color-mix(in srgb, var(--row-kind) 8%, var(--wb-paper));
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--row-kind) 30%, transparent);
+  background: color-mix(in srgb, var(--hs-steel, var(--wb-sel)) 7%, var(--wb-paper));
+  box-shadow: none;
 }
 /* DELIGHT (2026-10-27): the selection of a list that does not hold focus
    (another window is in front, or the press went elsewhere) is the row's
    kind wash with a 3 px rule in the kind hue, the Finder's quiet
    selection in our colours. A focused list keeps the selection blue. */
-.object-list[data-density="dense"]:not(:focus-within) .object-list-row[data-selected="true"] {
-  background: color-mix(in srgb, var(--row-kind) 14%, var(--wb-paper));
-  box-shadow: inset 3px 0 0 var(--row-kind);
-}
+/* The language in every window (2026-11-08): the selected row is a steel
+   tint with a 3 px steel bar at its left; its words stay ink. */
+.object-list[data-density="dense"] .object-list-row[data-selected="true"],
 .object-list[data-density="dense"]:focus-within .object-list-row[data-selected="true"] {
-  background: var(--wb-sel-vivid);
-  box-shadow: none;
-  color: var(--wb-paper);
+  background: var(--hs-steel-tint, color-mix(in srgb, var(--wb-sel) 14%, var(--wb-paper)));
+  box-shadow: inset 3px 0 0 var(--hs-steel, var(--wb-sel));
+  color: var(--wb-ink);
 }
 @media (prefers-reduced-motion: reduce) {
   .object-list[data-density="dense"] .object-list-row { transition: none; }
 }
 .object-list[data-density="dense"] .object-list-open {
-  gap: 10px;
+  gap: 12px;
   min-height: var(--wb-row-dense);
-  padding: 4px 10px;
+  padding: 4px 12px;
 }
 .object-list[data-density="dense"] .object-list-open:focus-visible {
   outline: 2px solid var(--wb-sel);
   outline-offset: -2px;
 }
-.object-list[data-density="dense"]:focus-within .object-list-row[data-selected="true"] .object-list-open:focus-visible {
-  outline-color: var(--wb-paper);
-}
-/* Every row leads with its 20 px illustrated object glyph. */
+/* Every row leads with its 22 px illustrated object sprite. */
 .object-list[data-density="dense"] .object-list-open img {
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
 }
 /* DELIGHT: the glyph seat (below). */
 .object-list[data-density="dense"] .object-list-open img,
@@ -594,22 +594,16 @@
     0 0 0 2px color-mix(in srgb, var(--row-kind) 13%, var(--wb-paper)),
     0 0 0 3px color-mix(in srgb, var(--row-kind) 22%, transparent);
 }
-.object-list[data-density="dense"]:focus-within .object-list-row[data-selected="true"] .object-list-open img {
-  background: color-mix(in srgb, var(--wb-paper) 92%, transparent);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--wb-paper) 92%, transparent);
-}
 .object-list[data-density="dense"] .object-list-name-word {
-  font: 600 13px / 1.35 var(--font-sans);
-  color: var(--wb-text);
+  font: 600 14px / 1.3 var(--font-sans);
+  color: var(--hs-ink, var(--wb-text));
 }
-.object-list[data-density="dense"]:focus-within .object-list-row[data-selected="true"] .object-list-name-word {
-  color: var(--wb-paper);
-}
+/* The facts: 12 px mono in secondary ink. */
 .object-list[data-density="dense"] .object-list-cell {
-  padding: 3px 10px;
-  font: 400 13px / 1.35 var(--font-sans);
+  padding: 3px 12px;
+  font: 400 12px / 16px var(--font-mono);
   letter-spacing: 0;
-  color: var(--wb-muted);
+  color: var(--hs-ink-2, var(--wb-muted));
   white-space: normal;
   overflow-wrap: anywhere;
 }
@@ -622,14 +616,14 @@
   align-items: center;
   gap: 6px;
   min-width: 0;
-  font: 400 13px / 1.35 var(--font-sans);
+  font: 500 12px / 1.35 var(--font-sans);
   color: var(--wb-ink);
   white-space: nowrap;
 }
 .object-list-dot-word[data-tone="ok"] { color: var(--wb-ok-ink); }
 .object-list-dot-word[data-tone="fail"] { color: var(--wb-danger-ink); }
 .object-list-dot-word[data-tone="warn"] { color: var(--wb-warn-ink); }
-.object-list-dot-word[data-tone="ask"] { color: var(--wb-ember-ink); }
+.object-list-dot-word[data-tone="ask"] { color: var(--hs-brass-ink, var(--wb-ember-ink)); }
 .object-list-dot-word[data-tone="info"] { color: var(--wb-info-ink); }
 /* Idle: nothing is happening (Idle, Not installed, Quiet): the plain grey
    dot and a muted word. */
@@ -661,12 +655,7 @@
 .object-list-row[data-selected="true"] .object-list-avatar {
   box-shadow: 0 0 0 2px var(--wb-paper);
 }
-.object-list[data-density="dense"]:focus-within .object-list-row[data-selected="true"] :is(.object-list-cell, .object-list-dot-word) {
-  color: var(--wb-paper);
-}
-.object-list[data-density="dense"]:focus-within .object-list-row[data-selected="true"] .kit-dot {
-  box-shadow: 0 0 0 1px var(--wb-paper);
-}
+.object-list-dot-word[data-tone="parked"] { color: var(--hs-graphite); }
 /* W1-KIT (2026-10-27): the narrow sort verb (a dense "Sort" Button in the
    toolbar's sort slot, or in place above the rows when no toolbar holds a
    slot) and its menu of columns. Wide, the column header sorts. */
@@ -742,7 +731,7 @@
     width: auto;
     height: auto;
     margin: 0;
-    padding: 0 10px 0 40px;
+    padding: 0 12px 0 46px;
     clip-path: none;
     overflow: visible;
     font-size: 12px;
