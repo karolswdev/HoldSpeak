@@ -2,6 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · #PRNUM Fix forward #1937: the Room glass waits for a completed steward run from Python (Playwright's wait_for_function returned at once on an async predicate; the run now takes 70 ms, not 18).
 - 2026-11-08 · #1938 Fix forward #1937: the one-number glass skips the Room's project-scoped need count in its mast.
 - 2026-11-08 · #1937 The Room's Now face in the language; Draft update (never Write update; the Update posture's mast says "<engine> drafts from the sources · you send"; palette Draft update for <project>; user docs 76 → 27 mentions, the rest internal history): the kit Mast and Spine in the state's colour, the Ask field, What changed as a raised pull-quote with Continue, What is open as three spined plates (Programs, People, Decisions), two columns at 720 px, the mono status bar; History gets Prepare a brief and the Pages row (Open · Risks · Changed); five Prepare cases and the standing-pages case un-parked.
 - 2026-11-08 · perf hot paths: desk drawn in 303 ms, was 674 (median of 15 cold opens, seeded desk); Needs you build 104 → 39 ms; projections 80 → 6 ms; Room 17 → 8 ms; roadmaps cold 2.3 → 1.0 s and never again on the 5-minute expiry; no loop hold over 100 ms; desk open still 51 API requests.

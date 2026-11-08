@@ -1461,6 +1461,23 @@ def _rf_shot(page: Any, name: str, width: int) -> None:
     page.screenshot(path=str(RF_SHOTS / f"{name}-{width}.png"))
 
 
+def _rf_run_completed(page: Any, pid: str, timeout_s: float = 30.0) -> dict[str, Any]:
+    """Wait until the project's newest steward run is completed; return it.
+
+    Polled from Python: Playwright's wait_for_function does not await an
+    async predicate, so a fetch-based predicate is a truthy Promise and
+    returned at once (the run takes about 70 ms; the GET came first)."""
+    import time as _time
+
+    deadline = _time.monotonic() + timeout_s
+    while True:
+        runs = _api(page, "GET", f"/api/projects/{pid}/steward/runs", token=RF_TOKEN).get("runs") or []
+        if runs and runs[0].get("state") == "completed":
+            return runs[0]
+        assert _time.monotonic() < deadline, runs[:1]
+        page.wait_for_timeout(50)
+
+
 def _delivery_time(iso: str) -> str:
     d = datetime.fromisoformat(iso).astimezone()
     return f"{MONTHS[d.month - 1].title()} {d.day} {d.hour:02d}:{d.minute:02d}"
@@ -2106,10 +2123,7 @@ class TestRoomFaceGlass:
             try:
                 pid = self._project(page)
                 _api(page, "POST", f"/api/projects/{pid}/steward/runs", {}, token=RF_TOKEN)
-                page.wait_for_function(
-                    f"""async () => {{ const r = await fetch('/api/projects/{pid}/steward/runs', {{headers: {{authorization: 'Bearer {RF_TOKEN}'}}}});
-                        const j = await r.json(); return (j.runs || [])[0]?.state === 'completed'; }}""", timeout=30_000)
-                run = _api(page, "GET", f"/api/projects/{pid}/steward/runs", token=RF_TOKEN)["runs"][0]
+                run = _rf_run_completed(page, pid)
                 rid = run["summary"]["phase_results"]["compare"]["review_id"]
                 assert rid
                 _api(page, "POST", f"/api/projects/{pid}/reviews/{rid}/accept", {}, token=RF_TOKEN)
@@ -2240,9 +2254,7 @@ class TestRoomFaceGlass:
                 seen["published"] = receipts(page)
                 _api(page, "POST", f"/api/updates/{uid}/delivered", {"delivered_to": "Priya", "command_id": "p903-r"}, token=RF_TOKEN)
                 _api(page, "POST", f"/api/projects/{pid}/steward/runs", {}, token=RF_TOKEN)
-                page.wait_for_function(
-                    f"""async () => {{ const r = await fetch('/api/projects/{pid}/steward/runs', {{headers: {{authorization: 'Bearer {RF_TOKEN}'}}}});
-                        const j = await r.json(); return (j.runs || [])[0]?.state === 'completed'; }}""", timeout=30_000)
+                _rf_run_completed(page, pid)
                 self._room(page, pid)
                 seen["ran"] = receipts(page)
                 page.locator("[data-testid=receipt-row]").first.scroll_into_view_if_needed()
