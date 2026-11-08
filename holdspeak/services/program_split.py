@@ -330,7 +330,8 @@ def _part_row(step: Mapping[str, Any], part: Mapping[str, Any], *, last: bool) -
 def apply_split(service: Any, program: Mapping[str, Any], step: dict[str, Any], parts: list[Mapping[str, Any]], *,
                 by: str) -> list[dict[str, Any]]:
     """The parts take the step's place; the step is removed (§5.4)."""
-    from .program_service import _LOCK, FROZEN_SET, ProgramRefused
+    from .program_definitions import FROZEN_SET, ProgramRefused
+    from .program_service import _LOCK
 
     if step["state"] not in ("planned", "ready"):
         raise ProgramRefused("step_frozen", f"Step {step['ordinal']} started. It is not split.", field="position",
@@ -384,7 +385,7 @@ def overturn_split(service: Any, program: Mapping[str, Any], row: Mapping[str, A
     """Undo YOLO's split while every part is Planned or Ready: the step is
     back in the parts' place, and the split is his (a proposal)."""
     from ..kernel.program_ops import RUNNER
-    from .program_service import ProgramRefused
+    from .program_definitions import ProgramRefused
 
     undo = dict((row.get("undo") or {}).get("split") or {})
     parts = [service.store.get_step(str(ident)) for ident in undo.get("parts") or []]
