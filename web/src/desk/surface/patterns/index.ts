@@ -10,8 +10,6 @@ export { ProgressPlan, type PlanStep } from "./ProgressPlan";
 export { HeardQuote, heardFacts, heardWordCount, heardDuration } from "./HeardQuote";
 export { ChoiceCardGroup, ChoiceCard } from "./ChoiceCardGroup";
 export { ChoiceCardShell, type ChoiceCardShellProps } from "./ChoiceCardShell";
-export { ReadyStrip, type ReadyStripItem } from "./ReadyStrip";
-export { StartVerb, StartVerbs } from "./StartVerb";
 export { Popover } from "./Popover";
 export { ProvenanceChip, Receipt } from "./ProvenanceChip";
 export {
@@ -25,12 +23,6 @@ export {
   type ClaimAxesProps,
 } from "./ClaimAxes";
 export {
-  TaskResume,
-  TaskResumeList,
-  type TaskResumeState,
-  type TaskResumeProps,
-} from "./TaskResume";
-export {
   CoverageRow,
   CoverageLedger,
   coverageEmblem,
@@ -38,7 +30,6 @@ export {
   type CoverageLedgerProps,
 } from "./CoverageRow";
 export { ProjectButton, type ProjectButtonProps } from "./ProjectButton";
-export { LedgerRemainder, type LedgerRemainderProps } from "./LedgerRemainder";
 export {
   ParkReceipt,
   ParkedStrip,

@@ -1,57 +1,10 @@
-/* First run, option A "One screen" (owner ratified 2026-10-05) — the
-   three species it added to the library: ReadyStrip, StartVerb, and the
-   lit state on ChoiceCardShell. */
+/* First run, option A "One screen" (owner ratified 2026-10-05): the lit
+   state on ChoiceCardShell. ReadyStrip and StartVerb are parked (2026-11-08,
+   no face draws them). */
 import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { ChoiceCardShell, ReadyStrip, StartVerb, StartVerbs } from "..";
+import { ChoiceCardShell } from "..";
 
-
-describe("ReadyStrip", () => {
-  it("one success chip per step, in order; an empty label gives no chip", () => {
-    render(
-      <ReadyStrip
-        items={[
-          { key: "a", label: "LOCAL AI · ON DEVICE" },
-          { key: "b", label: "" },
-          { key: "c", label: "HEARD · 8 WORDS" },
-        ]}
-      />,
-    );
-    const strip = screen.getByRole("list", { name: "Ready" });
-    const chips = within(strip).getAllByRole("status");
-    expect(chips.map((c) => c.getAttribute("aria-label"))).toEqual(["Local AI · On device", "Heard · 8 words"]);
-    expect(chips.every((c) => c.getAttribute("data-state") === "success")).toBe(true);
-    expect(chips[0].textContent).toBe("✓Local AI · On device");
-  });
-
-  it("no items, no strip (no empty section)", () => {
-    const { container } = render(<ReadyStrip items={[{ key: "a", label: " " }]} />);
-    expect(container.innerHTML).toBe("");
-  });
-});
-
-describe("StartVerb", () => {
-  it("is the library Button: glyph over word, the glyph hidden from the reader", () => {
-    const press = vi.fn();
-    render(
-      <StartVerbs>
-        <StartVerb glyph="◉" variant="primary" onClick={press}>
-          Record Atlas weekly · 10:30
-        </StartVerb>
-        <StartVerb glyph="◖">Dictate</StartVerb>
-      </StartVerbs>,
-    );
-    const group = screen.getByRole("group", { name: "Start" });
-    const [record, dictate] = within(group).getAllByRole("button");
-    expect(record.className).toContain("btn btn--primary");
-    expect(record.className).toContain("surface-start-verb");
-    expect(dictate.className).toContain("btn--secondary");
-    expect(record.querySelector(".surface-start-verb-glyph")?.getAttribute("aria-hidden")).toBe("true");
-    expect(screen.getByRole("button", { name: "Record Atlas weekly · 10:30" })).toBe(record);
-    record.click();
-    expect(press).toHaveBeenCalledTimes(1);
-  });
-});
 
 describe("ChoiceCardShell lit", () => {
   it("stamps data-lit only when lit", () => {

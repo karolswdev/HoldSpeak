@@ -1,7 +1,6 @@
 // HS-117-09 — barrel for history sub-components.
 export { displayState, stateToken, type StateToken, ledgerDate, durationToken, clockTime, download, WINGS, DOOR_SECTIONS, MONTHS, wordsToken, needsIntelligence, summaryIsOff, meetingFailed, meetingsHeadline, hasOpenMeetingActions, meetingRowState, type MeetingRowState, intelDurationToken, unclearLampLabel, finishedRunReceipt, intelStateOf, ACTIVE_RUN_STATES, FINAL_RUN_STATES, adoptDurableRunReceipt } from "./helpers";
 export type { Receipt, NeedsRow, DetailView, RunIdentity } from "./helpers";
-export { StateTokenSpan } from "./StateTokenSpan";
 export { ImportSection } from "./ImportSection";
 export { MeetingDetail } from "./MeetingDetail";
 export { MeetingHeader } from "./MeetingHeader";
@@ -9,7 +8,6 @@ export { CaptureSlab } from "./CaptureSlab";
 export { PreparedResults } from "./PreparedResults";
 export { NeedsYouTable } from "./NeedsYouTable";
 export { TranscriptWell } from "./TranscriptWell";
-export { SettledList } from "./SettledList";
 export { CatalogRail } from "./CatalogRail";
 export { DoorSection } from "./DoorSection";
 export { useMeetingData, type MeetingData } from "./useMeetingData";
