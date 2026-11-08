@@ -572,6 +572,11 @@ export const createCompositorSlice: SliceCreator<CompositorSlice> = (set, get) =
     get().recordRecentOpen(`app:${application.action}`);
     // PHILO-13-06 (B1): in front, also from its Dock chip (iconified).
     get().restorePanel(application.windowId);
+    // HS-S12: an application open is an explicit intent; before the hub
+    // seeds this desk it counts as this load's raise, so the hub's first
+    // list does not put an older window over it (or re-scope it).
+    loadRaises.delete(application.windowId);
+    loadRaises.add(application.windowId);
     if (application.surface.maximized && !get().panelMax.includes(application.windowId))
       get().toggleMaximizePanel(application.windowId);
   },
