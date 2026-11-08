@@ -338,80 +338,140 @@ class FollowThroughService:
         owner: str | None = None,
         due_at: str | None = None,
     ) -> dict[str, Any]:
-        """Create an accountable action from an accepted decision."""
-        now = utc_now_iso()
-        action_item_id = f"action-{uuid.uuid4().hex}"
-        commitment_id = f"commitment-{uuid.uuid4().hex}"
+        """Commit an accepted decision: one action item and one commitment.
 
+        ``decision_id`` is a decision record id, or (older MCP/SDK callers) the
+        id of a meeting ``decisions`` row. The work is
+        ``commit_decision_in_transaction``, which the one record writer
+        (``DecisionRecordService.create``) also calls.
+        """
         with self._db._connection() as conn:
+            return self.commit_decision_in_transaction(
+                conn, principal, decision_id, owner=owner, due_at=due_at,
+            )
+
+    def commit_decision_in_transaction(
+        self,
+        conn: Any,
+        principal: Any,
+        record_id: str,
+        *,
+        owner: str | None = None,
+        due_at: str | None = None,
+    ) -> dict[str, Any]:
+        """The ONE place a decision becomes a commitment (2026-11-08).
+
+        Runs in the caller's write transaction. Keyed by the record: the
+        action item is ``action-<key>`` and the commitment
+        ``commitment-<key>``, so a second call answers the first commitment
+        (``replayed``) and writes nothing. The commitment's ``decision_id`` is
+        the record's source (the Room and Needs you reach it from there).
+        """
+        ref = str(record_id or "").strip()
+        record = conn.execute(
+            "SELECT id, decision_text, owner, source_type, source_id FROM decision_records "
+            "WHERE id = ? AND deleted = 0", (ref,),
+        ).fetchone()
+        if record is None:
+            # An older caller names the meeting ``decisions`` row.
+            found = conn.execute(
+                "SELECT id FROM decision_records WHERE source_type = 'meeting' "
+                "AND source_id = ? AND deleted = 0 ORDER BY created_at LIMIT 1", (ref,),
+            ).fetchone()
+            if found is not None:
+                record = conn.execute(
+                    "SELECT id, decision_text, owner, source_type, source_id "
+                    "FROM decision_records WHERE id = ?", (found["id"],),
+                ).fetchone()
+        if record is not None:
+            key = str(record["id"])
+            source_type, source_id = str(record["source_type"]), str(record["source_id"])
+            text = str(record["decision_text"])
+            meeting = conn.execute(
+                "SELECT source_ref FROM decision_record_sources WHERE record_id = ? "
+                "AND source_type = 'meeting' ORDER BY created_at, id LIMIT 1", (key,),
+            ).fetchone()
+            meeting_id = str(meeting["source_ref"]).removeprefix("meeting:") if meeting else None
+            owner = owner or record["owner"]
+        else:
             decision = conn.execute(
-                """SELECT id, text, source_meeting_id, lifecycle
-                   FROM decisions WHERE id = ? AND deleted = 0""",
-                (decision_id,),
+                "SELECT id, text, source_meeting_id FROM decisions WHERE id = ? AND deleted = 0",
+                (ref,),
             ).fetchone()
             if decision is None:
-                raise ValueError(f"Decision not found: {decision_id}")
-            if decision["lifecycle"] != "accepted":
-                raise ValueError("Only accepted decisions can be committed")
+                raise ValueError(f"Decision not found: {ref}")
+            key = source_id = str(decision["id"])
+            source_type, text = "meeting", str(decision["text"])
+            meeting_id = decision["source_meeting_id"]
+        if source_type == "meeting":
+            accepted = conn.execute(
+                "SELECT lifecycle FROM decisions WHERE id = ? AND deleted = 0", (source_id,),
+            ).fetchone()
+            is_accepted = accepted is not None and accepted["lifecycle"] == "accepted"
+        else:
+            accepted = conn.execute(
+                "SELECT status FROM desk_decisions WHERE id = ? AND deleted = 0", (source_id,),
+            ).fetchone()
+            is_accepted = accepted is not None and str(accepted["status"] or "").lower() == "accepted"
+        if not is_accepted:
+            raise ValueError("Only accepted decisions can be committed")
 
-            # Fresh INSERT: stamp delegated_at when an owner is assigned.
-            delegated_at = now if owner else None
-            conn.execute(
-                """INSERT INTO action_items
-                   (id, meeting_id, task, owner, due, status, review_state, created_at, delegated_at)
-                   VALUES (?, ?, ?, ?, ?, 'open', 'accepted', ?, ?)""",
-                (
-                    action_item_id,
-                    decision["source_meeting_id"],
-                    str(decision["text"]),
-                    owner,
-                    due_at,
-                    now,
-                    delegated_at,
-                ),
-            )
-            ServiceEventLedger(self._db).append_in_transaction(
-                conn, principal,
-                event_type="decision.committed",
-                producer=type(self).__name__,
-                subject_ref=f'decision:{decision["id"]}',
-                source_revision=commitment_id,
-                facts={
-                    "entity_title": str(decision["text"]),
-                    "commitment_id": commitment_id,
-                    "action_item_id": action_item_id,
-                    "owner": owner,
-                    "due_at": due_at,
-                },
-                refs=[f'decision:{decision["id"]}', f"action_item:{action_item_id}"],
-                correlation_id=current_correlation_id(),
-                causation_id=f'decision:{decision["id"]}',
-            )
-            conn.execute(
-                """INSERT INTO decision_commitments
-                   (id, decision_id, action_item_id, owner, due_at, status,
-                    created_at, updated_at)
-                   VALUES (?, ?, ?, ?, ?, 'open', ?, ?)""",
-                (
-                    commitment_id,
-                    decision["id"],
-                    action_item_id,
-                    owner,
-                    due_at,
-                    now,
-                    now,
-                ),
-            )
-
+        action_item_id = f"action-{key}"
+        commitment_id = f"commitment-{key}"
+        existing = conn.execute(
+            "SELECT * FROM decision_commitments WHERE id = ?", (commitment_id,),
+        ).fetchone()
+        if existing is not None:
+            return {**dict(existing), "replayed": True}
+        if meeting_id and conn.execute(
+            "SELECT 1 FROM meetings WHERE id = ?", (meeting_id,),
+        ).fetchone() is None:
+            meeting_id = None
+        now = utc_now_iso()
+        # Fresh INSERT: stamp delegated_at when an owner is assigned.
+        delegated_at = now if owner else None
+        conn.execute(
+            """INSERT INTO action_items
+               (id, meeting_id, task, owner, due, status, review_state, created_at, delegated_at)
+               VALUES (?, ?, ?, ?, ?, 'open', 'accepted', ?, ?)""",
+            (action_item_id, meeting_id, text, owner, due_at, now, delegated_at),
+        )
+        ServiceEventLedger(self._db).append_in_transaction(
+            conn, principal,
+            event_type="decision.committed",
+            producer=type(self).__name__,
+            subject_ref=f"decision:{source_id}",
+            source_revision=commitment_id,
+            facts={
+                "entity_title": text,
+                "commitment_id": commitment_id,
+                "action_item_id": action_item_id,
+                "decision_record_id": key if record is not None else None,
+                "owner": owner,
+                "due_at": due_at,
+            },
+            refs=[f"decision:{source_id}", f"action_item:{action_item_id}"]
+            + ([f"decision_record:{key}"] if record is not None else []),
+            correlation_id=current_correlation_id(),
+            causation_id=f"decision:{source_id}",
+        )
+        conn.execute(
+            """INSERT INTO decision_commitments
+               (id, decision_id, action_item_id, owner, due_at, status,
+                created_at, updated_at)
+               VALUES (?, ?, ?, ?, ?, 'open', ?, ?)""",
+            (commitment_id, source_id, action_item_id, owner, due_at, now, now),
+        )
         return {
             "id": commitment_id,
-            "decision_id": str(decision["id"]),
+            "decision_id": source_id,
             "action_item_id": action_item_id,
             "owner": owner,
             "due_at": due_at,
             "status": "open",
             "created_at": now,
             "updated_at": now,
+            "replayed": False,
         }
 
     def complete(
