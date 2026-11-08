@@ -389,7 +389,9 @@ def test_the_walk_link_opens_the_desk_with_its_own_bootstrap_token(tmp_path, mon
             return token == "t" * 43
     monkeypatch.setattr(walks_module, "_service", lambda: Known())
     app = FastAPI()
-    app.include_router(build_walks_router(SimpleNamespace(web_auth_token="desk-secret")))  # type: ignore[arg-type]
+    ctx = SimpleNamespace(web_auth_token="")
+    app.include_router(build_walks_router(ctx))  # type: ignore[arg-type]
+    ctx.web_auth_token = "desk-secret"  # the server fills it after the router is built
     client = TestClient(app)
     served = client.get("/w/" + "t" * 43, follow_redirects=False)
     assert served.status_code == 303
