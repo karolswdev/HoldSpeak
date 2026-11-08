@@ -1,6 +1,7 @@
 /** Surface pattern library — v1 pattern components. */
 
 export { StateChip, type ChipState } from "./StateChip";
+export { ProgressDots, type ProgressDotsProps } from "./ProgressDots";
 export { ActionNotice } from "./ActionNotice";
 export { Disclosure } from "./Disclosure";
 export { ProgressPlan, type PlanStep } from "./ProgressPlan";

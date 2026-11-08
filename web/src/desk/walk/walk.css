@@ -303,28 +303,8 @@
   height: 14px;
 }
 
-/* The progress: one round dot a question; answered dots fill, the step
-   now stretches into a short pill. */
-.walk-dots {
-  display: inline-flex;
-  flex: none;
-  gap: 5px;
-  align-items: center;
-}
-
-.walk-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 3px;
-  background: color-mix(in srgb, var(--text-muted) 30%, transparent);
-  transition: width var(--duration-long) var(--ease-standard), background-color var(--duration-long) var(--ease-standard);
-}
-
-.walk-dot[data-state="done"] { background: color-mix(in srgb, var(--accent) 70%, transparent); }
-.walk-dot[data-state="now"] {
-  width: 16px;
-  background: var(--accent);
-}
+/* The progress dots (the kit ProgressDots) draw in the accent. */
+.walk-progress { color: var(--accent); }
 
 /* "n of m" is read out, not shown. */
 .walk-count {
@@ -411,6 +391,5 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .walk-cursor,
-  .walk-dot { transition: none; }
+  .walk-cursor { transition: none; }
 }

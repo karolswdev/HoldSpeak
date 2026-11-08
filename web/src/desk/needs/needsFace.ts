@@ -78,11 +78,13 @@ export type NeedVerbs =
 export type ProgramAsk = "merge" | "decide" | "review" | "turn";
 
 /** The ask of a Program your-turn item: a merge, a person to ask for a
- *  review, a decision (the hub says TO DECIDE), or else his turn. */
+ *  review, a decision (the hub says TO DECIDE, TO CONFIRM or TO PICK), or
+ *  else his turn. */
 export function programAsk(kind: string, why: string): ProgramAsk {
   if (kind === "merge") return "merge";
   if (kind === "ask_review") return "review";
-  if (why.toUpperCase() === "TO DECIDE") return "decide";
+  // His word on a requirement (Met / Unmet) and a race pick are decisions too.
+  if (["TO DECIDE", "TO CONFIRM", "TO PICK"].includes(why.toUpperCase())) return "decide";
   return "turn";
 }
 

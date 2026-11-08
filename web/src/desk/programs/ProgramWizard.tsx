@@ -32,7 +32,7 @@ import { ApiError } from "../../lib/api";
 import { Button } from "../../components/signal/Signal";
 import { spriteUrl } from "../sprites";
 import {
-  ActionNotice, FilterTokens, GadgetGroup, GadgetRow, PadGadget, StringGadget, SurfaceState, useWindowBack, useWindowTitle, useWindowWings,
+  ActionNotice, FilterTokens, GadgetGroup, GadgetRow, PadGadget, ProgressDots, StringGadget, SurfaceState, useWindowBack, useWindowTitle, useWindowWings,
 } from "../surface";
 import { readControlMode } from "../hand/begin";
 import { ListRow, ListView } from "../surface/objects/ListView";
@@ -170,11 +170,8 @@ export function ProgramWizard({ template: firstTemplate, scopeProjectId, program
   }, [pending]);
   // The progress dots ride the title bar's right end.
   useWindowWings(
-    <span className="pg-wiz-dots" data-keeps-title="" aria-label={`Step ${step + 1} of ${STEP_TOTAL}`} role="img" data-testid="programs-wizard-dots">
-      {STEPS.map((word, at) => (
-        <span key={word} className="pg-wiz-dot" data-state={at === step ? "now" : at < step ? "done" : undefined} />
-      ))}
-    </span>,
+    <ProgressDots className="pg-wiz-progress" data-keeps-title="" data-testid="programs-wizard-dots"
+      count={STEP_TOTAL} at={step} done={(at) => at < step} label={`Step ${step + 1} of ${STEP_TOTAL}`} />,
     [step],
   );
 
