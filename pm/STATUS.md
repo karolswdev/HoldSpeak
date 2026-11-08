@@ -2,6 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · #1901 scripts/measure.py reads his presses per night (The Walk answers and feedback bundles), the first-commit-to-merge proxy for finding to main, and four more seams; the day's file keeps the 00:40 run as its baseline.
 - 2026-11-08 · #1900 The hub's router mounting moves to runtime/web_mount.py (207 lines, same 935 routes in the same order, fenced by a recorded route list): web_server.py 1,958 -> 1,775 lines, its import lines 209 -> 137, cold start median 1.70 s -> 1.65 s (noise).
 - 2026-11-08 · #1899 The New program wizard has a Person row under Review (the desk's People roster, "Nobody yet" by default) that writes for_person_id on create, and its summary says "<person> reviews".
 - 2026-11-08 · #1898 The Program window's Drafting tray shows one thing from the plan_goal row (the planning row with no verb, Start with "4 steps", or the not-planned notice with Plan it) and no sentence under any of its verbs.
