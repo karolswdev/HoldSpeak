@@ -18,7 +18,7 @@ What you can decide from each channel, and how, is in [Programs](programs.md#dec
 HoldSpeak uses one bot (the same bot as Cadence) and one chat: yours.
 
 1. Make a bot with BotFather in Telegram and copy its token.
-2. In the **Bot token** row, paste the token and press **Save**. HoldSpeak keeps it in your keystore (the macOS Keychain, or the Secret Service on Linux). The row then says **Stored in your keystore**; before that, **Missing**. **Replace** puts in a new token. No page shows the token again. A token that is still in the config file is moved into the keystore one time, and the file entry is made empty.
+2. In the **Bot token** row, paste the token and press **Save**. HoldSpeak keeps it in your keystore: one sealed file, whose key is in the macOS Keychain (the Secret Service on Linux). See [Secrets](SECURITY.md#5-secrets). The row then says **Stored in your keystore**; before that, **Missing**. **Replace** puts in a new token. No page shows the token again. A token that is still in the config file is moved into the keystore one time, and the file entry is made empty.
 3. Press **Pair Telegram**. The row shows "Send /pair <code> to your bot", the minutes left and **Copy**. The code has six digits and is good for ten minutes. **New code** makes a new one.
 4. Send `/pair <code>` to your bot from your own Telegram chat. The first chat that sends the code is your chat. The row then says **Paired · <name>**.
 

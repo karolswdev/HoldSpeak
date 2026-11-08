@@ -172,8 +172,12 @@ def pin_wire_day(hub: Any, monkeypatch: Any, *, brief: bool = False) -> None:
 
     monkeypatch.setattr(follow_through_service, "date", WireDate)
     wire_now = lambda: datetime(2026, 10, 20, 10, 0).astimezone()
-    for module in (attention_ranking, needs_you_aggregate, needs_you_membership, people_service, project_service):
+    # The Room reads moved to project_room_reads (#1902); the service may no
+    # longer name local_wall itself, so the patch there must not raise.
+    from holdspeak.services import project_room_reads
+    for module in (attention_ranking, needs_you_aggregate, needs_you_membership, people_service, project_room_reads):
         monkeypatch.setattr(module, "local_wall", wire_now)
+    monkeypatch.setattr(project_service, "local_wall", wire_now, raising=False)
     # The calendar reads "next" on the same day (_calendar_today seeds the
     # wire day's events): the Door's upcoming and the People overlay.
     monkeypatch.setattr(person_overlay, "utc_now_iso",

@@ -30,10 +30,12 @@ Use a program when one goal is too big for one agent: "make the hub stop stallin
 
 1. Open **Go ▸ Programs** (after Agents), or press ⌃7.
 2. Press **New program** (or choose a template in **Templates ▾**). The Programs window shows the New program wizard in four steps. Press **Next** to go to the next step, **Back** to go to the step before, and Escape or **Cancel** to go back to the list. The wizard saves nothing until you press **Create**.
-   - **Project**: choose the project. When you open Programs from a project, or when you have only one project, that project is chosen. To use a repository that is not in a project, choose **A folder on this machine** and type its folder.
+   - **Project**: choose the project. When you open Programs from a project, or when you have only one project, that project is chosen. To use a repository that is not in a project, choose **A folder on this machine** and type its folder. The project you chose stays as a card at the top of each next screen, and the title bar says "New program · <project>".
    - **Goal**: type the title and the goal (the brief). Each field has a mic. Choose a template here if you want a different one.
-   - **Runs**: choose what the program can do by itself: **Runs by itself** (YOLO), **Asks before it merges or sends** (Normal) or **Asks at every step** (Secure). With no choice, the program uses your desk's level. Choose the agent, the reviewer and the check command if you do not want the template's. Spending is not capped.
-   - **Create**: read the summary and press **Create**. The Program window opens in **Drafting**. When you typed a goal, Create plans the steps from it (as **Plan it** does, and applies them); with **Runs by itself** the program then starts, and with the other levels **Start** is the one press left.
+   - **Runs**: choose what the program can do by itself: **Runs by itself** (YOLO), **Asks before it merges or sends** (Normal) or **Asks at every step** (Secure). With no choice, the program uses your desk's level. Choose the agent, the reviewer and the check command if you do not want the template's. Under **Review**, the **Person** row names a person from People who reviews the pull requests ("Nobody yet" is the default). Spending is not capped.
+   - **Create**: read the summary and press **Create**. The Program window opens in **Drafting**.
+   - **Create plans the steps.** When you typed a goal, HoldSpeak plans the steps from it by itself, as **Plan it** does, and applies them. You do not press anything. While it plans, the Drafting tray says so. Then it shows **Start** with the number of steps ("4 steps"). When it cannot plan, the tray says why and shows **Plan it**.
+   - **Runs by itself starts by itself.** With **Runs by itself**, the program starts after it is planned. With the other levels, **Start** is the one press left.
 3. To change the goal, press it at the top and type.
 4. Add the steps. Each step is one row; press it to open it in place: its title, agent, effort and "after", its brief, its **Gate** (the check, the review, who merges) and **What it must prove**. Paste a brief for each step. Give each step the files it owns. A step can start after other steps ("after 2, 3"). Or press **Plan it**, and the engine drafts the steps for you (see "Plan it from a goal"). Press **Ask me first** if you want the engine to ask you some questions before it plans (see "The interview rounds").
 5. Press **Start**. Under it the window says what Start checks first: the repository, the remote (when a step opens a pull request) and the check command.
@@ -48,7 +50,16 @@ Choose the **From the desk** template and a project. HoldSpeak makes one step fo
 
 ### From a note
 
-On a note, open the toolbar fold and press **Run as a program**. The note becomes the goal.
+On a note, open the toolbar fold and press **Run as a program**. The note becomes the goal. The program goes to the project that the wizard chooses first.
+
+### From a decision or from Needs you
+
+**Run as a program** is also in two more places. It does the same thing in each place:
+
+- In the Decisions window, a decision's reader has **Run as a program** beside **Send…**. The decision becomes the goal, and the program goes to the decision's project.
+- In Needs you, right-press an action's row and choose **Run as a program**.
+
+**Run as a program** makes a Program. **Hand to an agent session** is a different verb: it starts one live agent session on the item, with no Program and no steps (see [Coder integration](CODER_INTEGRATION.md)).
 
 ### On a call
 
@@ -230,7 +241,7 @@ HoldSpeak decides what it can decide by rule at the program's control level. A *
 - **Safety.** A finding about security or data loss, a deleted test, a migration that drops or changes rows.
 - **No rule.** HoldSpeak has no rule for the choice.
 
-Each item of your turn is a row in Needs you, in a group with the program's title. In the Program window, the first item is under the line, in the words of the briefing page: what the step was doing, what happened, the question, and which steps wait on your answer. Under it, each verb has one line that says what it does ("HoldSpeak merges the PR. The step that waits on it can start."). Under the verbs, one row of words opens more: **Brief** (the step's brief), **Program text** and **Copy page link**. These are not choices. The other items are one line each under the verbs. The verbs are **Merge** / **Not yet**, **Fix now** / **Later** / **Skip**, **Go on** / **Park** for a core question, **Resume** / **Skip**, **Allow the commit** / **Not now** for a held commit, **Answer**. You can also decide most of these items away from the desk (see "Decide from anywhere").
+Each item of your turn is a row in Needs you, in a group with the program's title. In Needs you, the row is the program: its name, a short word for what it asks, and one verb. The verb is **Merge**, **Decide** or **Open**. **Decide** opens the choices in place, under the row; press a choice and the row goes. A press on the row opens the Program window at its step. Right-press the row for **Later** and **Send**. In the Program window, the first item is under the line, in the words of the briefing page: what the step was doing, what happened, the question, and which steps wait on your answer. Under it, each verb has one line that says what it does ("HoldSpeak merges the PR. The step that waits on it can start."). Under the verbs, one row of words opens more: **Brief** (the step's brief), **Program text** and **Copy page link**. These are not choices. The other items are one line each under the verbs. The verbs are **Merge** / **Not yet**, **Fix now** / **Later** / **Skip**, **Go on** / **Park** for a core question, **Resume** / **Skip**, **Allow the commit** / **Not now** for a held commit, **Answer**. You can also decide most of these items away from the desk (see "Decide from anywhere").
 
 ![The Program window at 1440: Your turn with a merge, two findings and a core question](assets/programs/program-your-turn-1440.png)
 
@@ -779,6 +790,8 @@ A program with the line `delivery dw <project>/<phase>` or `delivery dw <project
 
 The log says "Delivered to dw app/1 (PR #12)". When a part fails, the log says it in words, for example "Could not deliver to dw app/1/07: Delivery Workbench did not take the evidence", and a Your turn row asks you: **Retry** or **Skip**. **Skip** leaves the program Done, with no delivery. At Secure the row asks you to **Merge** the delivery pull request or **Skip**. In the Program window this row is the headline, with what each choice does under it; you can also answer it from a briefing page. After the merge, the Done window says "Delivered to dw app/1 (PR #12)" under its step line. Delivery Workbench never gets the steps, the briefs, the checkpoints, the findings or the worktree paths.
 
+**A pull request that exists.** When HoldSpeak knows the delivery pull request, it never opens a second one. The row offers **Check** (HoldSpeak reads the pull request on GitHub and changes nothing), **Merge**, **Retry** and **Skip**. **Retry** shows only when the delivery stopped before HoldSpeak pushed, opened or merged anything. **Skip** calls nothing on GitHub.
+
 **A whole phase.** A line with no story (`delivery dw <project>/<phase>`) also closes the phase in the same PR (`dw phase close`). The log then says "Delivered to dw app/1 (PR #12) · phase closed"; at Secure, "… waits for your merge · it closes the phase". When Delivery Workbench refuses the close, the log says "· the phase stays open".
 
 **When you make the program.** In a repository with Delivery Workbench, HoldSpeak reads its roadmap once (`dw context`) and keeps a short summary (each project, its next story, its active phase, its open stories) in the log. Each step's brief carries it as data. When the read fails, one log line says so and the program goes on.
@@ -806,7 +819,7 @@ What waits on you does not need the desk. You can decide it from a page on your 
 
 ### The briefing page
 
-On a Your turn row (in the Program window or in Needs you), press **Copy page link**. In Needs you, it is in **Send ▾**. HoldSpeak makes a page for that one item and puts its link on the clipboard. The row's line then says "Page link copied · open until 06:30".
+On a Your turn row (in the Program window or in Needs you), press **Copy page link**. In Needs you, right-press the row and choose **Send ▸ Copy page link**. HoldSpeak makes a page for that one item and puts its link on the clipboard. The row's line then says "Page link copied · open until 06:30".
 
 The page reads like a note: the kind of item, the program and its goal, the program's steps with this step lit and the steps that wait on it marked, what the step was doing, what happened, and then the question. Under the question, the choices, each with what it does, and **Later**, which shows four times in place. Under the choices, one line opens the evidence in place, read only: **The error**, **Check log**, **Brief**, **Program text**. Press a choice to decide. The page then shows one line, for example "Resume · 18:18. The step starts again. Nothing else waits on you.", and **Open on the desk**.
 
@@ -832,7 +845,7 @@ Pair Telegram one time in **Settings ▸ Reach** (see [Reach](reach.md)). Then:
 
 ### Later, and when it comes back
 
-Every item has **Later**. Later decides nothing. In Needs you, **Later ▾** offers **In 1 hour**, **At 13:00**, **Tonight** (19:00) and **Tomorrow** (the end of your quiet hours). On Telegram you can also write the time: "later" (your default in **Settings ▸ Reach ▸ Later means**), "later 2h", "later 30m", "at 13:00", "at one", "tonight", "tomorrow".
+Every item has **Later**. Later decides nothing. In Needs you, right-press the row and choose **Later**. It offers **In 1 hour**, **At 13:00**, **Tonight** (19:00) and **Tomorrow** (the end of your quiet hours). On Telegram you can also write the time: "later" (your default in **Settings ▸ Reach ▸ Later means**), "later 2h", "later 30m", "at 13:00", "at one", "tonight", "tomorrow".
 
 A deferred item leaves the Needs you count. Its row says "Later · back at 13:00", and the channel when it was not the desk ("· from Telegram"). At that time, it comes back to the count, and Telegram sends it again when you deferred it on Telegram or on the page. The Ledger gets one line: "Later, back at 13:00 · from Telegram".
 
@@ -864,8 +877,8 @@ Read this note first after a day away. A new chat or a new agent also reads it f
 
 A program is a desk object, like a meeting or a note.
 
-- **Its project.** A program made from a project uses the project's repository. A program without a project goes to the project of its repository. If there is none, the Program window shows **No project**: on a wide screen, press it to file the program. The project's Room shows a **Programs** fold, and its Needs you rows. The handover note goes to the project's memory. The project's update draft gets a Programs paragraph, and the Monday brief counts the running programs.
-- **Its origin.** A program can come from a meeting (its actions are the steps), a decision (the pull requests become the decision's work), a note, or a project item. The status bar of the Program window tells where the program lives and where it came from: "Project ▸ HoldSpeak · From the meeting of Tue 28 Oct · For Alice".
+- **Its project.** A program made from a project uses the project's repository. A program without a project goes to the project of its repository. If there is none, the Program window shows **No project**: on a wide screen, press it to file the program. The **Now** tab of the project's Room always shows a **Programs** fold. Each row is a program with its step dots; press it to open the program. With no programs, the fold says "No Programs yet" and has **New program** for this project. The Room also shows the program's Needs you rows. The handover note goes to the project's memory. The project's update draft gets a Programs paragraph, and the Monday brief counts the running programs.
+- **Its origin.** A program can come from a meeting (its actions are the steps), a decision (the pull requests become the decision's work), a note, or a project item. When a step's pull request merges, HoldSpeak leaves the pull request on the origin: a note gets the PR link in its project's Room, with the program; a decision gets the PR link as its work. An action closes only when its own step merges. The status bar of the Program window tells where the program lives and where it came from: "Project ▸ HoldSpeak · From the meeting of Tue 28 Oct · For Alice".
 - **The person it is for.** A program or a step can name a person. The person's room shows the program under their commitments. Your 1:1 brief with that person lists a merged step under "To show them", and a finding they own under "To ask".
 - **A human review.** A step can name a person as its reviewer. Then Needs you shows "Ask Alice to review PR #1591" with **Send…** (a prepared send; you press Send). The merge waits until that person approves the pull request on GitHub. No agent reviewer reads such a step: its Review requirements are your word at the merge (**Met** or **Unmet** in Your turn). When the person asks for changes on GitHub, their comments go to the step's agent as one more round on the same branch and pull request; the log says "Alice asked for changes on GitHub; round 1 goes back to the agent". HoldSpeak reads the review again on each pass while the pull request waits, also after an approval. A later request for changes stops the merge until the person approves again; it gives one round, not one round on each pass. The merge uses the last review that HoldSpeak read completely for that pull request. When HoldSpeak cannot read the review (gh fails, or the answer is not complete), the merge waits and the log says "HoldSpeak could not read the latest review". This does not cancel the earlier approval, and HoldSpeak does not ask the person again. A Merge question that is no longer correct goes back to "PR open". After a merge request goes to GitHub, HoldSpeak does not send a second request; it waits until GitHub shows the merge. A request is not a merge: GitHub can still put it in a queue.
 - **What it leaves.** Today shows one line, such as "Programs: 1 running, 1 waits on you", on a day a Program moved. Each merged step is a result on Today and in the timelines of the project and the person. A **Later** decision makes a task for you, filed to the project and to the person. A **Skip** writes one line with your reason in the note.

@@ -265,8 +265,9 @@ for you. Open **Settings > Calls > Line**, set **The line** to **A Telnyx
 number**, and open **Set up Telnyx**. There are three presses:
 
 1. **Your key.** Paste your Telnyx API key into **Telnyx API key** and press
-   **Save**. The key goes into the hub's keystore (the macOS Keychain or the
-   Linux Secret Service). HoldSpeak never writes the key into a file. A key
+   **Save**. The key goes into the hub's keystore (one sealed file; its master key
+   is in the macOS Keychain or the Linux Secret Service). HoldSpeak never
+   writes the key into a plain file. A key
    that is only in your shell (`TELNYX_API_KEY` in `~/.zshrc`) is not in the
    hub's environment, so save it here.
 2. **Connect.** The hub makes an outbound voice profile and a SIP credential

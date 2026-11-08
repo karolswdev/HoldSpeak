@@ -381,11 +381,16 @@ A **Program** is a goal cut into steps. An agent can do each step, while the
 owner keeps the decisions that affect scope, authority, and delivery.
 
 1. Open **Programs** from **Go** or Search.
-2. Select **New program** or choose **Templates**.
-3. Define the goal and steps, then review the plan.
-4. Select **Start** when the steps, agent, and control level are correct.
+2. Select **New program** or choose **Templates**. The wizard has four
+   screens: the project, the goal, how it runs, and the summary.
+3. Press **Create**. HoldSpeak plans the steps from the goal by itself.
+4. With **Runs by itself**, the Program starts with no press. With the other
+   levels, read the plan and press **Start**.
 5. Read each checkpoint and answer the **Your turn** item when the Program
-   asks.
+   asks. The item is also a row in **Needs you**.
+
+**Run as a program** on a note, a decision or an action makes a Program from
+it. **Hand to an agent session** starts one live agent session instead.
 
 The Program window can **Park** a run, **Resume** it, add a step, and show
 handoff notes and decisions. **Race** is available only where the service
