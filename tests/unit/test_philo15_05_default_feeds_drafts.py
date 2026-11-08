@@ -3,7 +3,7 @@ batteries included"): the Conductor's routine answers inherit the Default
 for AI work.
 
 Cadence drafts (``background.cadence_draft``) are OWNER work: the YOLO
-responder and the cadence loop admit them through ``run_owner_draft`` with an
+responder and the cadence loop admit them through ``engine_door.run`` with an
 OWNER principal, and OWNER work reads the whole assignment chain
 (capability, group, global).  So the global default alone makes the drafts
 route ready, the lane chip names its model, and a routine question is

@@ -65,7 +65,7 @@ BRIEF_MAX_CHARS = 6000
 SCREEN_MAX_CHARS = 4000
 SCREEN_LINES = 60
 #: The drafting capability (its assigned model drafts the answer).  The draft
-#: is OWNER work (``run_owner_draft``), so it reads the whole assignment chain:
+#: is OWNER work (``engine_door.run``), so it reads the whole assignment chain:
 #: an exact Cadence-drafts model, else the Background group, else the Default
 #: for AI work (PHILO-15 05; tests/unit/test_philo15_05_default_feeds_drafts.py).
 #: TODO(#967): when the owner's per-capability OFF record
@@ -73,8 +73,6 @@ SCREEN_LINES = 60
 #: hold here too.  #967 checks OFF only on SERVICE routes (assignment_sources
 #: set); this OWNER route needs the same check before the group/global heads.
 CAPABILITY = "background.cadence_draft"
-PARENT_KIND = "cadence.next-action-draft"
-PROJECTION_KIND = "cadence-next-action"
 #: The principal that sends a routine answer under the YOLO posture.
 RESPONDER_IDENTITY = "control-mode"
 
@@ -1089,45 +1087,33 @@ class AgentResponder:
         screen: Optional[str] = None, choices: Optional[list[str]] = None,
     ) -> Optional[str]:
         """One draft from the model assigned to Cadence drafts, through the
-        one admission path (``run_owner_draft``). ``None``: no model."""
+        engine door. ``None``: no model, or it gave no answer."""
         from ..kernel.runtime import _service
         from ..principals import Principal, PrincipalKind
-        from .inference_owner_draft import run_owner_draft
+        from . import engine_door
         from .memory_grounding import memory_for
 
-        wait_id = str(getattr(session, "wait_id", "") or "")
-        digest = hashlib.sha256(f"{key}#{wait_id}".encode()).hexdigest()
-        command_id = f"agent-answer:{digest}"
         project = str((launch.get("story_ref") or {}).get("project") or "")
         project_id = project if project.startswith("proj-") else None
         system, user = answer_prompt(
             str(launch.get("brief_text") or ""), self._screen(launch) if screen is None else screen,
             question, choices,
         )
-        result = run_owner_draft(
-            _service(),
-            Principal(PrincipalKind.OWNER, RESPONDER_IDENTITY),
-            command_id=command_id,
-            parent_kind=PARENT_KIND,
-            definition_ref=f"agent-launch:{launch['launch_id']}",
-            definition_revision=wait_id or "wait",
-            input_snapshot={"session_key": key, "wait_id": wait_id, "launch_id": str(launch["launch_id"])},
-            capability_id=CAPABILITY,
-            route_key="agent-answer",
-            operation_id=command_id,
-            reserved_output_tokens=900,
-            payload_factory=lambda: {
-                "system_prompt": system, "user_prompt": user,
-                "max_tokens": 900, "temperature": None,
-            },
-            memory=lambda: memory_for(CAPABILITY, self._db, project_id=project_id, query=question),
-            # The cadence draft's passthrough projection: the same seam.
-            projection_kind=PROJECTION_KIND,
-            projection_factory=lambda value: {"output": str(value.get("draft") or "")},
-        )
-        if result.get("outcome") != "succeeded" or not isinstance(result.get("published"), Mapping):
+        broker = _service()
+        try:
+            engine = engine_door.engine_for(broker, CAPABILITY)
+            payload = engine_door.with_memory(
+                broker, engine,
+                {"system_prompt": system, "user_prompt": user, "max_tokens": 900, "temperature": None},
+                lambda: memory_for(CAPABILITY, self._db, project_id=project_id, query=question),
+                reserved_output_tokens=900,
+            )
+            answer = engine_door.run(
+                broker, Principal(PrincipalKind.OWNER, RESPONDER_IDENTITY), CAPABILITY, payload, engine=engine,
+            )
+        except engine_door.EngineDoorError:
             return None
-        return str(result["published"].get("output") or "")
+        return answer.output
 
     def _screen(self, launch: Mapping[str, Any]) -> str:
         from ..coder_steering import peek_pane

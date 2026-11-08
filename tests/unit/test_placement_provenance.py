@@ -400,7 +400,7 @@ def test_cadence_get_loop_llm_placement(tmp_path, monkeypatch):
     detail = asyncio.run(service.get_loop(OWNER, loop.id))
     assert detail["next_action"]["generated_by"] == "llm"
     assert "placement" in detail, f"placement missing from cadence: {sorted(detail)}"
-    assert detail["placement"]["source"] == "frozen_owner_assignment"
+    assert detail["placement"]["source"] == "owner_assignment"
     assert detail["placement"]["egress"]["scope"] == "local"
 
 

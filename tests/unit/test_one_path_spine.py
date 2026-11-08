@@ -779,10 +779,7 @@ def _drive_cadence(tmp_path, monkeypatch) -> SurfaceRun:
     service = CadenceService(db, CadenceConfig(use_llm=True), kernel=broker)
     detail = asyncio.run(service.get_loop(WEB_OWNER_SESSION, loop.id))
     assert detail["next_action"]["generated_by"] == "llm", detail["next_action"]
-    return SurfaceRun(
-        db, WEB_OWNER_SESSION, _parent_run_operation_id(db, "cadence.next-action-draft"),
-        THIS_MACHINE_ID, parent_kind="cadence.next-action-draft",
-    )
+    return SurfaceRun(db, WEB_OWNER_SESSION, None, THIS_MACHINE_ID)
 
 
 SURFACE_DRIVERS: dict[str, Callable[[Any, Any], SurfaceRun]] = {
@@ -815,11 +812,11 @@ assert len(SURFACE_DRIVERS) == 15, "every named surface form is proven here; non
 #: the sanity test below) because ``test_one_path_provenance.py`` imports these
 #: to cross-check the DECLARED shape against the shape the stored row actually
 #: shows — the two files cannot drift apart without one of them failing.
-ROOT_SHAPED_SURFACES = frozenset({"Ask", "Recipe run", "Rails", "Decision promotion", "Delivery review"})  # HS-151-02: Recipe chat removed
+ROOT_SHAPED_SURFACES = frozenset({"Ask", "Recipe run", "Rails", "Decision promotion", "Delivery review", "cadence next action"})  # HS-151-02: Recipe chat removed
 CHILD_SHAPED_SURFACES = frozenset({
     "Sequence", "Workflow", "manual Workbench", "scheduled Workbench",
     "memory writeback", "voice",
-    "meeting live", "meeting deferred", "dictation pipeline", "cadence next action",
+    "meeting live", "meeting deferred", "dictation pipeline",
 })
 
 

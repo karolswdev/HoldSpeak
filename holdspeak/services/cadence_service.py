@@ -3,7 +3,6 @@ from __future__ import annotations
 from holdspeak.services.observer import NullObserver, PipelineObserver, observe_service
 
 import asyncio
-import hashlib
 from datetime import timedelta
 from holdspeak.timestamps import local_now, utc_iso, utc_now
 from typing import Any
@@ -15,7 +14,6 @@ from .memory_grounding import memory_for
 
 _LOCAL_EGRESS = endpoint_egress(cloud=False, label="Local only")
 #: The kernel projection kind the elected draft is staged as.
-_DRAFT_PROJECTION = "cadence-next-action"
 #: A loop's source under the name memory uses, so the draft never reads it back.
 _LOOP_SOURCE_REF_KIND = {"meeting_action": "action_item", "meeting_decision": "decision"}
 
@@ -215,84 +213,42 @@ class CadenceService:
         return await asyncio.to_thread(generate_next_action, loop), None
 
     async def _drafted_next_action(self, principal: Principal, loop: Any) -> Any:
-        """Run Cadence's one OWNER draft through a one-member frozen route.
-
-        Cadence does not make scheduler authority from a detail read.  An exact
-        OWNER assignment is required at admission; a pre-route refusal has its own
-        durable parent receipt and this method simply lets CAD-7's deterministic
-        action remain useful.
-        """
+        """Draft the loop's next action on the engine assigned to Cadence drafts,
+        through the engine door. ``None`` when no engine answers usefully, so
+        CAD-7's deterministic action stays."""
         from ..cadence.llm_action import next_action_from_output, next_action_prompt
         from ..kernel.runtime import _service
-        from .inference_owner_draft import run_owner_draft
+        from . import engine_door
 
         broker = self._kernel or _service()
-        loop_revision = str(loop.updated_at or loop.created_at or "unversioned")
-        digest = hashlib.sha256(f"{loop.id}:{loop_revision}".encode()).hexdigest()
-        command_id = f"cadence-draft:{digest}"
-
-        def payload() -> dict[str, Any]:
-            system_prompt, user_prompt = next_action_prompt(loop)
-            return {
+        try:
+            engine = engine_door.engine_for(broker, "background.cadence_draft")
+        except engine_door.EngineDoorError:
+            return None
+        system_prompt, user_prompt = next_action_prompt(loop)
+        payload = engine_door.with_memory(
+            broker, engine,
+            {
                 "system_prompt": system_prompt,
                 "user_prompt": user_prompt,
                 "max_tokens": 900,
                 "temperature": None,
                 "loop_id": loop.id,
-                "loop_revision": loop_revision,
-            }
-
-        def projection(value: dict[str, Any]) -> dict[str, Any]:
-            return {
-                "output": str(value.get("draft") or ""),
-                "loop_id": loop.id,
-                "actor": principal.identity,
-            }
-
-        running_parent: dict[str, Any] = {}
+                "loop_revision": str(loop.updated_at or loop.created_at or "unversioned"),
+            },
+            lambda: self._loop_memory(loop),
+            reserved_output_tokens=900,
+        )
         try:
-            routed = await asyncio.to_thread(
-                run_owner_draft,
-                broker,
-                principal,
-                command_id=command_id,
-                parent_kind="cadence.next-action-draft",
-                definition_ref=f"cadence-loop:{loop.id}",
-                definition_revision=loop_revision,
-                input_snapshot={
-                    "loop_id": loop.id,
-                    "source_type": loop.source_type,
-                    "loop_revision": loop_revision,
-                },
-                capability_id="background.cadence_draft",
-                route_key="cadence-draft",
-                operation_id="cadence-draft:" + digest,
-                reserved_output_tokens=900,
-                payload_factory=payload,
-                memory=lambda: self._loop_memory(loop),
-                projection_kind=_DRAFT_PROJECTION,
-                projection_factory=projection,
-                result_is_usable=lambda value: (
-                    next_action_from_output(loop, str(value.get("output") or "")).generated_by == "llm"
-                ),
-                parent_started=lambda parent: running_parent.setdefault("parent", parent),
+            answer = await asyncio.to_thread(
+                engine_door.run, broker, principal, "background.cadence_draft", payload, engine=engine,
             )
-        except asyncio.CancelledError:
-            parent = running_parent.get("parent")
-            if parent is not None:
-                self._cancel_parent(broker, parent, principal)
-            raise
-        except BaseException:
-            parent = running_parent.get("parent")
-            if parent is not None:
-                self._close_parent(broker, parent, principal, "failed")
-            raise
-        if routed.get("outcome") != "succeeded" or not isinstance(routed.get("published"), dict):
+        except engine_door.EngineDoorError:
             return None
-        action = next_action_from_output(loop, str(routed["published"].get("output") or ""))
+        action = next_action_from_output(loop, answer.output)
         if action.generated_by != "llm":
             return None
-        return action, {"source": "frozen_owner_assignment", "egress": routed["egress"]}
+        return action, {"source": "owner_assignment", "egress": {"scope": engine_door.egress_of(broker, engine)}}
 
     def _loop_memory(self, loop: Any) -> Any:
         """Memory for one loop's draft: its words, less the loop and its source.
@@ -331,25 +287,3 @@ class CadenceService:
             return ""
         return str(row[0] or "") if row else ""
 
-    @staticmethod
-    def _close_parent(broker: Any, parent: Any, principal: Principal, outcome: str) -> None:
-        if broker.store.receipt(parent.operation_id) is None:
-            broker.parent_run_controller.close(parent.context, outcome, principal=principal)
-
-    @staticmethod
-    def _cancel_parent(broker: Any, parent: Any, principal: Principal) -> None:
-        """Durably elect cancellation, and never let it raise over the cancellation.
-
-        ``cancel_by_operation_id`` is the controller's own route-side path: it
-        checks the durable owner, moves the parent to CANCELLING, signals the live
-        invocation child, and closes the parent ``cancelled``. If it cannot (the
-        parent already terminalized, the row is gone), the fallback is still a
-        terminal receipt rather than an OPEN parent left for the lease reaper.
-        """
-        try:
-            broker.parent_run_controller.cancel_by_operation_id(principal, parent.operation_id)
-        except Exception:
-            try:
-                CadenceService._close_parent(broker, parent, principal, "cancelled")
-            except Exception:
-                pass
