@@ -74,6 +74,45 @@ def _automation_view(value: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _watch_automation_view(watch: dict[str, Any]) -> dict[str, Any]:
+    """The same product row for an event start that is a watch (2026-11-08)."""
+    connector = str(watch.get("connector_id") or "custom")
+    adapter_status = "ready" if connector in ("gh", "jira") else "unavailable"
+    enabled = watch.get("state") in {"active", "tested"}
+    if watch.get("last_error"):
+        status = "attention"
+    elif adapter_status == "unavailable":
+        status = "unavailable"
+    else:
+        status = "active" if enabled else "paused"
+    query = watch.get("query") if isinstance(watch.get("query"), dict) else {}
+    return {
+        "id": watch.get("id"),
+        "name": watch.get("name") or "Event automation",
+        "provider": "github" if connector == "gh" else connector,
+        "event_kind": watch.get("event_pattern") or "",
+        "enabled": enabled,
+        "status": status,
+        "adapter_status": adapter_status,
+        "last_error": watch.get("last_error"),
+        "last_good_at": watch.get("last_success_at"),
+        "created_at": watch.get("created_at"),
+        "repository": query.get("repository"),
+    }
+
+
+def _watch_history_view(value: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "id": value.get("item_id"),
+        "occurred_at": value.get("created_at"),
+        "outcome": "added",
+        "event_kind": value.get("event_type") or "",
+        "subject": value.get("entity_ref") or "",
+        "receipt_id": None,
+        "detail": None,
+    }
+
+
 def _history_view(value: dict[str, Any]) -> dict[str, Any]:
     return {
         "id": f'{value.get("reaction_id")}:{value.get("event_id")}',
@@ -103,6 +142,24 @@ def build_automations_router(ctx: WebContext) -> APIRouter:
 
     def principal(request: Request) -> Any:
         return getattr(request.state, "principal", UNAUTHENTICATED)
+
+    def watches() -> Any:
+        """The one watch service (an Automation's event start is a watch)."""
+        from ...services.watch_service import WatchService
+
+        return WatchService(service._db, observer=get_observer())
+
+    def _is_watch_start(workbench_id: str, automation_id: str) -> bool:
+        from ...services.watch_service import AUTOMATION_INTENT_PREFIX
+
+        watch = service._db.automations.get_watch(automation_id)
+        return bool(watch) and watch.get("intent") == AUTOMATION_INTENT_PREFIX + workbench_id
+
+    def _with_pattern(watch: dict[str, Any]) -> dict[str, Any]:
+        from ...services.watch_service import _automation_event_pattern
+
+        return {**watch, "event_pattern": _automation_event_pattern(
+            service._db.automations.list_rules(str(watch.get("id") or "")))}
 
     @router.get("/automations/watches")
     def list_watches(request: Request) -> Any:
@@ -213,7 +270,9 @@ def build_automations_router(ctx: WebContext) -> APIRouter:
     def list_workbench_automations(workbench_id: str, request: Request) -> Any:
         try:
             values = service.list_workbench_automations(principal(request), workbench_id)
-            return JSONResponse({"automations": [_automation_view(value) for value in values]})
+            starts = [_watch_automation_view(watch)
+                      for watch in watches().automation_event_watches(workbench_id)]
+            return JSONResponse({"automations": starts + [_automation_view(value) for value in values]})
         except ServiceError as exc:
             return _error(exc)
 
@@ -222,11 +281,12 @@ def build_automations_router(ctx: WebContext) -> APIRouter:
         workbench_id: str, request: Request, payload: _WorkbenchAutomationCreateRequest,
     ) -> Any:
         try:
-            value = service.create_preset_automation(
+            # 2026-11-08: a new event start is a watch, read and on at once.
+            value = watches().start_automation_event(
                 principal(request), workbench_id=workbench_id,
-                preset_id=payload.preset_id, repository=payload.repository,
+                preset_id=payload.preset_id, repository=payload.repository or "",
             )
-            return JSONResponse({"automation": _automation_view(value)}, status_code=201)
+            return JSONResponse({"automation": _watch_automation_view(_with_pattern(value))}, status_code=201)
         except ServiceError as exc:
             return _error(exc)
 
@@ -236,6 +296,12 @@ def build_automations_router(ctx: WebContext) -> APIRouter:
         payload: _ReactionEnabledRequest,
     ) -> Any:
         try:
+            if _is_watch_start(workbench_id, automation_id):
+                value = watches().set_automation_event_enabled(
+                    principal(request), workbench_id=workbench_id,
+                    watch_id=automation_id, enabled=payload.enabled,
+                )
+                return JSONResponse({"automation": _watch_automation_view(_with_pattern(value))})
             value = service.set_workbench_automation_enabled(
                 principal(request), workbench_id=workbench_id,
                 reaction_id=automation_id, enabled=payload.enabled,
@@ -249,6 +315,8 @@ def build_automations_router(ctx: WebContext) -> APIRouter:
         workbench_id: str, automation_id: str, request: Request,
     ) -> Any:
         try:
+            if _is_watch_start(workbench_id, automation_id):
+                return JSONResponse(watches().test_watch(principal(request), automation_id))
             return JSONResponse(service.test_workbench_automation(
                 principal(request), workbench_id=workbench_id, reaction_id=automation_id,
             ))
@@ -261,6 +329,12 @@ def build_automations_router(ctx: WebContext) -> APIRouter:
         limit: int = Query(default=100, ge=1, le=500),
     ) -> Any:
         try:
+            if _is_watch_start(workbench_id, automation_id):
+                rows = watches().automation_event_history(
+                    principal(request), workbench_id=workbench_id,
+                    watch_id=automation_id, limit=limit,
+                )
+                return JSONResponse({"history": [_watch_history_view(row) for row in rows]})
             values = service.workbench_automation_history(
                 principal(request), workbench_id=workbench_id,
                 reaction_id=automation_id, limit=limit,

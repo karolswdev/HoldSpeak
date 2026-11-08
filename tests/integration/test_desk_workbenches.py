@@ -789,13 +789,14 @@ def test_the_spend_limit_per_run_is_the_automation_own_and_overrides_the_engine(
 def test_an_event_choice_turns_its_start_on_and_its_occurrence_runs_without_a_press(tmp_path: Path, monkeypatch) -> None:
     """When something happens: the choice installs and turns on the start
     (a quiet baseline first), stops the schedule, and the event's
-    occurrence runs at once although the preset's auto-run is off (A2
-    follow-up: it used to wait for a press that never came)."""
-    import asyncio
+    occurrence runs at once (A2 follow-up: it used to wait for a press that
+    never came). Since 2026-11-08 the start is a watch (WatchService): one
+    real event from the recorded gh answer is driven through the watch's
+    evaluation to a minted occurrence, its run and its result."""
     import subprocess
 
     import holdspeak.services.watch_sources as watch_sources
-    from holdspeak.services.reaction_service import ReactionService
+    from holdspeak.services.watch_service import AUTOMATION_INTENT_PREFIX, WatchService
     from holdspeak.services.watch_sources import GitHubWatchSource
 
     import holdspeak.workbench_memory as memory
@@ -826,12 +827,18 @@ def test_an_event_choice_turns_its_start_on_and_its_occurrence_runs_without_a_pr
     assert start["enabled"] is True and start["event_pattern"] == "github.pr.review_requested"
     # A5: the face's About line for an event start (the thing that happened).
     _record_window("about-event", client, wb, tmp_path)
-    reaction = db.automations.get_reaction(start["id"])
-    assert reaction["auto_run"] in (0, False)  # the preset's own; the occurrence runs anyway
+    watch = db.automations.get_watch(start["id"])
+    assert (watch["intent"], watch["state"]) == (AUTOMATION_INTENT_PREFIX + wb, "active")
+    assert db.automations.list_reactions() == []  # no legacy Watch + Reaction pair
 
-    changed = asyncio.run(ReactionService(db).refresh_watch(OWNER, reaction["watch_id"], snapshot(wire["after"])))
-    assert [p["status"] for p in changed["projections"]] == ["projected"]
+    monkeypatch.setattr(watch_sources, "fetch_watch_snapshot", lambda *_a, **_k: snapshot(wire["after"]))
+    WatchService(db).evaluate_once(OWNER, start["id"])
+    [item] = [i for i in db.workbench_items.list_for_workbench(wb) if "watch_id" in i.context_json]
+    assert _json.loads(item.context_json)["event_type"] == "github.pr.review_requested"
     assert len(prompts) == 1 and "https://github.com/acme/ledger/pull/418" in prompts[0]
+    # The same evaluation again mints nothing and runs nothing twice.
+    WatchService(db).evaluate_once(OWNER, start["id"])
+    assert len(prompts) == 1
     results = client.get(f"/api/workbenches/{wb}").json()["workbench"]["results"]
     assert [(r["title"], r["status"]) for r in results] == [("Move the ledger cutover behind a flag", "done")]
 
@@ -841,7 +848,7 @@ def test_an_event_choice_turns_its_start_on_and_its_occurrence_runs_without_a_pr
         "kind": "event", "event_id": "github-review-requested", "repository": wire["repository"]})
     assert [s["id"] for s in again.json()["workbench"]["event_starts"]] == [start["id"]]
     manual = client.put(f"/api/workbenches/{wb}/when", json={"kind": "manual"}).json()["workbench"]
-    assert manual["event_starts"] == [] and db.automations.get_reaction(start["id"])["enabled"] in (0, False)
+    assert manual["event_starts"] == [] and db.automations.get_watch(start["id"])["state"] == "paused"
 
 
 def test_a_schedule_with_no_engine_is_kept_off_and_says_why(tmp_path: Path) -> None:
