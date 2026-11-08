@@ -300,7 +300,19 @@ def spoken_state(wire: Mapping[str, Any]) -> str:
     return " ".join(parts)
 
 
+#: 2026-11-08 (Create plans itself): a Program made with a goal carries one
+#: engine claim row (``kind`` plan_goal, ``choice`` pending); the runner's
+#: next tick plans the steps from the goal and writes the result on the row
+#: (``planned``, ``not_planned`` or ``skipped``).
+PLAN_GOAL_KIND = "plan_goal"
+PLAN_GOAL_PENDING = "Planning the steps from the goal"
+PLAN_GOAL_NOT_NEEDED = "Not planned from the goal: the program has steps"
+
+
 __all__ = [
+    "PLAN_GOAL_KIND",
+    "PLAN_GOAL_NOT_NEEDED",
+    "PLAN_GOAL_PENDING",
     "ACTIVE_STATES",
     "AGENT_LABELS",
     "AUDIT_STATIONS",

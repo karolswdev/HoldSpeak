@@ -2,6 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · #1904 The Program reads move into program_reads.py (1,434 lines; 63 reads: 33 service read methods and the 30 pure reads they use; imports only the Program store, definitions, rules, brief words and errors); program_service.py 5,591 -> 4,370 lines, the service keeps a thin method for each.
 - 2026-11-08 · #1903 The Programs app tests are split by face: programs.app.test.tsx (3,735 lines) becomes seven programs.<face>.app.test.tsx files (128 to 796 lines) and one shared programs.test-setup.tsx (450 lines); 147 it( and 1 it.each( before and after, 152 cases pass, and the density guard fences the eight files at 900 lines.
 - 2026-11-08 · #1902 The Room's reads move into project_room_reads.py (2,234 lines; 15 _read_room_* reads and 15 helpers, imports only definitions, errors and steward serialization); project_service.py 5,459 -> 3,404 lines, the service keeps a thin method for each.
 - 2026-11-08 · #1901 scripts/measure.py reads his presses per night (The Walk answers and feedback bundles), the first-commit-to-merge proxy for finding to main, and four more seams; the day's file keeps the 00:40 run as its baseline.
