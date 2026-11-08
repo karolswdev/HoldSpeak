@@ -956,7 +956,7 @@ No tool marks a requirement Met: HoldSpeak judges it, or you press. An agent can
 
 An agent can make and start a program, but it cannot decide for you, and it does not prompt a step's agent: HoldSpeak does that. The skill `agent/skills/holdspeak-programs/SKILL.md` tells an agent how to drive a program.
 
-The routes are under `/api/programs` (see [API surface](API_SURFACE.md)): `GET` and `POST /api/programs/{id}/text`, `GET` and `POST /api/programs/{id}/shape`, `DELETE /api/programs/{id}/shape/held`, `POST /api/programs/{id}/plan/draft`, `POST /api/programs/{id}/rounds`, `/rounds/{name}/next`, `/rounds/{name}/answer` and `/rounds/{name}/decide`, and `POST /api/programs/{id}/steps/{sid}/remove`. The briefing page is `/b/<token>` and `GET /api/b/{token}`, with `POST /api/b/{token}/answer`. The owner's reach routes are under `/api/reach` (see [Reach](reach.md)). Each change of a program is a `program_changed` frame.
+The routes are under `/api/programs` (see [API surface](API_SURFACE.md)): `GET` and `POST /api/programs/{id}/text`, `GET` and `POST /api/programs/{id}/shape`, `DELETE /api/programs/{id}/shape/held`, `POST /api/programs/{id}/plan/draft`, `POST /api/programs/{id}/rounds`, `/rounds/{name}/next`, `/rounds/{name}/answer` and `/rounds/{name}/decide`. The briefing page is `/b/<token>` and `GET /api/b/{token}`, with `POST /api/b/{token}/answer`. The owner's reach routes are under `/api/reach` (see [Reach](reach.md)). Each change of a program is a `program_changed` frame.
 
 `HOLDSPEAK_PROGRAMS=off` stops the engine: it hands, checks and merges nothing. Test hubs set it.
 

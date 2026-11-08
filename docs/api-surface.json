@@ -5278,14 +5278,6 @@
       "consumers": []
     },
     {
-      "path": "/api/programs/{program_id}/from-desk",
-      "methods": [
-        "POST"
-      ],
-      "module": "web.routes.programs",
-      "consumers": []
-    },
-    {
       "path": "/api/programs/{program_id}/park",
       "methods": [
         "POST"
@@ -5321,14 +5313,6 @@
     },
     {
       "path": "/api/programs/{program_id}/proposals/{proposal_id}/decide",
-      "methods": [
-        "POST"
-      ],
-      "module": "web.routes.programs",
-      "consumers": []
-    },
-    {
-      "path": "/api/programs/{program_id}/propose_fix",
       "methods": [
         "POST"
       ],
@@ -5456,14 +5440,6 @@
       "consumers": []
     },
     {
-      "path": "/api/programs/{program_id}/steps/{step_id}/checkpoint",
-      "methods": [
-        "POST"
-      ],
-      "module": "web.routes.programs",
-      "consumers": []
-    },
-    {
       "path": "/api/programs/{program_id}/steps/{step_id}/decide",
       "methods": [
         "POST"
@@ -5489,14 +5465,6 @@
     },
     {
       "path": "/api/programs/{program_id}/steps/{step_id}/race",
-      "methods": [
-        "POST"
-      ],
-      "module": "web.routes.programs",
-      "consumers": []
-    },
-    {
-      "path": "/api/programs/{program_id}/steps/{step_id}/remove",
       "methods": [
         "POST"
       ],

@@ -22495,45 +22495,6 @@
         "summary": "Api Programs Overturn"
       }
     },
-    "/api/programs/{program_id}/from-desk": {
-      "post": {
-        "operationId": "api_programs_from_desk_api_programs__program_id__from_desk_post",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "program_id",
-            "required": true,
-            "schema": {
-              "title": "Program Id",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Api Programs From Desk Api Programs  Program Id  From Desk Post"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Api Programs From Desk"
-      }
-    },
     "/api/programs/{program_id}/park": {
       "post": {
         "operationId": "api_programs_park_api_programs__program_id__park_post",
@@ -22736,45 +22697,6 @@
           }
         },
         "summary": "Api Programs Proposal Decide"
-      }
-    },
-    "/api/programs/{program_id}/propose_fix": {
-      "post": {
-        "operationId": "api_programs_propose_fix_api_programs__program_id__propose_fix_post",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "program_id",
-            "required": true,
-            "schema": {
-              "title": "Program Id",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Api Programs Propose Fix Api Programs  Program Id  Propose Fix Post"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Api Programs Propose Fix"
       }
     },
     "/api/programs/{program_id}/requirements": {
@@ -23432,54 +23354,6 @@
         "summary": "Api Programs Step Amend"
       }
     },
-    "/api/programs/{program_id}/steps/{step_id}/checkpoint": {
-      "post": {
-        "operationId": "api_programs_checkpoint_api_programs__program_id__steps__step_id__checkpoint_post",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "program_id",
-            "required": true,
-            "schema": {
-              "title": "Program Id",
-              "type": "string"
-            }
-          },
-          {
-            "in": "path",
-            "name": "step_id",
-            "required": true,
-            "schema": {
-              "title": "Step Id",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Api Programs Checkpoint Api Programs  Program Id  Steps  Step Id  Checkpoint Post"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Api Programs Checkpoint"
-      }
-    },
     "/api/programs/{program_id}/steps/{step_id}/decide": {
       "post": {
         "operationId": "api_programs_decide_api_programs__program_id__steps__step_id__decide_post",
@@ -23670,54 +23544,6 @@
           }
         },
         "summary": "Api Programs Race"
-      }
-    },
-    "/api/programs/{program_id}/steps/{step_id}/remove": {
-      "post": {
-        "operationId": "api_programs_step_remove_api_programs__program_id__steps__step_id__remove_post",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "program_id",
-            "required": true,
-            "schema": {
-              "title": "Program Id",
-              "type": "string"
-            }
-          },
-          {
-            "in": "path",
-            "name": "step_id",
-            "required": true,
-            "schema": {
-              "title": "Step Id",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Api Programs Step Remove Api Programs  Program Id  Steps  Step Id  Remove Post"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Api Programs Step Remove"
       }
     },
     "/api/programs/{program_id}/steps/{step_id}/take": {

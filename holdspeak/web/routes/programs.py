@@ -16,9 +16,7 @@ PATCH  /api/programs/{id}                          {title, goal, control, prefer
                                                    rounds_before_start, check_command, for_person_id}
 POST   /api/programs/{id}/plan                     {steps: [...], size: "auto"|null, replace: bool,
                                                    before: <step_id> (insert before), waits: bool}
-POST   /api/programs/{id}/from-desk                one step per open action of its Project
 POST   /api/programs/{id}/start | /park | /resume
-POST   /api/programs/{id}/steps/{sid}/checkpoint   {line}
 POST   /api/programs/{id}/steps/{sid}/decide       {kind, choice, finding_id?, reason?, via?,
                                                    expected_delivery_checkpoint_id? (a delivery)}
 POST   /api/programs/{id}/steps/{sid}/race         {n}
@@ -33,7 +31,6 @@ PATCH  /api/programs/{id}/steps/{sid}              PG-REQ: change a step (the §
                                                    open); before: <step_id> | "end" moves it; 409
                                                    step_frozen names the field and the reason
 POST   /api/programs/{id}/steps/{sid}/amend        {line}: a line added to a started step's brief
-POST   /api/programs/{id}/steps/{sid}/remove       PG-LANG: remove a Planned or Ready step (409 step_stays)
 POST   /api/programs/from-action                  JRN13: a Drafting Program from a project's action {action_id, project_id?}
 POST   /api/programs/tonight                       PG-LANG LANG12: add a Door task, a note line or a step to tonight
 POST   /api/programs/{id}/requirements             {text, kind?, step_id?, each_step?, required?, spec?}
@@ -182,11 +179,6 @@ def build_programs_router(ctx: WebContext) -> APIRouter:
             waits=body.get("waits") is not False,
         ))
 
-    @router.post("/api/programs/{program_id}/from-desk")
-    async def api_programs_from_desk(program_id: str, request: Request) -> Any:
-        principal = _principal(request)
-        return await _call(lambda: _service().plan_from_project(principal, program_id))
-
     @router.post("/api/programs/{program_id}/start")
     async def api_programs_start(program_id: str, request: Request) -> Any:
         principal = _principal(request)
@@ -197,20 +189,10 @@ def build_programs_router(ctx: WebContext) -> APIRouter:
         principal, body = _principal(request), await _body(request)
         return await _call(lambda: _service().park(principal, program_id, reason=body.get("reason")))
 
-    @router.post("/api/programs/{program_id}/propose_fix")
-    async def api_programs_propose_fix(program_id: str, request: Request) -> Any:
-        principal = _principal(request)
-        return await _call(lambda: _service().propose_fix(principal, program_id))
-
     @router.post("/api/programs/{program_id}/resume")
     async def api_programs_resume(program_id: str, request: Request) -> Any:
         principal = _principal(request)
         return await _call(lambda: _service().resume(principal, program_id))
-
-    @router.post("/api/programs/{program_id}/steps/{step_id}/checkpoint")
-    async def api_programs_checkpoint(program_id: str, step_id: str, request: Request) -> Any:
-        principal, body = _principal(request), await _body(request)
-        return await _call(lambda: _service().checkpoint(principal, program_id, step_id, str(body.get("line") or "")))
 
     @router.post("/api/programs/{program_id}/steps/{step_id}/decide")
     async def api_programs_decide(program_id: str, step_id: str, request: Request) -> Any:
@@ -249,11 +231,6 @@ def build_programs_router(ctx: WebContext) -> APIRouter:
     async def api_programs_step_change(program_id: str, step_id: str, request: Request) -> Any:
         principal, body = _principal(request), await _body(request)
         return await _call(lambda: _service().change_step(principal, program_id, step_id, **body))
-
-    @router.post("/api/programs/{program_id}/steps/{step_id}/remove")
-    async def api_programs_step_remove(program_id: str, step_id: str, request: Request) -> Any:
-        principal = _principal(request)
-        return await _call(lambda: _service().remove_step(principal, program_id, step_id))
 
     # PG-IMPORT IMP6: Take it over / Hand it back on a step's lane (owner).
     @router.post("/api/programs/{program_id}/steps/{step_id}/take")

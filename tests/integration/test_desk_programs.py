@@ -23,6 +23,7 @@ import re
 from pathlib import Path
 from typing import Any
 
+import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
@@ -697,12 +698,11 @@ def test_the_program_family_reads_and_applies_the_text(tmp_path, monkeypatch) ->
 
 # ── PG-LANG fields: the step remove route, the Program's new fields ──
 
-def test_the_step_remove_route_and_the_new_program_fields(tmp_path, monkeypatch) -> None:
+def test_the_step_remove_and_the_new_program_fields(tmp_path, monkeypatch) -> None:
     rig, client, pid = _req_rig(tmp_path, monkeypatch)
     two = rig.step(pid, 2)
-    removed = client.post(f"/api/programs/{pid}/steps/{two['id']}/remove")
-    assert removed.status_code == 200, removed.text
-    assert [(s["ordinal"], s["title"], s["after"]) for s in removed.json()["steps"]] == [
+    removed = rig.service.remove_step(OWNER, pid, two["id"])
+    assert [(s["ordinal"], s["title"], s["after"]) for s in removed["steps"]] == [
         (1, "Indexes", []), (2, "The fan-out", [1])]
     patched = client.patch(f"/api/programs/{pid}", json={
         "review_depth": "standard", "budget_tokens": "64k", "night": "23:30–07:00 · at most 8 steps",
@@ -718,10 +718,10 @@ def test_the_step_remove_route_and_the_new_program_fields(tmp_path, monkeypatch)
     assert client.patch(f"/api/programs/{pid}", json={"night": None}).status_code == 200
     client.post(f"/api/programs/{pid}/start")
     one = rig.step(pid, 1)
-    stays = client.post(f"/api/programs/{pid}/steps/{one['id']}/remove")
-    assert stays.status_code == 409
-    assert {key: stays.json()[key] for key in ("code", "field", "reason")} == {
-        "code": "step_stays", "field": "position", "reason": "The worktree and the agent are set"}
+    with pytest.raises(program_module.ProgramRefused) as stays:
+        rig.service.remove_step(OWNER, pid, one["id"])
+    assert (stays.value.code, stays.value.context["field"], stays.value.context["reason"]) == (
+        "step_stays", "position", "The worktree and the agent are set")
 
 
 def test_the_list_names_the_night_when_steps_are_queued_and_nothing_when_the_engine_is_off(tmp_path, monkeypatch) -> None:
