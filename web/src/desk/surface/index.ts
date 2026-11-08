@@ -130,13 +130,6 @@ export { DiffRow, verdictWords, type DiffOp, type DiffVerdict } from "./DiffRow"
 export { AppHead, StatusStrip, FilterBar, Toolbar, ToolbarFold, type ToolbarFoldVerb, StatusBar, TickNumber, DotWord, stateTone, STATE_TONES, type DotTone, ToolGlyph, countWords, KindPlate, Avatar, AvatarStack, AppTile, FigureStrip, Steps, initialsOf, hueOf, type StatusStripItem, type StatusBarItem, type ToolGlyphKind, type Figure, type Step } from "./kit";
 
 export {
-  LedgerFilterBar,
-  useLedgerFilter,
-  type LedgerFilterToken,
-  type UseLedgerFilterOpts,
-} from "./LedgerFilter";
-
-export {
   StateChip,
   type ChipState,
   ProgressDots,
@@ -160,10 +153,6 @@ export {
   ChoiceCard,
   ChoiceCardShell,
   type ChoiceCardShellProps,
-  ReadyStrip,
-  type ReadyStripItem,
-  StartVerb,
-  StartVerbs,
   Popover,
   ProvenanceChip,
   Receipt,
@@ -175,10 +164,6 @@ export {
   type ClaimAxisToken,
   type ClaimUnknownValue,
   type ClaimAxesProps,
-  TaskResume,
-  TaskResumeList,
-  type TaskResumeState,
-  type TaskResumeProps,
   CoverageRow,
   CoverageLedger,
   coverageEmblem,
@@ -186,8 +171,6 @@ export {
   type CoverageLedgerProps,
   ProjectButton,
   type ProjectButtonProps,
-  LedgerRemainder,
-  type LedgerRemainderProps,
   ParkReceipt,
   ParkedStrip,
   parkClock,

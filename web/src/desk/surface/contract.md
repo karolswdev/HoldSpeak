@@ -455,6 +455,8 @@ modals, edit in-world). Composes the library `Button` — ghost when resting,
 
 ## TaskResume / TaskResumeList (HS-200-41)
 
+**Parked 2026-11-08** (`_parked/`): no face draws it. The text below is history.
+
 The ratified `UNFINISHED` row: one piece of work the owner walked away from,
 drawn so he can pick it back up. Promoted to the library BEFORE any face drew
 it (canon B; story AC2).
@@ -594,6 +596,8 @@ back.
   follow is a verb that does nothing (A.11)
 
 ## LedgerRemainder (HS-200-15, species S4)
+
+**Parked 2026-11-08** (`_parked/`): no face draws it. The text below is history.
 
 The cap and the remainder as one grammar under a capped ledger: the TRUE
 total lives in the head (the display line), the cap in the section caption
@@ -888,6 +892,8 @@ of the recall card) draws its evidence with the same species.
 
 ## ReadyStrip (first run option A "One screen", 2026-10-05)
 
+**Parked 2026-11-08** (`_parked/`): no face draws it. The text below is history.
+
 Every finished step's success token in one wrapping row. Born on the
 first-run face, option A "One screen" (canvas YDTpkaJqFs3hyrZ4g581Mx §1,
 owner ratified 2026-10-05), where Ready goes to the top when every step is
@@ -902,6 +908,8 @@ done.
   strip at a narrow width; it is never cut.
 
 ## StartVerb / StartVerbs (first run option A "One screen", 2026-10-05)
+
+**Parked 2026-11-08** (`_parked/`): no face draws it. The text below is history.
 
 The "what you can do now" verbs at the top of a finished face, made from
 the owner's own data (`Record Atlas weekly · 10:30`, `Dictate`,

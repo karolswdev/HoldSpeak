@@ -4,7 +4,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { SPARSE_THRESHOLD } from "../sparse";
-import { LedgerFilterBar } from "../LedgerFilter";
 import { MetricStrip, SurfaceState, SurfaceVerbs } from "../Surface";
 
 // --------------- constant ---------------
@@ -12,57 +11,6 @@ import { MetricStrip, SurfaceState, SurfaceVerbs } from "../Surface";
 describe("SPARSE_THRESHOLD constant", () => {
   it("is 5", () => {
     expect(SPARSE_THRESHOLD).toBe(5);
-  });
-});
-
-// --------------- LedgerFilterBar ---------------
-
-describe("LedgerFilterBar sparse gating (L10)", () => {
-  const base = {
-    query: "",
-    onQueryChange: vi.fn(),
-    tokens: [],
-    onRemoveToken: vi.fn(),
-    onClear: vi.fn(),
-    total: 3,
-    matchCount: 3,
-    isActive: false,
-  };
-
-  it("renders nothing when itemCount < SPARSE_THRESHOLD", () => {
-    const { container } = render(
-      <LedgerFilterBar {...base} itemCount={1} />,
-    );
-    expect(container.innerHTML).toBe("");
-  });
-
-  it("renders nothing at itemCount = 0", () => {
-    const { container } = render(
-      <LedgerFilterBar {...base} itemCount={0} />,
-    );
-    expect(container.innerHTML).toBe("");
-  });
-
-  it("renders nothing at itemCount = 4 (still below threshold)", () => {
-    const { container } = render(
-      <LedgerFilterBar {...base} itemCount={4} />,
-    );
-    expect(container.innerHTML).toBe("");
-  });
-
-  it("renders the filter bar when itemCount >= SPARSE_THRESHOLD", () => {
-    render(<LedgerFilterBar {...base} itemCount={5} total={5} />);
-    expect(screen.getByPlaceholderText("Filter...")).toBeInTheDocument();
-  });
-
-  it("renders the filter bar when itemCount is well above threshold", () => {
-    render(<LedgerFilterBar {...base} itemCount={100} total={100} />);
-    expect(screen.getByPlaceholderText("Filter...")).toBeInTheDocument();
-  });
-
-  it("renders the filter bar when itemCount is omitted (backwards compat)", () => {
-    render(<LedgerFilterBar {...base} />);
-    expect(screen.getByPlaceholderText("Filter...")).toBeInTheDocument();
   });
 });
 
