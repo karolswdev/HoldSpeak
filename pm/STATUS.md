@@ -2,7 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
-- 2026-11-08 · #PR The walk brings a part's window to the front before it marks it (the phone showed Programs over Needs you).
+- 2026-11-08 · #1841 The walk brings a part's window to the front before it marks it (the phone showed Programs over Needs you).
 - 2026-11-08 · #1840 The walk link is the tailnet name over https (Tailscale Serve), not the IP: the owner's ruling, and a secure context.
 - 2026-11-08 · #1838 Fix forward #1836: Open the Project in the Needs row menu; lamp, A8 and mic guards green.
 - 2026-11-08 · #1836 Needs you: one row, one verb (Done; the rest on a right press), no "Yours", Mine · People as one control, Must/Should/Noted as kinds sorted must first.
