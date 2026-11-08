@@ -53,6 +53,16 @@ import { openSourceRef } from "../../../desk/surface/citations";
  *  transcript fold (`detail`: the meeting id). */
 export const MEETING_TRANSCRIPT_OPEN = "holdspeak:meeting-transcript-open";
 
+/** The meeting's participants as the hub names them (its speakers and the
+ *  calendar event's attendees): the deciders of a decision made from it. */
+function meetingAttendees(...reads: Array<Record<string, unknown> | null | undefined>): string[] {
+  for (const read of reads) {
+    const names = read?.attendees;
+    if (Array.isArray(names)) return names.filter((n): n is string => typeof n === "string" && n.trim() !== "");
+  }
+  return [];
+}
+
 function deferredToken(value: unknown): string {
   const stamp = String(value ?? "").trim();
   if (!stamp) return "";
@@ -816,6 +826,7 @@ export function MeetingDetail({
           {/* PHILO-13-08 (B3): Decide, next to SEND; with or without a summary. */}
           {decideRequested ? <div id={`meeting-${id}-decide`} className="meetings-detail-anchor"><MeetingDecideWell defaultOpen meetingId={id} title={meetingTitle}
             startedAt={String((detail ?? meeting)?.started_at ?? "") || null}
+            deciders={meetingAttendees(meeting, detail)}
             summary={summaryIntel?.summary ?? null}
             runSummaryOnFace={showsRunSummary({
               intelOff, hasTranscript, plannedRoute: displayedRoute,

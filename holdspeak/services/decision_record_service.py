@@ -17,6 +17,7 @@ from holdspeak.services.observer import (
 )
 from holdspeak.services.errors import NotFound
 from holdspeak.services.service_event_ledger import ServiceEventLedger
+from holdspeak.db.relationships import ProjectRelationshipRepository
 
 
 _SOURCE_TYPES = frozenset({"meeting", "desk"})
@@ -50,9 +51,14 @@ _NOT_AN_ACTION = (
 class DecisionRecordService:
     """Create and retrieve the durable canon for a decision."""
 
-    def __init__(self, db: Any, *, observer: PipelineObserver | None = None) -> None:
+    def __init__(
+        self, db: Any, *, observer: PipelineObserver | None = None, people: Any = None,
+    ) -> None:
         self._db = db
         self._observer = observer or NullObserver()
+        # The People lookup that turns an owner's words into a Person
+        # reference. None: the hub's composed People service, when a hub runs.
+        self._people = people
 
     def migrate_legacy_desk_decisions(self, principal: Any) -> dict[str, int]:
         """Copy retained Desk decisions into the record ledger once per source.
@@ -91,40 +97,124 @@ class DecisionRecordService:
         review_date: str | None = None,
         source_type: str,
         source_id: str,
+        project_id: str | None = None,
+        owner_person_id: str | None = None,
+        sources: tuple[tuple[str, str], ...] = (),
+        kind: str = "decision",
+        record_id: str | None = None,
+        conn: Any = None,
     ) -> dict[str, Any]:
-        """Create a new decision record."""
+        """Create a decision record: the ONE writer of ``decision_records``.
+
+        One transaction writes the record, its sources, its Person reference
+        (a ``person`` source) and its Project filing (``project_resources``
+        ``decision_record:<id>`` as a member, where every Project reader
+        looks). ``conn`` joins a caller's open transaction (proposal confirm);
+        such a caller resolves the owner to a Person BEFORE it opens the
+        transaction and passes ``owner_person_id``, because a People read
+        must not hold the database write lock.
+        """
         text = self._required("decision_text", decision_text)
         source_kind = self._required("source_type", source_type)
         if source_kind not in _SOURCE_TYPES:
             raise ValueError("source_type must be 'meeting' or 'desk'")
         source = self._required("source_id", source_id)
-        record_id = f"record-{uuid4().hex}"
-        now = datetime.now(UTC).isoformat()
+        record_kind = "action" if kind == "action" else "decision"
+        new_id = str(record_id or "").strip() or f"record-{uuid4().hex}"
+        project = str(project_id or "").strip() or None
+        person = str(owner_person_id or "").strip() or None
+        owner_words = str(owner or "").strip() or None
+        if person is None and conn is None:
+            person = self.person_for(owner_words)
+        if person is not None and owner_words is None:
+            owner_words = self._person_name(person)
 
-        with self._db._connection() as conn:
-            conn.execute(
+        def write(connection: Any) -> dict[str, Any]:
+            now = datetime.now(UTC).isoformat()
+            connection.execute(
                 """INSERT INTO decision_records
                    (id, decision_text, rationale, alternatives, owner, review_date,
-                    source_type, source_id, created_at, updated_at)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                (
-                    record_id,
-                    text,
-                    rationale,
-                    alternatives,
-                    owner,
-                    review_date,
-                    source_kind,
-                    source,
-                    now,
-                    now,
-                ),
+                    source_type, source_id, created_at, updated_at, kind)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (new_id, text, rationale, alternatives, owner_words,
+                 review_date or None, source_kind, source, now, now, record_kind),
             )
-            row = conn.execute(
-                "SELECT * FROM decision_records WHERE id = ? AND deleted = 0", (record_id,)
+            refs = list(dict.fromkeys(
+                (str(kind_ or "").strip(), str(ref or "").strip()) for kind_, ref in sources
+            ))
+            if person is not None:
+                refs.append(("person", person))
+            for source_type_, source_ref in refs:
+                if not source_type_ or not source_ref:
+                    continue
+                connection.execute(
+                    """INSERT INTO decision_record_sources
+                       (id, record_id, source_type, source_ref, created_at)
+                       VALUES (?, ?, ?, ?, ?)""",
+                    (f"record-source-{uuid4().hex}", new_id, source_type_, source_ref, now),
+                )
+            if project is not None:
+                ProjectRelationshipRepository.upsert_in(
+                    connection, project_id=project,
+                    resource_ref=f"decision_record:{new_id}", relationship="member",
+                    source="decision",
+                )
+            row = connection.execute(
+                "SELECT * FROM decision_records WHERE id = ? AND deleted = 0", (new_id,)
             ).fetchone()
-        assert row is not None
-        return self._record_dict(row)
+            assert row is not None
+            record = self._record_dict(row)
+            record["project_id"] = project
+            record["owner_person_id"] = person
+            return record
+
+        if conn is not None:
+            return write(conn)
+        with self._db._connection() as connection:
+            return write(connection)
+
+    def person_for(self, owner: str | None) -> str | None:
+        """The one Person an owner's words name, else None.
+
+        Several names (``Mira, Theo``) name the first that resolves. Free
+        text stays the record's display name either way; a locked or absent
+        People store resolves nobody (never a guess).
+        """
+        people = self._people_service()
+        if people is None:
+            return None
+        for name in str(owner or "").split(","):
+            if not name.strip():
+                continue
+            try:
+                found = people.resolve_owner_candidates(name.strip())
+            except Exception:
+                return None
+            if found.get("state") != "ready":
+                return None
+            person = found.get("relationship") if found.get("link") == "linked" else None
+            if isinstance(person, dict) and str(person.get("id") or "").strip():
+                return str(person["id"]).strip()
+        return None
+
+    def _person_name(self, person_id: str) -> str | None:
+        people = self._people_service()
+        if people is None:
+            return None
+        try:
+            return people.display_names().get(person_id) or None
+        except Exception:
+            return None
+
+    def _people_service(self) -> Any:
+        if self._people is not None:
+            return self._people
+        try:
+            from holdspeak.runtime.composition import service as runtime_service
+
+            return runtime_service("people_service", lambda: None)
+        except Exception:
+            return None
 
     def create_from_meeting(self, principal: Any, decision_id: str) -> dict[str, Any]:
         """Mint a record from a meeting-derived decision."""
@@ -135,13 +225,6 @@ class DecisionRecordService:
         if existing is not None:
             return existing
 
-        record = self.create(
-            principal,
-            decision_text=decision.text,
-            rationale=decision.rationale,
-            source_type="meeting",
-            source_id=decision.id,
-        )
         # A segment is precision evidence, not a prerequisite for minting the
         # record.  Keep its absence honest when the decision's moment cannot
         # be resolved from the current transcript.
@@ -155,8 +238,14 @@ class DecisionRecordService:
         ]
         if moment is not None:
             sources.append(("segment", str(moment.segment_id)))
-        self._add_sources(record["id"], tuple(sources))
-        return record
+        return self.create(
+            principal,
+            decision_text=decision.text,
+            rationale=decision.rationale,
+            source_type="meeting",
+            source_id=decision.id,
+            sources=tuple(sources),
+        )
 
     def create_from_desk(self, principal: Any, desk_decision_id: str) -> dict[str, Any]:
         """Mint a record from an authored desk decision."""
@@ -178,7 +267,15 @@ class DecisionRecordService:
         )
         alternatives = self._alternatives_text(decision.alternatives_json)
         owner = ", ".join(decider.strip() for decider in decision.deciders if decider.strip())
-        record = self.create(
+        # The Desk row's `kind:id` tags carry what its producer named: the
+        # meeting (a record source), the Project (the record's filing) and
+        # the Person who decided (the record's People reference).
+        tagged: dict[str, list[str]] = {"meeting": [], "project": [], "person": []}
+        for tag in decision.tags:
+            kind, separator, ref = str(tag).partition(":")
+            if separator and kind in tagged and ref.strip() and ref.strip() not in tagged[kind]:
+                tagged[kind].append(ref.strip())
+        return self.create(
             principal,
             decision_text=decision_text,
             rationale=rationale or None,
@@ -186,15 +283,22 @@ class DecisionRecordService:
             owner=owner or None,
             source_type="desk",
             source_id=decision.id,
+            sources=tuple(("meeting", ref) for ref in tagged["meeting"]),
+            project_id=self.live_project(tagged["project"]),
+            owner_person_id=(tagged["person"] or [None])[0],
         )
-        sources = tuple(dict.fromkeys(
-            (kind, source_ref)
-            for tag in decision.tags
-            for kind, separator, source_ref in [str(tag).partition(":")]
-            if separator and kind in {"meeting", "project"} and source_ref.strip()
-        ))
-        self._add_sources(record["id"], sources)
-        return record
+
+    def live_project(self, project_ids: list[str]) -> str | None:
+        """The first named Project that is live (not archived), else None."""
+        if not project_ids:
+            return None
+        with self._db._connection() as conn:
+            for project_id in project_ids:
+                if conn.execute(
+                    "SELECT 1 FROM projects WHERE id = ? AND is_archived = 0", (project_id,)
+                ).fetchone() is not None:
+                    return project_id
+        return None
 
     def sync_from_desk(self, principal: Any, desk_decision_id: str) -> dict[str, Any]:
         """Create or reconcile the canonical record for one Desk decision."""
@@ -212,15 +316,23 @@ class DecisionRecordService:
                 "SELECT 1 FROM decision_record_revisions WHERE record_id = ? LIMIT 1",
                 (record["id"],),
             ).fetchone()
+            named = conn.execute(
+                "SELECT 1 FROM decision_record_sources WHERE record_id = ? "
+                "AND source_type = 'person' LIMIT 1",
+                (record["id"],),
+            ).fetchone()
         if authored is not None:
             return self._decorate(record)
+        deciders = ", ".join(decider.strip() for decider in decision.deciders if decider.strip())
         fields = {
             "decision_text": decision.decision_markdown.strip() or decision.title.strip(),
             "rationale": self._join_text(
                 decision.context_markdown, decision.consequences_markdown
             ) or None,
             "alternatives": self._alternatives_text(decision.alternatives_json) or None,
-            "owner": ", ".join(decider.strip() for decider in decision.deciders if decider.strip()) or None,
+            # A record that names its Person keeps that Person's name when
+            # the Desk row names no decider.
+            "owner": deciders or (record.get("owner") if named is not None else None),
         }
         return self._decorate(self.update_record(
             principal,
@@ -597,6 +709,19 @@ class DecisionRecordService:
                     (record_id,),
                 ).fetchall()
             )
+            # The record's Person reference and its Project filing (the one
+            # place every Project reader joins: `decision_record:<id>`).
+            record["owner_person_id"] = next(
+                (source["source_ref"] for source in record["sources"] if source["source_type"] == "person"),
+                None,
+            )
+            filed = conn.execute(
+                """SELECT project_id FROM project_resources
+                   WHERE resource_ref = ? AND deleted = 0 AND relationship = 'member'
+                   ORDER BY created_at, project_id LIMIT 1""",
+                (f"decision_record:{record_id}",),
+            ).fetchone()
+            record["project_id"] = str(filed["project_id"]) if filed is not None else None
             record["successor_id"] = next(
                 (source["source_ref"] for source in record["sources"] if source["source_type"] == "successor"),
                 None,
@@ -707,22 +832,6 @@ class DecisionRecordService:
                 (source_type, source_id),
             ).fetchone()
         return self._record_dict(row) if row is not None else None
-
-    def _add_sources(
-        self, record_id: str, sources: tuple[tuple[str, str], ...]
-    ) -> None:
-        now = datetime.now(UTC).isoformat()
-        with self._db._connection() as conn:
-            for source_type, source_ref in sources:
-                clean_ref = str(source_ref or "").strip()
-                if not clean_ref:
-                    continue
-                conn.execute(
-                    """INSERT INTO decision_record_sources
-                       (id, record_id, source_type, source_ref, created_at)
-                       VALUES (?, ?, ?, ?, ?)""",
-                    (f"record-source-{uuid4().hex}", record_id, source_type, clean_ref, now),
-                )
 
     @staticmethod
     def _join_text(*values: str) -> str:
