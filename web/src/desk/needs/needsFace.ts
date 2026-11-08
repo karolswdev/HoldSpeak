@@ -84,7 +84,7 @@ export function programAsk(kind: string, why: string): ProgramAsk {
   if (kind === "merge") return "merge";
   if (kind === "ask_review") return "review";
   // His word on a requirement (Met / Unmet) and a race pick are decisions too.
-  if (["TO DECIDE", "TO CONFIRM", "TO PICK"].includes(why.toUpperCase())) return "decide";
+  if (["to decide", "to confirm", "to pick"].includes(why.toLowerCase())) return "decide";
   return "turn";
 }
 
