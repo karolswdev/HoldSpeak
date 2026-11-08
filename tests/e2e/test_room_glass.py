@@ -62,7 +62,7 @@ from typing import Any
 
 import pytest
 
-from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _rendered_text_faults, _settle, pick_wing
+from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _rendered_text_faults, _settle, pick_wing, wait_for_hub
 from tests._evidence import evidence_dir
 from datetime import date
 from .room_glass_helpers import open_room_folds
@@ -1464,18 +1464,14 @@ def _rf_shot(page: Any, name: str, width: int) -> None:
 def _rf_run_completed(page: Any, pid: str, timeout_s: float = 30.0) -> dict[str, Any]:
     """Wait until the project's newest steward run is completed; return it.
 
-    Polled from Python: Playwright's wait_for_function does not await an
-    async predicate, so a fetch-based predicate is a truthy Promise and
-    returned at once (the run takes about 70 ms; the GET came first)."""
-    import time as _time
-
-    deadline = _time.monotonic() + timeout_s
-    while True:
-        runs = _api(page, "GET", f"/api/projects/{pid}/steward/runs", token=RF_TOKEN).get("runs") or []
-        if runs and runs[0].get("state") == "completed":
-            return runs[0]
-        assert _time.monotonic() < deadline, runs[:1]
-        page.wait_for_timeout(50)
+    Polled from Python (glass_infra.wait_for_hub): the run takes about 70 ms
+    and the GET can come first."""
+    runs = wait_for_hub(
+        page, f"/api/projects/{pid}/steward/runs",
+        lambda payload: bool(payload.get("runs")) and payload["runs"][0].get("state") == "completed",
+        token=RF_TOKEN, timeout=timeout_s * 1000,
+    )["runs"]
+    return runs[0]
 
 
 def _delivery_time(iso: str) -> str:

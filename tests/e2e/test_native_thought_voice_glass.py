@@ -13,7 +13,7 @@ import pytest
 
 from tests._evidence import evidence_dir
 from tests.e2e.chair_windows import go_group
-from .glass_infra import _api, _boot, _ensure_build, _normal_chair
+from .glass_infra import _api, _boot, _ensure_build, _normal_chair, wait_for_hub
 from .test_desk_sweep import TARGET_JS
 
 pytest.importorskip("playwright.sync_api", reason="P03 glass needs Playwright")
@@ -261,12 +261,11 @@ def test_production_note_words_survive_close_reopen_and_second_note(
             assert _editor_text(first) == first_words
             first.locator(".desk-gadget-close").first.click()
             first.wait_for(state="detached")
-            page.wait_for_function(
-                """async ([id, words, token]) => {
-                  const r = await fetch('/api/notes', {headers:{authorization:`Bearer ${token}`}});
-                  return (await r.json()).notes?.some(n => n.id === id && n.body_markdown === words);
-                }""",
-                arg=[first_id, first_words, TOKEN], timeout=15_000,
+            wait_for_hub(
+                page, "/api/notes",
+                lambda payload: any(n.get("id") == first_id and n.get("body_markdown") == first_words
+                                    for n in payload.get("notes") or []),
+                token=TOKEN, timeout=15_000,
             )
             page.goto(f"{base}/?token={TOKEN}&open=note:{first_id}", wait_until="load")
             _normal_chair(page)

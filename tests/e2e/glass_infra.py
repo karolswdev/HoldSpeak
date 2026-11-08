@@ -468,6 +468,35 @@ def _api_text(
     return result
 
 
+def wait_for_hub(
+    page: Any,
+    path: str,
+    predicate: Any,
+    *,
+    token: str = "glass-test",
+    timeout: float = 30_000,
+    interval: float = 50,
+) -> Any:
+    """Poll a hub GET from Python until ``predicate(payload)`` is truthy.
+
+    Returns the payload that passed. A non-2xx answer counts as not yet.
+    ``timeout`` and ``interval`` are milliseconds, as in Playwright.
+
+    Use this, never ``page.wait_for_function("async ...")``: Playwright does
+    not await an async check. It gets a Promise, takes it as truthy and
+    returns at once (a check of ``async () => false`` with a 2 s timeout
+    returned in 17 ms; #1942). The guard
+    tests/unit/test_glass_no_async_wait_for_function.py keeps that shape out.
+    """
+    deadline = time.monotonic() + timeout / 1000
+    while True:
+        status, payload = _api_allow_error(page, "GET", path, token=token)
+        if status < 300 and predicate(payload):
+            return payload
+        assert time.monotonic() < deadline, f"GET {path} never matched in {timeout:.0f} ms: HTTP {status} {payload!r}"[:2000]
+        page.wait_for_timeout(interval)
+
+
 # ── _settle: wait for all CSS animations to finish ──
 
 def _settle(page: Any) -> None:

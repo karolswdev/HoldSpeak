@@ -84,7 +84,7 @@ from typing import Any
 
 import pytest
 
-from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _rendered_text_faults, _settle, park_builtin_folder
+from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _rendered_text_faults, _settle, park_builtin_folder, wait_for_hub
 from tests._evidence import evidence_dir
 from ._doc_send_glass import Boards
 from .chair_windows import open_chair_window
@@ -964,14 +964,10 @@ class TestSendGlass:
         note_win.wait_for(state="detached", timeout=T)
         # Reload only after the same close has reached the canonical hub row.
         # A detached optimistic frame alone does not prove the close is durable.
-        page.wait_for_function(
-            """async ({id, token}) => {
-                const response = await fetch('/api/desk/windows', {headers: {'X-HoldSpeak-Token': token}});
-                const data = await response.json();
-                return !data.windows.some(window => window.id === id);
-            }""",
-            arg={"id": closing_note_id, "token": TOKEN},
-            timeout=T,
+        wait_for_hub(
+            page, "/api/desk/windows",
+            lambda payload: all(w.get("id") != closing_note_id for w in payload.get("windows") or []),
+            token=TOKEN, timeout=T,
         )
         page.reload(wait_until="load")
         _normal_chair(page)

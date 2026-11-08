@@ -17,7 +17,7 @@ import pytest
 
 from tests._evidence import evidence_dir
 from .engine_stub_rig import _StubHandler, completion_reply
-from .glass_infra import _api, _boot, _ensure_build, _normal_chair
+from .glass_infra import _api, _boot, _ensure_build, _normal_chair, wait_for_hub
 from .test_desk_sweep import TARGET_JS
 
 pytest.importorskip("playwright.sync_api", reason="P04 glass needs Playwright")
@@ -349,15 +349,16 @@ def test_selected_note_ask_save_and_return(
             title.press("Enter")
             note.locator(".thought-note-body .cm-scroller").click(position={"x": 28, "y": 28})
             page.keyboard.press("ControlOrMeta+s")
-            page.wait_for_function("""async ([id, token, revision]) => {
-              const response = await fetch(`/api/thoughts/for-note/${id}`, {
-                headers: {authorization: `Bearer ${token}`}});
-              if (!response.ok) return false;
-              const thought = (await response.json()).thought;
-              return thought?.working_revision > revision &&
-                thought.working_note.title.endsWith(' revised') &&
-                thought.working_note.body_markdown.endsWith('Newer source words.');
-            }""", arg=[NOTE_ID, TOKEN, source_thought["working_revision"]])
+            revision = source_thought["working_revision"]
+
+            def _saved_revision(payload: dict) -> bool:
+                thought = payload.get("thought") or {}
+                note = thought.get("working_note") or {}
+                return ((thought.get("working_revision") or 0) > revision
+                        and str(note.get("title") or "").endswith(" revised")
+                        and str(note.get("body_markdown") or "").endswith("Newer source words."))
+
+            wait_for_hub(page, f"/api/thoughts/for-note/{NOTE_ID}", _saved_revision, token=TOKEN)
             _raise_ask(page)
             ask.get_by_role("textbox", name="Ask about your work", exact=True).fill("Can the old source answer?")
             with page.expect_response(lambda response: response.url.endswith("/api/ask") and response.request.method == "POST") as refused:
