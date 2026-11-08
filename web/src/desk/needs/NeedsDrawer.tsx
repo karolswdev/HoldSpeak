@@ -32,7 +32,7 @@ import { PeopleReadFailed } from "../people/PeopleReadFailed";
 import { openProjectProposal, refOpener, type Opener } from "../openObject";
 import { openCoderSession, openProjectRoom, openSurfaceOr } from "../shell";
 import { useDesk } from "../store";
-import { ConfirmVerb, ScrollHint, StatusBar, StringGadget, SurfaceSection, SurfaceState, TickNumber, ToolGlyph, Toolbar, type StatusBarItem } from "../surface";
+import { ConfirmVerb, ScrollHint, StatusBar, StringGadget, SurfaceSection, SurfaceState, TickNumber, Toolbar, type StatusBarItem } from "../surface";
 import { openSourceRef } from "../surface/citations";
 import { NeedsList, NeedsRow } from "../surface/objects";
 import { spriteUrl } from "../sprites";
@@ -53,6 +53,7 @@ import {
   NO_CHIPS,
   passesChips,
   plateOf,
+  tierWord,
   urlHost,
   type NeedFace,
   type NeedsChips,
@@ -193,11 +194,23 @@ const PROGRAM_CHOICE_WORDS: Record<string, string> = {
   file: "File", make: "Make", keep_program: "Keep for this program", keep_repo: "Keep for HoldSpeak",
 };
 
-function NeedVerbsView({ face, primary, onWell, well }: {
+/** Owner walk 2026-11-08: where the row's context menu opens (a right
+ *  press, a long press, Shift+F10), and the row it is for. */
+type RowMenu = { x: number; y: number; row: Element | null };
+
+/** The rows whose other verbs live in the row's context menu (the More
+ *  Button is gone: one verb on the row, the rest on a right press). */
+export function hasRowMenu(face: Pick<NeedFace, "verbs">): boolean {
+  return face.verbs.kind === "work" || face.verbs.kind === "confirm";
+}
+
+function NeedVerbsView({ face, primary, onWell, well, menu = null, onMenu = () => undefined }: {
   face: NeedFace;
   primary: boolean;
   well: Well | null;
   onWell(next: Well | null): void;
+  menu?: RowMenu | null;
+  onMenu?(next: RowMenu | null): void;
 }) {
   const [busy, setBusy] = useState(false);
   const moreRef = useRef<HTMLButtonElement>(null);
@@ -380,19 +393,21 @@ function NeedVerbsView({ face, primary, onWell, well }: {
         await followThrough(v.cardId, "dismiss");
         offerUndo(face.name, () => followThrough(v.cardId, "reopen"));
       }, key);
+      // Owner walk 2026-11-08: the row is one verb; the rest is the row's
+      // context menu. Open is first there for the keyboard (a press on the
+      // row opens it too).
       const entries: WorkMenuEntry[] = [
         ...(opener ? [{ type: "item" as const, id: "open", label: "Open", onSelect: opener }] : []),
         ...(v.direction === "theirs"
           ? [{ type: "item" as const, id: "done", label: "Done", ghost: busy ? "Busy" : undefined,
-            onSelect: () => void act("Done", () => followThrough(v.cardId, "done"), key, moreRef.current) }]
+            onSelect: () => void act("Done", () => followThrough(v.cardId, "done"), key, menu?.row) }]
           : []),
         ...(v.next === "set_date"
           ? [{ type: "item" as const, id: "date", label: "Set a date", onSelect: () => onWell("date") }]
           : []),
         { type: "item", id: "later", label: "Later", ghost: busy ? "Busy" : undefined,
           onSelect: () => void act("Later", () => followThrough(v.cardId, "snooze", { until: tomorrowDay() }), key) },
-        ...(face.arrival ? [] : [{ type: "item" as const, id: "drop", label: "Drop", ghost: busy ? "Busy" : undefined,
-          onSelect: () => void drop() }]),
+        { type: "item", id: "drop", label: "Drop", ghost: busy ? "Busy" : undefined, onSelect: () => void drop() },
         // Betterment AG4: hand the action to an agent from where he reads it.
         { type: "item", id: "hand", label: "Hand to agent",
           onSelect: () => openHand({ kind: "action", id: v.cardId, title: face.name }) },
@@ -403,18 +418,11 @@ function NeedVerbsView({ face, primary, onWell, well }: {
             data-testid="needs-row-verb" data-verb="nudge"
             onClick={() => onWell(well === "nudge" ? null : "nudge")}>Nudge</Button>
         ) : (
-          <Button dense variant={lead} disabled={busy} aria-label={named("Done")} data-testid="needs-row-verb" data-verb="done"
+          <Button dense variant="secondary" disabled={busy} aria-label={named("Done")} data-testid="needs-row-verb" data-verb="done"
             onClick={(event) => void act("Done", () => followThrough(v.cardId, "done"), key, event.currentTarget)}>Done</Button>
         )}
-        {face.arrival ? (
-          <Button dense variant="ghost" disabled={busy} aria-label={named("Drop")} data-testid="needs-row-verb" data-verb="drop"
-            onClick={() => void drop()}>Drop</Button>
-        ) : null}
-        <Button ref={moreRef} dense variant="ghost" aria-label={named("More")} aria-haspopup="menu" aria-expanded={more}
-          data-testid="needs-row-verb" data-verb="more" onClick={() => setMore((value) => !value)}>More</Button>
-        {more && moreRef.current ? <WorkMenu label={named("More")} x={moreRef.current.getBoundingClientRect().left}
-          y={moreRef.current.getBoundingClientRect().bottom} entries={entries} autoFocus onClose={() => setMore(false)}
-          returnFocus={() => moreRef.current?.focus()} /> : null}
+        {menu ? <WorkMenu label={face.name} x={menu.x} y={menu.y} entries={entries} autoFocus onClose={() => onMenu(null)}
+          returnFocus={() => menu.row?.querySelector<HTMLElement>("[data-testid=needs-row-verb]")?.focus()} /> : null}
       </>;
     }
     case "whose":
@@ -485,11 +493,8 @@ function NeedVerbsView({ face, primary, onWell, well }: {
           onClick={() => void act("Confirm", () => apiFetch(
             `/api/proposals/${encodeURIComponent(v.proposalId)}/confirm`, { method: "POST" },
           ), `proposal:${v.proposalId}`)}>Confirm</Button>
-        <Button ref={moreRef} dense variant="ghost" aria-label={named("More")} aria-haspopup="menu" aria-expanded={more}
-          data-testid="needs-row-verb" data-verb="more" onClick={() => setMore((value) => !value)}>More</Button>
-        {more && moreRef.current ? <WorkMenu label={named("More")} x={moreRef.current.getBoundingClientRect().left}
-          y={moreRef.current.getBoundingClientRect().bottom} entries={entries} autoFocus onClose={() => setMore(false)}
-          returnFocus={() => moreRef.current?.focus()} /> : null}
+        {menu ? <WorkMenu label={face.name} x={menu.x} y={menu.y} entries={entries} autoFocus onClose={() => onMenu(null)}
+          returnFocus={() => menu.row?.querySelector<HTMLElement>("[data-testid=needs-row-verb]")?.focus()} /> : null}
       </>;
     }
     case "door": {
@@ -891,23 +896,85 @@ export function NeedRow({ face, primary, projects, plates = true }: {
   return <PlainNeedRow face={face} primary={primary} projects={projects} plates={plates} />;
 }
 
+/** The lamp words that say nothing on a row (owner walk 2026-11-08: "the
+ *  'Yours' (well, duh, of course it's going to be mine…)"). */
+const DEFAULT_STATES = new Set(["YOURS", "NEEDS YOU"]);
+
+/** The row's one quiet word, only when it is not the default: nothing on
+ *  his own row; the person's name on a row a person owes (`Bea`, `Bea ·
+ *  OVERDUE`); any other state as the hub says it. */
+export function quietState(face: Pick<NeedFace, "lamp" | "direction" | "personName">): NeedFace["lamp"] | null {
+  const label = String(face.lamp.label ?? "").trim();
+  if (!label || DEFAULT_STATES.has(label.toUpperCase())) return null;
+  if (face.direction === "theirs") {
+    // `WAITING ON BEA · OVERDUE` → `Bea · Overdue`; `TO REVIEW` → `Dana · To review`.
+    const parts = label.split(" · ");
+    const waiting = /^WAITING ON\s+(.+)$/i.exec(parts[0].trim());
+    const person = face.personName || waiting?.[1] || "";
+    const rest = waiting ? parts.slice(1) : parts;
+    if (person) return { label: [person, ...rest].join(" · "), tone: face.lamp.tone };
+  }
+  return face.lamp;
+}
+
+const LONG_PRESS_MS = 500;
+
 function PlainNeedRow({ face, primary, projects, plates }: { face: NeedFace; primary: boolean; projects: boolean; plates: boolean }) {
   const [well, setWell] = useState<Well | null>(null);
+  const [menu, setMenu] = useState<RowMenu | null>(null);
+  const press = useRef<{ timer: number; held: boolean } | null>(null);
   const project = projects && face.project ? face.project : null;
+  const menuable = hasRowMenu(face);
+  const clearPress = () => { if (press.current) window.clearTimeout(press.current.timer); };
+  // Owner walk 2026-11-08: the row's other verbs are its context menu (a
+  // right press, a long press on touch, the ContextMenu key or Shift+F10).
+  const rowProps: React.LiHTMLAttributes<HTMLLIElement> | undefined = menuable ? {
+    onContextMenu: (event) => {
+      event.preventDefault();
+      setMenu({ x: event.clientX, y: event.clientY, row: event.currentTarget });
+    },
+    onKeyDown: (event) => {
+      if (event.key !== "ContextMenu" && !(event.shiftKey && event.key === "F10")) return;
+      event.preventDefault();
+      const box = event.currentTarget.getBoundingClientRect();
+      setMenu({ x: box.left + 32, y: box.bottom, row: event.currentTarget });
+    },
+    onPointerDown: (event) => {
+      if (event.pointerType !== "touch") return;
+      const row = event.currentTarget;
+      const { clientX: x, clientY: y } = event;
+      clearPress();
+      press.current = { held: false, timer: window.setTimeout(() => {
+        if (press.current) press.current.held = true;
+        setMenu({ x, y, row });
+      }, LONG_PRESS_MS) };
+    },
+    onPointerUp: clearPress,
+    onPointerCancel: clearPress,
+    onPointerLeave: clearPress,
+    // A long press is not also a press on the row (it would open the item).
+    onClickCapture: (event) => {
+      if (!press.current?.held) return;
+      press.current = null;
+      event.stopPropagation();
+      event.preventDefault();
+    },
+  } : undefined;
   return (
     <>
       <NeedsRow
         id={face.id}
+        rowProps={rowProps}
         kind={face.kind}
         name={face.name}
         fact={face.fact || undefined}
         factTitle={face.factTitle}
         factCode={face.factCode}
         factWords={face.factWords}
-        lamp={face.lamp}
+        lamp={plates ? face.lamp : quietState(face)}
         sprite={needsRowSprite(face)}
         plate={plates ? plateOf(face) : undefined}
-        glyphLabel={plates ? undefined : glyphWord(face)}
+        glyphLabel={plates ? undefined : face.tier ? tierWord(face.tier) : glyphWord(face)}
         dotState={!plates}
         // A2b: the Project button is a generic open: the Project's drawer.
         project={project ? { name: project.name, onOpen: () => openProjectRoom(project.id) } : undefined}
@@ -916,7 +983,7 @@ function PlainNeedRow({ face, primary, projects, plates }: { face: NeedFace; pri
             {face.moreAsks ? (
               <Token className="surface-token" data-testid="needs-more-asks">{`+${face.moreAsks} MORE`}</Token>
             ) : null}
-            <NeedVerbsView face={face} primary={primary} well={well} onWell={setWell} />
+            <NeedVerbsView face={face} primary={primary} well={well} onWell={setWell} menu={menu} onMenu={setMenu} />
           </>
         )}
       />
@@ -1005,6 +1072,8 @@ export function useRowMarks(
       if (face.arrival) li.setAttribute("data-new", "true");
       else li.removeAttribute("data-new");
       if (face.direction) li.setAttribute("data-direction", face.direction);
+      if (face.tier) li.setAttribute("data-tier", face.tier);
+      else li.removeAttribute("data-tier");
       if (faceOpener(face)) li.setAttribute("data-opens", "true");
       else li.removeAttribute("data-opens");
     }
@@ -1042,18 +1111,30 @@ function Chip({ label, count, on, onPress, menu, testId }: {
   );
 }
 
-type Pick = { key: string; name: string; count: number };
+type PickRow = { key: string; name: string; count: number };
 
 /** Betterment D2: the chips over the one list (Mine, They owe me, To decide,
  *  This week, a person, a Project; More holds the muted projects). Chips
  *  combine; one at zero is not drawn unless it is on. At the phone width the
  *  row scrolls in one line. */
-function NeedsChipRow({ chips, setChips, counts, people, projects, muted, showMuted, setShowMuted }: {
+/** Owner walk 2026-11-08: the list's scope. Mine is his own (everything a
+ *  person does not owe him); People is what people owe him. */
+export type NeedsScope = "mine" | "people";
+
+export function inScope(face: Pick<NeedFace, "direction">, scope: NeedsScope): boolean {
+  return scope === "people" ? face.direction === "theirs" : face.direction !== "theirs";
+}
+
+function NeedsChipRow({ scope, setScope, count, chips, setChips, counts, people, projects, muted, showMuted, setShowMuted }: {
+  scope: NeedsScope;
+  setScope(next: NeedsScope): void;
+  /** The hub's one number: the quiet count in the Mine segment. */
+  count: number;
   chips: NeedsChips;
   setChips(next: NeedsChips): void;
-  counts: { mine: number; theirs: number; decide: number; week: number };
-  people: Pick[];
-  projects: Pick[];
+  counts: { decide: number; week: number };
+  people: PickRow[];
+  projects: PickRow[];
   muted: number;
   showMuted: boolean;
   setShowMuted(next: boolean): void;
@@ -1065,8 +1146,6 @@ function NeedsChipRow({ chips, setChips, counts, people, projects, muted, showMu
     anchors.current[kind] = event.currentTarget;
     setMenu({ kind, x: box.left, y: box.bottom });
   };
-  const direction = (value: "mine" | "theirs" | "decide") =>
-    setChips({ ...chips, direction: chips.direction === value ? null : value });
   const person = people.find((p) => p.key === chips.person);
   const project = projects.find((p) => p.key === chips.project);
   const entries: WorkMenuEntry[] = !menu ? [] : menu.kind === "more"
@@ -1075,21 +1154,25 @@ function NeedsChipRow({ chips, setChips, counts, people, projects, muted, showMu
       type: "item" as const, id: `${menu.kind}-${p.key}`, label: `${p.name} · ${p.count}`,
       onSelect: () => setChips({ ...chips, [menu.kind]: p.key }),
     }));
-  const directions: Array<["mine" | "theirs" | "decide", string, number]> = [
-    ["mine", "Mine", counts.mine], ["theirs", "They owe me", counts.theirs], ["decide", "To decide", counts.decide],
-  ];
   return (
     <span className="needs-chips" data-testid="needs-filter">
       <span className="surface-filter-tokens needs-chip-row" role="group" aria-label="Needs you filter">
-        {/* The scope: one segmented band (Mine, They owe me, To decide); the
-            other chips combine with it. */}
-        {directions.some(([value, , count]) => count > 0 || chips.direction === value) ? (
-          <span className="needs-scope" data-testid="needs-scope">
-            {directions.map(([value, label, count]) => (count > 0 || chips.direction === value ? (
-              <Chip key={value} label={label} count={count > 0 ? count : null} on={chips.direction === value} testId={`needs-chip-${value}`}
-                onPress={() => direction(value)} />
-            ) : null))}
-          </span>
+        {/* Owner walk 2026-11-08: ONE segmented control, Mine · People, at
+            the band's left; the count is a quiet number in Mine. The other
+            chips narrow the scope and show only when they hold rows. */}
+        <span className="needs-scope" role="group" aria-label="Whose" data-testid="needs-scope">
+          <Button dense variant={scope === "mine" ? "secondary" : "ghost"} className="surface-filter-token needs-chip"
+            data-filter-active={scope === "mine" || undefined} aria-pressed={scope === "mine"} data-testid="needs-chip-mine"
+            aria-label={count > 0 ? `Mine · ${count}` : "Mine"} onClick={() => setScope("mine")}>
+            Mine{count > 0 ? <TickNumber className="needs-chip-count" value={count} /> : null}
+          </Button>
+          <Button dense variant={scope === "people" ? "secondary" : "ghost"} className="surface-filter-token needs-chip"
+            data-filter-active={scope === "people" || undefined} aria-pressed={scope === "people"} data-testid="needs-open-people"
+            onClick={() => setScope("people")}>People</Button>
+        </span>
+        {scope === "mine" && (counts.decide > 0 || chips.direction === "decide") ? (
+          <Chip label="To decide" count={counts.decide > 0 ? counts.decide : null} on={chips.direction === "decide"} testId="needs-chip-decide"
+            onPress={() => setChips({ ...chips, direction: chips.direction === "decide" ? null : "decide" })} />
         ) : null}
         {counts.week > 0 || chips.week ? (
           <Chip label="This week" count={counts.week > 0 ? counts.week : null} on={chips.week} testId="needs-chip-week"
@@ -1117,8 +1200,8 @@ function NeedsChipRow({ chips, setChips, counts, people, projects, muted, showMu
 }
 
 /** The person and Project choices of the rows, with how many rows each has. */
-function picksOf(faces: readonly NeedFace[], key: (f: NeedFace) => [string, string] | null): Pick[] {
-  const out = new Map<string, Pick>();
+function picksOf(faces: readonly NeedFace[], key: (f: NeedFace) => [string, string] | null): PickRow[] {
+  const out = new Map<string, PickRow>();
   for (const face of faces) {
     const hit = key(face);
     if (!hit) continue;
@@ -1256,6 +1339,12 @@ export function NeedsDrawer() {
   const { needs, now, ctx, coverage, multipleProjects, outcome, faces } = useNeedFaces();
   const [door, setDoor] = useState<DoorRead | null>(null);
   const [chips, setChips] = useState<NeedsChips>(NO_CHIPS);
+  const [scope, setScopeState] = useState<NeedsScope>("mine");
+  // To decide narrows Mine only: People drops it.
+  const setScope = (next: NeedsScope) => {
+    setScopeState(next);
+    if (next === "people" && chips.direction) setChips({ ...chips, direction: null });
+  };
   const [showMuted, setShowMuted] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -1296,14 +1385,11 @@ export function NeedsDrawer() {
   const head = needsHead(needs.count, needs.complete && coverage.complete);
   // Betterment D2: the chips narrow the one ranked list. Each chip's count
   // is what the list shows with that chip on (the others as they are).
-  const base = showMuted ? muted : faces;
+  const base = (showMuted ? muted : faces).filter((face) => inScope(face, scope));
   const shown = base.filter((face) => passesChips(face, chips, now));
   const countWith = (next: Partial<NeedsChips>) =>
     base.filter((face) => passesChips(face, { ...chips, ...next }, now)).length;
-  const counts = {
-    mine: countWith({ direction: "mine" }), theirs: countWith({ direction: "theirs" }),
-    decide: countWith({ direction: "decide" }), week: countWith({ week: true }),
-  };
+  const counts = { decide: countWith({ direction: "decide" }), week: countWith({ week: true }) };
   const narrowed = base.filter((face) => passesChips(face, { ...chips, person: null, project: null }, now));
   const people = picksOf(narrowed.filter((f) => !chips.project || f.projectId === chips.project),
     (f) => (f.personKey ? [f.personKey, f.personName ?? f.personKey] : null));
@@ -1371,21 +1457,19 @@ export function NeedsDrawer() {
         onClick={() => openSurfaceOr("configure-settings", "/settings", "integration:calendar")}>Connect calendar</Button>
     </span>
   ) : null;
-  // HS-S43 (D22/G43 = A, 2026-11-07; owner verdict the same night: the
-  // sentence over the list "looks really ugly"): the People overlay leaves
-  // out what his people owe him, so the toolbar carries one People Button
-  // at its right end in every settled state. Its title names the coverage;
-  // the face has no sentence. No read, no count, no scope.
-  const peopleVerb = (
-    <Button dense variant="ghost" className="needs-people" data-testid="needs-open-people"
-      title="What people owe you is in People" onClick={() => openSurfaceOr("open-people", "/")}>
-      <ToolGlyph kind="person" />People
-    </Button>
-  );
-  const chipRow = faces.length + muted.length > 0 ? (
-    <NeedsChipRow chips={chips} setChips={setChips} counts={counts} people={people} projects={projects}
+  // Owner walk 2026-11-08: the toolbar is one band: the Mine · People
+  // control at its left, nothing floating at its right. HS-S43 (D22/G43):
+  // People's commitments to him live in People; the People scope ends with
+  // Open People, so the coverage stays one press away.
+  const chipRow = (
+    <NeedsChipRow scope={scope} setScope={setScope} count={needsRead ? Number(needs.count ?? 0) : 0}
+      chips={chips} setChips={setChips} counts={counts} people={people} projects={projects}
       muted={muted.length > 0 ? muted.length : 0} showMuted={showMuted} setShowMuted={setShowMuted} />
-  ) : null;
+  );
+  const openPeople = (
+    <Button dense variant="ghost" className="needs-people-open" data-testid="needs-people-open"
+      onClick={() => openSurfaceOr("open-people", "/")}>Open People</Button>
+  );
   const counted = Number(needs.count ?? 0) > 0;
   // DELIGHT slice 2: the head's number ticks (with the dock's badge and the
   // chips' counts) when a Done lands. Before the hub's first answer there is
@@ -1405,7 +1489,7 @@ export function NeedsDrawer() {
     <div className="needs-drawer kit-face" data-testid="needs-drawer"
       data-settling={settling ? "true" : undefined} aria-busy={settling ? true : undefined}>
       {settling ? <div className="needs-drawer-settling"><SurfaceState loading /></div> : null}
-      <Toolbar label="Needs you" data-testid="needs-toolbar" trailing={<>{offer}{peopleVerb}</>} trailingStays={!offer}>
+      <Toolbar label="Needs you" data-testid="needs-toolbar" trailing={offer}>
         {chipRow}
       </Toolbar>
       {/* W5-WORDS: every source read is no row (`16 of 16 available` was a
@@ -1452,7 +1536,10 @@ export function NeedsDrawer() {
             </>
           ) : chipsOn(chips) ? (
             <p className="needs-drawer-none" data-testid="needs-none">Nothing matches these filters.</p>
+          ) : scope === "people" && !settling ? (
+            <p className="needs-drawer-none" data-testid="needs-none">Nothing waits on people here.</p>
           ) : null}
+          {scope === "people" && !settling ? <div className="needs-people-foot">{openPeople}</div> : null}
         </ScrollHint>
       </div>
       {/* The Chair's head keeps its testids (the Chair-ready signal of the

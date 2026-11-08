@@ -363,16 +363,20 @@ describe("Arrival attention (HS-200-15)", () => {
     useDesk.setState({ openPullout } as never);
     try {
       render(<ChairHome />);
-      await waitFor(() => expect(rowNamed("Draft the onboarding checklist")).toBeTruthy());
-      const owned = rowNamed("Draft the onboarding checklist");
+      // Owner walk 2026-11-08: the item nobody owns is his (Mine); the item
+      // Dana owns is under People, with her name as its quiet word.
+      await waitFor(() => expect(rowNamed("Book the room")).toBeTruthy());
       const bare = rowNamed("Book the room");
-      expect(lampOf(owned)).toBe("To review");
-      expect(factOf(owned)).toContain("Dana");
-      expect(owned.textContent).not.toContain("Unassigned");
-      expect(owned.querySelector('[data-verb="name-owner"]')).toBeNull();
       expect(lampOf(bare)).toBe("Unassigned");
       expect((bare.querySelector('[data-verb="name-owner"]') as HTMLElement).textContent).toBe("Name an owner");
       expect(bare.querySelector('[data-verb="review"]')).toBeNull();
+      fireEvent.click(screen.getByTestId("needs-open-people"));
+      await waitFor(() => expect(rowNamed("Draft the onboarding checklist")).toBeTruthy());
+      const owned = rowNamed("Draft the onboarding checklist");
+      expect(lampOf(owned)).toBe("Dana · To review");
+      expect(factOf(owned)).toContain("Dana");
+      expect(owned.textContent).not.toContain("Unassigned");
+      expect(owned.querySelector('[data-verb="name-owner"]')).toBeNull();
 
       const review = (owned.querySelector('[data-verb="review"]') as HTMLElement);
       expect(review.textContent).toBe("Review");

@@ -12,7 +12,7 @@
  *  DragGhost is the dragged object's sprite under the pointer (fixed,
  *  aria-hidden, no pointer events). A DeskIcon lights itself with `drop`.
  */
-import type { ReactNode } from "react";
+import type { LiHTMLAttributes, ReactNode } from "react";
 import { LampGadget } from "../gadgets";
 import { AgentWords } from "../../components/AgentWords";
 import { ProjectButton } from "../patterns/ProjectButton";
@@ -34,7 +34,11 @@ export interface NeedsRowProps {
   /** Phase 16: the fact is an agent's words: AgentWords, compact, two
    *  lines, cut at a whole word. */
   factWords?: boolean;
-  lamp: { label: string; tone: ObjectTone };
+  /** The state word. Absent: the row says no state (its state is the
+   *  default, e.g. the owner's own item under Mine). */
+  lamp?: { label: string; tone: ObjectTone } | null;
+  /** The row's own handlers (the context menu, a long press). */
+  rowProps?: Omit<LiHTMLAttributes<HTMLLIElement>, "className" | "children">;
   /** The object's verbs (library Buttons; one primary at most). */
   verbs?: ReactNode;
   sprite?: string;
@@ -64,7 +68,7 @@ export { KEEP_CAPS, stateWords } from "../words";
 import { stateWords } from "../words";
 import { Token } from "../Token";
 
-export function NeedsRow({ id, kind, name, fact, factTitle, factCode, factWords, lamp, verbs, sprite, project, kindWord, plate, glyphLabel, dotState }: NeedsRowProps) {
+export function NeedsRow({ id, kind, name, fact, factTitle, factCode, factWords, lamp, rowProps, verbs, sprite, project, kindWord, plate, glyphLabel, dotState }: NeedsRowProps) {
   const factClass = factCode ? "needs-row-fact is-code" : "needs-row-fact";
   const factNode = !fact ? null : factWords && !factCode ? (
     <AgentWords compact lines={2} className="needs-row-fact needs-row-words" text={fact} />
@@ -72,7 +76,7 @@ export function NeedsRow({ id, kind, name, fact, factTitle, factCode, factWords,
     <span className={factClass} title={factTitle || undefined}>{fact}</span>
   );
   return (
-    <li className="needs-row" data-object-id={id} data-kind={kind} data-plate={plate ? "true" : undefined}
+    <li {...rowProps} className="needs-row" data-object-id={id} data-kind={kind} data-plate={plate ? "true" : undefined}
       data-dot={dotState ? "true" : undefined}>
       {plate ? (
         <KindPlate kind={plate} title={kindWord} />
@@ -80,7 +84,7 @@ export function NeedsRow({ id, kind, name, fact, factTitle, factCode, factWords,
         <img src={listSprite(sprite ?? objectSprite(kind, id))} alt={glyphLabel ?? ""} title={glyphLabel} draggable={false} />
       )}
       <span className="needs-row-what">
-        <span className="needs-row-name">{name}</span>
+        <span className="needs-row-name" title={dotState ? name : undefined}>{name}</span>
         {project || kindWord ? (
           // The canvas names the Project on the fact line (README, Phase 14):
           // here it is the Project's own Button at the line's end. The kind
@@ -98,7 +102,7 @@ export function NeedsRow({ id, kind, name, fact, factTitle, factCode, factWords,
         ) : factNode}
       </span>
       <span className="needs-row-lamp">
-        {dotState ? (
+        {!lamp ? null : dotState ? (
           <DotWord tone={lamp.tone} data-testid="needs-row-state">{stateWords(lamp.label)}</DotWord>
         ) : (
           <LampGadget label={lamp.label} on tone={lampGadgetTone(lamp.tone)} />

@@ -2,6 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · #1836 Needs you: one row, one verb (Done; the rest on a right press), no "Yours", Mine · People as one control, Must/Should/Noted as kinds sorted must first.
 - 2026-11-08 · #1833 New program opens a four-step wizard (Where · What · How · Go) inside the Programs window; the inline project well is gone.
 - 2026-11-08 · #1834 Keystore review fixes: the master key goes on stdin, a delete keeps a tombstone, migration holds the store lock, an flock serializes processes, and fsync plus a disk read-back come before an old item is deleted.
 - 2026-11-08 · #1835 The race fixtures are re-recorded after #1829 widened the Program's shape.

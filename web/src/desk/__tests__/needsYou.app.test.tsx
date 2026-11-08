@@ -64,7 +64,7 @@ describe("Needs you: Name an owner and Review on a meeting's action items", () =
   const OWNED = "Draft the migration runbook";
   const UNOWNED = "Book the dry run";
 
-  it("the owner well saves; the row stays, reads TO REVIEW and drops Name an owner", async () => {
+  it("the owner well saves; the row moves to People, reads TO REVIEW and drops Name an owner", async () => {
     // replaces: tests/e2e/test_chair_owner_verb_glass.py::test_owner_verb_only_where_no_owner_exists
     let avery: string | null = null;
     vi.mocked(apiFetch).mockImplementation(asHub(async (path: string, init?: unknown) => {
@@ -86,10 +86,16 @@ describe("Needs you: Name an owner and Review on a meeting's action items", () =
     }));
     render(<ChairHome />);
     await waitFor(() => expect(rowNamed(UNOWNED)).toBeTruthy());
-    const owned = rowNamed(OWNED)!;
-    expect(lampOf(owned)).toBe("To review");
-    expect(owned.querySelector('[data-verb="name-owner"]')).toBeNull();
+    // Owner walk 2026-11-08: Priya's item is under People, named by her.
+    expect(rowNamed(OWNED)).toBeUndefined();
     expect(lampOf(rowNamed(UNOWNED)!)).toBe("Unassigned");
+    fireEvent.click(screen.getByTestId("needs-open-people"));
+    await waitFor(() => expect(rowNamed(OWNED)).toBeTruthy());
+    const owned = rowNamed(OWNED)!;
+    expect(lampOf(owned)).toBe("Priya · To review");
+    expect(owned.querySelector('[data-verb="name-owner"]')).toBeNull();
+    fireEvent.click(screen.getByTestId("needs-chip-mine"));
+    await waitFor(() => expect(rowNamed(UNOWNED)).toBeTruthy());
 
     fireEvent.click(rowNamed(UNOWNED)!.querySelector('[data-verb="name-owner"]') as HTMLElement);
     const well = await screen.findByTestId("needs-well");
@@ -97,8 +103,11 @@ describe("Needs you: Name an owner and Review on a meeting's action items", () =
     fireEvent.click(within(well).getByRole("button", { name: /Save owner/ }));
     await waitFor(() => expect(screen.queryByTestId("needs-well")).toBeNull());
 
-    // The hub's board is the truth the row settles on.
-    await waitFor(() => expect(lampOf(rowNamed(UNOWNED)!)).toBe("To review"));
+    // The hub's board is the truth the row settles on: Avery owns it now,
+    // so it leaves Mine and stands under People.
+    await waitFor(() => expect(rowNamed(UNOWNED)).toBeUndefined());
+    fireEvent.click(screen.getByTestId("needs-open-people"));
+    await waitFor(() => expect(lampOf(rowNamed(UNOWNED)!)).toBe("Avery · To review"));
     expect(needsRows().filter((r) => r.querySelector(".needs-row-name")?.textContent === UNOWNED)).toHaveLength(1);
     expect(document.querySelector('[data-testid="needs-drawer"] [data-verb="name-owner"]')).toBeNull();
     expect(rowNamed(UNOWNED)!.textContent).not.toContain("Unassigned");
@@ -210,14 +219,14 @@ describe("Needs you: the head counts what needs him; Waiting lists the rest", ()
     expect(counted).toHaveLength(6);
     expect(counted.some((t) => t.includes("A3 wait for Priya's review") || /waiting on/i.test(t))).toBe(false);
 
-    fireEvent.click(within(screen.getByTestId("needs-filter")).getByTestId("needs-chip-theirs"));
+    fireEvent.click(within(screen.getByTestId("needs-filter")).getByTestId("needs-open-people"));
     await waitFor(() => expect(needsRows().every((r) => r.getAttribute("data-direction") === "theirs")).toBe(true));
-    const waitingRows = needsRows().map((r) => r.textContent ?? "");
-    expect(waitingRows.some((t) => t.includes("A3 wait for Priya's review") && t.includes("Waiting on Priya"))).toBe(true);
+    const waitingRows = needsRows().map((r) => `${r.textContent ?? ""}|${lampOf(r)}`);
+    expect(waitingRows.some((t) => t.includes("A3 wait for Priya's review") && /\|Priya/.test(t))).toBe(true);
     expect(waitingRows.some((t) => t.includes("A4 assign the owner"))).toBe(false);
     expect(head()).toMatch(/^6 need you/);
 
-    fireEvent.click(within(screen.getByTestId("needs-filter")).getByTestId("needs-chip-theirs"));
+    fireEvent.click(within(screen.getByTestId("needs-filter")).getByTestId("needs-chip-mine"));
     await waitFor(() => expect(rowNamed("R1 adopt the release checklist")).toBeTruthy());
     const decision = rowNamed("R1 adopt the release checklist")!;
     expect(within(decision).getByRole("button", { name: "Confirm: R1 adopt the release checklist" })).toBeEnabled();
@@ -319,11 +328,15 @@ describe("Needs you: Confirm and Defer on a meeting in no Project", () => {
     // Confirm: the hub accepts the action; it now waits on its owner, Priya
     // Shah: listed (They owe me), not counted, with Nudge (Betterment D2).
     fireEvent.click(screen.getByRole("button", { name: `Confirm: ${action}` }));
-    await waitFor(() => expect(rowNamed(action)?.getAttribute("data-counted")).toBe("false"));
+    // It leaves Mine: People lists it, named by Priya (owner walk 2026-11-08).
+    await waitFor(() => expect(rowNamed(action)).toBeUndefined());
     expect(posted).toEqual([steps[1].post]);
+    fireEvent.click(screen.getByTestId("needs-open-people"));
+    await waitFor(() => expect(rowNamed(action)?.getAttribute("data-counted")).toBe("false"));
     const held = rowNamed(action)!;
-    expect(held.textContent).toMatch(/WAITING ON PRIYA/i);
+    expect(lampOf(held)).toMatch(/^Priya/);
     expect(held.querySelector('[data-verb="nudge"]')).toBeTruthy();
+    fireEvent.click(screen.getByTestId("needs-chip-mine"));
 
     // Decide ▸ Not now: the decision leaves the face.
     await waitFor(() => expect(rowNamed(decision)).toBeTruthy());
