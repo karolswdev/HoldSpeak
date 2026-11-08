@@ -14,6 +14,11 @@
  * as its deciders. An unconfirmed Save keeps Save off for that same title
  * until he edits it.
  *
+ * One face (2026-11-08): a row opens the decision's record in the Decisions
+ * window reader, never the Decision pullout. The project is its own object
+ * row (sprite, name, `Filed`); a refused create is a notice with the hub's
+ * reason and Retry, which runs the one create call again.
+ *
  * Seats: the Meetings record (MeetingDetail) and the meeting window
  * (MeetingPullout).
  */
@@ -21,9 +26,14 @@ import "./meeting-decide.css";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "../components/signal/Signal";
 import { useDesk } from "../desk/store";
-import { refOpener } from "../desk/openObject";
+import { openDeskDecisionRecord } from "../desk/openObject";
+import { openProjectRoom } from "../desk/shell";
+import { spriteUrl } from "../desk/sprites";
+import { ApiError } from "../lib/api";
 import { StringGadget } from "../desk/surface/gadgets";
 import { DotWord } from "../desk/surface/kit";
+import { ListRow, ListRows } from "../desk/surface/objects/ListView";
+import { ActionNotice } from "../desk/surface/patterns/ActionNotice";
 import { SurfaceRow, SurfaceRows, SurfaceSection } from "../desk/surface/Surface";
 import {
   DecisionUnconfirmed, decideFromMeeting, decisionsFromMeeting, meetingScope,
@@ -151,7 +161,7 @@ function DecideWellFor({ meetingId, title, startedAt, summary, runSummaryOnFace,
       }
     } catch (cause) {
       if (cause instanceof DecisionUnconfirmed) setUnconfirmedAt(attempt);
-      else setRefusal(writeFailureReason(cause));
+      else setRefusal(cause instanceof ApiError && cause.message.trim() ? cause.message.trim() : writeFailureReason(cause));
       return;
     } finally {
       pending.current = false;
@@ -160,7 +170,6 @@ function DecideWellFor({ meetingId, title, startedAt, summary, runSummaryOnFace,
     // The record is known; a failed refresh does not unmake it.
     await useDesk.getState().refresh().catch(() => undefined);
   };
-  const projectWords = (p: { id: string; name: string } | null) => (p ? p.name : "No project");
 
   return (
     <div data-seat="meeting" data-testid="meeting-decide-well" role="group" aria-label={`Decide ${title}`}>
@@ -173,22 +182,21 @@ function DecideWellFor({ meetingId, title, startedAt, summary, runSummaryOnFace,
                 title={d.title}
                 detail={stateWords(d.status)}
                 meta={receipt?.sourceId === d.id ? (
-                  <span data-testid="decide-receipt">
-                    Decided {receipt.at}{receipt.filing === "filed" || receipt.filing === "unfiled" ? ` · ${projectWords(receipt.project)}` : ""}
-                  </span>
+                  <span data-testid="decide-receipt">Decided {receipt.at}</span>
                 ) : undefined}
-                onOpen={refOpener(`decision:${d.id}`) ?? undefined}
+                onOpen={() => openDeskDecisionRecord(d.id, receipt?.sourceId === d.id ? receipt.recordId : null)}
               />
             ))}
           </SurfaceRows>
         </SurfaceSection>
       ) : null}
-      {receipt && receipt.project && receipt.filing === "unknown" ? (
-        <div className="meeting-decide-line" data-testid="decide-filing">
-          <DotWord tone="warn" data-testid="decide-filing-state">
-            {`Decided · Not filed to ${receipt.project.name}`}
-          </DotWord>
-        </div>
+      {receipt?.project ? (
+        <ListRows>
+          <ListRow data-testid="decide-project" openLabel={receipt.project.name}
+            glyph={spriteUrl("project", receipt.project.id, "rest", null, 20)} name={receipt.project.name}
+            meta={receipt.filing === "filed" ? <span data-testid="decide-filed">Filed</span> : undefined}
+            onOpen={() => openProjectRoom(receipt.project!.id)} />
+        </ListRows>
       ) : null}
       {naming ? (
         <div className="meeting-decide-line" data-testid="decide-naming">
@@ -218,7 +226,11 @@ function DecideWellFor({ meetingId, title, startedAt, summary, runSummaryOnFace,
             Cancel
           </Button>
           {refusal ? (
-            <DotWord tone="fail" data-testid="decide-refused" title={refusal}>Could not save the decision · Your title stays here · Try again</DotWord>
+            <div data-testid="decide-refused">
+              <ActionNotice tone="danger" role="alert" action={busy ? undefined : { label: "Retry", onClick: () => void save() }}>
+                {refusal}
+              </ActionNotice>
+            </div>
           ) : null}
           {unconfirmed ? (
             <>

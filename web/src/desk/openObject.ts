@@ -344,6 +344,26 @@ export function openDecisionRecord(recordId: string): void {
   useDesk.getState().openSurfaceWindow("open-decisions", `record:${id}`);
 }
 
+/** A Desk decision (`desk_decision`) opens its record in the Decisions
+ *  window reader, the one face of a decision (2026-11-08): the record the
+ *  caller knows, else the records the hub names for that source. A source
+ *  with no record, or a failed read, opens the Decisions window. */
+export function openDeskDecisionRecord(deskDecisionId: string, recordId?: string | null): void {
+  const known = String(recordId ?? "").trim();
+  if (known) return openDecisionRecord(known);
+  const id = deskDecisionId.trim();
+  if (!id) return;
+  void apiFetch<unknown>(`/api/decision-records/source/desk/${encodeURIComponent(id)}`)
+    .then((records) => {
+      const ids = (Array.isArray(records) ? records : [])
+        .map((row) => String((row as { id?: unknown })?.id ?? "").trim())
+        .filter(Boolean);
+      if (ids.length) openDecisionRecords(ids);
+      else useDesk.getState().openSurfaceWindow("open-decisions");
+    })
+    .catch(() => useDesk.getState().openSurfaceWindow("open-decisions"));
+}
+
 /** The records that govern one piece of work (WHY with several): the
  *  Decisions window lists only those, the first in the reader. One record
  *  opens its reader alone. */

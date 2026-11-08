@@ -21,6 +21,8 @@ const hub = vi.hoisted(() => ({
   projectsFail: false,
   canonical: "ok" as "ok" | "malformed",
   answerUnfiled: false,
+  // One face (2026-11-08): the hub refuses the next N creates (a 4xx).
+  refuse: 0,
 }));
 
 function decisionWire(body: Record<string, unknown>, n: number) {
@@ -57,6 +59,10 @@ vi.mock("../../lib/api", async (importOriginal) => {
       if (url === "/api/decision-records/from-desk" && init?.method === "POST") {
         const json = init.json as Record<string, unknown>;
         hub.posts.push(json);
+        if (hub.refuse > 0) {
+          hub.refuse -= 1;
+          return Promise.reject(new (real.ApiError as typeof import("../../lib/api").ApiError)(409, "Project Checkout is archived", {}));
+        }
         if (hub.canonical === "malformed") return Promise.resolve({});
         const tags = [
           ...(json.project_id ? [`project:${json.project_id}`] : []),
@@ -72,6 +78,8 @@ vi.mock("../../lib/api", async (importOriginal) => {
       if (url === "/api/decisions" && init?.method === "POST")
         return Promise.resolve({ decision: post(init.body) });
       if (url === "/api/decisions") return Promise.resolve({ decisions: hub.decisions });
+      if (url.startsWith("/api/decision-records/source/desk/"))
+        return Promise.resolve([{ id: `rec_of_${decodeURIComponent(url.split("/").pop() ?? "")}` }]);
       if (/^\/api\/meetings\/[^/]+\/projects$/.test(url))
         return hub.projectsFail ? Promise.reject(new TypeError("Failed to fetch")) : Promise.resolve({ projects: hub.projects });
       if (url.startsWith("/api/projects/") && init?.method === "PUT") {
@@ -98,6 +106,7 @@ beforeEach(() => {
   hub.projectsFail = false;
   hub.canonical = "ok";
   hub.answerUnfiled = false;
+  hub.refuse = 0;
   useNamePrompt.getState().clear();
   usePalette.getState().setOpen(false);
   useDesk.setState({ pullouts: [], editingId: null, newIds: [], windowsById: {}, drafts: {} });
@@ -191,7 +200,11 @@ describe("PHILO-13-08 Decide in the meeting record", () => {
     expect(String(body.why)).toContain("p99 doubled");
     expect(body.deciders).toEqual(["Mira", "Theo"]);
     // the receipt is where the click happened: the meeting lists it
-    await waitFor(() => expect(screen.getByTestId("decide-receipt").textContent).toMatch(/^Decided \d\d:\d\d · Checkout$/));
+    await waitFor(() => expect(screen.getByTestId("decide-receipt").textContent).toMatch(/^Decided \d\d:\d\d$/));
+    // The project is its own object row: sprite, name, the quiet word Filed.
+    const project = screen.getByTestId("decide-project");
+    expect(project.querySelector("img")).toBeTruthy();
+    expect(project.textContent).toBe("CheckoutFiled");
     // The hub filed it: the client makes no second write.
     expect(hub.resourcePuts).toEqual([]);
     expect(screen.getByText("Roll back the cache change")).toBeTruthy();
@@ -256,7 +269,7 @@ describe("PHILO-13-08 Decide in the meeting record", () => {
     expect((title as HTMLInputElement).value).toBe("Roll back");
   });
 
-  it("an answer that does not name the Project says Not filed, and writes nothing again", async () => {
+  it("an answer that does not name the Project shows the project row without Filed; no dead line, no second write", async () => {
     hub.answerUnfiled = true;
     well();
     fireEvent.click(screen.getByRole("button", { name: "Decide" }));
@@ -264,10 +277,57 @@ describe("PHILO-13-08 Decide in the meeting record", () => {
     const title = screen.getByRole("textbox", { name: "Decision title" });
     fireEvent.change(title, { target: { value: "Roll back" } });
     await act(async () => { fireEvent.keyDown(title, { key: "Enter" }); });
-    await waitFor(() => expect(screen.getByTestId("decide-filing-state").textContent).toBe("Decided · Not filed to Checkout"));
+    await waitFor(() => expect(screen.getByTestId("decide-project").textContent).toBe("Checkout"));
+    expect(screen.queryByTestId("decide-filed")).toBeNull();
+    expect(screen.queryByText(/Not filed/)).toBeNull();
     expect(screen.queryByRole("textbox", { name: "Decision title" })).toBeNull();
     expect(hub.resourcePuts).toEqual([]);
     expect(hub.posts).toHaveLength(1);
+  });
+
+  it("one face: a row opens the record reader in the Decisions window, never the Decision pullout", async () => {
+    const open = vi.fn();
+    const real = useDesk.getState().openSurfaceWindow;
+    useDesk.setState({ openSurfaceWindow: open });
+    try {
+      hub.decisions = [{ ...decisionWire({ title: "Older call", tags: ["meeting:m-face"] }, 0), id: "decision_old" }];
+      well("m-face");
+      fireEvent.click(screen.getByRole("button", { name: "Decide" }));
+      await waitFor(() => expect(screen.getByRole("button", { name: "Checkout" }).getAttribute("aria-pressed")).toBe("true"));
+      const title = screen.getByRole("textbox", { name: "Decision title" });
+      fireEvent.change(title, { target: { value: "Roll back" } });
+      await act(async () => { fireEvent.keyDown(title, { key: "Enter" }); });
+      await waitFor(() => expect(screen.getByTestId("decide-receipt")).toBeTruthy());
+      // The record this press made: its reader, at once.
+      await act(async () => { fireEvent.click(screen.getByRole("button", { name: /Roll back/ })); });
+      expect(open).toHaveBeenCalledWith("open-decisions", "record:rec_1");
+      expect(useDesk.getState().pullouts.map((p) => p.id)).toEqual([]);
+      // A decision made before (no receipt): its record, as the hub names it.
+      open.mockClear();
+      await act(async () => { fireEvent.click(screen.getByRole("button", { name: /Older call/ })); });
+      await waitFor(() => expect(open).toHaveBeenCalledWith("open-decisions", "record:rec_of_decision_old"));
+      expect(useDesk.getState().pullouts.map((p) => p.id)).toEqual([]);
+    } finally {
+      useDesk.setState({ openSurfaceWindow: real });
+    }
+  });
+
+  it("a refused create shows the hub's reason and Retry; Retry calls create once more", async () => {
+    hub.refuse = 1;
+    well("m-refused");
+    fireEvent.click(screen.getByRole("button", { name: "Decide" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Checkout" }).getAttribute("aria-pressed")).toBe("true"));
+    const title = screen.getByRole("textbox", { name: "Decision title" });
+    fireEvent.change(title, { target: { value: "Roll back" } });
+    await act(async () => { fireEvent.keyDown(title, { key: "Enter" }); });
+    await waitFor(() => expect(screen.getByRole("alert").textContent).toContain("Project Checkout is archived"));
+    expect(hub.posts).toHaveLength(1);
+    expect(screen.getByTestId("decide-scope")).toBeVisible();
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Retry" })); });
+    await waitFor(() => expect(hub.posts).toHaveLength(2));
+    expect(hub.posts[1].title).toBe("Roll back");
+    await waitFor(() => expect(screen.getByTestId("decide-receipt")).toBeTruthy());
+    expect(screen.queryByRole("alert")).toBeNull();
   });
 
   it("Cancel abandons: nothing is written", async () => {
