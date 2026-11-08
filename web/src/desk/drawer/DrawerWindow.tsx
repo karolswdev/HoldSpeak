@@ -35,7 +35,10 @@ import {
   type ObjectSortKey,
   type StatusStripItem,
 } from "../surface";
-import { RoomAskWell, SourceGlyph, emblemFor, useRoomAsk } from "../../features/project-room/ProjectRoomCore";
+// The leaf modules, not the ProjectRoomCore barrel: the Room's code stays in
+// its own chunk, loaded when the Room opens (measure 2026-11-08).
+import { RoomAskWell, useRoomAsk } from "../../features/project-room/core/Ask";
+import { SourceGlyph, emblemFor } from "../../features/project-room/core/rows";
 import type { RoomSnapshot } from "../../features/project-room/model";
 import { openProjectRoomAt, refOpener } from "../openObject";
 import { DeskWindowFrame } from "../components/DeskWindow";
