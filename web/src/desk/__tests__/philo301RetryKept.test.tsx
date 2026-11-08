@@ -1,7 +1,7 @@
 /** PHILO-3-01 round 2 (Astra condition 2) — a failed create keeps its
  * Retry when the read that follows also fails; after both recover, the
  * rendered Retry creates the record. Real store slice; hub transport double. */
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const hub = vi.hoisted(() => ({
@@ -36,6 +36,8 @@ vi.mock("../../lib/api", async (importOriginal) => {
         if (hub.failRead) return Promise.reject({ status: 500, message: "read fault" });
         return Promise.resolve({ decisions: hub.decisions });
       }
+      // Every Desk decision has its record (decision_record_service sync_from_desk).
+      if (url === "/api/decision-records/source/desk/decision_retry") return Promise.resolve([{ id: "rec_retry" }]);
       return Promise.resolve({});
     }),
   };
@@ -85,7 +87,10 @@ describe("PHILO-3-01 a read failure never takes a pending write's Retry", () => 
 
     expect(hub.posts).toBe(2);
     expect(hub.decisions.map((d) => d.id)).toEqual(["decision_retry"]);
-    expect(useDesk.getState().pullouts.map((p) => p.id)).toContain("decision_retry");
+    // The one decision face (2026-11-08): the made decision opens its record
+    // in the Decisions window reader, never a Decision pullout.
+    await waitFor(() => expect(useDesk.getState().windowsById["surface-decisions"]?.scope).toBe("record:rec_retry"));
+    expect(useDesk.getState().pullouts.map((p) => p.id)).not.toContain("decision_retry");
     expect(screen.getByTestId("line").textContent).toBe("");
   });
 });

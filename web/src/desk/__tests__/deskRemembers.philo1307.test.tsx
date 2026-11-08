@@ -50,16 +50,18 @@ afterEach(() => {
 });
 
 describe("B2: every open window returns after a reload", () => {
+  // A Knowledge item stands for the object pullouts: a decision opens its
+  // record in the Decisions window (the one decision face, 2026-11-08).
   it("object pullouts return in open order; Meetings use the hosted surface", async () => {
     const { useDesk } = await import("../store");
-    useDesk.getState().openPullout("decision:d1");
+    useDesk.getState().openPullout("kb:k1");
     useDesk.getState().openPullout("note:n1");
     useDesk.getState().openPullout("meeting:m1");
     useDesk.getState().closePullout("note:n1");
-    expect(stored().windows.pullouts).toEqual(["decision:d1"]);
+    expect(stored().windows.pullouts).toEqual(["kb:k1"]);
 
     const fresh = await reload();
-    expect(fresh.useDesk.getState().pullouts.map((p) => p.id)).toEqual(["decision:d1"]);
+    expect(fresh.useDesk.getState().pullouts.map((p) => p.id)).toEqual(["kb:k1"]);
   });
 
   it("Info, Roadmap, Repository and Workbench windows return; a closed one stays gone", async () => {
@@ -81,29 +83,29 @@ describe("B2: every open window returns after a reload", () => {
 
   it("a minimized window comes back minimized; a moved window comes back where it was; order and zoom return", async () => {
     const { useDesk } = await import("../store");
-    useDesk.getState().openPullout("decision:d1");
+    useDesk.getState().openPullout("kb:k1");
     useDesk.getState().openInfoWindow("decision:d1");
-    useDesk.getState().setPanelRect("pullout:decision:d1", { x: 10, y: 54, w: 420, h: 300 }, true);
+    useDesk.getState().setPanelRect("pullout:kb:k1", { x: 10, y: 54, w: 420, h: 300 }, true);
     useDesk.getState().minimizePanel("info:decision:d1");
-    useDesk.getState().toggleMaximizePanel("pullout:decision:d1");
+    useDesk.getState().toggleMaximizePanel("pullout:kb:k1");
 
     const fresh = (await reload()).useDesk.getState();
     expect(fresh.panelMin).toEqual(["info:decision:d1"]);
-    expect(fresh.panelRects["pullout:decision:d1"]).toEqual({ x: 10, y: 54, w: 420, h: 300 });
-    expect(fresh.panelMax).toContain("pullout:decision:d1");
-    expect(fresh.panelOrder.at(-1)).toBe("pullout:decision:d1");
+    expect(fresh.panelRects["pullout:kb:k1"]).toEqual({ x: 10, y: 54, w: 420, h: 300 });
+    expect(fresh.panelMax).toContain("pullout:kb:k1");
+    expect(fresh.panelOrder.at(-1)).toBe("pullout:kb:k1");
   });
 
   it("a window that comes back minimized stays minimized when its frame mounts; a stale minimize is dropped", async () => {
     const { useDesk } = await import("../store");
-    useDesk.getState().openPullout("decision:d1");
-    useDesk.getState().minimizePanel("pullout:decision:d1");
+    useDesk.getState().openPullout("kb:k1");
+    useDesk.getState().minimizePanel("pullout:kb:k1");
     useDesk.getState().minimizePanel("delivery-board"); // a window that does not return
     const fresh = (await reload()).useDesk;
-    expect(fresh.getState().panelMin).toEqual(["pullout:decision:d1"]);
+    expect(fresh.getState().panelMin).toEqual(["pullout:kb:k1"]);
     const { DeskWindowFrame } = await import("../components/DeskWindow");
-    const view = render(<DeskWindowFrame id="pullout:decision:d1" title="D1" open onClose={() => {}}>d</DeskWindowFrame>);
-    expect(fresh.getState().panelMin).toEqual(["pullout:decision:d1"]);
+    const view = render(<DeskWindowFrame id="pullout:kb:k1" title="D1" open onClose={() => {}}>d</DeskWindowFrame>);
+    expect(fresh.getState().panelMin).toEqual(["pullout:kb:k1"]);
     view.unmount();
   });
 
@@ -141,9 +143,9 @@ describe("B2: every open window returns after a reload", () => {
     saveDeskWorkspaceSection({ screen: "floor" });
     vi.resetModules();
     const { useDesk } = await import("../store");
-    useDesk.getState().openPullout("decision:d1"); // a compositor save after it
+    useDesk.getState().openPullout("kb:k1"); // a compositor save after it
     expect(stored().screen).toBe("floor");
-    expect(stored().windows.pullouts).toContain("decision:d1");
+    expect(stored().windows.pullouts).toContain("kb:k1");
   });
 });
 

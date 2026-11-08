@@ -3,6 +3,9 @@
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
 - 2026-11-08 · #1917 The Room always opens on Now; a kept update draft waits on the head as Update draft · <time> with Continue, and no update place is kept or restored.
+- 2026-11-08 · #1916 Fix forward #1906: five more vitest cases read the one decision face (a desk_decision ref, a Needs you decision row and a retried create open the record reader; two pullout identity cases run on a Knowledge pullout); all 153 desk test files that mention decision pass.
+- 2026-11-08 · #1915 The lifespan's background work moves to runtime/background.py (start_background + Stopper.stop; same switches, order and thread names): web_server.py 1,775 -> 1,456 lines, background.py 388, 12 thread start sites moved, cold start median 2.06 -> 1.92 s.
+- 2026-11-08 · #1914 Fix forward #1906: the desk-remembers cases restore a Knowledge pullout (open order, rect, zoom, minimize across a reload); Meetings still use the hosted surface.
 - 2026-11-08 · #1913 docs/PROJECT_ROOMS.md describes the Room as it is on main: the Now and History tabs, the head, Needs you, Waiting on, This week, the ask row, the Files, Programs, Sources, People and Plan folds, the update row and the four postures.
 - 2026-11-08 · #1912 Fix forward #1906: the pullout identity cases run on a Knowledge pullout, and New decision's type + Enter opens its one record in the Decisions window reader.
 - 2026-11-08 · #1910 The user docs follow the night: the New program wizard plans on Create, Needs you rows and their right-press menu, Run as a program vs Hand to an agent session, one decision face, the one keystore, the walk link, the Room's Programs fold.
