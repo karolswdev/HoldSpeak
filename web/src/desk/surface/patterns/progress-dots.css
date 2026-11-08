@@ -1,0 +1,23 @@
+/* ── ProgressDots: one dot a step; done dots fill; the current step
+   stretches into a short pill. Colour from currentColor (the caller's). */
+.surface-progress-dots {
+  display: inline-flex;
+  flex: none;
+  gap: 5px;
+  align-items: center;
+}
+
+.surface-progress-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 3px;
+  background: color-mix(in srgb, currentColor 30%, transparent);
+  transition: width var(--duration-long) var(--ease-standard), background-color var(--duration-long) var(--ease-standard);
+}
+
+.surface-progress-dot[data-state="done"] { background: color-mix(in srgb, currentColor 70%, transparent); }
+.surface-progress-dot[data-state="now"] { width: 16px; background: currentColor; }
+
+@media (prefers-reduced-motion: reduce) {
+  .surface-progress-dot { transition: none; }
+}

@@ -39,6 +39,7 @@ import {
 } from "react";
 import { Button } from "../../components/signal/Signal";
 import { PadGadget } from "../surface/gadgets";
+import { ProgressDots } from "../surface/patterns/ProgressDots";
 import { captureScale, captureViewportPng } from "../feedback/capture";
 import { VerbGlyph } from "../components/window/VerbGlyph";
 import { speak, stop as stopVoice } from "../../lib/tts";
@@ -754,6 +755,7 @@ function WalkSession({ token }: { token: string }) {
   if (!page) return null;
 
   const cards = steps.map((row, at) => (row.highlight || row.ask ? at : -1)).filter((at) => at >= 0);
+  const cardCount = cards.length;
   const count = stepCount(cards.indexOf(index) + 1, cards.length);
   const asking = !done && !!step && stage.ready && !stage.line && !!(step.highlight || step.ask);
   // The bar: full width on the phone, at most 720 px centred at desk width;
@@ -819,12 +821,9 @@ function WalkSession({ token }: { token: string }) {
               {ask?.question ?? ""}
             </p>
             {cards.length > 1 ? (
-              <span className="walk-dots" aria-hidden="true" data-testid="walk-dots">
-                {cards.map((at) => (
-                  <span key={at} className="walk-dot"
-                    data-state={at === index ? "now" : answeredAt[at] ? "done" : undefined} />
-                ))}
-              </span>
+              <ProgressDots className="walk-progress" data-testid="walk-dots" at={cards.indexOf(index)}
+                done={(dot) => Boolean(answeredAt[cards[dot]])}
+                count={cardCount} />
             ) : null}
             {count ? <span className="walk-count" data-testid="walk-count">{count}</span> : null}
           </div>

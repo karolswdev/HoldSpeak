@@ -139,6 +139,8 @@ export {
 export {
   StateChip,
   type ChipState,
+  ProgressDots,
+  type ProgressDotsProps,
   ActionNotice,
   Disclosure,
   ProgressPlan,

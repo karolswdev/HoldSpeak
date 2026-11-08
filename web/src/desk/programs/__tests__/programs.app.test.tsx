@@ -750,7 +750,7 @@ describe("New program is a wizard inside the window (owner, live walk 2026-11-08
     expect(screen.getByTestId("programs-wizard-card-name").textContent).toBe(nameOf(madeProgram.project_id));
     expect(next().disabled).toBe(false);
     // The progress: four dots in the title bar, the first is now; none in the bar.
-    const dots = within(screen.getByTestId("window-head")).getByTestId("programs-wizard-dots").querySelectorAll(".pg-wiz-dot");
+    const dots = within(screen.getByTestId("window-head")).getByTestId("programs-wizard-dots").querySelectorAll(".surface-progress-dot");
     expect([...dots].map((dot) => dot.getAttribute("data-state"))).toEqual(["now", null, null, null]);
     expect(posts()).toEqual([]);
   });
@@ -784,7 +784,7 @@ describe("New program is a wizard inside the window (owner, live walk 2026-11-08
     expect(screen.getByTestId("programs-wizard-sum-where").textContent).toBe(nameOf(madeProgram.project_id));
     expect(screen.getByTestId("programs-wizard-sum-title").textContent).toBe("New program · Fast cycle");
     expect(screen.queryByTestId("programs-wizard-next")).toBeNull();
-    const dots = screen.getByTestId("programs-wizard-dots").querySelectorAll(".pg-wiz-dot");
+    const dots = screen.getByTestId("programs-wizard-dots").querySelectorAll(".surface-progress-dot");
     expect([...dots].map((dot) => dot.getAttribute("data-state"))).toEqual(["done", "done", "done", "now"]);
     // Back keeps what he chose.
     fireEvent.click(screen.getByTestId("programs-wizard-back"));
