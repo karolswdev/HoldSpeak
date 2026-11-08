@@ -2,6 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · (PR) The Engines task probe ("Try it") runs through the engine door: the assigned engine and its chain's next one, one real sample, the answering engine's model and boundary; no route admission or frozen plan.
 - 2026-11-08 · (PR) The engine door keeps the assignment chain: a job that fails plainly runs once more on the chain's next engine (never after a Stop or an unknown send); the moved callers report the egress of the engine that answered.
 - 2026-11-08 · (PR) The calendar Snapshot runs through the engine door on both of its paths (the assigned engine, else the nearest ready vision engine); the face's egress chip reads the same choice.
 - 2026-11-08 · (PR) The Cadence next-action draft and the agent responder's answer draft run through the engine door; `inference_owner_draft.py` (249 lines) has no caller left and is parked in `holdspeak/services/_parked/`.

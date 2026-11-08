@@ -453,8 +453,8 @@ def test_a_real_probe_records_the_model_that_served_and_the_boundary_it_crossed(
     assert result["engine"] == "configured_local_engine"
     assert result["boundary"] == "local"
     assert result["host"] == "THIS DEVICE"
-    assert result["routePlanId"].startswith("irp_")
-    assert result["executionId"]
+    # The runner's kernel operation is the probe's one receipt.
+    assert broker.store.receipt(result["operationId"])["outcome"] == "succeeded"
 
 
 def test_a_local_probe_host_is_this_device_and_an_endpoint_host_is_its_hostname() -> None:
@@ -475,26 +475,15 @@ def test_an_off_machine_route_refuses_the_probe_until_the_owner_confirms(
     broker = _configure(db)
     seen = _engine_factory(broker)
 
-    def _cloud_plan(*_args: Any, **_kwargs: Any) -> dict[str, Any]:
-        return {
-            "entries": [
-                {
-                    "ordinal": 1,
-                    "profile_id": "cloudy",
-                    "deployment_revision_id": "dep-cloud",
-                    "boundary": "cloud",
-                }
-            ]
-        }
+    from holdspeak.services import engine_door
 
-    monkeypatch.setattr(
-        broker.inference_adoption_service.plans, "resolve_route_plan", _cloud_plan
-    )
+    monkeypatch.setattr(engine_door, "engine_for", lambda *_a: engine_door.Engine("dep-cloud", profile="cloudy"))
+    monkeypatch.setattr(engine_door, "egress_of", lambda *_a: "cloud")
 
-    def _never(*_args: Any, **_kwargs: Any) -> dict[str, Any]:
-        raise AssertionError("a refused probe must never admit a route")
+    def _never(*_args: Any, **_kwargs: Any) -> Any:
+        raise AssertionError("a refused probe must never run")
 
-    monkeypatch.setattr(broker.inference_adoption_service, "admit", _never)
+    monkeypatch.setattr(engine_door, "run", _never)
 
     result = route_probe.task_probe(broker, OWNER, db=db, capability_id=PROBE_CAPABILITY)
 
@@ -547,8 +536,7 @@ def test_when_every_frozen_leg_fails_the_probe_names_the_route_and_refuses(
 
     assert result["ok"] is False and result["state"] == "UNREACHABLE"
     assert result["allModelsFailed"] is True
-    # The failure NAMES the route: its plan and every frozen leg considered.
-    assert result["routePlanId"].startswith("irp_")
+    # The failure names every engine of the chain it tried.
     assert {leg["deploymentRevisionId"] for leg in result["legs"]} == every
     assert set(seen) == every
     # No silent substitution: nothing outside the frozen plan was dispatched.
@@ -570,7 +558,7 @@ def test_a_successful_empty_output_keeps_the_kernel_terminal_truth(tmp_path: Pat
     assert result["ok"] is True and result["state"] == "READY"
     assert result["reasonCode"] == ""
     assert result["emptyOutput"] is True and result["sampleOutput"] == ""
-    assert result["executionId"] and result["routePlanId"]
+    assert result["operationId"]
 
 
 @pytest.mark.parametrize(
@@ -626,9 +614,8 @@ def test_each_job_sample_runs_its_own_capability_without_domain_writes(
     assert "tools" not in calls[0]
     with db._connection() as conn:
         after = {table: [tuple(row) for row in conn.execute(f"SELECT * FROM {table}")] for table in domain_tables}
-        execution = conn.execute("SELECT state,terminal_outcome FROM inference_route_executions WHERE id=?", (result["executionId"],)).fetchone()
     assert after == before
-    assert tuple(execution) == ("terminal", "succeeded")
+    assert broker.store.receipt(result["operationId"])["outcome"] == "succeeded"
 
 
 def test_a_changed_assignment_refuses_before_admission(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -636,10 +623,12 @@ def test_a_changed_assignment_refuses_before_admission(tmp_path: Path, monkeypat
     broker = _configure(db)
     seen = _engine_factory(broker)
 
-    def never_admit(*_args: Any, **_kwargs: Any) -> None:
-        raise AssertionError("a changed route must not be admitted")
+    from holdspeak.services import engine_door
 
-    monkeypatch.setattr(broker.inference_adoption_service, "admit", never_admit)
+    def never_run(*_args: Any, **_kwargs: Any) -> None:
+        raise AssertionError("a changed route must not run")
+
+    monkeypatch.setattr(engine_door, "run", never_run)
     result = route_probe.task_probe(broker, OWNER, db=db, expected_profile_ids=["quick"])
     assert result["state"] == "REFUSED" and result["ok"] is False
     assert result["reasonCode"] == "route_probe_assignment_changed"
@@ -674,11 +663,12 @@ def test_probe_preview_uses_the_existing_endpoint_locality_classifier(
     db = _routed_db(tmp_path, "probe-endpoint-locality.db", ("quick",))
     broker = _configure(db)
     seen = _engine_factory(broker)
-    monkeypatch.setattr(broker.inference_adoption_service.plans, "resolve_route_plan",
-        lambda *_args, **_kwargs: {"entries": [{"ordinal": 1, "profile_id": "quick",
-            "deployment_revision_id": "recorded-endpoint", "boundary": "private_network"}]})
-    monkeypatch.setattr(route_probe, "_deployment_facts",
-        lambda *_args: {"endpoint": endpoint, "engine": "openai_compatible", "model": "quick", "node": ""})
+    from types import SimpleNamespace
+    from holdspeak.services import engine_door
+
+    monkeypatch.setattr(engine_door, "engine_for", lambda *_a: engine_door.Engine("recorded-endpoint", profile="quick"))
+    monkeypatch.setattr(broker.database.deployment_revisions, "get",
+        lambda _rid: SimpleNamespace(boundary="private_network", endpoint=endpoint))
     preview = route_probe.preview_route(broker, db=db)
     assert preview["offMachine"] is off_machine
     assert preview["paid"] is paid
