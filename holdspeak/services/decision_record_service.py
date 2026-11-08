@@ -113,6 +113,11 @@ class DecisionRecordService:
         such a caller resolves the owner to a Person BEFORE it opens the
         transaction and passes ``owner_person_id``, because a People read
         must not hold the database write lock.
+
+        An accepted record with an owner Person and a Project is committed in
+        the same transaction (2026-11-08): the follow-through commitment the
+        owner sees in Needs you (``FollowThroughService
+        .commit_decision_in_transaction``, keyed by the record).
         """
         text = self._required("decision_text", decision_text)
         source_kind = self._required("source_type", source_type)
@@ -128,6 +133,11 @@ class DecisionRecordService:
             person = self.person_for(owner_words)
         if person is not None and owner_words is None:
             owner_words = self._person_name(person)
+        # The commitment names the Person; a People read comes before the
+        # write transaction. A joined transaction uses the owner's words.
+        committed_name = None
+        if person is not None and project is not None:
+            committed_name = (self._person_name(person) if conn is None else None) or owner_words
 
         def write(connection: Any) -> dict[str, Any]:
             now = datetime.now(UTC).isoformat()
@@ -163,6 +173,8 @@ class DecisionRecordService:
                 "SELECT * FROM decision_records WHERE id = ? AND deleted = 0", (new_id,)
             ).fetchone()
             assert row is not None
+            if committed_name is not None:
+                self._commit(connection, principal, new_id, committed_name)
             record = self._record_dict(row)
             record["project_id"] = project
             record["owner_person_id"] = person
@@ -172,6 +184,47 @@ class DecisionRecordService:
             return write(conn)
         with self._db._connection() as connection:
             return write(connection)
+
+    def _commit(self, conn: Any, principal: Any, record_id: str, owner: str) -> None:
+        """Commit an owned, filed record in the caller's transaction.
+
+        A record whose source is not accepted yet (a proposed Desk decision)
+        is not committed; its accept commits it (``sync_from_desk``).
+        """
+        from .follow_through_service import FollowThroughService
+
+        try:
+            FollowThroughService(self._db).commit_decision_in_transaction(
+                conn, principal, record_id, owner=owner,
+            )
+        except ValueError:
+            return
+
+    def _commit_if_owned(self, principal: Any, record_id: str) -> None:
+        """An accept: commit the record when it names a Person and a Project."""
+        with self._db._connection() as conn:
+            if conn.execute(
+                "SELECT 1 FROM decision_commitments WHERE id = ?", (f"commitment-{record_id}",),
+            ).fetchone() is not None:
+                return
+            person = conn.execute(
+                "SELECT source_ref FROM decision_record_sources WHERE record_id = ? "
+                "AND source_type = 'person' ORDER BY created_at, id LIMIT 1", (record_id,),
+            ).fetchone()
+            filed = conn.execute(
+                "SELECT 1 FROM project_resources WHERE resource_ref = ? AND deleted = 0 "
+                "AND relationship = 'member' LIMIT 1", (f"decision_record:{record_id}",),
+            ).fetchone()
+            owner = conn.execute(
+                "SELECT owner FROM decision_records WHERE id = ?", (record_id,),
+            ).fetchone()
+        if person is None or filed is None:
+            return
+        name = self._person_name(str(person["source_ref"])) or (owner["owner"] if owner else None)
+        if not name:
+            return
+        with self._db._connection() as conn:
+            self._commit(conn, principal, record_id, name)
 
     def person_for(self, owner: str | None) -> str | None:
         """The one Person an owner's words name, else None.
@@ -308,6 +361,9 @@ class DecisionRecordService:
         record = self.create_from_desk(principal, desk_decision_id)
         if record.get("lifecycle") != "active":
             return record
+        # An accept commits an owned, filed record once (a replay is a no-op).
+        if str(decision.status or "").lower() == "accepted":
+            self._commit_if_owned(principal, record["id"])
         # The legacy row remains for compatibility. Once the canonical record
         # has an authored revision, reopening the old editor must not replace
         # canonical words with its stale projection.
@@ -722,6 +778,11 @@ class DecisionRecordService:
                 (f"decision_record:{record_id}",),
             ).fetchone()
             record["project_id"] = str(filed["project_id"]) if filed is not None else None
+            # 2026-11-08: the name the record is committed to, or None.
+            committed = conn.execute(
+                "SELECT owner FROM decision_commitments WHERE id = ?", (f"commitment-{record_id}",),
+            ).fetchone()
+            record["committed_to"] = (str(committed["owner"] or "") or None) if committed else None
             record["successor_id"] = next(
                 (source["source_ref"] for source in record["sources"] if source["source_type"] == "successor"),
                 None,
