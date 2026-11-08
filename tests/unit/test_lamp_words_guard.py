@@ -277,7 +277,7 @@ UPPER_DEBT: dict[str, int] = {
     "desk/needsYou.ts": 2,  # waitingOn: the head-part compare, both sides
     "desk/surface/kit.tsx": 1,  # initialsOf: initials
     "desk/zoneName.ts": 1,  # the hub's casefold rule (upper then lower)
-    "features/project-room/ProjectRoomCore.tsx": 1,  # plainWord: a two-letter acronym (PR, CI)
+    "features/project-room/core/Plan.tsx": 1,  # plainWord: a two-letter acronym (PR, CI)
     "features/project-room/RoomPeopleSection.tsx": 1,  # monogram: initials
     "features/project-room/update/model.ts": 3,  # ref plates: MTG id, Jira key, a raw id
     "features/runson/RunsOnCore.tsx": 1,  # the engine-state compare key

@@ -136,7 +136,7 @@ first category may participate in a future assignment migration.
 | display-transport | `web/src/desk/terminals/types.ts` | Server-issued terminal/context wire types; `profile_id` is launch metadata only, not browser route authority. | 143-11 |
 | display-transport | `web/src/pages/cores/ModelLibraryCore.tsx`, `web/src/pages/cores/modelLibrary.ts` | 143-12 availability transport; selection never writes an assignment pointer |
 | display-transport | `web/src/pages/cores/TopologyMapView.tsx` | 156-04 topology graph reads profile_id for node display; never writes an assignment pointer |
-| display-transport | `web/src/features/project-room/ProjectRoomCore.tsx`, `web/src/features/project-room/model.ts` | 169-07 project room reads assignment state and the update automation's selected engine for display; never writes a placement pointer |
+| display-transport | `web/src/features/project-room/core/Ask.tsx`, `web/src/features/project-room/model.ts` | 169-07 project room reads assignment state and the update automation's selected engine for display; never writes a placement pointer |
 | display-transport | `web/src/features/concierge/api.ts` | 170-03 concierge engine type carries profileId for display; never writes an assignment pointer |
 | display-transport | `web/src/pages/cores/dictation/SpeakFace.tsx` | 170-04 speak face reads profileId for engine resolution display; never writes a placement pointer |
 | display-transport | `web/src/meetings/summaryRoute.ts` | 201-04 the disclosed summary route's legs carry profile_id for display; the run gesture sends the route's selection HASH, never a pointer, and the hub binds the selection |

@@ -184,6 +184,20 @@ def test_settings_core_stays_a_composition() -> None:
     )
 
 
+# The Room is a composition (2026-11-08): the window frame, the two wings,
+# the postures' routing and the shared read and store wiring. Each section
+# lives in web/src/features/project-room/core/<Section>.tsx. It was 2,591
+# lines before that split.
+_ROOM_CORE_BUDGET = 600
+
+
+def test_room_core_stays_a_composition() -> None:
+    n = _lines(SRC / "features/project-room/ProjectRoomCore.tsx")
+    assert n < _ROOM_CORE_BUDGET, (
+        f"web/src/features/project-room/ProjectRoomCore.tsx is {n} lines (budget "
+        f"{_ROOM_CORE_BUDGET}). It composes the sections only; a section's rows, "
+        "state and reads belong in web/src/features/project-room/core/<Section>.tsx. "
+        "Carve, don't bump."
 def test_settings_files_live_in_the_settings_folder() -> None:
     """Every Settings file is in web/src/pages/cores/settings/ (2026-11-08).
 
