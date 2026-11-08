@@ -156,10 +156,11 @@ and the owner's real DB stay out of it. Times are from the owner's machine
   The tree is clean after any run: no restore of tracked evidence is needed.
   Old evidence (shots, run dumps, proof databases) is not in the tree: it is on
   branch `archive/evidence-2026-10-04`. `pm/ARCHIVE.md` says how to get a file back.
-- Generated docs: `scripts/gen_docs.sh` runs every generator. Three outputs
-  are not in git (`docs/generated/api-reference.json`,
-  `boundary-candidates.json`, `graph.json`): generate them when you need to
-  read them. Atlas source references have no `line`; the cited text must be
+- Generated docs: `scripts/gen_docs.sh` runs every generator. No output is
+  in git (2026-11-08): `docs/generated/`, `docs/api-surface.json`,
+  `docs/API_SURFACE.md` and `docs/API_REFERENCE.md` are written on demand;
+  generate them when you need to read them. Tests derive what they check from
+  the live tree, never from a committed copy. Atlas source references have no `line`; the cited text must be
   in exactly one place in the cited file, so cite the declaration or render
   site. Do not add count fences; a new `.op` case needs no list edit.
 - Web-unit inherited baseline:

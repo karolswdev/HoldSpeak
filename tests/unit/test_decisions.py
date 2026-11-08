@@ -973,10 +973,8 @@ def test_other_kinds_still_take_the_generic_path(tmp_path: Path, monkeypatch) ->
 
 
 def test_operations_export_matches_the_catalogue() -> None:
-    gen = _load_script("gen_operations_json")
-    committed = (REPO / "docs" / "generated" / "operations.json").read_text(encoding="utf-8")
-    assert committed == gen.render(), "regenerate: uv run python scripts/gen_operations_json.py"
-    exported = json.loads(committed)["operations"]
+    # The export is derived from the catalogue (not in git since 2026-11-08).
+    exported = json.loads(_load_script("gen_operations_json").render())["operations"]
     assert [op["name"] for op in exported] == [d.name for d in operations.DESCRIPTORS]
     for op, descriptor in zip(exported, operations.DESCRIPTORS):
         assert op["args_schema"] == json.loads(json.dumps(dict(descriptor.args_schema)))

@@ -18,10 +18,15 @@ from urllib.parse import unquote, urlsplit
 ROOT = Path(__file__).resolve().parents[1]
 # Not in git (owner ruling 2026-10-03): scripts/gen_docs.sh writes these on
 # demand, so a link to one is lawful on a fresh clone.
+ON_DEMAND_PREFIXES = ("docs/generated/",)
 ON_DEMAND = {
     "docs/generated/api-reference.json",
     "docs/generated/boundary-candidates.json",
     "docs/generated/graph.json",
+    # 2026-11-08: every generated view and the API surface are on demand.
+    "docs/api-surface.json",
+    "docs/API_SURFACE.md",
+    "docs/API_REFERENCE.md",
 }
 FENCE = re.compile(r"^\s*(`{3,}|~{3,})")
 INLINE_CODE = re.compile(r"(`+).*?\1")
@@ -123,7 +128,7 @@ def check_documents(paths: list[Path], root: Path) -> list[str]:
                 continue
             destination = (path.parent / unquote(url.path)).resolve() if url.path else path.resolve()
             if not destination.exists():
-                if destination.is_relative_to(root) and destination.relative_to(root).as_posix() in ON_DEMAND:
+                if destination.is_relative_to(root) and (destination.relative_to(root).as_posix() in ON_DEMAND or destination.relative_to(root).as_posix().startswith(ON_DEMAND_PREFIXES)):
                     continue
                 errors.append(f"{label}:{number}: missing target {target}")
                 continue
