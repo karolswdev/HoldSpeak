@@ -341,8 +341,8 @@ def _seed_list(rig_dir: Path, monkeypatch: pytest.MonkeyPatch) -> dict[str, str]
 @pytest.mark.timeout(900)
 @pytest.mark.skipif(not _wanted("list"), reason="WALK_ONLY names other faces")
 def test_walk_list(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, pw_browser: Any) -> None:
-    """The Programs list: every group, a family fold, a split chain, and the
-    Find, Project and Person filters, at 1440 and 393."""
+    """The Programs window: the rail of every group and the first four
+    Programs picked into the right pane, at 1440 and 393."""
     ids = _seed_list(tmp_path / "rig", monkeypatch)
     server, base = _serve(tmp_path / "rig", tmp_path, monkeypatch)
     try:
@@ -360,34 +360,16 @@ def test_walk_list(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, pw_browser: 
             page.wait_for_timeout(800)
             _close_others(base, wid)
             win = page.locator(f'[id="{wid}"]')
-            win.locator("[data-testid=programs-list]").wait_for(timeout=30_000)
+            # The language, 2026-11-08: the window is the Program; the rail picks.
+            win.locator("[data-testid=programs-rail-tile]").first.wait_for(timeout=30_000)
             _shot(page, f"list-{width}")
             win.screenshot(path=str(SHOTS / f"list-{width}-window.png"))
-            for fold in ("programs-family-fold", "programs-parked-fold"):
-                found = win.locator(f"[data-testid={fold}]")
-                if found.count():
-                    found.first.locator("button, summary").first.click()
-            _shot(page, f"list-folds-{width}")
-            win.screenshot(path=str(SHOTS / f"list-folds-{width}-window.png"))
-            find = win.locator("[data-testid=programs-find] input")
-            if find.count():
-                find.fill("audit")
-                _shot(page, f"list-find-{width}")
-                find.fill("")
-            for menu, sub, pick, shot in (("programs-project", "Project", "HoldSpeak", "project"),
-                                          ("programs-person", "Person", "Alice Park", "person")):
-                opener = win.locator(f"[data-testid={menu}]")
-                if opener.count() and opener.is_visible():
-                    opener.click()
-                else:
-                    # At 393 Project and Person live under More (its submenus).
-                    win.locator("[data-testid=programs-more]").click()
-                    page.get_by_role("menuitem", name=re.compile(rf"^{sub}")).first.click()
-                page.get_by_role("menuitem", name=pick).first.click()
-                page.wait_for_timeout(400)
-                _shot(page, f"list-{shot}-{width}")
-                # The filter is on: only that program's rows (the status names the filter).
-                assert pick.split()[0] in win.locator("[data-testid=programs-status]").inner_text() or shot == "person", shot
+            tiles = win.locator("[data-testid=programs-rail-tile]")
+            for n in range(min(tiles.count(), 4)):
+                tiles.nth(n).click()
+                win.locator("[data-testid=programs-mast]").wait_for(timeout=30_000)
+                page.wait_for_timeout(300)
+                _shot(page, f"list-pick{n + 1}-{width}")
             sideways = page.evaluate("() => document.documentElement.scrollWidth - document.documentElement.clientWidth")
             ctx.close()
             assert not errors, (width, errors)
