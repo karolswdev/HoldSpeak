@@ -1307,7 +1307,7 @@
 .desk-tool-name { display: flex; padding: 6px 2px 2px; }
 
 
-/* Betterment AG4: the selected work item's Hand to agent, under its row,
+/* Betterment AG4: the selected work item's Hand to an agent session, under its row,
    at the row's right edge (one verb, never on every row). */
 .desk-next .desk-deck-hand {
   display: block;

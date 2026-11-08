@@ -96,7 +96,7 @@ function ResourceAction({ resource, projectId, onOpen }: { resource: ResourceRow
       if (!askAboutRef(ref)) useDesk.getState().askAbout([about]);
       setMenu(null);
     } }] : []),
-    ...(hand ? [{ type: "item" as const, id: "hand", label: "Hand to an agent", onSelect: () => { openHand({ ...hand, title: resource.title, projectId }); setMenu(null); } }] : []),
+    ...(hand ? [{ type: "item" as const, id: "hand", label: "Hand to an agent session", onSelect: () => { openHand({ ...hand, title: resource.title, projectId }); setMenu(null); } }] : []),
   ];
   if (!entries.length) return <Button dense variant="ghost" onClick={onOpen}>{openLabel}</Button>;
   return <>

@@ -103,7 +103,7 @@ function DoStep({
           onClick={() => onKind("run")}>Make a result</Button>
         <Button dense variant={kind === "hand_to_agent" ? "secondary" : "ghost"}
           aria-pressed={kind === "hand_to_agent"} onClick={() => onKind("hand_to_agent")}>
-          Hand to an agent
+          Hand to an agent session
         </Button>
         <Button dense variant={kind === "run_program" ? "secondary" : "ghost"}
           aria-pressed={kind === "run_program"} onClick={() => onKind("run_program")}

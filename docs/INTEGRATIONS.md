@@ -69,7 +69,7 @@ If no local checkout is registered, a Project can name a GitHub repository as
 `owner/name`. In the Project Info window, **Register** records that name. It
 does not clone the repository.
 
-The first **Hand to agent** for an item in that Project uses the local GitHub
+The first **Hand to an agent session** for an item in that Project uses the local GitHub
 CLI (`gh`) to clone from `github.com`. HoldSpeak registers the clone as a
 local Delivery Source and starts the agent in a new sibling worktree. The
 clone and worktree are on the hub that runs the Desk. A missing CLI, sign-in,

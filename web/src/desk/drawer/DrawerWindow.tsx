@@ -328,7 +328,7 @@ export function DrawerWindow({ drawer }: { drawer: OpenDrawer }) {
             data-testid="drawer-fold"
             verbs={[
               { key: "history", label: "History", testId: "drawer-history", onSelect: () => openProjectRoomAt(projectId, "history") },
-              ...(selectedHand ? [{ key: "hand", label: "Hand to agent", testId: "drawer-hand", onSelect: handSelected }] : []),
+              ...(selectedHand ? [{ key: "hand", label: "Hand to an agent session", testId: "drawer-hand", onSelect: handSelected }] : []),
               { key: "info", label: "Get Info", testId: "drawer-get-info", onSelect: () => info(selected) },
               ...(toRegister ? [{ key: "register", label: "Register", testId: "drawer-register", busy: registering, onSelect: () => void register() }] : []),
             ]}
