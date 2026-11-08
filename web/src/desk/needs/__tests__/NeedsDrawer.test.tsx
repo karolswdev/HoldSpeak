@@ -290,12 +290,15 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
     await mount();
     const drawer = screen.getByTestId("needs-drawer");
     expect(screen.getByTestId("arrival-display").textContent).toBe("8 need you");
-    // Window grammar (2026-10-24): no headline; the status bar says the
-    // number once, with its lamp.
-    expect(drawer.querySelectorAll("h1, h2").length).toBe(0);
+    // The bold mast (2026-11-08): one title, the day and the head (no must
+    // fix here); the status bar says the number once, with its lamp.
+    const titles = drawer.querySelectorAll("h1, h2");
+    expect(titles.length).toBe(1);
+    expect(titles[0].textContent).toMatch(/^(Sun|Mon|Tues|Wednes|Thurs|Fri|Satur)day · 8 need you$/);
     expect(drawer.querySelectorAll(".kit-disp").length).toBe(0);
     expect(screen.getByTestId("arrival-display").closest(".kit-statusbar")).toBeTruthy();
     expect(screen.getAllByText("8 need you")).toHaveLength(1);
+    expect(screen.getByTestId("needs-mast").querySelector(".surface-mast-glyph")?.getAttribute("src")).toMatch(/dock-intelligence\.png$/);
     // DELIGHT slice 2: the number wears the tick (it fades only on a change, never on the first paint).
     const tick = screen.getByTestId("arrival-display").querySelector(".kit-tick");
     expect(tick?.textContent).toBe("8 need you");
@@ -378,7 +381,11 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
 
   it("puts the agents first, then the rest in the hub's order", async () => {
     await mount();
-    const names = [...document.querySelectorAll(".needs-row-name")].map((n) => n.textContent);
+    const names = [...document.querySelectorAll("[data-testid='needs-ledger'] .needs-row-name")].map((n) => n.textContent);
+    // The bold face: the first plate holds the one thing that waits most
+    // (no weight, no Program, no age here: the hub's first that is not an
+    // agent's ask); the ledger keeps the rest in the hub's order.
+    expect(screen.getByTestId("needs-first").querySelector(".needs-row-name")?.textContent).toBe("Run a second ops interview");
     expect(names.slice(0, 4)).toEqual([
       "Claude Code: rollback runbook",
       "Codex: reconciliation",
@@ -386,7 +393,6 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
       "Write the rollback runbook",
     ]);
     expect(names.slice(4)).toEqual([
-      "Run a second ops interview",
       "Sam: send the status by Thursday",
       "Pick the vendor",
       "Vendor call",
@@ -400,9 +406,10 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
     expect(drawer.querySelector("[data-testid='flight-chip']")).toBeNull();
     expect(drawer.querySelector(".state-chip, .signal-chip, [class*='StateChip'], [class*='state-chip']")).toBeNull();
     expect(screen.queryByText("Hand to coder")).toBeNull();
-    // ONE filled primary on the face: the first row's Answer.
-    expect(drawer.querySelectorAll(".btn--primary").length).toBe(1);
-    expect(within(row("Claude Code: rollback runbook")).getByText("Answer").className).toContain("btn--primary");
+    // ONE filled verb on the face: the first plate's lead, the brass Button.
+    expect(drawer.querySelectorAll(".btn--primary").length).toBe(0);
+    expect(drawer.querySelectorAll(".btn--brass").length).toBe(1);
+    expect(within(screen.getByTestId("needs-first")).getByText("Open item").className).toContain("btn--brass");
   });
 
   it("Deny and Approve decide the held call through the gate", async () => {
@@ -480,7 +487,7 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
     expect(toolbar.querySelector(".kit-toolbar-trailing")).toBeNull();
     const scope = within(toolbar).getByTestId("needs-scope");
     expect([...scope.querySelectorAll("button")].map((b) => b.getAttribute("data-testid"))).toEqual(["needs-chip-mine", "needs-open-people"]);
-    expect(within(scope).getByRole("button", { name: "Mine · 8" }).getAttribute("aria-pressed")).toBe("true");
+    expect(within(scope).getByRole("button", { name: "Mine" }).getAttribute("aria-pressed")).toBe("true");
     expect(within(scope).getByRole("button", { name: "People" }).getAttribute("aria-pressed")).toBe("false");
     expect(screen.getByText("8 need you")).toBeTruthy();
     fireEvent.click(within(scope).getByRole("button", { name: "People" }));
@@ -540,7 +547,8 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
     });
     render(<NeedsDrawer />);
     await screen.findByText("9 need you");
-    const rows = document.querySelectorAll<HTMLElement>("[data-testid='needs-row']");
+    // The first ledger row (the plate holds the one thing that waits most).
+    const rows = document.querySelectorAll<HTMLElement>("[data-testid='needs-ledger'] [data-testid='needs-row']");
     expect(rows[0].getAttribute("data-object-id")).toBe("arming:sch-1");
     expect(rows[0].getAttribute("data-kind")).toBe("meeting");
     const first = rows[0].querySelector("[data-testid=needs-row-state]")?.textContent ?? "";
@@ -617,7 +625,7 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
     await mount();
     const offer = await screen.findByTestId("needs-no-calendar");
     expect(offer.textContent).toBe("No calendarConnect calendar");
-    expect(offer.closest("[role='toolbar']")).toBeTruthy();
+    expect(offer.closest("[data-testid='needs-mast']")).toBeTruthy();
     expect(screen.queryByTestId("needs-source-row")).toBeNull();
     fireEvent.click(screen.getByTestId("needs-drawer").querySelector("[data-verb='connect-calendar']")!);
     expect(openSurfaceOr).toHaveBeenCalledWith("configure-settings", "/settings", "integration:calendar");
@@ -631,9 +639,8 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
     });
     await mount();
     expect(screen.queryByText("A muted decision")).toBeNull();
-    // Betterment D2: Muted moved to the chip row's More (drawn while a muted row exists).
-    fireEvent.click(within(screen.getByTestId("needs-filter")).getByTestId("needs-chip-more"));
-    fireEvent.click(screen.getByRole("menuitemcheckbox", { name: "Muted projects · 1" }));
+    // The bold mast: Muted · N (drawn while a muted row exists) shows them.
+    fireEvent.click(screen.getByRole("button", { name: "Muted · 1" }));
     expect(within(screen.getByTestId("needs-muted")).getByText("A muted decision")).toBeTruthy();
     expect(screen.getByTestId("needs-muted").querySelector("h3")?.textContent).toBe("Muted · 1");
   });
@@ -1068,10 +1075,12 @@ describe("NeedsDrawer on the interior kit (Phase 16)", () => {
     await screen.findByText("8 need you");
     const list = screen.getByTestId("needs-list");
     expect(list.querySelectorAll("li.needs-row")).toHaveLength(8);
-    // Betterment D2: no group header; the list is ranked with no groups.
-    expect(list.querySelector("h3")).toBeNull();
+    // The bold ledger: no row has a weight here, so one group, To do, with
+    // every row but the plate's (`To do · 7 more`).
+    expect([...list.querySelectorAll(".needs-ledger-head")].map((h) => h.textContent)).toEqual(["To do · 7 more"]);
     expect(list.querySelector(".surface-scroll-hint[data-axis='y']")).toBeTruthy();
-    expect(screen.queryByText(/more$/)).toBeNull();
+    // No cap: nothing says "N more" beyond the group head.
+    expect(screen.queryAllByText(/more$/).filter((n) => !n.classList.contains("needs-ledger-head"))).toEqual([]);
     expect(screen.queryByRole("button", { name: "Show all" })).toBeNull();
   });
 
@@ -1090,45 +1099,34 @@ describe("NeedsDrawer on the interior kit (Phase 16)", () => {
     useSourceReceipt.setState({ receipt: null });
     render(<NeedsDrawer />);
     await screen.findByText("8 need you");
-    // Window grammar: the toolbar carries the offer; the status bar the facts.
-    const toolbar = screen.getByRole("toolbar", { name: "Needs you" });
+    // The bold mast carries the offer; the status bar the facts.
+    const toolbar = screen.getByTestId("needs-mast");
     // W5-WORDS: every source read draws no coverage row (no `1 of 1 available`).
     expect(screen.queryByRole("button", { name: "Coverage" })).toBeNull();
     await waitFor(() => expect(toolbar.textContent).toContain("No calendar"));
     expect(within(toolbar).getByRole("button", { name: "Connect calendar" })).toBeTruthy();
-    expect(screen.getByTestId("needs-checked").textContent).toMatch(/^Checked \d{2}:\d{2}$/);
+    expect(screen.getByTestId("needs-checked").textContent).toMatch(/^checked \d{2}:\d{2}$/);
+    expect(toolbar.querySelector(".surface-mast-facts")?.textContent).toMatch(/^checked \d{2}:\d{2}$/);
     expect(screen.getByTestId("needs-checked").closest("[data-testid='arrival-headline']")).toBeTruthy();
   });
 
-  it("the chips narrow the ledger; a chip at zero is not drawn (Betterment D2)", async () => {
-    const today = new Date();
-    const day = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
-      if (String(path).startsWith("/api/desk/needs-you"))
-        return { ...ANSWER, items: ITEMS.map((item) => item.id === "commitment:c-sam" ? { ...item, dueAt: day } : item) } as never;
-      return { upcoming: [], calendar_configured: true } as never;
-    });
-    render(<NeedsDrawer />);
-    await screen.findByText("8 need you");
-    const bar = screen.getByTestId("needs-filter");
-    const tokens = within(bar).getAllByRole("button").map((b) => b.getAttribute("aria-label"));
-    // The time-class tokens left; a chip says its count.
-    for (const gone of ["All", "Overdue", "Due today", "Not run", "No due date", "Waiting", "Muted"])
-      expect(tokens).not.toContain(gone);
-    expect(tokens).toContain("This week · 1");
-    fireEvent.click(within(bar).getByTestId("needs-chip-week"));
-    const names = [...screen.getByTestId("needs-list").querySelectorAll(".needs-row-name")].map((n) => n.textContent);
-    expect(names).toEqual(["Sam: send the status by Thursday"]);
-    expect(within(bar).getByTestId("needs-chip-week").getAttribute("aria-pressed")).toBe("true");
-    // A second press clears it.
-    fireEvent.click(within(bar).getByTestId("needs-chip-week"));
-    expect(screen.getByTestId("needs-list").querySelectorAll(".needs-row-name")).toHaveLength(8);
+  // The bold face (2026-11-08): the narrowing chips left the window (owner:
+  // "way too cluttered"). The mast says Mine · People and Later; the People
+  // tab narrows by person.
+  it("draws no chip strip: the mast's verbs are Mine · People only on a desk of today", async () => {
+    await mount();
+    expect(screen.queryByTestId("needs-filter")).toBeNull();
+    expect(screen.queryByTestId("needs-chip-week")).toBeNull();
+    expect(screen.queryByTestId("needs-chip-later")).toBeNull();
+    const verbs = screen.getByTestId("needs-mast").querySelectorAll(".surface-mast-verbs button");
+    expect([...verbs].map((b) => b.textContent)).toEqual(["Mine", "People"]);
   });
 
   it("every row leads with its glyph, named in plain words", async () => {
     await mount();
     const words = [...document.querySelectorAll("li.needs-row > img")].map((n) => n.getAttribute("alt"));
-    expect(words).toEqual(["Claude Code", "Codex", "Pull request", "Action", "Decision", "Action", "Action", "Meeting"]);
+    // The plate's row first (the decision), then the ledger's.
+    expect(words).toEqual(["Decision", "Claude Code", "Codex", "Pull request", "Action", "Action", "Action", "Meeting"]);
     expect(document.querySelectorAll("li.needs-row [data-testid='kit-kind']")).toHaveLength(0);
   });
 });
@@ -1136,8 +1134,8 @@ describe("NeedsDrawer on the interior kit (Phase 16)", () => {
 // Astra r1 M4: a dated proposal carries its date as `proposalDue` (the
 // producer: needs_you_aggregate.py), never `dueAt`; it is Due today, not
 // No due date.
-describe("NeedsDrawer chips read a proposal's own date (Phase 16, Betterment D2)", () => {
-  it("a proposal due today is under This week, and an undated one is not", async () => {
+describe("NeedsDrawer reads a proposal's own date (Phase 16, Betterment D2)", () => {
+  it("a proposal due today says its date on the row", async () => {
     const t = new Date();
     const today = `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, "0")}-${String(t.getDate()).padStart(2, "0")}`;
     const proposals = [
@@ -1164,11 +1162,7 @@ describe("NeedsDrawer chips read a proposal's own date (Phase 16, Betterment D2)
     render(<NeedsDrawer />);
     await screen.findByText("2 need you");
     expect(row("Ship the runbook").querySelector(".needs-row-fact")?.textContent).toContain(`by ${today}`);
-    const bar = screen.getByTestId("needs-filter");
-    // Betterment D2: This week reads the proposal's own date; the undated one is not in it.
-    fireEvent.click(within(bar).getByTestId("needs-chip-week"));
-    const names = () => [...screen.getByTestId("needs-list").querySelectorAll(".needs-row-name")].map((n) => n.textContent);
-    expect(names()).toEqual(["Ship the runbook"]);
+    expect(row("Pick the vendor").querySelector(".needs-row-fact")?.textContent ?? "").not.toContain(" by ");
   });
 });
 
@@ -1375,8 +1369,7 @@ describe("NeedsDrawer muted rows are dimmed", () => {
       return { upcoming: [], calendar_configured: true } as never;
     });
     await mount();
-    fireEvent.click(within(screen.getByTestId("needs-filter")).getByTestId("needs-chip-more"));
-    fireEvent.click(screen.getByRole("menuitemcheckbox", { name: "Muted projects · 1" }));
+    fireEvent.click(screen.getByTestId("needs-chip-more"));
     const muted = screen.getByTestId("needs-muted");
     expect(muted.classList.contains("needs-drawer-muted")).toBe(true);
     expect(muted.classList.contains("surface-section")).toBe(true);
@@ -1566,7 +1559,7 @@ describe("Later and Telegram on a Program row (PG-DIRECTION DIR4, DIR5)", () => 
     expect(face(row(item.group)).verbs).toEqual(["Decide"]);
   });
 
-  it("Later ▸ In 1 hour in the row's menu defers the item: it moves to the end, not counted, with its time", async () => {
+  it("Later ▸ In 1 hour in the row's menu defers the item: it leaves the desk of today for Later, not counted, with its time", async () => {
     let deferred = false;
     const posts: { path: string; json: unknown }[] = [];
     vi.mocked(apiFetch).mockImplementation(async (path: string, init?: unknown) => {
@@ -1587,6 +1580,8 @@ describe("Later and Telegram on a Program row (PG-DIRECTION DIR4, DIR5)", () => 
     fireEvent.click(await screen.findByRole("menuitem", { name: "In 1 hour" }));
     await waitFor(() => expect(posts).toEqual([{ path: "/api/reach/later", json: { ref: item.id, later: "in_1h" } }]));
     const later = needsLater.items[0];
+    // The bold mast (2026-11-08): a row for a later day waits behind Later.
+    fireEvent.click(await screen.findByTestId("needs-chip-later"));
     await waitFor(() => expect(face(row(later.group)).fact).toContain(`Later · back at ${clock(later.later.until)}`));
     fireEvent.contextMenu(row(later.group), { clientX: 40, clientY: 60 });
     const menu = await screen.findByRole("menu", { name: later.group });
@@ -1629,7 +1624,9 @@ describe("one row, one verb (owner walk 2026-11-08)", () => {
     expect(li.querySelector("[data-testid=needs-row-state]")).toBeNull();
     expect(li.textContent).not.toMatch(/Yours/i);
     expect([...li.querySelectorAll(".needs-row-verbs button")].map((b) => b.textContent)).toEqual(["Done"]);
-    expect(within(li).getByRole("button", { name: `Done: ${must}` }).className).toContain("btn--secondary");
+    // The must-fix row is the first plate: its Done is the brass Button.
+    expect(li.closest("[data-testid='needs-first']")).toBeTruthy();
+    expect(within(li).getByRole("button", { name: `Done: ${must}` }).className).toContain("btn--brass");
     expect(li.querySelector("[data-verb='more']")).toBeNull();
   });
 
@@ -1665,13 +1662,13 @@ describe("one row, one verb (owner walk 2026-11-08)", () => {
   it("Done posts the done act; the row leaves and the count ticks down", async () => {
     render(<NeedsDrawer />);
     await screen.findByText("4 need you");
-    expect(screen.getByRole("button", { name: "Mine · 4" })).toBeTruthy();
+    expect(screen.getByTestId("needs-mast").querySelector("h2")?.textContent).toMatch(/· 1 must fix$/);
     fireEvent.click(within(row(must)).getByRole("button", { name: `Done: ${must}` }));
     await screen.findByText("3 need you");
     expect(posts).toEqual([{ path: afterDone.post, json: afterDone.body }]);
     expect(names()).not.toContain(must);
     expect(names()).toHaveLength(3);
-    expect(screen.getByRole("button", { name: "Mine · 3" })).toBeTruthy();
+    expect(screen.getByTestId("needs-mast").querySelector("h2")?.textContent).toMatch(/· 3 need you$/);
   });
 
   it("the other verbs are the row's context menu; More is gone", async () => {
@@ -1713,8 +1710,8 @@ describe("one row, one verb (owner walk 2026-11-08)", () => {
     // offer this recorded desk has (no calendar), never a People Button.
     const scope = within(toolbar).getByTestId("needs-scope");
     expect(scope.getAttribute("role")).toBe("group");
-    expect([...scope.querySelectorAll("button")].map((b) => b.textContent)).toEqual(["Mine4", "People"]);
-    expect([...toolbar.querySelectorAll(".kit-toolbar-trailing button")].map((b) => b.textContent)).toEqual(["Connect calendar"]);
+    expect([...scope.querySelectorAll("button")].map((b) => b.textContent)).toEqual(["Mine", "People"]);
+    expect([...toolbar.querySelectorAll("[data-testid='needs-no-calendar'] button")].map((b) => b.textContent)).toEqual(["Connect calendar"]);
     expect(toolbar.querySelector(".kit-toolglyph")).toBeNull();
     expect(names()).not.toContain("Send the vendor contract");
     fireEvent.click(within(toolbar).getByRole("button", { name: "People" }));
@@ -1873,7 +1870,11 @@ describe("a Program row is the object (owner walk 2026-11-08)", () => {
     const li = await waitFor(() => row(title));
     expect(face(li).lamps).toEqual(["Merge"]);
     expect(face(li).verbs).toEqual(["Merge"]);
-    expect(within(li).getByRole("button", { name: `Merge: ${title}` }).className).toContain("btn--secondary");
+    // The bold face: the Program that waits is the first plate; Merge is its
+    // brass Button, beside Open the Program and Later (the times).
+    expect(li.closest("[data-testid='needs-first']")).toBeTruthy();
+    expect(within(li).getByRole("button", { name: `Merge: ${title}` }).className).toContain("btn--brass");
+    expect(within(li).getByTestId("needs-first-open").textContent).toBe("Open the Program");
     // The one rule: the step's number stays; the step's question is the hover.
     expect(face(li).fact).toBe("Step 1");
     expect(li.querySelector(".needs-row-fact")?.getAttribute("title")).toBe(ask.title);
@@ -2039,6 +2040,9 @@ describe("one Done for a promise (2026-11-08)", () => {
   it("Done on a Room commitment is markDone to the follow-through complete; the row settles", async () => {
     replay(done.steps);
     render(<NeedsDrawer />);
+    // The commitment is due on a later day (the count leaves it out): it
+    // waits behind the mast's Later.
+    fireEvent.click(await screen.findByTestId("needs-chip-later"));
     await waitFor(() => expect(names()).toContain(done.commitment));
     fireEvent.click(within(row(done.commitment)).getByRole("button", { name: `Done: ${done.commitment}` }));
     await waitFor(() => expect(names()).not.toContain(done.commitment));

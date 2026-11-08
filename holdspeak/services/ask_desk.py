@@ -22,7 +22,6 @@ tools are not in either set and are refused.
 from __future__ import annotations
 
 import asyncio
-import json
 import threading
 import time
 from types import SimpleNamespace
@@ -224,28 +223,19 @@ def tools_mode(db: Any, capability_id: str = "ask.answer", deployment: Any = Non
 
 
 def cancel_loop(invocation_id: str) -> bool:
-    """Stop a running loop Ask (Stop in the Ask window)."""
-    from .thread_service import ThreadService
+    """Stop a running loop Ask (Stop in the Ask window). HS-S34: False when
+    the turn has ended or has sealed its answer (a saved answer is not stopped)."""
+    from . import thread_turns
 
     message_id = _LOOP_TURNS.get(str(invocation_id or ""))
-    event = ThreadService._active_turns.get(message_id) if message_id else None
-    if event is None:
-        return False
-    event.set()
-    return True
+    return thread_turns.cancel(message_id) if message_id else False
 
 
 def _holds(message_id: str) -> list[dict[str, str]]:
     from .thread_service import ThreadService
 
-    executor = ThreadService._tool_executor._executors.get(message_id)
-    if executor is None:
-        return []
-    rows = []
-    for handle in list(executor._handles.values()):
-        if handle.state == "awaiting_decision":
-            rows.append({"call_id": handle.call_id, "tool": handle.name, "words": hold_words(handle.name)})
-    return rows
+    return [{"call_id": handle.call_id, "tool": handle.name, "words": hold_words(handle.name)}
+            for handle in ThreadService._tool_executor.held(message_id)]
 
 
 async def run_loop(
@@ -263,17 +253,22 @@ async def run_loop(
 
     ``service`` is a ThreadService wired with the ASK palette and
     :data:`DESK_PROMPT`. Returns the turn's answer message (text, error and
-    route) and its ids."""
-    from .thread_service import ThreadService
+    route), its ids and its saved ``state``.
+
+    HS-S34: this wait is a ``thread_turns`` observer. It detaches when it
+    returns or is cancelled (a call hangs up, a page closes); the turn runs
+    on and saves its answer, which the next ``service.turn`` read gives."""
+    from . import thread_turns
 
     ids = await service.start_turn(principal, thread_id, question, refs=refs or None,
                                    pinned_note=pinned_note)
     message_id = str(ids["assistant_message_id"])
     _LOOP_TURNS[invocation_id] = message_id
+    observer = thread_turns.observe(message_id)
     said: list[dict[str, str]] = []
     deadline = time.monotonic() + LOOP_LIMIT_SECONDS
     try:
-        while message_id in ThreadService._active_turns:
+        while observer is not None and not observer.finished:
             holds = _holds(message_id)
             if holds != said and progress is not None:
                 said = holds
@@ -284,40 +279,29 @@ async def run_loop(
                     log.debug(f"hold frame dropped: {exc}")
             if time.monotonic() > deadline:
                 cancel_loop(invocation_id)
+                # The turn ends on its own thread: wait for its last write.
+                await asyncio.to_thread(observer.wait, 2.5)
                 break
             await asyncio.sleep(0.1)
-        # The turn ends on its own thread: wait for its last write.
-        for _ in range(50):
-            message = service._threads.get_message(message_id)
-            if message is None or not getattr(message, "streaming", 0):
-                break
-            await asyncio.sleep(0.05)
     finally:
+        if observer is not None:
+            observer.detach()
         _LOOP_TURNS.pop(invocation_id, None)
-    message = service._threads.get_message(message_id)
-    # The answer is the last pass's words; earlier passes said what they
-    # would look at (each pass that calls tools keeps its own text part).
-    texts = [
-        str(part.text).strip() for part in service._threads.get_parts(message_id)
-        if part.kind == "text" and part.text and part.text.strip() and not part.draft
-    ]
-    text = texts[-1] if texts else ""
-    error: dict[str, Any] = {}
-    raw_error = str(getattr(message, "error_json", "") or "")
-    if raw_error:
-        try:
-            error = json.loads(raw_error)
-        except ValueError:
-            error = {"error": raw_error}
+    turn = service.turn(message_id)
+    error = turn["error"]
+    if turn["state"] in (thread_turns.RUNNING, thread_turns.INTERRUPTED, thread_turns.MISSING) and not error:
+        # Not a terminal row: never read as an answer or as a stop.
+        error = {"code": "turn_unsettled", "error": "The turn did not finish."}
     return {
         "user_message_id": str(ids["user_message_id"]),
         "assistant_message_id": message_id,
-        "turn_invocation_id": str(getattr(message, "invocation_id", "") or ""),
-        "text": text,
+        "turn_invocation_id": turn["invocation_id"],
+        "text": turn["text"],
         "error": error,
-        "aborted": message is None or getattr(message, "aborted_at", None) is not None,
-        "egress_scope": str(getattr(message, "egress_scope", "") or ""),
-        "model": str(getattr(message, "model_id", "") or ""),
+        "aborted": turn["state"] == thread_turns.CANCELLED,
+        "state": turn["state"],
+        "egress_scope": turn["egress_scope"],
+        "model": turn["model"],
     }
 
 

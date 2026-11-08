@@ -146,31 +146,27 @@ describe("Needs you on the daily week: the chips and one verb per row (Bettermen
     });
   });
 
-  it("People + Theo shows exactly Theo's two rows, each with Nudge", async () => {
+  it("People shows what each person owes, each with Nudge, named by the person", async () => {
     render(<NeedsDrawer />);
     // Owner walk 2026-11-08: Mine (his own and his decisions) is the scope
-    // the window opens on; People is what people owe him.
+    // the window opens on; People is what people owe him. The bold face
+    // (2026-11-08) dropped the narrowing chips: the mast's verbs are Mine ·
+    // People.
     await waitFor(() => expect(weekRows().length).toBe(4));
-    const bar = screen.getByTestId("needs-filter");
-    // Mine says the one number; To decide its rows.
-    expect(within(bar).getByRole("button", { name: "Mine · 4" })).toBeTruthy();
-    expect(within(bar).getByRole("button", { name: "To decide · 2" })).toBeTruthy();
-    expect(within(bar).getByTestId("needs-open-people").closest("[data-testid='needs-scope']")).toBeTruthy();
-    fireEvent.click(within(bar).getByTestId("needs-open-people"));
+    expect(screen.queryByTestId("needs-filter")).toBeNull();
+    const scope = screen.getByTestId("needs-scope");
+    expect(within(scope).getByRole("button", { name: "Mine" }).getAttribute("aria-pressed")).toBe("true");
+    fireEvent.click(within(scope).getByTestId("needs-open-people"));
     await waitFor(() => expect(weekRows().length).toBe(5));
-    fireEvent.click(within(bar).getByTestId("needs-chip-person"));
-    fireEvent.click(await screen.findByRole("menuitem", { name: "Theo Park · 2" }));
-    await waitFor(() => expect(names()).toEqual(["Profile the reconciliation job", "Write up alert rule changes"]));
-    for (const row of weekRows()) {
+    const theo = weekRows().filter((row) => row.querySelector("[data-testid=needs-row-state]")?.textContent === "Theo Park");
+    expect(theo.map((row) => row.querySelector(".needs-row-name")?.textContent).sort())
+      .toEqual(["Profile the reconciliation job", "Write up alert rule changes"]);
+    for (const row of theo) {
       const verbs = [...row.querySelectorAll<HTMLElement>("[data-testid='needs-row-verb']")].map((b) => b.dataset.verb);
       expect(verbs).toEqual(["nudge"]);
-      expect(row.querySelector("[data-testid=needs-row-state]")?.textContent).toBe("Theo Park");
     }
     expect(screen.getByTestId("arrival-display").textContent).toBe("4 need you");
-    // A second press clears a chip: the whole scope again.
-    fireEvent.click(within(bar).getByTestId("needs-chip-person"));
-    await waitFor(() => expect(weekRows().length).toBe(5));
-    fireEvent.click(within(bar).getByTestId("needs-chip-mine"));
+    fireEvent.click(within(scope).getByTestId("needs-chip-mine"));
     await waitFor(() => expect(weekRows().length).toBe(4));
   });
 
@@ -236,8 +232,6 @@ describe("Needs you on the daily week: the chips and one verb per row (Bettermen
   it("a decision waits for Decide; Accept, Not now and Drop are in place", async () => {
     render(<NeedsDrawer />);
     await waitFor(() => expect(weekRows().length).toBe(4));
-    fireEvent.click(within(screen.getByTestId("needs-filter")).getByTestId("needs-chip-decide"));
-    await waitFor(() => expect(names()).toEqual(["Do it", "Talk about the staff path in our next one-on-one"]));
     const row = weekRows().find((li) => li.textContent?.includes("Do it"))!;
     fireEvent.click(row.querySelector<HTMLElement>("[data-verb='decide']")!);
     const well = await screen.findByTestId("needs-decide");
