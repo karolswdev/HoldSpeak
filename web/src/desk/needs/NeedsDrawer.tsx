@@ -1393,6 +1393,17 @@ export function NeedsDrawer() {
           {chipRow}
         </Toolbar>
       ) : null}
+      {/* HS-S43 (D22/G43 = A, 2026-11-07): the People overlay lists what the
+          owner owes his people (leader_owes) and leaves out what they owe him
+          (report_owes); `They owe me` never says so. One static line names
+          that coverage and opens the ordinary People place: no read, no
+          count, no scope. It is not a member, a source gap or a row, so it
+          sits outside the chip, muted and coverage conditions. */}
+      <p className="needs-coverage-note" data-testid="needs-people-coverage">
+        <span>They owe me does not show People commitments to you.</span>
+        <Button dense variant="ghost" data-testid="needs-open-people"
+          onClick={() => openSurfaceOr("open-people", "/")}>Open People</Button>
+      </p>
       {/* W5-WORDS: every source read is no row (`16 of 16 available` was a
           count that said nothing); a gap names how many and which. */}
       {!coverage.complete && coverage.expected > 0 ? (() => {
