@@ -40,6 +40,8 @@ from ..kernel.prompt_adapter import StreamingPromptAdapter
 from ..inference_locality import least_private, served_route
 from ..principals import Principal, PrincipalKind
 from .errors import ServiceError, ValidationError
+from . import thread_turns
+from .thread_turns import _ToolExecutorAggregator
 
 
 THREAD_SERVICE_CONTRACT = "holdspeak.thread"
@@ -215,45 +217,8 @@ def _guardrail_matches(tool_name: str, trigger_tools: list[str]) -> bool:
     return False
 
 
-class _ToolExecutorAggregator:
-    """Class-level view across concurrent per-turn tool executors.
-
-    The ``/decide`` route (HS-152-02) accesses ``svc._tool_executor``
-    and looks up handles by ``call_id``; this aggregator merges handles
-    from all active executors so concurrent turns coexist.
-    """
-
-    def __init__(self) -> None:
-        self._executors: dict[str, Any] = {}  # assistant_msg_id -> executor
-
-    @property
-    def _handles(self) -> dict[str, Any]:
-        merged: dict[str, Any] = {}
-        for ex in self._executors.values():
-            merged.update(ex._handles)
-        return merged
-
-    def decide(self, handle: Any, decision: str, answer: Any = None) -> None:
-        for ex in self._executors.values():
-            if handle.call_id in ex._handles:
-                ex.decide(handle, decision, answer)
-                return
-        raise ValueError(f"No active executor for call {handle.call_id}")
-
-    def register(self, msg_id: str, executor: Any) -> None:
-        self._executors[msg_id] = executor
-
-    def unregister(self, msg_id: str) -> None:
-        self._executors.pop(msg_id, None)
-
-
 class ThreadService:
     """Orchestrate desk chat threads: CRUD, turn, branch, regenerate, keep, abort."""
-
-    # Class-level shared dict: every ThreadService instance (the route
-    # factory creates one per request) sees the same active turns so
-    # POST /abort can cancel a turn started by POST /turns.
-    _active_turns: dict[str, threading.Event] = {}
 
     # Class-level aggregator for the /decide route (HS-152-02).
     _tool_executor: _ToolExecutorAggregator = _ToolExecutorAggregator()
@@ -860,8 +825,9 @@ class ThreadService:
             )
 
         # -- Run streaming turn in a daemon thread --
-        cancel_event = threading.Event()
-        self._active_turns[assistant_msg.id] = cancel_event
+        # HS-S34: the turn is in ``thread_turns`` (every ThreadService
+        # instance sees it, so POST /abort can cancel a turn of POST /turns).
+        cancel_event = thread_turns.open_turn(assistant_msg.id, thread_id).cancel_event
 
         adapter = StreamingPromptAdapter(external_cancel=cancel_event)
 
@@ -1268,7 +1234,32 @@ class ThreadService:
             "hand": handed,
         }
 
-    def _run_streaming_turn(
+    def _run_streaming_turn(self, **kwargs: Any) -> None:
+        """The turn's thread. HS-S34: whatever the turn does, it leaves the
+        registry and its executor; a turn that ends before its terminal row
+        is saved saves one (cancelled or failed), so no row stays streaming."""
+        msg_id = str(kwargs["assistant_msg_id"])
+        try:
+            self._stream_turn(**kwargs)
+        except Exception as exc:
+            from ..logging_config import get_logger
+            get_logger("thread_service").warning("turn %s ended on an error: %s", msg_id, exc)
+        finally:
+            ThreadService._tool_executor.unregister(msg_id)
+            turn = thread_turns.get(msg_id)
+            if turn is not None and not turn.saved:
+                try:
+                    if turn.seal(thread_turns.FAILED) == thread_turns.CANCELLED:
+                        self._threads.abort_message(msg_id)
+                    else:
+                        self._threads.complete_message(msg_id, error_json=json.dumps(
+                            {"code": "turn_failed", "error": "The turn stopped before its answer was saved."},
+                            separators=(",", ":")))
+                except Exception:
+                    pass
+            thread_turns.close_turn(msg_id)
+
+    def _stream_turn(
         self,
         *,
         principal: Principal,
@@ -2077,7 +2068,10 @@ class ThreadService:
 
         # -- Complete the message --
         stats_json = json.dumps(stats, separators=(",", ":"), sort_keys=True) if stats else ""
-        if cancel_event.is_set():
+        # HS-S34: the terminal fact is sealed once; a cancel after it is refused.
+        turn = thread_turns.get(assistant_msg_id) or thread_turns.open_turn(assistant_msg_id, thread_id, cancel_event)
+        sealed = turn.seal(thread_turns.FAILED if outcome in ("failed", "indeterminate") else thread_turns.COMPLETED)
+        if sealed == thread_turns.CANCELLED:
             # The real receipt id, never a placeholder (Astra, #875).
             receipt_id = receipt_id or route_receipt
             self._threads.abort_message(assistant_msg_id, receipt_id=receipt_id)
@@ -2099,6 +2093,7 @@ class ThreadService:
                 stats_json=stats_json,
                 error_json=error_json_str,
             )
+        turn.saved = True
 
         # -- Update token totals --
         token_in = int(stats.get("prompt_tokens", 0))
@@ -2152,10 +2147,7 @@ class ThreadService:
                 state="listening",
             )
 
-        # -- Clean up --
-        if tool_executor is not None:
-            ThreadService._tool_executor.unregister(assistant_msg_id)
-        self._active_turns.pop(assistant_msg_id, None)
+        # -- Clean up: the caller (``_run_streaming_turn``) closes the turn. --
 
     def _served(self, execution_id: str, returned: Any) -> dict[str, Any] | None:
         """One pass's route: the controller's durable receipt for the
@@ -2176,14 +2168,17 @@ class ThreadService:
     # ── Abort ───────────────────────────────────────────────────────
 
     def abort(self, thread_id: str) -> dict[str, Any]:
-        """Cancel a running turn within 250 ms."""
-        # Find any active streaming message for this thread.
-        for msg_id, cancel_event in list(self._active_turns.items()):
-            msg = self._threads.get_message(msg_id)
-            if msg and msg.thread_id == thread_id:
-                cancel_event.set()
-                return {"aborted": True, "message_id": msg_id}
+        """Cancel a running turn within 250 ms. HS-S34: a turn that has
+        sealed its answer is not aborted (``thread_turns.cancel`` refuses)."""
+        for turn in thread_turns.live():
+            if turn.thread_id == thread_id and turn.cancel():
+                return {"aborted": True, "message_id": turn.message_id}
         return {"aborted": False}
+
+    def turn(self, message_id: str) -> dict[str, Any]:
+        """HS-S34: a turn as it is saved (``thread_turns.read``): its state
+        (running, completed, failed, cancelled) and its answer."""
+        return thread_turns.read(self._threads, message_id)
 
     # ── Branch ──────────────────────────────────────────────────────
 

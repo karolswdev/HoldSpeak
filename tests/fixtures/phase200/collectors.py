@@ -437,7 +437,6 @@ class EvaluationHub:
         from holdspeak.services.interview_contracts import INTERVIEW_MODE_ID
         from holdspeak.services.project_service import ProjectService
         from holdspeak.services.thread_modes import seed_modes
-        from holdspeak.services.thread_service import ThreadService
         from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
 
         material = episode["material"]
@@ -505,8 +504,10 @@ class EvaluationHub:
                         break
                 state = (detail or {}).get("interview", {}) or {}
         finally:
-            for event in list(ThreadService._active_turns.values()):
-                event.set()
+            from holdspeak.services import thread_turns
+
+            for turn in thread_turns.live():
+                turn.cancel()
             runtime._dispose(broker)
             reset_database()
 
