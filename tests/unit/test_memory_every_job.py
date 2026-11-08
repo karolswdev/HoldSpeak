@@ -449,40 +449,6 @@ def _memory_block(prompt: str) -> str:
     return prompt[start:end] if start >= 0 and end > start else ""
 
 
-def _executions(db: Database, capability_id: str) -> list[Any]:
-    with db._connection() as conn:
-        return conn.execute(
-            """SELECT e.tokens_reserved, e.token_budget, e.terminal_outcome
-                 FROM inference_route_executions e
-                 JOIN inference_route_plans p ON p.id=e.route_plan_id
-                WHERE p.capability_id=?""",
-            (capability_id,),
-        ).fetchall()
-
-
-def _full_memory_would_not_fit(db: Database, capability_id: str, full: Any, reserved_output_tokens: int) -> bool:
-    """The admitted payload with the WHOLE memory block instead of the fitted one."""
-    from holdspeak.services.memory_grounding import admitted_memory_prefix, with_memory
-
-    adoption = _configure(db).inference_adoption_service
-    with db._connection() as conn:
-        row = conn.execute(
-            """SELECT s.operation_id, e.route_plan_id
-                 FROM inference_adoption_material_snapshots s,
-                      inference_route_executions e
-                 JOIN inference_route_plans p ON p.id=e.route_plan_id
-                WHERE s.capability_id=? AND p.capability_id=?""",
-            (capability_id, capability_id),
-        ).fetchone()
-    sent = adoption.admitted_payload(row["operation_id"])
-    own = sent["user_prompt"][len(admitted_memory_prefix(sent["user_prompt"])):]
-    return adoption.payload_room(
-        route_plan_id=row["route_plan_id"], capability_id=capability_id,
-        operation_id=row["operation_id"], payload={**sent, "user_prompt": with_memory(own, full)},
-        reserved_output_tokens=reserved_output_tokens,
-    ) < 0
-
-
 def _long_matching_decisions(db: Database, count: int = 5) -> list[str]:
     body = "We adopt quorumdb for the ledger. " + "The ledger keeps every quorumdb write. " * 20
     return [_decide(db, f"Quorumdb ledger decision {index}", body) for index in range(count)]
@@ -502,13 +468,18 @@ def test_memory_never_turns_a_fitting_pr_review_into_a_failing_one(rig, tmp_path
 
     assert response.status_code == 200, response.text
     assert len(review.engine.prompts) == 1
-    (execution,) = _executions(rig, "delivery.pr_review_draft")
-    assert execution["terminal_outcome"] == "succeeded"
-    assert execution["tokens_reserved"] <= execution["token_budget"] == 16384
     full = memory_for("delivery.pr_review_draft", rig, query="Move the ledger to quorumdb feat/ledger-quorumdb")
     sent = _memory_block(review.engine.prompts[0])
     assert full.excerpts and sent.count("\n- ") < len(full.excerpts)  # the block was cut to fit
-    assert _full_memory_would_not_fit(rig, "delivery.pr_review_draft", full, 1800)
+    from holdspeak.kernel.runtime import _configure as configure
+    from holdspeak.services import engine_door
+    from holdspeak.services.memory_grounding import admitted_memory_prefix, with_memory
+
+    own = review.engine.prompts[0][len(admitted_memory_prefix(review.engine.prompts[0])):]
+    broker = configure(rig)
+    engine = engine_door.engine_for(broker, "delivery.pr_review_draft")
+    whole = {"user_prompt": with_memory(own, full)}
+    assert engine_door.room(broker, engine, whole, reserved_output_tokens=1800) < 0
 
 
 def test_memory_never_turns_a_fitting_rails_batch_into_a_failing_one(rig):
@@ -551,35 +522,22 @@ def test_memory_never_turns_a_fitting_rails_batch_into_a_failing_one(rig):
     assert engine_door.room(broker, door_engine, whole, reserved_output_tokens=220) < 0
 
 
-def test_a_replay_rebuilds_the_reviews_own_material(rig, tmp_path, monkeypatch):
+def test_a_changed_story_reaches_the_model_and_gets_its_own_review(rig, tmp_path, monkeypatch):
     """Astra P2 repro: the linked story changed between two reviews of the same
-    commit and diff.  A replay may reuse only its MEMORY block, so the second
-    review never returns the first review's stale artifact as a success."""
+    commit and diff; the second review reads the edited story and never
+    returns the first review's artifact."""
     _decide(rig, "Adopt quorumdb for the ledger", "We adopt quorumdb for the ledger.")
     review = _ReviewRig(rig, tmp_path, monkeypatch)
     review.linked = [{"ref": "file:story-02-ledger.md", "text": "Story 02: move the ledger."}]
     first = review.post()
     assert first.status_code == 200, first.text
 
-    # The same request again is an exact replay: one model call, one artifact.
-    again = review.post()
-    assert again.status_code == 200 and again.json()["artifact_id"] == first.json()["artifact_id"]
-    assert len(review.engine.prompts) == 1
-
     review.linked = [{"ref": "file:story-02-ledger.md", "text": "Story 02: move the ledger. EDITED."}]
     second = review.post()
-    stale = second.status_code == 200 and second.json().get("artifact_id") == first.json()["artifact_id"]
-    assert not stale, "a changed story returned the first review as a success"
-    # The story is part of the request identity (2026-10-05; it was an HTTP
-    # 500 before): a changed story is a new review run with its own artifact,
-    # and the model reads the edited story.
     assert second.status_code == 200, second.text
+    assert second.json()["artifact_id"] != first.json()["artifact_id"]
     assert len(review.engine.prompts) == 2
     assert "EDITED" in review.engine.prompts[1]
-    # And that edited request replays exactly too.
-    third = review.post()
-    assert third.status_code == 200 and third.json()["artifact_id"] == second.json()["artifact_id"]
-    assert len(review.engine.prompts) == 2
 
 
 def test_cadence_memory_never_carries_its_source_under_the_meeting(rig, tmp_path, monkeypatch):
@@ -630,32 +588,3 @@ def test_promotion_memory_never_carries_the_decision_under_another_name(rig):
     assert "use record-backed decisions" not in block.casefold()
 
 
-def test_a_review_made_before_the_story_joined_the_identity_still_replays(rig, tmp_path, monkeypatch):
-    """Astra on #867 (P2): a review made by the base branch (its identity had no
-    story) replays when the story is unchanged; an edited story is a new run."""
-    from holdspeak.web.routes import delivery_prs
-
-    _decide(rig, "Adopt quorumdb for the ledger", "We adopt quorumdb for the ledger.")
-    review = _ReviewRig(rig, tmp_path, monkeypatch)
-    review.linked = [{"ref": "file:story-02-ledger.md", "revision": "r1",
-                      "text": "Story 02: move the ledger."}]
-    # The base branch's route: the identity leaves the story out.
-    with monkeypatch.context() as base:
-        base.setattr(delivery_prs, "_legacy_review_matches", lambda *_args: True)
-        legacy = review.post()
-    assert legacy.status_code == 200, legacy.text
-    assert len(review.engine.prompts) == 1
-
-    # This branch, identical material: the legacy review replays.
-    again = review.post()
-    assert again.status_code == 200, again.text
-    assert again.json()["artifact_id"] == legacy.json()["artifact_id"]
-    assert len(review.engine.prompts) == 1
-
-    # An edited story: a new run with its own artifact.
-    review.linked = [{"ref": "file:story-02-ledger.md", "revision": "r2",
-                      "text": "Story 02: move the ledger. EDITED."}]
-    edited = review.post()
-    assert edited.status_code == 200, edited.text
-    assert edited.json()["artifact_id"] != legacy.json()["artifact_id"]
-    assert len(review.engine.prompts) == 2

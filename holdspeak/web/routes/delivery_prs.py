@@ -28,30 +28,6 @@ def _classified_500(exc: Exception, detail: str) -> JSONResponse:
     return JSONResponse({"error": detail}, status_code=500)
 
 
-def _legacy_review_matches(
-    broker: Any, identity: str, linked_text: str, linked_revisions: list[str],
-) -> bool:
-    """A review admitted under the pre-story *identity* with this same story.
-
-    Before 2026-10-05 the identity left the linked story out, so such a run
-    stored the story only in its admitted prompt. It replays (one artifact, no
-    model call) only when that prompt holds this exact story text and the same
-    story revisions; an edited story is a new run.
-    """
-    operation_id = "delivery-pr-review:" + __import__("hashlib").sha256(identity.encode()).hexdigest()
-    try:
-        prior = broker.inference_adoption_service.admitted_payload(operation_id)
-    except Exception:  # no adoption store: nothing was admitted before
-        return False
-    if not prior:
-        return False
-    block = f"Linked story and evidence:\n{linked_text[:48000]}\n\nDiff:\n"
-    return (
-        block in str(prior.get("user_prompt") or "")
-        and list(prior.get("linked_revisions") or []) == linked_revisions
-    )
-
-
 def build_delivery_prs_router(
     ctx: WebContext,
     *,
@@ -258,90 +234,34 @@ def build_delivery_prs_router(
         try:
             from ...kernel.runtime import _service as kernel_service
             from ...principals import PrincipalKind, PrincipalRight
-            from ...services.inference_owner_draft import run_owner_draft
-            from ...services.inference_parent_route_bundle_service import InferenceParentRouteBundleService
+            from ...services import engine_door
 
             broker = kernel_service()
             principal = request.state.principal
             if principal.kind is not PrincipalKind.OWNER or not principal.permits(PrincipalRight.OWNER):
                 return JSONResponse({"error": "delivery_pr_review_owner_required"}, status_code=403)
+            # E3: the retired per-request engine override is refused by name and
+            # sends no PR material anywhere; the assignment names the engine.
+            if str(body.get("inference_target_id") or "").strip():
+                return JSONResponse({"error": "inference_request_target_override_retired"}, status_code=409)
+            try:
+                engine = engine_door.engine_for(broker, "delivery.pr_review_draft")
+            except engine_door.EngineDoorError:
+                return JSONResponse({
+                    "error": "delivery_pr_review_draft_refused", "reason": "inference_no_engine",
+                }, status_code=409)
             material_revision = str(material.get("revision") or "unversioned")
             diff_sha256 = __import__("hashlib").sha256(
                 str(material.get("diff") or "").encode()
             ).hexdigest()
-            identity = f"{source_id}:{number}:{material_revision}:{diff_sha256}"
-            # The linked story is part of the request: an edited story under the
-            # same commit and diff is a new review run (it was an HTTP 500: the
-            # kernel refused the same command id with a different payload).
-            # No linked story keeps the old identity. A review made before this
-            # rule (its identity had no story) still replays when its admitted
-            # prompt holds this exact story (Astra on #867).
             linked = material.get("linked") or []
             linked_text = "\n\n".join(str(item.get("text") or "") for item in linked)
-            linked_revisions = [str(item.get("revision") or "") for item in linked]
-            linked_sha256 = __import__("hashlib").sha256(
-                __import__("json").dumps(
-                    [[str(item.get("ref") or ""), str(item.get("revision") or ""), str(item.get("text") or "")]
-                     for item in linked],
-                ).encode()
-            ).hexdigest() if linked else ""
-            if linked_sha256 and not _legacy_review_matches(
-                broker, identity, linked_text, linked_revisions,
-            ):
-                identity += f":{linked_sha256}"
-            else:
-                linked_sha256 = ""
-            command_id = "delivery-pr-review:" + __import__("hashlib").sha256(identity.encode()).hexdigest()
-            input_snapshot = {
-                "source_id": source_id,
-                "number": number,
-                "material_revision": material_revision,
-                "diff_sha256": diff_sha256,
-            }
-            if linked_sha256:
-                input_snapshot["linked_sha256"] = linked_sha256
-            # E3: a request target can no longer compete with the exact OWNER
-            # assignment.  The named refusal is durable, content-free, and sends
-            # no PR material to a provider.
-            if str(body.get("inference_target_id") or "").strip():
-                refusal = InferenceParentRouteBundleService(
-                    broker, broker.inference_adoption_service
-                ).record_pre_route_refusal(
-                    principal,
-                    command_id=command_id,
-                    parent_kind="delivery.pr-review-draft",
-                    definition_ref=f"pr:{source_id}:{number}",
-                    definition_revision=material_revision,
-                    input_snapshot=input_snapshot,
-                    deadline_at=4_102_444_800.0,
-                    reason="inference_request_target_override_retired",
-                )
-                return JSONResponse({
-                    "error": "inference_request_target_override_retired",
-                    "operation_id": refusal["parent"].operation_id,
-                    "parent_receipt": refusal["receipt"],
-                }, status_code=409)
-
-            def prompt_payload() -> dict[str, Any]:
-                prompt = (
-                    f"Review PR #{number}. Return a concise GitHub review draft with concrete findings. "
-                    "Do not claim to have posted, approved, merged, or run checks.\n\n"
-                    f"Linked story and evidence:\n{linked_text[:48000]}\n\n"
-                    f"Diff:\n{str(material.get('diff') or '')[:120000]}"
-                )
-                return {
-                    "system_prompt": "You are a precise code reviewer. Findings first; cite files and lines when possible.",
-                    "user_prompt": prompt,
-                    "max_tokens": 1800,
-                    "temperature": None,
-                    "source_id": source_id,
-                    "number": number,
-                    "material_revision": material_revision,
-                    "diff_sha256": diff_sha256,
-                    "linked_revisions": [
-                        str(item.get("revision") or "") for item in material.get("linked") or []
-                    ],
-                }
+            prompt = (
+                f"Review PR #{number}. Return a concise GitHub review draft with concrete findings. "
+                "Do not claim to have posted, approved, merged, or run checks.\n\n"
+                f"Linked story and evidence:\n{linked_text[:48000]}\n\n"
+                f"Diff:\n{str(material.get('diff') or '')[:120000]}"
+            )
 
             def review_memory() -> Any:
                 """Decisions and notes on the PR's subject (title, branch, story).
@@ -360,59 +280,52 @@ def build_delivery_prs_router(
                     )),
                 )
 
-            routed = await asyncio.to_thread(
-                run_owner_draft,
-                broker,
-                principal,
-                command_id=command_id,
-                parent_kind="delivery.pr-review-draft",
-                definition_ref=f"pr:{source_id}:{number}",
-                definition_revision=material_revision,
-                input_snapshot=input_snapshot,
-                capability_id="delivery.pr_review_draft",
-                route_key="delivery-pr-review-draft",
-                operation_id="delivery-pr-review:" + __import__("hashlib").sha256(identity.encode()).hexdigest(),
-                reserved_output_tokens=1800,
-                payload_factory=prompt_payload,
-                memory=review_memory,
-                projection_kind="delivery-pr-review",
-                projection_factory=lambda value: {
-                    "output": str(value.get("draft") or ""),
+            payload = engine_door.with_memory(
+                broker, engine,
+                {
+                    "system_prompt": "You are a precise code reviewer. Findings first; cite files and lines when possible.",
+                    "user_prompt": prompt,
+                    "max_tokens": 1800,
+                    "temperature": None,
                     "source_id": source_id,
                     "number": number,
+                    "material_revision": material_revision,
+                    "diff_sha256": diff_sha256,
+                    "linked_revisions": [str(item.get("revision") or "") for item in linked],
                 },
-                result_is_usable=lambda value: bool(
-                    str(value.get("output") or "").strip()
-                    and str(value.get("artifact_id") or "")
-                ),
-                parent_result_ref=lambda value: str(value["artifact_id"]),
+                review_memory,
+                reserved_output_tokens=1800,
             )
-            if routed.get("outcome") != "succeeded" or not isinstance(routed.get("published"), dict):
+
+            def projection(value: Any) -> dict[str, Any]:
+                text = value.get("output") if isinstance(value, dict) else value
+                return {"output": str(text or ""), "source_id": source_id, "number": number}
+
+            try:
+                answer = await asyncio.to_thread(
+                    engine_door.run, broker, principal, "delivery.pr_review_draft", payload,
+                    engine=engine, deadline=300, stage=("delivery-pr-review", projection),
+                )
+            except engine_door.EngineDoorError as exc:
                 return JSONResponse({
                     "error": "delivery_pr_review_draft_refused",
-                    "reason": routed.get("reason") or "inference_draft_unavailable",
-                    "operation_id": routed["parent"].operation_id,
-                    "parent_receipt": routed["parent_receipt"],
+                    "reason": "inference_" + (exc.outcome or exc.code),
+                    "operation_id": exc.operation_id,
                 }, status_code=409)
-            published = routed["published"]
+            published = answer.published if isinstance(answer.published, dict) else {}
             output = str(published.get("output") or "")
             artifact_id = str(published.get("artifact_id") or "")
             if not artifact_id or not output.strip():
                 return JSONResponse({"error": "delivery_pr_review_draft_refused"}, status_code=409)
-            winner = (routed.get("routed") or {}).get("winning_reservation") or {}
             return JSONResponse({
                 "output": output,
                 "artifact_id": artifact_id,
                 "result_ref": f"artifact:{artifact_id}",
-                "invocation_id": str(winner.get("child_invocation_id") or ""),
-                "operation_id": routed["parent"].operation_id,
-                "invocation": {
-                    "operation_id": str(winner.get("child_operation_id") or ""),
-                    "outcome": "succeeded",
-                    "receipt": dict((routed.get("routed") or {}).get("receipt") or {}),
-                },
-                "parent_receipt": dict(routed["parent_receipt"]),
-                "placement": {"source": "frozen_owner_assignment", "egress": routed["egress"]},
+                "invocation_id": answer.invocation_id,
+                # The runner's kernel operation is the review's one receipt.
+                "operation_id": answer.operation_id,
+                "invocation": {"operation_id": answer.operation_id, "outcome": "succeeded"},
+                "placement": {"source": "owner_assignment", "egress": {"scope": engine_door.egress_of(broker, engine)}},
             })
         except Exception as exc:
             return _classified_500(exc, "pr review draft failed")
