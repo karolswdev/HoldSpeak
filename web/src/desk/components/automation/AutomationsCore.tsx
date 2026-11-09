@@ -168,7 +168,7 @@ export function AutomationsCore(_props: CoreProps) {
 
   return (
     <div className="automation-app" data-testid="automations-window">
-      <div className="automation-frame">
+      <div className="automation-frame" data-making={making || undefined}>
         <nav ref={rail} className="automation-rail" aria-label="Automations" data-testid="automation-home-rows">
           <Button variant="secondary" dense className="automation-rail-new" aria-expanded={making}
             onClick={toggleNew} data-testid="automation-new">

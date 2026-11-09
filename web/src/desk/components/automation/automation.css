@@ -650,7 +650,10 @@
 @container surface (max-width: 559.9px) {
   .automation-plate { padding: 12px 12px 14px; }
   .automation-plate-verbs .btn { min-height: 44px; }
-  .desk-next .automation-run .btn--chrome.automation-run-line { grid-template-columns: 20px 52px minmax(0, 1fr); min-height: 44px; }
+  /* Each row's two presses own their whole 44 px halo: taller than 44,
+     and square corners (a rounded corner gives its halo point away). */
+  .automation-run { padding: 2px 0; }
+  .desk-next .automation-run .btn--chrome.automation-run-line { grid-template-columns: 20px 52px minmax(0, 1fr); min-height: 48px; border-radius: 2px; }
   .automation-run-state { display: none; }
-  .desk-next .automation-run .btn.automation-run-open { min-height: 44px; }
+  .desk-next .automation-run .btn.automation-run-open { min-height: 48px; }
 }

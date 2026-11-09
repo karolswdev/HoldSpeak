@@ -189,19 +189,28 @@
 .automation-rail-spine-none { display: block; height: 4px; border-radius: 2px; background: var(--hs-edge); }
 .automation-rail-when { grid-area: when; min-width: 0; overflow-wrap: anywhere; color: var(--hs-ink-2); font: 400 12px / 16px var(--font-mono); }
 
-/* At a phone (or a narrow window) the rail is a strip on top of the pane. */
+/* At a phone (or a narrow window) the rail is a band on top of the pane:
+   its items wrap (never a sideways scroll that clips them), each one a
+   44 px target with square corners (a rounded corner gives its halo
+   point away). */
 @container surface (max-width: 640px) {
   .automation-frame { flex-direction: column; }
   .automation-rail {
     flex-direction: row;
+    flex-wrap: wrap;
     gap: 6px;
     width: auto;
+    max-height: 40%;
     padding: 8px;
-    overflow-x: auto;
-    overflow-y: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
     border-right: 0;
     border-bottom: 1px solid var(--hs-edge);
   }
-  .desk-next .automation-rail .btn.automation-rail-new { flex: none; min-height: 44px; margin: 0; }
-  .desk-next .automation-rail .btn--chrome.automation-rail-item { flex: 0 0 168px; min-height: 44px; }
+  .desk-next .automation-rail .btn.automation-rail-new { flex: 1 1 100%; min-height: 48px; margin: 0; }
+  .desk-next .automation-rail .btn--chrome.automation-rail-item { flex: 1 1 150px; min-width: 0; min-height: 48px; border-radius: 2px; }
+  .automation-new-pane { padding: 4px 0 16px; }
+  /* New automation at the phone: the starters take the sheet; the band
+     keeps only its New automation press (pressed again, it goes back). */
+  .automation-frame[data-making] .automation-rail-item { display: none; }
 }

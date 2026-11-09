@@ -141,7 +141,7 @@ export function RunPlate({
       facts={[program.state_word, program.total ? `${program.done} of ${program.total} steps` : ""].filter(Boolean).join(" · ")} />;
     verbs = (
       <>
-        <Button dense variant="primary" onClick={() => openProgram(program.id)} data-testid="automation-open-program">Open</Button>
+        <Button dense variant="primary" onClick={() => openProgram(program.id)} data-testid="automation-open-program">Open program</Button>
         {runNow(false)}
       </>
     );
