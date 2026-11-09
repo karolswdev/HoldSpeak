@@ -3,7 +3,7 @@
 // while HOLDSPEAK_MCP_PEOPLE_ACCESS overrides the setting.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { PeopleAccessModule, PeopleHubCells } from "../settings/People";
+import { PeopleAccessModule } from "../settings/People";
 
 type Answer = { status: number; body: unknown };
 let getAnswer: () => Answer;
@@ -82,18 +82,6 @@ describe("Settings › People", () => {
     expect(receipt.getAttribute("data-outcome")).toBe("refused");
     expect(receipt.textContent).toContain("Not saved");
     expect(receipt.textContent).toContain("Set by environment");
-  });
-
-  it("the hub row's cell is one plain fact (PHILO-17 U35: was MCP · WRITE · AGENTS · READ)", async () => {
-    render(<PeopleHubCells />);
-    expect((await screen.findByTestId("people-hub-access")).textContent).toBe("Agents can read People");
-    expect(screen.queryByText(/MCP ·/)).toBeNull();
-  });
-
-  it("the hub row says Agents: off when access is off", async () => {
-    getAnswer = () => ({ status: 200, body: { mode: "off", effective: "off", source: "config", env_var: null, agents: "off" } });
-    render(<PeopleHubCells />);
-    expect((await screen.findByTestId("people-hub-access")).textContent).toBe("Agents: off");
   });
 
   // Astra round 1 on #919, finding 2 (her probe, ported): a read failure is its own state.

@@ -124,7 +124,9 @@ def test_the_canonical_map_has_all_seventeen_operations_and_no_local_service_tar
                                # 2026-11-08: the Agents window's launch verbs (HTTP only).
                                "agent.launch.lane", "agent.launch.explain", "agent.launch.answer", "agent.launch.seen",
                                "agent.launch.done", "agent.launch.remove", "agent.launch.resume",
-                               "agent.hand.cancel_queued", "agent.helper.allow"}
+                               "agent.hand.cancel_queued", "agent.helper.allow",
+                               # 2026-11-11: the Settings window's credentials (HTTP only, no tool).
+                               "settings.secret.replace", "settings.secret.rotate", "settings.secret.delete"}
     assert all(value["kind"] in {"tool", "resource"}
                for value in gw.OP_MCP_PROJECTIONS.values())
 

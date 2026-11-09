@@ -2394,52 +2394,8 @@ button.surface-edit-in-place:hover {
   }
 }
 
-/* ── HS-111-01: the Prefs program (audit §3.1/§3.4/§3.6) ──
-   The drawer face: a filter string gadget, an icon grid of module
-   tiles, an etched rule, the POSTURE line. A module swaps the whole
-   window body; the footer status bar carries « PREFS, the receipt,
-   and DEFAULTS. One model at every width — the grid reflows. */
-.prefs-face {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-/* HS-170-04: the hub face — SurfaceLedgerRows with state tokens,
-   ONE display headline, the posture row, and the footer receipt.
-   The hub template (data-cols="hub") is a flex row: name at primary,
-   inline tokens, trailing Open right-aligned at a fixed X.  At 393
-   tokens fall under the name; Open stays on the name line.  */
-.prefs-hub {
-  gap: 0;
-  padding: 0;
-}
-/* PHILO-17 U35: the headline and its one verb (Choose) on one line;
-   the engine names wrap inside the window, never past it. */
-.prefs-hub-lead {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0 12px;
-  padding-right: 12px;
-  min-width: 0;
-}
-.prefs-hub-headline {
-  padding: 16px 12px 12px;
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-.prefs-hub-headline[data-warning] {
-  color: var(--warn);
-}
-.prefs-hub-headline:not([data-warning]) {
-  color: var(--text-muted);
-}
-.prefs-hub .surface-ledger-head {
-  display: none;
-}
-.prefs-hub .prefs-rule {
-  margin-top: 8px;
-}
+/* ── HS-111-01: the Prefs program. The drawer and hub faces are gone
+   (2026-11-11: Settings is a native app); Cadence keeps the hub ledger. */
 /* The hub ledger template. */
 .surface-ledger[data-cols="hub"] .surface-ledger-line {
   display: flex;
@@ -2629,22 +2585,6 @@ button.surface-edit-in-place:hover {
   height: 2px;
   background: linear-gradient(var(--etch-dark) 50%, var(--etch-light) 50%);
 }
-.prefs-posture {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-height: 52px;
-  padding: 0 12px;
-}
-.prefs-posture-label {
-  flex: 1;
-  font-size: var(--desk-type-primary-size);
-  font-weight: var(--desk-type-primary-weight);
-  line-height: var(--desk-type-primary-lh);
-}
-/* HS-139-07: .prefs-precedence removed from the face — the chain is now
-   a title attribute on the POSTURE line. CSS kept as a no-op comment
-   for the walk script's selector stability. */
 /* A module owns the whole body. */
 .prefs-module {
   display: flex;

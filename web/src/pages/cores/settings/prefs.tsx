@@ -1,39 +1,21 @@
-import { wireWords } from "../../../desk/surface/words";
-import { wireClock } from "../../../desk/surface/format";
-import { PeopleHubCells } from "./People";
-import { spriteUrl } from "../../../desk/sprites";
+import { sectionSprite } from "./native";
 import { PrefStatus, stampDate, type PrefSaveState } from "./window";
-// HS-111-01 — the Prefs program's face (audit §3.1-§3.4): a drawer of
-// pref modules, authored — never wire-derived. The module registry is a
-// CODE CONSTANT: a new wire key never mints a pane again (unmapped keys
-// land in System, the one place the generic walker survives).
-// HS-170-04: the drawer face is now a hub of SurfaceLedgerRows showing
-// state tokens from GET /api/settings/hub. The tile grid is retired.
+// HS-111-01 — the Prefs program: authored sections, never wire-derived. The
+// section roster is a CODE CONSTANT: a new wire key never mints a pane
+// again. The language (2026-11-11): the rail says each section's health
+// (`sectionHealth`), read from GET /api/settings/hub; the drawer face of
+// HS-170-04 is gone.
 import { useState, type ReactNode } from "react";
 import { Button } from "../../../components/signal/Signal";
-import { CONTROL_MODES, controlModeLabel } from "../../../lib/productLanguage";
 import {
-  CheckGadget,
-  CycleGadget,
   FoldGadget,
   GadgetGroup,
-  GadgetRow,
 } from "../../../desk/surface/gadgets";
-import {
-  SurfaceLedger,
-  SurfaceLedgerRow,
-  StateChip,
-  countToken,
-  Receipt,
-} from "../../../desk/surface";
-import { ConfirmVerb, SurfaceSection } from "../../../desk/surface/Surface";
+import { ConfirmVerb } from "../../../desk/surface/Surface";
 import { DotWord } from "../../../desk/surface/kit";
+import type { SpineTone } from "../../../desk/surface/patterns/Spine";
 import { useDesk } from "../../../desk/store";
 import "./settings.css";
-import { useAtmospherePreference } from "../../../desk/gl/atmospherePreference";
-import { resolveAtmosphere } from "../../../desk/gl/atmosphereRegistry";
-import { useBuilderTools } from "../../../desk/builderTools";
-import { Token } from "../../../desk/surface/Token";
 
 /* ── the roster (owner-named destinations, including the Models/Assignments pair) ── */
 
@@ -75,6 +57,9 @@ export const PREF_MODULES: PrefModule[] = [
  * sections and the page remains mounted while the owner moves around it. */
 export const SETTINGS_SECTIONS = [
   { id: "you", label: "You", sprite: "system" },
+  // The language (2026-11-11): Engines is a section of Settings, second,
+  // because a working engine comes before every other choice.
+  { id: "engines", label: "Engines", sprite: "models" },
   { id: "speak", label: "Speak", sprite: "voice" },
   { id: "meetings", label: "Meetings", sprite: "meetings" },
   // PG-DIRECTION DIR6 (ruled 2026-10-31): Notices becomes Reach; the id
@@ -155,13 +140,6 @@ export const MODULE_ALIASES: Record<string, string> = {
   desk: "system",
 };
 
-/** Which module owns a top-level settings key (System catches the rest). */
-export function moduleForKey(key: string): string {
-  for (const module of PREF_MODULES)
-    if (module.keys.includes(key)) return module.id;
-  return "system";
-}
-
 /* ── enum option sets, derived from the hub's own config canon
       (holdspeak/config.py, holdspeak/languages.py) ── */
 
@@ -170,76 +148,11 @@ export function moduleForKey(key: string): string {
 /** Window Program W4 (the words): a select shows a sentence-case word; the
  *  stored value stays the wire token underneath (`normal` reads `Normal`). */
 const worded = (value: string) => ({ value, label: value.charAt(0).toUpperCase() + value.slice(1) });
-export const WHISPER_MODEL_OPTIONS = [
-  "tiny",
-  "base",
-  "small",
-  "medium",
-  "large",
-].map(worded);
 // HS-139-01: TRANSCRIBE_BACKEND_OPTIONS deleted (duplicate; the Models
 // module's Hub Default Engine keeps the backend cycle).
 export const EXPORT_FORMAT_OPTIONS = ["txt", "markdown", "json", "srt"].map(
   (value) => ({ value }),
 );
-export const INTEL_PROVIDER_OPTIONS = ["local", "cloud"].map((value) => ({
-  value,
-}));
-
-/* ── HS-132-10: the ONE meetings placement dial ──────────────────────────
-   Meetings placement had two independent faces (a Provider cycle here, a
-   RUNS ON destination pointer in Models) and no precedence signal, so
-   setting Provider = LOCAL under an adopted destination did nothing,
-   silently. The hub already decides with one rule; these read the
-   provenance it now ships (`_placement.meeting`) so the face states which
-   dial decided and what it loaded. Copy is label grammar, never prose. */
-
-export type MeetingPlacementWire = {
-  /** "destination" | "provider" | "provider-selection-ignored" */
-  placement_source?: string;
-  /** Why a set destination pointer was dropped (empty when none was). */
-  placement_reason?: string;
-  provider_intent?: string;
-  /** False exactly when an adopted destination decided instead. */
-  provider_honored?: boolean;
-  boundary?: string;
-  target_id?: string;
-  target_name?: string;
-  engine?: string;
-  model?: string;
-  node?: string;
-  runnable?: boolean;
-  runnable_reason?: string;
-};
-
-/** The precedence rule, rendered where the placement is set. */
-export const MEETING_PLACEMENT_RULE =
-  "Destination wins · Provider decides when no destination";
-
-export function meetingPlacement(
-  settings: Record<string, unknown> | undefined,
-): MeetingPlacementWire | null {
-  const block = (settings?._placement as
-    | { meeting?: MeetingPlacementWire }
-    | undefined)?.meeting;
-  return block && typeof block === "object" ? block : null;
-}
-
-/** WHERE meetings run right now, as one fact line. Names stay as typed;
- *  the boundary code is said in words (`same_device` → `Same device`). */
-export function placementLine(placement: MeetingPlacementWire): string {
-  const target = String(placement.target_name || placement.node || "Hub default");
-  const parts = ["Engine", target, wireWords(String(placement.boundary ?? ""))];
-  if (placement.model) parts.push(String(placement.model));
-  return parts.filter(Boolean).join(" · ");
-}
-
-/** WHY the Provider dial did not decide. Empty string when it did. */
-export function providerIgnoredReason(placement: MeetingPlacementWire): string {
-  if (placement.provider_honored !== false) return "";
-  const target = String(placement.target_name || placement.node || placement.target_id || "");
-  return `Provider selection ignored · ${target ? `Destination ${target}` : "The destination"} decides`;
-}
 export const MIR_PROFILE_OPTIONS = [
   "balanced",
   "architect",
@@ -314,87 +227,10 @@ export function SettingSprite({ name, src }: { name: string; src?: string }) {
   );
 }
 
-/* The rail's illustrated glyphs: the world sprites where a category is an
-   object of the desk (you, meetings, agents), the settings mold elsewhere. */
-const SETTINGS_WORLD_SPRITES: Partial<Record<SettingsSectionId, { kind: string; id: string; agent?: string }>> = {
-  you: { kind: "person", id: "settings-you" },
-  meetings: { kind: "meeting", id: "settings-meetings" },
-  agents: { kind: "agent", id: "settings-agents", agent: "codex" },
-};
-
+/* The rail's illustrated glyphs: the section's sprite (`sectionSprite`,
+   one place for the rail and the mast). */
 export function SettingsRailGlyph({ section }: { section: (typeof SETTINGS_SECTIONS)[number] }) {
-  const world = SETTINGS_WORLD_SPRITES[section.id];
-  return <SettingSprite name={section.sprite} src={world ? spriteUrl(world.kind, world.id, "rest", world.agent, 32) : undefined} />;
-}
-
-/* ── legacy SVG glyph (kept for non-tile uses: posture shield etc.) ── */
-
-export function SettingGlyph({ name }: { name: string }) {
-  const paths: Record<string, string> = {
-    posture: "M8 1.8 13 3.8v3.4c0 3.2-2.1 5.6-5 6.9-2.9-1.3-5-3.7-5-6.9V3.8Z",
-    secret: "M3.5 7.5h9v5.5h-9Z M5.5 7.5V5.4a2.5 2.5 0 0 1 5 0v2.1",
-    ui: "M3 5h10M3 5v6h10V5M6 8h4",
-    hotkey: "M2.5 4.5h11v7h-11Z M4.5 6.5h1M7.5 6.5h1M10.5 6.5h1M5 9.5h6",
-    model: "M4 12V7m4 5V4m4 8V9",
-    dictation:
-      "M8 2.5a2 2 0 0 1 2 2v3a2 2 0 1 1-4 0v-3a2 2 0 0 1 2-2Z M4.5 7.5a3.5 3.5 0 0 0 7 0M8 11v2.5",
-    wake_word: "M8 2l1.2 3.3L12.5 6.5 9.2 7.7 8 11 6.8 7.7 3.5 6.5 6.8 5.3Z",
-    presence:
-      "M2.5 8s2-3.5 5.5-3.5S13.5 8 13.5 8s-2 3.5-5.5 3.5S2.5 8 2.5 8Z M8 8m-1.5 0a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0",
-    meeting:
-      "M5.5 6.5a2 2 0 1 0 0-.01M10.5 6.5a2 2 0 1 0 0-.01M2.5 12c0-1.7 1.3-3 3-3s3 1.3 3 3M8.5 12c0-1.7 1.3-3 3-3s3 1.3 3 3",
-    cadence: "M8 8V4.5M8 8l2.5 1.5M8 2.5A5.5 5.5 0 1 0 8 13.5 5.5 5.5 0 1 0 8 2.5Z",
-    device: "M4.5 2.5h7v11h-7Z M7 11.5h2",
-    delivery: "M2.5 5.5h11v8h-11Z M2.5 5.5 8 2.5l5.5 3M8 8.5v5",
-    models: "M4.5 4.5h7v7h-7Z M8 1.5v3M8 11.5v3M1.5 8h3M11.5 8h3",
-    desk: "M2.5 3.5h11v9h-11Z M2.5 8h11 M6.5 5.75h3 M6.5 10.25h3",
-    system: "M3 4.5h10M3 8h10M3 11.5h10M6 3v3M10 6.5v3M5 10v3",
-  };
-  return (
-    <svg
-      viewBox="0 0 16 16"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path
-        d={
-          paths[name] ??
-          "M8 8m-2.6 0a2.6 2.6 0 1 0 5.2 0a2.6 2.6 0 1 0-5.2 0"
-        }
-      />
-    </svg>
-  );
-}
-
-/* ── Betterment shell S1: the Builder tools switch (Settings ▸ System).
-   Off by default. On, Go shows Builder ▸ and Search lists the builder rows
-   (Activity, Processes, Context, Components, Calendar snapshot, Delivery
-   board, Terminals, Refresh from hub). Shared by the hub. ── */
-
-export function BuilderToolsModule({ checked, onChange }: {
-  checked?: boolean;
-  onChange?: (next: boolean) => void;
-} = {}) {
-  const cached = useBuilderTools((state) => state.on);
-  const setCached = useBuilderTools((state) => state.setOn);
-  const on = checked ?? cached;
-  const setOn = (next: boolean) => {
-    // SettingsCore owns the canonical debounced/revisioned write. The cache
-    // only keeps Go/Search responsive until the hub answer arrives.
-    setCached(next);
-    onChange?.(next);
-  };
-  return (
-    <GadgetGroup label="Builder tools" material="inset">
-      <GadgetRow label="Builder tools" fact="Adds Builder to Go and Search" controlWidth="short">
-        <CheckGadget variant="state" label="Builder tools" checked={on} onChange={setOn} />
-      </GadgetRow>
-    </GadgetGroup>
-  );
+  return <SettingSprite name={section.sprite} src={sectionSprite(section.id, section.sprite)} />;
 }
 
 /* ── the Desk module (HS-112-03): reset-to-seed, the desk's FIRST
@@ -482,29 +318,6 @@ export type SettingsHubWire = {
   writtenAt: number | null;
 };
 
-export type DeepHit = { module: string; label: string; path: string[] };
-
-/* ── HS-172-02: auto-run label helpers ── */
-
-const AUTO_LABELS: Record<string, string> = {
-  room_linked: "AFTER ROOM MEETINGS",
-  every: "AFTER EVERY MEETING",
-  off: "OFF",
-};
-
-function autoLabel(auto: string | undefined): string {
-  return AUTO_LABELS[auto ?? "off"] ?? "OFF";
-}
-
-export function autoDisplayFact(auto: string | undefined): string {
-  const map: Record<string, string> = {
-    room_linked: "After room meetings",
-    every: "After every meeting",
-    off: "Off",
-  };
-  return map[auto ?? "off"] ?? "Off";
-}
-
 export const INTELLIGENCE_AUTO_OPTIONS = [
   { value: "off", label: "Manual" },
   { value: "room_linked", label: "After room meetings" },
@@ -544,162 +357,39 @@ export function workHasEngine(hub: SettingsHubWire): boolean {
   return hub.meetings?.engineSet === true || hub.voice?.engineSet === true;
 }
 
-/** PHILO-17 REFIT: one pill per job on the Runs on plate: the job's word
- *  and a lamp (green set, amber no engine, grey off). The engine names stay
- *  in the headline; a job the hub does not report is left out. */
-export function jobPills(hub: SettingsHubWire): Array<{ key: string; word: string; tone: "ok" | "warn" | "idle"; title?: string }> {
-  const pills: Array<{ key: string; word: string; tone: "ok" | "warn" | "idle"; title?: string }> = [];
-  if (hub.voice?.engineSet === false) pills.push({ key: "voice", word: "Speech", tone: "warn", title: "No engine" });
-  else if (hub.voice?.engineSet === true) pills.push({ key: "voice", word: "Speech", tone: "ok" });
-  const meetings = hub.meetings;
-  if (meetings?.summariesOff) pills.push({ key: "summaries", word: "Summaries", tone: "idle", title: "Off" });
-  else if (meetings?.engineSet === false) pills.push({ key: "summaries", word: "Summaries", tone: "warn", title: "No engine" });
-  else if (meetings?.engineSet === true) pills.push({ key: "summaries", word: "Summaries", tone: "ok", title: meetings.engine ?? undefined });
-  if (hub.answers?.engineSet === false) pills.push({ key: "answers", word: "Answers", tone: "warn", title: "No engine" });
-  else if (hub.answers?.engineSet === true) pills.push({ key: "answers", word: "Answers", tone: "ok", title: hub.answers.engine ?? undefined });
-  // The default (Everything else): a quiet fact while some work has an
-  // engine of its own (PHILO-15 B33), amber when nothing has one.
-  if (hub.models.defaultSet) pills.push({ key: "default", word: "Default engine", tone: "ok" });
-  else pills.push({ key: "default", word: "Default engine", tone: workHasEngine(hub) ? "idle" : "warn", title: "No default" });
-  return pills;
-}
+/* ── the rail's health (the language, 2026-11-11): one tone and one word
+   per section, from the one hub read. Moss is set up, brass needs him,
+   coral is failing, idle is not set. No zero counts: an empty section
+   says "Not set". ── */
 
-/** Format writtenAt (epoch seconds) as HH:MM for the receipt. */
-function formatWrittenAt(epoch: number | null): string | null {
-  if (epoch == null) return null;
-  const d = new Date(epoch * 1000);
-  return d.toTimeString().slice(0, 5);
-}
+export type SectionHealth = { tone: SpineTone; word: string };
 
-export function PrefsFace({
-  onOpen,
-  hub,
-  posture,
-  postureBusy,
-  onPosture,
-  precedence,
-}: {
-  onOpen(moduleId: string): void;
-  hub: SettingsHubWire;
-  posture: string;
-  postureBusy?: boolean;
-  onPosture(mode: string): void;
-  /** The precedence chain as data (etched fact line, never a paragraph). */
-  precedence: string[];
-}) {
-  // HS-170-04: the hub is rows that tell the truth before you open them.
-  // HS-139-07: precedence chain folded into the POSTURE title attribute.
-  const precedenceText = (precedence.length
-    ? precedence
-    : ["hard invariants", "grants", "mode", "feature default"]
-  )
-    .join(" → ")
-    .replace(/^./, (c) => c.toUpperCase());
-
-  const [atmosphereId] = useAtmospherePreference();
-  const connected = hub.connections.connected;
+export function sectionHealth(hub: SettingsHubWire, ownerName = ""): Partial<Record<SettingsSectionId, SectionHealth>> {
+  const idle = (word = "Not set"): SectionHealth => ({ tone: "idle", word });
+  const head = hubHeadline(hub);
   const engines = hub.models.engines;
-  const engineFact = engines > 0
-    ? `${engines} ${engines === 1 ? "engine" : "engines"}${hub.models.defaultSet ? " · Default set" : ""}`
-    : workHasEngine(hub) || hub.models.defaultSet || hub.answers?.engineSet === true
-      ? "Engine assigned"
-      : "No engine yet";
-  const summaryFact = hub.meetings.intelligence && hub.meetings.summariesOff
-    ? <StateChip state="idle" label="SUMMARIES OFF" />
-    : hub.meetings.intelligence && hub.meetings.engineSet === false
-      ? <StateChip state="warning" label="SUMMARY · NO ENGINE" />
-      : hub.meetings.intelligence
-        ? <StateChip
-            state="idle"
-            icon={hub.meetings.auto && hub.meetings.auto !== "off" ? "✓" : undefined}
-            label={`SUMMARY SET ON${hub.meetings.auto && hub.meetings.auto !== "off" ? ` · ${autoLabel(hub.meetings.auto)}` : ""}`}
-            data-testid="settings-hub-summary-chip"
-          />
-        : <StateChip state="warning" label="SUMMARY SET OFF" />;
-  // Betterment ST0: the Voice fact is whether speech works (the speech
-  // model Setup reads), never the pipeline switch alone. Unknown: no claim.
-  const voiceFact = !hub.voice.live
-    ? <span>Voice typing off</span>
-    : hub.voice.speechReady === true
-      ? <StateChip state="success" label="Works" data-testid="settings-hub-voice-fact" />
-      : hub.voice.speechReady === false
-        ? <StateChip state="warning" label="Speech is not set up" data-testid="settings-hub-voice-fact" />
-        : null;
-  const rhythmFact = <>
-    {hub.rhythm.sweepEveryMinutes != null
-      ? <span>{hub.rhythm.sweepEveryMinutes >= 60
-          ? `EVERY ${Math.round(hub.rhythm.sweepEveryMinutes / 60)} HR`
-          : `EVERY ${hub.rhythm.sweepEveryMinutes} MIN`}</span>
-      : hub.rhythm.loops > 0
-        ? <span>{countToken(hub.rhythm.loops, "LOOP", "LOOPS")}</span>
-        : <span>No loops</span>}
-    {hub.rhythm.nextSweepAt ? <span>NEXT {wireClock(hub.rhythm.nextSweepAt)}</span> : null}
-  </>;
-  const work = [
-    { id: "voice", label: "Voice", sprite: "voice", fact: voiceFact },
-    { id: "meetings", label: "Meetings", sprite: "meetings", fact: summaryFact },
-    { id: "rhythm", label: "Rhythm", sprite: "rhythm", fact: rhythmFact },
-    { id: "models", label: "Engines", sprite: "models", fact: engineFact },
-    { id: "integrations", label: "Accounts", sprite: "integrations", fact: connected > 0 ? `${connected} connected` : "None connected" },
-  ];
-  const desk = [
-    { id: "sounds", label: "Sounds & Presence", sprite: "sounds", fact: hub.sounds.on ? "Desk sounds on" : "Desk sounds off" },
-    { id: "wallpaper", label: "Wallpaper", sprite: "wallpaper", fact: resolveAtmosphere(atmosphereId).name },
-    { id: "people", label: "People", sprite: "system", fact: <PeopleHubCells /> },
-    { id: "agents", label: "Agents", sprite: "system", fact: hub.agents ? `Up to ${hub.agents.workingAtOnce} at once` : "" },
-    { id: "system", label: "System", sprite: "system", fact: <OtherDevicesChip on={Boolean(hub.system.remote)} /> },
-  ];
-  const directory = (entries: typeof work, label: string) => (
-    <SurfaceLedger count={null} cols="settings-directory" label={label}>
-      {entries.map((entry) => (
-        <SurfaceLedgerRow
-          key={entry.id}
-          lead={<SettingSprite name={entry.sprite} />}
-          primary={entry.label}
-          meta={<span className="settings-directory-fact">{entry.fact}</span>}
-          data-testid={entry.id === "models" ? "settings-lead-engines" : entry.id === "integrations" ? "settings-lead-accounts" : undefined}
-          expands={false}
-          onToggle={() => onOpen(entry.id)}
-          trailing={
-            <Button
-              variant="secondary"
-              dense
-              onClick={() => onOpen(entry.id)}
-              data-testid={entry.id === "models" ? "settings-hub-choose" : entry.id === "integrations" ? "settings-hub-accounts" : undefined}
-            >Open {entry.label}</Button>
-          }
-        />
-      ))}
-    </SurfaceLedger>
-  );
-
-  return (
-    <div className="prefs-face prefs-hub settings-home">
-      {/* PARKED: oversized lead plates, routing headline and More toggle. */}
-      <div className="settings-directory-grid">
-        <SurfaceSection label="Work">{directory(work, "Work preferences")}</SurfaceSection>
-        <SurfaceSection label="Desk">{directory(desk, "Desk preferences")}</SurfaceSection>
-      </div>
-      <div className="prefs-posture" title={precedenceText}>
-        <span className="prefs-posture-label">Posture</span>
-        <CycleGadget
-          label="Control posture"
-          value={posture}
-          disabled={postureBusy}
-          options={CONTROL_MODES.map((mode) => ({ value: mode, label: controlModeLabel(mode) }))}
-          onChange={onPosture}
-        />
-      </div>
-    </div>
-  );
-}
-
-/** PHILO-17 U35: remote access in plain words, on the hub row and the
- *  System face alike. */
-export function OtherDevicesChip({ on }: { on: boolean }) {
-  return on
-    ? <StateChip state="success" label="Other devices: on" />
-    : <Token className="surface-token" data-chip>Other devices: off</Token>;
+  const meetings = hub.meetings;
+  return {
+    you: ownerName.trim() ? { tone: "moss", word: ownerName.trim() } : { tone: "brass", word: "Add your name" },
+    engines: head.text === "No engine yet" && engines === 0
+      ? { tone: "brass", word: "No engine yet" }
+      : head.warning
+        ? { tone: "brass", word: "Choose an engine" }
+        : { tone: "moss", word: engines > 0 ? (engines === 1 ? "1 engine" : `${engines} engines`) : "Engine assigned" },
+    speak: !hub.voice.live ? idle("Off")
+      : hub.voice.speechReady === false ? { tone: "brass", word: "Speech not set up" }
+        : { tone: "moss", word: "On" },
+    meetings: !meetings.intelligence || meetings.summariesOff ? idle("Summaries off")
+      : meetings.engineSet === false ? { tone: "brass", word: "No summary engine" }
+        : { tone: "moss", word: meetings.engine ? `Summaries · ${meetings.engine}` : "Summaries on" },
+    notices: hub.rhythm.sweepEveryMinutes != null
+      ? { tone: "moss", word: hub.rhythm.sweepEveryMinutes >= 60 ? `Every ${Math.round(hub.rhythm.sweepEveryMinutes / 60)} hr` : `Every ${hub.rhythm.sweepEveryMinutes} min` }
+      : hub.rhythm.loops > 0 ? { tone: "moss", word: hub.rhythm.loops === 1 ? "1 loop" : `${hub.rhythm.loops} loops` } : idle(),
+    accounts: hub.connections.connected > 0 ? { tone: "moss", word: `${hub.connections.connected} connected` } : idle(),
+    agents: hub.agents ? { tone: "moss", word: `Up to ${hub.agents.workingAtOnce} at once` } : idle(),
+    desk: { tone: hub.sounds.on ? "moss" : "idle", word: hub.sounds.on ? "Sounds on" : "Sounds off" },
+    "this-mac": hub.system.remote ? { tone: "moss", word: "Other devices on" } : idle("This Mac only"),
+  };
 }
 
 /* ── the status bar (window grammar 2026-10-24): save state · facts ── */
