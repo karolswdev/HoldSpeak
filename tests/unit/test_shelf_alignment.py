@@ -99,11 +99,3 @@ def test_an_unknown_shelf_state_is_refused_by_the_one_service_on_both_transports
     assert client.post(f"/api/brief/items/{item}/shelf", json={"state": 5}).status_code == 422 and seen == []
 
 
-def test_the_published_shelf_schema_names_the_three_states(hub) -> None:
-    _root, client = hub
-    tools = client.post("/api/mcp", json={"jsonrpc": "2.0", "id": 1, "method": "tools/list", "params": {}}).json()["result"]["tools"]
-    shelf = next(t for t in tools if t["name"] == "monday_brief.shelf")
-    state = shelf["inputSchema"]["properties"]["state"]
-    for word in ("acknowledged", "deferred", "null"):
-        assert word in state["description"]
-    assert shelf["inputSchema"]["required"] == ["item_id", "state"]

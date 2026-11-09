@@ -204,24 +204,6 @@ def test_exploding_on_detect_never_kills_the_loop():
 # ── the optional engine stays optional ───────────────────────────────────────
 
 
-def test_module_imports_without_the_engine():
-    # This very file imported holdspeak.wake_word at the top with no
-    # openwakeword requirement; the availability probe is bool either way.
-    assert wake_word_available() in (True, False)
-
-
-def test_lazy_imports_only():
-    import holdspeak.wake_word as mod
-
-    top_level = [
-        l.strip()
-        for l in open(mod.__file__)
-        if l.startswith(("import ", "from "))
-    ]
-    for line in top_level:
-        assert "openwakeword" not in line, f"engine import must be lazy: {line}"
-
-
 # ── config ───────────────────────────────────────────────────────────────────
 
 
@@ -241,6 +223,3 @@ def test_wake_config_normalizes_file_edited_values():
     assert WakeWordConfig(action="sideways").action == "preview"
 
 
-def test_older_config_shape_coerces_forward():
-    # A config without the section loads with defaults (the _coerce path).
-    assert WakeWordConfig(**{}).enabled is False

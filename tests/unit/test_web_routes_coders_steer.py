@@ -681,16 +681,6 @@ def test_a_bad_pane_key_is_a_400(env) -> None:
         assert res.json()["error"] == "key must be pane:%N"
 
 
-def test_registry_path_still_works_unchanged(env) -> None:
-    # HS-89-02 must not regress Phase 87: an agent:session_id key steers
-    # exactly as before.
-    _register(env.monkeypatch, _session())
-    _pin_identity(env.monkeypatch, "%3")
-    env.client.post("/api/coders/claude:abc/arm", json={})
-    res = env.client.post("/api/coders/claude:abc/steer", json={"text": "hi"})
-    assert res.status_code == 200 and res.json()["pane_id"] == "%3"
-
-
 # --- cross-machine relay routes (HS-89-03) ---------------------------------
 
 

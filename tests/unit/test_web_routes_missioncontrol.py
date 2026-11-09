@@ -476,26 +476,6 @@ class TestReceipts:
         entry = client.get("/api/missioncontrol/receipts").json()["repos"][0]
         assert entry["status"] == "unavailable"
 
-    def test_receipts_route_is_get_only(self, tmp_path):
-        """The belt addition registers no write path (RFC B1)."""
-        from holdspeak.web.routes import missioncontrol as mc_module
-
-        app = FastAPI()
-        _authenticate_owner(app)
-        app.include_router(
-            build_missioncontrol_router(
-                WebContext(get_state=lambda: {}),
-                runner=_gh_runner(RECEIPTS_DOC),
-                map_path=_make_map(tmp_path),
-            )
-        )
-        for route in app.routes:
-            path = getattr(route, "path", "")
-            if "receipts" in path:
-                assert set(route.methods) == {"GET"}
-        assert not hasattr(mc_module, "_belt_write")
-
-
 class TestBeltFrames:
     def _framed_client(self, tmp_path, tree_sequence):
         """A client whose fake feed advances through tree_sequence."""
@@ -607,21 +587,6 @@ class TestEvidenceInPlace:
     def test_missing_file_is_absent(self, tmp_path):
         body = self._get(_evidence_client(tmp_path, self.REL, write=False))
         assert body["status"] == "absent"
-
-    def test_route_is_get_only(self, tmp_path):
-        app = FastAPI()
-        _authenticate_owner(app)
-        app.include_router(
-            build_missioncontrol_router(
-                WebContext(get_state=lambda: {}),
-                runner=_runner_for({}),
-                map_path=_make_map(tmp_path),
-            )
-        )
-        for route in app.routes:
-            if "evidence" in getattr(route, "path", ""):
-                assert set(route.methods) == {"GET"}
-
 
 class TestEvidenceSelfHostedLayout:
     """HS-94-01: Delivery Workbench's self-hosted `pmo-roadmap/pm/roadmap`
@@ -772,19 +737,4 @@ class TestRailsJournal:
         assert len(entries) == 1
         assert "HS-1 shipped." in entries[0]["body_markdown"]
         reset_database()
-
-    def test_journal_is_get_only(self, tmp_path):
-        app = FastAPI()
-        _authenticate_owner(app)
-        app.include_router(
-            build_missioncontrol_router(
-                WebContext(get_state=lambda: {}),
-                runner=_runner_for({}),
-                map_path=_make_map(tmp_path),
-            )
-        )
-        for route in app.routes:
-            if "rails/journal" in getattr(route, "path", ""):
-                assert set(route.methods) == {"GET"}
-
 

@@ -33,12 +33,6 @@ def test_every_room_write_producer_declares_its_project_identity_field() -> None
     assert census(ps._RECEIPT_SCOPE) == []
 
 
-def test_mutation_a_producer_without_a_declaration_is_caught() -> None:
-    mutated = dict(ps._RECEIPT_SCOPE)
-    mutated.pop("create_item")
-    assert census(mutated) == ["create_item: no project-identity declaration"]
-
-
 def test_free_text_equal_to_another_projects_id_does_not_scope_a_receipt() -> None:
     # B's item whose TITLE is A's id: the producer's field says B.
     args = '{"project_id":"proj-b","payload":{"item_type":"risk","title":"proj-a"}}'

@@ -2113,7 +2113,7 @@ class ThreadService:
     def import_threads(self, payload: list[dict[str, Any]]) -> dict[str, str]:
         return self._threads.import_threads(payload)
 
-    # ── profile_override → next-run override (HS-152-03) ─────────────
+    # ── profile_override → the turn's engine (HS-152-03) ─────────────
 
     def _override_entries(self, profile_override: str) -> list[dict[str, Any]]:
         """Resolve a thread's ``profile_override`` to assignment entries.
@@ -2140,36 +2140,19 @@ class ThreadService:
             return [{"profile_id": "legacy-" + str(legacy["id"]), "profile_revision": 1}]
         return []
 
-    def _apply_profile_override(
-        self, principal: Principal, *, invocation_id: str, profile_override: str,
-    ) -> None:
-        """Honor ``thread.profile_override`` for ONE turn.
-
-        The thread row stores the owner's pick; routing truth stays the
-        assignment ledger, so the pick is written as an invocation-scoped
-        next-run override (the Phase 143 mechanism) that the turn's engine
-        resolves through.
-        """
-        entries = self._override_entries(profile_override)
-        if not entries or self._broker is None:
-            return
-        self._broker.inference_adoption_service.apply_next_run_override(
-            principal,
-            command_id=f"override-{invocation_id}",
-            invocation_id=invocation_id,
-            capability_id=self._capability_id,
-            entries=entries,
-        )
-
     def _engine(self, principal: Principal, invocation_id: str, profile_override: str) -> Any:
-        """This turn's engine (``engine_door.engine_for``): the thread's model
-        pick as a one-run override, else the one the assignment names."""
+        """This turn's engine: the thread's model pick
+        (``engine_door.engine_of_profile``), else the one the assignment names
+        (``engine_door.engine_for``)."""
         from . import engine_door
 
-        if profile_override:
-            self._apply_profile_override(principal, invocation_id=invocation_id, profile_override=profile_override)
+        entries = self._override_entries(profile_override) if self._broker is not None else []
+        if entries:
+            picked = engine_door.engine_of_profile(self._broker, str(entries[0]["profile_id"]))
+            if picked is not None:
+                return picked
         try:
-            return engine_door.engine_for(self._broker, self._capability_id, subject=("invocation", invocation_id))
+            return engine_door.engine_for(self._broker, self._capability_id)
         except engine_door.EngineDoorError as exc:
             raise ServiceError("no_assignment", exc.detail, context={"reason": "no_engine", "status": 409}) from exc
 

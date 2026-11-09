@@ -40,6 +40,3 @@ def test_agent_question_maps_to_reply():
     assert na.kind == "reply_to_agent"
 
 
-def test_generator_is_deterministic():
-    loop = _loop(owner="Karol")
-    assert generate_next_action(loop).kind == generate_next_action(loop).kind

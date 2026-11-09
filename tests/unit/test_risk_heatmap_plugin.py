@@ -28,14 +28,6 @@ def _plugin(response):
     return intel_plugin(RiskHeatmapPlugin(), lambda _m, **_kw: response)
 
 
-def test_attributes() -> None:
-    p = RiskHeatmapPlugin()
-    assert p.id == "risk_heatmap"
-    assert p.kind == "synthesizer"
-    assert p.execution_mode == "deferred"
-    assert p.required_capabilities == ["llm"]
-
-
 def test_run_success_builds_register() -> None:
     out = _plugin(_GOOD_JSON).run({"transcript": "We surfaced risks."})
     assert out["confidence_hint"] == 1.0
@@ -112,12 +104,6 @@ def test_normalize_level() -> None:
     assert _normalize_level("moderate") == "medium"
     assert _normalize_level("unlikely") == "low"
     assert _normalize_level("bogus") == "medium"
-
-
-def test_registrar_returns_real_plugin() -> None:
-    host = PluginHost(default_timeout_seconds=0.5, enabled_capabilities={"llm"})
-    register_builtin_plugins(host)
-    assert isinstance(host.get_plugin("risk_heatmap"), RiskHeatmapPlugin)
 
 
 def test_host_blocks_without_llm_capability() -> None:

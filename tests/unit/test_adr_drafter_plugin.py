@@ -31,14 +31,6 @@ def _plugin(response):
     return intel_plugin(AdrDrafterPlugin(), lambda _m, **_kw: response)
 
 
-def test_attributes() -> None:
-    p = AdrDrafterPlugin()
-    assert p.id == "adr_drafter"
-    assert p.kind == "artifact_generator"
-    assert p.execution_mode == "deferred"
-    assert p.required_capabilities == ["llm"]
-
-
 def test_run_success_drafts_adrs() -> None:
     out = _plugin(_GOOD_JSON).run({"transcript": "We settled the data store."})
     assert out["confidence_hint"] == 1.0

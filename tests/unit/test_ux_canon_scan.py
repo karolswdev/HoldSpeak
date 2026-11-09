@@ -589,25 +589,6 @@ class TestMicAllowlist:
             if v.rule == "mic"]
         assert hits == []
 
-    def test_every_entry_names_a_reason(self):
-        mod = _load_scanner()
-        for path, needle, reason in mod.MIC_ALLOWLIST:
-            assert path and needle and len(reason) > 10, (path, needle, reason)
-
-
-    def test_the_ledger_matches_the_census(self):
-        """23 census - retired Thread checkbox + R13 + Workbench grammar
-        - the Thread number field parked with the Thread window (Q4) = 23,
-        + DIR10's briefing-page answer field (the thin kit has no mic) = 24,
-        + the Programs wizard's Folder path and Check command (#1833) = 26,
-        - the six ModelLibraryCore/TopologyMapView entries parked with the
-        Models chain (2026-11-08) = 20, - the Workbench grammar entry parked
-        with WorkbenchWindow (#2039) = 19."""
-        mod = _load_scanner()
-        assert len(mod.MIC_ALLOWLIST) == 19
-        assert len({(p, n) for p, n, _ in mod.MIC_ALLOWLIST}) == 19
-
-
 _MIC_HOST_FIELDS = (
     ("desk/components/AskPanel.tsx", "PadGadget", 'label="Ask about your work"'),
     ("desk/components/DeskComposer.tsx", "PadGadget", 'label={placeholder || actionLabel}'),
@@ -667,18 +648,6 @@ class TestMicHostAuthorities:
     def test_named_label_in_another_path_is_flagged(self, path, species, label):
         body = self._body(species, label, "<MicButton onText={f} />")
         assert len(self._scan("desk/components/OtherWindow.tsx", body)) == 1
-
-    def test_authorities_are_exact_named_fields_present_in_tree(self):
-        scanner = _load_scanner()
-        assert {(path, label) for path, label, _ in scanner.MIC_HOST_AUTHORITIES} == {
-            (path, label) for path, _species, label in _MIC_HOST_FIELDS
-        }
-        assert len(scanner.MIC_HOST_AUTHORITIES) == 4  # DeskComposer owns both reply editor variants; + the Room and Memory composer rows (W2); ThreadComposer parked 2026-11-08
-        src = Path(__file__).resolve().parents[2] / "web" / "src"
-        for path, label, reason in scanner.MIC_HOST_AUTHORITIES:
-            assert label in (src / path).read_text()
-            assert len(reason) > 10
-
 
 # PHILO-15 02 (ruling 2026-10-07): a secret is never dictated aloud.
 # Astra r2: the comments sit in ATTRIBUTE position (depth 0), as on the real

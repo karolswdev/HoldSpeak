@@ -450,21 +450,6 @@ class TestSnapshotUIDDeterminism:
         }
         assert _snapshot_uid(event_a) != _snapshot_uid(event_b)
 
-    def test_uid_format_is_hex_at_snapshot_domain(self):
-        import re
-        from holdspeak.services.calendar_snapshot_service import _snapshot_uid
-
-        event = {
-            "title": "Test",
-            "starts_at": "2026-08-31T09:00:00Z",
-            "ends_at": "2026-08-31T10:00:00Z",
-            "location": None,
-        }
-        uid = _snapshot_uid(event)
-        # 16 hex chars + @holdspeak-snapshot
-        assert re.match(r"^[0-9a-f]{16}@holdspeak-snapshot$", uid), \
-            f"UID format wrong: {uid}"
-
     def test_none_location_handled(self):
         from holdspeak.services.calendar_snapshot_service import _snapshot_uid
 

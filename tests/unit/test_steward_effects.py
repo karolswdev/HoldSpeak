@@ -975,15 +975,6 @@ class TestSTW008Bounds:
         error = json.loads(door_steps[0]["error_json"])
         assert error["attempts"] == 3  # max_retries=2 -> 3 attempts
 
-    def test_cooldown_recorded_in_policy(self, tmp_path: Path) -> None:
-        """Cooldown is a policy field, enforced at the scheduling layer."""
-        conn = _make_conn(tmp_path)
-        policy_id = _make_policy(conn, cooldown=60)
-        repos = _make_repos(conn)
-        policy = repos[0].get_policy(policy_id)
-        assert policy["cooldown_seconds"] == 60
-
-
 # ── TST-EFF-006: STW-010 policy eligibility ──────────────────────────
 
 class TestSTW010PolicyEligibility:

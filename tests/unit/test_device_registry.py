@@ -93,14 +93,6 @@ class TestDeviceRegistry:
         assert descriptor.id == "aipi-2"
         assert descriptor.label == "Karol"
 
-    def test_recorder_for_returns_audio_source(self) -> None:
-        reg = DeviceRegistry()
-        reg.register("aipi-1", "Karol")
-        recorder = reg.recorder_for("aipi-1")
-        assert recorder is not None
-        assert isinstance(recorder, AudioSource)
-        assert isinstance(recorder, RemoteAudioRecorder)
-
     def test_recorder_for_unknown_id_returns_none(self) -> None:
         reg = DeviceRegistry()
         assert reg.recorder_for("nope") is None

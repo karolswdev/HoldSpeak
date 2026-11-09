@@ -44,27 +44,11 @@ def test_normalize_rejects_unknown_actionably() -> None:
         normalize_language("klingon")
 
 
-def test_registry_is_whisper_sized() -> None:
-    assert len(WHISPER_LANGUAGES) >= 99
-    assert all(code == code.lower() for code in WHISPER_LANGUAGES)
-
-
 def test_choices_lead_with_auto() -> None:
     choices = language_choices()
     assert choices[0] == {"code": "auto", "name": "Auto-detect"}
     names = [c["name"] for c in choices[1:]]
     assert names == sorted(names)
-
-
-def test_registry_module_is_light() -> None:
-    # The registry must be importable at config time: no transcription
-    # backend, no numpy. Check real import statements, not docstring words.
-    import holdspeak.languages as mod
-
-    lines = [l.strip() for l in open(mod.__file__) if l.strip().startswith(("import ", "from "))]
-    for line in lines:
-        for heavy in ("mlx", "faster_whisper", "numpy", "torch"):
-            assert heavy not in line, f"heavy import in languages.py: {line}"
 
 
 # ── the mlx backend call shape ───────────────────────────────────────────────

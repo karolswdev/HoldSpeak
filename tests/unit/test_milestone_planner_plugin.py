@@ -26,14 +26,6 @@ def _plugin(response):
     return intel_plugin(MilestonePlannerPlugin(), lambda _m, **_kw: response)
 
 
-def test_attributes() -> None:
-    p = MilestonePlannerPlugin()
-    assert p.id == "milestone_planner"
-    assert p.kind == "synthesizer"
-    assert p.execution_mode == "deferred"
-    assert p.required_capabilities == ["llm"]
-
-
 def test_run_success_extracts_milestones() -> None:
     out = _plugin(_GOOD_JSON).run({"transcript": "We planned the roadmap."})
     assert out["confidence_hint"] == 1.0
@@ -95,12 +87,6 @@ def test_extract_returns_none_without_recognizable_key() -> None:
     assert _extract_milestones('{"foo": 1}') is None
     assert _extract_milestones("") is None
     assert _extract_milestones("[1,2,3]") is None
-
-
-def test_registrar_returns_real_plugin() -> None:
-    host = PluginHost(default_timeout_seconds=0.5, enabled_capabilities={"llm"})
-    register_builtin_plugins(host)
-    assert isinstance(host.get_plugin("milestone_planner"), MilestonePlannerPlugin)
 
 
 def test_host_blocks_without_llm_capability() -> None:

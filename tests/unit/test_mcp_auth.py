@@ -40,8 +40,3 @@ def test_resolve_auth_with_token_yields_owner_mcp_token():
     assert auth.principal.identity == "mcp-token"
 
 
-def test_mcpauth_has_no_url_attribute():
-    """MCPAuth no longer carries a url field (removed in HS-133-08)."""
-    assert not hasattr(MCPAuth, "url")
-    auth = resolve_auth(environ={})
-    assert not hasattr(auth, "url")

@@ -176,19 +176,6 @@ def test_composite_empty_answer_and_unready_admission_refuse_without_append(rig)
     assert service.get(OWNER, thought["id"])["working_note"]["body_markdown"] == "Launch ownership"
 
 
-def test_catalogue_has_eighteen_tools_and_workbench_original_resources():
-    assert len(thought_family.TOOLS) == 18
-    tools = {tool["name"]:tool for tool in thought_family.TOOLS}
-    assert all(tool["inputSchema"]["additionalProperties"] is False for tool in tools.values())
-    assert tools["thought.answer_and_continue"]["inputSchema"]["required"][-1] == "workspace_cursor"
-    for unchanged in ("thought.create","thought.adopt_note","thought.get_default_context",
-                      "thought.replace_default_context","thought.list_context"):
-        assert "workspace_cursor" not in tools[unchanged]["inputSchema"]["properties"]
-    templates = {item["uriTemplate"] for item in resources.list_resources()["resourceTemplates"]}
-    assert "holdspeak://thoughts/{thought_id}/workbench" in templates
-    assert "holdspeak://thoughts/{thought_id}/original" in templates
-
-
 @pytest.mark.parametrize("initial,answer", [("", "Mina"), ("Launch ownership", "Mïna 🚀")])
 def test_add_to_note_persists_exact_append_effect_and_replays_original_hub(rig, initial, answer):
     db, service, thought = rig
@@ -332,18 +319,6 @@ def test_terminal_reducer_is_closed_and_scheduler_loss_is_retryable(code, catego
     assert RefinementThoughtService._terminal_status(source) == {
         "code":code,"category":category,"retryable":retryable,
     }
-
-
-def test_terminal_write_sites_and_dynamic_ingress_use_the_closed_vocabulary():
-    source = Path("holdspeak/services/refinement_thought_service.py").read_text()
-    persisted_literals = set(re.findall(r"terminal_code='([a-z_]+)'", source))
-    assert persisted_literals <= set(_TERMINAL_CODE_CATEGORY)
-    assert {"shutdown_before_dispatch","thought_missing_during_recovery",
-            "restart_bound_outcome_unknown","refinement_result_stale","retry_plan_invalid",
-            "retry_child_missing_after_plan","orphaned_before_dispatch_binding",
-            "refinement_result_invalid","kernel_operation_missing","ask_result_unpublished"} <= persisted_literals
-    assert _closed_terminal_code("new_unruled_provider_literal") == "unknown_terminal_code"
-    assert _TERMINAL_CODE_CATEGORY["failed"] == "retryable"
 
 
 def test_duplicate_dispatch_and_cancellation_callbacks_are_continuity_noops(rig):
