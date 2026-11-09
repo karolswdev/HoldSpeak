@@ -58,6 +58,11 @@ _MCP_ONLY: frozenset[str] = frozenset({
     # Setup inventory is an MCP read; seeded Thread palettes stay bounded.
     "setup.status",
     "agent.start_helper", "agent.prompt", "agent.wait", "agent.read", "agent.answer",
+    # The declared meeting reads (2026-11-08, meeting_operations.py): a thread
+    # reaches a meeting through meeting.get / meeting.list; these are MCP and
+    # HTTP only, so the seeded palettes do not grow.
+    "action_item.list", "meeting.artifacts", "meeting.facets", "meeting.intent_timeline",
+    "meeting.prepared", "meeting.ready_list", "meeting.sync_conflicts", "speaker.list",
 })
 
 
