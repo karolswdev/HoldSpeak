@@ -1,27 +1,17 @@
-// HS-170-04 — the meetings stream (the board's list face).
-// Window grammar (2026-10-24): the stream is a native list view (the dense
-// ObjectList: Name · When · Length · Summary, a state as a dot and a word).
-// A press selects the row; Enter or a double press opens the meeting. The
-// selected row's verbs (Run summary, Retry, Transcribe), its route and its
-// receipts sit at the status bar's right (`MeetingSelectionVerbs`).
+// The Meetings app in the language (2026-11-08): the rail of meetings at
+// the window's left. One row per meeting: its title, the day and length in
+// mono, the spine (captured, transcribed, intelligence run, decisions filed)
+// and the state in a word. A press picks the meeting; the pane at the right
+// shows it (mast, plate, ledger). Up and Down move the focus along the rows.
+import { useRef, type KeyboardEvent, type ReactNode } from "react";
 import { speechWasMissing } from "../../../desk/firstrun/speechTruth";
-import { useState } from "react";
 import { Button } from "../../../components/signal/Signal";
-import {
-  SurfaceState,
-} from "../../../desk/surface/Surface";
-import { ObjectList, type ObjectListRow, type ObjectListSort } from "../../../desk/surface/objects/ObjectList";
+import { SurfaceState } from "../../../desk/surface/Surface";
 import { Loading } from "../../../desk/surface/kit";
+import { Spine } from "../../../desk/surface/patterns/Spine";
 import type { ObjectTone } from "../../../desk/surface/objects/kinds";
 import {
-  RefusalToken,
-  RouteDisclosure,
-  RunAttempts,
-  routeTitle,
-} from "../../../meetings/RouteDisclosure";
-import {
   executedReceipt,
-  readLastRefusal,
   readPlannedRoute,
   readRunReceipt,
   routeOff,
@@ -30,36 +20,8 @@ import {
   type SummaryRefusal,
 } from "../../../meetings/summaryRoute";
 import { countToken } from "../../../desk/surface";
-import {
-  durationToken, ledgerDate, wordsToken, unclearLampLabel,
-  meetingRowState, stateToken,
-} from "./helpers";
-import { AudioOnlyVerb } from "./TranscribeVerb";
-
-/** HS-201-04 — true when this row would draw a verb that STARTS a summary
- *  run: the verb is a run verb AND a route resolves for it. The rail uses
- *  it to pick the ONE row that may carry the filled primary. */
-function rowStartsRun(row: Record<string, unknown>): boolean {
-  const verb = meetingRowState(row).verb;
-  if (verb !== "Run summary" && verb !== "Retry") return false;
-  return routeReady(readPlannedRoute(row));
-}
-
-/** The row that may wear the filled primary: the SELECTED row when it can
- *  start a run, else the top-most row that can. Every other row's verb is
- *  the default species (UX-CANON: one filled primary per window). */
-export function leadRunRowId(
-  rows: Record<string, unknown>[],
-  selected: Record<string, unknown> | null,
-): string | null {
-  const selectedId = selected ? String(selected.id) : null;
-  if (selectedId) {
-    const row = rows.find((item) => String(item.id) === selectedId);
-    if (row && rowStartsRun(row)) return selectedId;
-  }
-  const first = rows.find(rowStartsRun);
-  return first ? String(first.id) : null;
-}
+import { durationToken, ledgerDate, meetingRowState, stateToken } from "./helpers";
+import { meetingSpine } from "./plate";
 
 /** PHILO-13-04 A3-W — the process states a NEEDS YOU count never covers:
  *  capture, failure, and an active summary run. */
@@ -181,166 +143,114 @@ export function meetingRowView(
   };
 }
 
-/** The selected meeting's verbs, at the status bar's right: its run verb
- *  (Run summary / Retry, or Transcribe for an audio-only meeting), the
- *  route that run will use (egress where egress happens, Article III), the
- *  hub's refusal and the run's attempts. Open is the list's own Enter. */
-export function MeetingSelectionVerbs({
-  row,
-  primary,
-  onRunIntelligence,
-  runningId,
-  drainerAbsent,
-  refusal,
-  onTranscribe,
-}: {
+/** One meeting on the rail: title, day and length (mono), spine, state word. */
+function RailRow({ row, picked, stop, view, onPick }: {
   row: Record<string, unknown>;
-  /** The run verb wears the window's one primary. */
-  primary: boolean;
-  onRunIntelligence: (id: string, route: PlannedRoute | null) => void;
-  runningId: string | null;
-  drainerAbsent?: boolean;
-  refusal?: SummaryRefusal | null;
-  onTranscribe?: (id: string) => Promise<unknown>;
+  picked: boolean;
+  /** The row that holds the rail's one Tab stop. */
+  stop: boolean;
+  view: MeetingRowView;
+  onPick(row: Record<string, unknown>): void;
 }) {
-  const view = meetingRowView(row, { runningId, drainerAbsent, refusal });
-  const runs = view.verb === "Run summary" || view.verb === "Retry";
-  const runButton = runs ? (
-    <Button
-      dense
-      variant={primary ? "primary" : "secondary"}
-      title={view.showRoute ? routeTitle(view.plannedRoute) : undefined}
-      onClick={() => onRunIntelligence(String(row.id), view.plannedRoute)}
-      data-testid={view.verb === "Run summary" ? "run-intelligence-btn" : "retry-intelligence-btn"}
-    >
-      {view.verb}
-    </Button>
-  ) : null;
-  const unclear = unclearLampLabel(row);
-  const words = wordsToken(row.transcriptWords);
+  const pending = Number(row.needs_you_count ?? row.needsYouCount ?? 0) || 0;
+  const spine = meetingSpine(row, pending);
+  const title = String(row.title ?? "").trim() || "Meeting";
+  const facts = [quiet(ledgerDate(row.started_at ?? row.created_at)), quiet(durationToken(row.duration_seconds))]
+    .filter(Boolean);
   return (
-    <span className="meetings-selection" data-testid="meetings-selection">
-      {onTranscribe ? (
-        <AudioOnlyVerb row={row} onTranscribe={onTranscribe} otherwise={runButton} testId="row-transcribe" />
-      ) : runButton}
-      {view.showRoute ? <RouteDisclosure route={view.plannedRoute} testId="row-route" /> : null}
-      <RunAttempts receipt={view.runReceipt} testId="row-attempts" />
-      <RefusalToken refusal={refusal} durable={readLastRefusal(row)} testId="row-refusal" />
-      {/* PHILO-15-07 (B01): honest gaps carry a warn lamp beside the words. */}
-      {unclear ? (
-        <span className="meetings-selection-fact" data-testid="unclear-lamp">
-          <span className="kit-dot" data-tone="warn" aria-hidden="true" />
-          {quiet(unclear.replace(/^WARN · /, "")).toLowerCase()}
-        </span>
-      ) : null}
-      {words ? <span className="meetings-selection-fact">{quiet(words)}</span> : null}
-    </span>
+    <Button variant="chrome" className="mt-rail-row" data-picked={picked ? "" : undefined}
+      aria-current={picked ? "page" : undefined} tabIndex={stop ? 0 : -1}
+      aria-label={`${title}, ${view.label}`} onClick={() => onPick(row)}>
+      <span className="mt-rail-title" title={title}>{title}</span>
+      {facts.length ? <span className="mt-rail-facts">{facts.map((fact) => <span key={fact}>{fact}</span>)}</span> : null}
+      <Spine className="mt-rail-spine" segments={spine.segments} label={spine.label} />
+      <span className="mt-rail-state" data-tone={view.tone} data-live={view.live || undefined}
+        data-testid={view.noTranscript ? "no-transcript-token" : "state-token"}>{view.label}</span>
+    </Button>
   );
 }
-
-const MEETING_COLUMNS = [
-  { key: "when", word: "When", track: "88px" },
-  { key: "length", word: "Length", track: "80px" },
-  { key: "state", word: "Summary", track: "minmax(140px, 0.6fr)" },
-] as const;
 
 export function CatalogRail({
   meetingRows,
   meetings,
-  selected,
-  setSelected,
-  onOpen,
+  picked,
+  marked = null,
+  onPick,
   runningId,
   drainerAbsent,
   runRefusal,
-  narrowed,
   emptyImage,
   onEmptyAction,
+  head,
+  rowsHidden = false,
 }: {
-  /** The app's illustrated icon for the empty list (one true line under it). */
-  emptyImage?: string;
-  /** DELIGHT (2026-10-27): the empty list's one verb (Import a recording). */
-  onEmptyAction?: () => void;
   meetingRows: Record<string, unknown>[];
   meetings: { loading: boolean; error: string; reload(): Promise<unknown> };
-  /** The selected row (the list's own selection; it opens nothing). */
-  selected: Record<string, unknown> | null;
-  setSelected: (row: Record<string, unknown> | null) => void;
-  /** Enter or a double press: open the meeting (default: select it). */
-  onOpen?: (row: Record<string, unknown>) => void;
-  /** Retired with the row verbs (they live in the status bar now:
-   *  MeetingSelectionVerbs); accepted so older callers still compile. */
-  onRunIntelligence?: (id: string, route: PlannedRoute | null) => void;
-  onTranscribe?: (id: string) => Promise<unknown>;
-  restoredId?: string | null;
+  /** The meeting the pane shows. */
+  picked: string | null;
+  /** The row the rail marks: the picked one, else the last one picked or
+   *  the one Restore brought back. */
+  marked?: string | null;
+  onPick: (row: Record<string, unknown>) => void;
   runningId: string | null;
   /** The `runtime_queue` frame says no hub drainer will execute the queue. */
   drainerAbsent?: boolean;
   /** HS-201-04 — the hub's 409 on the last run gesture, with its row. */
   runRefusal?: { meetingId: string; refusal: SummaryRefusal } | null;
-  /** When true, shown as the narrowed left side in SurfaceSplit. */
-  narrowed?: boolean;
+  /** The app's illustrated icon for the empty list (one true line under it). */
+  emptyImage?: string;
+  /** The empty list's one verb (Import a recording). */
+  onEmptyAction?: () => void;
+  /** The rail's head: search, Record, Import, the filters. */
+  head?: ReactNode;
+  /** The parked rows take the rail's place (the head's Parked strip). */
+  rowsHidden?: boolean;
 }) {
-  // The hub's order (newest first) until a header asks for another.
-  const [sort, setSort] = useState<ObjectListSort>({ key: "when", dir: "desc" });
-  const byId = new Map(meetingRows.map((row) => [String(row.id), row]));
-  const rows: ObjectListRow[] = meetingRows.map((row, index) => {
-    const id = String(row.id);
-    const view = meetingRowView(row, {
-      runningId,
-      drainerAbsent,
-      refusal: runRefusal && runRefusal.meetingId === id ? runRefusal.refusal : null,
-    });
-    const at = new Date(String(row.started_at ?? row.created_at ?? "")).getTime();
-    return {
-      id,
-      kind: "meeting",
-      name: String(row.title ?? "Meeting"),
-      when: quiet(ledgerDate(row.started_at ?? row.created_at)),
-      // Equal or missing times keep the hub's order (index breaks ties).
-      whenSort: Number.isFinite(at) ? at * 1000 - index : -index,
-      cells: { length: quiet(durationToken(row.duration_seconds)) },
-      sortValues: { length: Number(row.duration_seconds) || 0 },
-      state: {
-        label: view.label,
-        tone: view.tone,
-        live: view.live,
-        testId: view.noTranscript ? "no-transcript-token" : "state-token",
-      },
-    };
-  });
+  const ref = useRef<HTMLElement | null>(null);
+  const onKeys = (event: KeyboardEvent<HTMLElement>) => {
+    const step = event.key === "ArrowDown" ? 1 : event.key === "ArrowUp" ? -1 : 0;
+    if (!step) return;
+    const rows = [...(ref.current?.querySelectorAll<HTMLButtonElement>(".mt-rail-row") ?? [])];
+    if (!rows.length) return;
+    event.preventDefault();
+    const at = rows.indexOf(document.activeElement as HTMLButtonElement);
+    rows[Math.min(rows.length - 1, Math.max(0, at < 0 ? 0 : at + step))]?.focus();
+  };
+  // No pick: the first row takes the focus stop.
+  const focusId = picked && meetingRows.some((row) => String(row.id) === picked) ? picked : String(meetingRows[0]?.id ?? "");
   return (
-    <div className="meetings-stream" data-narrowed={narrowed || undefined}>
-      {meetings.loading ? <Loading data-testid="meetings-loading" /> : <SurfaceState
-        error={meetings.error}
-        empty={!meetingRows.length}
-        /* UX-CANON A.3: an empty state is ONE true line with the next move. */
-        emptyLabel="Record or import a meeting"
-        emptyImage={emptyImage}
-        emptyKind="meeting"
-        onAction={onEmptyAction}
-        actionLabel="Import a recording"
-        onRetry={() => void meetings.reload()}
-      >
-        <ObjectList
-          label="Meetings"
-          density="dense"
-          rows={rows}
-          columns={MEETING_COLUMNS}
-          sort={sort}
-          onSort={(key: string) => setSort((current) => ({
-            key,
-            dir: current.key === key ? (current.dir === "asc" ? "desc" : "asc") : key === "when" ? "desc" : "asc",
-          }))}
-          selectedId={selected ? String(selected.id) : null}
-          onSelect={(id) => setSelected(byId.get(id) ?? null)}
-          onOpen={(id) => {
-            const row = byId.get(id);
-            if (row) (onOpen ?? setSelected)(row);
-          }}
-          rowProps={(row) => ({ "data-testid": `meeting-row-${row.id}` })}
-        />
-      </SurfaceState>}
-    </div>
+    <nav ref={ref} className="mt-rail meetings-stream" aria-label="Meetings" onKeyDown={onKeys} data-testid="meetings-rail">
+      {head ? <div className="mt-rail-head">{head}</div> : null}
+      {rowsHidden ? null : meetings.loading ? <Loading data-testid="meetings-loading" /> : (
+        <SurfaceState
+          error={meetings.error}
+          empty={!meetingRows.length}
+          /* UX-CANON A.3: an empty state is ONE true line with the next move. */
+          emptyLabel="Record or import a meeting"
+          emptyImage={emptyImage}
+          emptyKind="meeting"
+          onAction={onEmptyAction}
+          actionLabel="Import a recording"
+          onRetry={() => void meetings.reload()}
+        >
+          <div className="mt-rail-rows" role="list">
+            {meetingRows.map((row) => {
+              const id = String(row.id);
+              const view = meetingRowView(row, {
+                runningId,
+                drainerAbsent,
+                refusal: runRefusal && runRefusal.meetingId === id ? runRefusal.refusal : null,
+              });
+              return (
+                <div key={id} role="listitem" className="mt-rail-item" data-testid={`meeting-row-${id}`}
+                  data-selected={id === (picked ?? marked) ? "true" : undefined}>
+                  <RailRow row={row} picked={id === picked} stop={id === focusId} view={view} onPick={onPick} />
+                </div>
+              );
+            })}
+          </div>
+        </SurfaceState>
+      )}
+    </nav>
   );
 }

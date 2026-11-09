@@ -53,24 +53,25 @@ class TestTheMeetingRecord(FitRig):
                 # meeting's own window; it takes the window body's whole width.
                 self._stage(page, "review-meetings", "meeting:p15-12-m")
                 win = page.locator("#surface-meetings")
-                # Window grammar (2026-10-24): no headline; the record (toolbar,
-                # compact head, reader, status bar) runs edge to edge.
-                detail = win.locator(".desk-surface-body > .meeting-record").first
-                detail.locator("[data-testid=meeting-head]").first.wait_for(timeout=T)
+                # The language (2026-11-08): the rail of meetings, and the
+                # picked meeting (mast, plate, ledger, status bar) in the pane.
+                detail = win.locator(".mt-pane > .meeting-record").first
+                detail.locator("[data-testid=meeting-mast]").first.wait_for(timeout=T)
                 page.wait_for_timeout(800)
                 _settle(page)
 
                 def measure(tag: str) -> dict[str, Any]:
-                    body = win.locator(".desk-surface-body").first.evaluate(
-                        "(e) => { const st = getComputedStyle(e); const b = e.getBoundingClientRect();"
-                        " return {x: b.left, w: e.clientWidth - parseFloat(st.paddingLeft) - parseFloat(st.paddingRight)}; }")
+                    pane = win.locator(".mt-pane").first.evaluate(
+                        "(e) => { const b = e.getBoundingClientRect(); return {x: b.left, w: e.clientWidth}; }")
                     d = detail.evaluate(BOX_JS)
-                    facts = {"body": body, "detail": d}
+                    rail = win.locator(".mt-rail").first.is_visible()
+                    facts = {"pane": pane, "detail": d, "rail": rail}
                     self.facts[f"B22_{tag}"] = facts
-                    # The record takes the window body's whole width; no rail
-                    # column beside it (the list is its own window now).
-                    assert d["w"] >= body["w"] - 2, facts
-                    assert win.locator(".surface-split-main").count() == 0, facts
+                    # The record takes the pane's whole width; on a narrow
+                    # window the rail gives the meeting the whole window.
+                    assert d["w"] >= pane["w"] - 2, facts
+                    if width < 640:
+                        assert not rail, facts
                     return facts
 
                 measure("normal")
@@ -298,16 +299,16 @@ class TestOneMeetingOneWindow:
                 self._press(row.locator("[data-verb=summarize]"))
                 self._one_front(ONE, "needs")
                 win = page.locator("#surface-meetings")
-                # Window grammar: Export and More are the toolbar's menus.
+                # The language: Export and More are the mast's menus.
                 self._press(win.get_by_role("button", name="More actions", exact=True))
                 for verb in ("Open transcript", "Park"):
                     assert page.get_by_role("menuitem", name=verb, exact=True).count() == 1, verb
                 page.keyboard.press("Escape")
-                self._press(win.get_by_role("toolbar", name="Meeting").get_by_role("button", name="Export", exact=True))
+                self._press(win.get_by_test_id("meeting-mast").get_by_role("button", name="Export", exact=True))
                 for verb in ("Export MD", "Export SRT"):
                     assert page.get_by_role("menuitem", name=verb, exact=True).count() == 1, verb
                 page.keyboard.press("Escape")
-                assert win.get_by_role("tab", name="Outcomes").count() + win.locator(".desk-wing", has_text="Outcomes").count() >= 1
+                assert win.get_by_test_id("meeting-plate").count() == 1
                 assert "Platform sync" in (win.get_attribute("aria-label") or win.inner_text())
                 self._shot("meeting-window-needs")
 
@@ -319,7 +320,7 @@ class TestOneMeetingOneWindow:
                     self._press(win.get_by_role("button", name="Back from Meetings", exact=True))
                     self._press(page.get_by_role("button", name="Go", exact=True))
                     self._press(page.locator(".desk-menu-list").get_by_role("menuitem", name="Meetings", exact=True))
-                    self._open_row(win.locator(f"[data-testid='meeting-row-{ONE}'] .object-list-open"))
+                    self._open_row(win.locator(f"[data-testid='meeting-row-{ONE}'] .mt-rail-row"))
                 else:
                     self._open_icon(f"meeting:{ONE}")
                 self._one_front(ONE, "icon")
@@ -334,7 +335,7 @@ class TestOneMeetingOneWindow:
                 self._home(staged="review-meetings")
                 page.locator("#surface-meetings [data-testid='meetings-toolbar']").wait_for(timeout=T)
                 self._shot("meetings-list")
-                self._open_row(page.locator(f"#surface-meetings [data-testid='meeting-row-{ONE}'] .object-list-open"))
+                self._open_row(page.locator(f"#surface-meetings [data-testid='meeting-row-{ONE}'] .mt-rail-row"))
                 self._one_front(ONE, "list")
 
                 # 5. (Betterment P3) The Room's FILES fold left the Now wing

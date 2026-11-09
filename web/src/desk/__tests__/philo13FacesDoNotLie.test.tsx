@@ -19,7 +19,7 @@ import { ApiError } from "../../lib/api";
 import { failureTitle, plainFailure, plainReason, plainWords } from "../surface/plainFailure";
 import { askFailureLabel } from "../components/AskPanel";
 import { PeopleCore } from "../../pages/cores/PeopleCore";
-import { meetingSummaryState } from "../../pages/cores/history/MeetingHeader";
+import { meetingSummaryState } from "../../pages/cores/history/plate";
 
 const SRC = resolve(__dirname, "../..");
 const read = (rel: string) => readFileSync(resolve(SRC, rel), "utf8");

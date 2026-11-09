@@ -18,7 +18,7 @@ vi.mock("../../../lib/api", async (importOriginal) => ({
 import { SPEECH_SETUP_EVENT, SpeechSetup, useSpeechSetup } from "../SpeechSetup";
 import { NO_TRANSCRIPT_SPEECH, speechWasMissing } from "../speechTruth";
 import { meetingsHeadline } from "../../../pages/cores/history/helpers";
-import { meetingStripItems } from "../../../pages/cores/history/MeetingHeader";
+import { mastFacts, meetingPlate } from "../../../pages/cores/history/plate";
 
 const MB = 1_000_000;
 function status(landed: boolean, over: Partial<LocalAiStatus> = {}): LocalAiStatus {
@@ -160,8 +160,8 @@ describe("a meeting saved with no transcript because speech was missing", () => 
     expect(meetingsHeadline([fine, lost], false)).toEqual({ text: "1 meeting has no transcript", accent: true });
   });
 
-  it("the record's strip names it", () => {
-    const items = meetingStripItems(lost, { detail: null, startedAt: "", durationS: 6, segments: [] });
-    expect(items.find((item) => item.key === "speech")?.text).toBe("NO TRANSCRIPT · SPEECH NOT SET UP");
+  it("the record's mast names it, and its plate is Transcribe", () => {
+    expect(mastFacts(lost)).toContain("speech not set up");
+    expect(meetingPlate(lost, {}).kind).toBe("transcribe");
   });
 });

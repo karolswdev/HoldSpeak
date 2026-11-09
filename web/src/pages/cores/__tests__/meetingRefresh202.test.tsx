@@ -323,7 +323,7 @@ describe("C1 readiness acknowledgement", () => {
     render(<HistoryCore />);
     const rowBody = await waitFor(() => {
       const found = document.querySelector(
-        '[data-testid="meeting-row-m-1"] .object-list-open',
+        '[data-testid="meeting-row-m-1"] .mt-rail-row',
       );
       expect(found, "the real Meetings ledger draws the row").toBeTruthy();
       return found as Element;
@@ -335,7 +335,7 @@ describe("C1 readiness acknowledgement", () => {
   it("ACKs readiness when the meeting's window opens (every door)", async () => {
     openRecord();
     await waitFor(() =>
-      expect(document.querySelector(".meetings-detail-head")).toBeTruthy(),
+      expect(document.querySelector("[data-testid=meeting-mast]")).toBeTruthy(),
     );
     expect(apiFetch).toHaveBeenCalledWith("/api/meetings/m-1/ready/read", {
       method: "POST",

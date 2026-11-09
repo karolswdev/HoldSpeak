@@ -120,11 +120,12 @@ it("Outcomes is the one review face and reads its own records", async () => {
   hub(meeting([{ leg_ordinal: 1, host: "127.0.0.1", outcome: "succeeded", operation_id: "op_1" }], "127.0.0.1"));
   render(<Shell open />);
   await screen.findByTestId("meeting-summary-text");
-  expect(screen.getByRole("tab", { name: "Outcomes" })).toBeTruthy();
-  expect(screen.queryByRole("tab", { name: /Review/i })).toBeNull();
+  // The language: the record is one face (no wing of its own; the app's
+  // wings are the Meetings window's).
+  expect(screen.queryByRole("tab", { name: /Review|Outcomes|Artifacts/i })).toBeNull();
   await waitFor(() => expect(apiFetch).toHaveBeenCalledWith("/api/meetings/a/outcome-review"));
-  // The strip has no same-device chip. Never the raw IP.
-  const strip = document.querySelector(".meetings-detail-facts");
+  // The mast has no same-device chip. Never the raw IP.
+  const strip = screen.getByTestId("meeting-mast");
   expect(strip?.querySelector(".gadget-chip-egress")).toBeNull();
   expect(chips().join(" ")).not.toContain("127.0.0.1");
 });

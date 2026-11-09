@@ -168,7 +168,7 @@ function at(fixture: Fixture) {
 
 describe("the Meetings list over the HS-170 seed", () => {
   /* replaces: tests/e2e/test_hs170_meetings_glass.py::TestMeetingsGlass::test_meetings_face (the list half, 1440) */
-  it("window grammar: toolbar, dense list, status bar; ONE Run summary for the selected meeting with words, No transcript, Interrupted, no REC, no 0 SEG, no raw button", async () => {
+  it("the language: the rail (head, rows with a spine), No transcript, Interrupted, no REC, no 0 SEG, no run verb on the rail, no raw button", async () => {
     at(hs170 as Fixture);
     hub(hs170 as Fixture);
     render(<Shell><HistoryCore /></Shell>);
@@ -176,23 +176,18 @@ describe("the Meetings list over the HS-170 seed", () => {
     // The page grammar is retired: no headline, no week tiles.
     expect(screen.queryByTestId("meetings-headline")).toBeNull();
     expect(screen.queryByTestId("meetings-week")).toBeNull();
-    await screen.findByTestId("meeting-row-m-off-words");
-    expect(screen.getByRole("grid", { name: "Meetings" })).toHaveAttribute("data-density", "dense");
-    // Nothing selected: no run verb; a press selects (it opens nothing).
+    const offWords = await screen.findByTestId("meeting-row-m-off-words");
+    expect(screen.getByRole("navigation", { name: "Meetings" })).toContainElement(offWords);
+    // Each row carries its spine (four marks) with its words.
+    expect(offWords.querySelectorAll(".surface-spine-part")).toHaveLength(4);
+    expect(within(offWords).getByRole("img").getAttribute("aria-label")).toContain("transcribed");
+    // The run verb is the picked meeting's plate, never the rail's.
     expect(screen.queryAllByTestId("run-intelligence-btn")).toHaveLength(0);
-    fireEvent.click(within(screen.getByTestId("meeting-row-m-off-words")).getByRole("button"));
-    expect(openSurfaceOr).not.toHaveBeenCalledWith("review-meetings", "/history", "meeting:m-off-words");
-    const run = screen.getAllByTestId("run-intelligence-btn");
-    expect(run).toHaveLength(1);
-    // The selection's verbs sit at the status bar's right (a selection never
-    // reflows the toolbar above the list).
-    expect(screen.getByTestId("meetings-status")).toContainElement(run[0]);
-    expect(toolbar).not.toContainElement(run[0]);
-    // The meeting with no words says so and offers no run.
+    // Nothing picked: one line and the verb that makes a meeting.
+    expect(screen.getByText("Pick a meeting")).toBeTruthy();
+    // The meeting with no words says so.
     const vendor = screen.getByTestId("meeting-row-m-no-transcript");
     expect(within(vendor).getByTestId("no-transcript-token").textContent).toBe("No transcript");
-    fireEvent.click(within(vendor).getByRole("button"));
-    expect(screen.queryByTestId("run-intelligence-btn")).toBeNull();
     // The dead capture says INTERRUPTED; no row says REC.
     expect(within(screen.getByTestId("meeting-row-m-dead-rec")).getByTestId("state-token").textContent).toBe("Interrupted");
     expect(stateTokens()).not.toContain("Rec");
@@ -206,20 +201,17 @@ describe("the Meetings list over the HS-170 seed", () => {
   });
 
   /* replaces: tests/e2e/test_hs170_meetings_glass.py::TestMeetingsGlass::test_meetings_face (S-3: host chip + the run POST) */
-  it("the row keeps same-device work quiet; Run summary POSTs the disclosed route", async () => {
+  it("the picked meeting keeps same-device work quiet; its plate's Run summary POSTs the disclosed route", async () => {
     at(hs170 as Fixture);
     const calls = hub(hs170 as Fixture);
-    render(<Shell><HistoryCore /></Shell>);
-    const row = await screen.findByTestId("meeting-row-m-off-words");
-    fireEvent.click(within(row).getByRole("button"));
-    const status = screen.getByTestId("meetings-status");
+    render(<Shell><HistoryCore scope="meeting:m-off-words" /></Shell>);
+    const plate = await screen.findByTestId("meeting-plate");
+    await waitFor(() => expect(plate.getAttribute("data-kind")).toBe("run"));
     // Owner ruling 2026-10-25: no route chip beside the verb at all.
-    const chip = () => status.querySelector(".gadget-chip-egress");
-    // Same-device work has no egress to disclose. The route remains bound to
-    // the run and never leaks its wire enum.
+    const chip = () => document.querySelector(".gadget-chip-egress");
     expect(chip()).toBeNull();
-    expect(status.textContent).not.toContain("same_device");
-    fireEvent.click(within(status).getByTestId("run-intelligence-btn"));
+    expect(document.body.textContent).not.toContain("same_device");
+    fireEvent.click(await within(plate).findByTestId("detail-run-intelligence-btn"));
     const listed = (hs170 as Fixture)["/api/meetings?limit=100"] as { meetings: Array<{ id: string; planned_route: { selection_hash: string } }> };
     const hash = listed.meetings.find((m) => m.id === "m-off-words")!.planned_route.selection_hash;
     await waitFor(() =>
@@ -228,30 +220,21 @@ describe("the Meetings list over the HS-170 seed", () => {
         init: { method: "POST", json: { expected_selection_hash: hash } },
       }),
     );
-    // The hub's answer admits the SAME route the row disclosed (the real
-    // path, not the missing-route fallback of summaryRoute.ts).
+    // The hub's answer admits the SAME route the record disclosed.
     const answer = (hs170 as Fixture)["POST /api/meetings/m-off-words/intelligence/run"] as { planned_route: { selection_hash: string; status: string } };
     expect(answer.planned_route).toMatchObject({ status: "ready", selection_hash: hash });
-    // The row remains quiet through the run.
     await waitFor(() => expect(chip()).toBeNull());
   });
 
-  /* replaces: tests/e2e/test_hs170_meetings_glass.py::TestMeetingsGlass::test_meetings_face (row → the meeting's own window) */
-  it("one press opens the meeting's own window (W1-KIT); Space or a ⌘-press selects", async () => {
+  /* replaces: tests/e2e/test_hs170_meetings_glass.py::TestMeetingsGlass::test_meetings_face (row → the meeting) */
+  it("one press picks the meeting: the pane shows it (W1-KIT)", async () => {
     at(hs170 as Fixture);
     hub(hs170 as Fixture);
     render(<Shell><HistoryCore /></Shell>);
     const row = await screen.findByTestId("meeting-row-m-saved-outcomes");
-    // detail 0 (Space, element.click()) and a ⌘-press select only.
     fireEvent.click(within(row).getByRole("button"));
-    expect(row).toHaveAttribute("aria-selected", "true");
-    fireEvent.click(within(row).getByRole("button"), { detail: 1, metaKey: true });
-    expect(openSurfaceOr).not.toHaveBeenCalledWith("review-meetings", "/history", "meeting:m-saved-outcomes");
-    // W1-KIT: Record meeting is the one primary.
-    expect(screen.getByTestId("meetings-record").className).toContain("btn--primary");
-    fireEvent.click(within(row).getByRole("button"), { detail: 1 });
-    // `openSourceRef` hands the shell the meeting scope. The one Meetings
-    // surface owns the record and its Back control returns to this list.
+    // `openSourceRef` hands the shell the meeting scope; the one Meetings
+    // surface shows it in its pane, the rail beside it.
     expect(openSurfaceOr).toHaveBeenCalledWith(
       "review-meetings", "/history", "meeting:m-saved-outcomes",
     );
@@ -259,13 +242,12 @@ describe("the Meetings list over the HS-170 seed", () => {
 });
 
 describe("the hosted meeting record returns to its list", () => {
-  it("desktop Back clears the real host scope and keeps the selected list row", async () => {
+  it("Back clears the real host scope and keeps the picked row marked", async () => {
     at(hs170 as Fixture);
     hub(hs170 as Fixture);
     render(<HostedMeetings />);
     const back = await screen.findByTestId("meeting-record-back");
-    expect(back).toBeVisible();
-    expect(screen.getByTestId("meeting-record-back").closest(".desk-surface-window")?.querySelector(".meetings-detail-head")).toBeTruthy();
+    expect(screen.getByTestId("meeting-record-back").closest(".desk-surface-window")?.querySelector("[data-testid=meeting-mast]")).toBeTruthy();
 
     fireEvent.click(back);
 
@@ -286,11 +268,12 @@ describe("the meeting window over the HS-170 seed", () => {
     // Window grammar (2026-10-24): no headline; the status bar says what is
     // left to review, once, in warm words.
     await waitFor(() => expect(screen.getByTestId("meeting-review-count").textContent).toBe("3 to review"));
-    expect(document.querySelectorAll(".meetings-detail-head .surface-display")).toHaveLength(0);
-    expect(screen.getByRole("toolbar", { name: "Meeting" })).toBeTruthy();
-    // W2-LIVE-2 (canvas live-direction-2026-10-27, A, After): Today's rail
-    // under the toolbar, at Summary while three wait for review.
-    expect(screen.getByTestId("meeting-steps").querySelector("[aria-current=step]")?.textContent).toContain("Summary");
+    // The language: the mast names the meeting once; the plate is the review
+    // (its one verb), the spine's last mark waits on him.
+    expect(screen.getByTestId("meeting-mast")).toBeTruthy();
+    expect(screen.getByTestId("meeting-plate").getAttribute("data-kind")).toBe("review");
+    expect(screen.getByTestId("meeting-plate")).toHaveTextContent("3 to review");
+    expect(screen.getByTestId("meeting-spine").getAttribute("aria-label")).toContain("3 to file");
     const head = await screen.findByText("TO REVIEW 3");
     expect(head.closest(".meetings-detail-needs-head")).toBeTruthy();
     const rows = document.querySelectorAll(".meetings-detail-outcome-row");
@@ -401,16 +384,22 @@ describe("the summary face (HS-201-04 seed shapes)", () => {
         return { ...m, planned_route: { ...route, legs: [{ ...route.legs[0], host: "192.168.1.43", boundary: "lan" }] } };
       }),
     };
-    hub(hs170 as Fixture, { "/api/meetings?limit=100": lan });
-    render(<Shell><HistoryCore /></Shell>);
+    const detailKey = "/api/meetings/m-off-words?include_parked=true";
+    const detail = (hs170 as Fixture)[detailKey] as Record<string, unknown>;
+    const detailRoute = detail.planned_route as { legs: Array<Record<string, unknown>> };
+    hub(hs170 as Fixture, {
+      "/api/meetings?limit=100": lan,
+      [detailKey]: { ...detail, planned_route: { ...detailRoute, legs: [{ ...detailRoute.legs[0], host: "192.168.1.43", boundary: "lan" }] } },
+    });
+    // The picked meeting: its status bar names no host either.
+    render(<Shell><HistoryCore scope="meeting:m-off-words" /></Shell>);
     await screen.findByTestId("meeting-row-m-off-words");
-    const row = await screen.findByTestId("meeting-row-m-off-words");
-    fireEvent.click(within(row).getByRole("button"));
+    const plate = await screen.findByTestId("meeting-plate");
+    const verb = await within(plate).findByTestId("detail-run-intelligence-btn");
     expect(document.querySelector(".kit-statusbar .gadget-chip-egress")).toBeNull();
-    expect(screen.getByTestId("meetings-status").textContent).not.toContain("192.168.1.43");
+    expect(screen.getByTestId("meeting-status").textContent).not.toContain("192.168.1.43");
     // The press that leaves the device names the host in its hover title.
-    expect(within(screen.getByTestId("meetings-status")).getByTestId("run-intelligence-btn").getAttribute("title"))
-      .toContain("192.168.1.43");
+    expect(verb.getAttribute("title")).toContain("192.168.1.43");
   });
 
   /* replaces: tests/e2e/test_hs201_summary_face_glass.py::test_import_transcribes_then_queues_the_disclosed_summary (station 1: the Import door) */
@@ -521,7 +510,7 @@ describe("the import lands on the open record with no reload (HS-202-02)", () =>
       String(path).startsWith("/api/meetings/p17-audio-only") && !String(path).slice("/api/meetings/p17-audio-only".length).startsWith("/")
         ? (current as never) : base(path, init as never));
     render(<Shell><MeetingRecord meetingId="p17-audio-only" onClose={() => undefined} /></Shell>);
-    await waitFor(() => expect(document.querySelector(".meetings-detail-head")).toBeTruthy());
+    await waitFor(() => expect(document.querySelector("[data-testid=meeting-mast]")).toBeTruthy());
     expect(document.body.textContent).not.toContain("we ship the speech fix on friday");
     current = after;
     act(() => emit("desk_changed"));
@@ -535,21 +524,22 @@ describe("an audio-only meeting is transcribed in place (PHILO-17)", () => {
     at(p17t as Fixture);
     hub(p17t as Fixture);
     render(<Shell><MeetingRecord meetingId="p17-audio-only" onClose={() => undefined} /></Shell>);
-    await screen.findByTestId("meeting-speech-missing");
+    await waitFor(() => expect(screen.getByTestId("meeting-mast").textContent).toContain("speech not set up"));
+    expect(screen.getByTestId("meeting-plate").getAttribute("data-kind")).toBe("transcribe");
     const setup = await screen.findByTestId("meeting-transcribe-speech-setup-verb");
     expect(setup.textContent?.trim()).toMatch(/^Set up speech · \d+ MB$/);
     expect(screen.queryByRole("button", { name: "Transcribe" })).toBeNull();
   });
 
   /* replaces: tests/e2e/test_philo17_transcribe_glass.py::test_an_audio_only_meeting_is_transcribed_in_place (step 2, the row at 1440) */
-  it("speech ready: the selected audio-only row offers Transcribe in the status bar", async () => {
+  it("speech ready: the picked audio-only meeting's plate is Transcribe", async () => {
     at(p17tReady as Fixture);
     hub(p17tReady as Fixture);
-    render(<Shell><HistoryCore /></Shell>);
-    const token = await screen.findByTestId("no-transcript-token");
-    fireEvent.click(within(token.closest("[role='row']") as HTMLElement).getByRole("button"));
-    const verb = await screen.findByTestId("row-transcribe-verb");
-    expect(screen.getByTestId("meetings-status")).toContainElement(verb);
+    render(<Shell><HistoryCore scope="meeting:p17-audio-only" /></Shell>);
+    await screen.findByTestId("no-transcript-token");
+    const plate = await screen.findByTestId("meeting-plate");
+    const verb = await within(plate).findByTestId("meeting-transcribe-verb");
+    expect(plate.getAttribute("data-kind")).toBe("transcribe");
     expect(verb.textContent?.trim()).toBe("Transcribe");
   });
 
