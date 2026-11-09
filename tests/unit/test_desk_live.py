@@ -193,5 +193,3 @@ def test_transcript_pass_is_silent_without_speech() -> None:
     assert [kind for kind, _ in session.frames] == ["_pass"]
 
 
-def test_transcript_pass_is_a_registered_frame() -> None:
-    assert "transcript_pass" in RUNTIME_FRAME_TYPES

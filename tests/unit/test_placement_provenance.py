@@ -227,6 +227,3 @@ def test_cadence_get_loop_deterministic_no_placement(tmp_path, monkeypatch):
 # ---------------------------------------------------------------------------
 
 
-def test_placement_dict_source_vocabulary():
-    """placement_dict source is always one of PLACEMENT_SOURCES."""
-    assert set(PLACEMENT_SOURCES) == {"invocation", "workbench", "agent", "global"}

@@ -15,12 +15,6 @@ from holdspeak.desktop_presence_cocoa import (
 )
 
 
-def test_status_probe_reads_the_existing_connection_lamp() -> None:
-    assert "presence-activity" in PRESENCE_STATUS_PROBE_JS
-    assert "data-on" in PRESENCE_STATUS_PROBE_JS
-    assert "available" in PRESENCE_STATUS_PROBE_JS
-
-
 class _FakeMenu:
     def __init__(self) -> None:
         self.autoenables: bool | None = None

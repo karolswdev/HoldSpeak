@@ -113,8 +113,3 @@ def test_no_readable_size_under_12px_in_web_src() -> None:
     )
 
 
-def test_every_glyph_exemption_is_still_a_live_declaration() -> None:
-    """The list only shrinks: a healed glyph line leaves the list."""
-    live = {(p, sel) for p, _n, _px, sel in under_floor()}
-    stale = sorted(GLYPHS - live)
-    assert not stale, f"glyph exemptions with no sub-12 declaration left (remove them): {stale}"

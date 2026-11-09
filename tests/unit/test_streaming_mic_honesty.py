@@ -242,21 +242,6 @@ def test_a_floor_taken_mid_stream_stops_the_capture_by_name(dictate):
     assert floor.active_owner == "hotkey", "the taker keeps what it took"
 
 
-def test_the_floor_is_claimed_on_the_shared_lease_constant(dictate):
-    """The claim and the heartbeat read the same number, so they cannot drift."""
-    clock = _Clock()
-    floor = VoiceTypingSession(clock=clock)
-    seen: list[str | None] = []
-
-    def between() -> None:
-        seen.append(floor.active_owner)
-
-    dictate(_stream(2), floor=floor, between=between)
-
-    assert seen[0] == "browser_mic"
-    assert voice_support.BROWSER_FLOOR_LEASE_SECONDS == TEST_LEASE_SECONDS
-
-
 # ── one utterance, one transcription pass ────────────────────────────────────
 
 

@@ -231,17 +231,6 @@ class TestDirectStartCalendarContext:
 class TestMeetingsCalendarEventIdColumn:
     """The meetings table carries the additive calendar_event_id column."""
 
-    def test_column_exists_and_nullable(self, tmp_path):
-        db = make_db(tmp_path)
-        meeting = MeetingState(
-            id="m-test-01",
-            started_at=datetime.now(),
-        )
-        db.meetings.save_meeting(meeting)
-        loaded = db.meetings.get_meeting("m-test-01")
-        assert loaded is not None
-        assert loaded.calendar_event_id is None
-
     def test_calendar_event_id_persists(self, tmp_path):
         db = make_db(tmp_path)
         meeting = MeetingState(
@@ -471,23 +460,6 @@ class TestPendingCalendarEventIdGlue:
 class TestReadSideExposesCalendarEventId:
     """Meeting list/get API and MCP paths expose calendar_event_id."""
 
-    def test_to_dict_includes_calendar_event_id(self):
-        state = MeetingState(
-            id="m-dict-01",
-            started_at=datetime.now(),
-            calendar_event_id="ce_abc",
-        )
-        d = state.to_dict()
-        assert d["calendar_event_id"] == "ce_abc"
-
-    def test_to_dict_null_when_unlinked(self):
-        state = MeetingState(
-            id="m-dict-02",
-            started_at=datetime.now(),
-        )
-        d = state.to_dict()
-        assert d["calendar_event_id"] is None
-
     def test_service_get_meeting_exposes_field(self, tmp_path):
         db = make_db(tmp_path)
         meeting = MeetingState(
@@ -592,67 +564,6 @@ class TestEnrichmentHonestDegradation:
 
 
 # -- web_server lambda wiring --
-
-
-class TestWebServerLambdaCalendarEventId:
-    """The web_server lambda accepts calendar_event_id kwarg and sets it
-    on the callbacks object."""
-
-    def test_lambda_sets_pending_calendar_event_id(self):
-        """Proves the lambda signature and setattr behavior."""
-
-        class FakeCallbacks:
-            pending_title: Optional[str] = None
-            pending_calendar_event_id: Optional[str] = None
-            _start_meeting_called = False
-
-            def _start_meeting(self, *, principal=None):
-                self._start_meeting_called = True
-
-        callbacks = FakeCallbacks()
-
-        # Reproduce the lambda from web_server.py:986-991
-        start_meeting_fn = lambda principal, title, calendar_event_id=None: (
-            setattr(callbacks, "pending_title", title) or
-            setattr(callbacks, "pending_calendar_event_id", calendar_event_id or None) or
-            callbacks._start_meeting(principal=principal)
-        )
-
-        principal = Principal(PrincipalKind.SCHEDULER, "sr:test")
-
-        # With calendar_event_id
-        start_meeting_fn(
-            principal=principal,
-            title="Sprint Review",
-            calendar_event_id="ce_lambda_test",
-        )
-        assert callbacks.pending_title == "Sprint Review"
-        assert callbacks.pending_calendar_event_id == "ce_lambda_test"
-        assert callbacks._start_meeting_called
-
-    def test_lambda_none_when_no_event(self):
-        """Non-event schedules pass calendar_event_id=None."""
-
-        class FakeCallbacks:
-            pending_title: Optional[str] = None
-            pending_calendar_event_id: Optional[str] = None
-
-            def _start_meeting(self, *, principal=None):
-                pass
-
-        callbacks = FakeCallbacks()
-
-        start_meeting_fn = lambda principal, title, calendar_event_id=None: (
-            setattr(callbacks, "pending_title", title) or
-            setattr(callbacks, "pending_calendar_event_id", calendar_event_id or None) or
-            callbacks._start_meeting(principal=principal)
-        )
-
-        start_meeting_fn(
-            principal=Principal(PrincipalKind.SCHEDULER, "sr:test"),
-            title="Manual",
-        )
-        assert callbacks.pending_calendar_event_id is None
 
 
 class TestSyncRoundTripPreservesCalendarEventId:

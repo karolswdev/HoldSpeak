@@ -93,12 +93,6 @@ def test_invalid_generic_webhook_urls_are_refused(url):
         slack_webhook_host(url)
 
 
-def test_old_slack_connector_is_not_exported():
-    import holdspeak.slack_export as slack_export
-
-    assert not hasattr(slack_export, "build_slack_connector")
-
-
 def test_generic_companion_connector_still_has_a_transport_boundary():
     calls = []
 

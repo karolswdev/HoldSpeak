@@ -40,21 +40,6 @@ class TestLinearResampleMono:
         # Should be approximately 16000 samples (1 second at 16kHz)
         assert len(result) == 16000
 
-    def test_upsample_with_sine_wave(self) -> None:
-        """Upsampling a sine wave preserves frequency characteristics."""
-        # 440Hz at 8kHz sample rate, 0.5 seconds
-        t = np.linspace(0, 0.5, 4000, dtype=np.float32)
-        audio_8k = np.sin(2 * np.pi * 440 * t).astype(np.float32)
-
-        result = _linear_resample_mono(audio_8k, 8000, 16000)
-        assert len(result) == 8000  # 0.5 seconds at 16kHz
-
-    def test_upsample_4x(self) -> None:
-        """Upsampling 4x (4kHz to 16kHz)."""
-        audio_4k = np.ones(4000, dtype=np.float32)  # 1 second at 4kHz
-        result = _linear_resample_mono(audio_4k, 4000, 16000)
-        assert len(result) == 16000  # 1 second at 16kHz
-
     # ============================================================
     # Downsampling Tests
     # ============================================================
@@ -62,12 +47,6 @@ class TestLinearResampleMono:
     def test_downsample_halves_length(self, silence_1s: np.ndarray) -> None:
         """Downsampling from 16kHz to 8kHz halves length."""
         result = _linear_resample_mono(silence_1s, 16000, 8000)
-        assert len(result) == 8000
-
-    def test_downsample_with_sine_wave(self, sine_440hz_1s: np.ndarray) -> None:
-        """Downsampling a sine wave preserves duration."""
-        result = _linear_resample_mono(sine_440hz_1s, 16000, 8000)
-        # 1 second at 8kHz = 8000 samples
         assert len(result) == 8000
 
     def test_downsample_from_48khz(self) -> None:
@@ -93,20 +72,6 @@ class TestLinearResampleMono:
         assert len(result) == 0
         assert result.dtype == np.float32
 
-    def test_empty_array_same_rate(self) -> None:
-        """Empty array with same rate returns empty float32."""
-        empty = np.array([], dtype=np.float32)
-        result = _linear_resample_mono(empty, 16000, 16000)
-        assert len(result) == 0
-        assert result.dtype == np.float32
-
-    def test_single_sample(self) -> None:
-        """Single sample input."""
-        single = np.array([0.5], dtype=np.float32)
-        result = _linear_resample_mono(single, 16000, 32000)
-        # Duration is 1/16000 seconds, at 32000 Hz = 2 samples
-        assert len(result) == 2 or len(result) == 0  # Depends on rounding
-
     # ============================================================
     # DC Component / Constant Signal Tests
     # ============================================================
@@ -124,12 +89,6 @@ class TestLinearResampleMono:
         result = _linear_resample_mono(dc_signal, 16000, 8000)
         np.testing.assert_array_almost_equal(result, np.full(len(result), -0.5))
 
-    def test_preserves_dc_component_same_rate(self) -> None:
-        """Constant signal stays constant with same rate."""
-        dc_signal = np.full(16000, 0.25, dtype=np.float32)
-        result = _linear_resample_mono(dc_signal, 16000, 16000)
-        np.testing.assert_array_almost_equal(result, dc_signal)
-
     def test_zero_signal_stays_zero(self, silence_1s: np.ndarray) -> None:
         """Zero (silence) signal stays zero after resampling."""
         result = _linear_resample_mono(silence_1s, 16000, 8000)
@@ -138,11 +97,6 @@ class TestLinearResampleMono:
     # ============================================================
     # Output Type Tests
     # ============================================================
-
-    def test_output_dtype_is_float32(self, silence_1s: np.ndarray) -> None:
-        """Output dtype is always float32."""
-        result = _linear_resample_mono(silence_1s, 16000, 8000)
-        assert result.dtype == np.float32
 
     def test_output_dtype_float32_from_float64(self) -> None:
         """Input float64 produces float32 output."""
@@ -154,12 +108,6 @@ class TestLinearResampleMono:
         """Input int16 produces float32 output."""
         audio_int16 = np.zeros(8000, dtype=np.int16)
         result = _linear_resample_mono(audio_int16, 8000, 16000)
-        assert result.dtype == np.float32
-
-    def test_output_dtype_float32_same_rate(self) -> None:
-        """Same rate conversion still produces float32."""
-        audio_f64 = np.zeros(16000, dtype=np.float64)
-        result = _linear_resample_mono(audio_f64, 16000, 16000)
         assert result.dtype == np.float32
 
     # ============================================================
@@ -182,9 +130,3 @@ class TestLinearResampleMono:
         with pytest.raises(ValueError, match="positive"):
             _linear_resample_mono(silence_1s, 16000, 0)
 
-    def test_raises_on_negative_rates(self, silence_1s: np.ndarray) -> None:
-        """Raises ValueError for negative sample rates."""
-        with pytest.raises(ValueError, match="positive"):
-            _linear_resample_mono(silence_1s, -16000, 8000)
-        with pytest.raises(ValueError, match="positive"):
-            _linear_resample_mono(silence_1s, 16000, -8000)

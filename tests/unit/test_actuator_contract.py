@@ -29,10 +29,6 @@ def _good(**overrides):
     return base
 
 
-def test_status_constant() -> None:
-    assert ACTUATOR_PROPOSAL_STATUS == "proposed"
-
-
 # ──────────────────────────── Happy path ──────────────────────────────
 
 

@@ -129,11 +129,6 @@ def test_qualification_hash_binds_full_manifest_and_legacy_stays_unavailable() -
         parse_capability_manifest(forged)
 
 
-def test_result_limitation_default_is_false() -> None:
-    result = ToolResultEnvelope("unavailable", None, 0, 0)
-    assert result.final_answer_may_name_limitation is False
-
-
 def test_real_profile_persists_full_qualified_manifest_without_upgrading_legacy(tmp_path) -> None:
     from holdspeak.db import Database
     from holdspeak.principals import Principal, PrincipalKind

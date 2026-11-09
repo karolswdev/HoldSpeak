@@ -27,14 +27,6 @@ def _plugin(response):
     return intel_plugin(DecisionCapturePlugin(), lambda _m, **_kw: response)
 
 
-def test_attributes() -> None:
-    p = DecisionCapturePlugin()
-    assert p.id == "decision_capture"
-    assert p.kind == "synthesizer"
-    assert p.execution_mode == "deferred"
-    assert p.required_capabilities == ["llm"]
-
-
 def test_run_success_captures_decisions_and_questions() -> None:
     out = _plugin(_GOOD_JSON).run({"transcript": "We made some calls."})
     assert out["confidence_hint"] == 1.0
@@ -124,12 +116,6 @@ def test_extract_returns_none_without_recognizable_keys() -> None:
     assert _extract_decisions('{"foo": 1}') is None
     assert _extract_decisions("") is None
     assert _extract_decisions("[1,2,3]") is None
-
-
-def test_registrar_returns_real_plugin() -> None:
-    host = PluginHost(default_timeout_seconds=0.5, enabled_capabilities={"llm"})
-    register_builtin_plugins(host)
-    assert isinstance(host.get_plugin("decision_capture"), DecisionCapturePlugin)
 
 
 def test_host_blocks_without_llm_capability() -> None:

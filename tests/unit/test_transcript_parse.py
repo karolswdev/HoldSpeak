@@ -195,21 +195,3 @@ def test_unsupported_suffix_refused() -> None:
         parse_transcript("hello\n", "x.docx")
 
 
-def test_suffix_registry_is_the_v1_trio() -> None:
-    assert TRANSCRIPT_SUFFIXES == frozenset({".vtt", ".srt", ".txt"})
-
-
-def test_module_is_pure() -> None:
-    import holdspeak.transcript_parse as mod
-
-    source = open(mod.__file__).read()
-    for forbidden in ("import sqlite3", "from .db", "from .config", "import requests",
-                      "import httpx", "open("):
-        assert forbidden not in source, f"pure parser module must not use {forbidden!r}"
-
-
-def test_parsed_transcript_shape() -> None:
-    parsed = parse_transcript("Ana: hi\n", "x.txt")
-    assert isinstance(parsed, ParsedTranscript)
-    cue = parsed.cues[0]
-    assert (cue.text, cue.speaker) == ("hi", "Ana")

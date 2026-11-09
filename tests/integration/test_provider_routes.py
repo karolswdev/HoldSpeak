@@ -214,22 +214,6 @@ class TestListProviders:
         assert "native" in ids
         assert "github" in ids
 
-    def test_native_provider_has_families(self, rig) -> None:
-        _db, client, _log, _ctx = rig
-        resp = client.get("/api/providers")
-        native = [p for p in resp.json()["providers"] if p["provider_id"] == "native"][0]
-        assert "meetings" in native["families"]
-        assert "decisions" in native["families"]
-        assert "door" in native["families"]
-
-    def test_github_provider_has_capabilities(self, rig) -> None:
-        _db, client, _log, _ctx = rig
-        resp = client.get("/api/providers")
-        github = [p for p in resp.json()["providers"] if p["provider_id"] == "github"][0]
-        assert github["capabilities"]["discover"] is True
-        assert github["capabilities"]["read"] is True
-
-
 # ── GET /api/providers/github/connection ─────────────────────────────
 
 

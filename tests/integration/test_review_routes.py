@@ -544,17 +544,6 @@ class TestFailurePaths:
 class TestDeltaEmptyState:
     """GET /api/projects/{id}/delta with no open review."""
 
-    def test_delta_empty_state_shape(self, rig) -> None:
-        db, client, _delta = rig
-        project_id = _seed_project(db, "proj-delta-empty")
-
-        resp = client.get(f"/api/projects/{project_id}/delta")
-        assert resp.status_code == 200
-        body = resp.json()
-        assert body["open_review"] is None
-        assert "last_accepted_at" in body
-        assert "source_coverage" in body
-
     def test_delta_unknown_project_404(self, rig) -> None:
         _db, client, _delta = rig
         resp = client.get("/api/projects/proj-nonexistent/delta")

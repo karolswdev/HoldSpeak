@@ -29,19 +29,6 @@ _EXPECTED = {
 }
 
 
-def test_model_library_mcp_catalogue_is_closed_and_contains_all_http_twins() -> None:
-    tools = {tool["name"]: tool["inputSchema"] for tool in model_library.TOOLS}
-    assert set(tools) == _EXPECTED
-    for name, schema in tools.items():
-        assert schema["$id"] == f"holdspeak://mcp/{name}@1"
-        assert schema["additionalProperties"] is False
-    assert tools["model_library.connect_hosted_model"]["properties"]["draft"]["additionalProperties"] is False
-    assert tools["model_library.connect_hosted_model"]["properties"]["secret"]["additionalProperties"] is False
-    upload = tools["model_library.use_model_file"]
-    assert upload["properties"]["bytes_base64"]["maxLength"] == model_library.MAX_MODEL_FILE_BASE64_CHARS
-    assert "path" not in upload["properties"]
-
-
 def test_model_library_mcp_is_owner_before_every_body_read(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     monkeypatch.setattr(model_library, "get_database", lambda: Database(tmp_path / "library-mcp.db"))
     malformed = {"secret": {"value": "do-not-read"}, "path": "/private/owner.gguf"}
@@ -155,3 +142,16 @@ def test_define_endpoint_over_mcp_keeps_the_servers_context(monkeypatch: pytest.
             "model_library.define_endpoint", {"draft": {**draft, "request_id": "x", "extra": 1}, "secret": None}, OWNER,
         )
     assert refused.value.code == "model_library_provider_invalid"
+
+
+def test_model_library_mcp_catalogue_is_closed_and_contains_all_http_twins() -> None:
+    tools = {tool["name"]: tool["inputSchema"] for tool in model_library.TOOLS}
+    assert set(tools) == _EXPECTED
+    for name, schema in tools.items():
+        assert schema["$id"] == f"holdspeak://mcp/{name}@1"
+        assert schema["additionalProperties"] is False
+    assert tools["model_library.connect_hosted_model"]["properties"]["draft"]["additionalProperties"] is False
+    assert tools["model_library.connect_hosted_model"]["properties"]["secret"]["additionalProperties"] is False
+    upload = tools["model_library.use_model_file"]
+    assert upload["properties"]["bytes_base64"]["maxLength"] == model_library.MAX_MODEL_FILE_BASE64_CHARS
+    assert "path" not in upload["properties"]

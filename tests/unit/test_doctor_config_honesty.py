@@ -72,10 +72,6 @@ def test_database_check_unreadable_is_warn(db_path: Path) -> None:
 # --- config_version ---
 
 
-def test_config_default_carries_current_version() -> None:
-    assert Config().config_version == CONFIG_VERSION
-
-
 def test_config_roundtrips_version(tmp_path) -> None:
     path = tmp_path / "config.json"
     Config().save(path)

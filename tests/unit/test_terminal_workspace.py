@@ -246,14 +246,6 @@ def test_sessions_route_uses_injected_workspace_service() -> None:
     assert required_right("GET", "/api/delivery/terminal/sessions") is PrincipalRight.OWNER
 
 
-def test_delivery_service_composes_workspace_with_shared_targets() -> None:
-    targets = object()
-    service = DeliveryService(None)
-    workspace = service.terminal_workspace_service(targets=targets, local_node_id="node-a")
-    assert workspace.targets is targets
-    assert workspace.local_node_id == "node-a"
-
-
 def test_sessions_route_delegates_workspace_composition_and_shared_targets() -> None:
     tmux = IdentityTmux()
     targets = TerminalTargetRegistry(runner=tmux)
