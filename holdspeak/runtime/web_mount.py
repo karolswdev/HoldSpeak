@@ -73,7 +73,6 @@ def mount_routers(app: Any, hub: HubComposition, *, auth_token: Optional[str]) -
         build_tts_router,
         build_project_reviews_router,
         build_project_door_router,
-        build_project_setup_router,
         build_project_updates_router,
         build_channels_router,
         build_project_briefs_router,
@@ -192,7 +191,6 @@ def mount_routers(app: Any, hub: HubComposition, *, auth_token: Optional[str]) -
     mount_router(app, build_recordings_router(web_ctx))
     mount_router(app, build_project_reviews_router(web_ctx))
     mount_router(app, build_project_door_router(web_ctx))
-    mount_router(app, build_project_setup_router(web_ctx))
     mount_router(app, build_project_updates_router(web_ctx))
     mount_router(app, build_channels_router(web_ctx))  # PHILO-10-01: the Send
     mount_router(app, build_project_briefs_router(web_ctx))

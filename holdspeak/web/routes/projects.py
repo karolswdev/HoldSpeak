@@ -20,6 +20,7 @@ from ...services.errors import ConflictError, NotFound, ServiceError, Validation
 from ...services.project_service import ProjectService
 from ..context import WebContext
 from ..runtime_support import error_500
+from ._mount import mount_router
 from ._room_kernel import body_or_refusal, kernel_fields, kernel_refusal, refusal_fields
 
 log = get_logger("web.routes.projects")
@@ -58,6 +59,16 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
         """
         return operations.for_context(ctx, "project_service")
 
+    # 2026-11-09 (ops/projects): the Room's reads and its saved asks are
+    # produced from their declared rows (``project_operations.py``).
+    from ...project_operations import PROJECT_OPERATIONS
+    from ._produced import envelope, produced
+
+    room_answer = envelope(log, "Failed to read the project", statuses={ValueError: 400}, not_found=lambda exc: {
+        "error": "Project not found" if exc.kind == "project" else str(exc)})
+    mount_router(router, produced(ctx, [d for d in PROJECT_OPERATIONS if d.service == "project_service"],
+                                  room_answer, module=__name__, project_service=lambda: service))
+
     def not_found(exc: NotFound, *, success: bool = False) -> JSONResponse:
         body: dict[str, Any] = {"error": "Project not found" if exc.kind == "project" else str(exc)}
         if success:
@@ -67,22 +78,13 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
     @router.get("/api/projects/{project_id}/room")
     async def api_project_room(project_id: str, request: Request) -> Any:
         try:
+            who = principal(request)
             return JSONResponse(await run_in_threadpool(
-                ops().invoke, principal(request), "project.get_room", {"project_id": project_id}))
+                lambda: ops().invoke(who, "project.get_room", {"project_id": project_id})))
         except NotFound as exc:
             return not_found(exc)
         except Exception as exc:
             return error_500(exc, log, "Failed to get project room")
-
-    @router.post("/api/projects/{project_id}/room/read")
-    def api_mark_room_read(project_id: str, request: Request) -> Any:
-        """HS-169-04: set the per-project read marker to now."""
-        try:
-            return JSONResponse(service.mark_room_read(principal(request), project_id))
-        except NotFound as exc:
-            return not_found(exc)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to mark room read")
 
     # ── HS-200-41: the saved ask ─────────────────────────────────────
     #
@@ -110,49 +112,6 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
         body.setdefault("error_code", exc.code)
         status = int(body.pop("status", 409 if isinstance(exc, ConflictError) else 400))
         return JSONResponse(body, status_code=status)
-
-    @router.post("/api/projects/{project_id}/ask-tasks")
-    def api_save_ask_task(project_id: str, payload: dict[str, Any], request: Request) -> Any:
-        try:
-            host_id, lease_epoch = host_identity()
-            return JSONResponse(
-                service.save_ask(
-                    principal(request), project_id, payload,
-                    host_id=host_id, lease_epoch=lease_epoch,
-                ),
-                status_code=201,
-            )
-        except NotFound as exc:
-            return not_found(exc)
-        except ServiceError as exc:
-            return service_error(exc)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to save ask")
-
-    @router.get("/api/ask-tasks")
-    def api_list_ask_tasks(
-        request: Request,
-        state: str = "unfinished",
-        limit: int = 20,
-        cursor: str | None = None,
-        project_id: str | None = None,
-    ) -> Any:
-        # A closed `state` param: the Resume projection is the only view.
-        if state != "unfinished":
-            return JSONResponse(
-                {"error": "state must be 'unfinished'", "error_code": "ask_task_state_invalid"},
-                status_code=400,
-            )
-        try:
-            host_id, _ = host_identity()
-            return JSONResponse(service.list_unfinished_asks(
-                principal(request), limit=limit, cursor=cursor,
-                project_id=project_id, host_id=host_id,
-            ))
-        except ServiceError as exc:
-            return service_error(exc)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to list unfinished asks")
 
     @router.post("/api/ask-tasks/{task_id}/resume")
     async def api_resume_ask_task(task_id: str, request: Request) -> Any:
@@ -183,42 +142,6 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
             return service_error(exc)
         except Exception as exc:
             return error_500(exc, log, "Failed to resume ask")
-
-    @router.post("/api/ask-tasks/{task_id}/stopped")
-    def api_record_ask_stop(task_id: str, payload: dict[str, Any], request: Request) -> Any:
-        """Record why a saved ask stopped, from the refusal CODE alone.
-
-        The body carries `code` and nothing else that reaches the store: the
-        service resolves that token against its own live placement and quotes
-        the destination's words, so no caller-supplied sentence can ever land
-        on a row (ruling B5).  `saved` -> `failed` only; a repeat is a no-op.
-        """
-        try:
-            host_id, _ = host_identity()
-            return JSONResponse(service.record_ask_stop(
-                principal(request), task_id,
-                str(payload.get("code") or ""), host_id=host_id,
-            ))
-        except NotFound as exc:
-            return not_found(exc)
-        except ServiceError as exc:
-            return service_error(exc)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to record ask stop")
-
-    @router.post("/api/ask-tasks/{task_id}/discard")
-    def api_discard_ask_task(task_id: str, request: Request) -> Any:
-        try:
-            host_id, _ = host_identity()
-            return JSONResponse(service.discard_ask(
-                principal(request), task_id, host_id=host_id,
-            ))
-        except NotFound as exc:
-            return not_found(exc)
-        except ServiceError as exc:
-            return service_error(exc)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to discard ask")
 
     @router.get("/api/projects")
     def api_list_projects(request: Request, include_archived: bool = False) -> Any:
@@ -314,15 +237,6 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
             log.error(f"Failed to restore project: {exc}")
             return JSONResponse({"success": False, "error": str(exc)}, status_code=500)
 
-    @router.get("/api/projects/{project_id}/meetings")
-    def api_project_meetings(project_id: str, request: Request, limit: int = 50, offset: int = 0) -> Any:
-        try:
-            return JSONResponse({"meetings": service.list_meetings(principal(request), project_id, limit=limit, offset=offset)})
-        except NotFound as exc:
-            return not_found(exc)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to get project meetings")
-
     @router.get("/api/projects/{project_id}/resources")
     def api_project_resources(project_id: str, request: Request) -> Any:
         try:
@@ -386,15 +300,6 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
         except Exception as exc:
             return error_500(exc, log, "Failed to remove Project resource")
 
-    @router.get("/api/desk/relationships/{resource_ref:path}")
-    def api_resource_relationships(resource_ref: str, request: Request) -> Any:
-        try:
-            return JSONResponse(service.list_resource_relationships(principal(request), resource_ref))
-        except ValueError as exc:
-            return JSONResponse({"error": str(exc)}, status_code=400)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to inspect Desk relationships")
-
     @router.post("/api/projects/{project_id}/meetings/{meeting_id}")
     def api_associate_meeting(project_id: str, meeting_id: str, request: Request) -> Any:
         try:
@@ -426,33 +331,6 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
         except Exception as exc:
             log.error(f"Failed to disassociate meeting: {exc}")
             return JSONResponse({"success": False, "error": str(exc)}, status_code=500)
-
-    @router.get("/api/meetings/{meeting_id}/projects")
-    def api_meeting_projects(meeting_id: str, request: Request) -> Any:
-        try:
-            return JSONResponse({"projects": service.list_meeting_projects(principal(request), meeting_id)})
-        except NotFound as exc:
-            return JSONResponse({"error": str(exc)}, status_code=404)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to get meeting projects")
-
-    @router.get("/api/projects/{project_id}/since-last-meeting")
-    def api_project_since_last_meeting(project_id: str, request: Request) -> Any:
-        try:
-            return JSONResponse(service.since_last_meeting(principal(request), project_id))
-        except NotFound as exc:
-            return not_found(exc)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to compare Project meetings")
-
-    @router.get("/api/projects/{project_id}/artifacts")
-    def api_project_artifacts(project_id: str, request: Request) -> Any:
-        try:
-            return JSONResponse({"artifacts": service.list_artifacts(principal(request), project_id)})
-        except NotFound as exc:
-            return not_found(exc)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to get project artifacts")
 
     # ── Item routes (HS-158-03) ─────────────────────────────────────
 

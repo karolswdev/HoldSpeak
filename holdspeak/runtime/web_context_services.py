@@ -14,6 +14,7 @@ SERVICE_NAMES = (
     "project_steward_service",
     "project_setup_service",
     "project_door_service",
+    "project_brief_service",
     "project_evidence_collector",
     "watch_service",
     "connections_service",

@@ -16,153 +16,68 @@ owner's words and draws the repair (AC5).
 from __future__ import annotations
 
 import asyncio
-from typing import Any
+from typing import Any, Callable
 
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
+from ... import operations
 from ...logging_config import get_logger
-from ...principals import UNAUTHENTICATED
-from ...services.errors import ConflictError, NotFound, ServiceError, ValidationError
+from ...project_operations import PROJECT_OPERATIONS
+from ...services.errors import ConflictError, NotFound, ValidationError
 from ...services.preparation_brief_service import PreparationRefused
 from ..context import WebContext
-from ..runtime_support import error_500
+from ..operation_routes import _invoke, _principal
+from ._produced import envelope, produced
 
 log = get_logger("web.routes.project_briefs")
 
 
-def build_project_briefs_router(ctx: WebContext) -> APIRouter:
-    router = APIRouter()
+def _prepare(registry: Callable[[], Any], answer: Any) -> Callable[[Any], Callable[..., Any]]:
+    """The prepare route: the declared ``project.brief.prepare``, off the event
+    loop, so the stop route can land while it runs; the route watches for the
+    client leaving, and a Stop that aborted the fetch stops the attempt, so the
+    completing run writes no draft (P1-4)."""
 
-    def principal(request: Request) -> Any:
-        return getattr(request.state, "principal", UNAUTHENTICATED)
-
-    def service() -> Any:
-        svc = ctx.project_brief_service
-        if svc is None:
-            raise RuntimeError("project_brief_service is not configured")
-        return svc
-
-    def refused(exc: ServiceError, status: int) -> JSONResponse:
-        body: dict[str, Any] = dict(exc.context)
-        body.pop("status", None)
-        body.setdefault("error", exc.detail)
-        body.setdefault("error_code", exc.code)
-        return JSONResponse(body, status_code=status)
-
-    @router.get("/api/projects/{project_id}/briefs/route")
-    def api_brief_route(project_id: str, request: Request) -> Any:
-        try:
-            return JSONResponse({"route": service().route(principal(request), project_id)})
-        except NotFound as exc:
-            return refused(exc, 404)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to read the brief route")
-
-    @router.get("/api/projects/{project_id}/briefs/manifest")
-    def api_brief_manifest(project_id: str, request: Request) -> Any:
-        try:
-            return JSONResponse({"manifest": service().preview_manifest(principal(request), project_id)})
-        except NotFound as exc:
-            return refused(exc, 404)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to preview the brief manifest")
-
-    @router.post("/api/projects/{project_id}/briefs/prepare")
-    async def api_prepare_brief(project_id: str, payload: dict[str, Any], request: Request) -> Any:
-        """The run leaves the event loop (a model call is seconds), so the
-        stop route can land while it is out -- and the route itself watches
-        for the client leaving: a Stop that aborted the fetch cancels the
-        kernel operation and the completing run writes no draft (P1-4)."""
-        attempt_id = str(payload.get("attempt_id") or "").strip()
-        who = principal(request)
-        svc = service()
-
-        def _run() -> dict[str, Any]:
-            return svc.prepare(
-                who, project_id,
-                str(payload.get("purpose") or ""),
-                generator=str(payload.get("generator") or "model"),
-                attempt_id=attempt_id,
-            )
-
-        try:
-            task = asyncio.ensure_future(asyncio.to_thread(_run))
+    def build(descriptor: Any) -> Callable[..., Any]:
+        async def api_prepare_brief(project_id: str, request: Request) -> Any:
+            try:
+                payload = await request.json()
+            except Exception:
+                payload = None
+            if not isinstance(payload, dict):
+                return JSONResponse({"error": "expected a JSON object", "error_code": "validation_error"},
+                                    status_code=422)
+            args = {**payload, "project_id": project_id}
+            attempt_id = str(payload.get("attempt_id") or "").strip()
+            who = _principal(request)
+            task = asyncio.ensure_future(asyncio.to_thread(_invoke, registry, who, descriptor.name, args))
             while not task.done():
                 await asyncio.wait({task}, timeout=0.25)
-                if task.done():
-                    break
-                if attempt_id:
-                    try:
-                        gone = await request.is_disconnected()
-                    except Exception:
-                        gone = False
-                    if gone:
-                        svc.stop(attempt_id)
-            brief = task.result()
-            return JSONResponse({"success": True, "brief": brief})
-        except PreparationRefused as exc:
-            return refused(exc, 409)
-        except NotFound as exc:
-            return refused(exc, 404)
-        except ValidationError as exc:
-            return refused(exc, 422)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to prepare the brief")
+                if task.done() or not attempt_id:
+                    continue
+                try:
+                    gone = await request.is_disconnected()
+                except Exception:
+                    gone = False
+                if gone:
+                    _invoke(registry, who, "project.brief.stop", {"project_id": project_id, "attempt_id": attempt_id})
+            return await answer(task.result)
 
-    @router.post("/api/projects/{project_id}/briefs/stop")
-    def api_stop_brief(project_id: str, payload: dict[str, Any], request: Request) -> Any:
-        del project_id
-        try:
-            return JSONResponse(service().stop(str(payload.get("attempt_id") or "")))
-        except ValidationError as exc:
-            return refused(exc, 422)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to stop the brief")
+        return api_prepare_brief
 
-    @router.get("/api/projects/{project_id}/briefs")
-    def api_list_briefs(
-        project_id: str, request: Request, lifecycle: str | None = None, limit: int = 20,
-    ) -> Any:
-        try:
-            briefs = service().list_briefs(
-                principal(request), project_id, lifecycle=lifecycle, limit=limit,
-            )
-            return JSONResponse({"briefs": briefs})
-        except NotFound as exc:
-            return refused(exc, 404)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to list briefs")
+    return build
 
-    @router.get("/api/briefs/{brief_id}")
-    def api_get_brief(brief_id: str, request: Request) -> Any:
-        try:
-            return JSONResponse({"brief": service().get_brief(principal(request), brief_id)})
-        except NotFound as exc:
-            return refused(exc, 404)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to read the brief")
 
-    @router.post("/api/briefs/{brief_id}/keep")
-    def api_keep_brief(brief_id: str, request: Request) -> Any:
-        try:
-            return JSONResponse({"success": True, "brief": service().keep(principal(request), brief_id)})
-        except NotFound as exc:
-            return refused(exc, 404)
-        except ConflictError as exc:
-            return refused(exc, 409)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to keep the brief")
+def build_project_briefs_router(ctx: WebContext) -> APIRouter:
+    """HS-200-11's routes, produced from their declared rows (``project_operations.py``).
 
-    @router.post("/api/briefs/{brief_id}/discard")
-    def api_discard_brief(brief_id: str, request: Request) -> Any:
-        try:
-            return JSONResponse({"success": True, "brief": service().discard(principal(request), brief_id)})
-        except NotFound as exc:
-            return refused(exc, 404)
-        except ConflictError as exc:
-            return refused(exc, 409)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to discard the brief")
+    A refused preparation is a 409 carrying the bounded route state AND the
+    purpose, so the face keeps the owner's words and draws the repair (AC5)."""
+    def registry() -> operations.OperationRegistry:
+        return operations.for_context(ctx)
 
-    return router
+    answer = envelope(log, "Failed to run the brief verb", statuses={
+        PreparationRefused: 409, NotFound: 404, ValidationError: 422, ConflictError: 409})
+    return produced(ctx, [d for d in PROJECT_OPERATIONS if d.service == "project_brief_service"], answer,
+                    module=__name__, hand_written={"project.brief.prepare": _prepare(registry, answer)})

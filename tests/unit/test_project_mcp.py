@@ -103,18 +103,17 @@ def test_project_tools_are_discoverable_with_versioned_schemas() -> None:
     assert project_tools[0]["name"] == "project.list"
     assert project_tools[1]["name"] == "project.get"
     assert project_tools[2]["name"] == "project.get_room"
-    # HS-165-02 adds 14 command tools (17), HS-165-03 adds 16 driver tools (33 total)
-    # HS-172-06: + 3 suggested_source tools (35 -> 38)
-    # HS-200-03: + 4 Project-setup proposal tools (38 -> 42), regenerated from
-    # the authoritative source below rather than from a remembered number.
-    # PHILO-9-01: + the seven item and resource tools (42 -> 49).
-    # PHILO-9-02: + project.mark_update_delivered (49 -> 50).
-    assert len(project_tools) == 50
+    # Every project.* tool is the project family's or a declared operation's
+    # (2026-11-09: the Room's web verbs are declared, project_operations.py),
+    # and no name is both.
+    from holdspeak import operations
     from holdspeak.mcp.families import project as project_family
 
-    assert len(project_tools) == len(
-        [t for t in project_family.TOOLS if t["name"].startswith("project.")]
-    )
+    family = {t["name"] for t in project_family.TOOLS if t["name"].startswith("project.")}
+    declared = {d.tool_name for d in operations.DESCRIPTORS
+                if d.tool_schema is not None and d.tool_name.startswith("project.")}
+    assert {t["name"] for t in project_tools} == family | declared
+    assert not family & declared
     # Versioned $id schemas
     assert project_tools[0]["inputSchema"]["$id"] == "holdspeak://mcp/project.list@1"
     assert project_tools[1]["inputSchema"]["$id"] == "holdspeak://mcp/project.get@1"

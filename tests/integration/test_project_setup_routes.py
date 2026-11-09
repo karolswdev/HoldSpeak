@@ -31,7 +31,6 @@ from tests.watch_seed import seed_watch
 from holdspeak.services.watch_service import WatchService
 from holdspeak.web.context import WebContext
 from holdspeak.web.routes import (
-    build_project_setup_router,
     build_projects_router,
     build_watches_router,
 )
@@ -98,7 +97,6 @@ def rig(tmp_path, monkeypatch):
             return await call_next(request)
 
     app.add_middleware(_OwnerMiddleware)
-    app.include_router(build_project_setup_router(ctx))
     app.include_router(build_watches_router(ctx))
     app.include_router(build_projects_router(ctx))
     client = TestClient(app)
