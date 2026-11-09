@@ -225,12 +225,6 @@ def build_briefing_router(ctx: WebContext) -> APIRouter:
     async def api_reach_package_revoke(package_id: str, request: Request) -> Any:
         return await _owner(request, lambda principal: _service().revoke(principal, package_id), what="revoke")
 
-    @router.get("/api/reach/packages")
-    async def api_reach_packages(request: Request) -> Any:
-        program_id = str(request.query_params.get("program_id") or "")
-        return await _owner(request, lambda principal: {"packages": _service().packages(principal, program_id)},
-                            what="list")
-
     # ── DIR4 to DIR6: Later, his settings, Telegram ──────────────────
 
     @router.get("/api/reach")

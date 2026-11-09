@@ -30,7 +30,6 @@ QUIET_ROUTES: dict[tuple[str, str], str] = {
     # Read-like: the POST carries a question; nothing a window shows is stored.
     ("POST", "/api/activity/project-rules/preview"): "read-like: previews a rule",
     ("POST", "/api/agent/hand/preview"): "read-like: previews a hand-off, writes nothing",
-    ("POST", "/api/authority/evaluate"): "read-like: evaluates an operation",
     ("POST", "/api/channels/preview"): "read-like: channel.preview is effect=read",
     ("POST", "/api/dictation/dry-run"): "read-like: runs the pipeline on text, stores nothing",
     ("POST", "/api/grounding/resolve"): "read-like: resolves references",
@@ -59,7 +58,6 @@ QUIET_ROUTES: dict[tuple[str, str], str] = {
     ("POST", "/api/tts/download"): "noise: speech model download",
     ("POST", "/api/delivery/node/hello"): "noise: node traffic",
     ("POST", "/api/delivery/node/heartbeat"): "noise: node traffic, periodic",
-    ("POST", "/api/delivery/node/disconnect"): "noise: node traffic",
     # Ephemeral terminal output is a read-like subscription.  It is a POST so
     # the browser can carry its immutable target and resume cursor, but it
     # never writes a Desk object and may remain open indefinitely.

@@ -45,12 +45,7 @@ def test_every_dynamic_web_call_resolves_to_a_route(live) -> None:
 
 # Web calls to a path the app does not serve, each a single named defect.
 # Strict: a fix fails here until its entry is removed.
-KNOWN_UNSERVED_WEB_CALLS = {
-    # The park in 96b8a3884 ("no client reads") took the route out, but
-    # web/src/features/project-room/door/api.ts calls it through
-    # `${PROVIDERS}/confluence/discover…`, which the census did not follow then.
-    "GET /api/providers/confluence/discover*",
-}
+KNOWN_UNSERVED_WEB_CALLS: set[str] = set()
 
 
 def test_clients_only_call_served_routes(live) -> None:

@@ -138,7 +138,7 @@ Each send is egress. Its record names the destination ("Telegram · owner chat")
 | `POST /api/reach/digest` | Send the digest now. |
 | `POST /api/reach/later` | Later on one item (`ref`, `later`). |
 | `POST /api/reach/packages` | Make the briefing page for one item; `send: ["telegram"]` also sends it. |
-| `POST /api/reach/packages/{id}/revoke`, `GET /api/reach/packages?program_id=` | End a page, or list the open pages. |
+| `POST /api/reach/packages/{id}/revoke` | End a page. |
 
 The MCP tools are `phone.brief`, `phone.later` and `phone.status` (it also tells Telegram's state, the ladder and the open pages). Only you can change Reach, make a page or say Later.
 

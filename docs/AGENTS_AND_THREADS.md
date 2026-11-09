@@ -53,7 +53,7 @@ is not treated as a physical purge.
 | Stop the active turn | `POST /api/threads/{thread_id}/abort` |
 | Branch or regenerate | `POST /api/threads/{thread_id}/branch`, `POST /api/threads/{thread_id}/regenerate` |
 | Keep a result | `POST /api/threads/{thread_id}/keep` |
-| Import, compact, annotate, or create a todo | `POST /api/threads/import`, `POST /api/threads/{thread_id}/compact`, `POST /api/threads/{thread_id}/annotations`, `POST /api/threads/{thread_id}/todo` |
+| Import, annotate, or create a todo | `POST /api/threads/import`, `POST /api/threads/{thread_id}/annotations`, `POST /api/threads/{thread_id}/todo` |
 | Decide a held tool call | `POST /api/threads/{thread_id}/decide` |
 | Interview commands and promotions | `POST /api/threads/{thread_id}/interview` |
 

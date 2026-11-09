@@ -147,15 +147,6 @@ def build_delivery_node_router(
             )
         )
 
-    @router.post("/api/delivery/node/disconnect")
-    def api_node_disconnect(
-        body: _DisconnectRequest,
-        x_holdspeak_node_token: Optional[str] = Header(default=None),
-    ) -> Any:
-        return _guarded(
-            lambda: _link().disconnect(body.name, x_holdspeak_node_token)
-        )
-
     @router.get("/api/delivery/nodes")
     def api_delivery_nodes() -> Any:
         """Browser-facing liveness projection: typed status with
