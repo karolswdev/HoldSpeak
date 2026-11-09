@@ -1,12 +1,11 @@
 #!/usr/bin/env bash
 # Write every generated document. One command; run it from any directory.
 #
-# Three outputs are not in git (owner ruling 2026-10-03), because they hold
-# line numbers, test lists and input hashes that conflict on every merge:
-#   docs/generated/api-reference.json
-#   docs/generated/boundary-candidates.json
-#   docs/generated/graph.json
-# The other outputs stay in git; commit them when they change.
+# No output is in git (owner ruling 2026-10-03, extended 2026-11-08): every
+# park or move made a committed copy stale, and every PR conflicted on them.
+# .gitignore lists them: docs/generated/, docs/api-surface.json,
+# docs/API_SURFACE.md, docs/API_REFERENCE.md and docs/MCP_SIDECAR.md (filled
+# from scripts/mcp_sidecar_doc.template.md). Tests derive from the live tree.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 

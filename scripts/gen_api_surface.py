@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Generate the declared API surface: docs/api-surface.json + docs/API_SURFACE.md.
+"""Generate the API surface census: docs/api-surface.json + docs/API_SURFACE.md.
 
 The HTTP surface used to be an emergent property of 13 routers, and which
 routes each client consumes was discoverable only by grepping the Swift and
-web sources. This generator makes the surface a committed artifact:
+web sources. This generator makes the surface a generated artifact:
 
 - **Routes** are enumerated from the REAL assembled FastAPI app (the same
   construction the route pre-flight uses), so nothing can hide.
@@ -29,15 +29,22 @@ web sources. This generator makes the surface a committed artifact:
   tagged and the entries are listed under ``web_dynamic_calls``. A dynamic
   call with no entry (same file and method) tags nothing and is listed under
   ``unresolved_dynamic_calls`` so it is not lost.
+- A path built on a URL builder (``${base(id)}/start``, ``${at(id)}/retry``,
+  ``repoUrl(id, "/stage")``, ``${PROVIDERS}/jira/discover``) is read with the
+  builder's path filled in (see ``find_builders``); an exported builder also
+  counts in each file that imports it. A ``${verb}`` typed as a union of
+  string literals gives one candidate call per value; a candidate the app does
+  not serve is dropped (code can guard a value away).
+- Parked code is not read: no ``_parked/`` web or Swift file, and no route
+  whose module is in a ``_parked`` package.
 - Each route is tagged ``web`` / ``ios`` / both / neither (server-only).
 
-Regenerate after any route change:
+The outputs are not in git (2026-11-08); write them on demand:
 
     uv run python scripts/gen_api_surface.py
 
-The snapshot guard (``tests/unit/test_api_surface.py``) fails when the
-committed manifest drifts from the live app, and when a client calls a path
-the app does not serve.
+``tests/unit/test_api_surface.py`` builds the manifest from the live tree and
+fails when a client calls a path the app does not serve.
 """
 from __future__ import annotations
 
@@ -122,10 +129,14 @@ def build_app_routes() -> list[dict[str, Any]]:
             # cannot live in a manifest that must match every environment.
             continue
         if kind.endswith("WebSocketRoute"):
+            if "._parked." in f".{module}.":
+                continue
             routes.append({"path": path, "methods": ["WS"], "module": _short(module)})
             continue
         if not methods:
             continue
+        if "._parked." in f".{module}.":
+            continue  # parked code is not the product surface
         routes.append({"path": path, "methods": methods, "module": _short(module)})
     routes.sort(key=lambda r: (r["path"], r["methods"]))
     return routes
@@ -596,14 +607,58 @@ def _wrapper_methods(src: _Source, name: str, index: int, depth: int) -> set[str
     return _uses_methods(src, params[index], params_close, body_end, depth + 1)
 
 
-def _param_variants(src: _Source, start: int, end: int) -> list[str]:
+def _union_values(src: _Source, params_open: int, index: int) -> list[str]:
+    """The string literals a parameter's type allows (``verb: "a" | "b"``).
+
+    The type is read inline or from a ``type Name = "a" | "b"`` alias in the
+    same source; any other type gives no values.
+    """
+    parts = _split_top(src.text[params_open + 1 : src.pairs[params_open]])
+    if index >= len(parts) or ":" not in parts[index]:
+        return []
+    kind = parts[index].split(":", 1)[1].split("=", 1)[0].strip()
+    alias = re.search(rf"\btype\s+{re.escape(kind)}\s*=\s*([^;]+);", src.text) if re.fullmatch(_IDENT, kind) else None
+    if alias is not None:
+        kind = alias.group(1)
+    options = [o.strip() for o in kind.split("|") if o.strip()]
+    values = [re.fullmatch(r"[\"']([\w-]+)[\"']", o) for o in options]
+    return [v.group(1) for v in values if v] if values and all(values) else []
+
+
+def _union_fill(src: _Source, start: int, source: str) -> list[str]:
+    """The source once per value of a ``${param}`` typed as a literal union.
+
+    ``${base(id)}/${verb}`` inside ``programVerb(id, verb: "start" | "park")``
+    gives ``…/start`` and ``…/park``. Empty when no such parameter is in the
+    source. Each value is a candidate: code can guard one away (``action ===
+    "read" ? PATH : `${PATH}/${action}```), so a candidate the app does not
+    serve is dropped, not reported as an unmatched call.
+    """
+    owner = src.function_around(start)
+    if owner is None:
+        return []
+    params = src.params(owner[1])
+    for ident in re.findall(rf"\$\{{\s*({_IDENT})\s*\}}", source):
+        if ident not in params:
+            continue
+        union = _union_values(src, owner[1], params.index(ident))
+        if union:
+            out = []
+            for value in sorted(set(union)):
+                one = source.replace("${" + ident + "}", value)
+                out += _union_fill(src, start, one) or [one]
+            return out
+    return []
+
+
+def _param_variants(src: _Source, start: int, end: int, source: str | None = None) -> list[str]:
     """A template's source with a ``${param}`` filled by each literal passed.
 
     ``url: `/api/coders/relay/${node}/${verb}``` inside ``verbEndpoint(node,
     key, verb)`` becomes one source per ``verbEndpoint(…, "arm")`` call. Only
     a parameter every call passes as a string literal is filled.
     """
-    source = src.text[start:end]
+    source = src.text[start:end] if source is None else source
     owner = src.function_around(start)
     if owner is None:
         return [source]
@@ -633,26 +688,294 @@ def _is_dynamic(path: str) -> bool:
     )
 
 
-def web_call_sites(text: str) -> set[tuple[str, str]]:
+# --- URL builders -----------------------------------------------------------
+# A web module often names its base path once and builds each call on it:
+#   const base = (id: string) => `/api/programs/${encodeURIComponent(id)}`;
+#   apiFetch(`${base(id)}/start`, { method: "POST" });
+#   const repoUrl = (id: string, suffix = "") => `/api/repositories/${id}${suffix}`;
+#   apiFetch(repoUrl(id, "/stage"), { method: "POST" });
+# A builder is a const or function whose value is one /api (or /ws) path
+# literal, or a const string literal that holds one. Each use of it, as the
+# first interpolation of a template or as a bare call, is a call site with the
+# builder's path filled in: a parameter that the call passes as a literal (or
+# that keeps a literal default) is replaced by that literal; any other
+# parameter reads as a wildcard. An exported builder also applies in each file
+# that imports it by name.
+_PATH_START = re.compile(r"(?:\$\{|/(?:api|ws)\b)")
+_BUILDER_ARROW = re.compile(
+    rf"(?<![\w$.])(?:export\s+)?(?:const|let)\s+({_IDENT})\s*=\s*"
+    rf"(?:\(([^()]*)\)|({_IDENT}))\s*(?::\s*string\s*)?=>\s*(?=[`\"'])"
+)
+_BUILDER_FUNCTION = re.compile(
+    rf"(?<![\w$.])(?:export\s+)?function\s+({_IDENT})\s*\(([^()]*)\)\s*(?::\s*string\s*)?\{{\s*return\s+(?=[`\"'])"
+)
+_BUILDER_CONST = re.compile(
+    rf"(?<![\w$.])(?:export\s+)?(?:const|let)\s+({_IDENT})\s*(?::\s*string\s*)?=\s*(?=[`\"'])"
+)
+
+
+class _Builder:
+    """One URL builder: its parameters, their literal defaults, its path source."""
+
+    def __init__(self, name: str, at: int, params: list[str] | None,
+                 defaults: dict[str, str], body: str, span: tuple[int, int],
+                 exported: bool) -> None:
+        self.name = name
+        self.at = at
+        self.params = params  # None: a const, used as ``${NAME}``
+        self.defaults = defaults
+        self.body = body  # the template source between the quotes
+        self.span = span  # the path literal in the source
+        self.exported = exported
+
+
+def _literal_source(text: str, i: int) -> tuple[str, int] | None:
+    """The source between the quotes of the literal at ``text[i]``, and its end."""
+    if text[i] == "`":
+        literal, end = _read_template(text, i)
+        if literal is None:
+            return None
+        return text[i + 1 : end - 1], end
+    end = _skip_quoted(text, i)
+    if end > len(text) or text[end - 1] != text[i]:
+        return None
+    # A quoted string holds no interpolation; escape a literal ``${``.
+    return text[i + 1 : end - 1].replace("`", "\\`"), end
+
+
+def _whole_literal(arg: str) -> str | None:
+    """The source of ``arg`` when it is one string or template literal."""
+    arg = arg.strip()
+    if not arg or arg[0] not in "`\"'":
+        return None
+    found = _literal_source(arg, 0)
+    if found is None or found[1] != len(arg):
+        return None
+    return found[0]
+
+
+def _builder_params(raw: str) -> tuple[list[str], dict[str, str]]:
+    names, defaults = [], {}
+    for part in _split_top(raw):
+        match = re.match(rf"\s*(?:\.\.\.)?({_IDENT})", part)
+        name = match.group(1) if match else ""
+        names.append(name)
+        if "=" in part and name:
+            literal = _whole_literal(part.split("=", 1)[1])
+            if literal is not None:
+                defaults[name] = literal
+    return names, defaults
+
+
+def find_builders(text: str) -> list[_Builder]:
+    """The URL builders defined in one (comment-blanked) web source."""
+    found: dict[int, _Builder] = {}
+    for pattern, kind in ((_BUILDER_ARROW, "arrow"), (_BUILDER_FUNCTION, "function"),
+                          (_BUILDER_CONST, "const")):
+        for match in pattern.finditer(text):
+            if match.start() in found:
+                continue
+            literal = _literal_source(text, match.end())
+            if literal is None or not _PATH_START.match(literal[0]):
+                continue
+            body, end = literal
+            if kind == "const":
+                params, defaults = None, {}
+                # "/api/kbs/" + encodeURIComponent(id): the rest is one wildcard.
+                if re.match(r"\s*\+", text[end : end + 8]):
+                    body += "${_}"
+            else:
+                raw = match.group(2) if match.group(2) is not None else (match.group(3) or "")
+                params, defaults = _builder_params(raw)
+            exported = match.group(0).lstrip().startswith("export")
+            found[match.start()] = _Builder(match.group(1), match.start(), params,
+                                            defaults, body, (match.end(), end), exported)
+    return sorted(found.values(), key=lambda b: b.at)
+
+
+def _fill(builder: _Builder, args: list[str]) -> str:
+    """The builder's path source with each literal argument filled in."""
+    body = builder.body
+    for index, param in enumerate(builder.params or []):
+        if not param:
+            continue
+        value = _whole_literal(args[index]) if index < len(args) else builder.defaults.get(param)
+        if value is not None:
+            body = re.sub(r"\$\{\s*" + re.escape(param) + r"\s*\}", lambda _m: value, body)
+    return body
+
+
+def _builder_use(expr: str) -> tuple[str, list[str] | None] | None:
+    """``NAME`` or ``NAME(args)`` → (name, args or None for a bare name)."""
+    match = re.fullmatch(rf"\s*({_IDENT})\s*(?:\((.*)\))?\s*", expr, re.DOTALL)
+    if match is None:
+        return None
+    return match.group(1), (_split_top(match.group(2)) if match.group(2) is not None else None)
+
+
+def _resolve(builder: _Builder, visible: dict[str, list[_Builder]], depth: int = 0) -> str | None:
+    """The builder's body with a leading ``${OTHER(…)}`` builder expanded."""
+    body = builder.body
+    if not body.startswith("${"):
+        return body
+    if depth > _FOLLOW_DEPTH:
+        return None
+    end = _skip_expression(body, 2)
+    use = _builder_use(body[2 : end - 1])
+    if use is None:
+        return None
+    inner = _pick(visible, use[0], builder.at)
+    if inner is None or inner is builder or (inner.params is None) != (use[1] is None):
+        return None
+    inner_body = _resolve(inner, visible, depth + 1)
+    if inner_body is None:
+        return None
+    filled = _Builder(inner.name, inner.at, inner.params, inner.defaults, inner_body,
+                      inner.span, inner.exported)
+    return _fill(filled, use[1] or []) + body[end:]
+
+
+def _pick(visible: dict[str, list[_Builder]], name: str, at: int) -> _Builder | None:
+    """The definition of ``name`` in effect at ``at`` (the nearest one before it)."""
+    options = visible.get(name) or []
+    before = [b for b in options if b.at < at]
+    return before[-1] if before else (options[0] if options else None)
+
+
+def builder_call_sites(
+    src: "_Source", imported: Iterable[_Builder] = ()
+) -> tuple[set[tuple[str, str]], set[tuple[str, str]], set[int]]:
+    """The calls built on a URL builder, as (method, path template).
+
+    Returns the calls, the candidate calls (see ``_union_fill``), and the
+    start of each function builder's own path literal: that literal is read
+    through its uses here, not as a call by itself.
+    """
+    text = src.text
+    local = find_builders(text)
+    visible: dict[str, list[_Builder]] = {}
+    for builder in imported:
+        if re.search(rf"\bimport\b[^;]*\b{re.escape(builder.name)}\b[^;]*\bfrom\b", text):
+            visible.setdefault(builder.name, []).append(
+                _Builder(builder.name, -1, builder.params, builder.defaults,
+                         builder.body, (-1, -1), False)
+            )
+    for builder in local:
+        visible.setdefault(builder.name, []).append(builder)
+    bodies = {id(b): _resolve(b, visible) for bs in visible.values() for b in bs}
+    sites: set[tuple[str, str]] = set()
+    candidates: set[tuple[str, str]] = set()
+
+    def add(source: str, start: int, end: int) -> None:
+        union = _union_fill(src, start, source)
+        for one in union or [source]:
+            path = _normalize(_read_template("`" + one + "`", 0)[0] or "")
+            if not path or not path.startswith(("/api", "/ws")):
+                continue
+            for method in _value_methods(src, start, end) or {UNNAMED}:
+                (candidates if union else sites).add((method, path))
+
+    def filled(builder: _Builder, args: list[str] | None) -> str | None:
+        body = bodies.get(id(builder))
+        if body is None or (builder.params is None) != (args is None):
+            return None
+        return _fill(_Builder(builder.name, builder.at, builder.params, builder.defaults,
+                              body, builder.span, builder.exported), args or [])
+
+    skip = {
+        b.span[0] for bs in visible.values() for b in bs
+        if b.params is not None and b.span[0] >= 0
+    }
+    # A template that opens with ``${NAME}`` or ``${NAME(…)}``.
+    for match in re.finditer(r"`\$\{", text):
+        start = match.start()
+        if start in skip:
+            continue  # a builder built on another: read through its own uses
+        literal, end = _read_template(text, start)
+        if literal is None:
+            continue
+        close = _skip_expression(text, start + 3)
+        use = _builder_use(text[start + 3 : close - 1])
+        if use is None or use[0] not in visible:
+            continue
+        builder = _pick(visible, use[0], start)
+        head = filled(builder, use[1]) if builder is not None else None
+        if head is not None:
+            for source in _param_variants(src, start, end, head + text[close : end - 1]):
+                add(source, start, end)
+    # A bare call ``NAME(…)`` of a function builder.
+    for name, builders in visible.items():
+        if all(b.params is None for b in builders):
+            continue
+        for name_at, paren_open, paren_close in src.calls_of(name):
+            builder = _pick(visible, name, name_at)
+            if builder is None or builder.params is None:
+                continue
+            body = filled(builder, _split_top(text[paren_open + 1 : paren_close]))
+            if body is not None:
+                add(body, name_at, paren_close + 1)
+    return sites, candidates, skip
+
+
+def exported_builders(texts: Iterable[str]) -> list[_Builder]:
+    """The exported URL builders of the web sources, each with its path resolved.
+
+    A name exported by two modules is left out: an import cannot say which.
+    """
+    by_name: dict[str, list[_Builder]] = {}
+    for text in texts:
+        blank = _blank_comments(text)
+        local = find_builders(blank)
+        visible: dict[str, list[_Builder]] = {}
+        for builder in local:
+            visible.setdefault(builder.name, []).append(builder)
+        for builder in local:
+            if not builder.exported:
+                continue
+            body = _resolve(builder, visible)
+            if body is not None:
+                by_name.setdefault(builder.name, []).append(
+                    _Builder(builder.name, -1, builder.params, builder.defaults,
+                             body, (-1, -1), True)
+                )
+    return [found[0] for found in by_name.values() if len(found) == 1]
+
+def web_call_sites(
+    text: str,
+    imported: Iterable["_Builder"] = (),
+    candidates: set[tuple[str, str]] | None = None,
+) -> set[tuple[str, str]]:
     """Every web call in one source text as (method, path template).
 
     A call whose method is read at run time carries ``*`` as its method; a
-    call that names none carries ``UNNAMED``.
+    call that names none carries ``UNNAMED``. ``imported`` are the exported
+    URL builders of other sources (``exported_builders``). A call filled from
+    a literal-union parameter (``_union_fill``) goes into ``candidates`` when
+    it is given, else with the other calls.
     """
-    sites: set[tuple[str, str]] = set()
     src = _Source(_blank_comments(text))
+    sites, maybe, builder_literals = builder_call_sites(src, imported)
     for raw, start, end in _web_literals(src.text):
-        raws = [raw]
+        if start in builder_literals:
+            continue  # a function builder's own path: its uses carry it
+        raws = [(raw, False)]
         if src.text[start] == "`" and _read_template(src.text, start)[1] == end:
-            variants = (_read_template(v, 0)[0] for v in _param_variants(src, start, end))
-            raws = [v for v in variants if v is not None] or [raw]
+            variants = []
+            for source in _param_variants(src, start, end):
+                union = _union_fill(src, start, source)
+                variants += [(v, bool(union)) for v in union or [source]]
+            read = [(_read_template(v, 0)[0], u) for v, u in variants]
+            raws = [(v, u) for v, u in read if v is not None] or raws
         methods = _value_methods(src, start, end) or {UNNAMED}
-        for one in raws:
+        for one, union in raws:
             path = _normalize(one)
             if not path:
                 continue
             for method in methods:
-                sites.add((method, path))
+                (maybe if union else sites).add((method, path))
+    if candidates is None:
+        return sites | maybe
+    candidates |= maybe - sites
     return sites
 
 
@@ -686,6 +1009,7 @@ def extract_from_text(
 def extract_ios_calls() -> set[str]:
     files = list((REPO / "apple" / "Sources").rglob("*.swift"))
     files += list((REPO / "apple" / "App").rglob("*.swift"))
+    files = [p for p in files if "_parked" not in p.parts]
     return _extract(files, _SWIFT_LITERAL)
 
 
@@ -701,20 +1025,28 @@ def _web_files() -> list[Path]:
     )
 
 
-def extract_web_call_sites() -> tuple[set[tuple[str, str]], list[dict[str, str]]]:
+def extract_web_call_sites(
+    candidates: set[tuple[str, str]] | None = None,
+) -> tuple[set[tuple[str, str]], list[dict[str, str]]]:
     """The web calls as (method, path), and the unresolved dynamic calls.
 
     An unresolved call has no fixed segment after /api; it is returned with
-    its file instead of being matched.
+    its file instead of being matched. Candidate calls (``_union_fill``) go
+    into ``candidates`` when it is given, else with the other calls.
     """
+    keep_apart = candidates is not None
+    candidates = set() if candidates is None else candidates
     calls: set[tuple[str, str]] = set()
     dynamic: set[tuple[str, str, str]] = set()
+    texts: dict[Path, str] = {}
     for path in _web_files():
         try:
-            text = path.read_text(encoding="utf-8")
+            texts[path] = path.read_text(encoding="utf-8")
         except (UnicodeDecodeError, OSError):
             continue
-        for method, call in web_call_sites(text):
+    exported = exported_builders(texts.values())
+    for path, text in texts.items():
+        for method, call in web_call_sites(text, exported, candidates):
             if _is_dynamic(call):
                 dynamic.add((str(path.relative_to(REPO)), method, call))
             else:
@@ -723,6 +1055,8 @@ def extract_web_call_sites() -> tuple[set[tuple[str, str]], list[dict[str, str]]
         {"file": file, "method": method, "path": call}
         for file, method, call in sorted(dynamic)
     ]
+    if not keep_apart:
+        calls |= {c for c in candidates if not _is_dynamic(c[1])}
     return calls, unresolved
 
 
@@ -869,8 +1203,12 @@ def apply_web_dynamic_calls(
 def build_manifest() -> dict[str, Any]:
     routes = build_app_routes()
     ios = extract_ios_calls()
-    web, unresolved = extract_web_call_sites()
-    routes, unmatched_ios, unmatched_web = match_consumers(routes, ios, web)
+    candidates: set[tuple[str, str]] = set()
+    web, unresolved = extract_web_call_sites(candidates)
+    candidates = {c for c in candidates if not _is_dynamic(c[1])}
+    routes, unmatched_ios, unmatched_web = match_consumers(routes, ios, web | candidates)
+    # A candidate the app does not serve is a value the code guards away.
+    unmatched_web -= {f"{'GET' if m == UNNAMED else m} {c}" for m, c in candidates - web}
     hand = load_web_dynamic_calls()
     unresolved = apply_web_dynamic_calls(routes, hand, unresolved)
     return {
@@ -898,13 +1236,12 @@ def render_markdown(manifest: dict[str, Any]) -> str:
         "# The API surface",
         "",
         "Generated by `scripts/gen_api_surface.py`. Do not edit by hand;",
-        "regenerate with `uv run python scripts/gen_api_surface.py` after any",
-        "route change (the snapshot test fails otherwise).",
+        "write it with `uv run python scripts/gen_api_surface.py` (or `scripts/gen_docs.sh`).",
         "",
         "Routes registered by the reference FastAPI app, with their defining modules.",
         "Consumer tags are static matches in `web/src` and Swift sources.",
         "A web tag needs the path and the HTTP method of the call to match the route.",
-        "They can include parked code and do not prove a current UI calls the route.",
+        "Parked code (`_parked/`) is not read. A tag does not prove that a current UI calls the route.",
         "The `server only` label means the extractor found no matching client literal.",
         "A registered compatibility route can return a named refusal instead of an effect.",
         "For example, the old meeting Slack-export route returns `slack_moved_to_channel`.",

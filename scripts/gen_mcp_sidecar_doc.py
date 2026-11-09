@@ -1,25 +1,23 @@
 #!/usr/bin/env python3
-"""Generate docs/MCP_SIDECAR.md from the MCP tool registry.
+"""Write docs/MCP_SIDECAR.md from its template and the live MCP registry.
 
-The MCP sidecar doc's header totals and per-family tool roster are
-derived from the ONE source of truth: the assembled TOOLS list in
-holdspeak.mcp.tools (which aggregates tools.py + every family module).
+The page is generated on demand and is not in git (2026-11-08, like
+docs/API_SURFACE.md). The hand-written text is in
+``scripts/mcp_sidecar_doc.template.md``; the generator fills its
+placeholders from the live server:
 
-The generator updates three machine-verifiable parts of the doc:
-1. The header paragraph's "N tools across M families" count.
-2. The PROJECT_PALETTE section's tool count.
-3. A fenced roster block listing every tool grouped by name-prefix
-   family -- the drift guard checks this block against the registry.
+- ``{{TOOLS}}``: the number of tools in ``holdspeak.mcp.tools.TOOLS``.
+- ``{{PALETTE}}``: the project.*, provider.* and connection.* tools.
+- ``{{ROSTER}}``: every tool, grouped by name-prefix family.
+- ``{{OWNER_STATIC}}``, ``{{OWNER_TEMPLATES}}``, ``{{OTHER_STATIC}}``,
+  ``{{OTHER_TEMPLATES}}``, ``{{OTHER_TOTAL}}``: the resource discovery counts
+  for the owner and for the default non-owner principal.
 
-Narrative sections (per-family descriptions, trust model, etc.) are
-hand-written and not touched by the generator.
-
-Regenerate after any tool change:
+Write it:
 
     uv run python scripts/gen_mcp_sidecar_doc.py
 
-The snapshot guard (tests/unit/test_mcp_sidecar_doc_drift.py) fails when
-the committed doc drifts from the live registry.
+(``scripts/gen_docs.sh`` runs it with every other generator.)
 """
 from __future__ import annotations
 
@@ -29,21 +27,49 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
 DOC_PATH = REPO / "docs" / "MCP_SIDECAR.md"
+TEMPLATE_PATH = Path(__file__).resolve().parent / "mcp_sidecar_doc.template.md"
 
 
-def collect_tools() -> list[str]:
-    """Return the sorted list of all MCP tool names from the registry."""
+def _with_scratch_database(read):
+    """Run ``read`` against a disposable database, never the owner's."""
     from holdspeak.db import get_database, reset_database
 
     reset_database()
     with tempfile.TemporaryDirectory(prefix="holdspeak-mcp-sidecar-") as tmp:
         get_database(Path(tmp) / "mcp-sidecar-gen.db")
         try:
-            from holdspeak.mcp.tools import TOOLS
-            names = sorted(t["name"] for t in TOOLS)
+            return read()
         finally:
             reset_database()
-    return names
+
+
+def collect_tools() -> list[str]:
+    """Return the sorted list of all MCP tool names from the registry."""
+    def read() -> list[str]:
+        from holdspeak.mcp.tools import TOOLS
+
+        return sorted(t["name"] for t in TOOLS)
+
+    return _with_scratch_database(read)
+
+
+def collect_resource_counts() -> dict[str, int]:
+    """Static and template resource counts, for the owner and the default non-owner."""
+    def read() -> dict[str, int]:
+        from holdspeak.mcp import resources
+        from holdspeak.principals import Principal, PrincipalKind
+
+        owner = resources.list_resources(Principal(PrincipalKind.OWNER, "mcp-sidecar-doc"))
+        other = resources.list_resources(None)
+        return {
+            "OWNER_STATIC": len(owner["resources"]),
+            "OWNER_TEMPLATES": len(owner["resourceTemplates"]),
+            "OTHER_STATIC": len(other["resources"]),
+            "OTHER_TEMPLATES": len(other["resourceTemplates"]),
+            "OTHER_TOTAL": len(other["resources"]) + len(other["resourceTemplates"]),
+        }
+
+    return _with_scratch_database(read)
 
 
 def group_by_family(tool_names: list[str]) -> dict[str, list[str]]:
@@ -69,15 +95,12 @@ def build_roster(tool_names: list[str]) -> dict:
 
 
 # ── The roster fence ──────────────────────────────────────────────────
-# The fence is a machine-generated block inside the doc that the drift
-# guard can compare against.  Everything outside it is hand-written
-# narrative and is NOT checked by the guard (so it can be edited freely).
+# The roster block that fills ``{{ROSTER}}`` in the template.
 
 _FENCE_START = "<!-- BEGIN MCP TOOL ROSTER (machine-generated -- do not edit) -->"
 _FENCE_END = "<!-- END MCP TOOL ROSTER -->"
 
-# The header line pattern: "N tools across M families"
-_HEADER_RE = re.compile(r"(\d+)\s+tools\s+across\s+(\d+)\s+families")
+_PLACEHOLDER = re.compile(r"\{\{([A-Z_]+)\}\}")
 
 
 def render_roster_block(roster: dict) -> str:
@@ -98,86 +121,43 @@ def render_roster_block(roster: dict) -> str:
     return "\n".join(lines)
 
 
-def update_header_totals(text: str, roster: dict) -> str:
-    """Update the header paragraph's tool/family counts."""
-    total = roster["total_tools"]
-    families = roster["total_families"]
-
-    def _replace(m: re.Match) -> str:
-        return f"{total} tools across {families} families"
-
-    return _HEADER_RE.sub(_replace, text, count=1)
-
-
-def update_palette_count(text: str, roster: dict) -> str:
-    """Update the PROJECT_PALETTE frozen-set size in the palette section."""
-    project_count = roster["families"].get("project", {}).get("count", 0)
-    provider_count = roster["families"].get("provider", {}).get("count", 0)
-    connection_count = roster["families"].get("connection", {}).get("count", 0)
-    palette_size = project_count + provider_count + connection_count
-    # The "frozen set of the NN\nproject.*" may wrap across lines.
-    # HS-168-02: connection.* tools are also in the palette.
-    text = re.sub(
-        r"a frozen set of the \d+\s+project\.\*[^\n]*tool\s*names",
-        f"a frozen set of the {palette_size}\nproject.*, provider.* and connection.* tool names",
-        text,
-        count=1,
+def palette_size(roster: dict) -> int:
+    """The PROJECT_PALETTE size: project.*, provider.* and connection.* tools."""
+    return sum(
+        roster["families"].get(family, {}).get("count", 0)
+        for family in ("project", "provider", "connection")
     )
-    text = re.sub(
-        r"sees \d+ tools\s+instead of \d+",
-        f"sees {palette_size} tools\ninstead of {roster['total_tools']}",
-        text,
-        count=1,
-    )
-    return text
 
 
-def regenerate(doc_text: str | None = None) -> str:
-    """Regenerate MCP_SIDECAR.md from the registry.
+def render(template: str, roster: dict, resource_counts: dict[str, int]) -> str:
+    """The template with every placeholder filled. An unknown placeholder fails."""
+    values = {
+        "TOOLS": str(roster["total_tools"]),
+        "PALETTE": str(palette_size(roster)),
+        "ROSTER": render_roster_block(roster),
+        **{key: str(value) for key, value in resource_counts.items()},
+    }
 
-    If doc_text is None, reads the committed file.
-    Returns the updated doc text.
-    """
-    if doc_text is None:
-        doc_text = DOC_PATH.read_text(encoding="utf-8")
+    def fill(match: re.Match) -> str:
+        key = match.group(1)
+        if key not in values:
+            raise KeyError(f"{TEMPLATE_PATH.name}: unknown placeholder {{{{{key}}}}}")
+        return values[key]
 
-    tool_names = collect_tools()
-    roster = build_roster(tool_names)
+    return _PLACEHOLDER.sub(fill, template)
 
-    # 1. Update header totals
-    result = update_header_totals(doc_text, roster)
 
-    # 2. Update palette count
-    result = update_palette_count(result, roster)
-
-    # 3. Insert or replace the roster fence block
-    if _FENCE_START in result:
-        pattern = re.compile(
-            re.escape(_FENCE_START) + r".*?" + re.escape(_FENCE_END),
-            re.DOTALL,
-        )
-        result = pattern.sub(render_roster_block(roster), result)
-    else:
-        # Insert before "## Model-invoking tools"
-        insert_before = "## Model-invoking tools"
-        if insert_before in result:
-            result = result.replace(
-                insert_before,
-                render_roster_block(roster) + "\n\n" + insert_before,
-            )
-        else:
-            result += "\n\n" + render_roster_block(roster) + "\n"
-
-    return result
+def regenerate() -> str:
+    """The whole docs/MCP_SIDECAR.md text, from the template and the live server."""
+    template = TEMPLATE_PATH.read_text(encoding="utf-8")
+    return render(template, build_roster(collect_tools()), collect_resource_counts())
 
 
 def main() -> int:
     result = regenerate()
     DOC_PATH.write_text(result, encoding="utf-8")
+    roster = build_roster(collect_tools())
     print(f"wrote {DOC_PATH.relative_to(REPO)}")
-
-    tool_names = collect_tools()
-    roster = build_roster(tool_names)
     print(f"  {roster['total_tools']} tools across {roster['total_families']} families")
     return 0
 

@@ -158,7 +158,7 @@ Program for work that runs on the hub. See [Automation](AUTOMATION.md).
 The Desk, a supported Thread, and an external MCP client reach the same hub
 contracts through their applicable transport and principal. The local MCP
 sidecar is a proxy to the running hub. It does not open a second Desk
-database. See [MCP sidecar](MCP_SIDECAR.md).
+database. See MCP sidecar (`scripts/gen_docs.sh` writes `docs/MCP_SIDECAR.md`).
 
 ## See also
 

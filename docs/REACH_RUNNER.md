@@ -112,6 +112,6 @@ already admitted on the hub. Use the hub's run control for that run.
 ## See also
 
 - [Automation](AUTOMATION.md): manual and recurring execution paths.
-- [MCP sidecar](MCP_SIDECAR.md): transport, tools, and palette rules.
+- MCP sidecar (`scripts/gen_docs.sh` writes `docs/MCP_SIDECAR.md`): transport, tools, and palette rules.
 - [Control mode](SECURITY.md#control-mode): authority and grants.
 - [Operations](OPERATIONS.md): hub health and recovery.

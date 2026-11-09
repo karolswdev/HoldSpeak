@@ -188,7 +188,7 @@ Other routes:
 | `memory.page` | One standing page. |
 | `GET /api/memory/meaning-search` | Meaning search state. |
 
-See [API surface](API_SURFACE.md) and [MCP sidecar](MCP_SIDECAR.md) for exact fields.
+See [API surface](API_SURFACE.md) and MCP sidecar (`scripts/gen_docs.sh` writes `docs/MCP_SIDECAR.md`) for exact fields.
 
 ## What memory does not do
 

@@ -29,7 +29,7 @@ the capabilities you work on. See [Models](docs/MODELS.md).
 | Domain service or runtime | [System architecture](docs/SYSTEM_ARCHITECTURE.md), [backend architecture](docs/internal/ARCHITECTURE_BACKEND_RUNTIME.md) |
 | Agent, tool loop, or automation | [Agents and Threads](docs/AGENTS_AND_THREADS.md), [Automation](docs/AUTOMATION.md), [Model runtime](docs/MODEL_RUNTIME.md) |
 | Documentation | [Writing standard](docs/internal/DOCS_STYLE.md) and [terminology register](docs/internal/DOCS_TERMINOLOGY.md) |
-| API or MCP contract | [API surface](docs/API_SURFACE.md) and [MCP sidecar](docs/MCP_SIDECAR.md) |
+| API or MCP contract | [API surface](docs/API_SURFACE.md) and MCP sidecar (`scripts/gen_docs.sh` writes `docs/MCP_SIDECAR.md`) |
 
 ## Work flow
 
