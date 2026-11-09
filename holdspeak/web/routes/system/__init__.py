@@ -11,7 +11,6 @@ from fastapi import APIRouter
 
 from ...context import WebContext
 from .._mount import mount_router
-from .agent_capabilities import build_agent_capabilities_router
 from .coder_steering_routes import build_coder_steering_router
 from .coders import build_coders_router
 from .gate_routes import build_gate_router
@@ -28,7 +27,6 @@ def build_system_router(
 ) -> APIRouter:
     router = APIRouter()
     mount_router(router, build_health_router(ctx))
-    mount_router(router, build_agent_capabilities_router())
     mount_router(router, build_coders_router(ctx))
     mount_router(router, 
         build_coder_steering_router(ctx, commands=commands, targets=targets)

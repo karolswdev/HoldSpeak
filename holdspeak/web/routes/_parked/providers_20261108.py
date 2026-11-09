@@ -1,6 +1,6 @@
 """PARKED 20261108 (subtraction day, Lane R): routes no client reads.
 
-Parked from ``holdspeak/web/routes/providers.py``: POST /api/providers/confluence/connections/{ref}/recheck, GET /api/providers/confluence/discover, GET /api/providers/github/connection, POST /api/providers/github/connection/recheck.
+Parked from ``holdspeak/web/routes/providers.py``: POST /api/providers/confluence/connections/{ref}/recheck, GET /api/providers/github/connection, POST /api/providers/github/connection/recheck.
 Not imported. Kept for history; restore with ``git revert`` of the parking commit.
 """
 from __future__ import annotations
@@ -187,47 +187,6 @@ def parked_build_providers_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to recheck Confluence connection")
 
     # ── GET /api/providers/confluence/discover ────────────────────────
-
-    @router.get("/api/providers/confluence/discover")
-    def confluence_discover(
-        request: Request,
-        connection_ref: str = "",
-        kind: str = "spaces",
-        query: str = "",
-        cursor: int | None = None,
-        limit: int = 30,
-    ) -> Any:
-        """Bounded Confluence discovery (spaces)."""
-        try:
-            adapter = ctx.confluence_provider
-            if adapter is None:
-                return JSONResponse(
-                    {"code": "provider_not_configured",
-                     "message": "Confluence provider is not configured"},
-                    status_code=404,
-                )
-            if not connection_ref:
-                return JSONResponse(
-                    {"code": "validation_error",
-                     "message": "connection_ref is required"},
-                    status_code=400,
-                )
-            result = adapter.discover(
-                principal(request),
-                connection_ref,
-                kind=kind,
-                query=query,
-                cursor=cursor,
-                limit=limit,
-            )
-            return JSONResponse(result)
-        except ValidationError as exc:
-            return JSONResponse(
-                {"code": exc.code, "message": exc.detail},
-                status_code=400,
-            )
-        except Exception as exc:
-            return error_500(exc, log, "Failed to discover Confluence resources")
 
     # ── POST /api/providers/confluence/validate ───────────────────────
 

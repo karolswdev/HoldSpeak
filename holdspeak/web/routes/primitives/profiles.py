@@ -49,30 +49,6 @@ def build_profiles_router(ctx: WebContext) -> APIRouter:
             return JSONResponse({"error": "Unknown destination"}, status_code=404)
         return None
 
-    # HS-134-02: GET /api/profiles retired — the target contract is the only
-    # read shape; writes were already rejected (HS-112-01).
-    # `/api/inference-targets` is the one write path.
-    def _profiles_read_only() -> JSONResponse:
-        return JSONResponse(
-            {
-                "error": "/api/profiles is read-only; write via /api/inference-targets",
-                "write_path": "/api/inference-targets",
-            },
-            status_code=405,
-        )
-
-    @router.post("/api/profiles")
-    def api_create_profile(request: Request) -> Any:
-        return _profiles_read_only()
-
-    @router.put("/api/profiles/{profile_id}")
-    def api_update_profile(profile_id: str, request: Request) -> Any:
-        return _profiles_read_only()
-
-    @router.delete("/api/profiles/{profile_id}")
-    def api_delete_profile(profile_id: str) -> Any:
-        return _profiles_read_only()
-
     @router.get("/api/inference-targets")
     def api_list_inference_targets(request: Request) -> Any:
         try:

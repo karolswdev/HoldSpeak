@@ -31,7 +31,6 @@ _EXPECTED_ROUTES = {
     ("/api/dictation/project-kb", "GET"),
     ("/api/dictation/project-kb", "PUT"),
     ("/api/dictation/project-kb/starter", "POST"),
-    ("/api/dictation/project-kb", "DELETE"),
     ("/api/dictation/readiness", "GET"),
     ("/api/dictation/dry-run", "POST"),
     ("/api/dictation/remote", "POST"),  # HSM-13-01: companion remote-dictation inject
@@ -42,7 +41,6 @@ _EXPECTED_ROUTES = {
     ("/api/dictation/corrections", "POST"),
     # HS-40-04: curate the (now persistent) correction memory.
     ("/api/dictation/corrections/{correction_id}", "DELETE"),
-    ("/api/dictation/corrections", "DELETE"),
     # HS-45-02: the dictation journal (review + curate). The correct-attach
     # route is HS-45-03 (the in-moment teach), wired here with its siblings.
     ("/api/dictation/journal", "GET"),
@@ -80,4 +78,4 @@ def test_dictation_route_table_is_unchanged_after_split() -> None:
 
 
 def test_dictation_route_count_is_stable() -> None:
-    assert len(_router_route_set()) == len(_EXPECTED_ROUTES) == 34
+    assert len(_router_route_set()) == len(_EXPECTED_ROUTES) == 32

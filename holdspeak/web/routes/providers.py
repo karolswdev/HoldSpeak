@@ -446,6 +446,47 @@ def build_providers_router(ctx: WebContext) -> APIRouter:
 
     # ── GET /api/providers/confluence/discover ────────────────────────
 
+    @router.get("/api/providers/confluence/discover")
+    def confluence_discover(
+        request: Request,
+        connection_ref: str = "",
+        kind: str = "spaces",
+        query: str = "",
+        cursor: int | None = None,
+        limit: int = 30,
+    ) -> Any:
+        """Bounded Confluence discovery (spaces)."""
+        try:
+            adapter = ctx.confluence_provider
+            if adapter is None:
+                return JSONResponse(
+                    {"code": "provider_not_configured",
+                     "message": "Confluence provider is not configured"},
+                    status_code=404,
+                )
+            if not connection_ref:
+                return JSONResponse(
+                    {"code": "validation_error",
+                     "message": "connection_ref is required"},
+                    status_code=400,
+                )
+            result = adapter.discover(
+                principal(request),
+                connection_ref,
+                kind=kind,
+                query=query,
+                cursor=cursor,
+                limit=limit,
+            )
+            return JSONResponse(result)
+        except ValidationError as exc:
+            return JSONResponse(
+                {"code": exc.code, "message": exc.detail},
+                status_code=400,
+            )
+        except Exception as exc:
+            return error_500(exc, log, "Failed to discover Confluence resources")
+
     # ── POST /api/providers/confluence/validate ───────────────────────
 
     @router.post("/api/providers/confluence/validate")

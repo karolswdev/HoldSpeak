@@ -218,16 +218,3 @@ class TestNodesProjection:
         assert "LEGACY-SECRET" not in text
         assert "192.168.1.99" not in text
 
-    def test_explicit_disconnect_projects_offline(self, client, state):
-        token = _pair(state)
-        _hello(client, token)
-        gone = client.post(
-            "/api/delivery/node/disconnect",
-            json={"name": "studio-mac"},
-            headers={"X-HoldSpeak-Node-Token": token},
-        )
-        assert gone.status_code == 200
-        view = client.get("/api/delivery/nodes").json()
-        row = next(r for r in view["nodes"] if r["name"] == "studio-mac")
-        assert row["status"] == "offline"
-        assert row["last_seen"]

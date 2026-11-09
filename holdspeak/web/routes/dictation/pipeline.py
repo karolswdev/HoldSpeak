@@ -1209,15 +1209,6 @@ def build_pipeline_router(
             return JSONResponse({"removed": True, "size": len(store)})
         return JSONResponse({"removed": False, "error": "correction not found"}, status_code=404)
 
-    @router.delete("/api/dictation/corrections")
-    def api_dictation_corrections_clear() -> Any:
-        """HS-40-04: forget everything the copilot has learned (ring + durable)."""
-        store = ctx.corrections
-        if store is None:
-            return JSONResponse({"error": "correction store unavailable"}, status_code=503)
-        store.clear()
-        return JSONResponse({"cleared": True, "size": len(store)})
-
     # ── HS-45-02: the dictation journal (review + curate) ─────────────────
     def _journal_repo():
         """The durable journal repository behind the recorder, or None."""
@@ -1558,31 +1549,3 @@ def _routed_from_stages(stages: list[Any]) -> tuple[Optional[str], Optional[floa
     return block, conf
 
 
-def _journal_to_dict(record: Any) -> dict[str, Any]:
-    """Serialize a `DictationJournalRecord` for the Journal UI (HS-45-02)."""
-    return {
-        "id": record.id,
-        "created_at": record.created_at,
-        "source": record.source,
-        "transcript": record.transcript,
-        "final_text": record.final_text,
-        "project_root": record.project_root,
-        "intent": record.intent,
-        "block_id": record.block_id,
-        "target_profile": record.target_profile,
-        "stage_ms": record.stage_ms,
-        "total_ms": record.total_ms,
-        "rewrite_pass_ms": record.rewrite_pass_ms,
-        "confidence": record.confidence,
-        "warnings": record.warnings,
-        "corrected": record.corrected,
-        "correction_id": record.correction_id,
-        # HS-176-02 (R5): the two stored facts, split and both named.
-        # `taught_from` is the existing `corrected` column under its true
-        # meaning — "he taught FROM this row"; `corrections_applied` is the new
-        # per-run fact — "these stored rules fired ON this row".
-        "taught_from": bool(record.corrected),
-        "corrections_applied": [
-            int(x) for x in (getattr(record, "corrections_applied", None) or [])
-        ],
-    }

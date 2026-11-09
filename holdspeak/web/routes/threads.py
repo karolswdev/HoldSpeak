@@ -441,16 +441,6 @@ def build_threads_router(ctx: WebContext) -> APIRouter:
 
     # ── HS-153-05: compaction + todo ─────────────────────────────────
 
-    @router.post("/api/threads/{thread_id}/compact")
-    async def api_compact_thread(thread_id: str, request: Request) -> Any:
-        try:
-            result = await _service().compact_thread(_principal(request), thread_id)
-            return result
-        except (ServiceError, ValidationError) as exc:
-            return _error(exc)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to compact thread")
-
     @router.post("/api/threads/{thread_id}/todo")
     async def api_todo(thread_id: str, request: Request) -> Any:
         body = await _json_body(request)
