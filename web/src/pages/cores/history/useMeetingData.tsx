@@ -154,7 +154,7 @@ const FIRST_READS = [
 type FirstRead = (typeof FIRST_READS)[number];
 
 /** PHILO-17: one decision the meeting recorded (a ledger row of
- *  `GET /api/decisions?scope=all&meeting_id=`: never a confirmed action; its
+ *  `GET /api/decisions/ledger?meeting_id=`: never a confirmed action; its
  *  lifecycle is its record's when it has one). */
 export interface MeetingDecision {
   id: string;
@@ -302,7 +302,7 @@ export function useMeetingData(
       })
       .finally(endNewest("ftProposals"));
     void apiFetch<{ decisions?: MeetingDecision[] }>(
-      `/api/decisions?scope=all&limit=500&meeting_id=${encodeURIComponent(id)}`,
+      `/api/decisions/ledger?limit=500&meeting_id=${encodeURIComponent(id)}`,
     )
       .then(mine(newest((res: { decisions?: MeetingDecision[] }) =>
         setMeetingDecisions(Array.isArray(res?.decisions) ? res.decisions : []))))
@@ -345,7 +345,7 @@ export function useMeetingData(
     }))
       .catch(() => undefined).finally(endNewest("ftProposals"));
     void apiFetch<{ decisions?: MeetingDecision[] }>(
-      `/api/decisions?scope=all&limit=500&meeting_id=${encodeURIComponent(id)}`,
+      `/api/decisions/ledger?limit=500&meeting_id=${encodeURIComponent(id)}`,
     ).then(mine((res: { decisions?: MeetingDecision[] }) =>
       setMeetingDecisions(Array.isArray(res?.decisions) ? res.decisions : [])))
       .catch(() => undefined).finally(endNewest("decisions"));

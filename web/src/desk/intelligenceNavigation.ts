@@ -1,9 +1,7 @@
 import { useDesk } from "./store";
 
 /** Betterment daily D4: Today is one page. `brief` is Today with Since
- *  yesterday open; `receipts` opens the Decisions window (2026-10-25; only an ask by
- *  `decisionId` or `receiptWorkRef` still shows the Decisions page in Today's
- *  window; no door of the desk asks that way now);
+ *  yesterday open; `receipts` opens the Decisions window (2026-10-25);
  *  `follow-through` opens the Needs-you window, where its rows and verbs
  *  live, with the named action item (`followThroughId`) in its item reader. */
 export type IntelligenceView = "today" | "brief" | "follow-through" | "receipts";
@@ -56,22 +54,18 @@ export function openIntelligence(navigation: IntelligenceNavigation): void {
     return;
   }
   // The owner, 2026-10-25: Decisions is its own window, never a page that
-  // takes Today's place. A Decisions door opens that window (the record in
-  // its reader when one is named). A meeting decision with no record and
-  // WHY's governing records open that window too (openObject). An ask by
-  // `decisionId` or `receiptWorkRef` keeps the Decisions page in Today.
-  if (navigation.view === "receipts" && !navigation.decisionId && !navigation.receiptWorkRef) {
+  // takes Today's place. Every Decisions door opens that window: the record
+  // when one is named, a meeting's decision by its id, else the rail (the
+  // native app, 2026-11-08: one face of a decision; Today keeps no copy).
+  if (navigation.view === "receipts") {
     const record = (navigation.receiptId ?? "").trim();
-    // Review decisions asks for the standing ones: the list with Current only on.
-    const scope = record ? `record:${record}` : navigation.whyOnly ? "current" : undefined;
+    const decision = (navigation.decisionId ?? "").trim();
+    // Review decisions asks for the standing ones: the rail with Current only on.
+    const scope = record ? `record:${record}` : decision ? `decision:${decision}` : navigation.whyOnly ? "current" : undefined;
     useDesk.getState().openSurfaceWindow("open-decisions", scope);
     return;
   }
   if (navigation.view === "brief") {
-    requests += 1;
-    navigation = { ...navigation, nonce: requests };
-  }
-  if (navigation.decisionId) {
     requests += 1;
     navigation = { ...navigation, nonce: requests };
   }

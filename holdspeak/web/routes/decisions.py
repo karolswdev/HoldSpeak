@@ -3,12 +3,15 @@ from __future__ import annotations
 from typing import Any, Optional
 from fastapi import APIRouter, Body, Request
 from fastapi.responses import JSONResponse
+from starlette.concurrency import run_in_threadpool
 from ... import db as hsdb
+from ... import operations
 from ...db import get_observer
 
 def _database() -> Any:
     return getattr(hsdb, "get_database")()
 from ...services.decision_lifecycle_service import DecisionLifecycleService
+from ._mount import mount_router
 from ...services.errors import ServiceError, NotFound
 from ...principals import UNAUTHENTICATED
 
@@ -35,25 +38,39 @@ def _error(exc: ServiceError) -> JSONResponse:
         payload.setdefault("detail", exc.detail)
     return JSONResponse(payload,status_code=int(payload.pop("status",400 if exc.code == "validation_error" else 409)))
 
+async def _answer(fn: Any, *, status: int = 200) -> JSONResponse:
+    """The envelope of the produced routes (``decision_operations.py``): the
+    service errors as this router answers them; a ValueError (Commit of a
+    decision not accepted, an unknown one) is a 409 in words."""
+    try:
+        return JSONResponse(await run_in_threadpool(fn), status_code=status)
+    except ServiceError as exc:
+        return _error(exc)
+    except ValueError as exc:
+        return JSONResponse({"error": str(exc)}, status_code=409)
+
+
 def build_decisions_router(ctx: Any) -> APIRouter:
+    # 2026-11-08 (one contract): the ledger and Commit are produced from their
+    # declared rows, mounted before ``/{decision_id}`` so ``ledger`` is no id.
+    from ...decision_operations import DECISION_OPERATIONS
+    from ..operation_routes import operation_router
+    outer=APIRouter()
+    registry=lambda: operations.for_context(ctx, decision_lifecycle_service=service)  # noqa: E731
     router=APIRouter(prefix="/api/decisions",tags=["decisions"])
     # PHILO-5-01: this router is included BEFORE the primitives router
     # (web_server.py), so in the hub it answers GET /api/decisions and
     # GET /api/decisions/{id}. Its desk-decision branches are the contract's
     # decision.list / decision.read, bound to the hub's one PrimitiveService.
-    from ... import operations
     def desk_ops() -> Any: return operations.for_context(ctx, "primitive_service")
     # HS-131-13: the route holds no engine and no `run_prompt` callable. Drafting
     # is the admitted Decision promotion child inside the service (HS-131-07);
     # a second route-side model seam would be a second, unadmitted Decision path.
     def service() -> DecisionLifecycleService: return DecisionLifecycleService(_database(), kernel=_kernel_service(), observer=get_observer())
     @router.get("")
-    def list_decisions(request: Request,project_id: Optional[str]=None,project_key: Optional[str]=None,meeting_id: Optional[str]=None,lifecycle: Optional[str]=None,limit: int=200,offset: int=0,scope: Optional[str]=None,decision_id: Optional[str]=None,q: Optional[str]=None,current: bool=False) -> Any:
-        if scope == "all":
-            # PHILO-17: every decision on the desk, for Intelligence → Decisions
-            # and a meeting's record; paged, with the total.
-            try: return JSONResponse(service().list_decisions(_principal(request),scope="all",meeting_id=meeting_id,decision_id=decision_id,q=q,current=current,limit=limit,offset=offset))
-            except ServiceError as exc: return _error(exc)
+    def list_decisions(request: Request,project_id: Optional[str]=None,project_key: Optional[str]=None,meeting_id: Optional[str]=None,lifecycle: Optional[str]=None,limit: int=200,offset: int=0) -> Any:
+        # Every decision on the desk (PHILO-17) is ``decision.ledger``:
+        # ``GET /api/decisions/ledger`` (decision_operations.py).
         if not any((project_id, project_key, meeting_id, lifecycle)):
             return JSONResponse({"decisions": desk_ops().invoke(_principal(request), "decision.list", {"limit": limit})})
         try: return JSONResponse(service().list_decisions(_principal(request),project_id=project_id,project_key=project_key,meeting_id=meeting_id,lifecycle=lifecycle,limit=limit,offset=offset))
@@ -129,4 +146,6 @@ def build_decisions_router(ctx: Any) -> APIRouter:
     async def draft_promoted_decision_with_model(decision_id: str,artifact_type: str,request: Request,payload: dict[str,Any]=Body(default={})) -> Any:
         try: return JSONResponse(await service().draft_promoted_with_model(_principal(request),decision_id,artifact_type,payload))
         except ServiceError as exc: return _error(exc)
-    return router
+    mount_router(outer, operation_router(DECISION_OPERATIONS, registry, _answer, module=__name__))
+    mount_router(outer, router)
+    return outer

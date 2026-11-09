@@ -678,7 +678,7 @@ describe("the meeting's recorded decisions (PHILO-17)", () => {
       intel: { summary: "s", action_items: [{ id: "ai-1", task: "Write the rollback runbook", owner: null, status: "pending" }] },
     };
     apiFetch.mockImplementation(async (url: string) => {
-      if (url === "/api/decisions?scope=all&limit=500&meeting_id=m9")
+      if (url === "/api/decisions/ledger?limit=500&meeting_id=m9")
         return { decisions: [{ id: "d1", text: "Freeze the old ledger on Nov 5", lifecycle: "recorded" }] };
       if (url.includes("/follow-through-proposals")) return { proposals: [] };
       if (url === "/api/meetings/m9") return meeting;

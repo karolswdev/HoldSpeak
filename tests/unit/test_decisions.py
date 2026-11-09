@@ -820,6 +820,7 @@ def test_the_catalogue_is_explicit_descriptors() -> None:
         'meeting.intel_jobs', 'meeting.intel_retry', 'meeting.intel_recovery', 'meeting.intel_recovery_retry', 'meeting.intel_recovery_skip', 'meeting.aftercare',
         'meeting.aftercare_proposals', 'meeting.aftercare_decide', 'automation.set_when', 'automation.set_engine', 'automation.make_one', 'automation.template.list',
         'automation.template.instantiate', 'automation.result.open', 'automation.new.list', 'automation.lesson.list', 'automation.lesson.forget',
+        'decision.ledger', 'follow_through.commit_decision',
     ]
     # decision.list takes the empty object; its one optional argument is the
     # HTTP limit (round two: it passes through instead of slicing 500 rows).
@@ -1199,7 +1200,7 @@ def test_the_job_words_point_at_the_admitted_operations() -> None:
 
 # ── from test_philo17_decisions_visible.py: PHILO-17 ("what did we decide yesterday?"): a meeting's decisions are ──
 # readable per meeting, and Intelligence → Decisions lists every decision on
-# the desk with its date and its meeting (``GET /api/decisions?scope=all``).
+# the desk with its date and its meeting (``GET /api/decisions/ledger``, decision.ledger).
 
 
 OWNER_visible = Principal(PrincipalKind.OWNER, "philo17-owner")
@@ -1237,14 +1238,49 @@ def test_decisions_per_meeting_are_that_meetings_only(tmp_path, monkeypatch):
     assert {d["source_meeting_id"] for d in body["decisions"]} == {"m-sync"}
 
 
-def test_scope_all_lists_every_decision_with_date_meeting_and_record(tmp_path, monkeypatch):
+def test_the_decisions_face_verbs_are_declared_routes_and_tools(tmp_path, monkeypatch):
+    """The native Decisions app (2026-11-08): its ledger read and its Commit are
+    declared operations (decision_operations.py): the produced routes answer,
+    a ledger row carries its own state and its commitment, and the MCP tools
+    come from the same rows (Commit keeps its tool's name and schema)."""
+    from holdspeak.mcp.families import declared
+
+    db = Database(tmp_path / "declared.db")
+    _seed(db)
+    freeze, nightly = sorted(db.decisions.list(meeting_id="m-sync"), key=lambda d: d.text)
+    record = DecisionRecordService(db).create_from_meeting(OWNER_visible, freeze.id)
+    db.decisions.accept(freeze.id, actor="philo17-owner")
+    client = _app_visible(db, SQLiteObserver(db._connection), monkeypatch)
+
+    rows = {r["text"]: r for r in client.get("/api/decisions/ledger").json()["decisions"]}
+    assert rows["Use one schema"]["status"] == "accepted"
+    assert rows["Freeze the old ledger on Nov 5"]["committed"] == 0
+
+    committed = client.post(f"/api/decision-records/{record['id']}/commit", json={"who": "Ada"})
+    assert committed.status_code == 200, committed.text
+    assert committed.json()["owner"] == "Ada" and committed.json()["replayed"] is False
+    again = client.post(f"/api/decision-records/{record['id']}/commit", json={})
+    assert again.json()["replayed"] is True
+    row = client.get("/api/decisions/ledger", params={"decision_id": freeze.id}).json()["decisions"][0]
+    assert (row["committed"], row["committed_to"]) == (1, "Ada")
+    refused = client.post(f"/api/decision-records/{nightly.id}/commit", json={})
+    assert refused.status_code == 409 and "accepted" in refused.json()["error"]
+
+    assert {"decision.ledger", "follow_through.commit_decision"} <= declared.NAMES
+    commit_tool = next(t for t in declared.TOOLS if t["name"] == "follow_through.commit_decision")
+    assert commit_tool["inputSchema"]["required"] == ["decision_id"]
+    assert set(commit_tool["inputSchema"]["properties"]) == {"decision_id", "who", "due_at"}
+    assert sum(1 for t in tools.TOOLS if t["name"] == "follow_through.commit_decision") == 1
+
+
+def test_the_ledger_lists_every_decision_with_date_meeting_and_record(tmp_path, monkeypatch):
     db = Database(tmp_path / "ledger.db")
     _seed(db)
     freeze = next(d for d in db.decisions.list(meeting_id="m-sync") if d.text.startswith("Freeze"))
     record = DecisionRecordService(db).create_from_meeting(OWNER_visible, freeze.id)
     client = _app_visible(db, SQLiteObserver(db._connection), monkeypatch)
 
-    response = client.get("/api/decisions", params={"scope": "all"})
+    response = client.get("/api/decisions/ledger")
 
     assert response.status_code == 200
     body = response.json()
@@ -1272,21 +1308,21 @@ def test_scope_all_pages_searches_and_reads_one_by_id(tmp_path, monkeypatch):
     _seed(db)
     client = _app_visible(db, SQLiteObserver(db._connection), monkeypatch)
 
-    first = client.get("/api/decisions", params={"scope": "all", "limit": 2}).json()
-    second = client.get("/api/decisions", params={"scope": "all", "limit": 2, "offset": 2}).json()
+    first = client.get("/api/decisions/ledger", params={"limit": 2}).json()
+    second = client.get("/api/decisions/ledger", params={"limit": 2, "offset": 2}).json()
     assert first["page"]["total"] == second["page"]["total"] == 4
     ids = [r["id"] for r in first["decisions"] + second["decisions"]]
     assert len(set(ids)) == 4
 
-    found = client.get("/api/decisions", params={"scope": "all", "q": "cutover freeze"}).json()
+    found = client.get("/api/decisions/ledger", params={"q": "cutover freeze"}).json()
     assert [r["text"] for r in found["decisions"]] == ["Freeze the old ledger on Nov 5"]
     assert found["page"]["total"] == 1
 
     oldest = second["decisions"][-1]
-    one = client.get("/api/decisions", params={"scope": "all", "decision_id": oldest["id"], "limit": 1}).json()
+    one = client.get("/api/decisions/ledger", params={"decision_id": oldest["id"], "limit": 1}).json()
     assert [r["id"] for r in one["decisions"]] == [oldest["id"]]
 
-    mine = client.get("/api/decisions", params={"scope": "all", "meeting_id": "m-arch"}).json()
+    mine = client.get("/api/decisions/ledger", params={"meeting_id": "m-arch"}).json()
     assert [r["text"] for r in mine["decisions"]] == ["Pilot OTel in billing"]
 
 
@@ -1304,7 +1340,7 @@ def test_a_superseded_or_disputed_record_is_its_rows_state(tmp_path, monkeypatch
     records.dispute(OWNER_visible, otel["id"], "Not agreed.")
     client = _app_visible(db, SQLiteObserver(db._connection), monkeypatch)
 
-    rows = {r["text"]: r for r in client.get("/api/decisions", params={"scope": "all"}).json()["decisions"]}
+    rows = {r["text"]: r for r in client.get("/api/decisions/ledger").json()["decisions"]}
 
     assert rows["Freeze the old ledger on Nov 5"]["lifecycle"] == "superseded"
     assert rows["Pilot OTel in billing"]["lifecycle"] == "disputed"
@@ -1329,8 +1365,8 @@ def test_a_confirmed_action_is_never_a_decision(tmp_path, monkeypatch):
     service.confirm_proposal(DAY_ONE_OWNER, action["id"])
     client = _app_visible(db, SQLiteObserver(db._connection), monkeypatch)
 
-    for params in ({"scope": "all"}, {"scope": "all", "meeting_id": "m-day-one"}):
-        listed = client.get("/api/decisions", params=params).json()["decisions"]
+    for params in ({}, {"meeting_id": "m-day-one"}):
+        listed = client.get("/api/decisions/ledger", params=params).json()["decisions"]
         texts = [r["text"] for r in listed]
         assert not [t for t in texts if t.startswith("Write the migration")], texts
         confirmed = [r for r in listed if r["text"] == "Use SQLite for the local meeting ledger"]
@@ -1361,7 +1397,7 @@ def _confirmed_decision(tmp_path, monkeypatch):
 
 def _paired_lifecycle(db, record_id, monkeypatch):
     client = _app_visible(db, SQLiteObserver(db._connection), monkeypatch)
-    rows = client.get("/api/decisions", params={"scope": "all", "meeting_id": "m-day-one", "limit": 500}).json()
+    rows = client.get("/api/decisions/ledger", params={"meeting_id": "m-day-one", "limit": 500}).json()
     return [r["lifecycle"] for r in rows["decisions"] if r["record_id"] == record_id]
 
 

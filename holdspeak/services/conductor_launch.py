@@ -477,6 +477,8 @@ LAUNCH_RULES.update({name: (READ, "", "") for name in (
     "meeting.intel_jobs", "meeting.intel_recovery", "meeting.aftercare", "meeting.aftercare_proposals")})
 LAUNCH_RULES.update({name: (COMPOSER, "", "") for name in ("meeting.intel_retry", "meeting.intel_recovery_retry")})
 LAUNCH_RULES.update({name: (NEVER, "", "") for name in ("meeting.intel_recovery_skip", "meeting.aftercare_decide")})
+# The Decisions ledger (``decision_operations.py``): a launch reads it.
+LAUNCH_RULES["decision.ledger"] = (READ, "", "")
 # One display protocol (2026-11-08, ``desk_operations.py``): a launch may mark,
 # say and scroll on the owner's desk, and every window verb, as it opens his
 # windows; press is his.

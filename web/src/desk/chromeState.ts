@@ -27,8 +27,8 @@ export const useShortcutSheet = transient();
  *
  * A create asks its name in the ⌘K well first; Enter with a title runs
  * `submit`, and closing the palette abandons it (nothing is written).
- * New Decision asked here until the owner's catch of 2026-10-25; it has its
- * own window now (pages/cores/NewDecisionCore). */
+ * New Decision asked here until the owner's catch of 2026-10-25; it is the
+ * composer in the Decisions window now (desk/decisions/Composer.tsx). */
 export interface NamePrompt {
   /** The well's label and placeholder (`Name the note`). */
   label: string;

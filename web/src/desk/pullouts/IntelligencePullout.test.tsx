@@ -4,7 +4,6 @@ import { act, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useState } from "react";
 import { SurfaceFooter } from "../surface/SurfaceFooter";
-import { FootSlotContext } from "../surface/foot";
 import { openIntelligence } from "../intelligenceNavigation";
 import { IntelligencePullout } from "./IntelligencePullout";
 import { PULLOUT_CONTENT } from "./registry";
@@ -23,10 +22,6 @@ vi.mock("./views/TodayView", () => ({
     </div><SurfaceFooter verbs={<button>Today action</button>} /></>;
   },
 }));
-vi.mock("./views/DecisionsView", () => ({
-  DecisionsView: ({ decisionId }: { decisionId?: string }) => <div data-testid="decisions-page">{decisionId ?? "all"}</div>,
-}));
-
 const object = {
   kind: "intelligence" as const,
   id: "desk",
@@ -54,23 +49,17 @@ describe("Betterment D4: the Today window is one page", () => {
     }
   });
 
-  it("a decision drill shows the Decisions page; Today comes back with its state and one foot", async () => {
-    const foot = document.createElement("footer");
-    document.body.appendChild(foot);
-    const realOpen = useDesk.getState().openPullout;
-    useDesk.setState({ openPullout: vi.fn() } as never);
-    const view = render(<FootSlotContext.Provider value={foot}><IntelligencePullout object={object} onClose={() => {}} /></FootSlotContext.Provider>);
+  it("a decision drill opens the Decisions window; Today keeps its state", async () => {
+    const realOpen = useDesk.getState().openSurfaceWindow;
+    const openSurfaceWindow = vi.fn();
+    useDesk.setState({ openSurfaceWindow } as never);
+    const view = render(<IntelligencePullout object={object} onClose={() => {}} />);
     try {
       fireEvent.change(screen.getByRole("textbox", { name: "Kept draft" }), { target: { value: "Return context" } });
       act(() => openIntelligence({ view: "receipts", decisionId: "dec-1" }));
-      expect(await screen.findByTestId("decisions-page")).toHaveTextContent("dec-1");
-      expect(screen.queryByRole("textbox", { name: "Kept draft" })).toBeNull();
-      expect(screen.queryByRole("button", { name: "Today action" })).toBeNull();
-      fireEvent.click(screen.getByTestId("intelligence-today"));
-      await waitFor(() => expect(screen.getByRole("textbox", { name: "Kept draft" })).toHaveValue("Return context"));
-      expect(screen.getAllByRole("button", { name: "Today action" })).toHaveLength(1);
-      expect([...foot.querySelectorAll(".surface-footer-layout")].filter((node) => !node.closest('[style*="display: none"]'))).toHaveLength(1);
-    } finally { view.unmount(); foot.remove(); useDesk.setState({ openPullout: realOpen } as never); }
+      expect(openSurfaceWindow).toHaveBeenCalledWith("open-decisions", "decision:dec-1");
+      expect(screen.getByRole("textbox", { name: "Kept draft" })).toHaveValue("Return context");
+    } finally { view.unmount(); useDesk.setState({ openSurfaceWindow: realOpen } as never); }
   });
 
   it("Show since yesterday opens Today with the fold asked open; Follow-through opens the Needs-you window", async () => {

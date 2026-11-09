@@ -452,7 +452,7 @@ def _recorded_prepared(db: Any, meeting_id: str, *, writing: dict[str, Any]) -> 
     paths = [
         f"{base}?include_parked=true", f"{base}/artifacts", f"{base}/aftercare",
         f"{base}/intent-timeline", f"{base}/proposals", f"{base}/follow-through-proposals",
-        f"/api/decisions?scope=all&limit=500&meeting_id={meeting_id}", f"{base}/intel-recovery",
+        f"/api/decisions/ledger?limit=500&meeting_id={meeting_id}", f"{base}/intel-recovery",
         f"{base}/prepared",
     ]
     bodies = {}

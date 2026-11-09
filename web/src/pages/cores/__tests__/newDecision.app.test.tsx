@@ -1,19 +1,21 @@
 /** New Decision, app-level (the owner, 2026-10-25: "go -> new decision ->
- * opens up a cluster fuck of a window"). The real Desk store, the real
- * window host (SurfaceWindows), the real New decision window and the real
- * Decisions window. Only the transport is a double, and it replays the hub's
- * own recorded answers (tests/integration/test_face_wire_fences.py
+ * opens up a cluster fuck of a window"; the native Decisions app,
+ * 2026-11-08: the composer is the Decisions window's plate, never a second
+ * window). The real Desk store, the real window host (SurfaceWindows) and
+ * the real Decisions window. Only the transport is a double, and it replays
+ * the hub's own recorded answers (tests/integration/test_face_wire_fences.py
  * ::test_new_decision_reads): the from-desk create, the record read and the
- * list read. Nothing typed by hand (the SCAR LAW).
+ * ledger read. Nothing typed by hand (the SCAR LAW).
  *
- * The press is driven to the rendered outcome: New Decision opens a window
- * of its own (never the palette); Create writes ONE decision and the record
- * opens in the Decisions window, selected, in its reader; never in Today. */
+ * The press is driven to the rendered outcome: New Decision opens the
+ * Decisions window on its composer (never the palette); Create writes ONE
+ * decision and the record opens in the same window, picked on the rail;
+ * never in Today. */
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import CREATED from "../../../test/wire/decision-records.from-desk.wire.json";
 import RECORD from "../../../test/wire/decision-record.new.wire.json";
-import LIST from "../../../test/wire/decision-records.list-new.wire.json";
+import LEDGER from "../../../test/wire/decisions.ledger-new.wire.json";
 import MEETING_DECISION from "../../../test/wire/decision.honest-faces.wire.json";
 import NO_RECORD from "../../../test/wire/decision.no-record.wire.json";
 import NO_RECORD_ROW from "../../../test/wire/decisions.no-record.wire.json";
@@ -45,7 +47,6 @@ vi.mock("../../../lib/api", async (importOriginal) => {
     apiFetch: vi.fn((url: string) => {
       hub.gets.push(url);
       if (url === `/api/decision-records/${RECORD.wire.id}`) return Promise.resolve(structuredClone(RECORD.wire));
-      if (url.startsWith("/api/decision-records?")) return Promise.resolve(structuredClone(LIST.wire));
       if (url.startsWith("/api/channels/sends")) return Promise.resolve({ sends: [] });
       // A meeting's decision (recorded) and the records made from it / the
       // records that govern one work item: the recorded record, as a list.
@@ -57,7 +58,8 @@ vi.mock("../../../lib/api", async (importOriginal) => {
       // (tests/integration/test_face_wire_fences.py::test_decisions_window_scope_reads).
       if (url === `/api/decisions/${NO_RECORD.wire.decision.id}`) return Promise.resolve(structuredClone(NO_RECORD.wire));
       if (url === `/api/decision-records/source/meeting/${NO_RECORD.wire.decision.id}`) return Promise.resolve([]);
-      if (url.startsWith("/api/decisions?") && url.includes(`decision_id=${NO_RECORD.wire.decision.id}`)) return Promise.resolve(structuredClone(NO_RECORD_ROW.wire));
+      if (url.startsWith("/api/decisions/ledger?") && url.includes(`decision_id=${NO_RECORD.wire.decision.id}`)) return Promise.resolve(structuredClone(NO_RECORD_ROW.wire));
+      if (url.startsWith("/api/decisions/ledger?")) return Promise.resolve(structuredClone(LEDGER.wire));
       if (url === "/api/decision-records/work/item/w-2") return Promise.resolve(structuredClone(WORK_TWO.wire));
       if (url === `/api/decision-records/${GOVERNING_A.wire.id}`) return Promise.resolve(structuredClone(GOVERNING_A.wire));
       if (url === `/api/decision-records/${GOVERNING_B.wire.id}`) return Promise.resolve(structuredClone(GOVERNING_B.wire));
@@ -82,7 +84,6 @@ import { openRef } from "../../../desk/openObject";
 import { WhyControl } from "../../../desk/components/WhyControl";
 
 const PROJECT = { id: "proj-57969b0497a9", name: "Payments ledger cutover" };
-const NEW_WINDOW = "surface-new-decision";
 const DECISIONS_WINDOW = "surface-decisions";
 
 beforeEach(() => {
@@ -116,12 +117,13 @@ async function openNewDecision(overrides: Record<string, unknown> = {}) {
   return screen.findByRole("group", { name: "New decision" });
 }
 
-describe("New Decision opens a window of its own", () => {
-  it("the verb opens the New decision window, not the palette, and writes nothing", async () => {
+describe("New Decision is the Decisions window's composer", () => {
+  it("the verb opens the composer plate in the Decisions window, not the palette, and writes nothing", async () => {
     render(<SurfaceWindows />);
     await act(async () => { newDecision().run({ selectedRef: null }); });
     const form = await screen.findByRole("group", { name: "New decision" });
-    expect(useDesk.getState().windowsById[NEW_WINDOW]?.applicationKey).toBe("new-decision");
+    expect(useDesk.getState().windowsById[DECISIONS_WINDOW]?.scope).toBe("new");
+    expect(Object.keys(useDesk.getState().windowsById)).toEqual([DECISIONS_WINDOW]);
     expect(usePalette.getState().open).toBe(false);
     // The label/control grid: Decision and Why; no About row without a Project.
     expect(within(form).getByRole("textbox", { name: "Decision title" })).toHaveValue("");
@@ -131,7 +133,7 @@ describe("New Decision opens a window of its own", () => {
     expect(hub.posts).toEqual([]);
   });
 
-  it("Cancel closes the window and writes nothing; Enter with no title writes nothing", async () => {
+  it("Cancel returns to the rail and writes nothing; Enter with no title writes nothing", async () => {
     const form = await openNewDecision();
     const title = within(form).getByRole("textbox", { name: "Decision title" });
     await act(async () => { fireEvent.keyDown(title, { key: "Enter" }); });
@@ -139,7 +141,7 @@ describe("New Decision opens a window of its own", () => {
     fireEvent.change(title, { target: { value: "Half a thought" } });
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
     await waitFor(() => expect(screen.queryByRole("group", { name: "New decision" })).toBeNull());
-    expect(useDesk.getState().windowsById[NEW_WINDOW]).toBeUndefined();
+    expect(useDesk.getState().windowsById[DECISIONS_WINDOW]?.scope ?? null).toBeNull();
     expect(hub.posts).toEqual([]);
     // A fresh New Decision starts empty: the abandoned words do not return.
     await act(async () => { await useDesk.getState().createPrimitive("decision", {}); });
@@ -158,8 +160,9 @@ describe("New Decision opens a window of its own", () => {
     expect(hub.posts).toEqual([]);
   });
 
-  it("Create writes one decision about the Project and opens it in the Decisions window, selected, in its reader", async () => {
+  it("Create writes one decision about the Project and opens it in the same window, picked on the rail", async () => {
     const form = await openNewDecision({ project_id: PROJECT.id, project_name: PROJECT.name });
+    expect(useDesk.getState().windowsById[DECISIONS_WINDOW]?.scope).toBe(`new:project:${PROJECT.id}`);
     expect(within(form).getByTestId("decision-about-chip").textContent).toBe(PROJECT.name);
     const create = screen.getByRole("button", { name: /Create/ });
     expect(create).toBeDisabled();
@@ -182,9 +185,9 @@ describe("New Decision opens a window of its own", () => {
     // One decision writer (2026-11-08): the hub files it in the same call.
     expect(hub.puts).toEqual([]);
 
-    // The New decision window is gone; the Decisions window holds the record.
-    await waitFor(() => expect(useDesk.getState().windowsById[NEW_WINDOW]).toBeUndefined());
-    expect(useDesk.getState().windowsById[DECISIONS_WINDOW]?.scope).toBe(`record:${RECORD.wire.id}`);
+    // The composer is gone; the same window holds the record.
+    await waitFor(() => expect(useDesk.getState().windowsById[DECISIONS_WINDOW]?.scope).toBe(`record:${RECORD.wire.id}`));
+    expect(screen.queryByRole("group", { name: "New decision" })).toBeNull();
     // Never Today's window (the owner's catch: a receipts page inside Today).
     expect(useDesk.getState().windowsById["intelligence:desk"]).toBeUndefined();
 
@@ -193,17 +196,17 @@ describe("New Decision opens a window of its own", () => {
     expect(reader.textContent).toContain("One writer, one file. Postgres waits until we need a second host.");
     expect(within(reader).getByTestId("decision-reader-about").textContent).toBe(PROJECT.name);
     expect(within(reader).getByRole("button", { name: /Send…/ })).toBeTruthy();
-    expect(screen.getByTestId("decision-reader-state").textContent).toBe("Accepted just now");
+    expect(screen.getByTestId("decision-reader-state").textContent).toBe("Decided just now");
+    // The plate: a decided record no one owns yet waits on Commit.
+    expect(within(reader).getByTestId("decision-reader-commit").textContent).toBe("Commit");
     // No mono-capital captions, no state chip, no source button on this path.
     expect(reader.textContent).not.toMatch(/DECISION|CURRENT|Decision context|Open decision/);
 
-    // ‹ Decisions: the list, with the new record selected.
-    fireEvent.click(within(reader).getByTestId("decision-reader-back"));
+    // The rail beside it: the new record, picked.
     const row = await screen.findByTestId("decisions-row");
     expect(row.textContent).toContain("Keep the ledger on SQLite");
-    expect(row.getAttribute("aria-selected")).toBe("true");
-    // The window forgets the record it opened on: a reload shows the list.
-    expect(useDesk.getState().windowsById[DECISIONS_WINDOW]?.scope ?? null).toBeNull();
+    expect(within(row).getByRole("button").getAttribute("aria-current")).toBe("true");
+    expect(row.getAttribute("data-state")).toBe("steel");
   });
 });
 
@@ -222,10 +225,9 @@ describe("every decision door opens the Decisions window", () => {
     const reader = await screen.findByTestId("decision-reader");
     expect(await within(reader).findByRole("heading", { name: "Keep the ledger on SQLite" })).toBeTruthy();
     expect(within(reader).getByRole("button", { name: /Send…/ })).toBeTruthy();
-    expect(within(reader).getByTestId("decision-reader-back")).toBeTruthy();
-    expect(screen.getByTestId("decision-reader-state").textContent).toBe("Accepted just now");
+    expect(screen.getByTestId("decision-reader-state").textContent).toBe("Decided just now");
     // Not the old desk decision window, not Today; no read of the source decision.
-    expect(hub.gets.some((url) => url.startsWith("/api/decisions/"))).toBe(false);
+    expect(hub.gets.some((url) => /^\/api\/decisions\/(?!ledger\?)/.test(url))).toBe(false);
     expect(Object.keys(useDesk.getState().windowsById)).toEqual([DECISIONS_WINDOW]);
     expect(todayOpen()).toBe(false);
   });
@@ -293,16 +295,14 @@ describe("every decision door opens the Decisions window", () => {
     expect(reader.textContent).toContain("Dual-write is stable.");
     expect(reader.textContent).toContain("Ledger cutover sync");
     expect(within(reader).getByTestId("decision-reader-meeting").textContent).toContain("Open meeting");
-    expect(screen.getByTestId("decision-reader-state").textContent).toMatch(/^Accepted/);
+    expect(screen.getByTestId("decision-reader-state").textContent).toMatch(/^Decided/);
     expect(screen.getByTestId("decision-reader-status").textContent).toContain("From a meeting");
     // No Send (no record to send yet), no mono-capital captions.
     expect(within(reader).queryByTestId("decision-reader-send")).toBeNull();
     expect(reader.textContent).not.toMatch(/DECISION|Decision context|Results/);
     expect(todayOpen()).toBe(false);
-    // ‹ Decisions: the list; the window forgets the decision it opened on.
-    fireEvent.click(within(reader).getByTestId("decision-reader-back"));
+    // The rail stands beside it.
     expect(await screen.findByTestId("decisions-row")).toBeTruthy();
-    expect(useDesk.getState().windowsById[DECISIONS_WINDOW]?.scope ?? null).toBeNull();
   });
 
   it("WHY with several governing records lists only those, the first in the reader", async () => {
@@ -313,14 +313,13 @@ describe("every decision door opens the Decisions window", () => {
     const reader = await screen.findByTestId("decision-reader");
     expect(await within(reader).findByRole("heading", { name: first.decision_text })).toBeTruthy();
     expect(todayOpen()).toBe(false);
-    // ‹ Decisions: only the two governing records, the one read selected.
-    fireEvent.click(within(reader).getByTestId("decision-reader-back"));
+    // The rail: only the two governing records, the one read picked.
     await waitFor(() => expect(screen.getAllByTestId("decisions-row")).toHaveLength(2));
     const rows = screen.getAllByTestId("decisions-row");
     expect(rows.map((row) => row.textContent).join(" ")).toContain(second.decision_text);
-    expect(rows.find((row) => row.textContent?.includes(first.decision_text))?.getAttribute("aria-selected")).toBe("true");
-    expect(screen.getByTestId("decisions-status").textContent).toContain("2 decisions");
-    // All decisions: the whole list again.
+    const firstRow = rows.find((row) => row.textContent?.includes(first.decision_text))!;
+    expect(within(firstRow).getByRole("button").getAttribute("aria-current")).toBe("true");
+    // All decisions: the whole rail again.
     fireEvent.click(screen.getByTestId("decisions-all"));
     expect(useDesk.getState().windowsById[DECISIONS_WINDOW]?.scope ?? null).toBeNull();
     await waitFor(() => expect(screen.queryByTestId("decisions-all")).toBeNull());
