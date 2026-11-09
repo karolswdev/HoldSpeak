@@ -53,6 +53,9 @@ def test_the_canonical_map_has_all_seventeen_operations_and_no_local_service_tar
         "meeting.ready_list", "meeting.ready_read", "meeting.recover_capture", "meeting.rename",
         "meeting.resolve_sync_conflict", "meeting.restore", "meeting.sync_conflicts", "meeting.update",
         "speaker.list",
+        # the phone's declared verbs with an MCP tool (2026-11-08, holdspeak/phone_operations.py)
+        "phone.calls", "phone.devices", "phone.get_call", "phone.let_wait", "phone.messages", "phone.push_key",
+        "phone.revoke", "phone.test_push", "phone.ring", "phone.again",
         "setup.status", "setup.use",
         "decision.create", "decision.update", "decision.read", "decision.list",
         "meeting.list", "meeting.read", "meeting.import", "meeting.transcribe", "meeting.summary.run",
@@ -102,7 +105,10 @@ def test_the_canonical_map_has_all_seventeen_operations_and_no_local_service_tar
                                # #2027: the Programs descriptors with no MCP tool.
                                "program.close", "program.proposal_decide", "program.requirement_decide", "program.requirement_edit", "program.requirement_evidence", "program.round_answer", "program.round_decide", "program.round_next", "program.rounds_open",
                                # One display protocol (2026-11-08): the compositor's answer (HTTP only).
-                               "desk.request.result"}
+                               "desk.request.result",
+                               # 2026-11-08: the phone verbs with no MCP tool.
+                               "phone.redeem", "phone.pair", "phone.save_push_key", "phone.mark_read",
+                               "phone.decide", "phone.accept", "phone.decline", "phone.end"}
     assert all(value["kind"] in {"tool", "resource"}
                for value in gw.OP_MCP_PROJECTIONS.values())
 
