@@ -29,7 +29,8 @@
 #     already runs.
 #   * A red writes .tmp/quick-check/retry.txt (the failed test ids, and the
 #     steps that did not run); `scripts/quick_check.sh --retry` runs only those,
-#     and a green promotes the memo.
+#     and a green records the memo only at the head of the run it retries,
+#     for a step whose inputs that run saw (else the next check runs it).
 #   * The lock: the whole check holds one lock. It is a "browser" hold
 #     (exclusive) when the desk sweep runs, else a "unit" hold, which two other
 #     unit runs can share (scripts/test_lock.py).
@@ -152,16 +153,19 @@ if [ -z "$code" ]; then
   if in_retry docguards; then ids="$(retry_ids docguards)"; [ -n "$ids" ] && targets=($ids); fi
   if HOME="$H" uv run pytest -q "${targets[@]}" >"$H/docguards.log" 2>&1; then
     grep -E 'passed|failed' "$H/docguards.log" | tail -1 | sed 's/^/   /'
-    memo record "docguards=$(echo "$key" | awk '{print $2}')"
+    if [ "$retry" = 1 ]; then memo promote "$retry_file" "docguards=$(echo "$key" | awk '{print $2}')"
+    else memo record "docguards=$(echo "$key" | awk '{print $2}')"; fi
     rm -f "$retry_file"
     echo "QUICK CHECK GREEN: merge; the main watcher runs the whole suite."
     exit 0
   fi
   grep -E '^(FAILED|ERROR)' "$H/docguards.log" | head -8 | sed 's/^/   /'
-  { echo "base $base"
+  { if [ "$retry" = 1 ]; then grep -E '^(base|head|key) ' "$retry_file"
+    else echo "base $base"; echo "head $(git rev-parse HEAD)"; echo "key docguards $(echo "$key" | awk '{print $2}')"; fi
     ids="$(grep -E '^(FAILED|ERROR) ' "$H/docguards.log" | sed -e 's/ - .*//' | awk '{print $2}' | sort -u)"
     if [ -n "$ids" ]; then printf '%s\n' "$ids" | sed 's/^/ids docguards /'; else echo "step docguards"; fi
-  } >"$retry_file"
+  } >"$retry_file.new"
+  mv "$retry_file.new" "$retry_file"
   echo "   retry the failed tests only: scripts/quick_check.sh --retry"
   red "the doc guards failed"
 fi
@@ -242,7 +246,7 @@ printf '%s\n' "${repo_guards[@]}" >"$H/repo.sel"
 printf '%s\n' "${web_guards[@]}" >"$H/web-guards.sel"
 
 # ── 4. the plan: which steps run, which the memo skips ───────────────────────
-plan="$(memo plan build "vitest=$H/vitest.sel" "web-guards=$H/web-guards.sel" sweep "pytest=$H/pytest.sel" \
+plan="$(memo plan build npm "vitest=$H/vitest.sel" "web-guards=$H/web-guards.sel" sweep "pytest=$H/pytest.sel" \
   "canon=$H/canon.sel" "repo=$H/repo.sel")" || red "the memo failed"
 key_of() { printf '%s\n' "$plan" | awk -v s="$1" '$1 == s {print $2}'; }
 green_at() { printf '%s\n' "$plan" | awk -v s="$1" '$1 == s && $3 != "-" {print $3}'; }
@@ -280,7 +284,29 @@ pytest_ids() {  # the failed test ids of a pytest log
   grep -E '^(FAILED|ERROR) ' "$1" | sed -e 's/ - .*//' | awk '{print $2}' | sort -u
 }
 
+# The install before the build (2026-11-08): lanes link the main checkout's
+# web/node_modules, and a reinstall while a lane runs gave it "two Reacts" and
+# "Cannot find module 'react-router/dom'". `npm ci` runs only when
+# web/package-lock.json changed since its last green; never through a link.
+install_web() {
+  local at had=""; at="$(green_at npm)"; [ -d web/node_modules ] && had=1
+  if [ -L web/node_modules ]; then
+    sum build "   npm ci: web/node_modules is a link to $(readlink web/node_modules); not reinstalled from here"
+  elif [ -n "$at" ] && [ -d web/node_modules ]; then
+    sum build "   npm ci: web/package-lock.json unchanged since $at, skipped"
+  elif [ -d web/node_modules ] && ! grep -q '"npm"' "$memo_dir/green.json" 2>/dev/null; then
+    sum build "   npm ci: no record yet and web/node_modules is there, skipped (recorded on a green build)"
+  else
+    if ! HOME="$H" npm --prefix web ci >"$H/npm-ci.log" 2>&1; then
+      tail -20 "$H/npm-ci.log" | sed 's/^/   /' >>"$H/build.sum"; sum build "   npm ci failed: RED"; return 1
+    fi
+    if [ -n "$had" ]; then sum build "   npm ci: web/package-lock.json changed, reinstalled"
+    else sum build "   npm ci: web/node_modules was missing, installed"; fi
+  fi
+}
+
 run_build() {
+  install_web || { done_step build 1; return; }
   if HOME="$H" npm --prefix web run build >"$H/build.log" 2>&1; then
     sum build "   build ok"; done_step build 0
   else
@@ -461,15 +487,31 @@ rec=""
 for pair in $promote; do
   case "$pair" in canon=*|repo=*) [ "$pyrc" = 0 ] || continue ;; esac
   rec="$rec $pair"
+  # A green build means the install it ran on is good: the lock file's key.
+  case "$pair" in build=*) rec="$rec npm=$(key_of npm)" ;; esac
 done
-[ -n "$rec" ] && memo record $rec
+if [ "$retry" = 1 ]; then
+  # A retry records only at the head of the run it retries, and only a step
+  # whose inputs are what that run saw (retry.txt "head" and "key").
+  [ -n "$rec" ] && memo promote "$retry_file" $rec
+else
+  [ -n "$rec" ] && memo record $rec
+fi
 
 took=$(( $(date +%s) - started ))
 if [ "$fail" = 0 ]; then
   rm -f "$retry_file"
   echo "QUICK CHECK GREEN: merge; the main watcher runs the whole suite. (${took} s)"
 else
-  { echo "base $base"; printf '%s\n' "$retry_rows" | grep -v '^$'; } >"$retry_file"
+  if [ "$retry" = 1 ]; then
+    # Still red: keep the run being retried (its head and keys); the ids are new.
+    { grep -E '^(base|head|key) ' "$retry_file"; printf '%s\n' "$retry_rows" | grep -v '^$'; } >"$retry_file.new"
+    mv "$retry_file.new" "$retry_file"
+  else
+    { echo "base $base"; echo "head $(git rev-parse HEAD)"
+      printf '%s\n' "$plan" | awk '{print "key " $1 " " $2}'
+      printf '%s\n' "$retry_rows" | grep -v '^$'; } >"$retry_file"
+  fi
   nids="$(grep -c '^ids ' "$retry_file" || true)"; nsteps="$(grep -c '^step ' "$retry_file" || true)"
   echo "   retry: $nids failed test id(s) and $nsteps whole step(s) in $retry_file"
   echo "   after the fix, run: scripts/quick_check.sh --retry"

@@ -123,7 +123,11 @@ describe("Signal component gallery", () => {
     expect(within(progress).getByText("Needs retry")).toBeInTheDocument();
     fireEvent.click(within(progress).getByRole("button", { name: "Retry" }));
     expect(within(progress).getByRole("progressbar", { name: "Check source progress" })).toHaveAttribute("aria-valuenow", "55");
-  });
+    // Its own budget, like the a11y cases above: it walks four specimens with
+    // role queries over the whole gallery (about 1.1 s alone); under the quick
+    // check's load it ran past vitest's 5 s (2026-11-08). It has no negative
+    // wait: every absent element is a queryBy.
+  }, 20_000);
 
   it("retries the captured failed request without replacing a newer draft", async () => {
     render(<ComponentsCore />);
