@@ -15,7 +15,7 @@ class _Runner:
         self.outcome, self.publish, self.error = outcome, publish, error
         self.requests: list[Any] = []
 
-    def invoke(self, request: Any, adapter: Any, publish: Any = None) -> InvocationOutcome:
+    def invoke(self, request: Any, adapter: Any, publish: Any = None, **_: Any) -> InvocationOutcome:
         self.requests.append((request, adapter))
         ref = ""
         if self.publish is not None and self.outcome == "succeeded":
@@ -77,7 +77,7 @@ class _ChainRunner:
     def __init__(self, first: str) -> None:
         self.first, self.revisions = first, []
 
-    def invoke(self, request: Any, adapter: Any, publish: Any = None) -> InvocationOutcome:
+    def invoke(self, request: Any, adapter: Any, publish: Any = None, **_: Any) -> InvocationOutcome:
         self.revisions.append(request.deployment_revision)
         if request.deployment_revision == "rev-1":
             return InvocationOutcome("op-1", "inv-1", self.first, "", {}, "engine down")

@@ -8,12 +8,14 @@ from fastapi.testclient import TestClient
 from holdspeak.db import Database, reset_database
 from holdspeak.kernel.runtime import _configure
 from holdspeak.principals import Principal, PrincipalKind
+from holdspeak.services.inference_assignment_service import InferenceAssignmentService
 from holdspeak.services.refinement_coordinator import RefinementCoordinator
 from holdspeak.services.refinement_thought_service import (
     INBOX_DIRECTORY_ID,
     RefinementThoughtService,
 )
 from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
+from tests.unit.test_phase143_inference_assignments import OWNER as ASSIGNMENT_OWNER, _profile, _result_claim
 
 
 OWNER = Principal(PrincipalKind.OWNER, "kernel-walk-owner")
@@ -35,11 +37,13 @@ async def test_real_kernel_turn_reaches_review_then_answer_does_not_auto_chain(t
     reset_database()
     db = Database(tmp_path / "kernel-refinement.db")
     db.directories.upsert(directory_id=INBOX_DIRECTORY_ID, name="Inbox")
-    model = tmp_path / "Scripted.gguf"
-    model.touch()
-    monkeypatch.setattr(
-        "holdspeak.intel.providers.configured_local_meeting_model_path", lambda: str(model)
-    )
+    # The Thoughts assignment names the engine; the turn runs through the door.
+    _profile(db, "thoughts", claims=("language", _result_claim("thought.interview")))
+    InferenceAssignmentService(db).set_assignment(ASSIGNMENT_OWNER, {
+        "command_id": "assign-thoughts", "expected_revision": 0,
+        "scope": {"kind": "capability", "capability_id": "thought.interview"},
+        "entries": [{"profile_id": "thoughts", "profile_revision": 1}],
+    })
     engine = _ScriptedEngine()
     broker = _configure(db)
     monkeypatch.setattr(broker.inference_runner, "_engine_factory", lambda _revision, **_kw: engine)

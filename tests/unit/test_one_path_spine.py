@@ -206,14 +206,12 @@ def _assert_spine_reached(calls: list[str]) -> str:
 
 
 def _drive_ask(tmp_path, monkeypatch) -> SurfaceRun:
+    # An answer is one job through the engine door: the Answers assignment
+    # names the engine (``test_ask_engine_door.assign_answers``).
     from holdspeak.services.ask_service import AskService
+    from tests.unit.test_ask_engine_door import assign_answers
 
     db = Database(tmp_path / "ask.db")
-    profile = db.profiles.upsert(
-        profile_id="prof_a", name="Alpha", kind="openAICompatible",
-        base_url="http://192.168.1.50:8080", model="model-a", requires_key=False,
-    )
-    broker = _configure(db)
 
     class FakeIntel:
         active_provider = "openai_compatible"
@@ -221,10 +219,10 @@ def _drive_ask(tmp_path, monkeypatch) -> SurfaceRun:
         def run_prompt(self, *, system_prompt, user_prompt, temperature=None, max_tokens=None):
             return "ok"
 
-    monkeypatch.setattr(broker.inference_runner, "_engine_factory", lambda revision, **_: FakeIntel())
+    broker = assign_answers(db, FakeIntel, profile="prof_a")
     service = AskService(db, hub_model=lambda: "", broker=broker)
-    asyncio.run(service.ask(OWNER, "summarize", inference_target_id="prof_a", operation_capability="thought.interview"))
-    return SurfaceRun(db, OWNER, None, profile.id)
+    asyncio.run(service.ask(OWNER, "summarize"))
+    return SurfaceRun(db, OWNER, None, "prof_a")
 
 
 def _ready_this_machine(tmp_path, monkeypatch) -> None:

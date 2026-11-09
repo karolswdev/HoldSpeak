@@ -433,43 +433,6 @@ def test_dispatch_hook_refuses_replaced_host_epoch_for_initial_and_composite_chi
     assert child_error.value.code == "refinement_host_lease_expired"
 
 
-def test_default_same_id_readiness_change_refuses_initial_and_composite_before_writes(rig, monkeypatch):
-    db, service, thought = rig
-    from holdspeak.inference_targets import resolve_placement
-    monkeypatch.setattr("holdspeak.inference_targets._this_machine_readiness", lambda: ("ready", ""))
-    target = resolve_placement(db).target
-    claim = {"target_id":target.id,"target_kind":target.kind,"boundary":target.boundary,
-             "engine":target.engine,"model":target.model,"readiness":target.readiness_state,
-             "reason":target.readiness_reason}
-    epoch = service.claim_refinement_host("default-host", "web", lease_seconds=30)
-    monkeypatch.setattr("holdspeak.inference_targets._this_machine_readiness",
-                        lambda: ("unavailable", "model disappeared"))
-    with pytest.raises(ConflictError) as initial_error:
-        service.reserve_refinement_with_dispatch_claim(
-            OWNER, thought["id"], request_id="default-race-initial",
-            expected_aggregate_revision=1, expected_working_revision=1, expected_attachment_revision=0,
-            dispatch_host_id="default-host", dispatch_lease_epoch=epoch,
-            admission_claim=claim, validate_current_admission=True)
-    assert initial_error.value.code == "refinement_continuation_unavailable"
-    with db._connection() as conn:
-        assert conn.execute("SELECT COUNT(*) FROM refinement_invocations WHERE thought_id=?", (thought["id"],)).fetchone()[0] == 0
-
-    review_thought = service.create(OWNER, request_id="default-race-capture", raw_text="Race", source={"kind":"typed"})
-    review_id = _review(db, service, review_thought, "default-race")
-    cursor = service.get_workbench(OWNER, review_thought["id"], inference_available=True)["workspace_cursor"]
-    with pytest.raises(ConflictError) as composite_error:
-        service.answer_and_continue_with_dispatch_claim(
-            OWNER, review_thought["id"], review_id, command_id="default-race-composite",
-            answer="Mina", expected_aggregate_revision=1, expected_working_revision=1,
-            expected_attachment_revision=0, workspace_cursor=cursor,
-            dispatch_host_id="default-host", dispatch_lease_epoch=epoch,
-            admission_claim=claim, validate_current_admission=True)
-    assert composite_error.value.code == "refinement_continuation_unavailable"
-    assert service.get(OWNER, review_thought["id"])["working_note"]["body_markdown"] == "Race"
-    with db._connection() as conn:
-        assert conn.execute("SELECT COUNT(*) FROM refinement_answer_continue_commands").fetchone()[0] == 0
-        assert conn.execute("SELECT COUNT(*) FROM refinement_review_actions").fetchone()[0] == 0
-
 
 def test_process_only_cursor_race_returns_fresh_workbench_and_one_cas_retry_saves_draft(rig):
     db, service, thought = rig

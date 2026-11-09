@@ -210,6 +210,8 @@ def run(
     subject: Optional[tuple[str, str]] = None,
     parent_context: Any = None,
     planned_node: str = "",
+    before_physical_dispatch: Any = None,
+    before_compatibility_retry: Any = None,
 ) -> Answer:
     """Run ``job`` once on its assigned engine (or on ``engine`` when the
     caller already holds one) and return the answer.
@@ -227,7 +229,11 @@ def run(
     names its own ``invocation_id`` (a Stop handle) is not tracked.
     ``on_delta``: the job streams (``run_stream``). ``prepare(payload,
     engine)`` gives the bytes that go to that engine. ``subject`` is as in
-    ``engine_for``. Raises ``EngineDoorError``.
+    ``engine_for``. ``parent_context`` runs the job as a child of a live
+    parent run (a dictation or meeting session). ``before_physical_dispatch``
+    and ``before_compatibility_retry`` are the runner's hooks (a Thought binds
+    each attempt with them); the retry on the next engine is attempt 2.
+    Raises ``EngineDoorError``.
     """
     if engine is None:
         engine = engine_for(broker, job, subject=subject)
@@ -239,16 +245,18 @@ def run(
         started.append(getattr(delta, "kind", "") in _STARTED)
         on_delta(delta)  # type: ignore[misc]
 
-    def once(on: Engine, run_id: str) -> Answer:
+    def once(on: Engine, run_id: str, attempt: int) -> Answer:
         return _run_once(
             broker, principal, job, prepare(payload, on) if prepare else payload, engine=on,
             contract=contract, contract_revision=contract_revision, deadline=deadline, adapter=adapter,
             result_ref=result_ref, invocation_id=run_id, stage=stage,
             on_delta=forward if on_delta else None, parent_context=parent_context, planned_node=planned_node,
+            attempt=attempt, before_physical_dispatch=before_physical_dispatch,
+            before_compatibility_retry=before_compatibility_retry,
         )
 
     try:
-        return once(engine, invocation_id)
+        return once(engine, invocation_id, 1)
     except EngineDoorError as exc:
         # One retry on the next engine of the chain, only when the first one
         # said plainly that it did not answer, and (streamed) before its
@@ -257,7 +265,8 @@ def run(
             raise
         first = exc.sent
     try:
-        answer = once(engine.fallback, (invocation_id + "_r2") if invocation_id else "")
+        # ``_n2``, never ``_r2``: the runner names its own dialect retry ``_r2``.
+        answer = once(engine.fallback, (invocation_id + "_n2") if invocation_id else "", 2)
     except EngineDoorError as again:
         again.sent = first + again.sent
         raise
@@ -327,6 +336,7 @@ def _run_once(
     broker: Any, principal: Any, job: str, payload: Any, *, engine: Engine, contract: str,
     contract_revision: str, deadline: float, adapter: Any, result_ref: Optional[str],
     invocation_id: str, stage: Any, on_delta: Any, parent_context: Any, planned_node: str,
+    attempt: int = 1, before_physical_dispatch: Any = None, before_compatibility_retry: Any = None,
 ) -> Answer:
     from ..kernel.inference_runner import InvocationRequest, ServiceContract
     from ..kernel.runtime import _as_principal
@@ -345,6 +355,9 @@ def _run_once(
         payload=payload,
         invocation_id=invocation_id,
         parent_operation_id=str(getattr(parent_context, "operation_id", "") or ""),
+        attempt_ordinal=attempt,
+        before_physical_dispatch=before_physical_dispatch,
+        before_compatibility_retry=before_compatibility_retry,
     )
     captured: list[Any] = []
     ref = result_ref or f"{contract.replace('.', '-')}:{engine.assignment or engine.revision}"
@@ -365,7 +378,9 @@ def _run_once(
         publish = broker.projection_stager.publisher(invocation_id, kind, _encode)
     with _as_principal(principal):
         if on_delta is None:
-            outcome = broker.inference_runner.invoke(request, adapter, publish=publish)
+            outcome = broker.inference_runner.invoke(
+                request, adapter, publish=publish, parent_context=parent_context, planned_node=planned_node,
+            )
         else:
             outcome = broker.inference_runner.invoke_stream(
                 request, adapter, on_delta=on_delta, publish=publish,
@@ -466,6 +481,12 @@ JOB_WORDS = {
     "chat.turn": "the reply",
     "meeting.deferred_analysis": "the note's tasks",
     "project.brief.prepare": "the brief",
+    "speech.rewrite": "the dictation rewrite",
+    "speech.intent_classify": "the dictation intent",
+    "speech.punctuate": "the dictation punctuation",
+    "meeting.live_analysis": "the live meeting notes",
+    "meeting.bookmark_label": "a bookmark label",
+    "meeting.auto_title": "the meeting title",
 }
 
 ENGINES_REF = "window:surface-engines"
