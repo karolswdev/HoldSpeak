@@ -2,6 +2,9 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · #2056 The chat turn runs through the engine door: `run()` streams with `on_delta` (`run_stream` a thin wrapper), one retry on the next engine only before the first delta, a failed `chat.turn` is a Needs-you row with Retry; admission, `execute_stream`, the route-execution receipts and the second ThreadService constructor leave thread_service; −14 live lines.
+- 2026-11-08 · #2058 Fix forward #2052/#2054/#2051: every parked hub file compiles (the censuses parse them); the owner-only, announce and promotion fences name the declared tables; the morning-prep answers re-recorded.
+- 2026-11-08 · #2057 Codex conditions on #2051: a produced route with no principal is unauthenticated (five Programs rigs set the owner explicitly); redemption checks the pairing origin (`phone_devices.pair_origin`, schema 92; `pairing_origin_mismatch` leaves the token unspent).
 - 2026-11-08 · #2054 people_service's verbs are declared operations (`people_operations.py`): 12 web-only verbs gain MCP tools with the People redaction as a call/web_call pair, writes owner-only; the four calendar/alias link verbs lose their hand-written twins; people web-only 18 → 6 (the six are internal reads behind Needs you and the board).
 - 2026-11-08 · #2053 `gen_docs.sh` runs on a fresh tree: makes `docs/generated`, writes the capability docs before the graph reference joins on them.
 - 2026-11-08 · #2052 Twenty-three routes held only by their own tests are parked with them (activity candidates/rules, cadence loop reads, the calendar events router, decision supersede/dispute/reject, delivery terminal, inference defaults, intents override, recipe reads/chat/cancel, schedule read); live routes 816 → 793; −426 live lines.
