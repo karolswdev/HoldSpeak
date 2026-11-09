@@ -1,3 +1,5 @@
+# PARKED 20261109 (lane door/rest-park-waist): the recipe agent turn ran on this stack; it runs through the engine door now.
+# Not imported. Restore with git revert of the parking commit.
 """Durable private ToolTurn reservation authority (HS-143-09 A2).
 
 The controller owns leases, terminal election and tool/model reservation.  A

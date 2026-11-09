@@ -1,3 +1,5 @@
+# PARKED 20261109 (lane door/rest-park-waist): the recipe agent turn ran on this stack; it runs through the engine door now.
+# Not imported. Restore with git revert of the parking commit.
 """One-shot provider-neutral native-tool model adapter contract (HS-143-09 A5).
 
 This is deliberately below the ToolTurn controller and above a selected provider

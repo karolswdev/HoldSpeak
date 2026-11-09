@@ -118,13 +118,13 @@ def recipe_rig(tmp_path):
 
 
 def test_recipe_run_canonical_subject_assignment(recipe_rig):
-    """Recipe projection names the frozen route selected for its subject."""
+    """Recipe projection names the engine its subject assignment selected (the engine door)."""
     _db, service = recipe_rig
     result = asyncio.run(service.run(OWNER, "r1", input="hello"))
     assert result["profile_id"] == "agent_target"
     assert result["inference_target"]["profile_id"] == "agent_target"
-    assert set(result["placement"]) == {"route_plan_id", "route_plan_sha256"}
-    assert result["route_execution_receipt"]["outcome"] == "succeeded"
+    assert result["placement"]["source"] == "owner_assignment"
+    assert result["receipt_id"] and result["operation_id"]
 
 
 def test_recipe_run_workbench_context_cannot_reroute_canonical_subject(recipe_rig):
@@ -132,7 +132,7 @@ def test_recipe_run_workbench_context_cannot_reroute_canonical_subject(recipe_ri
     _db, service = recipe_rig
     result = asyncio.run(service.run(OWNER, "r1", input="hello", workbench_id="wb_target"))
     assert result["profile_id"] == "agent_target"
-    assert result["route_execution_receipt"]["outcome"] == "succeeded"
+    assert result["receipt_id"]
 
 
 def test_recipe_run_rejects_legacy_invocation_selector(recipe_rig):

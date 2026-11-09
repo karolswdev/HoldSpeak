@@ -80,11 +80,10 @@ def test_engine_replay_serves_model_discovery_on_loopback(tmp_path: Path) -> Non
         assert digest
         assert provider_url.startswith("http://127.0.0.1:")
         assert payload["data"] == [{"id": "p11-model", "owned_by": "graph-walk-replay"}]
-        from holdspeak.services.agent_turn_service import AgentTurnService
         recorded_engine = providers_module._configured_engine()
-        assert AgentTurnService.dispatch_plugin(SimpleNamespace(_engine=recorded_engine),
+        assert recorded_engine._chat_completion_text(
             [{"role": "user", "content": "Extract the decision"}], temperature=0.2,
-            max_tokens=800, plugin_id="decision_capture") == "recorded decision"
+            max_tokens=800) == "recorded decision"
         assert recorded_engine.calls == ["_chat_completion_text"]
         assert claim in ModelLibraryApplicationService._profile_body(draft)["capability_manifest"]["claims"]
     finally:
