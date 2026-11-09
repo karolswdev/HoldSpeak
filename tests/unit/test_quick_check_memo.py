@@ -57,6 +57,24 @@ def test_a_green_is_found_again_until_an_input_or_the_selection_changes(tmp_path
     assert _plan(repo, "build")["build"][1] == "-"
 
 
+def test_the_install_key_moves_only_with_the_lock_file(tmp_path: Path) -> None:
+    """2026-11-08: `npm ci` runs only when web/package-lock.json changed since
+    its last green; a source edit under web/ is not a reason to reinstall."""
+    repo = tmp_path / "repo"
+    (repo / "web").mkdir(parents=True)
+    (repo / "web" / "package-lock.json").write_text('{"v": 1}\n')
+    (repo / "web" / "a.ts").write_text("a\n")
+    _git(repo, "init", "-q")
+    _git(repo, "-c", "user.name=t", "-c", "user.email=t@t", "add", ".")
+    _git(repo, "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "one")
+    key = _plan(repo, "npm")["npm"][0]
+    _memo(repo, "record", f"npm={key}")
+    (repo / "web" / "a.ts").write_text("b\n")
+    assert _plan(repo, "npm")["npm"][1] != "-"
+    (repo / "web" / "package-lock.json").write_text('{"v": 2}\n')
+    assert _plan(repo, "npm")["npm"][1] == "-"
+
+
 def test_an_unknown_step_is_refused(tmp_path: Path) -> None:
     run = subprocess.run([sys.executable, str(MEMO), "plan", "nope"], cwd=tmp_path, capture_output=True, text=True)
     assert run.returncode == 2

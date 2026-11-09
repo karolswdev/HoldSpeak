@@ -186,7 +186,10 @@ and the owner's real DB stay out of it. Times are from the owner's machine
   skips a step whose inputs did not change since its last green
   (`.tmp/quick-check/green.json`), runs no test file twice, and after a red
   `scripts/quick_check.sh --retry` runs only the failed tests and the steps
-  that did not run.
+  that did not run. The main checkout's `web/node_modules` is shared by lane
+  symlinks: never reinstall it while a lane runs (the check's build runs
+  `npm ci` only when `web/package-lock.json` changed since its last green, and
+  `uv sync` runs `npm ci` too, through `hatch_build.py`).
   A docs-only diff runs only the doc check and the doc guards (seconds). Under the lock use `-n 8` (measured 2026-10-11: the
   whole browser suite 30 min at `-n 4`, 16.5 min at `-n 8`; FAST 11 → 6.5 min), not `-n auto`.
   A worker never runs FAST; a worker waits for the lock rather than running

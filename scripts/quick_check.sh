@@ -242,7 +242,7 @@ printf '%s\n' "${repo_guards[@]}" >"$H/repo.sel"
 printf '%s\n' "${web_guards[@]}" >"$H/web-guards.sel"
 
 # ── 4. the plan: which steps run, which the memo skips ───────────────────────
-plan="$(memo plan build "vitest=$H/vitest.sel" "web-guards=$H/web-guards.sel" sweep "pytest=$H/pytest.sel" \
+plan="$(memo plan build npm "vitest=$H/vitest.sel" "web-guards=$H/web-guards.sel" sweep "pytest=$H/pytest.sel" \
   "canon=$H/canon.sel" "repo=$H/repo.sel")" || red "the memo failed"
 key_of() { printf '%s\n' "$plan" | awk -v s="$1" '$1 == s {print $2}'; }
 green_at() { printf '%s\n' "$plan" | awk -v s="$1" '$1 == s && $3 != "-" {print $3}'; }
@@ -280,7 +280,29 @@ pytest_ids() {  # the failed test ids of a pytest log
   grep -E '^(FAILED|ERROR) ' "$1" | sed -e 's/ - .*//' | awk '{print $2}' | sort -u
 }
 
+# The install before the build (2026-11-08): lanes link the main checkout's
+# web/node_modules, and a reinstall while a lane runs gave it "two Reacts" and
+# "Cannot find module 'react-router/dom'". `npm ci` runs only when
+# web/package-lock.json changed since its last green; never through a link.
+install_web() {
+  local at had=""; at="$(green_at npm)"; [ -d web/node_modules ] && had=1
+  if [ -L web/node_modules ]; then
+    sum build "   npm ci: web/node_modules is a link to $(readlink web/node_modules); not reinstalled from here"
+  elif [ -n "$at" ] && [ -d web/node_modules ]; then
+    sum build "   npm ci: web/package-lock.json unchanged since $at, skipped"
+  elif [ -d web/node_modules ] && ! grep -q '"npm"' "$memo_dir/green.json" 2>/dev/null; then
+    sum build "   npm ci: no record yet and web/node_modules is there, skipped (recorded on a green build)"
+  else
+    if ! HOME="$H" npm --prefix web ci >"$H/npm-ci.log" 2>&1; then
+      tail -20 "$H/npm-ci.log" | sed 's/^/   /' >>"$H/build.sum"; sum build "   npm ci failed: RED"; return 1
+    fi
+    if [ -n "$had" ]; then sum build "   npm ci: web/package-lock.json changed, reinstalled"
+    else sum build "   npm ci: web/node_modules was missing, installed"; fi
+  fi
+}
+
 run_build() {
+  install_web || { done_step build 1; return; }
   if HOME="$H" npm --prefix web run build >"$H/build.log" 2>&1; then
     sum build "   build ok"; done_step build 0
   else
@@ -461,6 +483,8 @@ rec=""
 for pair in $promote; do
   case "$pair" in canon=*|repo=*) [ "$pyrc" = 0 ] || continue ;; esac
   rec="$rec $pair"
+  # A green build means the install it ran on is good: the lock file's key.
+  case "$pair" in build=*) rec="$rec npm=$(key_of npm)" ;; esac
 done
 [ -n "$rec" ] && memo record $rec
 

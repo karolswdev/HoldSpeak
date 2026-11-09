@@ -16,6 +16,8 @@ sees (tracked and untracked, not ignored), as the work tree holds it now.
 The sets are the brief's, widened where a step reads more (a narrow set would
 skip a red):
   * build, vitest: web/ and the package manifests;
+  * npm (the install before the build): web/package-lock.json and
+    web/package.json;
   * web guards: also tests/fixtures/, docs/product-language.json and
     holdspeak/services/memory_grounding.py (the guards read them,
     scripts/quick_check.sh web_guards list);
@@ -40,6 +42,10 @@ WEB = ["web/", "package.json", "package-lock.json"]
 EVERYTHING = [".", ":(exclude)pm/", ":(exclude).tmp/"]
 INPUTS: dict[str, list[str]] = {
     "build": WEB,
+    # The install (2026-11-08): `npm ci` runs only when the lock file changed
+    # since its last green, because lanes link the main checkout's
+    # web/node_modules and a reinstall under a running lane breaks it.
+    "npm": ["web/package-lock.json", "web/package.json"],
     "vitest": WEB,
     "web-guards": WEB + ["tests/fixtures/", "docs/product-language.json", "holdspeak/services/memory_grounding.py"],
     "sweep": WEB + ["holdspeak/", "tests/e2e/", "tests/conftest.py", "pyproject.toml", "uv.lock"],
