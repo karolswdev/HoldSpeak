@@ -81,7 +81,7 @@ const SEVENTEEN = Array.from({ length: 17 }, (_, i) => {
   return row(`item-${n}`, {
     projectId: pid, projectName: { p1: "Q4 Platform", p2: "Governance", p3: "Payments" }[pid],
     ...(i === 0 ? { why: "OVERDUE · 2 DAYS", dueAt: daysAgo(2), rankClass: "overdue", severity: "danger", source: "jira", title: "KAN-7 Payments cut-over runbook" } : {}),
-    ...(i === 1 ? { why: "DUE TODAY", dueAt: new Date().toISOString().slice(0, 10), rankClass: "due_today", title: "Priya confirms the freeze window", source: "commitment",
+    ...(i === 1 ? { why: "DUE TODAY", dueAt: daysAgo(0), rankClass: "due_today", title: "Priya confirms the freeze window", source: "commitment",
       sources: [{ id: "p1:commitment:freeze", source: "commitment", title: "Priya confirms the freeze window", why: "DUE TODAY", verbHref: "https://x/freeze" }, { id: "proposal:1", source: "proposal", title: "Priya confirms the freeze window", why: "PROPOSED · STANDUP" }], dedupCount: 2 } : {}),
   });
 });
@@ -397,11 +397,12 @@ describe("Arrival attention (HS-200-15)", () => {
 
   // Betterment D2: Done is the verb of HIS own work; what a person owes him
   // takes Nudge (needs-you.app.test.tsx, the daily week).
-  // Face defect since #1945 (the Needs you rebuild): the arrival row in ChairHome draws no Done verb. Strict: this passes again when the verb is back.
-  it.fails("Done is the verb only when owner and date are known, and it posts the explicit act", async () => {
+  // The due day is the LOCAL day (daysAgo(0)): a UTC day is tomorrow in the
+  // evening west of Greenwich, and the row then waits under Later.
+  it("Done is the verb only when owner and date are known, and it posts the explicit act", async () => {
     const commitment = row("p1:commitment:Priya confirms the freeze window", {
       title: "Priya confirms the freeze window", source: "commitment", kind: "commitment",
-      why: "DUE TODAY", severity: "warning", rankClass: "due_today", dueAt: new Date().toISOString().slice(0, 10),
+      why: "DUE TODAY", severity: "warning", rankClass: "due_today", dueAt: daysAgo(0),
       commitmentId: "cmt-1", actionItemId: "action-1", owner: "Me", unknowns: [],
       nextAction: "mark_done", verbHref: null,
     });

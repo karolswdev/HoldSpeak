@@ -9,6 +9,7 @@
  * Intelligence. */
 import { apiFetch } from "../lib/api";
 import { openIntelligence } from "./intelligenceNavigation";
+import { openPhoneWing } from "./calls/phoneFocus";
 import { openAgentLane, openCoderSession, openPrimitive, openProjectRoom } from "./shell";
 import { openSourceRef } from "./surface";
 import { personWindowRef, type PersonLens } from "./objectWindows";
@@ -271,6 +272,7 @@ export function refOpener(ref: string | null | undefined, navigation?: DeskNavig
       });
     };
   }
+  if (clean === "calls") return () => openPhoneWing(); // a phone row: the Calls window, Phone wing
   const followThrough = FOLLOW_THROUGH_REF.exec(clean);
   if (followThrough) {
     const id = followThrough[1];
