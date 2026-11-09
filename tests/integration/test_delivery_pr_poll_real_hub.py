@@ -6,13 +6,16 @@ startup tasks running, the PR poll among them). The launch is K2's real
 hand-to-agent launch with K4's real follow-through; ``gh`` is faked at its
 process boundary (the rig's runner) and answers the rehearsal's real PR #1.
 The poll period is cut from 120 s to 1 s. The test opens the PR, starts the
-hub, flips the PR to merged on the fake GitHub and reads
-``/api/coders/sessions`` (what the Room receipt reads) until the flight is
-merged, by the PR's own title, with the item closed. Nobody presses Run now.
+hub, flips the PR to merged on the fake GitHub, waits for the first poll
+that starts after the flip to finish, and reads ``/api/coders/sessions``
+(what the Room receipt reads): the flight is merged, by the PR's own title,
+with the item closed. Nobody presses Run now. The test counts polls, not
+seconds: a loaded machine slows the hub's thread pool, never the claim.
 """
 from __future__ import annotations
 
 import json
+import threading
 import time
 import urllib.request
 from pathlib import Path
@@ -61,6 +64,19 @@ def test_a_merge_lands_on_the_room_receipt_within_one_poll(tmp_path: Path, monke
 
     rig.gh.prs = [_real_pr(rig.branch, rig.head, "OPEN")]
     _sweep(rig)  # the agent's PR is open and kept on the launch
+    # Each poll the hub's timer runs: when it started, and a signal when it ends.
+    polls: list[tuple[float, threading.Event]] = []
+    poll_open_prs = rig.observer.poll_open_prs
+
+    def counted_poll(*args, **kwargs):
+        done = threading.Event()
+        polls.append((time.monotonic(), done))
+        try:
+            return poll_open_prs(*args, **kwargs)
+        finally:
+            done.set()
+
+    monkeypatch.setattr(rig.observer, "poll_open_prs", counted_poll)
     server = MeetingWebServer(
         WebRuntimeCallbacks(on_bookmark=lambda *_: None, on_stop=lambda: None, get_state=lambda: {}),
         auth_token=TOKEN,
@@ -73,16 +89,17 @@ def test_a_merge_lands_on_the_room_receipt_within_one_poll(tmp_path: Path, monke
         rig.gh.calls.clear()
         rig.gh.prs = [_real_pr(rig.branch, rig.head, "MERGED")]  # merged on GitHub
         merged_at = time.monotonic()
-        deadline = merged_at + 10.0
-        while time.monotonic() < deadline:
-            [flight] = _flights(url)
-            if flight["state"] == "merged" and flight.get("close") == "closed":
-                break
-            time.sleep(0.2)
-        landed = time.monotonic() - merged_at
+        # The first poll that starts after the merge, and its end.
+        deadline = merged_at + 60.0
+        first = None
+        while first is None and time.monotonic() < deadline:
+            first = next((done for started, done in list(polls) if started > merged_at), None)
+            time.sleep(0.05)
+        assert first is not None, "the hub's timer ran no poll after the merge"
+        assert first.wait(timeout=60.0), "the first poll after the merge did not finish"
+        [flight] = _flights(url)
         assert flight["state"] == "merged", flight
         assert flight["close"] == "closed"
-        assert landed < 5.0, f"the receipt took {landed:.1f}s with a 1 s poll"
         # The Room receipt's words: the PR's own title, number and link.
         assert flight["pr"] == {
             "number": 1, "url": REAL_PR1["url"], "state": "merged", "title": REAL_PR1["title"],

@@ -326,6 +326,8 @@ DECLARED_PEOPLE = {
     "people.project.link", "people.project.unlink", "people.one_on_one.list", "people.agenda.transition",
     "people.owed.create", "people.note.list", "people.commitment.send_to_workbench", "people.commitment.satisfy",
     "people.calendar.link", "people.calendar.unlink", "people.owner_alias.link", "people.owner_alias.unlink",
+    # 2026-11-09 (#2127, onboarding_operations.py): the People access read.
+    "people.access.get",
 }
 
 

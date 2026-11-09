@@ -1530,7 +1530,9 @@ def _resolve_generator_provenance(
     # HS-200-08: the profile the ROUTE resolved through is the truth.  The
     # revision's ``model`` column holds the real model id, so looking a
     # profile up by it only ever worked for a profile named after its model.
-    profile = db.profiles.get(profile_id) if profile_id else None
+    # A v1 profile reaches the door as ``legacy-<id>`` (its assignment
+    # entry); its row in ``profiles`` is ``<id>``.
+    profile = db.profiles.get(profile_id.removeprefix("legacy-")) if profile_id else None
     if profile is None:
         profile = db.profiles.get(rev.model)
     if profile is not None:

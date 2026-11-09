@@ -13,8 +13,6 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
-from fastapi import FastAPI, Request
-from fastapi.testclient import TestClient
 
 import holdspeak.db as hsdb
 from holdspeak.config import (
@@ -33,7 +31,6 @@ from holdspeak.intel.providers import (
     effective_intel_cloud,
     profile_key_env,
 )
-from holdspeak.principals import Principal, PrincipalKind
 
 REPO = Path(__file__).resolve().parents[2]
 
@@ -240,34 +237,8 @@ def test_intel_queue_has_no_runtime_endpoint_resolver_preflight(tmp_path, monkey
     assert iq.process_next_intel_job(provider="cloud") is False
 
 
-# ── /api/profiles read routes retired (HS-134-02) ─────────────────────
-
-
-@pytest.fixture
-def client(db, monkeypatch) -> TestClient:
-    from holdspeak.web.context import WebContext
-    from holdspeak.web.routes.primitives.profiles import build_profiles_router
-
-    monkeypatch.setattr(hsdb, "get_database", lambda *a, **k: db)
-    app = FastAPI()
-
-    @app.middleware("http")
-    async def owner_principal(request: Request, call_next):
-        request.state.principal = Principal(PrincipalKind.OWNER, "one-dial-test-owner")
-        return await call_next(request)
-
-    app.include_router(build_profiles_router(WebContext(get_state=lambda: {})))
-    return TestClient(app)
-
-
-def test_inference_targets_stays_the_write_path(client, db) -> None:
-    resp = client.post(
-        "/api/inference-targets",
-        json={"name": "LAN", "kind": "openAICompatible",
-              "base_url": "http://192.168.1.43:8080/v1", "model": "q"},
-    )
-    assert resp.status_code == 201
-    assert resp.json()["inference_target"]["id"]
+# The POST /api/inference-targets write-path check is parked
+# (tests/_parked/fixfwd2_20261109/test_one_dial_inference_targets_post.py).
 
 
 # ── the settings boundary never writes or returns the dead fields ──────

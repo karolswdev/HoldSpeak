@@ -111,7 +111,6 @@ def _seed_assignment(
     node: str = "",
 ) -> str:
     """Seed the minimal assignment chain WITH provenance-carrying fields."""
-    assignment_id = "assign_wire_001"
     profile_id = "profile_wire_draft"
     with db._connection() as conn:
         conn.execute("PRAGMA foreign_keys = OFF")
@@ -121,7 +120,7 @@ def _seed_assignment(
             """INSERT OR IGNORE INTO profiles
                (id, name, kind, model_file, base_url, model, node,
                 context_limit, requires_key, created_at, last_modified, deleted)
-               VALUES (?, ?, 'onDevice', '', ?, ?, ?, 16384, 0, ?, ?, 0)""",
+               VALUES (?, ?, 'openAICompatible', '', ?, ?, ?, 16384, 0, ?, ?, 0)""",
             (
                 profile_id,
                 profile_name,
@@ -148,37 +147,27 @@ def _seed_assignment(
             ),
         )
 
-        # Inference assignment chain.
-        conn.execute(
-            """INSERT OR IGNORE INTO inference_assignment_revisions
-               (assignment_id, revision, assignment_key,
-                scope_kind, selector_kind, capability_id,
-                payload_json, sha256, created_at)
-               VALUES (?, 1, ?, 'invocation', 'capability', ?,
-                       '{}', '', ?)""",
-            (
-                assignment_id,
-                f"capability:{capability_id}",
-                capability_id,
-                NOW_ISO,
-            ),
-        )
-        conn.execute(
-            """INSERT OR IGNORE INTO inference_assignment_heads
-               (assignment_key, assignment_id, revision, cleared,
-                updated_at)
-               VALUES (?, ?, 1, 0, ?)""",
-            (f"capability:{capability_id}", assignment_id, NOW_ISO),
-        )
-        conn.execute(
-            """INSERT OR IGNORE INTO inference_assignments
-               (id, assignment_id, assignment_revision, ordinal,
-                profile_id, profile_revision)
-               VALUES (?, ?, 1, 1, ?, 1)""",
-            (f"ia_{assignment_id}", assignment_id, profile_id),
-        )
-
         conn.execute("PRAGMA foreign_keys = ON")
+
+    # The owner's assignment, made through the product's own service (#2128:
+    # the engine door reads the chain through InferenceAssignmentService,
+    # which verifies the stored material, so a hand-written row is no
+    # assignment). The profile is a v1 endpoint profile: the door captures
+    # its deployment from the profile's own endpoint.
+    from holdspeak.services.inference_assignment_service import (
+        InferenceAssignmentService,
+    )
+
+    service = InferenceAssignmentService(db)
+    assignment_id, _entries = service.chain(capability_id)
+    if not assignment_id:
+        service.set_assignment(OWNER, {
+            "command_id": f"wire-{capability_id}".replace(".", "-"),
+            "expected_revision": 0,
+            "scope": {"kind": "capability", "capability_id": capability_id},
+            "entries": [{"profile_id": f"legacy-{profile_id}", "profile_revision": 1}],
+        })
+        assignment_id, _entries = service.chain(capability_id)
     return assignment_id
 
 

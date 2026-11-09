@@ -457,8 +457,15 @@ def test_with_no_page_and_no_observation_the_chat_payload_is_byte_identical(hub,
         "who": {"type": "string", "description": "Optional person."},
         "due_at": {"type": "string", "description": "Optional ISO-8601 date."},
     }
-    expected_tools.remove(commit)
-    expected_tools.insert([t["function"]["name"] for t in tools].index("follow_through.commit_decision"), commit)
+    # 2026-11-09: memory.search is a declared operation (memory_operations.py):
+    # the same schema, rendered in the declared family's place.
+    search = next(tool for tool in expected_tools if tool["function"]["name"] == "memory.search")
+    names = [t["function"]["name"] for t in tools]
+    moved = sorted([commit, search], key=lambda tool: names.index(tool["function"]["name"]))
+    for tool in moved:
+        expected_tools.remove(tool)
+    for tool in moved:
+        expected_tools.insert(names.index(tool["function"]["name"]), tool)
     assert json.dumps(tools, sort_keys=True) == json.dumps(expected_tools, sort_keys=True)
 
 

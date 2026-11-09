@@ -235,6 +235,14 @@ class TestRevocationOnPlacementTransitions:
             kind="openAICompatible", base_url="http://x", model="m")
         db.recipes.upsert(
             recipe_id="r", name="R", system_prompt="S")
+        # #2128: a schedule names the assignment its job runs on; enabling it
+        # needs the owner's engine for workbench.item.
+        from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+        InferenceAssignmentService(db).set_assignment(OWNER, {
+            "command_id": "revocation-engine", "expected_revision": 0,
+            "scope": {"kind": "capability", "capability_id": "workbench.item"},
+            "entries": [{"profile_id": "legacy-prof-dest", "profile_revision": 1}],
+        })
         from holdspeak.services.workbench_service import WorkbenchService
         service = WorkbenchService(db)
         wb = service.create_workbench(
