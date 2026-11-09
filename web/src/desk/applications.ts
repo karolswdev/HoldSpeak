@@ -370,10 +370,13 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     surface: {
       eyebrow: "Work",
       sprite: "workbench",
-      minW: 560,
+      minW: 420,
+      // The native app (2026-11-08): the rail and the automation side by side.
+      defaultW: 1000,
+      defaultH: 680,
       load: () =>
-        import("../pages/cores/WorkbenchesHomeCore").then((module) => ({
-          default: module.WorkbenchesHomeCore,
+        import("./components/automation/AutomationsCore").then((module) => ({
+          default: module.AutomationsCore,
         })),
     },
   },

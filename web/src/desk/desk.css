@@ -4,7 +4,6 @@
    and these classes preserve the visual contract the original desk proved). */
 
 /* ── Co-located CSS modules (HS-117-03) ── */
-@import "./components/workbench-config.css";
 @import "./components/chrome-menus.css";
 @import "./components/inline-editor.css";
 @import "./components/pullout.css";

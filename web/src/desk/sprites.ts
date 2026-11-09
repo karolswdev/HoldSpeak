@@ -61,6 +61,8 @@ export const VARIANTS: Record<string, string[]> = {
   model: ["cartridge"],
   recipe: ["cartridge"],
   workbench: ["cartridge"],
+  // The native Automations app (2026-11-08): an automation wears the cartridge.
+  automation: ["cartridge"],
   intelligence: ["cartridge"],
 };
 

@@ -381,3 +381,51 @@ export function oldQueuePrefill(detail: AutomationDetail): { title: string; goal
   return { title: detail.name || "Automation", goal: instruction, steps };
 }
 
+
+/** The language (2026-11-08): one run's meaning colour. Coral failed, brass
+ *  waits on him (a result not opened yet, a Program that asks), steel
+ *  running, moss done. */
+export type RunTone = "steel" | "brass" | "moss" | "coral";
+
+export function runTone(result: AutomationResult): RunTone {
+  if (result.status === "failed") return "coral";
+  const program = result.program_run ? undefined : result.program;
+  if (program) {
+    if (program.state === "failed") return "coral";
+    if (program.state === "waiting") return "brass";
+    if (program.state === "done") return "moss";
+    return "steel";
+  }
+  if (result.status !== "done") return "steel";
+  return result.new ? "brass" : "moss";
+}
+
+/** The ended runs (done or failed), newest first. A claimed or pending
+ *  occurrence is the run in progress, not a result. */
+export function endedRuns(detail: AutomationDetail | null | undefined): AutomationResult[] {
+  return (detail?.results ?? []).filter((r) => r.status === "done" || r.status === "failed");
+}
+
+/** The spine of the last runs, oldest at the left (at most `count`). */
+export function runSpine(detail: AutomationDetail, count = 8): Array<{ tone: RunTone; share: number }> {
+  return endedRuns(detail).slice(0, count).reverse().map((result) => ({ tone: runTone(result), share: 1 }));
+}
+
+/** The spine's words: `3 runs · 1 failed`; null when it never ran. */
+export function runSpineWords(detail: AutomationDetail, count = 8): string | null {
+  const runs = endedRuns(detail).slice(0, count);
+  if (!runs.length) return null;
+  const failed = runs.filter((r) => runTone(r) === "coral").length;
+  const words = runs.length === 1 ? "1 run" : `${runs.length} runs`;
+  return failed ? `${words} · ${failed} failed` : words;
+}
+
+/** The last result in one word with its day (`Done · 10 Oct`); null when
+ *  it never ran. */
+export function lastResultWords(detail: AutomationDetail): string | null {
+  const last = endedRuns(detail)[0];
+  if (!last) return null;
+  const word = last.status === "failed" ? "Failed" : last.new ? "New" : "Done";
+  const day = resultDay(last.completed_at);
+  return day ? `${word} · ${day}` : word;
+}

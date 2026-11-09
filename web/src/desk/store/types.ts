@@ -219,10 +219,6 @@ export interface DeskState {
   }[];
   /** Agent workbenches open as their own desk windows. */
   workbenchWindows: { id: string; origin: { x: number; y: number } | null }[];
-  /** The pre-persistence "new workbench" chooser (HS-130-09): open before
-   * any record exists so exactly one Workbench is persisted per creation
-   * gesture. Null when closed. */
-  newWorkbenchChooser: { origin: { x: number; y: number } | null } | null;
   /** The zone a live drag is hovering (the drop affordance, HS-73-05). */
   hoverZoneId: string | null;
   /** The freshly-created zone whose rename is focused. */
@@ -394,10 +390,9 @@ export interface DeskState {
   closeSurfaceWindow(key: string): void;
   /** Recovery-only arrival clears application windows without touching layout. */
   clearSurfaceWindows(): void;
-  /** Open the pre-persistence workbench chooser (no record created yet). */
-  openNewWorkbenchChooser(origin?: { x: number; y: number }): void;
-  /** Dismiss the pre-persistence workbench chooser. */
-  closeNewWorkbenchChooser(): void;
+  /** New automation (HS-130-09): the Automations app opens on its starters;
+   * no record exists until one starter is pressed. */
+  openNewAutomation(): void;
   setHoverZone(id: string | null): void;
   setRenamingZone(id: string | null): void;
   diveInto(zoneId: string): void;

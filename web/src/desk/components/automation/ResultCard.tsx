@@ -1,26 +1,32 @@
-/** Betterment A3 — one result of an automation (DESIGN §4, "Results").
+/** The plate of an automation (the language, 2026-11-08): the one raised
+ * thing, the one thing that matters now, with its one lead verb.
  *
- * The rendered answer (AgentWords: no `##`, no `**`) on paper, its head line
- * (when, how long, which model, where the prompt went, NEW), its verbs (Open
- * as note, Copy, Send), and a failure in words with Run again. While a run is
- * working, the head says so in place and nothing under it moves.
+ * - a run in progress: "Running now", the engine and the clock;
+ * - a refused run or a failed result: "Failed", why in words, Run again;
+ * - a result: "Last result", when, how long, which model, the cost, NEW;
+ *   the rendered answer (AgentWords: no `##`, no `**`), what the run's
+ *   agent used (Looked at, Wrote, Prepared), Open as note, Copy, Send;
+ * - a run that started a Program: the Program in its state, Open;
+ * - no run yet: the next run (or "First run") and Run now.
  *
- * Under the answer, what the run's agent used and did (MCP M2): Looked at
- * (each read object, a link), Wrote (each desk write, with Undo for what the
- * run made) and Prepared (each prepared send, with Send). Nothing when the
- * agent touched nothing. */
+ * The plate is one element in every state, so nothing under it moves when
+ * a run starts or ends. Run now rides the plate except where Run again
+ * says the same thing. */
+import type { ReactNode } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { AgentWords } from "../AgentWords";
 import { RunLine, StateChip } from "../../surface";
 import { SendWellsFold } from "../../surface/send";
-import { artifactDoc } from "../../documentSends";
+import { artifactDoc, noteDoc } from "../../documentSends";
 import { UsedLines } from "../UsedLines";
 import { openRef } from "../../openObject";
+import { openProgram } from "../../programs/open";
 import { useCopyReceipt } from "../../hooks/useCopyReceipt";
 import {
   costWords,
   failureWords,
   resultWhen,
+  runTone,
   secondsWords,
   withoutIds,
   type AutomationResult,
@@ -35,32 +41,28 @@ export function ResultHead({ result, isNew }: { result: AutomationResult; isNew:
   ].filter(Boolean);
   return (
     <span className="automation-card-facts">
-      {/* A4: NEW leads the line, so a narrow card never pushes it off. */}
+      {/* NEW leads the line, so a narrow plate never pushes it off. */}
       {isNew ? <StateChip state="active" label="NEW" data-testid="automation-new" /> : null}
       <span className="automation-card-when">{facts.join(" · ")}</span>
-      {result.status === "failed" ? <StateChip state="failure" label="FAILED" /> : null}
     </span>
   );
 }
 
+/** A result's reading (or its failure with Run again) and what its agent used. */
 export function ResultBody({
   result,
   onRunAgain,
   runAgainDisabled,
-  send = true,
 }: {
   result: AutomationResult;
   onRunAgain: () => void;
   runAgainDisabled?: boolean;
-  /** Window grammar: false when the window's toolbar carries Send…. */
-  send?: boolean;
 }) {
-  const { copy, state: copyState } = useCopyReceipt();
   if (result.status === "failed") {
     return (
       <div className="automation-failure" data-testid="automation-failure">
         <p className="automation-failure-words">{failureWords(result.error)}</p>
-        <Button dense variant="secondary" onClick={onRunAgain} disabled={runAgainDisabled}
+        <Button dense variant="primary" onClick={onRunAgain} disabled={runAgainDisabled}
           data-testid="automation-run-again">
           Run again
         </Button>
@@ -74,63 +76,114 @@ export function ResultBody({
         {text.trim() ? <AgentWords text={text} /> : <p className="automation-quiet">The engine gave no words.</p>}
       </div>
       <UsedLines used={result.used} testPrefix="automation" />
-      <div className="automation-card-verbs">
-        {result.note_id ? (
-          <Button dense variant="secondary" onClick={() => openRef(`note:${result.note_id}`)}
-            data-testid="automation-open-note">
-            Open as note
-          </Button>
-        ) : null}
-        {text.trim() ? (
-          <Button dense variant="ghost" onClick={() => void copy(text)} data-testid="automation-copy">
-            {copyState === "copied" ? "Copied" : copyState === "failed" ? "Copy failed" : "Copy"}
-          </Button>
-        ) : null}
-        {send && result.artifact_id ? (
-          <SendWellsFold doc={artifactDoc(result.artifact_id, result.title, "automation result")} />
-        ) : null}
-      </div>
     </>
   );
 }
 
-/** The newest result, open: its head, or the working line in its place. */
-export function ResultCard({
+function PlateHead({ title, facts }: { title: ReactNode; facts?: ReactNode }) {
+  return (
+    <header className="automation-plate-head automation-card-head">
+      <h3 className="automation-plate-title">{title}</h3>
+      {facts ? <span className="automation-plate-facts">{facts}</span> : null}
+    </header>
+  );
+}
+
+export function RunPlate({
   result,
   isNew,
   working,
-  onRunAgain,
-  send = true,
+  refusal,
+  next,
+  canRun,
+  onRunNow,
 }: {
   result: AutomationResult | null;
   isNew: boolean;
   /** A run in progress: when it began and on which engine. */
   working: { startedAt: number; engine: string } | null;
-  onRunAgain: () => void;
-  /** Window grammar: false when the window's toolbar carries Send…. */
-  send?: boolean;
+  /** A Run now the hub refused, in its words. */
+  refusal: string | null;
+  /** `Next: Fri 15:00` when it is on a schedule. */
+  next: string | null;
+  canRun: boolean;
+  onRunNow: () => void;
 }) {
-  const head = working ? (
-    <RunLine phase="running" verb="Working…" model={working.engine} startedAt={working.startedAt} />
-  ) : result ? (
-    <ResultHead result={result} isNew={isNew} />
-  ) : (
-    <span className="automation-card-empty">No results yet. Run now makes the first one.</span>
+  const { copy, state: copyState } = useCopyReceipt();
+  const runNow = (lead: boolean) => (
+    <Button dense variant={lead ? "primary" : "secondary"} onClick={onRunNow}
+      disabled={!canRun || Boolean(working)} data-testid="automation-run-now">
+      Run now
+    </Button>
   );
+  const program = result && !result.program_run && result.status !== "failed" ? result.program : undefined;
+  const tone = working ? "steel" : refusal ? "coral" : result ? runTone(result) : "idle";
+
+  let head: ReactNode;
+  let body: ReactNode = null;
+  let verbs: ReactNode;
+  if (working) {
+    head = <PlateHead title="Running now" facts={<RunLine phase="running" verb="Working…" model={working.engine} startedAt={working.startedAt} />} />;
+    verbs = runNow(true);
+  } else if (refusal) {
+    head = <PlateHead title="Not run" />;
+    body = (
+      <div className="automation-failure" data-testid="automation-refusal">
+        <p className="automation-failure-words">{failureWords(refusal)}</p>
+        <Button dense variant="primary" onClick={onRunNow} disabled={!canRun}>Run again</Button>
+      </div>
+    );
+  } else if (result?.status === "failed") {
+    head = <PlateHead title="Failed" facts={<ResultHead result={result} isNew={false} />} />;
+    body = <ResultBody result={result} onRunAgain={onRunNow} runAgainDisabled={!canRun} />;
+  } else if (program) {
+    head = <PlateHead title={program.title}
+      facts={[program.state_word, program.total ? `${program.done} of ${program.total} steps` : ""].filter(Boolean).join(" · ")} />;
+    verbs = (
+      <>
+        <Button dense variant="primary" onClick={() => openProgram(program.id)} data-testid="automation-open-program">Open</Button>
+        {runNow(false)}
+      </>
+    );
+  } else if (result) {
+    const text = withoutIds(result.text ?? "").trim();
+    head = <PlateHead title="Last result" facts={<ResultHead result={result} isNew={isNew} />} />;
+    body = <ResultBody result={result} onRunAgain={onRunNow} runAgainDisabled={!canRun} />;
+    const doc = result.program_run
+      ? (result.note_id ? noteDoc(result.note_id, result.title) : null)
+      : (result.artifact_id ? artifactDoc(result.artifact_id, result.title, "automation result") : null);
+    verbs = (
+      <>
+        {result.note_id ? (
+          <Button dense variant="primary" onClick={() => openRef(`note:${result.note_id}`)} data-testid="automation-open-note">
+            Open as note
+          </Button>
+        ) : null}
+        {text ? (
+          <Button dense variant="secondary" onClick={() => void copy(text)} data-testid="automation-copy">
+            {copyState === "copied" ? "Copied" : copyState === "failed" ? "Copy failed" : "Copy"}
+          </Button>
+        ) : null}
+        {runNow(!result.note_id)}
+        {doc ? <SendWellsFold doc={doc} /> : null}
+      </>
+    );
+  } else {
+    head = <PlateHead title={next ? next.replace(/^Next: /, "Next run · ") : "First run"} />;
+    verbs = runNow(true);
+  }
   return (
     <article
-      className="automation-card surface-group-well"
+      className="automation-plate"
       data-testid="automation-newest"
+      data-tone={tone}
       data-working={working ? "" : undefined}
       data-status={result?.status}
       aria-busy={working ? true : undefined}
     >
-      <header className="automation-card-head">{head}</header>
-      {result ? (
-        <div className="automation-card-body">
-          <ResultBody result={result} onRunAgain={onRunAgain} runAgainDisabled={Boolean(working)} send={send} />
-        </div>
-      ) : null}
+      {head}
+      {body ? <div className="automation-card-body">{body}</div> : null}
+      {verbs ? <div className="automation-plate-verbs">{verbs}</div> : null}
     </article>
   );
 }

@@ -191,12 +191,13 @@ def test_reported_settings_categories_and_guided_builder_in_firefox(
                 page.get_by_test_id("automation-new").click()
                 with page.expect_response(lambda response: response.url.endswith("/api/workbenches")
                                           and response.request.method == "POST") as created:
-                    page.get_by_role("region", name="New Automation", exact=True).get_by_test_id("automation-starter-scratch").click()
+                    page.get_by_test_id("automation-starter-scratch").click()
                 workbench_id = created.value.json()["workbench"]["id"]
-                automation = page.locator(f"[id='workbench:{workbench_id}'][data-layer='window']")
+                # The made automation opens in the Automations window's pane.
+                automation = page.locator("[id='surface-workbenches'][data-layer='window']")
                 setup = automation.get_by_test_id("automation-setup")
                 setup.wait_for()
-                assert automation.get_by_test_id("automation-run-now").is_disabled()
+                assert automation.get_by_test_id("automation-run-now").count() == 0
                 assert not automation.get_by_test_id("automation-newest").is_visible()
                 draft = "Draft an update from the platform checkpoint."
                 setup.get_by_role("textbox", name="What it does", exact=True).fill(draft)
