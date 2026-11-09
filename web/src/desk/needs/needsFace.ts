@@ -503,7 +503,7 @@ function attentionFace(item: NeedsYouRoomItem, ctx: NeedCtx): NeedFace {
       lamp: { label: why || "TO DECIDE", tone: missed ? "fail" : "ask" },
       group: "rest", direction: "decide",
       verbs: { kind: "phone", item: phone.kind, verbs: [...(phone.verbs ?? [])], msgId: phone.msgId ? String(phone.msgId) : null },
-      openRef: undefined,
+      openRef: String(item.openRef ?? "") || undefined,
       kindWord: "Phone",
     };
   }
