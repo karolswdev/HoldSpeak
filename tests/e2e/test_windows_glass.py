@@ -1601,9 +1601,10 @@ class TestHubWindows:
                     a.locator(lane_sel).first.wait_for(timeout=10_000)
                 except Exception:
                     fails["B7 A follows the lane opened on the hub"] = sorted(_h_wins(a))
-                lane_row = self._rows(a).get("lane", {})
-                if lane_row.get("object_ref") != "launch:L-glass":
-                    fails["B7 the lane's row names its launch"] = lane_row
+                # The hub holds it as the Agents row on that launch (no lane row).
+                lane_row = self._rows(a).get("conductor", {})
+                if lane_row.get("object_ref") != "launch:L-glass" or "lane" in self._rows(a):
+                    fails["B7 the Agents row names its launch"] = self._rows(a)
                 ctx_e, e, errors_e = self._page(browser, 1440)
                 try:
                     e.locator(lane_sel).first.wait_for(timeout=10_000)

@@ -622,14 +622,15 @@ describe("hubWindows", () => {
     expect(cached.panel.rects["chair:capture"]).toEqual(before);
   });
 
-  it("one face per agent (2026-11-08): a hub lane row opens Agents on its launch; this view shows no lane window", async () => {
-    const { hub } = start([row("lane", { app: "lane", object_ref: "launch:L-1", depth: 1 })]);
+  it("one face per agent (2026-11-08): the hub's Agents row on a launch picks it here and writes nothing", async () => {
+    const { fake, hub } = start([row("conductor", { app: "open-conductor", object_ref: "launch:L-1", depth: 1 })]);
     await hub.start();
     await flush(hub);
-    await vi.waitFor(() => expect(useLane.getState().launchId).toBe("L-1"));
-    await vi.waitFor(() => expect(useConductor.getState().open).toBe(true));
+    expect(useConductor.getState().open).toBe(true);
     expect(useConductor.getState().focus).toBe("launch:L-1");
-    // This view keeps no lane window of its own: the adapter is never open.
+    // A fresh load follows the hub and writes nothing.
+    expect(fake.calls.filter((c) => c.verb !== "list")).toEqual([]);
+    // No view keeps a lane window: a stored lane row is the hub's to fold.
     expect(adapterFor("lane")?.isOpen()).toBe(false);
   });
 

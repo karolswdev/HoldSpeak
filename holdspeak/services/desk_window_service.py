@@ -178,6 +178,14 @@ PULLOUT_KIND_ALIASES: dict[str, str] = {
 _PULLOUT_KIND = re.compile(r"^pullout:([a-z_]+):(.+)$")
 
 
+#: The agent lane window is parked (2026-11-08): a ``lane`` row is the Agents
+#: window (``conductor``) on that launch. An open names it; a stored row moves
+#: when the hub reads the windows (:meth:`DeskWindowService.list`), so no view
+#: writes on load to follow it.
+LANE_WINDOW = "lane"
+CONDUCTOR_WINDOW = "conductor"
+
+
 def canonical_open(window_id: str, object_ref: Optional[str] = None) -> tuple[str, Optional[str]]:
     """The window an open names: ``(window_id, object_ref)``.
 
@@ -186,6 +194,9 @@ def canonical_open(window_id: str, object_ref: Optional[str] = None) -> tuple[st
     ``project:<id>``), as the floor icon does.
     """
     wid = str(window_id or "")
+    if wid == LANE_WINDOW:
+        # One face per agent (2026-11-08): an agent's lane opens Agents on it.
+        return CONDUCTOR_WINDOW, object_ref
     match = _PULLOUT_KIND.match(wid)
     if not match:
         return wid, object_ref
@@ -398,6 +409,7 @@ class DeskWindowService:
         # that names a revision without its rows).
         with self._db._connection() as conn:
             conn.execute("BEGIN")
+            self._migrate_lane(conn)
             rows = self._rows(conn)
             desk = self._desk_read(conn)
         front = _front_id(rows)
@@ -810,6 +822,19 @@ class DeskWindowService:
         ).fetchone()
         return {"highest_depth": row[0], "stage_shelf": row[1], "revision": row[2],
                 "shelf_revision": row[3], "adopted_at": row[4]}
+
+    @staticmethod
+    def _migrate_lane(conn: Any) -> None:
+        """A stored ``lane`` row (from before 2026-11-08) is the Agents window
+        on its launch: it becomes the ``conductor`` row (or goes, when Agents
+        is open already). Done on the hub's read, so a view writes nothing."""
+        if conn.execute("SELECT 1 FROM desk_windows WHERE id = ?", (LANE_WINDOW,)).fetchone() is None:
+            return
+        if conn.execute("SELECT 1 FROM desk_windows WHERE id = ?", (CONDUCTOR_WINDOW,)).fetchone() is not None:
+            conn.execute("DELETE FROM desk_windows WHERE id = ?", (LANE_WINDOW,))
+            return
+        conn.execute("UPDATE desk_windows SET id = ?, app = ? WHERE id = ?",
+                     (CONDUCTOR_WINDOW, window_app(CONDUCTOR_WINDOW)[0], LANE_WINDOW))
 
     @staticmethod
     def _rows(conn: Any) -> list[dict[str, Any]]:
