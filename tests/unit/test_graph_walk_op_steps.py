@@ -61,6 +61,10 @@ def test_the_canonical_map_has_all_seventeen_operations_and_no_local_service_tar
         "people.project.link", "people.project.unlink", "people.one_on_one.list", "people.agenda.transition",
         "people.owed.create", "people.note.list", "people.commitment.send_to_workbench",
         "people.commitment.satisfy", "people.calendar.link", "people.calendar.unlink", "people.owner_alias.link", "people.owner_alias.unlink",
+        # the declared Automations verbs (2026-11-08, holdspeak/automation_operations.py)
+        "automation.set_when", "automation.set_engine", "automation.make_one", "automation.template.list",
+        "automation.template.instantiate", "automation.result.open", "automation.new.list", "automation.lesson.list",
+        "automation.lesson.forget",
         "setup.status", "setup.use",
         "decision.create", "decision.update", "decision.read", "decision.list",
         "meeting.list", "meeting.read", "meeting.import", "meeting.transcribe", "meeting.summary.run",

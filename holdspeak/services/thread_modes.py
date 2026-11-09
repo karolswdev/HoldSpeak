@@ -69,6 +69,9 @@ _MCP_ONLY: frozenset[str] = frozenset({
     # The declared People reads (2026-11-08, people_operations.py): a thread
     # reads a person through people.relationship.get; the palettes do not grow.
     "people.one_on_one.list", "people.note.list",
+    # The declared Automations reads (2026-11-08, automation_operations.py): a
+    # thread reads an automation through automation.get; the palettes do not grow.
+    "automation.template.list", "automation.new.list", "automation.lesson.list",
 })
 
 
