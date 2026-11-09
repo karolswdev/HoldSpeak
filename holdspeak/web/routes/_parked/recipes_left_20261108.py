@@ -5,6 +5,7 @@ Not imported. Kept for history; restore with ``git revert`` of the parking commi
 """
 
 
+def _parked_body(router=None, ctx=None, **_):  # parked 2026-11-08: kept at handler indent, never mounted
     @router.get("/api/recipes/{recipe_id}")
     def api_get_recipe(recipe_id: str, request: Request) -> Any:
         try:

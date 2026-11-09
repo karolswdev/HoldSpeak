@@ -5,6 +5,7 @@ Not imported. Kept for history; restore with ``git revert`` of the parking commi
 """
 
 
+def _parked_body(router=None, ctx=None, **_):  # parked 2026-11-08: kept at handler indent, never mounted
  @router.post("/api/activity/meeting-candidates")
  def create(request:Request,payload:_ActivityMeetingCandidateRequest)->Any:
   try:return JSONResponse(_svc().create(_principal(request),payload.model_dump()))

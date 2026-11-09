@@ -833,7 +833,8 @@ def test_no_mcp_tool_anywhere_can_mint_or_revoke_a_canonical_record() -> None:
     names = {str(tool["name"]) for tool in TOOLS}
     # Non-vacuity: this is the real, whole registry.
     assert len(names) > 100 and {"interview.record_fact", "interview.get"} <= names
-    assert not {name for name in names if "promot" in name or "revoke" in name}
+    # ``phone.revoke`` revokes a paired device (#2051), not a canonical record.
+    assert not {name for name in names if "promot" in name or "revoke" in name} - {"phone.revoke"}
 
     constants, scanned = _mcp_source_strings()
     # Non-vacuity: the scan does see event kinds where they exist.

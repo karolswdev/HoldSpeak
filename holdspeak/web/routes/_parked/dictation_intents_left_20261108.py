@@ -5,6 +5,7 @@ Not imported. Kept for history; restore with ``git revert`` of the parking commi
 """
 
 
+def _parked_body(router=None, ctx=None, **_):  # parked 2026-11-08: kept at handler indent, never mounted
     @router.put("/api/intents/override")
     def api_set_intent_override(payload: _IntentOverrideRequest) -> Any:
         if ctx.on_set_intent_override is None:

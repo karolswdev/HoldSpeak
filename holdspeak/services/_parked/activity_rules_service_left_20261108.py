@@ -5,6 +5,7 @@ Not imported. Kept for history; restore with ``git revert`` of the parking commi
 """
 
 
+class _ParkedBody:  # parked 2026-11-08: kept at method indent, never imported
     @staticmethod
     def _record(record: Any) -> dict[str, Any]:
         return {"id": record.id, "source_browser": record.source_browser, "source_profile": record.source_profile, "url": record.url, "title": record.title, "domain": record.domain, "visit_count": record.visit_count, "first_seen_at": record.first_seen_at.isoformat() if record.first_seen_at else None, "last_seen_at": record.last_seen_at.isoformat() if record.last_seen_at else None, "entity_type": record.entity_type, "entity_id": record.entity_id, "project_id": record.project_id}

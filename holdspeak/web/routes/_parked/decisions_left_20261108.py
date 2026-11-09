@@ -5,6 +5,7 @@ Not imported. Kept for history; restore with ``git revert`` of the parking commi
 """
 
 
+def _parked_body(router=None, ctx=None, **_):  # parked 2026-11-08: kept at handler indent, never mounted
     @router.post("/{decision_id}/reject")
     def reject_decision(decision_id: str,request: Request) -> Any:
         try: return JSONResponse(service().transition(_principal(request),decision_id,"reject",{}))
