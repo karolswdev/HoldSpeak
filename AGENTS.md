@@ -97,11 +97,11 @@ not by phase. Use existing tests before adding another harness.
 | Drag, focus, keys, touch, hover, clipboard, multiple browsers, exact geometry | Scoped real-browser test |
 | Physical device or live provider works | An authorized run on that device/provider; fixtures alone cannot prove it |
 
-Every pytest, Vitest, `glass_for` and graph-walk run takes the machine-wide
-lock through `scripts/test_lock.py`. Wait for it; never bypass or nest it.
-Up to three unit runs (pytest without browser files, Vitest) share the lock,
-each with an isolated HOME; a browser run has the machine alone.
-Use `-n 8 --dist worksteal` for focused pytest runs. Never run
+Every pytest, Vitest, `glass_for` and graph-walk run takes its CPUs from the
+machine-wide budget through `scripts/test_lock.py`. Wait for it; never bypass
+or nest it. A run takes its pytest `-n` in CPUs (twice that for a browser
+run), Vitest 4; runs share the machine while the sum fits the core count.
+Use `-n 4 --dist worksteal` for focused pytest runs, never `-n 8`. Never run
 `tests/e2e/test_metal.py`. Workers run only the test files in their brief.
 The full tape belongs to the main watcher after merge, and nightly CI.
 
@@ -126,20 +126,21 @@ plain `uv sync`. For an extra focused Python run from the repository root:
   export HOME="$HS_TEST_HOME"
   export PLAYWRIGHT_BROWSERS_PATH="$HS_REAL_HOME/Library/Caches/ms-playwright"
   export npm_config_cache="$HS_REAL_HOME/.npm"
-  uv run python scripts/test_lock.py -- uv run pytest -q -n 8 --dist worksteal tests/unit/test_desk_window_service.py
+  uv run python scripts/test_lock.py -- uv run pytest -q -n 4 --dist worksteal tests/unit/test_desk_window_service.py
 )
 ```
 
 Replace the final test path with the files that cover your change. For
 Vitest use the same isolated environment, `cd web`, then
-`uv run --project .. python ../scripts/test_lock.py -- ./node_modules/.bin/vitest run --maxWorkers=8 <test-file>`.
+`uv run --project .. python ../scripts/test_lock.py -- ./node_modules/.bin/vitest run --maxWorkers=4 <test-file>`.
 
 Before merge, run `scripts/quick_check.sh [base]` (default `origin/main`).
 It manages its own lock and isolated HOME: **do not wrap it in another lock**.
 It skips the steps that are green on unchanged inputs; after a red,
 `scripts/quick_check.sh --retry` runs only the failed tests.
-It runs the web build, related Vitest, affected Python tests, Desk sweep,
-canon guards and repository guards. `QUICK_TESTS` adds explicit Python files;
+It runs the web build, related Vitest, affected Python tests and the Desk
+sweep. The canon, repository and web guards run once on main after a merge
+batch (`scripts/main_check.sh`, the orchestrator's). `QUICK_TESTS` adds explicit Python files;
 name any required browser file the affected selector does not discover.
 Red means fix first. Type checking, a build or a skipped sweep is not a pass.
 

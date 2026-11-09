@@ -5,35 +5,33 @@
 #   scripts/quick_check.sh --retry       # after a red: the failed tests only
 #   QUICK_TESTS="tests/x.py tests/y.py" scripts/quick_check.sh   # add test files
 #
-# It runs under the test lock and an isolated HOME:
+# It runs with an isolated HOME, each step inside the test CPU budget:
 #   * the web build; vitest on the tests the changed web files reach
-#     (scripts/vitest_related.py) and the web guards (vitest censuses);
+#     (scripts/vitest_related.py);
 #   * pytest -m "not slow" on the affected test files
 #     (scripts/quick_check_affected.py, plus QUICK_TESTS);
 #   * the desk sweep (every app at 1440 and 393), which must PROVE it ran
-#     (60 or more passed, never skipped); the canon guards; the repo guards
-#     (whole-repo censuses and ratchets).
-# The whole suite does NOT run here: it runs on main after the merge
-# (the orchestrator's main watcher), and a red there is fixed forward at once.
+#     (60 or more passed, never skipped).
+# The whole-repo guards (repo, canon and web guards) and the whole suite do
+# NOT run here (2026-11-09): scripts/main_check.sh runs the guards once on
+# main after a merge batch, and a red there is fixed forward at once.
 #
 # Faster (2026-11-08, owner: "I still see a ton of sequentiality… come on"):
-#   * Parallel: the build, vitest and the web guards start together; when the
-#     build is done (the hub tests read its bundle), pytest, the desk sweep,
-#     the canon guards and the repo guards run together. Each step has its own
-#     log and a share of the CPU; one summary prints at the end, in order.
+#   * Parallel: the build and vitest start together; when the build is done
+#     (the hub tests read its bundle), pytest and the desk sweep run together.
+#     Each step has its own log; one summary prints at the end, in order.
 #   * Incremental: .tmp/quick-check/green.json keeps, per step, the head and
 #     the sha256 of the step's inputs at its last GREEN
 #     (scripts/quick_check_memo.py). A step whose inputs did not change is
 #     skipped with one line. A red never records.
-#   * No test twice: the canon and repo guards drop the files pytest affected
-#     already runs.
 #   * A red writes .tmp/quick-check/retry.txt (the failed test ids, and the
 #     steps that did not run); `scripts/quick_check.sh --retry` runs only those,
 #     and a green records the memo only at the head of the run it retries,
 #     for a step whose inputs that run saw (else the next check runs it).
-#   * The lock: the whole check holds one lock. It is a "browser" hold
-#     (exclusive) when the desk sweep runs, else a "unit" hold, which two other
-#     unit runs can share (scripts/test_lock.py).
+#   * The lock (2026-11-09): each step asks scripts/test_lock.py for its
+#     CPUs: the build 2, vitest 4, pytest 4 (-n 4), the sweep 8 (-n 4, each
+#     worker drives a Chromium). Other runs share the machine while the sum
+#     fits the budget.
 #
 # Fail closed (Astra's review of the first version): a change discovery that
 # fails, a skipped sweep, or an unhandled vitest error that is not jsdom's
@@ -53,6 +51,7 @@ memo_dir=".tmp/quick-check"
 retry_file="$memo_dir/retry.txt"
 red() { echo "QUICK CHECK RED: $*"; exit 1; }
 memo() { uv run python scripts/quick_check_memo.py "$@"; }
+locked() { local n="$1"; shift; uv run python scripts/test_lock.py --cpus "$n" -- "$@"; }
 
 if [ "$retry" = 1 ]; then
   [ -f "$retry_file" ] || red "no $retry_file: the last check was green, or never ran here"
@@ -61,10 +60,7 @@ if [ "$retry" = 1 ]; then
 fi
 
 # ── 1. what changed (each git call is checked; an error is red) ──────────────
-# The fetch runs once, before the lock (the run under the lock skips it).
-if [ -z "${QUICK_CHECK_CLASS:-}" ]; then
-  git fetch -q origin 2>/dev/null || echo "quick_check: fetch failed; using the local $base"
-fi
+git fetch -q origin 2>/dev/null || echo "quick_check: fetch failed; using the local $base"
 git rev-parse --verify --quiet "$base^{commit}" >/dev/null || red "base '$base' is not a commit"
 d1="$(git diff --name-only "$base"...HEAD)" || red "git diff $base...HEAD failed"
 d2="$(git diff --name-only)" || red "git diff (work tree) failed"
@@ -81,30 +77,8 @@ code="$(printf '%s\n' "$changed" | grep -E '^(web/|holdspeak/|tests/|scripts/|ap
 in_retry() { [ "$retry" = 1 ] && grep -qE "^(ids|step) $1( |$)" "$retry_file"; }
 retry_ids() { sed -n "s/^ids $1 //p" "$retry_file"; }
 
-# ── 2. one lock for the whole check (2026-11-08) ─────────────────────────────
-# Browser (exclusive) when the sweep may run, else unit (shared with two other
-# unit runs). The run under the lock does the work; this one only waits.
-if [ -z "${QUICK_CHECK_CLASS:-}" ]; then
-  cls=unit
-  if [ -n "$code" ]; then
-    if [ "$retry" = 1 ]; then
-      in_retry sweep && cls=browser
-    elif [ -n "$webany$hubany" ]; then
-      sweep_head="$(memo plan sweep | awk '{print $3}')"
-      [ "$sweep_head" = "-" ] && cls=browser
-    fi
-  fi
-  HOME_REAL="${HOME_REAL:-$HOME}"
-  H0="$(mktemp -d)"
-  HOME="$H0" uv run python scripts/test_lock.py --class "$cls" -- \
-    env HOME="$HOME_REAL" HOME_REAL="$HOME_REAL" QUICK_CHECK_CLASS="$cls" bash "$0" "$@"
-  rc=$?
-  rm -rf "$H0"
-  exit "$rc"
-fi
-
 started=$(date +%s)
-echo "quick_check: $(printf '%s\n' "$changed" | wc -l | tr -d ' ') changed files against $base ($QUICK_CHECK_CLASS lock)"
+echo "quick_check: $(printf '%s\n' "$changed" | wc -l | tr -d ' ') changed files against $base"
 [ "$retry" = 1 ] && echo "quick_check: --retry: the failed tests and the steps that did not run, from $retry_file"
 
 uncovered="$(printf '%s\n' "$changed" | grep -E '\.(ts|tsx|css)$' | grep -v '^web/src/' || true)"
@@ -151,7 +125,7 @@ if [ -z "$code" ]; then
   echo "== doc guards"
   targets=("${doc_guards[@]}")
   if in_retry docguards; then ids="$(retry_ids docguards)"; [ -n "$ids" ] && targets=($ids); fi
-  if HOME="$H" uv run pytest -q "${targets[@]}" >"$H/docguards.log" 2>&1; then
+  if HOME="$H" locked 1 uv run pytest -q "${targets[@]}" >"$H/docguards.log" 2>&1; then
     grep -E 'passed|failed' "$H/docguards.log" | tail -1 | sed 's/^/   /'
     if [ "$retry" = 1 ]; then memo promote "$retry_file" "docguards=$(echo "$key" | awk '{print $2}')"
     else memo record "docguards=$(echo "$key" | awk '{print $2}')"; fi
@@ -184,70 +158,12 @@ if [ -n "$web" ]; then
 fi
 printf '%s\n' "$vt" >"$H/vitest.sel"
 
-# The web guards (2026-10-31): vitest censuses that read sources by glob, walk
-# or path, so `vitest related` never picks them for the file they judge.
-web_guards=(
-  src/desk/__tests__/containerQueryLaw.test.ts           # viewport media only on shell exceptions (every CSS file)
-  src/pages/cores/__tests__/settingsWriters.test.ts      # one writer per settings subtree (every source file)
-  src/desk/__tests__/writeReceiptGuard.test.ts           # a desk write leaves a receipt (every desk source)
-  src/desk/__tests__/emojiGuard.test.ts                  # no emoji in glyph and label sources
-  src/desk/systemSprites.test.ts                         # every Dock item and launcher has its sprite file
-  src/desk/__tests__/illustratedIcons.test.ts            # every illustrated icon has its SVG and PNG
-  src/desk/__tests__/sprites32.test.ts                   # the 32 px world sprites (web/public)
-  src/desk/__tests__/philo13FacesDoNotLie.test.tsx       # faces show no raw error or raw title (named sources)
-  src/desk/components/__tests__/agentWordsFence.test.tsx # agent words come from AgentWords only
-  src/desk/surface/__tests__/fence.test.ts               # the surface fence ratchet (fence-baseline.json)
-  src/desk/surface/__tests__/kitDelight.test.tsx         # the kit motion and material rules (kit.css, react-app.css)
-  src/desk/components/window/__tests__/workBand.test.ts  # the work band tokens (tokens.css)
-  src/desk/__tests__/memoryRefsOpen.test.ts              # memory refs match the hub (holdspeak/services/memory_grounding.py)
-  src/lib/productLanguage.test.ts                        # product words match docs/product-language.json
-  src/desk/attention.test.ts                             # attention ranking matches tests/fixtures (the hub's twin)
-  src/desk/surface/__tests__/egress.test.ts              # loopback spellings match tests/fixtures (the hub's twin)
-  src/desk/surface/__tests__/fieldLabelWords.test.tsx    # field labels in sentence case (gadgets.css, surface.css)
-  src/desk/surface/__tests__/chipWords.test.tsx          # no host on a chip (gadgets.css)
-  src/desk/surface/__tests__/lampWords.test.tsx          # lamp words (gadgets.css, recordings.css, DeskChrome)
-)
-
 py_tests="$(printf '%s\n' "$changed" | uv run python scripts/quick_check_affected.py)" || red "the affected-test selection failed"
 py_tests="$(printf '%s\n' "$py_tests" | grep -v -e '^$' -e 'tests/e2e/test_desk_sweep.py' -e 'tests/e2e/test_metal.py' || true)"
 printf '%s\n' "$py_tests" >"$H/pytest.sel"
 
-canon_guards=(tests/unit/test_interior_canon_guard.py tests/unit/test_ux_canon_ratchet.py tests/unit/test_lan_address_guard.py
-              tests/unit/test_automation_name_guard.py tests/unit/test_agents_name_guard.py tests/unit/test_engines_name_guard.py)
-# The repo guards (2026-10-18): fast whole-repo censuses and ratchets that a
-# "related tests" run never picks, so their reds used to reach main unseen
-# (static SQL, density, copy, API surface, frame registry, model-call census,
-# time census, kernel line budget, residual census, atlas anchors, the
-# thread tool gate, the 12 px type floor, the graph join; 2026-10-28: the
-# kit's container rule, host-agnostic cores, no HTML injection, no dash in
-# web copy; 2026-10-30: the lamp words, the metal lane in the guide, the desk
-# never navigates, the build stamp, the desk locks, the first-run wires and
-# every MCP tool on a real hub: eight reds that reached main unseen).
-repo_guards=(tests/unit/test_static_sql_matches_schema.py tests/unit/test_density_guard.py tests/unit/test_product_copy.py
-  tests/unit/test_api_surface.py tests/unit/test_realtime_frame_registry.py tests/unit/test_one_path_census.py
-  tests/unit/test_aware_time_census.py tests/unit/test_kernel_effect_fence.py tests/unit/test_decisions.py
-  tests/unit/test_philo7_contract.py tests/unit/test_doc_drift_guard.py tests/unit/test_graph_atlas.py
-  tests/unit/test_ux_canon_scan.py tests/unit/test_thread_tool_gate.py
-  tests/unit/test_philo13_18_type_floor_static.py tests/unit/test_graph_reference.py tests/unit/test_native_surfaces_guard.py
-  tests/unit/test_page_cores_guard.py tests/unit/test_web_null_read_guard.py tests/unit/test_web_vocabulary_guard.py
-  tests/unit/test_hub_handlers_off_loop.py tests/unit/test_lamp_words_guard.py tests/unit/test_vitest_related.py
-  tests/unit/test_ci_lanes.py tests/unit/test_desk_no_exit_guard.py tests/unit/test_web_build_stamp_assets.py
-  tests/unit/test_desk_locks.py tests/integration/test_desk_firstrun.py tests/integration/test_mcp_every_tool_runs_on_hub.py)
-
-# No test twice (2026-11-08): a guard file the affected step selected runs
-# there, once. ("already run" counts print in the summary.)
-not_selected() { for f in "$@"; do grep -qxF "$f" "$H/pytest.sel" || echo "$f"; done; }
-canon_run="$(not_selected "${canon_guards[@]}")"
-repo_run="$(not_selected "${repo_guards[@]}")"
-canon_dropped=$(( ${#canon_guards[@]} - $(printf '%s' "$canon_run" | grep -c . || true) ))
-repo_dropped=$(( ${#repo_guards[@]} - $(printf '%s' "$repo_run" | grep -c . || true) ))
-printf '%s\n' "${canon_guards[@]}" >"$H/canon.sel"
-printf '%s\n' "${repo_guards[@]}" >"$H/repo.sel"
-printf '%s\n' "${web_guards[@]}" >"$H/web-guards.sel"
-
 # ── 4. the plan: which steps run, which the memo skips ───────────────────────
-plan="$(memo plan build npm "vitest=$H/vitest.sel" "web-guards=$H/web-guards.sel" sweep "pytest=$H/pytest.sel" \
-  "canon=$H/canon.sel" "repo=$H/repo.sel")" || red "the memo failed"
+plan="$(memo plan build npm "vitest=$H/vitest.sel" sweep "pytest=$H/pytest.sel")" || red "the memo failed"
 key_of() { printf '%s\n' "$plan" | awk -v s="$1" '$1 == s {print $2}'; }
 green_at() { printf '%s\n' "$plan" | awk -v s="$1" '$1 == s && $3 != "-" {print $3}'; }
 
@@ -266,18 +182,9 @@ w_build="$(want build "$webany")"
 # The built bundle must exist for the sweep, whatever the memo says.
 [ "$w_build" = memo ] && [ ! -f holdspeak/static/_built/index.html ] && w_build=run
 w_vitest="$(want vitest "$vt")"
-w_webg="$(want web-guards "$webany")"
 w_py="$(want pytest "$py_tests")"
 w_sweep="$(want sweep "$webany$hubany")"
-w_canon="$(want canon yes)"
-w_repo="$(want repo yes)"
-if [ "$w_sweep" = run ] && [ "$QUICK_CHECK_CLASS" != browser ]; then
-  red "the tree changed while the check waited for the lock (the desk sweep now has to run): run the check again"
-fi
-
-# The CPU budget (12 cores): shared while steps run together.
-if [ "$w_sweep" = run ]; then py_n=4; sweep_n=8; repo_n=3; else py_n=8; sweep_n=8; repo_n=4; fi
-vt_n=4; webg_n=2
+py_n=4; sweep_n=4; vt_n=4
 
 # ── 5. the steps ─────────────────────────────────────────────────────────────
 pytest_ids() {  # the failed test ids of a pytest log
@@ -307,7 +214,7 @@ install_web() {
 
 run_build() {
   install_web || { done_step build 1; return; }
-  if HOME="$H" npm --prefix web run build >"$H/build.log" 2>&1; then
+  if HOME="$H" locked 2 npm --prefix web run build >"$H/build.log" 2>&1; then
     sum build "   build ok"; done_step build 0
   else
     tail -20 "$H/build.log" | sed 's/^/   /' >>"$H/build.sum"; sum build "   the web build failed: RED"; done_step build 1
@@ -318,7 +225,7 @@ run_build() {
 vitest_step() {
   local step="$1" n="$2"; shift 2
   local out rc unhandled canvas
-  out="$(cd web && HOME="$H" ./node_modules/.bin/vitest run --maxWorkers="$n" "$@" 2>&1)"; rc=$?
+  out="$(cd web && HOME="$H" uv run --project .. python ../scripts/test_lock.py --cpus "$n" -- ./node_modules/.bin/vitest run --maxWorkers="$n" "$@" 2>&1)"; rc=$?
   printf '%s\n' "$out" >"$H/$step.log"
   printf '%s\n' "$out" | grep -E '^ FAIL|×|Test Files|Tests |Errors ' | sort -u | sed 's/^/   /' >>"$H/$step.sum"
   # The unhandled-error blocks: each starts with "⎯ Unhandled Error ⎯" or
@@ -351,17 +258,11 @@ run_vitest() {
   if [ "$retry" = 1 ]; then files="$(retry_ids vitest)"; [ -z "$files" ] && files="$vt"; else files="$vt"; fi
   vitest_step vitest "$vt_n" $files
 }
-run_webg() {
-  local files
-  files="$(retry_ids web-guards 2>/dev/null)"
-  [ "$retry" = 1 ] && [ -n "$files" ] || files="${web_guards[*]}"
-  vitest_step web-guards "$webg_n" $files
-}
 
-# py_step <step> <log-name> <pytest args...>
+# py_step <step> <cpus> <pytest args...>
 py_step() {
-  local step="$1"; shift
-  HOME="$H" uv run pytest "$@" >"$H/$step.log" 2>&1; local prc=$?
+  local step="$1" n="$2"; shift 2
+  HOME="$H" locked "$n" uv run pytest "$@" >"$H/$step.log" 2>&1; local prc=$?
   grep -E '^(FAILED|ERROR)|passed|failed|no tests ran' "$H/$step.log" | tail -8 | sed 's/^/   /' >>"$H/$step.sum"
   # 5 = no tests collected (every file's tests are marked slow): not a failure.
   if [ "$prc" = 0 ] || [ "$prc" = 5 ]; then done_step "$step" 0
@@ -373,22 +274,12 @@ targets_for() {  # the ids to retry for a step, else its default files
   [ "$retry" = 1 ] && ids="$(retry_ids "$step")"
   if [ -n "$ids" ]; then printf '%s\n' "$ids"; else printf '%s\n' "$@"; fi
 }
-run_pytest() { py_step pytest -q -n "$py_n" --dist worksteal -m "not slow" $(targets_for pytest $py_tests); }
-run_canon() {
-  local t; t="$(targets_for canon $canon_run)"
-  if [ -z "$t" ]; then sum canon "   ok: every file already ran in pytest affected"; done_step canon 0; return; fi
-  py_step canon -q $t
-}
-run_repo() {
-  local t; t="$(targets_for repo $repo_run)"
-  if [ -z "$t" ]; then sum repo "   ok: every file already ran in pytest affected"; done_step repo 0; return; fi
-  py_step repo -q -n "$repo_n" $t
-}
+run_pytest() { py_step pytest "$py_n" -q -n "$py_n" --dist worksteal -m "not slow" $(targets_for pytest $py_tests); }
 run_sweep() {
   local t floor="$SWEEP_MIN" src swept
   t="$(targets_for sweep tests/e2e/test_desk_sweep.py)"
   [ "$retry" = 1 ] && floor=1
-  HOME="$H" uv run pytest -q -rfEs -n "$sweep_n" --dist worksteal $t >"$H/sweep.log" 2>&1; src=$?
+  HOME="$H" locked $((sweep_n * 2)) uv run pytest -q -rfEs -n "$sweep_n" --dist worksteal $t >"$H/sweep.log" 2>&1; src=$?
   grep -E '^(FAILED|ERROR|SKIPPED)|passed|failed|skipped' "$H/sweep.log" | tail -12 | sed 's/^/   /' >>"$H/sweep.sum"
   swept="$(grep -oE '[0-9]+ passed' "$H/sweep.log" | tail -1 | grep -oE '[0-9]+' || echo 0)"
   if grep -qiE 'skipped' "$H/sweep.log"; then
@@ -403,11 +294,10 @@ run_sweep() {
   fi
 }
 
-# Phase 1: the build, vitest and the web guards (node only) together.
+# Phase 1: the build and vitest (node only) together.
 pids=""
 [ "$w_build" = run ] && { run_build & build_pid=$!; }
 [ "$w_vitest" = run ] && { run_vitest & pids="$pids $!"; }
-[ "$w_webg" = run ] && { run_webg & pids="$pids $!"; }
 # Phase 2 waits for the build: the hub tests and the sweep read its bundle
 # (holdspeak/static/_built), which the build rewrites in place.
 [ "$w_build" = run ] && wait "$build_pid"
@@ -415,8 +305,6 @@ build_red=0
 [ "$w_build" = run ] && [ "$(cat "$H/build.rc" 2>/dev/null)" != 0 ] && build_red=1
 [ "$w_py" = run ] && { run_pytest & pids="$pids $!"; }
 if [ "$w_sweep" = run ] && [ "$build_red" = 0 ]; then run_sweep & pids="$pids $!"; fi
-[ "$w_canon" = run ] && { run_canon & pids="$pids $!"; }
-[ "$w_repo" = run ] && { run_repo & pids="$pids $!"; }
 for p in $pids; do wait "$p"; done
 
 # ── 6. the summary, in order ─────────────────────────────────────────────────
@@ -444,7 +332,7 @@ step $step"
     fail=1
     local ids=""
     case "$step" in
-      vitest|web-guards) ids="$(grep -E '^ FAIL ' "$H/$step.log" 2>/dev/null | awk '{print $2}' | sort -u)" ;;
+      vitest) ids="$(grep -E '^ FAIL ' "$H/$step.log" 2>/dev/null | awk '{print $2}' | sort -u)" ;;
       build) ids="" ;;
       *) ids="$(pytest_ids "$H/$step.log")" ;;
     esac
@@ -463,7 +351,6 @@ report build "build" "$w_build" "nothing under web/ changed"
 if [ "$retry" = 0 ] && [ -s "$H/vitest-related.why" ] && [ "$w_vitest" = run ]; then sed 's/^/   /' "$H/vitest-related.why"; fi
 if [ -n "$web" ] && [ -z "$vt" ] && [ "$retry" = 0 ]; then echo "== vitest: no web test reaches the changed files"; echo "   ok"
 else report vitest "vitest" "$w_vitest" "no web test file changed or reached" " ($nweb changed web files, $nvt test files)"; fi
-report web-guards "web guards" "$w_webg" "nothing under web/ changed" " (${#web_guards[@]} files)"
 if [ "$w_py" = run ] && [ "$retry" = 0 ]; then
   report pytest "pytest affected" "$w_py" "no test file affected" " ($npy files, -n $py_n)"
   printf '%s\n' "$py_tests" | sed 's/^/   · /'
@@ -477,15 +364,8 @@ step sweep"
 else
   report sweep "desk sweep" "$w_sweep" "nothing under web/ or holdspeak/ changed" " (-n $sweep_n)"
 fi
-report canon "canon guards" "$w_canon" "" " ($canon_dropped of ${#canon_guards[@]} files already run in pytest affected)"
-report repo "repo guards" "$w_repo" "" " ($repo_dropped of ${#repo_guards[@]} files already run in pytest affected)"
-
-# A deduplicated guard step is green only with the affected step that ran its
-# dropped files: record it only when pytest is green (or was not needed).
-pyrc="$(cat "$H/pytest.rc" 2>/dev/null || echo 0)"
 rec=""
 for pair in $promote; do
-  case "$pair" in canon=*|repo=*) [ "$pyrc" = 0 ] || continue ;; esac
   rec="$rec $pair"
   # A green build means the install it ran on is good: the lock file's key.
   case "$pair" in build=*) rec="$rec npm=$(key_of npm)" ;; esac

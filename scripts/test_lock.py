@@ -1,49 +1,46 @@
-"""Run one command while holding the machine-wide test lock.
+"""Run one command inside the machine's test CPU budget.
 
 Owner catch 2026-10-07: "A ton of your workers are just running tests at the
-same time and keep breaking each other." Every test run on this machine
-(pytest, vitest, graph walks, glass_for) goes through this lock. The
-orchestrator's FAST takes the same lock.
+same time and keep breaking each other." Owner ruling 2026-11-09: a load of
+30 to 70 on 12 cores is "unacceptable". Every test run on this machine
+(pytest, vitest, graph walks, glass_for, the checks) goes through this lock.
 
 Usage:
     uv run python scripts/test_lock.py -- <command> [args...]
-    uv run python scripts/test_lock.py --class unit -- uv run pytest -q tests/unit/test_x.py
-    uv run python scripts/test_lock.py --wait 1800 -- uv run pytest -q tests/unit
+    uv run python scripts/test_lock.py --cpus 8 -- uv run pytest -q -n 4 tests/e2e/test_desk_sweep.py
+    uv run python scripts/test_lock.py --wait 1800 -- uv run pytest -q -n 4 tests/unit/test_x.py
 
-Classes (2026-11-08, owner: "I still see a ton of sequentiality"):
+One CPU budget (2026-11-09), no classes:
 
-* ``unit``: up to 3 unit runs share the machine (a semaphore of 3 slots,
-  $HOLDSPEAK_TEST_LOCK_SLOTS). The default for a direct pytest run that names
-  no browser file and for a direct vitest run. A unit run must set an isolated
-  HOME: the lock refuses the real HOME. When the 1-minute load is above 24
-  ($HOLDSPEAK_TEST_LOCK_MAX_LOAD), a unit run waits until no other unit run
-  holds a slot, as before.
-* ``browser``: exclusive against every other run. The default for every other
-  command, and for any command that names tests/e2e, the desk sweep, glass,
-  Playwright, a graph walk or tests/uat. A waiting browser run goes before
-  unit runs of the same or lower priority, so it is never starved.
+* A run takes CPUs: ``--cpus N``, else what the command says (``cpus_of``):
+  the pytest ``-n N`` (``auto`` is every core), else 1; a command that drives
+  a browser (tests/e2e, the desk sweep, glass, Playwright, a graph walk,
+  tests/uat) counts double, because each worker also drives a Chromium; a
+  vitest run counts 4.
+* The budget is $HOLDSPEAK_TEST_CPUS (default: the core count). A run starts
+  when the CPUs of the runs that hold the lock plus its own fit the budget. A
+  run larger than the budget starts when no other run holds the lock.
+* Waiters go in arrival order, so a large run is never starved by small ones.
+  A run started with HOLDSPEAK_TEST_LOCK_PRIORITY=low (the main watcher's
+  shards) also waits for every HIGH waiter, whenever it arrived.
+* HOME is not checked here. The rigs isolate HOME themselves.
 
-The lock is fcntl flocks on $HOLDSPEAK_TEST_LOCK (default
-/tmp/holdspeak-tests.lock): a browser run holds it exclusive; a unit run holds
-it shared plus one slot file <lock>.slot<N> exclusive. Every flock is released
-when the command exits, whether it passed, failed or was killed. The exit code
-is the command's.
-
-Priority (the fast cycle, 2026-10-12): a run is HIGH by default (a quick
-check, a lane's scoped run). A run started with
-HOLDSPEAK_TEST_LOCK_PRIORITY=low (the main watcher's shards) does not take the
-lock while any HIGH run is waiting. Each waiter registers a marker file
-<lock>.waiters/<pid>.<prio>.<class>; it is removed when the waiter takes the
-lock or exits, and a marker whose process is gone is ignored and removed.
+The lock is files next to $HOLDSPEAK_TEST_LOCK (default
+/tmp/holdspeak-tests.lock): the lock file is a short mutex for each admission;
+<lock>.holders/<pid>.<cpus> is one running run, flocked for its whole life (a
+holder whose flock is free is stale and removed); <lock>.waiters/<pid>.<prio>.
+<cpus> is one waiter (a marker whose process is gone is removed). Every flock
+is released when the command exits, whether it passed, failed or was killed.
+The exit code is the command's. ``--class`` is accepted and ignored (old
+callers).
 
 Reentrant (2026-11-07): a command that already runs under this lock runs at
-once, whatever its class.
+once.
 """
 from __future__ import annotations
 
 import fcntl
 import os
-import pwd
 import signal
 import subprocess
 import sys
@@ -52,12 +49,9 @@ from pathlib import Path
 from typing import IO, Optional
 
 PRIORITIES = ("high", "low")
-CLASSES = ("unit", "browser")
-#: A command that names one of these is a browser run (exclusive).
+#: A command that names one of these drives a browser: its CPUs count double.
 BROWSER_MARKS = ("tests/e2e", "test_desk_sweep", "playwright", "glass", "graph_walk", "tests/uat")
-#: pytest options that take a value (so the value is not read as a path).
-_PYTEST_VALUE_OPTS = {"-n", "-m", "-k", "-p", "-c", "-o", "--dist", "--durations", "--timeout", "--rootdir",
-                      "--maxfail", "--junitxml", "--basetemp", "-W", "--deselect", "--ignore"}
+VITEST_CPUS = 4
 
 
 def _alive(pid: int) -> bool:
@@ -70,25 +64,56 @@ def _alive(pid: int) -> bool:
     return True
 
 
-def _marker(name: str) -> Optional[tuple[int, str, str]]:
-    """(pid, priority, class) of a marker name; an old ``<pid>.<prio>`` marker is a browser run."""
+def cores() -> int:
+    return os.cpu_count() or 1
+
+
+def budget() -> int:
+    raw = os.environ.get("HOLDSPEAK_TEST_CPUS", "").strip()
+    return max(1, int(raw)) if raw.isdigit() else cores()
+
+
+def _workers(value: str) -> Optional[int]:
+    if value in ("auto", "logical"):
+        return cores()
+    return int(value) if value.isdigit() else None
+
+
+def cpus_of(cmd: list[str]) -> int:
+    """The CPUs a command takes: its pytest -n (doubled for a browser run),
+    4 for vitest, else 1."""
+    if any(Path(word).name == "vitest" for word in cmd):
+        return VITEST_CPUS
+    n: Optional[int] = None
+    for i, word in enumerate(cmd):
+        if word in ("-n", "--numprocesses") and i + 1 < len(cmd):
+            n = _workers(cmd[i + 1])
+        elif word.startswith("--numprocesses="):
+            n = _workers(word.split("=", 1)[1])
+        elif word.startswith("-n") and len(word) > 2:
+            n = _workers(word[2:])
+    n = max(1, n or 1)
+    text = " ".join(cmd)
+    return n * 2 if any(mark in text for mark in BROWSER_MARKS) else n
+
+
+def _marker(name: str) -> Optional[tuple[int, str]]:
+    """(pid, priority) of a waiter marker name."""
     parts = name.split(".")
-    try:
-        pid = int(parts[0])
-    except ValueError:
+    if not parts[0].isdigit():
         return None
-    prio = parts[1] if len(parts) > 1 else "high"
-    cls = parts[2] if len(parts) > 2 else "browser"
-    return pid, prio, cls
+    return int(parts[0]), parts[1] if len(parts) > 1 else "high"
 
 
-def live_waiters(waiters: Path, me: int) -> list[tuple[int, str, str]]:
-    """The live waiters other than `me`; stale markers are removed."""
-    found: list[tuple[int, str, str]] = []
+def ahead_of(waiters: Path, me: int, prio: str) -> list[int]:
+    """The live waiters that go before this one; stale markers are removed.
+    A HIGH run waits for older HIGH waiters; a LOW run for every HIGH waiter
+    and older LOW waiters."""
+    rows = []
     try:
         entries = list(waiters.iterdir())
     except FileNotFoundError:
-        return found
+        return []
     for entry in entries:
         row = _marker(entry.name)
         if row is None:
@@ -96,86 +121,43 @@ def live_waiters(waiters: Path, me: int) -> list[tuple[int, str, str]]:
         if not _alive(row[0]):
             entry.unlink(missing_ok=True)
             continue
-        if row[0] != me:
-            found.append(row)
-    return found
-
-
-def high_waiters(waiters: Path, me: int) -> list[int]:
-    """The live HIGH waiters other than `me` (kept for callers of the old name)."""
-    return [pid for pid, prio, _ in live_waiters(waiters, me) if prio == "high"]
-
-
-def ahead_of(waiters: Path, me: int, prio: str, cls: str) -> list[int]:
-    """The waiters that go before this one: every HIGH waiter for a LOW run;
-    for a unit run also every browser waiter of the same or higher priority."""
+        try:
+            rows.append((entry.stat().st_mtime_ns, row[0], row[1]))
+        except FileNotFoundError:
+            continue
+    mine = next(((at, pid) for at, pid, _ in rows if pid == me), (time.time_ns(), me))
     ahead = []
-    for pid, wprio, wcls in live_waiters(waiters, me):
-        if prio == "low" and wprio == "high":
-            ahead.append(pid)
-        elif cls == "unit" and wcls == "browser" and (wprio == "high" or prio == "low"):
+    for at, pid, wprio in rows:
+        if pid == me:
+            continue
+        older = (at, pid) < mine
+        if (prio == "low" and wprio == "high") or (wprio == prio and older):
             ahead.append(pid)
     return ahead
 
 
-def _pytest_paths(args: list[str]) -> list[str]:
-    paths, skip = [], False
-    for arg in args:
-        if skip:
-            skip = False
-            continue
-        if arg in _PYTEST_VALUE_OPTS:
-            skip = True
-            continue
-        if not arg.startswith("-"):
-            paths.append(arg)
-    return paths
-
-
-def guess_class(cmd: list[str]) -> str:
-    """unit for a direct pytest run on named files with no browser file, or a
-    direct vitest run; browser for everything else."""
-    text = " ".join(cmd)
-    if any(mark in text for mark in BROWSER_MARKS):
-        return "browser"
-    words = list(cmd)
-    if words[:1] == ["uv"] and len(words) > 1 and words[1] == "run":
-        words = words[2:]
-        while words and words[0].startswith("--"):
-            words = words[2:] if words[0] in ("--project", "--with", "--python") else words[1:]
-    if words and Path(words[0]).name.startswith("python") and words[1:3] == ["-m", "pytest"]:
-        words = ["pytest", *words[3:]]
-    if words[:1] == ["npx"]:
-        words = words[1:]
-    if not words:
-        return "browser"
-    tool = Path(words[0]).name
-    if tool == "vitest":
-        return "unit"
-    if tool == "pytest":
-        paths = _pytest_paths(words[1:])
-        # No path, or the whole tests/ tree: the suite, browser files included.
-        if not paths or any(p.rstrip("/") in ("tests", ".") for p in paths):
-            return "browser"
-        return "unit"
-    return "browser"
-
-
-def real_home() -> str:
+def in_use(holders: Path) -> tuple[int, int]:
+    """(CPUs, runs) of the live holders; a holder whose flock is free is
+    stale and removed. Call it with the mutex held."""
+    used = runs = 0
     try:
-        return pwd.getpwuid(os.getuid()).pw_dir
-    except KeyError:
-        return ""
-
-
-def _isolated_home() -> tuple[bool, str]:
-    home = os.environ.get("HOME", "")
-    real = real_home()
-    if not home:
-        return False, "HOME is not set"
-    if real and os.path.realpath(home) == os.path.realpath(real):
-        return False, f"HOME={home} is the real home"
-    return True, ""
+        entries = list(holders.iterdir())
+    except FileNotFoundError:
+        return 0, 0
+    for entry in entries:
+        parts = entry.name.split(".")
+        if len(parts) != 2 or not all(p.isdigit() for p in parts):
+            continue
+        try:
+            with open(entry, "a") as probe:
+                if _try(probe, fcntl.LOCK_EX):
+                    entry.unlink(missing_ok=True)
+                    continue
+        except FileNotFoundError:
+            continue
+        used += int(parts[1])
+        runs += 1
+    return used, runs
 
 
 def _try(handle: IO[str], mode: int) -> bool:
@@ -186,26 +168,9 @@ def _try(handle: IO[str], mode: int) -> bool:
         return False
 
 
-def _take_slot(slots: list[IO[str]], alone: bool) -> Optional[IO[str]]:
-    """One free slot; with ``alone``, only when every slot is free."""
-    if not alone:
-        for handle in slots:
-            if _try(handle, fcntl.LOCK_EX):
-                return handle
-        return None
-    got = [h for h in slots if _try(h, fcntl.LOCK_EX)]
-    if len(got) == len(slots):
-        for handle in got[1:]:
-            fcntl.flock(handle, fcntl.LOCK_UN)
-        return got[0]
-    for handle in got:
-        fcntl.flock(handle, fcntl.LOCK_UN)
-    return None
-
-
 def main(argv: list[str]) -> int:
     wait = 7200.0
-    cls: Optional[str] = None
+    cpus: Optional[int] = None
     if "--" not in argv:
         sys.stderr.write(__doc__ or "")
         return 2
@@ -215,18 +180,16 @@ def main(argv: list[str]) -> int:
     while i < len(opts):
         if opts[i] == "--wait" and i + 1 < len(opts):
             wait = float(opts[i + 1])
-            i += 2
+        elif opts[i] == "--cpus" and i + 1 < len(opts) and opts[i + 1].isdigit():
+            cpus = max(1, int(opts[i + 1]))
         elif opts[i] == "--class" and i + 1 < len(opts):
-            cls = opts[i + 1]
-            i += 2
+            pass  # the classes are gone (2026-11-09); old callers still pass one
         else:
             sys.stderr.write(f"unknown option {opts[i]}\n")
             return 2
+        i += 2
     if not cmd:
         sys.stderr.write("no command given after --\n")
-        return 2
-    if cls is not None and cls not in CLASSES:
-        sys.stderr.write(f"test_lock: --class must be one of {CLASSES}\n")
         return 2
     path = os.environ.get("HOLDSPEAK_TEST_LOCK", "/tmp/holdspeak-tests.lock")
     prio = os.environ.get("HOLDSPEAK_TEST_LOCK_PRIORITY", "high").strip().lower() or "high"
@@ -234,84 +197,65 @@ def main(argv: list[str]) -> int:
         sys.stderr.write(f"test_lock: HOLDSPEAK_TEST_LOCK_PRIORITY must be one of {PRIORITIES}\n")
         return 2
     poll = float(os.environ.get("HOLDSPEAK_TEST_LOCK_POLL", "1"))
-    # Reentrant (2026-11-07): a command that already runs under this lock
-    # (quick_check.sh, whose every step takes the lock) was wrapped in the lock
-    # again by a caller that followed CLAUDE.md to the letter; the inner call
-    # waited on the outer for the whole 7200 s. A nested call sees the holder's
-    # pid in the environment and runs at once.
+    # Reentrant (2026-11-07): a nested call sees the holder's pid in the
+    # environment and runs at once (its CPUs are the holder's).
     held = os.environ.get("HOLDSPEAK_TEST_LOCK_HELD", "")
     if held.isdigit() and _alive(int(held)) and os.environ.get("HOLDSPEAK_TEST_LOCK_HELD_PATH", path) == path:
         return subprocess.call(cmd)
-    cls = cls or guess_class(cmd)
-    if cls == "unit":
-        ok, why = _isolated_home()
-        if not ok:
-            sys.stderr.write(
-                f"test_lock: refused: a unit run shares the machine with other runs, so it must use an "
-                f"isolated HOME ({why}). Run it as: HOME=$(mktemp -d) uv run python scripts/test_lock.py "
-                f"-- <command>\n")
-            return 2
-    slots_n = max(1, int(os.environ.get("HOLDSPEAK_TEST_LOCK_SLOTS", "3")))
-    max_load = float(os.environ.get("HOLDSPEAK_TEST_LOCK_MAX_LOAD", "24"))
-    waiters = Path(f"{path}.waiters")
+    cpus = cpus or cpus_of(cmd)
+    total = budget()
+    waiters, holders = Path(f"{path}.waiters"), Path(f"{path}.holders")
     waiters.mkdir(parents=True, exist_ok=True)
-    marker = waiters / f"{os.getpid()}.{prio}.{cls}"
-    # A TERM or INT while waiting still removes the marker (finally).
-    def _stop(signum: int, _frame: object) -> None:
+    holders.mkdir(parents=True, exist_ok=True)
+    marker = waiters / f"{os.getpid()}.{prio}.{cpus}"
+    mine = holders / f"{os.getpid()}.{cpus}"
+
+    def _stop(signum: int, _frame: object) -> None:  # a TERM while waiting still removes the marker
         raise SystemExit(128 + signum)
     signal.signal(signal.SIGTERM, _stop)
     started = time.monotonic()
-    slots = [open(f"{path}.slot{n}", "a+") for n in range(slots_n)] if cls == "unit" else []
-    slot: Optional[IO[str]] = None
-    with open(path, "a+") as handle:
-        announced = False
-        marker.touch()
-        try:
-            while True:
-                ahead = ahead_of(waiters, os.getpid(), prio, cls)
-                if not ahead:
-                    if cls == "browser":
-                        if _try(handle, fcntl.LOCK_EX):
+    hold: Optional[IO[str]] = None
+    announced = False
+    marker.touch()
+    try:
+        with open(path, "a+") as mutex:
+            while hold is None:
+                ahead = ahead_of(waiters, os.getpid(), prio)
+                used = runs = 0
+                why = f"{len(ahead)} run(s) ahead"
+                if not ahead and not _try(mutex, fcntl.LOCK_EX):
+                    why = "a run of the old lock holds the lock file"
+                elif not ahead:
+                    try:
+                        used, runs = in_use(holders)
+                        if runs == 0 or used + cpus <= total:
+                            hold = open(mine, "w")
+                            fcntl.flock(hold, fcntl.LOCK_EX)
+                            hold.write(f"{os.getpid()} {cpus} {time.strftime('%H:%M:%S')} {' '.join(cmd)[:200]}\n")
+                            hold.flush()
                             break
-                    elif _try(handle, fcntl.LOCK_SH):
-                        busy = os.getloadavg()[0] > max_load
-                        slot = _take_slot(slots, alone=busy)
-                        if slot is not None:
-                            break
-                        fcntl.flock(handle, fcntl.LOCK_UN)
+                    finally:
+                        fcntl.flock(mutex, fcntl.LOCK_UN)
+                    why = f"{used} of {total} CPUs in use by {runs} run(s)"
                 if not announced:
-                    if ahead:
-                        why = f"{len(ahead)} run(s) go first"
-                    elif cls == "unit":
-                        why = "a browser run holds it, or every unit slot is taken, or the load is above " \
-                              f"{max_load:.0f}"
-                    else:
-                        why = "another test run holds it"
-                    sys.stderr.write(f"test_lock: waiting for {path} ({cls} run; {why})\n")
+                    sys.stderr.write(f"test_lock: waiting for {cpus} CPUs ({why})\n")
                     announced = True
                 if time.monotonic() - started > wait:
                     sys.stderr.write(f"test_lock: gave up after {wait:.0f} s\n")
                     return 75
                 time.sleep(poll)
-        finally:
-            marker.unlink(missing_ok=True)
-            signal.signal(signal.SIGTERM, signal.SIG_DFL)
-        note = slot if slot is not None else handle
-        note.seek(0)
-        note.truncate()
-        note.write(f"{os.getpid()} {cls} {time.strftime('%H:%M:%S')} {' '.join(cmd)[:200]}\n")
-        note.flush()
-        waited = time.monotonic() - started
-        if waited > 1:
-            sys.stderr.write(f"test_lock: acquired after {waited:.0f} s\n")
-        env = dict(os.environ, HOLDSPEAK_TEST_LOCK_HELD=str(os.getpid()), HOLDSPEAK_TEST_LOCK_HELD_PATH=path,
-                   HOLDSPEAK_TEST_LOCK_HELD_CLASS=cls)
-        try:
-            return subprocess.call(cmd, env=env)
-        finally:
-            for h in slots:
-                h.close()
-            fcntl.flock(handle, fcntl.LOCK_UN)
+    finally:
+        marker.unlink(missing_ok=True)
+        signal.signal(signal.SIGTERM, signal.SIG_DFL)
+    waited = time.monotonic() - started
+    if waited > 1:
+        sys.stderr.write(f"test_lock: acquired {cpus} CPUs after {waited:.0f} s\n")
+    env = dict(os.environ, HOLDSPEAK_TEST_LOCK_HELD=str(os.getpid()), HOLDSPEAK_TEST_LOCK_HELD_PATH=path)
+    try:
+        return subprocess.call(cmd, env=env)
+    finally:
+        mine.unlink(missing_ok=True)
+        hold.close()
 
 
 if __name__ == "__main__":

@@ -39,8 +39,9 @@ SECTION_NAMES = {
     "repo": "repo",
 }
 #: The sections a quick check log must carry (vitest and pytest run only when
-#: the change touches their files).
-QUICK_CHECK_REQUIRED = ("build", "sweep", "canon", "repo")
+#: the change touches their files; the canon and repo guards moved to
+#: scripts/main_check.sh on 2026-11-09).
+QUICK_CHECK_REQUIRED = ("build", "sweep")
 #: Every section the faces draw, in order.
 SECTION_ORDER = ("build", "vitest", "pytest", "sweep", "canon", "repo")
 
