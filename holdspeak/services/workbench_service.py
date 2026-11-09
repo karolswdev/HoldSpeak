@@ -77,8 +77,7 @@ class WorkbenchService:
         retired = sorted({"profile_id", "resolver_profile_id"} & set(fields))
         if not retired:
             return
-        from .inference_adoption_service import RECIPE_WORKBENCH_MIGRATION_FAMILY
-        from .inference_assignment_service import InferenceAssignmentService
+        from .inference_assignment_service import RECIPE_WORKBENCH_MIGRATION_FAMILY, InferenceAssignmentService
 
         marker = InferenceAssignmentService(self._db).migration_marker(
             principal, family=RECIPE_WORKBENCH_MIGRATION_FAMILY
@@ -149,9 +148,6 @@ class WorkbenchService:
     ) -> dict[str, Any]:
         _launch_own(principal, f"workbench:{workbench_id}")
         existing = self._require_workbench(workbench_id)
-        if principal.kind is PrincipalKind.OWNER:
-            from holdspeak.kernel.runtime import _configure
-            _configure(self._db).inference_adoption_service.migrate_recipe_workbench_subject_assignments(principal)
         self._refuse_post_marker_pointer_write(principal, fields)
         self._clean_automation_fields(fields)
         proposed = self._wb_fields(fields, existing)

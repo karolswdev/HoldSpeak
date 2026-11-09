@@ -81,66 +81,112 @@ class Answer:
 
 
 def engine_for(broker: Any, job: str, *, subject: Optional[tuple[str, str]] = None) -> Engine:
-    """The engine assigned to ``job``. Raises ``EngineDoorError('no_engine')``.
+    """The engine assigned to ``job``: the first engine of the owner's live
+    assignment chain (Settings › Engines), with the second as its one retry.
+    Raises ``EngineDoorError('no_engine')``.
 
     ``subject`` (``(kind, id)``, for one ``("workbench", <id>)``): the
-    assignment made for that subject (an automation's With line), resolved
-    by the same route planner; with none of its own, the job's. The kind
-    ``invocation`` names a one-run assignment ("Use X for this one")."""
-    from .project_update_service import _resolve_for_capability, _route_plan_deployment
-
-    if subject is not None:
-        one_run = subject[0] == "invocation"
-        revision, assignment, profile = _route_plan_deployment(
-            broker, job, subject_kind=None if one_run else subject[0],
-            subject_id=None if one_run else subject[1], invocation_id=subject[1] if one_run else None)
-        if revision:
-            engine = Engine(str(revision), str(assignment or ""), str(profile or ""))
-            return replace(engine, fallback=_next_in_chain(broker, job, engine))
-
+    assignment made for that subject (an automation's With line); with none
+    of its own, the job's. The kind ``invocation`` names a one-run
+    assignment ("Use X for this one"). The door reads the assignment store
+    itself; no route plan is written."""
     try:
-        revision, assignment, profile = _resolve_for_capability(broker, job)
-    except RuntimeError as exc:
+        assignment, engines = _chain(broker, job, subject)
+    except EngineDoorError:
+        raise
+    except Exception as exc:
         raise EngineDoorError("no_engine", str(exc)) from exc
-    if not revision:
+    if not engines:
         raise EngineDoorError("no_engine", f"No engine is assigned to {job}")
-    engine = Engine(str(revision), str(assignment or ""), str(profile or ""))
-    return replace(engine, fallback=_next_in_chain(broker, job, engine))
+    first = engines[0]
+    return replace(first, fallback=_next_in_chain(engines, first))
+
+
+def chain(
+    db: Any, job: str, *, subject: Optional[tuple[str, str]] = None, registry: Any = None,
+) -> tuple[str, list[Engine]]:
+    """The owner's live assignment for ``job``: its id and the engines of its
+    chain in his order (an entry whose deployment does not resolve is left
+    out). ``subject`` is as in ``engine_for``. A read; nothing is written."""
+    from .inference_assignment_service import InferenceAssignmentService
+
+    service = InferenceAssignmentService(db, registry=registry)
+    kind, ident = subject if subject is not None else ("", "")
+    one_run = kind == "invocation"
+    assignment, entries = service.chain(
+        job,
+        invocation_id=ident if one_run else None,
+        subject_kind=(kind or None) if not one_run else None,
+        subject_id=(ident or None) if not one_run else None,
+    )
+    engines = []
+    for entry in entries:
+        profile = str(entry.get("profile_id") or "")
+        revision = _bound_revision(db, profile) or _captured_revision(db, profile)
+        if revision:
+            engines.append(Engine(revision, assignment, profile))
+    return assignment, engines
+
+
+def _chain(broker: Any, job: str, subject: Optional[tuple[str, str]] = None) -> tuple[str, list[Engine]]:
+    return chain(broker.database, job, subject=subject,
+                 registry=getattr(broker, "inference_capability_registry", None))
 
 
 def engine_of_profile(broker: Any, profile_id: str) -> Optional[Engine]:
     """The engine one model profile names: the owner's pick for one run
     ("Use X for this one"), with no next engine. ``None`` when the profile
     names no deployment."""
-    from .project_update_service import _bound_deployment_revision, _captured_deployment_revision
-
     db = broker.database
-    revision = _bound_deployment_revision(db, profile_id) or _captured_deployment_revision(db, profile_id)
+    revision = _bound_revision(db, profile_id) or _captured_revision(db, profile_id)
     return Engine(str(revision), "", profile_id) if revision else None
 
 
-def _next_in_chain(broker: Any, job: str, first: Engine) -> Optional[Engine]:
-    """The second engine of the job's assignment chain, or ``None``."""
-    try:
-        from .inference_route_plan_service import ROUTE_PLANNING_AUTHORITY
-        from .project_update_service import _captured_deployment_revision
-
-        plan = broker.inference_adoption_service.plans.resolve_route_plan(
-            ROUTE_PLANNING_AUTHORITY, capability_id=job,
-        )
-        entries = sorted((e for e in (plan.get("entries") or ()) if e), key=lambda e: int(e.get("ordinal") or 0))
-        for entry in entries:
-            revision = str(entry.get("deployment_revision_id") or "")
-            profile = str(entry.get("profile_id") or "")
-            if not revision or revision == first.revision or (profile and profile == first.profile):
-                continue
-            if broker.database.deployment_revisions.get(revision) is None:
-                revision = _captured_deployment_revision(broker.database, profile)
-            if revision:
-                return Engine(revision, first.assignment, profile)
-    except Exception:
-        return None
+def _next_in_chain(engines: list[Engine], first: Engine) -> Optional[Engine]:
+    """The next engine of the chain after ``first`` that is a different
+    engine (another revision and another profile), or ``None``."""
+    for engine in engines:
+        if engine.revision == first.revision or (engine.profile and engine.profile == first.profile):
+            continue
+        return engine
     return None
+
+
+def _bound_revision(db: Any, profile_id: str) -> str:
+    """The deployment revision the profile's live binding head points at."""
+    if not profile_id:
+        return ""
+    with db._connection() as conn:
+        row = conn.execute(
+            """SELECT b.deployment_revision_id AS rev
+                 FROM model_profile_binding_heads h
+                 JOIN model_profile_binding_revisions b
+                   ON b.binding_id=h.binding_id AND b.revision=h.revision
+                WHERE h.profile_id=?""",
+            (profile_id,),
+        ).fetchone()
+        revision_id = str(row["rev"] or "") if row is not None else ""
+        if not revision_id:
+            return ""
+        exists = conn.execute("SELECT 1 FROM deployment_revisions WHERE id=?", (revision_id,)).fetchone()
+    return revision_id if exists is not None else ""
+
+
+def _captured_revision(db: Any, profile_id: str) -> str:
+    """A version-1 profile has no binding row: capture (and persist) its
+    deployment revision from the profile itself."""
+    if not profile_id:
+        return ""
+    try:
+        from ..deployment_revisions import capture_deployment_revision
+        from ..inference_targets import resolve_inference_target
+
+        target = resolve_inference_target(db, profile_id.removeprefix("legacy-"))
+        if getattr(target, "deployment", None) is None:
+            return ""
+        return str(capture_deployment_revision(db, target).id)
+    except Exception:
+        return ""
 
 
 def egress_of(broker: Any, engine: Engine) -> str:
@@ -405,9 +451,13 @@ def _run_once(
         exc.sent = sent
         raise
     if stage is not None:
-        answer = replace(
-            answer, published=broker.projection_stager.finalize(invocation_id), invocation_id=invocation_id,
-        )
+        try:
+            published = broker.projection_stager.finalize(invocation_id)
+        except Exception as exc:
+            # The engine was contacted: the error keeps where (``sent``).
+            exc.sent = sent  # type: ignore[attr-defined]
+            raise
+        answer = replace(answer, published=published, invocation_id=invocation_id)
     return replace(answer, sent=sent)
 
 
@@ -491,7 +541,7 @@ JOB_WORDS = {
     "ask.answer": "an answer",
     "chat.turn": "the reply",
     "meeting.deferred_analysis": "the note's tasks",
-    "project.brief.prepare": "the brief",
+    "project.brief_prepare": "the brief",
     "speech.rewrite": "the dictation rewrite",
     "speech.intent_classify": "the dictation intent",
     "speech.punctuate": "the dictation punctuation",

@@ -25,7 +25,7 @@ from ._shared import _json_body
 log = get_logger("web.routes.workbenches")
 
 # The route-plan refusals a Run can meet when no usable engine is assigned
-# (inference_route_plan_service._effective_assignment).
+# (the engine door reads the assignment, engine_door.chain).
 _NO_ENGINE_WORDS = {
     "no_assignment": "No engine is set for this automation.",
     "no_compatible_assignment": "The engine set for this automation cannot run it.",
