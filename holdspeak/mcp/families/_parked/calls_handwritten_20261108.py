@@ -1,3 +1,7 @@
+# PARKED 20261108 (the Calls window, one operation per verb): the hand-written calls MCP family.
+# The tool rows and the dispatch are now produced from the one table
+# ``holdspeak/calls_operations.py`` (``mcp/families/declared.py``).
+# Not imported. Kept for history; restore with ``git revert`` of the parking commit.
 """Calls family (2026-10-28): the hub's phone calls, through the one service
 (``holdspeak.calls.service``) the REST routes use.
 

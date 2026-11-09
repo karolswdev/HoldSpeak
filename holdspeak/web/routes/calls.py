@@ -1,11 +1,8 @@
 """Calls transport (2026-10-28); the work is :mod:`holdspeak.calls.service`.
 
-GET  /api/calls/status         the line, the engine, the steps, the active call
-GET  /api/calls                the last 20 calls, newest first
-GET  /api/calls/{id}           one call with its transcript
-POST /api/calls/place          {"to"?}: HoldSpeak calls (default: his number)
-POST /api/calls/{id}/hangup    end the call
-POST /api/calls/{id}/decide    {"decision": "approve"|"deny"}: the tap form of his spoken yes
+Produced from ``holdspeak/calls_operations.py`` (2026-11-08, one contract):
+GET /api/calls/status, GET /api/calls, GET /api/calls/{id}, POST /api/calls/place,
+POST /api/calls/{id}/hangup, POST /api/calls/{id}/decide, POST /api/calls/line/test.
 
 The Line (2026-10-29, LINE design §4 "the wire"; the node's side, text only):
 POST /api/calls/line/hello     {node, lines, version, active_call?} → {config}
@@ -13,7 +10,6 @@ POST /api/calls/line/events    {node, events: [{seq, kind, ...}]} → {acked}
 POST /api/calls/line/next      {node, after?, wait_s≤25} → {commands} (a long poll)
 And what the faces need:
 GET  /api/calls/line/status    the Line's node, state, words, address, and where each secret is
-POST /api/calls/line/test      {"to"?}: the Line calls him, says one line, hangs up
 Enrolment (LINE-3): a Line node on another machine gets its own credential,
 scoped to the three wire routes above and nothing else:
 POST   /api/calls/line/codes          {node}: a one-time code (10 minutes, once) and the command to run there
@@ -35,7 +31,9 @@ from typing import Any, Optional
 
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
+from starlette.concurrency import run_in_threadpool
 
+from ... import operations
 from ...calls.service import CALLS, line_config, line_status
 from ...line import line_on
 from ...line.enrol import CODES, EnrolError, enrolled, redeem, revoke, wire_node
@@ -43,9 +41,11 @@ from ...line import setup as line_setup
 from ...line.hub import LINE_HUB
 from ...logging_config import get_logger
 from ...principals import UNAUTHENTICATED
-from ...services.errors import ServiceError, ValidationError
+from ...services.errors import NotFound, ServiceError, ValidationError
 from ..context import WebContext
+from ..operation_routes import operation_router
 from ..runtime_support import error_500
+from ._mount import mount_router
 
 log = get_logger("web.routes.calls")
 
@@ -60,6 +60,20 @@ def _refused(exc: ServiceError) -> JSONResponse:
 
 def _missing() -> JSONResponse:
     return JSONResponse({"error": "call_not_found", "reason": "not_found"}, status_code=404)
+
+
+async def _answer(fn: Any, *, status: int = 200) -> Any:
+    """The produced routes' envelope: the async verbs run on this loop from the
+    worker (``CallsService._on_loop``), so the loop is bound first."""
+    operations.LIVE_CALLS_SERVICE.bind_loop()
+    try:
+        return JSONResponse(await run_in_threadpool(fn), status_code=status)
+    except NotFound:
+        return _missing()
+    except ServiceError as exc:
+        return _refused(exc)
+    except Exception as exc:
+        return error_500(exc, log, "Failed to run the call verb")
 
 
 def wire_calls(ctx: WebContext) -> None:
@@ -77,13 +91,8 @@ def build_calls_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
     wire_calls(ctx)
 
-    @router.get("/api/calls/status")
-    async def api_calls_status() -> Any:
-        try:
-            CALLS.ensure_listening()
-            return JSONResponse(await asyncio.to_thread(CALLS.status))
-        except Exception as exc:
-            return error_500(exc, log, "Failed to read calls")
+    def registry() -> operations.OperationRegistry:
+        return operations.for_context(ctx, calls_service=lambda: operations.LIVE_CALLS_SERVICE)
 
     # ── the Line's wire (the node's side) ────────────────────────────
 
@@ -226,16 +235,6 @@ def build_calls_router(ctx: WebContext) -> APIRouter:
         except Exception as exc:
             return error_500(exc, log, "Failed to read the line")
 
-    @router.post("/api/calls/line/test")
-    async def api_line_test(request: Request) -> Any:
-        body = await _body(request)
-        try:
-            return JSONResponse(await CALLS.test_line(str(body.get("to") or "")))
-        except ServiceError as exc:
-            return _refused(exc)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to place the test call")
-
     # ── the Telnyx setup (LINE-3b): each press off the loop ──────────
 
     async def _telnyx(request: Request, work: Any, what: str) -> Any:
@@ -274,49 +273,8 @@ def build_calls_router(ctx: WebContext) -> APIRouter:
         return await _telnyx(request, lambda: line_setup.TELNYX_SETUP.assign(str(body.get("phone_number") or "")),
                              "Failed to assign the number")
 
-    @router.get("/api/calls")
-    def api_calls_list() -> Any:
-        return JSONResponse({"calls": CALLS.list()})
-
-    @router.get("/api/calls/{call_id}")
-    def api_call_get(call_id: str) -> Any:
-        found = CALLS.get(call_id)
-        return JSONResponse(found) if found is not None else _missing()
-
-    @router.post("/api/calls/place")
-    async def api_call_place(request: Request) -> Any:
-        try:
-            body = await request.json()
-        except Exception:
-            body = {}
-        to = str((body or {}).get("to") or "") if isinstance(body, dict) else ""
-        try:
-            return JSONResponse(await CALLS.place(to), status_code=201)
-        except ServiceError as exc:
-            return _refused(exc)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to place the call")
-
-    @router.post("/api/calls/{call_id}/hangup")
-    async def api_call_hangup(call_id: str) -> Any:
-        try:
-            found = await CALLS.hangup(call_id)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to hang up")
-        return JSONResponse(found) if found is not None else _missing()
-
-    @router.post("/api/calls/{call_id}/decide")
-    async def api_call_decide(call_id: str, request: Request) -> Any:
-        try:
-            body = await request.json()
-        except Exception:
-            body = {}
-        decision = str((body or {}).get("decision") or "") if isinstance(body, dict) else ""
-        try:
-            found = CALLS.decide(call_id, decision)
-        except ServiceError as exc:
-            return _refused(exc)
-        return JSONResponse(found) if found is not None else _missing()
+    # The Calls window's verbs (calls_operations.py), after every literal /api/calls/... path.
+    mount_router(router, operation_router(operations.CALLS_OPERATIONS, registry, _answer, module=__name__))
 
     return router
 

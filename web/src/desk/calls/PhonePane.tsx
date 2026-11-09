@@ -1,33 +1,30 @@
-/* Phone (PHONE-DESIGN-2026-10-28 §9; canvas
- * docs/internal/betterment/phone/canvases/phone-2026-10-28.html, direction
- * A): the Phone wing of the Calls window.
+/* Phone (PHONE-DESIGN-2026-10-28 §9): the phone's pane in the Calls window
+ * (the language, 2026-11-08). The rail's phone row picks it.
  *
- * Window grammar: Toolbar (Message, the verb that makes the object; Call
- * me) → the thread edge to edge (the Live transcript's grammar: time · who
- * · words; a reply under the line it answers with the elbow rule; a line
- * the desk waits on in the ember rule; a desk call as one line with its
- * state and one verb) with the mic composer at its foot, and a rail (From
- * the desk, Your phone) → a 24 px StatusBar with a dot and a word. No host,
- * number or engine chip (UX-CANON A.9): egress is said in Settings ▸ Calls
- * ▸ Phone. In a narrow window the rail folds away. */
+ * The MAST is the paired phone (its name; paired and seen in mono); the
+ * PLATE is the one thing now: a line from his phone or a desk ask that waits
+ * on him, with the composer to answer it (Reply), else the composer to write
+ * to the phone (Send); the LEDGER is the thread by time (time · who · words;
+ * a reply under the line it answers; a desk call as one line with its state
+ * and its one verb on the line). No host, number or engine chip (UX-CANON
+ * A.9): egress is said in the Phone fold. */
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Button } from "../../components/signal/Signal";
 import { openRef } from "../openObject";
-import { openSurfaceOr } from "../shell";
 import { spriteUrl } from "../sprites";
 import { ComposerWell } from "../surface/ComposerWell";
 import { PadGadget } from "../surface/gadgets";
-import { DotWord, StatusBar, Toolbar, countWords, type StatusBarItem } from "../surface/kit";
+import { DotWord, countWords, type StatusBarItem } from "../surface/kit";
+import { Mast } from "../surface/patterns/Mast";
+import { Spine } from "../surface/patterns/Spine";
 import type { ObjectTone } from "../surface/objects/kinds";
 import { SurfaceState } from "../surface/Surface";
 import { stateWords } from "../surface/words";
 import { plainFail } from "../surface/plainFailure";
 import { canReach, markPhoneMessageRead, pairedPhone, phoneCallVerb, sendPhoneMessage, waitsForReply, type usePhone } from "./phoneApi";
 import type { PhoneCall, PhoneDevice, PhoneMessage } from "./phoneTypes";
-import { openPhoneWing, usePhoneFocus } from "./phoneFocus";
+import { usePhoneFocus } from "./phoneFocus";
 import "./phone.css";
-
-export { openPhoneWing, usePhoneFocus };
 
 function at(value: string | null | undefined): number {
   const ms = value ? Date.parse(value) : NaN;
@@ -198,30 +195,6 @@ function CallLine({ call, busy, onOpen, onVerb }: {
   );
 }
 
-function DeviceRow({ device }: { device: PhoneDevice | null }) {
-  if (!device) {
-    return (
-      <div className="phone-device" data-testid="phone-device-none">
-        <span className="phone-handset" aria-hidden="true"><i /></span>
-        <span className="phone-device-words"><span className="phone-device-name">No phone paired</span></span>
-        <Button variant="secondary" dense onClick={openPhoneSettings} data-testid="phone-pair-open">Pair a phone</Button>
-      </div>
-    );
-  }
-  return (
-    <div className="phone-device" data-testid="phone-device">
-      <span className="phone-handset" aria-hidden="true"><i /></span>
-      <span className="phone-device-words">
-        <span className="phone-device-name">{device.name}</span>
-        <span className="phone-device-fact">{deviceFact(device)}</span>
-      </span>
-      {pushNotReady(device)
-        ? <DotWord tone="warn" data-testid="phone-device-push" title={pushNotReady(device)!}>Push not ready</DotWord>
-        : <DotWord tone="ok">{stateWords("PAIRED")}</DotWord>}
-    </div>
-  );
-}
-
 /** A call's transcript: a Calls call (`call:<id>`) opens in the Calls
  *  wing; another ref opens as its object. */
 export function transcriptOf(call: PhoneCall): { callsId?: string; ref?: string } | null {
@@ -256,19 +229,31 @@ export function deviceFact(device: PhoneDevice, now = Date.now()): string {
   return parts.join(" · ");
 }
 
-export function openPhoneSettings(): void {
-  openSurfaceOr("configure-settings", "/settings", "calls");
+
+/** The status bar of the phone's pane: what waits on him, the calls from the desk. */
+export function phoneStatusItems(phone: ReturnType<typeof usePhone>): Array<StatusBarItem | null> {
+  const device = pairedPhone(phone.status);
+  const waiting = phone.messages.filter((message) => waitsForReply(message, phone.messages));
+  const none = <span className="calls-idle-word"><span className="kit-dot" data-tone="idle" aria-hidden="true" />No phone paired</span>;
+  if (phone.status == null) return [{ key: "none", text: none }];
+  return [
+    waiting.length
+      ? { key: "waits", lamp: "ask", text: waiting.length === 1 ? "A reply is waiting on you" : `${waiting.length} replies are waiting on you`, testId: "phone-status-waits" }
+      : device ? { key: "paired", lamp: "ok", text: "Your phone is paired", testId: "phone-status-paired" }
+        : phone.status.line?.ready ? { key: "number", lamp: "ok", text: "Reaches you by number", testId: "phone-status-number" }
+          : { key: "none", text: none, testId: "phone-status-none" },
+    { key: "calls", text: countWords(phone.calls.filter((call) => call.direction === "to_phone").length, "call from the desk", "calls from the desk") },
+  ];
 }
 
-export function PhoneWing({ phone, canCall, calling, onCallMe, onOpenCall, wings }: {
+export function PhonePane({ phone, onOpenCall, onPair, onBack }: {
   phone: ReturnType<typeof usePhone>;
-  /** Call me is ready (the Calls checklist is done). */
-  canCall: boolean;
-  calling: boolean;
-  onCallMe(): void;
   /** Open a Calls call (a desk call on the number transport) as a document. */
   onOpenCall(callsId: string): void;
-  wings?: ReactNode;
+  /** Pair a phone: the Phone fold at the window's foot (Settings when the hub has no phone). */
+  onPair(): void;
+  /** A narrow window: back to the rail. */
+  onBack(): void;
 }) {
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState("");
@@ -284,6 +269,8 @@ export function PhoneWing({ phone, canCall, calling, onCallMe, onOpenCall, wings
   const entries = useMemo(() => threadEntries(phone.messages, phone.calls), [phone.messages, phone.calls]);
   const waiting = phone.messages.filter((message) => waitsForReply(message, phone.messages));
   const replyLine = replying ? phone.messages.find((message) => message.id === replying) ?? null : null;
+  // The one thing now: the line he replies to, else the newest line that waits on him.
+  const ask = replyLine ?? waiting[waiting.length - 1] ?? null;
 
   // Reading a line from his phone marks it read (his phone sees the receipt).
   const unread = phone.messages.filter((message) => message.direction === "from_phone" && !message.read_at).map((m) => m.id).join(",");
@@ -320,11 +307,11 @@ export function PhoneWing({ phone, canCall, calling, onCallMe, onOpenCall, wings
     else if (where?.ref) openRef(where.ref);
   };
 
-  let body: ReactNode;
   if (phone.loading || phone.error) {
-    body = <SurfaceState loading={phone.loading} error={phone.error} onRetry={() => void phone.reload()} />;
-  } else if (!reachable && !entries.length) {
-    body = (
+    return <SurfaceState loading={phone.loading} error={phone.error} onRetry={() => void phone.reload()} />;
+  }
+  if (!reachable && !entries.length) {
+    return (
       <SurfaceState
         empty
         emptyKind="call"
@@ -332,122 +319,81 @@ export function PhoneWing({ phone, canCall, calling, onCallMe, onOpenCall, wings
         emptyLabel="No phone yet"
         emptyHint="Pair a phone, or add a number in Calls, and the desk can reach you."
         actionLabel="Pair a phone"
-        onAction={openPhoneSettings}
+        onAction={onPair}
       />
-    );
-  } else {
-    let lastDay = "";
-    const rows: ReactNode[] = [];
-    for (const entry of entries) {
-      const when = entry.kind === "message" ? entry.message.created_at : entry.call.created_at;
-      const day = dayWords(when);
-      if (day !== lastDay && !(entry.kind === "message" && entry.reply)) {
-        rows.push(<li key={`day-${when}`} className="phone-day" aria-hidden="true">{day}</li>);
-        lastDay = day;
-      }
-      rows.push(entry.kind === "message" ? (
-        <MessageLine key={entry.message.id} message={entry.message} reply={entry.reply} waits={entry.waits} replying={replying === entry.message.id}
-          onReply={() => { setReplying(entry.message.id); composer.current?.focus(); }} />
-      ) : (
-        <CallLine key={entry.call.id} call={entry.call} busy={busy === `call-${entry.call.id}`}
-          onOpen={transcriptOf(entry.call) ? () => openTranscript(entry.call) : undefined}
-          onVerb={(verb) => callVerb(entry.call, verb)} />
-      ));
-    }
-    const deskCalls = phone.calls.filter((call) => call.direction === "to_phone");
-    body = (
-      <div className="phone-wing" data-testid="phone-wing">
-        <div className="phone-thread">
-          {rows.length ? (
-            <ol className="phone-lines" aria-label="Messages and calls" data-testid="phone-thread">{rows}</ol>
-          ) : (
-            <SurfaceState empty emptyKind="call" emptyImage={spriteUrl("call", "calls")}
-              emptyLabel="No messages yet" emptyHint="When the desk needs you away from it, it messages your phone here." />
-          )}
-          <ComposerWell
-            className="phone-compose"
-            data-testid="phone-composer"
-            details={replyLine ? (
-              <span className="phone-replying" data-testid="phone-replying">
-                Reply to: <b>{replyLine.text}</b>
-                <Button variant="ghost" dense onClick={() => { setReplying(null); clearReply(); }}>Cancel</Button>
-              </span>
-            ) : undefined}
-            context={device ? <span className="phone-compose-to">Goes to {device.name}</span> : null}
-            actions={
-              <Button variant="primary" dense loading={busy === "send"} disabled={!draft.trim() || !reachable} onClick={send}
-                data-testid="phone-send">Send</Button>
-            }
-          >
-            <PadGadget
-              label="Message your phone"
-              placeholder="Message your phone"
-              value={draft}
-              onChange={setDraft}
-              rows={2}
-              micLabel="Speak a message to your phone"
-              autoGrow
-              inputRef={composer}
-              onKeyDown={(event) => { if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) send(); }}
-            />
-          </ComposerWell>
-        </div>
-        <aside className="phone-rail" aria-label="From the desk">
-          {deskCalls.length ? (
-            <>
-              <h3 className="phone-rail-cap">From the desk</h3>
-              <ul className="phone-rail-list">
-                {[...deskCalls].reverse().map((call) => {
-                  const state = callStateWords(call);
-                  return (
-                    <li key={call.id}>
-                      <Button variant="chrome" className="phone-rail-row" data-testid="phone-rail-call"
-                        disabled={!transcriptOf(call)} onClick={() => openTranscript(call)}>
-                        <span className="phone-rail-name">{call.reason}</span>
-                        <DotWord tone={state.tone}>{state.word.split(" · ")[0]}</DotWord>
-                        <span className="phone-rail-fact">{`Call · ${dayWords(call.created_at)} ${clock(call.created_at)}${call.urgent ? " · urgent" : ""}`}</span>
-                      </Button>
-                    </li>
-                  );
-                })}
-              </ul>
-            </>
-          ) : null}
-          <h3 className="phone-rail-cap">Your phone</h3>
-          <DeviceRow device={device} />
-        </aside>
-      </div>
     );
   }
 
-  const status: Array<StatusBarItem | null> = refusal ? [
-    { key: "refusal", lamp: "warn", text: <span title={refusal.title}>{refusal.words}</span>, testId: "phone-refusal" },
-  ] : phone.status == null ? [
-    { key: "none", text: <span className="calls-idle-word"><span className="kit-dot" data-tone="idle" aria-hidden="true" />No phone paired</span> },
-  ] : [
-    waiting.length
-      ? { key: "waits", lamp: "ask", text: waiting.length === 1 ? "A reply is waiting on you" : `${waiting.length} replies are waiting on you`, testId: "phone-status-waits" }
-      : device ? { key: "paired", lamp: "ok", text: "Your phone is paired", testId: "phone-status-paired" }
-        : phone.status.line?.ready ? { key: "number", lamp: "ok", text: "Reaches you by number", testId: "phone-status-number" }
-          : { key: "none", text: <span className="calls-idle-word"><span className="kit-dot" data-tone="idle" aria-hidden="true" />No phone paired</span>, testId: "phone-status-none" },
-    { key: "calls", text: countWords(phone.calls.filter((call) => call.direction === "to_phone").length, "call from the desk", "calls from the desk") },
-  ];
-
+  let lastDay = "";
+  const rows: ReactNode[] = [];
+  for (const entry of entries) {
+    const when = entry.kind === "message" ? entry.message.created_at : entry.call.created_at;
+    const day = dayWords(when);
+    if (day !== lastDay && !(entry.kind === "message" && entry.reply)) {
+      rows.push(<li key={`day-${when}`} className="phone-day" aria-hidden="true">{day}</li>);
+      lastDay = day;
+    }
+    rows.push(entry.kind === "message" ? (
+      <MessageLine key={entry.message.id} message={entry.message} reply={entry.reply} waits={entry.waits} replying={replying === entry.message.id}
+        onReply={() => { setReplying(entry.message.id); composer.current?.focus(); }} />
+    ) : (
+      <CallLine key={entry.call.id} call={entry.call} busy={busy === `call-${entry.call.id}`}
+        onOpen={transcriptOf(entry.call) ? () => openTranscript(entry.call) : undefined}
+        onVerb={(verb) => callVerb(entry.call, verb)} />
+    ));
+  }
+  const push = device ? pushNotReady(device) : null;
+  const facts = device ? deviceFact(device) : phone.status?.line?.ready ? "Reaches you by number" : "No phone paired";
+  const tone = waiting.length ? "brass" : refusal ? "coral" : device || phone.status?.line?.ready ? "moss" : "idle";
   return (
-    <div className="calls-window phone-window" data-testid="calls-window" data-state="phone">
-      {wings}
-      <Toolbar label="Phone" data-testid="phone-toolbar">
-        <Button variant="primary" dense disabled={!reachable} onClick={() => composer.current?.focus()}
-          title={reachable ? "Write to your phone" : "Pair a phone in Settings ▸ Calls ▸ Phone"} data-testid="phone-message-verb">
-          Message
-        </Button>
-        <Button variant="secondary" dense loading={calling} disabled={!canCall} onClick={onCallMe}
-          title={canCall ? "HoldSpeak rings your number" : "Set up calls in Settings ▸ Calls"} data-testid="phone-call-me">
-          Call me
-        </Button>
-      </Toolbar>
-      <div className="calls-body" data-phase="phone">{body}</div>
-      <StatusBar data-testid="calls-status" items={status} />
-    </div>
+    <article className="cl-object phone-pane" data-testid="phone-wing">
+      <Mast className="cl-mast" kind="call" id="phone" title={device?.name ?? "Your phone"} facts={facts} data-testid="phone-device">
+        {push ? <DotWord tone="warn" data-testid="phone-device-push" title={push}>Push not ready</DotWord> : null}
+        <Button variant="ghost" dense className="cl-back" onClick={onBack}>All calls</Button>
+      </Mast>
+      <Spine className="cl-spine" tone={tone} />
+      <section className="cl-plate" data-tone={waiting.length ? "brass" : "steel"} data-testid="phone-plate">
+        <header className="cl-plate-head">
+          <h3 className="cl-plate-title">{ask ? (ask.direction === "from_phone" ? "Reply" : "Waits on you") : "Message your phone"}</h3>
+          {device ? <span className="cl-plate-facts">Goes to {device.name}</span> : null}
+        </header>
+        {ask ? <p className="cl-plate-words">{ask.text}</p> : null}
+        <ComposerWell
+          className="phone-compose"
+          data-testid="phone-composer"
+          details={replyLine ? (
+            <span className="phone-replying" data-testid="phone-replying">
+              Reply to: <b>{replyLine.text}</b>
+              <Button variant="ghost" dense onClick={() => { setReplying(null); clearReply(); }}>Cancel</Button>
+            </span>
+          ) : undefined}
+          actions={
+            <Button variant="primary" dense loading={busy === "send"} disabled={!draft.trim() || !reachable} onClick={send}
+              data-testid="phone-send">{replyLine ? "Reply" : "Send"}</Button>
+          }
+        >
+          <PadGadget
+            label="Message your phone"
+            placeholder="Message your phone"
+            value={draft}
+            onChange={setDraft}
+            rows={2}
+            micLabel="Speak a message to your phone"
+            autoGrow
+            inputRef={composer}
+            onKeyDown={(event) => { if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) send(); }}
+          />
+        </ComposerWell>
+        {refusal ? <p className="cl-plate-refusal" title={refusal.title} data-testid="phone-refusal">{refusal.words}</p> : null}
+      </section>
+      <div className="cl-ledger" role="group" aria-label="Messages and calls">
+        {rows.length ? (
+          <ol className="phone-lines" aria-label="Messages and calls" data-testid="phone-thread">{rows}</ol>
+        ) : (
+          <SurfaceState empty emptyKind="call" emptyImage={spriteUrl("call", "calls")}
+            emptyLabel="No messages yet" emptyHint="When the desk needs you away from it, it messages your phone here." />
+        )}
+      </div>
+    </article>
   );
 }

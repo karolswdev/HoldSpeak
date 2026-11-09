@@ -348,6 +348,13 @@ def test_the_routes_place_a_call_list_it_and_refuse_without_a_number(hub, monkey
     monkeypatch.setattr(calls_routes, "CALLS", fresh)
     app = FastAPI()
     app.include_router(build_calls_router(WebContext(get_state=lambda: {}, broadcast=lambda k, d: frames.append((k, d)))))
+
+    @app.middleware("http")
+    async def _owner(request, call_next):  # the hub's edge: the owner's token (produced routes read it)
+        from holdspeak.principals import Principal, PrincipalKind
+
+        request.state.principal = Principal(PrincipalKind.OWNER, "owner")
+        return await call_next(request)
     with TestClient(app) as client:
         refused = client.post("/api/calls/place", json={})
         assert refused.status_code == 409 and refused.json()["reason"] == "no_number", refused.text
