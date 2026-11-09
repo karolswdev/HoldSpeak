@@ -90,7 +90,8 @@ def build_agent_hand_router(ctx: WebContext) -> APIRouter:
         )
         # The launch reads (a test's stand-in, else the defaults) and the
         # lane's steering resolver, on the one service the rows are bound to.
-        bind = getattr(registry.target("agent.hand"), "bind_reads", None)  # a test's stand-in may not have it
+        target = getattr(registry, "target", None)  # a test's stand-in registry or service may not have it
+        bind = getattr(target("agent.hand"), "bind_reads", None) if target is not None else None
         if bind is not None:
             bind(getattr(ctx, "agent_hand_reads", None), lane_control)
         return registry
