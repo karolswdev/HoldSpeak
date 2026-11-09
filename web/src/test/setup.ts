@@ -1,4 +1,5 @@
 import "@testing-library/jest-dom/vitest";
+import { configure } from "@testing-library/react";
 import { beforeEach } from "vitest";
 import { deskQueryClient } from "../lib/queryClient";
 
@@ -15,6 +16,15 @@ beforeEach(() => {
   // answer the next (registered by desk/deskMemory.ts).
   (globalThis as { __resetDeskMemory?: () => void }).__resetDeskMemory?.();
 });
+
+// The suite's one wait budget for findBy* and waitFor (2026-11-08). The
+// library default is 1000 ms of wall time. The quick check runs vitest beside
+// pytest and the desk sweep, and under that load a findBy on a big page (the
+// Settings System page, the Accounts pane) ran past 1000 ms and failed with
+// "Unable to find" (1.2 to 1.7 s per failed case, on main twice on
+// 2026-11-08); alone, the same files pass. Cases that already passed
+// { timeout: 3000 } by hand get the same budget from here.
+configure({ asyncUtilTimeout: 3000 });
 
 class ResizeObserverStub {
   observe() {}
