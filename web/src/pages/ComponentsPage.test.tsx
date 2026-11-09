@@ -57,7 +57,9 @@ describe("Signal component gallery", () => {
     fireEvent.click(screen.getByRole("button", { name: "Controls" }));
     expect(screen.getByTestId("reference-controls")).toBeInTheDocument();
     expect(screen.getByTestId("object-species-gallery")).toBeInTheDocument();
-  });
+    // It renders Forms and then the whole Controls gallery: 2.0 s alone
+    // (measured 2026-11-08 at e4b1c956d); under a full run it passed 5 s.
+  }, 20_000);
 
   it("shows the Thought editing states and retains the other production specimens", () => {
     render(<ComponentsCore />);
