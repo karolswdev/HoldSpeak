@@ -624,7 +624,8 @@ async def test_ask_boundary_refuses_duck_mismatched_and_over_cap_frozen_snapshot
         dispatched = True
         raise AssertionError("invalid frozen grounding reached dispatch")
 
-    monkeypatch.setattr(ask, "_invoke", forbidden_dispatch)
+    # Dispatch is the one engine door (#2119); an invalid snapshot never reaches it.
+    monkeypatch.setattr("holdspeak.services.engine_door.run", forbidden_dispatch)
 
     class DuckSnapshot:
         material = "[]"

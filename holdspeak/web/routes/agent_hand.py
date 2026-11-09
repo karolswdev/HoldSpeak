@@ -50,7 +50,7 @@ def lane_control(key: str) -> dict[str, Any]:
         return {"mode": mode, "armed": False, "direct": False, "expires_in_seconds": None}
     from ... import coder_steering
     from ...agent_context import list_agent_sessions
-    from .system.coder_steering_support import active_policy_grant, canonical_pane_id, steering_policy
+    from ...services.coder_steering_support import active_policy_grant, canonical_pane_id, steering_policy
 
     session = next(
         (s for s in list_agent_sessions() if f"{s.agent}:{s.session_id}" == key), None

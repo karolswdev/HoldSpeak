@@ -222,7 +222,8 @@ def _drive_ask(tmp_path, monkeypatch) -> SurfaceRun:
     broker = assign_answers(db, FakeIntel, profile="prof_a")
     service = AskService(db, hub_model=lambda: "", broker=broker)
     asyncio.run(service.ask(OWNER, "summarize"))
-    return SurfaceRun(db, OWNER, None, "prof_a")
+    # prof_a is a local profile: its deployment runs on this machine.
+    return SurfaceRun(db, OWNER, None, THIS_MACHINE_ID)
 
 
 def _ready_this_machine(tmp_path, monkeypatch) -> None:

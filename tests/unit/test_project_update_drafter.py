@@ -190,7 +190,7 @@ class _MockRunner:
         self._error = error
         self.invoke_calls: list[Any] = []
 
-    def invoke(self, request, adapter, publish=None):
+    def invoke(self, request, adapter, publish=None, parent_context=None, planned_node=""):
         self.invoke_calls.append(request)
         if self._error is not None:
             raise self._error

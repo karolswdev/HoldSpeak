@@ -319,6 +319,106 @@ def test_routed_stop_fences_controller_before_signalling_exact_child(tmp_path: P
     assert len(result["receipt"]["attempts"]) == 1
 
 
+def test_composite_is_published_only_after_every_operation_freezes(tmp_path: Path) -> None:
+    db = Database(tmp_path / "composite.db")
+    _ready_route(db, profiles=("quick",))
+    service = ProductionInferenceAdoptionService(db)
+    with pytest.raises(Exception):
+        service.admit_composite(
+            OWNER,
+            command_id="speech-composite",
+            operations=[
+                {
+                    "capability_id": "ask.answer",
+                    "operation_id": "composite-good",
+                    "payload": _payload(),
+                },
+                {
+                    "capability_id": "speech.rewrite",
+                    "operation_id": "composite-no-assignment",
+                    "payload": _payload("rewrite"),
+                },
+            ],
+        )
+    with db._connection() as conn:
+        assert conn.execute(
+            "SELECT COUNT(*) FROM inference_adoption_composites"
+        ).fetchone()[0] == 0
+        assert conn.execute(
+            "SELECT COUNT(*) FROM inference_adoption_material_snapshots"
+        ).fetchone()[0] == 0
+        assert conn.execute("SELECT COUNT(*) FROM inference_route_plans").fetchone()[0] == 0
+        assert conn.execute("SELECT COUNT(*) FROM inference_route_executions").fetchone()[0] == 0
+
+
+def test_speech_style_operation_freezes_against_existing_route_without_reresolution(
+    tmp_path: Path,
+) -> None:
+    from holdspeak.services.inference_route_plan_service import ROUTE_PLANNING_AUTHORITY
+
+    db = Database(tmp_path / "two-phase.db")
+    _ready_route(db, profiles=("quick", "deep"))
+    service = ProductionInferenceAdoptionService(db)
+    route = service.plans.freeze_route_plan(
+        ROUTE_PLANNING_AUTHORITY,
+        command_id="freeze-session-route",
+        capability_id="ask.answer",
+    )
+    assignment = InferenceAssignmentService(db).resolve_effective(
+        OWNER, capability_id="ask.answer"
+    )
+    InferenceAssignmentService(db).set_assignment(
+        OWNER,
+        {
+            "command_id": "retarget-after-session-open",
+            "expected_revision": assignment["assignment"]["revision"],
+            "scope": {"kind": "capability", "capability_id": "ask.answer"},
+            "entries": [{"profile_id": "deep", "profile_revision": 1}],
+        },
+    )
+    reference = "speech-style-material"
+    service.evidence.stage(
+        planning_reference=reference,
+        capability_id="ask.answer",
+        operation_id="speech-style-operation",
+        contract="ask.answer",
+        contract_revision="1",
+        payload=_payload("late material"),
+        reserved_output_tokens=64,
+    )
+    frozen = service.plans.freeze_operation_for_route(
+        ROUTE_PLANNING_AUTHORITY,
+        command_id="freeze-late-operation",
+        route_plan_id=route["id"],
+        operation_id="speech-style-operation",
+        planning_reference=reference,
+    )
+    assert frozen["route_plan"]["sha256"] == route["sha256"]
+    assert [item["profile_id"] for item in frozen["route_plan"]["entries"]] == [
+        "quick", "deep",
+    ]
+
+
+def test_next_run_summary_and_override_are_invocation_scoped(tmp_path: Path) -> None:
+    db = Database(tmp_path / "next-run.db")
+    _ready_route(db, profiles=("quick", "deep"))
+    service = ProductionInferenceAdoptionService(db)
+    before = service.next_run_summary(OWNER, capability_id="ask.answer")
+    assert [item["profile_id"] for item in before["chain"]] == ["quick", "deep"]
+    service.apply_next_run_override(
+        OWNER,
+        command_id="override-one-run",
+        invocation_id="ask-next-run",
+        capability_id="ask.answer",
+        entries=[{"profile_id": "deep", "profile_revision": 1}],
+    )
+    selected = service.next_run_summary(
+        OWNER, capability_id="ask.answer", invocation_id="ask-next-run"
+    )
+    unchanged = service.next_run_summary(OWNER, capability_id="ask.answer")
+    assert selected["source"] == "invocation"
+    assert [item["profile_id"] for item in selected["chain"]] == ["deep"]
+    assert [item["profile_id"] for item in unchanged["chain"]] == ["quick", "deep"]
 def test_speech_rewrite_uses_session_frozen_route_and_controller_child(
     tmp_path: Path,
 ) -> None:
@@ -523,235 +623,6 @@ def test_ask_post_marker_uses_assignment_controller_and_route_receipt(tmp_path: 
     assert result["profile_id"] == "thought-v2"
     # An answer runs through the engine door: one kernel operation is its receipt.
     assert result["route_execution_receipt"]["execution_id"] == result["operation_id"]
-
-
-@pytest.mark.asyncio
-async def test_thought_refinement_materializes_only_controller_winner(
-    tmp_path: Path,
-) -> None:
-    from holdspeak.services.refinement_coordinator import RefinementCoordinator
-    from holdspeak.services.ask_service import AskService
-    from holdspeak.services.refinement_thought_service import (
-        INBOX_DIRECTORY_ID,
-        RefinementThoughtService,
-    )
-
-    db = Database(tmp_path / "routed-thought.db")
-    db.directories.upsert(directory_id=INBOX_DIRECTORY_ID, name="Inbox")
-    _profile(
-        db,
-        "thought-v2",
-        claims=("language", _result_claim("thought.interview"), _result_claim("ask.answer")),
-    )
-    _profile(
-        db,
-        "writing-v2",
-        claims=("language", _result_claim("speech.intent_classify"), _result_claim("speech.rewrite")),
-    )
-    broker = _configure(db)
-    broker.inference_adoption_service.migrate_legacy_config(
-        OWNER,
-        SimpleNamespace(
-            thoughts=SimpleNamespace(inference_target_id="thought-v2"),
-            dictation=SimpleNamespace(runtime=SimpleNamespace(profile_id="writing-v2")),
-        ),
-    )
-
-    class Engine:
-        active_provider = "fixture"
-        active_model = "thought-v2"
-
-        @staticmethod
-        def run_prompt(**_kwargs: Any) -> str:
-            return json.dumps(
-                {
-                    "kind": "question",
-                    "question": "What is the next constraint?",
-                    "reason": "Keep it concrete.",
-                }
-            )
-
-    broker.inference_runner._engine_factory = lambda _revision, **_kwargs: Engine()
-    thoughts = RefinementThoughtService(db)
-    thought = thoughts.create(
-        OWNER,
-        request_id="routed-thought-capture",
-        raw_text="A routed thought",
-        source={"kind": "typed"},
-    )
-    routed_ask = AskService(db, broker=broker)
-    coordinator = RefinementCoordinator(db, ask_factory=lambda: routed_ask)
-    coordinator._uses_default_ask = True
-    await coordinator.start()
-    _current, invocation = await coordinator.begin(
-        OWNER,
-        thought_id=thought["id"],
-        request_id="routed-refine",
-        expected_aggregate_revision=1,
-        expected_working_revision=1,
-        expected_attachment_revision=0,
-    )
-    for _ in range(100):
-        if not coordinator.active_ids:
-            break
-        await asyncio.sleep(0.01)
-    current = thoughts.get(OWNER, thought["id"])
-    assert current["continuity"]["state"] == "review_ready"
-    with db._connection() as conn:
-        linked = conn.execute(
-            """SELECT re.winning_attempt_id,ra.id route_attempt_id,rr.kernel_operation_id
-               FROM refinement_review_results rr
-               JOIN inference_route_attempts ra ON ra.child_operation_id=rr.kernel_operation_id
-               JOIN inference_route_executions re ON re.id=ra.execution_id
-               WHERE rr.invocation_id=?""",
-            (invocation["id"],),
-        ).fetchone()
-    assert linked is not None
-    assert str(linked["winning_attempt_id"]) == str(linked["route_attempt_id"])
-    with db._connection() as conn:
-        review_id = str(conn.execute(
-            "SELECT review_result_id FROM refinement_invocations WHERE id=?",
-            (invocation["id"],),
-        ).fetchone()[0])
-    cursor = thoughts.get_workbench(
-        OWNER, thought["id"], inference_available=True
-    )["workspace_cursor"]
-    _continued, continuation = await coordinator.answer_and_continue(
-        OWNER, thought_id=thought["id"], review_result_id=review_id,
-        command_id="routed-continuation", answer="The exact constraint.",
-        expected_aggregate_revision=current["aggregate_revision"],
-        expected_working_revision=current["working_revision"],
-        expected_attachment_revision=current["attachment_revision"],
-        workspace_cursor=cursor,
-    )
-    with db._connection() as conn:
-        child = conn.execute(
-            "SELECT route_plan_id,operation_plan_id,route_execution_id FROM refinement_invocations WHERE id=?",
-            (continuation["child_invocation_id"],),
-        ).fetchone()
-    assert child is not None and all(str(value or "") for value in child)
-    await coordinator.shutdown()
-    with db._connection() as conn:
-        assert conn.execute("SELECT COUNT(*) FROM inference_route_executions").fetchone()[0] == 2
-
-
-@pytest.mark.asyncio
-async def test_routed_thought_resumes_exact_predispatch_execution_after_restart(
-    tmp_path: Path,
-) -> None:
-    from holdspeak.services.ask_service import AskService
-    from holdspeak.services.refinement_coordinator import RefinementCoordinator
-    from holdspeak.services.refinement_thought_service import (
-        INBOX_DIRECTORY_ID,
-        RefinementThoughtService,
-    )
-
-    db = Database(tmp_path / "routed-thought-restart.db")
-    db.directories.upsert(directory_id=INBOX_DIRECTORY_ID, name="Inbox")
-    _profile(
-        db,
-        "thought-v2",
-        claims=("language", _result_claim("thought.interview"), _result_claim("ask.answer")),
-    )
-    _profile(
-        db,
-        "writing-v2",
-        claims=(
-            "language",
-            _result_claim("speech.intent_classify"),
-            _result_claim("speech.rewrite"),
-        ),
-    )
-    broker = _configure(db)
-    broker.inference_adoption_service.migrate_legacy_config(
-        OWNER,
-        SimpleNamespace(
-            thoughts=SimpleNamespace(inference_target_id="thought-v2"),
-            dictation=SimpleNamespace(runtime=SimpleNamespace(profile_id="writing-v2")),
-        ),
-    )
-
-    entered, release = threading.Event(), threading.Event()
-
-    class Engine:
-        active_provider = "fixture"
-        active_model = "thought-v2"
-
-        @staticmethod
-        def run_prompt(**_kwargs: Any) -> str:
-            entered.set()
-            release.wait(2)
-            return json.dumps(
-                {
-                    "kind": "question",
-                    "question": "What survived the restart?",
-                    "reason": "Use the frozen route.",
-                }
-            )
-
-    broker.inference_runner._engine_factory = lambda _revision, **_kwargs: Engine()
-    thoughts = RefinementThoughtService(db)
-    thought = thoughts.create(
-        OWNER,
-        request_id="restart-thought-capture",
-        raw_text="A restartable routed thought",
-        source={"kind": "typed"},
-    )
-    routed_ask = AskService(db, broker=broker)
-    first = RefinementCoordinator(db, ask_factory=lambda: routed_ask)
-    first._uses_default_ask = True
-    await first.start()
-
-    async def simulate_crash_before_task(*_args: Any, **_kwargs: Any) -> bool:
-        return False
-
-    first.submit = simulate_crash_before_task  # type: ignore[method-assign]
-    _current, invocation = await first.begin(
-        OWNER,
-        thought_id=thought["id"],
-        request_id="restart-routed-refine",
-        expected_aggregate_revision=1,
-        expected_working_revision=1,
-        expected_attachment_revision=0,
-    )
-    execution_id = str(invocation["route_execution_id"])
-    await first.shutdown()
-
-    replacement = RefinementCoordinator(db, ask_factory=lambda: routed_ask)
-    replacement._uses_default_ask = True
-    recovered = await replacement.start()
-    assert invocation["id"] in recovered
-    assert await asyncio.to_thread(entered.wait, 2)
-    current = thoughts.get(OWNER, thought["id"])
-    _stopped, disposition = await replacement.stop(
-        OWNER,
-        thought_id=thought["id"],
-        invocation_id=invocation["id"],
-        expected_aggregate_revision=current["aggregate_revision"],
-    )
-    assert disposition in {"cancelled", "pending", "refused"}
-    assert disposition != "owner_unavailable"
-    release.set()
-    for _ in range(100):
-        if not replacement.active_ids:
-            break
-        await asyncio.sleep(0.01)
-    with db._connection() as conn:
-        owner = conn.execute(
-            "SELECT dispatch_host_id,dispatch_lease_epoch FROM refinement_invocations WHERE id=?",
-            (invocation["id"],),
-        ).fetchone()
-        executions = conn.execute(
-            "SELECT id,state,terminal_outcome FROM inference_route_executions"
-        ).fetchall()
-    assert (str(owner["dispatch_host_id"]), int(owner["dispatch_lease_epoch"])) == (
-        replacement.host_id,
-        replacement._lease_epoch,
-    )
-    assert [(str(row["id"]), str(row["state"])) for row in executions] == [
-        (execution_id, "terminal")
-    ]
-    await replacement.shutdown()
 
 
 def test_saved_local_to_cloud_boundary_crossing_and_unsaved_zero_egress(

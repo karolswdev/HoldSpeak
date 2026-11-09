@@ -1212,7 +1212,7 @@ class TestGuardrailM1CapabilityBoundary:
         broker.inference_runner.invoke = MagicMock()
 
         # Set up the invoke mock to call the capture and publish callbacks.
-        def _mock_invoke(request, adapter, publish=None):
+        def _mock_invoke(request, adapter, publish=None, parent_context=None, planned_node=""):
             # The adapter is CanonicalPromptAdapter; invoke the engine directly
             # to capture what would be sent.
             prompt = request.payload
@@ -1266,7 +1266,7 @@ class TestGuardrailM1CapabilityBoundary:
         broker = _Broker()
         captured_kwargs: list[dict] = []
 
-        def _mock_invoke(request, adapter, publish=None):
+        def _mock_invoke(request, adapter, publish=None, parent_context=None, planned_node=""):
             captured_kwargs.append(request.payload)
             result = MagicMock()
             result.result = {"violations": [], "warnings": []}

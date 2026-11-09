@@ -658,7 +658,7 @@ class TestCompactM1CapabilityBoundary:
         broker = _Broker()
         captured: list[dict] = []
 
-        def _mock_invoke(request, adapter, publish=None):
+        def _mock_invoke(request, adapter, publish=None, parent_context=None, planned_node=""):
             captured.append(request.payload)
             result = MagicMock()
             result.result = {"summary": "A summary."}
@@ -699,7 +699,7 @@ class TestCompactM1CapabilityBoundary:
         broker = _Broker()
         captured: list[dict] = []
 
-        def _mock_invoke(request, adapter, publish=None):
+        def _mock_invoke(request, adapter, publish=None, parent_context=None, planned_node=""):
             captured.append(request.payload)
             result = MagicMock()
             result.result = {"summary": "A summary."}

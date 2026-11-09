@@ -572,7 +572,10 @@ def _resolve(value: Any, path: str) -> list[Any]:
         nxt: list[Any] = []
         for v in found:
             assert isinstance(v, dict) and key in v, (path, key, v if not isinstance(v, dict) else sorted(v))
-            nxt.extend(v[key] if many else [v[key]])
+            got = v[key]
+            if key.endswith("_json") and isinstance(got, str):
+                got = json.loads(got)  # a *_json field is JSON text (an update's claims_json)
+            nxt.extend(got if many else [got])
         found = nxt
     return found
 
@@ -593,7 +596,15 @@ def test_r1_p3_every_advertised_id_path_resolves_on_its_real_producer(hub: Hub) 
     assert not _tool(c, "project.open_review", {"project_id": pid})[0]
     assert c.post(f"/api/projects/{pid}/items", json={"item_type": "milestone", "title": "Seed"}).status_code == 200
     assert c.post(f"/api/projects/{pid}/updates/draft", json={}).status_code == 200
-    producers: dict[str, dict[str, Any]] = {
+
+    def fresh_draft() -> dict[str, Any]:
+        """An engine pass needs a live draft; a later draft supersedes an earlier one."""
+        return {"update_id": c.post(f"/api/projects/{pid}/updates/draft", json={}).json()["update"]["id"]}
+
+    producers: dict[str, Any] = {
+        # The update family (#2123): an engine pass on a draft, the Room's automation.
+        "project.update.engine_pass": fresh_draft,
+        "project.get_room": {"project_id": pid},
         "project.list": {}, "project.create": {"name": "Paths two"},
         "project.list_updates": {"project_id": pid}, "project.draft_update": {"project_id": pid},
         "project.open_review": {"project_id": pid}, "project.get_delta": {"project_id": pid},
@@ -619,7 +630,8 @@ def test_r1_p3_every_advertised_id_path_resolves_on_its_real_producer(hub: Hub) 
             assert pairs, (name, argument, spec.get("description"))
             for path, producer in pairs:
                 assert producer in producers, (name, argument, producer)
-                is_error, answer = _tool(c, producer, producers[producer])
+                args = producers[producer]
+                is_error, answer = _tool(c, producer, args() if callable(args) else args)
                 assert not is_error, (producer, answer)
                 values = [v for v in _resolve(answer, path) if v]
                 assert values, (name, argument, path, producer)

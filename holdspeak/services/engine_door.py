@@ -396,6 +396,7 @@ def _run_once(
     attempt: int = 1, before_physical_dispatch: Any = None, before_compatibility_retry: Any = None,
 ) -> Answer:
     from ..kernel.inference_runner import InvocationRequest, ServiceContract
+    from ..kernel.parent_run import OuterRunContext
     from ..kernel.runtime import _as_principal
 
     if adapter is None:
@@ -433,6 +434,10 @@ def _run_once(
 
         # The stager's publisher follows a dialect retry onto the attempt that ran.
         publish = broker.projection_stager.publisher(invocation_id, kind, _encode)
+    # A live parent run (dictation, meeting) admits the job as its trusted
+    # child; any other parent (a steward effect) is the causal parent only.
+    if not isinstance(parent_context, OuterRunContext):
+        parent_context = None
     with _as_principal(principal):
         if on_delta is None:
             outcome = broker.inference_runner.invoke(
