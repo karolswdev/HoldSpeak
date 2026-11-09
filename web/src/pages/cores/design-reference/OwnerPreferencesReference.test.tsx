@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { OwnerPreferencesReference } from "./OwnerPreferencesReference";
+import { SETTINGS_SECTIONS } from "../settings/prefs";
 
 afterEach(() => vi.restoreAllMocks());
 
@@ -16,7 +17,9 @@ describe("Settings You local reference", () => {
     const { container } = render(<OwnerPreferencesReference state="saved" />);
     await screen.findByTestId("settings-owner-name");
     const rail = container.querySelector(".pref-rail")!;
-    expect(within(rail as HTMLElement).getAllByRole("button")).toHaveLength(9); // + Calls (2026-10-28)
+    // The gallery draws the Settings sections themselves: one rail row each.
+    expect(within(rail as HTMLElement).getAllByRole("button").map((b) => b.querySelector(".pref-rail-label")?.textContent))
+      .toEqual(SETTINGS_SECTIONS.map((section) => section.label));
     expect(screen.getByTestId("reference-settings-index-you")).toHaveClass("is-active");
     expect(container.querySelector(".pref-pane .gadget-row")).not.toBeNull();
     expect(container.querySelector(".surface-state-chip")?.textContent ?? "").not.toMatch(/SAVED|EDITED|SAVING/);
