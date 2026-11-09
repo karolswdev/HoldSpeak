@@ -19,6 +19,7 @@ The owner, 2026-11-08 evening: "my vision was for the entire system to be servic
 - **Codex is the default engine for AI work** (owner, 2026-11-08 19:15: "gemini should not be the default… codex should"). Live global assignment rev 5: Codex first, Gemini CLI second. Never reorder his chain without his word.
 - **A Stop is his decision** (#2061): a stopped turn or answer leaves no Needs-you row; only a turn that failed on its own is a row with Retry.
 - **Spotlight** was indexing the ~200 worktrees (load 15 with nothing running); the owner ran `sudo mdutil -a -i off`. Durable fix open: exclude `/Users/karol/dev/tools` in Spotlight Privacy and re-enable.
+- **The pipeline is parallel and incremental** (#2063, owner 2026-11-08 20:40: "I still see a ton of sequentiality… don't be haphazard"). `scripts/quick_check.sh <base>` runs its independent steps concurrently, skips a step whose inputs are unchanged since its last green (`.tmp/quick-check/green.json`), never runs a file twice, and on a red prints `scripts/quick_check.sh --retry` (the failed ids plus the steps that did not run). Measured on one diff: 161 s → 109 s cold, 2 s unchanged, 4 s retry. `scripts/test_lock.py --class unit` shares three slots (an isolated HOME is required; load above 24 waits); `--class browser` is exclusive. The orchestrator merges the batch, runs ONE check, fixes forward with `--retry`. Still architectural and not built (measured in #2063's body): the censuses' cost is repeated `ast.walk` (one walk per file would make the repo guards seconds; `test_graph_reference` builds its join once per xdist worker, 19.5 s each); the "affected" selection is wide because of `runtime/composition.py` (66 tests), `web/routes/__init__.py` (47), `db/schema/__init__.py` (23), `mcp/tools.py` (22), not `operations.py` (3), and a stale base re-tests earlier merges (142 files in batch 8): keep the base fresh, and select by declared dependency for those four hubs.
 - **The lock, stacked PRs, worktrees:** as before. A worker's focused run queues behind the quick check; fewer concurrent lanes beat more.
 
 ## Part II: what landed tonight (268149057 → c0ae1843a, #2036–#2061), by seam
@@ -37,7 +38,7 @@ The owner, 2026-11-08 evening: "my vision was for the entire system to be servic
 
 ## Part III: the hub, as it stands
 
-- Served checkout `/Users/karol/dev/tools/wt-desk-main-20261025`, detached on main **3be473f0e** (quick check 5 GREEN). c0ae1843a's check (the eighth tonight) was running at handover time; redeploy to it when green: `git fetch && git checkout --detach <sha> && uv sync --python 3.13 --extra dev --extra line && (cd web && npm ci && npm run build)`; kill the old `holdspeak.cli_entry web --no-open` pid, wait; start `HOME=/Users/karol HOLDSPEAK_WEB_HOST=0.0.0.0 HOLDSPEAK_UI_FEEDBACK=1 nohup .venv/bin/python -m holdspeak.cli_entry web --no-open >> ~/.local/state/holdspeak/hub-main-20261107.log 2>&1 &`; wait for `GET /` 200.
+- Served checkout `/Users/karol/dev/tools/wt-desk-main-20261025`, detached on main **c0ae1843a** (quick check 8 GREEN: 6,803 hub tests, 279 web files, the sweep, the guards). Redeploy: `git fetch && git checkout --detach <sha> && uv sync --python 3.13 --extra dev --extra line && (cd web && npm ci && npm run build)`; kill the old `holdspeak.cli_entry web --no-open` pid, wait; start `HOME=/Users/karol HOLDSPEAK_WEB_HOST=0.0.0.0 HOLDSPEAK_UI_FEEDBACK=1 nohup .venv/bin/python -m holdspeak.cli_entry web --no-open >> ~/.local/state/holdspeak/hub-main-20261107.log 2>&1 &`; wait for `GET /` 200.
 - Links, always both: `https://karols-macbook-pro.tailad9943.ts.net` then `http://127.0.0.1:8765`.
 - **Walks:** the evening walk "One runner · 2026-11-08 evening" (walk 4dd9611b…, `docs/walks/2026-11-08-evening.json`) is posted and unanswered; so are "The language" (afternoon) and "The Room and the row". `uv run python scripts/walk.py read <id>`. His morning answers: Needs you rows did not open (fixed #2036), the Room's Programs block "needs to be refactored by quite a bit", the wizard's where/what/how/why "unprofessional".
 - Worktrees: tonight's are `wt-*-eve`; purge their installs (`.venv`, `web/node_modules` symlinks) once merged, never the trees; `git worktree prune`.
@@ -62,7 +63,7 @@ The owner, 2026-11-08 evening: "my vision was for the entire system to be servic
 | MCP tools | 320 | 302 | 352 |
 | Operations web-only / MCP-only / both | | 289 / 89 / 201 | 230 / 86 / 258 |
 | Live product lines vs morning | | −26,353 | about −34,000 |
-| Quick checks run / green | | | 8 / 1 (five fix-forwards; each red fixed in 15–40 min) |
-| Merges tonight | | | 26 PRs (#2036–#2061) |
+| Quick checks run / green | | | 9 / 2 (five fix-forwards; each red fixed in 15–40 min); the ninth on the new parallel script |
+| Merges tonight | | | 28 PRs (#2036–#2063) |
 
 `docs/internal/measure/2026-11-08.md` holds the night run of `scripts/measure.py` (no hub boot). Presses by him in 24 h: 14 walks made, 5 answered, 16 answers.
