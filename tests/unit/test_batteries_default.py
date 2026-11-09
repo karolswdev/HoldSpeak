@@ -859,15 +859,6 @@ def test_a_dead_owner_default_is_never_touched(tmp_path: Path, engines) -> None:
     assert _receipts(desk.db) == []
 
 
-# 7 [P3] the census lives outside pm/roadmap
-
-
-def test_the_census_fence_reads_the_maintained_copy() -> None:
-    from tests.unit import test_phase143_surface_fallback_census as census
-
-    assert census.ARTIFACT.relative_to(census.REPO).as_posix() == "docs/internal/surface-fallback-census.md"
-
-
 @pytest.mark.parametrize("url", [
     "http://localhost:41234/v1",
     "http://localhost.:41234/v1",

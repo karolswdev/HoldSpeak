@@ -24,6 +24,8 @@ from __future__ import annotations
 import ast
 from pathlib import Path
 
+from tests import _tree
+
 REPO = Path(__file__).resolve().parents[2]
 PRODUCTION = REPO / "holdspeak"
 
@@ -57,8 +59,14 @@ def _aliases(tree: ast.AST) -> tuple[set[str], set[str]]:
     return classes, modules
 
 
-def naive_sites(source: str, rel: str) -> list[str]:
-    tree = ast.parse(source)
+#: A file without one of these words has no naive form (a cheap text gate).
+_WORDS = ("datetime", "strftime", "local_wall", "parse_wall", "naive_local", "tzinfo")
+
+
+def naive_sites(source: str, rel: str, tree: ast.AST | None = None) -> list[str]:
+    if not any(word in source for word in _WORDS):
+        return []
+    tree = tree if tree is not None else ast.parse(source)
     classes, modules = _aliases(tree)
     nows = {f"{c}.now" for c in classes} | {f"{m}.datetime.now" for m in modules}
     stale = {f"{c}.{verb}" for c in classes for verb in ("utcnow", "today")} | {
@@ -181,11 +189,13 @@ def _walk_in_order(body: list[ast.stmt]):
 
 def test_no_naive_time_source_in_production() -> None:
     offenders: list[str] = []
-    for path in sorted(PRODUCTION.rglob("*.py")):
+    for path in _tree.python_files(PRODUCTION):
         rel = str(path.relative_to(REPO))
         if rel in ALLOWLIST:
             continue
-        offenders.extend(naive_sites(path.read_text(encoding="utf-8"), rel))
+        source = _tree.text_of(path)
+        if any(word in source for word in _WORDS):
+            offenders.extend(naive_sites(source, rel, _tree.ast_of(path)))
     assert not offenders, (
         "Naive (zoneless) time sources. Store aware UTC through "
         "holdspeak.timestamps (utc_now / utc_now_iso / utc_iso); read the wall "

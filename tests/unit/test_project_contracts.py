@@ -89,11 +89,6 @@ def test_result_kind_values_pinned() -> None:
     assert actual == EXPECTED_RESULT_KINDS
 
 
-def test_result_kind_count_pinned() -> None:
-    """The result_kind vocabulary is closed at 16 values."""
-    assert len(ResultKind) == 16
-
-
 @pytest.mark.parametrize("name,value", [
     ("CREATED", "created"),
     ("UPDATED", "updated"),
@@ -135,11 +130,6 @@ def test_error_code_values_pinned() -> None:
     """A rename or removal of any error code MUST fail this test."""
     actual = frozenset(ec.value for ec in ProjectErrorCode)
     assert actual == EXPECTED_ERROR_CODES
-
-
-def test_error_code_count_pinned() -> None:
-    """The error-code vocabulary is closed at 5 values."""
-    assert len(ProjectErrorCode) == 5
 
 
 @pytest.mark.parametrize("name,value", [
@@ -282,10 +272,6 @@ EXPECTED_PREFIXES = frozenset({
 def test_id_prefixes_pinned() -> None:
     """All eleven SS4.1 prefixes are present and no extras."""
     assert frozenset(ID_PREFIXES.keys()) == EXPECTED_PREFIXES
-
-
-def test_id_prefix_count_pinned() -> None:
-    assert len(ID_PREFIXES) == 11
 
 
 def test_deterministic_prefixes_pinned() -> None:

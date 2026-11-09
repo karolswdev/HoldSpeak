@@ -1,47 +1,36 @@
-"""HS-131-10 — the executable one-path census (the HS-104-02 / HS-87 house style).
+"""HS-131-10, reduced 2026-11-09 (fences diet): one admission path for model execution.
 
-Phase 131 put every model call behind ``InferenceRunner.invoke``. A shared helper
-is not ONE path, though, unless a new door FAILS THE BUILD. This module is that
-fence: an ``ast`` walk over production ``holdspeak/**`` that finds every
-model-execution-shaped form — SDK client construction, completion/streaming
-opens, local model loads, mesh relay, engine/runtime factories, Whisper
-preload/transcribe leaves, runtime classify/rewrite, and the engine's public
-execution verbs — including the FIRST-CLASS CALLABLE forms
-(``asyncio.to_thread(intel.run_prompt, …)``, ``chat_fn = intel._chat_completion_text``,
-``factory = OpenAI``) that a call-expression census would miss (Sol Amendment 2).
+An ``ast`` walk over production ``holdspeak/**`` finds every model-execution-shaped
+form: SDK client construction, completion opens (also the SDK's
+``client.chat.completions.create`` receiver chain), local model loads, engine
+factories, Whisper leaves, the kernel's admission mints, and the first-class
+callable forms (``asyncio.to_thread(intel.run_prompt, ...)``, ``getattr(x, "run_prompt")``).
 
-Every site lands in exactly ONE literal bucket:
+The properties, with no hand-kept site list:
 
-* :data:`AUTHORIZED_GATEWAY` — the runner's own scopes (Sol Amendment 1 keeps the
-  gateway separate from its consumers).
-* :data:`ADAPTER_ALLOWLIST` — ONE ENTRY PER FUNCTION SCOPE (Sol: group labels are
-  not reviewable fence entries), each with its one-line justification. The FACTORY
-  entries require the runner's
-  :class:`~holdspeak.kernel.dispatch_context.DispatchContext`; the EXECUTION-LEAF
-  entries run inside an adapter dispatch that already carries it — except when
-  reached from a named finding below, which is exactly why the findings block.
-* :data:`ADMITTED_SEAM_CALLERS` — product callers that reach a model only THROUGH
-  a seam that admits the child itself. Design §4 calls these "migrated callers;
-  context must be threaded, never allowlisted", so they stay literal and separate
-  from the adapter allowlist. Each entry names its admitting seam.
-* :data:`NAMED_FINDINGS` — the blocking families from the Sol ruling (plus the two
-  this census newly found), by ``file:line`` and finding id. They are not
-  exceptions: while any of them stands, HS-131-10 is BLOCKED. The complete table
-  and the owner's draft amendment paragraphs live in
-  ``pm/roadmap/holdspeak/phase-131-one-admission-path/assets/hs-131-10/findings-inventory.md``.
+* no route, command or domain service builds an engine, constructs an SDK client,
+  opens an SDK completion or loads a model; it reaches a model only through an
+  admitted seam;
+* the admission mints live only in the kernel (the claim witness in
+  ``kernel/executor.py``, the dispatch context in ``kernel/inference_runner.py``),
+  and the retired public mints never come back;
+* every ``build_pipeline`` call passes an admission;
+* the legacy uncontextual marker is passed nowhere and satisfies no validator.
 
-Anything else fails with ``UNREGISTERED_MODEL_EXECUTION path:line scope target``.
-Every list edit requires a recorded phase decision.
+The per-scope allowlist, seam list and findings ledger are parked in
+``tests/_parked/fences/test_one_path_census.py`` (shape: each legitimate move
+needed an entry).
 """
 from __future__ import annotations
 
 import ast
 import functools
-import hashlib
 from pathlib import Path
 from typing import Iterator, NamedTuple
 
 import pytest
+
+from tests import _tree
 
 REPO = Path(__file__).resolve().parents[2]
 PRODUCTION = REPO / "holdspeak"
@@ -329,9 +318,9 @@ def _literal_getattr(node: ast.AST, aliases: dict[str, str]) -> str | None:
     return _literal_getattr_target(node.args[0], literal.value, aliases)
 
 
-def sites_in_source(relative: str, source: str) -> Iterator[Site]:
+def sites_in_source(relative: str, source: str, tree: ast.AST | None = None) -> Iterator[Site]:
     """Classify one module's source (a real file, or a synthetic mutation)."""
-    tree = ast.parse(source)
+    tree = ast.parse(source) if tree is None else tree
     scopes = _scope_index(tree)
     excluded = _non_sites(tree)
     aliases = _alias_map(tree)
@@ -375,750 +364,102 @@ def sites_in_source(relative: str, source: str) -> Iterator[Site]:
                 yield Site(relative, node.lineno, scopes.get(id(node), "<module>"), target, "ref")
 
 
-def census() -> list[Site]:
-    """Every model-execution site in production ``holdspeak/`` (tests excluded).
+#: A file whose text names none of these words holds no site (every target is
+#: one of DANGEROUS, written as a name, an attribute, an import or a getattr
+#: literal), so the walker skips it. ``create`` alone is too common; the SDK
+#: chain is found by its other words.
+_PREFILTER = frozenset(
+    part for name in DANGEROUS for part in name.split(".") if part != "create"
+)
 
-    The walk parses every production file (seconds); 14 callers in two files
-    asked for it again each time. No test writes production files, so one walk
-    per process serves them all; each caller gets its own list.
-    """
-    return list(_census())
+
+def _may_hold_a_site(text: str) -> bool:
+    return any(word in text for word in _PREFILTER)
 
 
 @functools.lru_cache(maxsize=1)
 def _census() -> tuple[Site, ...]:
     sites: list[Site] = []
-    for path in sorted(PRODUCTION.rglob("*.py")):
-        if "__pycache__" in path.parts:
+    for path in _tree.python_files("holdspeak"):
+        text = _tree.text_of(path)
+        if not _may_hold_a_site(text):
             continue
-        sites.extend(
-            sites_in_source(path.relative_to(REPO).as_posix(), path.read_text(encoding="utf-8"))
-        )
+        relative = path.relative_to(_tree.ROOT).as_posix()
+        sites.extend(sites_in_source(relative, text, _tree.ast_of(path)))
     return tuple(sorted(sites))
 
 
-# ------------------------------------------------------------ bucket 1: gateway
-RUNNER = "holdspeak/kernel/inference_runner.py"
-EXECUTOR = "holdspeak/kernel/executor.py"
-#: The ONE authorized gateway. `_attempt` owns child admission/claim, the dispatch
-#: context mint, and the engine-factory entrance; `_dispatch` owns adapter dispatch
-#: and its causally linked egress (it names no vocabulary target of its own — it
-#: calls `adapter.dispatch`, which is why it is declared, not inferred).
-#:
-#: The public `invoke` is the retry ORCHESTRATOR (one physical attempt, one child,
-#: one receipt — Sol Amendment 3): it names no vocabulary target at all, which is
-#: precisely why the gateway stays exactly two scopes and both of them are the
-#: places where a physical thing is actually admitted or dispatched.
-AUTHORIZED_GATEWAY: dict[tuple[str, str], str] = {
-    (RUNNER, "InferenceRunner._attempt"): "the one admission + claim + context mint + engine-factory entrance",
-    (RUNNER, "InferenceRunner._attempt_stream"): "the streaming admission + claim + context mint + engine-factory entrance (HS-151-02/D3)",
-    (RUNNER, "InferenceRunner._dispatch"): "the one adapter-dispatch and causally linked egress entrance",
-}
+def census() -> list[Site]:
+    """Every model-execution site in production ``holdspeak/`` (parked code included, as before)."""
+    return list(_census())
 
-#: The ONE claim-witness mint (HS-131-10 Terra finding A). Not the gateway and not
-#: an adapter: it executes no model, but whoever can call it can mint the dispatch
-#: context that BUILDS one, so it is pinned to the single scope where the kernel
-#: has just verified a warrant's signature, revocation, expiry, payload binding,
-#: and ancestor chain. A second caller — direct or aliased — fails the census.
-CLAIM_WITNESS_MINT: dict[tuple[str, str], str] = {
-    (EXECUTOR, "<module>"): "TAKES the process's one-shot witness issuer at import; `_install_claim_issuer` refuses every later caller",
-    (EXECUTOR, "ExecutorPlane.claim"): "issues the single-use witness on a VERIFIED claim; the only source of a dispatch context",
-}
 
-#: NOT the gateway, and deliberately not an adapter either: the runner's own
-#: constructor names `build_intel_for_revision` as a DEFAULT ARGUMENT VALUE. It
-#: is a first-class reference (so the census sees it, by design) but it executes
-#: nothing — binding a default cannot dispatch. Sol Amendment 1 requires the
-#: gateway list to stay exactly two entries, so this gets its own one-line
-#: bucket rather than diluting either list.
-GATEWAY_FACTORY_BINDING: dict[tuple[str, str], str] = {
-    (RUNNER, "InferenceRunner.__init__"): "binds `build_intel_for_revision` as the DEFAULT factory; executes nothing",
-}
+# ------------------------------------------------------------------ the properties
 
-# ------------------------------------------------------ bucket 2: the allowlist
-# ONE FUNCTION SCOPE PER ENTRY. `F:` = a context-requiring factory (runtime proof
-# in test_one_path_context.py). `L:` = an execution leaf reached from a dispatch.
-ADAPTER_ALLOWLIST: dict[tuple[str, str], str] = {
-    ("holdspeak/inference_targets.py", "build_intel_for_revision"): "F: the runner's factory; validates the context against this exact revision, binds it through every branch",
-    ("holdspeak/inference_targets.py", "_engine_for_revision"): "F: the per-branch construction body, reached only from the validating wrapper",
-    ("holdspeak/inference_targets.py", "local_pinned_meeting_intel"): "F: same-device pinned engine; context-requiring",
-    ("holdspeak/inference_targets.py", "_local_pinned_engine"): "F: the pinned construction body, reached only from the validating wrapper",
-    ("holdspeak/intel/providers.py", "build_meeting_intel_for_profile"): "F: profile-shaped engine; context-requiring, matched to the deployment revision",
-    ("holdspeak/intel/providers.py", "_profile_engine"): "F: the profile construction body, reached only from the validating wrapper",
-    ("holdspeak/intel/providers.py", "configured_meeting_intel"): "F: the gate in front of the host-adapter seam; validates the context (or the ONE named legacy marker) BEFORE any provider object exists",
-    ("holdspeak/intel/providers.py", "_configured_engine"): "F: the configured-placement construction body, reached only from the validating wrapper (HS-131-14 privatized it; it was the uncontextual `build_configured_meeting_intel`)",
-    ("holdspeak/speech_session/revision_target.py", "rebind"): "F: rebuilds a dictation backend onto the frozen revision; context-requiring",
-    ("holdspeak/speech_session/revision_target.py", "bound_target"): "F: agrees-or-rebind decision; forwards the child's context to rebind",
-    ("holdspeak/speech_session/provider.py", "ProviderAdmission.target"): "F: reads the context off the runner-built engine and binds the dispatch target",
-    ("holdspeak/speech_session/provider.py", "ProviderAdmission.dispatch_through"): "L: dispatches the target only after the provider child's admission",
-    ("holdspeak/speech_session/provider.py", "_RoutedSpeechAdapter.dispatch"): "L: executes the runner-built engine for the controller-owned provider route",
-    ("holdspeak/speech_session/provider.py", "_mesh_bound"): "F: binds the mesh backend to the runner's admitted envelope; constructs no relay of its own",
-    ("holdspeak/plugins/dictation/assembly.py", "_try_build_runtime"): "F: dictation runtime assembly; the pipeline it yields is wrapped by the admitted seam",
-    ("holdspeak/plugins/dictation/runtime.py", "_default_factories._llama_factory"): "F: the llama.cpp runtime factory seam",
-    ("holdspeak/plugins/dictation/runtime.py", "_default_factories._openai_factory"): "F: the OpenAI-compatible runtime factory seam",
-    ("holdspeak/plugins/dictation/runtime_mesh_relay.py", "MeshRelayRuntime.load"): "F: mesh backend construction inside the dictation adapter",
-    ("holdspeak/plugins/dictation/runtime_openai_compatible.py", "OpenAICompatibleRuntime.load"): "F: SDK client construction inside the dictation adapter",
-    ("holdspeak/plugins/dictation/runtime_openai_compatible.py", "OpenAICompatibleRuntime.classify"): "L: the dictation classify leg's ONE `chat.completions.create` (its compatibility twin is a SECOND admitted child, HS-131-09)",
-    ("holdspeak/plugins/dictation/runtime_openai_compatible.py", "OpenAICompatibleRuntime.rewrite"): "L: the dictation rewrite leg's ONE `chat.completions.create`",
-    ("holdspeak/plugins/dictation/runtime_llama_cpp.py", "LlamaCppRuntime._resolve_factories"): "F: local model class resolution inside the dictation adapter",
-    ("holdspeak/intel/engine.py", "MeetingIntel._ensure_openai_client_loaded"): "L: the ONE cloud SDK client construction",
-    ("holdspeak/intel/engine.py", "MeetingIntel._ensure_local_model_loaded"): "L: the ONE local llama.cpp load",
-    ("holdspeak/intel/engine.py", "MeetingIntel._ensure_runtime_loaded"): "L: picks the local/cloud load for the resolved provider",
-    ("holdspeak/intel/engine.py", "MeetingIntel._ensure_model_loaded"): "L: the legacy alias of the load entrance",
-    ("holdspeak/intel/engine.py", "MeetingIntel._chat_completion_text"): "L: the ONE non-streaming completion open",
-    ("holdspeak/intel/engine.py", "MeetingIntel._chat_completion_stream"): "L: the ONE streaming completion open",
-    ("holdspeak/intel/engine.py", "MeetingIntel._chat_completion_deltas"): "L: the typed-delta streaming completion open (HS-151-02/D3)",
-    ("holdspeak/intel/engine.py", "MeetingIntel.run_prompt"): "L: the canonical prompt leaf an adapter dispatches",
-    ("holdspeak/intel/engine.py", "MeetingIntel.run_prompt_stream"): "L: the streaming prompt leaf the stream adapter dispatches (HS-151-02/D3)",
-    ("holdspeak/intel/engine.py", "MeetingIntel.run_prompt_messages"): "L: the multi-part (vision) prompt leaf the VisionPromptAdapter dispatches (HS-146-07)",
-    ("holdspeak/intel/engine.py", "MeetingIntel._analyze_once"): "L: the analysis leaf an admitted meeting child dispatches",
-    ("holdspeak/intel/engine.py", "MeetingIntel._analyze_stream"): "L: the streaming analysis leaf an admitted meeting child dispatches",
-    ("holdspeak/intel/engine.py", "MeetingIntel.generate_title"): "L: the auto-title leaf an admitted child dispatches",
-    ("holdspeak/intel/engine.py", "MeetingIntel.generate_bookmark_label_with_context"): "L: the ONE bookmark-label leaf; both the live and the deferred admitted children dispatch it",
-    # Betterment E1/M1: an agent CLI on this Mac as an engine. `CliEngine` is
-    # constructed ONLY by the allowlisted `_profile_engine` (a `cliCommand`
-    # profile), so the runner builds it under the child's context and its
-    # leaves run inside that adapter dispatch, exactly as MeetingIntel's do.
-    ("holdspeak/intel/cli_engine.py", "CliEngine"): "L: the class base names MeetingIntel (a subclass, constructs nothing); its instances come only from `_profile_engine`",
-    ("holdspeak/intel/cli_engine.py", "CliEngine._ensure_model_loaded"): "L: the legacy alias of the load entrance; finds the CLI on PATH, starts no process",
-    ("holdspeak/intel/cli_engine.py", "CliEngine._chat_completion_stream"): "L: the one-delta stream over the CLI's ONE process run (`_chat_completion_text`)",
-    ("holdspeak/intel/cli_engine.py", "CliEngine.run_prompt_stream"): "L: the streaming prompt leaf the stream adapter dispatches; one CLI process run, then usage",
-    ("holdspeak/intel/mesh_relay.py", "MeshRelayIntel._chat_completion_text"): "L: the mesh envelope leaf; carries the frozen revision + warrant",
-    ("holdspeak/kernel/prompt_adapter.py", "CanonicalPromptAdapter.dispatch"): "L: the canonical adapter the runner hands an engine to",
-    ("holdspeak/memory/engine.py", "EmbeddingAdapter._local_model"): "L: the ONE embedding-mode llama.cpp load, reached only from the memory.embed adapter's dispatch",
-    ("holdspeak/memory/engine.py", "EmbeddingAdapter._endpoint_vectors"): "L: the memory.embed adapter's endpoint leaf; opens the runner-built engine's SDK client and sends one `/v1/embeddings` call through the engine's egress-warranted `_remote_completion`",
-    ("holdspeak/kernel/prompt_adapter.py", "StreamingPromptAdapter.dispatch"): "L: the streaming adapter's non-streaming fallback when the engine lacks run_prompt_stream (HS-151-04)",
-    ("holdspeak/plugins/dictation/runtime_llama_cpp.py", "LlamaCppRuntime.classify"): "L: local constrained-decoding classify leaf",
-    ("holdspeak/plugins/dictation/runtime_llama_cpp.py", "LlamaCppRuntime.rewrite"): "L: local rewrite leaf",
-    ("holdspeak/plugins/dictation/runtime_mesh_relay.py", "MeshRelayRuntime._run"): "L: mesh relay leaf for the dictation legs",
-    ("holdspeak/plugins/dictation/runtime_counters.py", "CountingRuntime.classify"): "L: the counting decorator around one classify leaf",
-    ("holdspeak/plugins/dictation/runtime_counters.py", "CountingRuntime.rewrite"): "L: the counting decorator around one rewrite leaf",
-    ("holdspeak/speech_session/provider.py", "AdmittedDictationRuntime.classify"): "L: the admitted seam's classify entrance (admits before it dispatches)",
-    ("holdspeak/speech_session/provider.py", "AdmittedDictationRuntime.rewrite"): "L: the admitted seam's rewrite entrance (admits before it dispatches)",
-    ("holdspeak/speech_session/provider.py", "_ClassifyLeg.run.call"): "L: the dispatch closure of ONE admitted classify attempt",
-    ("holdspeak/speech_session/provider.py", "ProviderAdmission.rewrite.call"): "L: the dispatch closure of ONE admitted rewrite child",
-    ("holdspeak/speech_session/provider.py", "ProviderAdmission.punctuate.call"): "L: the dispatch closure of ONE admitted punctuate child",
-    ("holdspeak/meeting_session/intel_routed_children.py", "IntelRoutedChildMixin._admitted_live_window.call"): "L: the dispatch closure of ONE admitted live-analysis child",
-    ("holdspeak/meeting_session/intel_routed_children.py", "IntelRoutedChildMixin._admitted_bookmark_label.call"): "L: the dispatch closure of ONE admitted bookmark-label child",
-    ("holdspeak/meeting_session/intel_routed_children.py", "IntelRoutedChildMixin._admitted_auto_title.call"): "L: the dispatch closure of ONE admitted auto-title child",
-    ("holdspeak/meeting_session/deferred_bound.py", "bound_analysis_dispatch.call"): "L: C1 stored-route dispatch closure for ONE bound deferred-analysis child (HS-143-08/C1)",
-    ("holdspeak/meeting_session/deferred_bound.py", "bound_bookmark_label_dispatch.call"): "L: C1 stored-route dispatch closure for ONE frozen bookmark-label child (HS-143-08/C1)",
-    ("holdspeak/meeting_session/deferred_bound.py", "bound_auto_title_dispatch.call"): "L: C1 stored-route dispatch closure for ONE bound auto-title child (HS-143-08/C1)",
-    ("holdspeak/transcribe.py", "Transcriber._timed_transcribe"): "L: the ONE transcription entrance every caller goes through",
-    ("holdspeak/transcribe.py", "Transcriber._timed_transcribe._run"): "L: the timed backend call inside that entrance",
-    ("holdspeak/transcribe.py", "_MlxTranscriber.transcribe._run"): "L: the MLX Whisper execution leaf",
-    ("holdspeak/transcribe.py", "_MlxTranscriber._model_holder_get._run"): "L: the MLX Whisper PRELOAD leaf (its own admitted child)",
-    ("holdspeak/transcribe.py", "_MlxTranscriber._silent_audio_load._run"): "L: the MLX Whisper warmup leaf (its own admitted child)",
-    ("holdspeak/transcribe.py", "_FasterWhisperTranscriber.transcribe"): "L: the faster-whisper execution leaf",
-    # The Line (2026-10-29, LINE design §7): the phone line's own speech leaf,
-    # Parakeet in the Line node's process (not the hub's); no route and no hub
-    # model. The call's TURN runs on calls.turn through the runner, unchanged.
-    ("holdspeak/line/speech.py", "Parakeet.__init__"): "L: the Line node's speech-in warmup leaf (Parakeet, the node's own process)",
-    ("holdspeak/line/node.py", "LineNode._hear"): "L: the Line node's speech-in leaf: one caller utterance to text (Parakeet, the node's own process)",
-}
-
-# -------------------------------------------- bucket 3: admitted-seam callers
-# Product callers that reach a model ONLY through a seam that admits the child
-# itself (design §4 "migrated callers"). value = the admitting seam.
-ADMITTED_SEAM_CALLERS: dict[tuple[str, str], str] = {
-    ("holdspeak/main.py", "_run_meeting_mode"): "Transcriber.transcribe (admitted per HS-131-09)",
-    ("holdspeak/meeting_import.py", "_transcribe_import_windows"): "Transcriber.transcribe",
-    ("holdspeak/meeting_import.py", "_transcribe_segmented._decode"): "Transcriber.transcribe (PHILO-15-07: Whisper segments for one import window)",
-    ("holdspeak/meeting_session/transcribe_loop.py", "TranscribeLoopMixin._transcribe_audio"): "Transcriber.transcribe",
-    ("holdspeak/runtime/dictation_capture.py", "DictationCaptureMixin._transcribe_and_type"): "Transcriber.transcribe",
-    ("holdspeak/runtime/dictation_capture.py", "DictationCaptureMixin.transcribe_audio_admitted"): "Transcriber.transcribe under the session's admitted transcription child",
-    ("holdspeak/runtime/wake_glue.py", "WakeWordGlueMixin._transcribe_wake_admitted"): "Transcriber.transcribe under the wake session's admitted child",
-    ("holdspeak/web/routes/system/voice.py", "build_voice_router.api_transcribe"): "the route refuses without the admitted seam, then calls Transcriber.transcribe",
-    # HS-132-12 MOVED this seam, it did not change it: the streaming socket is
-    # now its own concern module (`voice_stream.py`), composed by
-    # `build_voice_router`. Same body, same admitting seam, new documented home.
-    ("holdspeak/web/routes/system/voice_stream.py", "build_voice_stream_router.ws_dictation_stream"): "the stream refuses without the admitted seam, then calls Transcriber.transcribe",
-    ("holdspeak/plugins/dictation/builtin/intent_router.py", "IntentRouter.run"): "AdmittedDictationRuntime.classify",
-    ("holdspeak/plugins/dictation/builtin/project_rewriter.py", "ProjectRewriter.run"): "AdmittedDictationRuntime.rewrite",
-    ("holdspeak/project_doc_suggestions.py", "suggest_project_doc_update"): "AdmittedDictationRuntime.rewrite",
-    ("holdspeak/target_profile.py", "apply_model_assisted_target"): "AdmittedDictationRuntime.rewrite",
-    ("holdspeak/dictation_runner.py", "run_dictation_pipeline"): "build_pipeline(admission=…) wraps the runtime in the admitted seam",
-    ("holdspeak/dictation_runner.py", "run_pipeline_corrections_only"): "build_pipeline(admission=…) wraps the runtime in the admitted seam",
-    ("holdspeak/web/routes/dictation/_helpers.py", "_run_dictation_dry_run_text"): "requires a caller-owned live text-entry admission before construction",
-    ("holdspeak/commands/dictation.py", "_cmd_dry_run"): "requires the top-level CLI's derived owner and live text-entry admission before construction",
-    # HS-143-10 admits the old issued-handle compatibility leaf only through
-    # this one façade; the elected qualified agent turn uses AgentTurnService.run
-    # and ToolTurnFoundationService's separate controller path.
-    ("holdspeak/services/agent_turn_service.py", "AgentTurnService.dispatch_plugin"): "one already-admitted PluginDispatch child only; qualified tool turns use ToolTurnFoundationService",
-    ("holdspeak/services/agent_turn_service.py", "_PromptToolProviderTransport.dispatch"): "ToolTurnController invokes it only inside the frozen agent.tool_turn route's Runner reservation",
-}
-
-# ------------------------------------------------------- bucket 4: the findings
-# Sol Amendment 4's package, plus the TWO families this census newly found
-# (`legacy-live-meeting-engine`, `bookmark-auto-label`). key = "path:line target".
-NAMED_FINDINGS: dict[str, str] = {
-    # HS-131-13 retired four rows of this ledger by DELETION and MIGRATION, never
-    # by promotion: `cadence` (now an admitted `cadence.next-action-draft` parent
-    # with one `inference.invoke` child), `decisions-route` (the duplicate route
-    # seam is gone; the admitted Decision promotion service is the only path),
-    # `delivery-legacy-factory` (the dormant helper is deleted), and the five
-    # `legacy-uncontextual-factory` sites that sat inside `build_intel_for_target`
-    # (the factory itself is deleted). Nothing moved to an allowlist.
-    # HS-131-16 CLOSED `mesh-receiver` (2 sites) by ADMISSION, not by deletion of
-    # the feature and not by an allowlist entry. `MeshServeWorker` used to accept
-    # a hand-built envelope, construct an engine with `LEGACY_UNCONTEXTUAL`, and
-    # call `run_prompt` directly. It now verifies a hub-signed Ed25519 dispatch
-    # offer against a pinned public key, wins an atomic worker-local replay
-    # reservation, lets its own kernel derive the principal from that offer, and
-    # sends every physical attempt through the worker-local `InferenceRunner` —
-    # which mints a real `DispatchContext` and ends each attempt in an immutable
-    # receipt. No command scope entered `ADAPTER_ALLOWLIST`; the worker names no
-    # factory and no completion verb at all.
-    # HS-131-14 CLOSED two families here, both by deletion rather than promotion.
-    #
-    # `plugin-default-provider` (30 sites): every builtin's `_cached_provider`
-    # fallback and the segment probe's default construction are GONE. A plugin now
-    # consumes intelligence through the host-issued dispatch handle its invocation
-    # carries, and an `llm` plugin with no handle refuses by name. No plugin scope
-    # entered any list.
-    #
-    # `legacy-uncontextual-factory` (2 sites): `build_configured_meeting_intel()`
-    # took NO context and validated nothing — its signature was literally `()` —
-    # and it was PUBLIC and exported, which is how fifteen callers each built their
-    # own engine. Its last caller migrated, so the body was privatized to
-    # `_configured_engine`, dominated by the validating `configured_meeting_intel`
-    # (asserted below), and the public name deleted. The name stays in the
-    # vocabulary with zero permitted sites, so typing it again fails the fence.
-    #
-    # HS-131-17 CLOSED the last two families, and the ledger is now EMPTY.
-    #
-    # `legacy-live-meeting-engine` (session.py `MeetingIntel(**kwargs)`): deleted.
-    # `MeetingSession.start()` no longer preflights a provider or constructs an
-    # engine beside its frozen plan. It reads the plan's own placement readiness,
-    # sets the explicit `_intel_live` state, and lets the FIRST actual child build
-    # the exact frozen revision inside `InferenceRunner`.
-    #
-    # `bookmark-auto-label` (bookmarks.py `generate_bookmark_label`): admitted.
-    # Automatic refinement goes through `_admitted_bookmark_label` — one trusted
-    # `inference.invoke@1` child, one terminal receipt — and the context-only
-    # engine leaf it used to call is deleted. Both names stay in the vocabulary
-    # with zero permitted sites, so retyping either fails this fence (proved by
-    # the two mutations at the end of this module).
-}
-
-#: EMPTY since HS-131-17. `dormant-mir` was the one family with no executable
-#: site: a private `mir_routing_enabled=True` branch that would have routed
-#: through an unadmitted path if it were ever switched on. Production never
-#: switched it on — `WebRuntime._start_meeting` supplied no enable flag, plugin
-#: host, database, or tuning — so the story removed the branch itself, along with
-#: its constructor inputs, its plugin enumeration, and its post-close
-#: `process_meeting_state()` dispatch. Routed meeting intelligence remains a
-#: product path in the separately admitted deferred job.
-FINDINGS_WITHOUT_A_SITE: dict[str, str] = {}
-
-#: The complete blocking ledger — EMPTY as of HS-131-17. Every family left by
-#: deletion or admission; none was ever promoted onto a list.
-BLOCKING_FAMILIES: frozenset[str] = frozenset(NAMED_FINDINGS.values()) | frozenset(
-    FINDINGS_WITHOUT_A_SITE.values()
-)
-
-#: The named legacy marker may appear ONLY in its own module and in the ONE named
-#: legacy finding scope left. This is what keeps `LEGACY_UNCONTEXTUAL` from becoming
-#: a general escape hatch: the family can only ever shrink, and HS-131-13 shrank it
-#: by deleting `build_intel_for_target` rather than by exempting it.
-#: EMPTY since HS-131-16. The mesh receiver was the last scope that passed the
-#: marker, and it no longer builds an engine at all: it verifies a hub-signed
-#: dispatch offer, reserves it, and hands the work to a worker-local
-#: `InferenceRunner`, which issues a REAL context for every physical attempt. The
-#: name deliberately stays in the vocabulary with zero permitted scopes, so
-#: typing it again fails this fence instead of quietly reopening the family.
-LEGACY_MARKER_SCOPES: frozenset[tuple[str, str]] = frozenset()
-
-#: `F:` scopes that are NOT module-level public entry points: adapter methods and
-#: private construction bodies. Each is reached only from an allowlisted factory
-#: that has already validated the context (structurally asserted below; the
-#: runtime half is `test_one_path_context.py`). Listed literally, and compared by
-#: EXACT equality, so a new public factory cannot arrive unreviewed by looking
-#: like adapter internals.
-ADAPTER_INTERNAL_FACTORY_SCOPES: frozenset[tuple[str, str]] = frozenset({
-    ("holdspeak/inference_targets.py", "_engine_for_revision"),
-    ("holdspeak/inference_targets.py", "_local_pinned_engine"),
-    ("holdspeak/intel/providers.py", "_profile_engine"),
-    ("holdspeak/intel/providers.py", "_configured_engine"),
-    ("holdspeak/speech_session/provider.py", "ProviderAdmission.target"),
-    ("holdspeak/speech_session/provider.py", "_mesh_bound"),
-    ("holdspeak/plugins/dictation/assembly.py", "_try_build_runtime"),
-    ("holdspeak/plugins/dictation/runtime.py", "_default_factories._llama_factory"),
-    ("holdspeak/plugins/dictation/runtime.py", "_default_factories._openai_factory"),
-    ("holdspeak/plugins/dictation/runtime_mesh_relay.py", "MeshRelayRuntime.load"),
-    ("holdspeak/plugins/dictation/runtime_openai_compatible.py", "OpenAICompatibleRuntime.load"),
-    ("holdspeak/plugins/dictation/runtime_llama_cpp.py", "LlamaCppRuntime._resolve_factories"),
+PRODUCT_SURFACES = ("holdspeak/web/", "holdspeak/services/", "holdspeak/commands/")
+BUILDING_FAMILIES = frozenset({
+    "sdk-construction", "sdk-completion-create", "local-model-load", "admission-mint",
+    "engine-factory",
 })
 
-#: Public `F:` scopes that CONSTRUCT NOTHING themselves: they decide, then hand
-#: every construction to the named validating factory. Structurally checked below
-#: (their bodies may name no other physical target), so "it delegates" is a
-#: verified property rather than a claim in a comment.
-DELEGATING_FACTORY_SCOPES: dict[tuple[str, str], str] = {
-    ("holdspeak/speech_session/revision_target.py", "bound_target"): "rebind",
-}
 
-#: The private construction bodies whose ONLY callers must be validating wrappers,
-#: and the wrapper each one is dominated by. A private body that a second scope
-#: learns to call has escaped its gate even though nothing about it changed.
-DOMINATED_CONSTRUCTION_BODIES: dict[tuple[str, str], str] = {
-    ("holdspeak/inference_targets.py", "_engine_for_revision"): "build_intel_for_revision",
-    ("holdspeak/inference_targets.py", "_local_pinned_engine"): "local_pinned_meeting_intel",
-    ("holdspeak/intel/providers.py", "_profile_engine"): "build_meeting_intel_for_profile",
-    ("holdspeak/intel/providers.py", "_configured_engine"): "configured_meeting_intel",
-}
-
-#: The factory scopes whose bodies must NAME the validator (Sol Amendment 1).
-CONTEXT_REQUIRING_FACTORIES: tuple[tuple[str, str], ...] = (
-    ("holdspeak/inference_targets.py", "build_intel_for_revision"),
-    ("holdspeak/inference_targets.py", "local_pinned_meeting_intel"),
-    ("holdspeak/intel/providers.py", "build_meeting_intel_for_profile"),
-    ("holdspeak/intel/providers.py", "configured_meeting_intel"),
-    ("holdspeak/speech_session/revision_target.py", "rebind"),
-)
-
-
-def _bucket(site: Site) -> str | None:
-    if site.where in AUTHORIZED_GATEWAY:
-        return "gateway"
-    if site.where in CLAIM_WITNESS_MINT:
-        return "witness-mint"
-    if site.where in GATEWAY_FACTORY_BINDING:
-        return "gateway-binding"
-    if site.line_key in NAMED_FINDINGS:
-        return "finding"
-    if site.where in ADAPTER_ALLOWLIST:
-        return "allowlist"
-    if site.where in ADMITTED_SEAM_CALLERS:
-        return "seam"
-    return None
-
-
-# ----------------------------------------------------------------- the censuses
-
-
-def test_every_model_execution_site_is_in_exactly_one_bucket() -> None:
-    """THE fence. A new door — or a moved finding — fails here, by name."""
-    sites = census()
-    unregistered = [site.named() for site in sites if _bucket(site) is None]
-    assert unregistered == [], (
-        "unregistered model execution:\n  " + "\n  ".join(unregistered)
-        + "\n\nAdmit it as an adapter (with its context requirement), record it as a "
-        "NAMED FINDING with an owner story, or remove it. A fence exception is not "
-        "an option (HS-131-10 charter, Scope/Out)."
-    )
-    counts = {
-        name: 0
-        for name in (
-            "gateway", "witness-mint", "gateway-binding", "allowlist", "seam", "finding",
-        )
-    }
-    for site in sites:
-        counts[str(_bucket(site))] += 1
-    assert sum(counts.values()) == len(sites)
-    # Measured after HS-131-17 removed the last three sites, all by DELETION:
-    # the live session's `MeetingIntel(**kwargs)` construction, its direct
-    # `generate_bookmark_label` call, and the context-only engine leaf that call
-    # reached (whose body held the `_chat_completion_text` open). The admitted
-    # bookmark path adds NO site: `_admitted_bookmark_label` already existed and
-    # its dispatch closure is already allowlisted.
-    # HS-132-05 took one more site out, again by DELETION: the streaming
-    # dictation socket's PER-CHUNK `transcribe(...)` (a full Whisper pass every
-    # 600 ms, on the hotkey's own lock, producing a "partial" no client
-    # consumed). The socket's final, whole-utterance pass remains, so the
-    # `ws_dictation_stream` seam registration above still names a live site.
-    # Phase 143's C1 stored-route closures retain the three lawful deferred
-    # execution leaves.  Phase F removes the four legacy direct-runner entrances
-    # (the queue worker plus its three DeferredIntelJob closures).
-    # HS-143-10 moves the legacy issued-handle leaf behind its one precise
-    # product façade; qualified ToolTurn execution remains foundation-owned.
-    # HS-146-07 adds the one vision prompt leaf (run_prompt_messages), the
-    # multi-part sibling of run_prompt the VisionPromptAdapter dispatches.
-    # HS-151-02/D3: streaming seam adds _chat_completion_deltas (3) +
-    # _attempt_stream (1); line shifts do not change count.
-    # HS-151-04: +1 StreamingPromptAdapter.dispatch run_prompt fallback
-    # Memory slice 1: +3 leaf sites inside the memory.embed adapter's dispatch.
-    # PHILO-15-07 (Astra r1 on #982, CLAUDE.md "no count fences"): the literal
-    # site count is gone; every site is still classified in exactly one bucket.
-    # THE headline: the blocking ledger is empty. Every model execution in
-    # production is now the gateway, a reviewed adapter, or an admitted seam.
-    assert counts["finding"] == 0
-    assert BLOCKING_FAMILIES == frozenset()
-    print(
-        "one-path census:", len(sites), "sites",
-        {**counts, "unregistered": 0},
-        f"gateway_scopes={len(AUTHORIZED_GATEWAY)}",
-        f"allowlist_scopes={len(ADAPTER_ALLOWLIST)}",
-        f"seam_scopes={len(ADMITTED_SEAM_CALLERS)}",
-        f"finding_families={len(BLOCKING_FAMILIES)}",
-    )
-
-
-def test_the_gateway_is_exactly_two_scopes_and_is_not_an_adapter() -> None:
-    """Sol Amendment 1: separate the gateway from its consumers.
-
-    The gateway is the pair of runner scopes that ADMIT and DISPATCH. Everything
-    that physically constructs or executes is a consumer of it, on the reviewed
-    adapter list. Collapsing the two lists is exactly how an adapter would come
-    to be treated as an admission path.
-    """
-    assert set(AUTHORIZED_GATEWAY) == {
-        (RUNNER, "InferenceRunner._attempt"),
-        (RUNNER, "InferenceRunner._attempt_stream"),  # HS-151-02/D3
-        (RUNNER, "InferenceRunner._dispatch"),
-    }
-    # The public entrance is a pure orchestrator: it admits nothing, dispatches
-    # nothing, and constructs nothing, so it holds no site at all.
-    assert (RUNNER, "InferenceRunner.invoke") not in {site.where for site in census()}
-    for bucket in (
-        ADAPTER_ALLOWLIST, ADMITTED_SEAM_CALLERS, GATEWAY_FACTORY_BINDING, CLAIM_WITNESS_MINT,
-    ):
-        overlap = sorted(set(AUTHORIZED_GATEWAY) & set(bucket))
-        assert overlap == [], f"gateway scope also listed as a consumer: {overlap}"
-    assert sorted(set(ADAPTER_ALLOWLIST) & set(ADMITTED_SEAM_CALLERS)) == []
-    assert sorted(set(ADAPTER_ALLOWLIST) & set(CLAIM_WITNESS_MINT)) == []
-
-
-def test_every_declared_entry_still_exists() -> None:
-    """A stale entry is as dangerous as a missing one: it hides the real door."""
-    live_scopes = {site.where for site in census()}
-    live_lines = {site.line_key for site in census()}
-    stale_allowlist = sorted(entry for entry in ADAPTER_ALLOWLIST if entry not in live_scopes)
-    stale_seams = sorted(entry for entry in ADMITTED_SEAM_CALLERS if entry not in live_scopes)
-    stale_findings = sorted(key for key in NAMED_FINDINGS if key not in live_lines)
-    assert stale_allowlist == [], f"allowlist entries with no site: {stale_allowlist}"
-    assert stale_seams == [], f"seam entries with no site: {stale_seams}"
-    assert stale_findings == [], (
-        "findings whose file:line moved — RE-REVIEW them rather than bump the "
-        f"number: {stale_findings}"
-    )
-
-
-def test_the_allowlist_holds_no_product_surface_or_domain_service() -> None:
-    """Charter: "no route, command, plugin product surface, or domain service"."""
-    forbidden = ("holdspeak/web/", "holdspeak/services/", "holdspeak/commands/")
-    offenders = sorted(
-        f"{path}:{scope}" for path, scope in ADAPTER_ALLOWLIST
-        if path.startswith(forbidden) or path.startswith("holdspeak/plugins/builtin/")
-    )
-    assert offenders == [], f"product surfaces in the adapter allowlist: {offenders}"
-    for entry, justification in ADAPTER_ALLOWLIST.items():
-        assert justification.startswith(("F:", "L:")), entry
-    for entry, seam in ADMITTED_SEAM_CALLERS.items():
-        assert seam.strip(), entry
-
-
-def test_the_context_mint_and_the_legacy_marker_are_pinned() -> None:
-    """Unforgeability is structural: two mints, one scope each, two waivers.
-
-    The witness mint (``executor.py``) and the context mint
-    (``InferenceRunner._attempt``) are each pinned to ONE module. Every name is in
-    the census vocabulary, so a second caller — including one that renames the
-    function on import — appears here as a moved/extra site rather than as a quiet
-    new way to manufacture the right to build an engine.
-
-    Round 2 (Terra blocker 4) changed WHAT is pinned. There is no longer a
-    ``mint_claim_witness(operation_id=..., warrant=...)`` to call: issuance is a
-    capability, taken once by ``executor.py`` at import via the one-shot
-    ``_install_claim_issuer`` and invoked from ``ExecutorPlane.claim`` under a
-    module-local name. Both new names are pinned here, and the retired public
-    names (``mint_claim_witness``, ``issue_dispatch_context``) stay in the
-    vocabulary with ZERO permitted sites, so bringing either back fails the fence.
-    """
-    sites = census()
-    retired = [
-        site for site in sites
-        if site.target in {"mint_claim_witness", "issue_dispatch_context"}
+def test_no_route_command_or_service_builds_an_engine() -> None:
+    """A product surface reaches a model through an admitted seam, never by building one."""
+    offenders = [
+        site.named()
+        for site in census()
+        if site.path.startswith(PRODUCT_SURFACES)
+        and site.family in BUILDING_FAMILIES
+        and site.target != "build_pipeline"  # checked below: it must carry its admission
     ]
+    assert offenders == [], "a product surface builds an engine:\n  " + "\n  ".join(offenders)
+
+
+def test_the_admission_mints_live_only_in_the_kernel() -> None:
+    sites = census()
+    retired = [site for site in sites if site.target in {"mint_claim_witness", "issue_dispatch_context"}]
     assert retired == [], f"a retired public mint reappeared: {retired}"
+    homes = {
+        "_install_claim_issuer": {"holdspeak/kernel/executor.py"},
+        "_issue_claim_witness": {"holdspeak/kernel/executor.py"},
+        "_issue_dispatch_context": {"holdspeak/kernel/inference_runner.py"},
+    }
+    for target, home in homes.items():
+        found = {site.path for site in sites if site.target == target}
+        assert found == home, f"{target} is reached from {sorted(found)}"
 
-    installs = [site for site in sites if site.target == "_install_claim_issuer"]
-    assert [site.where for site in installs] == [(EXECUTOR, "<module>")], installs
-    witness_mints = [site for site in sites if site.target == "_issue_claim_witness"]
-    assert [site.where for site in witness_mints] == [
-        (EXECUTOR, "ExecutorPlane.claim")
-    ], witness_mints
-    context_mints = [site for site in sites if site.target == "_issue_dispatch_context"]
-    assert sorted(site.where for site in context_mints) == sorted([
-        (RUNNER, "InferenceRunner._attempt"),
-        (RUNNER, "InferenceRunner._attempt_stream"),  # HS-151-02/D3
-    ]), context_mints
 
-    marker_scopes: set[tuple[str, str]] = set()
-    for path in sorted(PRODUCTION.rglob("*.py")):
-        if "__pycache__" in path.parts:
-            continue
-        relative = path.relative_to(REPO).as_posix()
-        if relative == "holdspeak/kernel/dispatch_context.py":
-            continue  # its home
-        source = path.read_text(encoding="utf-8")
-        if "LEGACY_UNCONTEXTUAL" not in source:
-            continue
-        tree = ast.parse(source)
-        scopes = _scope_index(tree)
-        for node in ast.walk(tree):
-            if not isinstance(node, ast.Call):
+def test_every_build_pipeline_call_carries_an_admission() -> None:
+    calls = 0
+    for path in _tree.python_files("holdspeak", exclude=("_parked",)):
+        for node in _tree.walk(path):
+            if not (isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
+                    and node.func.id == "build_pipeline"):
                 continue
-            passed = list(node.args) + [keyword.value for keyword in node.keywords]
-            for value in passed:
-                # PASSING the marker is a waiver (pinned); COMPARING it
-                # (`context is LEGACY_UNCONTEXTUAL`) is the recognizer inside the
-                # validating factories, which is the mechanism, not an escape.
-                if isinstance(value, ast.Name) and value.id == "LEGACY_UNCONTEXTUAL":
-                    marker_scopes.add((relative, scopes.get(id(node), "<module>")))
-    # EXACT equality, not containment: a NEW scope passing the marker is an
-    # escape, and a DECLARED scope that stopped passing it is a stale waiver that
-    # would hide the next one. The family can only shrink by deleting its entry
-    # here in the same edit.
-    assert marker_scopes == LEGACY_MARKER_SCOPES, (
-        "the legacy uncontextual marker escaped its named findings: "
-        f"escaped={sorted(marker_scopes - LEGACY_MARKER_SCOPES)} "
-        f"stale={sorted(LEGACY_MARKER_SCOPES - marker_scopes)}"
-    )
+            calls += 1
+            keywords = {keyword.arg: keyword.value for keyword in node.keywords}
+            where = f"{path.relative_to(_tree.ROOT)}:{node.lineno}"
+            assert "admission" in keywords, f"{where}: build_pipeline lost its admission"
+            assert not (isinstance(keywords["admission"], ast.Constant)
+                        and keywords["admission"].value is None), f"{where}: admission=None"
+    assert calls, "the census found no build_pipeline call at all"
 
 
-def test_the_legacy_marker_can_never_satisfy_a_context_requirement() -> None:
-    """The marker is a FINDING, not a key: it must refuse at the validator.
-
-    The structural pin above proves only WHERE the marker may appear. This is the
-    other half — that appearing there buys nothing. If
-    ``require_dispatch_context`` ever accepted it, every pinned finding scope
-    would silently become an admitted adapter.
-    """
-    from holdspeak.kernel.dispatch_context import (
-        CONTEXT_REQUIRED,
-        LEGACY_UNCONTEXTUAL,
-        require_dispatch_context,
-    )
-    from holdspeak.kernel.model import KernelRefused
-
-    with pytest.raises(KernelRefused) as refusal:
-        require_dispatch_context(LEGACY_UNCONTEXTUAL)
-    assert CONTEXT_REQUIRED in str(refusal.value)
+def test_the_legacy_marker_is_passed_nowhere() -> None:
+    passed: list[str] = []
+    for path in _tree.python_files("holdspeak"):
+        relative = path.relative_to(_tree.ROOT).as_posix()
+        if relative == "holdspeak/kernel/dispatch_context.py" or "LEGACY_UNCONTEXTUAL" not in _tree.text_of(path):
+            continue
+        for node in _tree.walk(path):
+            if isinstance(node, ast.Call):
+                values = list(node.args) + [keyword.value for keyword in node.keywords]
+                if any(isinstance(v, ast.Name) and v.id == "LEGACY_UNCONTEXTUAL" for v in values):
+                    passed.append(f"{relative}:{node.lineno}")
+    assert passed == [], f"the legacy uncontextual marker is passed at {passed}"
 
 
-def test_every_allowlisted_factory_names_the_validator() -> None:
-    """Structural half of Sol Amendment 1 (the runtime half is the context suite)."""
-    for path, scope in CONTEXT_REQUIRING_FACTORIES:
-        tree = ast.parse((REPO / path).read_text(encoding="utf-8"))
-        wanted = scope.split(".")[-1]
-        body = next(
-            node for node in ast.walk(tree)
-            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == wanted
-        )
-        source = ast.dump(body)
-        # Either validator counts as validating, and `require_bound_context` is
-        # the STRICTER one (round 2): it refuses a real context that arrives with
-        # no expected revision, which is how a remote child's context used to be
-        # enough to build a local engine. `require_dispatch_context` remains the
-        # dispatch-leg validator, where the operation id is the binding.
-        assert any(
-            validator in source
-            for validator in ("require_bound_context", "require_dispatch_context")
-        ), f"{path}:{scope} does not validate its context"
-        assert "context" in {argument.arg for argument in body.args.kwonlyargs} | {
-            argument.arg for argument in body.args.args
-        }, f"{path}:{scope} takes no context"
-
-
-def test_no_public_factory_scope_can_escape_context_validation() -> None:
-    """The laundering test (HS-131-10 Terra finding B).
-
-    ``build_configured_meeting_intel()`` sat on the adapter allowlist with the
-    signature ``()``. It validated nothing, could not tell an admitted child from
-    a plugin, and its two engine constructors were bucketed "allowlisted adapter"
-    on the strength of the list alone. The allowlist is a REVIEW record, not an
-    argument — so the review is now mechanical:
-
-    * every module-level public ``F:`` scope must be a context-requiring factory;
-    * every other ``F:`` scope must be a declared adapter internal;
-    * every private construction body must be dominated by its validating wrapper
-      — nothing else in production may call it.
-
-    An uncontextual factory that keeps constructing engines is then a FINDING (it
-    is), never a list entry.
-    """
-    factories = {
-        entry for entry, justification in ADAPTER_ALLOWLIST.items()
-        if justification.startswith("F:")
-    }
-    validating = set(CONTEXT_REQUIRING_FACTORIES)
-    public = {
-        entry for entry in factories
-        if "." not in entry[1] and not entry[1].startswith("_")
-    }
-    escaped = sorted(
-        entry for entry in public
-        if entry not in validating and entry not in DELEGATING_FACTORY_SCOPES
-    )
-    assert escaped == [], (
-        "public factory scopes on the allowlist that never validate a context: "
-        f"{escaped} — an uncontextual factory is a FINDING, not an adapter entry."
-    )
-    assert sorted(factories - public - ADAPTER_INTERNAL_FACTORY_SCOPES) == []
-    assert sorted(ADAPTER_INTERNAL_FACTORY_SCOPES - factories) == []
-    assert sorted(validating - factories) == []
-
-    # A delegating scope earns its exemption only by constructing NOTHING: the
-    # single physical name in its body is the validating factory it hands to.
-    for entry, delegate in DELEGATING_FACTORY_SCOPES.items():
-        assert (entry[0], delegate) in validating, entry
-        targets = {site.target for site in census() if site.where == entry}
-        assert targets == {delegate}, f"{entry} also names {sorted(targets - {delegate})}"
-
-    for (path, scope), wrapper in DOMINATED_CONSTRUCTION_BODIES.items():
-        assert (path, scope) in ADAPTER_INTERNAL_FACTORY_SCOPES
-        name = scope.split(".")[-1]
-        callers = {
-            site.where for site in census()
-            if site.target == name and site.where != (path, scope)
-        }
-        assert callers == {(path, wrapper)}, (
-            f"{path}:{scope} is reached from {sorted(callers)}, not only from its "
-            f"validating wrapper {wrapper}"
-        )
-
-
-def test_the_findings_ledger_is_the_complete_blocking_package() -> None:
-    """The eleven-family package is CLOSED: nothing blocks, nothing was waived.
-
-    Every family left by deletion or admission, never by promotion into a list.
-    HS-131-13 closed `cadence`, `decisions-route`, `delivery-legacy-factory`;
-    HS-131-14 closed `plugin-default-provider` and `legacy-uncontextual-factory`;
-    HS-131-15 closed `dictation-dry-run` and `dictation-command`; HS-131-16 closed
-    `mesh-receiver`; HS-131-17 closes the last three — `dormant-mir` (the branch
-    deleted), `legacy-live-meeting-engine` (the parallel live engine deleted), and
-    `bookmark-auto-label` (routed through the admitted child seam).
-    """
-    assert BLOCKING_FAMILIES == frozenset()
-    assert NAMED_FINDINGS == {}
-    assert FINDINGS_WITHOUT_A_SITE == {}
-    # An empty ledger is only honest if the families did not simply move onto a
-    # list. The meeting session's OWN modules — the two that held the closing
-    # families — may not appear in the adapter allowlist at all, and neither may a
-    # command scope; those were the remedies a closing family might have taken.
-    forbidden = sorted(
-        f"{path}:{scope}" for path, scope in ADAPTER_ALLOWLIST
-        if path.startswith("holdspeak/commands/")
-        or path in {
-            "holdspeak/meeting_session/session.py",
-            "holdspeak/meeting_session/bookmarks.py",
-        }
-    )
-    assert forbidden == [], (
-        f"a meeting-session or command scope on the adapter allowlist: {forbidden} "
-        "— that is not an available remedy for a blocking family"
-    )
-    # The meeting entries that DO exist are the admitted live closures and C1
-    # stored-route deferred closures: one per capability inside a claimed child.
-    # Phase F deleted the parallel v1 deferred-admission closures; nothing here
-    # is a factory.
-    meeting_entries = {
-        (path, scope): justification
-        for (path, scope), justification in ADAPTER_ALLOWLIST.items()
-        if path.startswith("holdspeak/meeting_session/")
-    }
-    assert set(meeting_entries) == {
-        ("holdspeak/meeting_session/intel_routed_children.py", "IntelRoutedChildMixin._admitted_live_window.call"),
-        ("holdspeak/meeting_session/intel_routed_children.py", "IntelRoutedChildMixin._admitted_bookmark_label.call"),
-        ("holdspeak/meeting_session/intel_routed_children.py", "IntelRoutedChildMixin._admitted_auto_title.call"),
-        ("holdspeak/meeting_session/deferred_bound.py", "bound_analysis_dispatch.call"),
-        ("holdspeak/meeting_session/deferred_bound.py", "bound_bookmark_label_dispatch.call"),
-        ("holdspeak/meeting_session/deferred_bound.py", "bound_auto_title_dispatch.call"),
-    }
-    assert all(
-        justification.startswith("L:") and scope.endswith(".call")
-        for (_path, scope), justification in meeting_entries.items()
-    )
-    # ...and the retired names are still DANGEROUS, so reintroducing one fails.
-    for retired in ("MeetingIntel", "generate_bookmark_label", "build_configured_meeting_intel"):
-        assert retired in DANGEROUS
-
-
-def test_text_entry_build_pipeline_sites_are_admitted_seams_not_findings() -> None:
-    """HS-131-15's two former findings must visibly thread their admission."""
-    expected = {
-        ("holdspeak/web/routes/dictation/_helpers.py", "_run_dictation_dry_run_text"): "dictation-dry-run",
-        ("holdspeak/commands/dictation.py", "_cmd_dry_run"): "dictation-command",
-    }
-    sites = [site for site in census() if site.target == "build_pipeline"]
-    assert {site.where for site in sites} >= set(expected)
-    assert all(site.where not in NAMED_FINDINGS for site in sites)
-    assert all(_bucket(site) == "seam" for site in sites if site.where in expected)
-
-    # The seam ledger is not itself authority. A scope that remained on the list
-    # after dropping `admission=...` would otherwise look admitted merely because
-    # its name had not changed. Pin the executable keyword in both callers; the
-    # mutation proof removes each one in turn and expects the named family here.
-    for (path, scope), family in expected.items():
-        tree = ast.parse((REPO / path).read_text(encoding="utf-8"))
-        body = next(
-            node
-            for node in ast.walk(tree)
-            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
-            and node.name == scope
-        )
-        calls = [
-            node
-            for node in ast.walk(body)
-            if isinstance(node, ast.Call)
-            and isinstance(node.func, ast.Name)
-            and node.func.id == "build_pipeline"
-        ]
-        assert len(calls) == 1, f"{family}: expected one build_pipeline call"
-        keywords = {keyword.arg: keyword.value for keyword in calls[0].keywords}
-        assert "admission" in keywords, (
-            f"{family}: build_pipeline lost its caller-owned admission"
-        )
-        assert not (
-            isinstance(keywords["admission"], ast.Constant)
-            and keywords["admission"].value is None
-        ), f"{family}: build_pipeline hard-coded admission=None"
-
-
-def test_the_owner_inventory_covers_every_finding() -> None:
-    """The ledger above is worthless to the owner if the decision package omits a row.
-
-    The inventory is the owner's decision artifact for the blocking families it
-    found; it is authored into the story's evidence assets. This asserts the two
-    never drift in the direction that matters: every family name AND every
-    ``path:line`` still in the code-side ledger has to appear in it. The inventory
-    is deliberately allowed to be a SUPERSET — it is the historical record of the
-    eleven families HS-131-10 found, and a row that the amendment wave has since
-    closed stays written down rather than being edited out of the owner's package.
-    """
-    inventory_path = (
-        REPO / "pm/roadmap/holdspeak/phase-131-one-admission-path/assets/hs-131-10"
-        / "findings-inventory.md"
-    )
-    if not inventory_path.exists():
-        pytest.fail(
-            "the owner's findings inventory is missing: "
-            f"{inventory_path.relative_to(REPO)}\n"
-            "HS-131-10 is BLOCKED while any family stands; the decision package "
-            "that names them must ship with this fence, not after it."
-        )
-    inventory = inventory_path.read_text(encoding="utf-8")
-    missing_families = sorted(f for f in BLOCKING_FAMILIES if f not in inventory)
-    missing_sites = sorted(
-        key for key in NAMED_FINDINGS if key.split(" ")[0] not in inventory
-    )
-    assert missing_families == [], f"families absent from the owner's inventory: {missing_families}"
-    assert missing_sites == [], f"sites absent from the owner's inventory: {missing_sites}"
-
-
-# ------------------------------------------------------------- mutation fixtures
-
-
-SYNTHETIC_DIRECT_SDK = '''
-"""A synthetic product module: the door this fence exists to close."""
-from openai import OpenAI
-
-
-def summarize_note(text: str) -> str:
-    client = OpenAI(api_key="k")
-    return client.chat.completions.create(model="m", messages=[]).choices[0].message.content
-'''
+# --------------------------------------------------- the walker sees every door form
 
 SYNTHETIC_FIRST_CLASS_CALLABLE = '''
 """A synthetic product module: the CALLABLE-REFERENCE door (Sol Amendment 2)."""
@@ -1128,26 +469,6 @@ import asyncio
 async def summarize_note(intel, text: str) -> str:
     chat_fn = intel._chat_completion_text
     return await asyncio.to_thread(intel.run_prompt, system_prompt="s", user_prompt=text)
-'''
-
-SYNTHETIC_TRANSCRIBE = '''
-"""A synthetic product module: an unadmitted Whisper leaf."""
-
-
-def caption(backend, audio) -> str:
-    return backend.transcribe(audio)
-'''
-
-SYNTHETIC_UNREGISTERED_ADAPTER = '''
-"""A synthetic UNREGISTERED adapter: the right SHAPE, never reviewed onto the list."""
-
-
-class RogueRuntime:
-    def load(self):
-        self._model = Llama(model_path="/rogue.gguf")
-
-    def _run(self, prompt):
-        return self._model.create_chat_completion(messages=[{"role": "user"}])
 '''
 
 SYNTHETIC_INDIRECT_SENDER = '''
@@ -1181,27 +502,6 @@ def record(repo, principal, payload, store, name):
     repo.create(principal, payload)
     store.create(name)
     return _svc().create(principal, payload)
-'''
-
-SYNTHETIC_FORGED_MINT = '''
-"""A synthetic product module: minting the right to build an engine.
-
-The witness/context mints execute no model themselves, so a call-shape census
-that only knew physical verbs would wave this through — and its author would
-then be able to construct any adapter in the codebase.
-
-Round 2: at RUNTIME this module cannot work at all — `_install_claim_issuer`
-was spent by `executor.py`'s import and refuses. The census still has to see it,
-because "it would fail anyway" is not a fence: the next author writes the same
-line against whatever the issuer is called then.
-"""
-from holdspeak.kernel.claim_witness import _install_claim_issuer as _mint
-from holdspeak.kernel.dispatch_context import _issue_dispatch_context
-
-
-def forge(revision):
-    witness = _mint()(operation_id="op_invented", warrant={"signature": "looks-real"})
-    return _issue_dispatch_context(witness=witness, revision=revision, warrant={"signature": "looks-real"})
 '''
 
 SYNTHETIC_GETATTR_BINDING = '''
@@ -1264,249 +564,6 @@ class Store:
         return self._h(name), self._mk(row), self._computed(row)
 '''
 
-#: ``build_intel_for_target`` no longer EXISTS (HS-131-13 deleted it), and that is
-#: exactly why it stays in the census vocabulary and in this mutation: the fence
-#: must fail on the name coming BACK, not merely on it being absent today.
-SYNTHETIC_ALIASED_IMPORT = '''
-"""A synthetic product module: the RENAMED-ON-IMPORT door."""
-from openai import OpenAI as _Client
-from holdspeak.inference_targets import build_intel_for_target as _factory
-
-
-def summarize(text):
-    return _Client(api_key="k"), _factory(None)
-'''
-
-SYNTHETIC_REINTRODUCED_ROUTE_SEAM = '''
-"""HS-131-13's own mutation: the exact route seam this story deleted.
-
-The Decisions route used to build an engine from a MUTABLE resolved target and
-hand `intel.run_prompt` to a thread pool, beside a service that already admits
-its own child. Both halves must fail the census by name if anyone types them
-again — the deleted code is not a fence.
-"""
-import asyncio
-
-from holdspeak.inference_targets import build_intel_for_target
-
-
-async def _generate_with_model(db, target, prompt):
-    intel = build_intel_for_target(target, db)
-    output = await asyncio.to_thread(intel.run_prompt, system_prompt="s", user_prompt=prompt)
-    return str(output or "").strip(), intel
-'''
-
-SYNTHETIC_REINTRODUCED_PLUGIN_FALLBACK = '''
-"""HS-131-14's own mutation: the plugin default-provider family, retyped.
-
-Every LLM builtin used to carry exactly this: a `_cached_provider` that lazily
-built the configured engine and then dispatched `_chat_completion_text` on it —
-thirty sites, no admitted child behind any of them. The deleted code is not a
-fence, so both halves must come back as unregistered, by name: the uncontextual
-factory (whose symbol no longer exists) and the completion leaf, in both the
-called and the first-class-reference spelling.
-"""
-from typing import Any
-
-
-class RetypedPlugin:
-    id = "retyped"
-    required_capabilities = ["llm"]
-
-    def __init__(self) -> None:
-        self._cached_provider: Any = None
-
-    def _call_intel(self, messages):
-        if self._cached_provider is None:
-            from holdspeak.intel import build_configured_meeting_intel
-
-            self._cached_provider = build_configured_meeting_intel()
-        chat = self._cached_provider._chat_completion_text
-        return self._cached_provider._chat_completion_text(messages, temperature=0.2, max_tokens=800), chat
-'''
-
-SYNTHETIC_REINTRODUCED_LIVE_MEETING_ENGINE = '''
-"""HS-131-17's own mutation: the parallel live meeting engine, retyped.
-
-`MeetingSession.start()` used to preflight the provider runtime and construct a
-long-lived `MeetingIntel` beside the already frozen plan, and `add_bookmark`
-then handed that object to a background thread which called the context-only
-`generate_bookmark_label` leaf directly. Both are deleted, and deleted code is
-not a fence: retyping either must come back as unregistered, by name.
-"""
-import threading
-
-
-class RetypedSession:
-    def start(self):
-        self._intel = MeetingIntel(provider="local")
-        return self._intel
-
-    def add_bookmark(self, bookmark, context):
-        threading.Thread(target=self._label, args=(bookmark, context)).start()
-
-    def _label(self, bookmark, context):
-        bookmark.label = self._intel.generate_bookmark_label(context)
-'''
-
-#: Each mutation's EXACT expected census output (Sol Amendment 5: a mutation
-#: proof must show the INTENDED guard fired, naming the intended site — "some
-#: assertion failed" is not a proof). Written literally so a change in the
-#: classifier's precision — a lost line number, a collapsed scope, a target
-#: renamed to something vaguer — fails here instead of passing quietly.
-MUTATIONS: tuple[tuple[str, str, list[str]], ...] = (
-    (
-        "holdspeak/web/routes/synthetic_door.py",
-        SYNTHETIC_DIRECT_SDK,
-        [
-            "UNREGISTERED_MODEL_EXECUTION holdspeak/web/routes/synthetic_door.py:7"
-            " summarize_note OpenAI",
-            "UNREGISTERED_MODEL_EXECUTION holdspeak/web/routes/synthetic_door.py:8"
-            " summarize_note chat.completions.create",
-        ],
-    ),
-    (
-        # The door with NO constructor anywhere in the file.
-        "holdspeak/web/routes/synthetic_existing_client.py",
-        SYNTHETIC_EXISTING_CLIENT,
-        [
-            "UNREGISTERED_MODEL_EXECUTION holdspeak/web/routes/synthetic_existing_client.py:12"
-            " summarize chat.completions.create",
-            "UNREGISTERED_MODEL_EXECUTION holdspeak/web/routes/synthetic_existing_client.py:13"
-            " summarize chat.completions.create",
-        ],
-    ),
-    (
-        "holdspeak/services/synthetic_forged_mint.py",
-        SYNTHETIC_FORGED_MINT,
-        [
-            "UNREGISTERED_MODEL_EXECUTION holdspeak/services/synthetic_forged_mint.py:18"
-            " forge _install_claim_issuer",
-            "UNREGISTERED_MODEL_EXECUTION holdspeak/services/synthetic_forged_mint.py:19"
-            " forge _issue_dispatch_context",
-        ],
-    ),
-    (
-        # Terra MANDATORY 1 (2c) + the attribute holders Terra found in 2d.
-        # One site per door, at the GETTER — the container is irrelevant.
-        "holdspeak/services/synthetic_getattr.py",
-        SYNTHETIC_GETATTR_BINDING,
-        [
-            "UNREGISTERED_MODEL_EXECUTION holdspeak/services/synthetic_getattr.py:13"
-            " Door.__init__ run_prompt",
-            "UNREGISTERED_MODEL_EXECUTION holdspeak/services/synthetic_getattr.py:14"
-            " Door.__init__ chat.completions.create",
-            "UNREGISTERED_MODEL_EXECUTION holdspeak/services/synthetic_getattr.py:15"
-            " Door.__init__ transcribe",
-        ],
-    ),
-    (
-        "holdspeak/services/synthetic_callable.py",
-        SYNTHETIC_FIRST_CLASS_CALLABLE,
-        [
-            "UNREGISTERED_MODEL_EXECUTION holdspeak/services/synthetic_callable.py:7"
-            " summarize_note _chat_completion_text",
-            "UNREGISTERED_MODEL_EXECUTION holdspeak/services/synthetic_callable.py:8"
-            " summarize_note run_prompt",
-        ],
-    ),
-    (
-        "holdspeak/web/routes/synthetic_whisper.py",
-        SYNTHETIC_TRANSCRIBE,
-        [
-            "UNREGISTERED_MODEL_EXECUTION holdspeak/web/routes/synthetic_whisper.py:6"
-            " caption transcribe",
-        ],
-    ),
-    (
-        "holdspeak/plugins/dictation/runtime_rogue.py",
-        SYNTHETIC_UNREGISTERED_ADAPTER,
-        [
-            "UNREGISTERED_MODEL_EXECUTION holdspeak/plugins/dictation/runtime_rogue.py:7"
-            " RogueRuntime.load Llama",
-            "UNREGISTERED_MODEL_EXECUTION holdspeak/plugins/dictation/runtime_rogue.py:10"
-            " RogueRuntime._run create_chat_completion",
-        ],
-    ),
-    (
-        "holdspeak/services/synthetic_sender.py",
-        SYNTHETIC_INDIRECT_SENDER,
-        [
-            "UNREGISTERED_MODEL_EXECUTION holdspeak/services/synthetic_sender.py:6"
-            " summarize run_prompt",
-        ],
-    ),
-    (
-        # The census reports the RESOLVED name, not the local alias, so the
-        # allowlist/findings keys stay stable no matter what a module calls it.
-        "holdspeak/services/synthetic_alias.py",
-        SYNTHETIC_ALIASED_IMPORT,
-        [
-            "UNREGISTERED_MODEL_EXECUTION holdspeak/services/synthetic_alias.py:8"
-            " summarize OpenAI",
-            "UNREGISTERED_MODEL_EXECUTION holdspeak/services/synthetic_alias.py:8"
-            " summarize build_intel_for_target",
-        ],
-    ),
-    (
-        # HS-131-13: the deleted Decisions route seam, retyped. Both halves —
-        # the mutable-target factory AND the bound `run_prompt` handed to a
-        # thread pool — must reappear as unregistered, by name.
-        "holdspeak/web/routes/synthetic_decisions_seam.py",
-        SYNTHETIC_REINTRODUCED_ROUTE_SEAM,
-        [
-            "UNREGISTERED_MODEL_EXECUTION holdspeak/web/routes/synthetic_decisions_seam.py:15"
-            " _generate_with_model build_intel_for_target",
-            "UNREGISTERED_MODEL_EXECUTION holdspeak/web/routes/synthetic_decisions_seam.py:16"
-            " _generate_with_model run_prompt",
-        ],
-    ),
-    (
-        # HS-131-14: the plugin fallback, retyped. Three doors in one method —
-        # the uncontextual factory, the held completion reference, and the call.
-        "holdspeak/plugins/builtin/synthetic_retyped_fallback.py",
-        SYNTHETIC_REINTRODUCED_PLUGIN_FALLBACK,
-        [
-            "UNREGISTERED_MODEL_EXECUTION holdspeak/plugins/builtin/synthetic_retyped_fallback.py:25"
-            " RetypedPlugin._call_intel build_configured_meeting_intel",
-            "UNREGISTERED_MODEL_EXECUTION holdspeak/plugins/builtin/synthetic_retyped_fallback.py:26"
-            " RetypedPlugin._call_intel _chat_completion_text",
-            "UNREGISTERED_MODEL_EXECUTION holdspeak/plugins/builtin/synthetic_retyped_fallback.py:27"
-            " RetypedPlugin._call_intel _chat_completion_text",
-        ],
-    ),
-    (
-        # HS-131-17: the deleted live meeting engine and the direct bookmark
-        # label, retyped in the module they were deleted from. Neither name has a
-        # finding to fall into any more, so both are simply unregistered.
-        "holdspeak/meeting_session/synthetic_live_engine.py",
-        SYNTHETIC_REINTRODUCED_LIVE_MEETING_ENGINE,
-        [
-            "UNREGISTERED_MODEL_EXECUTION holdspeak/meeting_session/synthetic_live_engine.py:15"
-            " RetypedSession.start MeetingIntel",
-            "UNREGISTERED_MODEL_EXECUTION holdspeak/meeting_session/synthetic_live_engine.py:22"
-            " RetypedSession._label generate_bookmark_label",
-        ],
-    ),
-)
-
-
-@pytest.mark.parametrize("relative,source,expected", MUTATIONS, ids=[m[0] for m in MUTATIONS])
-def test_a_synthetic_door_fails_with_the_exact_named_message(
-    relative: str, source: str, expected: list[str]
-) -> None:
-    """Every mutation form produces its EXACT ``UNREGISTERED_MODEL_EXECUTION`` line.
-
-    Covers the direct SDK construction, the first-class-callable reference, an
-    unadmitted Whisper leaf, an adapter-SHAPED class that was never reviewed onto
-    the allowlist (shape is not admission), and a physical call hidden behind an
-    indirect ``sender=`` closure.
-    """
-    sites = list(sites_in_source(relative, source))
-    assert sites, f"{relative}: the census saw no door at all"
-    unregistered = sorted(site.named() for site in sites if _bucket(site) is None)
-    assert unregistered == sorted(expected)
-
 
 def test_the_sdk_verb_is_recognized_by_its_receiver_chain_not_by_its_name() -> None:
     """Precision, in both directions, is what makes the create-only door closable.
@@ -1529,6 +586,7 @@ def test_the_sdk_verb_is_recognized_by_its_receiver_chain_not_by_its_name() -> N
         "sdk-completion-create"
     }
     assert list(sites_in_source("holdspeak/services/x.py", SYNTHETIC_UNRELATED_CREATE)) == []
+
 
 
 
@@ -1559,6 +617,7 @@ def test_a_model_verb_spelled_as_a_string_is_still_a_door() -> None:
     }, seen
 
 
+
 def test_no_container_can_launder_the_getter() -> None:
     """Subscript, walrus, tuple, `to_thread`, and immediate invocation.
 
@@ -1576,6 +635,7 @@ def test_no_container_can_launder_the_getter() -> None:
     assert sorted(site.kind for site in sites) == ["call", "ref", "ref", "ref", "ref", "ref"]
 
 
+
 def test_the_getattr_rule_does_not_broaden_to_unrelated_dynamic_attributes() -> None:
     """...and precision in the other direction, which is what makes it usable.
 
@@ -1587,6 +647,7 @@ def test_the_getattr_rule_does_not_broaden_to_unrelated_dynamic_attributes() -> 
     assert list(
         sites_in_source("holdspeak/services/x.py", SYNTHETIC_GETATTR_INNOCENT)
     ) == []
+
 
 
 def test_the_callable_reference_forms_are_classified_as_references_not_calls() -> None:
@@ -1606,155 +667,25 @@ def test_the_callable_reference_forms_are_classified_as_references_not_calls() -
     assert ("run_prompt", "call") in sender_sites
 
 
-def test_an_allowlisted_scope_does_not_launder_a_different_module() -> None:
-    """The allowlist key is (path, scope) — a scope NAME alone admits nothing.
 
-    Without this, any new module could adopt an allowlisted function name (say
-    ``build_intel_for_revision``) and inherit its admission.
+def test_the_legacy_marker_can_never_satisfy_a_context_requirement() -> None:
+    """The marker is a FINDING, not a key: it must refuse at the validator.
+
+    The structural pin above proves only WHERE the marker may appear. This is the
+    other half — that appearing there buys nothing. If
+    ``require_dispatch_context`` ever accepted it, every pinned finding scope
+    would silently become an admitted adapter.
     """
-    laundered = '''
-def build_intel_for_revision(revision):
-    return MeetingIntel(provider="local")
-'''
-    sites = list(sites_in_source("holdspeak/services/impostor.py", laundered))
-    assert [site.named() for site in sites] == [
-        "UNREGISTERED_MODEL_EXECUTION holdspeak/services/impostor.py:3"
-        " build_intel_for_revision MeetingIntel"
-    ]
-
-
-# ------------------------------------------- HS-131-17: the live meeting fence
-
-
-def test_the_live_meeting_session_names_no_model_execution_at_all() -> None:
-    """The positive half of closing the last two meeting families.
-
-    A live `MeetingSession` holds its frozen plan, its parent context, and an
-    explicit liveness flag — never an engine. So the two modules that used to
-    construct and call one hold no census site: `session.py` builds nothing at
-    start, and `bookmarks.py` reaches a label only through the admitted seam
-    (whose dispatch closure lives in `intel_admission.py` and is allowlisted).
-    """
-    for module in ("session.py", "bookmarks.py"):
-        relative = f"holdspeak/meeting_session/{module}"
-        sites = [site for site in census() if site.path == relative]
-        assert sites == [], f"{relative} named model execution again: {sites}"
-
-    # The dormant MIR branch is GONE, not merely disabled by default: no switch,
-    # no plugin host, and no import of the routing pipeline it used to call after
-    # the live parent had already closed.
-    session_tree = ast.parse(
-        (REPO / "holdspeak/meeting_session/session.py").read_text(encoding="utf-8")
+    from holdspeak.kernel.dispatch_context import (
+        CONTEXT_REQUIRED,
+        LEGACY_UNCONTEXTUAL,
+        require_dispatch_context,
     )
-    names = {
-        node.id for node in ast.walk(session_tree) if isinstance(node, ast.Name)
-    } | {
-        node.attr for node in ast.walk(session_tree) if isinstance(node, ast.Attribute)
-    }
-    for retired in ("mir_routing_enabled", "_mir_plugin_host", "process_meeting_state"):
-        assert retired not in names, f"the dormant MIR branch came back: {retired}"
-    imported = {
-        node.module or "" for node in ast.walk(session_tree) if isinstance(node, ast.ImportFrom)
-    }
-    assert not any("plugins.pipeline" in module for module in imported)
-    bookmarks_source = (REPO / "holdspeak/meeting_session/bookmarks.py").read_text(encoding="utf-8")
-    assert "_admitted_bookmark_label" in bookmarks_source
+    from holdspeak.kernel.model import KernelRefused
+
+    with pytest.raises(KernelRefused) as refusal:
+        require_dispatch_context(LEGACY_UNCONTEXTUAL)
+    assert CONTEXT_REQUIRED in str(refusal.value)
 
 
-# ------------------------------------------------- HS-131-16: the receiver fence
 
-
-def test_the_mesh_receiver_names_no_model_execution_at_all() -> None:
-    """The positive half of closing `mesh-receiver`: zero sites, not a waiver.
-
-    A family can leave :data:`NAMED_FINDINGS` by being deleted or admitted. This
-    one was ADMITTED, and the shape of that admission is visible right here: the
-    worker constructs nothing, so the census finds no factory and no completion
-    verb in its module. If a future edit reintroduces either, the mutation proof
-    below is what fails.
-    """
-    sites = [site for site in census() if site.path == "holdspeak/commands/mesh_serve.py"]
-    assert sites == [], f"the mesh receiver named model execution again: {sites}"
-
-    # And it reaches the model through the ONE gateway, structurally: the worker
-    # hands its injectable factory to the worker-local runner rather than calling
-    # it, and never imports the legacy marker again.
-    source = (REPO / "holdspeak/commands/mesh_serve.py").read_text(encoding="utf-8")
-    assert "LEGACY_UNCONTEXTUAL" not in source
-    assert "run_prompt" not in source
-    assert "build_meeting_intel_for_profile" not in source
-    runner_source = (REPO / "holdspeak/kernel/mesh_local_runner.py").read_text(encoding="utf-8")
-    assert "InferenceRunner(" in runner_source
-
-
-def test_a_direct_receiver_run_prompt_fails_the_fence() -> None:
-    """The mutation proof: restore the side door and the census must name it.
-
-    A disposable edit puts a direct ``engine.run_prompt(...)`` back into the
-    receiver. The fence has to fail on that source — a green suite that only
-    ever saw the fixed tree proves nothing about the fence.
-
-    HS-200-13 (the 15/12/11/14/13 stack): the mutation is applied to the TEXT
-    the census parses (``sites_in_source``), never written to the tree.  The
-    earlier disk write raced every sibling xdist worker whose ``census()`` read
-    ``mesh_serve.py`` inside the write/restore window, so the one-path and the
-    capability censuses reported ``_mutation_direct_dispatch`` as a real
-    unregistered execution on a tree that never held it.  The tree is asserted
-    unchanged by digest before and after.
-    """
-    target = REPO / "holdspeak/commands/mesh_serve.py"
-    relative = target.relative_to(REPO).as_posix()
-    original = target.read_bytes()
-    before = hashlib.sha256(original).hexdigest()
-    anchor = "    def claim_once(self) -> Optional[tuple[dict[str, Any], Any]]:"
-    mutation = (
-        "    def _mutation_direct_dispatch(self, engine: Any) -> str:\n"
-        '        return str(engine.run_prompt(system_prompt="", user_prompt=""))\n\n'
-    )
-    text = original.decode("utf-8")
-    assert anchor in text, "the mutation anchor moved; re-review this proof"
-    mutated = text.replace(anchor, mutation + anchor, 1)
-    sites = [site for site in sites_in_source(relative, mutated) if site.path == relative]
-    assert len(sites) == 1, sites
-    site = sites[0]
-    assert site.target == "run_prompt"
-    assert site.scope == "MeshServeWorker._mutation_direct_dispatch"
-    # Unregistered: not a gateway, not an allowlist entry, not a seam, and
-    # NOT a finding — the family is gone, so there is nothing to fall into.
-    assert _bucket(site) is None
-    assert site.named().startswith("UNREGISTERED_MODEL_EXECUTION")
-    assert site.line_key not in NAMED_FINDINGS
-    assert hashlib.sha256(target.read_bytes()).hexdigest() == before
-    assert [site for site in census() if site.path == relative] == []
-
-
-# ---------------------------------------- HS-143-10 placement-adopter closure
-
-
-def test_phase143_placement_adopters_name_no_model_execution_door() -> None:
-    """The migrated product families only hand frozen work to the coordinator."""
-    adopters = {
-        "holdspeak/services/recipe_service.py",
-        "holdspeak/services/workbench_runner.py",
-        "holdspeak/services/workbench_service.py",
-        "holdspeak/services/support.py",
-    }
-    sites = [site for site in census() if site.path in adopters]
-    assert sites == [], f"placement adopter reopened a model door: {sites}"
-    assert all(path not in ADAPTER_ALLOWLIST for path, _scope in ADAPTER_ALLOWLIST if path in adopters)
-
-
-def test_phase143_placement_adopter_direct_provider_mutation_is_unregistered() -> None:
-    """A local selector cannot smuggle a completion through an adopted service."""
-    sites = list(sites_in_source(
-        "holdspeak/services/recipe_service.py",
-        """
-class RecipeService:
-    def _local_selector(self, engine):
-        return engine.run_prompt(system_prompt='x', user_prompt='x')
-""",
-    ))
-    assert len(sites) == 1
-    assert sites[0].where == ("holdspeak/services/recipe_service.py", "RecipeService._local_selector")
-    assert sites[0].target == "run_prompt"
-    assert _bucket(sites[0]) is None

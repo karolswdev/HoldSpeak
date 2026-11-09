@@ -1,6 +1,7 @@
 """P10 regressions for watch offers and transport boundaries."""
 from __future__ import annotations
 
+from tests import _tree
 import ast
 from importlib.util import resolve_name
 from pathlib import Path
@@ -68,8 +69,8 @@ def test_mcp_python_sources_have_no_web_route_imports() -> None:
     """MCP modules stay below the web transport boundary."""
     mcp_root = Path(__file__).parents[2] / "holdspeak" / "mcp"
     violations: list[str] = []
-    for path in sorted(mcp_root.rglob("*.py")):
-        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+    for path in _tree.python_files(mcp_root):
+        tree = _tree.ast_of(path)
         package = _package_for_mcp_file(path, mcp_root)
         for module in sorted(_web_route_imports(tree, package)):
             violations.append(f"{path}: {module}")

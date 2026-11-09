@@ -55,7 +55,7 @@ Arrange the tools around your work.
 *Prepare, record, review, and follow up. Today brings the next action into view.*
 
 Record microphone and system audio, or import a recording or transcript.
-Use **14 built-in plugins** to propose decisions, requirements, owners, risks, and other meeting outputs. Each needs an engine assignment.
+Use the **built-in plugins** to propose decisions, requirements, owners, risks, and other meeting outputs. Each needs an engine assignment.
 Review the outcomes, link the meeting to a Project, and turn an action into a task or agent brief.
 
 [Meeting mode](docs/MEETING_MODE_GUIDE.md) · [Meeting intelligence](docs/MEETING_INTELLIGENCE.md) · [Aftercare](docs/MEETING_AFTERCARE.md)
@@ -174,7 +174,7 @@ Saved sources, tool results, run records, and Receipts let you inspect the work.
 
 ## Connect external tools
 
-MCP lets external agents use permitted Desk operations: **372 tools across 48 families**, filtered for each caller.
+MCP lets external agents use permitted Desk operations: **hundreds of tools**, filtered for each caller.
 Use the local sidecar, or enable Reach for scoped Streamable HTTP access.
 Configure destinations for folders, GitHub, Jira, Confluence, email, or Slack.
 Extend the system with meeting plugins, connectors, actuators, Modes, and voice commands.

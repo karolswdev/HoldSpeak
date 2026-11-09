@@ -2,10 +2,11 @@
 authority, Needs you rows, Runs on (engine validation) and the idle gate."""
 from __future__ import annotations
 
+from tests import _tree
 import pytest
 
 from holdspeak.delivery.pi_launch import LibraryEngine, PiEngine
-from holdspeak.principals import AgentCredentialStore, Principal, PrincipalKind
+from holdspeak.principals import AgentCredentialStore, Principal
 from holdspeak.services.needs_you_membership import program_items
 from holdspeak.services.program_brief import compose, theirs
 from holdspeak.services.program_service import (
@@ -505,10 +506,10 @@ def test_no_module_imports_a_definition_through_the_program_service() -> None:
 
     package = Path(definitions.__file__).resolve().parents[1]
     wrong = []
-    for path in sorted(package.rglob("*.py")):
-        if path == package / "services" / "program_service.py":
+    for path in _tree.python_files(package):
+        if path == package / "services" / "program_service.py" or "program_service" not in _tree.text_of(path):
             continue
-        for node in ast.walk(ast.parse(path.read_text())):
+        for node in _tree.walk(path):
             if isinstance(node, ast.ImportFrom) and (node.module or "").endswith("program_service"):
                 names = sorted({alias.name for alias in node.names} & set(definitions.__all__))
                 if names:

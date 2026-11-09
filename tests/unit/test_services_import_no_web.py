@@ -7,6 +7,7 @@ primitives' copy. Parsed with `ast`, so a function-level import counts too.
 """
 from __future__ import annotations
 
+from tests import _tree
 import ast
 from pathlib import Path
 
@@ -14,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[2] / "holdspeak"
 
 
 def _web_imports(path: Path) -> list[str]:
-    tree = ast.parse(path.read_text(encoding="utf-8"))
+    tree = _tree.ast_of(path)
     package = path.relative_to(ROOT.parent).with_suffix("").parts[:-1]
     found: list[str] = []
     for node in ast.walk(tree):
@@ -34,7 +35,7 @@ def _web_imports(path: Path) -> list[str]:
 
 
 def test_services_import_nothing_from_the_web_layer() -> None:
-    found = [hit for path in sorted((ROOT / "services").rglob("*.py")) for hit in _web_imports(path)]
+    found = [hit for path in _tree.python_files(ROOT / "services") for hit in _web_imports(path)]
     assert found == []
 
 
