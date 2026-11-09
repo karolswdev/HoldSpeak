@@ -604,51 +604,12 @@ def test_when_every_friday_at_three_is_stored_as_cron_turned_on_and_says_when_ne
         "github-review-requested", "github-checks-failed", "github-pr-merged"]
 
 
-def test_with_writes_the_automation_engine_and_refreezes_its_live_schedule(tmp_path: Path, monkeypatch) -> None:
-    """Done when (A4, T1): With writes
-    subject:workbench:<id>:capability:workbench.item; a live schedule is
-    re-frozen on the new engine (scheduled runs ignored engine changes
-    before); an off schedule stays off."""
-    from holdspeak.kernel.runtime import _configure
-    from holdspeak.services.workbench_runner import WorkbenchRunner
-
-    db, client, _prompts, _ = _instruction_rig(tmp_path, monkeypatch, "wb-with")
-    db.profiles.upsert(profile_id="lan-profile", name="LAN Qwen", kind="openAICompatible",
-                       base_url="http://192.168.1.43:8080/v1", model="qwen")
-    wb = _make_automation(client, "wb-with")
-    assert client.put(f"/api/workbenches/{wb}/when", json={"kind": "schedule", "every": "day", "time": "09:00"}).status_code == 200
-    before = _live(db, wb)
-    runner = WorkbenchRunner(db, _configure(db))
-    assert [e["profile_id"] for e in runner._scheduled_route(before)["entries"]] == ["legacy-stub-profile"]
-
-    used = client.put(f"/api/workbenches/{wb}/engine", json={"profile_id": "legacy-lan-profile"})
-    assert used.status_code == 200, used.text
-    summary = used.json()["workbench"]["assignment_summary"]
-    assert (summary["chain"], summary["profile_id"]) == (["LAN Qwen"], "legacy-lan-profile")
-    with db._connection() as conn:
-        head = conn.execute("SELECT cleared FROM inference_assignment_heads WHERE assignment_key=?",
-                            (f"subject:workbench:{wb}:capability:workbench.item",)).fetchone()
-        old = conn.execute("SELECT state, revocation_reason FROM kernel_schedule_delegations WHERE id=?",
-                           (before["id"],)).fetchone()
-    assert head is not None and head["cleared"] == 0
-    assert (old["state"], old["revocation_reason"]) == ("REVOKED", "engine_changed")
-    after = _live(db, wb)
-    assert after["id"] != before["id"]
-    assert [e["profile_id"] for e in runner._scheduled_route(after)["entries"]] == ["legacy-lan-profile"]
-
-    # An off schedule has nothing to re-freeze; the engine is still written.
-    assert client.put(f"/api/workbenches/{wb}", json={"schedule_enabled": False}).status_code == 200
-    back = client.put(f"/api/workbenches/{wb}/engine", json={"profile_id": "legacy-stub-profile"})
-    assert back.status_code == 200 and back.json()["workbench"]["assignment_summary"]["profile_id"] == "legacy-stub-profile"
-    assert _live(db, wb) is None
-
-
 def test_the_spend_limit_per_run_is_the_automation_own_and_overrides_the_engine(tmp_path: Path, monkeypatch) -> None:
     """With's Spend limit per run: stored on the automation (null = the
     engine's own), refused outside $0-$1000, and the run hands it to an
     agent CLI that stops at a limit (a copy: the routed engine is shared)."""
     from holdspeak.intel.cli_engine import CliEngine, parse_cli_endpoint
-    from holdspeak.services.workbench_runner import _MeteredPromptAdapter
+    from holdspeak.services.program_prompt import _MeteredPromptAdapter
 
     db, client, _prompts, _ = _instruction_rig(tmp_path, monkeypatch, "wb-spend")
     wb = _make_automation(client, "wb-spend")

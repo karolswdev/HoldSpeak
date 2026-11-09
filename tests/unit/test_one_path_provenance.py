@@ -267,7 +267,7 @@ def test_every_child_carries_causation_revision_placement_and_basis(
         )
 
 
-@pytest.mark.parametrize("surface", ("manual Workbench", "voice"))
+@pytest.mark.parametrize("surface", ("voice",))  # 2026-11-08: the item queue (manual Workbench) is parked
 def test_adopted_workbench_family_children_link_parent_route_operation_and_receipt(
     surface: str, tmp_path, monkeypatch
 ) -> None:
@@ -304,12 +304,13 @@ def test_the_provenance_matrix_covers_every_named_surface() -> None:
     back to a convenient subset.
     """
     # HS-151-02: Recipe chat retired (was 16); 2026-11-08: Sequence and
-    # Workflow parked with their runner (was 15).
-    assert len(SURFACE_DRIVERS) == 13
+    # Workflow parked with their runner (was 15), and the item queue (manual
+    # and scheduled Workbench, memory writeback) parked (was 13).
+    assert len(SURFACE_DRIVERS) == 10
     assert ROOT_SHAPED_SURFACES | CHILD_SHAPED_SURFACES == set(SURFACE_DRIVERS)
     assert set(SURFACE_DRIVERS) == {
         "Ask", "Recipe run",
-        "manual Workbench", "scheduled Workbench", "memory writeback", "Rails",
+        "Rails",
         "Decision promotion", "Delivery review", "voice", "meeting live",
         "meeting deferred", "dictation pipeline",
         # HS-131-13's migration; the story's other two families were deleted as

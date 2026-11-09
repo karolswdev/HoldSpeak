@@ -500,19 +500,6 @@ def _mark_mint_attempted(db: Any, item_id: str) -> None:
         log.debug(f"Failed to mark mint_attempted for {item_id}: {exc}")
 
 
-async def run_workbench(workbench_id: str, principal: Any | None = None, *, memory_enabled: bool = True) -> dict:
-    """Compatibility seam for authenticated manual Workbench execution."""
-    if principal is None:
-        from .services.errors import ServiceError
-        raise ServiceError("scheduler_principal_required", "An explicit principal is required", context={"status": 403})
-    from .kernel.runtime import _service
-    from .services.workbench_runner import WorkbenchRunner
-    from .db import get_database
-    return await WorkbenchRunner(get_database(), _service()).run(
-        principal, workbench_id, memory_enabled=memory_enabled
-    )
-
-
 from .workbench_templates import MORNING_PREP_ID as _MORNING_PREP_ID  # noqa: E402
 
 

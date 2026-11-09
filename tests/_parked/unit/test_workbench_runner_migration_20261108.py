@@ -1,3 +1,8 @@
+"""PARKED 20261108 (Lane S2): the item-queue runner's migration cases.
+
+The item queue is parked (holdspeak/services/_parked/workbench_runner_queue_20261108.py);
+an automation's run is a Program of one prompt step. Not collected.
+"""
 """HS-131-05 admitted Workbench parent registration and fence proofs."""
 from __future__ import annotations
 
