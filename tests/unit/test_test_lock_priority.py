@@ -33,7 +33,7 @@ def _wait_for_marker(tmp: Path, prio: str, timeout: float = 10) -> None:
     waiters = tmp / "t.lock.waiters"
     end = time.time() + timeout
     while time.time() < end:
-        if waiters.exists() and any(m.name.endswith(f".{prio}") for m in waiters.iterdir()):
+        if waiters.exists() and any(m.name.split(".")[1:2] == [prio] for m in waiters.iterdir()):
             return
         time.sleep(0.02)
     raise AssertionError(f"no {prio} marker appeared")

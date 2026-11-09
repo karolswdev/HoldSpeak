@@ -70,6 +70,22 @@ def test_a_dirty_tree() -> None:
     assert result["reasons"] == ["the worktree had changes that were not committed when the check started"]
 
 
+def test_a_skipped_build_still_satisfies_the_build_section() -> None:
+    """scripts/quick_check.sh skips a step that is green on unchanged inputs
+    (or not needed): ``== build: …`` is the section build, and its ``ok``
+    line is its result."""
+    for skipped in ("== build: green at af3858b11, inputs unchanged\n   ok: not run again",
+                    "== build: nothing under web/ changed, skipped\n   ok: not needed"):
+        text = _log().replace("== build\n   build ok", skipped)
+        assert skipped in text
+        result = verify_text(text)
+        assert result["green"], result["reasons"]
+        assert ("build", "green") in [(row["name"], row["state"]) for row in result["sections"]]
+    sweep = _log().replace("== desk sweep\n   62 passed in 40.00s",
+                           "== desk sweep: green at af3858b11, inputs unchanged\n   ok: not run again")
+    assert verify_text(sweep)["green"]
+
+
 def test_a_section_without_a_result_line_and_no_commit() -> None:
     text = _log().replace("   build ok\n", "").replace("program-check: commit 0123abcd\n", "")
     result = verify_text(text)
