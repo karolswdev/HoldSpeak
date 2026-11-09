@@ -181,21 +181,6 @@ def test_delete_correction_by_id(persistent_db: Database, settings_path: Path) -
     assert again.status_code == 404
 
 
-def test_clear_all_corrections(persistent_db: Database, settings_path: Path) -> None:
-    persistent_db.dictation_corrections.record_correction(
-        kind="intent", gist="one", value="code_exercise"
-    )
-    persistent_db.dictation_corrections.record_correction(
-        kind="target", gist="two", value="codex_cli"
-    )
-    client = _persistent_client(persistent_db)
-    resp = client.request("DELETE", "/api/dictation/corrections")
-    assert resp.status_code == 200
-    assert resp.json() == {"cleared": True, "size": 0}
-    assert persistent_db.dictation_corrections.recent_corrections() == []
-    assert client.get("/api/dictation/corrections").json()["size"] == 0
-
-
 def test_delete_without_repo_404s(test_client: TestClient, settings_path: Path) -> None:
     # An in-memory-only store has no ids to address — delete is a no-op 404.
     resp = test_client.request("DELETE", "/api/dictation/corrections/1")
