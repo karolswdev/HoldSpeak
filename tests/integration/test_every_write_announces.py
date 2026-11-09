@@ -335,24 +335,24 @@ def test_ready_read_sends_one_frame(hub: Hub, seeded: dict[str, str]) -> None:
 
 
 def test_a_bulk_write_sends_one_frame_that_names_each_item(hub: Hub, seeded: dict[str, str]) -> None:
-    """Astra, #771 finding 2: parking three items sent three frames."""
-    status, body = hub.call("POST", "/api/workbenches", {"name": "Bulk fence"})
-    assert status == 201, body
-    workbench = body["workbench"]["id"]
-    items = []
-    for title in ("one", "two", "three"):
-        status, body = hub.call("POST", f"/api/workbenches/{workbench}/items", {"title": title})
-        assert status == 201, body
-        items.append(body["item"]["id"])
+    """Astra, #771 finding 2: parking three items sent three frames.
 
-    for verb in ("park", "restore"):
-        answer: list[tuple[int, Any]] = []
-        frames = hub.frames_from(lambda: answer.append(
-            hub.call("POST", f"/api/workbenches/{workbench}/items/{verb}", {"item_ids": items})))
-        assert answer[0][0] == 200, answer
-        assert len(frames) == 1, f"{verb}: {frames}"
-        named = {change["id"] for change in frames[0]["changes"]}
-        assert set(items) <= named, f"{verb}: the frame names {named}, not every item of {items}"
+    The bulk park/restore routes are parked (#2039); the live bulk write is
+    the desk's arrange: three windows, one transaction, one frame naming each.
+    """
+    windows = ("chair:brief", "chair:week", "surface-meetings")
+    for window_id in windows:
+        status, body = hub.call("POST", f"/api/desk/windows/{window_id}/open", {})
+        assert status == 200, body
+    rects = {window_id: {"x": f"{index * 10}%", "y": "-1/2", "w": "1/4", "h": "100%"}
+             for index, window_id in enumerate(windows)}
+    answer: list[tuple[int, Any]] = []
+    frames = hub.frames_from(lambda: answer.append(
+        hub.call("POST", "/api/desk/windows/arrange", {"rects": rects})))
+    assert answer[0][0] == 200, answer
+    assert len(frames) == 1, frames
+    named = {change["id"] for change in frames[0]["changes"]}
+    assert set(windows) <= named, f"the frame names {named}, not every window of {windows}"
 
 
 def test_an_admitted_write_with_no_http_request_sends_one_frame(hub: Hub, seeded: dict[str, str]) -> None:

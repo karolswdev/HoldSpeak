@@ -41,6 +41,7 @@ ID_COLLECTIONS = (
 
 
 _DERIVED: dict[tuple[str, str], str | None] = {}
+_UNDERIVABLE: dict[tuple[str, str], str] = {}  # why a generated view could not be derived
 
 
 def _parked_twin(root: Path, relative: str) -> str | None:
@@ -61,7 +62,11 @@ def _derived_inventory(root: Path, inventory_path: str) -> str | None:
         return None
     key = (str(root), inventory_path)
     if key not in _DERIVED:
-        _DERIVED[key] = _derive(root, inventory_path)
+        try:
+            _DERIVED[key] = _derive(root, inventory_path)
+        except Exception as exc:  # noqa: BLE001 - an underivable view is "does not exist", with its cause
+            _DERIVED[key] = None
+            _UNDERIVABLE[key] = f"{exc.__class__.__name__}: {exc}"
     return _DERIVED[key]
 
 
@@ -80,8 +85,6 @@ def _derive(root: Path, inventory_path: str) -> str | None:
         from generate_capability_docs import generate
 
         return generate(root).get(inventory_path)
-    except Exception:  # noqa: BLE001 - an underivable view is "does not exist"
-        return None
     finally:
         sys.path.remove(scripts)
 
@@ -95,7 +98,8 @@ def _load_inventory(root: Path, inventory_path: str) -> tuple[Any, str | None]:
     else:
         derived = _derived_inventory(root, inventory_path)
         if derived is None:
-            return None, "does not exist in the tree"
+            cause = _UNDERIVABLE.get((str(root), inventory_path))
+            return None, f"does not exist in the tree ({cause})" if cause else "does not exist in the tree"
         text = derived
     try:
         return json.loads(text), None
