@@ -606,9 +606,11 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     surface: {
       eyebrow: "Decided",
       sprite: "decision",
-      minW: 520,
-      defaultW: 680,
-      defaultH: 600,
+      // The rail and a picked record side by side (the native app): never
+      // narrower than the two, so a desk window keeps the rail beside it.
+      minW: 600,
+      defaultW: 920,
+      defaultH: 640,
       load: () =>
         import("../pages/cores/DecisionsCore").then((module) => ({
           default: module.DecisionsCore,

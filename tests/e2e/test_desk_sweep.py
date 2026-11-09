@@ -265,6 +265,8 @@ def _cases() -> tuple[list[tuple[str, str, str | None]], dict[str, str]]:
     cases += [
         ("room", "surface-project-memory", "project:{room}"),
         ("meeting", "surface-meetings", "meeting:{meeting}"),
+        # The Decisions app (2026-11-08): a picked record (the mast, the plate, the ledger).
+        ("decision-record", "surface-decisions", "record:{decision_record}"),
         ("note", "pullout:note:{note}", None),
         ("person", "pullout:people:{person}", None),
         # Programs (2026-10-28): a Program's window (the board of direction
@@ -511,6 +513,9 @@ def desk(tmp_path_factory: pytest.TempPathFactory, pw_browser: Any) -> Any:
             program_rounds = _seed_rounds_program(page, tmp)
             briefing, program_held = _seed_briefing(page, tmp)
             program_done, program_child = _seed_done_program(page, tmp)
+            # The Decisions app (2026-11-08): a record picked, by its scope.
+            decision_record = next(row["record_id"] for row in _api(
+                page, "GET", "/api/decisions/ledger?limit=50", token=TOKEN)["decisions"] if row.get("record_id"))
             ctx.close()
             _seed_finished_receipts()
             automation = _seed_automation(note_id)
@@ -518,7 +523,8 @@ def desk(tmp_path_factory: pytest.TempPathFactory, pw_browser: Any) -> Any:
             yield {"base": base, "room": room, "meeting": "m-standup", "person": week["priya"], "note": note_id,
                    "automation": automation, "program": program_id, "automation_program": automation_program,
                    "program_draft": program_draft, "program_rounds": program_rounds, "briefing": briefing,
-                   "program_held": program_held, "program_done": program_done, "program_child": program_child}
+                   "program_held": program_held, "program_done": program_done, "program_child": program_child,
+                   "decision_record": decision_record}
         finally:
             server.stop()
 

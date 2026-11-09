@@ -7,7 +7,7 @@
  * (pullouts/views/_parked/DecisionsView_20261108.test.tsx) that the native
  * face keeps are here: search and Current only by the hub, Show more, a
  * late answer dropped, every row's door, the reader's verbs. */
-import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import HONEST_DECISIONS from "../../../test/wire/decisions.honest-faces.wire.json";
 import CREATED_PROGRAM from "../../../desk/programs/__fixtures__/program.create_project.json";
@@ -48,6 +48,7 @@ import { DecisionsCore } from "../DecisionsCore";
 import { DESK_APPLICATIONS } from "../../../desk/applications";
 import { useDesk } from "../../../desk/store";
 
+const rail = () => within(screen.getByTestId("decisions-rail"));
 const params = (path: string) => new URLSearchParams(path.split("?")[1] ?? "");
 
 /** A record (DecisionRecordService.get), as the parked list page's cases had it. */
@@ -133,25 +134,43 @@ describe("Decisions: the rail", () => {
     expect(tone("Use OTel for tracing")).toBe("brass");
     expect(tone("Freeze the old ledger")).toBe("steel");
     expect(tone("Keep the old ledger")).toBe("graphite");
-    // With nothing picked, the plate is the proposal that waits on him.
-    const plate = screen.getByTestId("decisions-plate");
-    expect(plate.textContent).toContain("Use OTel for tracing");
-    expect(screen.getByTestId("decisions-status").textContent).toContain("4 decisions");
   });
 
-  it("an empty desk is the decision object, one line, New decision", async () => {
+  it("on open the first record is picked (the one that waits on him, else the newest); the plate leads with its own verb", async () => {
+    render(<DecisionsCore />);
+    // No proposal has a record here: the newest record is picked, beside the rail.
+    expect((await screen.findByTestId("decision-reader-title")).textContent).toBe(detail.decision_text);
+    const row = screen.getAllByTestId("decisions-row").find((r) => r.textContent?.includes(detail.decision_text))!;
+    expect(within(row).getByRole("button").getAttribute("aria-current")).toBe("true");
+    expect(screen.getByTestId("decision-spine")).toBeTruthy();
+    expect(screen.getByTestId("decision-reader-commit").textContent).toBe("Commit");
+    expect(screen.queryByRole("button", { name: /^Open$/ })).toBeNull();
+    // A proposal with a record comes first.
+    ledger.push({ ...ledger[3], id: "d-prop", text: "Adopt OpenTelemetry", record_id: "rec-prop" });
+    try {
+      apiFetch.mockImplementation((path: string) => path === "/api/decision-records/rec-prop"
+        ? Promise.resolve({ ...detail, id: "rec-prop", title: "Adopt OpenTelemetry", decision_text: "Adopt OpenTelemetry", status: "proposed", source_type: "desk", source_id: "d-prop" })
+        : hub(path));
+      cleanup();
+      render(<DecisionsCore />);
+      expect((await screen.findByTestId("decision-reader-accept")).textContent).toBe("Decide");
+      expect(screen.getByTestId("decision-reader-title").textContent).toBe("Adopt OpenTelemetry");
+    } finally {
+      ledger.pop();
+    }
+  });
+
+  it("an empty desk: the plate is New decision itself", async () => {
     apiFetch.mockImplementation(async () => ({ decisions: [], page: { total: 0 } }));
     const createPrimitive = vi.fn(async () => undefined);
     const before = useDesk.getState().createPrimitive;
     useDesk.setState({ createPrimitive } as never);
     try {
-      const { container } = render(<DecisionsCore />);
-      const line = await screen.findByText("No decisions yet");
-      expect(line.className).toBe("surface-state-line");
-      expect(container.querySelector(".surface-state-object")?.getAttribute("data-kind")).toBe("decision");
-      const verbs = screen.getAllByRole("button", { name: /New decision/ });
-      fireEvent.click(verbs[verbs.length - 1]);
-      expect(createPrimitive).toHaveBeenCalledWith("decision", {});
+      render(<DecisionsCore />);
+      const plate = await screen.findByRole("group", { name: "New decision" });
+      fireEvent.change(within(plate).getByRole("textbox", { name: "Decision title" }), { target: { value: "Use one ledger" } });
+      fireEvent.click(within(plate).getByRole("button", { name: /Create/ }));
+      expect(createPrimitive).toHaveBeenCalledWith("decision", { title: "Use one ledger" });
     } finally {
       useDesk.setState({ createPrimitive: before } as never);
     }
@@ -159,13 +178,13 @@ describe("Decisions: the rail", () => {
 
   it("the hub searches; Current only asks the hub for standing decisions", async () => {
     render(<DecisionsCore />);
-    await screen.findByText("Keep the old ledger");
+    await rail().findByText("Keep the old ledger");
     fireEvent.click(screen.getByRole("checkbox", { name: "Current only" }));
-    await waitFor(() => expect(screen.queryByText("Keep the old ledger")).toBeNull());
+    await waitFor(() => expect(rail().queryByText("Keep the old ledger")).toBeNull());
     expect(apiFetch).toHaveBeenCalledWith("/api/decisions/ledger?current=true&limit=100&offset=0");
     fireEvent.change(screen.getByRole("searchbox", { name: "Search decisions" }), { target: { value: "cutover freeze" } });
-    await waitFor(() => expect(screen.queryByText(detail.decision_text)).toBeNull());
-    expect(screen.getByText("Freeze the old ledger on Nov 5")).toBeInTheDocument();
+    await waitFor(() => expect(rail().queryByText(detail.decision_text)).toBeNull());
+    expect(rail().getByText("Freeze the old ledger on Nov 5")).toBeInTheDocument();
     expect(apiFetch).toHaveBeenCalledWith("/api/decisions/ledger?q=cutover+freeze&current=true&limit=100&offset=0");
   });
 
@@ -204,17 +223,17 @@ describe("Decisions: the rail", () => {
     const field = screen.getByRole("searchbox", { name: "Search decisions" });
     fireEvent.change(field, { target: { value: "alpha" } });
     await step(200);
-    expect(screen.getByText("Alpha decision")).toBeTruthy();
+    expect(rail().getByText("Alpha decision")).toBeTruthy();
     act(() => bus.handlers.forEach((handler) => handler({ type: "desk_changed", data: {} })));
     await step(300);
     expect(alphaReads).toBe(2);
     fireEvent.change(field, { target: { value: "beta" } });
     await step(200);
-    expect(screen.getByText("Beta decision")).toBeTruthy();
+    expect(rail().getByText("Beta decision")).toBeTruthy();
     await act(async () => { releaseAlpha(page("Alpha decision")); });
     await step(50);
-    expect(screen.getByText("Beta decision")).toBeTruthy();
-    expect(screen.queryByText("Alpha decision")).toBeNull();
+    expect(rail().getByText("Beta decision")).toBeTruthy();
+    expect(rail().queryByText("Alpha decision")).toBeNull();
   });
 });
 
