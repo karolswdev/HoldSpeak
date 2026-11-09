@@ -2,6 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-09 · pipe/lane-tool `scripts/lane.sh` new/done/purge/ls: a lane links the shared `web/node_modules`, clones the built output and syncs without npm (5.6 s); purge removes merged (squash-aware) clean lanes and never touches an active one; `hatch_build.py` skips `npm ci` on a linked install. Purge run: 170 worktrees removed, 82 GB freed, 28 kept.
 - 2026-11-09 · #2105 Handover and STATUS: the walk standard. Quick check GREEN on ea36a0e0c; the hub redeployed there; the ten-app morning walk posted (7d61d02def34).
 - 2026-11-09 · #2104 Every native app carries its walk (owner: "why is this not a standard thing for each native app?"): an app declares `walk:` in `applications.ts` with its script in `web/src/desk/walks/`; every native mast ends with Show me, which runs the walk in place on the one WalkRunner and files Keep/Redo, words and the shot through the one answer route; ten scripts; `scripts/walk.py apps` posts them as one morning link.
 - 2026-11-09 · #2103 Handover: the hub on the night's final green head; STATUS #2099–#2102.

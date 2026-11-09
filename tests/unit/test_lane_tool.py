@@ -59,9 +59,9 @@ def test_ls_names_merged_and_unmerged_lanes(tmp_path: Path) -> None:
     result = _lane(main, "ls")
     assert result.returncode == 0, result.stderr
     rows = _rows(result.stdout)
-    assert result.stdout.splitlines()[0].split() == ["NAME", "BRANCH", "MERGED", "CLEAN", "VENV", "SIZE"]
-    assert rows["wt-merged"][1:5] == ["merged", "yes", "yes", "no"]
-    assert rows["wt-work"][1:5] == ["work", "no", "no", "yes"]
+    assert result.stdout.splitlines()[0].split() == ["NAME", "BRANCH", "MERGED", "CLEAN", "VENV", "STATE", "SIZE"]
+    assert rows["wt-merged"][1:6] == ["merged", "yes", "yes", "no", "done"]
+    assert rows["wt-work"][1:6] == ["work", "no", "no", "yes", "active"]
     assert rows["Main"][1] == "main"
 
 
@@ -89,3 +89,31 @@ def test_new_refuses_a_lock_file_the_shared_install_does_not_match(tmp_path: Pat
     assert result.returncode == 1
     assert "package-lock.json differs" in result.stderr
     assert not (tmp_path / "wt-y").exists()
+
+
+def test_purge_removes_merged_clean_lanes_and_leaves_active_ones_whole(tmp_path: Path) -> None:
+    main = _repo(tmp_path)
+    merged = tmp_path / "wt-merged"
+    _git(main, "worktree", "add", "-q", str(merged), "-b", "merged", "origin/main")
+    work = tmp_path / "wt-work"
+    _git(main, "worktree", "add", "-q", str(work), "-b", "work", "origin/main")
+    (work / "a.txt").write_text("a\n")
+    _git(work, "add", "a.txt")
+    _git(work, "-c", "user.email=t@t", "-c", "user.name=t", "commit", "-q", "-m", "two")
+    (work / ".venv").mkdir()
+
+    fresh = _lane(main, "purge")  # both lanes moved seconds ago: nothing is touched
+    assert fresh.returncode == 0, fresh.stderr
+    assert merged.exists() and (work / ".venv").exists()
+    assert "active: moved in the last 2 h" in fresh.stdout
+
+    env_old = {"HOLDSPEAK_LANE_MIN_AGE_H": "0"}
+    old = subprocess.run(
+        ["/bin/bash", str(LANE), "purge"], cwd=main, capture_output=True, text=True,
+        env={**os.environ, **env_old},
+    )
+    assert old.returncode == 0, old.stderr
+    assert not merged.exists()
+    assert work.exists() and (work / ".venv").exists()  # an unmerged lane keeps its installs
+    assert "active: not merged" in old.stdout
+    assert "removed 1 worktrees" in old.stdout

@@ -5,7 +5,8 @@
 #                                       uv sync --extra dev (no npm), print the path
 #   scripts/lane.sh done <name>         drop the installs, remove the worktree,
 #                                       delete the branch when merged
-#   scripts/lane.sh purge               drop every lane's installs; remove merged+clean lanes
+#   scripts/lane.sh purge               remove merged+clean lanes with their installs;
+#                                       an unmerged or dirty lane is active and untouched
 #   scripts/lane.sh ls                  one line per worktree
 #
 # A lane links web/node_modules to the main checkout's install (never its own copy)
@@ -14,7 +15,8 @@
 #   HOLDSPEAK_SERVED_TREE   worktree that serves the hub; purge never touches it
 #                           (default wt-desk-main-20261025)
 #   HOLDSPEAK_LANE_NO_SYNC  1 = skip uv sync in `new` (tests)
-#   HOLDSPEAK_LANE_MIN_AGE_H  purge keeps a lane with git activity in the last N hours (default 2)
+#   HOLDSPEAK_LANE_MIN_AGE_H  purge leaves alone (installs too) a lane whose HEAD or any
+#                           file moved in the last N hours (default 2)
 #   HOLDSPEAK_LANE_BASE     ref that "merged" means (default origin/main, else main)
 # Bash 3.2 compatible (macOS /bin/bash).
 
@@ -47,8 +49,24 @@ worktrees() {
     END          { if (p != "") print p "\t" b "\t" h }'
 }
 
+# Squash merges leave the lane's tip outside main's history, so "merged" also means:
+# the tip is the head of a merged pull request on GitHub (one gh call per run).
+MERGED_HEADS=""
+merged_heads() {
+  if [ -z "$MERGED_HEADS" ]; then
+    MERGED_HEADS="$(mktemp)"; trap 'rm -f "$MERGED_HEADS"' EXIT
+    if command -v gh >/dev/null && git -C "$MAIN" remote get-url origin 2>/dev/null | grep -q github.com; then
+      (cd "$MAIN" && gh pr list --state merged --limit 3000 --json headRefOid -q '.[].headRefOid' \
+        > "$MERGED_HEADS" 2>/dev/null) || echo "lane: gh failed; merged means in $(base_ref)'s history only" >&2
+    fi
+  fi
+  echo "$MERGED_HEADS"
+}
+
 is_merged() {  # head sha
-  [ -n "$1" ] && git -C "$MAIN" merge-base --is-ancestor "$1" "$(base_ref)" 2>/dev/null
+  [ -n "$1" ] || return 1
+  git -C "$MAIN" merge-base --is-ancestor "$1" "$(base_ref)" 2>/dev/null && return 0
+  grep -qx "$1" "$(merged_heads)"
 }
 
 dirty_files() {  # path; prints porcelain lines (ignored files excluded)
@@ -62,12 +80,13 @@ label() {  # path -> short name: the directory beside the main checkout, else th
 size_of() { du -sh "$1" 2>/dev/null | awk '{print $1}'; }
 kb_of() { du -sk "$1" 2>/dev/null | awk '{print $1}'; }
 
-hours_since_activity() {  # path
-  local gd log now mt
-  gd="$(git -C "$1" rev-parse --path-format=absolute --git-dir 2>/dev/null)" || { echo 999; return; }
-  log="$gd/logs/HEAD"; [ -f "$log" ] || log="$gd/HEAD"
-  now="$(date +%s)"; mt="$(stat -f %m "$log" 2>/dev/null || stat -c %Y "$log")"
-  echo $(( (now - mt) / 3600 ))
+recently_active() {  # path; true when git moved HEAD or a tracked-tree file changed in the last MIN_AGE_H hours
+  local gd mins=$((MIN_AGE_H * 60))
+  [ "$mins" -gt 0 ] || return 1
+  gd="$(git -C "$1" rev-parse --path-format=absolute --git-dir 2>/dev/null)" || return 1
+  [ -n "$(find "$gd/logs/HEAD" "$gd/HEAD" -mmin "-$mins" 2>/dev/null | head -1)" ] && return 0
+  [ -n "$(find "$1" \( -path "$1/.venv" -o -path "$1/web/node_modules" -o -path "$1/.git" \) -prune \
+          -o -type f -mmin "-$mins" -print 2>/dev/null | head -1)" ]
 }
 
 cmd_new() {
@@ -161,20 +180,21 @@ cmd_done() {
 }
 
 cmd_ls() {
-  local path branch head merged clean venv size
-  printf '%-44s %-44s %-6s %-5s %-5s %s\n' NAME BRANCH MERGED CLEAN VENV SIZE
+  local path branch head merged clean venv size state
+  printf '%-44s %-44s %-6s %-5s %-5s %-6s %s\n' NAME BRANCH MERGED CLEAN VENV STATE SIZE
   while IFS="$(printf '\t')" read -r path branch head; do
     [ -d "$path" ] || { printf '%-44s %-44s %s\n' "$(label "$path")" "$branch" "(missing; git worktree prune)"; continue; }
     if is_merged "$head"; then merged=yes; else merged=no; fi
     if [ -z "$(dirty_files "$path")" ]; then clean=yes; else clean=no; fi
     if [ -d "$path/.venv" ]; then venv=yes; else venv=no; fi
+    if [ "$merged$clean" = yesyes ]; then state=done; else state=active; fi
     size="$(size_of "$path")"
-    printf '%-44s %-44s %-6s %-5s %-5s %s\n' "$(label "$path")" "$branch" "$merged" "$clean" "$venv" "$size"
+    printf '%-44s %-44s %-6s %-5s %-5s %-6s %s\n' "$(label "$path")" "$branch" "$merged" "$clean" "$venv" "$state" "$size"
   done < <(worktrees)
 }
 
 cmd_purge() {
-  local path branch head name kb freed=0 removed=0 kept=0 action why age
+  local path branch head name kb freed=0 removed=0 kept=0 action why
   git -C "$MAIN" fetch -q origin 2>/dev/null || echo "lane: fetch failed; using the local refs" >&2
   printf '%-44s %-8s %8s  %s\n' NAME ACTION FREED WHY
   while IFS="$(printf '\t')" read -r path branch head; do
@@ -184,27 +204,17 @@ cmd_purge() {
     fi
     [ -d "$path" ] || continue
     kb=0; action=kept
-    if is_merged "$head" && [ -z "$(dirty_files "$path")" ]; then
-      age="$(hours_since_activity "$path")"
-      if [ "$age" -lt "$MIN_AGE_H" ]; then
-        why="merged and clean, but active ${age} h ago (a new lane)"
-      else
-        kb="$(kb_of "$path")"
-        drop_installs "$path"
-        git -C "$MAIN" worktree remove --force "$path"
-        if [ "$branch" != "(detached)" ]; then git -C "$MAIN" branch -q -D "$branch" 2>/dev/null || true; fi
-        action=removed; why="merged into $(base_ref) and clean"
-      fi
+    if recently_active "$path"; then
+      why="active: moved in the last ${MIN_AGE_H} h"
+    elif is_merged "$head" && [ -z "$(dirty_files "$path")" ]; then
+      kb="$(kb_of "$path")"
+      drop_installs "$path"
+      git -C "$MAIN" worktree remove --force "$path"
+      if [ "$branch" != "(detached)" ]; then git -C "$MAIN" branch -q -D "$branch" 2>/dev/null || true; fi
+      action=removed; why="merged into $(base_ref) and clean"
     else
-      if is_merged "$head"; then why="has changes"; else why="not merged into $(base_ref)"; fi
-      if [ -d "$path/.venv" ] || { [ -d "$path/web/node_modules" ] && [ ! -L "$path/web/node_modules" ]; }; then
-        [ -d "$path/.venv" ] && kb=$((kb + $(kb_of "$path/.venv")))
-        if [ -d "$path/web/node_modules" ] && [ ! -L "$path/web/node_modules" ]; then
-          kb=$((kb + $(kb_of "$path/web/node_modules"))); rm -rf "$path/web/node_modules"
-        fi
-        rm -rf "$path/.venv"
-        action=slimmed; why="$why; installs removed"
-      fi
+      # An unmerged or dirty tree is a running lane: its installs stay.
+      if is_merged "$head"; then why="active: has changes"; else why="active: not merged into $(base_ref)"; fi
     fi
     if [ "$action" = removed ]; then removed=$((removed + 1)); else kept=$((kept + 1)); fi
     freed=$((freed + kb))
@@ -214,6 +224,7 @@ cmd_purge() {
   echo "removed $removed worktrees, kept $kept, freed $((freed / 1024 / 1024)) GB ($((freed / 1024)) MB)"
 }
 
+case "${1:-}" in done|purge|ls) merged_heads >/dev/null ;; esac
 case "${1:-}" in
   new) shift; cmd_new "$@" ;;
   done) shift; cmd_done "$@" ;;
