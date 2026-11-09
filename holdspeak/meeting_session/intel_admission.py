@@ -1,10 +1,10 @@
-"""Admitted meeting intelligence: one session parent, one child per dispatch (HS-131-08).
+"""Admitted meeting intelligence: one session parent, one door job per call (HS-131-08).
 
-Every ACTUAL meeting-intelligence provider dispatch during a live session runs
-as one trusted ``inference.invoke@1`` child of a single authenticated
-``meeting.session`` parent. Nothing here resolves placement: the frozen
-:class:`~holdspeak.meeting_session.intel_plan.MeetingIntelPlan` decided that at
-admission, and a capability missing from the plan is a named refusal.
+Every model call of a live session (transcription, live analysis, bookmark
+labels, the title) runs through the engine door as a trusted
+``inference.invoke@1`` child of a single authenticated ``meeting.session``
+parent. The door names the engine from the owner's live assignment; the
+kernel receipt of each child records which engine answered.
 
 Transcript, bookmark context, and prompt material ride ONLY inside the
 dispatched payload. The payload is hashed into the service contract; the kernel
@@ -38,10 +38,13 @@ from .intel_plan import (
     SESSION_NOT_ADMITTED,
 )
 from .transcribe_admission import (
+    SPEECH_JOB,
     TRANSCRIPTION_INTERVAL_SECONDS,
     TRANSCRIPTION_NOT_ADMITTED,
+    RoutedMeetingTranscriptionAdmission,
     TranscribeAdmissionMixin,
     session_child_budget,
+    speech_evidence,
 )
 
 log = get_logger("meeting_session")
@@ -58,9 +61,8 @@ from .intel_routed_children import (
     ROUTE_AUTO_TITLE,
     ROUTE_BOOKMARK_LABEL,
     ROUTE_LIVE_ANALYSIS,
+    LIVE_JOBS,
     displaced_work_for_stop,
-    live_intel_budget_group,
-    live_intel_route_declarations,
     WINDOW_DEADLINE_SECONDS,
     WINDOW_SUPERSEDED,
 )
@@ -94,12 +96,19 @@ class IntelAdmissionMixin(IntelRoutedChildMixin, TranscribeAdmissionMixin):
             self._state.intel_status_detail = detail
 
     def _admit_intel_session(self) -> bool:
-        """Atomically admit the OWNER Meeting parent and complete live bundle."""
+        """Admit the OWNER Meeting parent and read the engines its jobs run on.
+
+        The engine door names each job's engine from the owner's live
+        assignment (``engine_door.engine_for``). A text job reads it again at
+        each call; transcription keeps the one it started with, because the
+        transcriber is built for it. Nothing is planned or frozen.
+        """
         self._intel_refusal = ""
         self._transcription_refusal = ""
-        self._intel_plan = None  # v1 reader only; production sessions use the bundle.
+        self._intel_plan = None
         self._intel_parent = None
-        self._route_bundle = None
+        self._live_engines = None
+        self._speech_evidence = None
         self._intel_closed = False
         self._intel_live = False
         if self._state is None:
@@ -112,96 +121,55 @@ class IntelAdmissionMixin(IntelRoutedChildMixin, TranscribeAdmissionMixin):
             )
             log.warning("meeting session refused: %s", PRINCIPAL_REQUIRED)
             return False
-        requested = tuple(self._requested_remote_device_ids)
-        # HS-151-07: probe whether a speech.transcribe assignment head exists
-        # BEFORE declaring routes.  A fresh HOME without the speech migration
-        # (or one whose migration recorded an issue) has no head; the bundle
-        # excludes transcription + preload and surfaces honest record_only.
-        from ..services.inference_assignment_service import InferenceAssignmentService
+        from dataclasses import replace
+
+        from ..services import engine_door
 
         broker = self._intel_broker()
-        has_speech_head = False
-        try:
-            with broker.database._connection() as conn:
-                has_speech_head = InferenceAssignmentService._head(
-                    conn, "capability:speech.transcribe"
-                ) is not None
-        except Exception:
-            pass
+        jobs = list(LIVE_JOBS) if self.intel_enabled else []
+        jobs.append(SPEECH_JOB)
+        engines: dict[str, Any] = {}
+        for job in jobs:
+            try:
+                engines[job] = engine_door.engine_for(broker, job)
+            except engine_door.EngineDoorError:
+                continue
+        if SPEECH_JOB in engines:
+            # The transcriber is built for this engine: no retry on another.
+            engines[SPEECH_JOB] = replace(engines[SPEECH_JOB], fallback=None)
+        if not engines or (not self.intel_enabled and SPEECH_JOB not in engines):
+            # Nothing this Meeting asks for has an engine.
+            what = "intelligence" if self.intel_enabled else "transcription"
+            self._refuse_session(
+                "no_assignment",
+                f"Meeting {what} refused: no_assignment. Recording continues.",
+            )
+            log.warning("meeting %s refused: no_assignment", what)
+            return False
         interval_count = int(
             (SESSION_DEADLINE_SECONDS + TRANSCRIPTION_INTERVAL_SECONDS - 1)
             // TRANSCRIPTION_INTERVAL_SECONDS
         )
-        source_count = 2 + len(requested)  # mic + system + frozen requested remotes
-        transcription_budget = 2 * source_count * (interval_count + 1) + 2
-        # The caller's mutable ModelConfig may establish the migration input but
-        # is never execution authority.  Candidate/model/language material is
-        # derived inside bundle admission from the frozen speech deployment.
-        # Reserve the one bounded lifecycle child up front; a matching already
-        # warm instance simply leaves that capacity unused.
-        preload_budget = 1
-        preload_declaration = {
-            "key": "preload",
-            "source_key": "transcription",
-            "candidate_material": [],
-            "strategy_sequence": ["derive-from-frozen-transcription"],
-        } if has_speech_head else None
-        intel_routes: list[dict[str, str]] = []
-        if self.intel_enabled:
-            intel_routes.extend(live_intel_route_declarations(self._state.id))
-        if has_speech_head:
-            intel_routes.append(
-                {"key": "transcription", "capability_id": "speech.transcribe", "invocation_id": self._state.id},
-            )
-        budget_groups_list: list[dict[str, object]] = []
-        if self.intel_enabled:
-            budget_groups_list.append(live_intel_budget_group())
-        if has_speech_head:
-            budget_groups_list.append({
-                "id": "meeting-transcription",
-                "allocation": transcription_budget,
-                "member_keys": ["transcription"],
-            })
-            budget_groups_list.append({
-                "id": "meeting-preload",
-                "allocation": preload_budget,
-                "member_keys": ["preload"],
-            })
-        budget_groups = tuple(budget_groups_list)
-        if not intel_routes:
-            self._refuse_session(
-                "no_assignment",
-                "Meeting transcription refused: no_assignment. Recording continues.",
-            )
-            log.warning("meeting transcription refused: no_assignment")
-            return False
+        source_count = 2 + len(self._requested_remote_device_ids)  # mic + system + remotes
+        child_budget = (SESSION_CHILD_BUDGET if self.intel_enabled else 0) + (
+            2 * source_count * (interval_count + 1) + 3 if SPEECH_JOB in engines else 0
+        )
         try:
-            from ..services.inference_parent_route_bundle_service import InferenceParentRouteBundleService
-
             deadline = time.time() + SESSION_DEADLINE_SECONDS
-            started = InferenceParentRouteBundleService(
-                broker, broker.inference_adoption_service
-            ).start(
+            self._intel_parent = broker.parent_run_controller.start(
                 principal,
-                command_id=f"meeting-route-bundle:{self._state.id}",
-                parent_kind="meeting.session",
+                kind="meeting.session",
                 definition_ref=f"meeting:{self._state.id}:intel",
-                definition_revision="meeting-live-bundle-1",
+                definition_revision="meeting-live-door-1",
                 input_snapshot={
-                    "schema": "MeetingLiveBundleInput@1",
+                    "schema": "MeetingLiveSession@2",
                     "meeting_id": self._state.id,
                     "provenance": str(self._state.provenance or "desktop"),
-                    "deadline_at": deadline,
-                    "budget_groups": [
-                        {"id": group["id"], "allocation": group["allocation"]}
-                        for group in budget_groups
-                    ],
+                    "jobs": sorted(engines),
                 },
                 deadline_at=deadline,
-                routes=tuple(intel_routes),
-                budget_groups=budget_groups,
-                derived_preload=preload_declaration,
-                requested_remote_device_ids=requested,
+                child_budget=max(1, child_budget),
+                idempotency_key=f"meeting-session:{self._state.id}",
             )
         except Exception as exc:
             reason = str(getattr(exc, "code", "") or getattr(exc, "reason", "") or SESSION_NOT_ADMITTED)
@@ -211,31 +179,30 @@ class IntelAdmissionMixin(IntelRoutedChildMixin, TranscribeAdmissionMixin):
             )
             log.error("meeting session admission refused: %s (%s)", reason, exc)
             return False
-        self._intel_parent = started["parent"]
-        self._route_bundle = started["bundle"]
-        # HS-151-07: when the speech head was absent the bundle carries no
-        # transcription member and no derived preload.  Raw capture continues
-        # and the degradation is visible on the meeting state.
-        if not has_speech_head:
+        self._live_engines = engines
+        if SPEECH_JOB not in engines:
+            # Raw capture continues; the degradation is visible on the meeting.
             self._record_only({
                 "family": "speech-recognition-route-assignments",
                 "reason_code": "transcription_no_speech_assignment",
                 "repair": "repair_audio_model_lifecycle",
             })
             log.info(
-                "meeting intelligence bundle admitted (intel-only, no speech head): "
-                "parent=%s bundle=%s transcription_status=record_only",
+                "meeting intelligence admitted (no speech engine): parent=%s transcription_status=record_only",
                 self._intel_parent.operation_id,
-                self._route_bundle["id"],
             )
             return True
-        evidence = next(iter(self._route_bundle.get("derived_preloads", ())), None)
-        if not isinstance(evidence, Mapping):
+        try:
+            evidence = speech_evidence(broker.database, engines[SPEECH_JOB])
+        except Exception:
+            evidence = None
+        if evidence is None:
             self._refuse_session(
                 TRANSCRIPTION_NOT_ADMITTED,
                 "Meeting intelligence refused: frozen transcription evidence is missing. Recording continues.",
             )
             return False
+        self._speech_evidence = evidence
         self._frozen_transcription = {
             "backend": str(evidence["engine"]),
             "model": str(evidence["model"]),
@@ -244,38 +211,16 @@ class IntelAdmissionMixin(IntelRoutedChildMixin, TranscribeAdmissionMixin):
         }
         if self._frozen_transcription["backend"] in {"mlx", "faster-whisper"}:
             current = self.transcriber
-            # An unloaded instance has not yet been reused: it is the candidate
-            # that this newly admitted Meeting will warm under its own P=1 route.
-            # Only an already loaded artifact needs receipt-gated reuse proof.
+            # A loaded instance serves this Meeting only when its preload
+            # receipt names the same engine; otherwise it is rebuilt.
             if current is not None and bool(getattr(current, "loaded", False)):
-                from ..speech_session.transcription import _durable_preload_provenance_matches
-
-                reusable = _durable_preload_provenance_matches(
-                    broker,
-                    getattr(getattr(current, "_impl", None), "_holdspeak_preload_provenance", {}),
-                    deployment_revision_id=self._frozen_transcription["deployment_revision_id"],
-                    engine=self._frozen_transcription["backend"],
-                    model=self._frozen_transcription["model"],
-                    language=self._frozen_transcription["language"],
-                )
-                if not reusable:
-                    # Construction strings alone are not reuse authority.  A
-                    # matching deployment revision and durable successful
-                    # preload/load receipt are both required; faster-whisper has
-                    # no such separable receipt, so it reconstructs after route
-                    # admission.
+                admission = RoutedMeetingTranscriptionAdmission(self, "lifecycle", 0.0, 0.0, False)
+                if not admission.loaded_artifact_reusable(getattr(current, "_impl", None)):
                     self.transcriber = None
             self._resolved_transcription_backend = self._frozen_transcription["backend"]
             self._transcription_backend = self._frozen_transcription["backend"]
             self._transcription_model_name = self._frozen_transcription["model"]
-        # A fresh bundle-backed Meeting never reconstructs a legacy speech plan.
-        # The bundle's transcription member is the only execution authority;
-        # `SpeechSessionPlan` remains readable solely for pre-cutover history.
-        log.info(
-            "meeting intelligence bundle admitted: parent=%s bundle=%s",
-            self._intel_parent.operation_id,
-            self._route_bundle["id"],
-        )
+        log.info("meeting intelligence admitted: parent=%s", self._intel_parent.operation_id)
         return True
 
     def _record_only(self, issue: Mapping[str, Any]) -> None:
@@ -328,23 +273,14 @@ class IntelAdmissionMixin(IntelRoutedChildMixin, TranscribeAdmissionMixin):
         return "" if parent is None else str(parent.operation_id)
 
     def _unwind_started_bundle(self, stage: str) -> None:
-        """Fence a Phase-B bundle after a capture-start failure, if one exists."""
-        bundle = getattr(self, "_route_bundle", None)
-        if bundle is None or self.intel_principal is None or self._state is None:
+        """Cancel the admitted parent after a capture-start failure, if one exists."""
+        if self._intel_parent is None or self.intel_principal is None:
             return
         try:
-            from ..services.inference_parent_route_bundle_service import InferenceParentRouteBundleService
-
-            broker = self._intel_broker()
-            InferenceParentRouteBundleService(
-                broker, broker.inference_adoption_service
-            ).fence_cancel(
-                self.intel_principal,
-                command_id=f"meeting-start-abort:{self._state.id}:{stage}",
-                bundle_id=str(bundle["id"]),
-            )
+            self._cancel_intel_session()
+            self._finish_cancelled_intel_session()
         except Exception as exc:
-            log.error("meeting bundle unwind failed at %s: %s", stage, type(exc).__name__)
+            log.error("meeting parent unwind failed at %s: %s", stage, type(exc).__name__)
 
     def _close_intel_session(self, outcome: str = "succeeded") -> None:
         """Close the live parent with its honest terminal outcome, exactly once."""
@@ -450,13 +386,11 @@ class IntelAdmissionMixin(IntelRoutedChildMixin, TranscribeAdmissionMixin):
     # ----------------------------------------------------- the Stop fence
 
     def _handoff_intel_at_stop(self, state: Any) -> tuple[str, ...]:
-        """Fence live bundle work and reserve its deferred handoff atomically.
+        """Stop the live jobs, end the parent cancelled, queue the deferred work.
 
         The final transcription pass has already completed when this method is
-        entered.  It needs the still-open frozen transcription route, so this is
-        the first point at which the shared live-admission fence can close it.
-        A record-only Meeting has no bundle, but its pre-cutover deferred-work
-        predicate and Meeting-keyed legacy queue upsert remain exactly available.
+        entered. Each running door job is stopped (``engine_door.stop``); the
+        work the Meeting still owes is one queue upsert.
         """
         # The in-memory gate closes publication and fresh Meeting-side admission
         # before the durable parent fence.  `_apply_live_window()` rechecks this
@@ -481,71 +415,13 @@ class IntelAdmissionMixin(IntelRoutedChildMixin, TranscribeAdmissionMixin):
         from ..db import get_database
 
         database = get_database()
-
-        bundle = self._route_bundle
-        fenced = bundle is None or self.intel_principal is None
-        if bundle is not None and self.intel_principal is not None:
-            from ..services.inference_parent_route_bundle_service import InferenceParentRouteBundleService
-
-            broker = self._intel_broker()
-            provider = database.intel.stop_handoff_provider(
-                meeting_id=state.id,
-                transcript_hash=state.transcript_hash(),
-                displaced_work=tuple(displaced),
-                reason=detail,
-            ) if displaced else None
-            service = InferenceParentRouteBundleService(
-                broker,
-                broker.inference_adoption_service,
-                handoff_evidence_providers=(provider,) if provider is not None else (),
-            )
-            fence_error: Exception | None = None
-            for attempt in (1, 2):
-                try:
-                    if provider is None:
-                        effect = service.fence_cancel(
-                            self.intel_principal,
-                            command_id=f"meeting-stop:{state.id}",
-                            bundle_id=str(bundle["id"]),
-                        )
-                    else:
-                        effect = service.request_stop_handoff(
-                            self.intel_principal,
-                            command_id=f"meeting-stop:{state.id}",
-                            bundle_id=str(bundle["id"]),
-                            evidence_provider_id=provider.id,
-                            planning_reference=database.intel.stop_handoff_planning_reference(state.id),
-                        )
-                    log.info(
-                        "live meeting bundle stop handed off: bundle=%s routes=%s",
-                        effect["bundle_id"],
-                        len(effect["route_stops"]),
-                    )
-                    fenced = True
-                    break
-                except Exception as exc:
-                    fence_error = exc
-                    log.warning(
-                        "live meeting bundle handoff attempt %s failed: %s",
-                        attempt,
-                        type(exc).__name__,
-                    )
-            if not fenced:
-                assert fence_error is not None
-                # Unlike the B-era fallback, a failed C3 handoff must not write a
-                # separately runnable legacy row.  Recovery repeats this exact
-                # atomic request, which either creates the inert reservation with
-                # the fence or leaves neither durable effect behind.
-                database.meetings.mark_route_fence_pending(
-                    state.id, f"{type(fence_error).__name__}: {fence_error}"
-                )
-            elif not displaced:
-                # A speech-only bundle has no deferred adopter to settle the
-                # handoff fence.  Elect the ordinary cancelled parent receipt
-                # after the durable route fence, so speech ownership closes at
-                # Stop with a terminal parent outcome.
+        # The live parent ends cancelled: Stop is the owner's decision.
+        if self._intel_parent is not None and self.intel_principal is not None:
+            try:
+                self._cancel_intel_session()
+            finally:
                 self._finish_cancelled_intel_session()
-        elif displaced:
+        if displaced:
             try:
                 database.intel.enqueue_intel_job(
                     state.id,
@@ -556,6 +432,8 @@ class IntelAdmissionMixin(IntelRoutedChildMixin, TranscribeAdmissionMixin):
                 )
             except Exception as exc:
                 log.error("deferred intel handoff enqueue failed: %s", exc)
+                # Recovery (``recover_capture``) queues the same work again.
+                database.meetings.mark_route_fence_pending(state.id, f"{type(exc).__name__}: {exc}")
                 self._set_intel_status(
                     "error",
                     f"Deferred intelligence could not be queued: {exc}",
@@ -563,9 +441,6 @@ class IntelAdmissionMixin(IntelRoutedChildMixin, TranscribeAdmissionMixin):
                 )
                 return tuple(displaced)
 
-        # The old parent close/cancel path is intentionally not used for a bundle:
-        # the handoff primitive derives and fences the complete route set in one
-        # durable transaction, then performs best-effort physical child cancellation.
         self._intel_parent = None
         self._intel_closed = True
         if not displaced:

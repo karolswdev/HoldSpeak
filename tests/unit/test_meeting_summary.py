@@ -654,13 +654,9 @@ def test_summary_selection_then_real_queue_binder_freezes_selected_revision(
             "SELECT principal_kind,principal_identity,name FROM kernel_operations WHERE operation_id=?",
             (claimed.parent_operation_id,),
         ).fetchone()
-        frozen = conn.execute(
-            """SELECT p.capability_id,e.profile_id,e.profile_revision
-                 FROM inference_parent_route_bundle_members p
-                 JOIN inference_route_plan_entries e ON e.plan_id=p.route_plan_id
-                WHERE p.bundle_id=? AND p.capability_id=?""",
-            (claimed.bundle_id, "meeting.deferred_analysis"),
-        ).fetchone()
+    from holdspeak.services.meeting_route_projection import project_route
+
+    frozen = project_route(db)["legs"][0]
     assert operation is not None
     assert operation["principal_kind"] == "service"
     assert operation["principal_identity"] == QUEUE_SERVICE_IDENTITY

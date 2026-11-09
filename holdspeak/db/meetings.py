@@ -1051,10 +1051,9 @@ class MeetingRepository(BaseRepository):
     def recover_capture(self, meeting_id: str) -> Optional["MeetingState"]:
         """Finalize interrupted capture and converge its Stop fence/aftercare.
 
-        A process loss can occur before the Stop transaction begins, or after an
-        older build fenced without atomically retaining aftercare.  Recovery
-        therefore derives the same Meeting-keyed aftercare predicate and repeats
-        the idempotent fence from durable bundle evidence.
+        A process loss can occur before Stop queued its deferred work.  Recovery
+        derives the same Meeting-keyed aftercare predicate and queues it
+        (the queue upsert is idempotent).
         """
         meeting = self.get_meeting(meeting_id)
         if meeting is None:
@@ -1095,57 +1094,10 @@ class MeetingRepository(BaseRepository):
             )
             + " queued for deferred processing."
         )
-        # Bundles are scoped to Meeting IDs by their command identity.  Avoid
-        # reconstructing mutable runtime state: match the admitted definition.
-        with self._connection() as conn:
-            bundle = conn.execute(
-                """SELECT b.id,o.principal_kind,o.principal_identity
-                     FROM inference_parent_route_bundles b
-                     JOIN kernel_operations o ON o.operation_id=b.parent_operation_id
-                    WHERE b.command_id=?""",
-                (f"meeting-route-bundle:{meeting_id}",),
-            ).fetchone()
+        # The live session's parent run is settled by the kernel's abandoned
+        # parent reconciliation; recovery queues the work the Stop owed.
         try:
-            if bundle is not None:
-                from ..kernel.runtime import _service
-                from ..principals import Principal, PrincipalKind
-                from ..services.inference_parent_route_bundle_service import (
-                    InferenceParentRouteBundleService,
-                )
-
-                principal = Principal(
-                    PrincipalKind(str(bundle["principal_kind"])),
-                    str(bundle["principal_identity"]),
-                )
-                broker = _service()
-
-                provider = self._db.intel.stop_handoff_provider(
-                    meeting_id=meeting_id,
-                    transcript_hash=meeting.transcript_hash(),
-                    displaced_work=tuple(displaced),
-                    reason=detail,
-                ) if displaced else None
-                service = InferenceParentRouteBundleService(
-                    broker,
-                    broker.inference_adoption_service,
-                    handoff_evidence_providers=(provider,) if provider is not None else (),
-                )
-                if provider is None:
-                    service.fence_cancel(
-                        principal,
-                        command_id=f"meeting-recovery:{meeting_id}",
-                        bundle_id=str(bundle["id"]),
-                    )
-                else:
-                    service.request_stop_handoff(
-                        principal,
-                        command_id=f"meeting-recovery:{meeting_id}",
-                        bundle_id=str(bundle["id"]),
-                        evidence_provider_id=provider.id,
-                        planning_reference=self._db.intel.stop_handoff_planning_reference(meeting_id),
-                    )
-                self.clear_route_fence_pending(meeting_id)
-            elif displaced:
+            if displaced:
                 self._db.intel.enqueue_intel_job(
                     meeting_id,
                     transcript_hash=meeting.transcript_hash(),
@@ -1153,6 +1105,8 @@ class MeetingRepository(BaseRepository):
                     displaced_work=tuple(displaced),
                     legacy_displaced_work=True,
                 )
+            if pending_fence:
+                self.clear_route_fence_pending(meeting_id)
         except Exception as exc:
             self.mark_route_fence_pending(meeting_id, f"{type(exc).__name__}: {exc}")
             log.error("meeting capture recovery fence failed: %s", type(exc).__name__)

@@ -258,16 +258,14 @@ def test_deferred_intel_runs_the_chain_when_router_enabled(env, monkeypatch, tmp
     refreshed = db.meetings.get_meeting("m84")
     assert refreshed.intel_status == "ready"
     assert "Meeting intelligence ready" in (refreshed.intel_status_detail or "")
-    # C2 freezes the routed installed set in the bound bundle, then each plugin
-    # executes as its own routed child and publishes an artifact from the exact
+    # C2 freezes the installed set in the job's descriptor, then each plugin
+    # executes as its own door job and publishes an artifact from the exact
     # inner output.  Config-time host planning is not consulted by this path.
     assert db.plugins.list_artifacts("m84")
-    with db._connection() as conn:
-        members = conn.execute(
-            """SELECT capability_id FROM inference_parent_route_bundle_members
-               WHERE capability_id LIKE 'meeting.plugin.%'"""
-        ).fetchall()
-    assert members
+    from holdspeak.meeting_session.deferred_bound import job_capabilities
+
+    job = db.intel.get_latest_intel_job("m84")
+    assert any(capability.startswith("meeting.plugin.") for capability in job_capabilities(job))
 
 
 def test_deferred_intel_retains_base_analysis_when_routed_work_fails(

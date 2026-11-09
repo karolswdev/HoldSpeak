@@ -1,4 +1,4 @@
-"""Frozen route execution children for a live meeting session."""
+"""The live Meeting's text jobs, each one call through the engine door."""
 
 from __future__ import annotations
 
@@ -40,22 +40,8 @@ LABEL_DEADLINE_SECONDS = 120.0
 WINDOW_SUPERSEDED = "meeting_live_window_superseded"
 
 
-def live_intel_route_declarations(invocation_id: str) -> list[dict[str, str]]:
-    """Declare the three optional text routes for a live intel session."""
-    return [
-        {"key": "live-analysis", "capability_id": ROUTE_LIVE_ANALYSIS, "invocation_id": invocation_id},
-        {"key": "bookmark-label", "capability_id": ROUTE_BOOKMARK_LABEL, "invocation_id": invocation_id},
-        {"key": "auto-title", "capability_id": ROUTE_AUTO_TITLE, "invocation_id": invocation_id},
-    ]
-
-
-def live_intel_budget_group() -> dict[str, object]:
-    """Return the fixed child budget for the optional live text routes."""
-    return {
-        "id": "meeting-intelligence",
-        "allocation": 4096,
-        "member_keys": ["live-analysis", "bookmark-label", "auto-title"],
-    }
+#: The live text jobs a Meeting with intelligence runs through the door.
+LIVE_JOBS = (ROUTE_LIVE_ANALYSIS, ROUTE_BOOKMARK_LABEL, ROUTE_AUTO_TITLE)
 
 
 def displaced_work_for_stop(state: Any, intelligence_enabled: bool) -> tuple[str, ...]:
@@ -122,16 +108,12 @@ class _MeetingRoutedAdapter:
 
 
 class IntelRoutedChildMixin:
-    """Live provider work through frozen route-bundle members only."""
+    """Live provider work through the engine door only."""
 
-    def _bundle_member(self, capability: str) -> Mapping[str, Any] | None:
-        bundle = self._route_bundle
-        if bundle is None:
-            return None
-        return next(
-            (member for member in bundle.get("members", ()) if member["capability_id"] == capability),
-            None,
-        )
+    def _live_job(self, capability: str) -> bool:
+        """Whether the door named an engine for ``capability`` when the
+        Meeting started (``_admit_intel_session``)."""
+        return capability in (getattr(self, "_live_engines", None) or {})
 
     def _stop_door_runs(self) -> None:
         """Stop: the owner's cancel reaches every live job still running (and
@@ -160,18 +142,12 @@ class IntelRoutedChildMixin:
         attempt_ordinal: int = 1,
         deadline_seconds: float = WINDOW_DEADLINE_SECONDS,
     ) -> tuple[Any, Optional[Mapping[str, Any]], Any]:
-        """Execute live Meeting work only through its frozen bundle member.
-
-        Operation material is private until the coordinator validates and elects a
-        result.  The legacy branch remains solely for historical-plan readers;
-        production sessions set ``_route_bundle`` at start and never call the
-        legacy planner or child runner.
-        """
+        """Run one live Meeting job through the engine door, a child of the
+        live parent. The door reads the job's engine at this call."""
         if getattr(self, "_intel_closed", False):
             raise MeetingIntelRefused(SESSION_CLOSED, capability)
         parent = self._intel_parent
-        member = self._bundle_member(capability)
-        if member is not None and parent is not None:
+        if self._live_job(capability) and parent is not None:
             from types import SimpleNamespace
 
             from ..services import engine_door
@@ -197,9 +173,6 @@ class IntelRoutedChildMixin:
             value = answer.result
             return SimpleNamespace(outcome="succeeded", error=""), value if isinstance(value, Mapping) else None, value
 
-        # Stored v1 plans are display-only history after the Phase-F cutover.
-        # A missing C1 bundle is never permission to reconstruct or replay a
-        # provider child, even when an old in-memory plan object survives.
         raise MeetingIntelRefused(SESSION_NOT_ADMITTED, capability)
 
     # ----------------------------------------------------------- live window

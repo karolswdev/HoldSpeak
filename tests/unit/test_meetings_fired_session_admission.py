@@ -1,7 +1,7 @@
-"""HS-151-07: speech head pre-check at meeting bundle admission.
+"""HS-151-07: which engines a Meeting's jobs run on when it starts.
 
 Pin tests for the six counsel-ruled pins (P1-P6):
-P1 owner WITH speech head -> bundle includes transcription (4 routes).
+P1 owner WITH speech assignment -> the door names engines for all four jobs.
 P2 owner WITHOUT speech head -> intel-only; record_only with
    reason_code=transcription_no_speech_assignment.
 P3 SERVICE scheduled-recording principal WITH speech head + assignments -> WITH transcription.
@@ -196,10 +196,9 @@ def test_p1_owner_with_speech_head_admits_four_routes(
 
     state = session.start()
 
-    bundle = session._route_bundle
-    assert bundle is not None
-    member_capabilities = frozenset(m["capability_id"] for m in bundle["members"])
-    assert member_capabilities == frozenset({*_BUNDLE_CAPABILITIES, "speech.preload"})
+    assert session._live_engines is not None
+    member_capabilities = frozenset(session._live_engines)
+    assert member_capabilities == frozenset(_BUNDLE_CAPABILITIES)
     assert state.capture_status == "recording"
     # Transcription should NOT be record_only when speech head is present
     assert state.transcription_status != "record_only" or state.transcription_status is None
@@ -214,12 +213,10 @@ def test_p2_owner_without_speech_head_admits_intel_only_record_only(
 
     state = session.start()
 
-    bundle = session._route_bundle
-    assert bundle is not None
-    member_capabilities = frozenset(m["capability_id"] for m in bundle["members"])
-    # Only the 3 intel capabilities, no speech.transcribe, no speech.preload
+    assert session._live_engines is not None
+    member_capabilities = frozenset(session._live_engines)
+    # Only the 3 intel capabilities, no speech.transcribe
     assert member_capabilities == frozenset(_INTEL_ONLY_CAPABILITIES)
-    assert len(bundle["members"]) == 3
     # Transcription should be record_only with the correct reason
     assert state.transcription_status == "record_only"
     detail = state.transcription_status_detail
@@ -229,13 +226,15 @@ def test_p2_owner_without_speech_head_admits_intel_only_record_only(
     assert detail["family"] == "speech-recognition-route-assignments"
     # Raw capture still started
     assert state.capture_status == "recording"
-    # Bundle should NOT have derived_preloads
-    assert not bundle.get("derived_preloads")
-    # Budget groups should only have meeting-intelligence (no transcription/preload)
-    group_ids = {g["id"] for g in bundle.get("budget_groups", [])}
-    assert "meeting-intelligence" in group_ids
-    assert "meeting-transcription" not in group_ids
-    assert "meeting-preload" not in group_ids
+    # No speech engine: nothing to build a transcriber from, and the parent
+    # budget holds the intelligence children only.
+    assert session._speech_evidence is None
+    with _db._connection() as conn:
+        budget = conn.execute(
+            "SELECT child_budget FROM kernel_parent_runs WHERE operation_id=?",
+            (session._intel_parent.operation_id,),
+        ).fetchone()[0]
+    assert budget == 4096
 
 
 # ---------------------------------------------------------------- P3
@@ -259,11 +258,8 @@ def test_p3_service_principal_with_speech_head_admits_with_transcription(
 
     state = session.start()
 
-    bundle = session._route_bundle
-    assert bundle is not None
-    member_capabilities = frozenset(m["capability_id"] for m in bundle["members"])
-    assert "speech.transcribe" in member_capabilities
-    assert "speech.preload" in member_capabilities
+    assert session._live_engines is not None
+    assert "speech.transcribe" in session._live_engines
     assert state.capture_status == "recording"
 
 
@@ -298,7 +294,7 @@ def test_p7_routed_meeting_admission_has_frozen_preload_material(
     _db, _broker, session = _build_session(tmp_path, monkeypatch, assign_speech=True)
     state = session.start()
 
-    assert session._route_bundle is not None
+    assert session._live_engines is not None
     assert session._intel_parent is not None
 
     admission = RoutedMeetingTranscriptionAdmission(
@@ -344,7 +340,7 @@ def test_p8_service_principal_execute_passes_parent_operation_id(
     )
     state = session.start()
 
-    assert session._route_bundle is not None
+    assert session._live_engines is not None
     assert session._intel_parent is not None
 
     admission = RoutedMeetingTranscriptionAdmission(

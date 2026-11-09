@@ -189,10 +189,8 @@ def test_speech_only_recording_admits_without_text_routes(
     assert state.capture_status == "recording"
     assert state.transcription_status == "active"
     assert state.transcription_status_detail is None
-    assert session._route_bundle is not None
-    assert {
-        member["capability_id"] for member in session._route_bundle["members"]
-    } == {"speech.transcribe", "speech.preload"}
+    assert session._live_engines is not None
+    assert set(session._live_engines) == {"speech.transcribe"}
     assert db.meetings.get_meeting(state.id) is not None
 
 
@@ -308,6 +306,7 @@ def test_speech_only_stop_saves_transcript_and_closes_parent_without_queue(
 ) -> None:
     db, session = _speech_only_session(tmp_path, monkeypatch)
     state = session.start()
+    parent_id = str(session._intel_parent.operation_id)
 
     stopped = session.stop()
 
@@ -315,7 +314,6 @@ def test_speech_only_stop_saves_transcript_and_closes_parent_without_queue(
     assert [segment.text for segment in stopped.segments] == ["fixture speech transcript"]
     assert stopped.intel_status == "disabled"
     assert db.intel.get_intel_job(stopped.id) is None
-    parent_id = str(session._route_bundle["parent_operation_id"])
     with db._connection() as conn:
         parent = conn.execute(
             "SELECT state FROM kernel_parent_runs WHERE operation_id=?", (parent_id,)
@@ -337,10 +335,8 @@ def test_speech_only_ignores_available_text_engine_until_summary_gesture(
     stopped = session.stop()
     assert db.intel.get_intel_job(stopped.id) is None
     assert stopped.intel_status == "disabled"
-    assert session._route_bundle is not None
-    assert {
-        member["capability_id"] for member in session._route_bundle["members"]
-    } == {"speech.transcribe", "speech.preload"}
+    assert session._live_engines is not None
+    assert set(session._live_engines) == {"speech.transcribe"}
 
 
 def test_retry_preserves_no_assignment_reason_instead_of_empty_transcript(

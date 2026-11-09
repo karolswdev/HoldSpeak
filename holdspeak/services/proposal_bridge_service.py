@@ -625,27 +625,26 @@ class ProposalBridgeService:
         }
 
     def _extraction_model(self, job: Any, capability: str) -> Optional[str]:
-        """The model the bound job's FROZEN route ran this extractor on.
-
-        Read from the bundle member → route plan → deployment revision, the
-        same chain ``BoundDeferredIntelJob.egress_model_host`` reads the host
-        from.  None when the job carries no bundle (a pre-C row, a test seed).
-        """
-        bundle_id = str(getattr(job, "bundle_id", "") or "")
-        if not bundle_id:
+        """The model the bound job's door run answered on: the deployment of
+        the first successful model call under the job's parent run. None when
+        the job has no parent (a pre-C row, a test seed)."""
+        del capability
+        parent = str(getattr(job, "parent_operation_id", "") or "")
+        if not parent:
             return None
         try:
             with self._db._connection() as conn:
                 row = conn.execute(
                     """SELECT d.model
-                         FROM inference_parent_route_bundle_members m
-                         JOIN inference_route_plan_entries e ON e.plan_id = m.route_plan_id
-                         JOIN deployment_revisions d ON d.id = e.deployment_revision_id
-                        WHERE m.bundle_id = ? AND m.capability_id IN (?, 'meeting.deferred_analysis')
-                        ORDER BY CASE WHEN m.capability_id = ? THEN 0 ELSE 1 END,
-                                 e.route_leg_ordinal
+                         FROM kernel_operations o
+                         JOIN kernel_receipts r ON r.operation_id = o.operation_id
+                         JOIN deployment_revisions d
+                           ON 'deployment-revision:' || d.id = o.target_ref
+                        WHERE o.parent_operation_id = ? AND o.name = 'inference.invoke'
+                          AND r.state = 'succeeded'
+                        ORDER BY o.created_at
                         LIMIT 1""",
-                    (bundle_id, capability, capability),
+                    (parent,),
                 ).fetchone()
         except Exception:
             return None
