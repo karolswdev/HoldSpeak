@@ -1,0 +1,22 @@
+{
+  "title": "One runner · 2026-11-08 evening",
+  "steps": [
+    {"open": {"app": "open-intelligence"},
+     "say": {"words": "Four questions on the evening's work. Every job that runs is now a Program. First, Today."},
+     "highlight": {"target": "today-prepared", "window": "intelligence:desk", "thing": "the prepared block",
+                   "words": "Today's prepared block is a Program run: the morning prep ran as a Program of one step and this is its result."},
+     "ask": {"ref": "today-prepared-run", "question": "Does the prepared block read as a result, not a feature?", "choices": ["Keep", "Redo"]}},
+    {"open": {"app": "open-workbenches"},
+     "highlight": {"target": "automation-home-toolbar", "window": "surface-workbenches", "thing": "the Automations toolbar",
+                   "words": "Automations: Run now runs the automation as a Program. An old queue automation says Set this up as a program."},
+     "ask": {"ref": "automations-run-program", "question": "Is Automations one window you would keep, or fold it into Programs?", "choices": ["Keep", "Fold into Programs"]}},
+    {"open": {"app": "chair:needs"},
+     "highlight": {"target": "needs-first", "window": "chair:needs", "thing": "the first thing that waits",
+                   "words": "Needs you: a job whose engine failed is one row with Retry. The row opens its object on a double press."},
+     "ask": {"ref": "needs-retry-open", "question": "Does a row open and does Retry say what it does?", "choices": ["Keep", "Redo"]}},
+    {"open": {"app": "surface-programs"},
+     "highlight": {"target": "programs-step-report", "window": "surface-programs", "thing": "a step report",
+                   "words": "A prompt step's report: one call through the engine door, its sources, where it delivered."},
+     "ask": {"ref": "programs-prompt-report", "question": "Is the step report enough to trust the run without opening anything else?", "choices": ["Keep", "Redo"]}}
+  ]
+}
