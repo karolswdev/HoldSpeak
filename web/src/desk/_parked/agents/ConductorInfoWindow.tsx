@@ -1,3 +1,6 @@
+/* PARKED 2026-11-08 (Agents is a native app): the agent's Get Info window.
+ * The picked agent's pane in the Agents window holds its facts (Details)
+ * and its verbs (the plate); nothing opens this window now. */
 /** PHILO-14 C4 — Get Info on a Conductor member: a window of its own (the
  *  drawer's Get Info, board A-2 right).
  *

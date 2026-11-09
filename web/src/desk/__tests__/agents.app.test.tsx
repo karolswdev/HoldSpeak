@@ -305,7 +305,10 @@ function ag0<T = unknown>(name: string): { captured_at: string; wire: T } {
 const AG0 = ag0<{ sessions: unknown[]; flights: Array<Record<string, unknown>> }>("coders-sessions");
 const AG0_SEEN = ag0("coders-sessions.seen");
 const DETECT = hubWire("onboarding-agents.isolated");
-const conductorMember = (id: string) => document.querySelector<HTMLElement>(`[data-object-id='${id}']`);
+/** The language (2026-11-08): an agent is a tile on the Agents rail. */
+const conductorMember = (id: string) => document.querySelector<HTMLElement>(`[data-testid='agents-rail'] [data-object-id='${id}']`);
+/** The picked agent's pane (mast, plate, ledger). */
+const agentPane = () => screen.getByTestId("agents-pane");
 
 function pillOf(id: string): string {
   return conductorMember(id)?.querySelector("[data-testid='conductor-pill']")?.textContent ?? "";
@@ -316,8 +319,8 @@ const findMember = (id: string) => waitFor(() => {
   if (!el) throw new Error(`no row ${id}`);
   return el;
 });
-/** A press on a list row's name selects it (its verbs go to the status bar). */
-const selectRow = (id: string) => fireEvent.click(conductorMember(id)!.querySelector(".object-list-open")!);
+/** A press on a tile picks the agent (its pane shows it). */
+const selectRow = (id: string) => fireEvent.click(conductorMember(id)!.querySelector(".aw-tile-open")!);
 /** The status bar's words, as it draws them. */
 const statusWords = () => [...screen.getByTestId("conductor-head").querySelectorAll(".kit-statusbar-item")]
   .map((item) => item.textContent).filter(Boolean).join(" · ");
@@ -620,17 +623,18 @@ describe("one press to answer and to allow (Betterment AG2)", () => {
     });
   });
 
-  async function rows() {
+  /** The language: the picked agent's plate is its ask (one at a time). */
+  async function plateOf(id: string) {
     render(<ConductorWindow />);
     await screen.findByRole("button", { name: "Write the on-call note" });
-    const asks = within(screen.getByTestId("conductor-asks")).getAllByTestId("conductor-ask-row");
-    const asking = asks.find((row) => row.dataset.objectId === "launch:launch_ag0_ghost")!;
-    const held = asks.find((row) => row.dataset.objectId === "coder:claude:ag2-held")!;
-    return { asking, held };
+    selectRow(id);
+    const plate = within(agentPane()).getByTestId("conductor-ask-row");
+    expect(plate.dataset.objectId).toBe(id);
+    return plate;
   }
 
   it("the row shows the whole question and 1 · config / 2 · env; one press sends 1 with the wait", async () => {
-    const { asking } = await rows();
+    const asking = await plateOf("launch:launch_ag0_ghost");
     expect(asking.querySelector(".cw-ask-label")?.textContent).toBe("Asks you");
     expect(asking.textContent).toContain(LANE_ASKS.wire.wait.question);
     await waitFor(() => expect(within(asking).getAllByTestId("agent-row-choice").map((b) => b.textContent))
@@ -646,7 +650,7 @@ describe("one press to answer and to allow (Betterment AG2)", () => {
   });
 
   it("a typed answer goes in one press too (Answer)", async () => {
-    const { asking } = await rows();
+    const asking = await plateOf("launch:launch_ag0_ghost");
     const field = within(asking).getByTestId("agent-row-answer-field") as HTMLInputElement;
     fireEvent.change(field, { target: { value: "Use config, and add a test" } });
     await act(async () => {
@@ -657,7 +661,7 @@ describe("one press to answer and to allow (Betterment AG2)", () => {
   });
 
   it("Wants to run: Allow sends Enter, Deny sends Escape", async () => {
-    const { held } = await rows();
+    const held = await plateOf("coder:claude:ag2-held");
     expect(held.querySelector(".cw-ask-label")?.textContent).toBe("Wants to run");
     await act(async () => {
       fireEvent.click(within(held).getByRole("button", { name: "Allow" }));
@@ -798,8 +802,9 @@ describe("the screen says the state when no hook speaks (Betterment AG7)", () =>
   it("Asks you shows the agent's last words and their choices; Done is New", async () => {
     render(<ConductorWindow />);
     await screen.findByRole("button", { name: "Move the rollback flag" });
-    const asks = within(screen.getByTestId("conductor-asks")).getAllByTestId("conductor-ask-row")
-      .find((row) => row.dataset.objectId === "launch:launch_ag7_asks")!;
+    selectRow("launch:launch_ag7_asks");
+    const asks = within(agentPane()).getByTestId("conductor-ask-row");
+    expect(asks.dataset.objectId).toBe("launch:launch_ag7_asks");
     expect(asks.querySelector(".cw-ask-label")?.textContent).toBe("Asks you");
     expect(within(asks).getByTestId("agent-row-question").textContent).toContain("Should it live in config/flags.yaml");
     expect(within(asks).getAllByTestId("agent-row-choice").map((b) => b.textContent)).toEqual(["1 · config", "2 · env"]);
@@ -853,21 +858,24 @@ describe("the Agents list is the fleet (Betterment AG8)", () => {
     await findMember("launch:launch_ag8_work");
     expect(statusWords()).toMatch(/^2 need you · 1 new · 1 working/);
     expect(statusWords()).not.toMatch(/\b0\b/);
-    // The asks: the oldest first, each a plate with its answer.
-    expect(order(screen.getByTestId("conductor-asks"))).toEqual(["launch:launch_ag8_ask", "launch:launch_ag8_held"]);
-    // The list: New, Working, the hand that waits for a free agent, Quiet.
-    const working = [...document.querySelectorAll<HTMLElement>("[data-group='work']")];
+    // The asks: the oldest first, each a tile in Needs you; the oldest is picked, its plate the ask.
+    expect(order(document.querySelector<HTMLElement>("[data-section='asks']")!)).toEqual(["launch:launch_ag8_ask", "launch:launch_ag8_held"]);
+    expect(agentPane().getAttribute("data-member")).toBe("launch:launch_ag8_ask");
+    expect(within(agentPane()).getByTestId("conductor-ask-row")).toBeTruthy();
+    // Running: New, Working, the hand that waits for a free agent, Quiet.
+    const working = [...document.querySelectorAll<HTMLElement>("[data-section='running'] [data-group='work']")];
     expect(working.map((el) => el.dataset.objectId))
       .toEqual(["launch:launch_ag8_new", "launch:launch_ag8_work", expect.stringMatching(/^queue:/), "launch:launch_ag8_quiet"]);
-    expect(working.map((el) => el.querySelector("[data-col='project']")?.textContent))
-      .toEqual(["Platform", "Ledger", "Ledger", "Platform"]);
+    // Each agent's Project is in its mast's facts.
+    selectRow("launch:launch_ag8_work");
+    expect(within(agentPane()).getByTestId("agents-mast").textContent).toContain("Ledger");
     expect(pillOf("launch:launch_ag8_new")).toBe("Done · New");
     expect(pillOf("launch:launch_ag8_quiet")).toBe("Done");
     // W4 AGENT 2: the tools are their own section, Installed, each with its
     // state (the rig's agents lack their hooks).
     expect([...document.querySelectorAll("[data-section='installed'] [data-testid='conductor-pill']")].map((el) => el.textContent))
       .toEqual(["Not connected", "Not connected", "Hooks not checked"]);   // Claude Code, Codex, pi
-    expect(screen.getAllByTestId("conductor-section").map((el) => el.textContent)).toEqual(["Running", "Installed"]);
+    expect(screen.getAllByTestId("conductor-section").map((el) => el.textContent)).toEqual(["Needs you", "Running", "On this Mac"]);
   });
 
   it("the Dock tile carries the worst lamp, the mark for New and the count that needs him", () => {
@@ -996,11 +1004,10 @@ describe("working at once, and a queue (Betterment AG5)", () => {
     // The status bar: the done agent and the queued hand are not at work.
     expect(statusWords()).not.toMatch(/working|at work/);
     expect(statusWords()).toContain("1 waiting");
-    // Selecting the queued row offers Cancel, no Open and no Stop (nothing runs yet).
+    // Picking the queued agent: its plate offers Cancel, no Open and no Stop (nothing runs yet).
     selectRow(id);
-    const foot = document.querySelector(".cw-footer") as HTMLElement;
-    expect(within(foot).getByTestId("conductor-cancel-queued")).toBeTruthy();
-    expect(within(foot).queryByTestId("conductor-open")).toBeNull();
+    expect(within(agentPane()).getByTestId("conductor-cancel-queued")).toBeTruthy();
+    expect(within(agentPane()).queryByTestId("conductor-open")).toBeNull();
     expect(screen.queryByTestId("conductor-stop")).toBeNull();
   });
 
@@ -1107,7 +1114,12 @@ describe("the desk's own answers are visible (Betterment AG3)", () => {
       "/api/coders/claude%3Aag0-done/peek": hubWire("peek.ag2-asks").wire,
     });
   }
-  const ghost = () => document.querySelector<HTMLElement>('[data-object-id="launch:launch_ag0_ghost"]')!;
+  /** The ghost agent's pane, picked (its plate shows the desk's answer). */
+  const ghost = () => {
+    const tile = document.querySelector<HTMLElement>('[data-testid="agents-rail"] [data-object-id="launch:launch_ag0_ghost"]')!;
+    if (!tile.hasAttribute("data-picked")) fireEvent.click(tile.querySelector(".aw-tile-open")!);
+    return agentPane();
+  };
 
   it("while the desk drafts, the row says so and offers Answer it myself, then the answer box", async () => {
     serveAg3("coders-sessions.drafting");

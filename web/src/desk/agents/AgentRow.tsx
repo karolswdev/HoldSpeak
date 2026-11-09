@@ -155,9 +155,12 @@ export interface AgentRowProps {
   onOpenAnswer(): void;
   /** Open the agent's window (its Story). */
   onOpen(): void;
+  /** The plate under the agent's mast (the Agents window): the mast says
+   *  the sprite and the title, so the plate draws neither. */
+  bare?: boolean;
 }
 
-export function AgentRow({ member, question, waitId, lead, selected, onSelect, onTerminal, onOpenAnswer, onOpen }: AgentRowProps) {
+export function AgentRow({ member, question, waitId, lead, selected, onSelect, onTerminal, onOpenAnswer, onOpen, bare = false }: AgentRowProps) {
   const { call, wait, error: callError, reread } = useHeldCall(member);
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
@@ -325,19 +328,23 @@ export function AgentRow({ member, question, waitId, lead, selected, onSelect, o
         <span className="cw-ask-age">{askedWord(member.when, member.whenSort)}</span>
       </header>
       <div className="cw-ask-body">
-        <span className="cw-plate-sprite" aria-hidden="true">
-          <img src={member.sprite} alt="" draggable={false} />
-        </span>
+        {bare ? null : (
+          <span className="cw-plate-sprite" aria-hidden="true">
+            <img src={member.sprite} alt="" draggable={false} />
+          </span>
+        )}
         <div className="cw-ask-text">
-          <Button variant="chrome" className="cw-row-title" aria-pressed={selected} onClick={onSelect}>
-            {member.role === "ready" ? member.name : String(member.facts.from || member.name)}
-          </Button>
-          <span className="cw-row-meta">
+          {bare ? null : (
+            <Button variant="chrome" className="cw-row-title" aria-pressed={selected} onClick={onSelect}>
+              {member.role === "ready" ? member.name : String(member.facts.from || member.name)}
+            </Button>
+          )}
+          {bare ? null : <span className="cw-row-meta">
             <span>{agentName}</span>
             {member.facts.where ? <span className="kit-pill" data-tone="info">{String(member.facts.where)}</span> : null}
             {reviewWords(member.review) ? <span data-testid="conductor-review">{reviewWords(member.review)}</span> : null}
             <ProgramStepLine program={member.program} />
-          </span>
+          </span>}
           {held ? (
             <>
               {command ? (

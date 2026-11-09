@@ -9,23 +9,11 @@
 .desk-next .desk-session-glyph {
   font-size: 16px;
 }
-.desk-next .desk-session-identity {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  min-width: 0;
-}
-.desk-next .desk-session-agent-portrait {
-  display: block;
-  flex: 0 0 64px;
-  width: 64px;
-  height: 64px;
-  image-rendering: auto;
-}
-.desk-next .desk-session-identity .kit-apphead {
-  flex: 1 1 auto;
-  min-width: 0;
-}
+/* The language (2026-11-08): the mast, the spine and the plate are the
+   Agents window's (conductor.css); the session window keeps its gaps. */
+.desk-next .is-session .desk-session-body > .aw-plate,
+.desk-next .is-session .desk-session-spine { margin: 0; }
+.desk-next .is-session .desk-session-spine { display: flex; }
 /* HS-111-04 — liveness is a steady LampGadget in the head; the pulsing
    dot species is gone. */
 .desk-next .desk-chip.is-stale {
@@ -77,32 +65,13 @@
   font-size: var(--font-size-sm);
   font-family: var(--font-mono);
 }
-.desk-next .desk-session-report > .surface-well {
-  background: var(--alive-paper, var(--wb-paper));
-}
-.desk-next .desk-session-report > .surface-well > .surface-well-body {
-  padding: 14px 16px;
-}
-.desk-next .desk-session-report .agent-words {
-  font-size: var(--desk-surface-body-size, 13px);
-  line-height: 1.5;
-}
 .desk-next .desk-session-activity {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 6px 10px;
   min-width: 0;
-  padding: 8px 0;
-  border-top: 1px solid var(--border-subtle);
-  border-bottom: 1px solid var(--border-subtle);
-}
-.desk-next .desk-session-activity-lamp {
-  flex: none;
-  width: 8px;
-  height: 8px;
-  border: 1px solid var(--wb-ink);
-  background: var(--lamp-info);
+  margin: 0;
 }
 .desk-next .desk-session-activity-label {
   color: var(--text-muted);

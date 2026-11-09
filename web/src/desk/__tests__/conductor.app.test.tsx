@@ -137,22 +137,21 @@ describe("the Conductor on the C4 seed", () => {
     if (codex) expect(ask!.compareDocumentPosition(codex) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
-  it("the asking agent's verbs are Get Info, Stop, Answer, Open; Stop confirms in place; Open opens its lane", async () => {
+  it("the asking agent's pane: Answer on its plate, Stop in its mast (confirmed in place), Details; Open opens a working agent's lane", async () => {
     render(<ConductorWindow />);
     fireEvent.click(await screen.findByRole("button", { name: "Write the rollback runbook" }));
-    const plate = member("launch:launch_c4_runbook")!;
-    expect(within(plate).getByRole("button", { name: "Answer" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Get Info" })).toBeTruthy();
-    expect(screen.getByTestId("conductor-stop")).toBeTruthy();
+    const pane = screen.getByTestId("agents-pane");
+    expect(pane.getAttribute("data-member")).toBe("launch:launch_c4_runbook");
+    expect(within(pane).getByRole("button", { name: "Answer" })).toBeTruthy();
+    expect(within(pane).getByTestId("agents-details")).toBeTruthy();
     fireEvent.click(screen.getByTestId("conductor-stop"));
     expect(screen.getByTestId("conductor-stop-confirm")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Stop · sure? (ends the agent's session)" })).toBeTruthy();
-    expect(screen.queryByRole("button", { name: "Get Info" })).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Back" }));
-    expect(screen.getByRole("button", { name: "Get Info" })).toBeTruthy();
-    // Window grammar: Open is the selected row's verb, at the status bar's right.
-    fireEvent.click(member("launch:launch_c4_recon")!.querySelector(".object-list-open")!);
-    fireEvent.click(within(document.querySelector(".cw-footer") as HTMLElement).getByTestId("conductor-open"));
+    expect(screen.getByTestId("conductor-stop")).toBeTruthy();
+    // The language: a press on a tile picks the agent; its plate's Open opens its lane.
+    fireEvent.click(member("launch:launch_c4_recon")!.querySelector(".aw-tile-open")!);
+    fireEvent.click(within(screen.getByTestId("agents-pane")).getByTestId("conductor-open"));
     expect(shell.lanes.at(-1)?.[0]).toBe("launch_c4_recon");
   });
 
