@@ -43,6 +43,18 @@ OWNER = Principal(PrincipalKind.OWNER, "guardrail-test-owner")
 # ---------------------------------------------------------------------------
 
 
+
+def _stop_live_turns() -> None:
+    """A safe-mode turn waits for the owner's decision; stop it before the
+    hub goes, so no turn stays live for the next test in this worker."""
+    from holdspeak.services import thread_turns
+
+    turns = thread_turns.live()
+    for turn in turns:
+        turn.cancel()
+    for turn in turns:
+        turn._closed.wait(5.0)
+
 class TestGuardrailMatches:
     def test_exact_match(self) -> None:
         assert _guardrail_matches("people.note.create", ["people.note.create"])
@@ -389,6 +401,7 @@ class TestRealCoordinatorGuardrail:
     @staticmethod
     def _cleanup(hub):
         from holdspeak.db import reset_database
+        _stop_live_turns()
         hub["server"].stop()
         os.environ["HOME"] = hub["old_home"]
         reset_database()
@@ -639,6 +652,7 @@ class TestRealRunnerGuardrailCloudRedaction:
     @staticmethod
     def _cleanup(hub):
         from holdspeak.db import reset_database
+        _stop_live_turns()
         hub["server"].stop()
         os.environ["HOME"] = hub["old_home"]
         reset_database()
