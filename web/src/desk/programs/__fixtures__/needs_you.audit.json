@@ -14,7 +14,7 @@
     {
       "kind": "coder",
       "label": "Agents",
-      "observed_at": "2026-11-02T01:00:12.791876+00:00",
+      "observed_at": "2026-11-09T00:04:38.989503+00:00",
       "project_id": "",
       "reason": null,
       "repair": null,
@@ -24,7 +24,7 @@
     {
       "kind": "send",
       "label": "Sends",
-      "observed_at": "2026-11-02T01:00:12.787415+00:00",
+      "observed_at": "2026-11-09T00:04:38.985200+00:00",
       "project_id": "",
       "reason": null,
       "repair": null,
@@ -35,28 +35,28 @@
   "failedMeetings": [],
   "items": [
     {
-      "ageToken": "2026-11-02T01:00:12.560053+00:00",
+      "ageToken": "2026-11-09T00:04:38.789111+00:00",
       "counted": true,
       "direction": "decide",
       "dueAt": null,
       "dueWord": "now",
       "group": "Desk audit",
-      "id": "program:program-18410c9590fa:program-18410c9590fa:close",
+      "id": "program:program-6814610edfcf:program-6814610edfcf:close",
       "kind": "program",
       "muted": false,
-      "openRef": "program:program-18410c9590fa",
+      "openRef": "program:program-6814610edfcf",
       "personId": null,
       "person_id": "",
       "program": {
         "choices": [
           "close"
         ],
-        "decide": "/api/programs/program-18410c9590fa/close",
+        "decide": "/api/programs/program-6814610edfcf/close",
         "findingId": null,
         "kind": "close",
         "ordinal": 0,
         "pr": null,
-        "programId": "program-18410c9590fa",
+        "programId": "program-6814610edfcf",
         "requirementId": null,
         "stepId": ""
       },
@@ -64,9 +64,9 @@
       "projectName": "",
       "rank": 1,
       "rankClass": "no_due_date",
-      "ref": "program:program-18410c9590fa:program-18410c9590fa:close",
+      "ref": "program:program-6814610edfcf:program-6814610edfcf:close",
       "severity": "warning",
-      "since": "2026-11-02T01:00:12.560053+00:00",
+      "since": "2026-11-09T00:04:38.789111+00:00",
       "source": "program",
       "title": "Close “Desk audit”: every step is finished",
       "verbHref": null,
@@ -74,16 +74,16 @@
       "why": "TO CLOSE"
     },
     {
-      "ageToken": "2026-11-02T01:00:12.061500+00:00",
+      "ageToken": "2026-11-09T00:04:38.637617+00:00",
       "counted": true,
       "direction": "decide",
       "dueAt": null,
       "dueWord": "now",
       "group": "Desk audit",
-      "id": "program:program-18410c9590fa:program-18410c9590fa:audit_file",
+      "id": "program:program-6814610edfcf:program-6814610edfcf:audit_file",
       "kind": "program",
       "muted": false,
-      "openRef": "program:program-18410c9590fa",
+      "openRef": "program:program-6814610edfcf",
       "personId": null,
       "person_id": "",
       "program": {
@@ -91,22 +91,22 @@
           "file",
           "skip"
         ],
-        "decide": "/api/programs/program-18410c9590fa/steps/step-402961962a3a/decide",
+        "decide": "/api/programs/program-6814610edfcf/steps/step-ddfa74129f12/decide",
         "findingId": null,
         "kind": "audit_file",
         "ordinal": 1,
         "pr": null,
-        "programId": "program-18410c9590fa",
+        "programId": "program-6814610edfcf",
         "requirementId": null,
-        "stepId": "step-402961962a3a"
+        "stepId": "step-ddfa74129f12"
       },
       "projectId": "",
       "projectName": "",
       "rank": 2,
       "rankClass": "no_due_date",
-      "ref": "program:program-18410c9590fa:program-18410c9590fa:audit_file",
+      "ref": "program:program-6814610edfcf:program-6814610edfcf:audit_file",
       "severity": "warning",
-      "since": "2026-11-02T01:00:12.061500+00:00",
+      "since": "2026-11-09T00:04:38.637617+00:00",
       "source": "program",
       "title": "3 findings to file as Door tasks",
       "verbHref": null,
@@ -114,16 +114,16 @@
       "why": "TO DECIDE"
     },
     {
-      "ageToken": "2026-11-02T01:00:12.061500+00:00",
+      "ageToken": "2026-11-09T00:04:38.637617+00:00",
       "counted": true,
       "direction": "decide",
       "dueAt": null,
       "dueWord": "now",
       "group": "Desk audit",
-      "id": "program:program-18410c9590fa:program-18410c9590fa:fix_program",
+      "id": "program:program-6814610edfcf:program-6814610edfcf:fix_program",
       "kind": "program",
       "muted": false,
-      "openRef": "program:program-18410c9590fa",
+      "openRef": "program:program-6814610edfcf",
       "personId": null,
       "person_id": "",
       "program": {
@@ -131,22 +131,22 @@
           "make",
           "skip"
         ],
-        "decide": "/api/programs/program-18410c9590fa/steps/step-402961962a3a/decide",
+        "decide": "/api/programs/program-6814610edfcf/steps/step-ddfa74129f12/decide",
         "findingId": null,
         "kind": "fix_program",
         "ordinal": 1,
         "pr": null,
-        "programId": "program-18410c9590fa",
+        "programId": "program-6814610edfcf",
         "requirementId": null,
-        "stepId": "step-402961962a3a"
+        "stepId": "step-ddfa74129f12"
       },
       "projectId": "",
       "projectName": "",
       "rank": 3,
       "rankClass": "no_due_date",
-      "ref": "program:program-18410c9590fa:program-18410c9590fa:fix_program",
+      "ref": "program:program-6814610edfcf:program-6814610edfcf:fix_program",
       "severity": "warning",
-      "since": "2026-11-02T01:00:12.061500+00:00",
+      "since": "2026-11-09T00:04:38.637617+00:00",
       "source": "program",
       "title": "A fix program from 1 MUST finding",
       "verbHref": null,
@@ -157,15 +157,15 @@
   "members": [
     {
       "kind": "attention",
-      "ref": "program:program-18410c9590fa:program-18410c9590fa:close"
+      "ref": "program:program-6814610edfcf:program-6814610edfcf:close"
     },
     {
       "kind": "attention",
-      "ref": "program:program-18410c9590fa:program-18410c9590fa:audit_file"
+      "ref": "program:program-6814610edfcf:program-6814610edfcf:audit_file"
     },
     {
       "kind": "attention",
-      "ref": "program:program-18410c9590fa:program-18410c9590fa:fix_program"
+      "ref": "program:program-6814610edfcf:program-6814610edfcf:fix_program"
     },
     {
       "kind": "blocker",

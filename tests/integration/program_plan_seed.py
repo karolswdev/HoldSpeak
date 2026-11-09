@@ -87,7 +87,9 @@ def create(rig: Rig, case: Mapping[str, Any], *, repository: Optional[str] = Non
         conn.execute("INSERT OR IGNORE INTO projects (id, name) VALUES ('proj-holdspeak', 'HoldSpeak')")
     pid = rig.service.create(OWNER, title=case["title"], goal=case["goal"], repository=repository or str(rig.repo),
                              check_command=case["check"], template=case["template"], control=case["control"],
-                             project_id="proj-holdspeak")["id"]
+                             project_id="proj-holdspeak",
+                             # The scene is his Plan it press: the engine does not plan the goal by itself.
+                             plan_goal=False)["id"]
     if case.get("budget"):
         # The text's ``budget 64k``: the planner reads the Program's budget.
         rig.service.update(OWNER, pid, budget_tokens=case["budget"])

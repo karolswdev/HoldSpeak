@@ -2,6 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · (PR) Fix forward #2014: the Programs, reach and briefing fixtures are re-recorded through the real routes with the step wire (kind, deliver, sources); the plan seed records his Plan it press (plan_goal off). No face change.
 - 2026-11-08 · (PR) One contract: the Programs verbs are OperationDescriptors (`holdspeak/program_operations.py`); OperationDescriptor carries the HTTP and MCP faces (call/web_call, http, tool_schema, authority, thread) and the routes and tool rows are produced from it through `OperationRegistry.invoke`; the separate table is parked; receipts, route list, OpenAPI and the 33 Programs tools unchanged; the parity census prints the 349 routes that reach no service.
 - 2026-11-08 · (PR) Fix forward #2017 and #2007: the six new WORK Programs tools get launch rules (templates and shape_engine read; from_action, plan_programs, race, shape_held_drop on a Program the launch made); the Desk/Chase size fences follow the watch fold (70 → 65, 76 → 71).
 - 2026-11-08 · (PR) What he sees: an old queue automation (an agent and tasks, no Do text of its own) shows "Set this up as a program" where Run now was; the press opens New program with its title, its agent's prompt as the brief and its waiting tasks as the steps. Nothing is made until he presses Create; no automatic conversion.

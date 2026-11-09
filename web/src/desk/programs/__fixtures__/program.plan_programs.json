@@ -2,11 +2,11 @@
   "applied": {
     "made": [
       {
-        "id": "program-4f0a41e4cb7a",
+        "id": "program-c6fe3bdce346",
         "title": "Calls window lists the last ten"
       },
       {
-        "id": "program-3c4bf7f2c581",
+        "id": "program-438898b978b8",
         "title": "Programs window exports to a Note"
       }
     ],
@@ -24,7 +24,7 @@
       "check_command": "scripts/quick_check.sh",
       "checkpoints": [
         {
-          "at": "2026-11-02T02:49:11.782677+00:00",
+          "at": "2026-11-09T00:06:03.611101+00:00",
           "by": "owner",
           "choice": null,
           "decision_record_id": null,
@@ -42,7 +42,7 @@
           "undo": {}
         },
         {
-          "at": "2026-11-02T02:49:11.777128+00:00",
+          "at": "2026-11-09T00:06:03.607074+00:00",
           "by": "owner",
           "choice": null,
           "decision_record_id": null,
@@ -58,11 +58,11 @@
           "rule": null,
           "step_id": "",
           "undo": {
-            "requirement_id": "req-e636d38505ea"
+            "requirement_id": "req-480f2b24a1a3"
           }
         },
         {
-          "at": "2026-11-02T02:49:11.765438+00:00",
+          "at": "2026-11-09T00:06:03.603145+00:00",
           "by": "owner",
           "choice": null,
           "decision_record_id": null,
@@ -78,11 +78,11 @@
           "rule": null,
           "step_id": "",
           "undo": {
-            "requirement_id": "req-cc9fb7faba8f"
+            "requirement_id": "req-fb97004b16cb"
           }
         },
         {
-          "at": "2026-11-02T02:49:11.761876+00:00",
+          "at": "2026-11-09T00:06:03.599671+00:00",
           "by": "owner",
           "choice": null,
           "decision_record_id": null,
@@ -100,7 +100,7 @@
           "undo": {}
         },
         {
-          "at": "2026-11-02T02:49:11.747429+00:00",
+          "at": "2026-11-09T00:06:03.595762+00:00",
           "by": "owner",
           "choice": null,
           "decision_record_id": null,
@@ -118,7 +118,7 @@
           "undo": {}
         },
         {
-          "at": "2026-11-02T02:49:11.320831+00:00",
+          "at": "2026-11-09T00:06:03.508226+00:00",
           "by": "owner",
           "choice": null,
           "decision_record_id": null,
@@ -136,7 +136,7 @@
           "undo": {}
         },
         {
-          "at": "2026-11-02T02:49:11.313032+00:00",
+          "at": "2026-11-09T00:06:03.501875+00:00",
           "by": "owner",
           "choice": null,
           "decision_record_id": null,
@@ -157,7 +157,7 @@
       "closed_at": null,
       "control": "normal",
       "control_word": "Normal",
-      "created_at": "2026-11-02T02:49:11.312671+00:00",
+      "created_at": "2026-11-09T00:06:03.501164+00:00",
       "decided_for_you": [],
       "default": {
         "agent": "Claude Code",
@@ -181,10 +181,10 @@
       "for_person": null,
       "for_person_id": null,
       "goal": "After a meeting the meeting's Note should end with a short recap: the decisions, the actions with their owners and the open questions, from the transcript we keep.",
-      "id": "program-e2d0a306995d",
+      "id": "program-01f105b2fd3e",
       "in_state_seconds": 0,
       "last_checkpoint": {
-        "at": "2026-11-02T02:49:11.782677+00:00",
+        "at": "2026-11-09T00:06:03.611101+00:00",
         "by": "owner",
         "choice": null,
         "decision_record_id": null,
@@ -205,8 +205,8 @@
       "may_call": false,
       "may_handoff": false,
       "night": null,
-      "note_id": "program-program-e2d0a306995d",
-      "note_window": "pullout:note:program-program-e2d0a306995d",
+      "note_id": "program-program-01f105b2fd3e",
+      "note_window": "pullout:note:program-program-01f105b2fd3e",
       "origin_ref": null,
       "persons": [],
       "place": {
@@ -235,9 +235,9 @@
           "choices": [
             "waive"
           ],
-          "created_at": "2026-11-02T02:49:11.765261+00:00",
+          "created_at": "2026-11-09T00:06:03.602973+00:00",
           "evidence": {},
-          "id": "req-cc9fb7faba8f",
+          "id": "req-fb97004b16cb",
           "judged_at": null,
           "judged_commit": null,
           "kind": "check",
@@ -245,7 +245,7 @@
           "label": "R1",
           "ordinal": 1,
           "parent_id": null,
-          "program_id": "program-e2d0a306995d",
+          "program_id": "program-01f105b2fd3e",
           "required": true,
           "rounds": 0,
           "running": false,
@@ -267,9 +267,9 @@
             "unmet",
             "waive"
           ],
-          "created_at": "2026-11-02T02:49:11.777016+00:00",
+          "created_at": "2026-11-09T00:06:03.606950+00:00",
           "evidence": {},
-          "id": "req-e636d38505ea",
+          "id": "req-480f2b24a1a3",
           "judged_at": null,
           "judged_commit": null,
           "kind": "word",
@@ -277,7 +277,7 @@
           "label": "R2",
           "ordinal": 2,
           "parent_id": null,
-          "program_id": "program-e2d0a306995d",
+          "program_id": "program-01f105b2fd3e",
           "required": true,
           "rounds": 0,
           "running": false,
@@ -333,6 +333,7 @@
             "verdict": null
           },
           "contenders": [],
+          "deliver": null,
           "editable": [
             "title",
             "brief",
@@ -381,7 +382,8 @@
           "handoffs": [],
           "held_reason": null,
           "history": null,
-          "id": "step-c301f0cfd92f",
+          "id": "step-439870414180",
+          "kind": "agent",
           "last_checkpoint": null,
           "launch_id": null,
           "limit": null,
@@ -416,6 +418,7 @@
               "profile": "claude-default"
             }
           ],
+          "sources": [],
           "started_at": null,
           "state": "planned",
           "state_word": "Planned",
@@ -431,7 +434,7 @@
           "story": [],
           "taken": false,
           "title": "Build the recap from the transcript",
-          "updated_at": "2026-11-02T02:49:11.758472+00:00",
+          "updated_at": "2026-11-09T00:06:03.599165+00:00",
           "wait": null,
           "worktree": null
         },
@@ -455,6 +458,7 @@
             "verdict": null
           },
           "contenders": [],
+          "deliver": null,
           "editable": [
             "title",
             "brief",
@@ -503,7 +507,8 @@
           "handoffs": [],
           "held_reason": null,
           "history": null,
-          "id": "step-1d9686f81626",
+          "id": "step-8f7206840051",
+          "kind": "agent",
           "last_checkpoint": null,
           "launch_id": null,
           "limit": null,
@@ -538,6 +543,7 @@
               "profile": "claude-default"
             }
           ],
+          "sources": [],
           "started_at": null,
           "state": "planned",
           "state_word": "Planned",
@@ -553,7 +559,7 @@
           "story": [],
           "taken": false,
           "title": "Append the recap to the meeting Note",
-          "updated_at": "2026-11-02T02:49:11.758472+00:00",
+          "updated_at": "2026-11-09T00:06:03.599165+00:00",
           "wait": null,
           "worktree": null
         },
@@ -578,6 +584,7 @@
             "verdict": null
           },
           "contenders": [],
+          "deliver": null,
           "editable": [
             "title",
             "brief",
@@ -626,7 +633,8 @@
           "handoffs": [],
           "held_reason": null,
           "history": null,
-          "id": "step-131eea20f7d5",
+          "id": "step-317026d393ae",
+          "kind": "agent",
           "last_checkpoint": null,
           "launch_id": null,
           "limit": null,
@@ -661,6 +669,7 @@
               "profile": "claude-default"
             }
           ],
+          "sources": [],
           "started_at": null,
           "state": "planned",
           "state_word": "Planned",
@@ -676,7 +685,7 @@
           "story": [],
           "taken": false,
           "title": "Tests for the recap",
-          "updated_at": "2026-11-02T02:49:11.758472+00:00",
+          "updated_at": "2026-11-09T00:06:03.599165+00:00",
           "wait": null,
           "worktree": null
         }
@@ -701,7 +710,7 @@
           "title": "Tests for the recap"
         }
       ],
-      "updated_at": "2026-11-02T02:49:11.782745+00:00",
+      "updated_at": "2026-11-09T00:06:03.611194+00:00",
       "usage_warning_share": null,
       "within": [],
       "your_turn": 0,
@@ -858,10 +867,10 @@
       "recent": 2,
       "template": "fast-cycle"
     },
-    "latency_ms": 13,
+    "latency_ms": 7,
     "lowers": [],
     "patch": "--- current\n+++ proposed\n@@ -1,5 +1,5 @@\n # program text 1\n-program Before the standup review                 # Drafting\n+program Before the standup review\n   goal\n   > Three things before the standup review. First, after a meeting the meeting's Note should end with a short recap: the decisions, the actions with their owners and the open questions, from the transcript we keep.\n   >\n@@ -11,3 +11,29 @@\n   control normal\n   check scripts/quick_check.sh\n   budget 64k\n+\n+at the end\n+  R+ check: `scripts/quick_check.sh` is green\n+  R+ word: The recap reads like a human wrote it after the meeting: short, no filler, the three groups are obvious.\n+\n+step + Build the recap from the transcript\n+  owns holdspeak/meeting_aftercare.py\n+  brief\n+  > Add a build_recap function that takes the finalized transcript and the meeting's structured decisions and actions, and returns a short recap: decisions one line each, actions with their owners one line each, open questions one line each.\n+  > Open questions are transcript lines ending in a question mark with no answering line before the next speaker change.\n+  > If a group is empty, omit it.\n+\n+step + Append the recap to the meeting Note\n+  owns holdspeak/meeting_exports.py\n+  after 1\n+  brief\n+  > In the Note write path for a meeting, after the transcript is attached, call build_recap and append the result as the final section of the Note.\n+  > Nothing follows the recap in the Note.\n+\n+step + Tests for the recap\n+  owns tests/unit/test_meeting_exports.py\n+  after 1, 2\n+  brief\n+  > Unit tests: build_recap extracts decisions, actions with owners, and open questions from a sample transcript.\n+  > The Note write path appends the recap as the last section.\n+  > An empty group is omitted from the recap.\n",
-    "program_id": "program-e2d0a306995d",
+    "program_id": "program-01f105b2fd3e",
     "programs": [
       {
         "goal": "After a meeting the meeting's Note should end with a short recap: the decisions, the actions with their owners and the open questions, from the transcript we keep.",
@@ -1096,7 +1105,7 @@
     "check_command": "scripts/quick_check.sh",
     "checkpoints": [
       {
-        "at": "2026-11-02T02:49:11.320831+00:00",
+        "at": "2026-11-09T00:06:03.508226+00:00",
         "by": "owner",
         "choice": null,
         "decision_record_id": null,
@@ -1114,7 +1123,7 @@
         "undo": {}
       },
       {
-        "at": "2026-11-02T02:49:11.313032+00:00",
+        "at": "2026-11-09T00:06:03.501875+00:00",
         "by": "owner",
         "choice": null,
         "decision_record_id": null,
@@ -1135,7 +1144,7 @@
     "closed_at": null,
     "control": "normal",
     "control_word": "Normal",
-    "created_at": "2026-11-02T02:49:11.312671+00:00",
+    "created_at": "2026-11-09T00:06:03.501164+00:00",
     "decided_for_you": [],
     "default": {
       "agent": "Claude Code",
@@ -1159,10 +1168,10 @@
     "for_person": null,
     "for_person_id": null,
     "goal": "Three things before the standup review. First, after a meeting the meeting's Note should end with a short recap: the decisions, the actions with their owners and the open questions, from the transcript we keep.\n\nSecond, the Calls window should list the last ten calls with their length and who was on them, newest first.\n\nThird, the Programs window should export the list to a new Note, one line per program with its state.",
-    "id": "program-e2d0a306995d",
+    "id": "program-01f105b2fd3e",
     "in_state_seconds": 0,
     "last_checkpoint": {
-      "at": "2026-11-02T02:49:11.320831+00:00",
+      "at": "2026-11-09T00:06:03.508226+00:00",
       "by": "owner",
       "choice": null,
       "decision_record_id": null,
@@ -1183,8 +1192,8 @@
     "may_call": false,
     "may_handoff": false,
     "night": null,
-    "note_id": "program-program-e2d0a306995d",
-    "note_window": "pullout:note:program-program-e2d0a306995d",
+    "note_id": "program-program-01f105b2fd3e",
+    "note_window": "pullout:note:program-program-01f105b2fd3e",
     "origin_ref": null,
     "persons": [],
     "place": {
@@ -1229,7 +1238,7 @@
     "title": "Before the standup review",
     "total": 0,
     "track": [],
-    "updated_at": "2026-11-02T02:49:11.320662+00:00",
+    "updated_at": "2026-11-09T00:06:03.508147+00:00",
     "usage_warning_share": null,
     "within": [],
     "your_turn": 0,
@@ -1249,7 +1258,7 @@
     "check_command": "scripts/quick_check.sh",
     "checkpoints": [
       {
-        "at": "2026-11-02T02:49:11.809601+00:00",
+        "at": "2026-11-09T00:06:03.632199+00:00",
         "by": "owner",
         "choice": null,
         "decision_record_id": null,
@@ -1267,7 +1276,7 @@
         "undo": {}
       },
       {
-        "at": "2026-11-02T02:49:11.803640+00:00",
+        "at": "2026-11-09T00:06:03.628214+00:00",
         "by": "owner",
         "choice": null,
         "decision_record_id": null,
@@ -1283,11 +1292,11 @@
         "rule": null,
         "step_id": "",
         "undo": {
-          "requirement_id": "req-b3f579c733f7"
+          "requirement_id": "req-c4d6e3f3de9e"
         }
       },
       {
-        "at": "2026-11-02T02:49:11.798802+00:00",
+        "at": "2026-11-09T00:06:03.624053+00:00",
         "by": "owner",
         "choice": null,
         "decision_record_id": null,
@@ -1303,11 +1312,11 @@
         "rule": null,
         "step_id": "",
         "undo": {
-          "requirement_id": "req-3dea514d7e56"
+          "requirement_id": "req-d85cd7d4bd37"
         }
       },
       {
-        "at": "2026-11-02T02:49:11.792744+00:00",
+        "at": "2026-11-09T00:06:03.620296+00:00",
         "by": "owner",
         "choice": null,
         "decision_record_id": null,
@@ -1325,7 +1334,7 @@
         "undo": {}
       },
       {
-        "at": "2026-11-02T02:49:11.787703+00:00",
+        "at": "2026-11-09T00:06:03.617075+00:00",
         "by": "owner",
         "choice": null,
         "decision_record_id": null,
@@ -1343,7 +1352,7 @@
         "undo": {}
       },
       {
-        "at": "2026-11-02T02:49:11.785768+00:00",
+        "at": "2026-11-09T00:06:03.614745+00:00",
         "by": "owner",
         "choice": null,
         "decision_record_id": null,
@@ -1364,7 +1373,7 @@
     "closed_at": null,
     "control": "normal",
     "control_word": "Normal",
-    "created_at": "2026-11-02T02:49:11.785650+00:00",
+    "created_at": "2026-11-09T00:06:03.614595+00:00",
     "decided_for_you": [],
     "default": {
       "agent": "Claude Code",
@@ -1388,10 +1397,10 @@
     "for_person": null,
     "for_person_id": null,
     "goal": "The Calls window should list the last ten calls with their length and who was on them, newest first.",
-    "id": "program-4f0a41e4cb7a",
+    "id": "program-c6fe3bdce346",
     "in_state_seconds": 0,
     "last_checkpoint": {
-      "at": "2026-11-02T02:49:11.809601+00:00",
+      "at": "2026-11-09T00:06:03.632199+00:00",
       "by": "owner",
       "choice": null,
       "decision_record_id": null,
@@ -1412,15 +1421,15 @@
     "may_call": false,
     "may_handoff": false,
     "night": null,
-    "note_id": "program-program-4f0a41e4cb7a",
-    "note_window": "pullout:note:program-program-4f0a41e4cb7a",
-    "origin_ref": "after:program-e2d0a306995d",
+    "note_id": "program-program-c6fe3bdce346",
+    "note_window": "pullout:note:program-program-c6fe3bdce346",
+    "origin_ref": "after:program-01f105b2fd3e",
     "persons": [],
     "place": {
       "origin": {
-        "id": "program-e2d0a306995d",
+        "id": "program-01f105b2fd3e",
         "kind": "after",
-        "ref": "after:program-e2d0a306995d",
+        "ref": "after:program-01f105b2fd3e",
         "title": "Meeting recap in the Note"
       },
       "person": null,
@@ -1447,9 +1456,9 @@
         "choices": [
           "waive"
         ],
-        "created_at": "2026-11-02T02:49:11.795852+00:00",
+        "created_at": "2026-11-09T00:06:03.623860+00:00",
         "evidence": {},
-        "id": "req-3dea514d7e56",
+        "id": "req-d85cd7d4bd37",
         "judged_at": null,
         "judged_commit": null,
         "kind": "check",
@@ -1457,7 +1466,7 @@
         "label": "R1",
         "ordinal": 1,
         "parent_id": null,
-        "program_id": "program-4f0a41e4cb7a",
+        "program_id": "program-c6fe3bdce346",
         "required": true,
         "rounds": 0,
         "running": false,
@@ -1477,9 +1486,9 @@
         "choices": [
           "waive"
         ],
-        "created_at": "2026-11-02T02:49:11.803533+00:00",
+        "created_at": "2026-11-09T00:06:03.628078+00:00",
         "evidence": {},
-        "id": "req-b3f579c733f7",
+        "id": "req-c4d6e3f3de9e",
         "judged_at": null,
         "judged_commit": null,
         "kind": "shot",
@@ -1487,7 +1496,7 @@
         "label": "R2",
         "ordinal": 2,
         "parent_id": null,
-        "program_id": "program-4f0a41e4cb7a",
+        "program_id": "program-c6fe3bdce346",
         "required": true,
         "rounds": 0,
         "running": false,
@@ -1546,6 +1555,7 @@
           "verdict": null
         },
         "contenders": [],
+        "deliver": null,
         "editable": [
           "title",
           "brief",
@@ -1594,7 +1604,8 @@
         "handoffs": [],
         "held_reason": null,
         "history": null,
-        "id": "step-1cbc4953428d",
+        "id": "step-dded6caf0443",
+        "kind": "agent",
         "last_checkpoint": null,
         "launch_id": null,
         "limit": null,
@@ -1630,6 +1641,7 @@
             "profile": "claude-default"
           }
         ],
+        "sources": [],
         "started_at": null,
         "state": "planned",
         "state_word": "Planned",
@@ -1645,7 +1657,7 @@
         "story": [],
         "taken": false,
         "title": "Show the last ten calls in the Calls window",
-        "updated_at": "2026-11-02T02:49:11.792526+00:00",
+        "updated_at": "2026-11-09T00:06:03.619960+00:00",
         "wait": null,
         "worktree": null
       },
@@ -1669,6 +1681,7 @@
           "verdict": null
         },
         "contenders": [],
+        "deliver": null,
         "editable": [
           "title",
           "brief",
@@ -1717,7 +1730,8 @@
         "handoffs": [],
         "held_reason": null,
         "history": null,
-        "id": "step-0dd66f824c93",
+        "id": "step-3fda3cb7f685",
+        "kind": "agent",
         "last_checkpoint": null,
         "launch_id": null,
         "limit": null,
@@ -1752,6 +1766,7 @@
             "profile": "claude-default"
           }
         ],
+        "sources": [],
         "started_at": null,
         "state": "planned",
         "state_word": "Planned",
@@ -1767,7 +1782,7 @@
         "story": [],
         "taken": false,
         "title": "Tests for the calls list",
-        "updated_at": "2026-11-02T02:49:11.792526+00:00",
+        "updated_at": "2026-11-09T00:06:03.619960+00:00",
         "wait": null,
         "worktree": null
       }
@@ -1787,7 +1802,7 @@
         "title": "Tests for the calls list"
       }
     ],
-    "updated_at": "2026-11-02T02:49:11.809679+00:00",
+    "updated_at": "2026-11-09T00:06:03.632276+00:00",
     "usage_warning_share": null,
     "within": [],
     "your_turn": 0,
@@ -1798,7 +1813,7 @@
       "code": "waits_on_program",
       "detail": "It starts after Meeting recap in the Note is done.",
       "error": "waits_on_program",
-      "program_id": "program-e2d0a306995d"
+      "program_id": "program-01f105b2fd3e"
     },
     "status": 409
   }
