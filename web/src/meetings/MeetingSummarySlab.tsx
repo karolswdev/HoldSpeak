@@ -11,12 +11,8 @@
  *  run receipt (Article III: the truth AFTER the run, never composed from
  *  configuration).
  */
-import type { ReactNode } from "react";
-import { SurfaceWell } from "../desk/surface/Surface";
-import { ReadingDocument } from "../desk/surface/ReadingDocument";
 import { RunAttempts } from "./RouteDisclosure";
 import type { RunReceipt } from "./summaryRoute";
-import { Token } from "../desk/surface/Token";
 
 export interface MeetingIntel {
   summary?: string | null;
@@ -38,72 +34,21 @@ export function readMeetingIntel(source: unknown): MeetingIntel | null {
   };
 }
 
-/** PHILO-15-03: the slab is the one owner of the summary text. A face that
- *  has more to say about the run (the Chair's RETRYING/FAILED facts) passes
- *  it as `facts`, under the topics; it never draws the summary itself. */
-export function MeetingSummarySlab({
-  intel,
-  receipt,
-  facts,
-  reader = false,
-}: {
-  /** Window grammar (2026-10-24): the meeting window reads its summary as
-   *  a document (the one place a document heading is allowed), at a
-   *  comfortable measure, edge to edge; other faces keep the well. */
-  reader?: boolean;
-  intel: MeetingIntel | null;
-  receipt: RunReceipt | null;
-  facts?: ReactNode;
-}) {
+/** The language (2026-11-08; owner 2026-10-31, "the brief IS the page"):
+ *  the summary is one plain paragraph at the head of the meeting's ledger,
+ *  no slab, no tint. Its topics and the run's attempts are one mono line
+ *  under it. */
+export function MeetingSummary({ intel, receipt }: { intel: MeetingIntel | null; receipt: RunReceipt | null }) {
   const summary = String(intel?.summary ?? "").trim();
   if (!summary) return null;
-  const topics = intel?.topics ?? [];
-  if (reader) {
-    return (
-      <section className="meeting-summary-reader" aria-label="Summary" data-testid="meeting-summary">
-        <header className="meeting-summary-reader-head">
-          <h2 className="meeting-summary-heading">Summary</h2>
-          <RunAttempts receipt={receipt} testId="summary-record-attempts" />
-        </header>
-        <ReadingDocument className="meeting-summary-document" data-testid="meeting-summary-text">{summary}</ReadingDocument>
-        {topics.length > 0 ? (
-          <p className="meeting-summary-topics" data-testid="meeting-summary-topics">
-            {topics.map((topic, index) => (
-              <span key={topic} className="meeting-summary-topic">
-                {index > 0 ? <span aria-hidden="true"> · </span> : null}
-                {topic.charAt(0).toUpperCase() + topic.slice(1)}
-              </span>
-            ))}
-          </p>
-        ) : null}
-        {facts ?? null}
-      </section>
-    );
-  }
+  const topics = (intel?.topics ?? []).map((topic) => topic.charAt(0).toUpperCase() + topic.slice(1));
   return (
-    <SurfaceWell
-      head={
-        <span className="summary-well-head">
-          <span>SUMMARY</span>
-          <RunAttempts receipt={receipt} testId="summary-record-attempts" />
-        </span>
-      }
-    >
-      <p className="summary-text" data-testid="meeting-summary-text">
-        {summary}
+    <div className="mt-ledger-summary" data-testid="meeting-summary">
+      <p className="mt-ledger-summary-text" data-testid="meeting-summary-text">{summary}</p>
+      <p className="mt-ledger-summary-facts">
+        {topics.length ? <span data-testid="meeting-summary-topics">{topics.join(" · ")}</span> : null}
+        <RunAttempts receipt={receipt} testId="summary-record-attempts" />
       </p>
-      {topics.length > 0 ? (
-        <span className="summary-topics" data-testid="meeting-summary-topics">
-          {topics.map((topic) => (
-            // PHILO-15 lane 12 (B28): a long topic wraps inside the window
-            // (the chip species' wrap variant); it never runs past its edge.
-            <Token key={topic} className="surface-token" data-chip data-wrap>
-              {topic}
-            </Token>
-          ))}
-        </span>
-      ) : null}
-      {facts ?? null}
-    </SurfaceWell>
+    </div>
   );
 }
