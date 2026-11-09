@@ -30,6 +30,9 @@ describe("the fold grammar", () => {
     const disclosure = css("surface/patterns/disclosure.css");
     expect(disclosure).toContain('content: "Show"');
     expect(disclosure).toContain('content: "Hide"');
+    // The word rides the hit-face pseudo; it is a flex item, never the
+    // absolute layer over the label (fix forward #2070).
+    expect(disclosure).toMatch(/trigger::after \{\s*content: "Show";[^}]*position: static;/);
     const today = css("pullouts/views/today.css");
     // Today's word is the ::before: the library Button's ::after is its hit
     // face (#1757), so the fold word cannot ride it.

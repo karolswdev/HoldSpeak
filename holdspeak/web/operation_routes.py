@@ -14,7 +14,9 @@ from typing import Any, Awaitable, Callable, Iterable, Mapping
 
 from fastapi import APIRouter, Request
 
+from holdspeak.operations import OperationRefused
 from holdspeak.principals import UNAUTHENTICATED
+from holdspeak.services.errors import ValidationError
 
 Answer = Callable[..., Awaitable[Any]]
 
@@ -24,6 +26,29 @@ def _principal(request: Request) -> Any:
     owner (Codex on #2051): the registry then refuses an owner-only operation
     with ``owner_required``."""
     return getattr(request.state, "principal", UNAUTHENTICATED)
+
+
+class ContractRefusal(ValidationError, OperationRefused):
+    """A contract refusal (``authority_in_arguments``, ``invalid_arguments``)
+    as every route envelope already reads one: a ValidationError with status
+    400 (the meeting, intel and aftercare envelopes; phone's ServiceError
+    path, whose body keeps ``error``/``code``/``detail``), and still an
+    OperationRefused (People). Before this a module whose envelope did not
+    name OperationRefused answered the refusal with a 500 (#2066)."""
+
+    def __init__(self, refused: OperationRefused) -> None:
+        Exception.__init__(self, refused.detail)
+        self.code, self.detail, self.operation = refused.code, refused.detail, refused.operation
+        self.context = {"status": 400}
+
+
+def _invoke(registry: Callable[[], Any], principal: Any, name: str, args: dict[str, Any]) -> Any:
+    try:
+        return registry().invoke(principal, name, args, shape="web")
+    except ContractRefusal:
+        raise
+    except OperationRefused as refused:
+        raise ContractRefusal(refused) from refused
 
 
 async def _body(request: Request) -> dict[str, Any]:
@@ -44,7 +69,7 @@ def _endpoint(descriptor: Any, registry: Callable[[], Any], answer: Answer, modu
         query = dict(request.query_params) if method in ("GET", "DELETE") else {}
         source = query if method == "GET" else {**query, **await _body(request)}
         args = {**source, **params}
-        return await answer(lambda: registry().invoke(principal, descriptor.name, args, shape="web"),
+        return await answer(lambda: _invoke(registry, principal, descriptor.name, args),
                             status=descriptor.http_status)
 
     # FastAPI reads the path parameters and the operation id from the
