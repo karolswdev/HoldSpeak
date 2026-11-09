@@ -164,6 +164,13 @@ class RuntimeServices:
 
     # --- remaining hub boundaries ----------------------------------------
     projection_service: Optional[Any] = None
+    # 2026-11-09 (ops/programs-work): the declared rows' services (recipe,
+    # note-window, memory Recall, desk state, constitutional context).
+    recipe_service: Optional[Any] = None
+    refinement_thought_service: Optional[Any] = None
+    recall_service: Optional[Any] = None
+    desk_service: Optional[Any] = None
+    constitutional_context_service: Optional[Any] = None
     authority_service: Optional[Any] = None
     # The Settings family's declared rows (settings_operations.py, setup_operations.py, 2026-11-09).
     settings_hub_service: Optional[Any] = None

@@ -90,7 +90,6 @@ class RecipeService:
             canonical_source_type,
             inject_skills,
         )
-        self._migrate_subject_pointers(principal)
         self._reject_retired_selector(inference_target_id or requested_placement)
         recipe = self._recipe(recipe_id)
         self._refuse_missing_legacy_profile(recipe)
@@ -152,7 +151,6 @@ class RecipeService:
             _hydrate_grounding_detailed,
             inject_skills,
         )
-        self._migrate_subject_pointers(principal)
         self._reject_retired_selector(inference_target_id)
         question = str(question or "").strip()
         if not question:
@@ -240,17 +238,13 @@ class RecipeService:
                                context={"invocation_id": answer.invocation_id, "status": 409})
         return dict(answer.published)
 
-    def _migrate_subject_pointers(self, principal: Principal) -> None:
-        self._broker.inference_adoption_service.migrate_recipe_workbench_subject_assignments(principal)
-
     def _refuse_post_marker_profile_pointer(
         self, principal: Principal, fields: dict[str, Any]
     ) -> None:
         """Leave migrated assignments immutable to retired Recipe pointers."""
         if "profile_id" not in fields:
             return
-        from .inference_adoption_service import RECIPE_WORKBENCH_MIGRATION_FAMILY
-        from .inference_assignment_service import InferenceAssignmentService
+        from .inference_assignment_service import RECIPE_WORKBENCH_MIGRATION_FAMILY, InferenceAssignmentService
 
         marker = InferenceAssignmentService(self._db).migration_marker(
             principal, family=RECIPE_WORKBENCH_MIGRATION_FAMILY

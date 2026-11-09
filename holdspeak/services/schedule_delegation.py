@@ -8,8 +8,7 @@ import time
 import uuid
 from typing import Any
 from ..principals import Principal, PrincipalKind
-from .errors import ServiceError
-from .inference_route_plan_service import ROUTE_PLANNING_AUTHORITY
+from .errors import ServiceError, ValidationError
 
 
 def _terms(
@@ -77,21 +76,24 @@ def _terms(
     if recipe is None and not str(getattr(wb, "instruction", "") or "").strip():
         # Betterment A2: an automation with an instruction needs no agent.
         raise ServiceError("delegation_stale_work", "Automation has no agent", context={"status": 409})
-    from ..kernel.runtime import _configure
-    route = _configure(db).inference_adoption_service.plans.freeze_route_plan_in_transaction(
-        ROUTE_PLANNING_AUTHORITY, conn,
-        command_id=f"schedule-delegation-route-{delegation_id}",
-        capability_id="workbench.item", subject_kind="workbench", subject_id=str(wb.id),
-        # This is immutable schedule-source evidence. Per-run parent contexts
-        # remain the active deadline and cancellation fence at execution.
-        deadline_at=time.time() + 365 * 24 * 60 * 60,
-    )
-    primary = dict(route["entries"][0])
+    # The schedule names the assignment it runs on (an automation's With
+    # line, else the job's); the engine door reads its chain at each run.
+    # Read only: this runs inside the owner's enable transaction, so it never
+    # captures (writes) a deployment revision.
+    from .engine_door import _bound_revision
+    from .inference_assignment_service import InferenceAssignmentService
+
+    assignment, entries = InferenceAssignmentService(db).chain(
+        "workbench.item", subject_kind="workbench", subject_id=str(wb.id))
+    if not entries:
+        raise ValidationError("No model assignment can be frozen.", code="no_assignment",
+                              context={"capability_id": "workbench.item"})
+    first = str(entries[0].get("profile_id") or "")
     return {"recipe_id": recipe.id if recipe else "", "recipe_revision": str(recipe.last_modified) if recipe else "",
             "workbench_revision": str(wb.last_modified), "schedule_revision": str(wb.schedule_revision),
             "cadence": str(wb.schedule or ""),
-            "deployment_revision_id": str(primary["deployment_revision_id"]),
-            "route_plan_sha256": str(route["sha256"])}
+            "deployment_revision_id": _bound_revision(db, first) or f"profile:{first}",
+            "assignment_id": assignment}
 
 
 def _hash(terms: dict[str, Any], expires_at: float | None) -> str:
@@ -123,8 +125,6 @@ class ScheduleDelegationService:
         """INTERNAL compatibility helper; WorkbenchService owns the atomic gesture."""
         if principal.kind is not PrincipalKind.OWNER:
             raise ServiceError("owner_principal_required", "Only the owner can enable a schedule", context={"status": 403})
-        from ..kernel.runtime import _configure
-        _configure(self.db).inference_adoption_service.migrate_recipe_workbench_subject_assignments(principal)
         with self.db._connection() as conn:
             conn.execute("BEGIN IMMEDIATE")
             return self.enable_from_owner_in_transaction(principal, wb, conn, expires_at=expires_at)

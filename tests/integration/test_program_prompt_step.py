@@ -33,12 +33,12 @@ class _Engine:
 
 @pytest.fixture()
 def rig(tmp_path, monkeypatch) -> Rig:
-    from holdspeak.services import project_update_service
+    from holdspeak.services import engine_door
 
     rig = Rig(tmp_path)
     monkeypatch.setattr(programs, "default_program_service", lambda db=None: rig.service)
-    monkeypatch.setattr(project_update_service, "_resolve_for_capability",
-                        lambda _broker, job: ("rev-1", "asg-1", "prof-1"))
+    monkeypatch.setattr(engine_door, "_chain",
+                        lambda _broker, job, _subject=None: ("asg-1", [engine_door.Engine("rev-1", "asg-1", "prof-1")]))
     with rig.db._connection() as conn:
         conn.execute("INSERT INTO projects (id, name) VALUES ('proj-1', 'App')")
     rig.db.notes.upsert(note_id="prompt-note-1", title="Standup", body_markdown="The login page ships Friday.")

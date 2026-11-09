@@ -762,9 +762,9 @@ class PreparationBriefService:
         return self._route_state()
 
     def _route_state(self) -> dict[str, Any]:
-        """Bounded route state read off the FROZEN ROUTE the product's own
-        planner resolves (the Ask path's resolver, `_resolve_for_capability`
-        -> `_route_plan_deployment`), then the leg's own revisions: the
+        """Bounded route state read off the engine the engine door picks
+        (`_resolve_for_capability` -> `engine_door.engine_for`), then that
+        engine's own revisions: the
         deployment revision for boundary, endpoint and secret slot; the
         model-profile revision for the display label.  No selection of its
         own; the target's readiness (a key that is not set) is read from

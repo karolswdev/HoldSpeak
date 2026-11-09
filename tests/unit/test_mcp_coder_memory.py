@@ -140,6 +140,14 @@ class _StubMemoryService:
             raise ValidationError("query is required")
         return {"results": [{"id": "m1"}], "total": 1}
 
+    # The registry binds every memory row to one service: the stand-in names
+    # the methods the other declared rows reach (memory_operations.py).
+    def observations(self, principal: Any, **kwargs: Any) -> dict:
+        return {"observations": []}
+
+    def page(self, principal: Any, **kwargs: Any) -> dict:
+        return {"page": None}
+
 
 @pytest.fixture()
 def _patch_memory(monkeypatch: pytest.MonkeyPatch) -> _StubMemoryService:
@@ -147,6 +155,11 @@ def _patch_memory(monkeypatch: pytest.MonkeyPatch) -> _StubMemoryService:
     monkeypatch.setattr(memory_family, "MemoryService", lambda **_kw: stub)
     monkeypatch.setattr(memory_family, "get_database", lambda: object())
     monkeypatch.setattr(memory_family, "get_observer", lambda: None)
+    # memory.search is a declared row (memory_operations.py): the declared
+    # family binds it over the MCP registry's bare MemoryService.
+    import holdspeak.services.memory_service as memory_module
+
+    monkeypatch.setattr(memory_module, "MemoryService", lambda **_kw: stub)
     return stub
 
 

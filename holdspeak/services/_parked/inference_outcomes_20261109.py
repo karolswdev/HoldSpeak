@@ -1,4 +1,6 @@
-"""One typed service boundary for admitted inference terminal outcomes."""
+"""PARKED 20261109 (lane door/own-choice-park-waist): map_inference_outcome has no caller; the engine door raises one typed error.
+Moved from holdspeak/services/inference_outcomes.py. Not imported.
+"""
 from __future__ import annotations
 from typing import Any
 from ..kernel.inference_runner import InvocationOutcome

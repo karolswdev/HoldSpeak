@@ -21,7 +21,7 @@ from __future__ import annotations
 from typing import Any, Callable, Mapping, Optional
 
 from holdspeak.operations import _CONTRACT_REFUSALS, OperationDescriptor
-from holdspeak.services.errors import NotFound
+from holdspeak.services.errors import NotFound, ValidationError
 
 Call = Callable[[Any, Any, dict[str, Any]], Any]
 
@@ -66,9 +66,43 @@ def _forget(service: Any, principal: Any, args: dict[str, Any]) -> dict[str, Any
     return {"success": True}
 
 
+def _event_start_view(watch: Mapping[str, Any]) -> dict[str, Any]:
+    """An automation's event start (a watch, the watch fold of 2026-11-08) as the face's row."""
+    connector = str(watch.get("connector_id") or "custom")
+    adapter_status = "ready" if connector in ("gh", "jira") else "unavailable"
+    enabled = watch.get("state") in {"active", "tested"}
+    status = ("attention" if watch.get("last_error") else "unavailable" if adapter_status == "unavailable"
+              else "active" if enabled else "paused")
+    query = watch.get("query") if isinstance(watch.get("query"), dict) else {}
+    return {
+        "id": watch.get("id"), "name": watch.get("name") or "Event automation",
+        "provider": "github" if connector == "gh" else connector, "event_kind": watch.get("event_pattern") or "",
+        "enabled": enabled, "status": status, "adapter_status": adapter_status,
+        "last_error": watch.get("last_error"), "last_good_at": watch.get("last_success_at"),
+        "created_at": watch.get("created_at"), "repository": query.get("repository"),
+    }
+
+
+def _set_event_start(service: Any, principal: Any, args: dict[str, Any]) -> dict[str, Any]:
+    """On or off for one event start of an automation (Enabling sets a silent baseline)."""
+    from holdspeak.services.watch_service import AUTOMATION_INTENT_PREFIX, _automation_event_pattern
+
+    workbench_id, watch_id = str(args.get("workbench_id")), str(args.get("automation_id"))
+    if not isinstance(args.get("enabled"), bool):
+        raise ValidationError("enabled must be true or false")
+    db = service._db
+    watch = db.automations.get_watch(watch_id)
+    if not watch or watch.get("intent") != AUTOMATION_INTENT_PREFIX + workbench_id:
+        raise NotFound("automation event", watch_id)
+    value = service.set_automation_event_enabled(principal, workbench_id=workbench_id, watch_id=watch_id,
+                                                 enabled=args["enabled"])
+    pattern = _automation_event_pattern(db.automations.list_rules(str(value.get("id") or "")))
+    return {"automation": _event_start_view({**value, "event_pattern": pattern})}
+
+
 def _op(name: str, method: str, http: tuple[str, str], handler: str, call: Call, description: str, *,
         write: bool = False, properties: Optional[Mapping[str, Any]] = None, required: tuple[str, ...] = (),
-        status: int = 200, authority: str = WORK) -> OperationDescriptor:
+        status: int = 200, authority: str = WORK, service: str = "workbench_service") -> OperationDescriptor:
     """One verb; its tool requires the path's ids and ``required``."""
     ids = [part[1:-1] for part in http[1].split("/") if part.startswith("{")]
     tool = {"type": "object", "properties": {**{key: _ID for key in ids}, **dict(properties or {})},
@@ -77,7 +111,7 @@ def _op(name: str, method: str, http: tuple[str, str], handler: str, call: Call,
         name=name, version=1, description=description, args_schema={"type": "object"}, principal=_PRINCIPAL,
         effect="write" if write else "read", result="the WorkbenchService answer, in the route's envelope",
         refusals=_REFUSALS, completion="synchronous; a write is one desk_changed frame (kind workbench)",
-        exposure=(f"http:{http[0]} {http[1]}", f"mcp:{name}"), service="workbench_service", method=method,
+        exposure=(f"http:{http[0]} {http[1]}", f"mcp:{name}"), service=service, method=method,
         call=call, http=http, http_status=status, handler=handler, tool_schema=tool,
         authority=authority,
         # A read is evidence and MCP only (thread_modes._MCP_ONLY): a thread
@@ -133,6 +167,19 @@ AUTOMATION_OPERATIONS: tuple[OperationDescriptor, ...] = (
     _op("automation.lesson.forget", "forget_memory", ("DELETE", _WB + "/memory/{index}"), "api_forget_memory",
         _forget, "Forget one lesson of an automation; at is its timestamp.", write=True,
         properties={"index": {"type": ["integer", "string"]}, "at": {"type": "string"}}),
+    # 2026-11-09 (ops/programs-work): Today's Prepared block and an item's Restore.
+    _op("automation.prepared.read", "prepared_for_today", ("GET", "/api/automations/prepared"),
+        "api_prepared_for_today", lambda s, p, a: s.prepared_for_today(p),
+        "Read what is prepared for today: the newest result of an automation that puts it in Today, and the "
+        "automation Prepare now runs. Each is null when there is none."),
+    _op("automation.item.restore", "restore_item", ("POST", _WB + "/items/{item_id}/restore"), "api_restore_item",
+        _named("item", "item_id",
+               lambda s, p, a: {"item": s.restore_item(p, a.get("workbench_id"), a.get("item_id"))}),
+        "Restore one parked item of an automation (workbench.delete_item parks it).", write=True),
+    _op("automation.event_start.set_enabled", "set_automation_event_enabled",
+        ("PATCH", _WB + "/automations/{automation_id}"), "set_workbench_automation_enabled", _set_event_start,
+        "Turn one event start of an automation on or off. Turning it on sets a silent baseline first.",
+        write=True, properties={"enabled": {"type": "boolean"}}, required=("enabled",), service="watch_service"),
 )
 
 __all__ = ["AUTOMATION_OPERATIONS"]

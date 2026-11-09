@@ -1,8 +1,10 @@
-"""Stored-route C1 deferred queue owner reconstruction."""
+"""The deferred Meeting queue's job owner: one parent per job, each model call through the engine door."""
 
 from __future__ import annotations
 
 import hashlib
+import time
+import uuid
 from typing import Any, Callable, Mapping
 
 from ..logging_config import get_logger
@@ -81,6 +83,17 @@ class BoundMeetingAdapter:
         return "cancelled"
 
 
+def _receipt(sent: Any) -> dict[str, Any]:
+    """The door's attempts as the queue's route receipt: each attempt's
+    number is its ``route_leg_ordinal`` (attempt 1 is the first engine of
+    the chain, attempt 2 the next), so the public receipt maps it to the
+    disclosed host."""
+    return {"attempts": [
+        {"route_leg_ordinal": number, "send_phase": phase, "outcome": outcome, "child_operation_id": operation_id}
+        for number, (_revision, phase, operation_id, outcome) in enumerate(tuple(sent or ()), 1)
+    ]}
+
+
 PARENT_KIND = "meeting.deferred-intel-job"
 QUEUE_SERVICE_IDENTITY = "meeting-intel-queue"
 QUEUE_AUTHORITY_BASIS = "meeting-intel-queue:deferred"
@@ -146,18 +159,20 @@ class BoundDeferredIntelJob:
         job: Any,
         parent: Any,
         members: Mapping[str, Mapping[str, Any]],
+        deadline_at: float = 0.0,
     ) -> None:
         self._broker = broker
+        #: The parent's deadline: no model call of this job runs past it.
+        self._deadline_at = float(deadline_at or 0.0)
         self._job = job
         self._parent = parent
         self._members = {str(key): dict(value) for key, value in members.items()}
         self._principal = queue_service_principal()
         self._closed = False
         self.memory_sent: Any = None  # the memory staged on the last execute
-        # Set immediately after route admission.  If a later provider or
-        # projection boundary raises, this lets the queue recover the durable
-        # controller evidence instead of manufacturing an empty receipt.
-        self._execution_id = ""
+        # The attempts of the last model call: the receipt a later
+        # exception still writes (``durable_route_receipt``).
+        self._last_receipt: Mapping[str, Any] | None = None
 
     @classmethod
     def reconstruct(cls, db: Any, job: Any, *, broker: Any = None) -> "BoundDeferredIntelJob":
@@ -202,6 +217,7 @@ class BoundDeferredIntelJob:
             job=job,
             parent=parent,
             members={str(row["capability_id"]): dict(row) for row in members},
+            deadline_at=float(parent_row["deadline_at"] or 0.0),
         )
 
     @property
@@ -209,64 +225,46 @@ class BoundDeferredIntelJob:
         return str(self._parent.operation_id)
 
     def egress_model_host(self, db: Any, capability: str) -> str:
-        """The host this bound job's FROZEN route actually egresses to.
+        """The host this job's model call egresses to: the engine the door
+        picks for ``capability`` (HS-200-42, Article III: the row states the
+        host the call goes to, not the enqueue-time estimate). An adopted
+        mesh node wins, else the endpoint's bare host, else the boundary."""
+        from ..services import engine_door
 
-        HS-200-42 (counsel P1-2, Article III).  ``run_intelligence`` records a
-        host at ENQUEUE time from ``resolve_meeting_placement(Config.load()
-        .meeting)`` (``intel/providers.py:666``) -- mutable config, read before
-        a claim exists.  Execution goes somewhere else entirely: through the
-        deployment revision frozen into this bundle member's route plan, which
-        is what ``_engine_for_revision`` (``inference_targets.py:721``) builds
-        the engine from.  The two sources are NOT structurally guaranteed to
-        agree, so the row must be re-stated from THIS one, before the call.
-
-        Same vocabulary as the enqueue-time estimate: an adopted mesh node
-        wins, else the endpoint's bare host, else the frozen boundary.
-        """
-        member = self._members.get(capability)
-        if member is None:
+        try:
+            engine = engine_door.engine_for(self._broker, capability)
+            row = db.deployment_revisions.get(engine.revision)
+        except Exception:
             return ""
-        with db._connection() as conn:
-            row = conn.execute(
-                """SELECT d.node,d.endpoint,d.boundary
-                     FROM inference_route_plan_entries e
-                     JOIN deployment_revisions d ON d.id=e.deployment_revision_id
-                    WHERE e.plan_id=? ORDER BY e.route_leg_ordinal LIMIT 1""",
-                (str(member["route_plan_id"]),),
-            ).fetchone()
         if row is None:
             return ""
         from ..intel.providers import endpoint_host
 
-        node = str(row["node"] or "").strip()
+        node = str(getattr(row, "node", "") or "").strip()
         if node:
             return node
-        host = endpoint_host(row["endpoint"])
+        host = endpoint_host(getattr(row, "endpoint", ""))
         if host:
             return host
-        return str(row["boundary"] or "").strip() or "local"
+        return str(getattr(row, "boundary", "") or "").strip() or "local"
 
     def require_frozen_plugin_member(self, frozen: Mapping[str, Any]) -> Mapping[str, Any]:
-        """Prove descriptor, bundle, and frozen capability say the same plugin.
-
-        This is deliberately before ``execute``/child admission.  A host or
-        registry drift is a queue refusal, never an opportunity to create a
-        model child under an almost-matching capability.
-        """
+        """Prove descriptor, bundle member and the registered capability say
+        the same plugin, before any model call. A host or registry drift is a
+        queue refusal, never a call under an almost-matching capability."""
         capability = str(frozen.get("capability_id") or "").strip()
         plugin_id = str(frozen.get("plugin_id") or "").strip()
         revision = str(frozen.get("plugin_definition_revision") or "").strip()
         if capability != f"meeting.plugin.{plugin_id}" or not plugin_id or not revision:
             raise MeetingIntelRefused("frozen_plugin_descriptor_invalid", capability)
-        member = self._members.get(capability)
-        if member is None:
+        if capability not in self._members:
             raise MeetingIntelRefused("frozen_plugin_bundle_member_missing", capability)
-        definition = self._broker.inference_adoption_service._frozen_capability_definition(
-            str(member["route_plan_id"])
-        )
+        try:
+            definition = self._registry().require(capability).canonical_dict()
+        except Exception:
+            raise MeetingIntelRefused("frozen_plugin_capability_drift", capability) from None
         if (
-            str(definition.get("id") or "") != capability
-            or int(definition.get("revision") or 0) != int(frozen.get("capability_revision") or 0)
+            int(definition.get("revision") or 0) != int(frozen.get("capability_revision") or 0)
             or str(definition.get("schema_sha256") or "") != str(frozen.get("schema_sha256") or "")
             or str(definition.get("plugin_id") or "") != plugin_id
             or str(definition.get("plugin_definition_revision") or "") != revision
@@ -275,47 +273,15 @@ class BoundDeferredIntelJob:
             raise MeetingIntelRefused("frozen_plugin_capability_drift", capability)
         return definition
 
+    def _registry(self) -> Any:
+        from ..inference_capabilities import process_inference_capability_registry
+
+        return getattr(self._broker, "inference_capability_registry", None) or process_inference_capability_registry()
+
     def durable_route_receipt(self) -> Mapping[str, Any] | None:
-        """Read this execution's durable route evidence for exception recovery.
-
-        The controller's public projection intentionally leaves ``send_phase``
-        null while an attempt is only reserved or has a persisted dispatch
-        intent.  A dispatch intent is possible contact, however, so derive the
-        pending/indeterminate phase from the durable attempt row.  A reservation
-        without ``dispatch_intent_at`` remains pre-send and is left alone.
-        """
-        if not self._execution_id:
-            return None
-        from ..services.inference_fallback_controller import INFERENCE_FALLBACK_AUTHORITY
-
-        controller = self._broker.inference_adoption_service.controller
-        receipt = controller.get_route_execution_receipt(
-            INFERENCE_FALLBACK_AUTHORITY,
-            execution_id=self._execution_id,
-        )
-        if not isinstance(receipt, Mapping):
-            return None
-        db = self._broker.database
-        with db._connection() as conn:
-            rows = conn.execute(
-                """SELECT id,send_phase,dispatch_intent_at
-                     FROM inference_route_attempts
-                    WHERE execution_id=?""",
-                (self._execution_id,),
-            ).fetchall()
-        durable = {str(row["id"]): row for row in rows}
-        attempts = []
-        for raw in receipt.get("attempts", ()):
-            if not isinstance(raw, Mapping):
-                continue
-            attempt = dict(raw)
-            if not attempt.get("send_phase"):
-                row = durable.get(str(attempt.get("attempt_id") or ""))
-                if row is not None and row["dispatch_intent_at"]:
-                    attempt["send_phase"] = "dispatch_intent"
-                    attempt["outcome"] = "indeterminate"
-            attempts.append(attempt)
-        return {**dict(receipt), "attempts": attempts}
+        """The attempts of the last model call, for a receipt written after
+        an exception (``None`` when no call was sent)."""
+        return self._last_receipt
 
     def execute(
         self,
@@ -330,32 +296,29 @@ class BoundDeferredIntelJob:
         memory: Any = None,
         memory_heading: str = "MEMORY",
     ) -> tuple[Mapping[str, Any] | None, Mapping[str, Any]]:
-        """Stage private material and execute one exact frozen bundle member.
+        """Run one member of this job through the engine door, under the
+        job's parent, and publish its projection.
 
         ``memory`` (a ``MemoryContext``) is staged as ``memory_material`` and
-        ``memory_refs``, cut to what the member's route leaves after the
-        material: memory never makes a job that fit fail.
+        ``memory_refs``, cut to what the engine leaves after the material:
+        memory never makes a job that fit fail. Returns ``(published,
+        routed)``; ``routed`` is ``{outcome, receipt}`` and the receipt's
+        attempts carry the door's attempt number as ``route_leg_ordinal``.
         """
         if self._closed:
             raise MeetingIntelRefused(SESSION_CLOSED, capability)
-        member = self._members.get(capability)
-        if member is None:
+        if capability not in self._members:
             raise MeetingIntelRefused(SESSION_NOT_ADMITTED, capability)
-        from ..services.inference_semantic_adapters import adapter_for_frozen_definition
         from ..kernel.model import KernelRefused
+        from ..services import engine_door
+        from ..services.inference_semantic_adapters import adapter_for
 
         if executor_held is not None and not executor_held():
             return None, {"outcome": "lease_lost"}
-        executor_lease = {
-            "job_id": str(self._job.job_id),
-            "token": str(getattr(self._job, "executor_lease_token", "") or ""),
-            "epoch": int(getattr(self._job, "executor_lease_epoch", 0) or 0),
-        }
-        operation_id = "meeting:deferred:" + sha(
-            (str(self._job.job_id), capability, operation_suffix)
-        ).split(":", 1)[1]
-        command_id = "meeting-bound-route:" + operation_id
-        adoption = self._broker.inference_adoption_service
+        try:
+            engine = engine_door.engine_for(self._broker, capability)
+        except engine_door.EngineDoorError:
+            return None, {"outcome": "refused", "receipt": {"attempts": []}}
         if memory:
             from ..services.memory_grounding import fit_memory
 
@@ -366,77 +329,43 @@ class BoundDeferredIntelJob:
                     staged["memory_refs"] = candidate.refs
                 return staged
 
-            sent = fit_memory(memory, lambda candidate: adoption.payload_room(
-                route_plan_id=str(member["route_plan_id"]),
-                capability_id=capability,
-                operation_id=operation_id,
-                payload=with_memory(candidate),
-                reserved_output_tokens=512,
+            sent = fit_memory(memory, lambda candidate: engine_door.room(
+                self._broker, engine, with_memory(candidate), reserved_output_tokens=512,
             ) >= 0)
             # What was staged, for the run receipt's "Looked at".
             self.memory_sent = sent
             material = with_memory(sent)
-        admitted = adoption.admit_on_frozen_route(
-            self._principal,
-            command_id=command_id,
-            route_plan_id=str(member["route_plan_id"]),
-            capability_id=capability,
-            operation_id=operation_id,
-            payload=dict(material),
-            reserved_output_tokens=512,
-            parent_operation_id=self.parent_operation_id,
-            executor_lease=executor_lease,
-        )
-        self._execution_id = str(admitted["execution"]["id"])
-        definition = adoption._frozen_capability_definition(str(member["route_plan_id"]))
-        provider_adapter = BoundMeetingAdapter(capability, call)
-        adapter = adapter_for_frozen_definition(definition, provider_adapter.dispatch)
-        if executor_held is not None and not executor_held():
-            return None, {"outcome": "lease_lost"}
 
-        def require_current_executor(_deployment: str, _child: str, _attempt: int) -> None:
+        def require_current_executor(_operation: str, _child: str, _attempt: int) -> None:
             if executor_held is not None and not executor_held():
                 raise KernelRefused("bound_executor_lease_lost")
 
-        def publish(value: Any, winning: Mapping[str, Any]) -> str:
-            # The controller has already elected this child and retained its exact
-            # private result reference. Stage against that reference rather than a
-            # fresh projection-stage ref, so finalization can verify the receipt.
-            from ..services.inference_adoption_service import _sha256
-
-            invocation_id = str(winning["child_invocation_id"])
-            stage = self._broker.projection_stager.stage(
-                invocation_id,
-                projection_kind,
-                dict(projection(dict(value))),
-                result_sha256=_sha256(value),
-                receipt_result_ref=str(winning["result_ref"]),
+        run_id = "meetingdeferred_" + sha(
+            (str(self._job.job_id), capability, operation_suffix, uuid.uuid4().hex)
+        ).split(":", 1)[1][:40]
+        adapter = adapter_for(capability, BoundMeetingAdapter(capability, call).dispatch, registry=self._registry())
+        try:
+            answer = engine_door.run(
+                self._broker, self._principal, capability, dict(material), engine=engine,
+                adapter=adapter, invocation_id=run_id,
+                deadline=max(1.0, self._deadline_at - time.time()) if self._deadline_at else engine_door.DEFAULT_DEADLINE_SECONDS,
+                stage=(projection_kind, lambda value: dict(projection(dict(value)))),
+                parent_context=self._parent.context,
+                before_physical_dispatch=require_current_executor,
             )
-            return stage.result_ref
-
-        # A lease adopter inherits possible in-flight physical work. Reconcile the
-        # durable child intent first; it must not reserve a second provider call
-        # while the old dispatch has unknown settlement.
-        if int(executor_lease["epoch"]) > 1:
-            adoption.recover_route_executions(
-                execution_id=self._execution_id,
-                parent_operation_id=self.parent_operation_id,
-            )
-        routed = adoption.execute(
-            self._principal,
-            execution_id=self._execution_id,
-            adapter=adapter,
-            publish=publish,
-            before_physical_dispatch=require_current_executor,
-            parent_context=self._parent.context,
-        )
-        result = routed.get("result")
-        if str(routed.get("outcome")) != "succeeded" or not isinstance(result, Mapping):
-            return None, routed
-        winning = routed.get("winning_reservation") or {}
-        invocation_id = str(winning.get("child_invocation_id") or "")
-        published = self._broker.projection_stager.finalize(invocation_id) if invocation_id else None
-        return (dict(published) if isinstance(published, Mapping) else None), routed
+        except engine_door.EngineDoorError as exc:
+            self._last_receipt = _receipt(exc.sent)
+            return None, {"outcome": exc.outcome or "failed", "receipt": self._last_receipt}
+        except Exception as exc:
+            # A publication that failed after the call: the receipt still
+            # names the engine that was contacted.
+            self._last_receipt = _receipt(getattr(exc, "sent", ()))
+            raise
+        self._last_receipt = _receipt(answer.sent)
+        published = answer.published
+        return (dict(published) if isinstance(published, Mapping) else None), {
+            "outcome": "succeeded", "receipt": self._last_receipt, "result": answer.result,
+        }
 
     def close(self, outcome: str, *, executor_lease: Mapping[str, Any] | None = None) -> bool:
         """Close the old owner before any reserved successor can be promoted.

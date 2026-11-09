@@ -1,0 +1,66 @@
+"""PARKED 20261109 (ops/programs-work): the hand-written memory.search tool.
+
+``memory.search`` is a row in ``holdspeak/memory_operations.py`` now: the same
+name and schema, produced by the declared family, and the same row produces
+GET /api/memory/search (the desk's shape through ``web_call``). Kept here as it
+stood in ``mcp/families/memory.py``.
+
+Not imported. Restore with git revert of the parking commit.
+"""
+# ruff: noqa
+# fmt: off
+PARKED = True
+
+'''
+TOOLS: list[dict[str, Any]] = [
+    {
+        "name": "memory.search",
+        "description": "Search memory: decisions, meetings (transcript, summary), notes, threads, actions, project milestones/risks, sends, published updates, prep briefs, calendar events. Returns records; use project.list for projects; read permission applies.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "Search query."},
+                "kind": {"type": "string", "description": "Kinds: decision, decision_record, desk_decision, artifact, meeting, note, thread, action, project_item, workbench_item, cadence, send, project_update, prep_brief, calendar_event."},
+                "project_id": {"type": "string", "description": "Project ID."},
+                "time_from": {"type": "string", "description": "ISO-8601 start."},
+                "time_to": {"type": "string", "description": "ISO-8601 end."},
+                "limit": {"type": "integer", "minimum": 1, "maximum": 500, "description": "Maximum; default 50."},
+                "offset": {"type": "integer", "minimum": 0, "description": "Pagination offset."},
+            },
+            "required": ["query"],
+            "additionalProperties": False,
+        },
+    },
+]
+
+
+def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
+    """Route a tool call.  Raises LookupError for unowned names."""
+    if name != "memory.search" and name not in _OPERATION_TOOLS:
+        raise LookupError(name)
+
+    if name in _OPERATION_TOOLS:
+        from holdspeak import operations
+
+        ops = operations.for_runtime(
+            memory_service=lambda: runtime_service(
+                "memory_service",
+                lambda: MemoryService(db=db_or(get_database), observer=observer_or(get_observer)),
+            ),
+        )
+        if name == "memory.page":
+            return ops.invoke(principal, "memory.page.read", dict(arguments or {}))
+        return ops.invoke(principal, "memory.observations.read", dict(arguments or {}))
+
+    svc = MemoryService(db=db_or(get_database), observer=observer_or(get_observer))
+
+    kwargs: dict[str, Any] = {"query": str(arguments.get("query") or "")}
+    for key in ("kind", "project_id", "time_from", "time_to"):
+        if key in arguments:
+            kwargs[key] = arguments[key]
+    if "limit" in arguments:
+        kwargs["limit"] = arguments["limit"]
+    if "offset" in arguments:
+        kwargs["offset"] = arguments["offset"]
+    return svc.search(principal, **kwargs)
+'''

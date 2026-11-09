@@ -215,14 +215,15 @@ def test_real_producer_bad_output_is_failed_with_contact_receipt_and_no_summary(
     assert receipt["attempts"][0]["host"] == "127.0.0.1"
     assert receipt["attempts"][0]["outcome"] == "failed"
     assert db.intel.get_latest_intel_job(meeting.id).status == "failed"
+    # The engine door's attempt is the kernel's receipt: it ran and failed.
     with db._connection() as conn:
         attempt = conn.execute(
-            "SELECT disposition,send_phase,outcome FROM inference_route_attempts ORDER BY reserved_at DESC LIMIT 1"
+            """SELECT r.state FROM kernel_operations o JOIN kernel_receipts r ON r.operation_id=o.operation_id
+                WHERE o.name='inference.invoke' AND o.native_id LIKE 'meetingdeferred%'
+                ORDER BY o.created_at DESC LIMIT 1"""
         ).fetchone()
     assert attempt is not None
-    assert attempt["disposition"] == "invalid_typed_output"
-    assert attempt["send_phase"] == "provider_returned"
-    assert attempt["outcome"] == "failed"
+    assert attempt["state"] == "failed"
     saved = db.meetings.get_meeting(meeting.id)
     assert saved is not None
     assert saved.intel is None

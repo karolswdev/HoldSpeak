@@ -244,7 +244,9 @@ def test_d_a_scheduled_model_draft_is_admitted_as_the_effects_child(
     updates = svc._update_service
     hub.db.profiles.upsert(profile_id="local", name="Local", kind="onDevice", model_file="/model.gguf")
     revision = capture_deployment_revision(hub.db, resolve_inference_target(hub.db, "local"))
-    monkeypatch.setattr(update_module, "_resolve_for_capability", lambda *_a, **_k: (revision.id, "assignment", "local"))
+    from holdspeak.services import engine_door
+
+    monkeypatch.setattr(engine_door, "_chain", lambda *_a, **_k: ("assignment", [engine_door.Engine(revision.id, "assignment", "local")]))
     engines: list[bool] = []
 
     def engine(*_a: Any, **_k: Any) -> Any:
