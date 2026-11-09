@@ -56,7 +56,9 @@ describe("Astra r1: the meeting window's own records follow the hub", () => {
       return {} as never;
     });
     render(<MeetingRecord meetingId="m-1" onClose={() => undefined} />);
-    expect(await screen.findByText("Freeze the old ledger")).toBeTruthy();
+    // The proposed decision is the plate (its Confirm) and its ledger row.
+    await waitFor(() => expect(screen.getByTestId("meeting-plate")).toHaveTextContent("Freeze the old ledger"));
+    expect(screen.getAllByText("Freeze the old ledger")).toHaveLength(2);
     state = "confirmed";
     await act(async () => {
       emit("desk_changed");
@@ -219,18 +221,16 @@ describe("daily work: Send opens on request", () => {
     await screen.findByTestId("meeting-send");
     expect(screen.queryByTestId("meeting-send-well")).toBeNull();
     expect(screen.queryByTestId("meeting-decide-well")).toBeNull();
-    // Window grammar: Send, Export and More are the toolbar's verbs.
-    const toolbar = screen.getByRole("toolbar", { name: "Meeting" });
-    expect(within(toolbar).getByTestId("meeting-send")).toBeTruthy();
-    // W2-LIVE-2 (canvas A, After): Send follow-up… is the primary, Settings
-    // the trailing verb; with a summary and nothing to review the rail is at
-    // Send follow-up (Summary done).
-    expect(within(toolbar).getByTestId("meeting-send")).toHaveTextContent("Send follow-up…");
-    expect(within(toolbar).getByTestId("meeting-send").className).toContain("btn--primary");
+    // The language: with a summary and nothing to file, the plate is Send
+    // the follow-up (its brass verb); Export, More and Settings are the mast's.
+    const plate = screen.getByTestId("meeting-plate");
+    expect(plate.getAttribute("data-kind")).toBe("send");
+    expect(within(plate).getByTestId("meeting-send")).toHaveTextContent("Send follow-up…");
+    expect(within(plate).getByTestId("meeting-send").className).toContain("btn--brass");
+    const toolbar = screen.getByTestId("meeting-mast");
     expect(within(toolbar).getByRole("button", { name: "Settings" })).toBeTruthy();
-    const rail = screen.getByTestId("meeting-steps");
-    expect(rail.querySelector("[aria-current=step]")?.textContent).toContain("Send follow-up");
-    expect(rail.querySelector('[data-state="done"]:nth-child(3)')?.textContent).toContain("Summary");
+    const spine = screen.getByTestId("meeting-spine");
+    expect(spine.getAttribute("aria-label")).toContain("intelligence run");
     fireEvent.click(within(toolbar).getByRole("button", { name: "Export" }));
     expect(screen.getByRole("menuitem", { name: "Export MD" })).toBeTruthy();
     expect(screen.getByRole("menuitem", { name: "Export SRT" })).toBeTruthy();

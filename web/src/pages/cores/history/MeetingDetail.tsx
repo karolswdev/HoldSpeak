@@ -30,7 +30,7 @@ import {
   type MeetingData,
   type MeetingDecision,
 } from "./useMeetingData";
-import { MeetingHeader, meetingPipelineActive, meetingReviewCount } from "./MeetingHeader";
+import { meetingReviewCount, type PlateLead } from "./plate";
 import { OutcomeLedger, type OutcomeRow } from "./OutcomeLedger";
 import { CaptureSlab } from "./CaptureSlab";
 import { DraftReady, PreparedResults, resultServing } from "./PreparedResults";
@@ -620,8 +620,15 @@ export function MeetingDetail({
   sendRequested = false,
   decideRequested = false,
   onReviewCount,
+  onLead,
+  onConflicts,
   onDecide,
 }: {
+  /** The open sync conflicts, for the record's plate. */
+  onConflicts?: (count: number) => void;
+  /** The language (2026-11-08): the first proposal still to file, for the
+   *  record's plate (its one verb), or null. */
+  onLead?: (lead: PlateLead | null) => void;
   /** W2-LIVE-2: a decided row's Decide… with no record opens New decision. */
   onDecide?: () => void;
   /** Window grammar: the window's status bar says what is left to review. */
@@ -653,6 +660,30 @@ export function MeetingDetail({
   const data = useMeetingData(meeting, onReceipt, revision);
   const reviewCount = meetingReviewCount(data);
   useEffect(() => { onReviewCount?.(reviewCount); }, [onReviewCount, reviewCount]);
+  // The plate's lead: an action before a decision; one with no owner or date
+  // opens its row in the ledger ("Fill in") instead of a blind Confirm.
+  const open = data.ftProposals.filter((p) => p.state === "proposed" && !p.deferred_until);
+  const first = open.find((p) => p.kind === "action") ?? open[0] ?? null;
+  const confirmLead = data.confirmProposal;
+  const leadKey = first ? `${first.id}:${first.text}:${first.owner ?? first.owner_hint ?? ""}:${first.due ?? first.due_hint ?? ""}:${data.busy}` : "";
+  useEffect(() => {
+    if (!onLead) return;
+    if (!first) { onLead(null); return; }
+    const owner = String(first.owner ?? first.owner_hint ?? "").trim();
+    const due = String(first.due ?? first.due_hint ?? "").trim();
+    const gap = first.kind === "action" && (!owner || !due);
+    onLead({
+      id: first.id,
+      text: first.text,
+      facts: [first.kind === "action" ? "action" : "decision", owner, due ? `by ${due}` : ""].filter(Boolean).join(" · "),
+      verb: gap ? "Fill in" : "Confirm",
+      busy: data.busy,
+      act: gap
+        ? () => document.querySelector<HTMLElement>(`[data-testid="meeting-commitments"]`)?.scrollIntoView?.({ block: "start", behavior: "smooth" })
+        : () => void confirmLead(first.id, { owner: owner || undefined, due: due || undefined }),
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [leadKey, onLead]);
   // PHILO-17 (the desk sweep): the body is drawn once (per meeting) when
   // the record's first reads and its Send well's have ended, or at the cap.
   const [wellRead, setWellRead] = useState<{ id: string; read: boolean } | null>(null);
@@ -721,13 +752,9 @@ export function MeetingDetail({
   const hasTranscript = segments.length > 0 || (
     meeting.transcriptWords != null && Number(meeting.transcriptWords) > 0
   );
-  const compactSavedOutcome = view === "outcomes" && !meetingPipelineActive(meeting, data);
 
   return (
     <SurfaceSection>
-      {/* Window grammar: no headline (the title bar names the meeting); a
-          compact head, its glyph and one muted line. */}
-      <MeetingHeader meeting={meeting} data={data} compact={compactSavedOutcome} />
       {/* PHILO-17 (the desk sweep): the record's body is mounted at once
           (its wells start their reads) but drawn only when its first reads
           end, the Send well's included, or at the cap: a late read never
@@ -744,8 +771,10 @@ export function MeetingDetail({
         </MeetingRunVerb>
       ) : null}
       <CaptureSlab detail={detail} meeting={meeting} />
+      <div id={`meeting-${id}-conflict`} className="meetings-detail-anchor">
       <MeetingConflictRecovery
         meetingId={id}
+        onCount={onConflicts}
         onResolved={(result) => {
           onDeleted();
           if (result.deleted) {
@@ -755,6 +784,7 @@ export function MeetingDetail({
           }
         }}
       />
+      </div>
       <MeetingIntelRecovery
         meetingId={id}
         revision={revision}

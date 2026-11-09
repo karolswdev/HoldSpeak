@@ -4,7 +4,7 @@
 // `Commitments · n`, each a Section over a Ledger of kind-plated rows.
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { MeetingHeader, meetingOutcomeFact, meetingReviewCount, meetingStripItems, meetingSummaryState, peopleCount } from "../MeetingHeader";
+import { mastFacts, meetingPlate, meetingReviewCount, meetingSpine, meetingSummaryState, peopleNames } from "../plate";
 import { MeetingOutcomes, meetingOutcomes } from "../MeetingDetail";
 import { useMeetingData, type FollowThroughProposal } from "../useMeetingData";
 import { MEETING_OPEN_EVENT } from "../../../../desk/objectWindows";
@@ -22,55 +22,46 @@ vi.mock("../../../../runtime/RuntimeBus", () => {
 const text = (node: unknown) => (typeof node === "string" ? node : "");
 
 describe("the meeting on the interior kit", () => {
-  // Window grammar (2026-10-24): the title bar names the meeting; the head
-  // is its glyph and one muted line; the state is the status bar's word.
-  it("no headline: the compact head says when, length and the people; the state is Summary stored", () => {
-    const meeting = { id: "m1", title: "Cutover sync", intel_status: "complete", intel: { summary: "We froze the ledger." } };
-    const data = {
-      detail: meeting,
-      startedAt: "2026-10-06T14:00:00",
-      durationS: 42 * 60,
+  // The language (2026-11-08): the mast names the meeting (sprite, title,
+  // one mono facts line: when, who, how long); the state is the status
+  // bar's word; the spine says where it stands.
+  it("the mast's facts say when, who and how long; the state is Summary stored", () => {
+    const meeting = {
+      id: "m1", title: "Cutover sync", intel_status: "complete", intel: { summary: "We froze the ledger." },
+      started_at: "2026-10-06T14:00:00", duration_seconds: 42 * 60,
       segments: [{ speaker: "Jordan" }, { speaker: "Avery" }, { speaker: "jordan" }, { speaker: "" }],
     };
-    const { container } = render(<MeetingHeader meeting={meeting} data={data as never} />);
-    expect(container.querySelectorAll(".kit-disp")).toHaveLength(0);
-    expect(container.textContent).not.toContain("Cutover sync");
-    expect(screen.getByTestId("meeting-head-when").textContent).toBe("Oct 06 · 42 min");
-    expect(screen.getByTestId("meeting-head-people").getAttribute("aria-label")).toBe("With Jordan, Avery");
-    expect(container.querySelector(".meeting-head-glyph")).toBeTruthy();
+    const facts = mastFacts(meeting);
+    expect(facts).toContain("Jordan, Avery");
+    expect(facts).toContain("42 min");
+    expect(facts).not.toContain("Cutover sync");
     expect(meetingSummaryState(meeting)).toEqual({ text: "Summary stored", lamp: "ok" });
   });
 
-  it("saved Outcomes: one review count, the compact head, no static step ladder", () => {
-    const meeting = { id: "m-saved", title: "Cutover sync", intel_status: "complete", intel: { summary: "We froze the ledger." } };
+  it("saved Outcomes: one review count; the spine's last mark waits on him", () => {
+    const meeting = { id: "m-saved", title: "Cutover sync", intel_status: "complete", intel: { summary: "We froze the ledger." }, segments: [{ speaker: "A" }] };
     const data = {
-      detail: meeting,
       needsCount: 0,
       ftProposals: [{ id: "p1", meeting_id: "m-saved", kind: "action" as const, text: "Write the runbook", state: "proposed" as const, created_at: "" }],
-      startedAt: "2026-10-06T14:00:00",
-      durationS: 42 * 60,
-      segments: [],
     };
-    const { container } = render(
-      <MeetingHeader meeting={meeting} data={data as never} compact />,
-    );
-    expect(meetingOutcomeFact(meeting, data as never)).toBe("1 to review");
     expect(meetingReviewCount(data as never)).toBe(1);
-    expect(container.querySelector(".meetings-detail-facts")).toBeTruthy();
-    expect(screen.queryByTestId("meeting-steps")).toBeNull();
+    const spine = meetingSpine(meeting, 1);
+    expect(spine.segments.map((part) => part.tone)).toEqual(["moss", "moss", "moss", "brass"]);
+    expect(spine.label).toBe("captured, transcribed, intelligence run, 1 to file");
   });
 
-  it("does not expose a zero review counter when the saved record is settled", () => {
-    const meeting = { id: "m-done", title: "Cutover sync", intel_status: "complete", intel: { summary: "We froze the ledger." } };
-    expect(meetingOutcomeFact(meeting, { detail: meeting, needsCount: 0, ftProposals: [] })).toBe("Outcomes");
+  it("does not say a zero review counter when the saved record is settled", () => {
+    const meeting = { id: "m-done", title: "Cutover sync", intel_status: "complete", intel: { summary: "We froze the ledger." }, segments: [{ speaker: "A" }] };
+    expect(meetingSpine(meeting, 0).label).not.toMatch(/0 to file/);
+    expect(meetingPlate(meeting, { pending: 0 }).kind).toBe("send");
   });
 
-  it("no people token at zero; a failed summary keeps its word with the fail lamp", () => {
-    const meeting = { id: "m2", title: "Vendor call", intel_status: "failed" };
-    const items = meetingStripItems(meeting, { detail: meeting, startedAt: null, durationS: 0, segments: [] });
-    expect(peopleCount([])).toBe(0);
-    expect(items.map((i) => i.key)).toEqual(["state"]);
-    expect(items[0]).toMatchObject({ lamp: "fail", text: "SUMMARY FAILED" });
+  it("no people at zero; a failed summary keeps its word with the fail lamp and a coral plate", () => {
+    const meeting = { id: "m2", title: "Vendor call", intel_status: "failed", segments: [{ speaker: "" }, { text: "x" }] };
+    expect(peopleNames([])).toEqual([]);
+    expect(mastFacts({ id: "m2", intel_status: "failed" })).toBe("");
+    expect(meetingSummaryState(meeting)).toMatchObject({ lamp: "fail", text: "Summary failed" });
+    expect(meetingPlate(meeting, {})).toMatchObject({ kind: "failed", tone: "coral" });
   });
 
   it("Decisions and Commitments: proposed rows leave gaps visible, confirmed rows name their owner, settled rows are Done", () => {

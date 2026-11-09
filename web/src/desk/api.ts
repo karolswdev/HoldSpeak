@@ -942,6 +942,15 @@ export async function parkMeeting(id: string): Promise<void> {
   });
 }
 
+/** Rename a meeting (`meeting.rename`, declared): the hub's title back. */
+export async function renameMeeting(id: string, title: string): Promise<string | null> {
+  const data = await apiFetch<{ meeting?: { title?: unknown } }>(`/api/meetings/${encodeURIComponent(id)}`, {
+    method: "PUT",
+    json: { title },
+  });
+  return typeof data?.meeting?.title === "string" ? data.meeting.title : null;
+}
+
 /** PHILO-13-02 — the explicit Parked view asks the server for parked rows. */
 export async function fetchParkedMeetings(): Promise<Meeting[]> {
   const data = await apiFetch<Record<string, unknown>>("/api/meetings?parked=true");

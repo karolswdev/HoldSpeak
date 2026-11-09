@@ -103,10 +103,12 @@ describe("HS-201-11 the open-actions filter is drawn only when it can find one",
     view.rerender(<HistoryCore scope="meeting:m-1" />);
     await screen.findByTestId("meeting-record-back");
     expect(screen.queryByTestId("meeting-decide-well")).toBeNull();
-    expect(screen.queryByTestId("meeting-row-m-1")).toBeNull();
+    // The language: the rail stays beside the picked meeting, its row marked.
+    expect(screen.getByTestId("meeting-row-m-1").getAttribute("data-selected")).toBe("true");
+    expect(screen.getByTestId("meetings-pane").getAttribute("data-meeting")).toBe("m-1");
 
-    // Desktop Back clears the canonical scope. The list's row selection is
-    // retained in HistoryCore so the owner returns to the same meeting.
+    // Back clears the canonical scope (the narrow window's way to the rail).
+    // The rail keeps the last meeting marked so the owner returns to it.
     view.rerender(<HistoryCore />);
     await screen.findByTestId("meeting-row-m-1");
     expect(screen.getByTestId("meeting-row-m-1").getAttribute("data-selected")).toBe("true");

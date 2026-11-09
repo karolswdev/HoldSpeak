@@ -71,7 +71,7 @@ describe("DeskOS application manifest", () => {
 
     const meetings = DESK_APPLICATIONS.find((application) => application.action === "review-meetings");
     const settings = DESK_APPLICATIONS.find((application) => application.action === "configure-settings");
-    expect(meetings?.surface).toMatchObject({ defaultW: 720, defaultH: 600 });
+    expect(meetings?.surface).toMatchObject({ defaultW: 1000, defaultH: 640 });
     expect(settings?.surface).toMatchObject({ defaultW: 1040, defaultH: 720, minW: 880 });
   });
 

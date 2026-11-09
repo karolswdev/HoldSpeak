@@ -1,14 +1,13 @@
-// HS-170-04 — the Meetings face, rewritten to the settled design.
-// PHILO-17 (owner 2026-10-10, "A meeting opens in one window"): the Meetings
-// window owns the list and the selected meeting record. A row selects the
-// record inside Meetings; its Back control returns to this list.
+// The Meetings app in the language (2026-11-08, owner: "every single app
+// needs to be native"): the rail of meetings at the left, the picked meeting
+// at the right (MeetingRecord: the mast, the spine, the plate, the ledger).
+// A press on a row picks it (the window's scope `meeting:<id>`). At a narrow
+// window the rail and the meeting take turns; the meeting's Back returns.
 import { SPEECH_SETUP_EVENT } from "../../desk/firstrun/SpeechSetup";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { openSurfaceOr } from "../../desk/shell";
 import { openSourceRef } from "../../desk/surface/citations";
 import type { CoreProps, MeetingsListResponse } from "./core-types";
-import { Button } from "../../components/signal/Signal";
-import { apiFetch } from "../../lib/api";
 import { asRows } from "../pageSupport";
 import { useResource } from "../pageSupport";
 import {
@@ -38,13 +37,14 @@ import {
 } from "./history";
 import { useSummaryRun } from "./history/useSummaryRun";
 import { IMPORT_ACCEPT } from "./history/importWhen";
-import { MeetingSelectionVerbs } from "./history/CatalogRail";
 import { RecordHome } from "./history/RecordHome";
-import { StatusBar, ToolGlyph, Toolbar, countWords, type StatusBarItem } from "../../desk/surface/kit";
+import { StatusBar, ToolGlyph, countWords, type StatusBarItem } from "../../desk/surface/kit";
+import { SurfaceState } from "../../desk/surface/Surface";
+import { Button } from "../../components/signal/Signal";
+import { objectWindowStandIn } from "../../desk/objectWindows";
 import { useWindowInterior } from "../../desk/surface/interior";
 import "./history/meetings-list.css";
 import { MeetingWindow } from "../../desk/pullouts/MeetingWindow";
-import { objectWindowStandIn } from "../../desk/objectWindows";
 import { Token } from "../../desk/surface/Token";
 import { MEETING_CHANGE_KINDS } from "../../desk/useDeskChangedRefresh";
 import { frameNames } from "../../desk/components/window/dockState";
@@ -62,7 +62,6 @@ export function HistoryCore({ hero, scope }: CoreProps) {
   const scopedMeetingId = scope?.startsWith("meeting:")
     ? scope.slice("meeting:".length).split(/[?#]/, 1)[0] || null
     : null;
-  const [selectedMeeting, setSelectedMeeting] = useState<Record<string, unknown> | null>(null);
   // PHILO-17: a meeting scope belongs to the meeting's own window (the store
   // routes it there); one that reaches this list is passed on, once.
   const forwarded = useRef<string | null>(null);
@@ -76,21 +75,20 @@ export function HistoryCore({ hero, scope }: CoreProps) {
     forwarded.current = scope;
     openSourceRef(scope);
   }, [scope]);
-  // The record owns its own wings and footer. Clearing the list wings while a
-  // canonical meeting scope is active prevents two wing sets from competing
-  // in the same Meetings window.
-  const wings = useCoreWings(
-    scopedMeetingId ? [] : LIST_WINGS,
-    scope === "record" ? "record" : "outcomes",
-    scopedMeetingId ? undefined : "Meeting plumbing",
-    !scopedMeetingId,
-  );
+  // The app's wings: Records (the rail and the meeting), Record (the one
+  // home for recording, in the pane) and the plumbing door.
+  const wings = useCoreWings(LIST_WINGS, scope === "record" ? "record" : "outcomes", "Meeting plumbing");
   // PHILO-13-02: Restore of a parked meeting; the outcome is a receipt in
   // the footer's receipt slot.
   const [parkOutcome, setParkOutcome] = useState<ParkOutcome | null>(null);
   const [parked, setParked] = useState<ParkedRow[]>([]);
   const [parkedOn, setParkedOn] = useState(false);
-  const [restoredId, setRestoredId] = useState<string | null>(null);
+  // The rail marks the last meeting picked (Back returns to it) and the one
+  // Restore brought back.
+  const [marked, setMarked] = useState<string | null>(null);
+  useEffect(() => {
+    if (scopedMeetingId) setMarked(scopedMeetingId);
+  }, [scopedMeetingId]);
   // Capture C3: Import opens the file picker at once, and a file dropped on
   // the Meetings window does the same; the chosen file opens the import form.
   const importPicker = useRef<HTMLInputElement | null>(null);
@@ -155,18 +153,15 @@ export function HistoryCore({ hero, scope }: CoreProps) {
     () => asRows(meetings.data, ["meetings"]),
     [meetings.data],
   );
-  useEffect(() => {
-    if (!scopedMeetingId) return;
-    const row = meetingRows.find((item) => String(item.id ?? "") === scopedMeetingId);
-    if (row) setSelectedMeeting(row);
-  }, [meetingRows, scopedMeetingId]);
-
-  // Window grammar: a press selects the row (nothing opens); Enter or a
-  // double press opens the meeting in this window.
-  const selectMeeting = useCallback((row: Record<string, unknown> | null) => {
-    setSelectedMeeting(row);
-    if (row?.id) openSourceRef(`meeting:${String(row.id)}`);
-  }, []);
+  // A press on a rail row picks the meeting: the pane shows it, on the
+  // Records face.
+  const setView = wings.setView;
+  const setDoorOpen = wings.setDoorOpen;
+  const pickMeeting = useCallback((row: Record<string, unknown>) => {
+    setDoorOpen(false);
+    setView("outcomes");
+    if (row.id) openSourceRef(`meeting:${String(row.id)}`);
+  }, [setDoorOpen, setView]);
 
   // PHILO-13-02: the parked meetings, read through H-A1's client.
   const loadParked = useCallback(async () => {
@@ -288,43 +283,13 @@ export function HistoryCore({ hero, scope }: CoreProps) {
     ? (routeOff(faceRoute) ? "Summaries off" : "No engine for summaries")
     : null;
 
-  // PHILO-13-02 (C1-5d): the row Restore brought back is the selected row
-  // (the list keeps it in view).
-  useEffect(() => {
-    if (!restoredId) return;
-    const row = meetingRows.find((item) => String(item.id) === restoredId);
-    if (row) setSelectedMeeting(row);
-  }, [restoredId, meetingRows]);
-
-  // Window grammar: the list face runs edge to edge (toolbar, list, status
+  // Window grammar: the Records face runs edge to edge (rail, pane, status
   // bar); Record, Import and the plumbing door keep the form inset.
-  const listFace = !scopedMeetingId && !wings.doorOpen && wings.view !== "record";
-  // A meeting record says its own interior (MeetingRecord: edge to edge).
-  useWindowInterior(scopedMeetingId ? undefined : listFace ? "list" : null);
+  const recordsFace = !wings.doorOpen && wings.view !== "record";
+  useWindowInterior(recordsFace ? "list" : null);
 
-  // SurfaceWindows routes `meeting:<id>` into this real core. Keep the list
-  // mounted in the host, but draw the selected record in place so Back can
-  // clear the scope and reveal the same list selection/state.
-  if (scopedMeetingId) {
-    return (
-      <MeetingWindow
-        key={scopedMeetingId}
-        object={objectWindowStandIn(`meeting:${scopedMeetingId}`)!}
-        onClose={() => openSurfaceOr("review-meetings", "/history")}
-      />
-    );
-  }
-
-  // W1-KIT (2026-10-27) — the primary verb: Record meeting (the verb that
-  // makes a meeting) is the one primary, empty or full. Choose engine (the
-  // warning's fix) and the selection's run verb stay plain.
+  // W1-KIT (2026-10-27): Choose engine is the warning's fix.
   const engineMissing = Boolean(faceRoute) && !routeReady(faceRoute) && !routeOff(faceRoute);
-  const selectedRow = selectedMeeting
-    ? meetingRows.find((row) => String(row.id) === String(selectedMeeting.id)) ?? null
-    : null;
-  const selectedRefusal = selectedRow && runRefusal && runRefusal.meetingId === String(selectedRow.id)
-    ? runRefusal.refusal
-    : null;
 
   // PHILO-13-02 (A1-F) — Restore (C1-5a–e).
   const showParkOutcome = (outcome: ParkOutcome) => {
@@ -336,7 +301,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
       await Promise.all(ids.map((id) => restoreMeeting(id)));
       showParkOutcome(restoredOutcome(ids));
       setParkedOn(false);
-      setRestoredId(ids[ids.length - 1] ?? null);
+      setMarked(ids[ids.length - 1] ?? null);
       void meetings.reload();
       void loadParked();
     } catch {
@@ -344,79 +309,9 @@ export function HistoryCore({ hero, scope }: CoreProps) {
     }
   };
 
-  // PHILO-17 transcribe: the hub starts Transcribe on an audio-only meeting
-  // (202); the face reads itself again now and on the worker's desk_changed.
-  const transcribeMeeting = async (id: string) => {
-    await apiFetch(`/api/meetings/${encodeURIComponent(id)}/transcribe`, { method: "POST" });
-    await reloadMeetings();
-  };
 
-  // The toolbar verbs: icon + label (the Workbench way).
-  const verbs = (
-    <>
-      {/* PHILO-17 ALIVE: a warning has its verb. With no engine for
-          summaries, Choose engine is the first move (Runs on, on the
-          Meeting summaries job). */}
-      {engineMissing ? (
-        <Button
-          dense
-          variant="secondary"
-          data-testid="meetings-choose-engine"
-          onClick={() => openSurfaceOr("open-concierge", "/models", "meetings")}
-        >
-          <ToolGlyph kind="engine" />
-          Choose engine
-        </Button>
-      ) : null}
-      <Button
-        dense
-        variant="primary"
-        data-testid="meetings-record"
-        onClick={() => openSurfaceOr("record-live", "/live", scope)}
-      >
-        <ToolGlyph kind="record" />
-        Record meeting
-      </Button>
-      <Button
-        dense
-        variant="secondary"
-        data-testid="meetings-import"
-        onClick={() => importPicker.current?.click()}
-      >
-        <ToolGlyph kind="import" />
-        Import
-      </Button>
-    </>
-  );
-
-  // The selected meeting's verbs sit at the status bar's right, beside the
-  // route the run would use (egress where egress happens). Kept off the
-  // toolbar so a selection never reflows the band above the list (a row
-  // must stay under the pointer between the two presses of a double press).
-  const selectionVerbs = selectedRow ? (
-    <>
-      <Button
-        dense
-        variant="secondary"
-        data-testid="meetings-open"
-        onClick={() => selectMeeting(selectedRow)}
-      >
-        <ToolGlyph kind="open" />
-        Open
-      </Button>
-      <MeetingSelectionVerbs
-        row={selectedRow}
-        primary={false}
-        onTranscribe={transcribeMeeting}
-        onRunIntelligence={(id, route) => void summary.run(id, route)}
-        runningId={runningId}
-        drainerAbsent={drainerAbsent}
-        refusal={selectedRefusal}
-      />
-    </>
-  ) : null;
-
-  // The status bar's words (UX-CANON A.8: a zero is never said).
+  // The status bar's words (UX-CANON A.8: a zero is never said). With a
+  // meeting picked, the meeting's own status bar is the window's foot.
   const failedCount = meetingRows.filter(meetingFailed).length;
   const reviewCount = meetingRows.reduce((sum, row) => sum + (Number(row.needs_you_count) || 0), 0);
   const statusItems: StatusBarItem[] = [
@@ -425,16 +320,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
     { key: "failed", lamp: "fail" as const, text: countWords(failedCount, "failed", "failed") },
     routeWord ? { key: "route", lamp: "warn" as const, text: routeWord, testId: "meetings-route-state" } : null,
     parkOutcome
-      ? {
-          key: "receipt",
-          text: (
-            <ParkReceipt
-              outcome={parkOutcome}
-              onRestore={(ids) => void restoreParked(ids)}
-              data-testid="meetings-park-receipt"
-            />
-          ),
-        }
+      ? { key: "receipt", text: <ParkReceipt outcome={parkOutcome} onRestore={(ids) => void restoreParked(ids)} data-testid="meetings-park-receipt" /> }
       : receipt
         ? {
             key: "receipt",
@@ -447,38 +333,62 @@ export function HistoryCore({ hero, scope }: CoreProps) {
         : null,
   ].filter((item): item is NonNullable<typeof item> => Boolean(item)) as StatusBarItem[];
 
+  // The rail's head: the search well, Record meeting and Import, then the
+  // filters (each drawn only when it can find something).
+  const railHead = (
+    <>
+      <span className="meetings-search">
+        <StringGadget label="Search meetings" value={searchQuery} onChange={setSearchQuery} placeholder="Search meetings" />
+      </span>
+      <span className="mt-rail-verbs" role="toolbar" aria-label="Meetings" data-testid="meetings-toolbar">
+        <Button dense variant="secondary" data-testid="meetings-record" onClick={() => openSurfaceOr("record-live", "/live", scope)}>
+          <ToolGlyph kind="record" />
+          Record
+        </Button>
+        <Button dense variant="secondary" data-testid="meetings-import" onClick={() => importPicker.current?.click()}>
+          <ToolGlyph kind="import" />
+          Import
+        </Button>
+        {openActionsFacetDrawn ? (
+          <span className="meetings-facets" data-testid="meetings-facets">
+            <CheckGadget label="Open actions" variant="token" checked={facets.has_open_actions}
+              onChange={(next) => setFacets((f) => ({ ...f, has_open_actions: next }))} />
+          </span>
+        ) : null}
+        {/* PHILO-13-02: the PARKED token (absent at zero); on, the parked
+            rows take the rail's place, each with Restore. */}
+        <ParkedStrip rows={parked} on={parkedOn} onToggle={setParkedOn}
+          onRestore={(ids) => void restoreParked(ids)} data-testid="meetings-parked" />
+      </span>
+    </>
+  );
+
   const rail = (
     <CatalogRail
       meetingRows={meetingRows}
+      rowsHidden={parkedOn}
       meetings={meetings}
-      selected={selectedMeeting}
-      setSelected={setSelectedMeeting}
-      onOpen={selectMeeting}
+      picked={scopedMeetingId}
+      marked={marked}
+      onPick={pickMeeting}
       runningId={runningId}
       drainerAbsent={drainerAbsent}
       runRefusal={runRefusal}
+      head={railHead}
       emptyImage={`${import.meta.env.BASE_URL || "/_built/"}desk/sprites/meeting.png`}
       onEmptyAction={() => importPicker.current?.click()}
     />
   );
 
-  const face = wings.doorOpen ? (
-    <DoorSection
-      actions={doorActions}
-      speakers={doorSpeakers}
-      projects={doorProjects}
-      intel={doorIntel}
-      plugin={doorPlugin}
-      queueStatus={queueStatus}
-      setQueueStatus={setQueueStatus}
-    />
+  // The pane: the picked meeting (live while it records, else its record),
+  // or one line and the verb that makes a meeting.
+  const pane = wings.doorOpen ? (
+    <DoorSection actions={doorActions} speakers={doorSpeakers} projects={doorProjects} intel={doorIntel}
+      plugin={doorPlugin} queueStatus={queueStatus} setQueueStatus={setQueueStatus} />
   ) : wings.view === "record" && !importFile ? (
     // Capture C7: Meetings ▸ Record is the one home for recording. A chosen
     // file (Import, or a drop) opens the import form below.
-    <RecordHome
-      onRecord={() => openSurfaceOr("record-live", "/live", scope)}
-      onImport={() => importPicker.current?.click()}
-    />
+    <RecordHome onRecord={() => openSurfaceOr("record-live", "/live", scope)} onImport={() => importPicker.current?.click()} />
   ) : wings.view === "record" ? (
     <ImportSection
       onDone={() => {
@@ -489,60 +399,21 @@ export function HistoryCore({ hero, scope }: CoreProps) {
       scope={scope}
       initialFile={importFile}
     />
+  ) : scopedMeetingId ? (
+    <MeetingWindow key={scopedMeetingId} object={objectWindowStandIn(`meeting:${scopedMeetingId}`)!}
+      onClose={() => openSurfaceOr("review-meetings", "/history")} />
   ) : (
-    <>
-      {/* Window grammar: the toolbar under the title bar: verbs left, the
-          search well and the open-actions filter right. */}
-      <Toolbar
-        label="Meetings"
-        data-testid="meetings-toolbar"
-        trailing={
-          <>
-            {/* HS-201-11: a filter that can match nothing is not drawn; it
-                stays while it is ON (the way back). */}
-            {openActionsFacetDrawn ? (
-              <span className="meetings-facets" data-testid="meetings-facets">
-                <CheckGadget
-                  label="Open actions"
-                  variant="token"
-                  checked={facets.has_open_actions}
-                  onChange={(next) => setFacets((f) => ({ ...f, has_open_actions: next }))}
-                />
-              </span>
-            ) : null}
-            {/* PHILO-13-02: the PARKED token (absent at zero); on, the
-                parked rows take the list's place, each with Restore. */}
-            <ParkedStrip
-              rows={parked}
-              on={parkedOn}
-              onToggle={setParkedOn}
-              onRestore={(ids) => void restoreParked(ids)}
-              data-testid="meetings-parked"
-            />
-            <span className="meetings-search">
-              <StringGadget
-                label="Search meetings"
-                value={searchQuery}
-                onChange={setSearchQuery}
-                placeholder="Search meetings"
-              />
-            </span>
-          </>
-        }
-      >
-        {verbs}
-      </Toolbar>
-
-      {/* The list view: a press selects, Enter or a double press opens. */}
-      {parkedOn ? null : rail}
-    </>
+    <SurfaceState empty emptyKind="meeting" emptyImage={`${import.meta.env.BASE_URL || "/_built/"}desk/sprites/meeting.png`}
+      emptyLabel={meetingRows.length ? "Pick a meeting" : "No meeting yet"}
+      actionLabel="Record meeting" onAction={() => openSurfaceOr("record-live", "/live", scope)} />
   );
+  const showsMeeting = recordsFace && Boolean(scopedMeetingId);
 
   return (
     <>
       {renderHeroSlot(hero, null)}
       <div
-        className="meetings-drop"
+        className="meetings-drop mt-window"
         data-testid="meetings-drop"
         onDragOver={(event) => event.preventDefault()}
         onDrop={(event) => {
@@ -550,7 +421,11 @@ export function HistoryCore({ hero, scope }: CoreProps) {
           startImport(event.dataTransfer?.files?.[0]);
         }}
       >
-        {face}
+        <div className="mt-frame" data-picked={showsMeeting ? "" : undefined} data-face={recordsFace ? undefined : "form"}>
+          {/* Record, Import and the door take the whole window. */}
+          {recordsFace ? rail : null}
+          <div className="mt-pane" data-testid="meetings-pane" data-meeting={showsMeeting ? scopedMeetingId ?? undefined : undefined}>{pane}</div>
+        </div>
         {/* Capture C7: the picker is mounted on every face, so Import on
             Meetings ▸ Record opens it too. */}
         <input
@@ -566,14 +441,20 @@ export function HistoryCore({ hero, scope }: CoreProps) {
           }}
         />
       </div>
-      {/* Window grammar: the status bar says the count and the state in
-          warm words (no zeros), the receipt beside them, and the engine's
-          host at the right (egress where egress happens). */}
-      <StatusBar
-        data-testid="meetings-status"
-        verbs={listFace ? selectionVerbs : null}
-        items={statusItems}
-      />
+      {/* One foot per window: the picked meeting's own status bar, else this. */}
+      {showsMeeting ? null : (
+        <StatusBar
+          data-testid="meetings-status"
+          verbs={engineMissing ? (
+            <Button dense variant="secondary" data-testid="meetings-choose-engine"
+              onClick={() => openSurfaceOr("open-concierge", "/models", "meetings")}>
+              <ToolGlyph kind="engine" />
+              Choose engine
+            </Button>
+          ) : null}
+          items={statusItems}
+        />
+      )}
     </>
   );
 }

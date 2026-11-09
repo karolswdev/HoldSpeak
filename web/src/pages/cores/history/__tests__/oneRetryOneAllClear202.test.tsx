@@ -85,9 +85,8 @@ describe("the cold Meetings face says its all-clear once (M6)", () => {
       <CatalogRail
         meetingRows={[]}
         meetings={{ loading: false, error: "", reload: vi.fn(async () => ({})) }}
-        selected={null}
-        setSelected={vi.fn()}
-        onRunIntelligence={vi.fn()}
+        picked={null}
+        onPick={vi.fn()}
         runningId={null}
       />,
     );
@@ -100,9 +99,8 @@ describe("the cold Meetings face says its all-clear once (M6)", () => {
       <CatalogRail
         meetingRows={[]}
         meetings={{ loading: false, error: "", reload: vi.fn(async () => ({})) }}
-        selected={null}
-        setSelected={vi.fn()}
-        onRunIntelligence={vi.fn()}
+        picked={null}
+        onPick={vi.fn()}
         runningId={null}
       />,
     );

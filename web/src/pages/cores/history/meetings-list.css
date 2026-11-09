@@ -1,59 +1,124 @@
-/* Window grammar (2026-10-24): the Meetings list face. The toolbar holds
-   the verbs (and the selection's verbs after a hairline), the filter and
-   the search well; the list view runs edge to edge under it. */
+/* The Meetings app in the language (2026-11-08): the rail of meetings at
+   the left (its head: search, Record, Import, the filters), the picked
+   meeting at the right, one status bar. A narrow window (the phone at 393,
+   or a narrow window at 1440) shows the rail or the meeting, never both. */
 .meetings-drop {
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  background: var(--hs-ground);
+  color: var(--hs-ink);
+}
+.mt-frame {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
   min-height: 0;
 }
-.meetings-drop > .meetings-stream {
+.mt-pane {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+}
+.mt-pane > .surface-state { flex: 1 1 auto; justify-content: center; }
+
+/* ── the rail ── */
+.mt-rail {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  width: 280px;
+  min-height: 0;
+  background: var(--hs-rule);
+  border-right: 1px solid var(--hs-edge);
+}
+.mt-rail-head {
   display: flex;
   flex-direction: column;
-  flex: 1 1 auto;
-  min-height: 0;
+  gap: 8px;
+  padding: 12px 12px 8px;
 }
-.meetings-toolbar-sep {
-  align-self: stretch;
-  width: 1px;
-  margin: 4px 4px;
-  background: var(--wb-rule-soft);
-}
-.meetings-selection {
-  display: inline-flex;
-  align-items: center;
+.mt-rail-verbs {
+  display: flex;
   flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.meetings-search { display: flex; min-width: 0; }
+.meetings-search > * { flex: 1 1 auto; min-width: 0; }
+.meetings-facets { display: inline-flex; align-items: center; }
+.mt-rail-rows {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 0;
+  padding: 4px 8px 12px;
+  overflow-y: auto;
+}
+.mt-rail > .surface-state { flex: 1 1 auto; justify-content: center; }
+.mt-rail-item { display: block; }
+.mt-rail-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "title state" "facts facts" "spine spine";
   gap: 4px 8px;
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0;
+  padding: 10px 10px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--hs-ink);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--motion-settle) var(--desk-ease), box-shadow var(--motion-settle) var(--desk-ease);
+}
+.mt-rail-row:hover { background: var(--hs-plate); }
+.mt-rail-row:focus-visible { outline: 2px solid var(--hs-steel); outline-offset: 1px; }
+.mt-rail-row[data-picked] {
+  background: var(--hs-raised);
+  box-shadow: var(--hs-raised-shadow);
+}
+.mt-rail-title {
+  grid-area: title;
   min-width: 0;
-}
-.meetings-selection:empty {
-  display: none;
-}
-.meetings-selection-fact {
-  font: 400 12px / 1.3 var(--font-sans);
-  color: var(--wb-muted);
+  overflow: hidden;
+  font: 600 14px / 18px var(--font-sans);
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
-.meetings-facets {
-  flex: none;
+.mt-rail-facts { grid-area: facts; color: var(--hs-ink-2); font: 400 12px / 16px var(--font-mono); }
+.mt-rail-spine { grid-area: spine; margin-top: 2px; }
+.mt-rail-state {
+  grid-area: state;
+  align-self: center;
+  color: var(--hs-ink-2);
+  font: 500 12px / 16px var(--font-sans);
+  white-space: nowrap;
 }
-.meetings-facets,
-.meetings-search {
-  display: inline-flex;
-  align-items: center;
-  min-width: 0;
+.mt-rail-state[data-tone="ask"] { color: var(--hs-brass-ink); }
+.mt-rail-state[data-tone="fail"] { color: var(--hs-coral-ink); }
+.mt-rail-state[data-tone="ok"] { color: var(--hs-moss-ink); }
+.mt-rail-state[data-tone="info"] { color: var(--hs-steel); }
+@media (prefers-reduced-motion: no-preference) {
+  .mt-rail-state[data-live] { animation: mt-breathe var(--motion-breathe) ease-in-out infinite; }
 }
-.meetings-search > * {
-  flex: 1 1 auto;
-  min-width: 0;
+@keyframes mt-breathe { 50% { opacity: 0.55; } }
+
+/* A narrow window: the rail fills it; a picked meeting takes its place
+   (its Back returns). The forms (Record, Import, the door) take the pane. */
+@container surface (max-width: 639.9px) {
+  .mt-rail { width: auto; flex: 1 1 auto; border-right: 0; }
+  .mt-frame[data-picked] > .mt-rail { display: none; }
+  .mt-frame:not([data-picked]):not([data-face="form"]) > .mt-pane { display: none; }
+  .mt-rail-row { min-height: 44px; }
+  .desk-next .mt-rail-verbs .btn { min-height: 44px; }
 }
-/* Empty state: the app's big illustrated icon over one true line. */
-.meetings-drop .surface-state {
-  flex: 1 1 auto;
-  justify-content: center;
-}
-@container surface (max-width: 520px) {
-  .meetings-toolbar-sep {
-    display: none;
-  }
-}
+.mt-rail-facts > span + span::before { content: "·"; margin-inline: 6px; }

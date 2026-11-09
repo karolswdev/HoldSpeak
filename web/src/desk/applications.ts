@@ -159,9 +159,9 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     surface: {
       eyebrow: "Meeting memory",
       minW: 640,
-      // PHILO-17 (windows): the canonical first-open meeting room size.
-      defaultW: 720,
-      defaultH: 600,
+      // The language (2026-11-08): the rail and the picked meeting side by side.
+      defaultW: 1000,
+      defaultH: 640,
       load: () =>
         import("../pages/cores/HistoryCore").then((module) => ({
           default: module.HistoryCore,

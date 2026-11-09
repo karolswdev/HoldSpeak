@@ -7,7 +7,8 @@
 // snake_case `intel_status`, `has_summary`, `transcriptWords`.
 import { render, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { CatalogRail, MeetingSelectionVerbs } from "../CatalogRail";
+import { CatalogRail } from "../CatalogRail";
+import { meetingPlate } from "../plate";
 import { meetingRowState, meetingsHeadline, stateToken } from "../helpers";
 
 function row(id: string, intel_status: unknown, has_summary: boolean, needs_you_count = 0) {
@@ -29,9 +30,8 @@ function rail(rows: Record<string, unknown>[]) {
     <CatalogRail
       meetingRows={rows}
       meetings={{ loading: false, error: "", reload: vi.fn(async () => ({})) }}
-      selected={null}
-      setSelected={vi.fn()}
-      onRunIntelligence={vi.fn()}
+      picked={null}
+      onPick={vi.fn()}
       runningId={null}
     />,
   );
@@ -78,11 +78,9 @@ describe("PHILO-13-04 A3-W — the rail names a stored summary", () => {
     expect(stateToken(row("c", "error", false)).label).toBe("FAILED");
   });
 
-  it("offers no Run summary on a stored summary (the toolbar's Open opens it)", () => {
+  it("offers no Run summary on a stored summary (its plate is the follow-up)", () => {
     const stored = row("stored", "disabled", true);
-    rail([stored]);
-    render(<MeetingSelectionVerbs row={stored} primary onRunIntelligence={vi.fn()} runningId={null} />);
-    expect(document.querySelector('[data-testid="run-intelligence-btn"]')).toBeNull();
+    expect(meetingPlate(stored, {}).kind).toBe("send");
     expect(meetingRowState(stored).verb).toBe("Open");
   });
 

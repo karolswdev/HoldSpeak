@@ -108,11 +108,15 @@ function VersionSlip({
 export function MeetingConflictRecovery({
   meetingId,
   onResolved,
+  onCount,
 }: {
   meetingId: string;
   onResolved?(result: MeetingConflictResolution): void | Promise<void>;
+  /** The open conflicts, for the meeting's plate (Resolve). */
+  onCount?(count: number): void;
 }) {
   const [conflicts, setConflicts] = useState<MeetingConflict[]>([]);
+  useEffect(() => { onCount?.(conflicts.length); }, [conflicts.length, onCount]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState("");
   const [error, setError] = useState("");
