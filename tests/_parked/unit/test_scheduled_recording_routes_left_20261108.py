@@ -4,6 +4,7 @@ From ``tests/unit/test_scheduled_recording_routes.py``. Not collected (tests/_pa
 """
 
 
+def _parked_body(router=None, ctx=None, **_):  # parked 2026-11-08: kept at handler indent, never mounted
     def test_get(self, client: TestClient) -> None:
         resp = client.post("/api/scheduled-recordings", json={
             "title": "Weekly",

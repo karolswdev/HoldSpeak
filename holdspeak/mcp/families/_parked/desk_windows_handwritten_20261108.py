@@ -1,9 +1,9 @@
-"""PARKED 2026-11-08 (one display protocol): the six hand-written desk_window.* tools.
-
-The declared family (``mcp/families/declared.py``) now produces the same six
-tools, same names and schemas, from ``holdspeak/desk_operations.py``. Kept for
-history; not imported. The import below names the module it read then.
-"""
+# PARKED 2026-11-08 (one display protocol): the six hand-written desk_window.* tools.
+#
+# The declared family (``mcp/families/declared.py``) now produces the same six
+# tools, same names and schemas, from ``holdspeak/desk_operations.py``. Kept for
+# history; not imported. The import below names the module it read then.
+#
 """Desk windows family: an agent composes the owner's desk windows (PHILO-16 16b).
 
 COMPOSITOR.md §13 L1: the hub owns the desk's windows, every browser is one

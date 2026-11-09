@@ -1,7 +1,7 @@
-"""Parked 2026-11-08 (watch fold 4): the automations router as it stood
-before ReactionService was parked, kept verbatim. Not mounted, not imported.
-The live router (holdspeak/web/routes/automations.py) keeps the workbench
-automation and resourceful routes."""
+# Parked 2026-11-08 (watch fold 4): the automations router as it stood
+# before ReactionService was parked, kept verbatim. Not mounted, not imported.
+# The live router (holdspeak/web/routes/automations.py) keeps the workbench
+# automation and resourceful routes.
 # ruff: noqa
 """HTTP adapters for typed service-event Watches and Workbench Reactions.
 

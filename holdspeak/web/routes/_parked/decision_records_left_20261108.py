@@ -5,6 +5,7 @@ Not imported. Kept for history; restore with ``git revert`` of the parking commi
 """
 
 
+def _parked_body(router=None, ctx=None, **_):  # parked 2026-11-08: kept at handler indent, never mounted
     # ── HS-200-13: the lifecycle verbs the recall chain needs ──────────
 
     @router.post("/{record_id}/supersede")

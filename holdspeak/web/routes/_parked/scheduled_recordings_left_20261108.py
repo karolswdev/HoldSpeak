@@ -5,6 +5,7 @@ Not imported. Kept for history; restore with ``git revert`` of the parking commi
 """
 
 
+def _parked_body(router=None, ctx=None, **_):  # parked 2026-11-08: kept at handler indent, never mounted
     @router.get("/{schedule_id}")
     def get_schedule(request: Request, schedule_id: str) -> Any:
         try:

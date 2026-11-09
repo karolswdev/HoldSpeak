@@ -5,6 +5,7 @@ Not imported. Kept for history; restore with ``git revert`` of the parking commi
 """
 
 
+def _parked_body(router=None, ctx=None, **_):  # parked 2026-11-08: kept at handler indent, never mounted
     @router.post("/closeout/apply")
     def closeout_apply(request: Request, body: dict = Body(default={})) -> dict[str, Any]:
         return service.apply_closeout(principal(request), body)
