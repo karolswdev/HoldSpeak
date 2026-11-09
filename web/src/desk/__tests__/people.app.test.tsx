@@ -336,11 +336,11 @@ describe("People from his work (Betterment daily D6), on the recorded week", () 
     return { wire, posts };
   }
 
-  it("with no people, FROM YOUR MEETINGS names Theo, Jun and Mira, each with Add and Not a person; no Set up step", async () => {
+  it("with no people, FROM YOUR MEETINGS names Theo, Jun and Mira, each with Add and Hide; no Set up step", async () => {
     replayWeek();
     render(<PeopleCore />);
-    // Window grammar: the names sit in the list view's second group; the
-    // status bar counts them and carries the selected name's two verbs.
+    // The native face: the names sit on the rail under the people; the
+    // status bar counts them; a picked name is the plate with its two verbs.
     expect((await screen.findByTestId("people-suggestions")).textContent).toBe("3 from your meetings");
     const rows = screen.getAllByTestId("people-suggestion");
     expect(rows.map((row) => row.textContent ?? "")).toEqual([
@@ -349,11 +349,11 @@ describe("People from his work (Betterment daily D6), on the recorded week", () 
     expect(rows[2].textContent).toContain("Named in Payments platform sync · 1 promise");
     for (const row of rows) {
       fireEvent.click(within(row).getByRole("button", { name: /^(Theo|Jun|Mira)/ }));
-      const bar = screen.getByTestId("people-status");
-      expect(within(bar).getByRole("button", { name: /^Add / })).toBeTruthy();
-      expect(within(bar).getByRole("button", { name: /is not a person$/ })).toBeTruthy();
+      const plate = screen.getByTestId("people-plate");
+      expect(within(plate).getByRole("button", { name: /^Add / })).toBeTruthy();
+      expect(within(plate).getByRole("button", { name: /^Hide / })).toBeTruthy();
       expect(rawButtons(row)).toEqual([]);
-      expect(rawButtons(bar)).toEqual([]);
+      expect(rawButtons(plate)).toEqual([]);
     }
     expect(screen.queryByText("Set up People")).toBeNull();
     expect(screen.queryByText("Do it")).toBeNull();
@@ -389,12 +389,12 @@ describe("People from his work (Betterment daily D6), on the recorded week", () 
     expect(owed.textContent).toContain("Draft the rollback runbook");
   });
 
-  it("Not a person takes the name off for good", async () => {
+  it("Hide takes the name off for good", async () => {
     const { posts } = replayWeek();
     render(<PeopleCore />);
     const jun = (await screen.findAllByTestId("people-suggestion")).find((r) => r.textContent?.includes("Jun"))!;
     fireEvent.click(within(jun).getByRole("button", { name: /^Jun/ }));
-    fireEvent.click(await screen.findByRole("button", { name: "Jun is not a person" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Hide Jun" }));
     await waitFor(() => expect(screen.queryByRole("button", { name: "Add Jun" })).toBeNull());
     expect(posts).toEqual([{ url: "/api/people/suggestions/hide", body: { key: "jun" } }]);
   });
@@ -472,7 +472,7 @@ describe("DELIGHT 2 small joy: a person's next 1:1 in their own teal", () => {
   /** The recorded People wire (fixtures/people-wire): four people, and the
    *  Door's upcoming 1:1 with Priya (`person_relationship_id`), at the time of
    *  the boot (2026-10-11 20:40Z, before the 21:27Z 1:1). */
-  it("the row with a next 1:1 marks its cell for the person ink; no 1:1 is an empty cell", async () => {
+  it("the rail row with a next 1:1 says it in the person ink; no 1:1 says nothing", async () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date("2026-10-11T20:40:00Z"));
     try {
@@ -492,12 +492,12 @@ describe("DELIGHT 2 small joy: a person's next 1:1 in their own teal", () => {
       render(<PeopleCore />);
       const priya = await waitFor(() => {
         const row = screen.getAllByTestId("people-row").find((r) => r.textContent?.includes("Priya Nair"));
-        expect(row?.querySelector('[data-col="next"]')?.textContent).toMatch(/^1:1 /);
+        expect(row?.querySelector('[data-testid="people-row-next"]')?.textContent).toMatch(/^1:1 /);
         return row!;
       }, { timeout: 5000 });
       expect(priya).toHaveAttribute("data-next-one-on-one");
       const avery = screen.getAllByTestId("people-row").find((r) => r.textContent?.includes("Avery Chen"))!;
-      expect(avery.querySelector('[data-col="next"]')?.textContent ?? "").toBe("");
+      expect(avery.querySelector('[data-testid="people-row-next"]')).toBeNull();
       expect(avery).not.toHaveAttribute("data-next-one-on-one");
     } finally {
       vi.useRealTimers();
