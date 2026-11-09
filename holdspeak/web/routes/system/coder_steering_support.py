@@ -1,15 +1,15 @@
-"""Shared composition and policy helpers for the Coder steering routes."""
+"""Shared composition and policy helpers for the coder steering verbs
+(``CoderService``) and the launch lane (``agent_hand.lane_control``).
+
+A refusal is a ``CoderRefused`` (its body and HTTP status are the answer)."""
 
 from __future__ import annotations
 
-import asyncio
 import re
 import uuid
 from typing import Any, Mapping, Optional
 
-from fastapi.responses import JSONResponse
-
-from ....services.coder_service import CoderService
+from ....services.coder_service import CoderRefused, CoderService
 
 _PANE_ID_RE = re.compile(r"^%[0-9]+$")
 
@@ -90,7 +90,7 @@ def steering_commitment(
 
 def compose_from_body(
     body: dict[str, Any], *, principal: Any, service: CoderService
-) -> dict[str, Any] | JSONResponse:
+) -> dict[str, Any]:
     """Hydrate bounded Desk/rails grounding into the exact steer payload."""
     from ....grounding import (
         GROUNDING_EXPANDS,
@@ -100,7 +100,7 @@ def compose_from_body(
 
     text = body.get("text")
     if not isinstance(text, str) or not text.strip():
-        return JSONResponse({"error": "text is required"}, status_code=400)
+        raise CoderRefused({"error": "text is required"}, 400, code="text_required")
     grounding = body.get("grounding")
     if grounding is None:
         # Conductor R1: a steer carries only what the owner attached. The
@@ -109,7 +109,7 @@ def compose_from_body(
         # its siblings (memory recall over the text).
         return compose_steer(text, [])
     if not isinstance(grounding, dict):
-        return JSONResponse({"error": "grounding must be an object"}, status_code=400)
+        raise CoderRefused({"error": "grounding must be an object"}, 400, code="invalid_grounding")
     raw_m = grounding.get("meeting_ids")
     raw_a = grounding.get("artifact_ids")
     raw_r = grounding.get("rails")
@@ -138,17 +138,17 @@ def compose_from_body(
     )
     expand = str(grounding.get("expand") or "summary").strip() or "summary"
     if expand not in GROUNDING_EXPANDS:
-        return JSONResponse(
-            {"error": f"expand {expand!r} is not one of {list(GROUNDING_EXPANDS)}"},
-            status_code=400,
+        raise CoderRefused(
+            {"error": f"expand {expand!r} is not one of {list(GROUNDING_EXPANDS)}"}, 400,
+            code="invalid_grounding",
         )
     if (
         len(meeting_ids) + len(artifact_ids) + len(rails_refs) + len(qualified_refs)
         > GROUNDING_MAX_REFS
     ):
-        return JSONResponse(
-            {"error": f"grounding is capped at {GROUNDING_MAX_REFS} refs"},
-            status_code=400,
+        raise CoderRefused(
+            {"error": f"grounding is capped at {GROUNDING_MAX_REFS} refs"}, 400,
+            code="invalid_grounding",
         )
     blocks, unknown = service.hydrate_refs(
         principal,
@@ -167,9 +167,9 @@ def compose_from_body(
         blocks = list(blocks) + rail_blocks
         unknown = list(unknown) + rail_unknown
     if unknown:
-        return JSONResponse(
-            {"error": "grounding ids not on this hub", "unknown_ids": unknown},
-            status_code=400,
+        raise CoderRefused(
+            {"error": "grounding ids not on this hub", "unknown_ids": unknown}, 400,
+            code="unknown_grounding",
         )
     return compose_steer(text, blocks)
 
@@ -206,7 +206,7 @@ class ProcessInputServices:
         return self._commands
 
 
-async def deliver_process_input(
+def deliver_process_input(
     services: ProcessInputServices,
     *,
     key: str,
@@ -219,7 +219,7 @@ async def deliver_process_input(
     principal: Any,
 ) -> dict[str, Any]:
     """Adapt one terminal-input act onto ``process.input@1``."""
-    issued = await asyncio.to_thread(services.targets().issue, target)
+    issued = services.targets().issue(target)
     command_payload = dict(payload)
     command_payload.update(
         {
@@ -235,8 +235,7 @@ async def deliver_process_input(
         "operation": {"family": "coder_steering", "verb": verb},
         "payload": command_payload,
     }
-    adapted = await asyncio.to_thread(
-        services.commands().submit_process_input,
+    adapted = services.commands().submit_process_input(
         command,
         principal,
         authority_snapshot=policy,
@@ -256,30 +255,32 @@ __all__ = [
     "ProcessInputServices",
     "steering_commitment",
     "steering_policy",
+    "record_kill",
+    "wait_not_current",
 ]
 
 
-def wait_not_current(session: Any, body: Mapping[str, Any]) -> Optional[JSONResponse]:
+def wait_not_current(session: Any, body: Mapping[str, Any]) -> None:
     """PHILO-14 C2: an ANSWER (``kind: "answer"``, or a body that names a
     ``wait_id``) must name the current wait. Absent, or a wait that was
     answered or replaced since the face read it: 409 ``wait_not_current``.
     A plain steer (no ``kind``, no ``wait_id``: a re-brief, the session
     window's composer) answers no wait and passes."""
     if str(body.get("kind") or "") != "answer" and "wait_id" not in body:
-        return None
+        return
     from ....agent_context.models import is_blocked
 
     wanted = str(body.get("wait_id") or "")
     current = str(getattr(session, "wait_id", "") or "") if is_blocked(session) else ""
     if wanted and wanted == current:
-        return None
-    return JSONResponse(
+        return
+    raise CoderRefused(
         {"status": "wait_not_current", "detail": "the question was answered or changed", "wait_id": current or None},
-        status_code=409,
+        409,
     )
 
 
-async def record_kill(key: str, session: Any, result: dict[str, Any], scope: str) -> None:
+def record_kill(key: str, session: Any, result: dict[str, Any], scope: str) -> None:
     """PHILO-14 C2: the owner killed an agent's pane. Its launch reads
     ``stopped_by_owner`` with the audit row, and its session ends
     (``services.launch_lane.record_owner_stop``). A failure is logged; the
@@ -288,9 +289,7 @@ async def record_kill(key: str, session: Any, result: dict[str, Any], scope: str
     from ....services.launch_lane import record_owner_stop
 
     try:
-        stopped = await asyncio.to_thread(
-            record_owner_stop, key, session, audit_id=result.get("audit_id"), scope=scope,
-        )
+        stopped = record_owner_stop(key, session, audit_id=result.get("audit_id"), scope=scope)
     except Exception as exc:
         get_logger("web.routes.system.steering").warning(f"coder kill: stop not recorded for {key}: {exc}")
         return

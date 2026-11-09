@@ -19,6 +19,7 @@ import holdspeak.agent_context as agent_context
 from holdspeak import coder_steering
 from holdspeak.config import Config
 from holdspeak.web.context import WebContext
+from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.web.routes.system.coder_steering_routes import (
     build_coder_steering_router,
 )
@@ -62,6 +63,12 @@ def frames() -> list:
 @pytest.fixture
 def client(frames) -> TestClient:
     app = FastAPI()
+
+    @app.middleware("http")
+    async def owner(request, call_next):  # the hub edge gives /api/coders the OWNER right
+        request.state.principal = Principal(PrincipalKind.OWNER, "owner-session")
+        return await call_next(request)
+
     app.include_router(
         build_coder_steering_router(
             WebContext(

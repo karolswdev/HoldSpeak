@@ -369,7 +369,11 @@ database, FTS index or Cadence.
   `plugin_job.retry` re-queues a job. `plugin_job.cancel` marks a job completed.
   Both refuse a running job.
 - `coder.list`, `coder.get` and `coder.audit` read Coder sessions and the
-  steering audit. See [Coder integration](CODER_INTEGRATION.md).
+  steering audit. `coder.peek`, `coder.grants`, `coder.nodes` and
+  `coder.own_agents` read a pane, the grants, the nodes and the agents the
+  owner started. The owner's presses are `coder.select`, `coder.dismiss`,
+  `coder.pin`, `coder.arm`, `coder.disarm`, `coder.kill`, `coder.keep_note`
+  and `coder.own_agents.answer`. See [Coder integration](CODER_INTEGRATION.md).
 - `agent.hand` hands one desk item (an action, a decision, a Project
   item, a note, a meeting or an artifact) to a coding agent. HoldSpeak
   writes a brief, makes a new git worktree in the Project repository and
@@ -412,13 +416,12 @@ it receives.
 
 ## Deliberate absences
 
-Four verbs do not exist. A tool that always fails wastes a turn, so the
+Three verbs do not exist. A tool that always fails wastes a turn, so the
 catalogue leaves it out.
 
 | Absent verb | Reason |
 |---|---|
 | `coder.reply` | Delivery into a tmux pane needs the live web runtime. |
-| `coder.select_session` | Selection needs live agent context that the sidecar does not hold. |
 | `cadence.reply` | Reply delivery needs the live runtime. |
 | `plugin_job.process` | Queue processing runs in the web server. |
 

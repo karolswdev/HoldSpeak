@@ -134,9 +134,7 @@ _ALL_TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     "today.get":         ("evidence_read",   False),
     "meeting.run_intelligence": ("effect_proposal", False),
     # --- coder family ---
-    "coder.list":   ("evidence_read",     False),
     "coder.get":    ("evidence_read",     False),
-    "coder.audit":  ("evidence_read",     False),
     # Betterment AG11 (MCP-only: launched agents; no thread palette has them)
     "agent.start_helper": ("effect_proposal", False),
     "agent.prompt":       ("effect_proposal", False),
