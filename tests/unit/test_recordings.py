@@ -158,7 +158,9 @@ def client(svc, monkeypatch: pytest.MonkeyPatch):
 
     from holdspeak.web.routes import recordings as routes
 
-    monkeypatch.setattr(routes, "RECORDINGS", svc.service)
+    from holdspeak.recordings import service as recordings_service
+
+    monkeypatch.setattr(recordings_service, "RECORDINGS", svc.service)
     app = FastAPI()
     app.include_router(routes.build_recordings_router(SimpleNamespace(broadcast=None)))
     return TestClient(app)

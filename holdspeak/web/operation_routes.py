@@ -1,7 +1,7 @@
 """HTTP routes produced from declared operations (2026-11-08, one contract).
 
 A descriptor that declares ``http`` gets one handler here: the path
-parameters over the JSON body (the query for a GET) are its arguments, the
+parameters over the JSON body over the query are its arguments, the
 call is ``OperationRegistry.invoke(..., shape="web")`` off the event loop, and
 the answer is wrapped by the route module's own envelope (``answer``). The
 handler keeps the name and the path-parameter signature a hand-written one
@@ -66,8 +66,10 @@ def _endpoint(descriptor: Any, registry: Callable[[], Any], answer: Answer, modu
 
     async def endpoint(request: Request, **params: str) -> Any:
         principal = _principal(request)
-        # A DELETE carries its arguments in the query (``?at=``), under any body.
-        query = dict(request.query_params) if method in ("GET", "DELETE") else {}
+        # The query (``?at=``, ``?scope=``) is arguments on every method, under
+        # any body: a DELETE carries them there, and a POST or PUT may name its
+        # target there (the dictation blocks' ``?scope=&project_root=``).
+        query = dict(request.query_params)
         source = query if method == "GET" else {**query, **await _body(request)}
         args = {**source, **params}
         return await answer(lambda: _invoke(registry, principal, descriptor.name, args),
