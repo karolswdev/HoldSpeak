@@ -277,6 +277,37 @@ def test_the_list_counts_owed_both_ways_in_one_read(service: PeopleService) -> N
     assert sam["id"] in {row["id"] for row in plain}
 
 
+def test_the_list_counts_overdue_and_done_for_the_rail(service: PeopleService, db: Database) -> None:
+    """The native rail (2026-11-08): the roster read with counts also says
+    how many promises are done and how many reviewed meeting actions the
+    person owes are past their day (the real meeting producer's rows)."""
+    from datetime import datetime, timezone
+
+    from holdspeak.intel.models import ActionItem
+    from holdspeak.meeting_session.models import IntelSnapshot, MeetingState
+    from holdspeak.services.meeting_service import MeetingService
+
+    maya = service.create_relationship(OWNER, {"display_name": "Maya"})
+    owed = service.create_owed_to_you(OWNER, maya["id"], {"body": "Send the plan"})
+    service.transition(OWNER, f"people:{owed['id']}", "done")
+    db.meetings.save_meeting(MeetingState(
+        id="m-maya", started_at=datetime(2026, 10, 1, 16, tzinfo=timezone.utc),
+        ended_at=datetime(2026, 10, 1, 16, 30, tzinfo=timezone.utc), title="1:1 Maya",
+        intel=IntelSnapshot(timestamp=30.0, summary="", action_items=[
+            ActionItem(task="Draft the runbook", owner="Maya", id="ai-late", due="2026-10-06"),
+            ActionItem(task="Ship it later", owner="Maya", id="ai-later", due="2999-01-01"),
+            ActionItem(task="No day", owner="Maya", id="ai-none"),
+        ]),
+    ))
+    for item in db.meetings.list_action_items(meeting_id="m-maya"):
+        MeetingService(db).review_action_item(OWNER, item.id, {"review_state": "accepted"})
+
+    [row] = service.list_relationships(OWNER, with_counts=True, db=db)
+    assert (row["overdue_count"], row["done_count"], row["owes_you_count"]) == (1, 1, 0)
+    [blind] = service.list_relationships(OWNER, with_counts=True)
+    assert (blind["overdue_count"], blind["done_count"]) == (0, 1)
+
+
 # Moved from tests/unit/test_hs172_people_sources.py (fast diet, by service).
 # ==============================================================================
 # HS-172-04: The People resolver

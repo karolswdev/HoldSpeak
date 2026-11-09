@@ -226,19 +226,21 @@ describe("People: Add on They owe you shows the saved item", () => {
     });
     vi.stubGlobal("fetch", fetchSpy);
     render(<PeopleCore scope={`people:${id}`} />);
-    const owed = await screen.findByTestId("people-they-owe", {}, { timeout: 5000 });
+    const owed = await screen.findByTestId("people-commitments", {}, { timeout: 5000 });
     expect(within(owed).queryByText(owedBody)).toBeNull();
     expect(within(owed).queryByLabelText("Priya owes me")).toBeNull();
+    // One Add on the ledger; the well asks which way the promise goes.
     fireEvent.click(within(owed).getByRole("button", { name: "Add" }));
+    fireEvent.click(within(owed).getByRole("button", { name: "Priya owes me" }));
     fireEvent.change(within(owed).getByLabelText("Priya owes me"), { target: { value: owedBody } });
     fireEvent.click(within(owed).getByRole("button", { name: "Add" }));
     // 5 s, not the 1 s default: the full suite runs in parallel (#1100).
-    await waitFor(() => expect(within(screen.getByTestId("people-they-owe")).getByText(owedBody)).toBeTruthy(), { timeout: 5000 });
+    await waitFor(() => expect(within(screen.getByTestId("people-commitments")).getByText(owedBody)).toBeTruthy(), { timeout: 5000 });
     const posted = fetchSpy.mock.calls.filter(([url, o]) => String(url) === `/api/people/relationships/${id}/owed` && o?.method === "POST");
     expect(posted).toHaveLength(1);
     expect(JSON.parse(String(posted[0][1]?.body)).body).toBe(owedBody);
-    expect(screen.getByTestId("people-they-owe").querySelector("h3")!.textContent).toBe("Priya owes me1");
-    expect(within(screen.getByTestId("people-they-owe")).queryByLabelText("Priya owes me")).toBeNull();
+    expect(screen.getByTestId("people-commitments-facts").textContent).toContain("1 owed to you");
+    expect(within(screen.getByTestId("people-commitments")).queryByLabelText("Priya owes me")).toBeNull();
     // It is what they owe, never a request asked of him.
     expect(fetchSpy.mock.calls.some(([url]) => String(url).endsWith("/requests"))).toBe(false);
   });
@@ -385,7 +387,7 @@ describe("People from his work (Betterment daily D6), on the recorded week", () 
     expect(await screen.findByRole("button", { name: /Mira/ })).toBeTruthy();
     // Mira's prep: her promise, from the meeting, with no alias press.
     cleanupAndOpen(wire.added.mira.relationship.id);
-    const owed = await screen.findByTestId("people-they-owe", {}, { timeout: 5000 });
+    const owed = await screen.findByTestId("people-commitments", {}, { timeout: 5000 });
     expect(owed.textContent).toContain("Draft the rollback runbook");
   });
 

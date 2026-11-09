@@ -127,8 +127,10 @@ def build_people_router(ctx: WebContext) -> APIRouter:
         # PHILO-17 (MUST 4): `?counts=1` adds you_owe_count and owes_you_count
         # to each row (the owner's faces: one bounded read for the totals).
         try:
+            from ...db import get_database
             return {"relationships": service.list_relationships(
                 principal(request), include_archived=include_archived, with_counts=counts,
+                db=get_database() if counts else None,
             )}
         except PeopleServiceError as exc:
             raise _failure(exc) from exc

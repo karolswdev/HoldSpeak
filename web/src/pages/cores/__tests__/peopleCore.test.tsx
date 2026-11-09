@@ -33,10 +33,15 @@ describe("Prep owns each obligation and pending Add draft", () => {
   const report = RECORDED_OWED.commitment;
   const session = RECORDED_SESSIONS.one_on_ones[0];
   const scenarios = [
-    { label: "Add to the agenda", section: "people-next-plate", button: "Add to agenda", path: `/api/people/one-on-ones/${session.id}/agenda` },
-    { label: "I owe Priya", section: "people-you-owe", button: "Add", path: `/api/people/requests/${person.requests[0].id}/accept` },
-    { label: "Priya owes me", section: "people-they-owe", button: "Add", path: `/api/people/relationships/${person.id}/owed` },
+    { label: "Add to the agenda", section: "people-next-plate", button: "Add to agenda", way: null, path: `/api/people/one-on-ones/${session.id}/agenda` },
+    // The commitments ledger has ONE Add; the well asks which way it goes.
+    { label: "I owe Priya", section: "people-commitments", button: "Add", way: "I owe Priya", path: `/api/people/requests/${person.requests[0].id}/accept` },
+    { label: "Priya owes me", section: "people-commitments", button: "Add", way: "Priya owes me", path: `/api/people/relationships/${person.id}/owed` },
   ];
+  function openWell(area: HTMLElement, button: string, way: string | null) {
+    fireEvent.click(within(area).getByRole("button", { name: button }));
+    if (way) fireEvent.click(within(area).getByRole("button", { name: way }));
+  }
   function mount(id = person.id, refresh = vi.fn(), failure = vi.fn()) {
     const relationship = { ...person, id, sessions: [session], owed_to_you: [report] };
     // The recorded transport contains nullable fields (for example
@@ -63,12 +68,12 @@ describe("Prep owns each obligation and pending Add draft", () => {
     }));
   }
 
-  it("opens either exact commitment in its owning section and Close returns to that row", async () => {
+  it("opens either exact commitment in place on its ledger row and Close returns to that row", async () => {
     readers();
     mount();
     await screen.findByTestId("people-prep-lens");
-    for (const [sectionId, item] of [["people-you-owe", leader], ["people-they-owe", report]] as const) {
-      const section = screen.getByTestId(sectionId);
+    for (const item of [leader, report]) {
+      const section = screen.getByTestId("people-commitments");
       const title = within(section).getByRole("button", { name: item.body });
       title.focus();
       fireEvent.click(title);
@@ -83,26 +88,26 @@ describe("Prep owns each obligation and pending Add draft", () => {
     }
   });
 
-  it.each(scenarios)("$label starts closed and clears only its accepted submitted draft", async ({ label, section, button }) => {
+  it.each(scenarios)("$label starts closed and clears only its accepted submitted draft", async ({ label, section, button, way }) => {
     const refresh = vi.fn();
     readers();
     mount(person.id, refresh);
     const area = await screen.findByTestId(section);
     expect(screen.queryByLabelText(label)).toBeNull();
-    fireEvent.click(within(area).getByRole("button", { name: button }));
+    openWell(area, button, way);
     fireEvent.change(screen.getByLabelText(label), { target: { value: "  Send the platform plan  " } });
     fireEvent.click(within(area).getByRole("button", { name: button }));
     await waitFor(() => expect(refresh).toHaveBeenCalledOnce());
     expect(screen.queryByLabelText(label)).toBeNull();
-    fireEvent.click(within(area).getByRole("button", { name: button }));
+    openWell(area, button, way);
     expect(screen.getByLabelText(label)).toHaveValue("");
   });
 
-  it.each(scenarios)("$label stays open and focused when its text is cleared for editing", async ({ label, section, button }) => {
+  it.each(scenarios)("$label stays open and focused when its text is cleared for editing", async ({ label, section, button, way }) => {
     readers();
     mount();
     const area = await screen.findByTestId(section);
-    fireEvent.click(within(area).getByRole("button", { name: button }));
+    openWell(area, button, way);
     const input = screen.getByLabelText(label) as HTMLInputElement;
     input.focus();
     fireEvent.change(input, { target: { value: "Replace these words" } });
@@ -120,7 +125,7 @@ describe("Prep owns each obligation and pending Add draft", () => {
     expect(screen.queryByLabelText(label)).toBeNull();
   });
 
-  it.each(scenarios.flatMap((scenario) => [true, false].map((accepted) => ({ ...scenario, accepted }))))("$label keeps newer text after accepted=$accepted and through person/tab/remount return", async ({ label, section, button, path, accepted }) => {
+  it.each(scenarios.flatMap((scenario) => [true, false].map((accepted) => ({ ...scenario, accepted }))))("$label keeps newer text after accepted=$accepted and through person/tab/remount return", async ({ label, section, button, way, path, accepted }) => {
     let finish!: (response: Response) => void;
     const submitted: Array<{ path: string; body: unknown }> = [];
     readers((url, opts) => {
@@ -131,7 +136,7 @@ describe("Prep owns each obligation and pending Add draft", () => {
     const failure = vi.fn();
     let view = mount(person.id, refresh, failure);
     const area = await screen.findByTestId(section);
-    fireEvent.click(within(area).getByRole("button", { name: button }));
+    openWell(area, button, way);
     const input = screen.getByLabelText(label);
     fireEvent.change(input, { target: { value: "Original task for this report" } });
     fireEvent.click(within(area).getByRole("button", { name: button }));
@@ -150,7 +155,7 @@ describe("Prep owns each obligation and pending Add draft", () => {
     view = mount("another-report");
     const other = await screen.findByTestId(section);
     expect(screen.queryByLabelText(label)).toBeNull();
-    fireEvent.click(within(other).getByRole("button", { name: button }));
+    openWell(other, button, way);
     expect(screen.getByLabelText(label)).toHaveValue("");
     view.unmount();
     mount();
@@ -189,8 +194,9 @@ describe("HS-S33: I owe keeps the saved request and finishes that one", () => {
     return { view, refresh, failure };
   }
   async function press() {
-    const area = await screen.findByTestId("people-you-owe");
+    const area = await screen.findByTestId("people-commitments");
     fireEvent.click(within(area).getByRole("button", { name: "Add" }));
+    fireEvent.click(within(area).getByRole("button", { name: "I owe Priya" }));
     fireEvent.change(screen.getByLabelText("I owe Priya"), { target: { value: words } });
     fireEvent.click(within(area).getByRole("button", { name: "Add" }));
     return area;
@@ -889,13 +895,17 @@ describe("PeopleCore PHILO-17 the 1:1 runs both ways", () => {
       "POST /api/people/commitments/o1/transition": () => json({ transition: { verb: "done" } }),
     });
     render(<PeopleCore scope="people:r1" />);
-    const owed = await screen.findByTestId("people-they-owe");
-    expect(within(owed).getByRole("heading").textContent).toBe("Maya owes me1");
+    // One ledger: her open promise, the request asked of him, her done one last (moss).
+    const owed = await screen.findByTestId("people-commitments");
+    expect(screen.getByTestId("people-commitments-facts").textContent).toBe("1 owed to you");
     expect(within(owed).getByText("Send the rollout plan")).toBeTruthy();
-    expect(within(owed).queryByText("Old item")).toBeNull();
+    const words = [...owed.querySelectorAll(".people-ledger-words")];
+    expect(words.at(-1)?.textContent).toBe("Old item");
+    expect(words.at(-1)?.getAttribute("data-tone")).toBe("moss");
     expect(screen.getByText("Asked of you")).toBeTruthy();
     expect(screen.queryByText(/Open requests/i)).toBeNull();
     fireEvent.click(within(owed).getByRole("button", { name: "Add" }));
+    fireEvent.click(within(owed).getByRole("button", { name: "Maya owes me" }));
     fireEvent.change(within(owed).getByLabelText("Maya owes me"), { target: { value: "Send me the API migration estimate" } });
     fireEvent.click(within(owed).getByRole("button", { name: "Add" }));
     await waitFor(() => expect(posts(fetchSpy, "/api/people/relationships/r1/owed")).toHaveLength(1));
@@ -906,7 +916,7 @@ describe("PeopleCore PHILO-17 the 1:1 runs both ways", () => {
     // lands. Wait for the read that carries the added item, then press Done.
     // A press in that gap found no Done: the -n 8 flake (test diet 2026-10-11).
     await within(owed).findByText("Send me the API migration estimate");
-    const rollout = within(owed).getByText("Send the rollout plan").closest(".people-plate-row") as HTMLElement;
+    const rollout = within(owed).getByText("Send the rollout plan").closest(".surface-ledger-row") as HTMLElement;
     fireEvent.click(within(rollout).getByRole("button", { name: "Done" }));
     await waitFor(() => expect(posts(fetchSpy, "/api/people/commitments/o1/transition")).toHaveLength(1));
     expect(JSON.parse(String(posts(fetchSpy, "/api/people/commitments/o1/transition")[0][1]?.body)).verb).toBe("done");

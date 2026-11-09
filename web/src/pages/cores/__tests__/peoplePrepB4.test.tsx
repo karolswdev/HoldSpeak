@@ -118,8 +118,8 @@ describe("PHILO-13-09 B4-W: the 1:1 finds its person", () => {
     render(<PeopleCore scope="people:r1:prep" />);
     await screen.findByTestId("people-prep-lens");
     expect(within(await screen.findByTestId("prep-agenda")).getByText("Review the dry-run report")).toBeTruthy();
-    const owed = await screen.findByTestId("prep-owed");
-    expect(screen.getByTestId("people-they-owe").querySelector("h3")!.textContent).toBe("Priya owes me1");
+    const owed = await screen.findByTestId("prep-commitments");
+    expect(screen.getByTestId("people-commitments-facts").textContent).toBe("1 owed to you");
     fireEvent.click(within(owed).getByRole("button", { name: /Send the dry-run report/ }));
     expect(opened).toEqual(["meeting:m-1"]);
     const projects = screen.getByTestId("prep-projects");
@@ -128,19 +128,19 @@ describe("PHILO-13-09 B4-W: the 1:1 finds its person", () => {
     expect(document.body.textContent).not.toMatch(ISO);
   });
 
-  it("PHILO-17: Prep holds you owe and they owe (his rows, then the meeting actions)", async () => {
+  it("PHILO-17: one ledger holds you owe and they owe (his rows and the meeting actions)", async () => {
     // The plates read the person's record (the brief carries the meeting actions).
     stub({ linked: true, brief: FULL, record: {
       commitments: [{ id: "c1", body: "Review her design doc", visibility: "shared_intent", state: "open" }],
       owed_to_you: [{ id: "o1", body: "Send the API migration estimate", visibility: "shared_intent", state: "open" }],
     } });
     render(<PeopleCore scope="people:r1:prep" />);
-    const youOwe = await screen.findByTestId("prep-you-owe");
-    expect(screen.getByTestId("people-you-owe").querySelector("h3")!.textContent).toBe("I owe Priya1");
-    expect(within(youOwe).getByText("Review her design doc")).toBeTruthy();
-    const owed = screen.getByTestId("prep-owed");
-    expect(screen.getByTestId("people-they-owe").querySelector("h3")!.textContent).toBe("Priya owes me2");
-    expect(within(owed).getByText("Send the API migration estimate")).toBeTruthy();
+    const ledger = await screen.findByTestId("prep-commitments");
+    expect(screen.getByTestId("people-commitments-facts").textContent).toBe("2 owed to you · 1 you owe");
+    const side = (words: string) => within(ledger).getByText(words).getAttribute("data-side");
+    expect(side("Review her design doc")).toBe("you");
+    expect(side("Send the API migration estimate")).toBe("they");
+    const owed = ledger;
     expect(within(owed).getByRole("button", { name: /Send the dry-run report/ })).toBeTruthy();
   });
 
@@ -173,7 +173,7 @@ describe("PHILO-13-09 B4-W: the 1:1 finds its person", () => {
     stub({ linked: true, brief: {} });
     render(<PeopleCore scope="people:r1:prep" />);
     await screen.findByTestId("people-prep-lens");
-    expect(screen.queryByTestId("prep-owed")).toBeNull();
+    expect(screen.queryByTestId("prep-commitments")).toBeNull();
     expect(screen.queryByTestId("prep-projects")).toBeNull();
     expect(screen.queryByTestId("prep-agenda")).toBeNull();
     expect(screen.queryByTestId("prep-link-suggestion")).toBeNull();
@@ -225,7 +225,7 @@ describe("PHILO-13-09 B4-W: the 1:1 finds its person", () => {
     const due = { ...FULL.open_meeting_actions[0], id: "philo13-b4-owned-action", due: "2026-10-06" };
     stub({ linked: true, brief: { ...FULL, open_meeting_actions: [due] } });
     render(<PeopleCore scope="people:r1:prep" />);
-    const owed = await screen.findByTestId("prep-owed");
+    const owed = await screen.findByTestId("prep-commitments");
     expect(owed.textContent).toContain("by Tue"); // 2026-10-06 is a Tuesday
     expect(owed.textContent).not.toContain("by Mon");
   });
