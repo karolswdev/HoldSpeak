@@ -344,5 +344,7 @@ engine, as every door job), never a different route. Its callers register it
 at import: `holdspeak/rails_observer.py::_register_retry`,
 `holdspeak/services/decision_lifecycle_service.py::_register_retry` with
 `_retry_decision_draft`, `holdspeak/web/routes/delivery_prs.py::_register_retry`
-with `_retry_review`; `engine_door.py::_load_retry_callers` imports them.
-None selects a model.
+with `_retry_review`, `holdspeak/services/thread_service.py::_register_retry`
+with `_retry_turn` (the thread's last turn again); `engine_door.py::_load_retry_callers`
+imports them. None selects a model. The owner's Stop is a decision, not a
+failure: a job with a cancel signal before its deadline waits in no row.

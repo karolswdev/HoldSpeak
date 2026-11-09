@@ -31,6 +31,8 @@ BACKEND_PRIVATE_DECISIONS: dict[tuple[str, str], tuple[str, str]] = {
     ("holdspeak/services/decision_lifecycle_service.py", "_retry_decision_draft"): ("owner-pressed Retry: the same decision draft through the engine door; no fallback of its own", "143-07"),
     ("holdspeak/web/routes/delivery_prs.py", "_register_retry"): ("registers the PR review draft's owner-pressed Retry with the engine door; selects no engine", "143-07"),
     ("holdspeak/web/routes/delivery_prs.py", "_retry_review"): ("owner-pressed Retry: the same PR review draft through the engine door; no fallback of its own", "143-07"),
+    ("holdspeak/services/thread_service.py", "_register_retry"): ("registers the chat turn's owner-pressed Retry with the engine door; selects no engine", "143-07"),
+    ("holdspeak/services/thread_service.py", "_retry_turn"): ("owner-pressed Retry: the thread's last turn again (regenerate) through the engine door; no fallback of its own", "143-07"),
     ("holdspeak/calls/service.py", "_override_profile"): ("a call's default engine: the home engine profile as the call thread's profile_override (the existing next-run override) unless calls.turn is assigned; no new route law", "143-03"),
     ("holdspeak/memory/engine.py", "_resolve_selected_head"): ("canonical selected Memory assignment adapter; existing planner validation, no wider-head fallback", "143-04"),
     ("holdspeak/services/project_door_service.py", "_resolve_connection"): ("provider account identity; exact pasted site binding, no inference route", "143-01"),

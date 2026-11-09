@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import json
 import threading
-from typing import Any, Optional
+from typing import Any, Callable, Optional
 
 RUNNING = "running"
 COMPLETED = "completed"
@@ -82,21 +82,38 @@ class Turn:
         self._lock = threading.Lock()
         self._closed = threading.Event()
         self._observers: list[TurnObserver] = []
+        #: The owner's Stop for the pass that runs now (``engine_door.stop``).
+        self.stop: Optional[Callable[[], Any]] = None
+        self._stopping = False
 
     def seal(self, outcome: str) -> str:
         """Decide the terminal fact once: CANCELLED when a cancel came first,
         else ``outcome``. After this, a cancel is refused."""
         with self._lock:
             if not self.terminal:
-                self.terminal = CANCELLED if self.cancel_event.is_set() else outcome
+                self.terminal = CANCELLED if self.cancel_event.is_set() or self._stopping else outcome
             return self.terminal
 
     def cancel(self) -> bool:
         with self._lock:
             if self.terminal:
                 return False
+            stop, self._stopping = self.stop, True
+            if stop is None:
+                self.cancel_event.set()
+                return True
+
+        def stop_then_signal() -> None:
+            # The runner stops the live pass first, so the stop is on its
+            # record (his decision, never a failure); then the turn ends.
+            try:
+                stop()
+            except Exception:
+                pass
             self.cancel_event.set()
-            return True
+
+        threading.Thread(target=stop_then_signal, daemon=True).start()
+        return True
 
 
 class TurnObserver:
