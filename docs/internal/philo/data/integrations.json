@@ -570,7 +570,7 @@
       ],
       "docs": [
         "docs/AGENTS_AND_THREADS.md",
-        "docs/MCP_SIDECAR.md"
+        "scripts/mcp_sidecar_doc.template.md"
       ],
       "limitations": [
         "The sidecar count in public docs is snapshot-specific.",

@@ -601,10 +601,11 @@ class TestMicAllowlist:
         + DIR10's briefing-page answer field (the thin kit has no mic) = 24,
         + the Programs wizard's Folder path and Check command (#1833) = 26,
         - the six ModelLibraryCore/TopologyMapView entries parked with the
-        Models chain (2026-11-08) = 20."""
+        Models chain (2026-11-08) = 20, - the Workbench grammar entry parked
+        with WorkbenchWindow (#2039) = 19."""
         mod = _load_scanner()
-        assert len(mod.MIC_ALLOWLIST) == 20
-        assert len({(p, n) for p, n, _ in mod.MIC_ALLOWLIST}) == 20
+        assert len(mod.MIC_ALLOWLIST) == 19
+        assert len({(p, n) for p, n, _ in mod.MIC_ALLOWLIST}) == 19
 
 
 _MIC_HOST_FIELDS = (
@@ -730,21 +731,3 @@ def test_password_exemption_belongs_to_its_own_element_only() -> None:
     found = scanner.scan_mic("features/x/Row.tsx", opted_out, opted_out.splitlines())
     labels = [opted_out.splitlines()[v.line].strip() for v in found]
     assert labels == ['label="Name"', 'label="Server address"']
-
-
-def test_workbench_instruction_keeps_one_named_grammar_mic_authority() -> None:
-    scanner = _load_scanner()
-    content = '''export function WorkbenchWindow() {
-      return <div>
-        <MicButton onText={writeInstructionAndResolveReferences} />
-        <PadGadget label="New item instruction" mic={false} />
-        <PadGadget label="Unrelated instruction" mic={false} />
-      </div>;
-    }'''
-    rel = "desk/components/WorkbenchWindow.tsx"
-    found = scanner.scan_mic(rel, content, content.splitlines())
-    assert len(found) == 1
-    assert 'label="Unrelated instruction"' in content.splitlines()[found[0].line - 1]
-    # The named label does not excuse a different face's missing capture path.
-    elsewhere = scanner.scan_mic("features/x/Row.tsx", content, content.splitlines())
-    assert len(elsewhere) == 2

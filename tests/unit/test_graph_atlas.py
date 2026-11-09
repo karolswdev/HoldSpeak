@@ -226,7 +226,15 @@ def test_no_timer_edge_is_triggered_by_a_substitute_button(atlas: dict) -> None:
 def test_every_api_setup_step_exists_in_the_generated_openapi(
     atlas: dict, openapi: dict
 ) -> None:
-    paths = openapi["paths"]
+    # A path parameter's name is the case's capture name, not the route's:
+    # `{item_two}` fills the route's `{item_id}` (2026-11-08, #2039 parked the
+    # bulk park/restore routes; a two-item round calls the one-item route twice).
+    def shape(path: str) -> str:
+        return re.sub(r"\{[^}/]+\}", "{}", path)
+
+    paths: dict[str, set[str]] = {}
+    for route, methods in openapi["paths"].items():
+        paths.setdefault(shape(route), set()).update(methods)
     missing: list[str] = []
     for case in atlas["cases"]:
         for step in _acts(case):
@@ -235,7 +243,7 @@ def test_every_api_setup_step_exists_in_the_generated_openapi(
             # A query string filters the same route (PHILO-16 C: restore binds
             # its projection from `?attention_state=needs_attention`).
             path, method = step["path"].split("?", 1)[0], step["method"].lower()
-            if path not in paths or method not in paths[path]:
+            if shape(path) not in paths or method not in paths[shape(path)]:
                 missing.append(f"{case['id']}: {step['method']} {path}")
     assert not missing, f"setup steps name routes that do not exist: {missing}"
 
