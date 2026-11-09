@@ -442,6 +442,12 @@ def test_no_registered_write_is_silent(hub: Hub, seeded: dict[str, str]) -> None
         "windows.raise": {"window_id": "chair:needs"},
         "windows.arrange": {"rects": {"workbench:walk": {"x": "-1/2", "y": "-1/2", "w": "1/2", "h": "100%"}}},
         "windows.seat": {"window_id": "chair:capture", "seated": True},
+        "windows.move": {"window_id": "chair:needs", "x": 7, "y": 7},
+        "windows.resize": {"window_id": "chair:needs", "w": 400, "h": 300},
+        "windows.set_geometry": {"window_id": "chair:needs", "rect": {"x": 1, "y": 2, "w": 300, "h": 200}},
+        "windows.send_back": {"window_id": "chair:needs"},
+        "windows.zoom": {"window_id": "chair:needs", "zoomed": True},
+        "windows.stage_shelf": {"side": "right"},
         # The Dock's own frame (kind meeting_ready_read), for a ready meeting.
         "meeting.ready_read": {"meeting_id": seeded["meeting"]},
     }
@@ -451,6 +457,10 @@ def test_no_registered_write_is_silent(hub: Hub, seeded: dict[str, str]) -> None
     hub.frames_until_mark(lambda: None)  # the four opens' frames land before the walk
     for name in writes:
         bound = registry.operations[name]
+        if bound.descriptor.announces_changes and name.startswith("desk."):
+            # One display protocol (2026-11-08): a display request changes no
+            # desk object; its frame is ``desk_request`` (test_desk_requests.py).
+            continue
         if bound.descriptor.announces_changes and bound.descriptor.service == "program_service":
             # One contract (2026-11-08): a Programs verb's service announces
             # ``program_changed`` itself (the Programs tests read that frame);

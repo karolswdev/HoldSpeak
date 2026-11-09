@@ -50,7 +50,8 @@ vi.mock("../../../lib/api", async (importOriginal) => {
 });
 
 import { GHOSTS, WalkRunner, arcFrames, tiltFor, travelMs } from "../WalkRunner";
-import { READY_BEAT_MS, deskReady, deskSignals } from "../walk";
+import { READY_BEAT_MS } from "../walk";
+import { deskReady, deskSignals } from "../../compositor/dom";
 
 // The compositor's flag loads lazily (no import cycle through the registry).
 beforeAll(async () => { await deskSignals; });
@@ -518,8 +519,8 @@ describe("The Walk", () => {
   });
 
   it("opens a Project Room on the Room itself, never on its kept update posture", async () => {
-    const { openWalkApp } = await import("../walk");
-    expect(await openWalkApp("open-project-memory", "project:p-1")).toBe(true);
+    const { openDeskApp } = await import("../../compositor/requests");
+    expect(await openDeskApp("open-project-memory", "project:p-1")).toBe(true);
     expect(mocks.openSurface).toHaveBeenCalledWith("open-project-memory", "project:p-1");
     expect(mocks.requestRoomAt).toHaveBeenCalledWith("p-1", "room");
   });

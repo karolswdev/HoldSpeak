@@ -826,8 +826,10 @@ def test_the_catalogue_is_explicit_descriptors() -> None:
         # Conductor K2: Hand to agent.
         "agent.hand",
         # PHILO-16 16b: the desk's windows (the desk_window.* MCP tools).
-        "windows.list", "windows.open", "windows.close", "windows.raise", "windows.arrange",
-        "windows.seat",
+        "windows.list", "windows.arrange", "windows.stage_shelf", "windows.open", "windows.close", "windows.move",
+        "windows.resize", "windows.set_geometry", "windows.raise", "windows.send_back", "windows.seat", "windows.zoom",
+        # One display protocol (2026-11-08): the desk's display requests.
+        "desk.mark", "desk.press", "desk.say", "desk.scroll", "desk.request.read", "desk.request.result",
         # Betterment Q9: Find the tasks on a note (the note.* MCP tools).
         "note.outcomes.read", "note.find_tasks", "note.outcome.edit", "note.outcome.dismiss",
         "note.outcome.confirm",

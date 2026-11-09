@@ -74,12 +74,18 @@ QUIET_ROUTES: dict[tuple[str, str], str] = {
     # PHILO-16 (16b): the window service announces each change itself (one
     # frame, kind ``windows``, one change per id); a no-op (a raise of the
     # front window) changes nothing and sends nothing, never a desk refresh.
-    ("POST", "/api/desk/windows/{window_id}/{verb}"): "the window service announces (kind windows)",
+    **{("POST", f"/api/desk/windows/{{window_id}}/{verb}"): "the window service announces (kind windows)"
+       for verb in ("open", "close", "move", "resize", "set_geometry", "raise", "send_back", "seat", "zoom")},
     ("POST", "/api/desk/windows/arrange"): "the window service announces (kind windows)",
     ("POST", "/api/desk/windows/stage-shelf"): "the window service announces (kind windows)",
     # Betterment daily D8: the desk says which window is in front (memory
     # only, once a minute); nothing is stored and no window shows it.
     ("POST", "/api/desk/presence"): "noise: the desk's front window, in memory",
+    # One display protocol (2026-11-08): a display request is a desk_request
+    # frame and its answer a memory row; no desk object changes.
+    **{("POST", f"/api/desk/requests/{op}"): "a display request: its own desk_request frame"
+       for op in ("mark", "press", "say", "scroll")},
+    ("POST", "/api/desk/requests/{request_id}/result"): "the desk's answer to a display request, in memory",
     # Recordings (2026-10-28): one chunk each 5 s while a recording runs; the
     # service sends its own ``recording_state`` frame.
     ("POST", "/api/recordings/{recording_id}/chunks"): "noise: one chunk each 5 s; the service frames it",

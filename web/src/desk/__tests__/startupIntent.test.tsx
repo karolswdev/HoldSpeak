@@ -231,8 +231,8 @@ describe("HS-S12: a proposal target reveals exactly that proposal", () => {
     // Needs you asked for a proposal before the Room mounted; the walk then
     // opens the same Room on the Room itself.
     openProjectProposal("p-w", "prop-old");
-    const { openWalkApp } = await import("../walk/walk");
-    expect(await openWalkApp("open-project-memory", "project:p-w")).toBe(true);
+    const { openDeskApp } = await import("../compositor/requests");
+    expect(await openDeskApp("open-project-memory", "project:p-w")).toBe(true);
     expect(takeRoomProposalRequest("p-w")).toBeNull();
     expect(takeRoomAtRequest("p-w")).toBe("room");
     expect(useDesk.getState().windowsById[ROOM]?.scope).toBe("project:p-w");

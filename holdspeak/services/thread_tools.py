@@ -28,7 +28,7 @@ from ..principals import Principal, PrincipalKind
 def _declared_thread_classes() -> dict[str, tuple[str, bool]]:
     from ..operations import DESCRIPTORS
 
-    return {d.name: (d.thread, False) for d in DESCRIPTORS if d.tool_schema is not None and d.thread}
+    return {d.tool_name: (d.thread, False) for d in DESCRIPTORS if d.tool_schema is not None and d.thread}
 
 
 _ALL_TOOL_CLASSES: dict[str, tuple[str, bool]] = {

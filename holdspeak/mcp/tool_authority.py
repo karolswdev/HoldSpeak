@@ -38,7 +38,7 @@ def _declared_authority() -> dict[str, str]:
     """The class of every tool a descriptor produces (``OperationDescriptor.authority``)."""
     from holdspeak.operations import DESCRIPTORS
 
-    return {d.name: d.authority for d in DESCRIPTORS if d.tool_schema is not None}
+    return {d.tool_name: d.authority for d in DESCRIPTORS if d.tool_schema is not None}
 
 
 #: Each non-work row carries its reason.

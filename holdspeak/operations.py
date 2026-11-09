@@ -199,9 +199,14 @@ class OperationDescriptor:
     authority: str = "work"
     thread: Optional[str] = None
 
+    @property
+    def tool_name(self) -> str:
+        """The MCP tool's name: the ``mcp:`` exposure, else the operation's own name."""
+        return next((entry[4:] for entry in self.exposure if entry.startswith("mcp:")), self.name)
+
     def tool(self) -> dict[str, Any]:
         """The MCP tool row this descriptor produces."""
-        return {"name": self.name, "description": self.description, "inputSchema": self.tool_schema}
+        return {"name": self.tool_name, "description": self.description, "inputSchema": self.tool_schema}
 
     def __post_init__(self) -> None:
         Draft202012Validator.check_schema(dict(self.args_schema))
@@ -2293,8 +2298,8 @@ from holdspeak.onboarding_operations import ONBOARDING_OPERATIONS  # noqa: E402
 from holdspeak.setup_operations import SETUP_OPERATIONS  # noqa: E402
 # Conductor K2: Hand to an agent session.
 from holdspeak.agent_operations import AGENT_OPERATIONS  # noqa: E402
-# PHILO-16 (16b): the desk's windows (the MCP rows).
-from holdspeak.desk_window_operations import DESK_WINDOW_OPERATIONS  # noqa: E402
+# The desk: its windows and its display requests (one display protocol, 2026-11-08).
+from holdspeak.desk_operations import DESK_DISPLAY_OPERATIONS  # noqa: E402
 # Imported only through here (it imports this module): read operations.PROGRAM_OPERATIONS.
 from holdspeak.program_operations import LIVE_PROGRAM_SERVICE, PROGRAM_OPERATIONS  # noqa: E402,F401 (re-exported)
 from holdspeak.meeting_operations import MEETING_OPERATIONS  # noqa: E402
@@ -2432,7 +2437,7 @@ DESCRIPTORS: tuple[OperationDescriptor, ...] = (
     DECISION_DELETE, DECISION_STATUS, DECISION_SUPERSEDE,
     KERNEL_RECEIPT_READ, MEMORY_OBSERVATIONS_READ, MEMORY_PAGE_READ,
 ) + ROOM_OPERATIONS + STEWARD_CONNECTOR_OPERATIONS + CHANNEL_OPERATIONS + ONBOARDING_OPERATIONS + SETUP_OPERATIONS + AGENT_OPERATIONS \
-    + DESK_WINDOW_OPERATIONS + NOTE_OUTCOME_OPERATIONS + (TODAY_GET,) + PROGRAM_OPERATIONS + MEETING_OPERATIONS
+    + DESK_DISPLAY_OPERATIONS + NOTE_OUTCOME_OPERATIONS + (TODAY_GET,) + PROGRAM_OPERATIONS + MEETING_OPERATIONS
 
 #: The RuntimeServices / WebContext fields the catalogue binds to.
 BOUND_SERVICES: tuple[str, ...] = tuple(dict.fromkeys(d.service for d in DESCRIPTORS))

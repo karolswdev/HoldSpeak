@@ -64,6 +64,10 @@ RUNTIME_FRAME_TYPES: tuple[str, ...] = (
                                 # audience: the owner's own desk sockets — the runtime
                                 #           bus has no other subscriber
     "dictation_preview",        # dictation is held for preview
+    "desk_request",             # one display request for the compositor (one
+                                #   display protocol, 2026-11-08): payload
+                                #   {request_id, op: mark|press|say|scroll, args};
+                                #   the desk answers POST /api/desk/requests/{id}/result
     "desk_changed",             # one desk object was written, by ANY caller
                                 #   (HS-200-45): payload {kind, id, op, origin};
                                 #   the desk re-reads itself, debounced

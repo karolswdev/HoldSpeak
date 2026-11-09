@@ -1,0 +1,28 @@
+{
+  "recorded": "2026-11-08: two desk.mark calls over MCP on a hub root (holdspeak/desk_operations.py), the frames as broadcast",
+  "mark": {
+    "type": "desk_request",
+    "data": {
+      "request_id": "req-11c7010cc039",
+      "op": "mark",
+      "args": {
+        "target": "needs-row",
+        "window": "chair:needs",
+        "thing": "needs rows",
+        "words": "This one asks you"
+      }
+    }
+  },
+  "missing": {
+    "type": "desk_request",
+    "data": {
+      "request_id": "req-a8a4df580f1f",
+      "op": "mark",
+      "args": {
+        "target": "person-row",
+        "window": "chair:needs",
+        "thing": "people rows"
+      }
+    }
+  }
+}
