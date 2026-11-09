@@ -566,7 +566,7 @@ flowchart LR
 sidecar and the in-process fetcher. There is one implementation and three
 transports. The remote path uses the live services of the web runtime. An
 agent credential gets the agent principal and its tool palette. The owner web
-token is refused off loopback. See [MCP sidecar](MCP_SIDECAR.md).
+token is refused off loopback. See MCP sidecar (`scripts/gen_docs.sh` writes `docs/MCP_SIDECAR.md`).
 
 ## The Desk across surfaces
 
@@ -670,4 +670,4 @@ flowchart LR
 - [Desk architecture](DESK_ARCHITECTURE.md): shared windows, local presentation, and recovery.
 - [Model runtime](MODEL_RUNTIME.md): assignments, frozen routes, CLI adapters, and attempts.
 - [Domain model](DOMAIN_MODEL.md): record identities and storage owners.
-- [MCP sidecar](MCP_SIDECAR.md): transports and scoped tool access.
+- MCP sidecar (`scripts/gen_docs.sh` writes `docs/MCP_SIDECAR.md`): transports and scoped tool access.

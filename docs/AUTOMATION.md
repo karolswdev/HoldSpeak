@@ -33,7 +33,7 @@ The same systems can be reached through these supported paths:
 | [Scheduled recording](USER_GUIDE.md#schedule-a-recording) | A configured recording time arrives | Meeting capture when the hub can run it |
 | [Voice commands](VOICE_COMMANDS.md) | A configured keyword matches | The action mapped to that keyword |
 | [Coder steering](USER_GUIDE.md#steer-a-session-from-the-desk) | You deliver text or an allowed key | Input to an identified live Coder pane |
-| [External MCP client](MCP_SIDECAR.md) | Your client calls a tool | The operation exposed by the sidecar or Reach transport |
+| External MCP client (`scripts/gen_docs.sh` writes `docs/MCP_SIDECAR.md`) | Your client calls a tool | The operation exposed by the sidecar or Reach transport |
 
 Cadence and Heartbeat are distinct systems. An Interview cadence preference is
 context until you configure a supported recurring operation. Reach Runner also
@@ -119,7 +119,7 @@ queue-style behavior.
 
 ## Use an MCP client
 
-Read [MCP sidecar](MCP_SIDECAR.md) for the generated tool roster, transport,
+Read MCP sidecar (`scripts/gen_docs.sh` writes `docs/MCP_SIDECAR.md`) for the generated tool roster, transport,
 resources, and deliberate exclusions. An external client should:
 
 1. read the current Automation and source state;
@@ -158,5 +158,5 @@ claims as unverified until the actual configuration and Receipt agree.
 - [Coder integration](CODER_INTEGRATION.md): coding-agent launches and reviews.
 - [Models](MODELS.md): engine readiness and assignments.
 - [Execution destinations](EXECUTION_DESTINATIONS.md): frozen routes.
-- [MCP sidecar](MCP_SIDECAR.md): callable contracts and transport limits.
+- MCP sidecar (`scripts/gen_docs.sh` writes `docs/MCP_SIDECAR.md`): callable contracts and transport limits.
 - [Cadence](CADENCE.md): unresolved work and recurring review.

@@ -46,7 +46,7 @@ facts, and a parent input snapshot can retain caller-supplied prompt text.
 | --- | --- | --- |
 | Runtime composition and host | `holdspeak/web_runtime.py`, `holdspeak/runtime/`, `holdspeak/web_server.py` | [Architecture](ARCHITECTURE.md) |
 | HTTP transport | `holdspeak/web/routes/` | [API surface](API_SURFACE.md) |
-| MCP transport and authority | `holdspeak/mcp/server.py`, `holdspeak/mcp/tool_authority.py`, tool families | [MCP sidecar](MCP_SIDECAR.md) |
+| MCP transport and authority | `holdspeak/mcp/server.py`, `holdspeak/mcp/tool_authority.py`, tool families | MCP sidecar (`scripts/gen_docs.sh` writes `docs/MCP_SIDECAR.md`) |
 | Ask and conversations | `services/ask_service.py`, `ask_desk.py`, `thread_service.py`, `thread_tools.py` under `holdspeak/` | [Agents and Threads](AGENTS_AND_THREADS.md) |
 | Agent handoff | `holdspeak/services/agent_hand_service.py`, `agent_brief.py`, delivery launch services | [Coder integration](CODER_INTEGRATION.md) |
 | Automations | `holdspeak/services/workbench_service.py`, `automation_runs.py`, `workbench_runner.py`, `engine_tool_loop.py` | [Automation](AUTOMATION.md) |
