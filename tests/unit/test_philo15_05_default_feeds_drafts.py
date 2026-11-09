@@ -62,7 +62,7 @@ def test_the_default_alone_makes_the_drafts_route_ready(tmp_path: Path) -> None:
     assert row["has_override"] is False
     effective = row["effective"]
     assert effective["status"] == "assigned" and effective["inherited_from"] == "global"
-    # The lane chip reads this entry (web/src/desk/lane/LaneWindow.tsx readDraftEntry).
+    # The lane chip reads this entry (the ask row's draft, web/src/desk/agents/AgentRow.tsx).
     assert effective["assignment"]["entries"][0]["profile_id"] == "default-model"
 
 

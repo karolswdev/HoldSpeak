@@ -186,11 +186,9 @@ def _open_lane(page: Any) -> Any:
     # ("Asks you", sentence case since the words wave).
     said = (agent.get_attribute("aria-label") or "") + (agent.text_content() or "")
     assert "Asks you" in said, said
-    # PHILO-17 THE REFIT: the asking coder is a plate; its one verb (Answer)
-    # opens its lane on the ask well.
+    # One face per agent (2026-11-08): a press picks the agent; its pane is
+    # its face (the lane window is parked).
     agent.locator(".aw-tile-open").click()
-    conductor.get_by_test_id("agents-pane").get_by_role("button", name="Answer", exact=True).click()
-    window = page.locator(".is-lane")
-    window.wait_for(timeout=15000)
-    page.locator("[data-testid='lane-rail']").wait_for(timeout=15000)
-    return window
+    pane = conductor.get_by_test_id("agents-pane")
+    pane.get_by_test_id("agents-mast").wait_for(timeout=15000)
+    return pane

@@ -9,7 +9,7 @@ import type { AgentFlight, CoderSessionRow } from "../agentFlights";
 import { conductorMembers } from "../conductor/members";
 import { drawerMembers } from "../drawer/members";
 import { agentSprite } from "../hand/HandConfirm";
-import { laneTitleSprite } from "../lane/LaneWindow";
+import { laneTitleSprite } from "../conductor/AgentLane";
 import { needsRowSprite } from "../needs/NeedsDrawer";
 import { composeScreen } from "../screen/compose";
 import { SPRITE_BASE, listSprite } from "../sprites";
