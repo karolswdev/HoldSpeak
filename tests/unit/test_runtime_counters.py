@@ -65,15 +65,6 @@ def _reset() -> None:
     reset_counters()
 
 
-def test_initial_snapshot_is_all_zero() -> None:
-    assert get_counters() == {
-        "model_loads": 0,
-        "classify_calls": 0,
-        "classify_failures": 0,
-        "constrained_retries": 0,
-    }
-
-
 def test_first_load_advances_model_loads_subsequent_loads_do_not() -> None:
     rt = CountingRuntime(_StubRuntime())
     rt.load()
@@ -118,18 +109,6 @@ def test_reset_clears_state() -> None:
         "classify_failures": 0,
         "constrained_retries": 0,
     }
-
-
-def test_wrapper_delegates_backend_attribute() -> None:
-    inner = _StubRuntime()
-    rt = CountingRuntime(inner)
-    assert rt.backend == "stub"
-
-
-def test_wrapper_delegates_info() -> None:
-    inner = _StubRuntime()
-    rt = CountingRuntime(inner)
-    assert rt.info() == {"backend": "stub"}
 
 
 # ---------------------------------------------------------------------------

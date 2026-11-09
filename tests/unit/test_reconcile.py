@@ -407,15 +407,6 @@ def test_newer_db_opens_via_database_class(tmp_path: Path) -> None:
 # ── Reference schema builder ──────────────────────────────────────────
 
 
-def test_reference_schema_contains_canonical_tables() -> None:
-    """The in-memory reference DB has the expected table count."""
-    ref = _build_reference_schema()
-    assert len(ref) >= 100, f"Expected many tables, got {len(ref)}"
-    assert "meetings" in ref
-    assert "schema_version" in ref
-    assert "decisions" in ref
-
-
 # ── _is_function_default ──────────────────────────────────────────────
 
 

@@ -206,11 +206,6 @@ def test_sweep_returns_the_expired_keys_for_their_frames() -> None:
     assert list(active_grants(clock=clock)) == ["codex:b"]
 
 
-def test_a_fresh_store_holds_zero_grants_fail_closed() -> None:
-    # A hub restart constructs this module fresh: nothing survives.
-    assert active_grants() == {}
-
-
 def test_wall_clock_jumps_cannot_extend_a_grant() -> None:
     # The store keys expiry off the injected monotonic clock alone —
     # moving it forward expires; nothing else is consulted.

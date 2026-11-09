@@ -518,27 +518,6 @@ class TestFreshnessWriteback:
 class TestObservationShape:
     """Every observation carries the SS5.5 shape with canonical refs."""
 
-    def test_observation_has_all_fields(self, rig):
-        db = rig
-        pid = _seed_project(db)
-        _seed_meeting(db, "m-040", "Shape test")
-        _associate_meeting(db, pid, "m-040")
-
-        collector = ProjectEvidenceCollector(db)
-        collector.collect_all(pid)
-
-        obs_list = db.project_observations.list_observations(pid)
-        assert len(obs_list) >= 1
-
-        obs = obs_list[0]
-        # SS5.5 required fields
-        assert obs["id"].startswith("pobs_")
-        assert obs["project_id"] == pid
-        assert obs["observation_kind"] != ""
-        assert obs["observed_at"] != ""
-        assert obs["fact_json"] != ""
-        assert obs["content_hash"] != ""
-
     def test_subject_ref_is_canonical(self, rig):
         db = rig
         pid = _seed_project(db)

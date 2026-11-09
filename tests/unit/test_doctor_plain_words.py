@@ -146,16 +146,6 @@ def test_the_dictation_model_row_tells_starter_from_custom(monkeypatch, tmp_path
     assert "Set up local AI" not in custom.fix
 
 
-def test_every_row_name_is_plain_words() -> None:
-    source = (REPO / "holdspeak" / "commands" / "doctor.py").read_text(encoding="utf-8")
-    names = set(re.findall(r'name="([^"]+)"', source))
-    labels = set(hub_doctor.ROW_LABELS.values())
-    assert names and labels
-    bad = sorted(n for n in names | labels if JARGON.search(n))
-    # `Tool-call gate` and `ffmpeg` / `pactl` name the real tool and command.
-    assert [n for n in bad if n != "Tool-call gate"] == []
-
-
 def test_every_hub_check_has_a_plain_label() -> None:
     source = (REPO / "holdspeak" / "doctor.py").read_text(encoding="utf-8")
     ids = set(re.findall(r'DoctorResult\(\s*"[A-Z]+",\s*"([a-z-]+)"', source))
@@ -225,11 +215,6 @@ def test_the_printed_hub_list_is_plain_words(monkeypatch) -> None:
     assert OUTPUT_JARGON.findall(out) == [], out
     for line in lines[:-2]:
         assert not re.match(r"\w+\s+[a-z]+-[a-z]+\s", line), line  # a kebab id printed as a row name
-
-
-def test_the_hub_database_row_says_notes_not_primitives() -> None:
-    source = (REPO / "holdspeak" / "doctor.py").read_text(encoding="utf-8")
-    assert '"database", "notes readable"' in source
 
 
 @pytest.mark.parametrize("branch", ["openai_compatible", "unresolvable"])

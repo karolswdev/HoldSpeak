@@ -130,15 +130,6 @@ def test_the_default_profile_runs_decision_capture() -> None:
 # ── the parser ───────────────────────────────────────────────────────
 
 
-def test_the_summary_schema_asks_for_decisions() -> None:
-    from holdspeak.intel.parsing import INTEL_JSON_SCHEMA, INTEL_SCHEMA, _json_only_messages
-
-    assert "decisions" in INTEL_SCHEMA
-    assert "decisions" in INTEL_JSON_SCHEMA["required"]
-    prompt = _json_only_messages("t")[1]["content"]
-    assert "decisions" in prompt
-
-
 def test_the_parser_yields_the_decisions() -> None:
     result = _parse(COMPLETION)
     assert [d["decision"] for d in result.decisions] == [

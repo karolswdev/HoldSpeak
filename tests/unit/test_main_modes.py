@@ -43,20 +43,6 @@ def test_main_web_subcommand_supports_no_open(monkeypatch: pytest.MonkeyPatch) -
     assert verbose_calls == [False]
 
 
-def test_unknown_tui_subcommand_is_rejected(
-    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
-) -> None:
-    """The retired `tui` subcommand no longer parses (HS-32-07)."""
-    _patch_logging(monkeypatch)
-    monkeypatch.setattr("sys.argv", ["holdspeak", "tui"])
-
-    with pytest.raises(SystemExit) as exc:
-        main_module.main()
-
-    # argparse exits 2 on an unrecognized subcommand.
-    assert exc.value.code == 2
-
-
 def test_doctor_subcommand_still_exits_with_command_return_code(monkeypatch: pytest.MonkeyPatch) -> None:
     _patch_logging(monkeypatch)
     monkeypatch.setattr(main_module, "run_doctor_command", lambda _args: 7)

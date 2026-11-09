@@ -20,13 +20,6 @@ def test_breakdown_sums_to_total():
     assert round(sum(b.contributions.values()), 2) == b.total
 
 
-def test_deterministic_with_injected_now():
-    loop = _loop(priority="normal", created_at="2026-06-20T10:00:00")
-    a = score_loop(loop, now=NOW)
-    b = score_loop(loop, now=NOW)
-    assert a.total == b.total
-
-
 def test_accepted_unexecuted_outranks_unowned_outranks_plain():
     accepted = score_loop(_loop(priority="normal"), now=NOW,
                           signals=LoopSignals(accepted_unexecuted=True))

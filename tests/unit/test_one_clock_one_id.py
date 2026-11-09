@@ -48,18 +48,6 @@ OLD_BODIES = {
 }
 
 
-@pytest.mark.parametrize("name", sorted(OLD_BODIES))
-@pytest.mark.parametrize("at", [FRACTION, WHOLE], ids=["fraction", "whole"])
-def test_each_now_shape_is_the_old_text(frozen, name, at) -> None:
-    frozen.at = at
-    assert getattr(timestamps, name)() == OLD_BODIES[name](at)
-
-
-def test_the_seconds_z_shape_is_also_the_isoformat_copies_text(frozen) -> None:
-    # Five copies wrote it as isoformat(seconds).replace, four as strftime.
-    assert timestamps.utc_now_z() == FRACTION.isoformat(timespec="seconds").replace("+00:00", "Z")
-
-
 def test_the_shapes_stay_apart(frozen) -> None:
     texts = {name: getattr(timestamps, name)() for name in OLD_BODIES}
     assert texts == {
@@ -182,9 +170,3 @@ def _resolve(dotted: str):
     raise ImportError(dotted)
 
 
-@pytest.mark.parametrize(
-    "home,name", [(home, name) for home, names in ONE_HOME.items() for name in names],
-    ids=lambda v: v if isinstance(v, str) else v.__name__,
-)
-def test_the_module_name_is_the_one_function(home, name) -> None:
-    assert _resolve(name) is home

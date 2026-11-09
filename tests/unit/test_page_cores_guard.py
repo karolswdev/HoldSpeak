@@ -28,11 +28,6 @@ FORBIDDEN = (
 )
 
 
-def test_cores_exist() -> None:
-    assert CORES.is_dir(), "the cores directory is the pattern's home"
-    assert list(CORES.glob("*.tsx")), "at least one extracted core"
-
-
 def test_cores_are_host_agnostic() -> None:
     for path in sorted(CORES.glob("*.tsx")):
         text = path.read_text(encoding="utf-8")

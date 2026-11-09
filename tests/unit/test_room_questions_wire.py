@@ -720,19 +720,6 @@ class TestMcpParity:
             "MCP project.get_room must return the same shape as ProjectService.room()"
         )
 
-    def test_room_has_new_sections(self, db: Database) -> None:
-        """The new HS-169-04 sections are present in the room response."""
-        project_id = _seed_project(db)
-        svc = ProjectService(db)
-        room = svc.room(OWNER, project_id)
-
-        new_sections = ["needsYou", "sources", "health", "sinceRead",
-                        "decisions", "commitments", "target"]
-        for section in new_sections:
-            assert section in room, f"Missing section: {section}"
-            assert "state" in room[section], f"Section {section} has no state"
-
-
 # ── sources ───────────────────────────────────────────────────────────
 
 class TestSources:

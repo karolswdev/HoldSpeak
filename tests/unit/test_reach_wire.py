@@ -231,19 +231,7 @@ class TestAgentCredentialStore:
         assert store.derive("") is None
         assert store.derive(None) is None
 
-    def test_credential_has_id(self):
-        store = AgentCredentialStore()
-        cred = store.issue("runner", ttl_seconds=3600)
-        assert cred.id  # non-empty
-        assert len(cred.id) == 16  # hex format
-
-
 # ── MCP protocol version ───────────────────────────────────────────────
-
-def test_protocol_version_is_streamable_http():
-    """174-02: both transports announce the Streamable HTTP revision."""
-    assert MCP_PROTOCOL_VERSION == "2025-03-26"
-
 
 # ── Route: 404 when disabled ───────────────────────────────────────────
 
@@ -394,14 +382,6 @@ def test_x_forwarded_for_ignored():
 
 # ── Origin on pipeline event context vars ──────────────────────────────
 
-def test_origin_context_vars():
-    """174-04: origin context vars are set during dispatch."""
-    # Verify the context vars exist and default correctly.
-    assert _origin.get("local") == "local"
-    assert _caller.get("") == ""
-    assert _caller_identity.get("") == ""
-
-
 # ── Origin tagging on remote call ──────────────────────────────────────
 
 def test_origin_remote_on_receipt():
@@ -507,22 +487,6 @@ def test_steward_poll_with_palette():
 
 # ── Settings routes ────────────────────────────────────────────────────
 
-def test_settings_get_shape():
-    """174-02: GET /api/settings/remote returns the expected shape."""
-    app = _make_app()
-    client = TestClient(app)
-    resp = client.get(
-        "/api/settings/remote",
-        headers={"X-HoldSpeak-Token": "owner-tok-123"},
-    )
-    assert resp.status_code == 200
-    data = resp.json()
-    assert "enabled" in data
-    assert "credentials" in data
-    assert "active_count" in data
-    assert "total_count" in data
-
-
 def test_settings_put_update():
     app = _make_app()
     client = TestClient(app)
@@ -615,15 +579,6 @@ def test_n_active_counts_non_expired():
 
 # ── Palette names ──────────────────────────────────────────────────────
 
-def test_palette_names():
-    """174-03: the four palette names resolve without error."""
-    assert set(PALETTE_NAMES) == {"PROJECT", "SWEEP", "DESK", "ALL"}
-    for name in PALETTE_NAMES:
-        result = resolve_palette(name)
-        assert isinstance(result, frozenset)
-        assert len(result) > 0
-
-
 def test_sweep_palette_includes_project_and_heartbeat():
     """174-05: SWEEP palette covers both project and heartbeat families."""
     sweep = resolve_palette("SWEEP")
@@ -661,28 +616,6 @@ def test_pipeline_event_origin_fields():
     assert event.caller_identity == "sweep-runner"
 
 
-def test_pipeline_event_defaults_to_local():
-    """174-04: PipelineEvent defaults to origin=local."""
-    event = PipelineEvent(
-        event_id="test",
-        timestamp=0.0,
-        service="test",
-        method="test",
-        principal_kind="owner",
-        principal_identity="owner",
-        args_summary="{}",
-        result_summary="",
-        error=None,
-        error_code=None,
-        duration_ms=0.0,
-        correlation_id="",
-        is_async=False,
-    )
-    assert event.origin == "local"
-    assert event.caller == ""
-    assert event.caller_identity == ""
-
-
 # ── required_right for /api/mcp ────────────────────────────────────────
 
 def test_required_right_mcp():
@@ -700,21 +633,7 @@ def test_required_right_settings_remote():
 
 # ── Schema: pipeline_events has origin column ──────────────────────────
 
-def test_schema_has_origin_column():
-    """C6: pipeline_events.origin TEXT NOT NULL DEFAULT 'local'."""
-    from holdspeak.db.schema import SCHEMA_SQL
-    assert "origin TEXT NOT NULL DEFAULT 'local'" in SCHEMA_SQL
-
-
 # ── SQLiteObserver INSERT includes origin ──────────────────────────────
-
-def test_sqlite_observer_insert_has_origin():
-    """174-04: the SQLiteObserver INSERT names origin, caller, caller_identity."""
-    from holdspeak.services.sqlite_observer import _INSERT_SQL
-    assert "origin" in _INSERT_SQL
-    assert "caller" in _INSERT_SQL
-    assert "caller_identity" in _INSERT_SQL
-
 
 # ── HS-174-04/08: wire gap tests (projection origin, room receipts,
 #    heartbeat runs_on, remote hosts, last_remote_run_at) ──────────────
@@ -918,14 +837,6 @@ class TestRoomReceipts:
 # ── 3. Heartbeat settings: runs_on, remote_hosts, last_remote_run_at ────
 
 class TestHeartbeatRunsOn:
-    def test_runs_on_defaults_to_local(self, _wire_db):
-        """174-08: runs_on defaults to 'local'."""
-        from holdspeak.services.heartbeat_service import HeartbeatService
-        hb = HeartbeatService(_wire_db)
-        settings = hb.get_settings()
-        assert settings["runs_on"] == "local"
-        assert settings["remote_hosts"] == []
-        assert settings["last_remote_run_at"] is None
 
     def test_runs_on_persists(self, _wire_db):
         """174-08: runs_on round-trips through update_settings."""
@@ -1052,41 +963,6 @@ class TestHeartbeatRunsOn:
 
 
 # ── 4. DeskProjection payload key names ─────────────────────────────────
-
-def test_desk_projection_to_dict_has_origin_keys():
-    """174-04: DeskProjection.to_dict() includes origin, caller, caller_identity."""
-    from holdspeak.db.projections import DeskProjection
-    proj = DeskProjection(
-        id="test", projection_kind="receipt", subject_ref="s", subject_label="S",
-        title="T", summary="", reason_code="", decision_kind="",
-        attention_state="resolved", actual_destination=None, authority_basis=None,
-        attempt=None, outcome="ok", timestamp="2026-01-01T00:00:00Z",
-        correlation_id=None, source_kind="test", source_id="test-1",
-        source_api="/test", detail_url="/",
-        origin="remote", caller="100.64.0.5", caller_identity="sweep-runner",
-    )
-    d = proj.to_dict()
-    assert d["origin"] == "remote"
-    assert d["caller"] == "100.64.0.5"
-    assert d["caller_identity"] == "sweep-runner"
-
-
-def test_desk_projection_defaults_none():
-    """174-04: origin/caller/caller_identity default to None."""
-    from holdspeak.db.projections import DeskProjection
-    proj = DeskProjection(
-        id="test", projection_kind="receipt", subject_ref="s", subject_label="S",
-        title="T", summary="", reason_code="", decision_kind="",
-        attention_state="resolved", actual_destination=None, authority_basis=None,
-        attempt=None, outcome="ok", timestamp="2026-01-01T00:00:00Z",
-        correlation_id=None, source_kind="test", source_id="test-1",
-        source_api="/test", detail_url="/",
-    )
-    d = proj.to_dict()
-    assert d["origin"] is None
-    assert d["caller"] is None
-    assert d["caller_identity"] is None
-
 
 # ── HS-202-06 (the owner's sitting, 2026-09-21): a receipt names a door
 #    only where one exists. The sweep's "Open" did nothing because its

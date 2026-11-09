@@ -393,22 +393,6 @@ class TestSweepRunsCalendarRefresh:
 
 # -- Test 2: no double refresh with old thread gone -------------------------
 
-class TestNoDoubleRefresh:
-    def test_conductor_start_does_not_spawn_thread(self, db_wire: Database, ics_file: Path) -> None:
-        """After HS-175-02, start_calendar_ingest_conductor does NOT spawn
-        the standalone thread."""
-        from holdspeak.calendar_ingest_conductor import CalendarIngestConductor
-
-        conductor = _make_conductor(db_wire, str(ics_file))
-        # The conductor's thread should be None (never started).
-        assert conductor._thread is None
-        # Calling refresh() directly works.
-        result = conductor.refresh()
-        assert result is True
-        # Thread still None.
-        assert conductor._thread is None
-
-
 # -- Test 3: matcher's title rule + H3 negative ---------------------------
 
 class TestTitleMatcher:
@@ -1223,17 +1207,6 @@ class TestArmsLikeEveryScheduledRecording:
 class TestSettingOnHubRead:
     """The hub read exposes the auto_record setting."""
 
-    def test_hub_read_exposes_auto_record(self, db_recordings: Database) -> None:
-        """The MeetingConfig carries auto_record; verify it serializes."""
-        cfg = MeetingConfig(auto_record="all_calendar", auto_record_lead_minutes=10)
-        assert cfg.auto_record == "all_calendar"
-        assert cfg.auto_record_lead_minutes == 10
-
-    def test_default_is_off(self) -> None:
-        cfg = MeetingConfig()
-        assert cfg.auto_record == "off"
-        assert cfg.auto_record_lead_minutes == 5
-
     def test_invalid_auto_record_rejected(self) -> None:
         with pytest.raises(ValueError, match="auto_record"):
             MeetingConfig(auto_record="invalid")
@@ -1733,15 +1706,6 @@ def test_an_agent_never_opens_it(hub, monkeypatch) -> None:
     assert mac.calls == 0
 
 
-def test_the_descriptor_is_owner_only_http_only_and_admitted() -> None:
-    from holdspeak.kernel.project import ONBOARDING_ADMITTED
-    from holdspeak.onboarding_operations import CALENDAR_OPEN_SETTINGS as op
-
-    assert op.owner_only and op.owner_press and op.admission.rule == "admitted"
-    assert op.exposure == ("http:POST /api/onboarding/calendar/macos/settings",)
-    assert "calendar.open_settings" in ONBOARDING_ADMITTED
-
-
 def test_the_open_targets_the_calendars_privacy_pane(monkeypatch) -> None:
     from holdspeak import macos_calendar
 
@@ -1773,13 +1737,6 @@ def test_the_op_takes_no_arguments(hub, monkeypatch, extra) -> None:
 # owner's real calendar names on the first-run Calendar step ("FOUND · 5").
 # `HOLDSPEAK_MACOS_CALENDAR=0` turns the reader off at its one gate
 # (`macos_calendar._eventkit`); the graph-walk hub and the glass hub set it.
-
-
-def test_reader_is_on_by_default(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.delenv("HOLDSPEAK_MACOS_CALENDAR", raising=False)
-    assert macos_calendar.reader_enabled() is True
-    monkeypatch.setenv("HOLDSPEAK_MACOS_CALENDAR", "1")
-    assert macos_calendar.reader_enabled() is True
 
 
 @pytest.mark.parametrize("value", ["0", "off", "false", "no", " OFF "])

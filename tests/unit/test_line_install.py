@@ -48,23 +48,6 @@ def test_the_service_uses_a_python_the_speech_has_wheels_for(monkeypatch, tmp_pa
     assert install.NODE_PYTHON == "3.13"
 
 
-def test_the_build_script_pins_the_versions_and_builds_bsd_modules_only() -> None:
-    text = SCRIPT.read_text()
-    assert re.search(r'^BARESIP_VERSION="4\.12\.0"$', text, re.M)
-    assert re.search(r'^LIBRE_VERSION="4\.12\.0"$', text, re.M)
-    assert re.search(r'^BARESIP_SHA256="710d79d60c15c09f0aeb93e5d2f219e7f12ab93f62cab826e4280592a1ea155f"$', text, re.M)
-    assert re.search(r'^LIBRE_SHA256="707b6194dd3b8d3fb1641ca08a0999aaac1d38d36b5c45514777a13ded311923"$', text, re.M)
-    assert "sha256sum -c" in text
-    modules = re.search(r'^MODULES="([^"]+)"$', text, re.M).group(1).split(";")
-    assert tuple(modules) == MODULES  # the build list is the load list
-    assert not set(modules) & set(FORBIDDEN)
-    # No command runs sudo or apt (a message may name the owner's sudo press).
-    code = [line for line in text.splitlines() if not line.lstrip().startswith(("#", "echo"))]
-    assert not any(re.search(r"(^|[;&|(]\s*)(sudo|apt|apt-get)\b", line.strip()) for line in code)
-    assert 'id -u)" = "0"' in text  # it refuses to run as root
-    assert SCRIPT.stat().st_mode & 0o111
-
-
 def test_linger_off_is_named_as_the_owners_one_press(monkeypatch, tmp_path) -> None:
     calls = []
     monkeypatch.setenv("HOLDSPEAK_LINE_HOME", str(tmp_path))

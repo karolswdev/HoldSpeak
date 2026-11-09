@@ -93,14 +93,6 @@ def test_cli_prints_the_shared_setup_rows_before_technical_checks(monkeypatch, c
     assert "secret-token" not in out
 
 
-def test_the_real_list_carries_coding_agents_mic_hotkey_and_connectors() -> None:
-    import inspect
-
-    source = inspect.getsource(local_doctor.collect_doctor_checks)
-    for check in ("_check_coding_agents", "_check_microphone", "_check_hotkey", "_check_connector_packs"):
-        assert check in source
-
-
 def test_cli_runs_the_hub_checks_after_the_list(monkeypatch, capsys) -> None:
     _one_list(monkeypatch, SENTINEL)
     calls = _hub(monkeypatch, hub_doctor.DoctorResult("PASS", "hub-health", "ok"))

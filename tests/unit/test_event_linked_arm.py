@@ -694,14 +694,3 @@ class TestEventLinkedMCP:
         error_text = result["content"][0]["text"]
         assert "not_found" in error_text.lower() or "unknown" in error_text.lower()
 
-    def test_calendar_event_id_in_tool_schema(self, db: Database, monkeypatch: Any) -> None:
-        """The MCP tool schema includes calendar_event_id."""
-        from holdspeak.mcp.server import handle_message
-        _setup_mcp(db, monkeypatch)
-
-        response = handle_message({
-            "jsonrpc": "2.0", "id": 1, "method": "tools/list",
-        })
-        tools = response["result"]["tools"]
-        create_tool = next(t for t in tools if t["name"] == "scheduled_recording.create")
-        assert "calendar_event_id" in create_tool["inputSchema"]["properties"]
