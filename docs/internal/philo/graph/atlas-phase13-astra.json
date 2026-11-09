@@ -3605,18 +3605,16 @@
           "why": "confirm the real meeting proposal through the proposal bridge"
         },
         {
-          "kind": "api",
-          "method": "GET",
-          "path": "/api/decision-records",
-          "expect_status": 200,
-          "adapter": "http-route",
+          "kind": "op",
+          "name": "decision_record.list",
+          "args": {},
+          "adapter": "mcp-http",
           "capture_as": "record_id",
           "capture_path": "/",
           "capture_match": {
             "id": "{confirmed_id}"
           },
-          "why": "read the confirmed meeting record before attaching it to the Room project",
-          "body": null
+          "why": "read the confirmed meeting record before attaching it to the Room project (GET /api/decision-records is parked, #2123; the MCP list is the read)"
         },
         {
           "kind": "op",
@@ -4038,18 +4036,16 @@
           "why": "confirm the real meeting proposal through the proposal bridge"
         },
         {
-          "kind": "api",
-          "method": "GET",
-          "path": "/api/decision-records",
-          "expect_status": 200,
-          "adapter": "http-route",
+          "kind": "op",
+          "name": "decision_record.list",
+          "args": {},
+          "adapter": "mcp-http",
           "capture_as": "record_id",
           "capture_path": "/",
           "capture_match": {
             "id": "{confirmed_id}"
           },
-          "why": "read the confirmed meeting record before attaching it to the Room project",
-          "body": null
+          "why": "read the confirmed meeting record before attaching it to the Room project (GET /api/decision-records is parked, #2123; the MCP list is the read)"
         },
         {
           "kind": "op",

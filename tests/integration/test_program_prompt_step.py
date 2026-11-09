@@ -25,7 +25,7 @@ class _Engine:
         self.output, self.outcome = output, outcome
         self.calls: list[Any] = []
 
-    def invoke(self, request: Any, adapter: Any, publish: Any = None) -> InvocationOutcome:
+    def invoke(self, request: Any, adapter: Any, publish: Any = None, parent_context: Any = None, planned_node: str = "") -> InvocationOutcome:
         self.calls.append(request)
         ref = publish({"output": self.output, "model": "fake-model"}) if self.outcome == "succeeded" else ""
         return InvocationOutcome("op-prompt-1", "inv-1", self.outcome, ref, {}, "" if ref else "connection refused")

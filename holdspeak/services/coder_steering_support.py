@@ -9,7 +9,7 @@ import re
 import uuid
 from typing import Any, Mapping, Optional
 
-from ....services.coder_service import CoderRefused, CoderService
+from .coder_service import CoderRefused, CoderService
 
 _PANE_ID_RE = re.compile(r"^%[0-9]+$")
 
@@ -20,7 +20,7 @@ def canonical_pane_id(value: Any) -> Optional[str]:
 
 
 def active_policy_grant(key: str) -> Optional[dict[str, Any]]:
-    from .... import coder_steering
+    from .. import coder_steering
 
     return coder_steering.policy_grant(key)
 
@@ -51,8 +51,8 @@ def steering_policy(
     owner_answer: bool = False,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     """Describe one exact pane effect and consume the central resolver."""
-    from ....config import Config
-    from ....operation_policy import describe_operation, resolve_policy
+    from ..config import Config
+    from ..operation_policy import describe_operation, resolve_policy
 
     operation = describe_operation(
         operation_id=f"coder:{key}:{operation_kind}",
@@ -92,7 +92,7 @@ def compose_from_body(
     body: dict[str, Any], *, principal: Any, service: CoderService
 ) -> dict[str, Any]:
     """Hydrate bounded Desk/rails grounding into the exact steer payload."""
-    from ....grounding import (
+    from ..grounding import (
         GROUNDING_EXPANDS,
         GROUNDING_MAX_REFS,
         compose_steer,
@@ -159,7 +159,7 @@ def compose_from_body(
         qualified_refs=qualified_refs,
     )
     if rails_refs:
-        from ....grounding_rails import hydrate_rails_refs
+        from ..grounding_rails import hydrate_rails_refs
 
         rail_blocks, rail_unknown = hydrate_rails_refs(
             rails_refs, principal=principal
@@ -190,8 +190,8 @@ class ProcessInputServices:
 
     def targets(self) -> Any:
         if self._targets is None:
-            from .... import coder_steering
-            from ....delivery.terminal import TerminalTargetRegistry
+            from .. import coder_steering
+            from ..delivery.terminal import TerminalTargetRegistry
 
             self._targets = TerminalTargetRegistry(
                 resolver=lambda target, runner=None: coder_steering.resolve_pane_identity(
@@ -268,7 +268,7 @@ def wait_not_current(session: Any, body: Mapping[str, Any]) -> None:
     window's composer) answers no wait and passes."""
     if str(body.get("kind") or "") != "answer" and "wait_id" not in body:
         return
-    from ....agent_context.models import is_blocked
+    from ..agent_context.models import is_blocked
 
     wanted = str(body.get("wait_id") or "")
     current = str(getattr(session, "wait_id", "") or "") if is_blocked(session) else ""
@@ -285,8 +285,8 @@ def record_kill(key: str, session: Any, result: dict[str, Any], scope: str) -> N
     ``stopped_by_owner`` with the audit row, and its session ends
     (``services.launch_lane.record_owner_stop``). A failure is logged; the
     kill already happened and stays reported."""
-    from ....logging_config import get_logger
-    from ....services.launch_lane import record_owner_stop
+    from ..logging_config import get_logger
+    from .launch_lane import record_owner_stop
 
     try:
         stopped = record_owner_stop(key, session, audit_id=result.get("audit_id"), scope=scope)

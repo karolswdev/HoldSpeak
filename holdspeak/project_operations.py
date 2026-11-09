@@ -198,40 +198,48 @@ def _review_claim(s: Any, p: Any, a: dict[str, Any]) -> Any:
 
 
 _U = "project_update_service"
+# Where an agent finds each id it must pass (the Room's id paths, R1 P3).
+_UPDATE = {"update_id": {**_ID, "description": (
+    "The update id: updates[].id from project.list_updates, or update.id from project.draft_update.")}}
+_JOB = {"job_id": {**_ID, "description": "The engine pass id: job.id from project.update.engine_pass."}}
+_SPAN = {"span_id": {**_ID, "description": (
+    "The claim id: update.claims_json[].span_id from project.draft_update (claims_json is JSON text).")}}
+_AUTOMATION = {"automation_id": {"type": "string", "description": (
+    "The project's update automation: updates.automation.id from project.get_room.")}}
 _UPDATES: tuple[OperationDescriptor, ...] = (
     _op("project.update.get", _U, "get_update", ("GET", "/api/updates/{update_id}"), "api_get_update",
         lambda s, p, a: {"update": enrich_update(s.get_update(p, _text(a, "update_id")))},
-        "Read one project update by id."),
+        "Read one project update by id.", properties=_UPDATE),
     _op("project.update.regenerate", _U, "regenerate_update", ("POST", "/api/updates/{update_id}/regenerate"),
         "api_regenerate_update",
         lambda s, p, a: {"success": True, "update": enrich_update(s.regenerate_update(
             p, _text(a, "update_id"), generator=str(a.get("generator") or "deterministic").strip(),
             command_id=a.get("command_id")))},
         "Replace a draft update with a fresh draft (generator: deterministic or model).", write=True,
-        properties={"generator": {"enum": ["deterministic", "model"]}, "command_id": {"type": "string"}}),
+        properties={**_UPDATE, "generator": {"enum": ["deterministic", "model"]}, "command_id": {"type": "string"}}),
     _op("project.update.engine_pass", _U, "start_engine_pass", ("POST", "/api/updates/{update_id}/engine-pass"),
         "api_start_engine_pass",
         lambda s, p, a: {"success": True, "job": s.start_engine_pass(
             p, _text(a, "update_id"), automation_id=_text(a, "automation_id").strip() or None)},
         "Let an engine improve a draft update in the background. Read the job with project.update.job.",
-        write=True, properties={"automation_id": {"type": "string"}}),
+        write=True, properties={**_UPDATE, **_AUTOMATION}),
     _op("project.update.job", _U, "get_engine_pass", ("GET", "/api/update-jobs/{job_id}"), "api_get_engine_pass",
         lambda s, p, a: {"job": s.get_engine_pass(_text(a, "job_id"))},
-        "Read an engine pass on an update: its state and its draft."),
+        "Read an engine pass on an update: its state and its draft.", properties=_JOB),
     _op("project.update.job_stop", _U, "stop_engine_pass", ("POST", "/api/update-jobs/{job_id}/stop"),
         "api_stop_engine_pass",
         lambda s, p, a: {"success": True, "job": s.stop_engine_pass(p, _text(a, "job_id"))},
-        "Stop an engine pass; its late answer is dropped.", write=True),
+        "Stop an engine pass; its late answer is dropped.", write=True, properties=_JOB),
     _op("project.update.job_apply", _U, "apply_engine_pass", ("POST", "/api/update-jobs/{job_id}/apply"),
         "api_apply_engine_pass",
         lambda s, p, a: {"success": True, "update": enrich_update(s.apply_engine_pass(
             p, _text(a, "job_id"), force=bool(a.get("force"))))},
         "Save an engine pass's draft as the next revision (refused if you edited, unless force).", write=True,
-        properties={"force": {"type": "boolean"}}),
+        properties={**_JOB, "force": {"type": "boolean"}}),
     _op("project.update.review_claim", _U, "review_claim", ("POST", "/api/updates/{update_id}/claims/{span_id}/review"),
         "api_review_claim", _review_claim,
         "Accept or reject one claim of an update (the owner's judgment).", write=True,
-        properties={"acceptance": {"enum": ["accepted", "rejected"]}}, required=("acceptance",)),
+        properties={**_UPDATE, **_SPAN, "acceptance": {"enum": ["accepted", "rejected"]}}, required=("acceptance",)),
 )
 
 # ── the follow-through proposals (ProposalBridgeService) ────────────────

@@ -65,6 +65,31 @@ def _invocations(db: Any, observer: Any) -> Any:
     return InvocationService(db, observer=observer)
 
 
+def _bare_coders(db: Any, observer: Any, services: Any) -> Any:
+    from holdspeak.services.coder_service import CoderService
+
+    return CoderService(db, observer=observer, broadcast=services.broadcast)
+
+
+def _bare_delivery(db: Any, observer: Any) -> Any:
+    from holdspeak.services.delivery_service import DeliveryService
+
+    return DeliveryService(db, observer=observer)
+
+
+def _bare_plain(module: str, cls: str, db: Any, observer: Any) -> Any:
+    import importlib
+
+    return getattr(importlib.import_module(f"holdspeak.services.{module}"), cls)(db, observer=observer)
+
+
+def _bare_cadence(db: Any, observer: Any) -> Any:
+    from holdspeak.config import Config
+    from holdspeak.services.cadence_service import CadenceService
+
+    return CadenceService(db, Config.load().cadence, observer=observer)
+
+
 def _hub_threads(services: Any) -> Any:
     """The threads' rows bind to a factory: one ThreadService per verb over the hub's bus (``thread_operations.py``)."""
 
@@ -258,6 +283,16 @@ def compose_declared_services(services: Any, ctx: Any, resolved_db: Any, resolve
         "constitutional_context_service": _constitutional,
         # The threads' verbs (thread_operations.py): the hub's ThreadService factory.
         "hub_thread_service": lambda: _hub_threads(services),
+        # The coder sessions and the delivery runtime (coder_operations.py,
+        # delivery_operations.py): the hub composes its own; a partial context's are bare.
+        "coder_service": lambda: _bare_coders(resolved_db, resolved_observer, services),
+        "delivery_service": lambda: _bare_delivery(resolved_db, resolved_observer),
+        # The speech family (dictation_operations.py, device_operations.py) and the
+        # cadence loops (project_operations.py): the hub composes its own; a partial context's are bare.
+        "dictation_service": lambda: _bare_plain("dictation_service", "DictationService", resolved_db, resolved_observer),
+        "sync_service": lambda: _bare_plain("sync_service", "SyncService", resolved_db, resolved_observer),
+        "mesh_service": lambda: _bare_plain("mesh_service", "MeshService", resolved_db, resolved_observer),
+        "cadence_service": lambda: _bare_cadence(resolved_db, resolved_observer),
         # The capability run receipts (invocation_operations.py); the kernel broker at first use.
         "invocation_service": lambda: _invocations(resolved_db, resolved_observer),
         # The recordings descriptors (media_operations.py): the process's one RecordingsService.

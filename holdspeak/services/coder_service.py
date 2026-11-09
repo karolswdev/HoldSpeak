@@ -461,7 +461,7 @@ class CoderService:
         ``agent:session_id`` in the registry."""
         from types import SimpleNamespace
 
-        from ..web.routes.system.coder_steering_support import canonical_pane_id
+        from .coder_steering_support import canonical_pane_id
 
         key = str(key or "")
         if key.startswith("pane:"):
@@ -494,7 +494,7 @@ class CoderService:
     def _registered_pane(target: str | None) -> str | None:
         """The ``%N`` the registry's target names now (None when it cannot prove itself)."""
         from .. import coder_steering
-        from ..web.routes.system.coder_steering_support import canonical_pane_id
+        from .coder_steering_support import canonical_pane_id
 
         if not target:
             return None
@@ -516,7 +516,7 @@ class CoderService:
         from ..agent_context.models import is_blocked
         from ..config import Config
         from ..operation_policy import steering_ttl_for_mode
-        from ..web.routes.system.coder_steering_support import (
+        from .coder_steering_support import (
             active_policy_grant, canonical_pane_id, steering_commitment, steering_policy,
         )
 
@@ -632,7 +632,7 @@ class CoderService:
         sends nothing. Delivered or refused, the attempt is audited.
         ``process_input``: the transport's ``ProcessInputServices``."""
         from .. import coder_steering
-        from ..web.routes.system.coder_steering_support import (
+        from .coder_steering_support import (
             active_policy_grant, compose_from_body, deliver_process_input, expected_pane_id,
             steering_commitment, steering_policy, wait_not_current,
         )
@@ -682,7 +682,7 @@ class CoderService:
         """Send allow-listed keys through ``process.input@1``. An unknown key
         and missing authority are refused by name; every attempt is audited."""
         from .. import coder_steering
-        from ..web.routes.system.coder_steering_support import (
+        from .coder_steering_support import (
             active_policy_grant, deliver_process_input, expected_pane_id, steering_policy, wait_not_current,
         )
 
@@ -723,7 +723,7 @@ class CoderService:
         (``scope="session"``), gated like a steer (HS-90-01). A recycled pane
         refuses AND revokes; the launch records the owner's stop."""
         from .. import coder_factory, coder_steering
-        from ..web.routes.system.coder_steering_support import record_kill
+        from .coder_steering_support import record_kill
 
         session = self._steering_session(key)
         key, clean_scope = str(key), str(scope or "pane")
