@@ -21,14 +21,9 @@ skip a red):
   * build, vitest: web/ and the package manifests;
   * npm (the install before the build): web/package-lock.json and
     web/package.json;
-  * web guards: also tests/fixtures/, docs/product-language.json and
-    holdspeak/services/memory_grounding.py (the guards read them,
-    scripts/quick_check.sh web_guards list);
   * desk sweep: web/, holdspeak/, tests/e2e/, tests/conftest.py and the
     manifests (the sweep runs the hub);
-  * pytest, canon guards, repo guards, doc guards: the whole tree but pm/
-    (the canon and repo guards scan web/ and docs/ too, for example
-    tests/unit/test_interior_canon_guard.py and test_engines_name_guard.py).
+  * pytest, doc guards: the whole tree but pm/.
 """
 from __future__ import annotations
 
@@ -50,11 +45,8 @@ INPUTS: dict[str, list[str]] = {
     # web/node_modules and a reinstall under a running lane breaks it.
     "npm": ["web/package-lock.json", "web/package.json"],
     "vitest": WEB,
-    "web-guards": WEB + ["tests/fixtures/", "docs/product-language.json", "holdspeak/services/memory_grounding.py"],
     "sweep": WEB + ["holdspeak/", "tests/e2e/", "tests/conftest.py", "pyproject.toml", "uv.lock"],
     "pytest": EVERYTHING,
-    "canon": EVERYTHING,
-    "repo": EVERYTHING,
     "docguards": EVERYTHING,
 }
 

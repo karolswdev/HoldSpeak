@@ -1,7 +1,7 @@
 """scripts/test_lock.py priority (the fast cycle, 2026-10-12): a LOW run (the
 main watcher's shards) never takes the lock while a HIGH run (a quick check,
 a lane's scoped run) waits; a stale marker is ignored; HIGH runs still
-serialize on the flock."""
+serialize when together they exceed the CPU budget."""
 from __future__ import annotations
 
 import os
@@ -15,12 +15,13 @@ LOCK = ROOT / "scripts" / "test_lock.py"
 
 
 def _run(tmp: Path, name: str, prio: str, hold: float, log: Path) -> subprocess.Popen:
-    """A locked run that logs its start and end (monotonic times) to `log`."""
-    env = {**os.environ, "HOLDSPEAK_TEST_LOCK": str(tmp / "t.lock"),
+    """A locked run that logs its start and end (monotonic times) to `log`.
+    Each run takes the whole budget (2 of 2 CPUs), so runs serialize."""
+    env = {**os.environ, "HOLDSPEAK_TEST_LOCK": str(tmp / "t.lock"), "HOLDSPEAK_TEST_CPUS": "2",
            "HOLDSPEAK_TEST_LOCK_PRIORITY": prio, "HOLDSPEAK_TEST_LOCK_POLL": "0.05"}
     body = (f"import time; f=open({str(log)!r},'a'); f.write('start {name} %f\\n' % time.time()); f.flush(); "
             f"time.sleep({hold}); f.write('end {name} %f\\n' % time.time()); f.close()")
-    return subprocess.Popen([sys.executable, str(LOCK), "--", sys.executable, "-c", body], env=env,
+    return subprocess.Popen([sys.executable, str(LOCK), "--cpus", "2", "--", sys.executable, "-c", body], env=env,
                             stderr=subprocess.DEVNULL)
 
 

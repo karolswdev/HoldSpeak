@@ -172,31 +172,37 @@ and the owner's real DB stay out of it. Times are from the owner's machine
   `tests/web-inherited-baseline.txt` (BASELINE-MATCHED / BRANCH-NEW /
   HEALED; exit 0 only with zero branch-new). See `tests/WEB_BASELINE.md`.
 
-- **ONE TEST RUN AT A TIME ON THE MACHINE (owner catch 2026-10-07: "a ton of
-  your workers are just running tests at the same time and keep breaking each
-  other").** Every pytest, vitest, glass_for and graph-walk run, in every lane
-  and the orchestrator's FAST alike, goes through the lock:
-  `uv run python scripts/test_lock.py -- <command>`. Classes (2026-11-08): a
-  `unit` run (the default for a direct pytest run that names no browser file,
-  and for vitest) shares the machine with two other unit runs; it must set an
-  isolated HOME (the lock refuses the real HOME), and above a load of 24 it
-  waits to run alone. A `browser` run (tests/e2e, the sweep, glass, Playwright,
-  graph walks, tests/uat, and any other command) is exclusive; a waiting
-  browser run goes before later unit runs. `--class unit|browser` overrides.
-  `scripts/quick_check.sh` takes the lock itself, once: run it bare, never
-  wrapped (the lock is reentrant since 2026-11-07, so a wrapped run no longer
-  deadlocks for 7200 s; it is still wrong). It runs its steps in parallel,
+- **ONE CPU BUDGET FOR ALL TEST RUNS (owner catch 2026-10-07: "a ton of your
+  workers are just running tests at the same time and keep breaking each
+  other"; owner ruling 2026-11-09: a load of 30 to 70 on 12 cores is
+  "unacceptable").** Every pytest, vitest, glass_for and graph-walk run, in
+  every lane and the orchestrator's alike, goes through the lock:
+  `uv run python scripts/test_lock.py -- <command>`. A run takes CPUs:
+  `--cpus N`, else the pytest `-n N` in the command, else 1; a browser command
+  (tests/e2e, the sweep, glass, Playwright, graph walks, tests/uat) counts its
+  `-n` twice (each worker drives a Chromium); vitest counts 4. Runs share the
+  machine while their CPUs fit `HOLDSPEAK_TEST_CPUS` (default: the core
+  count); a larger run waits, waiters go in arrival order, and a run larger
+  than the budget runs alone. The lock does not check HOME; the rigs isolate
+  it. A focused run is `-n 4`, never 8.
+  `scripts/quick_check.sh` asks the lock for each step's CPUs itself: run it
+  bare, never wrapped. It runs the build (2 CPUs) and vitest on the related
+  tests (4), then pytest on the affected files (`-n 4`) and, when `web/src/`
+  or `holdspeak/` changed, the desk sweep (`-n 4`, 8 CPUs), in parallel. It
   skips a step whose inputs did not change since its last green
-  (`.tmp/quick-check/green.json`), runs no test file twice, and after a red
+  (`.tmp/quick-check/green.json`), and after a red
   `scripts/quick_check.sh --retry` runs only the failed tests and the steps
-  that did not run. The main checkout's `web/node_modules` is shared by lane
-  symlinks: never reinstall it while a lane runs (the check's build runs
-  `npm ci` only when `web/package-lock.json` changed since its last green, and
-  `uv sync` runs `npm ci` too, through `hatch_build.py`).
-  A docs-only diff runs only the doc check and the doc guards (seconds). Under the lock use `-n 8` (measured 2026-10-11: the
-  whole browser suite 30 min at `-n 4`, 16.5 min at `-n 8`; FAST 11 → 6.5 min), not `-n auto`.
+  that did not run. A docs-only diff runs only the doc check and the doc
+  guards (seconds). The whole-repo guards (30 repo guards, 6 canon guards,
+  19 web-guard vitest files) and `scripts/check_docs.py` run in
+  `scripts/main_check.sh`, which the orchestrator runs ONCE on main after a
+  merge batch, never per PR and never in a lane (`--retry` after a red). The
+  main checkout's `web/node_modules` is shared by lane symlinks: never
+  reinstall it while a lane runs (the check's build runs `npm ci` only when
+  `web/package-lock.json` changed since its last green, and `uv sync` runs
+  `npm ci` too, through `hatch_build.py`).
   A worker never runs FAST; a worker waits for the lock rather than running
-  a smaller suite in parallel. Load above 60 means someone skipped the lock.
+  outside it.
 
 - **THE TEST DOCTRINE (owner order 2026-10-08, revised by the fast cycle
   2026-10-12).** Before merge: `scripts/quick_check.sh` only. The system-level
