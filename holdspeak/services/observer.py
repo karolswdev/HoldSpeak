@@ -14,6 +14,7 @@ from collections import OrderedDict
 from dataclasses import dataclass
 from typing import Any, Protocol, runtime_checkable
 
+from holdspeak.line.secrets import SETTINGS_FIELDS as _LINE_SECRET_FIELDS
 from holdspeak.redaction import REDACTED, redact_bounded, redact_error
 
 #: The most of an exception's text one pipeline event keeps (redacted first).
@@ -189,8 +190,13 @@ def _truncate(value: Any, limit: int = 2048) -> str:
 #: whole text of a held tool call, kept for the owner's Raw read only, is
 #: withheld from every record. Fields: by name, at any depth of the
 #: arguments and the result. Results: whole, by ``(service, method)``.
-UNRECORDED_FIELDS = frozenset({"args_full"})
+#: A settings patch may carry the Line's secrets (the owner's Calls face writes
+#: them through it): their field names come from the one list in ``line/secrets.py``.
+UNRECORDED_FIELDS = frozenset({"args_full"} | {path[-1] for path in _LINE_SECRET_FIELDS.values()})
 UNRECORDED_RESULTS = frozenset({("GateService", "full_call"), ("GateService", "issue_agent")})
+#: Arguments withheld by ``(service, method)``: a credential replacement is
+#: recorded (which secret, by whom), never its value (Codex on #2127, finding 3).
+UNRECORDED_ARGS = {("CredentialService", "replace"): frozenset({"value"})}
 WITHHELD = "<withheld>"
 
 
@@ -212,8 +218,9 @@ def _summarize_args(fn: Any, args: tuple[Any, ...], kwargs: dict[str, Any]) -> s
     try:
         signature = inspect.signature(fn)
         bound = signature.bind_partial(*args, **kwargs)
+        withheld = UNRECORDED_ARGS.get((type(args[0]).__name__, fn.__name__), frozenset()) if args else frozenset()
         summary = {
-            name: value
+            name: (WITHHELD if name in withheld else value)
             for name, value in bound.arguments.items()
             if name != "self" and "Principal" not in str(signature.parameters[name].annotation)
         }

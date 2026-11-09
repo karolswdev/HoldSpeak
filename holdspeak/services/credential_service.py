@@ -86,6 +86,23 @@ def strip_secret_mutations(payload: dict[str, Any]) -> dict[str, Any]:
     return clean
 
 
+def credential_fields_in(patch: Any) -> list[str]:
+    """The credential fields a settings patch carries, by dotted path: every
+    secret of the settings file (``SECRET_PATHS``) and the Line's keystore
+    secrets (``line.secrets.SETTINGS_FIELDS``). Empty when it carries none."""
+    from ..line.secrets import SETTINGS_FIELDS
+
+    paths = [(section, field) for section, field in SECRET_PATHS.values()] + list(SETTINGS_FIELDS.values())
+    found = []
+    for path in paths:
+        node = patch
+        for part in path[:-1]:
+            node = node.get(part) if isinstance(node, dict) else None
+        if isinstance(node, dict) and path[-1] in node:
+            found.append(".".join(path))
+    return found
+
+
 @observe_service
 class CredentialService:
     """Persist credentials while returning only redacted metadata."""
