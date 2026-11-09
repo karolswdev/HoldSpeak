@@ -525,6 +525,46 @@ class GateService:
         limit = max(1, min(int((filters or {}).get("limit") or 100), 500))
         return {"entries": self._db.gate.audit_entries(limit=limit)}
 
+    def config(self, principal: Principal) -> dict[str, Any]:
+        """The gate's configuration (``GET /api/gate/config``)."""
+        from ..coder_gate import load_gate_config
+
+        return load_gate_config().to_dict()
+
+    def issue_agent(self, principal: Principal, identity: Any) -> dict[str, Any]:
+        """A new agent credential for *identity*. Its plaintext token leaves in
+        this answer only (``observer.UNRECORDED_RESULTS`` keeps it out of the
+        pipeline log)."""
+        from ..principals import agent_credentials
+
+        name = str(identity or "").strip()
+        if not name:
+            raise ValidationError("identity is required")
+        credential = agent_credentials.issue(name)
+        return {"principal": credential.principal.name, "identity": credential.principal.identity,
+                "credential": credential.token}
+
+    def revoke_agent(self, principal: Principal, identity: Any) -> dict[str, Any]:
+        """PHILO-7-02 (invariant 5, durable first): the identity's LIVE desk
+        grant is revoked FIRST, with its own receipt (even when no credential
+        remains), then its LIVE project grants (PHILO-9-07), and only then the
+        credential. A kernel refusal raises and leaves the credential."""
+        from ..principals import agent_credentials
+        from . import desk_delegation, project_delegation
+
+        name = str(identity or "")
+        grant = desk_delegation.revoke_for_credential(principal, name)
+        project_grants = project_delegation.revoke_for_credential(principal, name)
+        return {"principal": "agent", "identity": name, "revoked": agent_credentials.revoke(name),
+                "grant_revoked": grant is not None, **(grant or {}), "project_grants_revoked": project_grants}
+
+    def revoke_self(self, principal: Principal) -> dict[str, Any]:
+        """The caller's own credential ends."""
+        from ..principals import agent_credentials
+
+        return {"principal": principal.name, "identity": principal.identity,
+                "revoked": agent_credentials.revoke(principal.identity)}
+
     def invalidate_held_on_startup(self) -> tuple[list[Any], int]:
         """Expire proposals a process restart can no longer honestly resume."""
         from ..kernel.runtime import _service

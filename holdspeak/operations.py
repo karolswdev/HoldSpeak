@@ -2307,6 +2307,8 @@ from holdspeak.people_operations import PEOPLE_OPERATIONS  # noqa: E402
 from holdspeak.automation_operations import AUTOMATION_OPERATIONS  # noqa: E402
 from holdspeak.calls_operations import CALLS_OPERATIONS, LIVE_CALLS_SERVICE  # noqa: E402,F401 (re-exported)
 from holdspeak.settings_operations import SETTINGS_OPERATIONS  # noqa: E402
+# The gate, the principals and the kernel (2026-11-09): the security surface on the contract.
+from holdspeak.gate_operations import GATE_OPERATIONS, KERNEL_OPERATIONS, LIVE_KERNEL_SERVICE  # noqa: E402,F401 (re-exported)
 
 #: The whole catalogue, in export order.
 # ── Betterment Q9: Find the tasks on a note ───────────────────────────────
@@ -2442,7 +2444,8 @@ DESCRIPTORS: tuple[OperationDescriptor, ...] = (
     KERNEL_RECEIPT_READ, MEMORY_OBSERVATIONS_READ, MEMORY_PAGE_READ,
 ) + ROOM_OPERATIONS + STEWARD_CONNECTOR_OPERATIONS + CHANNEL_OPERATIONS + ONBOARDING_OPERATIONS + SETUP_OPERATIONS + AGENT_OPERATIONS \
     + DESK_DISPLAY_OPERATIONS + NOTE_OUTCOME_OPERATIONS + (TODAY_GET,) + PROGRAM_OPERATIONS + MEETING_OPERATIONS + PHONE_OPERATIONS + PEOPLE_OPERATIONS \
-    + MEETING_INTEL_OPERATIONS + AUTOMATION_OPERATIONS + CALLS_OPERATIONS + SETTINGS_OPERATIONS + DECISION_OPERATIONS
+    + MEETING_INTEL_OPERATIONS + AUTOMATION_OPERATIONS + CALLS_OPERATIONS + SETTINGS_OPERATIONS + DECISION_OPERATIONS \
+    + GATE_OPERATIONS + KERNEL_OPERATIONS
 
 #: The RuntimeServices / WebContext fields the catalogue binds to.
 BOUND_SERVICES: tuple[str, ...] = tuple(dict.fromkeys(d.service for d in DESCRIPTORS))
