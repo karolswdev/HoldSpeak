@@ -1,8 +1,9 @@
 """Phone transport (2026-10-28, design §10); the work is :mod:`holdspeak.phone.service`.
 
-The owner's verbs (devices, revoke, wait, calls, ring, again, push) and the
-pairing redeem are produced from ``holdspeak/phone_operations.py``. Written
-here: pair (it holds the address he pressed Pair on), the routes a paired phone
+The owner's verbs (devices, revoke, wait, calls, ring, again, push) are
+produced from ``holdspeak/phone_operations.py``. Written here: pair (it holds
+the address he pressed Pair on), the pairing redeem (it holds the address the
+phone reached; the two must match), the routes a paired phone
 calls (messages, read, decide, a call, accept|decline|end, events, the socket),
 sending a message, placing a call and the status.
 
@@ -25,7 +26,7 @@ from ... import operations
 from ...logging_config import get_logger
 from ...phone import devices as devs
 from ...phone_operations import PRODUCED
-from ...principals import PrincipalKind
+from ...principals import UNAUTHENTICATED, PrincipalKind
 from ...services.errors import ServiceError
 from ..context import WebContext
 from ..operation_routes import operation_router
@@ -113,6 +114,13 @@ def build_phone_router(ctx: WebContext) -> APIRouter:
     async def api_phone_pair(request: Request) -> Any:
         base = str(request.base_url).rstrip("/")
         return await invoke(_principal(request), "phone.pair", {}, status=201, hub_urls=[base])
+
+    @router.post("/api/phone/devices")
+    async def api_phone_devices_pair(request: Request) -> Any:
+        # The address the phone reached; the pairing token must have been made on it.
+        origin = str(request.base_url).rstrip("/")
+        body = {key: value for key, value in (await _body(request)).items() if key != "origin"}
+        return await invoke(_principal(request) or UNAUTHENTICATED, "phone.redeem", body, status=201, origin=origin)
 
     by_name = {op.name: op for op in operations.PHONE_OPERATIONS}
     mount_router(router, operation_router([by_name[name] for name in PRODUCED], registry, _call,

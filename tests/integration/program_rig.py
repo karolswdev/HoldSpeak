@@ -42,6 +42,22 @@ from holdspeak.services.program_service import ProgramService
 from tests.unit.test_agent_review import Ledger
 
 OWNER = Principal(PrincipalKind.OWNER, "owner-session")
+
+
+def owner_app() -> Any:
+    """A bare FastAPI app whose every request carries the owner principal, as
+    the hub's edge sets it. A produced route reads no default owner (Codex on
+    #2051): a request with no principal is unauthenticated."""
+    from fastapi import FastAPI
+
+    app = FastAPI()
+
+    @app.middleware("http")
+    async def _owner(request, call_next):  # type: ignore[no-untyped-def]
+        request.state.principal = OWNER
+        return await call_next(request)
+
+    return app
 FAKE_CHECK = Path(__file__).resolve().parents[1] / "fixtures" / "fake_program_check.sh"
 
 

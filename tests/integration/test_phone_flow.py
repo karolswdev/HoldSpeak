@@ -133,6 +133,17 @@ def _needs_phone(hub: Any) -> list[dict[str, Any]]:
 
 # ── messages ────────────────────────────────────────────────────────────
 
+def test_the_redeem_route_refuses_a_pairing_token_made_on_another_address(hub, monkeypatch) -> None:
+    # Codex on #2051: Pair pressed on this address; a redeem reaching another address is refused.
+    _phone(hub, monkeypatch)
+    token = hub.client.post("/api/phone/pair").json()["token"]
+    other = hub.client.post("/api/phone/devices", json={"pair_token": token, "name": "Phone", "platform": "test"},
+                            headers={"Authorization": "", "X-HoldSpeak-Token": "", "Host": "other-hub.tail:8765"})
+    assert other.status_code == 403, other.text
+    assert other.json()["code"] == "pairing_origin_mismatch"
+    FakePhoneDevice(hub.client).pair(token)  # the same address redeems the unspent token
+
+
 def test_a_paired_phone_gets_the_message_replies_and_get_replies_reads_it_once(hub, monkeypatch) -> None:
     from holdspeak.mcp.tools import dispatch
 

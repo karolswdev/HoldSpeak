@@ -12,7 +12,7 @@ import json
 from typing import Any, Mapping, Optional
 
 DEVICE_COLUMNS = ("id", "name", "platform", "push_token", "push_kind", "sip_identity", "jwt_kid", "state",
-                  "paired_at", "last_seen_at", "revoked_at")
+                  "paired_at", "last_seen_at", "revoked_at", "pair_origin")
 MESSAGE_COLUMNS = ("id", "seq", "direction", "text", "reply_to", "created_at", "delivered_at", "read_at",
                    "origin_ref", "program_step_id")
 CALL_COLUMNS = ("id", "seq", "direction", "reason", "context_digest", "urgent", "state", "created_at",
@@ -21,11 +21,12 @@ CALL_COLUMNS = ("id", "seq", "direction", "reason", "context_digest", "urgent", 
 
 _DEVICE_UPSERT = (
     "INSERT INTO phone_devices (id, name, platform, push_token, push_kind, sip_identity, jwt_kid, state, "
-    "paired_at, last_seen_at, revoked_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE "
+    "paired_at, last_seen_at, revoked_at, pair_origin) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
+    "ON CONFLICT(id) DO UPDATE "
     "SET name=excluded.name, platform=excluded.platform, push_token=excluded.push_token, "
     "push_kind=excluded.push_kind, sip_identity=excluded.sip_identity, jwt_kid=excluded.jwt_kid, "
     "state=excluded.state, paired_at=excluded.paired_at, last_seen_at=excluded.last_seen_at, "
-    "revoked_at=excluded.revoked_at"
+    "revoked_at=excluded.revoked_at, pair_origin=excluded.pair_origin"
 )
 _MESSAGE_UPSERT = (
     "INSERT INTO phone_messages (id, seq, direction, text, reply_to, created_at, delivered_at, read_at, "

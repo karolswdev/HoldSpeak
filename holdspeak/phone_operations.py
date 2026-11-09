@@ -12,7 +12,7 @@ authenticated device as a HELD input.
 No tool, and why:
 
 - ``phone.redeem``: only the phone app redeems a pairing token; the answer is
-  its device credential.
+  its device credential. The transport holds the address the redeem reached.
 - ``phone.pair``: the transport holds the address the owner pressed Pair on;
   the answer is a pairing credential.
 - ``phone.save_push_key``: the Apple push key is a credential; it never goes
@@ -93,10 +93,12 @@ PHONE_OPERATIONS: tuple[OperationDescriptor, ...] = (
     _op("phone.test_push", "test_push", ("POST", "/api/phone/push/test"), "api_phone_push_test",
         lambda s, p, a: s.test_push(p), "Send one silent push to the newest paired phone; return Apple's answer.",
         write=True, authority="egress"),
-    # The pairing redeem: no principal; the one-time pairing token in the body is the credential.
-    _op("phone.redeem", "redeem", ("POST", _D), "api_phone_devices_pair", lambda s, p, a: s.redeem(a),
+    # The pairing redeem: no principal; the one-time pairing token in the body is the credential. The
+    # route holds the hub address the redeem reached (``origin``); it must be the one Pair was pressed on.
+    _op("phone.redeem", "redeem", ("POST", _D), "api_phone_devices_pair",
+        lambda s, p, a: s.redeem({k: v for k, v in a.items() if k != "origin"}, origin=a["origin"]),
         "Redeem a pairing token (the phone app): the device token.", write=True, tool=False, owner_only=False,
-        authority="authority", status=201,
+        held=("origin",), authority="authority", status=201,
         principal="none: the one-time pairing token in the body is the credential (the edge lets the route through)"),
     # Hand-written routes (web/routes/phone.py) that invoke these rows.
     _op("phone.pair", "pair_token", ("POST", "/api/phone/pair"), "api_phone_pair",
@@ -128,7 +130,7 @@ PHONE_OPERATIONS: tuple[OperationDescriptor, ...] = (
 )
 
 #: The rows whose routes ``operation_router`` produces (the owner's edge, or no principal).
-PRODUCED: tuple[str, ...] = ("phone.devices", "phone.redeem", "phone.revoke", "phone.let_wait", "phone.calls",
+PRODUCED: tuple[str, ...] = ("phone.devices", "phone.revoke", "phone.let_wait", "phone.calls",
                              "phone.ring", "phone.again", "phone.push_key", "phone.save_push_key", "phone.test_push")
 
 

@@ -31,7 +31,7 @@ from holdspeak.services import program_service as program_module
 from holdspeak.services.decision_record_service import DecisionRecordService
 from holdspeak.services.project_service import ProjectService
 from holdspeak.web.routes.programs import build_programs_router
-from tests.integration.program_rig import FAKE_CHECK, OWNER, Rig
+from tests.integration.program_rig import FAKE_CHECK, OWNER, Rig, owner_app
 
 FIXTURES = Path(__file__).resolve().parents[2] / "web" / "src" / "desk" / "programs" / "__fixtures__"
 
@@ -57,7 +57,7 @@ def _fixture(name: str, answer: Any, tmp_path: Path) -> Any:
 
 def _client(rig: Rig, monkeypatch) -> TestClient:
     monkeypatch.setattr(program_module, "default_program_service", lambda db=None: rig.service)
-    app = FastAPI()
+    app = owner_app()
     app.include_router(build_programs_router(None))  # type: ignore[arg-type]
     return TestClient(app)
 
