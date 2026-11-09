@@ -2,6 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · Fix forward #2020: three slow-tier files had one slow case each; their fast cases are back (memory engine, meeting import, base-install catalogue) and only the slow case stays parked; test_meaning_search_turn_on imports again.
 - 2026-11-08 · (PR) Fix forward #2014: the Programs, reach and briefing fixtures are re-recorded through the real routes with the step wire (kind, deliver, sources); the plan seed records his Plan it press (plan_goal off). No face change.
 - 2026-11-08 · (PR) One contract: the Programs verbs are OperationDescriptors (`holdspeak/program_operations.py`); OperationDescriptor carries the HTTP and MCP faces (call/web_call, http, tool_schema, authority, thread) and the routes and tool rows are produced from it through `OperationRegistry.invoke`; the separate table is parked; receipts, route list, OpenAPI and the 33 Programs tools unchanged; the parity census prints the 349 routes that reach no service.
 - 2026-11-08 · (PR) Fix forward #2017 and #2007: the six new WORK Programs tools get launch rules (templates and shape_engine read; from_action, plan_programs, race, shape_held_drop on a Program the launch made); the Desk/Chase size fences follow the watch fold (70 → 65, 76 → 71).
