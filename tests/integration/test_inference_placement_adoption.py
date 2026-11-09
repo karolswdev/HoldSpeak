@@ -295,7 +295,7 @@ ENTRY_CASES: tuple[tuple[str, str, Callable[[Database, Any], Any]], ...] = (
     # HS-151-02: recipe.chat retired — both _run_recipe_chat_* helpers call
     # RecipeService.chat() which internally admits "recipe.chat", no longer in
     # the sealed registry. Removed until HS-151-04 re-wires the alias.
-    ("workbench-item-and-memory", "workbench.item", _run_workbench),
+    # 2026-11-08: the item queue is parked (_run_workbench drove it).
     ("agent-turn-facade", "agent.tool_turn", _run_agent_facade),
     ("voice-resolution", "voice.reference_resolve", _run_voice),
 )

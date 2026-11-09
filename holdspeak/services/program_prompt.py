@@ -39,6 +39,79 @@ _RUNNING: set[str] = set()
 _RUNNING_GUARD = threading.Lock()
 
 
+from ..kernel.prompt_adapter import CanonicalPromptAdapter  # noqa: E402
+
+
+class _MeteredPromptAdapter(CanonicalPromptAdapter):
+    """The canonical adapter, plus the tokens the provider said it used.
+
+    The sealed result shape stays {output, provider, model}. The count travels
+    on this adapter instance, which the runner keeps for its one child."""
+
+    def __init__(self, spend_limit_usd: float | None = None, work_folder: str | None = None, *,
+                 desk_tools: bool = True, project_id: str = "") -> None:
+        self.tokens = 0
+        #: Betterment A4: the automation's Spend limit per run; it overrides
+        #: the engine's own limit on an agent CLI that enforces one.
+        self.spend_limit_usd = spend_limit_usd
+        #: Betterment M2 follow-up (orchestrator ruling): the memory call
+        #: after an item runs WITHOUT the desk's tools on an agent CLI.
+        self.desk_tools = desk_tools
+        #: Project scope for an update automation's run credential.
+        self.project_id = str(project_id or "").strip()
+        #: Betterment A10: the folder an agent CLI works in, read only (the
+        #: automation's Folder source). An HTTP engine has no folder: ignored.
+        self.work_folder = work_folder
+
+    def _limited(self, engine: Any) -> Any:
+        preset = getattr(engine, "preset", None)
+        limit = (self.spend_limit_usd is not None and hasattr(engine, "spend_limit_usd")
+                 and getattr(preset, "enforces_spend_limit", False))
+        no_tools = not self.desk_tools and getattr(engine, "desk_tools", False)
+        folder = bool(self.work_folder) and hasattr(engine, "work_folder")
+        project_scope = bool(self.project_id) and hasattr(engine, "project_id")
+        if not limit and not no_tools and not folder and not project_scope:
+            return engine
+        # A copy for this one call: the routed engine may be shared.
+        import copy
+
+        limited = copy.copy(engine)
+        if limit:
+            limited.spend_limit_usd = self.spend_limit_usd
+        if no_tools:
+            limited.desk_tools = False
+        if folder:
+            limited.work_folder = self.work_folder
+        if project_scope:
+            limited.project_id = self.project_id
+        return limited
+
+    def dispatch(self, engine: Any, payload: dict[str, Any], cancellation: Any) -> dict[str, str]:
+        engine = self._limited(engine)
+        from .run_trace import for_item
+
+        # Betterment M2: an agent CLI run records the item it ran for, so the
+        # result shows the run's cost and what its agent used.
+        with for_item(str(payload.get("item_id") or "")):
+            if self.desk_tools:
+                # MCP M5: an HTTP engine whose server takes tool calls runs
+                # the item through the hub's tool loop, with the desk's tools.
+                from .engine_tool_loop import answer_item
+
+                looped = answer_item(engine, payload, cancellation)
+                if looped is not None:
+                    result, tokens = looped
+                    self.tokens += tokens
+                    return result
+            result = super().dispatch(engine, payload, cancellation)
+        try:
+            usage = dict(getattr(engine, "last_usage", None) or {})
+            self.tokens += int(usage.get("total_tokens") or 0)
+        except (TypeError, ValueError):
+            pass  # an engine without a provider count reports none, never a guess
+        return result
+
+
 def is_prompt(step: Mapping[str, Any]) -> bool:
     return str(step.get("kind") or "") == PROMPT
 
@@ -121,8 +194,7 @@ def hand(runner: Any, program: Mapping[str, Any], step: dict[str, Any], *,
 def _run(runner: Any, program: Mapping[str, Any], step: dict[str, Any], broker: Callable[[], Any]) -> None:
     from . import engine_door
     from .automation_runs import PROJECT_UPDATES_PREFIX
-    from .workbench_runner import _MeteredPromptAdapter
-
+    
     service = runner.service
     deliver = str(step.get("deliver") or DEFAULT_DELIVER)
     if step["state"] == "planned":
@@ -213,8 +285,7 @@ def _keep_lesson(door: Any, principal: Any, engine: Any, wb: Any, program: Mappi
     tools. A failed call or "nothing" keeps none; it never fails the run."""
     from . import engine_door
     from ..workbench_memory import append_memory
-    from .workbench_runner import _MeteredPromptAdapter
-
+    
     title = str(program.get("title") or step.get("title") or "")
     payload = {"system_prompt": "You are a concise assistant. Reply in one sentence only.",
                "user_prompt": f"Task: {title}\n\nYour output:\n{text[:500]}\n\n{LESSON_QUESTION}",

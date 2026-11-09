@@ -21,7 +21,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import uuid
 from datetime import datetime
 from typing import Any, Mapping, Optional
 
@@ -33,8 +32,6 @@ log = get_logger("services.automation_runs")
 
 #: The context marker of an occurrence item (``workbench_items.context_json``).
 OCCURRENCE = "occurrence"
-#: The per-item time limit for an HTTP engine (seconds).
-HTTP_ITEM_SECONDS = 60.0
 #: The Inbox zone (``holdspeak/seeds/fresh-desk.yaml``).
 INBOX_DIRECTORY_ID = "hs-seed-inbox"
 OUTPUT_TARGETS = ("inbox", "needs_you", "today")
@@ -142,36 +139,12 @@ def sources_of(wb: Any) -> list[str]:
     return [str(ref) for ref in value if isinstance(ref, str) and ref.strip()] if isinstance(value, list) else []
 
 
-def plain_agent(wb: Any) -> Any:
-    """The agent of an automation that has an instruction and no recipe."""
-    from types import SimpleNamespace
-
-    return SimpleNamespace(
-        id="", name=str(wb.name or "Automation"), system_prompt=PLAIN_SYSTEM_PROMPT,
-        last_modified="", manual_context="", kb_id=None,
-    )
-
-
 # ── the occurrence item ────────────────────────────────────────────────
-
-
-def is_occurrence(item: Any) -> bool:
-    try:
-        context = json.loads(getattr(item, "context_json", "") or "{}")
-    except (TypeError, ValueError):
-        return False
-    return isinstance(context, dict) and bool(context.get(OCCURRENCE))
 
 
 def occurrence_title(wb: Any, now: Optional[datetime] = None) -> str:
     when = (now or local_now()).astimezone()
     return f"{wb.name or 'Automation'}, {when:%a} {when.day} {when:%b %Y}"
-
-
-def automation_result_title(wb: Any, now: Optional[datetime] = None) -> str:
-    """Name one automation result by the automation and the run date."""
-    when = (now or local_now()).astimezone()
-    return f"{wb.name or 'Automation'} · {when.day} {when:%b}"
 
 
 def _event_block(event: dict[str, Any]) -> str:
@@ -186,40 +159,6 @@ def _event_block(event: dict[str, Any]) -> str:
         "current": facts.get("current"),
     }
     return "[EVENT]\n" + json.dumps(subject, sort_keys=True, indent=2, default=str)
-
-
-def mint_occurrence(
-    db: Any,
-    wb: Any,
-    *,
-    item_id: Optional[str] = None,
-    title: Optional[str] = None,
-    event: Optional[dict[str, Any]] = None,
-    context: Optional[dict[str, Any]] = None,
-) -> Any:
-    """Add the one item a run of an instruction automation runs.
-
-    A known ``item_id`` (a scheduled minute, a request id, an event) is
-    made once: a replayed start finds the item it made and adds none.
-    """
-    clean_id = str(item_id or ("wbocc_" + uuid.uuid4().hex[:16]))
-    existing = db.workbench_items.get(clean_id, include_parked=True)
-    if existing is not None:
-        return existing
-    body = str(wb.instruction or "").strip()
-    refs, about = expand_sources(db, sources_of(wb))
-    if about:
-        body = f"{body}\n\n[ABOUT]\n" + "\n".join(about)
-    if event is not None:
-        body = f"{body}\n\n{_event_block(event)}"
-    return db.workbench_items.upsert(
-        item_id=clean_id,
-        workbench_id=wb.id,
-        title=str(title or occurrence_title(wb)),
-        body=body,
-        grounding={"refs": refs} if refs else {},
-        context={**(context or {}), OCCURRENCE: True},
-    )
 
 
 # ── a run is a Program of one prompt step (2026-11-08) ─────────────────
@@ -251,7 +190,8 @@ def run_as_program(
     db: Any, principal: Any, wb: Any, *, now: Optional[datetime] = None,
     event: Optional[dict[str, Any]] = None, title: Optional[str] = None,
     start: bool = True, wait: bool = False, key: Optional[str] = None,
-    context: Optional[dict[str, Any]] = None,
+    context: Optional[dict[str, Any]] = None, brief: Optional[str] = None,
+    sources: Optional[list[str]] = None,
 ) -> dict[str, Any]:
     """Start one run of an automation: a Program titled "<name>, <date>"
     (or the event's title) with one prompt step that does the instruction
@@ -271,7 +211,10 @@ def run_as_program(
         for row in program_runs(db, str(wb.id)):
             if any((step.get("facts") or {}).get("run_key") == key for step in store.list_steps(row["id"])):
                 return {"program_id": row["id"], "run_id": row["id"], "started": False}
-    brief = str(wb.instruction or "").strip()
+    # ``brief``/``sources``: the run's own words and sources (an idle routine's
+    # item), in place of the automation's instruction and About.
+    explicit = brief is not None
+    brief = str(brief if explicit else (wb.instruction or "")).strip()
     if event is not None:
         # With no instruction, the event's own words are the brief.
         words = brief or f"Something happened: {title or event.get('event_type') or 'an event'}. Say what it means for me."
@@ -287,7 +230,7 @@ def run_as_program(
         control="yolo", origin_ref=PROGRAM_ORIGIN_PREFIX + str(wb.id),
         spend_limit_usd=getattr(wb, "spend_limit_usd", None),
         steps=[{"title": str(wb.name or "Automation"), "brief": brief, "kind": "prompt",
-                "deliver": target, "sources": sources_of(wb)}],
+                "deliver": target, "sources": list(sources) if sources is not None else sources_of(wb)}],
     )
     if key or context:
         store = ProgramStore(db)
@@ -613,10 +556,6 @@ def work_folder_of(wb: Any) -> Optional[str]:
         if path and Path(path).is_dir():
             return str(Path(path).resolve())
     return None
-
-
-def occurrence_id(workbench_id: str, key: str) -> str:
-    return "wbocc_" + hashlib.sha256(f"{workbench_id}:{key}".encode()).hexdigest()[:20]
 
 
 # ── AG14: one durable hand per source item ─────────────────────────────
@@ -978,33 +917,6 @@ def sync_queue_outcomes(db: Any, queue: Any = None, workbench_id: Optional[str] 
 # ── the per-engine time limit ──────────────────────────────────────────
 
 
-def _seconds_for(endpoints: list[Any]) -> float:
-    from ..intel.cli_engine import parse_cli_endpoint
-
-    seconds = HTTP_ITEM_SECONDS
-    for endpoint in endpoints:
-        parsed = parse_cli_endpoint(endpoint)
-        if parsed is not None:
-            seconds = max(seconds, float(parsed[0].timeout_seconds))
-    return seconds
-
-
-def item_seconds(db: Any, route: dict[str, Any]) -> float:
-    """The time limit for one item on a frozen route (a scheduled run): 60 s
-    for an HTTP engine, the preset's timeout for a CLI engine; the longest
-    leg of the chain."""
-    ids = [str(entry.get("deployment_revision_id") or "") for entry in route.get("entries") or []]
-    endpoints: list[Any] = []
-    with db._connection() as conn:
-        for revision_id in ids:
-            row = conn.execute(
-                "SELECT kind, endpoint FROM deployment_revisions WHERE id=?", (revision_id,)
-            ).fetchone()
-            if row is not None and str(row["kind"]) == "cli_engine":
-                endpoints.append(row["endpoint"])
-    return _seconds_for(endpoints)
-
-
 def cli_endpoint_of(conn: Any, profile_id: str) -> str:
     """The ``cli:`` endpoint of an engine profile; '' when it is not an agent CLI."""
     if profile_id.startswith("legacy-"):
@@ -1021,31 +933,6 @@ def cli_endpoint_of(conn: Any, profile_id: str) -> str:
         (profile_id,),
     ).fetchone()
     return str(row["endpoint"] or "") if row is not None and str(row["kind"]) == "cli_engine" else ""
-
-
-def assigned_item_seconds(db: Any, workbench_id: str) -> float:
-    """The same limit for a press or an event: read from the engine assigned
-    to this automation's ``workbench.item`` job before the run is admitted
-    (the admitted deadline is bound into the route bundle and cannot move)."""
-    from .inference_assignment_service import InferenceAssignmentService
-
-    service = InferenceAssignmentService(db)
-    try:
-        capability = service._require_assignable("workbench.item")
-        with db._connection() as conn:
-            resolved = service._resolve(
-                conn, capability, subject_kind="workbench", subject_id=workbench_id,
-            )
-            entries = list((resolved.get("assignment") or {}).get("entries") or [])
-            endpoints: list[Any] = []
-            for entry in entries:
-                endpoint = cli_endpoint_of(conn, str(entry.get("profile_id") or ""))
-                if endpoint:
-                    endpoints.append(endpoint)
-    except Exception as exc:  # no readable assignment: the run's own admission says why
-        log.debug("automation %s: engine limit read failed: %s", workbench_id, exc)
-        return HTTP_ITEM_SECONDS
-    return _seconds_for(endpoints)
 
 
 # ── results ────────────────────────────────────────────────────────────

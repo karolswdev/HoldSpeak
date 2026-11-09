@@ -806,9 +806,8 @@ class WorkbenchService:
         one prompt step (``automation_runs.run_as_program``); this call waits
         for its answer, which goes where ``output_target`` says. An old queue
         (an agent and no instruction of its own) is refused: it is set up as
-        a program. An agent hand and a Program automation run as before;
-        ``item_ids`` re-runs earlier queue items."""
-        from holdspeak.workbench_conductor import run_workbench
+        a program. An agent hand and a Program automation run as before
+        (their ``item_ids``: a hand's Re-run)."""
         from . import automation_runs
 
         wb = self._require_workbench(workbench_id)
@@ -836,42 +835,15 @@ class WorkbenchService:
                     "set_up_as_program", "Programs run this queue now: set it up as a program.",
                     context={"status": 409})
             return {"error": f"The automation {wb.name} has nothing to do yet: write what it should do."}
-        if request_id or source_event or item_ids or native:
-            from holdspeak.kernel.runtime import _service
-            from holdspeak.services.workbench_runner import WorkbenchRunner
-            result = await WorkbenchRunner(self._db, _service()).run(
-                principal, workbench_id, memory_enabled=memory_enabled,
-                request_id=request_id, source_event=source_event,
-                item_ids=item_ids,
-            )
-        else:
-            result = await run_workbench(workbench_id, principal, memory_enabled=memory_enabled)
-        return self._deliver(principal, result)
-
-    async def run_item(
-        self,
-        principal: Principal,
-        workbench_id: str,
-        item_id: str,
-        *,
-        memory_enabled: bool = True,
-        request_id: str | None = None,
-        source_event: dict[str, str] | None = None,
-        deadline_seconds: float = 600,
-    ) -> dict[str, Any]:
-        """Admit exactly one causal Workbench item, never the pending batch."""
-        self._require_item(workbench_id, item_id)
+        # A hand or a Program automation (the item queue is parked: the
+        # runner refuses any other run as set_up_as_program).
         from holdspeak.kernel.runtime import _service
         from holdspeak.services.workbench_runner import WorkbenchRunner
 
         result = await WorkbenchRunner(self._db, _service()).run(
-            principal,
-            workbench_id,
-            memory_enabled=memory_enabled,
-            request_id=request_id,
-            source_event=source_event,
-            deadline_seconds=deadline_seconds,
-            item_ids=[item_id],
+            principal, workbench_id, memory_enabled=memory_enabled,
+            request_id=request_id, source_event=source_event,
+            item_ids=item_ids,
         )
         return self._deliver(principal, result)
 

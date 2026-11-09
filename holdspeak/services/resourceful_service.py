@@ -249,18 +249,37 @@ class ResourcefulService:
         if self._item_runner is not None:
             result = self._item_runner(principal, workbench_id, item_id, event)
             return await result if inspect.isawaitable(result) else result
-        return await self._workbenches().run_item(
-            principal,
-            workbench_id,
-            item_id,
-            request_id=f'resourceful:{event["id"]}',
-            source_event={
-                "event_id": event["id"],
-                "correlation_id": event.get("correlation_id", ""),
-                "causation_id": event["id"],
-            },
-            deadline_seconds=600,
+        # 2026-11-08: the item queue is parked. The routine's item stays its
+        # dispatch ledger; its work runs as a Program of one prompt step (its
+        # title, its body as the brief, its source), and the item records how
+        # it ended.
+        import asyncio
+        import json as _json
+
+        from holdspeak.db.programs import ProgramStore
+        from holdspeak.services.automation_runs import run_as_program
+
+        wb = self._db.workbenches.get(workbench_id)
+        item = self._db.workbench_items.get(item_id)
+        if wb is None or item is None:
+            return {"error": "The automation or its item is gone."}
+        try:
+            refs = list((_json.loads(item.grounding_json or "{}") or {}).get("refs") or [])
+        except (TypeError, ValueError):
+            refs = []
+        ran = await asyncio.to_thread(
+            run_as_program, self._db, principal, wb, title=item.title, brief=item.body, sources=refs,
+            key=f"resourceful:{event['id']}", wait=True)
+        steps = ProgramStore(self._db).list_steps(ran["program_id"])
+        step = steps[0] if steps else {}
+        done = step.get("state") == "done"
+        self._workbenches().update_item(
+            principal, workbench_id, item_id, status="done" if done else "failed",
+            result=str(step.get("report") or "") if done else "Error: the program's step did not finish",
+            completed_at=_iso(datetime.now().astimezone()),
+            context={**_json.loads(item.context_json or "{}"), "program": {"program_id": ran["program_id"]}},
         )
+        return {"program_id": ran["program_id"], **({} if done else {"error": "the program's step did not finish"})}
 
     async def tick(
         self, principal: Principal, *, now: datetime | None = None

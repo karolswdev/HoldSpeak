@@ -701,9 +701,9 @@ SURFACE_DRIVERS: dict[str, Callable[[Any, Any], SurfaceRun]] = {
     # RecipeService.chat() unavailable until HS-151-04 rewires the alias.
     # 2026-11-08: Sequence and Workflow parked with their runner (a crew on the
     # hub is one Recipe run per step; a Workflow runs as the saved Ask).
-    "manual Workbench": _drive_workbench_manual,
-    "scheduled Workbench": _drive_workbench_scheduled,
-    "memory writeback": _drive_workbench_memory,
+    # 2026-11-08: the item queue is parked (manual Workbench, scheduled
+    # Workbench, memory writeback): an automation's run is a Program of one
+    # prompt step through the engine door.
     "Rails": _drive_rails,
     "Decision promotion": _drive_decision,
     "Delivery review": _drive_delivery_review,
@@ -718,7 +718,7 @@ SURFACE_DRIVERS: dict[str, Callable[[Any, Any], SurfaceRun]] = {
 #: its seat here rather than riding in unproven. The other two families that story
 #: closed added no surface: both were DELETED as duplicates of a surface already
 #: below (Decision promotion, Delivery review).
-assert len(SURFACE_DRIVERS) == 13, "every named surface form is proven here; none may be collapsed (HS-151-02: Recipe chat retired; 2026-11-08: Sequence and Workflow parked)"
+assert len(SURFACE_DRIVERS) == 10, "every named surface form is proven here; none may be collapsed (HS-151-02: Recipe chat retired; 2026-11-08: Sequence and Workflow parked; the item queue parked)"
 
 #: Which admission shape each surface uses. Module-level (rather than buried in
 #: the sanity test below) because ``test_one_path_provenance.py`` imports these
@@ -726,8 +726,7 @@ assert len(SURFACE_DRIVERS) == 13, "every named surface form is proven here; non
 #: shows — the two files cannot drift apart without one of them failing.
 ROOT_SHAPED_SURFACES = frozenset({"Ask", "Recipe run", "Rails", "Decision promotion", "Delivery review", "cadence next action"})  # HS-151-02: Recipe chat removed
 CHILD_SHAPED_SURFACES = frozenset({
-    "manual Workbench", "scheduled Workbench",
-    "memory writeback", "voice",
+    "voice",
     "meeting live", "meeting deferred", "dictation pipeline",
 })
 
@@ -767,7 +766,7 @@ def test_each_driver_reports_the_run_it_actually_performed(tmp_path, monkeypatch
     changing which cohort the fence inspects. Exercised on one surface of each
     shape; the provenance suite re-checks every one against the stored rows.
     """
-    for surface in ("Ask", "manual Workbench"):
+    for surface in ("Ask", "voice"):
         run = SURFACE_DRIVERS[surface](tmp_path / surface.replace(" ", "-"), monkeypatch)
         assert isinstance(run, SurfaceRun), f"{surface}: driver returned {run!r}"
         assert run.destination_id, f"{surface}: driver named no destination"
