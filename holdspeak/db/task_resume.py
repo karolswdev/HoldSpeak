@@ -389,8 +389,10 @@ class ProjectAskTaskRepository(BaseRepository):
             if any(str(row["state"]) in {"active", "stopping"} for row in routed):
                 return "running"
             classic = conn.execute(
-                "SELECT state FROM kernel_operations WHERE idempotency_key = ? OR operation_id = ?",
-                (ident, ident),
+                # An answer through the engine door runs under door_<…>_<this id>_<nonce>.
+                "SELECT state FROM kernel_operations WHERE idempotency_key = ? OR operation_id = ? "
+                "OR (native_id LIKE 'door\\_%' ESCAPE '\\' AND instr(native_id, ?) > 0)",
+                (ident, ident, f"_{ident}_"),
             ).fetchall()
             if any(
                 str(row["state"]) in {"admitting", "awaiting_decision", "awaiting_execution", "claimed"}

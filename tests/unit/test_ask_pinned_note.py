@@ -21,6 +21,7 @@ from holdspeak.services.refinement_thought_service import INBOX_DIRECTORY_ID, Re
 from holdspeak.services.thread_service import ThreadService
 from holdspeak.web.context import WebContext
 from holdspeak.web.routes.primitives.ask import build_ask_router
+from tests.unit.test_ask_engine_door import assign_answers
 from tests.unit.test_thread_service import FakeAdoptionService
 
 
@@ -137,11 +138,8 @@ class _CaptureEngine:
 @pytest.mark.parametrize("mode", ["normal", "cli"])
 def test_normal_and_cli_dispatch_the_admitted_note(selected, monkeypatch, mode):
     db, thought, snapshot = selected
-    db.profiles.upsert(profile_id="pin-engine", name="Pin", kind="openAICompatible",
-                       base_url="http://192.168.1.50:8080", model="pin-model", requires_key=False)
-    broker = _configure(db)
+    broker = assign_answers(db, profile="pin-engine")
     engine = _CaptureEngine()
-    monkeypatch.setattr(broker.inference_runner, "_engine_factory", lambda *_a, **_k: engine)
     service = AskService(db, broker=broker)
     edited = False
     def change_after_admission(*_args):
@@ -152,10 +150,12 @@ def test_normal_and_cli_dispatch_the_admitted_note(selected, monkeypatch, mode):
                 OWNER, thought["id"], expected_aggregate_revision=1,
                 expected_working_revision=1, title="Changed", body_markdown="NEW BODY",
             )
+    # The edit lands as the engine is built: after the bytes were prepared.
+    monkeypatch.setattr(broker.inference_runner, "_engine_factory",
+                        lambda *_a, **_k: change_after_admission() or engine)
     if mode == "normal":
         result = asyncio.run(service.ask(
             OWNER, "Question", {"refs": [snapshot["ref"]]}, source_snapshot=snapshot,
-            inference_target_id="pin-engine", before_physical_dispatch=change_after_admission,
         ))
     else:
         monkeypatch.setattr(ask_desk, "tools_mode", lambda _db: ask_desk.CLI)
@@ -163,8 +163,6 @@ def test_normal_and_cli_dispatch_the_admitted_note(selected, monkeypatch, mode):
         # snapshot read cannot change the prepared bytes.
         original = service.ask
         async def dispatch(*args, **kwargs):
-            kwargs["inference_target_id"] = "pin-engine"
-            kwargs["before_physical_dispatch"] = change_after_admission
             return await original(*args, **kwargs)
         monkeypatch.setattr(service, "ask", dispatch)
         result = asyncio.run(service.ask_in_thread(
@@ -307,9 +305,7 @@ def _containing_ref(db, pinned_ref: str, kind: str) -> str:
 def test_normal_container_does_not_reread_selected_note(selected, monkeypatch, container):
     db, thought, snapshot = selected
     containing_ref = _containing_ref(db, snapshot["ref"], container)
-    db.profiles.upsert(profile_id="pin-engine", name="Pin", kind="openAICompatible",
-                       base_url="http://192.168.1.50:8080", model="pin-model", requires_key=False)
-    broker = _configure(db)
+    broker = assign_answers(db, profile="pin-engine")
     if container == "project_knowledge":
         # An index-free hub uses the project's supported recency member path.
         db.memory = None
@@ -326,7 +322,7 @@ def test_normal_container_does_not_reread_selected_note(selected, monkeypatch, c
     monkeypatch.setattr(service, "_grounding", edit_before_container_hydration)
     result = asyncio.run(service.ask(
         OWNER, "Question", {"refs": [snapshot["ref"], containing_ref]},
-        source_snapshot=snapshot, inference_target_id="pin-engine",
+        source_snapshot=snapshot,
     ))
     assert result["output"] == "Pinned answer"
     prompt = engine.prompts[0]
@@ -385,9 +381,7 @@ def _change_with_unrelated_memory(db, thought, snapshot):
 @pytest.mark.parametrize("source_mode", ["snapshot_only", "context_note", "grounding_ref"])
 def test_normal_and_cli_keep_original_memory_decision(selected, monkeypatch, mode, source_mode):
     db, thought, snapshot = selected
-    db.profiles.upsert(profile_id="pin-engine", name="Pin", kind="openAICompatible",
-                       base_url="http://192.168.1.50:8080", model="pin-model", requires_key=False)
-    broker = _configure(db)
+    broker = assign_answers(db, profile="pin-engine")
     engine = _CaptureEngine()
     monkeypatch.setattr(broker.inference_runner, "_engine_factory", lambda *_a, **_k: engine)
     service = AskService(db, broker=broker)
@@ -402,13 +396,11 @@ def test_normal_and_cli_keep_original_memory_decision(selected, monkeypatch, mod
     if mode == "normal":
         result = asyncio.run(service.ask(
             OWNER, "Atlas review", grounding, context=context, source_snapshot=snapshot,
-            inference_target_id="pin-engine",
         ))
     else:
         monkeypatch.setattr(ask_desk, "tools_mode", lambda _db: ask_desk.CLI)
         original_ask = service.ask
         async def dispatch(*args, **kwargs):
-            kwargs["inference_target_id"] = "pin-engine"
             return await original_ask(*args, **kwargs)
         monkeypatch.setattr(service, "ask", dispatch)
         result = asyncio.run(service.ask_in_thread(

@@ -268,15 +268,17 @@ def test_dead_endpoint_or_rejected_token_refuses_with_target_name(
         "holdspeak.intel.providers.build_meeting_intel_for_profile",
         lambda **kwargs: Rejected(),
     )
-    response = client.post(
-        "/api/ask",
-        json={
-            "prompt": "go",
-            "inference_target_id": profile.id,
-        },
-    )
-    assert response.status_code == 502
-    assert response.json()["error"] == (
-        "Destination 'Named vendor' refused the run: 401 rejected token"
-    )
-    assert response.json()["alternate_target_id"] == "this_machine"
+    # A target is named by the unrouted Thought only; an answer runs on its
+    # assignment through the engine door (test_ask_engine_door.py).
+    import asyncio
+
+    from holdspeak.principals import Principal, PrincipalKind
+    from holdspeak.services.ask_service import AskService
+    from holdspeak.services.errors import ServiceError
+
+    with pytest.raises(ServiceError) as refused:
+        asyncio.run(AskService(db).ask(Principal(PrincipalKind.OWNER, "owner"), "go", inference_target_id=profile.id,
+                                       operation_capability="thought.interview"))
+    assert refused.value.context["status"] == 502
+    assert refused.value.detail == "Destination 'Named vendor' refused the run: 401 rejected token"
+    assert refused.value.context["alternate_target_id"] == "this_machine"

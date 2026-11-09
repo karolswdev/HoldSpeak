@@ -182,22 +182,19 @@ def test_an_ask_on_a_free_engine_sends_no_busy_event(hub, monkeypatch) -> None:
     assert [event for event in events if event["state"] == "busy"] == []
 
 
-def test_a_second_attempt_is_said(hub, tmp_path) -> None:
+def test_a_second_attempt_is_silent_and_the_answer_comes(hub) -> None:
+    """The engine door retries once, on the next engine of the Answers
+    chain; the face hears no "Trying again"."""
     from holdspeak.kernel.provider_signals import ProviderKnownNoGenerationTransient
 
     release, started = threading.Event(), []
     release.set()
     _lan(hub, release, started, plan=[ProviderKnownNoGenerationTransient("429"), ANSWER])
+    _assign(hub.db, "ask.answer", ["glass-lan", "glass-local"], "ask-first-lan-then-local")
     events: list[dict[str, Any]] = []
     result = _ask(hub, events, FACE_INVOCATION)
     assert result["output"] == ANSWER
-    retries = [event for event in events if event["state"] == "retry"]
-    assert retries and retries[0]["attempt"] == 1 and retries[0]["of"] >= 1
-
-    from tests.unit.test_desk_speak import _record
-    _record("ask.retry.wire", {"retry": retries[0]}, tmp_path,
-            "tests/integration/test_desk_ask_priority.py::test_a_second_attempt_is_said",
-            folder=WIRES)
+    assert [event for event in events if event["state"] == "retry"] == []
 
 
 @pytest.mark.parametrize(("contract", "label"), [

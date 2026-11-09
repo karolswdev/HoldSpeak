@@ -60,7 +60,6 @@ from holdspeak.intel.models import (
 from holdspeak.kernel.runtime import _configure
 from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.services.ask_service import AskService
-from holdspeak.services.errors import ValidationError
 from holdspeak.services.inference_assignment_service import InferenceAssignmentService
 from holdspeak.services.sync_service import _hub_model_name
 from tests.unit.admitted_context import admitted_context
@@ -192,6 +191,9 @@ def rig(tmp_path, monkeypatch):
 def _ask(db: Any, broker: Any, **kwargs: Any) -> dict[str, Any]:
     """One REAL Ask turn: placement, admission, dispatch, projection, receipt."""
     service = AskService(db, broker=broker)
+    # Placement is the unrouted Thought's now; an answer runs on its
+    # assignment through the engine door (test_ask_engine_door.py).
+    kwargs.setdefault("operation_capability", "thought.interview")
     return asyncio.run(service.ask(OWNER, "state of play", **kwargs))
 
 
@@ -362,11 +364,10 @@ def test_naming_the_genuinely_loaded_model_is_accepted(rig, tmp_path, monkeypatc
     accepted = _ask(db, broker, inference_target_id="this_machine", model="Hub-Local-8B")
     assert accepted["model"] == "Hub-Local-8B"
 
-    with pytest.raises(ValidationError) as exc:
-        _ask(db, broker, inference_target_id="this_machine", model=DEFAULT_INTEL_CLOUD_MODEL)
-    message = str(exc.value)
-    assert "Hub-Local-8B" in message
-    assert exc.value.context["available_models"] == ["Hub-Local-8B"]
+    # The engine door (2026-11-08): a model named by the caller no longer
+    # refuses or retargets; the run names the model it really ran.
+    other = _ask(db, broker, inference_target_id="this_machine", model=DEFAULT_INTEL_CLOUD_MODEL)
+    assert other["model"] == "Hub-Local-8B"
 
 
 # HS-151-04: test_recipe_run_and_chat_agree_on_the_model DELETED —

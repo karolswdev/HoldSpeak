@@ -79,7 +79,8 @@ def _ask_rig(db: Database, *, ceiling: int = 32768) -> tuple[Any, _AskEngine]:
 def _ask(service: Any, engine: _AskEngine, question: str, scope: tuple[str, str], **kwargs: Any) -> str:
     grounding = {"refs": [f"project:{scope[1]}"]} if scope[0] == "project" else None
     result = asyncio.run(service.ask(OWNER, question, grounding, **kwargs))
-    assert result["output"] == "answer" and result["route_execution_receipt"]["outcome"] == "succeeded"
+    # An answer runs through the engine door: one kernel operation is its receipt.
+    assert result["output"] == "answer" and result["route_execution_receipt"]["execution_id"] == result["operation_id"]
     return engine.prompts[-1]
 
 
@@ -199,22 +200,22 @@ def test_the_part_never_pushes_an_ask_over_its_route(tmp_path: Path) -> None:
     db = _desk(tmp_path)
     _many_beliefs(db)
     service, engine = _ask_rig(db, ceiling=8192)
+    sent_payloads: list[dict[str, Any]] = []
+    door_projection = service._door_projection
+    service._door_projection = lambda output, payload, ask_id: sent_payloads.append(payload) or door_projection(output, payload, ask_id)
     question = "What about topic00? " + "Context words. " * 1400  # Betterment E3: 3.5 characters a token
     prompt = _ask(service, engine, question, ATLAS)
     full = reflect_for("ask.answer", db, scopes=[ATLAS], query=question)
     sent = prompt.count("\n- ")
     assert 0 < len(_memory_part(prompt)) and sent < reflect_block(full).count("\n- ")
-    with db._connection() as conn:
-        row = conn.execute(
-            "SELECT s.operation_id FROM inference_adoption_material_snapshots s WHERE s.capability_id='ask.answer'"
-        ).fetchone()
-    adoption = service._broker.inference_adoption_service
-    admitted = adoption.admitted_payload(row["operation_id"])
-    whole = {**admitted, "user_prompt": admitted["user_prompt"].replace(
-        _memory_part(prompt) + REFLECT_NOTE, reflect_block(full))}
-    assert adoption.payload_room_now(
-        capability_id="ask.answer", operation_id=row["operation_id"], payload=whole,
-        reserved_output_tokens=512, invocation_id=row["operation_id"]) < 0
+    # With the whole part, the prompt alone has no room on the engine (the door's measure).
+    from holdspeak.services import engine_door
+
+    broker = service._broker
+    part = _memory_part(prompt) + REFLECT_NOTE
+    whole = {key: value.replace(part, reflect_block(full)) if isinstance(value, str) else value
+             for key, value in sent_payloads[-1].items()}
+    assert engine_door.room(broker, engine_door.engine_for(broker, "ask.answer"), whole, reserved_output_tokens=512) < 0
 
 
 @pytest.mark.parametrize("scope", [ATLAS, DESK])

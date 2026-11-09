@@ -81,12 +81,15 @@ def engine_for(broker: Any, job: str, *, subject: Optional[tuple[str, str]] = No
 
     ``subject`` (``(kind, id)``, for one ``("workbench", <id>)``): the
     assignment made for that subject (an automation's With line), resolved
-    by the same route planner; with none of its own, the job's."""
+    by the same route planner; with none of its own, the job's. The kind
+    ``invocation`` names a one-run assignment ("Use X for this one")."""
     from .project_update_service import _resolve_for_capability, _route_plan_deployment
 
     if subject is not None:
+        one_run = subject[0] == "invocation"
         revision, assignment, profile = _route_plan_deployment(
-            broker, job, subject_kind=subject[0], subject_id=subject[1])
+            broker, job, subject_kind=None if one_run else subject[0],
+            subject_id=None if one_run else subject[1], invocation_id=subject[1] if one_run else None)
         if revision:
             engine = Engine(str(revision), str(assignment or ""), str(profile or ""))
             return replace(engine, fallback=_next_in_chain(broker, job, engine))
@@ -216,7 +219,7 @@ def run(
     if engine is None:
         engine = engine_for(broker, job)
     if not invocation_id:
-        invocation_id = _door_invocation_id(job, retry)
+        invocation_id = door_id(job, retry)
     try:
         return _run_once(
             broker, principal, job, payload, engine=engine, contract=contract,
@@ -316,9 +319,11 @@ def _hex(text: str) -> str:
     return text.encode("utf-8").hex()
 
 
-def _door_invocation_id(job: str, retry: Optional[tuple[str, str]]) -> str:
+def door_id(job: str, retry: Optional[tuple[str, str]], nonce: str = "") -> str:
+    """The tracked runner id of one job. A caller that needs its own handle
+    (a Stop) passes it as ``nonce`` and passes the result as ``invocation_id``."""
     kind, key = retry if retry else ("", "")
-    return f"{_DOOR_PREFIX}{_hex(job)}_{_hex(kind)}_{_hex(key)}_{uuid.uuid4().hex[:12]}"
+    return f"{_DOOR_PREFIX}{_hex(job)}_{_hex(kind)}_{_hex(key)}_{nonce or uuid.uuid4().hex[:12]}"
 
 
 def _parse_door_id(native_id: str) -> Optional[tuple[str, str, str]]:
@@ -377,6 +382,7 @@ _RETRY_CALLERS = (
     "holdspeak.rails_observer",
     "holdspeak.services.decision_lifecycle_service",
     "holdspeak.web.routes.delivery_prs",
+    "holdspeak.services.ask_service",
 )
 
 

@@ -10,6 +10,7 @@ import holdspeak.db as hsdb
 from holdspeak.db import Database, reset_database
 from holdspeak.web.context import WebContext
 from holdspeak.web.routes import build_primitives_router
+from tests.unit.test_ask_engine_door import assign_answers
 
 
 @pytest.fixture
@@ -17,6 +18,8 @@ def rig(tmp_path, monkeypatch, local_model_present):
     reset_database()
     db = Database(tmp_path / "ask_grounding.db")
     monkeypatch.setattr(hsdb, "get_database", lambda *a, **k: db)
+    # An answer runs on the engine the Answers assignment names (the door).
+    assign_answers(db)
     # These route tests inject an engine; local model-file readiness is outside
     # the behavior they cover. HS-200-03: `local_model_present` substitutes the
     # ONE readiness predicate. Patching `_this_machine_readiness` alone missed

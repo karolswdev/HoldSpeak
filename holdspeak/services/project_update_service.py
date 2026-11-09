@@ -1480,6 +1480,7 @@ def _parse_model_output(
 
 def _route_plan_deployment(
     broker: Any, capability_id: str, *, subject_kind: str | None = None, subject_id: str | None = None,
+    invocation_id: str | None = None,
 ) -> tuple[str, str, str]:
     """The authoritative resolution: profile -> plan -> frozen leg (HS-200-08).
 
@@ -1497,7 +1498,7 @@ def _route_plan_deployment(
 
         plan = plans.resolve_route_plan(
             ROUTE_PLANNING_AUTHORITY, capability_id=capability_id,
-            subject_kind=subject_kind, subject_id=subject_id,
+            subject_kind=subject_kind, subject_id=subject_id, invocation_id=invocation_id,
         )
     except Exception as exc:  # planner refusals are a fallback, never a crash
         _log.warning(

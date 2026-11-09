@@ -421,9 +421,9 @@ def test_a_lan_ask_carries_the_lan_route_the_footer_prints(hub) -> None:
     hub.broker.inference_runner._engine_factory = lambda rev, **_kw: _TextEngine(
         str(rev.model), "The cutover is on 17 October, after the freeze.")
     result = asyncio.run(AskService(hub.db, broker=hub.broker).ask(OWNER, "What did we decide about the cutover date?"))
-    [execution] = _executions(hub.db)
+    # The receipt is the engine door's one kernel operation.
     assert result["route"] == {"lamp": "private_network", "host": "192.168.1.43", "model": "qwen3.8-27b",
-                               "receipt": execution, "fallback": False}
+                               "receipt": result["operation_id"], "fallback": False}
 
 
 def test_subject_assignment_wins_without_family_marker(hub) -> None:
@@ -445,12 +445,11 @@ def test_subject_assignment_wins_without_family_marker(hub) -> None:
         subject_id="project-17",
     ))
 
-    [execution] = _executions(hub.db)
     assert result["route"] == {
         "lamp": "private_network",
         "host": "192.168.1.43",
         "model": "qwen3.8-27b",
-        "receipt": execution,
+        "receipt": result["operation_id"],
         "fallback": False,
     }
     assert InferenceAssignmentService(hub.db).migration_marker(
@@ -459,7 +458,8 @@ def test_subject_assignment_wins_without_family_marker(hub) -> None:
 
 
 def test_incompatible_chosen_assignment_is_named_and_never_uses_legacy_download(hub) -> None:
-    """An incompatible owner choice stays a repair refusal, without fallback."""
+    """An incompatible owner choice fails on that engine, without a fallback
+    to a legacy local engine (the engine door runs only what is assigned)."""
     from holdspeak.services.ask_service import AskService
     from tests.unit.test_phase143_inference_assignments import _profile, _result_claim
 
@@ -472,21 +472,21 @@ def test_incompatible_chosen_assignment_is_named_and_never_uses_legacy_download(
         claims=("language", _result_claim("ask.answer")),
     )
     _assign(hub.db, "ask.answer", ["glass-too-small"], "ask-incompatible")
-    hub.broker.inference_runner._engine_factory = lambda *_args, **_kw: pytest.fail(
-        "a rejected assignment must not fall through to a legacy local engine"
-    )
+    built: list[str] = []
+
+    def _not_ready(rev: Any, **_kw: Any) -> Any:
+        built.append(str(rev.model))
+        raise RuntimeError("not ready")
+
+    hub.broker.inference_runner._engine_factory = _not_ready
 
     with pytest.raises(ServiceError) as refused:
         asyncio.run(AskService(hub.db, broker=hub.broker).ask(OWNER, "This must refuse"))
 
     assert refused.value.code == "inference_route_failed"
-    # Betterment Q1 (FOLLOWUPS, from Q0): the assigned engine is not ready
-    # (its check could not reach it), so the face says "not reachable",
-    # never "No engine for answers".
-    assert refused.value.context.get("reason") == "not_reachable"
-    # Admission records the refused route receipt, but never reaches the
-    # runner (the engine factory above would fail if a legacy fallback ran).
-    assert len(_executions(hub.db)) == 1
+    assert refused.value.context.get("reason") in {"did_not_answer", "not_reachable"}
+    # Only the assigned engine was built: never a legacy local engine.
+    assert set(built) == {"too-small"}
     from holdspeak.services.inference_assignment_service import InferenceAssignmentService
     assert InferenceAssignmentService(hub.db).migration_marker(
         OWNER, family="thoughts-writing-route-assignments"

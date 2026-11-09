@@ -78,7 +78,7 @@ import { ActionNotice, StateChip, RunLine, StatusBar, ToolGlyph, reasonVerb, rea
 import { openProjectRoomAtResource, openRef, refOpener } from "../openObject";
 import { openSurfaceOr } from "../shell";
 import { useOptionalRuntimeBus } from "../../runtime/RuntimeBus";
-import { busyWords, otherEngineVerb, retryWords } from "../surface/waitWords";
+import { busyWords, otherEngineVerb } from "../surface/waitWords";
 import { deleteThread, getThread, listThreads, type ThreadWire } from "../threads";
 import { UsedLines } from "./UsedLines";
 import type { AgentUse } from "../used";
@@ -115,14 +115,12 @@ export function askFailureLabel(_output: string, reason = "did_not_answer"): { l
 }
 
 /** Betterment Q2: one running Ask's `ask_progress` frame from the hub. */
-type AskProgress =
-  | {
-      state: "busy";
-      job: string;
-      engine: { model?: string; boundary?: string };
-      alternatives: Array<{ profile_id: string; profile_revision: number; label: string; boundary?: string }>;
-    }
-  | { state: "retry"; attempt: number; of: number };
+type AskProgress = {
+  state: "busy";
+  job: string;
+  engine: { model?: string; boundary?: string };
+  alternatives: Array<{ profile_id: string; profile_revision: number; label: string; boundary?: string }>;
+};
 
 /** What an answer wrote, with the tasks he made from it here. */
 function usedWithTasks(used: AgentUse | null | undefined, made: { ref: string; label: string } | undefined): AgentUse | null {
@@ -140,9 +138,7 @@ function mintInvocationId(): string {
 
 /** The running line's words while the hub says the Ask waits. */
 function progressWords(progress: AskProgress | null): string {
-  if (!progress) return "Working";
-  if (progress.state === "busy") return busyWords(progress.job, progress.engine?.boundary);
-  return retryWords(progress.attempt, progress.of);
+  return progress ? busyWords(progress.job, progress.engine?.boundary) : "Working";
 }
 
 
@@ -206,7 +202,7 @@ export const FORGET_UNDO_MS = 10_000;
 function stoppedRun(): AskRunResult {
   return {
     ok: false, output: "", reason: "stopped", invocationId: "", refusalCode: "", egress: null,
-    model: "", profileId: null, inferenceTarget: null, actualPlacement: null, contextIds: [],
+    model: "", profileId: null, contextIds: [],
     contextTitles: [], groundingClaims: [], groundingReceipt: null, threadId: "", lookedAt: [],
     used: null, deskTools: false,
   };
@@ -372,8 +368,6 @@ export function AskPanel() {
           engine: (data.engine as { model?: string; boundary?: string }) || {},
           alternatives: Array.isArray(data.alternatives) ? data.alternatives as never : [],
         });
-      } else if (data.state === "retry") {
-        setProgress({ state: "retry", attempt: Number(data.attempt) || 1, of: Number(data.of) || 1 });
       }
     });
   }, [bus]);

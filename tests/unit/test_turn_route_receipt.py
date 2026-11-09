@@ -331,9 +331,9 @@ def test_a_failed_ask_keeps_where_its_bytes_went(tmp_path) -> None:
     import json
 
     body = json.loads(response.body)
-    [execution] = _executions(db)
+    # The receipt is the engine door's one kernel operation.
     assert body["route"] == {"lamp": "cloud", "host": "api.openai.com", "model": "cloud-model",
-                             "receipt": execution, "fallback": False}
+                             "receipt": body["operation_id"], "fallback": False}
 
 
 def test_an_answered_ask_carries_its_receipt_route(tmp_path) -> None:
@@ -352,7 +352,6 @@ def test_an_answered_ask_carries_its_receipt_route(tmp_path) -> None:
 
     broker.inference_runner._engine_factory = lambda rev, **kw: Answer()
     result = asyncio.run(AskService(db, broker=broker).ask(OWNER, "When is the cutover?"))
-    [execution] = _executions(db)
     assert result["route"] == {"lamp": "cloud", "host": "api.openai.com", "model": "cloud-model",
-                               "receipt": execution, "fallback": False}
+                               "receipt": result["operation_id"], "fallback": False}
     assert result["egress"] == {"scope": "cloud", "host": "api.openai.com"}

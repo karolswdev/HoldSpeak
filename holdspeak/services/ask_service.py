@@ -266,6 +266,32 @@ _RUNS_KEPT = 64
 _RUN_SETTLED_KEEP_SECONDS = 3600.0
 
 
+#: The door id each running answer runs under, by its Ask invocation id (Stop).
+_DOOR_IDS: dict[str, str] = {}
+
+
+def _retry_key(thread_id: str, question: str) -> str:
+    """What Retry from Needs you asks again: ``<thread id>|<question>``
+    (none for a question over 400 characters)."""
+    return f"{thread_id}|{question}" if len(question) <= 400 else ""
+
+
+def _retry_ask(principal: Any, key: str) -> Any:
+    from ..db import get_database
+
+    thread_id, _, question = key.partition("|")
+    return asyncio.run(AskService(get_database()).ask_in_thread(principal, question, thread_id=thread_id))
+
+
+def _register_retry() -> None:
+    from . import engine_door
+
+    engine_door.on_retry("ask", engine_door.RetryKind(
+        words="your question", object_kind="thread", run=_retry_ask,
+        open_ref=lambda key: f"thread:{key.partition('|')[0]}" if key.partition("|")[0] else "window:ask:desk",
+    ))
+
+
 def run_started(invocation_id: str, question: str, thread_id: str = "") -> None:
     now = time.time()
     for key, row in list(_RUNS.items()):
@@ -568,10 +594,10 @@ class AskService:
         # acting principal rides the kernel `_as_principal` context.
         self._runner = self._broker.inference_runner
 
-    def _invoke(self, principal: Principal, request: InvocationRequest, *, publish: Any, adapter: Any = None) -> Any:
+    def _invoke(self, principal: Principal, request: InvocationRequest, *, publish: Any) -> Any:
         from ..kernel.runtime import _as_principal
         with _as_principal(principal):
-            return self._runner.invoke(request, adapter or CanonicalPromptAdapter(), publish=publish)
+            return self._runner.invoke(request, CanonicalPromptAdapter(), publish=publish)
 
     def send_text(self, invocation_id: str, text: str) -> None:
         """Ask hub gap 1: one ``ask_text`` frame (the answer's words so far)."""
@@ -642,7 +668,7 @@ class AskService:
         return {"refs": refs, "titles": titles, "chars": sum(len(block) for block in blocks),
                 "blocks": [{"ref": ref, "title": title, "chars": len(block)} for ref, title, block in zip(refs, titles, blocks)]}
 
-    async def ask(self, principal: Principal, question: str, grounding: Any = None, *, lens: str = "Ask", context: list[dict[str, Any]] | None = None, model: str | None = None, inference_target_id: str | None = None, profile_id: str | None = None, max_tokens: Any = None, temperature: Any = None, invocation_id: str | None = None, before_physical_dispatch: Any = None, before_compatibility_retry: Any = None, frozen_grounding: FrozenGroundingSnapshot | None = None, frozen_admission_claim: dict[str, Any] | None = None, operation_capability: str = "ask.answer", routed_execution_id: str | None = None, memory_exclude_refs: Sequence[str] = (), subject_kind: str | None = None, subject_id: str | None = None, history: Sequence[tuple[str, str]] = (), desk_tools: bool = False, source_snapshot: Any = None, _prepared_note: dict[str, str] | None = None) -> dict[str, Any]:
+    async def ask(self, principal: Principal, question: str, grounding: Any = None, *, lens: str = "Ask", context: list[dict[str, Any]] | None = None, model: str | None = None, inference_target_id: str | None = None, profile_id: str | None = None, max_tokens: Any = None, temperature: Any = None, invocation_id: str | None = None, before_physical_dispatch: Any = None, before_compatibility_retry: Any = None, frozen_grounding: FrozenGroundingSnapshot | None = None, frozen_admission_claim: dict[str, Any] | None = None, operation_capability: str = "ask.answer", routed_execution_id: str | None = None, memory_exclude_refs: Sequence[str] = (), subject_kind: str | None = None, subject_id: str | None = None, history: Sequence[tuple[str, str]] = (), desk_tools: bool = False, source_snapshot: Any = None, _prepared_note: dict[str, str] | None = None, _thread_id: str = "") -> dict[str, Any]:
         prompt = str(question or "").strip()
         if not prompt: raise ValidationError("prompt is required")
         pinned = _prepared_note if _prepared_note is not None else _pinned_note(self._db, source_snapshot)
@@ -718,32 +744,44 @@ class AskService:
         capability_id = str(operation_capability or "")
         if capability_id not in {"ask.answer", "thought.interview"}:
             raise ValidationError("Ask operation capability is invalid", code="ask_capability_invalid")
+
+        def _payload(memory: MemoryContext) -> dict[str, Any]:
+            env = _envelope(memory)
+            return {
+                "schema_version": 2,
+                "system_prompt": _ASK_SYSTEM_PROMPT + frozen_system_instruction + (" " + ask_desk.DESK_PROMPT if desk_tools else ""),
+                "user_prompt": asked + ("\n\nMaterial:\n" + material if material else "") + ("\n\nGrounding:\n" + env if env else ""),
+                "lens": lens,
+                "context_ids": context_ids,
+                "context_titles": context_titles,
+                "grounding": grounding_echo,
+                "source_text": material + ("\n\n" + env if env else ""),
+                "temperature": float(temperature) if temperature is not None else None,
+                "max_tokens": int(max_tokens) if max_tokens is not None else None,
+            }
+
+        if capability_id == "ask.answer":
+            # An answer is one job through the engine door: the engine its
+            # assignment names, one retry on the next engine of the chain,
+            # one receipt, and a failure waits in Needs you with Retry.
+            if model is not None or inference_target_id is not None or profile_id is not None:
+                raise ValidationError(
+                    "Legacy model selectors are unavailable after assignment migration.",
+                    code="inference_legacy_selector_retired",
+                )
+            return await asyncio.to_thread(
+                self._ask_through_door, principal, _payload, reflect, invocation_id=invocation_id,
+                lens=lens, max_tokens=max_tokens, trace=ask_trace(invocation_id) if desk_tools else "",
+                retry_key=_retry_key(_thread_id, prompt),
+                subject=(subject_kind, subject_id) if subject_kind and subject_id else ("invocation", invocation_id),
+            )
         if self._routed_assignments_active(
             capability_id=capability_id,
             invocation_id=invocation_id,
             subject_kind=subject_kind,
             subject_id=subject_id,
         ):
-            if model is not None or inference_target_id is not None or profile_id is not None:
-                raise ValidationError(
-                    "Legacy model selectors are unavailable after assignment migration.",
-                    code="inference_legacy_selector_retired",
-                )
-            def _payload(memory: MemoryContext) -> dict[str, Any]:
-                env = _envelope(memory)
-                return {
-                    "schema_version": 2,
-                    "system_prompt": _ASK_SYSTEM_PROMPT + frozen_system_instruction + (" " + ask_desk.DESK_PROMPT if desk_tools else ""),
-                    "user_prompt": asked + ("\n\nMaterial:\n" + material if material else "") + ("\n\nGrounding:\n" + env if env else ""),
-                    "lens": lens,
-                    "context_ids": context_ids,
-                    "context_titles": context_titles,
-                    "grounding": grounding_echo,
-                    "source_text": material + ("\n\n" + env if env else ""),
-                    "temperature": float(temperature) if temperature is not None else None,
-                    "max_tokens": int(max_tokens) if max_tokens is not None else None,
-                }
-
+            # The routed Thought: the refinement coordinator names no target.
             if routed_execution_id and capability_id == "thought.interview":
                 # The routed Thought: the same read and fit the coordinator
                 # made at reservation, so the dispatched bytes are the
@@ -764,11 +802,7 @@ class AskService:
                 )
             payload = _payload(reflect)
             self._emit("running", kind="ask", ref="ask", name=lens)
-            adapter: Any = CanonicalPromptAdapter()
-            if capability_id == "thought.interview":
-                adapter = _QuestionOrSynthesisAdapter(adapter)
-            else:
-                adapter = _AskAnswerAdapter(self._answer_adapter(invocation_id), trace=ask_trace(invocation_id) if desk_tools else "")
+            adapter = _QuestionOrSynthesisAdapter(CanonicalPromptAdapter())
             if routed_execution_id:
                 coordinator = self._broker.inference_adoption_service
                 from .inference_route_plan_service import ROUTE_PLANNING_AUTHORITY
@@ -787,76 +821,58 @@ class AskService:
                     )
                 admitted = {"execution": execution, "operation_request_plan": operation, "route_plan": route}
             else:
-                try:
-                    admitted = await asyncio.to_thread(
-                        self._broker.inference_adoption_service.admit,
-                        principal,
-                        command_id=f"admit-{invocation_id}",
-                        capability_id=capability_id,
-                        operation_id=invocation_id,
-                        payload=payload,
-                        invocation_id=invocation_id,
-                        subject_kind=subject_kind,
-                        subject_id=subject_id,
-                        reserved_output_tokens=int(max_tokens) if max_tokens is not None else 512,
-                    )
-                except ServiceError as exc:
-                    raise self._with_route_reason(exc) from exc
-            # Betterment Q2, Ask goes first: the turn holds its engines, so
-            # background work starts no new call on them until it ends; the
-            # owner hears it when the engine is still busy after 5 s, and
-            # every second attempt is said.
-            from ..engine_lanes import LANES
-            lanes = self._route_lanes(admitted["route_plan"])
-            watch = self._watch_busy(invocation_id, lanes, capability_id)
-            dispatch_hook = self._attempt_progress(
-                invocation_id, admitted["execution"], before_physical_dispatch,
-            )
-            try:
-                with LANES.foreground([lane["key"] for lane in lanes]):
-                    routed = await asyncio.to_thread(
-                        self._broker.inference_adoption_service.execute,
-                        principal,
-                        execution_id=admitted["execution"]["id"],
-                        adapter=adapter,
-                        publish=lambda output, reservation: self._broker.projection_stager.stage(
-                            str(reservation["child_invocation_id"]),
-                            "ask-result",
-                            self._routed_projection(
-                                dict(output), payload, None, admitted["route_plan"],
-                                route_leg_ordinal=int(reservation["route_leg_ordinal"]),
-                            ),
-                            result_sha256=(
-                                result_sha256 := "sha256:" + hashlib.sha256(
-                                    json.dumps(
-                                        output,
-                                        sort_keys=True,
-                                        separators=(",", ":"),
-                                        ensure_ascii=True,
-                                        allow_nan=False,
-                                    ).encode()
-                                ).hexdigest()
-                            ),
-                            receipt_result_ref=(
-                                f"inference-result:{reservation['child_invocation_id']}/{result_sha256}"
-                            ),
-                        ).result_ref,
-                        before_physical_dispatch=dispatch_hook,
-                    )
-            except ServiceError as exc:
-                raise self._with_route_reason(exc) from exc
-            finally:
-                watch.cancel()
+                admitted = await asyncio.to_thread(
+                    self._broker.inference_adoption_service.admit,
+                    principal,
+                    command_id=f"admit-{invocation_id}",
+                    capability_id=capability_id,
+                    operation_id=invocation_id,
+                    payload=payload,
+                    invocation_id=invocation_id,
+                    subject_kind=subject_kind,
+                    subject_id=subject_id,
+                    reserved_output_tokens=int(max_tokens) if max_tokens is not None else 512,
+                )
+            # Betterment Q2: the turn holds its engines, so background work
+            # starts no new call on them until it ends.
+            from ..engine_lanes import LANES, engine_key
+            lanes = [engine_key(self._db, str(leg.get("deployment_revision_id") or ""))
+                     for leg in admitted["route_plan"].get("entries") or ()]
+            with LANES.foreground(lanes):
+                routed = await asyncio.to_thread(
+                    self._broker.inference_adoption_service.execute,
+                    principal,
+                    execution_id=admitted["execution"]["id"],
+                    adapter=adapter,
+                    publish=lambda output, reservation: self._broker.projection_stager.stage(
+                        str(reservation["child_invocation_id"]),
+                        "ask-result",
+                        self._routed_projection(
+                            dict(output), payload, None, admitted["route_plan"],
+                            route_leg_ordinal=int(reservation["route_leg_ordinal"]),
+                        ),
+                        result_sha256=(
+                            result_sha256 := "sha256:" + hashlib.sha256(
+                                json.dumps(
+                                    output,
+                                    sort_keys=True,
+                                    separators=(",", ":"),
+                                    ensure_ascii=True,
+                                    allow_nan=False,
+                                ).encode()
+                            ).hexdigest()
+                        ),
+                        receipt_result_ref=(
+                            f"inference-result:{reservation['child_invocation_id']}/{result_sha256}"
+                        ),
+                    ).result_ref,
+                    before_physical_dispatch=before_physical_dispatch,
+                )
             if routed["outcome"] != "succeeded" or not isinstance(routed["result"], dict):
-                # A failed Ask keeps where its bytes went (Astra, #875).
+                # The routed Thought reads the failure's code (refinement_coordinator).
                 raise ServiceError(
                     "inference_route_failed", "No assigned model completed this request",
-                    context={
-                        "receipt": routed["receipt"],
-                        "route": self._receipt_route(routed["receipt"]),
-                        "reason": self._route_reason(routed["receipt"]),
-                        "status": 409,
-                    },
+                    context={"receipt": routed["receipt"], "status": 409},
                 )
             winner = str(routed["winning_reservation"]["child_invocation_id"])
             result = self._broker.projection_stager.finalize(winner)
@@ -866,20 +882,11 @@ class AskService:
                     "Ask result is awaiting receipt reconciliation",
                     context={"invocation_id": winner, "status": 409},
                 )
-            result = dict(result)
-            result["route_execution_receipt"] = routed["receipt"]
-            # The route the face names: the least private SENT attempt of
-            # this receipt, with its token (inference_locality.served_route).
-            route = self._receipt_route(routed["receipt"])
-            if route is not None:
-                result["route"] = route
-                if route["lamp"]:
-                    result["egress"] = {"scope": route["lamp"], **({"host": route["host"]} if route["host"] else {})}
             self._emit("ready", kind="ask", ref="ask", name=lens)
-            return result
+            return {**dict(result), "route_execution_receipt": routed["receipt"]}
         from ..inference_targets import resolve_placement, target_refusal
         placement = resolve_placement(self._db, invocation=(inference_target_id or profile_id) or None)
-        target, requested = placement.target, placement.effective_target_id
+        target = placement.target
         if frozen_admission_claim is not None:
             observed = {"target_id":target.id,"target_kind":target.kind,"boundary":target.boundary,
                         "engine":target.engine,"model":target.model,"readiness":target.readiness_state,
@@ -895,10 +902,6 @@ class AskService:
         # so the refusal below names the true model and `selected_model` cannot
         # hand the receipt a name no engine on this path will ever report.
         advertised = self._destination_model(target)
-        override = str(model or "").strip() or None
-        if override and override != advertised:
-            offer = advertised or "no model"
-            raise ValidationError(f"model {override!r} is not available on destination '{target.name}' (id {requested!r}); it runs {offer!r}. Address the destination that advertises {override!r} by its inference_target_id — Ask does not retarget by model name.", code="model_not_advertised", context={"inference_target_id": requested, "target_name": target.name, "requested_model": override, "available_models": [advertised] if advertised else [], "status": 400})
         if not target.ready:
             raise ServiceError(
                 "target_unavailable",
@@ -928,29 +931,14 @@ class AskService:
                 principal,
                 InvocationRequest(revision.id, ServiceContract.for_payload(ASK_SERVICE_CONTRACT, ASK_SERVICE_SCHEMA_VERSION, payload), time.time() + 60, payload, invocation_id, before_physical_dispatch=before_physical_dispatch, before_compatibility_retry=before_compatibility_retry),
                 publish=self._broker.projection_stager.publisher(invocation_id, "ask-result", lambda output: self._ask_projection(output, payload, target, ran_profile_id, placement.placement_dict())),
-                adapter=self._answer_adapter(invocation_id) if capability_id == "ask.answer" else None,
             )
+        # The unrouted Thought reads the failure's code (refinement_coordinator).
         except KernelRefused as exc:
             self._emit("error", kind="ask", ref="ask", name=lens, error=exc.reason)
-            failure = self._outcome_error(None, exc)
-            failure.context["reason"] = self._route_reason(
-                {"terminal_disposition": exc.reason}
-            )
-            raise failure
+            raise self._outcome_error(None, exc)
         if outcome.outcome != "succeeded":
             self._emit("error", kind="ask", ref="ask", name=lens, error=outcome.outcome)
-            failure = self._outcome_error(outcome, None, target=target)
-            failure.context["reason"] = self._route_reason(
-                {
-                    "attempts": [
-                        {
-                            "runner_signal": getattr(outcome, "runner_signal", ""),
-                            "send_phase": getattr(outcome, "send_phase", ""),
-                        }
-                    ]
-                }
-            )
-            raise failure
+            raise self._outcome_error(outcome, None, target=target)
         result = self._broker.projection_stager.finalize(invocation_id)
         if result is None:
             raise ServiceError("projection_not_published", "Ask result is awaiting receipt reconciliation", context={"invocation_id": invocation_id, "operation_id": outcome.operation_id, "receipt": dict(outcome.receipt), "result_ref": outcome.result_ref, "status": 409})
@@ -1058,7 +1046,7 @@ class AskService:
             principal, question, grounding, lens=lens, context=context,
             invocation_id=invocation_id, history=history,
             memory_exclude_refs=self._earlier_asks(thread_id, context or [], grounding),
-            desk_tools=desk_tools, _prepared_note=pinned,
+            desk_tools=desk_tools, _prepared_note=pinned, _thread_id=thread_id,
         )
         text = str(question or "").strip()
         if not thread_id:
@@ -1286,29 +1274,95 @@ class AskService:
 
     # ── Betterment Q2: Ask goes first ────────────────────────────────
 
-    def _route_lanes(self, route_plan: Any) -> list[dict[str, Any]]:
-        """One row per leg of the frozen route: its engine (lane) and words."""
-        from ..engine_lanes import engine_key
+    def _ask_through_door(
+        self, principal: Principal, build: Callable[[MemoryContext], dict[str, Any]], reflect: MemoryContext, *,
+        invocation_id: str, lens: str, max_tokens: Any, trace: str, retry_key: str, subject: tuple[str, str],
+    ) -> dict[str, Any]:
+        """One answer through the engine door: the engine the Answers
+        assignment names (the subject's, or a one-run "Use X for this one"),
+        one retry on the chain's next engine, one receipt; a failure waits in
+        Needs you with Retry (kind ``ask``)."""
+        from . import engine_door
+        from ..engine_lanes import LANES, engine_key
+        from .memory_grounding import fit_memory
 
-        lanes: list[dict[str, Any]] = []
-        for leg in (route_plan or {}).get("entries") or ():
-            revision = str(leg.get("deployment_revision_id") or "")
-            model = ""
-            try:
+        job = "ask.answer"
+        try:
+            engine = engine_door.engine_for(self._broker, job, subject=subject)
+        except engine_door.EngineDoorError as exc:
+            raise ServiceError("no_assignment", exc.detail, context={"reason": "no_engine", "status": 409}) from exc
+        reserved = int(max_tokens) if max_tokens is not None else 512
+        if reflect:  # memory never turns an answer that fits into one that does not
+            reflect = fit_memory(reflect, lambda memory: engine_door.room(
+                self._broker, engine, build(memory), reserved_output_tokens=reserved) >= 0)
+        payload = build(reflect)
+        retry = ("ask", retry_key)
+        # The door id carries this Ask's id, so a saved Room ask finds this run
+        # (``db/task_resume.py``); each run is its own.
+        _DOOR_IDS[invocation_id] = door = engine_door.door_id(job, retry, nonce=f"{invocation_id}_{uuid.uuid4().hex[:8]}")
+        # Betterment Q2, Ask goes first: background work starts no new call on
+        # these engines until the answer ends; after 5 s the owner hears it.
+        engines = [e for e in (engine, engine.fallback) if e is not None]
+        watch = self._watch_busy(invocation_id, engine, job)
+        self._emit("running", kind="ask", ref="ask", name=lens)
+        try:
+            with LANES.foreground([engine_key(self._db, e.revision) for e in engines]):
+                answer = engine_door.run(
+                    self._broker, principal, job, payload, engine=engine, invocation_id=door, retry=retry,
+                    adapter=_AskAnswerAdapter(self._answer_adapter(invocation_id), trace=trace),
+                    stage=("ask-result", lambda output: self._door_projection(output, payload, invocation_id)),
+                )
+        except engine_door.EngineDoorError as exc:
+            self._emit("error", kind="ask", ref="ask", name=lens, error=exc.outcome or exc.code)
+            reason = "not_reachable" if exc.send_phase == "pre_send" else {
+                "refused": "refused", "cancelled": "stopped"}.get(exc.outcome, "did_not_answer")
+            context: dict[str, Any] = {"reason": reason, "status": 409, "operation_id": exc.operation_id}
+            if exc.operation_id and exc.send_phase != "pre_send":  # a failed Ask keeps where its bytes went (#875)
                 with self._db._connection() as conn:
-                    row = conn.execute(
-                        "SELECT model FROM deployment_revisions WHERE id=?", (revision,),
-                    ).fetchone()
-                model = "" if row is None else str(row["model"] or "")
-            except Exception:
-                model = ""
-            lanes.append({
-                "key": engine_key(self._db, revision),
-                "profile_id": str(leg.get("profile_id") or ""),
-                "boundary": str(leg.get("boundary") or ""),
-                "model": model,
-            })
-        return lanes
+                    row = conn.execute("SELECT target_ref, native_id FROM kernel_operations WHERE operation_id=?",
+                                       (exc.operation_id,)).fetchone()
+                if row is not None:
+                    revision = str(row["target_ref"]).removeprefix("deployment-revision:")
+                    context["route"] = self._door_route(revision, exc.operation_id, "", str(row["native_id"]))["route"]
+            raise ServiceError("inference_route_failed", "No assigned model completed this request",
+                               context=context) from exc
+        finally:
+            watch.cancel()
+            _DOOR_IDS.pop(invocation_id, None)
+        if answer.published is None:
+            raise ServiceError("projection_not_published", "Ask result is awaiting receipt reconciliation",
+                               context={"invocation_id": invocation_id, "status": 409})
+        self._emit("ready", kind="ask", ref="ask", name=lens)
+        return {
+            **dict(answer.published), "invocation_id": invocation_id, "operation_id": answer.operation_id,
+            "profile_id": answer.engine.profile, "route_execution_receipt": {"execution_id": answer.operation_id},
+            **self._door_route(answer.engine.revision, answer.operation_id, answer.model, answer.invocation_id),
+        }
+
+    def _door_route(self, revision_id: str, operation_id: str, model: str, run_id: str) -> dict[str, Any]:
+        """The receipt the face reads: which engine ran and where the bytes went
+        (``inference_locality``, the one classifier)."""
+        from ..inference_locality import _attempt_route
+
+        revision = self._db.deployment_revisions.get(revision_id)
+        with self._db._connection() as conn:
+            route = _attempt_route(conn, {"deployment_revision_id": revision_id,
+                                          "boundary": getattr(revision, "boundary", "")})
+        model = model or route["model"]
+        return {"model": model, "provider": str(getattr(revision, "engine", "") or ""),
+                "egress": {"scope": route["lamp"], **({"host": route["host"]} if route["host"] else {})},
+                "route": {**route, "model": model, "receipt": operation_id, "fallback": run_id.endswith("_r2")}}
+
+    @staticmethod
+    def _door_projection(output: Any, payload: dict[str, Any], invocation_id: str) -> dict[str, Any]:
+        """The kept answer (``ask_results``, under the Ask's own id): the words and what they read."""
+        answer = str(output.get("output") if isinstance(output, dict) else output)
+        source_text = str(payload.get("source_text") or "")
+        return {"output": answer, "invocation_id": invocation_id, "lens": str(payload["lens"]),
+                "context_ids": list(payload["context_ids"]),
+                "context_titles": list(payload["context_titles"]),
+                **({"grounding": payload["grounding"]} if payload.get("grounding") is not None else {}),
+                **({"grounding_claims": score_claims(answer, source_text)} if source_text.strip() else {})}
 
     def _send_progress(self, event: dict[str, Any]) -> None:
         if self._progress is None:
@@ -1318,26 +1372,26 @@ class AskService:
         except Exception:  # a progress event is never a gate
             pass
 
-    def _watch_busy(self, invocation_id: str, lanes: list[dict[str, Any]], capability_id: str) -> Any:
+    def _watch_busy(self, invocation_id: str, engine: Any, capability_id: str) -> Any:
         """After ``BUSY_AFTER_SECONDS``, say so when background work holds the engine."""
         import threading
 
-        if self._progress is None or not lanes:
+        if self._progress is None:
             return threading.Timer(0, lambda: None)
 
         def check() -> None:
-            from ..engine_lanes import LANES
+            from ..engine_lanes import LANES, engine_key
 
-            first = lanes[0]
-            job = LANES.busy_with(first["key"])
+            key = engine_key(self._db, engine.revision)
+            job = LANES.busy_with(key)
             if not job:
                 return
+            revision = self._db.deployment_revisions.get(engine.revision)
             self._send_progress({
-                "invocation_id": invocation_id,
-                "state": "busy",
-                "job": job,
-                "engine": {"model": first["model"], "boundary": first["boundary"]},
-                "alternatives": self._other_engines(capability_id, first["key"]),
+                "invocation_id": invocation_id, "state": "busy", "job": job,
+                "engine": {"model": str(getattr(revision, "model", "") or ""),
+                           "boundary": str(getattr(revision, "boundary", "") or "")},
+                "alternatives": self._other_engines(capability_id, key),
             })
 
         timer = threading.Timer(BUSY_AFTER_SECONDS, check)
@@ -1384,29 +1438,6 @@ class AskService:
         order = {"local": 0, "same_device": 0, "private_network": 1, "lan": 1, "mesh": 2, "cloud": 3}
         others.sort(key=lambda other: order.get(str(other["boundary"]), 4))
         return others
-
-    def _attempt_progress(self, invocation_id: str, execution: Any, inner: Any) -> Any:
-        """Say every attempt after the first ("Trying again, 1 of 3")."""
-        limit = int((execution or {}).get("total_attempt_limit") or 0)
-
-        def hook(operation_id: str, child_invocation_id: str, attempt_ordinal: int) -> None:
-            if int(attempt_ordinal or 1) > 1:
-                self._send_progress({
-                    "invocation_id": invocation_id,
-                    "state": "retry",
-                    "attempt": int(attempt_ordinal) - 1,
-                    "of": max(1, limit - 1) if limit else int(attempt_ordinal) - 1,
-                })
-            if inner is not None:
-                inner(operation_id, child_invocation_id, attempt_ordinal)
-
-        return hook
-
-    def _receipt_route(self, receipt: Any) -> dict[str, Any] | None:
-        from ..inference_locality import served_route
-
-        with self._db._connection() as conn:
-            return served_route(conn, receipt)
 
     def _routed_assignments_active(
         self,
@@ -1494,8 +1525,6 @@ class AskService:
         code = str(exc.code or "")
         if code == "grounding_not_found":
             return "source_gone"
-        if code == "model_not_advertised":
-            return "no_engine"
         if code == "mesh_node_offline":
             return "not_reachable"
         if isinstance(exc, ValidationError):
@@ -1620,19 +1649,11 @@ class AskService:
     def cancel(self, principal: Principal, invocation_id: str) -> dict[str, str]:
         if ask_desk.cancel_loop(invocation_id):
             return {"invocation_id": invocation_id, "disposition": "stopped"}
-        if self._routed_assignments_active():
-            stopped = self._broker.inference_adoption_service.stop_operation(
-                principal,
-                command_id=f"stop-{invocation_id}",
-                operation_id=invocation_id,
-            )
-            return {
-                "invocation_id": invocation_id,
-                "disposition": str(stopped["child_signal"]),
-            }
         from ..kernel.runtime import _as_principal
         with _as_principal(principal):
-            return {"invocation_id": invocation_id, "disposition": self._runner.cancel(invocation_id)}
+            # An answer runs under its door id (``_ask_through_door``).
+            door = _DOOR_IDS.get(invocation_id, invocation_id)
+            return {"invocation_id": invocation_id, "disposition": self._runner.cancel(door)}
 
     def keep(self, principal: Principal, output: str, sources: list[dict[str, Any]], *, lens: str = "Ask", prompt: str = "", grounding: Any = None) -> dict[str, Any]:
         if not str(output or "").strip(): raise ValidationError("output is required")
@@ -1840,3 +1861,6 @@ class AskService:
         if titles: p["context_titles"]=titles
         if prompt: p["prompt"]=prompt
         return p
+
+
+_register_retry()

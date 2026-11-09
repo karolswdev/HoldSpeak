@@ -15,7 +15,6 @@ import { latchAskSelection } from "../ask";
 import { ASK_RETURN_EVENT, takeAskReturn } from "../thought-workspace/askReturn";
 import { clearEngineCache } from "../hooks/useEngine";
 import BUSY from "../../test/wire/ask.busy.wire.json";
-import RETRY from "../../test/wire/ask.retry.wire.json";
 import THREAD from "../../test/wire/ask.thread.wire.json";
 import NOTE_WIRE from "../../test/wire/notes-create.wire.json";
 import TOOLS from "../../test/wire/ask.tools.wire.json";
@@ -189,12 +188,6 @@ describe("Betterment Q2: an Ask on a busy engine says so, and offers another eng
     const asks = calls.filter((c) => c.url.endsWith("/api/ask"));
     expect(asks[1].body?.invocation_id).toBe(next);
     expect(calls.indexOf(set)).toBeLessThan(calls.indexOf(asks[1]));
-  });
-
-  it("a second attempt is said: 'Trying again, 1 of N'", async () => {
-    await askMira();
-    act(() => deliver("ask_progress", RETRY.retry));
-    expect((await screen.findByTestId("run-line")).textContent).toContain(`Trying again, 1 of ${RETRY.retry.of}`);
   });
 });
 

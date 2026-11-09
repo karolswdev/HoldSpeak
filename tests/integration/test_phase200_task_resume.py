@@ -73,6 +73,10 @@ def rig(tmp_path: Path, monkeypatch):
     engine = _FakeIntel()
     monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: engine)
     monkeypatch.setattr("holdspeak.intel.providers._configured_engine", lambda: engine)
+    # An answer runs on the engine the Answers assignment names (the door).
+    from tests.unit.test_ask_engine_door import assign_answers
+
+    assign_answers(db)
 
     app = FastAPI()
 

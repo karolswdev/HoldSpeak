@@ -67,10 +67,15 @@ def ask_rig(tmp_path, monkeypatch):
     return db, AskService(db, broker=broker)
 
 
+#: Placement is the unrouted Thought's now; an answer runs on its assignment
+#: through the engine door (``test_ask_engine_door.py``).
+CLASSIC = "thought.interview"
+
+
 def test_ask_global_placement(ask_rig):
     """Ask with no overrides -> source 'global'."""
     _db, service = ask_rig
-    result = asyncio.run(service.ask(OWNER, "hello"))
+    result = asyncio.run(service.ask(OWNER, "hello", operation_capability=CLASSIC))
     assert "placement" in result, f"placement block missing from Ask result: {sorted(result)}"
     p = result["placement"]
     assert p["source"] == "global"
@@ -81,7 +86,7 @@ def test_ask_invocation_placement(ask_rig):
     """Ask with explicit inference_target_id -> source 'invocation'."""
     _db, service = ask_rig
     result = asyncio.run(
-        service.ask(OWNER, "hello", inference_target_id="ask_profile", model="ask-model")
+        service.ask(OWNER, "hello", inference_target_id="ask_profile", operation_capability=CLASSIC)
     )
     assert result["placement"]["source"] == "invocation"
     assert result["placement"]["effective_target_id"] == "ask_profile"
