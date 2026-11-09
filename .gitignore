@@ -98,6 +98,9 @@ docs/generated/
 docs/api-surface.json
 docs/API_SURFACE.md
 docs/API_REFERENCE.md
+# The MCP sidecar page: scripts/gen_mcp_sidecar_doc.py fills
+# scripts/mcp_sidecar_doc.template.md from the live registry.
+docs/MCP_SIDECAR.md
 
 # SQLite lock state: a reader that opens a tracked proof database writes these.
 *.sqlite-shm

@@ -972,14 +972,8 @@ export async function restoreProject(id: string): Promise<void> {
 import type {
   WorkbenchDetail,
   WorkbenchItem,
-  WorkbenchRun,
-  Skill,
   MemoryEntry,
   WorkbenchAutomation,
-  AutomationHistoryEntry,
-  AutomationTestResult,
-  ResourcefulPolicy,
-  ResourcefulDispatch,
 } from "./detail-types";
 
 export async function fetchWorkbenchDetail(id: string): Promise<WorkbenchDetail> {
@@ -987,19 +981,9 @@ export async function fetchWorkbenchDetail(id: string): Promise<WorkbenchDetail>
   return wireRaw(data, "workbench") as WorkbenchDetail;
 }
 
-export async function fetchWorkbenchRuns(id: string): Promise<WorkbenchRun[]> {
-  const data = await apiFetch<Record<string, unknown>>(`/api/workbenches/${encodeURIComponent(id)}/runs`);
-  return (wireArray(data, "runs") as WorkbenchRun[]) || [];
-}
-
 export async function fetchWorkbenchMemory(id: string): Promise<MemoryEntry[]> {
   const data = await apiFetch<Record<string, unknown>>(`/api/workbenches/${encodeURIComponent(id)}/memory`);
   return (wireArray(data, "entries") as MemoryEntry[]) || [];
-}
-
-export async function fetchSkills(): Promise<Skill[]> {
-  const data = await apiFetch<Record<string, unknown>>("/api/skills");
-  return (wireArray(data, "skills") as Skill[]) || [];
 }
 
 export async function updateWorkbenchField(
@@ -1086,53 +1070,6 @@ export async function restoreWorkbenchItem(
   return (wireRaw(data, "item") as WorkbenchItem | null) || null;
 }
 
-export async function parkWorkbenchItems(
-  workbenchId: string,
-  itemIds: string[],
-): Promise<string[]> {
-  const data = await apiFetch<Record<string, unknown>>(
-    `/api/workbenches/${encodeURIComponent(workbenchId)}/items/park`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ item_ids: itemIds }),
-    },
-  );
-  return wireArray(data, "parked").filter((id): id is string => typeof id === "string");
-}
-
-export async function restoreWorkbenchItems(
-  workbenchId: string,
-  itemIds: string[],
-): Promise<string[]> {
-  const data = await apiFetch<Record<string, unknown>>(
-    `/api/workbenches/${encodeURIComponent(workbenchId)}/items/restore`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ item_ids: itemIds }),
-    },
-  );
-  return wireArray(data, "restored").filter((id): id is string => typeof id === "string");
-}
-
-export async function fetchParkedWorkbenchItems(
-  workbenchId: string,
-): Promise<WorkbenchItem[]> {
-  const data = await apiFetch<Record<string, unknown>>(
-    `/api/workbenches/${encodeURIComponent(workbenchId)}?parked=true`,
-  );
-  const workbench = wireRaw(data, "workbench");
-  return wireArray(workbench, "items") as WorkbenchItem[];
-}
-
-export async function deleteWorkbenchItem(
-  workbenchId: string,
-  itemId: string,
-): Promise<void> {
-  await parkWorkbenchItem(workbenchId, itemId);
-}
-
 /** Run the pending queue, or only the named items (an item's Re-run). */
 export async function triggerWorkbenchRun(workbenchId: string, itemIds?: string[]): Promise<Record<string, unknown> | null> {
   const answer = await apiFetch<{ run?: Record<string, unknown> }>(
@@ -1142,24 +1079,6 @@ export async function triggerWorkbenchRun(workbenchId: string, itemIds?: string[
       : { method: "POST" },
   );
   return answer && typeof answer === "object" && answer.run && typeof answer.run === "object" ? answer.run : null;
-}
-
-export async function updateSkill(
-  skillId: string,
-  fields: Record<string, unknown>,
-): Promise<void> {
-  await apiFetch<Record<string, unknown>>(`/api/skills/${encodeURIComponent(skillId)}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(fields),
-  });
-}
-
-export async function clearWorkbenchMemory(workbenchId: string): Promise<void> {
-  await apiFetch<Record<string, unknown>>(
-    `/api/workbenches/${encodeURIComponent(workbenchId)}/memory`,
-    { method: "DELETE" },
-  );
 }
 
 /** Betterment A3: opening a result reads it (`new` becomes `read`). */
@@ -1204,37 +1123,7 @@ export async function forgetAutomationLesson(workbenchId: string, index: number,
   );
 }
 
-export async function promoteMemoryToSkill(
-  workbenchId: string,
-  index: number,
-): Promise<void> {
-  await apiFetch<Record<string, unknown>>(
-    `/api/workbenches/${encodeURIComponent(workbenchId)}/memory/${index}/promote`,
-    { method: "POST" },
-  );
-}
-
-export async function retryMint(
-  workbenchId: string,
-  itemId: string,
-): Promise<string | null> {
-  const data = await apiFetch<Record<string, unknown>>(
-    `/api/workbenches/${encodeURIComponent(workbenchId)}/items/${encodeURIComponent(itemId)}/retry-mint`,
-    { method: "POST" },
-  );
-  return data?.artifact_id ? String(data.artifact_id) : null;
-}
-
 /* ── Workbench automations (Reactions) ─────────────────────────────── */
-
-export async function fetchWorkbenchAutomations(
-  workbenchId: string,
-): Promise<WorkbenchAutomation[]> {
-  const data = await apiFetch<{ automations?: Record<string, unknown>[] }>(
-    `/api/workbenches/${encodeURIComponent(workbenchId)}/automations`,
-  );
-  return Array.isArray(data.automations) ? data.automations.map(automationFromWire) : [];
-}
 
 /** The service's rich Watch + Reaction document becomes the compact row the
  * Workbench needs. Keeping this mapper tolerant also lets a later facade send
@@ -1267,18 +1156,6 @@ export function automationFromWire(value: Record<string, unknown>): WorkbenchAut
   };
 }
 
-export async function createWorkbenchAutomation(
-  workbenchId: string,
-  presetId: "github-review-requested" | "jira-assigned-to-me",
-  repository: string,
-): Promise<WorkbenchAutomation> {
-  const data = await apiFetch<{ automation: Record<string, unknown> }>(
-    `/api/workbenches/${encodeURIComponent(workbenchId)}/automations`,
-    { method: "POST", json: { preset_id: presetId, repository } },
-  );
-  return automationFromWire(data.automation);
-}
-
 /** Enabling is the owner gesture that establishes an initial silent baseline. */
 export async function setWorkbenchAutomationEnabled(
   workbenchId: string,
@@ -1292,88 +1169,3 @@ export async function setWorkbenchAutomationEnabled(
   return automationFromWire(data.automation);
 }
 
-/** A test exercises matching without adding an item or advancing the baseline. */
-export async function testWorkbenchAutomation(
-  workbenchId: string,
-  automationId: string,
-): Promise<AutomationTestResult> {
-  const data = await apiFetch<Record<string, unknown>>(
-    `/api/workbenches/${encodeURIComponent(workbenchId)}/automations/${encodeURIComponent(automationId)}/test`,
-    { method: "POST" },
-  );
-  const changes = Array.isArray(data.changes) ? data.changes.length : Number(data.changes || 0);
-  return {
-    entity_count: Number(data.entity_count || 0),
-    changes,
-    would_add: Number(data.would_project || data.would_add || 0),
-  };
-}
-
-export async function fetchWorkbenchAutomationHistory(
-  workbenchId: string,
-  automationId: string,
-): Promise<AutomationHistoryEntry[]> {
-  const data = await apiFetch<{ history?: Record<string, unknown>[] }>(
-    `/api/workbenches/${encodeURIComponent(workbenchId)}/automations/${encodeURIComponent(automationId)}/history`,
-  );
-  return Array.isArray(data.history) ? data.history.map((entry) => ({
-    id: String(entry.id || entry.event_id || ""),
-    occurred_at: String(entry.occurred_at || entry.projected_at || entry.event_created_at || ""),
-    outcome: entry.item_id ? "added" : "skipped",
-    event_kind: String(entry.event_kind || entry.event_type || "event"),
-    subject: String(entry.subject || entry.subject_ref || ""),
-    receipt_id: entry.receipt_id ? String(entry.receipt_id) : null,
-    detail: entry.detail ? String(entry.detail) : null,
-  })) : [];
-}
-
-export async function fetchResourcefulPolicy(
-  workbenchId: string,
-): Promise<ResourcefulPolicy> {
-  const data = await apiFetch<{ policy: ResourcefulPolicy }>(
-    `/api/workbenches/${encodeURIComponent(workbenchId)}/resourceful`,
-  );
-  return data.policy;
-}
-
-export async function updateResourcefulPolicy(
-  workbenchId: string,
-  policy: Pick<ResourcefulPolicy,
-    "enabled" | "idle_after_minutes" | "cooldown_hours" | "nightly_target" |
-    "night_only" | "night_start_hour" | "night_end_hour" | "routines"
-  >,
-): Promise<ResourcefulPolicy> {
-  const data = await apiFetch<{ policy: ResourcefulPolicy }>(
-    `/api/workbenches/${encodeURIComponent(workbenchId)}/resourceful`,
-    { method: "PUT", json: policy },
-  );
-  return data.policy;
-}
-
-export async function fetchResourcefulHistory(
-  workbenchId: string,
-): Promise<ResourcefulDispatch[]> {
-  const data = await apiFetch<{ history?: ResourcefulDispatch[] }>(
-    `/api/workbenches/${encodeURIComponent(workbenchId)}/resourceful/history`,
-  );
-  return Array.isArray(data.history) ? data.history : [];
-}
-
-/** HS-118-05: resolve voice references via the workbench's resolver profile. */
-export async function resolveVoiceReferences(
-  workbenchId: string,
-  transcript: string,
-  requestId: string,
-): Promise<{
-  refs: Array<{ name: string; id: string; ref: string; kind: string }>;
-  egress: { boundary: string; model: string };
-  request_id: string;
-  error?: string;
-  attempts?: number;
-}> {
-  return apiFetch(`/api/workbenches/${encodeURIComponent(workbenchId)}/voice/resolve`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ transcript, request_id: requestId }),
-  });
-}

@@ -917,18 +917,18 @@ describe("an old automation (A9)", () => {
   const doOf = (step: unknown): string =>
     ((step as Step).gets[DETAIL_OF(step)] as { workbench: { instruction_shown: string } }).workbench.instruction_shown;
 
-  it("a recorded TODO automation shows its tasks waiting, its agent's prompt as Do, and RAW", async () => {
+  it("a recorded TODO automation shows its tasks waiting and its agent's prompt as Do", async () => {
     hub.step = oldQueue as Step;
-    render(<AutomationWindow workbenchId={(oldQueue as Step).workbench_id} onRaw={() => undefined} />);
+    render(<AutomationWindow workbenchId={(oldQueue as Step).workbench_id} />);
     await screen.findByTestId("automation-sentence");
     expect(line("do")).toHaveTextContent(doOf(oldQueue).split("\n")[0]);
     const rows = within(screen.getByTestId("automation-tasks")).getAllByTestId("automation-task");
     expect(rows.map((row) => row.textContent)).toEqual(
       itemsOf(oldQueue).map((item) => expect.stringContaining(item.title)));
     rows.forEach((row) => expect(row).toHaveTextContent("Waiting"));
-    // No empty card above its tasks; the old queue view stays behind RAW.
+    // No empty card above its tasks, and no RAW: the old queue view is parked.
     expect(screen.queryByTestId("automation-newest")).toBeNull();
-    expect(screen.getByTestId("automation-raw")).toBeInTheDocument();
+    expect(screen.queryByTestId("automation-raw")).toBeNull();
     expect(screen.getByTestId("automation-make-one")).toHaveTextContent("Make this one automation");
     // A long Do (the agent's prompt) clamps to 3 lines on a phone; "more" opens it.
     const text = line("do").querySelector(".automation-do-text")!;
@@ -944,7 +944,7 @@ describe("an old automation (A9)", () => {
     const before = useDesk.getState().openSurfaceWindow;
     useDesk.setState({ openSurfaceWindow: ((...args: unknown[]) => { opened.push(args); }) as typeof before });
     try {
-      render(<AutomationWindow workbenchId={(oldQueue as Step).workbench_id} onRaw={() => undefined} />);
+      render(<AutomationWindow workbenchId={(oldQueue as Step).workbench_id} />);
       await screen.findByTestId("automation-sentence");
       // Programs run it now: no Run now for an old queue.
       expect(screen.queryByTestId("automation-run-now")).toBeNull();
@@ -962,7 +962,7 @@ describe("an old automation (A9)", () => {
 
   it("its done tasks open in place to their answers, and one press makes it one automation; nothing is lost", async () => {
     hub.step = oldQueueRan as Step;
-    render(<AutomationWindow workbenchId={(oldQueueRan as Step).workbench_id} onRaw={() => undefined} />);
+    render(<AutomationWindow workbenchId={(oldQueueRan as Step).workbench_id} />);
     await screen.findByTestId("automation-sentence");
     const [first] = itemsOf(oldQueueRan);
     const row = within(screen.getByTestId("automation-tasks")).getAllByTestId("automation-task")[0];
@@ -978,10 +978,9 @@ describe("an old automation (A9)", () => {
     await waitFor(() => expect(screen.queryByTestId("automation-make-one")).toBeNull());
     expect(hub.calls).toContainEqual({ method: "POST", url: `${DETAIL_OF(oldQueueRan)}/make-one`, body: undefined });
     expect(line("do")).toHaveTextContent(doOf(oldMadeOne).split("\n")[0]);
-    // Its tasks and their answers stay; it is no longer a queue (no RAW).
+    // Its tasks and their answers stay; it is no longer a queue.
     expect(within(screen.getByTestId("automation-tasks")).getAllByTestId("automation-task"))
       .toHaveLength(itemsOf(oldQueueRan).length);
-    expect(screen.queryByTestId("automation-raw")).toBeNull();
   });
 });
 
@@ -1040,16 +1039,10 @@ describe("A6: Put it in", () => {
   });
 });
 
-/* ── A8: one way to automate; the parked faces stay behind RAW ─────────── */
+/* ── A8: one way to automate; the queue view is parked (#2033) ─────────── */
 import { AutomationHost } from "../components/automation/AutomationHost";
 import { useBuilderTools } from "../builderTools";
 import { VERBS } from "../verbRegistry";
-
-// The parked queue view itself has its own tests (WorkbenchWindow's); here
-// only that RAW reaches it.
-vi.mock("../components/WorkbenchWindow", () => ({
-  WorkbenchWindow: ({ workbenchId }: { workbenchId: string }) => <div data-testid="parked-queue-window" data-id={workbenchId} />,
-}));
 
 describe("A8: park what the sentence replaces", () => {
   afterEach(() => { act(() => { useBuilderTools.getState().setOn(false); }); });
@@ -1059,15 +1052,14 @@ describe("A8: park what the sentence replaces", () => {
     expect(creates.filter((label) => /automation|workflow|agent/i.test(label))).toEqual(["New Automation"]);
   });
 
-  it("a sentence automation shows no RAW; with Builder tools on, RAW opens the parked queue view", async () => {
+  it("an automation shows no RAW, even with Builder tools on: the queue view is parked", async () => {
     hub.step = empty as Step;
     render(<AutomationHost workbenchId={WB} />);
     await screen.findByTestId("automation-sentence");
     expect(screen.queryByTestId("automation-raw")).toBeNull();
     act(() => { useBuilderTools.getState().setOn(true); });
-    fireEvent.click(await screen.findByTestId("automation-raw"));
-    expect(await screen.findByTestId("parked-queue-window")).toHaveAttribute("data-id", WB);
-    expect(screen.queryByTestId("automation-sentence")).toBeNull();
+    expect(screen.getByTestId("automation-sentence")).toBeInTheDocument();
+    expect(screen.queryByTestId("automation-raw")).toBeNull();
   });
 });
 

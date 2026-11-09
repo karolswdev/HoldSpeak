@@ -2121,3 +2121,66 @@ describe("an engine row: the job that did not run, and Retry (engines 2026-11-08
     await waitFor(() => expect(() => row(title)).toThrow());
   });
 });
+
+// Owner walk 2026-11-08 ("I can't open any of these when double clicking on
+// the title… right clicking and using the open option - still nothing
+// happened"). Every row kind opens its object as a window through the one
+// open grammar (openObject's refOpener): a double-click on the title and the
+// context menu's Open alike. Replays the hub's recorded answers.
+describe("every row opens its object (owner walk 2026-11-08)", () => {
+  const rows = needsRows as unknown as {
+    done: { steps: Array<{ gets: Gets }> };
+    program: { steps: Array<{ gets: Gets }> };
+    engine: { steps: Array<{ gets: Gets }> };
+  };
+  const phoneItems = (needsPhone as { items: Array<{ title: string }> }).items;
+  const people = (rows.done.steps[0].gets["/api/desk/needs-you?fresh=1"] as { items: Array<{ title: string; person_id: string }> }).items[0];
+  const program = (rows.program.steps[0].gets["/api/desk/needs-you?fresh=1"] as { items: Array<{ group: string; openRef: string }> }).items[0];
+  const engine = (rows.engine.steps[0].gets["/api/desk/needs-you?fresh=1"] as { items: Array<{ engine: { line: string } }> }).items[0];
+  const phoneHub: Gets = { "/api/desk/needs-you?fresh=1": { ...ANSWER, failedMeetings: [], count: phoneItems.length, items: phoneItems } };
+  const openPullout = vi.fn();
+  const openSurfaceWindow = vi.fn();
+  const REAL = { openPullout: useDesk.getState().openPullout, openSurfaceWindow: useDesk.getState().openSurfaceWindow };
+
+  beforeEach(() => {
+    openPullout.mockClear();
+    openSurfaceWindow.mockClear();
+    vi.mocked(openSurfaceOr).mockClear();
+    useDesk.setState({ openPullout, openSurfaceWindow } as never);
+    return () => useDesk.setState(REAL as never);
+  });
+
+  /** The windows asked for, in one list: a pull-out, a surface window, a surface. */
+  const opened = () => [
+    ...openPullout.mock.calls.map((c) => `pullout:${String(c[0])}`),
+    ...openSurfaceWindow.mock.calls.map((c) => `surface:${String(c[0])}`),
+    ...vi.mocked(openSurfaceOr).mock.calls.map((c) => `surface:${String(c[0])}`),
+  ];
+
+  const cases: Array<[string, () => Gets, string, string]> = [
+    ["a Program step", () => rows.program.steps[0].gets, program.group, `pullout:${program.openRef.split(":").slice(0, 2).join(":")}`],
+    ["a person's obligation", () => rows.done.steps[0].gets, people.title, `pullout:people:${people.person_id}`],
+    ["an engine that did not run (Retry)", () => rows.engine.steps[0].gets, engine.engine.line, "surface:open-decisions"],
+    ...phoneItems.map((item) => ["a phone row", () => phoneHub, item.title, "surface:open-calls"] as [string, () => Gets, string, string]),
+  ];
+
+  for (const [kind, hub, title, window] of cases) {
+    it(`${kind}: a double-click on the title and the menu's Open open it as a window (${title.slice(0, 24)})`, async () => {
+      vi.mocked(apiFetch).mockImplementation(async (path: string) => recordedGet(hub(), String(path)) as never);
+      render(<NeedsDrawer />);
+      const name = (await waitFor(() => row(title))).querySelector(".needs-row-name")!;
+      // A double-click in a browser: two clicks, then the dblclick.
+      fireEvent.click(name);
+      fireEvent.click(name);
+      fireEvent.doubleClick(name);
+      await waitFor(() => expect(opened()).toContain(window));
+
+      openPullout.mockClear();
+      openSurfaceWindow.mockClear();
+      vi.mocked(openSurfaceOr).mockClear();
+      fireEvent.contextMenu(row(title));
+      fireEvent.click(await screen.findByRole("menuitem", { name: "Open" }));
+      await waitFor(() => expect(opened()).toContain(window));
+    });
+  }
+});

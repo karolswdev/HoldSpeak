@@ -27,6 +27,7 @@ ON_DEMAND = {
     "docs/api-surface.json",
     "docs/API_SURFACE.md",
     "docs/API_REFERENCE.md",
+    "docs/MCP_SIDECAR.md",
 }
 FENCE = re.compile(r"^\s*(`{3,}|~{3,})")
 INLINE_CODE = re.compile(r"(`+).*?\1")

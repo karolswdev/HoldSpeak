@@ -179,7 +179,7 @@ Use the local sidecar, or enable Reach for scoped Streamable HTTP access.
 Configure destinations for folders, GitHub, Jira, Confluence, email, or Slack.
 Extend the system with meeting plugins, connectors, actuators, Modes, and voice commands.
 
-[MCP reference](docs/MCP_SIDECAR.md) · [Integrations](docs/INTEGRATIONS.md) · [Plugin authoring](docs/PLUGIN_AUTHORING.md)
+MCP reference (`scripts/gen_docs.sh` writes `docs/MCP_SIDECAR.md`) · [Integrations](docs/INTEGRATIONS.md) · [Plugin authoring](docs/PLUGIN_AUTHORING.md)
 
 ## Platforms and current limits
 

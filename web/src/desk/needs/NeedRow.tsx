@@ -96,12 +96,12 @@ export function useRowMenu(face: NeedFace, projects: boolean) {
   const [menu, setMenu] = useState<RowMenu | null>(null);
   const press = useRef<{ timer: number; held: boolean } | null>(null);
   const project = projects && face.project ? face.project : null;
-  // The row's own menu (work, confirm), or for any other row that names its
-  // Project: Open and Open the Project.
+  // The row's own menu (work, confirm), or for any other row that opens or
+  // names its Project: Open and Open the Project.
   const extra = projectEntries(project);
   const own = hasRowMenu(face);
   const opener = faceOpener(face);
-  const menuable = own || extra.length > 0;
+  const menuable = own || extra.length > 0 || opener !== null;
   const clearPress = () => { if (press.current) window.clearTimeout(press.current.timer); };
   const rowProps: React.LiHTMLAttributes<HTMLLIElement> | undefined = menuable ? {
     onContextMenu: (event) => {

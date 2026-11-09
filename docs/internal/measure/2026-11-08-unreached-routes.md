@@ -1,0 +1,178 @@
+# Routes with no web or iOS caller, 2026-11-08
+
+Written from `scripts/gen_api_surface.py` on branch `tools/api-surface-census` (base `origin/main` 2b0296340). 163 of 828 routes have `consumers == []`.
+
+The census reads the web (`web/src`, not `_parked`, not tests) and the iOS app (`apple/Sources`, `apple/App`). It does not read other callers: the CLI, hooks, the MCP proxy, the Line node, the phone app, walk and fixture scripts. Where the fixed part of a path is named in `holdspeak/`, `scripts/` or `apple/` outside the route modules, the line says so (`named in`). A name is text, not a proven call: read it before you park the route.
+
+Format: method, path, handler module.
+
+## API routes (134)
+
+- POST `/api/activity/extension/events` web.routes.activity.enrichment
+- DELETE `/api/activity/meeting-candidates` web.routes.activity.candidates
+- POST `/api/activity/meeting-candidates` web.routes.activity.candidates
+- POST `/api/activity/project-rules` web.routes.activity.rules (named in: holdspeak/web/announce.py)
+- POST `/api/activity/project-rules/preview` web.routes.activity.rules (named in: holdspeak/web/announce.py)
+- PUT `/api/activity/project-rules/{rule_id}` web.routes.activity.rules (named in: holdspeak/web/announce.py)
+- GET `/api/agents/capabilities` web.routes.system.agent_capabilities (named in: holdspeak/agent_capabilities.py)
+- PATCH `/api/all-action-items/{item_id}/review` web.routes.meetings.action_items (named in: scripts/dogfood_meeting_aftercare.py, scripts/needs_you_faces_fixture.py, scripts/philo13_needs_you_fixture.py)
+- POST `/api/authority/evaluate` web.routes.authority (named in: holdspeak/web/announce.py)
+- GET `/api/authority/grants` web.routes.authority (named in: holdspeak/principals.py)
+- POST `/api/authority/grants` web.routes.authority (named in: holdspeak/principals.py)
+- DELETE `/api/authority/grants/{grant_id}` web.routes.authority (named in: holdspeak/principals.py)
+- GET `/api/authority/grants/{grant_id}/uses` web.routes.authority (named in: holdspeak/principals.py)
+- POST `/api/brief/items/{item_id}/shelf` web.routes.monday_brief (named in: holdspeak/operations.py)
+- GET `/api/brief/shelf` web.routes.monday_brief (named in: holdspeak/operations.py, scripts/philo5_pairs.py)
+- POST `/api/cadence/closeout/apply` web.routes.cadence
+- GET `/api/cadence/loops/{loop_id}` web.routes.cadence (named in: holdspeak/db/projections.py, scripts/phase107_closeout_beats.py, scripts/record_chair_rhythm_fixture.py, scripts/walk_working_desk_legs.py)
+- POST `/api/cadence/run-now` web.routes.cadence (named in: scripts/walk_working_desk.py, scripts/walk_working_desk_legs.py)
+- GET `/api/calendar/events` web.routes.calendar_events
+- DELETE `/api/calendar/events/{event_id}/link` web.routes.calendar_events
+- POST `/api/calendar/events/{event_id}/link` web.routes.calendar_events
+- POST `/api/calls/line/enrol` web.routes.calls (named in: holdspeak/line/node.py, holdspeak/principals.py, scripts/record_line_fixtures.py)
+- POST `/api/calls/line/events` web.routes.calls (named in: holdspeak/line/node.py, holdspeak/principals.py)
+- POST `/api/calls/line/hello` web.routes.calls (named in: holdspeak/line/node.py, holdspeak/principals.py, scripts/record_line_fixtures.py)
+- POST `/api/calls/line/next` web.routes.calls (named in: holdspeak/line/node.py, holdspeak/principals.py)
+- GET `/api/chains` web.routes.primitives.chains (named in: scripts/record_chrome_palette.py, scripts/surface_census_walk.py)
+- POST `/api/chains` web.routes.primitives.chains (named in: scripts/record_chrome_palette.py, scripts/surface_census_walk.py)
+- DELETE `/api/chains/{chain_id}` web.routes.primitives.chains (named in: scripts/record_chrome_palette.py, scripts/surface_census_walk.py)
+- GET `/api/chains/{chain_id}` web.routes.primitives.chains (named in: scripts/record_chrome_palette.py, scripts/surface_census_walk.py)
+- PUT `/api/chains/{chain_id}` web.routes.primitives.chains (named in: scripts/record_chrome_palette.py, scripts/surface_census_walk.py)
+- POST `/api/channels/sends` web.routes.channels (named in: holdspeak/channel_operations.py, holdspeak/principals.py, scripts/record_room_wires.py)
+- POST `/api/concierge/retry` web.routes.concierge (named in: holdspeak/services/needs_you_membership.py)
+- POST `/api/decision-records/{record_id}/dispute` web.routes.decision_records
+- POST `/api/decision-records/{record_id}/supersede` web.routes.decision_records
+- POST `/api/decisions/{decision_id}/reject` web.routes.decisions (named in: holdspeak/operations.py, holdspeak/principals.py, scripts/graph_walk.py, scripts/hs109_03_live_proof.py, …)
+- POST `/api/delivery/node/disconnect` web.routes.delivery_node (named in: holdspeak/web/announce.py)
+- POST `/api/delivery/node/heartbeat` web.routes.delivery_node (named in: holdspeak/commands/node_serve.py, holdspeak/web/announce.py)
+- POST `/api/delivery/node/hello` web.routes.delivery_node (named in: holdspeak/commands/node_serve.py, holdspeak/web/announce.py)
+- GET `/api/delivery/terminal/commands/{command_id}` web.routes.delivery_terminal (named in: scripts/phase94_delivery_campaign.py)
+- POST `/api/delivery/terminal/targets` web.routes.delivery_terminal (named in: scripts/phase94_delivery_campaign.py)
+- WS `/api/devices/audio` device_audio_ws (named in: holdspeak/commands/device.py, holdspeak/device_audio.py, holdspeak/device_audio_ws.py, holdspeak/principals.py, …)
+- DELETE `/api/dictation/corrections` web.routes.dictation.pipeline
+- DELETE `/api/dictation/project-kb` web.routes.dictation.kb (named in: scripts/dogfood_project_knowledge.py)
+- GET `/api/directories/{directory_id}` web.routes.primitives.directories (named in: holdspeak/operations.py, scripts/philo7_file_and_find.py, scripts/philo7_pairs.py, scripts/record_chrome_palette.py, …)
+- GET `/api/directories/{directory_id}/members` web.routes.primitives.directories (named in: holdspeak/operations.py, scripts/philo7_file_and_find.py, scripts/philo7_pairs.py, scripts/record_chrome_palette.py, …)
+- POST `/api/door/items` web.routes.door
+- GET `/api/gate/audit` web.routes.system.gate_routes
+- GET `/api/gate/config` web.routes.system.gate_routes
+- POST `/api/gate/proposals` web.routes.system.gate_routes (named in: holdspeak/coder_gate.py, holdspeak/db/schema/cadence_agents.py, holdspeak/principals.py)
+- GET `/api/gate/proposals/{proposal_id}` web.routes.system.gate_routes (named in: holdspeak/coder_gate.py, holdspeak/db/schema/cadence_agents.py, holdspeak/principals.py)
+- POST `/api/gate/proposals/{proposal_id}/receipt` web.routes.system.gate_routes (named in: holdspeak/coder_gate.py, holdspeak/db/schema/cadence_agents.py, holdspeak/principals.py)
+- POST `/api/gate/usage` web.routes.system.gate_routes (named in: holdspeak/coder_gate.py, holdspeak/principals.py)
+- POST `/api/inference-targets` web.routes.primitives.profiles (named in: holdspeak/doctor.py, scripts/record_chrome_palette.py, scripts/record_room_wires.py, scripts/settings_walk_139.py, …)
+- GET `/api/inference/defaults` web.routes.inference_assignments
+- POST `/api/inference/defaults/use-proposal` web.routes.inference_assignments
+- POST `/api/intel/process` web.routes.meetings.intel (named in: holdspeak/intel_queue.py, holdspeak/intel_queue_conductor.py)
+- GET `/api/intel/summary` web.routes.meetings.intel
+- PUT `/api/intents/override` web.routes.dictation.intents
+- GET `/api/invocations/{invocation_id}` web.routes.primitives.invocations (named in: holdspeak/db/projections.py)
+- GET `/api/kbs/{kb_id}` web.routes.primitives.kbs (named in: holdspeak/operations.py, scripts/philo7_pairs.py, scripts/record_chrome_palette.py, scripts/surface_census_walk.py)
+- GET `/api/kbs/{kb_id}/members` web.routes.primitives.kbs (named in: holdspeak/operations.py, scripts/philo7_pairs.py, scripts/record_chrome_palette.py, scripts/surface_census_walk.py)
+- POST `/api/kernel/executor/claim` web.routes.system.kernel_routes (named in: holdspeak/web/announce.py)
+- POST `/api/kernel/executor/operations/{operation_id}/receipt` web.routes.system.kernel_routes (named in: holdspeak/web/announce.py)
+- GET `/api/kernel/executor/operations/{operation_id}/reconcile` web.routes.system.kernel_routes (named in: holdspeak/web/announce.py)
+- POST `/api/kernel/operations/{operation_id}/decide` web.routes.system.kernel_routes (named in: holdspeak/principals.py)
+- POST `/api/kernel/submit` web.routes.system.kernel_routes (named in: holdspeak/kernel/desk.py, holdspeak/kernel/project.py, holdspeak/principals.py, scripts/hs109_06_process_window_walk.py)
+- POST `/api/mcp` web.routes.mcp_http (named in: holdspeak/delivery/agent_mcp.py, holdspeak/delivery/pi_launch.py, holdspeak/mcp/aio.py, holdspeak/mcp/long_tools.py, …)
+- POST `/api/meetings/{meeting_id}/export/slack` web.routes.meetings.aftercare (named in: apple/App/CompanionShellApp.swift, apple/Sources/Contracts/Aftercare.swift, apple/Sources/Contracts/MeetingArtifact.swift, apple/Sources/Contracts/MeetingFacets.swift, …)
+- GET `/api/meetings/{meeting_id}/followup-draft` web.routes.meetings.aftercare (named in: apple/App/CompanionShellApp.swift, apple/Sources/Contracts/Aftercare.swift, apple/Sources/Contracts/MeetingArtifact.swift, apple/Sources/Contracts/MeetingFacets.swift, …)
+- POST `/api/missioncontrol/rails/remote-events` web.routes.missioncontrol
+- GET `/api/model-profiles` web.routes.primitives.model_profiles (named in: scripts/surface_interaction_walk.py)
+- POST `/api/model-profiles` web.routes.primitives.model_profiles (named in: scripts/surface_interaction_walk.py)
+- DELETE `/api/model-profiles/{profile_id}` web.routes.primitives.model_profiles (named in: scripts/surface_interaction_walk.py)
+- GET `/api/model-profiles/{profile_id}` web.routes.primitives.model_profiles (named in: scripts/surface_interaction_walk.py)
+- DELETE `/api/model-profiles/{profile_id}/binding` web.routes.primitives.model_profiles (named in: scripts/surface_interaction_walk.py)
+- POST `/api/model-profiles/{profile_id}/binding` web.routes.primitives.model_profiles (named in: scripts/surface_interaction_walk.py)
+- POST `/api/model-profiles/{profile_id}/probe` web.routes.primitives.model_profiles (named in: scripts/surface_interaction_walk.py)
+- POST `/api/model-profiles/{profile_id}/revisions` web.routes.primitives.model_profiles (named in: scripts/surface_interaction_walk.py)
+- POST `/api/onboarding/agents/use-all` web.routes.onboarding (named in: holdspeak/onboarding_operations.py)
+- GET `/api/people/relationships/{relationship_id}/notes` web.routes.people (named in: scripts/people_walk.py, scripts/people_walk_full.py, scripts/philo13_b4_fixture.py, scripts/record_chrome_palette.py, …)
+- POST `/api/phone/calls` web.routes.phone (named in: holdspeak/principals.py, holdspeak/services/needs_you_membership.py, scripts/record_phone_fixtures.py)
+- GET `/api/phone/calls/{call_id}` web.routes.phone (named in: holdspeak/principals.py, holdspeak/services/needs_you_membership.py, scripts/record_phone_fixtures.py)
+- GET `/api/phone/devices` web.routes.phone (named in: holdspeak/phone/contract.py, holdspeak/phone/devices.py, holdspeak/principals.py, scripts/record_phone_fixtures.py)
+- POST `/api/phone/devices` web.routes.phone (named in: holdspeak/phone/contract.py, holdspeak/phone/devices.py, holdspeak/principals.py, scripts/record_phone_fixtures.py)
+- GET `/api/phone/events` web.routes.phone (named in: holdspeak/phone/events.py, holdspeak/principals.py, scripts/record_phone_fixtures.py)
+- POST `/api/phone/messages/{message_id}/decide` web.routes.phone (named in: holdspeak/phone/actions.py, holdspeak/principals.py, holdspeak/services/needs_you_membership.py, holdspeak/web/announce.py, …)
+- POST `/api/phone/messages/{message_id}/wait` web.routes.phone (named in: holdspeak/phone/actions.py, holdspeak/principals.py, holdspeak/services/needs_you_membership.py, holdspeak/web/announce.py, …)
+- WS `/api/phone/ws` web.routes.phone (named in: holdspeak/principals.py)
+- POST `/api/principals/agents` web.routes.system.gate_routes (named in: holdspeak/coder_gate.py, holdspeak/principals.py)
+- DELETE `/api/principals/agents/{identity}` web.routes.system.gate_routes (named in: holdspeak/coder_gate.py, holdspeak/principals.py)
+- DELETE `/api/principals/self` web.routes.system.gate_routes (named in: holdspeak/coder_gate.py, holdspeak/principals.py)
+- POST `/api/profiles` web.routes.primitives.profiles (named in: holdspeak/inference_targets.py, scripts/walk_hs84_live.py, scripts/walk_hs85_live.py, scripts/walk_hsm25_live.py)
+- DELETE `/api/profiles/{profile_id}` web.routes.primitives.profiles (named in: holdspeak/inference_targets.py, scripts/walk_hs84_live.py, scripts/walk_hs85_live.py, scripts/walk_hsm25_live.py)
+- PUT `/api/profiles/{profile_id}` web.routes.primitives.profiles (named in: holdspeak/inference_targets.py, scripts/walk_hs84_live.py, scripts/walk_hs85_live.py, scripts/walk_hsm25_live.py)
+- GET `/api/programs/{program_id}/requirements/{requirement_id}/evidence` web.routes.programs (named in: holdspeak/commands/program.py, holdspeak/program_operations.py, holdspeak/sdk/programs.py, holdspeak/services/needs_you_membership.py, …)
+- POST `/api/project-setups` web.routes.project_setup
+- POST `/api/projects` web.routes.projects (named in: .githooks/workbench/app.js, holdspeak/agent_operations.py, holdspeak/operations.py, holdspeak/principals.py, …)
+- POST `/api/projects/{project_id}/items` web.routes.projects (named in: .githooks/workbench/app.js, holdspeak/agent_operations.py, holdspeak/operations.py, holdspeak/principals.py, …)
+- PATCH `/api/projects/{project_id}/items/{item_id}` web.routes.projects (named in: .githooks/workbench/app.js, holdspeak/agent_operations.py, holdspeak/operations.py, holdspeak/principals.py, …)
+- POST `/api/projects/{project_id}/items/{item_id}/transition` web.routes.projects (named in: .githooks/workbench/app.js, holdspeak/agent_operations.py, holdspeak/operations.py, holdspeak/principals.py, …)
+- DELETE `/api/projects/{project_id}/meetings/{meeting_id}` web.routes.projects (named in: .githooks/workbench/app.js, holdspeak/agent_operations.py, holdspeak/operations.py, holdspeak/principals.py, …)
+- GET `/api/providers/confluence/connections` web.routes.providers
+- POST `/api/providers/confluence/validate` web.routes.providers (named in: holdspeak/web/announce.py)
+- POST `/api/providers/github/validate-repo` web.routes.providers (named in: holdspeak/web/announce.py)
+- GET `/api/providers/jira/connections` web.routes.providers (named in: scripts/record_room_wires.py)
+- POST `/api/providers/jira/connections/{ref}/recheck` web.routes.providers (named in: scripts/record_room_wires.py)
+- POST `/api/providers/jira/search` web.routes.providers (named in: holdspeak/web/announce.py)
+- POST `/api/providers/jira/validate-scope` web.routes.providers (named in: holdspeak/web/announce.py)
+- GET `/api/reach/packages` web.routes.briefing
+- GET `/api/recipes/{recipe_id}` web.routes.primitives.recipes (named in: apple/Sources/Providers/Desktop/HTTPDesktopClient.swift, apple/Sources/Providers/Providers.swift, apple/Tests/ProvidersTests/DesktopClientTests.swift, scripts/record_chrome_palette.py, …)
+- POST `/api/recipes/{recipe_id}/chat` web.routes.primitives.recipes (named in: apple/Sources/Providers/Desktop/HTTPDesktopClient.swift, apple/Sources/Providers/Providers.swift, apple/Tests/ProvidersTests/DesktopClientTests.swift, scripts/record_chrome_palette.py, …)
+- POST `/api/recipes/{recipe_id}/invocations/{invocation_id}/cancel` web.routes.primitives.recipes (named in: apple/Sources/Providers/Desktop/HTTPDesktopClient.swift, apple/Sources/Providers/Providers.swift, apple/Tests/ProvidersTests/DesktopClientTests.swift, scripts/record_chrome_palette.py, …)
+- GET `/api/recordings/{recording_id}` web.routes.recordings (named in: holdspeak/web/announce.py, scripts/record_recordings_fixtures.py)
+- GET `/api/scheduled-recordings/{schedule_id}` web.routes.scheduled_recordings (named in: scripts/door_walk_hs144.py, scripts/schedule_walk_hs136.py)
+- POST `/api/skills` web.routes.primitives.workbenches
+- DELETE `/api/skills/{skill_id}` web.routes.primitives.workbenches
+- POST `/api/steward/trigger` web.routes.steward (named in: holdspeak/principals.py, holdspeak/room_operations.py, holdspeak/services/watch_service.py)
+- GET `/api/thoughts/default-context` web.routes.primitives.thoughts
+- GET `/api/thoughts/{thought_id}` web.routes.primitives.thoughts (named in: holdspeak/operations.py, scripts/door_walk_hs144.py, scripts/philo5_pairs.py, scripts/record_chrome_palette.py, …)
+- POST `/api/threads/{thread_id}/compact` web.routes.threads (named in: holdspeak/mcp/tools.py, holdspeak/services/ask_desk.py, scripts/door_walk_hs144.py, scripts/record_chrome_palette.py, …)
+- POST `/api/walks` web.routes.walks (named in: holdspeak/web/announce.py, scripts/walk.py)
+- GET `/api/walks/{walk_id}` web.routes.walks (named in: holdspeak/web/announce.py, scripts/walk.py)
+- GET `/api/watches/{watch_id}` web.routes.watches (named in: holdspeak/principals.py, holdspeak/room_operations.py, holdspeak/services/watch_service.py, scripts/record_needs_you_fixture.py, …)
+- PATCH `/api/watches/{watch_id}` web.routes.watches (named in: holdspeak/principals.py, holdspeak/room_operations.py, holdspeak/services/watch_service.py, scripts/record_needs_you_fixture.py, …)
+- POST `/api/watches/{watch_id}/baseline` web.routes.watches (named in: holdspeak/principals.py, holdspeak/room_operations.py, holdspeak/services/watch_service.py, scripts/record_needs_you_fixture.py, …)
+- PUT `/api/watches/{watch_id}/rules` web.routes.watches (named in: holdspeak/principals.py, holdspeak/room_operations.py, holdspeak/services/watch_service.py, scripts/record_needs_you_fixture.py, …)
+- POST `/api/watches/{watch_id}/test` web.routes.watches (named in: holdspeak/principals.py, holdspeak/room_operations.py, holdspeak/services/watch_service.py, scripts/record_needs_you_fixture.py, …)
+- DELETE `/api/workbenches/{workbench_id}` web.routes.primitives.workbenches (named in: scripts/automations_walk.py, scripts/record_chrome_palette.py, scripts/surface_census_walk.py, scripts/walk_working_desk_legs.py)
+- POST `/api/workbenches/{workbench_id}/runs/{parent_operation_id}/cancel` web.routes.primitives.workbenches (named in: scripts/automations_walk.py, scripts/record_chrome_palette.py, scripts/surface_census_walk.py, scripts/walk_working_desk_legs.py)
+- GET `/api/workflows` web.routes.primitives.workflows (named in: scripts/record_chrome_palette.py, scripts/surface_census_walk.py)
+- POST `/api/workflows` web.routes.primitives.workflows (named in: scripts/record_chrome_palette.py, scripts/surface_census_walk.py)
+- DELETE `/api/workflows/{workflow_id}` web.routes.primitives.workflows (named in: scripts/record_chrome_palette.py, scripts/surface_census_walk.py)
+- GET `/api/workflows/{workflow_id}` web.routes.primitives.workflows (named in: scripts/record_chrome_palette.py, scripts/surface_census_walk.py)
+- PUT `/api/workflows/{workflow_id}` web.routes.primitives.workflows (named in: scripts/record_chrome_palette.py, scripts/surface_census_walk.py)
+
+## Pages, documents and token links (29)
+
+A browser opens these by URL (address bar, link, QR code). A fetch never calls them, so `consumers == []` is expected here.
+
+- GET `/` web.routes.pages
+- GET `/activity` web.routes.pages
+- GET `/b/{token}` web.routes.briefing
+- GET `/cadence` web.routes.pages
+- GET `/commands` web.routes.pages
+- GET `/companion` web.routes.pages
+- GET `/conductor` web.routes.pages
+- GET `/design/components` web.routes.pages
+- GET `/desk` web.routes.pages
+- GET `/dictation` web.routes.pages
+- GET `/docs` fastapi.applications
+- GET `/docs/dictation-runtime` web.routes.pages
+- GET `/docs/oauth2-redirect` fastapi.applications
+- GET `/history` web.routes.pages
+- GET `/live` web.routes.pages
+- GET `/meetings` web.routes.pages
+- GET `/models` web.routes.pages
+- GET `/openapi.json` fastapi.applications
+- GET `/presence` web.routes.pages
+- GET `/profiles` web.routes.pages
+- GET `/r/{recording_id}/{token}/{name}` web.routes.recordings
+- GET `/redoc` fastapi.applications
+- GET `/settings` web.routes.pages
+- GET `/setup` web.routes.pages
+- GET `/studio` web.routes.pages
+- GET `/terminals` web.routes.pages
+- GET `/w/{token}` web.routes.walks
+- GET `/welcome` web.routes.pages
+- GET `/workbench` web.routes.pages

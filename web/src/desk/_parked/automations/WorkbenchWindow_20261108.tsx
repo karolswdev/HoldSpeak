@@ -1,4 +1,9 @@
-import "./workbench-config.css";
+/* PARKED 20261108 (queue view park): the old item-queue view of an automation, behind RAW.
+ * Every automation run is a Program (#2032/#2033); the item-queue runner is
+ * parked, so the queue view it fed is parked too. It stood at src/desk/components/WorkbenchWindow.tsx.
+ * Not compiled or collected (tsconfig and vitest exclude _parked); its
+ * relative imports point at the old place. Restore with git revert. */
+import "./workbench-config_20261108.css";
 import {
   useCallback,
   useEffect,

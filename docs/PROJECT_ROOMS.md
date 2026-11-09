@@ -261,7 +261,7 @@ operations through MCP and HTTP. The setup conversation and the New Project
 window use the same Project services. A call still needs caller permission
 and operation prerequisites.
 
-Use [MCP sidecar](MCP_SIDECAR.md) and [API surface](API_SURFACE.md) for exact
+Use MCP sidecar (`scripts/gen_docs.sh` writes `docs/MCP_SIDECAR.md`) and [API surface](API_SURFACE.md) for exact
 operations. A scheduler trigger can return `scheduler_not_wired` when no
 scheduler is available. Read the response and receipt. Do not treat a
 successful request as proof that a provider source changed.
