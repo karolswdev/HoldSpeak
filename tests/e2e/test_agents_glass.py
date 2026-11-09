@@ -181,11 +181,12 @@ def _open_lane(page: Any) -> Any:
             has=page.locator(".desk-menu-label", has_text=re.compile(r"^Agents$"))).click()
     conductor = page.locator(".conductor-window")
     conductor.wait_for(timeout=15000)
-    agent = conductor.locator("[data-object-id='launch:launch_p16_words']")
+    agent = conductor.locator("[data-testid='agents-rail'] [data-object-id='launch:launch_p16_words']")
     agent.wait_for(timeout=20000)
-    # Betterment AG2: an asking agent's row answers in place; its Open (as a
-    # working agent's row) opens its window.
-    agent.locator("[data-testid='conductor-open']").first.click()
+    # The language (2026-11-08): a press on the tile picks the agent; its
+    # plate's Open opens its window.
+    agent.locator(".aw-tile-open").click()
+    conductor.get_by_test_id("agents-pane").locator("[data-testid='conductor-open']").first.click()
     window = page.locator(".is-lane")
     window.wait_for(timeout=15000)
     page.locator("[data-testid='lane-rail']").wait_for(timeout=15000)

@@ -9,6 +9,7 @@ import { SurfaceFooter } from "../surface/SurfaceFooter";
 // the typed-refusal rendering, the grant re-sync); only the RENDER moved
 // to the gadget grammar — transport keys, lamps, LedMeters, facts tokens.
 import "./session-pullout.css";
+import "../conductor/conductor.css";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "../../components/signal/Signal";
 import { MicButton } from "./MicButton";
@@ -29,9 +30,10 @@ import { flipTargetForStory, useMissionControl } from "../missioncontrol";
 import { mmss, useSteering } from "../steering";
 import { useDurableDraft } from "../../lib/durableDraft";
 import { controlModeLabel, humanizeWireValue } from "../../lib/productLanguage";
-import { PaneWell, SurfaceFacts, SurfaceSection, SurfaceWell } from "../surface/Surface";
-import { AskWell, FoldGadget } from "../surface";
-import { AppHead, StatusStrip } from "../surface/kit";
+import { PaneWell, SurfaceFacts } from "../surface/Surface";
+import { AskWell, DotWord, FoldGadget } from "../surface";
+import { Mast } from "../surface/patterns/Mast";
+import { Spine, type SpineTone } from "../surface/patterns/Spine";
 import { wireClock } from "../surface/format";
 import { useAgentFlights } from "../agentFlights";
 import { agentName } from "../lane/laneWire";
@@ -709,6 +711,10 @@ export function SessionPullout() {
     project: row?.flight?.title || row?.flight?.projectName || row?.name,
     agent,
   }, sessionId);
+  const sessionTitle = String(row?.flight?.title || row?.flight?.projectName || row?.name || agent);
+  const facts = [agent, updated ? wireClock(updated) : "", raw.model ? String(raw.model) : ""]
+    .filter(Boolean).join(" · ");
+  const tone: SpineTone = session?.stale ? "graphite" : question ? "brass" : row?.state === "idle" || row?.state === "ended" ? "moss" : "steel";
 
   return (
     <DeskWindowFrame
@@ -760,34 +766,32 @@ export function SessionPullout() {
             <Button dense variant="ghost" onClick={() => setTerminal(false)}>Back to session</Button>
           </div> : null}
         </div> : <>
-        <div className="desk-session-identity" data-testid="session-agent-identity">
-          <img
-            src={spriteUrl("agent", openKey, "rest", agentId)}
-            alt=""
-            width={64}
-            height={64}
-            className="desk-session-agent-portrait desk-chrome-sprite"
-            data-testid="session-agent-portrait"
-            draggable={false}
-          />
-          <AppHead fact={state} data-testid="session-head">
-            <StatusStrip items={[{ text: agent }, updated ? { text: wireClock(updated) } : null, raw.model ? { text: String(raw.model) } : null]} />
-          </AppHead>
+        {/* The language (2026-11-08): the mast (the agent's sprite, what it
+            works on, one facts line), the spine, the plate (its question
+            with the answer well, else its report and its latest tool). */}
+        <Mast kind="agent" id={openKey} agent={agentId} title={sessionTitle} facts={facts}
+          className="desk-session-mast" data-testid="session-agent-identity" />
+        <Spine className="desk-session-spine" tone={tone} label={state} />
+        <div className="aw-plate desk-session-plate" data-tone={tone} data-testid="session-head">
+          <header className="aw-plate-head">
+            <DotWord className="aw-plate-state" tone={tone === "brass" ? "ask" : tone === "moss" ? "ok" : tone === "graphite" ? "idle" : "info"}>
+              {state}
+            </DotWord>
+          </header>
+          {question ? <SessionAnswerWell key={openKey} question={question} agent={agent} available={available} listenSignal={listenSignal} /> : null}
+          {latestReport && latestReport !== question ? (
+            <div className="desk-session-report" data-testid="session-report">
+              <AgentWords className="aw-plate-report" text={latestReport} />
+            </div>
+          ) : null}
+          {tool || screenCommand ? (
+            <p className="desk-session-activity" data-testid="session-activity">
+              <span className="desk-session-activity-label">Latest activity</span>
+              {tool ? <span className="desk-session-activity-value">{tool}</span> : null}
+              {screenCommand ? <><span className="desk-session-activity-label">Command</span><span className="desk-session-activity-value">{screenCommand}</span></> : null}
+            </p>
+          ) : !latestReport && !question ? <p className="aw-plate-words desk-session-state">No report yet</p> : null}
         </div>
-        {question ? <SessionAnswerWell key={openKey} question={question} agent={agent} available={available} listenSignal={listenSignal} /> : null}
-        {latestReport && latestReport !== question ? (
-          <SurfaceSection label="Latest report" className="desk-session-report" data-testid="session-report">
-            <SurfaceWell><AgentWords text={latestReport} /></SurfaceWell>
-          </SurfaceSection>
-        ) : null}
-        {tool || screenCommand ? (
-          <div className="desk-session-activity" data-testid="session-activity">
-            <span className="desk-session-activity-lamp" aria-hidden="true" />
-            <span className="desk-session-activity-label">Latest activity</span>
-            {tool ? <span className="desk-session-activity-value">{tool}</span> : null}
-            {screenCommand ? <><span className="desk-session-activity-label">Command</span><span className="desk-session-activity-value">{screenCommand}</span></> : null}
-          </div>
-        ) : !latestReport && !question ? <p className="desk-session-state">No report yet</p> : null}
         {!question && (answerOpen || directing) ? (
           <div className="desk-session-answer" data-testid="session-answer-well">
             {available ? armed || postureAuthorized ? <SteeringPolicyFacts /> : <ArmStrip /> : <span className="desk-session-terminal-fact">Terminal unavailable</span>}

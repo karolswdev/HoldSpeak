@@ -2,7 +2,7 @@
  *
  *  Open on a live or stale agent = its lane window (`launch:<id>` in the one
  *  open grammar, `openObject.ts`); a session no launch holds opens its
- *  session window (`coder:<key>`). Open on a ready agent = its Get Info.
+ *  session window (`coder:<key>`). An agent on this Mac opens nothing.
  *  Answer opens the ask well; Stop goes through the lane (its ARM and its
  *  kill route), so the receipt lands in the lane window. */
 import { apiFetch } from "../../lib/api";
@@ -15,10 +15,8 @@ import { useConductor } from "./store";
 import { useAgentFlights } from "../agentFlights";
 
 export function openMember(member: ConductorMember): void {
-  if (member.role === "ready") {
-    useConductor.getState().openInfo(member);
-    return;
-  }
+  // An agent on this Mac has no window: its pane in Agents is its face.
+  if (member.role === "ready") return;
   refOpener(member.ref)?.();
 }
 

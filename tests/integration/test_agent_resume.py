@@ -192,7 +192,13 @@ def test_the_route_answers_202_while_it_resumes(monkeypatch, tmp_path):
 
     from holdspeak.web.routes.agent_hand import build_agent_hand_router
 
-    class _Service:
+    from holdspeak.services.agent_hand_service import AgentHandService
+
+    class _Service(AgentHandService):
+        # The declared launch verbs bind to the hub's AgentHandService (2026-11-08).
+        def __init__(self) -> None:
+            pass
+
         def resume_after_restart(self, _principal, launch_id):
             if launch_id == "gone":
                 raise AgentHandRefused("launch_not_stopped", "only an agent a restart stopped resumes")
@@ -201,6 +207,14 @@ def test_the_route_answers_202_while_it_resumes(monkeypatch, tmp_path):
                                "command": "claude --resume s1", "outcome": None}}
 
     app = FastAPI()
+
+    @app.middleware("http")
+    async def _owner(request, call_next):  # the hub's edge names the principal (produced routes, #2051)
+        from holdspeak.principals import Principal, PrincipalKind
+
+        request.state.principal = Principal(PrincipalKind.OWNER, "owner-session")
+        return await call_next(request)
+
     app.include_router(build_agent_hand_router(SimpleNamespace(agent_hand_service=_Service())))
     client = TestClient(app)
     answer = client.post("/api/agent/launches/l1/resume")

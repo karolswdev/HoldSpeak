@@ -17,7 +17,6 @@ import { ApiError, apiFetch } from "../../lib/api";
 import { fromWireFlight, fromWireOwnAgent, fromWireSessionRow, useAgentFlights, type AgentFlight, type OwnAgent } from "../agentFlights";
 import type { LaneReceipt } from "../lane/laneStore";
 import { AGENTS_PATH, AGENTS_USE_PATH, type AgentId, type AgentsDetect } from "../firstrun/agentsStep";
-import type { ConductorMember } from "./members";
 import { wireWords } from "../surface/words";
 
 export const CONDUCTOR_WINDOW_ID = "conductor";
@@ -25,14 +24,12 @@ export const CONDUCTOR_KEY = "open-conductor";
 export const FLIGHTS_PATH = "/api/coders/sessions?include_ended=false";
 
 // The workspace keeps a window's place under an id of [A-Za-z0-9:_-] only.
-export const conductorInfoId = (ref: string) => `conductor-info:${ref.replace(/[^A-Za-z0-9:_-]/g, "_")}`;
 
 export type ReadState = "idle" | "loading" | "ok" | "failed";
 
 interface ConductorState {
   open: boolean;
   origin: { x: number; y: number } | null;
-  infos: ConductorMember[];
   detect: AgentsDetect | null;
   detectState: ReadState;
   /** The failed agents read as a token (`HTTP 500`, `HUB OFFLINE`). */
@@ -65,8 +62,6 @@ interface ConductorState {
    *  keep the hub's seat and depth. No gesture, so no raise. */
   showFromHub(): void;
   closeWindow(): void;
-  openInfo(member: ConductorMember): void;
-  closeInfo(ref: string): void;
   readDetect(): Promise<void>;
   readFlights(): Promise<void>;
   readOwnAgents(): Promise<void>;
@@ -79,7 +74,6 @@ const failureToken = (error: unknown) => (error instanceof ApiError ? `HTTP ${er
 export const useConductor = create<ConductorState>((set, get) => ({
   open: false,
   origin: null,
-  infos: [],
   detect: null,
   detectState: "idle",
   detectFailure: "",
@@ -126,13 +120,7 @@ export const useConductor = create<ConductorState>((set, get) => ({
     if (!get().open) set({ open: true });
   },
   closeWindow() {
-    set({ open: false, infos: [] });
-  },
-  openInfo(member) {
-    set({ infos: [...get().infos.filter((i) => i.ref !== member.ref), member] });
-  },
-  closeInfo(ref) {
-    set({ infos: get().infos.filter((i) => i.ref !== ref) });
+    set({ open: false });
   },
   async readDetect() {
     set({ detectState: get().detect ? get().detectState : "loading" });
@@ -216,7 +204,7 @@ export function openConductor(origin?: { x: number; y: number } | null): void {
 /** Test seam. */
 export function __resetConductor(): void {
   useConductor.setState({
-    open: false, origin: null, infos: [], detect: null, detectState: "idle", detectFailure: "",
+    open: false, origin: null, detect: null, detectState: "idle", detectFailure: "",
     flightsState: "idle", ownAgents: [], ownAgentsState: "idle", launchedAt: {}, endedAt: {}, history: [], launches: null, stops: {},
     installing: null, installFailure: "", installFailedAgent: null, installDone: null, focus: null,
   });

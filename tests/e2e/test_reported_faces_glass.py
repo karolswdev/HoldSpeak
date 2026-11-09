@@ -87,16 +87,17 @@ def test_reported_faces_and_saved_images(tmp_path: Path, monkeypatch: pytest.Mon
             clear_hub_windows(page, TOKEN)
             page.goto(f"{base}/conductor?token={TOKEN}", wait_until="load")
             _normal_chair(page)
-            # W1-KIT: one press on the row opens the agent's window.
-            page.locator(".conductor-window [data-object-id='coder:codex:reported-work'] .object-list-open").click()
+            # The language (2026-11-08): the tile picks the agent; its plate's Open opens its window.
+            page.locator(".conductor-window [data-testid='agents-rail'] [data-object-id='coder:codex:reported-work'] .aw-tile-open").click()
+            page.locator(".conductor-window [data-testid='agents-pane'] [data-testid='conductor-open']").click()
             agent = page.locator("[id='session'][data-layer='window']")
             agent.get_by_test_id("session-report").wait_for()
             assert REPORT in agent.inner_text()
             assert "Bash" in agent.get_by_test_id("session-activity").inner_text()
-            portrait = agent.get_by_test_id("session-agent-portrait")
+            portrait = agent.get_by_test_id("session-agent-identity").locator(".surface-mast-glyph")
             page.wait_for_function("el => el.complete && el.naturalWidth > 0", arg=portrait.element_handle())
             assert "agent-codex" in str(portrait.get_attribute("src"))
-            assert portrait.bounding_box()["width"] == 64
+            assert portrait.bounding_box()["width"] == 32
             assert not agent.locator("details.desk-session-details").evaluate("el => el.open")
             assert agent.locator(".desk-session-body").evaluate("el => el.scrollWidth <= el.clientWidth + 1")
             _settle(page)

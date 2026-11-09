@@ -1034,7 +1034,11 @@ OP_HTTP_ONLY = frozenset({"decision.status", "project.door.create", "project.doo
                           "desk.request.result",
                           # 2026-11-08: the phone verbs with no MCP tool (a held device or address, a credential).
                           "phone.redeem", "phone.pair", "phone.save_push_key", "phone.mark_read", "phone.decide",
-                          "phone.accept", "phone.decline", "phone.end"})
+                          "phone.accept", "phone.decline", "phone.end",
+                          # 2026-11-08: the Agents window's launch verbs (HTTP only).
+                          "agent.launch.lane", "agent.launch.explain", "agent.launch.answer", "agent.launch.seen",
+                          "agent.launch.done", "agent.launch.remove", "agent.launch.resume",
+                          "agent.hand.cancel_queued", "agent.helper.allow"})
 
 # PHILO-7-01: the desk kind and id argument of each slice prefix.
 _DESK_OP_KINDS: dict[str, tuple[str, str]] = {

@@ -112,7 +112,7 @@ NOT_ON_HUB: dict[str, str] = {
     "delivery-terminal": "opens on a delivery",
     "delivery-dossier": "opens on a delivery",
     "drawer-info:": "opens on a drawer member",
-    "conductor-info:": "opens on a Conductor member",
+    "conductor-info:": "parked (2026-11-08): the agent's facts are its Details in Agents",
     "editor:": "opens on an edit in progress",
     "schedule:": "opens on a schedule draft",
 }
