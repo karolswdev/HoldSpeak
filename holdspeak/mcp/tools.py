@@ -979,7 +979,8 @@ def runtime_registry(primitives: Any = None, meetings: Any = None) -> operations
              "meeting_service": lambda: meetings or MeetingService(db, observer=obs),
              "desk_window_service": lambda: DeskWindowService(db),
              "people_service": lambda: people_family.build_people_service()}
-    return operations.for_runtime(program_service=lambda: operations.LIVE_PROGRAM_SERVICE, **{
+    return operations.for_runtime(program_service=lambda: operations.LIVE_PROGRAM_SERVICE,
+                                  phone_service=lambda: operations.LIVE_PHONE_SERVICE, **{
         name: (lambda name=name, build=build: runtime_service(name, build)) for name, build in plain.items()})
 
 

@@ -848,6 +848,11 @@ def test_the_catalogue_is_explicit_descriptors() -> None:
         "meeting.recover_capture", "meeting.sync_conflicts", "meeting.resolve_sync_conflict",
         "meeting.intent_timeline", "meeting.artifacts", "meeting.prepared", "speaker.list",
         "action_item.list", "action_item.update", "action_item.review", "meeting.bookmark", "meeting.update",
+        # 2026-11-08: the phone's web verbs, declared (phone_operations.py).
+        "phone.devices", "phone.revoke", "phone.let_wait", "phone.calls", "phone.ring", "phone.again", "phone.push_key",
+        "phone.save_push_key",
+        "phone.test_push", "phone.redeem", "phone.pair", "phone.messages", "phone.mark_read", "phone.decide",
+        "phone.get_call", "phone.accept", "phone.decline", "phone.end",
         # 2026-11-08: People's web verbs, declared (people_operations.py).
         "people.setup", "people.suggestion.add", "people.suggestion.hide", "people.relationship.archive",
         "people.project.link", "people.project.unlink", "people.one_on_one.list", "people.agenda.transition",
