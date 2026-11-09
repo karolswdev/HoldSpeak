@@ -319,7 +319,7 @@ def command_run(args: argparse.Namespace) -> int:
         "engine": args.engine,
         "model": args.model or ("canned" if args.engine == "canned" else ""),
         "endpoint": args.endpoint or "",
-        "plan_id": "",
+        "operation_id": "",
         "boundary": "",
         "host": "",
     }

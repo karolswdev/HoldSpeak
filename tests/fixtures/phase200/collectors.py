@@ -313,7 +313,7 @@ class EvaluationHub:
             )
             facts.update({
                 "state": probe.get("state"),
-                "plan_id": probe.get("routePlanId", ""),
+                "operation_id": probe.get("operationId", ""),
                 "boundary": probe.get("boundary", ""),
                 "host": probe.get("host", ""),
                 "probe_model": probe.get("model", ""),

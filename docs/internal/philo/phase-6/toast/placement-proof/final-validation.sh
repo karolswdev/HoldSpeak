@@ -3,8 +3,8 @@ mkdir -p .tmp/philo603
 export PATH=/Users/karol/.nvm/versions/node/v22.21.0/bin:$PATH
 export HOME=$(mktemp -d)
 export PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright
-uv run --extra dev pytest --collect-only -q tests/unit/test_philo_graph_atlas.py tests/unit/test_graph_walk_first_paint.py tests/unit/test_graph_walk_http_fault.py tests/unit/test_graph_walk_producer_clock.py tests/unit/test_philo_architecture.py > docs/internal/philo/phase-6/toast/placement-proof/final-python-collect.txt 2>&1
-uv run --extra dev pytest -q tests/unit/test_philo_graph_atlas.py tests/unit/test_graph_walk_first_paint.py tests/unit/test_graph_walk_http_fault.py tests/unit/test_graph_walk_producer_clock.py tests/unit/test_philo_architecture.py > docs/internal/philo/phase-6/toast/placement-proof/final-python-run.txt 2>&1
+uv run --extra dev pytest --collect-only -q tests/unit/test_philo_graph_atlas.py tests/e2e/test_graph_walk_first_paint.py tests/unit/test_graph_walk_http_fault.py tests/unit/test_graph_walk_producer_clock.py tests/unit/test_philo_architecture.py > docs/internal/philo/phase-6/toast/placement-proof/final-python-collect.txt 2>&1
+uv run --extra dev pytest -q tests/unit/test_philo_graph_atlas.py tests/e2e/test_graph_walk_first_paint.py tests/unit/test_graph_walk_http_fault.py tests/unit/test_graph_walk_producer_clock.py tests/unit/test_philo_architecture.py > docs/internal/philo/phase-6/toast/placement-proof/final-python-run.txt 2>&1
 tail -4 docs/internal/philo/phase-6/toast/placement-proof/final-python-collect.txt
 tail -8 docs/internal/philo/phase-6/toast/placement-proof/final-python-run.txt
 python3 scripts/generate_capability_docs.py > .tmp/philo603/generate-caps.txt
