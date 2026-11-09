@@ -42,7 +42,7 @@ if TYPE_CHECKING:
 # Memory slice 6: ``memory.page`` joins the default chat, Desk and Chase
 # palettes (it was MCP only in slice 5).  The admission law reserves one
 # token per schema byte, so no palette may grow versus main
-# (``test_memory_slice6_reflect.MAIN_PALETTE_BYTES``): the page's schema
+# (the byte snapshot is parked in ``tests/_parked/fences/``): the page's schema
 # words are short, and the People tools' operator note leaves the chat
 # rendering (``thread_tools.tool_schemas_for``).  A tool here is gate-only,
 # MCP only.  Betterment D6: ``people.suggestions`` is an agent's MCP read;

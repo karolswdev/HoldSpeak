@@ -1,6 +1,7 @@
 """HS-106-02: credential-derived owner, agent, and node principals."""
 from __future__ import annotations
 
+from tests import _tree
 import ast
 from pathlib import Path
 from unittest.mock import MagicMock
@@ -193,8 +194,8 @@ def test_loopback_classifier_has_no_request_authority_callers() -> None:
     root = Path(__file__).parents[2] / "holdspeak"
     found: set[tuple[str, str]] = set()
 
-    for source_path in root.rglob("*.py"):
-        tree = ast.parse(source_path.read_text(encoding="utf-8"))
+    for source_path in _tree.python_files(root):
+        tree = _tree.ast_of(source_path)
         stack: list[str] = []
 
         class Visitor(ast.NodeVisitor):

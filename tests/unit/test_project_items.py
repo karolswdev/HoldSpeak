@@ -12,8 +12,8 @@ Tests:
 """
 from __future__ import annotations
 
+from tests import _tree
 import json
-from datetime import datetime
 from typing import Any
 
 import pytest
@@ -23,9 +23,6 @@ from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.project_contracts import generate_pcmd_id, generate_pitem_id
 from holdspeak.services.errors import ConflictError, NotFound, ValidationError
 from holdspeak.services.project_service import (
-    ITEM_DEFAULT_LIFECYCLE,
-    ITEM_LIFECYCLES,
-    ITEM_TYPES,
     SEVERITY_LEVELS,
     SEVERITY_RANK,
     ProjectService,
@@ -770,10 +767,10 @@ def test_no_module_imports_a_definition_through_the_project_service() -> None:
         "_validate_lifecycle", "_validate_optional_ref", "_validate_details",
     }
     wrong = []
-    for path in sorted(package.rglob("*.py")):
-        if path == package / "services" / "project_service.py":
+    for path in _tree.python_files(package):
+        if path == package / "services" / "project_service.py" or "project_service" not in _tree.text_of(path):
             continue
-        for node in ast.walk(ast.parse(path.read_text())):
+        for node in _tree.walk(path):
             if isinstance(node, ast.ImportFrom) and (node.module or "").endswith("project_service"):
                 names = sorted({alias.name for alias in node.names} & set(definitions.__all__))
                 if names:

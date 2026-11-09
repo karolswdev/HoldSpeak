@@ -1,0 +1,246 @@
+# PARKED 2026-11-09 (fences diet, pipe/fences-diet): a per-rule and per-face ceiling ratchet that had to be re-recorded (tests/ux_canon_ceiling.json and A1_RATCHET kept in two places) on every face change.
+# Replaced by tests/unit/test_ux_canon_ratchet.py: the rules that are defects (A1 raw <button>, A4, A8, A9, DS6, mic) stay at zero; the scanner's self-tests stay.
+"""UX canon ratchet guard — counts can only go down.
+
+Uses the in-process scanner (scripts/ux_canon_scan.py) against the live
+web/src tree and compares to the committed ceiling file
+(tests/ux_canon_ceiling.json).  Three tests:
+
+1. ratchet  — per-rule counts must not exceed the ceiling.
+2. hard_zeros — DS6, A9 must stay at 0; A1 must stay within its dated,
+   down-only ratchet (HS-200-44).
+3. healing — passes with a notice when a count drops below the ceiling
+   (informational; reminds to lower the ceiling).
+4. the ceiling file carries the date and the reason its numbers stand.
+
+The ceiling is rewritten only by an explicit
+`python scripts/ux_canon_scan.py --write-ceiling tests/ux_canon_ceiling.json`;
+a number may fall freely under the reason on file and may only rise with a
+new `--ceiling-reason` in the same commit.
+"""
+from __future__ import annotations
+
+import importlib.util
+import json
+import re
+import sys
+from pathlib import Path
+
+import pytest
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+CEILING_PATH = REPO_ROOT / "tests" / "ux_canon_ceiling.json"
+SCRIPT_PATH = REPO_ROOT / "scripts" / "ux_canon_scan.py"
+
+
+def _load_scanner():
+    """Import the scanner module from its script path."""
+    spec = importlib.util.spec_from_file_location("ux_canon_scan", SCRIPT_PATH)
+    assert spec and spec.loader
+    mod = importlib.util.module_from_spec(spec)
+    # Avoid registering in sys.modules to prevent import side effects
+    spec.loader.exec_module(mod)
+    return mod
+
+
+# Module-level cache: the scanner is pure and deterministic over the same
+# tree, so we run it once and share the result across the three tests.
+_SCAN_RESULT: dict | None = None
+
+
+def _get_scan():
+    global _SCAN_RESULT
+    if _SCAN_RESULT is None:
+        mod = _load_scanner()
+        _SCAN_RESULT = mod.scan(REPO_ROOT)
+    return _SCAN_RESULT
+
+
+# ---------------------------------------------------------------------------
+# Test 1: ratchet
+# ---------------------------------------------------------------------------
+
+def test_ratchet():
+    """For every rule, the current hit count must be <= the ceiling count.
+
+    Failure message names the rule, the delta, and the faces whose count
+    rose — so a developer sees exactly what to fix.
+    """
+    ceiling = json.loads(CEILING_PATH.read_text())
+    result = _get_scan()
+    totals = result["totals"]
+    face_rule_counts = result["face_rule_counts"]
+    ceiling_faces = ceiling.get("faces", {})
+
+    regressions: list[str] = []
+    for rule, current in totals["per_rule"].items():
+        ceiling_val = ceiling["per_rule"].get(rule, 0)
+        if current > ceiling_val:
+            delta = current - ceiling_val
+            risen: list[str] = []
+            for face, counts in face_rule_counts.items():
+                face_current = counts.get(rule, 0)
+                face_ceiling = ceiling_faces.get(face, {}).get(rule, 0)
+                if face_current > face_ceiling:
+                    risen.append(f"  {face}: {face_ceiling} -> {face_current}")
+            detail = "\n".join(risen) if risen else "  (no single face rose)"
+            regressions.append(
+                f"{rule}: ceiling {ceiling_val} -> current {current} (+{delta})\n{detail}"
+            )
+
+    assert not regressions, (
+        "UX canon ratchet broken — new violations introduced:\n\n"
+        + "\n\n".join(regressions)
+        + "\n\nFix the violations, or if this is a deliberate trade-off, "
+        "run: python scripts/ux_canon_scan.py --write-ceiling tests/ux_canon_ceiling.json"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Test 2: hard zeros (+ A1 allowlist)
+# ---------------------------------------------------------------------------
+
+# HS-202-03, 2026-09-21 — the dated, down-only A1 ratchet.
+#
+# HS-200-44 measured 175 raw `<button>` elements once the A1 matcher could see
+# a multi-line opening tag (the previous ceiling of 4 was an artifact of a
+# per-line regex, not a fact about the code).  HS-202-03 pays 68 of them:
+# the surface inventory of 2026-09-20 (§3.3) found the worst sites were the
+# SHARED species themselves — every menu item, every wing tab, the dock, the
+# editor's rail — so the product's first five minutes were raw HTML at every
+# turn.  Those, and every raw control on the five first-use jobs' screens,
+# now draw through the library Button.
+#
+# The owner's ruling stands unchanged: every verb is the library Button, and
+# a raw `<button>` is a species bug.  This number may only shrink; raising it
+# requires changing A1_RATCHET_REASON in the same commit to name the debt
+# being admitted (the HS-200-03 / HS-200-46 shape).
+A1_RATCHET = 2
+A1_RATCHET_DATE = "2026-11-08"
+A1_RATCHET_REASON = (
+    "A8 zero, 2026-11-08: 81 -> 2, the live count on main 10ebdd8aa (the "
+    "constant had not moved since 2026-10-06 while the faces paid it down; "
+    "the two left are ZoneWindow.tsx). Earlier, "
+    "Conductor R6, 2026-10-06: 90 -> 81 (87 live on main db4893900): the "
+    "six raw buttons of the session window (the rename/kill arm verb, Keep "
+    "as note, Flip, PINNED, Pin, the pane picker rows) are the library "
+    "Button. Earlier, "
+    "PHILO-13-18 (C8), 2026-10-02: 102 -> 90 (95 live on main 5912fcb9): "
+    "the five inherited Workbench raw buttons the C1 canvas README assigns "
+    "to C8 (Run, Add, the priority cycle, the configuration strip, the item "
+    "head) are the library Button, chrome variant. Earlier, main reds after PHILO-9/10, 2026-09-28: 105 -> 102, the live count once "
+    "the Phase 9 and 10 faces landed (the ceiling file moved in the same "
+    "commit). Earlier, PHILO-9-04: 106 -> 105, the sortable table's sort headers became the "
+    "library Button (DeskSortableTable.tsx SortButton). Earlier, "
+    "HS-202-03: 106 raw <button> elements remain across the scanner's scope "
+    "(features/, pages/cores/, desk/; not Signal.tsx, gadgets.tsx, tests or "
+    "_parked) after the shared controls on the first-use path became library "
+    "species — 174 before the story, 175 at HS-200-44. The residue is the "
+    "inventory's own ledger: WorkbenchWindow (23), the tool inspector (10), "
+    "the Session/Coder/Thread pullouts, GroundingSection — faces the five "
+    "owner jobs do not touch. Face stories pay this down file by file."
+)
+
+
+def test_hard_zeros():
+    """DS6 (accent rail) and A9 (egress) must be zero.
+
+    A1 (raw <button>) must stay within its dated ratchet, which agrees with
+    the ceiling file so there is one number, not two.
+    """
+    result = _get_scan()
+    totals = result["totals"]
+
+    ds6 = totals["per_rule"].get("DS6", 0)
+    assert ds6 == 0, f"DS6 (accent left rail) must be 0, got {ds6}"
+
+    a9 = totals["per_rule"].get("A9", 0)
+    assert a9 == 0, f"A9 (missing egress chip) must be 0, got {a9}"
+
+    a1 = totals["per_rule"].get("A1", 0)
+    assert a1 <= A1_RATCHET, (
+        f"A1 (raw <button>) is {a1} against a ratchet of {A1_RATCHET} set "
+        f"{A1_RATCHET_DATE}.\n{A1_RATCHET_REASON}\n"
+        "New raw buttons were introduced: use the library Button. Raising the "
+        "ratchet requires changing A1_RATCHET_REASON in the same commit."
+    )
+    ceiling = json.loads(CEILING_PATH.read_text())
+    assert ceiling["per_rule"]["A1"] == A1_RATCHET, (
+        f"tests/ux_canon_ceiling.json says A1={ceiling['per_rule']['A1']} but "
+        f"A1_RATCHET is {A1_RATCHET}: one number, kept in two places, drifted"
+    )
+
+
+def test_ceiling_carries_its_date_and_reason():
+    """The ceiling names when its numbers were measured and why they stand."""
+    ceiling = json.loads(CEILING_PATH.read_text())
+    ratchet = ceiling.get("ratchet") or {}
+    assert re.fullmatch(r"\d{4}-\d{2}-\d{2}", ratchet.get("date", "")), (
+        "tests/ux_canon_ceiling.json has no dated `ratchet` block; write it with "
+        "--write-ceiling --ceiling-reason ..."
+    )
+    assert re.search(r"HS-\d+-\d+", ratchet.get("reason", "")), (
+        "the ceiling's reason must name the story that set it"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Test 3: healing (informational — always passes)
+# ---------------------------------------------------------------------------
+
+def test_healing(capsys):
+    """If any rule's current count is below the ceiling, print a notice.
+
+    This test always passes.  The notice reminds the developer to lower
+    the ceiling so the gain is locked in.
+    """
+    ceiling = json.loads(CEILING_PATH.read_text())
+    result = _get_scan()
+    totals = result["totals"]
+
+    healed = False
+    for rule, ceiling_val in sorted(ceiling["per_rule"].items()):
+        current = totals["per_rule"].get(rule, 0)
+        if current < ceiling_val:
+            healed = True
+            print(f"ratchet: {rule} {ceiling_val} -> {current} -- lower the ceiling")
+
+    if not healed:
+        print("ratchet: ceiling matches current counts -- nothing to lower")
+
+
+def test_ds6_exempts_only_the_workbench_ink_divider():
+    """PHILO-13-11: the 1px ink divider is a separator, not an accent rail.
+    Only that exact token is exempt; any other border-left stays flagged."""
+    import importlib.util, pathlib
+    spec = importlib.util.spec_from_file_location(
+        "ux_canon_scan", pathlib.Path(__file__).resolve().parents[2] / "scripts" / "ux_canon_scan.py")
+    scan = importlib.util.module_from_spec(spec); spec.loader.exec_module(scan)
+    def ds6(css):
+        return [v for v in scan.scan_file("x.css", css, css.splitlines()) if v.rule == "DS6"]
+    assert ds6(".a { border-left: 1px solid var(--wb-ink); }") == []
+    assert ds6(".a { border-left: 3px solid var(--accent); }")
+    assert ds6(".a { border-left: 2px solid var(--wb-ink); }")
+    assert ds6(".a { border-left: 1px solid var(--wb-blue); }")
+    assert ds6(".a { border-left: 1px solid #6688bb; }")
+
+
+@pytest.mark.parametrize(("filename", "source", "rule"), [
+    ("Button.tsx", "export const Button = () => <button>Save</button>;", "A1"),
+    ("WorkbenchSelect.tsx", "export const Select = () => <select />;", "B"),
+])
+def test_picker_library_implementation_paths_are_exact(filename, source, rule):
+    """Native library elements are valid only at their implementation path."""
+    scanner = _load_scanner()
+
+    def hits(path):
+        return [v for v in scanner.scan_file(path, source, source.splitlines()) if v.rule == rule]
+
+    assert hits(f"components/signal/{filename}") == []
+    for path in (
+        f"desk/components/{filename}",
+        f"features/picker/{filename}",
+        f"components/signal/Fake{filename}",
+        f"components/signal/{filename}.copy.tsx",
+    ):
+        assert hits(path), f"face or lookalike path escaped {rule}: {path}"

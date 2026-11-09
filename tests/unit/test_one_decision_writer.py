@@ -13,6 +13,7 @@ test never touches.
 """
 from __future__ import annotations
 
+from tests import _tree
 import ast
 from datetime import datetime
 from pathlib import Path
@@ -339,9 +340,10 @@ def test_one_place_builds_the_decision_commitment():
     commitment (the proposal bridge's action chain is an action's own)."""
     root = Path(__file__).resolve().parents[2] / "holdspeak"
     inserts: dict[str, list[str]] = {}
-    for path in sorted(root.rglob("*.py")):
-        tree = ast.parse(path.read_text())
-        for fn in (n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef)):
+    for path in _tree.python_files(root):
+        if "DECISION_COMMITMENTS" not in _tree.text_of(path).upper():
+            continue
+        for fn in (n for n in _tree.walk(path) if isinstance(n, ast.FunctionDef)):
             if any(isinstance(c, ast.Constant) and isinstance(c.value, str)
                    and "INSERT INTO DECISION_COMMITMENTS" in " ".join(c.value.upper().split())
                    for c in ast.walk(fn)):

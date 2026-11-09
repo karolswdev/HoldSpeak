@@ -30,9 +30,15 @@ gen = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(_spec and gen)  # type: ignore[union-attr]
 
 
-@pytest.fixture(scope="module")
+_LIVE: dict = {}
+
+
+@pytest.fixture
 def live() -> dict:
-    return gen.build_manifest()
+    """The manifest, built once per process (a 5 s build of the real app)."""
+    if not _LIVE:
+        _LIVE.update(gen.build_manifest())
+    return _LIVE
 
 
 def test_every_dynamic_web_call_resolves_to_a_route(live) -> None:
@@ -74,12 +80,15 @@ def test_manifest_is_not_vacuous(live) -> None:
     assert len(web_routes) >= 80, "the web consumer extraction went dark"
 
 
-def test_extractors_see_the_real_call_sites() -> None:
-    """A moved/emptied source tree must fail loudly, not pass vacuously."""
+def test_extractors_see_the_real_call_sites(live) -> None:
+    """A moved/emptied source tree must fail loudly, not pass vacuously.
+
+    The web side reads the manifest already built (one scan of web/src per
+    process, 2026-11-09); only the small iOS scan runs again."""
     ios = gen.extract_ios_calls()
-    web = gen.extract_web_calls()
     assert "/api/coders/status" in ios, (
         "iOS extraction lost the coder-board calls — did the client move?")
+    web = {r["path"] for r in live["routes"] if "web" in r["consumers"]}
     assert any(c.startswith("/api/dictation/") for c in web)
     assert len(ios) >= 15 and len(web) >= 60
 

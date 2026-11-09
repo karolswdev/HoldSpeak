@@ -18,6 +18,7 @@ Ordering (ruling C1): the boundary landed before the verb it bounds.
 
 from __future__ import annotations
 
+from tests import _tree
 import json
 import uuid
 from pathlib import Path
@@ -768,10 +769,10 @@ def _mcp_source_strings() -> tuple[set[str], int]:
     import holdspeak
 
     root = Path(holdspeak.__file__).parent / "mcp"
-    files = sorted(root.rglob("*.py"))
+    files = _tree.python_files(root)
     constants: set[str] = set()
     for path in files:
-        for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+        for node in _tree.walk(path):
             if isinstance(node, ast.Constant) and isinstance(node.value, str):
                 constants.add(node.value)
     return constants, len(files)

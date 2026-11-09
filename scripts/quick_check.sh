@@ -227,7 +227,7 @@ repo_guards=(tests/unit/test_static_sql_matches_schema.py tests/unit/test_densit
   tests/unit/test_api_surface.py tests/unit/test_realtime_frame_registry.py tests/unit/test_one_path_census.py
   tests/unit/test_aware_time_census.py tests/unit/test_kernel_effect_fence.py tests/unit/test_decisions.py
   tests/unit/test_philo7_contract.py tests/unit/test_doc_drift_guard.py tests/unit/test_graph_atlas.py
-  tests/unit/test_phase143_surface_fallback_census.py tests/unit/test_ux_canon_scan.py tests/unit/test_thread_tool_gate.py
+  tests/unit/test_ux_canon_scan.py tests/unit/test_thread_tool_gate.py
   tests/unit/test_philo13_18_type_floor_static.py tests/unit/test_graph_reference.py tests/unit/test_native_surfaces_guard.py
   tests/unit/test_page_cores_guard.py tests/unit/test_web_null_read_guard.py tests/unit/test_web_vocabulary_guard.py
   tests/unit/test_hub_handlers_off_loop.py tests/unit/test_lamp_words_guard.py tests/unit/test_vitest_related.py

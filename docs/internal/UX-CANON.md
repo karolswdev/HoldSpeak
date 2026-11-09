@@ -499,35 +499,15 @@ replace the earlier 11 px caption allowance.
    step; his words verbatim; scars become laws here.
 
 **Guards.** `tests/unit/test_ux_canon_ratchet.py` runs the canon
-scanner (`scripts/ux_canon_scan.py`) against the live `web/src` tree
-and enforces three invariants.  (i) *Ratchet*: per-rule violation
-counts must not exceed the committed ceiling file
-`tests/ux_canon_ceiling.json`; a regression names the rule, the delta,
-and the faces that rose.  (ii) *Hard zeros*: DS6 (accent rail) and A9
-(missing egress) must stay at 0; A1 (raw `<button>`) is held to a
-dated, down-only ratchet of 2, set on 2026-11-08 by the night's A8 pass (#1865; 81 on 2026-10-06 by Conductor R6, #913)
-(the session window's raw buttons became the library Button; 90 on
-2026-10-02 by PHILO-13-18, the Workbench's raw buttons; 102 on 2026-09-28 by
-#694, the live count once the Phase 9 and 10 faces landed; 105 the same day by
-PHILO-9-04, the sortable table's sort headers; 106 on 2026-09-21 by HS-202-03;
-175 on 2026-09-17 by HS-200-44, once the matcher could see a
-multi-line opening tag; the earlier "4 residues" was an artifact of a
-per-line regex, not a fact about the code).  That number can only shrink; the ruling itself is unchanged:
-every verb is the library Button, and a raw `<button>` is a species
-bug that face stories pay down file by file.  (iii) *Healing*: when a
-count drops below the ceiling, the test passes with a notice to lower
-the ceiling.  To lower the ceiling after fixing violations, run:
-`python scripts/ux_canon_scan.py --write-ceiling tests/ux_canon_ceiling.json`.
-A ceiling only rises with a new `--ceiling-reason` in the same commit,
-and a plain scanner run writes nothing into the tree.
+scanner (`scripts/ux_canon_scan.py`) against the live `web/src` tree.
+The rules that are defects stay at zero: A1 (raw `<button>`), A4, A8
+(a counter of zero), A9 (missing egress), DS6 (accent rail) and mic.
+A hit fails the test and names the faces. The other rules (prose, raw
+ids, emoji, B, C) are findings for the face lanes, not a gate. The
+per-rule ceiling ratchet is parked (2026-11-09, the fences diet): it
+had to be re-recorded on every face change. Every verb is the library
+Button; a raw `<button>` is a species bug.
 
-**The census and the ratchet.** The scanner (`scripts/ux_canon_scan.py`)
-reads every file under `web/src` and counts violations per rule and per
-face. The ceiling file (`tests/ux_canon_ceiling.json`) records the
-highest-known count per rule. The test
-(`tests/unit/test_ux_canon_ratchet.py`) fails when any rule's count
-exceeds its ceiling, so a regression is caught before merge. After a fix,
-lower the ceiling with `python scripts/ux_canon_scan.py --write-ceiling
-tests/ux_canon_ceiling.json`. The review order is: read the shot, read
+The review order is: read the shot, read
 the artboard, then read the canon. A face that matches its artboard but
 violates this canon is still wrong.

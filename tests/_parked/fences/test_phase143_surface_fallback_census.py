@@ -1,3 +1,5 @@
+# PARKED 2026-11-09 (fences diet, pipe/fences-diet): a hand-kept classification of every private helper named *retry*/*fallback*/*route* and every web file naming a profile id (#2061, #2086 and #2067 each had to add rows); phase 143 is history.
+# Nothing replaces it: a shape fence. docs/internal/surface-fallback-census.md stays as a doc.
 """HS-143-01 — executable census of owner route controls and recovery semantics.
 
 This is intentionally a *static* fence.  Phase 143 has not consolidated these

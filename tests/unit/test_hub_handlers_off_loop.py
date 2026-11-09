@@ -10,6 +10,7 @@ stays empty (checked below).
 """
 from __future__ import annotations
 
+from tests import _tree
 import ast
 import sys
 from pathlib import Path
@@ -82,10 +83,9 @@ def _runs_on_loop(node: ast.AsyncFunctionDef) -> bool:
 
 def _route_handlers() -> list[tuple[str, int, str, bool, bool]]:
     handlers: list[tuple[str, int, str, bool, bool]] = []
-    for path in sorted(_WEB.rglob("*.py")):
+    for path in _tree.python_files(_WEB):
         relative = str(path.relative_to(_REPO / "holdspeak"))
-        tree = ast.parse(path.read_text(), filename=str(path))
-        for node in ast.walk(tree):
+        for node in _tree.walk(path):
             if not _is_route_handler(node):
                 continue
             is_async = isinstance(node, ast.AsyncFunctionDef)

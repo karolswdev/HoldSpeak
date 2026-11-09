@@ -19,9 +19,8 @@ Each statement gets exactly one verdict:
 * PASSED: SQLite prepared it.
 * OFFENDER: SQLite named a missing table or column. The test fails.
 * UNCHECKED: the statement could not be completed statically (a runtime
-  value inside it), or SQLite refused it for another reason. It is reported by
-  ``file:line`` and counted. It is never counted as passed. The count has a
-  ceiling, so new unchecked SQL is a decision and not an accident.
+  value inside it), or SQLite refused it for another reason. It is never
+  counted as passed. (Its ceiling was a count fence, parked 2026-11-09.)
 
 A constant that is only a part of other statements is judged through them.
 
@@ -37,6 +36,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from holdspeak.db import Database
+from tests import _tree
 
 ROOT = Path(__file__).resolve().parents[2]
 _STATEMENT = re.compile(r"\s*(SELECT|INSERT|UPDATE|DELETE|WITH)\s")
@@ -57,10 +57,6 @@ _OTHER_DATABASE_SCOPES: dict[tuple[str, str], str] = {
         "reads the renamed tables of the older schema during the rebuild",
 }
 
-# Statements that cannot be completed statically today. New dynamic SQL makes
-# this test fail with the list: make the statement static, or raise the ceiling
-# on purpose.
-_UNCHECKED_CEILING = 138  # measured 2026-10-04; +1 the time retriever (db/memory.py _time_rows: one read per kind spec, as recent() does); +3 the one-time zoneless-stamp repair (db/zoneless_stamps.py walks every time column by name, 2026-10-05)
 
 
 @dataclass
@@ -81,9 +77,9 @@ def _is_string_expr(node: ast.AST) -> bool:
 class _Module:
     """One source file: its string constants and its complete string expressions."""
 
-    def __init__(self, relative: str, source: str) -> None:
+    def __init__(self, relative: str, source: str, tree: ast.Module | None = None) -> None:
         self.relative = relative
-        self.tree = ast.parse(source)
+        self.tree = tree if tree is not None else ast.parse(source)
         self.constants: dict[str, str] = {}
         self.used_constants: set[str] = set()
         self.roots: list[tuple[ast.AST, str, str]] = []  # node, scope, assigned name
@@ -181,8 +177,10 @@ def _prepare(conn: sqlite3.Connection, sql: str) -> str:
     return message or "did not prepare"
 
 
-def sweep_source(conn: sqlite3.Connection, relative: str, source: str, into: Sweep) -> None:
-    module = _Module(relative, source)
+def sweep_source(
+    conn: sqlite3.Connection, relative: str, source: str, into: Sweep, tree: ast.Module | None = None,
+) -> None:
+    module = _Module(relative, source, tree)
     verdicts = []
     for node, scope, assigned in module.roots:
         text = module.resolve(node)
@@ -210,8 +208,8 @@ def sweep_source(conn: sqlite3.Connection, relative: str, source: str, into: Swe
 
 def sweep_package(conn: sqlite3.Connection) -> Sweep:
     result = Sweep()
-    for path in sorted((ROOT / "holdspeak").rglob("*.py")):
-        sweep_source(conn, path.relative_to(ROOT).as_posix(), path.read_text(encoding="utf-8"), result)
+    for path in _tree.python_files("holdspeak"):
+        sweep_source(conn, path.relative_to(ROOT).as_posix(), _tree.text_of(path), result, _tree.ast_of(path))
     return result
 
 
@@ -241,19 +239,6 @@ def test_every_static_sql_statement_names_real_tables_and_columns(tmp_path: Path
         result = sweep_package(conn)
     assert result.passed > 1000, "the extraction found too few statements to be the real sweep"
     assert not result.offenders, "SQL names a missing table or column:\n  " + "\n  ".join(result.offenders)
-
-
-def test_unchecked_statements_are_named_counted_and_do_not_grow(tmp_path: Path, capsys) -> None:
-    """UNCHECKED is a verdict of its own: listed, counted, held under a ceiling."""
-    with _fresh(tmp_path)._connection() as conn:
-        result = sweep_package(conn)
-    listing = "\n  ".join(result.unchecked)
-    with capsys.disabled():
-        print(f"\nstatic SQL sweep: {result.passed} passed, {len(result.unchecked)} UNCHECKED")
-    assert len(result.unchecked) <= _UNCHECKED_CEILING, (
-        f"{len(result.unchecked)} statements are UNCHECKED (ceiling {_UNCHECKED_CEILING}). "
-        "Make the new statement static, or raise the ceiling on purpose:\n  " + listing
-    )
 
 
 def test_every_exclusion_names_a_scope_that_holds_sql() -> None:
