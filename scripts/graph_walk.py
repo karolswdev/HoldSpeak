@@ -931,10 +931,47 @@ OP_MCP_PROJECTIONS: dict[str, dict[str, Any]] = {
     "note.outcome.edit": {"kind": "tool", "name": "note.outcome.edit"},
     "note.outcome.dismiss": {"kind": "tool", "name": "note.outcome.dismiss"},
     "note.outcome.confirm": {"kind": "tool", "name": "note.outcome.confirm"},
+    # #2027: the Programs verbs are OperationDescriptors (holdspeak/program_operations.py);
+    # each one with an MCP tool is projected to it.
+    "program.add_to_night": {"kind": "tool", "name": "program.add_to_night"},
+    "program.amend": {"kind": "tool", "name": "program.amend"},
+    "program.checkpoint": {"kind": "tool", "name": "program.checkpoint"},
+    "program.create": {"kind": "tool", "name": "program.create"},
+    "program.decide": {"kind": "tool", "name": "program.decide"},
+    "program.from_action": {"kind": "tool", "name": "program.from_action"},
+    "program.get": {"kind": "tool", "name": "program.get"},
+    "program.handoff": {"kind": "tool", "name": "program.handoff"},
+    "program.list": {"kind": "tool", "name": "program.list"},
+    "program.overturn": {"kind": "tool", "name": "program.overturn"},
+    "program.park": {"kind": "tool", "name": "program.park"},
+    "program.plan": {"kind": "tool", "name": "program.plan"},
+    "program.plan_draft": {"kind": "tool", "name": "program.plan_draft"},
+    "program.plan_programs": {"kind": "tool", "name": "program.plan_programs"},
+    "program.propose_fix": {"kind": "tool", "name": "program.propose_fix"},
+    "program.race": {"kind": "tool", "name": "program.race"},
+    "program.require": {"kind": "tool", "name": "program.require"},
+    "program.resume": {"kind": "tool", "name": "program.resume"},
+    "program.round": {"kind": "tool", "name": "program.round"},
+    "program.shape": {"kind": "tool", "name": "program.shape"},
+    "program.shape_engine": {"kind": "tool", "name": "program.shape_engine"},
+    "program.shape_held_drop": {"kind": "tool", "name": "program.shape_held_drop"},
+    "program.start": {"kind": "tool", "name": "program.start"},
+    "program.start_from": {"kind": "tool", "name": "program.start_from"},
+    "program.step_done": {"kind": "tool", "name": "program.step_done"},
+    "program.step_hand_back": {"kind": "tool", "name": "program.step_hand_back"},
+    "program.step_remove": {"kind": "tool", "name": "program.step_remove"},
+    "program.step_take": {"kind": "tool", "name": "program.step_take"},
+    "program.step_update": {"kind": "tool", "name": "program.step_update"},
+    "program.templates": {"kind": "tool", "name": "program.templates"},
+    "program.text": {"kind": "tool", "name": "program.text"},
+    "program.text_apply": {"kind": "tool", "name": "program.text_apply"},
+    "program.update": {"kind": "tool", "name": "program.update"},
 }
 
 #: Declared operations with no MCP exposure: the rig refuses them by name.
 OP_HTTP_ONLY = frozenset({"decision.status", "project.door.create", "project.door.preview",
+                          # #2027: the Programs verbs the face presses that have no MCP tool.
+                          "program.close", "program.proposal_decide", "program.requirement_decide", "program.requirement_edit", "program.requirement_evidence", "program.round_answer", "program.round_decide", "program.round_next", "program.rounds_open",
                           # Betterment capture C5b: the meeting window's Prepare… press (HTTP only).
                           "meeting.result.prepare",
                           # PHILO-9-02: the charter's HTTP capability exceptions.

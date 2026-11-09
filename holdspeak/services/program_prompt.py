@@ -125,6 +125,9 @@ def _run(runner: Any, program: Mapping[str, Any], step: dict[str, Any], broker: 
 
     service = runner.service
     deliver = str(step.get("deliver") or DEFAULT_DELIVER)
+    if step["state"] == "planned":
+        # A caller that waits runs it before any tick promoted it (the engine may be off).
+        service.transition(program, step, "ready")
     if step["state"] == "ready":
         service.transition(program, step, "briefed", line="Asked the engine")
     if step["state"] == "briefed":
@@ -135,7 +138,12 @@ def _run(runner: Any, program: Mapping[str, Any], step: dict[str, Any], broker: 
         service.transition(program, step, "failed", line=f"The sources were not read · {exc}"[:400])
         return
     project_id = deliver[len(PROJECT_UPDATES_PREFIX):] if deliver.startswith(PROJECT_UPDATES_PREFIX) else ""
-    adapter = _MeteredPromptAdapter(program.get("spend_limit_usd"), project_id=project_id)
+    # Betterment A10: an automation's agent CLI engine works in its Folder source, read only.
+    from .automation_runs import work_folder_of
+
+    started_by = _automation_of(service.db, program)
+    folder = work_folder_of(started_by) if started_by is not None else None
+    adapter = _MeteredPromptAdapter(program.get("spend_limit_usd"), folder, project_id=project_id)
     payload = {
         "system_prompt": system, "user_prompt": user,
         # The run's cost and what its agent used are keyed by the step (run_trace).

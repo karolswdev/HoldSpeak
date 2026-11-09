@@ -44,7 +44,7 @@ def test_the_canonical_map_has_all_seventeen_operations_and_no_local_service_tar
     # Conductor K2's one (agent.hand), then Conductor R7's (people_access.set),
     # then PHILO-16 16b's six (the desk's windows), then PHILO-17's
     # meeting.transcribe, then Betterment Q9's five (Find the tasks).
-    assert len(gw.OP_MCP_PROJECTIONS) == 115
+    assert len(gw.OP_MCP_PROJECTIONS) == 148
     assert set(gw.OP_MCP_PROJECTIONS) == {
         "setup.status", "setup.use",
         "decision.create", "decision.update", "decision.read", "decision.list",
@@ -77,6 +77,8 @@ def test_the_canonical_map_has_all_seventeen_operations_and_no_local_service_tar
         "agent.hand", "people_access.set",
         "windows.list", "windows.open", "windows.close", "windows.raise", "windows.arrange", "windows.seat",
         "note.outcomes.read", "note.find_tasks", "note.outcome.edit", "note.outcome.dismiss", "note.outcome.confirm",
+        # #2027: the Programs descriptors with an MCP tool.
+        "program.add_to_night", "program.amend", "program.checkpoint", "program.create", "program.decide", "program.from_action", "program.get", "program.handoff", "program.list", "program.overturn", "program.park", "program.plan", "program.plan_draft", "program.plan_programs", "program.propose_fix", "program.race", "program.require", "program.resume", "program.round", "program.shape", "program.shape_engine", "program.shape_held_drop", "program.start", "program.start_from", "program.step_done", "program.step_hand_back", "program.step_remove", "program.step_take", "program.step_update", "program.templates", "program.text", "program.text_apply", "program.update",
     }
     assert gw.OP_HTTP_ONLY == {"decision.status", "project.door.create", "project.door.preview",
                                "project.door.count", "project.watch.update", "project.watch.baseline",
@@ -85,7 +87,9 @@ def test_the_canonical_map_has_all_seventeen_operations_and_no_local_service_tar
                                "setup.found", "setup.people.add", "setup.lan.scan",
                                "project.repository.register",
                                # Betterment capture C5b: Prepare… / Write again (HTTP only).
-                               "meeting.result.prepare"}
+                               "meeting.result.prepare",
+                               # #2027: the Programs descriptors with no MCP tool.
+                               "program.close", "program.proposal_decide", "program.requirement_decide", "program.requirement_edit", "program.requirement_evidence", "program.round_answer", "program.round_decide", "program.round_next", "program.rounds_open"}
     assert all(value["kind"] in {"tool", "resource"}
                for value in gw.OP_MCP_PROJECTIONS.values())
 
