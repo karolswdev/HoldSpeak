@@ -1446,8 +1446,8 @@
         },
         {
           "path": "web/src/pages/cores/__tests__/peopleCore.test.tsx",
-          "node": "opens either exact commitment in its owning section and Close returns to that row",
-          "assertion": "Both sections read the exact execution ID and restore title focus without a lifecycle write.",
+          "node": "opens either exact commitment in place on its ledger row and Close returns to that row",
+          "assertion": "Either ledger row reads the exact execution ID in place and Close restores focus to its row without a lifecycle write.",
           "execution": "passed"
         },
         {
