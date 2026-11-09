@@ -10,9 +10,9 @@ def _is_test_source(path: Path) -> bool:
 
 
 def test_product_components_do_not_mutate_global_dom_or_inject_html() -> None:
-    # desk/walk/dom.ts is the walk's one DOM adapter: the walk is an instrument
-    # over the desk and its targets ARE selectors from the owner's walk script.
-    sanctioned = {"desk/walk/dom.ts"}
+    # desk/compositor/dom.ts is the desk's one DOM adapter for display requests
+    # (the Walk's steps, an agent's desk.mark): their targets ARE selectors.
+    sanctioned = {"desk/compositor/dom.ts"}
     offenders = []
     for path in sorted(ROOT.rglob("*")):
         if path.suffix not in {".ts", ".tsx"}:

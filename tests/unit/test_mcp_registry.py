@@ -146,7 +146,7 @@ def test_every_declared_tool_schema_is_a_declared_tool() -> None:
     from holdspeak import operations
     from holdspeak.mcp.families import declared
 
-    with_schema = {d.name for d in operations.DESCRIPTORS if d.tool_schema is not None}
+    with_schema = {d.tool_name for d in operations.DESCRIPTORS if d.tool_schema is not None}
     assert declared.NAMES == with_schema
     assert {"meeting.facets", "action_item.update", "program.get"} <= declared.NAMES
 

@@ -1,3 +1,9 @@
+"""PARKED 2026-11-08 (one display protocol): the six hand-written desk_window.* tools.
+
+The declared family (``mcp/families/declared.py``) now produces the same six
+tools, same names and schemas, from ``holdspeak/desk_operations.py``. Kept for
+history; not imported. The import below names the module it read then.
+"""
 """Desk windows family: an agent composes the owner's desk windows (PHILO-16 16b).
 
 COMPOSITOR.md §13 L1: the hub owns the desk's windows, every browser is one
@@ -24,7 +30,7 @@ from holdspeak.principals import Principal
 
 def _tools() -> list[dict[str, Any]]:
     """Each tool IS its declared operation: one schema, one set of words."""
-    from holdspeak.desk_window_operations import DESK_WINDOW_OPERATIONS, TOOL_OPERATIONS
+    from holdspeak.desk_window_operations import DESK_WINDOW_OPERATIONS, TOOL_OPERATIONS  # parked: gone
 
     by_name = {d.name: d for d in DESK_WINDOW_OPERATIONS}
     tools = []

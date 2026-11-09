@@ -925,6 +925,13 @@ OP_MCP_PROJECTIONS: dict[str, dict[str, Any]] = {
     "windows.raise": {"kind": "tool", "name": "desk_window.raise"},
     "windows.arrange": {"kind": "tool", "name": "desk_window.arrange"},
     "windows.seat": {"kind": "tool", "name": "desk_window.seat"},
+    # One display protocol (2026-11-08): every window verb is a tool.
+    **{f"windows.{verb}": {"kind": "tool", "name": f"desk_window.{verb}"} for verb in (
+        "move", "resize", "set_geometry", "send_back", "zoom", "stage_shelf")},
+    # One display protocol (2026-11-08): the desk's display requests (holdspeak/desk_operations.py).
+    **{name: {"kind": "tool", "name": name} for name in (
+        "desk.mark", "desk.press", "desk.say", "desk.scroll", "desk.request.read",
+    )},
     # Betterment Q9: Find the tasks on a note.
     "note.outcomes.read": {"kind": "tool", "name": "note.outcomes"},
     "note.find_tasks": {"kind": "tool", "name": "note.find_tasks"},
@@ -1002,7 +1009,9 @@ OP_HTTP_ONLY = frozenset({"decision.status", "project.door.create", "project.doo
                           # PHILO-15 04: the owner's press opens the Calendars privacy pane (HTTP only).
                           "calendar.open_settings", "connection.signin",
                           # PHILO-15 16: the owner names a Project's repository (HTTP only).
-                          "project.repository.register"})
+                          "project.repository.register",
+                          # One display protocol (2026-11-08): the compositor's answer to a display request.
+                          "desk.request.result"})
 
 # PHILO-7-01: the desk kind and id argument of each slice prefix.
 _DESK_OP_KINDS: dict[str, tuple[str, str]] = {
@@ -1035,6 +1044,8 @@ OP_READ_OBSERVATIONS = frozenset({
     "memory.page.read",
     # PHILO-16 16b.
     "windows.list",
+    # One display protocol (2026-11-08).
+    "desk.request.read",
 })
 
 

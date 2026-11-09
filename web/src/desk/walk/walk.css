@@ -5,21 +5,9 @@
    edge, the part itself lifted with a warm halo, and one kit toolbar band
    above the dock that asks (direction S3 "the bar", 2026-11-08). No
    character, no bubble, no ring, no dim. Over the windows, the dock and the
-   popovers; under the feedback strip. Motion is transforms and opacity. */
-.walk-layer {
-  /* The safe area (the Dynamic Island, the home bar). A rig may set these. */
-  --walk-safe-top: env(safe-area-inset-top, 0px);
-  --walk-safe-right: env(safe-area-inset-right, 0px);
-  --walk-safe-bottom: env(safe-area-inset-bottom, 0px);
-  --walk-safe-left: env(safe-area-inset-left, 0px);
-  /* The warm accent: the ember the kit gives what asks him (IconLamp ask). */
-  --walk-warm: var(--lamp-ask);
-  position: fixed;
-  inset: 0;
-  z-index: 95;
-  pointer-events: none;
-}
-
+   popovers; under the feedback strip. Motion is transforms and opacity.
+   The layer, the caption, the halo and the pressed look are the desk's
+   (compositor/requests.css): an agent's desk.mark wears them too. */
 /* One frame without the walk's chrome: the shot is the screen he sees. */
 .walk-layer[data-capturing] {
   visibility: hidden;
@@ -142,96 +130,9 @@
   to { scale: 1.6; opacity: 0; }
 }
 
-/* The caption: the step's words at the bottom edge, over the dock and the
-   sheet, at most two lines, fading in with the step and out with it. */
-.walk-caption-slot {
-  position: fixed;
-  z-index: 2;
-  left: calc(var(--walk-safe-left) + 16px);
-  right: calc(var(--walk-safe-right) + 16px);
-  bottom: calc(var(--walk-caption-bottom, 12px) + var(--walk-safe-bottom));
-  display: flex;
-  justify-content: center;
-  pointer-events: none;
-}
-
-.walk-caption {
-  margin: 0;
-  max-width: min(560px, 100%);
-  padding: 6px 14px;
-  color: var(--desk-dock-glass-ink);
-  background: var(--desk-dock-glass);
-  border-radius: var(--radius-lg);
-  -webkit-backdrop-filter: blur(14px) saturate(1.4);
-  backdrop-filter: blur(14px) saturate(1.4);
-  font-size: var(--font-size-md);
-  font-weight: 500;
-  line-height: 1.4;
-  text-align: center;
-  text-wrap: balance;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  overflow: hidden;
-}
-
-.walk-caption[data-leaving] {
-  position: absolute;
-  bottom: 0;
-  opacity: 0;
-}
-
 .walk-begin {
   min-height: 44px;
   pointer-events: auto;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .walk-caption { animation: walk-caption-in var(--duration-long) var(--ease-standard) 1 both; }
-  .walk-caption[data-leaving] { animation: walk-caption-out 200ms var(--ease-standard) 1 both; }
-}
-
-@keyframes walk-caption-in {
-  from { opacity: 0; translate: 0 4px; }
-}
-
-@keyframes walk-caption-out {
-  from { opacity: 1; }
-  to { opacity: 0; translate: 0 -4px; }
-}
-
-/* The mark (2026-11-08): the part itself lifts one step and wears a soft
-   warm halo that breathes; nothing is over it and nothing dims. The halo's
-   animation outranks the part's own shadow while it is up. */
-.walk-halo.walk-halo {
-  --walk-warm: var(--lamp-ask);
-  translate: 0 -1px;
-  box-shadow: var(--depth-card),
-    0 0 0 3px color-mix(in srgb, var(--walk-warm) 90%, transparent),
-    0 0 24px 6px color-mix(in srgb, var(--walk-warm) 45%, transparent);
-  transition: translate var(--duration-medium) var(--ease-standard);
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .walk-halo.walk-halo { animation: walk-halo-breathe 2.4s ease-in-out infinite; }
-}
-
-@keyframes walk-halo-breathe {
-  0%, 100% {
-    box-shadow: var(--depth-card),
-      0 0 0 3px color-mix(in srgb, var(--walk-warm) 90%, transparent),
-      0 0 24px 6px color-mix(in srgb, var(--walk-warm) 45%, transparent);
-  }
-  50% {
-    box-shadow: var(--depth-card),
-      0 0 0 3px color-mix(in srgb, var(--walk-warm) 90%, transparent),
-      0 0 32px 9px color-mix(in srgb, var(--walk-warm) 30%, transparent);
-  }
-}
-
-/* The guide's tap: the kit's pressed settle on the part for 120 ms. */
-[data-walk-pressed] {
-  translate: 0 1px;
 }
 
 /* The bar (direction S3, 2026-11-08; the sheet was "so ugly and

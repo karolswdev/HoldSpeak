@@ -229,6 +229,7 @@ def test_the_contract_refuses_a_non_owner_before_anything_else(tmp_path: Path) -
         "setup.found", "setup.use", "setup.people.add", "setup.lan.scan",  # Betterment ST3-ST5
         "project.repository.register",  # PHILO-15 16: only the owner names a Project's repository
         "agent.hand",  # Conductor K2: only the owner hands an item to an agent
+        "desk.press",  # One display protocol (2026-11-08): only the owner's desk is pressed
     ]
     assert "owner_required" in operations.MEETING_IMPORT.export()["refusals"]
 
@@ -728,6 +729,24 @@ def _p_windows_seat(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
     return _window_op(hub, "windows.seat", {"window_id": "chair:brief", "seated": True})
 
 
+# One display protocol (2026-11-08): every window verb, and the display requests.
+def _p_window(name: str, args: dict[str, Any]) -> Any:
+    def produce(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
+        _window_op(hub, "windows.open", {"window_id": "chair:brief"})
+        return _window_op(hub, name, args)
+    return produce
+
+
+def _p_desk_request_read(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
+    sent = _window_op(hub, "desk.say", {"words": "Look here"})
+    return _window_op(hub, "desk.request.read", {"request_id": sent["request_id"]})
+
+
+def _p_desk_request_result(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
+    sent = _window_op(hub, "desk.mark", {"target": "needs-row"})
+    return _window_op(hub, "desk.request.result", {"request_id": sent["request_id"], "done": True})
+
+
 def _p_calendar_open_settings(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
     """The real service and kernel path; only the macOS open is a double."""
     service = hub.root.operations.target("calendar.open_settings")
@@ -917,6 +936,20 @@ PRODUCERS: dict[str, Callable[[Hub, Any, Path], Any]] = {
     "windows.raise": _p_windows_raise,
     "windows.arrange": _p_windows_arrange,
     "windows.seat": _p_windows_seat,
+    # One display protocol (2026-11-08).
+    "windows.stage_shelf": _p_window("windows.stage_shelf", {"side": "right"}),
+    "windows.move": _p_window("windows.move", {"window_id": "chair:brief", "x": 10, "y": 10}),
+    "windows.resize": _p_window("windows.resize", {"window_id": "chair:brief", "w": 400, "h": 300}),
+    "windows.set_geometry": _p_window("windows.set_geometry",
+                                      {"window_id": "chair:brief", "rect": {"x": 1, "y": 2, "w": 300, "h": 200}}),
+    "windows.send_back": _p_window("windows.send_back", {"window_id": "chair:brief"}),
+    "windows.zoom": _p_window("windows.zoom", {"window_id": "chair:brief", "zoomed": True}),
+    "desk.mark": _p_window("desk.mark", {"target": "needs-row", "window": "chair:needs"}),
+    "desk.press": _p_window("desk.press", {"target": "needs-row"}),
+    "desk.say": _p_window("desk.say", {"words": "Look here"}),
+    "desk.scroll": _p_window("desk.scroll", {"target": "needs-row"}),
+    "desk.request.read": _p_desk_request_read,
+    "desk.request.result": _p_desk_request_result,
     # Betterment Q9: Find the tasks on a note.
     "note.outcomes.read": _p_note_outcomes_read,
     "note.find_tasks": _p_note_find_tasks,

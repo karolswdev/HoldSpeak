@@ -471,6 +471,14 @@ LAUNCH_RULES.update({name: (NEVER, "", "") for name in (
     "meeting.ready_read", "meeting.rename", "meeting.restore", "meeting.recover_capture",
     "meeting.resolve_sync_conflict", "action_item.update", "action_item.review", "meeting.bookmark",
     "meeting.update")})
+# One display protocol (2026-11-08, ``desk_operations.py``): a launch may mark,
+# say and scroll on the owner's desk, and every window verb, as it opens his
+# windows; press is his.
+LAUNCH_RULES.update({name: (WINDOW, "", "") for name in (
+    "desk.mark", "desk.say", "desk.scroll", "desk_window.move", "desk_window.resize", "desk_window.set_geometry",
+    "desk_window.send_back", "desk_window.zoom", "desk_window.stage_shelf")})
+LAUNCH_RULES["desk.press"] = (NEVER, "", "")
+LAUNCH_RULES["desk.request.read"] = (READ, "", "")
 
 #: Not offered to a launch at all (the palette leaves them out).
 NOT_OFFERED: frozenset[str] = frozenset(n for n, (rule, _k, _a) in LAUNCH_RULES.items() if rule in (NEVER, COMPOSER))

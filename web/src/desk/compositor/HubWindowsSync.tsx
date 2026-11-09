@@ -1,11 +1,14 @@
 /** PHILO-16 (16b) — the mount point of the hub's windows: seed on load,
- * follow the hub's `desk_changed` frames of kind `windows`. Renders nothing.
- * Without a bus (a component test) it seeds and does not follow. */
+ * follow the hub's `desk_changed` frames of kind `windows`. One display
+ * protocol (2026-11-08): it also runs the hub's display requests
+ * (`DeskRequests`, the `desk_request` frame). Without a bus (a component
+ * test) it seeds and does not follow. */
 import { useEffect } from "react";
 import { useBusSubscribe } from "../useDeskChangedRefresh";
+import { DeskRequests } from "./DeskRequests";
 import { hubWindows } from "./hubWindows";
 
-export function HubWindowsSync(): null {
+export function HubWindowsSync() {
   const subscribe = useBusSubscribe();
   useEffect(() => {
     const hub = hubWindows();
@@ -19,5 +22,5 @@ export function HubWindowsSync(): null {
       if (typeof unsubscribe === "function") unsubscribe();
     };
   }, [subscribe]);
-  return null;
+  return <DeskRequests />;
 }

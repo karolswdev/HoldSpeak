@@ -28,7 +28,9 @@ from __future__ import annotations
 import json
 import math
 import re
+import secrets
 import threading
+from collections import OrderedDict
 from typing import Any, Callable, Iterable, Mapping, Optional
 
 from .errors import ConflictError, NotFound, ValidationError
@@ -343,6 +345,28 @@ def _announce(op: str, ids: list[str]) -> None:
             notify_desk_changed(CHANGE_KIND, window_id, op)
 
 
+#: How many display requests the hub keeps (memory only; the oldest goes).
+REQUESTS_KEPT = 50
+_REQUESTS: "OrderedDict[str, dict[str, Any]]" = OrderedDict()
+_REQUESTS_LOCK = threading.Lock()
+
+
+def _send_request(sent: dict[str, Any]) -> None:
+    """ONE ``desk_request`` frame on the hub's bus. No hub, no bus: no-op."""
+    from holdspeak.runtime import composition
+
+    try:
+        broadcast = composition.current().broadcast
+    except composition.NoRuntimeError:
+        return
+    if broadcast is None:
+        return
+    try:
+        broadcast("desk_request", sent)
+    except Exception:  # pragma: no cover - a dead socket never fails a request
+        pass
+
+
 class WindowStale(ConflictError):
     """The caller's revision is not the row's: re-read and follow."""
 
@@ -358,9 +382,11 @@ class DeskWindowService:
     """The desk's windows. Construct per call or keep one: the state is the
     database; the write lock is shared by every instance in the process."""
 
-    def __init__(self, db: Any, *, on_changed: Optional[Changes] = None) -> None:
+    def __init__(self, db: Any, *, on_changed: Optional[Changes] = None,
+                 send_request: Optional[Callable[[dict[str, Any]], None]] = None) -> None:
         self._db = db
         self._on_changed = on_changed or _announce
+        self._send_request = send_request or _send_request
 
     # ---- reads ---------------------------------------------------------
 
@@ -643,33 +669,48 @@ class DeskWindowService:
             self._on_changed("stage_shelf", [DESK_ID])
         return {"stage_shelf": desk["stage_shelf"], "revision": desk["shelf_revision"]}
 
-    # ---- the declared operations (desk_window_operations.py) -------------
-    # The registry calls ``method(principal, **arguments)``; the principal is
-    # the transport's and the service checks none (a window is the view).
+    # ---- display requests (desk_operations.py, one display protocol) -----
+    # A request is no row: one ``desk_request`` frame, and the desk's answer
+    # kept in this process's memory (the last REQUESTS_KEPT; no table).
 
-    def list_windows(self, principal: Any) -> dict[str, Any]:
-        return self.list()
+    def request(self, op: str, args: Mapping[str, Any]) -> dict[str, Any]:
+        """Send one display request to every open desk; answer its id at once."""
+        if op == "say" and not str(args.get("words") or "").strip():
+            raise ValidationError("say needs words", code="words_required")
+        if op != "say" and not str(args.get("target") or "").strip():
+            raise ValidationError(f"{op} needs a target", code="target_required")
+        request_id = f"req-{secrets.token_hex(6)}"
+        sent = {"request_id": request_id, "op": op,
+                "args": {key: value for key, value in args.items() if value is not None}}
+        with _REQUESTS_LOCK:
+            _REQUESTS[request_id] = {"request_id": request_id, "op": op, "answered": False}
+            while len(_REQUESTS) > REQUESTS_KEPT:
+                _REQUESTS.popitem(last=False)
+        self._send_request(sent)
+        return {"request_id": request_id}
 
-    def open_window(self, principal: Any, window_id: str, object_ref: Optional[str] = None,
-                    geometry: Optional[Mapping[str, Any]] = None, room: Optional[str] = None,
-                    expected_revision: Optional[int] = None) -> dict[str, Any]:
-        return self.open(window_id, None, object_ref, geometry, room, expected_revision=expected_revision)
+    def request_result(self, request_id: Any, done: Any, reason: Any = None) -> dict[str, Any]:
+        """The desk's answer to one request (the compositor posts it). Every
+        open desk answers; a done answer is not replaced by a refusal."""
+        with _REQUESTS_LOCK:
+            row = _REQUESTS.get(str(request_id))
+            if row is None:
+                raise NotFound("desk request", str(request_id))
+            if row.get("done") and not done:
+                return dict(row)
+            row.update({"answered": True, "done": bool(done)})
+            row.pop("reason", None)
+            if reason:
+                row["reason"] = str(reason)[:400]
+            return dict(row)
 
-    def close_window(self, principal: Any, window_id: str,
-                     expected_revision: Optional[int] = None) -> dict[str, Any]:
-        return self.close(window_id, expected_revision=expected_revision)
-
-    def raise_window(self, principal: Any, window_id: str,
-                     expected_revision: Optional[int] = None) -> dict[str, Any]:
-        return self.raise_(window_id, expected_revision=expected_revision)
-
-    def arrange_windows(self, principal: Any, rects: Mapping[str, Mapping[str, Any]],
-                        expected_revisions: Optional[Mapping[str, int]] = None) -> dict[str, Any]:
-        return self.arrange(rects, expected_revisions=expected_revisions)
-
-    def seat_window(self, principal: Any, window_id: str, seated: bool,
-                    expected_revision: Optional[int] = None) -> dict[str, Any]:
-        return self.seat(window_id, seated, expected_revision=expected_revision)
+    def read_request(self, request_id: Any) -> dict[str, Any]:
+        """One request: ``answered`` false until the desk answers."""
+        with _REQUESTS_LOCK:
+            row = _REQUESTS.get(str(request_id))
+            if row is None:
+                raise NotFound("desk request", str(request_id))
+            return dict(row)
 
     # ---- internals -----------------------------------------------------
 
@@ -828,37 +869,6 @@ def _serialize(row: Mapping[str, Any], front: Optional[str]) -> dict[str, Any]:
     }
 
 
-#: The verbs on one window (the HTTP route's ``{verb}``; the MCP family's tools).
-VERBS: tuple[str, ...] = (
-    "open", "close", "move", "resize", "set_geometry", "raise", "send_back", "seat", "zoom",
-)
-
-
-def call_verb(svc: DeskWindowService, window_id: str, verb: str, args: Mapping[str, Any]) -> Any:
-    """One verb on one window from a transport's arguments (HTTP body, MCP)."""
-    rev = args.get("expected_revision")
-    if verb == "open":
-        return svc.open(window_id, args.get("app"), args.get("object_ref"), args.get("geometry"),
-                        args.get("room"), expected_revision=rev)
-    if verb == "close":
-        return svc.close(window_id, expected_revision=rev)
-    if verb == "move":
-        return svc.move(window_id, args.get("x"), args.get("y"), expected_revision=rev)
-    if verb == "resize":
-        return svc.resize(window_id, args.get("w"), args.get("h"), expected_revision=rev)
-    if verb == "set_geometry":
-        return svc.set_geometry(window_id, args.get("rect"), expected_revision=rev)
-    if verb == "raise":
-        return svc.raise_(window_id, expected_revision=rev)
-    if verb == "send_back":
-        return svc.send_back(window_id, expected_revision=rev)
-    if verb == "seat":
-        return svc.seat(window_id, bool(args.get("seated", True)), expected_revision=rev)
-    if verb == "zoom":
-        return svc.zoom(window_id, bool(args.get("zoomed", True)), args.get("rect"), expected_revision=rev)
-    raise NotFound("window verb", verb)
-
-
 def default_desk_window_service() -> DeskWindowService:
     """The service over the hub's database (the one composition root)."""
     from holdspeak.db import get_database
@@ -869,9 +879,7 @@ def default_desk_window_service() -> DeskWindowService:
 
 __all__ = [
     "NOT_ON_HUB",
-    "VERBS",
     "DeskWindowService",
-    "call_verb",
     "STATIC_WINDOWS",
     "WINDOW_FAMILIES",
     "WindowStale",

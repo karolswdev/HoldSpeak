@@ -1,9 +1,10 @@
-/** The walk's one DOM adapter (2026-11-07). The walk is an instrument over
- * the desk: its targets are selectors from the owner's walk script, so it
- * reads the desk's DOM where no React state of its own exists. Every lookup
- * of the walk is in this file, and only here (the null-read guard,
- * tests/unit/test_web_null_read_guard.py, names it). It reads; it never
- * writes the desk's DOM. */
+/** The desk's one DOM adapter for display requests (the Walk 2026-11-07;
+ * one display protocol 2026-11-08). A display request (the hub's
+ * `desk.mark`, `desk.press`, `desk.scroll`, or a Walk step) names its part by
+ * a selector, so it reads the desk's DOM where no React state of its own
+ * exists. Every such lookup is in this file, and only here (the null-read
+ * guard, tests/unit/test_web_null_read_guard.py, names it). It reads; it
+ * never writes the desk's DOM, except the two marks of `markPart`. */
 
 /** A plain id is a `data-testid`; anything else is a CSS selector. */
 export function selectorFor(target: string): string {
@@ -67,7 +68,7 @@ export function lookIn(root: ParentNode, selector: string): HTMLElement | null {
   }
 }
 
-/** The first match on the desk outside the walk's own layer, or null. */
+/** The first match on the desk outside the guide's own layer, or null. */
 export function lookOnDesk(selector: string): HTMLElement | null {
   const anywhere = lookIn(document, selector);
   return anywhere && !anywhere.closest("[data-walk]") ? anywhere : null;
@@ -75,16 +76,16 @@ export function lookOnDesk(selector: string): HTMLElement | null {
 
 /** True while a part of the desk reads its first answer: the desk's own
  * `aria-busy` marker (the kit's loading face, the Surface state). */
-export function walkLoading(root: ParentNode | null): boolean {
+export function loadingIn(root: ParentNode | null): boolean {
   return !!root?.querySelector("[aria-busy='true']");
 }
 
 // The compositor's flag "the hub's window list landed", loaded lazily: a
 // static import makes a cycle through the window registry at module load
-// (DeskApp → WalkRunner → walk → hubWindows → … → compositor/live).
+// (DeskApp → WalkRunner → requests → hubWindows → … → compositor/live).
 let seeded: (() => boolean) | null = null;
 /** Resolves when the compositor's flag is read; deskReady is false before. */
-export const deskSignals: Promise<void> = import("../compositor/hubWindows").then(
+export const deskSignals: Promise<void> = import("./hubWindows").then(
   (module) => { seeded = module.hubSeeded; },
   () => undefined,
 );
@@ -98,7 +99,7 @@ export function deskReady(): boolean {
   if (!desk || desk.getAttribute("aria-busy") === "true") return false;
   const dock = document.querySelector(".desk-dock");
   if (!dock || dock.getBoundingClientRect().height <= 0) return false;
-  return !deskWindows().some(walkLoading);
+  return !deskWindows().some(loadingIn);
 }
 
 /** The desk's dock height (the `--desk-dock-h` the dock sets), or 0. */
@@ -107,7 +108,7 @@ export function dockHeight(): number {
   return parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--desk-dock-h")) || 0;
 }
 
-/** The walk's two marks on a part: the halo (the part lifts and glows while
+/** The two marks on a part (the Walk's, and an agent's `desk.mark`): the halo (the part lifts and glows while
  * the guide asks about it) and the kit's pressed look for the guide's tap.
  * Each is taken off again by the same call with `on` false. */
 export function markPart(element: HTMLElement, mark: "halo" | "pressed", on: boolean): void {

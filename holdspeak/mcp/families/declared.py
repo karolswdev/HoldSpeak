@@ -19,8 +19,9 @@ TOOLS: list[dict[str, Any]] = [op.tool() for op in operations.DESCRIPTORS if op.
 
 NAMES = frozenset(tool["name"] for tool in TOOLS)
 
-#: Each tool is the operation of its own name (``scripts/operation_parity.py`` reads this).
-TOOL_OPERATIONS: dict[str, str] = {name: name for name in NAMES}
+#: Tool name -> operation name: the operation's own name, or its ``mcp:``
+#: exposure (``desk_window.list`` is ``windows.list``). ``scripts/operation_parity.py`` reads this.
+TOOL_OPERATIONS: dict[str, str] = {op.tool_name: op.name for op in operations.DESCRIPTORS if op.tool_schema is not None}
 
 
 def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
@@ -29,7 +30,7 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
         raise LookupError(name)
     from holdspeak.mcp.tools import runtime_registry  # tools.py imports this family
 
-    return runtime_registry().invoke(principal, name, dict(arguments or {}))
+    return runtime_registry().invoke(principal, TOOL_OPERATIONS[name], dict(arguments or {}))
 
 
 __all__ = ["NAMES", "TOOLS", "TOOL_OPERATIONS", "dispatch"]

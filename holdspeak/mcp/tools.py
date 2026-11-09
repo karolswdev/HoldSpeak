@@ -966,6 +966,7 @@ def runtime_registry(primitives: Any = None, meetings: Any = None) -> operations
     runtime_queue notify and the Programs engine are the hub's); in a bare
     composition it binds over plain (db, observer) services.
     """
+    from holdspeak.services.desk_window_service import DeskWindowService
     from holdspeak.services.today_service import TodayService
 
     db, obs = db_or(get_database), observer_or(get_observer)
@@ -974,7 +975,8 @@ def runtime_registry(primitives: Any = None, meetings: Any = None) -> operations
              "kernel_read_service": lambda: KernelReadService(db), "today_service": lambda: TodayService(db),
              "project_service": lambda: _bare_project_service(db, obs),
              "primitive_service": lambda: primitives or PrimitiveService(db, observer=obs),
-             "meeting_service": lambda: meetings or MeetingService(db, observer=obs)}
+             "meeting_service": lambda: meetings or MeetingService(db, observer=obs),
+             "desk_window_service": lambda: DeskWindowService(db)}
     return operations.for_runtime(program_service=lambda: operations.LIVE_PROGRAM_SERVICE, **{
         name: (lambda name=name, build=build: runtime_service(name, build)) for name, build in plain.items()})
 

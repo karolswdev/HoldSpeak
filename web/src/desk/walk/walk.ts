@@ -2,12 +2,11 @@
  *
  * The hub serves `/w/<token>` as the desk at `/?walk=<token>`. The token reads
  * ONLY its own walk and posts its answers (`/api/w/<token>`); it is no owner
- * session. A step opens windows through the desk's own openers (the surface
- * registry and the registry verbs the Dock and Go run), never a new path. */
+ * session. A step runs through the desk's one executor of display requests
+ * (compositor/requests.ts): the hub's desk.mark and a Walk step are one
+ * implementation. */
 import { ApiError, apiFetch } from "../../lib/api";
-import { DESK_APPLICATIONS, applicationVerbId } from "../applications";
-import { deskReady, frontWindow, lookIn, lookOnDesk, selectorFor, walkLoading } from "./dom";
-import { openSurface, openSurfaceOr } from "../shell";
+import { deskReady } from "../compositor/dom";
 
 /** One step. The keys run in this order: open, verb, press, scroll, say,
  * highlight, ask. `thing` names what the target is ("people rows"): when the
@@ -80,12 +79,6 @@ export function walkAgent(ua: string): string {
   return `${platform} · ${browser.trim()}`;
 }
 
-/** The guide's words when the window holds no such part. */
-export function noneWords(thing: string | undefined): string {
-  const name = (thing ?? "").trim();
-  return name ? `No ${name} here yet` : "This part is not here yet";
-}
-
 /** The walk token on this address (`?walk=`), or "". */
 export function walkTokenFromLocation(): string {
   if (typeof window === "undefined") return "";
@@ -127,125 +120,11 @@ export function postWalkAnswer(token: string, answer: WalkAnswer): Promise<{ ref
   });
 }
 
-/** The window id an app key names: `chair:needs`, or the application's window. */
-export function walkWindowId(app: string): string {
-  if (app.startsWith("chair:")) return app;
-  const application = DESK_APPLICATIONS.find((row) => row.action === app || row.windowId === app);
-  return application?.windowId ?? app;
-}
-
-/** `@first-project` and `@first-meeting` name the first of his own; anything
- * else is the scope as written. `null`: there is none. */
-export async function resolveWalkScope(scope: string | undefined): Promise<string | undefined | null> {
-  if (scope === "@first-project") {
-    const read = await apiFetch<{ projects?: Array<{ id?: string }> }>("/api/projects").catch(() => null);
-    const id = read?.projects?.find((row) => row?.id)?.id;
-    return id ? `project:${id}` : null;
-  }
-  if (scope === "@first-meeting") {
-    const read = await apiFetch<{ meetings?: Array<{ id?: string }> }>("/api/meetings?limit=40").catch(() => null);
-    const id = read?.meetings?.find((row) => row?.id)?.id;
-    return id ? `meeting:${id}` : null;
-  }
-  return scope;
-}
-
-const CTX = { selectedRef: null };
-const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
-/** Open one app as the Dock and Go do. A surface the desk has not yet
- * registered is tried again for a few seconds before the legacy route. */
-export async function openWalkApp(app: string, scope?: string): Promise<boolean> {
-  // The registry loads on first use: it reads the window store at import.
-  const { verbById } = await import("../verbRegistry");
-  if (app.startsWith("chair:")) {
-    const verb = verbById(`chair.window.${app.slice("chair:".length)}`);
-    if (!verb) return false;
-    verb.run(CTX);
-    return true;
-  }
-  const application = DESK_APPLICATIONS.find((row) => row.action === app || row.windowId === app);
-  if (!application) return false;
-  if (!application.surface) {
-    const verb = verbById(applicationVerbId(application));
-    if (!verb || verb.ghost(CTX)) return false;
-    verb.run(CTX);
-    return true;
-  }
-  for (let attempt = 0; attempt < 30; attempt += 1) {
-    if (openSurface(application.action, scope)) {
-      await showRoomProper(application.action, scope);
-      return true;
-    }
-    await wait(200);
-  }
-  openSurfaceOr(application.action, application.href, scope);
-  await showRoomProper(application.action, scope);
-  return true;
-}
-
-/** A Project Room opens on the Room itself, never on the Update posture it
- * kept from an earlier visit (walk 2026-11-07: the Room opened on its update
- * document). The Room takes the request once, as its History verb does. */
-async function showRoomProper(action: string, scope: string | undefined): Promise<void> {
-  if (action !== "open-project-memory" || !scope?.startsWith("project:")) return;
-  const { requestRoomAt } = await import("../openObject");
-  requestRoomAt(scope.slice("project:".length), "room");
-}
-
-/** Run one registry verb (the Dock, Go and ⌘K run the same). */
-export async function runWalkVerb(id: string): Promise<boolean> {
-  const { verbById } = await import("../verbRegistry");
-  const verb = verbById(id);
-  if (!verb || verb.ghost(CTX)) return false;
-  verb.run(CTX);
-  return true;
-}
-
-/** The window element of an app (the front one when it has several), or
- * null when that window is not open. */
-export function findWalkWindow(app: string): HTMLElement | null {
-  return frontWindow(walkWindowId(app));
-}
-
-/** Bring a desk window to the front (the store's raise, the same the Dock
- * and the Window menu run). The store loads lazily: a static import makes a
- * cycle at module load, as hubWindows does. */
-export async function raiseWalkWindow(element: HTMLElement): Promise<void> {
-  try {
-    const { useDesk } = await import("../store");
-    useDesk.getState().focusPanel(element.id);
-  } catch {
-    // A page without the desk store has nothing to raise.
-  }
-}
-
 /** The window a step's part is in: the part's own `window`, else the app
  * the walk opened last. */
 export function stepWindow(step: WalkStep, last: string | undefined): string | undefined {
   return step.highlight?.window ?? step.press?.window ?? step.scroll?.window ?? last;
 }
-
-export interface WalkPart {
-  /** The step's window; null when the step names no app. */
-  window: HTMLElement | null;
-  target: HTMLElement | null;
-}
-
-/** The target ONLY inside the window of the step's app, never in another
- * window (first run 2026-11-07: "the newest window" was an Update draft).
- * A step with no app looks on the desk outside the walk. */
-export function findWalkTarget(target: string, app?: string): WalkPart {
-  const selector = selectorFor(target);
-  if (!app) return { window: null, target: lookOnDesk(selector) };
-  const root = findWalkWindow(app);
-  return { window: root, target: root ? lookIn(root, selector) : null };
-}
-
-/** The ceiling of the target wait, and the ceiling while the step's window
- * still reads its first answers (its loading markers are on). */
-export const TARGET_MS = 6000;
-export const TARGET_LOADING_MS = 12000;
 
 /** The desk is ready for the guide (owner, 2026-11-07, on his iPhone: "the
  * click happened only shortly after the web page loaded… only launch when
@@ -255,8 +134,8 @@ export const TARGET_LOADING_MS = 12000;
  * - the desk's first read landed: `#desk-next` is drawn and does not say
  *   `aria-busy` (the "Preparing HoldSpeak" face);
  * - the Dock has drawn (`.desk-dock` has a box);
- * - no window reads its first answer (no `aria-busy` in a window). */
-export { deskReady, deskSignals, walkLoading } from "./dom";
+ * - no window reads its first answer (no `aria-busy` in a window).
+ * `deskReady` (compositor/dom.ts) reads all four. */
 
 /** The one deliberate beat after the desk is ready: the eye lands before
  * the guide moves. */
@@ -265,6 +144,8 @@ export const READY_BEAT_MS = 900;
 export const READY_CEILING_MS = 15000;
 export const STILL_LOADING = "The desk is still loading";
 
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 /** Wait until the desk is ready; false when the ceiling came first. */
 export async function waitForDeskReady(ms = READY_CEILING_MS): Promise<boolean> {
   const until = Date.now() + ms;
@@ -272,47 +153,5 @@ export async function waitForDeskReady(ms = READY_CEILING_MS): Promise<boolean> 
     if (deskReady()) return true;
     if (Date.now() >= until) return false;
     await wait(100);
-  }
-}
-
-/** Wait for the target: a window paints its core after a lazy load and
- * reads its first answers after that. The target counts when it is there
- * and its window reads nothing, two looks in a row (a window that mounts
- * says `aria-busy` one frame after its toolbar). The ceiling is 6 s, and
- * 12 s while the window still reads; at the ceiling the part is taken as
- * it is. */
-export async function waitForWalkTarget(target: string, app: string | undefined, ms = TARGET_MS,
-  loadingMs = TARGET_LOADING_MS): Promise<WalkPart> {
-  const start = Date.now();
-  let calm = 0;
-  for (;;) {
-    const found = findWalkTarget(target, app);
-    const loading = walkLoading(found.window);
-    calm = found.target && !loading ? calm + 1 : 0;
-    if (calm >= 2) return found;
-    const spent = Date.now() - start;
-    if (spent >= (loading ? Math.max(ms, loadingMs) : ms)) return found;
-    await wait(150);
-  }
-}
-
-/** The app's name for a plain line: "Meetings", "Needs you". The Chair
- * module loads on first use, as the registry does (it reads the store). */
-export async function walkAppName(app: string): Promise<string> {
-  if (app.startsWith("chair:")) {
-    const { chairWindowSpec } = await import("../chair/chairWindows");
-    return chairWindowSpec(app)?.title ?? app.slice("chair:".length);
-  }
-  const application = DESK_APPLICATIONS.find((row) => row.action === app || row.windowId === app);
-  return application?.label ?? app;
-}
-
-/** Wait for the window of an app (a step that asks without a mark). */
-export async function waitForWalkWindow(app: string, ms = 6000): Promise<HTMLElement | null> {
-  const until = Date.now() + ms;
-  for (;;) {
-    const found = findWalkWindow(app);
-    if (found || Date.now() >= until) return found;
-    await wait(150);
   }
 }

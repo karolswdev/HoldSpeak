@@ -83,6 +83,10 @@ def test_the_canonical_map_has_all_seventeen_operations_and_no_local_service_tar
         "memory.observations.read", "memory.page.read",
         "agent.hand", "people_access.set",
         "windows.list", "windows.open", "windows.close", "windows.raise", "windows.arrange", "windows.seat",
+        # One display protocol (2026-11-08): every window verb, and the display requests.
+        "windows.move", "windows.resize", "windows.set_geometry", "windows.send_back", "windows.zoom",
+        "windows.stage_shelf",
+        "desk.mark", "desk.press", "desk.say", "desk.scroll", "desk.request.read",
         "note.outcomes.read", "note.find_tasks", "note.outcome.edit", "note.outcome.dismiss", "note.outcome.confirm",
         # #2027: the Programs descriptors with an MCP tool.
         "program.add_to_night", "program.amend", "program.checkpoint", "program.create", "program.decide", "program.from_action", "program.get", "program.handoff", "program.list", "program.overturn", "program.park", "program.plan", "program.plan_draft", "program.plan_programs", "program.propose_fix", "program.race", "program.require", "program.resume", "program.round", "program.shape", "program.shape_engine", "program.shape_held_drop", "program.start", "program.start_from", "program.step_done", "program.step_hand_back", "program.step_remove", "program.step_take", "program.step_update", "program.templates", "program.text", "program.text_apply", "program.update",
@@ -96,7 +100,9 @@ def test_the_canonical_map_has_all_seventeen_operations_and_no_local_service_tar
                                # Betterment capture C5b: Prepare… / Write again (HTTP only).
                                "meeting.result.prepare",
                                # #2027: the Programs descriptors with no MCP tool.
-                               "program.close", "program.proposal_decide", "program.requirement_decide", "program.requirement_edit", "program.requirement_evidence", "program.round_answer", "program.round_decide", "program.round_next", "program.rounds_open"}
+                               "program.close", "program.proposal_decide", "program.requirement_decide", "program.requirement_edit", "program.requirement_evidence", "program.round_answer", "program.round_decide", "program.round_next", "program.rounds_open",
+                               # One display protocol (2026-11-08): the compositor's answer (HTTP only).
+                               "desk.request.result"}
     assert all(value["kind"] in {"tool", "resource"}
                for value in gw.OP_MCP_PROJECTIONS.values())
 

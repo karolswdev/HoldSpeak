@@ -53,26 +53,26 @@ import {
   STILL_LOADING,
   WORDS,
   clearWalkFromLocation,
-  deskReady,
-  noneWords,
-  openWalkApp,
-  raiseWalkWindow,
   postWalkAnswer,
   readWalk,
-  resolveWalkScope,
-  runWalkVerb,
   stepWindow,
   waitForDeskReady,
-  waitForWalkTarget,
-  waitForWalkWindow,
   walkAgent,
-  walkAppName,
   walkTokenFromLocation,
   type WalkPage,
-  type WalkPart,
   type WalkView,
 } from "./walk";
-import { dockHeight, isFrontWindow, markPart } from "./dom";
+import { deskReady, dockHeight, markPart } from "../compositor/dom";
+import {
+  PRESS_LOOK_MS,
+  deskAppName,
+  executeDeskRequest,
+  waitForDeskWindow,
+  type DeskPart,
+  type DeskResult,
+  type DeskStage,
+} from "../compositor/requests";
+import { Caption } from "../compositor/DeskRequests";
 
 interface Rect { left: number; top: number; width: number; height: number }
 
@@ -231,34 +231,6 @@ function WalkEdge() {
   return <div className="walk-edge" aria-hidden="true" data-testid="walk-edge" />;
 }
 
-/** The caption: the step's words at the bottom edge, fading in with the
- * step; the words before fade out over them. */
-function Caption({ text, testId }: { text: string; testId: string }) {
-  const [leaving, setLeaving] = useState("");
-  const last = useRef(text);
-  useEffect(() => {
-    if (last.current === text) return;
-    const before = last.current;
-    last.current = text;
-    if (!before) return;
-    setLeaving(before);
-    const timer = setTimeout(() => setLeaving(""), CAPTION_OUT_MS);
-    return () => clearTimeout(timer);
-  }, [text]);
-  return (
-    <>
-      {leaving && leaving !== text ? (
-        <p className="walk-caption" data-leaving="" aria-hidden="true">{leaving}</p>
-      ) : null}
-      {text ? (
-        <p key={text} className="walk-caption" role="status" aria-live="polite" data-testid={testId}>
-          {text}
-        </p>
-      ) : null}
-    </>
-  );
-}
-
 /** The phone bar: at this width or less (or at the desk's compact
  * breakpoint) the band is full width above the dock; wider, it is at most
  * 720 px wide, centred at the bottom edge. */
@@ -273,12 +245,10 @@ const GAP = 16;
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 const frame = () => new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
-/** The press: one beat of hover, the pressed look, the face's settle. */
+/** The press: one beat of hover, the pressed look (PRESS_LOOK_MS, the
+ * executor's), the face's settle. */
 const HOVER_MS = 240;
-const PRESS_LOOK_MS = 120;
 const SETTLE_MS = 600;
-/** The caption's fade out. */
-const CAPTION_OUT_MS = 200;
 
 /** How long the guide speaks a `say` step: about a reading pace. */
 function readingMs(words: string): number {
@@ -484,30 +454,30 @@ function WalkSession({ token }: { token: string }) {
       await wait(1600);
       if (alive) advance();
     };
+    /** The step's frame for the desk's one executor: the part goes into the
+     * clear band; the Walk holds its own halo while it asks. */
+    const stage: DeskStage = {
+      alive: () => alive,
+      reveal: (part) => {
+        if (part.target) revealAbove(part.target, part.window, clearBottom(), clearTop());
+      },
+      mark: () => undefined,
+    };
+    /** A part the executor did not find: the guide says why and skips. */
+    const skipFor = async (result: DeskResult) => {
+      if (!alive) return;
+      await skipWith(result.missing === "part" ? result.reason ?? "" : `${result.reason} · This step is skipped`);
+    };
     /** The step's part, in the step's window only, scrolled into the clear
      * band; null after the guide said it is not there. */
-    const partOf = async (target: string, app: string | undefined, thing?: string): Promise<WalkPart | null> => {
-      const part = await waitForWalkTarget(target, app);
-      if (!alive) return null;
-      if (app && !part.window) {
-        const name = await walkAppName(app);
-        if (alive) await skipWith(`The ${name} window is not open · This step is skipped`);
+    const partOf = async (op: "mark" | "scroll", target: string, app: string | undefined,
+      thing?: string): Promise<DeskPart | null> => {
+      const result = await executeDeskRequest({ op, args: { target, window: app, thing } }, stage);
+      if (!result.done || !result.part) {
+        await skipFor(result);
         return null;
       }
-      if (!part.target) {
-        await skipWith(noneWords(thing));
-        return null;
-      }
-      // The part's window comes to the front before the guide marks it: on
-      // the phone Needs you opened behind Programs and the shot was Programs.
-      if (part.window && !isFrontWindow(part.window)) {
-        await raiseWalkWindow(part.window);
-        await frame();
-        await frame();
-      }
-      revealAbove(part.target, part.window, clearBottom(), clearTop());
-      await frame();
-      return part;
+      return alive ? result.part : null;
     };
     void (async () => {
       // A later step's open, press and mark wait for the desk as the first does.
@@ -517,47 +487,50 @@ function WalkSession({ token }: { token: string }) {
       if (!step.press) setCursor((now) => (now && now.phase !== "out" ? { ...now, phase: "out" } : now));
       setSpoken(step.say?.words ?? step.press?.words ?? step.highlight?.words ?? "");
       if (step.open) {
-        const scope = await resolveWalkScope(step.open.scope);
+        const opened = await executeDeskRequest({ op: "open", args: { ...step.open } }, stage);
         if (!alive) return;
-        if (scope === null) {
-          const none = step.open.scope === "@first-meeting" ? "No meeting yet" : "No project yet";
-          await skipWith(`${none} · This step is skipped`);
+        if (opened.missing === "scope") {
+          await skipWith(`${opened.reason} · This step is skipped`);
           return;
         }
-        await openWalkApp(step.open.app, scope);
         appRef.current = step.open.app;
       }
       if (!alive) return;
       if (step.verb) {
-        await runWalkVerb(step.verb.verb);
+        await executeDeskRequest({ op: "verb", args: { verb: step.verb.verb } }, stage);
         if (step.verb.window) appRef.current = step.verb.window;
       }
       const app = stepWindow(step, appRef.current);
       if (step.press) {
         // The guide presses; he watches. The cursor comes from where it
         // rests (first: over the caption), hovers, taps, then the click lands.
-        const part = await partOf(step.press.target, step.press.window ?? appRef.current, step.press.thing);
-        if (!part?.target || !alive) return;
-        const target = part.target;
-        const box = rectOf(target);
-        const to = { x: Math.round(box.left + box.width / 2), y: Math.round(box.top + box.height / 2) };
-        const from = restRef.current ?? { x: Math.round(window.innerWidth / 2), y: Math.round(clearBottom()) };
-        const still = stillMotion();
-        const ms = still ? 0 : travelMs(from, to);
-        trip.current += 1;
-        setCursor({ from, to, phase: "travel", ms, tilt: still ? 0 : tiltFor(from, to), trip: trip.current });
-        await wait(ms);
+        let to = restRef.current;
+        const pressed = await executeDeskRequest({ op: "press", args: {
+          target: step.press.target, window: step.press.window ?? appRef.current, thing: step.press.thing,
+        } }, { ...stage, press: async (target) => {
+          const box = rectOf(target);
+          to = { x: Math.round(box.left + box.width / 2), y: Math.round(box.top + box.height / 2) };
+          const from = restRef.current ?? { x: Math.round(window.innerWidth / 2), y: Math.round(clearBottom()) };
+          const still = stillMotion();
+          const ms = still ? 0 : travelMs(from, to);
+          trip.current += 1;
+          setCursor({ from, to, phase: "travel", ms, tilt: still ? 0 : tiltFor(from, to), trip: trip.current });
+          await wait(ms);
+          if (!alive) return;
+          setCursor((now) => (now ? { ...now, phase: "hover" } : now));
+          await wait(HOVER_MS);
+          if (!alive) return;
+          setCursor((now) => (now ? { ...now, phase: "tap" } : now));
+          if (!still) setRipple(to);
+          markPart(target, "pressed", true);
+          await wait(PRESS_LOOK_MS);
+          markPart(target, "pressed", false);
+        } });
+        if (!pressed.done) {
+          await skipFor(pressed);
+          return;
+        }
         if (!alive) return;
-        setCursor((now) => (now ? { ...now, phase: "hover" } : now));
-        await wait(HOVER_MS);
-        if (!alive) return;
-        setCursor((now) => (now ? { ...now, phase: "tap" } : now));
-        if (!still) setRipple(to);
-        markPart(target, "pressed", true);
-        await wait(PRESS_LOOK_MS);
-        markPart(target, "pressed", false);
-        if (!alive) return;
-        target.click();
         restRef.current = to;
         setCursor((now) => (now ? { ...now, phase: "rest" } : now));
         await wait(SETTLE_MS);
@@ -565,7 +538,7 @@ function WalkSession({ token }: { token: string }) {
         setRipple(null);
       }
       if (step.scroll) {
-        const part = await partOf(step.scroll.target, step.scroll.window ?? appRef.current, step.scroll.thing);
+        const part = await partOf("scroll", step.scroll.target, step.scroll.window ?? appRef.current, step.scroll.thing);
         if (!part || !alive) return;
         await wait(300);
       }
@@ -577,16 +550,16 @@ function WalkSession({ token }: { token: string }) {
         return;
       }
       // The step's window: the mark's own, else the app the walk opened last.
-      let part: WalkPart = { window: null, target: null };
+      let part: DeskPart = { window: null, target: null };
       if (step.highlight) {
-        const found = await partOf(step.highlight.target, app, step.highlight.thing);
+        const found = await partOf("mark", step.highlight.target, app, step.highlight.thing);
         if (!found) return;
         part = found;
       } else if (app) {
-        part = { window: await waitForWalkWindow(app), target: null };
+        part = { window: await waitForDeskWindow(app), target: null };
         if (!alive) return;
         if (!part.window) {
-          const name = await walkAppName(app);
+          const name = await deskAppName(app);
           if (alive) await skipWith(`The ${name} window is not open · This step is skipped`);
           return;
         }

@@ -1,6 +1,7 @@
 """PHILO-16 (16b): an agent reaches the owner's desk windows over MCP.
 
-The family is thin over ``DeskWindowService``. Every tool is ``work`` (a
+The tools are produced from ``holdspeak/desk_operations.py`` by the declared
+family (2026-11-08; the hand-written family is parked), thin over ``DeskWindowService``. Every tool is ``work`` (a
 window is not egress, authority or config); a launched agent meets the
 ``window`` launch rule; ``list`` is the one read, so a Secure launch's gate
 and a Secure thread hold every other tool. Each write through the one MCP
@@ -16,14 +17,17 @@ import pytest
 
 from holdspeak.db import Database
 from holdspeak.mcp import tools as mcp_tools
-from holdspeak.mcp.families import desk_windows as family
+from holdspeak.mcp.families import declared as family
 from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.runtime import composition
 
 OWNER = Principal(PrincipalKind.OWNER, "philo16-owner")
 LAUNCH = Principal(PrincipalKind.AGENT, "agent:launch:L-16b")
 NAMES = {"desk_window.list", "desk_window.open", "desk_window.close", "desk_window.raise",
-         "desk_window.arrange", "desk_window.seat"}
+         "desk_window.arrange", "desk_window.seat",
+         # One display protocol (2026-11-08): every window verb is a tool.
+         "desk_window.move", "desk_window.resize", "desk_window.set_geometry", "desk_window.send_back",
+         "desk_window.zoom", "desk_window.stage_shelf"}
 WRITES = NAMES - {"desk_window.list"}
 
 
@@ -39,8 +43,8 @@ def hub(tmp_path: Path) -> Any:
         composition.uninstall()
 
 
-def test_the_family_names_six_tools_in_the_catalogue() -> None:
-    assert {t["name"] for t in family.TOOLS} == NAMES
+def test_the_declared_family_names_every_window_tool() -> None:
+    assert {t["name"] for t in family.TOOLS if t["name"].startswith("desk_window.")} == NAMES
     assert NAMES <= {t["name"] for t in mcp_tools.TOOLS}
 
 
