@@ -848,6 +848,11 @@ def test_the_catalogue_is_explicit_descriptors() -> None:
         "meeting.recover_capture", "meeting.sync_conflicts", "meeting.resolve_sync_conflict",
         "meeting.intent_timeline", "meeting.artifacts", "meeting.prepared", "speaker.list",
         "action_item.list", "action_item.update", "action_item.review", "meeting.bookmark", "meeting.update",
+        # 2026-11-08: the phone's web verbs, declared (phone_operations.py).
+        "phone.devices", "phone.revoke", "phone.let_wait", "phone.calls", "phone.ring", "phone.again", "phone.push_key",
+        "phone.save_push_key",
+        "phone.test_push", "phone.redeem", "phone.pair", "phone.messages", "phone.mark_read", "phone.decide",
+        "phone.get_call", "phone.accept", "phone.decline", "phone.end",
     ]
     # decision.list takes the empty object; its one optional argument is the
     # HTTP limit (round two: it passes through instead of slicing 500 rows).
