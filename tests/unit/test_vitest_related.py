@@ -1,10 +1,10 @@
-"""The vitest selection of the quick check never drops a direct dependent.
+"""The vitest selection of the quick check: one hop, the app files, the readers.
 
-scripts/vitest_related.py cuts `vitest related` in two places: a barrel edge
-is followed by name, and a walk over the cap is cut by depth. These cases
-prove, on a fixture graph and on the real web tree, that the cut keeps every
-test that imports the changed file, every test of a module that imports it,
-and every per-app T2 file.
+scripts/vitest_related.py selects, per changed file, the tests that import it
+directly (a barrel by name, a re-export as the same hop), the per-app T2 files
+of its app (by folder or registry entry) and the tests that name it. These
+cases prove the rule on a fixture tree, and on the real web tree that no
+direct test importer is dropped.
 """
 from __future__ import annotations
 
@@ -30,7 +30,10 @@ FIXTURE = {
     "desk/surface/kit.tsx": "export const Toolbar = () => null;\n",
     "desk/surface/shape.ts": "export type Shape = { a: number };\n",
     "desk/surface/gadgets.test.tsx": 'import { Gadget } from "./gadgets";\n',
+    "desk/named.test.ts": 'import { Toolbar } from "./surface";\n',
     "desk/a/AWin.tsx": 'import { Gadget } from "../surface";\nexport const AWin = Gadget;\n',
+    "desk/a/parts/Deep.tsx": "export const Deep = 1;\n",
+    "desk/a/a.css": ".a { color: red; }\n",
     "desk/b/BWin.tsx": 'import { Toolbar, List } from "../surface";\nexport const BWin = Toolbar;\n',
     "desk/a/__tests__/a.app.test.tsx": 'import { AWin } from "../AWin";\n',
     "desk/b/__tests__/b.app.test.tsx": 'import { BWin } from "../BWin";\n',
@@ -44,10 +47,21 @@ FIXTURE = {
     "desk/_parked/shade.test.tsx": 'import { Shade } from "./Shade";\n',
     "desk/Shade.tsx": 'export { Shade } from "./_parked/Shade";\n',
     "desk/shade.test.tsx": 'import { Shade } from "./Shade";\n',
-    # a registry two rings above AWin, and a test deep behind it
-    "desk/registry.ts": 'import { AWin } from "./a/AWin";\nimport { BWin } from "./b/BWin";\n',
-    "desk/store.ts": 'import "./registry";\n',
+    # a store behind the registry: two hops from AWin, never selected
+    "desk/store.ts": 'import { AWin } from "./a/AWin";\n',
     "desk/deep.test.ts": 'import "./store";\n',
+    # the app registry: two cores in one shared folder
+    "desk/applications.ts": (
+        '  {\n    action: "open-bees",\n    windowId: "surface-bees",\n'
+        '    load: () => import("../pages/cores/BeesCore"),\n  },\n'
+        '  {\n    action: "open-wasps",\n    windowId: "surface-wasps",\n'
+        '    load: () => import("../pages/cores/WaspCore"),\n  },\n'
+    ),
+    "pages/cores/BeesCore.tsx": "export const BeesCore = 1;\n",
+    "pages/cores/WaspCore.tsx": "export const WaspCore = 1;\n",
+    "pages/cores/bees/Hive.tsx": "export const Hive = 1;\n",
+    "desk/__tests__/bees.app.test.tsx": "it('bees');\n",
+    "desk/__tests__/wasp.app.test.tsx": "it('wasp');\n",
 }
 
 
@@ -64,60 +78,60 @@ def _run(src: Path, changed: str, **kw) -> set[str]:
     return {p.removeprefix("src/") for p in vr.related([f"src/{changed}"], root=src, **kw)}
 
 
-def test_a_barrel_edge_is_followed_by_name(tmp_path):
+def test_one_hop_follows_a_barrel_by_name(tmp_path):
     src = _tree(tmp_path)
-    got = _run(src, "desk/surface/gadgets.css")
-    assert {
-        "desk/surface/gadgets.test.tsx",  # imports the component directly
-        "desk/a/__tests__/a.app.test.tsx",  # AWin imports Gadget by name
-        "desk/star.test.ts",  # `import * as` the barrel: everything
-        "desk/lazy.test.ts",  # a dynamic import is an edge
-        "desk/deep.test.ts",  # store -> registry -> AWin (under the cap)
-    } <= got
-    assert "desk/b/__tests__/b.app.test.tsx" not in got  # BWin names no gadget
+    got = _run(src, "desk/surface/gadgets.tsx")
+    assert {"desk/surface/gadgets.test.tsx", "desk/star.test.ts"} <= got
+    assert "desk/named.test.ts" not in got  # names only Toolbar
     assert "desk/typeonly.test.ts" not in got  # a type import is erased
-
-
-def test_plain_follows_every_barrel_edge_like_vitest(tmp_path):
-    src = _tree(tmp_path)
-    assert "desk/b/__tests__/b.app.test.tsx" in _run(src, "desk/surface/gadgets.css", plain=True)
+    assert "desk/a/__tests__/a.app.test.tsx" not in got  # two hops: AWin, then the test
+    assert "desk/deep.test.ts" not in got  # no transitive walk
+    assert "desk/named.test.ts" in _run(src, "desk/surface/kit.tsx")
 
 
 def test_a_nested_barrel_resolves_the_name(tmp_path):
     src = _tree(tmp_path)
     got = _run(src, "desk/surface/objects/List.tsx")
-    assert {"desk/b/__tests__/b.app.test.tsx", "desk/mocked.test.ts", "desk/star.test.ts"} <= got
-    assert "desk/a/__tests__/a.app.test.tsx" not in got
+    assert "desk/star.test.ts" in got
+    assert "desk/named.test.ts" not in got
 
 
 def test_a_change_to_the_barrel_reaches_every_importer(tmp_path):
     src = _tree(tmp_path)
     got = _run(src, "desk/surface/index.ts")
-    assert {"desk/a/__tests__/a.app.test.tsx", "desk/b/__tests__/b.app.test.tsx",
-            "desk/star.test.ts"} <= got
+    assert {"desk/star.test.ts", "desk/named.test.ts"} <= got
+    assert "desk/typeonly.test.ts" not in got
 
 
-def test_over_the_cap_keeps_the_direct_rings_and_the_app_files(tmp_path):
+def test_a_re_export_is_the_same_hop_and_a_parked_test_never_runs(tmp_path):
     src = _tree(tmp_path)
-    why: list[str] = []
-    got = _run(src, "desk/surface/gadgets.tsx", cap=2, why=why)
-    assert "over the cap of 2" in why[0]
-    # distance 1 and 2 always run, and every app file, and the path reader
-    assert {"desk/surface/gadgets.test.tsx", "desk/a/__tests__/a.app.test.tsx",
-            "desk/b/__tests__/b.app.test.tsx", "desk/star.test.ts"} <= got
-    assert "desk/deep.test.ts" not in got  # four imports away: cut
-
-
-def test_a_path_reader_runs_when_cut(tmp_path):
-    src = _tree(tmp_path)
-    assert "desk/reader.test.ts" in _run(src, "desk/surface/gadgets.css", cap=1)
-
-
-def test_a_parked_module_is_followed_and_a_parked_test_never_runs(tmp_path):
-    src = _tree(tmp_path)
-    got = _run(src, "desk/surface/gadgets.tsx")
-    assert "desk/shade.test.tsx" in got
+    got = _run(src, "desk/_parked/Shade.tsx")
+    assert "desk/shade.test.tsx" in got  # through desk/Shade.tsx, a re-export
     assert "desk/_parked/shade.test.tsx" not in got
+
+
+def test_the_app_folder_selects_its_app_file(tmp_path):
+    src = _tree(tmp_path)
+    got = _run(src, "desk/a/AWin.tsx")
+    assert {"desk/a/__tests__/a.app.test.tsx", "desk/lazy.test.ts"} <= got
+    assert "desk/b/__tests__/b.app.test.tsx" not in got
+    assert _run(src, "desk/a/parts/Deep.tsx") == {"desk/a/__tests__/a.app.test.tsx"}
+    assert "desk/mocked.test.ts" in _run(src, "desk/b/BWin.tsx")  # vi.mock is an edge
+
+
+def test_the_registry_entry_selects_its_app_file(tmp_path):
+    src = _tree(tmp_path)
+    # the loaded core itself, and a file in a folder named like the app
+    assert _run(src, "pages/cores/WaspCore.tsx") == {"desk/__tests__/wasp.app.test.tsx"}
+    assert _run(src, "pages/cores/bees/Hive.tsx") == {"desk/__tests__/bees.app.test.tsx"}
+    # pages/cores holds two cores: a sibling there belongs to neither
+    assert _run(src, "pages/cores/BeesCore.tsx") == {"desk/__tests__/bees.app.test.tsx"}
+
+
+def test_a_stylesheet_selects_its_app_file_and_its_readers_only(tmp_path):
+    src = _tree(tmp_path)
+    assert _run(src, "desk/surface/gadgets.css") == {"desk/reader.test.ts"}
+    assert _run(src, "desk/a/a.css") == {"desk/a/__tests__/a.app.test.tsx"}
 
 
 def test_a_changed_test_file_runs(tmp_path):
@@ -125,23 +139,39 @@ def test_a_changed_test_file_runs(tmp_path):
     assert _run(src, "desk/star.test.ts") == {"desk/star.test.ts"}
 
 
+def test_why_names_each_rule_per_changed_file(tmp_path):
+    src = _tree(tmp_path)
+    why: list[str] = []
+    vr.related(["src/desk/a/AWin.tsx", "src/desk/surface/gadgets.css"], root=src, why=why)
+    assert why[0] == "src/desk/a/AWin.tsx: 2 import it, 1 app files (folder desk/a), 0 name it"
+    assert why[1] == "src/desk/surface/gadgets.css: 0 import it, 0 app files (no app), 1 name it"
+
+
 def test_the_real_tree_keeps_every_direct_importer():
-    """On web/src: for every source file, each test that imports it (any
-    edge, the barrel itself included) and each test of a module that
-    imports it is selected."""
-    src = vr.WEB / "src"
-    graph = vr.Graph(src)
+    """On web/src: for every source file, each test that imports it by path
+    is selected (the barrel cut and the re-export hop drop none). One graph
+    for the whole check (graph_for caches it)."""
+    graph = vr.graph_for(vr.WEB / "src")
     plain = graph.reverse(True)
+    cut = graph.reverse(False)
     missed: list[str] = []
-    for f in sorted(graph.files):
-        if vr.is_test(f) or f.suffix == ".json":
+    for f in graph.files:
+        if vr.is_test(f) or f.suffix in (".json", ".css"):
             continue
-        got = set(vr.related([str(f.relative_to(src.parent))], root=src, graph=graph))
+        direct = graph.direct_tests(f, cut)
         for importer in plain.get(f, ()):
-            if importer in graph.barrels:
-                continue
-            if vr.is_test(importer):
-                rel = str(importer.relative_to(src.parent))
-                if rel not in got:
-                    missed.append(f"{rel} imports {f.relative_to(src)}")
-    assert not missed, "\n".join(missed[:20])
+            if vr.is_test(importer) and importer not in direct:
+                missed.append(f"{importer.relative_to(graph.root)} imports {f.relative_to(graph.root)}")
+    assert not missed, "\n".join(sorted(missed)[:20])
+
+
+def test_the_real_tree_places_files_in_their_apps():
+    """The app rule on the real registry and folders (batch 23 files)."""
+    cases = {
+        "src/desk/walk/walk.ts": "src/desk/walk/__tests__/walk.app.test.tsx",
+        "src/pages/cores/history/MeetingRecord.tsx": "src/desk/__tests__/meetings.app.test.tsx",
+        "src/pages/cores/settings/native.tsx": "src/desk/__tests__/settings.app.test.tsx",
+        "src/desk/calls/CallsWindow.tsx": "src/desk/__tests__/calls.app.test.tsx",
+    }
+    for changed, app in cases.items():
+        assert app in vr.related([changed]), changed
