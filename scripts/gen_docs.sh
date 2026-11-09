@@ -18,6 +18,7 @@ scratch="$(mktemp -d)"
 trap 'rm -rf "$scratch"' EXIT
 product() { echo "+ uv run python $*"; HOME="$scratch" UV_CACHE_DIR="$real_uv_cache" uv run python "$@"; }
 
+mkdir -p docs/generated  # out of git since 2026-11-08; a fresh tree has no folder
 product scripts/gen_api_surface.py
 product scripts/philo_openapi_reference.py
 product scripts/gen_operations_json.py
@@ -29,6 +30,8 @@ run python3 scripts/philo_api_reference.py
 run python3 scripts/philo_boundary_census.py
 run python3 scripts/philo_doctor_reference.py
 run python3 scripts/philo_config_reference.py
-run python3 scripts/philo_graph_reference.py
+# The capability docs write docs/generated/components.yaml, which the graph
+# reference joins on: generate first, join second.
 run python3 scripts/generate_capability_docs.py
+run python3 scripts/philo_graph_reference.py
 run python3 scripts/check_doc_coverage.py
