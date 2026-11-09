@@ -5,7 +5,7 @@
  * edited, copied and filed there. The Decision pullout is parked
  * (pullouts/_parked/DecisionPullout.tsx; its cases in
  * pullouts/_parked/__tests__/decisionPullout.app.test.tsx). The real well
- * (MeetingDecideWell), the real reader (DecisionsView), the real desk store,
+ * (MeetingDecideWell), the real Decisions app (DecisionsCore), the real desk store,
  * the real `lib/api` and wire adapters run; only `fetch` is replaced. Its
  * bodies are the hub's own shapes, never invented (SCAR LAW):
  *   - a decision: `DecisionRecord.to_dict` (holdspeak/db/models/__init__.py:609);
@@ -39,7 +39,7 @@ import { fileURLToPath } from "node:url";
 import { loadDeskWorkspace, useDesk } from "../store";
 import { seatMounted, seatUnmounted } from "../deleteSeat";
 import { OBJECT_DELETE_REQUEST } from "../verbRegistry";
-import { DecisionsView } from "../pullouts/views/DecisionsView";
+import { DecisionsCore } from "../../pages/cores/DecisionsCore";
 import { PULLOUT_CONTENT } from "../pullouts/registry";
 import { DecisionToReader } from "../pullouts/DecisionToReader";
 import { openRef } from "../openObject";
@@ -200,7 +200,7 @@ beforeEach(() => {
 
 /** The reader on one Desk decision's record, with the desk's receipt line. */
 function Reader({ deskId }: { deskId: string }) {
-  return <><DecisionsView windowed receiptId={recordId(deskId)} /><DeskReceiptRow /></>;
+  return <><DecisionsCore scope={`record:${recordId(deskId)}`} /><DeskReceiptRow /></>;
 }
 const stateText = () => screen.getByTestId("decision-reader-state").textContent ?? "";
 
@@ -586,7 +586,7 @@ describe("PHILO-3-01 the default title yields to the first line", () => {
   });
 });
 
-describe("the reader changes the state by one verb: Accept, Retire", () => {
+describe("the reader changes the state by one verb: Decide, Retire", () => {
   async function renderDecision(status: string, others: string[] = []) {
     hub.decisions = [
       decisionWire({ id: "state-decision", title: "Use the shared runners", status }),
@@ -615,7 +615,7 @@ describe("the reader changes the state by one verb: Accept, Retire", () => {
 
   it("Retire writes once; the state says Retiring, then Retired", async () => {
     await renderDecision("accepted");
-    expect(stateText()).toMatch(/^Accepted/);
+    expect(stateText()).toMatch(/^Decided/);
     let complete!: () => void;
     statusWrites(() => false, (resolve) => { complete = resolve; });
     const retire = screen.getByTestId("decision-reader-retire");
@@ -636,26 +636,26 @@ describe("the reader changes the state by one verb: Accept, Retire", () => {
     statusWrites(() => refuse);
     fireEvent.click(screen.getByTestId("decision-reader-retire"));
     expect((await screen.findByTestId("decision-reader-failure")).textContent).toMatch(/^Could not retire it · /);
-    expect(stateText()).toMatch(/^Accepted/);
+    expect(stateText()).toMatch(/^Decided/);
     refuse = false;
     fireEvent.click(screen.getByTestId("decision-reader-retire"));
     await waitFor(() => expect(stateText()).toBe("Retired"));
     expect(hub.puts.map((put) => put.body)).toEqual([{ status: "deprecated" }, { status: "deprecated" }]);
   });
 
-  it("DELIGHT 2: Accept makes the status bar say \"Accepted · 3 open\"", async () => {
+  it("DELIGHT 2: Decide makes the status bar say \"Decided · 3 proposed\"", async () => {
     await renderDecision("proposed", ["proposed", "proposed", "proposed", "accepted"]);
     statusWrites(() => false);
-    expect(stateText()).toBe("Open");
+    expect(stateText()).toBe("Proposed");
     fireEvent.click(screen.getByTestId("decision-reader-accept"));
-    await waitFor(() => expect(stateText()).toBe("Accepted · 3 open"));
+    await waitFor(() => expect(stateText()).toBe("Decided · 3 proposed"));
   });
 
   it("DELIGHT 2: the last open decision reads \"all decided\", never a count of zero", async () => {
     await renderDecision("proposed", ["accepted"]);
     statusWrites(() => false);
     fireEvent.click(screen.getByTestId("decision-reader-accept"));
-    await waitFor(() => expect(stateText()).toBe("Accepted · all decided"));
+    await waitFor(() => expect(stateText()).toBe("Decided · all decided"));
     expect(stateText()).not.toMatch(/\b0\b/);
   });
 });
@@ -672,16 +672,17 @@ describe("W6 (atlas pass 3): every verb of a Desk decision says its word in the 
     await act(async () => { await useDesk.getState().refresh(); });
   });
 
-  it("Edit, Retire, Send, Copy, Dictate; Copy and Dictate fold into More", async () => {
+  it("Edit, Send, then Retire, Copy, Dictate and Delete fold into More, all in the mast", async () => {
     render(<Reader deskId="decision_kafka" />);
-    const toolbar = await screen.findByTestId("decision-reader-toolbar");
+    const mast = await screen.findByTestId("decision-mast");
     await screen.findByTestId("decision-reader-retire");
-    for (const name of ["Edit", "Retire", "Send…", "Copy", "Dictate about this"]) {
-      expect(within(toolbar).getByRole("button", { name }).textContent).toContain(name.replace("…", ""));
+    for (const name of ["Edit", "Retire", "Send…", "Copy", "Dictate about this", "Delete"]) {
+      expect(within(mast).getByRole("button", { name }).textContent).toContain(name.replace("…", ""));
     }
-    fireEvent.click(within(toolbar).getByRole("button", { name: "More" }));
+    // On a narrow surface the folded verbs are one More (its menu says their words).
+    fireEvent.click(within(mast).getByTestId("decision-reader-fold-more"));
     const menu = screen.getByRole("menu", { name: "More" });
-    expect(within(menu).getAllByRole("menuitem").map((item) => item.textContent?.trim())).toEqual(["Copy", "Dictate about this"]);
+    expect(within(menu).getAllByRole("menuitem").map((item) => item.textContent?.trim())).toEqual(["Retire", "Copy", "Dictate about this", "Delete"]);
   });
 
   it("Delete is the desk's one delete: the window closes, the request names the Desk decision", async () => {

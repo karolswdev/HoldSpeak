@@ -231,16 +231,16 @@ class TestEveryNewVerbOpensItsWindow:
                 # New Decision: the name first, no record before it (PHILO-13-08).
                 before, sent = page.evaluate(WINDOW_IDS), len(posts)
                 self._menu_verb(page, width, "New Decision")
-                # The owner, 2026-10-25: New Decision opens a window of its own;
-                # Create closes it and the record opens in the Decisions window.
-                naming = page.locator("#surface-new-decision")
+                # The native Decisions app (2026-11-08): New Decision opens the
+                # Decisions window on its composer plate; Create opens the record there.
+                naming = page.locator("#surface-decisions [data-testid=new-decision]")
                 naming.locator("[data-testid=palette-name]").wait_for(timeout=OPENS_WITHIN_MS)
                 page.wait_for_timeout(800)
                 assert "/api/decision-records/from-desk" not in posts[sent:], ("a decision was made before its name", posts[sent:])
                 naming.locator("[data-testid=palette-name]").fill("Freeze the old ledger")
                 page.keyboard.press("Enter")
                 naming.wait_for(state="detached", timeout=OPENS_WITHIN_MS)
-                win = self._new_window(page, before + ["surface-new-decision"], f"New Decision on the {face} at {width}")
+                win = self._new_window(page, before, f"New Decision on the {face} at {width}")
                 assert posts[sent:].count("/api/decision-records/from-desk") == 1, posts[sent:]
                 page.screenshot(path=str(SHOTS / f"new-decision-{face}-{width}.png"))
                 page.wait_for_timeout(READ_DELAY_MS + 1500)

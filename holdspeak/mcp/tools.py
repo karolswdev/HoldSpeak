@@ -545,16 +545,6 @@ TOOLS.extend([
         ["card_id", "verb"],
     ),
     _mcp_tool(
-        "follow_through.commit_decision",
-        "Create an accountable commitment from an accepted decision.",
-        {
-            "decision_id": {"type": "string", "description": "Accepted decision ID."},
-            "owner": {"type": "string", "description": "Optional owner."},
-            "due_at": {"type": "string", "description": "Optional ISO-8601 date."},
-        },
-        ["decision_id"],
-    ),
-    _mcp_tool(
         "monday_brief.get",
         "Read the latest persisted Monday Brief; generate=true when none exists.",
         {"generate": {"type": "boolean", "default": False, "description": "Generate if no persisted brief."}},
@@ -967,6 +957,7 @@ def runtime_registry(primitives: Any = None, meetings: Any = None) -> operations
     composition it binds over plain (db, observer) services.
     """
     from holdspeak.mcp.families import people as people_family
+    from holdspeak.services.decision_lifecycle_service import DecisionLifecycleService
     from holdspeak.services.desk_window_service import DeskWindowService
     from holdspeak.services.today_service import TodayService
 
@@ -984,6 +975,9 @@ def runtime_registry(primitives: Any = None, meetings: Any = None) -> operations
              "people_service": lambda: people_family.build_people_service(),
              # The Automations verbs (automation_operations.py): the hub's one composed instance.
              "workbench_service": lambda: WorkbenchService(db, observer=obs),
+             # The Decisions verbs (decision_operations.py): the ledger and Commit.
+             "decision_lifecycle_service": lambda: DecisionLifecycleService(db, observer=obs),
+             "follow_through_service": lambda: FollowThroughService(db, observer=obs),
              # The Settings credential verbs bind here; they have no tool (HTTP only).
              "credential_service": lambda: _credential_service(db, obs)}
     return operations.for_runtime(program_service=lambda: operations.LIVE_PROGRAM_SERVICE,
@@ -1416,13 +1410,6 @@ def _dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal)
             str(args.get("card_id") or ""),
             str(args.get("verb") or ""),
             args.get("payload"),
-        )
-    if name == "follow_through.commit_decision":
-        return follow_through.commit_decision(
-            principal,
-            str(args.get("decision_id") or ""),
-            owner=args.get("owner"),
-            due_at=args.get("due_at"),
         )
     if name == "monday_brief.get":
         brief = ops().invoke(principal, "brief.generate" if args.get("generate") else "brief.latest", {})

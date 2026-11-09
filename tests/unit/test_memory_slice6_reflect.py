@@ -448,6 +448,17 @@ def test_with_no_page_and_no_observation_the_chat_payload_is_byte_identical(hub,
         "limit": {"type": "integer", "maximum": 500}, "offset": {"type": "integer"},
         "program_id": {"type": "string"},
     }
+    # 2026-11-08: follow_through.commit_decision is a declared operation
+    # (decision_operations.py): in the declared family's place, its person is
+    # ``who`` (the contract refuses ``owner``, an authority word).
+    commit = next(tool for tool in expected_tools if tool["function"]["name"] == "follow_through.commit_decision")
+    commit["function"]["parameters"]["properties"] = {
+        "decision_id": {"type": "string", "description": "Accepted decision ID."},
+        "who": {"type": "string", "description": "Optional person."},
+        "due_at": {"type": "string", "description": "Optional ISO-8601 date."},
+    }
+    expected_tools.remove(commit)
+    expected_tools.insert([t["function"]["name"] for t in tools].index("follow_through.commit_decision"), commit)
     assert json.dumps(tools, sort_keys=True) == json.dumps(expected_tools, sort_keys=True)
 
 

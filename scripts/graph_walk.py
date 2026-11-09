@@ -995,6 +995,8 @@ OP_MCP_PROJECTIONS: dict[str, dict[str, Any]] = {
     **{name: {"kind": "tool", "name": name} for name in (
         "meeting.intel_jobs", "meeting.intel_retry", "meeting.intel_recovery", "meeting.intel_recovery_retry",
         "meeting.intel_recovery_skip", "meeting.aftercare", "meeting.aftercare_proposals", "meeting.aftercare_decide")},
+    # The Decisions app's verbs (holdspeak/decision_operations.py).
+    **{name: {"kind": "tool", "name": name} for name in ("decision.ledger", "follow_through.commit_decision")},
     # 2026-11-08: the phone's declared verbs with an MCP tool (holdspeak/phone_operations.py).
     **{name: {"kind": "tool", "name": name} for name in (
         "phone.devices", "phone.revoke", "phone.let_wait", "phone.calls", "phone.ring", "phone.again", "phone.push_key",

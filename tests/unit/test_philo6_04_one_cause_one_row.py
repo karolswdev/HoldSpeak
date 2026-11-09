@@ -15,6 +15,7 @@ from holdspeak.db import Database
 from holdspeak.meeting_session import MeetingState
 from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.services.decision_lifecycle_service import DecisionLifecycleService
+from holdspeak.services.follow_through_service import FollowThroughService
 from holdspeak.services.errors import NotFound
 from holdspeak.services.primitive_service import PrimitiveService
 from holdspeak.services.sqlite_observer import SQLiteObserver
@@ -51,7 +52,12 @@ def _app(db: Database, observer: SQLiteObserver, monkeypatch: pytest.MonkeyPatch
     ctx = WebContext(
         get_state=lambda: {},
         primitive_service=primitive,
-        operations=operations.bind_available({"primitive_service": primitive}),
+        # The declared ledger (decision_operations.py) binds the lifecycle service.
+        operations=operations.bind_available({
+            "primitive_service": primitive,
+            "decision_lifecycle_service": DecisionLifecycleService(db, observer=observer),
+            "follow_through_service": FollowThroughService(db, observer=observer),
+        }),
     )
     app = FastAPI()
 

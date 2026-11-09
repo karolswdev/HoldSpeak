@@ -392,7 +392,7 @@ def test_honest_faces_and_arrival_reads(hub: Any, tmp_path: Path) -> None:
     seeds._seed_honest_faces(hub)
     _fence("follow-through-board.honest-faces", _ok(hub.client.get("/api/follow-through/board")), tmp_path, hub)
     _fence("decisions.honest-faces",
-           _ok(hub.client.get("/api/decisions?scope=all&limit=100&offset=0")), tmp_path, hub)
+           _ok(hub.client.get("/api/decisions/ledger?limit=100&offset=0")), tmp_path, hub)
     # ⌘K: the search hit, and the decision read its opener makes (paletteMemory.test.tsx).
     _fence("memory-search.honest-faces",
            _ok(hub.client.get("/api/memory/search", params={"query": "Freeze the old ledger"})), tmp_path, hub)
@@ -422,7 +422,7 @@ def test_new_decision_reads(hub: Any, tmp_path: Path) -> None:
     """newDecision.app.test.tsx (the owner, 2026-10-25): New Decision's window
     creates through the store's own POST (dataSlice createNow: the from-desk
     producer with the Project in front), then the Decisions window reads the
-    record and its list."""
+    record and its ledger."""
     project = _ok(hub.client.post("/api/projects", json={"name": "Payments ledger cutover"}))["project"]
     created = _ok(hub.client.post("/api/decision-records/from-desk", json={
         "status": "accepted", "context_markdown": "", "decision_markdown": "",
@@ -437,8 +437,9 @@ def test_new_decision_reads(hub: Any, tmp_path: Path) -> None:
     read = _ok(hub.client.get(f"/api/decision-records/{record['id']}"))
     assert "Why: One writer" in str(read.get("rationale")), read
     _fence("decision-record.new", read, tmp_path, hub)
-    _fence("decision-records.list-new",
-           _ok(hub.client.get("/api/decision-records?limit=100&offset=0")), tmp_path, hub)
+    # The native Decisions window's rail: the ledger (decision.ledger), one page.
+    _fence("decisions.ledger-new",
+           _ok(hub.client.get("/api/decisions/ledger?limit=100&offset=0")), tmp_path, hub)
 
 
 def test_decisions_window_scope_reads(hub: Any, tmp_path: Path) -> None:
@@ -473,7 +474,7 @@ def test_decisions_window_scope_reads(hub: Any, tmp_path: Path) -> None:
     _fence("decision.no-record", one, tmp_path, hub)
     none = _ok(hub.client.get(f"/api/decision-records/source/meeting/{lifecycle.id}"))
     assert none == [], none
-    row = _ok(hub.client.get(f"/api/decisions?scope=all&decision_id={lifecycle.id}&limit=1"))
+    row = _ok(hub.client.get(f"/api/decisions/ledger?decision_id={lifecycle.id}&limit=1"))
     assert [r["text"] for r in row["decisions"]] == ["Freeze the old ledger on Nov 5"], row
     assert not row["decisions"][0].get("record_id"), row
     _fence("decisions.no-record", row, tmp_path, hub)

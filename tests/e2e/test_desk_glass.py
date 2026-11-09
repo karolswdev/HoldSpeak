@@ -530,8 +530,9 @@ class TestOneDecisionRecord:
 
     def _new_decision(self, page: Any, phone: bool) -> tuple[str, str, Any]:
         _search(page, "New Decision", "[id='desk-palette-option-desk.new-decision']")
-        # The owner, 2026-10-25: New Decision opens a window of its own.
-        new_window = page.locator("#surface-new-decision")
+        # The native Decisions app (2026-11-08): New Decision is the
+        # Decisions window's composer plate.
+        new_window = page.locator("#surface-decisions [data-testid=new-decision]")
         new_window.wait_for(timeout=T)
         prompt = new_window.get_by_test_id("palette-name")
         prompt.wait_for(timeout=T)

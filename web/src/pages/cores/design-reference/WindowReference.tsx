@@ -18,7 +18,7 @@ import { DotWord } from "../../../desk/surface/kit";
 import { spriteUrl } from "../../../desk/sprites";
 import { ListDay, ListRow, ListView } from "../../../desk/surface/objects/ListView";
 import { Token } from "../../../desk/surface/Token";
-import { NewDecisionForm } from "../NewDecisionCore";
+import { DecisionComposer } from "../../../desk/decisions/Composer";
 // The two-lists shape is the Engines window's own composition.
 import "../../../features/runson/runson.css";
 
@@ -121,10 +121,9 @@ const COLUMNS = [
   { key: "state", word: "Summary", track: "minmax(140px, 0.6fr)" },
 ] as const;
 
-/** The New decision window (the owner, 2026-10-25): the decision's picture,
- *  the label/control grid, and Cancel · Create in the status bar. Empty:
- *  Create waits for a title. Filled: a title, a Why and the Project in front.
- *  Local presses only; nothing is written. */
+/** New decision, the Decisions window's composer plate (the native app,
+ *  2026-11-08). Empty: Create waits for a title. Filled: a title, a Why and
+ *  the Project in front. Local presses only; nothing is written. */
 function NewDecisionWindow({ filled }: { filled: boolean }) {
   const [title, setTitle] = useState(filled ? "Keep the ledger on SQLite" : "");
   const [why, setWhy] = useState(filled ? "One writer, one file. Postgres waits until we need a second host." : "");
@@ -132,7 +131,7 @@ function NewDecisionWindow({ filled }: { filled: boolean }) {
   return (
     <section className="reference-example reference-window" data-testid="reference-window" aria-label="Window pattern">
       <div className="reference-window-frame reference-window-new-decision" data-preset={filled ? "decision-filled" : "decision-new"}>
-        <NewDecisionForm
+        <DecisionComposer
           title={title}
           why={why}
           about={filled ? { id: "specimen-project", name: "Payments ledger cutover" } : null}
@@ -140,7 +139,6 @@ function NewDecisionWindow({ filled }: { filled: boolean }) {
           onWhy={setWhy}
           onCreate={() => setPressed("Create")}
           onCancel={() => setPressed("Cancel")}
-          inline
         />
         {pressed ? <span className="reference-window-pressed" data-testid="reference-window-opened">Pressed locally · {pressed}</span> : null}
       </div>
