@@ -418,6 +418,7 @@ def _drive_delivery_review(tmp_path, monkeypatch) -> SurfaceRun:
     from fastapi import FastAPI, Request
     from fastapi.testclient import TestClient
     from holdspeak.web.context import WebContext
+    from holdspeak.services.delivery_service import DeliveryService
     from holdspeak.web.routes.delivery_prs import build_delivery_prs_router
 
     reset_database()
@@ -454,7 +455,7 @@ def _drive_delivery_review(tmp_path, monkeypatch) -> SurfaceRun:
         def review_material(self, source_id, number):
             return {"status": "ok", "diff": "diff --git a/x b/x\n+hi", "revision": "rev-spine", "linked": []}
 
-    ctx = WebContext(get_state=lambda: {}, delivery_service=object())
+    ctx = WebContext(get_state=lambda: {}, delivery_service=DeliveryService(None).configure(prs=_FakeDeliveryService()))
     app = FastAPI()
 
     @app.middleware("http")
@@ -462,7 +463,7 @@ def _drive_delivery_review(tmp_path, monkeypatch) -> SurfaceRun:
         request.state.principal = OWNER
         return await call_next(request)
 
-    app.include_router(build_delivery_prs_router(ctx, service=_FakeDeliveryService()))
+    app.include_router(build_delivery_prs_router(ctx))
     with TestClient(app) as client:
         response = client.post(
             "/api/delivery/prs/spine-source/1/draft-review",
@@ -482,6 +483,7 @@ def test_delivery_http_refusal_identity_keeps_valid_pr_retries_executable(tmp_pa
     from fastapi import FastAPI, Request
     from fastapi.testclient import TestClient
     from holdspeak.web.context import WebContext
+    from holdspeak.services.delivery_service import DeliveryService
     from holdspeak.web.routes.delivery_prs import build_delivery_prs_router
     from holdspeak.services.inference_assignment_service import InferenceAssignmentService
     from tests.unit.test_phase143_inference_assignments import OWNER as ASSIGNMENT_OWNER, _profile
@@ -529,7 +531,7 @@ def test_delivery_http_refusal_identity_keeps_valid_pr_retries_executable(tmp_pa
         return await call_next(request)
 
     app.include_router(build_delivery_prs_router(
-        WebContext(get_state=lambda: {}, delivery_service=object()), service=DeliveryMaterial()
+        WebContext(get_state=lambda: {}, delivery_service=DeliveryService(None).configure(prs=DeliveryMaterial()))
     ))
     with TestClient(app) as client:
         # Override first cannot poison the valid request identity.

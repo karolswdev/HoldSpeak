@@ -39,6 +39,7 @@ from holdspeak.delivery.attempts import (
     WorkAttemptService,
     resolver_from_registry,
 )
+from holdspeak.services.delivery_service import DeliveryService
 from holdspeak.web.context import WebContext
 from holdspeak.web.routes.delivery_attempts import build_delivery_attempts_router
 
@@ -496,14 +497,17 @@ class TestRiderClaimEmission:
 def _client(repo, *, resolver=None, claims_state_path=None, sync_on_read=False):
     service = WorkAttemptService(repo, resolver=resolver)
     app = FastAPI()
-    app.include_router(
-        build_delivery_attempts_router(
-            WebContext(get_state=lambda: {}),
-            service=service,
-            claims_state_path=claims_state_path,
-            sync_on_read=sync_on_read,
-        )
+    @app.middleware("http")
+    async def owner_principal(request, call_next):
+        from holdspeak.principals import Principal, PrincipalKind
+
+        request.state.principal = Principal(PrincipalKind.OWNER, "owner-session")
+        return await call_next(request)
+
+    delivery = DeliveryService(None).configure(
+        attempts=service, claims_state_path=claims_state_path, sync_on_read=sync_on_read,
     )
+    app.include_router(build_delivery_attempts_router(WebContext(get_state=lambda: {}, delivery_service=delivery)))
     return TestClient(app)
 
 

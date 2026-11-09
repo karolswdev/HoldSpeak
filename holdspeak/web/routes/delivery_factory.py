@@ -27,88 +27,27 @@ path-free (§13) and refusals are typed (§12).
 from __future__ import annotations
 
 import asyncio
-from pathlib import Path
 from typing import Any, Optional
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
 from ...logging_config import get_logger
 from ..context import WebContext
+from . import delivery_declared
+from ._mount import mount_router
 
 log = get_logger("web.routes.delivery_factory")
 
 
-def build_delivery_factory_router(
-    ctx: WebContext,
-    *,
-    service: Any = None,
-    profiles: Any = None,
-    commands: Any = None,
-    targets: Any = None,
-    registry_path: Optional[Path] = None,
-    map_path: Optional[Path] = None,
-    profiles_path: Optional[Path] = None,
-    launches_path: Optional[Path] = None,
-    ledger_path: Optional[Path] = None,
-    claims_state_path: Optional[Path] = None,
-    local_node_id: str = "local",
-    mode_loader: Any = None,
-    sync_on_read: bool = True,
-) -> APIRouter:
-    """Every keyword is a test seam (the delivery-router precedent);
-    production defaults assemble lazily on first request over the hub
-    database, the Delivery Source registry, the shared target registry,
-    and the HS-94-06 command service."""
-    delivery_service = ctx.delivery_service
+def build_delivery_factory_router(ctx: WebContext) -> APIRouter:
+    """The factory routes. ``profiles`` and ``discover`` are produced from
+    the ``delivery.factory_profiles`` and ``delivery.factory_discover`` rows.
+    ``launch`` stays written here: it spawns an agent process. The launcher,
+    the profiles, the shared targets and commands, and their test seams live
+    on ``ctx.delivery_service`` (``DeliveryService.configure``)."""
+    delivery_service = delivery_declared.delivery_of(ctx)
     router = APIRouter()
-    holder: dict[str, Any] = {
-        "service": service,
-        "profiles": profiles,
-        "commands": commands,
-        "targets": targets,
-    }
-
-    def _profiles() -> Any:
-        if holder["profiles"] is None:
-            from ...delivery.factory_launch import AgentProfileStore
-
-            holder["profiles"] = AgentProfileStore(profiles_path)
-        return holder["profiles"]
-
-    def _targets() -> Any:
-        if holder["targets"] is None:
-            from ...delivery.terminal import TerminalTargetRegistry
-
-            holder["targets"] = TerminalTargetRegistry()
-        return holder["targets"]
-
-    def _commands() -> Any:
-        if holder["commands"] is None:
-            if delivery_service is None:
-                raise RuntimeError("DeliveryService must be supplied at application composition")
-            holder["commands"] = delivery_service.command_service(
-                targets=_targets(),
-                ledger_path=ledger_path,
-                local_node_id=local_node_id,
-                mode_loader=mode_loader,
-            )
-        return holder["commands"]
-
-    def _service() -> Any:
-        if holder["service"] is None:
-            if delivery_service is None:
-                raise RuntimeError("DeliveryService must be supplied at application composition")
-            holder["service"] = delivery_service.launch_service(
-                profiles=_profiles(),
-                registry_path=registry_path,
-                map_path=map_path,
-                targets=_targets(),
-                commands=_commands(),
-                launches_path=launches_path,
-                local_node_id=local_node_id,
-            )
-        return holder["service"]
 
     def _refused(exc: Any) -> JSONResponse:
         return JSONResponse(
@@ -116,25 +55,19 @@ def build_delivery_factory_router(
             status_code=400,
         )
 
-    @router.get("/api/delivery/factory/profiles")
-    async def api_factory_profiles() -> Any:
-        try:
-            return await asyncio.to_thread(_profiles().to_wire)
-        except Exception as exc:
-            log.error(f"factory profiles read failed: {exc}")
-            return JSONResponse({"error": "factory_profiles_failure"}, status_code=500)
-
     @router.post("/api/delivery/factory/launch")
-    async def api_factory_launch(payload: Optional[dict[str, Any]] = None) -> Any:
+    async def api_factory_launch(request: Request, payload: Optional[dict[str, Any]] = None) -> Any:
         """One §9 agent.launch. The raw body rides to the service so a
         client-supplied executable/argv/command/shell/path refuses BY
         NAME — it is never silently dropped by a request model."""
         from ...delivery.commands import CommandRefused
         from ...delivery.factory_launch import LaunchRefused
+        from ...principals import UNAUTHENTICATED
 
         body = payload if isinstance(payload, dict) else {}
+        principal = getattr(request.state, "principal", UNAUTHENTICATED)
         try:
-            record = await asyncio.to_thread(_service().launch, body)
+            record = await asyncio.to_thread(lambda: delivery_service.factory_launch(principal, body))
         except (LaunchRefused, CommandRefused) as exc:
             return _refused(exc)
         except Exception as exc:
@@ -142,25 +75,7 @@ def build_delivery_factory_router(
             return JSONResponse({"error": "factory_launch_failure"}, status_code=500)
         return JSONResponse(record)
 
-    @router.get("/api/delivery/factory/discover")
-    async def api_factory_discover() -> Any:
-        """Panes/sessions as immutable targets. The best-effort sweep
-        binds fresh rider claims and expires overdue registrations so
-        the listing is honest without any client write."""
-        try:
-            def _read() -> dict[str, Any]:
-                svc = _service()
-                if sync_on_read:
-                    try:
-                        svc.bind_rider_claims(state_path=claims_state_path)
-                        svc.expire_unregistered()
-                    except Exception as sync_exc:
-                        log.warning(f"launch-claim sweep skipped: {sync_exc}")
-                return svc.discover()
-
-            return await asyncio.to_thread(_read)
-        except Exception as exc:
-            log.error(f"factory discover failed: {exc}")
-            return JSONResponse({"error": "factory_discover_failure"}, status_code=500)
-
+    mount_router(router, delivery_declared.router(
+        ctx, ("delivery.factory_profiles", "delivery.factory_discover"), module=__name__,
+    ))
     return router

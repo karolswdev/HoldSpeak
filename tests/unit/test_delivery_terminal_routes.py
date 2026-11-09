@@ -32,6 +32,7 @@ from holdspeak.delivery.node_link import (
 from holdspeak.delivery.terminal import TerminalStreamService, TerminalTargetRegistry
 from holdspeak.web.announce import QUIET_ROUTES
 from holdspeak.principals import Principal, PrincipalKind
+from holdspeak.services.delivery_service import DeliveryService
 from holdspeak.web.context import WebContext
 from holdspeak.web.routes.delivery_terminal import build_delivery_terminal_router
 
@@ -123,13 +124,12 @@ def rig(tmp_path):
         return await call_next(request)
 
     app.include_router(
-        build_delivery_terminal_router(
-            WebContext(get_state=lambda: {}),
-            service=service,
-            stream=stream,
-            targets=targets,
-            link=link,
-        )
+        build_delivery_terminal_router(WebContext(
+            get_state=lambda: {},
+            delivery_service=DeliveryService(None).configure(
+                commands=service, stream=stream, targets=targets, link=link,
+            ),
+        ))
     )
     return SimpleNamespace(
         client=TestClient(app),
@@ -272,14 +272,13 @@ def test_live_route_streams_ndjson_and_is_quiet(rig) -> None:
         return await call_next(request)
 
     app.include_router(
-        build_delivery_terminal_router(
-            WebContext(get_state=lambda: {}),
-            service=rig.service,
-            stream=TerminalStreamService(rig.targets, runner=rig.tmux),
-            live=live,
-            targets=rig.targets,
-            link=rig.link,
-        )
+        build_delivery_terminal_router(WebContext(
+            get_state=lambda: {},
+            delivery_service=DeliveryService(None).configure(
+                commands=rig.service, stream=TerminalStreamService(rig.targets, runner=rig.tmux),
+                live=live, targets=rig.targets, link=rig.link,
+            ),
+        ))
     )
     target = _target(rig)
     with TestClient(app) as client:
@@ -300,14 +299,13 @@ def test_live_route_disconnect_closes_blocked_offloop_reader(rig) -> None:
     live = _BlockingLive()
     app = FastAPI()
     app.include_router(
-        build_delivery_terminal_router(
-            WebContext(get_state=lambda: {}),
-            service=rig.service,
-            stream=TerminalStreamService(rig.targets, runner=rig.tmux),
-            live=live,
-            targets=rig.targets,
-            link=rig.link,
-        )
+        build_delivery_terminal_router(WebContext(
+            get_state=lambda: {},
+            delivery_service=DeliveryService(None).configure(
+                commands=rig.service, stream=TerminalStreamService(rig.targets, runner=rig.tmux),
+                live=live, targets=rig.targets, link=rig.link,
+            ),
+        ))
     )
     route = next(route for route in app.routes if getattr(route, "path", "") == "/api/delivery/terminal/live")
     target = _target(rig)
