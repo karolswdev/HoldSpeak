@@ -1,16 +1,26 @@
-"""Mesh discovery plus authenticated inbox and relay adapters."""
+"""Mesh discovery plus authenticated inbox and relay adapters.
+
+``GET /api/mesh/inbox`` is produced from ``mesh.inbox`` (``holdspeak/device_operations.py``,
+2026-11-09). The discovery answer and the three relay legs (a node protocol: the
+edge derives the node's credential, never an argument) stay hand-written.
+"""
 from __future__ import annotations
 
 from typing import Any
 
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
+from starlette.concurrency import run_in_threadpool
+
+from ... import operations
 
 from ...logging_config import get_logger
 from ...principals import UNAUTHENTICATED
 from ...services.errors import ConflictError, ServiceError, ValidationError
 from ..context import WebContext
+from ..operation_routes import operation_router
 from ..runtime_support import error_500
+from ._mount import mount_router
 
 MESH_INFO_PATH = "/api/mesh/info"
 log = get_logger("web.routes.mesh")
@@ -64,14 +74,17 @@ def build_mesh_router(ctx: WebContext) -> APIRouter:
             configured = ""
         return JSONResponse({"name": resolve_device_name(configured), "version": __version__, "requiresToken": bool(ctx.mesh_requires_token)})
 
-    @router.get("/api/mesh/inbox")
-    def api_mesh_inbox(request: Request) -> Any:
+    async def answer(fn: Any, *, status: int = 200) -> Any:
         try:
-            return JSONResponse(service.list_inbox(_principal(request)))
+            return JSONResponse(await run_in_threadpool(fn), status_code=status)
         except ServiceError as exc:
             return _error(exc)
         except Exception as exc:
             return error_500(exc, log, "Failed to build the mesh inbox")
+
+    by_name = {d.name: d for d in operations.DEVICE_OPERATIONS}
+    mount_router(router, operation_router([by_name["mesh.inbox"]],
+                                          lambda: operations.for_context(ctx), answer, module=__name__))
 
     @router.post("/api/mesh/relay/claim")
     def api_mesh_relay_claim(request: Request, payload: dict[str, Any]) -> Any:

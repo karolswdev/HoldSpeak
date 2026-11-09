@@ -78,6 +78,15 @@ _MCP_ONLY: frozenset[str] = frozenset({
     # The declared Automations reads (2026-11-08, automation_operations.py): a
     # thread reads an automation through automation.get; the palettes do not grow.
     "automation.template.list", "automation.new.list", "automation.lesson.list",
+    # The declared dictation reads (2026-11-09, dictation_operations.py): a
+    # thread reads the journal through dictation.list / dictation.get; the
+    # palettes do not grow.
+    "dictation.corrections.list", "dictation.learning_digest", "dictation.project_context",
+    "dictation.agent_hooks", "dictation.project_hs.get", "dictation.project_kb.get",
+    "dictation.block_templates", "dictation.blocks.list",
+    # The declared recordings, voice, sync and mesh reads (media_operations.py,
+    # device_operations.py): MCP and HTTP only; the palettes do not grow.
+    "recordings.list", "recordings.get", "tts.status", "sync.artifact.get", "sync.pull", "mesh.inbox",
     # The declared outcome review (2026-11-09, project_operations.py): a thread
     # reaches a meeting's proposals through meeting.proposals; the palettes do not grow.
     "meeting.outcome_review",

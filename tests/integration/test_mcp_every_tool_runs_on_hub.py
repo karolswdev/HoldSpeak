@@ -93,6 +93,7 @@ KNOWN_CODE = re.compile(
     r"|^triage_unavailable$"  # action_item.update / review: the sweep's hub runs no live meeting, has no item x (501)
     r"|^no_key$"  # phone.test_push: a fresh HOME has no Apple push key; nothing is sent (409)
     r"|^own_agents_disabled$"  # coder.own_agents.answer: tests/conftest.py turns own-agent discovery off (409)
+    r"|^journal_unavailable$"  # dictation.journal.*: the sweep's hub has no durable journal recorder (404)
     r"|^page_expired$"  # briefing.read / evidence / answer: a placeholder token is no page (404)
 )
 KNOWN_MESSAGE = re.compile(

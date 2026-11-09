@@ -2233,7 +2233,7 @@
         {
           "path": "holdspeak/web/routes/dictation/pipeline.py",
           "symbol": "api_dictation_journal_replay",
-          "line": 1452,
+          "line": 1010,
           "claim": "The route reprocesses a journal entry without typing."
         }
       ],
@@ -2291,7 +2291,7 @@
       ],
       "entry_points": [
         "holdspeak/dictation_learning.py::build_learning_digest",
-        "holdspeak/web/routes/dictation/pipeline.py::api_dictation_learning_digest"
+        "holdspeak/services/dictation_service.py::learning_digest"
       ],
       "platforms": {
         "macos": "supported_with_setup",

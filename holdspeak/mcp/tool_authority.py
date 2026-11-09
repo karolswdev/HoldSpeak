@@ -86,8 +86,6 @@ TOOL_AUTHORITY: dict[str, str] = {
     "steward.nudges": WORK,
     "nudge.send": EGRESS,  # posts a GitHub comment as the owner
     "nudge.dismiss": WORK,
-    "dictation.list": WORK,
-    "dictation.get": WORK,
     "desk.snapshot": WORK,
     "desk.needs_you": WORK,
     "today.get": WORK,

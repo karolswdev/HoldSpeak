@@ -2316,6 +2316,9 @@ from holdspeak.thread_operations import THREAD_OPERATIONS  # noqa: E402
 from holdspeak.coder_operations import CODER_OPERATIONS  # noqa: E402
 from holdspeak.delivery_operations import DELIVERY_OPERATIONS  # noqa: E402
 from holdspeak.invocation_operations import INVOCATION_OPERATIONS  # noqa: E402
+from holdspeak.dictation_operations import DICTATION_OPERATIONS  # noqa: E402,F401 (re-exported)
+from holdspeak.media_operations import LIVE_RECORDINGS_SERVICE, MEDIA_OPERATIONS  # noqa: E402,F401 (re-exported)
+from holdspeak.device_operations import DEVICE_OPERATIONS  # noqa: E402,F401 (re-exported)
 # 2026-11-09 (ops/projects): the Room's, the activity ledger's, the Walk's and the repository drawer's web verbs.
 from holdspeak.project_operations import PROJECT_OPERATIONS  # noqa: E402
 from holdspeak.activity_operations import ACTIVITY_OPERATIONS  # noqa: E402
@@ -2460,6 +2463,7 @@ DESCRIPTORS: tuple[OperationDescriptor, ...] = (
     + DESK_DISPLAY_OPERATIONS + NOTE_OUTCOME_OPERATIONS + (TODAY_GET,) + PROGRAM_OPERATIONS + MEETING_OPERATIONS + PHONE_OPERATIONS + PEOPLE_OPERATIONS \
     + MEETING_INTEL_OPERATIONS + AUTOMATION_OPERATIONS + CALLS_OPERATIONS + SETTINGS_OPERATIONS + DECISION_OPERATIONS \
     + THREAD_OPERATIONS + CODER_OPERATIONS + DELIVERY_OPERATIONS + INVOCATION_OPERATIONS \
+    + DICTATION_OPERATIONS + MEDIA_OPERATIONS + DEVICE_OPERATIONS \
     + PROJECT_OPERATIONS + ACTIVITY_OPERATIONS + WALK_OPERATIONS + REPOSITORY_OPERATIONS \
     + GATE_OPERATIONS + KERNEL_OPERATIONS
 
@@ -2741,7 +2745,7 @@ def _changed(name: str, args: Any, result: Any) -> tuple[str, str, str]:
     """
     kind, _, op = name.partition(".")
     # The kind the desk refreshes on (web/announce.py): a person, a workbench.
-    kind = {"people": "person", "automation": "workbench", "calls": "call"}.get(kind, kind)
+    kind = {"people": "person", "automation": "workbench", "calls": "call", "recordings": "recording"}.get(kind, kind)
     payload = args if isinstance(args, Mapping) else {}
     obj_id: Any = payload.get(f"{kind}_id")
     if not obj_id:

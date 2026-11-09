@@ -1,8 +1,11 @@
 """TTS route: the hub's one voice is the Line's Pocket TTS (HS-154-01, 2026-11-07).
 
-GET  /api/tts/status   -> {installed, model_ready, engine, voice}
-POST /api/tts          -> streaming WAV (404 without the ``line`` extra)
-POST /api/tts/download -> fetch the Line's TTS weights (egress-badged, receipted)
+POST /api/tts          -> streaming WAV (404 without the ``line`` extra); hand-written
+GET  /api/tts/status   -> produced from ``tts.status`` (``holdspeak/media_operations.py``)
+POST /api/tts/download -> produced from ``tts.download`` (egress-badged, receipted)
+
+The engine, its state and the two declared verbs live in
+``holdspeak/services/tts_service.py`` (2026-11-09).
 
 The desk and a call speak with the same engine and the same weights:
 ``holdspeak/line/speech.py`` (``Pocket``, Kyutai Pocket TTS, MIT code,
@@ -18,87 +21,22 @@ accepted and ignored.
 from __future__ import annotations
 
 import struct
-import time
-from threading import Lock
-from typing import Any, Iterator, Mapping, Optional
+from typing import Any, Iterator, Optional
 
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 from starlette.concurrency import run_in_threadpool
 
+from ... import operations
 from ...logging_config import get_logger
+from ...services import tts_service as tts_engine
+from ...services.errors import ServiceError
 from ..context import WebContext
+from ..operation_routes import operation_router
 from ..runtime_support import error_500
+from ._mount import mount_router
 
 log = get_logger("web.routes.tts")
-
-ENGINE = "pocket"
-#: The longest the download route waits for the Line's fetch job.
-DOWNLOAD_WAIT_S = 30 * 60
-
-# ---- the one engine per process ----
-
-_engine: Any = None
-_installed: Optional[bool] = None
-_STATE_LOCK = Lock()
-
-
-def _reset_state() -> None:
-    """Forget the engine and the import probe (test seam only)."""
-    global _engine, _installed
-    with _STATE_LOCK:
-        _engine = None
-        _installed = None
-
-
-def _line_installed() -> bool:
-    """The ``line`` extra imports (``pocket_tts`` and ``torch``); cached."""
-    global _installed
-    with _STATE_LOCK:
-        if _installed is None:
-            try:
-                import pocket_tts  # noqa: F401
-                import torch  # noqa: F401
-
-                _installed = True
-            except ImportError:
-                _installed = False
-        return _installed
-
-
-def _voice() -> str:
-    from ...line.speech import TTS_VOICE
-
-    return TTS_VOICE
-
-
-def _tts_row() -> Optional[Mapping[str, Any]]:
-    """The signed catalogue's TTS preset (the Line's voice weights)."""
-    from ...line import models
-
-    for row in models.presets():
-        if row["role"] == "tts":
-            return row
-    return None
-
-
-def _model_ready() -> bool:
-    from ...line import models
-
-    row = _tts_row()
-    return row is not None and models.ready(row)
-
-
-def _get_engine() -> Any:
-    """The process's one Pocket engine; the first use loads it."""
-    global _engine
-    with _STATE_LOCK:
-        if _engine is None:
-            from ...line.speech import Pocket
-
-            _engine = Pocket(voice=_voice())
-        return _engine
-
 
 def _wav_header(sample_rate: int, channels: int = 1, bits: int = 16) -> bytes:
     """A WAV header for a stream of unknown length (the sizes are the maximum)."""
@@ -115,7 +53,7 @@ def _synthesize_wav(text: str) -> Iterator[bytes]:
     """The WAV header, then the engine's 16-bit PCM chunks as they are made."""
     from ...line.audio import RATE
 
-    engine = _get_engine()
+    engine = tts_engine._get_engine()
     yield _wav_header(RATE)
     for chunk in engine.stream(text):
         yield chunk.astype("<i2", copy=False).tobytes()
@@ -129,37 +67,31 @@ def _first_two(gen: Iterator[bytes]) -> tuple[Optional[bytes], Optional[bytes]]:
 
 
 def _not_installed() -> JSONResponse:
-    return JSONResponse(
-        {"code": "tts_not_installed", "message": "Install the Line extra: pip install 'holdspeak[line]'"},
-        status_code=404,
-    )
+    return _refusal(tts_engine.not_installed())
 
 
 def _not_ready() -> JSONResponse:
-    return JSONResponse(
-        {"code": "tts_model_not_ready", "message": "The voice model is not downloaded."},
-        status_code=404,
-    )
+    return _refusal(tts_engine.not_ready())
+
+
+def _refusal(exc: ServiceError) -> JSONResponse:
+    return JSONResponse(exc.context.get("body") or {"code": exc.code, "message": exc.detail},
+                        status_code=int(exc.context.get("status") or 400))
+
+
+async def _answer(fn: Any, *, status: int = 200) -> Any:
+    """The produced routes' envelope: a refusal keeps its typed code and message."""
+    try:
+        return JSONResponse(await run_in_threadpool(fn), status_code=status)
+    except ServiceError as exc:
+        return _refusal(exc)
+    except Exception as exc:
+        return error_500(exc, log, "Failed to run the voice verb")
 
 
 def build_tts_router(ctx: WebContext) -> APIRouter:
     """Build the TTS route family (HS-154-01)."""
     router = APIRouter()
-
-    @router.get("/api/tts/status")
-    def tts_status(request: Request) -> Any:
-        """Report TTS availability: the Line extra installed + its TTS weights ready."""
-        try:
-            installed = _line_installed()
-            ready = installed and _model_ready()
-            return JSONResponse({
-                "installed": installed,
-                "model_ready": ready,
-                "engine": ENGINE,
-                "voice": _voice(),
-            })
-        except Exception as exc:
-            return error_500(exc, log, "Failed to read TTS status")
 
     @router.post("/api/tts")
     async def tts_speak(request: Request) -> Any:
@@ -168,9 +100,9 @@ def build_tts_router(ctx: WebContext) -> APIRouter:
         404 ``tts_not_installed`` without the ``line`` extra; 404
         ``tts_model_not_ready`` before the weights are fetched.
         """
-        if not await run_in_threadpool(_line_installed):
+        if not await run_in_threadpool(tts_engine._line_installed):
             return _not_installed()
-        if not await run_in_threadpool(_model_ready):
+        if not await run_in_threadpool(tts_engine._model_ready):
             return _not_ready()
         try:
             body = await request.json()
@@ -186,9 +118,9 @@ def build_tts_router(ctx: WebContext) -> APIRouter:
                 status_code=400,
             )
         voice = body.get("voice") if isinstance(body, dict) else None
-        if voice not in (None, "", _voice()):
+        if voice not in (None, "", tts_engine._voice()):
             return JSONResponse(
-                {"code": "tts_invalid_voice", "message": f"Voice {voice} is not available. Use {_voice()}."},
+                {"code": "tts_invalid_voice", "message": f"Voice {voice} is not available. Use {tts_engine._voice()}."},
                 status_code=400,
             )
 
@@ -214,48 +146,14 @@ def build_tts_router(ctx: WebContext) -> APIRouter:
         # Starlette iterates a sync generator in its thread pool.
         return StreamingResponse(_chain(), media_type="audio/wav")
 
-    @router.post("/api/tts/download")
-    def tts_download(request: Request) -> Any:
-        """Fetch the Line's TTS weights through ``line/models.py`` (egress-badged, receipted).
+    def registry() -> operations.OperationRegistry:
+        return operations.for_context(ctx, tts_service=tts_engine.TtsService)
 
-        Starts (or joins) the Line's fetch job for the TTS preset and waits
-        for it; the 202 carries the receipt and the egress badge.
-        """
-        if not _line_installed():
-            return _not_installed()
-        try:
-            from ...line import models
-
-            row = _tts_row()
-            if row is None:
-                return JSONResponse(
-                    {"code": "tts_no_preset", "message": "The catalogue has no voice model."},
-                    status_code=404,
-                )
-            started = time.monotonic()
-            models.start(row["id"])
-            models.wait(row["id"], DOWNLOAD_WAIT_S)
-            after = models.model_row(row)
-            ready = models.ready(row)
-            receipt = {
-                "downloaded": ready,
-                "elapsed_s": round(time.monotonic() - started, 2),
-                "weights_dir": str(models.model_dir(row)),
-                "total_bytes": int(row["source"]["download_bytes"]),
-                "state": after.get("state"),
-            }
-            if after.get("reason"):
-                receipt["reason"] = after["reason"]
-            egress = {
-                "host": models.HOST,
-                "bytes_estimate": f"~{round(int(row['source']['download_bytes']) / 1_000_000)} MB",
-                "purpose": f"Voice model weights ({row['label']})",
-            }
-            return JSONResponse({"receipt": receipt, "egress": egress}, status_code=202)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to download the voice model")
+    by_name = {d.name: d for d in operations.MEDIA_OPERATIONS}
+    mount_router(router, operation_router([by_name["tts.status"], by_name["tts.download"]], registry, _answer,
+                                          module=__name__))
 
     return router
 
 
-__all__ = ["ENGINE", "build_tts_router"]
+__all__ = ["build_tts_router"]

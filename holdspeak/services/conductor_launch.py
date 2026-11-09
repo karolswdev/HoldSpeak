@@ -518,14 +518,14 @@ LAUNCH_RULES["automation.template.instantiate"] = (CREATE, "", "")
 
 
 def _family_rules() -> dict[str, tuple[str, str, str]]:
-    """The agents, coders and delivery verbs (2026-11-09, read from their
-    rows): a launch reads what they read; every write is the owner's press on
-    his own desk (his agents, his terminals, his PRs). The chat threads are
-    his conversations: a launch neither reads nor writes them."""
+    """Every declared row without a rule of its own (2026-11-09, read from the
+    rows, never a hand-kept family list): a launch reads what a declared read
+    reads; a declared write is the owner's press and is never offered. The chat
+    threads are his conversations: a launch neither reads nor writes them."""
     from holdspeak import operations as ops
 
-    rows = ops.AGENT_OPERATIONS + ops.CODER_OPERATIONS + ops.DELIVERY_OPERATIONS + ops.INVOCATION_OPERATIONS
-    rules = {d.tool_name: (READ if d.effect == "read" else NEVER, "", "") for d in rows if d.tool_schema is not None}
+    rules = {d.tool_name: (READ if d.effect == "read" else NEVER, "", "")
+             for d in ops.DESCRIPTORS if d.tool_schema is not None and d.tool_name}
     rules.update({d.tool_name: (NEVER, "", "") for d in ops.THREAD_OPERATIONS if d.tool_schema is not None})
     return {name: rule for name, rule in rules.items() if name not in LAUNCH_RULES}
 
