@@ -121,7 +121,8 @@ def seeded_meeting(db: Database):
 
 
 @pytest.fixture
-def server() -> MeetingWebServer:
+def server(db: Database) -> MeetingWebServer:
+    # The hub composes over the database that exists (the test's), as a real hub does.
     return MeetingWebServer(
                WebRuntimeCallbacks(
                    on_bookmark=lambda *_args, **_kwargs: None,

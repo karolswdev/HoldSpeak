@@ -126,3 +126,37 @@ def test_required_tools_still_present_in_catalogue() -> None:
     names = {t["name"] for t in response["result"]["tools"]}
     missing = REQUIRED_TOOLS - names
     assert not missing, f"Missing from catalogue: {missing}"
+
+
+def test_no_tool_name_is_in_two_families() -> None:
+    """2026-11-08: the declared family makes every descriptor's tool; no hand-written tool may repeat one."""
+    from collections import Counter
+
+    from holdspeak.mcp.families import FAMILIES
+
+    owned = [tool["name"] for family in FAMILIES for tool in family.TOOLS]
+    family_names = set(owned)
+    main_only = [tool["name"] for tool in TOOLS if tool["name"] not in family_names]
+    repeated = [name for name, count in Counter(owned + main_only).items() if count > 1]
+    assert not repeated, repeated
+    assert len(TOOLS) == len({tool["name"] for tool in TOOLS})
+
+
+def test_every_declared_tool_schema_is_a_declared_tool() -> None:
+    from holdspeak import operations
+    from holdspeak.mcp.families import declared
+
+    with_schema = {d.name for d in operations.DESCRIPTORS if d.tool_schema is not None}
+    assert declared.NAMES == with_schema
+    assert {"meeting.facets", "action_item.update", "program.get"} <= declared.NAMES
+
+
+def test_a_declared_meeting_tool_runs_through_the_registry(tmp_path: Any, monkeypatch: pytest.MonkeyPatch) -> None:
+    """meeting.facets and speaker.list were web-only; their descriptors make the MCP tools."""
+    from holdspeak.db import Database
+
+    db = Database(tmp_path / "declared.db")
+    monkeypatch.setattr(mcp_tools, "get_database", lambda: db)
+    assert mcp_tools.dispatch("meeting.facets", {}, OWNER) == db.meetings.list_facet_values()
+    assert mcp_tools.dispatch("speaker.list", {}, OWNER) == {"speakers": [], "total": 0}
+    assert mcp_tools.dispatch("meeting.ready_list", {}, OWNER) == {"meetings": []}

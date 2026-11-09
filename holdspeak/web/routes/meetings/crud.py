@@ -1,43 +1,33 @@
-"""DB-backed meeting listing, facets, detail, delete, and export routes.
+"""DB-backed meeting listing, detail, delete, and export routes.
 
-These read routes delegate through the composition-bound meeting service.
+These read routes delegate through the composition-bound meeting service. The
+readiness, facets, rename, restore, recover, sync-conflict, speaker and
+insight routes are produced from their declared operations
+(``meeting_operations.py``).
 """
 
 from __future__ import annotations
 
-from threading import Lock
 from typing import Any, Optional
 
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse, Response
 
-from .... import operations
 from ....logging_config import get_logger
 from ....principals import UNAUTHENTICATED
 from ....services.meeting_service import MeetingService
 from ....services.errors import NotFound, ValidationError
 from ...context import WebContext
+from .._mount import mount_router
+from . import _declared
 
 log = get_logger("web.routes.meetings")
-_SERVICE_CACHE_LOCK = Lock()
 
 
 def _service(ctx: WebContext) -> MeetingService:
-    if isinstance(ctx.meeting_service, MeetingService):
+    if ctx.meeting_service is not None:
         return ctx.meeting_service
-    with _SERVICE_CACHE_LOCK:
-        if isinstance(ctx.meeting_service, MeetingService):
-            return ctx.meeting_service
-        from ....db import get_database, get_observer
-
-        service = MeetingService(get_database(), observer=get_observer())  # _service composition
-        ctx.meeting_service = service
-        return service
-
-
-def _ops(ctx: WebContext) -> operations.OperationRegistry:
-    """PHILO-5-02: meeting.list / meeting.read through the hub's bound contract."""
-    return operations.for_context(ctx, meeting_service=lambda: _service(ctx))
+    return _declared.registry_for(ctx)().target("meeting.list")  # a partial context's
 
 
 def _principal(request: Request):
@@ -45,26 +35,9 @@ def _principal(request: Request):
 
 
 def build_crud_router(ctx: WebContext) -> APIRouter:
-    router = APIRouter()
-
-    @router.get("/api/meetings/ready")
-    def api_list_unread_ready_meetings(request: Request) -> Any:
-        """Read producer-created meeting readiness that is still unseen."""
-        return JSONResponse(_service(ctx).list_ready(_principal(request)))
-
-    @router.post("/api/meetings/{meeting_id}/ready/read")
-    def api_mark_meeting_ready_read(meeting_id: str, request: Request) -> Any:
-        """Acknowledge the readiness marker opened by the Meetings face."""
-        try:
-            result = _service(ctx).mark_ready_read(_principal(request), meeting_id)
-        except NotFound:
-            return JSONResponse({"error": "Meeting not found"}, status_code=404)
-        if result["ready_at"] is not None:
-            # Through the one seam, so the request sends one frame, not two.
-            from ....runtime.composition import notify_desk_changed
-
-            notify_desk_changed("meeting_ready_read", meeting_id, "read")
-        return JSONResponse(result)
+    # Produced first: /ready and /facets come before /{meeting_id}.
+    router = _declared.router(ctx, ("meeting.ready_list", "meeting.ready_read", "meeting.facets"), module=__name__)
+    _ops = _declared.registry_for(ctx)
 
     @router.get("/api/meetings")
     def api_list_meetings(
@@ -100,7 +73,7 @@ def build_crud_router(ctx: WebContext) -> APIRouter:
                 status_code=422,
             )
         try:
-            result = _ops(ctx).invoke(_principal(request), "meeting.list", {
+            result = _ops().invoke(_principal(request), "meeting.list", {
                 "query": search,
                 "from_date": date_from,
                 "to_date": date_to,
@@ -121,22 +94,13 @@ def build_crud_router(ctx: WebContext) -> APIRouter:
                 {"error": str(e)}, status_code=500
             )
 
-    @router.get("/api/meetings/facets")
-    def api_meeting_facets(request: Request) -> Any:
-        """Distinct speakers + tags for the /history filter row (HS-55-04)."""
-        try:
-            return JSONResponse(_service(ctx).facets(_principal(request)))
-        except Exception as e:
-            log.error(f"Failed to list meeting facets: {e}")
-            return JSONResponse({"error": str(e)}, status_code=500)
-
     @router.get("/api/meetings/{meeting_id}")
     def api_get_meeting(
         meeting_id: str, request: Request, include_parked: bool = False
     ) -> Any:
         """Get meeting details from database."""
         try:
-            return JSONResponse(_ops(ctx).invoke(_principal(request), "meeting.read", {"meeting_id": meeting_id, "include_parked": include_parked}))
+            return JSONResponse(_ops().invoke(_principal(request), "meeting.read", {"meeting_id": meeting_id, "include_parked": include_parked}))
         except NotFound:
             return JSONResponse({"error": "Meeting not found"}, status_code=404)
         except Exception as e:
@@ -144,33 +108,6 @@ def build_crud_router(ctx: WebContext) -> APIRouter:
             return JSONResponse(
                 {"error": str(e)}, status_code=500
             )
-
-    @router.put("/api/meetings/{meeting_id}")
-    async def api_rename_meeting(meeting_id: str, request: Request) -> Any:
-        """Rename one archived meeting (HS-132-07).
-
-        Get Info offered Rename for every primitive while meetings had no
-        route to take it, so the edit died in the client. This is that route:
-        it writes the title of the named meeting (never the live session's).
-        """
-        try:
-            body = await request.json()
-        except Exception:
-            return JSONResponse({"error": "expected a JSON object"}, status_code=400)
-        if not isinstance(body, dict) or "title" not in body:
-            return JSONResponse({"error": "expected a title"}, status_code=400)
-        try:
-            meeting = _service(ctx).rename_meeting(
-                _principal(request), meeting_id, body.get("title")
-            )
-            return JSONResponse({"meeting": meeting})
-        except NotFound:
-            return JSONResponse({"error": "Meeting not found"}, status_code=404)
-        except ValidationError as exc:
-            return JSONResponse({"error": str(exc)}, status_code=400)
-        except Exception as e:
-            log.error(f"Failed to rename meeting: {e}")
-            return JSONResponse({"error": str(e)}, status_code=500)
 
     @router.delete("/api/meetings/{meeting_id}")
     def api_delete_meeting(meeting_id: str, request: Request) -> Any:
@@ -185,61 +122,6 @@ def build_crud_router(ctx: WebContext) -> APIRouter:
             return JSONResponse(
                 {"error": str(e)}, status_code=500
             )
-
-    @router.post("/api/meetings/{meeting_id}/restore")
-    def api_restore_meeting(meeting_id: str, request: Request) -> Any:
-        """Restore a parked meeting with all retained work intact."""
-        try:
-            return JSONResponse(
-                _service(ctx).restore_meeting(_principal(request), meeting_id)
-            )
-        except NotFound:
-            return JSONResponse({"error": "Meeting not found"}, status_code=404)
-        except Exception as e:
-            log.error(f"Failed to restore meeting: {e}")
-            return JSONResponse({"error": str(e)}, status_code=500)
-
-    @router.post("/api/meetings/{meeting_id}/capture/recover")
-    def api_recover_meeting_capture(meeting_id: str, request: Request) -> Any:
-        """Keep the last atomic checkpoint as an honestly partial Meeting."""
-        try:
-            return JSONResponse(_service(ctx).recover_capture(_principal(request), meeting_id))
-        except NotFound:
-            return JSONResponse({"error": "Meeting not found"}, status_code=404)
-        except Exception as exc:
-            return JSONResponse({"error": f"Recovery failed; the original Meeting is retained: {exc}. Retry recovery."}, status_code=500)
-
-    @router.get("/api/meetings/{meeting_id}/sync-conflicts")
-    def api_meeting_sync_conflicts(meeting_id: str, request: Request) -> Any:
-        try:
-            return JSONResponse(_service(ctx).list_sync_conflicts(_principal(request), meeting_id))
-        except NotFound:
-            return JSONResponse({"error": "Meeting not found"}, status_code=404)
-        except Exception as exc:
-            return JSONResponse({"error": str(exc)}, status_code=500)
-
-    @router.post(
-        "/api/meetings/{meeting_id}/sync-conflicts/{conflict_id}/resolve"
-    )
-    def api_resolve_meeting_sync_conflict(
-        meeting_id: str,
-        conflict_id: str,
-        payload: dict[str, Any],
-        request: Request,
-    ) -> Any:
-        """Apply the owner's explicit choice between two Meeting versions."""
-        try:
-            return JSONResponse(_service(ctx).resolve_sync_conflict(_principal(request), meeting_id, conflict_id, payload))
-        except ValidationError as exc:
-            return JSONResponse({"error": str(exc)}, status_code=400)
-        except NotFound:
-            return JSONResponse({"error": "Meeting conflict not found"}, status_code=404)
-        except Exception as exc:
-            from ....services.errors import ConflictError
-            if isinstance(exc, ConflictError):
-                return JSONResponse({"error": str(exc)}, status_code=409)
-            log.error("Failed to resolve Meeting sync conflict: %s", exc)
-            return JSONResponse({"error": f"Conflict recovery failed; both versions remain: {exc}. Retry the resolution."}, status_code=500)
 
     @router.get("/api/meetings/{meeting_id}/export")
     def api_export_meeting(
@@ -267,4 +149,8 @@ def build_crud_router(ctx: WebContext) -> APIRouter:
                 {"error": str(e)}, status_code=500
             )
 
+    mount_router(router, _declared.router(ctx, (
+        "meeting.rename", "meeting.restore", "meeting.recover_capture", "meeting.sync_conflicts",
+        "meeting.resolve_sync_conflict", "speaker.list", "meeting.intent_timeline", "meeting.artifacts",
+        "meeting.prepared"), module=__name__))
     return router

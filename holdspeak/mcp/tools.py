@@ -959,6 +959,26 @@ def _meeting_import(registry: operations.OperationRegistry, meetings: Any, princ
     return {"meeting_id": result["meeting_id"], "transcription_status": result["status"]}
 
 
+def runtime_registry(primitives: Any = None, meetings: Any = None) -> operations.OperationRegistry:
+    """The hub's bound contract, the object its HTTP routes reach (PHILO-5-01/02): the one MCP path to it.
+
+    In the hub no builder below runs (the brief's producer clock, the summary's
+    runtime_queue notify and the Programs engine are the hub's); in a bare
+    composition it binds over plain (db, observer) services.
+    """
+    from holdspeak.services.today_service import TodayService
+
+    db, obs = db_or(get_database), observer_or(get_observer)
+    plain = {"meeting_intel_service": lambda: MeetingIntelService(db, observer=obs),
+             "monday_brief_service": lambda: MondayBriefService(db, observer=obs),
+             "kernel_read_service": lambda: KernelReadService(db), "today_service": lambda: TodayService(db),
+             "project_service": lambda: _bare_project_service(db, obs),
+             "primitive_service": lambda: primitives or PrimitiveService(db, observer=obs),
+             "meeting_service": lambda: meetings or MeetingService(db, observer=obs)}
+    return operations.for_runtime(program_service=lambda: operations.LIVE_PROGRAM_SERVICE, **{
+        name: (lambda name=name, build=build: runtime_service(name, build)) for name, build in plain.items()})
+
+
 def dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) -> Any:
     """Call one day-one MCP tool and return JSON-serializable data.
 
@@ -1070,36 +1090,8 @@ def _dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal)
     events = EventQueryService(db)
     desk = DeskService(db, observer=obs)
     records = DecisionRecordService(db, observer=obs)
-    # PHILO-5-01/02: the hub's bound contract (the object its HTTP routes
-    # reach). In the hub no builder below runs: meeting.* , the summary run,
-    # the brief (with the hub's producer clock, gap A) and the summary's
-    # runtime_queue notify (gap B) all come from the hub's one instances. In a
-    # bare composition it binds over the same services this dispatcher built
-    # before. Resolved only when a contract operation is called.
     def ops() -> operations.OperationRegistry:
-        from holdspeak.services.today_service import TodayService
-
-        return operations.for_runtime(
-            lambda: primitives,
-            meeting_service=lambda: meetings,
-            meeting_intel_service=lambda: runtime_service(
-                "meeting_intel_service", lambda: MeetingIntelService(db, observer=obs)
-            ),
-            monday_brief_service=lambda: runtime_service(
-                "monday_brief_service", lambda: MondayBriefService(db, observer=obs)
-            ),
-            kernel_read_service=lambda: runtime_service(
-                "kernel_read_service", lambda: KernelReadService(db)
-            ),
-            # PHILO-9-01: desk.needs_you is the declared operation on the
-            # hub's ProjectService (a bare one off-hub, as before).
-            today_service=lambda: runtime_service(
-                "today_service", lambda: TodayService(db)
-            ),
-            project_service=lambda: runtime_service(
-                "project_service", lambda: _bare_project_service(db, obs)
-            ),
-        )
+        return runtime_registry(primitives, meetings)
 
     if name == "desk.list":
         return _primitive_list(ops, primitives, principal, _kind(args.get("kind")))

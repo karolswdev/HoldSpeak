@@ -2297,6 +2297,7 @@ from holdspeak.agent_operations import AGENT_OPERATIONS  # noqa: E402
 from holdspeak.desk_window_operations import DESK_WINDOW_OPERATIONS  # noqa: E402
 # Imported only through here (it imports this module): read operations.PROGRAM_OPERATIONS.
 from holdspeak.program_operations import LIVE_PROGRAM_SERVICE, PROGRAM_OPERATIONS  # noqa: E402,F401 (re-exported)
+from holdspeak.meeting_operations import MEETING_OPERATIONS  # noqa: E402
 
 #: The whole catalogue, in export order.
 # ── Betterment Q9: Find the tasks on a note ───────────────────────────────
@@ -2431,7 +2432,7 @@ DESCRIPTORS: tuple[OperationDescriptor, ...] = (
     DECISION_DELETE, DECISION_STATUS, DECISION_SUPERSEDE,
     KERNEL_RECEIPT_READ, MEMORY_OBSERVATIONS_READ, MEMORY_PAGE_READ,
 ) + ROOM_OPERATIONS + STEWARD_CONNECTOR_OPERATIONS + CHANNEL_OPERATIONS + ONBOARDING_OPERATIONS + SETUP_OPERATIONS + AGENT_OPERATIONS \
-    + DESK_WINDOW_OPERATIONS + NOTE_OUTCOME_OPERATIONS + (TODAY_GET,) + PROGRAM_OPERATIONS
+    + DESK_WINDOW_OPERATIONS + NOTE_OUTCOME_OPERATIONS + (TODAY_GET,) + PROGRAM_OPERATIONS + MEETING_OPERATIONS
 
 #: The RuntimeServices / WebContext fields the catalogue binds to.
 BOUND_SERVICES: tuple[str, ...] = tuple(dict.fromkeys(d.service for d in DESCRIPTORS))

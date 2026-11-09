@@ -20,8 +20,13 @@ from ....web_requests import (
 )
 from ...runtime_support import _UnknownDeviceError
 from ...context import WebContext
+from .._mount import mount_router
+from . import _declared
 
 log = get_logger("web.routes.meetings")
+
+#: The declared routes kept hand-written: the live-session answer ({"success": true}) and its broadcast.
+HAND_WRITTEN = ("meeting.bookmark", "meeting.update")
 
 # The runtime's named refusal when a stop press finds no meeting running
 # (`runtime/meeting_glue.py::_stop_active_meeting`). Matched on the message
@@ -66,21 +71,7 @@ def _principal(request: Request):
 
 def build_live_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
-
-    @router.post("/api/bookmark")
-    def api_bookmark(
-        request: Request, payload: Optional[_BookmarkRequest] = None
-    ) -> Any:
-        try:
-            result = _service(ctx).bookmark(
-                _principal(request), label=payload.label if payload else ""
-            )
-            if result is not None:
-                ctx.broadcast("bookmark", result)
-            return JSONResponse({"success": True})
-        except Exception as exc:
-            log.error("on_bookmark failed: %s", exc)
-            return JSONResponse({"success": False, "error": str(exc)}, status_code=500)
+    registry = _declared.registry_for(ctx)
 
     async def _stop(request: Request) -> Any:
         try:
@@ -165,24 +156,36 @@ def build_live_router(ctx: WebContext) -> APIRouter:
     async def api_meeting_stop(request: Request, _: Optional[_StopRequest] = None) -> Any:
         return await _stop(request)
 
-    @router.patch("/api/meeting")
-    def api_update_meeting(request: Request, payload: _UpdateMeetingRequest) -> Any:
-        try:
-            state = ctx.get_state() or {}
-            meeting_id = str(state.get("id") or state.get("meeting_id") or "")
-            meeting = _service(ctx).update_meeting(
-                _principal(request), meeting_id, title=payload.title, tags=payload.tags
-            )
-            ctx.broadcast(
-                "meeting_updated",
-                {
-                    "title": meeting.get("title"),
-                    "tags": meeting.get("tags") if isinstance(meeting.get("tags"), list) else [],
-                },
-            )
-            return JSONResponse({"success": True, "meeting": meeting})
-        except Exception as exc:
-            log.error("Failed to update meeting: %s", exc)
-            return JSONResponse({"success": False, "error": str(exc)}, status_code=500)
+    def bookmark(descriptor: Any) -> Any:
+        def api_bookmark(request: Request, payload: Optional[_BookmarkRequest] = None) -> Any:
+            try:
+                result = registry().invoke(_principal(request), descriptor.name, {"label": payload.label if payload else ""})
+                if result is not None:
+                    ctx.broadcast("bookmark", result)
+                return JSONResponse({"success": True})
+            except Exception as exc:
+                log.error("on_bookmark failed: %s", exc)
+                return JSONResponse({"success": False, "error": str(exc)}, status_code=500)
 
+        return api_bookmark
+
+    def update(descriptor: Any) -> Any:
+        def api_update_meeting(request: Request, payload: _UpdateMeetingRequest) -> Any:
+            try:
+                state = ctx.get_state() or {}
+                meeting_id = str(state.get("id") or state.get("meeting_id") or "")
+                meeting = registry().invoke(_principal(request), descriptor.name, {
+                    "meeting_id": meeting_id, "title": payload.title, "tags": payload.tags,
+                })
+                tags = meeting.get("tags") if isinstance(meeting.get("tags"), list) else []
+                ctx.broadcast("meeting_updated", {"title": meeting.get("title"), "tags": tags})
+                return JSONResponse({"success": True, "meeting": meeting})
+            except Exception as exc:
+                log.error("Failed to update meeting: %s", exc)
+                return JSONResponse({"success": False, "error": str(exc)}, status_code=500)
+
+        return api_update_meeting
+
+    mount_router(router, _declared.router(ctx, HAND_WRITTEN, module=__name__,
+                                          hand_written={"meeting.bookmark": bookmark, "meeting.update": update}))
     return router

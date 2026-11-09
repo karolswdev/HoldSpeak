@@ -462,6 +462,15 @@ LAUNCH_RULES.update({
     "agent.read": (OWN, "launch", "launch_id"),
     "agent.answer": (OWN, "launch", "launch_id"),
 })
+# The meeting archive's declared verbs (2026-11-08, ``meeting_operations.py``):
+# a launch reads them; its writes stay the owner's, as meeting.delete.
+LAUNCH_RULES.update({name: (READ, "", "") for name in (
+    "meeting.ready_list", "meeting.facets", "meeting.sync_conflicts", "meeting.intent_timeline",
+    "meeting.artifacts", "meeting.prepared", "speaker.list", "action_item.list")})
+LAUNCH_RULES.update({name: (NEVER, "", "") for name in (
+    "meeting.ready_read", "meeting.rename", "meeting.restore", "meeting.recover_capture",
+    "meeting.resolve_sync_conflict", "action_item.update", "action_item.review", "meeting.bookmark",
+    "meeting.update")})
 
 #: Not offered to a launch at all (the palette leaves them out).
 NOT_OFFERED: frozenset[str] = frozenset(n for n, (rule, _k, _a) in LAUNCH_RULES.items() if rule in (NEVER, COMPOSER))

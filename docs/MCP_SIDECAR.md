@@ -385,7 +385,13 @@ database, FTS index or Cadence.
 
 <!-- BEGIN MCP TOOL ROSTER (machine-generated -- do not edit) -->
 
-**Registry totals:** 302 tools across 46 families.
+**Registry totals:** 319 tools across 48 families.
+
+#### action_item (3)
+
+- `action_item.list`
+- `action_item.review`
+- `action_item.update`
 
 #### agent (6)
 
@@ -551,18 +557,31 @@ database, FTS index or Cadence.
 
 - `kernel.receipt`
 
-#### meeting (10)
+#### meeting (23)
 
+- `meeting.artifacts`
+- `meeting.bookmark`
 - `meeting.delete`
 - `meeting.export`
+- `meeting.facets`
 - `meeting.get`
 - `meeting.import`
+- `meeting.intent_timeline`
 - `meeting.list`
+- `meeting.prepared`
 - `meeting.proposals`
+- `meeting.ready_list`
+- `meeting.ready_read`
+- `meeting.recover_capture`
+- `meeting.rename`
+- `meeting.resolve_sync_conflict`
+- `meeting.restore`
 - `meeting.run_intelligence`
 - `meeting.start_capture`
 - `meeting.stop_capture`
+- `meeting.sync_conflicts`
 - `meeting.transcribe`
+- `meeting.update`
 
 #### memory (3)
 
@@ -781,6 +800,10 @@ database, FTS index or Cadence.
 - `setup.status`
 - `setup.use`
 
+#### speaker (1)
+
+- `speaker.list`
+
 #### steward (1)
 
 - `steward.nudges`
@@ -935,7 +958,7 @@ it.
 
 `tools_for_palette(palette)` returns only the tools in the palette. A
 client that lists tools through this filter sees 66 tools
-instead of 302.
+instead of 319.
 
 `dispatch_for_palette(name, arguments, principal, palette)` runs a tool
 only if `name` is in the palette. A name outside the palette gets a typed
