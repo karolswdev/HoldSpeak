@@ -448,6 +448,18 @@ class TestThePhoneDesk:
         assert not fails, fails
 
 
+
+def _declared_size(action: str) -> tuple[int, int]:
+    """The first-open size an application declares (web/src/desk/applications.ts),
+    so the fence and the manifest are one place."""
+    import re as _re
+    src = (Path(__file__).resolve().parents[2] / "web" / "src" / "desk" / "applications.ts").read_text()
+    block = src[src.index(f'action: "{action}"'):]
+    block = block[:block.index("load:")]
+    width = int(_re.search(r"defaultW:\s*(\d+)", block).group(1))
+    height = int(_re.search(r"defaultH:\s*(\d+)", block).group(1))
+    return width, height
+
 def test_escape_closes_the_strip_menu_not_the_window(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """replaces: tests/e2e/test_philo13_18_strip_escape_glass.py::test_escape_closes_the_strip_menu_not_the_window
 
@@ -1760,7 +1772,8 @@ class TestWindowsOpenWell:
                     # below the preferred height, without trapping a row.
                     body = a.locator("#surface-meetings .desk-surface-body")
                     fits = body.evaluate("el => el.scrollHeight <= el.clientHeight + 1")
-                    if meetings[2] != 720 or not 220 <= meetings[3] < 600 or not fits:
+                    declared_w, declared_h = _declared_size("review-meetings")
+                    if meetings[2] != declared_w or not 220 <= meetings[3] < declared_h or not fits:
                         fails["W1 Meetings fits its two records at the declared width"] = {"rect": meetings, "fits": fits}
                 a.screenshot(path=str(W_SHOTS / "1440-two-apps.png"))
 

@@ -44,9 +44,13 @@ WORKING_FACES = (
     "desk/components/AgentFlight.tsx",
     "pages/cores/HistoryCore.tsx",
     "pages/cores/history/MeetingRecord.tsx",
-    "pages/cores/history/MeetingHeader.tsx",
+    # The language (#2070, #2083): the mast's facts and the plate are plate.ts
+    # (MeetingHeader is parked); the ledger is MeetingDetail.tsx; the run's
+    # verbs and route line are SummaryRunVerbs.tsx (was NeedsYouTable.tsx).
+    "pages/cores/history/plate.ts",
+    "pages/cores/history/MeetingDetail.tsx",
     "pages/cores/history/CatalogRail.tsx",
-    "pages/cores/history/NeedsYouTable.tsx",
+    "pages/cores/history/SummaryRunVerbs.tsx",
     "meetings/RouteDisclosure.tsx",
     "meetings/MeetingIntelRecovery.tsx",
     "features/project-room/ProjectRoomCore.tsx",
