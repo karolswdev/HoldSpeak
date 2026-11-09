@@ -2,6 +2,13 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · #2079 Fix forward #2077: the people-from-work answers carry the counts; the desk citation names the ledger test; the done row's verb is Open inspector. Quick check GREEN on e78d78cc6; the hub redeployed there (Automations, Meetings, People, Agents native).
+- 2026-11-08 · #2078 Fix forward #2070/#2072: the meeting body draws after its first reads (the test waits the record's 8 s cap); the fold button keeps its heading's name (fenced).
+- 2026-11-08 · #2077 People: the commitments are one ledger by weight (brass owed to you, steel you owe, coral overdue, moss done; one verb per row; one Add); the roster read carries `done_count`/`overdue_count` so the rail spine has four colours.
+- 2026-11-08 · #2076 The web test suite has one wait budget (3 s): the parallel check's vitest reds were 1 s `findBy` waits under load, not shared state.
+- 2026-11-08 · #2075 Fix forward #2071: the explicit catalogue list follows the declared tables' order.
+- 2026-11-08 · #2074 Fix forward #2070: the arrival summary test reads the Meeting mast and plate.
+- 2026-11-08 · #2073 STATUS one-liners #2063–#2072.
 - 2026-11-08 · #2072 Fix forward #2066/#2070: an authority key in a body answers the contract's 400 on every produced route (one place, `operation_routes`; older than tonight for meeting too); the fold's Show/Hide word sits at the right of its heading on every desk fold (the chrome `::after` overlay since 2026-10-22; empty at 420 px since #1695).
 - 2026-11-08 · #2071 Agents is a native app: a rail by group (Needs you, Running, Ended today, On this Mac), the mast with the provider sprite, the plate (a question with Answer, a report with Open the PR, a stop with Resume), the ledger of activity, Details; nine launch verbs declared on `agent_operations.py` (HTTP only tonight); the old lane window still stands (next subtraction).
 - 2026-11-08 · #2070 Meetings is a native app: rail (spine captured/transcribed/intelligence/decisions), mast, the plate (Resolve, Transcribe, Run intelligence, Retry, Confirm, Review, Send the follow-up), the old body as the ledger (next slice); −330 live lines.
