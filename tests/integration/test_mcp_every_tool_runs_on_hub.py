@@ -89,12 +89,16 @@ KNOWN_CODE = re.compile(
     r"|^repository_required$"  # program.create: the placeholders name no repository or project (400; #1602)
     r"|^program_name_required$"  # program.start / program.get: neither program_id nor name (400; PG15)
     r"|^triage_unavailable$"  # action_item.update / review: the sweep's hub runs no live meeting, has no item x (501)
+    r"|^no_key$"  # phone.test_push: a fresh HOME has no Apple push key; nothing is sent (409)
 )
 KNOWN_MESSAGE = re.compile(
     r"^people_store_unavailable$"  # no People keystore on a fresh HOME
     # With the rig's file key store the People tools run: placeholder ids are
     # refused as not found (the People service names the code in ``error``).
     r"|^people_[a-z_]+_not_found$"
+    # The declared People tools list after people.access.set, which the sweep
+    # calls with its first value (off): the owner's own gate refuses them.
+    r"|^people_mcp_access_disabled$"
     r"|must be qualified as kind:id|^parent_operation_unknown$|not allowlisted for MCP"
     r"|is retired|live capture controller|not found: x$|^Unknown shelf state: x$"
     # workbench.update / automation.update with only the id (Betterment M3:

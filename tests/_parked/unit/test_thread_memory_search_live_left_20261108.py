@@ -1,3 +1,4 @@
+# PARKED 20261108 (late evening, the left-routes pass): from tests/unit/test_thread_memory_search_live.py; it drove POST /api/recipes/{id}/chat, parked. Not collected.
 """Recipe chat searches memory through the live thread turn.
 
 The agent tool turn (``RecipeService.chat`` -> ``AgentTurnService.run_recipe``)

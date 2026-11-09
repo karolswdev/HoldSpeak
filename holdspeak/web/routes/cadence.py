@@ -40,20 +40,9 @@ def build_cadence_router(ctx: WebContext) -> APIRouter:
     def loops(request: Request, all: bool = False) -> dict[str, Any]:
         return service.list_loops(principal(request), include_terminal=all)
 
-    @router.post("/closeout/apply")
-    def closeout_apply(request: Request, body: dict = Body(default={})) -> dict[str, Any]:
-        return service.apply_closeout(principal(request), body)
-
     @router.get("/history")
     def history(request: Request, limit: int = 50) -> dict[str, Any]:
         return service.history(principal(request), limit=limit)
-
-    @router.get("/loops/{loop_id}")
-    async def loop_detail(request: Request, loop_id: str) -> dict[str, Any]:
-        try:
-            return await service.get_loop(principal(request), loop_id)
-        except ServiceError as exc:
-            _raise(exc)
 
     # These existing lifecycle actions remain local-only. They delegate through
     # the same service-owned database rather than reopening a route database seam.
@@ -76,9 +65,5 @@ def build_cadence_router(ctx: WebContext) -> APIRouter:
             return await asyncio.to_thread(service.reply, principal(request), loop_id, body)
         except ServiceError as exc:
             _raise(exc)
-
-    @router.post("/run-now")
-    def run_now(request: Request) -> dict[str, Any]:
-        return service.run_now(principal(request))
 
     return router

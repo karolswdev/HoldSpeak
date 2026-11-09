@@ -1,25 +1,11 @@
 """Phone transport (2026-10-28, design §10); the work is :mod:`holdspeak.phone.service`.
 
-POST   /api/phone/pair                         owner: a 10-minute pairing token and its QR
-POST   /api/phone/devices                      the app: {pair_token, name, platform, push_token?} → its device token
-GET    /api/phone/devices                      owner: the paired phones
-DELETE /api/phone/devices/{id}                 owner: revoke (its socket closes, its token stops at once)
-POST   /api/phone/messages                     owner, agent, device: {text, reply_to?} → the message
-GET    /api/phone/messages?after_seq=          owner, device
-POST   /api/phone/messages/{id}/read           owner, device
-POST   /api/phone/messages/{id}/wait           owner: Let it wait (it leaves Needs you)
-POST   /api/phone/calls                        owner, agent (gated): {reason, context, urgent} → {call_id, state}
-GET    /api/phone/calls                        owner: the calls
-GET    /api/phone/calls/{id}                   owner, device
-POST   /api/phone/calls/{id}/accept|decline|end   device, owner
-POST   /api/phone/calls/{id}/ring              owner: a held call rings (Call now)
-POST   /api/phone/calls/{id}/again             owner: a missed call, again (Call again)
-GET    /api/phone/events?after_seq=            owner, device: the event log
-GET    /api/phone/status                       owner
-GET    /api/phone/push                         owner: where each part of his Apple push key is (never the key)
-PUT    /api/phone/push                         owner: {p8?, key_id?, team_id?, bundle_id?, host?} → the key store
-POST   /api/phone/push/test                    owner: one silent push to the paired phone; Apple's answer
-WS     /api/phone/ws?after_seq=                device (or owner): replay from after_seq, then live
+The owner's verbs (devices, revoke, wait, calls, ring, again, push) are
+produced from ``holdspeak/phone_operations.py``. Written here: pair (it holds
+the address he pressed Pair on), the pairing redeem (it holds the address the
+phone reached; the two must match), the routes a paired phone
+calls (messages, read, decide, a call, accept|decline|end, events, the socket),
+sending a message, placing a call and the status.
 
 The device principal is its JWT (``Authorization: Bearer <device token>``;
 on the socket also ``?device_token=``), and every request reads the device
@@ -36,11 +22,15 @@ from fastapi import APIRouter, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse
 from starlette.concurrency import run_in_threadpool
 
+from ... import operations
 from ...logging_config import get_logger
 from ...phone import devices as devs
-from ...principals import PrincipalKind
+from ...phone_operations import PRODUCED
+from ...principals import UNAUTHENTICATED, PrincipalKind
 from ...services.errors import ServiceError
 from ..context import WebContext
+from ..operation_routes import operation_router
+from ._mount import mount_router
 
 log = get_logger("web.routes.phone")
 
@@ -99,6 +89,8 @@ async def _call(fn: Callable[[], Any], *, status: int = 200) -> JSONResponse:
         return JSONResponse(await run_in_threadpool(fn), status_code=status)
     except ServiceError as exc:
         return _refused(exc)
+    except operations.OperationRefused as exc:
+        return JSONResponse({"error": exc.code, "code": exc.code, "detail": exc.detail}, status_code=400)
     except Exception as exc:
         log.error(f"phone route failed: {exc}", exc_info=True)
         return JSONResponse({"error": "phone_failed", "code": "phone_failed",
@@ -107,28 +99,32 @@ async def _call(fn: Callable[[], Any], *, status: int = 200) -> JSONResponse:
 
 
 def build_phone_router(ctx: WebContext) -> APIRouter:
+    """The owner's verbs are produced from ``holdspeak/phone_operations.py``; a
+    route a paired phone calls authenticates the device here, then invokes its
+    declared operation with the device HELD."""
     router = APIRouter()
+
+    def registry() -> operations.OperationRegistry:
+        return operations.for_context(ctx, phone_service=lambda: operations.LIVE_PHONE_SERVICE)
+
+    def invoke(principal: Any, name: str, args: dict[str, Any], *, status: int = 200, **held: Any) -> Any:
+        return _call(lambda: registry().invoke(principal, name, args, held=held or None), status=status)
 
     @router.post("/api/phone/pair")
     async def api_phone_pair(request: Request) -> Any:
-        principal = _principal(request)
         base = str(request.base_url).rstrip("/")
-        return await _call(lambda: _service().pair_token(principal, hub_urls=[base]), status=201)
+        return await invoke(_principal(request), "phone.pair", {}, status=201, hub_urls=[base])
 
     @router.post("/api/phone/devices")
     async def api_phone_devices_pair(request: Request) -> Any:
-        body = await _body(request)
-        return await _call(lambda: _service().redeem(body), status=201)
+        # The address the phone reached; the pairing token must have been made on it.
+        origin = str(request.base_url).rstrip("/")
+        body = {key: value for key, value in (await _body(request)).items() if key != "origin"}
+        return await invoke(_principal(request) or UNAUTHENTICATED, "phone.redeem", body, status=201, origin=origin)
 
-    @router.get("/api/phone/devices")
-    async def api_phone_devices(request: Request) -> Any:
-        principal = _principal(request)
-        return await _call(lambda: _service().devices(principal))
-
-    @router.delete("/api/phone/devices/{device_id}")
-    async def api_phone_device_revoke(device_id: str, request: Request) -> Any:
-        principal = _principal(request)
-        return await _call(lambda: _service().revoke(principal, device_id))
+    by_name = {op.name: op for op in operations.PHONE_OPERATIONS}
+    mount_router(router, operation_router([by_name[name] for name in PRODUCED], registry, _call,
+                                          module=__name__))
 
     @router.post("/api/phone/messages")
     async def api_phone_message_send(request: Request) -> Any:
@@ -148,16 +144,16 @@ def build_phone_router(ctx: WebContext) -> APIRouter:
         if _owner_or_agent(request) is None and await _device(request) is None:
             return _unauthorized()
         after = int(request.query_params.get("after_seq") or 0)
-        return await _call(lambda: _service().messages(after_seq=after))
+        return await invoke(_principal(request), "phone.messages", {"after_seq": after})
 
     @router.post("/api/phone/messages/{message_id}/read")
     async def api_phone_message_read(message_id: str, request: Request) -> Any:
-        by = "desk"
+        device = None
         if _owner_or_agent(request) is None:
-            if await _device(request) is None:
+            device = await _device(request)
+            if device is None:
                 return _unauthorized()
-            by = "phone"
-        return await _call(lambda: _service().mark_read(message_id, by=by))
+        return await invoke(_principal(request), "phone.mark_read", {"message_id": message_id}, device=device)
 
     @router.post("/api/phone/messages/{message_id}/decide")
     async def api_phone_message_decide(message_id: str, request: Request) -> Any:
@@ -168,12 +164,8 @@ def build_phone_router(ctx: WebContext) -> APIRouter:
             if device is None:
                 return _unauthorized()
         body = await _body(request)
-        return await _call(lambda: _service().decide(message_id, body.get("choice"), device=device))
-
-    @router.post("/api/phone/messages/{message_id}/wait")
-    async def api_phone_message_wait(message_id: str, request: Request) -> Any:
-        principal = _principal(request)
-        return await _call(lambda: _service().let_wait(principal, message_id))
+        return await invoke(principal, "phone.decide", {"message_id": message_id, "choice": body.get("choice")},
+                            device=device)
 
     @router.post("/api/phone/calls")
     async def api_phone_call(request: Request) -> Any:
@@ -188,37 +180,26 @@ def build_phone_router(ctx: WebContext) -> APIRouter:
             urgent=bool(body.get("urgent")), program_step_id=body.get("program_step_id") or None,
         ), status=201)
 
-    @router.get("/api/phone/calls")
-    async def api_phone_calls() -> Any:
-        return await _call(lambda: _service().calls())
-
     @router.get("/api/phone/calls/{call_id}")
     async def api_phone_call_get(call_id: str, request: Request) -> Any:
         if _owner_or_agent(request) is None and await _device(request) is None:
             return _unauthorized()
-        return await _call(lambda: _service().get_call(call_id))
+        return await invoke(_principal(request), "phone.get_call", {"call_id": call_id})
 
-    @router.post("/api/phone/calls/{call_id}/{verb}")
-    async def api_phone_call_verb(call_id: str, verb: str, request: Request) -> Any:
-        principal = _owner_or_agent(request)
-        device = None
-        if principal is None:
-            device = await _device(request)
-            if device is None:
-                return _unauthorized()
-        service = _service()
-        if verb == "accept":
-            return await _call(lambda: service.accept(call_id, device=device))
-        if verb == "decline":
-            return await _call(lambda: service.decline(call_id, device=device))
-        if verb == "end":
-            return await _call(lambda: service.end(call_id, device=device))
-        if verb in ("ring", "again") and device is None:
-            owner = _principal(request)
-            fn = service.ring_held if verb == "ring" else service.call_again
-            return await _call(lambda: fn(owner, call_id))
-        return JSONResponse({"error": "unknown_verb", "code": "unknown_verb",
-                             "detail": "A call takes accept, decline, end, ring or again."}, status_code=404)
+    def answer_verb(verb: str) -> None:
+        async def endpoint(call_id: str, request: Request) -> Any:
+            device = None
+            if _owner_or_agent(request) is None:
+                device = await _device(request)
+                if device is None:
+                    return _unauthorized()
+            return await invoke(_principal(request), f"phone.{verb}", {"call_id": call_id}, device=device)
+
+        endpoint.__name__ = endpoint.__qualname__ = f"api_phone_call_{verb}"
+        router.add_api_route(f"/api/phone/calls/{{call_id}}/{verb}", endpoint, methods=["POST"])
+
+    for verb in ("accept", "decline", "end"):
+        answer_verb(verb)
 
     @router.get("/api/phone/events")
     async def api_phone_events(request: Request) -> Any:
@@ -231,22 +212,6 @@ def build_phone_router(ctx: WebContext) -> APIRouter:
     async def api_phone_status(request: Request) -> Any:
         principal = _principal(request)
         return await _call(lambda: _service().status(principal))
-
-    @router.get("/api/phone/push")
-    async def api_phone_push(request: Request) -> Any:
-        principal = _principal(request)
-        return await _call(lambda: _service().push_key(principal))
-
-    @router.put("/api/phone/push")
-    async def api_phone_push_save(request: Request) -> Any:
-        principal = _principal(request)
-        body = await _body(request)
-        return await _call(lambda: _service().save_push_key(principal, body))
-
-    @router.post("/api/phone/push/test")
-    async def api_phone_push_test(request: Request) -> Any:
-        principal = _principal(request)
-        return await _call(lambda: _service().test_push(principal))
 
     @router.websocket("/api/phone/ws")
     async def api_phone_ws(websocket: WebSocket) -> None:

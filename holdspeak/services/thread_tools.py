@@ -28,7 +28,9 @@ from ..principals import Principal, PrincipalKind
 def _declared_thread_classes() -> dict[str, tuple[str, bool]]:
     from ..operations import DESCRIPTORS
 
-    return {d.tool_name: (d.thread, False) for d in DESCRIPTORS if d.tool_schema is not None and d.thread}
+    # A People result is sensitive at birth (the fence), declared or not.
+    return {d.tool_name: (d.thread, d.tool_name.startswith("people.")) for d in DESCRIPTORS
+            if d.tool_schema is not None and d.thread}
 
 
 _ALL_TOOL_CLASSES: dict[str, tuple[str, bool]] = {
@@ -178,10 +180,6 @@ _ALL_TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     "people.request.accept":       ("effect_proposal",   True),
     "people.commitment.transition":("effect_proposal",   True),
     "people.one_on_one.brief":     ("evidence_read",     True),
-    "people.calendar.link":        ("effect_proposal",   True),
-    "people.calendar.unlink":      ("effect_proposal",   True),
-    "people.owner_alias.link":     ("effect_proposal",   True),
-    "people.owner_alias.unlink":   ("effect_proposal",   True),
     "people.resolve":              ("evidence_read",     True),   # HS-172-04
     "people.suggestions":          ("evidence_read",     True),   # Betterment D6
     # --- plugin_job ---

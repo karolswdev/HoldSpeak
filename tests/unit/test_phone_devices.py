@@ -36,7 +36,7 @@ def phone(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> PhoneService:
 
 def _pair(phone: PhoneService) -> dict:
     token = phone.pair_token(OWNER, hub_urls=["http://127.0.0.1:8765"])["token"]
-    return phone.redeem({"pair_token": token, "name": "Phone", "platform": "test"})
+    return phone.redeem({"pair_token": token, "name": "Phone", "platform": "test"}, origin="http://127.0.0.1:8765")
 
 
 def test_the_device_jwt_is_hs256_signed_and_checked_against_the_row(phone: PhoneService) -> None:
@@ -75,6 +75,23 @@ def test_a_pairing_token_works_once_and_dies_after_ten_minutes(phone: PhoneServi
         phone.redeem({"pair_token": late, "name": "Phone", "platform": "test"})
     with pytest.raises(PhoneRefused):
         phone.pair_token(Principal(PrincipalKind.AGENT, "a"))
+
+
+def test_a_pairing_token_is_redeemed_only_on_the_address_pair_was_pressed_on(phone: PhoneService) -> None:
+    # Codex on #2051: pair on hub A, redeem through hub B -> refused, the token unspent.
+    token = phone.pair_token(OWNER, hub_urls=["http://hub-a.tail:8765"])["token"]
+    body = {"pair_token": token, "name": "Phone", "platform": "test"}
+    with pytest.raises(PhoneRefused) as other:
+        phone.redeem(body, origin="http://hub-b.tail:8765")
+    assert other.value.code == "pairing_origin_mismatch"
+    assert other.value.context["status"] == 403
+    with pytest.raises(PhoneRefused) as none:
+        phone.redeem(body)
+    assert none.value.code == "pairing_origin_mismatch"
+    assert phone.paired() == []
+    # The same address (case and a trailing slash aside) redeems the unspent token.
+    paired = phone.redeem(body, origin="http://HUB-A.tail:8765/")
+    assert phone.authenticate(paired["device_jwt"])["id"] == paired["device_id"]
 
 
 def test_the_hub_secret_is_made_once_and_kept_in_the_key_store(tmp_path: Path, monkeypatch) -> None:

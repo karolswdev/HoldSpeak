@@ -220,17 +220,47 @@ def test_the_contract_refuses_a_non_owner_before_anything_else(tmp_path: Path) -
     assert operations.MEETING_IMPORT.owner_only is True
     # Both secret saves are owner only and HTTP only, with held inputs.
     assert [d.name for d in operations.DESCRIPTORS if d.owner_only] == [
-        "meeting.import",
-        "meeting.transcribe",  # PHILO-17: only the owner transcribes a meeting's kept audio
-        "channel.save_email_key", "channel.save_slack_webhook", "agent_hooks.install", "agent_hooks.remove",
-        "people_access.set",  # Conductor R7: only the owner sets People MCP access
-        "calendar.open_settings",  # PHILO-15 04: only the owner opens the Calendars privacy pane
-        "connection.signin",  # Betterment ST8: only the owner starts native provider sign-in
-        "setup.found", "setup.use", "setup.people.add", "setup.lan.scan",  # Betterment ST3-ST5
-        "project.repository.register",  # PHILO-15 16: only the owner names a Project's repository
-        "agent.hand",  # Conductor K2: only the owner hands an item to an agent
-        "desk.press",  # One display protocol (2026-11-08): only the owner's desk is pressed
-    ]
+        'meeting.import',
+        'meeting.transcribe',
+        'channel.save_email_key',
+        'channel.save_slack_webhook',
+        'agent_hooks.install',
+        'agent_hooks.remove',
+        'people_access.set',
+        'calendar.open_settings',
+        'connection.signin',
+        'setup.found',
+        'setup.use',
+        'setup.people.add',
+        'setup.lan.scan',
+        'project.repository.register',
+        'agent.hand',
+        'desk.press',
+        'phone.devices',
+        'phone.revoke',
+        'phone.let_wait',
+        'phone.calls',
+        'phone.ring',
+        'phone.again',
+        'phone.push_key',
+        'phone.save_push_key',
+        'phone.test_push',
+        'phone.pair',
+        'people.setup',
+        'people.suggestion.add',
+        'people.suggestion.hide',
+        'people.relationship.archive',
+        'people.project.link',
+        'people.project.unlink',
+        'people.agenda.transition',
+        'people.owed.create',
+        'people.commitment.send_to_workbench',
+        'people.commitment.satisfy',
+        'people.calendar.link',
+        'people.calendar.unlink',
+        'people.owner_alias.link',
+        'people.owner_alias.unlink',
+    ]  # the declared tables (meeting, people, phone, desk display) in declaration order; writes are the owner's
     assert "owner_required" in operations.MEETING_IMPORT.export()["refusals"]
 
 

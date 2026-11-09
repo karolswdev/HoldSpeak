@@ -83,15 +83,20 @@ def _projection(db: Any, calendar_url: str | None) -> dict[str, Any]:
     return _door(db, calendar_url).get(Principal(PrincipalKind.OWNER, "owner"))
 
 
+def _schedule(db: Any, schedule_id: str) -> dict[str, Any]:
+    from holdspeak.principals import Principal, PrincipalKind
+    from holdspeak.services.scheduled_recording_service import ScheduledRecordingService
+
+    return ScheduledRecordingService(db).get_schedule(Principal(PrincipalKind.OWNER, "owner"), schedule_id)
+
+
 def _client() -> TestClient:
     from holdspeak.web.context import WebContext
-    from holdspeak.web.routes.calendar_events import build_calendar_events_router
     from holdspeak.web.routes.scheduled_recordings import build_scheduled_recordings_router
 
     app = FastAPI()
     ctx = WebContext(get_state=lambda: {})
     app.include_router(build_scheduled_recordings_router(ctx))
-    app.include_router(build_calendar_events_router(ctx))
     return TestClient(app)
 
 
@@ -281,7 +286,7 @@ def test_cancel_over_the_route_disables_and_receipts(db: Any, ics: str) -> None:
     assert resp.status_code == 200, resp.text
     assert resp.json()["success"] is True
 
-    schedule = client.get("/api/scheduled-recordings/rec-standup").json()["schedule"]
+    schedule = _schedule(db, "rec-standup")
     assert schedule["enabled"] is False, schedule
     assert schedule["state"] == "cancelled", schedule
     assert schedule["last_outcome"] == "owner_cancelled", schedule
@@ -311,34 +316,11 @@ def test_cancel_while_recording_is_refused_by_name(db: Any, ics: str) -> None:
     assert body["code"] == "already_recording", body
     assert body["error"] == "Already recording; stop the meeting instead", body
 
-    schedule = client.get("/api/scheduled-recordings/rec-standup").json()["schedule"]
+    schedule = _schedule(db, "rec-standup")
     assert schedule["state"] == "recording" and schedule["enabled"] is True, schedule
     assert _receipts(db, "scheduled_recording.cancelled.owner") == []
     # The Door the face refetches says RECORDING, so Cancel is withheld.
     assert _calendar_rows(_projection(db, ics))["ev-standup"]["armed"]["state"] == "recording"
-
-
-def test_unlink_over_the_route_drops_the_room_and_keeps_the_arm(db: Any, ics: str) -> None:
-    """replaces: tests/e2e/test_hs175_arrival_glass.py::TestArrivalWeekStrip::test_arrival_unlink_room (hub half)"""
-    _seed_week_strip(db)
-    resp = _client().delete("/api/calendar/events/ev-standup/link")
-    assert resp.status_code == 200, resp.text
-    assert resp.json() == {"unlinked": 1, "event_id": "ev-standup", "durable": True}
-
-    with db._connection() as conn:
-        links = conn.execute(
-            "SELECT COUNT(*) FROM calendar_event_projects WHERE calendar_event_id='ev-standup'"
-        ).fetchone()[0]
-        receipts = conn.execute(
-            "SELECT args_summary FROM pipeline_events "
-            "WHERE service='CalendarEventLink' AND method='unlink'"
-        ).fetchall()
-    assert links == 0
-    assert len(receipts) == 1 and json.loads(receipts[0]["args_summary"])["event_id"] == "ev-standup"
-
-    standup = _calendar_rows(_projection(db, ics))["ev-standup"]
-    assert "project_name" not in standup
-    assert standup["armed"]["recording_id"] == "rec-standup"
 
 
 # ── Capture C7: one home for recording (Coming up) ─────────────────────

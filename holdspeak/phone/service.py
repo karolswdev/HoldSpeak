@@ -110,6 +110,15 @@ def call_wire(row: Mapping[str, Any]) -> dict[str, Any]:
     return {key: value for key, value in out.items() if value is not None or key in ("reason",)}
 
 
+def _origin(url: Optional[str]) -> Optional[str]:
+    """The host and port of a hub address, lower case: the part the device
+    reaches (``http://Hub:8765/`` and ``http://hub:8765`` are one origin)."""
+    from urllib.parse import urlsplit
+
+    netloc = urlsplit(str(url or "").strip()).netloc.lower()
+    return netloc or None
+
+
 def device_wire(row: Mapping[str, Any], provider_state: Optional[str] = None) -> dict[str, Any]:
     """One device on the wire. ``push_state`` (RECIPE PH13) says why a push
     will not go: ``unregistered`` (no push token) first, else the provider's
@@ -285,15 +294,20 @@ class PhoneService:
         token = "pt_" + secrets.token_urlsafe(24)
         now = self._now()
         expires = utc_iso(now + timedelta(seconds=devs.PAIR_SECONDS))
-        self.store.save_device({"id": _new_id("dev"), "name": "", "platform": "", "jwt_kid": devs.token_hash(token),
-                                "state": "pairing", "paired_at": utc_iso(now)})
         urls = [url for url in (hub_urls if hub_urls is not None else self._hub_urls()) if url]
+        # The address he pressed Pair on (the route holds it): the redeem must reach the same one.
+        self.store.save_device({"id": _new_id("dev"), "name": "", "platform": "", "jwt_kid": devs.token_hash(token),
+                                "state": "pairing", "paired_at": utc_iso(now),
+                                "pair_origin": _origin(hub_urls[0]) if hub_urls else None})
         return {"token": token, "qr_payload": devs.qr_payload(token=token, hub_urls=urls,
                                                               expires_at=expires, hub=self.hub()),
                 "qr_png_base64": None, "expires_at": expires}
 
-    def redeem(self, body: Mapping[str, Any]) -> dict[str, Any]:
-        """The app redeems a pairing token once; its device token."""
+    def redeem(self, body: Mapping[str, Any], *, origin: Optional[str] = None) -> dict[str, Any]:
+        """The app redeems a pairing token once; its device token. *origin* is
+        the hub address the redeem reached (the route holds it); a token made on
+        another address is refused with ``pairing_origin_mismatch`` and stays
+        unspent (Codex on #2051)."""
         from pydantic import ValidationError as PydanticError
 
         from .contract import PairRequest
@@ -309,6 +323,10 @@ class PhoneService:
             if row is None or row["state"] != "pairing" or not fresh:
                 raise PhoneRefused("invalid_pairing_token",
                                    "The pairing code is not valid, has expired or was used. Press Pair again.", 401)
+            if row.get("pair_origin") and row["pair_origin"] != _origin(origin):
+                raise PhoneRefused("pairing_origin_mismatch",
+                                   "The pairing code was made on another hub address. Open the address in the QR "
+                                   "code and pair there.", 403)
             kid = "k_" + secrets.token_hex(12)
             now = self._stamp()
             row.update({"name": request.name.strip(), "platform": request.platform, "push_token": request.push_token,

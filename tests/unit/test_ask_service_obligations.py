@@ -521,10 +521,8 @@ def test_cancel_routes_delegate_to_migrated_services(rig, monkeypatch):
     app.include_router(build_primitives_router(WebContext(get_state=lambda: {})))
     client = TestClient(app)
     ask = client.post("/api/ask/unknown-ask/cancel")
-    recipe = client.post("/api/recipes/r1/invocations/unknown-recipe/cancel")
-    assert ask.status_code == recipe.status_code == 200
+    assert ask.status_code == 200
     assert ask.json() == {"invocation_id": "unknown-ask", "disposition": "pending"}
-    assert recipe.json() == {"invocation_id": "unknown-recipe", "disposition": "pending"}
 
 
 def test_ask_v1_golden_field_names_and_schema_version_are_exact(rig, monkeypatch):

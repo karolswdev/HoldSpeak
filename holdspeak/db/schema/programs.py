@@ -259,7 +259,8 @@ CREATE TABLE IF NOT EXISTS program_rounds (
 -- both ways, the calls (ringing, answered, missed, declined, ended) and the
 -- one sequence-numbered event log the phone and the desk replay from
 -- (holdspeak/phone/). A device row in state 'pairing' is a QR not yet
--- scanned (jwt_kid holds the pairing token's hash until it is redeemed).
+-- scanned (jwt_kid holds the pairing token's hash until it is redeemed;
+-- pair_origin the hub address he pressed Pair on, which the redeem must reach).
 CREATE TABLE IF NOT EXISTS phone_devices (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL DEFAULT '',
@@ -271,7 +272,8 @@ CREATE TABLE IF NOT EXISTS phone_devices (
     state TEXT NOT NULL DEFAULT 'pairing',
     paired_at TEXT NOT NULL,
     last_seen_at TEXT,
-    revoked_at TEXT
+    revoked_at TEXT,
+    pair_origin TEXT
 );
 CREATE TABLE IF NOT EXISTS phone_messages (
     id TEXT PRIMARY KEY,

@@ -93,16 +93,6 @@ def build_scheduled_recordings_router(ctx: WebContext) -> APIRouter:
         except Exception as exc:
             return _error_response(exc)
 
-    @router.get("/{schedule_id}")
-    def get_schedule(request: Request, schedule_id: str) -> Any:
-        try:
-            result = _service().get_schedule(_principal(request), schedule_id)
-            return JSONResponse({"success": True, "schedule": result})
-        except (NotFound, ValidationError, ConflictError) as exc:
-            return _error_response(exc)
-        except Exception as exc:
-            return _error_response(exc)
-
     @router.patch("/{schedule_id}")
     def update_schedule(request: Request, schedule_id: str, body: dict = Body(default={})) -> Any:
         try:

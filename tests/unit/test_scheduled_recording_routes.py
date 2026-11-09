@@ -70,24 +70,6 @@ class TestScheduledRecordingRoutes:
         assert len(schedules) == 1
         assert schedules[0]["id"] == schedule_id
 
-    def test_get(self, client: TestClient) -> None:
-        resp = client.post("/api/scheduled-recordings", json={
-            "title": "Weekly",
-            "cron_expr": "0 10 * * 1",
-        })
-        schedule_id = resp.json()["schedule"]["id"]
-
-        resp = client.get(f"/api/scheduled-recordings/{schedule_id}")
-        assert resp.status_code == 200
-        assert resp.json()["schedule"]["title"] == "Weekly"
-
-    def test_get_not_found(self, client: TestClient) -> None:
-        resp = client.get("/api/scheduled-recordings/sr_nonexistent")
-        assert resp.status_code == 404
-        body = resp.json()
-        assert body["success"] is False
-        assert body["code"] == "not_found"
-
     def test_update(self, client: TestClient) -> None:
         resp = client.post("/api/scheduled-recordings", json={
             "title": "Daily",
@@ -126,8 +108,8 @@ class TestScheduledRecordingRoutes:
         assert "receipt_id" in body
 
         # Verify deleted
-        resp = client.get(f"/api/scheduled-recordings/{schedule_id}")
-        assert resp.status_code == 404
+        listed = client.get("/api/scheduled-recordings").json()
+        assert schedule_id not in str(listed)
 
     def test_delete_not_found(self, client: TestClient) -> None:
         resp = client.delete("/api/scheduled-recordings/sr_phantom")

@@ -1019,11 +1019,9 @@ class TestIntentRoutingControlEndpoints:
         assert payload["available_profiles"] == []
         assert payload["supported_intents"] == []
 
-    def test_intent_profile_and_override_require_callbacks(self, test_client):
+    def test_intent_profile_and_preview_require_callbacks(self, test_client):
         profile_response = test_client.put("/api/intents/profile", json={"profile": "architect"})
         assert profile_response.status_code == 501
-        override_response = test_client.put("/api/intents/override", json={"intents": ["architecture"]})
-        assert override_response.status_code == 501
         preview_response = test_client.post("/api/intents/preview", json={"profile": "architect"})
         assert preview_response.status_code == 501
 
@@ -1085,15 +1083,11 @@ class TestIntentRoutingControlEndpoints:
         assert profile_update.status_code == 200
         assert profile_update.json()["controls"]["profile"] == "architect"
 
-        override_update = client.put("/api/intents/override", json={"intents": ["architecture", "delivery"]})
-        assert override_update.status_code == 200
-        assert override_update.json()["controls"]["override_intents"] == ["architecture", "delivery"]
-
         preview = client.post("/api/intents/preview", json={"profile": "architect"})
         assert preview.status_code == 200
         route = preview.json()["route"]
         assert route["profile"] == "architect"
-        assert route["active_intents"] == ["architecture", "delivery"]
+        assert route["active_intents"] == ["architecture"]
         assert "mermaid_architecture" in route["plugin_chain"]
 
 

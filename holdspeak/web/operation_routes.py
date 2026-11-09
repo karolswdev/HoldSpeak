@@ -14,13 +14,16 @@ from typing import Any, Awaitable, Callable, Iterable, Mapping
 
 from fastapi import APIRouter, Request
 
-from holdspeak.principals import Principal, PrincipalKind
+from holdspeak.principals import UNAUTHENTICATED
 
 Answer = Callable[..., Awaitable[Any]]
 
 
 def _principal(request: Request) -> Any:
-    return getattr(request.state, "principal", Principal(PrincipalKind.OWNER, "owner-session"))
+    """The edge's principal; none on the request is UNAUTHENTICATED, never the
+    owner (Codex on #2051): the registry then refuses an owner-only operation
+    with ``owner_required``."""
+    return getattr(request.state, "principal", UNAUTHENTICATED)
 
 
 async def _body(request: Request) -> dict[str, Any]:

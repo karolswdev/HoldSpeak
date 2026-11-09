@@ -42,7 +42,7 @@ payloads or Desk records.
 
 | Provider | Main routes |
 | --- | --- |
-| Calendar | `/api/calendar/sources`, `/api/calendar/events`, link and snapshot routes |
+| Calendar | `/api/calendar/sources` and snapshot routes |
 | GitHub | `/api/providers/github/discover` and repository validation |
 | Jira | Connection, recheck, discover, search, and scope validation routes |
 | Confluence | Connection and validation routes |

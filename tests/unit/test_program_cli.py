@@ -12,13 +12,12 @@ import io
 import json
 from typing import Any
 
-from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from holdspeak.commands.program import build_program_subparsers, run_program_command
 from holdspeak.services import program_service as program_module
 from holdspeak.web.routes.programs import build_programs_router
-from tests.integration.program_rig import FAKE_CHECK, OWNER, Rig
+from tests.integration.program_rig import FAKE_CHECK, OWNER, Rig, owner_app
 
 
 class _Answer:
@@ -57,7 +56,7 @@ def _run(argv: list[str], client: TestClient, seen: list) -> tuple[int, str]:
 def test_create_start_get_and_decide_over_the_hub(tmp_path, monkeypatch) -> None:
     rig = Rig(tmp_path)
     monkeypatch.setattr(program_module, "default_program_service", lambda db=None: rig.service)
-    app = FastAPI()
+    app = owner_app()
     app.include_router(build_programs_router(None))  # type: ignore[arg-type]
     client = TestClient(app)
     seen: list = []

@@ -2,6 +2,11 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · #2054 people_service's verbs are declared operations (`people_operations.py`): 12 web-only verbs gain MCP tools with the People redaction as a call/web_call pair, writes owner-only; the four calendar/alias link verbs lose their hand-written twins; people web-only 18 → 6 (the six are internal reads behind Needs you and the board).
+- 2026-11-08 · #2053 `gen_docs.sh` runs on a fresh tree: makes `docs/generated`, writes the capability docs before the graph reference joins on them.
+- 2026-11-08 · #2052 Twenty-three routes held only by their own tests are parked with them (activity candidates/rules, cadence loop reads, the calendar events router, decision supersede/dispute/reject, delivery terminal, inference defaults, intents override, recipe reads/chat/cancel, schedule read); live routes 816 → 793; −426 live lines.
+- 2026-11-08 · #2051 phone_service's verbs are declared operations (`phone_operations.py`): ten owner tools produced; the device-token routes stay hand-written on the registry; phone web-only 17 → 9; Codex review after the merge: ratified with two conditions (a produced route without a principal must be unauthenticated; redemption must check the pairing origin), fixed forward next.
+- 2026-11-08 · #2050 Fix forward #2046: README counts 330 tools; a refused display request says what stayed and what to do. Quick check GREEN on 3be473f0e; the hub redeployed there; the evening walk posted.
 - 2026-11-08 · #2046 The compositor speaks one display protocol: every desk-window verb and four display requests (mark, press, say, scroll) are declared operations (`desk_operations.py`), routes and MCP tools produced; one `desk_request` frame the compositor executes and answers; the Walk runs its steps on the same executor; the six hand-written desk-window tools parked.
 - 2026-11-08 · #2048 Fix forward: the guardrail test stops its held turn (a leaked live turn failed the cancel observer test on a shared xdist worker).
 - 2026-11-08 · #2047 Fix forward #2040/#2043: the eight meeting reads are evidence kept MCP-only (no palette grows); the Reach revoked-page test reads open pages from the service.

@@ -39,7 +39,7 @@ FIXTURES = REPO / "web" / "src" / "desk" / "__tests__" / "fixtures"
 #: window's one more read (betterment ST0: Engines after the press).
 FACE_READS = (
     "/api/setup/local-ai", "/api/settings", "/api/onboarding/calendar", "/api/onboarding/connections",
-    "/api/onboarding/agents", "/api/concierge/detect", "/api/inference/assignments", "/api/inference/defaults",
+    "/api/onboarding/agents", "/api/concierge/detect", "/api/inference/assignments",
     "/api/door", "/api/memory/meaning-search",
 )
 

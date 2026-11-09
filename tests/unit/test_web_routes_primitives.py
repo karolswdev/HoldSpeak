@@ -134,7 +134,7 @@ def test_agent_crud_flow(client: TestClient) -> None:
     assert upd.json()["recipe"]["system_prompt"] == "You summarize."  # unchanged
 
     assert client.delete(f"/api/recipes/{aid}").json() == {"success": True}
-    assert client.get(f"/api/recipes/{aid}").status_code == 404
+    assert all(r["id"] != aid for r in client.get("/api/recipes").json()["recipes"])
 
 
 def test_agent_create_requires_name(client: TestClient) -> None:

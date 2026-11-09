@@ -1872,7 +1872,7 @@
         "POST /api/providers/jira/connections",
         "GET /api/providers/confluence/connections",
         "POST /api/providers/jira/connections/{ref}/recheck",
-        "GET /api/calendar/events"
+        "GET /api/calendar/sources"
       ],
       "configuration": [
         "site/email metadata",

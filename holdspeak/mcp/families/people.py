@@ -16,10 +16,8 @@ from typing import Any, Mapping
 from holdspeak.people import PeopleOperation, PeoplePolicy, Visibility, production_people_store
 from holdspeak.principals import Principal
 from holdspeak.services.people_service import (
-    OwnerAliasTaken,
     PeopleService,
     PeopleServiceError,
-    SeriesAlreadyLinked,
     UnavailablePeopleStore,
 )
 
@@ -160,52 +158,6 @@ TOOLS: list[dict[str, Any]] = [
         {"relationship_id": {"type": "string", "description": "Opaque relationship identifier."}},
         ["relationship_id"],
     ),
-    _tool(
-        "people.calendar.link",
-        _BOUNDARY
-        + "Link a recurring calendar series to a relationship. The link is encrypted owner-selected evidence. "
-        "Invariant P1: a series already linked to another person refuses with series_already_linked.",
-        {
-            "relationship_id": {"type": "string", "description": "Opaque relationship identifier."},
-            "uid": {"type": "string", "description": "Calendar event UID (series-level)."},
-            "source_id": {"type": "string", "description": "Calendar source identifier."},
-            "label": {"type": "string", "description": "Event title at link time (owner-selected evidence)."},
-        },
-        ["relationship_id", "uid", "source_id"],
-    ),
-    _tool(
-        "people.calendar.unlink",
-        _BOUNDARY
-        + "Remove a calendar series link from a relationship. Idempotent.",
-        {
-            "relationship_id": {"type": "string", "description": "Opaque relationship identifier."},
-            "uid": {"type": "string", "description": "Calendar event UID (series-level)."},
-            "source_id": {"type": "string", "description": "Calendar source identifier."},
-        },
-        ["relationship_id", "uid", "source_id"],
-    ),
-    _tool(
-        "people.owner_alias.link",
-        _BOUNDARY
-        + "Link an owner-string alias to a relationship. The alias maps a free-text owner string "
-        "from action items to this person. Invariant P2: an alias held by another person refuses "
-        "with owner_alias_taken. Reserved strings (Me, Remote, you) are refused.",
-        {
-            "relationship_id": {"type": "string", "description": "Opaque relationship identifier."},
-            "alias": {"type": "string", "description": "The exact owner string to map."},
-        },
-        ["relationship_id", "alias"],
-    ),
-    _tool(
-        "people.owner_alias.unlink",
-        _BOUNDARY
-        + "Remove an owner-string alias from a relationship. Idempotent.",
-        {
-            "relationship_id": {"type": "string", "description": "Opaque relationship identifier."},
-            "alias": {"type": "string", "description": "The owner string alias to remove."},
-        },
-        ["relationship_id", "alias"],
-    ),
     # Betterment D6: the people his work names that People does not hold yet.
     _tool(
         "people.suggestions",
@@ -239,6 +191,7 @@ READ_TOOLS: frozenset[str] = frozenset({
     "people.grounding.get",
     "people.one_on_one.brief",
     "people.suggestions",
+    "people.one_on_one.list",  # declared (people_operations.py): shared intent only over MCP
 })
 
 
@@ -419,33 +372,6 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
         commitment = service.get_commitment(principal, commitment_id)
         _require_shared(commitment)
         return service.transition(principal, f"people:{commitment_id}", str(arguments.get("verb") or ""))
-    if name == "people.calendar.link":
-        return service.link_calendar_series(
-            principal,
-            _required_id(arguments, "relationship_id"),
-            _required_id(arguments, "uid"),
-            _required_id(arguments, "source_id"),
-            str(arguments.get("label") or ""),
-        )
-    if name == "people.calendar.unlink":
-        return service.unlink_calendar_series(
-            principal,
-            _required_id(arguments, "relationship_id"),
-            _required_id(arguments, "uid"),
-            _required_id(arguments, "source_id"),
-        )
-    if name == "people.owner_alias.link":
-        return service.link_owner_alias(
-            principal,
-            _required_id(arguments, "relationship_id"),
-            str(arguments.get("alias") or ""),
-        )
-    if name == "people.owner_alias.unlink":
-        return service.unlink_owner_alias(
-            principal,
-            _required_id(arguments, "relationship_id"),
-            str(arguments.get("alias") or ""),
-        )
     if name == "people.resolve":
         identity = str(arguments.get("identity") or "").strip()
         if not identity:

@@ -77,7 +77,7 @@ export function DeskRequests() {
       const requestId = data.request_id;
       const args = data.args && typeof data.args === "object" ? (data.args as Record<string, unknown>) : {};
       void executeDeskRequest({ op: data.op, args }, stage)
-        .catch((cause) => ({ done: false, reason: cause instanceof Error ? cause.message : "The desk could not do it" }))
+        .catch((cause) => ({ done: false, reason: cause instanceof Error ? cause.message : "The desk did not do this request. The desk stays as it is. Send it again." }))
         .then((result) => postDeskResult(requestId, result))
         .catch(() => undefined);
     });
