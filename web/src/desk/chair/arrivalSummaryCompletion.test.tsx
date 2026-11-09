@@ -173,10 +173,12 @@ describe("PHILO-3-02 Arrival summary completion", () => {
     expect(within(recovery).getByTestId("recovery-state").textContent).toMatch(/^[A-Z][a-z]/);
     expect(recovery.textContent ?? "").not.toMatch(/KEPT|NOT DONE/);
     expect(within(recovery).getByTestId("recovery-attempts")).not.toHaveTextContent("THIS DEVICE");
-    // Window grammar: the recovery's verbs sit in the meeting window's toolbar.
-    const toolbar = screen.getByRole("toolbar", { name: "Meeting" });
-    expect(await within(toolbar).findByRole("button", { name: "Retry" })).toBeEnabled();
-    expect(within(toolbar).getByRole("button", { name: "Skip" })).toBeEnabled();
+    // The language (2026-11-08): the recovery's verbs are the plate's, under
+    // the Meeting mast (the one thing now for a failed run).
+    expect(screen.getByTestId("meeting-mast")).toBeTruthy();
+    const plate = screen.getByTestId("meeting-plate");
+    expect(await within(plate).findByRole("button", { name: "Retry" })).toBeEnabled();
+    expect(within(plate).getByRole("button", { name: "Skip" })).toBeEnabled();
   });
 
   it("the actual Meeting record keeps the user's transcript open while a producer refresh is pending", async () => {
