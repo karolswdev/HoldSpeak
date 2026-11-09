@@ -2,6 +2,8 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · #2081 Handover: the native wave; the hub on e78d78cc6; STATUS #2073–#2079.
+- 2026-11-08 · #2080 The check reinstalls `web/node_modules` only when the lock file changed (memo step `npm`); a green `--retry` records a step only at the retried head with unchanged inputs; the gallery case gets its own 20 s budget. Found: `hatch_build.py` runs `npm ci` on `uv sync`, so a `uv sync` in the main checkout reinstalls the shared install under every lane's symlink (`HOLDSPEAK_SKIP_WEB_BUILD=1` skips it).
 - 2026-11-08 · #2079 Fix forward #2077: the people-from-work answers carry the counts; the desk citation names the ledger test; the done row's verb is Open inspector. Quick check GREEN on e78d78cc6; the hub redeployed there (Automations, Meetings, People, Agents native).
 - 2026-11-08 · #2078 Fix forward #2070/#2072: the meeting body draws after its first reads (the test waits the record's 8 s cap); the fold button keeps its heading's name (fenced).
 - 2026-11-08 · #2077 People: the commitments are one ledger by weight (brass owed to you, steel you owe, coral overdue, moss done; one verb per row; one Add); the roster read carries `done_count`/`overdue_count` so the rail spine has four colours.
