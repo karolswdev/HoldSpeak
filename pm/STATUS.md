@@ -2,6 +2,14 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · #2046 The compositor speaks one display protocol: every desk-window verb and four display requests (mark, press, say, scroll) are declared operations (`desk_operations.py`), routes and MCP tools produced; one `desk_request` frame the compositor executes and answers; the Walk runs its steps on the same executor; the six hand-written desk-window tools parked.
+- 2026-11-08 · #2048 Fix forward: the guardrail test stops its held turn (a leaked live turn failed the cancel observer test on a shared xdist worker).
+- 2026-11-08 · #2047 Fix forward #2040/#2043: the eight meeting reads are evidence kept MCP-only (no palette grows); the Reach revoked-page test reads open pages from the service.
+- 2026-11-08 · #2045 Fix forward #2040: the voice citation follows the declared operation; the generator names its first validation error; the meeting reads leave the thread palettes; README counts 319 tools.
+- 2026-11-08 · #2044 Ask answers run through the engine door (`ask.answer`): the Answers chain, one retry on the next engine, a failure is a Needs-you row with Retry; Ask's own engine pick, retry and receipt shaping removed.
+- 2026-11-08 · #2043 Fifteen unreached routes parked (authority evaluate/grants, reach packages list, delivery node disconnect, dictation deletes, rails remote events, profiles stubs, thread compact, agent capabilities); the Confluence discover route restored for its web caller; `docs/internal/measure/2026-11-08-unreached-routes.md` marks every line parked, kept or left.
+- 2026-11-08 · #2042 Fix forward #2037/#2039: the architecture metadata points at the sidecar template, so the graph reference generates its inputs again; atlas citations follow the parks.
+- 2026-11-08 · #2041 STATUS one-liners #2036–#2040; the evening walk script.
 - 2026-11-08 · #2040 One declared MCP family (`mcp/families/declared.py`) makes a tool from every descriptor with a schema; meeting_service's 17 web-only verbs are declared operations (`meeting_operations.py`), their routes produced; meeting web-only 17 → 0.
 - 2026-11-08 · #2039 The Automations queue view (`WorkbenchWindow`, 2,062 lines) and its RAW door are parked with the seven verbs only it called; −7,092 live lines; workbench web-only 20 → 13.
 - 2026-11-08 · #2038 The API census follows the web's URL builders and skips parked code (unreached routes 222 → 163, listed in `docs/internal/measure/2026-11-08-unreached-routes.md`); `docs/MCP_SIDECAR.md` is generated on demand; one defect found: the web still calls the parked Confluence discover route.
