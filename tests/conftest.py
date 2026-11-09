@@ -723,46 +723,20 @@ def missing_mlx_whisper_reason() -> str:
 
 
 def missing_local_dictation_route_reason() -> str:
-    """Why default configuration names no on-device dictation artifact.
+    """Why this machine cannot give the engine door a local speech engine.
 
-    `_local_dictation_engine` resolves `auto` to MLX on Apple silicon with
-    `mlx_lm` importable, and to llama.cpp everywhere else. Neither engine's
-    package is a core dependency: `mlx-whisper` is `sys_platform == 'darwin'
-    and platform_machine == 'arm64'` and `llama-cpp-python` lives in the
-    `meeting` extra (pyproject.toml). The Unit job installs `--extra test`
-    only, so on that runner the resolved engine has no package behind it, the
-    speech route cannot be frozen, and admission refuses `no_assignment`.
-
-    That is the environment, not a product defect, so the tests that assert on
-    a resolved speech route declare the dependency and skip with this reason.
+    The startup migration assigns ``speech.transcribe`` to the built-in
+    Whisper profile of the backend ``auto`` resolves to (MLX on Apple silicon,
+    faster-whisper elsewhere). Neither package is a core dependency, so on a
+    runner with neither the chain has no engine and a capture refuses
+    ``no_engine``. That is the environment, not a product defect.
     """
     try:
-        import importlib.util
+        from holdspeak.transcribe import _resolve_backend
 
-        from holdspeak.config import Config
-        from holdspeak.speech_session.plan import (
-            _local_dictation_engine,
-            _pipeline_terms,
-            dictation_local_deployment_identity,
-        )
-
-        terms = _pipeline_terms(Config())
-        engine = _local_dictation_engine(
-            str(terms.get("runtime_backend", "") or ""),
-            mlx_model=str(terms.get("runtime_mlx_model", "") or ""),
-        )
-    except Exception as exc:  # pragma: no cover - import-time environment fault
-        return f"dictation route could not be probed: {exc}"
-    if not engine:
-        return "default configuration names no on-device dictation engine"
-    if dictation_local_deployment_identity(terms) is None:
-        return f"default configuration names no {engine} dictation artifact"
-    package = {"mlx": "mlx_lm", "llama_cpp": "llama_cpp"}.get(engine, "")
-    if package and importlib.util.find_spec(package) is None:
-        return (
-            f"this machine resolves the {engine} dictation engine but "
-            f"{package!r} is not installed (it is an optional extra)"
-        )
+        _resolve_backend("auto")
+    except Exception as exc:  # pragma: no cover - environment-dependent
+        return f"this machine has no local Whisper backend: {type(exc).__name__}: {exc}"
     return ""
 
 

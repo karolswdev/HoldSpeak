@@ -40,9 +40,7 @@ from holdspeak.speech_session import (
     hold_gesture_principal,
     preload_service_admission,
     wake_config_revision,
-    whisper_deployment_identity,
 )
-from holdspeak.speech_session.child import invocation_id
 from holdspeak.speech_session.plan import (
     TRANSCRIPTION_CONTEXT_REQUIRED,
 )
@@ -165,17 +163,9 @@ def _build_host(
     monkeypatch.setattr("holdspeak.config.Config.load", lambda: config)
     monkeypatch.setattr("holdspeak.db.get_database", lambda: db)
     broker = _configure(db)
-    # These inherited HS-131 proofs reconstruct v1 parents.  Phase-D tests use
-    # the production migration API to activate BOTH coupled markers; no test
-    # writes a marker directly.
-    if legacy is True:
-        with db._connection() as conn:
-            conn.execute(
-                "DELETE FROM inference_assignment_migrations "
-                "WHERE family='speech-recognition-route-assignments'"
-            )
-            conn.commit()
-    elif legacy is False:
+    # ``legacy=False`` also assigns the dictation provider stages (the door
+    # reads the assignment chain), through the production migration API.
+    if legacy is False:
         from tests.unit.test_phase143_inference_assignments import _profile, _result_claim
 
         provider_capabilities = (
@@ -347,9 +337,11 @@ def _receipt(db: Database, operation_id: str) -> dict[str, Any] | None:
 
 
 def _whisper_revision(db: Database, config: Config) -> str:
-    from holdspeak.deployment_revisions import DeploymentRevision
+    """The revision the door's ``speech.transcribe`` chain names."""
+    from holdspeak.kernel.runtime import _configure
+    from holdspeak.speech_session.transcription import speech_engine
 
-    return DeploymentRevision.from_identity(whisper_deployment_identity(config.model)).id
+    return speech_engine(_configure(db)).deployment_revision_id
 
 
 # ------------------------------------------------------------- desktop hold
@@ -543,38 +535,17 @@ def test_phase_d_default_cold_wake_runs_its_complete_routed_bundle(
     assert transcriber.loaded is True
     assert len(physical_loads) == 1
     with db._connection() as conn:
-        members = list(conn.execute(
-            "SELECT capability_id FROM inference_parent_route_bundle_members "
-            "WHERE bundle_id=(SELECT id FROM inference_parent_route_bundles "
-            "WHERE parent_operation_id=?) ORDER BY ordinal",
-            (parent["operation_id"],),
-        ))
-        executions = list(conn.execute(
-            """SELECT p.capability_id,e.terminal_outcome
-                 FROM inference_route_executions e
-                 JOIN inference_route_plans p ON p.id=e.route_plan_id
-                 JOIN inference_route_attempts a ON a.execution_id=e.id
-                 JOIN kernel_operations o ON o.operation_id=a.child_operation_id
-                 WHERE o.parent_operation_id=? ORDER BY e.rowid""",
-            (parent["operation_id"],),
-        ))
         preload_assignments = conn.execute(
             "SELECT COUNT(*) FROM inference_assignment_heads WHERE assignment_key=?",
             ("capability:speech.preload",),
         ).fetchone()[0]
-    assert [row["capability_id"] for row in members] == [
-        "speech.transcribe", "speech.intent_classify", "speech.preload"
-    ]
-    assert [tuple(row) for row in executions] == [
-        ("speech.preload", "succeeded"), ("speech.transcribe", "succeeded")
-    ]
     assert preload_assignments == 0
     assert not [row for row in _parents(db) if row["principal_kind"] == "owner"]
     every = _operations(db, name="inference.invoke")
-    # The intent classify is a job through the engine door, a child of this
-    # same session; the speech children are the route bundle's.
+    # The intent classify, the warm and the transcription are door jobs,
+    # children of this same session.
     assert {row["parent_operation_id"] for row in every} == {parent["operation_id"]}
-    children = [row for row in every if not str(row["native_id"]).startswith("door_")]
+    children = [row for row in every if str(row["native_id"]).startswith("speech_")]
     assert len(children) == 2
     assert all((_receipt(db, row["operation_id"]) or {})["outcome"] == "succeeded" for row in children)
 
@@ -616,7 +587,7 @@ def test_phase_d_faster_whisper_constructs_after_frozen_local_route_then_transcr
     session = admit_one_shot_session(
         principal=hold_gesture_principal(), config_snapshot=host.config
     )
-    frozen = session.frozen_transcriber_arguments()
+    frozen = session.transcriber_arguments()
     assert {key: frozen[key] for key in ("model_name", "backend", "language")} == {
         "model_name": "base", "backend": "faster-whisper", "language": "auto"
     }
@@ -650,14 +621,7 @@ def test_phase_d_faster_whisper_constructs_after_frozen_local_route_then_transcr
     assert len(children) == 1
     assert children[0]["parent_operation_id"] == session.operation_id
     assert (_receipt(db, children[0]["operation_id"]) or {})["outcome"] == "succeeded"
-    with db._connection() as conn:
-        boundary = conn.execute(
-            """SELECT a.boundary FROM inference_route_attempts a
-                 JOIN kernel_operations o ON o.operation_id=a.child_operation_id
-                 WHERE o.operation_id=?""",
-            (children[0]["operation_id"],),
-        ).fetchone()[0]
-    assert boundary == "local"
+    assert session.provider().egress_boundary == "local"
     session.close("succeeded")
 
 
@@ -682,17 +646,12 @@ def test_phase_d_faster_whisper_deferred_warm_settles_before_first_speak_to_fill
     class WhisperModel:
         def __init__(self, model_name: str, *, device: str, compute_type: str) -> None:
             parents = _parents(db, "dictation.session")
-            with db._connection() as conn:
-                bundled = conn.execute(
-                    "SELECT count(*) FROM inference_parent_route_bundle_members"
-                ).fetchone()[0]
             constructed.append(
                 {
                     "model_name": model_name,
                     "device": device,
                     "compute_type": compute_type,
                     "parents_before_construction": len(parents),
-                    "bundle_members_before_construction": bundled,
                 }
             )
 
@@ -721,7 +680,6 @@ def test_phase_d_faster_whisper_deferred_warm_settles_before_first_speak_to_fill
     assert _parents(db) == []
     assert _operations(db, name="inference.invoke") == []
     with db._connection() as conn:
-        assert conn.execute("SELECT count(*) FROM inference_route_executions").fetchone()[0] == 0
         assert conn.execute("SELECT count(*) FROM kernel_receipts").fetchone()[0] == 0
 
     # The ordinary browser speak-to-fill admits the parent and complete frozen
@@ -734,23 +692,12 @@ def test_phase_d_faster_whisper_deferred_warm_settles_before_first_speak_to_fill
             "device": "cpu",
             "compute_type": "int8",
             "parents_before_construction": 1,
-            "bundle_members_before_construction": 3,
         }
     ]
     assert audio_calls == [8000]
     children = _operations(db, name="inference.invoke")
     assert len(children) == 1
-    with db._connection() as conn:
-        execution = conn.execute(
-            """SELECT p.capability_id,e.terminal_outcome,a.boundary
-                 FROM inference_route_executions e
-                 JOIN inference_route_plans p ON p.id=e.route_plan_id
-                 JOIN inference_route_attempts a ON a.execution_id=e.id
-                 JOIN kernel_operations o ON o.operation_id=a.child_operation_id
-                 WHERE o.operation_id=?""",
-            (children[0]["operation_id"],),
-        ).fetchone()
-    assert tuple(execution) == ("speech.transcribe", "succeeded", "local")
+    assert str(children[0]["native_id"]).startswith("speech_")
     assert (_receipt(db, children[0]["operation_id"]) or {})["outcome"] == "succeeded"
 
 
@@ -864,7 +811,7 @@ def test_transcribe_runs_one_child_naming_the_frozen_revision(tmp_path, monkeypa
     assert children[0]["target_ref"] == f"deployment-revision:{revision}"
     assert children[0]["parent_operation_id"] == session.operation_id
     assert (_receipt(db, children[0]["operation_id"]) or {})["outcome"] == "succeeded"
-    assert session.plan.primary(CAPABILITY_WHISPER_TRANSCRIBE) == revision
+    assert session.plan.job(CAPABILITY_WHISPER_TRANSCRIBE) == "speech.transcribe"
 
 
 def test_empty_audio_creates_no_child(tmp_path, monkeypatch):
@@ -968,18 +915,6 @@ def test_phase_d_day_one_standalone_speak_to_fill_uses_the_migrated_route(
     parent = _parents(db, "dictation.session")[0]
     assert parent["state"] == "SUCCEEDED"
     with db._connection() as conn:
-        members = list(conn.execute(
-            "SELECT capability_id FROM inference_parent_route_bundle_members "
-            "WHERE bundle_id=(SELECT id FROM inference_parent_route_bundles "
-            "WHERE parent_operation_id=?) ORDER BY ordinal",
-            (parent["operation_id"],),
-        ))
-        outcomes = list(conn.execute(
-            """SELECT p.capability_id,e.terminal_outcome
-                 FROM inference_route_executions e
-                 JOIN inference_route_plans p ON p.id=e.route_plan_id
-                ORDER BY e.rowid"""
-        ))
         readiness = conn.execute(
             """SELECT o.state,o.reason_code
                  FROM model_profile_binding_heads h
@@ -989,126 +924,14 @@ def test_phase_d_day_one_standalone_speak_to_fill_uses_the_migrated_route(
                    ON o.observation_id=b.readiness_observation_id
                 WHERE b.profile_id LIKE 'speech-migrated-%'"""
         ).fetchone()
-    assert [row["capability_id"] for row in members] == [
-        "speech.transcribe", "speech.intent_classify", "speech.preload"
-    ]
-    assert [tuple(row) for row in outcomes] == [
-        ("speech.preload", "succeeded"), ("speech.transcribe", "succeeded")
-    ]
+    # The warm, then the transcription: two speech jobs, children of the parent.
+    speech = [row for row in _operations(db, name="inference.invoke")
+              if str(row["native_id"]).startswith("speech_")]
+    assert len(speech) == 2
+    assert {row["parent_operation_id"] for row in speech} == {parent["operation_id"]}
+    assert all((_receipt(db, row["operation_id"]) or {})["outcome"] == "succeeded" for row in speech)
     assert tuple(readiness) == ("ready", "loaded_under_speech_preload")
 
-
-@pytest.mark.requires_local_dictation_route
-def test_phase_d_couples_speech_and_writing_markers_for_one_complete_pipeline(
-    tmp_path, monkeypatch
-):
-    """R4: partial migration stays v1; both markers produce one all-routed parent."""
-    from holdspeak.services.inference_assignment_service import InferenceAssignmentService
-    from holdspeak.speech_session import admit_one_shot_session
-    from holdspeak.speech_session.plan import pipeline_provider_capabilities
-
-    def configured_rewrite(session: Any) -> str:
-        runtime = _PipelineBackend()
-        # The test backend is the physical provider boundary. Legacy resolution
-        # freezes the configured 127.0.0.1 profile; the migrated assignment
-        # freezes the production on-device profile created by ``_build_host``.
-        if session._route_bundle is None:
-            runtime.base_url = "http://127.0.0.1:1234/v1"
-            runtime.model = "qwen-local"
-        else:
-            runtime.backend = "local"
-            runtime.model = ""
-        return session.provider().rewrite(runtime, "rewrite this", max_tokens=32, temperature=0.0)
-
-    # Startup's real speech migration with no writing marker remains wholly
-    # legacy. ``legacy=None`` retains that production startup state unchanged.
-    db, _broker, host, _unused = _build_host(tmp_path, monkeypatch, legacy=None)
-    db.profiles.upsert(
-        profile_id="phase-d-legacy-pipeline",
-        name="Phase D legacy pipeline",
-        kind="openAICompatible",
-        base_url="http://127.0.0.1:1234/v1",
-        model="qwen-local",
-    )
-    host.config.dictation.pipeline.enabled = True
-    host.config.dictation.pipeline.stages = ["project-rewriter"]
-    host.config.dictation.runtime.profile_id = "phase-d-legacy-pipeline"
-    assert InferenceAssignmentService(db).migration_marker(
-        hold_gesture_principal(), family="thoughts-writing-route-assignments"
-    ) is None
-    assert pipeline_provider_capabilities(host.config) == ("rewrite",)
-    legacy = admit_one_shot_session(
-        principal=hold_gesture_principal(), config_snapshot=host.config
-    )
-    assert legacy._route_bundle is None
-    assert legacy.plan.has("rewrite"), legacy.plan.summary()
-    assert _transcriber(FakeImpl()).transcribe(
-        np.full(8000, AUDIO_SENTINEL, dtype=np.float32), admission=legacy.transcription()
-    ) == TEXT_SENTINEL
-    assert configured_rewrite(legacy) == "REWRITTEN"
-    legacy_children = _operations(db, name="inference.invoke")
-    assert len(legacy_children) == 2
-    assert {row["parent_operation_id"] for row in legacy_children} == {legacy.operation_id}
-    legacy.close("succeeded")
-
-    # The same normal pipeline after both production migrations freezes all of
-    # its configured routes in one parent bundle and never emits a plain child.
-    # The retained v1 resolver is forbidden here: if it ran, this production
-    # object probe would fail before a bundle could be admitted.
-    from holdspeak.speech_session.plan import DictationSessionPlanResolver
-
-    def legacy_resolver_called(*_args: Any, **_kwargs: Any) -> Any:
-        raise AssertionError("fully routed speech invoked the legacy resolver")
-
-    monkeypatch.setattr(DictationSessionPlanResolver, "resolve", legacy_resolver_called)
-    routed_tmp = tmp_path / "routed"
-    routed_tmp.mkdir()
-    db, _broker, host, _unused = _build_host(routed_tmp, monkeypatch, legacy=False)
-    host.config.dictation.pipeline.enabled = True
-    host.config.dictation.pipeline.stages = ["project-rewriter"]
-    routed = admit_one_shot_session(
-        principal=hold_gesture_principal(), config_snapshot=host.config
-    )
-    assert routed._route_bundle is not None
-    # This carrier remains only for entry validation/history.  It contains no
-    # legacy deployment choice; every executable member is the atomic bundle.
-    assert routed.plan.capabilities == {}
-    assert "punctuate" not in routed.plan.capabilities
-    assert _transcriber(FakeImpl()).transcribe(
-        np.full(8000, AUDIO_SENTINEL, dtype=np.float32), admission=routed.transcription()
-    ) == TEXT_SENTINEL
-
-    class RoutedEngine:
-        active_provider = "fixture"
-        active_model = "phase-d-coupled-profile"
-
-        @staticmethod
-        def run_prompt(**_kwargs: Any) -> str:
-            return "REWRITTEN"
-
-    # Only the physical configured-model edge is bounded. The production route
-    # admission, controller, bundle, attempt, and receipt still execute intact.
-    _broker.inference_runner._engine_factory = lambda _revision, **_kwargs: RoutedEngine()
-    assert configured_rewrite(routed) == "REWRITTEN"
-    members = [item["capability_id"] for item in routed._route_bundle["members"]]
-    assert members == ["speech.transcribe", "speech.rewrite", "speech.preload"]
-    routed_children = _operations(db, name="inference.invoke")
-    assert len(routed_children) == 2
-    # The rewrite is one job through the engine door; the speech child is the
-    # route bundle's.
-    door = [row for row in routed_children if str(row["native_id"]).startswith("door_" + "speech.rewrite".encode().hex())]
-    assert len(door) == 1
-    with db._connection() as conn:
-        routed_child_ids = {row["operation_id"] for row in routed_children} - {door[0]["operation_id"]}
-        route_child_ids = {
-            row["child_operation_id"]
-            for row in conn.execute(
-                "SELECT child_operation_id FROM inference_route_attempts "
-                "WHERE child_operation_id IS NOT NULL"
-            )
-        }
-    assert routed_child_ids == route_child_ids
-    routed.close("succeeded")
 
 
 def _child_created_at(db: Database, native_id: str) -> float:
@@ -1134,21 +957,14 @@ def test_explicit_get_model_is_one_preload_sibling_before_the_transcribe_child(
 
     assert impl.dispatches == ["model-holder"]  # no fallback dispatch happened
     children = _operations(db, name="inference.invoke")
-    assert len(children) == 2
+    assert len(children) == 2  # the one warm job, then the transcription
     assert {row["parent_operation_id"] for row in children} == {session.operation_id}
-    preload = invocation_id(
-        session.plan.session_id,
-        CAPABILITY_WHISPER_PRELOAD,
-        ("model-holder", "mlx-community/whisper-base-mlx"),
-        1,
-    )
-    assert _child_created_at(db, preload) <= children[-1]["created_at"]
-    assert children[0]["native_id"] == preload
+    assert _child_created_at(db, children[0]["native_id"]) <= children[-1]["created_at"]
     for row in children:
         assert (_receipt(db, row["operation_id"]) or {})["outcome"] == "succeeded"
 
 
-def test_failed_get_model_then_silent_fallback_are_two_preload_children(tmp_path, monkeypatch):
+def test_failed_get_model_then_silent_fallback_walk_inside_one_warm_job(tmp_path, monkeypatch):
     db, _broker, _host, _impl = _build_host(tmp_path, monkeypatch)
     session = admit_hold_session(config_snapshot=Config())
     impl = _Mlx(holder_ok=False)
@@ -1160,9 +976,9 @@ def test_failed_get_model_then_silent_fallback_are_two_preload_children(tmp_path
 
     assert impl.dispatches == ["model-holder", "silent-audio"]
     children = _operations(db, name="inference.invoke")
-    assert len(children) == 3  # two preload siblings, then the transcription
+    assert len(children) == 2  # one warm job (it walked both stages), then the transcription
     outcomes = [(_receipt(db, row["operation_id"]) or {})["outcome"] for row in children]
-    assert outcomes == ["failed", "succeeded", "succeeded"]
+    assert outcomes == ["succeeded", "succeeded"]
 
 
 def test_every_preload_candidate_failing_refuses_without_transcribing(tmp_path, monkeypatch):
@@ -1177,11 +993,8 @@ def test_every_preload_candidate_failing_refuses_without_transcribing(tmp_path, 
 
     assert impl.transcribes == 0
     children = _operations(db, name="inference.invoke")
-    assert len(children) == 2
-    assert [(_receipt(db, row["operation_id"]) or {})["outcome"] for row in children] == [
-        "failed",
-        "failed",
-    ]
+    assert len(children) == 1  # the one warm job failed; no transcription child
+    assert [(_receipt(db, row["operation_id"]) or {})["outcome"] for row in children] == ["failed"]
 
 
 @pytest.mark.requires_local_dictation_route
@@ -1193,8 +1006,10 @@ def test_pre_session_warm_uses_the_assigned_speech_route_not_the_legacy_knob(tmp
     admission = preload_service_admission(config_snapshot=config)
 
     assert admission.principal.authority_basis == "local-model-preload:assigned-speech-route"
-    assert admission.source_route["source"]["inherited_from"] == "capability"
-    assert admission.preload_route["capability"]["id"] == "speech.preload"
+    # The warm's engine is the first engine of the door's speech.transcribe chain.
+    from holdspeak.services import engine_door
+
+    assert admission.speech().engine.revision == engine_door.engine_for(_broker, "speech.transcribe").revision
     assert _operations(db, name="inference.invoke") == []
     assert _parents(db) == []
 
@@ -1388,31 +1203,6 @@ def test_meeting_interval_without_a_live_parent_drops_before_whisper(tmp_path, m
 # ------------------------------------------------------- plan resolution (OQ4)
 
 
-def test_the_plan_freezes_ordered_per_capability_revisions(tmp_path, monkeypatch):
-    db, _broker, _host, _impl = _build_host(tmp_path, monkeypatch)
-    config = Config()
-    # Pipeline explicitly OFF (HS-139-02 flipped the default to True): no
-    # provider-backed stage is planned, so a stage dispatch would refuse by
-    # name instead of silently reaching a model.
-    config.dictation.pipeline.enabled = False
-    plain = admit_hold_session(config_snapshot=config).plan
-    assert set(plain.capabilities) == {CAPABILITY_WHISPER_TRANSCRIBE, CAPABILITY_WHISPER_PRELOAD}
-
-    config.dictation.pipeline.enabled = True
-    config.dictation.pipeline.stages = ["intent-router", "project-rewriter"]
-    staged = admit_hold_session(config_snapshot=config).plan
-    assert {"intent-classify", "rewrite"} <= set(staged.capabilities)
-    # punctuate is NOT planned: today's punctuation pass is lexical, not a model.
-    assert "punctuate" not in staged.capabilities
-    for name, revisions in staged.capabilities.items():
-        assert revisions and all(str(item).startswith("dep_") for item in revisions)
-    # Whisper is its own deployment, never the dictation-LLM leg.
-    assert staged.primary(CAPABILITY_WHISPER_TRANSCRIBE) == _whisper_revision(db, config)
-    assert staged.primary("intent-classify") != staged.primary(CAPABILITY_WHISPER_TRANSCRIBE)
-    # The plan summary the parent carries is content-free.
-    assert "insertion_context_sha256" in staged.summary()
-    assert staged.config_revision != plain.config_revision
-
 
 def test_paired_device_capture_admits_its_own_narrow_session(tmp_path, monkeypatch):
     """A remote device press is admitted — but never as a synthesized OWNER."""
@@ -1424,9 +1214,7 @@ def test_paired_device_capture_admits_its_own_narrow_session(tmp_path, monkeypat
     row = _parents(db, "dictation.session")[0]
     assert (row["principal_kind"], row["principal_identity"]) == ("service", "device-capture")
     assert str(row["authority_basis"]) == "paired-device:aipi-1"
-    # Paired capture intentionally remains outside owner/wake route adoption:
-    # it keeps the complete legacy transcription path even with both markers.
-    assert session._route_bundle is None
+    # Paired capture runs on the same door chain as every other capture.
     assert _transcriber(FakeImpl()).transcribe(
         np.full(8000, AUDIO_SENTINEL, dtype=np.float32), admission=session.transcription()
     ) == TEXT_SENTINEL
@@ -1725,30 +1513,57 @@ class _PipelineBackend:
         return "REWRITTEN"
 
 
-def _endpoint_profile(db: Database, config: Config) -> None:
-    """Point the dictation LLM at a real profile, and freeze THAT revision.
+class _DoorEngine:
+    """The engine the runner builds for the revision the door picked: the
+    provider stage's model call lands here."""
 
-    The dispatch seam binds a non-mesh child to its frozen revision, so a fake
-    backend must advertise the endpoint the plan froze — the same rule production
-    lives under.
-    """
+    def __init__(self) -> None:
+        self.rewrites: list[str] = []
+
+    def run_prompt(self, *, system_prompt: str = "", user_prompt: str, **_kwargs: Any) -> str:
+        self.rewrites.append(str(user_prompt))
+        return "REWRITTEN"
+
+
+_DOOR_ENGINE = _DoorEngine()
+
+
+def _endpoint_profile(db: Database, config: Config) -> None:
+    """Point the dictation stages at a real profile through the door's chain,
+    and make the runner build the recording engine for it."""
+    global _DOOR_ENGINE
+    from tests.unit._speech_door import assign_profile
+
     db.profiles.upsert(
         profile_id="prof_browser", name="prof_browser", kind="openAICompatible",
         base_url="http://127.0.0.1:1234/v1", model="qwen-local",
     )
+    for job in ("speech.rewrite", "speech.intent_classify"):
+        assign_profile(db, job, "prof_browser")
     config.dictation.pipeline.enabled = True
     config.dictation.pipeline.stages = ["project-rewriter"]
     config.dictation.runtime.profile_id = "prof_browser"
+    _DOOR_ENGINE = _DoorEngine()
+    runner = _configure(db).inference_runner
+    real = runner._engine_factory
+
+    def build(revision: Any, **kwargs: Any) -> Any:
+        if str(getattr(revision, "engine", "")) in {"mlx", "faster-whisper"}:
+            return real(revision, **kwargs)
+        return _DOOR_ENGINE
+
+    runner._engine_factory = build
 
 
 def _pipeline_runtime(admission: Any) -> tuple[Any, Any]:
-    """The runtime a pipeline stage would hold, wrapped in the live admission."""
+    """The runtime a pipeline stage would hold, wrapped in the live admission,
+    and the engine the door's call lands on."""
     from holdspeak.speech_session import admitted_runtime
 
     backend = _PipelineBackend()
     backend.base_url = "http://127.0.0.1:1234/v1"
     backend.model = "qwen-local"
-    return backend, admitted_runtime(backend, admission)
+    return _DOOR_ENGINE, admitted_runtime(backend, admission)
 
 
 # ------------------------------------------- 1. stop during the browser open
@@ -2265,8 +2080,8 @@ def test_mutable_preload_knobs_cannot_change_the_frozen_parentless_source(tmp_pa
     assert first.principal.authority_basis == second.principal.authority_basis == (
         "local-model-preload:assigned-speech-route"
     )
-    assert first.source_route["source"] == second.source_route["source"]
-    assert first.evidence["deployment_revision_id"] == second.evidence["deployment_revision_id"]
+    # Both read the same door chain; mutable ModelConfig bytes choose nothing.
+    assert first.speech().deployment_revision_id == second.speech().deployment_revision_id
     assert _operations(db, name="inference.invoke") == []
     assert _parents(db) == []
 
@@ -2494,7 +2309,9 @@ def test_the_egress_label_follows_the_frozen_revision_off_this_machine(
     )
     host.config.dictation.pipeline.enabled = True
     host.config.dictation.pipeline.stages = ["project-rewriter"]
-    host.config.dictation.runtime.profile_id = "prof_lan"
+    from tests.unit._speech_door import assign_profile
+
+    assign_profile(db, "speech.rewrite", "prof_lan")
 
     session = admit_one_shot_session(
         principal=_browser_principal(), config_snapshot=host.config
@@ -2536,9 +2353,7 @@ def test_phase_f_routed_text_entry_uses_provider_route_egress_without_transcript
         insertion_aim=AIM_CLI_DRY_RUN,
         config_snapshot=host.config,
     )
-    members = [item["capability_id"] for item in session._route_bundle["members"]]
-    assert members == ["speech.rewrite"]
-    assert session.provider().transcription_route is None
+    assert set(session.plan.capabilities) == {"rewrite"}
     assert session.provider().egress_boundary == "private_network"
     session.close("succeeded")
 
@@ -2552,7 +2367,6 @@ def test_phase_d_local_transcription_route_reports_local_egress(tmp_path, monkey
     session = admit_one_shot_session(
         principal=_browser_principal(), config_snapshot=host.config
     )
-    assert session._route_bundle is not None
     assert session.provider().egress_boundary == "local"
     session.close("succeeded")
 
@@ -2597,33 +2411,6 @@ def test_phase_d_nonlocal_historical_speech_refuses_before_construction_or_dispa
         assert conn.execute("SELECT COUNT(*) FROM kernel_receipts").fetchone()[0] == 0
 
 
-@pytest.mark.requires_local_dictation_route
-def test_phase_d_egress_refuses_a_missing_frozen_transcription_entry(
-    tmp_path, monkeypatch
-):
-    """A broken bundle cannot relabel an unknown transcription route ``local``."""
-    from holdspeak.speech_session import admit_one_shot_session
-    from holdspeak.speech_session.provider import ROUTED_EGRESS_ROUTE_MISSING
-
-    db, _broker, host, _impl = _build_host(tmp_path, monkeypatch, legacy=False)
-    session = admit_one_shot_session(
-        principal=_browser_principal(), config_snapshot=host.config
-    )
-    assert session._route_bundle is not None
-    route_id = next(
-        str(item["route_plan_id"])
-        for item in session._route_bundle["members"]
-        if item["capability_id"] == "speech.transcribe"
-    )
-    with db._connection() as conn:
-        conn.execute("DELETE FROM inference_route_plan_entries WHERE plan_id=?", (route_id,))
-        conn.commit()
-
-    with pytest.raises(SpeechSessionRefused) as excinfo:
-        _ = session.provider().egress_boundary
-    assert excinfo.value.reason == ROUTED_EGRESS_ROUTE_MISSING
-    session.close("succeeded")
-
 
 def test_a_classify_only_pipeline_reports_the_classify_revisions_boundary(
     tmp_path, monkeypatch
@@ -2643,7 +2430,9 @@ def test_a_classify_only_pipeline_reports_the_classify_revisions_boundary(
     )
     host.config.dictation.pipeline.enabled = True
     host.config.dictation.pipeline.stages = ["intent-router"]  # no rewriter
-    host.config.dictation.runtime.profile_id = "prof_lan_c"
+    from tests.unit._speech_door import assign_profile
+
+    assign_profile(db, "speech.intent_classify", "prof_lan_c")
 
     session = admit_one_shot_session(
         principal=_browser_principal(), config_snapshot=host.config

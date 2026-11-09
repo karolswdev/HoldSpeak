@@ -1,30 +1,17 @@
-"""ONE admitted speech-session model dispatch (HS-131-09).
+"""The two speech control signals (HS-131-09).
 
-Every ACTUAL Whisper transcription, MLX preload, or dictation provider dispatch
-under a live ``dictation.session`` / ``wake.session`` / ``meeting.session``
-reaches its model through :func:`run_admitted_speech_child` and nothing else.
-Placement is never resolved here: the frozen
-:class:`~holdspeak.speech_session.plan.SpeechSessionPlan` decided it at session
-opening, and a capability missing from the plan is a named refusal raised BEFORE
-any model request exists.
-
-Audio, transcript, and prompt material ride ONLY inside the dispatched payload.
-The payload is hashed into the service contract; the kernel journal records
-``{contract, revision, payload_hash}`` and nothing else.
+Every speech model call goes through the engine door (``services/engine_door``)
+as a child of its live session. These are the only two error types a speech
+call raises to its caller: a named refusal (``SpeechSessionRefused``, in
+``plan.py``) or a model failure named by contract and a SAFE reason
+(:class:`SpeechProviderFailure`).
 """
 
 from __future__ import annotations
 
-import threading
-import time
-from typing import Any, Callable, Mapping, Optional
+from typing import Optional
 
-from ..logging_config import get_logger
-from .plan import SESSION_NOT_LIVE, SpeechSessionRefused
-
-log = get_logger("speech_session")
-
-DEFAULT_DEADLINE_SECONDS = 300.0
+from .plan import SpeechSessionRefused
 
 
 class SpeechProviderFailure(RuntimeError):
@@ -48,171 +35,15 @@ class SpeechProviderFailure(RuntimeError):
 def fatal_speech_signal(exc: BaseException) -> bool:
     """True for the speech CONTROL signals that may never degrade to raw text.
 
-    HS-131-15 (Sol Amendment 3). Session refusal, provider failure, exact-revision
-    mismatch, expiry/revocation, and child-budget refusal all arrive as one of
-    these two types. They are not "a stage had a bad day": they mean the work was
-    never authorized, never reached its admitted target, or must not publish. A
-    broad ``except Exception`` that swallows them turns a refusal into a
-    successful-looking raw-text result with a journal row behind it, which is the
-    dishonest receipt this story exists to close.
+    HS-131-15 (Sol Amendment 3). Session refusal, provider failure, expiry or
+    revocation, and child-budget refusal all arrive as one of these two types.
+    They are not "a stage had a bad day": they mean the work was never
+    authorized or must not publish. A broad ``except Exception`` that swallows
+    them turns a refusal into a successful-looking raw-text result.
 
     DIR-F-003 degradation still applies to every ORDINARY stage failure.
     """
     return isinstance(exc, (SpeechSessionRefused, SpeechProviderFailure))
 
 
-class SpeechAdapter:
-    """One admitted dispatch against an already-frozen local/remote deployment.
-
-    The runner constructs the engine from the admitted revision; a Whisper child
-    ignores it (the loaded ``Transcriber`` implementation is captured by the
-    call) while a provider child uses it. Either way nothing here re-resolves a
-    target.
-    """
-
-    connector_id = "inference-provider"
-
-    def __init__(
-        self,
-        contract: str,
-        call: Callable[[Any, Mapping[str, Any], threading.Event], Any],
-    ) -> None:
-        self._contract = contract
-        self._call = call
-        self.cancelled = threading.Event()
-        self.cancel_calls = 0
-        self.result: Any = None
-
-    def dispatch(
-        self, engine: Any, payload: Mapping[str, Any], cancellation: threading.Event
-    ) -> dict[str, Any]:
-        from ..kernel.model import KernelRefused
-        from ..kernel.provider_signals import CONTROL_SIGNALS
-
-        try:
-            self.result = self._call(engine, payload, cancellation)
-        except CONTROL_SIGNALS:
-            # HS-131-10 round 2: typed KERNEL control, not backend content. The
-            # runner is what turns a dialect signal into a second admitted child;
-            # sanitizing it into a failure hides a physical attempt that the
-            # endpoint would have answered.
-            raise
-        except KernelRefused:
-            raise
-        except SpeechSessionRefused as exc:
-            # The speech adapter can discover an exact-revision refusal only after
-            # the runner has minted this child's dispatch context. Translate that
-            # fixed, content-free control class into the runner's refusal channel;
-            # it returns through InvocationOutcome.error and is restored at the
-            # speech edge instead of becoming a generic provider failure.
-            raise KernelRefused(exc.reason) from None
-        except BaseException as exc:  # sanitized: no backend text crosses this line
-            raise SpeechProviderFailure(self._contract, exc) from None
-        return {"contract": self._contract, "cancelled": self.cancelled.is_set()}
-
-    def cancel(self) -> str:
-        self.cancel_calls += 1
-        self.cancelled.set()
-        return "cancelled"
-
-
-def invocation_id(*parts: Any) -> str:
-    import hashlib
-
-    seed = "|".join(str(part) for part in parts)
-    return "speech_" + hashlib.sha256(seed.encode()).hexdigest()[:32]
-
-
-def run_admitted_speech_child(
-    *,
-    broker: Any,
-    principal: Any,
-    plan: Any,
-    parent: Any,
-    capability: str,
-    contract: str,
-    material: Mapping[str, Any],
-    call: Callable[[Any, Mapping[str, Any], threading.Event], Any],
-    seed: Any,
-    attempt_ordinal: int = 1,
-    deadline_seconds: float = DEFAULT_DEADLINE_SECONDS,
-    adapter: Optional[SpeechAdapter] = None,
-    revision_id: str = "",
-    publish: Any = None,
-) -> tuple[Any, Any]:
-    """Run ONE admitted model dispatch. Returns ``(outcome, result)``.
-
-    ``parent`` is the live session parent, or ``None`` for the explicitly
-    authorized pre-session service warm (which has no session to parent it).
-    ``revision_id`` selects WHICH frozen entry of the capability's ordered set
-    this child uses and is always re-asserted against the plan, so a child can
-    only ever repeat an entry the plan already froze.
-
-    Raises :class:`SpeechSessionRefused` when the plan or the parent refuses —
-    before any model request exists.
-    """
-    from ..kernel.inference_runner import InvocationRequest, ServiceContract
-    from ..kernel.model import KernelRefused
-    from ..kernel.runtime import _as_principal
-
-    revision_id = plan.assert_planned(capability, revision_id or plan.primary(capability))
-    identifier = invocation_id(plan.session_id, capability, seed, attempt_ordinal)
-    payload = {
-        "payload_schema": 1,
-        "capability": capability,
-        "session_id": plan.session_id,
-        "plan_sha256": plan.sha256,
-        "deployment_revision": revision_id,
-        "attempt_ordinal": int(attempt_ordinal),
-        **dict(material),
-    }
-    dispatcher = adapter if adapter is not None else SpeechAdapter(contract, call)
-    request = InvocationRequest(
-        revision_id,
-        ServiceContract.for_payload(contract, "1", payload),
-        time.time() + float(deadline_seconds),
-        payload,
-        identifier,
-        "" if parent is None else parent.operation_id,
-        int(attempt_ordinal),
-    )
-    try:
-        with _as_principal(principal):
-            outcome = broker.inference_runner.invoke(
-                request,
-                dispatcher,
-                publish=publish,
-                parent_context=None if parent is None else parent.context,
-            )
-    except KernelRefused as exc:
-        raise SpeechSessionRefused(exc.reason or SESSION_NOT_LIVE, capability) from None
-    return outcome, dispatcher.result
-
-
-def run_admitted_speech_capability(
-    *, plan: Any, capability: str, attempt_ordinal: int = 1, **kwargs: Any
-) -> tuple[Any, Any]:
-    """Run only the frozen primary; routed fallback is controller-owned.
-
-    A generic ``failed`` outcome is not authority to contact another model.
-    Story-07 routed adopters use ``InferenceFallbackController``; legacy speech
-    capabilities stay single-leg until their owner is migrated.
-    """
-    entries = plan.revisions(capability)
-    return run_admitted_speech_child(
-        plan=plan,
-        capability=capability,
-        revision_id=str(entries[0]),
-        attempt_ordinal=int(attempt_ordinal),
-        **kwargs,
-    )
-
-
-__all__ = [
-    "DEFAULT_DEADLINE_SECONDS",
-    "SpeechAdapter",
-    "SpeechProviderFailure",
-    "invocation_id",
-    "run_admitted_speech_capability",
-    "run_admitted_speech_child",
-]
+__all__ = ["SpeechProviderFailure", "fatal_speech_signal"]

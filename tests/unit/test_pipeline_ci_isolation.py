@@ -135,21 +135,12 @@ def test_the_local_model_probe_is_silent_when_present(monkeypatch) -> None:
     assert missing_local_model_reason() == ""
 
 
-def test_the_dictation_route_probe_names_the_missing_package(monkeypatch) -> None:
-    """The Unit runner installs `--extra test` only, so neither dictation
-    engine's package is present and the reason must say which one is wanted."""
-    import importlib.util
-
-    real = importlib.util.find_spec
-
-    def absent(name, package=None):
-        if name in {"mlx_lm", "llama_cpp"}:
-            return None
-        return real(name, package)
-
-    monkeypatch.setattr(importlib.util, "find_spec", absent)
+def test_the_dictation_route_probe_names_the_missing_backend(monkeypatch) -> None:
+    """The Unit runner installs `--extra test` only, so no Whisper backend is
+    present: the speech chain has no engine, and the reason says so."""
+    monkeypatch.setattr("holdspeak.transcribe._module_available", lambda _name: False)
     reason = missing_local_dictation_route_reason()
-    assert "is not installed" in reason, reason
+    assert "no local Whisper backend" in reason, reason
 
 
 # ── the readiness predicate ──────────────────────────────────────────

@@ -353,7 +353,7 @@ def build_profile_summarizer(
             ) from exc
         summarize.last_receipt_id = answer.operation_id
         summarize.last_egress = engine_door.egress_of(broker, answer.engine)
-        _record_local_readiness(broker, principal, engine)
+        _record_local_readiness(broker, principal, answer.engine)
         return answer.output
 
     summarize.last_receipt_id = ""  # type: ignore[attr-defined]
@@ -420,12 +420,11 @@ _register_retry()
 
 
 def _record_local_readiness(broker: Any, principal: Any, engine: Any) -> None:
-    """A migrated local Rails engine reads ready after its first answer."""
-    adoption = getattr(broker, "inference_adoption_service", None)
-    if adoption is None:
-        return
+    """The journal engine answered: its binding reads ready (``engine_door.record_ready``)."""
+    from .services.engine_door import record_ready
+
     try:
-        adoption.record_local_rails_readiness_after_load(principal, deployment_revision_id=engine.revision)
+        record_ready(broker.database, engine.revision, "loaded_under_rails_observer")
     except Exception:  # no binding (a cloud or legacy engine): nothing to record
         pass
 

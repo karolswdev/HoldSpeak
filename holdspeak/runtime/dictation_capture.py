@@ -20,7 +20,7 @@ from .dictation_delivery import DictationDeliveryMixin
 from .dictation_previews import DictationPreviewMixin
 from .dictation_processing import DictationProcessingMixin
 from .dictation_session import HoldSessionMixin
-from .transcriber_state import _frozen_session_transcriber
+from .transcriber_state import _session_transcriber
 
 log = get_logger("web_runtime")
 
@@ -103,7 +103,7 @@ class DictationCaptureMixin(
             try:
                 transcriber = (
                     self._ensure_transcriber_loaded()
-                    if session is None else _frozen_session_transcriber(self, session)
+                    if session is None else _session_transcriber(self, session)
                 )
                 text = transcriber.transcribe(audio, admission=admission)
                 if not text:
@@ -398,7 +398,7 @@ class DictationCaptureMixin(
             interval = browser_mic_sessions().resolve(principal, mic_handle)
         if interval is not None:
             with self.transcription_lock:
-                text = _frozen_session_transcriber(self, interval.session).transcribe(
+                text = _session_transcriber(self, interval.session).transcribe(
                     audio, admission=interval.transcription()
                 )
             processed = text if verbatim else ("" if not text else self.text_processor.process(text))
@@ -409,7 +409,7 @@ class DictationCaptureMixin(
         )
         try:
             with self.transcription_lock:
-                text = _frozen_session_transcriber(self, session).transcribe(
+                text = _session_transcriber(self, session).transcribe(
                     audio, admission=session.transcription()
                 )
         except BaseException:

@@ -46,12 +46,8 @@ from holdspeak.kernel.model import KernelRefused
 from holdspeak.kernel.runtime import _configure
 from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.speech_session.plan import (
-    CAPABILITY_REWRITE,
     WHISPER_KIND,
-    SpeechSessionRefused,
 )
-from holdspeak.speech_session.provider import ProviderAdmission
-from holdspeak.speech_session.revision_target import bound_target, rebind
 from tests.unit.admitted_context import admitted_context, claimed_witness
 
 OWNER = Principal(PrincipalKind.OWNER, "owner")
@@ -392,12 +388,6 @@ def test_every_migrated_factory_refuses_before_anything_is_constructed(
             kind="openAICompatible", base_url=frozen.endpoint, model=frozen.model,
             profile_id=frozen.destination_id, deployment_revision=frozen, context=forged,
         ),
-        lambda: rebind(SimpleNamespace(backend="openai_compatible"), frozen, context=forged),
-        lambda: bound_target(
-            SimpleNamespace(backend="openai_compatible", base_url="http://elsewhere/v1",
-                            model="other"),
-            frozen, context=forged,
-        ),
     ):
         with pytest.raises(KernelRefused) as refusal:
             call()
@@ -416,7 +406,6 @@ def test_a_wrong_revision_context_refuses_before_construction(no_construction: R
             kind="openAICompatible", base_url=frozen.endpoint, model=frozen.model,
             profile_id=frozen.destination_id, deployment_revision=frozen, context=other,
         ),
-        lambda: rebind(SimpleNamespace(backend="openai_compatible"), frozen, context=other),
     ):
         with pytest.raises(KernelRefused) as refusal:
             call()
@@ -561,97 +550,6 @@ def test_the_named_legacy_marker_is_the_only_uncontextual_way_through(
 
 
 # --------------------------------------------------------- the dictation seams
-
-
-class Plan:
-    """The frozen plan a dictation session opened with (only what `target` reads)."""
-
-    def __init__(self, frozen: Any) -> None:
-        self._frozen = frozen
-
-    def primary(self, _capability: str) -> str:
-        return self._frozen.id
-
-    def deployment(self, revision_id: str) -> Any:
-        return self._frozen if revision_id == self._frozen.id else None
-
-
-def test_a_dictation_rebind_needs_the_childs_own_context(no_construction: Recorder) -> None:
-    frozen = revision()
-    admission = ProviderAdmission(broker=None, principal=None, plan=Plan(frozen), parent=None)
-    # The pipeline's runtime points somewhere else: dispatching needs a REBUILD.
-    retargeted = SimpleNamespace(
-        backend="openai_compatible", base_url="http://elsewhere:9/v1", model="other-model",
-        timeout_seconds=8.0,
-    )
-
-    with pytest.raises(KernelRefused) as uncontextual:
-        admission.target(retargeted, None, CAPABILITY_REWRITE)
-    assert uncontextual.value.reason == CONTEXT_REQUIRED
-    assert no_construction.calls == []
-
-    with pytest.raises(KernelRefused) as foreign:
-        admission.target(
-            retargeted,
-            SimpleNamespace(_dispatch_context=context_for(revision(rid="dep_elsewhere"))),
-            CAPABILITY_REWRITE,
-        )
-    assert foreign.value.reason == CONTEXT_MISMATCH
-    assert no_construction.calls == []
-
-    context = context_for(frozen)
-    admitted_engine = SimpleNamespace(_dispatch_context=context)
-    bound = admission.target(retargeted, admitted_engine, CAPABILITY_REWRITE)
-    assert no_construction.calls, "the admitted child never got its target"
-    assert bound is not retargeted
-
-
-def test_the_target_cache_is_not_a_ride_for_an_unadmitted_caller(
-    no_construction: Recorder,
-) -> None:
-    frozen = revision()
-    admission = ProviderAdmission(broker=None, principal=None, plan=Plan(frozen), parent=None)
-    retargeted = SimpleNamespace(
-        backend="openai_compatible", base_url="http://elsewhere:9/v1", model="other-model",
-        timeout_seconds=8.0,
-    )
-    context = context_for(frozen)
-    first = admission.target(retargeted, SimpleNamespace(_dispatch_context=context),
-                             CAPABILITY_REWRITE)
-
-    # Cached — one construction per revision per session.
-    assert admission.target(retargeted, SimpleNamespace(_dispatch_context=context),
-                            CAPABILITY_REWRITE) is first
-    assert len(no_construction.calls) == 1
-
-    # …but the cache entry is not an ambient permit for a contextless caller.
-    with pytest.raises(KernelRefused) as riding:
-        admission.target(retargeted, None, CAPABILITY_REWRITE)
-    assert riding.value.reason == CONTEXT_REQUIRED
-
-
-def test_an_agreeing_runtime_needs_no_context_because_it_constructs_nothing(
-    no_construction: Recorder,
-) -> None:
-    """The fence is on CONSTRUCTION: an already-correct target is not rebuilt."""
-    frozen = revision()
-    admission = ProviderAdmission(broker=None, principal=None, plan=Plan(frozen), parent=None)
-    already_right = SimpleNamespace(
-        backend="openai_compatible", base_url=frozen.endpoint, model=frozen.model,
-    )
-
-    assert admission.target(already_right, None, CAPABILITY_REWRITE) is already_right
-    assert admission.prepared(already_right, CAPABILITY_REWRITE) is already_right
-    assert no_construction.calls == []
-
-
-def test_an_unbindable_engine_still_refuses_before_admission() -> None:
-    """`prepared` keeps naming the unbindable backend with no operation behind it."""
-    frozen = revision(engine="paired_runtime", endpoint="")
-    admission = ProviderAdmission(broker=None, principal=None, plan=Plan(frozen), parent=None)
-
-    with pytest.raises(SpeechSessionRefused):
-        admission.prepared(SimpleNamespace(backend="openai_compatible"), CAPABILITY_REWRITE)
 
 
 # ------------------------------------------------------------------ the runner

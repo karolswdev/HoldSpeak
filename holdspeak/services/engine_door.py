@@ -203,6 +203,65 @@ def egress_of(broker: Any, engine: Engine) -> str:
     return deployment_lamp(getattr(revision, "boundary", ""), getattr(revision, "endpoint", ""))
 
 
+def record_ready(db: Any, revision: str, reason_code: str) -> dict[str, Any]:
+    """Readiness is "the engine answered": after a job's first answer on a
+    deployment revision, its binding reads ``ready`` (Settings › Engines). A
+    binding that already reads ready is left as it is (``replayed``). Raises
+    ``LookupError`` when no binding names the revision (a cloud or CLI engine
+    that is not bound: nothing to record)."""
+    revision_id = str(revision or "").strip()
+    head = """SELECT b.*,h.revision AS head_revision,o.state AS observed
+                FROM model_profile_binding_heads h
+                JOIN model_profile_binding_revisions b
+                  ON b.binding_id=h.binding_id AND b.revision=h.revision
+                LEFT JOIN model_profile_readiness_observations o
+                  ON o.observation_id=b.readiness_observation_id
+               WHERE b.deployment_revision_id=?
+               ORDER BY h.updated_at DESC LIMIT 1"""
+    with db._connection() as conn:
+        row = conn.execute(head, (revision_id,)).fetchone()
+        if row is None:
+            raise LookupError("no binding names this engine")
+        if str(row["observed"] or "") == "ready":
+            return {"state": "ready", "replayed": True}
+        conn.execute("BEGIN IMMEDIATE")
+        try:
+            row = conn.execute(head, (revision_id,)).fetchone()
+            if row is None or str(row["observed"] or "") == "ready":
+                conn.commit()
+                return {"state": "ready", "replayed": True}
+            now = time.time()
+            observation_id = "ready_" + uuid.uuid4().hex
+            conn.execute(
+                """INSERT INTO model_profile_readiness_observations
+                   (observation_id,deployment_head_id,deployment_configuration_revision,
+                    deployment_revision_id,state,reason_code,observed_at)
+                   VALUES (?,?,?,?,?,?,?)""",
+                (observation_id, str(row["deployment_head_id"]), int(row["deployment_configuration_revision"]),
+                 revision_id, "ready", reason_code, now),
+            )
+            next_revision = int(row["head_revision"]) + 1
+            conn.execute(
+                """INSERT INTO model_profile_binding_revisions
+                   (binding_id,revision,profile_id,profile_revision,deployment_head_id,
+                    deployment_configuration_revision,deployment_revision_id,secret_slot,
+                    enabled,readiness_observation_id,created_at)
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
+                (str(row["binding_id"]), next_revision, str(row["profile_id"]), int(row["profile_revision"]),
+                 str(row["deployment_head_id"]), int(row["deployment_configuration_revision"]), revision_id,
+                 str(row["secret_slot"] or ""), int(row["enabled"]), observation_id, now),
+            )
+            conn.execute(
+                "UPDATE model_profile_binding_heads SET revision=?,updated_at=? WHERE binding_id=?",
+                (next_revision, now, str(row["binding_id"])),
+            )
+            conn.commit()
+        except Exception:
+            conn.rollback()
+            raise
+    return {"state": "ready", "observation_id": observation_id, "replayed": False}
+
+
 DEFAULT_CONTEXT_TOKENS = 16384
 
 
