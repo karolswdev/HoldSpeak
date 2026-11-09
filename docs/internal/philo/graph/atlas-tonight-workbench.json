@@ -612,7 +612,7 @@
           "claim": "Explicit attachments must resolve without silent dropping."
         },
         {
-          "path": "holdspeak/services/workbench_runner.py",
+          "path": "holdspeak/services/_parked/workbench_runner_queue_20261108.py",
           "symbol": "# A missing attachment fails this item before any provider",
           "claim": "The affected item fails locally under the parent epoch."
         },
@@ -640,7 +640,7 @@
           "claim": "Explicit attachments must resolve without silent dropping."
         },
         {
-          "path": "holdspeak/services/workbench_runner.py",
+          "path": "holdspeak/services/_parked/workbench_runner_queue_20261108.py",
           "symbol": "# A missing attachment fails this item before any provider",
           "claim": "The affected item fails locally under the parent epoch."
         },
