@@ -107,7 +107,8 @@ class TestRunnerEndToEnd:
         assert report["engine"] == "canned"
         route = report["route"]
         assert route["state"] == "READY", route
-        assert route["plan_id"].startswith("irp_")
+        # The engine door keeps no route plan (9183f78ba); its receipt is the operation.
+        assert route["operation_id"], route
         assert route["boundary"], route
         assert route["host"], route
         assert route["endpoint"].startswith("http://127.0.0.1:")
