@@ -417,6 +417,9 @@ LAUNCH_RULES: dict[str, tuple[str, str, str]] = {
 LAUNCH_RULES["automation.cancel"] = (OWN, "workbench", "workbench_id")
 # Calls (2026-10-28): the owner's phone call is never a launch's to end.
 LAUNCH_RULES["calls.hangup"] = (NEVER, "", "")
+# The Calls window's declared verbs (2026-11-08, ``calls_operations.py``): a
+# launch reads a call, as calls.list lets it; a real call is his alone.
+LAUNCH_RULES.update({"calls.get": (READ, "", ""), "calls.place": (NEVER, "", ""), "calls.test_line": (NEVER, "", "")})
 # Programs (2026-10-28): held in ProgramService, the one boundary every
 # transport reaches: a launch runs only the Programs it made, writes lines and
 # its report only on its own step, and never decides or overturns.

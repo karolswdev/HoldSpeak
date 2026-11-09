@@ -70,6 +70,8 @@ def test_the_canonical_map_has_all_seventeen_operations_and_no_local_service_tar
         "automation.set_when", "automation.set_engine", "automation.make_one", "automation.template.list",
         "automation.template.instantiate", "automation.result.open", "automation.new.list", "automation.lesson.list",
         "automation.lesson.forget",
+        # the Calls window's declared verbs with an MCP tool (2026-11-08, holdspeak/calls_operations.py)
+        "calls.status", "calls.list", "calls.get", "calls.place", "calls.hangup", "calls.test_line",
         "setup.status", "setup.use",
         "decision.create", "decision.update", "decision.read", "decision.list",
         "meeting.list", "meeting.read", "meeting.import", "meeting.transcribe", "meeting.summary.run",
@@ -126,7 +128,9 @@ def test_the_canonical_map_has_all_seventeen_operations_and_no_local_service_tar
                                # 2026-11-08: the Agents window's launch verbs (HTTP only).
                                "agent.launch.lane", "agent.launch.explain", "agent.launch.answer", "agent.launch.seen",
                                "agent.launch.done", "agent.launch.remove", "agent.launch.resume",
-                               "agent.hand.cancel_queued", "agent.helper.allow"}
+                               "agent.hand.cancel_queued", "agent.helper.allow",
+                               # 2026-11-08: the Calls window's tap answer (no MCP tool).
+                               "calls.decide"}
     assert all(value["kind"] in {"tool", "resource"}
                for value in gw.OP_MCP_PROJECTIONS.values())
 

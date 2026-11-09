@@ -263,6 +263,9 @@ def test_the_contract_refuses_a_non_owner_before_anything_else(tmp_path: Path) -
         'people.calendar.unlink',
         'people.owner_alias.link',
         'people.owner_alias.unlink',
+        'calls.place',
+        'calls.decide',
+        'calls.test_line',
     ]  # the declared tables (meeting, people, phone, desk display) in declaration order; writes are the owner's
     assert "owner_required" in operations.MEETING_IMPORT.export()["refusals"]
 

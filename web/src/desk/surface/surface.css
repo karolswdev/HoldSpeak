@@ -2971,31 +2971,6 @@ button.surface-edit-in-place:hover {
   min-width: 0;
 }
 
-/* HS-201-04 — the summary on the record, with its meeting. */
-.summary-well-head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px 8px;
-  min-width: 0;
-}
-.summary-text {
-  margin: 0;
-  min-width: 0;
-  font-size: 12px;
-  line-height: 1.5;
-  color: var(--text);
-  overflow-wrap: anywhere;
-}
-.summary-topics {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px;
-  margin-top: 6px;
-  min-width: 0;
-}
-
 /* A textarea riding the string-gadget well (the route preview): same
    sunken geometry, docked mic. */
 .gadget-string textarea {
@@ -4357,49 +4332,6 @@ button.surface-edit-in-place:hover {
   font-weight: 600;
   color: var(--text-muted);
 }
-.meetings-detail-outcomes {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-}
-.meetings-detail-outcome-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 4px 0;
-  border-top: 1px solid var(--border-subtle);
-}
-.meetings-detail-outcome-text {
-  flex: 1;
-  min-width: 0;
-  font-size: 13px;
-  color: var(--text-primary);
-}
-.meetings-detail-outcome-verb {
-  flex-shrink: 0;
-}
-
-/* HS-172 — proposal prefix accent in meeting detail */
-.meetings-proposal-prefix {
-  color: var(--accent);
-  font-weight: 600;
-}
-
-/* HS-172 — 393 responsive: proposal rows stack verbs under text */
-@container surface (max-width: 559.9px) {
-  .meetings-detail-outcome-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  .meetings-detail-outcome-verb {
-    display: flex;
-    justify-content: flex-end;
-    gap: 6px;
-  }
-}
-
 /* HS-170-04 — 393 responsive layout */
 @container surface (max-width: 559.9px) {
   .meetings-head-verbs {

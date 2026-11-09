@@ -49,7 +49,6 @@ _FAMILY_MODULE_NAMES: list[str] = [
     "agent",
     "setup",
     "note",
-    "calls",
     "declared",
     "phone",
 ]

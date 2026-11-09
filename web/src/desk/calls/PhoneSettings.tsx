@@ -19,7 +19,7 @@ import { DotWord } from "../surface/kit";
 import { stateWords, wireWords } from "../surface/words";
 import { readPushKey, removePhoneDevice, savePushKey, startPairing, testPush, usePhone, writeReach } from "./phoneApi";
 import type { PhoneDevice, PhonePairing, PhonePushKey, PhonePushTest, PhoneStatus, ReachChannel } from "./phoneTypes";
-import { deviceFact, pushNotReady } from "./PhoneWing";
+import { deviceFact, pushNotReady } from "./PhonePane";
 import { PhoneQr } from "./PhoneQr";
 import "./phone.css";
 

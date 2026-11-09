@@ -1,20 +1,18 @@
-/* Calls (CALLS-DESIGN-2026-10-28 §6; canvas
- * docs/internal/betterment/canvases/calls-2026-10-28.html): the Calls
- * window, Go ▸ Work ▸ Calls.
+/* Calls, the native app (the language, 2026-11-08; Agents and Meetings are
+ * the pattern). Go ▸ Work ▸ Calls.
  *
- * Window grammar: title bar → Toolbar (Call me, the primary that makes the
- * object; Hang up on a call) → the body → a 24 px StatusBar with a dot and a
- * word (`● Ready for calls`, `● On a call · 2:14`, `● ai-phone not running`,
- * `● Calls are off · Settings ▸ Calls`; with the Line as the phone, `● Line
- * starting`, `● Line not running`, `● No line: set one in Settings ▸ Calls ▸
- * Line`; LINE-DESIGN §10). No host, number or engine chip
- * (UX-CANON A.9): egress is said in Settings ▸ Calls.
- *
- * On a call the body is the call as a document (the Live transcript), a
- * held question as one warm row with Yes and No (the tap form of his spoken
- * yes), and "Done on this call". Idle, the past calls are a dense list; a
- * press opens a call as a document. A `call_state` frame replaces the call
- * it names. */
+ * The rail at the left: the call on the line first (its spine steel; brass
+ * when it holds a question for him), then the recent calls by time, then the
+ * paired phone as one row with its state. The picked thing at the right:
+ * the MAST (the person sprite when the caller is him, else the call sprite;
+ * who; when, how long, the line and the engine on a live call), its spine,
+ * the raised PLATE (the one thing now: a held question with Yes and No and
+ * Hang up; a live call with Hang up; an ended call with Call me; nothing
+ * picked: Place a call), then the LEDGER (the call's turns, then what it
+ * did). The phone's pane is PhonePane. The Line and the Phone settings are
+ * two folds at the window's foot. One status bar: a dot and a word. No host
+ * or number chip (UX-CANON A.9). A narrow window shows the rail or the
+ * picked thing, never both. A `call_state` frame replaces the call it names. */
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Button } from "../../components/signal/Signal";
 import { LiveTranscript } from "../../pages/cores/LiveTranscript";
@@ -22,15 +20,16 @@ import "../../pages/cores/liveTranscript.css";
 import type { CoreProps } from "../../pages/cores/core-types";
 import { openRef } from "../openObject";
 import { openSurfaceOr } from "../shell";
-import { spriteUrl } from "../sprites";
-import { useWindowInterior } from "../surface/interior";
-import { StatusBar, ToolGlyph, Toolbar, countWords, type StatusBarItem, type ToolGlyphKind } from "../surface/kit";
-import { ObjectList, type ObjectListRow, type ObjectListSort, type ObjectListTone } from "../surface/objects/ObjectList";
-import { SurfaceState } from "../surface/Surface";
-import { decide, hangUp, lineInUse, placeCall, readCall, refusalWords, useCalls, withTranscript } from "./api";
-import { useCoreWings } from "../../pages/cores/core-hooks";
-import { usePhone } from "./phoneApi";
-import { PhoneWing } from "./PhoneWing";
+import { listSprite, spriteUrl } from "../sprites";
+import {
+  FoldGadget, Mast, Spine, StatusBar, SurfaceState, ToolGlyph, countWords, useWindowInterior,
+  type SpineTone, type StatusBarItem, type ToolGlyphKind,
+} from "../surface";
+import { decide, hangUp, lineInUse, placeCall, readCall, refusalWords, useCalls, withTranscript, writeCallsSetting } from "./api";
+import { LineSettingsPane } from "./LineSettings";
+import { pairedPhone, usePhone, waitsForReply } from "./phoneApi";
+import { PhonePane, phoneStatusItems, pushNotReady } from "./PhonePane";
+import { PhoneSettingsPane } from "./PhoneSettings";
 import { usePhoneFocus } from "./phoneFocus";
 import type { Call, CallResult, CallSummary, CallsSettings, CallsStatus } from "./types";
 import "./calls.css";
@@ -67,7 +66,9 @@ export function callWhen(value: string | null | undefined, now = new Date()): st
   return `${date.toLocaleDateString("en-US", { month: "short", day: "numeric" })} ${clock}`;
 }
 
-const OUTCOMES: Record<string, { word: string; tone: ObjectListTone }> = {
+type Tone = "ok" | "idle" | "warn" | "fail" | "info" | "ask";
+
+const OUTCOMES: Record<string, { word: string; tone: Tone }> = {
   done: { word: "Done", tone: "ok" },
   no_answer: { word: "No answer", tone: "idle" },
   rejected: { word: "Refused", tone: "warn" },
@@ -76,16 +77,24 @@ const OUTCOMES: Record<string, { word: string; tone: ObjectListTone }> = {
   denied: { word: "Not let in", tone: "warn" },
 };
 
-export function outcomeOf(call: CallSummary): { word: string; tone: ObjectListTone } {
-  if (call.state !== "ended") return { word: "On the line", tone: "fail" };
+export function outcomeOf(call: CallSummary): { word: string; tone: Tone } {
+  if (call.state !== "ended") return call.hold ? { word: "Waits for you", tone: "ask" } : { word: "On the line", tone: "info" };
   const known = OUTCOMES[String(call.outcome ?? "")];
   if (known) return known;
   const raw = String(call.outcome ?? "").replace(/_/g, " ").trim();
   return { word: raw ? raw[0].toUpperCase() + raw.slice(1) : "Ended", tone: "idle" };
 }
 
+/** One colour per meaning (steel on the line, brass waits on him, moss done,
+ *  coral at risk, idle nothing came of it). */
+const SPINE: Record<Tone, SpineTone> = { info: "steel", ask: "brass", ok: "moss", warn: "coral", fail: "coral", idle: "idle" };
+
 function digits(value: string): string {
   return value.replace(/^sip:/i, "").split("@", 1)[0].replace(/[^\d+]/g, "");
+}
+
+function masked(number: string): string {
+  return number.length > 4 ? `${number.startsWith("+") ? number.slice(0, 2) : ""} ··· ${number.slice(-4)}`.trim() : number;
 }
 
 /** Who was on the other end: `You` for his own number, else the number with
@@ -93,8 +102,7 @@ function digits(value: string): string {
 export function remoteWords(remote: string, mine: readonly string[]): string {
   const number = digits(remote);
   if (number && mine.some((own) => digits(own) === number)) return "You";
-  if (number.length > 4) return `${number.startsWith("+") ? number.slice(0, 2) : ""} ··· ${number.slice(-4)}`.trim();
-  return number || "Unknown";
+  return masked(number) || "Unknown";
 }
 
 const EFFECT_WORDS: Record<CallResult["effect"], string> = {
@@ -136,61 +144,6 @@ function noteWhen(call: CallSummary): string {
 export const SETTLE_MS = 180;
 function motionAllowed(): boolean {
   return Boolean(window.matchMedia?.("(prefers-reduced-motion: no-preference)")?.matches);
-}
-
-/** The call as a document: the transcript, the held question, what it did. */
-function CallDocument({ call, live, busy, settle, onDecide }: {
-  call: Call;
-  live: boolean;
-  busy: boolean;
-  /** The answer that is settling out (`yes`, `no`), or none. */
-  settle?: "" | "yes" | "no";
-  onDecide?: (decision: "approve" | "deny") => void;
-}) {
-  const start = at(call.answered_at) || at(call.started_at);
-  const segments = useMemo(() => call.transcript.map((line, index) => {
-    const when = at(line.at);
-    return {
-      id: `${call.id}-${index}`,
-      start_time: Number.isFinite(when) && Number.isFinite(start) ? Math.max(0, (when - start) / 1000) : undefined,
-      speaker: line.who === "holdspeak" ? "HoldSpeak" : "You",
-      who: line.who,
-      text: line.text,
-    };
-  }), [call.id, call.transcript, start]);
-  const results = call.results ?? [];
-  return (
-    <div className="calls-doc" data-testid="calls-document" data-call={call.id}>
-      {segments.length ? <LiveTranscript segments={segments} listening={live && !call.hold} /> : null}
-      {live && call.hold ? (
-        <div className="calls-hold" role="group" aria-label="HoldSpeak asks" data-testid="calls-hold" data-settle={settle || undefined}>
-          <span className="calls-hold-words">{call.hold.words}</span>
-          <span className="calls-hold-verbs">
-            <Button variant="primary" dense loading={busy} onClick={() => onDecide?.("approve")} data-testid="calls-yes">Yes</Button>
-            <Button variant="secondary" dense disabled={busy} onClick={() => onDecide?.("deny")} data-testid="calls-no">No</Button>
-          </span>
-        </div>
-      ) : null}
-      {results.length || call.note_ref ? (
-        <section className="calls-done" aria-label="Done on this call" data-testid="calls-done">
-          <h3 className="calls-done-title">Done on this call</h3>
-          {results.map((result, index) => (
-            <ResultRow
-              key={`${result.ref}-${index}`}
-              kind={result.kind}
-              label={result.label}
-              word={EFFECT_WORDS[result.effect] ?? result.effect}
-              onOpen={result.ref ? () => openRef(result.ref) : undefined}
-              testId="calls-result"
-            />
-          ))}
-          {call.note_ref ? (
-            <ResultRow kind="note" label={noteWhen(call)} word="Transcript" onOpen={() => openRef(call.note_ref!)} testId="calls-transcript-note" />
-          ) : null}
-        </section>
-      ) : null}
-    </div>
-  );
 }
 
 /** The live clock of a call: seconds since it was answered. */
@@ -236,48 +189,215 @@ function openCallsSettings() {
   openSurfaceOr("configure-settings", "/settings", "calls");
 }
 
-/** Settings ▸ Calls ▸ Line (the section's focus). */
-function openLineSettings() {
-  openSurfaceOr("configure-settings", "/settings", "calls::line");
+/* ── the rail ─────────────────────────────────────────────────────────── */
+
+function callTitle(call: CallSummary): string {
+  if (call.first_words) return `“${call.first_words}”`;
+  if (call.state !== "ended") return "On the line";
+  return call.direction === "out" ? "HoldSpeak called you" : "No words";
 }
 
-/** The Calls window's two faces (PHONE-DESIGN §9, direction A): the calls
- *  HoldSpeak took or placed, and the Phone thread. */
-export const CALLS_WINGS = [
-  { id: "calls", label: "Calls" },
-  { id: "phone", label: "Phone" },
-];
+function CallRow({ call, mine, picked, onPick }: {
+  call: CallSummary; mine: readonly string[]; picked: boolean; onPick(): void;
+}) {
+  const outcome = outcomeOf(call);
+  const length = call.duration_sec && call.duration_sec > 0 ? clockWords(call.duration_sec) : "";
+  const facts = [remoteWords(call.remote, mine), callWhen(call.started_at), length].filter(Boolean);
+  return (
+    <li className="cl-item">
+      <Button variant="chrome" className="cl-row" onClick={onPick} aria-current={picked ? "true" : undefined}
+        data-picked={picked ? "" : undefined} data-tone={SPINE[outcome.tone]} data-kind="call" data-state={call.state}
+        data-call={call.id} data-testid="calls-row">
+        <img className="cl-row-sprite" src={listSprite(spriteUrl("call", "calls"))} alt="" width={32} height={32} draggable={false} />
+        <span className="cl-row-title">{callTitle(call)}</span>
+        <span className="cl-row-state" data-tone={outcome.tone} data-live={call.state !== "ended" || undefined}
+          data-testid="calls-outcome">{outcome.word}</span>
+        <span className="cl-row-facts">{facts.map((fact) => <span key={fact}>{fact}</span>)}</span>
+        <Spine className="cl-row-spine" tone={SPINE[outcome.tone]} />
+      </Button>
+    </li>
+  );
+}
+
+function PhoneRow({ phone, on, picked, onPick }: {
+  phone: ReturnType<typeof usePhone>; on: boolean; picked: boolean; onPick(): void;
+}) {
+  const device = pairedPhone(phone.status);
+  const waits = phone.messages.filter((message) => waitsForReply(message, phone.messages)).length
+    + phone.calls.filter((call) => call.state === "held").length;
+  const push = device ? pushNotReady(device) : null;
+  const state: { word: string; tone: Tone } = !on ? { word: "Off", tone: "idle" }
+    : waits ? { word: waits === 1 ? "Waits on you" : `${waits} wait on you`, tone: "ask" }
+      : device ? (push ? { word: "Push not ready", tone: "warn" } : { word: "Paired", tone: "ok" })
+        : phone.status?.line?.ready ? { word: "By number", tone: "ok" } : { word: "Not paired", tone: "idle" };
+  return (
+    <li className="cl-item">
+      <Button variant="chrome" className="cl-row cl-row--phone" onClick={onPick} aria-current={picked ? "true" : undefined}
+        data-picked={picked ? "" : undefined} data-tone={SPINE[state.tone]} data-testid="calls-rail-phone">
+        <span className="cl-row-sprite phone-handset" aria-hidden="true"><i /></span>
+        <span className="cl-row-title">{device?.name ?? "Your phone"}</span>
+        <span className="cl-row-state" data-tone={state.tone}>{state.word}</span>
+        <Spine className="cl-row-spine" tone={SPINE[state.tone]} />
+      </Button>
+    </li>
+  );
+}
+
+/* ── the plate ────────────────────────────────────────────────────────── */
+
+export function Plate({ tone, head, facts, children, testId, settle }: {
+  tone: SpineTone; head: ReactNode; facts?: ReactNode; children?: ReactNode; testId?: string; settle?: string;
+}) {
+  return (
+    <section className="cl-plate" data-tone={tone} data-testid={testId} data-settle={settle || undefined}>
+      <header className="cl-plate-head">
+        <h3 className="cl-plate-title">{head}</h3>
+        {facts ? <span className="cl-plate-facts">{facts}</span> : null}
+      </header>
+      {children}
+    </section>
+  );
+}
+
+/** The handset glyph of Call me and Hang up (16 px, the toolbar pen). */
+function CallGlyph({ down = false }: { down?: boolean }) {
+  return (
+    <svg className="kit-toolglyph calls-glyph" data-down={down || undefined} width={16} height={16} viewBox="0 0 16 16"
+      fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+      <path d="M5.2 2.75 3.4 3.6c-.6.3-.9 1-.7 1.6 1.3 3.8 4.2 6.8 8.1 8.1.6.2 1.3-.1 1.6-.7l.85-1.8-2.6-1.5-1.2 1.1c-1.5-.7-2.7-1.9-3.4-3.4l1.1-1.2Z" />
+    </svg>
+  );
+}
+
+function CallMe({ canCall, busy, onCall }: { canCall: boolean; busy: boolean; onCall(): void }) {
+  return (
+    <Button variant="primary" dense loading={busy} disabled={!canCall} onClick={onCall}
+      title={canCall ? "HoldSpeak rings your number" : "Set up calls in Settings ▸ Calls"} data-testid="calls-call-me">
+      <CallGlyph />
+      Call me
+    </Button>
+  );
+}
+
+/* ── the call ─────────────────────────────────────────────────────────── */
+
+function CallPane({ call, live, clock, mine, status, busy, settle, canCall, onCall, onHangUp, onDecide, onBack }: {
+  call: Call; live: boolean; clock: number | null; mine: readonly string[]; status: CallsStatus;
+  busy: string; settle: "" | "yes" | "no"; canCall: boolean;
+  onCall(): void; onHangUp(): void; onDecide(decision: "approve" | "deny"): void; onBack(): void;
+}) {
+  const who = remoteWords(call.remote, mine);
+  const outcome = outcomeOf(call);
+  const tone = SPINE[outcome.tone];
+  const length = live ? (clock != null ? clockWords(clock) : "") : call.duration_sec ? clockWords(call.duration_sec) : "";
+  // The line and the engine are known for the call on the line only.
+  const facts = [callWhen(call.started_at), length,
+    live ? (lineInUse(status) ? "the Line" : "ai-phone") : "", live ? status.engine.model ?? "" : ""].filter(Boolean).join(" · ");
+  const start = at(call.answered_at) || at(call.started_at);
+  const segments = useMemo(() => call.transcript.map((line, index) => {
+    const when = at(line.at);
+    return {
+      id: `${call.id}-${index}`,
+      start_time: Number.isFinite(when) && Number.isFinite(start) ? Math.max(0, (when - start) / 1000) : undefined,
+      speaker: line.who === "holdspeak" ? "HoldSpeak" : "You",
+      who: line.who,
+      text: line.text,
+    };
+  }), [call.id, call.transcript, start]);
+  const results = call.results ?? [];
+  const hangUp = (
+    <Button variant="danger" dense loading={busy === "hangup"} onClick={onHangUp} data-testid="calls-hangup">
+      <CallGlyph down />
+      Hang up
+    </Button>
+  );
+  return (
+    <article className="cl-object" data-testid="calls-document" data-call={call.id}>
+      <Mast className="cl-mast" kind={who === "You" ? "person" : "call"} id={who === "You" ? "you" : "calls"} title={who} facts={facts}>
+        {!live && call.note_ref ? (
+          <Button variant="secondary" dense onClick={() => openRef(call.note_ref!)} data-testid="calls-open-note">
+            <ToolGlyph kind="note" />
+            Open note
+          </Button>
+        ) : null}
+        <Button variant="ghost" dense className="cl-back" onClick={onBack} data-testid="calls-back">All calls</Button>
+      </Mast>
+      <Spine className="cl-spine" tone={tone} label={outcome.word} />
+      {live && call.hold ? (
+        <Plate tone="brass" head="HoldSpeak asks" facts={clock != null ? clockWords(clock) : undefined} testId="calls-hold" settle={settle}>
+          <p className="cl-plate-words">{call.hold.words}</p>
+          <div className="cl-plate-verbs">
+            <Button variant="primary" dense loading={busy === "decide" && !settle} onClick={() => onDecide("approve")} data-testid="calls-yes">Yes</Button>
+            <Button variant="secondary" dense disabled={busy === "decide"} onClick={() => onDecide("deny")} data-testid="calls-no">No</Button>
+            {hangUp}
+          </div>
+        </Plate>
+      ) : live ? (
+        <Plate tone="steel" head="On the line" facts={clock != null ? clockWords(clock) : undefined} testId="calls-plate">
+          <div className="cl-plate-verbs">{hangUp}</div>
+        </Plate>
+      ) : (
+        <Plate tone={tone} head={outcome.word} facts={length || undefined} testId="calls-plate">
+          <div className="cl-plate-verbs"><CallMe canCall={canCall} busy={busy === "place"} onCall={onCall} /></div>
+        </Plate>
+      )}
+      <div className="cl-ledger" role="group" aria-label="The call">
+        {/* The turns scroll in their own well: a live call follows its newest line there, and the plate keeps its place. */}
+        {segments.length ? <div className="cl-turns"><LiveTranscript segments={segments} listening={live && !call.hold} /></div> : null}
+        {results.length || call.note_ref ? (
+          <section className="calls-done" aria-label="Done on this call" data-testid="calls-done">
+            <h3 className="cl-cap">Done on this call</h3>
+            {results.map((result, index) => (
+              <ResultRow key={`${result.ref}-${index}`} kind={result.kind} label={result.label}
+                word={EFFECT_WORDS[result.effect] ?? result.effect} onOpen={result.ref ? () => openRef(result.ref) : undefined}
+                testId="calls-result" />
+            ))}
+            {call.note_ref ? (
+              <ResultRow kind="note" label={noteWhen(call)} word="Transcript" onOpen={() => openRef(call.note_ref!)} testId="calls-transcript-note" />
+            ) : null}
+          </section>
+        ) : null}
+      </div>
+    </article>
+  );
+}
+
+/* ── the window ───────────────────────────────────────────────────────── */
+
+type Picked = { kind: "call"; id: string } | { kind: "phone" } | null;
 
 export function CallsCore({ scope }: CoreProps) {
   const calls = useCalls();
+  const phoneOn = Boolean(calls.settings?.phone_on);
+  const phone = usePhone(phoneOn);
   const asks = usePhoneFocus.getState();
-  const { view, setView } = useCoreWings(CALLS_WINGS, scope === "phone" || (asks.pending && !asks.callId) ? "phone" : "calls");
-  const phone = usePhone(view === "phone");
-  /* Answer here (Needs you) and the Today line ask for the Phone wing. */
+  const [picked, setPicked] = useState<Picked>(scope === "phone" || (asks.pending && !asks.callId) ? { kind: "phone" } : null);
   const asked = usePhoneFocus((st) => st.pending);
   const askedCall = usePhoneFocus((st) => st.callId);
   const [viewing, setViewing] = useState<Call | null>(null);
   const [busy, setBusy] = useState<"" | "place" | "hangup" | "decide" | "open">("");
   const [refusal, setRefusal] = useState("");
   const [settle, setSettle] = useState<"" | "yes" | "no">("");
-  const [sort, setSort] = useState<ObjectListSort>({ key: "when", dir: "desc" });
+  const [fold, setFold] = useState<"" | "line" | "phone">("");
   const active = calls.active;
-  const shown = active ?? calls.ended ?? viewing;
+  const onPhone = picked?.kind === "phone";
+  const shown = onPhone ? null : active ?? calls.ended ?? viewing;
   const clock = useCallClock(active);
   useWindowInterior("list");
 
   const ready = callsReady(calls.settings, calls.status);
   const mine = calls.settings?.allowed_numbers ?? [];
-  const canCall = ready && mine.length > 0;
-
+  const canCall = ready && mine.length > 0 && !active;
   const onLine = lineInUse(calls.status);
+
   const run = async (kind: typeof busy, act: () => Promise<void>) => {
     setBusy(kind);
     setRefusal("");
     try { await act(); } catch (error) { setRefusal(refusalWords(error, onLine)); } finally { setBusy(""); }
   };
-  const callMe = () => run("place", async () => {
+  const callMe = () => void run("place", async () => {
     setViewing(null);
+    setPicked(null);
     calls.clearEnded();
     calls.apply(withTranscript(await placeCall(), null));
   });
@@ -293,167 +413,173 @@ export function CallsCore({ scope }: CoreProps) {
       calls.apply(next);
     });
   };
-  const open = (id: string) => void run("open", async () => { setViewing(await readCall(id)); });
-  const openFromPhone = (id: string) => { setView("calls"); open(id); };
+  const open = (id: string) => {
+    setPicked({ kind: "call", id });
+    if (active?.id === id) return;
+    calls.clearEnded();
+    void run("open", async () => { setViewing(await readCall(id)); });
+  };
   useEffect(() => {
     if (!asked) return;
-    if (askedCall) openFromPhone(askedCall);
-    else setView("phone");
+    if (askedCall) open(askedCall);
+    else setPicked({ kind: "phone" });
     usePhoneFocus.getState().take();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [asked, askedCall]);
-  const back = () => { setViewing(null); calls.clearEnded(); };
+  const back = () => { setViewing(null); setPicked(null); calls.clearEnded(); };
+  /** The Line's one writer (the `calls` subtree), then the window reads again. */
+  const writeLine = async (_key: "line", value: unknown) => {
+    await writeCallsSetting("line", value);
+    await calls.reload();
+  };
 
-  const rows: ObjectListRow[] = calls.calls.filter((row) => row.state === "ended").map((call) => {
-    const outcome = outcomeOf(call);
-    const length = call.duration_sec && call.duration_sec > 0 ? clockWords(call.duration_sec) : "";
-    return {
-      id: call.id,
-      kind: "call",
-      kindWord: "Call",
-      name: call.first_words ? `“${call.first_words}”` : (call.direction === "out" ? "HoldSpeak called you" : "No words"),
-      when: callWhen(call.started_at),
-      whenSort: at(call.started_at) || 0,
-      state: { label: outcome.word, tone: outcome.tone, testId: "calls-outcome" },
-      cells: { from: remoteWords(call.remote, mine), length },
-      sortValues: { from: remoteWords(call.remote, mine), length: call.duration_sec ?? 0 },
-    };
-  });
-  const ended = rows.length;
+  const ended = calls.calls.filter((row) => row.state === "ended")
+    .sort((a, b) => (at(b.started_at) || 0) - (at(a.started_at) || 0));
+  const live = calls.calls.filter((row) => row.state !== "ended");
+  const pickedId = onPhone ? null : shown?.id ?? null;
 
-  const statusItems: Array<StatusBarItem | null> = refusal ? [
-    { key: "refusal", lamp: "warn", text: refusal, testId: "calls-refusal" },
-  ] : active ? [
-    { key: "live", lamp: "fail", live: true, text: "On a call", testId: "calls-status-live" },
-    // The clock counts in place: no fade each second (a moment runs once).
-    clock != null ? { key: "clock", text: <span className="calls-clock">{clockWords(clock)}</span>, testId: "calls-clock" } : null,
-    active.hold ? { key: "hold", text: "Waiting for your answer" } : null,
-  ] : shown ? [
-    { key: "ended", text: <span className="calls-idle-word"><span className="kit-dot" data-tone="idle" aria-hidden="true" />Call ended</span> },
-    shown.duration_sec ? { key: "length", text: <b>{clockWords(shown.duration_sec)}</b> } : null,
-  ] : !calls.settings || !calls.settings.enabled ? [
-    {
-      key: "off",
-      testId: "calls-status-off",
-      text: (
-        <span className="calls-idle-word">
-          <span className="kit-dot" data-tone="idle" aria-hidden="true" />
-          Calls are off
-        </span>
-      ),
-    },
-  ] : onLine ? [
-    lineBarItem(calls.status),
-  ] : calls.status.aiphone.state !== "running" ? [
-    { key: "daemon", lamp: "warn", text: "ai-phone not running", testId: "calls-status-daemon" },
-  ] : [
-    { key: "ready", lamp: "ok", text: "Ready for calls", testId: "calls-status-ready" },
-  ];
-  if (!active) statusItems.push({ key: "count", text: countWords(ended, "call") });
-
-  if (view === "phone") {
-    return <PhoneWing phone={phone} canCall={canCall && !active} calling={busy === "place"} onCallMe={() => void callMe()} onOpenCall={openFromPhone} />;
+  let statusItems: Array<StatusBarItem | null>;
+  let statusVerbs: ReactNode = null;
+  if (onPhone) {
+    statusItems = phoneStatusItems(phone);
+  } else {
+    statusItems = refusal ? [
+      { key: "refusal", lamp: "warn", text: refusal, testId: "calls-refusal" },
+    ] : active ? [
+      { key: "live", lamp: "fail", live: true, text: "On a call", testId: "calls-status-live" },
+      // The clock counts in place: no fade each second (a moment runs once).
+      clock != null ? { key: "clock", text: <span className="calls-clock">{clockWords(clock)}</span>, testId: "calls-clock" } : null,
+      active.hold ? { key: "hold", text: "Waiting for your answer" } : null,
+    ] : shown ? [
+      { key: "ended", text: <span className="calls-idle-word"><span className="kit-dot" data-tone="idle" aria-hidden="true" />Call ended</span> },
+      shown.duration_sec ? { key: "length", text: <b>{clockWords(shown.duration_sec)}</b> } : null,
+    ] : !calls.settings || !calls.settings.enabled ? [
+      {
+        key: "off",
+        testId: "calls-status-off",
+        text: (
+          <span className="calls-idle-word">
+            <span className="kit-dot" data-tone="idle" aria-hidden="true" />
+            Calls are off
+          </span>
+        ),
+      },
+    ] : onLine ? [
+      lineBarItem(calls.status),
+    ] : calls.status.aiphone.state !== "running" ? [
+      { key: "daemon", lamp: "warn", text: "ai-phone not running", testId: "calls-status-daemon" },
+    ] : [
+      { key: "ready", lamp: "ok", text: "Ready for calls", testId: "calls-status-ready" },
+    ];
+    if (!active) statusItems.push({ key: "count", text: countWords(ended.length, "call") });
+    if (!active && !shown && (!calls.settings || !calls.settings.enabled)) {
+      statusVerbs = (
+        <Button variant="ghost" dense className="calls-status-link" onClick={openCallsSettings} data-testid="calls-open-settings">
+          Settings ▸ Calls
+        </Button>
+      );
+    }
   }
 
-  let body: ReactNode;
-  /* The body's phase keys it, so what arrives after the first read (the
-     list, a call, the empty object) fades up under the toolbar once, as the
-     first paint does (pullout.css). A call that changes in place does not. */
-  const phase = calls.loading || calls.error ? "read" : shown ? `call-${shown.id}` : !ended ? "empty" : "list";
-  if (calls.loading || calls.error) {
-    body = <SurfaceState loading={calls.loading} error={calls.error} onRetry={() => void calls.reload()} />;
+  /* The pane's phase keys it, so what arrives after the first read (the
+     home, a call, the phone) fades up once, as the first paint does
+     (pullout.css). A call that changes in place does not. */
+  const phase = onPhone ? "phone" : calls.loading || calls.error ? "read" : shown ? `call-${shown.id}` : !ended.length ? "empty" : "list";
+  const lineFold = calls.settings?.line ? "line" : null;
+  const setUpLine = () => (lineFold ? setFold("line") : openSurfaceOr("configure-settings", "/settings", "calls::line"));
+
+  let pane: ReactNode;
+  if (onPhone) {
+    pane = (
+      // With the phone off the hub has nothing to read: no phone yet, at once.
+      <PhonePane phone={phoneOn ? phone : { ...phone, loading: false }} onOpenCall={open} onBack={back}
+        onPair={phoneOn ? () => setFold("phone") : openCallsSettings} />
+    );
+  } else if (calls.loading || calls.error) {
+    pane = <SurfaceState loading={calls.loading} error={calls.error} onRetry={() => void calls.reload()} />;
   } else if (shown) {
-    body = <CallDocument call={shown} live={Boolean(active)} busy={busy === "decide" && !settle} settle={settle} onDecide={answer} />;
-  } else if (!ended) {
-    body = (
-      <SurfaceState
-        empty
-        emptyKind="call"
-        emptyImage={spriteUrl("call", "calls")}
-        emptyLabel={onLine && !ready ? "No line yet" : "No calls yet"}
-        emptyHint={onLine && !ready ? "Set up the Line, then Call me rings your number." : "Call me rings your number and HoldSpeak answers."}
-        actionLabel={canCall ? "Call me" : onLine ? "Set up the Line ›" : "Set up calls"}
-        onAction={canCall ? () => void callMe() : onLine ? openLineSettings : openCallsSettings}
-      />
+    pane = (
+      <CallPane call={shown} live={Boolean(active && active.id === shown.id)} clock={clock} mine={mine} status={calls.status}
+        busy={busy} settle={settle} canCall={canCall} onCall={callMe} onHangUp={hangup} onDecide={answer} onBack={back} />
     );
   } else {
-    body = (
-      <div className="calls-list" data-testid="calls-list">
-        <ObjectList
-          label="Past calls"
-          density="dense"
-          rows={rows}
-          columns={[
-            { key: "name", word: "First words" },
-            { key: "from", word: "From", track: "96px" },
-            { key: "when", word: "When", track: "136px" },
-            { key: "length", word: "Length", track: "72px" },
-            { key: "state", word: "Outcome", track: "120px" },
-          ]}
-          sort={sort}
-          onSort={(key: string) => setSort((now) => ({ key, dir: now.key === key && now.dir === "desc" ? "asc" : "desc" }))}
-          onOpen={open}
-          rowProps={(row) => ({ "data-testid": "calls-row", "data-call": row.id })}
-        />
+    const number = mine[0] ? masked(digits(mine[0])) : "";
+    pane = (
+      <div className="cl-object cl-home">
+        <Plate tone={ready ? "steel" : "idle"} head="Place a call" facts={number ? `Rings ${number}` : undefined} testId="calls-plate">
+          <div className="cl-plate-verbs">
+            <CallMe canCall={canCall} busy={busy === "place"} onCall={callMe} />
+          </div>
+        </Plate>
+        {ended.length ? null : (
+          <SurfaceState
+            empty
+            emptyKind="call"
+            emptyImage={spriteUrl("call", "calls")}
+            emptyLabel={onLine && !ready ? "No line yet" : "No calls yet"}
+            emptyHint={onLine && !ready ? "Set up the Line, then Call me rings your number." : "Call me rings your number and HoldSpeak answers."}
+            actionLabel={canCall ? undefined : onLine ? "Set up the Line ›" : "Set up calls"}
+            onAction={canCall ? undefined : onLine ? setUpLine : openCallsSettings}
+          />
+        )}
       </div>
     );
   }
 
+  const hasRail = live.length > 0 || ended.length > 0 || phoneOn;
   return (
-    <div className="calls-window" data-testid="calls-window" data-state={active ? "live" : shown ? "call" : "list"}>
-      <Toolbar label="Calls" data-testid="calls-toolbar">
-        {active ? (
-          <Button variant="danger" dense loading={busy === "hangup"} onClick={hangup} data-testid="calls-hangup">
-            <CallGlyph down />
-            Hang up
-          </Button>
-        ) : (
-          <>
-            <Button
-              variant="primary"
-              dense
-              loading={busy === "place"}
-              disabled={!canCall}
-              title={canCall ? "HoldSpeak rings your number" : "Set up calls in Settings ▸ Calls"}
-              onClick={() => void callMe()}
-              data-testid="calls-call-me"
-            >
-              <CallGlyph />
-              Call me
-            </Button>
-            {shown?.note_ref ? (
-              <Button variant="secondary" dense onClick={() => openRef(shown.note_ref!)} data-testid="calls-open-note">
-                <ToolGlyph kind="note" />
-                Open note
-              </Button>
+    <div className="calls-window cl" data-testid="calls-window" data-state={onPhone ? "phone" : active ? "live" : shown ? "call" : "list"}>
+      <div className="cl-frame" data-picked={onPhone || shown ? "" : undefined}>
+        {hasRail ? (
+          <nav className="cl-rail" aria-label="Calls" data-testid="calls-rail">
+            {live.length ? (
+              <div className="cl-group" role="group" aria-label="On the line">
+                <h3 className="cl-cap">On the line</h3>
+                <ul className="cl-rows">
+                  {live.map((call) => <CallRow key={call.id} call={call} mine={mine} picked={call.id === pickedId} onPick={() => open(call.id)} />)}
+                </ul>
+              </div>
             ) : null}
-            {shown ? (
-              <Button variant="secondary" dense onClick={back} data-testid="calls-back">All calls</Button>
+            {ended.length ? (
+              <div className="cl-group" role="group" aria-label="Recent">
+                <h3 className="cl-cap">Recent</h3>
+                <ul className="cl-rows" data-testid="calls-list">
+                  {ended.map((call) => <CallRow key={call.id} call={call} mine={mine} picked={call.id === pickedId} onPick={() => open(call.id)} />)}
+                </ul>
+              </div>
             ) : null}
-          </>
-        )}
-      </Toolbar>
-      <div className="calls-body" key={phase} data-phase={phase}>{body}</div>
-      <StatusBar
-        data-testid="calls-status"
-        items={statusItems}
-        verbs={!active && !shown && (!calls.settings || !calls.settings.enabled) ? (
-          <Button variant="ghost" dense className="calls-status-link" onClick={openCallsSettings} data-testid="calls-open-settings">
-            Settings ▸ Calls
-          </Button>
+            <div className="cl-group" role="group" aria-label="Your phone">
+              <h3 className="cl-cap">Your phone</h3>
+              <ul className="cl-rows">
+                <PhoneRow phone={phone} on={phoneOn} picked={onPhone} onPick={() => setPicked({ kind: "phone" })} />
+              </ul>
+            </div>
+          </nav>
         ) : null}
-      />
+        <div className="calls-body cl-pane" key={phase} data-phase={phase}>{pane}</div>
+      </div>
+      {lineFold || phoneOn ? (
+        <div className="cl-folds">
+          {lineFold ? (
+            <div className="cl-fold" data-testid="calls-fold-line" data-open={fold === "line" || undefined}>
+              <FoldGadget title="Line" open={fold === "line"} onToggle={(open) => setFold((now) => (open ? "line" : now === "line" ? "" : now))}>
+                {fold === "line" && calls.settings ? (
+                  <LineSettingsPane settings={calls.settings} onWrite={writeLine} onReload={calls.reload} />
+                ) : null}
+              </FoldGadget>
+            </div>
+          ) : null}
+          {phoneOn ? (
+            <div className="cl-fold" data-testid="calls-fold-phone" data-open={fold === "phone" || undefined}>
+              <FoldGadget title="Phone" open={fold === "phone"} onToggle={(open) => setFold((now) => (open ? "phone" : now === "phone" ? "" : now))}>
+                {fold === "phone" ? <PhoneSettingsPane /> : null}
+              </FoldGadget>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+      <StatusBar data-testid="calls-status" items={statusItems} verbs={statusVerbs} />
     </div>
-  );
-}
-
-/** The handset glyph of Call me and Hang up (16 px, the toolbar pen). */
-function CallGlyph({ down = false }: { down?: boolean }) {
-  return (
-    <svg className="kit-toolglyph calls-glyph" data-down={down || undefined} width={16} height={16} viewBox="0 0 16 16"
-      fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
-      <path d="M5.2 2.75 3.4 3.6c-.6.3-.9 1-.7 1.6 1.3 3.8 4.2 6.8 8.1 8.1.6.2 1.3-.1 1.6-.7l.85-1.8-2.6-1.5-1.2 1.1c-1.5-.7-2.7-1.9-3.4-3.4l1.1-1.2Z" />
-    </svg>
   );
 }
 

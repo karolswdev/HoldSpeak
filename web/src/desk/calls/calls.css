@@ -1,101 +1,189 @@
-/* Calls (CALLS-DESIGN-2026-10-28 §6; canvas betterment/canvases/calls-2026-10-28.html).
-   The window: Toolbar → the body (the call as a document, or the dense list)
-   → the 24 px StatusBar. Sans 13 rows, 12 muted facts, a state is a dot and a
-   word; the held question is ONE warm plate. Nothing moves on hover. */
-.desk-next .calls-window {
+/* Calls, the native app (the language, 2026-11-08; Agents and Meetings are
+   the pattern): the rail of calls and the phone at the left, the picked
+   thing at the right (mast, spine, the raised plate, the ledger), the Line
+   and Phone folds at the foot, one status bar. Ink text, one colour per
+   meaning: steel on the line, brass waits on him, moss done, coral at risk.
+   A narrow window shows the rail or the picked thing, never both. */
+.desk-next .calls-window.cl {
   display: flex;
   flex-direction: column;
-  min-height: 100%;
-  min-width: 0;
-}
-.desk-next .calls-body {
-  flex: 1 1 auto;
+  height: 100%;
   min-height: 0;
   min-width: 0;
+  background: var(--hs-ground);
+  color: var(--hs-ink);
 }
-.desk-next .calls-list { min-height: 100%; }
-.desk-next .calls-doc {
+.desk-next .cl-frame { display: flex; flex: 1 1 auto; min-width: 0; min-height: 0; }
+.desk-next .cl-pane {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+}
+.desk-next .cl-pane > .surface-state { flex: 1 1 auto; margin: 16px 20px; }
+
+/* The rail. */
+.desk-next .cl-rail {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: 12px;
+  width: 260px;
+  padding: 12px 10px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  background: var(--hs-rule);
+  border-right: 1px solid var(--hs-edge);
+}
+.desk-next .cl-group { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.desk-next .cl-cap { margin: 0; padding: 0 4px; color: var(--hs-ink-2); font: 600 12px / 16px var(--font-sans); }
+.desk-next .cl-rows { display: flex; flex-direction: column; gap: 2px; margin: 0; padding: 0; list-style: none; }
+.desk-next .cl-item { display: block; min-width: 0; }
+.desk-next .cl-row {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) auto;
+  grid-template-areas: "sprite title state" "sprite facts facts" "spine spine spine";
+  align-items: center;
+  gap: 2px 10px;
+  box-sizing: border-box;
+  width: 100%;
+  height: auto;
+  min-height: 52px;
+  margin: 0;
+  padding: 8px 8px 6px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--hs-ink);
+  text-align: left;
+  justify-content: stretch;
+  transition: background-color var(--duration-short) var(--ease-standard), box-shadow var(--duration-short) var(--ease-standard);
+}
+.desk-next .cl-row:hover { background: var(--hs-plate); }
+.desk-next .cl-row:focus-visible { outline: 2px solid var(--hs-steel); outline-offset: 1px; }
+.desk-next .cl-row[data-picked] { background: var(--hs-raised); box-shadow: var(--hs-raised-shadow), 0 0 0 1px var(--hs-steel); }
+.desk-next .cl-row[data-picked][data-tone="brass"] { box-shadow: var(--hs-raised-shadow), 0 0 0 1px var(--hs-brass); }
+.desk-next .cl-row-sprite { grid-area: sprite; width: 32px; height: 32px; object-fit: contain; image-rendering: auto; }
+.desk-next .cl-row-sprite.phone-handset { border-radius: 8px; }
+.desk-next .cl-row-title {
+  grid-area: title;
+  min-width: 0;
+  overflow: hidden;
+  font: 600 13px / 18px var(--font-sans);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.desk-next .cl-row-state { grid-area: state; color: var(--hs-ink-2); font: 500 12px / 16px var(--font-sans); white-space: nowrap; }
+.desk-next .cl-row-state[data-tone="ask"] { color: var(--hs-brass-ink); }
+.desk-next .cl-row-state:is([data-tone="fail"], [data-tone="warn"]) { color: var(--hs-coral-ink); }
+.desk-next .cl-row-state[data-tone="ok"] { color: var(--hs-moss-ink); }
+.desk-next .cl-row-state[data-tone="info"] { color: var(--hs-steel); }
+@media (prefers-reduced-motion: no-preference) {
+  .desk-next .cl-row-state[data-live] { animation: cl-breathe var(--motion-breathe) ease-in-out infinite; }
+}
+@keyframes cl-breathe { 50% { opacity: 0.55; } }
+.desk-next .cl-row-facts {
+  grid-area: facts;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--hs-ink-2);
+  font: 400 12px / 16px var(--font-mono);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.desk-next .cl-row-facts > span + span::before { content: "·"; margin-inline: 6px; }
+.desk-next .cl-row-spine { grid-area: spine; width: auto; margin: 4px 0 0 42px; }
+
+/* The picked thing: mast, spine, the plate, the ledger. */
+.desk-next .cl-object { display: flex; flex-direction: column; min-width: 0; padding-bottom: 20px; }
+.desk-next .cl-mast { padding: 18px 22px 0; }
+.desk-next .cl-spine { display: flex; width: auto; margin: 12px 22px 0; }
+.desk-next .cl-back { display: none; }
+.desk-next .cl-plate {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  max-width: 780px;
-  padding: 12px 16px 14px 4px;
+  margin: 14px 22px 0;
+  padding: 16px 18px;
+  border: 1px solid var(--hs-edge);
+  border-radius: 10px;
+  background: var(--hs-raised);
+  box-shadow: var(--hs-raised-shadow);
 }
-/* The caller's lines read plain; HoldSpeak's name wears the info ink. */
-.desk-next .calls-doc .live-doc-line[data-who="caller"] .live-doc-who { color: var(--wb-ink); }
-.desk-next .calls-doc .live-doc-line[data-who="holdspeak"] .live-doc-who { color: var(--wb-info-ink); }
+.desk-next .cl-home > .cl-plate { margin-top: 18px; }
+.desk-next .cl-plate[data-tone="steel"] { border-color: var(--hs-steel); }
+.desk-next .cl-plate[data-tone="brass"] { border-color: var(--hs-brass); box-shadow: var(--hs-raised-shadow), 0 0 0 3px var(--hs-brass-tint); }
+.desk-next .cl-plate[data-tone="moss"] { border-color: var(--hs-moss); }
+.desk-next .cl-plate[data-tone="coral"] { border-color: var(--hs-coral); }
+.desk-next .cl-plate-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; margin: 0; }
+.desk-next .cl-plate-title { margin: 0; color: var(--hs-ink); font: 600 18px / 24px var(--font-sans); letter-spacing: -0.01em; }
+.desk-next .cl-plate-facts { color: var(--hs-ink-2); font: 400 12px / 16px var(--font-mono); font-variant-numeric: tabular-nums; }
+.desk-next .cl-plate-words { margin: 0; max-width: 78ch; color: var(--hs-ink); font: 600 15px / 22px var(--font-sans); overflow-wrap: anywhere; }
+.desk-next .cl-plate-verbs { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.desk-next .cl-plate-refusal { margin: 0; color: var(--hs-coral-ink); font: 500 13px / 1.4 var(--font-sans); }
+.desk-next .cl-plate .phone-compose { padding: 0; }
+.desk-next .cl-ledger { display: flex; flex-direction: column; gap: 10px; margin: 18px 22px 0; min-width: 0; }
+.desk-next .cl-ledger > .surface-state { margin: 0; }
+.desk-next .cl-turns { max-height: 320px; overflow-y: auto; border-radius: 8px; background: var(--hs-plate); padding: 6px 4px; }
+.desk-next .cl-home > .surface-state { margin: 16px 22px 0; }
+/* The caller's lines read plain; HoldSpeak's name wears the steel. */
+.desk-next .cl-ledger .live-doc-line[data-who="caller"] .live-doc-who { color: var(--hs-ink); }
+.desk-next .cl-ledger .live-doc-line[data-who="holdspeak"] .live-doc-who { color: var(--hs-steel); }
 
-/* The held question: one warm plate row, the words and Yes / No. */
-.desk-next .calls-hold {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-left: 64px;
-  min-height: 36px;
-  padding: 6px 8px 6px 12px;
-  border: 1px solid color-mix(in srgb, var(--wb-ember-ink) 30%, var(--wb-rule-soft));
-  border-radius: 6px;
-  background: color-mix(in srgb, var(--wb-ember-ink) 8%, var(--wb-paper));
-  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--wb-ember-ink) 72%, transparent);
-}
-.desk-next .calls-hold-words {
-  flex: 1 1 auto;
-  min-width: 0;
-  font: 500 13px / 1.4 var(--font-sans);
-  color: var(--wb-ink);
-}
-.desk-next .calls-hold-verbs { display: inline-flex; flex: none; gap: 6px; }
+/* The Line and the Phone at the window's foot: two folds; an open one
+   scrolls inside its own band so the picked thing keeps its place. */
+.desk-next .cl-folds { flex: none; border-top: 1px solid var(--hs-edge); background: var(--hs-rule); }
+.desk-next .cl-fold + .cl-fold { border-top: 1px solid var(--hs-edge); }
+.desk-next .cl-fold > .gadget-fold { margin: 0; }
+.desk-next .cl-fold > .gadget-fold > summary { padding: 0 14px; min-height: 32px; }
+.desk-next .cl-fold[data-open] > .gadget-fold { max-height: 52vh; overflow-y: auto; padding-bottom: 12px; background: var(--hs-ground); }
+.desk-next .cl-fold[data-open] > .gadget-fold > :not(summary) { margin: 8px 14px 0; }
+
+/* The held question: the plate washes out once the hub has the answer. */
 /* DELIGHT slice 4 (2026-10-28) — the answer settles out: once the hub has
-   the Yes or the No, the row washes (green for Yes, the quiet rule for No)
+   the Yes or the No, the plate washes (green for Yes, the quiet rule for No)
    and fades, 180 ms, opacity and colour only (CallsWindow SETTLE_MS); then
    the call reads on without it. Nothing under reduced motion. */
 @media (prefers-reduced-motion: no-preference) {
-  .desk-next .calls-hold[data-settle] {
+  .desk-next .cl-plate[data-settle] {
     pointer-events: none;
     animation: calls-hold-settle-yes 180ms var(--ease-standard) both;
   }
-  .desk-next .calls-hold[data-settle="no"] { animation-name: calls-hold-settle-no; }
+  .desk-next .cl-plate[data-settle="no"] { animation-name: calls-hold-settle-no; }
 }
 @keyframes calls-hold-settle-yes {
-  from {
-    border-color: color-mix(in srgb, var(--ok-strong) 40%, var(--wb-rule-soft));
-    background: color-mix(in srgb, var(--ok-strong) 16%, var(--wb-paper));
-    box-shadow: inset 3px 0 0 var(--ok-strong);
-    opacity: 1;
-  }
-  to {
-    border-color: color-mix(in srgb, var(--ok-strong) 40%, var(--wb-rule-soft));
-    background: color-mix(in srgb, var(--ok-strong) 16%, var(--wb-paper));
-    box-shadow: inset 3px 0 0 var(--ok-strong);
-    opacity: 0;
-  }
+  from { border-color: var(--hs-moss); background: var(--hs-moss-tint); opacity: 1; }
+  to { border-color: var(--hs-moss); background: var(--hs-moss-tint); opacity: 0; }
 }
 @keyframes calls-hold-settle-no {
-  from {
-    border-color: var(--wb-rule-soft);
-    background: color-mix(in srgb, var(--wb-muted) 12%, var(--wb-paper));
-    box-shadow: inset 3px 0 0 color-mix(in srgb, var(--wb-muted) 60%, transparent);
-    opacity: 1;
-  }
-  to {
-    border-color: var(--wb-rule-soft);
-    background: color-mix(in srgb, var(--wb-muted) 12%, var(--wb-paper));
-    box-shadow: inset 3px 0 0 color-mix(in srgb, var(--wb-muted) 60%, transparent);
-    opacity: 0;
-  }
+  from { border-color: var(--hs-edge); background: var(--hs-plate); opacity: 1; }
+  to { border-color: var(--hs-edge); background: var(--hs-plate); opacity: 0; }
+}
+
+/* A narrow window (the phone at 393, or a narrow window at 1440): the rail
+   fills it; a picked call or the phone takes its place, with All calls. */
+@container surface (max-width: 639.9px) {
+  .desk-next .cl-frame { flex-direction: column; overflow-y: auto; }
+  .desk-next .cl-frame:not([data-picked]) > .cl-pane { flex: none; overflow: visible; }
+  .desk-next .cl-frame[data-picked] > .cl-rail { display: none; }
+  .desk-next .cl-rail { width: auto; flex: 1 0 auto; overflow: visible; border-right: 0; border-top: 1px solid var(--hs-edge); }
+  .desk-next .cl-frame:not([data-picked]) > .cl-rail { order: 2; }
+  .desk-next .cl-back { display: inline-flex; }
+  .desk-next .cl-mast { padding: 14px 14px 0; }
+  .desk-next .cl-spine,
+  .desk-next .cl-ledger { margin-left: 12px; margin-right: 12px; }
+  .desk-next .cl-home > .surface-state { margin: 12px 12px 0; }
+  .desk-next .cl-plate { margin: 12px 12px 0; padding: 14px; }
+  .desk-next .cl-plate-verbs { flex-direction: column; align-items: stretch; }
+  .desk-next .cl-plate-verbs > .btn { width: 100%; min-height: 44px; }
+  .desk-next .cl-row { min-height: 56px; }
+  .desk-next .cl-fold > .gadget-fold > summary { min-height: 44px; }
 }
 
 /* Done on this call: dense rows, a kind mark, the label, the effect word. */
-.desk-next .calls-done { margin-left: 64px; }
-.desk-next .calls-done-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 4px 0 2px;
-  font: 600 12px / 1.4 var(--font-sans);
-  color: var(--wb-muted);
-}
-.desk-next .calls-done-title::after { content: ""; flex: 1; border-top: 1px solid var(--wb-rule-soft); }
+.desk-next .calls-done { display: flex; flex-direction: column; gap: 4px; }
 .desk-next .calls-result {
   display: grid;
   grid-template-columns: 20px minmax(0, 1fr) auto;
@@ -232,10 +320,6 @@
 /* Phone and narrow windows: the rows stack; every verb is a 44 px target;
    Yes and No are thumb-sized. */
 @container surface (max-width: 560px) {
-  .desk-next .calls-hold { flex-wrap: wrap; margin-left: 0; }
-  .desk-next .calls-hold-verbs { width: 100%; justify-content: flex-end; }
-  .desk-next .calls-hold-verbs .btn { min-height: 44px; min-width: 72px; font-size: 15px; }
-  .desk-next .calls-done { margin-left: 0; }
   .desk-next .calls-result { min-height: 44px; }
   .desk-next .calls-step-line {
     grid-template-columns: minmax(0, 1fr) max-content;

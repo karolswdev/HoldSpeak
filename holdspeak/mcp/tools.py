@@ -979,7 +979,8 @@ def runtime_registry(primitives: Any = None, meetings: Any = None) -> operations
              "decision_lifecycle_service": lambda: DecisionLifecycleService(db, observer=obs),
              "follow_through_service": lambda: FollowThroughService(db, observer=obs)}
     return operations.for_runtime(program_service=lambda: operations.LIVE_PROGRAM_SERVICE,
-                                  phone_service=lambda: operations.LIVE_PHONE_SERVICE, **{
+                                  phone_service=lambda: operations.LIVE_PHONE_SERVICE,
+                                  calls_service=lambda: operations.LIVE_CALLS_SERVICE, **{
         name: (lambda name=name, build=build: runtime_service(name, build)) for name, build in plain.items()})
 
 

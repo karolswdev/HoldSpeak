@@ -820,6 +820,7 @@ def test_the_catalogue_is_explicit_descriptors() -> None:
         'meeting.intel_jobs', 'meeting.intel_retry', 'meeting.intel_recovery', 'meeting.intel_recovery_retry', 'meeting.intel_recovery_skip', 'meeting.aftercare',
         'meeting.aftercare_proposals', 'meeting.aftercare_decide', 'automation.set_when', 'automation.set_engine', 'automation.make_one', 'automation.template.list',
         'automation.template.instantiate', 'automation.result.open', 'automation.new.list', 'automation.lesson.list', 'automation.lesson.forget',
+        'calls.status', 'calls.list', 'calls.get', 'calls.place', 'calls.hangup', 'calls.decide', 'calls.test_line',
         'decision.ledger', 'follow_through.commit_decision',
     ]
     # decision.list takes the empty object; its one optional argument is the

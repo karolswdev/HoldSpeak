@@ -1,7 +1,7 @@
 """The hub's calls: status, the listener, place, hang up, decide, the frame.
 
 One service behind the REST routes (``web/routes/calls.py``) and the MCP
-tools (``mcp/families/calls.py``). It keeps the last 20 calls in memory (as
+tools (``calls_operations.py``). It keeps the last 20 calls in memory (as
 ai-phone does); each finished call is a Note on the desk.
 
 "Full auto": while ``calls.enabled`` is on and ai-phone runs, the hub keeps
@@ -615,7 +615,12 @@ class CallsService:
         try:
             self.bind_loop()
         except RuntimeError:
-            return False
+            # A worker thread (a declared route, an MCP call): start it on the hub's loop.
+            loop = self._loop
+            if loop is None or not loop.is_running():
+                return False
+            loop.call_soon_threadsafe(self.ensure_listening)
+            return True
         self._listener = asyncio.ensure_future(self._listen_forever())
         return True
 
