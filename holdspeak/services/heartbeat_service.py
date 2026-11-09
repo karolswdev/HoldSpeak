@@ -1050,7 +1050,10 @@ class HeartbeatService:
         return receipt
 
     def _agent_window_in_front(self, launch_id: str) -> bool:
-        """The agent's own window (the lane on this launch) is the desk's front."""
+        """The agent's own face is the desk's front: the Agents window (``conductor``)
+        on this launch (one face per agent, 2026-11-08; a ``lane`` open is that
+        row). The session window is no hub row (NOT_ON_HUB): no view tells the
+        hub it is in front."""
         try:
             from holdspeak.services.desk_window_service import DeskWindowService
 
@@ -1058,7 +1061,7 @@ class HeartbeatService:
         except Exception:
             return False
         front = next((w for w in windows if w.get("front")), None)
-        return bool(front and front.get("id") == "lane" and front.get("object_ref") == f"launch:{launch_id}")
+        return bool(front and front.get("id") in {"conductor", "lane"} and front.get("object_ref") == f"launch:{launch_id}")
 
     # ── D3 notification decision (wired from run_sweep) ────────────────
 
