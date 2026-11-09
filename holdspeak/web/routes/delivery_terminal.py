@@ -25,7 +25,6 @@ from __future__ import annotations
 
 import asyncio
 import json
-from pathlib import Path
 from typing import Any, Optional
 
 import anyio
@@ -33,10 +32,11 @@ from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
 
-from ...db import get_observer
 from ...logging_config import get_logger
-from ...services.delivery_service import DeliveryService
+from ...services.delivery_service import TERMINAL_ABSENCE_HTTP
 from ..context import WebContext
+from . import delivery_declared
+from ._mount import mount_router
 
 log = get_logger("web.routes.delivery_terminal")
 
@@ -50,24 +50,6 @@ def _next_stream_frame(iterator: Any) -> Any:
     except StopIteration:
         return _STREAM_END
 
-NODE_TOKEN_HEADER = "X-HoldSpeak-Node-Token"
-
-# Typed subscription absences → HTTP status (§7.1). The envelope's
-# "status" field stays the contract's vocabulary either way.
-_ABSENCE_HTTP = {
-    "target_gone": 404,
-    "generation_mismatch": 409,
-    "stream_unavailable": 503,
-    "unauthorized": 401,
-}
-
-
-class _SubscriptionRequest(BaseModel):
-    target_id: str
-    target_generation: str
-    resume_sequence: Optional[int] = None
-    last_hash: Optional[str] = None
-
 
 class _LiveRequest(BaseModel):
     target_id: str
@@ -76,91 +58,18 @@ class _LiveRequest(BaseModel):
     resume_sequence: Optional[int] = None
 
 
-def build_delivery_terminal_router(
-    ctx: WebContext,
-    *,
-    service: Any = None,
-    stream: Any = None,
-    live: Any = None,
-    targets: Any = None,
-    workspace: Any = None,
-    link: Any = None,
-    hub_db: Any = None,
-    registry_path: Optional[Path] = None,
-    launches_path: Optional[Path] = None,
-    ledger_path: Optional[Path] = None,
-    local_node_id: str = "local",
-    mode_loader: Any = None,
-) -> APIRouter:
-    """Every keyword is a test seam (the delivery-router precedent).
-
-    ``service``/``stream``/``targets`` accept pre-built HS-94-06 objects
-    (tests inject fakes and clocks); absent, production defaults build
-    lazily on first request over the hub database and the node ledger.
-    ``link`` is the shared :class:`NodeLinkState` whose token store
-    authenticates the node results leg.
-    """
-    delivery_service = DeliveryService(hub_db, observer=get_observer()) if hub_db is not None else ctx.delivery_service
+def build_delivery_terminal_router(ctx: WebContext) -> APIRouter:
+    """The terminal routes. ``sessions`` and ``subscriptions`` are produced
+    from the ``delivery.terminal_sessions`` and ``delivery.terminal_read``
+    rows. Two stay written here: ``live`` answers an NDJSON stream, and
+    ``commands`` runs keys and process commands in a terminal (a spawn
+    among them). The targets, the stream, the commands and their test seams
+    live on ``ctx.delivery_service`` (``DeliveryService.configure``)."""
+    delivery_service = delivery_declared.delivery_of(ctx)
     router = APIRouter()
-    holder: dict[str, Any] = {
-        "service": service,
-        "stream": stream,
-        "live": live,
-        "targets": targets,
-        "workspace": workspace,
-        "link": link,
-    }
-
-    def _targets() -> Any:
-        if holder["targets"] is None:
-            from ...delivery.terminal import TerminalTargetRegistry
-
-            holder["targets"] = TerminalTargetRegistry()
-        return holder["targets"]
-
-    def _stream() -> Any:
-        if holder["stream"] is None:
-            from ...delivery.terminal import TerminalStreamService
-
-            holder["stream"] = TerminalStreamService(_targets())
-        return holder["stream"]
-
-    def _live() -> Any:
-        if holder["live"] is None:
-            if delivery_service is None:
-                raise RuntimeError("DeliveryService must be supplied at application composition")
-            holder["live"] = delivery_service.terminal_live_service(targets=_targets())
-        return holder["live"]
-
-    def _workspace() -> Any:
-        if holder["workspace"] is None:
-            if delivery_service is None:
-                raise RuntimeError("DeliveryService must be supplied at application composition")
-            workspace_args = {"targets": _targets(), "local_node_id": local_node_id}
-            if registry_path is not None:
-                workspace_args["registry_path"] = registry_path
-            if launches_path is not None:
-                workspace_args["launches_path"] = launches_path
-            holder["workspace"] = delivery_service.terminal_workspace_service(**workspace_args)
-        return holder["workspace"]
-
-    def _service() -> Any:
-        if holder["service"] is None:
-            if delivery_service is None:
-                raise RuntimeError("DeliveryService must be supplied at application composition")
-            holder["service"] = delivery_service.command_service(
-                targets=_targets(),
-                ledger_path=ledger_path,
-                local_node_id=local_node_id,
-                mode_loader=mode_loader,
-            )
-            # Remote nodes claim their queued commands through the shared
-            # node link; hook the claim source once the service exists.
-            if holder["link"] is not None and getattr(
-                holder["link"], "command_source", None
-            ) is None:
-                holder["link"].command_source = holder["service"].claim_for_node
-        return holder["service"]
+    mount_router(router, delivery_declared.router(
+        ctx, ("delivery.terminal_sessions", "delivery.terminal_read"), module=__name__,
+    ))
 
     def _refused(exc: Any) -> JSONResponse:
         reason = getattr(exc, "reason", "refused")
@@ -168,42 +77,6 @@ def build_delivery_terminal_router(
         return JSONResponse(
             {"ok": False, "error": reason, "detail": str(exc)}, status_code=status
         )
-
-    @router.get("/api/delivery/terminal/sessions")
-    async def api_terminal_sessions() -> Any:
-        """List current local terminal sessions from live tmux panes.
-
-        Discovery is a read-only projection. Blocking tmux and hook-registry
-        reads run off the event loop; an unclassified shell is still a useful
-        ``live`` pane and is never presented as an agent state.
-        """
-        try:
-            out = await asyncio.to_thread(_workspace().discover)
-        except Exception as exc:
-            log.error(f"terminal session discovery failure: {exc}")
-            return JSONResponse(
-                {"status": "error", "detail": "terminal session discovery failed", "sessions": []},
-                status_code=500,
-            )
-        return JSONResponse(out)
-
-    @router.post("/api/delivery/terminal/subscriptions")
-    async def api_terminal_subscribe(body: _SubscriptionRequest) -> Any:
-        try:
-            out = await asyncio.to_thread(
-                _stream().read,
-                body.target_id,
-                body.target_generation,
-                resume_sequence=body.resume_sequence,
-                last_hash=body.last_hash,
-            )
-        except Exception as exc:
-            log.error(f"terminal subscription failure: {exc}")
-            return JSONResponse(
-                {"error": "terminal_stream_failure"}, status_code=500
-            )
-        status = _ABSENCE_HTTP.get(out.get("status"))
-        return JSONResponse(out, status_code=status or 200)
 
     @router.post(
         "/api/delivery/terminal/live",
@@ -230,16 +103,15 @@ def build_delivery_terminal_router(
         the iterator detaches only the control client.
         """
         try:
-            subscription = await asyncio.to_thread(
-                _live().subscribe,
+            subscription = await asyncio.to_thread(lambda: delivery_service.terminal_subscribe(
                 body.target_id,
                 body.target_generation,
                 stream_id=body.stream_id,
                 resume_sequence=body.resume_sequence,
-            )
+            ))
         except Exception as exc:
             status_name = getattr(exc, "status", "stream_unavailable")
-            status_code = _ABSENCE_HTTP.get(status_name, 503)
+            status_code = TERMINAL_ABSENCE_HTTP.get(status_name, 503)
             detail = getattr(exc, "detail", str(exc))
             return JSONResponse(
                 {"status": status_name, "detail": detail}, status_code=status_code
@@ -272,27 +144,11 @@ def build_delivery_terminal_router(
         from ...principals import UNAUTHENTICATED
 
         body = payload if isinstance(payload, dict) else {}
-        operation = body.get("operation") or {}
         principal = getattr(
             request.state, "principal", UNAUTHENTICATED
         )
         try:
-            if (
-                operation.get("family") == "coder_steering"
-                and operation.get("verb") in {"terminal.text", "terminal.keys"}
-            ):
-                out = await asyncio.to_thread(
-                    _service().submit_process_input, body, principal
-                )
-            elif (
-                operation.get("family") == "coder_steering"
-                and operation.get("verb") == "process.resize@1"
-            ):
-                out = await asyncio.to_thread(
-                    _service().submit_process_resize, body, principal
-                )
-            else:
-                out = await asyncio.to_thread(_service().submit, body)
+            out = await asyncio.to_thread(lambda: delivery_service.terminal_command(principal, body))
         except CommandRefused as exc:
             return _refused(exc)
         except Exception as exc:

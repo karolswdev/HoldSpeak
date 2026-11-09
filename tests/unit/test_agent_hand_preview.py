@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.testclient import TestClient
 
 from holdspeak.delivery import DeliveryRegistry
@@ -126,9 +126,21 @@ def test_preview_does_not_register_a_project_map_clone(tmp_path, db, monkeypatch
     assert not reads.registry_path.exists()
 
 
+def _owner_app() -> FastAPI:
+    """An app whose edge names the owner (a produced route with no principal is unauthenticated, #2057)."""
+    app = FastAPI()
+
+    @app.middleware("http")
+    async def owner(request: Request, call_next):  # noqa: ANN001
+        request.state.principal = OWNER
+        return await call_next(request)
+
+    return app
+
+
 def test_route_previews_and_refuses_by_name(tmp_path, db, monkeypatch) -> None:  # noqa: F811
     rig = _track(_rig(tmp_path, db, monkeypatch))
-    app = FastAPI()
+    app = _owner_app()
     app.include_router(build_agent_hand_router(SimpleNamespace(
         agent_hand_service=rig.hand, delivery_service=None, agent_hand_reads=_reads(rig))))
     client = TestClient(app)
@@ -242,7 +254,7 @@ def test_preview_emits_no_change(tmp_path, db, monkeypatch) -> None:  # noqa: F8
     rig = _track(_rig(tmp_path, db, monkeypatch))
     seen: list = []
     monkeypatch.setattr(composition, "_installed", SimpleNamespace(_send_desk_changed=lambda changes: seen.extend(changes)))
-    app = FastAPI()
+    app = _owner_app()
     app.include_router(build_agent_hand_router(SimpleNamespace(
         agent_hand_service=rig.hand, delivery_service=None, agent_hand_reads=_reads(rig))))
     install(app)

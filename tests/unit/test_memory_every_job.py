@@ -290,6 +290,7 @@ class _ReviewRig:
 
     def __init__(self, db: Database, tmp_path, monkeypatch, *, diff: str = "diff --git a/x b/x\n+hi") -> None:
         from holdspeak.web.context import WebContext
+        from holdspeak.services.delivery_service import DeliveryService
         from holdspeak.web.routes.delivery_prs import build_delivery_prs_router
         from tests.unit.test_one_path_spine import _ready_this_machine
 
@@ -321,7 +322,7 @@ class _ReviewRig:
             return await call_next(request)
 
         app.include_router(build_delivery_prs_router(
-            WebContext(get_state=lambda: {}, delivery_service=object()), service=_Delivery(),
+            WebContext(get_state=lambda: {}, delivery_service=DeliveryService(None).configure(prs=_Delivery())),
         ))
         self.client = TestClient(app, raise_server_exceptions=False)
 

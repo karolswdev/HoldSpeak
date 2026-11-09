@@ -1021,6 +1021,16 @@ OP_MCP_PROJECTIONS: dict[str, dict[str, Any]] = {
         "automation.template.instantiate", "automation.result.open", "automation.new.list", "automation.lesson.list",
         "automation.lesson.forget")},
 }
+# 2026-11-09: the agents, threads, coders and delivery verbs, read from their rows.
+def _family_projections() -> dict[str, dict[str, Any]]:
+    from holdspeak import operations as ops
+
+    rows = (ops.AGENT_OPERATIONS + ops.THREAD_OPERATIONS + ops.CODER_OPERATIONS + ops.DELIVERY_OPERATIONS
+            + ops.INVOCATION_OPERATIONS)
+    return {d.name: {"kind": "tool", "name": d.tool_name} for d in rows if d.tool_schema is not None}
+
+
+OP_MCP_PROJECTIONS.update({k: v for k, v in _family_projections().items() if k not in OP_MCP_PROJECTIONS})
 
 #: Declared operations with no MCP exposure: the rig refuses them by name.
 OP_HTTP_ONLY = frozenset({"decision.status",
@@ -1047,11 +1057,7 @@ OP_HTTP_ONLY = frozenset({"decision.status",
                           "phone.redeem", "phone.pair", "phone.save_push_key", "phone.mark_read", "phone.decide",
                           "phone.accept", "phone.decline", "phone.end",
                           # 2026-11-08: the Calls window's tap answer (no MCP tool: an agent never answers his hold).
-                          "calls.decide",
-                          # 2026-11-08: the Agents window's launch verbs (HTTP only).
-                          "agent.launch.lane", "agent.launch.explain", "agent.launch.answer", "agent.launch.seen",
-                          "agent.launch.done", "agent.launch.remove", "agent.launch.resume",
-                          "agent.hand.cancel_queued", "agent.helper.allow"})
+                          "calls.decide"})
 
 # PHILO-7-01: the desk kind and id argument of each slice prefix.
 _DESK_OP_KINDS: dict[str, tuple[str, str]] = {

@@ -119,6 +119,8 @@ class RuntimeServices:
     agent_hand_service: Optional[Any] = None        # Conductor K2: Hand to an agent session
     desk_window_service: Optional[Any] = None       # PHILO-16 16b: the desk's windows
     note_outcomes_service: Optional[Any] = None     # Betterment Q9: Find the tasks
+    hub_thread_service: Optional[Any] = None        # the threads' verbs: the hub's ThreadService factory
+    invocation_service: Optional[Any] = None        # the capability run receipts (invocation_operations.py)
     # 2026-11-09 (ops/projects): the declared project, activity, walk and
     # repository tables' services (composition_declared.py builds the bare ones).
     project_brief_service: Optional[Any] = None
