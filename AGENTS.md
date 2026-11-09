@@ -95,6 +95,8 @@ not by phase. Use existing tests before adding another harness.
 
 Every pytest, Vitest, `glass_for` and graph-walk run takes the machine-wide
 lock through `scripts/test_lock.py`. Wait for it; never bypass or nest it.
+Up to three unit runs (pytest without browser files, Vitest) share the lock,
+each with an isolated HOME; a browser run has the machine alone.
 Use `-n 8 --dist worksteal` for focused pytest runs. Never run
 `tests/e2e/test_metal.py`. Workers run only the test files in their brief.
 The full tape belongs to the main watcher after merge, and nightly CI.
@@ -130,6 +132,8 @@ Vitest use the same isolated environment, `cd web`, then
 
 Before merge, run `scripts/quick_check.sh [base]` (default `origin/main`).
 It manages its own lock and isolated HOME: **do not wrap it in another lock**.
+It skips the steps that are green on unchanged inputs; after a red,
+`scripts/quick_check.sh --retry` runs only the failed tests.
 It runs the web build, related Vitest, affected Python tests, Desk sweep,
 canon guards and repository guards. `QUICK_TESTS` adds explicit Python files;
 name any required browser file the affected selector does not discover.

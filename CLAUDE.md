@@ -173,10 +173,20 @@ and the owner's real DB stay out of it. Times are from the owner's machine
   your workers are just running tests at the same time and keep breaking each
   other").** Every pytest, vitest, glass_for and graph-walk run, in every lane
   and the orchestrator's FAST alike, goes through the lock:
-  `uv run python scripts/test_lock.py -- <command>`. It waits for the previous
-  run to finish, then runs yours. `scripts/quick_check.sh` takes the lock
-  itself, step by step: run it bare, never wrapped (the lock is reentrant since
-  2026-11-07, so a wrapped run no longer deadlocks for 7200 s; it is still wrong).
+  `uv run python scripts/test_lock.py -- <command>`. Classes (2026-11-08): a
+  `unit` run (the default for a direct pytest run that names no browser file,
+  and for vitest) shares the machine with two other unit runs; it must set an
+  isolated HOME (the lock refuses the real HOME), and above a load of 24 it
+  waits to run alone. A `browser` run (tests/e2e, the sweep, glass, Playwright,
+  graph walks, tests/uat, and any other command) is exclusive; a waiting
+  browser run goes before later unit runs. `--class unit|browser` overrides.
+  `scripts/quick_check.sh` takes the lock itself, once: run it bare, never
+  wrapped (the lock is reentrant since 2026-11-07, so a wrapped run no longer
+  deadlocks for 7200 s; it is still wrong). It runs its steps in parallel,
+  skips a step whose inputs did not change since its last green
+  (`.tmp/quick-check/green.json`), runs no test file twice, and after a red
+  `scripts/quick_check.sh --retry` runs only the failed tests and the steps
+  that did not run.
   A docs-only diff runs only the doc check and the doc guards (seconds). Under the lock use `-n 8` (measured 2026-10-11: the
   whole browser suite 30 min at `-n 4`, 16.5 min at `-n 8`; FAST 11 → 6.5 min), not `-n auto`.
   A worker never runs FAST; a worker waits for the lock rather than running
