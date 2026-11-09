@@ -1,7 +1,6 @@
 /** The words of a running Ask that waits (Betterment Q2, "Ask goes first").
  *  The hub sends an `ask_progress` frame: `busy` when background work holds
- *  the engine 5 s after the Ask starts, `retry` for every attempt after the
- *  first. These are its words; `runWords.ts` keeps the failure words. */
+ *  the engine 5 s after the Ask starts. These are its words; `runWords.ts` keeps the failure words. */
 
 /** The engine, by where it is: "the LAN engine". */
 export function engineWords(boundary: string | undefined): string {
@@ -17,11 +16,6 @@ export function engineWords(boundary: string | undefined): string {
 export function busyWords(job: string, boundary: string | undefined): string {
   const engine = engineWords(boundary);
   return job ? `Waiting for ${engine}, busy with ${job}` : `Waiting for ${engine}`;
-}
-
-/** "Trying again, 1 of 3". */
-export function retryWords(attempt: number, of: number): string {
-  return `Trying again, ${Math.max(1, attempt)} of ${Math.max(attempt, of)}`;
 }
 
 /** The verb that runs this one Ask on another engine. It names a cloud

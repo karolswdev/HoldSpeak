@@ -1,7 +1,7 @@
-"""HS-130-06 — Ask tells the truth: the target id selects the placement and a
-`model` override may only name what the resolved target advertises. Ask never
-silently hops to another destination by model name, and `list_models` no longer
-dedupes across destinations."""
+"""HS-130-06 — the target id selects the placement and a run never silently
+hops to another destination by model name. Since the engine door (2026-11-08)
+an answer takes no target selector at all; the unrouted Thought
+(``thought.interview``) is the one caller that still names a target."""
 from __future__ import annotations
 
 import asyncio
@@ -44,6 +44,7 @@ def rig(tmp_path, monkeypatch):
 
 
 def _ask(service, **kw):
+    kw.setdefault("operation_capability", "thought.interview")
     return asyncio.run(service.ask(OWNER, "summarize", **kw))
 
 
@@ -60,22 +61,18 @@ def test_no_model_override_stays_on_resolved_target(rig) -> None:
     assert payload["egress"]["scope"] == "cloud"
 
 
-def test_mismatched_model_refuses_and_names_target(rig) -> None:
-    # OLD behaviour: model-b != prof_a's model → scan all profiles, silently
-    # rebind to prof_b, and run on a DIFFERENT egress boundary (cloud) than the
-    # caller's chosen prof_a (private_network). NEW: refuse, never hop.
-    with pytest.raises(ValidationError) as exc:
-        _ask(rig, inference_target_id="prof_a", model="model-b")
-    msg = str(exc.value)
-    assert "Alpha" in msg and "model-a" in msg and "model-b" in msg
-    assert getattr(exc.value, "code", "") == "model_not_advertised"
+def test_an_answer_takes_no_target_or_model_selector(rig) -> None:
+    for selector in ({"inference_target_id": "prof_a"}, {"model": "model-b"}, {"profile_id": "prof_b"}):
+        with pytest.raises(ValidationError) as exc:
+            _ask(rig, operation_capability="ask.answer", **selector)
+        assert exc.value.code == "inference_legacy_selector_retired"
 
 
 def test_silent_hop_never_returns_the_other_destination(rig) -> None:
-    # Concrete proof the run never crosses to prof_b: a payload for prof_b is
-    # impossible; the call raises instead of returning another destination's id.
-    with pytest.raises(ValidationError):
-        _ask(rig, inference_target_id="prof_a", model="model-b")
+    # model-b is prof_b's model: the run still stays on the chosen prof_a.
+    payload = _ask(rig, inference_target_id="prof_a", model="model-b")
+    assert payload["profile_id"] == "prof_a"
+    assert payload["egress"]["scope"] == "private_network"
 
 
 def test_frozen_refinement_admission_refuses_same_id_deployment_race(rig) -> None:

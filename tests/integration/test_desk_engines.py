@@ -484,12 +484,14 @@ def test_check_lists_three_models_and_two_of_them_become_two_engines(hub: str, t
     assert status < 300, assigned
     answer = _ok(hub, "POST", "/api/ask", {"prompt": "Which model are you?"})
     assert answer["output"] == f"{PICKED_ANSWER} beta-13b", answer
-    from holdspeak.db import get_database
+    # The answer ran through the engine door, which persists no route plan: read
+    # the plan its assignment resolves to.
+    from holdspeak.kernel.runtime import _service
+    from holdspeak.services.inference_route_plan_service import ROUTE_PLANNING_AUTHORITY
 
-    with get_database()._connection() as conn:
-        support = json.loads(conn.execute(
-            "SELECT context_support_json FROM inference_route_plan_entries ORDER BY rowid DESC LIMIT 1"
-        ).fetchone()[0])
+    plan = _service().inference_adoption_service.plans.resolve_route_plan(
+        ROUTE_PLANNING_AUTHORITY, capability_id="ask.answer")
+    support = plan["entries"][0]["context_support"]
     assert support["maximum_tokens"] == 32768, support
 
 

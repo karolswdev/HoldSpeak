@@ -15,6 +15,9 @@ from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.services.ask_service import ASK_PAYLOAD_SCHEMA_VERSION, ASK_SERVICE_CONTRACT, ASK_SERVICE_SCHEMA_VERSION, AskService
 
 OWNER = Principal(PrincipalKind.OWNER, "owner")
+#: The classic runner path is the unrouted Thought's now; an answer runs
+#: through the engine door (``test_ask_engine_door.py``).
+CLASSIC = "thought.interview"
 
 
 class Engine:
@@ -50,7 +53,7 @@ def test_ask_uses_versioned_contract_hash_runner_and_staged_projection(rig):
     db, broker, engine = rig
     service = AskService(db, broker=broker)
     before_artifacts = len(db.plugins.list_run_artifacts())
-    result = asyncio.run(service.ask(OWNER, "What changed?", lens="Brief"))
+    result = asyncio.run(service.ask(OWNER, "What changed?", lens="Brief", operation_capability=CLASSIC))
     assert result["output"] == "runner answer"
     assert result["provider"] == "test-provider"
     assert len(engine.calls) == 1
@@ -86,7 +89,7 @@ def test_profile_ask_persists_revision_before_claim_without_preseed(rig, monkeyp
     monkeypatch.setattr(
         "holdspeak.intel.providers.build_meeting_intel_for_profile", lambda **_: engine
     )
-    result = asyncio.run(AskService(db, broker=broker).ask(OWNER, "profile", inference_target_id="profile"))
+    result = asyncio.run(AskService(db, broker=broker).ask(OWNER, "profile", inference_target_id="profile", operation_capability=CLASSIC))
     assert result["output"] == "runner answer"
     with db._connection() as conn:
         # Startup may lawfully create the migrated local speech deployment;
@@ -132,7 +135,7 @@ def test_ask_cancelled_after_provider_return_publishes_and_returns_no_answer(rig
 
     monkeypatch.setattr(engine, "run_prompt", run_prompt)
     try:
-        answer: object = asyncio.run(service.ask(OWNER, "What changed?", lens="Brief"))
+        answer: object = asyncio.run(service.ask(OWNER, "What changed?", lens="Brief", operation_capability=CLASSIC))
     except Exception as exc:  # noqa: BLE001 - the refusal is the answer here
         answer = exc
     assert len(seen) == 1

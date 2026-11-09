@@ -132,8 +132,6 @@ describe("the run/keep wire", () => {
       route: null,
       model: "Qwen3.5-9B-Q6_K",
       profileId: "p1",
-      inferenceTarget: null,
-      actualPlacement: null,
       // HS-83-01: the hub's folded lineage rides the result (empty when the
       // response omits it — an ungrounded ask against an older shape).
       contextIds: [],

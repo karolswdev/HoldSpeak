@@ -36,14 +36,15 @@ def materialize(conn: Any, stage: Any, permit: Any) -> dict[str, Any]:
         raise KernelRefused("projection_route_winner_missing")
     payload = dict(stage.projection)
     payload.update({
-        "invocation_id": stage.invocation_id,
+        # An answer through the engine door names its Ask's own id (the runner's is the door's).
+        "invocation_id": str(payload.get("invocation_id") or stage.invocation_id),
         "operation_id": stage.operation_id,
         "receipt_id": str(receipt["receipt_id"]),
         "result_ref": stage.result_ref,
     })
     conn.execute(
         "INSERT INTO ask_results(projection_stage_id,invocation_id,operation_id,receipt_id,payload_json,created_at) VALUES(?,?,?,?,?,?)",
-        (stage.stage_id, stage.invocation_id, stage.operation_id, receipt["receipt_id"],
+        (stage.stage_id, payload["invocation_id"], stage.operation_id, receipt["receipt_id"],
          json.dumps(payload, sort_keys=True, separators=(",", ":")), time.time()),
     )
     return payload

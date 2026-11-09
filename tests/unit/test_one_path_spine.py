@@ -223,7 +223,7 @@ def _drive_ask(tmp_path, monkeypatch) -> SurfaceRun:
 
     monkeypatch.setattr(broker.inference_runner, "_engine_factory", lambda revision, **_: FakeIntel())
     service = AskService(db, hub_model=lambda: "", broker=broker)
-    asyncio.run(service.ask(OWNER, "summarize", inference_target_id="prof_a", model="model-a"))
+    asyncio.run(service.ask(OWNER, "summarize", inference_target_id="prof_a", operation_capability="thought.interview"))
     return SurfaceRun(db, OWNER, None, profile.id)
 
 

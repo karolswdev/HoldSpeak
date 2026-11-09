@@ -1,13 +1,13 @@
 {
  "_source": "The hub's own answers, captured by tests/unit/test_desk_room_ask.py::test_record_the_room_ask_that_fails_then_answers (MeetingWebServer + TestClient, isolated HOME, the browser rigs' seeds). HOLDSPEAK_WIRE_WRITE=1 rewrites this file; never hand-edit a field a test reads.",
- "project_id": "proj-344430ff556c",
+ "project_id": "proj-d4f65cca800a",
  "room": {
-  "project_id": "proj-344430ff556c",
+  "project_id": "proj-d4f65cca800a",
   "revision": 1,
-  "observed_at": "2026-10-30T13:56:49.170594",
+  "observed_at": "2026-11-08T18:55:54.965518",
   "nextCheckAt": null,
   "project": {
-   "id": "proj-344430ff556c",
+   "id": "proj-d4f65cca800a",
    "name": "Ledger migration",
    "description": "",
    "keywords": [],
@@ -16,8 +16,8 @@
    "detection_threshold": 0.4,
    "is_archived": false,
    "meeting_count": 0,
-   "created_at": "2026-10-30T13:56:49.170594",
-   "updated_at": "2026-10-30T13:56:49.170594",
+   "created_at": "2026-11-08T18:55:54.965518",
+   "updated_at": "2026-11-08T18:55:54.965518",
    "purpose": null,
    "outcome_text": null,
    "owner_ref": null,
@@ -53,17 +53,17 @@
   "changes": {
    "recent": [
     {
-     "id": "pchg_974957d12ad731ec5fbce48db8e3c471",
-     "project_id": "proj-344430ff556c",
+     "id": "pchg_502f30c1292cb6fe54bbbcd2be369fff",
+     "project_id": "proj-d4f65cca800a",
      "project_revision": 1,
      "change_kind": "project.created",
-     "target_ref": "project:proj-344430ff556c",
+     "target_ref": "project:proj-d4f65cca800a",
      "actor_ref": "principal:ask-ai-owner",
-     "command_id": "pcmd_d38cda9b30044b15bf8bd8f22d7c9380",
+     "command_id": "pcmd_e0107bd5bc4e4d358e60146577139d77",
      "before_hash": null,
      "after_hash": "707972e1b79fff95727c0592dd85c6b1",
      "summary_json": "{\"name\": \"Ledger migration\"}",
-     "created_at": "2026-10-30T17:56:49.170594+00:00"
+     "created_at": "2026-11-09T01:55:54.965518+00:00"
     }
    ],
    "state": "ok"
@@ -190,21 +190,21 @@
  },
  "save": {
   "task": {
-   "id": "asktask_4f6c25a7de8f40c5a2fc6069dd57d1d6",
-   "projectId": "proj-344430ff556c",
-   "invocationId": "ask_982b23ccbca241f19ce24b26cf2d9761",
+   "id": "asktask_015ef2f172d04f22aad62aabb57756f0",
+   "projectId": "proj-d4f65cca800a",
+   "invocationId": "ask_01b51ae0586b41249e150f3cf7f15e85",
    "purpose": "What blocks the November 5 freeze?",
    "lens": "Project",
    "state": "saved",
-   "savedAt": "2026-10-30T17:56:49.185653Z",
-   "updatedAt": "2026-10-30T17:56:49.185653Z",
+   "savedAt": "2026-11-09T01:55:54.982410Z",
+   "updatedAt": "2026-11-09T01:55:54.982410Z",
    "resumeOrder": 1,
    "grounding": {
     "artifact_ids": [],
     "expand": "summary",
     "meeting_ids": [],
     "refs": [
-     "project:proj-344430ff556c"
+     "project:proj-d4f65cca800a"
     ]
    },
    "custody": "here"
@@ -213,38 +213,38 @@
  "ask_failed": {
   "status": 409,
   "body": {
+   "reason": "did_not_answer",
    "route": {
     "lamp": "private_network",
     "host": "192.168.1.43",
     "model": "qwen3.8-27b",
-    "fallback": false,
-    "receipt": "ire_9aaf5a426b21feb8084cb63aa22cd908"
+    "receipt": "op_af5bd6614ea945c39103a914541e6e3d",
+    "fallback": false
    },
-   "reason": "did_not_answer",
    "error": "No assigned model completed this request"
   }
  },
  "stopped": {
   "task": {
-   "id": "asktask_4f6c25a7de8f40c5a2fc6069dd57d1d6",
-   "projectId": "proj-344430ff556c",
-   "invocationId": "ask_982b23ccbca241f19ce24b26cf2d9761",
+   "id": "asktask_015ef2f172d04f22aad62aabb57756f0",
+   "projectId": "proj-d4f65cca800a",
+   "invocationId": "ask_01b51ae0586b41249e150f3cf7f15e85",
    "purpose": "What blocks the November 5 freeze?",
    "lens": "Project",
    "state": "failed",
-   "savedAt": "2026-10-30T17:56:49.185653Z",
-   "updatedAt": "2026-10-30T17:56:49.276650Z",
+   "savedAt": "2026-11-09T01:55:54.982410Z",
+   "updatedAt": "2026-11-09T01:55:55.000428Z",
    "resumeOrder": 1,
    "grounding": {
     "artifact_ids": [],
     "expand": "summary",
     "meeting_ids": [],
     "refs": [
-     "project:proj-344430ff556c"
+     "project:proj-d4f65cca800a"
     ]
    },
    "stoppedCode": "did_not_answer",
-   "settledAt": "2026-10-30T17:56:49.276650Z",
+   "settledAt": "2026-11-09T01:55:55.000428Z",
    "custody": "here"
   },
   "changed": true
@@ -252,25 +252,25 @@
  "unfinished_after_stop": {
   "items": [
    {
-    "id": "asktask_4f6c25a7de8f40c5a2fc6069dd57d1d6",
-    "projectId": "proj-344430ff556c",
-    "invocationId": "ask_982b23ccbca241f19ce24b26cf2d9761",
+    "id": "asktask_015ef2f172d04f22aad62aabb57756f0",
+    "projectId": "proj-d4f65cca800a",
+    "invocationId": "ask_01b51ae0586b41249e150f3cf7f15e85",
     "purpose": "What blocks the November 5 freeze?",
     "lens": "Project",
     "state": "failed",
-    "savedAt": "2026-10-30T17:56:49.185653Z",
-    "updatedAt": "2026-10-30T17:56:49.276650Z",
+    "savedAt": "2026-11-09T01:55:54.982410Z",
+    "updatedAt": "2026-11-09T01:55:55.000428Z",
     "resumeOrder": 1,
     "grounding": {
      "artifact_ids": [],
      "expand": "summary",
      "meeting_ids": [],
      "refs": [
-      "project:proj-344430ff556c"
+      "project:proj-d4f65cca800a"
      ]
     },
     "stoppedCode": "did_not_answer",
-    "settledAt": "2026-10-30T17:56:49.276650Z",
+    "settledAt": "2026-11-09T01:55:55.000428Z",
     "custody": "here"
    }
   ],
@@ -278,48 +278,29 @@
  },
  "resume": {
   "task": {
-   "id": "asktask_4f6c25a7de8f40c5a2fc6069dd57d1d6",
-   "projectId": "proj-344430ff556c",
-   "invocationId": "ask_b170a1ebec53402a83a2bc5e445e7ebd",
+   "id": "asktask_015ef2f172d04f22aad62aabb57756f0",
+   "projectId": "proj-d4f65cca800a",
+   "invocationId": "ask_57e39fe70dd44fa796baf2bc2b06b03e",
    "purpose": "What blocks the November 5 freeze?",
    "lens": "Project",
    "state": "accepted",
-   "savedAt": "2026-10-30T17:56:49.185653Z",
-   "updatedAt": "2026-10-30T17:56:49.356463Z",
+   "savedAt": "2026-11-09T01:55:54.982410Z",
+   "updatedAt": "2026-11-09T01:55:55.008803Z",
    "resumeOrder": 1,
    "grounding": {
     "artifact_ids": [],
     "expand": "summary",
     "meeting_ids": [],
     "refs": [
-     "project:proj-344430ff556c"
+     "project:proj-d4f65cca800a"
     ]
    },
-   "settledAt": "2026-10-30T17:56:49.356463Z",
+   "settledAt": "2026-11-09T01:55:55.008803Z",
    "custody": "here"
   },
   "answer": {
-   "actual_placement": {
-    "boundary": "private_network",
-    "data_classes": [
-     "prompt",
-     "grounding"
-    ],
-    "engine": "configured_local_engine",
-    "fallback_reason": null,
-    "model": "qwen3.8-27b",
-    "owner": "hub",
-    "target_id": "glass-lan",
-    "target_kind": "assigned_profile",
-    "target_name": "glass-lan",
-    "transport": "private_network"
-   },
    "context_ids": [],
    "context_titles": [],
-   "egress": {
-    "scope": "private_network",
-    "host": "192.168.1.43"
-   },
    "grounding": {
     "artifact_ids": [],
     "expand": "summary",
@@ -327,76 +308,34 @@
     "meeting_ids": [],
     "overflow_count": 0,
     "refs": [
-     "project:proj-344430ff556c"
+     "project:proj-d4f65cca800a"
     ],
     "selection": "relevance",
     "source_refs": [],
     "titles": []
    },
+   "invocation_id": "ask_57e39fe70dd44fa796baf2bc2b06b03e",
    "lens": "Project",
-   "model": "qwen3.8-27b",
    "output": "The freeze waits on the reconciliation job; it has no owner yet.",
+   "operation_id": "op_29c21ee137f943a994775a6c944ff987",
+   "receipt_id": "rcpt_69a152caf6c64753969f7a568f6f26a9",
+   "result_ref": "projection-stage:pstg_2d3c915220744360a03a40990e27c222",
    "profile_id": "glass-lan",
-   "provider": "configured_local_engine",
-   "invocation_id": "invoke_ce2b1e8facfe4c882a280189d1b145ca",
-   "operation_id": "op_5743522d796b4b40b4cb74def1d501f7",
-   "receipt_id": "rcpt_23fb4431ee154373bd2c73e6dcf006bf",
-   "result_ref": "inference-result:invoke_ce2b1e8facfe4c882a280189d1b145ca/sha256:23a3b091fd6df768f6d03ad6b5c910f054f3bb1d8b4a929dbcc8a0349b6a0ed1",
    "route_execution_receipt": {
-    "schema": "RouteExecutionReceipt@1",
-    "execution_id": "ire_681d373ef906d5113aa1d3d5fe16ce7a",
-    "route_plan_id": "irp_bdbcdb2b4ab67984a274134016864e9f17ee61319d562bf76cee77611098b322",
-    "route_plan_sha256": "sha256:e4a31e23fb812b6170641acf2436ab55a4196c44eadd7005c653cf3dbff93d82",
-    "operation_plan_id": "iorp_b4700b87955d80f254beb9a6cbae9db0bf4b821c069ce255a8f95258eed46a80",
-    "operation_plan_sha256": "sha256:7e84fe8fca3e465dc1ddebd3161bb74e6510ebcb578c9ff1074e6c258409d6ec",
-    "state": "terminal",
-    "outcome": "succeeded",
-    "disposition": "owner_terminal",
-    "winning_attempt_id": "ira_96a7938dda872296dfb080e01b82a5c2",
-    "result_ref": "inference-result:invoke_ce2b1e8facfe4c882a280189d1b145ca/sha256:23a3b091fd6df768f6d03ad6b5c910f054f3bb1d8b4a929dbcc8a0349b6a0ed1",
-    "winning_deployment_revision_id": "dep2_4e3a1ff6818887d50f17bd97fd892755fed9499a1a67a78b5dc278a9de8c84de",
-    "winning_boundary": "private_network",
-    "considerations": [
-     {
-      "route_leg_ordinal": 1,
-      "profile_id": "glass-lan",
-      "profile_revision": 1,
-      "deployment_revision_id": "dep2_4e3a1ff6818887d50f17bd97fd892755fed9499a1a67a78b5dc278a9de8c84de",
-      "boundary": "private_network",
-      "status": "attempted",
-      "disposition": null,
-      "reason_code": null,
-      "physical_attempts": 1
-     }
-    ],
-    "all_models_physically_failed": false,
-    "physically_failed_attempt_count": 0,
-    "attempts": [
-     {
-      "attempt_id": "ira_96a7938dda872296dfb080e01b82a5c2",
-      "route_leg_ordinal": 1,
-      "leg_attempt_ordinal": 1,
-      "profile_id": "glass-lan",
-      "profile_revision": 1,
-      "physical_attempt_ordinal": 1,
-      "purpose": "primary",
-      "deployment_revision_id": "dep2_4e3a1ff6818887d50f17bd97fd892755fed9499a1a67a78b5dc278a9de8c84de",
-      "boundary": "private_network",
-      "child_operation_id": "op_5743522d796b4b40b4cb74def1d501f7",
-      "disposition": "owner_terminal",
-      "outcome": "succeeded",
-      "send_phase": "provider_returned",
-      "child_receipt_sha256": "sha256:e937a25173f13ef3b910e0825fd673b707f333ea2b2ff5c60e2c7f45b50328e2",
-      "disposition_evidence_sha256": "sha256:45c0b64d17ff634a5cd4fe1ebf61f73fbef943d5856a319b95c175efb1ee3220"
-     }
-    ]
+    "execution_id": "op_29c21ee137f943a994775a6c944ff987"
+   },
+   "model": "qwen3.8-27b",
+   "provider": "configured_local_engine",
+   "egress": {
+    "scope": "private_network",
+    "host": "192.168.1.43"
    },
    "route": {
     "lamp": "private_network",
     "host": "192.168.1.43",
     "model": "qwen3.8-27b",
-    "fallback": false,
-    "receipt": "ire_681d373ef906d5113aa1d3d5fe16ce7a"
+    "receipt": "op_29c21ee137f943a994775a6c944ff987",
+    "fallback": false
    }
   },
   "claimed": false,

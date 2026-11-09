@@ -236,7 +236,7 @@ def test_real_migrated_ask_cancellation_after_stage_is_completed_and_not_duplica
 
     def invoke_ask() -> None:
         try:
-            replies.append(asyncio.run(service.ask(OWNER, "What changed?", lens="Brief")))
+            replies.append(asyncio.run(service.ask(OWNER, "What changed?", lens="Brief", operation_capability=_V1)))
         except BaseException as exc:
             failures.append(exc)
 
@@ -314,7 +314,7 @@ def test_ask_v1_contract_shape_hash_guards_service_payload_drift(rig, monkeypatc
         return original(cls, contract, revision, payload)
 
     monkeypatch.setattr(ServiceContract, "for_payload", classmethod(capture))
-    result = asyncio.run(AskService(db, broker=broker).ask(OWNER, "What changed?", lens="Brief"))
+    result = asyncio.run(AskService(db, broker=broker).ask(OWNER, "What changed?", lens="Brief", operation_capability=_V1))
     assert result["output"] == "contract answer"
     assert captured and captured[-1][0:2] == (ASK_SERVICE_CONTRACT, ASK_SERVICE_SCHEMA_VERSION)
     payload = captured[-1][2]
@@ -328,6 +328,10 @@ def test_ask_v1_contract_shape_hash_guards_service_payload_drift(rig, monkeypatc
     shape_hash = "sha256:" + hashlib.sha256(json.dumps(actual_shape, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
     assert shape_hash == _DECLARED_ASK_V1_SHAPE_SHA256
 
+
+#: The v1 contract (``holdspeak.ask@1``) is the unrouted Thought's now; an
+#: answer runs through the engine door (``test_ask_engine_door.py``).
+_V1 = "thought.interview"
 
 _GOLDEN_ASK_V1_FIELDS = frozenset({
     "schema_version", "system_prompt", "user_prompt", "lens", "context_ids",
@@ -539,7 +543,7 @@ def test_ask_v1_golden_field_names_and_schema_version_are_exact(rig, monkeypatch
         return original(cls, contract, revision, payload)
 
     monkeypatch.setattr(ServiceContract, "for_payload", classmethod(capture))
-    asyncio.run(AskService(db, broker=broker).ask(OWNER, "Golden ask"))
+    asyncio.run(AskService(db, broker=broker).ask(OWNER, "Golden ask", operation_capability=_V1))
     payload = captured[-1]
     missing = sorted(_GOLDEN_ASK_V1_FIELDS - set(payload))
     unexpected = sorted(set(payload) - _GOLDEN_ASK_V1_FIELDS)

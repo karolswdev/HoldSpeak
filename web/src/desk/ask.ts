@@ -176,8 +176,6 @@ export interface AskRunResult {
   route?: unknown;
   model: string;
   profileId: string | null;
-  inferenceTarget: Record<string, unknown> | null;
-  actualPlacement: Record<string, unknown> | null;
   /** The lineage the hub actually read — grounding rows folded in (HS-83-01). */
   contextIds: string[];
   contextTitles: string[];
@@ -279,8 +277,6 @@ export async function runAsk(opts: {
       egress: null,
       model: "",
       profileId: null,
-      inferenceTarget: null,
-      actualPlacement: null,
       contextIds: [],
       contextTitles: [],
       groundingClaims: [],
@@ -370,14 +366,6 @@ export function parseAskResult(data: Record<string, any>): AskRunResult {
     route: data.route ?? null,
     model: String(data.model || ""),
     profileId: data.profile_id ? String(data.profile_id) : null,
-    inferenceTarget:
-      data.inference_target && typeof data.inference_target === "object"
-        ? data.inference_target
-        : null,
-    actualPlacement:
-      data.actual_placement && typeof data.actual_placement === "object"
-        ? data.actual_placement
-        : null,
     contextIds: Array.isArray(data.context_ids)
       ? data.context_ids.map(String)
       : [],
