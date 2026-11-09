@@ -1,5 +1,21 @@
 # Intelligence Router architecture
 
+The engine door is the router now. One call, `engine_door.run` (or
+`run_stream`) in `holdspeak/services/engine_door.py`, runs one AI job. The
+caller names the job (a capability id, for example `meeting.deferred_analysis`)
+and gives the payload. The door reads the owner's live assignment for that job
+from the assignment store (`InferenceAssignmentService.chain`: the same lookup
+that Settings › Engines shows, invocation then subject then capability then
+group then the default). The first engine of that chain runs the job through the
+kernel runner, which writes the one receipt. When that engine says plainly that
+it did not answer, the door runs the job once more on the next engine of the
+chain. The door writes no route plan. A schedule names its assignment, not a
+frozen route. Speech capture (dictation and meeting transcription, with the
+preload), the live meeting bundle and the deferred queue's claim binding still
+use the older route stack below; the history section describes it.
+
+## History
+
 The intelligence router turns a declared product capability into one receipted
 physical model attempt. It keeps configuration useful without letting a later
 configuration edit rewrite work that has already been admitted.
@@ -11,7 +27,7 @@ chain. The router freezes and executes one immutable attempt at a time. The
 Library and Assignments are owner surfaces. The remaining stages are runtime
 authority, not a model picker or an alternate provider API.
 
-## 1. Scope, nouns, and ownership
+### 1. Scope, nouns, and ownership
 
 A **capability** is a registered, revisioned description of one kind of
 intelligence work. A **profile** is an immutable public model intent revision.
@@ -37,7 +53,7 @@ be able to improve a Library row or an Assignment while work is running, yet an
 in-flight provider attempt must retain the exact authority, material, and
 boundary that were reviewed at admission.
 
-## 2. Capability registry before model resolution
+### 2. Capability registry before model resolution
 
 [`InferenceCapabilityRegistry`](../../holdspeak/inference_capabilities.py)
 is a sealed process registry. Its immutable capability definitions carry exact
@@ -57,7 +73,7 @@ and the `holdspeak://inference/capabilities` MCP resource implemented in
 [`holdspeak/mcp/resources.py`](../../holdspeak/mcp/resources.py). Those are
 registry projections, not a routing control.
 
-## 3. Model authority and availability are separate
+### 3. Model authority and availability are separate
 
 [`ModelProfileService`](../../holdspeak/services/model_profile_service.py)
 creates immutable public profile revisions and binds one revision to an exact
@@ -78,7 +94,7 @@ an assignment can preserve a compatible chain while no member is currently
 executable. Availability and selection are separate facts so the owner can
 repair either without silently changing the other.
 
-## 4. Sparse assignments and whole-chain precedence
+### 4. Sparse assignments and whole-chain precedence
 
 [`InferenceAssignmentService`](../../holdspeak/services/inference_assignment_service.py)
 stores one to four unique profile entries per assignment. It validates a whole
@@ -100,7 +116,7 @@ chain in that order. It does not splice the cleared list into an inherited one.
 The resolver records both the assignment revision and the source tier in the
 route plan.
 
-## 5. Freeze: route plan then operation request plan
+### 5. Freeze: route plan then operation request plan
 
 `resolve_route_plan()` is read-only. It reads one SQLite snapshot, resolves the
 assignment and deployment revisions, and performs no probe, model load, scan,
@@ -118,7 +134,7 @@ stored hashes and uses the frozen pair. It never rereads assignment, profile,
 binding, readiness, or configuration heads.
 
 <a id="recipe-run-from-assignment-to-receipt"></a>
-## 6. Recipe run from assignment to receipt
+### 6. Recipe run from assignment to receipt
 
 `RecipeService.run()` is a representative production path. Its `recipe.run`
 capability and `recipe` subject make the assignment lookup explicit. If an
@@ -142,7 +158,7 @@ frozen fallback leg when that policy permits it. It never rereads Assignments.
 Each physical child has its own receipt. The route receipt records the elected
 outcome over those children.
 
-## 7. Controller, fallback, and receipts
+### 7. Controller, fallback, and receipts
 
 [`InferenceFallbackController`](../../holdspeak/services/inference_fallback_controller.py)
 is the sole state machine above the Runner. Callers cannot name a leg,
@@ -158,7 +174,7 @@ permit a larger executable fallback. The `RouteExecutionReceipt@1` is a
 privacy-safe route-level election. It does not replace individual physical child
 receipts.
 
-## 8. The `InferenceRunner` waist
+### 8. The `InferenceRunner` waist
 
 [`InferenceRunner`](../../holdspeak/kernel/inference_runner.py) has a narrow
 physical job. For one frozen `InvocationRequest`, it submits, approves, and
@@ -173,7 +189,7 @@ uses fail-closed AST checks to keep provider dispatch from growing alternate
 doors. The route authority and controller decide logical work. The Runner owns
 one physical provider attempt.
 
-## 9. ToolTurn is a constrained extension, not an alternate router
+### 9. ToolTurn is a constrained extension, not an alternate router
 
 Parked 2026-11-09: the recipe agent turn, its only caller, runs through the
 engine door (`holdspeak/services/engine_door.py`). The stack below is kept in
@@ -208,7 +224,7 @@ child, and route receipt. A tool child is a separate broker operation with its
 own admissibility and receipt. The controller, rather than a provider response,
 orders those facts and determines the next lawful action.
 
-## 10. Request-level structured output (meeting intelligence)
+### 10. Request-level structured output (meeting intelligence)
 
 Meeting intelligence sends a `response_format` of type `json_schema` on every
 cloud or endpoint request. The schema is derived from `INTEL_SCHEMA` in
@@ -231,7 +247,7 @@ records the 400; the second child gets one physical request and its own receipt.
 process starts empty). The prompt's JSON instruction and the `_extract_json`
 recovery heuristic remain the safety net when structured output is absent.
 
-## 11. Plugin capability skip at claim planning (Design A)
+### 11. Plugin capability skip at claim planning (Design A)
 
 `_plan_installed_plugin_members` in `holdspeak/db/intel.py` freezes the
 installed plugin set from the composed capability registry. A plugin capability
@@ -252,7 +268,7 @@ binder uses, reading persisted assignment heads only (no Config, no live host).
 `_plugin_assignment_reachable` returns `False` on `no_assignment`; any other
 validation error propagates.
 
-## 12. One-way migration and the census/sync fences
+### 12. One-way migration and the census/sync fences
 
 A migration reads known legacy bytes once, writes exact canonical assignments
 and source proof in one transaction, then commits a family marker. After that
@@ -275,7 +291,7 @@ state, receipt attestations, acquisition, readiness, probes, and invocations.
 forbidden buckets so an old or hostile peer receives a refusal rather than a
 partial replica.
 
-## 13. Owner surfaces and transport parity
+### 13. Owner surfaces and transport parity
 
 | Owner question | Canonical service | HTTP and MCP twin |
 |---|---|---|
@@ -288,7 +304,7 @@ service authorities. Read [the API surface](../API_SURFACE.md) for route names
 and [the MCP sidecar](../MCP_SIDECAR.md) for tool schemas. Neither is a second
 routing mechanics reference.
 
-## See also
+### See also
 
 - [Backend runtime](ARCHITECTURE_BACKEND_RUNTIME.md): operation-kernel composition.
 - [Models](../MODELS.md): owner setup for Model Library and Assignments.

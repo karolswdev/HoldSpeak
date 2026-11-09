@@ -7,7 +7,7 @@ from holdspeak import operations
 
 from collections.abc import Callable
 from dataclasses import asdict
-from typing import Any
+from typing import Any, Callable
 
 from jsonschema import Draft202012Validator
 from jsonschema.exceptions import ValidationError as JsonSchemaValidationError
@@ -968,13 +968,57 @@ def runtime_registry(primitives: Any = None, meetings: Any = None) -> operations
              # The dictation verbs (dictation_operations.py): the hub's journal and correction store.
              "dictation_service": lambda: DictationService(db, observer=obs),
              # The device sync (device_operations.py).
-             "sync_service": lambda: _sync_service(db, obs)}
+             "sync_service": lambda: _sync_service(db, obs),
+             # The Settings family (settings_operations.py, setup_operations.py): off the hub too.
+             **_settings_family(db, obs),
+             # 2026-11-09 (ops/programs-work): recipe writes, the note window, memory.
+             **_work_services(db, obs)}
     return operations.for_runtime(program_service=lambda: operations.LIVE_PROGRAM_SERVICE,
                                   phone_service=lambda: operations.LIVE_PHONE_SERVICE,
                                   calls_service=lambda: operations.LIVE_CALLS_SERVICE,
                                   recordings_service=lambda: operations.LIVE_RECORDINGS_SERVICE,
                                   tts_service=_tts_service, **{
         name: (lambda name=name, build=build: runtime_service(name, build)) for name, build in plain.items()})
+
+
+class _Lazy:
+    """A bare service built at its first use, never when the registry binds:
+    some constructors reach the kernel broker (``RecipeService``), and a bare
+    MCP registry binds every builder at once."""
+
+    def __init__(self, build: Callable[[], Any]) -> None:
+        self._build, self._target = build, None
+
+    def __getattr__(self, name: str) -> Any:
+        if self._target is None:
+            self._target = self._build()
+        return getattr(self._target, name)
+
+
+def _work_services(db: Any, obs: Any) -> dict[str, Any]:
+    """The bare builds of the recipe, note-window, memory and desk-state rows' services (lazy)."""
+    from holdspeak.mcp.families.thought import _service as refinement
+    from holdspeak.runtime import composition_declared as bare
+    from holdspeak.services.memory_service import MemoryService
+
+    builds: dict[str, Callable[[], Any]] = {
+        "recipe_service": lambda: bare._bare_recipes(db, obs),
+        "desk_service": lambda: bare._bare_desk(db, obs),
+        "projection_service": lambda: bare._bare_projections(db, obs),
+        "constitutional_context_service": bare._constitutional,
+        "watch_service": lambda: _watch_service(db, obs),
+        "refinement_thought_service": lambda: bare._bare_thoughts(db),
+        "recall_service": lambda: bare._bare_recall(db),
+        "refinement_service": refinement,
+        "memory_service": lambda: MemoryService(db=db, observer=obs),
+    }
+    return {name: (lambda build=build: _Lazy(build)) for name, build in builds.items()}
+
+
+def _watch_service(db: Any, obs: Any) -> Any:
+    from holdspeak.services.watch_service import WatchService
+
+    return WatchService(db, observer=obs)
 
 
 def _tts_service() -> Any:
@@ -987,6 +1031,10 @@ def _sync_service(db: Any, obs: Any) -> Any:
     from holdspeak.services.sync_service import SyncService
 
     return SyncService(db, observer=obs)
+def _settings_family(db: Any, obs: Any) -> dict[str, Any]:
+    from holdspeak.settings_operations import bare_builders
+
+    return bare_builders(db, obs)
 
 
 def _credential_service(db: Any, obs: Any) -> Any:

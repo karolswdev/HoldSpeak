@@ -100,22 +100,17 @@ def coding_engine(db: Any) -> PiEngine:
     ``no_assignment``: no engine is assigned (or the owner turned coding
     off). ``no_compatible_assignment``: the assigned engines include no
     OpenAI-compatible endpoint, or the assignment cannot run."""
-    from ..services.errors import ServiceError
-    from ..services.inference_route_plan_service import (
-        ROUTE_PLANNING_AUTHORITY,
-        InferenceRoutePlanService,
-    )
+    from ..services.engine_door import chain
     from .factory_launch import LaunchRefused
 
     try:
-        revisions = InferenceRoutePlanService(db).resolve_deployments(
-            ROUTE_PLANNING_AUTHORITY, capability_id=CAPABILITY_ID
-        )
-    except ServiceError as exc:
-        code = "no_assignment" if exc.code == "no_assignment" else "no_compatible_assignment"
-        raise LaunchRefused(code, f"pi has no engine for coding work ({exc.code})") from exc
-    for revision, executable in revisions:
-        if not executable or str(revision.engine) != "openai_compatible":
+        _assignment, engines = chain(db, CAPABILITY_ID)
+    except Exception as exc:
+        raise LaunchRefused("no_compatible_assignment", "pi has no engine for coding work") from exc
+    if not engines:
+        raise LaunchRefused("no_assignment", "pi has no engine for coding work (no_assignment)")
+    for revision in (db.deployment_revisions.get(engine.revision) for engine in engines):
+        if revision is None or str(revision.engine) != "openai_compatible":
             continue
         endpoint = str(revision.endpoint or "").strip().rstrip("/")
         parsed = urlparse(endpoint)

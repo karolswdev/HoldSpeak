@@ -1,68 +1,53 @@
-"""Control-mode policy inspection and scoped-grant transport adapters."""
+"""The control mode over HTTP, produced from ``holdspeak/settings_operations.py``.
+
+``GET /api/authority/policy`` (``authority.policy``) and
+``PUT /api/authority/control-mode`` (``authority.control_mode.set``: owner
+only, his press, no MCP tool). The answers keep the hand-written words:
+``{error}`` with 400 on a refused value, 409 on a conflict.
+"""
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Callable
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter
 from fastapi.responses import JSONResponse
+from starlette.concurrency import run_in_threadpool
 
+from ... import operations
 from ...logging_config import get_logger
+from ...operations import OperationRefused
 from ...services.errors import ConflictError, NotFound, ServiceError, ValidationError
+from ...settings_operations import SETTINGS_ROUTE_OPERATIONS
 from ..context import WebContext
+from ..operation_routes import operation_router
 from ..runtime_support import error_500
+from ._mount import mount_router
 
 log = get_logger("web.routes.authority")
 
 
-async def _body(request: Request) -> dict[str, Any] | None:
+async def _answer(fn: Callable[[], Any], *, status: int = 200) -> Any:
     try:
-        value = await request.json()
-    except Exception:
-        return None
-    return value if isinstance(value, dict) else None
-
-
-def _service_error(exc: ServiceError, *, missing_grant: str | None = None) -> JSONResponse:
-    if isinstance(exc, ValidationError):
+        return JSONResponse(await run_in_threadpool(fn), status_code=status)
+    except OperationRefused as exc:
+        return JSONResponse({"error": exc.detail, "code": exc.code},
+                            status_code=403 if exc.code == "owner_required" else 400)
+    except ValidationError as exc:
         return JSONResponse({"error": exc.detail}, status_code=400)
-    if isinstance(exc, ConflictError):
+    except ConflictError as exc:
         return JSONResponse({"error": exc.detail}, status_code=409)
-    if isinstance(exc, NotFound):
-        return JSONResponse(
-            {"error": missing_grant or "Proposed action not found"}, status_code=404
-        )
-    return JSONResponse({"error": exc.detail}, status_code=400)
+    except NotFound:
+        return JSONResponse({"error": "Proposed action not found"}, status_code=404)
+    except ServiceError as exc:
+        return JSONResponse({"error": exc.detail}, status_code=400)
+    except Exception as exc:
+        return error_500(exc, log, "Failed to read or change the control mode")
 
 
 def build_authority_router(ctx: WebContext) -> APIRouter:
-    service = ctx.authority_service
-    if service is None:
+    if ctx.authority_service is None:
         raise RuntimeError("AuthorityService must be supplied at application composition")
     router = APIRouter()
-
-    @router.get("/api/authority/policy")
-    def api_authority_policy(request: Request) -> Any:
-        try:
-            return JSONResponse(service.get_policy(request.state.principal))
-        except ServiceError as exc:
-            return _service_error(exc)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to read authority policy")
-
-    @router.put("/api/authority/control-mode")
-    async def api_set_control_mode(request: Request) -> Any:
-        body = await _body(request)
-        if body is None:
-            return JSONResponse({"error": "expected a JSON object"}, status_code=400)
-        try:
-            return JSONResponse(
-                service.set_control_mode(
-                    request.state.principal, str(body.get("control_mode") or "")
-                )
-            )
-        except ServiceError as exc:
-            return _service_error(exc)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to update control mode")
-
+    rows = tuple(d for d in SETTINGS_ROUTE_OPERATIONS if d.name.startswith("authority."))
+    mount_router(router, operation_router(rows, lambda: operations.for_context(ctx), _answer, module=__name__))
     return router

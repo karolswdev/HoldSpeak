@@ -29,7 +29,6 @@ _log = logging.getLogger(__name__)
 # Ordered list of family module names under holdspeak.mcp.families.
 _FAMILY_MODULE_NAMES: list[str] = [
     "ask",
-    "settings",
     "coder",
     "cadence",
     "memory",
@@ -44,10 +43,8 @@ _FAMILY_MODULE_NAMES: list[str] = [
     "thread",
     "project",
     "channel",
-    "heartbeat",
     "interview",
     "agent",
-    "setup",
     "note",
     "declared",
     "phone",

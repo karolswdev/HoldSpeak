@@ -861,15 +861,17 @@ def test_the_cocoa_paths_post_nothing_with_the_switch_off(monkeypatch: pytest.Mo
 
 
 def test_the_mcp_notify_test_answers_not_posted_in_this_rig(monkeypatch: pytest.MonkeyPatch) -> None:
-    from holdspeak import desktop_notify
-    from holdspeak.mcp.families import heartbeat
+    from unittest.mock import MagicMock
 
+    from holdspeak import desktop_notify, operations
+    from holdspeak.principals import Principal, PrincipalKind
+    from holdspeak.services.heartbeat_service import HeartbeatService
+
+    # heartbeat.notify_test is declared (settings_operations.py, 2026-11-09).
     monkeypatch.setenv(desktop_notify.DESKTOP_NOTIFY_ENV, "0")
-    monkeypatch.setattr(heartbeat, "db_or", lambda _: None)
-    monkeypatch.setattr(heartbeat, "observer_or", lambda _: None)
-    monkeypatch.setattr(heartbeat, "HeartbeatService", lambda *a, **k: None)
     monkeypatch.setattr(desktop_notify, "_notify_macos", lambda *a, **k: pytest.fail("posted"))
-    assert heartbeat.dispatch("heartbeat.notify_test", {}, None) == {
+    registry = operations.for_context(None, heartbeat_service=lambda: HeartbeatService(MagicMock()))
+    assert registry.invoke(Principal(PrincipalKind.OWNER, "rig"), "heartbeat.notify_test", {}) == {
         "fired": False, "reason": "not posted in this rig"}
 
 

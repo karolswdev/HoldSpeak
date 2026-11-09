@@ -549,23 +549,16 @@ def test_profile_never_sync_holds_across_every_read_surface(env) -> None:
     })
     assert push.status_code == 200, push.text
 
-    # Ingress 2 — the REST write path (HS-112-01: /api/inference-targets is
-    # the ONE write path; /api/profiles is a read-only alias). A hostile key
-    # is REFUSED at the door — even stronger than the old silent drop.
-    refused = client.post("/api/inference-targets", json={
-        "id": "prof_y", "name": "OpenRouter", "kind": "openAICompatible",
-        "base_url": "https://openrouter.ai/api/v1", "model": "anthropic/claude-sonnet-4",
-        "context_limit": 200000, "requires_key": True,
-        "api_key": "sk-FROM-REST-MUST-VANISH",
-    })
-    assert refused.status_code == 400, refused.text
-    assert "sk-FROM-REST-MUST-VANISH" not in refused.text
-    created = client.post("/api/inference-targets", json={
+    # Ingress 2 — the owner's own write (POST /api/inference-targets had no
+    # client and is parked, 2026-11-09): the service writes the target, no key.
+    from holdspeak.principals import Principal, PrincipalKind
+    from holdspeak.services.profile_service import ProfileService
+
+    ProfileService(db).create_profile(Principal(PrincipalKind.OWNER, "sync-owner"), {
         "id": "prof_y", "name": "OpenRouter", "kind": "openAICompatible",
         "base_url": "https://openrouter.ai/api/v1", "model": "anthropic/claude-sonnet-4",
         "context_limit": 200000, "requires_key": True,
     })
-    assert created.status_code == 201, created.text
 
     # Every READ surface a downstream surface consumes: the sync pull + target contract reads.
     # HS-134-02: /api/profiles read routes retired; reads go through /api/inference-targets.

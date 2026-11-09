@@ -20,6 +20,10 @@ def _rig(tmp_path):
     recipe=db.recipes.upsert(recipe_id="r",name="R",system_prompt="S")
     service=WorkbenchService(db)
     wb=service.create_workbench(OWNER,name="W",recipe_id=recipe.id,profile_id=profile.id,schedule="* * * * *")
+    # The hub's start consumes the pointer into the automation's With line
+    # (the startup migration); the schedule names that assignment.
+    from holdspeak.kernel.runtime import _configure
+    _configure(db)
     return db, service, wb["id"]
 
 
@@ -69,7 +73,7 @@ def test_enable_configuration_rolls_back_when_delegation_mint_fails(tmp_path, mo
 
     monkeypatch.setattr(ScheduleDelegationService, "enable_from_owner_in_transaction", fail_mint)
     with pytest.raises(RuntimeError, match="simulated mint failure"):
-        service.create_workbench(OWNER, name="Atomic", recipe_id="r", profile_id="p", schedule="* * * * *", schedule_enabled=True)
+        service.create_workbench(OWNER, name="Atomic", recipe_id="r", schedule="* * * * *", schedule_enabled=True)
     assert [wb for wb in db.workbenches.list() if wb.name == "Atomic"] == []
     monkeypatch.setattr(ScheduleDelegationService, "enable_from_owner_in_transaction", original)
 

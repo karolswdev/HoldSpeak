@@ -474,7 +474,7 @@ class TestSnapshotIcsRemoval:
         source's file is deleted; a kept snapshot and a removed plain file
         source are untouched."""
         from holdspeak.services.calendar_snapshot_service import snapshot_dir
-        from holdspeak.web.routes.system.settings import (
+        from holdspeak.settings_operations import (
             remove_generated_ics_for_removed_sources,
         )
         db, config = _setup(tmp_path, monkeypatch)
@@ -498,7 +498,7 @@ class TestSnapshotIcsRemoval:
         from holdspeak.principals import Principal, PrincipalKind
         from holdspeak.services.calendar_snapshot_service import snapshot_dir
         from holdspeak.services.settings_service import SettingsService
-        from holdspeak.web.routes.system.settings import (
+        from holdspeak.settings_operations import (
             _calendar_sources_snapshot, remove_generated_ics_for_removed_sources,
         )
         db, config = _setup(tmp_path, monkeypatch)

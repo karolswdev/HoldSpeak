@@ -272,15 +272,21 @@ def test_models_route_lists_every_destination_without_deduping(env, monkeypatch)
     its id. Two destinations serving the SAME model name are BOTH present and
     distinguishable by id — id, not name, is the selector, so no destination is
     silently collapsed into another."""
-    _, client = env
-    pid = client.post("/api/inference-targets", json={
+    db, client = env
+    from holdspeak.principals import Principal, PrincipalKind
+    from holdspeak.services.profile_service import ProfileService
+
+    # POST /api/inference-targets had no client and is parked (2026-11-09): the service writes.
+    owner = Principal(PrincipalKind.OWNER, "models-route-owner")
+    profiles = ProfileService(db)
+    pid = profiles.create_profile(owner, {
         "name": "LAN box", "kind": "openAICompatible",
         "base_url": "http://192.168.1.43:8080/v1", "model": "Qwen3.5-9B-Q6_K",
-    }).json()["inference_target"]["id"]
-    twin = client.post("/api/inference-targets", json={
+    })["id"]
+    twin = profiles.create_profile(owner, {
         "name": "Twin", "kind": "openAICompatible",
         "base_url": "http://192.168.1.44:8080/v1", "model": "Qwen3.5-9B-Q6_K",
-    }).json()["inference_target"]["id"]  # SAME model name — both must survive
+    })["id"]  # SAME model name — both must survive
 
     resp = client.get("/api/models")
     assert resp.status_code == 200

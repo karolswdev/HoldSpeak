@@ -21,6 +21,7 @@ sys.path[:0] = [str(REPO), str(REPO / "scripts")]  # this checkout, and gen_api_
 Op = tuple[str, str]
 DESCRIPTORS: dict[str, Op] = {}  # declared operation name -> (service, method)
 TOOL_OPS: dict[str, str] = {}  # MCP tool name -> declared operation name
+RESOURCE_OPS: set[Op] = set()  # operations a declared ``mcp-resource:`` exposure reads
 HTTP_OPS: dict[tuple[str, str], Op] = {}  # (method, path) a descriptor produces -> its operation
 
 
@@ -47,6 +48,7 @@ def _load_descriptors() -> None:
         found = [i for i in items if isinstance(i, OperationDescriptor)]
         DESCRIPTORS.update({i.name: (_norm(i.service) or i.service, i.method) for i in found})
         HTTP_OPS.update({tuple(i.http): DESCRIPTORS[i.name] for i in found if getattr(i, "http", None)})
+        RESOURCE_OPS.update(DESCRIPTORS[i.name] for i in found if any(e.startswith("mcp-resource:") for e in i.exposure))
 
 
 def _text(node: ast.AST) -> str | None:  # a string constant, or an f-string with * for each hole
@@ -100,7 +102,19 @@ class Reader:  # the operations one body, and the helpers it calls, reach
                 self.scope.setdefault(alias.asname or alias.name, found)
         for node in (n for stmt in body for n in ast.walk(stmt) if isinstance(n, ast.Call)):
             func = node.func
-            if any(word in getattr(func, "attr", getattr(func, "id", "")) for word in ("invoke", "operation")):
+            passed = [a for a in node.args if isinstance(a, (ast.Attribute, ast.Name))]  # run_in_threadpool(x.invoke, p, "op")
+            if any(word in getattr(f, "attr", getattr(f, "id", "")) for f in (func, *passed) for word in ("invoke", "operation")):
+                # an operation name: a string, or a local name assigned one (``name = "agent_hooks.install"``)
+                names = [_text(a) or next((_text(v) for v in assigns.get(getattr(a, "id", ""), ()) if _text(v)), None)
+                         for a in node.args]
+                ops.update(DESCRIPTORS[n] for n in names if n in DESCRIPTORS)
+            for ref in (a for a in node.args if isinstance(a, ast.Attribute)):  # run_in_threadpool(service.method, ...)
+                if (service := self.service(ref.value, assigns)) and not ref.attr.startswith(("_", "bind_")) \
+                        and "invoke" not in ref.attr:
+                    ops.add((service, ref.attr))
+            # invoke(p, "op"), and a route's own helper handed the name: call(request, "note.outcome.edit", ...)
+            if isinstance(func, ast.Name) or any(word in getattr(func, "attr", getattr(func, "id", ""))
+                                                 for word in ("invoke", "operation")):
                 ops.update(DESCRIPTORS[n] for n in map(_text, node.args) if n in DESCRIPTORS)
             if isinstance(func, ast.Call) and getattr(func.func, "id", "") == "getattr" and len(func.args) > 1:
                 if (service := self.service(func.args[0], assigns)) and isinstance(func.args[1], ast.JoinedStr):
@@ -175,7 +189,8 @@ def _branches(fn: Any, names: set[str]) -> tuple[dict[str, list[ast.AST]], list[
     walk(whole)
     for node in (n for s in tail for n in ast.walk(s) if isinstance(n, ast.Dict)):
         for key, value in zip(node.keys, node.values):  # a {"tool.name": handler} table
-            if isinstance(key, ast.Constant) and key.value in names:
+            # A handler, never a label: {"thought.attach_context": "attach"} names the branch below it.
+            if isinstance(key, ast.Constant) and key.value in names and not isinstance(value, ast.Constant):
                 out[key.value].append(value)
     out.update({name: tail for name in names - set(out)})
     return out, whole
@@ -190,6 +205,7 @@ def mcp_tools() -> dict[str, set[Op]]:
     handed = {k: v for f in FAMILIES for k, v in getattr(f, "TOOL_OPERATIONS", {}).items() if isinstance(v, str)}
     for module, dispatch, names in owners:
         mapped = {**TOOL_OPS, **getattr(module, "TOOL_OPERATIONS", {}), **getattr(module, "ROOM_TOOL_OPERATIONS", {}),
+                  **getattr(module, "_OPERATION_TOOLS", {}),  # a family whose tools ARE declared operations
                   **(handed if module is tools else {})}
         branches, whole = _branches(dispatch, names)
         for name, stmts in sorted(branches.items()):
@@ -225,6 +241,7 @@ def main() -> int:
     _load_descriptors()
     routes, tools = web_routes(), mcp_tools()
     web, mcp, cli = {op for r in routes for op in r[2]}, {op for ops in tools.values() for op in ops}, cli_ops(routes)
+    mcp |= RESOURCE_OPS  # an MCP resource reaches its operation as a tool does
     web, mcp, cli = (_expand(ops, web | mcp | cli) for ops in (web, mcp, cli))  # list_*s: each method it matches
     tools = {name: _expand(ops, web | mcp | cli) for name, ops in tools.items()}
     blind_routes, blind_tools = Counter("/".join(p.split("/")[:3]) for _m, p, o in routes if not o), sorted(n for n, o in tools.items() if not o)

@@ -1,20 +1,47 @@
-"""Recipe routes — thin FastAPI adapters over :class:`RecipeService` (HS-122-03)."""
+"""Recipe routes — thin FastAPI adapters over :class:`RecipeService` (HS-122-03).
+
+The writes (create, change, delete) are produced from
+``holdspeak/recipe_operations.py`` through ``OperationRegistry.invoke``
+(2026-11-09); the list and the run stay hand-written."""
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Callable
 
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
+from starlette.concurrency import run_in_threadpool
 
+from .... import operations
 from ....logging_config import get_logger
 from ....principals import Principal, PrincipalKind
 from ....services.errors import NotFound, ServiceError, ValidationError
 from ....services.recipe_service import RecipeService
 from ...context import WebContext
+from ...operation_routes import operation_router
 from ...runtime_support import error_500
+from .._mount import mount_router
 from ._shared import _json_body, _run_frame
 
 log = get_logger("web.routes.primitives")
+
+
+#: The 500 words of each produced route (the hand-written handlers' words).
+_FAILED = {"recipe.create": "Failed to create recipe", "recipe.update": "Failed to update recipe",
+           "recipe.delete": "Failed to delete recipe"}
+
+
+def _answer(name: str) -> Callable[..., Any]:
+    async def answer(fn: Callable[[], Any], *, status: int = 200) -> JSONResponse:
+        try:
+            return JSONResponse(await run_in_threadpool(fn), status_code=status)
+        except NotFound as exc:
+            return JSONResponse({"error": exc.detail}, status_code=404)
+        except (ValidationError, ValueError, operations.OperationRefused) as exc:
+            return JSONResponse({"error": str(exc)}, status_code=400)
+        except Exception as exc:
+            return error_500(exc, log, _FAILED[name])
+
+    return answer
 
 
 def build_recipes_router(ctx: WebContext) -> APIRouter:
@@ -46,47 +73,6 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
         except Exception as exc:
             return error_500(exc, log, "Failed to list recipes")
 
-    @router.post("/api/recipes")
-    async def api_create_recipe(request: Request) -> Any:
-        body = await _json_body(request)
-        if body is None:
-            return JSONResponse({"error": "expected a JSON object"}, status_code=400)
-        try:
-            fields = dict(body)
-            recipe_id = str(fields.pop("id", "") or fields.pop("recipe_id", "") or "") or None
-            recipe = _svc().create_recipe(
-                _principal(request), recipe_id=recipe_id, **fields
-            )
-            return JSONResponse({"recipe": recipe}, status_code=201)
-        except (ValidationError, ValueError) as exc:
-            return JSONResponse({"error": str(exc)}, status_code=400)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to create recipe")
-
-    @router.put("/api/recipes/{recipe_id}")
-    async def api_update_recipe(recipe_id: str, request: Request) -> Any:
-        body = await _json_body(request)
-        if body is None:
-            return JSONResponse({"error": "expected a JSON object"}, status_code=400)
-        try:
-            return JSONResponse({
-                "recipe": _svc().update_recipe(_principal(request), recipe_id, **body)
-            })
-        except NotFound:
-            return JSONResponse({"error": f"Unknown Agent: {recipe_id}"}, status_code=404)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to update recipe")
-
-    @router.delete("/api/recipes/{recipe_id}")
-    def api_delete_recipe(recipe_id: str, request: Request) -> Any:
-        try:
-            _svc().delete_recipe(_principal(request), recipe_id)
-            return JSONResponse({"success": True})
-        except NotFound:
-            return JSONResponse({"error": f"Unknown Agent: {recipe_id}"}, status_code=404)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to delete recipe")
-
     @router.post("/api/recipes/{recipe_id}/run")
     async def api_run_recipe(recipe_id: str, request: Request) -> Any:
         body = await _json_body(request) or {}
@@ -102,23 +88,10 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
         except Exception as exc:
             return error_500(exc, log, "Failed to run recipe")
 
-    @router.post("/api/recipes/{recipe_id}/keep")
-    async def api_keep_recipe_reply(recipe_id: str, request: Request) -> Any:
-        body = await _json_body(request) or {}
-        try:
-            result = _svc().keep(
-                _principal(request), recipe_id,
-                output=str(body.get("output") or ""), input=str(body.get("question") or ""),
-                sources=body.get("sources") if isinstance(body.get("sources"), list) else None,
-            )
-            return JSONResponse(result, status_code=201)
-        except ValidationError as exc:
-            return JSONResponse({"error": str(exc)}, status_code=400)
-        except NotFound:
-            return JSONResponse({"error": f"Unknown Agent: {recipe_id}"}, status_code=404)
-        except ServiceError as exc:
-            return _service_error(exc)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to keep chat reply")
+    def _registry() -> Any:
+        return operations.for_context(ctx, recipe_service=_svc)
+
+    for descriptor in operations.RECIPE_OPERATIONS:
+        mount_router(router, operation_router([descriptor], _registry, _answer(descriptor.name), module=__name__))
 
     return router

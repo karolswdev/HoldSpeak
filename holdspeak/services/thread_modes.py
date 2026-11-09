@@ -78,6 +78,11 @@ _MCP_ONLY: frozenset[str] = frozenset({
     # The declared Automations reads (2026-11-08, automation_operations.py): a
     # thread reads an automation through automation.get; the palettes do not grow.
     "automation.template.list", "automation.new.list", "automation.lesson.list",
+    # The Programs-and-work reads (2026-11-09, ops/programs-work): a thread reads
+    # a Program, a thought and memory through the reads it has; the palettes do not grow.
+    "automation.prepared.read", "program.requirement_evidence", "thought.for_note", "thought.original",
+    "thought.review", "memory.pages", "memory.recall", "memory.meaning.status", "desk.projection.list",
+    "today.since_morning", "desk.health", "constitutional_context.read", "constitutional_context.history",
     # The declared dictation reads (2026-11-09, dictation_operations.py): a
     # thread reads the journal through dictation.list / dictation.get; the
     # palettes do not grow.
@@ -92,6 +97,9 @@ _MCP_ONLY: frozenset[str] = frozenset({
     "meeting.outcome_review",
     # The declared kernel reads (2026-11-09, gate_operations.py); kernel.receipt keeps its place.
     "kernel.get", "kernel.events",
+    # The declared Settings-family reads (2026-11-09, setup_operations.py): MCP and HTTP only.
+    "inference.acquisition.get", "inference.targets.list", "people.access.get",
+    "connection.signin.status",
 })
 
 
@@ -129,7 +137,12 @@ def _thread_side(name: str) -> bool:
          # REST families; the seeded palettes do not grow.
          "activity.", "walk.", "briefing.", "repository.", "roadmap.",
          # The gate and the principals (2026-11-09, gate_operations.py): MCP and REST.
-         "gate.", "principals.")
+         "gate.", "principals.",
+         # Setup and onboarding (2026-11-09, setup_operations.py, onboarding_operations.py):
+         # the first-run verbs are an MCP and REST family.
+         "setup.", "onboarding.",
+         # Reach (2026-11-09, settings_operations.py): how HoldSpeak reaches him, MCP and REST.
+         "reach.")
     )
 
 

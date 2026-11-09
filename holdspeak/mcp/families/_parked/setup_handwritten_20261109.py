@@ -1,3 +1,6 @@
+# PARKED 20261109 (ops/settings): the hand-written setup MCP family.
+# setup.status and setup.use are produced from ``holdspeak/setup_operations.py`` (``mcp/families/declared.py``).
+# Not imported. Kept for history; restore with ``git revert`` of the parking commit.
 """Setup family: the owner's local Setup inventory and adoption press."""
 from __future__ import annotations
 

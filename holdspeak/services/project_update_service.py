@@ -1477,183 +1477,24 @@ def _parse_model_output(
     return sections, claims
 
 
-def _route_plan_deployment(
-    broker: Any, capability_id: str, *, subject_kind: str | None = None, subject_id: str | None = None,
-    invocation_id: str | None = None,
-) -> tuple[str, str, str]:
-    """The authoritative resolution: profile -> plan -> frozen leg (HS-200-08).
-
-    This is the SAME resolver the Ask path runs (``route_probe.preview_route``
-    reads exactly this plan): the capability's assignment is planned, and the
-    first frozen leg NAMES its deployment revision.  Returns
-    ``(deployment_revision_id, assignment_id, profile_id)``, or empty strings
-    when this broker carries no planner or the plan does not resolve.
-    """
-    plans = getattr(getattr(broker, "inference_adoption_service", None), "plans", None)
-    if plans is None:
-        return "", "", ""
-    try:
-        from .inference_route_plan_service import ROUTE_PLANNING_AUTHORITY
-
-        plan = plans.resolve_route_plan(
-            ROUTE_PLANNING_AUTHORITY, capability_id=capability_id,
-            subject_kind=subject_kind, subject_id=subject_id, invocation_id=invocation_id,
-        )
-    except Exception as exc:  # planner refusals are a fallback, never a crash
-        _log.warning(
-            "Route plan for %s did not resolve: %s", capability_id, exc,
-        )
-        return "", "", ""
-    entries = [e for e in (plan.get("entries") or ()) if e]
-    if not entries:
-        return "", "", ""
-    leg = min(entries, key=lambda e: int(e.get("ordinal") or 0))
-    revision_id = str(leg.get("deployment_revision_id") or "")
-    assignment_id = str((plan.get("source") or {}).get("assignment_id") or "")
-    profile_id = str(leg.get("profile_id") or "")
-    if not revision_id:
-        return "", "", ""
-    # The plan resolves purely (it rolls its snapshot back), so a legacy leg's
-    # content-addressed revision may never have been persisted.  The runner
-    # refuses a revision it cannot read, so capture it the way Ask does.
-    db = getattr(broker, "database", None)
-    if db is not None and db.deployment_revisions.get(revision_id) is None:
-        captured = _captured_deployment_revision(db, profile_id)
-        if not captured:
-            return "", "", ""
-        if captured != revision_id:
-            _log.warning(
-                "Frozen leg named %s; captured %s for profile %s.",
-                revision_id, captured, profile_id,
-            )
-        revision_id = captured
-    return revision_id, assignment_id, profile_id
-
-
-def _bound_deployment_revision(db: Any, profile_id: str) -> str:
-    """The deployment revision the profile's live binding head points at.
-
-    The second resolver, for a broker with no planner wired.  It reads the
-    binding the planner itself reads (``model_profile_binding_heads`` ->
-    ``model_profile_binding_revisions.deployment_revision_id``), never the
-    ``deployment_revisions.model`` column.
-    """
-    if not profile_id:
-        return ""
-    with db._connection() as conn:
-        row = conn.execute(
-            """SELECT b.deployment_revision_id AS rev
-                 FROM model_profile_binding_heads h
-                 JOIN model_profile_binding_revisions b
-                   ON b.binding_id=h.binding_id AND b.revision=h.revision
-                WHERE h.profile_id=?""",
-            (profile_id,),
-        ).fetchone()
-        if row is None:
-            return ""
-        revision_id = str(row["rev"] or "")
-        if not revision_id:
-            return ""
-        exists = conn.execute(
-            "SELECT 1 FROM deployment_revisions WHERE id=?", (revision_id,),
-        ).fetchone()
-    return revision_id if exists is not None else ""
-
-
 def _captured_deployment_revision(db: Any, profile_id: str) -> str:
-    """Capture (and persist) the profile's deployment exactly as Ask does.
+    """The profile's captured deployment revision (the engine door's reader)."""
+    from .engine_door import _captured_revision
 
-    The last resolver: a version-1 profile has no binding row, so the Ask
-    path's ``capture_deployment_revision`` is what freezes its deployment.
-    """
-    if not profile_id:
-        return ""
-    try:
-        from ..deployment_revisions import capture_deployment_revision
-        from ..inference_targets import resolve_inference_target
-
-        target = resolve_inference_target(db, profile_id.removeprefix("legacy-"))
-        if getattr(target, "deployment", None) is None:
-            return ""
-        return str(capture_deployment_revision(db, target).id)
-    except Exception as exc:
-        _log.warning(
-            "Could not capture a deployment for profile %s: %s",
-            profile_id, exc,
-        )
-        return ""
+    return _captured_revision(db, profile_id)
 
 
 def _resolve_for_capability(
     broker: Any,
     capability_id: str,
 ) -> tuple[str, str, str]:
-    """Resolve the deployment revision and assignment ID for a capability.
+    """``(deployment_revision_id, assignment_id, profile_id)`` of the first
+    engine the owner assigned to the capability: the engine door's choice
+    (``engine_door.engine_for``). Raises ``RuntimeError`` when none resolves."""
+    from .engine_door import engine_for
 
-    Returns ``(deployment_revision_id, assignment_id, profile_id)`` -- the
-    profile is the one the route actually resolved through, so provenance
-    never has to guess it back out of the revision's ``model`` column.
-    Raises ``RuntimeError`` when no route resolves.
-
-    HS-200-08: this used to run
-    ``SELECT id FROM deployment_revisions WHERE model=?`` with the ASSIGNED
-    PROFILE ID.  A captured revision's ``model`` column holds the real model
-    id, so every profile whose id differs from its model id (the owner's own
-    "Migrated intel endpoint", for one) resolved NOTHING and the model
-    drafter silently fell back to the deterministic one.  A profile id is
-    never string-matched against a model column again: resolution goes
-    profile -> plan -> frozen leg -> deployment revision, the same path the
-    Ask verb takes.
-    """
-    db = getattr(broker, "database", broker)
-
-    # The planner first: it owns assignment inheritance (a capability with no
-    # scoped assignment of its own still resolves through the global one), so
-    # asking it first is what makes a real desk's route the drafter's route.
-    planned_revision, planned_assignment, planned_profile = (
-        _route_plan_deployment(broker, capability_id)
-    )
-
-    key = f"capability:{capability_id}"
-    with db._connection() as conn:
-        head = conn.execute(
-            "SELECT assignment_id, revision FROM inference_assignment_heads "
-            "WHERE assignment_key=? AND cleared=0",
-            (key,),
-        ).fetchone()
-        entry = None
-        if head is not None:
-            entry = conn.execute(
-                "SELECT profile_id FROM inference_assignments "
-                "WHERE assignment_id=? AND assignment_revision=? "
-                "ORDER BY ordinal LIMIT 1",
-                (str(head["assignment_id"]), head["revision"]),
-            ).fetchone()
-    assignment_id = str(head["assignment_id"]) if head is not None else ""
-    profile_id = str(entry["profile_id"] or "") if entry is not None else ""
-
-    if planned_revision:
-        return (
-            planned_revision,
-            (planned_assignment or assignment_id),
-            (planned_profile or profile_id),
-        )
-    if head is None:
-        raise RuntimeError(f"No assignment for {capability_id}")
-    if entry is None:
-        raise RuntimeError(f"No entries in assignment for {capability_id}")
-
-    bound = _bound_deployment_revision(db, profile_id)
-    if bound:
-        return bound, assignment_id, profile_id
-
-    captured = _captured_deployment_revision(db, profile_id)
-    if captured:
-        return captured, assignment_id, profile_id
-
-    raise RuntimeError(
-        f"No deployment revision resolves for profile {profile_id}"
-    )
+    engine = engine_for(broker, capability_id)
+    return engine.revision, engine.assignment, engine.profile
 
 
 # ── Generator provenance (HS-173-02) ─────────────────────────────────

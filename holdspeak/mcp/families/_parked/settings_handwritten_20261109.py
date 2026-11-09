@@ -1,3 +1,6 @@
+# PARKED 20261109 (ops/settings): the hand-written settings MCP family.
+# Its tools are produced from ``holdspeak/settings_operations.py`` (``mcp/families/declared.py``).
+# Not imported. Kept for history; restore with ``git revert`` of the parking commit.
 """Settings family -- MCP tools for the SettingsService surface."""
 from __future__ import annotations
 

@@ -682,6 +682,11 @@ def test_the_sends_are_egress_owner_presses_and_blocking_io_in_the_one_table() -
                                         "recordings.open_folder", "tts.download",
                                         # HTTP only: the coder steering and factory verbs (#2125).
                                         "coder.keys", "coder.panes", "coder.rename", "coder.spawn", "coder.steer"}
+    # The property, not a hand-kept list (2026-11-09: the declared-operations lanes add
+    # blocking rows every day): each blocking operation an MCP tool reaches has an authority row.
+    by_name = {d.name: d for d in operations.DESCRIPTORS}
+    mcp_blocking = {by_name[n].tool_name for n in blocking if any(e.startswith("mcp:") for e in by_name[n].exposure)}
+    assert {"channel.send", "channel.save_destination", "agent.hand", "calls.place"} <= blocking
     assert all(name in TOOL_AUTHORITY for name in mcp_blocking), mcp_blocking - set(TOOL_AUTHORITY)
     key = by_name["channel.save_email_key"]
     assert key.owner_press and key.owner_only and key.held == ("api_key",) and "channel.save_email_key" not in TOOL_AUTHORITY
