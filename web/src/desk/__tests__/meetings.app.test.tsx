@@ -737,7 +737,9 @@ describe("the meeting prepares its Results (betterment/capture C5, C5b)", () => 
     at(fixture);
     const calls = hub(fixture);
     render5();
-    const prepareButton = await screen.findByRole("button", { name: "Prepare…" });
+    // The record draws its body once its first reads end (MEETING_READS_CAP_MS);
+    // under a loaded full run that is past findByRole's 1 s default.
+    const prepareButton = await screen.findByRole("button", { name: "Prepare…" }, { timeout: 8000 });
     fireEvent.click(prepareButton);
     const menu = await screen.findByRole("menu");
     const labels = within(menu).getAllByRole("menuitem").map((m) => (m.textContent ?? "").trim());

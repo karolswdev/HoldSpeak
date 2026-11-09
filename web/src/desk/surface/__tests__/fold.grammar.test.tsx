@@ -4,7 +4,7 @@
 // triangle or chevron is drawn by the kit's folds or by Today's.
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { FoldGadget } from "../fold";
 import { Disclosure } from "../patterns/Disclosure";
@@ -21,6 +21,10 @@ describe("the fold grammar", () => {
     );
     expect(container.textContent).not.toMatch(/[▸▾▴▶›]/);
     expect(screen.getByRole("button", { name: "Sources" })).toHaveAttribute("aria-expanded", "false");
+    // The word (Show, Hide) is CSS on the trigger; the button keeps its
+    // heading's name, folded and open (the stylesheets load: css: true).
+    fireEvent.click(screen.getByRole("button", { name: "Sources" }));
+    expect(screen.getByRole("button", { name: "Sources" })).toHaveAttribute("aria-expanded", "true");
   });
 
   it("the CSS says Show and Hide, and no fold draws a triangle", () => {
