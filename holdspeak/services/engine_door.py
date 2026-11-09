@@ -108,6 +108,17 @@ def engine_for(broker: Any, job: str, *, subject: Optional[tuple[str, str]] = No
     return replace(engine, fallback=_next_in_chain(broker, job, engine))
 
 
+def engine_of_profile(broker: Any, profile_id: str) -> Optional[Engine]:
+    """The engine one model profile names: the owner's pick for one run
+    ("Use X for this one"), with no next engine. ``None`` when the profile
+    names no deployment."""
+    from .project_update_service import _bound_deployment_revision, _captured_deployment_revision
+
+    db = broker.database
+    revision = _bound_deployment_revision(db, profile_id) or _captured_deployment_revision(db, profile_id)
+    return Engine(str(revision), "", profile_id) if revision else None
+
+
 def _next_in_chain(broker: Any, job: str, first: Engine) -> Optional[Engine]:
     """The second engine of the job's assignment chain, or ``None``."""
     try:
@@ -466,6 +477,8 @@ JOB_WORDS = {
     "chat.turn": "the reply",
     "meeting.deferred_analysis": "the note's tasks",
     "project.brief.prepare": "the brief",
+    "project.update_draft": "the update draft",
+    "recipe.run": "the agent's answer",
 }
 
 ENGINES_REF = "window:surface-engines"

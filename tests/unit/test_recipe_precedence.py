@@ -51,8 +51,8 @@ def test_recipe_subject_assignment_beats_divergent_global_for_run(rig: tuple[Dat
     _db, service = rig
     run = asyncio.run(service.run(OWNER, "r1", input="hello"))
     assert run["profile_id"] == "recipe-primary"
-    assert run["placement"]["route_plan_id"]
-    assert run["route_execution_receipt"]["outcome"] == "succeeded"
+    assert run["placement"]["assignment_id"]
+    assert run["receipt_id"]
 
 
 def test_recipe_refuses_retired_invocation_selector(rig: tuple[Database, RecipeService]) -> None:

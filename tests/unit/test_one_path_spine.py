@@ -578,25 +578,6 @@ def test_delivery_http_refusal_identity_keeps_valid_pr_retries_executable(tmp_pa
         assert conn.execute("SELECT COUNT(*) FROM artifacts").fetchone()[0] == 3
 
 
-def _drive_voice(tmp_path, monkeypatch) -> SurfaceRun:
-    from tests.unit.test_voice_resolve import OWNER as VOICE_OWNER
-    from tests.unit.test_voice_resolve import _admitted_voice_rig
-
-    db, service, broker, workbench_id = _admitted_voice_rig(tmp_path)
-
-    class FakeIntel:
-        def run_prompt(self, **_):
-            return '{"zone_ids":["zone-a"]}'
-
-    broker.inference_runner._engine_factory = lambda _revision, **_: FakeIntel()
-    service.resolve_voice(VOICE_OWNER, workbench_id, "find Alpha", "voice-spine")
-    return SurfaceRun(
-        db, VOICE_OWNER, _parent_run_operation_id(db, "voice_reference_resolve"),
-        db.workbenches.get(workbench_id).resolver_profile_id,
-        parent_kind="voice_reference_resolve",
-    )
-
-
 def _drive_meeting_live(tmp_path, monkeypatch) -> SurfaceRun:
     from tests.unit.test_meeting_session_admission import (
         OWNER as MEETING_OWNER,
@@ -707,7 +688,6 @@ SURFACE_DRIVERS: dict[str, Callable[[Any, Any], SurfaceRun]] = {
     "Rails": _drive_rails,
     "Decision promotion": _drive_decision,
     "Delivery review": _drive_delivery_review,
-    "voice": _drive_voice,
     "meeting live": _drive_meeting_live,
     "meeting deferred": _drive_meeting_deferred,
     "dictation pipeline": _drive_dictation,
@@ -718,7 +698,7 @@ SURFACE_DRIVERS: dict[str, Callable[[Any, Any], SurfaceRun]] = {
 #: its seat here rather than riding in unproven. The other two families that story
 #: closed added no surface: both were DELETED as duplicates of a surface already
 #: below (Decision promotion, Delivery review).
-assert len(SURFACE_DRIVERS) == 10, "every named surface form is proven here; none may be collapsed (HS-151-02: Recipe chat retired; 2026-11-08: Sequence and Workflow parked; the item queue parked)"
+assert len(SURFACE_DRIVERS) == 9, "every named surface form is proven here; none may be collapsed (HS-151-02: Recipe chat retired; 2026-11-08: Sequence and Workflow parked; the item queue parked; 2026-11-09: voice resolution parked)"
 
 #: Which admission shape each surface uses. Module-level (rather than buried in
 #: the sanity test below) because ``test_one_path_provenance.py`` imports these
@@ -726,7 +706,6 @@ assert len(SURFACE_DRIVERS) == 10, "every named surface form is proven here; non
 #: shows — the two files cannot drift apart without one of them failing.
 ROOT_SHAPED_SURFACES = frozenset({"Ask", "Recipe run", "Rails", "Decision promotion", "Delivery review", "cadence next action"})  # HS-151-02: Recipe chat removed
 CHILD_SHAPED_SURFACES = frozenset({
-    "voice",
     "meeting live", "meeting deferred", "dictation pipeline",
 })
 
@@ -766,7 +745,7 @@ def test_each_driver_reports_the_run_it_actually_performed(tmp_path, monkeypatch
     changing which cohort the fence inspects. Exercised on one surface of each
     shape; the provenance suite re-checks every one against the stored rows.
     """
-    for surface in ("Ask", "voice"):
+    for surface in ("Ask", "meeting live"):
         run = SURFACE_DRIVERS[surface](tmp_path / surface.replace(" ", "-"), monkeypatch)
         assert isinstance(run, SurfaceRun), f"{surface}: driver returned {run!r}"
         assert run.destination_id, f"{surface}: driver named no destination"

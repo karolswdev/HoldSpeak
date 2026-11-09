@@ -1,10 +1,7 @@
-"""Transport-neutral Recipe operations on the routed inference waist."""
+"""Transport-neutral Recipe operations; each model job goes through the engine door."""
 from __future__ import annotations
 
 import asyncio
-import hashlib
-import json
-import time
 import uuid
 from collections.abc import Callable
 from holdspeak.timestamps import utc_now_iso
@@ -16,7 +13,6 @@ from ..inference_memory_policy import memory_enabled
 from ..kernel.prompt_adapter import CanonicalPromptAdapter
 from ..principals import Principal
 from holdspeak.services.errors import NotFound, ServiceError, ValidationError
-from .inference_outcomes import map_inference_outcome
 from holdspeak.ids import new_id as _new_id
 
 
@@ -55,7 +51,6 @@ class RecipeService:
         self._db, self._broker, self._observer = db, broker, observer or NullObserver()
         from ..kernel.recipe_projection import register
         register(broker.projection_stager)
-        self._runner = broker.inference_runner
 
     def list_recipes(self, principal: Principal, *, kind: str | None = None) -> list[dict[str, Any]]:
         if kind is not None:
@@ -137,33 +132,16 @@ class RecipeService:
                 "overflow_count": memory_hydration.overflow_count,
             },
         }
-        invocation_id = "recipe_run_" + uuid.uuid4().hex
         self._broadcast(broadcast, "running", kind="recipe", ref=recipe_id, name=recipe.name or recipe_id)
-        admitted = await asyncio.to_thread(
-            self._broker.inference_adoption_service.admit, principal,
-            command_id=f"admit-{invocation_id}", capability_id="recipe.run",
-            operation_id=invocation_id, payload=payload, subject_kind="recipe", subject_id=recipe_id,
-            reserved_output_tokens=int(max_tokens) if max_tokens is not None else 512,
-        )
-        routed = await asyncio.to_thread(
-            self._broker.inference_adoption_service.execute, principal,
-            execution_id=admitted["execution"]["id"], adapter=_RecipeResultAdapter(),
-            publish=self._publisher("recipe-run", recipe, payload, sources, admitted["route_plan"]),
-        )
-        if routed["outcome"] != "succeeded":
-            self._broadcast(broadcast, "error", kind="recipe", ref=recipe_id, name=recipe.name or recipe_id, error=routed["outcome"])
-            failed = routed["outcome"] == "failed"
-            raise ServiceError(
-                "inference_route_failed",
-                str(routed.get("error") or "No assigned model completed this recipe"),
-                context={"receipt": routed["receipt"], "status": 502 if failed else 409},
+        try:
+            result = await asyncio.to_thread(
+                self._through_door, principal, "recipe.run", "recipe-run", recipe, payload,
+                lambda value, on: self._run_projection(value, recipe, sources, payload["user_prompt"], on),
             )
-        winner = str(routed["winning_reservation"]["child_invocation_id"])
-        result = self._broker.projection_stager.finalize(winner)
-        if result is None:
-            raise ServiceError("projection_not_published", "Recipe result is awaiting receipt reconciliation", context={"invocation_id": winner, "status": 409})
-        result = dict(result)
-        result["route_execution_receipt"] = routed["receipt"]
+        except ServiceError as exc:
+            self._broadcast(broadcast, "error", kind="recipe", ref=recipe_id, name=recipe.name or recipe_id,
+                            error=str(exc.context.get("outcome") or exc.code))
+            raise
         self._broadcast(broadcast, "ready", kind="recipe", ref=recipe_id, name=recipe.name or recipe_id)
         return result
 
@@ -225,53 +203,42 @@ class RecipeService:
         if convo: blocks.append("[CONVERSATION SO FAR]\n" + convo)
         blocks.append(f"[USER]\n{question[:6000]}\n\nReply as {name}.")
         payload = {"system_prompt": inject_skills(self._db, (recipe.system_prompt or "").strip() or f"You are {name}, a helpful assistant.", recipe_id), "user_prompt": "\n\n".join(blocks), "history": window, "recipe_id": recipe_id, "recipe_revision": str(recipe.last_modified), "context_ids": context_ids, "context_titles": context_titles, "grounding": grounding_echo, "workbench_id": str(workbench_id or "")}
-        invocation_id = "recipe_chat_" + uuid.uuid4().hex
         self._broadcast(broadcast, "running", kind="recipe", ref=recipe_id, name=name)
-        # Qualification is a zero-write probe of the *agent.tool_turn* route.
-        # A Recipe's persisted `tools` list is intentionally never consulted.
-        qualified = await asyncio.to_thread(
-            self._broker.inference_adoption_service.next_run_summary,
-            principal, capability_id="agent.tool_turn", subject_kind="recipe", subject_id=recipe_id,
+        result = await asyncio.to_thread(
+            self._through_door, principal, "chat.turn", "recipe-chat-result", recipe, payload,
+            lambda value, on: self._chat_projection(value, recipe, payload, on),
         )
-        if qualified["status"] == "ready":
-            from .agent_turn_service import AgentTurnService
-            agent = AgentTurnService.compose(self._broker)
-            turn = await asyncio.to_thread(
-                agent.run_recipe,
-                principal, command_id=f"agent-turn-{invocation_id}", turn_id=f"turn-{invocation_id}",
-                recipe_id=recipe_id,
-                messages=[{"role": "system", "content": payload["system_prompt"]}, {"role": "user", "content": payload["user_prompt"]}],
-                deadline_at=time.time() + 20,
-                publish=lambda route: self._publisher("recipe-chat-result", recipe, payload, [], route),
-            )
-            routed = {
-                "outcome": turn["outcome"], "receipt": turn["receipt"],
-                "winning_reservation": turn["winning_reservation"],
-            }
-        else:
-            admitted = await asyncio.to_thread(self._broker.inference_adoption_service.admit, principal, command_id=f"admit-{invocation_id}", capability_id="recipe.chat", operation_id=invocation_id, payload=payload, subject_kind="recipe", subject_id=recipe_id, reserved_output_tokens=512)
-            routed = await asyncio.to_thread(self._broker.inference_adoption_service.execute, principal, execution_id=admitted["execution"]["id"], adapter=_RecipeResultAdapter(), publish=self._publisher("recipe-chat-result", recipe, payload, [], admitted["route_plan"]))
-        if routed["outcome"] != "succeeded":
-            failed = routed["outcome"] == "failed"
-            raise ServiceError(
-                "inference_route_failed",
-                str(routed.get("error") or "No assigned model completed this recipe"),
-                context={"receipt": routed["receipt"], "status": 502 if failed else 409},
-            )
-        winner = str(routed["winning_reservation"]["child_invocation_id"])
-        result = self._broker.projection_stager.finalize(winner)
-        if result is None: raise ServiceError("projection_not_published", "Recipe chat is awaiting receipt reconciliation", context={"invocation_id": winner, "status": 409})
-        result = dict(result); result["route_execution_receipt"] = routed["receipt"]
         self._broadcast(broadcast, "ready", kind="recipe", ref=recipe_id, name=name)
         return result
 
-    def _publisher(self, kind: str, recipe: Any, payload: dict[str, Any], sources: list[dict[str, str]], route: dict[str, Any]) -> Callable[[Any, dict[str, Any]], str]:
-        def publish(output: Any, reservation: dict[str, Any]) -> str:
-            ordinal = int(reservation["route_leg_ordinal"])
-            projection = self._run_projection(output, recipe, sources, payload["user_prompt"], route, ordinal) if kind == "recipe-run" else self._chat_projection(output, recipe, payload, route, ordinal)
-            digest = "sha256:" + hashlib.sha256(json.dumps(output, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode()).hexdigest()
-            return self._broker.projection_stager.stage(str(reservation["child_invocation_id"]), kind, projection, result_sha256=digest, receipt_result_ref=f"inference-result:{reservation['child_invocation_id']}/{digest}").result_ref
-        return publish
+    def _through_door(self, principal: Principal, job: str, kind: str, recipe: Any, payload: dict[str, Any],
+                      project: Callable[[Any, Any], dict[str, Any]]) -> dict[str, Any]:
+        """One recipe job through the engine door; its result is staged as
+        ``kind`` and published once the receipt says it succeeded."""
+        from . import engine_door
+
+        current: list[Any] = []
+
+        def prepare(body: Any, on: Any) -> Any:
+            current[:] = [on]
+            return body
+
+        try:
+            answer = engine_door.run(
+                self._broker, principal, job, payload, subject=("recipe", str(recipe.id)),
+                adapter=_RecipeResultAdapter(), stage=(kind, lambda value: project(value, current[0])),
+                prepare=prepare,
+            )
+        except engine_door.EngineDoorError as exc:
+            raise ServiceError(
+                "inference_route_failed", exc.detail or "No assigned model completed this recipe",
+                context={"receipt": exc.operation_id, "reason": engine_door.reason(exc), "outcome": exc.outcome or exc.code,
+                         "status": 409 if exc.code == "no_engine" else 502},
+            ) from exc
+        if answer.published is None:
+            raise ServiceError("projection_not_published", "Recipe result is awaiting receipt reconciliation",
+                               context={"invocation_id": answer.invocation_id, "status": 409})
+        return dict(answer.published)
 
     def _migrate_subject_pointers(self, principal: Principal) -> None:
         self._broker.inference_adoption_service.migrate_recipe_workbench_subject_assignments(principal)
@@ -349,31 +316,28 @@ class RecipeService:
         if record is None: raise NotFound("Agent", recipe_id)
         return record
 
-    _outcome_error = staticmethod(map_inference_outcome)
-
     @staticmethod
     def _broadcast(broadcast: Broadcast | None, state: str, **frame: Any) -> None:
         if broadcast: broadcast(state, **frame)
 
-    def _route_summary(self, route: dict[str, Any], ordinal: int) -> dict[str, Any]:
-        entry = dict(route["entries"][ordinal - 1])
-        profile_id = str(entry["profile_id"]).removeprefix("legacy-")
-        # Target identity comes from the admitted immutable deployment revision,
-        # never from the current profile/assignment configuration.
-        revision = self._db.deployment_revisions.get(str(entry["deployment_revision_id"]))
+    def _route_summary(self, engine: Any) -> dict[str, Any]:
+        # Target identity comes from the immutable deployment revision the
+        # job ran on, never from the current profile/assignment configuration.
+        revision = self._db.deployment_revisions.get(str(engine.revision))
+        profile_id = str(engine.profile or getattr(revision, "destination_id", "") or "").removeprefix("legacy-")
         target_id = str(getattr(revision, "destination_id", "") or profile_id)
-        return {"id": profile_id, "profile_id": profile_id, "target_id": target_id, "engine": "routed", "boundary": entry["boundary"], "deployment_revision_id": entry["deployment_revision_id"]}
+        return {"id": profile_id, "profile_id": profile_id, "target_id": target_id, "engine": "routed", "boundary": str(getattr(revision, "boundary", "") or ""), "deployment_revision_id": str(engine.revision)}
 
-    def _run_projection(self, result: Any, recipe: Any, sources: list[dict[str, str]], user: str, route: dict[str, Any], ordinal: int) -> dict[str, Any]:
+    def _run_projection(self, result: Any, recipe: Any, sources: list[dict[str, str]], user: str, engine: Any) -> dict[str, Any]:
         value = dict(result) if isinstance(result, dict) else {"output": str(result)}
-        target = self._route_summary(route, ordinal); output = str(value["output"]); artifact_id = "artifact_" + uuid.uuid4().hex[:12]
+        target = self._route_summary(engine); output = str(value["output"]); artifact_id = "artifact_" + uuid.uuid4().hex[:12]
         model = str(value.get("model") or target["profile_id"])
-        return {"recipe_id": recipe.id, "name": f"{recipe.name or recipe.id}: {user}" if user else (recipe.name or recipe.id), "output": output, "provider": str(value.get("provider") or target["engine"]), "profile_id": target["profile_id"], "inference_target": target, "actual_placement": {"target_id": target["target_id"], "boundary": target["boundary"], "deployment_revision_id": target["deployment_revision_id"], "model": model}, "sources": sources, "artifact_id": artifact_id, "created_at": utc_now_iso(), "placement": {"route_plan_id": route["id"], "route_plan_sha256": route["sha256"]}}
+        return {"recipe_id": recipe.id, "name": f"{recipe.name or recipe.id}: {user}" if user else (recipe.name or recipe.id), "output": output, "provider": str(value.get("provider") or target["engine"]), "profile_id": target["profile_id"], "inference_target": target, "actual_placement": {"target_id": target["target_id"], "boundary": target["boundary"], "deployment_revision_id": target["deployment_revision_id"], "model": model}, "sources": sources, "artifact_id": artifact_id, "created_at": utc_now_iso(), "placement": {"source": "owner_assignment", "assignment_id": engine.assignment}}
 
-    def _chat_projection(self, result: Any, recipe: Any, payload: dict[str, Any], route: dict[str, Any], ordinal: int) -> dict[str, Any]:
-        value = dict(result) if isinstance(result, dict) else {"output": str(result)}; target = self._route_summary(route, ordinal)
+    def _chat_projection(self, result: Any, recipe: Any, payload: dict[str, Any], engine: Any) -> dict[str, Any]:
+        value = dict(result) if isinstance(result, dict) else {"output": str(result)}; target = self._route_summary(engine)
         model = str(value.get("model") or target["profile_id"])
-        output = {"recipe_id": recipe.id, "output": str(value.get("output") or value.get("summary") or ""), "provider": str(value.get("provider") or target["engine"]), "profile_id": target["profile_id"], "inference_target": target, "actual_placement": {"target_id": target["target_id"], "boundary": target["boundary"], "deployment_revision_id": target["deployment_revision_id"], "model": model}, "egress": {"scope": target["boundary"]}, "model": model, "context_ids": payload["context_ids"], "context_titles": payload["context_titles"], "placement": {"route_plan_id": route["id"], "route_plan_sha256": route["sha256"]}}
+        output = {"recipe_id": recipe.id, "output": str(value.get("output") or value.get("summary") or ""), "provider": str(value.get("provider") or target["engine"]), "profile_id": target["profile_id"], "inference_target": target, "actual_placement": {"target_id": target["target_id"], "boundary": target["boundary"], "deployment_revision_id": target["deployment_revision_id"], "model": model}, "egress": {"scope": target["boundary"]}, "model": model, "context_ids": payload["context_ids"], "context_titles": payload["context_titles"], "placement": {"source": "owner_assignment", "assignment_id": engine.assignment}}
         if payload["grounding"] is not None: output["grounding"] = payload["grounding"]
         return output
 

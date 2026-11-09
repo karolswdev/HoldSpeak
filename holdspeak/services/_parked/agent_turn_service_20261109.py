@@ -1,3 +1,5 @@
+# PARKED 20261109 (lane door/rest-park-waist): the recipe agent turn ran on this stack; it runs through the engine door now.
+# Not imported. Restore with git revert of the parking commit.
 """Narrow product façade for the elected HS-143-10 ToolTurn adopter.
 
 This module is the only product-facing bridge to ``ToolTurnFoundationService``.
