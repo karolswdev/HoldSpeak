@@ -832,6 +832,15 @@ def test_the_catalogue_is_explicit_descriptors() -> None:
         "note.outcomes.read", "note.find_tasks", "note.outcome.edit", "note.outcome.dismiss",
         "note.outcome.confirm",
         "today.get",
+        # One contract (2026-11-08): the Programs verbs; their routes and tools are produced from these rows.
+        "program.list", "program.templates", "program.create", "program.from_action", "program.add_to_night",
+        "program.get", "program.update", "program.plan", "program.start", "program.park", "program.resume", "program.decide",
+        "program.race", "program.handoff", "program.start_from", "program.overturn", "program.step_update", "program.step_take",
+        "program.step_hand_back", "program.amend", "program.require", "program.requirement_edit", "program.requirement_decide",
+        "program.proposal_decide", "program.requirement_evidence", "program.text", "program.text_apply", "program.shape_engine",
+        "program.shape", "program.shape_held_drop", "program.plan_draft", "program.plan_programs", "program.rounds_open",
+        "program.round_next", "program.round_answer", "program.round_decide", "program.close", "program.propose_fix",
+        "program.step_remove", "program.round", "program.checkpoint", "program.step_done",
     ]
     # decision.list takes the empty object; its one optional argument is the
     # HTTP limit (round two: it passes through instead of slicing 500 rows).

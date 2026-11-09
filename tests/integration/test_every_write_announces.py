@@ -446,6 +446,11 @@ def test_no_registered_write_is_silent(hub: Hub, seeded: dict[str, str]) -> None
     hub.frames_until_mark(lambda: None)  # the four opens' frames land before the walk
     for name in writes:
         bound = registry.operations[name]
+        if bound.descriptor.announces_changes and bound.descriptor.service == "program_service":
+            # One contract (2026-11-08): a Programs verb's service announces
+            # ``program_changed`` itself (the Programs tests read that frame);
+            # its effect needs a real Program, not this walk's minimal rows.
+            continue
         if bound.descriptor.announces_changes:
             arguments = self_announcing[name]
 

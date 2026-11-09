@@ -18,13 +18,18 @@ from dataclasses import dataclass
 from typing import Any, Callable, Mapping, Optional
 
 from ..principals import Principal, PrincipalKind
-from .program_operations import THREAD_CLASSES as _PROGRAM_THREAD_CLASSES
 
 # ---------------------------------------------------------------------------
 # Classification map -- every MCP tool, fail-closed
 # ---------------------------------------------------------------------------
 # Classes: evidence_read, candidate_builder, effect_proposal
 # Sensitive: True for all people.* tools
+
+def _declared_thread_classes() -> dict[str, tuple[str, bool]]:
+    from ..operations import DESCRIPTORS
+
+    return {d.name: (d.thread, False) for d in DESCRIPTORS if d.tool_schema is not None and d.thread}
+
 
 _ALL_TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     # --- desk family (main catalogue) ---
@@ -334,9 +339,10 @@ _ALL_TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     "calls.list": ("evidence_read", False),
     "calls.hangup": ("effect_proposal", False),
     "calls.place": ("effect_proposal", False),
-    # Programs (2026-10-28; one table 2026-11-08): the engine's
-    # goal-cut-into-steps verbs, classed by ``services/program_operations.py``.
-    **_PROGRAM_THREAD_CLASSES,
+    # Programs (2026-10-28; one contract 2026-11-08): the engine's
+    # goal-cut-into-steps verbs, and every tool a descriptor produces, classed
+    # by the descriptor (``OperationDescriptor.thread``).
+    **_declared_thread_classes(),
     "project.mark_update_delivered": ("effect_proposal", False),
     # Phone (2026-10-28): his phone.
     "phone.status": ("evidence_read", False),

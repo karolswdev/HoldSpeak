@@ -34,10 +34,11 @@ EGRESS = "egress"
 AUTHORITY = "authority"
 CONFIG = "config"
 
-def _program_authority() -> dict[str, str]:
-    from holdspeak.services.program_operations import AUTHORITY_CLASSES
+def _declared_authority() -> dict[str, str]:
+    """The class of every tool a descriptor produces (``OperationDescriptor.authority``)."""
+    from holdspeak.operations import DESCRIPTORS
 
-    return dict(AUTHORITY_CLASSES)
+    return {d.name: d.authority for d in DESCRIPTORS if d.tool_schema is not None}
 
 
 #: Each non-work row carries its reason.
@@ -309,8 +310,8 @@ TOOL_AUTHORITY: dict[str, str] = {
     # agent makes, plans and runs the Programs it created; a step's agent
     # writes its own lines; a merge, a finding's fate, an overturn, a handoff
     # and a taken lane are his alone. The rows and their reasons are the
-    # table's (``services/program_operations.py``).
-    **_program_authority(),
+    # descriptors' (``holdspeak/program_operations.py``).
+    **_declared_authority(),
     # Phone (2026-10-28, design §7): a launched agent messages the owner's
     # phone and reads his replies (CONDUCTOR); a call rings a real phone.
     "phone.send_message": WORK,

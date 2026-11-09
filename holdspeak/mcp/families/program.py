@@ -1,31 +1,29 @@
 """Program family (2026-10-28, design §7): the Programs engine over MCP.
 
-The tool rows and the dispatch are produced from the one table of Programs
-operations (``services/program_operations.py``); the HTTP routes
-(``web/routes/programs.py``) are produced from the same rows. Every tool
-reaches the one service the routes use
-(``services/program_service.default_program_service``); the authority rules
-live in the service, so every transport keeps them. The table's docstring
-names them.
+The tool rows are produced from the Programs operation descriptors
+(``holdspeak/program_operations.py``, on the one contract in
+``holdspeak/operations.py``), the rows the HTTP routes come from too; each
+call goes through ``OperationRegistry.invoke``. The authority rules live in
+the service, so every transport keeps them; the descriptors' module names them.
 """
 from __future__ import annotations
 
 from typing import Any
 
+from holdspeak import operations
 from holdspeak.principals import Principal
-from holdspeak.services import program_operations
 
-TOOLS: list[dict[str, Any]] = [op.tool() for op in program_operations.TOOL_ROWS]
+TOOLS: list[dict[str, Any]] = [op.tool() for op in operations.PROGRAM_OPERATIONS if op.tool_schema is not None]
 
 NAMES = frozenset(tool["name"] for tool in TOOLS)
 
 
 def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
-    """Route a tool call to its row. Raises LookupError for unowned names."""
+    """Route a tool call to its operation. Raises LookupError for unowned names."""
     if name not in NAMES:
         raise LookupError(name)
-    return program_operations.BY_NAME[name].call(program_operations.program_service(), principal,
-                                                 dict(arguments or {}))
+    registry = operations.for_runtime(program_service=lambda: operations.LIVE_PROGRAM_SERVICE)
+    return registry.invoke(principal, name, dict(arguments or {}))
 
 
 __all__ = ["NAMES", "TOOLS", "dispatch"]
