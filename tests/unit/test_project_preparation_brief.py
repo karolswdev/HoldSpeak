@@ -922,7 +922,7 @@ def test_a_stopped_attempt_writes_no_draft(db: Database) -> None:
             super().__init__(output=output)
             self._svc_ref = svc_ref
 
-        def invoke(self, request: Any, adapter: Any, publish: Any = None) -> Any:
+        def invoke(self, request: Any, adapter: Any, publish: Any = None, parent_context: Any = None, planned_node: str = "") -> Any:
             # The Stop lands while the request is out.
             self._svc_ref[0].stop("att_stop_1")
             return super().invoke(request, adapter, publish)
@@ -946,7 +946,7 @@ def test_an_invoke_that_returned_an_outcome_is_reported_as_sent(db: Database) ->
     _seed_assignment(db, PREPARATION_BRIEF_CAPABILITY)
 
     class _ProseRunner(_MockRunner):
-        def invoke(self, request: Any, adapter: Any, publish: Any = None) -> Any:
+        def invoke(self, request: Any, adapter: Any, publish: Any = None, parent_context: Any = None, planned_node: str = "") -> Any:
             if publish is not None:
                 publish({"output": "Sure! Here is a brief in prose."})
 

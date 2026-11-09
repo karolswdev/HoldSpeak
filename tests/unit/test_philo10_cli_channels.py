@@ -656,7 +656,20 @@ def test_the_sends_are_egress_owner_presses_and_blocking_io_in_the_one_table() -
                         # The Calls verbs (#2085) wait on the line: a real call, its hang-up, a test call.
                         "calls.place", "calls.hangup", "calls.test_line",
                         # 2026-11-09 (media_operations.py): Finder opens; the voice weights download.
-                        "recordings.open_folder", "tts.download"}
+                        "recordings.open_folder", "tts.download",
+                        # 2026-11-09 (#2125): the launch hand-offs, the coder sessions (tmux) and
+                        # the delivery runtime (gh, the terminal) wait on their processes.
+                        "agent.launch.deliver", "agent.launch.rebrief",
+                        "coder.arm", "coder.keys", "coder.kill", "coder.own_agents", "coder.own_agents.answer",
+                        "coder.panes", "coder.peek", "coder.rename", "coder.spawn", "coder.steer",
+                        "delivery.attempts", "delivery.evidence_asset", "delivery.factory_discover",
+                        "delivery.phase_dossier", "delivery.pr_diff", "delivery.pr_fetch", "delivery.prs_refresh",
+                        "delivery.snapshot", "delivery.source_register", "delivery.story_dossier",
+                        "delivery.terminal_read", "delivery.terminal_sessions",
+                        # 2026-11-09 (#2123): the repository drawer runs git.
+                        "repository.branches", "repository.checkout", "repository.commit", "repository.diff",
+                        "repository.list", "repository.read_file", "repository.register", "repository.stage",
+                        "repository.status", "repository.tree", "repository.write_file"}
     # The secret saves are HTTP only, in no MCP palette, and config by their
     # declarations: the owner's press, owner only, with transport-held secrets.
     by_name = {d.name: d for d in operations.DESCRIPTORS}
@@ -664,10 +677,11 @@ def test_the_sends_are_egress_owner_presses_and_blocking_io_in_the_one_table() -
     assert mcp_blocking == blocking - {"channel.save_email_key", "channel.save_slack_webhook",
                                         "agent_hooks.install", "agent_hooks.remove", "connection.signin",
                                         "setup.lan.scan",
-                                        # HTTP only: the Agents window's launch verbs.
-                                        "agent.launch.answer", "agent.launch.resume", "agent.helper.allow",
+                                        # (#2125 gave the Agents launch verbs their MCP tools.)
                                         # HTTP only: his Finder and the voice weights' egress (media_operations.py).
-                                        "recordings.open_folder", "tts.download"}
+                                        "recordings.open_folder", "tts.download",
+                                        # HTTP only: the coder steering and factory verbs (#2125).
+                                        "coder.keys", "coder.panes", "coder.rename", "coder.spawn", "coder.steer"}
     assert all(name in TOOL_AUTHORITY for name in mcp_blocking), mcp_blocking - set(TOOL_AUTHORITY)
     key = by_name["channel.save_email_key"]
     assert key.owner_press and key.owner_only and key.held == ("api_key",) and "channel.save_email_key" not in TOOL_AUTHORITY

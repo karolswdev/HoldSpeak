@@ -831,7 +831,13 @@ def test_all_command_tools_discoverable() -> None:
         "project.setup.test_proposal",
         "project.setup.clarify_repo_scope",
     ]
-    assert project_tools == expected
+    # 2026-11-09 (#2123): the rest of the project verbs are declared rows
+    # (``holdspeak.operations``); the server lists them after the family's own.
+    from holdspeak import operations
+
+    declared = [entry[len("mcp:"):] for descriptor in operations.DESCRIPTORS for entry in descriptor.exposure
+                if entry.startswith("mcp:project.")]
+    assert project_tools == expected + [name for name in declared if name not in expected]
     # The census is regenerated, never hand-maintained: a tool added to the
     # family module without an edit here is a one-line diff, not a mystery.
     assert expected == [
@@ -839,10 +845,11 @@ def test_all_command_tools_discoverable() -> None:
         for tool in project_family.TOOLS
         if tool["name"].startswith("project.")
     ]
-    # All have versioned $id and closed schemas
+    # The family's tools have a versioned $id; every project tool has a closed schema.
     for tool in response["result"]["tools"]:
         if tool["name"].startswith("project."):
-            assert "$id" in tool["inputSchema"]
+            if tool["name"] in expected:
+                assert "$id" in tool["inputSchema"]
             assert tool["inputSchema"]["additionalProperties"] is False
 
 

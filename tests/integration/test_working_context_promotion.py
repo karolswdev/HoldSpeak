@@ -839,8 +839,11 @@ def test_no_mcp_tool_anywhere_can_mint_or_revoke_a_canonical_record() -> None:
     # ``decision.promote_draft`` turn an accepted meeting decision into its
     # artifact, owner-only in the service (2026-11-09, ops/projects). None of
     # them promotes working context (the kinds below stay off MCP).
+    # ``principals.agent.revoke`` and ``principals.self.revoke`` revoke an agent
+    # credential (gate_operations.py, 2026-11-09), not a canonical record.
     assert not {name for name in names if "promot" in name or "revoke" in name} - {
-        "phone.revoke", "briefing.revoke", "decision.promote", "decision.promote_draft"}
+        "phone.revoke", "briefing.revoke", "decision.promote", "decision.promote_draft",
+        "principals.agent.revoke", "principals.self.revoke"}
 
     constants, scanned = _mcp_source_strings()
     # Non-vacuity: the scan does see event kinds where they exist.

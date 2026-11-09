@@ -30,7 +30,7 @@ class _Runner:
         self.requests: list[Any] = []
         self._result = result
 
-    def invoke(self, request: Any, adapter: Any, publish: Any = None) -> Any:
+    def invoke(self, request: Any, adapter: Any, publish: Any = None, parent_context: Any = None, planned_node: str = "") -> Any:
         self.requests.append(request)
 
         class _Outcome:

@@ -36,13 +36,12 @@ _ID = {"type": "string", "minLength": 1}
 def _op(name: str, service: str, method: str, http: tuple[str, str], handler: str, call: Call, description: str, *,
         write: bool = False, properties: Optional[Mapping[str, Any]] = None, required: tuple[str, ...] = (),
         principal: str = _PRINCIPAL, owner_only: bool = False, authority: str = "work",
-        announces: bool = False, status: int = 200, refusals: tuple[str, ...] = (), result: str = "",
-        open_tool: bool = False) -> OperationDescriptor:
+        announces: bool = False, status: int = 200, refusals: tuple[str, ...] = (), result: str = "") -> OperationDescriptor:
     """One verb; its tool requires the path's ids and ``required``. A non-work tool is never a thread tool."""
     ids = [part[1:-1] for part in http[1].split("/") if part.startswith("{")]
     tool = {"type": "object", "properties": {**{key: (_TOKEN if key == "token" else _ID) for key in ids},
                                              **dict(properties or {})},
-            "required": ids + list(required), "additionalProperties": open_tool}
+            "required": ids + list(required), "additionalProperties": False}
     return OperationDescriptor(
         name=name, version=1, description=description, args_schema={"type": "object"}, principal=principal,
         effect="write" if write else "read", result=result or f"the {service} answer",
@@ -64,7 +63,7 @@ WALK_OPERATIONS: tuple[OperationDescriptor, ...] = (
     _op("walk.create", "walk_service", "create", ("POST", "/api/walks"), "api_walk_create",
         lambda s, p, a: s.create(a),
         "Store a guided walk (a title and its steps) and give its page token, once. The link is url_path.",
-        write=True, owner_only=True, status=201, open_tool=True,
+        write=True, owner_only=True, status=201,
         properties={"title": {"type": "string"}, "steps": {"type": "array", "items": {"type": "object"}}},
         required=("title", "steps"), refusals=_WALK_REFUSALS, result="{id, token, url_path}"),
     _op("walk.read", "walk_service", "read", ("GET", "/api/walks/{walk_id}"), "api_walk_read",
