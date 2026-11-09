@@ -245,7 +245,9 @@ def test_a_revoked_page_reads_nothing_and_leaves_the_item_held(tmp_path, monkeyp
     item = next(row for row in rig.service.needs_you_items() if row["kind"] == "core")
     ref = f"program:{pid}:{item['id']}"
     made = client.post("/api/reach/packages", json={"refs": [ref]}).json()
-    listed = client.get(f"/api/reach/packages?program_id={pid}").json()["packages"]
+    # The list route is parked (#2043): the service answers the open pages.
+    pages = lambda: briefing_module.default_briefing_service().packages(OWNER, pid)  # noqa: E731
+    listed = pages()
     assert [row["id"] for row in listed] == [made["id"]] and "token" not in json.dumps(listed)
     opened = client.get(f"/api/programs/{pid}").json()
     _fixture(PROGRAM_FIXTURES / "program.revoke_open.json", opened, tmp_path, made["token"])
@@ -259,4 +261,4 @@ def test_a_revoked_page_reads_nothing_and_leaves_the_item_held(tmp_path, monkeyp
     assert client.post(f"/api/b/{made['token']}/answer", json={"ref": ref, "choice": "go_on"}).status_code == 404
     assert client.get(f"/b/{made['token']}").status_code == 404
     assert [row["kind"] for row in rig.service.needs_you_items()] == ["core"]
-    assert client.get(f"/api/reach/packages?program_id={pid}").json() == {"packages": []}
+    assert pages() == []
