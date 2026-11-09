@@ -53,7 +53,9 @@ _RESULT_WORDS = re.compile(r"\b(ok|no tests ran|tolerated)\b|\bRED\b")
 
 
 def _section_name(raw: str) -> str:
-    word = raw.strip().lower()
+    # "== build: green at <sha>, inputs unchanged" and "== build: nothing
+    # under web/ changed, skipped" open the section build (scripts/quick_check.sh).
+    word = raw.strip().lower().rstrip(":")
     return SECTION_NAMES.get(word, word)
 
 
