@@ -3148,10 +3148,10 @@
       "kernel_operations": [],
       "sources": [
         {
-          "path": "holdspeak/web/routes/meetings/action_items.py",
-          "symbol": "build_action_items_router",
-          "line": 36,
-          "claim": "Action item list, patch, review, and edit routes are registered."
+          "path": "holdspeak/meeting_operations.py",
+          "symbol": "MEETING_OPERATIONS",
+          "line": 75,
+          "claim": "Action item list, update, and review are declared operations; their routes and MCP tools are produced from the descriptors."
         }
       ],
       "tests": [

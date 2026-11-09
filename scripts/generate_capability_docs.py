@@ -85,7 +85,7 @@ def _platform_markdown(rows: list[dict[str, Any]], snapshot: str | None, missing
 def generate(root: Path = ROOT, *, allow_invalid: bool = False, allow_missing_shards: bool = True) -> dict[str, str]:
     result = validate(root, allow_missing_shards=allow_missing_shards)
     if result.errors and not allow_invalid:
-        raise ValueError("architecture metadata is invalid; run scripts/validate_architecture.py for diagnostics")
+        raise ValueError(f"architecture metadata is invalid ({len(result.errors)} error(s)); first: {result.errors[0]}")
     records = result.records
     snapshot = _snapshot(root, records)
     outputs: dict[str, str] = {}

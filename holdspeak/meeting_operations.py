@@ -46,7 +46,9 @@ def _op(name: str, method: str, http: tuple[str, str], handler: str, call: Call,
         completion="synchronous; a write is one desk_changed frame on the hub bus",
         exposure=(f"http:{http[0]} {http[1]}", f"mcp:{name}"), service="meeting_service", method=method,
         announces_changes=announces, call=call, http=http, handler=handler, tool_schema=tool,
-        thread="effect_proposal" if write else "evidence_read",
+        # A read stays MCP and HTTP only: a thread reaches a meeting through
+        # meeting.get / meeting.list, and the seeded palettes do not grow.
+        thread="effect_proposal" if write else None,
     )
 
 
