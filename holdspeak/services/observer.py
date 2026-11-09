@@ -190,7 +190,7 @@ def _truncate(value: Any, limit: int = 2048) -> str:
 #: withheld from every record. Fields: by name, at any depth of the
 #: arguments and the result. Results: whole, by ``(service, method)``.
 UNRECORDED_FIELDS = frozenset({"args_full"})
-UNRECORDED_RESULTS = frozenset({("GateService", "full_call")})
+UNRECORDED_RESULTS = frozenset({("GateService", "full_call"), ("GateService", "issue_agent")})
 WITHHELD = "<withheld>"
 
 

@@ -76,6 +76,8 @@ _MCP_ONLY: frozenset[str] = frozenset({
     # The declared Automations reads (2026-11-08, automation_operations.py): a
     # thread reads an automation through automation.get; the palettes do not grow.
     "automation.template.list", "automation.new.list", "automation.lesson.list",
+    # The declared kernel reads (2026-11-09, gate_operations.py); kernel.receipt keeps its place.
+    "kernel.get", "kernel.events",
 })
 
 
@@ -92,7 +94,9 @@ def _thread_side(name: str) -> bool:
          # Programs (2026-10-28): an MCP and REST family (agents orchestrate).
          "program.",
          # Phone (2026-10-28): an MCP and REST family (the desk reaches him).
-         "phone.")
+         "phone.",
+         # The gate and the principals (2026-11-09, gate_operations.py): MCP and REST.
+         "gate.", "principals.")
     )
 
 

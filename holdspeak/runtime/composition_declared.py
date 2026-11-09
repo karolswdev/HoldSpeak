@@ -55,6 +55,8 @@ def compose_declared_services(services: Any, ctx: Any, resolved_db: Any, resolve
             services.broadcast(topic, value)
 
     from holdspeak.operations import LIVE_CALLS_SERVICE, LIVE_PHONE_SERVICE, LIVE_PROGRAM_SERVICE
+    from holdspeak.operations import LIVE_KERNEL_SERVICE
+    from holdspeak.services.gate_service import GateService
     from holdspeak.services.people_service import PeopleService, UnavailablePeopleStore
 
     builders: dict[str, Callable[[], Any]] = {
@@ -115,6 +117,10 @@ def compose_declared_services(services: Any, ctx: Any, resolved_db: Any, resolve
         # The Decisions verbs (decision_operations.py): the ledger and Commit.
         "decision_lifecycle_service": lambda: DecisionLifecycleService(resolved_db, observer=resolved_observer),
         "follow_through_service": lambda: FollowThroughService(resolved_db, observer=resolved_observer),
+        # The gate and principals verbs (gate_operations.py): the hub composes its own GateService.
+        "gate_service": lambda: GateService(resolved_db, observer=resolved_observer),
+        # The kernel verbs: the process's one broker, read at each call.
+        "kernel_service": lambda: LIVE_KERNEL_SERVICE,
     }
     for name, build in builders.items():
         instance = getattr(services, name, None)
