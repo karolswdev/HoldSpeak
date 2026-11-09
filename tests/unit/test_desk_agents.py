@@ -59,10 +59,16 @@ def test_no_notice_for_the_agent_whose_window_is_in_front(heartbeat) -> None:
     from holdspeak.services.desk_window_service import DeskWindowService
 
     windows = DeskWindowService(db, on_changed=lambda *_a: None)
-    windows.open("lane", object_ref="launch:l1")
+    # One face per agent: the Agents window in front, on this agent.
+    windows.open("conductor", object_ref="launch:l1")
     sent: list = []
     assert _done(hb, sent)["outcome"] == "held_in_front"
-    windows.open("conductor")   # another window in front: the notice goes
+    windows.open("lane", object_ref="launch:l1")   # an older view's lane open is the same row
+    assert _done(hb, sent)["outcome"] == "held_in_front"
+    windows.open("conductor", object_ref="launch:l2")   # Agents on another agent: the notice goes
+    assert _done(hb, sent)["outcome"] == "sent"
+    windows.open("conductor", object_ref="launch:l1")
+    windows.open("surface-terminals")   # another window in front: the notice goes
     assert _done(hb, sent)["outcome"] == "sent"
 
 
