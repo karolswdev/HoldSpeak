@@ -298,7 +298,7 @@ web surface under the 143-13 assignment family: the owner's Use (or Add, then
 Use) press posts `PUT /api/workbenches/{id}/engine` with one profile id; the
 server (`WorkbenchService.set_engine`) writes the subject assignment
 `subject:workbench:<id>:capability:workbench.item` and re-freezes a live
-schedule delegation. `web/src/desk/components/automation/AutomationWindow.tsx`
+schedule delegation. `web/src/desk/components/automation/AutomationBody.tsx`
 and `web/src/desk/components/automation/model.ts` are `display-transport`:
 they show the engine the hub reports (`assignment_summary`). The browser
 selects nothing itself.
@@ -306,7 +306,7 @@ selects nothing itself.
 **2026-10-21, guided Automation setup.**
 `web/src/desk/components/automation/AutomationBuilder.tsx` is `display-transport`
 under 143-13. It composes the existing `WithEditor` and forwards the owner's
-selected profile through `AutomationWindow` to the same workbench engine
+selected profile through `AutomationBody` to the same workbench engine
 operation. It introduces no route authority, fallback, or model selection.
 
 **2026-10-19, Memory selected assignment repair.**

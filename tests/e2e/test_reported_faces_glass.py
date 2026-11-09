@@ -18,6 +18,9 @@ REPORT = "Added the rollback checkpoint. Checking the migration tests."
 
 
 def _fit_and_hit(button: Any) -> None:
+    # A card below the fold of a scrolling pane is reached by scrolling it
+    # in (the product rule: a Button is hittable once scrolled into view).
+    button.scroll_into_view_if_needed()
     facts = button.evaluate("""el => {
       const r=el.getBoundingClientRect();
       const owner=el.closest('[data-layer="window"]').getBoundingClientRect();
