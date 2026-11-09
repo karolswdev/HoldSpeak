@@ -2,6 +2,8 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · #2063 The quick check runs its steps in parallel and skips what is already green (`.tmp/quick-check/green.json`; no file runs twice; `--retry` re-runs only the failed ids): the same check 161 s → 109 s cold, 2 s when nothing changed, 4 s for one retry; the lock admits three concurrent unit runs (isolated HOME required), browser runs stay exclusive; the Programs verifier reads a skipped build as the build section. Measured, not built: the censuses' cost is repeated `ast.walk`, and 316 of 334 "affected" files came through composition.py, routes/__init__, schema/__init__ and mcp/tools.py plus a stale base, not through operations.py.
+- 2026-11-08 · #2062 Handover: the night of 2026-11-08; STATUS #2059–#2061; the night measure.
 - 2026-11-08 · Handover: the night of 2026-11-08 (one brain; the fences that bite a declared-ops PR; the compositor protocol; the open list; a third of the way).
 - 2026-11-08 · #2061 A Stop is his decision: a stopped turn or answer leaves no Needs-you row (the door reads the kernel cancel signal); door jobs keep the 16k room, the chat turn reads the whole ceiling; the Retry helpers classed in the surface-fallback census.
 - 2026-11-08 · #2060 Fix forward: the canonical schema snapshot carries `pair_origin` and the prompt-step comment.
