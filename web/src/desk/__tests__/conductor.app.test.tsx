@@ -8,6 +8,7 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { hubWire } from "./wire/hubWire";
+import { __resetLane } from "../lane/laneStore";
 
 const api = vi.hoisted(() => ({ fetch: vi.fn(), request: vi.fn() }));
 vi.mock("../../lib/api", async (importOriginal) => ({
@@ -37,6 +38,7 @@ const DETECT = hubWire("onboarding-agents.isolated");
 const LANE = hubWire("lane.c4-runbook");
 
 beforeEach(() => {
+  __resetLane();
   vi.useFakeTimers({ toFake: ["Date"] });
   vi.setSystemTime(new Date(SESSIONS.captured_at));
   localStorage.clear();
@@ -149,10 +151,11 @@ describe("the Conductor on the C4 seed", () => {
     expect(screen.getByRole("button", { name: "Stop · sure? (ends the agent's session)" })).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Back" }));
     expect(screen.getByTestId("conductor-stop")).toBeTruthy();
-    // The language: a press on a tile picks the agent; its plate's Open opens its lane.
+    // One face per agent: a press on a tile picks the agent and the pane is
+    // its face (no window of its own to open).
     fireEvent.click(member("launch:launch_c4_recon")!.querySelector(".aw-tile-open")!);
-    fireEvent.click(within(screen.getByTestId("agents-pane")).getByTestId("conductor-open"));
-    expect(shell.lanes.at(-1)?.[0]).toBe("launch_c4_recon");
+    expect(screen.getByTestId("agents-pane").getAttribute("data-member")).toBe("launch:launch_c4_recon");
+    expect(within(screen.getByTestId("agents-pane")).queryByTestId("conductor-open")).toBeNull();
   });
 
   /** replaces: tests/e2e/test_philo14_a0c_list_sprites_glass.py::test_the_list_species_wear_the_32px_set (the Conductor's list)

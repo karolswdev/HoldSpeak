@@ -26,7 +26,7 @@ import { CHAIR_WINDOW_IDS, TODAY_REPLACES, closeChairWindow, openChairWindowFrom
 import { openIntelligence } from "../intelligenceNavigation";
 import { workBand } from "../components/window/windowGeometry";
 import { CONDUCTOR_WINDOW_ID, useConductor } from "../conductor/store";
-import { useLane } from "../lane/laneStore";
+import { openAgentLane } from "../shell";
 import { PARKED_WINDOW_ID, drawerWindowId, useDrawers } from "../drawer/store";
 import { forgetLoadRaises, markRehydratedMinimized, raisesThisLoad, useDesk, type PanelRect } from "../store";
 import { COMPACT_VIEWPORT_QUERY } from "../useCompactViewport";
@@ -155,7 +155,7 @@ interface Adapter {
  * takes 400 chars. */
 export const isScopeRef = (scope: string): boolean => /^[\w.:?=&/,-]{1,400}$/.test(scope);
 
-/** The lane's window id (lane/LaneWindow.tsx; kept here so this module does
+/** The lane's window id (the lane window is parked: a row opens Agents; kept here so this module does
  * not import the window's component). */
 export const LANE_WINDOW_ID = "lane";
 
@@ -229,21 +229,18 @@ export function adapterFor(id: string): Adapter | null {
       close: () => useDrawers.getState().closeParked(),
     };
   }
-  // The agent lane: one window on one launch; its row's object is
-  // `launch:<id>`, and the lane's own open path opens it on that launch.
+  // The agent lane (2026-11-08: one face per agent): no window of its own.
+  // A hub row `lane` on `launch:<id>` opens Agents on that agent; this view
+  // then reports no lane window, so the row closes.
   if (id === LANE_WINDOW_ID) {
     const launchOf = (row?: HubWindowRow) => (row?.object_ref ?? "").replace(/^launch:/, "");
     return {
-      isOpen: () => useLane.getState().launchId !== null,
+      isOpen: () => false,
       open: (row) => {
         const launch = launchOf(row);
-        if (launch) useLane.getState().open(launch);
+        if (launch) openAgentLane(launch);
       },
-      close: () => useLane.getState().close(),
-      object: () => {
-        const launch = useLane.getState().launchId;
-        return launch ? `launch:${launch}` : null;
-      },
+      close: () => undefined,
     };
   }
   if (id === CONDUCTOR_WINDOW_ID) {
@@ -329,7 +326,6 @@ export function adapterOpenIds(): string[] {
     ...useDrawers.getState().drawers.map((d) => drawerWindowId(d.projectId)),
     ...(useDrawers.getState().parked ? [PARKED_WINDOW_ID] : []),
     ...(useConductor.getState().open ? [CONDUCTOR_WINDOW_ID] : []),
-    ...(useLane.getState().launchId ? [LANE_WINDOW_ID] : []),
   ];
 }
 

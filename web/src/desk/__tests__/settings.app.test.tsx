@@ -35,6 +35,13 @@ import setupFoundWire from "./fixtures/setup-st3-st5/found.json";
 import setupStatusWire from "./fixtures/trust-wire/status-virgin.json";
 import enginesWire from "./fixtures/runs-on-truth/no-record/0-open_api_concierge_detect.json";
 import localAiWire from "./fixtures/runs-on-truth/no-record/0-open_api_setup_local-ai.json";
+import downDetect from "./fixtures/runs-on-truth/engine-down/0-down_api_concierge_detect.json";
+import downRoster from "./fixtures/runs-on-truth/engine-down/0-down_api_inference_assignments.json";
+import addedDetect from "./fixtures/runs-on-truth/engine-truth/1-added_api_concierge_detect.json";
+import addedRoster from "./fixtures/runs-on-truth/engine-truth/1-added_api_inference_assignments.json";
+import patchedRoster from "./fixtures/runs-on-truth/engine-truth/2-patched_api_inference_assignments.json";
+import setDefaultWire from "./fixtures/runs-on-truth/engine-truth/set-default.json";
+import enginesRecorded from "../../features/runson/__tests__/fixtures/engines.recorded.json";
 import { WingSlotContext } from "../surface/wings";
 import { BackSlotContext, type WindowBack } from "../surface/back";
 import { useDesk } from "../store";
@@ -846,7 +853,7 @@ describe("Settings › System › Remote access grants", () => {
     await waitFor(() => expect(within(row("desk-agent")).getByTestId("grant-chip").textContent).toContain(W.live));
     fireEvent.click(within(row("desk-agent")).getByTestId("credential-revoke"));
     await waitFor(() => expect(screen.queryByText("desk-agent")).toBeNull());
-    expect(document.querySelector('[data-settings-section="this-mac"] .surface-ledger')).toBeNull();
+    expect(document.querySelector('[data-testid="settings-remote-plate"] .surface-ledger')).toBeNull();
     await waitFor(() => expect(foot().textContent).toContain("Stopped"));
     fireEvent.click(foot());
     const well = await screen.findByTestId("grant-receipt");
@@ -995,7 +1002,7 @@ it("opens You, shows one category at a time, and navigates as the owner does", a
     await screen.findByTestId("settings-page");
     const sections = Array.from(container.querySelectorAll("[data-settings-section]"))
       .map((section) => section.getAttribute("data-settings-section"));
-    expect(sections).toEqual(["you", "speak", "meetings", "notices", "accounts", "calls", "agents", "desk", "this-mac"]);
+    expect(sections).toEqual(["you", "engines", "speak", "meetings", "notices", "accounts", "calls", "agents", "desk", "this-mac"]);
     expect(screen.getByRole("navigation", { name: "Settings sections" })).toBeInTheDocument();
     expect(screen.getByTestId("settings-index-you")).toHaveClass("is-active");
     expect(container.querySelector('[data-settings-section="you"]')).not.toHaveAttribute("hidden");
@@ -1078,5 +1085,96 @@ describe("Settings at phone width: Back returns where the owner came from", () =
     expect(screen.queryByTestId("settings-back")).toBeNull();
     fireEvent.click(screen.getByTestId("frame-back"));
     expect(onClose).toHaveBeenCalledTimes(1);
+  });
+});
+
+/* The language (2026-11-11): Settings › Engines, on the hub's own recorded
+ * answers (tests/integration/test_desk_runs_on_hub.py and
+ * scripts/record_engines_fixture.py). Only the engine reads are added to
+ * the hub double; every other answer is the one above. */
+describe("Settings › Engines: the chain, its readiness, Use first and the spend limit", () => {
+  type Gets = Record<string, unknown>;
+  function engines(gets: Gets, posts: Record<string, () => { answer: unknown; next?: Gets }> = {}) {
+    let now = gets;
+    const sent: Array<{ path: string; body: Json }> = [];
+    const base = hub.fetchStub;
+    vi.stubGlobal("fetch", vi.fn(async (input: string, init?: RequestInit) => {
+      const path = new URL(String(input), "http://hub.test").pathname;
+      const method = (init?.method ?? "GET").toUpperCase();
+      const answer = (body: unknown) => new Response(JSON.stringify(body), { status: 200, headers: { "content-type": "application/json" } });
+      if (method === "GET" && path in now) return answer(now[path]);
+      if (method === "POST" && posts[path]) {
+        sent.push({ path, body: JSON.parse(String(init?.body ?? "{}")) });
+        const next = posts[path]();
+        if (next.next) now = next.next;
+        return answer(next.answer);
+      }
+      return base(input, init);
+    }));
+    return sent;
+  }
+
+  it("an engine in the chain that does not answer is the coral plate with Fix, which opens Engines", async () => {
+    engines({ "/api/concierge/detect": downDetect.wire, "/api/inference/assignments": downRoster.wire });
+    const { container } = render(<SettingsCore scope="engines" />);
+    const plate = await screen.findByTestId("settings-engines-plate");
+    await waitFor(() => expect(plate).toHaveAttribute("data-tone", "coral"));
+    expect(plate.textContent).toContain("Studio engine");
+    expect(plate.textContent).toContain("Not working");
+    expect(screen.getByTestId("settings-mast-engines").textContent).toContain("Studio engine first");
+    expect(screen.getByTestId("settings-index-engines")).toHaveClass("is-active");
+    fireEvent.click(within(plate).getByRole("button", { name: "Fix" }));
+    expect(openEngines).toHaveBeenCalledTimes(1);
+    expect(rawButtons(container.querySelector(".settings-page")!)).toEqual([]);
+  });
+
+  it("no default engine and a ready one: the brass plate's Use writes the chain; the mast says it first", async () => {
+    const sent = engines(
+      { "/api/concierge/detect": addedDetect.wire, "/api/inference/assignments": addedRoster.wire },
+      { "/api/inference/assignments/set": () => ({ answer: setDefaultWire.wire, next: { "/api/concierge/detect": addedDetect.wire, "/api/inference/assignments": patchedRoster.wire } }) },
+    );
+    render(<SettingsCore scope="models" />);
+    const plate = await screen.findByTestId("settings-engines-plate");
+    await waitFor(() => expect(plate.textContent).toContain("No default engine"));
+    expect(plate).toHaveAttribute("data-tone", "brass");
+    fireEvent.click(screen.getByTestId("settings-engines-use"));
+    await waitFor(() => expect(screen.getByTestId("settings-engines-plate")).toHaveAttribute("data-tone", "moss"));
+    expect(sent).toHaveLength(1);
+    expect(sent[0].body).toMatchObject({ scope: { kind: "global" }, entries: [{ profile_id: "engine-127-0-0-1-8099-stub-qwen" }] });
+    expect(screen.getByTestId("settings-mast-engines").textContent).toContain("stub Qwen first · 1 ready");
+    expect(screen.getByTestId("settings-engines-receipt").textContent).toMatch(/Default engine → stub Qwen/);
+  });
+
+  it("an agent CLI's spend limit: Set opens the field in its row; Save sends the limit; the row says it", async () => {
+    type Step = { name: string; gets: Gets; answer?: unknown };
+    const steps = enginesRecorded.claude.steps as Step[];
+    const step = (name: string) => steps.find((entry) => entry.name === name)!;
+    const sent = engines(step("spent").gets, {
+      "/api/inference/model-library/connect-cli-engine": () => ({ answer: step("limit").answer, next: step("limit").gets }),
+    });
+    render(<SettingsCore scope="engines" />);
+    const row = (await screen.findByTestId("settings-spend-agent-claude")).closest(".surface-ledger-row") as HTMLElement;
+    expect(row.textContent).toContain("No limit");
+    fireEvent.click(within(row).getByRole("button", { name: "Set" }));
+    fireEvent.change(within(row).getByLabelText("Spend limit per run"), { target: { value: "0.50" } });
+    fireEvent.click(within(row).getByRole("button", { name: "Save" }));
+    await waitFor(() => expect(row.textContent).toContain("$0.50 per run"));
+    expect(sent[0].body.draft).toMatchObject({ preset: "claude", profile_id: "agent-claude", spend_limit_usd: 0.5 });
+  });
+});
+
+describe("Settings: the rail says each section's health", () => {
+  it("on the recorded hub: Engines brass, Speak brass, Meetings brass, Reach moss, This Mac only", async () => {
+    render(<SettingsCore />);
+    await screen.findByTestId("settings-page");
+    const word = (id: string) => screen.getByTestId(`settings-index-${id}-health`);
+    expect(word("engines").textContent).toBe("No engine yet");
+    expect(word("engines")).toHaveAttribute("data-tone", "brass");
+    expect(word("speak").textContent).toBe("Speech not set up");
+    expect(word("meetings").textContent).toBe("No summary engine");
+    expect(word("notices").textContent).toBe("Every 15 min");
+    expect(word("this-mac").textContent).toBe("This Mac only");
+    // No counter of zero: an empty section says Not set.
+    expect(word("accounts").textContent).toBe("Not set");
   });
 });

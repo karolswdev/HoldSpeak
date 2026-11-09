@@ -18,6 +18,7 @@ import { DESK_WORKSPACE_STORAGE_KEY } from "../../store/workspaceStorage";
 import { record, type Rect } from "../geometry";
 import { orderFromDepth } from "../planes";
 import {
+  adapterFor,
   createHubWindows,
   isWindowsOnlyFrame,
   type HubTransport,
@@ -621,19 +622,15 @@ describe("hubWindows", () => {
     expect(cached.panel.rects["chair:capture"]).toEqual(before);
   });
 
-  it("Astra r2 M3: the agent lane follows on its launch, and re-targets", async () => {
-    const { fake, hub } = start([row("lane", { app: "lane", object_ref: "launch:L-1", depth: 1 })]);
+  it("one face per agent (2026-11-08): a hub lane row opens Agents on its launch; this view shows no lane window", async () => {
+    const { hub } = start([row("lane", { app: "lane", object_ref: "launch:L-1", depth: 1 })]);
     await hub.start();
-    expect(useLane.getState().launchId).toBe("L-1");
-    fake.state.windows = [row("lane", { app: "lane", object_ref: "launch:L-2", depth: 1, revision: 5 })];
-    hub.onFrame({ kind: "windows", id: "lane" });
     await flush(hub);
-    expect(useLane.getState().launchId).toBe("L-2");
-    // This view opens the lane on another launch: the hub hears the launch.
-    useLane.getState().open("L-3");
-    useDesk.getState().focusPanel("lane");
-    await flush(hub);
-    expect(fake.calls.find((c) => c.verb === "open")?.body.object_ref).toBe("launch:L-3");
+    await vi.waitFor(() => expect(useLane.getState().launchId).toBe("L-1"));
+    await vi.waitFor(() => expect(useConductor.getState().open).toBe(true));
+    expect(useConductor.getState().focus).toBe("launch:L-1");
+    // This view keeps no lane window of its own: the adapter is never open.
+    expect(adapterFor("lane")?.isOpen()).toBe(false);
   });
 
   it("PHILO-17 U28c: a Room comes back as its Room, not as Desk memory", async () => {

@@ -35,14 +35,12 @@ export const SECTION_ALIASES: Record<string, SettingsSectionId> = {
   desk: "desk",
   system: "this-mac",
   devices: "this-mac",
-  models: "this-mac",
-  assignments: "this-mac",
-  delivery: "this-mac",
+  models: "engines",
+  assignments: "engines",
+  delivery: "engines",
+  engines: "engines",
 };
 const LEGACY_FOCUS: Record<string, string> = {
-  models: "engines",
-  delivery: "engines",
-  assignments: "engines",
   integrations: "connections",
   calendar: "calendar",
   wallpaper: "wallpaper",

@@ -7,7 +7,7 @@
  * done, coral at risk, graphite ended). The picked tile is ringed. ↑ and ↓
  * (← and → on the phone strip) move the focus; Enter picks. At 393 the
  * rail is a strip of sprite tiles at the window's foot (conductor.css). */
-import { useRef, type KeyboardEvent } from "react";
+import { useRef, type CSSProperties, type KeyboardEvent } from "react";
 import { Button } from "../../components/signal/Signal";
 import { ToolGlyph } from "../surface";
 import { Spine } from "../surface/patterns/Spine";
@@ -39,6 +39,9 @@ function Tile({ member, group, helperOf, picked, pill, onPick }: {
           <span className="aw-tile-meta">
             <span data-testid="conductor-pill">{pill.word}</span>
             {sub ? <span className="aw-tile-sub">{sub}</span> : null}
+            {member.deskAnswer?.state === "answered" && member.deskAnswer.isNew ? (
+              <span className="aw-tile-sub" data-testid="agents-tile-new">The desk answered · New</span>
+            ) : null}
           </span>
         </span>
       </Button>
@@ -76,7 +79,7 @@ export function AgentRail({ sections, picked, starting, pillOf, onPick, onStart 
         <div key={section.id} className="aw-rail-group" role="group" aria-label={section.word}
           data-section={section.id} data-testid="conductor-list">
           <h3 className="aw-cap" data-testid="conductor-section">{section.word}</h3>
-          <ul className="aw-rail-tiles">
+          <ul className="aw-rail-tiles" style={{ "--aw-cols": Math.min(4, section.rows.length) } as CSSProperties}>
             {section.rows.map(({ member, group, helperOf }) => (
               <Tile key={member.id} member={member} group={group} helperOf={helperOf} picked={member.id === picked}
                 pill={pillOf(member)} onPick={onPick} />

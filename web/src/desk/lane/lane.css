@@ -1,280 +1,134 @@
-/* PHILO-14 C2 — the agent's lane window: lane layout only. The parts
- * (TimelineRail, StationTrack, AskWell, PRCard, FilesChanged) are the
- * library species (web/src/desk/surface/objects/, objects.css) since C2b;
- * their old local copies are parked in lane/_parked/species.tsx. What stays
- * here: the body, the two columns, the lane's own wells (approve, re-brief,
- * deciding), the brief, the receipts, the ARM, Raw and the footer branch. */
-
-.is-lane .desk-pullout-body.lw-body {
-  container: surface / inline-size;
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  padding: 12px 14px 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
+/* The launched agent's parts in the Agents pane (2026-11-08, one face per
+ * agent; conductor/AgentLane.tsx): the wells (Tell it, a cut call read
+ * whole), the receipts, the terminal, the Result, Why this state. The lane
+ * window itself is parked (desk/_parked/agents/LaneWindow.tsx). */
 
 /* The pullout chrome resets every `section` in its body (window-chrome.css:
  * `.desk-next .desk-pullout-body section`); the AskWell plate is a section,
  * so the lane gives it back its plate. */
-.desk-next .is-lane .desk-pullout-body section.ask-well {
+.desk-next .conductor-window .desk-pullout-body section.ask-well{
   display: flex;
   padding: 12px 14px;
   background: var(--surface-2);
   border: 1px solid var(--wb-ink);
 }
 
-.lw-caption { font: 600 12px/1.2 var(--font-sans); color: var(--text-muted); margin: 0; }
-.lw-fact { font: 12px/1.3 var(--font-sans); color: var(--text-muted); }
-.lw-fact b { color: var(--text); font-weight: 600; }
-.lw-verbs { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.lw-caption{ font: 600 12px/1.2 var(--font-sans); color: var(--text-muted); margin: 0; }
+.lw-fact{ font: 12px/1.3 var(--font-sans); color: var(--text-muted); }
+.lw-fact b{ color: var(--text); font-weight: 600; }
+.lw-verbs{ display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 /* An honest line: a part that could not be read, said once. */
-.lw-notread { margin: 0; font: 12px/1.4 var(--font-sans); color: var(--text-muted); }
-.lw-word { font: 600 12px/18px var(--font-sans); color: var(--text-muted); flex: none; }
-.lw-ev-text { font: 13px/18px var(--font-sans); color: var(--text); min-width: 0; overflow-wrap: anywhere; }
-.lw-ev-code { font: 12px/18px var(--font-mono); color: var(--text); overflow-wrap: anywhere; white-space: pre-wrap; min-width: 0; }
-.lw-more { align-self: flex-start; }
+.lw-notread{ margin: 0; font: 12px/1.4 var(--font-sans); color: var(--text-muted); }
 
 /* the lane's own wells: approve, re-brief */
 .lw-ask,
-.desk-next .is-lane .desk-pullout-body section.lw-ask { display: flex; flex-direction: column; gap: 8px; padding: 12px; background: var(--surface-2); border: 1px solid var(--wb-ink); box-shadow: var(--wb-raised); }
-.lw-ask-q { font-size: var(--font-size-sm); color: var(--text); margin: 0; }
-.lw-ask-row { display: flex; gap: 8px; align-items: center; }
-.lw-ask-row > .gadget-string { flex: 1 1 auto; min-width: 0; }
-.lw-deciding { margin: 0; display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
-.lw-deciding .lw-ev-text { font-size: 13px; flex: 1 1 16em; }
+.desk-next .conductor-window .desk-pullout-body section.lw-ask{ display: flex; flex-direction: column; gap: 8px; padding: 12px; background: var(--surface-2); border: 1px solid var(--wb-ink); box-shadow: var(--wb-raised); }
+
+.lw-ask-row{ display: flex; gap: 8px; align-items: center; }
+.lw-ask-row > .gadget-string{ flex: 1 1 auto; min-width: 0; }
 
 /* the brief, unfolded under its rail entry */
-.lw-brief { margin: 0; padding: 10px 12px; background: var(--surface-1); box-shadow: var(--wb-sunken); border: 1px solid var(--wb-ink); font: 12px/1.5 var(--font-mono); color: var(--text); white-space: pre-wrap; overflow-wrap: anywhere; max-height: 320px; overflow-y: auto; }
 
 /* the two columns (C-4): the rail, then the PR and its files */
-.lw-cols { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 16px; align-items: start; }
-.lw-col { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
-.lw-details .gadget-fold-body { display: flex; flex-direction: column; gap: 12px; }
-.lw-pane-detail { display: block; font-size: var(--font-size-xs); }
+
+.lw-pane-detail{ display: block; font-size: var(--font-size-xs); }
 
 /* Raw: the terminal pane behind the title-bar gadget */
-.lw-raw { display: flex; flex-direction: column; gap: 10px; min-height: 0; flex: 1 1 auto; }
+.lw-raw{ display: flex; flex-direction: column; gap: 10px; min-height: 0; flex: 1 1 auto; }
 /* PHILO-15 20 (B63): a held CUT call, whole, with Deny and Approve */
-.lw-raw-held { flex: none; }
-.lw-raw-command { margin: 0; padding: 10px 12px; background: var(--surface-1); box-shadow: var(--wb-sunken); border: 1px solid var(--wb-ink); font: 12px/1.5 var(--font-mono); color: var(--text); white-space: pre-wrap; overflow-wrap: anywhere; max-height: 240px; overflow-y: auto; }
-
-.lw-footer-branch { font: 12px/1.4 var(--font-mono); color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.lw-raw-held{ flex: none; }
+.lw-raw-command{ margin: 0; padding: 10px 12px; background: var(--surface-1); box-shadow: var(--wb-sunken); border: 1px solid var(--wb-ink); font: 12px/1.5 var(--font-mono); color: var(--text); white-space: pre-wrap; overflow-wrap: anywhere; max-height: 240px; overflow-y: auto; }
 
 @container surface (max-width: 520px) {
-  .lw-cols { grid-template-columns: 1fr; }
-  .lw-word { font-size: var(--font-size-xs); letter-spacing: 0.03em; }
-  .lw-ask-row { flex-wrap: wrap; }
-  .lw-ask-row > .gadget-string { flex-basis: 60%; }
+  
+  
+  .lw-ask-row{ flex-wrap: wrap; }
+  .lw-ask-row > .gadget-string{ flex-basis: 60%; }
 }
 
 /* receipts and ARM, kept on the face */
-.lw-receipt { margin: 0; font: 600 12px/1.4 var(--font-mono); letter-spacing: 0.04em; color: var(--text-muted); overflow-wrap: anywhere; }
-.lw-receipt[data-tone="fail"] { color: var(--danger); }
+.lw-receipt{ margin: 0; font: 600 12px/1.4 var(--font-mono); letter-spacing: 0.04em; color: var(--text-muted); overflow-wrap: anywhere; }
+.lw-receipt[data-tone="fail"]{ color: var(--danger); }
 /* Phase 16: what was sent, by AgentWords (compact, two lines, cut at a word). */
-.lw-receipt-words { display: flex; align-items: baseline; gap: 0; min-width: 0; }
-.lw-receipt-head { flex: none; white-space: pre; }
-.lw-receipt-words .lw-receipt-text { flex: 1 1 auto; min-width: 0; font: inherit; letter-spacing: inherit; }
+.lw-receipt-words{ display: flex; align-items: baseline; gap: 0; min-width: 0; }
+.lw-receipt-head{ flex: none; white-space: pre; }
+.lw-receipt-words .lw-receipt-text{ flex: 1 1 auto; min-width: 0; font: inherit; letter-spacing: inherit; }
 /* PHILO-15 20 (B67): a queued Re-brief and its Take back */
-.lw-queued { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
-.lw-queued > .lw-receipt { flex: 1 1 auto; min-width: 0; }
+.lw-queued{ display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.lw-queued > .lw-receipt{ flex: 1 1 auto; min-width: 0; }
 /* NOT CONFIRMED: the hub may have delivered; not a failure, not a send. */
-.lw-receipt[data-tone="warn"] { color: var(--warn); }
-.lw-arm { display: inline-flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.lw-receipt[data-tone="warn"]{ color: var(--warn); }
 
 /* The footer at 393: the egress chip and the branch on one row, the verbs
  * (Re-brief, the mode's ARM, Stop, Open PR) on their own row below, and they
  * wrap, so no verb leaves the frame. The footer is its own `surface`
  * container (UX-CANON D); the body's `surface` container does not hold it. */
-.desk-next .is-lane .surface-footer { container: surface / inline-size; }
-@container surface (max-width: 520px) {
-  .desk-next .surface-footer-layout.lw-footer {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-areas: "egress" "receipt" "verbs";
-    row-gap: 4px;
-    padding: 4px 0;
-  }
-  .desk-next .lw-footer .surface-footer-receipt { display: block; }
-  .desk-next .lw-footer .surface-footer-verbs { flex-wrap: wrap; justify-content: flex-end; row-gap: 4px; }
-}
+.desk-next .conductor-window .surface-footer{ container: surface / inline-size; }
 
 /* ── PHILO-17 THE REFIT: the lane in Today's language ───────────────────
    The head says what the coder does (19 px). A held call sits on a focus
    plate with a Workbench title bar. The transcript is compact (13 px words,
    12 px mono), on a dotted pixel rail in a sunken paper well. */
-.desk-next .is-lane .lw-head {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-width: 0;
-}
-.desk-next .is-lane .lw-head-sprite {
-  display: inline-grid;
-  place-items: center;
-  flex: none;
-  width: 40px;
-  height: 40px;
-  border: 1px solid var(--wb-ink);
-  border-radius: 6px;
-  background: hsl(214 70% 86%);
-  box-shadow: var(--wb-raised);
-}
-.desk-next .is-lane .lw-head-sprite > img { width: 28px; height: 28px; image-rendering: auto; }
-.desk-next .is-lane .lw-head-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-.desk-next .is-lane .lw-head-title {
-  margin: 0;
-  font: 650 19px / 1.2 var(--font-display);
-  letter-spacing: 0;
-  color: var(--wb-text);
-}
-.desk-next .is-lane .lw-head-title[data-tone="warn"] { color: var(--wb-warn-ink); }
-.desk-next .is-lane .lw-head-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2px 12px;
-  min-width: 0;
-  font: 500 13px / 1.3 var(--font-sans);
-  color: var(--wb-muted);
-}
-.desk-next .is-lane .lw-head-mono {
-  font: 600 12px / 1.3 var(--font-mono);
-  letter-spacing: 0.02em;
-  overflow-wrap: anywhere;
-}
 
 /* The held call: a raised plate with the title bar (the focus object). */
-.desk-next .is-lane .desk-pullout-body section.lw-plate,
-.desk-next .is-lane .lw-plate {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 0 0 10px;
-  border: 1px solid var(--wb-ink);
-  background: var(--wb-paper);
-  box-shadow: var(--depth-row); /* DELIGHT slice 5 (the old list led with var(--wb-raised), which is none, and voided the whole value): a plate in its column is the row step (was 3px 4px 0 ink 18 % + 4px 10px 22px ink 14 %) */
-}
-.desk-next .is-lane .lw-plate-bar {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 3px 10px;
-  border-bottom: 1px solid var(--wb-ink);
-  background: var(--wb-stipple-fine), var(--wb-blue);
-  color: var(--wb-ink);
-}
-.desk-next .is-lane .lw-plate-label {
-  padding: 1px 6px;
-  border: 1px solid var(--wb-ink);
-  background: color-mix(in srgb, var(--lamp-warn) 45%, var(--wb-paper));
-  box-shadow: var(--wb-raised);
-  font: 800 12px / 1.2 var(--font-mono);
-  letter-spacing: 0.08em;
-}
-.desk-next .is-lane .lw-plate-age {
-  margin-left: auto;
-  font: 700 12px / 1.2 var(--font-mono);
-  letter-spacing: 0.04em;
-  font-variant-numeric: tabular-nums;
-}
-.desk-next .is-lane .lw-plate-body { display: flex; flex-direction: column; gap: 6px; padding: 0 12px; min-width: 0; }
-.desk-next .is-lane .lw-plate-call {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  padding: 6px 8px;
-  border: 1px solid color-mix(in srgb, var(--wb-ink) 35%, transparent);
-  background: var(--alive-paper, #f8f5ee);
-  box-shadow: var(--wb-sunken);
-  font: 600 12px / 1.4 var(--font-mono);
-  color: var(--wb-text);
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-.desk-next .is-lane .lw-plate-why {
-  font: 600 12px / 1.2 var(--font-sans);
-  color: var(--wb-warn-ink);
-}
-.desk-next .is-lane .lw-plate-verbs { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; padding: 0 12px; }
 
 /* The transcript: compact, on a dotted pixel rail, in a sunken paper well. */
-.desk-next .is-lane .lane-rail {
+.desk-next .conductor-window .lane-rail{
   padding: 10px 10px 4px 0;
   background: var(--alive-paper, #f8f5ee);
   border: 1px solid var(--wb-ink);
   box-shadow: var(--wb-sunken);
 }
-.desk-next .is-lane .lane-rail-entry { grid-template-columns: 44px 16px minmax(0, 1fr); column-gap: 8px; padding: 0 0 6px; }
-.desk-next .is-lane .lane-rail-time { font: 600 12px / 18px var(--font-mono); font-variant-numeric: tabular-nums; }
-.desk-next .is-lane .lane-rail-node::before {
+.desk-next .conductor-window .lane-rail-entry{ grid-template-columns: 44px 16px minmax(0, 1fr); column-gap: 8px; padding: 0 0 6px; }
+.desk-next .conductor-window .lane-rail-time{ font: 600 12px / 18px var(--font-mono); font-variant-numeric: tabular-nums; }
+.desk-next .conductor-window .lane-rail-node::before{
   bottom: -6px;
   opacity: 1;
   background: repeating-linear-gradient(180deg, color-mix(in srgb, var(--wb-ink) 45%, transparent) 0 2px, transparent 2px 4px);
 }
-.desk-next .is-lane .lane-rail-node .lane-square { width: 10px; height: 10px; margin-top: 4px; }
-.desk-next .is-lane .lane-rail-text,
-.desk-next .is-lane .lane-rail-says,
-.desk-next .is-lane .lane-rail-quote { font-size: 13px; line-height: 18px; }
-.desk-next .is-lane .lane-rail-code { font-size: 12px; }
-.desk-next .is-lane .lane-rail-body { gap: 4px; }
-.desk-next .is-lane .lw-keys { flex: none; }
+.desk-next .conductor-window .lane-rail-node .lane-square{ width: 10px; height: 10px; margin-top: 4px; }
+.desk-next .conductor-window .lane-rail-text,
+.desk-next .conductor-window .lane-rail-says,
+.desk-next .conductor-window .lane-rail-quote{ font-size: 13px; line-height: 18px; }
+.desk-next .conductor-window .lane-rail-code{ font-size: 12px; }
+.desk-next .conductor-window .lane-rail-body{ gap: 4px; }
+.desk-next .conductor-window .lw-keys{ flex: none; }
 
 /* Betterment AG7: Why this state (behind Terminal). */
-.lw-why { display: flex; flex-direction: column; gap: 6px; padding: 6px 0; }
-.lw-why-line { font: 12px/1.5 var(--font-ui, inherit); color: var(--text); overflow-wrap: anywhere; }
-.lw-why-evidence { max-height: 180px; }
+.lw-why{ display: flex; flex-direction: column; gap: 6px; padding: 6px 0; }
+.lw-why-line{ font: 12px/1.5 var(--font-ui, inherit); color: var(--text); overflow-wrap: anywhere; }
+.lw-why-evidence{ max-height: 180px; }
 
 /* Betterment AG10: the Result of a turn leads the Story. */
-.desk-next .is-lane .desk-pullout-body section.lw-result { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border: 1px solid var(--wb-ink); background: var(--alive-paper, #f8f5ee); box-shadow: var(--wb-sunken); min-width: 0; }
-.desk-next .is-lane .lw-result-cap, .lw-result-cap { margin: 0; font: 600 12px / 1 var(--font-sans); color: var(--wb-muted); }
-.lw-result-facts { font: 600 12px / 1.4 var(--font-mono); color: var(--text); overflow-wrap: anywhere; }
-.lw-result-list { margin: 0; padding-left: 18px; font: 500 13px / 1.4 var(--font-sans); color: var(--text); }
+.desk-next .conductor-window .desk-pullout-body section.lw-result{ display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border: 1px solid var(--wb-ink); background: var(--alive-paper, #f8f5ee); box-shadow: var(--wb-sunken); min-width: 0; }
+.desk-next .conductor-window .lw-result-cap, .lw-result-cap{ margin: 0; font: 600 12px / 1 var(--font-sans); color: var(--wb-muted); }
+.lw-result-facts{ font: 600 12px / 1.4 var(--font-mono); color: var(--text); overflow-wrap: anywhere; }
+.lw-result-list{ margin: 0; padding-left: 18px; font: 500 13px / 1.4 var(--font-sans); color: var(--text); }
 
 /* W2-BUILDER (atlas 2026-10-27): the head is one line, not a headline (the
    state is a dot and a word); the verbs are the toolbar; an agent with no
    reported steps says so in plain words. */
-.desk-next .is-lane .lw-head { gap: 10px; }
-.desk-next .is-lane .lw-head-sprite { width: 28px; height: 28px; }
-.desk-next .is-lane .lw-head-sprite > img { width: 20px; height: 20px; }
-.desk-next .is-lane .lw-head-text { gap: 1px; }
-.desk-next .is-lane .lw-head-title.kit-dotword {
-  font: 600 14px / 1.3 var(--font-sans);
-}
-.desk-next .is-lane .lw-head-meta { font: 400 12px / 1.35 var(--font-sans); }
-.desk-next .is-lane .lw-work-empty {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 10px 12px;
-  border-radius: 6px;
-  background: color-mix(in srgb, var(--wb-steel) 30%, var(--wb-paper));
-  color: var(--wb-ink);
-  font: 400 13px / 1.45 var(--font-sans);
-}
-.desk-next .is-lane .lw-work-caption { font: 600 12px / 1.3 var(--font-sans); color: var(--wb-muted); }
-.desk-next .is-lane .lw-work-line { color: var(--wb-ink); }
 
 /* ── W3 AGENT WINDOW (canvas agent-window-2026-10-27, direction A) ──────
    The body is the step log: the ask first on a soft plate, the result on a
    soft green plate, then the steps (30 px rows, a coloured glyph per kind)
    beside what it made (object rows). No ink frames, no mono caps words. */
-.desk-next .is-lane .desk-pullout-body section.ask-well[data-plate="true"] {
+.desk-next .conductor-window .desk-pullout-body section.ask-well[data-plate="true"]{
   padding: 10px 12px 12px;
   border: 0;
   border-radius: 8px;
   background: color-mix(in srgb, var(--lamp-warn) 8%, var(--wb-paper));
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--lamp-warn) 30%, var(--wb-rule-soft));
 }
-.desk-next .is-lane .lw-quiet { font: 12px/1.3 var(--font-sans); color: var(--wb-muted); }
-.desk-next .is-lane .desk-pullout-body section.lw-result {
+
+.desk-next .conductor-window .desk-pullout-body section.lw-result{
   gap: 4px;
   border: 0;
   border-radius: 8px;
   background: color-mix(in srgb, var(--lamp-ok) 8%, var(--wb-paper));
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--lamp-ok) 35%, var(--wb-rule-soft));
 }
-.desk-next .is-lane .lw-result-cap {
+.desk-next .conductor-window .lw-result-cap{
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -283,143 +137,37 @@
   text-transform: none;
   color: var(--wb-ink);
 }
-.desk-next .is-lane .lw-result-cap::before {
+.desk-next .conductor-window .lw-result-cap::before{
   content: "";
   width: 8px;
   height: 8px;
   border-radius: 50%;
   background: var(--lamp-ok);
 }
-.desk-next .is-lane .lw-result-said { font-size: 14px; line-height: 1.5; }
+.desk-next .conductor-window .lw-result-said{ font-size: 14px; line-height: 1.5; }
 /* W4 AGENT 3: the done card's head: the dot and word, its age quiet at the right. */
-.desk-next .is-lane .lw-result-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; min-width: 0; }
-.desk-next .is-lane .lw-result-age { font: 12px / 1.3 var(--font-sans); color: var(--wb-muted); white-space: nowrap; }
+.desk-next .conductor-window .lw-result-head{ display: flex; align-items: baseline; justify-content: space-between; gap: 8px; min-width: 0; }
+.desk-next .conductor-window .lw-result-age{ font: 12px / 1.3 var(--font-sans); color: var(--wb-muted); white-space: nowrap; }
 /* W4 AGENT 3: a run's counts (a dot and a word) and the done face's step fold. */
-.desk-next .is-lane .lw-step-result { margin-left: 4px; font: 12px / 1.3 var(--font-sans); }
-.desk-next .is-lane .lw-steps-fold { display: flex; align-items: center; gap: 8px; padding: 2px 0 4px; }
-.desk-next .is-lane .lw-steps-fold-cap { font: 600 12px / 1.3 var(--font-sans); color: var(--wb-muted); }
-.desk-next .is-lane .lw-result-facts { font: 12px / 1.4 var(--font-sans); color: var(--wb-muted); }
 
-.desk-next .is-lane .lw-toolbar-end { display: inline-flex; align-items: center; gap: 6px; }
+.desk-next .conductor-window .lw-result-facts{ font: 12px / 1.4 var(--font-sans); color: var(--wb-muted); }
 
 /* the two columns: the steps, then what it made (a column at 1440) */
-.desk-next .is-lane .lw-cols { grid-template-columns: minmax(0, 1fr) minmax(220px, 300px); gap: 0; border-top: 1px solid var(--wb-rule-soft); }
-.desk-next .is-lane .lw-objects-col { box-shadow: inset 1px 0 0 var(--wb-rule-soft); align-self: stretch; }
-.desk-next .is-lane .lw-cols > .lw-col { gap: 0; }
 
-.desk-next .is-lane .lw-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
-.desk-next .is-lane .lw-step {
-  display: grid;
-  grid-template-columns: 44px 18px minmax(0, 1fr) auto;
-  align-items: center;
-  column-gap: 8px;
-  min-height: 30px;
-  padding: 0 8px 0 4px;
-  border-bottom: 1px solid color-mix(in srgb, var(--wb-rule-soft) 60%, transparent);
-  font: 13px / 18px var(--font-sans);
-  color: var(--wb-ink);
-}
-.desk-next .is-lane .lw-step[data-tall="true"] { align-items: start; padding-top: 6px; padding-bottom: 6px; }
-.desk-next .is-lane .lw-step[aria-current="step"] {
-  background: color-mix(in srgb, var(--lamp-info) 9%, var(--wb-paper));
-  box-shadow: inset 3px 0 0 var(--lamp-info);
-}
-.desk-next .is-lane .lw-step[aria-current="step"] .lw-step-time { color: var(--wb-sel, var(--wb-ink)); font-weight: 600; }
-.desk-next .is-lane .lw-step[data-pending="true"] { color: var(--wb-muted); }
-.desk-next .is-lane .lw-step-time { text-align: right; font: 12px / 18px var(--font-sans); font-variant-numeric: tabular-nums; color: var(--wb-muted); }
-.desk-next .is-lane .lw-step-glyph {
-  width: 18px;
-  height: 18px;
-  border-radius: 5px;
-  display: grid;
-  place-items: center;
-  background: var(--wb-steel);
-  color: var(--wb-muted);
-}
-.desk-next .is-lane .lw-step-glyph[data-family="read"] { background: color-mix(in srgb, var(--kind-project) 12%, var(--wb-paper)); color: var(--kind-project); }
-.desk-next .is-lane .lw-step-glyph[data-family="write"] { background: color-mix(in srgb, var(--kind-note) 12%, var(--wb-paper)); color: var(--kind-note); }
-.desk-next .is-lane .lw-step-glyph[data-family="run"] { background: color-mix(in srgb, var(--kind-pr) 12%, var(--wb-paper)); color: var(--kind-pr); }
-.desk-next .is-lane .lw-step-glyph[data-family="says"] { background: color-mix(in srgb, var(--kind-decision) 12%, var(--wb-paper)); color: var(--kind-decision); }
-.desk-next .is-lane .lw-step-glyph[data-family="commit"] { background: color-mix(in srgb, var(--kind-person) 12%, var(--wb-paper)); color: var(--kind-person); }
-.desk-next .is-lane .lw-step-glyph:is([data-family="answer"], [data-family="held"]) { background: var(--hs-brass-tint); color: var(--hs-brass-ink); }
-.desk-next .is-lane .lw-step-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.desk-next .is-lane .lw-step-line { min-width: 0; overflow-wrap: anywhere; }
-.desk-next .is-lane .lw-step-code { font: 12px / 18px var(--font-mono); color: var(--wb-ink); white-space: pre-wrap; overflow-wrap: anywhere; }
-.desk-next .is-lane .lw-step-muted { color: var(--wb-muted); }
-.desk-next .is-lane .lw-step-says { font: italic 13px / 18px var(--font-sans); color: var(--wb-ink); }
-.desk-next .is-lane .lw-step-quote { quotes: "\201C" "\201D"; font: italic 13px / 18px var(--font-sans); color: var(--wb-ink); }
-.desk-next .is-lane .lw-step-verbs { display: inline-flex; gap: 6px; }
+ [data-family="held"]){ background: var(--hs-brass-tint); color: var(--hs-brass-ink); }
 
 /* what it made: object rows */
-.desk-next .is-lane .desk-pullout-body section.lw-objects { display: flex; flex-direction: column; padding: 4px 0; gap: 0; border: 0; background: none; box-shadow: none; }
-.desk-next .is-lane .lw-objects-cap,
-.desk-next .is-lane .lw-files-cap { font: 600 12px / 1.3 var(--font-sans); color: var(--wb-muted); padding: 6px 12px 4px; }
-.desk-next .is-lane .lw-files-cap { padding: 0; font-weight: 400; color: var(--wb-ink); font-size: 13px; }
-.desk-next .is-lane .lw-obj { display: flex; align-items: center; gap: 9px; min-height: 32px; padding: 4px 12px; font: 13px / 1.35 var(--font-sans); min-width: 0; flex-wrap: wrap; }
-.desk-next .is-lane .lw-obj-sprite { width: 20px; height: 20px; flex: none; image-rendering: auto; }
-.desk-next .is-lane .lw-obj-text { display: flex; flex-direction: column; min-width: 0; flex: 1 1 9em; }
-.desk-next .is-lane .lw-obj-title { overflow-wrap: anywhere; }
-.desk-next .is-lane .lw-obj-sub { font-size: 12px; color: var(--wb-muted); }
-.desk-next .is-lane .lw-obj-code { font: 12px / 1.4 var(--font-mono); overflow-wrap: anywhere; }
-.desk-next .is-lane .lw-obj-facts { display: inline-flex; flex-wrap: wrap; gap: 4px 10px; padding-left: 29px; flex-basis: 100%; }
-.desk-next .is-lane .lw-files { display: flex; flex-direction: column; gap: 2px; padding: 6px 12px 6px 41px; }
-.desk-next .is-lane .lw-file { font: 12px / 1.5 var(--font-mono); color: var(--wb-ink); overflow-wrap: anywhere; }
+
+.desk-next .conductor-window .lw-file{ font: 12px / 1.5 var(--font-mono); color: var(--wb-ink); overflow-wrap: anywhere; }
 /* W5-WORDS: a part not read is a quiet 12 px line (the pullout body's 13 px
  * ink `p` rule would win), set in under the object it is about. */
-.desk-next .is-lane .lw-notread { font: 12px / 1.4 var(--font-sans); color: var(--wb-muted, var(--text-muted)); }
-.desk-next .is-lane .lw-files-notread { padding: 2px 12px 6px 41px; }
-
-@container surface (max-width: 520px) {
-  .desk-next .is-lane .lw-cols { grid-template-columns: 1fr; }
-}
+.desk-next .conductor-window .lw-notread{ font: 12px / 1.4 var(--font-sans); color: var(--wb-muted, var(--text-muted)); }
 
 /* ── W4 AGENT 2 (slice 2): the held call and "HoldSpeak decides" on the
    waiting card's soft plate; the receipts and the Details track as dots and
    sentence-case words with quiet ages. No ink frames, no mono caps words. */
-.desk-next .is-lane .desk-pullout-body section.lw-soft-plate,
-.desk-next .is-lane .lw-soft-plate {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin: 0;
-  padding: 10px 12px 12px;
-  border: 0;
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--lamp-warn) 8%, var(--wb-paper));
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--lamp-warn) 30%, var(--wb-rule-soft));
-}
-.desk-next .is-lane .lw-soft-plate[data-tone="info"] {
-  background: color-mix(in srgb, var(--lamp-info) 7%, var(--wb-paper));
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--lamp-info) 28%, var(--wb-rule-soft));
-}
-.desk-next .is-lane .lw-soft-plate .lw-ask-q { font-size: 15px; line-height: 1.45; font-weight: 500; }
-.desk-next .is-lane .lw-plate-callbox { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-.desk-next .is-lane .lw-soft-plate .lw-plate-why {
-  display: inline-flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 6px;
-  font: 12.5px / 1.4 var(--font-sans);
-  letter-spacing: normal;
-  text-transform: none;
-  color: var(--wb-warn-ink, var(--wb-muted));
-}
-.desk-next .is-lane .lw-plate-target { font: 12px / 1.4 var(--font-mono); color: var(--wb-ink); overflow-wrap: anywhere; }
-.desk-next .is-lane .lw-soft-plate .lw-plate-call {
-  display: block;
-  padding: 6px 8px;
-  border: 0;
-  border-radius: 6px;
-  background: color-mix(in srgb, var(--wb-ink) 5%, var(--wb-paper));
-  box-shadow: inset 0 0 0 1px var(--wb-rule-soft);
-  font: 12px / 1.45 var(--font-mono);
-  color: var(--wb-ink);
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-.desk-next .is-lane .lw-soft-plate .lw-plate-verbs { padding: 0; }
 
-.desk-next .is-lane .lw-receipt {
+.desk-next .conductor-window .lw-receipt{
   display: inline-flex;
   flex-wrap: wrap;
   align-items: baseline;
@@ -428,12 +176,9 @@
   letter-spacing: normal;
   color: var(--wb-muted);
 }
-.desk-next .is-lane .lw-receipt-word { color: var(--wb-ink); }
-.desk-next .is-lane .lw-receipt[data-tone="fail"] .lw-receipt-word { color: var(--danger); }
-.desk-next .is-lane .lw-receipt-age,
-.desk-next .is-lane .lw-receipt-fact { white-space: pre; color: var(--wb-muted); }
-.desk-next .is-lane .lw-receipt-head { display: inline-flex; align-items: baseline; }
+.desk-next .conductor-window .lw-receipt-word{ color: var(--wb-ink); }
+.desk-next .conductor-window .lw-receipt[data-tone="fail"] .lw-receipt-word{ color: var(--danger); }
+.desk-next .conductor-window .lw-receipt-age,
+.desk-next .conductor-window .lw-receipt-fact{ white-space: pre; color: var(--wb-muted); }
+.desk-next .conductor-window .lw-receipt-head{ display: inline-flex; align-items: baseline; }
 
-.desk-next .is-lane .lw-track { list-style: none; margin: 0; padding: 4px 0 0; display: flex; flex-wrap: wrap; gap: 4px 14px; }
-.desk-next .is-lane .lw-track-step { font: 12px / 1.4 var(--font-sans); color: var(--wb-ink); }
-.desk-next .is-lane .lw-track-sub { color: var(--wb-muted); }

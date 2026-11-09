@@ -1020,6 +1020,8 @@ OP_MCP_PROJECTIONS: dict[str, dict[str, Any]] = {
 
 #: Declared operations with no MCP exposure: the rig refuses them by name.
 OP_HTTP_ONLY = frozenset({"decision.status", "project.door.create", "project.door.preview",
+                          # The Settings window's credentials: owner only, HTTP only, no tool reaches a key.
+                          "settings.secret.replace", "settings.secret.rotate", "settings.secret.delete",
                           # #2027: the Programs verbs the face presses that have no MCP tool.
                           "program.close", "program.proposal_decide", "program.requirement_decide", "program.requirement_edit", "program.requirement_evidence", "program.round_answer", "program.round_decide", "program.round_next", "program.rounds_open",
                           # Betterment capture C5b: the meeting window's Prepare… press (HTTP only).

@@ -643,8 +643,8 @@ export function SessionPullout() {
   const [steerOptions, setSteerOptions] = useState(emptySteerOptions);
   const terminalAnswerSeq = useRef(0);
   const { closeSession } = useSteering.getState();
-  // PHILO-14 C2: a session that belongs to a launch has the agent's lane
-  // window as its face (lane/LaneWindow.tsx); this window is for a plain one
+  // A session that belongs to a launch has the Agents pane as its face (one
+  // face per agent, 2026-11-08); this window is for a plain one
   // (a pane opened from Panes keeps it while a lane is open).
   const laneLaunchId = useLaneOwnsSteering();
   const refresh = useCallback(() => {
@@ -746,6 +746,17 @@ export function SessionPullout() {
       onClose={closeSession}
     >
 
+      {/* The language (2026-11-08): the mast holds the window's verbs
+          (Open terminal, Direct, Refresh); it stays over the terminal. */}
+      <Mast kind="agent" id={openKey} agent={agentId} title={sessionTitle} facts={facts}
+        className="desk-session-mast" data-testid="session-agent-identity">
+        <Button dense variant="ghost" data-testid="session-open-terminal" aria-pressed={terminal} onClick={() => {
+          if (!terminal) terminalAnswerSeq.current = answerSeq;
+          setTerminal(!terminal);
+        }}>{terminal ? "Back to session" : "Open terminal"}</Button>
+        {!question && available ? <Button dense variant="secondary" aria-pressed={directing} onClick={() => { setDirecting(terminal || !directing); setTerminal(false); }}>Direct</Button> : null}
+        <Button dense variant="ghost" data-testid="session-refresh" onClick={() => { void refresh(); void useSteering.getState().poll(); }}>Refresh</Button>
+      </Mast>
       <div className="desk-pullout-body desk-session-body">
         {terminal ? <div className="desk-session-terminal" data-testid="session-terminal">
           <PaneWell
@@ -769,8 +780,6 @@ export function SessionPullout() {
         {/* The language (2026-11-08): the mast (the agent's sprite, what it
             works on, one facts line), the spine, the plate (its question
             with the answer well, else its report and its latest tool). */}
-        <Mast kind="agent" id={openKey} agent={agentId} title={sessionTitle} facts={facts}
-          className="desk-session-mast" data-testid="session-agent-identity" />
         <Spine className="desk-session-spine" tone={tone} label={state} />
         <div className="aw-plate desk-session-plate" data-tone={tone} data-testid="session-head">
           <header className="aw-plate-head">
@@ -821,14 +830,6 @@ export function SessionPullout() {
       <SurfaceFooter
         className="desk-session-footer"
         receipt={steerState === "sent" || steerState === "refused" ? <span className={steerState === "refused" ? "desk-arm-refusal" : "desk-steer-sent"}>{steerState === "sent" ? "sent" : "Not sent"}{steerDetail ? ` · ${steerDetail}` : ""}</span> : <ReceiptLine sessionKey={openKey} />}
-        verbs={<>
-          <Button dense variant="ghost" data-testid="session-open-terminal" aria-pressed={terminal} onClick={() => {
-            if (!terminal) terminalAnswerSeq.current = answerSeq;
-            setTerminal(!terminal);
-          }}>{terminal ? "Back to session" : "Open terminal"}</Button>
-          {!question && available ? <Button dense variant="secondary" aria-pressed={directing} onClick={() => { setDirecting(terminal || !directing); setTerminal(false); }}>Direct</Button> : null}
-          <Button dense variant="ghost" data-testid="session-refresh" onClick={() => { void refresh(); void useSteering.getState().poll(); }}>Refresh</Button>
-        </>}
       />
     </DeskWindowFrame>
   );

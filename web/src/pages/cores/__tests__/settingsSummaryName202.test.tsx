@@ -12,9 +12,8 @@
  * Brief / Decisions / Follow-through window); it is never the name of
  * what one meeting produced.
  */
-import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
-import { PrefsFace, type SettingsHubWire } from "../settings/prefs";
+import { describe, expect, it } from "vitest";
+import { sectionHealth, type SettingsHubWire } from "../settings/prefs";
 
 const hub = (intelligence: boolean): SettingsHubWire => ({
   models: { engines: 1, groupsSet: 1, defaultSet: true },
@@ -28,85 +27,41 @@ const hub = (intelligence: boolean): SettingsHubWire => ({
   writtenAt: null,
 });
 
-function face(intelligence: boolean) {
-  const view = render(
-    <PrefsFace
-      onOpen={vi.fn()}
-      hub={hub(intelligence)}
-      posture="neutral"
-      onPosture={vi.fn()}
-      precedence={[]}
-    />,
-  );
-  // PHILO-17 REFIT: the Meetings and Voice rows fold under More settings.
-  return view;
-}
-
-describe("the Settings hub's Meetings row (F06)", () => {
-  // PHILO-13-04 (A3): the row names the fact it reads, the configured switch.
-  it("says SUMMARY SET ON, never INTELLIGENCE ON", () => {
-    face(true);
-    expect(
-      screen.getByText("Summary set on · After room meetings"),
-    ).toBeInTheDocument();
-    expect(document.body.textContent ?? "").not.toMatch(/INTELLIGENCE/);
+// The language (2026-11-11): the drawer face is gone; the rail row of each
+// section says the same fact, in one word and one colour.
+describe("the Settings rail's Meetings word (F06)", () => {
+  it("says Summaries on, never Intelligence", () => {
+    expect(sectionHealth(hub(true)).meetings).toEqual({ tone: "moss", word: "Summaries on" });
+    expect(JSON.stringify(sectionHealth(hub(true)))).not.toMatch(/ntelligence/);
   });
 
-  // PHILO-17: the idle ring read as an empty checkbox beside "AFTER ...".
-  it("draws a check, not an empty ring, when the summary runs by itself", () => {
-    face(true);
-    const chip = screen.getByTestId("settings-hub-summary-chip");
-    expect(chip.querySelector(".surface-state-chip-icon")?.textContent).toBe("✓");
-  });
-
-  it("says SUMMARY SET OFF, never INTELLIGENCE OFF", () => {
-    face(false);
-    expect(screen.getByText("Summary set off")).toBeInTheDocument();
-    expect(document.body.textContent ?? "").not.toMatch(/INTELLIGENCE/);
+  it("says Summaries off, never Intelligence off", () => {
+    expect(sectionHealth(hub(false)).meetings).toEqual({ tone: "idle", word: "Summaries off" });
   });
 });
 
 // Inventory 2026-10-03 (UX-CANON A.10): the hub said "Voice LIVE" and
 // "SUMMARY SET ON" with no engine, beside the headline "No default model".
-// replaces (with settings.app.test.tsx): tests/e2e/test_honest_faces_glass.py::test_settings_names_the_missing_engine
-describe("the Settings hub names a missing engine", () => {
-  function faceWith(patch: Partial<ReturnType<typeof hub>>) {
-    const view = render(
-      <PrefsFace
-        onOpen={vi.fn()}
-        hub={{ ...hub(true), ...patch }}
-        posture="neutral"
-        onPosture={vi.fn()}
-        precedence={[]}
-      />,
-    );
-    return view;
-  }
+describe("the Settings rail names a missing engine", () => {
+  const with_ = (patch: Partial<SettingsHubWire>) => sectionHealth({ ...hub(true), ...patch });
 
-  it("Meetings: SUMMARY · NO ENGINE when the switch is on and no engine is set", () => {
-    faceWith({ meetings: { intelligence: true, engineSet: false, auto: "room_linked" } });
-    expect(screen.getByText("Summary · No engine")).toBeInTheDocument();
-    expect(document.body.textContent ?? "").not.toMatch(/SUMMARY SET ON/);
+  it("Meetings: No summary engine (brass) when the switch is on and no engine is set", () => {
+    expect(with_({ meetings: { intelligence: true, engineSet: false, auto: "room_linked" } }).meetings)
+      .toEqual({ tone: "brass", word: "No summary engine" });
   });
 
-  // Betterment ST0: the Voice fact reads whether speech works (the speech
-  // model Setup reads), not the pipeline switch.
-  it("Voice: Speech is not set up, never LIVE, when the switch is on and no speech model is here", () => {
-    faceWith({ voice: { live: true, target: "auto", engineSet: true, speechReady: false } });
-    expect(screen.getByText("Speech is not set up")).toBeInTheDocument();
-    expect(screen.queryByText("LIVE")).toBeNull();
-    expect(screen.queryByText("Works")).toBeNull();
+  // Betterment ST0: the Speak fact reads whether speech works, not the switch.
+  it("Speak: Speech not set up (brass) when the switch is on and no speech model is here", () => {
+    expect(with_({ voice: { live: true, target: "auto", engineSet: true, speechReady: false } }).speak)
+      .toEqual({ tone: "brass", word: "Speech not set up" });
   });
 
-  it("Voice: Works when the speech model is here", () => {
-    faceWith({ voice: { live: true, target: "auto", engineSet: false, speechReady: true } });
-    expect(screen.getByText("Works")).toBeInTheDocument();
-    expect(screen.queryByText("AUTO")).toBeNull();
+  it("Speak: On (moss) when the speech model is here", () => {
+    expect(with_({ voice: { live: true, target: "auto", engineSet: false, speechReady: true } }).speak)
+      .toEqual({ tone: "moss", word: "On" });
   });
 
-  it("Voice: Voice typing off when the switch is off", () => {
-    faceWith({ voice: { live: false, target: "auto", speechReady: true } });
-    expect(screen.getByText("Voice typing off")).toBeInTheDocument();
-    expect(screen.queryByText("Works")).toBeNull();
+  it("Speak: Off when the switch is off", () => {
+    expect(with_({ voice: { live: false, target: "auto", speechReady: true } }).speak).toEqual({ tone: "idle", word: "Off" });
   });
 });

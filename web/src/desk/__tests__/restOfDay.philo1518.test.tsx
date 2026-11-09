@@ -16,7 +16,7 @@ import { pickDefaultAgent } from "../agentHand";
 import { fitName } from "../surface/objects/fitName";
 import type { AgentsDetect } from "../firstrun/agentsStep";
 import { dismissAftercare, publishAftercare, refreshAftercare, useAftercare } from "../intelligenceAttention";
-import { PrefsFace, type SettingsHubWire } from "../../pages/cores/settings/prefs";
+import { sectionHealth, type SettingsHubWire } from "../../pages/cores/settings/prefs";
 import { chipLabel, stateWords } from "../../pages/cores/connections/ConnectionsPane";
 
 const agent = (id: "claude" | "codex", signedIn: "yes" | "unknown", installed = true) => ({
@@ -66,39 +66,20 @@ const hub = (patch: Partial<SettingsHubWire> = {}): SettingsHubWire => ({
   writtenAt: null,
   ...patch,
 });
-const face = (wire: SettingsHubWire) => {
-  const view = render(<PrefsFace onOpen={vi.fn()} hub={wire} posture="neutral" onPosture={vi.fn()} precedence={[]} />);
-  // The module rows are direct choices in Work and Desk.
-  return view;
-};
-
-describe("B33: the Settings hub reads the summary route", () => {
-  it("summaries on the LAN box with no default: the route is set and Engines keeps its inventory", () => {
-    const wire = hub();
-    expect(wire.models).toMatchObject({ engines: 1, defaultSet: false });
-    face(wire);
-    const engines = screen.getByTestId("settings-lead-engines");
-    expect(within(engines).getByText("1 engine")).toBeInTheDocument();
-    expect(engines.textContent).not.toContain("Default set");
-    expect(screen.getByText("Summary set on · After every meeting")).toBeInTheDocument();
-    expect(screen.queryByText("No default model")).toBeNull();
-    expect(screen.queryByText("SUMMARY · NO ENGINE")).toBeNull();
+describe("B33: the Settings rail reads the summary route", () => {
+  it("summaries on the LAN box with no default: Engines keeps its inventory, Meetings says on", () => {
+    const health = sectionHealth(hub());
+    expect(health.engines).toEqual({ tone: "moss", word: "1 engine" });
+    expect(health.meetings).toEqual({ tone: "moss", word: "Summaries on" });
   });
-  it("no summary route and no default: the job warns without erasing the installed engine inventory", () => {
-    const wire = hub({ meetings: { intelligence: true, engineSet: false, auto: "every" } });
-    expect(wire.models).toMatchObject({ engines: 1, defaultSet: false });
-    face(wire);
-    const engines = screen.getByTestId("settings-lead-engines");
-    expect(within(engines).getByText("1 engine")).toBeInTheDocument();
-    expect(engines.textContent).not.toContain("Default set");
-    expect(screen.queryByText("No engine yet")).toBeNull();
-    expect(screen.getByText("Summary · No engine")).toHaveAttribute("data-state", "warning");
-    expect(screen.queryByText("SUMMARY SET ON · AFTER EVERY MEETING")).toBeNull();
+  it("no summary route and no default: the job warns, never No engine yet", () => {
+    const health = sectionHealth(hub({ meetings: { intelligence: true, engineSet: false, auto: "every" } }));
+    expect(health.engines).toEqual({ tone: "brass", word: "Choose an engine" });
+    expect(health.meetings).toEqual({ tone: "brass", word: "No summary engine" });
   });
-  it("the owner's OFF reads SUMMARIES OFF, not a missing engine", () => {
-    face(hub({ meetings: { intelligence: true, engineSet: false, summariesOff: true, auto: "every" } }));
-    expect(screen.getByText("Summaries off")).toBeTruthy();
-    expect(screen.queryByText("SUMMARY · NO ENGINE")).toBeNull();
+  it("the owner's OFF reads Summaries off, not a missing engine", () => {
+    const health = sectionHealth(hub({ meetings: { intelligence: true, engineSet: false, summariesOff: true, auto: "every" } }));
+    expect(health.meetings).toEqual({ tone: "idle", word: "Summaries off" });
   });
 });
 
