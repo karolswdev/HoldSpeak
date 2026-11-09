@@ -66,7 +66,7 @@ Read `kernel/admission.py`, `kernel/broker.py`, `kernel/journal_atomic.py`,
 These are requirements for new work, not a claim that every legacy path
 already satisfies them. In particular, check optional actuator broker wiring
 before claiming kernel receipts. The stored actuator toggles are not enforced
-by current Desk/Mission Control construction; a proposal decision alone does
+by current Desk construction; a proposal decision alone does
 not dispatch an actuator. Track such gaps in `pm/STATUS.md`; do not describe
 a declaration such as `Admission.enforced` as execution proof.
 

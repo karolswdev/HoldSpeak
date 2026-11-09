@@ -608,12 +608,9 @@ A kept Artifact adds a reusable domain record with the result and its source inf
 Tool-created records and prepared sends also have their own persistence contracts.
 The trace and Receipt identify actual work and its execution route.
 
-The mission-control belt is a read path. The hub runs each mapped repository's
-own `dw` command for the documents the Delivery Workbench contract allows. It
-asks your own `gh` for open pull requests. It relays the result typed
-(`holdspeak/missioncontrol_bridge.py`, routes under `/api/missioncontrol/`).
-When a read sees the state tree change, the hub sends a `scope:"belt"` frame on
-the one `/ws` bus.
+The Delivery Workbench reads are a read path. The hub runs each mapped
+repository's own `dw` command for the documents the Delivery Workbench contract
+allows (`holdspeak/missioncontrol_bridge.py`). Delivery and Programs use them.
 
 ## Storage
 

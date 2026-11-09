@@ -50,12 +50,10 @@ async function openEverything(seat: "inspector" | "editor" = "inspector") {
   await import("../returningWindows"); // the watchers
   const { useDeliveryDossier } = await import("../deliveryDossier");
   const { useDeliveryTerminal } = await import("../deliveryTerminal");
-  const { useMissionControl } = await import("../missioncontrol");
   const { useSteering } = await import("../steering");
   const { useTrustWindow } = await import("../components/TrustWindow");
   await act(async () => { await useDeliveryDossier.getState().openStory("atlas-desk", "ATLAS-1-01", "src-1"); });
   useDeliveryTerminal.getState().open(TARGET);
-  useMissionControl.getState().toggle();
   useSteering.getState().openSession("session-1");
   useTrustWindow.getState().setOpen(true);
   useDesk.getState().openScheduleCreate();
@@ -75,7 +73,6 @@ async function reloadAndReturn(items?: Record<string, unknown>) {
     desk: desk.useDesk,
     dossier: (await import("../deliveryDossier")).useDeliveryDossier,
     terminal: (await import("../deliveryTerminal")).useDeliveryTerminal,
-    mission: (await import("../missioncontrol")).useMissionControl,
     steering: (await import("../steering")).useSteering,
     trust: (await import("../components/TrustWindow")).useTrustWindow,
   };
@@ -88,12 +85,12 @@ const NOTE = { id: "n1", title: "Ledger risks", bodyMarkdown: "body", tags: [] }
 const KB = { id: "k1", name: "Ledger reading", description: "", items: [] };
 
 describe("B2 slice two: every remaining family returns after a reload", () => {
-  it("dossier, terminal, Mission Control, session, Trust, tool inspector, Schedule, Ask and the editor come back; restore sends no write", async () => {
+  it("dossier, terminal, session, Trust, tool inspector, Schedule, Ask and the editor come back; restore sends no write", async () => {
     const opened = await openEverything();
     const places = stored().places;
     expect(Object.keys(places).filter((k) => k.startsWith("window/")).sort()).toEqual([
       "window/ask", "window/delivery-dossier", "window/delivery-terminal",
-      "window/mission-control", "window/schedule-create", "window/session", "window/tool-inspector", "window/trust",
+      "window/schedule-create", "window/session", "window/tool-inspector", "window/trust",
     ]);
     calls.length = 0;
 
@@ -101,7 +98,6 @@ describe("B2 slice two: every remaining family returns after a reload", () => {
     await waitFor(() => expect(after.dossier.getState().dossier?.kind).toBe("story"));
     expect(after.dossier.getState().dossier).toMatchObject({ project: "atlas-desk", storyId: "ATLAS-1-01" });
     expect(after.terminal.getState().openTarget).toEqual(TARGET);
-    expect(after.mission.getState().open).toBe(true);
     expect(after.steering.getState().openKey).toBe("session-1");
     expect(after.trust.getState().open).toBe(true);
     const s = after.desk.getState();
@@ -118,11 +114,9 @@ describe("B2 slice two: every remaining family returns after a reload", () => {
     const opened = await openEverything("editor");
     const { useDesk } = await import("../store");
     const { useDeliveryDossier } = await import("../deliveryDossier");
-    const { useMissionControl } = await import("../missioncontrol");
     const { useTrustWindow } = await import("../components/TrustWindow");
     useDeliveryDossier.getState().close();
     opened.useDeliveryTerminal.getState().close();
-    useMissionControl.getState().toggle();
     opened.useSteering.getState().closeSession();
     useTrustWindow.getState().setOpen(false);
     useDesk.getState().openToolInspector("project", "p-1");
@@ -136,7 +130,6 @@ describe("B2 slice two: every remaining family returns after a reload", () => {
     const after = await reloadAndReturn({ note: [NOTE] });
     expect(after.dossier.getState().dossier).toBeNull();
     expect(after.terminal.getState().openTarget).toBeNull();
-    expect(after.mission.getState().open).toBe(false);
     expect(after.steering.getState().openKey).toBeNull();
     expect(after.trust.getState().open).toBe(false);
     expect(after.desk.getState().toolInspector).toBeNull();

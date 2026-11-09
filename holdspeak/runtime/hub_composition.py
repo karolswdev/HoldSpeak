@@ -67,7 +67,6 @@ def compose_hub(host: Any, *, on_launch_hold: Callable[[str], Any]) -> HubCompos
     from holdspeak.services.follow_through_service import FollowThroughService
     from holdspeak.services.memory_service import MemoryService
     from holdspeak.services.mesh_service import MeshService
-    from holdspeak.services.mission_control_service import MissionControlService
     from holdspeak.services.project_service import ProjectService
     from holdspeak.services.projection_service import ProjectionService
     from holdspeak.services.settings_service import SettingsService
@@ -355,7 +354,6 @@ def compose_hub(host: Any, *, on_launch_hold: Callable[[str], Any]) -> HubCompos
         # link also reads (compose_delivery). It caches nothing (Sol Amendment 3).
         mesh_service=MeshService(db, observer=obs, token_store=node_token_store),
         memory_service=memory_service,
-        mission_control_service=MissionControlService(db, observer=obs),
         watch_service=watch_service,
         github_provider=github_provider,
         jira_provider=jira_provider,

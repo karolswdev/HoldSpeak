@@ -168,10 +168,7 @@ interface SteeringState {
   /** The last steer's fate (HS-87-03), rendered in place. */
   steerState: "idle" | "sending" | "sent" | "refused";
   steerDetail: string;
-  /** Classify (HS-87-05): manual session→story pins, desk-side only.
-   * A view preference over receipts — never the correlator's verdict;
-   * persisted to localStorage, re-asserted if the registry changes. */
-  manualPins: Record<string, string>;
+  /** Classify (HS-87-05): the Keep as note fate. */
   classifyState: "idle" | "kept" | "failed";
   /** Conductor F2 (K5b): the answer well is open in the body (Speak answer). */
   answerOpen: boolean;
@@ -194,8 +191,6 @@ interface SteeringState {
     } | null,
   ): Promise<boolean>;
   keepAsNote(title?: string): Promise<boolean>;
-  pinToStory(key: string, storyId: string): void;
-  clearPin(key: string): void;
   /** Full key control through the Hub's resolved grant/posture authority. */
   keyState: "idle" | "sending" | "sent" | "refused";
   keyDetail: string;
@@ -225,23 +220,6 @@ interface SteeringState {
 let timer: ReturnType<typeof setInterval> | null = null;
 let answerRequests = 0;
 
-const PIN_KEY = "hs.steering.pins";
-
-function loadPins(): Record<string, string> {
-  try {
-    return JSON.parse(localStorage.getItem(PIN_KEY) || "{}") || {};
-  } catch {
-    return {};
-  }
-}
-
-function savePins(pins: Record<string, string>) {
-  try {
-    localStorage.setItem(PIN_KEY, JSON.stringify(pins));
-  } catch {
-    /* storage unavailable — the pin won't persist, honestly */
-  }
-}
 
 /** The grant riding the peek envelope → the store's armed shape. */
 function grantPatch(
@@ -302,7 +280,6 @@ export const useSteering = create<SteeringState>((set, get) => ({
   armedKeys: {},
   steerState: "idle",
   steerDetail: "",
-  manualPins: loadPins(),
   classifyState: "idle",
   keyState: "idle",
   keyDetail: "",
@@ -506,18 +483,6 @@ export const useSteering = create<SteeringState>((set, get) => ({
       if (get().openKey === key) set({ classifyState: "failed" });
       return false;
     }
-  },
-
-  pinToStory(key, storyId) {
-    const pins = { ...get().manualPins, [key]: storyId };
-    set({ manualPins: pins });
-    savePins(pins);
-  },
-
-  clearPin(key) {
-    const { [key]: _dropped, ...rest } = get().manualPins;
-    set({ manualPins: rest });
-    savePins(rest);
   },
 
   async sendKeys(seq, label) {

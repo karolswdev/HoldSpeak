@@ -100,7 +100,7 @@ executor checks `approved` status, its supplied execution flag, destination
 checks, and the stored authority binding. It consumes a scoped grant when one
 is used and calls the connector through the admitted path.
 
-The current Desk and Mission Control executors do not enforce
+The current Desk executors do not enforce
 `meeting.allow_actuators` or `meeting.allowed_actuators`; those config values
 are not an effective off switch or allow-list for these paths.
 The meeting proposal decision route records a decision without executing it.

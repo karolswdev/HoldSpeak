@@ -16,7 +16,6 @@ import { ChairHome } from "./chair"; import { ReturningWindows } from "./returni
 import { DeskChrome } from "./components/DeskChrome";
 import { RecordOrb } from "./components/RecordOrb";
 import { useChatImport } from "./hooks/useChatImport";
-import { MissionControlConveyor } from "./components/MissionControlConveyor";
 import { hydrateBuilderTools, useBuilderTools } from "./builderTools";
 import { SessionPullout, PanePicker } from "./components/SessionPullout";
 import { DeliveryBoard } from "./components/DeliveryBoard";
@@ -271,9 +270,8 @@ function DeskFaces() {
       ))}
       {/* PersonaChat retired by HS-151-07; threads pullout is the one chat surface. */}
       {!arrivalRequired && <><ReturningWindows /* PHILO-13-07 (B2): the other families return once */ /><DeskToolInspector /></>}
-      {/* Betterment AG1: Mission Control (the rails), the Delivery board and
-          Terminals are builder tools: they mount only with Builder tools on. */}
-      {!arrivalRequired && builder && <MissionControlConveyor />}
+      {/* Betterment AG1: the Delivery board and Terminals are builder tools:
+          they mount only with Builder tools on. */}
       {!arrivalRequired && builder && <DeliveryBoard />}
       {!arrivalRequired && <DeliveryDossierWindow />}
       {!arrivalRequired && <DeliveryTerminalWindow />}

@@ -272,7 +272,6 @@ UPPER_DEBT: dict[str, int] = {
     "desk/hooks/useWriteReceipt.ts": 1,  # verbKey: the failure's compare key, never drawn
     "desk/conductor/AgentLane.tsx": 1,  # the review-decision compare
     "desk/lane/laneWire.ts": 2,  # the wait-kind and review-decision compares
-    "desk/missioncontrol.ts": 1,  # the CI-conclusion compare
     "desk/needsYou.ts": 2,  # waitingOn: the head-part compare, both sides
     "desk/surface/kit.tsx": 1,  # initialsOf: initials
     "desk/zoneName.ts": 1,  # the hub's casefold rule (upper then lower)

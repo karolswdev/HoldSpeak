@@ -40,7 +40,6 @@ const ROUTES = [
   ["dictation", "/dictation", 1440, 1100, true],
   ["history", "/history", 1440, 1100, true],
   ["activity", "/activity", 1440, 1100, true],
-  ["companion", "/companion", 1440, 1000, true],
   ["components", "/design/components", 1440, 1200, true],
   ["settings", "/settings", 1440, 1100, true],
   ["setup", "/setup", 1440, 1100, true],

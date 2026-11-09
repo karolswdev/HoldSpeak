@@ -467,7 +467,7 @@ describe("the steer action (HS-87-03)", () => {
 describe("classify (HS-87-05)", () => {
   afterEach(() => {
     useSteering.getState().closeSession();
-    useSteering.setState({ manualPins: {}, classifyState: "idle" });
+    useSteering.setState({ classifyState: "idle" });
     vi.unstubAllGlobals();
   });
 
@@ -497,13 +497,6 @@ describe("classify (HS-87-05)", () => {
     useSteering.setState({ openKey: "claude:abc123" });
     expect(await useSteering.getState().keepAsNote()).toBe(false);
     expect(useSteering.getState().classifyState).toBe("failed");
-  });
-
-  it("pinToStory and clearPin mutate the manual pin map", () => {
-    useSteering.getState().pinToStory("claude:x", "HS-87-05");
-    expect(useSteering.getState().manualPins["claude:x"]).toBe("HS-87-05");
-    useSteering.getState().clearPin("claude:x");
-    expect(useSteering.getState().manualPins["claude:x"]).toBeUndefined();
   });
 });
 
