@@ -853,6 +853,11 @@ def test_the_catalogue_is_explicit_descriptors() -> None:
         "phone.save_push_key",
         "phone.test_push", "phone.redeem", "phone.pair", "phone.messages", "phone.mark_read", "phone.decide",
         "phone.get_call", "phone.accept", "phone.decline", "phone.end",
+        # 2026-11-08: People's web verbs, declared (people_operations.py).
+        "people.setup", "people.suggestion.add", "people.suggestion.hide", "people.relationship.archive",
+        "people.project.link", "people.project.unlink", "people.one_on_one.list", "people.agenda.transition",
+        "people.owed.create", "people.note.list", "people.commitment.send_to_workbench",
+        "people.commitment.satisfy", "people.calendar.link", "people.calendar.unlink", "people.owner_alias.link", "people.owner_alias.unlink",
     ]
     # decision.list takes the empty object; its one optional argument is the
     # HTTP limit (round two: it passes through instead of slicing 500 rows).

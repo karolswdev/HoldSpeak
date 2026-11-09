@@ -488,13 +488,15 @@ def mcp_people(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> PeopleService
 
 class TestMCPCatalogue:
     def test_catalogue_includes_owner_alias_tools(self) -> None:
-        names = {tool["name"] for tool in people_family.TOOLS}
-        assert "people.owner_alias.link" in names
-        assert "people.owner_alias.unlink" in names
-        for tool in people_family.TOOLS:
+        # 2026-11-08: declared (people_operations.py); the declared family makes them.
+        from holdspeak.mcp.families import declared
+        from holdspeak.mcp.tool_authority import TOOL_AUTHORITY
+
+        for tool in declared.TOOLS:
             if tool["name"] in {"people.owner_alias.link", "people.owner_alias.unlink"}:
-                assert "PEOPLE DISCLOSURE" in tool["description"]
                 assert tool["inputSchema"]["additionalProperties"] is False
+                assert TOOL_AUTHORITY[tool["name"]] == "authority"
+        assert {"people.owner_alias.link", "people.owner_alias.unlink"} <= declared.NAMES
 
     def test_catalogue_is_closed(self) -> None:
         """The closed-catalogue pattern from 149, extended with the new tools."""
@@ -512,10 +514,6 @@ class TestMCPCatalogue:
             "people.request.create",
             "people.request.accept",
             "people.commitment.transition",
-            "people.calendar.link",
-            "people.calendar.unlink",
-            "people.owner_alias.link",
-            "people.owner_alias.unlink",
             "people.resolve",
             "people.suggestions",
             # Conductor R7: the owner's People MCP access, classed CONFIG

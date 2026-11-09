@@ -996,6 +996,12 @@ OP_MCP_PROJECTIONS: dict[str, dict[str, Any]] = {
         "phone.devices", "phone.revoke", "phone.let_wait", "phone.calls", "phone.ring", "phone.again", "phone.push_key",
         "phone.test_push",
         "phone.messages", "phone.get_call")},
+    # 2026-11-08: People's web verbs, declared (holdspeak/people_operations.py).
+    **{name: {"kind": "tool", "name": name} for name in (
+        "people.setup", "people.suggestion.add", "people.suggestion.hide", "people.relationship.archive",
+        "people.project.link", "people.project.unlink", "people.one_on_one.list", "people.agenda.transition",
+        "people.owed.create", "people.note.list", "people.commitment.send_to_workbench",
+        "people.commitment.satisfy", "people.calendar.link", "people.calendar.unlink", "people.owner_alias.link", "people.owner_alias.unlink")},
 }
 
 #: Declared operations with no MCP exposure: the rig refuses them by name.
