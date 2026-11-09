@@ -27,6 +27,7 @@ edge's 403.
 """
 from __future__ import annotations
 
+from tests import _tree
 import ast
 import json
 import subprocess
@@ -683,9 +684,10 @@ _PAID_HERE = {
 
 def _mock_imports(root: Path) -> list[str]:
     found: list[str] = []
-    for path in sorted(root.rglob("*.py")):
-        tree = ast.parse(path.read_text(encoding="utf-8"))
-        for node in ast.walk(tree):
+    for path in _tree.python_files(root):
+        if "mock" not in _tree.text_of(path):
+            continue
+        for node in _tree.walk(path):
             names = ([alias.name for alias in node.names] if isinstance(node, ast.Import)
                      else [node.module or ""] if isinstance(node, ast.ImportFrom) else [])
             if any(name == "unittest.mock" or name.startswith("unittest.mock.") or name == "mock" for name in names):

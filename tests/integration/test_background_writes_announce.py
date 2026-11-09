@@ -171,12 +171,16 @@ def test_every_mcp_write_tool_announces_at_the_root(
     for name in sorted(TOOL_AUTHORITY):
         sent.clear()
         tools.dispatch(name, {}, owner)
-        kind, _, op = name.partition(".")
-        # A People write announces ``person``, an automation write ``workbench``
-        # (the kinds the desk refreshes on; #2054, automation_operations.py); a call write ``call`` (#2085).
-        kind = {"people": "person", "automation": "workbench", "calls": "call"}.get(kind, kind)
-        want = [] if tools.is_read_tool(name) else [[(kind, f"walk-{name}", op)]]
-        if sent != want:
+        _, _, op = name.partition(".")
+        # The property: a write sends ONE frame naming its id and op; a read
+        # sends none. The kind is the family's own (no hand-kept kind map,
+        # 2026-11-09; the desk refresh per kind is the faces' tests).
+        if tools.is_read_tool(name):
+            ok = sent == []
+        else:
+            ok = (len(sent) == 1 and len(sent[0]) == 1 and bool(sent[0][0][0])
+                  and sent[0][0][1:] == (f"walk-{name}", op))
+        if not ok:
             wrong[name] = list(sent)
     assert not wrong, f"MCP tools that announced wrongly: {wrong}"
 

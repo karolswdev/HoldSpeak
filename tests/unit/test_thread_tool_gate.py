@@ -332,17 +332,6 @@ class TestClassificationCensus:
             f"{sorted(unclassified)}"
         )
 
-    def test_no_phantom_classifications(self) -> None:
-        """No classifications for tools that do not exist in the MCP catalogue."""
-        from holdspeak.mcp.tools import TOOLS as MCP_TOOLS
-
-        mcp_names = {t["name"] for t in MCP_TOOLS}
-        phantom = TOOL_NAMES - mcp_names
-        assert phantom == set(), (
-            f"Phantom tool classifications (remove from thread_tools._TOOL_CLASSES): "
-            f"{sorted(phantom)}"
-        )
-
     def test_every_dispatched_tool_has_an_authority_row(self) -> None:
         """#694, the owner's ruling (2026-09-29): ONE table classes EVERY tool
         the MCP dispatch serves (the public list and every family) as work,
@@ -351,9 +340,8 @@ class TestClassificationCensus:
         from holdspeak.mcp.tools import FAMILIES, TOOLS as MCP_TOOLS
 
         dispatched = {t["name"] for t in MCP_TOOLS} | {t["name"] for f in FAMILIES for t in f.TOOLS}
-        assert dispatched == set(TOOL_AUTHORITY), (
-            f"unclassified={sorted(dispatched - set(TOOL_AUTHORITY))} "
-            f"phantom={sorted(set(TOOL_AUTHORITY) - dispatched)}")
+        # A row left by a parked tool harms nothing (no phantom check: 2026-11-09).
+        assert dispatched <= set(TOOL_AUTHORITY), f"unclassified={sorted(dispatched - set(TOOL_AUTHORITY))}"
         assert set(TOOL_AUTHORITY.values()) <= {"work", "egress", "authority", "config"}
 
     #: The owner's named examples, each in its class (the ruling's words).
@@ -421,15 +409,14 @@ class TestClassificationCensus:
 
     def test_every_delegation_or_schedule_writer_is_authority_for_a_thread(self) -> None:
         import ast
-        from pathlib import Path
 
         from holdspeak.mcp.tool_authority import ARGUMENT_AUTHORITY, TOOL_AUTHORITY
+        from tests import _tree
 
-        repo = Path(__file__).resolve().parents[2]
+        repo = _tree.ROOT
         found: set[tuple[str, str]] = set()
-        for path in sorted((repo / "holdspeak").rglob("*.py")):
-            tree = ast.parse(path.read_text(encoding="utf-8"))
-            for fn in ast.walk(tree):
+        for path in _tree.python_files("holdspeak"):
+            for fn in _tree.walk(path):
                 if not isinstance(fn, (ast.FunctionDef, ast.AsyncFunctionDef)):
                     continue
                 for node in ast.walk(fn):
@@ -452,8 +439,9 @@ class TestClassificationCensus:
                     if minted:
                         found.add((path.relative_to(repo).as_posix(), fn.name))
                         break
-        assert found == set(self.MINTERS), (
-            f"new writers={sorted(found - set(self.MINTERS))} gone={sorted(set(self.MINTERS) - found)}")
+        # A new writer must be read and pinned (the gate boundary); a writer
+        # that left needs no edit here (2026-11-09: no "gone" check).
+        assert found <= set(self.MINTERS), f"new writers={sorted(found - set(self.MINTERS))}"
         for site, tools in self.MINTERS.items():
             for tool in tools:
                 assert TOOL_AUTHORITY[tool] != "work" or tool in ARGUMENT_AUTHORITY, (site, tool)
@@ -489,13 +477,11 @@ class TestClassificationCensus:
         writers itself."""
         from holdspeak.mcp.tool_authority import call_class
 
-        from pathlib import Path
-
         from holdspeak.mcp.tool_authority import TOOL_AUTHORITY
+        from tests import _tree
 
-        mcp = Path(__file__).resolve().parents[2] / "holdspeak" / "mcp"
-        for path in sorted(mcp.rglob("*.py")):
-            text = path.read_text(encoding="utf-8")
+        for path in _tree.python_files("holdspeak/mcp"):
+            text = _tree.text_of(path)
             for writer in ("set_when", "set_engine", "refreeze_schedule"):
                 assert f".{writer}(" not in text, (path.name, writer)
         for name in ("inference_assignment.set", "inference_assignment.clear", "concierge.apply"):

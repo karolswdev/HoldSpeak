@@ -1,0 +1,1742 @@
+# PARKED 2026-11-09 (fences diet, pipe/fences-diet): the effect census needed a hand-kept (path, scope, target, ordinal) entry per new effect site; budgets and debt ratchets are shape.
+# Replaced by tests/unit/test_kernel_effect_fence.py: four boundary properties (who may call the LAN, terminal, process and raw-desktop transports).
+"""HS-106-03: make the effect census and broker density limits executable.
+
+The census is deliberately an explicit AST table, not a call-graph guess.  It
+counts static statements in the five ratified families.  One logical action can
+therefore produce several sites.  When this fence fires, inspect the statement
+and amend the Article XI debt register deliberately; never hide it by weakening
+a rule.
+"""
+
+from __future__ import annotations
+
+import ast
+import functools
+import fnmatch
+import json
+import re
+from collections import Counter, defaultdict
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
+
+
+_REPO = Path(__file__).resolve().parents[2]
+_SOURCE = _REPO / "holdspeak"
+_KERNEL = _SOURCE / "kernel"
+_LEDGER = _KERNEL / "effect_ledger.json"
+
+FAMILY_TMUX = "tmux_transport"
+FAMILY_TYPER = "text_typer"
+FAMILY_SUBPROCESS = "subprocess"
+FAMILY_EGRESS = "egress"
+FAMILY_RAW_DESKTOP = "raw_desktop"
+_FAMILIES = {
+    FAMILY_TMUX,
+    FAMILY_TYPER,
+    FAMILY_SUBPROCESS,
+    FAMILY_EGRESS,
+    FAMILY_RAW_DESKTOP,
+}
+_STATUSES = {"covered", "bypass", "mixed", "dormant", "read", "exempt_computation"}
+
+# The broker is intended to stay smaller than one Phase-79 concern module.
+# Raising this number is an architecture decision; the ordinary response to a
+# failure is to carve a typed concern module, not grow the broker.
+_BROKER_MODULE_BUDGET = 300
+_BROKER_INIT_BUDGET = 60
+
+
+@dataclass(frozen=True)
+class CallRule:
+    """One explicit effect-family syntax rule.
+
+    ``path_globs`` and ``scopes`` narrow indirect calls whose target name alone
+    is not meaningful (the two ``actual(...)`` boundaries and coder steering's
+    injected ``send(...)``).  Direct APIs remain broad so a newly introduced
+    ambient call cannot hide in a new module.
+    """
+
+    family: str
+    targets: tuple[str, ...]
+    full_suffixes: tuple[str, ...] = ()
+    path_globs: tuple[str, ...] = ("holdspeak/*.py", "holdspeak/**/*.py")
+    scopes: tuple[str, ...] = ()
+
+    def matches(self, *, path: str, scope: str, target: str, full: str) -> bool:
+        if not any(fnmatch.fnmatchcase(path, pattern) for pattern in self.path_globs):
+            return False
+        if self.scopes and scope not in self.scopes:
+            return False
+        resolved_target = full.rsplit(".", 1)[-1] if full else target
+        return (target in self.targets or resolved_target in self.targets) and (
+            not self.full_suffixes
+            or any(
+                full == suffix or full.endswith(f".{suffix}")
+                for suffix in self.full_suffixes
+            )
+        )
+
+
+# Ordering is classification precedence.  The AppleScript process invocation is
+# a raw desktop primitive, not one of the plugin/connector subprocess rows.
+_CALL_RULES = (
+    CallRule(
+        FAMILY_RAW_DESKTOP,
+        ("run", "Popen", "call", "check_call", "check_output"),
+        path_globs=("holdspeak/*.py", "holdspeak/**/*.py"),
+    ),
+    CallRule(
+        FAMILY_RAW_DESKTOP,
+        ("copy",),
+        full_suffixes=("pyperclip.copy",),
+    ),
+    CallRule(
+        FAMILY_RAW_DESKTOP,
+        ("press", "release", "type"),
+        path_globs=("holdspeak/privileged_effects/desktop_driver.py",),
+        scopes=(
+            "RawDesktopDriver._paste_text",
+            "RawDesktopDriver._type_text_slowly",
+            "RawDesktopDriver._press_enter",
+        ),
+    ),
+    CallRule(
+        FAMILY_RAW_DESKTOP,
+        ("press", "release", "type"),
+        full_suffixes=(
+            "pynput.keyboard.Controller().press",
+            "pynput.keyboard.Controller().release",
+            "pynput.keyboard.Controller().type",
+        ),
+    ),
+    CallRule(
+        FAMILY_RAW_DESKTOP,
+        ("write", "press", "hotkey", "keyDown", "keyUp"),
+        full_suffixes=(
+            "pyautogui.write",
+            "pyautogui.press",
+            "pyautogui.hotkey",
+            "pyautogui.keyDown",
+            "pyautogui.keyUp",
+        ),
+    ),
+    CallRule(
+        FAMILY_RAW_DESKTOP,
+        ("CGEventPost", "AXUIElementSetAttributeValue"),
+    ),
+    CallRule(
+        FAMILY_TMUX,
+        ("send_text_to_pane", "send_keys_to_pane"),
+    ),
+    CallRule(
+        FAMILY_TMUX,
+        ("send",),
+        path_globs=("holdspeak/coder_steering.py",),
+        scopes=("deliver", "deliver_keys"),
+    ),
+    CallRule(
+        FAMILY_TMUX,
+        ("run", "transport"),
+        path_globs=("holdspeak/coder_steering.py",),
+        scopes=("resize_pane",),
+    ),
+    CallRule(
+        FAMILY_SUBPROCESS,
+        ("_popen_factory",),
+        path_globs=("holdspeak/delivery/terminal_live.py",),
+        scopes=("_ControlClient.start",),
+    ),
+    CallRule(FAMILY_TYPER, ("type_text",)),
+    CallRule(FAMILY_SUBPROCESS, ("run_subprocess", "run_read_subprocess")),
+    CallRule(
+        FAMILY_SUBPROCESS,
+        ("actual",),
+        path_globs=("holdspeak/connector_runtime.py",),
+        scopes=("PermissionGate.run_subprocess",),
+    ),
+    CallRule(
+        FAMILY_SUBPROCESS,
+        ("run", "Popen", "call", "check_call", "check_output"),
+        full_suffixes=(
+            "subprocess.run",
+            "subprocess.Popen",
+            "subprocess.call",
+            "subprocess.check_call",
+            "subprocess.check_output",
+        ),
+    ),
+    CallRule(FAMILY_EGRESS, ("open_outbound_socket",)),
+    CallRule(
+        FAMILY_EGRESS,
+        ("actual",),
+        path_globs=("holdspeak/connector_runtime.py",),
+        scopes=("PermissionGate.open_outbound_socket",),
+    ),
+    CallRule(
+        FAMILY_EGRESS,
+        ("urlopen", "create_connection"),
+        full_suffixes=("urlopen", "socket.create_connection"),
+    ),
+    CallRule(
+        FAMILY_EGRESS,
+        ("create",),
+        full_suffixes=("chat.completions.create", "responses.create"),
+    ),
+    CallRule(
+        FAMILY_EGRESS, ("open",),
+        path_globs=("holdspeak/services/lan_engine_discovery.py",),
+        scopes=("_lan_http_get",),
+    ),
+)
+
+# These are the census's inspected, deliberate scope exclusions.  Keeping them
+# explicit means a newly added process or network statement fails even when it
+# lands outside today's plugin/connector denominator.  Selectors are line-
+# independent so harmless edits above a call do not create false drift.
+_EXCLUDED_CALLS: dict[tuple[str, str, str, int], str] = {
+    # PG-LANG LANG3: the shaping call's grounding reads the repository map
+    # (`git ls-files` under the folders the steps own); it writes nothing.
+    ("holdspeak/services/program_shaper.py", "_repo_map", "run", 1): (
+        "read-only probe: `git ls-files` for the shaping prompt's repository map"
+    ),
+    # PG-LANG LANG6: the planning call's grounding reads the repository map
+    # and the last merged subjects (`git ls-files`, `git log`); it writes nothing.
+    ("holdspeak/services/program_planner.py", "_git", "run", 1): (
+        "read-only probe: `git ls-files` and `git log` for the planning prompt's repository map"
+    ),
+    # The Line (2026-10-29): the node's link to its own hub and two local
+    # build/probe processes. A call's own effects (say, hang up, place a call)
+    # are the hub's Calls service's, as with ai-phone.
+    ("holdspeak/line/node.py", "HubClient._post", "urlopen", 1): (
+        "line-node operation-state transport (hello, events, next to its own hub; text only)"
+    ),
+    ("holdspeak/line/supervisor.py", "baresip_version", "run", 1): (
+        "setup/diagnostic probe: `baresip -h`, a read of the local build's version"
+    ),
+    ("holdspeak/line/supervisor.py", "build_aupipe", "run", 1): (
+        "The Line: `make` compiles our aupipe module into the Line's own folder; "
+        "no network, no desk write"
+    ),
+    # The Line on another machine (LINE-3): the node's one-time enrolment POST
+    # to the hub the owner named, and the node machine's own install verbs
+    # (the pinned user-space build, the node venv, the user service). Each runs
+    # from `holdspeak line <verb>` on that machine; none is a hub route.
+    ("holdspeak/line/node.py", "enrol", "urlopen", 1): (
+        "line-node enrolment: redeems the owner's one-time code at his hub (text only)"
+    ),
+    ("holdspeak/line/install.py", "build_baresip_linux", "run", 1): (
+        "The Line: the pinned user-space baresip build (scripts/line/build-baresip-linux.sh)"
+    ),
+    ("holdspeak/line/install.py", "python_ok", "run", 1): (
+        "setup/diagnostic probe: a Python's minor version"
+    ),
+    ("holdspeak/line/install.py", "make_venv", "run", 1): "The Line: uv python install (the node venv)",
+    ("holdspeak/line/install.py", "make_venv", "run", 2): "The Line: uv venv (the node venv)",
+    ("holdspeak/line/install.py", "make_venv", "run", 3): "The Line: uv pip install holdspeak[line] (the node venv)",
+    ("holdspeak/line/install.py", "make_venv", "run", 4): "The Line: pip install holdspeak[line] (the node venv)",
+    ("holdspeak/line/install.py", "linger_on", "run", 1): "setup/diagnostic probe: loginctl show-user -p Linger",
+    ("holdspeak/line/install.py", "install_unit", "run", 1): "The Line: launchctl bootout (this user's agent)",
+    ("holdspeak/line/install.py", "install_unit", "run", 2): "The Line: launchctl bootstrap (this user's agent)",
+    ("holdspeak/line/install.py", "install_unit", "run", 3): "The Line: systemctl --user enable (this user's unit)",
+    ("holdspeak/line/install.py", "install_unit", "run", 4): "The Line: systemctl --user restart (this user's unit)",
+    ("holdspeak/line/install.py", "restart_unit", "run", 1): "The Line: launchctl kickstart after an enrolment",
+    ("holdspeak/line/install.py", "restart_unit", "run", 2): "The Line: systemctl --user restart after an enrolment",
+    # Recordings (2026-10-28): local processes on the owner's own files;
+    # nothing leaves the device and no desk object changes outside the
+    # recording's folder.
+    ("holdspeak/recordings/encoder.py", "encode", "Popen", 1): (
+        "Recordings: ffmpeg encodes the owner's own in.webm into out.mp4 in the "
+        "same local folder; no network, no desk write"
+    ),
+    ("holdspeak/recordings/encoder.py", "poster", "run", 1): (
+        "Recordings: ffmpeg writes one poster.jpg beside the local video"
+    ),
+    ("holdspeak/recordings/tailnet.py", "_serve_status", "run", 1): (
+        "setup/diagnostic network probe: `tailscale serve status --json`, a "
+        "read of the local daemon's Serve config (off in rig hubs)"
+    ),
+    ("holdspeak/web/routes/recordings.py", "_open_folder", "run", 1): (
+        "Recordings: `open <folder>` shows the local recordings folder in "
+        "Finder on the owner's press; it changes nothing"
+    ),
+    (
+        "holdspeak/agent_context/own_agents.py", "_runner", "run", 1,
+    ): (
+        "Betterment AG15: local ps process ancestry/session reads and tmux "
+        "list-panes, capture-pane -p and display-message -p discover the owner's "
+        "native agent panes. They change nothing; owner gestures use the "
+        "separate admitted process.input transport."
+    ),
+    (
+        "holdspeak/agent_context/screen_watch.py",
+        "_runner",
+        "run",
+        1,
+    ): (
+        "Betterment AG7: `tmux capture-pane -p` and `tmux display-message -p "
+        "#{pane_title}`, a read of a live agent's visible screen and title for "
+        "the screen rules; it changes nothing"
+    ),
+    (
+        "holdspeak/coder_factory.py",
+        "process_start",
+        "run",
+        1,
+    ): (
+        "pi harness (#1022, Astra r2): `ps -o lstart= -p <pid>`, a read of one "
+        "process's start time recorded at spawn so Stop never signals a later "
+        "generation that reuses the launch's group id; it changes nothing"
+    ),
+    (
+        "holdspeak/coder_factory.py",
+        "_members",
+        "run",
+        1,
+    ): (
+        "pi harness (#1022, Astra r2): `ps -A -o pid=,pgid=,lstart=`, a read of "
+        "the process table to keep only the recorded group's own generation "
+        "before Stop signals it; it changes nothing"
+    ),
+    (
+        "holdspeak/principals.py",
+        "current_boot_id",
+        "run",
+        1,
+    ): (
+        "Conductor R2: `sysctl -n kern.bootsessionuuid`, a read of this machine "
+        "boot's id (macOS) so a stored monotonic credential deadline is compared "
+        "only within one boot; it changes nothing and runs once per process"
+    ),
+    (
+        "holdspeak/services/launch_lane.py",
+        "_default_runner",
+        "run",
+        1,
+    ): (
+        "PHILO-14 C0: the launch lane's worktree facts, `git -C <worktree> "
+        "log|diff --name-status|status --porcelain|rev-parse|symbolic-ref`: "
+        "reads of the launch's own worktree that change nothing (read on "
+        "request, cached 5 s, refused outside a worktree top)"
+    ),
+    (
+        "holdspeak/services/agent_hand_preview.py",
+        "LaunchReads.launcher.alive",
+        "run",
+        1,
+    ): (
+        "Conductor F1: the side-effect-free launch preview's liveness probe, "
+        "`tmux has-session -t <session>`: a read of tmux state that changes nothing "
+        "(the preview writes no file, binds no kernel and announces nothing)"
+    ),
+    (
+        "holdspeak/mcp/server.py",
+        "forward_to_hub",
+        "urlopen",
+        1,
+    ): (
+        "HS-200-45: the stdio sidecar's POST to the owner's OWN hub on "
+        "127.0.0.1 (POST /api/mcp, owner token). Not egress from the owner's "
+        "machine: the hub dispatches the tool and ITS receipts are the ledger; "
+        "this hop moves the JSON-RPC message across a process boundary only"
+    ),
+    (
+        "holdspeak/tmux_transport.py",
+        "_run_tmux",
+        "run",
+        1,
+    ): "raw tmux implementation traced from T01-T04",
+    (
+        "holdspeak/coder_steering.py",
+        "_default_runner",
+        "run",
+        1,
+    ): "process site outside plugin/connector scope",
+    (
+        "holdspeak/target_profile.py",
+        "_collect_macos_hints",
+        "run",
+        1,
+    ): "read-only frontmost-app probe",
+    (
+        "holdspeak/runtime_identity.py",
+        "_working_tree_revision",
+        "run",
+        1,
+    ): "read-only `git rev-parse HEAD` probe, once at process start",
+    (
+        "holdspeak/target_profile.py",
+        "_run_text",
+        "run",
+        1,
+    ): "read-only Linux target-profile probe",
+    (
+        "holdspeak/meeting_recorder.py",
+        "MeetingRecorder._start_system_ffmpeg",
+        "Popen",
+        1,
+    ): "process site outside plugin/connector scope",
+    (
+        "holdspeak/audio_devices.py",
+        "_pactl_stdout",
+        "run",
+        1,
+    ): "process site outside plugin/connector scope",
+    (
+        "holdspeak/meeting_import.py",
+        "_decode_with_ffmpeg",
+        "run",
+        1,
+    ): "process site outside plugin/connector scope",
+    (
+        "holdspeak/agent_summarizer.py",
+        "summarize_agent_session",
+        "run",
+        1,
+    ): "process site outside plugin/connector scope",
+    (
+        "holdspeak/intel/cli_engine.py",
+        "CliEngine._run_process",
+        "Popen",
+        1,
+    ): (
+        "Betterment E1: one agent CLI run (claude -p, codex exec) with built-in "
+        "tools off in an empty temp folder, and (M1) only HoldSpeak's MCP "
+        "server on a run credential; it is the sender of the run's "
+        "`run_external_egress` record (destination = the preset's vendor host)"
+    ),
+    (
+        "holdspeak/delivery/dossiers.py",
+        "_default_runner",
+        "run",
+        1,
+    ): "process site outside plugin/connector scope",
+    (
+        "holdspeak/delivery/factory_launch.py",
+        "_default_git_runner",
+        "run",
+        1,
+    ): "process site outside plugin/connector scope",
+    (
+        "holdspeak/services/program_runner.py",
+        "_default_runner",
+        "run",
+        1,
+    ): (
+        "Programs (2026-10-28): the engine's one process site in a step's own worktree: "
+        "git rev-parse/status/push, gh pr create/merge on the step's branch, and the gate "
+        "command writing its log; each engine decision is its own program.step kernel "
+        "operation (holdspeak/kernel/program_ops.py)"
+    ),
+    (
+        "holdspeak/delivery/pr_receipts.py",
+        "_default_runner",
+        "run",
+        1,
+    ): "process site outside plugin/connector scope, added after census snapshot",
+    (
+        "holdspeak/delivery/registry.py",
+        "_default_git_runner",
+        "run",
+        1,
+    ): "process site outside plugin/connector scope",
+    (
+        "holdspeak/delivery/collector.py",
+        "_default_runner",
+        "run",
+        1,
+    ): "process site outside plugin/connector scope",
+    (
+        "holdspeak/agent_context/hooks.py",
+        "_read_tmux_display",
+        "run",
+        1,
+    ): "process site outside plugin/connector scope",
+    (
+        "holdspeak/coder_steering_relay.py",
+        "_default_opener",
+        "urlopen",
+        1,
+    ): "placement transport, not a second terminal-input effect",
+    (
+        "holdspeak/commands/node_serve.py",
+        "_default_http_post",
+        "urlopen",
+        1,
+    ): "delivery-node operation-state transport",
+    (
+        "holdspeak/commands/mesh_serve.py",
+        "_default_http_post",
+        "urlopen",
+        1,
+    ): "inference-mesh operation-state transport",
+    (
+        "holdspeak/commands/doctor.py",
+        "_check_meeting_intel_cloud_preflight",
+        "urlopen",
+        1,
+    ): "setup/diagnostic network probe",
+    (
+        "holdspeak/doctor.py",
+        "_open",
+        "urlopen",
+        1,
+    ): "operator-requested diagnostic network probe (a token-bearing request goes through a no-redirect opener)",
+    (
+        "holdspeak/doctor.py",
+        "_get_html",
+        "urlopen",
+        1,
+    ): "operator-requested diagnostic network probe",
+    (
+        "holdspeak/doctor.py",
+        "_check_mcp_server",
+        "Popen",
+        1,
+    ): "operator-requested diagnostic MCP probe",
+    (
+        "holdspeak/setup_runtime.py",
+        "_default_http_get",
+        "urlopen",
+        1,
+    ): "setup/diagnostic network probe",
+    (
+        "holdspeak/setup_runtime.py",
+        "_default_http_json",
+        "urlopen",
+        1,
+    ): "setup/diagnostic network probe",
+    (
+        "holdspeak/coder_gate.py",
+        "_send",
+        "urlopen",
+        1,
+    ): "loopback gate protocol transport outside census egress scope",
+    (
+        "holdspeak/agent_context/codex_trust.py",
+        "_AppServer.__init__",
+        "Popen",
+        1,
+    ): (
+        "Conductor R3: a short local `codex app-server` (JSON-RPC on stdio, no "
+        "network call) that lists Codex's hooks; its one write (the hook trust in "
+        "Codex's config) runs only inside the owner-only admitted "
+        "`agent_hooks.install` operation, whose receipt covers it"
+    ),
+    (
+        "holdspeak/macos_calendar.py",
+        "open_privacy_settings",
+        "run",
+        1,
+    ): (
+        "PHILO-15 04: `/usr/bin/open` on the System Settings Privacy_Calendars "
+        "link, a local open with no network call that changes no setting; it "
+        "runs only inside the owner-only admitted `calendar.open_settings` "
+        "operation, whose receipt covers it"
+    ),
+    (
+        "holdspeak/services/project_repository.py",
+        "_gh_clone",
+        "run",
+        1,
+    ): (
+        "PHILO-15 16: `gh repo clone owner/name <HoldSpeak clone folder>` (egress "
+        "to github.com, a read); it runs only inside the owner-only admitted "
+        "`project.repository.clone` kernel operation on the owner's Hand to agent "
+        "press, whose receipt covers it, and the confirm line names GITHUB.COM first"
+    ),
+    # HS-171-02/05: local desktop notification dispatch (osascript).
+    # Not an effect — a local-only notification, never egress.
+    (
+        "holdspeak/desktop_notify.py",
+        "_notify_macos",
+        "run",
+        1,
+    ): "local osascript notification dispatch, no egress",
+    # Betterment daily D8: the same local notice through terminal-notifier,
+    # which can open a desk address on this hub when pressed. No egress.
+    (
+        "holdspeak/desktop_notify.py",
+        "_notify_terminal_notifier",
+        "run",
+        1,
+    ): "local terminal-notifier notification dispatch (opens a loopback desk address), no egress",
+    (
+        "holdspeak/desktop_presence_cocoa.py",
+        "_cocoa_notify",
+        "run",
+        1,
+    ): "local osascript notification dispatch in Cocoa child, no egress",
+}
+
+# Phase 108 emptied the transitional debt register. These exact statements are
+# no longer debt because their enforcement proofs are pinned below: T01/T02
+# have one caller inside the claimed process.input executor; resize sites use
+# the separate process.resize admission below. C02/C03/C05 are
+# authenticated reads; N03/N04 are brokered egress; N10-N12 are the owner's
+# clause-5 computation ruling; and the desktop statements exist only behind the
+# warrant-validating anonymous-IPC child. A new statement matches no key here
+# and therefore fails as unledgered debt.
+_MIGRATED_CALLS: dict[tuple[str, str, str, int], str] = {
+    (
+        "holdspeak/coder_steering.py", "resize_pane", "transport", 1,
+    ): "process.resize executor only: injected local resize transport, grant and immutable pane rechecked",
+    (
+        "holdspeak/coder_steering.py", "resize_pane", "run", 1,
+    ): "process.resize split-layout read: fixed list-panes before any host geometry effect",
+    (
+        "holdspeak/coder_steering.py", "resize_pane", "run", 2,
+    ): "process.resize executor only: bounded tmux resize-window/resize-pane argv after kernel claim and Type grant",
+    (
+        "holdspeak/coder_steering.py", "resize_pane", "run", 3,
+    ): "process.resize geometry receipt read: fixed display-message after admitted host resize",
+    (
+        "holdspeak/delivery/terminal_live.py", "_ControlClient.start", "_popen_factory", 1,
+    ): "local output read: fixed read-only ignore-size tmux control client; no pane input or pipe replacement",
+    (
+        "holdspeak/services/lan_engine_discovery.py", "_run", "run", 1,
+    ): (
+        "Article XI.5 local interface read: _run rejects argv outside the exact "
+        "ip -json -4 addr show / ip -4 -o addr show / ifconfig commands before "
+        "subprocess.run; test_interface_read_runner_refuses_other_commands proves rejection"
+    ),
+    (
+        "holdspeak/services/lan_engine_discovery.py", "_probe_endpoint", "create_connection", 1,
+    ): (
+        "external.egress sender _execute_scan only: scan_lan_engines freezes "
+        "LanScanPlan targets and expiry, admits lan-scan:<manifest digest>, "
+        "then dispatches TCP; test_refused_scan_never_dispatches_tcp_or_http "
+        "and test_admitted_scan_freezes_manifest_and_receipts_success prove the boundary"
+    ),
+    (
+        "holdspeak/services/lan_engine_discovery.py", "_lan_http_get", "open", 1,
+    ): (
+        "external.egress sender _execute_scan -> _probe_endpoint -> "
+        "discover_endpoint_models uses only this keyless no-proxy no-redirect "
+        "GET /v1/models getter; the same frozen scan admission covers HTTP, "
+        "proved by test_refused_scan_never_dispatches_tcp_or_http"
+    ),
+    (
+        "holdspeak/coder_steering.py",
+        "deliver",
+        "send",
+        1,
+    ): "process.input executor only",
+    (
+        "holdspeak/coder_steering.py",
+        "deliver_keys",
+        "send",
+        1,
+    ): "process.input executor only",
+    (
+        "holdspeak/activity_github.py",
+        "run_github_cli_enrichment",
+        "run_read_subprocess",
+        1,
+    ): "mandatory authenticated owner read",
+    (
+        "holdspeak/activity_jira.py",
+        "run_jira_cli_enrichment",
+        "run_read_subprocess",
+        1,
+    ): "mandatory authenticated owner read",
+    (
+        "holdspeak/services/watch_sources.py",
+        "GitHubWatchSource.snapshot",
+        "run_read_subprocess",
+        1,
+    ): "mandatory authenticated owner read",
+    (
+        "holdspeak/services/watch_sources.py",
+        "GitHubWatchSource._snapshot_branch_ci",
+        "run_read_subprocess",
+        1,
+    ): "mandatory authenticated owner read",
+    (
+        "holdspeak/services/watch_sources.py",
+        "GitHubWatchSource._snapshot_issues",
+        "run_read_subprocess",
+        1,
+    ): "mandatory authenticated owner read",  # Conductor R4: `gh issue list`
+    (
+        "holdspeak/services/github_provider.py",
+        "GitHubProviderAdapter._run_gh",
+        "run_read_subprocess",
+        1,
+    ): "mandatory authenticated owner read",
+    (
+        "holdspeak/services/agent_issue.py",
+        "_gh_body",
+        "run_read_subprocess",
+        1,
+    ): "mandatory authenticated owner read",  # Conductor R4: `gh issue view` for an issue brief
+    (
+        "holdspeak/services/jira_provider.py",
+        "JiraProviderAdapter._run_acli",
+        "run_read_subprocess",
+        1,
+    ): "mandatory authenticated owner read",  # HS-166: acli, the gh twin
+    (
+        "holdspeak/services/confluence_provider.py",
+        "ConfluenceProviderAdapter._run_acli",
+        "run_read_subprocess",
+        1,
+    ): "mandatory authenticated owner read",  # HS-174: acli confluence, the jira twin
+    (
+        "holdspeak/services/channel_cli.py",
+        "GitHubChannel.login",
+        "run_read_subprocess",
+        1,
+    ): "mandatory authenticated owner read",  # PHILO-10-02: gh api user, the frozen login re-read
+    (
+        "holdspeak/services/channel_cli.py",
+        "_Atlassian._read",
+        "run_read_subprocess",
+        1,
+    ): "mandatory authenticated owner read",  # PHILO-10-04: acli auth switch/status before the boundary, the gh twin
+    (
+        "holdspeak/missioncontrol_bridge.py",
+        "_default_runner",
+        "run",
+        1,
+    ): "mandatory authenticated owner read",
+    (
+        "holdspeak/plugins/gated_connector.py",
+        "_route",
+        "open_outbound_socket",
+        1,
+    ): "external.egress executor",
+    (
+        "holdspeak/plugins/builtin/webhook_post_actuator.py",
+        "_default_post",
+        "urlopen",
+        1,
+    ): "external.egress executor",
+    (
+        "holdspeak/plugins/dictation/runtime_openai_compatible.py",
+        "OpenAICompatibleRuntime.classify",
+        "create",
+        1,
+    ): "owner-ratified clause-5 computation",
+    # HS-131-09B: the second `create` is GONE from this method. The
+    # `response_format` compatibility retry was a hidden second request to a
+    # model; it now runs as its own admitted `inference.invoke@1` child from
+    # `speech_session/provider.py`, which calls back in here with
+    # `response_format=False`. One method, one call site.
+    (
+        "holdspeak/plugins/dictation/runtime_openai_compatible.py",
+        "OpenAICompatibleRuntime.rewrite",
+        "create",
+        1,
+    ): "owner-ratified clause-5 computation",
+    (
+        "holdspeak/desktop_typing.py",
+        "type_text_from_owner_gesture",
+        "type_text",
+        1,
+    ): "warrant-only desktop proxy",
+    (
+        "holdspeak/privileged_effects/desktop_executor.py",
+        "execute_authorized",
+        "type_text",
+        1,
+    ): "payload-bound warrant IPC executor",
+    (
+        "holdspeak/privileged_effects/desktop_driver.py",
+        "RawDesktopDriver._paste_text",
+        "copy",
+        1,
+    ): "confined raw desktop driver",
+    (
+        "holdspeak/privileged_effects/desktop_driver.py",
+        "RawDesktopDriver._paste_text",
+        "press",
+        1,
+    ): "confined raw desktop driver",
+    (
+        "holdspeak/privileged_effects/desktop_driver.py",
+        "RawDesktopDriver._paste_text",
+        "press",
+        2,
+    ): "confined raw desktop driver",
+    (
+        "holdspeak/privileged_effects/desktop_driver.py",
+        "RawDesktopDriver._paste_text",
+        "release",
+        1,
+    ): "confined raw desktop driver",
+    (
+        "holdspeak/privileged_effects/desktop_driver.py",
+        "RawDesktopDriver._paste_text",
+        "release",
+        2,
+    ): "confined raw desktop driver",
+    (
+        "holdspeak/privileged_effects/desktop_driver.py",
+        "RawDesktopDriver._paste_text",
+        "copy",
+        2,
+    ): "confined raw desktop driver",
+    (
+        "holdspeak/privileged_effects/desktop_driver.py",
+        "RawDesktopDriver._type_text_slowly",
+        "type",
+        1,
+    ): "confined raw desktop driver",
+    (
+        "holdspeak/privileged_effects/desktop_driver.py",
+        "RawDesktopDriver._press_enter",
+        "press",
+        1,
+    ): "confined raw desktop driver",
+    (
+        "holdspeak/privileged_effects/desktop_driver.py",
+        "RawDesktopDriver._press_enter",
+        "release",
+        1,
+    ): "confined raw desktop driver",
+    (
+        "holdspeak/services/repository_workspace.py",
+        "_run_git",
+        "run",
+        1,
+    ): (
+        "legacy authenticated-owner Git read/edit surface, not a new "
+        "kernel-admitted operation: one bounded subprocess helper preserves "
+        "text and raw NUL-delimited paths; the repository route calls only "
+        "this pure workspace service and does not expose a second process site"
+    ),
+    (
+        "holdspeak/web/routes/roadmaps.py",
+        "_run",
+        "run",
+        1,
+    ): "authenticated owner read (dw CLI)",
+}
+
+_SKIP_DIRS = {
+    "__pycache__",
+    ".mypy_cache",
+    ".pytest_cache",
+    "_parked",  # parked code is kept, never imported (never delete; park)
+    "assets",
+    "generated",
+    "static",
+    "vendor",
+    "vendored",
+}
+
+
+@dataclass(frozen=True)
+class EffectSite:
+    family: str
+    path: str
+    line: int
+    scope: str
+    target: str
+    ordinal: int
+
+    @property
+    def key(self) -> tuple[str, str, str, int]:
+        return (self.path, self.scope, self.target, self.ordinal)
+
+    @property
+    def label(self) -> str:
+        return f"{self.path}:{self.line} [{self.family}]"
+
+
+class _EffectVisitor(ast.NodeVisitor):
+    def __init__(self, relative_path: str, *, include_migrated: bool = False) -> None:
+        self.relative_path = relative_path
+        self.include_migrated = include_migrated
+        self.scope_stack: list[str] = []
+        self.bindings: list[dict[str, str]] = [{}]
+        self.ordinals: defaultdict[tuple[str, str], int] = defaultdict(int)
+        self.sites: list[EffectSite] = []
+
+    @property
+    def scope(self) -> str:
+        return ".".join(self.scope_stack) or "<module>"
+
+    def _push_scope(self, name: str) -> None:
+        self.scope_stack.append(name)
+        self.bindings.append({})
+
+    def _pop_scope(self) -> None:
+        self.bindings.pop()
+        self.scope_stack.pop()
+
+    def _resolve_name(self, name: str) -> str:
+        seen: set[str] = set()
+        current = name
+        while current not in seen:
+            seen.add(current)
+            bound = next(
+                (
+                    scope[current]
+                    for scope in reversed(self.bindings)
+                    if current in scope
+                ),
+                None,
+            )
+            if bound is None or bound == current:
+                break
+            current = bound
+        return current
+
+    def _resolved_expr(self, node: ast.AST) -> str:
+        if isinstance(node, ast.Name):
+            return self._resolve_name(node.id)
+        if isinstance(node, ast.Attribute):
+            prefix = self._resolved_expr(node.value)
+            return f"{prefix}.{node.attr}" if prefix else node.attr
+        if isinstance(node, ast.Call):
+            return f"{self._resolved_expr(node.func)}()"
+        return ""
+
+    def _bind(self, target: ast.expr, origin: str) -> None:
+        if isinstance(target, ast.Name):
+            if origin:
+                self.bindings[-1][target.id] = origin
+            else:
+                self.bindings[-1].pop(target.id, None)
+
+    def visit_Import(self, node: ast.Import) -> None:
+        for alias in node.names:
+            local = alias.asname or alias.name.split(".", 1)[0]
+            origin = alias.name if alias.asname else local
+            self.bindings[-1][local] = origin
+
+    def visit_ImportFrom(self, node: ast.ImportFrom) -> None:
+        module = node.module or ""
+        for alias in node.names:
+            if alias.name == "*":
+                continue
+            local = alias.asname or alias.name
+            origin = f"{module}.{alias.name}" if module else alias.name
+            self.bindings[-1][local] = origin
+
+    def visit_Assign(self, node: ast.Assign) -> None:
+        self.visit(node.value)
+        origin = self._resolved_expr(node.value)
+        for target in node.targets:
+            self._bind(target, origin)
+
+    def visit_AnnAssign(self, node: ast.AnnAssign) -> None:
+        if node.value is not None:
+            self.visit(node.value)
+            self._bind(node.target, self._resolved_expr(node.value))
+
+    def visit_ClassDef(self, node: ast.ClassDef) -> None:
+        self._push_scope(node.name)
+        self.generic_visit(node)
+        self._pop_scope()
+
+    def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
+        self._push_scope(node.name)
+        arguments = (*node.args.posonlyargs, *node.args.args, *node.args.kwonlyargs)
+        for argument in arguments:
+            self.bindings[-1][argument.arg] = argument.arg
+        if node.args.vararg is not None:
+            self.bindings[-1][node.args.vararg.arg] = node.args.vararg.arg
+        if node.args.kwarg is not None:
+            self.bindings[-1][node.args.kwarg.arg] = node.args.kwarg.arg
+        self.generic_visit(node)
+        self._pop_scope()
+
+    visit_AsyncFunctionDef = visit_FunctionDef
+
+    def visit_Call(self, node: ast.Call) -> None:
+        target = _call_target(node.func)
+        full = self._resolved_expr(node.func)
+        ordinal_key = (self.scope, target)
+        self.ordinals[ordinal_key] += 1
+        ordinal = self.ordinals[ordinal_key]
+
+        family = _classify_call(
+            path=self.relative_path,
+            scope=self.scope,
+            target=target,
+            full=full,
+            node=node,
+        )
+        if family is not None:
+            site = EffectSite(
+                family=family,
+                path=self.relative_path,
+                line=node.lineno,
+                scope=self.scope,
+                target=target,
+                ordinal=ordinal,
+            )
+            if site.key not in _EXCLUDED_CALLS and (
+                self.include_migrated or site.key not in _MIGRATED_CALLS
+            ):
+                self.sites.append(site)
+        self.generic_visit(node)
+
+
+def _call_target(function: ast.expr) -> str:
+    if isinstance(function, ast.Name):
+        return function.id
+    if isinstance(function, ast.Attribute):
+        return function.attr
+    return type(function).__name__
+
+
+def _dotted_expr(node: ast.AST) -> str:
+    if isinstance(node, ast.Name):
+        return node.id
+    if isinstance(node, ast.Attribute):
+        prefix = _dotted_expr(node.value)
+        return f"{prefix}.{node.attr}" if prefix else node.attr
+    if isinstance(node, ast.Call):
+        return f"{_dotted_expr(node.func)}()"
+    return ""
+
+
+def _literal_strings(node: ast.AST) -> set[str]:
+    return {
+        child.value
+        for child in ast.walk(node)
+        if isinstance(child, ast.Constant) and isinstance(child.value, str)
+    }
+
+
+def _classify_call(
+    *, path: str, scope: str, target: str, full: str, node: ast.Call
+) -> str | None:
+    process_targets = {"run", "Popen", "call", "check_call", "check_output"}
+    resolved_target = full.rsplit(".", 1)[-1] if full else target
+    if resolved_target in process_targets and any(
+        "osascript" in value.lower() for value in _literal_strings(node)
+    ):
+        return FAMILY_RAW_DESKTOP
+
+    # The first raw-desktop rule is intentionally restricted here: ordinary
+    # subprocess calls continue into the subprocess rule below.
+    for index, rule in enumerate(_CALL_RULES):
+        if index == 0:
+            continue
+        if rule.matches(path=path, scope=scope, target=target, full=full):
+            return rule.family
+    return None
+
+
+@functools.lru_cache(maxsize=None)
+def _parsed(relative_path: str, source: str) -> ast.Module:
+    """One parse per source text in this process (fast diet 2026-10-12: four
+    tests here each parsed the whole tree). The walkers only read the tree."""
+    return ast.parse(source, filename=relative_path)
+
+
+def _classify_source(
+    relative_path: str, source: str, *, include_migrated: bool = False
+) -> list[EffectSite]:
+    tree = _parsed(relative_path, source)
+    visitor = _EffectVisitor(relative_path, include_migrated=include_migrated)
+    visitor.visit(tree)
+    return visitor.sites
+
+
+def _source_paths() -> list[Path]:
+    return sorted(
+        path
+        for path in _SOURCE.rglob("*.py")
+        if not any(part in _SKIP_DIRS for part in path.relative_to(_SOURCE).parts)
+    )
+
+
+def _walk_effect_sites() -> list[EffectSite]:
+    sites: list[EffectSite] = []
+    for path in _source_paths():
+        relative = path.relative_to(_REPO).as_posix()
+        sites.extend(_classify_source(relative, path.read_text(encoding="utf-8")))
+    return sorted(sites, key=lambda site: (site.path, site.line, site.family))
+
+
+def _walk_migrated_effect_sites() -> list[EffectSite]:
+    sites: list[EffectSite] = []
+    for path in _source_paths():
+        relative = path.relative_to(_REPO).as_posix()
+        classified = _classify_source(
+            relative,
+            path.read_text(encoding="utf-8"),
+            include_migrated=True,
+        )
+        sites.extend(site for site in classified if site.key in _MIGRATED_CALLS)
+    return sorted(sites, key=lambda site: (site.path, site.line, site.family))
+
+
+def _load_ledger() -> dict[str, Any]:
+    return json.loads(_LEDGER.read_text(encoding="utf-8"))
+
+
+def _ledger_key(entry: dict[str, Any]) -> tuple[str, str, str, int]:
+    selector = entry["selector"]
+    return (
+        entry["path"],
+        selector["scope"],
+        selector["target"],
+        selector["ordinal"],
+    )
+
+
+def _unledgered_message(site: EffectSite) -> str:
+    return (
+        f"UNLEDGERED effect site: {site.label} "
+        f"scope={site.scope} target={site.target} ordinal={site.ordinal}"
+    )
+
+
+def test_effect_family_classifier_fixtures() -> None:
+    fixtures = (
+        ("holdspeak/scratch.py", "send_text_to_pane(pane='p', text='x')", FAMILY_TMUX),
+        ("holdspeak/scratch.py", "typer.type_text('x')", FAMILY_TYPER),
+        (
+            "holdspeak/scratch.py",
+            "import subprocess\nsubprocess.run(['true'])",
+            FAMILY_SUBPROCESS,
+        ),
+        (
+            "holdspeak/scratch.py",
+            "import urllib.request\nurllib.request.urlopen('https://example.test')",
+            FAMILY_EGRESS,
+        ),
+        (
+            "holdspeak/scratch.py",
+            "import pyperclip\npyperclip.copy('x')",
+            FAMILY_RAW_DESKTOP,
+        ),
+    )
+    for path, source, expected in fixtures:
+        found = _classify_source(path, source)
+        assert [site.family for site in found] == [expected], (
+            f"fixture for {expected} classified as {[site.family for site in found]}"
+        )
+
+
+def test_new_model_or_transcription_network_call_still_requires_triage() -> None:
+    source = (
+        "def classify(runtime):\n"
+        "    return runtime.chat.completions.create(model='new', messages=[])\n"
+    )
+    found = _classify_source(
+        "holdspeak/plugins/dictation/runtime_openai_compatible_new.py", source
+    )
+    assert len(found) == 1
+    message = _unledgered_message(found[0])
+    assert "UNLEDGERED effect site" in message
+    assert "runtime_openai_compatible_new.py" in message
+    assert "target=create" in message
+
+
+def test_import_and_callable_aliases_cannot_evade_any_effect_family() -> None:
+    fixtures = (
+        # Subprocess: plain from-import, aliased from-import, module alias, and
+        # every process API named by the census scope.
+        (
+            "subprocess run from-import",
+            "from subprocess import run\nrun(['true'])",
+            FAMILY_SUBPROCESS,
+        ),
+        (
+            "subprocess run alias",
+            "from subprocess import run as sneaky\nsneaky(['true'])",
+            FAMILY_SUBPROCESS,
+        ),
+        (
+            "subprocess module alias",
+            "import subprocess as sp\nsp.run(['true'])",
+            FAMILY_SUBPROCESS,
+        ),
+        (
+            "subprocess Popen alias",
+            "from subprocess import Popen as launch\nlaunch(['true'])",
+            FAMILY_SUBPROCESS,
+        ),
+        (
+            "subprocess call alias",
+            "from subprocess import call as invoke\ninvoke(['true'])",
+            FAMILY_SUBPROCESS,
+        ),
+        (
+            "subprocess check_output alias",
+            "from subprocess import check_output as output\noutput(['true'])",
+            FAMILY_SUBPROCESS,
+        ),
+        (
+            "subprocess check_call alias",
+            "from subprocess import check_call as checked\nchecked(['true'])",
+            FAMILY_SUBPROCESS,
+        ),
+        # Tmux transport: both imported boundary names survive renaming.
+        (
+            "tmux text alias",
+            "from holdspeak.tmux_transport import send_text_to_pane as push\npush(pane='p', text='x')",
+            FAMILY_TMUX,
+        ),
+        (
+            "tmux keys module alias",
+            "import holdspeak.tmux_transport as tmux\ntmux.send_keys_to_pane(pane='p', keys=[])",
+            FAMILY_TMUX,
+        ),
+        # TextTyper: class aliases and aliases of the bound method itself.
+        (
+            "TextTyper class alias",
+            "from holdspeak.typer import TextTyper as Typer\nTyper().type_text('x')",
+            FAMILY_TYPER,
+        ),
+        (
+            "TextTyper bound method alias",
+            "from holdspeak.typer import TextTyper as Typer\nwriter = Typer().type_text\nwriter('x')",
+            FAMILY_TYPER,
+        ),
+        # Egress: HTTP, socket, and model-call aliases all retain provenance.
+        (
+            "urlopen alias",
+            "from urllib.request import urlopen as fetch\nfetch('https://example.test')",
+            FAMILY_EGRESS,
+        ),
+        (
+            "urllib module alias",
+            "import urllib.request as net\nnet.urlopen('https://example.test')",
+            FAMILY_EGRESS,
+        ),
+        (
+            "socket alias",
+            "from socket import create_connection as connect\nconnect(('example.test', 443))",
+            FAMILY_EGRESS,
+        ),
+        (
+            "model method alias",
+            "request = client.chat.completions.create\nrequest()",
+            FAMILY_EGRESS,
+        ),
+        # Raw desktop: clipboard, pyautogui, AX/Quartz, and AppleScript process
+        # aliases remain raw primitives rather than generic subprocess sites.
+        (
+            "clipboard alias",
+            "from pyperclip import copy as stash\nstash('x')",
+            FAMILY_RAW_DESKTOP,
+        ),
+        (
+            "clipboard module alias",
+            "import pyperclip as clipboard\nclipboard.copy('x')",
+            FAMILY_RAW_DESKTOP,
+        ),
+        (
+            "pyautogui alias",
+            "from pyautogui import hotkey as chord\nchord('ctrl', 'v')",
+            FAMILY_RAW_DESKTOP,
+        ),
+        (
+            "pynput controller alias",
+            "from pynput.keyboard import Controller as Keys\nkeyboard = Keys()\nkeyboard.press('x')",
+            FAMILY_RAW_DESKTOP,
+        ),
+        (
+            "Quartz alias",
+            "from Quartz import CGEventPost as post\npost(0, event)",
+            FAMILY_RAW_DESKTOP,
+        ),
+        (
+            "AX alias",
+            "from ApplicationServices import AXUIElementSetAttributeValue as set_ax\nset_ax(element, attr, value)",
+            FAMILY_RAW_DESKTOP,
+        ),
+        (
+            "AppleScript process alias",
+            "from subprocess import run as execute\nexecute(['osascript', '-e', script])",
+            FAMILY_RAW_DESKTOP,
+        ),
+    )
+
+    for name, source, expected_family in fixtures:
+        sites = _classify_source("holdspeak/alias_mutation.py", source)
+        assert len(sites) == 1, f"{name} escaped or double-counted: {sites}"
+        site = sites[0]
+        assert site.family == expected_family, (
+            f"{name} classified as {site.family}, expected {expected_family}"
+        )
+        message = _unledgered_message(site)
+        assert "holdspeak/alias_mutation.py:" in message
+        assert f"[{expected_family}]" in message
+        assert f"target={site.target}" in message
+
+    shadowed = (
+        "from subprocess import run\ndef harmless(run):\n    run(['not-the-import'])\n"
+    )
+    assert not _classify_source("holdspeak/shadowed.py", shadowed), (
+        "a function argument must shadow an imported effect name"
+    )
+
+
+def test_effect_ledger_is_complete_and_current() -> None:
+    ledger = _load_ledger()
+    entries = ledger["sites"]
+    actual = _walk_effect_sites()
+
+    ledger_by_key = {_ledger_key(entry): entry for entry in entries}
+    actual_by_key = {site.key: site for site in actual}
+    assert len(ledger_by_key) == len(entries), (
+        "effect ledger contains duplicate selectors"
+    )
+    assert len(actual_by_key) == len(actual), (
+        "source walker produced duplicate selectors"
+    )
+
+    unledgered = [
+        actual_by_key[key] for key in actual_by_key.keys() - ledger_by_key.keys()
+    ]
+    missing = [
+        ledger_by_key[key] for key in ledger_by_key.keys() - actual_by_key.keys()
+    ]
+    family_mismatches = [
+        (ledger_by_key[key], actual_by_key[key])
+        for key in ledger_by_key.keys() & actual_by_key.keys()
+        if ledger_by_key[key]["family"] != actual_by_key[key].family
+    ]
+
+    failures = [
+        _unledgered_message(site)
+        for site in sorted(unledgered, key=lambda item: (item.path, item.line))
+    ]
+    failures.extend(
+        f"MISSING ledgered effect site: {entry['id']} "
+        f"{entry['path']}:{entry['census_line']} [{entry['family']}] "
+        f"selector={entry['selector']}"
+        for entry in sorted(missing, key=lambda item: item["id"])
+    )
+    failures.extend(
+        f"FAMILY CHANGED for {entry['id']}: ledger={entry['family']} "
+        f"source={site.family} at {site.path}:{site.line}"
+        for entry, site in family_mismatches
+    )
+    assert not failures, "effect census drift:\n  " + "\n  ".join(failures)
+
+
+def test_effect_ledger_asserts_the_composed_family_counts() -> None:
+    ledger = _load_ledger()
+    entries = ledger["sites"]
+    expected = ledger["expected"]
+
+    families = Counter(entry["family"] for entry in entries)
+    assert entries == []
+    assert dict(families) == expected["families"] == {}
+    assert expected["total"] == 0
+    assert expected["not_covered"] == 0
+    assert "register is empty" in ledger["legal_effect"]
+
+
+def test_phase108_migrated_effect_sites_are_exact_and_still_present() -> None:
+    actual = {site.key: site for site in _walk_migrated_effect_sites()}
+    missing = set(_MIGRATED_CALLS) - set(actual)
+    assert not missing, (
+        "a migrated/exempt/confined effect proof went stale:\n  "
+        + "\n  ".join(map(str, sorted(missing)))
+    )
+    assert set(actual) == set(_MIGRATED_CALLS)
+
+    raw = [
+        site
+        for site in actual.values()
+        if site.path == "holdspeak/privileged_effects/desktop_driver.py"
+    ]
+    assert len(raw) == 9
+    assert all(site.family == FAMILY_RAW_DESKTOP for site in raw)
+
+
+def test_lan_transports_are_only_referenced_by_the_frozen_scan_sender() -> None:
+    """The exact migrated transports cannot acquire an unadmitted caller."""
+    helpers = {"_execute_scan", "_probe_endpoint", "_lan_http_get"}
+    references: list[tuple[str, str, str]] = []
+
+    class References(ast.NodeVisitor):
+        def __init__(self, relative: str) -> None:
+            self.relative = relative
+            self.scopes: list[str] = []
+
+        def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
+            self.scopes.append(node.name)
+            self.generic_visit(node)
+            self.scopes.pop()
+
+        visit_AsyncFunctionDef = visit_FunctionDef
+
+        def visit_Name(self, node: ast.Name) -> None:
+            if node.id in helpers:
+                references.append((self.relative, ".".join(self.scopes), node.id))
+
+        def visit_Attribute(self, node: ast.Attribute) -> None:
+            if node.attr in helpers:
+                references.append((self.relative, ".".join(self.scopes), node.attr))
+            self.generic_visit(node)
+
+        def visit_ImportFrom(self, node: ast.ImportFrom) -> None:
+            for alias in node.names:
+                if alias.name in helpers:
+                    references.append((self.relative, "import", alias.name))
+
+    for path in _source_paths():
+        relative = path.relative_to(_REPO).as_posix()
+        References(relative).visit(_parsed(relative, path.read_text(encoding="utf-8")))
+    relative = "holdspeak/services/lan_engine_discovery.py"
+    assert Counter(references) == Counter({
+        (relative, "scan_lan_engines", "_execute_scan"): 2,
+        (relative, "_execute_scan.probe_fn", "_probe_endpoint"): 1,
+        (relative, "_probe_endpoint", "_lan_http_get"): 1,
+    })
+
+
+def test_terminal_transports_have_only_the_admitted_command_executor_as_caller() -> None:
+    direct_calls: set[tuple[str, str]] = set()
+    for path in _source_paths():
+        relative = path.relative_to(_REPO).as_posix()
+        tree = _parsed(relative, path.read_text(encoding="utf-8"))
+        module_aliases = {"coder_steering"}
+        function_aliases: dict[str, str] = {}
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                for alias in node.names:
+                    if alias.name.endswith("coder_steering"):
+                        module_aliases.add(alias.asname or alias.name)
+            elif isinstance(node, ast.ImportFrom):
+                if str(node.module or "").endswith("coder_steering"):
+                    for alias in node.names:
+                        if alias.name in {"deliver", "deliver_keys", "resize_pane"}:
+                            function_aliases[alias.asname or alias.name] = alias.name
+                for alias in node.names:
+                    if alias.name == "coder_steering":
+                        module_aliases.add(alias.asname or alias.name)
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Call):
+                continue
+            if isinstance(node.func, ast.Name) and node.func.id in function_aliases:
+                direct_calls.add((relative, function_aliases[node.func.id]))
+                continue
+            if not isinstance(node.func, ast.Attribute):
+                continue
+            base = _dotted_expr(node.func.value)
+            if node.func.attr in {"deliver", "deliver_keys", "resize_pane"} and (
+                base in module_aliases or base.endswith(".coder_steering")
+            ):
+                direct_calls.add((relative, node.func.attr))
+    assert direct_calls == {
+        ("holdspeak/delivery/commands.py", "deliver"),
+        ("holdspeak/delivery/commands.py", "deliver_keys"),
+        ("holdspeak/delivery/commands.py", "resize_pane"),
+    }
+    assert "preflight_result" not in (
+        _REPO / "holdspeak" / "delivery" / "commands.py"
+    ).read_text(encoding="utf-8")
+
+
+def test_delivery_command_adapters_cannot_bypass_process_admission() -> None:
+    commands_path = _REPO / "holdspeak" / "delivery" / "commands.py"
+    tree = ast.parse(
+        commands_path.read_text(encoding="utf-8"),
+        filename="holdspeak/delivery/commands.py",
+    )
+    service = next(
+        node
+        for node in tree.body
+        if isinstance(node, ast.ClassDef) and node.name == "HubCommandService"
+    )
+    methods = {
+        node.name: node
+        for node in service.body
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+    }
+
+    native_calls = {
+        name: [
+            node
+            for node in ast.walk(method)
+            if isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Attribute)
+            and node.func.attr == "_submit_native"
+        ]
+        for name, method in methods.items()
+    }
+    assert {name: len(calls) for name, calls in native_calls.items() if calls} == {
+        "submit": 1,
+        "_submit_process_input": 1,
+        "_submit_process_resize": 1,
+    }
+
+    external_native_calls: list[str] = []
+    for path in _source_paths():
+        if path == commands_path:
+            continue
+        relative = path.relative_to(_REPO).as_posix()
+        source_tree = _parsed(relative, path.read_text(encoding="utf-8"))
+        for node in ast.walk(source_tree):
+            if (
+                isinstance(node, ast.Call)
+                and isinstance(node.func, ast.Attribute)
+                and node.func.attr == "_submit_native"
+            ):
+                external_native_calls.append(f"{relative}:{node.lineno}")
+    assert external_native_calls == []
+
+    submit_routes = [
+        node
+        for node in ast.walk(methods["submit"])
+        if isinstance(node, ast.If)
+        and "coder_steering" in ast.unparse(node.test)
+        and "STEERING_VERBS" in ast.unparse(node.test)
+    ]
+    assert len(submit_routes) == 1
+    adapter_assignment = next(
+        node for node in submit_routes[0].body
+        if isinstance(node, ast.Assign)
+        and any(isinstance(target, ast.Name) and target.id == "adapter" for target in node.targets)
+    )
+    selection = adapter_assignment.value
+    assert isinstance(selection, ast.IfExp)
+    assert ast.unparse(selection.test) == "verb == 'process.resize@1'"
+    assert ast.unparse(selection.body) == "self.submit_process_resize"
+    assert ast.unparse(selection.orelse) == "self.submit_process_input"
+    assert any(
+        isinstance(node, ast.Return)
+        and isinstance(node.value, ast.Call)
+        and isinstance(node.value.func, ast.Name)
+        and node.value.func.id == "adapter"
+        for node in submit_routes[0].body
+    )
+
+    locked_adapter_sites = set()
+    for public_name in ("submit_process_input", "submit_process_resize"):
+        private_name = "_" + public_name
+        wrapper = methods[public_name]
+        lock = next(node for node in wrapper.body if isinstance(node, ast.With))
+        assert len(lock.items) == 1
+        assert ast.unparse(lock.items[0].context_expr) == "self._steering_lock(request)"
+        private_call = next(
+            node for node in ast.walk(lock)
+            if isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Attribute)
+            and node.func.attr == private_name
+        )
+        locked_adapter_sites.add(("holdspeak/delivery/commands.py", private_call.lineno))
+    actual_adapter_sites = set()
+    for path in _source_paths():
+        relative = path.relative_to(_REPO).as_posix()
+        for node in ast.walk(_parsed(relative, path.read_text(encoding="utf-8"))):
+            if (isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)
+                    and node.func.attr in {"_submit_process_input", "_submit_process_resize"}):
+                actual_adapter_sites.add((relative, node.lineno))
+    assert actual_adapter_sites == locked_adapter_sites
+
+    for name in ("_submit_process_input", "_submit_process_resize"):
+        adapter_call = native_calls[name][0]
+        capability = next(
+            (keyword.value for keyword in adapter_call.keywords if keyword.arg == "process_input_capability"),
+            None,
+        )
+        assert isinstance(capability, ast.Attribute)
+        assert capability.attr == "_process_input_capability"
+    assert not any(
+        keyword.arg == "process_input_capability"
+        for keyword in native_calls["submit"][0].keywords
+    )
+
+
+def test_raw_desktop_module_is_reachable_only_from_warrant_server() -> None:
+    importers = set()
+    for path in _source_paths():
+        relative = path.relative_to(_REPO).as_posix()
+        source = path.read_text(encoding="utf-8")
+        if "privileged_effects.desktop_driver" in source or (
+            relative == "holdspeak/privileged_effects/desktop_executor.py"
+            and "from .desktop_driver import" in source
+        ):
+            importers.add(relative)
+    assert importers == {"holdspeak/privileged_effects/desktop_executor.py"}
+
+    proxy = (_REPO / "holdspeak" / "typer.py").read_text(encoding="utf-8")
+    for ambient_name in ("pyperclip", "pynput", "Controller", "osascript"):
+        assert ambient_name not in proxy
+
+
+def _broker_modules() -> list[Path]:
+    return sorted(_KERNEL.glob("*.py"))
+
+
+def _line_count(path: Path) -> int:
+    return len(path.read_text(encoding="utf-8").splitlines())
+
+
+# HS-200-03, 2026-09-06 — an EXPLICIT re-baseline, not a payment.
+#
+# This fence and the driver-conditional fence below had been red on every
+# machine and in every CI run for long enough that nobody could read the Unit
+# job. A permanently red fence protects nothing: it cannot tell a new
+# regression from the debt it has been reporting for months. Paying it means
+# carving seven kernel modules and moving thirteen driver conditionals into
+# typed operation modules, which is an architecture programme and not this
+# story (its scope explicitly excludes repairing unrelated historical work).
+#
+# So the debt is recorded here, by MODULE and MEASUREMENT — never by line
+# number, which any edit invalidates — and the fence becomes a RATCHET:
+#
+#   * a module NOT listed must be within budget, exactly as before;
+#   * a listed module may not grow past the number recorded here;
+#   * a listed module that comes back within budget must be DELETED from the
+#     list, which `test_broker_debt_ledger_only_shrinks` enforces, so the list
+#     can only ever get shorter.
+#
+# Nothing new is permitted. Destination for paying it down: the kernel's own
+# architecture story, tracked in BACKLOG "CI runner environment".
+_BROKER_BUDGET_DEBT: dict[str, int] = {
+    "holdspeak/kernel/broker.py": 344,
+    "holdspeak/kernel/inference_runner.py": 830,  # the Q2 lane gate went to engine_lanes.lane, request-cancel to inference_cancel_signal
+    "holdspeak/kernel/journal.py": 485,  # PHILO-9-02 carved create_operation into journal_atomic
+    "holdspeak/kernel/meeting_plugin_projection.py": 355,  # Betterment D0 carved the summary action write
+    "holdspeak/kernel/parent_run.py": 353,
+    "holdspeak/kernel/projection_stager.py": 395,
+}
+
+_BROKER_DRIVER_CONDITIONAL_DEBT: dict[str, int] = {
+    "holdspeak/kernel/ask_projection.py": 2,
+    "holdspeak/kernel/broker.py": 1,
+    "holdspeak/kernel/executor.py": 2,
+    "holdspeak/kernel/inference_runner.py": 1,
+    "holdspeak/kernel/journal.py": 7,
+}
+
+
+def test_kernel_broker_modules_stay_within_line_budget() -> None:
+    offenders: list[str] = []
+    for path in _broker_modules():
+        budget = (
+            _BROKER_INIT_BUDGET if path.name == "__init__.py" else _BROKER_MODULE_BUDGET
+        )
+        relative = path.relative_to(_REPO).as_posix()
+        allowed = max(budget, _BROKER_BUDGET_DEBT.get(relative, 0))
+        lines = _line_count(path)
+        if lines > allowed:
+            recorded = _BROKER_BUDGET_DEBT.get(relative)
+            ceiling = (
+                f"recorded debt of {recorded}" if recorded else f"{budget}-line budget"
+            )
+            offenders.append(
+                f"kernel broker module over its {ceiling}: "
+                f"{path.relative_to(_REPO)}: {lines} lines"
+            )
+    assert not offenders, (
+        "broker density guard failed — carve a typed concern module; don't bump "
+        "the budget:\n  " + "\n  ".join(offenders)
+    )
+
+
+_DRIVER_WORDS = re.compile(
+    r"driver|terminal|actuator|inference|operation\.(?:type|kind|family)",
+    re.IGNORECASE,
+)
+_DRIVER_CLASS = re.compile(
+    r"(?:Terminal|Actuator|Inference)\w*Driver|\w+Driver|"
+    r"ProcessInput\w*|DesktopType\w*|External\w*Operation"
+)
+_DRIVER_LITERALS = {
+    "terminal",
+    "terminal_input",
+    "actuator",
+    "actuator_egress",
+    "inference",
+    "inference_run",
+}
+_DRIVER_OPERATION_PREFIXES = ("process.", "desktop.", "external.", "inference.")
+
+
+def _source_mentions_driver_dispatch(node: ast.AST) -> bool:
+    rendered = ast.unparse(node)
+    if _DRIVER_WORDS.search(rendered) or _DRIVER_CLASS.search(rendered):
+        return True
+    literals = {value.lower() for value in _literal_strings(node)}
+    return bool(literals & _DRIVER_LITERALS) or any(
+        value.startswith(_DRIVER_OPERATION_PREFIXES) for value in literals
+    )
+
+
+def _driver_conditional_findings(path: Path) -> list[str]:
+    tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+    try:
+        relative = path.relative_to(_REPO).as_posix()
+    except ValueError:
+        relative = path.as_posix()
+    findings: set[tuple[int, str]] = set()
+
+    for node in ast.walk(tree):
+        kind: str | None = None
+        subject: ast.AST | None = None
+        if isinstance(node, ast.If):
+            kind, subject = "if dispatch", node.test
+        elif isinstance(node, ast.IfExp):
+            kind, subject = "ternary dispatch", node.test
+        elif isinstance(node, ast.Match):
+            kind, subject = "match dispatch", node
+        elif isinstance(node, ast.Subscript):
+            # Catches HANDLERS[driver.kind] and drivers[operation.type] style
+            # table dispatch even though neither form contains a literal if.
+            kind, subject = "table dispatch", node
+        elif isinstance(node, ast.Call):
+            full = _dotted_expr(node.func)
+            if (
+                _call_target(node.func) in {"isinstance", "issubclass", "type"}
+                or full.endswith(".get")
+                or full.endswith(".register")
+                or full.endswith(".dispatch")
+            ):
+                kind, subject = "type/registry dispatch", node
+        elif isinstance(node, ast.Dict):
+            if any(
+                isinstance(key, ast.Constant) and key.value in _DRIVER_LITERALS
+                for key in node.keys
+                if key is not None
+            ):
+                kind, subject = "driver-keyed dispatch table", node
+
+        if (
+            kind is not None
+            and subject is not None
+            and _source_mentions_driver_dispatch(subject)
+        ):
+            findings.add((node.lineno, kind))
+
+    return [
+        f"driver-specific conditional in broker module: {relative}:{line} ({kind})"
+        for line, kind in sorted(findings)
+    ]
+
+
+def test_kernel_broker_has_zero_driver_specific_conditionals() -> None:
+    """Zero for every module outside the HS-200-03 debt ledger; no growth inside it."""
+    findings: list[str] = []
+    for path in _broker_modules():
+        relative = path.relative_to(_REPO).as_posix()
+        module_findings = _driver_conditional_findings(path)
+        allowed = _BROKER_DRIVER_CONDITIONAL_DEBT.get(relative, 0)
+        if len(module_findings) > allowed:
+            findings.extend(module_findings)
+    assert not findings, (
+        "broker driver-conditional census exceeded its recorded debt; typed "
+        "operation modules must own driver behavior:\n  " + "\n  ".join(findings)
+    )
+
+
+def test_driver_conditional_census_catches_non_if_dispatch(tmp_path: Path) -> None:
+    cases = {
+        "ternary.py": "result = terminal if driver.kind == 'terminal' else inference\n",
+        "match.py": "match driver.kind:\n    case 'terminal':\n        result = 1\n",
+        "table.py": "result = handlers[driver.kind]\n",
+        "operation_table.py": "result = handlers[operation.type]\n",
+        "registry.py": "result = registry.dispatch(driver)\n",
+    }
+    for name, source in cases.items():
+        path = tmp_path / name
+        path.write_text(source, encoding="utf-8")
+        findings = _driver_conditional_findings(path)
+        assert findings, f"non-if driver dispatch fixture escaped: {name}"

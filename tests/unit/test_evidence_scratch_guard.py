@@ -9,6 +9,7 @@ rewrote ~388 tracked evidence files of closed phases.
 
 from __future__ import annotations
 
+from tests import _tree
 import ast
 import re
 from pathlib import Path
@@ -19,10 +20,8 @@ TESTS = REPO / "tests"
 # Files that only READ tracked evidence as input. They are not writers.
 ALLOWLIST = {
     "tests/unit/test_one_path_census.py": "reads the HS-131-10 findings inventory as input",
-    "tests/unit/test_phase143_surface_fallback_census.py": "reads the generated census artifact as input",
     "tests/unit/test_primitive_contract.py": "reads the mobile contract schemas as input",
     "tests/unit/test_coder_gate.py": "reads the gate-proposal schema as input; writes only to tmp_path",
-    "tests/unit/test_phase143_routing_authority_census.py": "reads the routing census as input; writes only to tmp_path",
     "tests/unit/test_philo5_his_words.py": "reads the retained Phase 6 rehearsal run (the Codex events and hub transcript) as input; writes only to tmp_path",
     "tests/unit/test_philo7_file_and_find.py": "reads the retained Phase 5 and Phase 7 rehearsal runs (events, launch setups) as input; every write goes to tmp_path",
     "tests/unit/test_philo10_send_job.py": "reads the retained story-06 send-job run and the tracked real-send ledger as input; every mutation and the second-run refusal write only under tmp_path",
@@ -60,16 +59,16 @@ def _anchored_lines(tree: ast.Module) -> list[int]:
 
 def test_no_test_writes_into_tracked_evidence() -> None:
     offenders = []
-    for path in sorted(TESTS.rglob("*.py")):
+    for path in _tree.python_files(TESTS):
         rel = path.relative_to(REPO).as_posix()
         if rel in ALLOWLIST:
             continue
         if rel.startswith("tests/_parked/"):
             continue  # parked tests are not collected; they cannot write
-        source = path.read_text(encoding="utf-8")
+        source = _tree.text_of(path)
         if "pm/roadmap" not in source or not WRITE_RE.search(source):
             continue
-        lines = _anchored_lines(ast.parse(source, filename=rel))
+        lines = _anchored_lines(_tree.ast_of(path))
         if lines:
             offenders.append(f"{rel}:{lines[0]}")
     assert not offenders, (
@@ -142,14 +141,14 @@ def _tracked_writes(tree: ast.Module) -> list[int]:
 
 def test_no_writes_through_a_tracked_path_outside_evidence_dir() -> None:
     offenders = []
-    for path in sorted(TESTS.rglob("*.py")):
+    for path in _tree.python_files(TESTS):
         rel = path.relative_to(REPO).as_posix()
         if rel in ALLOWLIST or rel.startswith(("tests/_parked/", "tests/e2e/_parked/")):
             continue
-        source = path.read_text(encoding="utf-8")
+        source = _tree.text_of(path)
         if not any(t in source for t in ('"docs"', "docs/internal", '"pm"', "pm/roadmap")):
             continue
-        lines = _tracked_writes(ast.parse(source, filename=rel))
+        lines = _tracked_writes(_tree.ast_of(path))
         if lines:
             offenders.append(f"{rel}:{lines[0]}")
     assert not offenders, (

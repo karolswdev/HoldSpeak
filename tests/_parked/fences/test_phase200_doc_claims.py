@@ -1,3 +1,5 @@
+# PARKED 2026-11-09 (fences diet, pipe/fences-diet): every row pins a literal anchor sentence in a document and a count; a pure move or a re-worded doc turned it red.
+# Nothing replaces it: a citation fence. tests/unit/doc_claims/registry.py stays (scripts/doc_claims.py and the scan-shape test read it).
 """HS-200-46 — a stale document fails CI instead of misleading the next agent.
 
 Planned suite: ``phase200_doc_claims``.

@@ -21,6 +21,7 @@ against a real hub) live in
 
 from __future__ import annotations
 
+from tests import _tree
 import os
 import sqlite3
 import threading
@@ -637,8 +638,8 @@ class TestEveryAskedServiceIsCarriedAndLive:
 
         root = Path(__file__).resolve().parents[2] / "holdspeak" / "mcp"
         names: set[str] = set()
-        for source in root.rglob("*.py"):
-            for node in ast.walk(ast.parse(source.read_text(encoding="utf-8"))):
+        for source in _tree.python_files(root):
+            for node in _tree.walk(source):
                 if (isinstance(node, ast.Call)
                         and isinstance(node.func, ast.Name)
                         and node.func.id == "runtime_service"
@@ -694,8 +695,8 @@ class TestNoBareAccessorInMcp:
 
         root = Path(__file__).resolve().parents[2] / "holdspeak" / "mcp"
         offenders: list[str] = []
-        for source in sorted(root.rglob("*.py")):
-            tree = ast.parse(source.read_text(encoding="utf-8"))
+        for source in _tree.python_files(root):
+            tree = _tree.ast_of(source)
             allowed: set[int] = set()
             for node in ast.walk(tree):
                 if (isinstance(node, ast.Call) and isinstance(node.func, ast.Name)

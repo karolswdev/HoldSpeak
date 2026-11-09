@@ -25,6 +25,7 @@ layers:
 
 from __future__ import annotations
 
+from tests import _tree
 import threading
 import time
 from contextlib import contextmanager
@@ -1257,11 +1258,9 @@ def test_no_plugin_module_references_a_provider_construction() -> None:
     # not USE it, so this reads the AST rather than the text.
     forbidden = {"_cached_provider", "build_configured_meeting_intel"}
     offenders: list[str] = []
-    for path in sorted(root.rglob("*.py")):
-        if "__pycache__" in path.parts:
-            continue
+    for path in _tree.python_files(root):
         banned = forbidden if path == seam else forbidden | {"_chat_completion_text"}
-        for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+        for node in _tree.walk(path):
             name = (
                 node.attr if isinstance(node, ast.Attribute)
                 else node.id if isinstance(node, ast.Name)

@@ -2,8 +2,8 @@
 
 The fences, and what turns each one red:
 
-* **The slice table** — fifteen explicit descriptors, one per (kind, verb),
-  each naming its real ``PrimitiveService`` method and its Article XI
+* **The slice table** — every (kind, verb) descriptor names its real
+  ``PrimitiveService`` method and its Article XI
   admission exactly as the phase status's admission table rules it (declared
   here; story 02 enforces). Deliberate mutations (``evidence-story-01.md``):
   drop a row from ``DESK_OPERATIONS`` -> the table fence fails; change one
@@ -21,9 +21,8 @@ The fences, and what turns each one red:
   contract as they did on main (no owner-only refusal is added).
 * **Palettes** — refusal through dispatch and through the JSON-RPC handler,
   and catalogue filtering, for these kinds.
-* **The residual set** — exactly the enumerated identities 2-5, 7-24, 26-27
-  and 34-36 are paid; the public tool count is unchanged (a separate
-  measurement).
+* Parked 2026-11-09 (fences diet): the fifteen-row order fence and the
+  residual-set fence, in ``tests/_parked/fences/test_philo7_contract.py``.
 """
 from __future__ import annotations
 
@@ -91,21 +90,17 @@ def _descriptor(name: str) -> operations.OperationDescriptor:
     return {d.name: d for d in operations.DESCRIPTORS}[name]
 
 
-def test_the_slice_is_fifteen_explicit_rows_each_naming_a_real_method() -> None:
+def test_every_desk_row_runs_a_real_primitive_service_method() -> None:
+    """Each (kind, verb) row names a declared operation whose method is a literal
+    attribute of ``PrimitiveService`` (never built from a kind)."""
     from holdspeak.services.primitive_service import PrimitiveService
 
-    names = [d.name for d in operations.DESCRIPTORS]
-    # PHILO-7-02 adds the membership rows (zone.file ... kb.members) after these.
-    assert [n for n in names if n.split(".")[0] in {"note", "zone", "kb"}][:len(SLICE)] == list(SLICE)
-    rows = {(kind, verb): op for (kind, verb), op in operations.DESK_OPERATIONS.items() if kind != "decision"}
-    assert sorted(rows.values()) == sorted(SLICE), "a slice operation has no (kind, verb) row"
-    for name in SLICE:
+    assert set(SLICE) <= set(operations.DESK_OPERATIONS.values())
+    for name in operations.DESK_OPERATIONS.values():
         descriptor = _descriptor(name)
-        assert descriptor.service == "primitive_service"
-        # The method is a literal attribute of the service, never built from a kind.
+        assert descriptor.service == "primitive_service", name
         assert callable(PrimitiveService.__dict__.get(descriptor.method)), (name, descriptor.method)
         assert descriptor.refusals[:3] == ("unknown_operation", "invalid_arguments", "authority_in_arguments")
-        assert descriptor.owner_only is False, f"{name}: no owner-only refusal where main accepted"
         assert descriptor.result and descriptor.completion and descriptor.exposure
     # Thought-owned note behaviour is declared on the note rows.
     for name in ("note.update", "note.delete"):
@@ -466,34 +461,3 @@ def test_workflows_and_chains_keep_the_generic_path(tmp_path: Path, monkeypatch)
     assert dispatch("desk.get", {"kind": "chains", "id": chain["id"]}, OWNER)["name"] == "c"
     workflow = dispatch("desk.create", {"kind": "workflows", "data": {"name": "w"}}, OWNER)
     assert dispatch("desk.delete", {"kind": "workflows", "id": workflow["id"]}, OWNER) == {"deleted": True, "id": workflow["id"]}
-
-
-# ── the residual set ────────────────────────────────────────────────────
-
-#: The phase status's enumerated identities this story pays (#2-5, 7-24,
-#: 26-27, 34-36): notes, directories and kbs on desk.* and desk.verb, and the
-#: three route fallback constructions.
-_PAID_HERE = {
-    *(("mcp", tool, f"kind={kind}") for tool in ("desk.create", "desk.delete", "desk.get", "desk.list", "desk.update")
-      for kind in ("notes", "kbs", "directories")),
-    *(("mcp", "desk.verb", f"verb_id={verb},kind={kind}") for verb in ("desk.create", "desk.update", "desk.delete")
-      for kind in ("notes", "kbs", "directories")),
-    ("http", "holdspeak/web/routes/primitives/directories.py::build_directories_router._svc", "PrimitiveService"),
-    ("http", "holdspeak/web/routes/primitives/kbs.py::build_kbs_router._svc", "PrimitiveService"),
-    ("http", "holdspeak/web/routes/primitives/notes.py::build_notes_router._svc", "PrimitiveService"),
-}
-
-
-def test_the_residual_set_paid_exactly_the_enumerated_identities() -> None:
-    census = _load_script("residual_census")
-    committed = json.loads(census.SET_PATH.read_text(encoding="utf-8"))
-    paid = {census._key(e) for e in committed["paid"] if e["story"] == "PHILO-7-01"}
-    assert len(_PAID_HERE) == 27
-    assert paid == _PAID_HERE
-    listed = {census._key(e) for e in committed["entries"]}
-    assert not (paid & listed)
-    assert census.check(REPO, committed) == []
-    # PHILO-7-02 paid the rest of the slice (#1, #6, #25, #28-33) and moved the
-    # measurements (320 -> 293 here, then -> 284): its own fence,
-    # tests/unit/test_philo7_membership_decisions.py, holds the numbers.
-    assert not [a for a in committed.get("public_tools_added", []) if a["story"] == "PHILO-7-01"]

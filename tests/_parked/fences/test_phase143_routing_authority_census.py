@@ -1,3 +1,5 @@
+# PARKED 2026-11-09 (fences diet, pipe/fences-diet): a phase-143 inventory pinned to four named modules and three text citations of the 143 waist (inference_adoption_service), which is slated for parking.
+# Nothing replaces it: a shape fence; the one-path census keeps "no service builds an engine".
 """HS-104-143-01 — fence the routing-authority census to observed production.
 
 This is intentionally a static inventory test.  It does not bless the two
