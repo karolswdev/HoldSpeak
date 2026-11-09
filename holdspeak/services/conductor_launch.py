@@ -532,6 +532,22 @@ LAUNCH_RULES.update({name: (NEVER, "", "") for name in (
     "recipe.update", "recipe.delete", "desk.projection.present", "memory.meaning.turn_on",
     "memory.meaning.turn_off", "constitutional_context.update", "desk.seed", "desk.reset")})
 
+
+def _family_rules() -> dict[str, tuple[str, str, str]]:
+    """Every declared row without a rule of its own (2026-11-09, read from the
+    rows, never a hand-kept family list): a launch reads what a declared read
+    reads; a declared write is the owner's press and is never offered. The chat
+    threads are his conversations: a launch neither reads nor writes them."""
+    from holdspeak import operations as ops
+
+    rules = {d.tool_name: (READ if d.effect == "read" else NEVER, "", "")
+             for d in ops.DESCRIPTORS if d.tool_schema is not None and d.tool_name}
+    rules.update({d.tool_name: (NEVER, "", "") for d in ops.THREAD_OPERATIONS if d.tool_schema is not None})
+    return {name: rule for name, rule in rules.items() if name not in LAUNCH_RULES}
+
+
+LAUNCH_RULES.update(_family_rules())
+
 #: Not offered to a launch at all (the palette leaves them out).
 NOT_OFFERED: frozenset[str] = frozenset(n for n, (rule, _k, _a) in LAUNCH_RULES.items() if rule in (NEVER, COMPOSER))
 

@@ -9,7 +9,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from holdspeak.delivery.terminal import TerminalTargetRegistry
-from holdspeak.principals import PrincipalRight, required_right
+from holdspeak.principals import Principal, PrincipalKind, PrincipalRight, required_right
 from holdspeak.services.delivery_service import DeliveryService
 from holdspeak.services.terminal_workspace import TerminalWorkspaceService
 from holdspeak.web.context import WebContext
@@ -232,12 +232,17 @@ def test_sessions_route_uses_injected_workspace_service() -> None:
         session_loader=lambda: [],
     )
     app = FastAPI()
+
+    @app.middleware("http")
+    async def owner_principal(request, call_next):
+        request.state.principal = Principal(PrincipalKind.OWNER, "owner-session")
+        return await call_next(request)
+
     app.include_router(
-        build_delivery_terminal_router(
-            WebContext(get_state=lambda: {}),
-            targets=targets,
-            workspace=workspace,
-        )
+        build_delivery_terminal_router(WebContext(
+            get_state=lambda: {},
+            delivery_service=DeliveryService(None).configure(targets=targets, workspace=workspace),
+        ))
     )
     response = TestClient(app).get("/api/delivery/terminal/sessions")
     assert response.status_code == 200
@@ -251,8 +256,9 @@ def test_sessions_route_delegates_workspace_composition_and_shared_targets() -> 
     targets = TerminalTargetRegistry(runner=tmux)
     seen: dict[str, object] = {}
 
-    class ComposedDelivery:
-        def terminal_workspace_service(self, *, targets, local_node_id):
+    class ComposedDelivery(DeliveryService):
+        def _workspace(self):
+            targets, local_node_id = self._targets(), self._settings["local_node_id"]
             seen.update({"targets": targets, "local_node_id": local_node_id})
             return TerminalWorkspaceService(
                 targets,
@@ -262,11 +268,17 @@ def test_sessions_route_delegates_workspace_composition_and_shared_targets() -> 
             )
 
     app = FastAPI()
+
+    @app.middleware("http")
+    async def owner_principal(request, call_next):
+        request.state.principal = Principal(PrincipalKind.OWNER, "owner-session")
+        return await call_next(request)
+
     app.include_router(
         build_delivery_terminal_router(
-            WebContext(get_state=lambda: {}, delivery_service=ComposedDelivery()),
-            targets=targets,
-            local_node_id="node-a",
+            WebContext(get_state=lambda: {}, delivery_service=ComposedDelivery(None).configure(
+                targets=targets, local_node_id="node-a",
+            )),
         )
     )
     response = TestClient(app).get("/api/delivery/terminal/sessions")

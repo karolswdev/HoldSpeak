@@ -37,6 +37,7 @@ from holdspeak.delivery.dossiers import (
     sanitize_markdown,
 )
 from holdspeak.grounding import GROUNDING_TRANSCRIPT_CAP
+from holdspeak.services.delivery_service import DeliveryService
 from holdspeak.web.context import WebContext
 from holdspeak.web.routes.delivery_dossiers import build_delivery_dossiers_router
 
@@ -243,11 +244,9 @@ def _service(
 
 def _client(service: DossierService) -> TestClient:
     app = FastAPI()
-    app.include_router(
-        build_delivery_dossiers_router(
-            WebContext(get_state=lambda: {}), service=service
-        )
-    )
+    app.include_router(build_delivery_dossiers_router(WebContext(
+        get_state=lambda: {}, delivery_service=DeliveryService(None).configure(dossiers=service),
+    )))
     return TestClient(app)
 
 

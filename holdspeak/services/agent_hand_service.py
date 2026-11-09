@@ -376,6 +376,24 @@ class AgentHandService:
         self._project_map = project_map
         #: ``None``: the setting, read at each hand (a change applies at once).
         self._max_live = None if max_live is None else int(max_live)
+        #: The launch reads (``agent_hand_preview.LaunchReads``; a test's own
+        #: stand-in) and the lane's steering resolver: the transports that own
+        #: them bind them (``bind_reads``); ``None``: the defaults, no control part.
+        self.reads: Any = None
+        self.lane_control: Optional[Callable[[str], Any]] = None
+
+    def bind_reads(self, reads: Any = None, lane_control: Optional[Callable[[str], Any]] = None) -> "AgentHandService":
+        """The launch reads and the lane's steering resolver (the web route binds both)."""
+        if reads is not None:
+            self.reads = reads
+        if lane_control is not None:
+            self.lane_control = lane_control
+        return self
+
+    def _reads(self) -> Any:
+        from .agent_hand_preview import LaunchReads
+
+        return self.reads or LaunchReads()
 
     def _launch_mode(self, kind: str, item_id: str, helper_of: Optional[str] = None) -> str:
         """The Control mode word of this hand's launch (``control_level.mode_for_request``)."""
@@ -972,18 +990,16 @@ class AgentHandService:
     # the hand-written route ran; a refusal is a ServiceError whose context
     # carries the HTTP status (``http``) and the answer the route gave.
 
-    def launch_lane(self, principal: Any, launch_id: str, *, after: Any = 0, limit: Any = 200,
-                    reads: Any = None, control: Any = None) -> dict[str, Any]:
+    def launch_lane(self, principal: Any, launch_id: str, *, after: Any = 0, limit: Any = 200) -> dict[str, Any]:
         """One launch's lane (PHILO-14 C0): the launch, its follow-through,
         the wait, the session's events (paged), the gated calls, the answers,
         the worktree and the usage. Reads only (``services.launch_lane``)."""
         from ..db import get_database
-        from .agent_hand_preview import LaunchReads
         from .launch_lane import launch_lane
 
         lane = launch_lane(
-            str(launch_id), db=get_database(), reads=reads or LaunchReads(),
-            after=max(0, int(after or 0)), limit=max(1, min(int(limit or 200), 1000)), control=control,
+            str(launch_id), db=get_database(), reads=self._reads(),
+            after=max(0, int(after or 0)), limit=max(1, min(int(limit or 200), 1000)), control=self.lane_control,
         )
         if lane is None:
             raise _launch_unknown()
@@ -1079,6 +1095,59 @@ class AgentHandService:
             raise ServiceError(str(result.get("status") or "not_launched"), "The helper did not start.",
                                context={"http": 409, **result})
         return result
+
+
+    # ── 2026-11-09: the rest of the Hand sheet's and the lane's calls, declared
+    # (``agent_operations.py``): the preview, one launch's delivery, Re-brief,
+    # Take back and Deliver (``resume``).
+
+    def preview(self, principal: Any, kind: Any, item_id: Any, *, instruction: Any = None, profile: Any = None,
+                project_id: Any = None, review_by: Any = None) -> dict[str, Any]:
+        """The launch sheet's preview (K3): the brief, the repository and the
+        branch Hand to an agent session would use. No side effect; owner only."""
+        from .agent_hand_preview import preview_hand
+
+        kind, item_id = str(kind or "").strip(), str(item_id or "").strip()
+        if not kind or not item_id:
+            raise ServiceError("item_required", "A kind and an id are required.", context={"http": 400})
+        return preview_hand(self, principal, kind, item_id, instruction=instruction, profile=profile,
+                            project_id=project_id, review_by=review_by, reads=self.reads)
+
+    def launch_record(self, principal: Any, launch_id: str) -> dict[str, Any]:
+        """One launch's delivery, read from the launch ledger (no driver, no
+        reconcile): the launch sheet follows it until the brief is sent, held
+        or refused."""
+        record = self._reads().launcher()._ledger.get(str(launch_id))
+        if not record:
+            raise _launch_unknown()
+        keys = ("launch_id", "state", "instruction_state", "trust_state", "failure", "profile_id")
+        return {key: record.get(key) for key in keys} | {"profile": record.get("profile_id")}
+
+    def rebrief(self, principal: Any, launch_id: str, *, text: Any = "") -> dict[str, Any]:
+        """PHILO-15 B46: the owner's Re-brief. Typed into the launch's own
+        pane now when the agent is idle or asks (``delivered``); mid-turn it
+        waits for the turn end (``queued``). Any other status is a refusal."""
+        from .launch_rebrief import QUEUED, rebrief
+
+        result = rebrief(str(launch_id), str(text or ""), principal, service=self._launch_service(), db=self._db)
+        status = str(result.get("status") or "")
+        if status in ("delivered", QUEUED):
+            return result
+        raise ServiceError(status or "rebrief_refused", status or "rebrief_refused",
+                           context={**result, "http": 404 if status == "launch_unknown" else 409})
+
+    def take_back(self, principal: Any, launch_id: str, press_id: Any) -> dict[str, Any]:
+        """PHILO-15 20 (B67): discard one queued Re-brief before the agent's
+        turn ends; its receipt is TAKEN BACK. ``not_queued`` when it was typed
+        already or is not queued."""
+        from .launch_rebrief import TAKEN_BACK, take_back
+
+        result = take_back(str(launch_id), str(press_id or ""), principal, service=self._launch_service())
+        status = str(result.get("status") or "")
+        if status == TAKEN_BACK:
+            return result
+        raise ServiceError(status or "not_taken_back", status or "not_taken_back",
+                           context={**result, "http": 404 if status == "launch_unknown" else 409})
 
 
 def _launch_unknown() -> ServiceError:

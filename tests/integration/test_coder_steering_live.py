@@ -156,7 +156,15 @@ def test_live_keep_as_note_creates_a_real_openable_note(tmp_path) -> None:
     _orig_list = agent_context.list_agent_sessions
     agent_context.list_agent_sessions = lambda agent=None: [session]
     try:
+        from holdspeak.principals import Principal, PrincipalKind
+
         app = FastAPI()
+
+        @app.middleware("http")
+        async def owner(request, call_next):  # the hub edge gives /api/coders the OWNER right
+            request.state.principal = Principal(PrincipalKind.OWNER, "owner-session")
+            return await call_next(request)
+
         app.include_router(build_coder_steering_router(WebContext(get_state=lambda: {})))
         client = TestClient(app)
         res = client.post("/api/coders/claude:live/keep-note", json={})

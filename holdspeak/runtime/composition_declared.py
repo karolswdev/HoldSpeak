@@ -59,6 +59,21 @@ def _constitutional() -> Any:
     from holdspeak.constitutional_context import ConstitutionalContextService
 
     return ConstitutionalContextService()
+def _invocations(db: Any, observer: Any) -> Any:
+    from holdspeak.services.invocation_service import InvocationService
+
+    return InvocationService(db, observer=observer)
+
+
+def _hub_threads(services: Any) -> Any:
+    """The threads' rows bind to a factory: one ThreadService per verb over the hub's bus (``thread_operations.py``)."""
+
+    def make() -> Any:
+        from holdspeak.services.thread_service import hub_thread_service
+
+        return hub_thread_service(lambda topic, data: services.broadcast(topic, data) if services.broadcast else None)
+
+    return make
 
 
 def _ops_projects_builders(db: Any, observer: Any) -> dict[str, Callable[[], Any]]:
@@ -206,6 +221,10 @@ def compose_declared_services(services: Any, ctx: Any, resolved_db: Any, resolve
         "desk_service": lambda: _bare_desk(resolved_db, resolved_observer),
         "projection_service": lambda: _bare_projections(resolved_db, resolved_observer),
         "constitutional_context_service": _constitutional,
+        # The threads' verbs (thread_operations.py): the hub's ThreadService factory.
+        "hub_thread_service": lambda: _hub_threads(services),
+        # The capability run receipts (invocation_operations.py); the kernel broker at first use.
+        "invocation_service": lambda: _invocations(resolved_db, resolved_observer),
         # The recordings descriptors (media_operations.py): the process's one RecordingsService.
         "recordings_service": lambda: LIVE_RECORDINGS_SERVICE,
         # The hub's voice (media_operations.py): the Line's TTS weights, read and fetched.

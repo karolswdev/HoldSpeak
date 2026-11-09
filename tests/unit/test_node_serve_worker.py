@@ -25,6 +25,7 @@ from holdspeak.commands.node_serve import (
     run_node_serve_command,
 )
 from holdspeak.delivery.node_link import NodeLinkState, NodeTokenStore
+from holdspeak.services.delivery_service import DeliveryService
 from holdspeak.web.context import WebContext
 from holdspeak.web.routes.delivery_node import build_delivery_node_router
 
@@ -42,7 +43,7 @@ def state(tmp_path) -> NodeLinkState:
 def hub(state) -> TestClient:
     app = FastAPI()
     app.include_router(
-        build_delivery_node_router(WebContext(get_state=lambda: {}), link=state)
+        build_delivery_node_router(WebContext(get_state=lambda: {}, delivery_service=DeliveryService(None).configure(link=state)))
     )
     return TestClient(app)
 

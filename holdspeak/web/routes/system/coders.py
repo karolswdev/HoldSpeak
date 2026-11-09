@@ -1,498 +1,115 @@
 """The coder board: which live coding session receives a spoken answer.
 
-Bodies moved verbatim from routes/system.py (HS-79-02, the Phase-63 discipline).
-The steering surface (attach/arm/steer/audit) is a sibling concern in
-`coder_steering_routes.py` (HS-87-03); `_coder_frame` and
-`_session_age_seconds` are shared from here.
+2026-11-09 (one contract): the routes are produced from the declared rows in
+``holdspeak/coder_operations.py`` through ``OperationRegistry.invoke``; each
+verb is a ``CoderService`` method. The steering surface (peek, arm, steer,
+audit, the factory) is produced in ``coder_steering_routes.py`` with the
+registry and the answer envelope from here.
 """
 from __future__ import annotations
 
-import asyncio
-from datetime import datetime, timezone
-from typing import Any, Optional
+from typing import Any, Callable
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter
 from fastapi.responses import JSONResponse
+from starlette.concurrency import run_in_threadpool
 
+from .... import operations
 from ....logging_config import get_logger
-from ....principals import Principal, PrincipalKind
-from ....services.coder_service import CoderService
-from ....services.errors import NotFound
+from ....operations import OperationOwnerRequired
+from ....services.coder_service import CoderRefused, CoderService
+from ....services.errors import NotFound, ServiceError, ValidationError
 from ...context import WebContext
+from ...operation_routes import operation_router
 from ...runtime_support import error_500
-
-log = get_logger("web.routes.system")
+from .._mount import mount_router
 from ._shared import _normalize_runtime_status_payload
 
-_COMPANION_TARGET_MAX_AGE_SECONDS = 120
-_COMPANION_OVERVIEW_MAX_AGE_SECONDS = 30 * 60
+log = get_logger("web.routes.system")
+
+#: The board's rows, in route order.
+BOARD = ("coder.status", "coder.list", "coder.own_agents", "coder.own_agents.answer",
+         "coder.select", "coder.dismiss", "coder.pin")
 
 
-def _coder_frame(ctx: WebContext, key: str) -> None:
-    """One `scope:"coder"` frame on the one bus — arming moved, a grant
-    expired, an awaiting flag flipped; every surface hears the same
-    motion (the HS-86-03 frame shape, coder scope)."""
-    if ctx.broadcast is None:
-        return
+def registry_for(ctx: WebContext) -> Callable[[], operations.OperationRegistry]:
+    """The routes' registry: the hub's bound contract, else one over a coder
+    service built for this context (its bus, its launch reads)."""
+
+    def fallback() -> CoderService:
+        from ....db import get_database, get_observer
+
+        return CoderService(get_database(), observer=get_observer(), broadcast=getattr(ctx, "broadcast", None),
+                            launch_reads=getattr(ctx, "agent_hand_reads", None))
+
+    return lambda: operations.for_context(ctx, coder_service=fallback)
+
+
+class Holding:
+    """The routes' registry with the inputs only this transport holds for its rows."""
+
+    def __init__(self, registry: Callable[[], Any], held: Callable[[], dict[str, Any]]) -> None:
+        self._registry, self._held = registry, held
+
+    def invoke(self, principal: Any, name: str, args: Any, *, shape: str = "call") -> Any:
+        return self._registry().invoke(principal, name, args, held=self._held(), shape=shape)
+
+
+async def answer(fn: Callable[[], Any], *, status: int = 200) -> JSONResponse:
+    """The coder verbs' envelope: the answer, else the refusal's own body at
+    the status the hand-written routes answered with."""
     try:
-        ctx.broadcast(
-            "intel_status",
-            {
-                "state": "ready",
-                "scope": "coder",
-                "capability": {
-                    "kind": "coder",
-                    "id": key,
-                    "name": key.split(":", 1)[0],
-                },
-            },
-        )
+        return JSONResponse(await run_in_threadpool(fn), status_code=status)
+    except CoderRefused as exc:
+        return JSONResponse(exc.context["body"], status_code=int(exc.context["http"]))
+    except OperationOwnerRequired as exc:
+        return JSONResponse({"error": exc.code, "code": exc.code}, status_code=403)
+    except ServiceError as exc:
+        http = exc.context.get("http") or exc.context.get("status")
+        if not isinstance(http, int):
+            http = 404 if isinstance(exc, NotFound) else 400 if isinstance(exc, ValidationError) else 409
+        return JSONResponse({"error": exc.detail, "code": exc.code}, status_code=http)
     except Exception as exc:
-        log.debug(f"coder frame dropped: {exc}")
+        return error_500(exc, log, "coder verb failed")
 
 
-def _session_age_seconds(stamp: Optional[str], now: datetime) -> Optional[int]:
-    """Seconds since an ISO-8601 session timestamp, or None if unparseable."""
-    if not isinstance(stamp, str) or not stamp.strip():
-        return None
+def produce(names: tuple[str, ...], registry: Callable[[], Any]) -> APIRouter:
+    """The routes of the named coder rows, in the order named."""
+    by_name = {descriptor.name: descriptor for descriptor in operations.CODER_OPERATIONS}
+    return operation_router([by_name[name] for name in names], registry, answer, module=__name__)
+
+
+def _status_inputs(ctx: WebContext) -> dict[str, Any]:
+    """What ``coder.status`` reads from the hub itself: the runtime status
+    (normalized) and the active devices."""
+    from ....meeting_session import _device_descriptor_to_dict
+
     try:
-        parsed = datetime.fromisoformat(stamp.replace("Z", "+00:00"))
-    except ValueError:
-        return None
-    if parsed.tzinfo is None:
-        parsed = parsed.replace(tzinfo=timezone.utc)
-    return max(0, int((now - parsed).total_seconds()))
-
-
+        state = ctx.get_state() or {}
+    except Exception as exc:
+        log.error(f"get_state failed: {exc}")
+        state = {}
+    runtime_error: str | None = None
+    raw: Any = {}
+    if ctx.on_get_status is not None:
+        try:
+            raw = ctx.on_get_status()
+        except Exception as exc:
+            log.error(f"on_get_status failed: {exc}")
+            runtime_error = str(exc)
+            raw = {}
+    runtime = _normalize_runtime_status_payload(raw if isinstance(raw, dict) else {"runtime_status": raw}, state)
+    devices = [_device_descriptor_to_dict(descriptor) for descriptor in ctx.device_registry.active()]
+    return {"runtime": runtime, "runtime_error": runtime_error, "devices": devices}
 
 
 def build_coders_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
-
-    @router.get("/api/coders/status")
-    def api_companion_status() -> Any:
-        """Return one debug snapshot for the AIPI agent companion loop."""
-        from ....agent_context import (
-            DEFAULT_STALE_AGENT_SESSION_SECONDS,
-            get_recent_awaiting_agent_session,
-            list_recent_awaiting_agent_sessions,
-        )
-        from ....agent_device import AGENT_QUERY_NAMES, build_agent_identity_payload
-        from ....config import Config
-        from ....meeting_session import _device_descriptor_to_dict
-
-        try:
-            state = ctx.get_state() or {}
-        except Exception as e:
-            log.error(f"get_state failed: {e}")
-            state = {}
-
-        runtime_error: str | None = None
-        if ctx.on_get_status is not None:
-            try:
-                raw_payload = ctx.on_get_status()
-                if isinstance(raw_payload, dict):
-                    runtime_payload = _normalize_runtime_status_payload(raw_payload, state)
-                else:
-                    runtime_payload = _normalize_runtime_status_payload(
-                        {"runtime_status": raw_payload},
-                        state,
-                    )
-            except Exception as e:
-                log.error(f"on_get_status failed: {e}")
-                runtime_error = str(e)
-                runtime_payload = _normalize_runtime_status_payload({}, state)
-        else:
-            runtime_payload = _normalize_runtime_status_payload({}, state)
-
-        devices = [
-            _device_descriptor_to_dict(descriptor)
-            for descriptor in ctx.device_registry.active()
-        ]
-        device_connected = bool(devices)
-
-        agent_error: str | None = None
-        try:
-            session = get_recent_awaiting_agent_session(
-                max_age_seconds=_COMPANION_TARGET_MAX_AGE_SECONDS
-            )
-            agent_sessions = list_recent_awaiting_agent_sessions(
-                max_age_seconds=_COMPANION_OVERVIEW_MAX_AGE_SECONDS,
-                limit=8,
-            )
-        except Exception as e:
-            log.error(f"agent companion status failed: {e}")
-            agent_error = str(e)
-            session = None
-            agent_sessions = []
-        agent_waiting = bool(session and session.awaiting_response)
-        tmux_reply_available = bool(
-            session
-            and session.awaiting_response
-            and getattr(session, "tmux_pane", None)
-        )
-
-        dictation_error: str | None = None
-        try:
-            dictation_cfg = Config.load().dictation
-            pipeline_enabled = bool(dictation_cfg.pipeline.enabled)
-            pipeline_stages = list(dictation_cfg.pipeline.stages)
-            target_profile_override = dictation_cfg.pipeline.target_profile_override
-            runtime_backend = dictation_cfg.runtime.backend
-        except Exception as e:
-            log.error(f"dictation config load failed: {e}")
-            dictation_error = str(e)
-            pipeline_enabled = False
-            pipeline_stages = []
-            target_profile_override = None
-            runtime_backend = None
-
-        text_injection_known = "text_injection_enabled" in runtime_payload
-        text_injection_enabled = (
-            bool(runtime_payload.get("text_injection_enabled"))
-            if text_injection_known
-            else None
-        )
-        agent_identity = build_agent_identity_payload(
-            session,
-            text_injection_enabled=text_injection_enabled,
-        )
-        if session is not None and not any(
-            item.agent == session.agent and item.session_id == session.session_id
-            for item in agent_sessions
-        ):
-            agent_sessions.insert(0, session)
-        selected_agent_key = (
-            (session.agent, session.session_id) if session is not None else None
-        )
-        agent_session_items = []
-        selected_index: int | None = None
-        status_now = datetime.now(timezone.utc)
-        for index, item in enumerate(agent_sessions):
-            item_key = (item.agent, item.session_id)
-            selected = item_key == selected_agent_key
-            if selected:
-                selected_index = index
-            age_seconds = _session_age_seconds(item.updated_at, status_now)
-            # Pinned sessions are intentionally kept; never badge them stale.
-            stale = (
-                not item.pinned
-                and age_seconds is not None
-                and age_seconds > DEFAULT_STALE_AGENT_SESSION_SECONDS
-            )
-            agent_session_items.append(
-                {
-                    "index": index,
-                    "selected": selected,
-                    "pinned": item.pinned,
-                    "stale": stale,
-                    "age_seconds": age_seconds,
-                    "session": item.to_dict(),
-                    "identity": build_agent_identity_payload(
-                        item,
-                        text_injection_enabled=text_injection_enabled,
-                    ),
-                }
-            )
-
-        blockers: list[str] = []
-        if not device_connected:
-            blockers.append("no_device_connected")
-        if not agent_waiting:
-            blockers.append("no_agent_waiting")
-        if not pipeline_enabled:
-            blockers.append("dictation_pipeline_disabled")
-        if text_injection_enabled is False and not tmux_reply_available:
-            blockers.append("text_injection_unavailable")
-        elif text_injection_enabled is None and not tmux_reply_available:
-            blockers.append("text_injection_status_unknown")
-        if agent_error:
-            blockers.append("agent_status_unavailable")
-        if dictation_error:
-            blockers.append("dictation_config_unavailable")
-        if runtime_error:
-            blockers.append("runtime_status_unavailable")
-
-        return JSONResponse(
-            {
-                "status": "ok",
-                "ready_for_agent_reply": not blockers,
-                "blockers": blockers,
-                "checks": {
-                    "device_connected": device_connected,
-                    "agent_waiting": agent_waiting,
-                    "dictation_pipeline_enabled": pipeline_enabled,
-                    "text_injection_enabled": text_injection_enabled,
-                    "tmux_reply_available": tmux_reply_available,
-                    "target_confidence": (
-                        agent_identity["target_confidence"] if agent_identity else None
-                    ),
-                },
-                "devices": {
-                    "connected": device_connected,
-                    "count": len(devices),
-                    "items": devices,
-                    "query_names": sorted(AGENT_QUERY_NAMES),
-                },
-                "agent": {
-                    "awaiting_response": agent_waiting,
-                    "session": session.to_dict() if session else None,
-                    "identity": agent_identity,
-                    "sessions": {
-                        "count": len(agent_session_items),
-                        "selected_index": selected_index,
-                        "items": agent_session_items,
-                    },
-                    "max_age_seconds": _COMPANION_TARGET_MAX_AGE_SECONDS,
-                    "overview_max_age_seconds": _COMPANION_OVERVIEW_MAX_AGE_SECONDS,
-                    "stale_threshold_seconds": DEFAULT_STALE_AGENT_SESSION_SECONDS,
-                    "error": agent_error,
-                },
-                "dictation": {
-                    "pipeline_enabled": pipeline_enabled,
-                    "stages": pipeline_stages,
-                    "target_profile_override": target_profile_override,
-                    "runtime_backend": runtime_backend,
-                    "error": dictation_error,
-                },
-                "runtime": {
-                    "status": runtime_payload.get("status"),
-                    "mode": runtime_payload.get("mode"),
-                    "meeting_active": runtime_payload.get("meeting_active"),
-                    "meeting_id": runtime_payload.get("meeting_id"),
-                    "voice_state": runtime_payload.get("voice_state"),
-                    "text_injection_enabled": text_injection_enabled,
-                    "text_injection_error": runtime_payload.get("text_injection_error"),
-                    "tmux_reply_available": tmux_reply_available,
-                    "target_transport": (
-                        agent_identity["target_transport"] if agent_identity else None
-                    ),
-                    "error": runtime_error,
-                },
-                "companion": {
-                    "query_names": sorted(AGENT_QUERY_NAMES),
-                    "voice_reply_max_age_seconds": _COMPANION_TARGET_MAX_AGE_SECONDS,
-                    "stale_threshold_seconds": DEFAULT_STALE_AGENT_SESSION_SECONDS,
-                },
-            }
-        )
-
-    def _companion_agent_target(payload: Optional[dict[str, Any]]) -> tuple[str, str] | JSONResponse:
-        """Pull a required (agent, session_id) pair from a control-route body."""
-        body = payload if isinstance(payload, dict) else {}
-        agent = body.get("agent")
-        session_id = body.get("session_id")
-        if not isinstance(agent, str) or not agent.strip():
-            return JSONResponse({"error": "agent is required"}, status_code=400)
-        if not isinstance(session_id, str) or not session_id.strip():
-            return JSONResponse({"error": "session_id is required"}, status_code=400)
-        return agent, session_id
-
-    def _service() -> CoderService:
-        from ....db import get_database, get_observer
-
-        return CoderService(get_database(), observer=get_observer())
-
-    @router.get("/api/coders/sessions")
-    async def api_coders_sessions(
-        request: Request, agent: Optional[str] = None, include_ended: bool = True
-    ) -> Any:
-        """The live coder set (HSM-17-02) in the HSM-17-01 shape.
-
-        Every session the hooks reported, newest first — not just the ones
-        waiting on a reply — each carrying its raw `lifecycle`, the pending
-        `question` (secret-filtered at ingest), and the decayed effective
-        `state` (working | waiting | idle | ended). Sessions past the dead
-        window fall out of the live set entirely; `include_ended=false` also
-        drops fresh tombstones. `flights` lists each item an agent was
-        handed (Conductor F2, `services.agent_flights`); a session that
-        works on one carries it as `flight`. A launched agent's drafted
-        answer, its events and its worktree facts are on its lane
-        (`GET /api/agent/launches/{id}/lane`, PHILO-14 C0), not here.
-        """
-        try:
-            items = _service().list_sessions(
-                getattr(request.state, "principal", None), agent=agent, include_ended=include_ended
-            )
-        except Exception as e:
-            return error_500("coders sessions", e, log)
-        # Conductor F2: the item each agent works on and how far it is (the
-        # launch ledger joined to the session), read beside the live set.
-        flights: list[dict[str, Any]] = []
-        try:
-            from ....db import get_database
-            from ....services.agent_flights import agent_flights, annotate_sessions
-
-            # The whole registry: lifecycle and freshness resolve before the
-            # presentation filter above (include_ended, the dead window).
-            flights = agent_flights(get_database())
-            annotate_sessions(items, flights)
-        except Exception as e:
-            log.warning(f"agent flights unread: {e}")
-        # Betterment AG7: each session's screen as the watcher last read it
-        # (its prompt's command and choices; null when no pane was read).
-        try:
-            from ....agent_context.screen_watch import STORE, screen_wire
-
-            now = datetime.now(timezone.utc)
-            for row in items:
-                session = row.get("session") or {}
-                row["screen"] = screen_wire(STORE.get(f"{session.get('agent')}:{session.get('session_id')}"), now)
-        except Exception as e:
-            log.warning(f"agent screens unread: {e}")
-        # PHILO-14 C4: the Conductor drawer's history (every launch that ended
-        # in the last 24 h, each once) and the hub's own launch count against
-        # its cap (`live_launches`, the count Hand to an agent session refuses at).
-        extra: dict[str, Any] = {}
-        try:
-            from ....db import get_database
-            from ....services.agent_flights import launch_history
-
-            extra["history"] = launch_history(get_database())
-        except Exception as e:
-            log.warning(f"agent launch history unread: {e}")
-        try:
-            from ....db import get_database
-            from ....services.agent_hand_queue import queued_flights
-
-            # Betterment AG5: a hand that waits for a free agent is a flight
-            # in the `queued` state ("Waits for a free agent").
-            flights = [*flights, *queued_flights(get_database())]
-        except Exception as e:
-            log.warning(f"queued hands unread: {e}")
-        try:
-            from ....services.agent_hand_preview import LaunchReads
-            from ....db import get_database
-            from ....services.agent_hand_service import working_at_once, working_launches
-
-            reads = getattr(ctx, "agent_hand_reads", None) or LaunchReads()
-            # Betterment AG5: the agents that work or need him, against the
-            # setting `agents.working_at_once` (done and quiet do not count).
-            live = await asyncio.to_thread(lambda: len(working_launches(reads.launcher(), get_database())))
-            extra["launches"] = {"live": live, "cap": working_at_once()}
-        except Exception as e:
-            log.warning(f"agent launch count unread: {e}")
-        # PHILO-14 C0: the coder frame drains the hook's event spool into
-        # the event log (the hook never writes the database itself).
-        try:
-            from ....agent_context import event_log
-            from ....db import get_database
-
-            await asyncio.to_thread(event_log.drain_spool, get_database()._connection)
-        except Exception as e:
-            log.warning(f"agent event spool not drained: {e}")
-        try:
-            return JSONResponse({"sessions": items, "count": len(items), "flights": flights, **extra})
-        except Exception as e:
-            return error_500("coders sessions", e, log)
-
-    @router.get("/api/coders/own-agents")
-    async def api_coders_own_agents() -> Any:
-        """Read Claude Code and Codex processes the owner started by hand.
-
-        The reader is local and read-only.  It never creates a flight or a
-        WorkAttempt; registered HoldSpeak launches are filtered at the pane
-        boundary inside ``agent_context.own_agents``.
-        """
-        try:
-            from ....agent_context.own_agents import list_own_agents
-
-            agents = await asyncio.to_thread(list_own_agents)
-            return JSONResponse({"agents": agents, "count": len(agents)})
-        except Exception as exc:
-            return error_500("own agents", exc, log)
-
-    @router.post("/api/coders/own-agents/answer")
-    async def api_coders_own_agent_answer(request: Request) -> Any:
-        """Answer one owner-started pane after a fresh prompt read."""
-        from ....agent_context.own_agents import ScreenAnswerRefused, answer_own_agent
-        from ....delivery.direct_gesture_input import ProcessInputRefused
-
-        principal = getattr(request.state, "principal", Principal(PrincipalKind.OWNER, "owner-session"))
-        if getattr(principal, "kind", None) is not PrincipalKind.OWNER:
-            return JSONResponse({"error": "owner_required", "code": "owner_required"}, status_code=403)
-        try:
-            raw = await request.json()
-        except Exception:
-            raw = None
-        body = raw if isinstance(raw, dict) else {}
-        pane_id = str(body.get("pane_id") or "")
-        since = str(body.get("since") or "")
-        keys = body.get("keys")
-        if not pane_id or not since:
-            return JSONResponse({"error": "pane_id_and_since_required", "code": "pane_id_and_since_required"}, status_code=400)
-        try:
-            result = await asyncio.to_thread(
-                answer_own_agent,
-                pane_id,
-                since=since,
-                keys=[str(item) for item in keys] if isinstance(keys, list) else None,
-                text=str(body.get("text") or "") if keys is None else None,
-            )
-        except ScreenAnswerRefused as exc:
-            return JSONResponse({"error": exc.code, "code": exc.code, "status": exc.code, "detail": exc.detail}, status_code=409)
-        except ProcessInputRefused as exc:
-            return JSONResponse({"error": exc.reason, "code": exc.reason, "status": "transport_error"}, status_code=409)
-        except Exception as exc:
-            log.error(f"own agent answer failed: {exc}")
-            return JSONResponse({"error": "own_agent_answer_failed", "code": "own_agent_answer_failed"}, status_code=500)
-        _coder_frame(ctx, f"own:{pane_id}")
-        return JSONResponse(result)
-
-    @router.post("/api/coders/select")
-    def api_companion_select(
-        request: Request, payload: Optional[dict[str, Any]] = None
-    ) -> Any:
-        """Select a specific waiting session as AI PI's active reply target."""
-        target = _companion_agent_target(payload)
-        if isinstance(target, JSONResponse):
-            return target
-        agent, session_id = target
-        try:
-            session = _service().select_session(
-                getattr(request.state, "principal", None), f"{agent}:{session_id}"
-            )
-        except NotFound:
-            return JSONResponse(
-                {"success": False, "error": "unknown_session", "session": None},
-                status_code=404,
-            )
-        return JSONResponse({"success": True, "session": session})
-
-    @router.post("/api/coders/dismiss")
-    def api_companion_dismiss(payload: Optional[dict[str, Any]] = None) -> Any:
-        """Clear a waiting session's captured response (non-destructive)."""
-        from ....agent_context import clear_agent_session_response
-
-        target = _companion_agent_target(payload)
-        if isinstance(target, JSONResponse):
-            return target
-        agent, session_id = target
-        session = clear_agent_session_response(agent=agent, session_id=session_id)
-        return JSONResponse(
-            {
-                "success": session is not None,
-                "session": session.to_dict() if session else None,
-            }
-        )
-
-    @router.post("/api/coders/pin")
-    def api_companion_pin(payload: Optional[dict[str, Any]] = None) -> Any:
-        """Pin or unpin a waiting session as the sticky reply target."""
-        from ....agent_context import pin_agent_session
-
-        target = _companion_agent_target(payload)
-        if isinstance(target, JSONResponse):
-            return target
-        agent, session_id = target
-        body = payload if isinstance(payload, dict) else {}
-        pinned = bool(body.get("pinned", True))
-        session = pin_agent_session(agent, session_id, pinned)
-        if session is None:
-            return JSONResponse(
-                {"success": False, "error": "unknown_session", "session": None},
-                status_code=404,
-            )
-        return JSONResponse({"success": True, "session": session.to_dict()})
-
+    registry = registry_for(ctx)
+    holding = Holding(registry, lambda: _status_inputs(ctx))
+    mount_router(router, produce(BOARD[:1], lambda: holding))
+    mount_router(router, produce(BOARD[1:], registry))
     return router
+
+
+__all__ = ["BOARD", "Holding", "answer", "build_coders_router", "produce", "registry_for"]

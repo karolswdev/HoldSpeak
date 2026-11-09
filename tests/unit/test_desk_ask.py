@@ -20,6 +20,18 @@ from fastapi.testclient import TestClient
 from tests.unit.test_desk_ask_ai import OWNER, _assign, _seed_routes, hub  # noqa: F401  (fixture)
 
 
+def _owner_edge(app: FastAPI) -> FastAPI:
+    """The hub's edge names the owner (a produced owner-only route with no principal is refused, #2057)."""
+    from holdspeak.principals import Principal as _P, PrincipalKind as _K
+
+    @app.middleware("http")
+    async def owner(request, call_next):  # noqa: ANN001
+        request.state.principal = _P(_K.OWNER, "owner-session")
+        return await call_next(request)
+
+    return app
+
+
 class _RecordingEngine:
     """Answers each call in turn and keeps every prompt it was sent."""
 
@@ -60,7 +72,7 @@ def _ask_app(hub: Any, answers: list[Any]) -> tuple[TestClient, list[str]]:
     _assign(hub.db, "ask.answer", ["glass-lan"], "ask-window-lan")
     seen: list[str] = []
     hub.broker.inference_runner._engine_factory = lambda rev, **_kw: _RecordingEngine(str(rev.model), answers, seen)
-    app = FastAPI()
+    app = _owner_edge(FastAPI())
     ctx = WebContext(get_state=lambda: {})
     app.include_router(build_ask_router(ctx))
     app.include_router(build_threads_router(ctx))
@@ -295,7 +307,7 @@ def _frames_app(hub: Any, engine: Any, monkeypatch: Any) -> tuple[TestClient, li
     hub.broker.inference_runner._engine_factory = lambda rev, **_kw: engine
     frames: list[tuple[str, Any]] = []
     ctx = WebContext(get_state=lambda: {}, broadcast=lambda kind, data: frames.append((kind, data)))
-    app = FastAPI()
+    app = _owner_edge(FastAPI())
     app.include_router(build_ask_router(ctx))
     app.include_router(build_threads_router(ctx))
     return TestClient(app), frames
@@ -416,7 +428,7 @@ def test_the_no_engine_refusal_is_recorded_for_the_face(hub, tmp_path) -> None: 
     from holdspeak.web.routes.primitives.ask import build_ask_router
     from tests.unit.test_desk_speak import _record
 
-    app = FastAPI()
+    app = _owner_edge(FastAPI())
     app.include_router(build_ask_router(WebContext(get_state=lambda: {})))
     response = TestClient(app).post("/api/ask", json={"prompt": "What needs my attention today?", "thread": True})
     assert response.status_code == 409, response.text

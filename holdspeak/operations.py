@@ -2311,6 +2311,11 @@ from holdspeak.people_operations import PEOPLE_OPERATIONS  # noqa: E402
 from holdspeak.automation_operations import AUTOMATION_OPERATIONS  # noqa: E402
 from holdspeak.calls_operations import CALLS_OPERATIONS, LIVE_CALLS_SERVICE  # noqa: E402,F401 (re-exported)
 from holdspeak.settings_operations import SETTINGS_OPERATIONS  # noqa: E402
+# 2026-11-09: the chat threads, the coder sessions and the delivery runtime.
+from holdspeak.thread_operations import THREAD_OPERATIONS  # noqa: E402
+from holdspeak.coder_operations import CODER_OPERATIONS  # noqa: E402
+from holdspeak.delivery_operations import DELIVERY_OPERATIONS  # noqa: E402
+from holdspeak.invocation_operations import INVOCATION_OPERATIONS  # noqa: E402
 from holdspeak.dictation_operations import DICTATION_OPERATIONS  # noqa: E402,F401 (re-exported)
 from holdspeak.media_operations import LIVE_RECORDINGS_SERVICE, MEDIA_OPERATIONS  # noqa: E402,F401 (re-exported)
 from holdspeak.device_operations import DEVICE_OPERATIONS  # noqa: E402,F401 (re-exported)
@@ -2457,6 +2462,7 @@ DESCRIPTORS: tuple[OperationDescriptor, ...] = (
 ) + ROOM_OPERATIONS + STEWARD_CONNECTOR_OPERATIONS + CHANNEL_OPERATIONS + ONBOARDING_OPERATIONS + SETUP_OPERATIONS + AGENT_OPERATIONS \
     + DESK_DISPLAY_OPERATIONS + NOTE_OUTCOME_OPERATIONS + (TODAY_GET,) + PROGRAM_OPERATIONS + MEETING_OPERATIONS + PHONE_OPERATIONS + PEOPLE_OPERATIONS \
     + MEETING_INTEL_OPERATIONS + AUTOMATION_OPERATIONS + CALLS_OPERATIONS + SETTINGS_OPERATIONS + DECISION_OPERATIONS \
+    + THREAD_OPERATIONS + CODER_OPERATIONS + DELIVERY_OPERATIONS + INVOCATION_OPERATIONS \
     + DICTATION_OPERATIONS + MEDIA_OPERATIONS + DEVICE_OPERATIONS \
     + PROJECT_OPERATIONS + ACTIVITY_OPERATIONS + WALK_OPERATIONS + REPOSITORY_OPERATIONS \
     + GATE_OPERATIONS + KERNEL_OPERATIONS

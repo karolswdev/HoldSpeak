@@ -42,6 +42,18 @@ HELD_INVOCATION = "ask_" + "c" * 32
 RECORDED = json.loads((Path(__file__).resolve().parents[1] / "fixtures" / "ask_tool_turn_lan.json").read_text())
 
 
+def _owner_edge(app: FastAPI) -> FastAPI:
+    """The hub's edge names the owner (a produced owner-only route with no principal is refused, #2057)."""
+    from holdspeak.principals import Principal as _P, PrincipalKind as _K
+
+    @app.middleware("http")
+    async def owner(request, call_next):  # noqa: ANN001
+        request.state.principal = _P(_K.OWNER, "owner-session")
+        return await call_next(request)
+
+    return app
+
+
 class _RecordedLanEngine:
     """Replays the LAN engine's recorded passes, one per call, as its stream did."""
 
@@ -87,7 +99,7 @@ def _loop_app(hub: Any, monkeypatch: pytest.MonkeyPatch, frames: list[tuple[str,
     seen: list[dict[str, Any]] = []
     passes = [dict(p) for p in RECORDED["passes"]]
     hub.broker.inference_runner._engine_factory = lambda rev, **_kw: _RecordedLanEngine(str(rev.model), passes, seen)
-    app = FastAPI()
+    app = _owner_edge(FastAPI())
     ctx = WebContext(get_state=lambda: {}, broadcast=lambda kind, data: frames.append((kind, data)))
     app.include_router(build_ask_router(ctx))
     app.include_router(build_threads_router(ctx))
@@ -229,7 +241,7 @@ def test_an_engine_without_tools_keeps_todays_ask(hub, monkeypatch) -> None:
 
     _seed_routes(hub.db)
     _assign(hub.db, "ask.answer", ["glass-lan"], "ask-plain-lan")
-    app = FastAPI()
+    app = _owner_edge(FastAPI())
     app.include_router(build_ask_router(WebContext(get_state=lambda: {})))
     assert TestClient(app).get("/api/ask/engine").json() == {"tools": ""}
 

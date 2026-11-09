@@ -259,9 +259,13 @@ class Hub:
             build_delivery_terminal_router,
         )
 
-        ctx = WebContext(
-            get_state=lambda: {}, delivery_service=DeliveryService(self.db)
+        # One spine: every collaborator the campaign built is the service's own.
+        delivery = DeliveryService(self.db).configure(
+            collector=self.collector, attempts=self.attempts, sync_on_read=False, dossiers=self.dossiers,
+            link=self.link, web_token=self.web_token, commands=self.cmd, targets=self.targets,
+            launcher=self.launch,
         )
+        ctx = WebContext(get_state=lambda: {}, delivery_service=delivery)
         app = FastAPI()
 
         @app.middleware("http")
@@ -271,26 +275,12 @@ class Hub:
             )
             return await call_next(request)
 
-        app.include_router(build_delivery_router(ctx, collector=self.collector))
-        app.include_router(
-            build_delivery_attempts_router(
-                ctx, service=self.attempts, sync_on_read=False
-            )
-        )
-        app.include_router(build_delivery_dossiers_router(ctx, service=self.dossiers))
-        app.include_router(
-            build_delivery_node_router(ctx, link=self.link, web_token=self.web_token)
-        )
-        app.include_router(
-            build_delivery_terminal_router(
-                ctx, service=self.cmd, targets=self.targets, link=self.link
-            )
-        )
-        app.include_router(
-            build_delivery_factory_router(
-                ctx, service=self.launch, commands=self.cmd, targets=self.targets
-            )
-        )
+        app.include_router(build_delivery_router(ctx))
+        app.include_router(build_delivery_attempts_router(ctx))
+        app.include_router(build_delivery_dossiers_router(ctx))
+        app.include_router(build_delivery_node_router(ctx))
+        app.include_router(build_delivery_terminal_router(ctx))
+        app.include_router(build_delivery_factory_router(ctx))
         return app
 
     def start(self) -> None:
