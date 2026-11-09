@@ -1,48 +1,52 @@
-// HS-135-04: People is a single protected Desk application.  Its roster is
-// a relationship projection, never a field of person tiles or a scorecard.
+// HS-135-04: People is a single protected Desk application. The native
+// face (2026-11-08, the language of Programs and the Room): a rail of
+// people at the left; the person at the right as one object: the mast, the
+// spine of what stands between you, the plate (the one thing that matters
+// now, with its verb), the ledger, then the folds. Every hub call goes
+// through `desk/people/api.ts`.
 import { PersonPrograms, personProgramsOf } from "../../desk/programs/PersonPrograms";
 import { PersonPages } from "../../desk/standingPages";
 import { wireDate } from "../../desk/surface/format";
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 import type { CoreProps } from "./core-types";
 import { Button } from "../../components/signal/Signal";
-import { ApiError, apiFetch } from "../../lib/api";
+import { ApiError } from "../../lib/api";
+import * as hub from "../../desk/people/api";
 import { failureTitle } from "../../desk/surface/plainFailure";
 import { openSurfaceOr } from "../../desk/shell";
 import { openSourceRef } from "../../desk/surface/citations";
-import { PERSON_OPEN_EVENT, openPerson, refOpener, type PersonOpenRequest } from "../../desk/openObject";
+import { PERSON_OPEN_EVENT, refOpener, type PersonOpenRequest } from "../../desk/openObject";
 import { peekPersonLens, takePersonLens } from "../../desk/objectWindows";
-import { composePeoplePrep, readPeoplePrep, type PeoplePrepData, type PrepCalendarEvent } from "../../desk/people/prepData";
+import { composePeoplePrep, type PeoplePrepData, type PrepCalendarEvent } from "../../desk/people/prepData";
 import { announceTaskReturn, taskFocusPending } from "../../desk/returnToTask";
 import { PEOPLE_CHANGE_KINDS, useOnDeskChanged } from "../../desk/useDeskChangedRefresh";
 import { keepPlace, keptPlace, keptDraft, useDeskDraft } from "../../desk/deskMemory";
 import { useDesk } from "../../desk/store";
 import { useDeskWriteReceipt } from "../../desk/hooks/useWriteReceipt";
 import { CycleGadget, PadGadget, StringGadget } from "../../desk/surface/gadgets";
-import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 import {
   ConfirmVerb,
-
   SurfaceLedger,
   SurfaceLedgerRow,
   SurfaceRow,
   SurfaceRows,
   SurfaceSection,
-  SurfaceSplit,
   SurfaceState,
   SurfaceWell,
 } from "../../desk/surface/Surface";
 import { Disclosure } from "../../desk/surface/patterns/Disclosure";
+import { Mast } from "../../desk/surface/patterns/Mast";
+import { Spine } from "../../desk/surface/patterns/Spine";
 import { countToken } from "../../desk/surface";
-import { Avatar, DotWord, Loading, StatusBar, ToolGlyph, Toolbar, countWords, hueOf, initialsOf } from "../../desk/surface/kit";
+import { DotWord, Loading, StatusBar, countWords } from "../../desk/surface/kit";
 import { useWindowInterior } from "../../desk/surface/interior";
-import { ObjectList, type ObjectListRow, type ObjectListSort } from "../../desk/surface/objects/ObjectList";
 import { renderHeroSlot } from "./core-layout";
 import { useOwnerName } from "../../desk/firstrun/ownerName";
 import { useOwnerWriter } from "./settings/writer";
 import { nudgeText } from "../../desk/needs/NeedsDrawer";
 import { NoteSendWells } from "../../desk/documentSendsLazy";
 import { PeopleNotHere, PeopleReadFailed } from "../../desk/people/PeopleReadFailed";
+import { PeopleRail, type RailPerson } from "../../desk/people/PeopleRail";
 import { useWindowTitle } from "../../desk/surface/title";
 import "./people.css";
 import { openProjectRoom } from "../../desk/shell";
@@ -271,6 +275,12 @@ const ROSTER_READ = "/api/people/relationships?counts=1";
 const PEOPLE_PERSON_PLACE = "people/person";
 
 
+/** The person's whole record: the relationship and its 1:1s, in one read. */
+async function readWhole(id: string): Promise<RelationshipDetail> {
+  const [read, sessions] = await Promise.all([hub.readPerson<Relationship>(id), hub.readOneOnOnes<Session>(id)]);
+  return { ...read.relationship, sessions: sessions.one_on_ones };
+}
+
 export function PeopleCore({ hero, scope }: CoreProps) {
   const [readiness, setReadiness] = useState<Readiness>({ readiness: "unconfigured" });
   const [loading, setLoading] = useState(true);
@@ -285,8 +295,8 @@ export function PeopleCore({ hero, scope }: CoreProps) {
   const [errorTitle, setErrorTitle] = useState("");
   const [busy, setBusy] = useState(false);
   const requestedScope = scope?.startsWith("people:") ? scope.slice("people:".length) : null;
-  // HS-200-14 (AC4): `people:project:<id>` scopes the roster to the people
-  // linked to that Project; `people:<relationship>[:<lens>]` stays as it was.
+  // HS-200-14 (AC4): `people:project:<id>` scopes the rail to the people
+  // linked to that Project; `people:<relationship>[:<lens>]` picks a person.
   const requestedProjectId = requestedScope?.startsWith("project:") ? requestedScope.slice("project:".length) : null;
   const relationshipScope = requestedProjectId ? null : requestedScope;
   const requestedRelationshipId = relationshipScope?.includes(":") ? relationshipScope.split(":")[0] : relationshipScope;
@@ -305,15 +315,14 @@ export function PeopleCore({ hero, scope }: CoreProps) {
     return () => window.removeEventListener(PERSON_OPEN_EVENT, onOpen);
   }, []);
 
-  // PHILO-17 ALIVE: one way to add. Add person opens the add row at the
-  // top of the roster.
+  // PHILO-17 ALIVE: one way to add. Add person opens the add row on the rail.
   const [adding, setAdding] = useState(false);
   // Betterment D6: the people his work names that People does not hold.
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [suggestionBusy, setSuggestionBusy] = useState("");
   const readSuggestions = useCallback(async () => {
     try {
-      const read = await apiFetch<{ suggestions?: Suggestion[] }>("/api/people/suggestions");
+      const read = await hub.readSuggestions<Suggestion>();
       setSuggestions(read.suggestions ?? []);
     } catch { /* the last read stays; the roster's own read names a failure */ }
   }, []);
@@ -327,13 +336,13 @@ export function PeopleCore({ hero, scope }: CoreProps) {
     setLoading(true);
     setError("");
     try {
-      const next = await apiFetch<Readiness>("/api/people/readiness");
+      const next = await hub.readReadiness<Readiness>();
       setReadiness(next);
       // Betterment D6: no Set up step. With no store yet the roster is
       // empty and the suggestions still come; the first Add makes the store.
       if (stateOf(next) === "unconfigured") { clearProtected(); void readSuggestions(); return; }
       if (stateOf(next) !== "ready") { clearProtected(); return; }
-      const list = await apiFetch<{ relationships?: Relationship[] }>(ROSTER_READ);
+      const list = await hub.readRoster<Relationship>();
       setRelationships(list.relationships ?? []);
       void readSuggestions();
     } catch (cause) {
@@ -356,16 +365,13 @@ export function PeopleCore({ hero, scope }: CoreProps) {
     const newest = () => order === quietReads.current;
     void (async () => {
       try {
-        const list = await apiFetch<{ relationships?: Relationship[] }>(ROSTER_READ);
+        const list = await hub.readRoster<Relationship>();
         if (!newest()) return;
         setRelationships(list.relationships ?? []);
         const id = followed.current.selectedId;
         if (!id) return;
-        const [relationship, sessions] = await Promise.all([
-          apiFetch<{ relationship: Relationship }>(`/api/people/relationships/${encodeURIComponent(id)}`),
-          apiFetch<{ one_on_ones: Session[] }>(`/api/people/relationships/${encodeURIComponent(id)}/one-on-ones`),
-        ]);
-        if (newest() && followed.current.selectedId === id) setDetail({ ...relationship.relationship, sessions: sessions.one_on_ones });
+        const whole = await readWhole(id);
+        if (newest() && followed.current.selectedId === id) setDetail(whole);
       } catch { /* the last read stays */ }
     })();
   });
@@ -375,32 +381,23 @@ export function PeopleCore({ hero, scope }: CoreProps) {
   // the verb the owner left -- and only then (the do-not-steal rule).
   useEffect(() => () => { if (taskFocusPending()) announceTaskReturn(); }, []);
 
-  // The row facts: the owed counts ride the roster read (`?counts=1`);
+  // The rail's facts: the owed counts ride the roster read (`?counts=1`);
   // the next 1:1 is the Door's upcoming calendar events that carry a
-  // person (ONE read for the whole roster, again only when the list of
-  // people changes). Read while no person is open.
-  const personOpen = Boolean(selectedId || requestedRelationshipId);
+  // person (ONE read for the whole roster, again when the list changes).
   const rosterKey = relationships.map((row) => row.id).join("|");
   const [nextByPerson, setNextByPerson] = useState<Record<string, RosterNext> | null>(null);
   // The roster whose next-1:1 read has ended (read or failed). Until it ends
-  // the roster says it is reading: the Next 1:1 plate it adds lands above the
-  // rows and reorders them (rows moved 153 px under load: the desk sweep).
+  // the rail says it is reading (the desk sweep's still fence).
   const [nextReadFor, setNextReadFor] = useState<string | null>(null);
   useEffect(() => {
-    if (personOpen || !rosterKey) return;
+    if (!rosterKey) return;
     let live = true;
-    void apiFetch<{ upcoming?: Array<Record<string, unknown>> }>("/api/door")
+    void hub.readUpcoming<Record<string, unknown>>()
       .then((door) => { if (live) { setNextByPerson(nextOneOnOnes(door.upcoming ?? [])); setNextReadFor(rosterKey); } })
       .catch(() => { if (live) { setNextByPerson(null); setNextReadFor(rosterKey); } });
     return () => { live = false; };
-  }, [rosterKey, personOpen]);
-  const nextReading = !personOpen && Boolean(rosterKey) && nextReadFor !== rosterKey;
-  const rowFacts = useMemo<Record<string, RowFacts>>(() => Object.fromEntries(relationships.map((row) => [row.id, {
-    next: nextByPerson?.[row.id]?.startsAt ?? null,
-    known: nextByPerson !== null,
-    youOwe: Number(row.you_owe_count) || 0,
-    owesYou: Number(row.owes_you_count) || 0,
-  }])), [relationships, nextByPerson]);
+  }, [rosterKey]);
+  const nextReading = Boolean(rosterKey) && nextReadFor !== rosterKey;
 
   const unconfigured = stateOf(readiness) === "unconfigured";
   const unavailable = stateOf(readiness) !== "ready" && !unconfigured;
@@ -408,9 +405,7 @@ export function PeopleCore({ hero, scope }: CoreProps) {
   const recover = () => {
     if (stateOf(readiness) === "locked" || stateOf(readiness) === "unavailable") { void load(); return; }
     if (stateOf(readiness) !== "unconfigured") { openSettings(); return; }
-    void apiFetch("/api/people/setup", { method: "POST", json: {} })
-      .then(() => load())
-      .catch((cause) => protectedFailure(cause));
+    void hub.setupPeople().then(() => load()).catch((cause) => protectedFailure(cause));
   };
   // HS-S33: only the newest person read may land (a late read of the
   // person he left never draws over the one he is on).
@@ -419,20 +414,18 @@ export function PeopleCore({ hero, scope }: CoreProps) {
     // PHILO-13-04 fix round (Astra counsel P2): a standing failure leaves only
     // when this read lands; it is never cleared before the person is back.
     const mine = ++selectSeq.current;
-    setSelectedId(id); setDetail(null);
+    setSelectedId(id); setDetail(null); setPickedSuggestion(null);
     // PHILO-13-07 (B2): the person is this window's place; it returns after
     // a reload and a close.
     keepPlace(PEOPLE_PERSON_PLACE, id);
     try {
-      const [relationship, sessions] = await Promise.all([
-        apiFetch<{ relationship: Relationship }>(`/api/people/relationships/${encodeURIComponent(id)}`),
-        apiFetch<{ one_on_ones: Session[] }>(`/api/people/relationships/${encodeURIComponent(id)}/one-on-ones`),
-      ]);
-      if (selectSeq.current !== mine || relationship.relationship?.id !== id) return;
-      setDetail({ ...relationship.relationship, sessions: sessions.one_on_ones });
+      const whole = await readWhole(id);
+      if (selectSeq.current !== mine || whole.id !== id) return;
+      setDetail(whole);
       setError("");
     } catch (cause) { if (selectSeq.current === mine) protectedFailure(cause); }
   };
+  const back = () => { selectSeq.current += 1; setSelectedId(null); setDetail(null); keepPlace(PEOPLE_PERSON_PLACE, ""); };
   useEffect(() => {
     if (
       stateOf(readiness) === "ready" &&
@@ -450,7 +443,7 @@ export function PeopleCore({ hero, scope }: CoreProps) {
   }, [readiness, relationships]); // once per roster read: Back clears the place
   const duplicate = sameName(relationships, newName);
   const duplicateShown = duplicate && duplicateWarned === nameKey(newName) ? duplicate : null;
-  // PHILO-17: Add stays on the list with the cursor in Name, so three
+  // PHILO-17: Add stays on the rail with the cursor in Name, so three
   // reports are Name, Add three times. A quiet roster re-read (no loading
   // state) keeps the input on screen.
   const createRelationship = async () => {
@@ -458,9 +451,9 @@ export function PeopleCore({ hero, scope }: CoreProps) {
     if (duplicate && duplicateWarned !== nameKey(display_name)) { setDuplicateWarned(nameKey(display_name)); return; }
     setBusy(true); setError("");
     try {
-      await apiFetch<{ relationship: Relationship }>("/api/people/relationships", { method: "POST", json: { display_name, relationship_kind: newKind } });
+      await hub.createPerson(display_name, newKind);
       setNewName(""); setDuplicateWarned("");
-      const list = await apiFetch<{ relationships?: Relationship[] }>(ROSTER_READ);
+      const list = await hub.readRoster<Relationship>();
       setRelationships(list.relationships ?? []);
     } catch (cause) { protectedFailure(cause); } finally {
       setBusy(false);
@@ -468,12 +461,13 @@ export function PeopleCore({ hero, scope }: CoreProps) {
     }
   };
   // Betterment D6: Add makes the person in one press (the full name, the
-  // kind, the spoken name and the 1:1 series ride along); Not a person
-  // hides the name for good.
+  // kind, the spoken name and the 1:1 series ride along); Hide takes the
+  // name off for good.
+  const [pickedSuggestion, setPickedSuggestion] = useState<string | null>(null);
   const addSuggestion = async (suggestion: Suggestion) => {
     setSuggestionBusy(suggestion.key); setError("");
     try {
-      await apiFetch("/api/people/suggestions/add", { method: "POST", json: { key: suggestion.key } });
+      await hub.addSuggestion(suggestion.key);
       setSuggestions((rows) => rows.filter((row) => row.key !== suggestion.key));
       await load();
     } catch (cause) { protectedFailure(cause); } finally { setSuggestionBusy(""); }
@@ -481,7 +475,7 @@ export function PeopleCore({ hero, scope }: CoreProps) {
   const hideSuggestion = async (suggestion: Suggestion) => {
     setSuggestionBusy(suggestion.key); setError("");
     try {
-      await apiFetch("/api/people/suggestions/hide", { method: "POST", json: { key: suggestion.key } });
+      await hub.hideSuggestion(suggestion.key);
       setSuggestions((rows) => rows.filter((row) => row.key !== suggestion.key));
     } catch (cause) { protectedFailure(cause); } finally { setSuggestionBusy(""); }
   };
@@ -505,20 +499,11 @@ export function PeopleCore({ hero, scope }: CoreProps) {
     setError("Could not read the people store · Nothing changed · Try again"); setErrorTitle(failureTitle(cause));
   }
   const selected = detail ?? relationships.find((row) => row.id === selectedId) ?? null;
-  // Window grammar (2026-10-24): the roster is a list view and a person is
-  // sections under hairlines: both run edge to edge.
   useWindowInterior("list");
-  const [rowSelected, setRowSelected] = useState<string | null>(null);
   const [query, setQuery] = useState("");
-  const [sort, setSort] = useState<ObjectListSort>({ key: "next", dir: "asc" });
   const openAdd = () => { setAdding(true); window.setTimeout(() => document.getElementById("people-new-relationship")?.focus(), 0); };
 
-  // W1-KIT: the first read shows the ghost rows of the list grammar; the
-  // roster keeps its toolbar band (its verbs arrive with the roster).
-  if (loading) return selectedId ? <Loading data-testid="people-loading" /> : <>
-    <Toolbar label="People" />
-    <Loading data-testid="people-loading" />
-  </>;
+  if (loading) return <Loading data-testid="people-loading" />;
   if (unavailable) {
     const state = stateOf(readiness);
     // Betterment daily D8: People cannot hold a key on this Mac: one line, no verb.
@@ -527,17 +512,14 @@ export function PeopleCore({ hero, scope }: CoreProps) {
     if (state === "unavailable" || state === "locked") return <PeopleReadFailed onRetry={() => void load()} detail={error} />;
     const face = readinessFace(state);
     return <div className="people-joy-state" data-testid="people-joy-state">
-      <div className="people-joy-lead">
-        <Button variant="primary" onClick={recover} data-testid="people-joy-action">{face.action}</Button>
-        <span className="people-joy-line">{face.label}</span>
-      </div>
+      <Button variant="primary" onClick={recover} data-testid="people-joy-action">{face.action}</Button>
+      <span className="people-joy-line">{face.label}</span>
       {error ? <span className="sr-only">{error}</span> : null}
     </div>;
   }
   // PHILO-13-04 (A3): the failure is ONE row that stays on screen while he
-  // is down in a lens; the person and any unsent draft stay under it
-  // (J3-06). Try again re-reads the person (or the roster); the row leaves
-  // only when that read lands.
+  // is down in a fold; the person and any unsent draft stay under it
+  // (J3-06). Try again re-reads the person (or the roster).
   const failureRow = error ? (
     <span className="people-failure" role="alert" data-testid="people-failure">
       <span className="people-failure-label" title={errorTitle || undefined}>{error}</span>
@@ -545,172 +527,109 @@ export function PeopleCore({ hero, scope }: CoreProps) {
     </span>
   ) : null;
 
-  // A person opened in place (a `people:<id>` scope, or the kept place).
-  if (selected) {
-    return <div className="people-surface">
-      {renderHeroSlot(hero, null, failureRow)}
-      <RelationshipPane relationship={selected} initialLens={requestedLens} lensRequest={lensRequest} onRefresh={() => void select(selected.id)} onProtectedFailure={protectedFailure} onArchived={() => { clearProtected(); void load(); }} onBack={() => { selectSeq.current += 1; setSelectedId(null); setDetail(null); keepPlace(PEOPLE_PERSON_PLACE, ""); }} />
-    </div>;
-  }
-
-  // The roster (window grammar): Toolbar [Add person] + search → the dense
-  // list view (Name · Role · Next 1:1 · You owe), the names his meetings
-  // carry as a second group under the people → the status bar (the count,
-  // the next 1:1 in warm words, Encrypted; the selected row's verbs).
   const scoped = projectFilter ? relationships.filter((r) => (r.project_refs ?? []).includes(projectFilter)) : relationships;
   const scopedOut = projectFilter ? relationships.length - scoped.length : 0;
   const needle = nameKey(query);
   const shownPeople = needle ? scoped.filter((r) => nameKey(r.display_name).includes(needle)) : scoped;
   const shownSuggestions = projectFilter ? [] : needle ? suggestions.filter((s) => nameKey(s.name).includes(needle)) : suggestions;
-  const weekEnd = Date.now() + 7 * 86_400_000;
   // The soonest 1:1 this week: the status bar's warm words; within a day its
-  // Open prep is the bar's primary verb.
+  // Open prep is the pane's verb.
+  const weekEnd = Date.now() + 7 * 86_400_000;
   const soonest = scoped
     .map((row) => ({ row, next: nextByPerson?.[row.id] }))
     .filter((x): x is { row: Relationship; next: RosterNext } => Boolean(x.next && (wireDate(x.next.startsAt)?.getTime() ?? Infinity) <= weekEnd))
     .sort((a, b) => (wireDate(a.next.startsAt)?.getTime() ?? 0) - (wireDate(b.next.startsAt)?.getTime() ?? 0))[0] ?? null;
-  const soonestAt = soonest ? wireDate(soonest.next.startsAt)?.getTime() ?? Infinity : Infinity;
-  const prepDue = Boolean(soonest) && soonestAt - Date.now() <= 86_400_000;
-  // A report with no 1:1 planned: the cell stays empty (never "None"); the
-  // row still offers Plan when it is chosen.
-  const planless = new Set<string>();
-  const personRows: ObjectListRow[] = shownPeople.map((relationship) => {
-    const fact = rowFacts[relationship.id];
-    const report = (relationship.relationship_kind ?? "direct_report") === "direct_report";
-    const next = fact?.next ?? relationship.next_one_on_one ?? null;
-    const at = next ? wireDate(next)?.getTime() ?? Number.MAX_SAFE_INTEGER : Number.MAX_SAFE_INTEGER;
-    const noOneOnOne = Boolean(fact?.known) && !next && report;
-    if (noOneOnOne) planless.add(relationship.id);
+  const prepDue = Boolean(soonest) && (wireDate(soonest!.next.startsAt)?.getTime() ?? Infinity) - Date.now() <= 86_400_000;
+  const railPeople: RailPerson[] = shownPeople.map((relationship) => {
+    const next = nextByPerson?.[relationship.id]?.startsAt ?? relationship.next_one_on_one ?? null;
     return {
-      id: relationship.id,
-      kind: "person",
-      name: relationship.display_name,
-      avatar: { initials: initialsOf(relationship.display_name), hue: hueOf(relationship.display_name) },
-      nameTestId: "people-row-name",
-      cells: {
-        role: relationshipLabel(relationship.relationship_kind),
-        next: next ? `1:1 ${oneOnOneWhen(next)}` : "",
-        owe: fact?.youOwe ? String(fact.youOwe) : "",
-      },
-      sortValues: { next: at, owe: fact ? fact.youOwe : 0, role: relationshipLabel(relationship.relationship_kind) },
+      id: relationship.id, name: relationship.display_name, role: relationshipLabel(relationship.relationship_kind),
+      next: next ? `1:1 ${oneOnOneWhen(next)}` : "",
+      youOwe: Number(relationship.you_owe_count) || 0, owesYou: Number(relationship.owes_you_count) || 0,
     };
   });
-  // The hub ranks the names his work carries; the group keeps that order.
-  const suggestionRows: ObjectListRow[] = shownSuggestions.map((row, index) => ({
-    id: `suggestion:${row.key}`,
-    kind: "person",
-    name: row.name,
-    avatar: { initials: initialsOf(row.name), hue: hueOf(row.name) },
-    group: 1,
-    cells: { role: "From your meetings", next: sentence(suggestionSource(row)), owe: "" },
-    sortValues: { next: index, owe: index, role: String(index).padStart(4, "0") },
-  }));
-  const rows = [...personRows, ...suggestionRows];
-  const byPerson = new Map(shownPeople.map((r) => [r.id, r]));
-  const bySuggestion = new Map(shownSuggestions.map((s) => [`suggestion:${s.key}`, s]));
-  const chosen = rowSelected && (byPerson.has(rowSelected) || bySuggestion.has(rowSelected)) ? rowSelected : null;
-  const chosenPerson = chosen ? byPerson.get(chosen) ?? null : null;
-  const chosenSuggestion = chosen ? bySuggestion.get(chosen) ?? null : null;
-  const chosenNoOneOnOne = chosenPerson ? planless.has(chosenPerson.id) : false;
-  const selectionVerbs = chosenSuggestion ? <>
-    <Button dense variant="secondary" loading={suggestionBusy === chosenSuggestion.key} disabled={Boolean(suggestionBusy)} onClick={() => void addSuggestion(chosenSuggestion)} aria-label={`Add ${chosenSuggestion.name}`} data-testid="people-suggestion-add"><ToolGlyph kind="new" />Add</Button>
-    <Button dense variant="secondary" disabled={Boolean(suggestionBusy)} onClick={() => void hideSuggestion(chosenSuggestion)} aria-label={`${chosenSuggestion.name} is not a person`} data-testid="people-suggestion-hide">Not a person</Button>
-  </> : chosenPerson ? <>
-    <Button dense variant="secondary" onClick={() => openPerson(chosenPerson.id)} data-testid="people-open-selected">
-      <ToolGlyph kind="open" />
-      Open
-    </Button>
-    {chosenNoOneOnOne ? <Button dense variant="secondary" onClick={() => openPerson(chosenPerson.id, "prep")} data-testid="people-plan">Plan</Button> : null}
-  </> : null;
-  // W1-KIT: the status bar holds the selection's verbs only; Open prep (a
-  // 1:1 within a day) is a plain toolbar verb beside Add person, the one
-  // primary.
-  const verbs = selectionVerbs;
-  const everyone = projectFilter && scopedOut > 0 ? (
-    <Button dense variant="secondary" aria-label="Everyone: clear the Project scope" onClick={() => setProjectFilter(null)} data-testid="people-roster-everyone">{`${scopedOut} more · Everyone`}</Button>
-  ) : null;
-  const toolbar = (
-    <Toolbar label="People" data-testid="people-toolbar" trailing={<>
-      {everyone}
-      {relationships.length || suggestions.length ? <span className="people-search">
-        <StringGadget label="Search people" value={query} onChange={setQuery} placeholder="Search people" />
-      </span> : null}
-    </>}>
-      <Button dense variant="primary" onClick={openAdd} data-testid="people-add"><ToolGlyph kind="new" />Add person</Button>
-      {prepDue && soonest ? <Button dense variant="secondary" onClick={() => openPerson(soonest.row.id, "prep")} data-testid="people-open-prep"><ToolGlyph kind="open" />Open prep</Button> : null}
-    </Toolbar>
-  );
+  const suggestion = pickedSuggestion ? shownSuggestions.find((s) => `suggestion:${s.key}` === pickedSuggestion) ?? null : null;
   const firstName = (name: string) => name.trim().split(/\s+/)[0] || name;
   const empty = !relationships.length && !suggestions.length && !projectFilter && !adding;
-  return <div className="people-surface people-roster" data-testid="people-roster">
-    {renderHeroSlot(hero, null)}
-    {toolbar}
-    {failureRow}
-    {nextReading ? <span hidden aria-busy="true" data-testid="people-next-reading" /> : null}
+
+  // The pane: the picked person, a picked suggestion's plate, or the soonest 1:1.
+  let pane: ReactNode;
+  if (selected) {
+    pane = <RelationshipPane relationship={selected} initialLens={requestedLens} lensRequest={lensRequest} onRefresh={() => void select(selected.id)} onProtectedFailure={protectedFailure} onArchived={() => { clearProtected(); void load(); }} onBack={back} />;
+  } else if (empty) {
+    pane = <div className="people-empty" data-testid="people-empty-roster">
+      <SurfaceState empty emptyLabel="People you meet appear here." emptyImage={PEOPLE_SPRITE} emptyKind="person" onAction={openAdd} actionLabel="Add person" />
+    </div>;
+  } else if (projectFilter && !scoped.length) {
+    pane = <div className="people-empty" data-testid="people-roster-none-linked">
+      <SurfaceState empty emptyLabel="No one linked yet" emptyImage={PEOPLE_SPRITE} emptyKind="person" />
+    </div>;
+  } else if (suggestion) {
+    pane = <NowPlate eyebrow="From your meetings" tone="brass" title={suggestion.name} facts={sentence(suggestionSource(suggestion))}>
+      <Button variant="primary" loading={suggestionBusy === suggestion.key} disabled={Boolean(suggestionBusy)} onClick={() => void addSuggestion(suggestion)} aria-label={`Add ${suggestion.name}`} data-testid="people-suggestion-add">Add</Button>
+      <Button variant="secondary" disabled={Boolean(suggestionBusy)} onClick={() => void hideSuggestion(suggestion)} aria-label={`Hide ${suggestion.name}`} data-testid="people-suggestion-hide">Hide</Button>
+    </NowPlate>;
+  } else if (soonest) {
+    pane = <NowPlate eyebrow="Next 1:1" tone="steel" title={soonest.row.display_name} facts={oneOnOneWhen(soonest.next.startsAt)}>
+      <Button variant={prepDue ? "primary" : "secondary"} onClick={() => void select(soonest.row.id)} data-testid={prepDue ? "people-open-prep" : "people-open-soonest"}>Open prep</Button>
+    </NowPlate>;
+  } else {
+    pane = <SurfaceState empty emptyLabel={countWords(scoped.length, "person", "people") ?? ""} emptyImage={PEOPLE_SPRITE} emptyKind="person" />;
+  }
+  const head = <>
     {adding ? <div className="people-new" data-testid="people-add-row">
       <StringGadget label="Add person" value={newName} onChange={setNewName} placeholder="Name" inputProps={{ id: "people-new-relationship" }} onKeyDown={(event) => { if (event.key === "Enter") void createRelationship(); if (event.key === "Escape" && relationships.length) setAdding(false); }} />
       <span className="people-role-pick" role="group" aria-label="Relationship">
         {ROLE_CHOICES.map((choice) => <Button key={choice.value} dense variant="ghost" className="people-role-choice" data-kind={choice.value} aria-pressed={newKind === choice.value} onClick={() => setNewKind(choice.value)}>{choice.label}</Button>)}
       </span>
-      <Button dense variant="primary" disabled={!newName.trim() || busy} loading={busy} onClick={() => void createRelationship()}>{duplicateShown ? "Add again" : "Add"}</Button>
-      {relationships.length ? <Button dense variant="ghost" onClick={() => setAdding(false)}>Done</Button> : null}
+      <span className="people-new-verbs">
+        <Button dense variant="primary" disabled={!newName.trim() || busy} loading={busy} onClick={() => void createRelationship()}>{duplicateShown ? "Add again" : "Add"}</Button>
+        {relationships.length ? <Button dense variant="ghost" onClick={() => setAdding(false)}>Done</Button> : null}
+      </span>
       {duplicateShown ? <span className="people-duplicate" role="status" data-testid="people-duplicate">{duplicateShown.display_name} · Already here</span> : null}
     </div> : null}
-    <WhoAreYou />
-    {empty ? (
-      <div className="people-empty" data-testid="people-empty-roster">
-        <SurfaceState empty emptyLabel="People you meet appear here." emptyImage={PEOPLE_SPRITE} emptyKind="person"
-          onAction={openAdd} actionLabel="Add person" />
-      </div>
-    ) : projectFilter && !scoped.length ? (
-      <div className="people-empty" data-testid="people-roster-none-linked">
-        <SurfaceState empty emptyLabel="No one linked yet" emptyImage={PEOPLE_SPRITE} emptyKind="person" />
-      </div>
-    ) : rows.length ? (
-      <div className="people-list" data-testid="people-list">
-        <ObjectList
-          label="People"
-          density="dense"
-          rows={rows}
-          columns={PEOPLE_COLUMNS.filter((column) => column.key === "name" || rows.some((row) => row.cells?.[column.key]))}
-          sort={sort}
-          onSort={(key: string) => setSort((current) => ({ key, dir: current.key === key && current.dir === "asc" ? "desc" : "asc" }))}
-          selectedId={chosen}
-          onSelect={setRowSelected}
-          onOpen={(id) => { if (byPerson.has(id)) openPerson(id); else setRowSelected(id); }}
-          rowProps={(row) => ({
-            "data-testid": row.group ? "people-suggestion" : "people-row",
-            "data-suggested": row.group ? "" : undefined,
-            // DELIGHT 2 (small joys): a person's next 1:1 is in their own
-            // teal (people.css), not grey; suggestions stay quiet.
-            "data-next-one-on-one": !row.group && String(row.cells?.next ?? "").startsWith("1:1 ") ? "" : undefined,
-          })}
-        />
-      </div>
+    {projectFilter && scopedOut > 0 ? (
+      <Button dense variant="secondary" className="people-everyone" aria-label="Everyone: clear the Project scope" onClick={() => setProjectFilter(null)} data-testid="people-roster-everyone">{`${scopedOut} more · Everyone`}</Button>
     ) : null}
-    <StatusBar
+  </>;
+  return <div className="people-surface people-frame" data-testid="people-roster" data-picked={selected ? "" : undefined}>
+    {renderHeroSlot(hero, null)}
+    {nextReading ? <span hidden aria-busy="true" data-testid="people-next-reading" /> : null}
+    <div className="people-body">
+      {empty ? null : <PeopleRail people={railPeople} suggestions={shownSuggestions.map((s) => ({ key: s.key, name: s.name, source: sentence(suggestionSource(s)) }))}
+        picked={selected ? selected.id : pickedSuggestion} query={query} onQuery={setQuery} adding={adding}
+        searchable={Boolean(relationships.length || suggestions.length)} head={head}
+        onPick={(id) => { if (id.startsWith("suggestion:")) { back(); setPickedSuggestion(id); } else void select(id); }} onAdd={() => (adding ? setAdding(false) : openAdd())} />}
+      <div className="people-pane" data-testid="people-pane">
+        {failureRow}
+        {selected ? null : <WhoAreYou />}
+        {pane}
+      </div>
+    </div>
+    {selected ? null : <StatusBar
       data-testid="people-status"
-      verbs={verbs}
       items={[
         { key: "count", testId: "people-count", text: projectFilter ? countWords(scoped.length, "on this project", "on this project") : countWords(relationships.length, "person", "people") },
         soonest ? { key: "next", lamp: prepDue ? "ask" as const : "info" as const, testId: "people-roster-next", text: `1:1 with ${firstName(soonest.row.display_name)} ${lowerDay(oneOnOneWhen(soonest.next.startsAt))}` } : null,
         { key: "suggested", lamp: "warn" as const, testId: "people-suggestions", text: projectFilter ? null : countWords(suggestions.length, "from your meetings", "from your meetings") },
         { key: "lock", lamp: "ok" as const, text: <span className="people-lock" title="Encrypted · Local storage · Notes only" data-testid="people-lock">Encrypted</span> },
       ]}
-    />
+    />}
   </div>;
 }
 
-const PEOPLE_SPRITE = `${import.meta.env.BASE_URL || "/_built/"}desk/sprites/people-ledger.png`;
+/** The plate (the language, 2026-11-08): the one raised thing of the face,
+ *  the thing that matters now, with its verb. */
+function NowPlate({ eyebrow, tone, title, facts, children }: { eyebrow: string; tone: "brass" | "steel" | "coral"; title: ReactNode; facts?: ReactNode; children?: ReactNode }) {
+  return <section className="people-now" data-tone={tone} aria-label={eyebrow} data-testid="people-plate">
+    <span className="people-now-eyebrow">{eyebrow}</span>
+    <h3 className="people-now-title">{title}</h3>
+    {facts ? <p className="people-now-facts">{facts}</p> : null}
+    {children ? <div className="people-now-verbs">{children}</div> : null}
+  </section>;
+}
 
-// A column no row fills is not drawn (an empty column is a zero in
-// another form, UX-CANON A.8).
-const PEOPLE_COLUMNS = [
-  { key: "name", word: "Name", track: "minmax(160px, 1.4fr)" },
-  { key: "role", word: "Role", track: "minmax(170px, 0.8fr)" },
-  { key: "next", word: "Next 1:1", track: "minmax(0, 1fr)" },
-  { key: "owe", word: "You owe", track: "88px" },
-] as const;
+const PEOPLE_SPRITE = `${import.meta.env.BASE_URL || "/_built/"}desk/sprites/people-ledger.png`;
 
 /** `Today 17:12` → `today 17:12` inside a sentence; a weekday stays. */
 function lowerDay(words: string): string {
@@ -800,14 +719,10 @@ export function PersonWindowBody({ relationshipId, onClose }: { relationshipId: 
   const read = useCallback(async () => {
     setLoading(true);
     try {
-      const next = await apiFetch<Readiness>("/api/people/readiness");
+      const next = await hub.readReadiness<Readiness>();
       setReadiness(next);
       if (stateOf(next) !== "ready") { setDetail(null); return; }
-      const [relationship, sessions] = await Promise.all([
-        apiFetch<{ relationship: Relationship }>(`/api/people/relationships/${encodeURIComponent(relationshipId)}`),
-        apiFetch<{ one_on_ones: Session[] }>(`/api/people/relationships/${encodeURIComponent(relationshipId)}/one-on-ones`),
-      ]);
-      setDetail({ ...relationship.relationship, sessions: sessions.one_on_ones });
+      setDetail(await readWhole(relationshipId));
       setError("");
     } catch (cause) {
       if (isProtectedFailure(cause) && !isStoreOutage(cause)) { setDetail(null); setReadiness(readinessForError(cause)); }
@@ -836,15 +751,12 @@ export function PersonWindowBody({ relationshipId, onClose }: { relationshipId: 
   if (readiness && stateOf(readiness) !== "ready") {
     const face = readinessFace(stateOf(readiness));
     return <div className="people-joy-state" data-testid="people-joy-state">
-      <div className="people-joy-lead">
-        <Button variant="primary" onClick={() => openSurfaceOr("open-people", "/")} data-testid="people-joy-action">{face.action}</Button>
-        <span className="people-joy-line">{face.label}</span>
-      </div>
+      <Button variant="primary" onClick={() => openSurfaceOr("open-people", "/")} data-testid="people-joy-action">{face.action}</Button>
+      <span className="people-joy-line">{face.label}</span>
     </div>;
   }
-  // Window grammar: the person window is the RelationshipPane with its
-  // toolbar (Record meeting, Add note), a compact head, the prep's sections
-  // edge to edge and the status bar (the next 1:1, Encrypted).
+  // The person window is the RelationshipPane: the mast, the plate, the
+  // ledger, the folds and the status bar (the next 1:1, Encrypted).
   return <div className="people-surface person-window" data-testid="person-window">
     {error ? (
       <span className="people-failure" role="alert" data-testid="people-failure">
@@ -853,7 +765,7 @@ export function PersonWindowBody({ relationshipId, onClose }: { relationshipId: 
       </span>
     ) : null}
     {detail ? (
-      <RelationshipPane relationship={detail} initialLens={initialLens} lensRequest={lensRequest} noteVerb
+      <RelationshipPane relationship={detail} initialLens={initialLens} lensRequest={lensRequest}
         /* Betterment Q11: What I owe her and What she owes me, first, from
            the desk's memory pages (no Ask). */
         lead={<PersonPages displayName={detail.display_name} />}
@@ -873,20 +785,31 @@ function paneLens(lens: Lens | string | null | undefined): PaneLens | null {
   return "prep";
 }
 const PANE_TABS: ReadonlyArray<readonly [PaneLens, string]> = [["prep", "Prep"], ["context", "Context"], ["history", "History"], ["info", "Info"]];
-const PERSON_SPRITE = `${import.meta.env.BASE_URL || "/_built/"}desk/sprites/32/person.png`;
 
-function openCount(items?: Array<{ state?: string }> | null): number {
-  return (items ?? []).filter((item) => (item.state ?? "open") === "open").length;
+/** The mast's spine: what stands between you, in the meaning colours
+ *  (brass owed to you, steel you owe, moss done, coral overdue). */
+function personSpine(relationship: RelationshipDetail) {
+  const theirs = relationship.owed_to_you ?? [];
+  const mine = relationship.commitments ?? [];
+  const open = (rows: Commitment[]) => rows.filter((row) => (row.state ?? "open") === "open");
+  const late = (rows: Commitment[]) => open(rows).filter((row) => isOverdue(row.due)).length;
+  const coral = late(theirs) + late(mine);
+  const brass = open(theirs).length - late(theirs);
+  const steel = open(mine).length - late(mine);
+  const moss = [...theirs, ...mine].filter((row) => row.state === "done").length;
+  const words = [brass ? `${brass} owed to you` : "", steel ? `${steel} you owe` : "", coral ? `${coral} overdue` : "", moss ? `${moss} done` : ""].filter(Boolean).join(", ");
+  return { open: brass + steel + coral, words, segments: [
+    { tone: "brass" as const, share: brass }, { tone: "steel" as const, share: steel },
+    { tone: "coral" as const, share: coral }, { tone: "moss" as const, share: moss },
+  ] };
 }
 
 /** PHILO-17 (2b): exported; a person's own window (`pullout:people:<id>`)
  *  hosts it. There the window's close is the way back, so no Back. */
-export function RelationshipPane({ relationship, initialLens, lensRequest = null, onRefresh, onProtectedFailure, onArchived, onBack, lead, noteVerb = false }: { relationship: RelationshipDetail; initialLens?: Lens | null; lensRequest?: { lens: Lens; seq: number } | null; onRefresh(): void; onProtectedFailure(cause: unknown, mayHaveSaved?: boolean): void; onArchived(): void; onBack?(): void;
-  /** Material under the head (the person window's memory pages). */
-  lead?: ReactNode;
-  /** The person window: Add note sits on the toolbar (it opens Context's note well). */
-  noteVerb?: boolean }) {
-  // PHILO-13-07 (B2): the tab is part of the place, kept per person.
+export function RelationshipPane({ relationship, initialLens, lensRequest = null, onRefresh, onProtectedFailure, onArchived, onBack, lead }: { relationship: RelationshipDetail; initialLens?: Lens | null; lensRequest?: { lens: Lens; seq: number } | null; onRefresh(): void; onProtectedFailure(cause: unknown, mayHaveSaved?: boolean): void; onArchived(): void; onBack?(): void;
+  /** Material under the mast (the person window's memory pages). */
+  lead?: ReactNode }) {
+  // PHILO-13-07 (B2): the fold is part of the place, kept per person.
   const lensPlace = `people/lens/${relationship.id}`;
   const [lens, setLensState] = useState<PaneLens>(() => paneLens(initialLens) ?? paneLens(keptPlace(lensPlace)) ?? "prep");
   const setLens = useCallback((next: PaneLens) => {
@@ -895,7 +818,7 @@ export function RelationshipPane({ relationship, initialLens, lensRequest = null
   }, [lensPlace]);
   // PHILO-13-06 (B1): a row that opens this person on a lens moves the open window to it.
   // On mount the state's initializer already holds that lens: the first run only
-  // keeps it. A mount run that set it again could land after his first tab press
+  // keeps it. A mount run that set it again could land after his first fold press
   // and undo it (the -n 8 flake of peopleReopenLens, 2026-10-12).
   const firstLensRun = useRef(true);
   useEffect(() => {
@@ -913,7 +836,6 @@ export function RelationshipPane({ relationship, initialLens, lensRequest = null
   const [calendarError, setCalendarError] = useState("");
   const [calendarTitle, setCalendarTitle] = useState("");
   const [calendarAttempt, setCalendarAttempt] = useState(0);
-  const [contextLinksOpen] = useState(false);
   const [prepRead, setPrepRead] = useState(false);
   const wantsCalendar = lens === "context";
   useEffect(() => {
@@ -921,7 +843,7 @@ export function RelationshipPane({ relationship, initialLens, lensRequest = null
     let live = true;
     setCalendarLoading(true);
     setCalendarError("");
-    void apiFetch<{ upcoming?: UpcomingEvent[] }>("/api/door")
+    void hub.readUpcoming<UpcomingEvent>()
       .then((door) => {
         if (!live) return;
         setUpcomingEvents((door.upcoming ?? []).filter(
@@ -933,57 +855,49 @@ export function RelationshipPane({ relationship, initialLens, lensRequest = null
     return () => { live = false; };
   }, [relationship.id, wantsCalendar, calendarAttempt]);
   const calendarRead: CalendarRead = { loading: calendarLoading, error: calendarError, title: calendarTitle, retry: () => setCalendarAttempt((attempt) => attempt + 1) };
-  const recordingState = useDesk((state) => state.recording);
-  // The prep's read names the next 1:1 (the head's line, the toolbar's Record).
+  // The prep's read names the last and the next 1:1 (the mast's facts).
   const [next, setNext] = useState<PrepNext | null>(null);
+  // The mast's Note and Link project open their well in Context.
   const [noteRequest, setNoteRequest] = useState(0);
-  useEffect(() => { if (lens !== "context") setNoteRequest(0); }, [lens]);
-  const nextWords = next?.at ? `1:1 ${oneOnOneWhen(next.at)}` : "";
-  const record = next?.eventId && recordingState !== "recording" ? (
-    <Button dense variant="primary" loading={recordingState === "busy"} disabled={recordingState !== "idle"}
-      onClick={() => void useDesk.getState().startRecording({ calendarEventId: next.eventId! })}
-      data-testid="prep-record-meeting"><ToolGlyph kind="record" />Record meeting</Button>
-  ) : null;
-  const addNote = noteVerb ? (
-    <Button dense variant="secondary" onClick={() => { setLens("context"); setNoteRequest((n) => n + 1); }} data-testid="person-add-note">
-      <ToolGlyph kind="new" />Add note
-    </Button>
-  ) : null;
-  return <div className="people-detail person-page">
-    {/* Window grammar: the window's verbs on a toolbar under the title bar. */}
-    {onBack || record || addNote ? <Toolbar label={relationship.display_name} data-testid="person-toolbar">
-      {onBack ? <Button dense variant="secondary" onClick={onBack}>Back</Button> : null}
-      {record}
-      {addNote}
-    </Toolbar> : null}
-    <header className="people-detail-head" data-testid="people-detail-head">
-      <Avatar name={relationship.display_name} size="md" />
-      <span className="people-who">
-        <h2 className="people-name" data-testid="prep-display-name">{relationship.display_name}</h2>
-        <span className="people-who-meta" data-testid="people-who-meta">
-          {[relationshipLabel(relationship.relationship_kind), relationship.role_context, nextWords].filter(Boolean).join(" · ")}
-        </span>
-      </span>
-    </header>
+  const [linkRequest, setLinkRequest] = useState(0);
+  useEffect(() => { if (lens !== "context") { setNoteRequest(0); setLinkRequest(0); } }, [lens]);
+  const spine = personSpine(relationship);
+  const facts = [
+    relationshipLabel(relationship.relationship_kind), relationship.role_context,
+    next?.last ? `last 1:1 ${dayLabel(next.last)}` : "",
+    next?.at ? `next 1:1 ${lowerDay(oneOnOneWhen(next.at))}` : "",
+    spine.open ? `${spine.open} open` : "",
+  ].filter(Boolean).join(" · ");
+  const folds = prepRead || lens !== "prep" ? <div className="people-folds" data-testid="people-folds">
+    {PANE_TABS.filter(([id]) => id !== "prep").map(([id, label]) => <Disclosure key={id} label={label}
+      open={lens === id} onOpenChange={(open) => setLens(open ? id : "prep")}>
+      {lens === id && id === "context" ? <ContextLens key={relationship.id} relationship={relationship} onRefresh={onRefresh} onProtectedFailure={onProtectedFailure} upcomingEvents={upcomingEvents} calendarRead={calendarRead} noteRequest={noteRequest} linkRequest={linkRequest} /> : null}
+      {lens === id && id === "history" ? <HistoryLens relationship={relationship} /> : null}
+      {lens === id && id === "info" ? <InfoLens relationship={relationship} onArchived={onArchived} onProtectedFailure={onProtectedFailure} /> : null}
+    </Disclosure>)}
+  </div> : null;
+  return <div className="people-person" data-testid="people-person">
+    <Mast kind="person" id={relationship.id} className="people-detail-head" data-testid="people-detail-head"
+      title={<span className="people-name" data-testid="prep-display-name">{relationship.display_name}</span>}
+      facts={<span data-testid="people-who-meta">{facts}</span>}>
+      {onBack ? <Button variant="secondary" className="people-back" onClick={onBack}>Back</Button> : null}
+      <Button variant="secondary" onClick={() => { setLens("context"); setNoteRequest((n) => n + 1); }} data-testid="person-add-note">Note</Button>
+      <Button variant="secondary" onClick={() => { setLens("context"); setLinkRequest((n) => n + 1); }} data-testid="person-link-project">Link project</Button>
+    </Mast>
+    <Spine className="people-spine" segments={spine.segments} label={spine.words || undefined} data-testid="people-spine" />
     {lead}
     {/* Betterment D7: the prep is the page; Context, History and Info are
-        folds under it (one open at a time; a door that asks for one opens it). */}
-    <PrepPane key={relationship.id} relationship={relationship} onRefresh={onRefresh} onProtectedFailure={onProtectedFailure} onRead={() => setPrepRead(true)} onNext={setNext} />
-    {/* The folds wait for the prep's first read: drawn under a loading prep,
-        they moved down when it landed (the desk sweep's still fence). */}
-    {prepRead || lens !== "prep" ? <div className="people-folds" data-testid="people-folds">
-      {PANE_TABS.filter(([id]) => id !== "prep").map(([id, label]) => <Disclosure key={id} label={label}
-        open={lens === id} onOpenChange={(open) => setLens(open ? id : "prep")}>
-        {lens === id && id === "context" ? <ContextLens key={relationship.id} relationship={relationship} onRefresh={onRefresh} onProtectedFailure={onProtectedFailure} upcomingEvents={upcomingEvents} calendarRead={calendarRead} initialLinksOpen={contextLinksOpen} noteRequest={noteRequest} noteVerbOutside={noteVerb} /> : null}
-        {lens === id && id === "history" ? <HistoryLens relationship={relationship} /> : null}
-        {lens === id && id === "info" ? <InfoLens relationship={relationship} onArchived={onArchived} onProtectedFailure={onProtectedFailure} /> : null}
-      </Disclosure>)}
-    </div> : null}
+        folds under it (one open at a time; a door that asks for one opens
+        it). The folds wait for the prep's first read: drawn under a loading
+        prep, they moved down when it landed (the desk sweep's still fence). */}
+    <PrepPane key={relationship.id} relationship={relationship} onRefresh={onRefresh} onProtectedFailure={onProtectedFailure} onRead={() => setPrepRead(true)} onNext={setNext}>
+      {folds}
+    </PrepPane>
   </div>;
 }
 
-/** What the prep's read says of the next 1:1. */
-type PrepNext = { at: string | null; eventId: string | null };
+/** What the prep's read says of the last and the next 1:1. */
+type PrepNext = { at: string | null; eventId: string | null; last: string | null };
 
 /** `in 50 min`, `in 2 h 05 min`, `now`; empty past a day. */
 function untilWords(isoDate: string, now: number): string {
@@ -1103,9 +1017,7 @@ function PrepNudge({ task, person, due }: { task: string; person: string; due: s
     const title = `Nudge: ${task}`;
     void (async () => {
       try {
-        const made = await apiFetch<{ note?: { id?: string } }>("/api/notes", {
-          method: "POST", json: { title, body_markdown: text, tags: ["nudge"] },
-        });
+        const made = await hub.keepNudge(title, text);
         const id = String(made.note?.id ?? "");
         if (!id) { setFailed(true); return; }
         setNote({ id, title });
@@ -1144,7 +1056,9 @@ function OweReceipt({ attempt, onCheck, onAccept, onStartAnother }: { attempt: O
   </div>;
 }
 
-function PrepPane({ relationship, onRefresh, onProtectedFailure, onRead, onNext }: { relationship: RelationshipDetail; onRefresh(): void; onProtectedFailure(cause: unknown, mayHaveSaved?: boolean): void; onRead?(): void; onNext?(next: PrepNext): void }) {
+function PrepPane({ relationship, onRefresh, onProtectedFailure, onRead, onNext, children }: { relationship: RelationshipDetail; onRefresh(): void; onProtectedFailure(cause: unknown, mayHaveSaved?: boolean): void; onRead?(): void; onNext?(next: PrepNext): void;
+  /** The folds, between the ledger and the status bar. */
+  children?: ReactNode }) {
   const [brief, setBrief] = useState<OneOnOneBrief | null>(null);
   const [failure, setFailure] = useState("");
   const [prepTitle, setPrepTitle] = useState("");
@@ -1166,7 +1080,7 @@ function PrepPane({ relationship, onRefresh, onProtectedFailure, onRead, onNext 
     if (failedAt.current?.attempt === attempt && failedAt.current.id === relationship.id) return;
     failedAt.current = null;
     let live = true;
-    void apiFetch<{ brief: OneOnOneBrief }>(`/api/people/relationships/${encodeURIComponent(relationship.id)}/brief`)
+    void hub.readBrief<OneOnOneBrief>(relationship.id)
       .then((result) => { if (live) { setBrief(result.brief ?? ({ open_commitments: [], agenda_items: [] } as unknown as OneOnOneBrief)); setFailure(""); } })
       .catch((cause) => {
         if (!live) return;
@@ -1201,11 +1115,13 @@ function PrepPane({ relationship, onRefresh, onProtectedFailure, onRead, onNext 
   useEffect(() => { if (brief || failure) onRead?.(); }, [brief, failure, onRead]);
   useEffect(() => {
     const event = brief ? composePeoplePrep(brief).nextOneOnOne ?? null : null;
-    onNext?.({ at: relationship.next_one_on_one ?? event?.starts_at ?? null, eventId: event?.id ?? null });
+    const last = brief?.last_time?.one_on_one ? brief.last_time.started_at : null;
+    onNext?.({ at: relationship.next_one_on_one ?? event?.starts_at ?? null, eventId: event?.id ?? null, last });
   }, [brief, relationship.next_one_on_one, onNext]);
-  if (!brief && !failure) return <SurfaceState loading />;
+  // The folds keep one place in the tree (a Fragment's second child), so a
+  // well open in a fold survives the prep's first read.
+  if (!brief && !failure) return <><SurfaceState loading />{children}</>;
 
-  const base = `/api/people/relationships/${encodeURIComponent(relationship.id)}`;
   const inspectCommitment = (commitment: Commitment, section: "you" | "they") => {
     commitmentOrigin.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     setSelectedCommitment({ commitment, section });
@@ -1222,8 +1138,8 @@ function PrepPane({ relationship, onRefresh, onProtectedFailure, onRead, onNext 
     const submitted = agendaDraft;
     const body = submitted.trim(); if (!body || busy === "agenda") return;
     void run("agenda", async () => {
-      const session = relationship.sessions?.[0] ?? (await apiFetch<{ one_on_one: Session }>(`${base}/one-on-ones`, { method: "POST", json: { visibility: "shared_intent" } })).one_on_one;
-      await apiFetch(`/api/people/one-on-ones/${encodeURIComponent(session.id)}/agenda`, { method: "POST", json: { body, visibility: "shared_intent", state: "open", source: { kind: "manual" } } });
+      const session = relationship.sessions?.[0] ?? (await hub.createOneOnOne<Session>(relationship.id)).one_on_one;
+      await hub.addAgendaItem(session.id, body);
     }, () => { if ((keptDraft(`people/1on1/${relationship.id}`) ?? "") === submitted) { forgetAgenda(); onSaved?.(); } });
   };
   // What he owes: the hub's own path (a request he accepts becomes his
@@ -1235,7 +1151,7 @@ function PrepPane({ relationship, onRefresh, onProtectedFailure, onRead, onNext 
       setOwe({ phase: "accepting", seq, relationshipId, body, requestId });
       let made: { commitment?: { id?: unknown; request_id?: unknown; body?: unknown; state?: unknown } };
       try {
-        made = await apiFetch(`/api/people/requests/${encodeURIComponent(requestId)}/accept`, { method: "POST", json: {} });
+        made = await hub.acceptRequest(requestId);
       } catch (cause) {
         if (!live(seq)) return;
         await settleFailure(seq, cause, () => setOwe({ phase: "acceptance_uncertain", seq, relationshipId, body, requestId, acceptable: !ACCEPT_NO_EFFECT.has(failureCode(cause)),
@@ -1264,7 +1180,7 @@ function PrepPane({ relationship, onRefresh, onProtectedFailure, onRead, onNext 
     let clear = isAuthOrKeyFailure(cause);
     if (!clear && cause instanceof ApiError && cause.status === 503) {
       try {
-        const ready = await apiFetch<Readiness>("/api/people/readiness");
+        const ready = await hub.readReadiness<Readiness>();
         clear = stateOf(ready) !== "ready";
       } catch { clear = true; }
       if (!live(seq)) return;
@@ -1284,7 +1200,7 @@ function PrepPane({ relationship, onRefresh, onProtectedFailure, onRead, onNext 
     void (async () => {
       let made: { request?: { id?: unknown; relationship_id?: unknown } };
       try {
-        made = await apiFetch(`${base}/requests`, { method: "POST", json: { body, visibility: "shared_intent", source: { kind: "manual" } } });
+        made = await hub.createRequest(relationship.id, body);
       } catch (cause) {
         if (!live(seq)) return;
         if (cause instanceof ApiError && CREATE_NO_EFFECT.has(failureCode(cause)) && !isAuthOrKeyFailure(cause)) {
@@ -1308,7 +1224,7 @@ function PrepPane({ relationship, onRefresh, onProtectedFailure, onRead, onNext 
     if (!current || current.phase !== "acceptance_uncertain") return;
     const { seq, relationshipId, body, requestId } = current;
     setOwe({ phase: "checking", seq, relationshipId, body, requestId });
-    void apiFetch(`/api/people/relationships/${encodeURIComponent(relationshipId)}`)
+    void hub.readPerson(relationshipId)
       .then((read) => {
         if (!live(seq)) return;
         const found = checkSavedRequest(read, relationshipId, requestId, body);
@@ -1331,17 +1247,17 @@ function PrepPane({ relationship, onRefresh, onProtectedFailure, onRead, onNext 
   const addOwed = (onSaved?: () => void) => {
     const submitted = owedDraft;
     const body = submitted.trim(); if (!body || busy === "owed") return;
-    void run("owed", () => apiFetch(`${base}/owed`, { method: "POST", json: { body, visibility: "shared_intent" } }),
+    void run("owed", () => hub.createOwed(relationship.id, body),
       () => { if ((keptDraft(`people/owed/${relationship.id}`) ?? "") === submitted) { forgetOwed(); onSaved?.(); } });
   };
-  const done = (id: string) => void run(`done:${id}`, () => apiFetch(`/api/people/commitments/${encodeURIComponent(id)}/transition`, { method: "POST", json: { verb: "done" } }));
-  const completeAction = (id: string) => void run(`action-done:${id}`, () => apiFetch("/api/follow-through/complete", { method: "POST", json: { card_id: id, verb: "done", payload: {} } }));
-  const removeAgenda = (id: string) => void run(`remove:${id}`, () => apiFetch(`/api/people/agenda/${encodeURIComponent(id)}/transition`, { method: "POST", json: { to: "removed" } }));
+  const done = (id: string) => void run(`done:${id}`, () => hub.commitmentDone(id));
+  const completeAction = (id: string) => void run(`action-done:${id}`, () => hub.completeAction(id));
+  const removeAgenda = (id: string) => void run(`remove:${id}`, () => hub.removeAgendaItem(id));
   // HS-S33: Asked of you for the held request goes through the attempt.
   const heldRequest = owe && "requestId" in owe && owe.phase !== "saved" ? owe.requestId : null;
   const accept = (id: string) => {
     if (id === heldRequest) { acceptSavedOwe(); return; }
-    void run(`accept:${id}`, () => apiFetch(`/api/people/requests/${encodeURIComponent(id)}/accept`, { method: "POST", json: {} }));
+    void run(`accept:${id}`, () => hub.acceptRequest(id));
   };
 
   const prep = brief ? composePeoplePrep(brief) : null;
@@ -1412,40 +1328,40 @@ function PrepPane({ relationship, onRefresh, onProtectedFailure, onRead, onNext 
   // (the brief's memory excerpts; its search words are the person's names).
   const excerpts = (brief?.memory?.excerpts ?? []).filter((e) => (e.title || e.text).trim());
 
-  // Window grammar: sections in sentence case under a hairline, rows edge to
-  // edge, no plates; the window's facts in the status bar.
-  return <div data-testid="people-prep-lens" className="people-prep">
+  // The plate: the one thing that matters now. A request asked of him, then
+  // what is overdue (his, then theirs); with none, the next 1:1 is the
+  // plate (the agenda, raised, with Record 1:1).
+  const late = <T extends { due?: string | null }>(rows: T[]) => rows.filter((row) => isOverdue(row.due));
+  const mineLate = [
+    ...late(youOweRows).map((row) => ({ text: row.body, due: row.due ?? "", key: `done:${row.id}`, press: () => done(row.id) })),
+    ...late(myActions).map((row) => ({ text: row.task, due: row.due ?? "", key: `action-done:${row.id}`, press: () => completeAction(row.id) })),
+  ][0];
+  const theirsLate = [
+    ...late(owedRows).map((row) => ({ id: row.id, task: row.body, due: row.due ?? null })),
+    ...late(actions).map((row) => ({ id: row.id, task: row.task, due: row.due })),
+  ][0];
+  const ask = asked[0];
+  const plate = ask ? <NowPlate eyebrow="Waits on you" tone="brass" title={ask.body} facts={`${firstName} asked`}>
+    <Button variant="primary" loading={busy === `accept:${ask.id}` || (ask.id === heldRequest && owe?.phase === "accepting")} disabled={ask.id === heldRequest && (owe?.phase !== "acceptance_uncertain" || !owe.acceptable)} onClick={() => accept(ask.id)}>Accept</Button>
+  </NowPlate> : mineLate ? <NowPlate eyebrow="Overdue" tone="coral" title={mineLate.text} facts={`You owe ${firstName} · by ${shortDay(mineLate.due)}`}>
+    <Button variant="primary" loading={busy === mineLate.key} onClick={mineLate.press}>Done</Button>
+  </NowPlate> : theirsLate ? <NowPlate eyebrow="Overdue" tone="coral" title={theirsLate.task} facts={[`${firstName} owes you`, theirsLate.due ? `by ${shortDay(theirsLate.due)}` : ""].filter(Boolean).join(" · ")}>
+    <Button variant="primary" aria-expanded={nudging?.id === theirsLate.id} onClick={() => toggleNudge(theirsLate)}>Nudge</Button>
+  </NowPlate> : null;
+  const eventId = nextEvent?.id ?? null;
+  const record = eventId && recordingState !== "recording" ? (
+    <Button dense variant="primary" loading={recordingState === "busy"} disabled={recordingState !== "idle"}
+      onClick={() => void useDesk.getState().startRecording({ calendarEventId: eventId })} data-testid="prep-record-meeting">Record 1:1</Button>
+  ) : null;
+
+  // The ledger by weight: the plate, what is owed both ways, the agenda,
+  // the Programs, the last 1:1, the open work, the desk; then the folds.
+  return <><div data-testid="people-prep-lens" className="people-prep">
     {failure ? <span className="people-failure" role="alert" data-testid="people-next-failure">
       <span className="people-failure-label" title={prepTitle || undefined}>{failure}</span>
       <Button dense variant="ghost" onClick={() => setAttempt((n) => n + 1)}>Try again</Button>
     </span> : null}
-
-    <section className="people-section" aria-label="Agenda" data-testid="people-next-plate">
-      <header className="people-section-head">
-        <h3 className="people-section-cap">Agenda</h3>
-        {nextAt ? <span className="people-section-fact" data-testid="people-next-1on1">{`Next 1:1 · ${[oneOnOneWhen(nextAt), until].filter(Boolean).join(" · ")}`}</span> : null}
-      </header>
-      {nextAt ? <div className="people-row people-next-event">
-        <span className="people-row-glyph" aria-hidden="true"><img src={PERSON_SPRITE} alt="" draggable={false} /></span>
-        <span className="people-row-words">{nextTitle}</span>
-        {nextEvent?.source_label ? <span className="people-row-meta">{nextEvent.source_label}</span> : null}
-      </div> : suggestions.length && prep ? <LinkSuggestions relationship={relationship} prep={prep} onLinked={onRefresh} onProtectedFailure={onProtectedFailure} testId="prep-link-suggestion" />
-        : brief ? <div className="people-row people-next-none"><span className="people-row-meta">No 1:1 planned</span></div> : null}
-      {prep?.projects.length ? <div className="people-row people-projects" data-testid="prep-projects">
-        {prep.projects.map((project) => <Button key={project.id} variant="chrome" className="people-link" onClick={refOpener(`project:${project.id}`) ?? undefined}>{project.name}</Button>)}
-      </div> : null}
-      {brief ? <ol className="people-rows" data-testid="prep-to-raise">
-        {agenda.map((item, index) => <li key={item.id} className="people-row people-raise-row" data-testid="prep-agenda">
-          <span className="people-raise-n" aria-hidden="true">{index + 1}</span>
-          <span className="people-raise-words">{item.body}</span>
-          {item.rolled_from_id ? <span className="people-row-meta">Rolled</span> : null}
-          <Button dense variant="ghost" className="people-raise-remove" aria-label={`Remove ${item.body}`} loading={busy === `remove:${item.id}`} onClick={() => removeAgenda(item.id)}>Remove</Button>
-        </li>)}
-      </ol> : null}
-      <div className="people-row people-add-line">
-        <PrepAddWell key={relationship.id} label="Add to the agenda" draft={agendaDraft} onChange={setAgendaDraft} onAdd={addAgenda} busy={busy === "agenda"} actionLabel="Add to agenda" testId="people-add-agenda" />
-      </div>
-    </section>
+    {plate}
 
     {/* Betterment D7: what she owes me (with Nudge) and what I owe her,
         named with the person's name, side by side when there is room. */}
@@ -1507,6 +1423,33 @@ function PrepPane({ relationship, onRefresh, onProtectedFailure, onRead, onNext 
       </div>
     </section>
 
+    <section className="people-section" aria-label="Agenda" data-testid="people-next-plate" data-plate={!plate && nextAt ? "" : undefined}>
+      <header className="people-section-head">
+        <h3 className="people-section-cap">Agenda</h3>
+        {nextAt ? <span className="people-section-fact" data-testid="people-next-1on1">{`Next 1:1 · ${[oneOnOneWhen(nextAt), until].filter(Boolean).join(" · ")}`}</span> : null}
+        {record}
+      </header>
+      {nextAt ? <div className="people-row people-next-event">
+        <span className="people-row-words">{nextTitle}</span>
+        {nextEvent?.source_label ? <span className="people-row-meta">{nextEvent.source_label}</span> : null}
+      </div> : suggestions.length && prep ? <LinkSuggestions relationship={relationship} prep={prep} onLinked={onRefresh} onProtectedFailure={onProtectedFailure} testId="prep-link-suggestion" />
+        : brief ? <div className="people-row people-next-none"><span className="people-row-meta">No 1:1 planned</span></div> : null}
+      {prep?.projects.length ? <div className="people-row people-projects" data-testid="prep-projects">
+        {prep.projects.map((project) => <Button key={project.id} variant="chrome" className="people-link" onClick={refOpener(`project:${project.id}`) ?? undefined}>{project.name}</Button>)}
+      </div> : null}
+      {brief ? <ol className="people-rows" data-testid="prep-to-raise">
+        {agenda.map((item, index) => <li key={item.id} className="people-row people-raise-row" data-testid="prep-agenda">
+          <span className="people-raise-n" aria-hidden="true">{index + 1}</span>
+          <span className="people-raise-words">{item.body}</span>
+          {item.rolled_from_id ? <span className="people-row-meta">Rolled</span> : null}
+          <Button dense variant="ghost" className="people-raise-remove" aria-label={`Remove ${item.body}`} loading={busy === `remove:${item.id}`} onClick={() => removeAgenda(item.id)}>Remove</Button>
+        </li>)}
+      </ol> : null}
+      <div className="people-row people-add-line">
+        <PrepAddWell key={relationship.id} label="Add to the agenda" draft={agendaDraft} onChange={setAgendaDraft} onAdd={addAgenda} busy={busy === "agenda"} actionLabel="Add to agenda" testId="people-add-agenda" />
+      </div>
+    </section>
+
     {/* Programs (2026-10-28, §9b): the Programs for this person, and the
         1:1's "To show them" and "To ask". */}
     <PersonPrograms programs={personProgramsOf(brief, relationship)} name={firstName} />
@@ -1543,6 +1486,8 @@ function PrepPane({ relationship, onRefresh, onProtectedFailure, onRead, onNext 
       </ul>
     </section> : null}
 
+  </div>
+    {children}
     {/* The window's status bar: the next 1:1, Encrypted, when it was prepared. */}
     <StatusBar
       data-testid="person-status"
@@ -1552,10 +1497,8 @@ function PrepPane({ relationship, onRefresh, onProtectedFailure, onRead, onNext 
         { key: "receipt", text: recordingFailure ? recordingReceipt : <span className="people-prep-receipt" data-testid="prep-receipt">{`Prepared ${preparedAt}`}</span> },
       ]}
     />
-  </div>;
+  </>;
 }
-/** PHILO-17 ALIVE: what one roster row says, from the person's record. */
-type RowFacts = { next: string | null; known: boolean; youOwe: number; owesYou: number };
 type RosterNext = { startsAt: string; title: string };
 /** Each person's soonest upcoming 1:1 from the Door's calendar rows. */
 function nextOneOnOnes(upcoming: Array<Record<string, unknown>>): Record<string, RosterNext> {
@@ -1652,10 +1595,7 @@ function LinkSuggestions({ relationship, prep, onLinked, onProtectedFailure, tes
   const link = async (ev: PrepCalendarEvent) => {
     setBusy(true);
     try {
-      await apiFetch(`/api/people/relationships/${encodeURIComponent(relationship.id)}/calendar-links`, {
-        method: "POST",
-        json: { uid: ev.uid, source_id: ev.source_id, label: ev.title },
-      });
+      await hub.linkSeries(relationship.id, ev.uid, ev.source_id, ev.title);
       onLinked();
     } catch (cause) { onProtectedFailure(cause); } finally { setBusy(false); }
   };
@@ -1697,10 +1637,7 @@ function CalendarLinkSection({ relationship, onRefresh, onProtectedFailure, upco
   const linkEvent = async (ev: UpcomingEvent) => {
     setBusy(true);
     try {
-      await apiFetch(`/api/people/relationships/${encodeURIComponent(relationship.id)}/calendar-links`, {
-        method: "POST",
-        json: { uid: ev.uid, source_id: ev.source_id, label: ev.title },
-      });
+      await hub.linkSeries(relationship.id, ev.uid, ev.source_id, ev.title);
       setPickerOpen(false);
       onRefresh();
     } catch (cause) { onProtectedFailure(cause); } finally { setBusy(false); }
@@ -1708,10 +1645,7 @@ function CalendarLinkSection({ relationship, onRefresh, onProtectedFailure, upco
   const unlinkSeries = async (link: CalendarLink) => {
     setBusy(true);
     try {
-      await apiFetch(`/api/people/relationships/${encodeURIComponent(relationship.id)}/calendar-links`, {
-        method: "DELETE",
-        json: { uid: link.uid, source_id: link.source_id },
-      });
+      await hub.unlinkSeries(relationship.id, link.uid, link.source_id);
       onRefresh();
     } catch (cause) { onProtectedFailure(cause); } finally { setBusy(false); }
   };
@@ -1754,10 +1688,7 @@ function OwnerAliasSection({ relationship, onRefresh, onProtectedFailure }: { re
     if (!alias) return;
     setBusy(true);
     try {
-      await apiFetch(`/api/people/relationships/${encodeURIComponent(relationship.id)}/owner-aliases`, {
-        method: "POST",
-        json: { alias },
-      });
+      await hub.linkAlias(relationship.id, alias);
       setNewAlias("");
       onRefresh();
     } catch (cause) { onProtectedFailure(cause); } finally { setBusy(false); }
@@ -1766,10 +1697,7 @@ function OwnerAliasSection({ relationship, onRefresh, onProtectedFailure }: { re
   const removeAlias = async (alias: string) => {
     setBusy(true);
     try {
-      await apiFetch(`/api/people/relationships/${encodeURIComponent(relationship.id)}/owner-aliases`, {
-        method: "DELETE",
-        json: { alias },
-      });
+      await hub.unlinkAlias(relationship.id, alias);
       onRefresh();
     } catch (cause) { onProtectedFailure(cause); } finally { setBusy(false); }
   };
@@ -1787,25 +1715,29 @@ function OwnerAliasSection({ relationship, onRefresh, onProtectedFailure }: { re
   </SurfaceSection></div>;
 }
 
-function ContextLens({ relationship, onRefresh, onProtectedFailure, upcomingEvents = [], calendarRead, initialLinksOpen = false, noteRequest = 0, noteVerbOutside = false }: { relationship: RelationshipDetail; onRefresh(): void; onProtectedFailure(cause: unknown): void; upcomingEvents?: UpcomingEvent[]; calendarRead: CalendarRead; initialLinksOpen?: boolean; noteRequest?: number; noteVerbOutside?: boolean }) {
+/** Context: the notes, the linked projects, and the links (projects,
+ *  calendar series, the names in meeting notes). The mast's Note and Link
+ *  project open their well here. */
+function ContextLens({ relationship, onRefresh, onProtectedFailure, upcomingEvents = [], calendarRead, noteRequest = 0, linkRequest = 0 }: { relationship: RelationshipDetail; onRefresh(): void; onProtectedFailure(cause: unknown): void; upcomingEvents?: UpcomingEvent[]; calendarRead: CalendarRead; noteRequest?: number; linkRequest?: number }) {
   const draftKey = `people/context/${relationship.id}`;
   const [topic, setTopic, forgetTopic] = useDeskDraft(`${draftKey}/topic`);
   const [body, setBody, forgetBody] = useDeskDraft(`${draftKey}/body`);
   const [draftVisibility, setVisibility, forgetVisibility] = useDeskDraft(`${draftKey}/visibility`);
   const visibility: Visibility = draftVisibility === "shared_intent" ? "shared_intent" : "leader_private";
   const [addingNote, setAddingNote] = useState(() => Boolean(topic || body || draftVisibility));
-  // The toolbar's Add note (the person window) opens the well here.
   useEffect(() => { if (noteRequest) setAddingNote(true); }, [noteRequest]);
+  const [linksOpen, setLinksOpen] = useState(false);
+  useEffect(() => { if (linkRequest) setLinksOpen(true); }, [linkRequest]);
   const [busy, setBusy] = useState(false);
   const [projects, setProjects] = useState<Project[]>([]);
   const [projectId, setProjectId] = useState("");
-  useEffect(() => { void apiFetch<{ projects?: Project[] }>("/api/projects").then((result) => { const rows = result.projects ?? []; setProjects(rows); setProjectId((current) => current || rows[0]?.id || ""); }).catch(onProtectedFailure); }, [relationship.id]);
+  useEffect(() => { void hub.readProjects<Project>().then((result) => { const rows = result.projects ?? []; setProjects(rows); setProjectId((current) => current || rows[0]?.id || ""); }).catch(onProtectedFailure); }, [relationship.id]);
   const add = async () => {
     if (!body.trim() || busy) return;
     const submitted = { topic, body, draftVisibility };
     setBusy(true);
     try {
-      await apiFetch(`/api/people/relationships/${encodeURIComponent(relationship.id)}/notes`, { method: "POST", json: { topic: topic.trim(), body: body.trim(), visibility } });
+      await hub.createNote(relationship.id, { topic: topic.trim(), body: body.trim(), visibility });
       // A newer note typed while this write was pending belongs to the next Add.
       if ((keptDraft(`${draftKey}/topic`) ?? "") === submitted.topic
           && (keptDraft(`${draftKey}/body`) ?? "") === submitted.body
@@ -1815,16 +1747,16 @@ function ContextLens({ relationship, onRefresh, onProtectedFailure, upcomingEven
       onRefresh();
     } catch (cause) { onProtectedFailure(cause); } finally { setBusy(false); }
   };
-  const linkProject = async () => { if (!projectId) return; try { await apiFetch(`/api/people/relationships/${encodeURIComponent(relationship.id)}/projects/${encodeURIComponent(projectId)}`, { method: "POST", json: {} }); onRefresh(); } catch (cause) { onProtectedFailure(cause); } };
-  const unlinkProject = async (id: string) => { try { await apiFetch(`/api/people/relationships/${encodeURIComponent(relationship.id)}/projects/${encodeURIComponent(id)}`, { method: "DELETE" }); onRefresh(); } catch (cause) { onProtectedFailure(cause); } };
+  const linkProject = async () => { if (!projectId) return; try { await hub.linkProject(relationship.id, projectId); onRefresh(); } catch (cause) { onProtectedFailure(cause); } };
+  const unlinkProject = async (id: string) => { try { await hub.unlinkProject(relationship.id, id); onRefresh(); } catch (cause) { onProtectedFailure(cause); } };
   const linkedProjects = projects.filter((project) => relationship.project_refs?.includes(project.id));
   return <>
-    <SurfaceSection label="Notes" actions={!addingNote && !noteVerbOutside ? <Button dense onClick={() => setAddingNote(true)}>Add note</Button> : undefined}>
+    <SurfaceSection label="Notes">
       {!(relationship.notes ?? []).length ? <SurfaceState empty emptyLabel="No notes" /> : <SurfaceLedger cols="room"><ul className="surface-ledger-rows">{(relationship.notes ?? []).map((note) => <SurfaceLedgerRow key={note.id} wrap primary={<span className="people-context-note">{note.topic ? <span className="people-context-note-topic">{note.topic}</span> : null}<span className="people-context-note-body">{note.body}</span></span>} cells={<Token className="surface-token">{note.visibility === "leader_private" ? "Leader private" : "Shared"}</Token>} />)}</ul></SurfaceLedger>}
       {addingNote ? <SurfaceWell head="Add note"><div className="people-context-add"><StringGadget label="Topic" value={topic} onChange={setTopic} placeholder="Topic (optional)" /><PadGadget label="Note" value={body} onChange={setBody} placeholder="Context worth remembering" rows={3} /><CycleGadget label="Visibility" value={visibility} onChange={setVisibility} options={[{ value: "leader_private", label: "Leader private" }, { value: "shared_intent", label: "Shared" }]} /><Button dense variant="ghost" onClick={() => setAddingNote(false)}>Close</Button><Button dense variant="primary" disabled={!body.trim() || busy} loading={busy} onClick={() => void add()}>Add note</Button></div></SurfaceWell> : null}
     </SurfaceSection>
     <SurfaceSection label="Projects">{linkedProjects.length ? <SurfaceRows>{linkedProjects.map((project) => <SurfaceRow key={project.id} title={project.name} detail={project.description} onOpen={() => openProjectRoom(project.id)} />)}</SurfaceRows> : <SurfaceState empty emptyLabel="No linked projects" />}</SurfaceSection>
-    <Disclosure label="Links" defaultOpen={initialLinksOpen}>
+    <Disclosure label="Links" open={linksOpen} onOpenChange={setLinksOpen}>
       <SurfaceSection label="Projects"><div className="people-project-link"><CycleGadget label="Project" value={projectId} onChange={setProjectId} options={projects.map((project) => ({ value: project.id, label: project.name }))} /><Button dense disabled={!projectId || relationship.project_refs?.includes(projectId)} onClick={() => void linkProject()}>Link</Button></div>{linkedProjects.length ? <SurfaceRows>{linkedProjects.map((project) => <SurfaceRow key={project.id} title={project.name} verbs={<Button dense variant="ghost" onClick={() => void unlinkProject(project.id)}>Unlink</Button>} />)}</SurfaceRows> : null}</SurfaceSection>
       <CalendarLinkSection relationship={relationship} onRefresh={onRefresh} onProtectedFailure={onProtectedFailure} upcomingEvents={upcomingEvents} calendarRead={calendarRead} />
       <OwnerAliasSection relationship={relationship} onRefresh={onRefresh} onProtectedFailure={onProtectedFailure} />
@@ -1844,15 +1776,15 @@ function CommitmentInspector({ commitment, onClose, onRefresh, onProtectedFailur
   const load = useCallback(async () => {
     try {
       const [catalog, execution] = await Promise.all([
-        apiFetch<{ workbenches?: Workbench[] }>("/api/workbenches"),
-        apiFetch<{ items?: ExecutionItem[] }>(`/api/people/commitments/${encodeURIComponent(commitment.id)}/execution`),
+        hub.readWorkbenches<Workbench>(),
+        hub.readExecution<ExecutionItem>(commitment.id),
       ]);
       const choices = catalog.workbenches ?? []; setWorkbenches(choices); setItems(execution.items ?? []); setWorkbenchId((current) => current || choices[0]?.id || "");
     } catch (cause) { onProtectedFailure(cause); }
   }, [commitment.id, onProtectedFailure]);
   useEffect(() => { void load(); }, [load]);
-  const send = async () => { if (!workbenchId) return; setBusy(true); try { await apiFetch(`/api/people/commitments/${encodeURIComponent(commitment.id)}/workbench`, { method: "POST", json: { workbench_id: workbenchId } }); await load(); } catch (cause) { onProtectedFailure(cause); } finally { setBusy(false); } };
-  const satisfy = async () => { setBusy(true); try { await apiFetch(`/api/people/commitments/${encodeURIComponent(commitment.id)}/satisfy`, { method: "POST", json: { rationale: rationale.trim() } }); onRefresh(); } catch (cause) { onProtectedFailure(cause); } finally { setBusy(false); } };
+  const send = async () => { if (!workbenchId) return; setBusy(true); try { await hub.sendToWorkbench(commitment.id, workbenchId); await load(); } catch (cause) { onProtectedFailure(cause); } finally { setBusy(false); } };
+  const satisfy = async () => { setBusy(true); try { await hub.satisfyCommitment(commitment.id, rationale.trim()); onRefresh(); } catch (cause) { onProtectedFailure(cause); } finally { setBusy(false); } };
   const linked = items[0];
   return <div className="people-commitment-inspector"><div className="people-inspector-head"><strong>Commitment</strong><Button dense variant="ghost" onClick={onClose}>Close</Button></div><div className="people-commitment-body">{commitment.body}</div>{linked ? <SurfaceRows><SurfaceRow title={linked.result ? "Output ready" : "Automation item"} detail={linked.result || `Status: ${linked.status}`} meta={linked.status} onOpen={() => openSurfaceOr("open-workbenches", "/workbenches", `workbench:${linked.workbench_id}`)} /></SurfaceRows> : <div className="people-delegate"><CycleGadget label="Automation" value={workbenchId} onChange={setWorkbenchId} options={workbenches.map((workbench) => ({ value: workbench.id, label: workbench.name }))} /><Button dense disabled={!workbenchId || busy} onClick={() => void send()}>Send to automation</Button></div>}<div className="people-satisfy"><StringGadget label="Satisfaction note" value={rationale} onChange={setRationale} placeholder="What fulfilled the commitment?" /><Button dense variant="primary" disabled={busy} onClick={() => void satisfy()}>Mark satisfied</Button></div></div>;
 }
@@ -1874,6 +1806,6 @@ function HistoryLens({ relationship }: { relationship: RelationshipDetail }) {
 }
 
 function InfoLens({ relationship, onProtectedFailure, onArchived }: { relationship: RelationshipDetail; onProtectedFailure(cause: unknown): void; onArchived(): void }) {
-  const archive = async () => { try { await apiFetch(`/api/people/relationships/${encodeURIComponent(relationship.id)}/archive`, { method: "POST", json: {} }); onArchived(); } catch (cause) { onProtectedFailure(cause); } };
+  const archive = async () => { try { await hub.archivePerson(relationship.id); onArchived(); } catch (cause) { onProtectedFailure(cause); } };
   return <SurfaceSection label="Info"><dl className="people-info"><div><dt>Relationship</dt><dd>{relationshipLabel(relationship.relationship_kind)}</dd></div>{relationship.role_context ? <div><dt>Role</dt><dd>{relationship.role_context}</dd></div> : null}{relationship.cadence ? <div><dt>Cadence</dt><dd>{relationship.cadence}</dd></div> : null}<div><dt>Storage</dt><dd>Encrypted</dd></div><div><dt>Sync</dt><dd>This device only</dd></div><div><dt>Capture</dt><dd>Notes only</dd></div></dl><ConfirmVerb label="Archive" confirmLabel="Archive?" onConfirm={() => void archive()} /></SurfaceSection>;
 }

@@ -156,9 +156,9 @@ describe("a People store failure keeps the window and the note", () => {
       return handler();
     }));
     render(<PeopleCore scope="people:r1" />);
-    await waitFor(() => expect(screen.getByRole("button", { name: "Context" })).toBeTruthy());
+    await waitFor(() => expect(screen.getByRole("button", { name: "Context" })).toBeTruthy(), { timeout: 5000 });
     fireEvent.click(screen.getByRole("button", { name: "Context" }));
-    fireEvent.click(screen.getByRole("button", { name: "Add note" }));
+    fireEvent.click(screen.getByRole("button", { name: "Note" }));
     const note = await screen.findByLabelText("Note");
     fireEvent.change(note, { target: { value: "Wants the cutover plan in writing" } });
     fireEvent.click(screen.getByRole("button", { name: "Add note" }));
