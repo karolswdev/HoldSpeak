@@ -24,9 +24,10 @@ The field names are Telnyx's OpenAPI spec
 from __future__ import annotations
 
 import os
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
-import httpx
+if TYPE_CHECKING:
+    import httpx
 
 from ..logging_config import get_logger
 from ..redaction import redact_error
@@ -35,7 +36,8 @@ log = get_logger("line.telnyx")
 
 API_ENV = "HOLDSPEAK_TELNYX_API"
 DEFAULT_API = "https://api.telnyx.com/v2"
-TIMEOUT = httpx.Timeout(15.0, connect=5.0)
+#: httpx.Timeout(15.0, connect=5.0); httpx loads at the first client (26 ms off the hub start).
+TIMEOUT = {"timeout": 15.0, "connect": 5.0}
 
 
 def api_base() -> str:
@@ -55,8 +57,10 @@ class Telnyx:
     def __init__(self, key: str, *, base: Optional[str] = None, transport: Optional[httpx.BaseTransport] = None) -> None:
         if not key:
             raise ValueError("a Telnyx API key is required")
+        import httpx
+
         self._key = key
-        self._client = httpx.Client(base_url=base or api_base(), timeout=TIMEOUT, transport=transport,
+        self._client = httpx.Client(base_url=base or api_base(), timeout=httpx.Timeout(**TIMEOUT), transport=transport,
                                     headers={"Authorization": f"Bearer {key}", "Accept": "application/json"})
 
     def close(self) -> None:
@@ -72,6 +76,8 @@ class Telnyx:
         return redact_error(str(text).replace(self._key, "[redacted]"), 300)
 
     def _call(self, method: str, path: str, *, params: Any = None, body: Any = None) -> Any:
+        import httpx
+
         try:
             answer = self._client.request(method, path, params=params, json=body)
         except httpx.HTTPError as exc:

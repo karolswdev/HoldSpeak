@@ -25,6 +25,7 @@ from ....speech_session import (
 )
 from ...context import WebContext
 from ...runtime_support import error_500
+from .._mount import mount_router
 
 from .voice_stream import build_voice_stream_router
 from .voice_support import (
@@ -384,7 +385,8 @@ def build_voice_router(ctx: WebContext) -> APIRouter:
     # The streaming socket (HS-132-12), carried on the SAME router the lane
     # always returned. The registry accessor is handed over from this module, so
     # the socket and the open-mic legs above read ONE ``browser_mic_sessions``.
-    router.include_router(
+    mount_router(
+        router,
         build_voice_stream_router(ctx, sessions=lambda: browser_mic_sessions())
     )
 

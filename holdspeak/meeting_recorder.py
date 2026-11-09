@@ -21,15 +21,12 @@ import numpy as np
 if TYPE_CHECKING:
     from .audio import AudioSource
 
-try:
-    import sounddevice as sd
-except Exception as exc:  # pragma: no cover
-    sd = None  # type: ignore[assignment]
-    _SD_IMPORT_ERROR: Optional[BaseException] = exc
-else:  # pragma: no cover
-    _SD_IMPORT_ERROR = None
+#: sounddevice, imported by ``_require_sounddevice`` at first use: the import
+#: starts PortAudio (0.07 s), and the hub opens no stream at start.
+sd: Any = None
+_SD_IMPORT_ERROR: Optional[BaseException] = None
 
-from .audio import _linear_resample_mono
+from .audio import _linear_resample_mono, load_sounddevice
 from .audio_devices import (
     find_blackhole,
     find_device_by_name,
@@ -55,6 +52,9 @@ class MeetingRecorderError(HoldSpeakError):
 
 
 def _require_sounddevice():
+    global sd, _SD_IMPORT_ERROR
+    if sd is None:
+        sd, _SD_IMPORT_ERROR = load_sounddevice()
     if sd is None:
         raise MeetingRecorderError(
             "sounddevice/PortAudio is not available. "
