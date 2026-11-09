@@ -131,9 +131,11 @@ def _assign_subject(
     })
 
 
-def _executions(db: Any) -> list[str]:
+def _receipts(db: Any) -> list[str]:
+    """The engine door's runs, in order: each is one kernel operation (its receipt)."""
     with db._connection() as conn:
-        return [r["id"] for r in conn.execute("SELECT id FROM inference_route_executions ORDER BY rowid")]
+        return [r["operation_id"] for r in conn.execute(
+            "SELECT operation_id FROM kernel_operations WHERE name='inference.invoke' ORDER BY created_at, rowid")]
 
 
 class _ToolThenTextEngine:
@@ -180,7 +182,7 @@ class _TextEngine:
 
 
 def _thread_service(hub: Any, frames: list, *, control_mode: str = "yolo") -> Any:
-    """The hub's ThreadService wiring (web/routes/_thread_factory.py) with a
+    """The hub's ThreadService wiring (``services/thread_service.py`` hub_thread_service) with a
     recording broadcast and a fixed posture."""
     from holdspeak.mcp.tools import dispatch as mcp_dispatch
     from holdspeak.services.thread_service import ThreadService
@@ -536,7 +538,7 @@ def test_a_chat_with_lan_local_cloud_turns_keeps_each_turns_route(hub) -> None:
     for n, pid in enumerate(["glass-lan", "glass-local", "glass-cloud"], start=1):
         _assign(hub.db, "chat.turn", [pid], f"chat-{n}")
         _run_turn(svc, frames, tid, f"turn {n}")
-    executions = _executions(hub.db)
+    executions = _receipts(hub.db)
     assert len(executions) == 3
     wire = hub.client.get(f"/api/threads/{tid}").json()
     turns = [m for m in wire["messages"] if m["role"] == "assistant"]

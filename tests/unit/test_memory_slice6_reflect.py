@@ -414,9 +414,15 @@ def test_with_no_page_and_no_observation_the_chat_payload_is_byte_identical(hub,
     main = json.loads((Path(__file__).parents[1] / "fixtures" / "memory_slice6_main_chat.json").read_text())
     _filed_note(hub.db, "n1", "Atlas launch is 2026-10-01.", "atlas" if refs else None)
     sweep(hub.db)
-    turn = _turn(hub, "What about the Atlas launch?", refs=refs)
-    adoption = hub.broker.inference_adoption_service
-    admitted = adoption.admitted_payload(str(hub.db.threads.get_message(turn["assistant_message_id"]).operation_id))
+    # The payload the turn's first pass gave the engine door's runner.
+    runner, sent = hub.broker.inference_runner, []
+    invoke_stream = runner.invoke_stream
+    runner.invoke_stream = lambda request, *a, **k: (sent.append(request.payload), invoke_stream(request, *a, **k))[1]
+    try:
+        _turn(hub, "What about the Atlas launch?", refs=refs)
+    finally:
+        del runner.invoke_stream
+    admitted = sent[0]
     without_tools = {k: v for k, v in admitted.items() if k != "tools"}
     assert json.dumps(without_tools, sort_keys=True) == json.dumps(main["project" if refs else "desk"], sort_keys=True)
     assert "[MEMORY" not in json.dumps(admitted)

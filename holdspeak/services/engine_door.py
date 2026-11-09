@@ -37,6 +37,8 @@ class EngineDoorError(RuntimeError):
         self.outcome = outcome
         self.send_phase = send_phase
         self.error = error
+        #: ``(revision, send_phase, operation_id, outcome)`` of each attempt (``route``).
+        self.sent: tuple[tuple[str, str, str, str], ...] = ()
 
 
 @dataclass(frozen=True)
@@ -64,6 +66,8 @@ class Answer:
     send_phase: str = ""
     published: Any = None
     invocation_id: str = ""
+    #: ``(revision, send_phase, operation_id, outcome)`` of each attempt (``route``).
+    sent: tuple[tuple[str, str, str, str], ...] = ()
 
     @property
     def output(self) -> str:
@@ -148,7 +152,9 @@ DEFAULT_CONTEXT_TOKENS = 16384
 def room(broker: Any, engine: Engine, payload: Any, *, reserved_output_tokens: int) -> int:
     """Tokens left on the engine after ``payload`` and the reserved answer
     (one token for each 3.5 characters of the JSON payload, rounded up, plus
-    16). Negative means the payload does not fit."""
+    16). The engine's context is its revision's ceiling, as admission read
+    it (16384 when the revision names none). Negative means the payload does
+    not fit."""
     import json
 
     try:
@@ -156,7 +162,7 @@ def room(broker: Any, engine: Engine, payload: Any, *, reserved_output_tokens: i
         ceiling = int(getattr(revision, "context_ceiling", 0) or 0)
     except Exception:
         ceiling = 0
-    ceiling = min(ceiling, DEFAULT_CONTEXT_TOKENS) if ceiling else DEFAULT_CONTEXT_TOKENS
+    ceiling = ceiling or DEFAULT_CONTEXT_TOKENS
     text = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True, default=str)
     return ceiling - (-(-len(text) * 2 // 7) + 16 + int(reserved_output_tokens))
 
@@ -199,6 +205,11 @@ def run(
     invocation_id: str = "",
     stage: Optional[tuple[str, Callable[[Any], Mapping[str, Any]]]] = None,
     retry: Optional[tuple[str, str]] = None,
+    on_delta: Optional[Callable[[Any], None]] = None,
+    prepare: Optional[Callable[[Any, Engine], Any]] = None,
+    subject: Optional[tuple[str, str]] = None,
+    parent_context: Any = None,
+    planned_node: str = "",
 ) -> Answer:
     """Run ``job`` once on its assigned engine (or on ``engine`` when the
     caller already holds one) and return the answer.
@@ -214,35 +225,102 @@ def run(
     that fails waits on the owner in Needs you (``failure_items``); when
     ``kind`` is registered (``on_retry``) its row has Retry. A caller that
     names its own ``invocation_id`` (a Stop handle) is not tracked.
-    Raises ``EngineDoorError``.
+    ``on_delta``: the job streams (``run_stream``). ``prepare(payload,
+    engine)`` gives the bytes that go to that engine. ``subject`` is as in
+    ``engine_for``. Raises ``EngineDoorError``.
     """
     if engine is None:
-        engine = engine_for(broker, job)
+        engine = engine_for(broker, job, subject=subject)
     if not invocation_id:
         invocation_id = door_id(job, retry)
-    try:
+    started: list[bool] = []
+
+    def forward(delta: Any) -> None:
+        started.append(getattr(delta, "kind", "") in _STARTED)
+        on_delta(delta)  # type: ignore[misc]
+
+    def once(on: Engine, run_id: str) -> Answer:
         return _run_once(
-            broker, principal, job, payload, engine=engine, contract=contract,
-            contract_revision=contract_revision, deadline=deadline, adapter=adapter,
-            result_ref=result_ref, invocation_id=invocation_id, stage=stage,
+            broker, principal, job, prepare(payload, on) if prepare else payload, engine=on,
+            contract=contract, contract_revision=contract_revision, deadline=deadline, adapter=adapter,
+            result_ref=result_ref, invocation_id=run_id, stage=stage,
+            on_delta=forward if on_delta else None, parent_context=parent_context, planned_node=planned_node,
         )
+
+    try:
+        return once(engine, invocation_id)
     except EngineDoorError as exc:
         # One retry on the next engine of the chain, only when the first one
-        # said plainly that it did not answer.
-        if engine.fallback is None or exc.outcome not in {"failed", "refused"}:
+        # said plainly that it did not answer, and (streamed) before its
+        # first token: after it, the failure is the job's.
+        if engine.fallback is None or any(started) or exc.outcome not in {"failed", "refused"}:
             raise
-        return _run_once(
-            broker, principal, job, payload, engine=engine.fallback, contract=contract,
-            contract_revision=contract_revision, deadline=deadline, adapter=adapter,
-            result_ref=result_ref, invocation_id=(invocation_id + "_r2") if invocation_id else "",
-            stage=stage,
-        )
+        first = exc.sent
+    try:
+        answer = once(engine.fallback, (invocation_id + "_r2") if invocation_id else "")
+    except EngineDoorError as again:
+        again.sent = first + again.sent
+        raise
+    return replace(answer, sent=first + answer.sent)
+
+
+#: Delta kinds that mean a streamed answer has started.
+_STARTED = frozenset({"text", "reasoning", "tool_calls"})
+
+
+def run_stream(broker: Any, principal: Any, job: str, payload: Any, *, on_delta: Callable[[Any], None],
+               adapter: Any, **kwargs: Any) -> Answer:
+    """``run`` for a streamed job: the runner gives each ``Delta`` to
+    ``on_delta``; the one retry on the next engine happens only before the
+    first token."""
+    return run(broker, principal, job, payload, on_delta=on_delta, adapter=adapter, **kwargs)
+
+
+def route(broker: Any, sent: Any) -> Optional[dict[str, Any]]:
+    """Where a job's bytes went (Article III): of its attempts that were sent,
+    the least private (on a tie, the later). ``{lamp, host, model, receipt,
+    fallback}``: ``receipt`` is that attempt's kernel operation, ``fallback``
+    is True when that attempt did not answer and another one did. ``None``
+    when no attempt was sent or its engine is not read."""
+    from ..inference_locality import _SENT_PHASES, LAMP_RANK, _attempt_route
+
+    db = getattr(broker, "database", None)
+    sent = tuple(sent or ())
+    answered = any(attempt[3] == "succeeded" for attempt in sent)
+    best: Optional[tuple[tuple[int, int], dict[str, Any]]] = None
+    for index, (revision, send_phase, operation_id, outcome) in enumerate(sent):
+        if db is None or send_phase not in _SENT_PHASES:
+            continue
+        try:
+            row = db.deployment_revisions.get(revision)
+            if row is None:
+                continue
+            with db._connection() as conn:
+                where = _attempt_route(conn, {"deployment_revision_id": revision,
+                                              "boundary": getattr(row, "boundary", "")})
+        except Exception:
+            continue
+        key = (LAMP_RANK[where["lamp"]], index)
+        if best is None or key > best[0]:
+            best = (key, {**where, "receipt": operation_id, "fallback": answered and outcome != "succeeded"})
+    return best[1] if best else None
+
+
+def reason(exc: EngineDoorError) -> str:
+    """The face reason token for a job that did not complete."""
+    if exc.code == "no_engine":
+        return "no_engine"
+    if exc.send_phase == "pre_send":
+        return "not_reachable"
+    if exc.error == "inference_local_runtime_busy":
+        return "engine_busy"
+    return {"refused": "refused", "cancelled": "stopped"}.get(exc.outcome, "did_not_answer")
 
 
 def _run_once(
     broker: Any, principal: Any, job: str, payload: Any, *, engine: Engine, contract: str,
     contract_revision: str, deadline: float, adapter: Any, result_ref: Optional[str],
-    invocation_id: str, stage: Any,
+    invocation_id: str, stage: Any, on_delta: Any, parent_context: Any, planned_node: str,
 ) -> Answer:
     from ..kernel.inference_runner import InvocationRequest, ServiceContract
     from ..kernel.runtime import _as_principal
@@ -260,6 +338,7 @@ def _run_once(
         deadline_at=time.time() + deadline,
         payload=payload,
         invocation_id=invocation_id,
+        parent_operation_id=str(getattr(parent_context, "operation_id", "") or ""),
     )
     captured: list[Any] = []
     ref = result_ref or f"{contract.replace('.', '-')}:{engine.assignment or engine.revision}"
@@ -279,13 +358,25 @@ def _run_once(
         # The stager's publisher follows a dialect retry onto the attempt that ran.
         publish = broker.projection_stager.publisher(invocation_id, kind, _encode)
     with _as_principal(principal):
-        outcome = broker.inference_runner.invoke(request, adapter, publish=publish)
-    answer = _answer(outcome, captured, engine, job)
+        if on_delta is None:
+            outcome = broker.inference_runner.invoke(request, adapter, publish=publish)
+        else:
+            outcome = broker.inference_runner.invoke_stream(
+                request, adapter, on_delta=on_delta, publish=publish,
+                parent_context=parent_context, planned_node=planned_node,
+            )
+    sent = ((engine.revision, str(getattr(outcome, "send_phase", "") or ""),
+             str(getattr(outcome, "operation_id", "") or ""), str(getattr(outcome, "outcome", "") or "")),)
+    try:
+        answer = _answer(outcome, captured, engine, job)
+    except EngineDoorError as exc:
+        exc.sent = sent
+        raise
     if stage is not None:
         answer = replace(
             answer, published=broker.projection_stager.finalize(invocation_id), invocation_id=invocation_id,
         )
-    return answer
+    return replace(answer, sent=sent)
 
 
 def _answer(outcome: Any, captured: list[Any], engine: Engine, job: str) -> Answer:
@@ -366,6 +457,7 @@ JOB_WORDS = {
     "memory.page": "a memory page",
     "agent.plan": "the program plan",
     "ask.answer": "an answer",
+    "chat.turn": "the reply",
     "meeting.deferred_analysis": "the note's tasks",
     "project.brief.prepare": "the brief",
 }
@@ -383,6 +475,7 @@ _RETRY_CALLERS = (
     "holdspeak.services.decision_lifecycle_service",
     "holdspeak.web.routes.delivery_prs",
     "holdspeak.services.ask_service",
+    "holdspeak.services.thread_service",
 )
 
 

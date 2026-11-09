@@ -53,7 +53,6 @@ export interface ThreadMessageWire {
   egress_scope: string | null;
   egress_host: string | null;
   model_id: string | null;
-  route_plan_id: string | null;
   stats_json: Record<string, unknown> | null;
   error_json: Record<string, unknown> | null;
   created_at: string;

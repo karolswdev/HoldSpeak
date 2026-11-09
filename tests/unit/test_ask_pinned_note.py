@@ -22,7 +22,20 @@ from holdspeak.services.thread_service import ThreadService
 from holdspeak.web.context import WebContext
 from holdspeak.web.routes.primitives.ask import build_ask_router
 from tests.unit.test_ask_engine_door import assign_answers
-from tests.unit.test_thread_service import FakeAdoptionService
+from tests.unit._door_fakes import Broker, door_engine, words  # noqa: F401 - door_engine is a fixture
+
+
+def _capturing(on_send=None):
+    """A broker whose runner keeps each payload it is given and answers."""
+    payloads: list = []
+
+    def engine(request, on_delta):
+        payloads.append(request.payload)
+        if on_send is not None:
+            on_send()
+        return words("Pinned answer")(request, on_delta)
+
+    return Broker(engine), payloads
 
 
 OWNER = Principal(PrincipalKind.OWNER, "test-owner")
@@ -188,31 +201,20 @@ def test_http_passes_snapshot_and_names_source_changed(selected, monkeypatch):
     assert response.json()["reason"] == "source_changed"
 
 
-def test_loop_dispatch_keeps_selected_body_after_admission(selected, monkeypatch):
+def test_loop_dispatch_keeps_selected_body_after_admission(selected, monkeypatch, door_engine):
     db, thought, snapshot = selected
-    class CaptureAdoption(FakeAdoptionService):
-        def __init__(self):
-            super().__init__(output="Pinned answer")
-            self.payloads = []
-        def admit(self, principal, **kwargs):
-            self.payloads.append(kwargs["payload"])
-            admitted = super().admit(principal, **kwargs)
-            RefinementThoughtService(db).update_working(
-                OWNER, thought["id"], expected_aggregate_revision=1,
-                expected_working_revision=1, body_markdown="NEW BODY",
-            )
-            return admitted
-    adoption = CaptureAdoption()
-    class Broker:
-        inference_adoption_service = adoption
+    broker, payloads = _capturing(lambda: RefinementThoughtService(db).update_working(
+        OWNER, thought["id"], expected_aggregate_revision=1,
+        expected_working_revision=1, body_markdown="NEW BODY",
+    ))
     service = AskService(db, thread_service=lambda **kw: ThreadService(
-        db, broadcast=lambda *_: None, broker=Broker(), **kw))
+        db, broadcast=lambda *_: None, broker=broker, **kw))
     monkeypatch.setattr(ask_desk, "tools_mode", lambda _db: ask_desk.LOOP)
     result = asyncio.run(service.ask_in_thread(
         OWNER, "Question", {"refs": [snapshot["ref"]]}, source_snapshot=snapshot))
     assert result["output"] == "Pinned answer"
-    assert len(adoption.payloads) == 1
-    payload = json.dumps(adoption.payloads[0])
+    assert len(payloads) == 1
+    payload = json.dumps(payloads[0])
     assert "OLD BODY" in payload and "NEW BODY" not in payload
 
 
@@ -242,7 +244,7 @@ def test_loop_current_pin_keeps_frozen_body_older_turn_replays_live(selected):
     assert "NEW BODY" in json.dumps(older) and "OLD BODY" not in json.dumps(older)
 
 
-def test_loop_deletion_gap_parks_unsent_user_turn(selected, monkeypatch):
+def test_loop_deletion_gap_parks_unsent_user_turn(selected, monkeypatch, door_engine):
     db, thought, snapshot = selected
     prepared = _pinned_note(db, snapshot)
     service = ThreadService(db, broadcast=lambda *_: None)
@@ -263,7 +265,7 @@ def test_loop_deletion_gap_parks_unsent_user_turn(selected, monkeypatch):
     assert row["aborted_at"] is not None and row["deleted_at"] is not None
 
 
-def test_loop_deletion_during_memory_fit_still_refuses(selected, monkeypatch):
+def test_loop_deletion_during_memory_fit_still_refuses(selected, monkeypatch, door_engine):
     db, _, snapshot = selected
     prepared = _pinned_note(db, snapshot)
     service = ThreadService(db, broadcast=lambda *_: None)
@@ -330,23 +332,14 @@ def test_normal_container_does_not_reread_selected_note(selected, monkeypatch, c
 
 
 @pytest.mark.parametrize("container", ["knowledge", "zone", "knowledge_zone", "project_knowledge"])
-def test_loop_container_does_not_reread_selected_note(selected, monkeypatch, container):
+def test_loop_container_does_not_reread_selected_note(selected, monkeypatch, door_engine, container):
     db, thought, snapshot = selected
     containing_ref = _containing_ref(db, snapshot["ref"], container)
     if container == "project_knowledge":
         db.memory = None
-    class CaptureAdoption(FakeAdoptionService):
-        def __init__(self):
-            super().__init__(output="Pinned answer")
-            self.payloads = []
-        def admit(self, principal, **kwargs):
-            self.payloads.append(kwargs["payload"])
-            return super().admit(principal, **kwargs)
-    adoption = CaptureAdoption()
-    class Broker:
-        inference_adoption_service = adoption
+    broker, payloads = _capturing()
     service = AskService(db, thread_service=lambda **kw: ThreadService(
-        db, broadcast=lambda *_: None, broker=Broker(), **kw))
+        db, broadcast=lambda *_: None, broker=broker, **kw))
     monkeypatch.setattr(ask_desk, "tools_mode", lambda _db: ask_desk.LOOP)
     original = ask_desk.run_loop
     async def edit_before_start_turn(*args, **kwargs):
@@ -361,7 +354,7 @@ def test_loop_container_does_not_reread_selected_note(selected, monkeypatch, con
         source_snapshot=snapshot,
     ))
     assert result["output"] == "Pinned answer"
-    prompt = json.dumps(adoption.payloads[0])
+    prompt = json.dumps(payloads[0])
     assert "OLD BODY" in prompt and "OTHER BODY" in prompt and "NEW BODY" not in prompt
 
 
@@ -414,20 +407,11 @@ def test_normal_and_cli_keep_original_memory_decision(selected, monkeypatch, mod
 
 
 @pytest.mark.parametrize("source_mode", ["snapshot_only", "context_note", "grounding_ref"])
-def test_loop_keeps_original_memory_decision_and_looked_at(selected, monkeypatch, source_mode):
+def test_loop_keeps_original_memory_decision_and_looked_at(selected, monkeypatch, door_engine, source_mode):
     db, thought, snapshot = selected
-    class CaptureAdoption(FakeAdoptionService):
-        def __init__(self):
-            super().__init__(output="Pinned answer")
-            self.payloads = []
-        def admit(self, principal, **kwargs):
-            self.payloads.append(kwargs["payload"])
-            return super().admit(principal, **kwargs)
-    adoption = CaptureAdoption()
-    class Broker:
-        inference_adoption_service = adoption
+    broker, payloads = _capturing()
     service = AskService(db, thread_service=lambda **kw: ThreadService(
-        db, broadcast=lambda *_: None, broker=Broker(), **kw))
+        db, broadcast=lambda *_: None, broker=broker, **kw))
     monkeypatch.setattr(ask_desk, "tools_mode", lambda _db: ask_desk.LOOP)
     original_loop = ask_desk.run_loop
     async def change_after_snapshot(*args, **kwargs):
@@ -442,7 +426,7 @@ def test_loop_keeps_original_memory_decision_and_looked_at(selected, monkeypatch
         OWNER, "Atlas review", grounding, context=context, source_snapshot=snapshot,
     ))
     assert result["output"] == "Pinned answer"
-    prompt = json.dumps(adoption.payloads[0])
+    prompt = json.dumps(payloads[0])
     assert "OLD BODY" in prompt
     assert ("UNRELATED MEMORY" in prompt) is (source_mode == "snapshot_only")
     assert "NEW BODY" not in prompt

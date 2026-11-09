@@ -77,8 +77,8 @@ def build_threads_router(ctx: WebContext) -> APIRouter:
 
     def _service() -> ThreadService:
         # One factory shared with the recipe chat alias (HS-151-04).
-        from ._thread_factory import thread_service_from_ctx
-        return thread_service_from_ctx(ctx)
+        from ...services.thread_service import hub_thread_service
+        return hub_thread_service(ctx.broadcast)
 
     def _error(exc: ServiceError) -> JSONResponse:
         payload = dict(exc.context)

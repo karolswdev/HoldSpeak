@@ -17,7 +17,6 @@ import os
 import tempfile
 import threading
 import time
-import uuid
 from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock, patch
@@ -33,6 +32,7 @@ from holdspeak.services.thread_service import (
     _PEOPLE_REDACTION,
     _guardrail_matches,
 )
+from tests.unit._door_fakes import Broker, door_engine  # noqa: F401 - door_engine is a fixture
 
 
 OWNER = Principal(PrincipalKind.OWNER, "guardrail-test-owner")
@@ -783,87 +783,33 @@ class TestRealRunnerGuardrailCloudRedaction:
 # ---------------------------------------------------------------------------
 
 
-class _GuardrailToolCallBroker:
-    """Broker whose adoption service yields tool_calls on the first call,
-    then text on the second. For guardrail tests with fake broker path."""
+def _GuardrailToolCallBroker(
+    *, tool_calls: list[dict[str, Any]] | None = None, final_text: str = "Done.",
+) -> Broker:
+    """A broker whose runner yields tool_calls on the first pass, then text
+    (``_door_fakes``). For guardrail tests with the fake broker path."""
+    calls = tool_calls or [{"id": "call_1", "name": "people.commitment.transition", "arguments": "{}"}]
+    count = [0]
 
-    _call_count: int = 0
-
-    def __init__(
-        self,
-        *,
-        tool_calls: list[dict[str, Any]] | None = None,
-        final_text: str = "Done.",
-        egress: str = "same_device",
-    ):
-        self._tool_calls = tool_calls or [
-            {"id": "call_1", "name": "people.commitment.transition", "arguments": '{}'},
-        ]
-        self._final_text = final_text
-        self._egress = egress
-
-    @property
-    def inference_adoption_service(self):
-        return _GuardrailAdoptionService(
-            tool_calls=self._tool_calls,
-            final_text=self._final_text,
-            egress=self._egress,
-        )
-
-    @property
-    def inference_runner(self):
-        return MagicMock()
-
-
-class _GuardrailAdoptionService:
-    _call_count: int = 0
-
-    def __init__(self, *, tool_calls, final_text, egress):
-        self._tool_calls = tool_calls
-        self._final_text = final_text
-        self._egress = egress
-
-    def admit(self, principal, *, command_id, capability_id, operation_id,
-              payload, invocation_id, reserved_output_tokens=512):
-        return {
-            "execution": {"id": f"exec_{uuid.uuid4().hex[:8]}"},
-            "route_plan": {
-                "id": "rp_test",
-                "egress_scope": self._egress,
-                "model_id": "test-model",
-                "entries": [{"boundary": self._egress}],
-            },
-            "operation_request_plan": {"id": "orp_test"},
-        }
-
-    def execute_stream(self, principal, *, execution_id, adapter, on_delta,
-                       publish=None, payload_redactor=None):
-        _GuardrailAdoptionService._call_count += 1
-        count = _GuardrailAdoptionService._call_count
-        if count == 1:
-            on_delta(Delta(kind="tool_calls", meta={"tool_calls": self._tool_calls}))
+    def engine(_request: Any, on_delta: Any) -> str:
+        count[0] += 1
+        if count[0] == 1:
+            on_delta(Delta(kind="tool_calls", meta={"tool_calls": calls}))
             on_delta(Delta(kind="usage", meta={"prompt_tokens": 10, "completion_tokens": 0}))
             on_delta(Delta(kind="done"))
-        else:
-            for word in self._final_text.split(" "):
-                on_delta(Delta(kind="text", text=word + " "))
-            on_delta(Delta(kind="usage", meta={"prompt_tokens": 10, "completion_tokens": 5}))
-            on_delta(Delta(kind="done"))
-        return {
-            "outcome": "succeeded",
-            "result": {"output": ""},
-            "receipt": {"id": f"receipt_{count}", "outcome": "succeeded"},
-        }
+            return ""
+        for word in final_text.split(" "):
+            on_delta(Delta(kind="text", text=word + " "))
+        on_delta(Delta(kind="usage", meta={"prompt_tokens": 10, "completion_tokens": 5}))
+        on_delta(Delta(kind="done"))
+        return final_text
 
-    def apply_next_run_override(self, *args, **kwargs):
-        pass
+    return Broker(engine)
 
 
-@pytest.fixture(autouse=True)
-def _reset_guardrail_call_count():
-    _GuardrailAdoptionService._call_count = 0
+@pytest.fixture
+def door(door_engine):
     yield
-    _GuardrailAdoptionService._call_count = 0
 
 
 def _fake_dispatch(name: str, args: dict, principal: Principal) -> Any:
@@ -871,6 +817,7 @@ def _fake_dispatch(name: str, args: dict, principal: Principal) -> Any:
     return {"tool": name, "args": args, "ok": True}
 
 
+@pytest.mark.usefixtures("door")
 class TestGuardrailRunsOncePerPass:
     """The guardrail runs ONCE per pass regardless of the number of tool calls."""
 
@@ -925,6 +872,7 @@ class TestGuardrailRunsOncePerPass:
             )
 
 
+@pytest.mark.usefixtures("door")
 class TestGuardrailTimeoutContinues:
     """Guardrail engine sleeping past the timeout -> one guardrail_failed warning,
     turn continues, no call denied."""
@@ -973,6 +921,7 @@ class TestGuardrailTimeoutContinues:
             assert len(done_frames) >= 1, "Turn should complete despite guardrail failure"
 
 
+@pytest.mark.usefixtures("door")
 class TestGuardrailExceptionContinues:
     """Guardrail engine raising -> one guardrail_failed warning, turn continues."""
 

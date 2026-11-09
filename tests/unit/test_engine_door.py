@@ -100,3 +100,59 @@ def test_a_stop_or_an_unknown_send_is_never_retried(outcome: str) -> None:
     with pytest.raises(engine_door.EngineDoorError):
         engine_door.run(_broker(runner), "owner", "ask.answer", {}, engine=first)
     assert runner.revisions == ["rev-1"]
+
+
+# ── a streamed job (run_stream): the chat turn's door ───────────────────
+
+
+def _stream_broker(fail_on: set[str], *, words_first: bool = False) -> Any:
+    from holdspeak.kernel.inference_stream import Delta
+
+    class _StreamRunner:
+        def __init__(self) -> None:
+            self.revisions: list[str] = []
+
+        def invoke_stream(self, request: Any, adapter: Any, *, on_delta: Any, publish: Any = None,
+                          parent_context: Any = None, planned_node: str = "") -> InvocationOutcome:
+            self.revisions.append(request.deployment_revision)
+            if request.deployment_revision in fail_on:
+                if words_first:
+                    on_delta(Delta(kind="text", text="half an "))
+                return InvocationOutcome("op-" + request.deployment_revision, request.invocation_id, "failed",
+                                         "", {}, "down", send_phase="provider_no_generation")
+            on_delta(Delta(kind="text", text="answer"))
+            ref = publish({"output": "answer"})
+            return InvocationOutcome("op-" + request.deployment_revision, request.invocation_id, "succeeded",
+                                     ref, {}, send_phase="provider_returned")
+
+    return SimpleNamespace(database=None, inference_runner=_StreamRunner())
+
+
+def test_a_stream_fails_over_to_the_next_engine_before_its_first_token() -> None:
+    broker, seen = _stream_broker({"rev-1"}), []
+    engine = engine_door.Engine("rev-1", fallback=engine_door.Engine("rev-2"))
+    answer = engine_door.run_stream(broker, "owner", "chat.turn", {"messages": []}, engine=engine,
+                                    on_delta=seen.append, adapter=None, invocation_id="turn_1")
+    assert broker.inference_runner.revisions == ["rev-1", "rev-2"]
+    assert answer.engine.revision == "rev-2" and answer.output == "answer"
+    assert [s[2:] for s in answer.sent] == [("op-rev-1", "failed"), ("op-rev-2", "succeeded")]
+
+
+def test_after_the_first_token_the_failure_is_the_jobs() -> None:
+    broker = _stream_broker({"rev-1"}, words_first=True)
+    engine = engine_door.Engine("rev-1", fallback=engine_door.Engine("rev-2"))
+    with pytest.raises(engine_door.EngineDoorError) as caught:
+        engine_door.run_stream(broker, "owner", "chat.turn", {"messages": []}, engine=engine,
+                               on_delta=lambda _d: None, adapter=None, invocation_id="turn_2")
+    assert broker.inference_runner.revisions == ["rev-1"]
+    assert caught.value.operation_id == "op-rev-1" and engine_door.reason(caught.value) == "did_not_answer"
+
+
+def test_prepare_shapes_the_bytes_for_each_engine() -> None:
+    broker = _stream_broker({"rev-1"})
+    engine = engine_door.Engine("rev-1", fallback=engine_door.Engine("rev-2"))
+    sent: list[tuple[str, Any]] = []
+    engine_door.run_stream(broker, "owner", "chat.turn", {"messages": ["x"]}, engine=engine,
+                           on_delta=lambda _d: None, adapter=None, invocation_id="turn_3",
+                           prepare=lambda body, on: sent.append((on.revision, body)) or {"for": on.revision})
+    assert [revision for revision, _ in sent] == ["rev-1", "rev-2"]

@@ -35,10 +35,10 @@ def build_ask_service(ctx: WebContext) -> AskService:
     ``invocation_id`` instead of assembling a second, divergent one.
     """
     from ..sync import _hub_model_name
-    from .._thread_factory import thread_service_from_ctx
+    from ....services.thread_service import hub_thread_service
     # Betterment Q7: an Ask on an HTTP engine that takes tool calls runs the
     # hub's tool loop (the Thread turn) with the Ask's prompt and palette.
-    return AskService(_database(),hub_model=lambda: _hub_model_name(ctx),broadcast=lambda state, **frame: _run_frame(ctx,state,**frame),rails_hydrator=lambda refs,principal: hydrate_rails_refs(refs,principal=principal),observer=get_observer(),progress=lambda event: _ask_progress(ctx,event),thread_service=lambda **overrides: thread_service_from_ctx(ctx,**overrides),text=lambda event: _ask_text(ctx,event))
+    return AskService(_database(),hub_model=lambda: _hub_model_name(ctx),broadcast=lambda state, **frame: _run_frame(ctx,state,**frame),rails_hydrator=lambda refs,principal: hydrate_rails_refs(refs,principal=principal),observer=get_observer(),progress=lambda event: _ask_progress(ctx,event),thread_service=lambda **overrides: hub_thread_service(ctx.broadcast,**overrides),text=lambda event: _ask_text(ctx,event))
 
 def _ask_progress(ctx: WebContext, event: dict[str, Any]) -> None:
     """Betterment Q2: one running Ask's progress (busy, trying again) to the face."""

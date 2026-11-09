@@ -37,12 +37,12 @@ import json
 import sqlite3
 import threading
 import time
-import uuid
 from pathlib import Path
 from typing import Any
 
 import pytest
 
+from tests.unit._door_fakes import Runner, door_engine, words  # noqa: F401 - door_engine is a fixture
 from holdspeak.db import Database
 from holdspeak.db.memory import rebuild_memory_index
 from holdspeak.principals import Principal, PrincipalKind
@@ -981,32 +981,25 @@ def _wait_turn(service: ThreadService, timeout: float = 5.0) -> None:
         time.sleep(0.01)
 
 
-class _FakeAdoption:
-    def admit(self, principal, *, command_id, capability_id, operation_id,
-              payload, invocation_id, reserved_output_tokens=512):
-        _FakeBroker.last_payload = payload
-        return {"execution": {"id": "exec_" + uuid.uuid4().hex[:8]},
-                "route_plan": {"id": "rp_test", "egress_scope": "same_device",
-                               "model_id": "test-model"},
-                "operation_request_plan": {"id": "orp_test"}}
-
-    def execute_stream(self, principal, *, execution_id, adapter, on_delta,
-                       publish=None, payload_redactor=None):
-        from holdspeak.kernel.inference_stream import Delta
-        on_delta(Delta(kind="text", text="ok"))
-        on_delta(Delta(kind="usage", meta={"prompt_tokens": 1, "completion_tokens": 1}))
-        on_delta(Delta(kind="done"))
-        return {"outcome": "succeeded", "result": {"output": "ok"},
-                "receipt": {"id": "receipt_test", "outcome": "succeeded"}}
-
-
 class _FakeBroker:
-    """Captures the payload the model would actually have received."""
+    """Captures the payload the model would actually have received: the
+    request the engine door gives the runner (``_door_fakes``)."""
+
+    database = None
     last_payload: Any = None
 
-    @property
-    def inference_adoption_service(self) -> _FakeAdoption:
-        return _FakeAdoption()
+    def __init__(self) -> None:
+        self.inference_runner = Runner(self._answer)
+
+    @staticmethod
+    def _answer(request: Any, on_delta: Any) -> str:
+        _FakeBroker.last_payload = request.payload
+        return words("ok")(request, on_delta)
+
+
+@pytest.fixture(autouse=True)
+def _door(door_engine):
+    yield
 
 
 def _frozen_texts(db: Database, thread_id: str) -> list[str]:

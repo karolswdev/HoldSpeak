@@ -135,7 +135,7 @@ def _service(hub: Any, monkeypatch: pytest.MonkeyPatch, engine: Any, frames: lis
     from holdspeak.services import ask_desk
     from holdspeak.setup_runtime import endpoint_tool_support
     from holdspeak.web.context import WebContext
-    from holdspeak.web.routes._thread_factory import thread_service_from_ctx
+    from holdspeak.services.thread_service import hub_thread_service
 
     monkeypatch.setenv("HOLDSPEAK_ASK_SERVER_TOOLS", "on")
     props = json.dumps({"chat_template_caps": RECORDED["props_chat_template_caps"]}).encode()
@@ -151,7 +151,7 @@ def _service(hub: Any, monkeypatch: pytest.MonkeyPatch, engine: Any, frames: lis
     ctx = WebContext(get_state=lambda: {}, broadcast=lambda kind, data: frames.append((kind, data)))
     service = CallsService()
     service.configure(broadcast=ctx.broadcast, db=lambda: hub.db,
-                      thread_factory=lambda **overrides: thread_service_from_ctx(ctx, **overrides))
+                      thread_factory=lambda **overrides: hub_thread_service(ctx.broadcast, **overrides))
     return service
 
 
@@ -180,6 +180,11 @@ def test_a_call_does_the_job_reads_it_back_and_keeps_the_transcript_as_a_note(hu
     seen: list[dict[str, Any]] = []
     passes = [dict(p) for p in RECORDED["passes"]]
     service = _service(hub, monkeypatch, lambda model: _RecordedHomeEngine(model, passes, seen), frames)
+    from holdspeak.services import engine_door
+
+    jobs: list[str] = []
+    engine_for = engine_door.engine_for
+    monkeypatch.setattr(engine_door, "engine_for", lambda broker, job, **kw: (jobs.append(job), engine_for(broker, job, **kw))[1])
 
     assert asyncio.run(service.serve_once(wait=5)) == "call"
 
@@ -197,10 +202,8 @@ def test_a_call_does_the_job_reads_it_back_and_keeps_the_transcript_as_a_note(hu
     offered = {tool["function"]["name"] for tool in first["tools"]}
     assert {"door.add_item", "channel.prepare", "channel.send", "nudge.send"} <= offered
     assert not offered & {"settings.update", "inference_assignment.set", "calls.place", "agent.hand"}
-    # The turn ran on calls.turn.
-    with hub.db._connection() as conn:
-        planned = {row[0] for row in conn.execute("SELECT capability_id FROM inference_route_plans").fetchall()}
-    assert "calls.turn" in planned and "chat.turn" not in planned, planned
+    # The turn ran on calls.turn (the engine door's job).
+    assert "calls.turn" in jobs and "chat.turn" not in jobs, jobs
     # The record, the note, the frames.
     [record] = service.list()
     assert record["state"] == "ended" and record["direction"] == "in" and record["remote"] == REMOTE

@@ -115,14 +115,14 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
     async def api_chat_recipe(recipe_id: str, request: Request) -> Any:
         # HS-151-04: recipe.chat is now an alias that creates/reuses a thread
         # bound to this recipe and starts a turn with the body's text.
-        from .._thread_factory import thread_service_from_ctx
+        from ....services.thread_service import hub_thread_service
         from ....db import get_database
         body = await _json_body(request) or {}
         text = str(body.get("text") or body.get("question") or "")
         if not text.strip():
             return JSONResponse({"error": "text is required"}, status_code=400)
         db = get_database()
-        thread_svc = thread_service_from_ctx(ctx)
+        thread_svc = hub_thread_service(ctx.broadcast)
         # Reuse newest non-deleted thread with this recipe_id, or create one.
         existing = [t for t in db.threads.list(limit=50) if t.recipe_id == recipe_id]
         if existing:
