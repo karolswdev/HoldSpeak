@@ -315,7 +315,7 @@ def test_the_settings_wire_fixtures_carry_no_invented_field(hub: Any, tmp_path: 
 # "Settings › System › Remote access grants"). The hub half of each grant
 # fact (kernel op names, revocation reasons, credential revoke ends the
 # grant first) is fenced in tests/unit/test_philo7_article_xi.py,
-# test_philo7_round_two.py and test_philo9_project_grant.py.
+# test_grants_round_two.py and test_philo9_project_grant.py.
 
 
 def _answer(resp: Any) -> Any:

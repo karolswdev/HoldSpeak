@@ -7765,7 +7765,7 @@
       "id": "excluded.p10.resend_op",
       "applicability": "not_applicable",
       "combination": "case.p10.send.resend_setup, case.p10.send.resend_accepted, case.p10.send.resend_prepared, case.p10.send.resend_history, case.p10.send.resend_unknown with an .op sibling",
-      "reason": "each Resend face case reads its durable outcome in the same observation (the press's own answer with its receipt, the hub's send and history rows, the recording edge's count); the operation form of every Resend answer is fenced through the real save, prepare and send routes by tests/unit/test_philo10_email_channel.py test_c7_*."
+      "reason": "each Resend face case reads its durable outcome in the same observation (the press's own answer with its receipt, the hub's send and history rows, the recording edge's count); the operation form of every Resend answer is fenced through the real save, prepare and send routes by tests/unit/test_send_email_channel.py test_c7_*."
     }
   ],
   "council_readings": []

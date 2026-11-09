@@ -417,7 +417,7 @@ def test_p1_the_version_bump_keeps_every_vector_and_recall_has_no_gap(tmp_path: 
     by its vector: before the sweep, after the sweep, and with an engine that
     fails every embed call.  The bump writes the same chunks, so no vector
     is dropped and nothing waits to be embedded."""
-    from test_memory_slice1 import HashEngine
+    from test_memory_admission_fences import HashEngine
 
     from holdspeak.db import Database, reset_database
     from holdspeak.memory.retain import MemorySource, embed_pending, prepare

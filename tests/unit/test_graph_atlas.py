@@ -309,7 +309,7 @@ def source_ref_problem(ref: dict, text: str | None = None) -> str | None:
     return None
 
 
-OP_CASES_PATH = Path(__file__).with_name("philo_atlas_op_cases.txt")
+OP_CASES_PATH = Path(__file__).with_name("graph_atlas_op_cases.txt")
 READ_REFUSAL_SIBLINGS = frozenset({
     "case.philo504.decision_missing.refusal.op",
 })

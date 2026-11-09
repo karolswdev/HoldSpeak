@@ -15,7 +15,7 @@ product seam, the same assertion. Each is red at 24576f25 (the capture in
 6. An accepted suggestion's watch says untested and unbaselined.
 7. B1: a cached GitHub row keeps the state its last probe stored.
 9. The beat's obligations: ``run_once`` is admitted (the model draft's parent:
-   ``test_philo9_02_round_three.py``, through the real runner).
+   ``test_steward_runs_round_three.py``, through the real runner).
 """
 from __future__ import annotations
 
@@ -341,5 +341,5 @@ def test_f9_run_once_is_an_admitted_operation_with_its_receipt(hub: Hub) -> None
     assert receipt["state"] == "succeeded" and receipt["outcome"] == "completed"
 
 
-# The model-draft parentage fence moved to test_philo9_02_round_three.py (ruling D:
+# The model-draft parentage fence moved to test_steward_runs_round_three.py (ruling D:
 # through the REAL inference runner, replacing the captured runner).

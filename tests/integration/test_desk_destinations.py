@@ -15,7 +15,7 @@ write them again from the live hub: ``HOLDSPEAK_WRITE_WIRE_FIXTURES=1``.
 The hub halves the browser tests also asserted are fenced elsewhere and cited
 here, not repeated: the GitHub login read at save and the one-key Jira refusal
 (``tests/unit/test_philo10_cli_channels.py``), the email key store refusal and
-the sender check states (``tests/unit/test_philo10_email_channel.py``).
+the sender check states (``tests/unit/test_send_email_channel.py``).
 """
 from __future__ import annotations
 

@@ -26,7 +26,7 @@ from holdspeak.runtime import composition
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _philo10_send import Hub, _boot, destination, files, send, sends  # noqa: E402
 from _philo11_documents import OWNER, mint_documents  # noqa: E402
-from _philo12_artifacts import mint_meeting_synthesis  # noqa: E402
+from _send_artifacts import mint_meeting_synthesis  # noqa: E402
 
 PERSON = "Priya Nair"
 AGENDA = "Review the rollback plan"

@@ -29,8 +29,8 @@ from holdspeak.services.recipe_service import RecipeService
 from holdspeak.services.workbench_runner import WorkbenchRunner
 from holdspeak.services.workbench_service import WorkbenchService
 from tests.unit.test_phase143_inference_assignments import _profile, _result_claim
-from tests.unit.test_phase143_inference_run_retirement import _legacy_request
-from tests.unit.test_phase143_tool_turn_routing import _qualified_manifest
+from tests.unit.test_engines_run_retirement import _legacy_request
+from tests.unit.test_ask_tool_turn_routing import _qualified_manifest
 
 
 OWNER = Principal(PrincipalKind.OWNER, "placement-matrix-owner")

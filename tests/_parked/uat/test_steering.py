@@ -1,3 +1,6 @@
+# PARKED 2026-11-09 (pipe/test-mass): boots the real product through the UAT conductor.
+# Owner 2026-11-08: no pipeline stands anything up; the Programs engine is the
+# one runner. Kept, not run (tests/_parked/conftest.py ignores this tree).
 """Live steering staged through the product's own /api/coders routes.
 
 Spawns a real tmux coder pane, proves peek shows it, the unarmed consent gate

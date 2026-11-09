@@ -28,7 +28,7 @@ from holdspeak.services.inference_assignment_service import InferenceAssignmentS
 from holdspeak.services.errors import ConflictError
 from holdspeak.services.inference_route_plan_service import InferenceRoutePlanService
 from tests.unit.test_phase143_inference_assignments import OWNER, _profile, _result_claim
-from tests.unit.test_phase143_inference_route_plans import _ready_route
+from tests.unit.test_engines_route_plans import _ready_route
 
 
 def _payload(text: str = "hello") -> dict[str, Any]:

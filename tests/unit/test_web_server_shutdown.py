@@ -1,7 +1,7 @@
 """The hub's shutdown stops every conductor its startup started.
 
 Successor of the parked source pin
-``test_phase200_ci_isolation::test_the_shutdown_handler_stops_every_conductor_it_started``
+``test_pipeline_ci_isolation::test_the_shutdown_handler_stops_every_conductor_it_started``
 (HS-200-03): a conductor that outlives its app keeps ticking against a
 database nobody owns. This boots a real MeetingWebServer, sees the always-on
 conductors running, stops the server, and reads each conductor module's

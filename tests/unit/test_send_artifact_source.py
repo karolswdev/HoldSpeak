@@ -14,7 +14,7 @@ from holdspeak.services.document_sources import render_document
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _philo10_send import _boot, destination  # noqa: E402
-from _philo12_artifacts import mint_ask_keep, mint_meeting_synthesis, mint_run_output
+from _send_artifacts import mint_ask_keep, mint_meeting_synthesis, mint_run_output
 from test_philo5_the_loop import Hub  # noqa: E402
 
 

@@ -28,7 +28,7 @@ from holdspeak.web_server import (
     _parse_iso_datetime,
 )
 from holdspeak.meeting_session import IntelSnapshot, MeetingState, TranscriptSegment
-from tests.unit.test_hs201_route_contract import assign_summary, summary_profile
+from tests.unit.test_meetings_route_contract import assign_summary, summary_profile
 
 
 # ============================================================

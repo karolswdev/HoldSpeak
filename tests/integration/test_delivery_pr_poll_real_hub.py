@@ -21,7 +21,7 @@ import pytest
 
 from tests.unit.test_agent_hand import OWNER, _seed
 from tests.unit.test_conductor_k4_follow_through import _status, _sweep
-from tests.unit.test_philo15_17_merge_reaches_update import REAL_PR1, _real_pr, _rehearsal_launch
+from tests.unit.test_room_merge_reaches_update import REAL_PR1, _real_pr, _rehearsal_launch
 
 pytestmark = [pytest.mark.timeout(120)]
 

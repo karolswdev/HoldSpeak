@@ -1,3 +1,6 @@
+# PARKED 2026-11-09 (pipe/test-mass): boots a rig hub and the real MCP proxy, then restarts the hub under the proxy.
+# Owner 2026-11-08: no pipeline restarts a real hub or stands up a second
+# process; a rig boots only the one process under test. Kept, not run.
 """PHILO-5-01: the Codex seams, through the rig's hub and the REAL proxy.
 
 A hub started the rig's way (``scripts/graph_walk.py`` ``Hub``) publishes its

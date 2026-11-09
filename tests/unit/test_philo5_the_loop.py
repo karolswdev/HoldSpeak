@@ -365,7 +365,7 @@ def test_gap_a_an_mcp_brief_generate_uses_the_hubs_producer_clock(tmp_path, monk
 def _summary_ready_meeting(hub: Hub, monkeypatch: pytest.MonkeyPatch, meeting_id: str) -> str:
     """A meeting with a transcript and an assigned summary route; its selection hash."""
     from tests.unit.test_meeting_deferred_admission import _Route, _assign_deferred_queue_routes
-    from tests.unit.test_philo3_summary_queue import _meeting
+    from tests.unit.test_meetings_summary_queue import _meeting
 
     _assign_deferred_queue_routes(hub.db)
     monkeypatch.setattr("holdspeak.plugins.router.preview_route_from_transcript", lambda **kwargs: _Route(()))

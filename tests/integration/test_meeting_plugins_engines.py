@@ -30,7 +30,7 @@ from holdspeak.kernel.runtime import _configure
 from holdspeak.meeting_import import import_transcript
 from holdspeak.services.inference_assignment_service import InferenceAssignmentService
 from holdspeak.services.meeting_route_projection import project_route
-from tests.unit.test_hs201_route_contract import OWNER
+from tests.unit.test_meetings_route_contract import OWNER
 from tests.unit.test_model_library_providers import _draft, _library
 
 pytestmark = pytest.mark.timeout(240, method="signal")

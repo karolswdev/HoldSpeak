@@ -23,7 +23,7 @@ from holdspeak.db import Database
 from holdspeak.meeting_session import MeetingSession
 from holdspeak.services.errors import ConflictError
 from holdspeak.services.meeting_service import MeetingService
-from tests.unit.test_hs201_record_speech_only import _configure, _FixtureRecorder
+from tests.unit.test_meetings_record_speech_only import _configure, _FixtureRecorder
 
 pytestmark = pytest.mark.timeout(90, method="signal")
 
@@ -84,10 +84,10 @@ def _record_audio_only(
 
     The speech route is migrated from ``route_model``; the returned config
     may then disagree with it (the route wins)."""
-    from tests.unit.test_phase143_meeting_live_cutover import (
+    from tests.unit.test_meetings_live_cutover import (
         OWNER as MIGRATION_OWNER,
     )
-    from tests.unit.test_phase143_meeting_live_cutover import (
+    from tests.unit.test_meetings_live_cutover import (
         _assign_meeting_routes_without_speech,
         _meeting_config,
     )
@@ -158,7 +158,7 @@ def _join_worker(meeting_id: str) -> None:
 
 
 def _owner() -> Any:
-    from tests.unit.test_phase143_meeting_live_cutover import OWNER
+    from tests.unit.test_meetings_live_cutover import OWNER
 
     return OWNER
 

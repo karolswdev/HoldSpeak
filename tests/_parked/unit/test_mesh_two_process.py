@@ -1,3 +1,6 @@
+# PARKED 2026-11-09 (pipe/test-mass): boots two real mesh processes on loopback.
+# Owner 2026-11-08: no pipeline restarts a real hub or stands up a second
+# process; a rig boots only the one process under test. Kept, not run.
 """HS-131-16 — the mesh protocol across two REAL processes on loopback.
 
 Everything else in this story is proved in-process, where it is easy to hold both

@@ -59,9 +59,9 @@ from tests.unit.test_agent_hand import PROJECT
 from tests.unit.test_conductor_k4_follow_through import _launch, _status
 from tests.unit.test_conductor_k4_follow_through import db as db_day
 from tests.unit.test_factory_launch import T0
-from tests.unit.test_philo6_02_brief_truth import EVENTS_AT, GENERATED
-from tests.unit.test_philo6_02_brief_truth import OWNER as OWNER_record
-from tests.unit.test_philo15_17_merge_reaches_update import ViewGh
+from tests.unit.test_brief_truth import EVENTS_AT, GENERATED
+from tests.unit.test_brief_truth import OWNER as OWNER_record
+from tests.unit.test_room_merge_reaches_update import ViewGh
 
 
 def _insert_pipeline_event(

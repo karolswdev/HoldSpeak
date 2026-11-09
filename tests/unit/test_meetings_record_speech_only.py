@@ -223,7 +223,7 @@ def test_no_speech_model_records_audio_only_and_says_why(
     REAL capture journal keeps every audio byte after Stop."""
     import json
 
-    from tests.unit.test_phase143_meeting_live_cutover import (
+    from tests.unit.test_meetings_live_cutover import (
         OWNER as MIGRATION_OWNER,
         _assign_meeting_routes_without_speech,
         _meeting_config,

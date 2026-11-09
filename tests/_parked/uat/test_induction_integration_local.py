@@ -1,3 +1,6 @@
+# PARKED 2026-11-09 (pipe/test-mass): boots the real product through the UAT conductor.
+# Owner 2026-11-08: no pipeline stands anything up; the Programs engine is the
+# one runner. Kept, not run (tests/_parked/conftest.py ignores this tree).
 """The induction engine against a REAL boot — the fully-local recipes.
 
 Proves fresh-desk, seeded-desk (idempotent — applied twice, verified both

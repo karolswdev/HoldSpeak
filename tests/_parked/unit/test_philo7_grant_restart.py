@@ -1,3 +1,6 @@
+# PARKED 2026-11-09 (pipe/test-mass): boots the real hub, SIGKILLs it, boots a second one on the same database.
+# Owner 2026-11-08: no pipeline restarts a real hub or stands up a second
+# process; a rig boots only the one process under test. Kept, not run.
 """PHILO-7-02 F13 + F11: the grant survives a REAL hub restart; a waiting desk write is recovered.
 
 A hub is a PROCESS here: the credential store is a module singleton captured

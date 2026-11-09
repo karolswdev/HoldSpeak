@@ -1932,7 +1932,7 @@
           }
         },
         {
-          "path": "tests/unit/test_hs174_confluence_wire.py",
+          "path": "tests/unit/test_connections_confluence_wire.py",
           "node": "test_page_create_rejected",
           "assertion": "Confluence wire uses the read-only pack boundary.",
           "execution": "not_run"
@@ -2619,7 +2619,7 @@
           }
         },
         {
-          "path": "tests/unit/test_philo12_artifact_source.py",
+          "path": "tests/unit/test_send_artifact_source.py",
           "node": "test_real_producers_render_stored_artifact_body",
           "assertion": "Meeting synthesis, run output, and Ask Keep render their stored body; only the lineage-matched synthesis footer is removed.",
           "execution": {
@@ -2630,7 +2630,7 @@
           }
         },
         {
-          "path": "tests/unit/test_philo12_artifact_lifecycle.py",
+          "path": "tests/unit/test_send_artifact_lifecycle.py",
           "node": "test_artifact_preview_equals_frozen_payload_and_is_read_only",
           "assertion": "The real hub previews artifact bytes without an operation or send row, then prepares exactly those bytes.",
           "execution": {
@@ -2954,7 +2954,7 @@
       ],
       "tests": [
         {
-          "path": "tests/unit/test_hs174_confluence_wire.py",
+          "path": "tests/unit/test_connections_confluence_wire.py",
           "node": "test_page_create_rejected",
           "assertion": "The Confluence wire uses the read-only connector boundary.",
           "execution": "not_run"

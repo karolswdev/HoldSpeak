@@ -42,7 +42,7 @@ from holdspeak.memory.retain import sweep
 
 from tests.memory_bench import bench
 from tests.memory_bench.corpus import build_corpus
-from tests.unit.test_memory_slice3_facts import F, Scripted, _memory_text, _note
+from tests.unit.test_memory_facts import F, Scripted, _memory_text, _note
 from tests.unit.test_phase143_inference_assignments import OWNER, _profile
 from tests.unit.test_phase200_readiness import _assign
 

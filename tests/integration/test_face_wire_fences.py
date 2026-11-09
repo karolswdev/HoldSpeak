@@ -308,7 +308,7 @@ def test_the_local_ai_answer_does_not_depend_on_the_machine(
 
 def test_parked_reads(hub: Any, tmp_path: Path) -> None:
     """parkedDrawer.test.tsx: the parked list and each kind's restore answer."""
-    from test_philo15_desk_parked import _seed
+    from test_desk_parked_reads import _seed
 
     _seed(hub.db)
     _fence("desk-parked", _ok(hub.client.get("/api/desk/parked")), tmp_path, hub)

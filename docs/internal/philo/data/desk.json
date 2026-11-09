@@ -1327,13 +1327,13 @@
       ],
       "tests": [
         {
-          "path": "tests/unit/test_philo13_b5_week.py",
+          "path": "tests/unit/test_room_update_week.py",
           "node": "test_deterministic_draft_reads_real_linked_week",
           "assertion": "The draft includes real persisted meeting summary, decision and two owned actions with source refs.",
           "execution": "passed"
         },
         {
-          "path": "tests/unit/test_philo13_b5_week.py",
+          "path": "tests/unit/test_room_update_week.py",
           "node": "test_deterministic_draft_never_calls_model_boundary",
           "assertion": "The deterministic path does not access the model broker.",
           "execution": "passed"
@@ -1439,7 +1439,7 @@
       ],
       "tests": [
         {
-          "path": "tests/unit/test_philo13_b4_prep.py",
+          "path": "tests/unit/test_people_brief_prep.py",
           "node": "test_brief_suggests_alias_event_without_linking_and_returns_next_prep_data",
           "assertion": "Real ICS, meeting and People producers yield a suggestion, confirmed event and the report-owned open actions; completed and parked work stays out.",
           "execution": "passed"

@@ -11,7 +11,7 @@ Five things are proved here:
 5. A critical factual failure cannot be averaged away by a passing majority.
 
 The runner and its real product paths are proved separately, in
-``tests/integration/test_phase200_semantic_evaluation.py``.
+``tests/integration/test_eval_semantic_corpus.py``.
 """
 
 from __future__ import annotations

@@ -17,7 +17,7 @@ from holdspeak.services.tool_model_adapter import (
     DeterministicToolModelTransport,
 )
 from holdspeak.services.tool_turn_controller import TOOL_TURN_AUTHORITY, ToolTurnRefused
-from tests.unit.test_phase143_tool_turn_controller import _started
+from tests.unit.test_ask_tool_turn_controller import _started
 
 
 def _stage_step_material(

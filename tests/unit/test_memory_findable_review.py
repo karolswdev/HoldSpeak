@@ -13,7 +13,7 @@ from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from test_memory_findable_kinds import _meeting_with_actions, _recall, _refs, _search  # noqa: E402
-from test_philo10_email_channel import hub, press, ready, send, store, wire  # noqa: E402,F401
+from test_send_email_channel import hub, press, ready, send, store, wire  # noqa: E402,F401
 
 from holdspeak.grounding import hydrate_refs_detailed  # noqa: E402
 

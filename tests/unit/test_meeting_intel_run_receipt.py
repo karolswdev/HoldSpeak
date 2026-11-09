@@ -12,11 +12,11 @@ from holdspeak.services.errors import ConflictError
 from holdspeak.services.inference_assignment_service import InferenceAssignmentService
 from holdspeak.services.meeting_intel_service import MeetingIntelService
 from holdspeak.services.meeting_route_projection import project_route
-from tests.unit.test_hs201_route_contract import OWNER, assign_summary, summary_profile
+from tests.unit.test_meetings_route_contract import OWNER, assign_summary, summary_profile
 from tests.unit.test_phase143_inference_assignments import _profile, _result_claim
 from fastapi.testclient import TestClient
 from holdspeak.services.meeting_service import MeetingService
-from tests.unit.test_hs201_route_counsel import _http_app, _ready_db
+from tests.unit.test_meetings_route_counsel import _http_app, _ready_db
 
 
 @pytest.fixture

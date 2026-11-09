@@ -214,7 +214,7 @@ class TestTheRunNeverAbortsSilently:
     This runs everywhere -- it needs no model at all, only a route that
     cannot answer -- and it reproduces the abort on any machine. The abort
     column itself (a hub that never boots) is proved in
-    ``tests/unit/test_phase200_semantic_evaluation.py``.
+    ``tests/unit/test_eval_semantic_corpus.py``.
     """
 
     DEAD_ROUTE = ("--engine", "route", "--endpoint", "http://127.0.0.1:1/v1", "--model", "absent")

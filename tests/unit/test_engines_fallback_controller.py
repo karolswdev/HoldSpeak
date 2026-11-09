@@ -39,7 +39,7 @@ from holdspeak.services.inference_fallback_controller import (
 from holdspeak.services.inference_route_plan_service import ROUTE_PLANNING_AUTHORITY
 from holdspeak.services.sync_service import SyncService
 from tests.unit.test_phase143_inference_assignments import OWNER, _profile
-from tests.unit.test_phase143_inference_route_plans import (
+from tests.unit.test_engines_route_plans import (
     _digest,
     _evidence_service,
     _ready_route,

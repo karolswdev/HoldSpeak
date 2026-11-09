@@ -253,7 +253,7 @@ def _routed_recovery_session(tmp_path, monkeypatch):
     from holdspeak.services.inference_adoption_service import RoutedInferenceCoordinator
     from holdspeak.meeting_session import MeetingSession
     from tests.unit.test_meeting_session_admission import FakeJournal, FakeRecorder
-    from tests.unit.test_phase143_meeting_live_cutover import (
+    from tests.unit.test_meetings_live_cutover import (
         _assign_meeting_routes_without_speech,
         _meeting_config,
     )

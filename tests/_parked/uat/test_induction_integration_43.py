@@ -1,3 +1,6 @@
+# PARKED 2026-11-09 (pipe/test-mass): boots the real product through the UAT conductor.
+# Owner 2026-11-08: no pipeline stands anything up; the Programs engine is the
+# one runner. Kept, not run (tests/_parked/conftest.py ignores this tree).
 """Induction recipes that ride the .43 LAN endpoint.
 
 `meeting-just-ended-open-actions` needs real intel to extract an open action;

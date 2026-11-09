@@ -39,7 +39,7 @@ from holdspeak.services.meeting_route_projection import project_route
 from holdspeak.services.primitive_service import PrimitiveService
 from holdspeak.services.sqlite_observer import SQLiteObserver
 
-from tests.unit.test_philo6_02_brief_truth import (
+from tests.unit.test_brief_truth import (
     EVENTS_AT, FIXTURE_ZONE, OWNER, RAW, _hub, _stable, producer_timezone,
 )
 
