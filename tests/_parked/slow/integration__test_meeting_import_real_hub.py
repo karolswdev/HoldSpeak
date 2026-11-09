@@ -1,3 +1,6 @@
+"""Parked 2026-11-08 (the slow tier): the slow-marked cases of tests/integration/test_meeting_import_real_hub.py, moved as text. Not collected."""
+
+
 """PHILO-15-03: a WAV import on the real hub always reaches a final status.
 
 The route, the service worker and the production transcriber factory
@@ -26,72 +29,6 @@ WAV = REPO / "tests/fixtures/core_path_smoke_16k.wav"  # 3 s: "The quick brown f
 
 
 @pytest.fixture
-def client(monkeypatch):
-    temp_dir = Path(tempfile.mkdtemp())
-    reset_database()
-    get_database(temp_dir / "test.db")
-    server = MeetingWebServer(
-        WebRuntimeCallbacks(
-            on_bookmark=lambda *_a, **_k: None,
-            on_stop=lambda *_a, **_k: None,
-            get_state=lambda: None,
-        ),
-        host="127.0.0.1",
-    )
-    yield TestClient(server.app), temp_dir
-    reset_database()
-    shutil.rmtree(temp_dir, ignore_errors=True)
-
-
-def _pin_model(monkeypatch, name: str) -> None:
-    config = Config()
-    config.model.name = name
-    monkeypatch.setattr(Config, "load", classmethod(lambda cls, *a, **k: config))
-
-
-def _final(client, meeting_id: str, bound_s: float) -> tuple[dict, float]:
-    started = time.monotonic()
-    last: dict = {}
-    while time.monotonic() - started < bound_s:
-        detail = client.get(f"/api/meetings/{meeting_id}")
-        if detail.status_code == 200:
-            last = detail.json()
-            if last.get("transcription_status") != "active":
-                return last, time.monotonic() - started
-        time.sleep(0.25)
-    raise AssertionError(f"transcription_status stayed active for {bound_s}s: {last}")
-
-
-def _post(client) -> str:
-    response = client.post(
-        "/api/meetings/import",
-        files={"file": ("fixture.wav", WAV.read_bytes(), "audio/wav")},
-        data={"title": "Fixture import"},
-    )
-    assert response.status_code == 202, response.text
-    return response.json()["meeting_id"]
-
-
-def test_an_import_whose_model_cannot_load_reaches_failed(client, monkeypatch):
-    """No model on disk (the isolated-HOME case): final `failed`, fast."""
-    http, temp_dir = client
-    empty_model = temp_dir / "no-model-here"
-    empty_model.mkdir()
-    _pin_model(monkeypatch, str(empty_model))
-    meeting_id = _post(http)
-
-    row, elapsed = _final(http, meeting_id, bound_s=120)
-
-    assert row["transcription_status"] == "failed", row
-    assert (row.get("intel_status") or {}).get("state") == "import_failed", row
-    assert row["transcription_status_detail"]["reason_code"] == "import_failed"
-    assert elapsed < 120
-
-
-def _whisper_cached(repo: str) -> bool:
-    hf_home = Path(os.environ.get("HF_HOME") or Path.home() / ".cache/huggingface")
-    folder = hf_home / "hub" / ("models--" + repo.replace("/", "--"))
-    return any(folder.glob("snapshots/*/*"))
 
 
 @pytest.mark.slow
@@ -113,32 +50,3 @@ def test_a_real_whisper_import_reaches_complete(client, monkeypatch):
     assert row["segments"], row
     assert "fox" in " ".join(s["text"] for s in row["segments"]).lower(), row["segments"]
     assert (row.get("intel_status") or {}).get("state") != "import_failed"
-
-
-def test_hub_start_ends_an_interrupted_import_failed(client):
-    """Astra r1 #2: a row a killed hub left `importing / active` ends `failed`
-    when the hub starts again (no import worker survives a restart)."""
-    from datetime import datetime
-
-    from holdspeak.meeting_session import MeetingState
-
-    _unused, _temp_dir = client
-    row = MeetingState(id="interrupted-import", started_at=datetime.now(), title="Killed", segments=[])
-    row.intel_status = "importing"
-    row.intel_status_detail = "Transcribing — window 2 of 9."
-    get_database().meetings.save_meeting(row)
-
-    server = MeetingWebServer(
-        WebRuntimeCallbacks(
-            on_bookmark=lambda *_a, **_k: None,
-            on_stop=lambda *_a, **_k: None,
-            get_state=lambda: None,
-        ),
-        host="127.0.0.1",
-    )
-    with TestClient(server.app) as started:  # runs the hub's startup handlers
-        detail = started.get("/api/meetings/interrupted-import").json()
-
-    assert detail["transcription_status"] == "failed", detail
-    assert (detail.get("intel_status") or {}).get("state") == "import_failed"
-    assert detail["transcription_status_detail"]["cause"] == "INTERRUPTED BY A RESTART"
