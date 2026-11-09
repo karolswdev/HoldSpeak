@@ -14,23 +14,28 @@ GET  /api/recordings/{id}/video         the video (the desk's Play; owner token)
 GET  /api/recordings/{id}/poster        the poster frame (owner token)
 GET  /r/{id}/{token}/{name}             the shared link: no hub token; Range (Safari)
 
-Every handler that touches the disk or a process runs in the threadpool.
+The JSON verbs are produced from ``holdspeak/media_operations.py`` (2026-11-09,
+one contract); the chunk (a raw body), the video, the poster and the shared link
+(file answers) stay hand-written here. Every handler that touches the disk or a
+process runs in the threadpool.
 """
 from __future__ import annotations
 
-import subprocess
-import sys
 from typing import Any
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import FileResponse, JSONResponse, Response
 from starlette.concurrency import run_in_threadpool
 
+from ... import operations
 from ...logging_config import get_logger
-from ...recordings.service import RECORDINGS
+from ...recordings import service as recordings
 from ...recordings.store import RecordingRefused
+from ...services.errors import ServiceError
 from ..context import WebContext
+from ..operation_routes import operation_router
 from ..runtime_support import error_500
+from ._mount import mount_router
 
 log = get_logger("web.routes.recordings")
 
@@ -48,110 +53,61 @@ def _port(request: Request) -> int | None:
     return request.url.port
 
 
-async def _json(request: Request) -> dict[str, Any]:
+async def _answer(fn: Any, *, status: int = 200) -> Any:
+    """The produced routes' envelope: a refusal keeps ``{error, reason}`` and its status."""
     try:
-        body = await request.json()
-    except Exception:
-        return {}
-    return body if isinstance(body, dict) else {}
+        return JSONResponse(await run_in_threadpool(fn), status_code=status)
+    except ServiceError as exc:
+        return JSONResponse(exc.context.get("body") or {"error": exc.detail, "reason": exc.code},
+                            status_code=int(exc.context.get("status") or 400))
+    except Exception as exc:
+        return error_500(exc, log, "Failed to run the recording verb")
 
 
-def _open_folder(path: str) -> None:
-    opener = "open" if sys.platform == "darwin" else "xdg-open"
-    subprocess.run([opener, path], check=False, timeout=10,
-                   stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+def _remember(request: Request) -> None:
+    """The two link bases come from the port this request reached (list and start)."""
+    recordings.RECORDINGS.remember_bases(port=_port(request))
 
 
 def wire_recordings(ctx: WebContext) -> None:
-    RECORDINGS.configure(broadcast=lambda kind, data: (ctx.broadcast or (lambda *_: None))(kind, data))
+    recordings.RECORDINGS.configure(broadcast=lambda kind, data: (ctx.broadcast or (lambda *_: None))(kind, data))
 
 
 def build_recordings_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
     wire_recordings(ctx)
 
-    def act(fn: Any, *args: Any, status: int = 200, **kwargs: Any) -> Any:
-        try:
-            return JSONResponse(fn(*args, **kwargs), status_code=status)
-        except RecordingRefused as exc:
-            return _refused(exc)
+    def registry() -> operations.OperationRegistry:
+        return operations.for_context(ctx, recordings_service=lambda: operations.LIVE_RECORDINGS_SERVICE)
 
-    @router.get("/api/recordings")
-    async def api_recordings(request: Request) -> Any:
-        port = _port(request)
+    def produced(*names: str) -> APIRouter:
+        by_name = {d.name: d for d in operations.MEDIA_OPERATIONS}
+        return operation_router([by_name[name] for name in names], registry, _answer, module=__name__)
 
-        def read() -> dict[str, Any]:
-            RECORDINGS.remember_bases(port=port)
-            return RECORDINGS.payload()
-
-        try:
-            return JSONResponse(await run_in_threadpool(read))
-        except Exception as exc:
-            return error_500(exc, log, "Failed to read recordings")
-
-    @router.post("/api/recordings")
-    async def api_recording_start(request: Request) -> Any:
-        body = await _json(request)
-        port = _port(request)
-
-        def start() -> Any:
-            RECORDINGS.remember_bases(port=port)
-            return act(
-                RECORDINGS.start,
-                width=int(body.get("width") or 0), height=int(body.get("height") or 0),
-                voice=bool(body.get("voice")), project_id=str(body.get("project_id") or ""),
-                view=str(body.get("view") or ""), status=201,
-            )
-
-        return await run_in_threadpool(start)
-
-    @router.post("/api/recordings/folder/open")
-    async def api_recordings_open_folder() -> Any:
-        def open_it() -> dict[str, Any]:
-            root = RECORDINGS.store.root()
-            root.mkdir(parents=True, exist_ok=True)
-            _open_folder(str(root))
-            return {"opened": True, "folder": str(root)}
-
-        try:
-            return JSONResponse(await run_in_threadpool(open_it))
-        except Exception as exc:
-            return error_500(exc, log, "Failed to open the recordings folder")
-
-    @router.get("/api/recordings/{recording_id}")
-    async def api_recording_get(recording_id: str) -> Any:
-        return await run_in_threadpool(act, RECORDINGS.get, recording_id)
+    # The list and start read the link bases from the request's port first.
+    mount_router(router, produced("recordings.list", "recordings.start"), dependencies=[Depends(_remember)])
+    mount_router(router, produced("recordings.open_folder", "recordings.get"))
 
     @router.post("/api/recordings/{recording_id}/chunks")
     async def api_recording_chunk(recording_id: str, request: Request) -> Any:
         data = await request.body()
-        return await run_in_threadpool(act, RECORDINGS.chunk, recording_id, data)
 
-    @router.post("/api/recordings/{recording_id}/stop")
-    async def api_recording_stop(recording_id: str) -> Any:
-        return await run_in_threadpool(act, RECORDINGS.stop, recording_id)
+        def append() -> Any:
+            try:
+                return JSONResponse(recordings.RECORDINGS.chunk(recording_id, data))
+            except RecordingRefused as exc:
+                return _refused(exc)
 
-    @router.post("/api/recordings/{recording_id}/retry")
-    async def api_recording_retry(recording_id: str) -> Any:
-        return await run_in_threadpool(act, RECORDINGS.retry, recording_id)
+        return await run_in_threadpool(append)
 
-    @router.post("/api/recordings/{recording_id}/share")
-    async def api_recording_share(recording_id: str) -> Any:
-        return await run_in_threadpool(act, RECORDINGS.share, recording_id)
-
-    @router.post("/api/recordings/{recording_id}/unshare")
-    async def api_recording_unshare(recording_id: str) -> Any:
-        return await run_in_threadpool(act, RECORDINGS.unshare, recording_id)
-
-    @router.post("/api/recordings/{recording_id}/park")
-    async def api_recording_park(recording_id: str) -> Any:
-        return await run_in_threadpool(act, RECORDINGS.park, recording_id)
+    mount_router(router, produced("recordings.stop", "recordings.retry", "recordings.share", "recordings.unshare",
+                                  "recordings.park"))
 
     def _video(recording_id: str) -> Any:
-        rec = RECORDINGS.store.get(recording_id)
+        rec = recordings.RECORDINGS.store.get(recording_id)
         if rec is None or rec.state != "ready":
             return Response(status_code=404)
-        path = RECORDINGS.store.video_path(rec)
+        path = recordings.RECORDINGS.store.video_path(rec)
         if not path.is_file():
             return Response(status_code=404)
         return FileResponse(path, media_type=_MEDIA.get(rec.encoder, "video/mp4"))
@@ -164,7 +120,7 @@ def build_recordings_router(ctx: WebContext) -> APIRouter:
     async def api_recording_poster(recording_id: str) -> Any:
         def poster() -> Any:
             try:
-                path = RECORDINGS.store.poster_path(recording_id)
+                path = recordings.RECORDINGS.store.poster_path(recording_id)
             except RecordingRefused:
                 return Response(status_code=404)
             return FileResponse(path, media_type="image/jpeg") if path.is_file() else Response(status_code=404)
@@ -176,10 +132,10 @@ def build_recordings_router(ctx: WebContext) -> APIRouter:
         """The link he opens on the phone: the share token is the only key."""
 
         def shared() -> Any:
-            rec = RECORDINGS.store.by_share(recording_id, token)
+            rec = recordings.RECORDINGS.store.by_share(recording_id, token)
             if rec is None or name != rec.video_name():
                 return Response(status_code=404)
-            path = RECORDINGS.store.video_path(rec)
+            path = recordings.RECORDINGS.store.video_path(rec)
             if not path.is_file():
                 return Response(status_code=404)
             return FileResponse(

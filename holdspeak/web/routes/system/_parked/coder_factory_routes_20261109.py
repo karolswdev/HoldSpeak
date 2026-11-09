@@ -1,4 +1,11 @@
-"""Audited coder-session factory route registration."""
+"""PARKED 20261109 (one contract): the factory routes are produced now.
+
+POST /api/coders/factory/spawn and /rename are the declared rows
+``coder.spawn`` and ``coder.rename`` (``holdspeak/coder_operations.py``,
+``CoderService.spawn`` / ``rename``), mounted by ``coder_steering_routes.py``.
+Not imported. Kept for history; restore with ``git revert`` of the parking commit.
+
+Audited coder-session factory route registration."""
 from __future__ import annotations
 
 import asyncio
@@ -13,7 +20,7 @@ def register_factory_routes(router: APIRouter) -> None:
 
     @router.post("/api/coders/factory/spawn")
     async def api_factory_spawn(payload: Optional[dict[str, Any]] = None) -> Any:
-        from .... import coder_factory
+        from ..... import coder_factory
 
         body = payload if isinstance(payload, dict) else {}
         name = str(body.get("name", "")).strip()
@@ -32,7 +39,7 @@ def register_factory_routes(router: APIRouter) -> None:
 
     @router.post("/api/coders/factory/rename")
     async def api_factory_rename(payload: Optional[dict[str, Any]] = None) -> Any:
-        from .... import coder_factory
+        from ..... import coder_factory
 
         body = payload if isinstance(payload, dict) else {}
         target = str(body.get("target", "")).strip()

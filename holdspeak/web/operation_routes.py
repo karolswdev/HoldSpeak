@@ -1,7 +1,7 @@
 """HTTP routes produced from declared operations (2026-11-08, one contract).
 
 A descriptor that declares ``http`` gets one handler here: the path
-parameters over the JSON body (the query for a GET) are its arguments, the
+parameters over the JSON body over the query are its arguments, the
 call is ``OperationRegistry.invoke(..., shape="web")`` off the event loop, and
 the answer is wrapped by the route module's own envelope (``answer``). The
 handler keeps the name and the path-parameter signature a hand-written one
@@ -61,16 +61,32 @@ async def _body(request: Request) -> dict[str, Any]:
 
 def _endpoint(descriptor: Any, registry: Callable[[], Any], answer: Answer, module: str) -> Callable[..., Any]:
     method, path = descriptor.http
-    names = [part[1:-1] for part in path.split("/") if part.startswith("{")]
+    # ``{resource_ref:path}``: the parameter is ``resource_ref`` (a path converter).
+    names = [part[1:-1].split(":", 1)[0] for part in path.split("/") if part.startswith("{")]
 
     async def endpoint(request: Request, **params: str) -> Any:
         principal = _principal(request)
-        # A DELETE carries its arguments in the query (``?at=``), under any body.
-        query = dict(request.query_params) if method in ("GET", "DELETE") else {}
+        # The query (``?at=``, ``?scope=``) is arguments on every method, under
+        # any body: a DELETE carries them there, and a POST or PUT may name its
+        # target there (the dictation blocks' ``?scope=&project_root=``).
+        query = dict(request.query_params)
         source = query if method == "GET" else {**query, **await _body(request)}
         args = {**source, **params}
-        return await answer(lambda: _invoke(registry, principal, descriptor.name, args),
-                            status=descriptor.http_status)
+
+        def run() -> Any:
+            # A body or query that names a path parameter with another value is a
+            # conflicting request, refused by name inside the envelope, never
+            # resolved in the path's favour (Codex on #2122: the old kernel decide
+            # and receipt routes rejected a body ``operation_id``; the produced
+            # route overwrote it).
+            for name, value in params.items():
+                if name in source and str(source[name]) != str(value):
+                    raise ContractRefusal(OperationRefused(
+                        "path_body_mismatch", descriptor.name,
+                        f"{name} in the body ({source[name]!r}) is not the one in the path ({value!r})"))
+            return _invoke(registry, principal, descriptor.name, args)
+
+        return await answer(run, status=descriptor.http_status)
 
     # FastAPI reads the path parameters and the operation id from the
     # signature and the name.

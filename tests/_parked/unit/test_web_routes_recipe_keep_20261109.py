@@ -1,3 +1,5 @@
+# PARKED 2026-11-09 (ops/programs-work): POST /api/recipes/{id}/keep has no client; the route is parked
+# in holdspeak/web/routes/_parked/recipes_declared_20261109.py. Not collected.
 """Tests for POST /api/recipes/{id}/keep (the chat alias tests are parked with
 the /chat route, 2026-11-08: tests/_parked/unit/test_web_routes_recipe_chat_left_20261108.py).
 """

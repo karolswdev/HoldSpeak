@@ -515,6 +515,38 @@ LAUNCH_RULES.update({name: (OWN, "workbench", "workbench_id") for name in (
     "automation.set_when", "automation.set_engine", "automation.make_one", "automation.result.open",
     "automation.lesson.forget")})
 LAUNCH_RULES["automation.template.instantiate"] = (CREATE, "", "")
+# The Programs-and-work rows (2026-11-09, ops/programs-work): a launch reads
+# them; it restores an item only on an automation it made, opens a note as
+# thought.adopt_note does, and makes a new recipe; changing or deleting his
+# recipes, his attention state, meaning search, the constitutional context,
+# seed and reset stay his.
+LAUNCH_RULES.update({name: (READ, "", "") for name in (
+    "automation.prepared.read", "program.requirement_evidence", "thought.for_note", "thought.original",
+    "thought.review", "memory.pages", "memory.recall", "memory.meaning.status", "desk.projection.list",
+    "today.since_morning", "desk.health", "constitutional_context.read", "constitutional_context.history")})
+LAUNCH_RULES.update({name: (OWN, "workbench", "workbench_id") for name in (
+    "automation.item.restore", "automation.event_start.set_enabled")})
+LAUNCH_RULES["thought.open_note"] = (OWN, "note", "note_id")
+LAUNCH_RULES["recipe.create"] = (CREATE, "", "")
+LAUNCH_RULES.update({name: (NEVER, "", "") for name in (
+    "recipe.update", "recipe.delete", "desk.projection.present", "memory.meaning.turn_on",
+    "memory.meaning.turn_off", "constitutional_context.update", "desk.seed", "desk.reset")})
+
+
+def _family_rules() -> dict[str, tuple[str, str, str]]:
+    """Every declared row without a rule of its own (2026-11-09, read from the
+    rows, never a hand-kept family list): a launch reads what a declared read
+    reads; a declared write is the owner's press and is never offered. The chat
+    threads are his conversations: a launch neither reads nor writes them."""
+    from holdspeak import operations as ops
+
+    rules = {d.tool_name: (READ if d.effect == "read" else NEVER, "", "")
+             for d in ops.DESCRIPTORS if d.tool_schema is not None and d.tool_name}
+    rules.update({d.tool_name: (NEVER, "", "") for d in ops.THREAD_OPERATIONS if d.tool_schema is not None})
+    return {name: rule for name, rule in rules.items() if name not in LAUNCH_RULES}
+
+
+LAUNCH_RULES.update(_family_rules())
 
 #: Not offered to a launch at all (the palette leaves them out).
 NOT_OFFERED: frozenset[str] = frozenset(n for n, (rule, _k, _a) in LAUNCH_RULES.items() if rule in (NEVER, COMPOSER))

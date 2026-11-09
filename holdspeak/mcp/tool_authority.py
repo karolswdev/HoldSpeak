@@ -86,8 +86,6 @@ TOOL_AUTHORITY: dict[str, str] = {
     "steward.nudges": WORK,
     "nudge.send": EGRESS,  # posts a GitHub comment as the owner
     "nudge.dismiss": WORK,
-    "dictation.list": WORK,
-    "dictation.get": WORK,
     "desk.snapshot": WORK,
     "desk.needs_you": WORK,
     "today.get": WORK,
@@ -120,9 +118,7 @@ TOOL_AUTHORITY: dict[str, str] = {
     "settings.update": CONFIG,  # the system settings (incl. calendar sources)
     "setup.status": WORK,
     "setup.use": CONFIG,  # Setup adoption changes the system configuration
-    "coder.list": WORK,
     "coder.get": WORK,
-    "coder.audit": WORK,
     # Betterment AG11: a launched agent and its one helper (decision 3:
     # work under Normal and YOLO; Secure records an owner Allow ask at the call).
     "agent.start_helper": WORK,

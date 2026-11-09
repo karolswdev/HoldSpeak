@@ -13,6 +13,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from holdspeak.delivery import DeliveryRegistry
+from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.services import repository_workspace
 from holdspeak.web.context import WebContext
 from holdspeak.web.routes.repositories import _safe_path, build_repositories_router
@@ -26,6 +27,21 @@ def _git_output(root: Path, *args: str) -> str:
     return subprocess.run(
         ["git", *args], cwd=root, check=True, capture_output=True, text=True
     ).stdout.strip()
+
+
+OWNER = Principal(PrincipalKind.OWNER, "repository-route-test")
+
+
+def _owner_app() -> FastAPI:
+    """The hub's edge: the drawer's writes are owner-only (repository_operations.py)."""
+    app = FastAPI()
+
+    @app.middleware("http")
+    async def _edge(request, call_next):
+        request.state.principal = OWNER
+        return await call_next(request)
+
+    return app
 
 
 def _context() -> WebContext:
@@ -45,7 +61,7 @@ def _client(tmp_path: Path) -> tuple[TestClient, Path]:
     _git(root, "commit", "-m", "seed")
     registry = DeliveryRegistry(tmp_path / "registry.json", map_path=tmp_path / "missing.json")
     registry.register(str(root), label="Fixture")
-    app = FastAPI()
+    app = _owner_app()
     app.include_router(build_repositories_router(_context(), registry=registry))
     return TestClient(app), root
 
@@ -140,7 +156,7 @@ def _worktree_client(tmp_path: Path) -> tuple[TestClient, Path, Path, str, str, 
     registered_source, selected = registry.register(str(worktree), label="Fixture")
     assert registered_source.source_id == source.source_id
     assert primary.worktree_id != selected.worktree_id
-    app = FastAPI()
+    app = _owner_app()
     app.include_router(build_repositories_router(_context(), registry=registry))
     return TestClient(app), root, worktree, source.source_id, selected.worktree_id, registry
 
@@ -220,7 +236,7 @@ def test_repository_route_refreshes_worktree_registered_by_separate_factory_inst
     seed = DeliveryRegistry(registry_path, map_path=map_path)
     source, _ = seed.register(str(root), label="Fixture")
 
-    app = FastAPI()
+    app = _owner_app()
     app.include_router(
         build_repositories_router(
             _context(), registry_path=registry_path, map_path=map_path
@@ -253,7 +269,7 @@ def test_repository_route_bootstraps_legacy_project_map_on_first_read(tmp_path: 
         encoding="utf-8",
     )
 
-    app = FastAPI()
+    app = _owner_app()
     app.include_router(
         build_repositories_router(
             _context(), registry_path=registry_path, map_path=map_path
@@ -286,7 +302,7 @@ def test_repository_registration_refuses_git_subdirectory_without_persisting_sou
     registry_path = tmp_path / "registry.json"
     registry = DeliveryRegistry(registry_path, map_path=tmp_path / "missing.json")
     before = registry_path.read_bytes()
-    app = FastAPI()
+    app = _owner_app()
     app.include_router(build_repositories_router(_context(), registry=registry))
 
     response = TestClient(app).post(
@@ -522,3 +538,18 @@ def test_repository_diff_includes_untracked_text_and_names_binary_or_oversize_fa
     read = client.get(f"/api/repositories/{repository_id}/file/massive.txt")
     assert read.status_code == 409
     assert read.json() == {"error": "file is not readable text"}
+
+
+def test_a_drawer_write_without_the_owner_is_refused_and_writes_nothing(tmp_path: Path) -> None:
+    """A produced route trusts only the edge's principal (#2057): no principal, no write."""
+    owner_client, root = _client(tmp_path)
+    repository_id = owner_client.get("/api/repositories").json()["repositories"][0]["id"]
+    registry = DeliveryRegistry(tmp_path / "registry.json", map_path=tmp_path / "missing.json")
+    app = FastAPI()
+    app.include_router(build_repositories_router(_context(), registry=registry))
+    anonymous = TestClient(app)
+    assert anonymous.get(f"/api/repositories/{repository_id}/status").status_code == 200
+    refused = anonymous.put(f"/api/repositories/{repository_id}/file/README.md", json={"content": "x"})
+    assert refused.status_code == 403, refused.text
+    assert refused.json()["code"] == "owner_required"
+    assert (root / "README.md").read_text(encoding="utf-8") == "seed\n"

@@ -1,15 +1,14 @@
 """Hand to an agent session (docs/internal/CONDUCTOR.md, step 2).
 
 ``POST /api/agent/hand {kind, id, instruction?, profile?, project_id?}``
-(``POST /api/agent/hand/preview``, the same body: the launch sheet's preview,
-no side effect; ``GET /api/agent/launches/{launch_id}``: one launch's delivery;
-``GET /api/agent/launches/{launch_id}/lane``: the launch lane, PHILO-14 C0)
 invokes the declared ``agent.hand`` operation (``holdspeak/agent_operations.py``):
 one coding agent on one desk item: a grounded brief, a new
 worktree, the launch, ``origin_ref`` on the launch and the attempt. The
 caller's authenticated principal admits the ``process.spawn`` operation
 (its kernel receipt is the launch receipt), the same as the PR send-agent
-verb (``delivery_prs.py``). Blocking work runs off the event loop.
+verb (``delivery_prs.py``). Blocking work runs off the event loop. The
+preview, one launch's delivery and lane, and the launch verbs are produced
+from ``agent_operations.LAUNCH_OPERATIONS``.
 
 PHILO-15 16: ``GET /api/projects/{project_id}/repository`` (the Project's
 registered repository, cloned or not) and ``POST`` of the same path
@@ -28,7 +27,7 @@ from ...agent_operations import LAUNCH_OPERATIONS
 from ._mount import mount_router
 from ...logging_config import get_logger
 from ...operations import OperationRefused
-from ...principals import UNAUTHENTICATED, Principal, PrincipalKind
+from ...principals import Principal, PrincipalKind
 from ...services.errors import ServiceError
 from ..context import WebContext
 from ..operation_routes import operation_router
@@ -83,12 +82,19 @@ def build_agent_hand_router(ctx: WebContext) -> APIRouter:
         from ... import operations
         from ...services.agent_hand_service import default_agent_hand_service
 
-        return operations.for_context(
+        registry = operations.for_context(
             ctx,
             agent_hand_service=lambda: default_agent_hand_service(
                 delivery_service=getattr(ctx, "delivery_service", None)
             ),
         )
+        # The launch reads (a test's stand-in, else the defaults) and the
+        # lane's steering resolver, on the one service the rows are bound to.
+        target = getattr(registry, "target", None)  # a test's stand-in registry or service may not have it
+        bind = getattr(target("agent.hand"), "bind_reads", None) if target is not None else None
+        if bind is not None:
+            bind(getattr(ctx, "agent_hand_reads", None), lane_control)
+        return registry
 
     @router.post("/api/agent/hand")
     async def api_agent_hand(request: Request) -> Any:
@@ -124,154 +130,6 @@ def build_agent_hand_router(ctx: WebContext) -> APIRouter:
             return JSONResponse({"error": reason, "code": reason, "detail": str(exc)}, status_code=status)
         status = 202 if result.get("status") in ("launched", "queued") else 409
         return JSONResponse(result, status_code=status)
-
-    @router.post("/api/agent/hand/preview")
-    async def api_agent_hand_preview(request: Request) -> Any:
-        """The launch sheet's preview (K3): the brief, the repository and
-        the branch Hand to an agent session would use, with no side effect.
-        Owner only."""
-        from ...services.agent_hand_preview import preview_hand
-        from ...services.agent_hand_service import default_agent_hand_service
-
-        try:
-            body = await request.json()
-        except Exception:
-            body = None
-        body = body if isinstance(body, dict) else {}
-        kind, item_id = str(body.get("kind") or "").strip(), str(body.get("id") or "").strip()
-        if not kind or not item_id:
-            return JSONResponse({"error": "item_required"}, status_code=400)
-        principal = getattr(
-            request.state, "principal", Principal(PrincipalKind.OWNER, "owner-session")
-        )
-        # The service object only: its launch driver getter is never called
-        # (it binds and reconciles); the preview reads the driver's files.
-        service = getattr(ctx, "agent_hand_service", None) or default_agent_hand_service(
-            delivery_service=getattr(ctx, "delivery_service", None)
-        )
-
-        def run() -> Any:
-            return preview_hand(
-                service, principal, kind, item_id,
-                instruction=body.get("instruction"), profile=body.get("profile"),
-                project_id=body.get("project_id"), review_by=body.get("review_by"),
-                reads=getattr(ctx, "agent_hand_reads", None),
-            )
-
-        try:
-            result = await asyncio.to_thread(run)
-        except ServiceError as exc:
-            payload = dict(exc.context)
-            status = int(payload.pop("status", 409))
-            return JSONResponse(
-                {"error": exc.code, "code": exc.code, "detail": exc.detail, **payload}, status_code=status
-            )
-        except Exception as exc:
-            log.error(f"agent hand preview failed: {exc}")
-            return JSONResponse({"error": "agent_hand_preview_failed"}, status_code=500)
-        return JSONResponse(result)
-
-    @router.get("/api/agent/launches/{launch_id}")
-    async def api_agent_launch(launch_id: str) -> Any:
-        """One launch's delivery, read from the launch ledger (no driver, no
-        reconcile): the launch sheet's receipt follows it until the brief is
-        sent, held or refused."""
-        from ...services.agent_hand_preview import LaunchReads
-
-        reads = getattr(ctx, "agent_hand_reads", None) or LaunchReads()
-        record = await asyncio.to_thread(lambda: reads.launcher()._ledger.get(launch_id))
-        if not record:
-            return JSONResponse({"error": "launch_unknown", "code": "launch_unknown"}, status_code=404)
-        return JSONResponse({
-            key: record.get(key)
-            for key in ("launch_id", "state", "instruction_state", "trust_state", "failure", "profile_id")
-        } | {"profile": record.get("profile_id")})
-
-    @router.post("/api/agent/launches/{launch_id}/rebrief")
-    async def api_agent_rebrief(launch_id: str, request: Request) -> Any:
-        """PHILO-15 B46: the owner's Re-brief ``{text}``. Typed into the
-        launch's own pane now when the agent is idle or asks (``delivered``);
-        mid-turn it waits for the turn end (``queued``). A refusal is 409
-        with its status."""
-        from ...db import get_database
-        from ...delivery.factory_launch import default_launch_service
-        from ...services.launch_rebrief import QUEUED, rebrief
-
-        try:
-            body = await request.json()
-        except Exception:
-            body = None
-        body = body if isinstance(body, dict) else {}
-        principal = getattr(
-            request.state, "principal", Principal(PrincipalKind.OWNER, "owner-session")
-        )
-
-        def run() -> Any:
-            db = get_database()
-            return rebrief(
-                launch_id, str(body.get("text") or ""), principal,
-                service=default_launch_service(db), db=db,
-            )
-
-        try:
-            result = await asyncio.to_thread(run)
-        except Exception as exc:
-            log.error(f"re-brief failed: {exc}")
-            return JSONResponse({"status": "rebrief_failed"}, status_code=500)
-        if result.get("status") == "launch_unknown":
-            return JSONResponse(result, status_code=404)
-        ok = result.get("status") in ("delivered", QUEUED)
-        return JSONResponse(result, status_code=202 if result.get("status") == QUEUED else (200 if ok else 409))
-
-    @router.post("/api/agent/launches/{launch_id}/rebrief/{press_id}/take-back")
-    async def api_agent_rebrief_take_back(launch_id: str, press_id: str, request: Request) -> Any:
-        """PHILO-15 20 (B67): discard one queued Re-brief before the agent's
-        turn ends; its receipt is TAKEN BACK. 409 ``not_queued`` when it was
-        typed already or is not queued."""
-        from ...db import get_database
-        from ...delivery.factory_launch import default_launch_service
-        from ...services.launch_rebrief import TAKEN_BACK, take_back
-
-        principal = getattr(
-            request.state, "principal", Principal(PrincipalKind.OWNER, "owner-session")
-        )
-        if principal.kind is not PrincipalKind.OWNER:
-            # The press is the owner's; only he takes it back.
-            return JSONResponse({"status": "principal_scope_required"}, status_code=403)
-
-        def run() -> Any:
-            return take_back(launch_id, press_id, principal, service=default_launch_service(get_database()))
-
-        try:
-            result = await asyncio.to_thread(run)
-        except Exception as exc:
-            log.error(f"re-brief take back failed: {exc}")
-            return JSONResponse({"status": "take_back_failed"}, status_code=500)
-        if result.get("status") == "launch_unknown":
-            return JSONResponse(result, status_code=404)
-        return JSONResponse(result, status_code=200 if result.get("status") == TAKEN_BACK else 409)
-
-    @router.post("/api/agent/launches/{launch_id}/deliver")
-    async def api_agent_deliver(launch_id: str, request: Request) -> Any:
-        """Deliver the held brief of an existing launch (after a restart, a
-        hook install or a refused send): resume on the launch, no relaunch."""
-        from ...services.agent_hand_service import default_agent_hand_service
-
-        principal = getattr(
-            request.state, "principal", Principal(PrincipalKind.OWNER, "owner-session")
-        )
-        service = getattr(ctx, "agent_hand_service", None) or default_agent_hand_service(
-            delivery_service=getattr(ctx, "delivery_service", None)
-        )
-        try:
-            result = await asyncio.to_thread(service.resume, principal, launch_id)
-        except ServiceError as exc:
-            payload = dict(exc.context)
-            status = int(payload.pop("status", 409))
-            return JSONResponse(
-                {"error": exc.code, "code": exc.code, "detail": exc.detail, **payload}, status_code=status
-            )
-        return JSONResponse(result, status_code=202)
 
     # ── PHILO-15 16 (B38): a Project knows its repository ──────────────
 
@@ -330,21 +188,11 @@ def build_agent_hand_router(ctx: WebContext) -> APIRouter:
 
     # 2026-11-08 (one contract): the launch verbs are produced from their
     # declared rows (``agent_operations.LAUNCH_OPERATIONS``) through the
-    # registry; the lane's read holds the route's launch reads and the
-    # steering resolver (``lane_control``), never arguments.
-    def lane_handler(descriptor: Any) -> Any:
-        async def api_agent_launch_lane(launch_id: str, request: Request) -> Any:
-            args = {**dict(request.query_params), "launch_id": launch_id}
-            principal = getattr(request.state, "principal", UNAUTHENTICATED)
-            held = {"reads": getattr(ctx, "agent_hand_reads", None), "control": lane_control}
-            return await _answer(lambda: _ops().invoke(principal, descriptor.name, args, held=held, shape="web"),
-                                 name=descriptor.name)
-
-        return api_agent_launch_lane
-
+    # registry; 2026-11-09: the preview, the launch's delivery, Re-brief, Take
+    # back and Deliver too. The lane reads the reads and the steering resolver
+    # ``_ops`` binds on the service, never arguments.
     mount_router(router, operation_router(
         LAUNCH_OPERATIONS, _ops, lambda fn, status=200: _answer(fn, status=status), module=__name__,
-        hand_written={"agent.launch.lane": lane_handler},
     ))
     return router
 

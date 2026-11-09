@@ -871,6 +871,10 @@ OP_MCP_PROJECTIONS: dict[str, dict[str, Any]] = {
     "project.get": {"kind": "tool", "name": "project.get"},
     "project.get_room": {"kind": "tool", "name": "project.get_room"},
     "project.create": {"kind": "tool", "name": "project.create"},
+    # 2026-11-09 (ops/projects): the Door's three verbs are MCP tools too (egress, owner press).
+    "project.door.count": {"kind": "tool", "name": "project.door.count"},
+    "project.door.preview": {"kind": "tool", "name": "project.door.preview"},
+    "project.door.create": {"kind": "tool", "name": "project.door.create"},
     "project.update": {"kind": "tool", "name": "project.update"},
     "project.archive": {"kind": "tool", "name": "project.archive"},
     "project.restore": {"kind": "tool", "name": "project.restore"},
@@ -1016,18 +1020,37 @@ OP_MCP_PROJECTIONS: dict[str, dict[str, Any]] = {
         "automation.set_when", "automation.set_engine", "automation.make_one", "automation.template.list",
         "automation.template.instantiate", "automation.result.open", "automation.new.list", "automation.lesson.list",
         "automation.lesson.forget")},
+    # 2026-11-09 (ops/programs-work): the Programs-and-work rows, declared.
+    **{name: {"kind": "tool", "name": name} for name in (
+        "program.requirement_evidence", "automation.prepared.read", "automation.item.restore",
+        "automation.event_start.set_enabled",
+        "recipe.create", "recipe.update", "recipe.delete", "thought.for_note", "thought.open_note",
+        "thought.original", "thought.review", "memory.search", "memory.pages", "memory.recall",
+        "memory.meaning.status", "memory.meaning.turn_on", "memory.meaning.turn_off", "desk.projection.list",
+        "desk.projection.present", "today.since_morning", "desk.health", "desk.seed", "desk.reset",
+        "constitutional_context.read", "constitutional_context.update", "constitutional_context.history")},
 }
+# 2026-11-09: the agents, threads, coders and delivery verbs, read from their rows.
+def _family_projections() -> dict[str, dict[str, Any]]:
+    from holdspeak import operations as ops
+
+    rows = (ops.AGENT_OPERATIONS + ops.THREAD_OPERATIONS + ops.CODER_OPERATIONS + ops.DELIVERY_OPERATIONS
+            + ops.INVOCATION_OPERATIONS)
+    return {d.name: {"kind": "tool", "name": d.tool_name} for d in rows if d.tool_schema is not None}
+
+
+OP_MCP_PROJECTIONS.update({k: v for k, v in _family_projections().items() if k not in OP_MCP_PROJECTIONS})
 
 #: Declared operations with no MCP exposure: the rig refuses them by name.
-OP_HTTP_ONLY = frozenset({"decision.status", "project.door.create", "project.door.preview",
+OP_HTTP_ONLY = frozenset({"decision.status",
                           # The Settings window's credentials: owner only, HTTP only, no tool reaches a key.
                           "settings.secret.replace", "settings.secret.rotate", "settings.secret.delete",
                           # #2027: the Programs verbs the face presses that have no MCP tool.
-                          "program.close", "program.proposal_decide", "program.requirement_decide", "program.requirement_edit", "program.requirement_evidence", "program.round_answer", "program.round_decide", "program.round_next", "program.rounds_open",
+                          "program.close", "program.proposal_decide", "program.requirement_decide", "program.requirement_edit", "program.round_answer", "program.round_decide", "program.round_next", "program.rounds_open",
                           # Betterment capture C5b: the meeting window's Prepare… press (HTTP only).
                           "meeting.result.prepare",
                           # PHILO-9-02: the charter's HTTP capability exceptions.
-                          "project.door.count", "project.watch.update", "project.watch.baseline",
+                          "project.watch.update", "project.watch.baseline",
                           # PHILO-10-03: the email key is a held input, HTTP only (never a tool argument).
                           "channel.save_email_key", "channel.save_slack_webhook",
                           # The Conductor K1: the owner's one-press hook install (config, HTTP only).
@@ -1043,11 +1066,7 @@ OP_HTTP_ONLY = frozenset({"decision.status", "project.door.create", "project.doo
                           "phone.redeem", "phone.pair", "phone.save_push_key", "phone.mark_read", "phone.decide",
                           "phone.accept", "phone.decline", "phone.end",
                           # 2026-11-08: the Calls window's tap answer (no MCP tool: an agent never answers his hold).
-                          "calls.decide",
-                          # 2026-11-08: the Agents window's launch verbs (HTTP only).
-                          "agent.launch.lane", "agent.launch.explain", "agent.launch.answer", "agent.launch.seen",
-                          "agent.launch.done", "agent.launch.remove", "agent.launch.resume",
-                          "agent.hand.cancel_queued", "agent.helper.allow"})
+                          "calls.decide"})
 
 # PHILO-7-01: the desk kind and id argument of each slice prefix.
 _DESK_OP_KINDS: dict[str, tuple[str, str]] = {

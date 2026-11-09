@@ -362,6 +362,38 @@ def _round(s: Any, p: Any, a: dict[str, Any]) -> Any:
                    apply=a.get("apply") is True)
 
 
+def _names(a: Mapping[str, Any]) -> Optional[list[Any]]:
+    return a.get("names") if isinstance(a.get("names"), list) else None
+
+
+def _round_answer(s: Any, p: Any, a: dict[str, Any]) -> Any:
+    """The face's answer press: ``skip`` and ``not_this`` are their own actions."""
+    qid = str(a["question_id"]) if a.get("question_id") else None
+    action = "skip_question" if a.get("skip") is True else "not_this" if a.get("not_this") is True else "answer"
+    return s.round(p, _pid(a), action, round_name=a["name"], answer_text=a.get("answer"), choice=a.get("option"),
+                   question_id=qid if action != "not_this" else (qid or ""), apply=a.get("apply") is True)
+
+
+def _round_decide(s: Any, p: Any, a: dict[str, Any]) -> Any:
+    """Done with, Skip round, Ask more: the round's own three choices only."""
+    from holdspeak.services.program_rounds import _refused
+
+    choice = str(a.get("choice") or "").strip().lower()
+    if choice not in ("done", "skip", "reopen"):
+        raise _refused("bad_choice", "Choose done, skip or reopen.", status=400)
+    return s.round(p, _pid(a), choice, round_name=a["name"])
+
+
+def _requirement_edit(s: Any, p: Any, a: dict[str, Any]) -> Any:
+    """His edit: only the fields the body names change (``required`` too)."""
+    fields = {key: a[key] for key in ("text", "kind", "required", "spec") if key in a}
+    return s.require(p, _pid(a), requirement_id=str(a["requirement_id"]), **fields)
+
+
+#: Any proposal kind reaches ``decide_proposal``; the proposal's own row names its kind.
+_PROPOSAL = "requirement_proposed"
+
+
 def _schema(properties: dict[str, Any], required: list[str]) -> dict[str, Any]:
     return {"type": "object", "properties": properties, "required": required, "additionalProperties": False}
 
@@ -596,19 +628,27 @@ PROGRAM_OPERATIONS: tuple[OperationDescriptor, ...] = (
            "required": {"type": ["boolean", "null"]}, "spec": _SPEC,
            "requirement_id": {"type": ["string", "null"]},
        }, ["program_id"])),
-    _P("program.requirement_edit",
-       lambda s, p, a: s.edit_requirement(p, _pid(a), str(a["requirement_id"]),
-                                          **{key: a[key] for key in ("text", "kind", "required", "spec") if key in a}),
-       ("PATCH", "/api/programs/{program_id}/requirements/{requirement_id}")),
+    # 2026-11-09 (one entry per verb): his edit, his press on a requirement or a
+    # proposal and his Close enter the service where program.require and
+    # program.decide do (require with requirement_id; decide with the kind), so
+    # the route and the tool reach one method with one argument rule.
+    _P("program.requirement_edit", _requirement_edit,
+       ("PATCH", "/api/programs/{program_id}/requirements/{requirement_id}"), method="require"),
     _P("program.requirement_decide",
-       lambda s, p, a: s.decide_requirement(p, _pid(a), str(a["requirement_id"]), str(a.get("choice") or ""),
-                                            line=a.get("line")),
-       ("POST", "/api/programs/{program_id}/requirements/{requirement_id}/decide"), authority=AUTHORITY),
+       lambda s, p, a: s.decide(p, _pid(a), "", kind="requirement", choice=str(a.get("choice") or ""),
+                                requirement_id=str(a["requirement_id"]), reason=a.get("line")),
+       ("POST", "/api/programs/{program_id}/requirements/{requirement_id}/decide"), authority=AUTHORITY,
+       method="decide"),
     _P("program.proposal_decide",
-       lambda s, p, a: s.decide_proposal(p, _pid(a), str(a["proposal_id"]), str(a.get("choice") or "")),
-       ("POST", "/api/programs/{program_id}/proposals/{proposal_id}/decide"), authority=AUTHORITY),
+       lambda s, p, a: s.decide(p, _pid(a), "", kind=_PROPOSAL, choice=str(a.get("choice") or ""),
+                                proposal_id=str(a["proposal_id"])),
+       ("POST", "/api/programs/{program_id}/proposals/{proposal_id}/decide"), authority=AUTHORITY,
+       method="decide"),
     _P("program.requirement_evidence", lambda s, p, a: s.requirement_evidence(p, _pid(a), str(a["requirement_id"])),
-       ("GET", "/api/programs/{program_id}/requirements/{requirement_id}/evidence"), thread=READ),
+       ("GET", "/api/programs/{program_id}/requirements/{requirement_id}/evidence"), thread=READ,
+       description="Read the evidence of one requirement: the check's log, the shot, the review's line or the "
+                   "measured value the engine judged it by, with its verdict.",
+       schema=_schema({"program_id": _ID, "requirement_id": _ID}, ["program_id", "requirement_id"])),
     _P("program.text", _text, ("GET", "/api/programs/{program_id}/text"), thread=READ,
        web=lambda s, p, a: s.text_get(p, _pid(a)),
        description="Read one Program as its text (PG-LANG §3): one statement per line, the steps with their briefs, "
@@ -689,20 +729,18 @@ PROGRAM_OPERATIONS: tuple[OperationDescriptor, ...] = (
                         "description": "The proposed programs of the draft, each with its text."},
            "which": {"type": ["string", "integer"], "description": "all, or the place of one program."},
        }, ["program_id", "programs"])),
-    _P("program.rounds_open",
-       lambda s, p, a: s.rounds_open(p, _pid(a), a.get("names") if isinstance(a.get("names"), list) else None),
-       ("POST", "/api/programs/{program_id}/rounds")),
-    _P("program.round_next", lambda s, p, a: s.round_next(p, _pid(a), a["name"]),
-       ("POST", "/api/programs/{program_id}/rounds/{name}/next")),
-    _P("program.round_answer",
-       lambda s, p, a: s.round_answer(p, _pid(a), a["name"], answer=a.get("answer"), option=a.get("option"),
-                                      question_id=a.get("question_id"), skip=a.get("skip") is True,
-                                      not_this=a.get("not_this") is True, apply=a.get("apply") is True),
-       ("POST", "/api/programs/{program_id}/rounds/{name}/answer")),
-    _P("program.round_decide", lambda s, p, a: s.round_decide(p, _pid(a), a["name"], a.get("choice")),
-       ("POST", "/api/programs/{program_id}/rounds/{name}/decide")),
-    _P("program.close", lambda s, p, a: s.close(p, _pid(a)), ("POST", "/api/programs/{program_id}/close"),
-       authority=AUTHORITY),
+    # 2026-11-09: the rounds' presses enter where program.round does (one
+    # service verb, ``program_rounds.act``); the four per-press methods are parked.
+    _P("program.rounds_open", lambda s, p, a: s.round(p, _pid(a), "open", names=_names(a)),
+       ("POST", "/api/programs/{program_id}/rounds"), method="round"),
+    _P("program.round_next", lambda s, p, a: s.round(p, _pid(a), "next", round_name=a["name"]),
+       ("POST", "/api/programs/{program_id}/rounds/{name}/next"), method="round"),
+    _P("program.round_answer", _round_answer, ("POST", "/api/programs/{program_id}/rounds/{name}/answer"),
+       method="round"),
+    _P("program.round_decide", _round_decide, ("POST", "/api/programs/{program_id}/rounds/{name}/decide"),
+       method="round"),
+    _P("program.close", lambda s, p, a: s.decide(p, _pid(a), "", kind="close", choice=""),
+       ("POST", "/api/programs/{program_id}/close"), authority=AUTHORITY, method="decide"),
     # MCP only: the step's own agent, the audit's fix and the rounds as one tool.
     _P("program.propose_fix", lambda s, p, a: s.propose_fix(p, _pid(a)),
        description="From an audit Program (template audit), make a fix Program in Drafting: one step per MUST "

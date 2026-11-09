@@ -1,3 +1,12 @@
+# PARKED 2026-11-09 (ops/programs-work): the last automations router, kept verbatim.
+# Its one called route, PATCH /api/workbenches/{id}/automations/{automation_id} (the
+# Automations face's event-start switch), is the declared row
+# automation.event_start.set_enabled (automation_operations.py) now. Six routes no
+# client calls are parked with it: list, create, test and history of an event start,
+# and the resourceful policy (GET/PUT /api/workbenches/{id}/resourceful). The face
+# makes an event start through automation.set_when.
+# Not mounted, not imported. Restore with git revert of the parking commit.
+# ruff: noqa
 """HTTP adapters for an Automation's event starts and its resourceful policy.
 
 An event start is a watch (WatchService, the watch fold of 2026-11-08). The

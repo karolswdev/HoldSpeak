@@ -1616,7 +1616,7 @@ PROJECT_DOOR_PREVIEW = OperationDescriptor(
     name="project.door.preview",
     version=1,
     description="Parse pasted source links, validate their exact provider sites, and find matching local meetings and notes.",
-    args_schema={
+    args_schema=(_DOOR_PREVIEW_ARGS := {
         "type": "object",
         "properties": {
             "outcome": {"type": "string", "description": "The outcome in your words; used to find local material."},
@@ -1624,13 +1624,15 @@ PROJECT_DOOR_PREVIEW = OperationDescriptor(
         },
         "required": [],
         "additionalProperties": False,
-    },
+    }),
     principal=_ROOM_PRINCIPAL,
     effect="read",
     result="parsed source rows with truthful provider state, plus matching meetings, notes, and people",
     refusals=_CONTRACT_REFUSALS + ("ServiceError project_service_missing", "ValidationError validation"),
     completion="synchronous; no project or watch is created",
-    exposure=("http:POST /api/projects/door/preview",),
+    exposure=("http:POST /api/projects/door/preview", "mcp:project.door.preview"),
+    # 2026-11-09 (ops/projects): its MCP tool; it reads a provider (egress), so no thread offers it.
+    tool_schema=_DOOR_PREVIEW_ARGS, authority="egress",
     service="project_door_service",
     method="preview",
     admission=Admission("admitted", "Provider validation reads an external site and is an owner Room operation."),
@@ -1639,10 +1641,10 @@ PROJECT_DOOR_PREVIEW = OperationDescriptor(
 PROJECT_DOOR_CREATE = OperationDescriptor(
     name="project.door.create",
     version=1,
-    description="Make a project through the Door: the outcome in your words names it, and each provider source "
+    description="Start a project through the Door: the outcome in your words names it, and each provider source "
                 "arms watches that read that provider on a schedule, then takes a baseline read. With project_id, "
                 "the sources are added to that project (the Room's Add source) and no project is made.",
-    args_schema={
+    args_schema=(_DOOR_CREATE_ARGS := {
         "type": "object",
         "properties": {
             "outcome": {"type": "string", "description": "The outcome you want, in your words; it names the project."},
@@ -1653,13 +1655,15 @@ PROJECT_DOOR_CREATE = OperationDescriptor(
         },
         "required": [],
         "additionalProperties": False,
-    },
+    }),
     principal=_ROOM_PRINCIPAL,
     effect="write",
     result="the project's id as projectId (the new one, or project_id)",
     refusals=_CONTRACT_REFUSALS + ("ServiceError project_service_missing", "ValidationError validation"),
     completion="synchronous; project.get returns it; each armed watch took its baseline read (or is marked pending)",
-    exposure=("http:POST /api/projects/door",),
+    exposure=("http:POST /api/projects/door", "mcp:project.door.create"),
+    # 2026-11-09 (ops/projects): its MCP tool; it reads a provider (egress), so no thread offers it.
+    tool_schema=_DOOR_CREATE_ARGS, authority="egress",
     service="project_door_service",
     method="create",
     admission=Admission(
@@ -2307,6 +2311,21 @@ from holdspeak.people_operations import PEOPLE_OPERATIONS  # noqa: E402
 from holdspeak.automation_operations import AUTOMATION_OPERATIONS  # noqa: E402
 from holdspeak.calls_operations import CALLS_OPERATIONS, LIVE_CALLS_SERVICE  # noqa: E402,F401 (re-exported)
 from holdspeak.settings_operations import SETTINGS_OPERATIONS  # noqa: E402
+# 2026-11-09: the chat threads, the coder sessions and the delivery runtime.
+from holdspeak.thread_operations import THREAD_OPERATIONS  # noqa: E402
+from holdspeak.coder_operations import CODER_OPERATIONS  # noqa: E402
+from holdspeak.delivery_operations import DELIVERY_OPERATIONS  # noqa: E402
+from holdspeak.invocation_operations import INVOCATION_OPERATIONS  # noqa: E402
+from holdspeak.dictation_operations import DICTATION_OPERATIONS  # noqa: E402,F401 (re-exported)
+from holdspeak.media_operations import LIVE_RECORDINGS_SERVICE, MEDIA_OPERATIONS  # noqa: E402,F401 (re-exported)
+from holdspeak.device_operations import DEVICE_OPERATIONS  # noqa: E402,F401 (re-exported)
+# 2026-11-09 (ops/projects): the Room's, the activity ledger's, the Walk's and the repository drawer's web verbs.
+from holdspeak.project_operations import PROJECT_OPERATIONS  # noqa: E402
+from holdspeak.activity_operations import ACTIVITY_OPERATIONS  # noqa: E402
+from holdspeak.walk_operations import WALK_OPERATIONS  # noqa: E402
+from holdspeak.repository_operations import REPOSITORY_OPERATIONS  # noqa: E402
+# The gate, the principals and the kernel (2026-11-09): the security surface on the contract.
+from holdspeak.gate_operations import GATE_OPERATIONS, KERNEL_OPERATIONS, LIVE_KERNEL_SERVICE  # noqa: E402,F401 (re-exported)
 
 #: The whole catalogue, in export order.
 # ── Betterment Q9: Find the tasks on a note ───────────────────────────────
@@ -2442,7 +2461,21 @@ DESCRIPTORS: tuple[OperationDescriptor, ...] = (
     KERNEL_RECEIPT_READ, MEMORY_OBSERVATIONS_READ, MEMORY_PAGE_READ,
 ) + ROOM_OPERATIONS + STEWARD_CONNECTOR_OPERATIONS + CHANNEL_OPERATIONS + ONBOARDING_OPERATIONS + SETUP_OPERATIONS + AGENT_OPERATIONS \
     + DESK_DISPLAY_OPERATIONS + NOTE_OUTCOME_OPERATIONS + (TODAY_GET,) + PROGRAM_OPERATIONS + MEETING_OPERATIONS + PHONE_OPERATIONS + PEOPLE_OPERATIONS \
-    + MEETING_INTEL_OPERATIONS + AUTOMATION_OPERATIONS + CALLS_OPERATIONS + SETTINGS_OPERATIONS + DECISION_OPERATIONS
+    + MEETING_INTEL_OPERATIONS + AUTOMATION_OPERATIONS + CALLS_OPERATIONS + SETTINGS_OPERATIONS + DECISION_OPERATIONS \
+    + THREAD_OPERATIONS + CODER_OPERATIONS + DELIVERY_OPERATIONS + INVOCATION_OPERATIONS \
+    + DICTATION_OPERATIONS + MEDIA_OPERATIONS + DEVICE_OPERATIONS \
+    + PROJECT_OPERATIONS + ACTIVITY_OPERATIONS + WALK_OPERATIONS + REPOSITORY_OPERATIONS \
+    + GATE_OPERATIONS + KERNEL_OPERATIONS
+
+# 2026-11-09 (ops/programs-work): the Agent recipes' writes, the note window's
+# reads and Open, memory's desk reads and the meaning-search switch, the desk's
+# projections, Today's Since this morning, health, seed and reset.
+from holdspeak.recipe_operations import RECIPE_OPERATIONS  # noqa: E402
+from holdspeak.thought_operations import THOUGHT_OPERATIONS  # noqa: E402
+from holdspeak.memory_operations import MEMORY_OPERATIONS  # noqa: E402
+from holdspeak.desk_state_operations import DESK_STATE_OPERATIONS  # noqa: E402
+
+DESCRIPTORS = DESCRIPTORS + RECIPE_OPERATIONS + THOUGHT_OPERATIONS + MEMORY_OPERATIONS + DESK_STATE_OPERATIONS
 
 #: The RuntimeServices / WebContext fields the catalogue binds to.
 BOUND_SERVICES: tuple[str, ...] = tuple(dict.fromkeys(d.service for d in DESCRIPTORS))
@@ -2722,7 +2755,7 @@ def _changed(name: str, args: Any, result: Any) -> tuple[str, str, str]:
     """
     kind, _, op = name.partition(".")
     # The kind the desk refreshes on (web/announce.py): a person, a workbench.
-    kind = {"people": "person", "automation": "workbench", "calls": "call"}.get(kind, kind)
+    kind = {"people": "person", "automation": "workbench", "calls": "call", "recordings": "recording"}.get(kind, kind)
     payload = args if isinstance(args, Mapping) else {}
     obj_id: Any = payload.get(f"{kind}_id")
     if not obj_id:

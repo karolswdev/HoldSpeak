@@ -275,6 +275,18 @@ class RecordingsService:
         self._emit("parked", rec)
         return {"id": rec.id, "parked": True}
 
+    def open_folder(self) -> dict[str, Any]:
+        """Open the recordings folder on this Mac (Finder; xdg-open elsewhere)."""
+        import subprocess
+        import sys
+
+        root = self.store.root()
+        root.mkdir(parents=True, exist_ok=True)
+        opener = "open" if sys.platform == "darwin" else "xdg-open"
+        subprocess.run([opener, str(root)], check=False, timeout=10,
+                       stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        return {"opened": True, "folder": str(root)}
+
     # ── the lifespan ────────────────────────────────────────────────────
 
     def startup(self) -> None:

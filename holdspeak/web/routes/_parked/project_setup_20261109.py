@@ -1,3 +1,8 @@
+"""PARKED 20261109 (ops/projects): POST /api/project-setups -- no client reads it.
+
+The web never calls it; MCP starts a setup through project.setup.start. Not imported.
+Kept for history; restore with ``git revert`` of the parking commit.
+"""
 """HS-159-04: Project Setup routes -- the interview on the wire.
 
 POST /api/project-setups                              -- start

@@ -67,6 +67,8 @@ _MCP_ONLY: frozenset[str] = frozenset({
     "meeting.intel_jobs", "meeting.intel_recovery", "meeting.aftercare", "meeting.aftercare_proposals",
     # The declared Decisions ledger (decision_operations.py).
     "decision.ledger",
+    # 2026-11-09 (ops/projects): the meeting decision's and the record ledger's reads.
+    "decision.lineage", "decision.moment", "decision_record.due_for_review", "decision_record.for_source",
     # The compositor's display requests (2026-11-08, desk_operations.py): an
     # agent drives the owner's desk over MCP; the seeded palettes do not grow.
     "desk.mark", "desk.press", "desk.say", "desk.scroll", "desk.request.read",
@@ -76,7 +78,41 @@ _MCP_ONLY: frozenset[str] = frozenset({
     # The declared Automations reads (2026-11-08, automation_operations.py): a
     # thread reads an automation through automation.get; the palettes do not grow.
     "automation.template.list", "automation.new.list", "automation.lesson.list",
+    # The Programs-and-work reads (2026-11-09, ops/programs-work): a thread reads
+    # a Program, a thought and memory through the reads it has; the palettes do not grow.
+    "automation.prepared.read", "program.requirement_evidence", "thought.for_note", "thought.original",
+    "thought.review", "memory.pages", "memory.recall", "memory.meaning.status", "desk.projection.list",
+    "today.since_morning", "desk.health", "constitutional_context.read", "constitutional_context.history",
+    # The declared dictation reads (2026-11-09, dictation_operations.py): a
+    # thread reads the journal through dictation.list / dictation.get; the
+    # palettes do not grow.
+    "dictation.corrections.list", "dictation.learning_digest", "dictation.project_context",
+    "dictation.agent_hooks", "dictation.project_hs.get", "dictation.project_kb.get",
+    "dictation.block_templates", "dictation.blocks.list",
+    # The declared recordings, voice, sync and mesh reads (media_operations.py,
+    # device_operations.py): MCP and HTTP only; the palettes do not grow.
+    "recordings.list", "recordings.get", "tts.status", "sync.artifact.get", "sync.pull", "mesh.inbox",
+    # The declared outcome review (2026-11-09, project_operations.py): a thread
+    # reaches a meeting's proposals through meeting.proposals; the palettes do not grow.
+    "meeting.outcome_review",
+    # The declared kernel reads (2026-11-09, gate_operations.py); kernel.receipt keeps its place.
+    "kernel.get", "kernel.events",
 })
+
+
+def _family_reads() -> frozenset[str]:
+    """The declared reads of the agents, threads, coders and delivery verbs
+    (2026-11-09; ``agent_operations.py``, ``thread_operations.py``,
+    ``coder_operations.py``, ``delivery_operations.py``): MCP and HTTP only,
+    read from the rows, so the seeded palettes do not grow."""
+    from holdspeak import operations as ops
+
+    rows = (ops.AGENT_OPERATIONS + ops.THREAD_OPERATIONS + ops.CODER_OPERATIONS + ops.DELIVERY_OPERATIONS
+            + ops.INVOCATION_OPERATIONS)
+    return frozenset(d.tool_name for d in rows if d.tool_schema is not None and d.thread == "evidence_read")
+
+
+_MCP_ONLY = _MCP_ONLY | _family_reads()
 
 
 def _thread_side(name: str) -> bool:
@@ -92,7 +128,13 @@ def _thread_side(name: str) -> bool:
          # Programs (2026-10-28): an MCP and REST family (agents orchestrate).
          "program.",
          # Phone (2026-10-28): an MCP and REST family (the desk reaches him).
-         "phone.")
+         "phone.",
+         # 2026-11-09 (ops/projects): the activity ledger, the Walk and the
+         # briefing pages, the repository drawer and the roadmaps are MCP and
+         # REST families; the seeded palettes do not grow.
+         "activity.", "walk.", "briefing.", "repository.", "roadmap.",
+         # The gate and the principals (2026-11-09, gate_operations.py): MCP and REST.
+         "gate.", "principals.")
     )
 
 

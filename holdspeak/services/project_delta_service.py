@@ -1825,6 +1825,15 @@ class ProjectDeltaService:
                 )
         return None
 
+    def get_review(self, principal: Any, project_id: str, review_id: str) -> dict[str, Any]:
+        """One review of a project: its frozen window (project.get_review).
+
+        A review of another project is not found, as an unknown one is."""
+        review = self._db.project_observations.get_review(review_id)
+        if review is None or review["project_id"] != project_id:
+            raise NotFound("review", review_id)
+        return self._load_frozen_window(review)
+
     def get_delta(self, principal: Any, project_id: str) -> dict[str, Any]:
         """The open review window, or the honest empty state (WEB-STA-004).
 
