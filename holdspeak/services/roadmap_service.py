@@ -329,7 +329,12 @@ class RoadmapService:
     def __init__(self, db: Any = None, *, observer: Any = None, repo_root: Optional[Path] = None) -> None:
         self._db = db
         self._observer = observer
-        self._root = Path(repo_root) if repo_root is not None else REPO_ROOT
+        # The checkout the roadmaps are read from: the argument (a route-builder
+        # test seam), else HOLDSPEAK_REPO_ROOT (a rig that boots this hub over a
+        # case-owned repository; the hub composes this service itself since
+        # #2123, so the builder's argument no longer reaches it), else this tree.
+        env_root = os.environ.get("HOLDSPEAK_REPO_ROOT") or ""
+        self._root = Path(repo_root) if repo_root is not None else (Path(env_root) if env_root else REPO_ROOT)
 
     def _known(self, slug: str) -> None:
         if _project_path(self._root, slug) is None:
