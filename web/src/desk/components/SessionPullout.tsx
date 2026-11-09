@@ -12,21 +12,16 @@ import "./session-pullout.css";
 import "../conductor/conductor.css";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "../../components/signal/Signal";
-import { MicButton } from "./MicButton";
 import { GroundingSection } from "./GroundingSection";
 import { ReceiptLine } from "./ReceiptLine";
-import { RailsPicker } from "./RailsPicker";
 import { useDesk } from "../store";
 import {
-  buildGrounding,
   emptyGrounding,
   groundingIsEmpty,
   groundingTokens,
-  railsTokens,
+  hubGrounding,
   type GroundingSelection,
-  type RailsPick,
 } from "../grounding";
-import { flipTargetForStory, useMissionControl } from "../missioncontrol";
 import { mmss, useSteering } from "../steering";
 import { useDurableDraft } from "../../lib/durableDraft";
 import { controlModeLabel, humanizeWireValue } from "../../lib/productLanguage";
@@ -366,9 +361,8 @@ function FactoryControls() {
 interface SteerOptions {
   submitOn: boolean;
   grounding: GroundingSelection;
-  rails: RailsPick[];
 }
-const emptySteerOptions = (): SteerOptions => ({ submitOn: true, grounding: emptyGrounding(), rails: [] });
+const emptySteerOptions = (): SteerOptions => ({ submitOn: true, grounding: emptyGrounding() });
 
 /** The voice-first composer (HS-87-03), available under resolved authority. */
 function SteerComposer({ listenSignal = 0, available = true, options, onOptionsChange }: {
@@ -385,20 +379,20 @@ function SteerComposer({ listenSignal = 0, available = true, options, onOptionsC
     setDraft: setText,
     recovered: textRecovered,
   } = useDurableDraft(`steer:${openKey || "unattached"}`);
-  const { submitOn, grounding, rails } = options;
+  const { submitOn, grounding } = options;
 
   const send = async () => {
     if (!available) return;
     const delivered = await useSteering
       .getState()
-      .steer(text, submitOn, buildGrounding(grounding, rails));
+      .steer(text, submitOn, hubGrounding(grounding));
     if (delivered && useSteering.getState().openKey === openKey) {
       setText(""); // a refused steer keeps its composition
-      onOptionsChange({ ...options, grounding: emptyGrounding(), rails: [] });
+      onOptionsChange({ ...options, grounding: emptyGrounding() });
     }
   };
 
-  const budgetTokens = groundingTokens(grounding) + railsTokens(rails);
+  const budgetTokens = groundingTokens(grounding);
 
   return (
     <div className="desk-steer">
@@ -456,13 +450,7 @@ function SteerComposer({ listenSignal = 0, available = true, options, onOptionsC
         limitTokens={STEER_LIMIT_TOKENS}
         meter={false}
       />
-      <RailsPicker
-        picks={rails}
-        onChange={(rails) => onOptionsChange({ ...options, rails })}
-        limitTokens={STEER_LIMIT_TOKENS}
-        meter={false}
-      />
-      {(!groundingIsEmpty(grounding) || rails.length > 0) && (
+      {!groundingIsEmpty(grounding) && (
         <span className="desk-steer-grounded">
           <LedMeter
             label="CTX"
@@ -496,23 +484,9 @@ export function SteeringPolicyFacts() {
   );
 }
 
-/** Classify (HS-87-05): triage the session onto the desk and the rails —
- * keep the ask as a note, pin to a story, or flip a correlated story
- * through the Phase-82 proposal leg (the ProposalCard renders in the
- * conveyor). All through existing write paths. */
-function ClassifySection({ sessionKey }: { sessionKey: string }) {
+/** Classify (HS-87-05): keep the session's ask as a note. */
+function ClassifySection() {
   const classifyState = useSteering((s) => s.classifyState);
-  const manualPins = useSteering((s) => s.manualPins);
-  const repos = useMissionControl((s) => s.repos);
-  const mcSessions = useMissionControl((s) => s.sessions);
-  const [pinInput, setPinInput] = useState("");
-
-  const mc = mcSessions.find((s) => s.key === sessionKey);
-  const correlated = mc?.storyRefs[0] || null;
-  const flipTarget = correlated
-    ? flipTargetForStory(repos, correlated.storyId, correlated.project)
-    : null;
-  const pinned = manualPins[sessionKey];
 
   return (
     <div className="desk-classify">
@@ -530,65 +504,6 @@ function ClassifySection({ sessionKey }: { sessionKey: string }) {
               ? "Retry keep"
               : "Keep as note"}
         </Button>
-        {flipTarget && (
-          <Button
-            dense
-            variant="ghost"
-            className="desk-chip"
-            title={`propose a status flip for ${flipTarget.story}`}
-            onClick={() =>
-              useMissionControl
-                .getState()
-                .proposeFlip(
-                  flipTarget.repo,
-                  flipTarget.project,
-                  flipTarget.story,
-                  "done",
-                )
-            }
-          >
-            Flip {flipTarget.story} →
-          </Button>
-        )}
-      </div>
-      <div className="desk-classify-row">
-        {pinned ? (
-          <Button
-            dense
-            variant="ghost"
-            className="desk-chip quiet"
-            title="clear the manual pin"
-            onClick={() => useSteering.getState().clearPin(sessionKey)}
-          >
-            PINNED {pinned}
-          </Button>
-        ) : (
-          <>
-            <MicButton
-              label="Pin to story"
-              draftScope={`story-pin:${sessionKey}`}
-              onText={(t) => setPinInput(t.trim())}
-            />
-            <StringGadget
-              label="Story id"
-              value={pinInput}
-              placeholder="e.g. HS-87-05"
-              onChange={setPinInput}
-            />
-            <Button
-              dense
-              variant="ghost"
-              className="desk-chip quiet"
-              disabled={!pinInput.trim()}
-              onClick={() => {
-                useSteering.getState().pinToStory(sessionKey, pinInput.trim());
-                setPinInput("");
-              }}
-            >
-              Pin
-            </Button>
-          </>
-        )}
       </div>
     </div>
   );
@@ -821,7 +736,7 @@ export function SessionPullout() {
                 </span>}
               </> : null}
             </> : null}
-            <ClassifySection sessionKey={openKey} />
+            <ClassifySection />
           </div>
         </FoldGadget>
         </>}

@@ -1,59 +1,15 @@
-// HS-111-06 — species smoke locks (audit §4.4): the census fold, the
+// HS-111-06 — species smoke locks (audit §4.4): the
 // shared PaneWell seam, the dossier's named empty-command token, and
 // the lifecycle surface-token.
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import type { McSession } from "../missioncontrol";
 import { fromWirePhaseDossier, fromWireStoryDossier, useDeliveryDossier, type StoryDossier } from "../deliveryDossier";
 import phaseFixture from "../../../../apple/Tests/ContractsTests/Fixtures/delivery_phase_dossier.json";
 import storyFixture from "../../../../apple/Tests/ContractsTests/Fixtures/delivery_story_dossier.json";
 import { PaneWell } from "../surface/Surface";
-import { censusByAgent } from "./MissionControlConveyor";
 import { DeliveryDossierWindow } from "./DeliveryDossierWindow";
 import { LifecycleChip } from "../../features/project-room/ProjectRoomCore";
-
-function session(over: Partial<McSession>): McSession {
-  return {
-    key: "claude:s1",
-    agent: "claude",
-    correlation: "off_rails",
-    storyIds: [],
-    storyRefs: [],
-    awaitingResponse: false,
-    lastAssistantText: "",
-    stale: false,
-    tmuxSession: null,
-    ...over,
-  };
-}
-
-describe("censusByAgent (the pin-flood fold)", () => {
-  it("folds off-belt sessions into one line per agent; needs-you stays out", () => {
-    const sessions: McSession[] = [
-      session({ key: "claude:1", correlation: "off_rails" }),
-      session({ key: "claude:2", correlation: "off_rails" }),
-      session({ key: "claude:3", correlation: "ambiguous" }),
-      session({ key: "claude:4", correlation: "off_rails", stale: true }),
-      // Awaiting: the needs-you layer renders this one individually.
-      session({ key: "claude:5", awaitingResponse: true }),
-      // On-story: pins to its story cell, never censused.
-      session({ key: "claude:6", correlation: "on_story" }),
-      session({ key: "codex:1", agent: "codex", correlation: "off_rails" }),
-    ];
-    const census = censusByAgent(sessions);
-    expect(census.map((row) => `${row.agent} ${row.total}`)).toEqual([
-      "claude 4",
-      "codex 1",
-    ]);
-    const claude = census[0];
-    expect(claude.buckets).toEqual([
-      { token: "Off rails", count: 2 },
-      { token: "Ambiguous", count: 1 },
-      { token: "Idle", count: 1 },
-    ]);
-  });
-});
 
 describe("PaneWell (the one terminal seam)", () => {
   it("mounts the sunken mono pane while live", () => {

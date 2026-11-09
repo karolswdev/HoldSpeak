@@ -6,7 +6,6 @@
 // read the one read model.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  deliveryBeltRepos,
   deliveryListRows,
   fromWireAttempt,
   fromWireNode,
@@ -364,17 +363,5 @@ describe("delivery objects reach the List view", () => {
     expect(sessions).toEqual(["HS-94-08"]);
     // A story row carries its source freshness, resolved from the read model.
     expect(rows.find((r) => r.label === "HS-94-08" && r.kind === "Story")!.freshness).toBe("live");
-  });
-});
-
-describe("belt compatibility reads the one read model", () => {
-  it("maps sources to the belt repo shape, freshness folded honestly", () => {
-    const repos = deliveryBeltRepos(SNAPSHOT.sources.map(fromWireSource));
-    expect(repos[0]).toMatchObject({ name: "holdspeak", status: "live" });
-    expect(repos[0].projects[0]).toMatchObject({ slug: "holdspeak", nextStoryId: "HS-94-08" });
-    expect(repos[0].projects[0].phases.map((p) => p.status)).toEqual(["closed", "open"]);
-    // An incompatible source becomes the belt's "compatibility" with no invented projects.
-    expect(repos[1]).toMatchObject({ name: "delivery-workbench", status: "compatibility" });
-    expect(repos[1].projects).toEqual([]);
   });
 });
