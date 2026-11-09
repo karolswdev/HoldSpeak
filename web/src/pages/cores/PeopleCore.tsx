@@ -52,6 +52,7 @@ import "./people.css";
 import { openProjectRoom } from "../../desk/shell";
 import { Token } from "../../desk/surface/Token";
 import { wireWords } from "../../desk/surface/words";
+import { ShowMe } from "../../desk/walk/ShowMe";
 
 type ReadinessState = "unconfigured" | "locked" | "key_unavailable" | "corrupt" | "unavailable" | "no_key_store" | "ready";
 type Visibility = "shared_intent" | "leader_private";
@@ -887,6 +888,7 @@ export function RelationshipPane({ relationship, initialLens, lensRequest = null
       {onBack ? <Button variant="secondary" className="people-back" onClick={onBack}>Back</Button> : null}
       <Button variant="secondary" onClick={() => { setLens("context"); setNoteRequest((n) => n + 1); }} data-testid="person-add-note">Note</Button>
       <Button variant="secondary" onClick={() => { setLens("context"); setLinkRequest((n) => n + 1); }} data-testid="person-link-project">Link project</Button>
+      <ShowMe app="surface-people" />
     </Mast>
     <Spine className="people-spine" segments={spine.segments} label={spine.words || undefined} data-testid="people-spine" />
     {lead}

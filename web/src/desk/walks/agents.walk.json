@@ -1,0 +1,44 @@
+{
+  "title": "Agents",
+  "open": {
+    "app": "open-conductor"
+  },
+  "steps": [
+    {
+      "highlight": {
+        "target": "agents-rail",
+        "thing": "agent list",
+        "words": "All your agents are here: who works, who asks you, who is done."
+      }
+    },
+    {
+      "highlight": {
+        "target": "agents-mast",
+        "thing": "agent head",
+        "words": "This is one agent: its name and what it does now, in one line."
+      }
+    },
+    {
+      "highlight": {
+        "target": "agents-plate",
+        "thing": "thing the agent needs now",
+        "words": "This matters now: what the agent needs from you, with its button."
+      }
+    },
+    {
+      "highlight": {
+        "target": "agents-ledger",
+        "thing": "agent work",
+        "words": "What the agent did, the newest first."
+      },
+      "ask": {
+        "ref": "agents-feel",
+        "question": "Is this how Agents should feel?",
+        "choices": [
+          "Keep",
+          "Redo"
+        ]
+      }
+    }
+  ]
+}

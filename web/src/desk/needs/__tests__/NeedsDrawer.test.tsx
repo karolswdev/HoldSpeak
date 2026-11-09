@@ -1119,7 +1119,8 @@ describe("NeedsDrawer on the interior kit (Phase 16)", () => {
     expect(screen.queryByTestId("needs-chip-week")).toBeNull();
     expect(screen.queryByTestId("needs-chip-later")).toBeNull();
     const verbs = screen.getByTestId("needs-mast").querySelectorAll(".surface-mast-verbs button");
-    expect([...verbs].map((b) => b.textContent)).toEqual(["Mine", "People"]);
+    // Show me is the standard verb at the end of every native mast (2026-11-09).
+    expect([...verbs].map((b) => b.textContent)).toEqual(["Mine", "People", "Show me"]);
   });
 
   it("every row leads with its glyph, named in plain words", async () => {

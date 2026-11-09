@@ -67,6 +67,35 @@ two links (the tailnet name over https first, then this computer; set
     uv run python scripts/walk.py new docs/walks/2026-11-07-wave-two.json
     uv run python scripts/walk.py read <id>
 
+## An app's own walk
+
+Each native app has its own walk: Needs you, Programs, the Room,
+Automations, Meetings, People, Agents, Calls, Settings and Decisions.
+
+1. Press **Show me** at the end of the verbs in the head of the app. On a
+   phone, press **More**, then **Show me**.
+2. The walk starts in that window. It does not open a link. It shows where
+   everything is, what the app is, the one thing that matters now, and the
+   rest. At the end it asks: "Is this how <app> should feel?"
+3. Press **Keep** or **Redo**. To add words, press **Say more**. The hub keeps
+   the answer and the image with the other walks (see below).
+
+An app that has no walk shows no **Show me**.
+
+To make or change the walk of an app:
+
+- The script is `web/src/desk/walks/<name>.walk.json`, in the format above.
+  `open` (at the top, not in a step) is the app that a linked walk opens
+  first. The steps open nothing: they look in the window of the app.
+- The app names its walk in `web/src/desk/applications.ts`: `walk: "<name>"`
+  on the row of the app. Needs you is in `CHAIR_WALKS`.
+- `tests/unit/test_app_walks.py` makes sure that each walk is valid and that
+  each part it marks is in the desk.
+
+To walk through all the apps from one link:
+
+    uv run python scripts/walk.py apps
+
 ## What the hub keeps
 
 Each walk is one folder: `~/.local/share/holdspeak/feedback/walks/<id>/`.

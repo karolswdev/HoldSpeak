@@ -2,21 +2,33 @@
 """The Walk: make a guided feedback walk on the owner's hub, and read it back.
 
     uv run python scripts/walk.py new docs/walks/2026-11-07-wave-two.json
+    uv run python scripts/walk.py apps
     uv run python scripts/walk.py read <id>
 
 ``new`` posts the script to the local hub (the owner token from
 ``~/.config/holdspeak/config.json`` meeting.web_auth_token) and prints the
 walk id and the two links, Tailscale first, each on its own line. ``read``
-prints each answer as one plain line. Docs: docs/walks.md.
+prints each answer as one plain line. ``apps`` posts every app's own walk
+(``web/src/desk/walks/<name>.walk.json``, declared in
+``web/src/desk/applications.ts``) as one linked walk, each app opened first,
+and prints its two links. Docs: docs/walks.md.
 """
 from __future__ import annotations
 
 import json
 import os
+import re
 import sys
 import urllib.error
 import urllib.request
 from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+APPLICATIONS = ROOT / "web" / "src" / "desk" / "applications.ts"
+WALKS = ROOT / "web" / "src" / "desk" / "walks"
+# `"chair:needs": "needs"` in CHAIR_WALKS and `walk: "programs"` on a manifest
+# row: the walks the desk declares, in the order of the file.
+_DECLARED = re.compile(r'"chair:[a-z-]+":\s*"([a-z0-9-]+)"|\bwalk:\s*"([a-z0-9-]+)"')
 
 HUB = os.environ.get("HOLDSPEAK_HUB", "http://127.0.0.1:8765")
 
@@ -60,6 +72,30 @@ def new(script_path: str) -> None:
     print(f"{HUB}{made['url_path']}")
 
 
+def declared_walks(root: Path = ROOT) -> list[str]:
+    """The app walks the desk declares, in the order of applications.ts."""
+    text = (root / "web" / "src" / "desk" / "applications.ts").read_text(encoding="utf-8")
+    return [chair or row for chair, row in _DECLARED.findall(text)]
+
+
+def compose_apps(root: Path = ROOT) -> dict:
+    """One linked walk of every app's own walk: each opens its app first."""
+    steps: list[dict] = []
+    for name in declared_walks(root):
+        script = json.loads((root / "web" / "src" / "desk" / "walks" / f"{name}.walk.json").read_text(encoding="utf-8"))
+        first, *rest = script["steps"]
+        steps.append({"open": dict(script["open"]), **first})
+        steps.extend(rest)
+    return {"title": "Every app, its own walk", "steps": steps}
+
+
+def apps() -> None:
+    made = _call("POST", "/api/walks", compose_apps())
+    print(f"walk {made['id']}")
+    print(f"{TAILNET}{made['url_path']}")
+    print(f"{HUB}{made['url_path']}")
+
+
 def read(walk_id: str) -> None:
     walk = _call("GET", f"/api/walks/{walk_id}")
     answers = walk.get("answers") or {}
@@ -83,6 +119,8 @@ def read(walk_id: str) -> None:
 def main(argv: list[str]) -> None:
     if len(argv) == 2 and argv[0] == "new":
         new(argv[1])
+    elif argv == ["apps"]:
+        apps()
     elif len(argv) == 2 and argv[0] == "read":
         read(argv[1])
     else:

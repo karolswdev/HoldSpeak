@@ -44,6 +44,7 @@ import "./meeting-record.css";
 import { useDesk } from "../../../desk/store";
 import { openSurfaceOr } from "../../../desk/shell";
 import { useWindowId } from "../../../desk/components/window/windowIdContext";
+import { ShowMe, useShowMe } from "../../../desk/walk/ShowMe";
 import { SEND_OPEN, windowDoc } from "../../../desk/windowSend";
 import { MEETING_OPEN_EVENT, peekMeetingRequest, takeMeetingRequest, type MeetingOpenRequest } from "../../../desk/objectWindows";
 import { MEETING_CHANGE_KINDS } from "../../../desk/useDeskChangedRefresh";
@@ -90,6 +91,8 @@ function RecordMenu({ label, ariaLabel, entries, glyph }: {
 
 export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClose(): void }) {
   const winId = useWindowId();
+  // The app's own walk: a Button at desk width, an entry of More on the phone.
+  const showMe = useShowMe("review-meetings");
   // The place a door asked for (an Outcomes face or transcript row), once.
   // Peeked in render (a render may run again), taken once it is shown.
   const [request] = useState<MeetingOpenRequest | null>(() => peekMeetingRequest(meetingId));
@@ -315,6 +318,7 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
     { type: "item", id: "decide", label: "Decide", onSelect: () => requestWell("decide") },
     ...(projects.some((project) => !project.is_archived) ? [{ type: "item" as const, id: "project", label: "Add to Project", onSelect: () => requestWell("project") }] : []),
     { type: "item", id: "park", label: "Park", ghost: parking ? "Busy" : undefined, onSelect: () => void park() },
+    ...(showMe.entry ? [showMe.entry] : []),
   ];
   const exportEntries: WorkMenuEntry[] = [
     { type: "item", id: "markdown", label: "Export MD", onSelect: () => void exportMeeting("markdown") },
@@ -416,6 +420,7 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
                 <path d="M8 1.75v1.75M8 12.5v1.75M1.75 8h1.75M12.5 8h1.75M3.6 3.6l1.25 1.25M11.15 11.15l1.25 1.25M3.6 12.4l1.25-1.25M11.15 4.85l1.25-1.25" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" />
               </svg>
             </Button>
+            <ShowMe app="review-meetings" inMore />
           </Mast>
           <Spine segments={spine.segments} label={spine.label} data-testid="meeting-spine" className="mt-spine" />
         </div>

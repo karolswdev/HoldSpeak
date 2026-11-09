@@ -33,6 +33,7 @@ import { PhoneSettingsPane } from "./PhoneSettings";
 import { usePhoneFocus } from "./phoneFocus";
 import type { Call, CallResult, CallSummary, CallsSettings, CallsStatus } from "./types";
 import "./calls.css";
+import { ShowMe } from "../walk/ShowMe";
 
 /** Seconds → `m:ss` (`h:mm:ss` past the hour). */
 export function clockWords(seconds: number): string {
@@ -313,7 +314,7 @@ function CallPane({ call, live, clock, mine, status, busy, settle, canCall, onCa
   );
   return (
     <article className="cl-object" data-testid="calls-document" data-call={call.id}>
-      <Mast className="cl-mast" kind={who === "You" ? "person" : "call"} id={who === "You" ? "you" : "calls"} title={who} facts={facts}>
+      <Mast className="cl-mast" kind={who === "You" ? "person" : "call"} id={who === "You" ? "you" : "calls"} title={who} facts={facts} data-testid="calls-mast">
         {!live && call.note_ref ? (
           <Button variant="secondary" dense onClick={() => openRef(call.note_ref!)} data-testid="calls-open-note">
             <ToolGlyph kind="note" />
@@ -321,6 +322,7 @@ function CallPane({ call, live, clock, mine, status, busy, settle, canCall, onCa
           </Button>
         ) : null}
         <Button variant="ghost" dense className="cl-back" onClick={onBack} data-testid="calls-back">All calls</Button>
+        <ShowMe app="surface-calls" />
       </Mast>
       <Spine className="cl-spine" tone={tone} label={outcome.word} />
       {live && call.hold ? (

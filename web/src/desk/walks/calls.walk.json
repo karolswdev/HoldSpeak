@@ -1,0 +1,44 @@
+{
+  "title": "Calls",
+  "open": {
+    "app": "surface-calls"
+  },
+  "steps": [
+    {
+      "highlight": {
+        "target": "calls-rail",
+        "thing": "call list",
+        "words": "Your calls and your phone are here."
+      }
+    },
+    {
+      "highlight": {
+        "target": "calls-mast",
+        "thing": "call head",
+        "words": "This is one call: who was on it and when, in one line."
+      }
+    },
+    {
+      "highlight": {
+        "target": "calls-plate",
+        "thing": "call plate",
+        "words": "This matters now: the one thing about this call, with its button."
+      }
+    },
+    {
+      "highlight": {
+        "target": "calls-list",
+        "thing": "recent calls",
+        "words": "Your recent calls, the newest first."
+      },
+      "ask": {
+        "ref": "calls-feel",
+        "question": "Is this how Calls should feel?",
+        "choices": [
+          "Keep",
+          "Redo"
+        ]
+      }
+    }
+  ]
+}

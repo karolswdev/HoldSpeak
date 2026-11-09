@@ -10,6 +10,7 @@ import { Spine, type SpineSegment } from "../surface/patterns/Spine";
 import { SYSTEM_48 } from "../systemSprites";
 import { needYouWords } from "../surface/count";
 import type { NeedFace } from "./needsFace";
+import { ShowMe } from "../walk/ShowMe";
 
 /** Owner walk 2026-11-08: the list's scope. Mine is his own (everything a
  *  person does not owe him); People is what people owe him. */
@@ -111,6 +112,7 @@ export function NeedsMast({ now, head, count, weights, total, checked, scope, se
             onClick={() => setShowMuted(!showMuted)}>{`Muted · ${muted}`}</Button>
         ) : null}
         {offer}
+        <ShowMe app="chair:needs" />
       </Mast>
       {segments.length ? (
         <Spine className="needs-mast-spine" segments={segments} data-testid="needs-spine"

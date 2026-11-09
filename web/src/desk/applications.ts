@@ -62,6 +62,9 @@ export interface DeskApplication {
    * names the place it lands ("Wallpaper, in Settings ▸ Desk"), never the name
    * of its retired window. Its old name stays a search word. */
   paletteLabel?: string;
+  /** The app's own walk: `desk/walks/<walk>.walk.json`. Its mast draws Show
+   *  me, which runs the walk in place (desk/walk/appWalks.ts). */
+  walk?: string;
 }
 
 export type GoGroup = "daily" | "work" | "builder";
@@ -69,6 +72,10 @@ export type GoGroup = "daily" | "work" | "builder";
 export type SurfaceApplication = DeskApplication & {
   surface: DeskSurfaceSpec;
 };
+
+/** The walk of a Chair window: Needs you is a Chair window, not a row of
+ * the manifest, so its walk is named here. */
+export const CHAIR_WALKS: Readonly<Record<string, string>> = { "chair:needs": "needs" };
 
 export const DESK_APPLICATIONS: readonly DeskApplication[] = [
   {
@@ -148,6 +155,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
   {
     action: "review-meetings",
     windowId: "surface-meetings",
+    walk: "meetings",
     label: "Meetings",
     description: "Outcomes, recordings, and the typed record.",
     glyph: "▣",
@@ -174,6 +182,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
   {
     action: "open-conductor",
     windowId: "conductor",
+    walk: "agents",
     label: "Agents",
     toolLabel: "Agents",
     description: "Your coding agents: who works, who asks you, what they finished.",
@@ -211,6 +220,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
   {
     action: "open-programs",
     windowId: "surface-programs",
+    walk: "programs",
     label: "Programs",
     description: "Goals cut into steps, each handed to an agent; what waits on you first.",
     glyph: "▦",
@@ -239,6 +249,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
   {
     action: "configure-settings",
     windowId: "surface-settings",
+    walk: "settings",
     label: "Settings",
     description: "Every boundary, stated once.",
     glyph: "⚙",
@@ -361,6 +372,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
   {
     action: "open-workbenches",
     windowId: "surface-workbenches",
+    walk: "automations",
     label: "Automations",
     description: "Jobs that run for you on a schedule or when something happens.",
     glyph: "⚒",
@@ -423,6 +435,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
   {
     action: "open-project-memory",
     windowId: "surface-project-memory",
+    walk: "room",
     // PHILO-17 (doors): one name. The Dock's Missed list is a different thing.
     label: "Memory",
     description: "Search connected evidence across the Desk or within a Project.",
@@ -487,6 +500,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
   {
     action: "open-calls",
     windowId: "surface-calls",
+    walk: "calls",
     label: "Calls",
     description: "Call HoldSpeak from your phone, or let it call you.",
     glyph: "☏",
@@ -551,6 +565,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
   {
     action: "open-people",
     windowId: "surface-people",
+    walk: "people",
     label: "People",
     description: "Relationships, commitments, and follow-through.",
     glyph: "♧",
@@ -597,6 +612,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
   {
     action: "open-decisions",
     windowId: "surface-decisions",
+    walk: "decisions",
     label: "Decisions",
     description: "Every decision, why it was made and what replaced it. New decision is its composer.",
     glyph: "◈",

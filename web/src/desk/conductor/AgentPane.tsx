@@ -42,6 +42,7 @@ import {
   allowHelper, answerMember, cancelQueuedHand, doneMember, openMember, removeLaunch, resumeAll, stopMember, stops,
 } from "./open";
 import { useConductor } from "./store";
+import { ShowMe } from "../walk/ShowMe";
 
 /** The stopped agents whose item takes Hand again (a new agent in the
  *  same worktree; the hub checks it). */
@@ -544,6 +545,7 @@ export function AgentPane({ member, pill, row, onStart, opened = true }: PanePro
           {raw ? "Back to the agent" : "Terminal"}
         </Button>
       ) : null}
+      <ShowMe app="open-conductor" />
     </Mast>
   );
 

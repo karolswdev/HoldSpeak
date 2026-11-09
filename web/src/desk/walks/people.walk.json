@@ -1,0 +1,44 @@
+{
+  "title": "People",
+  "open": {
+    "app": "open-people"
+  },
+  "steps": [
+    {
+      "highlight": {
+        "target": "people-rail",
+        "thing": "people list",
+        "words": "All your people are here. Press a name to open it."
+      }
+    },
+    {
+      "highlight": {
+        "target": "people-detail-head",
+        "thing": "person head",
+        "words": "This is one person: the name and how you work together, in one line."
+      }
+    },
+    {
+      "highlight": {
+        "target": "people-plate",
+        "thing": "next thing with this person",
+        "words": "This matters now: the one thing to do with this person."
+      }
+    },
+    {
+      "highlight": {
+        "target": "prep-commitments",
+        "thing": "commitments",
+        "words": "The commitments: what you owe and what is owed to you."
+      },
+      "ask": {
+        "ref": "people-feel",
+        "question": "Is this how People should feel?",
+        "choices": [
+          "Keep",
+          "Redo"
+        ]
+      }
+    }
+  ]
+}

@@ -19,6 +19,7 @@ import type { useUpdateController } from "../update/useUpdateController";
 import type { RoomAsk } from "./Ask";
 import { sourcesWord } from "./format";
 import "./now-face.css";
+import { ShowMe } from "../../../desk/walk/ShowMe";
 
 /** What needs him on this Project: his own Needs you rows, or the claims
  *  that wait on his review when he has no row. Never a zero (the caller
@@ -146,6 +147,7 @@ export function RoomHead({
         </Button>
         <Button variant="secondary" className="room-verb-wide" onClick={onHistory} data-testid="room-head-history">History</Button>
         <Button variant="secondary" className="room-verb-phone" onClick={askPhone} data-testid="room-head-ask">Ask</Button>
+        <ShowMe app="open-project-memory" />
       </Mast>
       <Spine tone={tone} className="room-spine" data-testid="room-spine" data-meaning={tone} />
       {/* The Ask: a plain field with its mic; Enter asks (Betterment Q5). */}
