@@ -14,7 +14,6 @@ import asyncio
 import json
 import threading
 import time
-import uuid
 from pathlib import Path
 from typing import Any, Optional
 
@@ -24,6 +23,7 @@ from holdspeak.db.core import Database
 from holdspeak.kernel.inference_stream import Delta
 from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.services.errors import ServiceError, ValidationError
+from tests.unit._door_fakes import Broker, door_engine, words  # noqa: F401 - door_engine is a fixture
 from holdspeak.services.thread_service import (
     ThreadService,
     _PEOPLE_REDACTION,
@@ -81,165 +81,41 @@ def _sensitive_dispatch(name: str, args: dict, principal: Principal) -> Any:
 
 
 # ---------------------------------------------------------------------------
-# Fake adoption service that alternates tool_calls and text
+# Fake runner that alternates tool_calls and text (``_door_fakes``)
 # ---------------------------------------------------------------------------
 
 
-class _ToolCallBroker:
-    """Broker whose adoption service yields tool_calls on the first call,
-    then text on the second.  Re-admission for subsequent passes is
-    handled by returning a new execution id each time.
-    """
+def _ToolCallBroker(
+    *,
+    tool_calls: list[dict[str, Any]] | None = None,
+    final_text: str = "Here are the results.",
+    always_tools: bool = False,
+) -> Broker:
+    """A broker whose runner yields tool_calls on the first pass (or every
+    pass), then text."""
+    calls = tool_calls or [{"id": "call_1", "name": "desk.list", "arguments": "{}"}]
+    count = [0]
 
-    def __init__(
-        self,
-        *,
-        tool_calls: list[dict[str, Any]] | None = None,
-        final_text: str = "Here are the results.",
-        egress: str = "same_device",
-        always_tools: bool = False,
-    ):
-        self._tool_calls = tool_calls or [
-            {"id": "call_1", "name": "desk.list", "arguments": "{}"},
-        ]
-        self._final_text = final_text
-        self._egress = egress
-        self._always_tools = always_tools
-
-    @property
-    def inference_adoption_service(self):
-        return _ToolCallAdoptionService(
-            tool_calls=self._tool_calls,
-            final_text=self._final_text,
-            egress=self._egress,
-            always_tools=self._always_tools,
-        )
-
-
-class _ToolCallAdoptionService:
-    """Fake that yields tool_calls on first execute_stream, text on second."""
-
-    _call_count: int = 0  # class-level shared counter across instances
-
-    def __init__(
-        self,
-        *,
-        tool_calls: list[dict[str, Any]],
-        final_text: str,
-        egress: str,
-        always_tools: bool,
-    ):
-        self._tool_calls = tool_calls
-        self._final_text = final_text
-        self._egress = egress
-        self._always_tools = always_tools
-
-    def admit(
-        self,
-        principal,
-        *,
-        command_id,
-        capability_id,
-        operation_id,
-        payload,
-        invocation_id,
-        reserved_output_tokens=512,
-    ):
-        # Store the payload for sensitive-text assertions.
-        self._last_payload = dict(payload)
-        return {
-            "execution": {"id": f"exec_{uuid.uuid4().hex[:8]}"},
-            "route_plan": {
-                "id": "rp_test",
-                "egress_scope": self._egress,
-                "model_id": "test-model",
-                "entries": [{"boundary": self._egress}],
-            },
-            "operation_request_plan": {"id": "orp_test"},
-        }
-
-    def execute_stream(
-        self,
-        principal,
-        *,
-        execution_id,
-        adapter,
-        on_delta,
-        publish=None,
-        payload_redactor=None,
-    ):
-        _ToolCallAdoptionService._call_count += 1
-        count = _ToolCallAdoptionService._call_count
-
-        if self._always_tools or count == 1:
-            # First pass (or always): yield tool_calls
-            on_delta(Delta(kind="tool_calls", meta={"tool_calls": self._tool_calls}))
+    def engine(_request: Any, on_delta: Any) -> str:
+        count[0] += 1
+        if always_tools or count[0] == 1:
+            on_delta(Delta(kind="tool_calls", meta={"tool_calls": calls}))
             on_delta(Delta(kind="usage", meta={"prompt_tokens": 10, "completion_tokens": 0}))
             on_delta(Delta(kind="done"))
-        else:
-            # Subsequent pass: yield text answer
-            words = self._final_text.split(" ")
-            for i, word in enumerate(words):
-                token = word if i == 0 else " " + word
-                on_delta(Delta(kind="text", text=token))
-            on_delta(Delta(kind="usage", meta={"prompt_tokens": 10, "completion_tokens": len(words)}))
-            on_delta(Delta(kind="done"))
-        return {
-            "outcome": "succeeded",
-            "result": {"output": ""},
-            "receipt": {"id": f"receipt_{count}", "outcome": "succeeded"},
-        }
+            return ""
+        return words(final_text)(_request, on_delta)
+
+    return Broker(engine)
+
+
+def _NoToolsBroker(*, output: str = "Hello from assistant") -> Broker:
+    """A broker that yields text only (no tool_calls), matching DC-01."""
+    return Broker(words(output))
 
 
 @pytest.fixture(autouse=True)
-def _reset_call_count():
-    """Reset the shared call counter before each test."""
-    _ToolCallAdoptionService._call_count = 0
+def _door(door_engine):
     yield
-    _ToolCallAdoptionService._call_count = 0
-
-
-# ---------------------------------------------------------------------------
-# No-tools broker (identical to test_thread_service.py's FakeBroker)
-# ---------------------------------------------------------------------------
-
-
-class _NoToolsBroker:
-    """Broker that yields text only (no tool_calls), matching DC-01."""
-
-    def __init__(self, *, output: str = "Hello from assistant"):
-        self._output = output
-
-    @property
-    def inference_adoption_service(self):
-        return _NoToolsAdoptionService(output=self._output)
-
-
-class _NoToolsAdoptionService:
-    def __init__(self, *, output: str):
-        self._output = output
-
-    def admit(self, principal, *, command_id, capability_id, operation_id,
-              payload, invocation_id, reserved_output_tokens=512):
-        return {
-            "execution": {"id": f"exec_{uuid.uuid4().hex[:8]}"},
-            "route_plan": {"id": "rp_test", "egress_scope": "same_device", "model_id": "test-model"},
-            "operation_request_plan": {"id": "orp_test"},
-        }
-
-    def execute_stream(self, principal, *, execution_id, adapter, on_delta,
-                       publish=None, payload_redactor=None):
-        words = self._output.split(" ")
-        for i, word in enumerate(words):
-            token = word if i == 0 else " " + word
-            on_delta(Delta(kind="text", text=token))
-        on_delta(Delta(kind="usage", meta={"prompt_tokens": 10, "completion_tokens": len(words)}))
-        on_delta(Delta(kind="done"))
-        return {
-            "outcome": "succeeded",
-            "result": {"output": self._output},
-            "receipt": {"id": "receipt_test_123", "outcome": "succeeded"},
-        }
 
 
 # ---------------------------------------------------------------------------
@@ -490,50 +366,23 @@ class TestAbortDuringExecute:
 class TestSensitiveAccumulator:
     """AC: sensitive result -> accumulator -> next pass payload withholds it."""
 
-    def test_sensitive_text_in_accumulator(self, db, broadcast_fn, broadcasts):
-        """A people.* tool result text is added to _sensitive_texts for M1."""
-        captured_payloads: list[dict] = []
-        original_admit = _ToolCallAdoptionService.admit
-
-        def capturing_admit(self_inner, principal, *, command_id, capability_id,
-                            operation_id, payload, invocation_id,
-                            reserved_output_tokens=512):
-            captured_payloads.append(dict(payload))
-            return original_admit(
-                self_inner, principal,
-                command_id=command_id, capability_id=capability_id,
-                operation_id=operation_id, payload=payload,
-                invocation_id=invocation_id,
-                reserved_output_tokens=reserved_output_tokens,
-            )
-
-        # Monkeypatch admit to capture payloads
-        _ToolCallAdoptionService.admit = capturing_admit
-
-        try:
-            svc = ThreadService(
-                db, broadcast=broadcast_fn,
-                broker=_ToolCallBroker(
-                    tool_calls=[{"id": "call_people", "name": "people.readiness", "arguments": "{}"}],
-                ),
-                tool_dispatch_fn=_sensitive_dispatch,
-            )
-            t = svc.create(title="Sensitive test")
-            asyncio.run(svc.start_turn(OWNER, t["id"], "Check readiness"))
-            _wait_done(broadcasts)
-        finally:
-            _ToolCallAdoptionService.admit = original_admit
-
-        # The second admit (re-admission for pass 2) should have
-        # _sensitive_texts containing the people.* result.
-        assert len(captured_payloads) >= 1, "No payload captured"
-        # The second payload (pass 2 re-admission):
-        second_payload = captured_payloads[-1]
-        sensitive = second_payload.get("_sensitive_texts", [])
-        # The people.readiness result should be in the sensitive texts
-        assert any("John Doe" in s for s in sensitive), (
-            f"Sensitive result not in accumulator: {sensitive}"
+    def test_sensitive_text_in_accumulator(self, db, broadcast_fn, broadcasts, monkeypatch):
+        """A people.* tool result text is withheld from the next pass on cloud egress (M1)."""
+        broker = _ToolCallBroker(
+            tool_calls=[{"id": "call_people", "name": "people.readiness", "arguments": "{}"}],
         )
+        svc = ThreadService(db, broadcast=broadcast_fn, broker=broker, tool_dispatch_fn=_sensitive_dispatch)
+        monkeypatch.setattr("holdspeak.services.engine_door.egress_of", lambda _broker, _engine: "cloud")
+        t = svc.create(title="Sensitive test")
+        asyncio.run(svc.start_turn(OWNER, t["id"], "Check readiness"))
+        _wait_done(broadcasts)
+
+        # The second pass carries the people.* result, redacted on cloud.
+        requests = broker.inference_runner.requests
+        assert len(requests) == 2
+        sent = json.dumps(requests[-1].payload)
+        assert "John Doe" not in sent and _PEOPLE_REDACTION in sent
+        assert "_sensitive_texts" not in requests[-1].payload
 
         # Verify that the tool result part is marked sensitive in DB
         got = svc.get(t["id"])

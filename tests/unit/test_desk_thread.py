@@ -9,15 +9,16 @@ schemas are about 15 KB, and the route reserves one token per byte
 with the default 16384-token context a turn with a source, or a pass with a
 tool result, is skipped before it is sent (``context_overflow``).  The routed
 result then carried ``outcome: failed`` and no error text, and the turn
-completed as an empty reply.  The engine answer here is the receipt that rig
-hub recorded (``tests/fixtures/thread_turn_context_overflow_receipt.json``).
+completed as an empty reply.  Since the turn runs through the engine door
+(2026-11-08), ``engine_door.room`` says before the send that a pass does not
+fit, and the pass goes without tools.  The rig's recorded receipt is parked
+(``tests/fixtures/_parked/``).
 """
 from __future__ import annotations
 
 import asyncio
 import json
 import time
-import uuid
 from pathlib import Path
 from typing import Any
 
@@ -26,49 +27,46 @@ import pytest
 from holdspeak.db.core import Database
 from holdspeak.kernel.inference_stream import Delta
 from holdspeak.principals import Principal, PrincipalKind
+from holdspeak.services import engine_door
 from holdspeak.services.thread_service import ThreadService
+from tests.unit._door_fakes import EngineDown, Runner, door_engine  # noqa: F401 - door_engine is a fixture
 
 OWNER = Principal(PrincipalKind.OWNER, "owner-session")
-FIXTURE = Path(__file__).resolve().parents[1] / "fixtures" / "thread_turn_context_overflow_receipt.json"
-OVERFLOW = json.loads(FIXTURE.read_text())["receipt"]
 
 
 class _Engine:
-    """An adoption service that plays one scripted answer per pass.
+    """A broker whose runner plays one scripted answer per pass (``_door_fakes``).
 
-    Each answer is ``("overflow",)`` (the recorded receipt, nothing sent),
-    ``("text", words)``, ``("tools", calls)`` or ``("empty",)``.
+    Each answer is ``("overflow",)`` (the pass does not fit the engine:
+    ``engine_door.room`` says so before anything is sent), ``("down",)``
+    (the engine does not answer), ``("text", words)``, ``("tools", calls)``
+    or ``("empty",)``.
     """
+
+    database = None
 
     def __init__(self, answers: list[tuple[Any, ...]]):
         self.answers = list(answers)
         self.payloads: list[dict[str, Any]] = []
+        self.inference_runner = Runner(self._answer)
 
-    @property
-    def inference_adoption_service(self) -> "_Engine":
-        return self
+    def room(self, *_args: Any, **_kwargs: Any) -> int:
+        if self.answers and self.answers[0][0] == "overflow":
+            self.answers.pop(0)
+            return -1
+        return 1
 
-    def admit(self, principal, *, command_id, capability_id, operation_id,
-              payload, invocation_id, reserved_output_tokens=512):
-        self.payloads.append(json.loads(json.dumps(payload)))
-        return {"execution": {"id": "ire_" + uuid.uuid4().hex[:8]},
-                "route_plan": {"id": "rp", "model_id": "qwen3.8-27b",
-                               "entries": [{"boundary": "private_network"}]},
-                "operation_request_plan": {"id": "orp"}}
-
-    def execute_stream(self, principal, *, execution_id, adapter, on_delta,
-                       publish=None, payload_redactor=None, **_: Any):
+    def _answer(self, request: Any, on_delta: Any) -> str:
+        self.payloads.append(json.loads(json.dumps(request.payload)))
         answer = self.answers.pop(0)
-        if answer[0] == "overflow":
-            receipt = dict(OVERFLOW, execution_id=execution_id)
-            return {"outcome": "failed", "result": None, "receipt": receipt}
+        if answer[0] == "down":
+            raise EngineDown("connection refused")
         if answer[0] == "text":
             on_delta(Delta(kind="text", text=answer[1]))
         elif answer[0] == "tools":
             on_delta(Delta(kind="tool_calls", meta={"tool_calls": answer[1]}))
         on_delta(Delta(kind="done"))
-        return {"outcome": "succeeded", "result": {"output": ""},
-                "receipt": {"execution_id": execution_id, "outcome": "succeeded"}}
+        return answer[1] if answer[0] == "text" else ""
 
 
 def _service(db: Database, engine: _Engine, *, tools: bool) -> tuple[ThreadService, list]:
@@ -97,44 +95,49 @@ def _text(message: dict[str, Any]) -> str:
 
 
 @pytest.fixture
-def db(tmp_path: Path) -> Database:
+def db(tmp_path: Path, door_engine) -> Database:
     return Database(tmp_path / "desk_thread.db")
 
 
-def test_a_failed_routed_turn_completes_with_error_json(db: Database) -> None:
+def _fits(monkeypatch: pytest.MonkeyPatch, engine: _Engine) -> None:
+    monkeypatch.setattr(engine_door, "room", engine.room)
+
+
+def test_a_failed_turn_completes_with_error_json(db: Database) -> None:
     """Any mode, not only Interview: the reply says why, in words."""
-    engine = _Engine([("overflow",)])
+    engine = _Engine([("down",)])
     service, done = _service(db, engine, tools=False)
     thread = service.create(title="")
     turn = _turn(service, done, thread["id"], "What do I owe Mira this week?")
     assert turn["message"]["error_json"] == {
-        "code": "context_overflow",
-        "error": "The conversation is too long for the engine.",
-        "reason": "too_long",
+        "code": "turn_failed",
+        "error": "The engine did not answer.",
+        "reason": "did_not_answer",
     }
     assert turn["done"]["outcome"] == "failed"
-    assert turn["done"]["stats"]["error"]["reason"] == "too_long"
+    assert turn["done"]["stats"]["error"]["reason"] == "did_not_answer"
 
 
-def test_a_turn_too_long_with_tools_is_sent_again_without_them(db: Database) -> None:
-    """The cause: the recorded overflow on the first pass (a thread with a
-    source) is followed by one pass without tool schemas, and it answers."""
+def test_a_turn_too_long_with_tools_is_sent_without_them(db: Database, monkeypatch: pytest.MonkeyPatch) -> None:
+    """The cause: a first pass that does not fit with its tool schemas (a
+    thread with a source) goes without them, and it answers."""
     engine = _Engine([("overflow",), ("text", "The reconciliation job has no owner.")])
+    _fits(monkeypatch, engine)
     service, done = _service(db, engine, tools=True)
     thread = service.create(title="")
     turn = _turn(service, done, thread["id"], "Which risk has no owner?")
     assert turn["message"]["error_json"] is None
     assert _text(turn["message"]) == "The reconciliation job has no owner."
-    assert "tools" in engine.payloads[0]
-    assert "tools" not in engine.payloads[1]
+    assert len(engine.payloads) == 1 and "tools" not in engine.payloads[0]
 
 
-def test_tool_results_go_in_as_data_when_the_next_pass_overflows(db: Database) -> None:
+def test_tool_results_go_in_as_data_when_the_next_pass_overflows(db: Database, monkeypatch: pytest.MonkeyPatch) -> None:
     """The rig's own sequence: tools run, the next pass overflows, the answer
     pass carries the results as a leading system message (Qwen's template
     refuses a system message after the user message)."""
     calls = [{"id": "c1", "name": "follow_through.board", "arguments": "{}"}]
     engine = _Engine([("tools", calls), ("overflow",), ("text", "You owe Mira the design review.")])
+    _fits(monkeypatch, engine)
     service, done = _service(db, engine, tools=True)
     thread = service.create(title="")
     turn = _turn(service, done, thread["id"], "What do I owe Mira this week?")

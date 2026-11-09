@@ -173,9 +173,11 @@ def _assign(db, pids: list[str], n: int) -> None:
     })
 
 
-def _executions(db) -> list[str]:
+def _operations(db) -> list[str]:
+    """The engine door's runs, in order: each is one kernel operation (its receipt)."""
     with db._connection() as conn:
-        return [r["id"] for r in conn.execute("SELECT id FROM inference_route_executions ORDER BY rowid")]
+        return [r["operation_id"] for r in conn.execute(
+            "SELECT operation_id FROM kernel_operations WHERE name='inference.invoke' ORDER BY created_at, rowid")]
 
 
 def _turn(svc, db, frames, *, abort_after=None, before=None):
@@ -230,7 +232,8 @@ def test_thread_fallback_after_a_cloud_send_shows_cloud(tmp_path) -> None:
     broker.inference_runner._engine_factory = lambda rev, **kw: _Engine(rev, script)
     frames: list = []
     done, msg, wire = _turn(ThreadService(db, broker=broker, broadcast=lambda t, d: frames.append((t, d))), db, frames)
-    [execution] = _executions(db)
+    execution, answered = _operations(db)  # the door's one retry, on the next engine
+    assert done["receipt_id"] == answered
     assert (done["egress"], done["host"], done["model"], done["fallback"]) == ("cloud", "api.openai.com", "cloud-model", True)
     assert done["route_receipt_id"] == execution
     assert (msg.egress_scope, msg.egress_host, msg.egress_receipt_id, msg.egress_fallback) == ("cloud", "api.openai.com", execution, True)
@@ -269,7 +272,7 @@ def test_thread_partial_cancel_keeps_the_real_receipt(tmp_path) -> None:
     frames: list = []
     svc = ThreadService(db, broker=broker, broadcast=lambda t, d: frames.append((t, d)))
     done, msg, wire = _turn(svc, db, frames, abort_after=(started, release))
-    [execution] = _executions(db)
+    [execution] = _operations(db)
     assert done["outcome"] == "aborted"
     assert done["receipt_id"] == execution and done["route_receipt_id"] == execution
     assert msg.receipt_id == execution and msg.egress_receipt_id == execution
@@ -277,18 +280,22 @@ def test_thread_partial_cancel_keeps_the_real_receipt(tmp_path) -> None:
     assert done["egress"] == "cloud"
 
 
-def test_thread_multipass_pairs_the_route_with_its_own_receipt(tmp_path) -> None:
+def test_thread_passes_stay_on_the_turns_engine_and_keep_their_receipts(tmp_path) -> None:
+    """The engine is chosen once per turn: an assignment changed between two
+    passes is the next turn's.  Each pass is its own receipt."""
     from holdspeak.kernel.inference_stream import Delta
     from holdspeak.services.thread_service import ThreadService
 
     db, broker = _hub(tmp_path, ["cloud", "local"])
     _assign(db, ["cloud"], 1)
+    models: list[str] = []
 
     def script(model):
-        if model == "cloud-model":
+        models.append(model)
+        if len(models) == 1:
             yield Delta(kind="tool_calls", meta={"tool_calls": [
                 {"id": "tool-1", "type": "function", "function": {"name": "desk.list", "arguments": "{}"}}]})
-            _assign(db, ["local"], 2)  # the next pass is admitted on LOCAL
+            _assign(db, ["local"], 2)
         else:
             yield Delta(kind="text", text="Here are the results.")
         yield Delta(kind="done")
@@ -298,12 +305,13 @@ def test_thread_multipass_pairs_the_route_with_its_own_receipt(tmp_path) -> None
     svc = ThreadService(db, broker=broker, broadcast=lambda t, d: frames.append((t, d)),
                         tool_dispatch_fn=lambda name, args, principal: {"items": []})
     done, msg, wire = _turn(svc, db, frames)
-    cloud_pass, local_pass = _executions(db)
+    first_pass, answer_pass = _operations(db)
+    assert models == ["cloud-model", "cloud-model"]
     assert done["egress"] == "cloud" and done["model"] == "cloud-model"
-    assert done["route_receipt_id"] == cloud_pass
-    assert done["receipt_id"] == local_pass
-    assert (msg.egress_scope, msg.egress_receipt_id) == ("cloud", cloud_pass)
-    assert wire["egress_receipt_id"] == cloud_pass
+    assert done["route_receipt_id"] == answer_pass and done["receipt_id"] == answer_pass
+    assert first_pass != answer_pass
+    assert (msg.egress_scope, msg.egress_receipt_id) == ("cloud", answer_pass)
+    assert wire["egress_receipt_id"] == answer_pass
 
 
 def test_a_failed_ask_keeps_where_its_bytes_went(tmp_path) -> None:

@@ -176,14 +176,18 @@ def _scenario(hub: Any, name: str) -> dict:
     db.threads.append_part(message.id, kind="text", text="Atlas codename is THREADWORD.")
     sweep(db)
     refs = {"desk": None, "project": ["project:atlas", "note:n-named"]}[name]
-    first = _turn(hub, QUESTION, refs=refs)
-    second = _turn(hub, "Continue.", thread_id=first["thread_id"])
-    adoption = hub.broker.inference_adoption_service
-    out = {}
-    for label, turn in (("first", first), ("second", second)):
-        admitted = adoption.admitted_payload(str(db.threads.get_message(turn["assistant_message_id"]).operation_id))
-        out[label] = {k: v for k, v in admitted.items() if k != "tools"}
-    return out
+    # The payload each turn's first pass gave the engine door's runner.
+    runner, sent = hub.broker.inference_runner, []
+    invoke_stream = runner.invoke_stream
+    runner.invoke_stream = lambda request, *a, **k: (sent.append(request.payload), invoke_stream(request, *a, **k))[1]
+    try:
+        first = _turn(hub, QUESTION, refs=refs)
+        at = len(sent)
+        _turn(hub, "Continue.", thread_id=first["thread_id"])
+    finally:
+        del runner.invoke_stream
+    return {label: {k: v for k, v in payload.items() if k != "tools"}
+            for label, payload in (("first", sent[0]), ("second", sent[at]))}
 
 
 @pytest.mark.parametrize("name", ["desk", "project"])

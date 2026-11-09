@@ -4,7 +4,7 @@
 The agent tool turn (``RecipeService.chat`` -> ``AgentTurnService.run_recipe``)
 is retired code with no caller.  Recipe chat is ``POST
 /api/recipes/{id}/chat``, which starts a thread turn
-(``web/routes/_thread_factory.py``).  This file proves that path end to end:
+(``thread_service.hub_thread_service``).  This file proves that path end to end:
 
 * the real hub, the real kernel broker, the real route and ThreadService,
   the real ``ThreadToolExecutor`` and the real MCP dispatch;

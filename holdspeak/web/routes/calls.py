@@ -64,11 +64,11 @@ def _missing() -> JSONResponse:
 
 def wire_calls(ctx: WebContext) -> None:
     """Bind the hub's broadcast and thread loop to the calls service."""
-    from ._thread_factory import thread_service_from_ctx
+    from ...services.thread_service import hub_thread_service
 
     CALLS.configure(
         broadcast=lambda kind, data: (ctx.broadcast or (lambda *_: None))(kind, data),
-        thread_factory=lambda **overrides: thread_service_from_ctx(ctx, **overrides),
+        thread_factory=lambda **overrides: hub_thread_service(ctx.broadcast, **overrides),
     )
     LINE_HUB.config_fn = line_config
 

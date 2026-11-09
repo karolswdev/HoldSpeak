@@ -22,7 +22,6 @@ from ..db.core import Database
 from ..db.threads import ThreadRepository
 from ..grounding import GROUNDING_MAX_REFS, GroundingBlock, _defended_block, _unkept_draft_refs, hydrate_refs_detailed, live_block
 from ..inference_memory_policy import memory_enabled
-from ..kernel.inference_runner import InvocationRequest, ServiceContract
 from ..kernel.inference_stream import (
     Delta,
     StreamCadence,
@@ -32,7 +31,6 @@ from ..kernel.inference_stream import (
     emit_thread_turn_done,
 )
 from ..kernel.prompt_adapter import StreamingPromptAdapter
-from ..inference_locality import least_private, served_route
 from ..principals import Principal, PrincipalKind
 from .errors import ServiceError, ValidationError
 from . import thread_turns
@@ -140,12 +138,6 @@ _EMPTY_ANSWER_WORDS = "The engine finished without an answer."
 # pass is sent again without tools.  Each tool result goes in as data, cut to
 # this many characters, so the second pass does not overflow again.
 _ANSWER_ONLY_RESULT_CHARS = 2000
-
-
-def _turn_reason(receipt: Any) -> str:
-    """The face reason token for a routed receipt (the same map Ask uses)."""
-    from .ask_service import AskService
-    return AskService._route_reason(receipt)
 
 
 def _answer_only_messages(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -683,9 +675,8 @@ class ThreadService:
                         meta_json=json.dumps({"ref_kind": fref["ref_kind"], "ref_id": fref["ref_id"]}),
                     )
 
-        # -- Admit chat.turn through the adoption service exactly like Ask --
+        # -- The turn runs through the one engine door (``engine_door.run_stream``) --
         invocation_id = "chat_turn_" + uuid.uuid4().hex
-        capability_id = self._capability_id
 
         # Assemble the payload (assembler law).
         try:
@@ -717,23 +708,19 @@ class ThreadService:
             if effective_palette:
                 payload["tools"] = tool_schemas_for(effective_palette)
 
-        # HS-152-03: the thread's model pick is honored at admission.
-        profile_override = str(getattr(thread, "profile_override", "") or "")
-        if profile_override:
-            await asyncio.to_thread(
-                self._apply_profile_override,
-                principal,
-                invocation_id=invocation_id,
-                profile_override=profile_override,
-            )
+        # HS-152-03: the thread's model pick is this turn's engine; else the
+        # engine the assignment names.
+        engine = await asyncio.to_thread(
+            self._engine, principal, invocation_id, str(getattr(thread, "profile_override", "") or ""),
+        )
 
         # Memory slice 6 (MEMORY-DESIGN.md §3.5): the scope's pages, then its
-        # observations, before the recall, fitted to the route this turn
-        # will be admitted on.  Nothing served: the payload is unchanged.
+        # observations, before the recall, fitted to this turn's engine.
+        # Nothing served: the payload is unchanged.
         try:
             payload, reflect = await asyncio.to_thread(
                 self._with_reflect, payload, thread_id, user_msg.id, thread,
-                text=text, scopes=reflect_on, operation_id=invocation_id,
+                text=text, scopes=reflect_on, engine=engine,
                 pinned_ref=pinned_note["ref"] if pinned_note is not None else "",
             )
             # fit_reflect treats a raising candidate as optional memory. The
@@ -750,28 +737,6 @@ class ThreadService:
                              (time.time(), time.time(), user_msg.id))
             raise
 
-        # Admit through the adoption service.
-        admitted = await asyncio.to_thread(
-            self._broker.inference_adoption_service.admit,
-            principal,
-            command_id=f"admit-{invocation_id}",
-            capability_id=capability_id,
-            operation_id=invocation_id,
-            payload=payload,
-            invocation_id=invocation_id,
-            reserved_output_tokens=512,
-        )
-
-        route_plan = admitted["route_plan"]
-        # Derive egress_scope from the first route entry's boundary.
-        entries = route_plan.get("entries", [])
-        egress_scope = str(entries[0].get("boundary", "")) if entries else ""
-        if not egress_scope:
-            egress_scope = str(route_plan.get("egress_scope", "") or "")
-        model_id = str(route_plan.get("model_id", "") or "")
-        if not model_id and entries:
-            model_id = str(entries[0].get("profile_id", "") or "")
-
         # -- Commit assistant row with streaming=1 --
         assistant_msg = self._threads.append_message(
             thread_id,
@@ -782,8 +747,7 @@ class ThreadService:
             # No lamp before a receipt: the admitted plan is not where bytes
             # went (Article III).  The receipt route lands at turn end.
             egress_scope="",
-            model_id=model_id,
-            route_plan_id=str(route_plan.get("id", "")),
+            model_id=engine.profile,
         )
         self._threads.mark_streaming(assistant_msg.id)
 
@@ -798,15 +762,13 @@ class ThreadService:
             target=self._run_streaming_turn,
             kwargs=dict(
                 principal=principal,
-                admitted=admitted,
+                engine=engine,
                 adapter=adapter,
                 thread_id=thread_id,
                 assistant_msg_id=assistant_msg.id,
                 cancel_event=cancel_event,
-                egress_scope=egress_scope,
                 payload=payload,
                 turn_operation_id=invocation_id,
-                profile_override=profile_override,
                 interview=thread.recipe_id == INTERVIEW_MODE_ID,
                 reflect=reflect,
             ),
@@ -1218,28 +1180,27 @@ class ThreadService:
         self,
         *,
         principal: Principal,
-        admitted: dict[str, Any],
+        engine: Any,
         adapter: Any,
         thread_id: str,
         assistant_msg_id: str,
         cancel_event: threading.Event,
-        egress_scope: str,
         payload: dict[str, Any],
         turn_operation_id: str = "",
-        profile_override: str = "",
         interview: bool = False,
         reflect: Any = None,
     ) -> None:
         """Sync function that runs in a background thread.
 
-        Uses ``execute_stream`` on the adoption service which calls
-        ``InferenceRunner.invoke_stream`` internally.  Each text delta is
-        emitted as a ``thread_delta`` frame (frame-per-delta for text);
-        persistence uses ``StreamCadence`` (flush every 500 chars or 2 s).
+        Each pass is one door job (``engine_door.run_stream``) on the turn's
+        engine.  Each text delta is emitted as a ``thread_delta`` frame
+        (frame-per-delta for text); persistence uses ``StreamCadence`` (flush
+        every 500 chars or 2 s).  A pass that fails waits in Needs you with
+        Retry (kind ``thread.turn``).
 
         HS-152-01: when a tool executor is available the method runs a
         pass loop (up to ``_CHAT_PASS_CAP`` passes).  Each pass streams
-        via ``execute_stream`` with ``tools`` in the payload.  When the
+        with ``tools`` in the payload.  When the
         model emits ``tool_calls``, each call is resolved through the
         executor, persisted, and the result is injected into the next
         pass's payload.  When no ``tool_calls`` arrive, the text is the
@@ -1279,10 +1240,10 @@ class ThreadService:
         outcome = "succeeded"
         receipt_id = ""
         error_code = ""
-        # Each pass's route execution, in order, and the receipt it returned:
-        # the turn's route is read from these (inference_locality).
-        pass_executions: list[str] = [str(admitted["execution"]["id"])]
-        pass_receipts: dict[str, Any] = {}
+        failure_reason = ""
+        # Every attempt the turn's passes made: the turn's route is read from
+        # these (``engine_door.route``).
+        sent: list[tuple[str, str, str, str]] = []
 
         # D3 hook: sensitive text accumulator across passes (counsel M1).
         sensitive_texts: list[str] = list(payload.get("_sensitive_texts", []))
@@ -1294,9 +1255,14 @@ class ThreadService:
         # engine; the next pass goes without tools (`_answer_only_messages`).
         answer_only = False
         any_tool_calls = False
-        last_receipt: Any = None
+        from . import engine_door
 
-        current_execution_id = admitted["execution"]["id"]
+        def prepare(body: dict[str, Any], on: Any) -> dict[str, Any]:
+            return self._m1_redactor(body, {"entries": [{"boundary": engine_door.egress_of(self._broker, on)}]})
+
+        # A chat turn that fails waits on the owner (Needs you, Retry); a
+        # call's or an Ask's turn answers its own caller.
+        retry = ("thread.turn", thread_id) if self._capability_id == "chat.turn" else None
 
         # Per-pass list of tool calls captured from tool_calls deltas.
         tool_calls_this_pass: list[dict[str, Any]] = []
@@ -1365,7 +1331,7 @@ class ThreadService:
                 # adoption waist. Each physical model/tool attempt is a child.
                 outer_run = self._broker.parent_run_controller.start(
                     principal, kind="tool.turn", definition_ref=f"thread:{thread_id}",
-                    definition_revision=str(admitted["execution"]["id"]),
+                    definition_revision=turn_operation_id or assistant_msg_id,
                     input_snapshot={"thread_id": thread_id, "message_id": assistant_msg_id},
                     deadline_at=time.time() + 600, child_budget=30,
                     idempotency_key=f"interview-turn-{assistant_msg_id}",
@@ -1417,61 +1383,44 @@ class ThreadService:
                 if sensitive_texts:
                     pass_payload["_sensitive_texts"] = list(sensitive_texts)
 
-                # -- For pass > 0: re-admit with the updated payload --
-                if pass_num > 0:
-                    try:
-                        new_inv = f"chat_turn_{uuid.uuid4().hex}"
-                        if profile_override:
-                            self._apply_profile_override(
-                                principal,
-                                invocation_id=new_inv,
-                                profile_override=profile_override,
-                            )
-                        # Memory slice 6 (review round 1, Astra): the pages
-                        # and observations are optional.  Fit them again to
-                        # THIS pass (it carries the tool exchange), so they
-                        # never make a pass fail that fits without them.
-                        # Every pass starts from the turn's payload, which
-                        # holds the block as first sent: refit whenever it
-                        # was sent, so a part fitted to empty stays empty
-                        # (review round 2, Astra).
-                        if reflect_sent:
-                            pass_payload, reflect = self._refit_reflect(
-                                pass_payload, reflect_sent, reflect, operation_id=new_inv,
-                            )
-                        new_admitted = self._broker.inference_adoption_service.admit(
-                            principal,
-                            command_id=f"admit-{new_inv}",
-                            capability_id=self._capability_id,
-                            operation_id=new_inv,
-                            payload=pass_payload,
-                            invocation_id=new_inv,
-                            reserved_output_tokens=512,
-                        )
-                        current_execution_id = new_admitted["execution"]["id"]
-                    except Exception as exc:
-                        outcome = "failed"
-                        stats["error"] = f"Re-admission failed: {exc}"
-                        error_code = "execute_stream_failed"
-                        break
+                # Memory slice 6 (review round 1, Astra): the pages and
+                # observations are optional.  Fit them again to THIS pass (it
+                # carries the tool exchange), so they never make a pass fail
+                # that fits without them.  Every pass starts from the turn's
+                # payload, which holds the block as first sent: refit whenever
+                # it was sent, so a part fitted to empty stays empty (review
+                # round 2, Astra).
+                if pass_num > 0 and reflect_sent:
+                    pass_payload, reflect = self._refit_reflect(pass_payload, reflect_sent, reflect, engine=engine)
+
+                # Betterment Q0 (the cause of the silent empty replies): the
+                # tool schemas alone are about 15 KB, so on a 16k engine a
+                # turn with a source or a tool result does not fit.  Such a
+                # pass goes without tools; the results go in as data.
+                if (not interview and not answer_only and "tools" in pass_payload
+                        and engine_door.room(self._broker, engine, pass_payload, reserved_output_tokens=512) < 0):
+                    answer_only = True
+                    pass_payload.pop("tools", None)
+                    pass_payload["messages"] = _answer_only_messages(list(pass_payload["messages"]))
 
                 # -- Reset per-pass state --
                 tool_calls_this_pass.clear()
 
-                # -- Stream this pass --
-                if current_execution_id not in pass_executions:
-                    pass_executions.append(str(current_execution_id))
-                routed = self._broker.inference_adoption_service.execute_stream(
-                    principal,
-                    execution_id=current_execution_id,
-                    adapter=adapter,
-                    on_delta=on_delta,
-                    publish=None,
-                    payload_redactor=self._m1_redactor,
-                    **({"parent_context": outer_run.context, "planned_node": "interview-model"} if outer_run else {}),
-                )
-                pass_receipts[str(current_execution_id)] = routed.get("receipt")
-                last_receipt = routed.get("receipt")
+                # -- Stream this pass: one door job on the turn's engine --
+                failed: Any = None
+                try:
+                    answer = engine_door.run_stream(
+                        self._broker, principal, self._capability_id, pass_payload,
+                        engine=engine, on_delta=on_delta, adapter=adapter, prepare=prepare,
+                        invocation_id=engine_door.door_id(self._capability_id, retry) if retry
+                        else f"chat_turn_{uuid.uuid4().hex}",
+                        **({"parent_context": outer_run.context, "planned_node": "interview-model"} if outer_run else {}),
+                    )
+                    sent.extend(answer.sent)
+                except engine_door.EngineDoorError as exc:
+                    sent.extend(exc.sent)
+                    failed = exc
+                    tool_calls_this_pass.clear()
                 if answer_only:
                     # No tool schemas went on this pass: a tool call now is
                     # not an answer.
@@ -1489,26 +1438,10 @@ class ThreadService:
 
                 # -- No tool calls: text answer, done --
                 if not tool_calls_this_pass:
-                    outcome = str(routed.get("outcome", "failed"))
-                    receipt = routed.get("receipt", {})
-                    # Betterment Q0 (the cause of the silent empty replies):
-                    # the tool schemas alone are about 15 KB, and the route
-                    # reserves one token per byte, so on a 16k engine a turn
-                    # with a source or a tool result overflows before it is
-                    # sent.  Send the pass again without tools.
-                    if (outcome != "succeeded" and not interview and not answer_only
-                            and "tools" in pass_payload and _turn_reason(receipt) == "too_long"):
-                        answer_only = True
-                        outcome = "succeeded"
-                        continue
-                    receipt_id = str(
-                        receipt.get("execution_id", "")
-                        or receipt.get("id", "")
-                        or ""
-                    )
-                    routed_error = str(routed.get("error", "") or "")
-                    if outcome == "failed" and routed_error and not stats.get("error"):
-                        stats["error"] = routed_error
+                    outcome = "succeeded" if failed is None else (failed.outcome or "failed")
+                    receipt_id = answer.operation_id if failed is None else failed.operation_id
+                    if failed is not None:
+                        failure_reason = engine_door.reason(failed)
                     if interview and outcome != "succeeded" and not stats.get("error"):
                         stats["error"] = "The model could not complete this turn within its route or context limits. Saved context is retained; shorten the request or choose another model."
                     if interview and outcome == "succeeded" and not cadence.total_text.strip():
@@ -1560,7 +1493,6 @@ class ThreadService:
                                 tool_calls=tool_calls_this_pass,
                                 guardrails=matched_guardrails,
                                 sensitive_texts=sensitive_texts,
-                                egress_scope=egress_scope,
                                 timeout_s=_GUARDRAIL_TIMEOUT_S,
                             )
                             # Map violations to tool names (S1 fix: per-call).
@@ -1931,7 +1863,6 @@ class ThreadService:
             get_logger("thread_service").warning("pass loop failed: %s", exc)
 
         # -- Betterment Q0: a failed turn always says why, in words --
-        failure_reason = ""
         if not cancel_event.is_set() and outcome != "aborted":
             if outcome == "succeeded" and not interview and not any_tool_calls and not cadence.total_text.strip():
                 outcome = "failed"
@@ -1941,9 +1872,8 @@ class ThreadService:
             elif outcome != "succeeded":
                 if outcome != "indeterminate":
                     outcome = "failed"
-                failure_reason = _turn_reason(last_receipt) if last_receipt else "did_not_answer"
-                if not error_code:
-                    error_code = str((last_receipt or {}).get("disposition") or "") or "turn_failed"
+                failure_reason = failure_reason or "did_not_answer"
+                error_code = error_code or "turn_failed"
                 if not stats.get("error"):
                     stats["error"] = _TURN_FAILURE_WORDS.get(failure_reason, _TURN_FAILURE_WORDS["did_not_answer"])
 
@@ -1958,11 +1888,9 @@ class ThreadService:
                 stats["error"] = f"Interview settlement requires reconciliation: {exc}"
 
         # -- The turn's route (Article III): the least private attempt that
-        #    was SENT in any pass, with that pass's receipt id.  No sent
-        #    attempt, or no route receipt: no lamp, no route.
-        route = least_private([
-            r for r in (self._served(eid, pass_receipts.get(eid)) for eid in pass_executions) if r
-        ]) or {}
+        #    was SENT in any pass, with its receipt.  No sent attempt: no
+        #    lamp, no route.
+        route = engine_door.route(self._broker, sent) or {}
         done_egress, done_host, done_model = route.get("lamp", ""), route.get("host", ""), route.get("model", "")
         route_receipt, fallback = str(route.get("receipt", "")), bool(route.get("fallback"))
         self._threads.set_message_route(
@@ -2016,7 +1944,7 @@ class ThreadService:
         done_stats = dict(stats)
         if outcome in ("failed", "indeterminate") and (stats.get("error") or error_code):
             done_stats["error"] = {
-                "code": error_code or "execute_stream_failed",
+                "code": error_code or "turn_failed",
                 "message": str(stats.get("error", "")),
                 **({"reason": failure_reason} if failure_reason else {}),
             }
@@ -2035,22 +1963,6 @@ class ThreadService:
         )
 
         # -- Clean up: the caller (``_run_streaming_turn``) closes the turn. --
-
-    def _served(self, execution_id: str, returned: Any) -> dict[str, Any] | None:
-        """One pass's route: the controller's durable receipt for the
-        execution (it holds every attempt, even when the pass raised or was
-        cancelled), else the receipt the pass returned."""
-        receipt = returned
-        try:
-            from .inference_fallback_controller import INFERENCE_FALLBACK_AUTHORITY
-
-            receipt = self._broker.inference_adoption_service.controller.get_route_execution_receipt(
-                INFERENCE_FALLBACK_AUTHORITY, execution_id=execution_id,
-            )
-        except Exception:
-            pass
-        with self._db._connection() as conn:
-            return served_route(conn, receipt)
 
     # ── Abort ───────────────────────────────────────────────────────
 
@@ -2224,12 +2136,12 @@ class ThreadService:
     def _apply_profile_override(
         self, principal: Principal, *, invocation_id: str, profile_override: str,
     ) -> None:
-        """Honor ``thread.profile_override`` for ONE admission.
+        """Honor ``thread.profile_override`` for ONE turn.
 
         The thread row stores the owner's pick; routing truth stays the
         assignment ledger, so the pick is written as an invocation-scoped
-        next-run override right before admit (the Phase 143 mechanism), and
-        every pass of a tool turn re-applies it for its own invocation.
+        next-run override (the Phase 143 mechanism) that the turn's engine
+        resolves through.
         """
         entries = self._override_entries(profile_override)
         if not entries or self._broker is None:
@@ -2242,79 +2154,49 @@ class ThreadService:
             entries=entries,
         )
 
+    def _engine(self, principal: Principal, invocation_id: str, profile_override: str) -> Any:
+        """This turn's engine (``engine_door.engine_for``): the thread's model
+        pick as a one-run override, else the one the assignment names."""
+        from . import engine_door
+
+        if profile_override:
+            self._apply_profile_override(principal, invocation_id=invocation_id, profile_override=profile_override)
+        try:
+            return engine_door.engine_for(self._broker, self._capability_id, subject=("invocation", invocation_id))
+        except engine_door.EngineDoorError as exc:
+            raise ServiceError("no_assignment", exc.detail, context={"reason": "no_engine", "status": 409}) from exc
+
     # ── M1 redactor (counsel M1, close counsel M5) ────────────────────
 
     @staticmethod
     def _m1_redactor(payload: dict[str, Any], route: dict[str, Any]) -> dict[str, Any]:
-        """Redact sensitive message parts when the frozen route's egress is cloud.
+        """Redact sensitive message parts when the engine's egress is cloud
+        (``engine_door.egress_of``, the lamp word).
 
         This is the SINGLE redaction point for the production turn path
-        (HS-151-04 M5).  It runs inside ``execute_stream`` after the payload
-        is reconstructed from frozen admission evidence and before it reaches
-        the engine.  The frozen route plan carries the boundary at this point;
-        admission evidence is never altered.
-
-        Why here and not before admit: the egress scope is determined by the
-        frozen route plan, which is only known after ``admit()`` returns.
-        Why not a separate redaction pass in ThreadService: the payload
-        handed to the engine MUST be the admitted payload, so redaction must
-        happen at the exact reconstruction-to-dispatch seam.
+        (HS-151-04 M5).  The door runs it (``run_stream``'s ``prepare``) for
+        each engine a pass goes to, right before the bytes go, so a retry on
+        the next engine is redacted by that engine's own boundary.
         """
         entries = route.get("entries", [])
         boundary = str(entries[0].get("boundary", "")) if entries else ""
-        # "cloud" is the boundary value that indicates non-local egress.
-        # Local boundaries (same_device, local, private_network) keep
-        # sensitive data verbatim.
-        # The sentinel key is bookkeeping for THIS seam; it never travels
-        # to an engine on any boundary (close counsel S2).
-        if boundary not in ("cloud", "external_service"):
-            return {k: v for k, v in payload.items() if k != "_sensitive_texts"}
-
-        messages = payload.get("messages")
-        if not isinstance(messages, list):
-            return {k: v for k, v in payload.items() if k != "_sensitive_texts"}
-
-        redacted_messages = []
-        for msg in messages:
-            if not isinstance(msg, dict):
-                redacted_messages.append(msg)
-                continue
-            content = msg.get("content", "")
-            # The sensitive annotation parts are embedded in the message
-            # content by _assemble_payload.  We redact any message whose
-            # content block was marked sensitive by checking the thread
-            # parts.  Since the payload is a flat messages list and
-            # sensitive parts were concatenated into the content, we
-            # must replace the content wholesale.
-            #
-            # The payload_redactor sees the reconstructed payload dict;
-            # it has no access to the DB.  Sensitive annotations were
-            # concatenated into user-message content by _assemble_payload.
-            # We apply a text-level search-and-replace: any content block
-            # that appears in the messages is left alone unless the caller
-            # has embedded the sentinel metadata.
-            #
-            # Since we do not have DB access here, the honest approach is
-            # to carry a `_sensitive_texts` list in the payload at assembly
-            # time.  This list is consumed by the redactor and removed
-            # before dispatch.
-            redacted_messages.append(msg)
-
-        # Check for the _sensitive_texts annotation set by _assemble_payload.
-        sensitive_texts = payload.get("_sensitive_texts", [])
-        if sensitive_texts:
-            for i, msg in enumerate(redacted_messages):
-                if not isinstance(msg, dict):
-                    continue
+        # The sentinel key ``_sensitive_texts`` (set by _assemble_payload: the
+        # sensitive parts' text) is bookkeeping for THIS seam; it never
+        # travels to an engine on any boundary (close counsel S2).  Local
+        # boundaries keep sensitive data verbatim.
+        body = {k: v for k, v in payload.items() if k != "_sensitive_texts"}
+        texts = [t for t in payload.get("_sensitive_texts", []) if t]
+        if boundary not in ("cloud", "external_service") or not isinstance(payload.get("messages"), list):
+            return body
+        messages = []
+        for msg in payload["messages"]:
+            if isinstance(msg, dict) and texts:
                 content = str(msg.get("content", ""))
-                for st in sensitive_texts:
-                    if st and st in content:
-                        content = content.replace(st, _PEOPLE_REDACTION)
-                redacted_messages[i] = {**msg, "content": content}
-
-        result = {**payload, "messages": redacted_messages}
-        result.pop("_sensitive_texts", None)
-        return result
+                for text in texts:
+                    content = content.replace(text, _PEOPLE_REDACTION)
+                msg = {**msg, "content": content}
+            messages.append(msg)
+        return {**body, "messages": messages}
 
     # ── HS-153-03: Guardrail admission ──────────────────────────────
 
@@ -2328,7 +2210,6 @@ class ThreadService:
         tool_calls: list[dict[str, Any]],
         guardrails: list[dict[str, Any]],
         sensitive_texts: list[str],
-        egress_scope: str,
         timeout_s: float = _GUARDRAIL_TIMEOUT_S,
     ) -> dict[str, Any]:
         """Run the guardrail admission ONCE for all pending calls.
@@ -2509,14 +2390,14 @@ class ThreadService:
         *,
         text: str,
         scopes: list[tuple[str, str]],
-        operation_id: str,
+        engine: Any,
         pinned_ref: str = "",
     ) -> tuple[dict[str, Any], Any]:
         """``(payload, part)``: ``payload`` with this turn's pages and
         observations (§3.5) and the part that fitted, or ``payload`` itself
         and the empty part when none is served or none fits.  The thread
         itself is excluded, as the recall pass excludes it."""
-        from .memory_grounding import EMPTY_MEMORY, fit_reflect, reflect_block, reflect_for
+        from .memory_grounding import EMPTY_MEMORY, reflect_block, reflect_for
 
         reflect = reflect_for(
             self._capability_id, self._db, scopes=scopes, query=text,
@@ -2533,11 +2414,7 @@ class ThreadService:
                 built["tools"] = payload["tools"]
             return built
 
-        fitted = fit_reflect(
-            self._broker.inference_adoption_service, reflect,
-            capability_id=self._capability_id, operation_id=operation_id,
-            reserved_output_tokens=512, build=build,
-        )
+        fitted = self._fit(reflect, build, engine)
         return (build(fitted), fitted) if fitted else (payload, EMPTY_MEMORY)
 
     def _refit_reflect(
@@ -2546,13 +2423,13 @@ class ThreadService:
         sent_block: str,
         reflect: Any,
         *,
-        operation_id: str,
+        engine: Any,
     ) -> tuple[dict[str, Any], Any]:
         """``pass_payload`` with the turn's part fitted again to this pass:
         excerpts drop from the end (observations first, then pages), down to
         no part at all (its system message goes).  Returns the new payload
         and the part that is left, for the next pass."""
-        from .memory_grounding import EMPTY_MEMORY, fit_reflect, reflect_block
+        from .memory_grounding import EMPTY_MEMORY, reflect_block
 
         messages = list(pass_payload.get("messages") or [])
         at = next((i for i, message in enumerate(messages)
@@ -2569,12 +2446,22 @@ class ThreadService:
                 del rebuilt[at]
             return {**pass_payload, "messages": rebuilt}
 
-        fitted = fit_reflect(
-            self._broker.inference_adoption_service, reflect,
-            capability_id=self._capability_id, operation_id=operation_id,
-            reserved_output_tokens=512, build=build,
-        )
+        fitted = self._fit(reflect, build, engine)
         return build(fitted), fitted
+
+    def _fit(self, reflect: Any, build: Callable[[Any], dict[str, Any]], engine: Any) -> Any:
+        """The largest leading part of ``reflect`` whose payload fits the
+        turn's engine (``engine_door.room``); any failure: none."""
+        from . import engine_door
+        from .memory_grounding import EMPTY_MEMORY, fit_memory
+
+        if not reflect:
+            return EMPTY_MEMORY
+        try:
+            return fit_memory(reflect, lambda memory: engine_door.room(
+                self._broker, engine, build(memory), reserved_output_tokens=512) >= 0)
+        except Exception:
+            return EMPTY_MEMORY
 
     def _assemble_payload(
         self,
@@ -2983,3 +2870,47 @@ def _invoke_agent_hand(db: Any, principal: Principal, args: dict[str, Any]) -> d
         ),
     )
     return ops.invoke(principal, "agent.hand", args)
+
+
+def hub_thread_service(broadcast: Optional[Callable[[str, Any], None]] = None, **overrides: Any) -> ThreadService:
+    """The hub's ThreadService: the kernel broker, the in-process MCP dispatch
+    (HS-152-03, settled design D2) and the desk's control mode. ``overrides``
+    (Betterment Q7: the Ask's ``system_prompt`` and ``palette``) go to it as
+    they are."""
+    from ..config import Config
+    from ..db import get_database
+    from ..kernel.runtime import _service as _kernel_service
+    from ..mcp.tools import dispatch as mcp_dispatch
+
+    return ThreadService(
+        get_database(),
+        broadcast=broadcast or (lambda _t, _d: None),
+        broker=_kernel_service(),
+        tool_dispatch_fn=mcp_dispatch,
+        control_mode_fn=lambda: Config.load().control_mode,
+        **overrides,
+    )
+
+
+def _retry_turn(principal: Any, thread_id: str) -> Any:
+    """Retry from Needs you: the thread's last answer, again (``regenerate``)."""
+    from ..runtime import composition
+
+    service = hub_thread_service(composition.broadcast())
+    path = service._threads.list_path(thread_id)
+    last = next((m for m in reversed(path) if m.role == "assistant"), None)
+    if last is None:
+        raise ServiceError("message_not_found", "The thread has no answer to try again", context={"status": 404})
+    return asyncio.run(service.regenerate(principal, thread_id, last.id))
+
+
+def _register_retry() -> None:
+    from . import engine_door
+
+    engine_door.on_retry("thread.turn", engine_door.RetryKind(
+        words="your message", object_kind="thread", run=_retry_turn,
+        open_ref=lambda thread_id: f"thread:{thread_id}",
+    ))
+
+
+_register_retry()

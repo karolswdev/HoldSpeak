@@ -10,9 +10,8 @@ import asyncio
 import json
 import threading
 import time
-import uuid
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import pytest
 
@@ -20,6 +19,7 @@ from holdspeak.db.core import Database
 from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.services.errors import ServiceError, ValidationError
 from holdspeak.services.thread_service import ThreadService, _PEOPLE_REDACTION
+from tests.unit._door_fakes import Broker, door_engine, words  # noqa: F401 - door_engine is a fixture
 
 
 OWNER = Principal(PrincipalKind.OWNER, "owner-session")
@@ -57,101 +57,15 @@ def broadcast_fn(broadcasts):
     return _broadcast
 
 
-class FakeBroker:
-    """Minimal broker that satisfies the ThreadService admission envelope."""
-
-    def __init__(self, *, output: str = "Hello from assistant", fail: bool = False):
-        self._output = output
-        self._fail = fail
-
-    @property
-    def inference_adoption_service(self) -> "FakeAdoptionService":
-        return FakeAdoptionService(output=self._output, fail=self._fail)
-
-
-class FakeAdoptionService:
-    """Mimics the admit/execute_stream interface of the real adoption service.
-
-    ``execute_stream`` yields >= 5 text deltas so tests can assert that
-    delta frames arrive per-token with monotonically increasing seq.
-    """
-
-    def __init__(self, *, output: str = "Hello from assistant", fail: bool = False):
-        self._output = output
-        self._fail = fail
-
-    def admit(self, principal, *, command_id, capability_id, operation_id, payload, invocation_id, reserved_output_tokens=512):
-        return {
-            "execution": {"id": "exec_" + uuid.uuid4().hex[:8]},
-            "route_plan": {
-                "id": "rp_test",
-                "egress_scope": "same_device",
-                "model_id": "test-model",
-            },
-            "operation_request_plan": {"id": "orp_test"},
-        }
-
-    def execute_stream(self, principal, *, execution_id, adapter, on_delta, publish=None, payload_redactor=None):
-        from holdspeak.kernel.inference_stream import Delta
-        if self._fail:
-            raise ServiceError("provider_failed", "Test failure")
-        # Yield individual word-deltas to simulate real streaming.
-        words = self._output.split(" ")
-        for i, word in enumerate(words):
-            token = word if i == 0 else " " + word
-            on_delta(Delta(kind="text", text=token))
-        on_delta(Delta(kind="usage", meta={"prompt_tokens": 10, "completion_tokens": len(words)}))
-        on_delta(Delta(kind="done"))
-        return {
-            "outcome": "succeeded",
-            "result": {"output": self._output},
-            "receipt": {"id": "receipt_test_123", "outcome": "succeeded"},
-        }
-
-
-class FakeCloudBroker(FakeBroker):
-    """Broker that returns a cloud egress scope."""
-
-    @property
-    def inference_adoption_service(self):
-        return FakeCloudAdoptionService(output=self._output, fail=self._fail)
-
-
-class FakeCloudAdoptionService(FakeAdoptionService):
-    def admit(self, principal, *, command_id, capability_id, operation_id, payload, invocation_id, reserved_output_tokens=512):
-        return {
-            "execution": {"id": "exec_" + uuid.uuid4().hex[:8]},
-            "route_plan": {
-                "id": "rp_cloud",
-                "egress_scope": "cloud",
-                "model_id": "gpt-4",
-            },
-            "operation_request_plan": {"id": "orp_cloud"},
-        }
-
-    def execute_stream(self, principal, *, execution_id, adapter, on_delta, publish=None, payload_redactor=None):
-        from holdspeak.kernel.inference_stream import Delta
-        words = self._output.split(" ")
-        for i, word in enumerate(words):
-            token = word if i == 0 else " " + word
-            on_delta(Delta(kind="text", text=token))
-        on_delta(Delta(kind="usage", meta={"prompt_tokens": 10, "completion_tokens": len(words)}))
-        on_delta(Delta(kind="done"))
-        return {
-            "outcome": "succeeded",
-            "result": {"output": self._output},
-            "receipt": {"id": "receipt_cloud_456", "outcome": "succeeded"},
-        }
+def FakeBroker(*, output: str = "Hello from assistant") -> Broker:
+    """A broker whose runner streams ``output`` word by word (>= 3 deltas, so
+    tests can assert per-token frames with increasing seq)."""
+    return Broker(words(output))
 
 
 @pytest.fixture
-def service(db, broadcast_fn) -> ThreadService:
+def service(db, broadcast_fn, door_engine) -> ThreadService:
     return ThreadService(db, broadcast=broadcast_fn, broker=FakeBroker())
-
-
-@pytest.fixture
-def cloud_service(db, broadcast_fn) -> ThreadService:
-    return ThreadService(db, broadcast=broadcast_fn, broker=FakeCloudBroker())
 
 
 # ---------------------------------------------------------------------------
@@ -267,33 +181,22 @@ def test_turn_broadcasts_done_with_receipt(service: ThreadService, broadcasts) -
 # ---------------------------------------------------------------------------
 
 
-def test_abort_semantics(db, broadcast_fn, broadcasts) -> None:
+def test_abort_semantics(db, broadcast_fn, broadcasts, door_engine) -> None:
     """Abort cancels and leaves aborted_at, streaming=0, receipt indeterminate."""
     execute_entered = threading.Event()
     abort_seen = threading.Event()
 
-    class SlowBroker(FakeBroker):
-        @property
-        def inference_adoption_service(self):
-            return SlowAdoptionService()
+    def slow(_request, _on_delta):
+        # Signal entry, then poll for cancellation (simulates a cooperative
+        # streaming loop that checks the cancel event frequently).
+        execute_entered.set()
+        for _ in range(50):
+            time.sleep(0.05)
+            if abort_seen.is_set():
+                break
+        return "slow response"
 
-    class SlowAdoptionService(FakeAdoptionService):
-        def execute_stream(self, principal, *, execution_id, adapter, on_delta, publish=None, payload_redactor=None):
-            from holdspeak.kernel.inference_stream import Delta
-            # Signal entry, then poll for cancellation (simulates a cooperative
-            # streaming loop that checks the cancel event frequently).
-            execute_entered.set()
-            for _ in range(50):
-                time.sleep(0.05)
-                if abort_seen.is_set():
-                    break
-            return {
-                "outcome": "succeeded",
-                "result": {"output": "slow response"},
-                "receipt": {"id": "receipt_slow", "outcome": "succeeded"},
-            }
-
-    svc = ThreadService(db, broadcast=broadcast_fn, broker=SlowBroker())
+    svc = ThreadService(db, broadcast=broadcast_fn, broker=Broker(slow))
     t = svc.create(title="Abort test")
     result = asyncio.run(svc.start_turn(OWNER, t["id"], "Abort me"))
 
@@ -313,7 +216,7 @@ def test_abort_semantics(db, broadcast_fn, broadcasts) -> None:
     assert len(done_frames) == 1
     assert done_frames[0]["outcome"] == "aborted"
     # Astra #875: the real receipt id the pass returned, never a placeholder.
-    assert done_frames[0]["receipt_id"] == "receipt_slow"
+    assert done_frames[0]["receipt_id"] == "op_1"
 
     # Check DB state.
     msg = db.threads.get_message(result["assistant_message_id"])
@@ -364,7 +267,7 @@ def test_regenerate_creates_sibling_assistant(service: ThreadService, broadcasts
 
 def test_m1_cloud_redacts_sensitive_parts(db, broadcast_fn) -> None:
     """Seeded sensitive part + cloud profile => provider payload contains none of it."""
-    svc = ThreadService(db, broadcast=broadcast_fn, broker=FakeCloudBroker())
+    svc = ThreadService(db, broadcast=broadcast_fn, broker=FakeBroker())
     t = svc.create(title="M1 cloud test")
 
     # Manually insert a user message with a sensitive annotation part.
