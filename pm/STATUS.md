@@ -2,6 +2,10 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · #2098 Fix forward #2090/#2094: the Decisions rail says "Show more" (no counter); the commit tool's test passes `who`; the phase-7 atlas and desk.json citations follow the native face; the one-record and close-to-desk browser cases read the rail, the mast's title and the frame's Back.
+- 2026-11-08 · #2097 Fix forward: `runtime/composition.py` 613 → 508 lines; the declared tables' service builders live in `composition_declared.py`; the gallery's catalogue case gets the file's 20 s budget (measured 2.0 s alone).
+- 2026-11-08 · #2096 Fix forward #2086: the preferences gallery test reads the Settings sections' labels, not a count.
+- 2026-11-08 · #2095 STATUS one-liners #2089–#2094.
 - 2026-11-08 · #2094 Decisions: the record that waits on him is picked on open (else the newest); the plate leads with Decide / Commit / Resolve / Open the new one, never a bare Open; 920×640 default, 600 minimum so the rail never hides without Back; a picked-record sweep case.
 - 2026-11-08 · #2093 Fix forward #2087: a fresh view writes nothing on load; the hub folds an old `lane` window row into the Agents row itself.
 - 2026-11-08 · #2092 Fix forward #2086: the credential verbs bind in every composition (a bare context gets a bare CredentialService); This Mac's verbs name their destination; Engines classified in the census; the spend-limit field keeps its microphone.
