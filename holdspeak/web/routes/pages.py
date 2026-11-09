@@ -22,7 +22,8 @@ _HOLDSPEAK_DIR = Path(__file__).resolve().parent.parent.parent
 _SHELL_PATH = _HOLDSPEAK_DIR / "static" / "_built" / "index.html"
 
 # Canonical product routes plus deliberate compatibility aliases. Keep this in
-# sync with web/src/routes.tsx and the Phase-91 parity ledger.
+# sync with web/src/routes.tsx and the Phase-91 parity ledger. Parked 2026-11-09
+# (nothing opened or linked them): /studio, /workbench, /companion, /meetings.
 SPA_ROUTES = (
     "/",
     "/desk",
@@ -32,16 +33,12 @@ SPA_ROUTES = (
     "/dictation",
     "/live",
     "/history",
-    "/meetings",
     "/settings",
     "/activity",
     "/commands",
     "/cadence",
-    "/studio",
-    "/workbench",
     "/profiles",
     "/models",
-    "/companion",
     # PHILO-14 C4: the Conductor drawer's address.
     "/conductor",
     "/presence",

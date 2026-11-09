@@ -82,7 +82,6 @@ vi.mock("./presence", () => ({ useDeskPresence: () => undefined }));
 vi.mock("./components/DeskChrome", () => ({ DeskChrome: marker("desk-chrome") }));
 vi.mock("./components/RecordOrb", () => ({ RecordOrb: marker("record-orb") }));
 vi.mock("./hooks/useChatImport", () => ({ useChatImport: () => ({ receipt: "" }) }));
-vi.mock("./components/MissionControlConveyor", () => ({ MissionControlConveyor: marker("mission-control") }));
 vi.mock("./components/SessionPullout", () => ({
   SessionPullout: marker("session-pullout"),
   PanePicker: marker("pane-picker"),
@@ -169,7 +168,6 @@ describe("DeskApp arrival state", () => {
     expect(screen.queryByTestId("world-stage")).not.toBeInTheDocument();
     expect(screen.queryByTestId("dock")).not.toBeInTheDocument();
     expect(screen.queryByTestId("record-orb")).not.toBeInTheDocument();
-    expect(screen.queryByTestId("mission-control")).not.toBeInTheDocument();
     expect(screen.queryByTestId("pane-picker")).not.toBeInTheDocument();
   });
 
@@ -237,11 +235,9 @@ describe("DeskApp arrival state", () => {
     expect(screen.getByTestId("normal-chair")).toBeInTheDocument();
     expect(screen.getByTestId("desk-chrome")).toBeInTheDocument();
     expect(screen.getByTestId("dock")).toBeInTheDocument();
-    // Betterment AG1: Mission Control and Terminals are builder tools.
-    expect(screen.queryByTestId("mission-control")).not.toBeInTheDocument();
+    // Betterment AG1: Terminals are builder tools.
     expect(screen.queryByTestId("pane-picker")).not.toBeInTheDocument();
     act(() => useBuilderTools.getState().setOn(true));
-    expect(screen.getByTestId("mission-control")).toBeInTheDocument();
     expect(screen.getByTestId("pane-picker")).toBeInTheDocument();
     act(() => useBuilderTools.getState().setOn(false));
   });

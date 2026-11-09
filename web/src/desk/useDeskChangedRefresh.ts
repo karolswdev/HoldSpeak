@@ -171,7 +171,7 @@ export function useBusSubscribe(): ReturnType<typeof useRuntimeBus>["subscribe"]
 
 /** Conductor K3: a window that shows coder sessions re-reads on a
  * `scope:"coder"` frame (an agent began or stopped waiting for the owner),
- * the frame `MissionControlConveyor` reads with {@link isCoderFrame}. The
+ * the frame {@link isCoderFrame} names. The
  * frame is rare (one per transition), so there is no debounce. Without a bus
  * (a component test) it does nothing. */
 export function useOnCoderFrame(reload: () => void): void {

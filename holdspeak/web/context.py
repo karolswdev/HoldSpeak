@@ -132,7 +132,6 @@ class WebContext:
     delivery_service: Optional[Any] = None
     mesh_service: Optional[Any] = None
     memory_service: Optional[Any] = None
-    mission_control_service: Optional[Any] = None
     # HS-159-02: the universal Watch facade over the graduated
     # connector_watches table. Routes come in P3; construction only here.
     watch_service: Optional[Any] = None

@@ -257,7 +257,7 @@ Use **Settings ▸ Meetings** for supported changes. The active configuration fi
 | `routing_profile` | `balanced` | Intent routing preset. |
 | `intent_router_enabled` | `true` | Intent router switch. `holdspeak doctor` reports it. |
 | `disabled_plugins` | `[]` | Plugin ids to skip. |
-| `allow_actuators`, `allowed_actuators` | `true`, `["*"]` | Stored settings. Current Desk and Mission Control executors do not enforce them. See [Actuators](ACTUATOR_DEVELOPMENT.md#gates). |
+| `allow_actuators`, `allowed_actuators` | `true`, `["*"]` | Stored settings. Current Desk executors do not enforce them. See [Actuators](ACTUATOR_DEVELOPMENT.md#gates). |
 | `webhook_allowed_hosts` | `["*"]` | Hosts a webhook action can reach. |
 | `diarization_enabled` | `false` | Label speakers in system audio. |
 | `diarize_mic` | `false` | Label speakers in the microphone stream. |
