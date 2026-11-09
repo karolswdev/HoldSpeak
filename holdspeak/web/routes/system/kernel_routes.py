@@ -1,121 +1,54 @@
-"""HTTP transports for the kernel's four caller and three executor calls."""
+"""HTTP transport for the kernel's four caller and three executor calls: produced from ``holdspeak/gate_operations.py``.
+
+One route per declared verb, through ``OperationRegistry.invoke``; the paths and
+the answers are the ones the hand-written routes had (parked in
+``_parked/kernel_routes_20261109.py``). ``GET /api/kernel/read`` stays a
+hand-written shell: its query repeats ``refs``, which the producer reads as one.
+"""
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Awaitable, Callable, Optional
 
-from fastapi import APIRouter, Query, Request
+from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
+from starlette.concurrency import run_in_threadpool
 
-from .... import kernel
-from ....kernel.model import KernelRefused
-from ....kernel.runtime import _as_principal
+from .... import operations
+from ....gate_operations import KERNEL_OPERATIONS, LIVE_KERNEL_SERVICE
+from ....logging_config import get_logger
+from ....principals import UNAUTHENTICATED
+from ....services.errors import ServiceError
+from ...operation_routes import operation_router
+from ...runtime_support import error_500
+
+log = get_logger("web.routes.kernel")
 
 
-def _refused(exc: KernelRefused) -> JSONResponse:
-    status = 403 if "principal" in exc.reason else 409
-    return JSONResponse(
-        {"error": exc.reason, "operation_id": exc.operation_id or None}, status_code=status
-    )
+async def _answer(fn: Callable[[], Any], *, status: int = 200) -> JSONResponse:
+    """A refusal is ``{error: <reason>, ...}``: 403 for a principal reason, else its status."""
+    try:
+        return JSONResponse(await run_in_threadpool(fn), status_code=status)
+    except ServiceError as exc:
+        context = {key: value for key, value in exc.context.items() if key != "status"}
+        return JSONResponse({"error": exc.code, **context}, status_code=int(exc.context.get("status") or 409))
+    except operations.OperationRefused as exc:
+        return JSONResponse({"error": exc.code}, status_code=400)
+    except Exception as exc:
+        return error_500(exc, log, "The kernel call failed")
 
 
-def build_kernel_router() -> APIRouter:
-    router = APIRouter()
+def build_kernel_router(ctx: Optional[Any] = None) -> APIRouter:
+    def registry() -> operations.OperationRegistry:
+        return operations.for_context(ctx, kernel_service=lambda: LIVE_KERNEL_SERVICE)
 
-    @router.get("/api/kernel/read")
-    def api_kernel_read(
-        request: Request, refs: list[str] = Query(default=[]),
-        view: str = "state", consistency: str = "committed",
-    ) -> Any:
-        try:
-            with _as_principal(request.state.principal):
-                return JSONResponse(kernel.read(refs, view, consistency))
-        except KernelRefused as exc:
-            return _refused(exc)
+    def read(descriptor: Any) -> Callable[..., Awaitable[Any]]:
+        async def api_kernel_read(request: Request) -> Any:
+            query = request.query_params
+            args = {**query, "refs": query.getlist("refs")}
+            principal = getattr(request.state, "principal", UNAUTHENTICATED)
+            return await _answer(lambda: registry().invoke(principal, descriptor.name, args, shape="web"))
+        return api_kernel_read
 
-    @router.post("/api/kernel/submit")
-    async def api_kernel_submit(request: Request) -> Any:
-        body = await request.json()
-        try:
-            with _as_principal(request.state.principal):
-                return JSONResponse(kernel.submit(body), status_code=202)
-        except KernelRefused as exc:
-            return _refused(exc)
+    return operation_router(KERNEL_OPERATIONS, registry, _answer, module=__name__,
+                            hand_written={"kernel.read": read})
 
-    @router.post("/api/kernel/operations/{operation_id}/decide")
-    async def api_kernel_decide(operation_id: str, request: Request) -> Any:
-        body = await request.json()
-        if not isinstance(body, dict):
-            return JSONResponse({"error": "decision_body_malformed"}, status_code=400)
-        mutation = {"payload", "arguments", "target", "placement"}.intersection(body)
-        if mutation:
-            return JSONResponse(
-                {"error": "admitted_envelope_immutable", "fields": sorted(mutation)},
-                status_code=409,
-            )
-        unknown = set(body) - {"decision", "expected_revision"}
-        if unknown:
-            return JSONResponse(
-                {"error": "decision_field_not_allowed", "fields": sorted(unknown)},
-                status_code=400,
-            )
-        try:
-            revision = int(body.get("expected_revision"))
-            with _as_principal(request.state.principal):
-                return JSONResponse(
-                    kernel.decide(operation_id, str(body.get("decision") or ""), revision)
-                )
-        except KernelRefused as exc:
-            return _refused(exc)
-        except (TypeError, ValueError):
-            return JSONResponse({"error": "expected_revision_required"}, status_code=400)
-
-    @router.get("/api/kernel/events")
-    def api_kernel_events(
-        request: Request, after_cursor: int = 0, operation_id: str = "",
-        event_type: str = "", privacy_class: str = "", stream: str = "",
-    ) -> Any:
-        filters = {
-            key: value for key, value in {
-                "operation_id": operation_id, "event_type": event_type,
-                "privacy_class": privacy_class, "stream": stream,
-            }.items() if value
-        }
-        try:
-            with _as_principal(request.state.principal):
-                return JSONResponse(kernel.events(after_cursor, filters))
-        except KernelRefused as exc:
-            return _refused(exc)
-
-    @router.post("/api/kernel/executor/claim")
-    def api_kernel_claim(request: Request) -> Any:
-        try:
-            with _as_principal(request.state.principal):
-                return JSONResponse(kernel.claim())
-        except KernelRefused as exc:
-            return _refused(exc)
-
-    @router.post("/api/kernel/executor/operations/{operation_id}/receipt")
-    async def api_kernel_receipt(operation_id: str, request: Request) -> Any:
-        body = await request.json()
-        if not isinstance(body, dict) or set(body) - {"outcome", "result_ref"}:
-            return JSONResponse({"error": "receipt_body_invalid"}, status_code=400)
-        try:
-            with _as_principal(request.state.principal):
-                return JSONResponse(
-                    kernel.receipt(
-                        operation_id, str(body.get("outcome") or ""),
-                        str(body.get("result_ref") or ""),
-                    )
-                )
-        except KernelRefused as exc:
-            return _refused(exc)
-
-    @router.get("/api/kernel/executor/operations/{operation_id}/reconcile")
-    def api_kernel_reconcile(operation_id: str, request: Request) -> Any:
-        try:
-            with _as_principal(request.state.principal):
-                return JSONResponse(kernel.reconcile(operation_id))
-        except KernelRefused as exc:
-            return _refused(exc)
-
-    return router

@@ -88,7 +88,15 @@ def compose_room_services(services: Any, ctx: Any, db: Any, observer: Any) -> No
                 kind, obj_id, op
             ),
         )
-    for name, instance in (("project_service", project), ("project_delta_service", delta),
+    brief = _held("project_brief_service")
+    if brief is None:
+        # 2026-11-09 (ops/projects): the preparation brief verbs are declared
+        # (project_operations.py); a partial context gets the bare build.
+        from holdspeak.services.preparation_brief_service import PreparationBriefService
+
+        brief = PreparationBriefService(db, project_service=project)
+    for name, instance in (("project_brief_service", brief),
+                           ("project_service", project), ("project_delta_service", delta),
                            ("project_update_service", update), ("project_door_service", door),
                            ("watch_service", watch), ("project_steward_service", steward),
                            ("connections_service", connections), ("suggested_source_service", suggested),

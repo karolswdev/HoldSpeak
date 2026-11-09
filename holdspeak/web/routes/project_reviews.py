@@ -65,30 +65,6 @@ def build_project_reviews_router(ctx: WebContext) -> APIRouter:
 
     # ── GET /api/projects/{project_id}/reviews/{review_id} ──────────
 
-    @router.get("/{project_id}/reviews/{review_id}")
-    def get_review(
-        project_id: str, review_id: str, request: Request,
-    ) -> Any:
-        try:
-            review = ctx.project_delta_service._db.project_observations.get_review(
-                review_id,
-            )
-            if review is None:
-                return JSONResponse(
-                    {"code": "not_found", "message": f"Review {review_id!r} not found"},
-                    status_code=404,
-                )
-            if review["project_id"] != project_id:
-                return JSONResponse(
-                    {"code": "not_found",
-                     "message": f"Review {review_id!r} does not belong to project {project_id!r}"},
-                    status_code=404,
-                )
-            window = ctx.project_delta_service._load_frozen_window(review)
-            return JSONResponse(window)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to get review")
-
     # ── GET /api/projects/{project_id}/delta ─────────────────────────
 
     @router.get("/{project_id}/delta")
@@ -161,4 +137,17 @@ def build_project_reviews_router(ctx: WebContext) -> APIRouter:
         except Exception as exc:
             return error_500(exc, log, "Failed to accept review")
 
-    return router
+    # 2026-11-09 (ops/projects): one review's frozen window is the declared
+    # project.get_review (``project_operations.py``); another project's review
+    # is not found, as an unknown one is.
+    from ...project_operations import PROJECT_OPERATIONS
+    from ._mount import mount_router
+    from ._produced import envelope, produced
+
+    outer = APIRouter()
+    mount_router(outer, router)
+    mount_router(outer, produced(ctx, [d for d in PROJECT_OPERATIONS if d.name == "project.get_review"],
+                                 envelope(log, "Failed to get review", not_found=lambda exc: {
+                                     "code": "not_found", "message": f"Review {exc.id!r} not found"}),
+                                 module=__name__))
+    return outer

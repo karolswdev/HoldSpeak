@@ -1,38 +1,27 @@
-"""HTTP adapters for the transport-neutral activity ledger service."""
+"""The activity ledger's routes, produced from ``holdspeak/activity_operations.py`` (2026-11-09)."""
 from __future__ import annotations
-from typing import Any, Optional
-from fastapi import APIRouter, Request
-from fastapi.responses import JSONResponse
+
+from fastapi import APIRouter
+
+from .... import operations
 from ....db import get_database, get_observer
-from ....principals import UNAUTHENTICATED
-from ....services.activity_ledger_service import ActivityLedgerService
-from ....web_requests import _ActivitySettingsRequest
-from ...context import WebContext
-from ...runtime_support import error_500
 from ....logging_config import get_logger
+from ....services.activity_ledger_service import ActivityLedgerService
+from ...context import WebContext
+from .._produced import envelope, produced
+
 log = get_logger("web.routes.activity")
-def _principal(request: Request): return getattr(request.state, "principal", UNAUTHENTICATED)
-def _svc() -> ActivityLedgerService: return ActivityLedgerService(get_database(), observer=get_observer())
+
+_WORDS = {
+    "activity.status": "Failed to read activity status",
+    "activity.records": "Failed to read activity records",
+    "activity.refresh": "Failed to refresh activity",
+    "activity.settings.update": "Failed to update activity settings",
+    "activity.records.delete": "Failed to delete activity records",
+}
+
+
 def build_ledger_router(ctx: WebContext) -> APIRouter:
- router=APIRouter()
- @router.get("/api/activity/status")
- def status(request: Request)->Any:
-  try:return JSONResponse(_svc().status(_principal(request)))
-  except Exception as e:return error_500(e,log,"Failed to read activity status")
- @router.get("/api/activity/records")
- def records(request:Request,project_id:Optional[str]=None,domain:Optional[str]=None,entity_type:Optional[str]=None,limit:int=100)->Any:
-  try:return JSONResponse(_svc().list_records(_principal(request),project_id,domain,entity_type,limit))
-  except Exception as e:return error_500(e,log,"Failed to read activity records")
- @router.post("/api/activity/refresh")
- def refresh(request:Request)->Any:
-  try:return JSONResponse(_svc().refresh(_principal(request)))
-  except Exception as e:return error_500(e,log,"Failed to refresh activity")
- @router.put("/api/activity/settings")
- def settings(request:Request,payload:_ActivitySettingsRequest)->Any:
-  try:return JSONResponse(_svc().update_settings(_principal(request),payload.model_dump()))
-  except Exception as e:return error_500(e,log,"Failed to update activity settings")
- @router.delete("/api/activity/records")
- def delete_records(request:Request,domain:Optional[str]=None,project_id:Optional[str]=None)->Any:
-  try:return JSONResponse(_svc().delete_records(_principal(request),domain,project_id))
-  except Exception as e:return error_500(e,log,"Failed to delete activity records")
- return router
+    rows = [op for op in operations.ACTIVITY_OPERATIONS if op.name in _WORDS]
+    return produced(ctx, rows, {name: envelope(log, words) for name, words in _WORDS.items()}, module=__name__,
+                    activity_ledger_service=lambda: ActivityLedgerService(get_database(), observer=get_observer()))

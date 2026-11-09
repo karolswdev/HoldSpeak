@@ -23,26 +23,47 @@ from typing import Any
 
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse, PlainTextResponse
+from starlette.concurrency import run_in_threadpool
 
 from ...db.updates import PublishedUpdateError
 from ... import operations
 from ...logging_config import get_logger
 from ...operations import OperationRefused
 from ...principals import UNAUTHENTICATED
+from ...project_operations import PROJECT_OPERATIONS, enrich_update
 from ...services.errors import NotFound, ServiceError, ValidationError
+from ..operation_routes import ContractRefusal
+from ._mount import mount_router
+from ._produced import produced
 from ..context import WebContext
 from ..runtime_support import error_500
 from ._room_kernel import body_or_refusal, kernel_fields, kernel_refusal, refusal_fields
-from .primitives._shared import _json_body
 
 log = get_logger("web.routes.project_updates")
 
 
-def _enrich_update(update: dict[str, Any]) -> dict[str, Any]:
-    """Add camelCase provenance keys for the face (HS-173-02)."""
-    update["generatorHost"] = update.get("generator_host")
-    update["generatorModel"] = update.get("generator_model")
-    return update
+_enrich_update = enrich_update
+
+
+async def _answer(fn: Any, *, status: int = 200) -> Any:
+    """The envelope of the produced update routes: the words these routes answered with."""
+    try:
+        return JSONResponse(await run_in_threadpool(fn), status_code=status)
+    except ContractRefusal as exc:
+        return JSONResponse({"success": False, "code": "validation", "message": exc.detail}, status_code=400)
+    except PublishedUpdateError as exc:
+        return JSONResponse({"success": False, "error_code": "published_update", "error": str(exc)}, status_code=409)
+    except NotFound as exc:
+        return JSONResponse({"success": False, "code": exc.code, "message": exc.detail}, status_code=404)
+    except ValidationError as exc:
+        status = 403 if exc.code == "claim_review_forbidden" else 400
+        return JSONResponse({"success": False, "code": exc.code, "message": exc.detail}, status_code=status)
+    except ServiceError as exc:
+        return JSONResponse({"success": False, "code": exc.code, "message": exc.detail,
+                             "reason": exc.context.get("reason"), "detail": exc.context.get("detail")},
+                            status_code=int(exc.context.get("status") or 409))
+    except Exception as exc:
+        return error_500(exc, log, "Failed to run the update verb")
 
 
 def _request_hash(payload: dict[str, Any]) -> str:
@@ -61,6 +82,12 @@ def build_project_updates_router(ctx: WebContext) -> APIRouter:
     def ops() -> Any:
         """PHILO-9-01: the Room's declared operations, bound to the hub's services."""
         return operations.for_context(ctx)
+
+    # 2026-11-09 (ops/projects): the update read, the regenerate, the claim
+    # review and the engine pass are produced from their declared rows
+    # (``project_operations.py``).
+    mount_router(router, produced(ctx, [d for d in PROJECT_OPERATIONS if d.service == "project_update_service"],
+                                  _answer, module=__name__))
 
     # ── GET /api/projects/{project_id}/updates ─────────────────────
 
@@ -148,56 +175,6 @@ def build_project_updates_router(ctx: WebContext) -> APIRouter:
         except Exception as exc:
             return error_500(exc, log, "Failed to draft update")
 
-    # ── Betterment P1: the engine pass behind Write update ─────────
-
-    def _job_error(exc: Exception) -> Any:
-        if isinstance(exc, NotFound):
-            return JSONResponse({"success": False, "code": exc.code, "message": exc.detail}, status_code=404)
-        if isinstance(exc, ServiceError):
-            return JSONResponse(
-                {"success": False, "code": exc.code, "message": exc.detail},
-                status_code=int(exc.context.get("status") or 409),
-            )
-        return error_500(exc, log, "Engine pass failed")
-
-    @router.post("/api/updates/{update_id}/engine-pass")
-    async def api_start_engine_pass(update_id: str, request: Request) -> Any:
-        try:
-            payload = await _json_body(request) or {}
-            job = await asyncio.to_thread(
-                ctx.project_update_service.start_engine_pass, principal(request), update_id,
-                automation_id=(str(payload.get("automation_id") or "").strip() or None),
-            )
-            return JSONResponse({"success": True, "job": job})
-        except Exception as exc:
-            return _job_error(exc)
-
-    @router.get("/api/update-jobs/{job_id}")
-    def api_get_engine_pass(job_id: str, request: Request) -> Any:
-        try:
-            return JSONResponse({"job": ctx.project_update_service.get_engine_pass(job_id)})
-        except Exception as exc:
-            return _job_error(exc)
-
-    @router.post("/api/update-jobs/{job_id}/stop")
-    def api_stop_engine_pass(job_id: str, request: Request) -> Any:
-        try:
-            job = ctx.project_update_service.stop_engine_pass(principal(request), job_id)
-            return JSONResponse({"success": True, "job": job})
-        except Exception as exc:
-            return _job_error(exc)
-
-    @router.post("/api/update-jobs/{job_id}/apply")
-    async def api_apply_engine_pass(job_id: str, request: Request, payload: dict[str, Any] | None = None) -> Any:
-        try:
-            update = await asyncio.to_thread(
-                ctx.project_update_service.apply_engine_pass, principal(request), job_id,
-                force=bool((payload or {}).get("force")),
-            )
-            return JSONResponse({"success": True, "update": _enrich_update(update)})
-        except Exception as exc:
-            return _job_error(exc)
-
     # ── PUT /api/updates/{update_id} ───────────────────────────────
 
     @router.put("/api/updates/{update_id}")
@@ -242,52 +219,6 @@ def build_project_updates_router(ctx: WebContext) -> APIRouter:
             )
         except Exception as exc:
             return error_500(exc, log, "Failed to save update")
-
-    # ── POST /api/updates/{update_id}/regenerate ───────────────────
-
-    @router.post("/api/updates/{update_id}/regenerate")
-    async def api_regenerate_update(
-        update_id: str, payload: dict[str, Any], request: Request,
-    ) -> Any:
-        try:
-            generator = str(payload.get("generator") or "deterministic").strip()
-            cmd_id = payload.get("command_id")
-            # P0: a model regenerate runs off the event loop, as the draft does.
-            result = await asyncio.to_thread(
-                ctx.project_update_service.regenerate_update,
-                principal(request), update_id,
-                generator=generator, command_id=cmd_id,
-            )
-            return JSONResponse({"success": True, "update": _enrich_update(result)})
-        except PublishedUpdateError as exc:
-            return JSONResponse(
-                {"success": False, "error_code": "published_update",
-                 "error": str(exc)},
-                status_code=409,
-            )
-        except NotFound as exc:
-            return JSONResponse(
-                {"success": False, "code": exc.code, "message": exc.detail},
-                status_code=404,
-            )
-        except ValidationError as exc:
-            return JSONResponse(
-                {"success": False, "code": exc.code, "message": exc.detail},
-                status_code=400,
-            )
-        except ServiceError as exc:
-            return JSONResponse(
-                {
-                    "success": False,
-                    "code": exc.code,
-                    "message": exc.detail,
-                    "reason": exc.context.get("reason"),
-                    "detail": exc.context.get("detail"),
-                },
-                status_code=int(exc.context.get("status") or 409),
-            )
-        except Exception as exc:
-            return error_500(exc, log, "Failed to regenerate update")
 
     # ── POST /api/updates/{update_id}/publish ──────────────────────
 
@@ -356,63 +287,12 @@ def build_project_updates_router(ctx: WebContext) -> APIRouter:
         except Exception as exc:
             return error_500(exc, log, "Failed to mark the update delivered")
 
-    # ── POST /api/updates/{update_id}/claims/{span_id}/review ──────
-    # PHILO-15 B64 (Astra r1 P1-2): the editor's Accept / Reject on one claim.
-    # The owner's judgment; the service refuses any other principal.
-
-    @router.post("/api/updates/{update_id}/claims/{span_id}/review")
-    def api_review_claim(
-        update_id: str, span_id: str, payload: dict[str, Any], request: Request,
-    ) -> Any:
-        acceptance = str((payload or {}).get("acceptance") or "")
-        if acceptance not in ("accepted", "rejected"):
-            return JSONResponse({"success": False, "code": "claim_acceptance_unknown",
-                                 "message": "acceptance is accepted or rejected"}, status_code=400)
-        service = ctx.project_update_service
-        if service is None:
-            return JSONResponse({"success": False, "code": "unavailable",
-                                 "message": "No update service"}, status_code=503)
-        try:
-            update = service.review_claim(principal(request), update_id, span_id, acceptance=acceptance)
-            from datetime import datetime, timezone
-
-            return JSONResponse({
-                "success": True, "update": _enrich_update(update),
-                "reviewed_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-            })
-        except PublishedUpdateError as exc:
-            return JSONResponse({"success": False, "error_code": "published_update", "error": str(exc)},
-                                status_code=409)
-        except NotFound as exc:
-            return JSONResponse({"success": False, "code": exc.code, "message": exc.detail}, status_code=404)
-        except ValidationError as exc:
-            status = 403 if exc.code == "claim_review_forbidden" else 400
-            return JSONResponse({"success": False, "code": exc.code, "message": exc.detail}, status_code=status)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to review the claim")
-
-    # ── GET /api/updates/{update_id} ───────────────────────────────
-
-    @router.get("/api/updates/{update_id}")
-    def api_get_update(update_id: str, request: Request) -> Any:
-        """One update by id (a steward receipt's `update:<id>` opens it; the
-        Room's list is capped, so a lookup there could miss it)."""
-        try:
-            update = ctx.project_update_service.get_update(principal(request), update_id)
-            return JSONResponse({"update": _enrich_update(update)})
-        except NotFound as exc:
-            return JSONResponse({"code": exc.code, "message": exc.detail}, status_code=404)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to get the update")
-
     # ── GET /api/updates/{update_id}/markdown ──────────────────────
 
     @router.get("/api/updates/{update_id}/markdown")
     def api_update_markdown(update_id: str, request: Request) -> Any:
         try:
-            update = ctx.project_update_service.get_update(
-                principal(request), update_id,
-            )
+            update = ops().invoke(principal(request), "project.update.get", {"update_id": update_id})["update"]
             from ...services.channel_contract import stored_claims, without_desk_marks
 
             return PlainTextResponse(

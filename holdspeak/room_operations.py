@@ -473,7 +473,7 @@ DOOR_COUNT = OperationDescriptor(
     name="project.door.count",
     version=1,
     description="Count what a GitHub or Jira source has now, for the Door's source rows: it reads the provider.",
-    args_schema={
+    args_schema=(_DOOR_COUNT_ARGS := {
         "type": "object",
         "properties": {
             "provider": {"type": "string", "description": "github or jira."},
@@ -483,15 +483,19 @@ DOOR_COUNT = OperationDescriptor(
         },
         "required": ["provider", "scope"],
         "additionalProperties": False,
-    },
+    }),
     principal=_ROOM_PRINCIPAL,
     effect="write",
     result="the counts per watch key (count, label, host, counted_at)",
     refusals=_CONTRACT_REFUSALS + ("ValidationError validation", "owner_principal_required"),
     completion="synchronous",
-    exposure=("http:POST /api/projects/door/count",),
+    exposure=("http:POST /api/projects/door/count", "mcp:project.door.count"),
+    # 2026-11-09 (ops/projects): its MCP tool; it reads a provider (egress), so no thread offers it.
+    tool_schema=_DOOR_COUNT_ARGS, authority="egress",
     service="project_door_service",
     method="count",
+    # 2026-11-09: the MCP tool may leave out watches (the route sent []).
+    call=lambda s, p, a: s.count(p, a.get("provider", ""), a.get("scope"), a.get("watches") or [], a.get("adjust")),
     admission=Admission("admitted", "Fetches GitHub/Jira snapshots to count: egress (Q1; F21)."),
 )
 

@@ -16,6 +16,7 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
+import holdspeak.services.roadmap_service as roadmap_service
 import holdspeak.web.routes.roadmaps as roadmaps
 from holdspeak.web.context import WebContext
 
@@ -121,15 +122,15 @@ def test_an_old_answer_is_served_and_read_again_in_the_background(tmp_path: Path
     _, before = _list(client)
     built: list[str] = []
     gate = threading.Event()
-    real = roadmaps._project
+    real = roadmap_service._project
 
     def slow_project(repo_root: Path, slug: str, include_phases: bool = True):
         gate.wait(10)
         built.append(slug)
         return real(repo_root, slug, include_phases)
 
-    monkeypatch.setattr(roadmaps, "_project", slow_project)
-    monkeypatch.setattr(roadmaps, "_PROJECT_MAX_AGE", 0.0)
+    monkeypatch.setattr(roadmap_service, "_project", slow_project)
+    monkeypatch.setattr(roadmap_service, "_PROJECT_MAX_AGE", 0.0)
     _, served = _list(client)
     assert served == before
     assert built == []

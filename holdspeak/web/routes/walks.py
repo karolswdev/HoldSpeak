@@ -29,10 +29,13 @@ from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from starlette.concurrency import run_in_threadpool
 
+from ... import operations
 from ...logging_config import get_logger
+from ...principals import UNAUTHENTICATED
 from ...services.errors import ServiceError
 from ..context import WebContext
-from .briefing import PAGE_HEADERS, BodyTooLarge, _address, _body, _bounded_body, _refused, _too_large
+from .briefing import PAGE_HEADERS, BodyTooLarge, _address, _bounded_body, _refused, _too_large
+from ._mount import mount_router
 from .pages import _react_shell
 
 log = get_logger("web.routes.walks")
@@ -48,6 +51,16 @@ def _service() -> Any:
     from ...services.walk_service import default_walk_service
 
     return default_walk_service()
+
+
+def _ops(ctx: Any) -> operations.OperationRegistry:
+    """The declared walk rows (``walk_operations.py``): the hub's bound contract,
+    else one over the module's walk service (a router built without a hub)."""
+    return operations.for_context(ctx, walk_service=_service)
+
+
+def _invoke(ctx: Any, request: Request, name: str, args: dict[str, Any]) -> Any:
+    return _ops(ctx).invoke(getattr(request.state, "principal", UNAUTHENTICATED), name, args, shape="web")
 
 
 def _misses() -> Any:
@@ -108,14 +121,21 @@ def build_walks_router(ctx: WebContext) -> APIRouter:
         except Exception:
             return ""
 
-    @router.post("/api/walks")
-    async def api_walk_create(request: Request) -> Any:
-        body = await _body(request)
-        return await _run(lambda: _service().create(body), status=201, what="create")
+    # 2026-11-09 (ops/projects): the owner's two rows are produced from
+    # walk_operations.py (owner_only); the token rows below keep their handler.
+    from ..operation_routes import operation_router
+    from ...walk_operations import WALK_OPERATIONS
 
-    @router.get("/api/walks/{walk_id}")
-    async def api_walk_read(walk_id: str) -> Any:
-        return await _run(lambda: _service().read(walk_id), what="read")
+    def _answer(what: str) -> Any:
+        async def answer(fn: Callable[[], Any], *, status: int = 200) -> JSONResponse:
+            return await _run(fn, status=status, what=what)
+
+        return answer
+
+    for descriptor in WALK_OPERATIONS:
+        if descriptor.name in ("walk.create", "walk.read"):
+            mount_router(router, operation_router([descriptor], lambda: _ops(ctx), _answer(descriptor.method),
+                                                  module=__name__))
 
     @router.get("/w/{token}", include_in_schema=False)
     async def walk_page(token: str, request: Request) -> Any:
@@ -130,7 +150,7 @@ def build_walks_router(ctx: WebContext) -> APIRouter:
 
     @router.get("/api/w/{token}")
     async def api_walk_page(token: str, request: Request) -> Any:
-        return await _page(request, lambda: _service().page(token), what="page")
+        return await _page(request, lambda: _invoke(ctx, request, "walk.page", {"token": token}), what="page")
 
     @router.post("/api/w/{token}/answer")
     async def api_walk_answer(token: str, request: Request) -> Any:
@@ -147,10 +167,10 @@ def build_walks_router(ctx: WebContext) -> APIRouter:
             body = await _bounded_body(request, WALK_BODY_BYTES)
         except BodyTooLarge:
             return _too_large(PAGE_HEADERS)
-        return await _page(request, lambda: _service().answer(
-            token, body.get("ref"), body.get("choice"), words=body.get("words"),
-            window_png=body.get("window_png"), view=body.get("view"),
-        ), what="answer")
+        return await _page(request, lambda: _invoke(ctx, request, "walk.answer", {
+            "token": token, "ref": body.get("ref"), "choice": body.get("choice"), "words": body.get("words"),
+            "window_png": body.get("window_png"), "view": body.get("view"),
+        }), what="answer")
 
     return router
 

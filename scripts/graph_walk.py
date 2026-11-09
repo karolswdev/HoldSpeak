@@ -871,6 +871,10 @@ OP_MCP_PROJECTIONS: dict[str, dict[str, Any]] = {
     "project.get": {"kind": "tool", "name": "project.get"},
     "project.get_room": {"kind": "tool", "name": "project.get_room"},
     "project.create": {"kind": "tool", "name": "project.create"},
+    # 2026-11-09 (ops/projects): the Door's three verbs are MCP tools too (egress, owner press).
+    "project.door.count": {"kind": "tool", "name": "project.door.count"},
+    "project.door.preview": {"kind": "tool", "name": "project.door.preview"},
+    "project.door.create": {"kind": "tool", "name": "project.door.create"},
     "project.update": {"kind": "tool", "name": "project.update"},
     "project.archive": {"kind": "tool", "name": "project.archive"},
     "project.restore": {"kind": "tool", "name": "project.restore"},
@@ -1029,7 +1033,7 @@ def _family_projections() -> dict[str, dict[str, Any]]:
 OP_MCP_PROJECTIONS.update({k: v for k, v in _family_projections().items() if k not in OP_MCP_PROJECTIONS})
 
 #: Declared operations with no MCP exposure: the rig refuses them by name.
-OP_HTTP_ONLY = frozenset({"decision.status", "project.door.create", "project.door.preview",
+OP_HTTP_ONLY = frozenset({"decision.status",
                           # The Settings window's credentials: owner only, HTTP only, no tool reaches a key.
                           "settings.secret.replace", "settings.secret.rotate", "settings.secret.delete",
                           # #2027: the Programs verbs the face presses that have no MCP tool.
@@ -1037,7 +1041,7 @@ OP_HTTP_ONLY = frozenset({"decision.status", "project.door.create", "project.doo
                           # Betterment capture C5b: the meeting window's Prepare… press (HTTP only).
                           "meeting.result.prepare",
                           # PHILO-9-02: the charter's HTTP capability exceptions.
-                          "project.door.count", "project.watch.update", "project.watch.baseline",
+                          "project.watch.update", "project.watch.baseline",
                           # PHILO-10-03: the email key is a held input, HTTP only (never a tool argument).
                           "channel.save_email_key", "channel.save_slack_webhook",
                           # The Conductor K1: the owner's one-press hook install (config, HTTP only).
