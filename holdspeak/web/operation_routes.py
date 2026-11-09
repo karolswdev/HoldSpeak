@@ -72,8 +72,21 @@ def _endpoint(descriptor: Any, registry: Callable[[], Any], answer: Answer, modu
         query = dict(request.query_params)
         source = query if method == "GET" else {**query, **await _body(request)}
         args = {**source, **params}
-        return await answer(lambda: _invoke(registry, principal, descriptor.name, args),
-                            status=descriptor.http_status)
+
+        def run() -> Any:
+            # A body or query that names a path parameter with another value is a
+            # conflicting request, refused by name inside the envelope, never
+            # resolved in the path's favour (Codex on #2122: the old kernel decide
+            # and receipt routes rejected a body ``operation_id``; the produced
+            # route overwrote it).
+            for name, value in params.items():
+                if name in source and str(source[name]) != str(value):
+                    raise ContractRefusal(OperationRefused(
+                        "path_body_mismatch", descriptor.name,
+                        f"{name} in the body ({source[name]!r}) is not the one in the path ({value!r})"))
+            return _invoke(registry, principal, descriptor.name, args)
+
+        return await answer(run, status=descriptor.http_status)
 
     # FastAPI reads the path parameters and the operation id from the
     # signature and the name.
