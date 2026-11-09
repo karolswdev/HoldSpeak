@@ -442,7 +442,12 @@ def test_no_registered_write_is_silent(hub: Hub, seeded: dict[str, str]) -> None
         "windows.raise": {"window_id": "chair:needs"},
         "windows.arrange": {"rects": {"workbench:walk": {"x": "-1/2", "y": "-1/2", "w": "1/2", "h": "100%"}}},
         "windows.seat": {"window_id": "chair:capture", "seated": True},
+        # The Dock's own frame (kind meeting_ready_read), for a ready meeting.
+        "meeting.ready_read": {"meeting_id": seeded["meeting"]},
     }
+    from holdspeak.db import get_database
+
+    assert get_database().meetings.mark_ready_unseen(seeded["meeting"]) is not None
     hub.frames_until_mark(lambda: None)  # the four opens' frames land before the walk
     for name in writes:
         bound = registry.operations[name]

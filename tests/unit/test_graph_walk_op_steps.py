@@ -43,9 +43,16 @@ def test_the_canonical_map_has_all_seventeen_operations_and_no_local_service_tar
     # its baseline are HTTP only), then PHILO-10-01's nine (the Send), then
     # Conductor K2's one (agent.hand), then Conductor R7's (people_access.set),
     # then PHILO-16 16b's six (the desk's windows), then PHILO-17's
-    # meeting.transcribe, then Betterment Q9's five (Find the tasks).
-    assert len(gw.OP_MCP_PROJECTIONS) == 148
+    # meeting.transcribe, then Betterment Q9's five (Find the tasks), then
+    # the declared meeting operations (2026-11-08). No count fence: the set
+    # below and the live-exposure test are the proof.
     assert set(gw.OP_MCP_PROJECTIONS) == {
+        # the declared meeting operations (2026-11-08, holdspeak/meeting_operations.py)
+        "action_item.list", "action_item.review", "action_item.update", "meeting.artifacts",
+        "meeting.bookmark", "meeting.facets", "meeting.intent_timeline", "meeting.prepared",
+        "meeting.ready_list", "meeting.ready_read", "meeting.recover_capture", "meeting.rename",
+        "meeting.resolve_sync_conflict", "meeting.restore", "meeting.sync_conflicts", "meeting.update",
+        "speaker.list",
         "setup.status", "setup.use",
         "decision.create", "decision.update", "decision.read", "decision.list",
         "meeting.list", "meeting.read", "meeting.import", "meeting.transcribe", "meeting.summary.run",

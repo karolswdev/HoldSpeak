@@ -1,54 +1,15 @@
-"""Thin transport adapters for canonical action-item operations."""
+"""The action items of every meeting: produced from their declared operations (``meeting_operations.py``).
+
+HS-132-02: the triage verbs ask the live meeting first (``_declared.registry_for``
+binds the runtime's session mutations), then the archive.
+"""
 from __future__ import annotations
-from typing import Any, Optional
-from threading import Lock
-from fastapi import APIRouter, Request
-from fastapi.responses import JSONResponse
-from ....principals import UNAUTHENTICATED
-from ....services.errors import NotFound, ValidationError
-from ....services.meeting_service import ActionItemTriageUnavailable, MeetingService
-from ....web_requests import (_GlobalActionItemReviewRequest, _GlobalActionItemUpdateRequest)
+
+from fastapi import APIRouter
+
 from ...context import WebContext
+from . import _declared
 
-_TRIAGE_BIND_LOCK = Lock()
 
-def _service(ctx: WebContext) -> MeetingService:
-    service: Optional[MeetingService] = None
-    if ctx.meeting_service_factory is not None:
-        candidate = ctx.meeting_service_factory()
-        if isinstance(candidate, MeetingService): service = candidate
-    if service is None and isinstance(ctx.meeting_service, MeetingService): service = ctx.meeting_service
-    if service is None: raise RuntimeError("Meeting service is not configured")
-    # HS-132-02: a live meeting keeps its action items in the session, not the
-    # archive. Binding the runtime's session mutations here — the same
-    # composition-at-the-edge the live-meeting routes do — is what makes them
-    # reachable, whether the context hands over one service or a per-request
-    # factory (isolated test databases use the latter).
-    with _TRIAGE_BIND_LOCK:
-        service.bind_live_triage(
-            on_update=ctx.on_update_action_item,
-            on_review=ctx.on_update_action_item_review,
-            on_edit=ctx.on_edit_action_item,
-        )
-    return service
-def _principal(request: Request): return getattr(request.state, "principal", UNAUTHENTICATED)
-def _error(exc: Exception) -> JSONResponse:
-    if isinstance(exc, ValidationError): return JSONResponse({"success": False, "error": str(exc)}, status_code=400)
-    if isinstance(exc, ActionItemTriageUnavailable): return JSONResponse({"success": False, "error": str(exc)}, status_code=501)
-    if isinstance(exc, NotFound): return JSONResponse({"success": False, "error": "Action item not found"}, status_code=404)
-    return JSONResponse({"success": False, "error": str(exc)}, status_code=500)
 def build_action_items_router(ctx: WebContext) -> APIRouter:
-    router = APIRouter()
-    @router.get("/api/all-action-items")
-    def api_list_all_action_items(request: Request, include_completed: bool = False, owner: Optional[str] = None, meeting_id: Optional[str] = None) -> Any:
-        try: return JSONResponse(_service(ctx).list_all_action_items(_principal(request), {"include_completed": include_completed, "owner": owner, "meeting_id": meeting_id}))
-        except Exception as exc: return JSONResponse({"error": str(exc)}, status_code=500)
-    @router.patch("/api/all-action-items/{item_id}")
-    def api_update_global_action_item(item_id: str, payload: _GlobalActionItemUpdateRequest, request: Request) -> Any:
-        try: return JSONResponse(_service(ctx).update_action_item(_principal(request), item_id, payload.model_dump()))
-        except Exception as exc: return _error(exc)
-    @router.patch("/api/all-action-items/{item_id}/review")
-    def api_review_global_action_item(item_id: str, payload: _GlobalActionItemReviewRequest, request: Request) -> Any:
-        try: return JSONResponse(_service(ctx).review_action_item(_principal(request), item_id, payload.model_dump()))
-        except Exception as exc: return _error(exc)
-    return router
+    return _declared.router(ctx, ("action_item.list", "action_item.update", "action_item.review"), module=__name__)

@@ -51,7 +51,7 @@ _FAMILY_MODULE_NAMES: list[str] = [
     "desk_windows",
     "note",
     "calls",
-    "program",
+    "declared",
     "phone",
 ]
 

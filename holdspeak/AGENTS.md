@@ -14,6 +14,12 @@ behavior. A descriptor or configuration field does not prove runtime enforcement
   `runtime/composition.py`. Do not improvise a second live composition root
   or a bare service that loses the hub's callbacks and policy wiring.
   Bare fallbacks are only for the contexts documented by that module.
+- One declared operation makes the HTTP route and the MCP tool. Give its
+  `OperationDescriptor` (`holdspeak/*_operations.py`) an `http` row and a
+  `tool_schema`: `web/operation_routes.py` produces the route and
+  `mcp/families/declared.py` the tool, both through `OperationRegistry.invoke`.
+  No per-family MCP file is needed for a declared operation. Keep a route
+  hand-written (`hand_written=`) only where production would change its answer.
 - Keep DB, filesystem, synchronous model/probe and subprocess work off the
   async event loop. Use `run_in_threadpool` or the existing async boundary;
   do not wrap an already asynchronous operation in a blocking substitute.

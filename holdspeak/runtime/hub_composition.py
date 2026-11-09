@@ -161,6 +161,13 @@ def compose_hub(host: Any, *, on_launch_hold: Callable[[str], Any]) -> HubCompos
             else None
         ),
     )
+    # HS-132-02: a live meeting keeps its action items in the session; the
+    # triage verbs (HTTP and MCP alike) ask it first, then the archive.
+    meeting_service.bind_live_triage(
+        on_update=host.on_update_action_item,
+        on_review=host.on_update_action_item_review,
+        on_edit=host.on_edit_action_item,
+    )
     # The encrypted People sidecar is deliberately composed outside the
     # normal database.  Key custody failures remain a named readiness state;
     # there is never a plaintext fallback.

@@ -841,6 +841,11 @@ def test_the_catalogue_is_explicit_descriptors() -> None:
         "program.shape", "program.shape_held_drop", "program.plan_draft", "program.plan_programs", "program.rounds_open",
         "program.round_next", "program.round_answer", "program.round_decide", "program.close", "program.propose_fix",
         "program.step_remove", "program.round", "program.checkpoint", "program.step_done",
+        # 2026-11-08: the meeting archive's web verbs, declared (meeting_operations.py).
+        "meeting.ready_list", "meeting.ready_read", "meeting.facets", "meeting.rename", "meeting.restore",
+        "meeting.recover_capture", "meeting.sync_conflicts", "meeting.resolve_sync_conflict",
+        "meeting.intent_timeline", "meeting.artifacts", "meeting.prepared", "speaker.list",
+        "action_item.list", "action_item.update", "action_item.review", "meeting.bookmark", "meeting.update",
     ]
     # decision.list takes the empty object; its one optional argument is the
     # HTTP limit (round two: it passes through instead of slicing 500 rows).

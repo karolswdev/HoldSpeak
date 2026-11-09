@@ -24,10 +24,8 @@ from .._mount import mount_router
 from .action_items import build_action_items_router
 from .aftercare import build_aftercare_router
 from .crud import build_crud_router
-from .insights import build_insights_router
 from .intel import build_intel_router
 from .live import build_live_router
-from .speakers import build_speakers_router
 
 __all__ = ["build_meetings_router"]
 
@@ -36,8 +34,6 @@ def build_meetings_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
     mount_router(router, build_live_router(ctx))
     mount_router(router, build_crud_router(ctx))
-    mount_router(router, build_speakers_router(ctx))
-    mount_router(router, build_insights_router(ctx))
     mount_router(router, build_aftercare_router(ctx))
     mount_router(router, build_action_items_router(ctx))
     mount_router(router, build_intel_router(ctx))

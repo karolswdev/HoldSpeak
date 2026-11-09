@@ -966,6 +966,24 @@ OP_MCP_PROJECTIONS: dict[str, dict[str, Any]] = {
     "program.text": {"kind": "tool", "name": "program.text"},
     "program.text_apply": {"kind": "tool", "name": "program.text_apply"},
     "program.update": {"kind": "tool", "name": "program.update"},
+    # 2026-11-08: the meeting archive's declared verbs (holdspeak/meeting_operations.py).
+    "meeting.ready_list": {"kind": "tool", "name": "meeting.ready_list"},
+    "meeting.ready_read": {"kind": "tool", "name": "meeting.ready_read"},
+    "meeting.facets": {"kind": "tool", "name": "meeting.facets"},
+    "meeting.rename": {"kind": "tool", "name": "meeting.rename"},
+    "meeting.restore": {"kind": "tool", "name": "meeting.restore"},
+    "meeting.recover_capture": {"kind": "tool", "name": "meeting.recover_capture"},
+    "meeting.sync_conflicts": {"kind": "tool", "name": "meeting.sync_conflicts"},
+    "meeting.resolve_sync_conflict": {"kind": "tool", "name": "meeting.resolve_sync_conflict"},
+    "meeting.intent_timeline": {"kind": "tool", "name": "meeting.intent_timeline"},
+    "meeting.artifacts": {"kind": "tool", "name": "meeting.artifacts"},
+    "meeting.prepared": {"kind": "tool", "name": "meeting.prepared"},
+    "speaker.list": {"kind": "tool", "name": "speaker.list"},
+    "action_item.list": {"kind": "tool", "name": "action_item.list"},
+    "action_item.update": {"kind": "tool", "name": "action_item.update"},
+    "action_item.review": {"kind": "tool", "name": "action_item.review"},
+    "meeting.bookmark": {"kind": "tool", "name": "meeting.bookmark"},
+    "meeting.update": {"kind": "tool", "name": "meeting.update"},
 }
 
 #: Declared operations with no MCP exposure: the rig refuses them by name.
