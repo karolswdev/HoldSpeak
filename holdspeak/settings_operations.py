@@ -30,7 +30,9 @@ _ADMISSION = Admission("admitted", "Config: the owner's press writes one credent
 
 
 def _replace(service: Any, principal: Any, args: dict[str, Any]) -> Any:
-    body = {key: value for key, value in args.items() if key != "secret_id"}
+    # The value travels once, as ``value``; the metadata copy never holds it (the
+    # observer withholds ``value``, Codex on #2127 finding 3).
+    body = {key: value for key, value in args.items() if key not in ("secret_id", "value")}
     return {"success": True, "secrets": service.replace(principal, args.get("secret_id"), args.get("value"), body)}
 
 
@@ -208,9 +210,11 @@ SETTINGS_ROUTE_OPERATIONS: tuple[OperationDescriptor, ...] = (
          "intel_provider and intel_profile_id are retired routing controls; _placement inference assignments and "
          "secrets cannot be written through this tool. Echo _revision from settings.get for optimistic concurrency; "
          "omit it for last-writer-wins. Settings are persisted immediately; the hub applies them at once, and a "
-         "process off the hub sends no live-reload signal.",
-         write=True, authority="config",
-         result="{success, settings, _revision}", refusals=("ValidationError", "ConflictError: a stale _revision"),
+         "process off the hub sends no live-reload signal. Owner only: the settings are his, and no agent "
+         "writes a credential (Codex on #2127).",
+         write=True, owner_only=True, authority="config",
+         result="{success, settings, _revision}", refusals=("ValidationError", "ConflictError: a stale _revision",
+                                                            "credential_in_settings_patch"),
          completion="synchronous; settings.get reads the new values",
          tool={"type": "object", "properties": {"patch": {"type": "object", "description":
                "Partial settings object. Only supplied keys are changed."}}, "required": ["patch"],

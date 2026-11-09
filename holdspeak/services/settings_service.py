@@ -14,7 +14,7 @@ from urllib.parse import urlparse
 
 from holdspeak.config import Config
 from holdspeak.db.core import Database
-from holdspeak.principals import Principal
+from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.services.errors import ConflictError, ValidationError
 
 SettingsApplied = Callable[[Config], None]
@@ -264,10 +264,12 @@ def _keep_line_secrets(calls_data: dict[str, Any]) -> str:
     line.pop("secrets", None)
     account = line.get("account") if isinstance(line.get("account"), dict) else {}
     writes = []
-    if "password" in account:
-        writes.append((line_secrets.SIP_PASSWORD, account.pop("password")))
-    if "telnyx_api_key" in line:
-        writes.append((line_secrets.TELNYX_API_KEY, line.pop("telnyx_api_key")))
+    for slot, path in line_secrets.SETTINGS_FIELDS.items():
+        node: Any = calls_data
+        for part in path[1:-1]:
+            node = node.get(part) if isinstance(node, dict) else None
+        if isinstance(node, dict) and path[-1] in node:
+            writes.append((slot, node.pop(path[-1])))
     for slot, value in writes:
         if value is not None and not str(value).strip():
             continue  # an empty field keeps the saved secret
@@ -355,6 +357,18 @@ class SettingsService:
     ) -> dict[str, Any]:
         if not isinstance(patch, dict):
             raise ValidationError("Settings patch must be an object")
+        # Codex on #2127, finding 2: a credential moves only by the owner's hand
+        # (his Calls face writes the Line's secrets here; every other secret has
+        # the owner-only settings.secret.* operations). Never an agent's patch.
+        if getattr(principal, "kind", None) is not PrincipalKind.OWNER:
+            from holdspeak.services.credential_service import credential_fields_in
+
+            fields = credential_fields_in(patch)
+            if fields:
+                raise ValidationError(
+                    f"A credential cannot be written through a settings patch: {', '.join(fields)}.",
+                    code="credential_in_settings_patch",
+                )
         if self._routed_assignments_active() and (
             "inference_target_id" in dict(patch.get("thoughts") or {})
             or "profile_id" in dict(dict(patch.get("dictation") or {}).get("runtime") or {})

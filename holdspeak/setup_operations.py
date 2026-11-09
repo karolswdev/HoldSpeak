@@ -247,8 +247,10 @@ SETUP_ROUTE_OPERATIONS: tuple[OperationDescriptor, ...] = (
         result="{sections, trust, presence, first_run, primary_action, verdict}", blocking_io=True),
     _op("setup.runtime.probe", "setup_service", "test_runtime", ("POST", "/api/setup/runtime-test"),
         "api_setup_runtime_test", lambda s, p, a: s.test_runtime(p),
-        "Test the dictation runtime on this Mac once: is the speech model and its backend usable. No network call.",
-        result="the runtime probe: {ok, backend, model, detail}", blocking_io=True),
+        "Test the dictation runtime once: is the speech model and its backend usable. A remote "
+        "(OpenAI-compatible) runtime is reached once with its stored key (GET /models): egress, the owner's press.",
+        result="the runtime probe: {ok, backend, model, detail}", blocking_io=True,
+        owner_only=True, owner_press=True, authority="egress"),
     _op("setup.onboarding.set", "setup_service", "set_onboarding_disposition", ("PUT", "/api/setup/onboarding"),
         "api_onboarding_disposition", lambda s, p, a: s.set_onboarding_disposition(p, a),
         "Record how the owner left Setup (finished, skipped) and seed the Desk.",

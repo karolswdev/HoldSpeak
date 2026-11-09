@@ -29,6 +29,14 @@ SERVICE = "HoldSpeak Line"
 SIP_PASSWORD = "calls.line.sip_password"
 TELNYX_API_KEY = "calls.line.telnyx_api_key"
 SLOTS = (SIP_PASSWORD, TELNYX_API_KEY)
+#: Where each slot's value arrives in a settings patch (the Calls face writes it
+#: there; the settings service moves it to the keystore). The one list of the
+#: Line's credential fields: the settings write, its refusal of a non-owner and
+#: the pipeline observer all read it.
+SETTINGS_FIELDS = {
+    SIP_PASSWORD: ("calls", "line", "account", "password"),
+    TELNYX_API_KEY: ("calls", "line", "telnyx_api_key"),
+}
 #: The dev fallback for each slot.
 ENV = {SIP_PASSWORD: "HOLDSPEAK_LINE_SIP_PASSWORD", TELNYX_API_KEY: "TELNYX_API_KEY"}
 
