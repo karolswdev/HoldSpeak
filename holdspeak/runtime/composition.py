@@ -509,6 +509,7 @@ def install_from_web_context(
             services.broadcast(topic, value)
 
     from holdspeak.operations import LIVE_PROGRAM_SERVICE
+    from holdspeak.services.people_service import PeopleService, UnavailablePeopleStore
 
     builders: dict[str, Callable[[], Any]] = {
         "meeting_service": lambda: MeetingService(resolved_db, observer=resolved_observer),
@@ -553,6 +554,8 @@ def install_from_web_context(
         # 2026-11-08 (one contract): the Programs descriptors bind to the
         # process's one ProgramService, read at each call.
         "program_service": lambda: LIVE_PROGRAM_SERVICE,
+        # The People verbs: the hub composes the encrypted store; a partial context's refuses every call.
+        "people_service": lambda: PeopleService(UnavailablePeopleStore()),
     }
     for name, build in builders.items():
         instance = getattr(services, name, None)

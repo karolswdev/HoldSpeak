@@ -53,6 +53,11 @@ def test_the_canonical_map_has_all_seventeen_operations_and_no_local_service_tar
         "meeting.ready_list", "meeting.ready_read", "meeting.recover_capture", "meeting.rename",
         "meeting.resolve_sync_conflict", "meeting.restore", "meeting.sync_conflicts", "meeting.update",
         "speaker.list",
+        # the declared People verbs (2026-11-08, holdspeak/people_operations.py)
+        "people.setup", "people.suggestion.add", "people.suggestion.hide", "people.relationship.archive",
+        "people.project.link", "people.project.unlink", "people.one_on_one.list", "people.agenda.transition",
+        "people.owed.create", "people.note.list", "people.commitment.send_to_workbench",
+        "people.commitment.satisfy", "people.calendar.link", "people.calendar.unlink", "people.owner_alias.link", "people.owner_alias.unlink",
         "setup.status", "setup.use",
         "decision.create", "decision.update", "decision.read", "decision.list",
         "meeting.list", "meeting.read", "meeting.import", "meeting.transcribe", "meeting.summary.run",

@@ -3,16 +3,21 @@ from __future__ import annotations
 
 import logging
 from contextvars import ContextVar
-from typing import Any
+from typing import Any, Callable
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Request
+from fastapi.responses import JSONResponse
+from starlette.concurrency import run_in_threadpool
 
 from ...principals import UNAUTHENTICATED
 from ...services.people_service import OwnerAliasTaken, PeopleServiceError, SeriesAlreadyLinked
 from ...services.errors import NotFound
-from ...services.workbench_service import WorkbenchService
 from ... import operations
+from ...operations import OperationOwnerRequired, OperationRefused
+from ...people_operations import workbenches
 from ..context import WebContext
+from ..operation_routes import operation_router
+from ._mount import mount_router
 
 
 log = logging.getLogger(__name__)
@@ -81,17 +86,6 @@ def build_people_router(ctx: WebContext) -> APIRouter:
     def principal(request: Request) -> Any:
         return getattr(request.state, "principal", UNAUTHENTICATED)
 
-    def workbenches() -> WorkbenchService:
-        # HS-200-45: the hub's ONE composed instance (on_changed -> the bus).
-        if getattr(ctx, "workbench_service", None) is not None:
-            return ctx.workbench_service
-        from ...db import get_database, get_observer
-        return WorkbenchService(get_database(), observer=get_observer())
-
-    def projects() -> Any:
-        """PHILO-9-01: the Room's declared operations on the hub's ProjectService."""
-        return operations.for_context(ctx, "project_service")
-
     @router.get("/readiness")
     def readiness(request: Request) -> dict[str, str]:
         try:
@@ -126,32 +120,6 @@ def build_people_router(ctx: WebContext) -> APIRouter:
         except PeopleServiceError as exc:
             raise _failure(exc) from exc
 
-    @router.post("/suggestions/add", status_code=201)
-    def add_suggestion(request: Request, body: dict[str, Any] = Body(default={})) -> dict[str, Any]:
-        try:
-            from ...db import get_database
-            kind = body.get("relationship_kind")
-            return {"relationship": service.add_suggestion(
-                principal(request), str(body.get("key") or ""), db=get_database(),
-                relationship_kind=str(kind) if kind else None,
-            )}
-        except PeopleServiceError as exc:
-            raise _failure(exc) from exc
-
-    @router.post("/suggestions/hide")
-    def hide_suggestion(request: Request, body: dict[str, Any] = Body(default={})) -> dict[str, Any]:
-        try:
-            return service.hide_suggestion(principal(request), str(body.get("key") or ""))
-        except PeopleServiceError as exc:
-            raise _failure(exc) from exc
-
-    @router.post("/setup")
-    def setup(request: Request) -> dict[str, str]:
-        try:
-            return service.setup(principal(request))
-        except PeopleServiceError as exc:
-            raise _failure(exc) from exc
-
     @router.get("/relationships")
     def relationships(
         request: Request, include_archived: bool = False, counts: bool = False,
@@ -182,31 +150,6 @@ def build_people_router(ctx: WebContext) -> APIRouter:
         except PeopleServiceError as exc:
             raise _failure(exc) from exc
 
-    @router.post("/relationships/{relationship_id}/archive")
-    def archive_relationship(request: Request, relationship_id: str) -> dict[str, Any]:
-        try:
-            return {"relationship": service.archive_relationship(principal(request), relationship_id)}
-        except PeopleServiceError as exc:
-            raise _failure(exc) from exc
-
-    @router.post("/relationships/{relationship_id}/projects/{project_id}")
-    def link_project(request: Request, relationship_id: str, project_id: str) -> dict[str, Any]:
-        try:
-            owner = principal(request)
-            projects().invoke(owner, "project.get", {"project_id": project_id})
-            return {"relationship": service.link_project(owner, relationship_id, project_id)}
-        except PeopleServiceError as exc:
-            raise _failure(exc) from exc
-        except NotFound as exc:
-            raise HTTPException(status_code=404, detail="people_project_not_found") from exc
-
-    @router.delete("/relationships/{relationship_id}/projects/{project_id}")
-    def unlink_project(request: Request, relationship_id: str, project_id: str) -> dict[str, Any]:
-        try:
-            return {"relationship": service.unlink_project(principal(request), relationship_id, project_id)}
-        except PeopleServiceError as exc:
-            raise _failure(exc) from exc
-
     @router.get("/relationships/{relationship_id}/brief")
     def relationship_brief(request: Request, relationship_id: str) -> dict[str, Any]:
         """HS-149-04: read-time 1:1 brief across the encrypted/plaintext boundary."""
@@ -214,13 +157,6 @@ def build_people_router(ctx: WebContext) -> APIRouter:
             from ...db import get_database
             db = get_database()
             return {"brief": service.one_on_one_brief(principal(request), relationship_id, db=db)}
-        except PeopleServiceError as exc:
-            raise _failure(exc) from exc
-
-    @router.get("/relationships/{relationship_id}/one-on-ones")
-    def one_on_ones(request: Request, relationship_id: str) -> dict[str, list[dict[str, Any]]]:
-        try:
-            return {"one_on_ones": service.list_one_on_ones(principal(request), relationship_id)}
         except PeopleServiceError as exc:
             raise _failure(exc) from exc
 
@@ -238,15 +174,6 @@ def build_people_router(ctx: WebContext) -> APIRouter:
         except PeopleServiceError as exc:
             raise _failure(exc) from exc
 
-    @router.post("/agenda/{item_id}/transition")
-    def transition_agenda_item(request: Request, item_id: str, body: dict[str, Any] = Body(default={})) -> dict[str, Any]:
-        """PHILO-17: remove an agenda item from the 1:1 (`{"to": "removed"}`)
-        or mark it raised (`{"to": "done"}`). Owner web only; not an MCP tool."""
-        try:
-            return {"agenda_item": service.transition_agenda_item(principal(request), item_id, body)}
-        except PeopleServiceError as exc:
-            raise _failure(exc) from exc
-
     @router.post("/relationships/{relationship_id}/requests", status_code=201)
     def create_request(request: Request, relationship_id: str, body: dict[str, Any] = Body(default={})) -> dict[str, Any]:
         try:
@@ -254,68 +181,10 @@ def build_people_router(ctx: WebContext) -> APIRouter:
         except PeopleServiceError as exc:
             raise _failure(exc) from exc
 
-    @router.post("/relationships/{relationship_id}/owed", status_code=201)
-    def create_owed_to_you(request: Request, relationship_id: str, body: dict[str, Any] = Body(default={})) -> dict[str, Any]:
-        """PHILO-17 (U09): record what the person owes him."""
-        try:
-            return {"commitment": service.create_owed_to_you(principal(request), relationship_id, body)}
-        except PeopleServiceError as exc:
-            raise _failure(exc) from exc
-
-    @router.get("/relationships/{relationship_id}/notes")
-    def notes(request: Request, relationship_id: str) -> dict[str, list[dict[str, Any]]]:
-        try:
-            return {"notes": service.list_notes(principal(request), relationship_id)}
-        except PeopleServiceError as exc:
-            raise _failure(exc) from exc
-
     @router.post("/relationships/{relationship_id}/notes", status_code=201)
     def create_note(request: Request, relationship_id: str, body: dict[str, Any] = Body(default={})) -> dict[str, Any]:
         try:
             return {"note": service.create_note(principal(request), relationship_id, body)}
-        except PeopleServiceError as exc:
-            raise _failure(exc) from exc
-
-    @router.post("/relationships/{relationship_id}/calendar-links")
-    def link_calendar_series(request: Request, relationship_id: str, body: dict[str, Any] = Body(default={})) -> dict[str, Any]:
-        try:
-            return {"relationship": service.link_calendar_series(
-                principal(request), relationship_id,
-                str(body.get("uid") or ""),
-                str(body.get("source_id") or ""),
-                str(body.get("label") or ""),
-            )}
-        except PeopleServiceError as exc:
-            raise _failure(exc) from exc
-
-    @router.delete("/relationships/{relationship_id}/calendar-links")
-    def unlink_calendar_series(request: Request, relationship_id: str, body: dict[str, Any] = Body(default={})) -> dict[str, Any]:
-        try:
-            return {"relationship": service.unlink_calendar_series(
-                principal(request), relationship_id,
-                str(body.get("uid") or ""),
-                str(body.get("source_id") or ""),
-            )}
-        except PeopleServiceError as exc:
-            raise _failure(exc) from exc
-
-    @router.post("/relationships/{relationship_id}/owner-aliases")
-    def link_owner_alias(request: Request, relationship_id: str, body: dict[str, Any] = Body(default={})) -> dict[str, Any]:
-        try:
-            return {"relationship": service.link_owner_alias(
-                principal(request), relationship_id,
-                str(body.get("alias") or ""),
-            )}
-        except PeopleServiceError as exc:
-            raise _failure(exc) from exc
-
-    @router.delete("/relationships/{relationship_id}/owner-aliases")
-    def unlink_owner_alias(request: Request, relationship_id: str, body: dict[str, Any] = Body(default={})) -> dict[str, Any]:
-        try:
-            return {"relationship": service.unlink_owner_alias(
-                principal(request), relationship_id,
-                str(body.get("alias") or ""),
-            )}
         except PeopleServiceError as exc:
             raise _failure(exc) from exc
 
@@ -344,77 +213,6 @@ def build_people_router(ctx: WebContext) -> APIRouter:
         except PeopleServiceError as exc:
             raise _failure(exc) from exc
 
-    @router.post("/commitments/{commitment_id}/workbench", status_code=201)
-    def send_commitment_to_workbench(
-        request: Request,
-        commitment_id: str,
-        body: dict[str, Any] = Body(default={}),
-    ) -> dict[str, Any]:
-        try:
-            owner = principal(request)
-            commitment = service.get_commitment(owner, commitment_id)
-            workbench_id = str(body.get("workbench_id") or "").strip()
-            if not workbench_id:
-                raise PeopleServiceError("people_workbench_required")
-            wb = workbenches()
-            wb.get_workbench(owner, workbench_id)
-            for link in commitment.get("execution_links") or []:
-                if isinstance(link, dict) and link.get("workbench_id") == workbench_id:
-                    try:
-                        existing = wb.get_item(owner, workbench_id, str(link.get("item_id") or ""))
-                        return {"commitment": commitment, "item": existing, "created": False}
-                    except NotFound:
-                        pass
-            text = str(commitment.get("body") or "").strip()
-            relationship = service.get_relationship(owner, str(commitment.get("relationship_id") or ""))
-            project_grounding: list[dict[str, Any]] = []
-            rooms = projects()
-            for project_id in relationship.get("project_refs") or []:
-                try:
-                    project = rooms.invoke(owner, "project.get", {"project_id": str(project_id)})
-                    resources = rooms.invoke(owner, "project.resource.list", {"project_id": str(project_id)})
-                except NotFound:
-                    continue
-                project_grounding.append({
-                    "id": project.get("id"),
-                    "name": project.get("name"),
-                    "description": project.get("description"),
-                    "keywords": project.get("keywords"),
-                    "context": project.get("context"),
-                    "resources": [resource.get("resource_ref") for resource in resources],
-                })
-            item = wb.add_item(
-                owner,
-                workbench_id,
-                title=text,
-                body=(
-                    "Complete this relationship follow-through item. Return a concrete deliverable "
-                    "and a concise completion summary.\n\nCommitment:\n" + text
-                ),
-                grounding={"people_commitment": text, "projects": project_grounding},
-                context={
-                    "source": "people_commitment",
-                    "people_commitment_id": commitment_id,
-                    "relationship_id": commitment.get("relationship_id"),
-                    "project_ids": [project.get("id") for project in project_grounding],
-                },
-            )
-            try:
-                linked = service.attach_execution(
-                    owner,
-                    commitment_id,
-                    workbench_id=workbench_id,
-                    item_id=str(item["id"]),
-                )
-            except Exception:
-                wb.delete_item(owner, workbench_id, str(item["id"]))
-                raise
-            return {"commitment": linked, "item": item, "created": True}
-        except PeopleServiceError as exc:
-            raise _failure(exc) from exc
-        except NotFound as exc:
-            raise HTTPException(status_code=404, detail="people_workbench_not_found") from exc
-
     @router.post("/commitments/{commitment_id}/transition")
     def transition_commitment(
         request: Request,
@@ -433,40 +231,25 @@ def build_people_router(ctx: WebContext) -> APIRouter:
         except PeopleServiceError as exc:
             raise _failure(exc) from exc
 
-    @router.post("/commitments/{commitment_id}/satisfy")
-    def satisfy_commitment(
-        request: Request,
-        commitment_id: str,
-        body: dict[str, Any] = Body(default={}),
-    ) -> dict[str, Any]:
-        try:
-            owner = principal(request)
-            commitment = service.get_commitment(owner, commitment_id)
-            wb = workbenches()
-            evidence: list[dict[str, Any]] = []
-            for link in commitment.get("execution_links") or []:
-                if not isinstance(link, dict) or link.get("kind") != "workbench_item":
-                    continue
-                try:
-                    item = wb.get_item(owner, str(link.get("workbench_id") or ""), str(link.get("item_id") or ""))
-                except NotFound:
-                    continue
-                evidence.append({
-                    "kind": "workbench_item",
-                    "workbench_id": item["workbench_id"],
-                    "item_id": item["id"],
-                    "status": item["status"],
-                    "artifact_id": item.get("result_artifact_id"),
-                    "completed_at": item.get("completed_at"),
-                })
-            result = service.satisfy_commitment(
-                owner,
-                commitment_id,
-                rationale=str(body.get("rationale") or ""),
-                evidence=evidence,
-            )
-            return {"commitment": result}
-        except PeopleServiceError as exc:
-            raise _failure(exc) from exc
+    # 2026-11-08 (one contract): the verbs of ``holdspeak/people_operations.py``,
+    # produced through ``OperationRegistry.invoke`` with the words above.
+    produced = APIRouter(tags=["people"], dependencies=[Depends(note_caller)])
+    produced.include_router(operation_router(
+        operations.PEOPLE_OPERATIONS, lambda: operations.for_context(ctx), _answer, module=__name__))
+    both = APIRouter()
+    mount_router(both, router)
+    mount_router(both, produced)
+    return both
 
-    return router
+
+async def _answer(fn: Callable[[], Any], *, status: int = 200) -> JSONResponse:
+    """The produced verbs answer as the hand-written routes did: ``{"detail": code}`` on a refusal."""
+    try:
+        return JSONResponse(await run_in_threadpool(fn), status_code=status)
+    except PeopleServiceError as exc:
+        refused = _failure(exc)
+    except OperationOwnerRequired:
+        refused = HTTPException(status_code=403, detail="people_owner_required")
+    except OperationRefused as exc:
+        refused = HTTPException(status_code=400, detail=exc.code)
+    return JSONResponse({"detail": refused.detail}, status_code=refused.status_code)

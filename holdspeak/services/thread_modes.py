@@ -66,6 +66,9 @@ _MCP_ONLY: frozenset[str] = frozenset({
     # The compositor's display requests (2026-11-08, desk_operations.py): an
     # agent drives the owner's desk over MCP; the seeded palettes do not grow.
     "desk.mark", "desk.press", "desk.say", "desk.scroll", "desk.request.read",
+    # The declared People reads (2026-11-08, people_operations.py): a thread
+    # reads a person through people.relationship.get; the palettes do not grow.
+    "people.one_on_one.list", "people.note.list",
 })
 
 

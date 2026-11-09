@@ -2303,6 +2303,7 @@ from holdspeak.desk_operations import DESK_DISPLAY_OPERATIONS  # noqa: E402
 # Imported only through here (it imports this module): read operations.PROGRAM_OPERATIONS.
 from holdspeak.program_operations import LIVE_PROGRAM_SERVICE, PROGRAM_OPERATIONS  # noqa: E402,F401 (re-exported)
 from holdspeak.meeting_operations import MEETING_OPERATIONS  # noqa: E402
+from holdspeak.people_operations import PEOPLE_OPERATIONS  # noqa: E402
 
 #: The whole catalogue, in export order.
 # ── Betterment Q9: Find the tasks on a note ───────────────────────────────
@@ -2437,7 +2438,7 @@ DESCRIPTORS: tuple[OperationDescriptor, ...] = (
     DECISION_DELETE, DECISION_STATUS, DECISION_SUPERSEDE,
     KERNEL_RECEIPT_READ, MEMORY_OBSERVATIONS_READ, MEMORY_PAGE_READ,
 ) + ROOM_OPERATIONS + STEWARD_CONNECTOR_OPERATIONS + CHANNEL_OPERATIONS + ONBOARDING_OPERATIONS + SETUP_OPERATIONS + AGENT_OPERATIONS \
-    + DESK_DISPLAY_OPERATIONS + NOTE_OUTCOME_OPERATIONS + (TODAY_GET,) + PROGRAM_OPERATIONS + MEETING_OPERATIONS
+    + DESK_DISPLAY_OPERATIONS + NOTE_OUTCOME_OPERATIONS + (TODAY_GET,) + PROGRAM_OPERATIONS + MEETING_OPERATIONS + PEOPLE_OPERATIONS
 
 #: The RuntimeServices / WebContext fields the catalogue binds to.
 BOUND_SERVICES: tuple[str, ...] = tuple(dict.fromkeys(d.service for d in DESCRIPTORS))
@@ -2695,7 +2696,7 @@ class OperationRegistry:
 #: Argument names that say which object a write touched, most specific first
 #: after ``<kind>_id``. Never ``command_id`` or ``expected_*``.
 _ID_ARGUMENTS = (
-    "item_id", "resource_ref", "meeting_id", "update_id", "watch_id", "run_id",
+    "relationship_id", "commitment_id", "item_id", "resource_ref", "meeting_id", "update_id", "watch_id", "run_id",
     "step_id", "send_id", "destination_id", "primitive_id", "directory_id",
     "project_id", "provider_id", "window_id",
 )
@@ -2713,6 +2714,7 @@ def _changed(name: str, args: Any, result: Any) -> tuple[str, str, str]:
     the most specific object id in the arguments, else the result's ``id``.
     """
     kind, _, op = name.partition(".")
+    kind = "person" if kind == "people" else kind  # the kind the desk refreshes on (web/announce.py)
     payload = args if isinstance(args, Mapping) else {}
     obj_id: Any = payload.get(f"{kind}_id")
     if not obj_id:

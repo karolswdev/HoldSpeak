@@ -95,6 +95,9 @@ KNOWN_MESSAGE = re.compile(
     # With the rig's file key store the People tools run: placeholder ids are
     # refused as not found (the People service names the code in ``error``).
     r"|^people_[a-z_]+_not_found$"
+    # The declared People tools list after people.access.set, which the sweep
+    # calls with its first value (off): the owner's own gate refuses them.
+    r"|^people_mcp_access_disabled$"
     r"|must be qualified as kind:id|^parent_operation_unknown$|not allowlisted for MCP"
     r"|is retired|live capture controller|not found: x$|^Unknown shelf state: x$"
     # workbench.update / automation.update with only the id (Betterment M3:

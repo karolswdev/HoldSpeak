@@ -165,10 +165,6 @@ TOOL_AUTHORITY: dict[str, str] = {
     "people.request.accept": WORK,
     "people.commitment.transition": WORK,
     "people.one_on_one.brief": WORK,
-    "people.calendar.link": WORK,
-    "people.calendar.unlink": WORK,
-    "people.owner_alias.link": AUTHORITY,  # who the owner is in the People store
-    "people.owner_alias.unlink": AUTHORITY,  # who the owner is in the People store
     "people.resolve": WORK,
     "people.suggestions": WORK,
     "people.access.set": CONFIG,  # who reads People over MCP (Conductor R7)

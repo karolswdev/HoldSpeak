@@ -478,6 +478,15 @@ LAUNCH_RULES.update({name: (WINDOW, "", "") for name in (
     "desk.mark", "desk.say", "desk.scroll", "desk_window.move", "desk_window.resize", "desk_window.set_geometry",
     "desk_window.send_back", "desk_window.zoom", "desk_window.stage_shelf")})
 LAUNCH_RULES["desk.press"] = (NEVER, "", "")
+# People's declared verbs (2026-11-08, ``people_operations.py``): a launch reads
+# the 1:1s (shared intent); the notes are the owner's read (PeopleService), and
+# every People write is his (owner ruling 2026-10-06).
+LAUNCH_RULES["people.one_on_one.list"] = (READ, "", "")
+LAUNCH_RULES.update({name: (NEVER, "", "") for name in (
+    "people.note.list", "people.setup", "people.suggestion.add", "people.suggestion.hide",
+    "people.relationship.archive", "people.project.link", "people.project.unlink", "people.agenda.transition",
+    "people.owed.create", "people.commitment.send_to_workbench", "people.commitment.satisfy",
+    "people.calendar.link", "people.calendar.unlink", "people.owner_alias.link", "people.owner_alias.unlink")})
 LAUNCH_RULES["desk.request.read"] = (READ, "", "")
 
 #: Not offered to a launch at all (the palette leaves them out).

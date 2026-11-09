@@ -269,10 +269,6 @@ def test_people_mcp_catalogue_is_closed_and_does_not_offer_forbidden_operations(
         "people.request.create",
         "people.request.accept",
         "people.commitment.transition",
-        "people.calendar.link",
-        "people.calendar.unlink",
-        "people.owner_alias.link",
-        "people.owner_alias.unlink",
         "people.resolve",
         "people.suggestions",
         "people.access.set",  # Conductor R7: the owner's config press
@@ -323,3 +319,74 @@ def test_every_people_tool_result_is_sensitive_in_a_thread() -> None:
     names = {tool["name"] for tool in people_family.TOOLS} - EXCLUDED_TOOLS
     assert names
     assert {name for name in names if not tool_sensitive(name)} == set()
+
+
+DECLARED_PEOPLE = {
+    "people.setup", "people.suggestion.add", "people.suggestion.hide", "people.relationship.archive",
+    "people.project.link", "people.project.unlink", "people.one_on_one.list", "people.agenda.transition",
+    "people.owed.create", "people.note.list", "people.commitment.send_to_workbench", "people.commitment.satisfy",
+    "people.calendar.link", "people.calendar.unlink", "people.owner_alias.link", "people.owner_alias.unlink",
+}
+
+
+def test_declared_people_reads_answer_the_route_shape_cut_to_shared_intent(
+    people_service: PeopleService, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """2026-11-08 (people_operations.py): one verb, two faces. HTTP answers the
+    owner's whole view; MCP answers the same shape with no leader-private row."""
+    from holdspeak import operations
+
+    rid = people_service.create_relationship(OWNER, {"display_name": "Declared Sentinel"})["id"]
+    for visibility, words in (("leader_private", "PRIVATE NOTE SENTINEL"), ("shared_intent", "Shared note")):
+        people_service.create_note(OWNER, rid, {"body": words, "visibility": visibility})
+    private = people_service.create_one_on_one(OWNER, rid, {"agenda": "PRIVATE 1:1", "visibility": "leader_private"})
+    shared = people_service.create_one_on_one(OWNER, rid, {"agenda": "Shared 1:1", "visibility": "shared_intent"})
+    people_service.add_agenda_item(OWNER, shared["id"], {"body": "PRIVATE ITEM", "visibility": "leader_private"})
+    people_service.add_agenda_item(OWNER, shared["id"], {"body": "Shared item", "visibility": "shared_intent"})
+    monkeypatch.setenv(people_family.ACCESS_ENV, "read")
+
+    failed, notes = _call("people.note.list", {"relationship_id": rid})
+    assert failed is False and [n["body"] for n in notes["notes"]] == ["Shared note"]
+    failed, sessions = _call("people.one_on_one.list", {"relationship_id": rid})
+    assert failed is False
+    assert [s["id"] for s in sessions["one_on_ones"]] == [shared["id"]]
+    assert [i["body"] for i in sessions["one_on_ones"][0]["agenda"]] == ["Shared item"]
+    assert "PRIVATE" not in json.dumps([notes, sessions]) and private["id"] not in json.dumps(sessions)
+
+    web = operations.bind_available({"people_service": people_service})
+    full = web.invoke(OWNER, "people.note.list", {"relationship_id": rid}, shape="web")
+    assert sorted(n["body"] for n in full["notes"]) == ["PRIVATE NOTE SENTINEL", "Shared note"]
+    assert len(web.invoke(OWNER, "people.one_on_one.list", {"relationship_id": rid}, shape="web")["one_on_ones"]) == 2
+
+
+def test_declared_people_writes_are_the_owners_and_record_shared_intent_over_mcp(
+    people_service: PeopleService, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from holdspeak import operations
+    from holdspeak.operations import OperationOwnerRequired
+
+    rid = people_service.create_relationship(OWNER, {"display_name": "Owed Sentinel"})["id"]
+    registry = operations.bind_available({"people_service": people_service})
+    assert {d.name for d in operations.PEOPLE_OPERATIONS if d.effect == "write"} <= {
+        d.name for d in operations.PEOPLE_OPERATIONS if d.owner_only}
+    with pytest.raises(OperationOwnerRequired):
+        registry.invoke(Principal(PrincipalKind.AGENT, "agent"), "people.owed.create",
+                        {"relationship_id": rid, "body": "agent write"})
+
+    monkeypatch.setenv(people_family.ACCESS_ENV, "read")
+    failed, refused = _call("people.owed.create", {"relationship_id": rid, "body": "read mode"})
+    assert failed is True and "people_mcp_write_required" in json.dumps(refused)
+
+    monkeypatch.setenv(people_family.ACCESS_ENV, "write")
+    failed, owed = _call("people.owed.create", {"relationship_id": rid, "body": "Send the estimate"})
+    assert failed is False and owed["commitment"]["visibility"] == "shared_intent"
+
+
+def test_every_declared_people_tool_is_a_sensitive_tool() -> None:
+    from holdspeak.mcp.families import declared
+    from holdspeak.services.thread_tools import EXCLUDED_TOOLS, tool_sensitive
+
+    assert DECLARED_PEOPLE == {name for name in declared.NAMES if name.startswith("people.")}
+    assert not DECLARED_PEOPLE & {tool["name"] for tool in people_family.TOOLS}
+    assert all(tool_sensitive(name) for name in DECLARED_PEOPLE - EXCLUDED_TOOLS)
+    assert {"people.setup", "people.relationship.archive"} <= EXCLUDED_TOOLS
