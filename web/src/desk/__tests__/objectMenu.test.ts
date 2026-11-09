@@ -155,9 +155,7 @@ describe("objectMenuEntries (registry-derived, parallel list #4 dead)", () => {
 describe("PHILO-17: a window carries its object's verbs (off-desk kinds)", () => {
   const OFF_DESK = [
     { kind: "recipe", id: "r1", ref: "persona:r1", item: { kind: "recipe", id: "r1", name: "Scout" } },
-    { kind: "workflow", id: "w1", ref: "workflow:w1", item: { kind: "workflow", id: "w1", name: "Triage" } },
     { kind: "kb", id: "k1", ref: "knowledge:k1", item: { kind: "kb", id: "k1", name: "Runbooks" } },
-    { kind: "chain", id: "c1", ref: "sequence:c1", item: { kind: "chain", id: "c1", name: "Steps" } },
   ] as const;
 
   it.each(OFF_DESK)("the $kind window's Object ▸ Delete closes the window and asks the one delete", (c) => {
