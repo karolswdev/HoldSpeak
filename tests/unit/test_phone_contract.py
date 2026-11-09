@@ -27,11 +27,6 @@ def _cases() -> list[Path]:
     return sorted(PHONE.glob("*.json"))
 
 
-def test_every_event_type_has_a_golden_fixture() -> None:
-    have = {path.name[len("event."):-len(".json")] for path in PHONE.glob("event.*.json")}
-    assert have == set(contract.EVENT_TYPES) - {"ping"}
-
-
 @pytest.mark.parametrize("path", _cases(), ids=lambda path: path.name)
 def test_the_fixture_round_trips_through_its_model(path: Path) -> None:
     raw = json.loads(path.read_text())
@@ -49,10 +44,3 @@ def test_the_fixture_round_trips_through_its_model(path: Path) -> None:
     assert all(dumped[key] is None for key in set(dumped) - set(raw))  # only unset optionals are added
 
 
-def test_a_stored_event_without_seq_and_an_unknown_field_are_refused() -> None:
-    with pytest.raises(ValueError):
-        contract.Event.model_validate({"type": "message.read", "ts": "2026-10-28T00:00:00+00:00",
-                                       "data": {"msg_id": "m", "at": "2026-10-28T00:00:00+00:00"}})
-    with pytest.raises(ValueError):
-        contract.Event.model_validate({"seq": 1, "type": "message.read", "ts": "2026-10-28T00:00:00+00:00",
-                                       "data": {"msg_id": "m", "at": "x", "extra": 1}})

@@ -17,8 +17,6 @@ pattern instead of a raw WebSocket) is documented in
 
 from __future__ import annotations
 
-from pathlib import Path
-from threading import Lock
 from typing import Any, Optional
 
 from fastapi import APIRouter, Header
@@ -27,6 +25,8 @@ from pydantic import BaseModel
 
 from ...logging_config import get_logger
 from ..context import WebContext
+from . import delivery_declared
+from ._mount import mount_router
 
 log = get_logger("web.routes.delivery_node")
 
@@ -69,44 +69,20 @@ def _refusal(exc: Any) -> JSONResponse:
     )
 
 
-def build_delivery_node_router(
-    ctx: WebContext,
-    *,
-    link: Any = None,
-    token_store_path: Optional[Path] = None,
-    web_token: Optional[str] = None,
-    legacy_env: Optional[dict] = None,
-) -> APIRouter:
-    """Every keyword is a test seam (the delivery-router precedent).
-
-    ``link`` accepts a pre-built :class:`NodeLinkState` so the hub can
-    share one state instance between this router and its embedded
-    local-node adapter; absent, one builds lazily on first request
-    (assembling the app stays side-effect free).
-    """
-    _ = ctx
+def build_delivery_node_router(ctx: WebContext) -> APIRouter:
+    """The node link's routes. ``hello`` and ``heartbeat`` stay written here:
+    node-token traffic from ``holdspeak node serve`` (§12.1), never a tool.
+    ``/api/delivery/nodes`` is produced from the ``delivery.nodes`` row. The
+    one shared :class:`NodeLinkState` (the hub's, or one built lazily) and
+    its lock live on ``ctx.delivery_service`` (``DeliveryService.configure``)."""
+    delivery_service = delivery_declared.delivery_of(ctx)
     router = APIRouter()
-    holder: dict[str, Any] = {"link": link}
-    holder_lock = Lock()
-    link_lock = Lock()
-
-    def _link() -> Any:
-        if holder["link"] is None:
-            with holder_lock:
-                if holder["link"] is None:
-                    from ...delivery.node_link import NodeLinkState, NodeTokenStore
-
-                    holder["link"] = NodeLinkState(
-                        NodeTokenStore(token_store_path), web_token=web_token
-                    )
-        return holder["link"]
 
     def _guarded(fn: Any) -> Any:
         from ...delivery.node_link import NodeLinkError
 
         try:
-            with link_lock:
-                return fn()
+            return delivery_service.node_call(fn)
         except NodeLinkError as exc:
             return _refusal(exc)
         except Exception as exc:  # §12.3: classified, never raw
@@ -121,7 +97,7 @@ def build_delivery_node_router(
         x_holdspeak_node_token: Optional[str] = Header(default=None),
     ) -> Any:
         return _guarded(
-            lambda: _link().hello(
+            lambda link: link.hello(
                 body.name,
                 x_holdspeak_node_token,
                 node_protocol=body.node_protocol,
@@ -138,7 +114,7 @@ def build_delivery_node_router(
         x_holdspeak_node_token: Optional[str] = Header(default=None),
     ) -> Any:
         return _guarded(
-            lambda: _link().heartbeat(
+            lambda link: link.heartbeat(
                 body.name,
                 x_holdspeak_node_token,
                 instance_id=body.instance_id,
@@ -147,11 +123,5 @@ def build_delivery_node_router(
             )
         )
 
-    @router.get("/api/delivery/nodes")
-    def api_delivery_nodes() -> Any:
-        """Browser-facing liveness projection: typed status with
-        last-seen retained; legacy env-table steering nodes appear
-        labeled ``legacy-direct``. No secrets cross (§13)."""
-        return _guarded(lambda: _link().nodes_view(legacy_env=legacy_env))
-
+    mount_router(router, delivery_declared.router(ctx, ("delivery.nodes",), module=__name__))
     return router

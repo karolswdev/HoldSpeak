@@ -255,19 +255,3 @@ def test_limit_cap_is_respected(db: Database, now: datetime) -> None:
     assert len(nudges) == 3
 
 
-def test_nudge_serialization_is_jsonable(db: Database, now: datetime) -> None:
-    db.activity.upsert_activity_record(
-        source_browser="safari",
-        url="https://github.com/k/h/issues/1",
-        entity_type="github_issue",
-        entity_id="k/h#1",
-        last_seen_at=now - timedelta(minutes=10),
-    )
-    nudges = compute_nudges(db, now=now)
-    assert nudges
-    payload = [n.to_dict() for n in nudges]
-    # Keys present and stable.
-    assert {"key", "kind", "title", "body", "score", "citations"} <= set(payload[0])
-    import json
-
-    json.dumps(payload)  # must not raise

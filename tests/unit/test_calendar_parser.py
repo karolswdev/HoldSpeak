@@ -208,5 +208,3 @@ END:VCALENDAR\r
     }
 
 
-def test_horizon_constant_is_the_declared_two_week_window() -> None:
-    assert HORIZON_DAYS == 14

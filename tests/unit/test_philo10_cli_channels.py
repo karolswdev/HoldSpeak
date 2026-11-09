@@ -655,6 +655,8 @@ def test_the_sends_are_egress_owner_presses_and_blocking_io_in_the_one_table() -
                         "agent.launch.answer", "agent.launch.resume", "agent.helper.allow",
                         # The Calls verbs (#2085) wait on the line: a real call, its hang-up, a test call.
                         "calls.place", "calls.hangup", "calls.test_line",
+                        # 2026-11-09 (media_operations.py): Finder opens; the voice weights download.
+                        "recordings.open_folder", "tts.download",
                         # The Settings family (2026-11-09): doctor reads, file and PATH detections,
                         # a provider probe, a download, a sweep, a Telegram send.
                         "setup.readiness", "setup.runtime.probe", "setup.local_ai.start",
@@ -671,6 +673,8 @@ def test_the_sends_are_egress_owner_presses_and_blocking_io_in_the_one_table() -
                                         "setup.lan.scan",
                                         # HTTP only: the Agents window's launch verbs.
                                         "agent.launch.answer", "agent.launch.resume", "agent.helper.allow",
+                                        # HTTP only: his Finder and the voice weights' egress (media_operations.py).
+                                        "recordings.open_folder", "tts.download",
                                         # HTTP only: the hub read, Telegram pairing.
                                         "settings.hub", "reach.telegram.pair"}
     assert all(name in TOOL_AUTHORITY for name in mcp_blocking), mcp_blocking - set(TOOL_AUTHORITY)

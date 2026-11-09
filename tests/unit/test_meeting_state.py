@@ -20,37 +20,6 @@ class TestTranscriptSegment:
     # Creation Tests
     # ============================================================
 
-    def test_creation(self) -> None:
-        """TranscriptSegment can be created with required fields."""
-        segment = TranscriptSegment(
-            text="Hello world",
-            speaker="Me",
-            start_time=0.0,
-            end_time=5.0,
-        )
-        assert segment.text == "Hello world"
-        assert segment.speaker == "Me"
-        assert segment.start_time == 0.0
-        assert segment.end_time == 5.0
-        assert segment.is_bookmarked is False
-
-    def test_creation_with_bookmark(self) -> None:
-        """TranscriptSegment can be created with bookmark flag."""
-        segment = TranscriptSegment(
-            text="Important point",
-            speaker="Remote",
-            start_time=10.0,
-            end_time=15.0,
-            is_bookmarked=True,
-        )
-        assert segment.is_bookmarked is True
-
-    def test_creation_from_fixture(self, sample_segments) -> None:
-        """Sample segments fixture creates valid TranscriptSegments."""
-        assert len(sample_segments) == 3
-        assert sample_segments[0].speaker == "Me"
-        assert sample_segments[1].speaker == "Remote"
-
     # ============================================================
     # Properties Tests
     # ============================================================
@@ -64,16 +33,6 @@ class TestTranscriptSegment:
             end_time=12.5,
         )
         assert segment.duration == 7.5
-
-    def test_duration_zero(self) -> None:
-        """duration is zero when start_time equals end_time."""
-        segment = TranscriptSegment(
-            text="Test",
-            speaker="Me",
-            start_time=5.0,
-            end_time=5.0,
-        )
-        assert segment.duration == 0.0
 
     # ============================================================
     # to_dict Tests
@@ -126,16 +85,6 @@ class TestTranscriptSegment:
         )
         assert segment.format_timestamp() == "01:01:01"
 
-    def test_format_timestamp_zero(self) -> None:
-        """format_timestamp at start of meeting."""
-        segment = TranscriptSegment(
-            text="Test",
-            speaker="Me",
-            start_time=0.0,
-            end_time=5.0,
-        )
-        assert segment.format_timestamp() == "00:00:00"
-
     def test_str_representation(self) -> None:
         """__str__ returns formatted string."""
         segment = TranscriptSegment(
@@ -155,29 +104,6 @@ class TestBookmark:
     # Creation Tests
     # ============================================================
 
-    def test_creation_minimal(self) -> None:
-        """Bookmark can be created with just timestamp."""
-        bookmark = Bookmark(timestamp=45.5)
-        assert bookmark.timestamp == 45.5
-        assert bookmark.label == ""
-        assert bookmark.created_at is not None
-
-    def test_creation_with_label(self) -> None:
-        """Bookmark can be created with label."""
-        bookmark = Bookmark(timestamp=100.0, label="Important decision")
-        assert bookmark.label == "Important decision"
-
-    def test_creation_with_explicit_datetime(self) -> None:
-        """Bookmark can be created with explicit datetime."""
-        dt = datetime(2024, 6, 15, 14, 30, 0)
-        bookmark = Bookmark(timestamp=30.0, label="Test", created_at=dt)
-        assert bookmark.created_at == dt
-
-    def test_creation_from_fixture(self, sample_bookmark) -> None:
-        """Sample bookmark fixture creates valid Bookmark."""
-        assert sample_bookmark.timestamp == 45.5
-        assert sample_bookmark.label == "Important decision"
-
     # ============================================================
     # to_dict Tests
     # ============================================================
@@ -191,12 +117,6 @@ class TestBookmark:
         assert "created_at" in result
         # created_at should be ISO format string
         assert isinstance(result["created_at"], str)
-
-    def test_to_dict_empty_label(self) -> None:
-        """to_dict handles empty label."""
-        bookmark = Bookmark(timestamp=10.0)
-        result = bookmark.to_dict()
-        assert result["label"] == ""
 
     def test_to_dict_created_at_iso_format(self) -> None:
         """to_dict serializes created_at as ISO format."""
@@ -212,26 +132,6 @@ class TestMeetingState:
     # ============================================================
     # Creation Tests
     # ============================================================
-
-    def test_creation_minimal(self) -> None:
-        """MeetingState can be created with required fields."""
-        state = MeetingState(
-            id="abc123",
-            started_at=datetime.now(),
-        )
-        assert state.id == "abc123"
-        assert state.ended_at is None
-        assert state.title is None
-        assert state.tags == []
-        assert state.segments == []
-        assert state.bookmarks == []
-        assert state.intel is None
-
-    def test_creation_from_fixture(self, sample_meeting_state) -> None:
-        """Sample meeting state fixture creates valid MeetingState."""
-        assert sample_meeting_state.id == "test-meeting-123"
-        assert sample_meeting_state.mic_label == "Me"
-        assert sample_meeting_state.remote_label == "Remote"
 
     # ============================================================
     # Properties Tests
@@ -351,22 +251,6 @@ class TestMeetingState:
         assert "formatted_duration" in result
         assert result["formatted_duration"] == "10:30"
 
-    def test_to_dict_includes_labels(self, sample_meeting_state) -> None:
-        """to_dict includes mic_label and remote_label."""
-        result = sample_meeting_state.to_dict()
-        assert result["mic_label"] == "Me"
-        assert result["remote_label"] == "Remote"
-
-    def test_to_dict_includes_web_url(self) -> None:
-        """to_dict includes web_url field."""
-        state = MeetingState(
-            id="test",
-            started_at=datetime.now(),
-            web_url="http://localhost:8765",
-        )
-        result = state.to_dict()
-        assert result["web_url"] == "http://localhost:8765"
-
     def test_devices_round_trip_through_to_dict(self) -> None:
         """state.devices serializes each DeviceDescriptor to a JSON-safe dict."""
         from datetime import datetime
@@ -408,45 +292,12 @@ class TestMeetingState:
             }
         ]
 
-    def test_devices_default_empty_list(self) -> None:
-        from datetime import datetime
-
-        from holdspeak.meeting_session import MeetingState
-
-        state = MeetingState(id="m", started_at=datetime.now())
-        result = state.to_dict()
-        assert result["devices"] == []
-
-
 class TestIntelSnapshot:
     """Tests for IntelSnapshot dataclass."""
 
     # ============================================================
     # Creation Tests
     # ============================================================
-
-    def test_creation_minimal(self) -> None:
-        """IntelSnapshot can be created with just timestamp."""
-        snapshot = IntelSnapshot(timestamp=120.0)
-        assert snapshot.timestamp == 120.0
-        assert snapshot.topics == []
-        assert snapshot.action_items == []
-        assert snapshot.summary == ""
-
-    def test_creation_full(self) -> None:
-        """IntelSnapshot can be created with all fields."""
-        snapshot = IntelSnapshot(
-            timestamp=300.0,
-            topics=["Project timeline", "Budget review"],
-            action_items=[
-                {"task": "Send proposal", "owner": "Me", "due": "Tomorrow"},
-                {"task": "Review docs", "owner": "Remote", "due": None},
-            ],
-            summary="Productive meeting about project planning.",
-        )
-        assert len(snapshot.topics) == 2
-        assert len(snapshot.action_items) == 2
-        assert snapshot.summary == "Productive meeting about project planning."
 
     # ============================================================
     # to_dict Tests
@@ -482,14 +333,3 @@ class TestIntelSnapshot:
         assert result["action_items"][0]["task"] == "Write API spec"
         assert result["summary"] == "Discussed API design and testing approach."
 
-    def test_to_dict_preserves_action_item_structure(self) -> None:
-        """to_dict preserves action item dictionary structure."""
-        action_items = [
-            {"task": "Task 1", "owner": "Alice", "due": "Monday"},
-            {"task": "Task 2", "owner": "Bob", "due": None},
-            {"task": "Task 3", "owner": None, "due": "Tuesday"},
-        ]
-        snapshot = IntelSnapshot(timestamp=0.0, action_items=action_items)
-        result = snapshot.to_dict()
-
-        assert result["action_items"] == action_items

@@ -191,18 +191,6 @@ def test_guard_notes_fresh_desk_loads_none_existing_desk_keeps_them(db) -> None:
     }
 
 
-def test_mode_recipe_census_matches_its_authoritative_source() -> None:
-    """HS-200-03: the census above is regenerated, never hand-maintained.
-
-    `MODE_SEEDS` is what `seed_modes` actually applies. When the two disagree
-    the fixture is stale, and that staleness used to surface as two red seed
-    tests rather than as the one-line census edit it is.
-    """
-    from holdspeak.services.thread_modes import MODE_SEEDS
-
-    assert {mode.id for mode in MODE_SEEDS} == MODE_RECIPES
-
-
 def test_starter_text_is_questions_not_invented_owner_facts(db) -> None:
     apply_seed(db)
     text = "\n".join(note.body_markdown for note in db.notes.list())

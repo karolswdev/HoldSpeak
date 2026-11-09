@@ -65,6 +65,13 @@ def _service() -> Any:
     return default_briefing_service()
 
 
+def _invoke(ctx: Any, request: Request, name: str, args: dict[str, Any]) -> Any:
+    """One declared briefing row (``walk_operations.py``) through the hub's
+    contract, else one over the module's briefing service."""
+    registry = operations.for_context(ctx, briefing_service=_service)
+    return registry.invoke(getattr(request.state, "principal", UNAUTHENTICATED), name, args, shape="web")
+
+
 def _tailnet_base(port: int) -> str | None:
     """The hub's tailnet address (§6 "The address"), when Tailscale Serve
     proxies to this hub; ``None`` on a rig (``HOLDSPEAK_RECORDINGS=off``
@@ -197,11 +204,12 @@ def build_briefing_router(ctx: WebContext) -> APIRouter:
 
     @router.get("/api/b/{token}")
     async def api_briefing_read(token: str, request: Request) -> Any:
-        return await _page(request, lambda: _service().read(token), what="read")
+        return await _page(request, lambda: _invoke(ctx, request, "briefing.read", {"token": token}), what="read")
 
     @router.get("/api/b/{token}/evidence/{ref}/{pane}")
     async def api_briefing_evidence(token: str, ref: str, pane: str, request: Request) -> Any:
-        return await _page(request, lambda: _service().evidence(token, ref, pane), what="evidence")
+        return await _page(request, lambda: _invoke(ctx, request, "briefing.evidence",
+                                                    {"token": token, "ref": ref, "pane": pane}), what="evidence")
 
     @router.post("/api/b/{token}/answer")
     async def api_briefing_answer(token: str, request: Request) -> Any:
@@ -209,9 +217,10 @@ def build_briefing_router(ctx: WebContext) -> APIRouter:
             body = await _bounded_body(request, PAGE_BODY_BYTES)
         except BodyTooLarge:
             return _too_large(PAGE_HEADERS)
-        return await _page(request, lambda: _service().answer(
-            token, body.get("ref"), body.get("choice"), reason=body.get("reason"), later=body.get("later"),
-        ), what="answer")
+        return await _page(request, lambda: _invoke(ctx, request, "briefing.answer", {
+            "token": token, "ref": body.get("ref"), "choice": body.get("choice"),
+            "reason": body.get("reason"), "later": body.get("later"),
+        }), what="answer")
 
     @router.post("/api/reach/packages")
     async def api_reach_package_make(request: Request) -> Any:
@@ -228,7 +237,8 @@ def build_briefing_router(ctx: WebContext) -> APIRouter:
 
     @router.post("/api/reach/packages/{package_id}/revoke")
     async def api_reach_package_revoke(package_id: str, request: Request) -> Any:
-        return await _owner(request, lambda principal: _service().revoke(principal, package_id), what="revoke")
+        return await _owner(request, lambda _principal: _invoke(ctx, request, "briefing.revoke",
+                                                                {"package_id": package_id}), what="revoke")
 
     # ── DIR4 to DIR6: Later, his settings, Telegram ──────────────────
     # Produced from the reach.* rows (settings_operations.py); the bot token is

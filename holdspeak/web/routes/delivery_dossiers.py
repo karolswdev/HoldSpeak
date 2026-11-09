@@ -28,37 +28,17 @@ read; that route stays working alongside (§10 compatibility rule).
 """
 from __future__ import annotations
 
-import asyncio
 import re
-from pathlib import Path
 from typing import Any, Optional
 
 from fastapi import APIRouter, Request, Response
-from fastapi.responses import JSONResponse
+from starlette.concurrency import run_in_threadpool
 
-from ...logging_config import get_logger
+from ...principals import UNAUTHENTICATED
 from ..context import WebContext
-
-log = get_logger("web.routes.delivery_dossiers")
+from . import delivery_declared
 
 _RANGE_RE = re.compile(r"^bytes=(\d*)-(\d*)$")
-
-
-def _classified_500(exc: Exception, detail: str) -> JSONResponse:
-    """§12.3: the exception (which may carry paths) goes to the log,
-    never the wire."""
-    log.error(f"{detail}: {exc}")
-    return JSONResponse({"error": detail}, status_code=500)
-
-
-def _refusal_response(refusal: Any) -> JSONResponse:
-    body: dict[str, Any] = {
-        "refusal": refusal.code,
-        "detail": refusal.detail,
-    }
-    if refusal.manifest is not None:
-        body["manifest"] = refusal.manifest
-    return JSONResponse(body, status_code=refusal.http_status)
 
 
 def parse_range(header: Optional[str], size: int) -> Optional[tuple[int, int]]:
@@ -88,130 +68,56 @@ def parse_range(header: Optional[str], size: int) -> Optional[tuple[int, int]]:
     return (start, min(end, size - 1))
 
 
-def build_delivery_dossiers_router(
-    ctx: WebContext,
-    *,
-    service: Any = None,
-    registry_path: Optional[Path] = None,
-    map_path: Optional[Path] = None,
-    runner: Any = None,
-    dw_argv_factory: Any = None,
-    max_age_seconds: float = 15.0,
-) -> APIRouter:
-    """Every keyword is a test seam (the delivery-router precedent);
-    production uses the defaults. The service builds lazily so app
-    assembly has no side effects."""
-    _ = ctx
-    router = APIRouter()
-    holder: dict[str, Any] = {"service": service}
+def build_delivery_dossiers_router(ctx: WebContext) -> APIRouter:
+    """The dossier routes, produced from the ``delivery.story_dossier``,
+    ``delivery.phase_dossier`` and ``delivery.evidence_asset`` rows. The
+    dossier service and its test seams live on ``ctx.delivery_service``.
+    The asset route answers a file, so it is written here; it still calls
+    the declared verb."""
+    registry = delivery_declared.registry_for(ctx)
 
-    def _service() -> Any:
-        if holder["service"] is None:
-            from ...delivery import DeliveryRegistry
-            from ...delivery.dossiers import DossierService
-
-            registry = DeliveryRegistry(registry_path, map_path=map_path)
-            holder["service"] = DossierService(
-                registry,
-                runner=runner,
-                dw_argv_factory=dw_argv_factory,
-                max_age_seconds=max_age_seconds,
-            )
-        return holder["service"]
-
-    @router.get("/api/delivery/stories/{project}/{story}/dossier")
-    async def api_story_dossier(
-        project: str, story: str, source: str = ""
-    ) -> Any:
-        """The story dossier. ``?source=src_...`` pins one source;
-        omitted, every registered source is tried (a story an offline
-        source may hold answers 503, never a silent 404)."""
-        from ...delivery.dossiers import DossierRefusal
-
-        try:
-            def _load() -> Any:
-                svc = _service()
-                if source:
-                    return svc.story_dossier(source, project, story)
-                return svc.story_dossier_any(project, story)
-
-            return await asyncio.to_thread(_load)
-        except DossierRefusal as refusal:
-            return _refusal_response(refusal)
-        except Exception as exc:
-            return _classified_500(exc, "story dossier failed")
-
-    @router.get("/api/delivery/phases/{project}/{phase}/dossier")
-    async def api_phase_dossier(
-        project: str, phase: int, source: str = ""
-    ) -> Any:
-        """The phase dossier: grouped story dossiers + the final
-        summary REFERENCE — metadata only, no asset bytes load here."""
-        from ...delivery.dossiers import DossierRefusal
-
-        try:
-            def _load() -> Any:
-                svc = _service()
-                if source:
-                    return svc.phase_dossier(source, project, phase)
-                last: Any = None
-                for source_id in svc.source_ids():
-                    try:
-                        return svc.phase_dossier(source_id, project, phase)
-                    except DossierRefusal as refusal:
-                        if refusal.code != "not_found":
-                            last = refusal
-                raise last or DossierRefusal(
-                    "not_found", f"phase {phase} not found in any source"
+    def asset_handler(descriptor: Any) -> Any:
+        async def api_evidence_asset(bundle_id: str, asset_id: str, request: Request) -> Any:
+            """Manifest-bound bytes. Content-Type comes from the manifest,
+            ETag is the member sha256, and single Range requests answer
+            206 (dw's member cap bounds the buffered body)."""
+            principal = getattr(request.state, "principal", UNAUTHENTICATED)
+            args = {"bundle_id": bundle_id, "asset_id": asset_id}
+            try:
+                data, member = await run_in_threadpool(
+                    lambda: registry().invoke(principal, descriptor.name, args, shape="web")
                 )
+            except Exception as exc:
+                return delivery_declared.refused(descriptor.name, exc)
 
-            return await asyncio.to_thread(_load)
-        except DossierRefusal as refusal:
-            return _refusal_response(refusal)
-        except Exception as exc:
-            return _classified_500(exc, "phase dossier failed")
-
-    @router.get("/api/delivery/evidence/{bundle_id}/{asset_id}")
-    async def api_evidence_asset(
-        bundle_id: str, asset_id: str, request: Request
-    ) -> Any:
-        """Manifest-bound bytes. Content-Type comes from the manifest,
-        ETag is the member sha256, and single Range requests answer
-        206 (dw's member cap bounds the buffered body)."""
-        from ...delivery.dossiers import DossierRefusal
-
-        try:
-            data, member = await asyncio.to_thread(
-                lambda: _service().open_asset(bundle_id, asset_id)
-            )
-        except DossierRefusal as refusal:
-            return _refusal_response(refusal)
-        except Exception as exc:
-            return _classified_500(exc, "evidence asset failed")
-
-        etag = str(member.get("sha256") or "")
-        media_type = str(member.get("media_type") or "application/octet-stream")
-        headers = {"Accept-Ranges": "bytes", "ETag": etag}
-        if request.headers.get("if-none-match") == etag:
-            return Response(status_code=304, headers=headers)
-        try:
-            window = parse_range(request.headers.get("range"), len(data))
-        except ValueError:
+            etag = str(member.get("sha256") or "")
+            media_type = str(member.get("media_type") or "application/octet-stream")
+            headers = {"Accept-Ranges": "bytes", "ETag": etag}
+            if request.headers.get("if-none-match") == etag:
+                return Response(status_code=304, headers=headers)
+            try:
+                window = parse_range(request.headers.get("range"), len(data))
+            except ValueError:
+                return Response(
+                    status_code=416,
+                    headers={**headers, "Content-Range": f"bytes */{len(data)}"},
+                )
+            if window is None:
+                return Response(content=data, media_type=media_type, headers=headers)
+            start, end = window
             return Response(
-                status_code=416,
-                headers={**headers, "Content-Range": f"bytes */{len(data)}"},
+                content=data[start : end + 1],
+                status_code=206,
+                media_type=media_type,
+                headers={
+                    **headers,
+                    "Content-Range": f"bytes {start}-{end}/{len(data)}",
+                },
             )
-        if window is None:
-            return Response(content=data, media_type=media_type, headers=headers)
-        start, end = window
-        return Response(
-            content=data[start : end + 1],
-            status_code=206,
-            media_type=media_type,
-            headers={
-                **headers,
-                "Content-Range": f"bytes {start}-{end}/{len(data)}",
-            },
-        )
 
-    return router
+        return api_evidence_asset
+
+    return delivery_declared.router(
+        ctx, ("delivery.story_dossier", "delivery.phase_dossier", "delivery.evidence_asset"),
+        module=__name__, hand_written={"delivery.evidence_asset": asset_handler},
+    )

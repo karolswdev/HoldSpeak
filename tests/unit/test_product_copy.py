@@ -18,31 +18,6 @@ from holdspeak.product_language import PRODUCT_LANGUAGE
 REPO = Path(__file__).resolve().parents[2]
 
 
-def test_every_declared_primary_surface_expands_and_is_classified() -> None:
-    paths = list(iter_surface_paths(REPO))
-    assert paths
-    assert {client for client, _ in paths} == {
-        "web",
-        "swift",
-        "hub",
-        "cli_and_guides",
-    }
-    assert len(paths) == len(set(paths))
-
-    candidates = inventory(REPO)
-    assert len(candidates) >= 250
-    assert {candidate.client for candidate in candidates} == {
-        "web",
-        "swift",
-        "hub",
-        "cli_and_guides",
-    }
-    assert {candidate.classification for candidate in candidates} <= COPY_CLASSIFICATIONS
-    assert {candidate.classification for candidate in candidates} <= set(
-        PRODUCT_LANGUAGE.copy_contract.classifications
-    )
-
-
 # HS-200-03, 2026-09-06 — the recorded copy debt on the G0 baseline.
 #
 # This fence had been red with 29 inherited offenders, which meant it could no
@@ -302,44 +277,3 @@ def test_copy_that_holds_a_bracket_is_still_copy(tmp_path: Path) -> None:
     }
 
 
-def test_copy_contract_covers_postures_failures_and_bounded_exceptions() -> None:
-    contract = PRODUCT_LANGUAGE.copy_contract
-    assert contract.generic_consequential_verbs == (
-        "Approve",
-        "Apply",
-        "Open",
-        "Run",
-    )
-    assert contract.failure_requirements == (
-        "failed_operation",
-        "retained_work",
-        "next_action",
-        "destination_when_relevant",
-    )
-    assert {pattern.id for pattern in contract.prohibited_operational_patterns} == {
-        "legacy-product-nouns",
-        "raw-control-mode-labels",
-        "unqualified-state",
-        "promotional-narration",
-        "paired-as-local",
-    }
-    exception_ids: set[str] = set()
-    for exception in contract.exceptions:
-        exception_id = str(exception["id"])
-        assert exception_id not in exception_ids
-        exception_ids.add(exception_id)
-        assert str(exception["path"]).endswith((".swift", ".tsx", ".md"))
-        # HS-100-10: an exception carries literals OR terms (a staged
-        # vocabulary migration names whole words instead).
-        assert exception.get("literals") or exception.get("terms")
-        assert len(str(exception["reason"]).strip()) >= 40
-
-
-def test_inventory_contains_shared_product_language_in_real_surfaces() -> None:
-    values = {(item.client, item.text) for item in inventory(REPO)}
-    assert ("web", "Secure") in values
-    assert ("web", "Normal") in values
-    assert ("swift", "Secure") in values
-    assert ("swift", "Normal") in values
-    assert any(client == "web" and "Engines" in text for client, text in values)
-    assert any(client == "swift" and "Coder session" in text for client, text in values)

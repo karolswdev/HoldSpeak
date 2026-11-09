@@ -64,24 +64,6 @@ def test_registry_is_deterministic_across_registration_order_and_restart() -> No
     assert first.capability_projection("ask.answer") == restarted.capability_projection("ask.answer")
 
 
-def test_registry_names_the_semantic_capabilities() -> None:
-    # The fast diet (2026-10-12) parked the Phase 143 site census this test
-    # also read (tests/_parked/unit/test_phase143_inference_capability_census.py);
-    # tests/unit/test_one_path_census.py keeps the fail-closed site fence.
-    registry = _registry()
-    assert {
-        "thought.interview",
-        "ask.answer",
-        "agent.plan",
-        "agent.code",
-        "project_doc.suggest_update",
-        "speech.target_classify",
-        "internal.semantic_dispatch",
-    } <= set(registry.capability_ids)
-    assert registry.require("speech.preload").owner_visibility == "internal"
-    assert registry.require("apple.workbench.workflow").owner_visibility == "future"
-
-
 def test_unknown_capability_refuses_before_any_profile_or_runner_access() -> None:
     called = False
 

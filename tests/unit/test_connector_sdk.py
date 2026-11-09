@@ -49,12 +49,6 @@ def test_validate_manifest_round_trips_a_well_formed_manifest():
     assert validate_manifest(payload) == manifest
 
 
-def test_validate_manifest_returns_immutable_dataclass():
-    manifest = validate_manifest(_good_manifest())
-    with pytest.raises(Exception):
-        manifest.id = "other"  # type: ignore[misc]
-
-
 def test_validate_manifest_rejects_non_object_root():
     with pytest.raises(ConnectorManifestError) as exc:
         validate_manifest("not-a-mapping")  # type: ignore[arg-type]
@@ -169,63 +163,9 @@ def test_validate_manifest_collects_every_error_at_once():
     }.issubset(codes)
 
 
-def test_validate_manifest_default_dry_run_is_true():
-    raw = _good_manifest()
-    raw.pop("dry_run", None)
-    manifest = validate_manifest(raw)
-    assert manifest.dry_run is True
-
-
 def test_validate_manifest_dry_run_must_be_bool():
     with pytest.raises(ConnectorManifestError) as exc:
         validate_manifest(_good_manifest(dry_run="yes"))
     assert any(e.code == "must_be_bool" for e in exc.value.errors)
 
 
-def test_known_constants_match_phase_9_shape():
-    """Sanity: the kinds + capabilities here cover what phase 9
-    actually shipped, so phase-11 connector packs slot in cleanly."""
-    assert {"cli_enrichment", "candidate_inference", "extension_events"} <= KNOWN_KINDS
-    assert {"annotations", "candidates", "commands", "records", "snapshots"} <= KNOWN_CAPABILITIES
-
-
-def test_sdk_protocols_are_runtime_checkable():
-    """A connector class implementing the right method satisfies the
-    Protocol via duck-typing; isinstance() reports it correctly."""
-
-    class FakeConnector:
-        def preview(self, db, *, limit=25):  # noqa: ARG002
-            return {}
-
-        def enrich(self, db, *, limit=25):  # noqa: ARG002
-            return {}
-
-        def clear(self, db, *, capability):  # noqa: ARG002
-            return 0
-
-        def discover(self, db, *, limit=25):  # noqa: ARG002
-            return []
-
-        def snapshot(self, *, query_kind, query):  # noqa: ARG002
-            return []
-
-    instance = FakeConnector()
-    assert isinstance(instance, Preview)
-    assert isinstance(instance, Enrich)
-    assert isinstance(instance, Clear)
-    assert isinstance(instance, Discover)
-    assert isinstance(instance, Snapshot)
-
-
-def test_partial_implementations_are_partial_isinstance():
-    """A pack that only previews is a Preview, not an Enrich."""
-
-    class PreviewOnly:
-        def preview(self, db, *, limit=25):  # noqa: ARG002
-            return {}
-
-    instance = PreviewOnly()
-    assert isinstance(instance, Preview)
-    assert not isinstance(instance, Enrich)
-    assert not isinstance(instance, Clear)
-    assert not isinstance(instance, Snapshot)

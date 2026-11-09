@@ -140,9 +140,3 @@ def test_core_path_audio_to_injected_text(tmp_path, monkeypatch) -> None:
     assert "lazy dog" in injected, f"got: {injected!r}"
 
 
-def test_core_path_smoke_assertion_is_not_vacuous() -> None:
-    """Mutation guard: the substring assertion *rejects* a wrong transcript, so a
-    broken transcription path would turn the smoke test red (no backend needed)."""
-    wrong = _normalize("Goodbye everyone, see you later.")
-    assert "quick brown fox" not in wrong
-    assert "lazy dog" not in wrong

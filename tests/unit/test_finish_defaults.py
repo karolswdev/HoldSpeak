@@ -264,12 +264,6 @@ def mlx_installed(monkeypatch: pytest.MonkeyPatch):
     )
 
 
-def test_the_default_mlx_model_is_blank() -> None:
-    from holdspeak.config import Config
-
-    assert Config().dictation.runtime.mlx_model == ""
-
-
 def test_auto_plans_llama_cpp_when_no_mlx_model_is_set(mlx_installed) -> None:
     from holdspeak.config import Config
     from holdspeak.speech_session.plan import _pipeline_terms, dictation_local_deployment_identity

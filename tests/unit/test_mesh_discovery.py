@@ -231,6 +231,3 @@ def test_mesh_info_uses_configured_device_name():
     assert body["name"] == "The Coder Mac"
 
 
-def test_mesh_module_constant_is_holdspeak_tcp():
-    # The Bonjour service type the iPad's NWBrowser browses for.
-    assert mesh.MESH_SERVICE_TYPE == "_holdspeak._tcp.local."

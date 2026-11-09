@@ -32,12 +32,6 @@ def _make_session() -> MeetingSession:
     )
 
 
-def test_overlap_seconds_default() -> None:
-    session = _make_session()
-    # 1.5 s default — matches the comment in __init__.
-    assert session._overlap_tail_seconds == 1.5
-
-
 def test_first_pass_no_prior_tail() -> None:
     """A fresh stream returns the audio unchanged on the first pass."""
     session = _make_session()

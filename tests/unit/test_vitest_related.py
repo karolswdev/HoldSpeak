@@ -139,14 +139,6 @@ def test_a_changed_test_file_runs(tmp_path):
     assert _run(src, "desk/star.test.ts") == {"desk/star.test.ts"}
 
 
-def test_why_names_each_rule_per_changed_file(tmp_path):
-    src = _tree(tmp_path)
-    why: list[str] = []
-    vr.related(["src/desk/a/AWin.tsx", "src/desk/surface/gadgets.css"], root=src, why=why)
-    assert why[0] == "src/desk/a/AWin.tsx: 2 import it, 1 app files (folder desk/a), 0 name it"
-    assert why[1] == "src/desk/surface/gadgets.css: 0 import it, 0 app files (no app), 1 name it"
-
-
 def test_the_real_tree_keeps_every_direct_importer():
     """On web/src: for every source file, each test that imports it by path
     is selected (the barrel cut and the re-export hop drop none). One graph

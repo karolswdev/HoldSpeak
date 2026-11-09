@@ -10,13 +10,13 @@ identical** and `build_dictation_router` stays the public entry point
 
 Domains:
 - `intents`       — `/api/intents/*`
-- `agent`         — `/api/dictation/project-context`, `agent-hooks`
-- `project_docs`  — `/api/dictation/project-hs`
-- `blocks`        — `/api/dictation/block-templates`, `blocks*`
-- `kb`            — `/api/dictation/project-kb*`
-- `pipeline`      — `/api/dictation/readiness`, `dry-run`
+- `_declared`     — the declared operations (`holdspeak/dictation_operations.py`,
+  2026-11-09): the journal edits, the corrections, the floor, the project
+  context, agent hooks, `.hs` files and KB, the templates and blocks
+- `blocks`        — `/api/dictation/blocks/from-template` (it can run a preview)
+- `pipeline`      — `/api/dictation/readiness`, `dry-run`, `remote`, journal replay
 
-`project_docs`, `blocks`, and `pipeline` share one in-memory project-doc-suggestion
+`blocks` and `pipeline` share one in-memory project-doc-suggestion
 store (a dry-run detects a suggestion; its GET route is parked 2026-11-08).
 That store is created here, once per router build (per app), and passed to the
 groups that touch it — preserving the original closure-scoped lifetime.
@@ -28,13 +28,10 @@ from fastapi import APIRouter
 
 from ...context import WebContext
 from .._mount import mount_router
-from .agent import build_agent_router
+from ._declared import build_declared_router
 from .blocks import build_blocks_router
-from .floor import build_floor_router
 from .intents import build_intents_router
-from .kb import build_kb_router
 from .pipeline import build_pipeline_router
-from .project_docs import build_project_docs_router
 
 __all__ = ["build_dictation_router"]
 
@@ -50,16 +47,25 @@ def build_dictation_router(ctx: WebContext) -> APIRouter:
     dismissed_suggestion_signatures: set[str] = set()
 
     mount_router(router, build_intents_router(ctx))
-    mount_router(router, build_agent_router(ctx))
-    mount_router(router, 
-        build_project_docs_router(ctx, project_doc_suggestions, dismissed_suggestion_signatures)
-    )
+    mount_router(router, build_declared_router(ctx, (
+        "dictation.project_context", "dictation.agent_hooks", "dictation.project_hs.get",
+        "dictation.project_hs.put", "dictation.block_templates", "dictation.blocks.list",
+        "dictation.blocks.create",
+    )))
     mount_router(router, build_blocks_router(ctx, project_doc_suggestions))
-    mount_router(router, build_kb_router(ctx))
-    # HS-112-06: the audio floor, read + claimable by the browser's open mic.
-    mount_router(router, build_floor_router(ctx))
-    mount_router(router, 
+    mount_router(router, build_declared_router(ctx, (
+        "dictation.blocks.update", "dictation.blocks.delete", "dictation.project_kb.get",
+        "dictation.project_kb.put", "dictation.project_kb.start",
+        # HS-112-06: the audio floor, claimable by the browser's open mic.
+        "dictation.floor.claim", "dictation.floor.release",
+    )))
+    mount_router(router,
         build_pipeline_router(ctx, project_doc_suggestions, dismissed_suggestion_signatures)
     )
+    mount_router(router, build_declared_router(ctx, (
+        "dictation.corrections.list", "dictation.learning_digest", "dictation.corrections.add",
+        "dictation.corrections.remove", "dictation.list", "dictation.journal.update",
+        "dictation.journal.delete", "dictation.journal.clear", "dictation.journal.correct",
+    )))
 
     return router

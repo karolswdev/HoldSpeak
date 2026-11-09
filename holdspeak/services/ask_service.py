@@ -13,10 +13,7 @@ from holdspeak.timestamps import local_wall
 from typing import Any
 
 from ..db.core import Database
-from ..deployment_revisions import capture_deployment_revision
 from ..inference_memory_policy import memory_enabled
-from ..kernel.inference_runner import InvocationRequest, ServiceContract
-from ..kernel.model import KernelRefused
 from ..kernel.prompt_adapter import CanonicalPromptAdapter
 from ..principals import Principal
 from ..grounding import (
@@ -24,12 +21,11 @@ from ..grounding import (
     hydrate_grounding_blocks_detailed, meeting_digest, score_claims,
 )
 from .memory_grounding import (
-    EMPTY_MEMORY, MemoryContext, fit_reflect, reflect_block, reflect_for, reflect_scopes,
+    EMPTY_MEMORY, MemoryContext, reflect_block, reflect_for, reflect_scopes,
 )
 from .errors import ServiceError, ValidationError
 from . import ask_desk
 from .run_trace import ask_trace, use_by_trace
-from .inference_outcomes import map_inference_outcome
 from .refinement_context_service import FrozenGroundingSnapshot
 
 _MATERIAL_CAP = 6000
@@ -40,11 +36,6 @@ ASK_SERVICE_CONTRACT = "holdspeak.ask"
 BUSY_AFTER_SECONDS = 5.0
 ASK_SERVICE_SCHEMA_VERSION = "1"
 ASK_PAYLOAD_SCHEMA_VERSION = 1
-#: The operation id the Thought's pages and observations are fitted with,
-#: at reservation (the refinement coordinator) and at dispatch (Ask): one
-#: fixed value, longer than any real Ask id, so both sides fit the same bytes
-#: and the real request is never larger than the one that was fitted.
-THOUGHT_FIT_OPERATION_ID = "ask_" + "0" * 60
 
 
 def _pinned_note(db: Database, snapshot: Any) -> dict[str, str] | None:
@@ -289,6 +280,10 @@ def _register_retry() -> None:
     engine_door.on_retry("ask", engine_door.RetryKind(
         words="your question", object_kind="thread", run=_retry_ask,
         open_ref=lambda key: f"thread:{key.partition('|')[0]}" if key.partition("|")[0] else "window:ask:desk",
+    ))
+    # A Thought turn that failed opens its Thought; Refine there asks again.
+    engine_door.on_retry("thought", engine_door.RetryKind(
+        words="the next question", object_kind="thought", open_ref=lambda key: f"thought:{key}",
     ))
 
 
@@ -594,11 +589,6 @@ class AskService:
         # acting principal rides the kernel `_as_principal` context.
         self._runner = self._broker.inference_runner
 
-    def _invoke(self, principal: Principal, request: InvocationRequest, *, publish: Any) -> Any:
-        from ..kernel.runtime import _as_principal
-        with _as_principal(principal):
-            return self._runner.invoke(request, CanonicalPromptAdapter(), publish=publish)
-
     def send_text(self, invocation_id: str, text: str) -> None:
         """Ask hub gap 1: one ``ask_text`` frame (the answer's words so far)."""
         run_text(invocation_id, text)
@@ -668,7 +658,7 @@ class AskService:
         return {"refs": refs, "titles": titles, "chars": sum(len(block) for block in blocks),
                 "blocks": [{"ref": ref, "title": title, "chars": len(block)} for ref, title, block in zip(refs, titles, blocks)]}
 
-    async def ask(self, principal: Principal, question: str, grounding: Any = None, *, lens: str = "Ask", context: list[dict[str, Any]] | None = None, model: str | None = None, inference_target_id: str | None = None, profile_id: str | None = None, max_tokens: Any = None, temperature: Any = None, invocation_id: str | None = None, before_physical_dispatch: Any = None, before_compatibility_retry: Any = None, frozen_grounding: FrozenGroundingSnapshot | None = None, frozen_admission_claim: dict[str, Any] | None = None, operation_capability: str = "ask.answer", routed_execution_id: str | None = None, memory_exclude_refs: Sequence[str] = (), subject_kind: str | None = None, subject_id: str | None = None, history: Sequence[tuple[str, str]] = (), desk_tools: bool = False, source_snapshot: Any = None, _prepared_note: dict[str, str] | None = None, _thread_id: str = "") -> dict[str, Any]:
+    async def ask(self, principal: Principal, question: str, grounding: Any = None, *, lens: str = "Ask", context: list[dict[str, Any]] | None = None, model: str | None = None, inference_target_id: str | None = None, profile_id: str | None = None, max_tokens: Any = None, temperature: Any = None, invocation_id: str | None = None, before_physical_dispatch: Any = None, before_compatibility_retry: Any = None, frozen_grounding: FrozenGroundingSnapshot | None = None, frozen_admission_claim: dict[str, Any] | None = None, operation_capability: str = "ask.answer", memory_exclude_refs: Sequence[str] = (), subject_kind: str | None = None, subject_id: str | None = None, history: Sequence[tuple[str, str]] = (), desk_tools: bool = False, source_snapshot: Any = None, _prepared_note: dict[str, str] | None = None, _thread_id: str = "") -> dict[str, Any]:
         prompt = str(question or "").strip()
         if not prompt: raise ValidationError("prompt is required")
         pinned = _prepared_note if _prepared_note is not None else _pinned_note(self._db, source_snapshot)
@@ -722,10 +712,9 @@ class AskService:
             frozen_grounding.validate()
         # Memory slice 6 (MEMORY-DESIGN.md §3.5): the scope's pages, then its
         # observations, BEFORE the fused recall in the grounding block.  The
-        # routed Thought reads them below, as its coordinator did when it
-        # reserved the bytes (``thought_reflect``).
+        # Thought reads them at dispatch (``_thought_through_door``).
         reflect = EMPTY_MEMORY
-        if frozen_grounding is None and not routed_execution_id:
+        if frozen_grounding is None and operation_capability == "ask.answer":
             reflect = reflect_for(
                 operation_capability, self._db, scopes=self._reflect_scopes(grounding),
                 query=prompt, exclude_refs=source_exclusions,
@@ -736,8 +725,6 @@ class AskService:
             block = reflect_block(memory)
             return "\n\n".join(part for part in (block, recall_envelope) if part)
 
-        envelope = _envelope(reflect)
-        user_prompt = asked + ("\n\nMaterial:\n" + material if material else "") + ("\n\nGrounding:\n" + envelope if envelope else "")
         invocation_id = str(invocation_id or ("ask_" + uuid.uuid4().hex)).strip()
         if not invocation_id or not invocation_id.replace("_", "").isalnum():
             raise ValidationError("invocation id is invalid", code="ask_invocation_id_invalid")
@@ -775,175 +762,21 @@ class AskService:
                 retry_key=_retry_key(_thread_id, prompt),
                 subject=(subject_kind, subject_id) if subject_kind and subject_id else ("invocation", invocation_id),
             )
-        if self._routed_assignments_active(
-            capability_id=capability_id,
-            invocation_id=invocation_id,
-            subject_kind=subject_kind,
-            subject_id=subject_id,
-        ):
-            # The routed Thought: the refinement coordinator names no target.
-            if routed_execution_id and capability_id == "thought.interview":
-                # The routed Thought: the same read and fit the coordinator
-                # made at reservation, so the dispatched bytes are the
-                # reserved bytes (checked below).
-                reflect = await asyncio.to_thread(
-                    self.thought_reflect, prompt, exclude_refs=memory_exclude_refs, build=_payload,
-                )
-            elif reflect:
-                # One budget: the pages and observations never push the Ask
-                # over the route admission will freeze.
-                reflect = await asyncio.to_thread(
-                    fit_reflect, self._broker.inference_adoption_service, reflect,
-                    capability_id=capability_id, operation_id=invocation_id,
-                    reserved_output_tokens=int(max_tokens) if max_tokens is not None else 512,
-                    build=_payload,
-                    subject_kind=subject_kind,
-                    subject_id=subject_id,
-                )
-            payload = _payload(reflect)
-            self._emit("running", kind="ask", ref="ask", name=lens)
-            adapter = _QuestionOrSynthesisAdapter(CanonicalPromptAdapter())
-            if routed_execution_id:
-                coordinator = self._broker.inference_adoption_service
-                from .inference_route_plan_service import ROUTE_PLANNING_AUTHORITY
-                execution = coordinator.controller._execution(None, routed_execution_id)
-                operation = coordinator.plans.get_operation_request_plan(
-                    ROUTE_PLANNING_AUTHORITY, execution["operation_plan_id"]
-                )
-                route = coordinator.plans.get_route_plan(ROUTE_PLANNING_AUTHORITY, operation["route_plan_id"])
-                serialized = coordinator.evidence.serialized_request(
-                    operation["admission_evidence_ref"], 1
-                )
-                if serialized["payload"] != payload or operation["operation_id"] != invocation_id:
-                    raise ServiceError(
-                        "inference_adoption_material_mismatch",
-                        "Reserved Thought material differs from dispatch material",
-                    )
-                admitted = {"execution": execution, "operation_request_plan": operation, "route_plan": route}
-            else:
-                admitted = await asyncio.to_thread(
-                    self._broker.inference_adoption_service.admit,
-                    principal,
-                    command_id=f"admit-{invocation_id}",
-                    capability_id=capability_id,
-                    operation_id=invocation_id,
-                    payload=payload,
-                    invocation_id=invocation_id,
-                    subject_kind=subject_kind,
-                    subject_id=subject_id,
-                    reserved_output_tokens=int(max_tokens) if max_tokens is not None else 512,
-                )
-            # Betterment Q2: the turn holds its engines, so background work
-            # starts no new call on them until it ends.
-            from ..engine_lanes import LANES, engine_key
-            lanes = [engine_key(self._db, str(leg.get("deployment_revision_id") or ""))
-                     for leg in admitted["route_plan"].get("entries") or ()]
-            with LANES.foreground(lanes):
-                routed = await asyncio.to_thread(
-                    self._broker.inference_adoption_service.execute,
-                    principal,
-                    execution_id=admitted["execution"]["id"],
-                    adapter=adapter,
-                    publish=lambda output, reservation: self._broker.projection_stager.stage(
-                        str(reservation["child_invocation_id"]),
-                        "ask-result",
-                        self._routed_projection(
-                            dict(output), payload, None, admitted["route_plan"],
-                            route_leg_ordinal=int(reservation["route_leg_ordinal"]),
-                        ),
-                        result_sha256=(
-                            result_sha256 := "sha256:" + hashlib.sha256(
-                                json.dumps(
-                                    output,
-                                    sort_keys=True,
-                                    separators=(",", ":"),
-                                    ensure_ascii=True,
-                                    allow_nan=False,
-                                ).encode()
-                            ).hexdigest()
-                        ),
-                        receipt_result_ref=(
-                            f"inference-result:{reservation['child_invocation_id']}/{result_sha256}"
-                        ),
-                    ).result_ref,
-                    before_physical_dispatch=before_physical_dispatch,
-                )
-            if routed["outcome"] != "succeeded" or not isinstance(routed["result"], dict):
-                # The routed Thought reads the failure's code (refinement_coordinator).
-                raise ServiceError(
-                    "inference_route_failed", "No assigned model completed this request",
-                    context={"receipt": routed["receipt"], "status": 409},
-                )
-            winner = str(routed["winning_reservation"]["child_invocation_id"])
-            result = self._broker.projection_stager.finalize(winner)
-            if result is None:
-                raise ServiceError(
-                    "projection_not_published",
-                    "Ask result is awaiting receipt reconciliation",
-                    context={"invocation_id": winner, "status": 409},
-                )
-            self._emit("ready", kind="ask", ref="ask", name=lens)
-            return {**dict(result), "route_execution_receipt": routed["receipt"]}
-        from ..inference_targets import resolve_placement, target_refusal
-        placement = resolve_placement(self._db, invocation=(inference_target_id or profile_id) or None)
-        target = placement.target
-        if frozen_admission_claim is not None:
-            observed = {"target_id":target.id,"target_kind":target.kind,"boundary":target.boundary,
-                        "engine":target.engine,"model":target.model,"readiness":target.readiness_state,
-                        "reason":target.readiness_reason}
-            if observed != frozen_admission_claim or observed["readiness"] != "ready":
-                raise ServiceError("refinement_admission_changed",
-                                   "The admitted refinement destination changed before dispatch",
-                                   context={"status":409,"target_id":str(frozen_admission_claim.get("target_id") or "")})
-        ran_profile_id = target.profile_id
-        prof = self._db.profiles.get(ran_profile_id) if ran_profile_id else None
-        # The model this destination will ACTUALLY load, from the deployment
-        # identity readiness checked and execution loads (HS-130-03/HS-132-09) —
-        # so the refusal below names the true model and `selected_model` cannot
-        # hand the receipt a name no engine on this path will ever report.
-        advertised = self._destination_model(target)
-        if not target.ready:
-            raise ServiceError(
-                "target_unavailable",
-                target.readiness_reason,
-                context={
-                    **target_refusal(target),
-                    "reason": "no_engine",
-                    "status": 409,
-                },
+        # A Thought's next question is one job through the engine door, as an
+        # answer is: the engine the Thoughts assignment names, one retry on the
+        # next engine, one receipt; a failure waits in Needs you.
+        if model is not None or inference_target_id is not None or profile_id is not None:
+            raise ValidationError(
+                "Legacy model selectors are unavailable after assignment migration.",
+                code="inference_legacy_selector_retired",
             )
-        if prof is not None and prof.kind == "meshNode":
-            from ..intel.mesh_relay import DEFAULT_LIVENESS_WINDOW_SECONDS
-            node = str(getattr(prof, "node", "") or ""); last = self._db.mesh_relay.worker_last_seen(node) if node else None
-            age = None if last is None else (local_wall() - last).total_seconds()
-            if age is None or age > DEFAULT_LIVENESS_WINDOW_SECONDS:
-                seen = "no worker has ever polled" if age is None else f"last seen {int(age)}s ago"
-                raise ValidationError(f"mesh node '{node}' is offline ({seen})", code="mesh_node_offline", context={"reason": "not_reachable"})
-        # Resolve and persist the immutable deployment before payload construction
-        # and ServiceContract hashing. Mutable target state cannot retarget this turn.
-        revision = capture_deployment_revision(self._db, target)
-        source_text = material + ("\n\n" + envelope if envelope else "")
-        payload: dict[str, Any] = {"schema_version": ASK_PAYLOAD_SCHEMA_VERSION, "system_prompt": _ASK_SYSTEM_PROMPT + frozen_system_instruction, "user_prompt": user_prompt, "lens": lens, "context_ids": context_ids, "context_titles": context_titles, "grounding": grounding_echo, "source_text": source_text, "temperature": float(temperature) if temperature is not None else None, "max_tokens": int(max_tokens) if max_tokens is not None else None, "deployment_revision": revision.id, "selected_model": advertised}
-        self._emit("running", kind="ask", ref="ask", name=lens)
-        try:
-            outcome = await asyncio.to_thread(
-                self._invoke,
-                principal,
-                InvocationRequest(revision.id, ServiceContract.for_payload(ASK_SERVICE_CONTRACT, ASK_SERVICE_SCHEMA_VERSION, payload), time.time() + 60, payload, invocation_id, before_physical_dispatch=before_physical_dispatch, before_compatibility_retry=before_compatibility_retry),
-                publish=self._broker.projection_stager.publisher(invocation_id, "ask-result", lambda output: self._ask_projection(output, payload, target, ran_profile_id, placement.placement_dict())),
-            )
-        # The unrouted Thought reads the failure's code (refinement_coordinator).
-        except KernelRefused as exc:
-            self._emit("error", kind="ask", ref="ask", name=lens, error=exc.reason)
-            raise self._outcome_error(None, exc)
-        if outcome.outcome != "succeeded":
-            self._emit("error", kind="ask", ref="ask", name=lens, error=outcome.outcome)
-            raise self._outcome_error(outcome, None, target=target)
-        result = self._broker.projection_stager.finalize(invocation_id)
-        if result is None:
-            raise ServiceError("projection_not_published", "Ask result is awaiting receipt reconciliation", context={"invocation_id": invocation_id, "operation_id": outcome.operation_id, "receipt": dict(outcome.receipt), "result_ref": outcome.result_ref, "status": 409})
-        self._emit("ready", kind="ask", ref="ask", name=lens)
-        return dict(result)
+        return await asyncio.to_thread(
+            self._thought_through_door, principal, _payload, prompt, invocation_id=invocation_id, lens=lens,
+            exclude_refs=memory_exclude_refs, frozen_claim=frozen_admission_claim,
+            subject=(subject_kind, subject_id) if subject_kind and subject_id else None,
+            before_physical_dispatch=before_physical_dispatch,
+            before_compatibility_retry=before_compatibility_retry,
+        )
 
     # ── Betterment Q4: one Ask window, every Ask kept as a thread ─────
 
@@ -1351,7 +1184,7 @@ class AskService:
         model = model or route["model"]
         return {"model": model, "provider": str(getattr(revision, "engine", "") or ""),
                 "egress": {"scope": route["lamp"], **({"host": route["host"]} if route["host"] else {})},
-                "route": {**route, "model": model, "receipt": operation_id, "fallback": run_id.endswith("_r2")}}
+                "route": {**route, "model": model, "receipt": operation_id, "fallback": run_id.endswith("_n2")}}
 
     @staticmethod
     def _door_projection(output: Any, payload: dict[str, Any], invocation_id: str) -> dict[str, Any]:
@@ -1550,102 +1383,6 @@ class AskService:
             }.get(exc.code, "did_not_answer")
         return exc
 
-    def _routed_projection(
-        self, output: dict[str, Any], payload: dict[str, Any], receipt: dict[str, Any] | None,
-        route: dict[str, Any], *, route_leg_ordinal: int | None = None,
-    ) -> dict[str, Any]:
-        winner = int(route_leg_ordinal or receipt["attempts"][-1]["route_leg_ordinal"])
-        leg = route["entries"][winner - 1]
-        boundary = str(
-            (receipt or {}).get("winning_boundary") or leg["boundary"]
-        )
-        with self._db._connection() as conn:
-            deployment = conn.execute(
-                "SELECT engine,model FROM deployment_revisions WHERE id=?",
-                (str(leg["deployment_revision_id"]),),
-            ).fetchone()
-            # Where the bytes went (the winning attempt's deployment, the
-            # #855 loopback rule): the lamp and the host the Ask face names.
-            from ..inference_locality import served_route
-
-            # At publish time the receipt is not written yet: the leg that
-            # answered.  ask() replaces it with the full receipt route.
-            served = served_route(conn, receipt) or served_route(conn, {
-                "attempts": [{"attempt_id": "leg", "deployment_revision_id": str(leg["deployment_revision_id"]),
-                              "boundary": boundary, "send_phase": "provider_returned"}],
-                "winning_attempt_id": "leg",
-            })
-        if deployment is None:
-            raise ServiceError("inference_route_deployment_missing", "Frozen deployment is missing")
-        engine, model = str(deployment["engine"]), str(deployment["model"])
-        egress: dict[str, Any] = {"scope": (served or {}).get("lamp") or boundary}
-        if (served or {}).get("host"):
-            egress["host"] = served["host"]
-        semantic_output = (
-            json.dumps(output, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
-            if "kind" in output else str(output["output"])
-        )
-        result = {
-            "output": semantic_output,
-            "lens": str(payload["lens"]),
-            "provider": engine,
-            "model": model,
-            "profile_id": str(leg["profile_id"]),
-            "actual_placement": {
-                "target_id": str(leg["profile_id"]), "target_name": str(leg["profile_id"]),
-                "target_kind": "assigned_profile", "boundary": boundary,
-                "owner": "hub", "transport": boundary,
-                "data_classes": ["prompt", "grounding"],
-                "engine": engine,
-                "model": model, "fallback_reason": None,
-            },
-            "egress": egress,
-            "context_ids": list(payload["context_ids"]),
-            "context_titles": list(payload["context_titles"]),
-        }
-        if receipt is not None:
-            result["route_execution_receipt"] = receipt
-        if payload.get("grounding") is not None:
-            result["grounding"] = payload["grounding"]
-        return result
-
-    def _ask_projection(self, output: Any, payload: dict[str, Any], target: Any, profile_id: str | None, placement_block: dict[str, Any] | None = None) -> dict[str, Any]:
-        dispatched = dict(output) if isinstance(output, dict) else {"output": str(output)}
-        answer = str(dispatched["output"])
-        provider = str(dispatched.get("provider") or target.deployment.engine)
-        selected_model = str(dispatched.get("model") or payload["selected_model"] or target.deployment.model)
-        from urllib.parse import urlparse
-        actual_placement = target.placement_receipt(provider=provider, model=selected_model)
-        actual_boundary = str(actual_placement["boundary"])
-        egress: dict[str, Any] = {"scope": "local"}
-        if actual_boundary == "private_network":
-            egress = {"scope": "private_network", "host": urlparse(target.deployment.endpoint).hostname or ""}
-        elif actual_boundary in {"cloud", "external_service", "paired_device_then_external_service"}:
-            egress = {"scope": "cloud"}
-        elif target.kind == "mesh_node":
-            egress = {"scope": "mesh", "host": target.deployment.node}
-        result: dict[str, Any] = {"output": answer, "lens": payload["lens"], "provider": provider,
-                                  "profile_id": profile_id, "inference_target": target.to_dict(),
-                                  "actual_placement": actual_placement,
-                                  "egress": egress, "model": selected_model,
-                                  "context_ids": list(payload["context_ids"]), "context_titles": list(payload["context_titles"])}
-        # The route the face names, from the attempt's placement receipt
-        # (the one classifier; no execution receipt id on this path).
-        from ..inference_locality import deployment_lamp
-        endpoint = str(getattr(target.deployment, "endpoint", "") or "") if target.deployment else ""
-        lamp = deployment_lamp(actual_boundary, endpoint)
-        lamp = "cloud" if lamp == "unknown" else lamp
-        host = "" if lamp == "local" else str(egress.get("host") or urlparse(endpoint).hostname or "")
-        result["route"] = {"lamp": lamp, "host": host,
-                           "model": selected_model, "receipt": "", "fallback": False}
-        if placement_block is not None: result["placement"] = placement_block
-        if payload["grounding"] is not None: result["grounding"] = payload["grounding"]
-        source_text = str(payload["source_text"])
-        if source_text.strip(): result["grounding_claims"] = score_claims(answer, source_text)
-        return result
-
-    _outcome_error = staticmethod(map_inference_outcome)
-
     def cancel(self, principal: Principal, invocation_id: str) -> dict[str, str]:
         if ask_desk.cancel_loop(invocation_id):
             return {"invocation_id": invocation_id, "disposition": "stopped"}
@@ -1758,35 +1495,89 @@ class AskService:
         )
         return envelope, echo, ids, titles, instruction
 
-    def thought_reflect(
-        self,
-        prompt: str,
-        *,
-        exclude_refs: Sequence[str] = (),
-        build: Callable[[MemoryContext], dict[str, Any]],
-    ) -> MemoryContext:
-        """The desk's pages and observations for a routed Thought turn,
-        fitted to the route with ``build`` (the whole payload for a part).
+    def _thought_through_door(
+        self, principal: Principal, build: Callable[[MemoryContext], dict[str, Any]], prompt: str, *,
+        invocation_id: str, lens: str, exclude_refs: Sequence[str], frozen_claim: dict[str, Any] | None,
+        subject: tuple[str, str] | None, before_physical_dispatch: Any, before_compatibility_retry: Any,
+    ) -> dict[str, Any]:
+        """One Thought turn through the engine door (``thought.interview``):
+        the engine the Thoughts assignment names, one retry on the next engine
+        (attempt 2, bound by the refinement hooks), one receipt. A failure
+        waits in Needs you and opens the Thought (kind ``thought``)."""
+        from . import engine_door
+        from .memory_grounding import fit_memory
 
-        The refinement coordinator calls this before it reserves the bytes,
-        and Ask calls it again at dispatch with the same arguments: the same
-        memory gives the same bytes.  A change between the two (a page
-        rewrite, a withdrawn source) is the dispatch-material check's, as for
-        the recall.  No broker, or any failure: the empty context."""
+        job = "thought.interview"
         try:
-            reflect = reflect_for(
-                "thought.interview", self._db, scopes=reflect_scopes((), explicit=False),
-                query=prompt, exclude_refs=exclude_refs,
-            )
-            if not reflect or self._broker is None:
-                return EMPTY_MEMORY
-            return fit_reflect(
-                self._broker.inference_adoption_service, reflect,
-                capability_id="thought.interview", operation_id=THOUGHT_FIT_OPERATION_ID,
-                reserved_output_tokens=512, build=build,
-            )
+            engine = engine_door.engine_for(self._broker, job, subject=subject)
+        except engine_door.EngineDoorError as exc:
+            raise ServiceError("no_assignment", exc.detail, context={"reason": "no_engine", "status": 409}) from exc
+        if frozen_claim is not None and str(frozen_claim.get("target_id") or "") != engine.profile:
+            raise ServiceError("refinement_admission_changed",
+                               "The admitted refinement destination changed before dispatch",
+                               context={"status": 409, "target_id": str(frozen_claim.get("target_id") or "")})
+        try:  # the desk's pages and observations, cut to the engine's room
+            reflect = reflect_for(job, self._db, scopes=reflect_scopes((), explicit=False),
+                                  query=prompt, exclude_refs=exclude_refs)
+            if reflect:
+                reflect = fit_memory(reflect, lambda memory: engine_door.room(
+                    self._broker, engine, build(memory), reserved_output_tokens=512) >= 0)
         except Exception:  # memory never fails a Thought
-            return EMPTY_MEMORY
+            reflect = EMPTY_MEMORY
+        payload = build(reflect)
+        ran: list[Any] = [engine]
+
+        def on(sent: dict[str, Any], chosen: Any) -> dict[str, Any]:
+            ran[0] = chosen
+            return sent
+
+        self._emit("running", kind="ask", ref="ask", name=lens)
+        try:
+            answer = engine_door.run(
+                self._broker, principal, job, payload, engine=engine, invocation_id=invocation_id,
+                adapter=_QuestionOrSynthesisAdapter(CanonicalPromptAdapter()), prepare=on,
+                stage=("ask-result", lambda output: self._thought_projection(output, payload, ran[0])),
+                before_physical_dispatch=before_physical_dispatch,
+                before_compatibility_retry=before_compatibility_retry,
+            )
+        except engine_door.EngineDoorError as exc:
+            self._emit("error", kind="ask", ref="ask", name=lens, error=exc.outcome or exc.code)
+            raise ServiceError("inference_route_failed", "No assigned model completed this request",
+                               context={"reason": engine_door.reason(exc), "status": 409,
+                                        "operation_id": exc.operation_id}) from exc
+        if answer.published is None:
+            raise ServiceError("projection_not_published", "Ask result is awaiting receipt reconciliation",
+                               context={"invocation_id": invocation_id, "status": 409})
+        self._emit("ready", kind="ask", ref="ask", name=lens)
+        return dict(answer.published)
+
+    def _thought_projection(self, output: Any, payload: dict[str, Any], engine: Any) -> dict[str, Any]:
+        """The kept Thought turn (``ask_results``, under the run's own id): the
+        card, which engine ran it and where the bytes went."""
+        from ..inference_locality import _attempt_route
+
+        revision = self._db.deployment_revisions.get(engine.revision)
+        with self._db._connection() as conn:
+            route = _attempt_route(conn, {"deployment_revision_id": engine.revision,
+                                          "boundary": getattr(revision, "boundary", "")})
+        provider = str(getattr(revision, "engine", "") or "")
+        model = str(getattr(revision, "model", "") or route["model"] or "")
+        boundary = str(getattr(revision, "boundary", "") or "")
+        result: dict[str, Any] = {
+            "output": json.dumps(dict(output), sort_keys=True, separators=(",", ":"), ensure_ascii=True),
+            "lens": str(payload["lens"]), "provider": provider, "model": model, "profile_id": engine.profile,
+            "actual_placement": {
+                "target_id": engine.profile, "target_name": engine.profile, "target_kind": "assigned_profile",
+                "boundary": boundary, "owner": "hub", "transport": boundary,
+                "data_classes": ["prompt", "grounding"], "engine": provider, "model": model,
+                "fallback_reason": None,
+            },
+            "egress": {"scope": route["lamp"], **({"host": route["host"]} if route["host"] else {})},
+            "context_ids": list(payload["context_ids"]), "context_titles": list(payload["context_titles"]),
+        }
+        if payload.get("grounding") is not None:
+            result["grounding"] = payload["grounding"]
+        return result
 
     @staticmethod
     def _reflect_scopes(grounding: Any) -> list[tuple[str, str]]:

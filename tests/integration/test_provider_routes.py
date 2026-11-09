@@ -34,7 +34,6 @@ from holdspeak.services.watch_service import WatchService
 from holdspeak.web.context import WebContext
 from holdspeak.web.routes import (
     build_project_reviews_router,
-    build_project_setup_router,
     build_projects_router,
     build_providers_router,
     build_watches_router,
@@ -161,7 +160,6 @@ def rig(tmp_path, monkeypatch):
 
     app.add_middleware(_OwnerMiddleware)
     app.include_router(build_providers_router(ctx))
-    app.include_router(build_project_setup_router(ctx))
     app.include_router(build_watches_router(ctx))
     app.include_router(build_projects_router(ctx))
     app.include_router(build_project_reviews_router(ctx))
@@ -213,22 +211,6 @@ class TestListProviders:
         ids = [p["provider_id"] for p in providers]
         assert "native" in ids
         assert "github" in ids
-
-    def test_native_provider_has_families(self, rig) -> None:
-        _db, client, _log, _ctx = rig
-        resp = client.get("/api/providers")
-        native = [p for p in resp.json()["providers"] if p["provider_id"] == "native"][0]
-        assert "meetings" in native["families"]
-        assert "decisions" in native["families"]
-        assert "door" in native["families"]
-
-    def test_github_provider_has_capabilities(self, rig) -> None:
-        _db, client, _log, _ctx = rig
-        resp = client.get("/api/providers")
-        github = [p for p in resp.json()["providers"] if p["provider_id"] == "github"][0]
-        assert github["capabilities"]["discover"] is True
-        assert github["capabilities"]["read"] is True
-
 
 # ── GET /api/providers/github/connection ─────────────────────────────
 

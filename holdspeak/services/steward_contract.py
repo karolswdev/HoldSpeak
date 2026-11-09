@@ -531,6 +531,13 @@ class StewardContract:
         return {"run": _serialize_run(run), "steps": _serialize_steps(self._db.steward_steps.list_steps(run_id)),
                 "operation_id": operation_id, "receipt": dict(receipt) if receipt is not None else None}
 
+    def list_runs(self, principal: Principal, project_id: str, *, state: Optional[str] = None,
+                  limit: int = 100) -> list[dict[str, Any]]:
+        """The project's steward runs, newest first (project.steward_runs)."""
+        from .steward_serialization_service import _serialize_runs
+
+        return _serialize_runs(self._db.steward_runs.list_runs(project_id, state=state, limit=limit))
+
     # ── the trigger (project.steward.trigger) ─────────────────────────
 
     def trigger(self, principal: Principal, command_id: Optional[str] = None) -> dict[str, Any]:

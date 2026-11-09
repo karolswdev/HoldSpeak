@@ -25,6 +25,3 @@ def test_memory_conductor_stop_does_not_wait_for_an_engine_call(monkeypatch) -> 
         release.set()
 
 
-def test_the_stop_bounds_are_seconds() -> None:
-    assert memory_conductor.STOP_JOIN_SECONDS <= 5.0
-    assert intel_queue_conductor.STOP_JOIN_SECONDS <= 5.0

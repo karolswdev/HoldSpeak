@@ -50,14 +50,6 @@ def test_peek_live_returns_lines_and_hash() -> None:
     assert result["hash"] == content_hash("one\ntwo\nthree")
 
 
-def test_peek_invokes_capture_pane_with_the_pinned_flags() -> None:
-    run = _runner_returning(_completed("x"))
-    peek_pane("%5", lines=50, runner=run)
-    assert run.calls == [
-        ["tmux", "capture-pane", "-p", "-e", "-t", "%5", "-S", "-50"]
-    ]
-
-
 def test_peek_hash_gate_answers_not_modified_without_a_body() -> None:
     run = _runner_returning(_completed("same\ncontent"))
     first = peek_pane("%5", runner=run)

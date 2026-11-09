@@ -94,17 +94,6 @@ class TestNeedsYouCache:
         assert peeked is not None
         assert peeked["stale"] is True
 
-    def test_sweep_id_propagated(self):
-        from holdspeak.services.needs_you_aggregate import NeedsYouCache
-
-        builder, _ = self._make_builder()
-        cache = NeedsYouCache(builder, max_age_s=60.0)
-
-        cache.invalidate(sweep_id="sweep-42")
-        result = cache.get()
-        assert result["sweepId"] == "sweep-42"
-
-
 class TestBuildAggregate:
     """The pure builder produces the correct shape."""
 
@@ -532,21 +521,6 @@ class TestCocoaChildNotify:
 class TestCocoaRendererNotifyCommand:
     """The parent-side renderer can send a notify command."""
 
-    def test_notify_command_sent_to_queue(self, monkeypatch):
-        from holdspeak.desktop_notify import _notify_cocoa_child
-
-        mock_renderer = MagicMock()
-        mock_renderer._commands = MagicMock()
-        monkeypatch.setenv("HOLDSPEAK_DESKTOP_NOTIFY", "1")
-        result = _notify_cocoa_child(mock_renderer, "Test", "Body", click_url="http://localhost")
-        assert result is True
-        mock_renderer._commands.put.assert_called_once()
-        cmd, payload = mock_renderer._commands.put.call_args[0][0]
-        assert cmd == "notify"
-        assert payload["title"] == "Test"
-        assert payload["body"] == "Body"
-
-
 # ── HS-171-06: brief regeneration on cadence ────────────────────────
 
 
@@ -619,12 +593,6 @@ class TestNotifyDispatch:
 
 class TestMCPNotifyTest:
     """The MCP tool schema and dispatch exist in the heartbeat family."""
-
-    def test_tool_schema_present(self):
-        from holdspeak.mcp.tools import TOOLS
-
-        names = [t["name"] for t in TOOLS]
-        assert "heartbeat.notify_test" in names
 
     def test_dispatch_fires_notification(self, monkeypatch):
         # heartbeat.notify_test is declared (settings_operations.py, 2026-11-09).

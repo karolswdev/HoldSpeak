@@ -1,16 +1,22 @@
-"""Read-only capability run receipts for retry, inspection, and return."""
+"""Read-only capability run receipts for retry, inspection, and return.
+
+Both routes are produced from ``holdspeak/invocation_operations.py``
+(2026-11-09) through ``OperationRegistry.invoke``; the MCP tools come from the
+same rows."""
 from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter
 from fastapi.responses import JSONResponse
+from starlette.concurrency import run_in_threadpool
 
+from .... import operations
 from ....logging_config import get_logger
-from ....principals import Principal, PrincipalKind
-from ....services.errors import NotFound
+from ....services.errors import NotFound, ServiceError
 from ....services.invocation_service import InvocationService
 from ...context import WebContext
+from ...operation_routes import operation_router
 from ...runtime_support import error_500
 
 log = get_logger("web.routes.primitives.invocations")
@@ -21,32 +27,22 @@ def recover_inference_on_startup() -> list[str]:
     return InvocationService.recover_inference_on_startup()
 
 
+async def _answer(fn: Any, *, status: int = 200) -> JSONResponse:
+    try:
+        return JSONResponse(await run_in_threadpool(fn), status_code=status)
+    except NotFound as exc:
+        return JSONResponse({"error": exc.detail}, status_code=404)
+    except ServiceError as exc:
+        payload = dict(exc.context)
+        return JSONResponse({"error": exc.detail, "code": exc.code}, status_code=int(payload.get("status", 400)))
+    except Exception as exc:
+        return error_500(exc, log, "Failed to read capability invocations")
+
+
 def build_invocations_router(ctx: WebContext) -> APIRouter:
-    del ctx
-    router = APIRouter()
-    service = InvocationService.from_runtime()
+    from ....invocation_operations import INVOCATION_OPERATIONS
 
-    def _principal(request: Request | None = None) -> Principal:
-        return getattr(
-            getattr(request, "state", None),
-            "principal",
-            Principal(PrincipalKind.OWNER, "owner-session"),
-        )
+    def registry() -> operations.OperationRegistry:
+        return operations.for_context(ctx, invocation_service=InvocationService.from_runtime)
 
-    @router.get("/api/invocations")
-    def api_list_invocations(request: Request, limit: int = 100) -> Any:
-        try:
-            return JSONResponse({"invocations": service.list(_principal(request), limit=limit)})
-        except Exception as exc:
-            return error_500(exc, log, "Failed to list capability invocations")
-
-    @router.get("/api/invocations/{invocation_id}")
-    def api_get_invocation(invocation_id: str, request: Request) -> Any:
-        try:
-            return JSONResponse({"invocation": service.get(_principal(request), invocation_id)})
-        except NotFound:
-            return JSONResponse({"error": f"Unknown invocation: {invocation_id}"}, status_code=404)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to get capability invocation")
-
-    return router
+    return operation_router(INVOCATION_OPERATIONS, registry, _answer, module=__name__)

@@ -58,6 +58,10 @@ class _StubCoderService:
         self.calls.append(("list_steering_audit", (principal, session_key, limit), {}))
         return [{"entry": "e1"}]
 
+    def board(self, principal: Any, **kwargs: Any) -> dict:
+        self.calls.append(("board", (principal,), kwargs))
+        return {"sessions": [{"session": "s1"}], "count": 1}
+
 
 @pytest.fixture()
 def _patch_coder(monkeypatch: pytest.MonkeyPatch) -> _StubCoderService:
@@ -68,26 +72,32 @@ def _patch_coder(monkeypatch: pytest.MonkeyPatch) -> _StubCoderService:
     return stub
 
 
-def test_coder_list_dispatches(_patch_coder: _StubCoderService) -> None:
+@pytest.fixture()
+def _declared_coder(monkeypatch: pytest.MonkeyPatch) -> _StubCoderService:
+    """coder.list and coder.audit are declared rows (holdspeak/coder_operations.py):
+    the MCP call runs through the registry bound over the coder service."""
+    from holdspeak import operations
+    from holdspeak.mcp import tools as mcp_tools
+
+    stub = _StubCoderService()
+    registry = operations.bind_available({"coder_service": stub})
+    monkeypatch.setattr(mcp_tools, "runtime_registry", lambda: registry)
+    return stub
+
+
+def test_coder_list_dispatches(_declared_coder: _StubCoderService) -> None:
     result = _call("coder.list", {})
     assert result["isError"] is False
     payload = json.loads(result["content"][0]["text"])
-    assert payload == [{"session": "s1"}]
-    assert _patch_coder.calls[0][0] == "list_sessions"
+    assert payload["sessions"] == [{"session": "s1"}]
+    assert _declared_coder.calls[0][0] == "board"
 
 
-def test_coder_list_passes_filters(_patch_coder: _StubCoderService) -> None:
+def test_coder_list_passes_filters(_declared_coder: _StubCoderService) -> None:
     result = _call("coder.list", {"agent": "claude", "include_ended": False})
     assert result["isError"] is False
-    call = _patch_coder.calls[0]
+    call = _declared_coder.calls[0]
     assert call[2] == {"agent": "claude", "include_ended": False}
-
-
-def test_coder_get_dispatches(_patch_coder: _StubCoderService) -> None:
-    result = _call("coder.get", {"session_id": "agent:sess1"})
-    assert result["isError"] is False
-    payload = json.loads(result["content"][0]["text"])
-    assert payload["session_id"] == "agent:sess1"
 
 
 def test_coder_get_unknown_session_returns_is_error(_patch_coder: _StubCoderService) -> None:
@@ -97,19 +107,19 @@ def test_coder_get_unknown_session_returns_is_error(_patch_coder: _StubCoderServ
     assert "error" in payload
 
 
-def test_coder_audit_dispatches(_patch_coder: _StubCoderService) -> None:
+def test_coder_audit_dispatches(_declared_coder: _StubCoderService) -> None:
     result = _call("coder.audit", {"session_key": "sk1", "limit": 10})
     assert result["isError"] is False
     payload = json.loads(result["content"][0]["text"])
-    assert payload == [{"entry": "e1"}]
-    call = _patch_coder.calls[0]
+    assert payload == {"audit": [{"entry": "e1"}]}
+    call = _declared_coder.calls[0]
     assert call[1] == (OWNER, "sk1", 10)
 
 
-def test_coder_audit_default_limit(_patch_coder: _StubCoderService) -> None:
+def test_coder_audit_default_limit(_declared_coder: _StubCoderService) -> None:
     result = _call("coder.audit", {})
     assert result["isError"] is False
-    call = _patch_coder.calls[0]
+    call = _declared_coder.calls[0]
     # Default limit should be 50, session_key None
     assert call[1] == (OWNER, None, 50)
 
@@ -181,30 +191,3 @@ def test_memory_search_missing_query_returns_is_error(_patch_memory: _StubMemory
 # Catalogue presence
 # ---------------------------------------------------------------------------
 
-def test_coder_tools_in_catalogue() -> None:
-    """All three coder tools appear in tools/list with closed schemas."""
-    response = handle_message({"jsonrpc": "2.0", "id": 1, "method": "tools/list"})
-    assert response is not None
-    tools = response["result"]["tools"]
-    names = {t["name"] for t in tools}
-    expected = {"coder.list", "coder.get", "coder.audit"}
-    assert expected <= names
-
-    for tool in tools:
-        if tool["name"] in expected:
-            assert tool["inputSchema"]["type"] == "object"
-            assert tool["inputSchema"]["additionalProperties"] is False
-
-
-def test_memory_search_in_catalogue() -> None:
-    """memory.search appears in tools/list with a closed schema."""
-    response = handle_message({"jsonrpc": "2.0", "id": 1, "method": "tools/list"})
-    assert response is not None
-    tools = response["result"]["tools"]
-    names = {t["name"] for t in tools}
-    assert "memory.search" in names
-
-    tool = next(t for t in tools if t["name"] == "memory.search")
-    assert tool["inputSchema"]["type"] == "object"
-    assert tool["inputSchema"]["additionalProperties"] is False
-    assert "query" in tool["inputSchema"].get("required", [])

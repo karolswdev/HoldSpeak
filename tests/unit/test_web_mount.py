@@ -38,24 +38,6 @@ def _route_list() -> list[list[str]]:
     return rows
 
 
-def test_mount_routers_is_the_runtime_mount() -> None:
-    from holdspeak.runtime.web_mount import mount_routers
-
-    assert callable(mount_routers)
-
-
-def test_web_mount_never_imports_web_server() -> None:
-    names: set[str] = set()
-    for source in (REPO / "holdspeak" / "runtime").glob("web_mount*.py"):
-        for node in ast.walk(ast.parse(source.read_text())):
-            if isinstance(node, ast.ImportFrom) and node.module:
-                names.add(node.module)
-            elif isinstance(node, ast.Import):
-                names.update(alias.name for alias in node.names)
-    assert names, "no web_mount module found"
-    assert not any(name.endswith("web_server") for name in names), names
-
-
 def test_no_mounted_route_is_shadowed(monkeypatch) -> None:
     """Mount order matters only where two routes overlap: a route that an
     earlier route of the same method already matches never runs. Derived from

@@ -315,41 +315,32 @@ class ProviderAdmission:
                 CAPABILITY_REWRITE: "speech.rewrite",
                 CAPABILITY_PUNCTUATE: "speech.punctuate",
             }[capability]
-            logical = f"speech_{self.parent.operation_id}_{attempt}"
-            admitted = self.broker.inference_adoption_service.admit_on_frozen_route(
-                self.principal,
-                command_id=f"speechop-{self.parent.operation_id}-{attempt}",
-                route_plan_id=str(routed["id"]),
-                capability_id=canonical,
-                operation_id=logical,
-                payload=dict(material),
-                reserved_output_tokens=int(material.get("max_tokens") or 256),
-            )
-            result = self.broker.inference_adoption_service.execute(
-                self.principal,
-                execution_id=admitted["execution"]["id"],
-                adapter=_RoutedSpeechAdapter(self, canonical, call),
-                parent_context=self.parent.context,
-            )
-            state = str(result["outcome"])
-            self.children.append((capability, contract, state))
-            if state == "succeeded":
-                value = result["result"]
-                if canonical in {"speech.rewrite", "speech.punctuate"}:
-                    value = dict(value or {}).get("output", "")
-                elif canonical == "speech.intent_classify":
-                    value = dict(value or {})
-                    value["extras"] = json.loads(str(value.pop("extras_json")))
-                return SimpleNamespace(
-                    outcome=state,
-                    receipt=result["receipt"],
-                    operation_id=logical,
-                ), value
-            if state == "refused":
-                raise SpeechSessionRefused(
-                    str(result["receipt"].get("terminal_disposition") or state), capability
+            # One job through the engine door, a child of this live session:
+            # the engine the assignment names, one retry on the next engine.
+            from ..services import engine_door
+
+            try:
+                answer = engine_door.run(
+                    self.broker, self.principal, canonical, dict(material),
+                    adapter=_RoutedSpeechAdapter(self, canonical, call),
+                    parent_context=self.parent.context, deadline=float(deadline_seconds),
                 )
-            raise SpeechProviderFailure(contract, reason=state)
+            except engine_door.EngineDoorError as exc:
+                self.children.append((capability, contract, exc.outcome or exc.code))
+                if exc.code == "no_engine" or exc.outcome == "refused":
+                    raise SpeechSessionRefused(exc.error or exc.outcome or exc.code, capability) from None
+                raise SpeechProviderFailure(contract, reason=exc.outcome or "failed") from None
+            self.children.append((capability, contract, "succeeded"))
+            value = answer.result
+            if canonical in {"speech.rewrite", "speech.punctuate"}:
+                value = dict(value or {}).get("output", "")
+            elif canonical == "speech.intent_classify":
+                value = dict(value or {})
+                value["extras"] = json.loads(str(value.pop("extras_json")))
+            return SimpleNamespace(
+                outcome="succeeded", receipt={"operation_id": answer.operation_id},
+                operation_id=answer.operation_id,
+            ), value
         if self.routed_routes or self.transcription_route is not None:
             # A bundle owns each selected capability independently.  A legacy
             # plan may still carry an unassigned provider stage while another

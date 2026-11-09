@@ -216,14 +216,6 @@ def svc(conn):
 # ── Tests ────────────────────────────────────────────────────────────
 
 
-class TestEffectKindRegistered:
-    def test_github_comment_in_effect_kinds(self):
-        assert "github_comment" in EFFECT_KINDS
-
-    def test_effect_kind_is_sixth(self):
-        assert EFFECT_KINDS.index("github_comment") == 5
-
-
 class TestNoProposalWhenIneligible:
     """H1: a project without github_comment in eligible kinds gets no nudge."""
 

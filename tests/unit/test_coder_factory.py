@@ -10,12 +10,14 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
-from fastapi import APIRouter, FastAPI
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 import pytest
 
 from holdspeak import coder_factory, coder_steering
-from holdspeak.web.routes.system.coder_factory_routes import register_factory_routes
+from holdspeak.principals import Principal, PrincipalKind
+from holdspeak.web.context import WebContext
+from holdspeak.web.routes.system.coder_steering_routes import build_coder_steering_router
 
 
 @pytest.fixture(autouse=True)
@@ -146,9 +148,13 @@ def test_factory_route_forwards_cwd_to_the_audited_spawn(monkeypatch, tmp_path) 
 
     monkeypatch.setattr(coder_factory, "spawn", fake_spawn)
     app = FastAPI()
-    router = APIRouter()
-    register_factory_routes(router)
-    app.include_router(router)
+
+    @app.middleware("http")
+    async def owner(request, call_next):  # the hub edge gives /api/coders the OWNER right
+        request.state.principal = Principal(PrincipalKind.OWNER, "owner-session")
+        return await call_next(request)
+
+    app.include_router(build_coder_steering_router(WebContext(get_state=lambda: {})))
     response = TestClient(app).post(
         "/api/coders/factory/spawn",
         json={"name": "work-cwd", "cwd": str(tmp_path)},

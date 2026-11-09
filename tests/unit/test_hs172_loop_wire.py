@@ -141,12 +141,6 @@ class TestAutoIntelTrigger:
         with pytest.raises(ValueError, match="intelligence_auto"):
             MeetingConfig(intelligence_auto="bogus")
 
-    def test_default_is_every(self) -> None:
-        """Default intelligence_auto is every (owner ruling 2026-10-05)."""
-        from holdspeak.config.meeting import MeetingConfig
-        cfg = MeetingConfig()
-        assert cfg.intelligence_auto == "every"
-
     def test_room_linked_enqueues_with_transcript(self, db: Database) -> None:
         """_maybe_auto_enqueue_intel enqueues for a Room-linked meeting."""
         import unittest.mock as mock

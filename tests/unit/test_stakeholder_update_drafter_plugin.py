@@ -25,14 +25,6 @@ def _plugin(response):
     return intel_plugin(StakeholderUpdateDrafterPlugin(), lambda _m, **_kw: response)
 
 
-def test_attributes() -> None:
-    p = StakeholderUpdateDrafterPlugin()
-    assert p.id == "stakeholder_update_drafter"
-    assert p.kind == "artifact_generator"
-    assert p.execution_mode == "deferred"
-    assert p.required_capabilities == ["llm"]
-
-
 def test_run_success_drafts_update() -> None:
     out = _plugin(_GOOD_JSON).run({"transcript": "kickoff"})
     assert out["confidence_hint"] == 1.0

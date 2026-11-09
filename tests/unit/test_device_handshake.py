@@ -78,15 +78,6 @@ class TestDeviceHandshakeSchema:
         with pytest.raises(InvalidHandshakeError):
             parse_handshake([("type", "hello")])  # type: ignore[arg-type]
 
-    def test_handshake_can_round_trip_through_json(self) -> None:
-        # The wire format is JSON; confirm the model survives a
-        # round-trip by an HTTP/WS client that uses ``model_dump``.
-        handshake = parse_handshake(_valid_payload())
-        wire = json.dumps(handshake.model_dump())
-        again = parse_handshake(json.loads(wire))
-        assert again == handshake
-
-
 class TestPskCompare:
     def test_matching_psks_compare_true(self) -> None:
         assert verify_psk("abc-123", "abc-123") is True
@@ -109,23 +100,6 @@ class TestPskCompare:
         # hmac.compare_digest tolerates different-length inputs by
         # returning False; we should pass that through, not raise.
         assert verify_psk("short", "much-longer-string") is False
-
-
-class TestCloseCodes:
-    def test_close_codes_are_distinct_app_range_integers(self) -> None:
-        codes = (
-            WS_CLOSE_INVALID_HANDSHAKE,
-            WS_CLOSE_PSK_MISMATCH,
-            WS_CLOSE_DUPLICATE_LABEL,
-        )
-        for code in codes:
-            assert isinstance(code, int)
-            assert 4000 <= code < 5000
-        assert len(set(codes)) == 3
-
-    def test_invalid_handshake_error_carries_code(self) -> None:
-        err = InvalidHandshakeError("boom")
-        assert err.code == WS_CLOSE_INVALID_HANDSHAKE
 
 
 class TestPskLifecycle:

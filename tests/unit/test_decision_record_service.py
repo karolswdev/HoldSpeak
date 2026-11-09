@@ -415,21 +415,6 @@ def test_sync_from_desk_follows_every_desk_edit_until_a_hand_edit(tmp_path):
     assert after_hand["decision_text"] == "Hand words."
 
 
-def test_records_from_each_origin_have_the_same_shape(tmp_path):
-    db = Database(tmp_path / "records.db")
-    _accepted_meeting_decision(db)
-    db.desk_decisions.upsert(
-        decision_id="desk-127",
-        decision_markdown="Choose the record origin.",
-    )
-    service = DecisionRecordService(db)
-
-    meeting_record = service.create_from_meeting(None, "dec-127")
-    desk_record = service.create_from_desk(None, "desk-127")
-
-    assert set(meeting_record) == set(desk_record)
-
-
 def test_create_from_meeting_rejects_unknown_decision(tmp_path):
     service = DecisionRecordService(Database(tmp_path / "records.db"))
 

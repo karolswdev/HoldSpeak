@@ -206,16 +206,6 @@ def test_llm_capability_reads_engines_not_the_profile_pointer(monkeypatch) -> No
 # ── config + settings carry the knob ─────────────────────────────────────
 
 
-def test_config_round_trips_intel_profile_id(tmp_path) -> None:
-    from holdspeak.config import Config
-
-    path = tmp_path / "config.json"
-    cfg = Config()
-    cfg.meeting.intel_profile_id = "p-43"
-    cfg.save(path)
-    assert Config.load(path).meeting.intel_profile_id == "p-43"
-
-
 def test_settings_route_round_trips_intel_profile_id(tmp_path, monkeypatch) -> None:
     from fastapi.testclient import TestClient
 

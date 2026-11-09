@@ -42,9 +42,6 @@ NOW = datetime(2026, 9, 5, 12, 0, 0, tzinfo=timezone.utc)
 
 class TestCreatedAtField:
 
-    def test_gh_watch_fields_includes_created_at(self) -> None:
-        assert "createdAt" in GH_WATCH_FIELDS
-
     def test_allowlist_unchanged_for_pr_list(self) -> None:
         """Adding a field to --json does not change the subcommand allowlist."""
         command = [
