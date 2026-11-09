@@ -22,8 +22,8 @@ def build_door_router(ctx: WebContext) -> APIRouter:
     @router.get("")
     async def get_door(request: Request) -> Any:
         try:
-            return JSONResponse(await run_in_threadpool(
-                service.get, getattr(request.state, "principal", UNAUTHENTICATED)))
+            who = getattr(request.state, "principal", UNAUTHENTICATED)
+            return JSONResponse(await run_in_threadpool(lambda: service.get(who)))
         except ServiceError as exc:
             return _error(exc)
 

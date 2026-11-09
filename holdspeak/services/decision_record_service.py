@@ -730,6 +730,16 @@ class DecisionRecordService:
         assert disputed is not None
         return disputed
 
+    def carry(self, principal: Any, record_id: str, *, project_id: str | None = None) -> dict[str, Any]:
+        """`Carry into brief`: queue the record, by reference, for its Project's
+        next preparation (``brief_carry.carry_into_brief``)."""
+        from holdspeak.services.brief_carry import carry_into_brief
+
+        try:
+            return carry_into_brief(self._db, principal, record_id, project_id=project_id)
+        except KeyError as exc:  # an unknown record is a typed not_found on every transport
+            raise NotFound("decision_record", str(exc.args[0] if exc.args else record_id)) from exc
+
     def due_for_review(self, principal: Any) -> list[dict[str, Any]]:
         """Return active records whose review date is today or earlier."""
         with self._db._connection() as conn:

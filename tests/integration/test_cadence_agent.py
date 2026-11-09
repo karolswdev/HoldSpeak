@@ -69,6 +69,15 @@ def client(db, tmp_path, monkeypatch):
     ))
     db.cadence.upsert_loop(OpenLoop(source_type="meeting_action", source_id="a1", title="File it"))
     app = FastAPI()
+
+    # The hub's edge sets the owner; the reply is owner-only (cadence.reply, 2026-11-09).
+    @app.middleware("http")
+    async def _owner(request, call_next):
+        from holdspeak.principals import Principal, PrincipalKind
+
+        request.state.principal = Principal(PrincipalKind.OWNER, "cadence-test-owner")
+        return await call_next(request)
+
     app.include_router(build_cadence_router(WebContext(get_state=lambda: {})))
     return TestClient(app), db
 

@@ -16,7 +16,7 @@ from pathlib import Path
 
 import pytest
 
-import holdspeak.web.routes.roadmaps as roadmaps
+import holdspeak.services.roadmap_service as roadmaps
 
 REPO = Path(__file__).resolve().parents[2]
 MANIFEST = REPO / "pm" / "archive-manifest.txt"

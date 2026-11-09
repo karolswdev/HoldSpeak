@@ -90,6 +90,7 @@ KNOWN_CODE = re.compile(
     r"|^program_name_required$"  # program.start / program.get: neither program_id nor name (400; PG15)
     r"|^triage_unavailable$"  # action_item.update / review: the sweep's hub runs no live meeting, has no item x (501)
     r"|^no_key$"  # phone.test_push: a fresh HOME has no Apple push key; nothing is sent (409)
+    r"|^page_expired$"  # briefing.read / evidence / answer: a placeholder token is no page (404)
 )
 KNOWN_MESSAGE = re.compile(
     r"^people_store_unavailable$"  # no People keystore on a fresh HOME

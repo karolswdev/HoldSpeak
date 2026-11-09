@@ -67,6 +67,8 @@ _MCP_ONLY: frozenset[str] = frozenset({
     "meeting.intel_jobs", "meeting.intel_recovery", "meeting.aftercare", "meeting.aftercare_proposals",
     # The declared Decisions ledger (decision_operations.py).
     "decision.ledger",
+    # 2026-11-09 (ops/projects): the meeting decision's and the record ledger's reads.
+    "decision.lineage", "decision.moment", "decision_record.due_for_review", "decision_record.for_source",
     # The compositor's display requests (2026-11-08, desk_operations.py): an
     # agent drives the owner's desk over MCP; the seeded palettes do not grow.
     "desk.mark", "desk.press", "desk.say", "desk.scroll", "desk.request.read",
@@ -76,6 +78,9 @@ _MCP_ONLY: frozenset[str] = frozenset({
     # The declared Automations reads (2026-11-08, automation_operations.py): a
     # thread reads an automation through automation.get; the palettes do not grow.
     "automation.template.list", "automation.new.list", "automation.lesson.list",
+    # The declared outcome review (2026-11-09, project_operations.py): a thread
+    # reaches a meeting's proposals through meeting.proposals; the palettes do not grow.
+    "meeting.outcome_review",
 })
 
 
@@ -92,7 +97,11 @@ def _thread_side(name: str) -> bool:
          # Programs (2026-10-28): an MCP and REST family (agents orchestrate).
          "program.",
          # Phone (2026-10-28): an MCP and REST family (the desk reaches him).
-         "phone.")
+         "phone.",
+         # 2026-11-09 (ops/projects): the activity ledger, the Walk and the
+         # briefing pages, the repository drawer and the roadmaps are MCP and
+         # REST families; the seeded palettes do not grow.
+         "activity.", "walk.", "briefing.", "repository.", "roadmap.")
     )
 
 

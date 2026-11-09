@@ -42,7 +42,9 @@ def db(temp_db_dir):
 
 
 @pytest.fixture
-def client() -> TestClient:
+def client(db: Database) -> TestClient:
+    # The hub binds its declared services to the database at construction
+    # (activity_operations.py): the database comes first.
     server = MeetingWebServer(
         WebRuntimeCallbacks(
             on_bookmark=lambda *_a, **_k: None,
