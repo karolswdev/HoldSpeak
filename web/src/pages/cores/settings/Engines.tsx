@@ -100,7 +100,7 @@ export function EnginesSection() {
               value={limit != null ? `${usd(limit)} per run` : "No limit"}
               verb={<Button dense variant="secondary" aria-expanded={open} onClick={() => agent.toggle(engine.key)}>{open ? "Close" : "Set"}</Button>}>
               <div className="settings-line-editor">
-                <StringGadget label="Spend limit per run" caption mic={false} value={agent.draft} onChange={agent.setDraft}
+                <StringGadget label="Spend limit per run" caption value={agent.draft} onChange={agent.setDraft}
                   placeholder="0.50" onKeyDown={(event) => { if (event.key === "Enter") void agent.save(engine.key); }} />
                 {agent.invalid ? <span className="settings-line-refusal" role="alert">Between $0.01 and $1000</span> : null}
                 <Button dense variant="primary" disabled={ctrl.busy} onClick={() => void agent.save(engine.key)}>Save</Button>

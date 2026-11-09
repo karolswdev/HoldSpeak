@@ -180,6 +180,9 @@ WEB_ROUTING_SURFACES: dict[str, tuple[str, str]] = {
     "web/src/features/runson/RunsOnCore.tsx": ("display-transport", "16-03"),
     # Betterment E5: What runs where; its presses write through useRunsOn.
     "web/src/features/runson/WhatRunsWhere.tsx": ("display-transport", "16-03"),
+    # 2026-11-11 (#2086): Settings › Engines reads the same roster and writes
+    # through useRunsOn.ts; no write of its own.
+    "web/src/pages/cores/settings/Engines.tsx": ("display-transport", "16-03"),
     # Betterment A4: the automation's With line. The owner's Use / Add press
     # names one engine; the hub (WorkbenchService.set_engine) writes the
     # subject assignment and re-freezes a live schedule. The window and its

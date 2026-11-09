@@ -977,11 +977,19 @@ def runtime_registry(primitives: Any = None, meetings: Any = None) -> operations
              "workbench_service": lambda: WorkbenchService(db, observer=obs),
              # The Decisions verbs (decision_operations.py): the ledger and Commit.
              "decision_lifecycle_service": lambda: DecisionLifecycleService(db, observer=obs),
-             "follow_through_service": lambda: FollowThroughService(db, observer=obs)}
+             "follow_through_service": lambda: FollowThroughService(db, observer=obs),
+             # The Settings credential verbs bind here; they have no tool (HTTP only).
+             "credential_service": lambda: _credential_service(db, obs)}
     return operations.for_runtime(program_service=lambda: operations.LIVE_PROGRAM_SERVICE,
                                   phone_service=lambda: operations.LIVE_PHONE_SERVICE,
                                   calls_service=lambda: operations.LIVE_CALLS_SERVICE, **{
         name: (lambda name=name, build=build: runtime_service(name, build)) for name, build in plain.items()})
+
+
+def _credential_service(db: Any, obs: Any) -> Any:
+    from holdspeak.services.credential_service import CredentialService
+
+    return CredentialService(db, observer=obs)
 
 
 def dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) -> Any:
