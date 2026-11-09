@@ -25,6 +25,40 @@ def _bare_credentials(db: Any, observer: Any) -> Any:
     return CredentialService(db, observer=observer)
 
 
+def _bare_recipes(db: Any, observer: Any) -> Any:
+    from holdspeak.services.recipe_service import RecipeService
+
+    return RecipeService(db, observer=observer)
+
+
+def _bare_thoughts(db: Any) -> Any:
+    from holdspeak.services.refinement_thought_service import RefinementThoughtService
+
+    return RefinementThoughtService(db)
+
+
+def _bare_recall(db: Any) -> Any:
+    from holdspeak.services.recall_service import RecallService
+
+    return RecallService(db)
+
+
+def _bare_desk(db: Any, observer: Any) -> Any:
+    from holdspeak.services.desk_service import DeskService
+
+    return DeskService(db, observer=observer)
+
+
+def _bare_projections(db: Any, observer: Any) -> Any:
+    from holdspeak.services.projection_service import ProjectionService
+
+    return ProjectionService(db, observer=observer)
+
+
+def _constitutional() -> Any:
+    from holdspeak.constitutional_context import ConstitutionalContextService
+
+    return ConstitutionalContextService()
 def _invocations(db: Any, observer: Any) -> Any:
     from holdspeak.services.invocation_service import InvocationService
 
@@ -178,6 +212,15 @@ def compose_declared_services(services: Any, ctx: Any, resolved_db: Any, resolve
         # The Decisions verbs (decision_operations.py): the ledger and Commit.
         "decision_lifecycle_service": lambda: DecisionLifecycleService(resolved_db, observer=resolved_observer),
         "follow_through_service": lambda: FollowThroughService(resolved_db, observer=resolved_observer),
+        # 2026-11-09 (ops/programs-work): the recipe writes, the note window's
+        # for-note read and memory's Recall (recipe_operations.py,
+        # thought_operations.py, memory_operations.py).
+        "recipe_service": lambda: _bare_recipes(resolved_db, resolved_observer),
+        "refinement_thought_service": lambda: _bare_thoughts(resolved_db),
+        "recall_service": lambda: _bare_recall(resolved_db),
+        "desk_service": lambda: _bare_desk(resolved_db, resolved_observer),
+        "projection_service": lambda: _bare_projections(resolved_db, resolved_observer),
+        "constitutional_context_service": _constitutional,
         # The threads' verbs (thread_operations.py): the hub's ThreadService factory.
         "hub_thread_service": lambda: _hub_threads(services),
         # The capability run receipts (invocation_operations.py); the kernel broker at first use.

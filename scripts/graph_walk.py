@@ -1020,6 +1020,15 @@ OP_MCP_PROJECTIONS: dict[str, dict[str, Any]] = {
         "automation.set_when", "automation.set_engine", "automation.make_one", "automation.template.list",
         "automation.template.instantiate", "automation.result.open", "automation.new.list", "automation.lesson.list",
         "automation.lesson.forget")},
+    # 2026-11-09 (ops/programs-work): the Programs-and-work rows, declared.
+    **{name: {"kind": "tool", "name": name} for name in (
+        "program.requirement_evidence", "automation.prepared.read", "automation.item.restore",
+        "automation.event_start.set_enabled",
+        "recipe.create", "recipe.update", "recipe.delete", "thought.for_note", "thought.open_note",
+        "thought.original", "thought.review", "memory.search", "memory.pages", "memory.recall",
+        "memory.meaning.status", "memory.meaning.turn_on", "memory.meaning.turn_off", "desk.projection.list",
+        "desk.projection.present", "today.since_morning", "desk.health", "desk.seed", "desk.reset",
+        "constitutional_context.read", "constitutional_context.update", "constitutional_context.history")},
 }
 # 2026-11-09: the agents, threads, coders and delivery verbs, read from their rows.
 def _family_projections() -> dict[str, dict[str, Any]]:
@@ -1037,7 +1046,7 @@ OP_HTTP_ONLY = frozenset({"decision.status",
                           # The Settings window's credentials: owner only, HTTP only, no tool reaches a key.
                           "settings.secret.replace", "settings.secret.rotate", "settings.secret.delete",
                           # #2027: the Programs verbs the face presses that have no MCP tool.
-                          "program.close", "program.proposal_decide", "program.requirement_decide", "program.requirement_edit", "program.requirement_evidence", "program.round_answer", "program.round_decide", "program.round_next", "program.rounds_open",
+                          "program.close", "program.proposal_decide", "program.requirement_decide", "program.requirement_edit", "program.round_answer", "program.round_decide", "program.round_next", "program.rounds_open",
                           # Betterment capture C5b: the meeting window's Prepare… press (HTTP only).
                           "meeting.result.prepare",
                           # PHILO-9-02: the charter's HTTP capability exceptions.

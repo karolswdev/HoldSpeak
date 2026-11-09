@@ -1878,7 +1878,7 @@ class ProgramService:
 
     def require(
         self, principal: Any, program_id: str, *, text: Any = None, kind: Any = None, step_id: Any = None,
-        each_step: Any = False, required: Any = True, spec: Any = None, requirement_id: Any = None,
+        each_step: Any = False, required: Any = None, spec: Any = None, requirement_id: Any = None,
     ) -> dict[str, Any]:
         """Add a requirement (PG-REQ §6): his at once; an orchestrating agent's
         or a step's own agent's goes up the ladder (``requirement_proposed``:
@@ -1887,9 +1887,10 @@ class ProgramService:
         from .program_requirements import label
         from .program_rules import decide
 
-        if requirement_id:
+        if requirement_id:  # an edit: only what it names changes (``required`` None keeps it)
             return self.edit_requirement(principal, program_id, str(requirement_id), text=text, kind=kind,
-                                         required=required if required is not True else None, spec=spec)
+                                         required=required, spec=spec)
+        required = True if required is None else required  # a new requirement is required unless he says not
         program = self._program(program_id)
         if program.get("closed_at"):
             raise ProgramRefused("program_closed", "The program is closed.")
@@ -2773,35 +2774,6 @@ class ProgramService:
         return self.get(principal, program["id"])
 
     # ── PG-LANG LANG9: the interview rounds (program_rounds) ─────────
-
-    def rounds_open(self, principal: Any, program_id: str, names: Any = None) -> dict[str, Any]:
-        from .program_rounds import open_rounds
-
-        return open_rounds(self, principal, program_id, names)
-
-    def round_next(self, principal: Any, program_id: str, name: str) -> dict[str, Any]:
-        from .program_rounds import ask
-
-        return ask(self, principal, program_id, name)
-
-    def round_answer(self, principal: Any, program_id: str, name: str, *, answer: Any = None, option: Any = None,
-                     question_id: Any = None, skip: bool = False, not_this: bool = False,
-                     apply: bool = False) -> dict[str, Any]:
-        """``{question_id, answer | option | skip}`` (§12); ``not_this``: the
-        answer's rows were dismissed, so it became nothing."""
-        from . import program_rounds as rounds
-
-        qid = str(question_id) if question_id else None
-        if skip:
-            return rounds.skip_question(self, principal, program_id, name, qid)
-        if not_this:
-            return rounds.not_this(self, principal, program_id, name, qid or "")
-        return rounds.answer(self, principal, program_id, name, answer, question_id=qid, choice=option, apply=apply)
-
-    def round_decide(self, principal: Any, program_id: str, name: str, choice: Any) -> dict[str, Any]:
-        from .program_rounds import decide
-
-        return decide(self, principal, program_id, name, choice)
 
     def round(self, principal: Any, program_id: str, action: Any, **kw: Any) -> dict[str, Any]:
         from .program_rounds import act

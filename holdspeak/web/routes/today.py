@@ -3,39 +3,42 @@
 ``GET /api/today/since-morning``: what got done today (tasks ticked,
 decisions recorded, notes filed, sends sent, meetings held), newest first.
 Today draws it after 17:00 as Since this morning; its ``programs`` block (PG18)
-feeds the Programs line at any hour. The read goes through the
-one Today service; the router builds a service only when the context has
-none (a route test)."""
+feeds the Programs line at any hour. The route is produced from
+``holdspeak/desk_state_operations.py`` (today.since_morning) through
+``OperationRegistry.invoke`` (2026-11-09)."""
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Callable
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 from starlette.concurrency import run_in_threadpool
 
+from ... import operations
 from ...db import get_database
 from ...logging_config import get_logger
-from ...principals import UNAUTHENTICATED
 from ...services.today_service import TodayService
 from ..context import WebContext
+from ..operation_routes import operation_router
 from ..runtime_support import error_500
+from ._mount import mount_router
 
 log = get_logger("web.routes.today")
 
 
+async def _answer(fn: Callable[[], Any], *, status: int = 200) -> JSONResponse:
+    try:
+        return JSONResponse(await run_in_threadpool(fn), status_code=status)
+    except Exception as exc:
+        return error_500(exc, log, "Failed to read what got done today")
+
+
 def build_today_router(ctx: WebContext) -> APIRouter:
-    router = APIRouter(prefix="/api/today", tags=["today"])
+    router = APIRouter(tags=["today"])
 
-    def service() -> TodayService:
-        return getattr(ctx, "today_service", None) or TodayService(get_database())
+    def _registry() -> Any:
+        return operations.for_context(ctx, today_service=lambda: TodayService(get_database()))
 
-    @router.get("/since-morning")
-    async def since_morning(request: Request) -> Any:
-        principal = getattr(request.state, "principal", UNAUTHENTICATED)
-        try:
-            return JSONResponse(await run_in_threadpool(service().since_morning, principal))
-        except Exception as exc:
-            return error_500(exc, log, "Failed to read what got done today")
-
+    descriptor = next(d for d in operations.DESK_STATE_OPERATIONS if d.name == "today.since_morning")
+    mount_router(router, operation_router([descriptor], _registry, _answer, module=__name__))
     return router

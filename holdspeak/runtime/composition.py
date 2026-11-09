@@ -164,6 +164,13 @@ class RuntimeServices:
 
     # --- remaining hub boundaries ----------------------------------------
     projection_service: Optional[Any] = None
+    # 2026-11-09 (ops/programs-work): the declared rows' services (recipe,
+    # note-window, memory Recall, desk state, constitutional context).
+    recipe_service: Optional[Any] = None
+    refinement_thought_service: Optional[Any] = None
+    recall_service: Optional[Any] = None
+    desk_service: Optional[Any] = None
+    constitutional_context_service: Optional[Any] = None
     authority_service: Optional[Any] = None
     sync_service: Optional[Any] = None
     gate_service: Optional[Any] = None

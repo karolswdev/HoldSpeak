@@ -1,15 +1,20 @@
 """HS-141-01 refinement-thought custody routes."""
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Callable
 
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
+from starlette.concurrency import run_in_threadpool
+
+from .... import operations
 
 from ....services.errors import ConflictError, NotFound, ServiceError, ValidationError
 from ....services.refinement_thought_service import RefinementThoughtService
 from ....principals import UNAUTHENTICATED
 from ...context import WebContext
+from ...operation_routes import operation_router
+from .._mount import mount_router
 from ._shared import _json_body
 
 
@@ -26,6 +31,14 @@ def _error(exc: ServiceError) -> JSONResponse:
     return JSONResponse(
         body, status_code=int(status) if isinstance(status, int) else fallback
     )
+
+
+async def _answer(fn: Callable[[], Any], *, status: int = 200) -> JSONResponse:
+    """A produced route's envelope: the hand-written routes' (``_error``)."""
+    try:
+        return JSONResponse(await run_in_threadpool(fn), status_code=status)
+    except ServiceError as exc:
+        return _error(exc)
 
 
 def build_thoughts_router(ctx: WebContext) -> APIRouter:
@@ -50,9 +63,13 @@ def build_thoughts_router(ctx: WebContext) -> APIRouter:
 
     def ops() -> Any:
         """PHILO-5-02: the Thought operations through the hub's bound contract."""
-        from .... import operations
+        return operations.for_context(ctx, refinement_service=application, refinement_thought_service=service)
 
-        return operations.for_context(ctx, refinement_service=application)
+    # 2026-11-09: the reads and Open of the note window are produced from
+    # ``holdspeak/thought_operations.py``, mounted first: the static Note
+    # lookup (/api/thoughts/for-note/{id}) precedes every /{thought_id} route.
+    for descriptor in operations.THOUGHT_OPERATIONS:
+        mount_router(router, operation_router([descriptor], ops, _answer, module=__name__))
 
     @router.post("/api/thoughts")
     async def create(request: Request) -> Any:
@@ -85,15 +102,6 @@ def build_thoughts_router(ctx: WebContext) -> APIRouter:
         except ServiceError as exc:
             return _error(exc)
 
-    # Static Note lookup must precede `/{thought_id}` so a Note id can never be
-    # mistaken for a thought id by route matching.
-    @router.get("/api/thoughts/for-note/{note_id}")
-    def for_note(note_id: str, request: Request) -> Any:
-        try:
-            return JSONResponse(service().for_note(principal(request), note_id))
-        except ServiceError as exc:
-            return _error(exc)
-
     @router.post("/api/thoughts/adopt")
     async def adopt(request: Request) -> Any:
         body = await _json_body(request)
@@ -109,21 +117,6 @@ def build_thoughts_router(ctx: WebContext) -> APIRouter:
                 expected_source_last_modified=body.get("expected_source_last_modified"),
             )
             return JSONResponse(result, status_code=201)
-        except ServiceError as exc:
-            return _error(exc)
-
-    # Betterment Q8 (one note): every note opens in the one note window. This
-    # returns the note's thought, adopting a plain note and resuming a
-    # finished one; the note's drawer never changes.
-    @router.post("/api/thoughts/open-note")
-    async def open_note(request: Request) -> Any:
-        body = await _json_body(request)
-        if body is None:
-            return JSONResponse({"error": "expected a JSON object"}, status_code=400)
-        try:
-            if set(body) - {"note_id"}:
-                raise ValidationError("thought open-note schema is closed", code="note_open_request_invalid")
-            return JSONResponse(application().open_note(principal(request), note_id=body.get("note_id")))
         except ServiceError as exc:
             return _error(exc)
 
@@ -154,15 +147,6 @@ def build_thoughts_router(ctx: WebContext) -> APIRouter:
     def get(thought_id: str, request: Request) -> Any:
         try:
             return JSONResponse({"thought": ops().invoke(principal(request), "thought.read", {"thought_id": thought_id})})
-        except ServiceError as exc:
-            return _error(exc)
-
-    @router.get("/api/thoughts/{thought_id}/original")
-    def original(thought_id: str, request: Request) -> Any:
-        try:
-            return JSONResponse(application().get_original(
-                principal(request), thought_id=thought_id
-            ))
         except ServiceError as exc:
             return _error(exc)
 
@@ -281,19 +265,6 @@ def build_thoughts_router(ctx: WebContext) -> APIRouter:
                 workspace_cursor=body.get("workspace_cursor"),
             )
             return JSONResponse(result)
-        except ServiceError as exc:
-            return _error(exc)
-
-    @router.get("/api/thoughts/{thought_id}/reviews/{review_result_id}")
-    def review(thought_id: str, review_result_id: str, request: Request) -> Any:
-        try:
-            return JSONResponse(
-                application().review(
-                    principal(request),
-                    thought_id=thought_id,
-                    review_result_id=review_result_id,
-                )
-            )
         except ServiceError as exc:
             return _error(exc)
 

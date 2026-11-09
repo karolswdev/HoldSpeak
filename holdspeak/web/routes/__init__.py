@@ -11,7 +11,6 @@ module.
 """
 
 from .activity import build_activity_router
-from .automations import build_automations_router
 from .authority import build_authority_router
 from .cadence import build_cadence_router
 from .calendar_snapshot import build_calendar_snapshot_router
@@ -71,7 +70,6 @@ from .mcp_http import build_mcp_http_router
 
 __all__ = [
     "build_activity_router",
-    "build_automations_router",
     "build_authority_router",
     "build_cadence_router",
     "build_calendar_snapshot_router",

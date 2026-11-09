@@ -515,6 +515,22 @@ LAUNCH_RULES.update({name: (OWN, "workbench", "workbench_id") for name in (
     "automation.set_when", "automation.set_engine", "automation.make_one", "automation.result.open",
     "automation.lesson.forget")})
 LAUNCH_RULES["automation.template.instantiate"] = (CREATE, "", "")
+# The Programs-and-work rows (2026-11-09, ops/programs-work): a launch reads
+# them; it restores an item only on an automation it made, opens a note as
+# thought.adopt_note does, and makes a new recipe; changing or deleting his
+# recipes, his attention state, meaning search, the constitutional context,
+# seed and reset stay his.
+LAUNCH_RULES.update({name: (READ, "", "") for name in (
+    "automation.prepared.read", "program.requirement_evidence", "thought.for_note", "thought.original",
+    "thought.review", "memory.pages", "memory.recall", "memory.meaning.status", "desk.projection.list",
+    "today.since_morning", "desk.health", "constitutional_context.read", "constitutional_context.history")})
+LAUNCH_RULES.update({name: (OWN, "workbench", "workbench_id") for name in (
+    "automation.item.restore", "automation.event_start.set_enabled")})
+LAUNCH_RULES["thought.open_note"] = (OWN, "note", "note_id")
+LAUNCH_RULES["recipe.create"] = (CREATE, "", "")
+LAUNCH_RULES.update({name: (NEVER, "", "") for name in (
+    "recipe.update", "recipe.delete", "desk.projection.present", "memory.meaning.turn_on",
+    "memory.meaning.turn_off", "constitutional_context.update", "desk.seed", "desk.reset")})
 
 
 def _family_rules() -> dict[str, tuple[str, str, str]]:
