@@ -13,7 +13,7 @@ import { fromWireFlight, fromWireSessionRow, useAgentFlights } from "../../agent
 import { ConductorWindow, headFact } from "../ConductorWindow";
 import { canRun, closeReceipt, conductorHead, conductorMembers, headWords, readyMember } from "../members";
 import { __resetConductor, useConductor } from "../store";
-import { laneSessionKey as laneSessionKeyOf } from "../../lane/laneStore";
+import { __resetLane, laneSessionKey as laneSessionKeyOf, useLane } from "../../lane/laneStore";
 import { ApiError } from "../../../lib/api";
 import { useGate } from "../../gate";
 
@@ -132,6 +132,7 @@ beforeEach(() => {
     return body;
   });
   __resetConductor();
+  __resetLane();
   useAgentFlights.setState({ sessions: [], flights: [], loaded: false });
   useGate.setState({ held: [], loaded: false, error: null });
   useDesk.setState({ items: { ...EMPTY_ITEMS }, zoneViewPrefs: {}, panelRects: {}, panelOrder: [], panelMin: [] });
@@ -304,14 +305,15 @@ describe("PHILO-14 C4 the Conductor window", () => {
     expect(within(pane()).getByRole("button", { name: "Answer" })).toBeTruthy();
   });
 
-  it("a press on a tile picks the agent; its plate's Open opens its lane, a plain session its window; Details keeps the facts", async () => {
+  it("a press on a tile picks the agent: a launched one's face is the pane, a plain session opens its window; Details keeps the facts", async () => {
     render(<ConductorWindow />);
     await findRow("Shard the reconciliation job");
     fireEvent.click(icon("Shard the reconciliation job"));
     expect(pane().getAttribute("data-member")).toBe("launch:l-recon");
     expect(rowOf("Shard the reconciliation job").hasAttribute("data-picked")).toBe(true);
-    fireEvent.click(within(pane()).getByTestId("conductor-open"));
-    expect(shell.lanes).toEqual([["l-recon"]]);
+    // One face per agent: no lane window to open.
+    expect(within(pane()).queryByTestId("conductor-open")).toBeNull();
+    expect(shell.lanes).toEqual([]);
     fireEvent.click(icon("scratch"));
     fireEvent.click(within(pane()).getByTestId("conductor-open"));
     expect(shell.sessions).toEqual([["claude:solo"]]);
@@ -340,7 +342,6 @@ describe("PHILO-14 C4 the Conductor window", () => {
     // A working agent: no Answer; its plate says its activity with Stop.
     fireEvent.click(icon("Shard the reconciliation job"));
     expect(within(pane()).queryByRole("button", { name: "Answer" })).toBeNull();
-    expect(within(pane()).getByTestId("conductor-open")).toBeTruthy();
     expect(within(screen.getByTestId("agents-plate")).getByTestId("conductor-stop")).toBeTruthy();
     // A stale launch shows its receipt and reads its lane; no Stop.
     fireEvent.click(icon("Write the cutover checklist"));
@@ -351,10 +352,13 @@ describe("PHILO-14 C4 the Conductor window", () => {
   it("Stop is bound to the agent pressed: confirm Stop on A, open B before A's read resolves; the kill names A (Astra r1 P1)", async () => {
     const { useLane, __resetLane } = await import("../../lane/laneStore");
     __resetLane();
-    let releaseA: (body: unknown) => void = () => undefined;
+    // A's one-row reads (the held call, the Stop's control read) are out
+    // until released; the pane's own lane read of A answers.
+    const held: Array<(body: unknown) => void> = [];
+    const releaseA = (body: unknown) => held.splice(0).forEach((resolve) => resolve(body));
     const base = apiFetch.getMockImplementation()!;
     apiFetch.mockImplementation(async (url: string, init?: { method?: string }) => {
-      if (url.startsWith("/api/agent/launches/l-runbook/lane")) return new Promise((resolve) => { releaseA = resolve; });
+      if (url.startsWith("/api/agent/launches/l-runbook/lane") && url.endsWith("limit=1")) return new Promise((resolve) => { held.push(resolve); });
       if (url.startsWith("/api/agent/launches/l-recon/lane"))
         return { launch: { launch_id: "l-recon", session_key: "codex:x1" }, control: { mode: "yolo", armed: true, direct: true } };
       return base(url, init);
@@ -767,8 +771,10 @@ describe("PHILO-17 the Conductor reads like Today", () => {
     render(<ConductorWindow />);
     await screen.findByTestId("conductor-held-call");
     expect(screen.queryByRole("button", { name: "Allow" })).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "Terminal" }));
-    expect(shell.lanes).toEqual([["l-runbook", { sessionKey: "claude:c1", raw: true }]]);
+    // The terminal is in the pane: the lane's own pane, bound to its session.
+    await waitFor(() => expect(useLane.getState().launchId).toBe("l-runbook"));
+    fireEvent.click(within(screen.getByTestId("conductor-ask-row")).getByRole("button", { name: "Terminal" }));
+    await waitFor(() => expect(useLane.getState().raw).toBe(true));
   });
 
   it("Installed is its own section after the runs; stopped launches are the runs' last group", async () => {

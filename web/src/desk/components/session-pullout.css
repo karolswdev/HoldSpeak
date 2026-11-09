@@ -11,6 +11,7 @@
 }
 /* The language (2026-11-08): the mast, the spine and the plate are the
    Agents window's (conductor.css); the session window keeps its gaps. */
+.desk-next .is-session .desk-session-mast { flex: none; padding: 16px 16px 0; }
 .desk-next .is-session .desk-session-body > .aw-plate,
 .desk-next .is-session .desk-session-spine { margin: 0; }
 .desk-next .is-session .desk-session-spine { display: flex; }

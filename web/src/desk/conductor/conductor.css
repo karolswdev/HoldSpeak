@@ -431,25 +431,26 @@
 
 @container surface (max-width: 520px) {
   .desk-next :is(.aw, .is-session) .aw-frame { flex-direction: column-reverse; }
+  /* 393: the rail is a strip at the foot: each group its caption over its
+     tiles, the tiles in even 44 px columns. */
   .desk-next :is(.aw, .is-session) .aw-rail {
     flex-direction: row;
     flex-wrap: wrap;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
+    align-items: flex-start;
+    gap: 6px 14px;
     width: auto;
-    max-height: 120px;
-    padding: 6px 12px;
+    max-height: 168px;
+    padding: 8px 12px;
     border-top: 1px solid var(--hs-edge);
     border-right: 0;
   }
-  .desk-next :is(.aw, .is-session) .aw-rail-group { display: contents; }
-  .desk-next :is(.aw, .is-session) .aw-cap,
+  .desk-next :is(.aw, .is-session) .aw-rail-group { flex: none; gap: 4px; }
+  .desk-next :is(.aw, .is-session) .aw-cap { padding: 0; white-space: nowrap; }
   .desk-next :is(.aw, .is-session) .aw-tile-words,
   .desk-next :is(.aw, .is-session) .aw-tile-spine,
   .desk-next :is(.aw, .is-session) .aw-rail-start-word { display: none; }
-  .desk-next :is(.aw, .is-session) .aw-rail-tiles { display: contents; }
-  .desk-next :is(.aw, .is-session) .aw-rail-start { align-self: center; width: 44px; min-width: 44px; height: 44px; padding: 0; }
+  .desk-next :is(.aw, .is-session) .aw-rail-tiles { display: grid; grid-template-columns: repeat(var(--aw-cols, 4), 44px); gap: 6px; }
+  .desk-next :is(.aw, .is-session) .aw-rail-start { align-self: flex-end; width: 44px; min-width: 44px; height: 44px; padding: 0; }
   .desk-next :is(.aw, .is-session) .aw-tile { width: 44px; }
   .desk-next :is(.aw, .is-session) .aw-tile[data-helper] { margin-left: 0; }
   .desk-next :is(.aw, .is-session) .aw-tile-open { justify-content: center; width: 44px; min-height: 44px; padding: 0; }
@@ -477,4 +478,52 @@
   .desk-next :is(.aw, .is-session) .aw-plate { margin: 12px 12px 0; padding: 14px; }
   .desk-next :is(.aw, .is-session) .aw-plate-verbs { flex-direction: column; align-items: stretch; }
   .desk-next :is(.aw, .is-session) .aw-plate-verbs > .btn { width: 100%; min-height: 44px; }
+}
+
+/* One face per agent (2026-11-08): what the lane window held, in the pane. */
+.desk-next :is(.aw, .is-session) .aw-made { display: flex; flex-direction: column; gap: 8px; margin: 16px 22px 0; }
+.desk-next :is(.aw, .is-session) .aw-pr {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--hs-edge);
+  border-radius: 8px;
+  background: var(--hs-raised);
+}
+.desk-next :is(.aw, .is-session) .aw-pr-spine { display: flex; width: auto; }
+.desk-next :is(.aw, .is-session) .aw-pr-row { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.desk-next :is(.aw, .is-session) .aw-pr-sprite { flex: none; width: 20px; height: 20px; }
+.desk-next :is(.aw, .is-session) .aw-pr-words { display: flex; flex: 1 1 auto; flex-direction: column; gap: 2px; min-width: 0; }
+.desk-next :is(.aw, .is-session) .aw-pr-title { color: var(--hs-ink); font: 600 14px / 20px var(--font-sans); overflow-wrap: anywhere; }
+.desk-next :is(.aw, .is-session) .aw-pr-sub { color: var(--hs-ink-2); font: 400 12px / 16px var(--font-sans); }
+.desk-next :is(.aw, .is-session) .aw-pr-facts { display: flex; flex-wrap: wrap; gap: 4px 12px; }
+.desk-next :is(.aw, .is-session) .aw-files,
+.desk-next :is(.aw, .is-session) .aw-checks { display: flex; flex-direction: column; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.desk-next :is(.aw, .is-session) .aw-checks > li { display: flex; gap: 10px; align-items: baseline; }
+.desk-next :is(.aw, .is-session) .aw-check-state { color: var(--hs-ink-2); font: 400 12px / 16px var(--font-mono); }
+.desk-next :is(.aw, .is-session) .aw-unread { display: flex; flex-direction: column; gap: 4px; margin: 10px 22px 0; }
+.desk-next :is(.aw, .is-session) .aw-terminal { margin: 14px 22px 0; }
+.desk-next :is(.aw, .is-session) .aw-plate--tell { padding: 12px 14px; }
+.desk-next :is(.aw, .is-session) .aw-ledger-body { padding: 4px 0 8px; font: 400 13px / 20px var(--font-sans); }
+.desk-next :is(.aw, .is-session) .aw-receipt-line { display: flex; flex-direction: column; gap: 4px; }
+@container surface (max-width: 520px) {
+  .desk-next :is(.aw, .is-session) .aw-made,
+  .desk-next :is(.aw, .is-session) .aw-unread,
+  .desk-next :is(.aw, .is-session) .aw-terminal { margin-left: 12px; margin-right: 12px; }
+  .desk-next :is(.aw, .is-session) .aw-pr-row { flex-wrap: wrap; }
+  .desk-next :is(.aw, .is-session) .aw-pr-row > .btn { width: 100%; min-height: 44px; }
+}
+/* The activity ledger: the time in its own mono column (empty for a report
+   section), the words, the kind, the Read verb. */
+.desk-next .surface-ledger[data-cols="agent"] .surface-ledger-row > .surface-ledger-line,
+.desk-next .surface-ledger[data-cols="agent"] .surface-ledger-row > .surface-ledger-line[data-has-trailing] {
+  grid-template-columns: 44px minmax(0, 1fr) auto auto;
+}
+.desk-next .surface-ledger[data-cols="agent"] .surface-ledger-time { font: 400 12px / 16px var(--font-mono); color: var(--hs-ink-2); }
+@container surface (max-width: 520px) {
+  .desk-next .surface-ledger[data-cols="agent"] .surface-ledger-row > .surface-ledger-line,
+  .desk-next .surface-ledger[data-cols="agent"] .surface-ledger-row > .surface-ledger-line[data-has-trailing] {
+    grid-template-columns: 40px minmax(0, 1fr) auto;
+  }
 }

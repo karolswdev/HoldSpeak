@@ -120,7 +120,6 @@ vi.mock("./compositor/CompositorLayer", () => ({ CompositorLayer: marker("compos
 vi.mock("./conductor", () => ({ ConductorWindows: marker("conductor-windows") }));
 vi.mock("./drawer", () => ({ DrawerWindows: marker("drawer-windows") }));
 vi.mock("./hand", () => ({ DragLayer: marker("drag-layer") }));
-vi.mock("./lane/LaneWindow", () => ({ LaneWindow: marker("lane-window") }));
 vi.mock("./deleteReceipt", () => ({ DeskDeleteHost: marker("delete-host"), DeskDeleteSeat: marker("delete-seat") }));
 // returningWindows subscribes to the TrustWindow store at import: mock the mount.
 vi.mock("./returningWindows", () => ({ ReturningWindows: marker("returning-windows") }));

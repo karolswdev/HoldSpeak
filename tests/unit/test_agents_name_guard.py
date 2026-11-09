@@ -42,7 +42,7 @@ CODER = re.compile(_EDGE_L + r"coders?" + _EDGE_R, re.IGNORECASE)
 AGENT_FACES = (
     "web/src/desk/conductor/ConductorWindow.tsx",
     "web/src/desk/conductor/members.ts",
-    "web/src/desk/lane/LaneWindow.tsx",
+    "web/src/desk/conductor/AgentLane.tsx",
     "web/src/desk/components/HandSheet.tsx",
 )
 FACE_WORDS = re.compile(

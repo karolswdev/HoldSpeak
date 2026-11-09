@@ -343,34 +343,25 @@ class TestSessionOpenGlass:
                 assert "is-listening" not in session.inner_html()
                 session.locator(".desk-gadget-close").click()
 
+                # One face per agent (2026-11-08): a launched agent's face is
+                # the pane; its terminal is in the pane (the lane window is parked).
                 conductor.locator("[data-testid='agents-rail'] [data-object-id='launch:launch_c4_recon'] .aw-tile-open").click()
-                conductor.get_by_test_id("agents-pane").get_by_test_id("conductor-open").click()
-                lane = page.locator(".is-lane")
-                lane.get_by_test_id("lane-head").wait_for()
-                # AG10 omits an empty timeline rather than drawing a lone brief.
-                assert lane.get_by_test_id("lane-rail").count() == 0
-                shot("lane-working", lane)
-                assert not lane.get_by_test_id("lane-track").is_visible()
-                assert "Your press in GitHub" not in lane.inner_text()
-                # W3 AGENT WINDOW: the terminal is the window's Terminal wing
-                # (a strip of tabs; at 393 the strip folds to one menu).
-                wing = lane.get_by_role("tab", name="Terminal", exact=True)
-                if wing.count():
-                    wing.click()
-                else:
-                    lane.locator(".desk-wings-menu").first.click()
-                    page.locator(".desk-menu-list [role='menuitemcheckbox']", has_text="Terminal").first.click()
-                shot("lane-terminal-unavailable", lane)
-                assert lane.get_by_test_id("lane-head").is_visible()
-                assert lane.get_by_test_id("lane-raw-pane").get_by_role("button", name="Retry", exact=True).is_visible()
-                assert lane.locator(".lw-keys").count() == 0
-                lane.locator(".desk-gadget-close").click()
+                pane = conductor.get_by_test_id("agents-pane")
+                pane.get_by_test_id("agents-mast").wait_for()
+                assert page.locator(".is-lane").count() == 0
+                shot("lane-working", conductor)
+                assert "Your press in GitHub" not in pane.inner_text()
+                pane.get_by_test_id("agents-terminal").click()
+                pane.get_by_test_id("lane-raw-pane").wait_for()
+                shot("lane-terminal-unavailable", conductor)
+                assert pane.get_by_test_id("lane-raw-pane").get_by_role("button", name="Retry", exact=True).is_visible()
+                assert pane.locator(".lw-keys").count() == 0
+                pane.get_by_test_id("agents-terminal").click()
 
-                open_asking("launch:launch_c4_runbook")
-                lane.get_by_test_id("lane-ask").wait_for()
-                shot("lane-asking", lane)
-                assert lane.locator(".ask-well-question").count() == 1
-                assert lane.get_by_test_id("lane-rail").count() == 0
+                conductor.locator("[data-testid='agents-rail'] [data-object-id='launch:launch_c4_runbook'] .aw-tile-open").click()
+                pane.get_by_test_id("conductor-ask-row").wait_for()
+                shot("lane-asking", conductor)
+                assert pane.get_by_test_id("agent-row-question").count() == 1
                 assert not errors, errors
             finally:
                 browser.close()

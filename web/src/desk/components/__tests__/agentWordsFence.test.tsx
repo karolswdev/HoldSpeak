@@ -14,7 +14,7 @@ import { AskWell } from "../../surface/objects/AskWell";
 import { TimelineRail } from "../../surface/objects/Timeline";
 import { NeedsRow } from "../../surface/objects/NeedsRow";
 import { eventEntries } from "../../lane/laneWire";
-import { sentHead } from "../../lane/LaneWindow";
+import { sentHead } from "../../conductor/AgentLane";
 import { agentWordsPlain, cutAtWord } from "../AgentWords";
 import { BRIEF_HEAD, OWNER_TEXT, noLiteralMarks } from "./fixtures.agentWords";
 

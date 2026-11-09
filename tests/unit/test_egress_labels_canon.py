@@ -40,7 +40,7 @@ WORKING_FACES = (
     "pages/cores/DictationCore.tsx",
     "pages/cores/dictation/SpeakFace.tsx",
     "desk/conductor/ConductorWindow.tsx",
-    "desk/lane/LaneWindow.tsx",
+    "desk/conductor/AgentLane.tsx",
     "desk/components/AgentFlight.tsx",
     "pages/cores/HistoryCore.tsx",
     "pages/cores/history/MeetingRecord.tsx",
