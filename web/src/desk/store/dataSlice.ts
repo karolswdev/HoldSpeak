@@ -311,11 +311,11 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => {
      * is about to be named): the press is no longer in flight. */
     answered: () => void = () => undefined,
   ): Promise<void> => {
-    // HS-130-09 — a Workbench is chosen BEFORE it is persisted. The create
-    // gesture opens the pre-persistence chooser; exactly one of its exits
-    // persists exactly one Workbench (no orphaned blank record).
+    // HS-130-09 — an automation is chosen BEFORE it is persisted. The create
+    // gesture opens the Automations app on its starters; exactly one starter
+    // press persists exactly one automation (no orphaned blank record).
     if (kind === "workbench") {
-      get().openNewWorkbenchChooser();
+      get().openNewAutomation();
       return;
     }
     // PHILO-13-08 (B3) — a decision is named BEFORE it is persisted. With no

@@ -1,24 +1,23 @@
-/** Betterment A7 — New automation: the starters, plus Start from scratch
- * (docs/internal/betterment/workbench/DESIGN.md §4, "Starters").
+/** New automation (the native Automations app, 2026-11-08): the starters
+ * as pictogram cards inside the Automations window, plus Start from
+ * scratch. No second chooser window (the old one is parked in
+ * desk/_parked/automations/NewWorkbenchChooser_20261108.tsx).
  *
  * Each starter is one automation's sentence: what it does, when it runs and
  * where the result goes. A press makes exactly one automation with that
- * sentence (no agent is copied) and opens its window; a blank the starter
- * cannot guess ("About: which people?") is shown here and in the window.
- * Start from scratch makes one empty automation.
+ * sentence (no agent is copied); the app then shows it. A blank the starter
+ * cannot guess ("About: which people?") is shown here and on the automation.
  *
- * HS-130-09 still holds: one press, one record, no orphan. The HS-116-05
- * template cards are parked (`_parked/WorkbenchTemplatePicker.tsx`). */
-import "./automation/automation-home.css";
+ * HS-130-09 still holds: one press, one record, no orphan. */
+import "./automation-home.css";
 import { useCallback, useEffect, useId, useRef, useState, type ComponentPropsWithoutRef } from "react";
-import { apiFetch, readableError } from "../../lib/api";
-import { Button } from "../../components/signal/Signal";
-import { useDesk } from "../store";
-import { spriteUrl } from "../sprites";
-import { SurfaceState } from "../surface/Surface";
-import { ChoiceCardShell } from "../surface/patterns/ChoiceCardShell";
-import { useRovingGrid } from "../surface/roving";
-import { putWords, scheduleWords } from "./automation/model";
+import { apiFetch, readableError } from "../../../lib/api";
+import { Button } from "../../../components/signal/Signal";
+import { spriteUrl } from "../../sprites";
+import { SurfaceState } from "../../surface/Surface";
+import { ChoiceCardShell } from "../../surface/patterns/ChoiceCardShell";
+import { useRovingGrid } from "../../surface/roving";
+import { putWords, scheduleWords } from "./model";
 
 /** One starter (`holdspeak/workbench_templates.py` STARTERS). */
 export interface AutomationStarter {
@@ -67,10 +66,11 @@ function StarterButton({
   return <Button {...props} variant="chrome" disabled={Boolean(dataDisabled)} />;
 }
 
-export function WorkbenchTemplatePicker({
+export function AutomationStarters({
   onCreated,
 }: {
-  onCreated?: (workbenchId: string) => void;
+  /** The made automation's id: the app picks it. */
+  onCreated: (workbenchId: string) => void;
 }) {
   const [starters, setStarters] = useState<AutomationStarter[]>([]);
   const [loading, setLoading] = useState(true);
@@ -111,12 +111,9 @@ export function WorkbenchTemplatePicker({
         setCreateError(`${name} was not made. Try again.`);
         return;
       }
-      // The POST saved it; its window reads it by id, so open it now. The
-      // desk read after it only refreshes the lists.
+      // The POST saved it; the app reads it by id and shows it now.
       setCreated(id);
-      useDesk.getState().openWorkbenchWindow(id);
-      onCreated?.(id);
-      void useDesk.getState().refresh();
+      onCreated(id);
     } catch (failure) {
       setCreateError(`${name} was not made: ${readableError(failure)}`);
     } finally {

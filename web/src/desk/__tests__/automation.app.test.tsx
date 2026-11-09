@@ -1,4 +1,5 @@
-/* Betterment A3 — the automation window, on the hub's own recorded answers.
+/* The Automations app and an automation (native, 2026-11-08: the rail, the
+ * mast, the plate, the ledger of runs), on the hub's own recorded answers.
  *
  * The answers come from tests/integration/test_desk_workbenches.py
  * (test_the_automation_window_reads_its_sentence_results_and_lessons: the
@@ -48,8 +49,7 @@ import putFolder from "./fixtures/automation-hub/put-folder.json";
 import programNew from "./fixtures/automation-hub/program-new.json";
 import programRan from "./fixtures/automation-hub/program-ran.json";
 import programStill from "./fixtures/automation-hub/program-still.json";
-import { WorkbenchesHomeCore } from "../../pages/cores/WorkbenchesHomeCore";
-import { NewWorkbenchChooser } from "../components/NewWorkbenchChooser";
+import { AutomationsCore } from "../components/automation/AutomationsCore";
 import { AutomationBuilder } from "../components/automation/AutomationBuilder";
 import type { AutomationDetail } from "../components/automation/model";
 import { EMPTY_ITEMS, fromWireDirectory, fromWireNote } from "../api";
@@ -310,8 +310,13 @@ describe("the sentence on top", () => {
     expect(line("put")).toHaveTextContent("My Inbox");
     const words = screen.getByTestId("automation-window").textContent ?? "";
     expect(words).not.toMatch(/note:|note-sync|wb-friday|artifact_|wbocc_|\* \* \*/);
-    // No result yet: one true line, no verbs, no fold of zero lessons.
-    expect(newest()).toHaveTextContent("No results yet. Run now makes the first one.");
+    // No result yet: the plate is the first run and its Run now; no ledger,
+    // no fold of zero lessons.
+    expect(newest()).toHaveTextContent("First run");
+    expect(within(newest()).getByTestId("automation-run-now")).toBeEnabled();
+    expect(screen.queryByTestId("automation-result-list")).toBeNull();
+    // The mast: the automation's name and its facts in one line.
+    expect(screen.getByTestId("automation-mast")).toHaveTextContent("Only when I press Run now · LAN Qwen");
     expect(screen.queryByText("What it has learned")).toBeNull();
     // Only when he presses Run now: there is no start to switch on or off.
     expect(screen.queryByTestId("automation-on")).toBeNull();
@@ -406,12 +411,14 @@ describe("Run now and the results", () => {
     expect(within(newest()).getByRole("heading", { name: "Weekly update" })).toBeInTheDocument();
   });
 
-  it("window grammar: the results are a list view; a press shows that result below the list and reads it", async () => {
+  it("the ledger of runs, newest first; a press shows that run on the plate and reads it", async () => {
     await open(populated as Step);
     const rows = within(screen.getByTestId("automation-result-list")).getAllByTestId("automation-result-row");
     expect(rows).toHaveLength(3);
-    // The newest is the selected row, and the reader below shows it.
-    expect(rows[0]).toHaveAttribute("aria-selected", "true");
+    // The newest is the shown row, and the plate shows it.
+    expect(rows[0]).toHaveAttribute("aria-current", "true");
+    // The spine under the mast: one part per run, in its meaning colour.
+    expect(screen.getByTestId("automation-spine")).toHaveAccessibleName("3 runs · 1 failed");
     expect(rows[1]).toHaveTextContent("Failed: The stub refuses: no source is attached");
     expect(within(rows[1]).getByTestId("automation-result-state")).toHaveTextContent("Failed");
     expect(rows[2]).toHaveTextContent("Weekly update");
@@ -784,8 +791,7 @@ function Desk() {
   const windows = useDesk((state) => state.workbenchWindows);
   return (
     <>
-      <WorkbenchesHomeCore />
-      <NewWorkbenchChooser />
+      <AutomationsCore />
       {windows.map((w) => <AutomationWindow key={w.id} workbenchId={w.id} />)}
     </>
   );
@@ -798,21 +804,21 @@ describe("A7: home, New automation and starters", () => {
     useDesk.setState({ workbenchWindows: [], refresh: vi.fn(async () => undefined) });
   });
 
-  it("DESIGN §6: New → Friday team update → With → Claude Code → Run now reads a result in 5 presses, one window", async () => {
+  it("DESIGN §6: New → Friday team update → With → Claude Code → Run now reads a result in 5 presses, in the one app window", async () => {
     hub.step = withStarters({ workbench_id: "", gets: {} });
     hub.detect = [detectOf("found"), detectOf("add")];
     render(<Desk />);
-    // The empty home: the one line, and the starters as large cards.
+    // The empty app: the automation object, the one line, and the starters
+    // as pictogram cards in the same window.
     expect(await screen.findByText("An automation does one job for you, again and again.")).toBeInTheDocument();
     expect(await within(screen.getByTestId("automation-home-empty")).findByTestId("automation-starter-friday-team-update")).toBeInTheDocument();
-    // DELIGHT 2: the line sits under the automation object with its making verb.
     const object = screen.getByTestId("automation-home-empty").querySelector('.surface-state[data-object="automation"]') as HTMLElement;
     expect(object.querySelector(".surface-state-sprite")?.getAttribute("src")).toMatch(/cartridge\.png$/);
-    expect(within(object).getByRole("button", { name: "New automation" })).toBeInTheDocument();
     let presses = 0;
 
+    // New automation keeps the starters in the pane (no second window).
     fireEvent.click(screen.getByTestId("automation-new")); presses += 1;
-    const chooser = await screen.findByRole("region", { name: "New Automation" });
+    const chooser = screen.getByTestId("automation-home-empty");
     const friday = await within(chooser).findByTestId("automation-starter-friday-team-update");
     expect(friday).toHaveAccessibleName("Friday team update");
     const describedBy = friday.getAttribute("aria-describedby");
@@ -855,32 +861,27 @@ describe("A7: home, New automation and starters", () => {
     expect(useDesk.getState().workbenchWindows.length).toBe(windows);
   });
 
-  it("window grammar: home rows are a list view (Name, When, Engine, Last result); a programmatic press selects, one pointer press or Open opens", async () => {
-    hub.step = homeRows as Step;
-    render(<WorkbenchesHomeCore />);
-    const [row] = await screen.findAllByTestId("automation-home-row");
-    expect(row).toHaveTextContent("Friday team update");
-    expect(row).toHaveTextContent(/Every Friday at 15:00/i);
-    expect(row).toHaveTextContent(/Claude Code/i);
-    expect(row).toHaveTextContent(/Off/i);
-    // W4 (the words): one state word from the result's status; a result not
-    // opened yet is the warm dot and the status bar's `1 new`.
-    expect(within(row).getByTestId("automation-home-result").textContent).toMatch(/^Done/);
-    expect(row.textContent).not.toMatch(/0 NEW|ITEM|PENDING|RECENT RUNS/);
+  it("the rail: each automation its name, the spine of its runs and when it runs; a press shows it in the pane", async () => {
+    // The list answer and the same automation's detail after its run.
+    hub.step = { workbench_id: (homeRows as Step).workbench_id, gets: { ...(fridayRan as Step).gets, ...(homeRows as Step).gets } };
+    render(<AutomationsCore />);
+    const [item] = await screen.findAllByTestId("automation-rail-item");
+    expect(item).toHaveTextContent("Friday team update");
+    expect(item).toHaveTextContent("Every Friday at 15:00 · Off");
+    // A result not opened yet is the brass dot and the status bar's `1 new`.
+    expect(item).toHaveAttribute("data-new");
+    expect(item.textContent).not.toMatch(/0 NEW|ITEM|PENDING|RECENT RUNS/);
     // The status bar says the count and what is new, never a zero.
     expect(screen.getByTestId("automation-home-count")).toHaveTextContent("1 automation");
     expect(screen.getByTestId("automation-home-status")).toHaveTextContent("1 new");
     expect(screen.getByTestId("automation-home-status").textContent).not.toMatch(/\b0\b/);
-    const name = within(row).getAllByRole("button")[0];
-    fireEvent.click(name);
-    expect(row).toHaveAttribute("aria-selected", "true");
+    // The first automation is chosen: its mast and plate are in the pane, in
+    // this one window.
+    expect(item).toHaveAttribute("aria-current", "page");
+    fireEvent.click(item);
+    expect(await within(screen.getByTestId("automations-pane")).findByTestId("automation-mast")).toHaveTextContent("Friday team update");
     expect(useDesk.getState().workbenchWindows).toEqual([]);
-    expect(screen.getByTestId("automation-home-run")).toBeInTheDocument();
-    // W1-KIT: one pointer press (detail 1) opens it.
-    fireEvent.click(name, { detail: 1 });
-    expect(useDesk.getState().workbenchWindows.map((w) => w.id)).toEqual([(homeRows as Step).workbench_id]);
-    fireEvent.click(screen.getByTestId("automation-home-open"));
-    expect(useDesk.getState().workbenchWindows.map((w) => w.id)).toEqual([(homeRows as Step).workbench_id]);
+    expect(useDesk.getState().places["automations/picked"]).toBe((homeRows as Step).workbench_id);
   });
 
   it("one press makes one automation; a failed press says so, keeps its choice, and a second press makes it", async () => {
@@ -895,15 +896,16 @@ describe("A7: home, New automation and starters", () => {
     hub.afterCreate = [withStarters(fridayNew)];
     fireEvent.click(friday);
     await screen.findByTestId("automation-sentence");
-    // The failed press and the one that made it: one automation, one window.
+    // The failed press and the one that made it: one automation, shown in
+    // the app's pane (no other window).
     expect(hub.calls.filter((c) => c.url.endsWith("/instantiate"))).toHaveLength(2);
-    expect(useDesk.getState().workbenchWindows.map((w) => w.id)).toEqual([(fridayNew as Step).workbench_id]);
-    expect(friday).toBeDisabled();
+    expect(useDesk.getState().workbenchWindows).toEqual([]);
+    expect(useDesk.getState().places["automations/picked"]).toBe((fridayNew as Step).workbench_id);
   });
 
   it("a starter with a blank shows it highlighted until he fills it", async () => {
     hub.step = withStarters({ workbench_id: "", gets: {} });
-    render(<WorkbenchesHomeCore />);
+    render(<AutomationsCore />);
     const prep = await screen.findByTestId("automation-starter-one-on-one-prep");
     expect(prep).toHaveTextContent("About: which people?");
     expect(screen.getByTestId("automation-starter-meeting-follow-ups")).toHaveTextContent("Only when I press Run now · Needs you");
@@ -1088,10 +1090,9 @@ describe("an agent works in a folder (A10)", () => {
     await screen.findByTestId("automation-sentence");
     expect(within(line("about")).getByTestId("automation-about-chips")).toHaveTextContent("Folder ledger");
     expect(line("with")).toHaveTextContent("Claude Code");
-    // Owner ruling 2026-10-25: no egress chip in the status bar; With names
-    // the engine.
-    expect(screen.getByTestId("automation-status")).not.toHaveTextContent("Anthropic");
-    expect(screen.getByTestId("automation-status").querySelector(".gadget-chip-egress")).toBeNull();
+    // Owner ruling 2026-10-25: no egress chip on the mast; With names the engine.
+    expect(screen.getByTestId("automation-mast")).not.toHaveTextContent("Anthropic");
+    expect(screen.getByTestId("automation-mast").querySelector(".gadget-chip-egress")).toBeNull();
     const reading = within(newest()).getByTestId("automation-reading");
     expect(reading).toHaveTextContent("ledger.py");
     expect(reading).toHaveTextContent("risky_migration.sql");

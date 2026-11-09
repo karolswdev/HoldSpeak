@@ -32,7 +32,7 @@ export interface HistoryEntry {
   created_at: string;
 }
 
-/** WorkbenchesHomeCore */
+/** AutomationsCore */
 export interface WbSummary {
   id: string;
   name: string;
@@ -288,7 +288,7 @@ export interface ConstitutionalContextSaveResponse {
   [key: string]: unknown;
 }
 
-/** WorkbenchesHomeCore endpoints */
+/** AutomationsCore endpoints */
 export interface WorkbenchesListResponse {
   workbenches: WbSummary[];
   [key: string]: unknown;
