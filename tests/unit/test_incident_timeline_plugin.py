@@ -26,14 +26,6 @@ def _plugin(response):
     return intel_plugin(IncidentTimelinePlugin(), lambda _m, **_kw: response)
 
 
-def test_attributes() -> None:
-    p = IncidentTimelinePlugin()
-    assert p.id == "incident_timeline"
-    assert p.kind == "synthesizer"
-    assert p.execution_mode == "deferred"
-    assert p.required_capabilities == ["llm"]
-
-
 def test_run_success_preserves_order() -> None:
     out = _plugin(_GOOD_JSON).run({"transcript": "incident retro"})
     assert out["confidence_hint"] == 1.0

@@ -492,12 +492,6 @@ def test_gemini_answers_from_its_json_with_tokens(more_bin: Path, egress: list) 
         engine.run_prompt(user_prompt="Hi")
 
 
-def test_the_real_pi_and_gemini_are_refused_in_tests(monkeypatch: pytest.MonkeyPatch) -> None:
-    from holdspeak.cli_guard import GUARDED
-
-    assert {"pi", "gemini"} <= GUARDED
-
-
 # -- Betterment A10: an agent works in a folder, read only ---------------------
 
 
@@ -542,3 +536,9 @@ def test_an_engine_with_a_work_folder_runs_in_that_folder(fake_bin: Path, egress
     assert folder.exists() and sorted(p.name for p in folder.iterdir()) == ["ledger.py", "risky_migration.sql"]
     assert cli_engine.cli_vendor("cli:claude") == "Anthropic" and cli_engine.cli_vendor("cli:codex") == "OpenAI"
     assert cli_engine.cli_vendor("http://lan:8080") == ""
+
+
+def test_the_real_pi_and_gemini_are_refused_in_tests(monkeypatch: pytest.MonkeyPatch) -> None:
+    from holdspeak.cli_guard import GUARDED
+
+    assert {"pi", "gemini"} <= GUARDED

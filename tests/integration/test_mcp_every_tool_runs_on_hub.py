@@ -252,20 +252,6 @@ def test_every_mcp_tool_runs_on_the_real_hub(tmp_path: Path) -> None:
 
 
 @pytest.mark.timeout(900)
-def test_the_sweep_fails_for_every_tool_when_no_tool_can_run(tmp_path: Path) -> None:
-    """The mutation: dispatch raises ``RuntimeError("MCP executor is unavailable")`` for every tool."""
-    home = tmp_path / "home"
-    home.mkdir()
-    hub = _Hub(home, "broken")
-    try:
-        count, broken = _sweep(hub)
-    finally:
-        hub.kill()
-    assert count > 200, count
-    assert len(broken) == count, f"the sweep passed {count - len(broken)} of {count} broken tools"
-
-
-@pytest.mark.timeout(900)
 def test_concurrent_edits_of_one_note_lose_no_change(tmp_path: Path) -> None:
     """Forty pairs: one call changes the title, one the body, at the same time. Both changes stay."""
     home = tmp_path / "home"

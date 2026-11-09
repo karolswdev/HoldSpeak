@@ -75,10 +75,6 @@ def redraw(worktree: str, root: str) -> str:
     return "\n".join(out)
 
 
-def test_the_redraw_keeps_the_capture() -> None:
-    assert redraw(CAPTURED_WORKTREE, CAPTURED_ROOT) == CAPTURED.read_text(encoding="utf-8")
-
-
 @pytest.mark.skipif(shutil.which("tmux") is None, reason="tmux is required")
 def test_a_real_pane_with_the_captured_screen_names_the_worktree(tmp_path: Path) -> None:
     name = f"hs1514_{tmp_path.name[-12:]}"

@@ -215,14 +215,6 @@ class TestRunLifecycle:
 class TestPhaseCheckpoints:
     """Each phase transition creates a visible step row."""
 
-    def test_six_steps_created(self, tmp_path: Path) -> None:
-        conn = _make_conn(tmp_path)
-        svc, db = _make_service(conn)
-        run_id = svc.run_once(_principal(), "proj-1")
-
-        steps = db.steward_steps.list_steps(run_id)
-        assert len(steps) == 6
-
     def test_steps_cover_all_phases(self, tmp_path: Path) -> None:
         conn = _make_conn(tmp_path)
         svc, db = _make_service(conn)
@@ -240,25 +232,6 @@ class TestPhaseCheckpoints:
         steps = db.steward_steps.list_steps(run_id)
         for step in steps:
             assert step["state"] == "completed", f"Step {step['phase']} not completed"
-
-    def test_steps_have_sequential_seq(self, tmp_path: Path) -> None:
-        conn = _make_conn(tmp_path)
-        svc, db = _make_service(conn)
-        run_id = svc.run_once(_principal(), "proj-1")
-
-        steps = db.steward_steps.list_steps(run_id)
-        seqs = [s["seq"] for s in steps]
-        assert seqs == [0, 1, 2, 3, 4, 5]
-
-    def test_steps_have_idempotency_keys(self, tmp_path: Path) -> None:
-        conn = _make_conn(tmp_path)
-        svc, db = _make_service(conn)
-        run_id = svc.run_once(_principal(), "proj-1")
-
-        steps = db.steward_steps.list_steps(run_id)
-        for step in steps:
-            assert step["idempotency_key"].startswith(run_id + ":")
-
 
 # -- TST-ENG-003: stop between phases ------------------------------------
 

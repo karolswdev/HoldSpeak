@@ -175,10 +175,14 @@ one physical provider attempt.
 
 ## 9. ToolTurn is a constrained extension, not an alternate router
 
-[`ToolTurnFoundationService`](../../holdspeak/services/tool_turn_service.py)
+Parked 2026-11-09: the recipe agent turn, its only caller, runs through the
+engine door (`holdspeak/services/engine_door.py`). The stack below is kept in
+`holdspeak/services/_parked/` for history.
+
+[`ToolTurnFoundationService`](../../holdspeak/services/_parked/tool_turn_service_20261109.py)
 composes a `tool.turn` parent, an exact tool-qualified route bundle, a private
 capability lease, and
-[`ToolTurnController`](../../holdspeak/services/tool_turn_controller.py). Model
+[`ToolTurnController`](../../holdspeak/services/_parked/tool_turn_controller_20261109.py). Model
 steps still use the installed fallback controller and Runner. Tool calls are
 broker-admitted children through `BrokerToolCallPort`, not direct model-side
 execution.

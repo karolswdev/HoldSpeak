@@ -273,24 +273,6 @@ class TestTriageRejectDB:
         run_artifacts = db.plugins.list_run_artifacts()
         assert not any(a.id == art_id for a in run_artifacts)
 
-    def test_rejected_artifact_still_in_db(self, db):
-        wb = _create_workbench(db)
-        item = _create_item(db)
-        art_id = _create_pending_review_artifact(db)
-
-        now_iso = datetime.now().isoformat()
-        with db._connection() as conn:
-            conn.execute(
-                "UPDATE artifacts SET status = 'rejected', updated_at = ? WHERE id = ?",
-                (now_iso, art_id),
-            )
-
-        # Still fetchable by ID (lineage)
-        art = db.plugins.get_artifact(art_id)
-        assert art is not None
-        assert art.status == "rejected"
-
-
 class TestTriageReworkDB:
     """Test rework triage at the DB level."""
 

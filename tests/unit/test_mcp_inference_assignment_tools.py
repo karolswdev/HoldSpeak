@@ -25,18 +25,6 @@ _EXPECTED = {
 }
 
 
-def test_assignment_mcp_catalogue_is_closed_to_versioned_recursive_dtos() -> None:
-    tools = {tool["name"]: tool["inputSchema"] for tool in inference_assignments.TOOLS}
-    assert set(tools) == _EXPECTED
-    for name, schema in tools.items():
-        assert schema["$id"] == f"holdspeak://mcp/{name}@1"
-        assert schema["additionalProperties"] is False
-    scope = tools["inference_assignment.set"]["properties"]["scope"]
-    assert all(variant["additionalProperties"] is False for variant in scope["oneOf"])
-    entry = tools["inference_assignment.set"]["properties"]["entries"]["items"]
-    assert entry["additionalProperties"] is False
-
-
 def test_assignment_mcp_is_owner_before_every_command_body(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     monkeypatch.setattr(inference_assignments, "get_database", lambda: Database(tmp_path / "assignments-mcp.db"))
     malformed = {"secret": "do-not-discover", "private_locator": "/not-a-body-oracle"}

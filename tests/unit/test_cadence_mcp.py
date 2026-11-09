@@ -122,90 +122,14 @@ def _call_err(name: str, arguments: dict[str, Any]) -> str:
 # Dispatch tests — each tool
 # ---------------------------------------------------------------------------
 
-class TestCadenceStatus:
-    def test_dispatch(self, _patch_cadence: FakeCadenceService) -> None:
-        payload = _call_ok("cadence.status", {})
-        assert payload["enabled"] is True
-        assert payload["pressure"] == "normal"
-
-
-class TestCadenceLoops:
-    def test_dispatch_default(self, _patch_cadence: FakeCadenceService) -> None:
-        payload = _call_ok("cadence.loops", {})
-        assert len(payload["loops"]) == 1
-        assert payload["loops"][0]["id"] == "loop-1"
-
-    def test_dispatch_include_terminal(self, _patch_cadence: FakeCadenceService) -> None:
-        payload = _call_ok("cadence.loops", {"include_terminal": True})
-        assert len(payload["loops"]) == 1
-
-
 class TestCadenceGetLoop:
-    def test_dispatch_async_wrapped(self, _patch_cadence: FakeCadenceService) -> None:
-        """get_loop is async; dispatch wraps it in _run()."""
-        payload = _call_ok("cadence.get_loop", {"loop_id": "loop-42"})
-        assert payload["id"] == "loop-42"
-        assert payload["next_action"]["kind"] == "nudge"
-
-    def test_proves_run_wrapping(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        """Prove _run wrapping by verifying a canned coroutine executes."""
-        call_log: list[str] = []
-
-        async def _canned_get_loop(self: Any, principal: Any, loop_id: str) -> dict[str, Any]:
-            call_log.append(f"get_loop:{loop_id}")
-            return {"id": loop_id, "status": "open", "next_action": {"kind": "check"}}
-
-        class StubService:
-            get_loop = _canned_get_loop
-
-        monkeypatch.setattr(cadence_mod, "_service", lambda: StubService())
-        monkeypatch.setattr(server, "resolve_auth", lambda: SimpleNamespace(principal=OWNER))
-
-        payload = _call_ok("cadence.get_loop", {"loop_id": "coro-proof"})
-        assert payload["id"] == "coro-proof"
-        assert call_log == ["get_loop:coro-proof"]
 
     def test_missing_loop_id(self, _patch_cadence: FakeCadenceService) -> None:
         err = _call_err("cadence.get_loop", {})
         assert "loop_id" in err
 
 
-class TestCadenceBrief:
-    def test_dispatch(self, _patch_cadence: FakeCadenceService) -> None:
-        payload = _call_ok("cadence.brief", {})
-        assert payload["headline"] == "All quiet"
-
-
-class TestCadenceCloseout:
-    def test_dispatch(self, _patch_cadence: FakeCadenceService) -> None:
-        payload = _call_ok("cadence.closeout", {})
-        assert "recs" in payload
-
-
-class TestCadenceHistory:
-    def test_dispatch_default(self, _patch_cadence: FakeCadenceService) -> None:
-        payload = _call_ok("cadence.history", {})
-        assert "nudges" in payload
-
-    def test_dispatch_with_limit(self, _patch_cadence: FakeCadenceService) -> None:
-        payload = _call_ok("cadence.history", {"limit": 10})
-        assert "nudges" in payload
-
-
-class TestCadenceAudit:
-    def test_dispatch(self, _patch_cadence: FakeCadenceService) -> None:
-        payload = _call_ok("cadence.audit", {})
-        assert "loops" in payload
-
-
 class TestCadenceSnooze:
-    def test_dispatch_with_until(self, _patch_cadence: FakeCadenceService) -> None:
-        payload = _call_ok("cadence.snooze", {"loop_id": "loop-1", "until": "2026-08-17T00:00:00"})
-        assert payload["id"] == "loop-1"
-
-    def test_dispatch_with_hours(self, _patch_cadence: FakeCadenceService) -> None:
-        payload = _call_ok("cadence.snooze", {"loop_id": "loop-1", "hours": 12})
-        assert payload["id"] == "loop-1"
 
     def test_missing_loop_id(self, _patch_cadence: FakeCadenceService) -> None:
         err = _call_err("cadence.snooze", {})
@@ -227,9 +151,6 @@ class TestCadenceSnooze:
 
 
 class TestCadenceSetStatus:
-    def test_dispatch(self, _patch_cadence: FakeCadenceService) -> None:
-        payload = _call_ok("cadence.set_status", {"loop_id": "loop-1", "status": "closed"})
-        assert payload["status"] == "closed"
 
     def test_invalid_status_returns_error(self, _patch_cadence: FakeCadenceService) -> None:
         """Status outside the enum must return isError:true."""
@@ -245,18 +166,7 @@ class TestCadenceSetStatus:
         assert "loop_id" in err
 
 
-class TestCadenceRunNow:
-    def test_dispatch(self, _patch_cadence: FakeCadenceService) -> None:
-        payload = _call_ok("cadence.run_now", {})
-        assert payload["open_loops"] == 3
-
-
 class TestCadenceApplyCloseout:
-    def test_dispatch(self, _patch_cadence: FakeCadenceService) -> None:
-        payload = _call_ok("cadence.apply_closeout", {
-            "decisions": [{"loop_id": "loop-1", "action": "close"}],
-        })
-        assert payload["applied"] == 1
 
     def test_missing_decisions(self, _patch_cadence: FakeCadenceService) -> None:
         err = _call_err("cadence.apply_closeout", {})

@@ -426,19 +426,17 @@ def test_a_thought_never_recalls_its_own_note(rig):
     coordinator = RefinementCoordinator(rig)
     sealed = coordinator._sealed_prompt(str(thought["working_note"]["body_markdown"]))
 
-    without_exclusion = coordinator._routed_payload(sealed, None, [])
-    assert f"note:{own_note}" in without_exclusion["user_prompt"]  # the risk is real
+    # The Thought's grounding at dispatch (``AskService.ask`` for thought.interview).
+    ask = AskService(rig, broker=broker)
+    without_exclusion, _echo = ask._grounding(OWNER, None, sealed, capability_id="thought.interview")
+    assert f"note:{own_note}" in without_exclusion  # the risk is real
 
-    payload = coordinator._routed_payload(sealed, None, coordinator._own_refs(thought))
-    assert f"desk_decision:{other}" in payload["user_prompt"]
-    assert f"note:{own_note}" not in payload["user_prompt"]
-
-    # Ask builds the same bytes at dispatch from the same arguments.
-    envelope, _echo = AskService(rig, broker=broker)._grounding(
+    envelope, _echo = ask._grounding(
         OWNER, None, sealed, capability_id="thought.interview",
         exclude_refs=coordinator._own_refs(thought),
     )
-    assert payload["user_prompt"] == sealed + "\n\nGrounding:\n" + envelope
+    assert f"desk_decision:{other}" in envelope
+    assert f"note:{own_note}" not in envelope
 
 
 # ── Review round (Astra, PR #830) ─────────────────────────────────────

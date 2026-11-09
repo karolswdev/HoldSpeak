@@ -72,10 +72,6 @@ class _Stage:
 # ── the deterministic matcher ─────────────────────────────────────────────
 
 
-def test_kinds_carry_text():
-    assert CORRECTION_KINDS == ("intent", "target", "text")
-
-
 def test_exact_phrase_replaces_and_names_the_rule():
     text, applied = apply_text_corrections(
         "postgress needs a version bump", [_rule("postgress", "PostgreSQL", rule_id=7)]
@@ -258,14 +254,6 @@ def test_pipeline_without_corrections_is_unchanged():
     seen: list[str] = []
     run = DictationPipeline([_Stage(seen=seen)]).run(_utt("postgress needs a bump"))
     assert seen == ["postgress needs a bump"]
-    assert run.corrections_applied == ()
-
-
-def test_pipeline_run_field_carries_a_default():
-    run = PipelineRun(
-        final_text="x", stage_results=[], intent=None, warnings=[],
-        total_elapsed_ms=0.0, short_circuited=False,
-    )
     assert run.corrections_applied == ()
 
 

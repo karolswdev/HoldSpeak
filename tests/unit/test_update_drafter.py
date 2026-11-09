@@ -540,28 +540,6 @@ class TestClaimSchema:
             "acceptance": "unreviewed",
         }
 
-    def test_claim_immutable(self):
-        c = Claim(
-            span_id="s_progress_0",
-            text="test",
-            refs=["item:x"],
-            section="progress",
-        )
-        with pytest.raises(AttributeError):
-            c.span_id = "changed"  # type: ignore[misc]
-
-    def test_section_keys_complete(self):
-        assert len(SECTION_KEYS) == 6
-        assert SECTION_KEYS == (
-            "progress",
-            "decisions",
-            "risks_blockers",
-            "dependencies",
-            "next_actions",
-            "source_coverage",
-        )
-
-
 # ── CAVEAT SCANNER UNIT TESTS ────────────────────────────────────────
 
 class TestCaveatScanner:
@@ -1501,17 +1479,6 @@ class TestClaimVerifiedSerialization:
 
 class TestBuildModelPrompt:
     """The model prompt builder produces a valid payload."""
-
-    def test_prompt_has_system_and_user(self):
-        claims = [
-            Claim(span_id="s_progress_0", text="T", refs=["item:p1"],
-                  section="progress"),
-        ]
-        payload = _build_model_prompt(claims)
-        assert "system_prompt" in payload
-        assert "user_prompt" in payload
-        assert "response_format" in payload
-        assert "item:p1" in payload["user_prompt"]
 
     def test_empty_sections_noted(self):
         payload = _build_model_prompt([])

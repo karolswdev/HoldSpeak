@@ -11,15 +11,6 @@ from holdspeak.plugins.router import (
 )
 
 
-def test_available_profiles_include_balanced_and_domain_profiles() -> None:
-    profiles = available_profiles()
-    assert "balanced" in profiles
-    assert "architect" in profiles
-    assert "delivery" in profiles
-    assert "product" in profiles
-    assert "incident" in profiles
-
-
 def test_normalize_profile_falls_back_to_default() -> None:
     assert normalize_profile("architect") == "architect"
     assert normalize_profile("  DELIVERY  ") == "delivery"

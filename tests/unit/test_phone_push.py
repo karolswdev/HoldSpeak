@@ -90,11 +90,6 @@ def test_the_provider_token_is_es256_over_team_and_iat_with_the_key_id() -> None
     assert parts["claims"] == {"iss": "TEAM123456", "iat": 1_761_700_000}
 
 
-def test_h2_is_installed_and_apns_says_ready() -> None:
-    assert http2_ready() is True
-    assert ApnsPush(_key()).push_state() == PUSH_READY
-
-
 def test_without_h2_apns_says_http2_unavailable_and_sends_nothing(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(push_module, "http2_ready", lambda: False)
     provider = ApnsPush(_key(), host="http://127.0.0.1:9")

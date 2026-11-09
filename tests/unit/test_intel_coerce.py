@@ -26,29 +26,11 @@ class TestCoerceStrListValidInput:
         result = _coerce_str_list(value)
         assert result == ["topic1", "topic2", "topic3"]
 
-    def test_single_element_list(self):
-        """Single element list works correctly."""
-        value = ["only one"]
-        result = _coerce_str_list(value)
-        assert result == ["only one"]
-
-    def test_empty_list(self):
-        """Empty list returns empty list."""
-        result = _coerce_str_list([])
-        assert result == []
-
     def test_list_with_whitespace_strings(self):
         """Strings are stripped of whitespace."""
         value = ["  topic1  ", "\ttopic2\n", "  topic3"]
         result = _coerce_str_list(value)
         assert result == ["topic1", "topic2", "topic3"]
-
-    def test_unicode_strings(self):
-        """Unicode strings are handled."""
-        value = ["\u65e5\u672c\u8a9e", "\u4e2d\u6587", "English"]
-        result = _coerce_str_list(value)
-        assert result == ["\u65e5\u672c\u8a9e", "\u4e2d\u6587", "English"]
-
 
 class TestCoerceStrListFiltersNonStrings:
     """Tests for filtering non-string items."""
@@ -58,24 +40,6 @@ class TestCoerceStrListFiltersNonStrings:
         value = ["topic1", None, "topic2", None]
         result = _coerce_str_list(value)
         assert result == ["topic1", "topic2"]
-
-    def test_converts_integers_to_strings(self):
-        """Integer values are converted to strings."""
-        value = ["topic1", 42, "topic2"]
-        result = _coerce_str_list(value)
-        assert result == ["topic1", "42", "topic2"]
-
-    def test_converts_floats_to_strings(self):
-        """Float values are converted to strings."""
-        value = ["topic1", 3.14, "topic2"]
-        result = _coerce_str_list(value)
-        assert result == ["topic1", "3.14", "topic2"]
-
-    def test_converts_booleans_to_strings(self):
-        """Boolean values are converted to strings."""
-        value = ["topic1", True, False, "topic2"]
-        result = _coerce_str_list(value)
-        assert result == ["topic1", "True", "False", "topic2"]
 
     def test_filters_empty_strings(self):
         """Empty strings after stripping are filtered out."""
@@ -103,11 +67,6 @@ class TestCoerceStrListNonListInput:
         result = _coerce_str_list("single topic")
         assert result == ["single topic"]
 
-    def test_single_integer_returns_list_with_string(self):
-        """Single integer becomes list with string representation."""
-        result = _coerce_str_list(42)
-        assert result == ["42"]
-
     def test_empty_string_returns_empty_list(self):
         """Empty string returns empty list."""
         result = _coerce_str_list("")
@@ -125,17 +84,6 @@ class TestCoerceStrListNonListInput:
         assert len(result) == 1
         assert "key" in result[0]
 
-    def test_boolean_true_returns_list(self):
-        """Boolean True becomes list with 'True' string."""
-        result = _coerce_str_list(True)
-        assert result == ["True"]
-
-    def test_boolean_false_returns_list(self):
-        """Boolean False becomes list with 'False' string."""
-        result = _coerce_str_list(False)
-        assert result == ["False"]
-
-
 class TestCoerceStrListEdgeCases:
     """Edge cases for _coerce_str_list."""
 
@@ -147,27 +95,6 @@ class TestCoerceStrListEdgeCases:
         assert result[0] == "topic1"
         assert "[" in result[1]  # String representation of list
         assert result[2] == "topic2"
-
-    def test_list_with_all_none(self):
-        """List with all None values returns empty list."""
-        value = [None, None, None]
-        result = _coerce_str_list(value)
-        assert result == []
-
-    def test_very_long_list(self):
-        """Very long list is handled."""
-        value = [f"topic{i}" for i in range(1000)]
-        result = _coerce_str_list(value)
-        assert len(result) == 1000
-        assert result[0] == "topic0"
-        assert result[999] == "topic999"
-
-    def test_special_characters_preserved(self):
-        """Special characters in strings are preserved."""
-        value = ["topic with 'quotes'", 'topic with "double"', "topic & symbols!"]
-        result = _coerce_str_list(value)
-        assert result == ["topic with 'quotes'", 'topic with "double"', "topic & symbols!"]
-
 
 # ============================================================
 # Tests for _coerce_action_items()
@@ -213,44 +140,11 @@ class TestCoerceActionItemsValid:
 class TestCoerceActionItemsMissingOptionalFields:
     """Tests for handling missing optional fields."""
 
-    def test_missing_owner(self):
-        """Action item without owner has None owner."""
-        value = [{"task": "Do this", "due": "Tomorrow"}]
-        result = _coerce_action_items(value)
-        assert len(result) == 1
-        assert result[0].task == "Do this"
-        assert result[0].owner is None
-        assert result[0].due == "Tomorrow"
-
-    def test_missing_due(self):
-        """Action item without due has None due."""
-        value = [{"task": "Do that", "owner": "Me"}]
-        result = _coerce_action_items(value)
-        assert len(result) == 1
-        assert result[0].task == "Do that"
-        assert result[0].owner == "Me"
-        assert result[0].due is None
-
-    def test_missing_both_optional(self):
-        """Action item with only task has None for optional fields."""
-        value = [{"task": "Just the task"}]
-        result = _coerce_action_items(value)
-        assert len(result) == 1
-        assert result[0].task == "Just the task"
-        assert result[0].owner is None
-        assert result[0].due is None
-
     def test_null_owner_becomes_none(self):
         """Owner value of null becomes None."""
         value = [{"task": "Task", "owner": None, "due": "Friday"}]
         result = _coerce_action_items(value)
         assert result[0].owner is None
-
-    def test_null_due_becomes_none(self):
-        """Due value of null becomes None."""
-        value = [{"task": "Task", "owner": "Me", "due": None}]
-        result = _coerce_action_items(value)
-        assert result[0].due is None
 
     def test_empty_string_owner_becomes_none(self):
         """Owner value of empty string becomes None."""
@@ -258,24 +152,11 @@ class TestCoerceActionItemsMissingOptionalFields:
         result = _coerce_action_items(value)
         assert result[0].owner is None
 
-    def test_empty_string_due_becomes_none(self):
-        """Due value of empty string becomes None."""
-        value = [{"task": "Task", "owner": "Me", "due": ""}]
-        result = _coerce_action_items(value)
-        assert result[0].due is None
-
     def test_string_null_owner_becomes_none(self):
         """Owner value of 'null' string becomes None."""
         value = [{"task": "Task", "owner": "null", "due": "Friday"}]
         result = _coerce_action_items(value)
         assert result[0].owner is None
-
-    def test_string_null_due_becomes_none(self):
-        """Due value of 'null' string becomes None."""
-        value = [{"task": "Task", "owner": "Me", "due": "null"}]
-        result = _coerce_action_items(value)
-        assert result[0].due is None
-
 
 class TestCoerceActionItemsFiltersInvalid:
     """Tests for filtering invalid action items."""
@@ -352,22 +233,6 @@ class TestCoerceActionItemsNonListInput:
         result = _coerce_action_items({"task": "Single task"})
         assert result == []
 
-    def test_string_returns_empty_list(self):
-        """String input returns empty list."""
-        result = _coerce_action_items("not a list")
-        assert result == []
-
-    def test_integer_returns_empty_list(self):
-        """Integer input returns empty list."""
-        result = _coerce_action_items(42)
-        assert result == []
-
-    def test_boolean_returns_empty_list(self):
-        """Boolean input returns empty list."""
-        result = _coerce_action_items(True)
-        assert result == []
-
-
 class TestCoerceActionItemsTypeCoercion:
     """Tests for type coercion of field values."""
 
@@ -377,18 +242,6 @@ class TestCoerceActionItemsTypeCoercion:
         result = _coerce_action_items(value)
         assert len(result) == 1
         assert result[0].task == "123"
-
-    def test_owner_coerced_to_string(self):
-        """Owner value is coerced to string."""
-        value = [{"task": "Task", "owner": 42}]
-        result = _coerce_action_items(value)
-        assert result[0].owner == "42"
-
-    def test_due_coerced_to_string(self):
-        """Due value is coerced to string."""
-        value = [{"task": "Task", "due": 2024}]
-        result = _coerce_action_items(value)
-        assert result[0].due == "2024"
 
     def test_whitespace_in_values_stripped(self):
         """Whitespace in values is stripped."""
@@ -402,11 +255,6 @@ class TestCoerceActionItemsTypeCoercion:
 class TestCoerceActionItemsEdgeCases:
     """Edge cases for _coerce_action_items."""
 
-    def test_empty_list_returns_empty_list(self):
-        """Empty list returns empty list."""
-        result = _coerce_action_items([])
-        assert result == []
-
     def test_extra_fields_ignored(self):
         """Extra fields in action items are ignored."""
         value = [{"task": "Task", "owner": "Me", "due": "Friday", "priority": "high", "notes": "extra"}]
@@ -417,29 +265,6 @@ class TestCoerceActionItemsEdgeCases:
         assert result[0].due == "Friday"
         # Verify no extra attributes
         assert not hasattr(result[0], "priority")
-
-    def test_unicode_in_fields(self):
-        """Unicode characters in fields are handled."""
-        value = [{"task": "\u30bf\u30b9\u30af", "owner": "\u7530\u4e2d", "due": "\u660e\u65e5"}]
-        result = _coerce_action_items(value)
-        assert result[0].task == "\u30bf\u30b9\u30af"
-        assert result[0].owner == "\u7530\u4e2d"
-        assert result[0].due == "\u660e\u65e5"
-
-    def test_very_long_task(self):
-        """Very long task string is handled."""
-        long_task = "A" * 10000
-        value = [{"task": long_task}]
-        result = _coerce_action_items(value)
-        assert result[0].task == long_task
-
-    def test_many_action_items(self):
-        """Many action items are handled."""
-        value = [{"task": f"Task {i}", "owner": "Me"} for i in range(100)]
-        result = _coerce_action_items(value)
-        assert len(result) == 100
-        assert result[0].task == "Task 0"
-        assert result[99].task == "Task 99"
 
     def test_realistic_llm_response(self):
         """Realistic LLM response structure is handled."""

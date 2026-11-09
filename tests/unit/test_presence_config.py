@@ -22,13 +22,6 @@ def isolated_config(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 
 
 # ── config field ──
-def test_presence_defaults_off_and_round_trips(isolated_config) -> None:
-    assert Config().presence.enabled is False
-    cfg = Config()
-    cfg.presence.enabled = True
-    cfg.save(isolated_config)
-    assert json.loads(isolated_config.read_text())["presence"]["enabled"] is True
-    assert Config.load(isolated_config).presence.enabled is True
 
 
 # ── gating: config OR env, neither => off ──

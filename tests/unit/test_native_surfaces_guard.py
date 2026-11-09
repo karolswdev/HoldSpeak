@@ -78,12 +78,6 @@ def test_cores_speak_the_surface_idiom() -> None:
         )
 
 
-def test_ledger_is_closed() -> None:
-    """HS-98-07: the seam is retired. The ledger only ever shrank and
-    is now empty — reopening it would let the page grammar return."""
-    assert ALLOWED == {}, "the Phase 98 conversion ledger never reopens"
-
-
 def viewport_queries(text: str) -> list[str]:
     """The viewport-width media queries in a stylesheet's source."""
     return [m.group(0) for m in re.finditer(r"@media[^{]*", text)

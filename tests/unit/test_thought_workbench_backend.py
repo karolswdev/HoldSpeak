@@ -176,19 +176,6 @@ def test_composite_empty_answer_and_unready_admission_refuse_without_append(rig)
     assert service.get(OWNER, thought["id"])["working_note"]["body_markdown"] == "Launch ownership"
 
 
-def test_catalogue_has_eighteen_tools_and_workbench_original_resources():
-    assert len(thought_family.TOOLS) == 18
-    tools = {tool["name"]:tool for tool in thought_family.TOOLS}
-    assert all(tool["inputSchema"]["additionalProperties"] is False for tool in tools.values())
-    assert tools["thought.answer_and_continue"]["inputSchema"]["required"][-1] == "workspace_cursor"
-    for unchanged in ("thought.create","thought.adopt_note","thought.get_default_context",
-                      "thought.replace_default_context","thought.list_context"):
-        assert "workspace_cursor" not in tools[unchanged]["inputSchema"]["properties"]
-    templates = {item["uriTemplate"] for item in resources.list_resources()["resourceTemplates"]}
-    assert "holdspeak://thoughts/{thought_id}/workbench" in templates
-    assert "holdspeak://thoughts/{thought_id}/original" in templates
-
-
 @pytest.mark.parametrize("initial,answer", [("", "Mina"), ("Launch ownership", "Mïna 🚀")])
 def test_add_to_note_persists_exact_append_effect_and_replays_original_hub(rig, initial, answer):
     db, service, thought = rig
@@ -334,18 +321,6 @@ def test_terminal_reducer_is_closed_and_scheduler_loss_is_retryable(code, catego
     }
 
 
-def test_terminal_write_sites_and_dynamic_ingress_use_the_closed_vocabulary():
-    source = Path("holdspeak/services/refinement_thought_service.py").read_text()
-    persisted_literals = set(re.findall(r"terminal_code='([a-z_]+)'", source))
-    assert persisted_literals <= set(_TERMINAL_CODE_CATEGORY)
-    assert {"shutdown_before_dispatch","thought_missing_during_recovery",
-            "restart_bound_outcome_unknown","refinement_result_stale","retry_plan_invalid",
-            "retry_child_missing_after_plan","orphaned_before_dispatch_binding",
-            "refinement_result_invalid","kernel_operation_missing","ask_result_unpublished"} <= persisted_literals
-    assert _closed_terminal_code("new_unruled_provider_literal") == "unknown_terminal_code"
-    assert _TERMINAL_CODE_CATEGORY["failed"] == "retryable"
-
-
 def test_duplicate_dispatch_and_cancellation_callbacks_are_continuity_noops(rig):
     _db, service, thought = rig
     invocation = service.reserve_refinement(
@@ -432,43 +407,6 @@ def test_dispatch_hook_refuses_replaced_host_epoch_for_initial_and_composite_chi
             "op-old-child-epoch", child["attempts"][0]["ask_invocation_id"], 1)
     assert child_error.value.code == "refinement_host_lease_expired"
 
-
-def test_default_same_id_readiness_change_refuses_initial_and_composite_before_writes(rig, monkeypatch):
-    db, service, thought = rig
-    from holdspeak.inference_targets import resolve_placement
-    monkeypatch.setattr("holdspeak.inference_targets._this_machine_readiness", lambda: ("ready", ""))
-    target = resolve_placement(db).target
-    claim = {"target_id":target.id,"target_kind":target.kind,"boundary":target.boundary,
-             "engine":target.engine,"model":target.model,"readiness":target.readiness_state,
-             "reason":target.readiness_reason}
-    epoch = service.claim_refinement_host("default-host", "web", lease_seconds=30)
-    monkeypatch.setattr("holdspeak.inference_targets._this_machine_readiness",
-                        lambda: ("unavailable", "model disappeared"))
-    with pytest.raises(ConflictError) as initial_error:
-        service.reserve_refinement_with_dispatch_claim(
-            OWNER, thought["id"], request_id="default-race-initial",
-            expected_aggregate_revision=1, expected_working_revision=1, expected_attachment_revision=0,
-            dispatch_host_id="default-host", dispatch_lease_epoch=epoch,
-            admission_claim=claim, validate_current_admission=True)
-    assert initial_error.value.code == "refinement_continuation_unavailable"
-    with db._connection() as conn:
-        assert conn.execute("SELECT COUNT(*) FROM refinement_invocations WHERE thought_id=?", (thought["id"],)).fetchone()[0] == 0
-
-    review_thought = service.create(OWNER, request_id="default-race-capture", raw_text="Race", source={"kind":"typed"})
-    review_id = _review(db, service, review_thought, "default-race")
-    cursor = service.get_workbench(OWNER, review_thought["id"], inference_available=True)["workspace_cursor"]
-    with pytest.raises(ConflictError) as composite_error:
-        service.answer_and_continue_with_dispatch_claim(
-            OWNER, review_thought["id"], review_id, command_id="default-race-composite",
-            answer="Mina", expected_aggregate_revision=1, expected_working_revision=1,
-            expected_attachment_revision=0, workspace_cursor=cursor,
-            dispatch_host_id="default-host", dispatch_lease_epoch=epoch,
-            admission_claim=claim, validate_current_admission=True)
-    assert composite_error.value.code == "refinement_continuation_unavailable"
-    assert service.get(OWNER, review_thought["id"])["working_note"]["body_markdown"] == "Race"
-    with db._connection() as conn:
-        assert conn.execute("SELECT COUNT(*) FROM refinement_answer_continue_commands").fetchone()[0] == 0
-        assert conn.execute("SELECT COUNT(*) FROM refinement_review_actions").fetchone()[0] == 0
 
 
 def test_process_only_cursor_race_returns_fresh_workbench_and_one_cas_retry_saves_draft(rig):

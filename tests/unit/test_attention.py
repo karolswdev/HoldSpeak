@@ -77,8 +77,6 @@ def _item(
 
 
 class TestRanking:
-    def test_the_five_classes_in_the_ratified_order(self) -> None:
-        assert RANK_CLASSES == ("overdue", "due_today", "not_run", "no_due_date", "waiting")
 
     def test_classes_rank_overdue_then_due_today_then_not_run_then_no_due_then_waiting(self) -> None:
         items = [

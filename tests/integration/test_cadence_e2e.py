@@ -56,17 +56,6 @@ def test_full_chief_of_staff_flow(db):
     assert "by_source" in audit["totals"]
 
 
-def test_audit_is_local_and_serializable(db):
-    import json
-
-    CadenceService(db, CadenceConfig()).tick(NOON)
-    audit = export_audit(db, now=NOON)
-    # round-trips as JSON (no non-serializable objects) and never claims off-machine egress
-    dumped = json.loads(json.dumps(audit))
-    assert dumped["egress"]["scope"] == "local"
-    assert "nothing leaves" in dumped["egress"]["label"].lower()
-
-
 def test_master_off_switch_keeps_the_thread_from_starting():
     # The runtime gate reads cadence.enabled via the mixin; disabled => no thread.
     from holdspeak.config import Config

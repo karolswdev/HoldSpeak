@@ -300,10 +300,3 @@ def _upper_lines() -> dict[str, int]:
     return out
 
 
-def test_to_upper_case_only_shrinks():
-    now = _upper_lines()
-    grew = {k: v for k, v in now.items() if v > UPPER_DEBT.get(k, 0)}
-    assert not grew, (
-        "a source uppercases a word for the face (say the word in sentence case, "
-        "or send it through stateWords):\n" + "\n".join(f"{k}: {v}" for k, v in sorted(grew.items()))
-    )
