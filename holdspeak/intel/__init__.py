@@ -14,26 +14,41 @@ from ..logging_config import get_logger
 
 log = get_logger("intel")
 
-try:
-    from llama_cpp import Llama
 
+def _import_llama() -> dict:
+    try:
+        from llama_cpp import Llama
+    except Exception as exc:  # pragma: no cover
+        # This dependency is optional; avoid noisy errors during normal voice-typing usage.
+        log.debug(f"llama_cpp not available: {exc}")
+        return {"Llama": None, "_IMPORT_ERROR": exc}
     log.debug("llama_cpp imported successfully")
-except Exception as exc:  # pragma: no cover
-    Llama = None  # type: ignore[assignment]
-    _IMPORT_ERROR = exc
-    # This dependency is optional; avoid noisy errors during normal voice-typing usage.
-    log.debug(f"llama_cpp not available: {exc}")
-else:  # pragma: no cover
-    _IMPORT_ERROR = None
+    return {"Llama": Llama, "_IMPORT_ERROR": None}
 
-try:
-    from openai import OpenAI
-except Exception as exc:  # pragma: no cover
-    OpenAI = None  # type: ignore[assignment]
-    _OPENAI_IMPORT_ERROR = exc
-    log.debug(f"openai not available: {exc}")
-else:  # pragma: no cover
-    _OPENAI_IMPORT_ERROR = None
+
+def _import_openai() -> dict:
+    try:
+        from openai import OpenAI
+    except Exception as exc:  # pragma: no cover
+        log.debug(f"openai not available: {exc}")
+        return {"OpenAI": None, "_OPENAI_IMPORT_ERROR": exc}
+    return {"OpenAI": OpenAI, "_OPENAI_IMPORT_ERROR": None}
+
+
+#: The optional clients, imported at first read (2026-11-09): ``openai`` alone
+#: took 0.3 s of the hub's start, and the hub builds no client at start.
+_LAZY = {"Llama": _import_llama, "_IMPORT_ERROR": _import_llama,
+         "OpenAI": _import_openai, "_OPENAI_IMPORT_ERROR": _import_openai}
+
+
+def __getattr__(name: str):
+    load = _LAZY.get(name)
+    if load is None:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    for key, value in load().items():
+        globals().setdefault(key, value)  # a test's patch already set stays
+    return globals()[name]
+
 
 from .models import (  # noqa: E402
     ActionItem,

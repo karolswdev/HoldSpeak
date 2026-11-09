@@ -12,8 +12,6 @@ from datetime import date, datetime, timedelta, timezone
 from typing import Any, Iterable
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-from dateutil.rrule import rrulestr
-from icalendar import Calendar
 
 
 MAX_FEED_BYTES = 5 * 1024 * 1024
@@ -86,6 +84,8 @@ def parse_calendar_bytes(
         raw.decode("utf-8")
     except UnicodeDecodeError:
         return ParseResult((), (), "calendar_feed_invalid_utf8")
+    from icalendar import Calendar  # at first parse: 16 ms off the hub start
+
     try:
         calendar = Calendar.from_ical(raw)
     except Exception:
@@ -228,6 +228,8 @@ def _event_occurrences(
         if frequency in {"SECONDLY", "MINUTELY"}:
             raise _EventProblem("calendar_event_skipped_unsupported_rrule_frequency")
         try:
+            from dateutil.rrule import rrulestr
+
             rule_text = rrule.to_ical().decode("utf-8")
             rule = rrulestr(rule_text, dtstart=starts_at)
             occurrences = []

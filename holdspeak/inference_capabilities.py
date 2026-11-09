@@ -8,6 +8,7 @@ profile, deployment, credential, or :class:`InferenceRunner` can be reached.
 """
 from __future__ import annotations
 
+import functools
 import hashlib
 import json
 import re
@@ -1063,6 +1064,7 @@ def _capability(
     )
 
 
+@functools.cache  # immutable rows; the registry and engine_lanes both read them at start
 def builtin_capability_definitions() -> tuple[InferenceCapabilityDefinition, ...]:
     """The complete Story-01 semantic census plus chartered near-term jobs.
 

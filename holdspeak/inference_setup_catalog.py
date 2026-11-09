@@ -482,6 +482,11 @@ del _PACKAGED_PRESETS_SOURCE
 del _PACKAGED_CATALOG_BODY
 
 
+#: (key, body, signature) triples that verified: each hub build checks the same
+#: packaged catalogue, and the pure-Python Ed25519 check is the dear part.
+_VERIFIED_SIGNATURES: set[tuple[bytes, bytes, bytes]] = set()
+
+
 def verify_catalog_envelope(
     envelope_json: str,
     *,
@@ -506,8 +511,10 @@ def verify_catalog_envelope(
         raise ValueError("catalog signature is invalid") from exc
     body = {key: value for key, value in raw.items() if key != "signature"}
     canonical = json.dumps(body, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode("utf-8")
-    if not ed25519.verify(public, canonical, signature):
-        raise ValueError("catalog signature is invalid")
+    if (public, canonical, signature) not in _VERIFIED_SIGNATURES:
+        if not ed25519.verify(public, canonical, signature):
+            raise ValueError("catalog signature is invalid")
+        _VERIFIED_SIGNATURES.add((public, canonical, signature))
     try:
         generated = datetime.fromisoformat(raw["generated_at"].replace("Z", "+00:00"))
         expires = datetime.fromisoformat(raw["expires_at"].replace("Z", "+00:00"))

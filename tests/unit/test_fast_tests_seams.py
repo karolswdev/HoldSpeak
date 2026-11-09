@@ -86,7 +86,7 @@ def _amount_app() -> FastAPI:
 
 
 def test_a_rebuilt_model_gets_its_new_constraint_in_the_next_app() -> None:
-    """The suite shares route field adapters (tests/conftest.py); a model
+    """Route field adapters are shared (holdspeak/web/routes/_mount.py); a model
     rebuilt with a new constraint must not get the adapter made before it."""
     assert TestClient(_amount_app()).post("/amount", json={"value": -1}).status_code == 200
     original = _Amount.model_fields["value"]

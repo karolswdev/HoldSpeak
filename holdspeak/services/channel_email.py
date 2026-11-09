@@ -39,6 +39,7 @@ Tests replace :data:`KEY_STORE` (a memory store: never the real keychain) and
 """
 from __future__ import annotations
 
+import functools
 import http.client
 import json
 import re
@@ -53,7 +54,6 @@ from html.parser import HTMLParser
 from typing import Any, Callable, Mapping, Optional, Protocol
 from urllib.parse import urlparse
 
-from markdown_it import MarkdownIt
 
 from ..plugins.gated_connector import (
     ConnectorOperationRefused,
@@ -84,12 +84,16 @@ class EmailMessage:
     html: str = ""
 
 
-_EMAIL_MARKDOWN = MarkdownIt("commonmark", {"html": False, "linkify": False})
+@functools.cache
+def _email_markdown() -> Any:
+    from markdown_it import MarkdownIt  # at first render: off the hub start
+
+    return MarkdownIt("commonmark", {"html": False, "linkify": False})
 
 
 def markdown_html(markdown: str) -> str:
     """Render stored Markdown as escaped, link-policy-safe HTML."""
-    return _EMAIL_MARKDOWN.render(str(markdown or ""))
+    return _email_markdown().render(str(markdown or ""))
 
 
 class _PlainTextFromHtml(HTMLParser):

@@ -42,7 +42,10 @@ each, in place of one "this face renders cleanly" file per phase.
     overlap   no two interactive controls overlap (painted boxes)
     library   every verb is a library Button: no raw <button>
     material  the bevel grammar (material_rig._assert_material)
-    still     nothing interactive moves for 1.5 s after the window settles;
+    still     nothing interactive moves from the moment the window settles
+              until it is quiet: no box moved, no fetch in flight and no
+              animation running for STILL_QUIET_MS (the micro token plus a
+              margin), at most STILL_MS (1.5 s);
               and with reduced motion (every case emulates it) nothing in the
               window runs a CSS animation, a CSS transition or a script
               animation (Element.animate) longer than the --duration-micro
@@ -68,7 +71,7 @@ each, in place of one "this face renders cleanly" file per phase.
 * Every HTML route the hub serves (tests/unit/test_route_preflight.PAGE_ROUTES, fenced
   against the live app there) draws what it is for: a standalone page its
   visible content, every other address the desk and the window it opens
-  (shown, with text); and no page error or console error after the 1.5 s watch.
+  (shown, with text); and no page error or console error after the still watch.
 * Known reds on main are listed in ``KNOWN_REDS`` and marked
   ``xfail(strict=True, raises=KnownRed)``. Each entry excuses ONE defect: a
   fence key and a regex over one observation. Any other observation fails,
@@ -77,7 +80,7 @@ each, in place of one "this face renders cleanly" file per phase.
 * Collection fails when the manifest yields fewer than MANIFEST_FLOOR rows,
   or when the hub refuses a window for any reason but ``window_not_on_hub``.
 
-No fixed waits: condition waits only, except the 1.5 s no-move window.
+No fixed waits: condition waits only. The still watch ends on a quiet window.
 """
 from __future__ import annotations
 
@@ -1058,12 +1061,17 @@ LIBRARY_JS = r"""(sel) => {""" + _COMMON_JS + r"""
     .map((b) => `<button class="${String(b.className).slice(0, 60)}"> ${name(b)}`);
 }"""
 
-# still: every interactive element's box, each frame, keyed by element.
-RECORD_JS = r"""([sel, ms]) => new Promise((resolve) => {
+# still: every interactive element's box, each frame, keyed by element. The
+# watch ends once the window has been quiet for `quiet` ms (no box moved or
+# appeared, no fetch in flight as MOTION_INIT_JS counts them, no finite
+# animation running), and at `ms` at the latest.
+RECORD_JS = r"""([sel, ms, quiet]) => new Promise((resolve) => {
   const scope = sel ? document.querySelector(sel) : document.body;
   const CTL = 'button, [role=button], [role=tab], input, textarea, select, a[href], [data-testid]';
   const ids = new WeakMap(); let n = 0; const rows = {}; const t0 = performance.now();
+  let changed = t0;
   const tick = () => {
+    const now = performance.now();
     for (const el of scope ? scope.querySelectorAll(CTL) : []) {
       const r = el.getBoundingClientRect();
       if (!r.width || !r.height) continue;
@@ -1072,13 +1080,22 @@ RECORD_JS = r"""([sel, ms]) => new Promise((resolve) => {
         if (r.top >= innerHeight || r.bottom <= 0 || getComputedStyle(el).visibility !== 'visible') continue;
         ids.set(el, k = ++n);
         rows[k] = {name: (el.getAttribute('data-testid') || el.getAttribute('aria-label') || el.textContent || el.tagName)
-          .trim().replace(/\s+/g, ' ').slice(0, 40), x: r.left, y: r.top, worst: 0};
+          .trim().replace(/\s+/g, ' ').slice(0, 40), x: r.left, y: r.top, px: r.left, py: r.top, worst: 0};
+        if (now > t0) changed = now;
       } else {
         const row = rows[k];
+        if (Math.abs(r.left - row.px) > 0.5 || Math.abs(r.top - row.py) > 0.5) changed = now;
+        row.px = r.left; row.py = r.top;
         row.worst = Math.max(row.worst, Math.abs(r.left - row.x), Math.abs(r.top - row.y));
       }
     }
-    if (performance.now() - t0 < ms) requestAnimationFrame(tick); else resolve(Object.values(rows));
+    const net = window.__hsNet || {inflight: 0, last: 0};
+    if (net.inflight > 0) changed = now; else changed = Math.max(changed, net.last);
+    if (document.getAnimations().some((a) => a.playState === 'running'
+      && a.effect && a.effect.getTiming().iterations !== Infinity)) changed = now;
+    const done = now - t0 >= ms || (now - t0 >= quiet && now - changed >= quiet);
+    if (done) resolve(Object.values(rows).map(({name, worst}) => ({name, worst})));
+    else requestAnimationFrame(tick);
   };
   requestAnimationFrame(tick);
 })"""
@@ -1103,12 +1120,24 @@ WINGS_JS = r"""(id) => {
 _MICRO = re.search(r"--duration-micro:\s*(\d+)ms", (REPO / "web/src/styles/tokens.css").read_text(encoding="utf-8"))
 assert _MICRO, "tokens.css has no --duration-micro in ms: the motion fence's threshold is lost"
 MOTION_MAX_MS = int(_MICRO.group(1))
+#: The still watch ends once the window has been quiet this long (no box moved,
+#: no fetch in flight, no animation running): the longest lawful motion under
+#: reduced motion plus a margin for a fetched answer to render. STILL_MS caps it.
+STILL_QUIET_MS = MOTION_MAX_MS + 190
 
 # Recorded from the first script on: every CSS animation and transition that
 # starts, and every Element.animate call, longer than the threshold (or
 # endless), with the element it ran on. The fence reads the ones in its scope.
 MOTION_INIT_JS = r"""((thr) => {
   const runs = []; window.__hsMotion = runs;
+  // The still watch's quiet test: fetches in flight, and when the last one ended.
+  const net = {inflight: 0, last: 0}; window.__hsNet = net;
+  const fetch0 = window.fetch;
+  window.fetch = function (...args) {
+    net.inflight += 1;
+    const done = () => { net.inflight -= 1; net.last = performance.now(); };
+    try { const p = fetch0.apply(this, args); p.then(done, done); return p; } catch (e) { done(); throw e; }
+  };
   const ms = (v) => Math.max(0, ...String(v || '0s').split(',').map((x) => x.trim())
     .map((x) => x.endsWith('ms') ? parseFloat(x) : parseFloat(x) * 1000).filter((x) => !Number.isNaN(x)));
   const keep = (el, what, dur, endless) => { if (dur > thr || (endless && dur > 0)) runs.push({el, what, dur: Math.round(dur)}); };
@@ -1323,7 +1352,7 @@ class _Case:
         fail("overlap", page.evaluate(OVERLAP_JS, sel))
         fail("library", page.evaluate(LIBRARY_JS, sel))
         fail("material", _material_faults(page, self.wid or "desk", sel))
-        moved = [r for r in page.evaluate(RECORD_JS, [sel, STILL_MS]) if r["worst"] > TOLERANCE]
+        moved = [r for r in page.evaluate(RECORD_JS, [sel, STILL_MS, STILL_QUIET_MS]) if r["worst"] > TOLERANCE]
         fail("still", [f"{r['name']} moved {round(r['worst'])} px" for r in moved])
         fail("still", page.evaluate(MOTION_JS, sel))
         fail("target", page.evaluate(TARGET_JS, sel))
@@ -1331,7 +1360,7 @@ class _Case:
         banned = AGENT_FACE_WORDS if self.wid in AGENT_FACES else None
         fail("words", sorted({m.group(0) for m in BANNED_WORDS.finditer(text)}
                              | ({m.group(0) for m in banned.finditer(text)} if banned else set())))
-        # After the 1.5 s watch: an error a late read raises is counted too.
+        # After the still watch: an error a late read raises is counted too.
         fail("clean", [e for e in self.errors if "ResizeObserver" not in e])
         if not page.evaluate("document.documentElement.scrollWidth <= window.innerWidth"):
             fail("clean", "the page scrolls sideways")
@@ -1653,14 +1682,18 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
 
 # PHILO-17 sweepreds r2: the late-read faces hold still under a HELD read.
 # Each case opens its window with one first read held 2.5 s in the page (the
-# fetch waits; nothing else does), then watches every control for the hold
-# plus 2 s after the window settles: nothing moves. Without the first-read
+# fetch waits; nothing else does), then watches every control from the moment
+# the window settles until the held read has landed and the window is quiet
+# (at most the hold plus 2 s): nothing moves. Without the first-read
 # gate each of these moved (Rhythm 18 px under load, the meeting 162 px, the
 # Needs-you drawer 260 px, the Agents wings 44 px).
 _HOLD_JS = """(([subs, ms]) => { const f = window.fetch.bind(window);
   window.fetch = (input, init) => { const u = typeof input === 'string' ? input : (input && input.url) || '';
-    if (subs.some((s) => u.includes(s))) return new Promise((r) => setTimeout(r, ms)).then(() => f(input, init));
-    return f(input, init); }; })(%s)"""
+    if (!subs.some((s) => u.includes(s))) return f(input, init);
+    // The hold counts as a fetch in flight: the still watch stays open over it.
+    const net = window.__hsNet; if (net) net.inflight += 1;
+    return new Promise((r) => setTimeout(r, ms)).then(() => {
+      if (net) { net.inflight -= 1; net.last = performance.now(); } return f(input, init); }); }; })(%s)"""
 HELD = 2500
 
 
@@ -1700,7 +1733,7 @@ def test_a_held_first_read_moves_nothing(desk: dict[str, Any], pw_browser: Any, 
         _normal_chair(page)
         page.wait_for_function(SETTLED_JS, arg=wid or None, timeout=T)
         sel = f'[id="{wid}"]' if wid else "[data-testid=desk-screen]"
-        moved = [r for r in page.evaluate(RECORD_JS, [sel, HELD + 2000]) if r["worst"] > TOLERANCE]
+        moved = [r for r in page.evaluate(RECORD_JS, [sel, HELD + 2000, STILL_QUIET_MS]) if r["worst"] > TOLERANCE]
         assert not moved, f"{case_id} with {held} held {HELD} ms: {moved}"
     finally:
         ctx.close()
@@ -1833,6 +1866,32 @@ def test_still_fence_sees_motion_under_reduced_motion(pw_browser: Any) -> None:
         ctx.close()
 
 
+def test_still_watch_waits_out_a_late_read(pw_browser: Any) -> None:
+    """The quiet watch stays open while a fetch is in flight: a read held
+    800 ms (the held-read test's hold) that moves a control when it lands is
+    seen, and a page with nothing in flight ends the watch long before STILL_MS."""
+    ctx = pw_browser.new_context(viewport={"width": 1440, "height": 900}, reduced_motion="reduce")
+    try:
+        page = ctx.new_page()
+        page.route("http://sweep.test/**", lambda route: route.fulfill(
+            status=200, content_type="text/html" if route.request.url.endswith("/") else "application/json",
+            body='<div id="win"><button data-testid="verb">Go</button></div>'
+            if route.request.url.endswith("/") else "{}"))
+        page.add_init_script(MOTION_INIT_JS % MOTION_MAX_MS)
+        page.add_init_script(_HOLD_JS % json.dumps([["/late"], 800]))
+        page.goto("http://sweep.test/", wait_until="load")
+        started = page.evaluate("performance.now()")
+        quiet = page.evaluate(RECORD_JS, ["#win", STILL_MS, STILL_QUIET_MS])
+        took = page.evaluate("performance.now()") - started
+        assert not [r for r in quiet if r["worst"] > TOLERANCE] and took < STILL_MS - 500, (quiet, took)
+        page.evaluate("""() => { fetch('/late').then(() => {
+            document.querySelector('[data-testid=verb]').style.marginTop = '40px'; }); }""")
+        moved = page.evaluate(RECORD_JS, ["#win", STILL_MS, STILL_QUIET_MS])
+        assert [(r["name"], round(r["worst"])) for r in moved if r["worst"] > TOLERANCE] == [("verb", 40)], moved
+    finally:
+        ctx.close()
+
+
 ROUTE_KNOWN_REDS: dict[str, str] = {}
 
 VISIBLE_TEXT_JS = r"""(sel) => { const e = document.querySelector(sel); if (!e) return null;
@@ -1879,8 +1938,8 @@ def test_every_html_route_loads_clean(desk: dict[str, Any], pw_browser: Any, rou
                 problems.append(f"{sel}: {drawn}")
         if not page.evaluate(VISIBLE_TEXT_JS, sel):
             problems.append(f"{sel}: no visible text")
-        # The same 1.5 s watch the window cases keep: a late error is counted.
-        page.evaluate(RECORD_JS, [None, STILL_MS])
+        # The same still watch the window cases keep: a late error is counted.
+        page.evaluate(RECORD_JS, [None, STILL_MS, STILL_QUIET_MS])
         problems += [e for e in errors if "ResizeObserver" not in e]
         assert not problems, f"{route}: {problems}"
     finally:
