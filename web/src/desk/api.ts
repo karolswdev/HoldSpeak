@@ -1126,13 +1126,6 @@ export async function fetchParkedWorkbenchItems(
   return wireArray(workbench, "items") as WorkbenchItem[];
 }
 
-export async function deleteWorkbenchItem(
-  workbenchId: string,
-  itemId: string,
-): Promise<void> {
-  await parkWorkbenchItem(workbenchId, itemId);
-}
-
 /** Run the pending queue, or only the named items (an item's Re-run). */
 export async function triggerWorkbenchRun(workbenchId: string, itemIds?: string[]): Promise<Record<string, unknown> | null> {
   const answer = await apiFetch<{ run?: Record<string, unknown> }>(
@@ -1142,17 +1135,6 @@ export async function triggerWorkbenchRun(workbenchId: string, itemIds?: string[
       : { method: "POST" },
   );
   return answer && typeof answer === "object" && answer.run && typeof answer.run === "object" ? answer.run : null;
-}
-
-export async function updateSkill(
-  skillId: string,
-  fields: Record<string, unknown>,
-): Promise<void> {
-  await apiFetch<Record<string, unknown>>(`/api/skills/${encodeURIComponent(skillId)}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(fields),
-  });
 }
 
 export async function clearWorkbenchMemory(workbenchId: string): Promise<void> {
