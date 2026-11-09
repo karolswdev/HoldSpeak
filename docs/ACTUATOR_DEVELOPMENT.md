@@ -126,7 +126,7 @@ Who authorizes an execution depends on the control posture:
 
 The config declares `meeting.allow_actuators=true` and
 `meeting.allowed_actuators=["*"]`. These values are validated and appear in
-setup status. Current Desk and Mission Control executors do not read them;
+setup status. Current Desk executors do not read them;
 they pass `allow_actuators=True` directly and no actuator-ID allow-list.
 Setting these config values does not disable or narrow those execution paths.
 Their actual gates are the stored proposal binding, operation policy,
@@ -198,7 +198,7 @@ decision and policy snapshot; it does not call an executor or send anything.
 An approved meeting proposal is not a delivered effect.
 
 Execution requires a caller that wires `ActuatorExecutor`. The current Desk
-actuator decision routes and Mission Control do this under their own proposal,
+actuator decision routes do this under their own proposal,
 origin, destination, and authority checks. The sequence diagram above describes
 such a wired execution path, not the meeting decision route alone.
 

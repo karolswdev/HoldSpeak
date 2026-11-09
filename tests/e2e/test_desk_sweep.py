@@ -344,7 +344,7 @@ CASES, NOT_ON_HUB_APPS = _cases()
 # cards, which stand in place of the desk screen):
 STANDALONE_ROUTES = {"/presence": ".presence-card", "/welcome": ".setup-face h1"}
 # Addresses that land on the bare desk (App.tsx: `/desk` and `*` go to `/`).
-DESK_ROUTES = {"/": None, "/desk": None, "/workbench": None}
+DESK_ROUTES = {"/": None, "/desk": None}
 
 
 def _route_windows() -> dict[str, str]:
