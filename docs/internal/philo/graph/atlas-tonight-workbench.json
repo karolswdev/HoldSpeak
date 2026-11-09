@@ -617,7 +617,7 @@
           "claim": "The affected item fails locally under the parent epoch."
         },
         {
-          "path": "web/src/desk/components/WorkbenchWindow.tsx",
+          "path": "web/src/desk/_parked/automations/WorkbenchWindow_20261108.tsx",
           "symbol": "const rerunItem = async () => {",
           "claim": "The existing Re-run resets the same item."
         }
@@ -645,7 +645,7 @@
           "claim": "The affected item fails locally under the parent epoch."
         },
         {
-          "path": "web/src/desk/components/WorkbenchWindow.tsx",
+          "path": "web/src/desk/_parked/automations/WorkbenchWindow_20261108.tsx",
           "symbol": "const rerunItem = async () => {",
           "claim": "The existing Re-run resets the same item."
         }

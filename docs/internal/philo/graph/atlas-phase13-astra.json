@@ -1749,7 +1749,8 @@
         393
       ],
       "preconditions": [
-        "H-A1 backend proof only; A1-F owns Parked filter, Restore Button and the 8-second face window. Real workbench/item producers, no inference engine or sends."
+        "H-A1 backend proof only; A1-F owns Parked filter, Restore Button and the 8-second face window. Real workbench/item producers, no inference engine or sends.",
+        "2026-11-08: the bulk park and restore routes are parked (#2039); the two-item round parks and restores each item through the one-item routes."
       ],
       "setup": [
         {
@@ -1897,16 +1898,19 @@
         },
         {
           "kind": "api",
-          "method": "POST",
-          "path": "/api/workbenches/{workbench_id}/items/park",
+          "method": "DELETE",
+          "path": "/api/workbenches/{workbench_id}/items/{item_id}",
           "adapter": "http-route",
           "expect_status": 200,
-          "body": {
-            "item_ids": [
-              "{item_id}",
-              "{item_two}"
-            ]
-          }
+          "body": null
+        },
+        {
+          "kind": "api",
+          "method": "DELETE",
+          "path": "/api/workbenches/{workbench_id}/items/{item_two}",
+          "adapter": "http-route",
+          "expect_status": 200,
+          "body": null
         },
         {
           "kind": "cli",
@@ -1952,15 +1956,18 @@
         {
           "kind": "api",
           "method": "POST",
-          "path": "/api/workbenches/{workbench_id}/items/restore",
+          "path": "/api/workbenches/{workbench_id}/items/{item_id}/restore",
           "adapter": "http-route",
           "expect_status": 200,
-          "body": {
-            "item_ids": [
-              "{item_id}",
-              "{item_two}"
-            ]
-          }
+          "body": null
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/workbenches/{workbench_id}/items/{item_two}/restore",
+          "adapter": "http-route",
+          "expect_status": 200,
+          "body": null
         }
       ],
       "trigger": {
@@ -2045,7 +2052,7 @@
             }
           ]
         },
-        "words": "Single and bulk park/restore retain the real item IDs and contents across hub restart and browser reload; restored rows leave Parked."
+        "words": "Parking and restoring one item, then two items one at a time, retain the real item IDs and contents across hub restart and browser reload; restored rows leave Parked."
       },
       "completion_bound_s": 30
     },
@@ -3276,7 +3283,7 @@
           "observe_at": "[data-testid=desk-dock-offline]",
           "predicate": {
             "kind": "readable_text",
-            "value": "OFFLINE · AS OF"
+            "value": "OFFLINE \u00b7 AS OF"
           },
           "timeout_s": 30,
           "capture_shot": true
@@ -5245,7 +5252,7 @@
         {
           "path": "web/src/desk/needsYou.ts",
           "symbol": "export function computeNeedsYou",
-          "claim": "The Dock reads the one R1–R3 membership rule."
+          "claim": "The Dock reads the one R1\u2013R3 membership rule."
         }
       ],
       "reachable_by": [

@@ -74,7 +74,6 @@ TUESDAY_USE: dict[str, int] = {
     "UpdatePosture": 4,
     "Chair": 4,
     "ChairHome": 4,
-    "WorkbenchWindow": 3,
     "CadenceCore": 3,
     "ActivityCore": 3,
     "ModelLibraryCore": 3,
@@ -242,8 +241,8 @@ MIC_ALLOWLIST: tuple[tuple[str, str, str], ...] = (
     # -- the 24th, ruling R13 (HS-176-05) ----------------------------------
     ("pages/cores/dictation/SpeakFace.tsx", 'label="Utterance"',
      "The Talk transport is this face's mic authority (Article IV.3, R13)"),
-    ("desk/components/WorkbenchWindow.tsx", 'label="New item instruction"',
-     "The adjacent Workbench grammar MicButton writes this instruction and resolves its references; the Pad must not add a second capture authority"),
+    # Parked 2026-11-08 with WorkbenchWindow (desk/_parked/automations/, #2039):
+    # its "New item instruction" grammar-mic exemption.
 )
 
 # These named fields keep their host's functional append and mic recovery
