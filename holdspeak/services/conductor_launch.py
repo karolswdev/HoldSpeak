@@ -516,6 +516,22 @@ LAUNCH_RULES.update({name: (OWN, "workbench", "workbench_id") for name in (
     "automation.lesson.forget")})
 LAUNCH_RULES["automation.template.instantiate"] = (CREATE, "", "")
 
+
+def _family_rules() -> dict[str, tuple[str, str, str]]:
+    """The agents, coders and delivery verbs (2026-11-09, read from their
+    rows): a launch reads what they read; every write is the owner's press on
+    his own desk (his agents, his terminals, his PRs). The chat threads are
+    his conversations: a launch neither reads nor writes them."""
+    from holdspeak import operations as ops
+
+    rows = ops.AGENT_OPERATIONS + ops.CODER_OPERATIONS + ops.DELIVERY_OPERATIONS
+    rules = {d.tool_name: (READ if d.effect == "read" else NEVER, "", "") for d in rows if d.tool_schema is not None}
+    rules.update({d.tool_name: (NEVER, "", "") for d in ops.THREAD_OPERATIONS if d.tool_schema is not None})
+    return {name: rule for name, rule in rules.items() if name not in LAUNCH_RULES}
+
+
+LAUNCH_RULES.update(_family_rules())
+
 #: Not offered to a launch at all (the palette leaves them out).
 NOT_OFFERED: frozenset[str] = frozenset(n for n, (rule, _k, _a) in LAUNCH_RULES.items() if rule in (NEVER, COMPOSER))
 

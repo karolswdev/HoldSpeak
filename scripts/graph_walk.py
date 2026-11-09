@@ -1017,6 +1017,15 @@ OP_MCP_PROJECTIONS: dict[str, dict[str, Any]] = {
         "automation.template.instantiate", "automation.result.open", "automation.new.list", "automation.lesson.list",
         "automation.lesson.forget")},
 }
+# 2026-11-09: the agents, threads, coders and delivery verbs, read from their rows.
+def _family_projections() -> dict[str, dict[str, Any]]:
+    from holdspeak import operations as ops
+
+    rows = ops.AGENT_OPERATIONS + ops.THREAD_OPERATIONS + ops.CODER_OPERATIONS + ops.DELIVERY_OPERATIONS
+    return {d.name: {"kind": "tool", "name": d.tool_name} for d in rows if d.tool_schema is not None}
+
+
+OP_MCP_PROJECTIONS.update({k: v for k, v in _family_projections().items() if k not in OP_MCP_PROJECTIONS})
 
 #: Declared operations with no MCP exposure: the rig refuses them by name.
 OP_HTTP_ONLY = frozenset({"decision.status", "project.door.create", "project.door.preview",

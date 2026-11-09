@@ -79,6 +79,20 @@ _MCP_ONLY: frozenset[str] = frozenset({
 })
 
 
+def _family_reads() -> frozenset[str]:
+    """The declared reads of the agents, threads, coders and delivery verbs
+    (2026-11-09; ``agent_operations.py``, ``thread_operations.py``,
+    ``coder_operations.py``, ``delivery_operations.py``): MCP and HTTP only,
+    read from the rows, so the seeded palettes do not grow."""
+    from holdspeak import operations as ops
+
+    rows = ops.AGENT_OPERATIONS + ops.THREAD_OPERATIONS + ops.CODER_OPERATIONS + ops.DELIVERY_OPERATIONS
+    return frozenset(d.tool_name for d in rows if d.tool_schema is not None and d.thread == "evidence_read")
+
+
+_MCP_ONLY = _MCP_ONLY | _family_reads()
+
+
 def _thread_side(name: str) -> bool:
     # PHILO-16 16b: ``desk_window.*`` (the owner's desk windows) joins the
     # MCP-only families: an agent composes the desk over MCP; the seeded
