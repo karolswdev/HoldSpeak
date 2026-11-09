@@ -19,7 +19,7 @@ from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.services.program_handoff import HandoffInputs, brief_of, gather, redact_counted, redacted_words
 from holdspeak.services.program_rules import CoreQuestion, Decision, decide
 from holdspeak.services.program_service import ProgramRefused
-from tests.integration.program_rig import FAKE_CHECK, OWNER, Rig, git
+from tests.integration.program_rig import FAKE_CHECK, OWNER, Rig, git, owner_app
 
 GOLDEN = Path(__file__).resolve().parents[1] / "fixtures" / "program_handoff_brief.txt"
 NOW = datetime(2026, 10, 28, 12, 30, tzinfo=timezone.utc)
@@ -332,7 +332,7 @@ def test_the_route_previews_then_sends_and_is_the_owners_alone(tmp_path, monkeyp
     pid = _program(rig, "normal", ["claude", "codex"])
     step = rig.step(pid, 1)
     monkeypatch.setattr(module, "default_program_service", lambda db=None: rig.service)
-    app = FastAPI()
+    app = owner_app()
     app.include_router(build_programs_router(None))  # type: ignore[arg-type]
     client = TestClient(app)
     url = f"/api/programs/{pid}/steps/{step['id']}/handoff"

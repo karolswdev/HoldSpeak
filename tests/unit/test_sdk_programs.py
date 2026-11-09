@@ -8,20 +8,19 @@ client's requests and the service's answers, unchanged; a refusal is
 from __future__ import annotations
 
 import pytest
-from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from holdspeak.sdk.programs import Programs, ProgramsRefused
 from holdspeak.services import program_service as program_module
 from holdspeak.web.routes.programs import build_programs_router
-from tests.integration.program_rig import FAKE_CHECK, Rig
+from tests.integration.program_rig import FAKE_CHECK, Rig, owner_app
 from tests.unit.test_program_cli import _opener
 
 
 def test_the_sdk_creates_starts_reads_decides_and_changes_by_text(tmp_path, monkeypatch) -> None:
     rig = Rig(tmp_path)
     monkeypatch.setattr(program_module, "default_program_service", lambda db=None: rig.service)
-    app = FastAPI()
+    app = owner_app()
     app.include_router(build_programs_router(None))  # type: ignore[arg-type]
     seen: list = []
     programs = Programs(url="http://127.0.0.1:8765", token="t", opener=_opener(TestClient(app), seen))
