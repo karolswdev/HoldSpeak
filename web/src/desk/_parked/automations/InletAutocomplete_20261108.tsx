@@ -1,3 +1,8 @@
+/* PARKED 20261108 (queue view park): the queue view's item inlet autocomplete.
+ * Every automation run is a Program (#2032/#2033); the item-queue runner is
+ * parked, so the queue view it fed is parked too. It stood at src/desk/components/InletAutocomplete.tsx.
+ * Not compiled or collected (tsconfig and vitest exclude _parked); its
+ * relative imports point at the old place. Restore with git revert. */
 /**
  * HS-118-04 — @-reference autocomplete popover for the inlet.
  *

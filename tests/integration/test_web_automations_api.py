@@ -146,9 +146,6 @@ def test_owner_can_enable_six_hour_two_per_night_resourcefulness(
     policy = configured.json()["policy"]
     assert policy["enabled"] is True
     assert policy["routines"] == ["loose_ideas", "failed_work"]
-    assert client.get("/api/workbenches/wb-review/resourceful/history").json() == {
-        "history": []
-    }
 
 
 def test_jira_watch_adapter_status_is_ready() -> None:

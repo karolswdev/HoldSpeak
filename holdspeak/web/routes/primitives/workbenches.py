@@ -218,44 +218,6 @@ def build_workbenches_router(ctx: WebContext) -> APIRouter:
         except Exception as exc:
             return error_500(exc, log, "Failed to delete item")
 
-    @router.post("/api/workbenches/{workbench_id}/items/park")
-    async def api_park_items(workbench_id: str, request: Request) -> Any:
-        body = await _json_body(request)
-        if body is None:
-            return JSONResponse({"error": "expected a JSON object"}, status_code=400)
-        try:
-            result = _svc().park_items(
-                _principal(request), workbench_id, body.get("item_ids")
-            )
-            return JSONResponse(result)
-        except NotFound as exc:
-            return _not_found(exc.kind, exc.id)
-        except (ValidationError, ValueError) as exc:
-            return JSONResponse({"error": str(exc)}, status_code=400)
-        except ConflictError as exc:
-            return JSONResponse({"error": str(exc)}, status_code=409)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to park Workbench items")
-
-    @router.post("/api/workbenches/{workbench_id}/items/restore")
-    async def api_restore_items(workbench_id: str, request: Request) -> Any:
-        body = await _json_body(request)
-        if body is None:
-            return JSONResponse({"error": "expected a JSON object"}, status_code=400)
-        try:
-            result = _svc().restore_items(
-                _principal(request), workbench_id, body.get("item_ids")
-            )
-            return JSONResponse(result)
-        except NotFound as exc:
-            return _not_found(exc.kind, exc.id)
-        except (ValidationError, ValueError) as exc:
-            return JSONResponse({"error": str(exc)}, status_code=400)
-        except ConflictError as exc:
-            return JSONResponse({"error": str(exc)}, status_code=409)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to restore Workbench items")
-
     @router.post("/api/workbenches/{workbench_id}/items/{item_id}/restore")
     def api_restore_item(workbench_id: str, item_id: str, request: Request) -> Any:
         try:
@@ -269,20 +231,6 @@ def build_workbenches_router(ctx: WebContext) -> APIRouter:
             return JSONResponse({"error": str(exc)}, status_code=400)
         except Exception as exc:
             return error_500(exc, log, "Failed to restore Workbench item")
-
-    @router.post("/api/workbenches/{workbench_id}/items/{item_id}/retry-mint")
-    def api_retry_mint(workbench_id: str, item_id: str, request: Request) -> Any:
-        try:
-            result = _svc().retry_mint(_principal(request), workbench_id, item_id)
-            return JSONResponse({"artifact_id": result["artifact_id"]}, status_code=201 if result["created"] else 200)
-        except NotFound:
-            return _not_found("item", item_id)
-        except ValidationError as exc:
-            return JSONResponse({"error": str(exc)}, status_code=400)
-        except ServiceError as exc:
-            return _service_error(exc)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to retry mint")
 
     @router.post("/api/workbenches/{workbench_id}/run")
     async def api_run_workbench(workbench_id: str, request: Request) -> Any:
@@ -326,26 +274,6 @@ def build_workbenches_router(ctx: WebContext) -> APIRouter:
         except Exception as exc:
             return error_500(exc, log, "Failed to make this one automation")
 
-    @router.post("/api/workbenches/{workbench_id}/voice/resolve")
-    async def api_voice_resolve(workbench_id: str, request: Request) -> Any:
-        body = await _json_body(request)
-        if body is None:
-            return JSONResponse({"error": "expected a JSON object"}, status_code=400)
-        try:
-            result = _svc().resolve_voice(
-                _principal(request), workbench_id, str(body.get("transcript") or "").strip(),
-                str(body.get("request_id") or ""),
-            )
-            return JSONResponse(result)
-        except NotFound:
-            return _not_found("automation", workbench_id)
-        except ValidationError as exc:
-            return JSONResponse({"error": str(exc)}, status_code=400)
-        except ServiceError as exc:
-            return _service_error(exc)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to resolve voice references")
-
     @router.get("/api/workbenches/{workbench_id}/runs")
     def api_list_runs(workbench_id: str, request: Request) -> Any:
         try:
@@ -359,13 +287,6 @@ def build_workbenches_router(ctx: WebContext) -> APIRouter:
             return JSONResponse({"templates": _svc().list_templates(_principal(request))})
         except Exception as exc:
             return error_500(exc, log, "Failed to list templates")
-
-    @router.get("/api/skills")
-    def api_list_skills(request: Request, recipe_id: str | None = None) -> Any:
-        try:
-            return JSONResponse({"skills": _svc().list_skills(_principal(request), recipe_id)})
-        except Exception as exc:
-            return error_500(exc, log, "Failed to list skills")
 
     @router.post("/api/workbench-templates/{template_id}/instantiate")
     async def api_instantiate_template(template_id: str, request: Request) -> Any:
@@ -385,14 +306,6 @@ def build_workbenches_router(ctx: WebContext) -> APIRouter:
         except Exception as exc:
             return error_500(exc, log, "Failed to read memory")
 
-    @router.delete("/api/workbenches/{workbench_id}/memory")
-    def api_clear_memory(workbench_id: str, request: Request) -> Any:
-        try:
-            _svc().clear_memory(_principal(request), workbench_id)
-            return JSONResponse({"success": True})
-        except Exception as exc:
-            return error_500(exc, log, "Failed to clear memory")
-
     @router.delete("/api/workbenches/{workbench_id}/memory/{index}")
     def api_forget_memory(workbench_id: str, index: int, request: Request, at: str = "") -> Any:
         """Betterment A3: Forget one lesson; ``at`` is its timestamp."""
@@ -403,15 +316,5 @@ def build_workbenches_router(ctx: WebContext) -> APIRouter:
             return _not_found("lesson", str(index))
         except Exception as exc:
             return error_500(exc, log, "Failed to forget the lesson")
-
-    @router.post("/api/workbenches/{workbench_id}/memory/{index}/promote")
-    def api_promote_memory(workbench_id: str, index: int, request: Request) -> Any:
-        try:
-            skill = _svc().promote_memory(_principal(request), workbench_id, index)
-            return JSONResponse({"skill": skill}, status_code=201)
-        except ValidationError as exc:
-            return JSONResponse({"error": str(exc)}, status_code=400)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to promote memory to skill")
 
     return router

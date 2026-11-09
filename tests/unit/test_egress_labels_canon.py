@@ -71,10 +71,8 @@ WORKING_FACES = (
     "pages/cores/ActivityFinishedReceipts.tsx",
     "desk/components/automation/AutomationWindow.tsx",
     "desk/components/automation/ResultCard.tsx",
-    # The left-overs (2026-10-25): Workbench, Delivery, Rhythm, the tool inspector.
-    "desk/components/WorkbenchWindow.tsx",
-    "desk/components/workbench/WorkbenchRunsWing.tsx",
-    "desk/components/WorkbenchAutomations.tsx",
+    # The left-overs (2026-10-25): Delivery, Rhythm, the tool inspector (the
+    # Workbench queue view is parked, 2026-11-08).
     "desk/components/DeliveryBoard.tsx",
     "desk/components/DeliveryDossierWindow.tsx",
     "pages/cores/CadenceCore.tsx",
