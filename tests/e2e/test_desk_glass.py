@@ -643,17 +643,20 @@ class TestOneDecisionRecord:
                 page.screenshot(path=str(P9_SHOTS / f"project-this-week-{width}.png"))
                 decided.click()
                 # The owner, 2026-10-25: the Room opens the record in the
-                # Decisions window reader (never the old desk decision window):
-                # the front window, the decision as its heading, Send and
-                # Back to the list in its toolbar, when it was decided below
-                # (TRUTH #1516: one state vocabulary, "Accepted just now").
+                # Decisions window (never the old desk decision window): the
+                # front window, the decision in its mast, Send among its verbs,
+                # the rail beside it (the frame's Back on the phone), when it
+                # was decided below (the native app: "Decided just now").
                 room_decisions = page.locator("#surface-decisions")
                 page.locator("[id='surface-decisions'].is-front").wait_for(timeout=T)
                 room_reader = room_decisions.get_by_test_id("decision-reader").filter(has_text=P9_DECISION_TEXT)
                 room_reader.wait_for(timeout=T)
                 room_decisions.get_by_role("button", name=re.compile(r"^Send")).first.wait_for(timeout=T)
-                room_decisions.get_by_test_id("decision-reader-back").wait_for(timeout=T)
-                assert re.match(r"^Accepted ", room_decisions.get_by_test_id("decision-reader-state").inner_text()), \
+                if phone:
+                    room_decisions.get_by_test_id("decision-reader-back").wait_for(timeout=T)
+                else:
+                    room_decisions.get_by_test_id("decisions-rail").wait_for(timeout=T)
+                assert re.match(r"^Decided ", room_decisions.get_by_test_id("decision-reader-state").inner_text()), \
                     room_decisions.get_by_test_id("decision-reader-state").inner_text()
                 assert page.locator(".desk-window-shell:not([id='surface-decisions'])[aria-label=" + json.dumps(P9_DECISION_TEXT) + "]").count() == 0
                 page.screenshot(path=str(P9_SHOTS / f"project-this-week-reader-{width}.png"))
@@ -673,12 +676,11 @@ class TestOneDecisionRecord:
                 decisions_window.wait_for(timeout=T)
                 row = decisions_window.get_by_test_id("decisions-row").filter(has_text=P9_DECISION_TEXT)
                 row.wait_for(timeout=T)
-                # Window grammar: the row is a dense list row; its one press
-                # target selects, a double press opens.
-                opener = row.locator(".object-list-open")
+                # The native app: the rail row is one press target; it picks.
+                opener = row.get_by_role("button")
                 geometry = self._hit_and_focus(opener)
                 assert geometry["in_view"] and geometry["owns_hit"] and geometry["focused"], json.dumps(geometry, sort_keys=True)
-                opener.dblclick()
+                opener.click()
                 desk_detail = decisions_window.get_by_test_id("decision-reader").filter(has_text=P9_DECISION_TEXT)
                 desk_detail.wait_for(timeout=T)
                 assert P9_DECISION_TEXT in desk_detail.inner_text()
@@ -688,7 +690,7 @@ class TestOneDecisionRecord:
                 page.screenshot(path=str(P9_SHOTS / f"decisions-window-{width}.png"))
                 decisions_surface = page.locator("#surface-decisions")
                 if phone:
-                    # On the phone the title-bar Back first returns the reader to the list.
+                    # On the phone the title-bar Back first returns the pick to the rail.
                     decisions_surface.get_by_test_id("decision-reader-back").click()
                     decisions_surface.get_by_test_id("decisions-row").first.wait_for(timeout=T)
                 decisions_surface.get_by_role("button", name=re.compile(r"^(Back from|Close) ")).click()
@@ -710,7 +712,8 @@ class TestOneDecisionRecord:
                 page.locator(".desk-verbbar-menu").locator("[role^='menuitem']").filter(
                     has=page.locator(".desk-menu-label", has_text=re.compile(r"^Meetings$"))
                 ).click()
-                meeting_title = meeting_window.get_by_text("P9 decision review", exact=True)
+                # The native Meetings face names the meeting in its rail and its mast too.
+                meeting_title = meeting_window.get_by_role("button", name="Edit Meeting title")
                 meeting_title.wait_for(state="attached", timeout=T)
                 meeting_geometry = self._hit_and_focus(meeting_window)
                 assert meeting_geometry["in_view"] and meeting_geometry["owns_hit"], json.dumps(meeting_geometry, sort_keys=True)

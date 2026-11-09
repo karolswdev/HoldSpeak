@@ -515,9 +515,9 @@
         },
         {
           "path": "web/src/desk/pullouts/IntelligencePullout.tsx",
-          "symbol": "RetainedView",
-          "line": 20,
-          "claim": "Visited views preserve state and scroll through source return; inactive view footer targets hide their portaled actions."
+          "symbol": "IntelligencePullout",
+          "line": 12,
+          "claim": "Today is one view that keeps its state; a decision drill opens the Decisions window instead of a second page in Today."
         }
       ],
       "tests": [
