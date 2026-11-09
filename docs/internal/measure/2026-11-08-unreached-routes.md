@@ -8,16 +8,16 @@ Format: method, path, handler module.
 
 **Evening pass (branch `refactor/park-unreached-routes`).** Each API line now ends with one word: `parked` (the handler is under `holdspeak/web/routes/_parked/`, its tests under `tests/_parked/`), `kept: <caller>` (a real client calls it), or `left: <reason>` (no product caller found, but a test, an atlas case, another lane or a security review holds it). 15 parked, 56 kept, 63 left. A route a test only uses for setup was left, not parked: park it together with that test.
 
-**Late-evening pass (branch `refactor/park-left-routes`, #PR_NUM).** Each of the 63 `left` lines was read again: 23 parked with their tests (cases moved to `tests/_parked/`, or the setup now seeds through the service or the store), 21 kept as declared http exposures, 8 left for a security review (gate, kernel, principals), 10 left for other lanes (meetings, people, workbenches), 1 left as a link (`/api/invocations/{id}`). Now: 38 parked, 77 kept, 19 left.
+**Late-evening pass (branch `refactor/park-left-routes`, #2052).** Each of the 63 `left` lines was read again: 23 parked with their tests (cases moved to `tests/_parked/`, or the setup now seeds through the service or the store), 21 kept as declared http exposures, 8 left for a security review (gate, kernel, principals), 10 left for other lanes (meetings, people, workbenches), 1 left as a link (`/api/invocations/{id}`). Now: 38 parked, 77 kept, 19 left.
 
 ## API routes (134)
 
 - POST `/api/activity/extension/events` web.routes.activity.enrichment: **kept: the Firefox extension (extensions/firefox/background.js:36)**
-- DELETE `/api/activity/meeting-candidates` web.routes.activity.candidates: **parked (#PR_NUM, the left-routes pass)**
-- POST `/api/activity/meeting-candidates` web.routes.activity.candidates: **parked (#PR_NUM, the left-routes pass)**
-- POST `/api/activity/project-rules` web.routes.activity.rules (named in: holdspeak/web/announce.py): **parked (#PR_NUM, the left-routes pass)**
-- POST `/api/activity/project-rules/preview` web.routes.activity.rules (named in: holdspeak/web/announce.py): **parked (#PR_NUM, the left-routes pass)**
-- PUT `/api/activity/project-rules/{rule_id}` web.routes.activity.rules (named in: holdspeak/web/announce.py): **parked (#PR_NUM, the left-routes pass)**
+- DELETE `/api/activity/meeting-candidates` web.routes.activity.candidates: **parked (#2052, the left-routes pass)**
+- POST `/api/activity/meeting-candidates` web.routes.activity.candidates: **parked (#2052, the left-routes pass)**
+- POST `/api/activity/project-rules` web.routes.activity.rules (named in: holdspeak/web/announce.py): **parked (#2052, the left-routes pass)**
+- POST `/api/activity/project-rules/preview` web.routes.activity.rules (named in: holdspeak/web/announce.py): **parked (#2052, the left-routes pass)**
+- PUT `/api/activity/project-rules/{rule_id}` web.routes.activity.rules (named in: holdspeak/web/announce.py): **parked (#2052, the left-routes pass)**
 - GET `/api/agents/capabilities` web.routes.system.agent_capabilities (named in: holdspeak/agent_capabilities.py): **parked**
 - PATCH `/api/all-action-items/{item_id}/review` web.routes.meetings.action_items (named in: scripts/dogfood_meeting_aftercare.py, scripts/needs_you_faces_fixture.py, scripts/philo13_needs_you_fixture.py): **left: other lane**
 - POST `/api/authority/evaluate` web.routes.authority (named in: holdspeak/web/announce.py): **parked**
@@ -27,12 +27,12 @@ Format: method, path, handler module.
 - GET `/api/authority/grants/{grant_id}/uses` web.routes.authority (named in: holdspeak/principals.py): **parked**
 - POST `/api/brief/items/{item_id}/shelf` web.routes.monday_brief (named in: holdspeak/operations.py): **kept: declared (an http exposure in holdspeak/*operations.py)**
 - GET `/api/brief/shelf` web.routes.monday_brief (named in: holdspeak/operations.py, scripts/philo5_pairs.py): **kept: declared (an http exposure in holdspeak/*operations.py)**
-- POST `/api/cadence/closeout/apply` web.routes.cadence: **parked (#PR_NUM, the left-routes pass)**
-- GET `/api/cadence/loops/{loop_id}` web.routes.cadence (named in: holdspeak/db/projections.py, scripts/phase107_closeout_beats.py, scripts/record_chair_rhythm_fixture.py, scripts/walk_working_desk_legs.py): **parked (#PR_NUM, the left-routes pass)**
-- POST `/api/cadence/run-now` web.routes.cadence (named in: scripts/walk_working_desk.py, scripts/walk_working_desk_legs.py): **parked (#PR_NUM, the left-routes pass)**
-- GET `/api/calendar/events` web.routes.calendar_events: **parked (#PR_NUM, the left-routes pass)**
-- DELETE `/api/calendar/events/{event_id}/link` web.routes.calendar_events: **parked (#PR_NUM, the left-routes pass)**
-- POST `/api/calendar/events/{event_id}/link` web.routes.calendar_events: **parked (#PR_NUM, the left-routes pass)**
+- POST `/api/cadence/closeout/apply` web.routes.cadence: **parked (#2052, the left-routes pass)**
+- GET `/api/cadence/loops/{loop_id}` web.routes.cadence (named in: holdspeak/db/projections.py, scripts/phase107_closeout_beats.py, scripts/record_chair_rhythm_fixture.py, scripts/walk_working_desk_legs.py): **parked (#2052, the left-routes pass)**
+- POST `/api/cadence/run-now` web.routes.cadence (named in: scripts/walk_working_desk.py, scripts/walk_working_desk_legs.py): **parked (#2052, the left-routes pass)**
+- GET `/api/calendar/events` web.routes.calendar_events: **parked (#2052, the left-routes pass)**
+- DELETE `/api/calendar/events/{event_id}/link` web.routes.calendar_events: **parked (#2052, the left-routes pass)**
+- POST `/api/calendar/events/{event_id}/link` web.routes.calendar_events: **parked (#2052, the left-routes pass)**
 - POST `/api/calls/line/enrol` web.routes.calls (named in: holdspeak/line/node.py, holdspeak/principals.py, scripts/record_line_fixtures.py): **kept: the Line node (holdspeak/line/node.py)**
 - POST `/api/calls/line/events` web.routes.calls (named in: holdspeak/line/node.py, holdspeak/principals.py): **kept: the Line node (holdspeak/line/node.py)**
 - POST `/api/calls/line/hello` web.routes.calls (named in: holdspeak/line/node.py, holdspeak/principals.py, scripts/record_line_fixtures.py): **kept: the Line node (holdspeak/line/node.py)**
@@ -44,14 +44,14 @@ Format: method, path, handler module.
 - PUT `/api/chains/{chain_id}` web.routes.primitives.chains (named in: scripts/record_chrome_palette.py, scripts/surface_census_walk.py): **kept: the UAT conductor seeds and probes them (uat/conductor/induction/seeds.py:40-41, probes.py:144,149); atlas case p13.chain.pullout; MCP desk.* kind=chains/workflows calls the same service methods**
 - POST `/api/channels/sends` web.routes.channels (named in: holdspeak/channel_operations.py, holdspeak/principals.py, scripts/record_room_wires.py): **kept: declared (an http exposure in holdspeak/*operations.py)**
 - POST `/api/concierge/retry` web.routes.concierge (named in: holdspeak/services/needs_you_membership.py): **kept: the Needs-you engine-failure row hands it as a verb href (holdspeak/services/needs_you_membership.py:479)**
-- POST `/api/decision-records/{record_id}/dispute` web.routes.decision_records: **parked (#PR_NUM, the left-routes pass)**
-- POST `/api/decision-records/{record_id}/supersede` web.routes.decision_records: **parked (#PR_NUM, the left-routes pass)**
-- POST `/api/decisions/{decision_id}/reject` web.routes.decisions (named in: holdspeak/operations.py, holdspeak/principals.py, scripts/graph_walk.py, scripts/hs109_03_live_proof.py, …): **parked (#PR_NUM, the left-routes pass)**
+- POST `/api/decision-records/{record_id}/dispute` web.routes.decision_records: **parked (#2052, the left-routes pass)**
+- POST `/api/decision-records/{record_id}/supersede` web.routes.decision_records: **parked (#2052, the left-routes pass)**
+- POST `/api/decisions/{decision_id}/reject` web.routes.decisions (named in: holdspeak/operations.py, holdspeak/principals.py, scripts/graph_walk.py, scripts/hs109_03_live_proof.py, …): **parked (#2052, the left-routes pass)**
 - POST `/api/delivery/node/disconnect` web.routes.delivery_node (named in: holdspeak/web/announce.py): **parked**
 - POST `/api/delivery/node/heartbeat` web.routes.delivery_node (named in: holdspeak/commands/node_serve.py, holdspeak/web/announce.py): **kept: holdspeak/commands/node_serve.py**
 - POST `/api/delivery/node/hello` web.routes.delivery_node (named in: holdspeak/commands/node_serve.py, holdspeak/web/announce.py): **kept: holdspeak/commands/node_serve.py**
-- GET `/api/delivery/terminal/commands/{command_id}` web.routes.delivery_terminal (named in: scripts/phase94_delivery_campaign.py): **parked (#PR_NUM, the left-routes pass)**
-- POST `/api/delivery/terminal/targets` web.routes.delivery_terminal (named in: scripts/phase94_delivery_campaign.py): **parked (#PR_NUM, the left-routes pass)**
+- GET `/api/delivery/terminal/commands/{command_id}` web.routes.delivery_terminal (named in: scripts/phase94_delivery_campaign.py): **parked (#2052, the left-routes pass)**
+- POST `/api/delivery/terminal/targets` web.routes.delivery_terminal (named in: scripts/phase94_delivery_campaign.py): **parked (#2052, the left-routes pass)**
 - WS `/api/devices/audio` device_audio_ws (named in: holdspeak/commands/device.py, holdspeak/device_audio.py, holdspeak/device_audio_ws.py, holdspeak/principals.py, …): **kept: holdspeak/commands/device.py (the device CLI)**
 - DELETE `/api/dictation/corrections` web.routes.dictation.pipeline: **parked**
 - DELETE `/api/dictation/project-kb` web.routes.dictation.kb (named in: scripts/dogfood_project_knowledge.py): **parked**
@@ -65,11 +65,11 @@ Format: method, path, handler module.
 - POST `/api/gate/proposals/{proposal_id}/receipt` web.routes.system.gate_routes (named in: holdspeak/coder_gate.py, holdspeak/db/schema/cadence_agents.py, holdspeak/principals.py): **kept: the coder gate hook (holdspeak/coder_gate.py:295,329,505,543,853,884)**
 - POST `/api/gate/usage` web.routes.system.gate_routes (named in: holdspeak/coder_gate.py, holdspeak/principals.py): **kept: the coder gate hook (holdspeak/coder_gate.py:295,329,505,543,853,884)**
 - POST `/api/inference-targets` web.routes.primitives.profiles (named in: holdspeak/doctor.py, scripts/record_chrome_palette.py, scripts/record_room_wires.py, scripts/settings_walk_139.py, …): **kept: the UAT conductor (uat/conductor/induction/recipes.py:322, seeds.py:42) and the Ask route tests set up through it**
-- GET `/api/inference/defaults` web.routes.inference_assignments: **parked (#PR_NUM, the left-routes pass)**
-- POST `/api/inference/defaults/use-proposal` web.routes.inference_assignments: **parked (#PR_NUM, the left-routes pass)**
+- GET `/api/inference/defaults` web.routes.inference_assignments: **parked (#2052, the left-routes pass)**
+- POST `/api/inference/defaults/use-proposal` web.routes.inference_assignments: **parked (#2052, the left-routes pass)**
 - POST `/api/intel/process` web.routes.meetings.intel (named in: holdspeak/intel_queue.py, holdspeak/intel_queue_conductor.py): **left: other lane**
 - GET `/api/intel/summary` web.routes.meetings.intel: **left: other lane**
-- PUT `/api/intents/override` web.routes.dictation.intents: **parked (#PR_NUM, the left-routes pass)**
+- PUT `/api/intents/override` web.routes.dictation.intents: **parked (#2052, the left-routes pass)**
 - GET `/api/invocations/{invocation_id}` web.routes.primitives.invocations (named in: holdspeak/db/projections.py): **left: linked (holdspeak/db/projections.py:446 hands it as source_api)**
 - GET `/api/kbs/{kb_id}` web.routes.primitives.kbs (named in: holdspeak/operations.py, scripts/philo7_pairs.py, scripts/record_chrome_palette.py, scripts/surface_census_walk.py): **kept: declared (an http exposure in holdspeak/*operations.py)**
 - GET `/api/kbs/{kb_id}/members` web.routes.primitives.kbs (named in: holdspeak/operations.py, scripts/philo7_pairs.py, scripts/record_chrome_palette.py, scripts/surface_census_walk.py): **kept: declared (an http exposure in holdspeak/*operations.py)**
@@ -121,11 +121,11 @@ Format: method, path, handler module.
 - POST `/api/providers/jira/search` web.routes.providers (named in: holdspeak/web/announce.py): **kept: HTTP twin of an MCP provider_* tool (TestJiraMcpParity, TestJiraDiscoverMcpParity); jira recheck also scripts/record_room_wires.py:1163**
 - POST `/api/providers/jira/validate-scope` web.routes.providers (named in: holdspeak/web/announce.py): **kept: HTTP twin of an MCP provider_* tool (TestJiraMcpParity, TestJiraDiscoverMcpParity); jira recheck also scripts/record_room_wires.py:1163**
 - GET `/api/reach/packages` web.routes.briefing: **parked**
-- GET `/api/recipes/{recipe_id}` web.routes.primitives.recipes (named in: apple/Sources/Providers/Desktop/HTTPDesktopClient.swift, apple/Sources/Providers/Providers.swift, apple/Tests/ProvidersTests/DesktopClientTests.swift, scripts/record_chrome_palette.py, …): **parked (#PR_NUM, the left-routes pass)**
-- POST `/api/recipes/{recipe_id}/chat` web.routes.primitives.recipes (named in: apple/Sources/Providers/Desktop/HTTPDesktopClient.swift, apple/Sources/Providers/Providers.swift, apple/Tests/ProvidersTests/DesktopClientTests.swift, scripts/record_chrome_palette.py, …): **parked (#PR_NUM, the left-routes pass)**
-- POST `/api/recipes/{recipe_id}/invocations/{invocation_id}/cancel` web.routes.primitives.recipes (named in: apple/Sources/Providers/Desktop/HTTPDesktopClient.swift, apple/Sources/Providers/Providers.swift, apple/Tests/ProvidersTests/DesktopClientTests.swift, scripts/record_chrome_palette.py, …): **parked (#PR_NUM, the left-routes pass)**
+- GET `/api/recipes/{recipe_id}` web.routes.primitives.recipes (named in: apple/Sources/Providers/Desktop/HTTPDesktopClient.swift, apple/Sources/Providers/Providers.swift, apple/Tests/ProvidersTests/DesktopClientTests.swift, scripts/record_chrome_palette.py, …): **parked (#2052, the left-routes pass)**
+- POST `/api/recipes/{recipe_id}/chat` web.routes.primitives.recipes (named in: apple/Sources/Providers/Desktop/HTTPDesktopClient.swift, apple/Sources/Providers/Providers.swift, apple/Tests/ProvidersTests/DesktopClientTests.swift, scripts/record_chrome_palette.py, …): **parked (#2052, the left-routes pass)**
+- POST `/api/recipes/{recipe_id}/invocations/{invocation_id}/cancel` web.routes.primitives.recipes (named in: apple/Sources/Providers/Desktop/HTTPDesktopClient.swift, apple/Sources/Providers/Providers.swift, apple/Tests/ProvidersTests/DesktopClientTests.swift, scripts/record_chrome_palette.py, …): **parked (#2052, the left-routes pass)**
 - GET `/api/recordings/{recording_id}` web.routes.recordings (named in: holdspeak/web/announce.py, scripts/record_recordings_fixtures.py): **kept: scripts/record_recordings_fixtures.py:69,75 records the web fixtures through it**
-- GET `/api/scheduled-recordings/{schedule_id}` web.routes.scheduled_recordings (named in: scripts/door_walk_hs144.py, scripts/schedule_walk_hs136.py): **parked (#PR_NUM, the left-routes pass)**
+- GET `/api/scheduled-recordings/{schedule_id}` web.routes.scheduled_recordings (named in: scripts/door_walk_hs144.py, scripts/schedule_walk_hs136.py): **parked (#2052, the left-routes pass)**
 - POST `/api/skills` web.routes.primitives.workbenches: **left: other lane**
 - DELETE `/api/skills/{skill_id}` web.routes.primitives.workbenches: **left: other lane**
 - POST `/api/steward/trigger` web.routes.steward (named in: holdspeak/principals.py, holdspeak/room_operations.py, holdspeak/services/watch_service.py): **kept: declared (an http exposure in holdspeak/*operations.py)**
