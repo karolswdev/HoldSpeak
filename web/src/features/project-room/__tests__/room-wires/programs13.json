@@ -4,7 +4,7 @@
   "create": {
    "request": {
     "json": {
-     "project_id": "proj-b1894ec8ab1e",
+     "project_id": "proj-57fcefa20bfe",
      "template": "fast-cycle",
      "title": "New program"
     },
@@ -26,7 +26,7 @@
      "check_command": null,
      "checkpoints": [
       {
-       "at": "2026-11-08T23:24:15.261625+00:00",
+       "at": "2026-11-09T00:31:23.787278+00:00",
        "by": "owner",
        "choice": null,
        "decision_record_id": null,
@@ -47,7 +47,7 @@
      "closed_at": null,
      "control": "yolo",
      "control_word": "YOLO",
-     "created_at": "2026-11-08T23:24:15.261416+00:00",
+     "created_at": "2026-11-09T00:31:23.787022+00:00",
      "decided_for_you": [],
      "default": {
       "agent": "Claude Code",
@@ -71,10 +71,10 @@
      "for_person": null,
      "for_person_id": null,
      "goal": "",
-     "id": "program-cdc0d9276c38",
+     "id": "program-f2d86c92181d",
      "in_state_seconds": 0,
      "last_checkpoint": {
-      "at": "2026-11-08T23:24:15.261625+00:00",
+      "at": "2026-11-09T00:31:23.787278+00:00",
       "by": "owner",
       "choice": null,
       "decision_record_id": null,
@@ -95,25 +95,25 @@
      "may_call": false,
      "may_handoff": false,
      "night": null,
-     "note_id": "program-program-cdc0d9276c38",
-     "note_window": "pullout:note:program-program-cdc0d9276c38",
+     "note_id": "program-program-f2d86c92181d",
+     "note_window": "pullout:note:program-program-f2d86c92181d",
      "origin_ref": null,
      "persons": [],
      "place": {
       "origin": null,
       "person": null,
       "project": {
-       "id": "proj-b1894ec8ab1e",
+       "id": "proj-57fcefa20bfe",
        "name": "Ledger cutover"
       }
      },
      "planner": null,
      "prefer_idle": false,
      "project": {
-      "id": "proj-b1894ec8ab1e",
+      "id": "proj-57fcefa20bfe",
       "name": "Ledger cutover"
      },
-     "project_id": "proj-b1894ec8ab1e",
+     "project_id": "proj-57fcefa20bfe",
      "repository": {
       "base_branch": "main",
       "label": "app",
@@ -141,7 +141,7 @@
      "title": "New program",
      "total": 0,
      "track": [],
-     "updated_at": "2026-11-08T23:24:15.261416+00:00",
+     "updated_at": "2026-11-09T00:31:23.787022+00:00",
      "usage_warning_share": null,
      "within": [],
      "your_turn": 0,
@@ -164,7 +164,7 @@
    "check_command": null,
    "checkpoints": [
     {
-     "at": "2026-11-08T23:24:15.261625+00:00",
+     "at": "2026-11-09T00:31:23.787278+00:00",
      "by": "owner",
      "choice": null,
      "decision_record_id": null,
@@ -185,7 +185,7 @@
    "closed_at": null,
    "control": "yolo",
    "control_word": "YOLO",
-   "created_at": "2026-11-08T23:24:15.261416+00:00",
+   "created_at": "2026-11-09T00:31:23.787022+00:00",
    "decided_for_you": [],
    "default": {
     "agent": "Claude Code",
@@ -209,10 +209,10 @@
    "for_person": null,
    "for_person_id": null,
    "goal": "",
-   "id": "program-cdc0d9276c38",
+   "id": "program-f2d86c92181d",
    "in_state_seconds": 0,
    "last_checkpoint": {
-    "at": "2026-11-08T23:24:15.261625+00:00",
+    "at": "2026-11-09T00:31:23.787278+00:00",
     "by": "owner",
     "choice": null,
     "decision_record_id": null,
@@ -233,25 +233,25 @@
    "may_call": false,
    "may_handoff": false,
    "night": null,
-   "note_id": "program-program-cdc0d9276c38",
-   "note_window": "pullout:note:program-program-cdc0d9276c38",
+   "note_id": "program-program-f2d86c92181d",
+   "note_window": "pullout:note:program-program-f2d86c92181d",
    "origin_ref": null,
    "persons": [],
    "place": {
     "origin": null,
     "person": null,
     "project": {
-     "id": "proj-b1894ec8ab1e",
+     "id": "proj-57fcefa20bfe",
      "name": "Ledger cutover"
     }
    },
    "planner": null,
    "prefer_idle": false,
    "project": {
-    "id": "proj-b1894ec8ab1e",
+    "id": "proj-57fcefa20bfe",
     "name": "Ledger cutover"
    },
-   "project_id": "proj-b1894ec8ab1e",
+   "project_id": "proj-57fcefa20bfe",
    "repository": {
     "base_branch": "main",
     "label": "app",
@@ -279,7 +279,7 @@
    "title": "New program",
    "total": 0,
    "track": [],
-   "updated_at": "2026-11-08T23:24:15.261416+00:00",
+   "updated_at": "2026-11-09T00:31:23.787022+00:00",
    "usage_warning_share": null,
    "within": [],
    "your_turn": 0,
@@ -289,17 +289,17 @@
    {
     "changes": [
      {
-      "id": "program-program-cdc0d9276c38",
+      "id": "program-program-f2d86c92181d",
       "kind": "note",
       "op": "create"
      },
      {
-      "id": "program-cdc0d9276c38",
+      "id": "program-f2d86c92181d",
       "kind": "program",
       "op": "create"
      }
     ],
-    "id": "program-program-cdc0d9276c38",
+    "id": "program-program-f2d86c92181d",
     "kind": "note",
     "op": "create",
     "origin": "hub"
@@ -315,42 +315,42 @@
      "projects": [
       {
        "context": {},
-       "created_at": "2026-11-08T16:24:15.088192",
+       "created_at": "2026-11-08T17:31:23.582590",
        "description": "",
        "detection_threshold": 0.4,
-       "id": "proj-833f77e7574a",
+       "id": "proj-c835f1414af7",
        "is_archived": false,
        "keywords": [],
        "meeting_count": 0,
        "name": "Card vault",
        "team_members": [],
-       "updated_at": "2026-11-08T16:24:15.249497"
+       "updated_at": "2026-11-08T17:31:23.775274"
       },
       {
        "context": {},
-       "created_at": "2026-11-08T16:24:15.081709",
+       "created_at": "2026-11-08T17:31:23.576813",
        "description": "",
        "detection_threshold": 0.4,
-       "id": "proj-b1894ec8ab1e",
+       "id": "proj-57fcefa20bfe",
        "is_archived": false,
        "keywords": [],
        "meeting_count": 0,
        "name": "Ledger cutover",
        "team_members": [],
-       "updated_at": "2026-11-08T16:24:15.244830"
+       "updated_at": "2026-11-08T17:31:23.769973"
       },
       {
        "context": {},
-       "created_at": "2026-11-08T16:24:15.096366",
+       "created_at": "2026-11-08T17:31:23.585085",
        "description": "",
        "detection_threshold": 0.4,
-       "id": "proj-2ec81fc04346",
+       "id": "proj-21d2f2bc6f70",
        "is_archived": false,
        "keywords": [],
        "meeting_count": 0,
        "name": "Quiet",
        "team_members": [],
-       "updated_at": "2026-11-08T16:24:15.096366"
+       "updated_at": "2026-11-08T17:31:23.585085"
       }
      ]
     },
@@ -365,13 +365,13 @@
       "after_hash": null,
       "before_hash": null,
       "change_kind": "project.resource.linked",
-      "command_id": "pcmd_43e3523660af46a191925f881a8c3eb6",
-      "created_at": "2026-11-08T23:24:15.244830+00:00",
-      "id": "pchg_e7664062e91906b565e31f80b2feb640",
-      "project_id": "proj-b1894ec8ab1e",
+      "command_id": "pcmd_6f3022e852474536af6eee38d8ecfbf3",
+      "created_at": "2026-11-09T00:31:23.769973+00:00",
+      "id": "pchg_febc65a509c2a1bfbfb7b29a41296c4d",
+      "project_id": "proj-57fcefa20bfe",
       "project_revision": 2,
-      "summary_json": "{\"resource_ref\": \"repository:src_5c262bee6689eea8\"}",
-      "target_ref": "repository:src_5c262bee6689eea8"
+      "summary_json": "{\"resource_ref\": \"repository:src_febccf2df7a181b6\"}",
+      "target_ref": "repository:src_febccf2df7a181b6"
      },
      {
       "actor_ref": "principal:owner-session",
@@ -379,12 +379,12 @@
       "before_hash": null,
       "change_kind": "project.created",
       "command_id": "s13-a",
-      "created_at": "2026-11-08T23:24:15.081709+00:00",
-      "id": "pchg_fe7e5eaf8b5a5cccf95bd3694df431a2",
-      "project_id": "proj-b1894ec8ab1e",
+      "created_at": "2026-11-09T00:31:23.576813+00:00",
+      "id": "pchg_f856e8e9673d33c6d064f48973ed5ec9",
+      "project_id": "proj-57fcefa20bfe",
       "project_revision": 1,
       "summary_json": "{\"name\": \"Ledger cutover\"}",
-      "target_ref": "project:proj-b1894ec8ab1e"
+      "target_ref": "project:proj-57fcefa20bfe"
      }
     ],
     "state": "ok"
@@ -476,18 +476,18 @@
     "risks": [],
     "state": "ok"
    },
-   "observed_at": "2026-11-08T16:24:15.244830",
+   "observed_at": "2026-11-08T17:31:23.769973",
    "programs": {
     "programs": [
      {
       "done": 0,
-      "id": "program-cdc0d9276c38",
+      "id": "program-f2d86c92181d",
       "state": "drafting",
       "state_word": "Drafting",
       "title": "New program",
       "total": 0,
       "track": [],
-      "updated_at": "2026-11-08T23:24:15.261416+00:00",
+      "updated_at": "2026-11-09T00:31:23.787022+00:00",
       "your_turn": 0
      }
     ],
@@ -495,10 +495,10 @@
    },
    "project": {
     "context": {},
-    "created_at": "2026-11-08T16:24:15.081709",
+    "created_at": "2026-11-08T17:31:23.576813",
     "description": "",
     "detection_threshold": 0.4,
-    "id": "proj-b1894ec8ab1e",
+    "id": "proj-57fcefa20bfe",
     "is_archived": false,
     "keywords": [],
     "last_review_at": null,
@@ -519,35 +519,35 @@
     "target_at": null,
     "team_members": [],
     "template_key": null,
-    "updated_at": "2026-11-08T16:24:15.244830"
+    "updated_at": "2026-11-08T17:31:23.769973"
    },
-   "project_id": "proj-b1894ec8ab1e",
+   "project_id": "proj-57fcefa20bfe",
    "receipts": {
     "items": [
      {
-      "at": 1794180255.244549,
+      "at": 1794184283.769683,
       "caller": null,
-      "id": "2135b139-712e-4df7-b768-b8552f5296b8",
+      "id": "533d73cf-7128-4ec1-bccc-1172f36325ff",
       "identity": null,
       "label": "ProjectService.add_resource",
       "op": "add_resource",
       "origin": null,
       "outcome": "ok",
       "reason": null,
-      "timestamp": 1794180255.244549,
+      "timestamp": 1794184283.769683,
       "title": "ProjectService.add_resource"
      },
      {
-      "at": 1794180255.078801,
+      "at": 1794184283.573985,
       "caller": null,
-      "id": "8cd3f262-4efb-4bd3-8209-aa605a579c6a",
+      "id": "2d80b387-f947-4b23-99b2-237185004348",
       "identity": null,
       "label": "ProjectService.create_project",
       "op": "create_project",
       "origin": null,
       "outcome": "ok",
       "reason": null,
-      "timestamp": 1794180255.078801,
+      "timestamp": 1794184283.573985,
       "title": "ProjectService.create_project"
      }
     ],
@@ -557,13 +557,13 @@
     "count": 2,
     "latest": {
      "confidence": 1.0,
-     "created_at": "2026-11-08T23:24:15.262903+00:00",
+     "created_at": "2026-11-09T00:31:23.788494+00:00",
      "deleted": false,
-     "id": "proj-b1894ec8ab1e|note:program-program-cdc0d9276c38",
-     "last_modified": "2026-11-08T23:24:15.262903+00:00",
-     "project_id": "proj-b1894ec8ab1e",
+     "id": "proj-57fcefa20bfe|note:program-program-f2d86c92181d",
+     "last_modified": "2026-11-09T00:31:23.788494+00:00",
+     "project_id": "proj-57fcefa20bfe",
      "relationship": "member",
-     "resource_ref": "note:program-program-cdc0d9276c38",
+     "resource_ref": "note:program-program-f2d86c92181d",
      "source": "program"
     },
     "state": "ok"
@@ -616,13 +616,13 @@
       "after_hash": null,
       "before_hash": null,
       "change_kind": "project.resource.linked",
-      "command_id": "pcmd_43e3523660af46a191925f881a8c3eb6",
-      "created_at": "2026-11-08T23:24:15.244830+00:00",
-      "id": "pchg_e7664062e91906b565e31f80b2feb640",
-      "project_id": "proj-b1894ec8ab1e",
+      "command_id": "pcmd_6f3022e852474536af6eee38d8ecfbf3",
+      "created_at": "2026-11-09T00:31:23.769973+00:00",
+      "id": "pchg_febc65a509c2a1bfbfb7b29a41296c4d",
+      "project_id": "proj-57fcefa20bfe",
       "project_revision": 2,
-      "summary_json": "{\"resource_ref\": \"repository:src_5c262bee6689eea8\"}",
-      "target_ref": "repository:src_5c262bee6689eea8"
+      "summary_json": "{\"resource_ref\": \"repository:src_febccf2df7a181b6\"}",
+      "target_ref": "repository:src_febccf2df7a181b6"
      },
      {
       "actor_ref": "principal:owner-session",
@@ -630,12 +630,12 @@
       "before_hash": null,
       "change_kind": "project.created",
       "command_id": "s13-a",
-      "created_at": "2026-11-08T23:24:15.081709+00:00",
-      "id": "pchg_fe7e5eaf8b5a5cccf95bd3694df431a2",
-      "project_id": "proj-b1894ec8ab1e",
+      "created_at": "2026-11-09T00:31:23.576813+00:00",
+      "id": "pchg_f856e8e9673d33c6d064f48973ed5ec9",
+      "project_id": "proj-57fcefa20bfe",
       "project_revision": 1,
       "summary_json": "{\"name\": \"Ledger cutover\"}",
-      "target_ref": "project:proj-b1894ec8ab1e"
+      "target_ref": "project:proj-57fcefa20bfe"
      }
     ],
     "state": "ok"
@@ -727,17 +727,17 @@
     "risks": [],
     "state": "ok"
    },
-   "observed_at": "2026-11-08T16:24:15.244830",
+   "observed_at": "2026-11-08T17:31:23.769973",
    "programs": {
     "programs": [],
     "state": "ok"
    },
    "project": {
     "context": {},
-    "created_at": "2026-11-08T16:24:15.081709",
+    "created_at": "2026-11-08T17:31:23.576813",
     "description": "",
     "detection_threshold": 0.4,
-    "id": "proj-b1894ec8ab1e",
+    "id": "proj-57fcefa20bfe",
     "is_archived": false,
     "keywords": [],
     "last_review_at": null,
@@ -758,35 +758,35 @@
     "target_at": null,
     "team_members": [],
     "template_key": null,
-    "updated_at": "2026-11-08T16:24:15.244830"
+    "updated_at": "2026-11-08T17:31:23.769973"
    },
-   "project_id": "proj-b1894ec8ab1e",
+   "project_id": "proj-57fcefa20bfe",
    "receipts": {
     "items": [
      {
-      "at": 1794180255.244549,
+      "at": 1794184283.769683,
       "caller": null,
-      "id": "2135b139-712e-4df7-b768-b8552f5296b8",
+      "id": "533d73cf-7128-4ec1-bccc-1172f36325ff",
       "identity": null,
       "label": "ProjectService.add_resource",
       "op": "add_resource",
       "origin": null,
       "outcome": "ok",
       "reason": null,
-      "timestamp": 1794180255.244549,
+      "timestamp": 1794184283.769683,
       "title": "ProjectService.add_resource"
      },
      {
-      "at": 1794180255.078801,
+      "at": 1794184283.573985,
       "caller": null,
-      "id": "8cd3f262-4efb-4bd3-8209-aa605a579c6a",
+      "id": "2d80b387-f947-4b23-99b2-237185004348",
       "identity": null,
       "label": "ProjectService.create_project",
       "op": "create_project",
       "origin": null,
       "outcome": "ok",
       "reason": null,
-      "timestamp": 1794180255.078801,
+      "timestamp": 1794184283.573985,
       "title": "ProjectService.create_project"
      }
     ],
@@ -796,13 +796,13 @@
     "count": 1,
     "latest": {
      "confidence": 1.0,
-     "created_at": "2026-11-08T23:24:15.244830+00:00",
+     "created_at": "2026-11-09T00:31:23.769973+00:00",
      "deleted": false,
-     "id": "proj-b1894ec8ab1e|repository:src_5c262bee6689eea8",
-     "last_modified": "2026-11-08T23:24:15.244830+00:00",
-     "project_id": "proj-b1894ec8ab1e",
+     "id": "proj-57fcefa20bfe|repository:src_febccf2df7a181b6",
+     "last_modified": "2026-11-09T00:31:23.769973+00:00",
+     "project_id": "proj-57fcefa20bfe",
      "relationship": "member",
-     "resource_ref": "repository:src_5c262bee6689eea8",
+     "resource_ref": "repository:src_febccf2df7a181b6",
      "source": "manual"
     },
     "state": "ok"
@@ -853,54 +853,54 @@
    {
     "changes": [
      {
-      "id": "program-program-19f92946bc07",
+      "id": "program-program-4c01a1008da0",
       "kind": "note",
       "op": "update"
      },
      {
-      "id": "program-19f92946bc07",
+      "id": "program-4c01a1008da0",
       "kind": "program",
       "op": "update"
      }
     ],
-    "id": "program-program-19f92946bc07",
+    "id": "program-program-4c01a1008da0",
     "kind": "note",
     "op": "update",
     "origin": "hub"
    }
   ],
-  "program": "program-19f92946bc07",
+  "program": "program-4c01a1008da0",
   "roomA": [
    {
     "done": 0,
-    "id": "program-cdc0d9276c38",
+    "id": "program-f2d86c92181d",
     "state": "drafting",
     "state_word": "Drafting",
     "title": "New program",
     "total": 0,
     "track": [],
-    "updated_at": "2026-11-08T23:24:15.261416+00:00",
+    "updated_at": "2026-11-09T00:31:23.787022+00:00",
     "your_turn": 0
    }
   ],
   "roomC": [
    {
     "done": 0,
-    "id": "program-19f92946bc07",
+    "id": "program-4c01a1008da0",
     "state": "drafting",
     "state_word": "Drafting",
     "title": "Moves",
     "total": 0,
     "track": [],
-    "updated_at": "2026-11-08T23:24:15.290654+00:00",
+    "updated_at": "2026-11-09T00:31:23.815846+00:00",
     "your_turn": 0
    }
   ]
  },
  "projects": {
-  "a": "proj-b1894ec8ab1e",
-  "b": "proj-833f77e7574a",
-  "c": "proj-2ec81fc04346"
+  "a": "proj-57fcefa20bfe",
+  "b": "proj-c835f1414af7",
+  "c": "proj-21d2f2bc6f70"
  },
  "roomDegraded": {
   "changes": {
@@ -910,13 +910,13 @@
      "after_hash": null,
      "before_hash": null,
      "change_kind": "project.resource.linked",
-     "command_id": "pcmd_43e3523660af46a191925f881a8c3eb6",
-     "created_at": "2026-11-08T23:24:15.244830+00:00",
-     "id": "pchg_e7664062e91906b565e31f80b2feb640",
-     "project_id": "proj-b1894ec8ab1e",
+     "command_id": "pcmd_6f3022e852474536af6eee38d8ecfbf3",
+     "created_at": "2026-11-09T00:31:23.769973+00:00",
+     "id": "pchg_febc65a509c2a1bfbfb7b29a41296c4d",
+     "project_id": "proj-57fcefa20bfe",
      "project_revision": 2,
-     "summary_json": "{\"resource_ref\": \"repository:src_5c262bee6689eea8\"}",
-     "target_ref": "repository:src_5c262bee6689eea8"
+     "summary_json": "{\"resource_ref\": \"repository:src_febccf2df7a181b6\"}",
+     "target_ref": "repository:src_febccf2df7a181b6"
     },
     {
      "actor_ref": "principal:owner-session",
@@ -924,12 +924,12 @@
      "before_hash": null,
      "change_kind": "project.created",
      "command_id": "s13-a",
-     "created_at": "2026-11-08T23:24:15.081709+00:00",
-     "id": "pchg_fe7e5eaf8b5a5cccf95bd3694df431a2",
-     "project_id": "proj-b1894ec8ab1e",
+     "created_at": "2026-11-09T00:31:23.576813+00:00",
+     "id": "pchg_f856e8e9673d33c6d064f48973ed5ec9",
+     "project_id": "proj-57fcefa20bfe",
      "project_revision": 1,
      "summary_json": "{\"name\": \"Ledger cutover\"}",
-     "target_ref": "project:proj-b1894ec8ab1e"
+     "target_ref": "project:proj-57fcefa20bfe"
     }
    ],
    "state": "ok"
@@ -1021,17 +1021,17 @@
    "risks": [],
    "state": "ok"
   },
-  "observed_at": "2026-11-08T16:24:15.244830",
+  "observed_at": "2026-11-08T17:31:23.769973",
   "programs": {
    "error_code": "programs_read_failed",
    "state": "degraded"
   },
   "project": {
    "context": {},
-   "created_at": "2026-11-08T16:24:15.081709",
+   "created_at": "2026-11-08T17:31:23.576813",
    "description": "",
    "detection_threshold": 0.4,
-   "id": "proj-b1894ec8ab1e",
+   "id": "proj-57fcefa20bfe",
    "is_archived": false,
    "keywords": [],
    "last_review_at": null,
@@ -1052,35 +1052,35 @@
    "target_at": null,
    "team_members": [],
    "template_key": null,
-   "updated_at": "2026-11-08T16:24:15.244830"
+   "updated_at": "2026-11-08T17:31:23.769973"
   },
-  "project_id": "proj-b1894ec8ab1e",
+  "project_id": "proj-57fcefa20bfe",
   "receipts": {
    "items": [
     {
-     "at": 1794180255.244549,
+     "at": 1794184283.769683,
      "caller": null,
-     "id": "2135b139-712e-4df7-b768-b8552f5296b8",
+     "id": "533d73cf-7128-4ec1-bccc-1172f36325ff",
      "identity": null,
      "label": "ProjectService.add_resource",
      "op": "add_resource",
      "origin": null,
      "outcome": "ok",
      "reason": null,
-     "timestamp": 1794180255.244549,
+     "timestamp": 1794184283.769683,
      "title": "ProjectService.add_resource"
     },
     {
-     "at": 1794180255.078801,
+     "at": 1794184283.573985,
      "caller": null,
-     "id": "8cd3f262-4efb-4bd3-8209-aa605a579c6a",
+     "id": "2d80b387-f947-4b23-99b2-237185004348",
      "identity": null,
      "label": "ProjectService.create_project",
      "op": "create_project",
      "origin": null,
      "outcome": "ok",
      "reason": null,
-     "timestamp": 1794180255.078801,
+     "timestamp": 1794184283.573985,
      "title": "ProjectService.create_project"
     }
    ],
@@ -1090,13 +1090,13 @@
    "count": 3,
    "latest": {
     "confidence": 1.0,
-    "created_at": "2026-11-08T23:24:15.287472+00:00",
+    "created_at": "2026-11-09T00:31:23.812654+00:00",
     "deleted": false,
-    "id": "proj-b1894ec8ab1e|note:program-program-19f92946bc07",
-    "last_modified": "2026-11-08T23:24:15.287472+00:00",
-    "project_id": "proj-b1894ec8ab1e",
+    "id": "proj-57fcefa20bfe|note:program-program-4c01a1008da0",
+    "last_modified": "2026-11-09T00:31:23.812654+00:00",
+    "project_id": "proj-57fcefa20bfe",
     "relationship": "member",
-    "resource_ref": "note:program-program-19f92946bc07",
+    "resource_ref": "note:program-program-4c01a1008da0",
     "source": "program"
    },
    "state": "ok"
@@ -1150,12 +1150,12 @@
      "before_hash": null,
      "change_kind": "project.created",
      "command_id": "s13-c",
-     "created_at": "2026-11-08T23:24:15.096366+00:00",
-     "id": "pchg_374259c1561a4d758a147afc965d3b1c",
-     "project_id": "proj-2ec81fc04346",
+     "created_at": "2026-11-09T00:31:23.585085+00:00",
+     "id": "pchg_3cb66535a6bf8e3de82deb41b9125885",
+     "project_id": "proj-21d2f2bc6f70",
      "project_revision": 1,
      "summary_json": "{\"name\": \"Quiet\"}",
-     "target_ref": "project:proj-2ec81fc04346"
+     "target_ref": "project:proj-21d2f2bc6f70"
     }
    ],
    "state": "ok"
@@ -1247,17 +1247,17 @@
    "risks": [],
    "state": "ok"
   },
-  "observed_at": "2026-11-08T16:24:15.096366",
+  "observed_at": "2026-11-08T17:31:23.585085",
   "programs": {
    "programs": [],
    "state": "ok"
   },
   "project": {
    "context": {},
-   "created_at": "2026-11-08T16:24:15.096366",
+   "created_at": "2026-11-08T17:31:23.585085",
    "description": "",
    "detection_threshold": 0.4,
-   "id": "proj-2ec81fc04346",
+   "id": "proj-21d2f2bc6f70",
    "is_archived": false,
    "keywords": [],
    "last_review_at": null,
@@ -1278,22 +1278,22 @@
    "target_at": null,
    "team_members": [],
    "template_key": null,
-   "updated_at": "2026-11-08T16:24:15.096366"
+   "updated_at": "2026-11-08T17:31:23.585085"
   },
-  "project_id": "proj-2ec81fc04346",
+  "project_id": "proj-21d2f2bc6f70",
   "receipts": {
    "items": [
     {
-     "at": 1794180255.0963352,
+     "at": 1794184283.5850592,
      "caller": null,
-     "id": "896058ae-e6df-4c06-8a59-d90821f59d07",
+     "id": "fa5d6c26-5ad6-46a5-a40e-261b7458f651",
      "identity": null,
      "label": "ProjectService.create_project",
      "op": "create_project",
      "origin": null,
      "outcome": "ok",
      "reason": null,
-     "timestamp": 1794180255.0963352,
+     "timestamp": 1794184283.5850592,
      "title": "ProjectService.create_project"
     }
    ],
@@ -1352,13 +1352,13 @@
      "after_hash": null,
      "before_hash": null,
      "change_kind": "project.resource.linked",
-     "command_id": "pcmd_e306745ff0f34731b319c1a42db4480a",
-     "created_at": "2026-11-08T23:24:15.249497+00:00",
-     "id": "pchg_0a47a8254753dd0a1942598058873d1c",
-     "project_id": "proj-833f77e7574a",
+     "command_id": "pcmd_e0f79d9b9b11496a852ebcfcd2749b9e",
+     "created_at": "2026-11-09T00:31:23.775274+00:00",
+     "id": "pchg_c41f7ee2d438734993e291f2aa4b457d",
+     "project_id": "proj-c835f1414af7",
      "project_revision": 2,
-     "summary_json": "{\"resource_ref\": \"repository:src_5c262bee6689eea8\"}",
-     "target_ref": "repository:src_5c262bee6689eea8"
+     "summary_json": "{\"resource_ref\": \"repository:src_febccf2df7a181b6\"}",
+     "target_ref": "repository:src_febccf2df7a181b6"
     },
     {
      "actor_ref": "principal:owner-session",
@@ -1366,12 +1366,12 @@
      "before_hash": null,
      "change_kind": "project.created",
      "command_id": "s13-b",
-     "created_at": "2026-11-08T23:24:15.088192+00:00",
-     "id": "pchg_495e1f1a7a88fdf30c584a2b513a7b77",
-     "project_id": "proj-833f77e7574a",
+     "created_at": "2026-11-09T00:31:23.582590+00:00",
+     "id": "pchg_c378762dcde638f20741a29285ce33a2",
+     "project_id": "proj-c835f1414af7",
      "project_revision": 1,
      "summary_json": "{\"name\": \"Card vault\"}",
-     "target_ref": "project:proj-833f77e7574a"
+     "target_ref": "project:proj-c835f1414af7"
     }
    ],
    "state": "ok"
@@ -1463,18 +1463,18 @@
    "risks": [],
    "state": "ok"
   },
-  "observed_at": "2026-11-08T16:24:15.249497",
+  "observed_at": "2026-11-08T17:31:23.775274",
   "programs": {
    "programs": [
     {
      "done": 0,
-     "id": "program-85806c2a4e3e",
+     "id": "program-377a33da8d8e",
      "state": "drafting",
      "state_word": "Drafting",
      "title": "New program",
      "total": 0,
      "track": [],
-     "updated_at": "2026-11-08T23:24:15.266130+00:00",
+     "updated_at": "2026-11-09T00:31:23.791835+00:00",
      "your_turn": 0
     }
    ],
@@ -1482,10 +1482,10 @@
   },
   "project": {
    "context": {},
-   "created_at": "2026-11-08T16:24:15.088192",
+   "created_at": "2026-11-08T17:31:23.582590",
    "description": "",
    "detection_threshold": 0.4,
-   "id": "proj-833f77e7574a",
+   "id": "proj-c835f1414af7",
    "is_archived": false,
    "keywords": [],
    "last_review_at": null,
@@ -1506,35 +1506,35 @@
    "target_at": null,
    "team_members": [],
    "template_key": null,
-   "updated_at": "2026-11-08T16:24:15.249497"
+   "updated_at": "2026-11-08T17:31:23.775274"
   },
-  "project_id": "proj-833f77e7574a",
+  "project_id": "proj-c835f1414af7",
   "receipts": {
    "items": [
     {
-     "at": 1794180255.2493582,
+     "at": 1794184283.7751129,
      "caller": null,
-     "id": "04e07ceb-7e0a-4e00-b795-c59397e22eb3",
+     "id": "4830d812-1d48-4f37-937e-51268e353a9b",
      "identity": null,
      "label": "ProjectService.add_resource",
      "op": "add_resource",
      "origin": null,
      "outcome": "ok",
      "reason": null,
-     "timestamp": 1794180255.2493582,
+     "timestamp": 1794184283.7751129,
      "title": "ProjectService.add_resource"
     },
     {
-     "at": 1794180255.0881479,
+     "at": 1794184283.5825422,
      "caller": null,
-     "id": "8a4b2c6a-5f16-4948-83c0-eb246d648c21",
+     "id": "11e92290-d17b-42f0-8345-8b606895d834",
      "identity": null,
      "label": "ProjectService.create_project",
      "op": "create_project",
      "origin": null,
      "outcome": "ok",
      "reason": null,
-     "timestamp": 1794180255.0881479,
+     "timestamp": 1794184283.5825422,
      "title": "ProjectService.create_project"
     }
    ],
@@ -1544,13 +1544,13 @@
    "count": 2,
    "latest": {
     "confidence": 1.0,
-    "created_at": "2026-11-08T23:24:15.267230+00:00",
+    "created_at": "2026-11-09T00:31:23.792945+00:00",
     "deleted": false,
-    "id": "proj-833f77e7574a|note:program-program-85806c2a4e3e",
-    "last_modified": "2026-11-08T23:24:15.267230+00:00",
-    "project_id": "proj-833f77e7574a",
+    "id": "proj-c835f1414af7|note:program-program-377a33da8d8e",
+    "last_modified": "2026-11-09T00:31:23.792945+00:00",
+    "project_id": "proj-c835f1414af7",
     "relationship": "member",
-    "resource_ref": "note:program-program-85806c2a4e3e",
+    "resource_ref": "note:program-program-377a33da8d8e",
     "source": "program"
    },
    "state": "ok"

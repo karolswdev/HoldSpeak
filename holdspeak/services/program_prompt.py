@@ -143,6 +143,14 @@ def _run(runner: Any, program: Mapping[str, Any], step: dict[str, Any], broker: 
 
     started_by = _automation_of(service.db, program)
     folder = work_folder_of(started_by) if started_by is not None else None
+    lessons_of = started_by if not project_id else None
+    if lessons_of is not None:
+        # An automation's lessons from its earlier runs ride before the task.
+        from ..workbench_memory import recall_for_prompt
+
+        recalled = recall_for_prompt(str(lessons_of.id))
+        if recalled:
+            user = f"{recalled}\n\n{user}"
     adapter = _MeteredPromptAdapter(program.get("spend_limit_usd"), folder, project_id=project_id)
     payload = {
         "system_prompt": system, "user_prompt": user,
@@ -163,7 +171,9 @@ def _run(runner: Any, program: Mapping[str, Any], step: dict[str, Any], broker: 
                                  result_ref=f"program-step:{step['id']}")
     except engine_door.EngineDoorError as exc:
         facts = dict(step.get("facts") or {})
-        facts["prompt"] = {"operation_id": exc.operation_id, "outcome": exc.outcome or exc.code}
+        # The engine's own words are the result's reason (the automation's Results show them).
+        facts["prompt"] = {"operation_id": exc.operation_id, "outcome": exc.outcome or exc.code,
+                           "error": exc.error or exc.detail}
         step["facts"] = facts
         service.transition(program, step, "failed", line=f"The engine gave no answer · {exc.detail}"[:400])
         return
@@ -187,7 +197,40 @@ def _run(runner: Any, program: Mapping[str, Any], step: dict[str, Any], broker: 
     step["facts"] = facts
     line = f"Answered on {answer.model or 'the engine'} · {_delivered_words(delivered)}"
     service.transition(program, step, "done", line=line[:400])
+    if lessons_of is not None:
+        _keep_lesson(door, runner.principal, answer.engine, lessons_of, program, step, text)
     _finished_notice(service.db, program)
+
+
+LESSON_QUESTION = ("Based on the task and your output, what ONE thing should future runs on this workbench "
+                   "remember? Reply with a single sentence. If nothing is worth remembering, reply exactly 'nothing'.")
+
+
+def _keep_lesson(door: Any, principal: Any, engine: Any, wb: Any, program: Mapping[str, Any],
+                 step: Mapping[str, Any], text: str) -> None:
+    """An automation's run keeps one lesson for its next runs (the
+    automation's Lessons): one short call on the same engine, with no desk
+    tools. A failed call or "nothing" keeps none; it never fails the run."""
+    from . import engine_door
+    from ..workbench_memory import append_memory
+    from .workbench_runner import _MeteredPromptAdapter
+
+    title = str(program.get("title") or step.get("title") or "")
+    payload = {"system_prompt": "You are a concise assistant. Reply in one sentence only.",
+               "user_prompt": f"Task: {title}\n\nYour output:\n{text[:500]}\n\n{LESSON_QUESTION}",
+               "item_id": step["id"]}
+    try:
+        # The automation's Spend limit per run holds for this call too.
+        answer = engine_door.run(door, principal, JOB, payload, engine=engine,
+                                 adapter=_MeteredPromptAdapter(program.get("spend_limit_usd"), desk_tools=False),
+                                 result_ref=f"program-step-lesson:{step['id']}")
+    except Exception as exc:
+        log.info(f"prompt step {step['id']}: no lesson kept: {exc}")
+        return
+    lesson = answer.output.strip()
+    if lesson and lesson.strip(" .'\"").lower() != "nothing":
+        append_memory(str(wb.id), str(program["id"]), "observation", lesson, item_title=title,
+                      provenance={"operation_id": answer.operation_id, "receipt_id": answer.operation_id})
 
 
 def _automation_of(db: Any, program: Mapping[str, Any]) -> Any:

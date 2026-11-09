@@ -23,8 +23,8 @@
     "schedule_enabled": false,
     "schedule_revision": 3,
     "item_order": [],
-    "created_at": "2026-11-08T23:24:11Z",
-    "last_modified": "2026-11-08T23:24:11Z",
+    "created_at": "2026-11-09T00:31:20Z",
+    "last_modified": "2026-11-09T00:31:20Z",
     "deleted": false,
     "items": [],
     "item_count": 0,
@@ -34,26 +34,27 @@
     "instruction_from": "automation",
     "results": [
      {
-      "item_id": "step-3295c218d194",
+      "item_id": "step-53ad18daf836",
       "title": "Friday team update, Sun 8 Nov 2026",
       "status": "done",
-      "artifact_id": "step-3295c218d194",
+      "artifact_id": "step-53ad18daf836",
       "new": true,
       "update_id": null,
       "error": null,
       "text": "## Weekly update\n\n- Platform sync: the cutover moves to Thursday.\n- Hiring: two loops are booked for next week.",
-      "completed_at": "2026-11-08T23:24:11.969899+00:00",
+      "completed_at": "2026-11-09T00:31:20.537292+00:00",
       "seconds": 0,
       "model": "stub-model-7b",
       "boundary": "cloud",
-      "note_id": "note_result_0f7865a0c85a574e",
+      "note_id": "note_result_b90a59e136815cac",
       "cost_usd": null,
       "used": null,
       "program": {
-       "id": "program-b603412ebbbb",
+       "id": "program-79f9108e4a14",
        "title": "Friday team update, Sun 8 Nov 2026",
        "state": "done"
-      }
+      },
+      "program_run": true
      }
     ],
     "sources_shown": [
@@ -119,7 +120,7 @@
      "workbench_id": "wb-put",
      "name": "Friday team update",
      "new_count": 1,
-     "newest_at": "2026-11-08T23:24:11.969899+00:00"
+     "newest_at": "2026-11-09T00:31:20.537292+00:00"
     }
    ],
    "new_count": 1
@@ -141,7 +142,7 @@
      "synced": false,
      "state": "active",
      "badge": "local",
-     "created_at": "2026-11-08T23:24:11+00:00",
+     "created_at": "2026-11-09T00:31:20+00:00",
      "parked_at": null,
      "connection": null
     }

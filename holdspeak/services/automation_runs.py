@@ -373,6 +373,7 @@ def _program_results(db: Any, workbench_id: str, limit: int) -> list[dict[str, A
     """The automation's Program runs as result rows (the shape of
     ``results_of``): the prompt step's report is the text."""
     from ..db.programs import ProgramStore
+    from ..intel.cli_engine_runs import cost_by_item
     from .run_trace import use_by_item
 
     store = ProgramStore(db)
@@ -390,14 +391,18 @@ def _program_results(db: Any, workbench_id: str, limit: int) -> list[dict[str, A
             "item_id": str(step["id"]), "title": str(program.get("title") or ""), "status": status,
             "artifact_id": str(step["id"]), "new": status == "done" and not facts.get("opened_at"),
             "update_id": (facts.get("delivered") or {}).get("update_id"),
-            "error": _failure_line(store, step) if status == "failed" else None,
+            "error": (str(prompt.get("error") or "") or _failure_line(store, step)) if status == "failed" else None,
             "text": str(step.get("report") or "") if status == "done" else None,
             "completed_at": step.get("ended_at"),
             "seconds": _seconds_between(step.get("started_at"), step.get("ended_at")) if step.get("ended_at") else None,
             "model": str(prompt.get("model") or ""), "boundary": str(prompt.get("egress") or ""),
             "note_id": (facts.get("delivered") or {}).get("note_id"),
-            "cost_usd": None, "used": use_by_item(db, [str(step["id"])]).get(str(step["id"])),
+            # An agent CLI engine's reported cost, keyed by the step (run_trace).
+            "cost_usd": cost_by_item(db, [str(step["id"])]).get(str(step["id"])),
+            "used": use_by_item(db, [str(step["id"])]).get(str(step["id"])),
             "program": {"id": program["id"], "title": program["title"], "state": program["state"]},
+            # The run itself is this Program (no artifact: its answer's note is what is sent).
+            "program_run": True,
             "_at": str(step.get("ended_at") or program.get("created_at") or ""),
         })
     return rows

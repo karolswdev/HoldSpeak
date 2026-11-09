@@ -159,93 +159,6 @@ def test_a_claimed_item_is_refused_in_place(tmp_path: Path) -> None:
 
 # ── A0 "Tell the truth" (betterment/workbench/RECIPE.md, recon steps 14–17) ──
 
-def _refusing_engine_rig(tmp_path: Path, monkeypatch) -> tuple[Database, TestClient, str, list[str], dict[str, Any]]:
-    """Three items on the real routes and the real runner; only the provider
-    constructor is a stub. The stub refuses "Item 2" with its own words and
-    reports provider token counts the way MeetingIntel.last_usage does."""
-    from holdspeak.intel.engine import MeetingIntelError
-    from holdspeak.kernel.runtime import _configure
-
-    state: dict[str, Any] = {"calls": 0, "refuse": True}
-
-    class RefusingStub:
-        active_provider = "stub-provider"
-        active_model = "stub-model-7b"
-        last_usage: dict[str, int] = {}
-
-        def run_prompt(self, *, system_prompt, user_prompt, temperature=None, max_tokens=None):
-            state["calls"] += 1
-            if "[TASK]\nItem 2" in user_prompt and state["refuse"]:
-                self.last_usage = {}
-                raise MeetingIntelError("the stub refuses Item 2: no source is attached")
-            memory = user_prompt.startswith("Task: ")
-            self.last_usage = {"prompt_tokens": 3 if memory else 30, "completion_tokens": 2 if memory else 10,
-                               "total_tokens": 5 if memory else 40}
-            return f"result {state['calls']}"
-
-    stub = RefusingStub()
-    monkeypatch.setattr("holdspeak.intel.providers.build_meeting_intel_for_profile", lambda **_: stub)
-    db = Database(tmp_path / "workbench.db")
-    monkeypatch.setattr("holdspeak.db.get_database", lambda *a, **k: db)
-    profile = db.profiles.upsert(profile_id="stub-profile", name="Stub", kind="openAICompatible",
-                                 base_url="http://stub", model="stub-model-7b")
-    recipe = db.recipes.upsert(recipe_id="stub-recipe", name="Stub agent", system_prompt="SYS", user_template="{input}")
-    wb = db.workbenches.upsert(workbench_id="wb-truth", name="Truth bench", recipe_id=recipe.id, profile_id=profile.id)
-    items = [db.workbench_items.upsert(item_id=f"item-{n}", workbench_id=wb.id, title=f"Item {n}", body=f"input {n}").id
-             for n in (1, 2, 3)]
-    _configure(db)
-    return db, _client(db), wb.id, items, state
-
-
-def test_a_run_with_one_refused_item_records_two_of_three_the_model_and_the_tokens(tmp_path: Path, monkeypatch) -> None:
-    """Recon steps 14–16: the record said `0/0 done · NO MODEL`, tokens 0, a
-    run with a failure was green, and the failed item said `Error: failed`."""
-    db, client, wb, items, _ = _refusing_engine_rig(tmp_path, monkeypatch)
-
-    ran = client.post(f"/api/workbenches/{wb}/run", json={})
-    assert ran.status_code == 200, ran.text
-
-    runs = client.get(f"/api/workbenches/{wb}/runs").json()["runs"]
-    assert len(runs) == 1
-    run = runs[0]
-    assert (run["items_completed"], run["items_attempted"], run["items_failed"]) == (2, 3, 1), run
-    assert run["status"] == "completed_with_failures", run
-    assert run["model"] == "stub-model-7b", run
-    assert run["egress_boundary"] == "cloud", run  # http://stub is not a private address
-    # Two items (40 each) and their two memory notes (5 each): the provider's own counts.
-    assert run["total_tokens"] == 90, run
-    assert client.get(f"/api/workbenches/{wb}").json()["workbench"]["last_run"]["status"] == "completed_with_failures"
-
-    failed = db.workbench_items.get(items[1])
-    assert failed.status == "failed"
-    assert failed.result == "Error: the stub refuses Item 2: no source is attached"
-    assert db.workbench_items.get(items[0]).tokens_consumed == 40
-
-
-def test_item_rerun_runs_only_that_item_and_gives_a_new_result(tmp_path: Path, monkeypatch) -> None:
-    """Recon step 17: Re-run only queued the item; nothing ran until the top Run.
-    The face's Re-run is now the PUT it always sent, then POST /run with the
-    item's id (WorkbenchWindow.tsx rerunItem → triggerRun([item.id]))."""
-    db, client, wb, items, state = _refusing_engine_rig(tmp_path, monkeypatch)
-    assert client.post(f"/api/workbenches/{wb}/run", json={}).status_code == 200
-    assert db.workbench_items.get(items[1]).status == "failed"
-
-    state["refuse"] = False
-    queued = client.put(f"/api/workbenches/{wb}/items/{items[1]}", json={
-        "status": "pending", "result": None, "result_egress": None, "tokens_consumed": 0, "completed_at": None})
-    assert queued.status_code == 200, queued.text
-    db.workbench_items.upsert(item_id="item-4", workbench_id=wb, title="Item 4", body="input 4")
-    rerun = client.post(f"/api/workbenches/{wb}/run", json={"item_ids": [items[1]]})
-    assert rerun.status_code == 200, rerun.text
-
-    again = db.workbench_items.get(items[1])
-    assert again.status == "done" and again.result.startswith("result "), again
-    # Only that item ran: the other pending item still waits.
-    assert db.workbench_items.get("item-4").status == "pending"
-    newest = client.get(f"/api/workbenches/{wb}/runs").json()["runs"][0]
-    assert (newest["items_completed"], newest["items_attempted"], newest["status"]) == (1, 1, "completed"), newest
-
-
 # ── A2 "One automation = one instruction + sources; each run = one result" ──
 # (betterment/workbench/RECIPE.md, slice A2). The real routes, the real runner,
 # the real conductor tick and the real WatchService; only the provider
@@ -433,9 +346,11 @@ def test_a_review_request_event_makes_one_result_about_that_pr(tmp_path: Path, m
     assert again.get("transitions", 0) == 0 and len(_inbox_notes(db)) == 1 and len(prompts) == 1
 
 
-def test_an_old_template_automation_still_runs_its_queue(tmp_path: Path, monkeypatch) -> None:
-    """Done when (A2): an automation with no instruction runs its typed items
-    as before, and shows its agent's prompt as its Do text without writing it."""
+def test_an_old_template_automation_is_set_up_as_a_program(tmp_path: Path, monkeypatch) -> None:
+    """An automation with no instruction shows its agent's prompt as its Do
+    text without writing it (A2); since 2026-11-08 Run now does not run its
+    queue: Programs run it, so the hub names the refusal (set it up as a
+    program) and nothing runs."""
     db, client, prompts, made = _instruction_rig(tmp_path, monkeypatch, template=True)
     wb = made["workbench"]
     starters = len(wb["items"])
@@ -447,11 +362,11 @@ def test_an_old_template_automation_still_runs_its_queue(tmp_path: Path, monkeyp
     assert detail["instruction_shown"] == ((recipe.user_template or "").strip() or recipe.system_prompt.strip())
 
     ran = client.post(f"/api/workbenches/{wb['id']}/run", json={})
-    assert ran.status_code == 200, ran.text
-    assert len(prompts) == starters
+    assert ran.status_code == 409, ran.text
+    assert ran.json()["code"] == "set_up_as_program"
+    assert prompts == []
     items = db.workbench_items.list_for_workbench(wb["id"])
-    assert len(items) == starters and all(item.status == "done" for item in items)
-    assert {db.plugins.get_artifact(item.result_artifact_id).status for item in items} == {"pending-review"}
+    assert len(items) == starters and all(item.status == "pending" for item in items)
     assert _inbox_notes(db) == []
     assert db.workbenches.get(wb["id"]).instruction == ""  # nothing rewritten on read
     assert client.get(f"/api/workbenches/{wb['id']}").json()["workbench"]["results"] == []
@@ -469,8 +384,9 @@ def test_a_result_for_needs_you_or_a_destination_is_a_door_item_or_a_prepared_se
     assert [d["outcome"] for d in ran.json()["run"]["deliveries"]] == ["added"]
     artifact_id = client.get(f"/api/workbenches/{needs}").json()["workbench"]["results"][0]["artifact_id"]
     with db._connection() as conn:
+        # 2026-11-08: a run is a Program of one prompt step; the result's id is the step's.
         door = conn.execute("SELECT owner, due, source_type, task FROM action_items WHERE source_ref=?",
-                            (f"artifact:{artifact_id}",)).fetchall()
+                            (f"program_step:{artifact_id}",)).fetchall()
     assert len(door) == 1 and door[0]["owner"] == "me" and door[0]["source_type"] == "automation_result"
     assert door[0]["due"] == datetime.now().astimezone().date().isoformat()
     assert _inbox_notes(db) == []
@@ -481,43 +397,11 @@ def test_a_result_for_needs_you_or_a_destination_is_a_door_item_or_a_prepared_se
     ran = client.post(f"/api/workbenches/{sent}/run", json={})
     assert ran.status_code == 200, ran.text
     assert [d["outcome"] for d in ran.json()["run"]["deliveries"]] == ["prepared"]
-    artifact_id = client.get(f"/api/workbenches/{sent}").json()["workbench"]["results"][0]["artifact_id"]
+    note_id = ran.json()["run"]["deliveries"][0]["note_id"]  # the answer is a note; the send is prepared from it
     with db._connection() as conn:
         sends = conn.execute("SELECT state FROM channel_sends WHERE document_ref=?",
-                             (f"artifact:{artifact_id}",)).fetchall()
+                             (f"note:{note_id}",)).fetchall()
     assert [row["state"] for row in sends] == ["prepared"]  # nothing sent
-
-
-def test_the_time_limit_is_per_item_and_comes_from_the_engine(tmp_path: Path, monkeypatch) -> None:
-    """60 s for an HTTP engine; a CLI engine gets its preset's timeout."""
-    from holdspeak.intel.cli_engine import PRESETS
-    from holdspeak.services import automation_runs
-
-    db, client, _prompts, _ = _instruction_rig(tmp_path, monkeypatch, "wb-http", cli_bench="wb-cli")
-    wb = _make_automation(client, "wb-http")
-    assert client.post(f"/api/workbenches/{wb}/run", json={}).status_code == 200
-    with db._connection() as conn:
-        row = conn.execute(
-            """SELECT p.deadline_at, o.created_at FROM kernel_parent_runs p
-               JOIN kernel_operations o ON o.operation_id = p.operation_id
-               JOIN workbench_runs r ON r.parent_operation_id = p.operation_id WHERE r.workbench_id=?""",
-            (wb,)).fetchone()
-        revision = conn.execute("SELECT id FROM deployment_revisions LIMIT 1").fetchone()["id"]
-        conn.execute(
-            """INSERT INTO deployment_revisions (id, destination_id, kind, engine, model, boundary, endpoint)
-               VALUES ('dep-cli', 'cli-claude', 'cli_engine', 'cli_v1', 'default', 'cloud', 'cli:claude')""")
-    assert automation_runs.item_seconds(db, {"entries": [{"deployment_revision_id": revision}]}) == 60.0
-    assert automation_runs.item_seconds(db, {"entries": [{"deployment_revision_id": revision},
-                                                         {"deployment_revision_id": "dep-cli"}]}) \
-        == PRESETS["claude"].timeout_seconds
-    # A press reads the assigned engine before the run is admitted.
-    assert automation_runs.assigned_item_seconds(db, wb) == 60.0
-    agent = _make_automation(client, "wb-cli")
-    assert automation_runs.assigned_item_seconds(db, agent) == PRESETS["claude"].timeout_seconds
-    # The HTTP run was admitted for one 60 s item.
-    started = datetime.fromisoformat(str(row["created_at"]).replace("Z", "+00:00")).timestamp() \
-        if isinstance(row["created_at"], str) else float(row["created_at"])
-    assert 0 < float(row["deadline_at"]) - started <= 61, (row["deadline_at"], row["created_at"])
 
 
 def test_an_older_database_gains_the_three_columns_on_open(tmp_path: Path) -> None:
@@ -555,8 +439,10 @@ def test_a_failed_result_keeps_its_reason_its_sources_and_its_place(tmp_path: Pa
     assert "deliveries" not in ran.json()["run"]
     [result] = client.get("/api/workbenches/wb-fails").json()["workbench"]["results"]
     assert result["status"] == "failed" and result["error"] == "the stub refuses: no source is attached", result
-    item = db.workbench_items.get(result["item_id"])
-    assert _json.loads(item.grounding_json) == {"refs": ["note:note-sync", "note:note-hiring"]}
+    from holdspeak.db.programs import ProgramStore
+
+    # The run's step keeps the automation's sources (2026-11-08: the run is a Program).
+    assert ProgramStore(db).get_step(result["item_id"])["sources"] == ["note:note-sync", "note:note-hiring"]
     assert _inbox_notes(db) == []
 
 
@@ -1033,8 +919,9 @@ def test_about_reads_sets_drawers_and_people_by_name_and_the_run_reads_them(tmp_
     assert "Q4 scope is frozen." in prompt  # the drawer's note
     assert "Person: Mira Chen" in prompt and "rel-gone" not in prompt
     result = client.get(f"/api/workbenches/{wb}").json()["workbench"]["results"][0]
-    item = db.workbench_items.get(result["item_id"])
-    refs = _json.loads(item.grounding_json)["refs"]
+    from holdspeak.db.programs import ProgramStore
+
+    refs = ProgramStore(db).get_step(result["item_id"])["facts"]["prompt"]["refs"]
     assert refs == ["note:note-sync", "meeting:m-week", "zone:dir-work"], refs
 
     # This week's notes are his notes, never an automation's own results.
@@ -1164,62 +1051,6 @@ def test_a_starter_makes_one_automation_and_the_friday_walk_reads_a_result(tmp_p
 # A2) shows its typed tasks and their results; one press (make-one) writes
 # its agent's prompt as its Do, and nothing is lost: the tasks, their
 # results, the agent and its skills stay. Its next run makes one result.
-
-
-def test_an_old_todo_automation_shows_its_tasks_and_becomes_one_automation_in_one_press(
-        tmp_path: Path, monkeypatch) -> None:
-    import itertools
-
-    import holdspeak.workbench_memory as memory
-
-    monkeypatch.setattr(memory, "WORKBENCH_DIR", tmp_path / "workbenches")
-    made_ids = itertools.count(1)
-    monkeypatch.setattr("holdspeak.services.workbench_service._new_id",
-                        lambda prefix: f"{prefix}_a9_{next(made_ids)}")
-    db, client, prompts, made = _instruction_rig(tmp_path, monkeypatch, template=True)
-    wb = made["workbench"]["id"]
-    recipe = db.recipes.get(made["workbench"]["recipe_id"])
-    agent_prompt = (recipe.user_template or "").strip() or recipe.system_prompt.strip()
-
-    old = _record_window("old-queue", client, wb, tmp_path)[f"/api/workbenches/{wb}"]["workbench"]
-    assert (old["instruction"], old["instruction_from"], old["instruction_shown"]) == ("", "agent", agent_prompt)
-    titles = [item["title"] for item in old["items"]]
-    assert titles and all(item["status"] == "pending" for item in old["items"])
-    assert old["results"] == []
-
-    # The queue runs as before: each task gets its own answer.
-    assert client.post(f"/api/workbenches/{wb}/run", json={}).status_code == 200
-    ran = _record_window("old-queue-ran", client, wb, tmp_path)[f"/api/workbenches/{wb}"]["workbench"]
-    assert [i["title"] for i in ran["items"]] == titles
-    assert all(i["status"] == "done" and i["result"] and i["result_artifact_id"] for i in ran["items"])
-    answers = {i["id"]: (i["result"], i["result_artifact_id"]) for i in ran["items"]}
-
-    # One press: the agent's prompt becomes Do. Nothing else changes.
-    pressed = client.post(f"/api/workbenches/{wb}/make-one")
-    assert pressed.status_code == 200, pressed.text
-    one = _record_window("old-made-one", client, wb, tmp_path)[f"/api/workbenches/{wb}"]["workbench"]
-    assert (one["instruction"], one["instruction_from"], one["instruction_shown"]) == (
-        agent_prompt, "automation", agent_prompt)
-    assert one["recipe_id"] == recipe.id and db.recipes.get(recipe.id) is not None
-    assert {i["id"]: (i["result"], i["result_artifact_id"]) for i in one["items"]} == answers
-    assert all(db.plugins.get_artifact(a) is not None for _r, a in answers.values())
-    # A second press changes nothing.
-    again = client.post(f"/api/workbenches/{wb}/make-one").json()["workbench"]
-    assert again["instruction"] == agent_prompt
-
-    # Its next run makes one result (one occurrence), the old tasks untouched.
-    before = len(prompts)
-    assert client.post(f"/api/workbenches/{wb}/run", json={}).status_code == 200
-    assert len(prompts) == before + 1 and agent_prompt in prompts[-1]
-    # Orchestrator ruling: the agent's prompt goes once (as the task), never
-    # again as the system prompt.
-    assert agent_prompt not in _SYSTEMS[-1] and prompts[-1].count(agent_prompt) == 1
-    assert agent_prompt in _SYSTEMS[0]  # the queue run before the press still used the agent
-    after = client.get(f"/api/workbenches/{wb}").json()["workbench"]
-    [result] = after["results"]
-    assert result["status"] == "done" and result["new"] is True
-    kept = {i["id"]: (i["result"], i["result_artifact_id"]) for i in after["items"] if i["id"] in answers}
-    assert kept == answers
 
 
 def test_make_one_refuses_an_automation_with_no_agent_prompt(tmp_path: Path) -> None:

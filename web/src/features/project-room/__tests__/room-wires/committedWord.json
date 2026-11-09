@@ -1,34 +1,34 @@
 {
  "_recorded": "tests/integration/test_desk_project_room.py::test_a_committed_decision_names_its_person_on_the_decided_line (HOLDSPEAK_WIRE_WRITE=1 rewrites this file; never hand-edit a field a test reads)",
  "proposals": {
-  "project_id": "proj-7c7dddc99119",
+  "project_id": "proj-c60c3b4a422f",
   "proposals": []
  },
  "record": {
   "alternatives": null,
   "committed_to": "Mira Okafor",
-  "created_at": "2026-11-08T23:24:14.492752+00:00",
+  "created_at": "2026-11-09T00:31:22.752959+00:00",
   "decision_text": "Adopt quorumdb",
   "deleted": 0,
   "dispute_reason": null,
-  "id": "record-d16991c55f9a4f06a4d4f0d9746373b4",
+  "id": "record-345d8c51348d4a04a940e9711739ab6d",
   "kind": "decision",
   "lifecycle": "active",
   "owner": "Mira Okafor",
-  "owner_person_id": "a58168d1-2b41-42e4-88f2-a0f743439e62",
+  "owner_person_id": "8434a8f0-a794-4cde-b210-d37a2694c590",
   "predecessor_id": null,
-  "project_id": "proj-7c7dddc99119",
+  "project_id": "proj-c60c3b4a422f",
   "rationale": null,
   "review_date": null,
   "revisions": [],
-  "source_id": "decision_6f84515690ae",
+  "source_id": "decision_8b2354cece2d",
   "source_type": "desk",
   "sources": [
    {
-    "created_at": "2026-11-08T23:24:14.492752+00:00",
-    "id": "record-source-0085c804e229425babba6dd414fa87f9",
-    "record_id": "record-d16991c55f9a4f06a4d4f0d9746373b4",
-    "source_ref": "a58168d1-2b41-42e4-88f2-a0f743439e62",
+    "created_at": "2026-11-09T00:31:22.752959+00:00",
+    "id": "record-source-4159ce07edf948d2986bc27e7e87911f",
+    "record_id": "record-345d8c51348d4a04a940e9711739ab6d",
+    "source_ref": "8434a8f0-a794-4cde-b210-d37a2694c590",
     "source_type": "person"
    }
   ],
@@ -36,7 +36,7 @@
   "successor_id": null,
   "supersession_reason": null,
   "title": "Adopt quorumdb",
-  "updated_at": "2026-11-08T23:24:14.492752+00:00",
+  "updated_at": "2026-11-09T00:31:22.752959+00:00",
   "work": []
  },
  "room": {
@@ -47,13 +47,13 @@
      "after_hash": "8285d7674d073763a7b8924c6bd74aeb",
      "before_hash": null,
      "change_kind": "project.created",
-     "command_id": "committed-32f39665",
-     "created_at": "2026-11-08T23:24:14.482643+00:00",
-     "id": "pchg_627913b458096416de45b1af30e24e44",
-     "project_id": "proj-7c7dddc99119",
+     "command_id": "committed-766e5276",
+     "created_at": "2026-11-09T00:31:22.744739+00:00",
+     "id": "pchg_21f76e1a4295cea10f305d720a7d5699",
+     "project_id": "proj-c60c3b4a422f",
      "project_revision": 1,
      "summary_json": "{\"name\": \"Ledger\"}",
-     "target_ref": "project:proj-7c7dddc99119"
+     "target_ref": "project:proj-c60c3b4a422f"
     }
    ],
    "state": "ok"
@@ -61,9 +61,9 @@
   "commitments": {
    "items": [
     {
-     "action_item_id": "action-record-d16991c55f9a4f06a4d4f0d9746373b4",
+     "action_item_id": "action-record-345d8c51348d4a04a940e9711739ab6d",
      "dueAt": null,
-     "id": "commitment-record-d16991c55f9a4f06a4d4f0d9746373b4",
+     "id": "commitment-record-345d8c51348d4a04a940e9711739ab6d",
      "kind": "action",
      "owner": "Mira Okafor",
      "text": "Adopt quorumdb"
@@ -74,25 +74,25 @@
   "decisions": {
    "items": [
     {
-     "at": "2026-11-08T23:24:14.500221+00:00",
+     "at": "2026-11-09T00:31:22.767383+00:00",
      "committed_to": null,
-     "id": "record-c5aa5ae1e1504575aafd1f187c4acb58",
+     "id": "record-47d1e57755f24a5a92054d0a468b8086",
      "kind": "decision",
      "lifecycle": "active",
-     "source_id": "decision_62f08853758f",
-     "source_ref": "decision_record:record-c5aa5ae1e1504575aafd1f187c4acb58",
+     "source_id": "decision_1aa6617b2777",
+     "source_ref": "decision_record:record-47d1e57755f24a5a92054d0a468b8086",
      "source_type": "desk",
      "text": "Keep the nightly export",
      "url": null
     },
     {
-     "at": "2026-11-08T23:24:14.492752+00:00",
+     "at": "2026-11-09T00:31:22.752959+00:00",
      "committed_to": "Mira Okafor",
-     "id": "record-d16991c55f9a4f06a4d4f0d9746373b4",
+     "id": "record-345d8c51348d4a04a940e9711739ab6d",
      "kind": "decision",
      "lifecycle": "active",
-     "source_id": "decision_6f84515690ae",
-     "source_ref": "decision_record:record-d16991c55f9a4f06a4d4f0d9746373b4",
+     "source_id": "decision_8b2354cece2d",
+     "source_ref": "decision_record:record-345d8c51348d4a04a940e9711739ab6d",
      "source_type": "desk",
      "text": "Adopt quorumdb",
      "url": null
@@ -169,17 +169,17 @@
    "count": 1,
    "items": [
     {
-     "action_item_id": "action-record-d16991c55f9a4f06a4d4f0d9746373b4",
-     "commitment_id": "commitment-record-d16991c55f9a4f06a4d4f0d9746373b4",
+     "action_item_id": "action-record-345d8c51348d4a04a940e9711739ab6d",
+     "commitment_id": "commitment-record-345d8c51348d4a04a940e9711739ab6d",
      "decision_lifecycle": "active",
-     "decision_record_id": "record-d16991c55f9a4f06a4d4f0d9746373b4",
+     "decision_record_id": "record-345d8c51348d4a04a940e9711739ab6d",
      "direction": "theirs",
      "due_at": null,
      "kind": "commitment",
      "next_action": "set_date",
      "owner": "Mira Okafor",
      "severity": "info",
-     "since": "2026-11-08T23:24:14.492923+00:00",
+     "since": "2026-11-09T00:31:22.753134+00:00",
      "source": "commitment",
      "title": "Adopt quorumdb",
      "unknowns": [
@@ -196,21 +196,21 @@
   "now": {
    "decided": [
     {
-     "at": "2026-11-08T23:24:14.500221+00:00",
+     "at": "2026-11-09T00:31:22.767383+00:00",
      "committed_to": null,
-     "id": "record-c5aa5ae1e1504575aafd1f187c4acb58",
-     "ref": "decision_record:record-c5aa5ae1e1504575aafd1f187c4acb58",
+     "id": "record-47d1e57755f24a5a92054d0a468b8086",
+     "ref": "decision_record:record-47d1e57755f24a5a92054d0a468b8086",
      "source": "",
-     "source_ref": "decision_record:record-c5aa5ae1e1504575aafd1f187c4acb58",
+     "source_ref": "decision_record:record-47d1e57755f24a5a92054d0a468b8086",
      "text": "Keep the nightly export"
     },
     {
-     "at": "2026-11-08T23:24:14.492752+00:00",
+     "at": "2026-11-09T00:31:22.752959+00:00",
      "committed_to": "Mira Okafor",
-     "id": "record-d16991c55f9a4f06a4d4f0d9746373b4",
-     "ref": "decision_record:record-d16991c55f9a4f06a4d4f0d9746373b4",
+     "id": "record-345d8c51348d4a04a940e9711739ab6d",
+     "ref": "decision_record:record-345d8c51348d4a04a940e9711739ab6d",
      "source": "",
-     "source_ref": "decision_record:record-d16991c55f9a4f06a4d4f0d9746373b4",
+     "source_ref": "decision_record:record-345d8c51348d4a04a940e9711739ab6d",
      "text": "Adopt quorumdb"
     }
    ],
@@ -220,17 +220,17 @@
    "risks": [],
    "state": "ok"
   },
-  "observed_at": "2026-11-08T16:24:14.482643",
+  "observed_at": "2026-11-08T17:31:22.744739",
   "programs": {
    "programs": [],
    "state": "ok"
   },
   "project": {
    "context": {},
-   "created_at": "2026-11-08T16:24:14.482643",
+   "created_at": "2026-11-08T17:31:22.744739",
    "description": "",
    "detection_threshold": 0.4,
-   "id": "proj-7c7dddc99119",
+   "id": "proj-c60c3b4a422f",
    "is_archived": false,
    "keywords": [],
    "last_review_at": null,
@@ -251,22 +251,22 @@
    "target_at": null,
    "team_members": [],
    "template_key": null,
-   "updated_at": "2026-11-08T16:24:14.482643"
+   "updated_at": "2026-11-08T17:31:22.744739"
   },
-  "project_id": "proj-7c7dddc99119",
+  "project_id": "proj-c60c3b4a422f",
   "receipts": {
    "items": [
     {
-     "at": 1794180254.4825768,
+     "at": 1794184282.7446852,
      "caller": null,
-     "id": "edbae0d3-de47-47ff-8d46-e78b6f2b2550",
+     "id": "a9e8700f-4844-435d-9a5a-218012792d2d",
      "identity": null,
      "label": "ProjectService.create_project",
      "op": "create_project",
      "origin": null,
      "outcome": "ok",
      "reason": null,
-     "timestamp": 1794180254.4825768,
+     "timestamp": 1794184282.7446852,
      "title": "ProjectService.create_project"
     }
    ],
@@ -276,13 +276,13 @@
    "count": 2,
    "latest": {
     "confidence": 1.0,
-    "created_at": "2026-11-08T23:24:14.500236+00:00",
+    "created_at": "2026-11-09T00:31:22.767399+00:00",
     "deleted": false,
-    "id": "proj-7c7dddc99119|decision_record:record-c5aa5ae1e1504575aafd1f187c4acb58",
-    "last_modified": "2026-11-08T23:24:14.500236+00:00",
-    "project_id": "proj-7c7dddc99119",
+    "id": "proj-c60c3b4a422f|decision_record:record-47d1e57755f24a5a92054d0a468b8086",
+    "last_modified": "2026-11-09T00:31:22.767399+00:00",
+    "project_id": "proj-c60c3b4a422f",
     "relationship": "member",
-    "resource_ref": "decision_record:record-c5aa5ae1e1504575aafd1f187c4acb58",
+    "resource_ref": "decision_record:record-47d1e57755f24a5a92054d0a468b8086",
     "source": "decision"
    },
    "state": "ok"
