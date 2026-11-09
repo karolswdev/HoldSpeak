@@ -436,9 +436,10 @@ def test_list_rows_and_revision_are_one_snapshot(tmp_path: Path, monkeypatch: py
 
 def test_the_lane_is_on_the_hub_with_its_launch(svc: Any) -> None:
     """M3: the agent lane follows to another view: its row names the launch,
-    and opening it on another launch re-targets the same window."""
+    and opening it on another launch re-targets the same window (the Agents
+    window since 2026-11-08: one face per agent)."""
     row = svc.open("lane", object_ref="launch:L-1")
-    assert row["app"] == "lane" and row["object_ref"] == "launch:L-1"
+    assert row["id"] == "conductor" and row["object_ref"] == "launch:L-1"
     again = svc.open("lane", object_ref="launch:L-2")
     assert again["object_ref"] == "launch:L-2" and again["revision"] > row["revision"]
     assert len(svc.list()["windows"]) == 1
@@ -510,3 +511,22 @@ def test_an_object_window_of_an_unknown_kind_is_refused(svc: Any) -> None:
     # A known kind and a bare legacy id still open.
     assert svc.open("pullout:note:n-1")["object_ref"] == "note:n-1"
     assert svc.open("pullout:n-legacy")["object_ref"] == "n-legacy"
+
+
+def test_an_agent_lane_opens_agents_on_its_launch_and_a_stored_lane_row_folds_on_read(svc: Any) -> None:
+    """One face per agent (2026-11-08): ``lane`` is the Agents window on the
+    launch; a row stored before folds into it when the hub reads the windows,
+    so no view writes on load to follow it."""
+    opened = svc.open("lane", object_ref="launch:L-1")
+    assert opened["id"] == "conductor" and opened["object_ref"] == "launch:L-1"
+    # A lane row written by an older hub.
+    with svc._db._connection() as conn:
+        conn.execute("DELETE FROM desk_windows")
+        conn.execute("INSERT INTO desk_windows (id, app, object_ref, depth) VALUES ('lane', 'lane', 'launch:L-2', 3)")
+    rows = {w["id"]: w for w in svc.list()["windows"]}
+    assert "lane" not in rows and rows["conductor"]["object_ref"] == "launch:L-2"
+    # With Agents open already, the old row only goes.
+    with svc._db._connection() as conn:
+        conn.execute("INSERT INTO desk_windows (id, app, object_ref, depth) VALUES ('lane', 'lane', 'launch:L-3', 4)")
+    rows = {w["id"]: w for w in svc.list()["windows"]}
+    assert set(rows) == {"conductor"} and rows["conductor"]["object_ref"] == "launch:L-2"

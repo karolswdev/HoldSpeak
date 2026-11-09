@@ -26,7 +26,6 @@ import { CHAIR_WINDOW_IDS, TODAY_REPLACES, closeChairWindow, openChairWindowFrom
 import { openIntelligence } from "../intelligenceNavigation";
 import { workBand } from "../components/window/windowGeometry";
 import { CONDUCTOR_WINDOW_ID, useConductor } from "../conductor/store";
-import { openAgentLane } from "../shell";
 import { PARKED_WINDOW_ID, drawerWindowId, useDrawers } from "../drawer/store";
 import { forgetLoadRaises, markRehydratedMinimized, raisesThisLoad, useDesk, type PanelRect } from "../store";
 import { COMPACT_VIEWPORT_QUERY } from "../useCompactViewport";
@@ -230,25 +229,24 @@ export function adapterFor(id: string): Adapter | null {
     };
   }
   // The agent lane (2026-11-08: one face per agent): no window of its own.
-  // A hub row `lane` on `launch:<id>` opens Agents on that agent; this view
-  // then reports no lane window, so the row closes.
+  // The hub folds a `lane` row into the Agents row (`conductor` on
+  // `launch:<id>`, desk_window_service) when it reads the windows; this view
+  // never shows a lane window and never writes for one.
   if (id === LANE_WINDOW_ID) {
-    const launchOf = (row?: HubWindowRow) => (row?.object_ref ?? "").replace(/^launch:/, "");
-    return {
-      isOpen: () => false,
-      open: (row) => {
-        const launch = launchOf(row);
-        if (launch) openAgentLane(launch);
-      },
-      close: () => undefined,
-    };
+    return { isOpen: () => false, open: () => undefined, close: () => undefined };
   }
   if (id === CONDUCTOR_WINDOW_ID) {
     return {
       isOpen: () => useConductor.getState().open,
       // A hub open is passive (hydration, another view): it keeps the hub's
-      // seat and depth; only a gesture here fronts the Conductor.
-      open: () => useConductor.getState().showFromHub(),
+      // seat and depth; only a gesture here fronts the Conductor. A row on
+      // `launch:<id>` (an agent opened on the hub) picks that agent here,
+      // and writes nothing.
+      open: (row) => {
+        const launch = (row?.object_ref ?? "").startsWith("launch:") ? String(row!.object_ref).slice("launch:".length) : "";
+        if (launch) useConductor.setState({ focus: `launch:${launch}` });
+        useConductor.getState().showFromHub();
+      },
       close: () => useConductor.getState().closeWindow(),
     };
   }
