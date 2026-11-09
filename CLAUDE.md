@@ -128,6 +128,9 @@ and the owner's real DB stay out of it. Times are from the owner's machine
 - **FULL** (nightly in CI, `.github/workflows/nightly.yml`; not measured with `--dist worksteal` yet; 47 min without it, because three workers held every browser test):
   `HOME_REAL=$HOME; H=$(mktemp -d); HOME=$H PLAYWRIGHT_BROWSERS_PATH=$HOME_REAL/Library/Caches/ms-playwright npm_config_cache=$HOME_REAL/.npm uv run pytest -q -n auto --dist worksteal --ignore=tests/e2e/test_metal.py; rm -rf $H`
   Pull-request CI runs FAST and the scoped browser tests only.
+- Lanes: `scripts/lane.sh new <name>` makes a worktree that shares the main
+  checkout's `web/node_modules` and syncs without npm; `done <name>` removes
+  it after the merge; `purge` removes every merged, clean lane; `ls` lists them.
 - One file or one test: the same command with the path in place of the
   directories. Doctor only: `uv run pytest -q tests/ -k doctor`.
 - `PLAYWRIGHT_BROWSERS_PATH` is not optional: the isolated HOME hides the

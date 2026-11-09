@@ -2,6 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-09 · pipe/lane-tool `scripts/lane.sh` new/done/purge/ls: a lane links the shared `web/node_modules`, clones the built output and syncs without npm (5.6 s); purge removes merged (squash-aware) clean lanes and never touches an active one; `hatch_build.py` skips `npm ci` on a linked install. Purge run: 170 worktrees removed, 82 GB freed, 28 kept.
 - 2026-11-09 · #2108 The fences diet: the shape fences (counts, hand-kept lists, the schema snapshot, the README tool count, citations, ceiling ratchets, line budgets, the phase-143 censuses) are parked in `tests/_parked/fences/`; the kept guards assert properties and read the tree once per process through `tests/_tree.py`.
 - 2026-11-09 · #2107 The vitest selection is one hop (owner: test time and load "unacceptable"): `scripts/vitest_related.py` selects the tests that import a changed file (a barrel by name, a re-export the same hop), its app's `*.app.test.tsx` (folder or registry entry) and the tests that name it; no transitive walk. Batch 23: 204 → 58 files, the script 24 → 3 s; its test file 1.9 s.
 - 2026-11-09 · #2105 Handover and STATUS: the walk standard. Quick check GREEN on ea36a0e0c; the hub redeployed there; the ten-app morning walk posted (7d61d02def34).
