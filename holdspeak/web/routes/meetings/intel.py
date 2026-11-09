@@ -1,17 +1,21 @@
 """Deferred-intelligence queue adapters."""
 from __future__ import annotations
-from typing import Any, Optional
+from typing import Any, Callable, Optional
 from threading import Lock
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
+from starlette.concurrency import run_in_threadpool
 from .... import operations
+from ....meeting_intel_operations import MEETING_INTEL_OPERATIONS, conflict_body, with_route
 from ....logging_config import get_logger
 from ....principals import UNAUTHENTICATED
 from ....services.errors import ConflictError, NotFound, ValidationError
 from ....services.meeting_intel_service import MeetingIntelService
 from ....web_requests import _IntelProcessRequest
 from ...context import WebContext
+from ...operation_routes import operation_router
 from ...runtime_support import error_500
+from .._mount import mount_router
 log = get_logger("web.routes.meetings")
 _SERVICE_CACHE_LOCK = Lock()
 
@@ -46,34 +50,30 @@ def _error(exc: Exception, action: str) -> JSONResponse:
     return error_500(exc, log, action)
 
 def _conflict_response(service: MeetingIntelService, meeting_id: str, exc: ConflictError) -> JSONResponse:
-    """Keep the route conflict contract identical across all three verbs."""
-    context = dict(getattr(exc, "context", {}) or {})
-    planned_route = context.get("current_planned_route") or context.get("planned_route")
-    if planned_route is None:
+    """Keep the route conflict contract identical across every run gesture (``meeting_intel_operations``)."""
+    return JSONResponse(conflict_body(with_route(service, meeting_id, exc)), status_code=409)
+
+#: The 500 words of each produced route; the run gestures answer a conflict with the route.
+_FAILED = {"meeting.intel_jobs": "Failed to list intel jobs", "meeting.intel_retry": "Failed to retry intel job",
+           "meeting.intel_recovery": "Failed to load Meeting intelligence recovery",
+           "meeting.intel_recovery_retry": "Failed to retry Meeting intelligence",
+           "meeting.intel_recovery_skip": "Failed to skip Meeting intelligence"}
+_ROUTED = {"meeting.intel_retry", "meeting.intel_recovery_retry"}
+
+def _answer(name: str) -> Callable[..., Any]:
+    async def answer(fn: Callable[[], Any], *, status: int = 200) -> JSONResponse:
         try:
-            planned_route = service.get_recovery(None, meeting_id).get("planned_route")
-        except Exception:
-            planned_route = {"status": "unavailable", "reason_code": "route unavailable", "selection_hash": None, "legs": []}
-    return JSONResponse(
-        {
-            "success": False,
-            "error": str(exc),
-            "plainReason": str(exc),
-            "code": getattr(exc, "code", "conflict"),
-            "planned_route": planned_route,
-            "current_planned_route": planned_route,
-            "run_receipt": context.get("run_receipt"),
-            "last_refusal": context.get("last_refusal"),
-        },
-        status_code=409,
-    )
+            return JSONResponse(await run_in_threadpool(fn), status_code=status)
+        except ConflictError as exc:
+            if name in _ROUTED:  # the call put the current route on it (with_route)
+                return JSONResponse(conflict_body(exc), status_code=409)
+            return _error(exc, _FAILED[name])
+        except Exception as exc:
+            return _error(exc, _FAILED[name])
+    return answer
 
 def build_intel_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
-    @router.get("/api/intel/jobs")
-    def api_list_intel_jobs(request: Request, status: str = "all", limit: int = 20, history_limit: int = 5) -> Any:
-        try: return JSONResponse(_svc(ctx).list_jobs(_principal(request), {"status": status, "limit": limit, "history_limit": history_limit}))
-        except Exception as exc: return _error(exc, "Failed to list intel jobs")
     @router.get("/api/intel/summary")
     def api_intel_queue_summary(request: Request) -> Any:
         try: return JSONResponse(_svc(ctx).queue_summary(_principal(request)))
@@ -84,15 +84,6 @@ def build_intel_router(ctx: WebContext) -> APIRouter:
             body = payload.model_dump() if payload is not None else {}
             return JSONResponse(_svc(ctx).process_jobs(_principal(request), body))
         except Exception as exc: return _error(exc, "Failed to process intel jobs")
-    @router.post("/api/intel/retry/{meeting_id}")
-    async def api_retry_intel_job(meeting_id: str, request: Request) -> Any:
-        try:
-            body = await _json_body(request)
-            return JSONResponse(_svc(ctx).retry_job(_principal(request), meeting_id, expected_selection_hash=body.get("expected_selection_hash")))
-        except Exception as exc:
-            if isinstance(exc, ConflictError):
-                return _conflict_response(_svc(ctx), meeting_id, exc)
-            return _error(exc, "Failed to retry intel job")
     @router.post("/api/meetings/{meeting_id}/prepare")
     async def api_prepare_meeting_result(meeting_id: str, request: Request) -> Any:
         """Betterment capture C5b: Prepare… and Write again (one draft)."""
@@ -127,21 +118,17 @@ def build_intel_router(ctx: WebContext) -> APIRouter:
         except Exception as exc:
             return _error(exc, "Failed to run Meeting intelligence")
 
-    @router.get("/api/meetings/{meeting_id}/intel-recovery")
-    def api_get_meeting_intel_recovery(meeting_id: str, request: Request) -> Any:
-        try: return JSONResponse(_svc(ctx).get_recovery(_principal(request), meeting_id))
-        except Exception as exc: return _error(exc, "Failed to load Meeting intelligence recovery")
-    @router.post("/api/meetings/{meeting_id}/intel-recovery/retry")
-    async def api_retry_meeting_intel_recovery(meeting_id: str, request: Request) -> Any:
-        try:
-            body = await _json_body(request)
-            return JSONResponse(_svc(ctx).retry_recovery(_principal(request), meeting_id, body))
-        except Exception as exc:
-            if isinstance(exc, ConflictError):
-                return _conflict_response(_svc(ctx), meeting_id, exc)
-            return _error(exc, "Failed to retry Meeting intelligence")
-    @router.post("/api/meetings/{meeting_id}/intel-recovery/skip")
-    def api_skip_meeting_intel_recovery(meeting_id: str, request: Request) -> Any:
-        try: return JSONResponse(_svc(ctx).skip_recovery(_principal(request), meeting_id))
-        except Exception as exc: return _error(exc, "Failed to skip Meeting intelligence")
+    registry = lambda: operations.for_context(ctx, meeting_intel_service=lambda: _svc(ctx))  # noqa: E731
+
+    def jobs(descriptor: Any) -> Callable[..., Any]:
+        """Typed query parameters keep FastAPI's 422 for a malformed limit, as the hand-written route did."""
+        async def api_list_intel_jobs(request: Request, status: str = "all", limit: int = 20, history_limit: int = 5) -> Any:
+            args = {"status": status, "limit": limit, "history_limit": history_limit}
+            return await _answer(descriptor.name)(lambda: registry().invoke(_principal(request), descriptor.name, args))
+        return api_list_intel_jobs
+
+    for descriptor in MEETING_INTEL_OPERATIONS:
+        if descriptor.service == "meeting_intel_service":
+            mount_router(router, operation_router([descriptor], registry, _answer(descriptor.name), module=__name__,
+                                                  hand_written={"meeting.intel_jobs": jobs}))
     return router

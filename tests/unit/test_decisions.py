@@ -858,6 +858,9 @@ def test_the_catalogue_is_explicit_descriptors() -> None:
         "people.project.link", "people.project.unlink", "people.one_on_one.list", "people.agenda.transition",
         "people.owed.create", "people.note.list", "people.commitment.send_to_workbench",
         "people.commitment.satisfy", "people.calendar.link", "people.calendar.unlink", "people.owner_alias.link", "people.owner_alias.unlink",
+        # 2026-11-08: the Meetings face's intelligence and aftercare verbs (meeting_intel_operations.py).
+        "meeting.intel_jobs", "meeting.intel_retry", "meeting.intel_recovery", "meeting.intel_recovery_retry",
+        "meeting.intel_recovery_skip", "meeting.aftercare", "meeting.aftercare_proposals", "meeting.aftercare_decide",
     ]
     # decision.list takes the empty object; its one optional argument is the
     # HTTP limit (round two: it passes through instead of slicing 500 rows).

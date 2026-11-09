@@ -471,6 +471,12 @@ LAUNCH_RULES.update({name: (NEVER, "", "") for name in (
     "meeting.ready_read", "meeting.rename", "meeting.restore", "meeting.recover_capture",
     "meeting.resolve_sync_conflict", "action_item.update", "action_item.review", "meeting.bookmark",
     "meeting.update")})
+# The intelligence and aftercare verbs (``meeting_intel_operations.py``): a launch
+# reads them; a retry is a run (meeting.run_intelligence's rule); the rest are his.
+LAUNCH_RULES.update({name: (READ, "", "") for name in (
+    "meeting.intel_jobs", "meeting.intel_recovery", "meeting.aftercare", "meeting.aftercare_proposals")})
+LAUNCH_RULES.update({name: (COMPOSER, "", "") for name in ("meeting.intel_retry", "meeting.intel_recovery_retry")})
+LAUNCH_RULES.update({name: (NEVER, "", "") for name in ("meeting.intel_recovery_skip", "meeting.aftercare_decide")})
 # One display protocol (2026-11-08, ``desk_operations.py``): a launch may mark,
 # say and scroll on the owner's desk, and every window verb, as it opens his
 # windows; press is his.
