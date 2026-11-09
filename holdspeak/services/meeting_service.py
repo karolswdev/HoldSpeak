@@ -613,17 +613,15 @@ class MeetingService:
         if not speech_routing:
             return _speech_construction(None, Config.load())
         try:
-            from .inference_route_plan_service import ROUTE_PLANNING_AUTHORITY, InferenceRoutePlanService
+            from .engine_door import chain
 
-            revisions = InferenceRoutePlanService(self._db).resolve_deployments(
-                ROUTE_PLANNING_AUTHORITY, capability_id="speech.transcribe"
-            )
+            _assignment, engines = chain(self._db, "speech.transcribe")
         except Exception:  # noqa: BLE001
             _LOG.info("transcribe speech route did not resolve", exc_info=True)
             return None
-        if not revisions:
+        revision = self._db.deployment_revisions.get(engines[0].revision) if engines else None
+        if revision is None:
             return None
-        revision = revisions[0][0]
         engine = str(revision.engine)
         return {
             "model_name": str(revision.model).removeprefix(f"builtin-whisper-{engine}-"),

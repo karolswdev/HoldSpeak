@@ -1525,8 +1525,7 @@
       ],
       "entry_points": [
         "holdspeak/services/inference_route_plan_service.py::InferenceRoutePlanService.resolve_route_plan",
-        "holdspeak/services/inference_route_plan_service.py::InferenceRoutePlanService.freeze_route_plan",
-        "holdspeak/services/inference_route_plan_service.py::InferenceRoutePlanService.freeze_legacy_one_leg_plan"
+        "holdspeak/services/inference_route_plan_service.py::InferenceRoutePlanService.freeze_route_plan"
       ],
       "platforms": {
         "macos": "supported",
@@ -1578,12 +1577,6 @@
           "symbol": "InferenceRoutePlanService.freeze_route_plan",
           "line": 405,
           "claim": "Route plans freeze assignment, deployment, policy, and hash evidence."
-        },
-        {
-          "path": "holdspeak/services/inference_route_plan_service.py",
-          "symbol": "InferenceRoutePlanService.freeze_legacy_one_leg_plan",
-          "line": 729,
-          "claim": "Legacy profiles are translated into one replay-safe route leg."
         },
         {
           "path": "holdspeak/speech_session/plan.py",
@@ -1913,17 +1906,6 @@
           "path": "tests/unit/test_inference_targets.py",
           "node": "test_unknown_target_is_named_and_never_retargeted",
           "assertion": "Unknown target ids are refused by name without silent retargeting.",
-          "execution": {
-            "status": "passed",
-            "record": "docs/generated/test-execution.json",
-            "run": "full-python-suite",
-            "cases": 1
-          }
-        },
-        {
-          "path": "tests/unit/test_inference_targets.py",
-          "node": "test_thought_placement_uses_its_selected_target_and_blank_means_this_device",
-          "assertion": "Placement winner and precedence are explicit.",
           "execution": {
             "status": "passed",
             "record": "docs/generated/test-execution.json",

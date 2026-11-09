@@ -215,62 +215,27 @@ def _resolve_selected_head(
 ) -> Optional[dict[str, str]]:
     """Resolve the exact head selected by memory's inheritance policy.
 
-    The generic project-update resolver starts at the planner's normal
-    inheritance order.  Memory has one extra policy: a non-local default made
-    by HoldSpeak is skipped, so its selected head can be a later global head.
-    Once that happens, asking the generic resolver again can return the skipped
-    assignment.  Use the planner's own immutable assignment and entry
-    validation for the already-selected head instead of changing routing for
-    other callers.
+    Memory has one extra policy: a non-local default made by HoldSpeak is
+    skipped, so its selected head can be a later global head than the one
+    the engine door would pick. Read that head's first engine directly
+    (the door's own revision readers), not the door's choice.
     """
-    plans = getattr(getattr(broker, "inference_adoption_service", None), "plans", None)
-    if plans is None:
-        return None
     try:
+        from ..services.engine_door import _bound_revision, _captured_revision
+
         assignment_id, revision_text = str(head).rsplit("@", 1)
-        revision = int(revision_text)
         db = broker.database
         with db._connection() as conn:
             row = conn.execute(
-                """SELECT r.*, h.assignment_key AS head_key,
-                             h.assignment_id AS head_id, h.revision AS head_revision,
-                             h.cleared AS head_cleared
-                      FROM inference_assignment_heads h
-                     JOIN inference_assignment_revisions r
-                       ON r.assignment_id=h.assignment_id AND r.revision=h.revision
-                    WHERE h.assignment_id=? AND h.revision=? AND h.cleared=0""",
-                (assignment_id, revision),
+                "SELECT profile_id FROM inference_assignments"
+                " WHERE assignment_id=? AND assignment_revision=? ORDER BY ordinal LIMIT 1",
+                (assignment_id, int(revision_text)),
             ).fetchone()
-            if row is None:
-                return None
-            material = plans._assignments._assignment_material(
-                conn, row, require_active_head=True,
-            )
-            definition = plans._registry.require(capability)
-            policy_id = material["retry_policy_id"] or definition.default_retry_policy_id
-            if policy_id not in definition.permitted_retry_policy_ids:
-                return None
-            entries, _revisions, _preflight = plans._resolve_entries(
-                conn, definition, material["entries"],
-            )
-        if not entries:
-            return None
-        leg = min(entries, key=lambda entry: int(entry.get("ordinal") or 0))
-        revision_id = str(leg.get("deployment_revision_id") or "")
-        profile_id = str(leg.get("profile_id") or "")
+        profile_id = str(row["profile_id"] or "") if row is not None else ""
+        revision_id = _bound_revision(db, profile_id) or _captured_revision(db, profile_id)
         if not revision_id:
             return None
-        if db.deployment_revisions.get(revision_id) is None:
-            from ..services.project_update_service import _captured_deployment_revision
-
-            revision_id = _captured_deployment_revision(db, profile_id)
-            if not revision_id:
-                return None
-        return {
-            "revision_id": revision_id,
-            "assignment_id": assignment_id,
-            "head": head,
-        }
+        return {"revision_id": revision_id, "assignment_id": assignment_id, "head": head}
     except Exception as exc:
         log.warning("%s selected head does not resolve: %s", capability, exc)
         return None

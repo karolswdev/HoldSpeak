@@ -100,6 +100,8 @@ _MIGRATION_FAMILY_BY_CAPABILITY = {
     "speech.transcribe": "speech-recognition-route-assignments",
 }
 _DEFAULT_MIGRATION_FAMILY = "thoughts-writing-route-assignments"
+#: The one-time move of Recipe/Workbench profile pointers into subject assignments.
+RECIPE_WORKBENCH_MIGRATION_FAMILY = "recipe-workbench-subject-route-assignments"
 
 
 def _safe_id(value: Any, *, field: str) -> str:
@@ -1024,6 +1026,35 @@ class InferenceAssignmentService:
                 subject_kind=subject_kind,
                 subject_id=subject_id,
             )
+
+    def chain(
+        self,
+        capability_id: str,
+        *,
+        invocation_id: str | None = None,
+        subject_kind: str | None = None,
+        subject_id: str | None = None,
+    ) -> tuple[str, list[dict[str, Any]]]:
+        """The live assignment a job runs on, for the engine door: its id and
+        its entries in the owner's order (``("", [])`` when none). The same
+        lookup as Settings › Engines (``_resolve``); no principal, no plan."""
+        capability = self._registry.require(capability_id)
+        with self._db._connection() as conn:
+            resolved = self._resolve(
+                conn,
+                capability,
+                invocation_id=invocation_id,
+                subject_kind=subject_kind,
+                subject_id=subject_id,
+            )
+        assignment = resolved.get("assignment")
+        if not assignment:
+            return "", []
+        entries = sorted(
+            (dict(entry) for entry in assignment.get("entries") or ()),
+            key=lambda entry: int(entry.get("ordinal") or 0),
+        )
+        return str(assignment.get("id") or ""), entries
 
     def routed(
         self,

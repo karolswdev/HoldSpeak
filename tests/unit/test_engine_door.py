@@ -49,12 +49,7 @@ def test_a_failed_job_raises_one_error_with_its_receipt() -> None:
 
 
 def test_a_job_with_no_engine_raises_no_engine(monkeypatch: pytest.MonkeyPatch) -> None:
-    from holdspeak.services import project_update_service
-
-    def _none(_broker: Any, job: str) -> Any:
-        raise RuntimeError(f"No assignment for {job}")
-
-    monkeypatch.setattr(project_update_service, "_resolve_for_capability", _none)
+    monkeypatch.setattr(engine_door, "_chain", lambda _b, _j, _s=None: ("", []))
     with pytest.raises(engine_door.EngineDoorError) as caught:
         engine_door.run(_broker(_Runner()), "owner", "agent.plan", {})
     assert caught.value.code == "no_engine"
@@ -62,9 +57,8 @@ def test_a_job_with_no_engine_raises_no_engine(monkeypatch: pytest.MonkeyPatch) 
 
 
 def test_the_assignment_names_the_engine(monkeypatch: pytest.MonkeyPatch) -> None:
-    from holdspeak.services import project_update_service
-
-    monkeypatch.setattr(project_update_service, "_resolve_for_capability", lambda _b, _j: ("rev-9", "asg-9", "prof-9"))
+    monkeypatch.setattr(engine_door, "_chain",
+                        lambda _b, _j, _s=None: ("asg-9", [engine_door.Engine("rev-9", "asg-9", "prof-9")]))
     runner = _Runner(publish={"output": "ok"})
     answer = engine_door.run(_broker(runner), "owner", "agent.plan", {})
     assert answer.engine == engine_door.Engine("rev-9", "asg-9", "prof-9")
