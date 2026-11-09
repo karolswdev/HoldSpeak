@@ -179,10 +179,11 @@ def test_ipad_changeset_push_is_readable_via_crud_and_pull(env) -> None:
     assert note.json()["note"]["title"] == "From the iPad"
     assert note.json()["note"]["tags"] == ["mobile"]
 
-    agent = client.get("/api/recipes/ipad_agent_1")
-    assert agent.status_code == 200
-    assert agent.json()["recipe"]["name"] == "Tailored Persona"
-    assert agent.json()["recipe"]["kb_id"] == "ipad_kb_1"
+    agents = client.get("/api/recipes")
+    assert agents.status_code == 200
+    agent = next(r for r in agents.json()["recipes"] if r["id"] == "ipad_agent_1")
+    assert agent["name"] == "Tailored Persona"
+    assert agent["kb_id"] == "ipad_kb_1"
 
     kb = client.get("/api/kbs/ipad_kb_1")
     assert kb.status_code == 200

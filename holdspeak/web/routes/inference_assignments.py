@@ -5,7 +5,6 @@ from typing import Any
 
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
-from starlette.concurrency import run_in_threadpool
 
 from ...logging_config import get_logger
 from ...services.errors import ConflictError, NotFound, ServiceError
@@ -104,46 +103,6 @@ def build_inference_assignments_router(ctx: WebContext) -> APIRouter:
             return _safe_error(exc)
         except Exception as exc:
             return error_500(exc, log, "Failed to clear assignment")
-
-    # Owner ruling 2026-10-05: the batteries-included default.  One read says,
-    # per capability, assigned / inherited_from_default / proposed /
-    # needs_setup; one press ("Use it") assigns a proposed network or cloud
-    # engine.  No face yet.
-    @router.get("/api/inference/defaults")
-    async def get_defaults(request: Request) -> Any:
-        try:
-            _owner(request)
-            defaults = ctx.inference_default_service
-            if defaults is None:
-                return JSONResponse(
-                    {"code": "inference_defaults_unavailable", "message": "Defaults are not available."},
-                    status_code=503,
-                )
-            return await run_in_threadpool(defaults.state, request.state.principal)
-        except ServiceError as exc:
-            return _safe_error(exc)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to read defaults")
-
-    @router.post("/api/inference/defaults/use-proposal")
-    async def use_proposal(request: Request) -> Any:
-        try:
-            body = await _json(request)
-            if set(body) != {"proposal_id"} or not isinstance(body.get("proposal_id"), str):
-                raise ServiceError(
-                    "inference_default_request_invalid", "Use it has an invalid request shape.", context={"status": 400}
-                )
-            defaults = ctx.inference_default_service
-            if defaults is None:
-                return JSONResponse(
-                    {"code": "inference_defaults_unavailable", "message": "Defaults are not available."},
-                    status_code=503,
-                )
-            return defaults.use_proposal(request.state.principal, body["proposal_id"])
-        except ServiceError as exc:
-            return _safe_error(exc)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to use the proposed default")
 
     return router
 

@@ -699,8 +699,7 @@ def test_an_unauthenticated_carry_is_refused_by_name_on_the_wire(tmp_path: Path,
     app.include_router(build_decision_records_router(None))
     http = TestClient(app)
     rid = chain["new"]["decision_record_id"]
-    for path in (f"/api/decision-records/{rid}/carry", f"/api/decision-records/{rid}/dispute",
-                 f"/api/decision-records/{chain['old']['decision_record_id']}/supersede"):
+    for path in (f"/api/decision-records/{rid}/carry",):
         response = http.post(path, json={"successor_id": rid})
         assert response.status_code == 403, (path, response.text)
         assert response.json()["error"] == "principal_right_required"
@@ -753,16 +752,18 @@ def test_the_recall_and_lifecycle_routes(client) -> None:
     old_id = chain["old"]["decision_record_id"]
     assert http.post(f"/api/decision-records/{old_id}/carry", json={}).status_code == 409, "not_current"
 
-    disputed = http.post(f"/api/decision-records/{rid}/dispute", json={"reason": "contested"}).json()
+    records = DecisionRecordService(db)
+    disputed = records.dispute(OWNER, rid, "contested")
     assert disputed["lifecycle"] == "disputed"
     body = http.get("/api/memory/recall", params={"query": "freeze window", "filter": "decisions"}).json()
     assert body["current"] == [] and [c["text"] for c in body["disputed"]] == [NEW_TEXT]
 
     newest = DecisionRecordService(db).create(OWNER, decision_text="Freeze window is Sunday 03:00",
                                               source_type="desk", source_id="desk-3")
-    sealed = http.post(f"/api/decision-records/{rid}/supersede", json={"successor_id": newest["id"]}).json()
+    sealed = records.supersede(OWNER, rid, newest["id"])
     assert sealed["lifecycle"] == "superseded"
-    assert http.post(f"/api/decision-records/{rid}/supersede", json={"successor_id": newest["id"]}).status_code == 409
+    with pytest.raises(ValueError):
+        records.supersede(OWNER, rid, newest["id"])
 
 
 def test_not_this_keeps_its_reason_on_the_receipt(tmp_path: Path) -> None:

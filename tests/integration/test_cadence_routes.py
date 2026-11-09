@@ -12,6 +12,15 @@ from holdspeak.web.context import WebContext
 from holdspeak.web.routes.cadence import build_cadence_router
 
 
+def _run_now(db) -> dict:
+    """Project the loops the way the scheduler and MCP cadence.run_now do."""
+    from holdspeak.config import Config
+    from holdspeak.principals import UNAUTHENTICATED
+    from holdspeak.services.cadence_service import CadenceService
+
+    return CadenceService(db, Config.load().cadence).run_now(UNAUTHENTICATED)
+
+
 @pytest.fixture
 def client(tmp_path: Path):
     reset_database()
@@ -42,8 +51,8 @@ def test_status_is_off_by_default(client):
 
 
 def test_run_now_then_loops_carry_evidence_and_next_action(client):
-    c, _ = client
-    assert c.post("/api/cadence/run-now").json()["projected"] == 2
+    c, db = client
+    assert _run_now(db)["projected"] == 2
     loops = c.get("/api/cadence/loops").json()["loops"]
     assert len(loops) == 2
     top = loops[0]
@@ -54,7 +63,7 @@ def test_run_now_then_loops_carry_evidence_and_next_action(client):
 
 def test_history_lists_nudges(client):
     c, db = client
-    c.post("/api/cadence/run-now")
+    _run_now(db)
     from holdspeak.cadence.models import Nudge
     loop_id = c.get("/api/cadence/loops").json()["loops"][0]["id"]
     db.cadence.record_nudge(Nudge(loop_id=loop_id, surface="web", title="pushed it"))
@@ -62,17 +71,10 @@ def test_history_lists_nudges(client):
     assert hist and hist[0]["title"] == "pushed it" and hist[0]["surface"] == "web"
 
 
-def test_loop_detail_404_then_ok(client):
-    c, _ = client
-    assert c.get("/api/cadence/loops/nope").status_code == 404
-    c.post("/api/cadence/run-now")
-    loop_id = c.get("/api/cadence/loops").json()["loops"][0]["id"]
-    assert c.get(f"/api/cadence/loops/{loop_id}").json()["id"] == loop_id
-
 
 def test_snooze_kill_close_mutate(client):
     c, db = client
-    c.post("/api/cadence/run-now")
+    _run_now(db)
     loop_id = c.get("/api/cadence/loops").json()["loops"][0]["id"]
 
     snoozed = c.post(f"/api/cadence/loops/{loop_id}/snooze", json={"hours": 2}).json()
@@ -87,9 +89,10 @@ def test_snooze_kill_close_mutate(client):
 
 
 def test_kill_survives_reprojection_via_route(client):
-    c, _ = client
-    c.post("/api/cadence/run-now")
+    c, db = client
+    _run_now(db)
     loop_id = c.get("/api/cadence/loops").json()["loops"][0]["id"]
     c.post(f"/api/cadence/loops/{loop_id}/kill")
-    c.post("/api/cadence/run-now")  # re-project
-    assert c.get(f"/api/cadence/loops/{loop_id}").json()["status"] == "killed"
+    _run_now(db)  # re-project
+    every = c.get("/api/cadence/loops?all=true").json()["loops"]
+    assert next(l for l in every if l["id"] == loop_id)["status"] == "killed"

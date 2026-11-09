@@ -253,9 +253,6 @@ def test_decision_routes_require_read_authority_and_owner_lifecycle_principal(
     assert accepted.status_code == 200
     assert accepted.json()["receipt"]["actor"] == "owner-session"
     assert accepted.json()["receipt"]["operation"] == "decision.accept"
-    illegal = owner.post(f"/api/decisions/{decision_id}/reject")
-    assert illegal.status_code == 409
-    assert illegal.json()["error"] == "illegal_decision_lifecycle_transition"
     agent_credentials.revoke("claude:decision-reader")
 
 

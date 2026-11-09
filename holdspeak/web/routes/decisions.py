@@ -85,10 +85,6 @@ def build_decisions_router(ctx: Any) -> APIRouter:
     def accept_decision(decision_id: str,request: Request) -> Any:
         try: return JSONResponse(service().transition(_principal(request),decision_id,"accept",{}))
         except ServiceError as exc: return _error(exc)
-    @router.post("/{decision_id}/reject")
-    def reject_decision(decision_id: str,request: Request) -> Any:
-        try: return JSONResponse(service().transition(_principal(request),decision_id,"reject",{}))
-        except ServiceError as exc: return _error(exc)
     @router.post("/{decision_id}/supersede")
     def supersede_decision(decision_id: str,request: Request,payload: Any=Body(default=None)) -> Any:
         # PHILO-7-02: this router answers the path in the hub (it is included

@@ -22,12 +22,6 @@ class ActivityMeetingCandidateService:
         except ValueError as exc: raise ValidationError(str(exc)) from exc
         return {"count": len(candidates), "candidates": [self._payload(c) for c in candidates]}
 
-    def create(self, principal: Principal, fields: dict[str, Any]) -> dict[str, Any]:
-        from ..timestamps import parse_iso_datetime as _parse_iso_datetime
-        try: candidate = self._db.activity.create_activity_meeting_candidate(source_connector_id=fields.get("source_connector_id") or "calendar_activity", source_activity_record_id=fields.get("source_activity_record_id"), title=fields.get("title") or "", starts_at=_parse_iso_datetime(fields.get("starts_at")), ends_at=_parse_iso_datetime(fields.get("ends_at")), meeting_url=fields.get("meeting_url"), confidence=fields.get("confidence") if fields.get("confidence") is not None else 0.0, status=fields.get("status") or "candidate")
-        except ValueError as exc: raise ValidationError(str(exc)) from exc
-        return {"candidate": self._payload(candidate)}
-
     def candidate_for_start(self, principal: Principal, candidate_id: str) -> dict[str, Any]:
         candidate = self._db.activity.get_activity_meeting_candidate(candidate_id)
         if candidate is None: raise NotFound("activity meeting candidate", candidate_id)
@@ -43,8 +37,3 @@ class ActivityMeetingCandidateService:
         result = {"success": True, "candidate": self._payload(candidate), "meeting": meeting_data}
         if title_warning: result["warning"] = f"Meeting started, but title update failed: {title_warning}"
         return result
-
-    def delete(self, principal: Principal, source_connector_id: str | None, status: str | None) -> dict[str, Any]:
-        try: deleted = self._db.activity.delete_activity_meeting_candidates(source_connector_id=source_connector_id, status=status)
-        except ValueError as exc: raise ValidationError(str(exc)) from exc
-        return {"deleted": deleted}

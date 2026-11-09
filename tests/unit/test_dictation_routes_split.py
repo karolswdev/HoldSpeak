@@ -16,7 +16,6 @@ from holdspeak.web.routes.dictation import build_dictation_router
 _EXPECTED_ROUTES = {
     ("/api/intents/control", "GET"),
     ("/api/intents/profile", "PUT"),
-    ("/api/intents/override", "PUT"),
     ("/api/intents/preview", "POST"),
     ("/api/dictation/project-context", "GET"),
     ("/api/dictation/agent-hooks", "GET"),
@@ -78,4 +77,4 @@ def test_dictation_route_table_is_unchanged_after_split() -> None:
 
 
 def test_dictation_route_count_is_stable() -> None:
-    assert len(_router_route_set()) == len(_EXPECTED_ROUTES) == 32
+    assert len(_router_route_set()) == len(_EXPECTED_ROUTES) == 31
