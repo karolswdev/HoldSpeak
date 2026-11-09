@@ -3643,9 +3643,9 @@
           "claim": "the status change is ADMITTED; HTTP only (over MCP it is decision.update)"
         },
         {
-          "path": "web/src/desk/pullouts/views/DecisionsView.tsx",
+          "path": "web/src/pages/cores/DecisionsCore.tsx",
           "symbol": "const writeStatus = async (next: \"accepted\" | \"deprecated\") => {",
-          "claim": "the pullout's status picker writes the explicit Proposed, Accepted, Replaced or Retired choice through the existing PUT"
+          "claim": "the Decisions window's plate (Decide) and its Retire write the Desk decision's status through the existing PUT"
         },
         {
           "path": "holdspeak/services/monday_brief_service.py",

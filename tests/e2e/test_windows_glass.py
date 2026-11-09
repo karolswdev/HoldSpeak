@@ -2104,13 +2104,13 @@ class TestCloseMeansGone:
 
     def _close_decision(self, page: Any, width: int, name: str) -> dict[str, Any]:
         """The one decision face (2026-11-08): a decision opens its record in
-        the Decisions window reader. At 393 the title-bar Back first returns
-        the reader to the list (the window's own Back); its Back then closes."""
+        the Decisions window. At 393 the title-bar Back first returns the pick
+        to the rail (the window's own Back); its Back then closes."""
         decisions = page.locator("#surface-decisions")
         decisions.get_by_test_id("decision-reader-title").filter(has_text=CLOSE_DECISION).wait_for()
         if width < 720:
             self._press(page, _close_control(page, width, "Decisions"), width)
-            decisions.get_by_test_id("decisions-toolbar").wait_for()
+            decisions.get_by_test_id("decisions-rail").wait_for()
         _close_control(page, width, "Decisions").wait_for()
         return self._close_and_prove(page, width, "Decisions", name)
 

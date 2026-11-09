@@ -295,7 +295,7 @@ export function DecisionsCore({ scope, scopeLabel }: CoreProps) {
   const proposed = rows.filter((row) => standing(row) === "proposed");
   const moreVerb = !loading && rows.length > 0 && rows.length < total ? (
     <Button variant="secondary" dense loading={more} onClick={showMore} className="decisions-rail-more" data-testid="decisions-more">
-      {`Show more (${rows.length} of ${total})`}
+      Show more
     </Button>
   ) : null;
 

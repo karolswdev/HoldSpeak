@@ -196,7 +196,8 @@ describe("Decisions: the rail", () => {
     });
     const { container } = render(<DecisionsCore />);
     const more = await screen.findByTestId("decisions-more");
-    expect(more.textContent).toBe("Show more (100 of 130)");
+    expect(more.textContent).toBe("Show more");
+    expect(container.querySelectorAll("[data-testid=decisions-row]")).toHaveLength(100);
     fireEvent.click(more);
     await waitFor(() => expect(container.querySelectorAll("[data-testid=decisions-row]")).toHaveLength(130));
     expect(screen.queryByTestId("decisions-more")).toBeNull();

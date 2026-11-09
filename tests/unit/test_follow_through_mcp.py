@@ -88,7 +88,7 @@ def test_follow_through_commit_decision_tool_creates_commitment(mcp_db: Database
 
     result = tools.dispatch(
         "follow_through.commit_decision",
-        {"decision_id": decision_id, "owner": "Ada", "due_at": "2026-08-14"},
+        {"decision_id": decision_id, "who": "Ada", "due_at": "2026-08-14"},
         OWNER,
     )
 
