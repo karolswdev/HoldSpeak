@@ -8,6 +8,7 @@ import { Mast } from "../../../desk/surface/patterns/Mast";
 import { SurfaceLedger, SurfaceLedgerRow } from "../../../desk/surface";
 import { spriteUrl } from "../../../desk/sprites";
 import type { SettingsSectionId } from "./prefs";
+import { ShowMe } from "../../../desk/walk/ShowMe";
 
 const SPRITES = `${import.meta.env.BASE_URL || "/_built/"}desk/sprites/settings/`;
 const WORLD: Partial<Record<SettingsSectionId, { kind: string; id: string; agent?: string }>> = {
@@ -34,6 +35,7 @@ export function SectionMast({ id, label, sprite, facts, children }: {
     <Mast kind="settings" glyph={sectionSprite(id, sprite)} className="settings-mast" data-testid={`settings-mast-${id}`}
       title={<span id={`settings-section-title-${id}`}>{label}</span>} facts={facts || undefined}>
       {children}
+      <ShowMe app="surface-settings" />
     </Mast>
   );
 }

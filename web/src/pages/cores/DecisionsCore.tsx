@@ -41,6 +41,7 @@ import { DecisionComposer, type NewDecisionAbout } from "../../desk/decisions/Co
 import * as hub from "../../desk/decisions/api";
 import type { CoreProps } from "./core-types";
 import "../../desk/decisions/decisions.css";
+import { ShowMe } from "../../desk/walk/ShowMe";
 
 type Row = hub.LedgerRow;
 type Rec = hub.DecisionRecord;
@@ -533,7 +534,7 @@ function RecordPane({ id, row, onOpenRecord }: { id: string; row: Row | null; on
 
   const ledger = <>
     {name !== record.decision_text.trim() ? <Section caption="Decision"><Material className="decisions-words">{record.decision_text}</Material></Section> : null}
-    {why ? <Section caption="Why"><Material className="decisions-words">{why}</Material></Section> : null}
+    {why ? <Section caption="Why" testId="decision-why"><Material className="decisions-words">{why}</Material></Section> : null}
     {about || record.alternatives || record.review_date ? <dl className="decisions-facts">
       {about ? <div><dt>About</dt><dd>{projectId ? (
         <Button dense variant="chrome" className="decisions-about" data-testid="decision-reader-about" onClick={() => openProjectRoom(projectId)}>
@@ -583,6 +584,7 @@ function RecordPane({ id, row, onOpenRecord }: { id: string; row: Row | null; on
         {committedTo ? <DotWord tone="ok" className="decisions-committed" data-testid="decision-reader-committed">{`Committed · ${committedTo}`}</DotWord> : null}
       </>}>
       {verbs}
+      <ShowMe app="surface-decisions" />
     </Mast>
     <Spine className="decisions-spine" tone={look.tone} label={look.word} data-testid="decision-spine" />
     {edit.editing ? <DeskDecisionEditor edit={edit} />

@@ -1,0 +1,44 @@
+{
+  "title": "Settings",
+  "open": {
+    "app": "surface-settings"
+  },
+  "steps": [
+    {
+      "highlight": {
+        "target": "settings-rail",
+        "thing": "settings list",
+        "words": "All your settings are here, one row for each part."
+      }
+    },
+    {
+      "highlight": {
+        "target": ".settings-mast",
+        "thing": "section head",
+        "words": "This is one part of Settings: its name and its state, in one line."
+      }
+    },
+    {
+      "highlight": {
+        "target": ".settings-plate",
+        "thing": "thing to fix",
+        "words": "This matters now: the one thing in this part that needs you, with its button."
+      }
+    },
+    {
+      "highlight": {
+        "target": ".settings-ledger",
+        "thing": "settings rows",
+        "words": "The other settings of this part, one row each."
+      },
+      "ask": {
+        "ref": "settings-feel",
+        "question": "Is this how Settings should feel?",
+        "choices": [
+          "Keep",
+          "Redo"
+        ]
+      }
+    }
+  ]
+}

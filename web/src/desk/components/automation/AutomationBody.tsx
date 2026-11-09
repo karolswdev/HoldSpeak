@@ -85,6 +85,7 @@ import {
   type AutomationDetail,
   type AutomationResult,
 } from "./model";
+import { ShowMe } from "../../walk/ShowMe";
 
 /** What a drop on the body can add to About (the hand's kinds that are
  *  desk sources; an issue is not one). */
@@ -772,6 +773,7 @@ export function AutomationBody({
               }} data-testid="automation-edit-setup">
                 Set up
               </Button>
+              <ShowMe app="surface-workbenches" />
             </Mast>
             {spine.length ? (
               <Spine className="automation-mast-spine" segments={spine} label={runSpineWords(detail) ?? undefined}

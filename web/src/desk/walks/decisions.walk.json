@@ -1,0 +1,44 @@
+{
+  "title": "Decisions",
+  "open": {
+    "app": "surface-decisions"
+  },
+  "steps": [
+    {
+      "highlight": {
+        "target": "decisions-rail",
+        "thing": "decision list",
+        "words": "All your decisions are here. Press one to read it."
+      }
+    },
+    {
+      "highlight": {
+        "target": "decision-mast",
+        "thing": "decision head",
+        "words": "This is one decision: what was decided and its state, in one line."
+      }
+    },
+    {
+      "highlight": {
+        "target": "decisions-plate",
+        "thing": "next step for this decision",
+        "words": "This matters now: the one thing to do with this decision, with its button."
+      }
+    },
+    {
+      "highlight": {
+        "target": "decision-why",
+        "thing": "reason",
+        "words": "Why it was decided, and what it is about."
+      },
+      "ask": {
+        "ref": "decisions-feel",
+        "question": "Is this how Decisions should feel?",
+        "choices": [
+          "Keep",
+          "Redo"
+        ]
+      }
+    }
+  ]
+}

@@ -8,6 +8,7 @@ import { Mast } from "../surface/patterns/Mast";
 import { controlValue } from "./model";
 import { runsOnLabel } from "./StepRow";
 import type { Program } from "./types";
+import { ShowMe } from "../walk/ShowMe";
 
 /** The ladder in his words: YOLO runs hands-off. */
 const CONTROL_FACT = { secure: "secure", normal: "normal", yolo: "hands-off" } as const;
@@ -48,6 +49,7 @@ export function ProgramMast({ program, children }: { program: Program; children?
         </>
       ) : programFacts(program)}>
       {children}
+      <ShowMe app="surface-programs" />
     </Mast>
   );
 }

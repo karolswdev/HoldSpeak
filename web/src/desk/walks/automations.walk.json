@@ -1,0 +1,44 @@
+{
+  "title": "Automations",
+  "open": {
+    "app": "surface-workbenches"
+  },
+  "steps": [
+    {
+      "highlight": {
+        "target": "automation-home-rows",
+        "thing": "automation list",
+        "words": "All your automations are here. Press one to open it."
+      }
+    },
+    {
+      "highlight": {
+        "target": "automation-mast",
+        "thing": "automation head",
+        "words": "This is the automation: its name, when it runs and what it uses."
+      }
+    },
+    {
+      "highlight": {
+        "target": "automation-sentence",
+        "thing": "automation sentence",
+        "words": "This matters now: what the automation does, in one sentence."
+      }
+    },
+    {
+      "highlight": {
+        "target": "automation-result-list",
+        "thing": "runs",
+        "words": "The runs, the newest first."
+      },
+      "ask": {
+        "ref": "automations-feel",
+        "question": "Is this how Automations should feel?",
+        "choices": [
+          "Keep",
+          "Redo"
+        ]
+      }
+    }
+  ]
+}

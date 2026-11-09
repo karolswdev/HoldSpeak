@@ -1,0 +1,41 @@
+{
+  "title": "Meetings",
+  "open": {
+    "app": "review-meetings",
+    "scope": "@first-meeting"
+  },
+  "steps": [
+    {
+      "highlight": {
+        "target": "meeting-mast",
+        "thing": "meeting head",
+        "words": "This is one meeting: its name, when it was and who was there.",
+        "window": "pullout:meeting"
+      }
+    },
+    {
+      "highlight": {
+        "target": "meeting-plate",
+        "thing": "next step for this meeting",
+        "words": "This matters now: the one thing to do with this meeting, with its button.",
+        "window": "pullout:meeting"
+      }
+    },
+    {
+      "highlight": {
+        "target": "meeting-ledger",
+        "thing": "outcomes",
+        "words": "The outcomes: what the meeting decided and who owes what.",
+        "window": "pullout:meeting"
+      },
+      "ask": {
+        "ref": "meetings-feel",
+        "question": "Is this how Meetings should feel?",
+        "choices": [
+          "Keep",
+          "Redo"
+        ]
+      }
+    }
+  ]
+}

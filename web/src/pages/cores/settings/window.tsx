@@ -87,7 +87,7 @@ export function PrefWindow({
   return (
     <div className="settings-page pref-window" data-testid={testId} data-pane-open={paneOpen || undefined}>
       {frameBack ? <PaneTitle label={viaFrame && paneOpen && current ? current.label : null} /> : null}
-      <nav ref={railRef} className="settings-page-index pref-rail" aria-label={label} onKeyDown={onKeyDown}>
+      <nav ref={railRef} className="settings-page-index pref-rail" aria-label={label} onKeyDown={onKeyDown} data-testid="settings-rail">
         {items.map((item) => {
           const active = item.id === selected;
           return (

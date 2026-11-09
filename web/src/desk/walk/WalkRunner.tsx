@@ -53,12 +53,14 @@ import {
   STILL_LOADING,
   WORDS,
   clearWalkFromLocation,
+  onLocalWalk,
   postWalkAnswer,
   readWalk,
   stepWindow,
   waitForDeskReady,
   walkAgent,
   walkTokenFromLocation,
+  type LocalWalk,
   type WalkPage,
   type WalkView,
 } from "./walk";
@@ -324,12 +326,18 @@ function stepCount(position: number, total: number): string {
   return position > 0 && total > 0 ? `${position} of ${total}` : "";
 }
 
+/** The desk's one walk runner: a linked walk (`?walk=<token>`), or an app's
+ * own walk that its Show me started in place (the same session, the same
+ * answer route; the steps start in the window of the mast he pressed). */
 export function WalkRunner() {
-  const [token] = useState(walkTokenFromLocation);
-  return token ? <WalkSession token={token} /> : null;
+  const [linked] = useState(walkTokenFromLocation);
+  const [local, setLocal] = useState<LocalWalk | null>(null);
+  useEffect(() => onLocalWalk(setLocal), []);
+  if (local) return <WalkSession key={local.run} token={local.token} origin={local.origin} />;
+  return linked ? <WalkSession token={linked} /> : null;
 }
 
-function WalkSession({ token }: { token: string }) {
+function WalkSession({ token, origin }: { token: string; origin?: string }) {
   const compact = useCompactViewport();
   const viewport = useViewport();
   const sheet = compact || viewport.width <= SHEET_MAX_WIDTH;
@@ -369,7 +377,8 @@ function WalkSession({ token }: { token: string }) {
   const captionRef = useRef<HTMLDivElement | null>(null);
   // Where the cursor rests: the next journey starts here.
   const restRef = useRef<Point | null>(null);
-  const appRef = useRef<string | undefined>(undefined);
+  // The window the steps look in: the last `open`, else where it started.
+  const appRef = useRef<string | undefined>(origin);
 
   useEffect(() => {
     let alive = true;

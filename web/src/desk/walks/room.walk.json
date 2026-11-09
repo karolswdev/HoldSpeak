@@ -1,0 +1,38 @@
+{
+  "title": "The Room",
+  "open": {
+    "app": "open-project-memory",
+    "scope": "@first-project"
+  },
+  "steps": [
+    {
+      "highlight": {
+        "target": "room-mast",
+        "thing": "project head",
+        "words": "This is the Room of one project: its name and its state, in one line."
+      }
+    },
+    {
+      "highlight": {
+        "target": "room-brief-plate",
+        "thing": "project brief",
+        "words": "This matters now: the brief, the one thing to know about this project."
+      }
+    },
+    {
+      "highlight": {
+        "target": "room-what-is-open",
+        "thing": "open work",
+        "words": "The open work, the most important first."
+      },
+      "ask": {
+        "ref": "room-feel",
+        "question": "Is this how the Room should feel?",
+        "choices": [
+          "Keep",
+          "Redo"
+        ]
+      }
+    }
+  ]
+}
