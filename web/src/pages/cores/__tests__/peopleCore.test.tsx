@@ -325,7 +325,7 @@ describe("Context keeps the report's working note", () => {
     });
   }
   function typeNote() {
-    fireEvent.click(screen.getByRole("button", { name: "Add note" }));
+    fireEvent.click(screen.getByRole("button", { name: "Note" }));
     fireEvent.change(screen.getByLabelText("Topic"), { target: { value: "Release feedback" } });
     fireEvent.change(screen.getByLabelText("Note"), { target: { value: "Priya can lead the release after the rollback review." } });
     fireEvent.change(screen.getByLabelText("Visibility"), { target: { value: "shared_intent" } });
@@ -346,7 +346,7 @@ describe("Context keeps the report's working note", () => {
     expect(screen.getByLabelText("Visibility")).toHaveValue("shared_intent");
     view.unmount();
     view = mount("context-r2");
-    fireEvent.click(screen.getByRole("button", { name: "Add note" }));
+    fireEvent.click(screen.getByRole("button", { name: "Note" }));
     expect(screen.getByLabelText("Note")).toHaveValue("");
     expect(screen.getByLabelText("Visibility")).toHaveValue("leader_private");
     view.unmount();
@@ -375,7 +375,7 @@ describe("Context keeps the report's working note", () => {
     await waitFor(() => expect(refresh).toHaveBeenCalledOnce());
     expect(submitted[1]).toEqual(submitted[0]);
     expect(submitted[1]).toMatchObject({ visibility: "shared_intent" });
-    fireEvent.click(screen.getByRole("button", { name: "Add note" }));
+    fireEvent.click(screen.getByRole("button", { name: "Note" }));
     expect(screen.getByLabelText("Topic")).toHaveValue("");
     expect(screen.getByLabelText("Note")).toHaveValue("");
     expect(screen.getByLabelText("Visibility")).toHaveValue("leader_private");
@@ -449,7 +449,7 @@ describe("PeopleCore encrypted local plane", () => {
     expect(await screen.findByRole("button", { name: /Platform/ })).toBeTruthy();
     expect(screen.getByText("Prefers written context")).toBeTruthy();
     expect(screen.queryByLabelText("Note")).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "Add note" }));
+    fireEvent.click(screen.getByRole("button", { name: "Note" }));
     expect(screen.getByLabelText("Note")).toBeTruthy();
     // HS-176-04 — the voice law (Article IV.1): People's wells carry the
     // mic like every other text input.  This assertion used to require the
@@ -960,13 +960,12 @@ describe("PeopleCore PHILO-17 the 1:1 runs both ways", () => {
     fireEvent.click(await screen.findByRole("button", { name: "History" }));
     expect(screen.queryByTestId("people-history-facts")).toBeNull();
     expect(document.body.textContent).not.toContain("—");
-    expect(screen.queryByRole("button", { name: "Add person" })).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Info" }));
     expect(screen.queryByText("Role context")).toBeNull();
     expect(screen.queryByText("Not set")).toBeNull();
   });
 
-  it("PHILO-17 ALIVE: a roster row says the next 1:1, owed both ways, and Plan for a report with none", async () => {
+  it("PHILO-17 ALIVE: a rail row says the next 1:1 and owed both ways; the pane leads with the soonest 1:1", async () => {
     const soon = new Date(Date.now() + 2 * 86_400_000).toISOString();
     // The counts ride the roster read (`?counts=1`); the next 1:1 is the
     // Door's calendar row that carries the person. No per-person read.
@@ -979,26 +978,24 @@ describe("PeopleCore PHILO-17 the 1:1 runs both ways", () => {
       "/api/door": () => json({ upcoming: [{ id: "e1", source: "calendar_event", title: "1:1 Maya / Karol", starts_at: soon, ends_at: soon, person_relationship_id: "r1", person_label: "Maya Chen" }] }),
     });
     render(<PeopleCore />);
-    // Window grammar: a dense list row (Name · Role · Next 1:1 · You owe).
-    const cell = (row: Element, col: string) => row.querySelector(`[data-col="${col}"]`)?.textContent ?? "";
-    const maya = (await screen.findByRole("button", { name: /Maya Chen/ })).closest("[role=row]")!;
-    await waitFor(() => expect(cell(maya, "next")).toMatch(/^1:1 /));
-    expect(cell(maya, "owe")).toBe("1");
-    expect(cell(maya, "role")).toBe("Direct report");
-    const sam = screen.getByRole("button", { name: /Sam Ortiz/ }).closest("[role=row]")!;
-    // No 1:1 planned: the cell is empty, never "None" (atlas pass 3 #19).
-    expect(cell(sam, "next")).toBe("");
-    expect(cell(sam, "owe")).toBe("");
+    // The native face: a rail row (the name, the role, the next 1:1, the spine).
+    const row = (name: string) => screen.getAllByTestId("people-row").find((r) => r.textContent?.includes(name))!;
+    await screen.findByRole("button", { name: /Maya Chen/ });
+    await waitFor(() => expect(row("Maya Chen").querySelector('[data-testid="people-row-next"]')?.textContent).toMatch(/^1:1 /));
+    expect(row("Maya Chen").textContent).toContain("Direct report");
+    expect(row("Maya Chen").querySelector(".surface-spine")?.getAttribute("aria-label")).toBe("1 owed to you, 1 you owe");
+    // No 1:1 planned, nothing owed: the row says nothing of it, never "None" (atlas pass 3 #19).
+    expect(row("Sam Ortiz").querySelector('[data-testid="people-row-next"]')).toBeNull();
+    expect(row("Sam Ortiz").querySelector(".surface-spine")).toBeNull();
     expect(document.body.textContent).not.toContain("None");
-    // Plan is the selected row's verb, in the status bar.
-    expect(screen.queryByRole("button", { name: "Plan" })).toBeNull();
-    fireEvent.click(within(sam as HTMLElement).getByRole("button", { name: /Sam Ortiz/ }));
-    await waitFor(() => expect(within(screen.getByTestId("people-status")).getByRole("button", { name: "Plan" })).toBeTruthy());
-    expect(fetchSpy.mock.calls.some(([url]) => /\/api\/people\/relationships\/r\d$/.test(String(url)))).toBe(false);
-    // The soonest 1:1 this week is the status bar's warm words; Open prep
-    // joins them only within a day (this one is two days out).
-    expect(screen.getByTestId("people-roster-next").textContent).toMatch(/^1:1 with Maya /);
+    // The pane leads with the soonest 1:1 this week; Open prep is the
+    // primary only within a day (this one is two days out).
+    const plate = screen.getByTestId("people-plate");
+    expect(plate.textContent).toContain("Maya Chen");
+    expect(within(plate).getByRole("button", { name: "Open prep" })).toBeTruthy();
     expect(screen.queryByTestId("people-open-prep")).toBeNull();
+    expect(screen.getByTestId("people-roster-next").textContent).toMatch(/^1:1 with Maya /);
+    expect(fetchSpy.mock.calls.some(([url]) => /\/api\/people\/relationships\/r\d$/.test(String(url)))).toBe(false);
   });
 });
 
@@ -1014,7 +1011,7 @@ describe("Calendar reads keep their actual state", () => {
         : json({ upcoming: [] }),
     });
     render(<RelationshipPane relationship={{ id: "calendar-state", display_name: "Priya" }} initialLens="context" onRefresh={vi.fn()} onProtectedFailure={vi.fn()} onArchived={vi.fn()} />);
-    fireEvent.click(screen.getByRole("button", { name: "Add note" }));
+    fireEvent.click(screen.getByRole("button", { name: "Note" }));
     fireEvent.change(screen.getByLabelText("Note"), { target: { value: "Keep the rollout draft" } });
     fireEvent.click(screen.getByRole("button", { name: "Links" }));
     fireEvent.click(screen.getByTestId("people-link-event"));

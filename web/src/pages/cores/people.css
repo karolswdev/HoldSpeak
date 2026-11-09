@@ -1,1035 +1,174 @@
-.people-fact { font-size: var(--desk-surface-label-size); color: var(--text-muted); white-space: nowrap; }
-.people-fact + .people-fact::before { content: " · "; }
-.people-new, .people-agenda-add, .people-context-add, .people-project-link { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-.people-new .gadget-string, .people-agenda-add .gadget-pad, .people-context-add .gadget-pad { flex: 1; min-width: 0; }
-.people-context-add { align-items: end; flex-wrap: wrap; }
-.people-context-add .gadget-pad { flex-basis: 100%; }
-.people-context-note { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
-.people-context-note-topic { font: 600 15px/1.4 var(--font-sans); }
-.people-context-note-body { font: 400 13px/1.5 var(--font-sans); white-space: pre-wrap; overflow-wrap: anywhere; }
-.people-project-link > :first-child { flex: 1; min-width: 0; }
-.people-detail-head { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
-.people-lenses { display: flex; gap: 2px; border-bottom: 1px solid var(--border); margin-bottom: var(--desk-surface-section-gap); }
-.people-lenses button { border: 0; background: transparent; padding: 6px 8px; color: var(--text-muted); }
-.people-lenses button[aria-selected="true"] { color: var(--text); border-bottom: 2px solid var(--text); }
-.people-info { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 7px 12px; margin: 0; }
-.people-info dt { color: var(--text-muted); }.people-info dd { margin: 0; }
-.people-commitment-inspector { margin-top: 10px; padding: 10px; border: 1px solid var(--border); background: var(--surface-sunken, transparent); }
-.people-inspector-head, .people-delegate, .people-satisfy { display: flex; align-items: center; gap: 8px; }
-.people-inspector-head { justify-content: space-between; margin-bottom: 8px; }
-.people-commitment-body { margin-bottom: 10px; line-height: 1.4; }
-.people-delegate, .people-satisfy { margin-top: 10px; }
-.people-delegate > :first-child, .people-satisfy > :first-child { flex: 1; min-width: 0; }
-.people-history-facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 0; }
-.people-history-facts div { padding: 8px; border: 1px solid var(--border); }
-.people-history-facts dt { color: var(--text-muted); font-size: var(--desk-surface-label-size); }
-.people-history-facts dd { margin: 3px 0 0; font-size: 18px; }
-/* HS-149-03 — joy state: lead with the act, not the absence. */
-.people-joy-state { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 32px 16px; min-height: 120px; }
-.people-joy-lead { display: flex; flex-direction: column; align-items: center; gap: 8px; }
-.people-joy-line { color: var(--text-muted); font-size: var(--desk-surface-detail-size); text-align: center; }
-/* HS-149-03 — empty roster: lead with the create act. */
-.people-empty-roster { padding: 16px 0; }
-.people-empty-lead { color: var(--text-muted); font-size: var(--desk-surface-body-size); margin: 0; }
-.people-duplicate { display: inline-block; margin: 0 0 8px; }
-/* HS-149-03 — NEXT 1:1 header on relationship detail. */
-.people-next-header { color: var(--text-muted); font-family: var(--font-mono); font-size: var(--desk-surface-detail-size); letter-spacing: 0.04em; margin-bottom: 4px; }
-/* HS-149-03 — picker inline region. */
-.people-picker { margin-top: 8px; }
-/* HS-150-02 — owner alias add row (mirrors .people-new). */
-.people-alias-add { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
-.people-alias-add .gadget-string { flex: 1; min-width: 0; }
-@container surface (max-width: 559.9px) { .people-new, .people-agenda-add, .people-context-add, .people-project-link, .people-delegate, .people-satisfy { align-items: stretch; flex-wrap: wrap; } .people-new .gadget-string, .people-agenda-add .gadget-pad, .people-context-add .gadget-pad, .people-project-link > :first-child, .people-delegate > :first-child, .people-satisfy > :first-child { flex-basis: 100%; } .people-history-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+/* People, the native app (the language, 2026-11-08: Programs, the Room,
+   Needs you). The rail of people at the left, the person at the right:
+   the mast, the spine, the plate, the ledger by weight, the folds. Ink
+   text, one colour per meaning, Inter; container queries only. */
 
-/* HS-172-05 — People split: the card takes the full window below 900px.
-   Above 900px both list and detail show side-by-side; below, the
-   detail (with Back) owns the window. Overrides the global 560px
-   SurfaceSplit breakpoint for the People surface only. */
-@container surface (min-width: 560px) and (max-width: 899.9px) {
-  .people-surface .surface-split-open { grid-template-columns: minmax(0, 1fr); }
-  .people-surface .surface-split-open .surface-split-main { display: none; }
-}
+/* ── the frame: rail | pane, the status bar under both ── */
+.people-frame { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; background: var(--hs-ground); }
+.people-body { display: flex; flex: 1 1 auto; min-width: 0; min-height: 0; }
+.people-pane { display: flex; flex: 1 1 auto; flex-direction: column; min-width: 0; min-height: 0; overflow-y: auto; }
+.people-pane > .people-empty,
+.people-pane > .surface-state { flex: 1 1 auto; }
 
-/* HS-172-05 — Prep enrichment: summary rows + display step + footer. */
-.people-prep-enriched { display: flex; flex-direction: column; gap: 16px; }
-.people-prep-display { font: 600 26px/1.15 var(--font-display); letter-spacing: -0.01em; color: var(--text); }
-.people-prep-summary { display: flex; flex-direction: column; }
-.people-prep-row { border-top: 1px solid var(--border); }
-.people-prep-row-main { display: flex; align-items: center; gap: 8px; padding: 10px 0; flex-wrap: wrap; }
-.people-prep-row-primary { font: 600 15px/1.4 var(--font-sans, 'Inter', system-ui, sans-serif); color: var(--text); white-space: nowrap; min-width: 0; }
-.people-prep-row-tokens { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-.people-prep-token { font: 600 var(--font-size-xs)/1 var(--font-sans); color: var(--text-muted); white-space: nowrap; }
-.people-prep-token[data-warning] { color: var(--warning, #fbbf24); }
-.people-prep-token-muted { color: var(--text-muted); }
-.people-prep-row-spacer { flex: 1; min-width: 8px; }
-/* The Open verb must never clip or be pushed out of the row. */
-.people-prep-row-main > .btn { flex-shrink: 0; }
-.people-prep-receipt { font: 600 var(--font-size-xs)/1 var(--font-sans); color: var(--text-muted); }
-
-/* HS-172-05 — Now wing caption tokens (same grammar as Room proposal captions). */
-.people-now-caption {
-  font-size: var(--desk-surface-detail-size, 12px);
-  font-family: var(--font-mono, 'JetBrains Mono', "JetBrains Mono Fallback", monospace);
-  color: var(--text-faint, var(--text-muted));
-  white-space: nowrap;
-}
-.people-now-caption-warning { color: var(--warning, #fbbf24); }
-
-/* HS-172-05 — 393: tokens wrap below primary, Open trailing. */
-@container surface (max-width: 559.9px) {
-  .people-prep-row-main { flex-wrap: wrap; }
-  .people-prep-row-primary { font-size: 14px; }
-}
-
-/* HS-172-05 — Now wing rows carry no lead slot, so at the narrow
-   container the primary takes the whole line and cells + Open fall under
-   (the HS-168-04 lead-beside-text rule has nothing to protect here). */
-@container surface (max-width: 559.9px) {
-  .people-surface .surface-ledger-row[data-wrap] .surface-ledger-primary {
-    flex: 1 1 100%;
-  }
-}
-
-/* PHILO-13-04 (A3): a People failure is ONE row in the window's status bar,
-   so it stays in view while he is down in a lens; its verb sits beside it. */
-.people-failure {
-  display: inline-flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  color: var(--warn);
-  font: 600 12px / 1.3 var(--font-mono);
-  letter-spacing: 0.04em;
-}
-
-/* PHILO-13-09 (B4-W): the Now side's Next 1:1 reads as the header does. */
-.people-next-side { font-family: var(--font-mono); font-size: var(--desk-surface-detail-size); letter-spacing: 0.04em; color: var(--text); }
-
-/* PHILO-17 ALIVE: the roster is a paper well of people: an initials
-   avatar, the name, the relationship as a soft chip; "You owe N" is an
-   amber pill. Rows lift under the pointer (surface.css, the ALIVE block). */
-.desk-next .people-surface .surface-rows {
-  gap: 2px;
-  padding: 4px;
-  background: transparent;
-  border: 0;
-  box-shadow: none;
-}
-.desk-next .people-surface .surface-row-line {
-  min-height: 40px;
-  padding: 4px 8px;
-}
-.desk-next .people-surface .surface-row-glyph {
-  width: 24px;
-}
-.desk-next .people-surface .surface-row-text strong {
-  font: 600 14px / 1.3 var(--font-sans);
-  color: var(--wb-text);
-}
-.desk-next .people-surface .surface-row-text small {
+/* ── the rail ── */
+.people-rail {
   display: flex;
-  align-items: center;
-  gap: 0 4px;
-  margin-top: 3px;
-  color: var(--wb-muted);
-}
-.people-role-chip {
-  display: inline-flex;
-  align-items: center;
-  min-height: 20px;
-  padding: 0 8px;
-  border-radius: 0;
-  background: var(--pill-info);
-  color: var(--wb-info-ink);
-  font: 600 12px / 1 var(--font-sans);
-}
-.people-role-chip[data-kind="peer"] {
-  background: var(--pill-ok);
-  color: var(--wb-ok-ink);
-}
-.people-role-chip[data-kind="extended"] {
-  background: var(--pill-neutral);
-  color: var(--wb-muted);
-}
-.desk-next .people-surface .surface-row-meta > .surface-token[data-chip] {
-  font: 600 12px / 1 var(--font-sans);
-  letter-spacing: 0;
-  text-transform: none;
-}
-.desk-next .people-top {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 2px 0 4px;
-}
-.desk-next .people-top > .surface-display {
-  font: 650 19px / 1.2 var(--font-display);
-  letter-spacing: 0;
-  color: var(--wb-text);
-}
-/* PHILO-17 ALIVE r3: the add row, the row facts, the lock in the foot. */
-.desk-next .people-new {
-  padding: 8px;
-  border: 1px solid var(--wb-rule);
-  border-radius: 6px;
-  background: color-mix(in srgb, var(--wb-sel) 8%, var(--alive-paper, #f8f5ee));
-}
-.people-role-pick {
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-.desk-next .people-role-pick > .btn[aria-pressed="true"] {
-  background: var(--wb-sel);
-  color: var(--wb-paper);
-}
-.desk-next .people-surface .surface-row-text small {
-  gap: 0 8px;
-}
-.people-row-fact {
-  font: 500 12px / 1.3 var(--font-sans);
-  color: var(--wb-text);
-  font-variant-numeric: tabular-nums;
-}
-.people-row-fact[data-quiet] {
-  color: var(--wb-muted);
-}
-.people-row-pills {
-  display: inline-flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 4px;
-}
-.people-lock {
-  font: 600 12px / 1 var(--font-sans);
-  color: var(--wb-ink-dim);
-  cursor: help;
-  white-space: nowrap;
-}
-
-/* ── PHILO-17 REFIT: the person page, in the Today language. The head
-   (avatar, name, role, owed both ways), a quiet tab strip with Prep in
-   front, the next 1:1 as the focus plate (a Workbench title bar), then two
-   steel plates: what he owes and what is owed to him. Colour and shadow
-   move on hover; nothing changes place. ── */
-.desk-next .person-page {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  min-width: 0;
-}
-.desk-next .people-detail-head {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 6px 12px;
-  margin: 0;
-}
-.desk-next .people-detail-head .kit-avatar {
   flex: none;
-}
-.desk-next .people-who {
-  display: flex;
   flex-direction: column;
   gap: 4px;
-  min-width: 0;
+  width: 248px;
+  padding: 12px 8px;
+  overflow-y: auto;
+  background: var(--hs-rule);
+  border-right: 1px solid var(--hs-edge);
 }
-.desk-next .people-name {
-  margin: 0;
-  font: 650 19px / 1.2 var(--font-display);
-  letter-spacing: 0;
-  color: var(--wb-text);
-  overflow-wrap: anywhere;
-}
-.desk-next .people-who-meta {
+.people-rail-head { display: flex; flex-direction: column; gap: 8px; padding: 0 4px 6px; }
+.people-rail-head > .btn { align-self: flex-start; }
+.people-rail-list { display: flex; flex-direction: column; gap: 2px; margin: 0; padding: 0; list-style: none; }
+.people-rail-cap { margin: 10px 8px 2px; color: var(--hs-ink-2); font: 600 12px / 16px var(--font-sans); }
+.btn--chrome.people-rail-row,
+.people-rail-row {
   display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 4px 8px;
-  font: 500 12px / 1.3 var(--font-sans);
-  color: var(--wb-muted);
-}
-.desk-next .people-head-sp {
-  flex: 1 1 8px;
-}
-.desk-next .people-strip {
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: 4px 14px;
-  font: 600 12px / 1.4 var(--font-sans);
-  color: var(--wb-muted);
-  font-variant-numeric: tabular-nums;
-}
-.desk-next .people-strip b {
-  font-weight: 800;
-  color: var(--wb-text);
-}
-.desk-next .people-strip [data-tone="warn"] b { color: var(--wb-warn-ink); }
-.desk-next .people-strip [data-tone="ok"] b { color: var(--wb-ok-ink); }
-
-/* The tab strip: a sunken steel well; the selected tab is a paper key. */
-.desk-next .person-page .people-lenses {
-  display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: stretch;
   gap: 2px;
-  margin: 0;
-  padding: 2px;
-  border: 1px solid var(--wb-ink);
-  border-bottom: 1px solid var(--wb-ink);
-  background: var(--wb-well);
-  box-shadow: var(--wb-sunken);
-}
-.desk-next .person-page .people-lenses > .btn {
-  flex: 1 1 0;
-  min-width: 64px;
-  border: 1px solid color-mix(in srgb, var(--wb-ink) 55%, transparent);
-  background: var(--wb-steel);
-  box-shadow: var(--wb-raised);
-  font: 600 12px / 1 var(--font-sans);
-  color: var(--wb-muted);
-}
-.desk-next .person-page .people-lenses > .btn:hover {
-  color: var(--wb-text);
-  background: var(--wb-steel-2);
-}
-.desk-next .person-page .people-lenses > .btn[aria-selected="true"] {
-  border-color: var(--wb-ink);
-  background: var(--alive-paper, #f8f5ee);
-  box-shadow: inset 0 -2px 0 var(--wb-sel);
-  color: var(--wb-text);
-}
-
-.desk-next .people-prep {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  min-width: 0;
-}
-.desk-next .people-cap {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 8px;
-  margin: 0;
-  font: 800 12px / 1 var(--font-mono);
-  letter-spacing: 0.08em;
-  color: var(--wb-muted);
-}
-.desk-next .people-cap > b {
-  font-weight: 800;
-  color: var(--wb-text);
-  font-variant-numeric: tabular-nums;
-}
-
-/* The next 1:1: the focus object, a raised paper plate with a title bar. */
-.desk-next .people-next {
-  display: flex;
-  flex-direction: column;
-}
-.desk-next .people-next-bar {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 3px 10px;
-  border-bottom: 1px solid var(--wb-rule-soft);
-  background: var(--wb-stipple-fine), var(--wb-blue);
-  color: var(--wb-ink);
-}
-.desk-next .people-next-label {
-  padding: 1px 6px;
-  border: 1px solid var(--wb-rule-soft);
-  border-radius: var(--radius-xs);
-  background: var(--wb-paper);
-  font: 800 12px / 1.2 var(--font-mono);
-  letter-spacing: 0.08em;
-}
-.desk-next .people-next-when {
-  margin-left: auto;
-  text-align: right;
-  font: 600 12px / 1.2 var(--font-sans);
-  font-variant-numeric: tabular-nums;
-  color: var(--wb-ink);
-}
-.desk-next .people-next-body {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 10px 12px 12px;
-  min-width: 0;
-}
-.desk-next .people-next-event {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-width: 0;
-}
-.desk-next .people-next-sprite {
-  display: inline-grid;
-  place-items: center;
-  flex: none;
-  width: 36px;
-  height: 36px;
-  border: 1px solid var(--wb-rule-soft);
-  border-radius: var(--radius-sm);
-  background: hsl(268 60% 88%);
-}
-.desk-next .people-next-sprite > img {
-  width: 24px;
-  height: 24px;
-  image-rendering: auto;
-}
-.desk-next .people-next-text {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
-}
-.desk-next .people-next-title {
-  font: 650 15px / 1.25 var(--font-display);
-  color: var(--wb-text);
-  overflow-wrap: anywhere;
-}
-.desk-next .people-next-none {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  font: 500 13px / 1.3 var(--font-sans);
-  color: var(--wb-muted);
-}
-.desk-next .people-next .surface-section {
-  margin: 0;
-}
-
-/* To raise: a paper well of beads on a dotted rail. */
-.desk-next .people-raise {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  min-width: 0;
-}
-.desk-next .people-raise-list {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  margin: 0;
-  padding: 6px 8px 6px 22px;
-  list-style: none;
-  background: transparent;
-  border: 0;
-  box-shadow: none;
-}
-.desk-next .people-raise-list::before {
-  content: "";
-  position: absolute;
-  top: 10px;
-  bottom: 10px;
-  left: 11px;
-  width: 2px;
-  background: repeating-linear-gradient(180deg, color-mix(in srgb, var(--wb-ink) 40%, transparent) 0 2px, transparent 2px 4px);
-}
-.desk-next .people-raise-row {
-  position: relative;
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 4px 8px;
-  min-height: 30px;
-  padding: 2px 4px;
-  border-radius: 3px;
-  transition: background-color 120ms ease, box-shadow 120ms ease;
-}
-.desk-next .people-raise-row::before {
-  content: "";
-  position: absolute;
-  left: -15px;
-  top: 50%;
-  width: 8px;
-  height: 8px;
-  margin-top: -4px;
-  border: 1px solid var(--wb-rule-soft);
-  border-radius: var(--radius-xs);
-  background: var(--wb-steel);
-}
-.desk-next .people-raise-row[data-testid="prep-commitments-row"]::before { background: var(--lamp-fail); }
-.desk-next .people-raise-row[data-testid="prep-prs-row"]::before,
-.desk-next .people-raise-row[data-testid="prep-assignments-row"]::before { background: var(--lamp-warn); }
-.desk-next .people-raise-row:hover {
-  background: #ffffff;
-  box-shadow: var(--alive-lift);
-}
-.desk-next .people-raise-bead { display: none; }
-.desk-next .people-raise-words {
-  flex: 1 1 12ch;
-  min-width: 0;
-  font: 500 13px / 1.35 var(--font-sans);
-  color: var(--wb-text);
-  overflow-wrap: anywhere;
-}
-.desk-next .people-raise-tokens {
-  display: inline-flex;
-  flex: 1 1 auto;
-  flex-wrap: wrap;
-  gap: 4px 8px;
-  min-width: 0;
-}
-.desk-next .people-raise-row > .btn { flex: none; margin-left: auto; }
-.desk-next .people-prep-token {
-  font: 600 12px / 1.2 var(--font-mono);
-  letter-spacing: 0.04em;
-  color: var(--wb-muted);
-  font-variant-numeric: tabular-nums;
-}
-.desk-next .people-prep-token[data-warning] { color: var(--wb-warn-ink); }
-.desk-next .people-concern { margin-top: 2px; }
-
-/* A pill: the state's tint, a round lamp, the word in the state's ink. */
-.desk-next .people-pill {
-  --tint: color-mix(in srgb, var(--wb-ink) 8%, transparent);
-  --lamp: color-mix(in srgb, var(--wb-ink) 35%, transparent);
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  min-height: 20px;
-  padding: 0 8px;
-  border: 0;
-  border-radius: 999px;
-  background: var(--tint);
-  font: 600 12px / 1 var(--font-sans);
-  letter-spacing: 0;
-  text-transform: none;
-  color: var(--wb-text);
-  white-space: nowrap;
-}
-.desk-next .people-pill::before {
-  content: "";
-  flex: none;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--lamp);
-}
-.desk-next .people-pill[data-tone="warn"] { --tint: color-mix(in srgb, var(--lamp-warn) 26%, transparent); --lamp: var(--lamp-warn); color: var(--wb-warn-ink); }
-.desk-next .people-pill[data-tone="danger"] { --tint: color-mix(in srgb, var(--lamp-fail) 16%, transparent); --lamp: var(--lamp-fail); color: var(--wb-danger-ink); }
-.desk-next .people-pill[data-tone="info"] { --tint: color-mix(in srgb, var(--lamp-info) 20%, transparent); --lamp: var(--lamp-info); color: var(--wb-info-ink); }
-.desk-next .people-pill[data-tone="ok"] { --tint: color-mix(in srgb, var(--lamp-ok) 20%, transparent); --lamp: var(--lamp-ok); color: var(--wb-ok-ink); }
-.desk-next .people-pill-link { cursor: pointer; }
-.desk-next .people-pill-link:hover { text-decoration: underline; text-underline-offset: 3px; }
-
-/* The add rows: a field and one quiet verb. */
-.desk-next .person-page .people-add {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  background: none;
-}
-.desk-next .person-page .people-add .gadget-string { flex: 1 1 auto; min-width: 0; }
-.desk-next .person-page .people-add > .btn { flex: none; }
-@container surface (max-width: 559.9px) {
-  .desk-next .person-page .people-add { align-items: stretch; flex-wrap: wrap; }
-  .desk-next .person-page .people-add .gadget-string { flex: 1 1 100%; }
-  .desk-next .person-page .people-add .gadget-string input,
-  .desk-next .person-page .people-add > .btn,
-  .desk-next .person-page .people-commitment-inspector .btn,
-  .desk-next .person-page .people-commitment-inspector input,
-  .desk-next .person-page .people-commitment-inspector select { min-height: 44px; }
-  .desk-next .person-page .people-add .desk-mic,
-  .desk-next .person-page .people-commitment-inspector .desk-mic { width: 44px; height: 44px; margin-right: 0; }
-}
-
-/* Owed both ways: two steel plates side by side (one column when narrow). */
-.desk-next .people-owe-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  align-items: start;
-}
-@container surface (max-width: 559.9px) {
-  .desk-next .people-owe-grid { grid-template-columns: minmax(0, 1fr); }
-}
-.desk-next .people-plate {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  min-width: 0;
-  padding: 8px;
-}
-.desk-next .people-plate-rows {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  margin: 0;
-  padding: 3px;
-  list-style: none;
-  background: transparent;
-  border: 0;
-  box-shadow: none;
-}
-.desk-next .people-plate-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-  padding: 4px 6px;
-  border-radius: 3px;
-  transition: background-color 120ms ease, box-shadow 120ms ease;
-}
-.desk-next .people-plate-row:hover {
-  background: #ffffff;
-  box-shadow: var(--alive-lift);
-}
-.desk-next .people-plate-row:has(button:active) {
-  background: color-mix(in srgb, var(--wb-sel) 10%, var(--wb-well));
-  box-shadow: var(--wb-sunken);
-}
-.desk-next .people-plate-text {
-  display: flex;
-  flex: 1 1 auto;
-  flex-direction: column;
-  gap: 3px;
-  min-width: 0;
-}
-.desk-next .people-plate-title {
-  min-width: 0;
-  padding: 0;
-  border: 0;
-  background: none;
-  text-align: left;
-  font: 600 13px / 1.3 var(--font-sans);
-  color: var(--wb-text);
-  overflow-wrap: anywhere;
-}
-.desk-next button.people-plate-title { cursor: pointer; }
-.desk-next button.people-plate-title:hover { text-decoration: underline; text-underline-offset: 3px; }
-.desk-next .people-plate-meta {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 4px 8px;
-  font: 500 12px / 1.3 var(--font-sans);
-  color: var(--wb-muted);
-}
-.desk-next .people-plate-row > .btn { flex: none; }
-.desk-next .people-plate .people-commitment-inspector {
-  margin: 0;
-  background: var(--wb-paper);
-  border: 1px solid var(--wb-rule-soft);
-  border-radius: var(--radius-sm);
-  box-shadow: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .desk-next .people-next,
-  .desk-next .people-raise-row,
-  .desk-next .people-plate-row { transition: none; }
-}
-.desk-next .people-next-sep { display: none; }
-
-/* ── PHILO-17 REFIT pass 2: TO RAISE numbered on the 1:1 plate; the
-   prep plates below (Last time, Open work, On the desk). ── */
-.desk-next .people-raise-list { padding-left: 34px; }
-.desk-next .people-raise-list::before { left: 17px; }
-.desk-next .people-raise-row::before { display: none; }
-.desk-next .people-raise-n {
-  position: absolute;
-  left: -27px;
-  top: 50%;
-  display: inline-grid;
-  place-items: center;
-  width: 18px;
-  height: 18px;
-  margin-top: -9px;
-  border: 1px solid var(--wb-rule-soft);
-  border-radius: var(--radius-xs);
-  background: var(--wb-steel);
-  font: 800 12px / 1 var(--font-mono);
-  font-variant-numeric: tabular-nums;
-  color: var(--wb-ink);
-}
-.desk-next .people-raise-row:first-child .people-raise-n {
-  background: var(--wb-sel);
-  color: var(--wb-paper);
-}
-.desk-next .people-cap > b { margin-left: 2px; }
-.desk-next .people-more-grid > .people-plate:only-child { grid-column: 1 / -1; }
-.desk-next .people-work-row {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 4px 8px;
-  min-width: 0;
-  padding: 4px 6px;
-  border-radius: 3px;
-  transition: background-color 120ms ease, box-shadow 120ms ease;
-}
-.desk-next .people-work-row:hover { background: #ffffff; box-shadow: var(--alive-lift); }
-.desk-next .people-work-row > .btn { flex: none; margin-left: auto; }
-.desk-next .people-last-head {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-}
-.desk-next .people-last-head > .btn { flex: none; }
-.desk-next .people-mono {
-  font: 600 12px / 1.2 var(--font-mono);
-  font-variant-numeric: tabular-nums;
-  color: var(--wb-text);
-}
-.desk-next .people-excerpt {
-  min-width: 0;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-@media (prefers-reduced-motion: reduce) {
-  .desk-next .people-work-row { transition: none; }
-}
-
-/* ── PHILO-17 REFIT pass 2: the roster. The head carries the week in mono
-   (Today's strip); the soonest 1:1 is the focus plate with Open prep; rows
-   say the next 1:1 and owed both ways as lamp pills. ── */
-.desk-next .people-surface > .people-top {
-  flex-wrap: wrap;
-  row-gap: 4px;
-}
-.desk-next .people-roster-next { margin: 0 0 10px; }
-.desk-next .people-next-row {
-  flex-direction: row;
-  align-items: center;
-  gap: 12px;
-}
-.desk-next .people-next-row > .btn { flex: none; }
-.desk-next .people-surface .surface-split-main .surface-section-head > h3 {
-  font: 600 12px / 1 var(--font-sans);
-  color: var(--wb-muted);
-}
-.desk-next .people-surface .surface-row-text small .people-pill { min-height: 20px; }
-.desk-next .people-row-fact.people-pill { color: var(--wb-info-ink); }
-.desk-next .people-row-fact[data-quiet] { font: 500 12px / 1.3 var(--font-sans); }
-@container surface (max-width: 559.9px) {
-  .desk-next .people-next-row { flex-wrap: wrap; }
-}
-
-/* PHILO-17: Remove on a TO RAISE row is quiet: it shows on hover or focus
-   (always on a touch screen, which has no hover). Opacity only. */
-.desk-next .people-raise-row > .people-raise-remove {
-  flex: none;
-  margin-left: auto;
-  opacity: 0;
-  transition: opacity 120ms ease;
-}
-.desk-next .people-raise-row:hover > .people-raise-remove,
-.desk-next .people-raise-row:focus-within > .people-raise-remove { opacity: 1; }
-@media (hover: none) {
-  .desk-next .people-raise-row > .people-raise-remove { opacity: 1; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .desk-next .people-raise-row > .people-raise-remove { transition: none; }
-}
-
-/* Betterment D6: people from his work. With no people and no suggestions,
-   one line; the suggestions sit under the roster with Add and Not a person;
-   while his own name is not set, People asks it. */
-.people-empty-line { padding: 16px 0; }
-.people-suggestion-verbs {
-  display: inline-flex;
-  flex-wrap: nowrap;
-  align-items: center;
-  gap: 6px;
-}
-/* The suggestion verbs are the row's point: always shown, never on hover
-   only; the source line wraps rather than cut at 393. */
-.people-suggestion .surface-row-verbs { opacity: 1; transform: none; }
-.people-suggestion .surface-row-text small { flex-wrap: wrap; white-space: normal; }
-.people-whoami .gadget-string { width: 100%; }
-
-/* Betterment D7: the 1:1 prep. Her rows carry Nudge beside Done; the
-   Nudge well drafts the message under the column. */
-.people-plate-verbs { display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; }
-.people-nudge { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
-.people-nudge-text { margin: 0; font: 500 13px / 1.4 var(--font-sans); color: var(--wb-text, var(--text)); }
-/* The two column heads read as the other caps ("MIRA OWES ME"). */
-
-/* ── Window grammar (2026-10-24): People, the roster. Toolbar [Add person]
-   + search → the dense list view (an initials disc in the person's hue
-   leads each row: People's one avatar) → the status bar. Suggested names
-   sit under the people with a dashed disc. ── */
-.people-roster {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 auto;
-  min-height: 0;
-}
-.people-list {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 auto;
-  min-height: 0;
-}
-.people-search {
-  display: inline-flex;
-  align-items: center;
-  min-width: 0;
-}
-.people-search > * { flex: 1 1 auto; min-width: 0; }
-.desk-next .people-roster > .people-new,
-.people-you-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px 8px;
-  margin: 0;
-  padding: 6px 12px;
-  border-bottom: 1px solid var(--wb-rule-soft);
-  background: color-mix(in srgb, var(--wb-sel) 6%, var(--wb-paper));
-}
-.people-you-row .gadget-string { flex: 1 1 220px; min-width: 0; }
-.people-you-row .kit-dotword { font-size: 12px; color: var(--wb-muted); }
-.people-roster > .people-new .gadget-string { flex: 1 1 200px; }
-.people-roster .people-duplicate {
-  margin: 0;
-  font: 500 12px / 1.3 var(--font-sans);
-  color: var(--wb-warn-ink);
-}
-.people-empty {
-  display: flex;
-  flex: 1 1 auto;
-  flex-direction: column;
-  min-height: 0;
-}
-.people-empty .surface-state { flex: 1 1 auto; justify-content: center; }
-.people-roster > .people-failure,
-.person-window > .people-failure { padding: 6px 12px; }
-
-/* A suggested name is not a person yet: a dashed disc, the group in ember. */
-.people-list .object-list-row[data-suggested] .object-list-avatar {
-  background: var(--wb-paper);
-  box-shadow: none;
-  outline: 1px dashed var(--wb-ink-dim);
-  outline-offset: -1px;
-  color: var(--wb-muted);
-}
-.people-list .object-list-row[data-suggested]:first-of-type,
-.people-list .object-list-row:not([data-suggested]) + .object-list-row[data-suggested] {
-  border-top: 1px solid var(--wb-rule-soft);
-}
-.people-list .object-list-row[data-suggested] .object-list-cell[data-col="role"] {
-  color: var(--wb-ember-ink);
-  font-weight: 500;
-}
-.people-list .object-list-cell[data-col="owe"] {
-  color: var(--wb-text);
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-}
-/* DELIGHT 2 (small joys): the next 1:1 in the person's own teal, the person
-   ink (5.6:1 on paper). Colour only; a selected row keeps its paper text. */
-.people-list .object-list-row[data-next-one-on-one] .object-list-cell[data-col="next"] {
-  color: var(--wb-person-ink);
-}
-.people-list .object-list-row[data-selected="true"] .object-list-cell[data-col] {
-  color: var(--wb-paper);
-}
-.people-lock {
-  font: inherit;
-  color: inherit;
-}
-
-/* ── Window grammar: the person window. Toolbar (Record meeting, Add
-   note) → a compact head → sections in sentence case under a hairline,
-   rows 30 px edge to edge, no plates → the status bar. ── */
-.desk-next .person-page {
-  gap: 0;
-}
-.desk-next .person-page > .kit-toolbar { margin: 0; }
-.desk-next .people-detail-head {
-  flex-wrap: nowrap;
-  gap: 10px;
-  padding: 12px 16px 10px;
-}
-.desk-next .people-name {
-  font: 600 17px / 1.2 var(--font-display);
-}
-.desk-next .people-who { gap: 2px; }
-.desk-next .people-who-meta {
-  display: block;
-  font: 400 12px / 1.35 var(--font-sans);
-}
-.desk-next .person-page > .standing-pages-section,
-.desk-next .person-page > :is(section, div):not(.kit-toolbar):not(.people-prep):not(.people-folds):not(.people-detail-head) {
-  padding-inline: 16px;
-}
-.desk-next .people-prep {
-  gap: 0;
-}
-.people-section {
-  min-width: 0;
-  padding: 6px 0 4px;
-  border-top: 1px solid var(--wb-rule-soft);
-}
-.people-section-head {
-  display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: 2px 12px;
-  padding: 4px 16px 4px;
-}
-.people-section-cap {
-  margin: 0;
-  font: 600 14px / 1.3 var(--font-display);
-  letter-spacing: 0;
-  color: var(--wb-text);
-}
-.people-section-fact {
-  display: inline-flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 4px 10px;
-  margin-left: auto;
-  font: 400 12px / 1.35 var(--font-sans);
-  color: var(--wb-muted);
-  font-variant-numeric: tabular-nums;
-}
-.people-section-fact .people-plate-title { font: 500 12px / 1.35 var(--font-sans); color: var(--wb-text); }
-.people-section-fact .people-prep-token { font: 500 12px / 1.35 var(--font-sans); letter-spacing: 0; color: var(--wb-muted); }
-.people-rows {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.desk-next .people-section .people-row,
-.desk-next .people-section .people-plate-row,
-.desk-next .people-section .people-work-row,
-.desk-next .people-section .people-raise-row {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 2px 8px;
-  min-height: 30px;
   box-sizing: border-box;
-  padding: 3px 16px;
-  border-radius: 0;
-  border-bottom: 1px solid color-mix(in srgb, var(--wb-rule-soft) 55%, transparent);
-  box-shadow: none;
-  transition: background-color var(--duration-short) var(--ease-standard), box-shadow var(--duration-short) var(--ease-standard);
-}
-.desk-next .people-section .people-rows > li:hover {
-  background: var(--wb-row-hover);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--wb-ink) 22%, transparent);
-}
-.desk-next .people-section .people-row:last-child,
-.desk-next .people-section .people-rows > li:last-child { border-bottom: 0; }
-.desk-next .people-section .people-plate-text { flex-direction: row; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; }
-.desk-next .people-section .people-plate-title { font: 500 13px / 1.35 var(--font-sans); }
-.desk-next .people-section .people-plate-meta { font: 400 12px / 1.35 var(--font-sans); }
-.people-row-glyph > img { display: block; width: 20px; height: 20px; }
-.people-row-words { font: 500 13px / 1.35 var(--font-sans); color: var(--wb-text); min-width: 0; overflow-wrap: anywhere; }
-.people-row-meta { font: 400 12px / 1.35 var(--font-sans); color: var(--wb-muted); }
-.desk-next .people-section .people-raise-n {
-  position: static;
-  display: inline-grid;
-  place-items: center;
-  flex: none;
-  width: 20px;
-  height: 20px;
-  margin: 0;
+  width: 100%;
+  min-height: 44px;
+  padding: 7px 10px;
   border: 0;
-  border-radius: 50%;
-  background: color-mix(in srgb, var(--wb-sel) 14%, var(--wb-paper));
-  font: 600 12px / 1 var(--font-sans);
-  color: var(--wb-info-ink);
+  border-radius: 7px;
+  background: transparent;
+  color: var(--hs-ink);
+  text-align: left;
+  transition: background-color var(--motion-settle) var(--desk-ease), box-shadow var(--motion-settle) var(--desk-ease);
 }
-.desk-next .people-section .people-raise-row:first-child .people-raise-n {
-  background: var(--wb-sel-vivid);
-  color: var(--wb-paper);
-}
-.desk-next .people-section .people-raise-words { font: 500 13px / 1.35 var(--font-sans); }
-.desk-next .people-section .people-add-line { border-bottom: 0; }
-.desk-next .people-section .people-add-line > .btn { width: auto; }
-.desk-next .people-section .people-add-line > .surface-well { flex: 1 1 auto; margin: 0; }
-.people-link {
-  padding: 0;
-  border: 0;
-  background: none;
-  font: 500 12px / 1.35 var(--font-sans);
-  color: var(--wb-info-ink);
-  cursor: pointer;
-}
-.people-link:hover { text-decoration: underline; text-underline-offset: 3px; }
-.people-state {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font: 500 12px / 1.35 var(--font-sans);
-}
-.people-state[data-tone="danger"] { color: var(--wb-danger-ink); }
-.people-state[data-tone="ok"] { color: var(--wb-ok-ink); }
-.people-state[data-tone="info"] { color: var(--wb-info-ink); }
-/* Commitments: two columns under one caption (one column when narrow). */
-/* The hairline between the columns is the 1 px grid gap over the rule colour. */
-/* 2026-10-25 audit: both columns stretch to the taller one; with `start`
-   the rule colour showed as a grey band under the shorter column. */
-.desk-next .people-commitments .people-owe-grid { gap: 1px; align-items: stretch; background: var(--wb-rule-soft); }
-.desk-next .people-commitments .people-owe { background: var(--wb-paper); }
-.people-owe-cap {
+.people-rail-row:hover { background: var(--hs-plate); }
+.people-rail-row:focus-visible { outline: 2px solid var(--hs-steel); outline-offset: 1px; }
+.people-rail-row[aria-current="true"] { background: var(--hs-raised); box-shadow: 0 0 0 1px var(--hs-edge), var(--hs-raised-shadow); }
+.people-rail-name { overflow: hidden; font: 600 14px / 20px var(--font-sans); text-overflow: ellipsis; white-space: nowrap; }
+.people-rail-facts { display: flex; flex-wrap: wrap; gap: 0 8px; color: var(--hs-ink-2); font: 400 12px / 16px var(--font-sans); }
+/* DELIGHT 2: a person's next 1:1 in their own teal. */
+.people-rail-next { color: var(--kind-person); font-weight: 600; }
+.people-rail-spine { margin-top: 4px; }
+.people-rail-suggestion .people-rail-name { font-weight: 500; }
+.people-new { display: flex; flex-direction: column; gap: 6px; padding: 8px; border-radius: 8px; background: var(--hs-plate); }
+.people-role-pick, .people-new-verbs { display: flex; flex-wrap: wrap; gap: 4px; }
+.people-role-choice[aria-pressed="true"] { background: var(--hs-steel-tint); color: var(--hs-ink); }
+.people-duplicate { color: var(--hs-brass-ink); font: 600 12px / 16px var(--font-sans); }
+.people-everyone { align-self: flex-start; margin: 0 4px 6px; }
+
+/* ── the person: the mast and the spine ── */
+.people-person { display: flex; flex-direction: column; gap: 14px; padding: 16px 22px 0; }
+.people-spine { margin-top: -4px; }
+
+/* ── the plate: the one raised thing, with its verb ── */
+.people-now {
   display: flex;
-  align-items: baseline;
+  flex-direction: column;
   gap: 6px;
   margin: 0;
-  padding: 4px 16px 2px;
-  font: 600 12px / 1.3 var(--font-sans);
-  color: var(--wb-muted);
+  padding: 16px 18px;
+  border: 1px solid var(--hs-edge);
+  border-radius: 10px;
+  background: var(--hs-raised);
+  box-shadow: var(--hs-raised-shadow);
 }
-.people-owe-cap > b { color: var(--wb-text); font-variant-numeric: tabular-nums; }
+.people-pane > .people-now { margin: 22px; }
+.people-now-eyebrow { font: 700 12px / 16px var(--font-sans); color: var(--hs-steel); }
+.people-now[data-tone="brass"] .people-now-eyebrow { color: var(--hs-brass-ink); }
+.people-now[data-tone="coral"] .people-now-eyebrow { color: var(--hs-coral-ink); }
+.people-now-title { margin: 0; color: var(--hs-ink); font: 600 18px / 22px var(--font-display); overflow-wrap: anywhere; }
+.people-now-facts { margin: 0; color: var(--hs-ink-2); font: 400 12px / 16px var(--font-mono); }
+.people-now-verbs { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+
+/* ── the ledger: sections under a hairline, rows edge to edge ── */
+.people-prep { display: flex; flex-direction: column; gap: 18px; }
+.people-section { display: flex; flex-direction: column; gap: 4px; padding-top: 12px; border-top: 1px solid var(--hs-rule); }
+/* The agenda is the plate when nothing is more urgent than the next 1:1. */
+.people-section[data-plate] { padding: 16px 18px; border: 1px solid var(--hs-edge); border-radius: 10px; background: var(--hs-raised); box-shadow: var(--hs-raised-shadow); }
+.people-section-head { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; }
+.people-section-cap, .people-owe-cap { margin: 0; color: var(--hs-ink); font: 700 13px / 18px var(--font-sans); }
+.people-owe-cap b { margin-left: 8px; color: var(--hs-ink-2); font: 500 12px / 16px var(--font-mono); }
+.people-section-fact { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; color: var(--hs-ink-2); font: 400 12px / 16px var(--font-mono); }
+.people-section[data-plate] [data-testid="people-next-1on1"] { color: var(--kind-person); font-weight: 600; }
+.people-owe-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 24px; }
+.people-owe { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.people-rows { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
+.people-row, .people-plate-row, .people-work-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  min-height: 36px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--hs-rule);
+}
+.people-rows > :last-child, .people-add-line { border-bottom: 0; }
+.people-plate-text { display: flex; flex: 1 1 220px; flex-direction: column; gap: 2px; min-width: 0; }
+.people-plate-title, .people-row-words, .people-raise-words { min-width: 0; color: var(--hs-ink); font: 500 14px / 20px var(--font-sans); overflow-wrap: anywhere; }
+.btn--chrome.people-plate-title { justify-content: flex-start; min-height: 0; padding: 0; border: 0; background: transparent; box-shadow: none; text-align: left; cursor: pointer; }
+.btn--chrome.people-plate-title:hover { text-decoration: underline; text-underline-offset: 3px; }
+.people-plate-meta, .people-row-meta { display: flex; flex-wrap: wrap; gap: 0 8px; color: var(--hs-ink-2); font: 400 12px / 16px var(--font-sans); }
+.people-plate-verbs { display: flex; flex: none; gap: 4px; }
+.people-raise-row { flex-wrap: nowrap; }
+.people-raise-n { flex: none; width: 20px; color: var(--hs-ink-2); font: 600 12px / 16px var(--font-mono); }
+.people-raise-words { flex: 1 1 auto; }
+.people-state { display: inline-flex; align-items: center; gap: 6px; }
+.people-state[data-tone="danger"] { color: var(--hs-coral-ink); font-weight: 600; }
+.people-state[data-tone="ok"] { color: var(--hs-moss-ink); }
+.people-projects { gap: 4px 12px; }
+.btn--chrome.people-link { min-height: 0; padding: 0; border: 0; background: transparent; color: var(--hs-steel); cursor: pointer; }
+.people-pill { color: var(--hs-ink); font: 600 12px / 16px var(--font-sans); }
+.people-pill[data-tone="warn"], .people-pill[data-tone="danger"] { color: var(--hs-coral-ink); }
+.people-raise-tokens { display: inline-flex; flex: 1 1 auto; flex-wrap: wrap; gap: 6px; }
+.people-prep-token, .people-now-caption { color: var(--hs-ink-2); font: 500 12px / 16px var(--font-mono); white-space: nowrap; }
+.people-prep-token[data-warning], .people-now-caption-warning { color: var(--hs-coral-ink); }
+.people-excerpt { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.people-add { display: flex; align-items: center; gap: 8px; }
+.people-add .gadget-string { flex: 1; min-width: 0; }
+.people-concern { margin-top: 6px; }
+.people-nudge { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; border-radius: 8px; background: var(--hs-plate); }
+.people-nudge-text { margin: 0; color: var(--hs-ink); font: 400 14px / 20px var(--font-sans); }
+.people-folds { display: flex; flex-direction: column; padding-bottom: 12px; border-top: 1px solid var(--hs-rule); }
+
+/* ── wells and folds ── */
+.people-context-add, .people-project-link, .people-alias-add, .people-delegate, .people-satisfy { display: flex; flex-wrap: wrap; align-items: end; gap: 8px; margin-top: 8px; }
+.people-context-add .gadget-pad { flex-basis: 100%; }
+.people-project-link > :first-child, .people-alias-add .gadget-string, .people-delegate > :first-child, .people-satisfy > :first-child { flex: 1; min-width: 0; }
+.people-context-note { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.people-context-note-topic { font: 600 14px / 20px var(--font-sans); }
+.people-context-note-body { font: 400 14px / 20px var(--font-sans); white-space: pre-wrap; overflow-wrap: anywhere; }
+.people-commitment-inspector { margin-top: 6px; padding: 12px; border-radius: 8px; background: var(--hs-plate); box-shadow: 0 0 0 1px var(--hs-rule); }
+.people-inspector-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.people-commitment-body { margin: 6px 0; font: 400 14px / 20px var(--font-sans); }
+.people-info, .people-history-facts { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 6px 12px; margin: 0; }
+.people-info dt, .people-history-facts dt { color: var(--hs-ink-2); }
+.people-info dd, .people-history-facts dd { margin: 0; }
+.people-picker { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+
+/* ── states ── */
+.people-failure { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: 12px 22px 0; color: var(--hs-coral-ink); font: 600 12px / 16px var(--font-sans); }
+.people-person .people-failure, .people-prep .people-failure { margin: 0; }
+.people-joy-state { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; min-height: 120px; padding: 32px 16px; }
+.people-joy-line { color: var(--hs-ink-2); font: 400 12px / 16px var(--font-sans); }
+.people-you-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 12px 22px 0; }
+.people-lock, .people-prep-receipt { color: var(--hs-ink-2); }
+
+/* ── narrow (393, or a narrow window): one column; the rail until a
+   person is picked, then the person with Back ── */
 @container surface (max-width: 559.9px) {
-  .desk-next .people-commitments .people-owe-grid { gap: 1px; }
+  .people-frame[data-picked] .people-rail { display: none; }
+  .people-frame:not([data-picked]) .people-rail { flex: 1 1 auto; width: auto; border-right: 0; }
+  .people-frame:not([data-picked]) .people-body:has(.people-rail) { flex-direction: column-reverse; }
+  .people-frame:not([data-picked]) .people-body:has(.people-rail) .people-pane { flex: none; overflow: visible; }
+  .people-body:has(.people-rail) .people-pane > .surface-state { display: none; }
+  .people-person { padding: 12px 16px 0; }
+  .people-pane > .people-now { margin: 12px 16px; }
+  .people-owe-grid { grid-template-columns: minmax(0, 1fr); }
+  .people-add, .people-context-add, .people-project-link, .people-alias-add, .people-delegate, .people-satisfy { flex-wrap: wrap; }
 }
-.desk-next .people-section .people-commitment-inspector,
-.desk-next .people-section .people-nudge,
-.desk-next .people-section .people-concern { margin: 4px 16px; }
-.desk-next .people-section .people-pill {
-  min-height: 0;
-  padding: 0;
-  border: 0;
-  background: none;
-  box-shadow: none;
-  font: 600 12px / 1.35 var(--font-sans);
-}
-.desk-next .people-section .people-pill::before { display: none; }
-.desk-next .people-section .people-prep-token { font: 500 12px / 1.35 var(--font-sans); letter-spacing: 0; color: var(--wb-muted); }
-.desk-next .people-folds {
-  padding: 4px 16px 8px;
-  border-top: 1px solid var(--wb-rule-soft);
-}
-.desk-next .people-prep > .people-failure { padding: 6px 16px; }
-.people-failure { font: 500 12px / 1.3 var(--font-sans); letter-spacing: 0; color: var(--wb-danger-ink); }
-@container surface (max-width: 520px) {
-  .desk-next .people-section .people-row,
-  .desk-next .people-section .people-plate-row,
-  .desk-next .people-section .people-work-row,
-  .desk-next .people-section .people-raise-row { min-height: 44px; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .desk-next .people-section :is(.people-row, .people-plate-row, .people-work-row, .people-raise-row) { transition: none; }
-}
-/* The person window is a hosted pullout (Pullout.tsx), which has no
-   interior slot: its body runs edge to edge the way `data-interior` does. */
-.desk-next .desk-surface-body[data-surface-host="people"]:has(> .person-window) {
-  padding: 0;
-  gap: 0;
-  scroll-padding-block: 0;
-}
-.people-list .object-list-row[data-suggested] .object-list-cell[data-col="role"] { white-space: nowrap; }
-.kit-statusbar .people-prep-receipt {
-  font: inherit;
-  letter-spacing: 0;
-  text-transform: none;
-  color: inherit;
-}
-/* W6-G words: the wrapper that carries a failure's hover title draws no box. */
-.people-failure-title { display: contents; }
+
+/* One status bar per window: the person's sits at the foot of the pane. */
+.people-person > .kit-statusbar { position: sticky; bottom: 0; margin: auto -22px 0; }
+@container surface (max-width: 559.9px) { .people-person > .kit-statusbar { margin: auto -16px 0; } }
