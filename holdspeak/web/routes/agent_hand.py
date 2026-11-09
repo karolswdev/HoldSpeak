@@ -23,10 +23,15 @@ from typing import Any
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
+from starlette.concurrency import run_in_threadpool
+
+from ...agent_operations import LAUNCH_OPERATIONS
 from ...logging_config import get_logger
-from ...principals import Principal, PrincipalKind
+from ...operations import OperationRefused
+from ...principals import UNAUTHENTICATED, Principal, PrincipalKind
 from ...services.errors import ServiceError
 from ..context import WebContext
+from ..operation_routes import operation_router
 
 log = get_logger("web.routes.agent_hand")
 
@@ -166,18 +171,6 @@ def build_agent_hand_router(ctx: WebContext) -> APIRouter:
             return JSONResponse({"error": "agent_hand_preview_failed"}, status_code=500)
         return JSONResponse(result)
 
-    @router.delete("/api/agent/hand/queue/{queue_id}")
-    async def api_agent_hand_queue_cancel(queue_id: str) -> Any:
-        """Betterment AG8 (AG5 follow-up): Cancel a hand that waits for a free
-        agent. It leaves the queue and never starts; nothing else changes.
-        404 when the queue holds no such hand (it started, or was cancelled)."""
-        from ...services.agent_hand_queue import HandQueue
-
-        removed = await asyncio.to_thread(HandQueue().remove, queue_id)
-        if not removed:
-            return JSONResponse({"error": "queue_unknown", "code": "queue_unknown"}, status_code=404)
-        return JSONResponse({"queue_id": queue_id, "cancelled": True})
-
     @router.get("/api/agent/launches/{launch_id}")
     async def api_agent_launch(launch_id: str) -> Any:
         """One launch's delivery, read from the launch ledger (no driver, no
@@ -193,128 +186,6 @@ def build_agent_hand_router(ctx: WebContext) -> APIRouter:
             key: record.get(key)
             for key in ("launch_id", "state", "instruction_state", "trust_state", "failure", "profile_id")
         } | {"profile": record.get("profile_id")})
-
-    @router.get("/api/agent/launches/{launch_id}/lane")
-    async def api_agent_launch_lane(launch_id: str, after: int = 0, limit: int = 200) -> Any:
-        """One launch's lane (PHILO-14 C0): the launch with its brief, the
-        follow-through with the PR checks, the current wait with its draft,
-        the session's events (paged: ``?after=<event id>&limit=``), the gated
-        calls, the answers typed, the attempt's state changes, the worktree's
-        commits and files, and the usage. Owner only (the edge default).
-        Reads only (``services.launch_lane``)."""
-        from ...db import get_database
-        from ...services.agent_hand_preview import LaunchReads
-        from ...services.launch_lane import launch_lane
-
-        reads = getattr(ctx, "agent_hand_reads", None) or LaunchReads()
-
-        def run() -> Any:
-            return launch_lane(
-                launch_id, db=get_database(), reads=reads,
-                after=max(0, int(after)), limit=max(1, min(int(limit), 1000)),
-                control=lane_control,
-            )
-
-        try:
-            lane = await asyncio.to_thread(run)
-        except Exception as exc:
-            log.error(f"launch lane failed: {exc}")
-            return JSONResponse({"error": "launch_lane_failed"}, status_code=500)
-        if lane is None:
-            return JSONResponse({"error": "launch_unknown", "code": "launch_unknown"}, status_code=404)
-        return JSONResponse(lane)
-
-    @router.get("/api/agent/launches/{launch_id}/explain")
-    async def api_agent_launch_explain(launch_id: str) -> Any:
-        """Betterment AG7, "Why this state": which source decided the agent's
-        state (the hook or a screen rule), the rule, the evidence lines, the
-        rule file and the age of the read (``agent_flights.explain_agent``)."""
-        from ...db import get_database
-        from ...services.agent_flights import explain_agent
-
-        try:
-            answer = await asyncio.to_thread(explain_agent, get_database(), f"launch:{launch_id}")
-        except Exception as exc:
-            log.error(f"launch explain failed: {exc}")
-            return JSONResponse({"error": "launch_explain_failed"}, status_code=500)
-        if answer is None:
-            return JSONResponse({"error": "launch_unknown", "code": "launch_unknown"}, status_code=404)
-        return JSONResponse(answer)
-
-    @router.post("/api/agent/launches/{launch_id}/answer")
-    async def api_agent_launch_answer(launch_id: str, request: Request) -> Any:
-        """Betterment AG7 gaps: answer an agent whose hooks are off, from its
-        row: ``{since, keys: ["Enter"|"Escape"|"1".."9"]}`` or ``{since,
-        text}``. ``since`` names the prompt he saw; the pane is read again
-        before the keystroke. Owner only. 409 with its code on a refusal."""
-        from ...agent_context.screen_watch import ScreenAnswerRefused, answer_launch
-        from ...delivery.direct_gesture_input import ProcessInputRefused
-
-        principal = getattr(request.state, "principal", Principal(PrincipalKind.OWNER, "owner-session"))
-        if getattr(principal, "kind", None) is not PrincipalKind.OWNER:
-            return JSONResponse({"error": "owner_required", "code": "owner_required"}, status_code=403)
-        try:
-            body = await request.json()
-        except Exception:
-            body = None
-        body = body if isinstance(body, dict) else {}
-        keys = body.get("keys")
-        try:
-            result = await asyncio.to_thread(
-                answer_launch, launch_id, since=str(body.get("since") or ""),
-                keys=[str(k) for k in keys] if isinstance(keys, list) else None,
-                text=str(body.get("text") or "") if keys is None else None,
-            )
-        except ScreenAnswerRefused as exc:
-            return JSONResponse({"error": exc.code, "code": exc.code, "status": exc.code, "detail": exc.detail}, status_code=409)
-        except ProcessInputRefused as exc:
-            return JSONResponse({"error": exc.reason, "code": exc.reason, "status": "transport_error"}, status_code=409)
-        except Exception as exc:
-            log.error(f"launch answer failed: {exc}")
-            return JSONResponse({"error": "launch_answer_failed"}, status_code=500)
-        return JSONResponse(result)
-
-    @router.post("/api/agent/launches/{launch_id}/seen")
-    async def api_agent_launch_seen(launch_id: str, request: Request) -> Any:
-        """Betterment AG0: the owner opened this agent, so its done turn is
-        seen (``seen_wait_id`` on the launch; the flight is no longer
-        ``new``). ``{wait_id}`` names the turn he saw; without it, the
-        launch's current done turn. ``{"seen": null}`` when no turn is done.
-        The desk's newest answer (Betterment AG3) is seen too
-        (``seen_answer_id``)."""
-        from ...db import get_database
-        from ...delivery.factory_launch import LaunchLedger
-        from ...services.agent_flights import flight_of_launch
-
-        try:
-            body = await request.json()
-        except Exception:
-            body = None
-        body = body if isinstance(body, dict) else {}
-
-        def run() -> Any:
-            ledger = LaunchLedger()
-            flight = flight_of_launch(get_database(), launch_id, ledger=ledger)
-            if flight is None:
-                return None
-            turn = str(body.get("wait_id") or flight.get("turn_id") or "")
-            if turn:
-                ledger.update(launch_id, seen_wait_id=turn)
-            # Betterment AG3: opening the agent also sees the desk's answer.
-            answer = flight.get("desk_answer") or {}
-            answered = str(answer.get("wait_id") or "") if answer.get("state") == "answered" else ""
-            if answered and (not body.get("wait_id") or body.get("wait_id") == answered):
-                ledger.update(launch_id, seen_answer_id=answered)
-            return {"launch_id": launch_id, "seen": turn or None, "answer_seen": answered or None}
-
-        try:
-            result = await asyncio.to_thread(run)
-        except Exception as exc:
-            log.error(f"launch seen failed: {exc}")
-            return JSONResponse({"error": "launch_seen_failed"}, status_code=500)
-        if result is None:
-            return JSONResponse({"error": "launch_unknown", "code": "launch_unknown"}, status_code=404)
-        return JSONResponse(result)
 
     @router.post("/api/agent/launches/{launch_id}/rebrief")
     async def api_agent_rebrief(launch_id: str, request: Request) -> Any:
@@ -402,118 +273,6 @@ def build_agent_hand_router(ctx: WebContext) -> APIRouter:
             )
         return JSONResponse(result, status_code=202)
 
-    @router.post("/api/agent/launches/{launch_id}/helper/allow")
-    async def api_agent_helper_allow(launch_id: str, request: Request) -> Any:
-        """The owner's one press for a helper requested under Secure.
-
-        The agent's request is durable, but this route consumes it through
-        ``AgentHandService.hand`` so the ordinary worktree and process.spawn
-        kernel checks still decide whether the helper can start.
-        """
-        from ...services import agent_helpers
-        from ...services.agent_hand_service import default_agent_hand_service
-
-        principal = getattr(
-            request.state, "principal", Principal(PrincipalKind.OWNER, "owner-session")
-        )
-        try:
-            body = await request.json()
-        except Exception:
-            body = None
-        body = body if isinstance(body, dict) else {}
-        request_id = str(body.get("request_id") or "").strip()
-        if not request_id:
-            return JSONResponse({"error": "request_id_required", "code": "request_id_required"}, status_code=400)
-        service = getattr(ctx, "agent_hand_service", None) or default_agent_hand_service(
-            delivery_service=getattr(ctx, "delivery_service", None)
-        )
-        try:
-            result = await asyncio.to_thread(
-                agent_helpers.allow_helper,
-                launch_id,
-                request_id=request_id,
-                principal=principal,
-                hand_service=service,
-            )
-        except ServiceError as exc:
-            payload = dict(exc.context)
-            status = int(payload.pop("status", 409))
-            return JSONResponse(
-                {"error": exc.code, "code": exc.code, "detail": exc.detail, **payload}, status_code=status
-            )
-        return JSONResponse(result, status_code=202 if result.get("status") == "launched" else 409)
-
-    @router.post("/api/agent/launches/{launch_id}/remove")
-    async def api_agent_launch_remove(launch_id: str, request: Request) -> Any:
-        """W4 AGENT 2 (slice 3): Remove an ended launch from the Agents list
-        (``removed_at`` on the launch; the record stays). Owner only. 200 when
-        removed; 409 for a launch still in flight; 404 for an unknown one."""
-        from ...db import get_database
-        from ...services.agent_flights import remove_ended_launch
-
-        principal = getattr(request.state, "principal", Principal(PrincipalKind.OWNER, "owner-session"))
-        if getattr(principal, "kind", None) is not PrincipalKind.OWNER:
-            return JSONResponse({"error": "owner_required", "code": "owner_required"}, status_code=403)
-
-        try:
-            result = await asyncio.to_thread(remove_ended_launch, get_database(), launch_id)
-        except Exception as exc:
-            log.error(f"launch remove failed: {exc}")
-            return JSONResponse({"error": "launch_remove_failed"}, status_code=500)
-        if result.get("removed"):
-            return JSONResponse(result)
-        return JSONResponse(result, status_code=404 if result.get("reason") == "unknown" else 409)
-
-    @router.post("/api/agent/launches/{launch_id}/done")
-    async def api_agent_launch_done(launch_id: str, request: Request) -> Any:
-        """W4 AGENT 3 (slice 3): Done: the owner checked the work of a launch
-        whose turn ended done; the launch closes (``checked_at``) and leaves
-        the running agents. Owner only. 200 when checked (again: the first
-        stamp); 409 for a launch that works or asks; 404 for an unknown one."""
-        from ...db import get_database
-        from ...services.agent_flights import check_launch_done
-
-        principal = getattr(request.state, "principal", Principal(PrincipalKind.OWNER, "owner-session"))
-        if getattr(principal, "kind", None) is not PrincipalKind.OWNER:
-            return JSONResponse({"error": "owner_required", "code": "owner_required"}, status_code=403)
-
-        try:
-            result = await asyncio.to_thread(check_launch_done, get_database(), launch_id)
-        except Exception as exc:
-            log.error(f"launch done failed: {exc}")
-            return JSONResponse({"error": "launch_done_failed"}, status_code=500)
-        if result.get("checked"):
-            return JSONResponse(result)
-        return JSONResponse(result, status_code=404 if result.get("reason") == "unknown" else 409)
-
-    @router.post("/api/agent/launches/{launch_id}/resume")
-    async def api_agent_resume(launch_id: str, request: Request) -> Any:
-        """Betterment AG6: Resume an agent a restart stopped: a new terminal
-        in its worktree runs the agent's own resume (``claude --resume``,
-        ``codex resume``, ``pi --session``). 202 with the launch's resume
-        state; a refusal is 409 (404 for an unknown launch) with its code."""
-        from ...services.agent_hand_service import default_agent_hand_service
-
-        principal = getattr(
-            request.state, "principal", Principal(PrincipalKind.OWNER, "owner-session")
-        )
-        service = getattr(ctx, "agent_hand_service", None) or default_agent_hand_service(
-            delivery_service=getattr(ctx, "delivery_service", None)
-        )
-        try:
-            result = await asyncio.to_thread(service.resume_after_restart, principal, launch_id)
-        except ServiceError as exc:
-            payload = dict(exc.context)
-            status = int(payload.pop("status", 409))
-            return JSONResponse(
-                {"error": exc.code, "code": exc.code, "detail": exc.detail, **payload}, status_code=status
-            )
-        except Exception as exc:
-            log.error(f"agent resume failed: {exc}")
-            return JSONResponse({"error": "agent_resume_failed"}, status_code=500)
-        status = 202 if (result.get("resume") or {}).get("state") == "resuming" else 409
-        return JSONResponse(result, status_code=status)
-
     # ── PHILO-15 16 (B38): a Project knows its repository ──────────────
 
     @router.get("/api/projects/{project_id}/repository")
@@ -569,7 +328,45 @@ def build_agent_hand_router(ctx: WebContext) -> APIRouter:
 
         return await asyncio.to_thread(run)
 
+    # 2026-11-08 (one contract): the launch verbs are produced from their
+    # declared rows (``agent_operations.LAUNCH_OPERATIONS``) through the
+    # registry; the lane's read holds the route's launch reads and the
+    # steering resolver (``lane_control``), never arguments.
+    def lane_handler(descriptor: Any) -> Any:
+        async def api_agent_launch_lane(launch_id: str, request: Request) -> Any:
+            args = {**dict(request.query_params), "launch_id": launch_id}
+            principal = getattr(request.state, "principal", UNAUTHENTICATED)
+            held = {"reads": getattr(ctx, "agent_hand_reads", None), "control": lane_control}
+            return await _answer(lambda: _ops().invoke(principal, descriptor.name, args, held=held, shape="web"),
+                                 name=descriptor.name)
+
+        return api_agent_launch_lane
+
+    router.include_router(operation_router(
+        LAUNCH_OPERATIONS, _ops, lambda fn, status=200: _answer(fn, status=status), module=__name__,
+        hand_written={"agent.launch.lane": lane_handler},
+    ))
     return router
+
+
+async def _answer(fn: Any, *, status: int = 200, name: str = "") -> JSONResponse:
+    """The launch verbs' envelope: the answer, else ``{error, code, detail}``
+    and the refusal's own fields (``status``, ``reason``, the record), at the
+    status the hand-written routes answered with."""
+    try:
+        return JSONResponse(await run_in_threadpool(fn), status_code=status)
+    except ServiceError as exc:
+        payload = dict(exc.context)
+        http = payload.pop("http", None)
+        if http is None and isinstance(payload.get("status"), int):
+            http = payload.pop("status")
+        return JSONResponse({"error": exc.code, "code": exc.code, "detail": exc.detail, **payload},
+                            status_code=int(http or 409))
+    except OperationRefused as exc:
+        return JSONResponse({"error": exc.code, "code": exc.code, "detail": exc.detail}, status_code=400)
+    except Exception as exc:
+        log.error(f"{name or 'agent launch verb'} failed: {exc}")
+        return JSONResponse({"error": "agent_launch_failed"}, status_code=500)
 
 
 __all__ = ["build_agent_hand_router"]

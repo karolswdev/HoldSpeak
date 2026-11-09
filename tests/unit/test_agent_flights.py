@@ -492,6 +492,14 @@ def test_the_done_route_checks_a_done_launch_once(monkeypatch, tmp_path, registr
     monkeypatch.setattr(dbmod, "get_database", lambda: database)
     monkeypatch.setattr(factory_launch, "DEFAULT_LAUNCHES_PATH", launches)
     app = FastAPI()
+
+    @app.middleware("http")
+    async def _owner(request, call_next):  # the hub's edge names the principal (produced routes, #2051)
+        from holdspeak.principals import Principal, PrincipalKind
+
+        request.state.principal = Principal(PrincipalKind.OWNER, "owner-session")
+        return await call_next(request)
+
     app.include_router(build_agent_hand_router(SimpleNamespace()))
     client = TestClient(app)
 

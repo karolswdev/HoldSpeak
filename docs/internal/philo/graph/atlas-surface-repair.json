@@ -83,7 +83,7 @@
         {
           "kind": "ui",
           "action": "wait_for",
-          "selector": ".conductor-window [data-object-id=\"coder:codex:{coder_session_id}\"] button.cw-row-title",
+          "selector": ".conductor-window [data-testid=agents-rail] [data-object-id=\"coder:codex:{coder_session_id}\"] .aw-tile-open",
           "state": "visible",
           "timeout_s": 20,
           "adapter": "ui-observation"
@@ -93,18 +93,12 @@
         "kind": "ui",
         "action": "click",
         "adapter": "ui-by-viewport",
-        "selector": ".conductor-window [data-object-id=\"coder:codex:{coder_session_id}\"] button.cw-row-title",
+        "selector": ".conductor-window [data-testid=agents-rail] [data-object-id=\"coder:codex:{coder_session_id}\"] .aw-tile-open",
         "then": [
           {
             "kind": "ui",
             "action": "click",
-            "selector": ".conductor-window button:has-text(\"Get Info\")",
-            "adapter": "ui-by-viewport"
-          },
-          {
-            "kind": "ui",
-            "action": "click",
-            "selector": ".conductor-info-window button:has-text(\"Open\")",
+            "selector": ".conductor-window [data-testid=agents-pane] [data-testid=conductor-open]",
             "adapter": "ui-by-viewport"
           }
         ]

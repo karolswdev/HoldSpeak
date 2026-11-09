@@ -125,6 +125,83 @@ PROJECT_REPOSITORY_REGISTER = OperationDescriptor(
     ),
 )
 
-AGENT_OPERATIONS = (PROJECT_REPOSITORY_REGISTER, AGENT_HAND)
+# ── The launch verbs (2026-11-08): the Agents window is a client of these ──
+#
+# One row per verb the Agents window (and the agent's window) calls on a
+# launch: its call on the hub's ``AgentHandService``, its HTTP method and
+# path. ``web/routes/agent_hand.py`` produces the routes from these rows
+# through ``OperationRegistry.invoke`` (the paths and the answers are the
+# ones the hand-written routes had). No MCP tool yet: they are the owner's
+# presses on his desk; an agent reads its helper through ``agent.read``.
+# As in the meeting rows, the arguments schema is any object (a GET's query
+# arrives as strings); the service validates.
 
-__all__ = ["AGENT_HAND", "AGENT_OPERATIONS", "PROJECT_REPOSITORY_REGISTER"]
+_LAUNCH_PRINCIPAL = "derived by the transport (HTTP auth middleware); the owner's desk"
+_LAUNCH_REFUSALS = _CONTRACT_REFUSALS + ("launch_unknown",)
+_ANY = {"type": "object"}
+_L = "/api/agent/launches/{launch_id}"
+_EXEMPT = Admission("exempt", "The owner's view of, and press on, his own agent: the launch ledger is its record.")
+
+
+def _launch_op(name: str, method: str, http: tuple[str, str], handler: str, call, description: str, *,
+               write: bool = False, result: str = "the AgentHandService answer", status: int = 200,
+               refusals: tuple[str, ...] = (), owner_only: bool = False, held: tuple[str, ...] = (),
+               blocking_io: bool = False) -> OperationDescriptor:
+    return OperationDescriptor(
+        name=name, version=1, description=description, args_schema=_ANY, principal=_LAUNCH_PRINCIPAL,
+        effect="write" if write else "read", result=result, refusals=_LAUNCH_REFUSALS + refusals,
+        completion="synchronous; a write is one desk_changed frame (the Agents window reads its flights again)",
+        exposure=(f"http:{http[0]} {http[1]}",), service="agent_hand_service", method=method,
+        owner_only=owner_only, held=held, blocking_io=blocking_io, admission=_EXEMPT,
+        call=call, http=http, http_status=status, handler=handler,
+    )
+
+
+LAUNCH_OPERATIONS: tuple[OperationDescriptor, ...] = (
+    _launch_op("agent.launch.lane", "launch_lane", ("GET", _L + "/lane"), "api_agent_launch_lane",
+               lambda s, p, a: s.launch_lane(p, a.get("launch_id"), after=a.get("after", 0), limit=a.get("limit", 200),
+                                             reads=a.get("reads"), control=a.get("control")),
+               "Read one launch: its brief, follow-through and PR checks, the wait with its draft, the session's "
+               "events (paged: after, limit), the gated calls, the answers typed, the worktree and the usage.",
+               held=("reads", "control"),
+               result="the lane: launch, session, follow_through, wait, events, events_next_after, gated, answers, "
+                      "attempt_events, worktree, usage, control, used, last_words"),
+    _launch_op("agent.launch.explain", "launch_explain", ("GET", _L + "/explain"), "api_agent_launch_explain",
+               lambda s, p, a: s.launch_explain(p, a.get("launch_id")),
+               "Why the agent has its state: the hook or the screen rule that decided it, the rule's file, the "
+               "lines it matched and the age of the read.", result="the source that decided the state, its rule, the hook or screen read"),
+    _launch_op("agent.launch.answer", "launch_answer", ("POST", _L + "/answer"), "api_agent_launch_answer",
+               lambda s, p, a: s.launch_answer(p, a.get("launch_id"), since=a.get("since"), keys=a.get("keys"),
+                                               text=a.get("text")),
+               "Answer an agent whose hooks are off, after a fresh read of its prompt: keys (Enter, Escape, 1..9) "
+               "or text; since names the prompt he saw.", write=True, owner_only=True, blocking_io=True,
+               refusals=("owner_required", "wait_not_current", "pane_gone", "transport_error")),
+    _launch_op("agent.launch.seen", "launch_seen", ("POST", _L + "/seen"), "api_agent_launch_seen",
+               lambda s, p, a: s.launch_seen(p, a.get("launch_id"), wait_id=a.get("wait_id")),
+               "He opened the agent: its done turn and the desk's answer are seen (New goes).", write=True,
+               result="launch_id, seen (the turn) and answer_seen"),
+    _launch_op("agent.launch.done", "launch_done", ("POST", _L + "/done"), "api_agent_launch_done",
+               lambda s, p, a: s.launch_done(p, a.get("launch_id")),
+               "Done: he checked the work of a launch whose turn ended done; it leaves the running agents.",
+               write=True, owner_only=True, refusals=("owner_required", "not_done", "unknown")),
+    _launch_op("agent.launch.remove", "launch_remove", ("POST", _L + "/remove"), "api_agent_launch_remove",
+               lambda s, p, a: s.launch_remove(p, a.get("launch_id")),
+               "Remove an ended launch from the Agents list (the record stays).", write=True, owner_only=True,
+               refusals=("owner_required", "in_flight", "unknown")),
+    _launch_op("agent.launch.resume", "launch_resume", ("POST", _L + "/resume"), "api_agent_resume",
+               lambda s, p, a: s.launch_resume(p, a.get("launch_id")),
+               "Resume an agent a restart stopped: a new terminal in its worktree runs the agent's own resume.",
+               write=True, status=202, blocking_io=True, refusals=("owner_required", "launch_not_stopped")),
+    _launch_op("agent.hand.cancel_queued", "cancel_queued_hand", ("DELETE", "/api/agent/hand/queue/{queue_id}"),
+               "api_agent_hand_queue_cancel", lambda s, p, a: s.cancel_queued_hand(p, a.get("queue_id")),
+               "Cancel a hand that waits for a free agent: it leaves the queue and never starts.", write=True,
+               result="queue_id and cancelled", refusals=("queue_unknown",)),
+    _launch_op("agent.helper.allow", "allow_helper", ("POST", _L + "/helper/allow"), "api_agent_helper_allow",
+               lambda s, p, a: s.allow_helper(p, a.get("launch_id"), request_id=a.get("request_id")),
+               "Allow the one helper an agent asked for under Secure (the worktree and process.spawn checks "
+               "still decide).", write=True, status=202, blocking_io=True, refusals=("request_id_required",)),
+)
+
+AGENT_OPERATIONS = (PROJECT_REPOSITORY_REGISTER, AGENT_HAND) + LAUNCH_OPERATIONS
+
+__all__ = ["AGENT_HAND", "AGENT_OPERATIONS", "LAUNCH_OPERATIONS", "PROJECT_REPOSITORY_REGISTER"]

@@ -113,7 +113,11 @@ def test_the_canonical_map_has_all_seventeen_operations_and_no_local_service_tar
                                "desk.request.result",
                                # 2026-11-08: the phone verbs with no MCP tool.
                                "phone.redeem", "phone.pair", "phone.save_push_key", "phone.mark_read",
-                               "phone.decide", "phone.accept", "phone.decline", "phone.end"}
+                               "phone.decide", "phone.accept", "phone.decline", "phone.end",
+                               # 2026-11-08: the Agents window's launch verbs (HTTP only).
+                               "agent.launch.lane", "agent.launch.explain", "agent.launch.answer", "agent.launch.seen",
+                               "agent.launch.done", "agent.launch.remove", "agent.launch.resume",
+                               "agent.hand.cancel_queued", "agent.helper.allow"}
     assert all(value["kind"] in {"tool", "resource"}
                for value in gw.OP_MCP_PROJECTIONS.values())
 

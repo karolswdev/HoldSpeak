@@ -967,6 +967,147 @@ class AgentHandService:
         return _resume_answer(record)
 
 
+    # ── The launch verbs (2026-11-08): the Agents window's calls, declared in
+    # ``holdspeak/agent_operations.py`` and produced as routes. Each runs what
+    # the hand-written route ran; a refusal is a ServiceError whose context
+    # carries the HTTP status (``http``) and the answer the route gave.
+
+    def launch_lane(self, principal: Any, launch_id: str, *, after: Any = 0, limit: Any = 200,
+                    reads: Any = None, control: Any = None) -> dict[str, Any]:
+        """One launch's lane (PHILO-14 C0): the launch, its follow-through,
+        the wait, the session's events (paged), the gated calls, the answers,
+        the worktree and the usage. Reads only (``services.launch_lane``)."""
+        from ..db import get_database
+        from .agent_hand_preview import LaunchReads
+        from .launch_lane import launch_lane
+
+        lane = launch_lane(
+            str(launch_id), db=get_database(), reads=reads or LaunchReads(),
+            after=max(0, int(after or 0)), limit=max(1, min(int(limit or 200), 1000)), control=control,
+        )
+        if lane is None:
+            raise _launch_unknown()
+        return lane
+
+    def launch_explain(self, principal: Any, launch_id: str) -> dict[str, Any]:
+        """Betterment AG7, "Why this state": the source, the rule, the lines."""
+        from ..db import get_database
+        from .agent_flights import explain_agent
+
+        answer = explain_agent(get_database(), f"launch:{launch_id}")
+        if answer is None:
+            raise _launch_unknown()
+        return answer
+
+    def launch_answer(self, principal: Any, launch_id: str, *, since: Any = "", keys: Any = None,
+                      text: Any = None) -> dict[str, Any]:
+        """Betterment AG7 gaps: answer an agent whose hooks are off, after a
+        fresh read of its prompt (``keys``: Enter, Escape, 1..9; or ``text``)."""
+        from ..agent_context.screen_watch import ScreenAnswerRefused, answer_launch
+        from ..delivery.direct_gesture_input import ProcessInputRefused
+
+        try:
+            return answer_launch(
+                str(launch_id), since=str(since or ""),
+                keys=[str(k) for k in keys] if isinstance(keys, list) else None,
+                text=str(text or "") if keys is None else None,
+            )
+        except ScreenAnswerRefused as exc:
+            raise ServiceError(exc.code, exc.detail, context={"http": 409, "status": exc.code}) from exc
+        except ProcessInputRefused as exc:
+            raise ServiceError(exc.reason, exc.reason, context={"http": 409, "status": "transport_error"}) from exc
+
+    def launch_seen(self, principal: Any, launch_id: str, *, wait_id: Any = None) -> dict[str, Any]:
+        """Betterment AG0/AG3: he opened the agent: its done turn (``wait_id``,
+        else the current one) and the desk's answer are seen."""
+        from ..db import get_database
+        from ..delivery.factory_launch import LaunchLedger
+        from .agent_flights import flight_of_launch
+
+        ledger = LaunchLedger()
+        flight = flight_of_launch(get_database(), str(launch_id), ledger=ledger)
+        if flight is None:
+            raise _launch_unknown()
+        turn = str(wait_id or flight.get("turn_id") or "")
+        if turn:
+            ledger.update(str(launch_id), seen_wait_id=turn)
+        answer = flight.get("desk_answer") or {}
+        answered = str(answer.get("wait_id") or "") if answer.get("state") == "answered" else ""
+        if answered and (not wait_id or wait_id == answered):
+            ledger.update(str(launch_id), seen_answer_id=answered)
+        return {"launch_id": launch_id, "seen": turn or None, "answer_seen": answered or None}
+
+    def launch_done(self, principal: Any, launch_id: str) -> dict[str, Any]:
+        """W4 AGENT 3: he checked the work of a launch whose turn ended done."""
+        from ..db import get_database
+        from .agent_flights import check_launch_done
+
+        return _settled(check_launch_done(get_database(), str(launch_id)), "checked")
+
+    def launch_remove(self, principal: Any, launch_id: str) -> dict[str, Any]:
+        """W4 AGENT 2: an ended launch leaves the Agents list (the record stays)."""
+        from ..db import get_database
+        from .agent_flights import remove_ended_launch
+
+        return _settled(remove_ended_launch(get_database(), str(launch_id)), "removed")
+
+    def launch_resume(self, principal: Any, launch_id: str) -> dict[str, Any]:
+        """Betterment AG6: Resume an agent a restart stopped (202 resuming)."""
+        result = self.resume_after_restart(principal, launch_id)
+        if (result.get("resume") or {}).get("state") != "resuming":
+            reason = str((result.get("resume") or {}).get("outcome") or "not_resumed")
+            raise ServiceError(reason, "The agent did not resume.", context={"http": 409, **result})
+        return result
+
+    def cancel_queued_hand(self, principal: Any, queue_id: str) -> dict[str, Any]:
+        """Betterment AG8: a hand that waits for a free agent leaves the queue."""
+        from .agent_hand_queue import HandQueue
+
+        if not HandQueue().remove(str(queue_id)):
+            raise ServiceError("queue_unknown", "The queue holds no such hand.", context={"http": 404})
+        return {"queue_id": queue_id, "cancelled": True}
+
+    def allow_helper(self, principal: Any, launch_id: str, *, request_id: Any = "") -> dict[str, Any]:
+        """Betterment AG11: the owner's one press for a helper Secure held."""
+        from . import agent_helpers
+
+        request = str(request_id or "").strip()
+        if not request:
+            raise ServiceError("request_id_required", "A request id is required.", context={"http": 400})
+        result = agent_helpers.allow_helper(str(launch_id), request_id=request, principal=principal, hand_service=self)
+        if result.get("status") != "launched":
+            raise ServiceError(str(result.get("status") or "not_launched"), "The helper did not start.",
+                               context={"http": 409, **result})
+        return result
+
+
+def _launch_unknown() -> ServiceError:
+    return ServiceError("launch_unknown", "No such launch.", context={"http": 404})
+
+
+def _settled(result: dict[str, Any], key: str) -> dict[str, Any]:
+    """A done or remove answer: the record, else its refusal (404 unknown, 409 else)."""
+    if result.get(key):
+        return result
+    reason = str(result.get("reason") or f"not_{key}")
+    raise ServiceError(reason, reason, context={"http": 404 if reason == "unknown" else 409, **result})
+
+
+
+def default_agent_hand_service(db: Any = None, *, delivery_service: Any = None) -> AgentHandService:
+    """The production composition: the process database and the one
+    shared launch driver (``DeliveryService.default_launch_service``)."""
+    if db is None:
+        from ..db import get_database
+
+        db = get_database()
+    if delivery_service is None:
+        from .delivery_service import DeliveryService
+
+        delivery_service = DeliveryService(db)
+    return AgentHandService(db, launch_service=delivery_service.default_launch_service)
+
+
 def _resume_answer(record: Mapping[str, Any]) -> dict[str, Any]:
     resume = record.get("resume") or {}
     return {
@@ -1141,17 +1282,3 @@ __all__ = [
     "branch_slug",
     "item_title",
 ]
-
-
-def default_agent_hand_service(db: Any = None, *, delivery_service: Any = None) -> AgentHandService:
-    """The production composition: the process database and the one
-    shared launch driver (``DeliveryService.default_launch_service``)."""
-    if db is None:
-        from ..db import get_database
-
-        db = get_database()
-    if delivery_service is None:
-        from .delivery_service import DeliveryService
-
-        delivery_service = DeliveryService(db)
-    return AgentHandService(db, launch_service=delivery_service.default_launch_service)

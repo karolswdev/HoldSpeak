@@ -3,8 +3,7 @@
  * lane's): at a narrow window the egress chip, the receipt and the verbs
  * each take a row, and the verbs wrap inside the window, so no verb leaves
  * the frame (Astra r1 on #947, P1: 393). */
-.desk-next .conductor-window .surface-footer,
-.desk-next .conductor-info-window .surface-footer { container: surface / inline-size; }
+.desk-next .conductor-window .surface-footer { container: surface / inline-size; }
 @container surface (max-width: 520px) {
   .desk-next .surface-footer-layout.cw-footer {
     grid-template-columns: minmax(0, 1fr);
