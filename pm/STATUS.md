@@ -2,6 +2,12 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · #2094 Decisions: the record that waits on him is picked on open (else the newest); the plate leads with Decide / Commit / Resolve / Open the new one, never a bare Open; 920×640 default, 600 minimum so the rail never hides without Back; a picked-record sweep case.
+- 2026-11-08 · #2093 Fix forward #2087: a fresh view writes nothing on load; the hub folds an old `lane` window row into the Agents row itself.
+- 2026-11-08 · #2092 Fix forward #2086: the credential verbs bind in every composition (a bare context gets a bare CredentialService); This Mac's verbs name their destination; Engines classified in the census; the spend-limit field keeps its microphone.
+- 2026-11-08 · #2091 Fix forward #2083/#2070: the egress canon names the live Meetings files; the W1 glass case reads the Meetings first-open size from `applications.ts`.
+- 2026-11-08 · #2090 Decisions is a native app: rail (title, day, where, a spine proposed/decided/committed/disputed/superseded), mast, the plate, the ledger (words, choices, evidence as plain words, commitment, history); New decision is the composer in the same window (the New decision application removed; Today's drill opens here); `decision.ledger` and `follow_through.commit_decision` declared (`decision_operations.py`); −789 lines.
+- 2026-11-08 · #2089 STATUS one-liners #2082–#2088.
 - 2026-11-08 · #2086 Settings is a native app: the sections as a rail with health, the mast, the plate, the ledger; This Mac and a new Engines section (chain, Fix, Use first, spend limit) built on the Engines window's own controller; three credential verbs declared HTTP-only (`settings_operations.py`); the old drawer face removed. Left: the other panes' bodies; the Engines window beside the section.
 - 2026-11-08 · #2087 Agents: the lane window folds into the pane (PR row, files fold, check log, Tell it, receipts, the terminal with Allow/Deny); report sections and tool activity as ledger rows; captions on the 393 strip; the session window's verbs in its mast; `LaneWindow.tsx` parked; −1,057 live lines.
 - 2026-11-08 · #2088 Fix forward #2085/#2071: the call verbs sit in the egress table (place/test_line egress + owner press + blocking; hangup blocking; decide his word) and announce one `desk_changed` kind `call`; the Agents launch verbs named in the census.
