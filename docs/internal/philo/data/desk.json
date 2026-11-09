@@ -1719,10 +1719,10 @@
           "claim": "Bounded network discovery returns transient actual model IDs."
         },
         {
-          "path": "holdspeak/web/routes/concierge.py",
-          "symbol": "post_discover_lan",
-          "line": 138,
-          "claim": "Owner-only scan runs outside the hub event loop."
+          "path": "holdspeak/concierge_operations.py",
+          "symbol": "CONCIERGE_OPERATIONS",
+          "line": 70,
+          "claim": "Owner-only scan (concierge.discover_lan, blocking_io) runs outside the hub event loop."
         },
         {
           "path": "web/src/features/runson/RunsOnCore.tsx",

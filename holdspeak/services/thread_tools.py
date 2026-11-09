@@ -118,12 +118,7 @@ _ALL_TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     "ask.keep":              ("effect_proposal",   False),
     # --- settings family ---
     "settings.hub":    ("evidence_read",     False),
-    # --- HS-170: the Concierge + the four faces' reads ---
-    "concierge.detect":   ("evidence_read",   False),
-    "concierge.propose":  ("evidence_read",   False),
-    "concierge.probe":    ("evidence_read",   False),
-    "concierge.apply":    ("effect_proposal", False),
-    "concierge.download": ("effect_proposal", False),
+    # --- HS-170: the four faces' reads (the Concierge's rows class themselves: concierge_operations.py) ---
     "desk.needs_you":     ("evidence_read",   False),
     "today.get":         ("evidence_read",   False),
     "meeting.run_intelligence": ("effect_proposal", False),
@@ -230,22 +225,6 @@ _ALL_TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     "project.list_updates": ("evidence_read", False),
     "project.setup.resume": ("evidence_read", False),
     "project.watch.inspect": ("evidence_read", False),
-    "provider.github_connection": ("evidence_read", False),
-    "provider.github_discover": ("evidence_read", False),
-    "provider.github_validate_repo": ("evidence_read", False),
-    "provider.github_pr_get": ("evidence_read", False),  # MCP M6: MCP only
-    "provider.list": ("evidence_read", False),
-    # HS-166: the Jira provider family (reads) + the one row-creating verb.
-    "provider.jira_connections": ("evidence_read", False),
-    "provider.jira_connection": ("evidence_read", False),
-    "provider.jira_discover": ("evidence_read", False),
-    "provider.jira_search": ("evidence_read", False),
-    "provider.jira_validate_scope": ("evidence_read", False),
-    "provider.jira_add_connection": ("effect_proposal", False),
-    # HS-174: the Confluence provider family (reads only in V0).
-    "provider.confluence_connections": ("evidence_read", False),
-    "provider.confluence_discover": ("evidence_read", False),
-    "provider.confluence_validate_space": ("evidence_read", False),
     "project.create": ("effect_proposal", False),
     "project.draft_update": ("effect_proposal", False),
     "project.open_review": ("effect_proposal", False),
@@ -269,8 +248,6 @@ _ALL_TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     # HS-172-06: suggested source tools
     "project.suggested_sources":         ("evidence_read",     False),
     "project.dismiss_suggested_source":  ("effect_proposal",   False),
-    # HS-168-02: connection tools (reads only -- no state mutation)
-    "connection.list": ("evidence_read", False),
     # HS-171-02: heartbeat family
     # PHILO-10-01: the channel family.
     "channel.destinations": ("evidence_read", False),

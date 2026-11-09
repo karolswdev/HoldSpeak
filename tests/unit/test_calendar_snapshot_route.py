@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import io
 import json
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -14,11 +15,21 @@ from holdspeak.web.routes.calendar_snapshot import (
 )
 
 
+def _as_owner(app) -> None:
+    """The confirm is owner only (calendar.snapshot.confirm, 2026-11-09): the desk's owner principal."""
+    from holdspeak.principals import Principal, PrincipalKind
+
+    @app.middleware("http")
+    async def owner(request, call_next):
+        request.state.principal = Principal(PrincipalKind.OWNER, "owner")
+        return await call_next(request)
+
+
 @pytest.fixture
 def client():
     from fastapi import FastAPI
 
-    ctx = MagicMock()
+    ctx = SimpleNamespace(settings_service=MagicMock())
     ctx._snapshot_extractor = lambda payload: json.dumps({
         "anchor_date": "2026-08-24",
         "anchor_confidence": "visible_header",
@@ -34,6 +45,7 @@ def client():
     })
 
     app = FastAPI()
+    _as_owner(app)
     app.include_router(build_calendar_snapshot_router(ctx))
     return TestClient(app)
 
@@ -42,13 +54,14 @@ def client():
 def client_unreadable():
     from fastapi import FastAPI
 
-    ctx = MagicMock()
+    ctx = SimpleNamespace(settings_service=MagicMock())
     ctx._snapshot_extractor = lambda payload: json.dumps({
         "error": "unreadable_screenshot",
         "events": [],
     })
 
     app = FastAPI()
+    _as_owner(app)
     app.include_router(build_calendar_snapshot_router(ctx))
     return TestClient(app)
 
@@ -114,19 +127,19 @@ class TestExtractEndpoint:
 class TestConfirmEndpoint:
     def test_confirm_writes_ics(self, client, tmp_path, monkeypatch):
         monkeypatch.setattr(
-            "holdspeak.web.routes.calendar_snapshot.write_ics_atomic",
+            "holdspeak.services.calendar_service.write_ics_atomic",
             lambda source_id, ics_bytes: tmp_path / f"{source_id}.ics",
         )
         monkeypatch.setattr(
-            "holdspeak.web.routes.calendar_snapshot.trigger_calendar_refresh",
+            "holdspeak.services.calendar_service.trigger_calendar_refresh",
             lambda: True,
         )
         monkeypatch.setattr(
-            "holdspeak.web.routes.calendar_snapshot.register_snapshot_source",
+            "holdspeak.services.calendar_service.register_snapshot_source",
             lambda *a, **kw: {"success": True},
         )
         monkeypatch.setattr(
-            "holdspeak.web.routes.calendar_snapshot.Config.load",
+            "holdspeak.services.calendar_service.Config.load",
             lambda: MagicMock(calendar=MagicMock(sources=[])),
         )
 
@@ -155,19 +168,19 @@ class TestConfirmEndpoint:
         it like the extract path does."""
         written: list[bytes] = []
         monkeypatch.setattr(
-            "holdspeak.web.routes.calendar_snapshot.write_ics_atomic",
+            "holdspeak.services.calendar_service.write_ics_atomic",
             lambda source_id, ics_bytes: written.append(ics_bytes) or tmp_path / f"{source_id}.ics",
         )
         monkeypatch.setattr(
-            "holdspeak.web.routes.calendar_snapshot.trigger_calendar_refresh",
+            "holdspeak.services.calendar_service.trigger_calendar_refresh",
             lambda: True,
         )
         monkeypatch.setattr(
-            "holdspeak.web.routes.calendar_snapshot.register_snapshot_source",
+            "holdspeak.services.calendar_service.register_snapshot_source",
             lambda *a, **kw: {"success": True},
         )
         monkeypatch.setattr(
-            "holdspeak.web.routes.calendar_snapshot.Config.load",
+            "holdspeak.services.calendar_service.Config.load",
             lambda: MagicMock(calendar=MagicMock(sources=[])),
         )
         response = client.post(

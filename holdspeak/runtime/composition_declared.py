@@ -177,6 +177,32 @@ def _settings_hub(services: Any, ctx: Any) -> Any:
                               cadence_service=live("cadence_service"))
 
 
+def _ops_connections_builders(ctx: Any) -> dict[str, Callable[[], Any]]:
+    """The concierge, calendar, feedback and provider services' builds (ops/connections)."""
+    def concierge() -> Any:
+        from holdspeak.services.concierge_service import ConciergeService
+
+        return ConciergeService(ctx)
+
+    def calendar() -> Any:
+        from holdspeak.services.calendar_service import CalendarService
+
+        return CalendarService(ctx)
+
+    def feedback() -> Any:
+        from holdspeak.services.ui_feedback import FeedbackService
+
+        return FeedbackService(ctx)
+
+    def providers() -> Any:
+        from holdspeak.services.provider_service import from_context
+
+        return from_context(ctx)
+
+    return {"concierge_service": concierge, "calendar_service": calendar, "feedback_service": feedback,
+            "provider_service": providers}
+
+
 def compose_declared_services(services: Any, ctx: Any, resolved_db: Any, resolved_observer: Any) -> None:
     """Put every declared table's service on the root and the context."""
     from holdspeak.services.setup_service import SetupService
@@ -320,6 +346,9 @@ def compose_declared_services(services: Any, ctx: Any, resolved_db: Any, resolve
         "heartbeat_service": lambda: LIVE_HEARTBEAT_SERVICE,
         "reach_service": lambda: LIVE_REACH_SERVICE,
         "telegram_service": lambda: LIVE_TELEGRAM_SERVICE,
+        # 2026-11-09 (ops/connections): the Engines window, the calendar and the
+        # Desk's UI feedback and the providers read the hub's context at each call.
+        **_ops_connections_builders(ctx),
     }
     for name, build in builders.items():
         instance = getattr(services, name, None)

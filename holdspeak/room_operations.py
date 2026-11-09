@@ -431,6 +431,11 @@ CONNECTION_LIST = OperationDescriptor(
     service="connections_service",
     method="list_tools",
     admission=_ROOM_READ,
+    # 2026-11-09 (ops/connections): the route and the tool are produced from this row.
+    http=("GET", "/api/connections"),
+    handler="list_connections",
+    tool_schema={"type": "object", "properties": {}, "additionalProperties": False},
+    thread="evidence_read",
 )
 
 CONNECTION_RECHECK = OperationDescriptor(

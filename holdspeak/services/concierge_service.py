@@ -2817,3 +2817,228 @@ def download_speech(preset_id: str, *, fetch: Any = None) -> dict[str, Any]:
         "progress": {"received": int(row.get("received") or 0), "total": int(row.get("total") or row["bytes"])},
         "row": row,
     }
+
+
+# ---- The one service (2026-11-09, ops/connections) ---------------------------
+
+class ConciergeService:
+    """The Engines window's verbs, once: the HTTP routes and the MCP tools are
+    produced from ``holdspeak/concierge_operations.py`` and both reach this.
+
+    ``source`` is the hub's context (or the composition root): its
+    ``inference_setup_service`` gives the database and HOME, its
+    ``inference_assignment_service``, ``model_library_service`` and
+    ``inference_default_service`` are read at each call. ``db`` is the bare
+    composition's database (an MCP call with no hub); there the assignment
+    authority and the model library are bare builds over it. The owner check
+    is the descriptors' (``owner_only``).
+    """
+
+    def __init__(self, source: Any = None, *, db: Any = None) -> None:
+        self._source = source
+        self._bare_db = db
+
+    def _get(self, name: str) -> Any:
+        return getattr(self._source, name, None)
+
+    @staticmethod
+    def _unavailable(message: str = "Database is not available.") -> Exception:
+        from .errors import ServiceError
+
+        return ServiceError("concierge_unavailable", message, context={"status": 503})
+
+    def _db(self) -> Any:
+        setup = self._get("inference_setup_service")
+        db = getattr(setup, "_db", None) if setup is not None else None
+        db = db if db is not None else self._bare_db
+        if db is None:
+            raise self._unavailable()
+        return db
+
+    def _home(self) -> Path:
+        setup = self._get("inference_setup_service")
+        provider = getattr(setup, "_home_provider", None) if setup is not None else None
+        return provider() if callable(provider) else Path.home()
+
+    def _assignments(self, *, required: bool) -> Any:
+        found = self._get("inference_assignment_service")
+        if found is None and self._bare_db is not None:
+            from .inference_assignment_service import InferenceAssignmentService
+
+            found = InferenceAssignmentService(self._bare_db)
+        if found is None and required:
+            raise self._unavailable("Required services are not available.")
+        return found
+
+    def _model_library(self) -> Any:
+        found = self._get("model_library_service")
+        if found is None and self._bare_db is not None:
+            from .inference_acquisition_service import InferenceAcquisitionApplicationService
+            from .inference_setup_service import InferenceSetupApplicationService
+            from .model_library_service import ModelLibraryApplicationService
+
+            setup = InferenceSetupApplicationService(self._bare_db)
+            acquisition = InferenceAcquisitionApplicationService(self._bare_db, setup_service=setup)
+            found = ModelLibraryApplicationService(self._bare_db, setup_service=setup, acquisition_service=acquisition)
+        if found is None:
+            raise self._unavailable("Model library is not available.")
+        return found
+
+    @staticmethod
+    def _live_hub() -> bool:
+        """True in the hub that owns the database: it scans loopback engine ports."""
+        try:
+            from ..intel_queue_conductor import owns_database
+
+            return owns_database()
+        except Exception:  # pragma: no cover
+            return False
+
+    def detect(self, principal: Any, *, fresh: bool = False) -> dict[str, Any]:
+        """Every engine found, each engine's fit per group, the named repairs and the last press's outcome."""
+        db = self._db()
+        assignments = self._assignments(required=False)
+        live_hub = self._live_hub()
+        result = detect(db=db, home=self._home(), assignment_service=assignments, principal=principal,
+                        scan_loopback=live_hub, **({"fresh": True} if fresh else {}))
+        # PHILO-16 (C): the Switchboard accepts or refuses a drop with the
+        # authority's own answer, per engine and group. A fit read never breaks detection.
+        if assignments is not None:
+            try:
+                engine_fits(result["engines"], authority_fit(assignments, principal, db), assignments._group_ids())
+            except Exception as exc:  # pragma: no cover - never break detect
+                log.warning(f"concierge fits unavailable: {exc}")
+        # A detection is an engine change the default rule must see.
+        default = self._get("inference_default_service")
+        if live_hub and default is not None:
+            default.kick("detect")
+        # HS-200-04: needs_attention resolved into named repair states; a
+        # repair read never blocks the face: it degrades to no rows.
+        try:
+            result["repairs"] = repairs(db=db, assignment_service=assignments, principal=principal)
+        except Exception as exc:  # pragma: no cover - never break detect
+            log.warning(f"concierge repairs unavailable: {exc}")
+            result["repairs"] = []
+        # PHILO-15 10 (Astra r2, finding 3): the last press's failed groups survive a reload.
+        result["lastApply"] = last_apply(db)
+        return result
+
+    def propose(self, principal: Any) -> dict[str, Any]:
+        """The seven groups with proposed engines: READY only where the assignment authority serves the group."""
+        db = self._db()
+        detection = detect(db=db, home=self._home(), scan_loopback=self._live_hub())
+        assignments = self._assignments(required=False)
+        fit = authority_fit(assignments, principal, db) if assignments is not None else None
+        return propose(engines=detection["engines"], fit=fit)
+
+    def probe(self, principal: Any, args: dict[str, Any]) -> dict[str, Any]:
+        """Reach one engine (``engineId``), or with ``task`` send one real request through the assigned route."""
+        from .errors import ServiceError
+
+        def invalid(message: str) -> ServiceError:
+            return ServiceError("concierge_probe_invalid", message, context={"status": 400})
+
+        if bool(args.get("task", False)):
+            from ..kernel.runtime import _service as kernel_service
+            from .route_probe import DEFAULT_PROBE_CAPABILITY, PROBE_CAPABILITIES, task_probe
+
+            capability_id = str(args.get("capabilityId") or DEFAULT_PROBE_CAPABILITY)
+            if capability_id not in PROBE_CAPABILITIES:
+                raise invalid("capabilityId is not probeable.")
+            expected = args.get("expectedProfileIds")
+            if "expectedProfileIds" in args and (
+                not isinstance(expected, list) or any(not isinstance(item, str) or not item.strip() for item in expected)
+            ):
+                raise invalid("expectedProfileIds must be a list of profile IDs.")
+            return task_probe(kernel_service(), principal, db=self._db(), capability_id=capability_id,
+                              allow_off_machine=bool(args.get("confirmOffMachine", False)),
+                              expected_profile_ids=expected)
+        engine_id = args.get("engineId")
+        if not engine_id or not isinstance(engine_id, str):
+            raise invalid("engineId is required.")
+        detection = detect(db=self._db(), home=self._home())
+        engine = next((e for e in detection["engines"] if e["id"] == engine_id), None)
+        if engine is None:
+            raise ServiceError("concierge_engine_not_found", f"Engine '{engine_id}' not found.", context={"status": 404})
+        return probe(engine=engine, generate=bool(args.get("generate", False)))
+
+    def apply(self, principal: Any, rows: Any) -> dict[str, Any]:
+        """Write the whole engine set once; a WAITING group without OFF refuses it."""
+        from .errors import ServiceError
+
+        if not isinstance(rows, list) or not rows:
+            raise ServiceError("concierge_apply_invalid", "rows is required.", context={"status": 400})
+        db = self._db()
+        assignments = self._assignments(required=True)
+        detection = detect(db=db, home=self._home())
+        return apply(rows=rows, engines=detection["engines"], assignment_service=assignments,
+                     principal=principal, db=db)
+
+    def select_summary(self, principal: Any, body: dict[str, Any]) -> dict[str, Any]:
+        """The owner's one explicit summary-engine selection; ``setDefault`` also sets the Default once."""
+        from .errors import ServiceError
+
+        body = dict(body)
+        set_default = body.pop("setDefault", False) is True
+        if set(body) != {"commandId", "expectedAssignmentRevision", "profileId", "profileRevision"}:
+            raise ServiceError("concierge_summary_selection_invalid",
+                               "Summary selection has an invalid request shape.", context={"status": 400})
+        db = self._db()
+        assignments = self._assignments(required=True)
+        result = assign_summary(assignment_service=assignments, principal=principal, db=db,
+                                profile_id=body["profileId"], profile_revision=body["profileRevision"],
+                                expected_assignment_revision=body["expectedAssignmentRevision"],
+                                command_id=body["commandId"])
+        if set_default and result.get("status") == "succeeded":
+            result["defaultSet"] = set_default_once(assignment_service=assignments, principal=principal,
+                                                    profile_id=body["profileId"],
+                                                    profile_revision=body["profileRevision"])
+        return result
+
+    def speech(self, principal: Any) -> dict[str, Any]:
+        """The Line's two speech models, their state and each download's progress (LINE-6)."""
+        return {"rows": speech_rows()}
+
+    def download(self, principal: Any, preset_id: Any) -> dict[str, Any]:
+        """Start one preset download: a speech model through the Line's fetch, else the model library's job."""
+        from .errors import ServiceError
+
+        if not preset_id or not isinstance(preset_id, str):
+            raise ServiceError("concierge_download_invalid", "presetId is required.", context={"status": 400})
+        if is_speech_preset(preset_id):
+            return download_speech(preset_id)
+        from ..inference_setup_catalog import packaged_catalog_envelope_json, verify_catalog_envelope
+
+        library = self._model_library()
+        catalog = verify_catalog_envelope(packaged_catalog_envelope_json(), now=datetime.now(timezone.utc))
+        return download(preset_id=preset_id, model_library_service=library, principal=principal,
+                        catalog_revision=catalog["catalog_revision"])
+
+    def discover_lan(self, principal: Any) -> dict[str, Any]:
+        """Find private-LAN OpenAI-compatible engines for this one press; it reads ``/v1/models`` and writes nothing."""
+        from ..kernel.external_egress import EgressOperationRefused
+        from .errors import ServiceError
+        from .lan_engine_discovery import checked_at, scan_lan_engines
+
+        try:
+            result = scan_lan_engines(principal=principal)
+        except EgressOperationRefused as exc:
+            raise ServiceError("concierge_lan_refused", exc.reason, context={"status": 403}) from exc
+        return {**result, "checkedAt": checked_at()}
+
+    def retry(self, principal: Any, kind: Any, key: Any) -> dict[str, Any]:
+        """Retry on a Needs-you engine row: the same job, run again through the engine door."""
+        from . import engine_door
+        from .errors import ServiceError
+
+        if not isinstance(kind, str) or not isinstance(key, str):
+            raise ServiceError("concierge_retry_invalid", "Retry needs the job's kind and key.", context={"status": 400})
+        try:
+            engine_door.retry(principal, kind, key)
+        except engine_door.EngineDoorError as exc:
+            if exc.code == "no_retry":
+                raise ServiceError(exc.code, "This job has no Retry.", context={"status": 404, "ok": False}) from exc
+            # The engine's own words stay out of the answer (a path or a host).
+            raise ServiceError(exc.code, "It did not run again. The row stays.",
+                               context={"status": 409, "ok": False}) from exc
+        return {"ok": True}
