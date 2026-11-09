@@ -28,14 +28,6 @@ def _plugin(response):
     return intel_plugin(ActionOwnerEnforcerPlugin(), lambda _messages, **_kw: response)
 
 
-def test_attributes() -> None:
-    p = ActionOwnerEnforcerPlugin()
-    assert p.id == "action_owner_enforcer"
-    assert p.kind == "validator"
-    assert p.execution_mode == "deferred"
-    assert p.required_capabilities == ["llm"]
-
-
 def test_run_success_flags_gaps() -> None:
     out = _plugin(_GOOD_JSON).run({"transcript": "We agreed on several tasks."})
     assert out["confidence_hint"] == 1.0

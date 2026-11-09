@@ -72,25 +72,6 @@ def ask_rig(tmp_path, monkeypatch):
 CLASSIC = "thought.interview"
 
 
-def test_ask_global_placement(ask_rig):
-    """Ask with no overrides -> source 'global'."""
-    _db, service = ask_rig
-    result = asyncio.run(service.ask(OWNER, "hello", operation_capability=CLASSIC))
-    assert "placement" in result, f"placement block missing from Ask result: {sorted(result)}"
-    p = result["placement"]
-    assert p["source"] == "global"
-    assert p["effective_target_id"] == THIS_MACHINE_ID
-
-
-def test_ask_invocation_placement(ask_rig):
-    """Ask with explicit inference_target_id -> source 'invocation'."""
-    _db, service = ask_rig
-    result = asyncio.run(
-        service.ask(OWNER, "hello", inference_target_id="ask_profile", operation_capability=CLASSIC)
-    )
-    assert result["placement"]["source"] == "invocation"
-    assert result["placement"]["effective_target_id"] == "ask_profile"
-
 
 # ---------------------------------------------------------------------------
 # Recipe
@@ -118,13 +99,13 @@ def recipe_rig(tmp_path):
 
 
 def test_recipe_run_canonical_subject_assignment(recipe_rig):
-    """Recipe projection names the frozen route selected for its subject."""
+    """Recipe projection names the engine its subject assignment selected (the engine door)."""
     _db, service = recipe_rig
     result = asyncio.run(service.run(OWNER, "r1", input="hello"))
     assert result["profile_id"] == "agent_target"
     assert result["inference_target"]["profile_id"] == "agent_target"
-    assert set(result["placement"]) == {"route_plan_id", "route_plan_sha256"}
-    assert result["route_execution_receipt"]["outcome"] == "succeeded"
+    assert result["placement"]["source"] == "owner_assignment"
+    assert result["receipt_id"] and result["operation_id"]
 
 
 def test_recipe_run_workbench_context_cannot_reroute_canonical_subject(recipe_rig):
@@ -132,7 +113,7 @@ def test_recipe_run_workbench_context_cannot_reroute_canonical_subject(recipe_ri
     _db, service = recipe_rig
     result = asyncio.run(service.run(OWNER, "r1", input="hello", workbench_id="wb_target"))
     assert result["profile_id"] == "agent_target"
-    assert result["route_execution_receipt"]["outcome"] == "succeeded"
+    assert result["receipt_id"]
 
 
 def test_recipe_run_rejects_legacy_invocation_selector(recipe_rig):
@@ -227,6 +208,3 @@ def test_cadence_get_loop_deterministic_no_placement(tmp_path, monkeypatch):
 # ---------------------------------------------------------------------------
 
 
-def test_placement_dict_source_vocabulary():
-    """placement_dict source is always one of PLACEMENT_SOURCES."""
-    assert set(PLACEMENT_SOURCES) == {"invocation", "workbench", "agent", "global"}

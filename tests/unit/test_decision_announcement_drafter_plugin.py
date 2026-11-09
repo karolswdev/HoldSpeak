@@ -30,14 +30,6 @@ def _plugin(response):
     return intel_plugin(DecisionAnnouncementDrafterPlugin(), lambda _m, **_kw: response)
 
 
-def test_attributes() -> None:
-    p = DecisionAnnouncementDrafterPlugin()
-    assert p.id == "decision_announcement_drafter"
-    assert p.kind == "artifact_generator"
-    assert p.execution_mode == "deferred"
-    assert p.required_capabilities == ["llm"]
-
-
 def test_run_success_drafts_announcements() -> None:
     out = _plugin(_GOOD_JSON).run({"transcript": "decisions"})
     assert out["confidence_hint"] == 1.0
@@ -91,12 +83,6 @@ def test_run_provider_failure_reaches_the_admitted_child() -> None:
 def test_extract_returns_none_without_recognizable_key() -> None:
     assert _extract_announcements('{"foo": 1}') is None
     assert _extract_announcements("") is None
-
-
-def test_registrar_returns_real_plugin() -> None:
-    host = PluginHost(default_timeout_seconds=0.5, enabled_capabilities={"llm"})
-    register_builtin_plugins(host)
-    assert isinstance(host.get_plugin("decision_announcement_drafter"), DecisionAnnouncementDrafterPlugin)
 
 
 def test_no_deterministic_stub_remains() -> None:

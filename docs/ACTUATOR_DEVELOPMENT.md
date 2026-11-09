@@ -236,9 +236,9 @@ Reference tests:
   allow-lists, shell argument safety, no-egress paths and failure results.
 - [`tests/unit/test_live_proposals.py`](../tests/unit/test_live_proposals.py):
   the live frame.
-- [`tests/integration/test_web_companion_slack.py`](../tests/integration/test_web_companion_slack.py):
-  deduplication, fixed-destination behavior under YOLO, secret omission and
-  receipts.
+- [`tests/integration/test_slack_channel.py`](../tests/integration/test_slack_channel.py):
+  the real Slack send, replay and rate-limit refusals, secret omission and the
+  parked companion paths.
 
 Add an actuator only when it has a real manifest, an explicit destination
 policy and a focused test.

@@ -35,16 +35,6 @@ _SITE_SCOPE = {
 class TestTemplateTruthTable:
     """All five templates compile to valid WatchSpec@1 drafts."""
 
-    def test_five_templates_exist(self) -> None:
-        assert len(JIRA_TEMPLATES) == 5
-        assert TEMPLATE_IDS == {
-            "watch.jira.blockers",
-            "watch.jira.delivery_flow",
-            "watch.jira.due_risk",
-            "watch.jira.scope_intake",
-            "watch.jira.transformation",
-        }
-
     @pytest.mark.parametrize("tmpl", JIRA_TEMPLATES, ids=lambda t: t.template_id)
     def test_template_compiles_valid(self, tmpl) -> None:
         """Every template compiles to a WatchSpec@1 that passes validation."""

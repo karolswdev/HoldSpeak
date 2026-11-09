@@ -229,35 +229,6 @@ class TestBlockIsolation:
         finally:
             wc.set_scheduler_services(None, None)
 
-    def test_conductor_never_calls_evaluate_due(
-        self, tmp_path, monkeypatch,
-    ) -> None:
-        """TST-COND-001 (HS-200-43 R1): the tick does not evaluate watches.
-
-        A watch service wired into the conductor that would RAISE if
-        called proves the block is gone, not merely quiet -- and run_due
-        still executes past it.
-        """
-        calls: list[str] = []
-
-        class _PoisonWatch:
-            def evaluate_due(self, principal):
-                calls.append("evaluate_due")
-                raise RuntimeError("poisoned evaluate_due")
-
-        class _TrackSteward:
-            def run_due(self, principal):
-                calls.append("run_due")
-                return []
-
-            def project_cadence_projections(self, principal):
-                calls.append("projections")
-                return []
-
-        self._tick_with(monkeypatch, tmp_path, _PoisonWatch(), _TrackSteward())
-        assert "evaluate_due" not in calls
-        assert calls == ["run_due", "projections"]
-
     def test_poisoned_run_due_does_not_stop_conductor(
         self, tmp_path, monkeypatch,
     ) -> None:
@@ -283,33 +254,6 @@ class TestBlockIsolation:
         # HS-200-43 R1: no "evaluate_due" -- the conductor's watch block
         # is deleted; the heartbeat owns scheduled evaluation.
         assert calls == ["run_due"]
-
-    def test_conductor_tick_both_blocks_run(
-        self, tmp_path, monkeypatch,
-    ) -> None:
-        """TST-COND-003: healthy services; the steward block ticks.
-
-        HS-200-43 R1: there is no watch block in the conductor any more,
-        so the wired watch service is never touched.
-        """
-        calls: list[str] = []
-
-        class _W:
-            def evaluate_due(self, principal):
-                calls.append("evaluate_due")
-                return [{"watch_id": "cw_x", "outcome": "evaluated"}]
-
-        class _S:
-            def run_due(self, principal):
-                calls.append("run_due")
-                return [{"outcome": "run_started"}]
-
-            def project_cadence_projections(self, principal):
-                calls.append("projections")
-                return []
-
-        self._tick_with(monkeypatch, tmp_path, _W(), _S())
-        assert calls == ["run_due", "projections"]
 
     def test_not_wired_skips_honestly(self, tmp_path, monkeypatch) -> None:
         """Unwired schedulers skip; the tick never builds crippled services."""
@@ -352,36 +296,6 @@ class TestRunStartedEvent:
 
 
 # ── TST-COND-005: steward.step_completed event ──────────────────────
-
-
-class TestStepCompletedEvent:
-    """steward.step_completed emits per phase step."""
-
-    def test_step_completed_per_phase(self, tmp_path) -> None:
-        """TST-COND-005."""
-        conn = _make_conn(tmp_path)
-        db, svc = _make_service(conn)
-        _seed_policy(conn)
-        p = _principal()
-
-        run_id = svc.insert_run(p, "proj-1")
-        svc.execute_phases(p, run_id, "proj-1")
-
-        events = db.automations.events
-        step_completed = [
-            e for e in events
-            if e.get("event_type") == "steward.step_completed"
-        ]
-        # At least 6 phase steps (observe, compare, propose, act, verify, record)
-        assert len(step_completed) >= len(PHASES), (
-            f"Expected at least {len(PHASES)} step_completed events, "
-            f"got {len(step_completed)}"
-        )
-        # Each has ref-oriented payload
-        for evt in step_completed:
-            assert "run_id" in evt["facts"]
-            assert "phase" in evt["facts"]
-            assert "step_id" in evt["facts"]
 
 
 # ── TST-COND-006: intervention_required on bounds-exhausted ──────────

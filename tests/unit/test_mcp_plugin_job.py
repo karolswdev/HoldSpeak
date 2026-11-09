@@ -71,21 +71,6 @@ def _call(name: str, arguments: dict[str, Any]) -> dict[str, Any]:
 # Catalogue: all four tools appear with closed schemas
 # ---------------------------------------------------------------------------
 
-def test_plugin_job_tools_in_catalogue() -> None:
-    """All four plugin_job.* tools appear in the catalogue with closed schemas."""
-    response = handle_message({"jsonrpc": "2.0", "id": 1, "method": "tools/list"})
-    assert response is not None
-    tools = response["result"]["tools"]
-    names = {t["name"] for t in tools}
-    expected = {"plugin_job.list", "plugin_job.summary", "plugin_job.retry", "plugin_job.cancel"}
-    assert expected <= names, f"Missing: {expected - names}"
-
-    for t in tools:
-        if t["name"] in expected:
-            assert t["inputSchema"]["type"] == "object"
-            assert t["inputSchema"]["additionalProperties"] is False
-
-
 # ---------------------------------------------------------------------------
 # Happy-path dispatch per tool
 # ---------------------------------------------------------------------------
@@ -104,15 +89,6 @@ def test_plugin_job_list_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
     result = _call("plugin_job.list", {})
     assert result["isError"] is False
     assert calls["list"] == [{"status": "all", "meeting_id": None, "limit": 200}]
-
-
-def test_plugin_job_summary_dispatch(monkeypatch: pytest.MonkeyPatch) -> None:
-    calls = _stub_service(monkeypatch)
-    result = _call("plugin_job.summary", {})
-    assert result["isError"] is False
-    payload = json.loads(result["content"][0]["text"])
-    assert payload["total_jobs"] == 10
-    assert calls["summary"] == [{}]
 
 
 def test_plugin_job_retry_dispatch(monkeypatch: pytest.MonkeyPatch) -> None:

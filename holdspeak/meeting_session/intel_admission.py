@@ -464,6 +464,7 @@ class IntelAdmissionMixin(IntelRoutedChildMixin, TranscribeAdmissionMixin):
         with self._lock:
             self._intel_closed = True
             self._intel_live = False
+        self._stop_door_runs()
 
         # A speech-only recording has no text work to hand off, including the
         # untitled-meeting auto-title path.

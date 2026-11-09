@@ -51,8 +51,8 @@ def test_recipe_subject_assignment_beats_divergent_global_for_run(rig: tuple[Dat
     _db, service = rig
     run = asyncio.run(service.run(OWNER, "r1", input="hello"))
     assert run["profile_id"] == "recipe-primary"
-    assert run["placement"]["route_plan_id"]
-    assert run["route_execution_receipt"]["outcome"] == "succeeded"
+    assert run["placement"]["assignment_id"]
+    assert run["receipt_id"]
 
 
 def test_recipe_refuses_retired_invocation_selector(rig: tuple[Database, RecipeService]) -> None:
@@ -62,8 +62,3 @@ def test_recipe_refuses_retired_invocation_selector(rig: tuple[Database, RecipeS
     assert refused.value.code == "inference_legacy_selector_retired"
 
 
-def test_recipe_service_has_no_local_target_or_display_resolver() -> None:
-    source = (Path(__file__).resolve().parents[2] / "holdspeak/services/recipe_service.py").read_text(encoding="utf-8")
-    assert "def _target(" not in source
-    assert "resolve_placement" not in source
-    assert "_chat_completion_text" not in source

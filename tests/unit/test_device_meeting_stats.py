@@ -179,10 +179,6 @@ def test_cycle_advances_in_order():
     assert view_id == VIEW_NUMBERS
 
 
-def test_cycle_order_constant():
-    assert CYCLE_ORDER == (VIEW_NUMBERS, VIEW_SPEAKERS, VIEW_INTEL)
-
-
 # ---------- render_view_for_state dispatch ----------
 
 

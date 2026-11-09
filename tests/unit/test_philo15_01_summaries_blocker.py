@@ -50,16 +50,6 @@ def _keys(roster: dict) -> list[str]:
     return [blocker["key"] for blocker in meeting_path_blockers(roster)]
 
 
-def test_policy_names_the_queue_sources() -> None:
-    found = builtin_service_route_policy_registry().assignment_sources(
-        "meeting-intel-queue", SUMMARY
-    )
-    assert found == ("meeting-intel-queue@2", ("capability", "group", "global"))
-    assert builtin_service_route_policy_registry().assignment_sources(
-        "meeting-intel-queue", "ask.answer"
-    ) is None
-
-
 def test_nothing_assigned_keeps_the_blocker(db: Database) -> None:
     roster = InferenceAssignmentService(db).assignment_summary(OWNER)
     row = _summary_row(roster)

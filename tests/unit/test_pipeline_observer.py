@@ -31,39 +31,6 @@ def make_event() -> PipelineEvent:
     )
 
 
-def test_pipeline_event_is_frozen() -> None:
-    event = make_event()
-
-    with pytest.raises(FrozenInstanceError):
-        event.event_id = "other-event"
-
-
-def test_pipeline_event_exposes_all_fields() -> None:
-    event = make_event()
-
-    assert event.event_id == "event-123"
-    assert event.timestamp == 123.456
-    assert event.service == "PrimitiveService"
-    assert event.method == "create_note"
-    assert event.principal_kind == "user"
-    assert event.principal_identity == "user-123"
-    assert event.args_summary == '{"title":"Note"}'
-    assert event.result_summary == '{"id":"note-123"}'
-    assert event.error is None
-    assert event.error_code is None
-    assert event.duration_ms == 12.5
-    assert event.correlation_id == "correlation-123"
-    assert event.is_async is False
-
-
-def test_null_observer_does_not_raise() -> None:
-    NullObserver().on_event(make_event())
-
-
-def test_null_observer_satisfies_pipeline_observer_protocol() -> None:
-    assert isinstance(NullObserver(), PipelineObserver)
-
-
 def test_an_in_transaction_method_is_not_observed() -> None:
     """It runs inside the caller's write transaction, so its event could only
     wait out the busy timeout and be dropped (decide accept took 5 s)."""

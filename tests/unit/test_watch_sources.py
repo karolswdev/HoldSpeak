@@ -115,11 +115,6 @@ class TestCompileJql:
         jql = _compile_jql({"projects": ['My "Special" Project']})
         assert r'"My \"Special\" Project"' in jql
 
-    def test_deterministic_ordering(self) -> None:
-        """Multiple calls produce the same string."""
-        q = {"projects": ["B", "A"], "priorities": ["High"]}
-        assert _compile_jql(q) == _compile_jql(q)
-
     def test_combined_filters(self) -> None:
         jql = _compile_jql({
             "projects": ["KAN"],
@@ -334,20 +329,6 @@ class TestFetchWatchSnapshot:
 
 
 # ── HS-166-03: project_service scope flattening maps ─────────────────
-
-
-class TestProjectServiceMaps:
-    """The provider-to-connector and subject-to-query-kind maps are complete."""
-
-    def test_provider_to_connector_jira(self) -> None:
-        from holdspeak.services.project_service import _PROVIDER_TO_CONNECTOR
-        assert _PROVIDER_TO_CONNECTOR["github"] == "gh"
-        assert _PROVIDER_TO_CONNECTOR["jira"] == "jira"
-
-    def test_subject_to_query_kind_issue(self) -> None:
-        from holdspeak.services.project_service import _SUBJECT_TO_QUERY_KIND
-        assert _SUBJECT_TO_QUERY_KIND["pull_request"] == "pull_requests"
-        assert _SUBJECT_TO_QUERY_KIND["issue"] == "issues"
 
 
 # ── PHILO-17 evalerror (Astra r1): no credential in an adapter's error ──

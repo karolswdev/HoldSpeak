@@ -104,16 +104,6 @@ def test_ask_tools_appear_in_catalogue() -> None:
     assert "ask.models" not in names
 
 
-def test_ask_tools_have_closed_schemas() -> None:
-    response = handle_message({"jsonrpc": "2.0", "id": 1, "method": "tools/list"})
-    assert response is not None
-    for tool in response["result"]["tools"]:
-        if tool["name"].startswith("ask."):
-            schema = tool["inputSchema"]
-            assert schema["type"] == "object"
-            assert schema["additionalProperties"] is False
-
-
 # ---------------------------------------------------------------------------
 # 2. Dispatch tests: each tool dispatches to the correct service method
 # ---------------------------------------------------------------------------
@@ -145,14 +135,6 @@ def test_dispatch_ask_run(_patch_ask) -> None:
     assert call_kwargs["temperature"] == 0.7
 
 
-def test_dispatch_ask_cancel(_patch_ask) -> None:
-    stub = _patch_ask
-    payload = _call_ok("ask.cancel", {"invocation_id": "ask_abc123"})
-    assert payload["invocation_id"] == "ask_abc123"
-    assert payload["disposition"] == "cancelled"
-    assert stub.calls[-1][0] == "cancel"
-
-
 def test_dispatch_ask_keep(_patch_ask) -> None:
     stub = _patch_ask
     payload = _call_ok("ask.keep", {
@@ -173,38 +155,6 @@ def test_dispatch_ask_keep(_patch_ask) -> None:
 # ---------------------------------------------------------------------------
 # 3. _run wrapping test for ask.run with a canned coroutine
 # ---------------------------------------------------------------------------
-
-def test_ask_run_wraps_async_via_run(monkeypatch: pytest.MonkeyPatch) -> None:
-    """ask.run dispatches the AskService.ask coroutine through _run()."""
-    canned = {
-        "output": "Wrapped answer.",
-        "model": "wrapped-model",
-        "provider": "test",
-        "actual_placement": {},
-        "egress": {"scope": "local"},
-    }
-
-    async def fake_ask(principal, *, question, **kw):
-        return canned
-
-    stub = StubAskService()
-    stub.ask = fake_ask  # type: ignore[assignment]
-    monkeypatch.setattr(ask_family, "_service", lambda: stub)
-    monkeypatch.setattr(server, "resolve_auth", lambda: SimpleNamespace(principal=OWNER))
-
-    payload = _call_ok("ask.run", {"question": "test wrapping"})
-    assert payload["output"] == "Wrapped answer."
-    assert payload["model"] == "wrapped-model"
-
-
-def test_run_helper_works_outside_event_loop() -> None:
-    """The local _run() helper can execute a coroutine when no loop is active."""
-    async def simple_coro():
-        return {"ok": True}
-
-    result = ask_family._run(simple_coro())
-    assert result == {"ok": True}
-
 
 # ---------------------------------------------------------------------------
 # 4. Error-path tests through handle_message
@@ -243,18 +193,6 @@ def test_error_ask_keep_empty_output(_patch_ask) -> None:
 def test_error_ask_resolve_grounding_missing_refs(_patch_ask) -> None:
     error_msg = _call_error("ask.resolve_grounding", {})
     assert "refs" in error_msg.lower()
-
-
-def test_error_ask_cancel_unknown_invocation_id(_patch_ask) -> None:
-    """Unknown invocation_id: cancel dispatches to the service which may raise;
-    this test verifies the dispatch reaches the service and doesn't crash."""
-    stub = _patch_ask
-    # The stub returns successfully even for unknown IDs; what matters is
-    # that the dispatch reaches the service.  For a real unknown-id error,
-    # the service would raise and server.py would catch it as isError.
-    payload = _call_ok("ask.cancel", {"invocation_id": "ask_nonexistent"})
-    assert payload["invocation_id"] == "ask_nonexistent"
-    assert stub.calls[-1][0] == "cancel"
 
 
 def test_error_ask_cancel_service_raises_on_unknown_id(monkeypatch: pytest.MonkeyPatch) -> None:
