@@ -64,7 +64,7 @@ def _build_and_review_first_two(rig: Rig, pid: str, words: str) -> tuple[dict, d
 
 
 def test_three_steps_at_secure_wait_for_his_merge(tmp_path) -> None:
-    rig = Rig(tmp_path)
+    rig = Rig(tmp_path, real_git=True)  # the one smoke whose pins are real git
     pid = _program(rig, reviewer_profile="codex-default", control="secure")
     _plan_three(rig, pid)
     assert rig.program(pid)["state"] == "drafting"

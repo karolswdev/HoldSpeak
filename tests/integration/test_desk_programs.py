@@ -62,8 +62,8 @@ def _client(rig: Rig, monkeypatch) -> TestClient:
     return TestClient(app)
 
 
-def _rig(tmp_path: Path, control: str) -> tuple[Rig, str]:
-    rig = Rig(tmp_path)
+def _rig(tmp_path: Path, control: str, *, real_git: bool = False) -> tuple[Rig, str]:
+    rig = Rig(tmp_path, real_git=real_git)
     with rig.db._connection() as conn:
         conn.execute("INSERT INTO projects (id, name) VALUES ('proj-holdspeak', 'HoldSpeak')")
     pid = rig.service.create(
@@ -230,10 +230,10 @@ def _tree_of_worktree(path: Path) -> str:
 
 def _pinned_rig(tmp_path: Path, control: str) -> tuple[Rig, str, dict[str, Any], Path, dict[str, Any]]:
     """Step 1 is handed; it has a commit and a change it did not commit; his
-    checkpoint pins it."""
+    checkpoint pins it (real git: the tests read the pin with git)."""
     from tests.integration.program_rig import git
 
-    rig, pid = _rig(tmp_path, control)
+    rig, pid = _rig(tmp_path, control, real_git=True)
     one = rig.step(pid, 1)
     tree = Path(rig.ledger.get(one["launch_id"])["worktree_path"])
     (tree / "web" / "src" / "desk" / "dock").mkdir(parents=True, exist_ok=True)

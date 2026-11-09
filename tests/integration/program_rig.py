@@ -21,17 +21,34 @@ the process edge only.
   missing answer writes its own ``REQ`` lines. The fake reviewer puts its
   words in the REVIEW RESULT block the brief asks for (``NO_BLOCK`` first:
   none).
+
+The rig is cheap (pipe/programs-rig, 2026-11-09): the seeded repository and
+its ``origin`` are built once per process and copied per test
+(:func:`make_repo`); the rig reads a HEAD from the files, not through a git
+process (:func:`head_of`). By default the engine's two git-heavy units are
+in memory: a checkpoint pin (seven git calls each, real in
+``ProgramRunner.pin_checkpoint``) and the checkpoint reach read
+(``ProgramService.checkpoint_reach``); the engine's ``git rev-parse HEAD``
+through its run port is answered from the files. ``Rig(..., real_git=True)``
+keeps every git call real: the tests that read a pin with git use it, and
+one smoke in ``test_program_run``. Everything else the engine does with git
+(worktrees, add, commit, diff, push, fetch, rebase, the delivery) stays
+real.
 """
 from __future__ import annotations
 
+import atexit
+import hashlib
 import re
+import shutil
+import tempfile
 
 #: A test's reviewer words that start with this get no REVIEW RESULT block.
 NO_BLOCK = "\x00no-block\x00"
 import subprocess
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any, Optional
+from typing import Any, Callable, Optional
 
 from holdspeak.db import Database
 from holdspeak.principals import Principal, PrincipalKind
@@ -74,14 +91,21 @@ def git(cwd: Path, *args: str) -> str:
 RIG_GITHUB_URL = "https://github.com/acme/app.git"
 
 
-def make_repo(root: Path, *, github: bool = True) -> Path:
+_TEMPLATES: dict[tuple[bool, str], Path] = {}
+
+
+def _seed(root: Path, *, github: bool) -> Path:
+    """The seeded repository and its bare ``origin`` under ``root``, by git."""
     origin = root / "origin.git"
-    subprocess.run(["git", "init", "--bare", "-b", "main", str(origin)], capture_output=True, check=True)
+    subprocess.run(["git", "init", "-q", "--template=", "--bare", "-b", "main", str(origin)],
+                   capture_output=True, check=True)
     repo = root / "app"
     repo.mkdir(parents=True)
-    git(repo, "init", "-b", "main")
-    git(repo, "config", "user.email", "test@example.test")
-    git(repo, "config", "user.name", "Test")
+    git(repo, "init", "-q", "--template=", "-b", "main")
+    # One identity for the seed and every step worktree (worktrees share the
+    # repository's config; FakeHand once wrote "Agent" into it per launch).
+    git(repo, "config", "user.email", "agent@example.test")
+    git(repo, "config", "user.name", "Agent")
     (repo / "README.md").write_text("# app\n", encoding="utf-8")
     git(repo, "add", "-A")
     git(repo, "commit", "-m", "seed")
@@ -90,8 +114,73 @@ def make_repo(root: Path, *, github: bool = True) -> Path:
         git(repo, "remote", "add", "origin", RIG_GITHUB_URL)
     else:
         git(repo, "remote", "add", "origin", str(origin))
-    git(repo, "push", "-u", "origin", "main")
+    git(repo, "push", "-q", "-u", "origin", "main")
     return repo
+
+
+def make_repo(root: Path, *, github: bool = True, seed: Optional[Callable[[Path], None]] = None) -> Path:
+    """A repository with one seed commit pushed to a bare ``origin``, both
+    under ``root``. Built by git once per process, then copied: the copy's
+    only absolute path (the ``origin`` in ``.git/config``) is rewritten.
+    ``seed``: a function that grows the template once (it commits and pushes
+    what it writes); each copy starts from its result."""
+    key = (github, f"{seed.__module__}.{seed.__qualname__}" if seed else "")
+    template = _TEMPLATES.get(key)
+    if template is None:
+        scratch = tempfile.mkdtemp(prefix="holdspeak-rig-")
+        atexit.register(shutil.rmtree, scratch, True)
+        template = Path(scratch) / "seed"
+        made = _seed(template, github=github)
+        if seed is not None:
+            seed(made)
+        _TEMPLATES[key] = template
+    root.mkdir(parents=True, exist_ok=True)
+    for name in ("origin.git", "app"):
+        shutil.copytree(template / name, root / name, symlinks=True)
+    config = root / "app" / ".git" / "config"
+    config.write_text(config.read_text(encoding="utf-8").replace(str(template), str(root)), encoding="utf-8")
+    return root / "app"
+
+
+def _git_dir(path: Path) -> Path:
+    dot = path / ".git"
+    if dot.is_dir():
+        return dot
+    found = dot.read_text(encoding="utf-8").strip()
+    assert found.startswith("gitdir: "), found
+    gitdir = Path(found[len("gitdir: "):])
+    return gitdir if gitdir.is_absolute() else (path / gitdir).resolve()
+
+
+def head_of(path: Path) -> Optional[str]:
+    """``git rev-parse HEAD`` of a repository or worktree, read from its
+    files (a loose ref or ``packed-refs``); ``None`` when it cannot say."""
+    try:
+        gitdir = _git_dir(Path(path))
+        head = (gitdir / "HEAD").read_text(encoding="utf-8").strip()
+        if not head.startswith("ref: "):
+            return head or None
+        ref = head[len("ref: "):]
+        common = gitdir / "commondir"
+        common_dir = (gitdir / common.read_text(encoding="utf-8").strip()).resolve() if common.is_file() else gitdir
+        for base in (gitdir, common_dir):
+            loose = base / ref
+            if loose.is_file():
+                sha = loose.read_text(encoding="utf-8").strip()
+                return sha if re.fullmatch(r"[0-9a-f]{40}", sha) else None
+        packed = common_dir / "packed-refs"
+        if packed.is_file():
+            for line in packed.read_text(encoding="utf-8").splitlines():
+                sha, _, name = line.partition(" ")
+                if name == ref:
+                    return sha
+    except (OSError, AssertionError):
+        return None
+    return None
+
+
+def rev_parse_head(path: Path) -> str:
+    return head_of(path) or git(path, "rev-parse", "HEAD")
 
 
 def give_quick_check(repo: Path) -> None:
@@ -136,9 +225,7 @@ class FakeHand:
             name, branch, start = spec["name"], spec["branch"], spec.get("start_point") or "main"
         path = self.repo.parent / name
         if not path.exists():
-            git(self.repo, "worktree", "add", "-b", branch, str(path), start)
-            git(path, "config", "user.email", "agent@example.test")
-            git(path, "config", "user.name", "Agent")
+            git(self.repo, "worktree", "add", "-q", "-b", branch, str(path), start)
         elif not kwargs.get("handoff_brief") and not helper_of:
             # The real hand (``AgentHandService``): the item's worktree exists;
             # its earlier agent stopped → Hand again in the same worktree, on
@@ -177,7 +264,7 @@ class FakeAgent:
         git(path, "add", "-A")
         git(path, "commit", "-m", message)
         self.end_turn(launch_id)
-        return git(path, "rev-parse", "HEAD")
+        return rev_parse_head(path)
 
     def end_turn(self, launch_id: str) -> None:
         self.turns += 1
@@ -209,6 +296,10 @@ class FakeGitHub:
 
     def __call__(self, argv: list[str], cwd: Optional[str] = None, **kwargs: Any) -> Any:
         if argv[:1] != ["gh"]:
+            if not self.rig.real_git and len(argv) == 5 and argv[1] == "-C" and argv[3:] == ["rev-parse", "HEAD"]:
+                head = head_of(Path(argv[2]))
+                if head:
+                    return SimpleNamespace(returncode=0, stdout=head + "\n", stderr="")
             return _default_runner(argv, cwd=cwd, **kwargs)
         self.calls.append(list(argv))
         if argv[1:3] == ["pr", "create"]:
@@ -220,7 +311,7 @@ class FakeGitHub:
                 self.prs[number]["base"] = argv[argv.index("--base") + 1]
             if cwd:
                 # HS-S32: the PR's head as pushed (the delivery's prepared commit).
-                self.prs[number]["head_sha"] = git(Path(cwd), "rev-parse", "HEAD")
+                self.prs[number]["head_sha"] = rev_parse_head(Path(cwd))
             return SimpleNamespace(returncode=0, stdout=url + "\n", stderr="")
         if argv[1:3] == ["pr", "view"]:
             return self._view(argv)
@@ -294,7 +385,7 @@ class FakeGitHub:
                             **({"changes_requested": changes} if changes else {})}
             follow["pr_state"] = f"pr_{pr['state']}"
             token = read_token()
-            head = pr.get("head") or git(Path(record["worktree_path"]), "rev-parse", "HEAD")
+            head = pr.get("head") or rev_parse_head(Path(record["worktree_path"]))
             row = {"url": pr["url"], "number": pr["number"], "head_sha": head, "approved_by": approved,
                    "changes_requested": changes, "review_read": {"quality": review_quality(raw), "token": token}}
             follow = observe_review(follow, row, {"path": "sweep", "gh_state": self.read_state, "token": token},
@@ -379,9 +470,10 @@ def frozen_quiet_phone(db: Any) -> Any:
 class Rig:
     def __init__(self, tmp_path: Path, *, kernel: bool = False, people: Any = None,
                  engines: Any = None, idle: Any = None, working_at_once: int = 6, clock: Any = None,
-                 github: bool = True) -> None:
+                 github: bool = True, real_git: bool = False, seed: Optional[Callable[[Path], None]] = None) -> None:
+        self.real_git = real_git
         self.db = Database(tmp_path / "hub.db")
-        self.repo = make_repo(tmp_path, github=github)
+        self.repo = make_repo(tmp_path, github=github, seed=seed)
         self.ledger = Ledger()
         self.states: dict[str, dict[str, Any]] = {}
         self.words: dict[str, str] = {}
@@ -400,7 +492,7 @@ class Rig:
         self.review = AgentReviewLoop(
             self.db, self.hand, ledger=self.ledger,
             state_reader=lambda launch_id: str((self.states.get(launch_id) or {}).get("state") or ""),
-            commit_reader=lambda record: git(Path(record["worktree_path"]), "rev-parse", "HEAD"),
+            commit_reader=lambda record: rev_parse_head(Path(record["worktree_path"])),
             result_reader=self.reviewer_words,
             prompt=lambda launch_id, text: self.prompts.append((launch_id, text)),
         )
@@ -411,6 +503,43 @@ class Rig:
             review_tick=self.review.tick, idle=idle, async_checks=False, review_words=self.reviewer_words,
             gate=self.gate,
         )
+        #: The in-memory checkpoint refs (``real_git=False``): ``{ref: commit}``.
+        self.pins: dict[str, str] = {}
+        if not real_git:
+            self.runner.pin_checkpoint = self._pin  # type: ignore[method-assign]
+            self.service.checkpoint_reach = self._reach  # type: ignore[method-assign]
+
+    def _pin(self, step: Any, line: str) -> dict[str, Any]:
+        """``ProgramRunner.pin_checkpoint`` in memory: the same answers (a
+        numbered ref under the step, its commit, tree and parent head, or a
+        note), no git."""
+        from holdspeak.services.program_runner import CHECKPOINT_REFS
+
+        worktree = str(step.get("worktree") or "")
+        step_id = str(step.get("id") or "")
+        if not step_id or not worktree or not Path(worktree).is_dir():
+            return {"note": "No worktree to pin yet"}
+        head = head_of(Path(worktree))
+        if not head:
+            return {"note": "Not pinned: the worktree has no commit git can read"}
+        prefix = f"{CHECKPOINT_REFS}/{step_id}/"
+        n = max((int(ref[len(prefix):]) for ref in self.pins if ref.startswith(prefix)), default=0) + 1
+        ref = f"{prefix}{n}"
+        commit = hashlib.sha1(f"commit {ref} {head} {line}".encode()).hexdigest()
+        tree = hashlib.sha1(f"tree {ref} {head}".encode()).hexdigest()
+        self.pins[ref] = commit
+        return {"ref": ref, "n": n, "commit": commit, "tree": tree, "head": head}
+
+    def _reach(self, rows: list[dict[str, Any]], repo_root: Optional[str]) -> list[dict[str, Any]]:
+        """``ProgramService.checkpoint_reach`` over the in-memory refs (the
+        product's projection; only the ``for-each-ref`` read is in memory)."""
+        from holdspeak.services.program_checkpoint_reach import project
+
+        def run(_argv: list[str], **_kwargs: Any) -> Any:
+            return SimpleNamespace(returncode=0, stderr="",
+                                   stdout="".join(f"{ref} {commit}\n" for ref, commit in self.pins.items()))
+
+        return project(rows, repo_root, run)
 
     def reviewer_words(self, launch_id: str) -> str:
         """The fake reviewer's words (see the module note on REQ lines)."""

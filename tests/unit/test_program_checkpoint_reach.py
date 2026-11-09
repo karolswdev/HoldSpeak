@@ -17,7 +17,7 @@ from tests.integration.program_rig import FAKE_CHECK, OWNER, Rig, git
 
 
 def _started(tmp_path: Path) -> tuple[Rig, str, dict]:
-    rig = Rig(tmp_path)
+    rig = Rig(tmp_path, real_git=True)  # the reach is read from real refs
     pid = rig.service.create(OWNER, title="P", repository=str(rig.repo), check_command=f"sh {FAKE_CHECK}",
                              control="yolo")["id"]
     rig.service.plan(OWNER, pid, steps=[{"title": "Pin it"}])
