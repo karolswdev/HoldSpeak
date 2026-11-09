@@ -250,9 +250,9 @@ export function ThisMacSection({ b, hubSystem, grantAct, receiptOpen, onGrantAct
       <SettingLine label="Builder tools" value="Adds Builder to Go and Search"
         verb={<CheckGadget variant="state" label="Builder tools" checked={builder} onChange={setBuilder} />} />
       <SettingLine label="Engines" value="Each job and its engine"
-        verb={<Button dense variant="secondary" onClick={() => openSurfaceOr("configure-runs-on", "/models")} data-testid="settings-engines-page-link">Open</Button>} />
+        verb={<Button dense variant="secondary" onClick={() => openSurfaceOr("configure-runs-on", "/models")} data-testid="settings-engines-page-link">Open Engines</Button>} />
       <SettingLine label="Setup" value="What HoldSpeak found"
-        verb={<Button dense variant="secondary" onClick={() => openSurfaceOr("configure-setup", "/")} data-testid="settings-setup-page-link">Open</Button>} />
+        verb={<Button dense variant="secondary" onClick={() => openSurfaceOr("configure-setup", "/")} data-testid="settings-setup-page-link">Open Setup</Button>} />
     </SettingsLedger>
     {/* The rare: the desk reset and the diagnostics, in one fold. */}
     <IdentityFold identity={identity} plated>

@@ -425,6 +425,12 @@ def _bare_onboarding() -> Any:
     return OnboardingService()
 
 
+def _bare_credentials(db: Any, observer: Any) -> Any:
+    from holdspeak.services.credential_service import CredentialService
+
+    return CredentialService(db, observer=observer)
+
+
 def install_from_web_context(
     ctx: Any,
     *,
@@ -565,6 +571,9 @@ def install_from_web_context(
         "phone_service": lambda: LIVE_PHONE_SERVICE,
         # The Calls window's descriptors (calls_operations.py): the process's one CallsService.
         "calls_service": lambda: LIVE_CALLS_SERVICE,
+        # The Settings credential verbs (settings_operations.py): the hub composes its
+        # own (with the settings-applied hook); a partial context's writes the file only.
+        "credential_service": lambda: _bare_credentials(resolved_db, resolved_observer),
         # The People verbs: the hub composes the encrypted store; a partial context's refuses every call.
         "people_service": lambda: PeopleService(UnavailablePeopleStore()),
         # The Decisions verbs (decision_operations.py): the ledger and Commit.
