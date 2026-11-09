@@ -338,8 +338,8 @@ function meetingMeta(ref: unknown): string | undefined {
 
 export function DeskToolShelf() {
   const open = usePalette((s) => s.open);
-  // PHILO-13-08 (B3): a create that asks its name first. New Decision has
-  // its own window now (the owner, 2026-10-25; pages/cores/NewDecisionCore).
+  // PHILO-13-08 (B3): a create that asks its name first. New Decision is the
+  // Decisions window's composer now (desk/decisions/Composer.tsx).
   const prompt = useNamePrompt((s) => s.prompt);
   const [query, setQuery] = useState("");
   // -1 means the palette has not received an arrow press yet. The first

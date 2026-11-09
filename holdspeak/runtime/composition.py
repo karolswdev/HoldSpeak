@@ -123,6 +123,7 @@ class RuntimeServices:
     # --- operations ------------------------------------------------------
     cadence_service: Optional[Any] = None          # Config.load().cadence
     follow_through_service: Optional[Any] = None
+    decision_lifecycle_service: Optional[Any] = None  # decision.ledger (decision_operations.py)
     door_service: Optional[Any] = None
     actuator_service: Optional[Any] = None         # broadcast=
     mission_control_service: Optional[Any] = None
@@ -492,6 +493,8 @@ def install_from_web_context(
     # wired context (a fence's stand-in) gets the same bare builds its routes
     # would make, put on BOTH the context and the root so the two still share
     # one instance.
+    from holdspeak.services.decision_lifecycle_service import DecisionLifecycleService
+    from holdspeak.services.follow_through_service import FollowThroughService
     from holdspeak.services.meeting_aftercare_service import MeetingAftercareService
     from holdspeak.services.meeting_intel_service import MeetingIntelService
     from holdspeak.services.meeting_service import MeetingService
@@ -564,6 +567,9 @@ def install_from_web_context(
         "calls_service": lambda: LIVE_CALLS_SERVICE,
         # The People verbs: the hub composes the encrypted store; a partial context's refuses every call.
         "people_service": lambda: PeopleService(UnavailablePeopleStore()),
+        # The Decisions verbs (decision_operations.py): the ledger and Commit.
+        "decision_lifecycle_service": lambda: DecisionLifecycleService(resolved_db, observer=resolved_observer),
+        "follow_through_service": lambda: FollowThroughService(resolved_db, observer=resolved_observer),
     }
     for name, build in builders.items():
         instance = getattr(services, name, None)

@@ -94,7 +94,7 @@ vi.mock("../setup", () => ({ loadSetup: vi.fn(() => Promise.resolve(null)) }));
 
 import { useDesk } from "../store";
 import { useNamePrompt, usePalette } from "../chromeState";
-import { NewDecisionCore } from "../../pages/cores/NewDecisionCore";
+import { DecisionsCore } from "../../pages/cores/DecisionsCore";
 import { MeetingDecideWell } from "../../meetings/MeetingDecideWell";
 import { VERBS } from "../verbRegistry";
 
@@ -115,15 +115,16 @@ beforeEach(() => {
 const newDecision = () => VERBS.find((v) => v.id === "desk.new-decision")!;
 
 describe("PHILO-13-08 New Decision writes nothing before it is named", () => {
-  // The owner, 2026-10-25: the title is asked in the New decision window
-  // (pages/cores/NewDecisionCore), not in the palette. The whole press, to
-  // the Decisions window, is pages/cores/__tests__/newDecision.app.test.tsx.
-  const form = () => render(<NewDecisionCore />);
+  // The native Decisions app (2026-11-08): the title is asked by the
+  // Decisions window's composer plate (scope `new`), not in the palette and
+  // not in a second window. The whole press is
+  // pages/cores/__tests__/decisions.app.test.tsx.
+  const form = () => render(<DecisionsCore scope="new" />);
 
-  it("the verb opens the New decision window and posts nothing", async () => {
+  it("the verb opens the Decisions window's composer and posts nothing", async () => {
     await act(async () => { newDecision().run({ selectedRef: null }); });
     expect(hub.posts).toEqual([]);
-    expect(useDesk.getState().windowsById["surface-new-decision"]?.applicationKey).toBe("new-decision");
+    expect(useDesk.getState().windowsById["surface-decisions"]?.scope).toBe("new");
     expect(usePalette.getState().open).toBe(false);
   });
 
@@ -132,7 +133,7 @@ describe("PHILO-13-08 New Decision writes nothing before it is named", () => {
     form();
     fireEvent.change(screen.getByRole("textbox", { name: "Decision title" }), { target: { value: "Half a thought" } });
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
-    expect(useDesk.getState().windowsById["surface-new-decision"]).toBeUndefined();
+    expect(useDesk.getState().windowsById["surface-decisions"]?.scope).toBeNull();
     expect(hub.posts).toEqual([]);
     expect(hub.decisions.filter((d) => d.title === "New decision")).toEqual([]);
   });
@@ -151,7 +152,6 @@ describe("PHILO-13-08 New Decision writes nothing before it is named", () => {
     // in the Decisions window reader, never a Decision pullout.
     await waitFor(() => expect(useDesk.getState().windowsById["surface-decisions"]?.scope).toBe("record:rec_of_decision_1"));
     expect(useDesk.getState().pullouts.map((p) => p.id)).not.toContain("decision_1");
-    expect(useDesk.getState().windowsById["surface-new-decision"]).toBeUndefined();
   });
 
   it("Create stays off until a title, then creates once", async () => {

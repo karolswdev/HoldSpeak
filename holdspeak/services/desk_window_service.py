@@ -74,7 +74,8 @@ STATIC_WINDOWS: dict[str, str] = {
     # Betterment P4 (projects): the Projects list and the Decisions window.
     "surface-projects": "open-projects",
     "surface-decisions": "open-decisions",
-    # The owner, 2026-10-25: New Decision opens a window of its own.
+    # Retired 2026-11-08: New decision is the Decisions window's composer
+    # (the native app); the id stays known so a saved row still closes.
     "surface-new-decision": "new-decision",
     "surface-calendar-snapshot": "review-calendar-snapshot",
     # The Chair's windows (chair/chairWindows.ts). Betterment daily D5:

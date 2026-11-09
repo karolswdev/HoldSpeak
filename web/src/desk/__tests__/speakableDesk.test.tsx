@@ -1,10 +1,11 @@
 // HS-129-07 — Article IV.1 census: every audited text well has a mic.
+import { useState } from "react";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { DeskComposer } from "../components/DeskComposer";
 import { KbEditor } from "../pullouts/editors/KbEditor";
 import { NoteEditor } from "../pullouts/editors/NoteEditor";
-import { DecisionsView } from "../pullouts/views/DecisionsView";
+import { DecisionsRail } from "../decisions/DecisionsRail";
 
 const save = vi.hoisted(() => vi.fn());
 const apiFetch = vi.hoisted(() => vi.fn());
@@ -54,7 +55,7 @@ describe("HS-129-07 speakable desk", () => {
       <>
         <NoteEditor object={note} onClose={vi.fn()} />
         <KbEditor object={kb} onClose={vi.fn()} />
-        <DecisionsView />
+        <DecisionsRail rows={[]} picked={null} query="" onQuery={vi.fn()} current={false} onCurrent={vi.fn()} onPick={vi.fn()} onNew={vi.fn()} composing={false} />
         <DeskComposer value="" onChange={vi.fn()} actionLabel="Send" onAction={vi.fn()} />
         <DeskComposer multiline value="" onChange={vi.fn()} actionLabel="Send" onAction={vi.fn()} />
       </>,
@@ -93,9 +94,13 @@ describe("HS-129-07 speakable desk", () => {
     apiFetch.mockResolvedValue([]);
     const onLineChange = vi.fn();
     const onPadChange = vi.fn();
+    const Rail = () => {
+      const [query, setQuery] = useState("");
+      return <DecisionsRail rows={[]} picked={null} query={query} onQuery={setQuery} current={false} onCurrent={vi.fn()} onPick={vi.fn()} onNew={vi.fn()} composing={false} />;
+    };
     render(
       <>
-        <DecisionsView />
+        <Rail />
         <DeskComposer value="" onChange={onLineChange} actionLabel="Send" onAction={vi.fn()} />
         <DeskComposer multiline value="" onChange={onPadChange} actionLabel="Send" onAction={vi.fn()} />
       </>,
@@ -103,9 +108,9 @@ describe("HS-129-07 speakable desk", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Speak Search decisions" }));
     expect(screen.getByRole("searchbox", { name: "Search decisions" })).toHaveValue("spoken");
-    // Index shifted by 1: DecisionsView now carries its own MicButton at [0]
+    // The Decisions rail's search carries its mic in the well (no second Speak).
+    fireEvent.click(screen.getAllByRole("button", { name: "Speak" })[0]);
     fireEvent.click(screen.getAllByRole("button", { name: "Speak" })[1]);
-    fireEvent.click(screen.getAllByRole("button", { name: "Speak" })[2]);
     expect(onLineChange).toHaveBeenCalledWith("spoken");
     expect(onPadChange).toHaveBeenCalledWith("spoken");
   });

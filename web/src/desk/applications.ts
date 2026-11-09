@@ -598,7 +598,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     action: "open-decisions",
     windowId: "surface-decisions",
     label: "Decisions",
-    description: "Every decision, why it was made and what replaced it.",
+    description: "Every decision, why it was made and what replaced it. New decision is its composer.",
     glyph: "◈",
     href: "/",
     group: "app",
@@ -612,29 +612,6 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
       load: () =>
         import("../pages/cores/DecisionsCore").then((module) => ({
           default: module.DecisionsCore,
-        })),
-    },
-  },
-  // The owner, 2026-10-25: New Decision is a small window of its own, not
-  // a popover in the palette. A decision is named before it is persisted
-  // (PHILO-13-08 B3): closing this window writes nothing. No `group`, no
-  // `go`: New Decision (the verb) opens it; Search and Go do not list it.
-  {
-    action: "new-decision",
-    windowId: "surface-new-decision",
-    label: "New decision",
-    description: "Name a decision, say why, and create it.",
-    glyph: "◈",
-    href: "/",
-    surface: {
-      eyebrow: "Decide",
-      sprite: "decision",
-      minW: 360,
-      defaultW: 520,
-      defaultH: 340,
-      load: () =>
-        import("../pages/cores/NewDecisionCore").then((module) => ({
-          default: module.NewDecisionCore,
         })),
     },
   },

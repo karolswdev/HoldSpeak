@@ -23,7 +23,7 @@ import { buildLinearGraph } from "../graph";
 import { loadSetup } from "../setup";
 import { registerRepository as registerRepositoryApi } from "../repository";
 import { faceChangeCount, nextFreeZoneName } from "../zoneName";
-import { NEW_DECISION_DRAFT, NEW_DECISION_WINDOW } from "../newDecision";
+import { NEW_DECISION_DRAFT, isNewDecisionScope, newDecisionScope } from "../newDecision";
 import type { DeskState, SliceCreator, ZoneRenameError } from "./types";
 import { GHOST_LAYOUT_KEYS } from "./types";
 import { COMPACT_VIEWPORT_QUERY } from "../useCompactViewport";
@@ -319,18 +319,18 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => {
       return;
     }
     // PHILO-13-08 (B3) — a decision is named BEFORE it is persisted. With no
-    // title from the caller the New decision window asks it (the owner,
-    // 2026-10-25: a window of its own, not a popover in the palette);
-    // closing that window writes nothing, so no `New decision` placeholder
-    // is ever born (F9). A Project in front comes along as its About.
+    // title from the caller the Decisions window asks it: its composer is
+    // the plate (the native app, 2026-11-08; never a second window).
+    // Cancel writes nothing, so no `New decision` placeholder is ever born
+    // (F9). A Project in front comes along as its About.
     if (kind === "decision" && !String(overrides.title ?? "").trim()) {
       const projectId = String(overrides.project_id ?? "").trim();
-      const fresh = !get().windowsById[NEW_DECISION_WINDOW];
+      const fresh = !isNewDecisionScope(get().windowsById["surface-decisions"]?.scope);
       if (fresh) {
         get().setDraft(NEW_DECISION_DRAFT.title, null);
         get().setDraft(NEW_DECISION_DRAFT.why, null);
       }
-      get().openSurfaceWindow("new-decision", projectId ? `project:${projectId}` : undefined);
+      get().openSurfaceWindow("open-decisions", newDecisionScope(projectId));
       return;
     }
     const posts = {
