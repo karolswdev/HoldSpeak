@@ -148,15 +148,15 @@ export function PreparedResults({ meetingId, results, canPrepare = [], selection
   const [asking, setAsking] = useState<string | null>(null);
   const [refusal, setRefusal] = useState("");
   const prepareRef = useRef<HTMLButtonElement>(null);
+  // A door asked for this Result: its draft scrolls into view when it mounts
+  // (the draft's own ref; the face reads no DOM by selector).
+  const reveal = useRef<string | null>(null);
   useEffect(() => {
     const onOpen = (event: Event) => {
       const detail = (event as CustomEvent<PreparedOpen>).detail;
       if (!detail || detail.meetingId !== meetingId) return;
+      reveal.current = detail.kind;
       setOpen(detail.kind);
-      window.requestAnimationFrame(() => {
-        document.querySelector(`[data-testid="meeting-prepared-${detail.kind}"]`)
-          ?.scrollIntoView?.({ block: "nearest", behavior: "smooth" });
-      });
     };
     window.addEventListener(PREPARED_OPEN, onOpen);
     return () => window.removeEventListener(PREPARED_OPEN, onOpen);
@@ -245,7 +245,12 @@ export function PreparedResults({ meetingId, results, canPrepare = [], selection
                   trailing={trailing}
                 >
                   {reading ? (
-                    <div className="meeting-prepared-draft" data-testid="meeting-prepared-draft">
+                    <div className="meeting-prepared-draft" data-testid="meeting-prepared-draft"
+                      ref={(element) => {
+                        if (!element || reveal.current !== result.kind) return;
+                        reveal.current = null;
+                        element.scrollIntoView?.({ block: "nearest", behavior: "smooth" });
+                      }}>
                       <AgentWords text={draftText(result)} />
                     </div>
                   ) : null}
