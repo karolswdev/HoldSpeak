@@ -59,24 +59,23 @@ class RefinementApplicationService:
                                           cursor=cursor, limit=limit)
 
     def get_workbench(self, principal: Principal, *, thought_id: str) -> dict[str, Any]:
+        # The engine a turn would run on: the engine door's pick for this Thought.
         intended = None
         target_ready = False
         try:
             if self._coordinator and hasattr(self._coordinator, "admission_claim"):
                 claim = self._coordinator.admission_claim()
-                from ..inference_targets import resolve_placement
-                target = resolve_placement(self._database, invocation=claim["target_id"]).target
-                intended = {"target_id":claim["target_id"],"target_name":target.name,
-                            "target_kind":claim["target_kind"],"boundary":claim["boundary"],
-                            "readiness":claim["readiness"]}
-                target_ready = claim["readiness"] == "ready"
             else:
-                from ..inference_targets import resolve_thought_placement
-                target = resolve_thought_placement(self._database).target
-                intended = {"target_id":target.id,"target_name":target.name,
-                            "target_kind":target.kind,"boundary":target.boundary,
-                            "readiness":target.readiness_state}
-                target_ready = target.readiness_state == "ready"
+                from ..kernel.runtime import _configure
+                from .refinement_coordinator import thought_claim
+
+                claim = thought_claim(_configure(self._database), ("thought", thought_id))
+            profile = self._database.profiles.get(claim["target_id"]) if claim["target_id"] else None
+            intended = {"target_id": claim["target_id"],
+                        "target_name": str(getattr(profile, "name", "") or claim["target_id"]),
+                        "target_kind": claim["target_kind"], "boundary": claim["boundary"],
+                        "readiness": claim["readiness"]}
+            target_ready = claim["readiness"] == "ready"
         except Exception:
             target_ready = False
         return self._thoughts.get_workbench(

@@ -17,6 +17,22 @@ from .refinement_thought_service import RefinementThoughtService
 log = logging.getLogger(__name__)
 
 
+def thought_claim(broker: Any, subject: tuple[str, str] | None = None) -> dict[str, Any]:
+    """The engine a Thought turn runs on, as the claim its reservation keeps:
+    the engine door's pick for ``thought.interview`` (the Thought's own
+    assignment, else the job's)."""
+    from . import engine_door
+
+    try:
+        engine = engine_door.engine_for(broker, "thought.interview", subject=subject)
+    except engine_door.EngineDoorError:
+        return {"target_id": "", "target_kind": "assigned_profile", "boundary": "", "engine": "",
+                "model": "", "readiness": "unavailable", "reason": "no_assignment"}
+    return {"target_id": engine.profile, "target_kind": "assigned_profile",
+            "boundary": engine_door.egress_of(broker, engine), "engine": "", "model": "",
+            "readiness": "ready", "reason": ""}
+
+
 class RefinementCoordinator:
     """Own refinement Tasks for the lifetime of the web application.
 
@@ -89,16 +105,6 @@ class RefinementCoordinator:
         self._heartbeat_task = self._loop.create_task(
             self._heartbeat_loop(), name=f"refinement-heartbeat:{self.host_id}"
         )
-        recovery_principal = Principal(PrincipalKind.OWNER, "refinement-route-recovery")
-        for invocation_id in recovered:
-            invocation = await asyncio.to_thread(
-                self._thoughts.get_invocation, recovery_principal, invocation_id
-            )
-            if invocation.get("route_execution_id") and invocation["state"] in {"reserved", "in_flight", "awaiting_projection"}:
-                await self.submit(
-                    recovery_principal,
-                    thought_id=str(invocation["thought_id"]), invocation=invocation,
-                )
         return recovered
 
     async def begin(
@@ -120,34 +126,6 @@ class RefinementCoordinator:
                 context={"status": 503},
             )
         admission_claim = self._admission_claim(subject_kind="thought", subject_id=thought_id)
-        routed_admission = None
-        if self._uses_default_ask and self._ask_factory()._routed_assignments_active(
-            capability_id="thought.interview",
-            subject_kind="thought",
-            subject_id=thought_id,
-        ):
-            frozen_thought = await asyncio.to_thread(self._thoughts.get, principal, thought_id)
-            frozen_note = frozen_thought.get("working_note") or {}
-            sealed_prompt = self._sealed_prompt(str(frozen_note.get("body_markdown") or ""))
-            frozen_grounding = None
-            if expected_attachment_revision > 0:
-                from .refinement_context_service import RefinementContextService
-                frozen_grounding = await asyncio.to_thread(
-                    RefinementContextService(self._database).materialize,
-                    thought_id, expected_attachment_revision,
-                    str(frozen_thought.get("attachment_sha256") or ""),
-                )
-            frozen_payload = self._routed_payload(
-                sealed_prompt, frozen_grounding, self._own_refs(frozen_thought),
-            )
-
-            def routed_admission(conn: Any, _invocation_id: str, ask_id: str) -> dict[str, Any]:
-                return self._ask_factory()._broker.inference_adoption_service.admit_in_transaction(
-                    principal, conn, command_id=f"admit-{ask_id}",
-                    capability_id="thought.interview", operation_id=ask_id,
-                    payload=frozen_payload, invocation_id=ask_id,
-                    reserved_output_tokens=512,
-                )
         invocation, dispatch_claim = await asyncio.to_thread(
             self._thoughts.reserve_refinement_with_dispatch_claim,
             principal,
@@ -160,8 +138,6 @@ class RefinementCoordinator:
             dispatch_lease_epoch=self._lease_epoch,
             workspace_cursor=workspace_cursor,
             admission_claim=admission_claim,
-            validate_current_admission=self._uses_default_ask,
-            routed_admission=routed_admission,
         )
         if dispatch_claim:
             await self.submit(principal, thought_id=thought_id, invocation=invocation)
@@ -188,24 +164,11 @@ class RefinementCoordinator:
         )
         disposition = "not_dispatched"
         ask_id = target.get("ask_invocation_id")
-        route_execution_id = target.get("route_execution_id")
         owns = (
             target.get("dispatch_host_id") == self.host_id
             and int(target.get("dispatch_lease_epoch") or 0) == self._lease_epoch
         )
-        if route_execution_id and owns:
-            try:
-                stopped = await asyncio.to_thread(
-                    self._ask_factory()._broker.inference_adoption_service.stop,
-                    principal,
-                    command_id=f"stop-refinement-{invocation_id}",
-                    execution_id=str(route_execution_id),
-                )
-                disposition = str(stopped["child_signal"])
-            except Exception:
-                log.exception("routed refinement cancellation failed for %s", invocation_id)
-                disposition = "local_cancel_failed"
-        elif ask_id and owns:
+        if ask_id and owns:
             try:
                 disposition = await self.cancel(
                     principal,
@@ -248,31 +211,6 @@ class RefinementCoordinator:
                 context={"status":409,"readiness":admission_claim["readiness"],
                          "reason":admission_claim["reason"]},
             )
-        routed_admission = None
-        if self._uses_default_ask and self._ask_factory()._routed_assignments_active(
-            capability_id="thought.interview",
-            subject_kind="thought",
-            subject_id=thought_id,
-        ):
-            frozen_thought = await asyncio.to_thread(self._thoughts.get, principal, thought_id)
-            frozen_grounding = None
-            if expected_attachment_revision > 0:
-                from .refinement_context_service import RefinementContextService
-                frozen_grounding = await asyncio.to_thread(
-                    RefinementContextService(self._database).materialize,
-                    thought_id, expected_attachment_revision,
-                    str(frozen_thought.get("attachment_sha256") or ""),
-                )
-
-            def routed_admission(conn: Any, _invocation_id: str, ask_id: str, body: str) -> dict[str, Any]:
-                payload = self._routed_payload(
-                    self._sealed_prompt(body), frozen_grounding, self._own_refs(frozen_thought),
-                )
-                return self._ask_factory()._broker.inference_adoption_service.admit_in_transaction(
-                    principal, conn, command_id=f"admit-{ask_id}",
-                    capability_id="thought.interview", operation_id=ask_id,
-                    payload=payload, invocation_id=ask_id, reserved_output_tokens=512,
-                )
         thought, receipt, invocation, created = await asyncio.to_thread(
             self._thoughts.answer_and_continue_with_dispatch_claim,
             principal, thought_id, review_result_id, command_id=command_id,
@@ -282,8 +220,6 @@ class RefinementCoordinator:
             workspace_cursor=workspace_cursor, dispatch_host_id=self.host_id,
             dispatch_lease_epoch=self._lease_epoch,
             admission_claim=admission_claim,
-            validate_current_admission=self._uses_default_ask,
-            routed_admission=routed_admission,
         )
         if created:
             try:
@@ -300,40 +236,16 @@ class RefinementCoordinator:
     def _admission_claim(
         self,
         *,
-        invocation_id: str | None = None,
         subject_kind: str | None = None,
         subject_id: str | None = None,
     ) -> dict[str, Any]:
         if not self._uses_default_ask:
             return {"target_id":"test","target_kind":"this_device","boundary":"same_device",
                     "engine":"scripted","model":"scripted","readiness":"ready","reason":""}
-        routed = self._ask_factory()._routed_assignments_active(
-            capability_id="thought.interview",
-            invocation_id=invocation_id,
-            subject_kind=subject_kind,
-            subject_id=subject_id,
+        return thought_claim(
+            self._ask_factory()._broker,
+            ("thought", subject_id) if subject_kind == "thought" and subject_id else None,
         )
-        if routed:
-            summary = self._ask_factory()._broker.inference_adoption_service.next_run_summary(
-                Principal(PrincipalKind.OWNER, "refinement-route-inspector"),
-                capability_id="thought.interview",
-                invocation_id=invocation_id,
-                subject_kind=subject_kind,
-                subject_id=subject_id,
-            )
-            if summary["status"] != "ready" or not summary["chain"]:
-                return {"target_id":"","target_kind":"assigned_profile","boundary":"",
-                        "engine":"","model":"","readiness":"unavailable",
-                        "reason":str(summary.get("reason_code") or "no_assignment")}
-            primary = summary["chain"][0]
-            return {"target_id":str(primary["profile_id"]),"target_kind":"assigned_profile",
-                    "boundary":str(primary["boundary"]),"engine":"","model":"",
-                    "readiness":"ready","reason":""}
-        from ..inference_targets import resolve_thought_placement
-        target = resolve_thought_placement(self._database).target
-        return {"target_id":target.id,"target_kind":target.kind,"boundary":target.boundary,
-                "engine":target.engine,"model":target.model,"readiness":target.readiness_state,
-                "reason":target.readiness_reason}
 
     async def submit(
         self,
@@ -435,32 +347,16 @@ class RefinementCoordinator:
                     int(invocation["frozen_attachment_revision"]),
                     str(invocation["frozen_attachment_sha256"]),
                 )
-            ask_service = self._ask_factory()
-            routed = bool(
-                self._uses_default_ask
-                and ask_service._routed_assignments_active(
-                    capability_id="thought.interview",
-                    invocation_id=ask_id,
-                    subject_kind="thought",
-                    subject_id=thought_id,
-                )
-            )
             await self._ask_factory().ask(
                 principal,
                 prompt,
                 lens="Refine",
                 operation_capability="thought.interview",
                 invocation_id=ask_id,
-                inference_target_id=None if routed else str(invocation.get("admission", {}).get("target_id") or "") or None,
-                frozen_admission_claim=None if routed else invocation.get("admission") or None,
+                frozen_admission_claim=(invocation.get("admission") or None) if self._uses_default_ask else None,
                 frozen_grounding=frozen_grounding,
-                before_physical_dispatch=self._thoughts.before_physical_dispatch(
-                    invocation_id
-                ) if not invocation.get("route_execution_id") else None,
-                before_compatibility_retry=self._thoughts.before_compatibility_retry(
-                    invocation_id
-                ) if not invocation.get("route_execution_id") else None,
-                routed_execution_id=invocation.get("route_execution_id"),
+                before_physical_dispatch=self._thoughts.before_physical_dispatch(invocation_id),
+                before_compatibility_retry=self._thoughts.before_compatibility_retry(invocation_id),
                 **(
                     {"subject_kind": "thought", "subject_id": thought_id}
                     if self._uses_default_ask
@@ -585,56 +481,6 @@ class RefinementCoordinator:
         """The Thought's own note: memory never feeds a Thought itself."""
         note_id = str((thought.get("working_note") or {}).get("id") or "").strip()
         return [f"note:{note_id}"] if note_id else []
-
-    def _routed_payload(
-        self, sealed_prompt: str, frozen_grounding: Any, own_refs: list[str] | None = None,
-    ) -> dict[str, Any]:
-        ask = self._ask_factory()
-        instruction = ""
-        # The same capability and exclusions Ask uses at dispatch, so the
-        # admitted bytes are the dispatched bytes.
-        memory_args = {"capability_id": "thought.interview", "exclude_refs": list(own_refs or [])}
-        if frozen_grounding is not None:
-            envelope, grounding_echo, context_ids, context_titles, instruction = (
-                ask._frozen_grounding_with_memory(frozen_grounding, sealed_prompt, **memory_args)
-            )
-        else:
-            envelope, grounding_echo = ask._grounding(
-                Principal(PrincipalKind.OWNER, "refinement-coordinator"),
-                None,
-                sealed_prompt,
-                **memory_args,
-            )
-            grounding_echo = dict(grounding_echo or {})
-            context_ids = [str(value) for value in grounding_echo.pop("_ids", [])]
-            context_titles = [str(value) for value in grounding_echo.pop("_titles", [])]
-        system = "You are the desk's AI core. Follow the instruction using the material provided. Be concrete and brief."
-        system += instruction
-
-        def build(memory: Any) -> dict[str, Any]:
-            from .memory_grounding import reflect_block
-
-            # Ask's order: the pages and observations, then the recall.
-            env = "\n\n".join(part for part in (reflect_block(memory), envelope) if part)
-            return {
-                "schema_version": 2, "system_prompt": system,
-                "user_prompt": sealed_prompt + ("\n\nGrounding:\n" + env if env else ""),
-                "lens": "Refine",
-                "context_ids": context_ids,
-                "context_titles": context_titles,
-                "grounding": grounding_echo,
-                "source_text": "\n\n" + env if env else "",
-                "temperature": None, "max_tokens": None,
-            }
-
-        # Memory slice 6 (#850): the desk's pages and observations, read and
-        # fitted as Ask reads them at dispatch (``AskService.thought_reflect``).
-        thought_reflect = getattr(ask, "thought_reflect", None)
-        memory = (
-            thought_reflect(sealed_prompt, exclude_refs=list(own_refs or []), build=build)
-            if callable(thought_reflect) else None
-        )
-        return build(memory)
 
     @staticmethod
     def _sealed_prompt(body_markdown: str) -> str:

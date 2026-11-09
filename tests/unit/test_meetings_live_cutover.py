@@ -756,6 +756,20 @@ class _LiveEngine:
         return "Budget review"
 
 
+def _door_runs(db: Any, job: str) -> list[tuple[str, str]]:
+    """Each run of ``job`` through the engine door, in order: (the run id's
+    tail after the door nonce, the receipt's outcome)."""
+    prefix = "door_" + job.encode().hex() + "_"
+    with db._connection() as conn:
+        rows = conn.execute(
+            """SELECT o.native_id, r.outcome FROM kernel_operations o
+                 JOIN kernel_receipts r ON r.operation_id=o.operation_id
+                WHERE o.name='inference.invoke' AND o.native_id LIKE ? ORDER BY o.created_at""",
+            (prefix + "%",),
+        ).fetchall()
+    return [("_".join(str(row["native_id"]).split("_")[5:]), str(row["outcome"])) for row in rows]
+
+
 def test_live_bundle_routes_analysis_label_and_title_after_receipt_election(
     tmp_path: Path, monkeypatch
 ) -> None:
@@ -784,39 +798,10 @@ def test_live_bundle_routes_analysis_label_and_title_after_receipt_election(
     assert title == {"title": "Budget review"}
     assert (engine.analysis_calls, engine.labels, engine.titles) == (1, 1, 1)
     assert not [event for event in broadcasts if event[0] == "intel_token"]
-    with db._connection() as conn:
-        executions = conn.execute(
-            "SELECT terminal_outcome FROM inference_route_executions ORDER BY started_at"
-        ).fetchall()
-    assert [row["terminal_outcome"] for row in executions] == ["succeeded"] * 3
+    # One job through the engine door each, each one receipt.
+    for job in ("meeting.live_analysis", "meeting.bookmark_label", "meeting.auto_title"):
+        assert [run[1] for run in _door_runs(db, job)] == ["succeeded"], job
 
-
-def test_replaying_identical_live_material_reuses_the_elected_execution(
-    tmp_path: Path, monkeypatch
-) -> None:
-    """Deterministic operation/command identities prevent repeat model egress."""
-    from tests.unit.test_meeting_session_admission import _bundle_session
-
-    db, _broker, session = _bundle_session(tmp_path, monkeypatch)
-    engine = _LiveEngine()
-    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kwargs: engine)
-    monkeypatch.setattr("holdspeak.intel.providers._configured_engine", lambda: engine)
-    session.start()
-    monkeypatch.setattr(type(session), "duration", property(lambda _self: 5.0))
-    session._state.segments.append(
-        TranscriptSegment(text="Repeat this exact window", speaker="Me", start_time=0.0, end_time=5.0)
-    )
-
-    session._run_intel_analysis()
-    session._run_intel_analysis()
-    first = session._admitted_auto_title("Repeat this exact window")
-    second = session._admitted_auto_title("Repeat this exact window")
-
-    assert engine.analysis_calls == 1
-    assert engine.titles == 1
-    assert first[1] == second[1] == {"title": "Budget review"}
-    with db._connection() as conn:
-        assert conn.execute("SELECT COUNT(*) FROM inference_route_executions").fetchone()[0] == 2
 
 
 def test_assignment_edit_after_meeting_bundle_freeze_does_not_retarget_route(
@@ -927,99 +912,12 @@ def test_live_analysis_controller_owns_compatibility_retry_then_fallback(
     assert engine.calls == 3
     assert received == ["ELECTED_WINNER"]
     assert "PRIMARY_LOSER_TEXT" not in received
-    with db._connection() as conn:
-        execution = conn.execute(
-            "SELECT id,winning_attempt_id,terminal_outcome FROM inference_route_executions"
-        ).fetchone()
-        attempts = conn.execute(
-            """SELECT id,route_leg_ordinal,physical_attempt_ordinal,leg_attempt_ordinal,
-                      purpose,disposition
-                 FROM inference_route_attempts WHERE execution_id=?
-                 ORDER BY physical_attempt_ordinal""",
-            (execution["id"],),
-        ).fetchall()
-    assert [(row["route_leg_ordinal"], row["physical_attempt_ordinal"], row["leg_attempt_ordinal"], row["purpose"])
-            for row in attempts] == [
-        (1, 1, 1, "primary"),
-        (1, 2, 2, "compatibility"),
-        (2, 3, 1, "fallback"),
+    # The runner's dialect retry (``_r2``) on the first engine, then the door's
+    # one retry on the next engine of the chain (``_n2``, attempt 2).
+    assert _door_runs(db, "meeting.live_analysis") == [
+        ("", "failed"), ("r2", "failed"), ("n2", "succeeded"),
     ]
-    assert [row["disposition"] for row in attempts] == [
-        "known_no_generation_transient",
-        "provider_permanent",
-        "owner_terminal",
-    ]
-    assert execution["terminal_outcome"] == "succeeded"
-    assert execution["winning_attempt_id"] == attempts[2]["id"]
 
-
-def test_meeting_kernel_refusal_is_terminal_without_retry_or_fallback(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    from holdspeak.kernel.model import KernelRefused
-    from tests.unit.test_meeting_session_admission import _bundle_session
-
-    db, _broker, session = _bundle_session(tmp_path, monkeypatch)
-    _profile(
-        db,
-        "meeting-refusal-fallback",
-        claims=("language", "structured_output", _result_claim("meeting.live_analysis")),
-    )
-    assignment = InferenceAssignmentService(db).resolve_effective(
-        OWNER, capability_id="meeting.live_analysis"
-    )
-    InferenceAssignmentService(db).set_assignment(
-        OWNER,
-        {
-            "command_id": "meeting-refusal-fallback",
-            "expected_revision": assignment["assignment"]["revision"],
-            "scope": {"kind": "capability", "capability_id": "meeting.live_analysis"},
-            "entries": [
-                {"profile_id": "meeting-profile", "profile_revision": 1},
-                {"profile_id": "meeting-refusal-fallback", "profile_revision": 1},
-            ],
-        },
-    )
-
-    class RefusingEngine:
-        active_provider = "fixture"
-        active_model = "refusing"
-
-        @staticmethod
-        def analyze(_transcript: str, *, stream: bool = False) -> IntelResult:
-            assert stream is False
-            raise KernelRefused("meeting_provider_refused")
-
-    engine = RefusingEngine()
-    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kwargs: engine)
-    monkeypatch.setattr("holdspeak.intel.providers._configured_engine", lambda: engine)
-    session.start()
-    session._state.segments.append(
-        TranscriptSegment(text="Refused work", speaker="Me", start_time=0.0, end_time=1.0)
-    )
-    session._run_intel_analysis()
-
-    with db._connection() as conn:
-        execution = conn.execute(
-            """SELECT e.terminal_outcome
-                 FROM inference_route_executions e
-                 JOIN inference_operation_route_request_plans o ON o.id=e.operation_plan_id
-                 JOIN inference_route_plans p ON p.id=o.route_plan_id
-                WHERE p.capability_id='meeting.live_analysis'"""
-        ).fetchone()
-        attempts = conn.execute(
-            """SELECT a.route_leg_ordinal,a.disposition
-                 FROM inference_route_attempts a
-                 JOIN inference_route_executions e ON e.id=a.execution_id
-                 JOIN inference_operation_route_request_plans o ON o.id=e.operation_plan_id
-                 JOIN inference_route_plans p ON p.id=o.route_plan_id
-                WHERE p.capability_id='meeting.live_analysis'
-                ORDER BY a.physical_attempt_ordinal"""
-        ).fetchall()
-    assert execution["terminal_outcome"] == "refused"
-    assert [(row["route_leg_ordinal"], row["disposition"]) for row in attempts] == [
-        (1, "dispatch_outcome_unknown")
-    ]
 
 
 def _admit_active_execution_for_each_bundle_member(broker: Any, session: Any) -> set[str]:
