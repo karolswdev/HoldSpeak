@@ -173,8 +173,8 @@ def test_every_mcp_write_tool_announces_at_the_root(
         tools.dispatch(name, {}, owner)
         kind, _, op = name.partition(".")
         # A People write announces ``person``, an automation write ``workbench``
-        # (the kinds the desk refreshes on; #2054, automation_operations.py).
-        kind = {"people": "person", "automation": "workbench"}.get(kind, kind)
+        # (the kinds the desk refreshes on; #2054, automation_operations.py); a call write ``call`` (#2085).
+        kind = {"people": "person", "automation": "workbench", "calls": "call"}.get(kind, kind)
         want = [] if tools.is_read_tool(name) else [[(kind, f"walk-{name}", op)]]
         if sent != want:
             wrong[name] = list(sent)

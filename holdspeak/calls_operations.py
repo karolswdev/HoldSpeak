@@ -16,6 +16,11 @@ The async verbs (place, hang up, test call) run on the hub's loop from the
 worker the producer calls in (``CallsService._on_loop``); the route envelope
 binds the loop first, as the hand-written route did by awaiting on it.
 
+Place and the test call are egress and his press (``owner_press``: a steward
+child is refused); decide is his word on the line. Place, hang up and the test
+call wait on the line (``blocking_io``: beside the MCP queue, never holding it).
+Each write is announced once by the registry (``desk_changed`` kind ``call``).
+
 No tool, and why:
 
 - ``calls.decide``: the tap form of his spoken yes on a held egress tool; an
@@ -43,7 +48,7 @@ _TO = {"to": {"type": "string", "description": "A +E.164 number or a sip: addres
 
 def _op(name: str, method: str, http: tuple[str, str], handler: str, call: Call, description: str, *,
         principal: str = _ANY, owner_only: bool = False, write: bool = False, tool: bool = True,
-        authority: str = "work", status: int = 200,
+        authority: str = "work", status: int = 200, owner_press: bool = False, blocking_io: bool = False,
         properties: Optional[Mapping[str, Any]] = None) -> OperationDescriptor:
     """One verb; its tool (when it has one) requires the path's ids."""
     ids = [part[1:-1] for part in http[1].split("/") if part.startswith("{")]
@@ -52,12 +57,12 @@ def _op(name: str, method: str, http: tuple[str, str], handler: str, call: Call,
     return OperationDescriptor(
         name=name, version=1, description=description, args_schema={"type": "object"}, principal=principal,
         effect="write" if write else "read", result="the CallsService answer", refusals=_REFUSALS,
-        # The service sends its own call_state frame for each change; no desk_changed.
-        completion="synchronous; a change to a call is one call_state frame on the hub bus",
+        # The service sends its call_state frame; the registry adds the one desk_changed frame (kind call).
+        completion="synchronous; a change to a call is one call_state and one desk_changed frame on the hub bus",
         exposure=(f"http:{http[0]} {http[1]}",) + ((f"mcp:{name}",) if tool else ()),
         service="calls_service", method=method, owner_only=owner_only, call=call, http=http,
         http_status=status, handler=handler, tool_schema=schema if tool else None, authority=authority,
-        announces_changes=write,
+        owner_press=owner_press, blocking_io=blocking_io,
         # calls.* is an MCP and REST family (thread_modes._thread_side): no palette grows.
         thread=("effect_proposal" if write else "evidence_read") if tool else None,
     )
@@ -98,19 +103,20 @@ CALLS_OPERATIONS: tuple[OperationDescriptor, ...] = (
         lambda s, p, a: _on_loop(s, s.place(str(a.get("to") or ""))),
         "Place a phone call. With no number, HoldSpeak calls the owner's own number (the first allowed number in "
         "Settings > Calls). A real call can cost money.", principal=_OWNER, owner_only=True, write=True,
-        authority="egress", status=201, properties=_TO),
+        authority="egress", status=201, properties=_TO, owner_press=True, blocking_io=True),
     _op("calls.hangup", "hangup", ("POST", _C + "/{call_id}/hangup"), "api_call_hangup",
         lambda s, p, a: _found(_on_loop(s, s.hangup(str(a.get("call_id") or ""))), a.get("call_id")),
-        "End a phone call: HoldSpeak says goodbye and hangs up.", write=True),
+        "End a phone call: HoldSpeak says goodbye and hangs up.", write=True, blocking_io=True),
     _op("calls.decide", "decide", ("POST", _C + "/{call_id}/decide"), "api_call_decide",
         lambda s, p, a: _found(s.decide(str(a.get("call_id") or ""), str(a.get("decision") or "")),
                                a.get("call_id")),
         "Answer what a call holds for the owner: approve or deny (the tap form of his spoken yes).",
-        principal=_OWNER, owner_only=True, write=True, tool=False, authority="authority"),
+        principal=_OWNER, owner_only=True, write=True, tool=False, authority="authority", owner_press=True),
     _op("calls.test_line", "test_line", ("POST", _C + "/line/test"), "api_line_test",
         lambda s, p, a: _on_loop(s, s.test_line(str(a.get("to") or ""))),
         "Test call: the Line calls the owner, says one line and hangs up. No turn runs.",
-        principal=_OWNER, owner_only=True, write=True, authority="egress", properties=_TO),
+        principal=_OWNER, owner_only=True, write=True, authority="egress", properties=_TO, owner_press=True,
+        blocking_io=True),
 )
 
 
