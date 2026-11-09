@@ -8,7 +8,7 @@ import summaryWire from "../../../../../../tests/fixtures/philo3_summary_wire.js
 import { WingSlotContext } from "../../../../desk/surface/wings";
 import { deskQueryClient } from "../../../../lib/queryClient";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import { MeetingHeader } from "../MeetingHeader";
+import { mastFacts } from "../plate";
 import { HistoryCore } from "../../HistoryCore";
 import { MeetingRecord } from "../MeetingRecord";
 import { apiFetch } from "../../../../lib/api";
@@ -53,7 +53,7 @@ function hub(states: Record<string, string>, reads: { terminalA: boolean }) {
       states[post[1]] = "queued";
       return { state: "queued", drainer: "running", jobId: `job-${post[1]}` } as never;
     }
-    const get = path.match(/^\/api\/meetings\/(\w+)$/);
+    const get = path.match(/^\/api\/meetings\/(\w+)(?:\?include_parked=true)?$/);
     if (get) {
       if (get[1] === "a" && states.a === "ready") reads.terminalA = true;
       return row(get[1], states[get[1]]) as never;
@@ -62,17 +62,17 @@ function hub(states: Record<string, string>, reads: { terminalA: boolean }) {
   });
 }
 
-/** Window grammar: select the row; its Run summary sits in the status bar. */
-async function runFromToolbar(id: string) {
-  fireEvent.click(within(await screen.findByTestId(`meeting-row-${id}`)).getByRole("button"));
-  fireEvent.click(await screen.findByTestId("run-intelligence-btn"));
+/** The language: the picked meeting's plate carries Run summary. */
+async function runFromPlate() {
+  const plate = await screen.findByTestId("meeting-plate");
+  fireEvent.click(await within(plate).findByTestId("detail-run-intelligence-btn"));
 }
 
 it("renders the footer receipt QUEUED → RAN for the run it names", async () => {
   const states: Record<string, string> = { a: "disabled" };
   hub(states, { terminalA: false });
-  render(<HistoryCore />);
-  await runFromToolbar("a");
+  render(<HistoryCore scope="meeting:a" />);
+  await runFromPlate();
   await screen.findByText(/^Queued at \d/);
   states.a = "ready";
   await screen.findByText(/^Ran at \d/, undefined, { timeout: 6000 });
@@ -83,10 +83,11 @@ it("a completion of meeting A cannot finish the receipt for queued meeting B", a
   const states: Record<string, string> = { a: "disabled", b: "disabled" };
   const reads = { terminalA: false };
   hub(states, reads);
-  render(<HistoryCore />);
-  await runFromToolbar("a");
+  const view = render(<HistoryCore scope="meeting:a" />);
+  await runFromPlate();
   await screen.findByText(/^Queued at \d/);
-  await runFromToolbar("b");
+  view.rerender(<HistoryCore scope="meeting:b" />);
+  await runFromPlate();
   await waitFor(() => expect(states.b).toBe("queued"));
   states.a = "ready";
   await waitFor(() => expect(reads.terminalA).toBe(true), { timeout: 5000 });
@@ -97,9 +98,9 @@ it("a completion of meeting A cannot finish the receipt for queued meeting B", a
 
 it("a fresh detail's zero removes a stale list warning", () => {
   const meeting = { id: "m1", title: "Meeting", unclearSpans: 1, intel_status: "disabled" };
-  const data = { detail: { ...meeting, unclearSpans: 0 }, startedAt: "2026-10-07T10:00:00", durationS: 30 };
-  render(<MeetingHeader meeting={meeting} data={data as never} />);
-  expect(screen.queryByTestId("unclear-lamp")).toBeNull();
+  // The record merges its fresh read over the list row (MeetingRecord.load).
+  expect(mastFacts(meeting)).toContain("1 unclear span");
+  expect(mastFacts({ ...meeting, unclearSpans: 0 })).not.toMatch(/unclear/);
 });
 
 // ── Astra iteration 2 ──────────────────────────────────────────────────
@@ -140,7 +141,6 @@ it("the full parent → Outcomes transition shows QUEUED then RAN, and Outcomes 
     return {} as never;
   });
   render(<Shell />);
-  expect(screen.getByRole("tab", { name: "Outcomes" })).toBeTruthy();
   expect(screen.queryByRole("tab", { name: /Review/i })).toBeNull();
   fireEvent.click(await screen.findByTestId("detail-run-intelligence-btn"));
   await waitFor(() => expect(screen.getByTestId("meetings-run-receipt")).toHaveTextContent(/^Queued at /));
@@ -223,13 +223,11 @@ it("a reload during a run recovers its timed receipt from the real producer rows
       phase = "running";
       return { state: "queued", drainer: "running", jobId: "job-x" } as never;
     }
-    if (path === `/api/meetings/${id}`) return wires[phase].detail as never;
+    if (path.split("?")[0] === `/api/meetings/${id}`) return wires[phase].detail as never;
     return {} as never;
   });
-  const first = render(<HistoryCore />);
-  // Window grammar: select the row; its Run summary sits in the status bar.
-  fireEvent.click(within(await screen.findByTestId(`meeting-row-${id}`)).getByRole("button"));
-  fireEvent.click(await screen.findByTestId("run-intelligence-btn"));
+  const first = render(<HistoryCore scope={`meeting:${id}`} />);
+  await runFromPlate();
   await screen.findByText(/^Queued at \d/);
   first.unmount();
   deskQueryClient.clear();

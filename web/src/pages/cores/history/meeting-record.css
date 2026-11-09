@@ -1,19 +1,74 @@
-/* Window grammar (2026-10-24): the meeting window. Title bar → toolbar →
-   a compact head (glyph + one muted line) → the summary as a reading
-   document → Decisions and Who owes what as 30 px rows (their verbs on
-   hover and focus) → the transcript fold → the status bar. Edge to edge:
-   the rows touch the frame; the reader keeps a comfortable measure. */
+/* The language (2026-11-08): the picked meeting. The mast and the spine,
+   the raised plate (the one thing now, its one verb), then the ledger: the
+   summary as a reading document, Decisions and Who owes what as rows by
+   weight (their verbs on hover and focus), the Results, the transcript
+   fold; the status bar at the foot. Container queries only. */
 .meeting-record {
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
-  min-height: 100%;
-  background: var(--wb-paper);
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  background: var(--hs-ground);
+  color: var(--hs-ink);
 }
-.meeting-record > .kit-toolbar {
-  position: sticky;
-  top: 0;
-  z-index: 3;
+.meeting-record-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+.mt-head {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 22px 0;
+}
+.mt-mast .surface-mast-title .surface-edit-in-place,
+.mt-mast .surface-mast-title :is(input, button) {
+  font: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+}
+/* Back is the narrow window's way to the rail; beside the rail it is not drawn. */
+@container surface (min-width: 640px) {
+  .mt-pane .meeting-record-back { display: none; }
+}
+/* ── the plate: the one raised thing ── */
+.mt-plate {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 14px 22px 0;
+  padding: 16px 18px;
+  border: 1px solid var(--hs-edge);
+  border-radius: 10px;
+  background: var(--hs-raised);
+  box-shadow: var(--hs-raised-shadow);
+}
+.mt-plate-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; margin: 0; }
+.mt-plate-title {
+  margin: 0;
+  min-width: 0;
+  color: var(--hs-ink);
+  font: 600 18px / 22px var(--font-display);
+  letter-spacing: -0.005em;
+  overflow-wrap: anywhere;
+}
+.mt-plate-facts { color: var(--hs-ink-2); font: 400 12px / 16px var(--font-mono); }
+.mt-plate-verbs { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.mt-plate-verbs:not(:has(.btn)) { display: none; }
+.mt-plate[data-tone="brass"] { box-shadow: var(--hs-raised-shadow), 0 0 0 1px var(--hs-brass-tint); }
+.mt-plate[data-tone="coral"] .mt-plate-title { color: var(--hs-coral-ink); }
+@media (prefers-reduced-motion: no-preference) {
+  .mt-plate { animation: mt-plate-in var(--motion-settle) var(--desk-ease); }
+}
+@keyframes mt-plate-in { from { opacity: 0; transform: translateY(4px); } }
+@container surface (max-width: 520px) {
+  .mt-head { padding: 12px 12px 0; }
+  .mt-plate { margin: 12px 12px 0; padding: 14px; }
+  .desk-next .mt-plate-verbs .btn,
+  .desk-next .mt-mast .surface-mast-verbs .btn { min-height: 44px; }
 }
 /* The run verbs the record's wells portal here are toolbar items. */
 .meeting-run-slot {
@@ -28,7 +83,7 @@
   font: 600 16px / 1 var(--font-sans);
   color: var(--wb-sel);
 }
-.meeting-record > .surface-section {
+.meeting-record-scroll > .surface-section {
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -36,43 +91,6 @@
   margin: 0;
   border: 0;
   background: transparent;
-}
-
-/* The compact head: the glyph and one muted line. */
-.meeting-record .meeting-head {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-height: 28px;
-  padding: 0;
-}
-.meeting-head-glyph {
-  flex: none;
-  width: 20px;
-  height: 20px;
-  filter: drop-shadow(0 1px 0 color-mix(in srgb, var(--wb-ink) 18%, transparent));
-}
-.meeting-head-line {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px 0;
-  min-width: 0;
-  font: 400 13px / 1.35 var(--font-sans);
-  color: var(--wb-muted);
-}
-.meeting-head-fact {
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums;
-}
-.meeting-head-line > * + *::before {
-  content: "·";
-  margin-inline: 8px;
-  color: var(--wb-muted);
-}
-.meeting-head-line > .kit-avatars {
-  display: inline-flex;
-  align-items: center;
 }
 
 /* The summary: a document at a reading measure; its heading is the one
@@ -282,9 +300,3 @@
   color: var(--wb-danger-ink);
 }
 
-/* W2-LIVE-2 (canvas A, After): the step rail under the toolbar, Today's
-   meetingSteps at Summary; one hairline below it, as on the Live window. */
-.meeting-record-steps {
-  padding: 10px 16px 10px;
-  border-bottom: 1px solid var(--wb-rule-soft);
-}

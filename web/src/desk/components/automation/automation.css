@@ -1,25 +1,33 @@
-/* Betterment A3 — the automation window (betterment/workbench/DESIGN.md §4).
-   The Workbench interior: the sentence on the slate ground, the newest
-   result on paper (a sunken well), older results as one ledger line each.
-   Type steps: primary 15 (the sentence values), body 14 (the reading),
-   secondary/caption 12 mono (labels, facts). One chip style: the library
-   surface-token[data-chip]. Phone: the named `surface` container. */
+/* An automation, native (the language, 2026-11-08): the mast and the
+   spine of its last runs, the sentence, the PLATE (the one raised thing),
+   the LEDGER of runs by weight, the lessons. One scroller; the type steps
+   are the mast's display title, primary 15 (the sentence), body 14 (the
+   reading), 12 mono (facts, times). Phone: the named `surface` container. */
+
+.automation-host { display: flex; flex-direction: column; min-height: 0; padding: 0; }
+.desk-next .desk-surface-body.automation-host[data-interior] { overflow: hidden; gap: 0; padding: 0; }
 
 .automation-body {
   display: flex;
+  flex: 1 1 auto;
   flex-direction: column;
-  gap: 16px;
-  padding: 14px 16px 18px;
   min-width: 0;
-  color: var(--wb-text);
+  min-height: 0;
+  color: var(--hs-ink);
+  background: var(--hs-ground);
 }
 
-.automation-title-verbs {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
+.automation-scroll {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+  overflow: auto;
+  padding: 16px 20px 20px;
 }
+.automation-pane { min-width: 0; }
+.automation-pane:empty { display: none; }
 
 .automation-switch { display: inline-flex; align-items: center; }
 
@@ -182,70 +190,6 @@
   color: var(--wb-danger-ink);
 }
 
-/* ── results ──────────────────────────────────────────────────────────── */
-
-.automation-results { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
-
-.automation-card {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  min-width: 0;
-  padding: 12px 16px 14px;
-}
-
-/* The head keeps one height in every state (facts, working, empty), so
-   nothing under it moves when a run starts or ends. */
-.automation-card-head {
-  display: flex;
-  align-items: center;
-  min-height: 28px;
-  min-width: 0;
-}
-.automation-card-head .surface-run-line { margin: 0; }
-
-.automation-card-facts {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px 10px;
-  min-width: 0;
-}
-.automation-card-when,
-.automation-card-empty {
-  font: 500 var(--font-size-xs, 12px) / 1.5 var(--font-mono);
-  letter-spacing: 0.02em;
-  color: var(--wb-muted);
-}
-.automation-card-empty { font-family: var(--font-sans); font-size: 14px; letter-spacing: 0; }
-
-.automation-card-body { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
-.automation-card[data-working] .automation-card-body { color: var(--wb-muted); }
-
-.automation-reading {
-  min-width: 0;
-  max-width: 76ch;
-  font: 400 14px / 1.55 var(--font-sans);
-  color: inherit;
-  user-select: text;
-  -webkit-user-select: text;
-}
-.automation-reading .agent-words { --scroll-hint-background: var(--wb-well); }
-
-.automation-quiet { margin: 0; color: var(--wb-muted); }
-
-.automation-card-verbs {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  gap: 6px;
-  min-width: 0;
-}
-/* The Send fold rides the verbs row: its head is one more verb (no rule of
-   its own); opened, its well grows under the row's verbs. */
-.automation-card-verbs .send-fold { flex: 1 1 240px; min-width: 0; }
-.automation-card-verbs .send-fold-head { padding-top: 0; border-top: 0; }
-
 .automation-failure {
   display: flex;
   flex-wrap: wrap;
@@ -261,18 +205,6 @@
   color: var(--wb-danger-ink);
   overflow-wrap: anywhere;
 }
-
-.automation-older-open {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 10px 12px 12px;
-  background: var(--wb-well);
-}
-
-/* A9: an old queue automation's one verb, above its tasks. */
-.automation-make-one { display: flex; flex-wrap: wrap; gap: 8px; min-width: 0; }
-
 
 /* ── what it has learned ──────────────────────────────────────────────── */
 
@@ -308,7 +240,7 @@
     line-clamp: 3;
     overflow: hidden;
   }
-  .automation-body { padding: 12px 12px 16px; gap: 14px; }
+  .automation-scroll { padding: 12px 12px 16px; gap: 12px; }
   .automation-line { grid-template-columns: minmax(0, 1fr); row-gap: 0; }
   .automation-line-label { padding-top: 4px; }
   .automation-line-static,
@@ -316,7 +248,6 @@
   .automation-line-press.btn--chrome { min-height: 44px; align-items: center; }
   .automation-line-aside { justify-self: start; }
   .automation-line-editor { grid-column: 1 / -1; }
-  .automation-card { padding: 10px 12px 12px; }
   .automation-lesson { align-items: flex-start; }
 }
 
@@ -481,17 +412,11 @@
    paper material. The sentence stays the primary working surface, while
    result cards and the setup editor use quiet outlines instead of competing
    window-like plates. */
-.desk-next .surface-host-body.automation-body {
-  gap: var(--surface-host-gap, 16px);
-}
-
 .desk-next .surface-host-body .automation-sentence,
-.desk-next .surface-host-body .automation-results,
 .desk-next .surface-host-body .automation-lessons {
   gap: var(--surface-group-gap, 12px);
 }
 
-.desk-next .surface-host-body .automation-card,
 .desk-next .surface-host-body .automation-setup-well {
   padding: 12px 14px 14px;
 }
@@ -501,7 +426,6 @@
   padding-top: 6px;
 }
 
-.desk-next .surface-host-body .automation-card-verbs,
 .desk-next .surface-host-body .automation-editor-verbs {
   flex-wrap: wrap;
 }
@@ -524,57 +448,6 @@
   .automation-setup-well { padding: 14px 12px 12px; }
   .automation-setup-heading { gap: 9px; }
   .automation-setup-heading h2 { font-size: 18px; }
-}
-
-/* ── Window grammar (2026-10-24) ─────────────────────────────────────────
-   Title bar → Toolbar [Run now · Edit · Send…] → the compact head (the
-   automation's glyph, the Do sentence in sans 15/500, one line of quiet
-   facts) → Results as a dense list view, edge to edge → the selected
-   result's reading → StatusBar (count · new · next start · engine and
-   where its prompt goes). The body runs edge to edge; the toolbar stays
-   put and the content scrolls under it. */
-
-.desk-next .desk-surface-body.automation-body[data-interior] {
-  overflow: hidden;
-  gap: 0;
-  padding: 0;
-}
-.automation-scroll {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow: auto;
-  gap: 0;
-}
-.automation-pane { padding: 0 16px; min-width: 0; }
-.automation-pane:empty { display: none; }
-.automation-scroll > .automation-pane:last-child { padding-bottom: 16px; }
-.automation-scroll > .surface-state,
-.automation-scroll > .automation-refusal { margin: 12px 16px 0; }
-
-/* The head: glyph | Do sentence over the facts line. */
-.automation-head {
-  display: grid;
-  grid-template-columns: 40px minmax(0, 1fr);
-  align-items: start;
-  column-gap: 12px;
-  padding: 12px 16px 10px;
-  border-bottom: 1px solid var(--wb-rule-soft);
-  background: linear-gradient(180deg, var(--wb-hover) 0%, transparent 100%);
-}
-.automation-head-sprite {
-  display: block;
-  width: 40px;
-  height: 40px;
-  margin-top: 2px;
-  object-fit: contain;
-}
-.automation-head-text {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
 }
 
 /* The lead line: the Do sentence. Its label is for assistive tech only. */
@@ -657,35 +530,7 @@
   outline-offset: 1px;
 }
 
-/* Results: the list view edge to edge, then the shown result's reading on
-   the window's paper (no card in the window). */
-.desk-next .surface-host-body .automation-results,
-.automation-results { gap: 0; }
-.automation-result-list {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-.automation-results > .automation-pane { padding-top: 10px; }
-.desk-next .automation-body .automation-card.surface-group-well,
-.automation-body .automation-card {
-  gap: 10px;
-  padding: 12px 16px 16px;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-}
-.automation-result-list + .automation-card,
-.automation-send + .automation-card { border-top: 1px solid var(--wb-rule-soft); }
-.automation-body .automation-card-when { font: 500 12px / 1.5 var(--font-sans); letter-spacing: 0; }
-.automation-body .automation-tasks,
-.automation-body [data-testid="automation-tasks"] { margin: 0 16px 12px; }
-.automation-send { padding-bottom: 10px; }
-
 @container surface (max-width: 559.9px) {
-  .automation-head { grid-template-columns: 32px minmax(0, 1fr); padding: 10px 12px 8px; column-gap: 10px; }
-  .automation-head-sprite { width: 32px; height: 32px; }
   .automation-pane { padding: 0 12px; }
   .automation-head-facts { flex-direction: column; align-items: stretch; }
   .automation-line[data-variant="fact"] {
@@ -697,7 +542,6 @@
   .automation-line[data-variant="fact"] + .automation-line[data-variant="fact"] > .automation-line-label::before { content: none; }
   .automation-line[data-variant] .automation-line-press.btn--chrome { min-height: 44px; }
   .automation-line[data-variant="fact"] > .automation-line-editor { grid-column: 1 / -1; }
-  .automation-body .automation-card { padding: 10px 12px 14px; }
 }
 /* A fact's About chips read as quiet words in the head, not mono caps. */
 .automation-line[data-variant="fact"] .automation-chips .surface-token {
@@ -714,4 +558,102 @@
   content: ",";
   margin-right: 4px;
   color: var(--wb-muted);
+}
+
+/* ── the mast and the spine of the last runs ─────────────────────────── */
+.automation-masthead { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.automation-mast-spine { max-width: 320px; }
+
+/* ── the plate: the one thing that matters now ──────────────────────── */
+.automation-plate {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  padding: 16px 18px;
+  border: 1px solid var(--hs-edge);
+  border-radius: 10px;
+  background: var(--hs-raised);
+  box-shadow: var(--hs-raised-shadow);
+  transition: box-shadow var(--motion-settle) var(--desk-ease), border-color var(--motion-settle) var(--desk-ease);
+}
+/* The plate's meaning colour is its top edge and its lamp, never a fill. */
+.automation-plate[data-tone="brass"] { border-top: 3px solid var(--hs-brass); }
+.automation-plate[data-tone="coral"] { border-top: 3px solid var(--hs-coral); }
+.automation-plate[data-tone="steel"] { border-top: 3px solid var(--hs-steel); }
+.automation-plate[data-tone="moss"] { border-top: 3px solid var(--hs-moss); }
+.automation-plate-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  min-height: 28px;
+  min-width: 0;
+  margin: 0;
+}
+.automation-plate-head .surface-run-line { margin: 0; }
+.automation-plate-title {
+  margin: 0;
+  color: var(--hs-ink);
+  font: 600 18px / 22px var(--font-display);
+  letter-spacing: -0.005em;
+  overflow-wrap: anywhere;
+}
+.automation-plate-facts { min-width: 0; color: var(--hs-ink-2); font: 400 12px / 16px var(--font-mono); }
+.automation-card-facts { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; min-width: 0; }
+.automation-card-when { color: var(--hs-ink-2); font: 400 12px / 16px var(--font-mono); }
+.automation-card-body { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.automation-plate[data-working] .automation-card-body { color: var(--hs-ink-2); }
+.automation-plate-verbs { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 8px; min-width: 0; }
+.automation-plate-verbs .send-fold { flex: 1 1 240px; min-width: 0; }
+.automation-plate-verbs .send-fold-head { padding-top: 0; border-top: 0; }
+.automation-reading { min-width: 0; max-width: 76ch; font: 400 14px / 1.55 var(--font-sans); color: var(--hs-ink); user-select: text; -webkit-user-select: text; }
+.automation-reading .agent-words { --scroll-hint-background: var(--hs-raised); }
+.automation-quiet { margin: 0; color: var(--hs-ink-2); }
+
+/* ── the ledger of runs, newest first ───────────────────────────────── */
+.automation-ledger { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.automation-ledger-title { margin: 0; color: var(--hs-ink-2); font: 600 12px / 16px var(--font-sans); }
+.automation-runs { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
+.automation-run {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  border-top: 1px solid var(--hs-rule);
+}
+.automation-run:first-child { border-top: 0; }
+.desk-next .automation-run .btn--chrome.automation-run-line {
+  display: grid;
+  grid-template-columns: 24px 64px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 40px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  text-align: left;
+  color: var(--hs-ink);
+}
+.automation-run[aria-current="true"] .btn--chrome.automation-run-line { background: var(--hs-plate); box-shadow: inset 0 0 0 1px var(--hs-edge); }
+.automation-run-spine { width: 24px; }
+.automation-run-when { color: var(--hs-ink-2); font: 400 12px / 16px var(--font-mono); }
+.automation-run-text { min-width: 0; overflow: hidden; font: 500 14px / 20px var(--font-sans); text-overflow: ellipsis; white-space: nowrap; }
+/* By weight: a run that waits on him or failed reads heavier. */
+.automation-run[data-tone="brass"] .automation-run-text,
+.automation-run[data-tone="coral"] .automation-run-text { font-weight: 600; }
+.automation-run-state { font: 600 12px / 16px var(--font-sans); color: var(--hs-ink-2); }
+.automation-run-state[data-tone="brass"] { color: var(--hs-brass-ink); }
+.automation-run-state[data-tone="coral"] { color: var(--hs-coral-ink); }
+.automation-run-state[data-tone="moss"] { color: var(--hs-moss-ink); }
+
+@container surface (max-width: 559.9px) {
+  .automation-plate { padding: 12px 12px 14px; }
+  .automation-plate-verbs .btn { min-height: 44px; }
+  /* Each row's two presses own their whole 44 px halo: taller than 44,
+     and square corners (a rounded corner gives its halo point away). */
+  .automation-run { padding: 2px 0; }
+  .desk-next .automation-run .btn--chrome.automation-run-line { grid-template-columns: 20px 52px minmax(0, 1fr); min-height: 48px; border-radius: 2px; }
+  .automation-run-state { display: none; }
+  .desk-next .automation-run .btn.automation-run-open { min-height: 48px; }
 }

@@ -3,7 +3,6 @@ export { displayState, stateToken, type StateToken, ledgerDate, durationToken, c
 export type { Receipt, NeedsRow, DetailView, RunIdentity } from "./helpers";
 export { ImportSection } from "./ImportSection";
 export { MeetingDetail } from "./MeetingDetail";
-export { MeetingHeader } from "./MeetingHeader";
 export { CaptureSlab } from "./CaptureSlab";
 export { PreparedResults } from "./PreparedResults";
 export { NeedsYouTable } from "./NeedsYouTable";

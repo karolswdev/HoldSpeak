@@ -25,7 +25,7 @@
     "src/desk/components/SessionPullout.tsx",
     "src/desk/components/SurfaceWindows.tsx",
     "src/desk/components/TrustWindow.tsx",
-    "src/desk/components/WorkbenchTemplatePicker.tsx",
+    "src/desk/components/automation/Starters.tsx",
     "src/desk/pullouts/ArtifactPullout.tsx",
     "src/desk/pullouts/CoderPullout.tsx",
     "src/desk/pullouts/DirectoryPullout.tsx",

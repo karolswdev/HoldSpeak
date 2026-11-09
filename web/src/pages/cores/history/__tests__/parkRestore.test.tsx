@@ -147,7 +147,7 @@ describe("PHILO-13-02 Park and Restore on Meetings", () => {
     );
     expect(hub.calls.some((c) => c.path === "/api/meetings/m-2/restore" && c.method === "POST")).toBe(true);
     const back = await screen.findByTestId("meeting-row-m-2");
-    await waitFor(() => expect(back.getAttribute("aria-selected")).toBe("true"));
+    await waitFor(() => expect(back.getAttribute("data-selected")).toBe("true"));
     await waitFor(() => expect(screen.queryByText(/^Parked \d+$/)).toBeNull());
   });
 
@@ -200,7 +200,7 @@ describe("PHILO-13-02 Meetings after a reload", () => {
       expect(screen.getByTestId("meetings-park-receipt").textContent).toMatch(/^Restored at \d\d:\d\d$/),
     );
     const back = await screen.findByTestId("meeting-row-m-2");
-    await waitFor(() => expect(back.getAttribute("aria-selected")).toBe("true"));
+    await waitFor(() => expect(back.getAttribute("data-selected")).toBe("true"));
     await waitFor(() => expect(screen.queryByText(/^Parked \d+$/)).toBeNull());
     expect(hub.calls.filter((c) => c.method !== "GET")).toEqual([{ path: "/api/meetings/m-2/restore", method: "POST" }]);
   });

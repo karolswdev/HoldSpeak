@@ -1,23 +1,19 @@
 // HS-170-04 -- CatalogRail tests: the run-summary verb appears only
-// on OFF rows with a transcript, never on no-transcript rows. Window grammar
-// (2026-10-24): the verb is the selected row's, in the status bar
-// (MeetingSelectionVerbs); the list view says the state.
+// on OFF rows with a transcript, never on no-transcript rows. The language
+// (2026-11-08): the verb is the picked meeting's plate (meetingPlate); the
+// rail says the state.
 
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { CatalogRail, MeetingSelectionVerbs } from "../CatalogRail";
-
-function selection(row: Record<string, unknown>) {
-  return <MeetingSelectionVerbs row={row} primary onRunIntelligence={vi.fn()} runningId={null} />;
-}
+import { CatalogRail } from "../CatalogRail";
+import { meetingPlate } from "../plate";
 
 function baseProps(rows: Record<string, unknown>[]) {
   return {
     meetingRows: rows,
     meetings: { loading: false, error: "", reload: vi.fn(async () => ({})) },
-    selected: null,
-    setSelected: vi.fn(),
-    onRunIntelligence: vi.fn(),
+    picked: null,
+    onPick: vi.fn(),
     runningId: null,
   };
 }
@@ -43,8 +39,8 @@ describe("CatalogRail Run summary verb (HS-170-04)", () => {
         },
       },
     ];
-    render(<><CatalogRail {...baseProps(rows)} />{selection(rows[0])}</>);
-    expect(screen.getByText("Run summary")).toBeInTheDocument();
+    render(<CatalogRail {...baseProps(rows)} />);
+    expect(meetingPlate(rows[0], {}).title).toBe("Run intelligence");
     expect(screen.getByTestId("state-token").textContent).toBe("Not run");
   });
 
@@ -60,12 +56,12 @@ describe("CatalogRail Run summary verb (HS-170-04)", () => {
         transcriptWords: null,
       },
     ];
-    render(<><CatalogRail {...baseProps(rows)} />{selection(rows[0])}</>);
-    expect(screen.queryByText("Run summary")).not.toBeInTheDocument();
+    render(<CatalogRail {...baseProps(rows)} />);
+    expect(meetingPlate(rows[0], {}).kind).toBe("transcribe");
     expect(screen.getByText("No transcript")).toBeInTheDocument();
   });
 
-  it("a summarised row offers no run verb; the toolbar's Open opens it", () => {
+  it("a summarised row offers no run verb; its plate is the follow-up", () => {
     const rows = [
       {
         id: "m-saved",
@@ -77,8 +73,8 @@ describe("CatalogRail Run summary verb (HS-170-04)", () => {
         transcriptWords: 800,
       },
     ];
-    render(<><CatalogRail {...baseProps(rows)} />{selection(rows[0])}</>);
-    expect(screen.queryByText("Run summary")).not.toBeInTheDocument();
+    render(<CatalogRail {...baseProps(rows)} />);
+    expect(meetingPlate(rows[0], {}).kind).toBe("send");
     expect(screen.getByTestId("state-token").textContent).toBe("Ran");
   });
 });

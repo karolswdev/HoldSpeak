@@ -79,8 +79,9 @@ def test_hand_automation_do_with_review_controls_are_real_and_saved(
                 go.get_by_role("menuitem", name="Automations").first.evaluate("el => el.click()")
                 page.get_by_test_id("automation-new").wait_for(timeout=45_000)
                 page.get_by_test_id("automation-new").click()
-                chooser = page.get_by_role("region", name="New Automation")
-                chooser.wait_for(timeout=45_000)
+                # The starters are cards in the Automations window's pane.
+                chooser = page.locator("[id='surface-workbenches']")
+                chooser.get_by_test_id("automation-starter-scratch").wait_for(timeout=45_000)
                 with page.expect_response(
                     lambda response: response.url.endswith("/api/workbenches")
                     and response.request.method == "POST"

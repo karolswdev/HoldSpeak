@@ -2,9 +2,9 @@
  *
  * The old create path POSTed a blank Workbench up front and opened it; the
  * blank's template picker then created ANOTHER record, orphaning the blank.
- * Now the gesture opens a PRE-persistence chooser and persists nothing until
- * a choice is made. This test proves the gesture creates no record (no
- * apiRequest) and opens the chooser instead.
+ * Now the gesture opens the Automations app on its starters and persists
+ * nothing until a starter is pressed. This test proves the gesture creates
+ * no record (no apiRequest) and opens the app instead.
  */
 import { describe, it, expect, beforeEach, vi } from "vitest";
 
@@ -29,25 +29,19 @@ import { useDesk } from "../../store";
 describe("createPrimitive('workbench') — one gesture, one record", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    useDesk.setState({ newWorkbenchChooser: null, workbenchWindows: [] });
+    useDesk.setState({ workbenchWindows: [], windowsById: {} });
   });
 
-  it("persists NO record and opens the pre-persistence chooser", async () => {
+  it("persists NO record and opens the Automations app on its starters", async () => {
     await useDesk.getState().createPrimitive("workbench");
 
-    // No orphan blank Workbench was POSTed by the gesture.
+    // No orphan blank automation was POSTed by the gesture.
     expect(apiRequest).not.toHaveBeenCalled();
-    // The chooser is open (the single record is minted by the chosen exit).
-    expect(useDesk.getState().newWorkbenchChooser).not.toBeNull();
+    // The app is open on New automation (the single record is minted by
+    // the starter he presses).
+    expect(useDesk.getState().places["automations/new"]).toBeTruthy();
+    expect(useDesk.getState().windowsById["surface-workbenches"]).toBeTruthy();
     // No window was opened for a not-yet-existing record.
     expect(useDesk.getState().workbenchWindows).toHaveLength(0);
-  });
-
-  it("closeNewWorkbenchChooser dismisses without persisting", () => {
-    useDesk.getState().openNewWorkbenchChooser();
-    expect(useDesk.getState().newWorkbenchChooser).not.toBeNull();
-    useDesk.getState().closeNewWorkbenchChooser();
-    expect(useDesk.getState().newWorkbenchChooser).toBeNull();
-    expect(apiRequest).not.toHaveBeenCalled();
   });
 });

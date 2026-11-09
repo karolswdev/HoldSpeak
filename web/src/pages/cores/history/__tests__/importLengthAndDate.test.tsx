@@ -63,9 +63,8 @@ describe("the imported row draws that length and today's date", () => {
       <CatalogRail
         meetingRows={row(startedAt)}
         meetings={{ loading: false, error: "", reload: vi.fn(async () => ({})) }}
-        selected={null}
-        setSelected={vi.fn()}
-        onRunIntelligence={vi.fn()}
+        picked={null}
+        onPick={vi.fn()}
         runningId={null}
       />,
     );

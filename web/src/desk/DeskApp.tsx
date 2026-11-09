@@ -23,7 +23,6 @@ import { LaneWindow } from "./lane/LaneWindow";
 import { DeliveryBoard } from "./components/DeliveryBoard";
 import { DeliveryDossierWindow } from "./components/DeliveryDossierWindow";
 import { DeliveryTerminalWindow } from "./components/DeliveryTerminalWindow";
-import { NewWorkbenchChooser } from "./components/NewWorkbenchChooser";
 import { ScheduleCreateWindow } from "./components/ScheduleCreateWindow";
 import { AskPanel } from "./components/AskPanel";
 import { HandSheet } from "./components/HandSheet";
@@ -305,7 +304,6 @@ function DeskFaces() {
           </Suspense>
         </ApplicationBoundary>
       ))}
-      {!arrivalRequired && <NewWorkbenchChooser />}
       {!arrivalRequired && <ScheduleCreateWindow />}
       {!arrivalRequired && builder && <PanePicker />}
       {!arrivalRequired && <SessionPullout />}

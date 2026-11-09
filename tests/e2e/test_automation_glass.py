@@ -188,7 +188,8 @@ class TestFridayWalk:
 
                 started, presses = time.monotonic(), 0
                 new.click(); presses += 1
-                friday = page.locator("[id='workbench:__new__']").get_by_test_id("automation-starter-friday-team-update")
+                # The starters are cards in the Automations window's pane (no chooser window).
+                friday = page.locator("[id='surface-workbenches']").get_by_test_id("automation-starter-friday-team-update")
                 friday.wait_for(timeout=T)
                 page.screenshot(path=str(SHOTS / f"walk-1-new-{width}.png"))
                 friday.click(); presses += 1
@@ -212,6 +213,11 @@ class TestFridayWalk:
                 seconds = time.monotonic() - started
                 reading.scroll_into_view_if_needed()
                 page.screenshot(path=str(SHOTS / f"walk-3-result-{width}.png"))
+                # The native face at rest: With folded, the mast, the plate
+                # and the ledger of runs from the top.
+                with_line.get_by_role("button").first.click()
+                page.get_by_test_id("automation-mast").scroll_into_view_if_needed()
+                page.screenshot(path=str(SHOTS / f"walk-4-native-{width}.png"))
                 assert presses <= 6, presses
                 assert "##" not in reading.inner_text()
                 print(f"FRIDAY WALK {width}: {presses} presses, {seconds:.1f} s")

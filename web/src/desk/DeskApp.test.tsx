@@ -93,7 +93,6 @@ vi.mock("./components/DeliveryTerminalWindow", () => ({ DeliveryTerminalWindow: 
 vi.mock("./components/RoadmapWindow", () => ({ RoadmapWindow: marker("roadmap-window") }));
 vi.mock("./components/RepoWindow", () => ({ RepoWindow: marker("repo-window") }));
 vi.mock("./components/automation/AutomationHost", () => ({ AutomationHost: marker("automation-window") }));
-vi.mock("./components/NewWorkbenchChooser", () => ({ NewWorkbenchChooser: marker("workbench-chooser") }));
 vi.mock("./components/ScheduleCreateWindow", () => ({ ScheduleCreateWindow: marker("schedule-create") }));
 vi.mock("./components/AskPanel", () => ({ AskPanel: marker("ask-panel") }));
 vi.mock("./components/DeskToolInspector", () => ({ DeskToolInspector: marker("tool-inspector") }));

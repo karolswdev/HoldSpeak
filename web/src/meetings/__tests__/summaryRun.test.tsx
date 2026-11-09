@@ -25,7 +25,6 @@ import {
   readPlannedRoute,
   readRunReceipt,
 } from "../summaryRoute";
-import { MeetingSelectionVerbs } from "../../pages/cores/history/CatalogRail";
 import { NeedsYouTable } from "../../pages/cores/history/NeedsYouTable";
 
 vi.mock("../../lib/api", async (original) => ({
@@ -281,66 +280,6 @@ describe("HS-201-04 the record's Retry", () => {
     // PHILO-17 ALIVE: plain words on the face; the wire reason in the title.
     expect(screen.getByTestId("recovery-route-unavailable").textContent).toBe("No engine for summaries");
     expect(screen.getByTestId("recovery-route-unavailable").getAttribute("title")).toContain("No assignment");
-  });
-});
-
-describe("HS-201-04 the ledger's Retry", () => {
-  beforeEach(() => forgetExecutedReceipts());
-  // Window grammar: the selected row's verbs live in the Meetings status bar
-  // (MeetingSelectionVerbs); the rail itself is the list view.
-  function rail(row: Record<string, unknown>, onRun = vi.fn()) {
-    render(
-      <MeetingSelectionVerbs
-        row={row}
-        primary
-        onRunIntelligence={onRun}
-        runningId={null}
-      />,
-    );
-    return onRun;
-  }
-
-  const FAILED_ROW = {
-    id: "meeting-1",
-    title: "Census standup",
-    started_at: "2026-09-19T09:00:00Z",
-    duration_seconds: 1800,
-    capture_status: "finalized",
-    intel_status: "error",
-    transcriptWords: 1204,
-    planned_route: READY_ROUTE,
-  };
-
-  it("dispatches the run with the route it DISPLAYED", () => {
-    // The audit measured zero requests from this verb; the counsel then
-    // measured a request whose hash came from a different object than the
-    // chip beside it. Both are fenced here: the row hands the callback the
-    // exact route it disclosed.
-    const onRun = rail(FAILED_ROW);
-    fireEvent.click(screen.getByTestId("retry-intelligence-btn"));
-    expect(onRun).toHaveBeenCalledWith(
-      "meeting-1",
-      readPlannedRoute({ planned_route: READY_ROUTE }),
-    );
-  });
-
-  it("names the route in the verb's hover title before the click", () => {
-    rail(FAILED_ROW);
-    expect(screen.queryByTestId("row-route")).toBeNull();
-    expect(screen.getByTestId("retry-intelligence-btn").getAttribute("title")).toContain("192.168.1.43");
-  });
-
-  it("withholds the verb when no route resolves", () => {
-    rail({ ...FAILED_ROW, planned_route: UNAVAILABLE_ROUTE });
-    expect(screen.queryByTestId("retry-intelligence-btn")).toBeNull();
-    // PHILO-17 ALIVE: plain words on the face; the wire reason in the title.
-    expect(screen.getByTestId("row-route-unavailable").textContent).toBe("No engine for summaries");
-    expect(screen.getByTestId("row-route-unavailable").getAttribute("title")).toContain("No assignment");
-  });
-
-  it("shows the destinations contacted after the run", () => {
-    rail({ ...FAILED_ROW, run_receipt: SUCCEEDED_RECEIPT });
-    expect(screen.getByTestId("row-attempts").textContent).toBe("Failed");
   });
 });
 

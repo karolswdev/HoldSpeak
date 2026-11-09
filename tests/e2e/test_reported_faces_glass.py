@@ -18,6 +18,9 @@ REPORT = "Added the rollback checkpoint. Checking the migration tests."
 
 
 def _fit_and_hit(button: Any) -> None:
+    # A card below the fold of a scrolling pane is reached by scrolling it
+    # in (the product rule: a Button is hittable once scrolled into view).
+    button.scroll_into_view_if_needed()
     facts = button.evaluate("""el => {
       const r=el.getBoundingClientRect();
       const owner=el.closest('[data-layer="window"]').getBoundingClientRect();
@@ -110,7 +113,8 @@ def test_reported_faces_and_saved_images(tmp_path: Path, monkeypatch: pytest.Mon
             page.get_by_role("button", name="Go", exact=True).first.click()
             page.locator("nav[aria-label='Go menu']").get_by_role("menuitem", name="Automations").first.click()
             page.get_by_test_id("automation-new").click()
-            chooser = page.locator("[id='workbench:__new__'][data-layer='window']")
+            # New automation: the starters in the Automations window's pane.
+            chooser = page.locator("[id='surface-workbenches'][data-layer='window']")
             scratch = chooser.get_by_test_id("automation-starter-scratch")
             scratch.wait_for()
             starters = _api(page, "GET", "/api/workbench-templates", token=TOKEN)["templates"]
@@ -124,20 +128,20 @@ def test_reported_faces_and_saved_images(tmp_path: Path, monkeypatch: pytest.Mon
                 assert description and description["width"] <= 1 and description["height"] <= 1, description
                 assert choice.get_attribute("title") == starter["description"]
             _fit_and_hit(scratch)
-            assert chooser.locator(".wb-body").evaluate("el => el.scrollWidth <= el.clientWidth + 1")
+            assert chooser.locator(".automation-new-pane, [data-testid='automation-home-empty']").first.evaluate("el => el.scrollWidth <= el.clientWidth + 1")
             page.screenshot(path=str(SHOTS / f"new-automation-{width}.png"))
-            chooser.get_by_role("button", name="Give feedback on New Automation", exact=True).click()
+            chooser.get_by_role("button", name="Give feedback on Automations", exact=True).click()
             page.locator("[data-ui-feedback]").get_by_text("Recording", exact=True).wait_for()
             page.wait_for_timeout(500)
-            _save_feedback(page, width, shot_stem="reported-automation", window_id="workbench:__new__", draft=None,
+            _save_feedback(page, width, shot_stem="reported-automation", window_id="surface-workbenches", draft=None,
                            png_regions={"scratch": scratch, "choices": chooser.locator(".automation-starter-grid")})
             before = _api(page, "GET", "/api/workbenches", token=TOKEN)["workbenches"]
             with page.expect_response(lambda response: response.url.endswith("/api/workbench-templates/friday-team-update/instantiate") and response.request.method == "POST") as made:
                 chooser.get_by_test_id("automation-starter-friday-team-update").click()
             assert made.value.ok, made.value.text()
             receipt = made.value.json()
-            page.get_by_test_id("automation-window").wait_for()
-            assert chooser.count() == 0
+            chooser.get_by_test_id("automation-window").wait_for()
+            assert chooser.get_by_test_id("automation-starter-scratch").count() == 0
             after = _api(page, "GET", "/api/workbenches", token=TOKEN)["workbenches"]
             assert len(after) == len(before) + 1
             assert receipt["workbench"]["id"] in {row["id"] for row in after}

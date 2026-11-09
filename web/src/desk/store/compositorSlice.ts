@@ -29,6 +29,7 @@ import {
   openTerminalWindow as openTerminalWindowState,
 } from "../terminals/open";
 import { terminalWindowId } from "../terminals/windows";
+import { NEW_AUTOMATION_PLACE } from "../components/automation/places";
 
 // ---- localStorage persistence -------------------------------------------
 
@@ -228,7 +229,6 @@ export type CompositorSlice = Pick<
   | "roadmapWindows"
   | "repositoryWindows"
   | "workbenchWindows"
-  | "newWorkbenchChooser"
   | "recentOpened"
   | "recordRecentOpen"
   | "openPullout"
@@ -246,8 +246,7 @@ export type CompositorSlice = Pick<
   | "closeRepositoryWindow"
   | "openWorkbenchWindow"
   | "closeWorkbenchWindow"
-  | "openNewWorkbenchChooser"
-  | "closeNewWorkbenchChooser"
+  | "openNewAutomation"
   | "openSurfaceWindow"
   | "openTerminalWindow"
   | "closeTerminalWindow"
@@ -296,7 +295,6 @@ export const createCompositorSlice: SliceCreator<CompositorSlice> = (set, get) =
   workbenchWindows: reopened("id", initialWindowLists.workbench),
   // Exempt (B2 story table): the chooser holds no typed text and no record;
   // one pick makes the record, so reopening is the same one gesture.
-  newWorkbenchChooser: null,
   recentOpened: initialWorkspace.recentOpened ?? [],
   drafts: initialWorkspace.drafts ?? {},
   places: initialWorkspace.places ?? {},
@@ -524,11 +522,10 @@ export const createCompositorSlice: SliceCreator<CompositorSlice> = (set, get) =
     closeWorkbench(id, set, get);
     saveDeskWorkspace(get());
   },
-  openNewWorkbenchChooser(origin) {
-    set({ newWorkbenchChooser: { origin: origin ?? null } });
-  },
-  closeNewWorkbenchChooser() {
-    set({ newWorkbenchChooser: null });
+  openNewAutomation() {
+    // The Automations app reads the place once, then clears it (AutomationsCore).
+    get().setPlace(NEW_AUTOMATION_PLACE, String(Date.now()));
+    get().openSurfaceWindow("open-workbenches");
   },
 
   recordRecentOpen(ref) {

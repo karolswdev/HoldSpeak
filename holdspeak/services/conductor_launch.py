@@ -501,6 +501,15 @@ LAUNCH_RULES.update({name: (NEVER, "", "") for name in (
     "people.owed.create", "people.commitment.send_to_workbench", "people.commitment.satisfy",
     "people.calendar.link", "people.calendar.unlink", "people.owner_alias.link", "people.owner_alias.unlink")})
 LAUNCH_RULES["desk.request.read"] = (READ, "", "")
+# The Automations verbs (2026-11-08, ``automation_operations.py``): a launch
+# reads the starters, the new results and the lessons; it changes only an
+# automation it made (as automation.update), and a starter makes a new one.
+LAUNCH_RULES.update({name: (READ, "", "") for name in (
+    "automation.template.list", "automation.new.list", "automation.lesson.list")})
+LAUNCH_RULES.update({name: (OWN, "workbench", "workbench_id") for name in (
+    "automation.set_when", "automation.set_engine", "automation.make_one", "automation.result.open",
+    "automation.lesson.forget")})
+LAUNCH_RULES["automation.template.instantiate"] = (CREATE, "", "")
 
 #: Not offered to a launch at all (the palette leaves them out).
 NOT_OFFERED: frozenset[str] = frozenset(n for n, (rule, _k, _a) in LAUNCH_RULES.items() if rule in (NEVER, COMPOSER))

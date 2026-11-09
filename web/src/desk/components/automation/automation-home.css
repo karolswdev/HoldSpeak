@@ -1,6 +1,8 @@
-/* Betterment A7 — the Automations home and New automation's starters.
-   The chooser cards use the shared ChoiceCardShell material on library
-   Buttons: a 32px pictogram, a 15px name and one compact fact line. */
+/* The Automations app (the language, 2026-11-08): the rail of automations
+   at the left, the chosen automation at the right, the status bar at the
+   foot; New automation's starters as pictogram cards in the right pane.
+   The cards use the shared ChoiceCardShell material on library Buttons: a
+   32px pictogram, a 15px name and one compact fact line. */
 
 .automation-starters {
   display: flex;
@@ -115,19 +117,100 @@
   .automation-starter-grid { grid-template-columns: minmax(0, 1fr); }
 }
 
-/* The home: the empty line, then the starters. */
-.automation-home-empty {
+/* ── the app: rail | pane, then the status bar ── */
+.automation-app {
   display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  background: var(--hs-ground);
+  color: var(--hs-ink);
+}
+.automation-frame { display: flex; flex: 1 1 auto; min-width: 0; min-height: 0; }
+.automation-app-pane { display: flex; flex: 1 1 auto; flex-direction: column; min-width: 0; min-height: 0; }
+.automation-app-pane > .automation-body,
+.automation-app-pane > .surface-state { flex: 1 1 auto; }
+.automation-new-pane { display: flex; flex-direction: column; gap: 8px; min-width: 0; overflow: auto; padding: 8px 8px 16px; }
+
+.automation-rail {
+  display: flex;
+  flex: none;
   flex-direction: column;
   gap: 4px;
-  min-width: 0;
+  width: 232px;
+  padding: 12px 10px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  background: var(--hs-rule);
+  border-right: 1px solid var(--hs-edge);
 }
-
-/* Window grammar (2026-10-24): the home is a list view under its toolbar;
-   it fills the window and scrolls inside it. */
-.automation-home-list {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 auto;
+.desk-next .automation-rail .btn.automation-rail-new { justify-content: center; margin-bottom: 6px; }
+.desk-next .automation-rail .btn--chrome.automation-rail-item {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  grid-template-areas: "sprite name" ". spine" ". when";
+  align-items: center;
+  gap: 4px 8px;
+  width: 100%;
   min-height: 0;
+  padding: 8px 10px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  text-align: left;
+  color: var(--hs-ink);
+  transition: background var(--motion-settle) var(--desk-ease), box-shadow var(--motion-settle) var(--desk-ease);
+}
+.desk-next .automation-rail .btn--chrome.automation-rail-item[data-picked] {
+  border-color: var(--hs-edge);
+  background: var(--hs-raised);
+  box-shadow: var(--hs-raised-shadow);
+}
+.automation-rail-sprite { grid-area: sprite; width: 20px; height: 20px; object-fit: contain; }
+.automation-rail-name {
+  grid-area: name;
+  min-width: 0;
+  overflow: hidden;
+  font: 600 14px / 18px var(--font-sans);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.automation-rail-item[data-new] .automation-rail-name::after {
+  content: "";
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-left: 6px;
+  border-radius: 50%;
+  background: var(--hs-brass);
+  vertical-align: 1px;
+}
+.automation-rail-spine { grid-area: spine; }
+.automation-rail-spine-none { display: block; height: 4px; border-radius: 2px; background: var(--hs-edge); }
+.automation-rail-when { grid-area: when; min-width: 0; overflow-wrap: anywhere; color: var(--hs-ink-2); font: 400 12px / 16px var(--font-mono); }
+
+/* At a phone (or a narrow window) the rail is a band on top of the pane:
+   its items wrap (never a sideways scroll that clips them), each one a
+   44 px target with square corners (a rounded corner gives its halo
+   point away). */
+@container surface (max-width: 640px) {
+  .automation-frame { flex-direction: column; }
+  .automation-rail {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 6px;
+    width: auto;
+    max-height: 40%;
+    padding: 8px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    border-right: 0;
+    border-bottom: 1px solid var(--hs-edge);
+  }
+  .desk-next .automation-rail .btn.automation-rail-new { flex: 1 1 100%; min-height: 48px; margin: 0; }
+  .desk-next .automation-rail .btn--chrome.automation-rail-item { flex: 1 1 150px; min-width: 0; min-height: 48px; border-radius: 2px; }
+  .automation-new-pane { padding: 4px 0 16px; }
+  /* New automation at the phone: the starters take the sheet; the band
+     keeps only its New automation press (pressed again, it goes back). */
+  .automation-frame[data-making] .automation-rail-item { display: none; }
 }

@@ -981,7 +981,9 @@ def runtime_registry(primitives: Any = None, meetings: Any = None) -> operations
              "primitive_service": lambda: primitives or PrimitiveService(db, observer=obs),
              "meeting_service": lambda: meetings or MeetingService(db, observer=obs),
              "desk_window_service": lambda: DeskWindowService(db),
-             "people_service": lambda: people_family.build_people_service()}
+             "people_service": lambda: people_family.build_people_service(),
+             # The Automations verbs (automation_operations.py): the hub's one composed instance.
+             "workbench_service": lambda: WorkbenchService(db, observer=obs)}
     return operations.for_runtime(program_service=lambda: operations.LIVE_PROGRAM_SERVICE,
                                   phone_service=lambda: operations.LIVE_PHONE_SERVICE, **{
         name: (lambda name=name, build=build: runtime_service(name, build)) for name, build in plain.items()})

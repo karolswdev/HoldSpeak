@@ -17,9 +17,8 @@ function baseProps(rowCount: number) {
   return {
     meetingRows,
     meetings: { loading: false, error: "", reload: vi.fn(async () => ({})) },
-    selected: null,
-    setSelected: vi.fn(),
-    onRunIntelligence: vi.fn(),
+    picked: null,
+    onPick: vi.fn(),
     runningId: null,
   };
 }
@@ -68,9 +67,8 @@ describe("CatalogRail stream (HS-170-04)", () => {
     render(<CatalogRail
       meetingRows={rows}
       meetings={{ loading: false, error: "", reload: vi.fn(async () => ({})) }}
-      selected={null}
-      setSelected={vi.fn()}
-      onRunIntelligence={vi.fn()}
+      picked={null}
+      onPick={vi.fn()}
       runningId={null}
     />);
     expect(screen.getByText("No transcript")).toBeInTheDocument();
