@@ -270,7 +270,7 @@ UPPER_DEBT: dict[str, int] = {
     "desk/attention.ts": 2,  # the rank-class compare; a ref key (KAN-7)
     "desk/documentSends.tsx": 1,  # the short id plate (85F927)
     "desk/hooks/useWriteReceipt.ts": 1,  # verbKey: the failure's compare key, never drawn
-    "desk/lane/LaneWindow.tsx": 1,  # the review-decision compare
+    "desk/conductor/AgentLane.tsx": 1,  # the review-decision compare
     "desk/lane/laneWire.ts": 2,  # the wait-kind and review-decision compares
     "desk/missioncontrol.ts": 1,  # the CI-conclusion compare
     "desk/needsYou.ts": 2,  # waitingOn: the head-part compare, both sides

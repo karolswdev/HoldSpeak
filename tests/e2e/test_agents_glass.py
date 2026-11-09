@@ -183,14 +183,12 @@ def _open_lane(page: Any) -> Any:
     conductor.wait_for(timeout=15000)
     agent = conductor.locator("[data-testid='agents-rail'] [data-object-id='launch:launch_p16_words']")
     agent.wait_for(timeout=20000)
-    # The language (2026-11-08): a press on the tile picks the agent; its
-    # plate's Open opens its window.
+    # One face per agent (2026-11-08): a press on the tile picks the agent;
+    # the pane is its face (the lane window is parked).
     agent.locator(".aw-tile-open").click()
-    conductor.get_by_test_id("agents-pane").locator("[data-testid='conductor-open']").first.click()
-    window = page.locator(".is-lane")
-    window.wait_for(timeout=15000)
-    page.locator("[data-testid='lane-rail']").wait_for(timeout=15000)
-    return window
+    pane = conductor.get_by_test_id("agents-pane")
+    pane.get_by_test_id("agents-ledger").wait_for(timeout=15000)
+    return conductor
 
 
 def _isolate(tmp_path: Path, monkeypatch) -> None:
@@ -255,7 +253,7 @@ def test_a_full_question_at_393_wraps_inside_needs_you_and_the_agent_window(tmp_
             row.screenshot(path=str(SHOTS / f"full-{tag}-needs-row-393.png"))
             page.keyboard.press("Escape")
             window = _open_lane(page)
-            question_well = window.locator("[data-testid='lane-ask'] .ask-well-question")
+            question_well = window.locator("[data-testid='conductor-ask-row'] [data-testid='agent-row-question']")
             question_well.wait_for()
             page.wait_for_timeout(300)
             assert question_well.text_content().strip() == question.replace("`", "")
@@ -267,7 +265,7 @@ def test_a_full_question_at_393_wraps_inside_needs_you_and_the_agent_window(tmp_
             assert fit["width"] > 0 and fit["content"] <= fit["width"] + 1, fit
             assert fit["contentHeight"] <= fit["height"] + 1, fit
             assert fit["windowLeft"] - 1 <= fit["left"] < fit["right"] <= fit["windowRight"] + 1, fit
-            rail_words = window.locator("[data-testid='lane-rail'] .lane-rail-says").all_text_contents()
+            rail_words = window.locator("[data-testid='agents-ledger-row'] .aw-ledger-text").all_text_contents()
             assert question.replace("`", "") not in [text.strip() for text in rail_words], rail_words
             window.screenshot(path=str(SHOTS / f"compact-{tag}-lane-asks-393.png"))
             assert page.evaluate("document.scrollingElement.scrollWidth <= window.innerWidth")

@@ -237,39 +237,32 @@ export function openPersona(personaId: string): void {
   void import("./newThread").then((m) => m.openNewThread({ recipe_id: personaId }));
 }
 
-/** Open a Coder session's window. PHILO-14 C2: a session that belongs to a
- * launch opens the agent's lane window (its face); a plain session keeps
- * the session window. */
+/** Open a Coder session's window. A session that belongs to a launch
+ * opens that agent in Agents (its one face, 2026-11-08); a plain session
+ * keeps the session window. */
 export function openCoderSession(key: string, opts?: { answer?: boolean; raw?: boolean }): void {
   // Conductor F2 (K5b): `answer` opens the answer well in the window's body,
-  // the steer composer recording (in the lane: the ask well's mic).
+  // the steer composer recording.
   void Promise.all([import("./steering"), import("./lane/laneStore")]).then(([steering, lane]) => {
     const launchId = lane.launchForSession(key);
     if (launchId) {
-      lane.useLane.getState().open(launchId, { sessionKey: key, answer: opts?.answer, raw: opts?.raw });
-      presentLane();
+      openAgentLane(launchId, { sessionKey: key, answer: opts?.answer, raw: opts?.raw });
       return;
     }
-    if (lane.useLane.getState().launchId) lane.useLane.getState().close();
     steering.useSteering.getState().openSession(key, opts);
   });
 }
 
-/** PHILO-14 C2: open a launched agent's lane window by its launch id. */
+/** Open a launched agent by its launch id: Agents, on that agent (the lane
+ * store binds to it; `raw` shows its terminal in the pane). */
 export function openAgentLane(launchId: string, opts?: { sessionKey?: string | null; answer?: boolean; raw?: boolean }): void {
   void import("./lane/laneStore").then((m) => {
     m.useLane.getState().open(launchId, opts);
-    presentLane();
+    presentLane(launchId);
   });
 }
 
-/** PHILO-16 (16b): an open asks for the lane in front, also when it is
- * already open (the hub opened it in this view) and seated on its Dock chip
- * (393: a Chair window iconifies the desk windows). A lane not yet mounted
- * presents itself when it mounts. The rule `openPullout` keeps (B1). */
-function presentLane(): void {
-  void import("./store").then(({ useDesk }) => {
-    const desk = useDesk.getState();
-    if (desk.panelMin.includes("lane") || "lane" in desk.panelDepth) desk.restorePanel("lane");
-  });
+/** The agent in front: Agents opens (or comes forward) with the launch picked. */
+function presentLane(launchId: string): void {
+  void import("./conductor/store").then(({ useConductor }) => useConductor.getState().openWindow(null, `launch:${launchId}`));
 }

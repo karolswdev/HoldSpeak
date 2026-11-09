@@ -260,7 +260,8 @@ export function ConductorWindow() {
       </div>
     );
   } else if (member) {
-    pane = <AgentPane key={member.id} member={member} pill={memberPill(member)} row={row} onStart={() => setStarting(true)} />;
+    pane = <AgentPane key={member.id} member={member} pill={memberPill(member)} row={row} onStart={() => setStarting(true)}
+      opened={pickedId === member.id} />;
   } else {
     pane = null;
   }

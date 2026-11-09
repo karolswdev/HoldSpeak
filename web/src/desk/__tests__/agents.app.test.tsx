@@ -21,7 +21,9 @@ vi.mock("../../runtime/RuntimeBus", () => {
 });
 vi.mock("../components/MicButton", () => ({ MicButton: () => <span data-testid="mic" /> }));
 
-import { LaneWindow } from "../lane/LaneWindow";
+import { AgentPane } from "../conductor/AgentPane";
+import { conductorMembers, launchLive } from "../conductor/members";
+import { memberPill } from "../conductor/ConductorWindow";
 import { __resetLane, useLane } from "../lane/laneStore";
 import { branchFace } from "../lane/laneWire";
 import { questionChoices } from "../agents/choices";
@@ -97,70 +99,68 @@ async function openLane(lane: unknown, extra: Routes = {}) {
   });
   steering();
   useAgentFlights.setState({ flights: FLIGHTS_C2.wire.flights.map((f) => fromWireFlight(f as never)), sessions: [], loaded: true });
-  const key = (lane as { launch: { session_key: string } }).launch.session_key;
-  render(<LaneWindow />);
-  await act(async () => {
-    await useLane.getState().open("launch_c2_runbook", { sessionKey: key });
-  });
-  await screen.findByTestId("lane-track");
+  await paneFor("launch_c2_runbook");
+}
+
+/** One face per agent (2026-11-08): a launched agent's lane is the Agents
+ *  pane, bound to the lane store (the lane window is parked). */
+async function paneFor(launchId: string) {
+  const { flights, sessions } = useAgentFlights.getState();
+  const history = useConductor.getState().history;
+  const endedAt = Object.fromEntries(history.map((f) => [String(f.launchId), String(f.endedAt ?? "")]));
+  const members = conductorMembers({ detect: null, sessions, flights, launchedAt: {}, history, endedAt, now: new Date() });
+  const flight = flights.find((f) => f.launchId === launchId);
+  // A launch the read lists only as a flight (a ghost a restart took) is its own member.
+  const member = members.find((m) => m.launchId === launchId) ?? (flight ? {
+    id: `launch:${launchId}`, ref: `launch:${launchId}`, kind: "coder", name: flight.title, role: "live" as const,
+    agent: flight.agent, launchId, sessionKey: flight.sessionKey, live: launchLive(flight), facts: { from: flight.title }, sprite: "",
+  } : undefined)!;
+  expect(member).toBeTruthy();
+  render(<AgentPane member={member} pill={memberPill(member)} row={sessions.find((r) => r.key === member.sessionKey)} onStart={() => undefined} />);
+  await waitFor(() => expect(useLane.getState().lane).not.toBeNull());
+  await screen.findByTestId("agents-mast");
 }
 
 describe("the agent's lane on the hub's lane answer", () => {
   /** replaces: tests/e2e/test_philo14_c2_lane_glass.py::test_the_agents_lane_window_at_1440_and_393 */
-  it("reads the launch: title, station track, the ask and its draft, the rail, the PR, the files", async () => {
+  it("reads the launch in the pane: the title, the held call and the ask, the ledger, the PR row, the files", async () => {
     await openLane(LANE.wire);
-    expect(screen.getAllByText("Claude Code: Write the rollback runbook").length).toBeGreaterThan(0);
-    const track = screen.getByTestId("lane-track").textContent ?? "";
-    // W4 AGENT 2: the recorded stages as dots and sentence-case words.
-    for (const word of ["Brief", "Work", "Commit", "PR", "Held", "Asks"]) expect(track).toContain(word);
-    expect(track).not.toContain("Merge");
-    expect(track).toContain("#413");
-    expect(track).toContain("1 held · 1 waiting");
-    expect(track).toContain("now");
-    expect(screen.getByTestId("lane-ask").querySelector(".ask-well-question")?.textContent).toBe(QUESTION);
-    expect(screen.getByTestId("lane-ask").querySelector(".ask-well-draft")?.textContent).toContain("Jordan owns it. Avery reviews.");
-    const rail = screen.getByTestId("lane-rail").textContent ?? "";
-    // W3 AGENT WINDOW: the steps in sentence-case words (the step log).
-    for (const word of ["Got the brief", "Read", "Wrote", "Ran", "Committed", "Pull request", "Held"]) expect(rail).toContain(word);
-    expect(rail).toContain("I will draft the runbook");
-    expect(rail).toContain("Draft the ledger rollback runbook");
-    expect(rail).toContain("psql -h staging-ledger");
-    expect(rail).not.toContain("Your press in GitHub");
-    expect(rail).not.toContain(QUESTION);
+    expect(screen.getByTestId("agents-mast").querySelector(".surface-mast-title")?.textContent).toBe("Write the rollback runbook");
+    // The held call is the plate (the ask row), as it waits on him first.
+    await waitFor(() => expect(screen.getByTestId("conductor-held-call").textContent).toContain("psql -h staging-ledger"));
+    const ledger = screen.getByTestId("agents-ledger").textContent ?? "";
+    for (const word of ["Read", "Wrote", "Ran", "Commit", "Held"]) expect(ledger).toContain(word);
+    expect(ledger).toContain("Draft the ledger rollback runbook");
+    expect(ledger).toContain("psql -h staging-ledger");
+    expect(ledger).not.toContain(QUESTION);
     const pr = screen.getByTestId("lane-pr").textContent ?? "";
     expect(pr).toContain("#413");
     expect(pr).toContain("Checks 6 of 7");
-    // One check still runs: the checks dot is the warn tone, not ok.
     expect(screen.getByTestId("lane-pr-checks").getAttribute("data-tone")).toBe("warn");
     const files = screen.getByTestId("lane-files").textContent ?? "";
     expect(files).toContain("docs/ledger-rollback.md");
     expect(files).toContain("freeze.py");
-    // Owner ruling 2026-10-25: no host chip; Open PR names the address in
-    // its hover title.
     expect(screen.queryByText("GITHUB.COM")).toBeNull();
     expect(screen.getByTestId("lane-open-pr").getAttribute("title")).toMatch(/^https:\/\/github\.com\//);
-    expect(screen.queryByTestId("lane-stop")).toBeNull(); // this recorded hub answer has no pane
   });
 
   /** replaces: tests/e2e/test_philo14_c2_lane_glass.py::test_the_agents_lane_window_at_1440_and_393 (Raw) */
-  it("the Terminal wing puts the terminal pane in the window, and Steps goes back", async () => {
+  it("Terminal puts the agent's own pane in the Agents pane, and Back to the agent returns", async () => {
     await openLane(LANE.wire);
-    // W3 AGENT WINDOW: the terminal is a wing of the title bar, not a tab.
-    fireEvent.click(screen.getByRole("tab", { name: "Terminal" }));
+    fireEvent.click(screen.getByTestId("agents-terminal"));
     expect(screen.getByTestId("lane-raw-pane")).toBeTruthy();
-    expect(screen.getByTestId("lane-rail")).toBeTruthy();
-    fireEvent.click(screen.getByRole("tab", { name: "Steps" }));
+    fireEvent.click(screen.getByTestId("agents-terminal"));
     expect(screen.queryByTestId("lane-raw-pane")).toBeNull();
-    expect(screen.getByTestId("lane-rail")).toBeTruthy();
+    expect(screen.getByTestId("agents-ledger")).toBeTruthy();
   });
 
   /** replaces: tests/e2e/test_philo14_c2_lane_glass.py::test_the_agents_lane_window_at_1440_and_393 (approve from the rail) */
-  it("Approve on the held plate decides it through the gate route; the next read has no Approve", async () => {
+  it("Allow on the held plate decides it through the gate route; the next read has no Allow", async () => {
     await openLane(LANE.wire, { "/api/gate/proposals/toolu_psql/decide": { state: "approved" } });
     // PHILO-17 THE REFIT: the held call is on the focus plate at the top of the lane.
-    const held = screen.getByTestId("lane-approve-well");
-    expect(held.textContent).toContain("psql -h staging-ledger");
-    fireEvent.click(within(held).getByTestId("lane-approve"));
+    const held = await screen.findByTestId("conductor-ask-row");
+    await waitFor(() => expect(held.textContent).toContain("psql -h staging-ledger"));
+    fireEvent.click(within(held).getByTestId("conductor-approve"));
     await waitFor(() =>
       expect(api.fetch).toHaveBeenCalledWith("/api/gate/proposals/toolu_psql/decide", expect.objectContaining({
         method: "POST", json: expect.objectContaining({ decision: "approved" }),
@@ -171,22 +171,19 @@ describe("the agent's lane on the hub's lane answer", () => {
     await act(async () => {
       await useLane.getState().load();
     });
-    const after = [...screen.getByTestId("lane-rail").querySelectorAll<HTMLElement>(".lw-step")]
-      .filter((el) => (el.textContent ?? "").includes("psql -h staging-ledger -c"));
-    expect(after.length).toBeGreaterThan(0);
-    expect(screen.queryByTestId("lane-approve")).toBeNull();
+    expect(screen.getByTestId("agents-ledger").textContent).toContain("psql -h staging-ledger -c");
+    await waitFor(() => expect(screen.queryByText("psql -h staging-ledger -c 'select 1'", { selector: "[data-testid=agent-row-command]" })).toBeNull());
   });
 
   /** replaces: tests/e2e/test_philo14_c2_lane_glass.py::test_the_agents_lane_window_at_1440_and_393 (the 198-char cut call) */
   it("a call the hook cut reads `… +90 CHARS` with Deny and Raw, never Approve", async () => {
     await openLane(LANE_CUT.wire);
-    const cut = screen.getByTestId("lane-approve-well");
-    expect(cut).toBeTruthy();
-    expect(cut.textContent).toContain(LONG_CMD.slice(0, 100));
+    const cut = await screen.findByTestId("conductor-ask-row");
+    await waitFor(() => expect(cut.textContent).toContain(LONG_CMD.slice(0, 100)));
     expect(cut.textContent).toContain("… +90 CHARS");
-    expect(within(cut).queryByTestId("lane-approve")).toBeNull();
-    expect(within(cut).getByTestId("lane-deny")).toBeTruthy();
-    expect(within(cut).getByTestId("lane-raw-cut")).toBeTruthy();
+    // A cut call is never allowed on the plate: Terminal shows it whole.
+    expect(within(cut).queryByTestId("conductor-approve")).toBeNull();
+    expect(within(cut).getByTestId("agent-row-terminal")).toBeTruthy();
   });
 });
 
@@ -280,7 +277,8 @@ describe("the lane's draft row (PHILO-15 05; owner ruling 2026-10-25)", () => {
     const lane = fixtureWire("lane");
     const assignments = fixtureWire("inference-assignments");
     await openLane(lane.wire, { "/api/inference/assignments": assignments.wire });
-    const draft = screen.getByTestId("lane-ask").querySelector(".ask-well-draft")!;
+    // The one answer face is the ask plate (agents/AgentRow.tsx): its draft row.
+    const draft = await screen.findByTestId("agent-row-draft");
     expect(draft.textContent).toContain("Use draft");
     expect(draft.querySelector(".gadget-chip-egress")).toBeNull();
     expect(draft.textContent).not.toContain("NOT SET");
@@ -288,7 +286,7 @@ describe("the lane's draft row (PHILO-15 05; owner ruling 2026-10-25)", () => {
 
   it("with no default at all the draft has no egress chip", async () => {
     await openLane(fixtureWire("lane").wire);
-    const draft = screen.getByTestId("lane-ask").querySelector(".ask-well-draft")!;
+    const draft = await screen.findByTestId("agent-row-draft");
     await waitFor(() => expect(draft.querySelector(".gadget-chip-egress")).toBeNull());
     expect(draft.textContent).not.toContain("NOT SET");
   });
@@ -377,11 +375,9 @@ describe("the Agents list tells the truth about state (Betterment AG0)", () => {
     });
     const [done] = useAgentFlights.getState().flights.filter((f) => f.launchId === "launch_ag0_done");
     expect(done.isNew).toBe(true);
-    render(<LaneWindow />);
-    await act(async () => {
-      await useLane.getState().open("launch_ag0_done", { sessionKey: lane.wire.launch.session_key });
-    });
-    // On open the lane asks the hub to mark its current done turn; the hub's
+    expect(lane.wire.launch.session_key).toBeTruthy();
+    await paneFor("launch_ag0_done");
+    // On open the pane asks the hub to mark its current done turn; the hub's
     // answer names that turn.
     await waitFor(() =>
       expect(api.fetch).toHaveBeenCalledWith("/api/agent/launches/launch_ag0_done/seen", { method: "POST", json: {} }),
@@ -409,19 +405,30 @@ describe("the Agents list tells the truth about state (Betterment AG0)", () => {
         : ({ ok: true, status: 200, json: async () => ({}) } as unknown as Response);
     });
     steering();
-    render(<LaneWindow />);
-    await act(async () => {
-      await useLane.getState().open("launch_ag0_ghost", { sessionKey: lane.wire.launch.session_key });
+    useAgentFlights.setState({
+      flights: AG0.wire.flights.map((f) => fromWireFlight(f as never)),
+      sessions: AG0.wire.sessions.map(fromWireSessionRow),
+      loaded: true,
     });
-    const well = await screen.findByTestId("lane-ask");
+    // The one answer face is the ask plate (agents/AgentRow.tsx): it posts
+    // through apiFetch and reads the hub's refusal.
+    const base = api.fetch.getMockImplementation()!;
+    api.fetch.mockImplementation(async (url: string, init?: { method?: string; json?: unknown }) => {
+      if (String(url).endsWith("/steer")) {
+        posted.push([String(url), init?.json ?? null]);
+        throw new ApiError(409, "refused", refused.wire);
+      }
+      return base(url, init);
+    });
+    await paneFor("launch_ag0_ghost");
+    const well = await screen.findByTestId("conductor-ask-row");
     // Normal mode, not armed: no ARM on the face.
-    expect(screen.queryByTestId("lane-arm")).toBeNull();
     expect(document.body.textContent).not.toMatch(/arm first/i);
-    fireEvent.change(within(well).getByRole("textbox", { name: "Answer" }), { target: { value: "1" } });
+    fireEvent.change(await within(well).findByTestId("agent-row-answer-field"), { target: { value: "1" } });
     await act(async () => {
-      fireEvent.click(within(well).getByRole("button", { name: "Answer" }));
+      fireEvent.click(within(well).getByTestId("conductor-answer"));
     });
-    await waitFor(() => expect(screen.getByTestId("lane-terminal-gone").textContent).toBe("This agent's terminal is gone"));
+    await waitFor(() => expect(screen.getByTestId("agent-row-refusal").textContent).toContain("This agent's terminal is gone"));
     const steer = posted.find(([url]) => url.endsWith("/steer"));
     expect(steer?.[1]).toMatchObject({ text: "1", kind: "answer", wait_id: lane.wire.wait.wait_id });
   });
@@ -459,10 +466,8 @@ describe("Done checks the work and the agent moves to Ended today (W4 AGENT 3)",
       sessions: wire.sessions.map(fromWireSessionRow),
       loaded: true,
     });
-    render(<LaneWindow />);
-    await act(async () => {
-      await useLane.getState().open("launch_ag0_done", { sessionKey: LANE_DONE.wire.launch.session_key });
-    });
+    expect(LANE_DONE.wire.launch.session_key).toBeTruthy();
+    await paneFor("launch_ag0_done");
   }
 
   it("the done face leads with Done and its age; Done is the one primary with no PR, and a press posts the hub's done route", async () => {
@@ -471,14 +476,15 @@ describe("Done checks the work and the agent moves to Ended today (W4 AGENT 3)",
     const cap = await screen.findByTestId("lane-result-cap");
     expect(cap.textContent).toBe("Done");
     expect(screen.getByTestId("lane-result-age").textContent).toMatch(/ago$|^just now$/);
-    const done = screen.getByTestId("lane-done");
-    expect(done.className).toContain("btn--primary");
+    // The plate's one verb is Done, in brass (it waits on him).
+    const done = screen.getByTestId("conductor-done");
+    expect(done.className).toContain("btn--brass");
     expect(screen.queryByTestId("lane-start-again")).toBeNull();
     await act(async () => {
       fireEvent.click(done);
     });
     expect(api.fetch).toHaveBeenCalledWith("/api/agent/launches/launch_ag0_done/done", { method: "POST", json: {} });
-    expect(screen.queryByTestId("lane-done-refused")).toBeNull();
+    expect(screen.queryByTestId("conductor-stop-receipt")).toBeNull();
   });
 
   it("a refused Done says so on the verb, in words (the hub's 409 not_done)", async () => {
@@ -490,19 +496,19 @@ describe("Done checks the work and the agent moves to Ended today (W4 AGENT 3)",
     });
     await openDoneLane(AG0.wire as never);
     await act(async () => {
-      fireEvent.click(await screen.findByTestId("lane-done"));
+      fireEvent.click(await screen.findByTestId("conductor-done"));
     });
-    expect((await screen.findByTestId("lane-done-refused")).textContent).toBe("Not done · it works again");
-    expect(screen.getByTestId("lane-done").textContent).toContain("Try Done again");
+    // The refusal is the plate's receipt, in words; Done stays to press again.
+    expect((await screen.findByTestId("conductor-stop-receipt")).textContent).toBe("Not done · it works again");
+    expect(screen.getByTestId("conductor-done")).toBeTruthy();
   });
 
   it("a checked launch reads Done · checked by you: the result stays, no Done, no Start again", async () => {
     serve(laneRoutes(CHECKED.wire));
     useConductor.setState({ history: CHECKED.wire.history.map((f) => fromWireFlight(f as never)), flightsState: "ok" });
     await openDoneLane(CHECKED.wire as never);
-    await waitFor(() => expect(screen.getByTestId("lane-head").textContent).toBe("Done · checked by you"));
-    expect(screen.getByTestId("lane-result-cap").textContent).toBe("Done · checked by you");
-    expect(screen.queryByTestId("lane-done")).toBeNull();
+    await waitFor(() => expect(screen.getByTestId("lane-result-cap").textContent).toBe("Done · checked by you"));
+    expect(screen.queryByTestId("conductor-done")).toBeNull();
     expect(screen.queryByTestId("lane-start-again")).toBeNull();
     expect(screen.queryByTestId("lane-turn-end")).toBeNull();
   });
@@ -567,16 +573,14 @@ describe("the agent faces say Agents and agent (Betterment AG1)", () => {
     expect(document.body.textContent).not.toMatch(OLD_WORDS);
   });
 
-  it("the agent's window: the Steps and Terminal wings, a held call says Wants to run, no old word", async () => {
+  it("the agent in the pane: a held call says Wants to run, Terminal is one verb, no old word", async () => {
     await openLane(LANE_CUT.wire);
-    // W3 AGENT WINDOW: the window's two faces are wings (Steps, Terminal).
-    expect(screen.getAllByRole("tab").map((tab) => tab.textContent)).toEqual(["Steps", "Terminal"]);
-    expect(screen.getByTestId("lane-approve-well").querySelector(".ask-well-state")?.textContent).toBe("Wants to run");
-    expect(screen.getByTestId("lane-raw-cut").textContent).toBe("Terminal");
-    // Tell it (was Re-brief) needs a live pane; laneWindow.c2.test.tsx drives it.
+    const plate = await screen.findByTestId("conductor-ask-row");
+    await waitFor(() => expect(plate.querySelector(".cw-ask-label")?.textContent).toBe("Wants to run"));
+    expect(within(plate).getByTestId("agent-row-terminal").textContent).toBe("Terminal");
     expect(document.body.textContent).not.toMatch(OLD_WORDS);
-    fireEvent.click(screen.getByRole("tab", { name: "Terminal" }));
-    expect(screen.getByRole("tab", { name: "Terminal" }).getAttribute("aria-selected")).toBe("true");
+    fireEvent.click(screen.getByTestId("agents-terminal"));
+    expect(screen.getByTestId("agents-terminal").getAttribute("aria-pressed")).toBe("true");
   });
 
   it("branchFace: the hub's id branch reads new branch; a branch with words shows as it is", () => {
@@ -604,8 +608,9 @@ describe("one press to answer and to allow (Betterment AG2)", () => {
   const SESSIONS = ag2<{ sessions: Array<{ session: Record<string, unknown> }> }>("coders-sessions");
   const LANE_ASKS = ag2<{ wait: { wait_id: string; question: string } }>("lane.asks");
   const waitOf = (sid: string) => String(SESSIONS.wire.sessions.find((r) => r.session.session_id === sid)?.session.wait_id ?? "");
+  // Picking an agent opens it (its seen mark); the presses are the rest.
   const posts = () => api.fetch.mock.calls
-    .filter(([, init]) => (init as { method?: string } | undefined)?.method === "POST")
+    .filter(([url, init]) => (init as { method?: string } | undefined)?.method === "POST" && !String(url).endsWith("/seen"))
     .map(([url, init]) => [String(url), (init as { json?: unknown }).json] as const);
 
   beforeEach(() => {
@@ -1114,10 +1119,12 @@ describe("the desk's own answers are visible (Betterment AG3)", () => {
       "/api/coders/claude%3Aag0-done/peek": hubWire("peek.ag2-asks").wire,
     });
   }
-  /** The ghost agent's pane, picked (its plate shows the desk's answer). */
+  /** The ghost agent's pane (picked when Agents shows another first; a
+   *  press opens it, which sees its answer). */
   const ghost = () => {
-    const tile = document.querySelector<HTMLElement>('[data-testid="agents-rail"] [data-object-id="launch:launch_ag0_ghost"]')!;
-    if (!tile.hasAttribute("data-picked")) fireEvent.click(tile.querySelector(".aw-tile-open")!);
+    if (agentPane().getAttribute("data-member") !== "launch:launch_ag0_ghost") {
+      fireEvent.click(document.querySelector<HTMLElement>('[data-testid="agents-rail"] [data-object-id="launch:launch_ag0_ghost"] .aw-tile-open')!);
+    }
     return agentPane();
   };
 
@@ -1137,11 +1144,12 @@ describe("the desk's own answers are visible (Betterment AG3)", () => {
   it("after the desk answered: what it said and the decision it used, New until opened", async () => {
     serveAg3("coders-sessions.answered");
     render(<ConductorWindow />);
-    await findMember("launch:launch_ag0_ghost");
+    const tile = await findMember("launch:launch_ag0_ghost");
+    // New until opened: the tile says so before the press.
+    expect(within(tile).getByTestId("agents-tile-new").textContent).toBe("The desk answered · New");
     const line = within(ghost()).getByTestId("agent-row-desk-answer");
-    expect(line.textContent).toBe(`${DECISION}New`);
+    expect(line.textContent?.startsWith(DECISION)).toBe(true);
     expect(line.textContent).not.toMatch(/Yes,/);
-    expect(within(line).getByTestId("agent-row-desk-answer-new").textContent).toBe("New");
   });
 
   it("after the seen mark the answer stays, without New", async () => {

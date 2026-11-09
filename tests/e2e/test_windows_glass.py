@@ -1581,8 +1581,10 @@ class TestHubWindows:
                 # The lane is opened on the hub (as an agent or another view
                 # would): A, live, follows the frame; a fresh view E shows it.
                 # The owner's own open sending launch:<id> is fenced in vitest.
+                # One face per agent (2026-11-08): a hub lane row opens Agents on
+                # its launch (the lane window is parked).
                 _api(a, "POST", "/api/desk/windows/lane/open", {"object_ref": "launch:L-glass"}, token=H_TOKEN)
-                lane_sel = ".desk-window-shell.is-lane"
+                lane_sel = ".desk-window-shell.conductor-window"
                 try:
                     a.locator(lane_sel).first.wait_for(timeout=10_000)
                 except Exception:

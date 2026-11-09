@@ -14,9 +14,8 @@
  * (`agents/AgentRow.tsx`), the lane's kill, Resume, Done, Remove, Cancel,
  * Hand again, Allow helper (`open.ts`), Connect (the store). The terminal is
  * behind one verb (Terminal); Details opens the agent's Get Info. */
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Button } from "../../components/signal/Signal";
-import { apiFetch } from "../../lib/api";
 import { CONTROL_MODE_LABELS } from "../../lib/productLanguage";
 import { madeWord } from "../drawer/members";
 import { AgentWords } from "../components/AgentWords";
@@ -26,14 +25,16 @@ import { AgentRow as AskPlate, DeskAnswerLine } from "../agents/AgentRow";
 import { WhyThisState } from "../agents/WhyThisState";
 import { AGENT_INSTALL, AGENT_NAME, needsHooks, type AgentId } from "../firstrun/agentsStep";
 import { useCopyReceipt } from "../hooks/useCopyReceipt";
-import { laneEntries, isNotRead, type LaneEntry, type LaneEvent, type LaneWire } from "../lane/laneWire";
+import { laneEntries, isNotRead, turnEndWord, turnWord, type LaneEntry, type LaneEvent, type LaneWire } from "../lane/laneWire";
+import { useLane } from "../lane/laneStore";
+import { CheckLog, FilesFold, LaneReceipts, PrRow, RawPane, RebriefWell, UnreadLines, heldNow, spokeWord, useLaneOf } from "./AgentLane";
+import { ResultBlock } from "../lane/ResultBlock";
 import { ProgramStepLine } from "../programs/StepLine";
 import { openAgentLane } from "../shell";
 import { DotWord, FoldGadget, SurfaceLedger, SurfaceLedgerRow } from "../surface";
 import { SurfaceFacts } from "../surface/Surface";
 import { Mast } from "../surface/patterns/Mast";
 import { Spine, type SpineTone } from "../surface/patterns/Spine";
-import { useOnCoderFrame } from "../useDeskChangedRefresh";
 import { reviewResult } from "../agentFlights";
 import { ReviewResult } from "./ReviewResult";
 import { canRun, fleetRank, reviewWords, type ConductorMember } from "./members";
@@ -103,41 +104,10 @@ export function tokenWords(usage: unknown): string {
   return total >= 1000 ? `${(total / 1000).toFixed(total >= 10_000 ? 0 : 1)}k tokens` : `${total} tokens`;
 }
 
-/* ── the lane read (one launch) ─────────────────────────────────────── */
-
-/** The newest events the ledger reads (the lane pages oldest first). */
-const LEDGER_LIMIT = 1000;
-/** The ledger shows this many rows; Terminal and the agent's window hold the rest. */
-const LEDGER_ROWS = 40;
-
-export function useAgentLane(launchId: string | null | undefined, live: string | undefined) {
-  const [lane, setLane] = useState<LaneWire | null>(null);
-  const [failed, setFailed] = useState(false);
-  const asked = useRef(0);
-  const read = useCallback(() => {
-    if (!launchId) return;
-    const seq = ++asked.current;
-    apiFetch<LaneWire | null>(`/api/agent/launches/${encodeURIComponent(launchId)}/lane?after=0&limit=${LEDGER_LIMIT}`)
-      .then((body) => {
-        if (seq !== asked.current) return;
-        setLane(body && typeof body === "object" && body.launch ? body : null);
-        setFailed(false);
-      })
-      .catch(() => {
-        if (seq === asked.current) setFailed(true);
-      });
-  }, [launchId]);
-  useEffect(() => {
-    setLane(null);
-    setFailed(false);
-  }, [launchId]);
-  // A state change (works → asks → done) reads the lane again.
-  useEffect(() => read(), [read, live]);
-  useOnCoderFrame(read);
-  return { lane, failed, read };
-}
-
 /* ── the ledger ─────────────────────────────────────────────────────── */
+
+/** The ledger shows this many activity rows; Terminal holds the rest. */
+const LEDGER_ROWS = 40;
 
 /** The ledger's words for a lane entry: sentence case, never a caps chip. */
 const ENTRY_WORD: Record<LaneEntry["kind"], string> = {
@@ -153,11 +123,71 @@ export interface LedgerLine {
   tone?: "ask" | "ok" | "fail";
   /** The agent's own words (a report): drawn as its words, at reading size. */
   report?: boolean;
+  /** Read opens this in the row (a report section, the brief). */
+  body?: string;
+}
+
+/** A report's sections: a heading line (`# …`, `**…**`, `Words:`) starts
+ *  one; without headings, each paragraph is one. Each is `{title, body}`. */
+export function reportSections(text: string): Array<{ title: string; body: string }> {
+  const lines = String(text ?? "").replace(/\r/g, "").split("\n");
+  const heading = (line: string) => {
+    const t = line.trim();
+    const m = /^#{1,6}\s+(.+)$/.exec(t) ?? /^\*\*(.+?)\*\*:?$/.exec(t) ?? /^([A-Z][^.!?]{0,48}):$/.exec(t);
+    return m ? m[1].replace(/\*\*/g, "").trim() : null;
+  };
+  const out: Array<{ title: string; body: string }> = [];
+  let current: { title: string; body: string[] } | null = null;
+  const flush = () => {
+    if (current && (current.title || current.body.join("").trim())) {
+      const body = current.body.join("\n").trim();
+      out.push({ title: current.title || firstWords(body), body });
+    }
+  };
+  const headed = lines.some((line) => heading(line));
+  if (!headed) {
+    return String(text ?? "").split(/\n\s*\n/).map((part) => part.trim()).filter(Boolean)
+      .map((part) => ({ title: firstWords(part), body: part }));
+  }
+  for (const line of lines) {
+    const h = heading(line);
+    if (h) {
+      flush();
+      current = { title: h, body: [] };
+    } else {
+      if (!current) current = { title: "", body: [] };
+      current.body.push(line);
+    }
+  }
+  flush();
+  return out;
+}
+
+function firstWords(text: string, max = 72): string {
+  const flat = String(text ?? "").replace(/\s+/g, " ").replace(/[#*`>]/g, "").trim();
+  if (flat.length <= max) return flat;
+  const cut = flat.slice(0, max);
+  return `${cut.slice(0, Math.max(cut.lastIndexOf(" "), 24)).trim()} …`;
+}
+
+/** The pane's ledger: the report's sections first (Read opens each), then
+ *  the tool activity by time, newest first; a launch with only its brief
+ *  shows the brief as one row. */
+export function ledgerLines(lane: LaneWire | null, events: readonly LaneEvent[], report: string, row?: CoderSessionRow): LedgerLine[] {
+  const sections = report ? reportSections(report).map((section, i): LedgerLine => ({
+    id: `report-${i}`, time: "", word: "Report", text: section.title, body: section.body, report: true,
+  })) : [];
+  const said = report.trim();
+  const activity = (lane ? laneLines(lane, events) : sessionLines(row).filter((line) => !line.report))
+    .filter((line) => !said || line.text.trim() !== said);
+  if (lane && !activity.length && !sections.length && lane.launch?.brief_text) {
+    return [{ id: "brief", time: "", word: "Brief", text: "The brief", body: String(lane.launch.brief_text) }];
+  }
+  return [...sections, ...activity];
 }
 
 /** The lane's timeline, newest first, as ledger lines. */
-export function laneLines(lane: LaneWire): LedgerLine[] {
-  const events = Array.isArray(lane.events) ? (lane.events as LaneEvent[]) : [];
+export function laneLines(lane: LaneWire, events: readonly LaneEvent[] = Array.isArray(lane.events) ? lane.events : []): LedgerLine[] {
   // An older hub (or a partial answer) leaves a part out: it is not read.
   const whole: LaneWire = {
     ...lane,
@@ -176,9 +206,10 @@ export function laneLines(lane: LaneWire): LedgerLine[] {
       word: ENTRY_WORD[entry.kind] ?? String(entry.word ?? ""),
       text: String(entry.words ?? entry.quote ?? entry.code ?? entry.text ?? entry.result ?? ""),
       tone: entry.tone === "fail" ? "fail" : entry.tone === "warn" ? "ask" : entry.tone === "ok" ? "ok" : undefined,
-      report: entry.kind === "says",
     }))
-    .filter((line) => line.text.trim());
+    // The brief is its own row (the only one, when nothing else is
+    // reported); the PR and its merge are the PR row above the ledger.
+    .filter((line) => line.text.trim() && !["Brief", "PR", "Merged"].includes(line.word));
 }
 
 /** A plain session's ledger: what the session row holds (its last words, its
@@ -197,6 +228,7 @@ export function sessionLines(row: CoderSessionRow | undefined): LedgerLine[] {
 }
 
 function AgentLedger({ lines, failed, onRetry }: { lines: LedgerLine[]; failed: boolean; onRetry(): void }) {
+  const [open, setOpen] = useState<string | null>(null);
   if (failed) {
     // A quiet line: the plate above keeps the one alert of the pane.
     return (
@@ -212,18 +244,27 @@ function AgentLedger({ lines, failed, onRetry }: { lines: LedgerLine[]; failed: 
   return (
     <div className="aw-ledger" role="group" aria-label="Activity" data-testid="agents-ledger">
       <h3 className="aw-cap">Activity</h3>
-      <SurfaceLedger cols="kit" label="Activity">
+      <SurfaceLedger cols="agent" label="Activity">
         <ul className="surface-ledger-rows">
           {lines.map((line) => (
             <SurfaceLedgerRow
               key={line.id}
-              time={line.time || undefined}
+              time={line.time}
               primary={<span className="aw-ledger-text" title={line.text}>{line.text}</span>}
               meta={line.word}
               metaTone={line.tone}
               expands={false}
+              open={open === line.id}
+              trailing={line.body ? (
+                <Button dense variant="ghost" aria-expanded={open === line.id} data-testid="agents-ledger-read"
+                  onClick={() => setOpen((now) => (now === line.id ? null : line.id))}>
+                  {open === line.id ? "Close" : "Read"}
+                </Button>
+              ) : undefined}
               data-testid="agents-ledger-row"
-            />
+            >
+              {line.body ? <AgentWords className="aw-ledger-body" text={line.body} /> : null}
+            </SurfaceLedgerRow>
           ))}
         </ul>
       </SurfaceLedger>
@@ -387,6 +428,14 @@ const CONTROL_WORD: Record<string, string> = {
   ...CONTROL_MODE_LABELS, secure: CONTROL_MODE_LABELS.safe, normal: CONTROL_MODE_LABELS.neutral,
 };
 
+/** The lane's own wait asks him now (a question or a permission prompt,
+ *  not a turn end): the plate is the ask row whatever the flight says. */
+function laneAsks(lane: LaneWire | null): boolean {
+  const wait = lane && !isNotRead(lane.wait) ? lane.wait : null;
+  if (!wait?.question || (wait.kind !== "TO ANSWER" && wait.kind !== "TO APPROVE")) return false;
+  return !turnEndWord(wait) && turnWord(wait).word === "ASKS";
+}
+
 /** The technical facts (Details): the item, the Project, the branch, the
  *  session and launch ids, the agent's own facts (version, hooks, control). */
 export function detailFacts(member: ConductorMember, lane: LaneWire | null): Record<string, string> {
@@ -415,11 +464,14 @@ export interface PaneProps {
   /** The session row of the agent (its question, its last words). */
   row: CoderSessionRow | undefined;
   onStart(): void;
+  /** He picked this agent (a press, a hand, an open): its done turn is seen.
+   *  False for the agent Agents shows first by itself. */
+  opened?: boolean;
 }
 
 /** What the plate says the agent did last: its tool, else the screen's command. */
 function activityOf(row: CoderSessionRow | undefined, lines: LedgerLine[]): string {
-  const latest = lines.find((line) => !line.report && line.word !== "Brief");
+  const latest = lines.find((line) => !line.report && !["Brief", "Says"].includes(line.word));
   if (latest) return `${latest.word} · ${latest.text}`;
   const raw = ((row?.raw as Record<string, unknown>)?.session ?? row?.raw ?? {}) as Record<string, unknown>;
   const tool = String(raw.last_tool_name ?? "").trim();
@@ -436,11 +488,20 @@ function reportOf(lane: LaneWire | null, row: CoderSessionRow | undefined, lines
     || String(row?.screen?.said ?? "").trim();
 }
 
-export function AgentPane({ member, pill, row, onStart }: PaneProps) {
-  const { lane, failed, read } = useAgentLane(member.launchId, member.live);
+export function AgentPane({ member, pill, row, onStart, opened = true }: PaneProps) {
+  // One face per agent: a launched agent's lane is bound to the one lane
+  // store while the pane shows it (lane/laneStore.ts).
+  const { lane, events, error, raw, rebrief } = useLaneOf(member.launchId, opened);
+  const failed = Boolean(error) && !lane;
+  const read = () => void useLane.getState().load();
   const flights = useAgentFlights((s) => s.flights);
   const flight = useMemo(() => flights.find((f) => f.launchId && f.launchId === member.launchId) ?? null, [flights, member.launchId]);
-  const lines = useMemo(() => (lane ? laneLines(lane) : sessionLines(row)), [lane, row]);
+  const activity = useMemo(() => (lane ? laneLines(lane, events) : sessionLines(row)), [lane, events, row]);
+  const report = reportOf(lane, row, activity);
+  const lines = useMemo(() => ledgerLines(lane, events, report, row), [lane, events, report, row]);
+  const held = lane ? heldNow(lane) : undefined;
+  const launched = Boolean(member.launchId && lane);
+  const tellIt = launched && Boolean(lane?.launch.session_key) && !lane?.launch.stopped && member.role === "live";
   const tone = spineTone(member);
   const [busy, setBusy] = useState<string | null>(null);
   const run = (key: string, work: () => Promise<unknown>) => {
@@ -458,9 +519,9 @@ export function AgentPane({ member, pill, row, onStart }: PaneProps) {
     member.role !== "ready" ? String(member.facts.where || "") : member.detect?.version ? String(member.detect.version) : "",
     tokens,
   ].filter(Boolean).join(" · ");
-  // An ask's plate carries its own Terminal where it matters (a held call).
-  const terminal = member.role !== "ready" && !member.ownAgent && member.live !== "queued" && fleetRank(member) !== 0
-    && (member.launchId || member.sessionKey);
+  // Terminal: a launched agent's own pane in the pane; a plain session's window.
+  const terminal = member.role !== "ready" && !member.ownAgent && member.live !== "queued"
+    && (launched ? Boolean(lane?.launch.session_key) : fleetRank(member) !== 0 && Boolean(member.sessionKey));
 
   // Stop is the working plate's verb; any other agent that runs has it in the mast.
   const working = member.role === "live" && !member.helperRequest && fleetRank(member) !== 0
@@ -469,12 +530,18 @@ export function AgentPane({ member, pill, row, onStart }: PaneProps) {
     <Mast kind="agent" id={member.id} agent={member.agent} title={memberTitle(member)} facts={facts}
       className="aw-mast" data-testid="agents-mast">
       {working ? null : <StopVerb member={member} quiet />}
+      {tellIt ? (
+        <Button dense variant="ghost" aria-pressed={rebrief} data-testid="lane-rebrief"
+          onClick={() => useLane.getState().setRebrief(!rebrief)}>
+          Tell it
+        </Button>
+      ) : null}
       {terminal ? (
-        <Button dense variant="ghost" data-testid="agents-terminal" onClick={() => {
-          if (member.launchId) openAgentLane(member.launchId, { sessionKey: member.sessionKey, raw: true });
+        <Button dense variant="ghost" aria-pressed={raw} data-testid="agents-terminal" onClick={() => {
+          if (launched) useLane.getState().setRaw(!raw);
           else openMember(member);
         }}>
-          Terminal
+          {raw ? "Back to the agent" : "Terminal"}
         </Button>
       ) : null}
     </Mast>
@@ -495,8 +562,38 @@ export function AgentPane({ member, pill, row, onStart }: PaneProps) {
     </>
   );
 
+  const askPlate = (
+    <div className="aw-plate aw-plate--ask" data-tone="brass" data-testid="conductor-asks" role="group" aria-label="Needs you">
+      <AskPlate
+        bare
+        member={member}
+        question={question}
+        waitId={waitId}
+        lead={false}
+        selected={false}
+        onSelect={() => undefined}
+        onTerminal={() => {
+          if (launched) useLane.getState().setRaw(true);
+          else if (member.launchId) openAgentLane(member.launchId, { sessionKey: member.sessionKey, raw: true });
+          else openMember(member);
+        }}
+        onOpenAnswer={() => answerMember(member)}
+        onOpen={() => openMember(member)}
+      />
+    </div>
+  );
+  // The Result of a done turn (AG10): its words, what changed, what it used.
+  const result = (word: string) => lane ? (
+    <ResultBlock lane={lane} screenSaid={flight?.screen?.said ?? null}
+      done={{ word, age: flight?.doneAt ? spokeWord(new Date(flight.doneAt)) : null }} />
+  ) : null;
+
   let plate: ReactNode;
-  if (member.helperRequest) {
+  if (launched && (held || laneAsks(lane)) && !member.helperRequest) {
+    // The call the gate holds now is the plate (Allow / Deny on the ask row;
+    // a cut call: Terminal shows it whole, with its own Allow / Deny).
+    plate = askPlate;
+  } else if (member.helperRequest) {
     plate = (
       <Plate tone="brass" head={<>{stateWord}<span className="aw-plate-fact">Asks for a helper</span></>}>
         <p className="aw-plate-words" data-testid="conductor-helper-request">{member.helperRequest.instruction}</p>
@@ -509,25 +606,7 @@ export function AgentPane({ member, pill, row, onStart }: PaneProps) {
       </Plate>
     );
   } else if (fleetRank(member) === 0) {
-    plate = (
-      <div className="aw-plate aw-plate--ask" data-tone="brass" data-testid="conductor-asks" role="group" aria-label="Needs you">
-        <AskPlate
-          bare
-          member={member}
-          question={question}
-          waitId={waitId}
-          lead={false}
-          selected={false}
-          onSelect={() => undefined}
-          onTerminal={() => {
-            if (member.launchId) openAgentLane(member.launchId, { sessionKey: member.sessionKey, raw: true });
-            else openMember(member);
-          }}
-          onOpenAnswer={() => answerMember(member)}
-          onOpen={() => openMember(member)}
-        />
-      </div>
-    );
+    plate = askPlate;
   } else if (member.role === "ready") {
     plate = (
       <Plate tone={tone} head={head}>
@@ -541,7 +620,8 @@ export function AgentPane({ member, pill, row, onStart }: PaneProps) {
     const restart = member.flightState === "stopped_by_restart" && member.launchId;
     plate = (
       <Plate tone={tone} head={head}>
-        {reportOf(lane, row, lines) ? <AgentWords className="aw-plate-report" text={reportOf(lane, row, lines)} /> : null}
+        {member.flightState === "checked" && lane ? result("Done · checked by you")
+          : report ? <AgentWords className="aw-plate-report" text={report} /> : null}
         <PlateVerbs>
           {restart ? (
             <Button dense variant="brass" loading={busy === "resume"} disabled={busy !== null} data-testid="conductor-resume"
@@ -560,9 +640,6 @@ export function AgentPane({ member, pill, row, onStart }: PaneProps) {
               Remove
             </Button>
           ) : null}
-          <Button dense variant="ghost" onClick={() => openMember(member)} data-testid="conductor-open">
-            Read
-          </Button>
         </PlateVerbs>
       </Plate>
     );
@@ -579,12 +656,12 @@ export function AgentPane({ member, pill, row, onStart }: PaneProps) {
       </Plate>
     );
   } else if (member.live === "done" || member.live === "pr" || member.live === "idle") {
-    const report = reportOf(lane, row, lines);
-    const pr = flight?.pr?.url ? flight.pr : null;
+    // The PR row in the ledger carries Open the PR once the lane is read.
+    const pr = flight?.pr?.url && !lane?.follow_through?.pr?.url ? flight.pr : null;
     const done = member.live === "done" && member.launchId;
     plate = (
       <Plate tone={tone} head={head}>
-        {report ? <AgentWords className="aw-plate-report" text={report} data-testid="agents-report" /> : (
+        {lane && member.live === "done" ? result("Done") : report ? <AgentWords className="aw-plate-report" text={report} data-testid="agents-report" /> : (
           <p className="aw-plate-words">{member.live === "idle" ? "Waits for your next words" : "No report yet"}</p>
         )}
         {reviewResult(member.review) ? <ReviewResult review={member.review} /> : null}
@@ -602,7 +679,7 @@ export function AgentPane({ member, pill, row, onStart }: PaneProps) {
               Done
             </Button>
           ) : null}
-          {member.ownAgent ? null : (
+          {member.ownAgent || member.launchId ? null : (
             <Button dense variant="ghost" onClick={() => openMember(member)} data-testid="conductor-open">
               Read
             </Button>
@@ -611,17 +688,17 @@ export function AgentPane({ member, pill, row, onStart }: PaneProps) {
       </Plate>
     );
   } else {
-    const activity = activityOf(row, lines);
+    const latest = activityOf(row, activity);
     plate = (
       <Plate tone={tone} head={head}>
         <p className="aw-plate-words" data-testid="agents-activity">
-          {activity ? <span className="aw-plate-label">Latest activity</span> : null}
-          {activity || "Working"}
+          {latest ? <span className="aw-plate-label">Latest activity</span> : null}
+          {latest || "Working"}
         </p>
         <DeskAnswerLine answer={member.deskAnswer} />
         <PlateVerbs>
           <StopVerb member={member} />
-          {member.ownAgent ? null : (
+          {member.ownAgent || member.launchId ? null : (
             <Button dense variant="ghost" onClick={() => openMember(member)} data-testid="conductor-open">
               Open
             </Button>
@@ -635,13 +712,22 @@ export function AgentPane({ member, pill, row, onStart }: PaneProps) {
     <div className="aw-agent" data-testid="agents-agent" data-member={member.id}>
       {mast}
       <Spine className="aw-spine" tone={tone} label={pill.word} data-testid="agents-spine" data-tone={tone} />
-      {plate}
-      <div className="aw-receipt-line"><MemberReceipt member={member} /></div>
-      <AgentLedger lines={lines} failed={failed && Boolean(member.launchId)} onRetry={read} />
+      {launched && raw ? <div className="aw-terminal"><RawPane /></div>
+        : launched && rebrief ? <div className="aw-plate aw-plate--tell" data-tone="steel"><RebriefWell /></div> : plate}
+      <div className="aw-receipt-line">
+        <MemberReceipt member={member} />
+        {launched && lane ? <LaneReceipts lane={lane} /> : null}
+      </div>
+      {launched && raw ? null : <>
+        {launched && lane ? <div className="aw-made"><PrRow lane={lane} itemTitle={String(member.facts.from || "")} /><FilesFold lane={lane} /></div> : null}
+        <AgentLedger lines={lines} failed={failed && Boolean(member.launchId)} onRetry={read} />
+        {launched && lane ? <UnreadLines lane={lane} /> : null}
+      </>}
       <div className="aw-details" data-testid="agents-details">
         <FoldGadget title="Details">
           <SurfaceFacts value={detailFacts(member, lane)} />
-          {member.launchId ? <WhyThisState launchId={member.launchId} /> : null}
+          {lane ? <CheckLog lane={lane} /> : null}
+          {member.launchId && !raw ? <WhyThisState launchId={member.launchId} /> : null}
         </FoldGadget>
       </div>
     </div>

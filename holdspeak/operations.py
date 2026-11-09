@@ -2721,7 +2721,7 @@ def _changed(name: str, args: Any, result: Any) -> tuple[str, str, str]:
     """
     kind, _, op = name.partition(".")
     # The kind the desk refreshes on (web/announce.py): a person, a workbench.
-    kind = {"people": "person", "automation": "workbench"}.get(kind, kind)
+    kind = {"people": "person", "automation": "workbench", "calls": "call"}.get(kind, kind)
     payload = args if isinstance(args, Mapping) else {}
     obj_id: Any = payload.get(f"{kind}_id")
     if not obj_id:

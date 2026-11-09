@@ -19,7 +19,6 @@ import { useChatImport } from "./hooks/useChatImport";
 import { MissionControlConveyor } from "./components/MissionControlConveyor";
 import { hydrateBuilderTools, useBuilderTools } from "./builderTools";
 import { SessionPullout, PanePicker } from "./components/SessionPullout";
-import { LaneWindow } from "./lane/LaneWindow";
 import { DeliveryBoard } from "./components/DeliveryBoard";
 import { DeliveryDossierWindow } from "./components/DeliveryDossierWindow";
 import { DeliveryTerminalWindow } from "./components/DeliveryTerminalWindow";
@@ -310,7 +309,6 @@ function DeskFaces() {
       {/* PHILO-14 A2: a Project opens as a drawer; Get Info is its own window. */}
       {!arrivalRequired && <DrawerWindows />}
       {!arrivalRequired && <ConductorWindows />}
-      {!arrivalRequired && <LaneWindow />}
       {/* PHILO-17 (Astra r2): the delete receipt's seat (the Floor's, #665)
           is desk-level, fixed above the dock and above every window, so its
           Undo is in view wherever Delete was pressed (a Chair window or a
