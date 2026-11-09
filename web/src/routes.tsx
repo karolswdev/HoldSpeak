@@ -63,12 +63,6 @@ export const DEMOTED_ROUTES: DemotedRoute[] = [
     legacyParam: "meeting",
   },
   {
-    path: "/meetings",
-    surface: "review-meetings",
-    subjectKind: "meeting",
-    legacyParam: "meeting",
-  },
-  {
     path: "/settings",
     surface: "configure-settings",
     subjectKind: "integration",
@@ -84,12 +78,6 @@ export const DEMOTED_ROUTES: DemotedRoute[] = [
   // to that host and keep their old paths for callers and bookmarks.
   { path: "/profiles", surface: "configure-runs-on", scope: "models" },
   { path: "/models", surface: "configure-runs-on", scope: "models" },
-  // HS-100-10 — Studio died; its address lands on Settings (the tools
-  // it launched are search-reachable).
-  { path: "/studio", surface: "configure-settings" },
-  // Betterment AG1: the old Agents application is unmapped; its address
-  // opens Agents (the Conductor window).
-  { path: "/companion", surface: "open-conductor" },
   // PHILO-14 C4: the Conductor drawer, where agents live.
   { path: "/conductor", surface: "open-conductor" },
   { path: "/terminals", surface: "open-terminals" },

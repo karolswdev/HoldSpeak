@@ -17,7 +17,6 @@ import { objectByRef } from "./world";
 import { objectWindowStandIn } from "./objectWindows";
 import { useDeliveryDossier } from "./deliveryDossier";
 import { useDeliveryTerminal, type OpenTarget } from "./deliveryTerminal";
-import { useMissionControl } from "./missioncontrol";
 import { useSteering } from "./steering";
 import { useTrustWindow } from "./components/TrustWindow";
 import { useDrawers, type OpenDrawer, type OpenInfo } from "./drawer/store";
@@ -47,10 +46,6 @@ useDeliveryDossier.subscribe((s, prev) => {
 useDeliveryTerminal.subscribe((s, prev) => {
   if (s.openTarget !== prev.openTarget && s.openTarget?.presentation !== "embedded")
     rememberWindow("delivery-terminal", s.openTarget);
-});
-
-useMissionControl.subscribe((s, prev) => {
-  if (s.open !== prev.open) rememberWindow("mission-control", s.open ? true : null);
 });
 
 useSteering.subscribe((s, prev) => {
@@ -99,7 +94,6 @@ function restoreOnce(): void {
   // closes the editor), and its subscription would forget that record.
   const dossier = keptWindow<DossierRecord>("delivery-dossier");
   const terminal = keptWindow<OpenTarget>("delivery-terminal");
-  const mission = keptWindow<boolean>("mission-control");
   const session = keptWindow<string>("session");
   const trust = keptWindow<boolean>("trust");
   const inspector = keptWindow<InspectorRecord>("tool-inspector");
@@ -114,7 +108,6 @@ function restoreOnce(): void {
   else if (dossier?.kind === "phase")
     void useDeliveryDossier.getState().openPhase(dossier.project, dossier.phase);
   if (terminal?.targetId) useDeliveryTerminal.getState().open(terminal);
-  if (mission && !useMissionControl.getState().open) useMissionControl.getState().toggle();
   if (session) useSteering.getState().openSession(session);
   if (trust) useTrustWindow.getState().setOpen(true);
   const desk = useDesk.getState();

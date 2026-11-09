@@ -17,8 +17,6 @@
     "src/desk/components/GroundingSection.tsx",
     "src/desk/components/InfoWindow.tsx",
     "src/desk/components/InlineEditor.tsx",
-    "src/desk/components/MissionControlConveyor.tsx",
-    "src/desk/components/RailsPicker.tsx",
     "src/desk/components/RepoWindow.tsx",
     "src/desk/components/RoadmapWindow.tsx",
     "src/desk/components/ScheduleCreateWindow.tsx",

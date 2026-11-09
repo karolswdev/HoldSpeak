@@ -54,7 +54,6 @@ FIELDS_BEFORE_THE_MOVE = [
     "memory_service",
     "mesh_requires_token",
     "mesh_service",
-    "mission_control_service",
     "model_library_service",
     "monday_brief_service",
     "note_outcomes_service",

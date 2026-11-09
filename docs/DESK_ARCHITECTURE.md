@@ -42,7 +42,6 @@ The parked spatial Floor and its rendering path do not define the active Desk.
 `web/src/routes.tsx` defines `/`, `/welcome`, and `/presence` as page routes.
 Other supported addresses are deep links that open the matching Desk window and preserve its scope.
 For example, `/history` opens Meetings and `/models` opens Engines.
-The legacy `/studio` address opens Settings.
 
 `web/src/desk/applications.ts` defines the application registry.
 Add a deep link only when the application needs an address.

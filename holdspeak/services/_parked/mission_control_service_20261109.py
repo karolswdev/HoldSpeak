@@ -1,3 +1,5 @@
+# PARKED 20261109 (lane subtract/mission-control): Mission control (the dw belt and its `dw story` proposal flow) was a second implementation of Programs; the Program window and the Programs engine own delivery now.
+# Not imported. Restore with git revert of the parking commit.
 """Principal-aware mission-control operations.
 
 The service owns durable rails-journal reads and Delivery Workbench proposal
@@ -12,9 +14,9 @@ import json
 from pathlib import Path
 from typing import Any, Callable
 
-from ..db.core import Database
-from ..principals import Principal
-from .errors import NotFound, ValidationError
+from ...db.core import Database
+from ...principals import Principal
+from ..errors import NotFound, ValidationError
 
 MC_PLUGIN_ID = "missioncontrol_desk"
 MC_PLUGIN_VERSION = "0.1.0"
@@ -27,7 +29,7 @@ class MissionControlService:
         self._observer = observer or NullObserver()
 
     def list_rails_journal(self, principal: Principal, *, limit: int = 50) -> list[Any]:
-        from ..rails_observer import list_journal
+        from ...rails_observer import list_journal
 
         return list_journal(self._db, limit=limit)
 
@@ -39,7 +41,7 @@ class MissionControlService:
         project_map: dict[str, Any],
         runner: Any = None,
     ) -> Any:
-        from ..missioncontrol_bridge import (
+        from ...missioncontrol_bridge import (
             ALLOWED_STORY_STATUSES,
             build_story_preview,
             state_entry,
@@ -152,7 +154,7 @@ class MissionControlService:
         try:
             policy_snapshot = None
             if clean == "approved":
-                from ..operation_policy import operation_for_proposal, resolve_policy
+                from ...operation_policy import operation_for_proposal, resolve_policy
 
                 operation = operation_for_proposal(existing, actor=actor)
                 captured = dict(getattr(existing, "policy_snapshot", {}) or {})
@@ -202,8 +204,8 @@ class MissionControlService:
         runner: Any,
         broadcast: Callable[[str, Any], None] | None,
     ) -> Any:
-        from ..missioncontrol_bridge import build_dw_story_connector, load_project_map
-        from ..plugins.actuator_executor import ActuatorExecutor
+        from ...missioncontrol_bridge import build_dw_story_connector, load_project_map
+        from ...plugins.actuator_executor import ActuatorExecutor
 
         payload = dict(proposal.payload or {})
         repo_path = str(payload.get("repo") or "")

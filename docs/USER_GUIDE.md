@@ -731,9 +731,8 @@ first-paint cache. Some transient views, including Ask, are view-specific. A
 second browser can change the same hub-backed window and cause a stale revision
 response. Read the receipt before you retry a window action.
 
-## Mission Control on the Desk
+## Review work on the Desk
 
-Mission Control collects sessions, deliveries, and receipts that need review.
 Open a row to inspect the owning surface. It does not replace the agent
 session, Project Room, or external provider.
 
