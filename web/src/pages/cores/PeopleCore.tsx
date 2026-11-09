@@ -1401,7 +1401,7 @@ function PrepPane({ relationship, onRefresh, onProtectedFailure, onRead, onNext,
     ...ledgerOpen.filter((row) => row.tone === "coral").sort((a, b) => dayOf(a) - dayOf(b)),
     ...ledgerOpen.filter((row) => row.tone !== "coral").sort((a, b) => dayOf(a) - dayOf(b)),
     ...doneRows.map(({ row, side }) => ({ key: `d:${row.id}`, side, tone: "moss" as const, text: row.body, due: null, meta: "Done", inspect: row,
-      verb: <Button dense variant="ghost" onClick={() => inspectCommitment(row)}>Open</Button> })),
+      verb: <Button dense variant="ghost" onClick={() => inspectCommitment(row)}>Open inspector</Button> })),
   ];
   const theyCount = owedRows.length + actions.length;
   const youCount = youOweRows.length + myActions.length;
@@ -1425,7 +1425,7 @@ function PrepPane({ relationship, onRefresh, onProtectedFailure, onRead, onNext,
         spine in the meaning colour (brass owed to you, steel you owe,
         coral overdue, moss done), the words, the day in mono and its one
         verb: Nudge on theirs past its day, else Done; Accept on a request;
-        Open on a done one. Overdue first, then by day. One Add on the head asks
+        Open inspector on a done one. Overdue first, then by day. One Add on the head asks
         which way it goes. */}
     <section className="people-section people-commitments" aria-label="Commitments" data-testid="people-commitments">
       <header className="people-section-head">
