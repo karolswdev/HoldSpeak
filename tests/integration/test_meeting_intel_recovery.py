@@ -174,3 +174,22 @@ def test_partial_intel_names_retained_work_and_supports_retry_or_skip(
     assert competing_skip.status_code == 409
     assert "running" in competing_skip.json()["error"]
     assert db.intel.get_intel_job(meeting.id).status == "running"
+
+
+@pytest.mark.parametrize("field", ["actor", "owner", "principal"])
+def test_an_authority_key_in_the_body_is_the_contracts_400_never_a_500(client, db, field) -> None:
+    """Fix forward #2066: the produced routes answer a contract refusal
+    (operation_routes.ContractRefusal) with 400, as meeting.* and phone.* do;
+    nothing changes."""
+    meeting = _seed_failed_partial_intel(db)
+    before = db.meetings.get_meeting(meeting.id).intel_status
+    for path in (f"/api/meetings/{meeting.id}/intel-recovery/skip", f"/api/meetings/{meeting.id}/intel-recovery/retry",
+                 f"/api/intel/retry/{meeting.id}"):
+        refused = client.post(path, json={field: "someone"})
+        assert refused.status_code == 400, (path, refused.status_code, refused.text)
+        assert field in refused.json()["error"], refused.json()
+    assert db.meetings.get_meeting(meeting.id).intel_status == before
+    # A declared meeting verb on the same producer answers the same way.
+    renamed = client.put(f"/api/meetings/{meeting.id}", json={"title": "x", field: "someone"})
+    assert renamed.status_code == 400, renamed.text
+    assert db.meetings.get_meeting(meeting.id).title == "Delivery review"

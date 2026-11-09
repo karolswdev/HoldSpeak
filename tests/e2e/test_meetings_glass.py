@@ -296,6 +296,9 @@ class TestOneMeetingOneWindow:
                 )
                 row.wait_for(timeout=T)
                 assert row.count() == 1
+                # The Needs-you row shows its verbs on hover at 1440.
+                if not self.phone:
+                    row.first.hover()
                 self._press(row.locator("[data-verb=summarize]"))
                 self._one_front(ONE, "needs")
                 win = page.locator("#surface-meetings")

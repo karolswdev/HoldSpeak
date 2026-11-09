@@ -63,6 +63,13 @@
 }
 .desk-next .surface-disclosure:not([data-variant="raw"]) .surface-disclosure-trigger::after {
   content: "Show";
+  /* The Button's hit face (global.css :where(.btn--chrome)::after) is an
+     absolute layer over the whole box; the fold's word is that same pseudo,
+     so it sat over the label ("Show" over "Since Sprint retro…", since
+     #1695). Here it is a flex item at the right edge of its heading; the
+     trigger's own box is the target. */
+  position: static;
+  inset: auto;
   flex: none;
   margin-left: auto;
   padding-left: 12px;
@@ -150,7 +157,8 @@
     position: relative;
     margin-block: calc((var(--desk-button-hit-size) - 26px) / 2 + var(--space-2) / 2);
   }
-  .desk-next .surface-disclosure:not([data-variant]) .surface-disclosure-trigger::after {
+  /* The halo is the ::before: the ::after is the fold's word (Show, Hide). */
+  .desk-next .surface-disclosure:not([data-variant]) .surface-disclosure-trigger::before {
     content: "";
     position: absolute;
     top: 50%;
