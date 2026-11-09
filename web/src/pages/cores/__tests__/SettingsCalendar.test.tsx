@@ -228,10 +228,13 @@ describe("Accounts calendar source rows", () => {
     });
     render(<SettingsCore scope="integrations"/>);
     fireEvent.click(screen.getByTestId("calendar-add-btn"));
-    fireEvent.change(screen.getByRole("textbox", WELL_INPUT), { target: { value: "https://first.example/a.ics" } });
-    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    // Role queries inside the well: a page-wide role query names every node
+    // of every mounted Settings section on each call.
+    const inWell = () => within(screen.getByTestId("calendar-well"));
+    fireEvent.change(inWell().getByRole("textbox", WELL_INPUT), { target: { value: "https://first.example/a.ics" } });
+    fireEvent.click(inWell().getByRole("button", { name: "Save" }));
     await act(async () => { await Promise.resolve(); });
-    fireEvent.change(screen.getByRole("textbox", WELL_INPUT), { target: { value: "https://newer.example/b.ics" } });
+    fireEvent.change(inWell().getByRole("textbox", WELL_INPUT), { target: { value: "https://newer.example/b.ics" } });
     await act(async () => refuse(new Error("Source refused")));
     const well = screen.getByTestId("calendar-well");
     expect(within(well).getByRole("textbox", WELL_INPUT)).toHaveValue("https://newer.example/b.ics");
