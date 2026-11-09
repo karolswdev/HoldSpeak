@@ -1002,6 +1002,11 @@ OP_MCP_PROJECTIONS: dict[str, dict[str, Any]] = {
         "people.project.link", "people.project.unlink", "people.one_on_one.list", "people.agenda.transition",
         "people.owed.create", "people.note.list", "people.commitment.send_to_workbench",
         "people.commitment.satisfy", "people.calendar.link", "people.calendar.unlink", "people.owner_alias.link", "people.owner_alias.unlink")},
+    # 2026-11-08: the Automations verbs, declared (holdspeak/automation_operations.py).
+    **{name: {"kind": "tool", "name": name} for name in (
+        "automation.set_when", "automation.set_engine", "automation.make_one", "automation.template.list",
+        "automation.template.instantiate", "automation.result.open", "automation.new.list", "automation.lesson.list",
+        "automation.lesson.forget")},
 }
 
 #: Declared operations with no MCP exposure: the rig refuses them by name.

@@ -40,7 +40,9 @@ def _endpoint(descriptor: Any, registry: Callable[[], Any], answer: Answer, modu
 
     async def endpoint(request: Request, **params: str) -> Any:
         principal = _principal(request)
-        source = dict(request.query_params) if method == "GET" else await _body(request)
+        # A DELETE carries its arguments in the query (``?at=``), under any body.
+        query = dict(request.query_params) if method in ("GET", "DELETE") else {}
+        source = query if method == "GET" else {**query, **await _body(request)}
         args = {**source, **params}
         return await answer(lambda: registry().invoke(principal, descriptor.name, args, shape="web"),
                             status=descriptor.http_status)

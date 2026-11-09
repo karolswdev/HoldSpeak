@@ -858,6 +858,10 @@ def test_the_catalogue_is_explicit_descriptors() -> None:
         "people.project.link", "people.project.unlink", "people.one_on_one.list", "people.agenda.transition",
         "people.owed.create", "people.note.list", "people.commitment.send_to_workbench",
         "people.commitment.satisfy", "people.calendar.link", "people.calendar.unlink", "people.owner_alias.link", "people.owner_alias.unlink",
+        # 2026-11-08: the Automations verbs, declared (automation_operations.py).
+        "automation.set_when", "automation.set_engine", "automation.make_one", "automation.template.list",
+        "automation.template.instantiate", "automation.result.open", "automation.new.list", "automation.lesson.list",
+        "automation.lesson.forget",
     ]
     # decision.list takes the empty object; its one optional argument is the
     # HTTP limit (round two: it passes through instead of slicing 500 rows).

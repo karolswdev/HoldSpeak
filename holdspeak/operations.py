@@ -2305,6 +2305,7 @@ from holdspeak.program_operations import LIVE_PROGRAM_SERVICE, PROGRAM_OPERATION
 from holdspeak.meeting_operations import MEETING_OPERATIONS  # noqa: E402
 from holdspeak.phone_operations import LIVE_PHONE_SERVICE, PHONE_OPERATIONS  # noqa: E402,F401 (re-exported)
 from holdspeak.people_operations import PEOPLE_OPERATIONS  # noqa: E402
+from holdspeak.automation_operations import AUTOMATION_OPERATIONS  # noqa: E402
 
 #: The whole catalogue, in export order.
 # ── Betterment Q9: Find the tasks on a note ───────────────────────────────
@@ -2439,7 +2440,8 @@ DESCRIPTORS: tuple[OperationDescriptor, ...] = (
     DECISION_DELETE, DECISION_STATUS, DECISION_SUPERSEDE,
     KERNEL_RECEIPT_READ, MEMORY_OBSERVATIONS_READ, MEMORY_PAGE_READ,
 ) + ROOM_OPERATIONS + STEWARD_CONNECTOR_OPERATIONS + CHANNEL_OPERATIONS + ONBOARDING_OPERATIONS + SETUP_OPERATIONS + AGENT_OPERATIONS \
-    + DESK_DISPLAY_OPERATIONS + NOTE_OUTCOME_OPERATIONS + (TODAY_GET,) + PROGRAM_OPERATIONS + MEETING_OPERATIONS + PHONE_OPERATIONS + PEOPLE_OPERATIONS
+    + DESK_DISPLAY_OPERATIONS + NOTE_OUTCOME_OPERATIONS + (TODAY_GET,) + PROGRAM_OPERATIONS + MEETING_OPERATIONS + PHONE_OPERATIONS + PEOPLE_OPERATIONS \
+    + AUTOMATION_OPERATIONS
 
 #: The RuntimeServices / WebContext fields the catalogue binds to.
 BOUND_SERVICES: tuple[str, ...] = tuple(dict.fromkeys(d.service for d in DESCRIPTORS))
@@ -2715,7 +2717,8 @@ def _changed(name: str, args: Any, result: Any) -> tuple[str, str, str]:
     the most specific object id in the arguments, else the result's ``id``.
     """
     kind, _, op = name.partition(".")
-    kind = "person" if kind == "people" else kind  # the kind the desk refreshes on (web/announce.py)
+    # The kind the desk refreshes on (web/announce.py): a person, a workbench.
+    kind = {"people": "person", "automation": "workbench"}.get(kind, kind)
     payload = args if isinstance(args, Mapping) else {}
     obj_id: Any = payload.get(f"{kind}_id")
     if not obj_id:
