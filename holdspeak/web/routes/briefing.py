@@ -33,9 +33,15 @@ from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from starlette.concurrency import run_in_threadpool
 
+from ... import operations
 from ...logging_config import get_logger
+from ...operations import OperationRefused
+from ...principals import UNAUTHENTICATED
 from ...services.errors import ServiceError
+from ...settings_operations import SETTINGS_ROUTE_OPERATIONS
 from ..context import WebContext
+from ..operation_routes import operation_router
+from ._mount import mount_router
 
 log = get_logger("web.routes.briefing")
 
@@ -164,7 +170,6 @@ async def _page(request: Request, fn: Callable[[], Any], *, what: str) -> JSONRe
 
 
 def build_briefing_router(ctx: WebContext) -> APIRouter:
-    del ctx
     router = APIRouter()
 
     @router.get("/b/{token}", include_in_schema=False)
@@ -226,59 +231,52 @@ def build_briefing_router(ctx: WebContext) -> APIRouter:
         return await _owner(request, lambda principal: _service().revoke(principal, package_id), what="revoke")
 
     # ── DIR4 to DIR6: Later, his settings, Telegram ──────────────────
-
-    @router.get("/api/reach")
-    async def api_reach(request: Request) -> Any:
-        return await _owner(request, lambda principal: _reach().status(principal), what="read")
-
-    @router.put("/api/reach")
-    async def api_reach_put(request: Request) -> Any:
-        body = await _body(request)
-
-        def save(principal: Any) -> dict[str, Any]:
-            _reach().save_settings(principal, body)
-            return _reach().status(principal)
-
-        return await _owner(request, save, what="save")
-
-    @router.post("/api/reach/later")
-    async def api_reach_later(request: Request) -> Any:
-        body = await _body(request)
-        return await _owner(request, lambda principal: _reach().later(
-            principal, body.get("ref"), body.get("later"), via="desk"), what="later")
-
-    @router.post("/api/reach/telegram/pair")
-    async def api_reach_telegram_pair(request: Request) -> Any:
-        return await _owner(request, lambda principal: _telegram().start_pairing(principal), status=201,
-                            what="pair")
-
-    @router.delete("/api/reach/telegram/pair")
-    async def api_reach_telegram_unpair(request: Request) -> Any:
-        return await _owner(request, lambda principal: _telegram().unpair(principal), what="unpair")
-
-    @router.put("/api/reach/telegram/token")
-    async def api_reach_telegram_token(request: Request) -> Any:
-        body = await _body(request)
-        return await _owner(request, lambda principal: _telegram().save_token(principal, body.get("token")),
-                            what="token")
-
-    @router.post("/api/reach/digest")
-    async def api_reach_digest(request: Request) -> Any:
-        return await _owner(request, lambda principal: _reach().send_digest_now(principal), what="digest")
+    # Produced from the reach.* rows (settings_operations.py); the bot token is
+    # HELD by its own handler, never an operation argument.
+    rows = tuple(d for d in SETTINGS_ROUTE_OPERATIONS if d.name.startswith("reach."))
+    mount_router(router, operation_router(
+        rows, lambda: _ops(ctx), _reach_answer, module=__name__,
+        hand_written={"reach.telegram.token": lambda descriptor: _held_token(ctx, descriptor)},
+    ))
 
     return router
 
 
-def _reach() -> Any:
-    from ...services.reach_service import default_reach_service
+def _ops(ctx: WebContext) -> Any:
+    """The registry, with the process's one Reach and Telegram services where the context carries none."""
+    from ...settings_operations import LIVE_REACH_SERVICE, LIVE_TELEGRAM_SERVICE
 
-    return default_reach_service()
+    return operations.for_context(ctx, reach_service=lambda: LIVE_REACH_SERVICE,
+                                  telegram_service=lambda: LIVE_TELEGRAM_SERVICE)
 
 
-def _telegram() -> Any:
-    from ...services.telegram_reach import default_telegram_reach
+async def _reach_answer(fn: Callable[[], Any], *, status: int = 200) -> JSONResponse:
+    try:
+        return JSONResponse(await run_in_threadpool(fn), status_code=status)
+    except OperationRefused as exc:
+        code = "owner_only" if exc.code == "owner_required" else exc.code
+        return JSONResponse({"error": code, "code": code, "detail": exc.detail},
+                            status_code=403 if exc.code == "owner_required" else 400)
+    except ServiceError as exc:
+        return _refused(exc)
+    except Exception as exc:
+        log.error(f"reach failed: {exc}", exc_info=True)
+        return JSONResponse({"error": "reach_failed", "code": "reach_failed",
+                             "detail": "The page service failed. Nothing changed. The log names the cause."},
+                            status_code=500)
 
-    return default_telegram_reach()
+
+def _held_token(ctx: WebContext, descriptor: Any) -> Callable[..., Any]:
+    """PUT /api/reach/telegram/token: the token leaves the body before anything reads the arguments."""
+
+    async def api_reach_telegram_token(request: Request) -> Any:
+        body = await _body(request)
+        token = body.pop("token", None)
+        principal = getattr(request.state, "principal", UNAUTHENTICATED)
+        return await _reach_answer(lambda: _ops(ctx).invoke(
+            principal, descriptor.name, body, held={"token": token}))
+
+    return api_reach_telegram_token
 
 
 __all__ = ["PAGE_HEADERS", "build_briefing_router"]

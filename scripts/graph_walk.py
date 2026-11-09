@@ -816,6 +816,7 @@ def _op_pending(record: dict[str, Any]) -> bool:
 OP_MCP_PROJECTIONS: dict[str, dict[str, Any]] = {
     "setup.status": {"kind": "tool", "name": "setup.status"},
     "setup.use": {"kind": "tool", "name": "setup.use"},
+    "setup.people.add": {"kind": "tool", "name": "setup.people.add"},
     "decision.create": {"kind": "tool", "name": "desk.create"},
     "decision.update": {"kind": "tool", "name": "desk.update"},
     "decision.read": {"kind": "tool", "name": "desk.get"},
@@ -1032,7 +1033,7 @@ OP_HTTP_ONLY = frozenset({"decision.status", "project.door.create", "project.doo
                           "channel.save_email_key", "channel.save_slack_webhook",
                           # The Conductor K1: the owner's one-press hook install (config, HTTP only).
                           "agent_hooks.install", "agent_hooks.remove",
-                          "setup.found", "setup.people.add", "setup.lan.scan",
+                          "setup.found", "setup.lan.scan",
                           # PHILO-15 04: the owner's press opens the Calendars privacy pane (HTTP only).
                           "calendar.open_settings", "connection.signin",
                           # PHILO-15 16: the owner names a Project's repository (HTTP only).

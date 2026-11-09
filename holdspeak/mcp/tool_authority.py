@@ -116,10 +116,6 @@ TOOL_AUTHORITY: dict[str, str] = {
     "ask.run": WORK,
     "ask.cancel": WORK,
     "ask.keep": WORK,
-    "settings.get": WORK,
-    "settings.update": CONFIG,  # the system settings (incl. calendar sources)
-    "setup.status": WORK,
-    "setup.use": CONFIG,  # Setup adoption changes the system configuration
     "coder.list": WORK,
     "coder.get": WORK,
     "coder.audit": WORK,
@@ -288,10 +284,6 @@ TOOL_AUTHORITY: dict[str, str] = {
     "channel.discard": EGRESS,  # decides a prepared send (the Send's other answer)
     "channel.send": EGRESS,  # sends a prepared document out (the owner's Send)
     "channel.sends": WORK,
-    "heartbeat.status": WORK,
-    "heartbeat.run_now": WORK,
-    "heartbeat.set": CONFIG,  # the heartbeat sweep settings
-    "heartbeat.notify_test": WORK,
     "interview.get": WORK,
     "interview.change_section": WORK,
     "interview.record_fact": WORK,

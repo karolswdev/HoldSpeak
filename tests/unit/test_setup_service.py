@@ -229,8 +229,11 @@ def test_setup_contract_binds_all_calls_to_one_service_instance() -> None:
 
     target = FakeSetup()
     registry = operations.bind_available({"setup_service": target})
+    # Every /api/setup route is declared (2026-11-09); the local-AI rows bind local_ai_setup_service.
     assert {name for name in registry.operations if name.startswith("setup.")} == {
         "setup.found", "setup.status", "setup.use", "setup.people.add", "setup.lan.scan",
+        "setup.readiness", "setup.runtime.probe", "setup.onboarding.set", "setup.first_value.start",
+        "setup.first_value.finish", "setup.first_value.event",
     }
     assert all(registry.target(name) is target for name in registry.operations if name.startswith("setup."))
 

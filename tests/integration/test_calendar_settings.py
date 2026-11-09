@@ -10,7 +10,7 @@ from fastapi.testclient import TestClient
 import holdspeak.config as config_module
 from holdspeak.config import Config, calendar_subscription_revision
 from holdspeak.db.core import get_database, reset_database
-from holdspeak.mcp.families.settings import dispatch
+from holdspeak.mcp.tools import dispatch
 from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
 

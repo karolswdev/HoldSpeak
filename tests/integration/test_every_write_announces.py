@@ -285,7 +285,8 @@ def test_a_settings_write_is_not_silenced_by_its_last_path_word(hub: Hub, seeded
     assert answer[0][0] == 200, answer
     assert hub.call("GET", "/api/settings/heartbeat")[1]["sweep_every_minutes"] == 17
     assert len(frames) == 1, frames
-    assert (frames[0]["kind"], frames[0]["op"]) == ("setting", "update")
+    # The route is produced from heartbeat.set (2026-11-09): the registry announces it, kind setting.
+    assert (frames[0]["kind"], frames[0]["op"]) == ("setting", "set")
 
 
 def test_the_quiet_routes_are_real_named_and_quiet(hub: Hub, seeded: dict[str, str]) -> None:

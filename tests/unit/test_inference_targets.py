@@ -184,20 +184,6 @@ def test_unknown_target_is_named_and_never_retargeted(rig) -> None:
     assert "gone" in target.readiness_reason
 
 
-def test_target_api_rejects_secret_fields(rig) -> None:
-    _, client = rig
-    response = client.post(
-        "/api/inference-targets",
-        json={
-            "name": "Nope",
-            "kind": "external_service",
-            "api_key": "sk-secret",
-        },
-    )
-    assert response.status_code == 400
-    assert "sk-secret" not in response.text
-
-
 def test_attempt_round_trips_actual_placement(rig) -> None:
     db, _ = rig
     db.capability_invocations.begin(invocation_id="run", definition_ref="persona:scout")

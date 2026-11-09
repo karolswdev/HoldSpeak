@@ -1133,14 +1133,14 @@ class TestTheOwnersHandIsUnbounded:
         self, db: Any, monkeypatch,
     ) -> None:
         """Through the REAL MCP dispatch for `heartbeat.run_now`."""
-        import holdspeak.mcp.families.heartbeat as hb_family
+        from holdspeak.mcp import tools as mcp_tools
 
+        # heartbeat.run_now is declared (settings_operations.py, 2026-11-09): its
+        # target builds the service over the process database at each call.
         self._seed_due(db, 25)
-        monkeypatch.setattr(hb_family, "get_database", lambda *a, **k: db)
-        monkeypatch.setattr(
-            hb_family, "WatchService",
-            lambda d, **kw: _watch_service(db, _fetcher([])),
-        )
+        monkeypatch.setattr("holdspeak.db.get_database", lambda *a, **k: db)
+        watches = _watch_service(db, _fetcher([]))  # built before the class is patched
+        monkeypatch.setattr("holdspeak.services.watch_service.WatchService", lambda d, **kw: watches)
         hour = datetime.now().hour
         from holdspeak.services.heartbeat_service import HeartbeatService
         HeartbeatService(db).update_settings(
@@ -1148,7 +1148,7 @@ class TestTheOwnersHandIsUnbounded:
                              "end": (hour + 5) % 24}},
         )
 
-        receipt = hb_family.dispatch("heartbeat.run_now", {}, OWNER)
+        receipt = mcp_tools.dispatch("heartbeat.run_now", {}, OWNER)
 
         assert receipt["watches"] == 25, (
             "Run now was bounded like the unattended sweep"
@@ -1211,16 +1211,14 @@ class TestRunNowOverridesQuietHours:
         self, db: Any, monkeypatch,
     ) -> None:
         """Through the REAL `heartbeat.run_now` MCP dispatch."""
-        import holdspeak.mcp.families.heartbeat as hb_family
+        from holdspeak.mcp import tools as mcp_tools
 
         self._rig(db)
-        monkeypatch.setattr(hb_family, "get_database", lambda *a, **k: db)
-        monkeypatch.setattr(
-            hb_family, "WatchService",
-            lambda d, **kw: _watch_service(db, _fetcher([])),
-        )
+        monkeypatch.setattr("holdspeak.db.get_database", lambda *a, **k: db)
+        watches = _watch_service(db, _fetcher([]))  # built before the class is patched
+        monkeypatch.setattr("holdspeak.services.watch_service.WatchService", lambda d, **kw: watches)
 
-        receipt = hb_family.dispatch("heartbeat.run_now", {}, OWNER)
+        receipt = mcp_tools.dispatch("heartbeat.run_now", {}, OWNER)
 
         assert receipt["held"] is False, (
             "Run now was held by quiet hours, contradicting the User Guide"

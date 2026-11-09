@@ -654,7 +654,14 @@ def test_the_sends_are_egress_owner_presses_and_blocking_io_in_the_one_table() -
                         # The Agents launch verbs (#2071) wait on tmux and the agent process.
                         "agent.launch.answer", "agent.launch.resume", "agent.helper.allow",
                         # The Calls verbs (#2085) wait on the line: a real call, its hang-up, a test call.
-                        "calls.place", "calls.hangup", "calls.test_line"}
+                        "calls.place", "calls.hangup", "calls.test_line",
+                        # The Settings family (2026-11-09): doctor reads, file and PATH detections,
+                        # a provider probe, a download, a sweep, a Telegram send.
+                        "setup.readiness", "setup.runtime.probe", "setup.local_ai.start",
+                        "onboarding.calendar.detect", "onboarding.connections.detect", "onboarding.agents.detect",
+                        "onboarding.calendar.request_access", "onboarding.calendar.check",
+                        "onboarding.calendar.use", "onboarding.connections.use", "settings.hub",
+                        "heartbeat.run_now", "reach.digest.send", "reach.telegram.pair"}
     # The secret saves are HTTP only, in no MCP palette, and config by their
     # declarations: the owner's press, owner only, with transport-held secrets.
     by_name = {d.name: d for d in operations.DESCRIPTORS}
@@ -663,7 +670,9 @@ def test_the_sends_are_egress_owner_presses_and_blocking_io_in_the_one_table() -
                                         "agent_hooks.install", "agent_hooks.remove", "connection.signin",
                                         "setup.lan.scan",
                                         # HTTP only: the Agents window's launch verbs.
-                                        "agent.launch.answer", "agent.launch.resume", "agent.helper.allow"}
+                                        "agent.launch.answer", "agent.launch.resume", "agent.helper.allow",
+                                        # HTTP only: the hub read, Telegram pairing.
+                                        "settings.hub", "reach.telegram.pair"}
     assert all(name in TOOL_AUTHORITY for name in mcp_blocking), mcp_blocking - set(TOOL_AUTHORITY)
     key = by_name["channel.save_email_key"]
     assert key.owner_press and key.owner_only and key.held == ("api_key",) and "channel.save_email_key" not in TOOL_AUTHORITY

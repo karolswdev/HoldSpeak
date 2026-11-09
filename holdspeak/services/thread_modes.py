@@ -76,6 +76,9 @@ _MCP_ONLY: frozenset[str] = frozenset({
     # The declared Automations reads (2026-11-08, automation_operations.py): a
     # thread reads an automation through automation.get; the palettes do not grow.
     "automation.template.list", "automation.new.list", "automation.lesson.list",
+    # The declared Settings-family reads (2026-11-09, setup_operations.py): MCP and HTTP only.
+    "inference.acquisition.get", "inference.targets.list", "people.access.get",
+    "connection.signin.status",
 })
 
 
@@ -92,7 +95,12 @@ def _thread_side(name: str) -> bool:
          # Programs (2026-10-28): an MCP and REST family (agents orchestrate).
          "program.",
          # Phone (2026-10-28): an MCP and REST family (the desk reaches him).
-         "phone.")
+         "phone.",
+         # Setup and onboarding (2026-11-09, setup_operations.py, onboarding_operations.py):
+         # the first-run verbs are an MCP and REST family.
+         "setup.", "onboarding.",
+         # Reach (2026-11-09, settings_operations.py): how HoldSpeak reaches him, MCP and REST.
+         "reach.")
     )
 
 

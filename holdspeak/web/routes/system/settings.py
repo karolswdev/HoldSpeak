@@ -1,429 +1,89 @@
-"""HTTP transport for application settings (HS-123-03)."""
+"""HTTP transport for application settings (HS-123-03), produced from ``holdspeak/settings_operations.py``.
+
+``/api/settings`` (read and write), the hub read and the heartbeat are each
+``OperationRegistry.invoke`` over a declared row. The answers keep the words
+the hand-written handlers answered with: a stale write is a 409 with the
+current ``revision``; a refused value a 400 ``{success: false, error}``.
+"""
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Callable
 
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 from starlette.concurrency import run_in_threadpool
 
+from .... import operations
 from ....logging_config import get_logger
+from ....operations import OperationRefused
+from ....services.errors import ConflictError, ServiceError, ValidationError
 from ....principals import UNAUTHENTICATED
-from ....services.errors import ConflictError, ValidationError
-from ....services.settings_service import SettingsService
+from ....settings_operations import LIVE_HEARTBEAT_SERVICE, SETTINGS_ROUTE_OPERATIONS
 from ...context import WebContext
+from ...operation_routes import operation_router
 from ...runtime_support import error_500
+from .._mount import mount_router
 from .settings_secrets import register_settings_secret_routes
 
 log = get_logger("web.routes.system")
 
-
-def _principal(request: Request):
-    return getattr(request.state, "principal", UNAUTHENTICATED)
-
-
-def _service(ctx: WebContext) -> SettingsService:
-    if not isinstance(ctx.settings_service, SettingsService):
-        raise RuntimeError("SettingsService was not supplied at application composition")
-    return ctx.settings_service
+#: The rows this module produces (the authority and Reach rows live beside their own routes).
+_SETTINGS = tuple(d for d in SETTINGS_ROUTE_OPERATIONS if d.http and d.http[1].startswith("/api/settings"))
 
 
-def _resolve_meetings_host(config: Any) -> str | None:
-    """HS-172-02: resolve the meetings group's assigned model host.
-
-    Returns the HOST the run egresses to, never a profile label:
-    - LAN endpoint: its ip/hostname (``192.168.1.43``)
-    - This device: ``local``
-    - Cloud provider: the provider's API host (``api.openai.com``)
-    - Mesh: the node name
-    - No assignment: None
-    """
+async def _answer(fn: Callable[[], Any], *, status: int = 200) -> Any:
     try:
-        profile_id = config.meeting.intel_profile_id
-        if not profile_id:
-            return None
-        from ....intel.providers import resolve_meeting_placement, endpoint_host
-        placement = resolve_meeting_placement(config.meeting)
-        if not placement.profile_id:
-            return None
-        return _placement_host(placement)
-    except Exception:
-        return None
+        return JSONResponse(await run_in_threadpool(fn), status_code=status)
+    except OperationRefused as exc:
+        return JSONResponse({"success": False, "code": exc.code, "error": exc.detail},
+                            status_code=403 if exc.code == "owner_required" else 400)
+    except ConflictError as exc:
+        # HS-130-07: a stale partial-tree write; the client reloads and reconciles.
+        return JSONResponse({"success": False, "error": exc.detail, "revision": exc.context.get("revision", "")},
+                            status_code=409)
+    except ValidationError as exc:
+        return JSONResponse({"success": False, "error": exc.detail}, status_code=400)
+    except ServiceError as exc:
+        return JSONResponse({"success": False, "error": exc.detail}, status_code=int(exc.context.get("status") or 400))
+    except Exception as exc:
+        return error_500(exc, log, "Settings failed")
 
 
-def _placement_host(placement: Any) -> str:
-    """Derive the egress host from a MeetingPlacement.
+def _update(ops: Callable[[], Any], descriptor: Any) -> Callable[..., Any]:
+    """PUT /api/settings: the body IS the patch. It is passed as ``patch``, so a
+    settings section named like an authority field (``owner``) stays data."""
 
-    Uses ``endpoint_host(base_url)`` for the bare hostname (the same
-    source the Concierge's engine_display_name and the Speak resolver
-    use), falling back to the boundary for local runs.
-    """
-    from ....intel.providers import endpoint_host
-    if placement.node:
-        return str(placement.node)
-    host = endpoint_host(placement.base_url)
-    return host if host else (placement.boundary or "local")
+    async def api_update_settings(request: Request) -> Any:
+        try:
+            body = await request.json()
+        except Exception:
+            body = None
+        principal = getattr(request.state, "principal", UNAUTHENTICATED)
+        return await _answer(lambda: ops().invoke(principal, descriptor.name, {"patch": body}, shape="web"))
 
-
-def _calendar_sources_snapshot() -> dict[str, str]:
-    """{source id: url} of the calendar sources on disk right now."""
-    try:
-        from ....config import Config
-
-        return {s.id: str(s.url or "") for s in Config.load().calendar.sources}
-    except Exception:
-        return {}
-
-
-def remove_generated_ics_for_removed_sources(
-    before: dict[str, str], after: dict[str, str],
-) -> list[str]:
-    """HS-175 counsel C4 (the Remove half): a calendar source removed by
-    this settings write whose URL is an ICS the Snapshot verb generated
-    takes its file with it (receipted).  Only files inside the snapshot
-    directory are ever deleted; an owner's own file path is never touched.
-    Returns the paths deleted."""
-    from ....services.calendar_snapshot_service import delete_generated_ics
-
-    removed: list[str] = []
-    for source_id, url in before.items():
-        if source_id in after:
-            continue
-        if delete_generated_ics(url):
-            removed.append(url)
-    return removed
+    return api_update_settings
 
 
 def build_settings_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
 
-    @router.get("/api/settings")
-    def api_get_settings(request: Request) -> Any:
-        try:
-            from ....plugins.dictation.runtime_counters import get_counters, get_session_status
+    def hub() -> Any:  # a partially wired context's hub read, over the services it carries
+        from ....services.settings_hub_service import SettingsHubService
 
-            payload = _service(ctx).get_settings(_principal(request))
-            # Runtime fields are read-only enrichment, retained verbatim from the
-            # previous HTTP response rather than becoming persisted service state.
-            payload["_runtime_status"] = {
-                "counters": get_counters(),
-                "session": get_session_status(),
-            }
-            return JSONResponse(payload)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to load settings")
+        return SettingsHubService(model_library_service=ctx.model_library_service,
+                                  inference_assignment_service=ctx.inference_assignment_service,
+                                  cadence_service=ctx.cadence_service)
 
-    @router.put("/api/settings")
-    def api_update_settings(payload: dict[str, Any], request: Request) -> Any:
-        try:
-            touches_sources = isinstance(payload.get("calendar"), dict) and "sources" in payload["calendar"]
-            before = _calendar_sources_snapshot() if touches_sources else {}
-            result = _service(ctx).update_settings(_principal(request), payload)
-            if touches_sources and isinstance(result, dict) and result.get("success", True):
-                try:
-                    remove_generated_ics_for_removed_sources(before, _calendar_sources_snapshot())
-                except Exception as exc:  # the write stands; the file cleanup is logged
-                    log.warning("snapshot ICS cleanup after settings write failed: %s", exc)
-            return JSONResponse(result)
-        except ConflictError as exc:
-            # HS-130-07: a stale partial-tree write. Reject with 409 and hand
-            # back the current revision so the client can reload + reconcile.
-            return JSONResponse(
-                {
-                    "success": False,
-                    "error": exc.detail,
-                    "revision": exc.context.get("revision", ""),
-                },
-                status_code=409,
-            )
-        except ValidationError as exc:
-            return JSONResponse({"success": False, "error": exc.detail}, status_code=400)
-        except Exception as exc:
-            log.error("Failed to update settings: %s", exc)
-            return JSONResponse({"success": False, "error": str(exc)}, status_code=500)
+    def ops() -> Any:
+        return operations.for_context(ctx, settings_hub_service=hub,
+                                      heartbeat_service=lambda: LIVE_HEARTBEAT_SERVICE)
 
-    @router.get("/api/settings/hub")
-    async def api_settings_hub(request: Request) -> Any:
-        """HS-170-04: settings hub row facts.
-
-        One read returning the seven module rows' state tokens from existing
-        services. Counts are integers; the face applies the zero law.
-        """
-        # PERF-HUB 2026-10-28: seconds of reads; off the event loop.
-        return await run_in_threadpool(_settings_hub, request)
-
-    def _settings_hub(request: Request) -> Any:
-        try:
-            from ....config import Config
-            from ....services.model_library_service import ModelLibraryApplicationService
-            from ....services.inference_assignment_service import InferenceAssignmentService
-
-            config = Config.load()
-            p = _principal(request)
-
-            # Models: engines from the model library summary, groups from
-            # the assignments summary.
-            engines = 0
-            groups_set = 0
-            default_set = False
-            # Inventory 2026-10-03 (UX-CANON A.10): the hub rows said
-            # "Voice LIVE" and "SUMMARY SET ON" with no engine assigned. A
-            # switch is not a working path; each row also carries whether its
-            # work has an engine. A missing key means unknown.
-            group_engine: dict[str, bool] = {}
-            answers_fact: dict[str, Any] = {"engineSet": None, "engine": None}
-            if ctx.model_library_service is not None:
-                try:
-                    lib = ctx.model_library_service.get_library(p)
-                    summary = lib.get("summary", {})
-                    engines = summary.get("ready_count", 0)
-                except Exception:
-                    pass
-            if ctx.inference_assignment_service is not None:
-                try:
-                    asn = ctx.inference_assignment_service.assignment_summary(p)
-                    rows = asn.get("rows", [])
-                    for row in rows:
-                        if row.get("id") == "global":
-                            default_set = row.get("status") == "assigned"
-                        elif row.get("status") == "assigned":
-                            groups_set += 1
-                except Exception:
-                    pass
-                # The engine fact is the EFFECTIVE assignment for the capability
-                # the work runs on, as the runner resolves it (capability, then
-                # its group, then the default). A group row misses a selection
-                # made for one capability (the summary selection writes
-                # `capability:meeting.deferred_analysis`), and said NO ENGINE
-                # after a successful selection (review of #789).
-                for wire_key, capability_id in (
-                    ("voice", "speech.rewrite"),
-                ):
-                    try:
-                        resolved = ctx.inference_assignment_service.resolve_effective(
-                            p, capability_id=capability_id)
-                        group_engine[wire_key] = resolved.get("status") == "assigned"
-                    except Exception:
-                        pass  # unknown: the face makes no engine claim
-                # PHILO-17 U35: the headline names the engine that answers an
-                # Ask. The assignment route decides only after the route
-                # migration (AskService._routed_assignments_active); before it
-                # the answer is unknown and the face names no engine.
-                try:
-                    routed = ctx.inference_assignment_service.routed("ask.answer")
-                    if routed:
-                        resolved = ctx.inference_assignment_service.resolve_effective(
-                            p, capability_id="ask.answer")
-                        answers_fact["engineSet"] = resolved.get("status") in {
-                            "assigned", "no_compatible_assignment",
-                        }
-                        entries = ((resolved.get("assignment") or {}).get("entries") or [])
-                        if answers_fact["engineSet"] and entries:
-                            answers_fact["engine"] = str(
-                                entries[0].get("label") or entries[0].get("profile_id") or ""
-                            ) or None
-                except Exception:
-                    pass  # unknown: the face makes no engine claim
-
-            # PHILO-15 B33: the summary engine is the ROUTE the queue takes
-            # (exact, group, global default; OFF first), the same answer
-            # doctor's "Meeting summary: profile …" line reads. It was the
-            # exact-capability resolution plus the legacy config pointer, so
-            # five faces said "no model" while summaries ran on the LAN box.
-            summary_fact: dict[str, Any] = {"engine_set": None, "off": False, "host": None}
-            try:
-                from ....db import get_database
-                from ....services.meeting_route_projection import summary_engine_fact
-
-                summary_fact = summary_engine_fact(
-                    getattr(ctx.inference_assignment_service, "_db", None) or get_database())
-            except Exception:
-                pass
-            if summary_fact.get("engine_set") is not None:
-                group_engine["meetings"] = bool(summary_fact["engine_set"])
-
-            # Connections: count provider connections.
-            connected = 0
-            try:
-                from ....db import get_database
-                conns = get_database().automations.list_provider_connections()
-                connected = len(conns)
-            except Exception:
-                pass
-
-            # Voice: pipeline live + target.
-            voice_live = config.dictation.pipeline.enabled
-            voice_target = config.dictation.pipeline.target_profile_override or "auto"
-            # Betterment ST0: the Voice fact reads whether speech works, the
-            # same speech-model read Setup and doctor make (disk only). A
-            # switch is not a working path. None: unknown.
-            speech_ready: bool | None = None
-            try:
-                from ....whisper_models import configured_speech_readiness
-
-                speech_ready = bool(configured_speech_readiness(config=config).get("ready"))
-            except Exception:
-                pass
-
-            # Meetings: intelligence enabled.
-            intel_on = config.meeting.intel_enabled
-
-            # Rhythm: count active cadence loops + heartbeat sweep state.
-            loops = 0
-            if ctx.cadence_service is not None:
-                try:
-                    loop_list = ctx.cadence_service.list_loops(p)
-                    loops = len(loop_list.get("loops", []))
-                except Exception:
-                    pass
-
-            # HS-171-02: heartbeat sweep rhythm mirror.
-            heartbeat_rhythm: dict[str, Any] = {"loops": loops}
-            try:
-                from ....services.heartbeat_service import HeartbeatService
-                hb = HeartbeatService(get_database())
-                heartbeat_rhythm = hb.hub_rhythm()
-            except Exception:
-                heartbeat_rhythm["sweepEveryMinutes"] = 15
-                heartbeat_rhythm["nextSweepAt"] = None
-                heartbeat_rhythm["lastSweepAt"] = None
-                heartbeat_rhythm["quiet"] = {"start": 22, "end": 8, "held": False}
-
-            # Sounds.
-            sounds_on = config.ui.desk_sounds
-
-            # System.
-            mesh_on = bool(getattr(config.mesh, "device_name", ""))
-            remote_on = bool(config.remote.streamable_http_enabled)
-
-            # Posture.
-            posture = config.control_mode
-
-            # writtenAt: the settings file's last write.
-            written_at = None
-            try:
-                from ....config import CONFIG_FILE
-                import os
-                if CONFIG_FILE.exists():
-                    written_at = os.path.getmtime(CONFIG_FILE)
-            except Exception:
-                pass
-
-            # HS-172-02: most recent completed intel run for the receipt.
-            last_run_at: str | None = None
-            last_run_s: int | None = None
-            try:
-                with get_database()._connection() as _conn:
-                    _row = _conn.execute(
-                        "SELECT intel_completed_at, intel_requested_at "
-                        "FROM meetings "
-                        "WHERE intel_status = 'complete' AND intel_completed_at IS NOT NULL "
-                        "ORDER BY intel_completed_at DESC LIMIT 1"
-                    ).fetchone()
-                    if _row and _row["intel_completed_at"]:
-                        last_run_at = _row["intel_completed_at"]
-                        if _row["intel_requested_at"]:
-                            from datetime import datetime as _dt
-                            _req = _dt.fromisoformat(_row["intel_requested_at"])
-                            _comp = _dt.fromisoformat(_row["intel_completed_at"])
-                            last_run_s = max(0, int((_comp - _req).total_seconds()))
-            except Exception:
-                pass
-
-            return JSONResponse({
-                "models": {
-                    "engines": engines,
-                    "groupsSet": groups_set,
-                    "defaultSet": default_set,
-                },
-                "connections": {"connected": connected},
-                "voice": {
-                    "live": voice_live,
-                    "target": voice_target,
-                    "engineSet": group_engine.get("voice"),
-                    "speechReady": speech_ready,
-                },
-                "meetings": {
-                    "intelligence": intel_on,
-                    "engineSet": group_engine.get("meetings"),
-                    "engine": summary_fact.get("profile"),
-                    "summariesOff": bool(summary_fact.get("off")),
-                    "auto": config.meeting.intelligence_auto,
-                    "auto_record": config.meeting.auto_record,
-                    "host": summary_fact.get("host") or _resolve_meetings_host(config),
-                    "lastRunAt": last_run_at,
-                    "lastRunS": last_run_s,
-                },
-                "answers": answers_fact,
-                "rhythm": heartbeat_rhythm,
-                "sounds": {"on": sounds_on},
-                # Betterment AG5: how many agents work at once.
-                "agents": {"workingAtOnce": config.agents.working_at_once},
-                "system": {
-                    "host": "THIS DEVICE",
-                    "mesh": mesh_on,
-                    "remote": remote_on,
-                },
-                "posture": posture,
-                "writtenAt": written_at,
-            })
-        except Exception as exc:
-            return error_500(exc, log, "Failed to load settings hub")
-
-    # ── HS-171-02: heartbeat settings + run-now ─────────────────────────
-
-    @router.get("/api/settings/heartbeat")
-    async def api_heartbeat_get(request: Request) -> Any:
-        """HS-171-02: read heartbeat sweep settings."""
-        try:
-            from ....db import get_database
-            from ....services.heartbeat_service import HeartbeatService
-
-            hb = HeartbeatService(get_database())
-            return JSONResponse(await run_in_threadpool(hb.get_settings))
-        except Exception as exc:
-            return error_500(exc, log, "Failed to load heartbeat settings")
-
-    @router.put("/api/settings/heartbeat")
-    def api_heartbeat_put(payload: dict[str, Any], request: Request) -> Any:
-        """HS-171-02: update heartbeat sweep settings."""
-        try:
-            from ....db import get_database
-            from ....services.heartbeat_service import HeartbeatService
-
-            hb = HeartbeatService(get_database())
-            result = hb.update_settings(payload)
-            return JSONResponse(result)
-        except ValidationError as exc:
-            return JSONResponse({"success": False, "error": exc.detail}, status_code=400)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to update heartbeat settings")
-
-    @router.post("/api/settings/heartbeat/run-now")
-    def api_heartbeat_run_now(request: Request) -> Any:
-        """HS-171-02: run one sweep out of band (owner only)."""
-        try:
-            from ....db import get_database, get_observer
-            from ....services.heartbeat_service import HeartbeatService
-            from ....services.watch_service import WatchService
-
-            db = get_database()
-            obs = get_observer()
-            ws = WatchService(db, observer=obs)
-            from ....delivery.follow_through import default_follow_through
-
-            hb = HeartbeatService(
-                db, observer=obs, watch_service=ws,
-                follow_through=default_follow_through(db),
-            )
-            # HS-200-43: Run now is the owner's explicit trigger. It
-            # evaluates every due watch (no WATCH_SWEEP_MAX) and runs
-            # inside quiet hours -- which is what this route's own
-            # USER_GUIDE promise has always said it does.
-            receipt = hb.run_sweep(_principal(request), owner_hand=True)
-            return JSONResponse(receipt)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to run heartbeat sweep")
-
+    mount_router(router, operation_router(
+        [d for d in _SETTINGS if d.name != "settings.update"], ops, _answer, module=__name__,
+    ))
+    mount_router(router, operation_router(
+        [d for d in _SETTINGS if d.name == "settings.update"], ops, _answer, module=__name__,
+        hand_written={"settings.update": lambda descriptor: _update(ops, descriptor)},
+    ))
     register_settings_secret_routes(router, ctx)
     return router

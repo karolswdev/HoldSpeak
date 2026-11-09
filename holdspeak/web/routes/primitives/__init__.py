@@ -25,7 +25,6 @@ from .kbs import build_kbs_router
 from .notes import build_notes_router
 from .note_outcomes import build_note_outcomes_router
 from .thoughts import build_thoughts_router
-from .profiles import build_profiles_router
 from .model_profiles import build_model_profiles_router
 from .workflows import build_workflows_router
 from .workbenches import build_workbenches_router
@@ -40,7 +39,6 @@ def build_primitives_router(ctx: WebContext) -> APIRouter:
     mount_router(router, build_desk_decisions_router(ctx))
     mount_router(router, build_ask_router(ctx))
     mount_router(router, build_recipes_router(ctx))
-    mount_router(router, build_profiles_router(ctx))
     mount_router(router, build_model_profiles_router())
     mount_router(router, build_kbs_router(ctx))
     mount_router(router, build_chains_router(ctx))

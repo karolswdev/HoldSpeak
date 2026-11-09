@@ -17,6 +17,7 @@ from .... import operations
 from ....logging_config import get_logger
 from ....services.credential_service import redacted_settings, strip_secret_mutations
 from ....services.errors import NotFound, ServiceError
+from ....settings_operations import CREDENTIAL_OPERATIONS
 from ...context import WebContext
 from ...operation_routes import operation_router
 from ...runtime_support import error_500
@@ -40,7 +41,7 @@ def register_settings_secret_routes(router: APIRouter, ctx: WebContext) -> None:
     if ctx.credential_service is None:
         raise RuntimeError("CredentialService must be supplied at application composition")
     mount_router(router, operation_router(
-        operations.SETTINGS_OPERATIONS, lambda: operations.for_context(ctx), _answer, module=__name__,
+        CREDENTIAL_OPERATIONS, lambda: operations.for_context(ctx), _answer, module=__name__,
     ))
 
 

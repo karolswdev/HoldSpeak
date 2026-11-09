@@ -119,11 +119,7 @@ _ALL_TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     "ask.cancel":            ("effect_proposal",   False),
     "ask.keep":              ("effect_proposal",   False),
     # --- settings family ---
-    "settings.get":    ("evidence_read",     False),
-    "settings.update": ("effect_proposal",   False),
     "settings.hub":    ("evidence_read",     False),
-    "setup.status":    ("evidence_read",     False),
-    "setup.use":       ("effect_proposal",   False),
     # --- HS-170: the Concierge + the four faces' reads ---
     "concierge.detect":   ("evidence_read",   False),
     "concierge.propose":  ("evidence_read",   False),
@@ -280,10 +276,6 @@ _ALL_TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     # HS-168-02: connection tools (reads only -- no state mutation)
     "connection.list": ("evidence_read", False),
     # HS-171-02: heartbeat family
-    "heartbeat.status": ("evidence_read", False),
-    "heartbeat.run_now": ("effect_proposal", False),
-    "heartbeat.set": ("effect_proposal", False),
-    "heartbeat.notify_test": ("effect_proposal", False),
     # PHILO-10-01: the channel family.
     "channel.destinations": ("evidence_read", False),
     "channel.check_destination": ("evidence_read", False),

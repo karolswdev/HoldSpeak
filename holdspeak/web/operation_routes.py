@@ -40,15 +40,42 @@ class ContractRefusal(ValidationError, OperationRefused):
         Exception.__init__(self, refused.detail)
         self.code, self.detail, self.operation = refused.code, refused.detail, refused.operation
         self.context = {"status": 400}
+        # The refusal receipt of an admitted operation rides on the refusal.
+        if getattr(refused, "kernel", None) is not None:
+            self.kernel = refused.kernel
 
 
-def _invoke(registry: Callable[[], Any], principal: Any, name: str, args: dict[str, Any]) -> Any:
+def _invoke(registry: Callable[[], Any], principal: Any, name: str, args: dict[str, Any],
+            receipted: bool = False) -> Any:
     try:
-        return registry().invoke(principal, name, args, shape="web")
+        if not receipted:
+            return registry().invoke(principal, name, args, shape="web")
+        # An admitted operation answers with its ``operation_id`` and terminal
+        # ``receipt`` beside its own answer (PHILO-9-02, ``_room_kernel``).
+        result, kernel = registry().invoke_receipted(principal, name, args, shape="web")
+        if isinstance(result, dict) and isinstance(kernel, dict):
+            return {**result, **{key: kernel[key] for key in ("operation_id", "receipt") if key in kernel}}
+        return result
     except ContractRefusal:
         raise
     except OperationRefused as refused:
         raise ContractRefusal(refused) from refused
+
+
+def _typed_query(descriptor: Any, query: dict[str, str]) -> dict[str, Any]:
+    """A query string's flags and counts as the schema types them (``?include_parked=true``)."""
+    properties = descriptor.args_schema.get("properties") or {}
+    typed: dict[str, Any] = {}
+    for key, value in query.items():
+        kind = (properties.get(key) or {}).get("type")
+        kinds = set(kind) if isinstance(kind, (list, tuple)) else {kind}
+        if "boolean" in kinds and value.strip().lower() in {"1", "true", "yes", "on", "0", "false", "no", "off"}:
+            typed[key] = value.strip().lower() in {"1", "true", "yes", "on"}
+        elif "integer" in kinds and value.strip().lstrip("-").isdigit():
+            typed[key] = int(value)
+        else:
+            typed[key] = value
+    return typed
 
 
 async def _body(request: Request) -> dict[str, Any]:
@@ -59,17 +86,18 @@ async def _body(request: Request) -> dict[str, Any]:
     return body if isinstance(body, dict) else {}
 
 
-def _endpoint(descriptor: Any, registry: Callable[[], Any], answer: Answer, module: str) -> Callable[..., Any]:
+def _endpoint(descriptor: Any, registry: Callable[[], Any], answer: Answer, module: str,
+              receipted: bool = False) -> Callable[..., Any]:
     method, path = descriptor.http
     names = [part[1:-1] for part in path.split("/") if part.startswith("{")]
 
     async def endpoint(request: Request, **params: str) -> Any:
         principal = _principal(request)
         # A DELETE carries its arguments in the query (``?at=``), under any body.
-        query = dict(request.query_params) if method in ("GET", "DELETE") else {}
+        query = _typed_query(descriptor, dict(request.query_params)) if method in ("GET", "DELETE") else {}
         source = query if method == "GET" else {**query, **await _body(request)}
         args = {**source, **params}
-        return await answer(lambda: _invoke(registry, principal, descriptor.name, args),
+        return await answer(lambda: _invoke(registry, principal, descriptor.name, args, receipted),
                             status=descriptor.http_status)
 
     # FastAPI reads the path parameters and the operation id from the
@@ -86,20 +114,22 @@ def _endpoint(descriptor: Any, registry: Callable[[], Any], answer: Answer, modu
 
 def operation_router(
     descriptors: Iterable[Any], registry: Callable[[], Any], answer: Answer, *, module: str,
-    hand_written: Mapping[str, Callable[[Any], Callable[..., Any]]] | None = None,
+    hand_written: Mapping[str, Callable[[Any], Callable[..., Any]]] | None = None, receipted: bool = False,
 ) -> APIRouter:
     """One route per descriptor with ``http``, in the descriptors' order.
 
     ``registry``: the route module's ``OperationRegistry`` (``operations.for_context``),
     read at each call. ``hand_written``: descriptor name -> a builder of a
-    handler the producer cannot make (an answer that is a file)."""
+    handler the producer cannot make (an answer that is a file, an input the
+    transport holds). ``receipted``: an admitted call's answer carries its
+    ``operation_id`` and ``receipt``."""
     router = APIRouter()
     for descriptor in descriptors:
         if descriptor.http is None:
             continue
         method, path = descriptor.http
         build = (hand_written or {}).get(descriptor.name)
-        endpoint = build(descriptor) if build else _endpoint(descriptor, registry, answer, module)
+        endpoint = build(descriptor) if build else _endpoint(descriptor, registry, answer, module, receipted)
         router.add_api_route(path, endpoint, methods=[method])
     return router
 

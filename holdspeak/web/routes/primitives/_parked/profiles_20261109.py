@@ -1,3 +1,7 @@
+# PARKED 20261109 (ops/settings): GET /api/inference-targets is the declared inference.targets.list
+# (setup_operations.py, produced in web/routes/setup.py); POST /api/inference-targets had no client.
+#
+# Parked from ``holdspeak/web/routes/primitives/profiles.py``. Not imported. Kept for history.
 """Runtime profiles CRUD (the key never rides the wire).
 
 Bodies moved verbatim from routes/primitives.py (HS-79-03, the Phase-63 discipline).

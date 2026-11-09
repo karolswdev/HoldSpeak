@@ -621,22 +621,23 @@ class TestMCPNotifyTest:
     """The MCP tool schema and dispatch exist in the heartbeat family."""
 
     def test_tool_schema_present(self):
-        from holdspeak.mcp.families.heartbeat import TOOLS
+        from holdspeak.mcp.tools import TOOLS
 
         names = [t["name"] for t in TOOLS]
         assert "heartbeat.notify_test" in names
 
     def test_dispatch_fires_notification(self, monkeypatch):
-        from holdspeak.mcp.families import heartbeat as heartbeat_family
+        # heartbeat.notify_test is declared (settings_operations.py, 2026-11-09).
+        from unittest.mock import MagicMock
+
+        from holdspeak import operations
+        from holdspeak.services.heartbeat_service import HeartbeatService
 
         with patch("holdspeak.desktop_notify.notify", return_value=True):
             monkeypatch.setenv("HOLDSPEAK_DESKTOP_NOTIFY", "1")
             from holdspeak.principals import Principal, PrincipalKind
-            result = heartbeat_family.dispatch(
-                "heartbeat.notify_test",
-                {},
-                Principal(PrincipalKind.OWNER, "test"),
-            )
+            registry = operations.for_context(None, heartbeat_service=lambda: HeartbeatService(MagicMock()))
+            result = registry.invoke(Principal(PrincipalKind.OWNER, "test"), "heartbeat.notify_test", {})
             assert result["fired"] is True
 
 
