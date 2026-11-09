@@ -288,6 +288,7 @@ _SERVICE_OBJECTS: dict[str, str] = {
     "MeetingIntelService": "Summary",
     "MeetingService": "Meeting",
     "MemoryService": "Memory",
+    "MissionControlService": "Status",
     "MondayBriefService": "Brief",
     "NoteService": "Note",
     "PeopleService": "Person",
