@@ -9,15 +9,12 @@ import json
 import time
 import uuid
 from typing import Any, Callable
-from holdspeak.timestamps import utc_now_iso
 
 from holdspeak.db.core import Database
 from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.services.errors import ConflictError, NotFound, ServiceError, ValidationError
 from holdspeak.ids import new_id as _new_id
 
-
-SKILL_BODY_LIMIT = 8192
 
 
 def _spend_limit(limit: Any) -> float | None:
@@ -1020,47 +1017,6 @@ class WorkbenchService:
         if recipe_id is not None:
             skills = [skill for skill in skills if recipe_id in skill.get("recipe_ids", [])]
         return skills
-
-    def create_skill(self, principal: Principal, *, title: str, body: str, **fields: Any) -> dict[str, Any]:
-        if not title.strip():
-            raise ValidationError("Skill title is required")
-        if len(body) > SKILL_BODY_LIMIT:
-            raise ValidationError(
-                f"Skill body exceeds {SKILL_BODY_LIMIT:,} byte limit (got {len(body):,})"
-            )
-        skill = self._db.skills.upsert(
-            skill_id=str(fields.get("id") or _new_id("skill")), title=title, body=body,
-            source=str(fields.get("source", "owner-authored")),
-            status=str(fields.get("status", "active")),
-            recipe_ids=list(fields.get("recipe_ids", [])),
-            created_by=str(fields.get("created_by", "")),
-        )
-        self._changed("skill", skill.id, "create")
-        return skill.to_dict()
-
-    def update_skill(self, principal: Principal, skill_id: str, **fields: Any) -> dict[str, Any]:
-        existing = self._db.skills.get(skill_id)
-        if existing is None:
-            raise NotFound("skill", skill_id)
-
-        def pick(key: str, default: Any) -> Any:
-            return fields[key] if key in fields else default
-
-        skill = self._db.skills.upsert(
-            skill_id=skill_id, title=str(pick("title", existing.title)),
-            body=str(pick("body", existing.body)), source=str(pick("source", existing.source)),
-            status=str(pick("status", existing.status)),
-            recipe_ids=list(pick("recipe_ids", existing.to_dict().get("recipe_ids", []))),
-            created_by=str(pick("created_by", existing.created_by)),
-        )
-        self._changed("skill", skill.id, "update")
-        return skill.to_dict()
-
-    def delete_skill(self, principal: Principal, skill_id: str) -> bool:
-        if not self._db.skills.delete(skill_id):
-            raise NotFound("skill", skill_id)
-        self._changed("skill", skill_id, "delete")
-        return True
 
     # ── Memory ───────────────────────────────────────────────────────────
 

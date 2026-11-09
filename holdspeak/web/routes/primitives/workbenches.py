@@ -326,15 +326,6 @@ def build_workbenches_router(ctx: WebContext) -> APIRouter:
         except Exception as exc:
             return error_500(exc, log, "Failed to make this one automation")
 
-    @router.post("/api/workbenches/{workbench_id}/runs/{parent_operation_id}/cancel")
-    def api_cancel_workbench_run(workbench_id: str, parent_operation_id: str, request: Request) -> Any:
-        try:
-            return JSONResponse({"disposition": _svc().cancel_run(_principal(request), parent_operation_id)})
-        except ServiceError as exc:
-            return _service_error(exc)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to cancel automation run")
-
     @router.post("/api/workbenches/{workbench_id}/voice/resolve")
     async def api_voice_resolve(workbench_id: str, request: Request) -> Any:
         body = await _json_body(request)
@@ -375,46 +366,6 @@ def build_workbenches_router(ctx: WebContext) -> APIRouter:
             return JSONResponse({"skills": _svc().list_skills(_principal(request), recipe_id)})
         except Exception as exc:
             return error_500(exc, log, "Failed to list skills")
-
-    @router.post("/api/skills")
-    async def api_create_skill(request: Request) -> Any:
-        body = await _json_body(request)
-        if body is None:
-            return JSONResponse({"error": "expected a JSON object"}, status_code=400)
-        try:
-            skill = _svc().create_skill(
-                _principal(request), title=str(body.get("title") or ""), body=str(body.get("body", "")),
-                **{k: v for k, v in body.items() if k not in {"title", "body"}},
-            )
-            return JSONResponse({"skill": skill}, status_code=201)
-        except (ValidationError, ValueError) as exc:
-            return JSONResponse({"error": str(exc)}, status_code=400)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to create skill")
-
-    @router.put("/api/skills/{skill_id}")
-    async def api_update_skill(skill_id: str, request: Request) -> Any:
-        body = await _json_body(request)
-        if body is None:
-            return JSONResponse({"error": "expected a JSON object"}, status_code=400)
-        try:
-            return JSONResponse({"skill": _svc().update_skill(_principal(request), skill_id, **body)})
-        except NotFound:
-            return _not_found("skill", skill_id)
-        except ValueError as exc:
-            return JSONResponse({"error": str(exc)}, status_code=400)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to update skill")
-
-    @router.delete("/api/skills/{skill_id}")
-    def api_delete_skill(skill_id: str, request: Request) -> Any:
-        try:
-            _svc().delete_skill(_principal(request), skill_id)
-            return JSONResponse({"success": True})
-        except NotFound:
-            return _not_found("skill", skill_id)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to delete skill")
 
     @router.post("/api/workbench-templates/{template_id}/instantiate")
     async def api_instantiate_template(template_id: str, request: Request) -> Any:
