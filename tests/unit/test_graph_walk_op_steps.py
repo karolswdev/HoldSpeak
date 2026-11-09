@@ -53,6 +53,9 @@ def test_the_canonical_map_has_all_seventeen_operations_and_no_local_service_tar
         "meeting.ready_list", "meeting.ready_read", "meeting.recover_capture", "meeting.rename",
         "meeting.resolve_sync_conflict", "meeting.restore", "meeting.sync_conflicts", "meeting.update",
         "speaker.list",
+        # the intelligence and aftercare verbs (2026-11-08, holdspeak/meeting_intel_operations.py)
+        "meeting.intel_jobs", "meeting.intel_retry", "meeting.intel_recovery", "meeting.intel_recovery_retry",
+        "meeting.intel_recovery_skip", "meeting.aftercare", "meeting.aftercare_proposals", "meeting.aftercare_decide",
         # the phone's declared verbs with an MCP tool (2026-11-08, holdspeak/phone_operations.py)
         "phone.calls", "phone.devices", "phone.get_call", "phone.let_wait", "phone.messages", "phone.push_key",
         "phone.revoke", "phone.test_push", "phone.ring", "phone.again",

@@ -492,6 +492,7 @@ def install_from_web_context(
     # wired context (a fence's stand-in) gets the same bare builds its routes
     # would make, put on BOTH the context and the root so the two still share
     # one instance.
+    from holdspeak.services.meeting_aftercare_service import MeetingAftercareService
     from holdspeak.services.meeting_intel_service import MeetingIntelService
     from holdspeak.services.meeting_service import MeetingService
     from holdspeak.services.monday_brief_service import MondayBriefService
@@ -514,6 +515,9 @@ def install_from_web_context(
     builders: dict[str, Callable[[], Any]] = {
         "meeting_service": lambda: MeetingService(resolved_db, observer=resolved_observer),
         "meeting_intel_service": lambda: MeetingIntelService(
+            resolved_db, notify=_intel_notify, observer=resolved_observer
+        ),
+        "meeting_aftercare_service": lambda: MeetingAftercareService(
             resolved_db, notify=_intel_notify, observer=resolved_observer
         ),
         "monday_brief_service": lambda: MondayBriefService(

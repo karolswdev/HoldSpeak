@@ -971,7 +971,10 @@ def runtime_registry(primitives: Any = None, meetings: Any = None) -> operations
     from holdspeak.services.today_service import TodayService
 
     db, obs = db_or(get_database), observer_or(get_observer)
+    from holdspeak.services.meeting_aftercare_service import MeetingAftercareService
+
     plain = {"meeting_intel_service": lambda: MeetingIntelService(db, observer=obs),
+             "meeting_aftercare_service": lambda: MeetingAftercareService(db, observer=obs),
              "monday_brief_service": lambda: MondayBriefService(db, observer=obs),
              "kernel_read_service": lambda: KernelReadService(db), "today_service": lambda: TodayService(db),
              "project_service": lambda: _bare_project_service(db, obs),

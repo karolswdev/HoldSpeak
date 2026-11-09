@@ -1,16 +1,21 @@
 """Meeting aftercare and proposal adapters."""
 from __future__ import annotations
-from typing import Any, Optional
+from typing import Any, Callable
 from threading import Lock
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
+from starlette.concurrency import run_in_threadpool
+from .... import operations
+from ....meeting_intel_operations import MEETING_INTEL_OPERATIONS
 from ....logging_config import get_logger
 from ....principals import UNAUTHENTICATED
 from ....services.errors import ConflictError, NotFound, ValidationError
 from ....services.meeting_aftercare_service import MeetingAftercareService
 from ....web_requests import _AftercareFileIssueRequest, _ProposalDecisionRequest
 from ...context import WebContext
+from ...operation_routes import operation_router
 from ...runtime_support import error_500
+from .._mount import mount_router
 log = get_logger("web.routes.meetings")
 _SERVICE_CACHE_LOCK = Lock()
 def _principal(request: Request): return getattr(request.state, "principal", UNAUTHENTICATED)
@@ -32,24 +37,20 @@ def _error(exc: Exception, action: str) -> JSONResponse:
     if isinstance(exc, ConflictError): return JSONResponse({"success": False, "error": str(exc)}, status_code=409)
     if isinstance(exc, ValidationError): return JSONResponse({"success": False, "error": str(exc)}, status_code=400)
     return error_500(exc, log, action)
+#: The 500 words of each produced route.
+_FAILED = {"meeting.aftercare": "Failed to load meeting aftercare", "meeting.aftercare_proposals": "Failed to load meeting proposals",
+           "meeting.aftercare_decide": "Failed to decide meeting proposal"}
+def _answer(name: str) -> Callable[..., Any]:
+    async def answer(fn: Callable[[], Any], *, status: int = 200) -> JSONResponse:
+        try: return JSONResponse(await run_in_threadpool(fn), status_code=status)
+        except Exception as exc: return _error(exc, _FAILED[name])
+    return answer
 def build_aftercare_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
-    @router.get("/api/meetings/{meeting_id}/aftercare")
-    def api_get_meeting_aftercare(meeting_id: str, request: Request) -> Any:
-        try: return JSONResponse(_svc(ctx).get_aftercare(_principal(request), meeting_id))
-        except Exception as exc: return _error(exc, "Failed to load meeting aftercare")
     @router.get("/api/meetings/{meeting_id}/followup-draft")
     def api_get_meeting_followup_draft(meeting_id: str, request: Request) -> Any:
         try: return JSONResponse(_svc(ctx).get_followup_draft(_principal(request), meeting_id))
         except Exception as exc: return _error(exc, "Failed to build meeting follow-up draft")
-    @router.get("/api/meetings/{meeting_id}/proposals")
-    def api_get_meeting_proposals(meeting_id: str, request: Request, status: Optional[str] = None) -> Any:
-        try: return JSONResponse(_svc(ctx).list_proposals(_principal(request), meeting_id, status))
-        except Exception as exc: return _error(exc, "Failed to load meeting proposals")
-    @router.post("/api/meetings/{meeting_id}/proposals/{proposal_id}/decision")
-    def api_decide_meeting_proposal(meeting_id: str, proposal_id: str, payload: _ProposalDecisionRequest, request: Request) -> Any:
-        try: return JSONResponse(_svc(ctx).decide_proposal(_principal(request), meeting_id, proposal_id, payload.model_dump()))
-        except Exception as exc: return _error(exc, "Failed to decide meeting proposal")
     @router.post("/api/meetings/{meeting_id}/export/slack")
     def api_export_meeting_to_slack(meeting_id: str, request: Request) -> Any:
         # PHILO-11-02 D1: retain the legacy route as a named capability
@@ -63,4 +64,19 @@ def build_aftercare_router(ctx: WebContext) -> APIRouter:
     def api_aftercare_file_issue(meeting_id: str, payload: _AftercareFileIssueRequest, request: Request) -> Any:
         try: return JSONResponse(_svc(ctx).file_issue(_principal(request), meeting_id, payload.model_dump()))
         except Exception as exc: return _error(exc, "Failed to file aftercare issue")
+    registry = lambda: operations.for_context(ctx, meeting_aftercare_service=lambda: _svc(ctx))  # noqa: E731
+
+    def decide(descriptor: Any) -> Callable[..., Any]:
+        """The body model keeps FastAPI's 422 for a malformed decision, as the hand-written route did."""
+        async def api_decide_meeting_proposal(meeting_id: str, proposal_id: str, payload: _ProposalDecisionRequest,
+                                              request: Request) -> Any:
+            args = {**payload.model_dump(), "meeting_id": meeting_id, "proposal_id": proposal_id}
+            return await _answer(descriptor.name)(
+                lambda: registry().invoke(_principal(request), descriptor.name, args, shape="web"))
+        return api_decide_meeting_proposal
+
+    for descriptor in MEETING_INTEL_OPERATIONS:
+        if descriptor.service == "meeting_aftercare_service":
+            mount_router(router, operation_router([descriptor], registry, _answer(descriptor.name), module=__name__,
+                                                  hand_written={"meeting.aftercare_decide": decide}))
     return router

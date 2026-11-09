@@ -63,6 +63,8 @@ _MCP_ONLY: frozenset[str] = frozenset({
     # HTTP only, so the seeded palettes do not grow.
     "action_item.list", "meeting.artifacts", "meeting.facets", "meeting.intent_timeline",
     "meeting.prepared", "meeting.ready_list", "meeting.sync_conflicts", "speaker.list",
+    # The declared intelligence and aftercare reads (meeting_intel_operations.py).
+    "meeting.intel_jobs", "meeting.intel_recovery", "meeting.aftercare", "meeting.aftercare_proposals",
     # The compositor's display requests (2026-11-08, desk_operations.py): an
     # agent drives the owner's desk over MCP; the seeded palettes do not grow.
     "desk.mark", "desk.press", "desk.say", "desk.scroll", "desk.request.read",

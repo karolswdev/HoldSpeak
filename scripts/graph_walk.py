@@ -991,6 +991,10 @@ OP_MCP_PROJECTIONS: dict[str, dict[str, Any]] = {
     "action_item.review": {"kind": "tool", "name": "action_item.review"},
     "meeting.bookmark": {"kind": "tool", "name": "meeting.bookmark"},
     "meeting.update": {"kind": "tool", "name": "meeting.update"},
+    # The intelligence and aftercare verbs (holdspeak/meeting_intel_operations.py).
+    **{name: {"kind": "tool", "name": name} for name in (
+        "meeting.intel_jobs", "meeting.intel_retry", "meeting.intel_recovery", "meeting.intel_recovery_retry",
+        "meeting.intel_recovery_skip", "meeting.aftercare", "meeting.aftercare_proposals", "meeting.aftercare_decide")},
     # 2026-11-08: the phone's declared verbs with an MCP tool (holdspeak/phone_operations.py).
     **{name: {"kind": "tool", "name": name} for name in (
         "phone.devices", "phone.revoke", "phone.let_wait", "phone.calls", "phone.ring", "phone.again", "phone.push_key",
