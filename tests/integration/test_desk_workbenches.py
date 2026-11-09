@@ -101,17 +101,18 @@ def test_park_one_and_clear_done_keep_the_rows_parked_across_a_reload(tmp_path: 
     assert _listed(client, wb, parked=True) == [spike]
 
     # Restore brings it back with its link.
-    restored = client.post(f"/api/workbenches/{wb}/items/restore", json={"item_ids": [spike]})
+    restored = client.post(f"/api/workbenches/{wb}/items/{spike}/restore")
     assert restored.status_code == 200, restored.text
-    assert restored.json()["restored"] == [spike]
+    assert restored.json()["item"]["parked"] is False
     assert _item_row(db, spike) == before
     assert spike in _listed(client, wb)
 
-    # Clear done parks both done items at once; a reload reads both parked.
+    # Park both done items; a reload reads both parked.
     done = [ids[t] for t in TITLES[2:]]
-    bulk = client.post(f"/api/workbenches/{wb}/items/park", json={"item_ids": done})
-    assert bulk.status_code == 200, bulk.text
-    assert bulk.json()["parked"] == done
+    for item_id in done:
+        one = client.delete(f"/api/workbenches/{wb}/items/{item_id}")
+        assert one.status_code == 200, one.text
+        assert one.json()["parked"] == item_id
     db.close()
     db = Database(path)
     client = _client(db)

@@ -16,7 +16,6 @@
     "src/desk/components/DeskToolShelf.tsx",
     "src/desk/components/GroundingSection.tsx",
     "src/desk/components/InfoWindow.tsx",
-    "src/desk/components/InletAutocomplete.tsx",
     "src/desk/components/InlineEditor.tsx",
     "src/desk/components/MissionControlConveyor.tsx",
     "src/desk/components/RailsPicker.tsx",
@@ -26,11 +25,7 @@
     "src/desk/components/SessionPullout.tsx",
     "src/desk/components/SurfaceWindows.tsx",
     "src/desk/components/TrustWindow.tsx",
-    "src/desk/components/WorkbenchAutomations.tsx",
-    "src/desk/components/WorkbenchResourceful.tsx",
     "src/desk/components/WorkbenchTemplatePicker.tsx",
-    "src/desk/components/WorkbenchWindow.tsx",
-    "src/desk/components/workbench/WorkbenchRunsWing.tsx",
     "src/desk/pullouts/ArtifactPullout.tsx",
     "src/desk/pullouts/CoderPullout.tsx",
     "src/desk/pullouts/DirectoryPullout.tsx",
@@ -56,8 +51,6 @@
   "library-css-outside": [],
   "roving-reimpl": [
     "src/desk/components/DeskMenu.tsx",
-    "src/desk/components/DeskToolShelf.tsx",
-    "src/desk/components/InletAutocomplete.tsx",
-    "src/desk/components/WorkbenchWindow.tsx"
+    "src/desk/components/DeskToolShelf.tsx"
   ]
 }

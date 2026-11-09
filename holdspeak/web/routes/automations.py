@@ -191,15 +191,6 @@ def build_automations_router(ctx: WebContext) -> APIRouter:
         except ServiceError as exc:
             return _error(exc)
 
-    @router.get("/workbenches/{workbench_id}/resourceful/history")
-    def resourceful_history(workbench_id: str, request: Request) -> Any:
-        try:
-            return JSONResponse({"history": resourceful.history(
-                principal(request), workbench_id,
-            )})
-        except ServiceError as exc:
-            return _error(exc)
-
     return router
 
 

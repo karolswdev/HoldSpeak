@@ -5,12 +5,9 @@ from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.testclient import TestClient
-import pytest
 
 from holdspeak.db import Database
-from holdspeak.db.models import VALID_WORKBENCH_ITEM_STATUSES
 from holdspeak.principals import Principal, PrincipalKind
-from holdspeak.services.errors import ConflictError
 from holdspeak.services.workbench_service import WorkbenchService
 from holdspeak.web.context import WebContext
 from holdspeak.web.routes.primitives.workbenches import build_workbenches_router
@@ -130,32 +127,6 @@ def test_normal_delete_verb_retains_real_result_and_run_links(tmp_path: Path) ->
     assert restored["parked"] is False
 
 
-def test_bulk_park_claimed_item_refuses_without_partial_change(tmp_path: Path) -> None:
-    db = Database(tmp_path / "workbench.db")
-    workbench, items = _seed(db, item_count=3)
-    assert "claimed" in VALID_WORKBENCH_ITEM_STATUSES
-    claimed_status = next(
-        status for status in VALID_WORKBENCH_ITEM_STATUSES if status == "claimed"
-    )
-    db.workbench_items.upsert(
-        item_id=items[1].id,
-        workbench_id=workbench.id,
-        title=items[1].title,
-        body=items[1].body,
-        status=claimed_status,
-        result=items[1].result,
-        result_artifact_id=items[1].result_artifact_id,
-    )
-
-    with pytest.raises(ConflictError, match="claimed"):
-        WorkbenchService(db).park_items(OWNER, workbench.id, [item.id for item in items])
-
-    assert [
-        db.workbench_items.get(item.id, include_parked=True).parked
-        for item in items
-    ] == [False, False, False]
-
-
 def test_upsert_keeps_a_parked_item_parked(tmp_path: Path) -> None:
     db = Database(tmp_path / "workbench.db")
     workbench, items = _seed(db)
@@ -189,7 +160,7 @@ def test_workbench_payload_selects_parked_items_only_when_requested(tmp_path: Pa
     assert [item["id"] for item in parked["items"]] == [items[0].id]
 
 
-def test_production_routes_park_bulk_reload_and_restore(tmp_path: Path) -> None:
+def test_production_routes_park_reload_and_restore(tmp_path: Path) -> None:
     db = Database(tmp_path / "workbench-route.db")
     service = WorkbenchService(db)
     client = _client(db, service)
@@ -230,12 +201,9 @@ def test_production_routes_park_bulk_reload_and_restore(tmp_path: Path) -> None:
     assert restored_one.status_code == 200, restored_one.text
     assert restored_one.json()["item"]["parked"] is False
 
-    bulk = client.post(
-        f"/api/workbenches/{workbench_id}/items/park",
-        json={"item_ids": item_ids},
-    )
-    assert bulk.status_code == 200, bulk.text
-    assert bulk.json()["parked"] == item_ids
+    for item_id in item_ids:
+        parked = client.delete(f"/api/workbenches/{workbench_id}/items/{item_id}")
+        assert parked.status_code == 200, parked.text
     assert len(client.get(f"/api/workbenches/{workbench_id}").json()["workbench"]["items"]) == 0
 
     db.close()
@@ -248,12 +216,12 @@ def test_production_routes_park_bulk_reload_and_restore(tmp_path: Path) -> None:
         ).json()["workbench"]["items"]
     ] == item_ids
 
-    restored_bulk = reopened_client.post(
-        f"/api/workbenches/{workbench_id}/items/restore",
-        json={"item_ids": item_ids},
-    )
-    assert restored_bulk.status_code == 200, restored_bulk.text
-    assert restored_bulk.json()["restored"] == item_ids
+    for item_id in item_ids:
+        restored = reopened_client.post(
+            f"/api/workbenches/{workbench_id}/items/{item_id}/restore"
+        )
+        assert restored.status_code == 200, restored.text
+        assert restored.json()["item"]["parked"] is False
 
 
 def test_legacy_repository_delete_parks_and_repeats_are_idempotent(tmp_path: Path) -> None:

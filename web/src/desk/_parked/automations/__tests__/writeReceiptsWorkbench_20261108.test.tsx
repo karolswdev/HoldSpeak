@@ -1,0 +1,252 @@
+// PARKED 20261108: the queue view's write receipts (HS-132-06), split from
+// src/desk/components/__tests__/writeReceipts.test.tsx when WorkbenchWindow was
+// parked. Not collected (vitest excludes _parked). Restore with git revert.
+// HS-132-06 — with the hub refusing, every wired write verb names its
+// failure in flow. No verb may look like a no-op.
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router-dom";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { Note } from "../../../lib/primitives";
+import { EMPTY_ITEMS } from "../../api";
+import { verbById } from "../../verbRegistry";
+import type { WorkMenuEntry } from "../DeskMenu";
+import { useDesk } from "../../store";
+import { clearWriteFailure } from "../../hooks/useWriteReceipt";
+import { WorkbenchWindow } from "../WorkbenchWindow";
+import { DeskChrome } from "../DeskChrome";
+
+// Query helper scoped to the render root (testing-library renders into
+// document.body, so this equals baseElement.querySelector).
+const q = (sel: string): HTMLElement | null => document.body.querySelector(sel);
+const qa = (sel: string) => document.body.querySelectorAll(sel);
+
+
+vi.mock("../../../runtime/RuntimeBus", () => ({
+  useRuntimeBus: () => ({
+    state: "connected",
+    lastFrame: null,
+    subscribe: () => () => undefined,
+  }),
+  // Recordings (2026-10-28): the menu-bar lamp reads the optional bus.
+  useOptionalRuntimeBus: () => null,
+}));
+
+const DETAIL = {
+  id: "wb1",
+  name: "Daily",
+  recipe_id: "r1",
+  profile_id: "p1",
+  schedule: null,
+  schedule_enabled: false,
+  items: [
+    {
+      id: "i-pending",
+      title: "Draft the brief",
+      body: "",
+      priority: 3,
+      status: "pending",
+      grounding: {},
+      result: null,
+      result_egress: null,
+      result_artifact_id: null,
+      artifact_status: null,
+      mint_attempted: false,
+      tokens_consumed: 0,
+      created_at: "2026-01-01T00:00:00Z",
+      completed_at: null,
+    },
+    {
+      id: "i-mint-failed",
+      title: "Summarize the call",
+      body: "",
+      priority: 3,
+      status: "done",
+      grounding: {},
+      result: "Here is the summary.",
+      result_egress: null,
+      result_artifact_id: null,
+      artifact_status: null,
+      mint_attempted: true,
+      tokens_consumed: 40,
+      created_at: "2026-01-01T00:00:00Z",
+      completed_at: "2026-01-01T00:01:00Z",
+    },
+  ],
+  last_run: null,
+};
+
+/** GETs answer; every write is refused with HTTP 500. */
+function mockHub() {
+  const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    const url = String(input);
+    const method = (init?.method || "GET").toUpperCase();
+    const json = (body: unknown, status = 200) =>
+      new Response(JSON.stringify(body), {
+        status,
+        headers: { "content-type": "application/json" },
+      });
+    if (method !== "GET") return json({ error: "refused" }, 500);
+    if (/\/runs$/.test(url)) return json({ runs: [] });
+    if (/\/memory$/.test(url)) return json({ entries: [] });
+    if (/\/api\/skills/.test(url)) return json({ skills: [] });
+    if (/\/api\/workbenches\/wb1$/.test(url)) return json({ workbench: DETAIL });
+    return json({});
+  });
+  vi.stubGlobal("fetch", fetchMock);
+  return fetchMock;
+}
+
+async function openWindow() {
+  useDesk.setState({
+    items: {
+      ...EMPTY_ITEMS,
+      workbench: [{ kind: "workbench", id: "wb1", name: "Daily" } as never],
+    },
+    inferenceTargets: [],
+    profiles: [],
+  });
+  const view = render(<WorkbenchWindow workbenchId="wb1" />);
+  await screen.findByText("Draft the brief");
+  return view;
+}
+
+async function expand(title: string) {
+  await userEvent.setup().click(screen.getByText(title));
+}
+
+function receiptText(): string {
+  return q(".write-receipt-label")?.textContent || "";
+}
+
+describe("HS-132-06 workbench write receipts", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    clearWriteFailure();
+    mockHub();
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it("names a refused ADD ITEM and keeps the typed instruction", async () => {
+    const user = userEvent.setup();
+    await openWindow();
+    const inlet = screen.getByLabelText("New item instruction");
+    await user.type(inlet, "Write the memo");
+    await user.click(screen.getByRole("button", { name: "Add" }));
+
+    await waitFor(() =>
+      expect(receiptText()).toBe("Could not add the item"),
+    );
+    expect(screen.getByRole("button", { name: "Try again" })).toBeInTheDocument();
+    expect(inlet).toHaveValue("Write the memo");
+  });
+
+  it("re-issues the refused add when RETRY is pressed", async () => {
+    const user = userEvent.setup();
+    const fetchMock = mockHub();
+    await openWindow();
+    await user.type(screen.getByLabelText("New item instruction"), "Write the memo");
+    await user.click(screen.getByRole("button", { name: "Add" }));
+    await waitFor(() => expect(receiptText()).toContain("Could not add the item"));
+
+    const posts = () =>
+      fetchMock.mock.calls.filter(
+        ([, init]) => (init as RequestInit | undefined)?.method === "POST",
+      ).length;
+    const before = posts();
+    await user.click(screen.getByRole("button", { name: "Try again" }));
+    await waitFor(() => expect(posts()).toBe(before + 1));
+  });
+
+  it("names a refused DISMISS ITEM", async () => {
+    const user = userEvent.setup();
+    await openWindow();
+    await expand("Draft the brief");
+    await user.click(screen.getByRole("button", { name: "Dismiss" }));
+    await waitFor(() =>
+      expect(receiptText()).toBe("Could not dismiss the item"),
+    );
+  });
+
+  it("names a refused RE-RUN ITEM", async () => {
+    const user = userEvent.setup();
+    await openWindow();
+    await expand("Summarize the call");
+    await user.click(screen.getByRole("button", { name: "Re-run" }));
+    await waitFor(() =>
+      expect(receiptText()).toBe("Could not run the item again"),
+    );
+  });
+
+  it("names a refused RETRY MINT", async () => {
+    const user = userEvent.setup();
+    await openWindow();
+    await expand("Summarize the call");
+    await user.click(screen.getByRole("button", { name: "Retry mint" }));
+    await waitFor(() =>
+      expect(receiptText()).toBe("Could not keep the result"),
+    );
+  });
+
+  it("names a refused RUN", async () => {
+    const user = userEvent.setup();
+    await openWindow();
+    await user.click(screen.getByRole("button", { name: /Run/ }));
+    await waitFor(() => expect(receiptText()).toBe("Could not start the run"));
+  });
+
+  it("names a refused DROP TO WORK and a malformed drop", async () => {
+    await openWindow();
+    const body = q(".wb-body") as HTMLElement;
+
+    fireEvent.drop(body, {
+      dataTransfer: {
+        getData: () =>
+          JSON.stringify([{ kind: "note", id: "n1", title: "Rollout risks" }]),
+      },
+    });
+    await waitFor(() =>
+      expect(receiptText()).toBe("Could not add it to the work"),
+    );
+
+    fireEvent.drop(body, { dataTransfer: { getData: () => "not-json" } });
+    await waitFor(() =>
+      expect(receiptText()).toBe("Could not add it to the work"),
+    );
+    // The reason is in the hover title only, never on the face.
+    await waitFor(() =>
+      expect(q(".write-receipt-label")?.getAttribute("title")).toBe("Could not add it to the work · Bad payload"),
+    );
+  });
+
+  it("stays quiet when the hub takes the write", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input);
+        const json = (body: unknown) =>
+          new Response(JSON.stringify(body), {
+            status: 200,
+            headers: { "content-type": "application/json" },
+          });
+        if ((init?.method || "GET").toUpperCase() !== "GET") return json({ ok: true });
+        if (/\/runs$/.test(url)) return json({ runs: [] });
+        if (/\/memory$/.test(url)) return json({ entries: [] });
+        if (/\/api\/skills/.test(url)) return json({ skills: [] });
+        if (/\/api\/workbenches\/wb1$/.test(url)) return json({ workbench: DETAIL });
+        return json({});
+      }),
+    );
+    const user = userEvent.setup();
+    await openWindow();
+    await user.type(screen.getByLabelText("New item instruction"), "Write the memo");
+    await user.click(screen.getByRole("button", { name: "Add" }));
+    await waitFor(() =>
+      expect(screen.getByLabelText("New item instruction")).toHaveValue(""),
+    );
+    expect(q(".write-receipt")).toBeNull();
+  });
+});

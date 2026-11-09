@@ -1,3 +1,8 @@
+/* PARKED 20261108 (queue view park): the queue view's runs wing.
+ * Every automation run is a Program (#2032/#2033); the item-queue runner is
+ * parked, so the queue view it fed is parked too. It stood at src/desk/components/workbench/WorkbenchRunsWing.tsx.
+ * Not compiled or collected (tsconfig and vitest exclude _parked); its
+ * relative imports point at the old place. Restore with git revert. */
 import type { WorkbenchRun } from "../../detail-types";
 import { humanTime } from "../../surface/format";
 import { GadgetGroup } from "../../surface/gadgets";

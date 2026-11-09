@@ -18,9 +18,8 @@
  * destination that he sends). Run now waits for an engine choice that is
  * still being saved, so it runs on the engine he just chose.
  *
- * The parked queue view (WorkbenchWindow, with its event and idle starts)
- * stays reachable through RAW in the title strip: for an old queue
- * automation, and for every automation while Builder tools is on (A8). */
+ * The old queue view (WorkbenchWindow) is parked in
+ * desk/_parked/automations/: every automation run is a Program (#2033). */
 import "./automation.css";
 import { useCallback, useEffect, useRef, useState, type DragEvent } from "react";
 import { useDesk } from "../../store";
@@ -69,7 +68,6 @@ import { readNativeAgentOptions, WithEditor, type NativeAgentOption } from "./Wi
 import { AboutChips, AboutEditor } from "./AboutEditor";
 import { PutEditor, PutValue } from "./PutEditor";
 import { useDropHand } from "../../hand";
-import { useBuilderTools } from "../../builderTools";
 import { ResultBody, ResultCard } from "./ResultCard";
 import { ProgramAgent, ProgramDo, programDraft, programFields, sameProgram, type ProgramDraft } from "./ProgramDo";
 import { openNewProgram } from "../../programs/newProgram";
@@ -280,12 +278,9 @@ function QueueTask({
 export function AutomationWindow({
   workbenchId,
   origin,
-  onRaw,
 }: {
   workbenchId: string;
   origin?: { x: number; y: number } | null;
-  /** The parked queue view, for an old queue automation. */
-  onRaw?: () => void;
 }) {
   const [detail, setDetail] = useState<AutomationDetail | null>(null);
   const [lessons, setLessons] = useState<MemoryEntry[]>([]);
@@ -603,10 +598,6 @@ export function AutomationWindow({
     }
   };
 
-  // Betterment A8: the parked faces (the queue, event and idle starts) stay
-  // behind RAW: for an old queue automation, and for any one while Builder
-  // tools is on.
-  const builder = useBuilderTools((state) => state.on);
   const name = detail?.name || "Automation";
   const isProgram = detail?.do_kind === "run_program";
   // A run that is a Program has no artifact: its answer's note is what is sent.
@@ -693,9 +684,6 @@ export function AutomationWindow({
               <CheckGadget variant="state" label={`${name} is on`} checked={isOn(detail)}
                 onChange={(next) => void setOn(next)} />
             </span>
-          ) : null}
-          {detail && onRaw && (isOldQueue(detail) || builder) ? (
-            <Button dense variant="ghost" onClick={onRaw} data-testid="automation-raw">RAW</Button>
           ) : null}
         </span>
       }
