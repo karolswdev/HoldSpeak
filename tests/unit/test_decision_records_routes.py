@@ -12,7 +12,7 @@ from holdspeak.web.context import WebContext
 from holdspeak.web.routes import decision_records as record_routes
 
 
-def test_record_routes_list_search_and_expand_detail(tmp_path, monkeypatch) -> None:
+def test_record_routes_search_and_expand_detail(tmp_path, monkeypatch) -> None:
     database = Database(tmp_path / "records.db")
     monkeypatch.setattr(record_routes, "get_database", lambda: database)
     service = DecisionRecordService(database)
@@ -29,9 +29,8 @@ def test_record_routes_list_search_and_expand_detail(tmp_path, monkeypatch) -> N
     app.include_router(record_routes.build_decision_records_router(None))
     client = TestClient(app)
 
-    listing = client.get("/api/decision-records")
-    assert listing.status_code == 200
-    assert listing.json()[0]["id"] == record["id"]
+    # The ledger list route is parked (2026-11-09: no web caller; MCP keeps decision_record.list).
+    assert client.get("/api/decision-records").status_code in (404, 405)
 
     searched = client.get("/api/decision-records/search", params={"q": "searchable ledger"})
     assert searched.status_code == 200

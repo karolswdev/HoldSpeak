@@ -25,7 +25,8 @@ ALLOWED_TRANSITION = {
 # (decide / expire_due / invalidate_all_held).
 ALLOWED_FLIP_CALLERS = {
     "holdspeak/db/gate.py",
-    "holdspeak/web/routes/system/gate_routes.py",  # the decision routes
+    "holdspeak/gate_operations.py",  # the declared decision verbs (2026-11-09)
+    "holdspeak/web/routes/system/_parked/gate_routes_20261109.py",  # parked, not imported
     "holdspeak/services/gate_service.py",  # transport-neutral gate service
     "holdspeak/web_server.py",  # startup invalidation only
 }
@@ -65,7 +66,8 @@ def test_state_flip_verbs_have_pinned_callers() -> None:
 
 
 def test_gate_routes_go_through_require_capability() -> None:
-    text = (REPO / "holdspeak/web/routes/system/gate_routes.py").read_text(encoding="utf-8")
+    # 2026-11-09: the routes are produced from the declared verbs; the calls live there.
+    text = (REPO / "holdspeak/gate_operations.py").read_text(encoding="utf-8")
     calls = re.findall(r"require_capability\(\s*\"claude-code-hooks\",\s*Capability\.(\w+)\s*\)", text)
     # HS-104-05 added the usage receiver (USAGE_TOKENS) beside the
     # HS-104-02 pair — a reviewed edit in that story's commit.
@@ -81,6 +83,7 @@ def test_redaction_census_gate_modules_never_name_full_payload() -> None:
     for rel in (
         "holdspeak/db/gate.py",
         "holdspeak/web/routes/system/gate_routes.py",
+        "holdspeak/gate_operations.py",
     ):
         text = (REPO / rel).read_text(encoding="utf-8")
         code_lines = [

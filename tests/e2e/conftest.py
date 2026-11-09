@@ -114,9 +114,9 @@ def _no_hub_outlives_its_database():
 def _one_roadmap_read_per_process():
     from pathlib import Path
 
-    import holdspeak.web.routes.roadmaps as roadmaps
+    import holdspeak.services.roadmap_service as roadmaps
 
-    real_root = Path(roadmaps.__file__).resolve().parents[3]
+    real_root = roadmaps.REPO_ROOT
     original = roadmaps._run
     kept: dict[tuple[str, ...], tuple[int, str]] = {}
 

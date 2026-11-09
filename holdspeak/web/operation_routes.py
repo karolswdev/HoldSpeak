@@ -61,7 +61,8 @@ async def _body(request: Request) -> dict[str, Any]:
 
 def _endpoint(descriptor: Any, registry: Callable[[], Any], answer: Answer, module: str) -> Callable[..., Any]:
     method, path = descriptor.http
-    names = [part[1:-1] for part in path.split("/") if part.startswith("{")]
+    # ``{resource_ref:path}``: the parameter is ``resource_ref`` (a path converter).
+    names = [part[1:-1].split(":", 1)[0] for part in path.split("/") if part.startswith("{")]
 
     async def endpoint(request: Request, **params: str) -> Any:
         principal = _principal(request)

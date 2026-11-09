@@ -26,13 +26,6 @@ from ...operations import OperationRefused
 from ...principals import UNAUTHENTICATED
 from ...room_operations import STEWARD_POLICY_FIELDS
 from ...services.errors import NotFound, ServiceError, ValidationError
-from ...services.steward_serialization_service import (
-    _serialize_policy,
-    _serialize_run,
-    _serialize_runs,
-    _serialize_step,
-    _serialize_steps,
-)
 from ..context import WebContext
 from ..runtime_support import error_500
 from ._room_kernel import body_or_refusal, kernel_fields, kernel_refusal, refusal_fields, service_refusal
@@ -96,20 +89,13 @@ def build_steward_router(ctx: WebContext) -> APIRouter:
 
     # ── GET /api/projects/{project_id}/steward/runs ────────────────
 
-    @router.get("/api/projects/{project_id}/steward/runs")
-    def api_list_steward_runs(
-        project_id: str, request: Request,
-        state: str | None = None,
-        limit: int = 100,
-    ) -> Any:
-        try:
-            svc = ctx.project_steward_service
-            runs = svc._db.steward_runs.list_runs(
-                project_id, state=state, limit=limit,
-            )
-            return JSONResponse({"runs": _serialize_runs(runs)})
-        except Exception as exc:
-            return error_500(exc, log, "Failed to list steward runs")
+    # 2026-11-09 (ops/projects): the run list is the declared project.steward_runs.
+    from ...project_operations import PROJECT_OPERATIONS
+    from ._mount import mount_router
+    from ._produced import envelope, produced
+
+    mount_router(router, produced(ctx, [d for d in PROJECT_OPERATIONS if d.name == "project.steward_runs"],
+                                  envelope(log, "Failed to list steward runs"), module=__name__))
 
     # ── GET /api/steward/runs/{run_id} ─────────────────────────────
     # Pollable state: phase, steps, receipts, the run's operation and its receipt.
@@ -233,8 +219,9 @@ def build_steward_router(ctx: WebContext) -> APIRouter:
             from starlette.concurrency import run_in_threadpool
 
             # PHILO-10-02 GATE 2: the gh child runs off the event loop.
+            text = str(body.get("text", "") or "")
             result, kernel = await run_in_threadpool(
-                ops().invoke_receipted, p, "nudge.send", {"step_id": step_id, "text": str(body.get("text", "") or "")})
+                lambda: ops().invoke_receipted(p, "nudge.send", {"step_id": step_id, "text": text}))
             return JSONResponse({"success": True, **result, **kernel_fields(kernel)})
         except OperationRefused as exc:
             return JSONResponse({"success": False, "code": "invalid_arguments", "message": exc.detail,

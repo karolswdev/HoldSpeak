@@ -63,7 +63,7 @@ ADAPTERS = ("tmux-pane", "delivery-node", "mesh-node", "claude-code-hooks", "cod
 # - mesh-node (intel/mesh_relay.py): a relayed inference endpoint.
 #   The hub knows which node it addressed (its own registry — hence
 #   inferred, not vouched by the far side) and nothing else.
-# - claude-code-hooks (coder_gate.py + gate_routes.py, HS-104-02):
+# - claude-code-hooks (coder_gate.py + gate_operations.py, HS-104-02):
 #   PreToolUse fires before the call and the hook blocks on the
 #   decision, so tool_hooks and blocking are authoritative — flipped
 #   in the same commit as the gate itself. The hook's session_id is
@@ -188,15 +188,15 @@ class LedgerConsumer:
 LEDGER_CONSUMERS: tuple[LedgerConsumer, ...] = (
     # HS-104-02: the tool-call gate's two capability-bearing routes.
     LedgerConsumer(
-        "web.routes.system.gate_routes.receive", "claude-code-hooks", Capability.TOOL_HOOKS
+        "gate_operations.gate.propose", "claude-code-hooks", Capability.TOOL_HOOKS
     ),
     LedgerConsumer(
-        "web.routes.system.gate_routes.decide", "claude-code-hooks", Capability.BLOCKING
+        "gate_operations.gate.decide", "claude-code-hooks", Capability.BLOCKING
     ),
     # HS-104-05: session receipts' reported tier — the usage receiver
     # and the tier assembly both act on reported tokens.
     LedgerConsumer(
-        "web.routes.system.gate_routes.usage", "claude-code-hooks", Capability.USAGE_TOKENS
+        "gate_operations.gate.usage", "claude-code-hooks", Capability.USAGE_TOKENS
     ),
     LedgerConsumer(
         "session_receipts.build_receipt", "claude-code-hooks", Capability.USAGE_TOKENS

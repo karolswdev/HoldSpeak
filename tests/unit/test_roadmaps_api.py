@@ -8,6 +8,7 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
+import holdspeak.services.roadmap_service as roadmap_service
 import holdspeak.web.routes.roadmaps as roadmaps
 from holdspeak.web.context import WebContext
 
@@ -84,9 +85,9 @@ def test_project_reads_dw_next_json_variants_exactly(
         status="ready",
     )
     fake_run, calls = _run_for_payload(name, payload, next_exit=next_exit)
-    monkeypatch.setattr(roadmaps, "_run", fake_run)
+    monkeypatch.setattr(roadmap_service, "_run", fake_run)
 
-    result = roadmaps._project(tmp_path, name, include_phases=False)
+    result = roadmap_service._project(tmp_path, name, include_phases=False)
 
     assert result is not None
     assert result["nextStoryId"] == expected
@@ -130,7 +131,7 @@ def test_roadmaps_list_keeps_active_project_when_completed_project_has_null_next
             return 2, '{"next_story": null}'
         raise AssertionError(args)
 
-    monkeypatch.setattr(roadmaps, "_run", fake_run)
+    monkeypatch.setattr(roadmap_service, "_run", fake_run)
     app = FastAPI()
     app.include_router(
         roadmaps.build_roadmaps_router(

@@ -1,40 +1,56 @@
-"""HTTP adapters for transport-neutral activity enrichment operations."""
+"""The activity enrichment routes, produced from ``holdspeak/activity_operations.py`` (2026-11-09).
+
+``POST /api/activity/extension/events`` is the browser extension's door (the
+loopback permission gate refuses it ``forbidden``: a 403 with ``success: false``).
+"""
 from __future__ import annotations
-from typing import Any
-from fastapi import APIRouter, Request
+
+from typing import Any, Callable
+
+from fastapi import APIRouter
 from fastapi.responses import JSONResponse
+from starlette.concurrency import run_in_threadpool
+
+from .... import operations
 from ....db import get_database, get_observer
-from ....principals import UNAUTHENTICATED
-from ....services.activity_enrichment_service import ActivityEnrichmentService
-from ....services.errors import NotFound, ServiceError
-from ....web_requests import _ActivityExtensionEventsRequest
-from ...context import WebContext
-from ...runtime_support import error_500
 from ....logging_config import get_logger
-log=get_logger("web.routes.activity")
-def _svc()->ActivityEnrichmentService:return ActivityEnrichmentService(get_database(), observer=get_observer())
-def _principal(r:Request):return getattr(r.state,"principal",UNAUTHENTICATED)
-def _err(e:ServiceError, *, github:bool=False)->JSONResponse:
- if e.code=="forbidden": return JSONResponse({"success":False,"error":str(e),**e.context},status_code=403)
- return JSONResponse({"error":str(e)},status_code=404 if isinstance(e,NotFound) else 400)
-def build_enrichment_router(ctx:WebContext)->APIRouter:
- router=APIRouter()
- @router.get("/api/activity/enrichment/connectors")
- def connectors(request:Request)->Any:
-  try:return JSONResponse(_svc().list_connectors(_principal(request)))
-  except Exception as e:return error_500(e,log,"Failed to list activity enrichment connectors")
- @router.post("/api/activity/extension/events")
- def ingest(request:Request,payload:_ActivityExtensionEventsRequest)->Any:
-  try:return JSONResponse(_svc().ingest_extension_events(_principal(request),payload.events))
-  except ServiceError as e:return _err(e)
-  except Exception as e:return error_500(e,log,"Failed to ingest activity extension events")
- @router.get("/api/activity/enrichment/connectors/{connector_id}/dry-run")
- def dry_run(request:Request,connector_id:str,limit:int=25)->Any:
-  try:return JSONResponse(_svc().dry_run(_principal(request),connector_id,limit))
-  except ServiceError as e:return _err(e)
-  except Exception as e:return error_500(e,log,"Failed to dry-run activity enrichment connector")
- @router.get("/api/activity/briefing")
- def briefing(request:Request)->Any:
-  try:return JSONResponse(_svc().briefing(_principal(request)))
-  except Exception as e:return error_500(e,log,"Failed to fetch activity briefing")
- return router
+from ....services.activity_enrichment_service import ActivityEnrichmentService
+from ....services.errors import ServiceError
+from ...context import WebContext
+from .._produced import envelope, produced
+
+log = get_logger("web.routes.activity")
+
+_WORDS = {
+    "activity.connector.list": "Failed to list activity enrichment connectors",
+    "activity.extension.ingest": "Failed to ingest activity extension events",
+    "activity.connector.dry_run": "Failed to dry-run activity enrichment connector",
+    "activity.briefing": "Failed to fetch activity briefing",
+}
+
+
+def _forbidden_first(answer: Callable[..., Any]) -> Callable[..., Any]:
+    """The loopback gate's ``forbidden`` as the route answered it; every other error through *answer*."""
+
+    async def wrapped(fn: Callable[[], Any], *, status: int = 200) -> JSONResponse:
+        try:
+            value = await run_in_threadpool(fn)
+        except Exception as exc:
+            if isinstance(exc, ServiceError) and exc.code == "forbidden":
+                return JSONResponse({"success": False, "error": str(exc), **exc.context}, status_code=403)
+            failure = exc
+
+            def again() -> Any:
+                raise failure
+
+            return await answer(again, status=status)
+        return JSONResponse(value, status_code=status)
+
+    return wrapped
+
+
+def build_enrichment_router(ctx: WebContext) -> APIRouter:
+    rows = [op for op in operations.ACTIVITY_OPERATIONS if op.name in _WORDS]
+    answers = {name: _forbidden_first(envelope(log, words)) for name, words in _WORDS.items()}
+    return produced(ctx, rows, answers, module=__name__,
+                    activity_enrichment_service=lambda: ActivityEnrichmentService(get_database(), observer=get_observer()))

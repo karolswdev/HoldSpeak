@@ -34,7 +34,6 @@ from holdspeak.services.watch_service import WatchService
 from holdspeak.web.context import WebContext
 from holdspeak.web.routes import (
     build_project_reviews_router,
-    build_project_setup_router,
     build_projects_router,
     build_providers_router,
     build_watches_router,
@@ -161,7 +160,6 @@ def rig(tmp_path, monkeypatch):
 
     app.add_middleware(_OwnerMiddleware)
     app.include_router(build_providers_router(ctx))
-    app.include_router(build_project_setup_router(ctx))
     app.include_router(build_watches_router(ctx))
     app.include_router(build_projects_router(ctx))
     app.include_router(build_project_reviews_router(ctx))

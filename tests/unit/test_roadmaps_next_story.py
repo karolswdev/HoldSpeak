@@ -14,7 +14,7 @@ import os
 import stat
 from pathlib import Path
 
-from holdspeak.web.routes.roadmaps import _project
+from holdspeak.services.roadmap_service import _project
 
 
 def _repo(tmp_path: Path, next_json: str) -> Path:

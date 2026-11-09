@@ -470,6 +470,14 @@ def test_no_registered_write_is_silent(hub: Hub, seeded: dict[str, str]) -> None
             # 2026-11-09: the open mic's floor lease lives in memory; no desk
             # object changes and no frame is sent (web/announce.QUIET_ROUTES).
             continue
+        if bound.descriptor.announces_changes and bound.descriptor.service == "briefing_service":
+            # 2026-11-09 (ops/projects): a briefing page's service announces
+            # ``reach`` itself, never with the token; its effect needs a real
+            # package, not this walk's minimal rows.
+            continue
+        if name == "project.mark_room_read":
+            # A read marker sends no frame by design (test_the_room_read_marker_sends_no_frame).
+            continue
         if bound.descriptor.announces_changes:
             arguments = self_announcing[name]
 

@@ -16,7 +16,7 @@
       ],
       "entry_points": [
         "holdspeak/kernel/broker.py::submit",
-        "holdspeak/web/routes/system/kernel_routes.py::api_kernel_submit"
+        "holdspeak/gate_operations.py::KERNEL_OPERATIONS"
       ],
       "platforms": {
         "macos": "unknown",
@@ -82,10 +82,10 @@
           "claim": "Scopes idempotency by principal identity and idempotency key and refuses an envelope mismatch."
         },
         {
-          "path": "holdspeak/web/routes/system/kernel_routes.py",
-          "symbol": "api_kernel_submit",
-          "line": 21,
-          "claim": "Exposes the kernel submit surface."
+          "path": "holdspeak/gate_operations.py",
+          "symbol": "KERNEL_OPERATIONS",
+          "line": 233,
+          "claim": "Declares the kernel submit surface (kernel.submit); web/routes/system/kernel_routes.py produces its route."
         }
       ],
       "tests": [
