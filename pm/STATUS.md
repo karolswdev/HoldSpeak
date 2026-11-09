@@ -2,6 +2,10 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · Handover: the night of 2026-11-08 (one brain; the fences that bite a declared-ops PR; the compositor protocol; the open list; a third of the way).
+- 2026-11-08 · #2061 A Stop is his decision: a stopped turn or answer leaves no Needs-you row (the door reads the kernel cancel signal); door jobs keep the 16k room, the chat turn reads the whole ceiling; the Retry helpers classed in the surface-fallback census.
+- 2026-11-08 · #2060 Fix forward: the canonical schema snapshot carries `pair_origin` and the prompt-step comment.
+- 2026-11-08 · #2059 STATUS one-liners #2056–#2058.
 - 2026-11-08 · #2056 The chat turn runs through the engine door: `run()` streams with `on_delta` (`run_stream` a thin wrapper), one retry on the next engine only before the first delta, a failed `chat.turn` is a Needs-you row with Retry; admission, `execute_stream`, the route-execution receipts and the second ThreadService constructor leave thread_service; −14 live lines.
 - 2026-11-08 · #2058 Fix forward #2052/#2054/#2051: every parked hub file compiles (the censuses parse them); the owner-only, announce and promotion fences name the declared tables; the morning-prep answers re-recorded.
 - 2026-11-08 · #2057 Codex conditions on #2051: a produced route with no principal is unauthenticated (five Programs rigs set the owner explicitly); redemption checks the pairing origin (`phone_devices.pair_origin`, schema 92; `pairing_origin_mismatch` leaves the token unspent).
