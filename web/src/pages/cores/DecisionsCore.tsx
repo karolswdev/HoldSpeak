@@ -236,7 +236,15 @@ export function DecisionsCore({ scope, scopeLabel }: CoreProps) {
   const compact = useCompactViewport();
   const backRef = useRef(back);
   backRef.current = back;
-  const away = Boolean(picked || composing || pickError);
+  // The first record is picked (Agents' way): the one that waits on him,
+  // else the newest, so the mast, the spine and the ledger show at once. On
+  // the phone the rail is the sheet until a pick.
+  const pickable = (row: Row) => Boolean(row.record_id) || row.source === "meeting";
+  const first = rows.find((row) => standing(row) === "proposed" && pickable(row)) ?? rows.find(pickable);
+  const auto: Pick | null = !picked && !composing && !pickError && !loading && !compact && !decisionScope && first
+    ? (first.record_id ? { kind: "record", id: first.record_id } : { kind: "meeting", row: first }) : null;
+  const onFace = picked ?? auto;
+  const away = Boolean(onFace || composing || pickError);
   useWindowBack(compact && away ? { onBack: () => backRef.current(), testId: "decision-reader-back" } : null, [compact, away]);
 
   // The composer's words are kept for a reload; Cancel forgets them.
@@ -282,7 +290,7 @@ export function DecisionsCore({ scope, scopeLabel }: CoreProps) {
     };
   });
   const byKey = new Map(rows.map((row) => [rowKey(row), row]));
-  const pickedKey = picked?.kind === "record" ? `record:${picked.id}` : picked?.kind === "meeting" ? rowKey(picked.row) : null;
+  const pickedKey = onFace?.kind === "record" ? `record:${onFace.id}` : onFace?.kind === "meeting" ? rowKey(onFace.row) : null;
   const pickedRow = pickedKey ? byKey.get(pickedKey) ?? null : null;
   const proposed = rows.filter((row) => standing(row) === "proposed");
   const moreVerb = !loading && rows.length > 0 && rows.length < total ? (
@@ -296,24 +304,18 @@ export function DecisionsCore({ scope, scopeLabel }: CoreProps) {
     pane = <div className="decisions-object"><DecisionComposer title={title} why={why} about={about} onTitle={setTitle} onWhy={setWhy} onCreate={create} onCancel={cancel} autoFocus /></div>;
   } else if (pickError) {
     pane = <SurfaceState error={pickError} />;
-  } else if (picked?.kind === "record") {
-    pane = <RecordPane key={picked.id} id={picked.id} row={pickedRow} onOpenRecord={(id) => setPicked({ kind: "record", id })} />;
-  } else if (picked?.kind === "meeting") {
-    pane = <MeetingDecisionPane row={picked.row} />;
+  } else if (onFace?.kind === "record") {
+    pane = <RecordPane key={onFace.id} id={onFace.id} row={pickedRow} onOpenRecord={(id) => setPicked({ kind: "record", id })} />;
+  } else if (onFace?.kind === "meeting") {
+    pane = <MeetingDecisionPane row={onFace.row} />;
   } else if (loading) {
     pane = <Loading data-testid="decisions-loading" />;
-  } else if (!rows.length && !error) {
-    pane = <SurfaceState empty emptyLabel={query.trim() ? "No decisions match this search" : current ? "No current decisions" : "No decisions yet"}
-      emptyImage={DECISION_SPRITE} emptyKind="decision"
-      onAction={query.trim() || current ? undefined : () => void useDesk.getState().createPrimitive("decision", {})} actionLabel="New decision" />;
-  } else if (proposed[0]) {
-    pane = <div className="decisions-object">
-      <Plate eyebrow="Waits on you" tone="brass" title={proposed[0].text} facts={[dayWords(proposed[0].decided_at), proposed[0].meeting_title || ""].filter(Boolean).join(" · ")}>
-        <Button variant="primary" onClick={() => pickRow(proposed[0])} data-testid="decisions-open-proposed">Open</Button>
-      </Plate>
-    </div>;
+  } else if (!rows.length && !error && !query.trim() && !current && !onlyRecords.length) {
+    // No decisions at all: the plate is New decision itself.
+    pane = <div className="decisions-object"><DecisionComposer title={title} why={why} onTitle={setTitle} onWhy={setWhy} onCreate={create} onCancel={forget} /></div>;
   } else {
-    pane = <SurfaceState empty emptyLabel={countWords(total, "decision") ?? ""} emptyImage={DECISION_SPRITE} emptyKind="decision" />;
+    pane = <SurfaceState empty emptyLabel={query.trim() ? "No decisions match this search" : current ? "No current decisions" : countWords(total, "decision") ?? ""}
+      emptyImage={DECISION_SPRITE} emptyKind="decision" />;
   }
 
   return (
@@ -327,7 +329,7 @@ export function DecisionsCore({ scope, scopeLabel }: CoreProps) {
           {pane}
         </div>
       </div>
-      {picked ? null : <StatusBar
+      {onFace ? null : <StatusBar
         data-testid="decisions-status"
         items={[
           { key: "count", text: countWords(total, "decision") },
@@ -550,7 +552,7 @@ function RecordPane({ id, row, onOpenRecord }: { id: string; row: Row | null; on
           {(record.work ?? []).map((work) => <SurfaceLedgerRow key={work.id} wrap expands={false}
             primary={`${workName(work.work_type)} · ${work.work_ref}`}
             trailing={<Button dense variant="ghost" aria-label={`Open ${workName(work.work_type)} · ${work.work_ref}`}
-              onClick={() => useDesk.getState().openPullout(qualifiedRef(work.work_type, work.work_ref))}>Open</Button>} />)}
+              onClick={() => useDesk.getState().openPullout(qualifiedRef(work.work_type, work.work_ref))}>{`Open ${workName(work.work_type)}`}</Button>} />)}
         </ul>
       </SurfaceLedger>
     </Section> : null}
