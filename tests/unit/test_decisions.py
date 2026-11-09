@@ -773,8 +773,7 @@ def test_the_catalogue_is_explicit_descriptors() -> None:
     # PHILO-5-01's four, then PHILO-5-02's loop, then PHILO-7-01's desk slice
     # -- an explicit list, no framework.
     assert names == [
-        # The catalogue in declaration order (2026-11-08 night: the declared tables
-        # follow operations.py's core rows; regenerated from DESCRIPTORS when a table
+        # The catalogue in declaration order (regenerated from DESCRIPTORS when a table
         # is added; still an explicit list, no framework).
         'decision.create', 'decision.update', 'decision.read', 'decision.list', 'meeting.list', 'meeting.read',
         'meeting.import', 'meeting.transcribe', 'meeting.summary.run', 'meeting.result.prepare', 'brief.generate', 'brief.latest',
@@ -819,8 +818,9 @@ def test_the_catalogue_is_explicit_descriptors() -> None:
         'people.commitment.send_to_workbench', 'people.commitment.satisfy', 'people.calendar.link', 'people.calendar.unlink', 'people.owner_alias.link', 'people.owner_alias.unlink',
         'meeting.intel_jobs', 'meeting.intel_retry', 'meeting.intel_recovery', 'meeting.intel_recovery_retry', 'meeting.intel_recovery_skip', 'meeting.aftercare',
         'meeting.aftercare_proposals', 'meeting.aftercare_decide', 'automation.set_when', 'automation.set_engine', 'automation.make_one', 'automation.template.list',
-        'automation.template.instantiate', 'automation.result.open', 'automation.new.list', 'automation.lesson.list', 'automation.lesson.forget',
-        'calls.status', 'calls.list', 'calls.get', 'calls.place', 'calls.hangup', 'calls.decide', 'calls.test_line',
+        'automation.template.instantiate', 'automation.result.open', 'automation.new.list', 'automation.lesson.list', 'automation.lesson.forget', 'calls.status',
+        'calls.list', 'calls.get', 'calls.place', 'calls.hangup', 'calls.decide', 'calls.test_line',
+        'settings.secret.replace', 'settings.secret.rotate', 'settings.secret.delete',
     ]
     # decision.list takes the empty object; its one optional argument is the
     # HTTP limit (round two: it passes through instead of slicing 500 rows).

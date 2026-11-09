@@ -17,6 +17,7 @@ import { FootSlotContext } from "../../../desk/surface/foot";
 import { useHasWindowBack, useWindowBack } from "../../../desk/surface/back";
 import { useWindowTitle } from "../../../desk/surface/title";
 import { useCompactViewport } from "../../../desk/useCompactViewport";
+import { Spine, type SpineTone } from "../../../desk/surface/patterns/Spine";
 import "./window.css";
 
 export type PrefRailItem = {
@@ -24,6 +25,10 @@ export type PrefRailItem = {
   label: string;
   glyph?: ReactNode;
   disabled?: boolean;
+  /** The language (2026-11-11): the section's health, a word under the
+   *  label and a 4 px spine in its meaning colour (Settings; a specimen
+   *  rail leaves it out). */
+  health?: { tone: SpineTone; word: string };
 };
 
 export function PrefWindow({
@@ -99,7 +104,11 @@ export function PrefWindow({
               data-testid={`${railTestIdPrefix}${item.id}`}
             >
               {item.glyph ? <span className="pref-rail-glyph" aria-hidden="true">{item.glyph}</span> : null}
-              <span className="pref-rail-label">{item.label}</span>
+              <span className="pref-rail-words">
+                <span className="pref-rail-label">{item.label}</span>
+                {item.health ? <span className="pref-rail-health" data-tone={item.health.tone} data-testid={`${railTestIdPrefix}${item.id}-health`}>{item.health.word}</span> : null}
+              </span>
+              {item.health ? <Spine className="pref-rail-spine" tone={item.health.tone} /> : null}
               <span className="pref-rail-chevron" aria-hidden="true">›</span>
             </Button>
           );
@@ -130,13 +139,17 @@ function PaneTitle({ label }: { label: string | null }) {
   return null;
 }
 
-/** A pane section: a sans 12/600 sentence-case caption over a hairline. */
-export function PrefSection({ id, label, hidden, quiet, children }: {
+/** A pane section: a sans 12/600 sentence-case caption over a hairline,
+ *  or, in Settings, the section's mast (the language, 2026-11-11). */
+export function PrefSection({ id, label, hidden, quiet, mast, children }: {
   id: string;
   label: string;
   hidden?: boolean;
   /** The caption is said by the first group inside (You, Agents). */
   quiet?: boolean;
+  /** The head of the section in place of the caption; its title carries
+   *  the id `settings-section-title-<id>`. `false`: the body draws its own. */
+  mast?: ReactNode;
   children: ReactNode;
 }) {
   return (
@@ -148,7 +161,7 @@ export function PrefSection({ id, label, hidden, quiet, children }: {
       aria-hidden={hidden}
       aria-labelledby={`settings-section-title-${id}`}
     >
-      <h2 id={`settings-section-title-${id}`} className={`settings-page-section-title${quiet ? " settings-page-section-title-quiet" : ""}`}>{label}</h2>
+      {mast !== undefined ? mast : <h2 id={`settings-section-title-${id}`} className={`settings-page-section-title${quiet ? " settings-page-section-title-quiet" : ""}`}>{label}</h2>}
       <div className="settings-page-section-body">{children}</div>
     </section>
   );

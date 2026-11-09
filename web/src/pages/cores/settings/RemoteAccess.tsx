@@ -116,11 +116,14 @@ function paletteLabel(palette: string | string[] | null): string {
 }
 
 export function RemoteAccessModule({
+  bare = false,
   onEnabledChange,
   grantAct = null,
   receiptOpen = false,
   onGrantAct,
 }: {
+  /** The caller's plate names it; the group draws no label of its own. */
+  bare?: boolean;
   /** Report the live enabled state so the parent can update hub chips. */
   onEnabledChange?: (enabled: boolean) => void;
   /** PHILO-7-02: the last grant act's receipt, and whether its well is open
@@ -383,7 +386,7 @@ export function RemoteAccessModule({
     : null;
 
   return (
-    <GadgetGroup material="inset" label="Remote access" actions={enabled && !issueOpen ? (
+    <GadgetGroup material="inset" label={bare ? undefined : "Remote access"} actions={enabled && !issueOpen ? (
       <Button variant="ghost" onClick={() => { setOneTimeToken(null); setIssueOpen(true); }} data-testid="issue-credential-btn">Issue credential</Button>
     ) : undefined}>
       {/* The toggle row */}

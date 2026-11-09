@@ -25,8 +25,11 @@ import {
   type SettingsSectionId,
   PrefStatusBar,
   SettingsRailGlyph,
+  sectionHealth,
   type SettingsHubWire,
 } from "./settings/prefs";
+import { SectionMast } from "./settings/native";
+import { EnginesSection } from "./settings/Engines";
 import { SECTION_ALIASES, SETTINGS_FOCUS_PATHS, settingsPageScope } from "./settings/navigation";
 import { settingsOwnerAdapter, useSettingsWriter, type SettingsChanges, type SettingsWriter } from "./settings/writer";
 import { settingsBindings } from "./settings/bindings";
@@ -197,18 +200,29 @@ function SettingsFace({ hero, scope }: CoreProps) {
   const receipt = { saving: saving || Boolean(secretChanges.secretBusy), writtenAt, refusal };
   const ownerSave = moduleId === "you" ? ownerSaveState(ownerPrefs) : undefined;
   const focusHighlight = SETTINGS_FOCUS_PATHS[navigation.focus ?? ""] ?? navigation.focus ?? "";
-  const pageSection = (id: SettingsSectionId, label: string, children: ReactNode) => (
-    <PrefSection id={id} label={label} hidden={moduleId !== id} quiet={id === "you" || id === "agents"}>{children}</PrefSection>
-  );
+  // The language (2026-11-11): each rail row says its section's health;
+  // each section opens on its mast. Engines and This Mac draw their own
+  // mast (its facts are their own reads).
+  const health = sectionHealth(hub.data, String((resource.data as { owner?: { name?: unknown } } | null)?.owner?.name ?? ""));
+  const pageSection = (id: SettingsSectionId, label: string, children: ReactNode) => {
+    const section = SETTINGS_SECTIONS.find((entry) => entry.id === id)!;
+    const ownMast = id === "engines" || id === "this-mac";
+    return (
+      <PrefSection id={id} label={label} hidden={moduleId !== id} quiet={id === "you" || id === "agents"}
+        mast={ownMast ? false : <SectionMast id={id} label={label} sprite={section.sprite} facts={health[id]?.word} />}>{children}</PrefSection>
+    );
+  };
   const railItems = SETTINGS_SECTIONS.map((section) => ({
     id: section.id,
     label: section.label,
     glyph: <SettingsRailGlyph section={section} />,
+    health: health[section.id],
   }));
   const settingsPage = (
     <PrefWindow items={railItems} selected={moduleId} onSelect={(id) => { setCameFromRail(true); openSection(id); }} paneOpen={paneOpen} onBack={() => { setCameFromRail(false); setPaneOpen(false); }} frameBack holdFrameBack={cameFromRail} testId="settings-page">
         {refusal && moduleId !== "you" ? <div className="pref-pane-alert"><SurfaceWell><div className="prefs-read-failure" role="alert" data-testid="settings-save-failure"><span>{refusal}</span>{failedChangesRef.current.length ? <Button dense variant="ghost" disabled={saving} onClick={() => void retryFailedChanges()}>Retry</Button> : null}</div></SurfaceWell></div> : null}
         {pageSection("you", "You", <OwnerNameGroup prefs={ownerPrefs} highlight={focusHighlight} />)}
+        {pageSection("engines", "Engines", moduleId === "engines" ? <EnginesSection /> : null)}
         {pageSection("speak", "Speak", <SpeakSection b={b} symbolsDraft={symbolsDraft} onRefuse={writer.setRefusal} />)}
         {pageSection("meetings", "Meetings", <MeetingsSection b={b} hub={hub} focusHighlight={focusHighlight} />)}
         {pageSection("notices", "Reach", <ReachSection b={b} focusHighlight={focusHighlight} onSaved={stamp} heartbeatRevision={heartbeatRevision} onHeartbeatWrite={() => setHeartbeatRevision((n) => n + 1)} />)}

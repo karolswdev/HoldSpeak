@@ -239,13 +239,3 @@ export function PeopleAccessModule({ highlight }: { highlight?: string | null } 
     </GadgetGroup>
   );
 }
-
-/** The Settings hub row's cell (the row is in settings/prefs). PHILO-17 U35:
- *  one plain fact (was MCP · <effective> · AGENTS · <mode>). */
-export function PeopleHubCells() {
-  const { access } = usePeopleAccess();
-  if (!access) return null;
-  // `agents` is what a started agent gets: read unless access is off.
-  const text = access.agents === "off" ? "Agents: off" : "Agents can read People";
-  return <Token className="surface-token" data-chip data-testid="people-hub-access">{text}</Token>;
-}

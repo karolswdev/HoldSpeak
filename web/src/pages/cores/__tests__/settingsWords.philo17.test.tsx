@@ -3,7 +3,7 @@
 // gets, the rows say who can do what, the back link says where it goes.
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { PrefsFace, PrefStatusBar, hubHeadline, type SettingsHubWire } from "../settings/prefs";
+import { PrefStatusBar, hubHeadline, sectionHealth, type SettingsHubWire } from "../settings/prefs";
 
 const hub = (patch: Partial<SettingsHubWire> = {}): SettingsHubWire => ({
   models: { engines: 1, groupsSet: 0, defaultSet: false },
@@ -36,22 +36,10 @@ describe("the hub headline is a plain state of what he gets", () => {
     expect(hubHeadline(hub({ meetings: { intelligence: true, engineSet: false, summariesOff: true } })).text)
       .toBe("Summaries: off · Answers: Qwen 27B");
   });
-  it("with no assigned job: Engines keeps its inventory and Open reaches Runs on", () => {
-    const onOpen = vi.fn();
-    render(
-      <PrefsFace
-        onOpen={onOpen}
-        hub={hub({ meetings: { intelligence: true, engineSet: false }, answers: { engineSet: false } })}
-        posture="neutral"
-        onPosture={vi.fn()}
-        precedence={[]}
-      />,
-    );
-    expect(screen.getByText("1 engine")).toBeTruthy();
-    expect(screen.getByText("Summary · No engine")).toBeTruthy();
-    expect(screen.queryByText("No default model")).toBeNull();
-    fireEvent.click(screen.getByTestId("settings-hub-choose"));
-    expect(onOpen).toHaveBeenCalledWith("models");
+  it("with no assigned job: the Engines rail word keeps the choice, never No engine yet", () => {
+    const health = sectionHealth(hub({ meetings: { intelligence: true, engineSet: false }, answers: { engineSet: false } }));
+    expect(health.engines).toEqual({ tone: "brass", word: "Choose an engine" });
+    expect(health.meetings).toEqual({ tone: "brass", word: "No summary engine" });
   });
   // Astra r1 on #1090: no other ready engine masks these two (no default,
   // no voice engine, no answer engine).
@@ -73,15 +61,13 @@ describe("the hub headline is a plain state of what he gets", () => {
   });
 });
 
-describe("the hub rows say who can do what", () => {
-  it("System: Other devices: off (was MESH OFF · REMOTE OFF)", () => {
-    render(<PrefsFace onOpen={vi.fn()} hub={hub()} posture="neutral" onPosture={vi.fn()} precedence={[]} />);
-    expect(screen.getByText("Other devices: off")).toBeTruthy();
-    expect(document.body.textContent ?? "").not.toMatch(/MESH|REMOTE OFF/);
+describe("the rail says who can reach this hub", () => {
+  it("This Mac: This Mac only (was MESH OFF · REMOTE OFF)", () => {
+    expect(sectionHealth(hub())["this-mac"]).toEqual({ tone: "idle", word: "This Mac only" });
   });
-  it("System: Other devices: on when remote access is on", () => {
-    render(<PrefsFace onOpen={vi.fn()} hub={hub({ system: { host: "THIS DEVICE", mesh: true, remote: true } })} posture="neutral" onPosture={vi.fn()} precedence={[]} />);
-    expect(screen.getByRole("status", { name: "Other devices: on" })).toBeTruthy();
+  it("This Mac: Other devices on (moss) when remote access is on", () => {
+    expect(sectionHealth(hub({ system: { host: "THIS DEVICE", mesh: true, remote: true } }))["this-mac"])
+      .toEqual({ tone: "moss", word: "Other devices on" });
   });
 });
 

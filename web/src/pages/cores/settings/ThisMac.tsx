@@ -4,10 +4,12 @@ import { useEffect, useState, type ReactNode } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { apiFetch, readableError } from "../../../lib/api";
 import { documentBuildId } from "../../../lib/buildId";
-import { FoldGadget, GadgetGroup, GadgetRow } from "../../../desk/surface/gadgets";
-import { humanTime, StateChip, SurfaceColumns } from "../../../desk/surface";
+import { CheckGadget, FoldGadget, GadgetGroup, GadgetRow, StringGadget } from "../../../desk/surface/gadgets";
+import { humanTime, StateChip } from "../../../desk/surface";
 import { openSurfaceOr } from "../../../desk/shell";
-import { BuilderToolsModule, DeskModule } from "./prefs";
+import { useBuilderTools } from "../../../desk/builderTools";
+import { DeskModule } from "./prefs";
+import { SectionMast, SettingLine, SettingsLedger, SettingsPlate } from "./native";
 import { Token } from "../../../desk/surface/Token";
 import { RemoteAccessModule } from "./RemoteAccess";
 import type { GrantAct } from "./grants";
@@ -43,11 +45,22 @@ export type RuntimeIdentityWire = {
 const shortToken = (value: string, length = 12) =>
   value && value.length > length ? value.slice(0, length) : value;
 
-export function RuntimeIdentityModule({ children }: { children?: ReactNode } = {}) {
+/** The tokens that need him: the hub's repair list, plus a STALE BUNDLE
+ *  when the loaded document disagrees with the process. Never twice. */
+export function repairTokens(wire: RuntimeIdentityWire | null): string[] {
+  if (!wire) return [];
+  const served = wire.identity?.frontend_build ?? "";
+  const document_ = documentBuildId();
+  const tokens = [...(wire.repair ?? [])];
+  if (document_ && served && document_ !== served && !tokens.includes("STALE BUNDLE")) tokens.push("STALE BUNDLE");
+  return tokens;
+}
+
+/** The one read of `/api/system/identity`, with Retry. */
+export function useRuntimeIdentity() {
   const [wire, setWire] = useState<RuntimeIdentityWire | null>(null);
   const [error, setError] = useState("");
   const [nonce, setNonce] = useState(0);
-
   useEffect(() => {
     let live = true;
     apiFetch<RuntimeIdentityWire>("/api/system/identity")
@@ -55,6 +68,23 @@ export function RuntimeIdentityModule({ children }: { children?: ReactNode } = {
       .catch((err) => { if (live) setError(readableError(err)); });
     return () => { live = false; };
   }, [nonce]);
+  return { wire, error, retry: () => { setError(""); setNonce((n) => n + 1); } };
+}
+
+export type RuntimeIdentity = ReturnType<typeof useRuntimeIdentity>;
+
+export function RuntimeIdentityModule({ children }: { children?: ReactNode } = {}) {
+  return <IdentityFold identity={useRuntimeIdentity()}>{children}</IdentityFold>;
+}
+
+/** The repair chips (unless `plated`: they stand on the caller's plate) and
+ *  the one RAW fold of diagnostics, from the caller's read. */
+export function IdentityFold({ children, identity, plated = false }: {
+  children?: ReactNode;
+  identity: RuntimeIdentity;
+  plated?: boolean;
+}) {
+  const { wire, error, retry } = identity;
 
   // PHILO-17 U35: the build hashes, the schema and the mesh name are
   // diagnostics. They live in ONE RAW fold; only a repair finding (a stale
@@ -64,7 +94,7 @@ export function RuntimeIdentityModule({ children }: { children?: ReactNode } = {
       <>
         <div className="prefs-read-failure" data-testid="runtime-unreadable" role="alert">
           <span>Device read failed · Settings unchanged · Retry</span>
-          <Button variant="ghost" dense onClick={() => { setError(""); setNonce((n) => n + 1); }}>Retry</Button>
+          <Button variant="ghost" dense onClick={retry}>Retry</Button>
         </div>
         {children ? <FoldGadget title="More">{children}</FoldGadget> : null}
       </>
@@ -75,23 +105,12 @@ export function RuntimeIdentityModule({ children }: { children?: ReactNode } = {
   const id = wire.identity ?? {};
   const served = id.frontend_build ?? "";
   const document_ = documentBuildId();
-  const tokens = [...(wire.repair ?? [])];
-  // The loaded document disagreeing with the process is the same finding,
-  // seen from the browser. Never list a token twice.
-  if (document_ && served && document_ !== served && !tokens.includes("STALE BUNDLE")) {
-    tokens.push("STALE BUNDLE");
-  }
+  const tokens = repairTokens(wire);
   const schema = id.schema_version_loaded ?? id.schema_version_expected;
 
   return (
     <>
-      {tokens.length ? (
-        <div className="prefs-hub-chips" data-testid="runtime-repair">
-          {tokens.map((token) => (
-            <StateChip key={token} state="warning" label={token} />
-          ))}
-        </div>
-      ) : null}
+      {tokens.length && !plated ? <RepairChips tokens={tokens} /> : null}
       <FoldGadget title="More">
         <GadgetGroup material="inset" label="Diagnostics">
           <GadgetRow label="Backend">
@@ -125,7 +144,7 @@ export function RuntimeIdentityModule({ children }: { children?: ReactNode } = {
             </Token>
           </GadgetRow>
           <GadgetRow label="Identity">
-            <Button variant="secondary" dense onClick={() => setNonce((n) => n + 1)}>
+            <Button variant="secondary" dense onClick={retry}>
               Recheck
             </Button>
           </GadgetRow>
@@ -157,8 +176,14 @@ export function RuntimeIdentityModule({ children }: { children?: ReactNode } = {
   );
 }
 
-/** HS-174: the System module face — owns the display step + hub chips
- *  so the REMOTE chip updates live when the toggle fires. */
+export function RepairChips({ tokens }: { tokens: string[] }) {
+  return (
+    <div className="prefs-hub-chips" data-testid="runtime-repair">
+      {tokens.map((token) => <StateChip key={token} state="warning" label={token} />)}
+    </div>
+  );
+}
+
 /** The hub's place in words: the wire's `THIS DEVICE` reads `This Mac`. */
 export function hubPlaceWord(host: string): string {
   const clean = String(host || "").trim();
@@ -166,49 +191,11 @@ export function hubPlaceWord(host: string): string {
   return clean;
 }
 
-function SystemModule({
-  hubSystem,
-  deviceName,
-  deskModule,
-  rawWell,
-  grantAct,
-  receiptOpen,
-  onGrantAct,
-}: {
-  hubSystem: { host: string; mesh: boolean; remote?: boolean };
-  deviceName: ReactNode;
-  deskModule: ReactNode;
-  rawWell: ReactNode;
-  grantAct?: GrantAct | null;
-  receiptOpen?: boolean;
-  onGrantAct?: (act: GrantAct) => void;
-}) {
-  return (
-    <>
-      <SurfaceColumns
-        variant="preferences"
-        main={<RemoteAccessModule grantAct={grantAct} receiptOpen={receiptOpen} onGrantAct={onGrantAct} />}
-        side={deskModule}
-      />
-      <GadgetGroup material="inset" label="This Mac">
-        {/* Window Program W4 (the words): the hub's place is a row of this
-            group in sentence case, never an orphan caps caption. */}
-        <GadgetRow label="Hub runs on">
-          <span className="gadget-fact" data-testid="system-hub-chips">
-            <span data-testid="system-display">{hubPlaceWord(hubSystem.host)}</span>
-          </span>
-        </GadgetRow>
-        {deviceName}
-      </GadgetGroup>
-      {/* PHILO-17 U35: one RAW fold holds the diagnostics (build hashes,
-          schema), and the device rows. */}
-      <RuntimeIdentityModule>
-        {rawWell}
-      </RuntimeIdentityModule>
-    </>
-  );
-}
-
+/** Settings > System (the language, 2026-11-11): the mast says where the
+ *  hub runs and who can reach it; the plate is a repair finding when one
+ *  needs him, else remote access, the section's primary setting; the
+ *  ledger holds the device name, Builder tools, the Engines window and Setup; the
+ *  fold holds the desk reset and the diagnostics. */
 export function ThisMacSection({ b, hubSystem, grantAct, receiptOpen, onGrantAct, focusHighlight }: {
   b: SettingsBindings;
   hubSystem: { host: string; mesh: boolean; remote?: boolean };
@@ -217,37 +204,64 @@ export function ThisMacSection({ b, hubSystem, grantAct, receiptOpen, onGrantAct
   onGrantAct: (act: GrantAct) => void;
   focusHighlight: string;
 }) {
-  const { data, update, val, str, walkerRows } = b;
-  const engineLink = (
-    <GadgetGroup material="inset" label="HoldSpeak">
-      <GadgetRow label="Engines" highlight={focusHighlight === "engines"}>
-        <Button variant="secondary" dense onClick={() => openSurfaceOr("configure-runs-on", "/models")} data-testid="settings-engines-page-link">Engines ›</Button>
-      </GadgetRow>
-      <GadgetRow label="Setup" highlight={focusHighlight === "setup"}>
-        <Button variant="secondary" dense onClick={() => openSurfaceOr("configure-setup", "/")} data-testid="settings-setup-page-link">Setup ›</Button>
-      </GadgetRow>
-    </GadgetGroup>
-  );
-  /* ── System: display + remote access + desk reset + one RAW (diagnostics, mesh, devices) ── */
+  const { data, update, val, walkerRows } = b;
+  const identity = useRuntimeIdentity();
+  const tokens = repairTokens(identity.wire);
+  const [remote, setRemote] = useState<boolean | null>(null);
+  const [nameOpen, setNameOpen] = useState(focusHighlight === "mesh.device_name");
+  useEffect(() => { if (focusHighlight === "mesh.device_name") setNameOpen(true); }, [focusHighlight]);
+  const cachedBuilder = useBuilderTools((state) => state.on);
+  const setCachedBuilder = useBuilderTools((state) => state.setOn);
+  const builder = Boolean(val(["ui", "builder_tools"]) ?? cachedBuilder);
+  const setBuilder = (next: boolean) => {
+    // The writer owns the revisioned write; the cache keeps Go and Search
+    // quick until the hub answers.
+    setCachedBuilder(next);
+    update(["ui", "builder_tools"], next);
+  };
+  const deviceName = String(val(["mesh", "device_name"]) ?? "");
+  const on = remote ?? Boolean(hubSystem.remote);
+  const schema = identity.wire?.identity?.schema_version_loaded ?? identity.wire?.identity?.schema_version_expected;
+  const facts = [`Hub on ${hubPlaceWord(hubSystem.host)}`, on ? "other devices on" : "this Mac only", schema != null ? `schema ${schema}` : ""]
+    .filter(Boolean).join(" · ");
   const device = (data.device ?? {}) as Record<string, unknown>;
-  const deviceCount = Object.keys(device).length;
+  const stale = tokens.includes("STALE BUNDLE");
   return <>
-    {engineLink}
-    <SystemModule
-          grantAct={grantAct}
-          receiptOpen={receiptOpen}
-          onGrantAct={onGrantAct}
-          hubSystem={hubSystem}
-          deviceName={str(["mesh", "device_name"], "Device name")}
-          deskModule={<><DeskModule /><BuilderToolsModule
-            checked={Boolean(val(["ui", "builder_tools"]) ?? false)}
-            onChange={(next) => update(["ui", "builder_tools"], next)}
-          /></>}
-          rawWell={deviceCount ? (
-            <GadgetGroup material="inset" label="Device">
-              {walkerRows(device, ["device"])}
-            </GadgetGroup>
-          ) : null}
-        />
+    <SectionMast id="this-mac" label="This Mac" sprite="system" facts={facts} />
+    {tokens.length ? (
+      <SettingsPlate tone="coral" title="Needs repair" testId="settings-system-plate"
+        verbs={stale
+          ? <Button variant="primary" onClick={() => window.location.reload()}>Reload</Button>
+          : <Button variant="primary" onClick={identity.retry}>Check again</Button>}>
+        <RepairChips tokens={tokens} />
+      </SettingsPlate>
+    ) : null}
+    <SettingsPlate tone={on ? "moss" : "steel"} title="Remote access" facts={on ? "On" : "Off"} testId="settings-remote-plate">
+      <RemoteAccessModule bare grantAct={grantAct} receiptOpen={receiptOpen} onGrantAct={onGrantAct} onEnabledChange={setRemote} />
+    </SettingsPlate>
+    <SettingsLedger label="This Mac">
+      <SettingLine label="Hub runs on" value={<span data-testid="system-hub-chips"><span data-testid="system-display">{hubPlaceWord(hubSystem.host)}</span></span>} />
+      <SettingLine label="Device name" value={deviceName || "Not set"} open={nameOpen} testId="settings-device-name"
+        verb={<Button dense variant="secondary" aria-expanded={nameOpen} onClick={() => setNameOpen((o) => !o)}>{nameOpen ? "Done" : "Change"}</Button>}>
+        <div className="settings-line-editor">
+          <StringGadget label="Device name" value={deviceName} onChange={(next) => update(["mesh", "device_name"], next || null)} />
+        </div>
+      </SettingLine>
+      <SettingLine label="Builder tools" value="Adds Builder to Go and Search"
+        verb={<CheckGadget variant="state" label="Builder tools" checked={builder} onChange={setBuilder} />} />
+      <SettingLine label="Engines" value="Each job and its engine"
+        verb={<Button dense variant="secondary" onClick={() => openSurfaceOr("configure-runs-on", "/models")} data-testid="settings-engines-page-link">Open</Button>} />
+      <SettingLine label="Setup" value="What HoldSpeak found"
+        verb={<Button dense variant="secondary" onClick={() => openSurfaceOr("configure-setup", "/")} data-testid="settings-setup-page-link">Open</Button>} />
+    </SettingsLedger>
+    {/* The rare: the desk reset and the diagnostics, in one fold. */}
+    <IdentityFold identity={identity} plated>
+      <DeskModule />
+      {Object.keys(device).length ? (
+        <GadgetGroup material="inset" label="Device">
+          {walkerRows(device, ["device"])}
+        </GadgetGroup>
+      ) : null}
+    </IdentityFold>
   </>;
 }
