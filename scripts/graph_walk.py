@@ -1031,16 +1031,24 @@ OP_MCP_PROJECTIONS: dict[str, dict[str, Any]] = {
         "desk.projection.present", "today.since_morning", "desk.health", "desk.seed", "desk.reset",
         "constitutional_context.read", "constitutional_context.update", "constitutional_context.history")},
 }
-# 2026-11-09: the agents, threads, coders and delivery verbs, read from their rows.
-def _family_projections() -> dict[str, dict[str, Any]]:
-    from holdspeak import operations as ops
-
-    rows = (ops.AGENT_OPERATIONS + ops.THREAD_OPERATIONS + ops.CODER_OPERATIONS + ops.DELIVERY_OPERATIONS
-            + ops.INVOCATION_OPERATIONS)
-    return {d.name: {"kind": "tool", "name": d.tool_name} for d in rows if d.tool_schema is not None}
-
-
-OP_MCP_PROJECTIONS.update({k: v for k, v in _family_projections().items() if k not in OP_MCP_PROJECTIONS})
+# 2026-11-09 (#2125): the agents, threads, coders and delivery verbs. Named here,
+# not read from the rows: the rig never imports the operation registry
+# (test_walk_rig: the walk is an outsider); test_graph_walk_op_steps fails
+# when a declared tool is missing from this table, so the list cannot drift.
+OP_MCP_PROJECTIONS.update({name: {"kind": "tool", "name": name} for name in (
+    "agent.launch.lane", "agent.launch.explain", "agent.launch.answer", "agent.launch.seen", "agent.launch.done",
+    "agent.launch.remove", "agent.launch.resume", "agent.hand.cancel_queued", "agent.helper.allow",
+    "agent.hand.preview", "agent.launch.get", "agent.launch.rebrief", "agent.launch.take_back",
+    "agent.launch.deliver", "thread.create", "thread.list", "thread.get", "thread.update", "thread.delete",
+    "thread.turn", "thread.abort", "thread.branch", "thread.regenerate", "thread.keep", "thread.import",
+    "thread.decide", "thread.annotation.add", "thread.annotation.delete", "thread.todo", "coder.list",
+    "coder.own_agents", "coder.own_agents.answer", "coder.select", "coder.dismiss", "coder.pin", "coder.peek",
+    "coder.arm", "coder.disarm", "coder.grants", "coder.nodes", "coder.kill", "coder.audit", "coder.keep_note",
+    "delivery.snapshot", "delivery.sources", "delivery.source_register", "delivery.attempts",
+    "delivery.attempt_create", "delivery.story_dossier", "delivery.phase_dossier", "delivery.evidence_asset",
+    "delivery.prs", "delivery.prs_refresh", "delivery.pr_diff", "delivery.pr_fetch", "delivery.nodes",
+    "delivery.terminal_sessions", "delivery.terminal_read", "delivery.factory_profiles",
+    "delivery.factory_discover", "invocation.list", "invocation.get") if name not in OP_MCP_PROJECTIONS})
 
 #: Declared operations with no MCP exposure: the rig refuses them by name.
 OP_HTTP_ONLY = frozenset({"decision.status",
@@ -5234,6 +5242,8 @@ def _isolated_hub_env(
     env.update({
         "HOME": str(isolated_home),
         "GRAPH_WALK_REPO_ROOT": str(repo_root or ""),
+        # The hub composes its own roadmap reader (#2123); it reads this root.
+        "HOLDSPEAK_REPO_ROOT": str(repo_root or ""),
         "TMUX_TMPDIR": str(isolated_home),
         "HOLDSPEAK_PEOPLE_KEYSTORE_FILE": str(isolated_home / "people.key"),
         # PHILO-16 (C): the loopback engine scan reads no port, so no walk
