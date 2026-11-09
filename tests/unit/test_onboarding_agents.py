@@ -513,8 +513,7 @@ def test_the_service_never_writes_off_the_kernel_path(tmp_path) -> None:
 def test_the_agent_routes_are_owner_only() -> None:
     from holdspeak.principals import PrincipalRight, required_right
 
-    for method, path in (("GET", "/api/onboarding/agents"), ("POST", "/api/onboarding/agents/use"),
-                         ("POST", "/api/onboarding/agents/use-all")):
+    for method, path in (("GET", "/api/onboarding/agents"), ("POST", "/api/onboarding/agents/use")):
         assert required_right(method, path) is PrincipalRight.OWNER
 
 
@@ -528,7 +527,8 @@ def test_the_operation_is_owner_only_and_admitted() -> None:
     stop = next(d for d in DESCRIPTORS if d.name == "agent_hooks.remove")
     assert stop.owner_only and stop.owner_press and stop.admission.rule == "admitted"
     assert "agent_hooks.remove" in OWNER_ONLY_OPERATIONS
-    assert "http:POST /api/onboarding/agents/use-all" in row.exposure
+    # /use-all had no client and is parked (2026-11-09); the one /use press takes ``agents``.
+    assert row.exposure == ("http:POST /api/onboarding/agents/use",)
 
 
 # ── doctor ───────────────────────────────────────────────────────────────

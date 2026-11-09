@@ -95,6 +95,7 @@ KNOWN_CODE = re.compile(
     r"|^own_agents_disabled$"  # coder.own_agents.answer: tests/conftest.py turns own-agent discovery off (409)
     r"|^journal_unavailable$"  # dictation.journal.*: the sweep's hub has no durable journal recorder (404)
     r"|^page_expired$"  # briefing.read / evidence / answer: a placeholder token is no page (404)
+    r"|^telegram_not_paired$"  # reach.digest.send: a fresh HOME pairs no Telegram chat; nothing is sent (409)
 )
 KNOWN_MESSAGE = re.compile(
     r"^people_store_unavailable$"  # no People keystore on a fresh HOME

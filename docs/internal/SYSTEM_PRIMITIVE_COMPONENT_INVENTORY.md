@@ -1230,7 +1230,7 @@ Do not delete domain journals. Add a unified event/receipt index referencing the
 - [intel/engine.py](../../holdspeak/intel/engine.py)
 - [intel/mesh_relay.py](../../holdspeak/intel/mesh_relay.py)
 - [target_profile.py](../../holdspeak/target_profile.py)
-- [web/routes/primitives/profiles.py](../../holdspeak/web/routes/primitives/profiles.py)
+- [web/routes/primitives/profiles.py](../../holdspeak/web/routes/primitives/_parked/profiles_20261109.py)
 - [web/routes/primitives/ask.py](../../holdspeak/web/routes/primitives/ask.py)
 
 ### Web and sync primitives

@@ -733,7 +733,7 @@ class TestIntelStatusEnrichment:
 
     def test_hub_host_null_without_assignment(self, db: Database) -> None:
         """Hub meetings.host is null when no intel profile is assigned."""
-        from holdspeak.web.routes.system.settings import _resolve_meetings_host
+        from holdspeak.services.settings_hub_service import _resolve_meetings_host
 
         class _MockMeeting:
             intel_profile_id = None
@@ -750,7 +750,7 @@ class TestHostDerivation:
 
     def test_lan_endpoint_host(self) -> None:
         """A LAN endpoint -> its ip/hostname."""
-        from holdspeak.web.routes.system.settings import _placement_host
+        from holdspeak.services.settings_hub_service import _placement_host
         from dataclasses import dataclass
 
         @dataclass
@@ -764,7 +764,7 @@ class TestHostDerivation:
 
     def test_local_no_base_url(self) -> None:
         """This device (no base_url) -> 'local'."""
-        from holdspeak.web.routes.system.settings import _placement_host
+        from holdspeak.services.settings_hub_service import _placement_host
         from dataclasses import dataclass
 
         @dataclass
@@ -778,7 +778,7 @@ class TestHostDerivation:
 
     def test_cloud_provider_host(self) -> None:
         """A cloud provider -> the provider's API host."""
-        from holdspeak.web.routes.system.settings import _placement_host
+        from holdspeak.services.settings_hub_service import _placement_host
         from dataclasses import dataclass
 
         @dataclass

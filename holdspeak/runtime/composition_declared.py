@@ -116,6 +116,40 @@ def _ops_projects_builders(db: Any, observer: Any) -> dict[str, Callable[[], Any
         "repository_drawer_service": _plain("repository_drawer_service", "RepositoryDrawerService"),
         "roadmap_service": _plain("roadmap_service", "RoadmapService"),
     }
+def _unavailable() -> Any:
+    from holdspeak.setup_operations import Unavailable
+
+    return Unavailable()
+
+
+def _bare_profiles(db: Any, observer: Any) -> Any:
+    from holdspeak.services.profile_service import ProfileService
+
+    return ProfileService(db, observer=observer)
+
+
+def _bare_settings(db: Any, observer: Any) -> Any:
+    from holdspeak.services.settings_service import SettingsService
+
+    return SettingsService(db=db, on_settings_applied=None, observer=observer)
+
+
+def _bare_authority(db: Any, observer: Any) -> Any:
+    from holdspeak.services.authority_service import AuthorityService
+
+    return AuthorityService(db, observer=observer)
+
+
+def _settings_hub(services: Any, ctx: Any) -> Any:
+    from holdspeak.services.settings_hub_service import SettingsHubService
+
+    def live(name: str) -> Any:
+        found = getattr(services, name, None)
+        return found if found is not None else getattr(ctx, name, None)
+
+    return SettingsHubService(model_library_service=live("model_library_service"),
+                              inference_assignment_service=live("inference_assignment_service"),
+                              cadence_service=live("cadence_service"))
 
 
 def compose_declared_services(services: Any, ctx: Any, resolved_db: Any, resolved_observer: Any) -> None:
@@ -152,6 +186,7 @@ def compose_declared_services(services: Any, ctx: Any, resolved_db: Any, resolve
     from holdspeak.services.tts_service import TtsService
     from holdspeak.operations import LIVE_KERNEL_SERVICE
     from holdspeak.services.gate_service import GateService
+    from holdspeak.settings_operations import LIVE_HEARTBEAT_SERVICE, LIVE_REACH_SERVICE, LIVE_TELEGRAM_SERVICE
     from holdspeak.services.people_service import PeopleService, UnavailablePeopleStore
 
     builders: dict[str, Callable[[], Any]] = {
@@ -237,6 +272,19 @@ def compose_declared_services(services: Any, ctx: Any, resolved_db: Any, resolve
         "gate_service": lambda: GateService(resolved_db, observer=resolved_observer),
         # The kernel verbs: the process's one broker, read at each call.
         "kernel_service": lambda: LIVE_KERNEL_SERVICE,
+        # The Setup routes (setup_operations.py): the hub composes local AI and the
+        # model downloads; a partial context's stand-in refuses every call as unavailable.
+        "local_ai_setup_service": _unavailable,
+        "inference_acquisition_service": _unavailable,
+        "profile_service": lambda: _bare_profiles(resolved_db, resolved_observer),
+        # The rest of Settings (settings_operations.py): the settings file, its hub
+        # read, the posture; the heartbeat, Reach and Telegram are read at each call.
+        "settings_service": lambda: _bare_settings(resolved_db, resolved_observer),
+        "settings_hub_service": lambda: _settings_hub(services, ctx),
+        "authority_service": lambda: _bare_authority(resolved_db, resolved_observer),
+        "heartbeat_service": lambda: LIVE_HEARTBEAT_SERVICE,
+        "reach_service": lambda: LIVE_REACH_SERVICE,
+        "telegram_service": lambda: LIVE_TELEGRAM_SERVICE,
     }
     for name, build in builders.items():
         instance = getattr(services, name, None)

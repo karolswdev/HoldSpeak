@@ -23,7 +23,9 @@ from holdspeak.services.profile_service import ProfileService
 from holdspeak.services.sync_service import SyncService
 from holdspeak.web.context import WebContext
 from holdspeak.web.routes.primitives.model_profiles import build_model_profiles_router
-from holdspeak.web.routes.primitives.profiles import build_profiles_router
+from holdspeak import operations
+from holdspeak.web.operation_routes import operation_router
+from holdspeak.web.routes.setup import _inference_answer
 
 
 OWNER = Principal(PrincipalKind.OWNER, "story-143-owner")
@@ -676,7 +678,10 @@ def test_owner_matrix_covers_v2_service_legacy_service_http_and_mcp(db: Database
         request.state.principal = OWNER if request.headers.get("x-test-principal") == "owner" else AGENT
         return await call_next(request)
 
-    app.include_router(build_profiles_router(WebContext(get_state=lambda: {})))
+    # GET /api/inference-targets is produced from inference.targets.list (2026-11-09).
+    registry = operations.for_context(None, profile_service=lambda: legacy)
+    targets = [d for d in operations.DESCRIPTORS if d.name == "inference.targets.list"]
+    app.include_router(operation_router(targets, lambda: registry, _inference_answer, module=__name__))
     app.include_router(build_model_profiles_router())
     client = TestClient(app)
     assert client.get("/api/inference-targets").status_code == 403

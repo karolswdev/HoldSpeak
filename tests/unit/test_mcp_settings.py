@@ -10,7 +10,6 @@ import pytest
 
 from holdspeak.mcp import server, tools as mcp_tools
 from holdspeak.mcp.server import handle_message
-from holdspeak.mcp.families import settings as settings_family
 from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.services.errors import ConflictError, ValidationError
 from holdspeak.services.settings_service import SECRET_PATHS
@@ -79,9 +78,10 @@ def test_settings_update_valid_patch_applies(monkeypatch: pytest.MonkeyPatch) ->
             captured["patch"] = patch
             return {"success": True, "settings": {"ui": {"desk_sounds": True}, "_revision": "abc123"}}
 
-    monkeypatch.setattr(settings_family, "SettingsService", FakeSettingsService)
-    monkeypatch.setattr(settings_family, "get_database", lambda: MagicMock())
-    monkeypatch.setattr(settings_family, "get_observer", lambda: None)
+    # settings.update is declared (settings_operations.py, 2026-11-09): off the hub it
+    # binds the SettingsService the bare builder makes.
+    monkeypatch.setattr("holdspeak.services.settings_service.SettingsService", FakeSettingsService)
+    monkeypatch.setattr(mcp_tools, "get_database", lambda: MagicMock())
 
     result = _call("settings.update", {"patch": {"ui": {"desk_sounds": False}}})
     assert result["isError"] is False
@@ -127,9 +127,10 @@ def test_settings_update_validation_error_is_error(monkeypatch: pytest.MonkeyPat
         def update_settings(self, principal: Any, patch: dict[str, Any]) -> dict[str, Any]:
             raise ValidationError("Invalid hotkey key: bogus")
 
-    monkeypatch.setattr(settings_family, "SettingsService", FailingSettingsService)
-    monkeypatch.setattr(settings_family, "get_database", lambda: MagicMock())
-    monkeypatch.setattr(settings_family, "get_observer", lambda: None)
+    # settings.update is declared (settings_operations.py, 2026-11-09): off the hub it
+    # binds the SettingsService the bare builder makes.
+    monkeypatch.setattr("holdspeak.services.settings_service.SettingsService", FailingSettingsService)
+    monkeypatch.setattr(mcp_tools, "get_database", lambda: MagicMock())
 
     result = _call("settings.update", {"patch": {"hotkey": {"key": "bogus"}}})
     assert result["isError"] is True
@@ -152,9 +153,10 @@ def test_settings_update_stale_revision_is_error(monkeypatch: pytest.MonkeyPatch
                 context={"revision": "current-rev"},
             )
 
-    monkeypatch.setattr(settings_family, "SettingsService", ConflictSettingsService)
-    monkeypatch.setattr(settings_family, "get_database", lambda: MagicMock())
-    monkeypatch.setattr(settings_family, "get_observer", lambda: None)
+    # settings.update is declared (settings_operations.py, 2026-11-09): off the hub it
+    # binds the SettingsService the bare builder makes.
+    monkeypatch.setattr("holdspeak.services.settings_service.SettingsService", ConflictSettingsService)
+    monkeypatch.setattr(mcp_tools, "get_database", lambda: MagicMock())
 
     result = _call(
         "settings.update",
@@ -169,7 +171,7 @@ def test_settings_update_stale_revision_is_error(monkeypatch: pytest.MonkeyPatch
 
 def test_settings_update_description_contains_egress_warning() -> None:
     """The shipped settings.update description includes the counsel-mandated egress sentence."""
-    tool_def = next(t for t in settings_family.TOOLS if t["name"] == "settings.update")
+    tool_def = next(t for t in mcp_tools.TOOLS if t["name"] == "settings.update")
     desc = tool_def["description"]
 
     # The spec mandates this exact content:

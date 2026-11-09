@@ -25,9 +25,9 @@ def _lazy_project_palette() -> frozenset[str]:
 
 
 def _lazy_heartbeat_names() -> frozenset[str]:
-    """Heartbeat family tool names."""
-    from holdspeak.mcp.families.heartbeat import TOOLS as HB_TOOLS
-    return frozenset(t["name"] for t in HB_TOOLS)
+    """Heartbeat tool names (declared in ``settings_operations.py``, 2026-11-09)."""
+    from holdspeak.operations import DESCRIPTORS
+    return frozenset(d.tool_name for d in DESCRIPTORS if d.tool_schema is not None and d.tool_name.startswith("heartbeat."))
 
 
 def _lazy_all_tools() -> frozenset[str]:

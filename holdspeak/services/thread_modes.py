@@ -97,6 +97,9 @@ _MCP_ONLY: frozenset[str] = frozenset({
     "meeting.outcome_review",
     # The declared kernel reads (2026-11-09, gate_operations.py); kernel.receipt keeps its place.
     "kernel.get", "kernel.events",
+    # The declared Settings-family reads (2026-11-09, setup_operations.py): MCP and HTTP only.
+    "inference.acquisition.get", "inference.targets.list", "people.access.get",
+    "connection.signin.status",
 })
 
 
@@ -134,7 +137,12 @@ def _thread_side(name: str) -> bool:
          # REST families; the seeded palettes do not grow.
          "activity.", "walk.", "briefing.", "repository.", "roadmap.",
          # The gate and the principals (2026-11-09, gate_operations.py): MCP and REST.
-         "gate.", "principals.")
+         "gate.", "principals.",
+         # Setup and onboarding (2026-11-09, setup_operations.py, onboarding_operations.py):
+         # the first-run verbs are an MCP and REST family.
+         "setup.", "onboarding.",
+         # Reach (2026-11-09, settings_operations.py): how HoldSpeak reaches him, MCP and REST.
+         "reach.")
     )
 
 

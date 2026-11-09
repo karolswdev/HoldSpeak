@@ -102,6 +102,16 @@ class Reader:  # the operations one body, and the helpers it calls, reach
                 self.scope.setdefault(alias.asname or alias.name, found)
         for node in (n for stmt in body for n in ast.walk(stmt) if isinstance(n, ast.Call)):
             func = node.func
+            passed = [a for a in node.args if isinstance(a, (ast.Attribute, ast.Name))]  # run_in_threadpool(x.invoke, p, "op")
+            if any(word in getattr(f, "attr", getattr(f, "id", "")) for f in (func, *passed) for word in ("invoke", "operation")):
+                # an operation name: a string, or a local name assigned one (``name = "agent_hooks.install"``)
+                names = [_text(a) or next((_text(v) for v in assigns.get(getattr(a, "id", ""), ()) if _text(v)), None)
+                         for a in node.args]
+                ops.update(DESCRIPTORS[n] for n in names if n in DESCRIPTORS)
+            for ref in (a for a in node.args if isinstance(a, ast.Attribute)):  # run_in_threadpool(service.method, ...)
+                if (service := self.service(ref.value, assigns)) and not ref.attr.startswith(("_", "bind_")) \
+                        and "invoke" not in ref.attr:
+                    ops.add((service, ref.attr))
             # invoke(p, "op"), and a route's own helper handed the name: call(request, "note.outcome.edit", ...)
             if isinstance(func, ast.Name) or any(word in getattr(func, "attr", getattr(func, "id", ""))
                                                  for word in ("invoke", "operation")):

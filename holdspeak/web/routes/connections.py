@@ -21,8 +21,11 @@ from ...operations import OperationRefused
 from ...principals import UNAUTHENTICATED
 from ...room_operations import REMOTE_PROVIDERS
 from ...services.errors import ServiceError
+from ...onboarding_operations import CONNECTION_SIGN_IN_STATUS
 from ..context import WebContext
+from ..operation_routes import operation_router
 from ..runtime_support import error_500
+from ._mount import mount_router
 from ._room_kernel import exempt_form_right, kernel_fields, kernel_refusal, refuse_identifiable, refusal_fields
 
 log = get_logger("web.routes.connections")
@@ -143,20 +146,22 @@ def build_connections_router(ctx: WebContext) -> APIRouter:
                 )
             return error_500(exc, log, "Failed to start connection sign-in")
 
-    @router.get("/api/connections/signin/{run_id}")
-    async def connection_signin_status(run_id: str, request: Request) -> Any:
-        service = getattr(ctx, "connection_signin_service", None)
-        if service is None:
-            return JSONResponse({"code": "service_unavailable", "message": "Sign in is not available on this hub"}, status_code=503)
+    async def signin_answer(fn: Any, *, status: int = 200) -> Any:
+        if getattr(ctx, "connection_signin_service", None) is None:
+            return JSONResponse({"code": "service_unavailable", "message": "Sign in is not available on this hub"},
+                                status_code=503)
         try:
-            result = await run_in_threadpool(service.status, principal(request), run_id)
-            return JSONResponse(result)
+            return JSONResponse(await run_in_threadpool(fn), status_code=status)
+        except OperationRefused as exc:
+            return JSONResponse({"code": exc.code, "message": exc.detail},
+                                status_code=403 if exc.code == "owner_required" else 400)
+        except ServiceError as exc:
+            return JSONResponse({"code": exc.code, "message": exc.detail},
+                                status_code=int(exc.context.get("status") or 409))
         except Exception as exc:
-            from ...services.connection_signin_service import SignInRefused
-
-            if isinstance(exc, SignInRefused):
-                status = 403 if exc.reason == "owner_required" else 404 if exc.reason == "run_unknown" else 409
-                return JSONResponse({"code": exc.reason, "message": str(exc)}, status_code=status)
             return error_500(exc, log, "Failed to read connection sign-in")
+
+    # The sign-in poll, produced from connection.signin.status (onboarding_operations.py).
+    mount_router(router, operation_router((CONNECTION_SIGN_IN_STATUS,), ops, signin_answer, module=__name__))
 
     return router

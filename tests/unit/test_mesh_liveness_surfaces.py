@@ -272,7 +272,12 @@ def test_inference_targets_list_reflects_mesh_liveness(env) -> None:
     _mesh_profile(db)
     db.mesh_relay.touch_worker("walk-edge")
 
-    data = client.get("/api/inference-targets").json()
+    # GET /api/inference-targets is the declared inference.targets.list (2026-11-09).
+    from holdspeak import operations
+    from holdspeak.services.profile_service import ProfileService
+
+    registry = operations.for_context(None, profile_service=lambda: ProfileService(db))
+    data = registry.invoke(Principal(PrincipalKind.OWNER, "mesh-test-owner"), "inference.targets.list", {})
     target = next(t for t in data["targets"] if t["id"] == "p-phone")
     # A live mesh node target reports ready.
     assert target["readiness"]["state"] == "ready"

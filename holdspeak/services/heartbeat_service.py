@@ -1594,6 +1594,14 @@ class HeartbeatService:
 
     # ── Hub mirror ─────────────────────────────────────────────────────
 
+    def notify_test(self) -> dict[str, Any]:
+        """Fire one test desktop notification (heartbeat.notify_test); off in a rig."""
+        from holdspeak.desktop_notify import NOT_POSTED_IN_RIG, desktop_notify_enabled, notify
+
+        if not desktop_notify_enabled():
+            return {"fired": False, "reason": NOT_POSTED_IN_RIG}
+        return {"fired": notify("HoldSpeak", "Test notification from heartbeat")}
+
     def hub_rhythm(self) -> dict[str, Any]:
         """Build the rhythm sub-object for GET /api/settings/hub."""
         settings = self.get_settings()

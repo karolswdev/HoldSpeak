@@ -969,6 +969,8 @@ def runtime_registry(primitives: Any = None, meetings: Any = None) -> operations
              "dictation_service": lambda: DictationService(db, observer=obs),
              # The device sync (device_operations.py).
              "sync_service": lambda: _sync_service(db, obs),
+             # The Settings family (settings_operations.py, setup_operations.py): off the hub too.
+             **_settings_family(db, obs),
              # 2026-11-09 (ops/programs-work): recipe writes, the note window, memory.
              **_work_services(db, obs)}
     return operations.for_runtime(program_service=lambda: operations.LIVE_PROGRAM_SERVICE,
@@ -1029,6 +1031,10 @@ def _sync_service(db: Any, obs: Any) -> Any:
     from holdspeak.services.sync_service import SyncService
 
     return SyncService(db, observer=obs)
+def _settings_family(db: Any, obs: Any) -> dict[str, Any]:
+    from holdspeak.settings_operations import bare_builders
+
+    return bare_builders(db, obs)
 
 
 def _credential_service(db: Any, obs: Any) -> Any:

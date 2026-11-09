@@ -2531,6 +2531,7 @@ class OperationRegistry:
         args: Optional[Mapping[str, Any]] = None,
         *,
         held: Optional[Mapping[str, Any]] = None,
+        shape: str = "call",
     ) -> tuple[Any, Optional[dict[str, Any]]]:
         """:meth:`invoke`, plus ``{operation_id, receipt}`` when the call was ADMITTED.
 
@@ -2542,8 +2543,10 @@ class OperationRegistry:
         """
         # ``held`` only when given: a recording fence may wrap ``invoke`` with
         # the three-argument signature every transport uses.
-        result = (self.invoke(principal, name, args) if held is None
-                  else self.invoke(principal, name, args, held=held))
+        extra: dict[str, Any] = {} if held is None else {"held": held}
+        if shape != "call":  # the produced HTTP route's shape (``web_call``)
+            extra["shape"] = shape
+        result = self.invoke(principal, name, args, **extra)
         return result, _LAST_KERNEL.get()
 
     def invoke(
@@ -2622,6 +2625,7 @@ class OperationRegistry:
             # attempt keeps its named error AND leaves a refusal receipt.
             self._refusal_receipt(exc, principal, name, payload)
             raise
+        call = bound.web_call if shape == "web" and bound.web_call is not None else bound.call
         if self._admits(bound, payload):
             # PHILO-7-02: Article XI -- the complete kernel path around the call.
             from holdspeak.services import desk_kernel
@@ -2644,17 +2648,16 @@ class OperationRegistry:
 
                 result, kernel = project_kernel.run(
                     _database_of(bound.target), principal, name, payload,
-                    lambda minted: bound.call(principal, **minted, **given_held),
+                    lambda minted: call(principal, **minted, **given_held),
                 )
                 _LAST_KERNEL.set(kernel)
                 return result
             result, kernel = desk_kernel.run(
                 _database_of(bound.target), principal, name, payload,
-                lambda minted: bound.call(principal, **minted, **given_held),
+                lambda minted: call(principal, **minted, **given_held),
             )
             _LAST_KERNEL.set(kernel)
             return result
-        call = bound.web_call if shape == "web" and bound.web_call is not None else bound.call
         return call(principal, **dict(payload), **given_held)
 
     @staticmethod
@@ -2755,7 +2758,10 @@ def _changed(name: str, args: Any, result: Any) -> tuple[str, str, str]:
     """
     kind, _, op = name.partition(".")
     # The kind the desk refreshes on (web/announce.py): a person, a workbench.
-    kind = {"people": "person", "automation": "workbench", "calls": "call", "recordings": "recording"}.get(kind, kind)
+    # A heartbeat write is a Settings change (the desk refreshes on ``setting``, as it
+    # did when ``/api/settings/heartbeat`` announced by its path).
+    kind = {"people": "person", "automation": "workbench", "calls": "call", "recordings": "recording",
+            "heartbeat": "setting"}.get(kind, kind)
     payload = args if isinstance(args, Mapping) else {}
     obj_id: Any = payload.get(f"{kind}_id")
     if not obj_id:

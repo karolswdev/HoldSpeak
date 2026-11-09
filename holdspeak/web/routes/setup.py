@@ -1,8 +1,21 @@
-"""First-run setup surface routes (HS-42-01)."""
+"""First-run setup routes (HS-42-01), produced from ``holdspeak/setup_operations.py``.
+
+Every ``/api/setup`` route (and the model download read, the inference
+targets list) is ``OperationRegistry.invoke`` over its declared row. Each
+answers in the envelope its hand-written handler had: the Setup window's
+admitted presses (found, use, people, the LAN look) with the kernel receipt;
+the first-value rows with ``{success: false, error}``; the local-AI rows with
+``{code, message, recovery}``.
+
+Kept hand-written: ``POST /api/setup/discover-models``. It reads a typed key,
+a profile key or the environment's OpenAI key and decides per address which
+one may leave the machine; that key custody moves to a service in its own
+change, not as a side effect of this one.
+"""
 from __future__ import annotations
 
 import os
-from typing import Any
+from typing import Any, Callable
 
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
@@ -11,248 +24,93 @@ from starlette.concurrency import run_in_threadpool
 from ... import operations
 from ...logging_config import get_logger
 from ...operations import OperationRefused
-from ...principals import UNAUTHENTICATED
 from ...services.errors import NotFound, ServiceError, ValidationError
+from ...db import get_database, get_observer
+from ...setup_operations import SETUP_OPERATIONS, Unavailable
 from ..context import WebContext
+from ..operation_routes import operation_router
 from ..runtime_support import error_500
-from ._room_kernel import kernel_fields, kernel_refusal, refusal_fields, service_refusal
+from ._mount import mount_router
+from ._room_kernel import kernel_refusal, refusal_fields, service_refusal
 
 log = get_logger("web.routes.setup")
 
-
-def _error(exc: ServiceError) -> JSONResponse:
-    if isinstance(exc, NotFound):
-        return JSONResponse({"success": False, "error": repr(exc.id)}, status_code=404)
-    if isinstance(exc, ValidationError):
-        return JSONResponse({"success": False, "error": exc.detail}, status_code=400)
-    return JSONResponse({"success": False, "error": exc.detail}, status_code=int(exc.context.get("status") or 400))
+#: The Setup window's admitted presses and reads: the kernel receipt rides the answer.
+_KERNEL = frozenset({"setup.found", "setup.use", "setup.people.add", "setup.lan.scan"})
+#: The local-AI rows and the download read: ``{code, message, recovery}``.
+_INFERENCE = frozenset({"setup.local_ai.status", "setup.local_ai.start", "setup.local_ai.cancel",
+                        "inference.acquisition.get"})
 
 
-def _inference_error(exc: ServiceError) -> JSONResponse:
-    body: dict[str, Any] = {
-        "code": exc.code,
-        "message": exc.detail,
-        "recovery": exc.context.get("recovery"),
-    }
-    if "current" in exc.context:
-        body["current"] = exc.context["current"]
-    return JSONResponse(body, status_code=int(exc.context.get("status") or 400))
+def _refused(exc: OperationRefused) -> JSONResponse:
+    status = 403 if exc.code == "owner_required" else 400
+    return JSONResponse({"success": False, "code": exc.code, "error_code": exc.code,
+                         "message": exc.detail, **refusal_fields(exc)}, status_code=status)
 
 
-def build_setup_router(ctx: WebContext) -> APIRouter:
-    service = ctx.setup_service
-    if service is None:
-        raise RuntimeError("SetupService must be supplied at application composition")
-    inference_setup = ctx.inference_setup_service
-    if inference_setup is None:
-        raise RuntimeError("InferenceSetupApplicationService must be supplied at application composition")
-    inference_acquisition = ctx.inference_acquisition_service
-    router = APIRouter()
-
-    def _ops() -> operations.OperationRegistry:
-        return operations.for_context(ctx)
-
-    def _principal(request: Request) -> Any:
-        return getattr(request.state, "principal", UNAUTHENTICATED)
-
-    def _contract_error(exc: OperationRefused) -> JSONResponse:
-        return JSONResponse(
-            {"success": False, "code": exc.code, "error_code": exc.code,
-             "message": exc.detail, **refusal_fields(exc)},
-            status_code=400,
-        )
-
-    def _service_error(exc: ServiceError) -> JSONResponse:
+async def _kernel_answer(fn: Callable[[], Any], *, status: int = 200) -> Any:
+    try:
+        return JSONResponse(await run_in_threadpool(fn), status_code=status)
+    except OperationRefused as exc:
+        return _refused(exc)
+    except ServiceError as exc:
         if (refused := kernel_refusal(exc)) is not None:
             return refused
         return service_refusal(exc)
+    except Exception as exc:
+        return error_500(exc, log, "Setup failed")
 
-    @router.get("/api/setup/status")
-    def api_setup_status(request: Request) -> Any:
-        try:
-            return service.status(request.state.principal)
-        except ServiceError as exc:
-            return _error(exc)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to build setup status")
 
-    @router.get("/api/setup/found")
-    async def api_setup_found(request: Request) -> Any:
-        """The shared Setup inventory; reads local files and stored rows only."""
-        try:
-            registry = _ops()
-            return await run_in_threadpool(registry.invoke, _principal(request), "setup.found", {})
-        except OperationRefused as exc:
-            return _contract_error(exc)
-        except ServiceError as exc:
-            return _service_error(exc)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to build Setup inventory")
+async def _answer(fn: Callable[[], Any], *, status: int = 200) -> Any:
+    try:
+        return JSONResponse(await run_in_threadpool(fn), status_code=status)
+    except OperationRefused as exc:
+        return _refused(exc)
+    except NotFound as exc:
+        return JSONResponse({"success": False, "error": repr(exc.id)}, status_code=404)
+    except ValidationError as exc:
+        return JSONResponse({"success": False, "error": exc.detail}, status_code=400)
+    except ServiceError as exc:
+        if exc.code == "owner_required" or exc.context.get("status") == 403:
+            return JSONResponse({"error": exc.detail, "code": exc.code}, status_code=403)
+        return JSONResponse({"success": False, "error": exc.detail, "code": exc.code},
+                            status_code=int(exc.context.get("status") or 400))
+    except Exception as exc:
+        return error_500(exc, log, "Setup failed")
 
-    @router.post("/api/setup/use")
-    async def api_setup_use(request: Request) -> Any:
-        try:
-            body = await request.json()
-        except Exception:
-            body = None
-        if not isinstance(body, dict) or not isinstance(body.get("id"), str):
-            return JSONResponse({"success": False, "error": "Setup row id is required."}, status_code=400)
-        try:
-            registry = _ops()
-            principal = _principal(request)
-            args = {"id": body["id"], "payload": body.get("payload", {})}
-            result, kernel = await run_in_threadpool(
-                lambda: registry.invoke_receipted(principal, "setup.use", args)
-            )
-            return JSONResponse({"success": True, "result": result, **kernel_fields(kernel)})
-        except OperationRefused as exc:
-            return _contract_error(exc)
-        except ServiceError as exc:
-            return _service_error(exc)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to use Setup row")
 
-    @router.post("/api/setup/people")
-    async def api_setup_people(request: Request) -> Any:
-        try:
-            body = await request.json()
-        except Exception:
-            body = None
-        if not isinstance(body, dict):
-            return JSONResponse({"success": False, "error": "Add names separated by commas."}, status_code=400)
-        try:
-            registry = _ops()
-            principal = _principal(request)
-            args = {"names": body.get("names", body.get("people", ""))}
-            result, kernel = await run_in_threadpool(
-                lambda: registry.invoke_receipted(principal, "setup.people.add", args)
-            )
-            return JSONResponse({"success": True, **result, **kernel_fields(kernel)}, status_code=201)
-        except OperationRefused as exc:
-            return _contract_error(exc)
-        except ServiceError as exc:
-            return _service_error(exc)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to add Setup people")
+async def _inference_answer(fn: Callable[[], Any], *, status: int = 200) -> Any:
+    try:
+        return JSONResponse(await run_in_threadpool(fn), status_code=status)
+    except OperationRefused as exc:
+        return _refused(exc)
+    except ServiceError as exc:
+        body: dict[str, Any] = {"code": exc.code, "message": exc.detail, "recovery": exc.context.get("recovery")}
+        if "current" in exc.context:
+            body["current"] = exc.context["current"]
+        return JSONResponse(body, status_code=int(exc.context.get("status") or 400))
+    except Exception as exc:
+        return error_500(exc, log, "Local AI failed")
 
-    @router.post("/api/setup/lan")
-    async def api_setup_lan(request: Request) -> Any:
-        """One explicit Setup-open LAN look; the shared found read never scans."""
-        try:
-            registry = _ops()
-            result, kernel = await run_in_threadpool(
-                lambda: registry.invoke_receipted(_principal(request), "setup.lan.scan", {})
-            )
-            return JSONResponse({**result, **kernel_fields(kernel)})
-        except OperationRefused as exc:
-            return _contract_error(exc)
-        except ServiceError as exc:
-            return _service_error(exc)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to look on the network")
 
-    @router.post("/api/setup/runtime-test")
-    async def api_setup_runtime_test(request: Request) -> Any:
-        try:
-            return await run_in_threadpool(service.test_runtime, request.state.principal)
-        except ServiceError as exc:
-            return _error(exc)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to test runtime")
+def build_setup_router(ctx: WebContext) -> APIRouter:
+    if ctx.setup_service is None:
+        raise RuntimeError("SetupService must be supplied at application composition")
+    router = APIRouter()
 
-    @router.put("/api/setup/onboarding")
-    def api_onboarding_disposition(request: Request, payload: dict[str, Any]) -> Any:
-        try:
-            return service.set_onboarding_disposition(request.state.principal, payload or {})
-        except ServiceError as exc:
-            return _error(exc)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to update onboarding disposition")
+    def ops() -> Any:
+        from ...services.profile_service import ProfileService
 
-    @router.post("/api/setup/first-value/start")
-    def api_first_value_start(request: Request, payload: dict[str, Any]) -> Any:
-        try:
-            return JSONResponse(service.start_first_value(request.state.principal, payload or {}), status_code=201)
-        except ServiceError as exc:
-            return _error(exc)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to start first-value receipt")
+        return operations.for_context(ctx, local_ai_setup_service=Unavailable,
+                                      inference_acquisition_service=Unavailable,
+                                      profile_service=lambda: ProfileService(get_database(), observer=get_observer()))
 
-    @router.post("/api/setup/first-value/{attempt_id}/finish")
-    def api_first_value_finish(attempt_id: str, request: Request, payload: dict[str, Any]) -> Any:
-        try:
-            return service.finish_first_value(request.state.principal, attempt_id, payload or {})
-        except ServiceError as exc:
-            return _error(exc)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to finish first-value receipt")
-
-    @router.post("/api/setup/first-value/{attempt_id}/event")
-    def api_first_value_event(attempt_id: str, request: Request, payload: dict[str, Any]) -> Any:
-        allowed = {"event_id", "kind"}
-        if set(payload or {}).difference(allowed):
-            return JSONResponse({"success": False, "error": "First-value events accept only event_id and kind."}, status_code=400)
-        try:
-            return JSONResponse(
-                service.record_event(request.state.principal, attempt_id, payload or {}),
-                status_code=201,
-            )
-        except ServiceError as exc:
-            return _error(exc)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to record first-value event")
-
-    def _local_ai() -> Any:
-        local_ai = ctx.local_ai_setup_service
-        if local_ai is None:
-            raise ServiceError("local_ai_unavailable", "Set up local AI is not available on this hub.", context={"status": 503})
-        return local_ai
-
-    @router.get("/api/setup/local-ai")
-    async def api_local_ai_status(request: Request) -> Any:
-        """What "Set up local AI" downloads, what is on this device, progress."""
-        try:
-            return await run_in_threadpool(_local_ai().status, request.state.principal)
-        except ServiceError as exc:
-            return _inference_error(exc)
-
-    @router.post("/api/setup/local-ai")
-    async def api_local_ai_start(request: Request) -> Any:
-        """The owner's call: check the runtime, download (one egress receipt), set up."""
-        try:
-            # PHILO-15 10: `{"only": ["whisper"]}` downloads the speech model alone.
-            try:
-                body = await request.json()
-            except Exception:
-                body = None
-            only = body.get("only") if isinstance(body, dict) else None
-            if only is not None and not isinstance(only, list):
-                raise ServiceError("local_ai_invalid", "only must be a list.", context={"status": 400})
-            start = _local_ai().start
-            return JSONResponse(
-                await run_in_threadpool(lambda: start(request.state.principal, only=only)),
-                status_code=202,
-            )
-        except ServiceError as exc:
-            return _inference_error(exc)
-
-    @router.post("/api/setup/local-ai/cancel")
-    async def api_local_ai_cancel(request: Request) -> Any:
-        try:
-            return await run_in_threadpool(_local_ai().cancel, request.state.principal)
-        except ServiceError as exc:
-            return _inference_error(exc)
-
-    @router.get("/api/inference/acquisitions/{job_id}")
-    def api_inference_acquisition(job_id: str, request: Request) -> Any:
-        try:
-            if inference_acquisition is None:
-                raise ServiceError("inference_acquisition_unavailable", "Model downloads are unavailable on this hub.", context={"status": 503})
-            return inference_acquisition.get_acquisition(request.state.principal, job_id)
-        except ServiceError as exc:
-            return _inference_error(exc)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to read model acquisition")
+    mount_router(router, operation_router(
+        [d for d in SETUP_OPERATIONS if d.name in _KERNEL], ops, _kernel_answer, module=__name__, receipted=True))
+    mount_router(router, operation_router(
+        [d for d in SETUP_OPERATIONS if d.name in _INFERENCE], ops, _inference_answer, module=__name__))
+    mount_router(router, operation_router(
+        [d for d in SETUP_OPERATIONS if d.name not in _KERNEL | _INFERENCE], ops, _answer, module=__name__))
 
     @router.post("/api/setup/discover-models")
     async def api_discover_models(request: Request) -> Any:
