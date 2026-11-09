@@ -66,3 +66,33 @@ def test_every_declared_args_schema_is_a_valid_json_schema() -> None:
 
     for descriptor in operations.DESCRIPTORS:
         Draft202012Validator.check_schema(dict(descriptor.args_schema))
+
+
+def test_a_body_that_contradicts_the_path_is_refused_by_name() -> None:
+    """Codex on #2122: the old kernel decide and receipt routes rejected a body
+    ``operation_id``; a produced route overwrote it with the path's. A body or
+    query naming a path parameter with another value is refused as
+    ``path_body_mismatch`` (400) on every produced route; the same value passes."""
+    seen: list[dict[str, Any]] = []
+
+    class _Registry:
+        def invoke(self, principal: Any, name: str, args: dict[str, Any], *, shape: str = "web") -> Any:
+            seen.append(dict(args))
+            return {"ok": True}
+
+    descriptor = next(d for d in operations.DESCRIPTORS
+                      if d.http and d.http[0] == "POST" and "{" in d.http[1] and not d.owner_only)
+    path_param = descriptor.http[1].split("{", 1)[1].split("}", 1)[0].split(":", 1)[0]
+    app = FastAPI()
+    app.include_router(operation_router([descriptor], lambda: _Registry(), _call, module=__name__))
+    client = TestClient(app)
+    url = descriptor.http[1]
+    for part in [p for p in descriptor.http[1].split("/") if p.startswith("{")]:
+        url = url.replace(part, "abc")
+    refused = client.post(url, json={path_param: "xyz"})
+    assert refused.status_code == 400, refused.text
+    assert "path_body_mismatch" in refused.text
+    assert seen == []
+    agreed = client.post(url, json={path_param: "abc"})
+    assert agreed.status_code in (200, 201, 202), agreed.text
+    assert seen and seen[0][path_param] == "abc"
