@@ -7,6 +7,9 @@ ton of sequentiality"). Read and written only by scripts/quick_check.sh.
         test selection, when one is named)
     python scripts/quick_check_memo.py record <step>=<key> ...
         records a GREEN of each step on the current head (a red never records)
+    python scripts/quick_check_memo.py promote <retry.txt> <step>=<key> ...
+        after a green --retry: records each step at the head of the run being
+        retried, only when its key is the one that run saw (retry.txt "key")
 
 The memo is .tmp/quick-check/green.json in the work tree: {step: {head, key,
 at}}. A step whose key matches its last green is skipped.
@@ -111,7 +114,43 @@ def _load() -> dict:
         return {}
 
 
+def _save(memo: dict) -> None:
+    path = _memo_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(f".{os.getpid()}.tmp")
+    tmp.write_text(json.dumps(memo, indent=2, sort_keys=True) + "\n")
+    tmp.replace(path)
+
+
+def promote(retry_file: str, pairs: list[tuple[str, str]]) -> list[str]:
+    """A green --retry records a step only at the head of the run it retries,
+    and only when the step's inputs are what that run saw (2026-11-08: a retry
+    recorded steps green at a head two merges later, which they never ran on;
+    the next full check skipped them). Returns the lines to print."""
+    head, seen = "", {}
+    for line in Path(retry_file).read_text().splitlines():
+        word, _, rest = line.partition(" ")
+        if word == "head":
+            head = rest.strip()
+        elif word == "key":
+            step, _, key = rest.partition(" ")
+            seen[step] = key.strip()
+    memo, said = _load(), []
+    for step, key in pairs:
+        if head and seen.get(step) == key:
+            memo[step] = {"head": head, "key": key, "at": time.strftime("%Y-%m-%dT%H:%M:%S"), "retry": True}
+            said.append(f"   {step}: green at {head[:9]} (the run being retried), inputs unchanged")
+        else:
+            said.append(f"   {step}: inputs changed since the run being retried: the next check runs this step in full")
+    _save(memo)
+    return said
+
+
 def main(argv: list[str]) -> int:
+    if len(argv) >= 2 and argv[0] == "promote":
+        pairs = [arg.partition("=")[::2] for arg in argv[2:]]
+        print("\n".join(promote(argv[1], pairs)))
+        return 0
     if not argv or argv[0] not in ("plan", "record"):
         sys.stderr.write(__doc__ or "")
         return 2
@@ -131,11 +170,7 @@ def main(argv: list[str]) -> int:
     head = _git("rev-parse", "HEAD").decode().strip()
     for step, key in pairs:
         memo[step] = {"head": head, "key": key, "at": time.strftime("%Y-%m-%dT%H:%M:%S")}
-    path = _memo_path()
-    path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_suffix(f".{os.getpid()}.tmp")
-    tmp.write_text(json.dumps(memo, indent=2, sort_keys=True) + "\n")
-    tmp.replace(path)
+    _save(memo)
     return 0
 
 
