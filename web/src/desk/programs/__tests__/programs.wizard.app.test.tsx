@@ -173,6 +173,25 @@ describe("New program is a wizard inside the window (owner, live walk 2026-11-08
     }]);
   });
 
+  it("a window that asks for New program filled in (an old queue's tasks) opens the wizard with its title and brief, and the steps ride on the body", async () => {
+    hub({ "GET /api/programs": list, "GET /api/projects": projects.response.body, "POST /api/programs": made.response.body });
+    const steps = [{ title: "Triage the inbox", brief: "Sort it.\n\nThe inbox" }, { title: "Draft replies", brief: "Sort it.\n\nReplies" }];
+    act(() => { useDesk.getState().setPlace("programs/new", JSON.stringify({ title: "Morning queue", goal: "Sort it.", steps })); });
+    renderWindow(<ProgramsCore />);
+    await ready();
+    // Read once, then cleared: a later open is a plain New program.
+    expect(useDesk.getState().places["programs/new"] ?? "").toBe("");
+    choose(madeProgram.project_id as string);
+    fireEvent.click(next());
+    expect((screen.getByLabelText("Title") as HTMLInputElement).value).toBe("Morning queue");
+    expect((screen.getByLabelText("Brief") as HTMLTextAreaElement).value).toBe("Sort it.");
+    fireEvent.click(next());
+    fireEvent.click(next());
+    fireEvent.click(screen.getByTestId("programs-wizard-create"));
+    await waitFor(() => expect(sent()).toHaveLength(1));
+    expect(sent()[0]).toMatchObject({ title: "Morning queue", goal: "Sort it.", steps });
+  });
+
   describe("Person: who reviews the person-gated steps (recorded People roster and create body)", () => {
     const scene = createPersonFixture as unknown as { readiness: Capture; people: Capture; made: Capture };
     const persons = (scene.people.response.body as { relationships: Array<{ id: string; display_name: string }> }).relationships;

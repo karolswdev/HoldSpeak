@@ -12,13 +12,14 @@
  * (ProgramWizard.tsx) in the right pane; the made Program is then the
  * picked one. At 393 the rail is a strip at the foot. Empty: the 64 px
  * program object, one line, one Button. */
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { CoreProps } from "../../pages/cores/core-types";
 import { keepPlace } from "../deskMemory";
 import { spriteUrl } from "../sprites";
 import { useDesk } from "../store";
 import { StatusBar, SurfaceState, countWords, type StatusBarItem } from "../surface";
 import { useWindowInterior } from "../surface/interior";
+import { NEW_PROGRAM_PLACE, type NewProgramPrefill } from "./newProgram";
 import { openProgram } from "./open";
 import { usePrograms } from "./api";
 import { ProgramWizard } from "./ProgramWizard";
@@ -34,7 +35,7 @@ export function ProgramsCore({ scope }: CoreProps) {
   const { loading, error, list, reload } = usePrograms();
   const scopeProjectId = scope?.startsWith("project:") ? scope.slice("project:".length) : null;
   // The open wizard (its template and its flow), or null.
-  const [making, setMaking] = useState<{ template: string; flow: number } | null>(null);
+  const [making, setMaking] = useState<{ template: string; flow: number; prefill?: NewProgramPrefill } | null>(null);
   const [busy, setBusy] = useState(false);
   const flows = useRef(0);
   const kept = useDesk((s) => s.places[PICKED]) || null;
@@ -53,6 +54,15 @@ export function ProgramsCore({ scope }: CoreProps) {
     if (busy) return;
     setMaking({ template, flow: ++flows.current });
   };
+  // Another window asked for New program, filled in (openNewProgram): read once, then cleared.
+  const asked = useDesk((s) => s.places[NEW_PROGRAM_PLACE]) || "";
+  useEffect(() => {
+    if (!asked) return;
+    keepPlace(NEW_PROGRAM_PLACE, "");
+    let prefill: NewProgramPrefill | null = null;
+    try { prefill = JSON.parse(asked) as NewProgramPrefill; } catch { prefill = null; }
+    if (prefill && typeof prefill.title === "string") setMaking({ template: "fast-cycle", flow: ++flows.current, prefill });
+  }, [asked]);
   // "+" toggles the wizard; closing it gives the focus back to "+".
   const toggle = () => {
     if (busy) return;
@@ -93,7 +103,7 @@ export function ProgramsCore({ scope }: CoreProps) {
   let pane;
   if (making) {
     pane = (
-      <ProgramWizard key={making.flow} template={making.template} scopeProjectId={scopeProjectId} programsOf={programsOf}
+      <ProgramWizard key={making.flow} template={making.template} prefill={making.prefill} scopeProjectId={scopeProjectId} programsOf={programsOf}
         onClose={closeWizard} onMade={reveal} onPending={setBusy} reload={reload} />
     );
   } else if (loading || (error && !list.programs.length)) {

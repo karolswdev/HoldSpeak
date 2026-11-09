@@ -56,6 +56,8 @@ export interface CreateBody {
   for_person_id?: string;
   /** HS-S24: the spend note in US dollars (a note, never a cap). */
   spend_limit_usd?: number;
+  /** Written at once (an old queue automation's tasks, set up as a program). */
+  steps?: Array<{ title: string; brief: string }>;
 }
 
 /** The hub answers the new Program's wire (or `{program}`). */

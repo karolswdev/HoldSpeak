@@ -39,6 +39,7 @@ import {
 import { readControlMode } from "../hand/begin";
 import { ListRow, ListView } from "../surface/objects/ListView";
 import { TEMPLATES, createProgram, defaultProjectId, readProjectChoices, type CreateBody, type ProjectChoice } from "./api";
+import type { NewProgramPrefill } from "./newProgram";
 import { PersonPicker, type PersonChoice } from "./PersonPicker";
 import { RunsOnPicker, type RunsOnChoice } from "./RunsOn";
 import { runsOnLabel } from "./StepRow";
@@ -105,8 +106,10 @@ function Peek({ step }: { step: number }) {
   );
 }
 
-export function ProgramWizard({ template: firstTemplate, scopeProjectId, programsOf, onClose, onMade, onPending, reload }: {
+export function ProgramWizard({ template: firstTemplate, prefill, scopeProjectId, programsOf, onClose, onMade, onPending, reload }: {
   template: string;
+  /** Filled in by the window that opened it (an old queue automation's tasks as steps). */
+  prefill?: NewProgramPrefill;
   /** The project of the window's scope (opened from a Room or a project). */
   scopeProjectId?: string | null;
   /** How many Programs each project has (the card's quiet line; no zero). */
@@ -127,8 +130,8 @@ export function ProgramWizard({ template: firstTemplate, scopeProjectId, program
   const [folder, setFolder] = useState("");
   const [template, setTemplate] = useState(firstTemplate);
   const [chips, setChips] = useState(false);
-  const [title, setTitle] = useState("");
-  const [goal, setGoal] = useState("");
+  const [title, setTitle] = useState(prefill?.title ?? "");
+  const [goal, setGoal] = useState(prefill?.goal ?? "");
   const [control, setControl] = useState<Control | "">("");
   const [deskLevel, setDeskLevel] = useState<Control | null>(null);
   const [agent, setAgent] = useState<RunsOnChoice | null>(null);
@@ -233,6 +236,7 @@ export function ProgramWizard({ template: firstTemplate, scopeProjectId, program
     ...(person ? { for_person_id: person.id } : {}),
     ...(check.trim() ? { check_command: check.trim() } : {}),
     ...(spendAmount(spend) !== null ? { spend_limit_usd: spendAmount(spend)! } : {}),
+    ...(prefill?.steps?.length ? { steps: prefill.steps } : {}),
   });
 
   const create = async () => {
