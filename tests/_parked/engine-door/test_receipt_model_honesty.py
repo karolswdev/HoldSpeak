@@ -1,3 +1,4 @@
+# PARKED 2026-11-09 (door/thought-dictation-meeting): every case asks through the placement-based Ask path, which is gone; the door names the engine its assignment names.
 """HS-132-09 — the receipt names what LOADED (the executable honesty fence).
 
 The last surviving instance of the issue-#450 defect class: with

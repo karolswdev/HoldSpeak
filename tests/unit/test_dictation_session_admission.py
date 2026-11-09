@@ -570,9 +570,12 @@ def test_phase_d_default_cold_wake_runs_its_complete_routed_bundle(
     ]
     assert preload_assignments == 0
     assert not [row for row in _parents(db) if row["principal_kind"] == "owner"]
-    children = _operations(db, name="inference.invoke")
+    every = _operations(db, name="inference.invoke")
+    # The intent classify is a job through the engine door, a child of this
+    # same session; the speech children are the route bundle's.
+    assert {row["parent_operation_id"] for row in every} == {parent["operation_id"]}
+    children = [row for row in every if not str(row["native_id"]).startswith("door_")]
     assert len(children) == 2
-    assert {row["parent_operation_id"] for row in children} == {parent["operation_id"]}
     assert all((_receipt(db, row["operation_id"]) or {})["outcome"] == "succeeded" for row in children)
 
 
@@ -1091,8 +1094,12 @@ def test_phase_d_couples_speech_and_writing_markers_for_one_complete_pipeline(
     assert members == ["speech.transcribe", "speech.rewrite", "speech.preload"]
     routed_children = _operations(db, name="inference.invoke")
     assert len(routed_children) == 2
+    # The rewrite is one job through the engine door; the speech child is the
+    # route bundle's.
+    door = [row for row in routed_children if str(row["native_id"]).startswith("door_" + "speech.rewrite".encode().hex())]
+    assert len(door) == 1
     with db._connection() as conn:
-        routed_child_ids = {row["operation_id"] for row in routed_children}
+        routed_child_ids = {row["operation_id"] for row in routed_children} - {door[0]["operation_id"]}
         route_child_ids = {
             row["child_operation_id"]
             for row in conn.execute(

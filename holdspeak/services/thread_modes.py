@@ -81,6 +81,8 @@ _MCP_ONLY: frozenset[str] = frozenset({
     # The declared outcome review (2026-11-09, project_operations.py): a thread
     # reaches a meeting's proposals through meeting.proposals; the palettes do not grow.
     "meeting.outcome_review",
+    # The declared kernel reads (2026-11-09, gate_operations.py); kernel.receipt keeps its place.
+    "kernel.get", "kernel.events",
 })
 
 
@@ -101,7 +103,9 @@ def _thread_side(name: str) -> bool:
          # 2026-11-09 (ops/projects): the activity ledger, the Walk and the
          # briefing pages, the repository drawer and the roadmaps are MCP and
          # REST families; the seeded palettes do not grow.
-         "activity.", "walk.", "briefing.", "repository.", "roadmap.")
+         "activity.", "walk.", "briefing.", "repository.", "roadmap.",
+         # The gate and the principals (2026-11-09, gate_operations.py): MCP and REST.
+         "gate.", "principals.")
     )
 
 

@@ -97,6 +97,8 @@ def compose_declared_services(services: Any, ctx: Any, resolved_db: Any, resolve
             services.broadcast(topic, value)
 
     from holdspeak.operations import LIVE_CALLS_SERVICE, LIVE_PHONE_SERVICE, LIVE_PROGRAM_SERVICE
+    from holdspeak.operations import LIVE_KERNEL_SERVICE
+    from holdspeak.services.gate_service import GateService
     from holdspeak.services.people_service import PeopleService, UnavailablePeopleStore
 
     builders: dict[str, Callable[[], Any]] = {
@@ -161,6 +163,10 @@ def compose_declared_services(services: Any, ctx: Any, resolved_db: Any, resolve
         # repository tables (project_operations.py, activity_operations.py,
         # walk_operations.py, repository_operations.py, decision_operations.py).
         **_ops_projects_builders(resolved_db, resolved_observer),
+        # The gate and principals verbs (gate_operations.py): the hub composes its own GateService.
+        "gate_service": lambda: GateService(resolved_db, observer=resolved_observer),
+        # The kernel verbs: the process's one broker, read at each call.
+        "kernel_service": lambda: LIVE_KERNEL_SERVICE,
     }
     for name, build in builders.items():
         instance = getattr(services, name, None)

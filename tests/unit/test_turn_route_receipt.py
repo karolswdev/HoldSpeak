@@ -125,15 +125,6 @@ def test_least_private_pass_keeps_its_own_receipt() -> None:
     assert least_private([{**local, "lamp": ""}]) is None
 
 
-def test_the_ask_projection_names_the_leg_that_answered(db) -> None:
-    route = {"entries": [{"ordinal": 1, "profile_id": "p1", "deployment_revision_id": "lan", "boundary": "private_network"}]}
-    result = AskService._routed_projection(
-        SimpleNamespace(_db=db), {"output": "answer"}, {"lens": "Ask", "context_ids": [], "context_titles": []},
-        None, route, route_leg_ordinal=1,
-    )
-    assert result["egress"] == {"scope": "private_network", "host": "192.168.1.43"}
-    assert result["actual_placement"]["boundary"] == "private_network"
-
 
 # ── the real route chain: thread turns and the Ask ──────────────────────────
 
