@@ -8,19 +8,25 @@ background PortAudio callback until `stop_recording()` is called.
 from __future__ import annotations
 
 import threading
-from typing import Callable, Optional, Protocol, runtime_checkable
+from typing import Any, Callable, Optional, Protocol, runtime_checkable
 
 import numpy as np
 
 from .errors import AudioError as _AudioErrorBase
 
-try:
-    import sounddevice as sd
-except Exception as exc:  # pragma: no cover
-    sd = None  # type: ignore[assignment]
-    _SD_IMPORT_ERROR: Optional[BaseException] = exc
-else:  # pragma: no cover
-    _SD_IMPORT_ERROR = None
+#: sounddevice, imported by ``_require_sounddevice`` at first use: the import
+#: starts PortAudio (0.07 s), and the hub opens no stream at start.
+sd: Any = None
+_SD_IMPORT_ERROR: Optional[BaseException] = None
+
+
+def load_sounddevice() -> tuple[Any, Optional[BaseException]]:
+    """Import sounddevice: (the module or None, the import error or None)."""
+    try:
+        import sounddevice
+    except Exception as exc:  # pragma: no cover
+        return None, exc
+    return sounddevice, None
 
 
 @runtime_checkable
@@ -47,6 +53,9 @@ class AudioRecorderError(_AudioErrorBase):
 
 
 def _require_sounddevice():
+    global sd, _SD_IMPORT_ERROR
+    if sd is None:
+        sd, _SD_IMPORT_ERROR = load_sounddevice()
     if sd is None:
         raise AudioRecorderError(
             "sounddevice/PortAudio is not available. "

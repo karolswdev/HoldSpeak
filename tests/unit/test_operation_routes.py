@@ -57,3 +57,12 @@ def test_a_produced_owner_only_route_with_the_owner_principal_passes() -> None:
     assert response.status_code == 200, response.text
     assert response.json() == {"saved": []}
     assert phone.callers == [OWNER]
+
+
+def test_every_declared_args_schema_is_a_valid_json_schema() -> None:
+    """The check a descriptor made at construction, once per test run (2026-11-09:
+    275 meta-schema checks were 0.1 s of every hub start)."""
+    from jsonschema import Draft202012Validator
+
+    for descriptor in operations.DESCRIPTORS:
+        Draft202012Validator.check_schema(dict(descriptor.args_schema))

@@ -35,8 +35,6 @@ from dataclasses import dataclass, field
 from types import MappingProxyType
 from typing import Any, Callable, Mapping, Optional
 
-from jsonschema import Draft202012Validator
-from jsonschema.exceptions import ValidationError as JsonSchemaValidationError
 
 from holdspeak.principals import PrincipalKind
 from holdspeak.services.errors import ServiceError
@@ -209,7 +207,6 @@ class OperationDescriptor:
         return {"name": self.tool_name, "description": self.description, "inputSchema": self.tool_schema}
 
     def __post_init__(self) -> None:
-        Draft202012Validator.check_schema(dict(self.args_schema))
         if self.args_schema.get("type") != "object":
             raise ValueError(f"{self.name}: args_schema must describe an object")
         if self.effect not in {"read", "write"}:
@@ -2578,6 +2575,9 @@ class OperationRegistry:
                     f"Invalid arguments for {name}: {', '.join(claimed)} cannot be an argument; "
                     "the principal comes from the transport",
                 )
+            from jsonschema import Draft202012Validator  # at first call: 30 ms off the hub start
+            from jsonschema.exceptions import ValidationError as JsonSchemaValidationError
+
             try:
                 Draft202012Validator(dict(bound.descriptor.args_schema)).validate(dict(payload))
             except JsonSchemaValidationError as exc:
