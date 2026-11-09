@@ -43,6 +43,11 @@ class CustomBuildHook(BuildHookInterface):
                 "holdspeak/static/_built."
             )
 
-        install_cmd = [npm, "ci"] if (web_dir / "package-lock.json").is_file() else [npm, "install"]
-        subprocess.run(install_cmd, cwd=web_dir, check=True)
+        # A lane worktree links web/node_modules to the main checkout's install
+        # (scripts/lane.sh). That install is shared: `npm ci` here would rebuild
+        # it under every other lane. Build with it as it is.
+        shared_install = (web_dir / "node_modules").is_symlink()
+        if not shared_install:
+            install_cmd = [npm, "ci"] if (web_dir / "package-lock.json").is_file() else [npm, "install"]
+            subprocess.run(install_cmd, cwd=web_dir, check=True)
         subprocess.run([npm, "run", "build"], cwd=web_dir, check=True)

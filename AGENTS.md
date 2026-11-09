@@ -67,9 +67,13 @@ done call.
 ## Worktree and change discipline
 
 - Work in the brief's isolated worktree. Never edit the main checkout at
-  `/Users/karol/dev/tools/HoldSpeak` for a lane. Start a new lane from current
-  main, for example `git worktree add ../wt-topic -b docs/topic origin/main`
-  after fetching it. Reuse an appropriate attached worktree when possible.
+  `/Users/karol/dev/tools/HoldSpeak` for a lane. Start a new lane with
+  `scripts/lane.sh new <name>`: it fetches, adds `../wt-<name>` from
+  `origin/main`, links `web/node_modules` to the main checkout's install,
+  clones the built web output and runs `uv sync --extra dev` without npm
+  (seconds). After the merge, `scripts/lane.sh done <name>` removes the lane;
+  `scripts/lane.sh ls` lists the lanes and `scripts/lane.sh purge` removes
+  every merged, clean one.
 - Never run `stash`, `reset`, `checkout --`, `restore`, `clean` or `switch`.
   Read committed content with `git show`; inspect with `status`, `diff`,
   `log` and `show`. Do not repair another lane's files.
