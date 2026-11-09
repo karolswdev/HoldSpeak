@@ -124,7 +124,9 @@ class TestAllowLists:
         assert "memory.observations" in _DESK_TOOLS
         # Memory slice 6: + memory.page (evidence_read; MCP only in slice 5).
         assert "memory.page" in _DESK_TOOLS
-        assert len(_DESK_TOOLS) == 70
+        # Watch fold 4 (#2007): - event.list, reaction.list, reaction.presets,
+        # watch.list, watch.preview (parked with ReactionService).
+        assert len(_DESK_TOOLS) == 65
 
     def test_chase_size(self) -> None:
         # Chase includes door.add_item which is a forward reference
@@ -138,7 +140,8 @@ class TestAllowLists:
         # Memory slice 4: + memory.observations (via Desk).
         # Memory slice 6: + memory.page (via Desk).
         assert "memory.page" in _CHASE_TOOLS
-        assert len(_CHASE_TOOLS) == 76
+        # Watch fold 4 (#2007): the five parked Desk reads leave Chase too.
+        assert len(_CHASE_TOOLS) == 71
 
     def test_draft_empty(self) -> None:
         assert len(_DRAFT_TOOLS) == 0

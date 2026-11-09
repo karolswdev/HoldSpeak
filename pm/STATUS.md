@@ -2,6 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · (PR) Fix forward #2017 and #2007: the six new WORK Programs tools get launch rules (templates and shape_engine read; from_action, plan_programs, race, shape_held_drop on a Program the launch made); the Desk/Chase size fences follow the watch fold (70 → 65, 76 → 71).
 - 2026-11-08 · (PR) What he sees: an old queue automation (an agent and tasks, no Do text of its own) shows "Set this up as a program" where Run now was; the press opens New program with its title, its agent's prompt as the brief and its waiting tasks as the steps. Nothing is made until he presses Create; no automatic conversion.
 - 2026-11-08 · (PR) What he sees: an automation started by "when something happens" now shows each event's run as a Program (in Programs, under the automation's one tile; in the automation's Results and Runs, as before). One event is one run, never two; an automation with no Do text runs the event's own words. Hub: `watch_service._run_automation` → `run_as_program`; no occurrence item.
 - 2026-11-08 · Fix forward #2020/#2011: the three CLI-channel cases that boot a real HubProcess join the parked slow tier; an absent registry gives Needs you no engine failures (k3).
