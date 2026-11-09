@@ -235,6 +235,20 @@ def test_backfill_noop_when_no_chat_turn() -> None:
 # ── Runner integration tests ──────────────────────────────────────────────
 
 
+def _assigned_engine():
+    """The owner's engine for the job, as the engine door names it (#2128:
+    the door reads the assignment chain from the database, which this
+    MagicMock broker does not have)."""
+    from unittest.mock import patch
+
+    from holdspeak.services.engine_door import Engine
+
+    return patch(
+        "holdspeak.services.engine_door.engine_for",
+        return_value=Engine("deprev-practice", "ia-practice", "practice-profile"),
+    )
+
+
 def test_run_guardrail_through_real_coordinator_with_fake_engine() -> None:
     """run_guardrail produces the expected structured output via the runner."""
     from unittest.mock import MagicMock, patch
@@ -253,7 +267,7 @@ def test_run_guardrail_through_real_coordinator_with_fake_engine() -> None:
     broker = MagicMock()
     broker.inference_runner = fake_runner
 
-    with patch("holdspeak.kernel.runtime._as_principal") as mock_ctx:
+    with _assigned_engine(), patch("holdspeak.kernel.runtime._as_principal") as mock_ctx:
         mock_ctx.return_value.__enter__ = MagicMock(return_value=None)
         mock_ctx.return_value.__exit__ = MagicMock(return_value=False)
         result = run_guardrail(
@@ -289,7 +303,7 @@ def test_run_compact_through_real_coordinator_with_fake_engine() -> None:
     broker = MagicMock()
     broker.inference_runner = fake_runner
 
-    with patch("holdspeak.kernel.runtime._as_principal") as mock_ctx:
+    with _assigned_engine(), patch("holdspeak.kernel.runtime._as_principal") as mock_ctx:
         mock_ctx.return_value.__enter__ = MagicMock(return_value=None)
         mock_ctx.return_value.__exit__ = MagicMock(return_value=False)
         result = run_compact(
@@ -326,7 +340,7 @@ def test_run_guardrail_handles_missing_result() -> None:
     broker = MagicMock()
     broker.inference_runner = fake_runner
 
-    with patch("holdspeak.kernel.runtime._as_principal") as mock_ctx:
+    with _assigned_engine(), patch("holdspeak.kernel.runtime._as_principal") as mock_ctx:
         mock_ctx.return_value.__enter__ = MagicMock(return_value=None)
         mock_ctx.return_value.__exit__ = MagicMock(return_value=False)
         result = run_guardrail(
@@ -358,7 +372,7 @@ def test_run_compact_handles_missing_result() -> None:
     broker = MagicMock()
     broker.inference_runner = fake_runner
 
-    with patch("holdspeak.kernel.runtime._as_principal") as mock_ctx:
+    with _assigned_engine(), patch("holdspeak.kernel.runtime._as_principal") as mock_ctx:
         mock_ctx.return_value.__enter__ = MagicMock(return_value=None)
         mock_ctx.return_value.__exit__ = MagicMock(return_value=False)
         result = run_compact(

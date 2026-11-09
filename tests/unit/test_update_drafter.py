@@ -737,77 +737,59 @@ class _MockBroker:
 #: among them -- resolved nothing and the model drafter fell back silently.
 SEED_PROFILE_ID = "profile_update_draft"
 SEED_MODEL_ID = "qwen3-30b-a3b-instruct"
-SEED_DEPLOYMENT_REVISION = "deprev_update_draft"
+
+#: The capabilities the seeded profile claims a result schema for.
+_SEED_CAPABILITIES = (PROJECT_UPDATE_CAPABILITY, "project.brief_prepare")
 
 
 def _seed_assignment(db: Database, capability_id: str = PROJECT_UPDATE_CAPABILITY) -> str:
-    """Seed the minimal assignment chain for a capability. Returns assignment_id."""
-    assignment_id = "assign_update_draft_001"
-    profile_id = SEED_PROFILE_ID
+    """The owner's assignment for ``capability_id``, made through the
+    product's own services (#2128: the engine door reads the chain through
+    ``InferenceAssignmentService``, which verifies the stored material, so a
+    hand-written row is no assignment): one v2 profile bound to a deployment
+    whose model is ``SEED_MODEL_ID``. Idempotent. Returns the assignment id."""
+    from holdspeak.services.inference_assignment_service import (
+        InferenceAssignmentService,
+    )
+    from tests.unit.test_phase143_inference_assignments import (
+        OWNER as ASSIGNMENT_OWNER,
+        _profile,
+        _result_claim,
+    )
+
     with db._connection() as conn:
-        # Temporarily disable FK enforcement for seeding.
-        conn.execute("PRAGMA foreign_keys = OFF")
+        exists = conn.execute(
+            "SELECT 1 FROM model_profile_revisions WHERE profile_id=?", (SEED_PROFILE_ID,)
+        ).fetchone()
+    if exists is None:
+        claims = tuple(dict.fromkeys(("language", *(
+            _result_claim(cap) for cap in (*_SEED_CAPABILITIES, capability_id)))))
+        _profile(db, SEED_PROFILE_ID, claims=claims, model=SEED_MODEL_ID)
+    service = InferenceAssignmentService(db)
+    assignment, _entries = service.chain(capability_id)
+    if assignment:
+        return assignment
+    service.set_assignment(ASSIGNMENT_OWNER, {
+        "command_id": f"seed-{capability_id}".replace(".", "-"),
+        "expected_revision": 0,
+        "scope": {"kind": "capability", "capability_id": capability_id},
+        "entries": [{"profile_id": SEED_PROFILE_ID, "profile_revision": 1}],
+    })
+    assignment, _entries = service.chain(capability_id)
+    return assignment
 
-        # The captured deployment revision: its `model` column holds the REAL
-        # model id, never the profile id.
-        conn.execute(
-            """INSERT OR IGNORE INTO deployment_revisions
-               (id, model, kind, boundary, engine, destination_id)
-               VALUES (?, ?, 'local', 'same_device', 'test', 'local')""",
-            (SEED_DEPLOYMENT_REVISION, SEED_MODEL_ID),
-        )
 
-        # The binding that ties the profile to that deployment -- the row the
-        # route planner reads, and the one the resolver must follow.
-        conn.execute(
-            """INSERT OR IGNORE INTO model_profile_binding_revisions
-               (binding_id, revision, profile_id, profile_revision,
-                deployment_head_id, deployment_configuration_revision,
-                deployment_revision_id, secret_slot, enabled,
-                readiness_observation_id, created_at)
-               VALUES (?, 1, ?, 1, ?, 1, ?, '', 1, '', ?)""",
-            (f"bind_{profile_id}", profile_id, f"dephead_{profile_id}",
-             SEED_DEPLOYMENT_REVISION, NOW_ISO),
-        )
-        conn.execute(
-            """INSERT OR IGNORE INTO model_profile_binding_heads
-               (binding_id, profile_id, revision, updated_at)
-               VALUES (?, ?, 1, ?)""",
-            (f"bind_{profile_id}", profile_id, NOW_ISO),
-        )
-
-        # inference_assignment_revisions (FK parent for heads + assignments).
-        conn.execute(
-            """INSERT OR IGNORE INTO inference_assignment_revisions
-               (assignment_id, revision, assignment_key,
-                scope_kind, selector_kind, capability_id,
-                payload_json, sha256, created_at)
-               VALUES (?, 1, ?, 'invocation', 'capability', ?,
-                       '{}', '', ?)""",
-            (assignment_id, f"capability:{capability_id}",
-             capability_id, NOW_ISO),
-        )
-
-        # assignment head
-        conn.execute(
-            """INSERT OR IGNORE INTO inference_assignment_heads
-               (assignment_key, assignment_id, revision, cleared,
-                updated_at)
-               VALUES (?, ?, 1, 0, ?)""",
-            (f"capability:{capability_id}", assignment_id, NOW_ISO),
-        )
-
-        # assignment entry
-        conn.execute(
-            """INSERT OR IGNORE INTO inference_assignments
-               (id, assignment_id, assignment_revision, ordinal,
-                profile_id, profile_revision)
-               VALUES (?, ?, 1, 1, ?, 1)""",
-            (f"ia_{assignment_id}", assignment_id, profile_id),
-        )
-
-        conn.execute("PRAGMA foreign_keys = ON")
-    return assignment_id
+def _bound_deployment_revision(db: Database) -> str:
+    """The deployment revision the seeded profile's binding points at."""
+    with db._connection() as conn:
+        row = conn.execute(
+            """SELECT b.deployment_revision_id FROM model_profile_binding_heads h
+                 JOIN model_profile_binding_revisions b
+                   ON b.binding_id=h.binding_id AND b.revision=h.revision
+                WHERE h.profile_id=?""",
+            (SEED_PROFILE_ID,),
+        ).fetchone()
+    return str(row[0])
 
 
 def _make_model_service(
@@ -1068,7 +1050,7 @@ class TestModelFallback:
         assert result["generator"].startswith("model:"), (
             f"Expected 'model:<assignment_id>', got {result['generator']!r}"
         )
-        assert "assign_update_draft_001" in result["generator"]
+        assert _seed_assignment(db) in result["generator"]
 
 
 # ── ROUTE RESOLUTION (HS-200-08) ─────────────────────────────────────
@@ -1120,7 +1102,7 @@ class TestRouteResolution:
         assert result["fallback_reason"] is None
         assert len(runner.invoke_calls) == 1
         assert runner.invoke_calls[0].deployment_revision == (
-            SEED_DEPLOYMENT_REVISION
+            _bound_deployment_revision(db)
         ), "The runner must be handed the BOUND deployment revision"
 
     def test_unresolvable_route_falls_back_with_a_named_reason(self, rig):

@@ -459,8 +459,9 @@ def _summary_rig(tmp_path, monkeypatch):
             self.prompts.append(_json_only_messages(transcript, memory_context)[1]["content"])
             return super().analyze(transcript, stream=stream)
 
-    db, _broker, _engine, _host, _requests = _queue_rig(tmp_path, monkeypatch)
+    db, _broker, _engine, _host, requests = _queue_rig(tmp_path, monkeypatch)
     engine = PromptIntel()
+    engine.requests = requests
     monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **kwargs: engine)
     monkeypatch.setattr("holdspeak.intel.providers._configured_engine", lambda: engine)
     return db, engine
@@ -474,13 +475,21 @@ def _dated_before_the_meeting(db: Database) -> None:
         conn.execute("UPDATE desk_decisions SET created_at='2026-08-01T09:00:00+00:00'")
 
 
-def _staged_material(db: Database) -> list[dict]:
-    with db._connection() as conn:
-        rows = conn.execute(
-            "SELECT payload_json FROM inference_adoption_material_snapshots "
-            "WHERE capability_id='meeting.deferred_analysis'"
-        ).fetchall()
-    return [json.loads(row[0]) for row in rows]
+def _staged_material(engine) -> list[dict]:
+    """The material each summary call handed the runner (#2128: the deferred
+    queue runs on the engine door, which writes no adoption snapshot; the
+    operation's material is the request payload, whose hash the receipt
+    names)."""
+    from holdspeak.kernel.inference_runner import ServiceContract
+
+    staged = []
+    for request in engine.requests:
+        origin = request.definition_origin
+        if getattr(origin, "contract", "") != "meeting.deferred_analysis":
+            continue
+        assert origin == ServiceContract.for_payload(origin.contract, origin.revision, request.payload)
+        staged.append(dict(request.payload))
+    return staged
 
 
 def test_meeting_summary_prompt_carries_the_projects_earlier_decision(tmp_path, monkeypatch):
@@ -501,7 +510,7 @@ def test_meeting_summary_prompt_carries_the_projects_earlier_decision(tmp_path, 
     assert "Borealis" not in prompt
     assert prompt.index("[END PROJECT MEMORY]") < prompt.index("we reviewed the ledger rollout plan")
     # The refs stay on the operation's staged material.
-    staged = [m for m in _staged_material(db) if m.get("memory_refs")]
+    staged = [m for m in _staged_material(engine) if m.get("memory_refs")]
     assert staged and staged[0]["memory_refs"] == [f"desk_decision:{inside}"]
     assert db.meetings.get_meeting(state.id).intel.summary == "The team reviewed the budget."
 
@@ -518,7 +527,9 @@ def test_meeting_summary_on_no_project_is_as_before(tmp_path, monkeypatch):
     assert process_next_intel_job() is True
 
     assert "MEMORY" not in engine.prompts[0]
-    assert all("memory_refs" not in m and "memory_material" not in m for m in _staged_material(db))
+    material = _staged_material(engine)
+    assert material
+    assert all("memory_refs" not in m and "memory_material" not in m for m in material)
     # No memory: the prompt is the prompt of before, byte for byte.
     assert _json_only_messages("t", "") == _json_only_messages("t")
 
