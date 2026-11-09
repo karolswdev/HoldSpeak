@@ -7,18 +7,17 @@ devices like BlackHole, and help users set up system audio capture.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional
+from typing import Any, Optional
 
 import subprocess
 import sys
 
-try:
-    import sounddevice as sd
-except Exception as exc:  # pragma: no cover
-    sd = None  # type: ignore[assignment]
-    _SD_IMPORT_ERROR: Optional[BaseException] = exc
-else:  # pragma: no cover
-    _SD_IMPORT_ERROR = None
+#: sounddevice, imported by ``_require_sounddevice`` at first use: the import
+#: starts PortAudio (0.07 s), and the hub opens no stream at start.
+sd: Any = None
+_SD_IMPORT_ERROR: Optional[BaseException] = None
+
+from .audio import load_sounddevice
 
 from .logging_config import get_logger
 
@@ -71,6 +70,9 @@ class PulseMonitorSource:
 
 
 def _require_sounddevice():
+    global sd, _SD_IMPORT_ERROR
+    if sd is None:
+        sd, _SD_IMPORT_ERROR = load_sounddevice()
     if sd is None:
         raise RuntimeError(
             "sounddevice/PortAudio is not available. "
@@ -365,7 +367,7 @@ def list_devices_formatted() -> str:
 
     # Defaults
     try:
-        default_in, default_out = sd.default.device
+        default_in, default_out = _require_sounddevice().default.device
         lines.append("")
         lines.append(f"Default input: {default_in}")
         lines.append(f"Default output: {default_out}")

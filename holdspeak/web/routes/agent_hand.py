@@ -22,10 +22,10 @@ from typing import Any
 
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
-
 from starlette.concurrency import run_in_threadpool
 
 from ...agent_operations import LAUNCH_OPERATIONS
+from ._mount import mount_router
 from ...logging_config import get_logger
 from ...operations import OperationRefused
 from ...principals import UNAUTHENTICATED, Principal, PrincipalKind
@@ -342,7 +342,7 @@ def build_agent_hand_router(ctx: WebContext) -> APIRouter:
 
         return api_agent_launch_lane
 
-    router.include_router(operation_router(
+    mount_router(router, operation_router(
         LAUNCH_OPERATIONS, _ops, lambda fn, status=200: _answer(fn, status=status), module=__name__,
         hand_written={"agent.launch.lane": lane_handler},
     ))

@@ -25,7 +25,6 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-import yaml
 
 from ..config import CONFIG_FILE  # noqa: F401 - compatibility seam for callers/tests
 
@@ -97,6 +96,8 @@ def load_manifest(name: str = DEFAULT_SEED) -> dict[str, Any]:
     path = SEEDS_DIR / f"{name}.yaml"
     if not path.exists():
         raise SeedError(f"unknown packaged seed: {name!r} (looked in {SEEDS_DIR})")
+    import yaml  # at first load: off the hub start
+
     doc = yaml.safe_load(path.read_text()) or {}
     if not isinstance(doc, dict):
         raise SeedError(f"seed {name!r} must be a mapping")

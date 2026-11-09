@@ -236,7 +236,7 @@ def build_people_router(ctx: WebContext) -> APIRouter:
     # 2026-11-08 (one contract): the verbs of ``holdspeak/people_operations.py``,
     # produced through ``OperationRegistry.invoke`` with the words above.
     produced = APIRouter(tags=["people"], dependencies=[Depends(note_caller)])
-    produced.include_router(operation_router(
+    mount_router(produced, operation_router(
         operations.PEOPLE_OPERATIONS, lambda: operations.for_context(ctx), _answer, module=__name__))
     both = APIRouter()
     mount_router(both, router)
