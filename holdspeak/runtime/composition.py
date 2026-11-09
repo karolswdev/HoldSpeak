@@ -509,7 +509,7 @@ def install_from_web_context(
         if services.broadcast is not None:
             services.broadcast(topic, value)
 
-    from holdspeak.operations import LIVE_PHONE_SERVICE, LIVE_PROGRAM_SERVICE
+    from holdspeak.operations import LIVE_CALLS_SERVICE, LIVE_PHONE_SERVICE, LIVE_PROGRAM_SERVICE
     from holdspeak.services.people_service import PeopleService, UnavailablePeopleStore
 
     builders: dict[str, Callable[[], Any]] = {
@@ -560,6 +560,8 @@ def install_from_web_context(
         "program_service": lambda: LIVE_PROGRAM_SERVICE,
         # The phone descriptors (phone_operations.py): the process's one PhoneService.
         "phone_service": lambda: LIVE_PHONE_SERVICE,
+        # The Calls window's descriptors (calls_operations.py): the process's one CallsService.
+        "calls_service": lambda: LIVE_CALLS_SERVICE,
         # The People verbs: the hub composes the encrypted store; a partial context's refuses every call.
         "people_service": lambda: PeopleService(UnavailablePeopleStore()),
     }

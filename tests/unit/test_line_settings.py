@@ -135,6 +135,13 @@ def _app(monkeypatch) -> tuple[Any, Any]:
     monkeypatch.setattr(adapter, "LINE_HUB", fresh_hub)
     app = FastAPI()
     app.include_router(calls_routes.build_calls_router(WebContext(get_state=lambda: {}, broadcast=lambda k, d: None)))
+
+    @app.middleware("http")
+    async def _owner(request, call_next):  # the hub's edge: the owner's token (produced routes read it)
+        from holdspeak.principals import Principal, PrincipalKind
+
+        request.state.principal = Principal(PrincipalKind.OWNER, "owner")
+        return await call_next(request)
     return app, fresh_hub
 
 
@@ -189,6 +196,7 @@ def test_the_status_says_where_the_line_is_and_a_test_call_needs_the_line(home, 
     import holdspeak.web.routes.calls as calls_routes
 
     monkeypatch.setattr(calls_routes, "CALLS", fresh)
+    monkeypatch.setattr(calls_service, "CALLS", fresh)
     with TestClient(app) as client:
         status = client.get("/api/calls/status").json()
         assert status["line"]["state"] == "not_running" and status["line"]["words"] == "Not running"
