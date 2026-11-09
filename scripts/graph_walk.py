@@ -1000,6 +1000,9 @@ OP_MCP_PROJECTIONS: dict[str, dict[str, Any]] = {
         "phone.devices", "phone.revoke", "phone.let_wait", "phone.calls", "phone.ring", "phone.again", "phone.push_key",
         "phone.test_push",
         "phone.messages", "phone.get_call")},
+    # 2026-11-08: the Calls window's declared verbs with an MCP tool (holdspeak/calls_operations.py).
+    **{name: {"kind": "tool", "name": name} for name in (
+        "calls.status", "calls.list", "calls.get", "calls.place", "calls.hangup", "calls.test_line")},
     # 2026-11-08: People's web verbs, declared (holdspeak/people_operations.py).
     **{name: {"kind": "tool", "name": name} for name in (
         "people.setup", "people.suggestion.add", "people.suggestion.hide", "people.relationship.archive",
@@ -1037,6 +1040,8 @@ OP_HTTP_ONLY = frozenset({"decision.status", "project.door.create", "project.doo
                           # 2026-11-08: the phone verbs with no MCP tool (a held device or address, a credential).
                           "phone.redeem", "phone.pair", "phone.save_push_key", "phone.mark_read", "phone.decide",
                           "phone.accept", "phone.decline", "phone.end",
+                          # 2026-11-08: the Calls window's tap answer (no MCP tool: an agent never answers his hold).
+                          "calls.decide",
                           # 2026-11-08: the Agents window's launch verbs (HTTP only).
                           "agent.launch.lane", "agent.launch.explain", "agent.launch.answer", "agent.launch.seen",
                           "agent.launch.done", "agent.launch.remove", "agent.launch.resume",

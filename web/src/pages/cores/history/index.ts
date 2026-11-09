@@ -5,7 +5,7 @@ export { ImportSection } from "./ImportSection";
 export { MeetingDetail } from "./MeetingDetail";
 export { CaptureSlab } from "./CaptureSlab";
 export { PreparedResults } from "./PreparedResults";
-export { NeedsYouTable } from "./NeedsYouTable";
+export { SummaryRunVerbs } from "./SummaryRunVerbs";
 export { TranscriptWell } from "./TranscriptWell";
 export { CatalogRail } from "./CatalogRail";
 export { DoorSection } from "./DoorSection";

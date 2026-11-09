@@ -186,22 +186,22 @@ describe("the meeting's Decisions through Confirm (the hook and the ledger, rend
       return <MeetingOutcomes data={data} meeting={meeting} />;
     }
     render(<Harness />);
-    const decisions = await screen.findByTestId("meeting-decisions");
-    expect(decisions.querySelector("h3")?.textContent).toBe("Decisions · 2");
-    expect(screen.getByTestId("meeting-commitments").querySelector("h3")?.textContent).toBe("Who owes what · 1");
+    const decisions = await screen.findByTestId("meeting-ledger");
+    expect(screen.getAllByTestId("meeting-decisions-row")).toHaveLength(2);
+    expect(screen.getAllByTestId("meeting-commitments-row")).toHaveLength(1);
     fireEvent.click(within(decisions).getByRole("button", { name: "Confirm: Freeze the old ledger on Nov 5" }));
     await waitFor(() => {
-      const row = within(screen.getByTestId("meeting-decisions")).getByText("Freeze the old ledger on Nov 5").closest(".surface-ledger-line");
+      const row = within(screen.getByTestId("meeting-ledger")).getByText("Freeze the old ledger on Nov 5").closest(".surface-ledger-line");
       expect(row?.querySelector(".surface-ledger-meta")?.textContent).toBe("Jordan");
     });
-    expect(screen.getByTestId("meeting-decisions").querySelector("h3")?.textContent).toBe("Decisions · 2");
+    expect(screen.getAllByTestId("meeting-decisions-row")).toHaveLength(2);
     proposals = proposals.map((p) => (p.id === "p1" ? { ...p, state: "confirmed" } : p));
-    const secondDecision = within(screen.getByTestId("meeting-decisions"))
+    const secondDecision = within(screen.getByTestId("meeting-ledger"))
       .getByText("Run reconciliation nightly")
       .closest(".surface-ledger-line") as HTMLElement;
     fireEvent.click(within(secondDecision).getByTestId("proposal-more-btn"));
     fireEvent.click(screen.getByRole("menuitem", { name: "Dismiss" }));
-    await waitFor(() => expect(screen.getByTestId("meeting-decisions").querySelector("h3")?.textContent).toBe("Decisions · 1"));
+    await waitFor(() => expect(screen.getAllByTestId("meeting-decisions-row")).toHaveLength(1));
   });
 
 
@@ -220,8 +220,8 @@ describe("the meeting's Decisions through Confirm (the hook and the ledger, rend
       return <MeetingOutcomes data={data} meeting={meeting} />;
     }
     render(<Harness />);
-    const decisions = await screen.findByTestId("meeting-decisions");
-    expect(decisions.querySelector("h3")?.textContent).toBe("Decisions · 1");
+    const decisions = await screen.findByTestId("meeting-ledger");
+    expect(screen.getAllByTestId("meeting-decisions-row")).toHaveLength(1);
     fireEvent.click(within(decisions).getByTestId("proposal-more-btn"));
     expect(Boolean(screen.queryByRole("menuitem", { name: "Show in transcript" }))).toBe(expected);
     if (!expected) expect(decisions).toHaveTextContent("Not in the transcript");
@@ -672,7 +672,7 @@ describe("the meeting's recorded decisions (PHILO-17)", () => {
     ]);
   });
 
-  it("the hook reads the meeting's ledger rows and the record shows them above Commitments", async () => {
+  it("the hook reads the meeting's ledger rows and the record ranks them by weight", async () => {
     const meeting = {
       id: "m9", title: "Ledger cutover sync", intel_status: "complete",
       intel: { summary: "s", action_items: [{ id: "ai-1", task: "Write the rollback runbook", owner: null, status: "pending" }] },
@@ -689,12 +689,14 @@ describe("the meeting's recorded decisions (PHILO-17)", () => {
       return <MeetingOutcomes data={data} meeting={meeting} />;
     }
     const { container } = render(<Harness />);
-    const decisions = await screen.findByTestId("meeting-decisions");
-    expect(decisions.querySelector("h3")?.textContent).toBe("Decisions · 1");
+    const decisions = await screen.findByTestId("meeting-ledger");
+    expect(screen.getAllByTestId("meeting-decisions-row")).toHaveLength(1);
     expect(decisions.textContent).toContain("Freeze the old ledger on Nov 5");
-    const order = [...container.querySelectorAll("[data-testid=meeting-decisions], [data-testid=meeting-commitments]")]
+    // The language: one ledger by weight; the open action waits on him, so
+    // it leads; the decision filed follows.
+    const order = [...container.querySelectorAll("[data-testid=meeting-decisions-row], [data-testid=meeting-commitments-row]")]
       .map((el) => el.getAttribute("data-testid"));
-    expect(order).toEqual(["meeting-decisions", "meeting-commitments"]);
+    expect(order).toEqual(["meeting-commitments-row", "meeting-decisions-row"]);
   });
 });
 
@@ -754,7 +756,7 @@ describe("the meeting's decided rows carry Decide… (W2-LIVE-2)", () => {
       completeAction: async () => undefined,
     };
     render(<MeetingOutcomes data={data as never} meeting={{ id: "m-dec" }} onDecide={onDecide} />);
-    const decisions = await screen.findByTestId("meeting-decisions");
+    const decisions = await screen.findByTestId("meeting-ledger");
     expect(within(decisions).getByRole("button", { name: "Confirm: Move the backup job to 22:00" })).toBeTruthy();
     expect(within(decisions).queryByRole("button", { name: "Decide: Move the backup job to 22:00" })).toBeNull();
 

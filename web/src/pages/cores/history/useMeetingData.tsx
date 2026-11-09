@@ -6,7 +6,6 @@ import type {
   MeetingDetailResponse,
   MeetingArtifactsResponse,
   MeetingAftercareResponse,
-  MeetingTimelineResponse,
   MeetingProposalsResponse,
   AuthorityPolicyResponse,
 } from "../core-types";
@@ -94,7 +93,6 @@ export interface MeetingData {
   segments: Record<string, unknown>[];
   artifactRows: Record<string, unknown>[];
   actionRows: Record<string, unknown>[];
-  timelineRows: Record<string, unknown>[];
   proposalRows: Record<string, unknown>[];
   openActions: Record<string, unknown>[];
   settledActions: Record<string, unknown>[];
@@ -148,7 +146,7 @@ export const MEETING_READS_CAP_MS = 8000;
 
 /** The record's first reads, by name (useMeetingData). */
 const FIRST_READS = [
-  "detail", "sendWell", "artifacts", "aftercare", "timeline", "proposals", "authority", "ftProposals", "decisions",
+  "detail", "sendWell", "artifacts", "aftercare", "proposals", "authority", "ftProposals", "decisions",
   "prepared",
 ] as const;
 type FirstRead = (typeof FIRST_READS)[number];
@@ -183,7 +181,6 @@ export function useMeetingData(
     setPrepared(readPrepared(body));
     setCanPrepare(readCanPrepare(body));
   }, []);
-  const [timeline, setTimeline] = useState<Record<string, unknown>>({});
   const [proposals, setProposals] = useState<Record<string, unknown>>({});
   const [authority, setAuthority] = useState<Record<string, unknown>>({});
   const [ftProposals, setFtProposals] = useState<FollowThroughProposal[]>([]);
@@ -275,12 +272,6 @@ export function useMeetingData(
       .then(mine(newest(applyPrepared)))
       .catch(() => { if (live && records === recordsSeq.current) setPrepared([]); })
       .finally(endNewest("prepared"));
-    void apiFetch<MeetingTimelineResponse>(
-      `/api/meetings/${encodeURIComponent(id)}/intent-timeline`,
-    )
-      .then(mine(setTimeline))
-      .catch(() => { if (live) setTimeline({}); })
-      .finally(end("timeline"));
     void apiFetch<MeetingProposalsResponse>(`/api/meetings/${encodeURIComponent(id)}/proposals`)
       .then(mine(newest(setProposals)))
       .catch(() => { if (live && records === recordsSeq.current) setProposals({}); })
@@ -538,7 +529,6 @@ export function useMeetingData(
   const segments = asRows(detail, ["segments", "transcript"]);
   const artifactRows = asRows(artifacts, ["artifacts", "items"]);
   const actionRows = asRows(aftercare, ["action_items", "actions", "items"]);
-  const timelineRows = asRows(timeline, ["timeline", "items"]);
   const proposalRows = asRows(proposals, ["proposals"]);
   const openActions = actionRows.filter((row) => row.status !== "done");
   const settledActions = actionRows.filter((row) => row.status === "done");
@@ -642,7 +632,6 @@ export function useMeetingData(
     segments,
     artifactRows,
     actionRows,
-    timelineRows,
     proposalRows,
     openActions,
     settledActions,

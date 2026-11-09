@@ -137,9 +137,10 @@ describe("idle: the past calls", () => {
     expect(await screen.findByText("No calls yet")).toBeInTheDocument();
     expect(screen.getByText("Call me rings your number and HoldSpeak answers.")).toBeInTheDocument();
     expect(status()).not.toMatch(/\b0\b/);
+    // One verb: the plate's Call me (the empty line carries no second one).
     const verbs = screen.getAllByRole("button", { name: /Call me/ });
-    expect(verbs.length).toBe(2);
-    fireEvent.click(verbs[1]);
+    expect(verbs.length).toBe(1);
+    fireEvent.click(verbs[0]);
     await waitFor(() => expect(calls).toContain("POST /api/calls/place {}"));
     expect(await screen.findByTestId("calls-hangup")).toBeInTheDocument();
     expect(status()).toContain("On a call");
@@ -571,7 +572,8 @@ function phoneHub(extra: Record<string, Answer> = {}) {
 async function openPhone() {
   render(<Hosted><CallsCore /></Hosted>);
   await screen.findAllByTestId("calls-row");
-  fireEvent.click(within(screen.getByTestId("head")).getByRole("tab", { name: "Phone" }));
+  // The paired phone is a row of the rail (the language, 2026-11-08).
+  fireEvent.click(await screen.findByTestId("calls-rail-phone"));
   return screen.findByTestId("phone-wing");
 }
 const line = (id: string) => screen.getAllByTestId("phone-message").find((row) => row.getAttribute("data-message") === id)!;
@@ -580,7 +582,7 @@ const callLine = (id: string) => screen.getAllByTestId("phone-call").find((row) 
 describe("Phone: the wing of the Calls window", () => {
   beforeEach(() => usePhoneFocus.setState({ pending: false, replyTo: null, callId: null }));
 
-  it("the head carries Calls · Phone; Phone draws the recorded thread, the desk calls and the paired phone", async () => {
+  it("the rail carries the phone; Phone draws the recorded thread, the desk calls and the paired phone", async () => {
     phoneHub();
     await openPhone();
     expect(screen.getAllByTestId("phone-message")).toHaveLength(P.messages.length);
@@ -681,7 +683,7 @@ describe("Phone: the wing of the Calls window", () => {
     await waitFor(() => expect(status()).toContain("A reply is waiting on you"));
   });
 
-  it("no phone and no number: one object, one line, Pair a phone opens Settings ▸ Calls", async () => {
+  it("no phone and no number: one object, one line, Pair a phone opens the Phone fold in place", async () => {
     phoneHub({
       "GET /api/phone/status": { ...P.status, devices: [] },
       "GET /api/phone/messages?after_seq=0": { messages: [], last_seq: 0 },
@@ -689,11 +691,12 @@ describe("Phone: the wing of the Calls window", () => {
     });
     render(<Hosted><CallsCore /></Hosted>);
     await screen.findAllByTestId("calls-row");
-    fireEvent.click(within(screen.getByTestId("head")).getByRole("tab", { name: "Phone" }));
+    fireEvent.click(await screen.findByTestId("calls-rail-phone"));
     expect(await screen.findByText("No phone yet")).toBeInTheDocument();
     expect(screen.getByText("Pair a phone, or add a number in Calls, and the desk can reach you.")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /Pair a phone/ }));
-    expect(mocks.openSurfaceOr).toHaveBeenCalledWith("configure-settings", "/settings", "calls");
+    expect(screen.getByTestId("calls-fold-phone").hasAttribute("data-open")).toBe(true);
+    expect(mocks.openSurfaceOr).not.toHaveBeenCalled();
     expect(status()).not.toMatch(/\b0\b/);
   });
 
@@ -701,7 +704,7 @@ describe("Phone: the wing of the Calls window", () => {
     hub({ "GET /api/settings": { calls: settingsCalls }, "GET /api/calls/status": statusReady, "GET /api/calls": callsList });
     render(<Hosted><CallsCore /></Hosted>);
     await screen.findAllByTestId("calls-row");
-    fireEvent.click(within(screen.getByTestId("head")).getByRole("tab", { name: "Phone" }));
+    fireEvent.click(await screen.findByTestId("calls-rail-phone"));
     expect(await screen.findByText("No phone yet")).toBeInTheDocument();
     // phone_on is not in the calls section: no /api/phone route is read.
     expect(calls.filter((call) => call.includes("/api/phone/"))).toEqual([]);
@@ -1264,13 +1267,17 @@ describe("the Calls window on the Line", () => {
     expect(screen.getByTestId("calls-status").querySelector(".kit-dot[data-live]")).not.toBeNull();
   });
 
-  it("not running: Line not running; the empty state is No line yet with Set up the Line › to Settings ▸ Calls ▸ Line", async () => {
+  it("not running: Line not running; the empty state is No line yet with Set up the Line ›, which opens the Line fold in place", async () => {
     await bar(lineCallsNotRunning);
     await waitFor(() => expect(status()).toContain("Line not running"));
     expect(await screen.findByText("No line yet")).toBeInTheDocument();
     expect(screen.getByTestId("calls-call-me")).toBeDisabled();
+    expect(screen.getByTestId("calls-fold-line").hasAttribute("data-open")).toBe(false);
     fireEvent.click(screen.getByRole("button", { name: "Set up the Line ›" }));
-    expect(mocks.openSurfaceOr).toHaveBeenCalledWith("configure-settings", "/settings", "calls::line");
+    // The Line is a fold at the window's foot, not a second screen.
+    expect(screen.getByTestId("calls-fold-line").hasAttribute("data-open")).toBe(true);
+    expect(await screen.findByTestId("line-settings")).toBeInTheDocument();
+    expect(mocks.openSurfaceOr).not.toHaveBeenCalled();
   });
 
   it("not installed: No line: set one in Settings ▸ Calls ▸ Line", async () => {

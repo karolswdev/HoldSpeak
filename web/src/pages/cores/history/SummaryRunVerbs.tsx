@@ -1,10 +1,8 @@
-// HS-172 — the detail's NEEDS YOU section.
-// Board: caption `NEEDS YOU 3` with optional `Run summary` at trailing.
-// Each row: Decide:/Confirm: prefix (accent) + text + verbs.
-// UX-CANON A.8: when zero rows AND not OFF-with-words, the section is ABSENT.
-// HS-172: QUEUED/FAILED verbs (Skip, Retry) in the header verb slot.
+// The summary run's verbs on the meeting record (the language, 2026-11-08):
+// Run summary, Retry and Skip go to the plate (MeetingRunVerb); the route
+// they would use and the hub's refusal are one quiet line at the ledger's
+// head. What the meeting asks of him is the ledger's rows (MeetingDetail).
 import { Button } from "../../../components/signal/Signal";
-import { countLabel } from "../../../desk/surface";
 import { RefusalToken, RouteDisclosure, routeTitle } from "../../../meetings/RouteDisclosure";
 import {
   routeReady,
@@ -12,7 +10,6 @@ import {
   type RunReceipt,
   type SummaryRefusal,
 } from "../../../meetings/summaryRoute";
-import type { NeedsRow } from "./helpers";
 import { MeetingRunVerb } from "../../../meetings/runSlot";
 import { ToolGlyph } from "../../../desk/surface/kit";
 
@@ -30,9 +27,7 @@ export function showsRunSummary({
   return intelOff && hasTranscript && Boolean(onRunIntelligence) && routeReady(plannedRoute);
 }
 
-export function NeedsYouTable({
-  needsRows,
-  needsCount,
+export function SummaryRunVerbs({
   intelOff,
   intelState,
   hasTranscript,
@@ -43,8 +38,6 @@ export function NeedsYouTable({
   onRetryIntelligence,
   onSkipIntelligence,
 }: {
-  needsRows: NeedsRow[];
-  needsCount: number;
   intelOff: boolean;
   /** The raw intel state string: "disabled", "queued", "running", "error", "failed", "complete". */
   intelState?: string;
@@ -75,17 +68,11 @@ export function NeedsYouTable({
     showRunIntel || showRetry || showSkip || showRoute ||
     Boolean(refusal) || Boolean(durableRefusal);
 
-  if (needsRows.length === 0 && !hasVerbs) return null;
+  if (!hasVerbs) return null;
 
   return (
-    <div className="meetings-detail-needs" data-testid="meeting-needs-you">
+    <div className="meetings-detail-needs" data-testid="meeting-run-verbs">
       <div className="meetings-detail-needs-head">
-        {needsRows.length > 0 ? (
-          <span className="surface-caption">
-            {/* PHILO-13-03: this meeting's proposals, narrower than "needs you". */}
-            {countLabel("TO REVIEW", needsCount)}
-          </span>
-        ) : null}
         {showRoute ? (
           <RouteDisclosure route={plannedRoute} testId="detail-route" />
         ) : null}
@@ -132,16 +119,6 @@ export function NeedsYouTable({
           ) : null}
         </MeetingRunVerb>
       </div>
-      {needsRows.length > 0 ? (
-        <ul className="meetings-detail-outcomes">
-          {needsRows.map((row, i) => (
-            <li key={i} className="meetings-detail-outcome-row">
-              <span className="meetings-detail-outcome-text">{row.cells[0]}</span>
-              <span className="meetings-detail-outcome-verb">{row.verbs}</span>
-            </li>
-          ))}
-        </ul>
-      ) : null}
     </div>
   );
 }
