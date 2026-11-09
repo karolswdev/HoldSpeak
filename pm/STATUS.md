@@ -2,6 +2,11 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · #2040 One declared MCP family (`mcp/families/declared.py`) makes a tool from every descriptor with a schema; meeting_service's 17 web-only verbs are declared operations (`meeting_operations.py`), their routes produced; meeting web-only 17 → 0.
+- 2026-11-08 · #2039 The Automations queue view (`WorkbenchWindow`, 2,062 lines) and its RAW door are parked with the seven verbs only it called; −7,092 live lines; workbench web-only 20 → 13.
+- 2026-11-08 · #2038 The API census follows the web's URL builders and skips parked code (unreached routes 222 → 163, listed in `docs/internal/measure/2026-11-08-unreached-routes.md`); `docs/MCP_SIDECAR.md` is generated on demand; one defect found: the web still calls the parked Confluence discover route.
+- 2026-11-08 · #2037 Four workbench verbs nothing reaches (skills, bulk cancel) are parked; the (c) remainder table names what folds each into Programs.
+- 2026-11-08 · #2036 Needs you: every row opens its object (menu Open on rows without their own menu; phone rows open Calls); the arrival Done verb was never lost (the test read the UTC day).
 - 2026-11-08 · Handover: the evening of 2026-11-08 (the grand refactor in one paragraph, the three rulings, what landed by seam, the hub on 268149057, the open list in run order, the measure).
 - 2026-11-08 · Fix forward #2032/#2033: the morning-prep answers re-recorded with the Program run fields; the tonight-workbench atlas and the integrations metadata cite the parked queue runner and its migration test (the graph join derives its views again).
 - 2026-11-08 · (PR) The item queue is parked: `WorkbenchRunner`'s queue body (occurrences, recipe items, memory write-back), `WorkbenchService.run_item`, `run_workbench` and the queue-only `automation_runs` helpers move to `holdspeak/services/_parked/workbench_runner_queue_20261108.py`; Resourceful's idle routines run as a Program of one prompt step. What he sees: nothing new (Run now, schedules, event starts and Draft update already run as Programs); a scheduled old queue is refused in words. Queue tests parked.
