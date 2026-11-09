@@ -75,9 +75,7 @@ _ALL_TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     "kb.add_member":      ("effect_proposal",   False),
     "kb.remove_member":   ("effect_proposal",   False),
     "kb.list_members":    ("evidence_read",     False),
-    # --- dictation ---
-    "dictation.list":     ("evidence_read",     False),
-    "dictation.get":      ("evidence_read",     False),
+    # --- dictation: the declared rows (dictation_operations.py) class themselves ---
     # --- decision records ---
     "decision_record.list":                ("evidence_read",     False),
     "decision_record.get":                 ("evidence_read",     False),

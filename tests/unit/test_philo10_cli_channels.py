@@ -654,7 +654,9 @@ def test_the_sends_are_egress_owner_presses_and_blocking_io_in_the_one_table() -
                         # The Agents launch verbs (#2071) wait on tmux and the agent process.
                         "agent.launch.answer", "agent.launch.resume", "agent.helper.allow",
                         # The Calls verbs (#2085) wait on the line: a real call, its hang-up, a test call.
-                        "calls.place", "calls.hangup", "calls.test_line"}
+                        "calls.place", "calls.hangup", "calls.test_line",
+                        # 2026-11-09 (media_operations.py): Finder opens; the voice weights download.
+                        "recordings.open_folder", "tts.download"}
     # The secret saves are HTTP only, in no MCP palette, and config by their
     # declarations: the owner's press, owner only, with transport-held secrets.
     by_name = {d.name: d for d in operations.DESCRIPTORS}
@@ -663,7 +665,9 @@ def test_the_sends_are_egress_owner_presses_and_blocking_io_in_the_one_table() -
                                         "agent_hooks.install", "agent_hooks.remove", "connection.signin",
                                         "setup.lan.scan",
                                         # HTTP only: the Agents window's launch verbs.
-                                        "agent.launch.answer", "agent.launch.resume", "agent.helper.allow"}
+                                        "agent.launch.answer", "agent.launch.resume", "agent.helper.allow",
+                                        # HTTP only: his Finder and the voice weights' egress (media_operations.py).
+                                        "recordings.open_folder", "tts.download"}
     assert all(name in TOOL_AUTHORITY for name in mcp_blocking), mcp_blocking - set(TOOL_AUTHORITY)
     key = by_name["channel.save_email_key"]
     assert key.owner_press and key.owner_only and key.held == ("api_key",) and "channel.save_email_key" not in TOOL_AUTHORITY

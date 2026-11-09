@@ -21,6 +21,7 @@ from holdspeak.line import models as line_models
 from holdspeak.line import speech
 from holdspeak.line.audio import RATE
 from holdspeak.web.context import WebContext
+from holdspeak.services import tts_service
 from holdspeak.web.routes import tts as tts_routes
 
 
@@ -37,15 +38,15 @@ class FakePocket:
 
 @pytest.fixture
 def client(monkeypatch: pytest.MonkeyPatch):
-    tts_routes._reset_state()
+    tts_service._reset_state()
     FakePocket.made = []
-    monkeypatch.setattr(tts_routes, "_line_installed", lambda: True)
+    monkeypatch.setattr(tts_service, "_line_installed", lambda: True)
     monkeypatch.setattr(line_models, "ready", lambda row: True)
     monkeypatch.setattr(speech, "Pocket", FakePocket)
     app = FastAPI()
     app.include_router(tts_routes.build_tts_router(WebContext(get_state=lambda: {})))
     yield TestClient(app)
-    tts_routes._reset_state()
+    tts_service._reset_state()
 
 
 def test_status_names_the_line_engine_and_reads_the_preset(client, monkeypatch) -> None:
@@ -75,7 +76,7 @@ def test_post_streams_a_wav_of_the_engine_chunks(client) -> None:
 
 
 def test_post_without_the_line_extra_is_404(client, monkeypatch) -> None:
-    monkeypatch.setattr(tts_routes, "_line_installed", lambda: False)
+    monkeypatch.setattr(tts_service, "_line_installed", lambda: False)
     r = client.post("/api/tts", json={"text": "Hello"})
     assert r.status_code == 404 and r.json()["code"] == "tts_not_installed"
     status = client.get("/api/tts/status").json()
@@ -93,12 +94,12 @@ def test_the_import_probe_fails_when_pocket_tts_cannot_import(monkeypatch) -> No
             raise ImportError("hidden by test")
         return real(name, *args, **kwargs)
 
-    tts_routes._reset_state()
+    tts_service._reset_state()
     monkeypatch.setattr(builtins, "__import__", blocked)
     try:
-        assert tts_routes._line_installed() is False
+        assert tts_service._line_installed() is False
     finally:
-        tts_routes._reset_state()
+        tts_service._reset_state()
 
 
 def test_post_before_the_weights_is_404(client, monkeypatch) -> None:

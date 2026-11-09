@@ -466,6 +466,10 @@ def test_no_registered_write_is_silent(hub: Hub, seeded: dict[str, str]) -> None
             # ``program_changed`` itself (the Programs tests read that frame);
             # its effect needs a real Program, not this walk's minimal rows.
             continue
+        if bound.descriptor.announces_changes and name.startswith("dictation.floor."):
+            # 2026-11-09: the open mic's floor lease lives in memory; no desk
+            # object changes and no frame is sent (web/announce.QUIET_ROUTES).
+            continue
         if bound.descriptor.announces_changes:
             arguments = self_announcing[name]
 

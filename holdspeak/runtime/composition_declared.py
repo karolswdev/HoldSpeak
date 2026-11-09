@@ -55,6 +55,8 @@ def compose_declared_services(services: Any, ctx: Any, resolved_db: Any, resolve
             services.broadcast(topic, value)
 
     from holdspeak.operations import LIVE_CALLS_SERVICE, LIVE_PHONE_SERVICE, LIVE_PROGRAM_SERVICE
+    from holdspeak.operations import LIVE_RECORDINGS_SERVICE
+    from holdspeak.services.tts_service import TtsService
     from holdspeak.services.people_service import PeopleService, UnavailablePeopleStore
 
     builders: dict[str, Callable[[], Any]] = {
@@ -115,6 +117,10 @@ def compose_declared_services(services: Any, ctx: Any, resolved_db: Any, resolve
         # The Decisions verbs (decision_operations.py): the ledger and Commit.
         "decision_lifecycle_service": lambda: DecisionLifecycleService(resolved_db, observer=resolved_observer),
         "follow_through_service": lambda: FollowThroughService(resolved_db, observer=resolved_observer),
+        # The recordings descriptors (media_operations.py): the process's one RecordingsService.
+        "recordings_service": lambda: LIVE_RECORDINGS_SERVICE,
+        # The hub's voice (media_operations.py): the Line's TTS weights, read and fetched.
+        "tts_service": TtsService,
     }
     for name, build in builders.items():
         instance = getattr(services, name, None)

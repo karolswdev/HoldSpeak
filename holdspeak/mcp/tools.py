@@ -443,21 +443,6 @@ TOOLS.extend([
         {"step_id": {"type": "string", "description": "Nudge step identifier."}},
         ["step_id"],
     ),
-    _mcp_tool(
-        "dictation.list",
-        "Read the retained dictation journal, optionally paged and filtered by source.",
-        {
-            "limit": {"type": "integer", "minimum": 1, "maximum": 500, "description": "Maximum entries to return."},
-            "cursor": {"type": "integer", "description": "Return entries older than this journal entry id."},
-            "source": {"type": "string", "enum": ["dictation", "dry_run", "browser", "hotkey"], "description": "Optional dictation source filter."},
-        },
-    ),
-    _mcp_tool(
-        "dictation.get",
-        "Get one retained dictation journal entry by its numeric id.",
-        {"entry_id": {"type": "integer", "description": "Numeric dictation journal entry id."}},
-        ["entry_id"],
-    ),
     _mcp_tool("desk.snapshot", "Read one coherent snapshot of the durable HoldSpeak desk.", {}),
     _mcp_tool("desk.needs_you", "What needs me, by the one rule every face uses: Door cards, Room items, decisions to review, engine blockers, failed summaries. One count; waiting rows and muted projects are not counted. Each row has direction, person_id, person_name. Filters combine; they narrow the rows, never the count. A 1:1 commitment's text is withheld.", {
         "direction": {"type": "string", "enum": ["mine", "theirs", "decide", "setup"], "description": "theirs: owed to me"},
@@ -979,11 +964,29 @@ def runtime_registry(primitives: Any = None, meetings: Any = None) -> operations
              "decision_lifecycle_service": lambda: DecisionLifecycleService(db, observer=obs),
              "follow_through_service": lambda: FollowThroughService(db, observer=obs),
              # The Settings credential verbs bind here; they have no tool (HTTP only).
-             "credential_service": lambda: _credential_service(db, obs)}
+             "credential_service": lambda: _credential_service(db, obs),
+             # The dictation verbs (dictation_operations.py): the hub's journal and correction store.
+             "dictation_service": lambda: DictationService(db, observer=obs),
+             # The device sync (device_operations.py).
+             "sync_service": lambda: _sync_service(db, obs)}
     return operations.for_runtime(program_service=lambda: operations.LIVE_PROGRAM_SERVICE,
                                   phone_service=lambda: operations.LIVE_PHONE_SERVICE,
-                                  calls_service=lambda: operations.LIVE_CALLS_SERVICE, **{
+                                  calls_service=lambda: operations.LIVE_CALLS_SERVICE,
+                                  recordings_service=lambda: operations.LIVE_RECORDINGS_SERVICE,
+                                  tts_service=_tts_service, **{
         name: (lambda name=name, build=build: runtime_service(name, build)) for name, build in plain.items()})
+
+
+def _tts_service() -> Any:
+    from holdspeak.services.tts_service import TtsService
+
+    return TtsService()
+
+
+def _sync_service(db: Any, obs: Any) -> Any:
+    from holdspeak.services.sync_service import SyncService
+
+    return SyncService(db, observer=obs)
 
 
 def _credential_service(db: Any, obs: Any) -> Any:
@@ -1097,7 +1100,6 @@ def _dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal)
     primitives = runtime_service("primitive_service", lambda: PrimitiveService(db, observer=obs))
     workbenches = runtime_service("workbench_service", lambda: WorkbenchService(db, observer=obs))
     meetings = runtime_service("meeting_service", lambda: MeetingService(db, observer=obs))
-    dictation = runtime_service("dictation_service", lambda: DictationService(db, observer=obs))
     follow_through = runtime_service("follow_through_service", lambda: FollowThroughService(db, observer=obs))
     recipes = RecipeService(db, observer=obs)
     events = EventQueryService(db)
@@ -1226,15 +1228,6 @@ def _dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal)
         return {"parked": True, "id": meeting_id}
     if name == "meeting.export":
         return meetings.export_meeting(principal, str(args.get("meeting_id") or ""), str(args.get("format") or ""))
-    if name == "dictation.list":
-        allowed = ("limit", "cursor", "source")
-        return dictation.list_journal(principal, **{key: args[key] for key in allowed if key in args})
-    if name == "dictation.get":
-        try:
-            entry_id = int(args.get("entry_id"))
-        except (TypeError, ValueError) as exc:
-            raise ToolError("entry_id must be an integer") from exc
-        return dictation.get_entry(principal, entry_id)
     if name == "desk.snapshot":
         return desk.snapshot(principal)
     if name == "desk.needs_you":
