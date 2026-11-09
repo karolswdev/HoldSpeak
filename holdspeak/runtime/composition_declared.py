@@ -97,6 +97,8 @@ def compose_declared_services(services: Any, ctx: Any, resolved_db: Any, resolve
             services.broadcast(topic, value)
 
     from holdspeak.operations import LIVE_CALLS_SERVICE, LIVE_PHONE_SERVICE, LIVE_PROGRAM_SERVICE
+    from holdspeak.operations import LIVE_RECORDINGS_SERVICE
+    from holdspeak.services.tts_service import TtsService
     from holdspeak.operations import LIVE_KERNEL_SERVICE
     from holdspeak.services.gate_service import GateService
     from holdspeak.services.people_service import PeopleService, UnavailablePeopleStore
@@ -159,6 +161,10 @@ def compose_declared_services(services: Any, ctx: Any, resolved_db: Any, resolve
         # The Decisions verbs (decision_operations.py): the ledger and Commit.
         "decision_lifecycle_service": lambda: DecisionLifecycleService(resolved_db, observer=resolved_observer),
         "follow_through_service": lambda: FollowThroughService(resolved_db, observer=resolved_observer),
+        # The recordings descriptors (media_operations.py): the process's one RecordingsService.
+        "recordings_service": lambda: LIVE_RECORDINGS_SERVICE,
+        # The hub's voice (media_operations.py): the Line's TTS weights, read and fetched.
+        "tts_service": TtsService,
         # 2026-11-09 (ops/projects): the declared project, activity, walk and
         # repository tables (project_operations.py, activity_operations.py,
         # walk_operations.py, repository_operations.py, decision_operations.py).

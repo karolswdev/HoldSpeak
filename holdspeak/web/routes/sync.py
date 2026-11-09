@@ -1,15 +1,19 @@
-"""Sync transport adapters; merge and serialization live in :mod:`holdspeak.services.sync_service`."""
+"""Sync transport adapters; merge and serialization live in :mod:`holdspeak.services.sync_service`.
+
+The three routes are produced from ``holdspeak/device_operations.py`` (2026-11-09, one contract).
+"""
 from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter
 from fastapi.responses import JSONResponse
+from starlette.concurrency import run_in_threadpool
 
-from ...principals import UNAUTHENTICATED
+from ... import operations
 from ...db import get_observer
 from ...services.errors import ConflictError, NotFound, ServiceError, ValidationError
-from ...services.sync_service import (
+from ...services.sync_service import (  # noqa: F401 (re-exported for the sync tests)
     SYNC_KINDS,
     _MERGEABLE,
     _artifact_value,
@@ -18,6 +22,8 @@ from ...services.sync_service import (
     meeting_state_from_sync_value,
 )
 from ..context import WebContext
+from ..operation_routes import operation_router
+from ._mount import mount_router
 
 
 def _error(exc: ServiceError) -> JSONResponse:
@@ -29,37 +35,26 @@ def _error(exc: ServiceError) -> JSONResponse:
     return JSONResponse(payload, status_code=422 if isinstance(exc, ValidationError) else 400)
 
 
+async def _answer(fn: Any, *, status: int = 200) -> Any:
+    try:
+        return JSONResponse(await run_in_threadpool(fn), status_code=status)
+    except ServiceError as exc:
+        return _error(exc)
+
+
 def build_sync_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
-    service = ctx.sync_service
-    if service is None:  # compatibility composition for isolated route fixtures
+
+    def fallback() -> Any:  # compatibility composition for isolated route fixtures
         from ... import db as hsdb
         from ...services.sync_service import SyncService
-        service = SyncService(hsdb.get_database(), hub_model_name=lambda: _hub_model_name(None), observer=get_observer())
 
-    @router.get("/api/artifacts/{artifact_id}")
-    def api_get_artifact(artifact_id: str, request: Request) -> Any:
-        try:
-            return JSONResponse(service.get_artifact(getattr(request.state, "principal", UNAUTHENTICATED), artifact_id))
-        except ServiceError as exc:
-            return _error(exc)
+        return SyncService(hsdb.get_database(), hub_model_name=lambda: _hub_model_name(None), observer=get_observer())
 
-    @router.get("/api/sync/pull")
-    def api_sync_pull(request: Request, limit: int = 50) -> Any:
-        try:
-            return JSONResponse(service.pull(getattr(request.state, "principal", UNAUTHENTICATED), limit=limit))
-        except ServiceError as exc:
-            return _error(exc)
+    def registry() -> operations.OperationRegistry:
+        return operations.for_context(ctx, sync_service=fallback)
 
-    @router.post("/api/sync/push")
-    async def api_sync_push(request: Request) -> Any:
-        try:
-            body = await request.json()
-        except Exception:
-            return JSONResponse({"success": False, "error": "invalid JSON"}, status_code=400)
-        try:
-            return JSONResponse(service.push(getattr(request.state, "principal", UNAUTHENTICATED), body))
-        except ServiceError as exc:
-            return _error(exc)
-
+    by_name = {d.name: d for d in operations.DEVICE_OPERATIONS}
+    mount_router(router, operation_router([by_name[name] for name in ("sync.artifact.get", "sync.pull", "sync.push")],
+                                          registry, _answer, module=__name__))
     return router

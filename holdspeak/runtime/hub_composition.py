@@ -474,6 +474,11 @@ def compose_hub(host: Any, *, on_launch_hold: Callable[[str], Any]) -> HubCompos
     # service does not need Delta back (the review read is the
     # repository's).
     _project_delta_service.attach_project_service(_project_service)
+    # 2026-11-09: the declared dictation verbs read the correction store, the
+    # floor, the config hook and the bus from this context at each call.
+    from holdspeak.services.dictation_service import bind_dictation_runtime
+
+    bind_dictation_runtime(web_ctx.dictation_service, web_ctx)
     # Owner ruling 2026-10-05: the onboarding backends compose the
     # settings and connections services above (detect + "Use it").
     from holdspeak.services.onboarding_service import OnboardingService

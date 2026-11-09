@@ -96,8 +96,9 @@ def _op(name: str, service: str, method: str, http: tuple[str, str], handler: st
         completion="synchronous; the answer is the outcome",
         exposure=(f"http:{http[0]} {http[1]}",) + ((f"mcp:{tool_name or name}",) if schema is not None else ()),
         service=service, method=method, owner_only=owner_only, owner_press=owner_press,
-        # Nothing new on the bus: the gate's own Needs you edges stay as they were.
-        announces_changes=True, call=guarded, http=http, http_status=status, handler=handler,
+        # Nothing new on the bus: the gate sends no desk frame; its Needs you edges
+        # read the proposals on open (fix forward #2122, test_every_write_announces).
+        announces_changes=False, call=guarded, http=http, http_status=status, handler=handler,
         tool_schema=schema, authority="authority" if write or owner_only else "work",
         thread=("effect_proposal" if write else "evidence_read") if schema is not None else None,
     )
