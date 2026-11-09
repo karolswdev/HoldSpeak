@@ -2113,6 +2113,104 @@ class ThreadService:
     def import_threads(self, payload: list[dict[str, Any]]) -> dict[str, str]:
         return self._threads.import_threads(payload)
 
+    # ── The desk's other thread verbs (2026-11-09, ``thread_operations.py``):
+    # the route bodies moved here, so HTTP and MCP reach one implementation.
+
+    def edit(
+        self,
+        thread_id: str,
+        *,
+        title: Any = None,
+        profile_override: Any = None,
+        recipe_id: Any = None,
+        call_mode: Any = None,
+        toggle_guardrail: Any = None,
+        toggle_guardrail_enable: Any = True,
+    ) -> dict[str, Any]:
+        """``patch``, plus a guardrail toggle on the thread's mode recipe
+        (HS-153-03) and the call mode as 0 or 1 (HS-154-03)."""
+        mode = None
+        if call_mode is not None:
+            try:
+                mode = int(call_mode)
+            except (ValueError, TypeError):
+                raise ServiceError("invalid_call_mode", "invalid_call_mode",
+                                   context={"status": 400, "detail": "call_mode must be an integer"}) from None
+        if toggle_guardrail:
+            from .thread_modes import toggle_guardrail_on_mode
+
+            thread = self._threads.get(thread_id)
+            if thread and thread.recipe_id:
+                toggle_guardrail_on_mode(self._db, thread.recipe_id, str(toggle_guardrail),
+                                         enable=bool(toggle_guardrail_enable))
+        return self.patch(thread_id, title=title, profile_override=profile_override, recipe_id=recipe_id,
+                          call_mode=mode)
+
+    def delete(self, thread_id: str) -> dict[str, Any]:
+        """Soft-delete a thread; ``thread_not_found`` when there is none."""
+        if not self.soft_delete(thread_id):
+            raise ServiceError("thread_not_found", "thread_not_found", context={"status": 404})
+        return {"deleted": True}
+
+    def decide_tool(self, thread_id: str, call_id: Any, decision: Any, *, answer: Any = None,
+                    always: Any = False) -> dict[str, Any]:
+        """HS-152-02: resolve a held tool call (approve or deny, with an
+        optional answer). A decision lands once (HS-152-06). Allow-always
+        writes an allow policy row first (HS-152-04)."""
+        call_id, decision, always = str(call_id or ""), str(decision or ""), bool(always)
+        if not call_id or decision not in ("approve", "deny"):
+            raise ServiceError("decision_invalid", "call_id and decision (approve|deny) are required",
+                               context={"status": 400})
+        executor = getattr(self, "_tool_executor", None)
+        if executor is None:
+            raise ServiceError("tool_executor_unavailable", "tool_executor_unavailable",
+                               context={"status": 503, "code": "tool_executor_unavailable"})
+        handle = executor._handles.get(call_id)
+        if handle is None or handle.thread_id != thread_id:
+            raise ServiceError("tool_call_not_found", "tool_call_not_found",
+                               context={"status": 404, "code": "tool_call_not_found"})
+        if handle.state != "awaiting_decision":
+            raise ServiceError("tool_call_not_pending", "tool_call_not_pending",
+                               context={"status": 409, "code": "tool_call_not_pending", "state": handle.state})
+        if always and decision == "approve":
+            self._threads.set_tool_policy(thread_id, handle.name, "allow")
+        try:
+            executor.decide(handle, decision, answer=answer)
+        except ValueError as exc:
+            raise ServiceError("decision_invalid", str(exc), context={"status": 400}) from exc
+        return {"call_id": call_id, "decision": decision, "always": always, "state": handle.state}
+
+    def add_annotation(self, thread_id: str, message_id: Any, quote: Any, comment: Any = "") -> dict[str, Any]:
+        """HS-153-04: an owner annotation on the thread's draft message (made
+        on the current leaf when there is none). It is sensitive when the
+        annotated text is."""
+        message_id, quote, comment = str(message_id or ""), str(quote or ""), str(comment or "")
+        if not message_id or not quote:
+            raise ServiceError("annotation_invalid", "message_id and quote are required", context={"status": 400})
+        source = self._threads.get_message(message_id)
+        if source is None or source.thread_id != thread_id:
+            raise ServiceError("message_not_found", "message_not_found", context={"status": 404})
+        sensitive = any(p.sensitive for p in self._threads.get_parts(message_id) if p.kind == "text")
+        draft = self._threads.draft_message_for(thread_id)
+        if draft is None:
+            path = self._threads.list_path(thread_id)
+            draft = self._threads.append_message(thread_id, role="user", parent_id=path[-1].id if path else None)
+        meta = {"source": "owner", "quote": quote, "comment": comment, "anchor_message_id": message_id}
+        part = self._threads.append_part(
+            draft.id, kind="annotation", text=f"The owner annotated: «{quote}» — {comment}",
+            meta_json=json.dumps(meta, separators=(",", ":"), sort_keys=True), sensitive=sensitive, draft=True,
+        )
+        return {"id": part.id, "kind": part.kind, "text": part.text, "ordinal": part.ordinal,
+                "sensitive": part.sensitive, "draft": part.draft, "meta_json": meta}
+
+    def delete_annotation(self, thread_id: str, part_id: Any) -> dict[str, Any]:
+        """Delete one draft annotation part of the thread."""
+        part_id = str(part_id or "")
+        if not any(p.id == part_id for p in self._threads.draft_parts(thread_id)) \
+                or not self._threads.delete_part(part_id):
+            raise ServiceError("annotation_not_found", "annotation_not_found", context={"status": 404})
+        return {"deleted": True}
+
     # ── profile_override → next-run override (HS-152-03) ─────────────
 
     def _override_entries(self, profile_override: str) -> list[dict[str, Any]]:

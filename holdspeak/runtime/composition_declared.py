@@ -25,6 +25,17 @@ def _bare_credentials(db: Any, observer: Any) -> Any:
     return CredentialService(db, observer=observer)
 
 
+def _hub_threads(services: Any) -> Any:
+    """The threads' rows bind to a factory: one ThreadService per verb over the hub's bus (``thread_operations.py``)."""
+
+    def make() -> Any:
+        from holdspeak.services.thread_service import hub_thread_service
+
+        return hub_thread_service(lambda topic, data: services.broadcast(topic, data) if services.broadcast else None)
+
+    return make
+
+
 def compose_declared_services(services: Any, ctx: Any, resolved_db: Any, resolved_observer: Any) -> None:
     """Put every declared table's service on the root and the context."""
     from holdspeak.services.setup_service import SetupService
@@ -115,6 +126,8 @@ def compose_declared_services(services: Any, ctx: Any, resolved_db: Any, resolve
         # The Decisions verbs (decision_operations.py): the ledger and Commit.
         "decision_lifecycle_service": lambda: DecisionLifecycleService(resolved_db, observer=resolved_observer),
         "follow_through_service": lambda: FollowThroughService(resolved_db, observer=resolved_observer),
+        # The threads' verbs (thread_operations.py): the hub's ThreadService factory.
+        "hub_thread_service": lambda: _hub_threads(services),
     }
     for name, build in builders.items():
         instance = getattr(services, name, None)

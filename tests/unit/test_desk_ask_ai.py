@@ -35,6 +35,18 @@ ROUTES = {
 # ── the hub rig ─────────────────────────────────────────────────────────────
 
 
+def _owner_edge(app: FastAPI) -> FastAPI:
+    """The hub's edge names the owner (a produced owner-only route with no principal is refused, #2057)."""
+    from holdspeak.principals import Principal as _P, PrincipalKind as _K
+
+    @app.middleware("http")
+    async def owner(request, call_next):  # noqa: ANN001
+        request.state.principal = _P(_K.OWNER, "owner-session")
+        return await call_next(request)
+
+    return app
+
+
 @pytest.fixture
 def hub(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     """Isolated HOME, the hub's one database, the real kernel broker and the
@@ -56,7 +68,7 @@ def hub(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     reset_database()
     db = get_database()
     broker = _service()
-    app = FastAPI()
+    app = _owner_edge(FastAPI())
     app.include_router(build_threads_router(WebContext(get_state=lambda: {})))
     registered: list[str] = []
     try:
