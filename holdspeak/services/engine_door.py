@@ -149,12 +149,12 @@ def egress_of(broker: Any, engine: Engine) -> str:
 DEFAULT_CONTEXT_TOKENS = 16384
 
 
-def room(broker: Any, engine: Engine, payload: Any, *, reserved_output_tokens: int) -> int:
+def room(broker: Any, engine: Engine, payload: Any, *, reserved_output_tokens: int, whole: bool = False) -> int:
     """Tokens left on the engine after ``payload`` and the reserved answer
     (one token for each 3.5 characters of the JSON payload, rounded up, plus
-    16). The engine's context is its revision's ceiling, as admission read
-    it (16384 when the revision names none). Negative means the payload does
-    not fit."""
+    16). A job's budget is the revision's ceiling, at most 16384; ``whole``
+    (the chat turn) reads the whole ceiling, as its admission did. Negative
+    means the payload does not fit."""
     import json
 
     try:
@@ -162,7 +162,7 @@ def room(broker: Any, engine: Engine, payload: Any, *, reserved_output_tokens: i
         ceiling = int(getattr(revision, "context_ceiling", 0) or 0)
     except Exception:
         ceiling = 0
-    ceiling = ceiling or DEFAULT_CONTEXT_TOKENS
+    ceiling = (ceiling if whole else min(ceiling, DEFAULT_CONTEXT_TOKENS)) if ceiling else DEFAULT_CONTEXT_TOKENS
     text = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True, default=str)
     return ceiling - (-(-len(text) * 2 // 7) + 16 + int(reserved_output_tokens))
 
@@ -304,6 +304,12 @@ def route(broker: Any, sent: Any) -> Optional[dict[str, Any]]:
         if best is None or key > best[0]:
             best = (key, {**where, "receipt": operation_id, "fallback": answered and outcome != "succeeded"})
     return best[1] if best else None
+
+
+def stop(broker: Any, run_id: str) -> str:
+    """The owner's Stop on a running job: the runner's cancel signal. A
+    stopped job is his decision: it never waits in Needs you (``_stopped``)."""
+    return broker.inference_runner.cancel(run_id)
 
 
 def reason(exc: EngineDoorError) -> str:
@@ -489,14 +495,22 @@ def _load_retry_callers() -> None:
             continue
 
 
+def _stopped(row: Any) -> bool:
+    """The owner's Stop (``stop``): a cancel signal on the job before its
+    deadline. His decision, never a failure. A cancel at the deadline is the
+    runner's watchdog: the job ran out of time, and that is a failure."""
+    cancelled_at = row["cancelled_at"]
+    return cancelled_at is not None and float(cancelled_at) - float(row["created_at"]) < DEFAULT_DEADLINE_SECONDS - 1
+
+
 def _reason(state: str, send_phase: str) -> str:
     """One line in the owner's words; never a path, a host or a trace."""
     if state == "refused":
         return "it was not ready"
+    if state == "cancelled":
+        return "it ran out of time"
     if state == "indeterminate":
         return "no answer came back"
-    if state == "cancelled":
-        return "it was stopped"
     if send_phase == "pre_send":
         return "it could not be reached"
     return "it gave no answer"
@@ -517,7 +531,8 @@ def _engine_name(conn: Any, target_ref: str) -> str:
 
 
 def failure_items(db: Any) -> list[dict[str, Any]]:
-    """Every door job whose latest receipt for its (job, kind, key) failed.
+    """Every door job whose latest receipt for its (job, kind, key) failed
+    on its own (a Stop is not a failure: ``_stopped``).
 
     ``{key, job, kind, retry_key, engine, words, reason, since, object_kind,
     open_ref, can_retry}``, newest first. A read of the kernel's receipts.
@@ -531,7 +546,9 @@ def failure_items(db: Any) -> list[dict[str, Any]]:
     latest: dict[tuple[str, str, str], dict[str, Any]] = {}
     with db._connection() as conn:
         rows = conn.execute(
-            """SELECT o.native_id, o.target_ref, o.created_at, r.state, a.material_json
+            """SELECT o.native_id, o.target_ref, o.created_at, r.state, a.material_json,
+                      (SELECT MIN(c.created_at) FROM kernel_operations c
+                        WHERE c.name = 'inference.cancel' AND c.parent_operation_id = o.operation_id) AS cancelled_at
                  FROM kernel_operations o
                  JOIN kernel_receipts r ON r.operation_id = o.operation_id
                  LEFT JOIN kernel_inference_receipt_attestations a ON a.operation_id = o.operation_id
@@ -543,7 +560,7 @@ def failure_items(db: Any) -> list[dict[str, Any]]:
             if parsed is None:
                 continue
             latest[parsed] = {**dict(row), "engine": ""}
-        failed = {k: v for k, v in latest.items() if str(v["state"]) != "succeeded"}
+        failed = {k: v for k, v in latest.items() if str(v["state"]) != "succeeded" and not _stopped(v)}
         for value in failed.values():
             value["engine"] = _engine_name(conn, str(value["target_ref"] or ""))
     out: list[dict[str, Any]] = []

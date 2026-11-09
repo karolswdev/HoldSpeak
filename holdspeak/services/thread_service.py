@@ -1398,7 +1398,7 @@ class ThreadService:
                 # turn with a source or a tool result does not fit.  Such a
                 # pass goes without tools; the results go in as data.
                 if (not interview and not answer_only and "tools" in pass_payload
-                        and engine_door.room(self._broker, engine, pass_payload, reserved_output_tokens=512) < 0):
+                        and engine_door.room(self._broker, engine, pass_payload, reserved_output_tokens=512, whole=True) < 0):
                     answer_only = True
                     pass_payload.pop("tools", None)
                     pass_payload["messages"] = _answer_only_messages(list(pass_payload["messages"]))
@@ -1408,12 +1408,16 @@ class ThreadService:
 
                 # -- Stream this pass: one door job on the turn's engine --
                 failed: Any = None
+                run_id = (engine_door.door_id(self._capability_id, retry) if retry
+                          else f"chat_turn_{uuid.uuid4().hex}")
+                live = thread_turns.get(assistant_msg_id)
+                if live is not None:  # his Stop reaches this pass through the runner
+                    live.stop = lambda run_id=run_id: engine_door.stop(self._broker, run_id)
                 try:
                     answer = engine_door.run_stream(
                         self._broker, principal, self._capability_id, pass_payload,
                         engine=engine, on_delta=on_delta, adapter=adapter, prepare=prepare,
-                        invocation_id=engine_door.door_id(self._capability_id, retry) if retry
-                        else f"chat_turn_{uuid.uuid4().hex}",
+                        invocation_id=run_id,
                         **({"parent_context": outer_run.context, "planned_node": "interview-model"} if outer_run else {}),
                     )
                     sent.extend(answer.sent)
@@ -1421,6 +1425,9 @@ class ThreadService:
                     sent.extend(exc.sent)
                     failed = exc
                     tool_calls_this_pass.clear()
+                finally:
+                    if live is not None:
+                        live.stop = None
                 if answer_only:
                     # No tool schemas went on this pass: a tool call now is
                     # not an answer.
@@ -2459,7 +2466,7 @@ class ThreadService:
             return EMPTY_MEMORY
         try:
             return fit_memory(reflect, lambda memory: engine_door.room(
-                self._broker, engine, build(memory), reserved_output_tokens=512) >= 0)
+                self._broker, engine, build(memory), reserved_output_tokens=512, whole=True) >= 0)
         except Exception:
             return EMPTY_MEMORY
 

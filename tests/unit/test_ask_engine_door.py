@@ -108,3 +108,41 @@ def test_a_stop_reaches_the_door_run(broker: Any, monkeypatch: pytest.MonkeyPatc
     monkeypatch.setattr(broker.inference_runner, "cancel", lambda iid: stopped.append(iid) or "cancel_requested")
     AskService(broker.database, broker=broker).cancel(OWNER, "ask_" + "2" * 32)
     assert stopped == ["door_x_y_z_ask_" + "2" * 32]
+
+
+def test_a_stopped_answer_leaves_no_needs_you_row(broker: Any) -> None:
+    """His Stop is a decision: the runner's receipt says cancelled and
+    nothing waits in Needs you (only an answer that failed on its own does)."""
+    import threading
+
+    started, release = threading.Event(), threading.Event()
+
+    class _Slow:
+        def run_prompt(self, **_kwargs: Any) -> str:
+            started.set()
+            release.wait(5)
+            return "Too late."
+
+        def cancel(self) -> str:
+            release.set()
+            return "cancelled"
+
+    broker.inference_runner._engine_factory = lambda *_a, **_k: _Slow()
+    service = AskService(broker.database, broker=broker)
+    invocation_id = "ask_" + "3" * 32
+    outcome: dict[str, Any] = {}
+
+    def ask() -> None:
+        try:
+            outcome["result"] = asyncio.run(service.ask(OWNER, QUESTION, invocation_id=invocation_id))
+        except ServiceError as exc:
+            outcome["error"] = exc
+
+    runner = threading.Thread(target=ask)
+    runner.start()
+    assert started.wait(5)
+    service.cancel(OWNER, invocation_id)
+    release.set()
+    runner.join(10)
+    assert "error" in outcome  # the answer was stopped, not given
+    assert engine_door.failure_items(broker.database) == []

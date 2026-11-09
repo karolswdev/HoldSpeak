@@ -116,3 +116,69 @@ def test_a_turn_with_no_engine_assigned_is_refused_before_it_runs(broker: Any, m
         asyncio.run(svc.start_turn(OWNER, thread_id, "What do I owe Mira?"))
     assert refused.value.context["reason"] == "no_engine"
     assert _Engine.calls == 0
+
+
+# ── A Stop is his decision, not a failure ───────────────────────────────
+
+
+def test_a_stopped_turn_leaves_no_needs_you_row(broker: Any) -> None:
+    import threading
+
+    started, release = threading.Event(), threading.Event()
+
+    class _Slow:
+        active_provider, active_model = "fixture", "chat-model"
+
+        def run_prompt_stream(self, **_kwargs: Any):
+            yield Delta(kind="text", text="Feedback on ")
+            started.set()
+            release.wait(5)
+            yield Delta(kind="text", text="her design doc.")
+            yield Delta(kind="done")
+
+    broker.inference_runner._engine_factory = lambda *_a, **_k: _Slow()
+    svc = ThreadService(broker.database, broadcast=lambda *_: None, broker=broker)
+    thread_id = svc.create(title="Mira")["id"]
+    ids = asyncio.run(svc.start_turn(OWNER, thread_id, "What do I owe Mira?"))
+    assert started.wait(5)
+    assert svc.abort(thread_id)["aborted"] is True
+    release.set()
+    stopped = _settled(broker.database, ids["assistant_message_id"])
+    assert stopped.aborted_at is not None
+    with broker.database._connection() as conn:
+        (signals,) = conn.execute("SELECT COUNT(*) FROM kernel_operations WHERE name='inference.cancel'").fetchone()
+    assert signals == 1  # his Stop reached the runner as its cancel signal
+    assert engine_door.failure_items(broker.database) == []
+
+
+def test_a_stop_then_an_engine_off_turn_is_exactly_one_row(broker: Any) -> None:
+    """Two turns in two threads: the first is stopped, the second fails on
+    its own (engine off). Only the second waits in Needs you, with Retry."""
+    import threading
+
+    started, release = threading.Event(), threading.Event()
+
+    class _SlowThenOff:
+        active_provider, active_model = "fixture", "chat-model"
+
+        def run_prompt_stream(self, **_kwargs: Any):
+            if started.is_set():
+                raise RuntimeError("connection refused")
+            yield Delta(kind="text", text="Feedback on ")
+            started.set()
+            release.wait(5)
+            yield Delta(kind="done")
+
+    broker.inference_runner._engine_factory = lambda *_a, **_k: _SlowThenOff()
+    svc = ThreadService(broker.database, broadcast=lambda *_: None, broker=broker)
+    stopped_thread = svc.create(title="Mira")["id"]
+    first = asyncio.run(svc.start_turn(OWNER, stopped_thread, "What do I owe Mira?"))
+    assert started.wait(5)
+    svc.abort(stopped_thread)
+    release.set()
+    _settled(broker.database, first["assistant_message_id"])
+    failed_thread = svc.create(title="Tomás")["id"]
+    second = asyncio.run(svc.start_turn(OWNER, failed_thread, "And Tomás?"))
+    _settled(broker.database, second["assistant_message_id"])
+    (item,) = engine_door.failure_items(broker.database)
+    assert (item["retry_key"], item["can_retry"]) == (failed_thread, True)
