@@ -32,7 +32,7 @@ def _desk(tmp_path, monkeypatch, key: str, *, engine: bool = True) -> tuple[Rig,
     the face sends no budget, the hub reads the Program's."""
     rig = Rig(tmp_path / key)
     recorded = wire_engine(rig, monkeypatch) if engine else None
-    pid = create(rig, CASES[key], file_bytes=case(key)["file_bytes"])
+    pid = create(rig, CASES[key], file_bytes=case(key)["file_bytes"], plan_goal=False)
     return rig, recorded, pid, _client(rig, monkeypatch)
 
 
@@ -73,7 +73,7 @@ def test_plan_draft_over_rest_apply_and_split(tmp_path, monkeypatch) -> None:
 
     # No engine: the refusal by name.
     rig_n = Rig(tmp_path / "none")
-    pid_n = create(rig_n, CASES["j1"])
+    pid_n = create(rig_n, CASES["j1"], plan_goal=False)
     client_n = _client(rig_n, monkeypatch)
     none = client_n.post(f"/api/programs/{pid_n}/plan/draft", json={})
     assert none.status_code == 409 and none.json()["code"] == "no_engine"
@@ -89,7 +89,7 @@ def test_program_plan_draft_is_an_mcp_tool_of_work_authority(tmp_path, monkeypat
     assert schema["required"] == ["program_id"]
     rig = Rig(tmp_path)
     engine = wire_engine(rig, monkeypatch)
-    pid = create(rig, CASES["j1"], file_bytes=case("j1")["file_bytes"])
+    pid = create(rig, CASES["j1"], file_bytes=case("j1")["file_bytes"], plan_goal=False)
     from holdspeak.services import program_service as program_module
 
     monkeypatch.setattr(program_module, "default_program_service", lambda db=None: rig.service)

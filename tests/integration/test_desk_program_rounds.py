@@ -42,7 +42,7 @@ def _round(program: dict[str, Any], name: str) -> dict[str, Any]:
 def test_the_rounds_over_rest_in_the_faces_own_walk(tmp_path, monkeypatch) -> None:
     rig = Rig(tmp_path)
     engine = wire_engine(rig, monkeypatch)
-    pid = create(rig, CASES["j1"], file_bytes=case("j1")["file_bytes"])
+    pid = create(rig, CASES["j1"], file_bytes=case("j1")["file_bytes"], plan_goal=False)
     client = _client(rig, monkeypatch)
     out: dict[str, Any] = {"program": _ok(client.get(f"/api/programs/{pid}")),
                            "engine": _ok(client.get(f"/api/programs/{pid}/shape"))}

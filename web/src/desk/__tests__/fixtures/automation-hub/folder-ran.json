@@ -1,14 +1,14 @@
 {
  "_source": "The hub's own answers, captured by tests/integration/test_desk_engines_tools.py (a real hub, isolated database, the fake claude CLI listing the folder it works in). HOLDSPEAK_WIRE_WRITE=1 rewrites this file; never hand-edit it.",
- "workbench_id": "workbench_842beb13a672",
+ "workbench_id": "workbench_b7442bd114ce",
  "gets": {
-  "/api/workbenches/workbench_842beb13a672": {
+  "/api/workbenches/workbench_b7442bd114ce": {
    "workbench": {
-    "id": "workbench_842beb13a672",
+    "id": "workbench_b7442bd114ce",
     "name": "Review summary",
     "instruction": "Summarize the PR and the risky files.",
     "sources": [
-     "repository:src_b15411263e3df8ca"
+     "repository:src_5822c2a43e40aace"
     ],
     "output_target": "inbox",
     "spend_limit_usd": null,
@@ -22,13 +22,13 @@
     "schedule_enabled": false,
     "schedule_revision": 1,
     "item_order": [],
-    "created_at": "2026-11-08T22:38:33Z",
-    "last_modified": "2026-11-08T22:38:33Z",
+    "created_at": "2026-11-09T00:25:17Z",
+    "last_modified": "2026-11-09T00:25:17Z",
     "deleted": false,
     "items": [
      {
-      "id": "wbocc_3cdccf67ab4a4d80",
-      "workbench_id": "workbench_842beb13a672",
+      "id": "wbocc_48b24b83a79449bf",
+      "workbench_id": "workbench_b7442bd114ce",
       "title": "Review summary, Sun 8 Nov 2026",
       "body": "Summarize the PR and the risky files.",
       "priority": 3,
@@ -38,27 +38,27 @@
        "occurrence": true
       },
       "result": "## ledger\n\n- README.md\n- ledger.py\n- risky_migration.sql",
-      "result_artifact_id": "artifact_4153d6d2596b",
+      "result_artifact_id": "artifact_9f080fbd79f3",
       "result_egress": {
        "boundary": "cloud",
        "model": "agent-claude"
       },
       "mint_attempted": true,
       "tokens_consumed": 16,
-      "created_at": "2026-11-08T22:38:33Z",
-      "last_modified": "2026-11-08T22:38:34.095417+00:00",
-      "claimed_at": "2026-11-08T22:38:33.830311+00:00",
-      "completed_at": "2026-11-08T22:38:34.095417+00:00",
+      "created_at": "2026-11-09T00:25:17Z",
+      "last_modified": "2026-11-09T00:25:17.586665+00:00",
+      "claimed_at": "2026-11-09T00:25:17.418764+00:00",
+      "completed_at": "2026-11-09T00:25:17.586665+00:00",
       "parked": false
      }
     ],
     "item_count": 1,
     "pending_count": 0,
     "last_run": {
-     "id": "wbrun_294e513024ec",
-     "workbench_id": "workbench_842beb13a672",
-     "started_at": "2026-11-08T22:38:33.829631+00:00",
-     "completed_at": "2026-11-08T22:38:34.252061+00:00",
+     "id": "wbrun_c9512e163042",
+     "workbench_id": "workbench_b7442bd114ce",
+     "started_at": "2026-11-09T00:25:17.418451+00:00",
+     "completed_at": "2026-11-09T00:25:17.713004+00:00",
      "items_attempted": 1,
      "items_completed": 1,
      "items_failed": 0,
@@ -75,25 +75,25 @@
     "instruction_from": "automation",
     "results": [
      {
-      "item_id": "wbocc_3cdccf67ab4a4d80",
+      "item_id": "wbocc_48b24b83a79449bf",
       "title": "Review summary, Sun 8 Nov 2026",
       "status": "done",
-      "artifact_id": "artifact_4153d6d2596b",
+      "artifact_id": "artifact_9f080fbd79f3",
       "new": true,
       "error": null,
       "text": "## ledger\n\n- README.md\n- ledger.py\n- risky_migration.sql",
-      "completed_at": "2026-11-08T22:38:34.095417+00:00",
+      "completed_at": "2026-11-09T00:25:17.586665+00:00",
       "seconds": 0,
       "model": "claude-fake-1",
       "boundary": "cloud",
-      "note_id": "note_result_b28b233f499be53e",
+      "note_id": "note_result_fc49f752a76085a1",
       "cost_usd": 0.0246,
       "used": null
      }
     ],
     "sources_shown": [
      {
-      "ref": "repository:src_b15411263e3df8ca",
+      "ref": "repository:src_5822c2a43e40aace",
       "kind": "folder",
       "label": "ledger",
       "missing": false
@@ -140,17 +140,17 @@
     }
    }
   },
-  "/api/workbenches/workbench_842beb13a672/memory": {
+  "/api/workbenches/workbench_b7442bd114ce/memory": {
    "entries": [
     {
-     "run_id": "wbrun_294e513024ec",
-     "timestamp": "2026-11-08T22:38:34Z",
+     "run_id": "wbrun_c9512e163042",
+     "timestamp": "2026-11-09T00:25:17Z",
      "kind": "observation",
-     "content": "## holdspeak-cli-engine-9vxr948h",
+     "content": "## holdspeak-cli-engine-1ns32ip3",
      "item_title": "Review summary, Sun 8 Nov 2026",
      "provenance": {
-      "operation_id": "op_75aa07b3247444119065a9b023911bf9",
-      "receipt_id": "rcpt_8d2278b0162a465fa5a82761beb85113"
+      "operation_id": "op_8eb47d614c8143bfa4761bdd48ec3675",
+      "receipt_id": "rcpt_b8c3ae07f1374a13804b188426f51a1d"
      }
     }
    ]
@@ -158,9 +158,9 @@
   "POST /api/repositories": {
    "repository": {
     "kind": "repository",
-    "id": "src_b15411263e3df8ca",
+    "id": "src_5822c2a43e40aace",
     "name": "ledger",
-    "source_id": "src_b15411263e3df8ca",
+    "source_id": "src_5822c2a43e40aace",
     "branch": "master",
     "created_at": ""
    }

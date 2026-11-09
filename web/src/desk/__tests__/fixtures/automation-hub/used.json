@@ -1,10 +1,10 @@
 {
  "_source": "The hub's own answers, captured by tests/integration/test_desk_engines_tools.py (a real hub, isolated database, the fake claude CLI reading 3 meetings, writing 1 note and preparing 1 send over MCP). HOLDSPEAK_WIRE_WRITE=1 rewrites this file; never hand-edit it.",
- "workbench_id": "workbench_78a16d6e2745",
+ "workbench_id": "workbench_203706f440b6",
  "gets": {
-  "/api/workbenches/workbench_78a16d6e2745": {
+  "/api/workbenches/workbench_203706f440b6": {
    "workbench": {
-    "id": "workbench_78a16d6e2745",
+    "id": "workbench_203706f440b6",
     "name": "Friday update",
     "instruction": "Write my Friday update from my meetings.",
     "sources": [],
@@ -20,13 +20,13 @@
     "schedule_enabled": false,
     "schedule_revision": 1,
     "item_order": [],
-    "created_at": "2026-11-08T22:38:33Z",
-    "last_modified": "2026-11-08T22:38:33Z",
+    "created_at": "2026-11-09T00:25:15Z",
+    "last_modified": "2026-11-09T00:25:15Z",
     "deleted": false,
     "items": [
      {
-      "id": "wbocc_135788f50e4447ff",
-      "workbench_id": "workbench_78a16d6e2745",
+      "id": "wbocc_034ffa9682d440ac",
+      "workbench_id": "workbench_203706f440b6",
       "title": "Friday update, Sun 8 Nov 2026",
       "body": "Write my Friday update from my meetings.",
       "priority": 3,
@@ -36,27 +36,27 @@
        "occurrence": true
       },
       "result": "## Friday update\n\n- The ledger cutover moves to Friday.\n- Two hiring loops are booked.",
-      "result_artifact_id": "artifact_476f89ba9675",
+      "result_artifact_id": "artifact_db574eb6f984",
       "result_egress": {
        "boundary": "cloud",
        "model": "agent-claude"
       },
       "mint_attempted": true,
       "tokens_consumed": 16,
-      "created_at": "2026-11-08T22:38:33Z",
-      "last_modified": "2026-11-08T22:38:33.823128+00:00",
-      "claimed_at": "2026-11-08T22:38:33.588185+00:00",
-      "completed_at": "2026-11-08T22:38:33.823128+00:00",
+      "created_at": "2026-11-09T00:25:15Z",
+      "last_modified": "2026-11-09T00:25:15.624933+00:00",
+      "claimed_at": "2026-11-09T00:25:15.412269+00:00",
+      "completed_at": "2026-11-09T00:25:15.624933+00:00",
       "parked": false
      }
     ],
     "item_count": 1,
     "pending_count": 0,
     "last_run": {
-     "id": "wbrun_b28e73c4efde",
-     "workbench_id": "workbench_78a16d6e2745",
-     "started_at": "2026-11-08T22:38:33.587555+00:00",
-     "completed_at": "2026-11-08T22:38:33.972868+00:00",
+     "id": "wbrun_4a205ecd1d67",
+     "workbench_id": "workbench_203706f440b6",
+     "started_at": "2026-11-09T00:25:15.412007+00:00",
+     "completed_at": "2026-11-09T00:25:15.751501+00:00",
      "items_attempted": 1,
      "items_completed": 1,
      "items_failed": 0,
@@ -73,18 +73,18 @@
     "instruction_from": "automation",
     "results": [
      {
-      "item_id": "wbocc_135788f50e4447ff",
+      "item_id": "wbocc_034ffa9682d440ac",
       "title": "Friday update, Sun 8 Nov 2026",
       "status": "done",
-      "artifact_id": "artifact_476f89ba9675",
+      "artifact_id": "artifact_db574eb6f984",
       "new": true,
       "error": null,
       "text": "## Friday update\n\n- The ledger cutover moves to Friday.\n- Two hiring loops are booked.",
-      "completed_at": "2026-11-08T22:38:33.823128+00:00",
+      "completed_at": "2026-11-09T00:25:15.624933+00:00",
       "seconds": 0,
       "model": "claude-fake-1",
       "boundary": "cloud",
-      "note_id": "note_result_1d5fa8b81fcc1152",
+      "note_id": "note_result_6d324d8e6377b311",
       "cost_usd": 0.0246,
       "used": {
        "looked_at": [
@@ -106,7 +106,7 @@
        ],
        "wrote": [
         {
-         "ref": "note:note_6aa091f46016",
+         "ref": "note:note_573f99d2d12c",
          "label": "Friday update draft",
          "kind": "note",
          "undo": true
@@ -114,10 +114,10 @@
        ],
        "prepared": [
         {
-         "ref": "note:note_fd70dd291eca",
+         "ref": "note:note_425eda2182a6",
          "label": "Cutover brief",
          "kind": "note",
-         "send_id": "chs_c90f9305353c5eaffee96409",
+         "send_id": "chs_8a7f6c86de8afc2410c5dc6b",
          "destination": "Outbox folder"
         }
        ]
@@ -166,27 +166,27 @@
     }
    }
   },
-  "/api/workbenches/workbench_78a16d6e2745/memory": {
+  "/api/workbenches/workbench_203706f440b6/memory": {
    "entries": [
     {
-     "run_id": "wbrun_b28e73c4efde",
-     "timestamp": "2026-11-08T22:38:33Z",
+     "run_id": "wbrun_4a205ecd1d67",
+     "timestamp": "2026-11-09T00:25:15Z",
      "kind": "observation",
      "content": "## Friday update\n\n- The ledger cutover moves to Friday.\n- Two hiring loops are booked.",
      "item_title": "Friday update, Sun 8 Nov 2026",
      "provenance": {
-      "operation_id": "op_92569d71d57f4f14b1bba98c3030b381",
-      "receipt_id": "rcpt_d938b69a3ac549928cb0b878a211fe7b"
+      "operation_id": "op_0c3ec2c18007471a9a5f7256391b03a4",
+      "receipt_id": "rcpt_00b8a71d0f424e1f85aa56867c301e69"
      }
     }
    ]
   },
-  "/api/channels/sends?document_ref=note:note_fd70dd291eca": {
+  "/api/channels/sends?document_ref=note:note_425eda2182a6": {
    "sends": [
     {
-     "id": "chs_c90f9305353c5eaffee96409",
-     "document_ref": "note:note_fd70dd291eca",
-     "destination_id": "chd_e171dee3ba5659b4f6445635",
+     "id": "chs_8a7f6c86de8afc2410c5dc6b",
+     "document_ref": "note:note_425eda2182a6",
+     "destination_id": "chd_4f5a41631a707ed9b0c41a73",
      "destination_name": "Outbox folder",
      "channel": "file",
      "badge": "local",
@@ -195,7 +195,7 @@
       "folder": "/tmp/rig/outbox",
       "display": "/tmp/rig/outbox"
      },
-     "target_digest": "db5757e642feb78640d676b6131e0cc764af2ced5ac424c6ef2518b120d81c07",
+     "target_digest": "82ef2a247097e2d79dda328c61956441fa46a1a9bc7a6c9ce96303224288ad9b",
      "payload_digest": "b9218c58b119f63a4fc0a7fe2f63a32fe8c721cb8395e10eae236e38fd3c490f",
      "document_json": {
       "label": "NOTE",
@@ -209,15 +209,15 @@
      },
      "prepared_by": {
       "kind": "agent",
-      "identity": "agent:run:run_f64a7f33bc5f486b"
+      "identity": "agent:run:run_d4a67f18e7b349a4"
      },
-     "prepare_operation_id": "op_172c183743f149ef8186f9024a28b7c1",
+     "prepare_operation_id": "op_3ed6da5c3df742b2b67500c2ef64a3ec",
      "send_operation_id": null,
      "state": "prepared",
      "reason": null,
      "proof": null,
      "file_path": null,
-     "created_at": "2026-11-08T22:38:33+00:00",
+     "created_at": "2026-11-09T00:25:15+00:00",
      "dispatch_started_at": null,
      "settled_at": null,
      "dispatch_seq": null,

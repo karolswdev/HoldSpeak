@@ -78,7 +78,7 @@ def seed_files(rig: Rig, file_bytes: Mapping[str, int]) -> None:
 
 
 def create(rig: Rig, case: Mapping[str, Any], *, repository: Optional[str] = None,
-           file_bytes: Optional[Mapping[str, int]] = None) -> str:
+           file_bytes: Optional[Mapping[str, int]] = None, plan_goal: Optional[bool] = None) -> str:
     """The case's Program in Drafting, no steps (station 1, Dropped), with
     the case's budget."""
     if file_bytes:
@@ -88,8 +88,9 @@ def create(rig: Rig, case: Mapping[str, Any], *, repository: Optional[str] = Non
     pid = rig.service.create(OWNER, title=case["title"], goal=case["goal"], repository=repository or str(rig.repo),
                              check_command=case["check"], template=case["template"], control=case["control"],
                              project_id="proj-holdspeak",
-                             # The scene is his Plan it press: the engine does not plan the goal by itself.
-                             plan_goal=False)["id"]
+                             # ``plan_goal=False``: a recorded Plan it scene (his press; the engine
+                             # does not plan the goal by itself). Default: create plans itself.
+                             plan_goal=plan_goal)["id"]
     if case.get("budget"):
         # The text's ``budget 64k``: the planner reads the Program's budget.
         rig.service.update(OWNER, pid, budget_tokens=case["budget"])

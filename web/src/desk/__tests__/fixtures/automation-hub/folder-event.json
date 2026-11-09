@@ -1,14 +1,14 @@
 {
  "_source": "The hub's own answers, captured by tests/integration/test_desk_engines_tools.py (a real hub, isolated database, the fake claude CLI listing the folder it works in). HOLDSPEAK_WIRE_WRITE=1 rewrites this file; never hand-edit it.",
- "workbench_id": "workbench_842beb13a672",
+ "workbench_id": "workbench_b7442bd114ce",
  "gets": {
-  "/api/workbenches/workbench_842beb13a672": {
+  "/api/workbenches/workbench_b7442bd114ce": {
    "workbench": {
-    "id": "workbench_842beb13a672",
+    "id": "workbench_b7442bd114ce",
     "name": "Review summary",
     "instruction": "Summarize the PR and the risky files.",
     "sources": [
-     "repository:src_b15411263e3df8ca"
+     "repository:src_5822c2a43e40aace"
     ],
     "output_target": "inbox",
     "spend_limit_usd": null,
@@ -22,13 +22,13 @@
     "schedule_enabled": false,
     "schedule_revision": 1,
     "item_order": [],
-    "created_at": "2026-11-08T22:38:33Z",
-    "last_modified": "2026-11-08T22:38:33Z",
+    "created_at": "2026-11-09T00:25:17Z",
+    "last_modified": "2026-11-09T00:25:17Z",
     "deleted": false,
     "items": [
      {
-      "id": "wbocc_3cdccf67ab4a4d80",
-      "workbench_id": "workbench_842beb13a672",
+      "id": "wbocc_48b24b83a79449bf",
+      "workbench_id": "workbench_b7442bd114ce",
       "title": "Review summary, Sun 8 Nov 2026",
       "body": "Summarize the PR and the risky files.",
       "priority": 3,
@@ -38,56 +38,27 @@
        "occurrence": true
       },
       "result": "## ledger\n\n- README.md\n- ledger.py\n- risky_migration.sql",
-      "result_artifact_id": "artifact_4153d6d2596b",
+      "result_artifact_id": "artifact_9f080fbd79f3",
       "result_egress": {
        "boundary": "cloud",
        "model": "agent-claude"
       },
       "mint_attempted": true,
       "tokens_consumed": 16,
-      "created_at": "2026-11-08T22:38:33Z",
-      "last_modified": "2026-11-08T22:38:34.095417+00:00",
-      "claimed_at": "2026-11-08T22:38:33.830311+00:00",
-      "completed_at": "2026-11-08T22:38:34.095417+00:00",
-      "parked": false
-     },
-     {
-      "id": "wbi_watch_822aa3976a4e4cdda21a",
-      "workbench_id": "workbench_842beb13a672",
-      "title": "Move the ledger cutover behind a flag",
-      "body": "Summarize the PR and the risky files.\n\n[EVENT]\n{\n  \"changed\": {\n    \"reviewers\": [\n      \"karolswdev\"\n    ]\n  },\n  \"current\": {\n    \"checks\": \"passing\",\n    \"head_ref\": \"feat/cutover-flag\",\n    \"head_sha\": \"9f2c1e7\",\n    \"id\": \"418\",\n    \"is_draft\": false,\n    \"review_decision\": \"review_required\",\n    \"review_requests\": [\n      \"karolswdev\"\n    ],\n    \"state\": \"open\",\n    \"title\": \"Move the ledger cutover behind a flag\",\n    \"updated_at\": \"2026-10-17T15:20:43Z\",\n    \"url\": \"https://github.com/acme/ledger/pull/418\"\n  },\n  \"event_type\": \"github.pr.review_requested\",\n  \"subject\": \"gh:pull_requests:418\",\n  \"title\": \"Move the ledger cutover behind a flag\",\n  \"url\": \"https://github.com/acme/ledger/pull/418\"\n}",
-      "priority": 3,
-      "status": "done",
-      "grounding": {},
-      "context": {
-       "entity_ref": "418",
-       "event_type": "github.pr.review_requested",
-       "occurrence": true,
-       "rule_id": "wrule_4e0712255fe5",
-       "watch_id": "w_0109d2aca6b3"
-      },
-      "result": "## ledger\n\n- README.md\n- ledger.py\n- risky_migration.sql",
-      "result_artifact_id": "artifact_9b3ec1bfb4b4",
-      "result_egress": {
-       "boundary": "cloud",
-       "model": "agent-claude"
-      },
-      "mint_attempted": true,
-      "tokens_consumed": 16,
-      "created_at": "2026-11-08T22:38:34Z",
-      "last_modified": "2026-11-08T22:38:34.497659+00:00",
-      "claimed_at": "2026-11-08T22:38:34.326568+00:00",
-      "completed_at": "2026-11-08T22:38:34.497659+00:00",
+      "created_at": "2026-11-09T00:25:17Z",
+      "last_modified": "2026-11-09T00:25:17.586665+00:00",
+      "claimed_at": "2026-11-09T00:25:17.418764+00:00",
+      "completed_at": "2026-11-09T00:25:17.586665+00:00",
       "parked": false
      }
     ],
-    "item_count": 2,
+    "item_count": 1,
     "pending_count": 0,
     "last_run": {
-     "id": "wbrun_9bf66c617d79",
-     "workbench_id": "workbench_842beb13a672",
-     "started_at": "2026-11-08T22:38:34.326120+00:00",
-     "completed_at": "2026-11-08T22:38:34.641412+00:00",
+     "id": "wbrun_c9512e163042",
+     "workbench_id": "workbench_b7442bd114ce",
+     "started_at": "2026-11-09T00:25:17.418451+00:00",
+     "completed_at": "2026-11-09T00:25:17.713004+00:00",
      "items_attempted": 1,
      "items_completed": 1,
      "items_failed": 0,
@@ -104,41 +75,47 @@
     "instruction_from": "automation",
     "results": [
      {
-      "item_id": "wbi_watch_822aa3976a4e4cdda21a",
+      "item_id": "step-8d1113cb97eb",
       "title": "Move the ledger cutover behind a flag",
       "status": "done",
-      "artifact_id": "artifact_9b3ec1bfb4b4",
+      "artifact_id": "step-8d1113cb97eb",
       "new": true,
+      "update_id": null,
       "error": null,
       "text": "## ledger\n\n- README.md\n- ledger.py\n- risky_migration.sql",
-      "completed_at": "2026-11-08T22:38:34.497659+00:00",
+      "completed_at": "2026-11-09T00:25:17.789814+00:00",
       "seconds": 0,
       "model": "claude-fake-1",
       "boundary": "cloud",
-      "note_id": "note_result_6890883b38a1690b",
-      "cost_usd": 0.0246,
-      "used": null
+      "note_id": "note_result_47bb64337af17785",
+      "cost_usd": null,
+      "used": null,
+      "program": {
+       "id": "program-6f51527e387c",
+       "title": "Move the ledger cutover behind a flag",
+       "state": "done"
+      }
      },
      {
-      "item_id": "wbocc_3cdccf67ab4a4d80",
+      "item_id": "wbocc_48b24b83a79449bf",
       "title": "Review summary, Sun 8 Nov 2026",
       "status": "done",
-      "artifact_id": "artifact_4153d6d2596b",
+      "artifact_id": "artifact_9f080fbd79f3",
       "new": true,
       "error": null,
       "text": "## ledger\n\n- README.md\n- ledger.py\n- risky_migration.sql",
-      "completed_at": "2026-11-08T22:38:34.095417+00:00",
+      "completed_at": "2026-11-09T00:25:17.586665+00:00",
       "seconds": 0,
       "model": "claude-fake-1",
       "boundary": "cloud",
-      "note_id": "note_result_b28b233f499be53e",
+      "note_id": "note_result_fc49f752a76085a1",
       "cost_usd": 0.0246,
       "used": null
      }
     ],
     "sources_shown": [
      {
-      "ref": "repository:src_b15411263e3df8ca",
+      "ref": "repository:src_5822c2a43e40aace",
       "kind": "folder",
       "label": "ledger",
       "missing": false
@@ -148,7 +125,7 @@
     "when_kind": null,
     "event_starts": [
      {
-      "id": "w_0109d2aca6b3",
+      "id": "w_8bdf554f8da5",
       "name": "PR review requested",
       "enabled": true,
       "event_pattern": "github.pr.review_requested"
@@ -192,28 +169,17 @@
     }
    }
   },
-  "/api/workbenches/workbench_842beb13a672/memory": {
+  "/api/workbenches/workbench_b7442bd114ce/memory": {
    "entries": [
     {
-     "run_id": "wbrun_9bf66c617d79",
-     "timestamp": "2026-11-08T22:38:34Z",
+     "run_id": "wbrun_c9512e163042",
+     "timestamp": "2026-11-09T00:25:17Z",
      "kind": "observation",
-     "content": "## holdspeak-cli-engine-74znxzxt",
-     "item_title": "Move the ledger cutover behind a flag",
-     "provenance": {
-      "operation_id": "op_292cddb82e9d43d6b2d849710370b260",
-      "receipt_id": "rcpt_d5ee1976c5574a37ac95b086e0921c92"
-     }
-    },
-    {
-     "run_id": "wbrun_294e513024ec",
-     "timestamp": "2026-11-08T22:38:34Z",
-     "kind": "observation",
-     "content": "## holdspeak-cli-engine-9vxr948h",
+     "content": "## holdspeak-cli-engine-1ns32ip3",
      "item_title": "Review summary, Sun 8 Nov 2026",
      "provenance": {
-      "operation_id": "op_75aa07b3247444119065a9b023911bf9",
-      "receipt_id": "rcpt_8d2278b0162a465fa5a82761beb85113"
+      "operation_id": "op_8eb47d614c8143bfa4761bdd48ec3675",
+      "receipt_id": "rcpt_b8c3ae07f1374a13804b188426f51a1d"
      }
     }
    ]
@@ -221,9 +187,9 @@
   "POST /api/repositories": {
    "repository": {
     "kind": "repository",
-    "id": "src_b15411263e3df8ca",
+    "id": "src_5822c2a43e40aace",
     "name": "ledger",
-    "source_id": "src_b15411263e3df8ca",
+    "source_id": "src_5822c2a43e40aace",
     "branch": "master",
     "created_at": ""
    }

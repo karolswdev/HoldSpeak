@@ -72,7 +72,7 @@ def drafted(rig: Rig) -> str:
     rig's engine is wired first (the planner resolves it; the draft's replies
     come through ``invoke_fn``, not the engine)."""
     case = PLAN["cases"]["j1"]
-    pid = create(rig, CASES["j1"], file_bytes=case["file_bytes"])
+    pid = create(rig, CASES["j1"], file_bytes=case["file_bytes"], plan_goal=False)
     replies = [row["reply_text"] for row in case["exchanges"]]
     model = PLAN["engine"]["model"]
     result = program_planner.plan(rig.service, OWNER, pid, budget=CASES["j1"]["budget"],
