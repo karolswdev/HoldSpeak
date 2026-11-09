@@ -26,7 +26,6 @@ from holdspeak.services.watch_service import WatchService
 from holdspeak.web.context import WebContext
 from holdspeak.web.routes import (
     build_connections_router,
-    build_project_setup_router,
 )
 
 OWNER = Principal(PrincipalKind.OWNER, "conn-route-owner")
@@ -145,7 +144,6 @@ def setup_rig(tmp_path, monkeypatch):
 
     app.add_middleware(_OwnerMiddleware)
     app.include_router(build_connections_router(ctx))
-    app.include_router(build_project_setup_router(ctx))
     client = TestClient(app)
     yield db, client, setup_svc, gh_adapter
     reset_database()

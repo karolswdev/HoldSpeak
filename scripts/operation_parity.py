@@ -190,9 +190,13 @@ def mcp_tools() -> dict[str, set[Op]]:
     tools, FAMILIES = importlib.import_module("holdspeak.mcp.tools"), importlib.import_module("holdspeak.mcp.families").FAMILIES
     owners, result = [(family, family.dispatch, {t["name"] for t in family.TOOLS}) for family in FAMILIES], {}
     owners.append((tools, tools._dispatch, {t["name"] for t in tools.TOOLS} - set().union(*(o[2] for o in owners))))
+    # A public tool the root hands to a family (steward.nudges -> the project family's _room_tool) maps by the
+    # family's own table.
+    handed = {k: v for f in FAMILIES for k, v in getattr(f, "TOOL_OPERATIONS", {}).items() if isinstance(v, str)}
     for module, dispatch, names in owners:
         mapped = {**TOOL_OPS, **getattr(module, "TOOL_OPERATIONS", {}), **getattr(module, "ROOM_TOOL_OPERATIONS", {}),
-                  **getattr(module, "_OPERATION_TOOLS", {})}  # a family whose tools ARE declared operations
+                  **getattr(module, "_OPERATION_TOOLS", {}),  # a family whose tools ARE declared operations
+                  **(handed if module is tools else {})}
         branches, whole = _branches(dispatch, names)
         for name, stmts in sorted(branches.items()):
             result[name] = Reader(dict(vars(module))).nodes(stmts, 0, around=whole)

@@ -32,7 +32,7 @@ def build_system_router(
         build_coder_steering_router(ctx, commands=commands, targets=targets)
     )
     mount_router(router, build_gate_router(ctx))
-    mount_router(router, build_kernel_router())
+    mount_router(router, build_kernel_router(ctx))
     mount_router(router, build_settings_router(ctx))
     mount_router(router, build_ui_feedback_router(ctx))
     mount_router(router, build_voice_router(ctx))

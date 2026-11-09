@@ -61,6 +61,48 @@ def _constitutional() -> Any:
     return ConstitutionalContextService()
 
 
+def _ops_projects_builders(db: Any, observer: Any) -> dict[str, Callable[[], Any]]:
+    """The bare builds of the services the project, activity, walk and repository rows bind to."""
+
+    def _plain(module: str, cls: str) -> Callable[[], Any]:
+        def build() -> Any:
+            import importlib
+
+            return getattr(importlib.import_module(f"holdspeak.services.{module}"), cls)(db, observer=observer)
+
+        return build
+
+    def _proposals() -> Any:
+        from holdspeak.services.proposal_bridge_service import ProposalBridgeService
+
+        return ProposalBridgeService(db)
+
+    def _briefing() -> Any:
+        from holdspeak.services.briefing_service import default_briefing_service
+
+        return default_briefing_service(db)
+
+    def _walks() -> Any:
+        from holdspeak.services.walk_service import default_walk_service
+
+        return default_walk_service()
+
+    return {
+        "proposal_bridge_service": _proposals,
+        "decision_record_service": _plain("decision_record_service", "DecisionRecordService"),
+        "briefing_service": _briefing,
+        "walk_service": _walks,
+        "activity_ledger_service": _plain("activity_ledger_service", "ActivityLedgerService"),
+        "activity_rules_service": _plain("activity_rules_service", "ActivityRulesService"),
+        "activity_enrichment_service": _plain("activity_enrichment_service", "ActivityEnrichmentService"),
+        "activity_meeting_candidate_service": _plain("activity_meeting_candidate_service",
+                                                     "ActivityMeetingCandidateService"),
+        "activity_nudge_service": _plain("activity_nudge_service", "ActivityNudgeService"),
+        "repository_drawer_service": _plain("repository_drawer_service", "RepositoryDrawerService"),
+        "roadmap_service": _plain("roadmap_service", "RoadmapService"),
+    }
+
+
 def compose_declared_services(services: Any, ctx: Any, resolved_db: Any, resolved_observer: Any) -> None:
     """Put every declared table's service on the root and the context."""
     from holdspeak.services.setup_service import SetupService
@@ -91,6 +133,8 @@ def compose_declared_services(services: Any, ctx: Any, resolved_db: Any, resolve
             services.broadcast(topic, value)
 
     from holdspeak.operations import LIVE_CALLS_SERVICE, LIVE_PHONE_SERVICE, LIVE_PROGRAM_SERVICE
+    from holdspeak.operations import LIVE_KERNEL_SERVICE
+    from holdspeak.services.gate_service import GateService
     from holdspeak.services.people_service import PeopleService, UnavailablePeopleStore
 
     builders: dict[str, Callable[[], Any]] = {
@@ -160,6 +204,16 @@ def compose_declared_services(services: Any, ctx: Any, resolved_db: Any, resolve
         "desk_service": lambda: _bare_desk(resolved_db, resolved_observer),
         "projection_service": lambda: _bare_projections(resolved_db, resolved_observer),
         "constitutional_context_service": _constitutional,
+
+
+        # 2026-11-09 (ops/projects): the declared project, activity, walk and
+        # repository tables (project_operations.py, activity_operations.py,
+        # walk_operations.py, repository_operations.py, decision_operations.py).
+        **_ops_projects_builders(resolved_db, resolved_observer),
+        # The gate and principals verbs (gate_operations.py): the hub composes its own GateService.
+        "gate_service": lambda: GateService(resolved_db, observer=resolved_observer),
+        # The kernel verbs: the process's one broker, read at each call.
+        "kernel_service": lambda: LIVE_KERNEL_SERVICE,
     }
     for name, build in builders.items():
         instance = getattr(services, name, None)

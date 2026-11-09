@@ -86,15 +86,13 @@ def test_provider_and_steward_helpers_have_one_wire_source() -> None:
     from holdspeak.services import project_room_reads
     from holdspeak.services import steward_contract
     from holdspeak.web.routes import providers as provider_route
-    from holdspeak.web.routes import steward as steward_route
 
     assert provider_route.collect_provider_manifests is provider_service.collect_provider_manifests
     assert project_family.collect_provider_manifests is provider_service.collect_provider_manifests
 
+    # 2026-11-09: the steward routes serialize nothing (every read is a declared operation).
     for name in ("_serialize_policy", "_serialize_run", "_serialize_step", "_serialize_steps"):
-        assert getattr(steward_route, name) is getattr(steward_service, name)
         assert getattr(project_family, name) is getattr(steward_service, name)
-    assert steward_route._serialize_runs is steward_service._serialize_runs
     assert resources._serialize_run is steward_service._serialize_run
     assert resources._serialize_steps is steward_service._serialize_steps
     assert project_room_reads._serialize_run is steward_service._serialize_run
@@ -134,7 +132,6 @@ def test_provider_and_steward_helpers_have_one_wire_source() -> None:
         "completed_at": "2026-10-19T00:01:00Z",
         "stop_requested_at": None,
     }
-    assert steward_route._serialize_run(run) == steward_service._serialize_run(run)
     assert project_family._serialize_run(run) == steward_service._serialize_run(run)
     assert resources._serialize_run(run) == steward_service._serialize_run(run)
 
@@ -150,7 +147,7 @@ def test_provider_and_steward_helpers_have_one_wire_source() -> None:
         "receipt_json": '{"ok": true}',
         "error_json": "",
     }
-    assert steward_route._serialize_step(step) == project_family._serialize_step(step)
+    assert project_family._serialize_step(step) == steward_service._serialize_step(step)
     assert resources._serialize_steps([step]) == steward_service._serialize_steps([step])
 
     policy = {
@@ -167,6 +164,6 @@ def test_provider_and_steward_helpers_have_one_wire_source() -> None:
         "created_at": "2026-10-19T00:00:00Z",
         "updated_at": "2026-10-19T00:00:00Z",
     }
-    assert steward_route._serialize_policy(policy) == project_family._serialize_policy(policy)
+    assert project_family._serialize_policy(policy) == steward_service._serialize_policy(policy)
     assert steward_contract._serialize_policy(policy) == steward_service._serialize_policy(policy)
 

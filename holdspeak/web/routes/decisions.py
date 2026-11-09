@@ -53,7 +53,7 @@ async def _answer(fn: Any, *, status: int = 200) -> JSONResponse:
 def build_decisions_router(ctx: Any) -> APIRouter:
     # 2026-11-08 (one contract): the ledger and Commit are produced from their
     # declared rows, mounted before ``/{decision_id}`` so ``ledger`` is no id.
-    from ...decision_operations import DECISION_OPERATIONS
+    from ...decision_operations import COMMIT_DECISION, DECISION_LEDGER, LIFECYCLE_OPERATIONS
     from ..operation_routes import operation_router
     outer=APIRouter()
     registry=lambda: operations.for_context(ctx, decision_lifecycle_service=service)  # noqa: E731
@@ -90,18 +90,10 @@ def build_decisions_router(ctx: Any) -> APIRouter:
         )
         try:
             if legacy_only:
-                return JSONResponse(service().get_decision(_principal(request),decision_id))
+                return JSONResponse(registry().invoke(_principal(request), "decision.lineage", {"decision_id": decision_id}))
             return JSONResponse({"decision": desk_ops().invoke(_principal(request), "decision.read", {"decision_id": decision_id})})
         except ServiceError as exc:
             return _error(exc)
-    @router.get("/{decision_id}/moment")
-    def get_decision_moment(decision_id: str,request: Request) -> Any:
-        try: return JSONResponse(service().get_moment(_principal(request),decision_id))
-        except ServiceError as exc: return _error(exc)
-    @router.post("/{decision_id}/accept")
-    def accept_decision(decision_id: str,request: Request) -> Any:
-        try: return JSONResponse(service().transition(_principal(request),decision_id,"accept",{}))
-        except ServiceError as exc: return _error(exc)
     @router.post("/{decision_id}/supersede")
     def supersede_decision(decision_id: str,request: Request,payload: Any=Body(default=None)) -> Any:
         # PHILO-7-02: this router answers the path in the hub (it is included
@@ -116,15 +108,15 @@ def build_decisions_router(ctx: Any) -> APIRouter:
         # its receipt (FastAPI answered 422 before, with none).
         db = _database()
         if db.desk_decisions.get(decision_id) is not None or db.decisions.get(decision_id) is None:
-            registry = desk_ops()
+            desk = desk_ops()
             if payload is not None and not isinstance(payload, dict):
-                kernel = registry.refuse(_principal(request), "decision.supersede", "invalid_arguments",
+                kernel = desk.refuse(_principal(request), "decision.supersede", "invalid_arguments",
                                          {"decision_id": decision_id}) or {}
                 return JSONResponse({"detail": [{"type": "dict_type", "loc": ["body"],
                                                  "msg": "Input should be a valid dictionary"}], **kernel},
                                     status_code=422)
             try:
-                decision, kernel = registry.invoke_receipted(
+                decision, kernel = desk.invoke_receipted(
                     _principal(request), "decision.supersede", {"decision_id": decision_id})
                 return JSONResponse({"decision": decision, **(kernel or {})}, status_code=201)
             except NotFound as exc:
@@ -135,17 +127,12 @@ def build_decisions_router(ctx: Any) -> APIRouter:
             return JSONResponse({"detail": [{"type": "dict_type", "loc": ["body"],
                                              "msg": "Input should be a valid dictionary"}]}, status_code=422)
         try:
-            result=service().supersede(_principal(request),decision_id,payload or {})
+            result=registry().invoke(_principal(request),"decision.meeting_supersede",{**(payload or {}),"decision_id":decision_id})
             return JSONResponse({k:v for k,v in result.items() if k != "_status"},status_code=result.get("_status",200))
         except ServiceError as exc: return _error(exc)
-    @router.post("/{decision_id}/promote/{artifact_type}")
-    def promote_decision(decision_id: str,artifact_type: str,request: Request) -> Any:
-        try: return JSONResponse(service().promote(_principal(request),decision_id,artifact_type,{}))
-        except ServiceError as exc: return _error(exc)
-    @router.post("/{decision_id}/promote/{artifact_type}/draft-with-model")
-    async def draft_promoted_decision_with_model(decision_id: str,artifact_type: str,request: Request,payload: dict[str,Any]=Body(default={})) -> Any:
-        try: return JSONResponse(await service().draft_promoted_with_model(_principal(request),decision_id,artifact_type,payload))
-        except ServiceError as exc: return _error(exc)
-    mount_router(outer, operation_router(DECISION_OPERATIONS, registry, _answer, module=__name__))
+    # 2026-11-09: the meeting decision's moment, accept and promote verbs too
+    # (decision_operations.LIFECYCLE_OPERATIONS; the rows without a route are
+    # invoked by the two branching handlers below).
+    mount_router(outer, operation_router((DECISION_LEDGER, COMMIT_DECISION, *LIFECYCLE_OPERATIONS), registry, _answer, module=__name__))
     mount_router(outer, router)
     return outer

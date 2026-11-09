@@ -1,32 +1,25 @@
-"""HTTP adapters for activity nudge operations."""
+"""The activity nudge routes, produced from ``holdspeak/activity_operations.py`` (2026-11-09)."""
 from __future__ import annotations
-from typing import Any, Optional
-from fastapi import APIRouter, Request
-from fastapi.responses import JSONResponse
+
+from fastapi import APIRouter
+
+from .... import operations
 from ....db import get_database, get_observer
-from ....principals import UNAUTHENTICATED
-from ....services.activity_nudge_service import ActivityNudgeService
-from ....services.errors import ValidationError
-from ...context import WebContext
-from ...runtime_support import error_500
 from ....logging_config import get_logger
-log=get_logger("web.routes.activity.nudges")
-def _svc()->ActivityNudgeService:return ActivityNudgeService(get_database(), observer=get_observer())
-def _principal(r:Request):return getattr(r.state,"principal",UNAUTHENTICATED)
-def build_nudges_router(ctx:WebContext)->APIRouter:
- router=APIRouter()
- @router.get("/api/activity/nudges")
- def list_nudges(request:Request,project_id:Optional[str]=None,limit:int=3)->Any:
-  try:return JSONResponse(_svc().list(_principal(request),project_id,limit))
-  except Exception as e:return error_500(e,log,"Failed to compute activity nudges")
- @router.post("/api/activity/nudges/{nudge_id}/dismiss")
- def dismiss(request:Request,nudge_id:str)->Any:
-  try:return JSONResponse(_svc().dismiss(_principal(request),nudge_id))
-  except ValidationError as e:return JSONResponse({"error":str(e)},status_code=400)
-  except Exception as e:return error_500(e,log,"Failed to dismiss activity nudge")
- @router.post("/api/activity/nudges/select")
- def select(request:Request,payload:dict[str,Any])->Any:
-  try:return JSONResponse(_svc().select(_principal(request),payload.get("record_id") if isinstance(payload,dict) else None))
-  except ValidationError as e:return JSONResponse({"error":str(e)},status_code=400)
-  except Exception as e:return error_500(e,log,"Failed to select activity record for dictation")
- return router
+from ....services.activity_nudge_service import ActivityNudgeService
+from ...context import WebContext
+from .._produced import envelope, produced
+
+log = get_logger("web.routes.activity.nudges")
+
+_WORDS = {
+    "activity.nudge.list": "Failed to compute activity nudges",
+    "activity.nudge.dismiss": "Failed to dismiss activity nudge",
+    "activity.nudge.select": "Failed to select activity record for dictation",
+}
+
+
+def build_nudges_router(ctx: WebContext) -> APIRouter:
+    rows = [op for op in operations.ACTIVITY_OPERATIONS if op.name in _WORDS]
+    return produced(ctx, rows, {name: envelope(log, words) for name, words in _WORDS.items()}, module=__name__,
+                    activity_nudge_service=lambda: ActivityNudgeService(get_database(), observer=get_observer()))

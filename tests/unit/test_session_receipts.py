@@ -264,7 +264,9 @@ def route_rig(tmp_path, monkeypatch):
 
     @app.middleware("http")
     async def agent_principal(request, call_next):
-        request.state.principal = Principal(PrincipalKind.AGENT, "claude:s1")
+        # The edge's rule: an agent reports usage; the session receipt is the owner's read.
+        owner = request.url.path.startswith("/api/sessions/")
+        request.state.principal = Principal(PrincipalKind.OWNER, "owner") if owner else Principal(PrincipalKind.AGENT, "claude:s1")
         return await call_next(request)
 
     app.include_router(build_gate_router(WebContext(get_state=lambda: {}, gate_service=GateService(db))))
