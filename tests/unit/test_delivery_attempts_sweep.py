@@ -24,6 +24,7 @@ from fastapi.testclient import TestClient
 
 from holdspeak.db import Database
 from holdspeak.delivery.attempts import WorkAttemptService
+from holdspeak.services.delivery_service import DeliveryService
 from holdspeak.web.context import WebContext
 from holdspeak.web.routes.delivery_attempts import build_delivery_attempts_router
 
@@ -180,14 +181,10 @@ class TestWorktreeIsNotTheIdempotenceKey:
 class TestSweepOnAttemptsRead:
     def _client(self, repo, sweep, *, sync_on_read=True):
         app = FastAPI()
-        app.include_router(
-            build_delivery_attempts_router(
-                WebContext(get_state=lambda: {}),
-                service=WorkAttemptService(repo),
-                launch_sweep=sweep,
-                sync_on_read=sync_on_read,
-            )
+        delivery = DeliveryService(None).configure(
+            attempts=WorkAttemptService(repo), sweep=sweep, sync_on_read=sync_on_read,
         )
+        app.include_router(build_delivery_attempts_router(WebContext(get_state=lambda: {}, delivery_service=delivery)))
         return TestClient(app)
 
     def test_get_attempts_runs_the_launch_sweep(self, repo):

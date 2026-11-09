@@ -118,28 +118,17 @@ def mount_routers(app: Any, hub: HubComposition, *, auth_token: Optional[str]) -
     mount_router(app, build_agent_hand_router(web_ctx))  # Conductor K2: Hand to an agent session
     mount_router(app, build_repositories_router(web_ctx))
 
-    mount_router(app,
-        build_delivery_node_router(
-            web_ctx, link=hub.delivery_link, web_token=auth_token
-        )
+    # One delivery spine (2026-11-09, one contract): the node link, the
+    # terminal command service and target registry the hub built are the
+    # DeliveryService's own, so a factory launch issues its envelopes and
+    # pins the spawned pane's target on the same spine the terminals read.
+    web_ctx.delivery_service.configure(
+        link=hub.delivery_link, web_token=auth_token, commands=hub.delivery_cmd,
+        targets=hub.delivery_targets, live=hub.delivery_live,
     )
-    mount_router(app,
-        build_delivery_terminal_router(
-            web_ctx,
-            service=hub.delivery_cmd,
-            targets=hub.delivery_targets,
-            link=hub.delivery_link,
-            live=hub.delivery_live,
-        )
-    )
-    # The factory shares the terminal command service and target
-    # registry so a launch issues its worktree.create/spawn envelopes
-    # and pins the spawned pane's immutable target on the same spine.
-    mount_router(app,
-        build_delivery_factory_router(
-            web_ctx, commands=hub.delivery_cmd, targets=hub.delivery_targets
-        )
-    )
+    mount_router(app, build_delivery_node_router(web_ctx))
+    mount_router(app, build_delivery_terminal_router(web_ctx))
+    mount_router(app, build_delivery_factory_router(web_ctx))
     mount_router(app, build_dictation_router(web_ctx))
     mount_router(app, build_activity_router(web_ctx))
     mount_router(app, build_pages_router(web_ctx))

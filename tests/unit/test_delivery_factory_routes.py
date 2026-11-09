@@ -42,6 +42,7 @@ from holdspeak.delivery.factory_launch import (
     LaunchService,
 )
 from holdspeak.delivery.terminal import TerminalTargetRegistry
+from holdspeak.services.delivery_service import DeliveryService
 from holdspeak.web.context import WebContext
 from holdspeak.web.routes.delivery_factory import build_delivery_factory_router
 
@@ -211,14 +212,8 @@ def rig(tmp_path):
         wall_now=lambda: T0,
     )
     app = FastAPI()
-    app.include_router(
-        build_delivery_factory_router(
-            WebContext(get_state=lambda: {}),
-            service=service,
-            profiles=profiles,
-            sync_on_read=False,
-        )
-    )
+    delivery = DeliveryService(None).configure(launcher=service, profiles=profiles, sync_on_read=False)
+    app.include_router(build_delivery_factory_router(WebContext(get_state=lambda: {}, delivery_service=delivery)))
     return SimpleNamespace(
         client=TestClient(app),
         repo=repo,

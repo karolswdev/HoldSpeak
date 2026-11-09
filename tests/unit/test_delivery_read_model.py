@@ -27,6 +27,7 @@ from fastapi.testclient import TestClient
 
 from holdspeak.delivery import DeliveryCollector, DeliveryRegistry
 from holdspeak.delivery.read_model import compose_cursor, parse_cursor
+from holdspeak.services.delivery_service import DeliveryService
 from holdspeak.web.context import WebContext
 from holdspeak.web.routes.delivery import build_delivery_router
 
@@ -513,9 +514,16 @@ def _route_client(tmp_path, fake, repos):
         max_age_seconds=3600.0,
     )
     app = FastAPI()
-    app.include_router(
-        build_delivery_router(WebContext(get_state=lambda: {}), collector=collector)
-    )
+    @app.middleware("http")
+    async def owner_principal(request, call_next):
+        from holdspeak.principals import Principal, PrincipalKind
+
+        request.state.principal = Principal(PrincipalKind.OWNER, "owner-session")
+        return await call_next(request)
+
+    app.include_router(build_delivery_router(WebContext(
+        get_state=lambda: {}, delivery_service=DeliveryService(None).configure(collector=collector),
+    )))
     return TestClient(app), collector
 
 
