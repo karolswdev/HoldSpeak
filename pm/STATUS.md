@@ -2,6 +2,10 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-09 · #2102 Handover: ten native apps; the night's numbers; the open list. Quick check GREEN on e54f4901f; the hub redeployed there at 00:55.
+- 2026-11-09 · #2101 Fix forward #2097/#2086: the atlas cites `composition_declared.py`; the calendar refusal test searches its own entry box (1,173 → 383 ms).
+- 2026-11-09 · #2100 Fix forward #2093: a notice is held when the Agents row shows the agent in front (the `lane` row still counts for an unfolded desk).
+- 2026-11-08 · #2099 STATUS one-liners #2095–#2098.
 - 2026-11-08 · #2098 Fix forward #2090/#2094: the Decisions rail says "Show more" (no counter); the commit tool's test passes `who`; the phase-7 atlas and desk.json citations follow the native face; the one-record and close-to-desk browser cases read the rail, the mast's title and the frame's Back.
 - 2026-11-08 · #2097 Fix forward: `runtime/composition.py` 613 → 508 lines; the declared tables' service builders live in `composition_declared.py`; the gallery's catalogue case gets the file's 20 s budget (measured 2.0 s alone).
 - 2026-11-08 · #2096 Fix forward #2086: the preferences gallery test reads the Settings sections' labels, not a count.
