@@ -143,7 +143,7 @@ from tests.unit.test_conductor_k3_coder_needs_you import (  # noqa: F401  (hooks
     hooks,
 )
 from tests.unit.test_agent_hand import db  # noqa: F401  (db is a fixture)
-from tests.unit.test_philo14_c0_launch_lane import worktree  # noqa: F401  (a fixture)
+from tests.unit.test_agents_launch_lane import worktree  # noqa: F401  (a fixture)
 from tests.unit.test_conductor_k5_supervision import _call, _mode, launched  # noqa: F401
 
 
@@ -334,7 +334,7 @@ def test_the_lane_route_carries_the_cut_view(tmp_path, worktree, monkeypatch) ->
     """The lane route's `gated[]` (the lane's approval surface) carries the
     same view for the 198-char call the hook sends (the hook's own fields)."""
     from holdspeak.db import Database
-    from tests.unit.test_philo14_c0_launch_lane import _lane
+    from tests.unit.test_agents_launch_lane import _lane
 
     lane_db = Database(tmp_path / "lane.db")
     client = _lane(tmp_path, lane_db, worktree, monkeypatch)

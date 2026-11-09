@@ -16,7 +16,7 @@ from holdspeak.services.document_sources import DOCUMENT_SOURCES, render_documen
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _philo11_documents import OWNER, TRANSCRIPT_SENTINEL, mint_documents  # noqa: E402
-from _philo12_artifacts import mint_meeting_synthesis  # noqa: E402
+from _send_artifacts import mint_meeting_synthesis  # noqa: E402
 
 
 @pytest.fixture(autouse=True)

@@ -38,8 +38,8 @@ from holdspeak.services.model_profile_service import ModelProfileService
 from holdspeak.services.profile_key_service import ProfileKeyService
 from holdspeak.services.profile_service import ProfileService
 from holdspeak.setup_status import _trust_block
-from tests.unit.test_hs201_route_contract import OWNER as OWNER_egress
-from tests.unit.test_hs201_route_contract import assign_summary as assign_summary_egress
+from tests.unit.test_meetings_route_contract import OWNER as OWNER_egress
+from tests.unit.test_meetings_route_contract import assign_summary as assign_summary_egress
 from tests.unit.test_meeting_deferred_admission import _queue_rig
 from tests.unit.test_mesh_liveness_surfaces import _modern_mesh_summary_assignment
 from tests.unit.test_model_library_providers import OWNER, _draft, _library

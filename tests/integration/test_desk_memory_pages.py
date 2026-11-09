@@ -44,7 +44,7 @@ from holdspeak.services.memory_service import MemoryService
 from tests.unit.test_batteries_default import mark_made_by_holdspeak
 from tests.unit.test_memory_slice4_observations import _desk, _filed_note, _meeting
 from tests.unit.test_memory_slice5_pages import Pages
-from tests.unit.test_memory_slice3_facts import F, Scripted
+from tests.unit.test_memory_facts import F, Scripted
 from tests.unit.test_memory_slice4_observations import Rules
 from holdspeak.memory.extract import extract_pending
 from holdspeak.memory.consolidate import consolidate_pending

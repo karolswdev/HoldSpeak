@@ -82,7 +82,7 @@ from tests.unit.test_phase143_inference_assignments import (
     _profile,
     _result_claim,
 )
-from tests.unit.test_phase143_inference_fallback_controller import _broker_child
+from tests.unit.test_engines_fallback_controller import _broker_child
 
 # ── from test_phase143_meeting_route_primitives.py: Story 143-08 tranche A-C closed adapters, principals, and parent bundles. ──
 

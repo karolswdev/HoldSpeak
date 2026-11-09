@@ -34,8 +34,8 @@ from holdspeak.services.tool_turn_controller import (
 )
 from holdspeak.services.tool_turn_service import ToolTurnFoundationService
 from tests.unit.test_phase143_inference_assignments import OWNER, _profile, _result_claim
-from tests.unit.test_phase143_tool_turn_controller import _descriptor, _lease, _started
-from tests.unit.test_phase143_tool_turn_model_steps import _stage_step_material
+from tests.unit.test_ask_tool_turn_controller import _descriptor, _lease, _started
+from tests.unit.test_ask_tool_turn_model_steps import _stage_step_material
 
 
 def test_reference_adapter_renders_once_dispatches_once_and_parses_one_candidate() -> None:

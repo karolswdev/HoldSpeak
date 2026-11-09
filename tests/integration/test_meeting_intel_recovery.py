@@ -22,7 +22,7 @@ from holdspeak.meeting_session import (  # noqa: E402
     TranscriptSegment,
 )
 from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks  # noqa: E402
-from tests.unit.test_hs201_route_contract import (  # noqa: E402
+from tests.unit.test_meetings_route_contract import (  # noqa: E402
     assign_summary,
     summary_profile,
 )

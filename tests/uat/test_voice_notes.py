@@ -58,32 +58,3 @@ def test_transcribe_down_run_is_honest(client, fake_products):
     body = client.post(f"/api/sittings/{sid}/transcribe", content=_silence_wav()).json()
     assert body["ok"] is False
     assert "not up" in body["error"].lower()
-
-
-@pytest.fixture
-def real_client(tmp_path, monkeypatch):
-    monkeypatch.setenv("UAT_RUNS_ROOT", str(tmp_path / "_runs"))
-    monkeypatch.setenv("UAT_DB_PATH", str(tmp_path / "_runs" / "uat.db"))
-    monkeypatch.delenv("UAT_REAL_HOME", raising=False)
-    mgr = RunManager(Database(), boot_timeout=60.0, link_caches=True)
-    app = create_app(mgr)
-    with TestClient(app) as c:
-        try:
-            yield c
-        finally:
-            mgr.teardown_all()
-
-
-def test_transcribe_against_real_product_is_structured(real_client):
-    created = real_client.post("/api/sittings", json={"pack": "smoke"}).json()
-    if created["run"] is None or created["run"]["status"] != "up":
-        pytest.skip("product did not boot")
-    sid = created["id"]
-    r = real_client.post(f"/api/sittings/{sid}/transcribe", content=_silence_wav())
-    assert r.status_code == 200
-    body = r.json()
-    # A structured answer either way — real transcription (ok) or an honest
-    # unavailable (e.g. no model on this run). Never a crash.
-    assert "ok" in body
-    if not body["ok"]:
-        assert body["error"]

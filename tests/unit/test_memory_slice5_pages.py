@@ -39,7 +39,7 @@ from holdspeak.services.memory_grounding import memory_context, memory_for, proj
 
 from tests.memory_bench import bench
 from tests.memory_bench.corpus import build_corpus
-from tests.unit.test_memory_slice3_facts import _memory_text
+from tests.unit.test_memory_facts import _memory_text
 from tests.unit.test_memory_slice4_observations import (
     Facts, Rules, _desk, _filed_note, _learn, _meeting,
 )

@@ -21,7 +21,7 @@ from holdspeak.runtime import composition
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from test_philo5_the_loop import Hub, _boot
 from test_philo9_steward_admission import AGENT_ID, _agent, _tool
-from _philo12_artifacts import mint_meeting_synthesis
+from _send_artifacts import mint_meeting_synthesis
 
 
 @pytest.fixture

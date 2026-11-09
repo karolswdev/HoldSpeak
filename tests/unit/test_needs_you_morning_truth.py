@@ -546,7 +546,7 @@ def test_a_done_action_reads_done_on_the_room_row(tmp_path, monkeypatch) -> None
 def test_a_model_draft_says_each_merge_once(tmp_path, monkeypatch) -> None:
     """B71 through the real drafter: the model's prose repeats the merge the
     carried ``Merged:`` row already says; the draft keeps the row only."""
-    from tests.unit import test_philo15_17_merge_reaches_update as m17
+    from tests.unit import test_room_merge_reaches_update as m17
     from tests.unit.test_conductor_k4_follow_through import _seed, _updates
 
     db = Database(tmp_path / "hub.db")

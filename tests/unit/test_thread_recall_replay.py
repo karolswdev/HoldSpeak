@@ -50,7 +50,7 @@ import pytest
 
 from holdspeak.memory.retain import sweep
 
-from tests.unit.test_memory_slice3_facts import _note
+from tests.unit.test_memory_facts import _note
 from tests.unit.test_memory_slice6_reflect import _turn, hub  # noqa: F401  (the fixture)
 
 SECRET = "ZEPHYRREPLAY"

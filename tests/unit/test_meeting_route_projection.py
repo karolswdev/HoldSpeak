@@ -21,7 +21,7 @@ from datetime import datetime
 from holdspeak.meeting_session import MeetingState, TranscriptSegment
 from holdspeak.services.meeting_intel_service import MeetingIntelService
 from holdspeak.web.routes.meetings.intel import build_intel_router
-from tests.unit.test_hs201_route_contract import OWNER as OWNER_HTTP, assign_summary, summary_profile
+from tests.unit.test_meetings_route_contract import OWNER as OWNER_HTTP, assign_summary, summary_profile
 
 
 # ── from tests/unit/test_philo15_18_engine_words.py (moved whole by the fast diet, 2026-10-12) ──

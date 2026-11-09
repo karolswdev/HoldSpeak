@@ -901,6 +901,32 @@ def pytest_collection_modifyitems(config, items):
             item.add_marker(skip_metal)
 
 
+@pytest.fixture(scope="session", autouse=True)
+def _git_without_the_xcrun_shim(tmp_path_factory):
+    """On macOS ``/usr/bin/git`` is an xcrun shim: 12 ms a call against 5 ms
+    for the real binary. The Programs rig and the engine run hundreds of git
+    calls per test (test_program_delivery: 23 s to 17 s at -n 4). Put the
+    real binary first on PATH for this run; elsewhere this does nothing."""
+    import shutil
+    import subprocess
+    import sys
+
+    if sys.platform != "darwin" or shutil.which("git") != "/usr/bin/git":
+        yield
+        return
+    found = subprocess.run(["xcrun", "--find", "git"], capture_output=True, text=True)
+    real = found.stdout.strip()
+    if found.returncode != 0 or not real or not os.access(real, os.X_OK):
+        yield
+        return
+    shim_dir = tmp_path_factory.mktemp("git-bin")
+    (shim_dir / "git").symlink_to(real)
+    before = os.environ.get("PATH", "")
+    os.environ["PATH"] = f"{shim_dir}{os.pathsep}{before}"
+    yield
+    os.environ["PATH"] = before
+
+
 @pytest.fixture(autouse=True)
 def _bare_composition_root():
     """HS-200-45: install a BARE composition root for every test, ALWAYS.

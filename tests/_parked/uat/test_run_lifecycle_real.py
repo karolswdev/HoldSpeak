@@ -1,3 +1,6 @@
+# PARKED 2026-11-09 (pipe/test-mass): boots the real product through the UAT conductor.
+# Owner 2026-11-08: no pipeline stands anything up; the Programs engine is the
+# one runner. Kept, not run (tests/_parked/conftest.py ignores this tree).
 """The conductor against a REAL HoldSpeak boot.
 
 Boots the actual product (``holdspeak web --no-open``) under an isolated

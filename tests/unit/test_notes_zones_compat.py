@@ -1,6 +1,6 @@
 """PHILO-7-01: the three-state compatibility tables (notes, zones, knowledge bases).
 
-One table per kind, in the Phase 5 story 01 form (``test_philo5_compat.py``):
+One table per kind, in the Phase 5 story 01 form (``test_contract_transport_compat.py``):
 each row names an input, the transport, and the outcome BASE MAIN gave it.
 Accepted stays accepted with the same stored value; refused stays refused.
 The three states are recorded in ``evidence-story-01.md``: base main (green),
@@ -17,7 +17,7 @@ here, only as a refusal):
   data. Base: a ``TypeError``; built: ``authority_in_arguments``. Refused in
   both (unlike decisions in Phase 5, nothing here was accepted-and-ignored).
 
-The rename rows are fenced in ``test_philo7_rename_repair.py`` (they change on
+The rename rows are fenced in ``test_notes_rename_repair.py`` (they change on
 purpose only under an interleaving; sequentially they are the same as base).
 
 This file imports no symbol the story adds, so it runs unchanged on a copy of

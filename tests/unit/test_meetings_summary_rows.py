@@ -25,7 +25,7 @@ from holdspeak.services.meeting_service import MeetingService
 from holdspeak.web.context import WebContext
 from holdspeak.web.routes.meetings.crud import build_crud_router
 from tests.unit.test_meeting_deferred_admission import _queue_rig
-from tests.unit.test_philo3_summary_detail import OWNER, _admit
+from tests.unit.test_meetings_summary_detail import OWNER, _admit
 
 
 SOURCE = Path(__file__).resolve().parents[1] / "fixtures" / "philo3_architect_meeting.wav"

@@ -46,7 +46,7 @@ from holdspeak.services.inference_assignment_service import InferenceAssignmentS
 from holdspeak.services.inference_fallback_controller import INFERENCE_FALLBACK_AUTHORITY
 from holdspeak.services.inference_parent_route_bundle_service import InferenceParentRouteBundleService
 from tests.unit.test_phase143_inference_assignments import _profile, _result_claim
-from tests.unit.test_phase143_inference_fallback_controller import _broker_child
+from tests.unit.test_engines_fallback_controller import _broker_child
 
 pytestmark = pytest.mark.timeout(90, method="signal")
 

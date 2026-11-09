@@ -16,7 +16,7 @@ from holdspeak.services.meeting_route_projection import project_route
 from holdspeak.services.meeting_service import MeetingService
 from holdspeak.web.context import WebContext
 from holdspeak.web.routes.meetings.intel import build_intel_router
-from tests.unit.test_hs201_route_contract import OWNER, assign_summary, summary_profile
+from tests.unit.test_meetings_route_contract import OWNER, assign_summary, summary_profile
 
 
 def _ready_db(tmp_path: Path, meeting_id: str = "counsel-meeting"):

@@ -27,7 +27,7 @@ from holdspeak.services.meeting_deferred_queue_binding import MeetingDeferredQue
 from holdspeak.services.meeting_route_projection import project_route
 from holdspeak.services.model_library_service import ModelLibraryApplicationService
 from holdspeak.services.model_profile_service import ModelProfileService
-from tests.unit.test_hs201_route_contract import OWNER
+from tests.unit.test_meetings_route_contract import OWNER
 from tests.unit.test_model_library_providers import _draft, _library
 from tests.unit.test_phase143_inference_assignments import _result_claim
 

@@ -1,3 +1,6 @@
+# PARKED 2026-11-09 (pipe/test-mass): boots a real hub and a real node process and links them.
+# Owner 2026-11-08: no pipeline restarts a real hub or stands up a second
+# process; a rig boots only the one process under test. Kept, not run.
 """TWO-PROCESS node-link proof (HS-94-03).
 
 A real ``holdspeak node serve`` subprocess (`python -m

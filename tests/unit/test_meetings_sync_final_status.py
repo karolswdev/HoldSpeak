@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from holdspeak.db import Database
 from holdspeak.services.sync_service import SyncService
-from tests.unit.test_philo15_03_import_final_status import _Explodes, _Words, _import
+from tests.unit.test_meetings_import_final_status import _Explodes, _Words, _import
 from tests.unit.test_phase143_inference_assignments import OWNER
 
 

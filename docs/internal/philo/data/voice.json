@@ -794,7 +794,7 @@
           }
         },
         {
-          "path": "tests/unit/test_philo3_summary_detail.py",
+          "path": "tests/unit/test_meetings_summary_detail.py",
           "node": "test_summary_wire_fixture_matches_real_producer_states",
           "assertion": "Real import and admitted queue producers supply the detail wire; a later real assignment change does not rewrite the executed host receipt. ASR and model execution are substituted in this unit fence.",
           "execution": {
@@ -978,7 +978,7 @@
           }
         },
         {
-          "path": "tests/unit/test_philo3_summary_queue.py",
+          "path": "tests/unit/test_meetings_summary_queue.py",
           "node": "test_real_admitted_success_notifies_after_running_and_receipt",
           "assertion": "A real admitted job announces running and success after persisted state and receipt writes.",
           "execution": {
@@ -989,7 +989,7 @@
           }
         },
         {
-          "path": "tests/unit/test_philo3_summary_queue.py",
+          "path": "tests/unit/test_meetings_summary_queue.py",
           "node": "test_real_admitted_retry_notifies_after_scheduled_successor_and_receipt",
           "assertion": "A real provider failure announces its persisted retry successor and contacted receipt.",
           "execution": {
@@ -1000,7 +1000,7 @@
           }
         },
         {
-          "path": "tests/unit/test_philo3_summary_queue.py",
+          "path": "tests/unit/test_meetings_summary_queue.py",
           "node": "test_real_admitted_terminal_failure_notifies_after_settlement_and_receipt",
           "assertion": "A terminal real-queue failure announces persisted failed state and receipt.",
           "execution": {
@@ -1011,7 +1011,7 @@
           }
         },
         {
-          "path": "tests/unit/test_philo3_summary_queue.py",
+          "path": "tests/unit/test_meetings_summary_queue.py",
           "node": "test_real_admission_refusal_notifies_after_durable_refusal_receipt",
           "assertion": "Removing the real assignment after admission yields a durable refusal and meeting notification.",
           "execution": {
@@ -1022,7 +1022,7 @@
           }
         },
         {
-          "path": "tests/unit/test_philo3_summary_detail.py",
+          "path": "tests/unit/test_meetings_summary_detail.py",
           "node": "test_summary_wire_fixture_matches_real_producer_states",
           "assertion": "Real import and admitted queue producers supply the detail wire; a later real assignment change does not rewrite the executed host receipt. ASR and model execution are substituted in this unit fence.",
           "execution": {
@@ -1594,7 +1594,7 @@
       ],
       "tests": [
         {
-          "path": "tests/unit/test_phase143_inference_route_plans.py",
+          "path": "tests/unit/test_engines_route_plans.py",
           "node": "test_pure_resolution_is_one_snapshot_zero_write_and_fast",
           "assertion": "Resolution performs no writes and returns no private endpoint or secret material.",
           "execution": {
@@ -1605,7 +1605,7 @@
           }
         },
         {
-          "path": "tests/unit/test_phase143_inference_route_plans.py",
+          "path": "tests/unit/test_engines_route_plans.py",
           "node": "test_freeze_replay_and_restart_ignore_later_assignment_mutation",
           "assertion": "A frozen plan is unchanged when assignment configuration mutates.",
           "execution": {
@@ -1729,7 +1729,7 @@
       ],
       "tests": [
         {
-          "path": "tests/unit/test_phase143_inference_fallback_controller.py",
+          "path": "tests/unit/test_engines_fallback_controller.py",
           "node": "test_typed_provider_permanent_failure_falls_back_to_exact_next_frozen_leg",
           "assertion": "Fallback advances only to the exact next frozen leg.",
           "execution": {
@@ -1740,7 +1740,7 @@
           }
         },
         {
-          "path": "tests/unit/test_phase143_inference_fallback_controller.py",
+          "path": "tests/unit/test_engines_fallback_controller.py",
           "node": "test_permission_denied_is_terminal_and_never_falls_back",
           "assertion": "Permission denial is terminal and does not trigger fallback.",
           "execution": {
@@ -1751,7 +1751,7 @@
           }
         },
         {
-          "path": "tests/unit/test_phase143_inference_fallback_controller.py",
+          "path": "tests/unit/test_engines_fallback_controller.py",
           "node": "test_local_capacity_pre_send_failure_falls_back_with_zero_physical_primary",
           "assertion": "A pre-send local capacity failure can advance without a physical primary attempt.",
           "execution": {
@@ -2037,7 +2037,7 @@
       ],
       "tests": [
         {
-          "path": "tests/unit/test_phase143_inference_fallback_controller.py",
+          "path": "tests/unit/test_engines_fallback_controller.py",
           "node": "test_stop_and_deadline_fence_reservation_claim",
           "assertion": "Stop and deadline fencing preserve a terminal reservation claim.",
           "execution": {
