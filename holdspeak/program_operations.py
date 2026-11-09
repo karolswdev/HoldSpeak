@@ -1,20 +1,24 @@
-"""The Programs operations, declared once (2026-11-08, one operation per verb).
+"""The Programs verbs on the one declared contract (2026-11-08, one contract).
 
-``OPERATIONS`` is the one table of what the Programs engine can do. Each row
-names the verb (its MCP tool name), the ProgramService call, the HTTP method
-and path, the MCP arguments schema, the authority class
-(``mcp/tool_authority.py``) and the thread class (``services/thread_tools.py``).
-Two small producers read it: ``web/routes/programs.py`` makes the HTTP routes
-and ``mcp/families/program.py`` makes the MCP tool rows and their dispatch.
-The Desk is one client of these rows; an agent over MCP is another.
+Carved beside ``holdspeak/operations.py`` (which imports it into
+``DESCRIPTORS``), as ``desk_window_operations.py`` is. Each descriptor states
+one Programs verb once: its ``ProgramService`` call (``call``, and
+``web_call`` where the HTTP shape differs: by id, not by his words; the desk's
+own field names), its HTTP method and path, its MCP tool schema, its
+authority class and its thread class. ``web/routes/programs.py`` produces the
+routes and ``mcp/families/program.py`` the tool rows from these rows, both
+through ``OperationRegistry.invoke``.
 
-A row with ``schema`` None is HTTP only: another tool reaches the same verb
+A row with no ``tool_schema`` is HTTP only: another tool reaches the same verb
 (``program.decide`` kind ``close``, ``requirement`` and the proposal kinds;
-``program.require`` with ``requirement_id``; ``program.round``). A row with
-``http`` None is MCP only. ``web`` is the HTTP call where the HTTP shape
-differs from the MCP one (by id, not by his words; the desk's own field
-names). The evidence read answers a file, so its route stays hand-written in
-``web/routes/programs.py`` (``HAND_WRITTEN``).
+``program.require`` with ``requirement_id``; ``program.round``). A row with no
+``http`` is MCP only. The evidence read answers a file: its route stays
+hand-written (``web/routes/programs.py`` ``HAND_WRITTEN``).
+
+The contract adds nothing to what the transports did before: the arguments
+schema is any object (the service validates, as it did), there is no
+admission (no kernel operation, no receipt: the engine keeps its own ledger),
+and the service announces each change itself (``program_changed``).
 
 The authority rules live in the service, so every transport keeps them:
 
@@ -43,51 +47,59 @@ The authority rules live in the service, so every transport keeps them:
   runs the interview rounds; ``program.shape`` turns one sentence into change
   rows (it writes nothing, except at YOLO with ``apply``);
   ``program.add_to_night`` puts an item in tonight's dreaming program.
-
-This module imports nothing heavy at import time: ``mcp/tool_authority.py``
-and ``services/thread_tools.py`` read its classes.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import Any, Callable, Mapping, Optional
+
+from holdspeak.operations import _CONTRACT_REFUSALS, OperationDescriptor
 
 WORK, AUTHORITY = "work", "authority"
 READ, EFFECT = "evidence_read", "effect_proposal"
 
 Call = Callable[[Any, Any, dict[str, Any]], Any]
 
+_ANY_OBJECT = {"type": "object"}
+_PRINCIPAL = ("derived by the transport (HTTP auth middleware; MCP auth resolver); the Programs service checks "
+              "the owner, the orchestrating agent or the step's own launch")
+_REFUSALS = _CONTRACT_REFUSALS + ("the Programs service's named refusals (ProgramRefused: code, detail, status)",)
 
-@dataclass(frozen=True)
-class ProgramOperation:
-    """One Programs verb, stated once."""
 
-    #: The MCP tool name, ``program.<verb>``; ``api_programs_<verb>`` names the HTTP handler.
-    name: str
-    #: ``(service, principal, args) -> answer``. HTTP args are the path
-    #: parameters over the JSON body (the query for a GET).
-    call: Call
-    #: ``(METHOD, path)``; None: MCP only.
-    http: Optional[tuple[str, str]] = None
-    #: The MCP tool's input schema; None: HTTP only.
-    schema: Optional[Mapping[str, Any]] = None
-    description: str = ""
-    authority: str = WORK
-    #: The thread class; None: a thread never offers it.
-    thread: Optional[str] = EFFECT
-    #: The HTTP status of an answer.
-    status: int = 200
-    #: The HTTP call, where the HTTP shape differs from ``call``.
-    web: Optional[Call] = None
-    #: The HTTP handler name, where it is not ``api_programs_<verb>``.
-    handler: Optional[str] = None
+#: The ProgramService method each verb reaches (``program.templates`` reads the template list itself).
+_METHODS: dict[str, str] = {
+    "program.list": "list", "program.templates": "templates", "program.create": "create",
+    "program.from_action": "from_action", "program.add_to_night": "add_to_night", "program.get": "get",
+    "program.update": "update", "program.plan": "plan", "program.start": "start",
+    "program.park": "park", "program.resume": "resume", "program.decide": "decide",
+    "program.race": "race", "program.handoff": "handoff", "program.start_from": "start_from",
+    "program.overturn": "overturn", "program.step_update": "change_step", "program.step_take": "take_over",
+    "program.step_hand_back": "hand_back", "program.amend": "amend", "program.require": "require",
+    "program.requirement_edit": "edit_requirement", "program.requirement_decide": "decide_requirement", "program.proposal_decide": "decide_proposal",
+    "program.requirement_evidence": "requirement_evidence", "program.text": "text_get", "program.text_apply": "text_apply",
+    "program.shape_engine": "shape_engine", "program.shape": "shape", "program.shape_held_drop": "drop_held_shape",
+    "program.plan_draft": "plan_draft", "program.plan_programs": "apply_programs", "program.rounds_open": "rounds_open",
+    "program.round_next": "round_next", "program.round_answer": "round_answer", "program.round_decide": "round_decide",
+    "program.close": "close", "program.propose_fix": "propose_fix", "program.step_remove": "remove_step",
+    "program.round": "round", "program.checkpoint": "checkpoint", "program.step_done": "step_done",
+}
 
-    def tool(self) -> dict[str, Any]:
-        return {"name": self.name, "description": self.description, "inputSchema": self.schema}
 
-    @property
-    def handler_name(self) -> str:
-        return self.handler or "api_programs_" + self.name.split(".", 1)[1]
+def _op(name: str, call: Call, http: Optional[tuple[str, str]] = None, *, method: Optional[str] = None,
+        schema: Optional[Mapping[str, Any]] = None, description: str = "", authority: str = WORK,
+        thread: Optional[str] = EFFECT, status: int = 200, web: Optional[Call] = None,
+        handler: Optional[str] = None) -> OperationDescriptor:
+    """One Programs verb as a descriptor (``method``: the ProgramService method it reaches)."""
+    exposure = ((f"http:{http[0]} {http[1]}",) if http else ()) + ((f"mcp:{name}",) if schema is not None else ())
+    return OperationDescriptor(
+        name=name, version=1, description=description or f"The Programs verb {name} (HTTP only).",
+        args_schema=_ANY_OBJECT, principal=_PRINCIPAL, effect="read" if thread == READ else "write",
+        result="the ProgramService answer (a Program wire, a list, or the verb's own shape)",
+        refusals=_REFUSALS, completion="the answer; each change is also a program_changed frame",
+        exposure=exposure, service="program_service", method=method or _METHODS[name], announces_changes=True,
+        call=call, web_call=web, http=http, http_status=status,
+        handler=handler or "api_programs_" + name.split(".", 1)[1], tool_schema=schema,
+        authority=authority, thread=thread,
+    )
 
 
 _ID = {"type": "string", "minLength": 1, "maxLength": 128}
@@ -234,7 +246,7 @@ def _sid(a: Mapping[str, Any]) -> str:
 
 
 def _templates(_s: Any, _p: Any, _a: dict[str, Any]) -> dict[str, Any]:
-    from ..program_templates import TEMPLATES
+    from holdspeak.program_templates import TEMPLATES
 
     return {"templates": [{key: template[key] for key in ("id", "name", "description")} for template in TEMPLATES]}
 
@@ -254,7 +266,7 @@ def _by_name(start: bool) -> Call:
     Each answer carries ``spoken``: the state in one or two sentences."""
 
     def call(service: Any, principal: Any, args: dict[str, Any]) -> Any:
-        from .program_definitions import ProgramRefused, spoken_state
+        from holdspeak.services.program_definitions import ProgramRefused, spoken_state
 
         def said(wire: dict[str, Any], **more: Any) -> dict[str, Any]:
             return {**wire, **more, "spoken": spoken_state(wire)}
@@ -326,7 +338,7 @@ def _pending(a: Mapping[str, Any]) -> Optional[str]:
 
 
 def _shape(s: Any, p: Any, a: dict[str, Any]) -> Any:
-    from .program_definitions import ProgramRefused
+    from holdspeak.services.program_definitions import ProgramRefused
 
     try:
         found = s.find(p, program_id=a.get("program_id"), name=a.get("name"))
@@ -336,7 +348,7 @@ def _shape(s: Any, p: Any, a: dict[str, Any]) -> Any:
             return {"found": False, "applied": False, "spoken": f"There is no program with the name {said}. Nothing changed."}
         raise
     # LANG5: on a call his spoken answer to the read back runs here.
-    from . import program_spoken
+    from holdspeak.services import program_spoken
 
     held = program_spoken.take(found["id"], a.get("sentence"))
     if held is not None:
@@ -356,11 +368,11 @@ def _schema(properties: dict[str, Any], required: list[str]) -> dict[str, Any]:
 
 _STEP_REF = _schema({"program_id": _ID, "step_id": _ID}, ["program_id", "step_id"])
 _PROGRAM_REF = _schema({"program_id": _ID}, ["program_id"])
-_P = ProgramOperation
+_P = _op
 
 #: The Programs verbs, in HTTP mount order (the recorded route list keeps it),
 #: then the MCP-only verbs. The MCP tools list in this order too.
-OPERATIONS: tuple[ProgramOperation, ...] = (
+PROGRAM_OPERATIONS: tuple[OperationDescriptor, ...] = (
     _P("program.list", lambda s, p, a: s.list(p, q=a.get("q"), project_id=a.get("project_id"), person_id=a.get("person_id")),
        ("GET", "/api/programs"), thread=READ,
        description="List the Programs, waiting first. q: words every row must have (title, goal, project, person, "
@@ -739,19 +751,21 @@ OPERATIONS: tuple[ProgramOperation, ...] = (
                       ["step_id", "report"])),
 )
 
-BY_NAME: dict[str, ProgramOperation] = {op.name: op for op in OPERATIONS}
-#: The MCP tools: every row with a schema.
-TOOL_ROWS: tuple[ProgramOperation, ...] = tuple(op for op in OPERATIONS if op.schema is not None)
-#: ``mcp/tool_authority.py`` and ``services/thread_tools.py`` read these.
-AUTHORITY_CLASSES: dict[str, str] = {op.name: op.authority for op in TOOL_ROWS}
-THREAD_CLASSES: dict[str, tuple[str, bool]] = {op.name: (op.thread, False) for op in TOOL_ROWS if op.thread}
+#: An MCP tool name -> its operation (each tool is its own operation).
+TOOL_OPERATIONS: dict[str, str] = {op.name: op.name for op in PROGRAM_OPERATIONS if op.tool_schema is not None}
 
 
-def program_service() -> Any:
-    from .program_service import default_program_service
+class _LiveProgramService:
+    """The bound target: the process's one ProgramService, read at each call
+    (``default_program_service``), so a rebuilt database or a test's own
+    service is the one the call reaches."""
 
-    return default_program_service()
+    def __getattr__(self, name: str) -> Any:
+        from holdspeak.services.program_service import default_program_service
+
+        return getattr(default_program_service(), name)
 
 
-__all__ = ["AUTHORITY_CLASSES", "BY_NAME", "OPERATIONS", "ProgramOperation", "THREAD_CLASSES", "TOOL_ROWS",
-           "program_service"]
+LIVE_PROGRAM_SERVICE = _LiveProgramService()
+
+__all__ = ["LIVE_PROGRAM_SERVICE", "PROGRAM_OPERATIONS", "TOOL_OPERATIONS"]

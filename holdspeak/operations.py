@@ -180,6 +180,28 @@ class OperationDescriptor:
     #: that changed nothing sends no frame (the window writes). The registry
     #: then adds no frame of its own (an agent's no-op raise is silent).
     announces_changes: bool = False
+    #: 2026-11-08 (one contract): the transport faces a descriptor declares
+    #: when its routes and MCP tool are PRODUCED from it, not written by hand.
+    #: ``call``: ``(service, principal, args) -> result``, in place of
+    #: ``service.method(principal, **args)`` (the verb's argument shape is not
+    #: the method's); ``web_call``: the HTTP call where it differs from ``call``
+    #: (``invoke(..., shape="web")``). ``http``: ``(METHOD, path)``, answered
+    #: with ``http_status`` by the handler named ``handler``. ``tool_schema``:
+    #: the MCP tool's input schema (None: no tool); ``authority``: its class in
+    #: ``mcp/tool_authority.py``; ``thread``: its class in
+    #: ``services/thread_tools.py`` (None: a thread never offers it).
+    call: Optional[Callable[[Any, Any, dict[str, Any]], Any]] = field(default=None, compare=False)
+    web_call: Optional[Callable[[Any, Any, dict[str, Any]], Any]] = field(default=None, compare=False)
+    http: Optional[tuple[str, str]] = None
+    http_status: int = 200
+    handler: Optional[str] = None
+    tool_schema: Optional[Mapping[str, Any]] = None
+    authority: str = "work"
+    thread: Optional[str] = None
+
+    def tool(self) -> dict[str, Any]:
+        """The MCP tool row this descriptor produces."""
+        return {"name": self.name, "description": self.description, "inputSchema": self.tool_schema}
 
     def __post_init__(self) -> None:
         Draft202012Validator.check_schema(dict(self.args_schema))
@@ -2273,6 +2295,8 @@ from holdspeak.setup_operations import SETUP_OPERATIONS  # noqa: E402
 from holdspeak.agent_operations import AGENT_OPERATIONS  # noqa: E402
 # PHILO-16 (16b): the desk's windows (the MCP rows).
 from holdspeak.desk_window_operations import DESK_WINDOW_OPERATIONS  # noqa: E402
+# Imported only through here (it imports this module): read operations.PROGRAM_OPERATIONS.
+from holdspeak.program_operations import LIVE_PROGRAM_SERVICE, PROGRAM_OPERATIONS  # noqa: E402,F401 (re-exported)
 
 #: The whole catalogue, in export order.
 # ── Betterment Q9: Find the tasks on a note ───────────────────────────────
@@ -2407,7 +2431,7 @@ DESCRIPTORS: tuple[OperationDescriptor, ...] = (
     DECISION_DELETE, DECISION_STATUS, DECISION_SUPERSEDE,
     KERNEL_RECEIPT_READ, MEMORY_OBSERVATIONS_READ, MEMORY_PAGE_READ,
 ) + ROOM_OPERATIONS + STEWARD_CONNECTOR_OPERATIONS + CHANNEL_OPERATIONS + ONBOARDING_OPERATIONS + SETUP_OPERATIONS + AGENT_OPERATIONS \
-    + DESK_WINDOW_OPERATIONS + NOTE_OUTCOME_OPERATIONS + (TODAY_GET,)
+    + DESK_WINDOW_OPERATIONS + NOTE_OUTCOME_OPERATIONS + (TODAY_GET,) + PROGRAM_OPERATIONS
 
 #: The RuntimeServices / WebContext fields the catalogue binds to.
 BOUND_SERVICES: tuple[str, ...] = tuple(dict.fromkeys(d.service for d in DESCRIPTORS))
@@ -2421,6 +2445,8 @@ class BoundOperation:
     descriptor: OperationDescriptor
     call: Callable[..., Any]
     target: Any
+    #: The HTTP shape's call (``invoke(..., shape="web")``); None: ``call``.
+    web_call: Optional[Callable[..., Any]] = None
 
 
 @dataclass
@@ -2483,8 +2509,12 @@ class OperationRegistry:
         args: Optional[Mapping[str, Any]] = None,
         *,
         held: Optional[Mapping[str, Any]] = None,
+        shape: str = "call",
     ) -> Any:
         """Validate *args* against the declaration, call the bound method, return its result.
+
+        ``shape="web"``: the descriptor's ``web_call`` where it declares one (the
+        HTTP face of a verb whose MCP face reads by name).
 
         *held* carries the transport-held inputs the descriptor names in
         ``held`` (PHILO-5-02, gap E) -- exactly those, or the call is a
@@ -2496,11 +2526,11 @@ class OperationRegistry:
         """
         descriptor = self._bound(name).descriptor
         if descriptor.effect != "write" or descriptor.announces_changes:
-            return self._run(principal, name, args, held=held)
+            return self._run(principal, name, args, held=held, shape=shape)
         from holdspeak.runtime.announce_scope import announce_scope
 
         with announce_scope() as announce:
-            result = self._run(principal, name, args, held=held)
+            result = self._run(principal, name, args, held=held, shape=shape)
             announce(*_changed(name, args, result))
         return result
 
@@ -2511,6 +2541,7 @@ class OperationRegistry:
         args: Optional[Mapping[str, Any]] = None,
         *,
         held: Optional[Mapping[str, Any]] = None,
+        shape: str = "call",
     ) -> Any:
         """:meth:`invoke` without the announcement (every path in it returns to ``invoke``)."""
         _LAST_KERNEL.set(None)
@@ -2576,7 +2607,8 @@ class OperationRegistry:
             )
             _LAST_KERNEL.set(kernel)
             return result
-        return bound.call(principal, **dict(payload), **given_held)
+        call = bound.web_call if shape == "web" and bound.web_call is not None else bound.call
+        return call(principal, **dict(payload), **given_held)
 
     @staticmethod
     def _admits(bound: BoundOperation, payload: Mapping[str, Any]) -> bool:
@@ -2737,13 +2769,27 @@ def bind(services: Mapping[str, Any], descriptors: tuple[OperationDescriptor, ..
         target = services.get(descriptor.service)
         if target is None:
             raise RuntimeError(f"{descriptor.name}: no {descriptor.service} to bind to")
-        call = getattr(target, descriptor.method, None)
-        if not callable(call):
-            raise RuntimeError(f"{descriptor.name}: {type(target).__name__} has no {descriptor.method}")
+        web_call = None
+        if descriptor.call is not None:  # the verb's own argument shape over the service
+            call = _shaped(descriptor.call, target)
+            web_call = _shaped(descriptor.web_call, target) if descriptor.web_call is not None else None
+        else:
+            call = getattr(target, descriptor.method, None)
+            if not callable(call):
+                raise RuntimeError(f"{descriptor.name}: {type(target).__name__} has no {descriptor.method}")
         if descriptor.name in registry.operations:
             raise RuntimeError(f"{descriptor.name} is declared twice")
-        registry.operations[descriptor.name] = BoundOperation(descriptor, call, target)
+        registry.operations[descriptor.name] = BoundOperation(descriptor, call, target, web_call)
     return registry
+
+
+def _shaped(call: Callable[[Any, Any, dict[str, Any]], Any], target: Any) -> Callable[..., Any]:
+    """``bound(principal, **args)`` over a descriptor's ``call(service, principal, args)``."""
+
+    def bound(principal: Any, **args: Any) -> Any:
+        return call(target, principal, args)
+
+    return bound
 
 
 def bind_available(services: Mapping[str, Any]) -> OperationRegistry:

@@ -1,9 +1,11 @@
 """Programs transport (2026-10-28); the work is ``services/program_service.py``.
 
-The routes are produced from the one table of Programs operations
-(``services/program_operations.py``), the rows the MCP tools come from too
-(2026-11-08). The evidence read answers a file, so it stays hand-written
-(``HAND_WRITTEN``). The paths:
+The routes are produced from the Programs operation descriptors
+(``holdspeak/program_operations.py``, on the one contract in
+``holdspeak/operations.py``), the rows the MCP tools come from too
+(2026-11-08); each call goes through ``OperationRegistry.invoke``. The
+evidence read answers a file, so it stays hand-written (``HAND_WRITTEN``).
+The paths:
 
 GET    /api/programs?q=&project_id=&person_id=     the Programs, waiting first (PG-REQ: Find a program,
                                                    Project, Person; the group is the face's)
@@ -65,32 +67,24 @@ Every handler runs the service off the event loop (``run_in_threadpool``).
 """
 from __future__ import annotations
 
-import inspect
 from typing import Any, Callable
 
 from fastapi import APIRouter, Request
 from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
 from starlette.concurrency import run_in_threadpool
 
+from ... import operations
 from ...logging_config import get_logger
 from ...principals import Principal, PrincipalKind
-from ...services import program_operations
 from ...services.errors import NotFound, ServiceError, ValidationError
 from ..context import WebContext
+from ..operation_routes import operation_router
 
 log = get_logger("web.routes.programs")
 
 
 def _principal(request: Request) -> Any:
     return getattr(request.state, "principal", Principal(PrincipalKind.OWNER, "owner-session"))
-
-
-async def _body(request: Request) -> dict[str, Any]:
-    try:
-        body = await request.json()
-    except Exception:
-        body = None
-    return body if isinstance(body, dict) else {}
 
 
 def _refused(exc: ServiceError) -> JSONResponse:
@@ -110,72 +104,39 @@ async def _call(fn: Callable[[], Any], *, status: int = 200) -> JSONResponse:
                              "detail": "The program service failed. The log names the cause."}, status_code=500)
 
 
-def _evidence(op: program_operations.ProgramOperation) -> Callable[..., Any]:
-    """The log text or the shot image of one requirement (a file, not JSON)."""
-
-    call = op.call
-
-    async def endpoint(program_id: str, requirement_id: str, request: Request) -> Any:
-        principal = _principal(request)
-
-        def read() -> Any:
-            try:
-                found = call(program_operations.program_service(), principal,
-                             {"program_id": program_id, "requirement_id": requirement_id})
-            except ServiceError as exc:
-                return _refused(exc)
-            if found["media"].startswith("image/"):
-                return FileResponse(found["path"], media_type=found["media"])
-            from pathlib import Path
-
-            text = Path(found["path"]).read_text(encoding="utf-8", errors="replace")
-            return PlainTextResponse(text[-200_000:])
-
-        return await run_in_threadpool(read)
-
-    endpoint.__name__ = endpoint.__qualname__ = op.handler_name
-    return endpoint
-
-
-#: The routes the table cannot produce: each answers a file.
-HAND_WRITTEN: dict[str, Callable[[program_operations.ProgramOperation], Callable[..., Any]]] = {
-    "program.requirement_evidence": _evidence,
-}
-
-
-def _endpoint(op: program_operations.ProgramOperation) -> Callable[..., Any]:
-    """One row's handler: the path parameters over the JSON body (the query for
-    a GET), the row's HTTP call off the event loop, its status."""
-    method, path = op.http or ("", "")
-    call = op.web or op.call
-    names = [part[1:-1] for part in path.split("/") if part.startswith("{")]
-
-    async def endpoint(request: Request, **params: str) -> Any:
-        principal = _principal(request)
-        source = dict(request.query_params) if method == "GET" else await _body(request)
-        args = {**source, **params}
-        return await _call(lambda: call(program_operations.program_service(), principal, args), status=op.status)
-
-    # FastAPI reads the path parameters and the handler name from the
-    # signature and the name: the OpenAPI document stays the one it was.
-    endpoint.__signature__ = inspect.Signature(  # type: ignore[attr-defined]
-        [inspect.Parameter(name, inspect.Parameter.KEYWORD_ONLY, annotation=str) for name in names]
-        + [inspect.Parameter("request", inspect.Parameter.KEYWORD_ONLY, annotation=Request)],
-        return_annotation=Any,
-    )
-    endpoint.__name__ = endpoint.__qualname__ = op.handler_name
-    return endpoint
-
-
 def build_programs_router(ctx: WebContext) -> APIRouter:
-    router = APIRouter()
-    for op in program_operations.OPERATIONS:
-        if op.http is None:
-            continue
-        method, path = op.http
-        make = HAND_WRITTEN.get(op.name, _endpoint)
-        router.add_api_route(path, make(op), methods=[method])
-    return router
+    def registry() -> Any:
+        return operations.for_context(ctx, program_service=lambda: operations.LIVE_PROGRAM_SERVICE)
 
+    def evidence(descriptor: Any) -> Callable[..., Any]:
+        """The log text or the shot image of one requirement (a file, not JSON)."""
+
+        async def endpoint(program_id: str, requirement_id: str, request: Request) -> Any:
+            principal = _principal(request)
+
+            def read() -> Any:
+                try:
+                    found = registry().invoke(principal, descriptor.name,
+                                              {"program_id": program_id, "requirement_id": requirement_id})
+                except ServiceError as exc:
+                    return _refused(exc)
+                if found["media"].startswith("image/"):
+                    return FileResponse(found["path"], media_type=found["media"])
+                from pathlib import Path
+
+                text = Path(found["path"]).read_text(encoding="utf-8", errors="replace")
+                return PlainTextResponse(text[-200_000:])
+
+            return await run_in_threadpool(read)
+
+        endpoint.__name__ = endpoint.__qualname__ = descriptor.handler
+        return endpoint
+
+    return operation_router(operations.PROGRAM_OPERATIONS, registry, _call, module=__name__,
+                            hand_written={"program.requirement_evidence": evidence})
+
+
+#: The routes the descriptors cannot produce: each answers a file.
+HAND_WRITTEN = ("program.requirement_evidence",)
 
 __all__ = ["HAND_WRITTEN", "build_programs_router"]

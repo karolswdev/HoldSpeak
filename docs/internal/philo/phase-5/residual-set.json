@@ -645,6 +645,204 @@
       "transport": "mcp",
       "entry_point": "watch.set_enabled",
       "discriminator": ""
+    },
+    {
+      "story": "one-contract-programs-2026-11-08",
+      "transport": "mcp",
+      "entry_point": "program.checkpoint",
+      "discriminator": ""
+    },
+    {
+      "story": "one-contract-programs-2026-11-08",
+      "transport": "mcp",
+      "entry_point": "program.create",
+      "discriminator": ""
+    },
+    {
+      "story": "one-contract-programs-2026-11-08",
+      "transport": "mcp",
+      "entry_point": "program.decide",
+      "discriminator": ""
+    },
+    {
+      "story": "one-contract-programs-2026-11-08",
+      "transport": "mcp",
+      "entry_point": "program.get",
+      "discriminator": ""
+    },
+    {
+      "story": "one-contract-programs-2026-11-08",
+      "transport": "mcp",
+      "entry_point": "program.handoff",
+      "discriminator": ""
+    },
+    {
+      "story": "one-contract-programs-2026-11-08",
+      "transport": "mcp",
+      "entry_point": "program.list",
+      "discriminator": ""
+    },
+    {
+      "story": "one-contract-programs-2026-11-08",
+      "transport": "mcp",
+      "entry_point": "program.overturn",
+      "discriminator": ""
+    },
+    {
+      "story": "one-contract-programs-2026-11-08",
+      "transport": "mcp",
+      "entry_point": "program.park",
+      "discriminator": ""
+    },
+    {
+      "story": "one-contract-programs-2026-11-08",
+      "transport": "mcp",
+      "entry_point": "program.propose_fix",
+      "discriminator": ""
+    },
+    {
+      "story": "one-contract-programs-2026-11-08",
+      "transport": "mcp",
+      "entry_point": "program.plan",
+      "discriminator": ""
+    },
+    {
+      "story": "one-contract-programs-2026-11-08",
+      "transport": "mcp",
+      "entry_point": "program.resume",
+      "discriminator": ""
+    },
+    {
+      "story": "one-contract-programs-2026-11-08",
+      "transport": "mcp",
+      "entry_point": "program.start",
+      "discriminator": ""
+    },
+    {
+      "story": "one-contract-programs-2026-11-08",
+      "transport": "mcp",
+      "entry_point": "program.start_from",
+      "discriminator": ""
+    },
+    {
+      "story": "one-contract-programs-2026-11-08",
+      "transport": "mcp",
+      "entry_point": "program.step_done",
+      "discriminator": ""
+    },
+    {
+      "story": "one-contract-programs-2026-11-08",
+      "transport": "mcp",
+      "entry_point": "program.update",
+      "discriminator": ""
+    },
+    {
+      "story": "one-contract-programs-2026-11-08",
+      "transport": "mcp",
+      "entry_point": "program.amend",
+      "discriminator": ""
+    },
+    {
+      "story": "one-contract-programs-2026-11-08",
+      "transport": "mcp",
+      "entry_point": "program.require",
+      "discriminator": ""
+    },
+    {
+      "story": "one-contract-programs-2026-11-08",
+      "transport": "mcp",
+      "entry_point": "program.step_update",
+      "discriminator": ""
+    },
+    {
+      "story": "one-contract-programs-2026-11-08",
+      "transport": "mcp",
+      "entry_point": "program.text",
+      "discriminator": ""
+    },
+    {
+      "story": "one-contract-programs-2026-11-08",
+      "transport": "mcp",
+      "entry_point": "program.text_apply",
+      "discriminator": ""
+    },
+    {
+      "story": "one-contract-programs-2026-11-08",
+      "transport": "mcp",
+      "entry_point": "program.step_remove",
+      "discriminator": ""
+    },
+    {
+      "story": "one-contract-programs-2026-11-08",
+      "transport": "mcp",
+      "entry_point": "program.shape",
+      "discriminator": ""
+    },
+    {
+      "story": "one-contract-programs-2026-11-08",
+      "transport": "mcp",
+      "entry_point": "program.plan_draft",
+      "discriminator": ""
+    },
+    {
+      "story": "one-contract-programs-2026-11-08",
+      "transport": "mcp",
+      "entry_point": "program.round",
+      "discriminator": ""
+    },
+    {
+      "story": "one-contract-programs-2026-11-08",
+      "transport": "mcp",
+      "entry_point": "program.add_to_night",
+      "discriminator": ""
+    },
+    {
+      "story": "one-contract-programs-2026-11-08",
+      "transport": "mcp",
+      "entry_point": "program.from_action",
+      "discriminator": ""
+    },
+    {
+      "story": "one-contract-programs-2026-11-08",
+      "transport": "mcp",
+      "entry_point": "program.plan_programs",
+      "discriminator": ""
+    },
+    {
+      "story": "one-contract-programs-2026-11-08",
+      "transport": "mcp",
+      "entry_point": "program.race",
+      "discriminator": ""
+    },
+    {
+      "story": "one-contract-programs-2026-11-08",
+      "transport": "mcp",
+      "entry_point": "program.shape_engine",
+      "discriminator": ""
+    },
+    {
+      "story": "one-contract-programs-2026-11-08",
+      "transport": "mcp",
+      "entry_point": "program.shape_held_drop",
+      "discriminator": ""
+    },
+    {
+      "story": "one-contract-programs-2026-11-08",
+      "transport": "mcp",
+      "entry_point": "program.step_hand_back",
+      "discriminator": ""
+    },
+    {
+      "story": "one-contract-programs-2026-11-08",
+      "transport": "mcp",
+      "entry_point": "program.step_take",
+      "discriminator": ""
+    },
+    {
+      "story": "one-contract-programs-2026-11-08",
+      "transport": "mcp",
+      "entry_point": "program.templates",
+      "discriminator": ""
     }
   ],
   "public_tools_added": [
@@ -1018,96 +1216,6 @@
       "entry_point": "calls.status",
       "discriminator": "",
       "reason": "hand-wired family dispatcher (holdspeak/mcp/families/calls.py)"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "program.checkpoint",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/program.py) over the one ProgramService"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "program.create",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/program.py) over the one ProgramService"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "program.decide",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/program.py) over the one ProgramService"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "program.get",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/program.py) over the one ProgramService"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "program.handoff",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/program.py) over the one ProgramService"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "program.list",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/program.py) over the one ProgramService"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "program.overturn",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/program.py) over the one ProgramService"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "program.park",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/program.py) over the one ProgramService"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "program.propose_fix",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/program.py) over the one ProgramService"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "program.plan",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/program.py) over the one ProgramService"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "program.resume",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/program.py) over the one ProgramService"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "program.start",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/program.py) over the one ProgramService"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "program.start_from",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/program.py) over the one ProgramService"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "program.step_done",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/program.py) over the one ProgramService"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "program.update",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/program.py) over the one ProgramService"
     },
     {
       "transport": "mcp",
@@ -2356,114 +2464,6 @@
       "entry_point": "holdspeak/web/routes/today.py::build_today_router.service",
       "discriminator": "TodayService",
       "reason": "route builds its own service instance instead of the hub's bound one (only when the context has none: a route test); a read-only desk reader (Since this morning)"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "program.amend",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/program.py) over the one ProgramService"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "program.require",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/program.py) over the one ProgramService"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "program.step_update",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/program.py) over the one ProgramService"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "program.text",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/program.py) over the one ProgramService"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "program.text_apply",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/program.py) over the one ProgramService"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "program.step_remove",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/program.py) over the one ProgramService"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "program.shape",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/program.py) over the one ProgramService"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "program.plan_draft",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/program.py) over the one ProgramService"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "program.round",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/program.py) over the one ProgramService"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "program.add_to_night",
-      "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/program.py) over the one ProgramService"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "program.from_action",
-      "discriminator": "",
-      "reason": "table-produced family dispatcher (holdspeak/services/program_operations.py) over the one ProgramService"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "program.plan_programs",
-      "discriminator": "",
-      "reason": "table-produced family dispatcher (holdspeak/services/program_operations.py) over the one ProgramService"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "program.race",
-      "discriminator": "",
-      "reason": "table-produced family dispatcher (holdspeak/services/program_operations.py) over the one ProgramService"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "program.shape_engine",
-      "discriminator": "",
-      "reason": "table-produced family dispatcher (holdspeak/services/program_operations.py) over the one ProgramService"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "program.shape_held_drop",
-      "discriminator": "",
-      "reason": "table-produced family dispatcher (holdspeak/services/program_operations.py) over the one ProgramService"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "program.step_hand_back",
-      "discriminator": "",
-      "reason": "table-produced family dispatcher (holdspeak/services/program_operations.py) over the one ProgramService"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "program.step_take",
-      "discriminator": "",
-      "reason": "table-produced family dispatcher (holdspeak/services/program_operations.py) over the one ProgramService"
-    },
-    {
-      "transport": "mcp",
-      "entry_point": "program.templates",
-      "discriminator": "",
-      "reason": "table-produced family dispatcher (holdspeak/services/program_operations.py) over the one ProgramService"
     }
   ]
 }

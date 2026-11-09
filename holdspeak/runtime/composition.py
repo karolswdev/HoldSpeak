@@ -508,6 +508,8 @@ def install_from_web_context(
         if services.broadcast is not None:
             services.broadcast(topic, value)
 
+    from holdspeak.operations import LIVE_PROGRAM_SERVICE
+
     builders: dict[str, Callable[[], Any]] = {
         "meeting_service": lambda: MeetingService(resolved_db, observer=resolved_observer),
         "meeting_intel_service": lambda: MeetingIntelService(
@@ -548,6 +550,9 @@ def install_from_web_context(
         "connection_signin_service": lambda: ConnectionSigninService(
             target_provider=lambda: None,
         ),
+        # 2026-11-08 (one contract): the Programs descriptors bind to the
+        # process's one ProgramService, read at each call.
+        "program_service": lambda: LIVE_PROGRAM_SERVICE,
     }
     for name, build in builders.items():
         instance = getattr(services, name, None)
