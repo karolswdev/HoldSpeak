@@ -311,6 +311,21 @@ def test_speech_session_freezes_only_assigned_provider_subset(
     assert session._routed_routes == {"rewrite": {"id": "rewrite-route"}}
 
 
+
+def _door_children(db: Database, prefix: str) -> list[str]:
+    """The kernel receipt state of each door job whose run id starts with
+    ``prefix`` (``meetingspeech`` / ``meetingpreload``), oldest first."""
+    with db._connection() as conn:
+        rows = conn.execute(
+            """SELECT r.state FROM kernel_operations o
+                 JOIN kernel_receipts r ON r.operation_id=o.operation_id
+                WHERE o.name='inference.invoke' AND o.native_id LIKE ? ESCAPE '\\'
+                ORDER BY o.created_at""",
+            (prefix + "\\_%",),
+        ).fetchall()
+    return [str(row["state"]) for row in rows]
+
+
 @pytest.mark.parametrize("saved_backend", ["auto", "mlx"])
 def test_migrated_local_whisper_bootstraps_ready_and_transcribes_first_meeting(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, saved_backend: str
@@ -395,7 +410,7 @@ def test_migrated_local_whisper_bootstraps_ready_and_transcribes_first_meeting(
     assert state.transcription_status == "active"
     assert transcriber.preload_outcome == "succeeded"
     assert transcriber.loaded is True and transcriber.warm_calls == 1
-    assert session._route_bundle is not None and session._route_bundle.get("derived_preloads")
+    assert session._speech_evidence is not None and session._speech_evidence["engine"] == "mlx"
     assert session._transcribe_audio(
         np.ones(16000, dtype=np.float32), source_id="mic", interval_start=0.0, interval_end=1.0
     ) == "day one exact"
@@ -409,13 +424,8 @@ def test_migrated_local_whisper_bootstraps_ready_and_transcribes_first_meeting(
                    ON o.observation_id=b.readiness_observation_id
                 WHERE b.profile_id LIKE 'speech-migrated-%'"""
         ).fetchone()
-        preload_count = conn.execute(
-            """SELECT COUNT(*) FROM inference_route_executions e
-                 JOIN inference_route_plans p ON p.id=e.route_plan_id
-                WHERE p.capability_id='speech.preload' AND e.terminal_outcome='succeeded'"""
-        ).fetchone()[0]
     assert tuple(readiness) == ("ready", "loaded_under_speech_preload")
-    assert preload_count == 1
+    assert _door_children(db, "meetingpreload") == ["succeeded"]
 
 
 def test_mlx_candidate_walk_runs_inside_one_meeting_preload_sequence(
@@ -589,14 +599,8 @@ def test_meeting_transcription_routes_actual_canonical_bytes_and_exact_result(
     )
 
     assert result == "Exact routed transcript"
-    # Same source/window/final tuple adopts the elected execution; source and
-    # final-pass changes remain distinct recurring operations on the same bytes.
-    assert transcriber.transcribe(
-        audio,
-        admission=session._transcription_admission(
-            source_id="mic", interval_start=10.0, interval_end=11.0, final_pass=False
-        ),
-    ) == result
+    # Each interval is one door job; source and final-pass changes are
+    # distinct jobs on the same bytes.
     for source_id, final_pass in (("system", False), ("device:remote-a", False), ("mic", True)):
         assert transcriber.transcribe(
             audio,
@@ -608,16 +612,13 @@ def test_meeting_transcription_routes_actual_canonical_bytes_and_exact_result(
             ),
         ) == result
     assert impl.calls == 4
+    assert _door_children(db, "meetingspeech") == ["succeeded"] * 4
     with db._connection() as conn:
-        material = conn.execute(
-            "SELECT payload_json FROM inference_adoption_material_snapshots"
-        ).fetchone()[0]
-        executions = conn.execute(
-            "SELECT terminal_outcome FROM inference_route_executions"
-        ).fetchall()
-    assert expected_sha in material
-    assert "Exact routed transcript" not in material
-    assert [row["terminal_outcome"] for row in executions] == ["succeeded"] * 4
+        journal = json.dumps([dict(row) for table in ("kernel_operations", "kernel_receipts", "kernel_journal")
+                              for row in conn.execute(f"SELECT * FROM {table}")], default=str)
+    # The transcript never reaches the kernel's journal.
+    assert "Exact routed transcript" not in journal
+    del expected_sha
 
 
 def test_deferred_faster_whisper_constructor_is_one_derived_preload_child(
@@ -645,18 +646,7 @@ def test_deferred_faster_whisper_constructor_is_one_derived_preload_child(
     session.start()
 
     assert len(constructed) == 1
-    assert next(
-        group for group in session._route_bundle["budget_groups"]
-        if group["id"] == "meeting-preload"
-    )["allocation"] == 1
-    with db._connection() as conn:
-        preload = conn.execute(
-            """SELECT e.terminal_outcome FROM inference_route_executions e
-                 JOIN inference_operation_route_request_plans o ON o.id=e.operation_plan_id
-                 JOIN inference_route_plans r ON r.id=o.route_plan_id
-                WHERE r.capability_id='speech.preload'"""
-        ).fetchall()
-    assert [row["terminal_outcome"] for row in preload] == ["succeeded"]
+    assert _door_children(db, "meetingpreload") == ["succeeded"]
 
 
 def test_meeting_transcription_refuses_a_device_absent_from_the_frozen_set(
@@ -719,13 +709,8 @@ def test_meeting_transcription_timeout_is_unknown_and_never_starts_a_second_mode
                 source_id="mic", interval_start=0.0, interval_end=1.0
             ),
         )
-    with db._connection() as conn:
-        attempts = conn.execute("SELECT COUNT(*) FROM inference_route_attempts").fetchone()[0]
-        outcome = conn.execute(
-            "SELECT terminal_outcome FROM inference_route_executions"
-        ).fetchone()[0]
-    assert attempts == 1
-    assert outcome == "indeterminate"
+    # One job, its outcome unknown; the door never retries a speech job.
+    assert _door_children(db, "meetingspeech") == ["indeterminate"]
 
 
 class _LiveEngine:
@@ -804,20 +789,16 @@ def test_live_bundle_routes_analysis_label_and_title_after_receipt_election(
 
 
 
-def test_assignment_edit_after_meeting_bundle_freeze_does_not_retarget_route(
+def test_assignment_edit_during_a_meeting_reaches_its_next_text_call(
     tmp_path: Path, monkeypatch
 ) -> None:
-    from tests.unit.test_meeting_session_admission import _bundle_session
+    """The door reads a text job's engine at each call: nothing is frozen."""
+    from holdspeak.services import engine_door
+    from tests.unit.test_meeting_session_admission import FakeIntel, _bundle_session
 
     db, broker, session = _bundle_session(tmp_path, monkeypatch)
+    broker.inference_runner._engine_factory = lambda _revision, **_kwargs: FakeIntel()
     session.start()
-    member = next(
-        item for item in session._route_bundle["members"]
-        if item["capability_id"] == "meeting.live_analysis"
-    )
-    before = broker.inference_adoption_service.plans.get_route_plan(
-        OWNER, member["route_plan_id"]
-    )
     _profile(
         db,
         "meeting-fallback-profile",
@@ -829,19 +810,30 @@ def test_assignment_edit_after_meeting_bundle_freeze_does_not_retarget_route(
     InferenceAssignmentService(db).set_assignment(
         OWNER,
         {
-            "command_id": "edit-meeting-after-freeze",
+            "command_id": "edit-meeting-during-capture",
             "expected_revision": assignment["assignment"]["revision"],
             "scope": {"kind": "capability", "capability_id": "meeting.live_analysis"},
             "entries": [{"profile_id": "meeting-fallback-profile", "profile_revision": 1}],
         },
     )
-    after = broker.inference_adoption_service.plans.get_route_plan(
-        OWNER, member["route_plan_id"]
+    edited = engine_door.engine_for(broker, "meeting.live_analysis")
+    assert edited.profile == "meeting-fallback-profile"
+    session._state.segments.append(
+        TranscriptSegment(text="After the edit", speaker="Me", start_time=0.0, end_time=1.0)
     )
-    assert after["sha256"] == before["sha256"]
-    assert [entry["deployment_revision_id"] for entry in after["entries"]] == [
-        entry["deployment_revision_id"] for entry in before["entries"]
-    ]
+    session._current_analysis_id = "after-edit"
+    outcome, _projection, _value = session._admitted_live_window(
+        "After the edit", final=False, analysis_id="after-edit"
+    )
+    assert outcome.outcome == "succeeded"
+    with db._connection() as conn:
+        target = conn.execute(
+            """SELECT target_ref FROM kernel_operations
+                WHERE name='inference.invoke' AND parent_operation_id=?
+                ORDER BY created_at DESC LIMIT 1""",
+            (session._intel_parent.operation_id,),
+        ).fetchone()["target_ref"]
+    assert target == f"deployment-revision:{edited.revision}"
 
 
 def test_live_analysis_controller_owns_compatibility_retry_then_fallback(
@@ -920,35 +912,16 @@ def test_live_analysis_controller_owns_compatibility_retry_then_fallback(
 
 
 
-def _admit_active_execution_for_each_bundle_member(broker: Any, session: Any) -> set[str]:
-    """Start (but do not dispatch) one execution on each frozen live member."""
-    assert session._route_bundle is not None
-    execution_ids: set[str] = set()
-    for member in session._route_bundle["members"]:
-        capability = str(member["capability_id"])
-        admitted = broker.inference_adoption_service.admit_on_frozen_route(
-            OWNER,
-            command_id=f"phase-b-stop-active-{capability}",
-            route_plan_id=str(member["route_plan_id"]),
-            capability_id=capability,
-            operation_id=f"phase-b-stop-active-{capability}",
-            payload={},
-            reserved_output_tokens=16,
-        )
-        execution_ids.add(str(admitted["execution"]["id"]))
-    return execution_ids
-
-
-def test_stop_fences_every_bundle_member_refuses_reservation_and_survives_restart(
+def test_stop_ends_the_parent_queues_the_owed_work_and_refuses_a_late_job(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Stop owns the complete live bundle, rather than a legacy live-plan child."""
-    from holdspeak.kernel.runtime import _configure
+    """Stop stops the live jobs, ends the parent and queues one deferred job."""
+    from holdspeak.meeting_session.intel_plan import MeetingIntelRefused
     from tests.unit.test_meeting_session_admission import _bundle_session
 
-    db, broker, session = _bundle_session(tmp_path, monkeypatch)
+    db, _broker, session = _bundle_session(tmp_path, monkeypatch)
     state = session.start()
-    execution_ids = _admit_active_execution_for_each_bundle_member(broker, session)
+    parent_id = session._intel_parent.operation_id
     state.segments.append(
         TranscriptSegment(text="Stop aftercare transcript", speaker="Me", start_time=0.0, end_time=1.0)
     )
@@ -957,67 +930,19 @@ def test_stop_fences_every_bundle_member_refuses_reservation_and_survives_restar
     session.stop()
 
     with db._connection() as conn:
-        executions = conn.execute(
-            "SELECT id,state FROM inference_route_executions WHERE id IN ({})".format(
-                ",".join("?" for _ in execution_ids)
-            ),
-            tuple(sorted(execution_ids)),
-        ).fetchall()
         parent = conn.execute(
-            "SELECT state FROM kernel_parent_runs WHERE operation_id=?",
-            (session._route_bundle["parent_operation_id"],),
+            "SELECT state FROM kernel_parent_runs WHERE operation_id=?", (parent_id,)
         ).fetchone()
         queued = conn.execute(
             "SELECT status,displaced_work FROM intel_jobs WHERE meeting_id=?", (state.id,)
         ).fetchall()
-
-    assert {str(row["id"]) for row in executions} == execution_ids
-    assert {str(row["state"]) for row in executions} == {"stopped"}
-    assert parent is not None and parent["state"] == "CANCELLING"
+    assert parent is not None and parent["state"] != "OPEN"
     assert len(queued) == 1 and queued[0]["status"] == "queued"
     assert queued[0]["displaced_work"] == (
         '["final-analysis","bookmark-labels","auto-title"]'
     )
-
-    member = session._route_bundle["members"][0]
-    with pytest.raises(ConflictError) as sealed:
-        broker.inference_adoption_service.admit_on_frozen_route(
-            OWNER,
-            command_id="phase-b-stop-late-reservation",
-            route_plan_id=str(member["route_plan_id"]),
-            capability_id=str(member["capability_id"]),
-            operation_id="phase-b-stop-late-reservation",
-            payload={},
-            reserved_output_tokens=16,
-        )
-    assert sealed.value.code == "inference_route_execution_parent_sealed"
-
-    # A fresh process receives the same durable seal; it cannot resume these live
-    # executions or open a new one on their frozen bundle route.
-    fresh = _configure(db)
-    with db._connection() as conn:
-        resumed = conn.execute(
-            "SELECT state FROM inference_route_executions WHERE id IN ({})".format(
-                ",".join("?" for _ in execution_ids)
-            ),
-            tuple(sorted(execution_ids)),
-        ).fetchall()
-    assert {str(row["state"]) for row in resumed} == {"stopped"}
-    with pytest.raises(ConflictError) as restarted:
-        fresh.inference_adoption_service.admit_on_frozen_route(
-            OWNER,
-            command_id="phase-b-stop-restart-reservation",
-            route_plan_id=str(member["route_plan_id"]),
-            capability_id=str(member["capability_id"]),
-            operation_id="phase-b-stop-restart-reservation",
-            payload={},
-            reserved_output_tokens=16,
-        )
-    assert restarted.value.code == "inference_route_execution_parent_sealed"
-    with db._connection() as conn:
-        assert conn.execute(
-            "SELECT COUNT(*) FROM intel_jobs WHERE meeting_id=?", (state.id,)
-        ).fetchone()[0] == 1
+    with pytest.raises(MeetingIntelRefused):
+        session._admitted_auto_title("late")
 
 
 def test_stop_discards_a_late_routed_live_result_and_signals_its_child(
@@ -1097,7 +1022,7 @@ def test_stop_discards_a_late_routed_live_result_and_signals_its_child(
 def test_stop_aftercare_upserts_one_legacy_deferred_row_for_bundle_and_record_only(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, bundle_backed: bool
 ) -> None:
-    """Only an admitted bundle may hand displaced work to legacy aftercare."""
+    """Only an admitted Meeting hands displaced work to the deferred queue."""
     from holdspeak.kernel.runtime import _configure
     from holdspeak.meeting_session import MeetingSession
     from tests.unit.test_meeting_session_admission import FakeJournal, FakeRecorder, _bundle_session
@@ -1105,6 +1030,12 @@ def test_stop_aftercare_upserts_one_legacy_deferred_row_for_bundle_and_record_on
     if bundle_backed:
         db, _broker, session = _bundle_session(tmp_path, monkeypatch)
     else:
+        from holdspeak.services import engine_door
+
+        def no_engine(*_args: Any, **_kwargs: Any) -> Any:
+            raise engine_door.EngineDoorError("no_engine", "nothing assigned")
+
+        monkeypatch.setattr(engine_door, "engine_for", no_engine)
         db = Database(tmp_path / "record-only-stop.db")
         _configure(db)
         monkeypatch.setattr("holdspeak.db.get_database", lambda: db)
@@ -1120,6 +1051,7 @@ def test_stop_aftercare_upserts_one_legacy_deferred_row_for_bundle_and_record_on
         session = MeetingSession(_Transcriber(), principal=OWNER, intel_enabled=True)  # type: ignore[arg-type]
 
     state = session.start()
+    parent_id = session._intel_parent.operation_id if session._intel_parent is not None else ""
     state.segments.append(
         TranscriptSegment(text="Deferred aftercare", speaker="Me", start_time=0.0, end_time=1.0)
     )
@@ -1136,22 +1068,22 @@ def test_stop_aftercare_upserts_one_legacy_deferred_row_for_bundle_and_record_on
         parent = (
             conn.execute(
                 "SELECT state FROM kernel_parent_runs WHERE operation_id=?",
-                ((session._route_bundle or {}).get("parent_operation_id", ""),),
+                (parent_id,),
             ).fetchone()
             if bundle_backed
             else None
         )
 
     if bundle_backed:
-        # An admitted live bundle still owns Stop aftercare and its parent seal.
+        # An admitted Meeting queues its owed work once and ends its parent.
         assert [(row["status"], row["displaced_work"]) for row in rows] == [(
             "queued", '["final-analysis","bookmark-labels","auto-title"]'
         )]
-        assert parent is not None and parent["state"] == "CANCELLING"
+        assert parent is not None and parent["state"] != "OPEN"
     else:
-        # A refused/unassigned recording has no bundle or text work to hand off.
+        # A refused/unassigned recording has no parent or text work to hand off.
         assert rows == []
-        assert session._route_bundle is None
+        assert session._live_engines is None
         assert state.transcription_status == "record_only"
         assert state.transcription_status_detail["reason_code"] == "no_assignment"
         assert state.intel_status == "refused"
@@ -1366,21 +1298,6 @@ def test_mlx_preload_sequence_stops_before_a_second_physical_call_after_cancella
             cancellation=cancelled,
         )
     assert physical == [("model-holder", "repo-a")]
-
-
-def test_unavailable_frozen_live_member_stays_queued_not_live(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    """Live readiness reads frozen preflight eligibility rather than member presence."""
-    from tests.unit.test_meeting_session_admission import _bundle_session
-
-    db, _broker, session = _bundle_session(tmp_path, monkeypatch)
-    with db._connection() as conn:
-        conn.execute(
-            "UPDATE model_profile_readiness_observations SET state='unavailable',reason_code='fault-injected-unavailable'"
-        )
-    state = session.start()
-    assert session._route_bundle is not None
-    assert state.intel_status == "queued"
-    assert state.intel_status_detail == "Queued for later processing: binding_not_ready"
 
 
 def test_persisted_v1_plan_is_displayable_history_without_a_resume_route() -> None:

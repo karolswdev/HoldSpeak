@@ -59,15 +59,11 @@ class BookmarkViewsMixin:
         Liveness is the explicit session state and the capability comes from the
         FROZEN plan — never from the presence of an engine object.
         """
-        bundle = getattr(self, "_route_bundle", None)
         return bool(
             self._intel_live
             and not self._intel_closed
             and self._intel_parent is not None
-            and any(
-                item.get("capability_id") == ROUTE_BOOKMARK_LABEL
-                for item in (bundle or {}).get("members", ())
-            )
+            and ROUTE_BOOKMARK_LABEL in (getattr(self, "_live_engines", None) or {})
         )
 
     def _generate_bookmark_label(

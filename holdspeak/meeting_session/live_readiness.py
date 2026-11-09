@@ -41,50 +41,20 @@ class LiveReadinessMixin:
         `queued` (or `error`, with deferral off) status and the same sentence the
         runtime preflight produced, with no child and no engine.
         """
-        bundle = getattr(self, "_route_bundle", None)
         self._intel_live = False
         self._segments_since_intel = 0
         if self._state is None:
             return
-        member = next(
-            (
-                item for item in (bundle or {}).get("members", ())
-                if item.get("capability_id") == ROUTE_LIVE_ANALYSIS
-            ),
-            None,
-        )
-        if member is None:
+        if ROUTE_LIVE_ANALYSIS not in (getattr(self, "_live_engines", None) or {}):
             self._defer_live_intelligence(_NOT_ADMITTED)
             return
-
-        # Read the frozen leg's own admission evidence.  A bundle member alone
-        # proves selection, not that its first physical leg was eligible.
-        from ..db import get_database
-
-        with get_database()._connection() as conn:
-            preflight = conn.execute(
-                """SELECT eligibility,reason_code
-                     FROM inference_route_plan_preflight_evidence
-                    WHERE plan_id=? AND route_leg_ordinal=1""",
-                (str(member["route_plan_id"]),),
-            ).fetchone()
-        if preflight is None or str(preflight["eligibility"]) == "known_preflight_unavailable":
-            self._defer_live_intelligence(
-                "" if preflight is None else str(preflight["reason_code"] or _UNAVAILABLE)
-            )
-            return
-
-        # The bundle route is already frozen and preflighted.  Do not re-resolve
-        # placement here: a first actual operation lets the controller interpret
-        # the immutable availability evidence.
+        # The door named an engine for the live analysis; the first call runs
+        # on it (and once on the next engine of the chain if it fails).
         self._intel_live = True
         self._deferred_intel_reason = None
         self._state.intel_status = "live"
         self._state.intel_status_detail = _DEFAULT_DETAIL
-        log.info(
-            "live meeting intelligence bundle ready: route=%s",
-            member["route_plan_id"],
-        )
+        log.info("live meeting intelligence ready")
 
     def _defer_live_intelligence(self, reason: str) -> None:
         """The pre-existing not-ready branch, now fed by plan readiness facts."""
