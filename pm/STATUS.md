@@ -2,6 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-08 · Fix forward #2006/#1945 (web): the object-menu and capability cases of the parked chain/workflow kinds leave (two parked as text), the Processes empty sprite is the cartridge again, and the arrival row's missing Done verb (since #1945) is a strict known defect.
 - 2026-11-08 · (PR) Fix forward the quick check on 3d39a8de0: an automation's run that a caller waits on (an event start, Draft update) now finishes when the Programs engine is off (the step was left Planned), and an agent engine works in the automation's Folder again; the plan seed plans by itself unless a recorded Plan it scene says not; the graph walk's map names the 42 Programs descriptors; delivery, race and folder scenes re-recorded.
 - 2026-11-08 · Fix forward #2020: three slow-tier files had one slow case each; their fast cases are back (memory engine, meeting import, base-install catalogue) and only the slow case stays parked; test_meaning_search_turn_on imports again.
 - 2026-11-08 · (PR) Fix forward #2014: the Programs, reach and briefing fixtures are re-recorded through the real routes with the step wire (kind, deliver, sources); the plan seed records his Plan it press (plan_goal off). No face change.
