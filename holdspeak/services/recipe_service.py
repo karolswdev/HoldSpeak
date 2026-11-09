@@ -377,10 +377,6 @@ class RecipeService:
         if payload["grounding"] is not None: output["grounding"] = payload["grounding"]
         return output
 
-    def cancel(self, principal: Principal, invocation_id: str) -> dict[str, str]:
-        from ..kernel.runtime import _as_principal
-        with _as_principal(principal): return {"invocation_id": invocation_id, "disposition": self._runner.cancel(invocation_id)}
-
     def keep(self, principal: Principal, recipe_id: str, *, output: str, input: str = "", sources: list[dict[str, str]] | None = None) -> dict[str, Any]:
         from .support import _persist_run_artifact
         if not str(output or "").strip(): raise ValidationError("output is required")

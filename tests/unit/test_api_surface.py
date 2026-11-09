@@ -173,11 +173,11 @@ def test_a_dynamic_call_tags_nothing_by_itself(live) -> None:
     source = 'await apiFetch(`/api/${path}/${encodeURIComponent(id)}`, { method: "DELETE" });\n'
     assert gen.web_call_sites(source) == {("DELETE", "/api/*/*")}
     assert gen.extract_from_text(source) == set()
-    routes = _routes(("DELETE", "/api/notes/{note_id}"), ("GET", "/api/cadence/loops/{loop_id}"))
+    routes = _routes(("DELETE", "/api/notes/{note_id}"), ("GET", "/api/invocations/{invocation_id}"))
     assert _web_tagged(routes, source) == set()
-    loop = next(r for r in live["routes"] if r["path"] == "/api/cadence/loops/{loop_id}"
-                and r["methods"] == ["GET"])
-    assert "web" not in loop["consumers"]
+    one = next(r for r in live["routes"] if r["path"] == "/api/invocations/{invocation_id}"
+               and r["methods"] == ["GET"])
+    assert "web" not in one["consumers"]
 
 
 def test_a_dynamic_call_with_no_hand_entry_is_listed_unresolved() -> None:

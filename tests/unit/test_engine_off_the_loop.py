@@ -14,7 +14,6 @@ below distinguishes the two cases deterministically.
 from __future__ import annotations
 
 import asyncio
-import time
 
 import pytest
 from fastapi import FastAPI
@@ -108,7 +107,7 @@ def test_ask_runs_the_engine_off_the_loop(env, spy) -> None:
     _assert_off_loop(spy)
 
 
-def test_recipe_run_and_chat_run_the_engine_off_the_loop(env, spy) -> None:
+def test_recipe_run_runs_the_engine_off_the_loop(env, spy) -> None:
     _, client = env
     rid = client.post(
         "/api/recipes",
@@ -117,17 +116,3 @@ def test_recipe_run_and_chat_run_the_engine_off_the_loop(env, spy) -> None:
 
     assert client.post(f"/api/recipes/{rid}/run", json={"input": "hi"}).status_code == 200
     _assert_off_loop(spy)
-
-    spy.on_loop = None
-    resp = client.post(f"/api/recipes/{rid}/chat", json={"question": "hi"})
-    # The thread alias returns 201 and dispatches the engine on a daemon
-    # thread (the request never blocks the loop). Wait briefly for the
-    # daemon to fire the spy before asserting.
-    assert resp.status_code == 201
-    for _ in range(100):
-        if spy.on_loop is not None:
-            break
-        time.sleep(0.02)
-    _assert_off_loop(spy)
-
-

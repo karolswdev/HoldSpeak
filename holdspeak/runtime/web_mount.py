@@ -27,7 +27,6 @@ def mount_routers(app: Any, hub: HubComposition, *, auth_token: Optional[str]) -
         build_automations_router,
         build_authority_router,
         build_cadence_router,
-        build_calendar_events_router,
         build_calendar_snapshot_router,
         build_calendar_sources_router,
         build_core_router,
@@ -87,7 +86,6 @@ def mount_routers(app: Any, hub: HubComposition, *, auth_token: Optional[str]) -
     mount_router(app, build_core_router(web_ctx))
     mount_router(app, build_authority_router(web_ctx))
     mount_router(app, build_cadence_router(web_ctx))
-    mount_router(app, build_calendar_events_router(web_ctx))
     mount_router(app, build_calendar_snapshot_router(web_ctx))
     mount_router(app, build_calendar_sources_router(web_ctx))
     mount_router(app, build_follow_through_router(web_ctx))

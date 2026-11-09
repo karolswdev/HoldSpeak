@@ -56,8 +56,11 @@ def _seed(home: Path, base: str) -> dict[str, Any]:
           {"calendar": {"sources": [{"id": "p13-06-week", "label": "Work", "url": str(ics), "enabled": True}]}})
     from holdspeak.calendar_ingest_conductor import CalendarIngestConductor
     assert CalendarIngestConductor().refresh() is True
-    events = {e["title"]: e for e in _http(base, "GET", "/api/calendar/events")["events"]}
-    _http(base, "POST", f"/api/calendar/events/{events['Ledger cutover sync']['id']}/link", {"project_id": "p-ledger"})
+    # The Room link is seeded on the store (the /api/calendar/events routes are parked, 2026-11-08).
+    from holdspeak.db import get_database
+    db = get_database()
+    sync = next(e for e in db.calendar_events.list_all() if e.title == "Ledger cutover sync")
+    db.calendar_event_projects.link(sync.id, "p-ledger", "manual")
     _http(base, "POST", f"/api/people/relationships/{priya}/calendar-links",
           {"uid": "p13-06-1on1", "source_id": "p13-06-week", "label": ONE_ON_ONE})
     brief = _http(base, "POST", "/api/brief/generate", {})

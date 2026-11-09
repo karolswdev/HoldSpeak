@@ -1,3 +1,8 @@
+"""PARKED 20261108 (late evening, the left-routes pass): routes no client calls; only their own tests held them.
+
+Parked from ``holdspeak/web/routes/calendar_events.py`` (the whole module): GET /api/calendar/events, POST and DELETE /api/calendar/events/{event_id}/link.
+Not imported. Kept for history; restore with ``git revert`` of the parking commit.
+"""
 """HS-175-02: Calendar event API routes.
 
 POST /api/calendar/events/{id}/link -- manually link an event to a Room.

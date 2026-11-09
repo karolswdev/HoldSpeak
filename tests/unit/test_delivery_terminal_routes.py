@@ -143,11 +143,10 @@ def rig(tmp_path):
 
 
 def _target(rig) -> dict:
-    res = rig.client.post(
-        "/api/delivery/terminal/targets", json={"ref": "pane:%5"}
-    )
-    assert res.status_code == 200
-    return res.json()
+    """Issue the pane's target on the registry (the web reads targets from /sessions)."""
+    issued = rig.targets.issue("pane:%5")
+    assert issued["status"] == "issued"
+    return issued
 
 
 def _steer_body(target: dict, **payload_extra) -> dict:
@@ -162,18 +161,6 @@ def _steer_body(target: dict, **payload_extra) -> dict:
             **payload_extra,
         },
     }
-
-
-def test_target_issue_and_dead_pane_refusal(rig) -> None:
-    issued = _target(rig)
-    assert issued["status"] == "issued"
-    assert issued["pane_id"] == "%5"
-    assert issued["node_id"] == "local"
-    gone = rig.client.post(
-        "/api/delivery/terminal/targets", json={"ref": "pane:%404"}
-    )
-    assert gone.status_code == 404
-    assert gone.json()["status"] == "pane_gone"
 
 
 def test_subscription_snapshot_deltas_and_typed_absences(rig) -> None:
@@ -376,12 +363,9 @@ def test_command_submit_duplicate_and_receipt_join(rig) -> None:
     assert again.json()["receipt"]["receipt_id"] == receipt["receipt_id"]
     assert len(rig.transport_calls) == 1
 
-    joined = rig.client.get(
-        "/api/delivery/terminal/commands/aaaaaaaa-bbbb-cccc-dddd-eeeeffff0001"
-    )
-    assert joined.status_code == 200
-    assert joined.json()["hub_state"] == "complete"
-    assert joined.json()["receipt"]["receipt_id"] == receipt["receipt_id"]
+    joined = rig.service.receipt("aaaaaaaa-bbbb-cccc-dddd-eeeeffff0001")
+    assert joined["hub_state"] == "complete"
+    assert joined["receipt"]["receipt_id"] == receipt["receipt_id"]
 
 
 def test_resize_command_route_passes_authenticated_principal(rig, monkeypatch) -> None:
@@ -415,13 +399,3 @@ def test_client_authority_is_refused_by_name(rig) -> None:
     assert res.status_code == 400
     assert res.json()["error"] == "authority_not_client_settable"
     assert rig.transport_calls == []
-
-
-def test_unknown_command_id_receipt_is_404(rig) -> None:
-    res = rig.client.get(
-        "/api/delivery/terminal/commands/99999999-0000-0000-0000-000000000000"
-    )
-    assert res.status_code == 404
-    assert res.json()["error"] == "unknown_command_id"
-
-

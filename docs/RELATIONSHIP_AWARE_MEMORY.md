@@ -129,7 +129,7 @@ These verbs write through the normal services:
 
 - **Carry into brief** calls `POST /api/decision-records/{id}/carry`. It records the current Decision, by reference, for the Project's next preparation. A repeat press has no further effect.
 - **Name an owner**, **Set a date**, and **Mark done** call `POST /api/follow-through/complete` with the verb `delegate`, `due`, or `done`.
-- `POST /api/decision-records/{id}/supersede` and `/dispute` seal a record.
+- The decision record service seals a record (supersede) or marks it disputed. These verbs have no HTTP route.
 
 Only **Mark done** and `dismiss` close a commitment. Each leaves a receipt.
 A closed commitment refuses `delegate` and `due` until you reopen it.

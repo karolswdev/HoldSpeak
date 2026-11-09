@@ -283,8 +283,12 @@ def _seed_continuity_chain(hub: Hub) -> dict[str, Any]:
                                       rationale="Least traffic on Saturday"))
     new = confirm(_continuity_propose("m-sun", pid, "decision", NEW_TEXT, segment_index=2, rationale=NEW_WHY))
     cmt = confirm(_continuity_propose("m-sun", pid, "action", CMT_TEXT, segment_index=3))
-    sealed = _ok(hub.client.post(f"/api/decision-records/{old['decision_record_id']}/supersede",
-                                 json={"successor_id": new["decision_record_id"], "reason": "moved to Sunday"}))
+    from holdspeak.db import get_database
+    from holdspeak.services.decision_record_service import DecisionRecordService
+
+    sealed = DecisionRecordService(get_database()).supersede(
+        Principal(PrincipalKind.OWNER, "pytest"), old["decision_record_id"], new["decision_record_id"], "moved to Sunday",
+    )
     assert sealed["lifecycle"] == "superseded", sealed
     return {"project_id": pid, "old": old, "new": new, "cmt": cmt}
 
