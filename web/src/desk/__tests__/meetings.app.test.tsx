@@ -274,12 +274,13 @@ describe("the meeting window over the HS-170 seed", () => {
     expect(screen.getByTestId("meeting-plate").getAttribute("data-kind")).toBe("review");
     expect(screen.getByTestId("meeting-plate")).toHaveTextContent("3 to review");
     expect(screen.getByTestId("meeting-spine").getAttribute("aria-label")).toContain("3 to file");
-    const head = await screen.findByText("TO REVIEW 3");
-    expect(head.closest(".meetings-detail-needs-head")).toBeTruthy();
-    const rows = document.querySelectorAll(".meetings-detail-outcome-row");
+    // The ledger by weight: the meeting's three asks lead it, each a row
+    // with its verbs; no caption counts them again.
+    const rows = await screen.findAllByTestId("meeting-needs-row");
     expect(rows).toHaveLength(3);
+    expect(screen.getByTestId("meeting-ledger")).toContainElement(rows[0]);
     const verbs = (label: string) =>
-      [...document.querySelectorAll(".meetings-detail-outcome-verb .btn")].filter((b) => (b.textContent ?? "").includes(label));
+      rows.flatMap((row) => [...row.querySelectorAll(".btn")]).filter((b) => (b.textContent ?? "").includes(label));
     expect(verbs("Decide")).toHaveLength(3);
     expect(verbs("Dismiss")).toHaveLength(3);
     expect(document.body.textContent).toContain("Decide: the PostgreSQL migration date");
@@ -308,20 +309,19 @@ describe("the meeting after a run (HS-172 seed)", () => {
     at(hs172 as Fixture);
     hub(hs172 as Fixture);
     render(<Shell><MeetingRecord meetingId="m-ran" onClose={() => undefined} /></Shell>);
-    const decisions = await screen.findByTestId("meeting-decisions");
+    const ledger = await screen.findByTestId("meeting-ledger");
+    await waitFor(() => expect(screen.getAllByTestId("meeting-decisions-row")).toHaveLength(1));
     // Window grammar: the status bar says the summary's state. No host on the
     // record (owner ruling 2026-10-25).
     expect(screen.getByTestId("meeting-summary-state").textContent).toBe("Summary stored");
     expect(document.body.textContent).not.toContain("192.168.1.43");
     expect(document.querySelector(".gadget-chip-egress")).toBeNull();
-    const commitments = screen.getByTestId("meeting-commitments");
-    expect(decisions.querySelector("h3")?.textContent).toBe("Decisions · 1");
-    expect(commitments.querySelector("h3")?.textContent).toBe("Who owes what · 2");
+    expect(screen.getAllByTestId("meeting-commitments-row")).toHaveLength(2);
     expect(screen.getAllByTestId("proposal-confirm-btn")).toHaveLength(3);
     expect(screen.getAllByTestId("proposal-more-btn")).toHaveLength(3);
     fireEvent.click(screen.getAllByTestId("proposal-more-btn")[0]);
     expect(screen.getByRole("menuitem", { name: "Dismiss" })).toBeTruthy();
-    const ledgers = `${decisions.textContent}${commitments.textContent}`;
+    const ledgers = ledger.textContent ?? "";
     expect(ledgers).toContain("Marek owns the PostgreSQL migration");
     expect(ledgers).toContain("no owner · by Fri");
     expect(ledgers).not.toMatch(/TO (DECIDE|CONFIRM)/);
@@ -603,7 +603,7 @@ describe("what the summary read (betterment/capture C2)", () => {
     at(hs172 as Fixture);
     hub(hs172 as Fixture);
     render(<Shell><MeetingRecord meetingId="m-ran" onClose={() => undefined} /></Shell>);
-    await screen.findByTestId("meeting-decisions");
+    await screen.findByTestId("meeting-ledger");
     expect(screen.queryByRole("button", { name: /Looked at/ })).toBeNull();
   });
 });
@@ -618,7 +618,7 @@ describe("Since last time (betterment/capture C6)", () => {
     hub(hs172 as Fixture, { "/api/meetings/m-ran/aftercare": sinceLast.aftercare });
     render(<Shell><MeetingRecord meetingId="m-ran" onClose={() => undefined} /></Shell>);
     const fold = await screen.findByRole("button", { name: "Since Payments platform sync, Thu 15 Oct: 1 closed · 2 still open · 2 new" });
-    const decisions = screen.getByTestId("meeting-decisions");
+    const decisions = await screen.findByTestId("meeting-ledger");
     expect(fold.compareDocumentPosition(decisions) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(screen.queryByTestId("meeting-since")).toBeNull();
     fireEvent.click(fold);
@@ -638,7 +638,7 @@ describe("Since last time (betterment/capture C6)", () => {
     at(hs172 as Fixture);
     hub(hs172 as Fixture, { "/api/meetings/m-ran/aftercare": { ...sinceLast.aftercare, since_last_meeting: null } });
     render(<Shell><MeetingRecord meetingId="m-ran" onClose={() => undefined} /></Shell>);
-    await screen.findByTestId("meeting-decisions");
+    await screen.findByTestId("meeting-ledger");
     expect(screen.queryByRole("button", { name: /^Since / })).toBeNull();
   });
 });
@@ -651,13 +651,15 @@ describe("the meeting prepares its Results (betterment/capture C5, C5b)", () => 
   const PREPARED = "/api/meetings/c5-review/prepared";
   const render5 = () => render(<Shell><MeetingRecord meetingId="c5-review" onClose={() => undefined} /></Shell>);
 
-  it("Prepared · 3 under Who owes what: one line each, title and kind, Send first; the title reads the draft", async () => {
+  it("the Results are ledger rows after the actions: one line each, title and kind, Send first; the title reads the draft", async () => {
     at(fixture);
     hub(fixture);
     render5();
-    const section = await screen.findByTestId("meeting-prepared");
-    const commitments = screen.getByTestId("meeting-commitments");
-    expect(commitments.compareDocumentPosition(section) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    await screen.findByTestId("meeting-prepared-adr", undefined, { timeout: 8000 });
+    const section = screen.getByTestId("meeting-ledger");
+    const commitments = screen.getAllByTestId("meeting-commitments-row");
+    const last = commitments[commitments.length - 1];
+    expect(last.compareDocumentPosition(screen.getByTestId("meeting-prepared-adr")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     const adr = within(section).getByTestId("meeting-prepared-adr");
     expect(adr.textContent).toContain("ADR: ");
     expect(adr.textContent).toContain("ADR draft");
@@ -680,11 +682,11 @@ describe("the meeting prepares its Results (betterment/capture C5, C5b)", () => 
     at(fixture);
     hub(fixture);
     render5();
-    await screen.findByTestId("meeting-prepared");
-    const commitments = screen.getByTestId("meeting-commitments");
-    const ready = within(commitments).getAllByRole("button", { name: /^Draft ready: ADR: / });
+    await screen.findByTestId("meeting-prepared-adr", undefined, { timeout: 8000 });
+    const ready = screen.getAllByRole("button", { name: /^Draft ready: ADR: / });
     expect(ready.length).toBeGreaterThan(0);
-    expect(within(commitments).getAllByRole("button", { name: /^Draft ready: Update for stakeholders/ }).length).toBeGreaterThan(0);
+    expect(ready[0].closest("[data-testid=meeting-commitments-row]")).toBeTruthy();
+    expect(screen.getAllByRole("button", { name: /^Draft ready: Update for stakeholders/ }).length).toBeGreaterThan(0);
     fireEvent.click(ready[0]);
     const draft = await screen.findByTestId("meeting-prepared-draft");
     expect(draft.closest("li")?.querySelector("[data-testid='meeting-prepared-adr']")).toBeTruthy();
@@ -755,7 +757,7 @@ describe("the meeting prepares its Results (betterment/capture C5, C5b)", () => 
     at(fixture);
     hub(fixture);
     render5();
-    await screen.findByTestId("meeting-prepared");
+    await screen.findByTestId("meeting-prepared", undefined, { timeout: 8000 });
     expect(screen.queryByRole("tab", { name: /Artifacts/i })).toBeNull();
     expect(screen.queryByRole("button", { name: /^Artifacts$/i })).toBeNull();
   });

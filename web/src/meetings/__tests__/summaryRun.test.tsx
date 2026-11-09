@@ -17,7 +17,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError, apiFetch } from "../../lib/api";
 import { MeetingIntelRecovery } from "../MeetingIntelRecovery";
-import { MeetingSummarySlab, readMeetingIntel } from "../MeetingSummarySlab";
+import { MeetingSummary, readMeetingIntel } from "../MeetingSummarySlab";
 import { RouteDisclosure, RunAttempts, routeTitle } from "../RouteDisclosure";
 import { EgressChip } from "../../desk/surface/gadgets";
 import {
@@ -25,7 +25,7 @@ import {
   readPlannedRoute,
   readRunReceipt,
 } from "../summaryRoute";
-import { NeedsYouTable } from "../../pages/cores/history/NeedsYouTable";
+import { SummaryRunVerbs } from "../../pages/cores/history/SummaryRunVerbs";
 
 vi.mock("../../lib/api", async (original) => ({
   ...(await original<typeof import("../../lib/api")>()),
@@ -283,13 +283,11 @@ describe("HS-201-04 the record's Retry", () => {
   });
 });
 
-describe("HS-201-04 the record's NEEDS YOU verbs", () => {
+describe("HS-201-04 the record's run verbs", () => {
   it("discloses the route and withholds Run when none resolves", () => {
     const { rerender } = render(
-      <NeedsYouTable
-        needsRows={[]}
-        needsCount={0}
-        intelOff
+      <SummaryRunVerbs
+                intelOff
         intelState="disabled"
         hasTranscript
         plannedRoute={readPlannedRoute({ planned_route: READY_ROUTE })}
@@ -300,10 +298,8 @@ describe("HS-201-04 the record's NEEDS YOU verbs", () => {
     expect(screen.queryByTestId("detail-route")).toBeNull();
 
     rerender(
-      <NeedsYouTable
-        needsRows={[]}
-        needsCount={0}
-        intelOff
+      <SummaryRunVerbs
+                intelOff
         intelState="disabled"
         hasTranscript
         plannedRoute={readPlannedRoute({ planned_route: UNAVAILABLE_ROUTE })}
@@ -322,7 +318,7 @@ describe("HS-201-04 the summary on the record", () => {
     const intel = readMeetingIntel({
       intel: { summary: "The team reviewed the budget.", topics: ["Budget"] },
     });
-    render(<MeetingSummarySlab intel={intel} receipt={readRunReceipt({ run_receipt: SUCCEEDED_RECEIPT })} />);
+    render(<MeetingSummary intel={intel} receipt={readRunReceipt({ run_receipt: SUCCEEDED_RECEIPT })} />);
     expect(screen.getByTestId("meeting-summary-text").textContent).toBe(
       "The team reviewed the budget.",
     );
@@ -335,7 +331,7 @@ describe("HS-201-04 the summary on the record", () => {
 
   it("draws nothing at all when no summary was produced", () => {
     const { container } = render(
-      <MeetingSummarySlab intel={readMeetingIntel({ intel: null })} receipt={null} />,
+      <MeetingSummary intel={readMeetingIntel({ intel: null })} receipt={null} />,
     );
     expect(container.textContent).toBe("");
   });

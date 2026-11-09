@@ -265,7 +265,7 @@ export function finishedRunReceipt(state: string, at: string): Receipt {
   return { text: `${said.charAt(0).toUpperCase()}${said.slice(1)} at ${clock}` };
 }
 
-/** Needs-you table row shape shared between useMeetingData and NeedsYouTable. */
+/** A needs-you row of the ledger (useMeetingData builds them; MeetingDetail draws them). */
 export type NeedsRow = { cells: ReactNode[]; verbs: ReactNode };
 
 /** HS-170-04 — `1,204 WORDS` token from transcriptWords. Null when

@@ -1,5 +1,5 @@
 // betterment/capture C5, C5b — the Results the meeting prepared.
-// Under Outcomes: "Prepared · N", one line per Result (the follow-up, then
+// Rows of the meeting's one ledger (MeetingDetail), one per Result (the follow-up, then
 // each draft the meeting asked for or he asked for: an ADR, an update for
 // stakeholders, a diagram …). A line is its title and its kind, its verbs on
 // the right: Send (the lead verb; the shared Send well opens under the line,
@@ -10,7 +10,7 @@
 // POST /api/meetings/<id>/prepare (a drafts-only job; never the summary).
 import { useEffect, useRef, useState } from "react";
 import { Button } from "../../../components/signal/Signal";
-import { SurfaceLedger, SurfaceLedgerRow, SurfaceSection } from "../../../desk/surface";
+import { SurfaceLedgerRow } from "../../../desk/surface";
 import { RunLine } from "../../../desk/surface/RunLine";
 import { SendWells } from "../../../desk/surface/send";
 import { artifactDoc } from "../../../desk/documentSends";
@@ -147,7 +147,6 @@ export function PreparedResults({ meetingId, results, canPrepare = [], selection
   const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
   const [asking, setAsking] = useState<string | null>(null);
   const [refusal, setRefusal] = useState("");
-  const section = useRef<HTMLDivElement>(null);
   const prepareRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     const onOpen = (event: Event) => {
@@ -155,7 +154,7 @@ export function PreparedResults({ meetingId, results, canPrepare = [], selection
       if (!detail || detail.meetingId !== meetingId) return;
       setOpen(detail.kind);
       window.requestAnimationFrame(() => {
-        section.current?.querySelector(`[data-testid="meeting-prepared-${detail.kind}"]`)
+        document.querySelector(`[data-testid="meeting-prepared-${detail.kind}"]`)
           ?.scrollIntoView?.({ block: "nearest", behavior: "smooth" });
       });
     };
@@ -205,15 +204,11 @@ export function PreparedResults({ meetingId, results, canPrepare = [], selection
       ) : null}
     </>
   ) : null;
+  // The language (2026-11-08): the Results are rows of the meeting's one
+  // ledger (MeetingDetail), after the decisions and actions; Prepare… is
+  // the last row's verb.
   return (
-    <div ref={section}>
-      {/* 2026-10-25 audit: Prepare… sits at the right of the caption (its
-          actions slot), not alone in a blank band above the rows. */}
-      <SurfaceSection label="Prepared" count={results.length || null} data-testid="meeting-prepared"
-        className="meeting-outcome-section meeting-prepared-section" actions={controls}>
-        <SurfaceLedger label="Prepared" cols="meeting-outcomes">
-          {refusal ? <p className="meeting-prepared-failed" role="alert">{refusal}</p> : null}
-          <ul className="surface-ledger-rows">
+    <>
             {results.map((result) => {
               const ready = result.state === "ready";
               const failed = result.state === "failed";
@@ -267,10 +262,11 @@ export function PreparedResults({ meetingId, results, canPrepare = [], selection
                 </SurfaceLedgerRow>
               );
             })}
-          </ul>
-        </SurfaceLedger>
-      </SurfaceSection>
-    </div>
+      {controls || refusal ? (
+        <SurfaceLedgerRow data-testid="meeting-prepared" primary="Prepare one more"
+          meta={refusal || undefined} metaTone={refusal ? "fail" : undefined} expands={false} trailing={controls} />
+      ) : null}
+    </>
   );
 }
 
