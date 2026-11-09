@@ -1,8 +1,10 @@
 """Evidence dossiers + safe asset browsing (HS-94-05).
 
-Every class runs the REAL vendored dw at `.githooks/dw` as a
-subprocess against real scratch rails repos built in tmp_path (the
-counterpart-contract discipline) — standard layout, self-hosted
+Every class runs the REAL vendored dw at `.githooks/dw` against real
+scratch rails repos built in tmp_path (the counterpart-contract
+discipline): its own `main` in this process (`_in_process_dw`, the same
+argv, exit code and stdout bytes; no Python start per call), and one test
+through the product's subprocess runner — standard layout, self-hosted
 layout, and a linked git worktree. Covered: dossier completeness with
 sanitized Markdown, pass/fail captured-run distinction, the
 bundle-keyed manifest cache (bounded, revision-aware, honest offline),
@@ -14,9 +16,14 @@ capped blocks.
 
 from __future__ import annotations
 
+import contextlib
+import importlib.machinery
+import importlib.util
+import io
 import subprocess
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -171,6 +178,34 @@ def _real_dw_argv(root: Path) -> list[str]:
     return [sys.executable, str(DW), "--root", str(root)]
 
 
+_DW_MODULE = None
+
+
+def _in_process_dw(argv, cwd=None, *, binary=False):
+    """The product runner's answer for ``[python, .githooks/dw, ...]``
+    (exit code, stdout as text or bytes, stderr) from dw's own ``main`` in
+    this process; any other argv goes to the product's subprocess runner."""
+    global _DW_MODULE
+    if list(argv[:2]) != [sys.executable, str(DW)]:
+        return _default_runner(argv, cwd, binary=binary)
+    if _DW_MODULE is None:
+        loader = importlib.machinery.SourceFileLoader("_dw_cli_in_process", str(DW))
+        _DW_MODULE = importlib.util.module_from_spec(importlib.util.spec_from_loader(loader.name, loader))
+        loader.exec_module(_DW_MODULE)
+    out_bytes, err = io.BytesIO(), io.StringIO()
+    out = io.TextIOWrapper(out_bytes, encoding="utf-8", errors="replace", write_through=True)
+    with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+        try:
+            code = _DW_MODULE.main(list(argv[2:]))
+        except SystemExit as exc:  # argparse refusals
+            code = exc.code if isinstance(exc.code, int) else 1
+        out.flush()
+    raw = out_bytes.getvalue()
+    stdout = raw if binary else raw.decode("utf-8", errors="replace")
+    return SimpleNamespace(returncode=int(code or 0), stdout=stdout,
+                           stderr=err.getvalue().encode() if binary else err.getvalue())
+
+
 class FlakyRunner:
     """Delegates to the real runner until flipped down (node offline)."""
 
@@ -180,7 +215,7 @@ class FlakyRunner:
     def __call__(self, argv, cwd=None, *, binary=False):
         if self.down:
             raise OSError("node offline")
-        return _default_runner(argv, cwd, binary=binary)
+        return _in_process_dw(argv, cwd, binary=binary)
 
 
 def _service(
@@ -198,7 +233,7 @@ def _service(
     source, _wt = registry.register(str(repo), label=label)
     service = DossierService(
         registry,
-        runner=runner,
+        runner=runner or _in_process_dw,
         dw_argv_factory=_real_dw_argv,
         max_age_seconds=max_age_seconds,
         max_entries=max_entries,
@@ -259,7 +294,8 @@ def _manifest_calls(service: DossierService) -> int:
 class TestStoryDossier:
     def test_dossier_completeness(self, tmp_path):
         repo = _make_repo(tmp_path)
-        service, source_id = _service(tmp_path, repo)
+        # The one test through the product's own subprocess runner.
+        service, source_id = _service(tmp_path, repo, runner=_default_runner)
         dossier = service.story_dossier(source_id, "demo", "DM-1-01")
 
         assert dossier["dossier_schema"] == 1

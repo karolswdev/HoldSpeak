@@ -78,8 +78,7 @@ def _rails(repo: Path) -> None:
 
 def _done(tmp_path: Path, *, control: str = "yolo", delivery: str = "dw app/1", edge: Any = None,
           merge_mode: str = "merged") -> tuple[Rig, str]:
-    rig = Rig(tmp_path)
-    _rails(rig.repo)
+    rig = Rig(tmp_path, seed=_rails)
     if edge is not None:
         # HS-S32: a test's process edge over the rig's (a push or a create that fails).
         rig.runner._run = lambda argv, cwd=None, **kw: edge(rig.gh, argv, cwd=cwd, **kw)
@@ -554,8 +553,7 @@ def test_a_program_on_a_repository_with_rails_briefs_each_step_with_the_dw_roadm
     from holdspeak.services.program_brief import compose
     from holdspeak.services.program_dw import MAX_BYTES
 
-    rig = Rig(tmp_path)
-    _rails(rig.repo)
+    rig = Rig(tmp_path, seed=_rails)
     subprocess.run([str(rig.repo / ".githooks" / "dw"), "story", "create", "app", "1", "The Line word lags"],
                    cwd=rig.repo, check=True, capture_output=True)
     pid = rig.service.create(OWNER, title="Lag", repository=str(rig.repo), template="fast-cycle")["id"]
@@ -582,8 +580,7 @@ def test_the_roadmap_summary_is_bounded_to_2_kb_in_whole_lines() -> None:
 def test_holdspeak_never_delivers_its_own_programs_to_dw(tmp_path) -> None:
     from holdspeak.services.program_service import ProgramRefused
 
-    rig = Rig(tmp_path)
-    _rails(rig.repo)
+    rig = Rig(tmp_path, seed=_rails)
     (rig.repo / "pyproject.toml").write_text('[project]\nname = "holdspeak"\nversion = "0"\n', encoding="utf-8")
     pid = rig.service.create(OWNER, title="On itself", repository=str(rig.repo), template="fast-cycle")["id"]
     assert [c for c in rig.program(pid)["checkpoints"] if c.get("kind") == "dw_context"] == []  # no read either
