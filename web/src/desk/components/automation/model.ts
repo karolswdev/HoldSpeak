@@ -29,6 +29,8 @@ export interface AutomationResult {
   used?: AgentUse | null;
   /** Programs PG14: the Program a run_program run started; absent otherwise. */
   program?: AutomationProgramLink;
+  /** 2026-11-08: this result is a Program run (its id is the step's; no artifact). */
+  program_run?: boolean;
 }
 
 /** PG14: a Program an automation run started, with its state now. */

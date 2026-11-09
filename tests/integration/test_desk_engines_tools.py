@@ -165,9 +165,9 @@ def test_a_run_whose_agent_reads_its_own_automation_does_not_hang(hub: str, fake
     """MODEL.md section 3: workbench.run over MCP holds the automation's lock
     for the whole run. The agent inside reads that automation; its read must
     answer at once, not wait for the run to time out."""
-    recipe = _ok(hub, "POST", "/api/recipes", {"name": "Chase", "system_prompt": "Do the work."})["recipe"]["id"]
-    bench = _ok(hub, "POST", "/api/workbenches", {"name": "Cutover bench", "recipe_id": recipe})["workbench"]["id"]
-    _ok(hub, "POST", f"/api/workbenches/{bench}/items", {"title": "Draft the runbook"})
+    # 2026-11-08: the run is a Program of one prompt step (an old queue is set up as a program).
+    bench = _ok(hub, "POST", "/api/workbenches", {"name": "Cutover bench",
+                                                  "instruction": "Draft the runbook."})["workbench"]["id"]
     _assign(hub, "workbench.item", _connect(hub, "claude"))
     set_tool_plan(fake_bin, "claude", [
         {"name": "automation.get", "arguments": {"workbench_id": bench}},

@@ -23,79 +23,38 @@
     "schedule_enabled": false,
     "schedule_revision": 1,
     "item_order": [],
-    "created_at": "2026-11-08T23:24:11Z",
-    "last_modified": "2026-11-08T23:24:11Z",
+    "created_at": "2026-11-09T00:31:20Z",
+    "last_modified": "2026-11-09T00:31:20Z",
     "deleted": false,
-    "items": [
-     {
-      "id": "wbocc_2316094a0a15467b",
-      "workbench_id": "workbench_a7_1",
-      "title": "Friday team update, Sun 8 Nov 2026",
-      "body": "Draft my team update for this week: what shipped, what slipped, and what I need from each person. Name the meeting or note each point comes from.",
-      "priority": 3,
-      "status": "done",
-      "grounding": {
-       "refs": [
-        "meeting:m-sync",
-        "note:note-sync",
-        "note:note-hiring"
-       ]
-      },
-      "context": {
-       "occurrence": true
-      },
-      "result": "## Weekly update\n\n- Platform sync: the cutover moves to Thursday.\n- Hiring: two loops are booked for next week.",
-      "result_artifact_id": "artifact_dfe42aab8d98",
-      "result_egress": {
-       "boundary": "cloud",
-       "model": "agent-claude"
-      },
-      "mint_attempted": true,
-      "tokens_consumed": 40,
-      "created_at": "2026-11-08T23:24:11Z",
-      "last_modified": "2026-11-08T23:24:11.444845+00:00",
-      "claimed_at": "2026-11-08T23:24:11.341058+00:00",
-      "completed_at": "2026-11-08T23:24:11.444845+00:00",
-      "parked": false
-     }
-    ],
-    "item_count": 1,
+    "items": [],
+    "item_count": 0,
     "pending_count": 0,
-    "last_run": {
-     "id": "wbrun_600799df5270",
-     "workbench_id": "workbench_a7_1",
-     "started_at": "2026-11-08T23:24:11.340793+00:00",
-     "completed_at": "2026-11-08T23:24:11.545596+00:00",
-     "items_attempted": 1,
-     "items_completed": 1,
-     "items_failed": 0,
-     "mint_failures": 0,
-     "total_tokens": 45,
-     "egress_boundary": "cloud",
-     "model": "stub-model-7b",
-     "constitutional_context_revision": 0,
-     "constitutional_context_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-     "skills_injected": [],
-     "status": "completed"
-    },
+    "last_run": null,
     "instruction_shown": "Draft my team update for this week: what shipped, what slipped, and what I need from each person. Name the meeting or note each point comes from.",
     "instruction_from": "automation",
     "results": [
      {
-      "item_id": "wbocc_2316094a0a15467b",
+      "item_id": "step-f3c59e5c86e2",
       "title": "Friday team update, Sun 8 Nov 2026",
       "status": "done",
-      "artifact_id": "artifact_dfe42aab8d98",
+      "artifact_id": "step-f3c59e5c86e2",
       "new": true,
+      "update_id": null,
       "error": null,
       "text": "## Weekly update\n\n- Platform sync: the cutover moves to Thursday.\n- Hiring: two loops are booked for next week.",
-      "completed_at": "2026-11-08T23:24:11.444845+00:00",
+      "completed_at": "2026-11-09T00:31:20.842751+00:00",
       "seconds": 0,
       "model": "stub-model-7b",
       "boundary": "cloud",
-      "note_id": "note_result_501c20860ca54bf8",
+      "note_id": "note_result_d42eb49cafbf35f4",
       "cost_usd": null,
-      "used": null
+      "used": null,
+      "program": {
+       "id": "program-65d1b9a5a1e9",
+       "title": "Friday team update, Sun 8 Nov 2026",
+       "state": "done"
+      },
+      "program_run": true
      }
     ],
     "sources_shown": [

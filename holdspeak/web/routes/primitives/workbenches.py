@@ -298,6 +298,8 @@ def build_workbenches_router(ctx: WebContext) -> APIRouter:
             # named 409 with plain words, so the face can show its door.
             if exc.code in _NO_ENGINE_WORDS:
                 return JSONResponse({"error": _NO_ENGINE_WORDS[exc.code], "code": exc.code}, status_code=409)
+            if exc.code == "set_up_as_program":  # an old queue: Programs run it now
+                return JSONResponse({"error": exc.detail, "code": exc.code}, status_code=409)
             return _service_error(exc)
         except Exception as exc:
             return error_500(exc, log, "Failed to run automation")

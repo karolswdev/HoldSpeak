@@ -800,14 +800,43 @@ class WorkbenchService:
                   request_id: str | None = None,
                   source_event: dict[str, str] | None = None,
                   item_ids: list[str] | None = None) -> dict[str, Any]:
-        """Run the pending queue, or only ``item_ids`` (an item's Re-run).
+        """Run the automation now (Run now, ``workbench.run``, ``automation.run``).
 
-        An automation with an instruction runs one new occurrence instead, and
-        its result goes where ``output_target`` says (Betterment A2)."""
-        self._require_workbench(workbench_id)
+        2026-11-08: an automation with an instruction runs as a Program of
+        one prompt step (``automation_runs.run_as_program``); this call waits
+        for its answer, which goes where ``output_target`` says. An old queue
+        (an agent and no instruction of its own) is refused: it is set up as
+        a program. An agent hand and a Program automation run as before;
+        ``item_ids`` re-runs earlier queue items."""
         from holdspeak.workbench_conductor import run_workbench
+        from . import automation_runs
+
         wb = self._require_workbench(workbench_id)
-        if request_id or source_event or item_ids or str(getattr(wb, "do_kind", "run") or "run") in NATIVE_DO_KINDS:
+        native = str(getattr(wb, "do_kind", "run") or "run") in NATIVE_DO_KINDS
+        if not native and not item_ids and not source_event:
+            if automation_runs.runs_as_program(wb):
+                import asyncio
+
+                from . import engine_door
+                from .program_prompt import JOB
+                from holdspeak.kernel.runtime import _service
+
+                try:  # no engine is a state he repairs: the named refusal, before any Program is made
+                    engine_door.engine_for(_service(), JOB, subject=("workbench", str(wb.id)))
+                except engine_door.EngineDoorError as exc:
+                    raise ServiceError("no_assignment", exc.detail, context={"status": 409}) from None
+                ran = await asyncio.to_thread(
+                    automation_runs.run_as_program, self._db, principal, wb, wait=True,
+                    key=f"request:{request_id}" if request_id else None)
+                delivered = automation_runs.program_delivery(self._db, ran["program_id"])
+                self._changed("workbench", str(wb.id), "update")
+                return {**ran, **({"deliveries": [delivered]} if delivered else {})}
+            if automation_runs.effective_instruction(self._db, wb)[1] == "agent":
+                raise ServiceError(
+                    "set_up_as_program", "Programs run this queue now: set it up as a program.",
+                    context={"status": 409})
+            return {"error": f"The automation {wb.name} has nothing to do yet: write what it should do."}
+        if request_id or source_event or item_ids or native:
             from holdspeak.kernel.runtime import _service
             from holdspeak.services.workbench_runner import WorkbenchRunner
             result = await WorkbenchRunner(self._db, _service()).run(

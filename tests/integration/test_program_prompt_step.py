@@ -145,8 +145,10 @@ def test_morning_prep_runs_as_a_program_and_today_reads_its_report(rig, monkeypa
     assert program["title"].startswith("Morning prep, ")
     assert program["state"] == "done"
     assert program["automation_id"] == wb.id
-    assert len(engine.calls) == 1
-    assert "Prepare my day" in engine.calls[0].payload["user_prompt"]
+    # One answer, then one short lesson call for the automation's next runs.
+    answers = [call for call in engine.calls if not call.payload["user_prompt"].startswith("Task: ")]
+    assert len(answers) == 1 and len(engine.calls) == 2
+    assert "Prepare my day" in answers[0].payload["user_prompt"]
     prepared = automation_runs.prepared_for_today(rig.db, OWNER)
     assert prepared["workbench_id"] == wb.id
     assert prepared["result"]["text"] == "## 09:00 Standup\n- Raise: the login page"

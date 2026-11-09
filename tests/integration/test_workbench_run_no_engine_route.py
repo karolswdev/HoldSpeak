@@ -31,14 +31,11 @@ def client(tmp_path):
 
 
 def test_run_with_no_engine_is_a_named_409(client) -> None:
-    recipe = client.post("/api/recipes", json={"name": "Chase", "system_prompt": "Do the work."})
-    assert recipe.status_code in (200, 201), recipe.text
-    recipe_id = recipe.json()["recipe"]["id"]
-    bench = client.post("/api/workbenches", json={"name": "Cutover bench", "recipe_id": recipe_id})
+    """Run now with no engine is a named 409, before any Program is made
+    (2026-11-08: an automation's run is a Program of one prompt step)."""
+    bench = client.post("/api/workbenches", json={"name": "Cutover bench", "instruction": "Draft the runbook."})
     assert bench.status_code in (200, 201), bench.text
     bench_id = bench.json()["workbench"]["id"]
-    item = client.post(f"/api/workbenches/{bench_id}/items", json={"title": "Draft the runbook"})
-    assert item.status_code in (200, 201), item.text
 
     run = client.post(f"/api/workbenches/{bench_id}/run", json={})
 
@@ -46,10 +43,11 @@ def test_run_with_no_engine_is_a_named_409(client) -> None:
     body = run.json()
     assert body["code"] == "no_assignment"
     assert body["error"] == "No engine is set for this automation."
-    # Nothing ran and nothing was spent: the item is still pending.
-    items = client.get(f"/api/workbenches/{bench_id}").json()
-    statuses = [row["status"] for row in items["workbench"]["items"]]
-    assert statuses == ["pending"]
+    # Nothing ran and nothing was made.
+    from holdspeak.services.automation_runs import program_runs
+    from holdspeak.db import get_database
+
+    assert program_runs(get_database(), bench_id) == []
 
 
 def _bench(client) -> str:

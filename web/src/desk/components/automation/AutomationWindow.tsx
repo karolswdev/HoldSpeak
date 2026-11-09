@@ -58,7 +58,7 @@ import {
 import { FootSlotContext } from "../../surface/foot";
 import { ObjectList } from "../../surface/objects/ObjectList";
 import { objectSprite } from "../../surface/objects/kinds";
-import { ArtifactSendWells } from "../../documentSends";
+import { ArtifactSendWells, NoteSendWells } from "../../documentSends";
 import { useOptionalRuntimeBus } from "../../../runtime/RuntimeBus";
 import { WORKBENCH_CHANGE_KINDS, useOnDeskChanged } from "../../useDeskChangedRefresh";
 import { WORKBENCH_RUN_FRAME_TYPES } from "../workbench/runLifecycle";
@@ -609,6 +609,9 @@ export function AutomationWindow({
   const builder = useBuilderTools((state) => state.on);
   const name = detail?.name || "Automation";
   const isProgram = detail?.do_kind === "run_program";
+  // A run that is a Program has no artifact: its answer's note is what is sent.
+  const runResult = Boolean(shown?.program_run);
+  const sendable = runResult ? Boolean(shown?.note_id) : Boolean(shown?.artifact_id);
   // An old queue (an agent and no Do text of its own): Programs run it now.
   const oldQueue = Boolean(detail && (detail.do_kind ?? "run") === "run" && detail.instruction_from !== "automation"
     && isOldQueue(detail));
@@ -637,7 +640,9 @@ export function AutomationWindow({
     const failed = result.status === "failed";
     const at = result.completed_at ? new Date(result.completed_at).getTime() : 0;
     const fresh = isNew(result);
-    const program = result.program;
+    // A run that is itself a Program (program_run) reads as a result; PG14's
+    // run_program rows read as the Program they started.
+    const program = result.program_run ? undefined : result.program;
     if (program && !failed) {
       // PG14: the row is the Program it started, in its state now.
       return {
@@ -745,7 +750,7 @@ export function AutomationWindow({
             Edit
           </Button>
           <Button dense variant="secondary" aria-expanded={sendOpen}
-            disabled={showBuilder || !shown?.artifact_id || shown.status === "failed"}
+            disabled={showBuilder || !sendable || shown?.status === "failed"}
             onClick={() => setSendOpen((open) => !open)}
             data-testid="automation-send">
             <ToolGlyph kind="send" />
@@ -960,10 +965,15 @@ export function AutomationWindow({
                   />
                 </div>
               ) : null}
-              {sendOpen && shown?.artifact_id ? (
+              {sendOpen && sendable && shown ? (
                 <div className="automation-pane automation-send" data-testid="automation-send-sheet">
-                  <ArtifactSendWells id={shown.artifact_id} title={shown.title} type="automation result"
-                    onBack={() => setSendOpen(false)} />
+                  {runResult ? (
+                    // A run that is a Program sends its answer's note (2026-11-08).
+                    <NoteSendWells id={shown.note_id ?? ""} title={shown.title} onBack={() => setSendOpen(false)} />
+                  ) : (
+                    <ArtifactSendWells id={shown.artifact_id ?? ""} title={shown.title} type="automation result"
+                      onBack={() => setSendOpen(false)} />
+                  )}
                 </div>
               ) : null}
               {/* A9: an old queue automation with no run result yet shows its
