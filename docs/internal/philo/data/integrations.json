@@ -740,7 +740,7 @@
           "execution": "passed"
         },
         {
-          "path": "tests/unit/test_workbench_runner_migration.py",
+          "path": "tests/_parked/unit/test_workbench_runner_migration_20261108.py",
           "node": "test_incomplete_grounding_fails_only_its_item_without_provider_or_artifact",
           "assertion": "Missing Note, Meeting, artifact and over-limit attachments fail only their item; a valid sibling completes, with no blocked-item call or artifact.",
           "execution": {
@@ -751,7 +751,7 @@
           }
         },
         {
-          "path": "tests/unit/test_workbench_runner_migration.py",
+          "path": "tests/_parked/unit/test_workbench_runner_migration_20261108.py",
           "node": "test_grounding_source_restoration_reruns_same_item_with_exact_source",
           "assertion": "A restored Note reaches the provider with its exact text on the same item; Re-run keeps original refs/context and completed artifact.",
           "execution": {
