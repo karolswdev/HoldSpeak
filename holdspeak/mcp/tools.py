@@ -7,7 +7,7 @@ from holdspeak import operations
 
 from collections.abc import Callable
 from dataclasses import asdict
-from typing import Any
+from typing import Any, Callable
 
 from jsonschema import Draft202012Validator
 from jsonschema.exceptions import ValidationError as JsonSchemaValidationError
@@ -988,22 +988,38 @@ def runtime_registry(primitives: Any = None, meetings: Any = None) -> operations
         name: (lambda name=name, build=build: runtime_service(name, build)) for name, build in plain.items()})
 
 
+class _Lazy:
+    """A bare service built at its first use, never when the registry binds:
+    some constructors reach the kernel broker (``RecipeService``), and a bare
+    MCP registry binds every builder at once."""
+
+    def __init__(self, build: Callable[[], Any]) -> None:
+        self._build, self._target = build, None
+
+    def __getattr__(self, name: str) -> Any:
+        if self._target is None:
+            self._target = self._build()
+        return getattr(self._target, name)
+
+
 def _work_services(db: Any, obs: Any) -> dict[str, Any]:
-    """The bare builds of the recipe, note-window, memory and desk-state rows' services."""
+    """The bare builds of the recipe, note-window, memory and desk-state rows' services (lazy)."""
     from holdspeak.mcp.families.thought import _service as refinement
-    from holdspeak.runtime.composition_declared import (
-        _bare_desk, _bare_projections, _bare_recall, _bare_recipes, _bare_thoughts, _constitutional,
-    )
+    from holdspeak.runtime import composition_declared as bare
     from holdspeak.services.memory_service import MemoryService
 
-    return {"recipe_service": lambda: _bare_recipes(db, obs),
-            "desk_service": lambda: _bare_desk(db, obs), "projection_service": lambda: _bare_projections(db, obs),
-            "constitutional_context_service": _constitutional,
-            "watch_service": lambda: _watch_service(db, obs),
-            "refinement_thought_service": lambda: _bare_thoughts(db),
-            "recall_service": lambda: _bare_recall(db),
-            "refinement_service": refinement,
-            "memory_service": lambda: MemoryService(db=db, observer=obs)}
+    builds: dict[str, Callable[[], Any]] = {
+        "recipe_service": lambda: bare._bare_recipes(db, obs),
+        "desk_service": lambda: bare._bare_desk(db, obs),
+        "projection_service": lambda: bare._bare_projections(db, obs),
+        "constitutional_context_service": bare._constitutional,
+        "watch_service": lambda: _watch_service(db, obs),
+        "refinement_thought_service": lambda: bare._bare_thoughts(db),
+        "recall_service": lambda: bare._bare_recall(db),
+        "refinement_service": refinement,
+        "memory_service": lambda: MemoryService(db=db, observer=obs),
+    }
+    return {name: (lambda build=build: _Lazy(build)) for name, build in builds.items()}
 
 
 def _watch_service(db: Any, obs: Any) -> Any:
