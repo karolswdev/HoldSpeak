@@ -668,7 +668,7 @@
         },
         {
           "path": "tests/unit/test_meeting_capture_durability.py",
-          "node": "test_recovery_converges_prefence_and_postfence_process_loss_to_one_aftercare_row",
+          "node": "test_recovery_converges_a_process_loss_before_the_enqueue_to_one_aftercare_row",
           "assertion": "Recovery does not duplicate the aftercare job.",
           "execution": {
             "status": "passed",
