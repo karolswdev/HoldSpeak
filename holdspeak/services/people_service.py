@@ -126,7 +126,7 @@ class PeopleService:
         return self._readiness_view(state)
 
     def list_relationships(
-        self, principal: Any, *, include_archived: bool = False, with_counts: bool = False,
+        self, principal: Any, *, include_archived: bool = False, with_counts: bool = False, db: Any = None,
     ) -> list[dict[str, Any]]:
         # Betterment daily D8 (the D6 503 log, reproduced on an isolated hub):
         # a desk with no People store yet has nobody, which is not a failed
@@ -140,15 +140,25 @@ class PeopleService:
         # PHILO-17 (Astra r1 on #1110, MUST 4): what each person is owed and
         # owes, counted from ONE read of the open commitments, so a face never
         # reads every person's whole record to draw a total.
+        # The native rail (2026-11-08): the open ones past their day
+        # (overdue_count, also inside the two sides) and the done ones.
+        zero = {"you_owe_count": 0, "owes_you_count": 0, "overdue_count": 0, "done_count": 0}
+        today = datetime.now(timezone.utc).date().isoformat()
         counts: dict[str, dict[str, int]] = {}
         for item in self._open_commitments():
-            side = "you_owe_count" if _owed_by_leader(item) else "owes_you_count"
-            row = counts.setdefault(str(item.get("relationship_id") or ""), {"you_owe_count": 0, "owes_you_count": 0})
-            row[side] += 1
+            row = counts.setdefault(str(item.get("relationship_id") or ""), dict(zero))
+            row["you_owe_count" if _owed_by_leader(item) else "owes_you_count"] += 1
+            due = str(item.get("due") or "")[:10]
+            row["overdue_count"] += bool(due) and due < today
+        for item in self._list("commitment"):
+            if str(item.get("state") or "") == "done":
+                counts.setdefault(str(item.get("relationship_id") or ""), dict(zero))["done_count"] += 1
+        for relationship_id in self._overdue_action_people(db, today):
+            counts.setdefault(relationship_id, dict(zero))["overdue_count"] += 1
         out = []
         for item in self._list("relationship", active_only=not include_archived):
             view = self._relationship_view(item)
-            view.update(counts.get(str(view.get("id") or ""), {"you_owe_count": 0, "owes_you_count": 0}))
+            view.update(counts.get(str(view.get("id") or ""), zero))
             out.append(view)
         return out
 
@@ -857,6 +867,33 @@ class PeopleService:
             "meeting_id": str(row["meeting_id"] or ""), "meeting_title": row["meeting_title"],
             "meeting_started_at": str(row["meeting_started_at"] or ""),
         } for row in rows]
+
+    def _overdue_action_people(self, db: Any, today: str) -> list[str]:
+        """The person each accepted open meeting action past its day is owed
+        by (one id per action), through the one owner resolver; an owner two
+        people could be meant by counts for nobody. In memory, never kept."""
+        if db is None:
+            return []
+        try:
+            with db._connection() as conn:
+                rows = conn.execute(
+                    """SELECT ai.owner FROM action_items ai
+                        LEFT JOIN meetings m ON m.id = ai.meeting_id
+                        WHERE COALESCE(m.parked, 0) = 0
+                          AND ai.status NOT IN ('done', 'dismissed', 'completed')
+                          AND ai.review_state = 'accepted'
+                          AND TRIM(COALESCE(ai.owner, '')) <> ''
+                          AND COALESCE(ai.due, '') <> '' AND SUBSTR(ai.due, 1, 10) < ?""",
+                    (today,),
+                ).fetchall()
+        except Exception:
+            return []
+        out: list[str] = []
+        for row in rows:
+            resolved = self.resolve_owner_candidates(str(row["owner"] or "").strip())
+            if resolved.get("state") == "ready" and resolved.get("link") == "linked":
+                out.append(str((resolved.get("relationship") or {}).get("id") or ""))
+        return out
 
     def _brief_owned_actions(
         self,

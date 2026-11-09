@@ -84,6 +84,9 @@ type Relationship = {
   /** PHILO-17: `?counts=1` — open commitments each way. */
   you_owe_count?: number;
   owes_you_count?: number;
+  /** The rail (2026-11-08): meeting actions they owe past their day; promises done. */
+  overdue_count?: number;
+  done_count?: number;
 };
 type AgendaItem = { id: string; body: string; visibility: Visibility; state: string; rolled_from_id?: string | null };
 type Session = { id: string; occurred_at?: string; title?: string; agenda?: AgendaItem[] };
@@ -546,6 +549,7 @@ export function PeopleCore({ hero, scope }: CoreProps) {
       id: relationship.id, name: relationship.display_name, role: relationshipLabel(relationship.relationship_kind),
       next: next ? `1:1 ${oneOnOneWhen(next)}` : "",
       youOwe: Number(relationship.you_owe_count) || 0, owesYou: Number(relationship.owes_you_count) || 0,
+      overdue: Number(relationship.overdue_count) || 0, done: Number(relationship.done_count) || 0,
     };
   });
   const suggestion = pickedSuggestion ? shownSuggestions.find((s) => `suggestion:${s.key}` === pickedSuggestion) ?? null : null;
@@ -947,15 +951,6 @@ function PlateRow({ title, onTitle, meta, verb, testId }: { title: string; onTit
   </li>;
 }
 
-function DuePill({ due }: { due?: string | null }) {
-  if (!due) return null;
-  const day = shortDay(due);
-  const words = `by ${day}`;
-  return isOverdue(due)
-    ? <span className="people-state" data-tone="danger"><span className="kit-dot" data-tone="fail" aria-hidden="true" />{`Overdue · ${words}`}</span>
-    : <span>{words}</span>;
-}
-
 /** HS-172-05: the rows behind a Prep concern (PRs, assignments, overdue). */
 function ConcernDetail({ concern, brief }: { concern: Exclude<NowConcern, null>; brief: OneOnOneBrief }) {
   const ws = brief.watch_summary;
@@ -1001,6 +996,33 @@ function PrepAddWell({ label, draft, onChange, onAdd, busy, blocked = false, act
     setOpen(true);
     requestAnimationFrame(() => document.getElementById(inputId)?.focus());
   }} aria-expanded={false} data-testid={testId}>{actionLabel}</Button>;
+}
+
+/** One Add for the commitments: it asks which way the promise goes, then
+ *  takes its words. Each way keeps its own draft; a way with a draft opens
+ *  the well on it. */
+type AddWay = { draft: string; onChange(value: string): void; onAdd(onSaved: () => void): void; busy: boolean; blocked: boolean };
+function CommitmentAdd({ name, theirs, mine }: { name: string; theirs: AddWay; mine: AddWay }) {
+  const [open, setOpen] = useState(() => Boolean(theirs.draft || mine.draft));
+  const [way, setWay] = useState<"they" | "you">(() => (mine.draft && !theirs.draft ? "you" : "they"));
+  const inputId = useId();
+  useEffect(() => { if (theirs.draft || mine.draft) setOpen(true); }, [theirs.draft, mine.draft]);
+  const side = way === "they" ? theirs : mine;
+  const label = way === "they" ? `${name} owes me` : `I owe ${name}`;
+  const focus = () => requestAnimationFrame(() => document.getElementById(inputId)?.focus());
+  const add = () => side.onAdd(() => setOpen(false));
+  if (!open) return <Button dense variant="ghost" className="people-ledger-add" aria-expanded={false} onClick={() => { setOpen(true); focus(); }} data-testid="people-add-commitment">Add</Button>;
+  return <SurfaceWell><div className="people-add people-add-commitment">
+    <span className="people-role-pick" role="group" aria-label="Which way">
+      {([["they", `${name} owes me`], ["you", `I owe ${name}`]] as const).map(([id, words]) => (
+        <Button key={id} dense variant="ghost" className="people-role-choice" aria-pressed={way === id} onClick={() => { setWay(id); focus(); }}>{words}</Button>
+      ))}
+    </span>
+    <StringGadget label={label} value={side.draft} onChange={side.onChange} inputProps={{ id: inputId }}
+      onKeyDown={(event) => { if (event.key === "Enter" && !side.busy && !side.blocked) add(); }} />
+    <Button dense variant="secondary" disabled={!side.draft.trim() || side.busy || side.blocked} loading={side.busy} onClick={add} data-testid="people-add-commitment">Add</Button>
+    <Button dense variant="ghost" disabled={side.busy} onClick={() => setOpen(false)} aria-expanded={true}>Hide</Button>
+  </div></SurfaceWell>;
 }
 
 /** Betterment D7: Nudge on a row she owes. It drafts the short message
@@ -1067,7 +1089,7 @@ function PrepPane({ relationship, onRefresh, onProtectedFailure, onRead, onNext,
   const [busy, setBusy] = useState<string | null>(null);
   const recordingState = useDesk((state) => state.recording);
   const { failure: recordingFailure, receipt: recordingReceipt } = useDeskWriteReceipt();
-  const [selectedCommitment, setSelectedCommitment] = useState<{ commitment: Commitment; section: "you" | "they" } | null>(null);
+  const [selectedCommitment, setSelectedCommitment] = useState<{ commitment: Commitment } | null>(null);
   const commitmentOrigin = useRef<HTMLElement | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const [preparedAt] = useState(() => new Date().toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", hour12: false }));
@@ -1122,9 +1144,9 @@ function PrepPane({ relationship, onRefresh, onProtectedFailure, onRead, onNext,
   // well open in a fold survives the prep's first read.
   if (!brief && !failure) return <><SurfaceState loading />{children}</>;
 
-  const inspectCommitment = (commitment: Commitment, section: "you" | "they") => {
+  const inspectCommitment = (commitment: Commitment) => {
     commitmentOrigin.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    setSelectedCommitment({ commitment, section });
+    setSelectedCommitment({ commitment });
   };
   const closeCommitment = () => {
     setSelectedCommitment(null);
@@ -1348,6 +1370,42 @@ function PrepPane({ relationship, onRefresh, onProtectedFailure, onRead, onNext,
   </NowPlate> : theirsLate ? <NowPlate eyebrow="Overdue" tone="coral" title={theirsLate.task} facts={[`${firstName} owes you`, theirsLate.due ? `by ${shortDay(theirsLate.due)}` : ""].filter(Boolean).join(" · ")}>
     <Button variant="primary" aria-expanded={nudging?.id === theirsLate.id} onClick={() => toggleNudge(theirsLate)}>Nudge</Button>
   </NowPlate> : null;
+  // The ledger's rows, one model for both ways.
+  type LedgerRow = { key: string; side: "they" | "you"; tone: "brass" | "steel" | "coral" | "moss"; text: string; due: string | null;
+    meta?: ReactNode; verb?: ReactNode; inspect?: Commitment; open?: () => void; testId?: string };
+  const toneOf = (side: "they" | "you", due?: string | null): LedgerRow["tone"] => (isOverdue(due) ? "coral" : side === "they" ? "brass" : "steel");
+  const fromMeeting = (title?: string | null, kind?: string | null) => title ? `from ${title}` : kind === "thought" ? "from Note" : kind === "meeting" ? "from Meeting" : "";
+  const nudgeVerb = (id: string, task: string, due: string | null) => <Button dense variant="ghost" aria-expanded={nudging?.id === id} onClick={() => toggleNudge({ id, task, due })}>Nudge</Button>;
+  const doneVerb = (key: string, press: () => void) => <Button dense variant="ghost" loading={busy === key} onClick={press}>Done</Button>;
+  const doneRows = [...(relationship.owed_to_you ?? []).map((row) => ({ row, side: "they" as const })), ...(relationship.commitments ?? []).map((row) => ({ row, side: "you" as const }))]
+    .filter(({ row }) => row.state === "done").slice(-3);
+  const ledgerOpen: LedgerRow[] = [
+    ...asked.map((item) => ({ key: `q:${item.id}`, side: "you" as const, tone: "steel" as const, text: item.body, due: null, testId: "people-asked",
+      meta: "Asked of you",
+      verb: <Button dense variant="ghost" loading={busy === `accept:${item.id}` || (item.id === heldRequest && owe?.phase === "accepting")} disabled={item.id === heldRequest && (owe?.phase !== "acceptance_uncertain" || !owe.acceptable)} onClick={() => accept(item.id)}>Accept</Button> })),
+    ...owedRows.map((item) => ({ key: `o:${item.id}`, side: "they" as const, tone: toneOf("they", item.due), text: item.body, due: item.due ?? null,
+      meta: `${firstName} owes you`, inspect: item,
+      verb: isOverdue(item.due) ? nudgeVerb(item.id, item.body, item.due ?? null) : doneVerb(`done:${item.id}`, () => done(item.id)) })),
+    ...actions.map((action) => ({ key: `a:${action.id}`, side: "they" as const, tone: toneOf("they", action.due), text: action.task, due: action.due ?? null,
+      meta: [`${firstName} owes you`, fromMeeting(action.meeting_title, action.source_type)].filter(Boolean).join(" · "),
+      open: refOpener(action.source_ref || (action.meeting_id ? `meeting:${action.meeting_id}` : null)) ?? undefined,
+      verb: isOverdue(action.due) ? nudgeVerb(action.id, action.task, action.due) : doneVerb(`action-done:${action.id}`, () => completeAction(action.id)) })),
+    ...youOweRows.map((item) => ({ key: `c:${item.id}`, side: "you" as const, tone: toneOf("you", item.due), text: item.body, due: item.due ?? null,
+      meta: ["You owe", item.execution_links?.length ? "On an automation" : ""].filter(Boolean).join(" · "), inspect: item, verb: doneVerb(`done:${item.id}`, () => done(item.id)) })),
+    ...myActions.map((action) => ({ key: `m:${action.id}`, side: "you" as const, tone: toneOf("you", action.due), text: action.task, due: action.due ?? null, testId: "prep-i-owe-action",
+      meta: ["You owe", fromMeeting(action.meeting_title)].filter(Boolean).join(" · "),
+      open: refOpener(action.meeting_id ? `meeting:${action.meeting_id}` : null) ?? undefined, verb: doneVerb(`action-done:${action.id}`, () => completeAction(action.id)) })),
+  ];
+  const dayOf = (row: LedgerRow) => (row.due ? wireDate(row.due)?.getTime() ?? Infinity : Infinity);
+  const ledger: LedgerRow[] = [
+    ...ledgerOpen.filter((row) => row.tone === "coral").sort((a, b) => dayOf(a) - dayOf(b)),
+    ...ledgerOpen.filter((row) => row.tone !== "coral").sort((a, b) => dayOf(a) - dayOf(b)),
+    ...doneRows.map(({ row, side }) => ({ key: `d:${row.id}`, side, tone: "moss" as const, text: row.body, due: null, meta: "Done", inspect: row,
+      verb: <Button dense variant="ghost" onClick={() => inspectCommitment(row)}>Open</Button> })),
+  ];
+  const theyCount = owedRows.length + actions.length;
+  const youCount = youOweRows.length + myActions.length;
+  const ledgerFacts = [theyCount ? `${theyCount} owed to you` : "", youCount ? `${youCount} you owe` : ""].filter(Boolean).join(" · ");
   const eventId = nextEvent?.id ?? null;
   const record = eventId && recordingState !== "recording" ? (
     <Button dense variant="primary" loading={recordingState === "busy"} disabled={recordingState !== "idle"}
@@ -1363,64 +1421,38 @@ function PrepPane({ relationship, onRefresh, onProtectedFailure, onRead, onNext,
     </span> : null}
     {plate}
 
-    {/* Betterment D7: what she owes me (with Nudge) and what I owe her,
-        named with the person's name, side by side when there is room. */}
-    <section className="people-section people-commitments" aria-label="Commitments">
-      <header className="people-section-head"><h3 className="people-section-cap">Commitments</h3></header>
-      <div className="people-owe-grid">
-        <div className="people-owe" data-testid="people-they-owe">
-          <h3 className="people-owe-cap">{`${firstName} owes me`}{owedRows.length + actions.length ? <b>{owedRows.length + actions.length}</b> : null}</h3>
-          {owedRows.length || actions.length ? <ul className="people-rows" data-testid="prep-owed">
-            {owedRows.map((item) => <PlateRow key={item.id} title={item.body}
-              onTitle={() => inspectCommitment(item, "they")}
-              meta={item.due ? <DuePill due={item.due} /> : undefined}
-              verb={<span className="people-plate-verbs">
-                <Button dense variant="ghost" aria-expanded={nudging?.id === item.id} onClick={() => toggleNudge({ id: item.id, task: item.body, due: item.due ?? null })}>Nudge</Button>
-                <Button dense variant="ghost" loading={busy === `done:${item.id}`} onClick={() => done(item.id)}>Done</Button>
-              </span>} />)}
-            {actions.map((action) => {
-              const sourceRef = action.source_ref || (action.meeting_id ? `meeting:${action.meeting_id}` : null);
-              const sourceName = action.meeting_title
-                ? `from ${action.meeting_title}`
-                : action.source_type === "thought" ? "from Note" : action.source_type === "meeting" ? "from Meeting" : null;
-              return <PlateRow key={action.id} title={action.task}
-                onTitle={refOpener(sourceRef) ?? undefined}
-                meta={<>{sourceName ? <span>{sourceName}</span> : null}{action.due ? <DuePill due={action.due} /> : null}</>}
-                verb={<span className="people-plate-verbs">
-                  <Button dense variant="ghost" aria-expanded={nudging?.id === action.id} onClick={() => toggleNudge({ id: action.id, task: action.task, due: action.due })}>Nudge</Button>
-                  <Button dense variant="ghost" loading={busy === `action-done:${action.id}`} onClick={() => completeAction(action.id)}>Done</Button>
-                </span>} />;
-            })}
-          </ul> : null}
-          {nudging ? <PrepNudge key={nudging.id} task={nudging.task} person={displayName} due={nudging.due} /> : null}
-          {selectedCommitment?.section === "they" ? <CommitmentInspector key={selectedCommitment.commitment.id} commitment={selectedCommitment.commitment} onClose={closeCommitment} onRefresh={() => { onRefresh(); setSelectedCommitment(null); }} onProtectedFailure={onProtectedFailure} /> : null}
-          <div className="people-row people-add-line">
-            <PrepAddWell key={relationship.id} label={`${firstName} owes me`} draft={owedDraft} onChange={setOwedDraft} onAdd={addOwed} busy={busy === "owed"} />
-          </div>
-        </div>
-
-        <div className="people-owe" data-testid="people-you-owe">
-          <h3 className="people-owe-cap">{`I owe ${firstName}`}{youOweRows.length + myActions.length ? <b>{youOweRows.length + myActions.length}</b> : null}</h3>
-          {youOweRows.length || asked.length || myActions.length ? <ul className="people-rows" data-testid="prep-you-owe">
-            {asked.map((item) => <PlateRow key={item.id} testId="people-asked" title={item.body}
-              meta={<span className="people-state" data-tone="info"><span className="kit-dot" data-tone="info" aria-hidden="true" />Asked of you</span>}
-              verb={<Button dense variant="ghost" loading={busy === `accept:${item.id}` || (item.id === heldRequest && owe?.phase === "accepting")} disabled={item.id === heldRequest && (owe?.phase !== "acceptance_uncertain" || !owe.acceptable)} onClick={() => accept(item.id)}>Accept</Button>} />)}
-            {youOweRows.map((item) => <PlateRow key={item.id} title={item.body}
-              onTitle={() => inspectCommitment(item, "you")}
-              meta={item.due || item.execution_links?.length ? <>{item.due ? <DuePill due={item.due} /> : null}{item.execution_links?.length ? <span>On an automation</span> : null}</> : undefined}
-              verb={<Button dense variant="ghost" loading={busy === `done:${item.id}`} onClick={() => done(item.id)}>Done</Button>} />)}
-            {myActions.map((action) => <PlateRow key={action.id} testId="prep-i-owe-action" title={action.task}
-              onTitle={refOpener(action.meeting_id ? `meeting:${action.meeting_id}` : null) ?? undefined}
-              meta={<>{action.meeting_title ? <span>{`from ${action.meeting_title}`}</span> : null}{action.due ? <DuePill due={action.due} /> : null}</>}
-              verb={<Button dense variant="ghost" loading={busy === `action-done:${action.id}`} onClick={() => completeAction(action.id)}>Done</Button>} />)}
-          </ul> : null}
-          {selectedCommitment?.section === "you" ? <CommitmentInspector key={selectedCommitment.commitment.id} commitment={selectedCommitment.commitment} onClose={closeCommitment} onRefresh={() => { onRefresh(); setSelectedCommitment(null); }} onProtectedFailure={onProtectedFailure} /> : null}
-          <div className="people-row people-add-line">
-            <PrepAddWell key={relationship.id} label={`I owe ${firstName}`} draft={oweDraft} onChange={setOweDraft} onAdd={addOwe} busy={owe?.phase === "creating" || owe?.phase === "accepting"} blocked={Boolean(owe && owe.phase !== "saved")} />
-          </div>
-          {owe && owe.phase !== "creating" && owe.phase !== "accepting" ? <OweReceipt attempt={owe} onCheck={checkOwe} onAccept={acceptSavedOwe} onStartAnother={() => setOwe(null)} /> : null}
-        </div>
-      </div>
+    {/* The commitments: ONE ledger by weight. Each row is a promise, its
+        spine in the meaning colour (brass owed to you, steel you owe,
+        coral overdue, moss done), the words, the day in mono and its one
+        verb: Nudge on theirs past its day, else Done; Accept on a request;
+        Open on a done one. Overdue first, then by day. One Add on the head asks
+        which way it goes. */}
+    <section className="people-section people-commitments" aria-label="Commitments" data-testid="people-commitments">
+      <header className="people-section-head">
+        <h3 className="people-section-cap">Commitments</h3>
+        {ledgerFacts ? <span className="people-section-fact" data-testid="people-commitments-facts">{ledgerFacts}</span> : null}
+      </header>
+      {ledger.length ? <SurfaceLedger cols="people" label="Commitments">
+        <ul className="surface-ledger-rows" data-testid="prep-commitments">
+          {ledger.map((row) => <SurfaceLedgerRow key={row.key} data-testid={row.testId} wrap
+            lead={<Spine className="people-ledger-spine" tone={row.tone} />}
+            lineLabel={row.inspect || row.open ? row.text : undefined}
+            primary={<span className="people-ledger-words" data-side={row.side} data-tone={row.tone}>{row.text}</span>}
+            meta={row.meta}
+            cells={row.due ? <span className="people-ledger-due" data-overdue={row.tone === "coral" || undefined}>{`by ${shortDay(row.due)}`}</span> : undefined}
+            trailing={row.verb}
+            expands={Boolean(row.inspect)}
+            open={Boolean(row.inspect) && selectedCommitment?.commitment.id === row.inspect?.id}
+            onToggle={row.inspect ? () => (selectedCommitment?.commitment.id === row.inspect!.id ? closeCommitment() : inspectCommitment(row.inspect!)) : row.open}>
+            {row.inspect && selectedCommitment?.commitment.id === row.inspect.id ? <CommitmentInspector key={row.inspect.id} commitment={row.inspect} onClose={closeCommitment} onRefresh={() => { onRefresh(); setSelectedCommitment(null); }} onProtectedFailure={onProtectedFailure} /> : null}
+          </SurfaceLedgerRow>)}
+        </ul>
+      </SurfaceLedger> : null}
+      {nudging ? <PrepNudge key={nudging.id} task={nudging.task} person={displayName} due={nudging.due} /> : null}
+      <CommitmentAdd key={relationship.id} name={firstName}
+        theirs={{ draft: owedDraft, onChange: setOwedDraft, onAdd: addOwed, busy: busy === "owed", blocked: false }}
+        mine={{ draft: oweDraft, onChange: setOweDraft, onAdd: addOwe, busy: owe?.phase === "creating" || owe?.phase === "accepting", blocked: Boolean(owe && owe.phase !== "saved") }} />
+      {owe && owe.phase !== "creating" && owe.phase !== "accepting" ? <OweReceipt attempt={owe} onCheck={checkOwe} onAccept={acceptSavedOwe} onStartAnother={() => setOwe(null)} /> : null}
     </section>
 
     <section className="people-section" aria-label="Agenda" data-testid="people-next-plate" data-plate={!plate && nextAt ? "" : undefined}>

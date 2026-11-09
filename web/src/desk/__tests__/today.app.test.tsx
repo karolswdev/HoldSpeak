@@ -268,10 +268,10 @@ describe("Today's Prep opens the 1:1 prep (Betterment D7), on one recorded boot"
     cleanup();
 
     render(<PersonWindowBody relationshipId={opened[0].relationshipId} />);
-    const owes = await screen.findByTestId("people-they-owe", {}, { timeout: 5000 });
-    expect(owes.querySelector("h3")!.textContent).toBe("Mira owes me1");
+    // One ledger of commitments: her promise owed to him, none he owes her.
+    const owes = await screen.findByTestId("people-commitments", {}, { timeout: 5000 });
+    expect(screen.getByTestId("people-commitments-facts").textContent).toBe("1 owed to you");
     expect(owes.textContent).toContain("Draft the rollback runbook");
-    expect(screen.getByTestId("people-you-owe").querySelector("h3")!.textContent).toBe("I owe Mira");
     expect(screen.getByTestId("prep-to-raise")).toBeTruthy();
     // The next 1:1 time, from her linked series.
     expect(screen.getByTestId("people-next-1on1").textContent).toMatch(/in 1 h 30 min|in 90 min|in 1 h 29 min/);
@@ -291,13 +291,13 @@ describe("Today's Prep opens the 1:1 prep (Betterment D7), on one recorded boot"
 });
 
 describe("I owe Theo (Betterment D7), on the same recorded boot", () => {
-  it("what I said I would do in our 1:1 is under I owe Theo, with Done", async () => {
+  it("what I said I would do in our 1:1 is a you-owe row of the ledger, with Done", async () => {
     vi.setSystemTime(new Date(String(PREP_WEEK.recordedAt)));
     const gets = PREP_WEEK.gets as Gets;
     replay(gets);
     render(<PersonWindowBody relationshipId="rel-theo" />);
-    const mine = await screen.findByTestId("people-you-owe", {}, { timeout: 5000 });
-    expect(mine.querySelector("h3")!.textContent).toBe("I owe Theo1");
+    const mine = await screen.findByTestId("people-commitments", {}, { timeout: 5000 });
+    expect(screen.getByTestId("people-commitments-facts").textContent).toBe("2 owed to you · 1 you owe");
     const row = within(mine).getByTestId("prep-i-owe-action");
     expect(row.textContent).toContain("Review design doc on settlement retries");
     expect(row.textContent).toContain("from 1:1 with Theo");

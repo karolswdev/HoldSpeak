@@ -2,7 +2,7 @@
  * Programs and the Room): the left edge of the People window. Add person
  * and the search at the head, then one row per person: the name, the role
  * and the next 1:1 in the person's teal, and a spine of what stands
- * between you (brass: owed to you; steel: you owe). Under them, the names
+ * between you (brass owed to you, steel you owe, coral overdue, moss done). Under them, the names
  * his work carries that People does not hold yet. A press picks the row;
  * the right pane is that person. ↑ and ↓ walk the rows. At 393 the rail
  * is the whole window until a person is picked (people.css). */
@@ -10,11 +10,12 @@ import { useRef, type ReactNode } from "react";
 import { Button } from "../../components/signal/Signal";
 import { Spine, StringGadget, useRovingRows } from "../surface";
 
-export type RailPerson = { id: string; name: string; role: string; next: string; youOwe: number; owesYou: number };
+export type RailPerson = { id: string; name: string; role: string; next: string; youOwe: number; owesYou: number; overdue: number; done: number };
 export type RailSuggestion = { key: string; name: string; source: string };
 
 function owedWords(row: RailPerson): string {
-  return [row.owesYou ? `${row.owesYou} owed to you` : "", row.youOwe ? `${row.youOwe} you owe` : ""].filter(Boolean).join(", ");
+  return [row.owesYou ? `${row.owesYou} owed to you` : "", row.youOwe ? `${row.youOwe} you owe` : "",
+    row.overdue ? `${row.overdue} overdue` : "", row.done ? `${row.done} done` : ""].filter(Boolean).join(", ");
 }
 
 export function PeopleRail({ people, suggestions, picked, query, onQuery, onPick, onAdd, adding, head, searchable }: {
@@ -47,7 +48,7 @@ export function PeopleRail({ people, suggestions, picked, query, onQuery, onPick
                 {row.next ? <span className="people-rail-next" data-testid="people-row-next">{row.next}</span> : null}
               </span>
               {owed ? <Spine className="people-rail-spine" label={owed}
-                segments={[{ tone: "brass", share: row.owesYou }, { tone: "steel", share: row.youOwe }]} /> : null}
+                segments={[{ tone: "brass", share: row.owesYou }, { tone: "steel", share: row.youOwe }, { tone: "coral", share: row.overdue }, { tone: "moss", share: row.done }]} /> : null}
             </Button>
           </li>;
         })}
