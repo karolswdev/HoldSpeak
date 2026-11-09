@@ -14,10 +14,19 @@ from .errors import ConflictError, NotFound
 class InvocationService:
     """Own the durable invocation receipt and cancellation operation boundary."""
 
-    def __init__(self, db: Database, broker: Any, *, observer: PipelineObserver | None = None) -> None:
+    def __init__(self, db: Database, broker: Any = None, *, observer: PipelineObserver | None = None) -> None:
         self._db = db
-        self._broker = broker
+        self._given_broker = broker
         self._observer = observer or NullObserver()
+
+    @property
+    def _broker(self) -> Any:
+        """The kernel broker; ``None`` given: the process's own, at first use (the reads need none)."""
+        if self._given_broker is None:
+            from ..kernel.runtime import _service
+
+            self._given_broker = _service()
+        return self._given_broker
 
     @classmethod
     def from_runtime(cls) -> "InvocationService":

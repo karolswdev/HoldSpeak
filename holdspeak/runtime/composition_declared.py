@@ -25,6 +25,12 @@ def _bare_credentials(db: Any, observer: Any) -> Any:
     return CredentialService(db, observer=observer)
 
 
+def _invocations(db: Any, observer: Any) -> Any:
+    from holdspeak.services.invocation_service import InvocationService
+
+    return InvocationService(db, observer=observer)
+
+
 def _hub_threads(services: Any) -> Any:
     """The threads' rows bind to a factory: one ThreadService per verb over the hub's bus (``thread_operations.py``)."""
 
@@ -128,6 +134,8 @@ def compose_declared_services(services: Any, ctx: Any, resolved_db: Any, resolve
         "follow_through_service": lambda: FollowThroughService(resolved_db, observer=resolved_observer),
         # The threads' verbs (thread_operations.py): the hub's ThreadService factory.
         "hub_thread_service": lambda: _hub_threads(services),
+        # The capability run receipts (invocation_operations.py); the kernel broker at first use.
+        "invocation_service": lambda: _invocations(resolved_db, resolved_observer),
     }
     for name, build in builders.items():
         instance = getattr(services, name, None)

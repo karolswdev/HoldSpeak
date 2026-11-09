@@ -1021,7 +1021,8 @@ OP_MCP_PROJECTIONS: dict[str, dict[str, Any]] = {
 def _family_projections() -> dict[str, dict[str, Any]]:
     from holdspeak import operations as ops
 
-    rows = ops.AGENT_OPERATIONS + ops.THREAD_OPERATIONS + ops.CODER_OPERATIONS + ops.DELIVERY_OPERATIONS
+    rows = (ops.AGENT_OPERATIONS + ops.THREAD_OPERATIONS + ops.CODER_OPERATIONS + ops.DELIVERY_OPERATIONS
+            + ops.INVOCATION_OPERATIONS)
     return {d.name: {"kind": "tool", "name": d.tool_name} for d in rows if d.tool_schema is not None}
 
 

@@ -81,6 +81,8 @@ while True:
 KNOWN_CODE = re.compile(
     r"not_found|unknown|invalid|validation|conflict|mismatch|stale|not_saved|not_absolute"
     r"|^no_assignment$"  # ask.run: no engine assigned to answers on a fresh HOME (the engine door)
+    r"|^item_kind_unsupported$"  # agent.hand.preview: the sweep's kind x is no desk item kind (409)
+    r"|^launch_not_running$"  # agent.launch.answer: no agent runs on a fresh HOME (409)
     r"|^inbox_unavailable$"  # thought.create: no inbox on a fresh HOME
     r"|^cli_engines_off$"  # model_library.connect_cli_engine: tests/conftest.py turns agent engines off
     r"|^model_library_not_agent_engine$"  # model_library.set_spend_limit: no engine "x" (404; Betterment M4)

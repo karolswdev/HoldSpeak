@@ -120,6 +120,7 @@ class RuntimeServices:
     desk_window_service: Optional[Any] = None       # PHILO-16 16b: the desk's windows
     note_outcomes_service: Optional[Any] = None     # Betterment Q9: Find the tasks
     hub_thread_service: Optional[Any] = None        # the threads' verbs: the hub's ThreadService factory
+    invocation_service: Optional[Any] = None        # the capability run receipts (invocation_operations.py)
 
     # --- operations ------------------------------------------------------
     cadence_service: Optional[Any] = None          # Config.load().cadence

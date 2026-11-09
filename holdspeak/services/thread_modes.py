@@ -86,7 +86,8 @@ def _family_reads() -> frozenset[str]:
     read from the rows, so the seeded palettes do not grow."""
     from holdspeak import operations as ops
 
-    rows = ops.AGENT_OPERATIONS + ops.THREAD_OPERATIONS + ops.CODER_OPERATIONS + ops.DELIVERY_OPERATIONS
+    rows = (ops.AGENT_OPERATIONS + ops.THREAD_OPERATIONS + ops.CODER_OPERATIONS + ops.DELIVERY_OPERATIONS
+            + ops.INVOCATION_OPERATIONS)
     return frozenset(d.tool_name for d in rows if d.tool_schema is not None and d.thread == "evidence_read")
 
 

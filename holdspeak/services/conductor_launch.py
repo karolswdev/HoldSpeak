@@ -524,7 +524,7 @@ def _family_rules() -> dict[str, tuple[str, str, str]]:
     his conversations: a launch neither reads nor writes them."""
     from holdspeak import operations as ops
 
-    rows = ops.AGENT_OPERATIONS + ops.CODER_OPERATIONS + ops.DELIVERY_OPERATIONS
+    rows = ops.AGENT_OPERATIONS + ops.CODER_OPERATIONS + ops.DELIVERY_OPERATIONS + ops.INVOCATION_OPERATIONS
     rules = {d.tool_name: (READ if d.effect == "read" else NEVER, "", "") for d in rows if d.tool_schema is not None}
     rules.update({d.tool_name: (NEVER, "", "") for d in ops.THREAD_OPERATIONS if d.tool_schema is not None})
     return {name: rule for name, rule in rules.items() if name not in LAUNCH_RULES}
