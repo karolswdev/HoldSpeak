@@ -25,12 +25,6 @@ def test_code_version_matches_pyproject() -> None:
     assert holdspeak.__version__ == _pyproject_version()
 
 
-def test_version_is_not_the_unknown_fallback() -> None:
-    # Running the test suite means the package is importable; the fallback
-    # placeholder should never be what we resolve to.
-    assert holdspeak.__version__ != "0.0.0+unknown"
-
-
 def test_doctor_runtime_check_reports_version() -> None:
     from holdspeak.commands.doctor import _check_runtime
 

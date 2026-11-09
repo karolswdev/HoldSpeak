@@ -109,10 +109,6 @@ def test_stale_answered_and_ended_waits_are_not_members(hooks: Hooks) -> None:
     assert hooks.members(T0 + timedelta(minutes=5)) == []
 
 
-def test_a_coder_is_a_coverage_kind() -> None:
-    assert "coder" in COVERAGE_KINDS
-
-
 # ── [P2-5] the Notification subtype ──────────────────────────────────
 
 

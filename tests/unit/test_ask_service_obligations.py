@@ -194,6 +194,7 @@ def test_recipe_materializer_rollback_leaves_no_partial_rows_then_retries(rig):
 
 
 
+
 _DECLARED_ASK_V1_SHAPE = {
     "schema_version": "int",
     "system_prompt": "str",
@@ -217,7 +218,6 @@ _DECLARED_ASK_V1_SHAPE = {
     "selected_model": "str",
 }
 _DECLARED_ASK_V1_SHAPE_SHA256 = "sha256:e77de01632ee952466740f03afad77896f20d06a463a6e25c98315fe0817c2e6"
-
 
 
 #: The v1 contract (``holdspeak.ask@1``) is the unrouted Thought's now; an

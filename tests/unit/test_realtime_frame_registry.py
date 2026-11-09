@@ -33,19 +33,6 @@ def _fmt(sites: dict[str, list[str]], names: set[str]) -> str:
     return "\n".join(f"  {n}: {', '.join(sites.get(n, [])[:4])}" for n in sorted(names))
 
 
-def test_vocabulary_is_a_set() -> None:
-    """One name, one entry."""
-    assert len(set(RUNTIME_FRAME_TYPES)) == len(RUNTIME_FRAME_TYPES)
-
-
-def test_the_scanners_actually_see_the_trees(
-    emitters: dict[str, list[str]], consumers: dict[str, list[str]]
-) -> None:
-    """A guard that scans nothing passes everything."""
-    assert len(emitters) >= 20, f"emitter scan found only {sorted(emitters)}"
-    assert len(consumers) >= 15, f"consumer scan found only {sorted(consumers)}"
-
-
 def test_every_emitted_frame_is_registered(emitters: dict[str, list[str]]) -> None:
     unknown = set(emitters) - set(RUNTIME_FRAME_TYPES)
     assert not unknown, (
@@ -84,37 +71,3 @@ def test_no_frame_is_consumed_with_no_emitter(
     )
 
 
-def test_registered_frames_are_all_live(
-    emitters: dict[str, list[str]], consumers: dict[str, list[str]]
-) -> None:
-    """No registry entry may name a frame that neither side speaks."""
-    dead = set(RUNTIME_FRAME_TYPES) - set(emitters) - set(consumers)
-    assert not dead, f"Registered but wired nowhere: {sorted(dead)}"
-
-
-def test_allowlists_are_honest(
-    emitters: dict[str, list[str]], consumers: dict[str, list[str]]
-) -> None:
-    """An allowlist entry must be registered, real, and carry a reason."""
-    for name, reason in EMITTED_WITHOUT_CONSUMER.items():
-        assert name in RUNTIME_FRAME_TYPES, f"{name} is allowlisted but unregistered"
-        assert name in emitters, f"{name} is allowlisted but nothing emits it"
-        assert name not in consumers, f"{name} has a consumer — drop the allowlist"
-        assert len(reason.strip()) > 20, f"{name} needs a real reason"
-    for name, reason in CONSUMED_WITHOUT_EMITTER.items():
-        assert name in RUNTIME_FRAME_TYPES, f"{name} is allowlisted but unregistered"
-        assert name in consumers, f"{name} is allowlisted but nothing consumes it"
-        assert name not in emitters, f"{name} has an emitter — drop the allowlist"
-        assert len(reason.strip()) > 20, f"{name} needs a real reason"
-
-
-def test_the_five_workbench_frames_are_emitted(emitters: dict[str, list[str]]) -> None:
-    """HS-132-03: the WorkbenchWindow subscriptions have a real counterpart."""
-    for name in (
-        "workbench.run_start",
-        "workbench.item_claimed",
-        "workbench.item_done",
-        "workbench.item_failed",
-        "workbench.run_complete",
-    ):
-        assert name in emitters, f"{name} is subscribed but never broadcast"

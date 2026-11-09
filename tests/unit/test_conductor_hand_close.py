@@ -678,43 +678,6 @@ def test_the_door_arms_the_open_issues_watch_with_the_pr_queue(db) -> None:
 # ── R4 round 2: no test reaches the real gh/acli ────────────────────
 
 
-def test_the_default_runner_refuses_a_real_gh_in_tests(tmp_path, monkeypatch) -> None:
-    from holdspeak.cli_guard import RealCliRefusedInTests, refuse_real_cli_in_tests
-
-    assert __import__("os").environ.get("HOLDSPEAK_TEST_NO_REAL_CLI") == "1", "tests/conftest.py sets it"
-    monkeypatch.setattr("shutil.which", lambda name: f"/opt/owner/bin/{name}")
-    with pytest.raises(RealCliRefusedInTests, match="real_cli_refused_in_tests"):
-        refuse_real_cli_in_tests(["gh", "pr", "list"])
-    with pytest.raises(RealCliRefusedInTests):
-        refuse_real_cli_in_tests(["acli", "jira", "auth", "status"])
-    refuse_real_cli_in_tests(["git", "status"])  # other programs are not guarded
-    stub = tmp_path / "gh"
-    stub.write_text("#!/bin/sh\nexit 0\n")
-    refuse_real_cli_in_tests([str(stub), "pr", "list"])  # a test's own stub runs
-    monkeypatch.setenv("HOLDSPEAK_TEST_NO_REAL_CLI", "0")
-    refuse_real_cli_in_tests(["gh", "pr", "list"])  # production: no guard
-
-
-def test_the_merged_read_without_a_runner_never_runs_the_real_gh(tmp_path, db, monkeypatch) -> None:
-    from holdspeak.delivery.factory_launch import LaunchLedger
-
-    _room_pr_watch(db)
-    monkeypatch.setattr("shutil.which", lambda name: f"/opt/owner/bin/{name}")
-    ran: list = []
-    monkeypatch.setattr("subprocess.run", lambda *a, **k: ran.append(a) or SimpleNamespace(returncode=0, stdout="[]", stderr=""))
-    registry = DeliveryRegistry(tmp_path / "sources.json", map_path=tmp_path / "absent.json")
-    observer = FollowThroughObserver(
-        db, ledger=LaunchLedger(tmp_path / "launches.json"), registry=registry,
-        receipts=PrReceiptsService(registry, gh_available=lambda: True),
-        attempts=WorkAttemptService(db.work_attempts), clock=lambda: NOON,
-    )
-    receipt = observer.sweep_merged(SWEEPER)
-    assert [(r["repository"], r["state"], r["drained"]) for r in receipt["repositories"]] == [
-        ("acme/railsproj", "real_cli_refused_in_tests", False),
-    ]
-    assert ran == []
-
-
 # ── R1's real walk: hand -> merge -> cleanup -> hand again ──────────
 
 
@@ -917,3 +880,40 @@ def test_round2b_31_merges_inside_one_minute_are_all_recorded(tmp_path, db) -> N
     assert len(_observations(db, "conductor.pr_merged")) == 31
     paged = [c for c in rig.gh.calls if "sort:created-asc" in c[c.index("--search") + 1]]
     assert paged, "the full one-minute window was paged, not skipped"
+
+
+def test_the_default_runner_refuses_a_real_gh_in_tests(tmp_path, monkeypatch) -> None:
+    from holdspeak.cli_guard import RealCliRefusedInTests, refuse_real_cli_in_tests
+
+    assert __import__("os").environ.get("HOLDSPEAK_TEST_NO_REAL_CLI") == "1", "tests/conftest.py sets it"
+    monkeypatch.setattr("shutil.which", lambda name: f"/opt/owner/bin/{name}")
+    with pytest.raises(RealCliRefusedInTests, match="real_cli_refused_in_tests"):
+        refuse_real_cli_in_tests(["gh", "pr", "list"])
+    with pytest.raises(RealCliRefusedInTests):
+        refuse_real_cli_in_tests(["acli", "jira", "auth", "status"])
+    refuse_real_cli_in_tests(["git", "status"])  # other programs are not guarded
+    stub = tmp_path / "gh"
+    stub.write_text("#!/bin/sh\nexit 0\n")
+    refuse_real_cli_in_tests([str(stub), "pr", "list"])  # a test's own stub runs
+    monkeypatch.setenv("HOLDSPEAK_TEST_NO_REAL_CLI", "0")
+    refuse_real_cli_in_tests(["gh", "pr", "list"])  # production: no guard
+
+
+def test_the_merged_read_without_a_runner_never_runs_the_real_gh(tmp_path, db, monkeypatch) -> None:
+    from holdspeak.delivery.factory_launch import LaunchLedger
+
+    _room_pr_watch(db)
+    monkeypatch.setattr("shutil.which", lambda name: f"/opt/owner/bin/{name}")
+    ran: list = []
+    monkeypatch.setattr("subprocess.run", lambda *a, **k: ran.append(a) or SimpleNamespace(returncode=0, stdout="[]", stderr=""))
+    registry = DeliveryRegistry(tmp_path / "sources.json", map_path=tmp_path / "absent.json")
+    observer = FollowThroughObserver(
+        db, ledger=LaunchLedger(tmp_path / "launches.json"), registry=registry,
+        receipts=PrReceiptsService(registry, gh_available=lambda: True),
+        attempts=WorkAttemptService(db.work_attempts), clock=lambda: NOON,
+    )
+    receipt = observer.sweep_merged(SWEEPER)
+    assert [(r["repository"], r["state"], r["drained"]) for r in receipt["repositories"]] == [
+        ("acme/railsproj", "real_cli_refused_in_tests", False),
+    ]
+    assert ran == []

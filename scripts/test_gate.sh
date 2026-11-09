@@ -25,7 +25,6 @@ uv run pytest -q -n auto --dist load \
     --ignore tests/e2e --ignore tests/uat \
     --ignore tests/unit/test_webhook_post_actuator.py \
     --ignore tests/unit/test_gated_connector.py \
-    --ignore tests/integration/test_web_companion_slack.py \
     --ignore tests/unit/test_device_recording_tick.py \
     --ignore tests/unit/test_intel_cloud.py \
     -p no:cacheprovider "$@" || status=1
@@ -34,7 +33,6 @@ uv run pytest -q \
     tests/e2e tests/uat \
     tests/unit/test_webhook_post_actuator.py \
     tests/unit/test_gated_connector.py \
-    tests/integration/test_web_companion_slack.py \
     tests/unit/test_device_recording_tick.py \
     tests/unit/test_intel_cloud.py \
     --deselect tests/e2e/test_metal.py \

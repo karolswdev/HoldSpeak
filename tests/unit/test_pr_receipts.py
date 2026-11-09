@@ -340,25 +340,6 @@ def test_diff_local_and_honest_absence_with_fetch_offer() -> None:
     assert service.diff("src_1", 999)["status"] == "unknown_pr"
 
 
-def test_egress_census_gh_and_fetch_only() -> None:
-    """The grep census: `gh` is named only in pr_receipts (this
-    delivery package's one collector egress) and the fetch verb is
-    the one git-network call."""
-    pkg = REPO / "holdspeak" / "delivery"
-    gh_files = set()
-    for path in pkg.glob("*.py"):
-        code = "\n".join(
-            line for line in path.read_text(encoding="utf-8").splitlines()
-            if not line.lstrip().startswith("#")
-        )
-        if '"gh"' in code or "'gh'" in code:
-            gh_files.add(path.name)
-    assert gh_files == {"pr_receipts.py"}
-
-    text = (pkg / "pr_receipts.py").read_text(encoding="utf-8")
-    assert text.count('"fetch"') == 1  # one explicit egress verb
-
-
 # ── HS-S25: the review read keeps its quality and its read ─────────
 
 

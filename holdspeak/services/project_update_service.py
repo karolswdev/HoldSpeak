@@ -53,7 +53,6 @@ import hashlib
 import json
 import re as _re
 import threading
-import time as _time
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -1860,9 +1859,9 @@ class ProjectUpdateService:
         Raises ``_ModelDraftFailed`` on any failure (router unavailable,
         model error, timeout, unparseable output).
         """
-        from ..kernel.inference_runner import InvocationRequest, ServiceContract
-        from ..kernel.prompt_adapter import CanonicalPromptAdapter
-        from ..kernel.runtime import _as_principal
+        from types import SimpleNamespace
+
+        from . import engine_door
 
         broker = self._broker
         if broker is None:
@@ -1871,28 +1870,14 @@ class ProjectUpdateService:
                 detail="the hub has no engine service",
             )
 
-        runner = broker.inference_runner
-
-        # Resolve deployment revision for the update-draft capability.
+        # The update-draft job's engine (the door's pick).
         try:
-            deployment_rev_id, assignment_id, route_profile_id = (
-                _resolve_for_capability(broker, PROJECT_UPDATE_CAPABILITY)
-            )
-        except RuntimeError as exc:
+            engine = engine_door.engine_for(broker, PROJECT_UPDATE_CAPABILITY)
+        except engine_door.EngineDoorError as exc:
             raise _ModelDraftFailed(
-                f"route_unresolved: {exc}", FALLBACK_ROUTE_UNRESOLVED,
+                f"route_unresolved: {exc.detail}", FALLBACK_ROUTE_UNRESOLVED,
                 detail="no engine is set for updates",
             ) from exc
-
-        # HS-173-02: derive generator provenance from the deployment revision.
-        gen_host: str | None = None
-        gen_model: str | None = None
-        try:
-            gen_host, gen_model = _resolve_generator_provenance(
-                broker.database, deployment_rev_id, route_profile_id,
-            )
-        except Exception:
-            pass  # Provenance is best-effort; never fails the draft.
 
         # Build the evidence inventory from deterministic claims.
         inventory_refs: frozenset[str] = frozenset(
@@ -1916,53 +1901,41 @@ class ProjectUpdateService:
         payload = _build_model_prompt(det_claims, memory)
 
         # PHILO-9-02 (the steward beat, section 5): a model draft made inside
-        # the steward's draft_update effect is that effect's CHILD -- the
-        # existing inference.invoke keeps its own admission and receipt, and
-        # its deadline is clamped to the effect's (``desk_broker.child_deadline``).
+        # the steward's draft_update effect is that effect's CHILD.
         from ..kernel.project import STEWARD_EFFECT
         from . import project_kernel
 
         running = project_kernel.current()
-        parent_operation_id = (running.operation_id
-                               if running is not None and running.name == STEWARD_EFFECT and not running.replay
-                               else "")
-        request = InvocationRequest(
-            deployment_revision=deployment_rev_id,
-            definition_origin=ServiceContract.for_payload(
-                "project.update.draft", "1", payload,
-            ),
-            deadline_at=_time.time() + 120,
-            payload=payload,
-            parent_operation_id=parent_operation_id,
-        )
-
-        captured: list[Any] = []
-
-        def _capture(value: Any) -> str:
-            captured.append(value)
-            return f"update-draft:{assignment_id}"
-
+        parent = (SimpleNamespace(operation_id=running.operation_id)
+                  if running is not None and running.name == STEWARD_EFFECT and not running.replay
+                  else None)
         try:
-            with _as_principal(principal):
-                outcome = runner.invoke(
-                    request, CanonicalPromptAdapter(), publish=_capture,
-                )
+            answer = engine_door.run(
+                broker, principal, PROJECT_UPDATE_CAPABILITY, payload, engine=engine,
+                contract="project.update.draft", parent_context=parent,
+            )
+        except engine_door.EngineDoorError as exc:
+            raise _ModelDraftFailed(
+                f"no_output: {exc.detail}", FALLBACK_NO_OUTPUT,
+                detail="it returned no text",
+            ) from exc
         except Exception as exc:
             raise _ModelDraftFailed(
                 f"runner_error: {exc}", FALLBACK_MODEL_UNAVAILABLE,
                 detail="the call to the engine failed",
             ) from exc
 
-        # Extract raw output -- try direct result first, then captured.
-        raw: str | None = None
-        result = getattr(outcome, "result", None)
-        if isinstance(result, dict) and "output" in result:
-            raw = str(result["output"])
-        elif captured:
-            adapter_result = captured[0]
-            if isinstance(adapter_result, dict) and "output" in adapter_result:
-                raw = str(adapter_result["output"])
-
+        # HS-173-02: provenance from the engine that answered.
+        gen_host: str | None = None
+        gen_model: str | None = None
+        try:
+            gen_host, gen_model = _resolve_generator_provenance(
+                broker.database, answer.engine.revision, answer.engine.profile,
+            )
+        except Exception:
+            pass  # Provenance is best-effort; never fails the draft.
+        assignment_id = answer.engine.assignment
+        raw = answer.output if isinstance(answer.result, dict) and "output" in answer.result else None
         if raw is None:
             raise _ModelDraftFailed(
                 "no_output", FALLBACK_NO_OUTPUT,

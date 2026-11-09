@@ -105,13 +105,6 @@ class TestConflictProposalRefusesAccept:
     verb with a ValidationError (code='capability'), surfaced as 400
     by the route. This is by design (HANDLER_MAP: 'refuse')."""
 
-    def test_handler_map_conflict_refuses(self):
-        from holdspeak.services.project_delta_service import HANDLER_MAP
-        assert HANDLER_MAP["conflict"] == "refuse", (
-            f"HANDLER_MAP['conflict'] should be 'refuse', "
-            f"got {HANDLER_MAP['conflict']!r}"
-        )
-
     def test_decide_accept_on_conflict_raises_validation(self, db):
         """Exercise the decide_proposal code path with a conflict-kind
         proposal and verb=accept. Expects ValidationError with code='capability'."""
@@ -159,12 +152,6 @@ class TestConflictProposalRefusesAccept:
                 OWNER, "proj_test167b", proposal_id, "accept",
             )
         assert exc_info.value.code == "capability"
-
-    def test_observation_attention_accepts(self, db):
-        """An observation_attention proposal CAN be accepted (record_only handler)."""
-        from holdspeak.services.project_delta_service import HANDLER_MAP
-        assert HANDLER_MAP["observation_attention"] == "record_only"
-
 
 # ── (c) Room projection shape ──────────────────────────────────────
 

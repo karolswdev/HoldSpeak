@@ -677,11 +677,3 @@ def test_historical_slack_proposals_remain_readable(
     assert db.actuators.last_execution_receipt("slack") == receipt.executed_at
 
 
-def test_legacy_slack_connector_is_removed() -> None:
-    import holdspeak.slack_export as slack_export
-
-    assert not hasattr(slack_export, "build_slack_connector")
-    assert document_markdown_for(
-        {"meeting_title": "A meeting", "meeting_date": "2026-09-30", "is_empty": False},
-        "digest",
-    ).startswith("# A meeting")

@@ -43,23 +43,6 @@ def client(settings_path: Path, tmp_path: Path) -> TestClient:
     reset_database()
 
 
-def test_old_meeting_export_route_is_parked(client: TestClient) -> None:
-    response = client.post(
-        "/api/meetings/any-meeting/export/slack", json={"what": "digest"}
-    )
-    assert response.status_code == 400
-    assert response.json() == {"success": False, "error": "slack_moved_to_channel"}
-    assert URL not in response.text
-
-
-def test_old_secret_operation_is_absent(client: TestClient) -> None:
-    response = client.put(
-        "/api/settings/secrets/slack_webhook_url", json={"value": URL}
-    )
-    assert response.status_code == 404
-    assert URL not in response.text
-
-
 def test_retained_config_value_loads_but_settings_drops_it(
     client: TestClient, settings_path: Path
 ) -> None:

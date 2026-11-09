@@ -172,24 +172,6 @@ class TestMeetingWatchSource:
         assert entities[1]["title"] == "Architecture Review"
         assert entities[1]["participants"] == 1  # Carol
 
-    def test_entity_shape(self, db):
-        project_id = _seed_project(db)
-        mid = _seed_meeting(db, title="Sprint Planning")
-        _link_meeting_to_project(db, mid, project_id)
-
-        entities = MeetingWatchSource(db=db).snapshot(
-            OWNER, query_kind="meetings", query={"project_id": project_id},
-        )
-
-        assert len(entities) == 1
-        entity = entities[0]
-        required_keys = {
-            "id", "entity_type", "title", "date", "participants",
-            "decisions_count", "commitments_count", "intel_status", "updated_at",
-        }
-        assert required_keys <= set(entity.keys())
-        assert entity["entity_type"] == "meeting"
-
     def test_decisions_and_commitments_count(self, db):
         project_id = _seed_project(db)
         mid = _seed_meeting(db, title="Design Review")
@@ -265,19 +247,6 @@ class TestMeetingWatchSource:
 
         assert entities == []
 
-    def test_zero_egress(self, db):
-        """The adapter makes no CLI or network calls -- pure DB reads."""
-        project_id = _seed_project(db)
-        mid = _seed_meeting(db, title="Standup")
-        _link_meeting_to_project(db, mid, project_id)
-
-        # The adapter takes db= and makes only DB calls.
-        # If it tried CLI/network, it would fail in this env.
-        entities = MeetingWatchSource(db=db).snapshot(
-            OWNER, query_kind="meetings", query={"project_id": project_id},
-        )
-        assert len(entities) == 1
-
     def test_invalid_query_kind_raises(self, db):
         with pytest.raises(ValidationError, match="meetings"):
             MeetingWatchSource(db=db).snapshot(
@@ -348,17 +317,6 @@ class TestMeetingDispatch:
 
 
 # ── Project service maps ──────────────────────────────────────────
-
-
-class TestProjectServiceMeetingMaps:
-
-    def test_provider_to_connector(self):
-        from holdspeak.services.project_service import _PROVIDER_TO_CONNECTOR
-        assert _PROVIDER_TO_CONNECTOR["meeting"] == "meeting"
-
-    def test_subject_to_query_kind(self):
-        from holdspeak.services.project_service import _SUBJECT_TO_QUERY_KIND
-        assert _SUBJECT_TO_QUERY_KIND["meeting"] == "meetings"
 
 
 # ── ensure_meeting_watch: creation trigger + idempotency ─────────

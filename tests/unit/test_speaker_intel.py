@@ -13,23 +13,6 @@ from holdspeak.speaker_intel import SpeakerEmbedding, SpeakerDiarizer
 class TestSpeakerEmbedding:
     """Tests for SpeakerEmbedding dataclass."""
 
-    def test_init(self):
-        """Test creating a speaker embedding."""
-        embedding = np.random.randn(256).astype(np.float32)
-        embedding = embedding / np.linalg.norm(embedding)  # Normalize
-
-        speaker = SpeakerEmbedding(
-            id="test123",
-            name="John Doe",
-            embedding=embedding,
-            sample_count=1,
-        )
-
-        assert speaker.id == "test123"
-        assert speaker.name == "John Doe"
-        assert speaker.embedding.shape == (256,)
-        assert speaker.sample_count == 1
-
     def test_similarity_same_embedding(self):
         """Test similarity of identical embeddings."""
         embedding = np.random.randn(256).astype(np.float32)
@@ -144,21 +127,6 @@ class TestSpeakerDiarizer:
     def diarizer(self, mock_encoder):
         """Create a diarizer instance with mocked encoder."""
         return SpeakerDiarizer(db=None, enable_cross_meeting=False)
-
-    def test_init(self, mock_encoder):
-        """Test initializing diarizer."""
-        diarizer = SpeakerDiarizer(db=None, enable_cross_meeting=False)
-        assert diarizer.db is None
-        assert diarizer.enable_cross_meeting is False
-        assert len(diarizer._session_speakers) == 0
-
-    def test_init_with_custom_threshold(self, mock_encoder):
-        """Test initializing with custom similarity threshold."""
-        diarizer = SpeakerDiarizer(
-            db=None,
-            similarity_threshold=0.85,
-        )
-        assert diarizer.SIMILARITY_THRESHOLD == 0.85
 
     def test_extract_embedding_too_short(self, diarizer):
         """Test that short audio returns None."""

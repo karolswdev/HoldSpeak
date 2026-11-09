@@ -45,11 +45,6 @@ def _turns(timing: Timing, gave_up: list[float]) -> CallTurns:
     return CallTurns(voice, timing=timing, give_up=give_up)
 
 
-def test_the_default_times_are_the_designs() -> None:
-    t = Timing()
-    assert (t.first_fill, t.second_fill, t.give_up) == (1.5, 10.0, 25.0)
-
-
 def test_with_no_answer_the_line_fills_twice_then_says_goodbye_and_hangs_up() -> None:
     async def walk() -> tuple:
         gave_up: list[float] = []

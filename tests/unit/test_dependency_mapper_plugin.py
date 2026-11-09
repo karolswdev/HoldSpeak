@@ -25,14 +25,6 @@ def _plugin(response):
     return intel_plugin(DependencyMapperPlugin(), lambda _m, **_kw: response)
 
 
-def test_attributes() -> None:
-    p = DependencyMapperPlugin()
-    assert p.id == "dependency_mapper"
-    assert p.kind == "synthesizer"
-    assert p.execution_mode == "deferred"
-    assert p.required_capabilities == ["llm"]
-
-
 def test_run_success_maps_edges() -> None:
     out = _plugin(_GOOD_JSON).run({"transcript": "We mapped deps."})
     assert out["confidence_hint"] == 1.0

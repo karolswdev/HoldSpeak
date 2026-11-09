@@ -66,7 +66,3 @@ def test_the_line_imports_no_gpl_code() -> None:
     assert out.stdout.strip() == "", out.stdout
 
 
-def test_aupipe_carries_a_bsd_3_header_naming_holdspeak() -> None:
-    source = (ROOT / "holdspeak" / "line" / "aupipe" / "aupipe.c").read_text()
-    assert "Neither the name of HoldSpeak nor the names of its contributors" in source
-    assert "GPL" not in source

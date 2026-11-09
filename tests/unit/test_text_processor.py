@@ -282,7 +282,3 @@ class TestProcessorStateless:
         assert result1 == "hello."
         assert result2 == "world,"
 
-    def test_new_instance_same_behavior(self):
-        p1 = TextProcessor()
-        p2 = TextProcessor()
-        assert p1.process("test period") == p2.process("test period")

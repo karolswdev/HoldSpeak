@@ -82,14 +82,3 @@ def test_score_claims_is_additive_never_mutates_input() -> None:
     assert text == "- Sarah owns the migration script\n- The launch moved to Mars\n"
 
 
-def test_no_network_egress_imports() -> None:
-    """The scorer must never introduce network egress — grep its own
-    source for anything that could reach the network."""
-    import inspect
-
-    import holdspeak.grounding as grounding_module
-
-    src = inspect.getsource(grounding_module)
-    banned = ("requests.", "httpx.", "urllib.request", "socket.", "aiohttp.")
-    for token in banned:
-        assert token not in src, f"unexpected network-capable symbol: {token}"

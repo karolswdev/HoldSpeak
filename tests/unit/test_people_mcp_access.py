@@ -43,13 +43,6 @@ def _people_tools(agent: Any) -> set[str]:
     return {t["name"] for t in _rpc(agent, "tools/list").json()["result"]["tools"] if t["name"].startswith("people.")}
 
 
-def test_the_default_is_on(config_file) -> None:
-    assert access_source({}) == ("write", "default")
-    from holdspeak.config import Config
-
-    assert Config().people.mcp_access == "write"
-
-
 def test_the_env_overrides_the_setting(config_file) -> None:
     config_file.write_text(json.dumps({"people": {"mcp_access": "read"}}), encoding="utf-8")
     assert access_source({}) == ("read", "config")

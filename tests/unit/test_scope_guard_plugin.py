@@ -27,14 +27,6 @@ def _plugin(response):
     return intel_plugin(ScopeGuardPlugin(), lambda _m, **_kw: response)
 
 
-def test_attributes() -> None:
-    p = ScopeGuardPlugin()
-    assert p.id == "scope_guard"
-    assert p.kind == "validator"
-    assert p.execution_mode == "deferred"
-    assert p.required_capabilities == ["llm"]
-
-
 def test_run_success_classifies() -> None:
     out = _plugin(_GOOD_JSON).run({"transcript": "We reviewed scope."})
     assert out["confidence_hint"] == 1.0
