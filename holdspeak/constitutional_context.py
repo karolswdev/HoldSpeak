@@ -14,7 +14,7 @@ surface).
 from __future__ import annotations
 
 import hashlib
-from typing import Optional
+from typing import Any, Optional
 
 from .logging_config import get_logger
 
@@ -137,3 +137,25 @@ def constitutional_receipt() -> dict:
         "revision": ctx.get("revision", 0),
         "content_hash": ctx.get("content_hash", ""),
     }
+
+
+class ConstitutionalContextService:
+    """The owner's always-on context as the declared rows' service
+    (``desk_state_operations.py``, 2026-11-09): the functions above, by principal."""
+
+    def get(self, principal: Any) -> dict:
+        return {**get_constitutional_context(), "char_limit": CHAR_LIMIT}
+
+    def update(self, principal: Any, content: Any) -> dict:
+        from .services.errors import ValidationError
+
+        if content is None:
+            raise ValidationError("content field is required")
+        try:
+            return {**update_constitutional_context(str(content)), "char_limit": CHAR_LIMIT}
+        except ValueError as exc:
+            raise ValidationError(str(exc)) from exc
+
+    def history(self, principal: Any) -> list[dict]:
+        return get_constitutional_history()
+

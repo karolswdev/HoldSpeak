@@ -24,7 +24,6 @@ def mount_routers(app: Any, hub: HubComposition, *, auth_token: Optional[str]) -
     web_ctx = hub.web_ctx
     from holdspeak.web.routes import (
         build_activity_router,
-        build_automations_router,
         build_authority_router,
         build_cadence_router,
         build_calendar_snapshot_router,
@@ -93,7 +92,6 @@ def mount_routers(app: Any, hub: HubComposition, *, auth_token: Optional[str]) -
     mount_router(app, build_door_router(web_ctx))
     mount_router(app, build_concierge_router(web_ctx))
     mount_router(app, build_people_router(web_ctx))
-    mount_router(app, build_automations_router(web_ctx))
     mount_router(app, build_decision_records_router(web_ctx))
     mount_router(app, build_decisions_router(web_ctx))
     mount_router(app, build_memory_router(web_ctx))
@@ -152,7 +150,7 @@ def mount_routers(app: Any, hub: HubComposition, *, auth_token: Optional[str]) -
     mount_router(app, build_roadmaps_router(web_ctx))
     mount_router(app, build_primitives_router(web_ctx))
     mount_router(app, build_projections_router(web_ctx))
-    mount_router(app, build_constitutional_router())
+    mount_router(app, build_constitutional_router(web_ctx))
     mount_router(app, build_scheduled_recordings_router(web_ctx))
     mount_router(app, build_setup_router(web_ctx))
     from holdspeak.web.routes.onboarding import build_onboarding_router

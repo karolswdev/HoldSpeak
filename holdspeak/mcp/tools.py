@@ -979,11 +979,37 @@ def runtime_registry(primitives: Any = None, meetings: Any = None) -> operations
              "decision_lifecycle_service": lambda: DecisionLifecycleService(db, observer=obs),
              "follow_through_service": lambda: FollowThroughService(db, observer=obs),
              # The Settings credential verbs bind here; they have no tool (HTTP only).
-             "credential_service": lambda: _credential_service(db, obs)}
+             "credential_service": lambda: _credential_service(db, obs),
+             # 2026-11-09 (ops/programs-work): recipe writes, the note window, memory.
+             **_work_services(db, obs)}
     return operations.for_runtime(program_service=lambda: operations.LIVE_PROGRAM_SERVICE,
                                   phone_service=lambda: operations.LIVE_PHONE_SERVICE,
                                   calls_service=lambda: operations.LIVE_CALLS_SERVICE, **{
         name: (lambda name=name, build=build: runtime_service(name, build)) for name, build in plain.items()})
+
+
+def _work_services(db: Any, obs: Any) -> dict[str, Any]:
+    """The bare builds of the recipe, note-window, memory and desk-state rows' services."""
+    from holdspeak.mcp.families.thought import _service as refinement
+    from holdspeak.runtime.composition_declared import (
+        _bare_desk, _bare_projections, _bare_recall, _bare_recipes, _bare_thoughts, _constitutional,
+    )
+    from holdspeak.services.memory_service import MemoryService
+
+    return {"recipe_service": lambda: _bare_recipes(db, obs),
+            "desk_service": lambda: _bare_desk(db, obs), "projection_service": lambda: _bare_projections(db, obs),
+            "constitutional_context_service": _constitutional,
+            "watch_service": lambda: _watch_service(db, obs),
+            "refinement_thought_service": lambda: _bare_thoughts(db),
+            "recall_service": lambda: _bare_recall(db),
+            "refinement_service": refinement,
+            "memory_service": lambda: MemoryService(db=db, observer=obs)}
+
+
+def _watch_service(db: Any, obs: Any) -> Any:
+    from holdspeak.services.watch_service import WatchService
+
+    return WatchService(db, observer=obs)
 
 
 def _credential_service(db: Any, obs: Any) -> Any:

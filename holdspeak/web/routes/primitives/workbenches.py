@@ -43,7 +43,12 @@ _FAILED = {
     "automation.new.list": "Failed to read new automation results",
     "automation.lesson.list": "Failed to read memory",
     "automation.lesson.forget": "Failed to forget the lesson",
+    "automation.prepared.read": "Failed to read the prepared day",
+    "automation.item.restore": "Failed to restore Workbench item",
+    "automation.event_start.set_enabled": "Failed to change the event start",
 }
+#: These answer a ValidationError as a 400 in its own words.
+_BAD_REQUEST = {"automation.make_one", "automation.item.restore", "automation.event_start.set_enabled"}
 #: When and With answer a refusal in its own words, code and status (Betterment A4).
 _A4 = {"automation.set_when", "automation.set_engine"}
 
@@ -67,8 +72,10 @@ def _answer(name: str) -> Callable[..., Any]:
         except ServiceError as exc:
             if name in _A4:
                 return _a4_error(exc)
-            if name == "automation.make_one" and isinstance(exc, ValidationError):
+            if name in _BAD_REQUEST and isinstance(exc, ValidationError):
                 return JSONResponse({"error": str(exc)}, status_code=400)
+            if name == "automation.item.restore" and isinstance(exc, ConflictError):
+                return JSONResponse({"error": str(exc)}, status_code=409)
             return error_500(exc, log, _FAILED[name])
         except Exception as exc:
             return error_500(exc, log, _FAILED[name])
@@ -108,16 +115,6 @@ def build_workbenches_router(ctx: WebContext) -> APIRouter:
             return JSONResponse({"workbenches": _svc().list_workbenches(_principal(request))})
         except Exception as exc:
             return error_500(exc, log, "Failed to list automations")
-
-    @router.get("/api/automations/prepared")
-    def api_prepared_for_today(request: Request) -> Any:
-        """Betterment daily D9: Today's Prepared block (the newest result of an
-        automation whose Put it in is Today) and the automation Prepare now
-        runs. Each is null when there is none."""
-        try:
-            return JSONResponse(_svc().prepared_for_today(_principal(request)))
-        except Exception as exc:
-            return error_500(exc, log, "Failed to read the prepared day")
 
     @router.post("/api/workbenches")
     async def api_create_workbench(request: Request) -> Any:
@@ -223,20 +220,6 @@ def build_workbenches_router(ctx: WebContext) -> APIRouter:
         except Exception as exc:
             return error_500(exc, log, "Failed to delete item")
 
-    @router.post("/api/workbenches/{workbench_id}/items/{item_id}/restore")
-    def api_restore_item(workbench_id: str, item_id: str, request: Request) -> Any:
-        try:
-            item = _svc().restore_item(_principal(request), workbench_id, item_id)
-            return JSONResponse({"item": item})
-        except NotFound:
-            return _not_found("item", item_id)
-        except ConflictError as exc:
-            return JSONResponse({"error": str(exc)}, status_code=409)
-        except ValidationError as exc:
-            return JSONResponse({"error": str(exc)}, status_code=400)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to restore Workbench item")
-
     @router.post("/api/workbenches/{workbench_id}/run")
     async def api_run_workbench(workbench_id: str, request: Request) -> Any:
         try:
@@ -265,7 +248,13 @@ def build_workbenches_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to list runs")
 
     def _registry() -> Any:
-        return operations.for_context(ctx, workbench_service=_svc)
+        return operations.for_context(ctx, workbench_service=_svc, watch_service=_watches)
+
+    def _watches() -> Any:
+        from ....db import get_database, get_observer
+        from ....services.watch_service import WatchService
+
+        return WatchService(get_database(), observer=get_observer())
 
     for descriptor in operations.AUTOMATION_OPERATIONS:
         mount_router(router, operation_router([descriptor], _registry, _answer(descriptor.name), module=__name__))

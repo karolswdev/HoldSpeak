@@ -2444,6 +2444,16 @@ DESCRIPTORS: tuple[OperationDescriptor, ...] = (
     + DESK_DISPLAY_OPERATIONS + NOTE_OUTCOME_OPERATIONS + (TODAY_GET,) + PROGRAM_OPERATIONS + MEETING_OPERATIONS + PHONE_OPERATIONS + PEOPLE_OPERATIONS \
     + MEETING_INTEL_OPERATIONS + AUTOMATION_OPERATIONS + CALLS_OPERATIONS + SETTINGS_OPERATIONS + DECISION_OPERATIONS
 
+# 2026-11-09 (ops/programs-work): the Agent recipes' writes, the note window's
+# reads and Open, memory's desk reads and the meaning-search switch, the desk's
+# projections, Today's Since this morning, health, seed and reset.
+from holdspeak.recipe_operations import RECIPE_OPERATIONS  # noqa: E402
+from holdspeak.thought_operations import THOUGHT_OPERATIONS  # noqa: E402
+from holdspeak.memory_operations import MEMORY_OPERATIONS  # noqa: E402
+from holdspeak.desk_state_operations import DESK_STATE_OPERATIONS  # noqa: E402
+
+DESCRIPTORS = DESCRIPTORS + RECIPE_OPERATIONS + THOUGHT_OPERATIONS + MEMORY_OPERATIONS + DESK_STATE_OPERATIONS
+
 #: The RuntimeServices / WebContext fields the catalogue binds to.
 BOUND_SERVICES: tuple[str, ...] = tuple(dict.fromkeys(d.service for d in DESCRIPTORS))
 

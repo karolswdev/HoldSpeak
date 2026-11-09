@@ -22,7 +22,7 @@ from holdspeak.db import Database, reset_database
 from holdspeak.meeting_session import MeetingState
 from holdspeak.db.seed import DEFAULT_SEED, apply_seed, load_manifest, reset_desk
 from holdspeak.grounding import hydrate_grounding_blocks
-from holdspeak.principals import PrincipalRight, required_right
+from holdspeak.principals import Principal, PrincipalKind, PrincipalRight, required_right
 from holdspeak.web.context import WebContext
 from holdspeak.web.routes import build_desk_seed_router, build_sync_router
 
@@ -74,6 +74,14 @@ def db(tmp_path, monkeypatch):
 def client(db, monkeypatch) -> TestClient:
     monkeypatch.setattr(hsdb, "get_database", lambda *a, **k: db)
     app = FastAPI()
+
+    # Seed and reset are owner-only declared rows (desk_state_operations.py): a
+    # produced route trusts only the principal the edge set (#2057).
+    @app.middleware("http")
+    async def _owner_edge(request, call_next):
+        request.state.principal = Principal(PrincipalKind.OWNER, "owner-session")
+        return await call_next(request)
+
     ctx = WebContext(get_state=lambda: {})
     app.include_router(build_desk_seed_router(ctx))
     app.include_router(build_sync_router(ctx))

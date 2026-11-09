@@ -76,6 +76,11 @@ _MCP_ONLY: frozenset[str] = frozenset({
     # The declared Automations reads (2026-11-08, automation_operations.py): a
     # thread reads an automation through automation.get; the palettes do not grow.
     "automation.template.list", "automation.new.list", "automation.lesson.list",
+    # The Programs-and-work reads (2026-11-09, ops/programs-work): a thread reads
+    # a Program, a thought and memory through the reads it has; the palettes do not grow.
+    "automation.prepared.read", "program.requirement_evidence", "thought.for_note", "thought.original",
+    "thought.review", "memory.pages", "memory.recall", "memory.meaning.status", "desk.projection.list",
+    "today.since_morning", "desk.health", "constitutional_context.read", "constitutional_context.history",
 })
 
 
