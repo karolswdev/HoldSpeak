@@ -54,7 +54,7 @@ def test_recipe_subject_edit_applies_only_to_later_admission(rig: tuple[Database
     second = asyncio.run(service.run(OWNER, "r1", input="second"))
     assert first["profile_id"] == "recipe-primary"
     assert second["profile_id"] == "recipe-next"
-    assert first["placement"]["route_plan_sha256"] != second["placement"]["route_plan_sha256"]
+    assert first["actual_placement"]["deployment_revision_id"] != second["actual_placement"]["deployment_revision_id"]
 
 
 def test_recipe_assignment_mutation_after_admission_cannot_retarget_frozen_execution(

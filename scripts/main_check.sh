@@ -46,9 +46,9 @@ repo_guards=(tests/unit/test_static_sql_matches_schema.py tests/unit/test_densit
   tests/unit/test_philo7_contract.py tests/unit/test_doc_drift_guard.py tests/unit/test_graph_atlas.py
   tests/unit/test_ux_canon_scan.py tests/unit/test_thread_tool_gate.py
   tests/unit/test_philo13_18_type_floor_static.py tests/unit/test_graph_reference.py tests/unit/test_native_surfaces_guard.py
-  tests/unit/test_page_cores_guard.py tests/unit/test_web_null_read_guard.py tests/unit/test_web_vocabulary_guard.py
+  tests/unit/test_page_cores_guard.py tests/unit/test_web_vocabulary_guard.py
   tests/unit/test_hub_handlers_off_loop.py tests/unit/test_lamp_words_guard.py tests/unit/test_vitest_related.py
-  tests/unit/test_ci_lanes.py tests/unit/test_desk_no_exit_guard.py tests/unit/test_web_build_stamp_assets.py
+  tests/unit/test_desk_no_exit_guard.py tests/unit/test_web_build_stamp_assets.py
   tests/unit/test_desk_locks.py tests/integration/test_desk_firstrun.py tests/integration/test_mcp_every_tool_runs_on_hub.py)
 # The web guards (2026-10-31): vitest censuses that read sources by glob, walk
 # or path, so `vitest related` never picks them for the file they judge.

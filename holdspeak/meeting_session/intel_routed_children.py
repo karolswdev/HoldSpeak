@@ -133,31 +133,19 @@ class IntelRoutedChildMixin:
             None,
         )
 
-    def _routed_identity(self, capability: str, material: Mapping[str, Any]) -> str:
-        """Stable logical operation identity; random UI supersession stays private."""
-        if self._state is None:
-            raise MeetingIntelRefused(SESSION_NOT_ADMITTED, capability)
-        if capability == ROUTE_LIVE_ANALYSIS:
-            suffix = ":".join((
-                str(material["transcript_sha256"]),
-                str(material["window"]["start"]),
-                str(material["window"]["end"]),
-                str(int(bool(material["final"]))),
-            ))
-        elif capability == ROUTE_BOOKMARK_LABEL:
-            suffix = ":".join((
-                str(material["bookmark_timestamp"]),
-                str(material["context_sha256"]),
-                str(material["summary_sha256"]),
-            ))
-        elif capability == ROUTE_AUTO_TITLE:
-            suffix = str(material["transcript_sha256"])
-        else:
-            raise MeetingIntelRefused(SESSION_NOT_ADMITTED, capability)
-        # Hash the complete stable tuple rather than truncating it: the durable
-        # command stays below the route API's identifier limit without weakening
-        # replay identity.
-        return f"meeting:{self._state.id}:{capability}:{_sha((capability, suffix))}"
+    def _stop_door_runs(self) -> None:
+        """Stop: the owner's cancel reaches every live job still running (and
+        its retry on the next engine)."""
+        from ..kernel.runtime import _as_principal
+        from ..services import engine_door
+
+        for run_id in list(self.__dict__.get("_intel_door_runs", ())):
+            for each in (run_id, run_id + "_n2"):
+                try:
+                    with _as_principal(self.intel_principal):
+                        engine_door.stop(self._intel_broker(), each)
+                except Exception:  # a job that already ended has nothing to stop
+                    continue
 
     def _intel_child(
         self,
@@ -186,38 +174,28 @@ class IntelRoutedChildMixin:
         if member is not None and parent is not None:
             from types import SimpleNamespace
 
-            operation_id = self._routed_identity(capability, material)
-            command_id = "meeting-route-operation:" + operation_id
+            from ..services import engine_door
+
+            # One job through the engine door, a child of the live Meeting:
+            # the engine the assignment names, one retry on the next engine.
+            # The run id is held while it runs, so Stop reaches it (``_stop_door_runs``).
+            run_id = engine_door.door_id(capability, None)
+            running = self.__dict__.setdefault("_intel_door_runs", set())
+            running.add(run_id)
             try:
-                admitted = self._intel_broker().inference_adoption_service.admit_on_frozen_route(
-                    self.intel_principal,
-                    command_id=command_id,
-                    route_plan_id=str(member["route_plan_id"]),
-                    capability_id=capability,
-                    operation_id=operation_id,
-                    payload=dict(material),
-                    reserved_output_tokens=512,
-                    parent_operation_id=getattr(parent, "operation_id", None),
+                answer = engine_door.run(
+                    self._intel_broker(), self.intel_principal, capability, dict(material),
+                    adapter=_MeetingRoutedAdapter(capability, call, encode), invocation_id=run_id,
+                    parent_context=parent.context, deadline=float(deadline_seconds),
                 )
-                routed = self._intel_broker().inference_adoption_service.execute(
-                    self.intel_principal,
-                    execution_id=str(admitted["execution"]["id"]),
-                    adapter=_MeetingRoutedAdapter(capability, call, encode),
-                    parent_context=parent.context,
-                )
-            except MeetingIntelRefused:
-                raise
-            except Exception as exc:
-                # A route admission failure is a named pre-dispatch refusal to the
-                # Meeting seam; a controller result below remains its own receipt.
-                reason = str(getattr(exc, "code", "") or SESSION_NOT_ADMITTED)
-                raise MeetingIntelRefused(reason, capability) from exc
-            outcome = SimpleNamespace(
-                outcome=str(routed["outcome"]),
-                error=str(routed.get("receipt", {}).get("terminal_disposition") or ""),
-            )
-            value = routed.get("result")
-            return outcome, value if isinstance(value, Mapping) else None, value
+            except engine_door.EngineDoorError as exc:
+                if exc.code == "no_engine":
+                    raise MeetingIntelRefused(SESSION_NOT_ADMITTED, capability) from exc
+                return SimpleNamespace(outcome=exc.outcome or "failed", error=exc.error), None, None
+            finally:
+                running.discard(run_id)
+            value = answer.result
+            return SimpleNamespace(outcome="succeeded", error=""), value if isinstance(value, Mapping) else None, value
 
         # Stored v1 plans are display-only history after the Phase-F cutover.
         # A missing C1 bundle is never permission to reconstruct or replay a

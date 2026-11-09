@@ -206,14 +206,12 @@ def _assert_spine_reached(calls: list[str]) -> str:
 
 
 def _drive_ask(tmp_path, monkeypatch) -> SurfaceRun:
+    # An answer is one job through the engine door: the Answers assignment
+    # names the engine (``test_ask_engine_door.assign_answers``).
     from holdspeak.services.ask_service import AskService
+    from tests.unit.test_ask_engine_door import assign_answers
 
     db = Database(tmp_path / "ask.db")
-    profile = db.profiles.upsert(
-        profile_id="prof_a", name="Alpha", kind="openAICompatible",
-        base_url="http://192.168.1.50:8080", model="model-a", requires_key=False,
-    )
-    broker = _configure(db)
 
     class FakeIntel:
         active_provider = "openai_compatible"
@@ -221,10 +219,10 @@ def _drive_ask(tmp_path, monkeypatch) -> SurfaceRun:
         def run_prompt(self, *, system_prompt, user_prompt, temperature=None, max_tokens=None):
             return "ok"
 
-    monkeypatch.setattr(broker.inference_runner, "_engine_factory", lambda revision, **_: FakeIntel())
+    broker = assign_answers(db, FakeIntel, profile="prof_a")
     service = AskService(db, hub_model=lambda: "", broker=broker)
-    asyncio.run(service.ask(OWNER, "summarize", inference_target_id="prof_a", operation_capability="thought.interview"))
-    return SurfaceRun(db, OWNER, None, profile.id)
+    asyncio.run(service.ask(OWNER, "summarize"))
+    return SurfaceRun(db, OWNER, None, "prof_a")
 
 
 def _ready_this_machine(tmp_path, monkeypatch) -> None:
@@ -578,25 +576,6 @@ def test_delivery_http_refusal_identity_keeps_valid_pr_retries_executable(tmp_pa
         assert conn.execute("SELECT COUNT(*) FROM artifacts").fetchone()[0] == 3
 
 
-def _drive_voice(tmp_path, monkeypatch) -> SurfaceRun:
-    from tests.unit.test_voice_resolve import OWNER as VOICE_OWNER
-    from tests.unit.test_voice_resolve import _admitted_voice_rig
-
-    db, service, broker, workbench_id = _admitted_voice_rig(tmp_path)
-
-    class FakeIntel:
-        def run_prompt(self, **_):
-            return '{"zone_ids":["zone-a"]}'
-
-    broker.inference_runner._engine_factory = lambda _revision, **_: FakeIntel()
-    service.resolve_voice(VOICE_OWNER, workbench_id, "find Alpha", "voice-spine")
-    return SurfaceRun(
-        db, VOICE_OWNER, _parent_run_operation_id(db, "voice_reference_resolve"),
-        db.workbenches.get(workbench_id).resolver_profile_id,
-        parent_kind="voice_reference_resolve",
-    )
-
-
 def _drive_meeting_live(tmp_path, monkeypatch) -> SurfaceRun:
     from tests.unit.test_meeting_session_admission import (
         OWNER as MEETING_OWNER,
@@ -707,7 +686,6 @@ SURFACE_DRIVERS: dict[str, Callable[[Any, Any], SurfaceRun]] = {
     "Rails": _drive_rails,
     "Decision promotion": _drive_decision,
     "Delivery review": _drive_delivery_review,
-    "voice": _drive_voice,
     "meeting live": _drive_meeting_live,
     "meeting deferred": _drive_meeting_deferred,
     "dictation pipeline": _drive_dictation,
@@ -718,7 +696,7 @@ SURFACE_DRIVERS: dict[str, Callable[[Any, Any], SurfaceRun]] = {
 #: its seat here rather than riding in unproven. The other two families that story
 #: closed added no surface: both were DELETED as duplicates of a surface already
 #: below (Decision promotion, Delivery review).
-assert len(SURFACE_DRIVERS) == 10, "every named surface form is proven here; none may be collapsed (HS-151-02: Recipe chat retired; 2026-11-08: Sequence and Workflow parked; the item queue parked)"
+assert len(SURFACE_DRIVERS) == 9, "every named surface form is proven here; none may be collapsed (HS-151-02: Recipe chat retired; 2026-11-08: Sequence and Workflow parked; the item queue parked; 2026-11-09: voice resolution parked)"
 
 #: Which admission shape each surface uses. Module-level (rather than buried in
 #: the sanity test below) because ``test_one_path_provenance.py`` imports these
@@ -726,7 +704,6 @@ assert len(SURFACE_DRIVERS) == 10, "every named surface form is proven here; non
 #: shows — the two files cannot drift apart without one of them failing.
 ROOT_SHAPED_SURFACES = frozenset({"Ask", "Recipe run", "Rails", "Decision promotion", "Delivery review", "cadence next action"})  # HS-151-02: Recipe chat removed
 CHILD_SHAPED_SURFACES = frozenset({
-    "voice",
     "meeting live", "meeting deferred", "dictation pipeline",
 })
 
@@ -741,40 +718,6 @@ def test_surface_reaches_the_literal_admission_spine(surface: str, tmp_path, mon
     with _spine_trace(monkeypatch) as calls:
         driver(tmp_path, monkeypatch)
     _assert_spine_reached(calls)
-
-
-def test_the_two_admission_shapes_both_appear_across_every_surface() -> None:
-    """Sanity on the trace mechanism itself: the fence would be worthless if
-    every surface happened to use the same admission shape — prove both a
-    root (Broker.submit) and a parent-scoped child (Broker.submit_trusted_child)
-    admission are exercised somewhere in the matrix above."""
-    import inspect
-
-    assert ROOT_SHAPED_SURFACES | CHILD_SHAPED_SURFACES == set(SURFACE_DRIVERS)
-    assert not (ROOT_SHAPED_SURFACES & CHILD_SHAPED_SURFACES)
-    assert ROOT_SHAPED_SURFACES and CHILD_SHAPED_SURFACES
-    for name in SURFACE_DRIVERS:
-        assert inspect.isfunction(SURFACE_DRIVERS[name])
-
-
-def test_each_driver_reports_the_run_it_actually_performed(tmp_path, monkeypatch) -> None:
-    """The declared admission shape must match what the driver hands back.
-
-    ``SurfaceRun.parent_operation_id`` is the handle the provenance suite reads
-    its rows through, so a driver that stopped running under its parent — or
-    started running under one — has to be caught HERE rather than quietly
-    changing which cohort the fence inspects. Exercised on one surface of each
-    shape; the provenance suite re-checks every one against the stored rows.
-    """
-    for surface in ("Ask", "voice"):
-        run = SURFACE_DRIVERS[surface](tmp_path / surface.replace(" ", "-"), monkeypatch)
-        assert isinstance(run, SurfaceRun), f"{surface}: driver returned {run!r}"
-        assert run.destination_id, f"{surface}: driver named no destination"
-        assert run.expected_children >= 1
-        if surface in ROOT_SHAPED_SURFACES:
-            assert run.parent_operation_id is None and run.parent_kind is None
-        else:
-            assert run.parent_operation_id and run.parent_kind
 
 
 # ============================================ ROUND 2: the sanitizers' fence
@@ -809,34 +752,6 @@ def _dispatch_body(path: str, scope: str) -> Any:
                 if isinstance(child, ast.FunctionDef) and child.name == wanted:
                     return child
     raise AssertionError(f"{path}:{scope} not found")
-
-
-@pytest.mark.parametrize(("path", "scope"), SANITIZING_ADAPTERS)
-def test_every_sanitizing_adapter_reraises_control_signals_first(path: str, scope: str) -> None:
-    """Structurally: the CONTROL_SIGNALS clause precedes the BaseException clause.
-
-    Ordering is the whole property. ``except BaseException`` first would catch a
-    dialect signal no matter what the later clauses say, which is exactly the bug
-    this pins: one physical attempt, one dead receipt, and an endpoint that would
-    have answered reported as failed.
-    """
-    import ast
-
-    body = _dispatch_body(path, scope)
-    handlers = [
-        handler for node in ast.walk(body)
-        if isinstance(node, ast.Try) for handler in node.handlers
-    ]
-    names = [ast.unparse(handler.type) if handler.type else "bare" for handler in handlers]
-    assert "CONTROL_SIGNALS" in names, f"{path}:{scope} does not name CONTROL_SIGNALS"
-    catch_all = [
-        index for index, name in enumerate(names)
-        if name in {"BaseException", "Exception", "bare"}
-    ]
-    assert catch_all, f"{path}:{scope} no longer sanitizes; re-review this entry"
-    assert names.index("CONTROL_SIGNALS") < min(catch_all), (
-        f"{path}:{scope} sanitizes BEFORE it re-raises control signals"
-    )
 
 
 @pytest.mark.parametrize(

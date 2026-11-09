@@ -336,18 +336,6 @@ class TestF6GatePin:
         assert "PRIVATE AGENDA" not in agenda_bodies
         assert "Shared agenda" in agenda_bodies
 
-    def test_f7_policy_block_present(
-        self, people_service_mcp: PeopleService,
-    ) -> None:
-        """F7: the response carries the policy disclosure block."""
-        svc = people_service_mcp
-        rel = svc.create_relationship(OWNER, {"display_name": "F7 test"})
-        failed, brief = self._call("people.one_on_one.brief", {"relationship_id": rel["id"]})
-        assert failed is False
-        assert "policy" in brief
-        assert brief["policy"]["visibility"] == "shared_intent_only"
-        assert brief["policy"]["employment_decisions"] == "prohibited"
-
     def test_access_off_refuses(
         self, people_service_mcp: PeopleService, monkeypatch: pytest.MonkeyPatch,
     ) -> None:

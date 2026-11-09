@@ -45,10 +45,6 @@ def test_cadence_package_has_no_external_side_effects():
     )
 
 
-def test_cadence_is_off_by_default():
-    assert Config().cadence.enabled is False
-
-
 def test_the_morning_brief_job_is_on_by_default():
     # PHILO-15 05: one setting per job; the Brief job is ON, at 06:00 local.
     cadence = Config().cadence

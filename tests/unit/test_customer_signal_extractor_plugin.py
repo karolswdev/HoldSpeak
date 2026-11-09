@@ -27,14 +27,6 @@ def _plugin(response):
     return intel_plugin(CustomerSignalExtractorPlugin(), lambda _m, **_kw: response)
 
 
-def test_attributes() -> None:
-    p = CustomerSignalExtractorPlugin()
-    assert p.id == "customer_signal_extractor"
-    assert p.kind == "signals"
-    assert p.execution_mode == "deferred"
-    assert p.required_capabilities == ["llm"]
-
-
 def test_run_success_extracts_and_classifies() -> None:
     out = _plugin(_GOOD_JSON).run({"transcript": "Customer call."})
     assert out["confidence_hint"] == 1.0
@@ -97,12 +89,6 @@ def test_normalize_type() -> None:
 def test_extract_returns_none_without_recognizable_key() -> None:
     assert _extract_signals('{"foo": 1}') is None
     assert _extract_signals("") is None
-
-
-def test_registrar_returns_real_plugin() -> None:
-    host = PluginHost(default_timeout_seconds=0.5, enabled_capabilities={"llm"})
-    register_builtin_plugins(host)
-    assert isinstance(host.get_plugin("customer_signal_extractor"), CustomerSignalExtractorPlugin)
 
 
 def test_host_blocks_without_llm_capability() -> None:

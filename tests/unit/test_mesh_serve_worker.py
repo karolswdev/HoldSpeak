@@ -778,18 +778,6 @@ def test_the_worker_never_derives_its_own_target(rig) -> None:
 # ── the CLI ──────────────────────────────────────────────────────────
 
 
-def test_cli_wiring_parses() -> None:
-    import subprocess
-    import sys
-
-    proc = subprocess.run(
-        [sys.executable, "-m", "holdspeak.main", "mesh", "--help"],
-        capture_output=True, text=True, timeout=60,
-    )
-    assert proc.returncode == 0
-    assert "serve" in proc.stdout
-
-
 def test_the_real_parser_defaults_to_the_node_credential() -> None:
     """Repair R2: the SHIPPED parser, not a module constant, decides this.
 

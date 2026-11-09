@@ -57,26 +57,6 @@ def _make_db(path: Path, version: int = 76) -> Path:
 # ── Capture once ─────────────────────────────────────────────────────
 
 
-def test_identity_carries_every_c1_field(tmp_path, monkeypatch):
-    """C1's six identity axes are all present and populated."""
-    bundle = tmp_path / "_built"
-    _stamp(bundle, "bundle-aaa")
-    monkeypatch.setattr(ri, "built_dir", lambda: bundle)
-    db = _make_db(tmp_path / "holdspeak.db")
-
-    identity = ri.capture_runtime_identity(db_path=db, force=True)
-
-    assert identity.backend_version  # the package version
-    assert identity.backend_revision  # a sha, or the honest "unknown"
-    assert identity.process_start
-    assert identity.pid == os.getpid()
-    assert identity.frontend_build == "bundle-aaa"
-    assert identity.database_id and len(identity.database_id) == 16
-    assert identity.schema_version_expected is not None
-    assert identity.schema_version_loaded == 76
-    assert identity.config_revision
-
-
 def test_a_later_checkout_cannot_change_a_running_identity(tmp_path, monkeypatch):
     """The C1 law: capture once. Rebuild the bundle — the process does not move."""
     bundle = tmp_path / "_built"

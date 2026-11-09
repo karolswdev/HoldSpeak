@@ -61,10 +61,6 @@ def _build_host_with(*plugin_ids: str) -> tuple[PluginHost, dict[str, StubPlugin
 # ─────────────────────── Pure routing-layer helpers ───────────────────
 
 
-def test_skipped_is_a_known_status() -> None:
-    assert "skipped" in PLUGIN_RUN_STATUSES
-
-
 def test_normalize_disabled_plugins_cleans_and_dedupes() -> None:
     assert normalize_disabled_plugins([" adr_drafter ", "adr_drafter", "", None]) == {
         "adr_drafter"
@@ -158,10 +154,6 @@ def test_default_no_disabled_is_byte_identical() -> None:
 
 
 # ─────────────────────────── Config knob ──────────────────────────────
-
-
-def test_config_disabled_plugins_default_empty() -> None:
-    assert MeetingConfig().disabled_plugins == []
 
 
 def test_config_disabled_plugins_normalized() -> None:

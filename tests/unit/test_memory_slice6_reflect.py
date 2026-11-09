@@ -694,14 +694,8 @@ def test_a_routed_thought_never_reflects_its_own_note(tmp_path: Path) -> None:
 
 
 def test_with_no_page_or_observation_the_thought_bytes_are_unchanged(tmp_path: Path) -> None:
-    """Nothing served: the coordinator's payload is exactly the recall-only
-    payload (no part, no note)."""
-    from holdspeak.services.ask_service import AskService
-    from holdspeak.services.refinement_coordinator import RefinementCoordinator
-
+    """Nothing served: the Thought turn sends no part and no memory note."""
     db = _desk(tmp_path)
-    service, _engine = _ask_rig(db)
-    coordinator = RefinementCoordinator(db, ask_factory=lambda: service)
-    sealed = coordinator._sealed_prompt("Plan the quorumdb ledger")
-    payload = coordinator._routed_payload(sealed, None, [])
-    assert REFLECT_NOTE not in payload["user_prompt"] and PAGE not in payload["user_prompt"]
+    engine, current, _ = _routed_thought(db, "Plan the quorumdb ledger")
+    assert current["continuity"]["state"] == "review_ready", current["continuity"]
+    assert REFLECT_NOTE not in engine.prompts[0] and PAGE not in engine.prompts[0]

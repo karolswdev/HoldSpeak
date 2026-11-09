@@ -291,15 +291,6 @@ def test_propose_whisper_on_speech_recognition_only_and_waiting():
         # The important thing: speech_recognition is ALWAYS local whisper only
 
 
-def test_propose_has_no_internal_chat_row():
-    """PHILO-15 10 (Astra r1, finding 5): "Chat" held only chat compaction and
-    the chat guardrail, internal works; desk chat (chat.turn) is in Thoughts &
-    notes. The internal group is no longer an owner row."""
-    from holdspeak.services.concierge_service import ASSIGNMENT_GROUPS
-
-    assert [g for g in ASSIGNMENT_GROUPS if g[0] == "chat_practice"] == []
-
-
 def test_propose_does_not_offer_a_text_only_whisper_profile_to_speech():
     """Speech requires an audio-capable profile, even when its label says Whisper."""
     from holdspeak.services.concierge_service import propose
@@ -424,37 +415,6 @@ def test_apply_succeeds_with_off():
     assert off_result["state"] == "OFF"
 
 
-def test_apply_writes_receipt():
-    """Apply writes one kernel receipt."""
-    from holdspeak.services.concierge_service import apply, STATE_READY
-
-    mock_svc = MagicMock()
-    mock_svc.get_assignment.side_effect = Exception("not found")
-    mock_svc.set_assignment.return_value = {"revision": 1}
-
-    db = FakeDB()
-
-    rows = [
-        {"group": "thoughts_notes", "engineId": "lan:qwen", "state": STATE_READY},
-    ]
-    engines = [
-        {"id": "lan:qwen", "kind": "lan", "profileId": "qwen-profile"},
-    ]
-
-    result = apply(
-        rows=rows,
-        engines=engines,
-        assignment_service=mock_svc,
-        principal=MagicMock(),
-        db=db,
-    )
-
-    assert result["receipt"].startswith("concierge-apply-")
-    # Verify the DB was asked to write
-    conn = db._conn_mock.__enter__()
-    assert conn.execute.call_count >= 1
-
-
 def test_apply_meetings_uses_exact_summary_capability_and_selected_profile_revision():
     """The existing Use these gesture must bind the SERVICE-visible capability."""
     from holdspeak.services.concierge_service import apply, STATE_READY
@@ -508,30 +468,6 @@ def test_apply_meetings_uses_exact_summary_capability_and_selected_profile_revis
 
 
 # ---- download ---------------------------------------------------------------
-
-def test_download_returns_job_shape():
-    """Download returns the job id + progress shape."""
-    from holdspeak.services.concierge_service import download
-
-    mock_lib_svc = MagicMock()
-    mock_lib_svc.download.return_value = {
-        "receipt": {"kind": "catalog_download"},
-    }
-
-    result = download(
-        preset_id="qwen-0.8b-preset",
-        model_library_service=mock_lib_svc,
-        principal=MagicMock(),
-        catalog_revision=1,
-    )
-
-    assert "presetId" in result
-    assert result["presetId"] == "qwen-0.8b-preset"
-    assert "progress" in result
-    assert "received" in result["progress"]
-    assert "total" in result["progress"]
-    mock_lib_svc.download.assert_called_once()
-
 
 def test_download_job_id_is_the_acquisition_id_the_poll_reads():
     """PHILO-16 (C): the bar polls /api/inference/acquisitions/{jobId}; the

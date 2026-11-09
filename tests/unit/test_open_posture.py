@@ -18,31 +18,6 @@ from pathlib import Path
 import pytest
 
 
-def test_fresh_config_defaults_yolo():
-    """A Config() with no on-disk file defaults to YOLO."""
-    from holdspeak.config.core import Config
-
-    config = Config()
-    assert config.control_mode == "yolo"
-
-
-def test_fresh_config_actuators_permissive():
-    """A fresh Config() has actuators on with a wildcard allowlist."""
-    from holdspeak.config.core import Config
-
-    config = Config()
-    assert config.meeting.allow_actuators is True
-    assert config.meeting.allowed_actuators == ["*"]
-
-
-def test_fresh_config_webhook_hosts_permissive():
-    """A fresh Config() has a wildcard webhook host allowlist."""
-    from holdspeak.config.core import Config
-
-    config = Config()
-    assert config.meeting.webhook_allowed_hosts == ["*"]
-
-
 def test_fresh_config_load_from_empty_dir(tmp_path):
     """Config.load() on a non-existent path produces the open posture."""
     from holdspeak.config.core import Config

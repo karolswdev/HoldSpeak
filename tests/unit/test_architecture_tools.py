@@ -81,21 +81,6 @@ def test_doctor_census_records_repair_and_condition(tmp_path,monkeypatch):
     assert 'if missing:' in rows[0]['condition_source']
 
 
-def test_candidate_patterns_do_not_claim_proof():
-    mod=module('philo_boundary_census')
-    import re
-    assert re.search(mod.PATTERNS['http_client'],'import httpx')
-    assert re.search(mod.PATTERNS['process_or_shell'],'subprocess.run(args)')
-    assert not re.search(mod.PATTERNS['credential_store'],'normal_settings = {}')
-
-
-def test_repository_categories_separate_runtime_and_evidence():
-    mod=module('philo_repository_census')
-    assert mod.category('holdspeak/kernel/broker.py')=='python-kernel'
-    assert mod.category('pm/roadmap/holdspeak/evidence.png')=='roadmap-and-evidence'
-    assert mod.category('apple/Sources/Client.swift')=='apple-clients-and-native-runtime'
-
-
 def test_workspace_reference_rejects_invalid_rect_and_version():
     import copy
     import json

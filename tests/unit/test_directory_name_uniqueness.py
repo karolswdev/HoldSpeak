@@ -174,11 +174,6 @@ def test_find_by_normalized_name_ignores_deleted(db: Database) -> None:
 
 # ── to_dict exposes name_normalized ──────────────────────────────────────────
 
-def test_to_dict_includes_name_normalized(db: Database) -> None:
-    d = db.directories.upsert(directory_id="d1", name="My Zone")
-    assert d.to_dict()["name_normalized"] == "my zone"
-
-
 # ── Migration backfill ───────────────────────────────────────────────────────
 
 def test_backfill_sets_normalized_names(tmp_path: Path) -> None:

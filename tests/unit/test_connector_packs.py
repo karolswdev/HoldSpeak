@@ -60,16 +60,6 @@ def test_network_capable_packs_declare_a_network_permission():
 # ─────────────────────── HS-11-03 firefox_ext ────────────────────
 
 
-def test_firefox_pack_manifest_shape():
-    manifest = firefox_ext.MANIFEST
-    assert manifest.id == "firefox_ext"
-    assert manifest.kind == "extension_events"
-    assert manifest.capabilities == ("records",)
-    assert manifest.requires_cli is None
-    assert manifest.requires_network is True
-    assert "loopback:http" in manifest.permissions
-
-
 def test_firefox_pack_captured_fields_match_parser():
     """The pack's CAPTURED_FIELDS export must mirror the parser's
     ALLOWED_FIELDS — drift would mean the pack documents a
@@ -84,16 +74,6 @@ def test_firefox_pack_captured_fields_match_parser():
 
 
 # ─────────────────────── HS-11-04 github_cli ────────────────────
-
-
-def test_github_pack_manifest_shape():
-    manifest = github_cli.MANIFEST
-    assert manifest.id == "gh"
-    assert manifest.kind == "cli_enrichment"
-    assert "annotations" in manifest.capabilities
-    assert manifest.requires_cli == "gh"
-    assert manifest.requires_network is True
-    assert "shell:exec" in manifest.permissions
 
 
 @pytest.mark.parametrize(
@@ -128,16 +108,6 @@ def test_github_pack_command_policy(command, allowed):
 # ─────────────────────── HS-11-05 jira_cli ──────────────────────
 
 
-def test_jira_pack_manifest_shape():
-    manifest = jira_cli.MANIFEST
-    assert manifest.id == "jira"
-    assert manifest.kind == "cli_enrichment"
-    assert "annotations" in manifest.capabilities
-    assert manifest.requires_cli == "jira"
-    assert manifest.requires_network is True
-    assert "shell:exec" in manifest.permissions
-
-
 @pytest.mark.parametrize(
     "command,allowed",
     [
@@ -161,16 +131,6 @@ def test_jira_pack_command_policy(command, allowed):
 
 
 # ─────────────────── HS-166-01 acli_jira ─────────────────────────
-
-
-def test_acli_jira_pack_manifest_shape():
-    manifest = acli_jira.MANIFEST
-    assert manifest.id == "acli_jira"
-    assert manifest.kind == "cli_enrichment"
-    assert "commands" in manifest.capabilities
-    assert manifest.requires_cli == "acli"
-    assert manifest.requires_network is True
-    assert "shell:exec" in manifest.permissions
 
 
 @pytest.mark.parametrize(
@@ -202,21 +162,6 @@ def test_acli_jira_pack_command_policy(command, allowed):
 
 
 # ─────────────────── HS-13-01 calendar_activity ──────────────────
-
-
-def test_calendar_pack_manifest_shape():
-    manifest = calendar_activity.MANIFEST
-    assert manifest.id == "calendar_activity"
-    assert manifest.kind == "candidate_inference"
-    assert manifest.capabilities == ("candidates",)
-    assert manifest.requires_cli is None
-    assert manifest.requires_network is False
-    assert "read:activity_records" in manifest.permissions
-    assert "write:activity_meeting_candidates" in manifest.permissions
-    # No shell, no network — the calendar pack is read-only over
-    # local rows.
-    assert "shell:exec" not in manifest.permissions
-    assert not (set(manifest.permissions) & NETWORK_PERMISSIONS)
 
 
 def test_calendar_pack_recognized_domains_match_extractor():

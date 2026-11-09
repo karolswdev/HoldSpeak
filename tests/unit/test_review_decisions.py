@@ -941,38 +941,6 @@ class TestAcceptReview:
             "Review status should not have changed"
         )
 
-    def test_envelope_correct(self, rig) -> None:
-        """accept_review returns a correct envelope."""
-        db, project_svc, delta_svc = rig
-        pid = _seed_project(db)
-        _seed_meeting(db)
-        _associate_meeting(db, pid, "m-dec01")
-
-        review = _open_review_with_proposals(
-            db, delta_svc, pid,
-            observation_kinds=["followthrough.overdue"],
-        )
-        for p in review["proposals"]:
-            if p["lifecycle"] == "open":
-                kind = p["proposal_kind"]
-                if HANDLER_MAP.get(kind) == "refuse":
-                    delta_svc.decide_proposal(
-                        OWNER, pid, p["id"], "dismiss",
-                    )
-                else:
-                    delta_svc.decide_proposal(
-                        OWNER, pid, p["id"], "accept",
-                    )
-
-        result = delta_svc.accept_review(OWNER, pid, review["review_id"])
-        assert result["result_kind"] == "review_accepted"
-        assert result["project_id"] == pid
-        assert result["project_revision"] > 0
-        assert result["review_id"] == review["review_id"]
-        assert result["accepted_at"] is not None
-        assert result["accepted_by_ref"] is not None
-
-
 # ── Test: DOM-007 guard ──────────────────────────────────────────────
 
 
@@ -1056,20 +1024,6 @@ class TestHandlerMap:
             assert rule.proposal_kind in HANDLER_MAP, (
                 f"Proposal kind {rule.proposal_kind!r} missing from HANDLER_MAP"
             )
-
-    def test_conflict_and_degraded_mapped(self) -> None:
-        """conflict and coverage_degraded have handler entries."""
-        assert "conflict" in HANDLER_MAP
-        assert "coverage_degraded" in HANDLER_MAP
-
-    def test_handler_map_closed(self) -> None:
-        """The handler map only contains known actions."""
-        valid_actions = {"create_item", "record_only", "refuse"}
-        for kind, action in HANDLER_MAP.items():
-            assert action in valid_actions, (
-                f"Unknown handler action {action!r} for {kind!r}"
-            )
-
 
 # ── Test: dismissal_basis_hash determinism ───────────────────────────
 

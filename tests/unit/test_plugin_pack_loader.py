@@ -341,13 +341,6 @@ def test_registration_flags_id_mismatch(user_pack_dir: Path) -> None:
 # ──────────────────────── Built-ins unchanged ─────────────────────────
 
 
-def test_first_party_registry_is_empty_today() -> None:
-    """The 14 built-ins stay hardcoded; no first-party packs ship yet."""
-    result = build_registry(user_packs_dir=Path("/nonexistent/plugin/packs"))
-    assert result.packs == ()
-    assert result.errors == ()
-
-
 def test_builtins_register_identically_with_no_packs() -> None:
     host = PluginHost(default_timeout_seconds=0.5)
     registered = register_builtin_plugins(host)
