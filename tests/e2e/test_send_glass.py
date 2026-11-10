@@ -1641,9 +1641,8 @@ class TestSendNeedsGlass(_Rig):
     ) -> None:
         """S7 T4: a real scheduled result becomes one owner-held Send.
 
-        The Workbench runner, schedule delegation, artifact mint, delivery
-        projection, Needs read, frozen Markdown bridge and owner Send all use
-        this Hub. The engine response is the only provider leaf; the File
+        The scheduled Program, result note, delivery projection, Needs read,
+        frozen Markdown bridge and owner Send all use this Hub. The engine response is the only provider leaf; the File
         destination is the local OS boundary. The scheduler never dispatches
         the file.
         """
@@ -1652,7 +1651,7 @@ class TestSendNeedsGlass(_Rig):
         from holdspeak.kernel.runtime import _service
         from holdspeak.principals import Principal, PrincipalKind
         from holdspeak.runtime import composition
-        from holdspeak.services.automation_runs import deliver_run
+        from holdspeak.services.automation_runs import program_delivery
         from holdspeak.services.workbench_runner import WorkbenchRunner
 
         source_markdown = "## Friday status\n\nThe scheduled result is frozen.\n"
@@ -1730,7 +1729,7 @@ class TestSendNeedsGlass(_Rig):
 
                 with ThreadPoolExecutor(max_workers=1) as pool:
                     run = pool.submit(scheduled_once).result()
-                first_delivery = deliver_run(db, scheduler, run)
+                first_delivery = [program_delivery(db, run["program_id"])]
                 if calls != 2:
                     with db._connection() as conn:
                         item_debug = [dict(row) for row in conn.execute(
@@ -1749,42 +1748,35 @@ class TestSendNeedsGlass(_Rig):
                     for message_type, data in desk_events
                 ), desk_events
 
-                # Replaying the completed delivery is durable and idempotent:
-                # it keeps the one prepared row and never prepares a second
-                # Send. (The schedule tick itself is consumed once.)
-                replay_delivery = deliver_run(db, scheduler, run)
-                assert len(replay_delivery) == 1 and replay_delivery[0]["outcome"] == "kept", replay_delivery
+                # The same scheduled minute returns the same Program and frozen Send.
+                with ThreadPoolExecutor(max_workers=1) as pool:
+                    replay = pool.submit(scheduled_once).result()
+                assert replay["program_id"] == run["program_id"] and replay["started"] is False
+                replay_delivery = [program_delivery(db, replay["program_id"])]
+                assert replay_delivery == first_delivery
                 assert calls == 2
 
-                with db._connection() as conn:
-                    artifact_row = conn.execute(
-                        """SELECT a.id AS artifact_id, a.source_run_id, a.source_item_id,
-                                  i.workbench_id, i.status, i.result
-                             FROM artifacts AS a
-                             JOIN workbench_items AS i ON i.id = a.source_item_id
-                            WHERE a.source_run_id = ?""",
-                        (run["run_id"],),
-                    ).fetchone()
-                assert artifact_row is not None
-                artifact = dict(artifact_row)
-                artifact_id = str(artifact["artifact_id"])
-                document_ref = f"artifact:{artifact_id}"
+                note_id = str(first_delivery[0]["note_id"])
+                result_note = db.notes.get(note_id)
+                assert result_note is not None
+                result_body = result_note.body_markdown
+                assert result_body.startswith(source_markdown.rstrip())
+                assert f"workbench:{workbench_id}" in result_body
+                document_ref = f"note:{note_id}"
                 sends_before = self._sends(page, document_ref)
                 assert len(sends_before) == 1
                 prepared = sends_before[0]
                 assert prepared["state"] == "prepared"
-                assert prepared["prepared_by"] == {
-                    "kind": "owner", "identity": "local-automation-conductor",
-                }
-                assert prepared["document_json"]["automation_origin"]["workbench_name"] == "Friday team update"
+                assert prepared["prepared_by"]["kind"] == "owner"
                 assert "body_md" not in prepared["document_json"]
                 from holdspeak.db import get_database
 
                 stored = get_database().channel_sends.get(prepared["id"])
                 assert stored is not None
-                assert json.loads(stored["document_json"])["body_md"] == source_markdown
-                assert prepared["preview"]["markdown"] == source_markdown
-                assert prepared["preview"]["text"] == source_markdown
+                frozen_markdown = json.loads(stored["document_json"])["body_md"]
+                assert frozen_markdown == f"# {result_note.title}\n\n{result_body}\n"
+                assert prepared["preview"]["markdown"] == frozen_markdown
+                assert prepared["preview"]["text"] == frozen_markdown
                 prepare_kernel = self._kernel(prepared["prepare_operation_id"])
                 assert prepare_kernel["state"] == "succeeded"
                 assert prepare_kernel["receipt_outcome"] == "succeeded"
@@ -1796,14 +1788,14 @@ class TestSendNeedsGlass(_Rig):
                 need = send_rows[0]
                 assert need["sendId"] == prepared["id"]
                 assert need["documentRef"] == document_ref
-                assert need["preparedBy"] == "Friday team update", need
+                assert need["preparedBy"] == "you", need
 
                 page.reload(wait_until="load")
                 _normal_chair(page)
                 row = page.locator("[data-testid='needs-row'][data-kind='send']").first
                 row.wait_for(timeout=H1_T)
                 row.scroll_into_view_if_needed()
-                assert "by Friday team update" in row.locator(".needs-row-fact").inner_text()
+                assert "by you" in row.locator(".needs-row-fact").inner_text()
                 page.screenshot(path=str(S3_SHOTS / f"scheduled-t4-needs-{width}.png"))
 
                 row.locator("[data-verb='look']").click()
@@ -1819,8 +1811,8 @@ class TestSendNeedsGlass(_Rig):
                     return true;
                 }""", timeout=H1_T)
                 expected_shown = " ".join(
-                    re.sub(r"^#+\s*", "", line).strip()
-                    for line in source_markdown.splitlines() if line.strip()
+                    re.sub(r"\[([^]]+)\]\(([^)]+)\)", r"\1 \2", re.sub(r"^#+\s*", "", line)).strip()
+                    for line in frozen_markdown.splitlines() if line.strip() and line.strip() != "---"
                 )
                 assert shown == expected_shown
                 contrast = preview.locator("[data-testid='send-preview-body'] p").first.evaluate("""el => {
@@ -1862,14 +1854,12 @@ class TestSendNeedsGlass(_Rig):
                 assert sent["state"] == "sent"
                 sent_path = Path(sent["proof"]["path"])
                 assert sent_path.parent.resolve() == folder.resolve()
-                assert sent_path.read_bytes() == source_markdown.encode()
-                assert sent["preview"]["markdown"] == source_markdown
+                assert sent_path.read_bytes() == frozen_markdown.encode()
+                assert sent["preview"]["markdown"] == frozen_markdown
                 send_kernel = self._face_row_receipt(sent, document_ref)
                 assert send_kernel["receipt_outcome"] == "succeeded"
 
-                # Negative control: the owner can manually prepare the same
-                # automation artifact. It has no internal delivery origin,
-                # so the existing owner label remains "you".
+                # A manual preparation of the same result uses the same owner label.
                 manual_destination_id, manual_folder = self._dest(page, "S7 manual folder")
                 manual_answer = _api(page, "POST", "/api/channels/sends", {
                     "document_ref": document_ref,
@@ -1894,7 +1884,7 @@ class TestSendNeedsGlass(_Rig):
                     "run": run,
                     "first_delivery": first_delivery,
                     "replay_delivery": replay_delivery,
-                    "artifact": artifact, "document_ref": document_ref,
+                    "note_id": note_id, "document_ref": document_ref,
                     "owner_before": owner_before, "http_send": posts[0], "preview_contrast": contrast,
                     "producer_calls": calls, "prepare_receipt": prepare_kernel,
                     "send": sent, "send_receipt": send_kernel,

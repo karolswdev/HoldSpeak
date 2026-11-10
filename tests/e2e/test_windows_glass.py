@@ -15,8 +15,8 @@ press):
   window menu; Go reaches a daily window in 2 taps, and a second tap
   closes Go (Astra r1 #751).
 * Escape on an open strip menu closes the menu, not the window (PHILO-13-18):
-  Speak's wings fold into one strip menu at 393; a tap opens it and leaves
-  focus on the Button; the first Escape closes the menu and Speak stays in
+  Activity's wings fold into one strip menu at 393; a tap opens it and leaves
+  focus on the Button; the first Escape closes the menu and Activity stays in
   front; a second Escape still closes the window.
 
 * PHILO-16 the compositor core (moved whole): planes, Tile with its divider
@@ -464,7 +464,7 @@ def test_escape_closes_the_strip_menu_not_the_window(tmp_path: Path, monkeypatch
     """replaces: tests/e2e/test_philo13_18_strip_escape_glass.py::test_escape_closes_the_strip_menu_not_the_window
 
     PHILO-17 ("A meeting opens in one window"): the window whose wings still
-    fold at 393 is Speak (four wings and a door)."""
+    fold at 393 is Activity (two wings and a door)."""
     from playwright.sync_api import sync_playwright
 
     token = "windows-glass-escape"
@@ -477,14 +477,14 @@ def test_escape_closes_the_strip_menu_not_the_window(tmp_path: Path, monkeypatch
             page.set_default_timeout(20_000)
             page.goto(f"{base}/?token={token}", wait_until="load")
             _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=token)
-            page.evaluate("sessionStorage.setItem('hs.desk.staged-surface-open', JSON.stringify({key: 'dictate'}))")
+            page.evaluate("sessionStorage.setItem('hs.desk.staged-surface-open', JSON.stringify({key: 'inspect-activity'}))")
             page.reload(wait_until="load")
             _normal_chair(page)
-            window = page.locator(".desk-window-shell[aria-label='Speak']")
+            window = page.locator(".desk-window-shell[aria-label='Activity']")
             window.wait_for()
             _settle(page)
             strip = window.locator(".desk-wings-menu")
-            assert strip.count() == 1, "at 393 the Speak wings fold into one strip menu"
+            assert strip.count() == 1, "at 393 the Activity wings fold into one strip menu"
             box = strip.bounding_box()
             page.touchscreen.tap(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
             strip_menu = page.get_by_role("menu", name="Window faces", exact=True)
@@ -506,7 +506,7 @@ def test_escape_closes_the_strip_menu_not_the_window(tmp_path: Path, monkeypatch
         server.stop()
 
     assert menu_open == 0, "the first Escape left the strip menu open"
-    assert still_open and front == "Speak", f"the first Escape closed the window (front now {front!r})"
+    assert still_open and front == "Activity", f"the first Escape closed the window (front now {front!r})"
     assert closed_after_second, "a second Escape no longer closes the window"
 
 
@@ -830,7 +830,7 @@ class TestCompositor:
                 needs = ".desk-window-shell[aria-label='Needs you']"
 
                 # M1 (zoomed): Zoom -> Stage -> resize the staged front -> Esc.
-                page.get_by_role("button", name="Zoom Needs you").click()
+                page.get_by_role("button", name="Zoom Needs you", exact=True).click()
                 rects = {w["name"]: w["rect"] for w in _c_wins(page)}
                 doc = page.evaluate(C_PANEL_JS)
                 page.locator(f"{needs} .desk-pullout-title").first.click()
@@ -848,7 +848,7 @@ class TestCompositor:
                 # M1 (Zoom during Stage leaves Stage first).
                 page.keyboard.press("Meta+Enter")
                 _c_wins(page)
-                page.get_by_role("button", name="Zoom Needs you").click()  # unzoom
+                page.get_by_role("button", name="Zoom Needs you", exact=True).click()  # unzoom
                 wins = _c_wins(page)
                 if any(w["k"] for w in wins):
                     fails["M1 Zoom during Stage leaves Stage"] = wins
@@ -1754,8 +1754,14 @@ class TestWindowsOpenWell:
                 # PHILO-17 (doors): Meetings from the Dock, People from its
                 # desk drawer.
                 ctx_a, a, errors_a = self._page(browser, 1440, onboard=True)
-                a.locator(".desk-dock button").filter(has_text="Meetings").first.click()
+                a.locator(".desk-dock [data-app=surface-meetings]").click()
                 a.wait_for_timeout(900)
+                receipt = a.locator(".desk-window-undo")
+                receipt.wait_for()
+                assert receipt.evaluate("""el => {
+                    const dock = document.querySelector('.desk-dock').getBoundingClientRect();
+                    return el.getBoundingClientRect().bottom <= dock.top;
+                }"""), "the standing Undo receipt must leave the Dock clear"
                 a.locator(".desk-dock [data-app='surface-people']").click()
                 a.wait_for_timeout(900)
                 wins = _w_until(lambda: _w_wins(a), lambda w: {"Meetings", "People"} <= set(w))
@@ -2090,10 +2096,25 @@ class TestCloseMeansGone:
         cx, cy = x + w / 2, y + h / 2
         assert page.evaluate(HIT_JS, [cx, cy])["window"] == win["id"], "the open window is not on top"
         page.screenshot(path=str(CLOSE_SHOTS / f"{name}-before-{width}.png"))
-        self._press(page, _close_control(page, width, label, host=page.locator(f"[id='{win['id']}']")), width)
+        host = page.locator(f"[id='{win['id']}']")
+        if width < 720 and label == "Today":
+            self._press(page, host.get_by_test_id("rail-back"), width)
+            host.get_by_test_id("today-rail").wait_for()
+            assert host.get_by_test_id("today-rail").get_attribute("data-pane-open") is None
+            page.wait_for_function("""id => {
+                const rail = document.getElementById(id)?.querySelector('[data-testid=today-rail]');
+                return rail?.querySelector('[aria-current=true]') === document.activeElement;
+            }""", arg=win["id"])
+        self._press(page, _close_control(page, width, label, host=host), width)
         page.wait_for_timeout(900)
         _settle(page)
         hit = page.evaluate(HIT_JS, [cx, cy])
+        receipt = page.locator(".desk-window-undo")
+        receipt.wait_for()
+        assert receipt.evaluate("""el => {
+            const dock = document.querySelector('.desk-dock').getBoundingClientRect();
+            return el.getBoundingClientRect().bottom <= dock.top;
+        }"""), "Undo must leave the Dock clear after a close too"
         left = [o for o in self._open(page) if o["id"] == win["id"]]
         page.screenshot(path=str(CLOSE_SHOTS / f"{name}-after-{width}.png"))
         proof = {"window": win["id"], "centre": [round(cx), round(cy)], "hit": hit, "left_in_dom": left}
@@ -2375,6 +2396,9 @@ class TestTheDeskRemembers(_Rig):
                 close = _close_control(page, width, "Today")
                 close.wait_for()
                 page.wait_for_timeout(500)
+                if width < 720:
+                    self._press(page, page.get_by_test_id("rail-back"), width)
+                    page.get_by_test_id("today-rail").wait_for()
                 self._press(page, close, width)
                 close.wait_for(state="detached")
 

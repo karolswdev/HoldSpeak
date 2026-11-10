@@ -40,14 +40,16 @@ def _open_page(page: Any, base: str, *, scope: str = "") -> Any:
 
 def _assert_page_shape(page: Any, width: int) -> None:
     settings = page.locator("#surface-settings [data-testid='settings-page']")
-    expected = ["you", "engines", "speak", "meetings", "notices", "accounts", "calls", "agents", "desk", "this-mac"]
+    # The rail and pane order agree; no second hand-kept section inventory.
     assert settings.locator("[data-settings-section]").evaluate_all(
         "els => els.map(el => el.getAttribute('data-settings-section'))"
-    ) == expected
+    ) == settings.locator("nav [data-rail-id]").evaluate_all(
+        "els => els.map(el => el.getAttribute('data-rail-id'))"
+    )
     geometry = settings.evaluate(
         """el => {
           const body = el.closest('.desk-surface-body');
-          const index = el.querySelector('.settings-page-index').getBoundingClientRect();
+          const index = el.querySelector('nav[aria-label="Settings sections"]').getBoundingClientRect();
           return {
             width: el.getBoundingClientRect().width,
             index: {x: index.x, width: index.width},
@@ -99,9 +101,7 @@ def test_settings_page_order_anchor_and_saved_write(
                 page.locator("#surface-settings .desk-gadget-close").click()
                 page.locator("#surface-settings").wait_for(state="detached", timeout=10_000)
                 _api(page, "POST", "/api/desk/windows/surface-settings/open", {}, token=TOKEN)
-            settings.get_by_test_id("settings-index-this-mac").click()
-            engines = settings.get_by_test_id("settings-engines-page-link")
-            engines.click()
+            settings.get_by_test_id("settings-index-engines").click()
             engine_window = page.locator("#surface-settings")
             engine_window.get_by_test_id("settings-engines-spine").wait_for(timeout=15_000)
             rows = _api(page, "GET", "/api/desk/windows", token=TOKEN)["windows"]
@@ -118,7 +118,7 @@ def test_settings_page_order_anchor_and_saved_write(
             anchor = notices.locator(".gadget-row[data-highlight]")
             anchor.wait_for(timeout=10_000)
             index_notice = settings.get_by_test_id("settings-index-notices")
-            assert index_notice.get_attribute("aria-current") == "location"
+            assert index_notice.get_attribute("aria-current") == "true"
 
             increase = page.get_by_role("button", name="Increase Quiet from", exact=True)
             increase.scroll_into_view_if_needed()
