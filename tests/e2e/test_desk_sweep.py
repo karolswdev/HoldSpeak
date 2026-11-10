@@ -276,7 +276,7 @@ def _cases() -> tuple[list[tuple[str, str, str | None]], dict[str, str]]:
         ("decision-record", "surface-decisions", "record:{decision_record}"),
         ("note", "pullout:note:{note}", None),
         ("person", "pullout:people:{person}", None),
-        ("person-walk", "pullout:people:{person}", None),
+        ("person-walk", "surface-people", None),
         # Programs (2026-10-28): a Program's window (the board of direction
         # C), seeded through the real routes on a real git folder.
         ("program", "pullout:program:{program}", None),
@@ -464,30 +464,6 @@ _red("surface-activity", 393, "whole",
 
 # Settings belongs to its repair lane. These are the remaining observations,
 # including Calls hosted within Settings; they waive no other control/word.
-for _width in (1440, 900):
-    for _case, _suffix in (("surface-settings", "@pane:accounts"),
-                           ("surface-settings@integration:destinations", "")):
-        _red(_case, _width, "whole" + _suffix,
-             r"^Button 'Choose calendar' uses 2 lines$",
-             "Settings: Choose calendar wraps its Button label")
-        _red(_case, _width, "air" + _suffix,
-             r"^'Check' x 'Check': .*<connections-check-action",
-             "Settings: adjacent service Check buttons have 1 px of air")
-        _red(_case, _width, "air" + _suffix,
-             r"^'Details' x 'Details': .*<surface-ledger-trailing",
-             "Settings: adjacent destination Details buttons have 1 px of air")
-        _red(_case, _width, "air" + _suffix,
-             r"^'Details' x 'Add destination': .*<send-verbs$",
-             "Settings: the last destination Details touches Add destination")
-for _width in SIZES:
-    for _case, _suffix in (("surface-settings", "@pane:calls"), ("surface-settings@calls", "")):
-        _red(_case, _width, "whole" + _suffix,
-             r"^word '[^']+' breaks in calls-step-line$",
-             "Settings Calls: setup code breaks a word across lines")
-        if _width != 1440:
-            _red(_case, _width, "whole" + _suffix,
-                 r"^word '[^']+' breaks in calls-step-install$",
-                 "Settings Calls: the install command breaks a word across lines")
 _red("surface-settings", 393, "target@pane:speak",
      r"^'Push-to-talk key: .*loses \d/9 points.*gadget-row-gadget",
      "Settings Speak: the shortcut Button loses its upper hit corners")
@@ -1130,7 +1106,8 @@ AIR_WORDS_JS = r"""(sel) => {
     return R - L > 1 && B - T > 1 ? {L, T, R, B} : null;
   };
   const air = [], whole = new Set();
-  const controls = [...scope.querySelectorAll('button, input:not([type=hidden]), select, textarea')]
+  const controls = [...scope.querySelectorAll('[role=listbox], button, input:not([type=hidden]), select, textarea')]
+    .filter(e => !(e.matches('[role=option]') && e.closest('[role=listbox]')))
     .map(e => ({e, r: painted(e)})).filter(c => c.r);
   for (let i = 0; i < controls.length; i++) for (let j = i + 1; j < controls.length; j++) {
     const a = controls[i], b = controls[j];
@@ -1663,6 +1640,17 @@ def _judge(where: str, listed: list[Red], failures: dict[str, list[str]]) -> Non
         raise KnownRed(f"{where}: known reds\n" + "\n".join(f"  {r.key}: {r.why}" for r in strict))
 
 
+def _start_app_walk(page: Any) -> None:
+    """Use the same application menu on the desktop and phone."""
+    switcher = page.get_by_test_id("desk-screen-switcher")
+    if switcher.is_visible():
+        switcher.click()
+        page.get_by_role("menuitem").and_(page.locator('[aria-haspopup="menu"]')).click()
+    else:
+        page.get_by_test_id("desk-screen-title").get_by_role("button").click()
+    page.get_by_role("menuitem", name="Show me", exact=True).click()
+
+
 @pytest.mark.timeout(240)
 @pytest.mark.parametrize(("case", "width"), _params())
 def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
@@ -1808,11 +1796,7 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
             # isolated hub. Voice is off; no provider or microphone runs.
             page.evaluate("localStorage.setItem('hs:walk-voice', 'off')")
             win = page.locator(f'[id="{wid}"]')
-            if width < 720:
-                win.get_by_test_id("show-me-more").click()
-                page.get_by_role("menuitem", name="Show me", exact=True).click()
-            else:
-                win.get_by_test_id("show-me").click()
+            _start_app_walk(page)
             walk_name = "people" if case_id == "person-walk" else "automations"
             script = json.loads((REPO / f"web/src/desk/walks/{walk_name}.walk.json").read_text())
             kept = False
@@ -1850,7 +1834,7 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
             page.screenshot(path=str(evidence_dir("desk-sweep") / f"automation-when-editor-{width}.png"))
             page.keyboard.press("Escape")
             popover.wait_for(state="detached", timeout=T)
-        if case_id in {"person", "person-walk"}:
+        if case_id == "person":
             # This pose is the seeded person's content, not the transient
             # readiness/detail gap or a frame whose lazy body has not loaded.
             page.locator(f'[id="{wid}"] [data-testid=people-detail-head]').wait_for(timeout=T)
@@ -1948,11 +1932,7 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
                     assert win.get_by_test_id("rail-back").is_visible()
                     assert not win.locator(".surface-rail-back").is_visible()
                 page.evaluate("localStorage.setItem('hs:walk-voice', 'off')")
-                if width == 393:
-                    win.get_by_test_id("show-me-more").click()
-                    page.get_by_role("menuitem", name="Show me").click()
-                else:
-                    win.get_by_test_id("show-me").click()
+                _start_app_walk(page)
                 script = json.loads((REPO / "web/src/desk/walks" / f"{case_id.removeprefix('surface-')}.walk.json").read_text())
                 for step in script["steps"]:
                     page.wait_for_function("question => document.querySelector('[data-testid=walk-question]')?.textContent === question",
@@ -2006,11 +1986,7 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
             if case_id in {"surface-dictation", "surface-live", "ask"}:
                 # The voice apps carry real walks, through the shared runner.
                 front = page.locator(f'[id="{wid}"]')
-                if width < 720:
-                    front.get_by_test_id("show-me-more").click()
-                    page.get_by_role("menuitem", name="Show me", exact=True).click()
-                else:
-                    front.get_by_test_id("show-me").click()
+                _start_app_walk(page)
                 walk_name = {"surface-dictation": "speak", "surface-live": "live", "ask": "ask"}[case_id]
                 script = json.loads((REPO / "web/src/desk/walks" / f"{walk_name}.walk.json").read_text())
                 for step in script["steps"]:
@@ -2386,5 +2362,24 @@ def test_whole_words_and_button_lines_are_measured_on_glass(pw_browser: Any) -> 
         assert "word 'Summaries' breaks in broken" in facts["whole"], facts
         assert any(row.startswith("Button 'Choose calendar' uses ") for row in facts["whole"]), facts
         assert not any("Whole" in row or "Invisible" in row or "One line" in row for row in facts["whole"]), facts
+    finally:
+        page.close()
+
+
+def test_air_keeps_list_selection_together_and_checks_editors(pw_browser: Any) -> None:
+    """Adjoining options are one control; independent editors still owe air."""
+    page = pw_browser.new_page()
+    try:
+        page.set_content('''<div id="face"><div role="listbox" style="display:flex;flex-direction:column;width:120px">
+          <button role="option">You</button><button role="option">Engines</button></div>
+          <button id="outside" style="margin-top:6px">Open</button></div>''')
+        assert not page.evaluate(AIR_WORDS_JS, "#face")["air"]
+        page.locator("#outside").evaluate("e => e.style.marginTop = '2px'")
+        assert page.evaluate(AIR_WORDS_JS, "#face")["air"]
+        page.locator("#outside").evaluate("e => e.setAttribute('role', 'option')")
+        assert page.evaluate(AIR_WORDS_JS, "#face")["air"], "an option outside a list is still a control"
+        page.set_content('''<div id="face" role="grid"><div role="row"><select><option>Codex</option></select></div>
+          <div role="row"><select><option>Gemini</option></select></div></div>''')
+        assert page.evaluate(AIR_WORDS_JS, "#face")["air"]
     finally:
         page.close()

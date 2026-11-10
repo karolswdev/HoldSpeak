@@ -29,6 +29,8 @@ vi.mock("../documentSendsLazy", () => ({
   BriefSendWells: () => <div data-testid="brief-send-wells" />,
 }));
 import { TodayView } from "../pullouts/views/TodayView";
+import { WindowIdContext } from "../components/window/windowIdContext";
+import { ApplicationMenu } from "../components/DeskMenuBar";
 import { appWalk } from "../walk/appWalks";
 import { PERSON_OPEN_EVENT } from "../objectWindows";
 const gets = TODAY.gets as Gets;
@@ -51,7 +53,7 @@ afterEach(() => {
 });
 const pick = (id: string) =>
   fireEvent.click(
-    within(screen.getByTestId("today-rail")).getByRole("button", { name: id }),
+    within(screen.getByTestId("today-rail")).getByRole("option", { name: id }),
   );
 const settled = () =>
   waitFor(() =>
@@ -288,7 +290,7 @@ describe("Today is a native app", () => {
     expect(row).toHaveTextContent("Census standup");
   });
   it("carries an in-place walk of real, stable face targets", async () => {
-    render(<TodayView />);
+    render(<WindowIdContext.Provider value="pullout:intelligence:desk"><ApplicationMenu windowId="pullout:intelligence:desk" /><TodayView /></WindowIdContext.Provider>);
     await settled();
     const walk = appWalk("open-intelligence");
     expect(walk).toBeTruthy();
@@ -297,6 +299,7 @@ describe("Today is a native app", () => {
       if (step.highlight?.target)
         expect(screen.getByTestId(step.highlight.target)).toBeTruthy();
     }
-    expect(screen.getByRole("button", { name: "Show me" })).toBeTruthy();
+    fireEvent.click(within(screen.getByTestId("desk-screen-title")).getByRole("button"));
+    expect(screen.getByRole("menuitem", { name: "Show me" })).toBeVisible();
   });
 });

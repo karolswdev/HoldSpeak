@@ -59,3 +59,9 @@
 .object-list--selection[data-action-bar="top"] .object-list-th > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .object-list-grid { display: flex; flex-direction: column; flex: 1 1 0; min-height: 0; min-width: 0; }
+/* A row with an independent editor owes that editor air, unlike selection
+   rows, which are adjoining parts of one control. */
+.object-list.object-list--selection .object-list-row:has(select) { min-height: 30px; }
+@container surface (max-width: 520px) {
+  .object-list.object-list--selection .object-list-row:has(select) { min-height: 52px; }
+}

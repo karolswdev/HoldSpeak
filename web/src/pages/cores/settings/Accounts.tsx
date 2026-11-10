@@ -1,7 +1,7 @@
 // Settings > Accounts: connections, calendar, destinations and credentials. Moved out of SettingsCore.tsx.
 import { Button } from "../../../components/signal/Signal";
 import { PreferencePane, SegmentedTabs, PaneInspector, PaneActions } from "../../../desk/surface";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { SecretState } from "../core-types";
 import { apiFetch, readableError } from "../../../lib/api";
 import { FoldGadget, GadgetGroup, SecretRow } from "../../../desk/surface/gadgets";
@@ -70,8 +70,16 @@ export function AccountsSection({ b, secrets: secretChanges, cal, writer, connec
   b: SettingsBindings; secrets: SecretChanges; cal: CalendarSources; writer: SettingsWriter;
   connections: { onFooterUpdate: (foot: ConnectionsFoot) => void; onOpenModule: (id: string) => void; focusProvider: string | null | undefined; onAttention?: (reason: string | null) => void; onCalendarChanged: () => Promise<void> };
 }) {
-  const [tab, setTab] = useState(connections.focusProvider === "calendar" ? "calendars" : "services");
+  const tabFor = (focus: string | null | undefined) => focus === "calendar" ? "calendars" : focus === "destinations" ? "destinations" : "services";
+  const [tab, setTab] = useState(tabFor(connections.focusProvider));
+  const [serviceFocus, focusService] = useState(connections.focusProvider);
   const [credentials, showCredentials] = useState(false);
+  useEffect(() => {
+    if (!connections.focusProvider) return;
+    setTab(tabFor(connections.focusProvider));
+    focusService(connections.focusProvider);
+    showCredentials(false);
+  }, [connections.focusProvider]);
   const secretRows = Object.entries((b.data._secrets ?? {}) as Record<string, SecretState>).filter(([id]) => !id.startsWith("telegram_"));
   return <PreferencePane label="Accounts" testId="settings-accounts">
     <SegmentedTabs label="Accounts" value={tab} onChange={(id) => { setTab(id); showCredentials(false); }} tabs={[
@@ -82,10 +90,10 @@ export function AccountsSection({ b, secrets: secretChanges, cal, writer, connec
           label={SECRET_LABELS[id] ?? title(id)} configured={Boolean(state.configured)} destination={state.destination}
           busy={secretChanges.secretBusy === id} rotatable={ROTATABLE_SECRETS.has(id)}
           onReplace={(value) => void secretChanges.changeSecret(id, "replace", value)} onRotate={() => void secretChanges.changeSecret(id, "rotate")} onDelete={() => void secretChanges.changeSecret(id, "delete")} />)}</GadgetGroup></PaneInspector>
-        : <><ConnectionsPane {...connections} extraVerbs={[{ id: "credentials", label: "Credentials…", run: () => showCredentials(true) }]} /></>}
+        : <><ConnectionsPane {...connections} key={serviceFocus} focusProvider={serviceFocus} extraVerbs={[{ id: "credentials", label: "Credentials…", run: () => showCredentials(true) }]} /></>}
       </div>
       <div className="surface-tab-panel" hidden={tab !== "calendars"}><CalendarSection b={b} cal={cal} commitMany={writer.commitMany} onRefuse={writer.setRefusal} beforeChange={writer.beforeCalendarChange} onChanged={connections.onCalendarChanged} /></div>
-      <div className="surface-tab-panel" hidden={tab !== "destinations"}><Destinations /></div>
+      <div className="surface-tab-panel" hidden={tab !== "destinations"}><Destinations onSetUpAccount={(channel) => { focusService(channel); setTab("services"); }} /></div>
     </SegmentedTabs>
   </PreferencePane>;
 }

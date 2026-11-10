@@ -66,9 +66,10 @@ def _selection_has_ink(
 
 
 def _capture(page: Any, window: Any, width: int, stem: str) -> dict[str, Any]:
+    page.evaluate("window.__feedbackAudioSeconds = 0")
     window.locator("button[aria-label^='Give feedback on ']").click()
     page.locator("[data-ui-feedback]").get_by_text("Recording", exact=True).wait_for()
-    page.wait_for_timeout(1200)
+    page.wait_for_function("window.__feedbackAudioSeconds >= 0.12", timeout=30_000)
     report = _save_feedback(page, width, shot_stem=stem,
                             window_id=str(window.get_attribute("id")), draft=None)
     page.locator("[data-ui-feedback]").get_by_role("button", name="Done", exact=True).click()
@@ -112,6 +113,21 @@ def test_reported_settings_categories_and_guided_builder_in_firefox(
             try:
                 page = browser.new_page(viewport={"width": width, "height": 900 if width == 1440 else 852},
                                         device_scale_factor=1, reduced_motion="reduce")
+                page.add_init_script("""(() => {
+                  const NativeNode = window.AudioWorkletNode;
+                  window.AudioWorkletNode = class extends NativeNode {
+                    constructor(context, name, options) {
+                      super(context, name, options);
+                      if (name === 'holdspeak-capture') {
+                        this.port.addEventListener('message', event => {
+                          window.__feedbackAudioSeconds = (window.__feedbackAudioSeconds || 0)
+                            + event.data.length / context.sampleRate;
+                        });
+                        this.port.start();
+                      }
+                    }
+                  };
+                })()""")
                 page.set_default_timeout(30_000)
                 errors: list[str] = []
                 page.on("pageerror", lambda error: errors.append(str(error)))
@@ -186,36 +202,40 @@ def test_reported_settings_categories_and_guided_builder_in_firefox(
                 workbench_id = created.value.json()["workbench"]["id"]
                 # The made automation opens in the Automations window's pane.
                 automation = page.locator("[id='surface-workbenches'][data-layer='window']")
-                setup = automation.get_by_test_id("automation-setup")
-                setup.wait_for()
-                assert automation.get_by_test_id("automation-run-now").count() == 0
+                automation.get_by_test_id("automation-sentence").wait_for()
+                assert automation.get_by_test_id("automation-run-now").is_disabled()
                 assert not automation.get_by_test_id("automation-newest").is_visible()
                 draft = "Draft an update from the platform checkpoint."
-                setup.get_by_role("textbox", name="What it does", exact=True).fill(draft)
-                _selection_has_ink(setup.get_by_test_id("automation-setup-step-do"))
+                automation.get_by_role("button", name="Do", exact=True).click()
+                editor = page.get_by_test_id("automation-do-editor")
+                editor.get_by_role("textbox", name="What it does", exact=True).fill(draft)
+                editor.get_by_test_id("automation-do-save").click()
+                editor.wait_for(state="hidden")
+                # Every part uses the same editor for a new and a saved automation.
+                automation.get_by_role("button", name="Do", exact=True).click()
+                assert page.get_by_role("textbox", name="What it does", exact=True).input_value() == draft
+                page.get_by_role("button", name="Cancel", exact=True).click()
                 _settle(page)
                 _contained(automation)
                 page.screenshot(path=str(SHOTS / f"automation-do-{width}.png"))
-                report = _capture(page, automation, width, "automation-wizard")
-                assert any(field.get("value") == draft for field in report["context"]["fields"])
-                setup.get_by_test_id("automation-setup-next").click()
-                setup.get_by_role("textbox", name="Find by name").wait_for()
-                setup.get_by_test_id("automation-setup-back").click()
-                assert setup.get_by_role("textbox", name="What it does", exact=True).input_value() == draft
-                setup.get_by_test_id("automation-setup-next").click()
-                setup.get_by_role("textbox", name="Find by name").fill("Platform")
-                setup.get_by_role("button", name="Add Platform checkpoint", exact=True).click()
-                setup.get_by_role("button", name="Remove Platform checkpoint", exact=True).wait_for()
-                setup.get_by_test_id("automation-setup-next").click()
-                setup.get_by_role("button", name="Add Claude Code", exact=True).click()
-                setup.get_by_text("In use", exact=True).wait_for()
+                report = _capture(page, automation, width, "automation-sentence")
+                assert draft.removesuffix(".") in report["context"]["owner"]["window_text"]
+                automation.get_by_role("button", name="About", exact=True).click()
+                page.get_by_role("textbox", name="Find by name").fill("Platform")
+                page.get_by_role("button", name="Add Platform checkpoint", exact=True).click()
+                page.get_by_role("button", name="Remove Platform checkpoint", exact=True).wait_for()
+                page.locator(".surface-popover").press("Escape")
+                automation.get_by_role("button", name="With", exact=True).click()
+                page.get_by_role("button", name="Add Claude Code", exact=True).click()
+                page.get_by_test_id("automation-with-editor").get_by_text("In use", exact=True).wait_for()
                 page.screenshot(path=str(SHOTS / f"automation-with-{width}.png"))
-                setup.get_by_test_id("automation-setup-next").click()
-                setup.get_by_role("button", name="Only when I press Run now", exact=True).wait_for()
-                setup.get_by_test_id("automation-setup-next").click()
-                setup.get_by_role("button", name="Put it in Needs you", exact=True).click()
-                setup.get_by_test_id("automation-setup-done").click()
-                setup.wait_for(state="hidden")
+                page.locator(".surface-popover").press("Escape")
+                automation.get_by_role("button", name="When", exact=True).click()
+                page.get_by_role("button", name="Only when I press Run now", exact=True).click()
+                page.locator(".surface-popover").press("Escape")
+                automation.get_by_role("button", name="Put it in", exact=True).click()
+                page.get_by_role("button", name="Put it in Needs you", exact=True).click()
+                page.locator(".surface-popover").press("Escape")
                 saved = _api(page, "GET", f"/api/workbenches/{workbench_id}", token=TOKEN)["workbench"]
                 assert saved["instruction"] == draft
                 assert saved["output_target"] == "needs_you"

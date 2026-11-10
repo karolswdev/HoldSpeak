@@ -65,7 +65,8 @@ describe("the Destination form", () => {
 
   it("picks Resend: its key row, its key save, its egress, its save body", async () => {
     render(<Destinations />);
-    const form = await screen.findByTestId("dest-form");
+    if (!screen.queryByTestId("dest-form")) fireEvent.click(await screen.findByRole("button", { name: "Add destination" }));
+  const form = await screen.findByTestId("dest-form");
     fireEvent.change(within(form).getByLabelText("Channel"), { target: { value: "email" } });
     const provider = within(screen.getByTestId("dest-form")).getByLabelText("Provider") as HTMLSelectElement;
     // PHILO-15 04 (gap 13): Resend first and picked; SendGrid one change away.
