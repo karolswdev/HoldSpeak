@@ -2,10 +2,8 @@
 
 One explicit row per operation (the Phase 7 settled method), carved beside
 ``holdspeak/operations.py`` (which imports this module into ``DESCRIPTORS``):
-the twenty MCP identities of the charter's enumeration (the steward 5, the
-nudges 3, the watches 7, the suggested sources 3, the connections 2), the
-three HTTP-only rows the charter names (the Door's count, a watch's update and
-its baseline), and the new ``project.mark_update_delivered``. Each row names
+the steward, nudges, watches, suggested sources and connections, with the
+Door's count and update delivery confirmation. Each row names
 the real method on the hub's service and its Article XI admission BY EFFECT
 (the owner's Q1; the phase status's admission table). Enforced: an ADMITTED
 row is one kernel operation with one terminal receipt
@@ -18,6 +16,7 @@ sends no update: nudge.send is a GitHub comment the owner reviews and sends.
 """
 from __future__ import annotations
 
+from dataclasses import replace
 from typing import Any, Mapping
 
 from holdspeak.operations import (
@@ -348,6 +347,29 @@ WATCH_BASELINE = _watch_row(
     result="the baseline result", held=(),
 )
 
+# The declared tools preserve the service's owner-only write boundary.
+WATCH_UPDATE = replace(WATCH_UPDATE, tool_schema=dict(WATCH_UPDATE.args_schema),
+    exposure=WATCH_UPDATE.exposure + ("mcp:project.watch.update",),
+    owner_only=True, owner_press=True, authority="config", blocking_io=True,
+    refusals=WATCH_UPDATE.refusals + ("owner_required",))
+WATCH_BASELINE = replace(WATCH_BASELINE, tool_schema=dict(WATCH_BASELINE.args_schema),
+    exposure=WATCH_BASELINE.exposure + ("mcp:project.watch.baseline",),
+    owner_only=True, owner_press=True, authority="egress", blocking_io=True,
+    refusals=WATCH_BASELINE.refusals + ("owner_required",))
+WATCH_LIST = OperationDescriptor(
+    name="project.watch.list", version=1, description="List the watches of one project, with an optional state.",
+    args_schema={"type": "object", "properties": {"project_id": _PROJECT_ID, "state": {"type": ["string", "null"]}},
+                 "required": ["project_id"], "additionalProperties": False},
+    principal=_ROOM_PRINCIPAL + "; owner only (includes watch drafts)", effect="read", result="{watches: [...]}",
+    owner_only=True, refusals=_WATCH_REFUSALS + ("owner_required",),
+    completion="synchronous", exposure=("http:GET /api/projects/{project_id}/watches", "mcp:project.watch.list"),
+    service="watch_service", method="list_watches", blocking_io=True,
+    call=lambda s, p, a: {"watches": s.list_watches(p, project_id=a["project_id"], state=a.get("state"))},
+    http=("GET", "/api/projects/{project_id}/watches"), handler="list_project_watches",
+    tool_schema={"type": "object", "properties": {"project_id": _PROJECT_ID, "state": {"type": ["string", "null"]}},
+                 "required": ["project_id"], "additionalProperties": False}, thread="evidence_read",
+)
+
 # ── the suggested sources ───────────────────────────────────────────────
 
 SUGGESTED_LIST = OperationDescriptor(
@@ -547,7 +569,7 @@ STEWARD_CONNECTOR_OPERATIONS: tuple[OperationDescriptor, ...] = (
     STEWARD_CONFIGURE, STEWARD_RUN, STEWARD_STOP, STEWARD_READ_RUN, STEWARD_TRIGGER,
     NUDGE_LIST, NUDGE_SEND, NUDGE_DISMISS,
     WATCH_INSPECT, WATCH_TEST, WATCH_EVALUATE, WATCH_SET_RULES, WATCH_PAUSE, WATCH_RESUME, WATCH_RETIRE,
-    WATCH_UPDATE, WATCH_BASELINE,
+    WATCH_UPDATE, WATCH_BASELINE, WATCH_LIST,
     SUGGESTED_LIST, SUGGESTED_ADD, SUGGESTED_DISMISS,
     CONNECTION_LIST, CONNECTION_RECHECK,
     DOOR_COUNT, UPDATE_MARK_DELIVERED,

@@ -45,6 +45,8 @@ async def _json_body(request: Request) -> dict[str, Any]:
     return value if isinstance(value, dict) else {}
 
 def _error(exc: Exception, action: str) -> JSONResponse:
+    if isinstance(exc, operations.OperationOwnerRequired):
+        return JSONResponse({"success": False, "error": exc.code}, status_code=403)
     if isinstance(exc, NotFound): return JSONResponse({"success": False, "error": "Meeting not found"}, status_code=404)
     if isinstance(exc, (ConflictError, ValidationError)): return JSONResponse({"success": False, "error": str(exc)}, status_code=400 if isinstance(exc, ValidationError) else 409)
     return error_500(exc, log, action)
@@ -54,7 +56,8 @@ def _conflict_response(service: MeetingIntelService, meeting_id: str, exc: Confl
     return JSONResponse(conflict_body(with_route(service, meeting_id, exc)), status_code=409)
 
 #: The 500 words of each produced route; the run gestures answer a conflict with the route.
-_FAILED = {"meeting.intel_jobs": "Failed to list intel jobs", "meeting.intel_retry": "Failed to retry intel job",
+_FAILED = {"meeting.intel_summary": "Failed to load intel queue summary",
+           "meeting.intel_process": "Failed to process intel jobs", "meeting.intel_jobs": "Failed to list intel jobs", "meeting.intel_retry": "Failed to retry intel job",
            "meeting.intel_recovery": "Failed to load Meeting intelligence recovery",
            "meeting.intel_recovery_retry": "Failed to retry Meeting intelligence",
            "meeting.intel_recovery_skip": "Failed to skip Meeting intelligence"}
@@ -74,22 +77,13 @@ def _answer(name: str) -> Callable[..., Any]:
 
 def build_intel_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
-    @router.get("/api/intel/summary")
-    def api_intel_queue_summary(request: Request) -> Any:
-        try: return JSONResponse(_svc(ctx).queue_summary(_principal(request)))
-        except Exception as exc: return _error(exc, "Failed to load intel queue summary")
-    @router.post("/api/intel/process")
-    def api_process_intel_jobs(request: Request, payload: Optional[_IntelProcessRequest] = None) -> Any:
-        try:
-            body = payload.model_dump() if payload is not None else {}
-            return JSONResponse(_svc(ctx).process_jobs(_principal(request), body))
-        except Exception as exc: return _error(exc, "Failed to process intel jobs")
     @router.post("/api/meetings/{meeting_id}/prepare")
     async def api_prepare_meeting_result(meeting_id: str, request: Request) -> Any:
         """Betterment capture C5b: Prepare… and Write again (one draft)."""
         try:
             body = await _json_body(request)
-            result = operations.for_context(ctx, meeting_intel_service=lambda: _svc(ctx)).invoke(
+            result = await run_in_threadpool(
+                operations.for_context(ctx, meeting_intel_service=lambda: _svc(ctx)).invoke,
                 _principal(request), "meeting.result.prepare",
                 {"meeting_id": meeting_id, "plugin_id": body.get("plugin_id"),
                  "expected_selection_hash": body.get("expected_selection_hash")},
@@ -120,6 +114,12 @@ def build_intel_router(ctx: WebContext) -> APIRouter:
 
     registry = lambda: operations.for_context(ctx, meeting_intel_service=lambda: _svc(ctx))  # noqa: E731
 
+    def process(descriptor: Any) -> Callable[..., Any]:
+        async def api_process_intel_jobs(request: Request, payload: Optional[_IntelProcessRequest] = None) -> Any:
+            args = payload.model_dump() if payload is not None else {}
+            return await _answer(descriptor.name)(lambda: registry().invoke(_principal(request), descriptor.name, args))
+        return api_process_intel_jobs
+
     def jobs(descriptor: Any) -> Callable[..., Any]:
         """Typed query parameters keep FastAPI's 422 for a malformed limit, as the hand-written route did."""
         async def api_list_intel_jobs(request: Request, status: str = "all", limit: int = 20, history_limit: int = 5) -> Any:
@@ -130,5 +130,5 @@ def build_intel_router(ctx: WebContext) -> APIRouter:
     for descriptor in MEETING_INTEL_OPERATIONS:
         if descriptor.service == "meeting_intel_service":
             mount_router(router, operation_router([descriptor], registry, _answer(descriptor.name), module=__name__,
-                                                  hand_written={"meeting.intel_jobs": jobs}))
+                                                  hand_written={"meeting.intel_jobs": jobs, "meeting.intel_process": process}))
     return router

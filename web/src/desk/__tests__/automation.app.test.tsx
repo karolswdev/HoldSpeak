@@ -869,7 +869,7 @@ describe("A7: home, New automation and starters", () => {
     expect(item).toHaveTextContent("Friday team update");
     expect(item).toHaveTextContent("Every Friday at 15:00 · Off");
     // A result not opened yet is the brass dot and the status bar's `1 new`.
-    expect(item).toHaveAttribute("data-new");
+    expect(within(item).getByText("New")).toBeInTheDocument();
     expect(item.textContent).not.toMatch(/0 NEW|ITEM|PENDING|RECENT RUNS/);
     // The status bar says the count and what is new, never a zero.
     expect(screen.getByTestId("automation-home-count")).toHaveTextContent("1 automation");
@@ -877,7 +877,7 @@ describe("A7: home, New automation and starters", () => {
     expect(screen.getByTestId("automation-home-status").textContent).not.toMatch(/\b0\b/);
     // The first automation is chosen: its mast and plate are in the pane, in
     // this one window.
-    expect(item).toHaveAttribute("aria-current", "page");
+    expect(item).toHaveAttribute("aria-current", "true");
     fireEvent.click(item);
     expect(await within(screen.getByTestId("automations-pane")).findByTestId("automation-mast")).toHaveTextContent("Friday team update");
     expect(useDesk.getState().workbenchWindows).toEqual([]);

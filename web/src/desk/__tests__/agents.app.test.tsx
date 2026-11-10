@@ -318,7 +318,7 @@ const findMember = (id: string) => waitFor(() => {
   return el;
 });
 /** A press on a tile picks the agent (its pane shows it). */
-const selectRow = (id: string) => fireEvent.click(conductorMember(id)!.querySelector(".aw-tile-open")!);
+const selectRow = (id: string) => fireEvent.click(conductorMember(id)!.querySelector(".surface-rail-row")!);
 /** The status bar's words, as it draws them. */
 const statusWords = () => [...screen.getByTestId("conductor-head").querySelectorAll(".kit-statusbar-item")]
   .map((item) => item.textContent).filter(Boolean).join(" · ");
@@ -1123,7 +1123,7 @@ describe("the desk's own answers are visible (Betterment AG3)", () => {
    *  press opens it, which sees its answer). */
   const ghost = () => {
     if (agentPane().getAttribute("data-member") !== "launch:launch_ag0_ghost") {
-      fireEvent.click(document.querySelector<HTMLElement>('[data-testid="agents-rail"] [data-object-id="launch:launch_ag0_ghost"] .aw-tile-open')!);
+      fireEvent.click(document.querySelector<HTMLElement>('[data-testid="agents-rail"] [data-object-id="launch:launch_ag0_ghost"] .surface-rail-row')!);
     }
     return agentPane();
   };

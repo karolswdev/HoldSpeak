@@ -154,12 +154,12 @@ function fixtureMembers() {
  *  is a button named by the item it works on); a press picks it, and the
  *  pane at the right is the picked agent (mast, plate, ledger). */
 const rowOf = (words: string) => {
-  const row = screen.queryAllByTestId("conductor-row").find((r) => r.querySelector(".aw-tile-title")?.textContent?.includes(words));
+  const row = screen.queryAllByTestId("conductor-row").find((r) => r.querySelector(".surface-rail-label")?.textContent?.includes(words));
   if (!row) throw new Error(`no tile reads "${words}" in ${(document.querySelector("[data-testid=agents-rail]")?.outerHTML ?? document.body.innerHTML).slice(0, 1500)}`);
   return row;
 };
 const findRow = (words: string) => waitFor(() => rowOf(words));
-const icon = (words: string) => rowOf(words).querySelector(".aw-tile-open") as HTMLElement;
+const icon = (words: string) => rowOf(words).querySelector(".surface-rail-row") as HTMLElement;
 const pillOf = (words: string) => within(rowOf(words)).getByTestId("conductor-pill").textContent;
 const pane = () => screen.getByTestId("agents-pane");
 /** The status bar's words, joined as it draws them. */
@@ -305,12 +305,26 @@ describe("PHILO-14 C4 the Conductor window", () => {
     expect(within(pane()).getByRole("button", { name: "Answer" })).toBeTruthy();
   });
 
+  it("an explicit agent request opens the folded pane, including the same agent after Back", async () => {
+    render(<ConductorWindow />);
+    await findRow("Shard the reconciliation job");
+    const rail = screen.getByTestId("agents-rail");
+    expect(rail.hasAttribute("data-pane-open")).toBe(false);
+    act(() => useConductor.setState({ focus: "launch:l-recon" }));
+    await waitFor(() => expect(rail.hasAttribute("data-pane-open")).toBe(true));
+    expect(pane().getAttribute("data-member")).toBe("launch:l-recon");
+    fireEvent.click(document.querySelector(".surface-rail-back button")!);
+    expect(rail.hasAttribute("data-pane-open")).toBe(false);
+    act(() => useConductor.setState({ focus: "launch:l-recon" }));
+    await waitFor(() => expect(rail.hasAttribute("data-pane-open")).toBe(true));
+  });
+
   it("a press on a tile picks the agent: a launched one's face is the pane, a plain session opens its window; Details keeps the facts", async () => {
     render(<ConductorWindow />);
     await findRow("Shard the reconciliation job");
     fireEvent.click(icon("Shard the reconciliation job"));
     expect(pane().getAttribute("data-member")).toBe("launch:l-recon");
-    expect(rowOf("Shard the reconciliation job").hasAttribute("data-picked")).toBe(true);
+    expect(rowOf("Shard the reconciliation job").querySelector(".surface-rail-row")?.getAttribute("aria-current")).toBe("true");
     // One face per agent: no lane window to open.
     expect(within(pane()).queryByTestId("conductor-open")).toBeNull();
     expect(shell.lanes).toEqual([]);
@@ -417,7 +431,7 @@ describe("PHILO-14 C4 the Conductor window", () => {
       if (!el) throw new Error("no Claude Code tile yet");
       return el as HTMLElement;
     });
-    fireEvent.click(claudeTile.querySelector(".aw-tile-open")!);
+    fireEvent.click(claudeTile.querySelector(".surface-rail-row")!);
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Connect Claude Code" }));
     });
@@ -446,7 +460,7 @@ describe("PHILO-14 C4 the Conductor window", () => {
     expect(claude.getAttribute("data-group")).toBe("mac");
     expect(within(claude).getByTestId("conductor-pill").textContent).toBe("Not connected");
     // Its fix is the selected row's verb, at the status bar's right.
-    fireEvent.click(claude.querySelector(".aw-tile-open")!);
+    fireEvent.click(claude.querySelector(".surface-rail-row")!);
     detectReply = () => DETECT;
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Connect Claude Code" }));
@@ -473,9 +487,9 @@ describe("PHILO-14 C4 the Conductor window", () => {
     await waitFor(() => expect(row("agent:claude")).toBeTruthy());
     expect(row("agent:codex")).toBeTruthy();
     expect(document.querySelectorAll(".conductor-window .btn--primary")).toHaveLength(1);
-    fireEvent.click(row("agent:codex").querySelector(".aw-tile-open")!);
+    fireEvent.click(row("agent:codex").querySelector(".surface-rail-row")!);
     expect(screen.getByRole("button", { name: "Connect Codex" }).className).toContain("btn--secondary");
-    fireEvent.click(row("agent:claude").querySelector(".aw-tile-open")!);
+    fireEvent.click(row("agent:claude").querySelector(".surface-rail-row")!);
     const claude = screen.getByRole("button", { name: "Connect Claude Code" });
     detectReply = () => ({ ...both, agents: [{ ...both.agents[0], hooks: "installed" }, both.agents[1]] });
     await act(async () => {
@@ -485,7 +499,7 @@ describe("PHILO-14 C4 the Conductor window", () => {
     const done = await screen.findByTestId("conductor-install-done");
     expect(done.textContent).toMatch(/^Connected · Claude Code · \d\d:\d\d$/);
     await waitFor(() => expect(screen.queryByRole("button", { name: "Connect Claude Code" })).toBeNull());
-    fireEvent.click(row("agent:codex").querySelector(".aw-tile-open")!);
+    fireEvent.click(row("agent:codex").querySelector(".surface-rail-row")!);
     expect(screen.getByRole("button", { name: "Connect Codex" })).toBeTruthy();
   });
 
@@ -517,7 +531,7 @@ describe("PHILO-14 C4 the Conductor window", () => {
     expect(document.body.textContent).not.toContain("Connect: see the agent's work");
     // W4 AGENT 2: Installed lists every tool: Claude Code is ready.
     expect(within(document.querySelector("[data-object-id='agent:claude']") as HTMLElement).getByTestId("conductor-pill").textContent).toBe("Ready");
-    fireEvent.click(document.querySelector("[data-object-id='agent:codex'] .aw-tile-open")!);
+    fireEvent.click(document.querySelector("[data-object-id='agent:codex'] .surface-rail-row")!);
     expect(screen.getByRole("button", { name: "Connect Codex" })).toBeTruthy();
   });
 
@@ -574,7 +588,7 @@ describe("PHILO-14 C4 the Conductor window", () => {
       if (!el) throw new Error("no Claude Code tile yet");
       return el as HTMLElement;
     });
-    fireEvent.click(tile.querySelector(".aw-tile-open")!);
+    fireEvent.click(tile.querySelector(".surface-rail-row")!);
     const info = within(pane()).getByTestId("agents-details");
     expect(within(info).getByText("Version").nextSibling?.textContent).toBe("2.1.0");
     expect(within(info).getByText("Hooks").nextSibling?.textContent).toBe("In");
@@ -801,7 +815,7 @@ describe("PHILO-17 the Conductor reads like Today", () => {
       if (!el) throw new Error("no ended row yet");
       return el as HTMLElement;
     });
-    fireEvent.click(row.querySelector(".aw-tile-open")!);
+    fireEvent.click(row.querySelector(".surface-rail-row")!);
     const reads = apiFetch.mock.calls.filter(([url]) => String(url).startsWith("/api/coders/sessions")).length;
     await act(async () => {
       fireEvent.click(await screen.findByTestId("conductor-remove"));

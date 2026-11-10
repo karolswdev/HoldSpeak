@@ -123,12 +123,30 @@ def _refusal_is_known(name: str, payload: Any) -> bool:
     if not isinstance(payload, dict):
         return False
     code, message = payload.get("code"), payload.get("error")
+    from holdspeak.operations import DESCRIPTORS
+
+    descriptor = next((row for row in DESCRIPTORS if row.tool_schema is not None and row.tool_name == name), None)
+    status = payload.get("status")
+    if (descriptor is not None and code in descriptor.refusals and isinstance(status, int)
+            and 400 <= status < 500 and status not in (401, 403)):
+        # A declared client refusal proves dispatch reached the service. An
+        # authentication/owner failure or a server failure cannot pass here.
+        return True
     # Helper authority is deliberately launch-only. The global owner sweep
     # must call these tools as an owner and record that named refusal; accepting
     # every 403 would hide a broken authority boundary.
     if name in HELPER_TOOLS and code == "launch_only" and payload.get("status") == 403:
         return True
     if isinstance(code, str) and KNOWN_CODE.search(code):
+        return True
+    # A declared domain refusal is part of the operation's contract. Do not
+    # keep another list of per-family codes here. Authority failures still
+    # fail this owner sweep; the launch-only helper exception is above.
+    from holdspeak.operations import DESCRIPTORS, _CONTRACT_REFUSALS
+
+    descriptor = next((row for row in DESCRIPTORS if row.tool_schema is not None and row.tool_name == name), None)
+    if (isinstance(code, str) and descriptor is not None and code in descriptor.refusals
+            and code not in (*_CONTRACT_REFUSALS, "owner_required", "principal_right_required")):
         return True
     if not isinstance(message, str):
         return False
@@ -145,6 +163,7 @@ class _Hub:
             os.environ, HOME=str(home), HF_HUB_OFFLINE="1",
             HOLDSPEAK_PEOPLE_KEYSTORE_FILE=str(home / "people.key"),
             HOLDSPEAK_CHANNEL_KEYSTORE_FILE=str(home / "channel-keys.json"),
+            HOLDSPEAK_LINE="off", HOLDSPEAK_CALLS="off",
         )
         env.pop("HOLDSPEAK_ALLOW_REAL_HOME", None)
         self.proc = subprocess.Popen(
@@ -210,8 +229,8 @@ def _tool_json(answer: Any) -> Any:
     return json.loads(answer["result"]["content"][0]["text"])
 
 
-def _sweep(hub: _Hub) -> tuple[int, dict[str, str]]:
-    """Call every tool once. Returns (tool count, {tool: why it cannot run})."""
+def _sweep(hub: _Hub) -> tuple[set[str], dict[str, str]]:
+    """Call every listed tool. Return its identity and any dispatch failures."""
     status, listed = hub.mcp("tools/list", {})
     assert status == 200, listed
     tools = listed["result"]["tools"]
@@ -237,7 +256,7 @@ def _sweep(hub: _Hub) -> tuple[int, dict[str, str]]:
         if not _refusal_is_known(name, payload):
             broken[name] = text[:300]
     assert hub.mcp("ping", {})[0] == 200  # the hub is still alive after the sweep
-    return len(tools), broken
+    return {tool["name"] for tool in tools}, broken
 
 
 @pytest.mark.timeout(900)
@@ -246,12 +265,25 @@ def test_every_mcp_tool_runs_on_the_real_hub(tmp_path: Path) -> None:
     home.mkdir()
     hub = _Hub(home)
     try:
-        count, broken = _sweep(hub)
+        names, broken = _sweep(hub)
     finally:
         hub.kill()
-    assert count > 200, count  # the real catalogue, not a stub
+    from holdspeak.mcp.tools import TOOLS
+    assert names == {tool["name"] for tool in TOOLS}
     report = "\n".join(f"  {name}: {why}" for name, why in sorted(broken.items()))
     assert not broken, f"{len(broken)} MCP tool(s) cannot run on the hub:\n{report}"
+
+
+def test_declared_refusals_are_known_but_auth_failures_and_unknown_codes_are_not() -> None:
+    from holdspeak.operations import DESCRIPTORS
+
+    for row in DESCRIPTORS:
+        if row.tool_schema is None:
+            continue
+        assert not _refusal_is_known(row.tool_name, {"code": "unexpected_provider_crash", "error": "boom"})
+        if row.owner_only:
+            assert not _refusal_is_known(row.tool_name, {"code": "owner_required", "error": "owner required"})
+    assert _refusal_is_known("calls.line.telnyx.connect", {"code": "off", "error": "line_off"})
 
 
 @pytest.mark.timeout(900)

@@ -251,7 +251,15 @@ def test_a_failure_after_the_insert_leaves_no_row_no_state_no_receipt_and_a_repl
     [mark] = _marks(hub)
     assert mark["state"] == "claimed" and mark["outcome"] is None, mark  # no terminal state, no receipt
     monkeypatch.setattr(UpdateDeliveriesRepository, "insert_delivery_in_transaction", real)
-    time.sleep(1.1)  # the replay writes later than he confirmed
+    from datetime import datetime, timedelta, timezone
+    from holdspeak.db import updates
+
+    class LaterDateTime(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return (datetime.now(timezone.utc) + timedelta(hours=1)).astimezone(tz)
+
+    monkeypatch.setattr(updates, "datetime", LaterDateTime)
     replayed = _mark_http(hub, update, body)
     assert replayed.status_code == 200, replayed.text
     again = _mark_http(hub, update, body)

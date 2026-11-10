@@ -323,7 +323,7 @@ describe("C1 readiness acknowledgement", () => {
     render(<HistoryCore />);
     const rowBody = await waitFor(() => {
       const found = document.querySelector(
-        '[data-testid="meeting-row-m-1"] .mt-rail-row',
+        '[data-testid="meeting-row-m-1"] .surface-rail-row',
       );
       expect(found, "the real Meetings ledger draws the row").toBeTruthy();
       return found as Element;

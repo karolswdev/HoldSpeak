@@ -30,8 +30,9 @@ import { FiledNotesReference, type FiledNotesPreset } from "./FiledNotesReferenc
 import { WindowReference, type WindowPreset } from "./WindowReference";
 import { ConversationReference, CONVERSATION_STATES, type ConversationPreset } from "./ConversationReference";
 import "./design-reference.css";
+import { RailReference } from "./RailReference";
 
-type Pattern = "window" | "forms" | "editing" | "reading" | "lists" | "resources" | "conversation" | "progress" | "controls";
+type Pattern = "rail" | "window" | "forms" | "editing" | "reading" | "lists" | "resources" | "conversation" | "progress" | "controls";
 type ExampleState = "ordinary" | "busy" | "failed" | "empty" | "long" | "resumed" | OwnerPreferencesState | EditingPreset | FiledNotesPreset | WindowPreset | ConversationPreset;
 
 /*
@@ -43,6 +44,7 @@ type ExampleState = "ordinary" | "busy" | "failed" | "empty" | "long" | "resumed
  */
 
 const PATTERNS: Array<{ id: Pattern; label: string }> = [
+  { id: "rail", label: "Rail" },
   { id: "window", label: "Window" },
   { id: "forms", label: "Forms" },
   { id: "editing", label: "Editing" },
@@ -178,6 +180,7 @@ const WINDOW_STATES: Array<{ id: WindowPreset; label: string }> = [
 ];
 
 const STATE_OPTIONS: Record<Pattern, Array<{ id: ExampleState; label: string }>> = {
+  rail: [STATES[0]],
   window: WINDOW_STATES,
   forms: FORM_STATES,
   editing: EDITING_STATES,
@@ -308,6 +311,7 @@ function ProgressPattern({ state }: { state: ExampleState }) {
 
 function PatternPanel({ pattern, state }: { pattern: Pattern; state: ExampleState }) {
   switch (pattern) {
+    case "rail": return <RailReference />;
     case "window": return <WindowReference key={state} preset={WINDOW_STATES.some((item) => item.id === state) ? state as WindowPreset : "populated"} />;
     case "forms": return <OwnerPreferencesReference state={FORM_STATES.some((item) => item.id === state) ? state as OwnerPreferencesState : "saved"} />;
     case "editing": return <EditingReference key={state} preset={EDITING_STATES.some((item) => item.id === state) ? state as EditingPreset : "ordinary"} />;
@@ -324,6 +328,7 @@ function PatternPanel({ pattern, state }: { pattern: Pattern; state: ExampleStat
 /** The group glyphs on the rail: the toolbar glyphs of the kit, one per
  *  group, so the rail reads as objects and not as a word list. */
 const PATTERN_GLYPH: Record<Pattern, ToolGlyphKind> = {
+  rail: "tasks",
   window: "open",
   forms: "edit",
   editing: "note",

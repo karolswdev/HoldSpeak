@@ -295,7 +295,7 @@ export function DecisionsCore({ scope, scopeLabel }: CoreProps) {
   const pickedRow = pickedKey ? byKey.get(pickedKey) ?? null : null;
   const proposed = rows.filter((row) => standing(row) === "proposed");
   const moreVerb = !loading && rows.length > 0 && rows.length < total ? (
-    <Button variant="secondary" dense loading={more} onClick={showMore} className="decisions-rail-more" data-testid="decisions-more">
+    <Button variant="secondary" dense loading={more} onClick={showMore} data-testid="decisions-more">
       Show more
     </Button>
   ) : null;
@@ -322,7 +322,7 @@ export function DecisionsCore({ scope, scopeLabel }: CoreProps) {
   return (
     <div className="decisions-frame" data-testid="decisions-window" data-picked={away ? "" : undefined}>
       {error ? <SurfaceState error={error} /> : null}
-      <div className="decisions-body">
+      <div className="decisions-body surface-rail-layout">
         <DecisionsRail rows={railRows} picked={pickedKey} query={query} onQuery={setQuery} current={current} onCurrent={setCurrent}
           onPick={(key) => { const row = byKey.get(key); if (row) pickRow(row); }} onNew={startNew} composing={composing} more={moreVerb}
           head={onlyRecords.length ? <Button dense variant="secondary" onClick={back} data-testid="decisions-all">All decisions</Button> : null} />

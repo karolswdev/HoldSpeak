@@ -17,6 +17,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "../../components/signal/Signal";
 import { FootSlotContext, StatusBar, SurfaceState, ToolGlyph, countWords, objectSprite, type StatusBarItem } from "../surface";
 import { DeskWindowFrame } from "../components/DeskWindow";
+import { BackSlotContext, type WindowBack } from "../surface/back";
 import { useAgentFlights } from "../agentFlights";
 import { needsHooks } from "../firstrun/agentsStep";
 import { AGENT_CHANGE_KINDS, useOnCoderFrame, useOnDeskChanged } from "../useDeskChangedRefresh";
@@ -115,6 +116,8 @@ export function ConductorWindow() {
   const [pickedId, setPickedId] = useState<string | null>(null);
   // Start an agent unfolds in the pane (Betterment AG8).
   const [starting, setStarting] = useState(false);
+  const [paneOpen, setPaneOpen] = useState(false);
+  const [windowBack, setWindowBack] = useState<WindowBack | null>(null);
   const [foot, setFoot] = useState<HTMLElement | null>(null);
 
   const flightsKnown = reads.flightsState === "ok";
@@ -188,6 +191,7 @@ export function ConductorWindow() {
   const railRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!focus || !everyone.some((m) => m.id === focus)) return;
+    setPaneOpen(true);
     setPickedId(focus);
     setStarting(false);
     useConductor.getState().clearFocus();
@@ -198,6 +202,7 @@ export function ConductorWindow() {
   const picked = defaultAgent(sections, pickedId);
   const member = everyone.find((m) => m.id === picked) ?? null;
   const pick = (id: string) => {
+    setPaneOpen(true);
     setPickedId(id);
     setStarting(false);
   };
@@ -284,14 +289,19 @@ export function ConductorWindow() {
       unmountOnMinimize
       // PHILO-16 (A1) §4.3: an agent that asks (or holds a call) lights the bar.
       lamp={head.ask > 0 ? "ask" : undefined}
+      onBack={windowBack?.onBack}
+      backTestId={windowBack?.testId}
+      backLabel={windowBack?.label}
       onClose={() => useConductor.getState().closeWindow()}
     >
+      <BackSlotContext.Provider value={setWindowBack}>
       <FootSlotContext.Provider value={foot}>
         <div ref={railRef} className="desk-pullout-body surface-host-body aw" data-surface-host="conductor"
           data-testid="conductor-window" data-interior="list">
-          <div className="aw-frame">
-            <AgentRail sections={sections} picked={starting ? null : picked} starting={starting} pillOf={memberPill}
-              onPick={pick} onStart={() => setStarting((open) => !open)} />
+          <div className="aw-frame surface-rail-layout">
+            <AgentRail sections={sections} picked={starting ? null : picked} starting={starting} paneOpen={paneOpen} pillOf={memberPill}
+              onBack={() => { setPaneOpen(false); setStarting(false); }}
+              onPick={pick} onStart={() => { setPaneOpen(true); setStarting((open) => !open); }} />
             <div className="aw-pane" data-testid="agents-pane" data-member={member?.id}>{pane}</div>
           </div>
         </div>
@@ -323,6 +333,7 @@ export function ConductorWindow() {
           </>}
         />
       </FootSlotContext.Provider>
+      </BackSlotContext.Provider>
     </DeskWindowFrame>
   );
 }
