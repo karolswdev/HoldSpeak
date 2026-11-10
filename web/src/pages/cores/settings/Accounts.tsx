@@ -4,7 +4,7 @@ import { PreferencePane, ListPane, SegmentedTabs, PaneInspector, PaneActions, Li
 import { useEffect, useState } from "react";
 import type { SecretState } from "../core-types";
 import { apiFetch, readableError } from "../../../lib/api";
-import { FoldGadget, GadgetGroup, SecretRow } from "../../../desk/surface/gadgets";
+import { GadgetGroup } from "../../../desk/surface/gadgets";
 import { ConnectionsPane, type ConnectionsFoot } from "../connections";
 import { Destinations } from "../connections/Destinations";
 import { title, type SettingsBindings } from "./bindings";

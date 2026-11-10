@@ -253,6 +253,10 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                         section.get_by_role("button", name="Change passphrase", exact=True).click()
                         shot("calls-passphrase")
                     if pane == "this-mac":
+                        section.get_by_role("tab", name="Device", exact=True).click()
+                        section.get_by_role("button", name="Reset desk to defaults…", exact=True).click()
+                        shot("this-mac-reset")
+                        section.get_by_role("region", name="Reset the desk?", exact=True).get_by_role("button", name="Cancel", exact=True).click()
                         section.get_by_role("tablist", name="This Mac", exact=True).get_by_role("tab", name="Access", exact=True).click()
                         section.get_by_text("sweep-runner", exact=True).click()
                         section.get_by_role("button", name="Details…", exact=True).click()
@@ -270,6 +274,8 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                         shot("key-details")
                         key = section.get_by_role("region", name="Web pairing token", exact=True)
                         expect(key.get_by_role("textbox")).to_have_value("")
+                        key.get_by_role("textbox").fill("Review draft")
+                        shot("key-replace")
                         key.get_by_role("button", name="Cancel", exact=True).click()
                     assert rail.locator(".surface-spine").count() == 0
                     assert all(not node.inner_text() for node in rail.locator(".surface-rail-state").all())
@@ -288,3 +294,10 @@ def _bounded(window: Any) -> None:
         && body.scrollWidth <= body.clientWidth + 1;
     }"""), window.bounding_box()
 
+    assert window.evaluate("""el => [...el.querySelectorAll('.surface-list-pane-list')].every(seat => {
+      const row = seat.querySelector('[data-object-id][aria-selected="true"]');
+      const well = row?.closest('.object-list-rows');
+      if (!row || !well) return true;
+      const r = row.getBoundingClientRect(), w = well.getBoundingClientRect();
+      return !r.width || !r.height || (r.top >= w.top - 1 && r.bottom <= w.bottom + 1);
+    })"""), "The selected row must remain visible above its inspector"

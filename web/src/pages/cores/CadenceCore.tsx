@@ -10,7 +10,7 @@ import { useCallback, useEffect, useLayoutEffect, useState, type ReactNode } fro
 import type { CoreProps, CadenceLoopsResponse, CadenceHistoryResponse } from "./core-types";
 import { Button } from "../../components/signal/Signal";
 import { CheckGadget, CycleGadget, LampGadget, PadGadget } from "../../desk/surface/gadgets";
-import { GadgetGroup, GadgetRow, PaneActions, ListView, PaneInspector, type ListVerb, SurfaceSection, countLabel, countToken } from "../../desk/surface";
+import { GadgetGroup, GadgetRow, PaneActions, ListPane, ListView, PaneInspector, type ListVerb, SurfaceSection, countLabel, countToken } from "../../desk/surface";
 import { DotWord } from "../../desk/surface/kit";
 import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 import { egressForEvent } from "../../desk/surface/egress";
@@ -603,30 +603,7 @@ export function CadenceCore({ hero, embedded = false }: CoreProps & { embedded?:
         ) : null}
         {loops.length > 0 ? (
           <>
-            {editingLoop ? (
-              <PaneInspector label="Loop" onClose={() => editLoop(null)}>
-                {(() => {
-                  const loop = loops.find((entry, index) => rowId(entry, index) === editingLoop);
-                  if (!loop) return null;
-                  return (
-                    <>
-                      <strong>{String(loop.title ?? "Open loop")}</strong>
-                      {loop.source_type === "agent_question" ? (
-                        <>
-                          <PadGadget label={`Reply to ${String(loop.title)}`} value={replies[editingLoop] ?? ""} onChange={(next) => setReplies({ ...replies, [editingLoop]: next })} />
-                          <PaneActions>
-                            <Button dense disabled={!replies[editingLoop]?.trim()} onClick={() => void sendReply(editingLoop)}>
-                              Send reply
-                            </Button>
-                          </PaneActions>
-                        </>
-                      ) : null}
-                    </>
-                  );
-                })()}
-              </PaneInspector>
-            ) : (
-              <ListView
+            <ListPane label="Loop inspector" list={(              <ListView
                 label="Open loops"
                 rows={loops.map((loop, index) => ({
                   id: rowId(loop, index),
@@ -668,8 +645,30 @@ export function CadenceCore({ hero, embedded = false }: CoreProps & { embedded?:
                     run: (row) => void act(row!.id, "kill"),
                   },
                 ]}
-              />
-            )}
+              />)}>{editingLoop ? (
+              <PaneInspector label="Loop" onClose={loops.some((loop, index) => rowId(loop, index) === editingLoop && loop.source_type === "agent_question") ? undefined : () => editLoop(null)}>
+                {(() => {
+                  const loop = loops.find((entry, index) => rowId(entry, index) === editingLoop);
+                  if (!loop) return null;
+                  return (
+                    <>
+                      <GadgetRow label="Loop"><span>{String(loop.title ?? "Open loop")}</span></GadgetRow>
+                      {loop.source_type === "agent_question" ? (
+                        <>
+                          <GadgetRow label="Reply"><PadGadget label={`Reply to ${String(loop.title)}`} value={replies[editingLoop] ?? ""} onChange={(next) => setReplies({ ...replies, [editingLoop]: next })} /></GadgetRow>
+                          <PaneActions>
+                            <Button dense variant="ghost" onClick={() => editLoop(null)}>Cancel</Button>
+                            <Button dense variant="primary" disabled={!replies[editingLoop]?.trim()} onClick={() => void sendReply(editingLoop)}>
+                              Send reply
+                            </Button>
+                          </PaneActions>
+                        </>
+                      ) : null}
+                    </>
+                  );
+                })()}
+              </PaneInspector>
+) : null}</ListPane>
           </>
         ) : null}
       </div>

@@ -393,3 +393,16 @@
   .desk-next .surface-preference-window .surface-pane-inspector .gadget-row[data-control-width] { grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); }
   .desk-next .surface-preference-window .surface-pane-inspector .gadget-row-gadget > .gadget-string { width: 100%; }
 }
+
+.surface-preference-well .surface-list-pane { flex: none; min-height: 160px; }
+.surface-preference-well .surface-list-pane:has(> .surface-list-pane-preview) { height: 360px; }
+
+.surface-preference-value { display: block; min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.surface-pane-inspector-head { flex: none; }
+@container surface (max-width: 520px) {
+  /* An explicit standard value seat remains beside its label, including a compound field. */
+  .desk-next .surface-preference-window .gadget-row[data-control-width="standard"]:has(.gadget-string) { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+}
+/* Commands and paths keep their tokens intact in their own horizontal well. */
+.surface-preference-window .surface-command-code { white-space: pre; overflow-wrap: normal; overflow-x: auto; min-width: 0; max-width: 100%; }

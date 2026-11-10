@@ -7,7 +7,18 @@ export function ListPane({ list, children, label, listTestId, previewTestId }: {
   useEffect(() => {
     if (typeof ResizeObserver === "undefined" || !ref.current) return;
     const observer = new ResizeObserver(() => {
-      const row = ref.current?.querySelector<HTMLElement>('[data-object-id][aria-selected="true"]');
+      const seat = ref.current;
+      const grid = [...(seat?.querySelectorAll<HTMLElement>(".object-list") ?? [])].find((el) => el.getBoundingClientRect().height > 0);
+      if (seat && grid) {
+        const height = (selector: string) => grid.querySelector<HTMLElement>(selector)?.getBoundingClientRect().height ?? 0;
+        const rowHeight = height(".object-list-row") || 44;
+        const box = seat.getBoundingClientRect(), content = grid.getBoundingClientRect();
+        const chrome = Math.max(0, content.top - box.top) + Math.max(0, box.bottom - content.bottom);
+        const gridFloor = parseFloat(getComputedStyle(grid).minHeight) || 0;
+        const contentFloor = Math.max(gridFloor, height(".object-list-head") + rowHeight + height(".object-list-verbs") + 2);
+        seat.style.setProperty("--surface-list-min", `${Math.ceil(chrome + contentFloor)}px`);
+      }
+      const row = seat?.querySelector<HTMLElement>('[data-object-id][aria-selected="true"]');
       const well = row?.closest<HTMLElement>(".object-list-rows");
       if (!row || !well) return;
       const r = row.getBoundingClientRect(), w = well.getBoundingClientRect();

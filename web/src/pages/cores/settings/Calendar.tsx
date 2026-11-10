@@ -211,7 +211,7 @@ export function CalendarSection({ b, cal, commitMany, onRefuse, beforeChange, on
             <GadgetRow label="URL or file"><StringGadget
               label="Calendar URL or file path"
               value={calWellValue}
-              placeholder="Paste an ICS URL or a file path"
+              placeholder="ICS URL or file"
               onChange={(value) => { ++calWellGeneration.current; setCalWellValue(value); setCalWellError(""); }}
               mic
             /></GadgetRow>

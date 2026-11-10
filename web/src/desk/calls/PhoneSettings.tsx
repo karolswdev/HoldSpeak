@@ -32,17 +32,18 @@ export const REACH_KINDS: ReadonlyArray<{
   kind: string;
   label: string;
   note?: string;
+  short?: string;
 }> = [
   {
     kind: "core_question",
-    label: "A program asks you",
+    label: "A program asks you", short: "Program question",
     note: "a call follows after 10 min with no reply when it may call",
   },
-  { kind: "step_red", label: "A program step stays red" },
-  { kind: "program_done", label: "A program is done" },
-  { kind: "heartbeat_security", label: "A security or data-loss finding" },
-  { kind: "aftercare", label: "A meeting's follow-up asks" },
-  { kind: "agent_question", label: "An agent asks what only you know" },
+  { kind: "step_red", label: "A program step stays red", short: "Failed step" },
+  { kind: "program_done", label: "A program is done", short: "Program done" },
+  { kind: "heartbeat_security", label: "A security or data-loss finding", short: "Security" },
+  { kind: "aftercare", label: "A meeting's follow-up asks", short: "Follow-up" },
+  { kind: "agent_question", label: "An agent asks what only you know", short: "Agent question" },
 ];
 
 const CHANNELS: ReadonlyArray<{ value: ReachChannel; word: string }> = [
@@ -439,9 +440,8 @@ export function ReachYouRows({ reach, level: levelKey, onChanged }: { reach: Pho
           ))}
           {rows.map((row) => (
             <div key={row.kind} className="phone-reach-line" data-testid="phone-reach-row" data-kind={row.kind} data-channel={row.channel} data-own={row.own || undefined}>
-              <span className="phone-reach-kind">
-                {row.label}
-                {row.note ? <span>{row.note}</span> : null}
+              <span className="phone-reach-kind" title={[row.label, row.note].filter(Boolean).join(" · ")}>
+                {row.short ?? row.label}
               </span>
               <MxRadio
                 label={row.label}
@@ -604,7 +604,7 @@ export function PhoneSettingsPane() {
           <GadgetGroup material="inset" label="Reach you">
             <Row
               testId="phone-reach-moved"
-              name="When the desk reaches you"
+              name="Reach you"
               verb={
                 <Button dense variant="secondary" onClick={() => openSurfaceOr("configure-settings", "/settings", "reach")} data-testid="phone-reach-open">
                   Open Reach
@@ -625,13 +625,13 @@ export function PhoneSettingsPane() {
             />
             <Row
               testId="phone-urgent"
-              name="Urgent calls ring through Do Not Disturb"
-              fact={status?.urgent_dnd ? "A security or data-loss call rings through" : "Until Apple allows it, an urgent call rings once more after 1 min"}
+              name="Urgent calls"
+              fact={status?.urgent_dnd ? "Bypass Do Not Disturb" : "Repeat after 1 min"}
               verb={<CheckGadget label={status?.urgent_dnd ? "On" : "Off"} checked={Boolean(status?.urgent_dnd)} disabled onChange={() => undefined} />}
             />
           </GadgetGroup>
           <GadgetGroup material="inset" label="The number">
-            <Row testId="phone-number" name="Your number" fact={<DotWord tone={status?.line?.ready ? "ok" : "idle"}>{status?.line?.words || "Not set in Settings ▸ Calls"}</DotWord>} verb={null} />
+            <Row testId="phone-number" name="Your number" verb={<span className="surface-preference-value" title={status?.line?.words}>{status?.line?.ready ? status.line.words : "Set in Calls"}</span>} />
           </GadgetGroup>
         </div>
       </PreferenceWell>

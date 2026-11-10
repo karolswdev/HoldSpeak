@@ -1,6 +1,5 @@
 // Settings > Reach: the channels, quiet hours, Cadence and the morning brief. Moved out of SettingsCore.tsx.
 import { FoldGadget, GadgetGroup } from "../../../desk/surface/gadgets";
-import { PreferencePane, SegmentedTabs, PaneInspector, SurfaceColumns } from "../../../desk/surface";
 import { useState } from "react";
 import { CycleGadget, GadgetRow, StepperGadget } from "../../../desk/surface";
 import { SurfaceState } from "../../../desk/surface/Surface";

@@ -1,4 +1,4 @@
-import { PreferenceWell, ListView, GadgetRow, CycleGadget, PaneActions } from "../surface";
+import { PreferenceWell, ListView, GadgetRow, PaneActions } from "../surface";
 /* Settings ▸ Calls ▸ Line (LINE-DESIGN-2026-10-29 §10; canvas
  * docs/internal/betterment/line/canvases/line-2026-10-29.html, direction A;
  * CANVAS-NOTES-2026-10-29.md is the kit-piece list): the Accounts grammar of
@@ -510,7 +510,7 @@ export function LineSettingsPane({
                       label="Add a machine"
                       value={machine}
                       onChange={setMachine}
-                      placeholder="Add a machine: its name on your tailnet"
+                      placeholder="Machine name"
                       onKeyDown={(event) => {
                         if (event.key === "Enter") void install(typed);
                       }}
@@ -619,12 +619,8 @@ export function LineSettingsPane({
           <GadgetGroup label="Test call">
             <Row
               testId="line-test"
-              name={
-                <>
-                  <img className="line-sprite" src={spriteUrl("call", "calls", "rest", null, 20)} alt="" width={20} height={20} />
-                  {noNumber ? "No number" : `Calls ${firstNumber}`}
-                </>
-              }
+              name="Test call"
+              fact={<span className="surface-preference-value" title={firstNumber}>{noNumber ? "No number" : `Calls ${firstNumber}`}</span>}
               state={
                 testWord ? (
                   <span className={ringing ? "line-live" : undefined}>
@@ -651,19 +647,10 @@ export function LineSettingsPane({
           </GadgetGroup>
 
           <GadgetGroup material="inset" label="From Calls">
-            <div className="calls-may" data-testid="line-from-calls">
-              <div className="calls-may-row">
-                <span>Daily limit</span>
-                <span className="calls-fact">{settings.daily_limit ? `${settings.daily_limit} placed calls a day` : "No limit"}</span>
-              </div>
-              <div className="calls-may-row">
-                <span>First words out</span>
-                <span className="calls-fact">This is HoldSpeak, an AI assistant</span>
-              </div>
-              <div className="calls-may-row">
-                <span>Never dialled</span>
-                <span className="calls-fact">{NEVER_DIALLED}</span>
-              </div>
+            <div data-testid="line-from-calls">
+              <GadgetRow label="Daily limit"><span className="surface-preference-value">{settings.daily_limit ? `${settings.daily_limit} placed calls a day` : "No limit"}</span></GadgetRow>
+              <GadgetRow label="First words"><span className="surface-preference-value" title="This is HoldSpeak, an AI assistant">This is HoldSpeak, an AI assistant</span></GadgetRow>
+              <GadgetRow label="Never dialled"><span className="surface-preference-value" title={NEVER_DIALLED}>{NEVER_DIALLED}</span></GadgetRow>
             </div>
           </GadgetGroup>
         </div>

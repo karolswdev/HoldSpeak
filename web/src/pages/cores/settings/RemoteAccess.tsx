@@ -560,7 +560,7 @@ export function RemoteAccessModule({
             <Button variant="ghost" onClick={() => setIssueOpen(false)} data-testid="issue-cancel">
               Cancel
             </Button>
-            <Button disabled={issuing || !issueName.trim()} onClick={() => void issueCredential()} data-testid="issue-submit">
+            <Button variant="primary" disabled={issuing || !issueName.trim()} onClick={() => void issueCredential()} data-testid="issue-submit">
               Issue
             </Button>
           </PaneActions>

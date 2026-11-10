@@ -20,7 +20,7 @@ import { readableError } from "../../lib/api";
 import { CommandWell } from "../../pages/cores/connections/ConnectionsPane";
 import { CheckGadget, GadgetGroup, StringGadget } from "../surface/gadgets";
 import { ABSENT_STATUS, OPEN_STEPS, lineInUse, readCallsSettings, readCallsStatus, writeCallsSetting } from "./api";
-import type { CallStepId, CallsSettings, CallsStatus } from "./types";
+import type { CallStep, CallStepId, CallsSettings, CallsStatus } from "./types";
 import { LineSettingsPane } from "./LineSettings";
 import { PhoneSettingsPane } from "./PhoneSettings";
 import { PreferencePane, PreferenceWell, SegmentedTabs, ListView, PaneActions, GadgetRow, CycleGadget } from "../surface";
@@ -47,7 +47,7 @@ function PassphraseField({ busy, onSave, onCancel }: { busy: boolean; onSave(val
         mic={false}
         value={draft}
         onChange={setDraft}
-        placeholder="Words you say first on a call"
+        placeholder="New passphrase"
         onKeyDown={(event) => {
           if (event.key === "Enter") save();
         }}

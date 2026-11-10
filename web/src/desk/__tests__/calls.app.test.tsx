@@ -865,7 +865,7 @@ describe("Settings ▸ Calls ▸ Phone", () => {
     expect(screen.getByTestId("phone-quiet").textContent).toContain("22:00 to 08:00");
     fireEvent.click(screen.getByTestId("phone-quiet-rhythm"));
     expect(mocks.openSurfaceOr).toHaveBeenCalledWith("configure-settings", "/settings", "rhythm");
-    expect(screen.getByTestId("phone-number").textContent).toContain(P.status.line.words);
+    expect(within(screen.getByTestId("phone-number")).getByTitle(P.status.line.words)).toBeInTheDocument();
     expect(screen.getAllByTestId("phone-egress")).toHaveLength(1);
     fireEvent.click(row);
     fireEvent.click(screen.getByRole("button", { name: "Remove phone" }));
@@ -1198,7 +1198,8 @@ describe("Settings ▸ Calls ▸ Line", () => {
     openCallsTab("Line");
     await waitFor(() => expect(screen.getByTestId("line-place-state").textContent).toBe("Ready"));
     expect(screen.queryByTestId("line-install")).toBeNull();
-    expect(screen.getByTestId("line-address").textContent).toContain(lineReady.address);
+    expect(screen.getByRole("textbox", {name:"Line address"})).toHaveValue(lineReady.address);
+    expect(screen.getByRole("textbox", {name:"Line address"})).toHaveAttribute("readonly");
     fireEvent.click(screen.getByTestId("line-address-copy"));
     await waitFor(() => expect(writeText).toHaveBeenCalledWith(lineReady.address));
     expect(screen.getByTestId("line-address-copy").textContent).toBe("Copied");

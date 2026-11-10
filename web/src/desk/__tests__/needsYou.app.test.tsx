@@ -354,7 +354,7 @@ describe("Needs you: Confirm and Defer on a meeting in no Project", () => {
 
 // ── PHILO-17: Reconnect lands on Settings, GitHub focused ─────────────────
 describe("Needs you: Reconnect opens Settings on the GitHub row", () => {
-  it("the real opener opens the Settings window scoped to GitHub, with GitHub selected and its sign-in action ready", async () => {
+  it("the real opener opens Accounts and offers GitHub in Add account when the hub has no account", async () => {
     // replaces: tests/e2e/test_philo17_needs_you_grouped_glass.py::test_one_row_per_cause_and_repair_on_the_real_hub (the Reconnect leg)
     // The hub's answers on the browser test's seed (30 signed-out GitHub sources),
     // and the Settings window's own reads, recorded (`grouped`). Nothing mocks the
@@ -369,9 +369,10 @@ describe("Needs you: Reconnect opens Settings on the GitHub row", () => {
     const reconnect = await screen.findByRole("button", { name: /^Reconnect: GitHub · 30 sources$/ }, { timeout: 3000 });
     fireEvent.click(reconnect);
     await waitFor(() => expect(useDesk.getState().windowsById["surface-settings"]?.scope).toBe("integration:github"));
-    const row = await screen.findByRole("row", { name: /GitHub/ });
-    expect(row).toHaveAttribute("aria-selected", "true");
-    expect(screen.getByRole("button", { name: "Sign in…" })).toBeEnabled();
+    const add = await screen.findByRole("button", {name:"Add account"});
+    expect(screen.queryByRole("row", {name:/GitHub/})).toBeNull();
+    fireEvent.click(add);
+    expect(screen.getByRole("menuitem", {name:"GitHub"})).toBeEnabled();
   });
 });
 
@@ -393,7 +394,8 @@ describe("Needs you: the calendar offer and the quiet calendar", () => {
     expect(head()).toBe("Nothing needs you");
     fireEvent.click(within(offer).getByRole("button", { name: "Connect calendar" }));
     await waitFor(() => expect(useDesk.getState().windowsById["surface-settings"]?.scope).toBe("integration:calendar"));
-    expect(await screen.findByRole("button", { name: "Add calendar" })).toBeVisible();
+    const addCalendar = await screen.findByRole("button", {name:"Add calendar"});
+    await waitFor(() => expect(addCalendar).toBeVisible());
     expect(screen.getByRole("tab", { name: "Calendars" })).toHaveAttribute("aria-selected", "true");
   });
 
