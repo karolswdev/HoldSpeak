@@ -652,10 +652,7 @@ class TestOneDecisionRecord:
                 room_reader = room_decisions.get_by_test_id("decision-reader").filter(has_text=P9_DECISION_TEXT)
                 room_reader.wait_for(timeout=T)
                 room_decisions.get_by_role("button", name=re.compile(r"^Send")).first.wait_for(timeout=T)
-                if phone:
-                    room_decisions.get_by_test_id("decision-reader-back").wait_for(timeout=T)
-                else:
-                    room_decisions.get_by_test_id("decisions-rail").wait_for(timeout=T)
+                room_decisions.get_by_test_id("decision-reader-back").wait_for(timeout=T)
                 assert re.match(r"^Decided ", room_decisions.get_by_test_id("decision-reader-state").inner_text()), \
                     room_decisions.get_by_test_id("decision-reader-state").inner_text()
                 assert page.locator(".desk-window-shell:not([id='surface-decisions'])[aria-label=" + json.dumps(P9_DECISION_TEXT) + "]").count() == 0
@@ -676,11 +673,11 @@ class TestOneDecisionRecord:
                 decisions_window.wait_for(timeout=T)
                 row = decisions_window.get_by_test_id("decisions-row").filter(has_text=P9_DECISION_TEXT)
                 row.wait_for(timeout=T)
-                # The native app: the rail row is one press target; it picks.
-                opener = row.get_by_role("button")
+                # The selection row owns the hit; double-click opens the reader.
+                opener = row
                 geometry = self._hit_and_focus(opener)
                 assert geometry["in_view"] and geometry["owns_hit"] and geometry["focused"], json.dumps(geometry, sort_keys=True)
-                opener.click()
+                opener.dblclick()
                 desk_detail = decisions_window.get_by_test_id("decision-reader").filter(has_text=P9_DECISION_TEXT)
                 desk_detail.wait_for(timeout=T)
                 assert P9_DECISION_TEXT in desk_detail.inner_text()

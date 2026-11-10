@@ -55,7 +55,7 @@ describe("HS-129-07 speakable desk", () => {
       <>
         <NoteEditor object={note} onClose={vi.fn()} />
         <KbEditor object={kb} onClose={vi.fn()} />
-        <DecisionsRail rows={[]} picked={null} query="" onQuery={vi.fn()} current={false} onCurrent={vi.fn()} onPick={vi.fn()} onNew={vi.fn()} composing={false} />
+        <DecisionsRail rows={[]} picked={null} query="" onQuery={vi.fn()} current={false} onCurrent={vi.fn()} onPick={vi.fn()} verbs={[]} />
         <DeskComposer value="" onChange={vi.fn()} actionLabel="Send" onAction={vi.fn()} />
         <DeskComposer multiline value="" onChange={vi.fn()} actionLabel="Send" onAction={vi.fn()} />
       </>,
@@ -96,7 +96,7 @@ describe("HS-129-07 speakable desk", () => {
     const onPadChange = vi.fn();
     const Rail = () => {
       const [query, setQuery] = useState("");
-      return <DecisionsRail rows={[]} picked={null} query={query} onQuery={setQuery} current={false} onCurrent={vi.fn()} onPick={vi.fn()} onNew={vi.fn()} composing={false} />;
+      return <DecisionsRail rows={[]} picked={null} query={query} onQuery={setQuery} current={false} onCurrent={vi.fn()} onPick={vi.fn()} verbs={[]} />;
     };
     render(
       <>
@@ -106,8 +106,8 @@ describe("HS-129-07 speakable desk", () => {
       </>,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Speak Search decisions" }));
-    expect(screen.getByRole("searchbox", { name: "Search decisions" })).toHaveValue("spoken");
+    fireEvent.click(screen.getByRole("button", { name: "Speak Find a decision" }));
+    expect(screen.getByRole("searchbox", { name: "Find a decision" })).toHaveValue("spoken");
     // The Decisions rail's search carries its mic in the well (no second Speak).
     fireEvent.click(screen.getAllByRole("button", { name: "Speak" })[0]);
     fireEvent.click(screen.getAllByRole("button", { name: "Speak" })[1]);

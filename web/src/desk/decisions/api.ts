@@ -49,6 +49,7 @@ export type DecisionRecord = {
   created_at?: string | null;
   committed_to?: string | null;
   dispute_reason?: string | null;
+  project_id?: string | null;
 };
 
 const enc = encodeURIComponent;

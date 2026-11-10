@@ -49,10 +49,16 @@ The previous spatial Floor and its list projection remain parked.
 
 An ID resolves as a bare ID or as a qualified `kind:id` reference.
 
-A decision has one face: its record in the reader of the Decisions window.
-Every decision reference (`decision:<id>`, `desk_decision:<id>`) opens it there.
-The reader has **Accept** (for a proposed decision), **Edit**, **Send…**,
-**Run as a program**, **Retire**, **Copy** and **Dictate about this**.
+Decisions opens as a selection list. Click a row to show its facts below the list.
+Double-click the row or press Return to open its reader. **Find a decision** searches the list.
+
+**New decision** opens the form below the list. **Record** saves it. **Cancel** discards the draft.
+A failed save keeps the title and reason. Cancel also removes the retry for that draft.
+
+Every decision reference (`decision:<id>`, `desk_decision:<id>`) opens the record reader.
+The reader keeps **Decide**, **Commit**, **Resolve**, **Edit**, **Send…**, **Run as a program**,
+**Retire**, **Copy** and **Dictate about this**, as the decision's state permits.
+**All decisions** returns to the list on a wide desk. The title-bar **Back** does this on a phone.
 
 ## Floor placement
 

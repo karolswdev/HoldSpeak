@@ -110,11 +110,12 @@ describe("Decisions: the rail", () => {
     expect(apiFetch).toHaveBeenCalledWith("/api/decisions/ledger?limit=100&offset=0");
     const rows = container.querySelectorAll("[data-testid=decisions-row]");
     expect(rows).toHaveLength(1);
-    expect(rows[0].textContent).toContain("Ledger cutover sync");
+    fireEvent.click(rows[0]);
+    expect(screen.getByTestId("decisions-preview").textContent).toContain("Ledger cutover sync");
     expect(rows[0].getAttribute("data-kind")).toBe("decision");
     // The spine's meaning colour: a recorded meeting decision is decided (steel).
-    expect(rows[0].getAttribute("data-state")).toBe("steel");
-    expect(rows[0].querySelector(".surface-spine-part")?.getAttribute("data-tone")).toBe("steel");
+    expect(rows[0].querySelector("[data-col=state]")).toHaveTextContent(/^$/);
+    expect(rows[0].querySelector(".surface-spine-part")).toBeNull();
     expect(rows[0].textContent).not.toMatch(/dec-[0-9a-f]{6,}|record-[0-9a-f]{6,}/);
   });
 
@@ -127,49 +128,44 @@ describe("Decisions: the rail", () => {
     expect(DESK_APPLICATIONS.some((a) => a.action === "new-decision")).toBe(false);
   });
 
-  it("each state has its colour: proposed brass, decided steel, superseded graphite", async () => {
+  it("only proposals, disputes and superseded decisions name a state in the list", async () => {
     render(<DecisionsCore />);
     await screen.findByText("Keep the old ledger");
-    const tone = (words: string) => screen.getAllByTestId("decisions-row").find((row) => row.textContent?.includes(words))?.getAttribute("data-state");
-    expect(tone("Use OTel for tracing")).toBe("brass");
-    expect(tone("Freeze the old ledger")).toBe("steel");
-    expect(tone("Keep the old ledger")).toBe("graphite");
+    const state = (words: string) => screen.getAllByTestId("decisions-row").find((row) => row.textContent?.includes(words))?.querySelector("[data-col=state]");
+    expect(state("Use OTel for tracing")).toHaveTextContent("Proposed");
+    expect(screen.getAllByTestId("decisions-row").find((row) => row.textContent?.includes("Use OTel"))?.querySelector("[data-col=when]")).toHaveTextContent(/^$/);
+    expect(state("Freeze the old ledger")).toHaveTextContent(/^$/);
+    expect(state("Keep the old ledger")).toHaveTextContent("Superseded");
   });
 
-  it("on open the first record is picked (the one that waits on him, else the newest); the plate leads with its own verb", async () => {
-    render(<DecisionsCore />);
-    // No proposal has a record here: the newest record is picked, beside the rail.
+  it("click selects a plain preview; Return opens the reader", async () => {
+    const { container } = render(<DecisionsCore />);
+    const row = (await screen.findAllByTestId("decisions-row")).find((r) => r.textContent?.includes(detail.decision_text))!;
+    expect(screen.queryByTestId("decision-reader")).toBeNull();
+    expect(screen.getByTestId("decisions-preview")).toHaveTextContent("Select a decision.");
+    fireEvent.click(row);
+    expect(row).toHaveAttribute("aria-selected", "true");
+    expect(await screen.findByTestId("decision-summary")).toHaveTextContent(detail.rationale);
+    expect(screen.queryByTestId("decision-reader")).toBeNull();
+    expect(container.querySelector("[role=row] button")).toBeNull();
+    expect(container.querySelector(".decisions-plate, .surface-spine")).toBeNull();
+    expect(screen.getByTestId("decisions-preview").querySelector("button")).toBeNull();
+    expect(rail().getAllByRole("columnheader").map((cell) => cell.textContent)).toEqual(["Decision", "Project", "Decided", "State"]);
+    fireEvent.keyDown(row, { key: "Enter" });
     expect((await screen.findByTestId("decision-reader-title")).textContent).toBe(detail.decision_text);
-    const row = screen.getAllByTestId("decisions-row").find((r) => r.textContent?.includes(detail.decision_text))!;
-    expect(within(row).getByRole("option").getAttribute("aria-current")).toBe("true");
-    expect(screen.getByTestId("decision-spine")).toBeTruthy();
-    expect(screen.getByTestId("decision-reader-commit").textContent).toBe("Commit");
-    expect(screen.queryByRole("button", { name: /^Open$/ })).toBeNull();
-    // A proposal with a record comes first.
-    ledger.push({ ...ledger[3], id: "d-prop", text: "Adopt OpenTelemetry", record_id: "rec-prop" });
-    try {
-      apiFetch.mockImplementation((path: string) => path === "/api/decision-records/rec-prop"
-        ? Promise.resolve({ ...detail, id: "rec-prop", title: "Adopt OpenTelemetry", decision_text: "Adopt OpenTelemetry", status: "proposed", source_type: "desk", source_id: "d-prop" })
-        : hub(path));
-      cleanup();
-      render(<DecisionsCore />);
-      expect((await screen.findByTestId("decision-reader-accept")).textContent).toBe("Decide");
-      expect(screen.getByTestId("decision-reader-title").textContent).toBe("Adopt OpenTelemetry");
-    } finally {
-      ledger.pop();
-    }
+    expect(useDesk.getState().windowsById["surface-decisions"]?.scope).toBe(`record:${detail.id}`);
   });
 
-  it("an empty desk: the plate is New decision itself", async () => {
+  it("a named new decision records from the inspector", async () => {
     apiFetch.mockImplementation(async () => ({ decisions: [], page: { total: 0 } }));
     const createPrimitive = vi.fn(async () => undefined);
     const before = useDesk.getState().createPrimitive;
     useDesk.setState({ createPrimitive } as never);
     try {
-      render(<DecisionsCore />);
+      render(<DecisionsCore scope="new" />);
       const plate = await screen.findByRole("group", { name: "New decision" });
       fireEvent.change(within(plate).getByRole("textbox", { name: "Decision title" }), { target: { value: "Use one ledger" } });
-      fireEvent.click(within(plate).getByRole("button", { name: /Create/ }));
+      fireEvent.click(within(plate).getByRole("button", { name: /Record/ }));
       expect(createPrimitive).toHaveBeenCalledWith("decision", { title: "Use one ledger" });
     } finally {
       useDesk.setState({ createPrimitive: before } as never);
@@ -182,7 +178,7 @@ describe("Decisions: the rail", () => {
     fireEvent.click(screen.getByRole("checkbox", { name: "Current only" }));
     await waitFor(() => expect(rail().queryByText("Keep the old ledger")).toBeNull());
     expect(apiFetch).toHaveBeenCalledWith("/api/decisions/ledger?current=true&limit=100&offset=0");
-    fireEvent.change(screen.getByRole("searchbox", { name: "Search decisions" }), { target: { value: "cutover freeze" } });
+    fireEvent.change(screen.getByRole("searchbox", { name: "Find a decision" }), { target: { value: "cutover freeze" } });
     await waitFor(() => expect(rail().queryByText(detail.decision_text)).toBeNull());
     expect(rail().getByText("Freeze the old ledger on Nov 5")).toBeInTheDocument();
     expect(apiFetch).toHaveBeenCalledWith("/api/decisions/ledger?q=cutover+freeze&current=true&limit=100&offset=0");
@@ -221,7 +217,7 @@ describe("Decisions: the rail", () => {
     vi.useFakeTimers();
     const step = (ms: number) => act(async () => { await vi.advanceTimersByTimeAsync(ms); });
     render(<DecisionsCore />);
-    const field = screen.getByRole("searchbox", { name: "Search decisions" });
+    const field = screen.getByRole("searchbox", { name: "Find a decision" });
     fireEvent.change(field, { target: { value: "alpha" } });
     await step(200);
     expect(rail().getByText("Alpha decision")).toBeTruthy();
@@ -239,14 +235,13 @@ describe("Decisions: the rail", () => {
 });
 
 describe("Decisions: a pick is one object (mast, spine, plate, ledger)", () => {
-  it("a row with a record opens it beside the rail: the mast, the evidence, the history by time", async () => {
+  it("a row opens the existing reader with its evidence and history", async () => {
     render(<DecisionsCore />);
     const row = (await screen.findAllByTestId("decisions-row")).find((r) => r.textContent?.includes(detail.decision_text))!;
-    fireEvent.click(within(row).getByRole("option"));
+    fireEvent.doubleClick(row);
     const reader = await screen.findByTestId("decision-reader");
     expect((await within(reader).findByTestId("decision-reader-title")).textContent).toBe(detail.decision_text);
     expect(within(reader).getByTestId("decision-mast").textContent).toContain("from Ledger cutover sync");
-    expect(within(row).getByRole("option").getAttribute("aria-current")).toBe("true");
     expect(reader.textContent).toContain(detail.rationale);
     expect(reader.textContent).toContain("Leave the placeholder in place");
     const evidence = within(reader).getByTestId("decision-evidence");
@@ -264,7 +259,7 @@ describe("Decisions: a pick is one object (mast, spine, plate, ledger)", () => {
   it("a meeting's decision with no record opens itself; Open meeting goes through the opener", async () => {
     render(<DecisionsCore />);
     const row = (await screen.findAllByTestId("decisions-row")).find((r) => r.textContent?.includes("Freeze the old ledger"))!;
-    fireEvent.click(within(row).getByRole("option"));
+    fireEvent.doubleClick(row);
     const reader = await screen.findByTestId("decision-reader");
     expect(reader.getAttribute("data-from")).toBe("meeting");
     expect(reader.textContent).toContain("Agreed in the meeting.");
@@ -278,7 +273,7 @@ describe("Decisions: a pick is one object (mast, spine, plate, ledger)", () => {
     useDesk.setState({ refresh } as never);
     render(<DecisionsCore />);
     const row = (await screen.findAllByTestId("decisions-row")).find((r) => r.textContent?.includes("Use OTel"))!;
-    fireEvent.click(within(row).getByRole("option"));
+    fireEvent.doubleClick(row);
     await waitFor(() => expect(openRef).toHaveBeenCalledWith("desk_decision:d-adr"));
     expect(refresh).not.toHaveBeenCalled();
   });
@@ -428,5 +423,47 @@ describe("Decisions: the plate is the one thing that matters now, with its verb"
       title: "Drop the nightly export", goal: `Drop the nightly export\n\n${open.rationale}`, template: "fast-cycle",
       origin_ref: "decision_record:rec-open", project_id: "proj-holdspeak",
     }]);
+  });
+});
+
+describe("Decisions selection writes", () => {
+  it("Decide captures the selected decision and rejects a duplicate press while it waits", async () => {
+    let accepted = false;
+    apiFetch.mockImplementation(async (path: string) => {
+      const answer = await hub(path);
+      if (!accepted || !path.startsWith("/api/decisions/ledger?")) return answer;
+      return { decisions: ledger.map((row) => row.id === "d-adr" ? { ...row, status: "accepted" } : row), page: { total: ledger.length } };
+    });
+    let finish!: () => void;
+    apiRequest.mockImplementation(() => new Promise((resolve) => { finish = () => {
+      accepted = true;
+      resolve(new Response(JSON.stringify({ decision: { id: "d-adr", status: "accepted" } }), { status: 200 }));
+    }; }));
+    render(<DecisionsCore />);
+    const row = (await screen.findAllByTestId("decisions-row")).find((item) => item.textContent?.includes("Use OTel"))!;
+    fireEvent.click(row);
+    fireEvent.keyDown(row, { key: "d" });
+    fireEvent.keyDown(row, { key: "d" });
+    expect(apiRequest).toHaveBeenCalledTimes(1);
+    expect(apiRequest).toHaveBeenCalledWith("/api/decisions/d-adr/status", expect.objectContaining({ method: "PUT" }));
+    fireEvent.click(screen.getAllByTestId("decisions-row").find((item) => item.textContent?.includes("Freeze the old ledger"))!);
+    await act(async () => finish());
+    await waitFor(() => expect(screen.getAllByTestId("decisions-row").find((item) => item.textContent?.includes("Use OTel"))?.querySelector('[data-col="state"]')).toHaveTextContent(/^$/));
+    expect(screen.getByTestId("decision-summary")).toHaveTextContent("Freeze the old ledger");
+  });
+
+  it("a refused Retire keeps the decision selected and permits the same choice again", async () => {
+    const rows = [{ ...ledger[3], status: "accepted" }];
+    apiFetch.mockImplementation(async (path: string) => path.startsWith("/api/decisions/ledger?")
+      ? { decisions: rows, page: { total: rows.length } } : hub(path));
+    apiRequest.mockResolvedValue(new Response("{}", { status: 503 }));
+    render(<DecisionsCore />);
+    fireEvent.click(await screen.findByTestId("decisions-row"));
+    fireEvent.click(screen.getByRole("button", { name: "Retire" }));
+    await waitFor(() => expect(screen.getByTestId("decisions-status")).toHaveTextContent("Could not retire it"));
+    expect(screen.getByTestId("decisions-row")).toHaveAttribute("aria-selected", "true");
+    apiRequest.mockResolvedValue(new Response("{}", { status: 503 }));
+    fireEvent.click(screen.getByRole("button", { name: "Retire" }));
+    await waitFor(() => expect(apiRequest).toHaveBeenCalledTimes(2));
   });
 });
