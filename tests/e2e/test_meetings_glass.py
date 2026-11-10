@@ -128,7 +128,15 @@ class _Capture:
     def stop(self) -> Any:
         self.live = False
         _save_meeting(LIVE, "Live sync", 0.1, "disabled")
-        return {"status": "stopped"}
+        # Use the real DB/JSON producer, and return its acknowledged facts.
+        from holdspeak.db import get_database
+        from holdspeak.meeting_session import MeetingSession
+        session = MeetingSession(intel_enabled=False)
+        session._state = get_database().meetings.get_meeting(LIVE)
+        saved = session.save()
+        return {"status": "stopped", "meeting": session._state.to_dict(),
+                "save": {"database_saved": saved.database_saved, "json_saved": saved.json_saved},
+                "save_error": saved.database_error or saved.json_error}
 
     def state(self) -> Any:
         if self.live:
@@ -381,6 +389,8 @@ class TestOneMeetingOneWindow:
                 preview = win.get_by_test_id("meetings-preview")
                 preview.get_by_text("We move the cutover to Friday.", exact=True).wait_for(timeout=T)
                 expect(win.get_by_test_id("meetings-list").get_by_role("row", selected=True)).to_contain_text("Live sync")
+                expect(page.locator("#desk-next")).not_to_contain_text("Save state not known")
+                expect(page.locator(".write-receipt")).to_have_count(0)
                 self._shot(f"meeting-window-stopped-preview-{stop}")
                 shots = evidence_dir("os-grammar")
                 page.screenshot(path=str(shots / f"meetings-stopped-{stop}-{'900x600' if width == 1440 else '393'}-after.png"))

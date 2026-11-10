@@ -1,16 +1,33 @@
 import { useEffect, useState } from "react";
 import { Button } from "../../../components/signal/Signal";
-import { PaneActions } from "../../../desk/surface";
+import { PaneActions, PreferencePane, PreferenceWell, SegmentedTabs } from "../../../desk/surface";
 import { apiFetch } from "../../../lib/api";
 import { MeetingSummary, readMeetingIntel } from "../../../meetings/MeetingSummarySlab";
+import { MeetingSendWellLazy } from "../../../meetings/MeetingSendWellLazy";
+import { SEND_OPEN, useAnnounceWindowDocument } from "../../../desk/windowSend";
+import { useWindowId } from "../../../desk/components/window/windowIdContext";
+import { useMeetingTasks } from "./MeetingTasks";
 import type { MeetingDecision } from "./useMeetingData";
 import { durationToken, ledgerDate, clockTime } from "./helpers";
 import { listMeetingState } from "./CatalogRail";
 import { TranscriptWell } from "./TranscriptWell";
 
 /** A selection read is cancelled on change; an old reply cannot replace the new preview. */
-export function MeetingPreview({ meeting, state }: { meeting: Record<string, unknown>; state?: string }) {
+export function MeetingPreview({ meeting, state, sendRequest = 0, onSendState, onChanged = () => {} }: { meeting: Record<string, unknown>; state?: string; sendRequest?: number; onSendState?(open: boolean): void; onChanged?(): void }) {
   const id = String(meeting.id);
+  const [tab, setTab] = useState(Number(meeting.needs_you_count) > 0 ? "tasks" : "summary");
+  const winId = useWindowId();
+  useEffect(() => {
+    onSendState?.(tab === "send");
+    return () => onSendState?.(false);
+  }, [tab, onSendState]);
+  useAnnounceWindowDocument(tab === "send" ? null : { kind: "meeting", id, form: "summary" });
+  useEffect(() => { if (sendRequest) setTab("send"); }, [sendRequest]);
+  useEffect(() => {
+    const open = (event: Event) => { if ((event as CustomEvent).detail?.winId === winId) setTab("send"); };
+    window.addEventListener(SEND_OPEN, open);
+    return () => window.removeEventListener(SEND_OPEN, open);
+  }, [winId]);
   const [detail, setDetail] = useState<Record<string, unknown> | null>(null);
   const [decisions, setDecisions] = useState<MeetingDecision[]>([]);
   const [error, setError] = useState(false);
@@ -28,7 +45,14 @@ export function MeetingPreview({ meeting, state }: { meeting: Record<string, unk
     return () => { current = false; };
   }, [id, meeting, retry]);
   const intel = readMeetingIntel(detail);
-  return <div data-testid="meeting-list-preview">
+  const tasks = useMeetingTasks({ meeting, onChanged });
+  if (tab === "tasks" && tasks.inspector) return tasks.inspector;
+  if (tab === "send") return <PreferencePane label="Send meeting" testId="meeting-list-preview"><PreferenceWell>
+    <MeetingSendWellLazy meetingId={id} title={String(meeting.title || "Meeting")} startedAt={String(meeting.started_at ?? meeting.created_at ?? "")} onBack={() => setTab("summary")} />
+  </PreferenceWell></PreferencePane>;
+  return <PreferencePane label="Selected meeting" testId="meeting-list-preview">
+    <SegmentedTabs label="Meeting contents" value={tab} onChange={setTab} tabs={[{ id: "summary", label: "Summary" }, { id: "tasks", label: "Tasks to confirm" }]}>
+    <div className="surface-tab-panel" hidden={tab !== "summary"}><PreferenceWell>
     <strong>{String(meeting.title || "Meeting")}</strong>
     <p>{[ledgerDate(meeting.started_at ?? meeting.created_at), clockTime(meeting.started_at ?? meeting.created_at), durationToken(meeting.duration_seconds), state ?? listMeetingState(meeting, { runningId: null })?.label].filter(Boolean).join(" · ")}</p>
     {error ? <PaneActions><span role="alert">Summary not read</span><Button dense onClick={() => setRetry(retry + 1)}>Retry</Button></PaneActions>
@@ -38,5 +62,8 @@ export function MeetingPreview({ meeting, state }: { meeting: Record<string, unk
         {!intel?.summary?.trim() ? <p>No summary</p> : null}
         {decisions.length ? <><strong>Decisions</strong><ul>{decisions.filter((row) => row.lifecycle !== "rejected").map((row) => <li key={row.id}>{row.text}</li>)}</ul></> : null}
       </>}
-  </div>;
+    </PreferenceWell></div>
+    <div className="surface-tab-panel" hidden={tab !== "tasks"}>{tasks.list}</div>
+    </SegmentedTabs>
+  </PreferencePane>;
 }
