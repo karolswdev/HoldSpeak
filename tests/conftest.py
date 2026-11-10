@@ -1017,6 +1017,13 @@ def pytest_sessionfinish(session, exitstatus):
     guard = getattr(session.config, "_holdspeak_process_guard", None)
     if guard is None:
         return
+    # multiprocessing keeps its resource tracker alive until interpreter exit.
+    # Finish that runtime-owned helper before looking for test-owned leaks;
+    # a surviving worker is still a leak and must keep the guard red.
+    from multiprocessing import active_children, resource_tracker
+
+    if not active_children():
+        resource_tracker._resource_tracker._stop()
     leaks = guard.finish(os.environ.get("TMUX_TMPDIR", ""))
     leaks += getattr(session.config, "_holdspeak_worker_leaks", [])
     if not leaks:
