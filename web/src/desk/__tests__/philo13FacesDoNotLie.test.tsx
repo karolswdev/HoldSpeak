@@ -18,7 +18,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "../../lib/api";
 import { failureTitle, plainFailure, plainReason, plainWords } from "../surface/plainFailure";
 import { askFailureLabel } from "../components/AskPanel";
-import { PeopleCore } from "../../pages/cores/PeopleCore";
+import { PersonWindowBody } from "../../pages/cores/PeopleCore";
 import { meetingSummaryState } from "../../pages/cores/history/plate";
 
 const SRC = resolve(__dirname, "../..");
@@ -155,14 +155,14 @@ describe("a People store failure keeps the window and the note", () => {
       if (!handler) throw new Error(`Unexpected request: ${String(input)}`);
       return handler();
     }));
-    render(<PeopleCore scope="people:r1" />);
+    render(<PersonWindowBody relationshipId="r1" />);
     await screen.findByTestId("people-composer");
     fireEvent.click(screen.getByRole("button", { name: "Note" }));
     const note = await screen.findByLabelText("Note");
     fireEvent.change(note, { target: { value: "Wants the cutover plan in writing" } });
     fireEvent.click(screen.getByRole("button", { name: "Add" }));
 
-    expect(await screen.findByText("Could not read the people store · What is on screen stays · Try again")).toBeTruthy();
+    expect(await screen.findByTestId("people-failure")).toBeTruthy();
     // The window keeps the person and the unsent note.
     expect(screen.queryByTestId("people-joy-state")).toBeNull();
     expect(screen.getAllByText("Priya Nair").length).toBeGreaterThan(0);
@@ -175,7 +175,7 @@ describe("a People store failure keeps the window and the note", () => {
     // Try again re-reads the store; the row leaves and the note is still there.
     storeDown = false;
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));
-    await waitFor(() => expect(screen.queryByText("Could not read the people store · What is on screen stays · Try again")).toBeNull());
+    await waitFor(() => expect(screen.queryByTestId("people-failure")).toBeNull());
     expect((screen.getByLabelText("Note") as HTMLTextAreaElement).value).toBe(
       "Wants the cutover plan in writing",
     );
@@ -213,29 +213,29 @@ describe("People Try again re-reads the person", () => {
 
   it("a failed detail read: Try again fetches the person again, then the row leaves", async () => {
     const calls = people(["down", "up"]);
-    render(<PeopleCore scope="people:r1" />);
-    expect(await screen.findByText("Could not read the people store · What is on screen stays · Try again")).toBeTruthy();
+    render(<PersonWindowBody relationshipId="r1" />);
+    expect(await screen.findByTestId("people-failure")).toBeTruthy();
     expect(calls["/api/people/relationships/r1"]).toBe(1);
 
     // The window's own failure row. The Next 1:1 side section has a Try again
     // too when its read fails; which one is on the face first is a race.
     fireEvent.click(within(screen.getByTestId("people-failure")).getByRole("button", { name: "Try again" }));
     await waitFor(() => expect(calls["/api/people/relationships/r1"]).toBe(2));
-    await waitFor(() => expect(screen.queryByText("Could not read the people store · What is on screen stays · Try again")).toBeNull());
+    await waitFor(() => expect(screen.queryByTestId("people-failure")).toBeNull());
     // Notes are rows in the person ledger after the detail read succeeds.
     expect(await screen.findByText("Wants to lead the EU shard work.")).toBeTruthy();
   });
 
   it("the row stays while the person read still fails", async () => {
     const calls = people(["down", "down", "up"]);
-    render(<PeopleCore scope="people:r1" />);
-    expect(await screen.findByText("Could not read the people store · What is on screen stays · Try again")).toBeTruthy();
+    render(<PersonWindowBody relationshipId="r1" />);
+    expect(await screen.findByTestId("people-failure")).toBeTruthy();
     // The window's own failure row. The Next 1:1 side section has a Try again
     // too when its read fails; which one is on the face first is a race.
     fireEvent.click(within(screen.getByTestId("people-failure")).getByRole("button", { name: "Try again" }));
     await waitFor(() => expect(calls["/api/people/relationships/r1"]).toBe(2));
     await new Promise((r) => setTimeout(r, 50));
-    expect(screen.getByText("Could not read the people store · What is on screen stays · Try again")).toBeTruthy();
+    expect(screen.getByTestId("people-failure")).toBeTruthy();
   });
 });
 

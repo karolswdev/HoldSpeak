@@ -7,12 +7,12 @@ afterEach(cleanup);
 
 describe("the shared selection list", () => {
   it("selects with a click, opens with Return or double-click, and projects the same verbs into its context menu", () => {
-    const open = vi.fn(); const remove = vi.fn();
+    const open = vi.fn(); const remove = vi.fn(); const select = vi.fn();
     const verbs: ListVerb[] = [
       { id: "open", label: "Open", key: "Enter", enabled: (row) => Boolean(row), run: (row) => open(row?.id) },
       { id: "remove", label: "Remove", key: "Delete", enabled: (row) => Boolean(row), run: remove },
     ];
-    render(<ListView label="Accounts" rows={[{ id: "one", kind: "account", name: "GitHub" }, { id: "two", kind: "account", name: "Jira" }]} columns={[{ key: "name", word: "Service" }]} verbs={verbs} defaultVerb="open" />);
+    render(<ListView label="Accounts" rows={[{ id: "one", kind: "account", name: "GitHub" }, { id: "two", kind: "account", name: "Jira" }]} columns={[{ key: "name", word: "Service" }]} verbs={verbs} defaultVerb="open" onSelect={select} />);
     const bar = screen.getByRole("toolbar", { name: "Accounts actions" });
     expect(within(bar).getByRole("button", { name: "Open" })).toBeDisabled();
     const row = screen.getByText("GitHub").closest('[role="row"]')!;
@@ -20,6 +20,8 @@ describe("the shared selection list", () => {
     fireEvent.click(row);
     expect(row).toHaveAttribute("aria-selected", "true");
     expect(open).not.toHaveBeenCalled();
+    expect(select).toHaveBeenCalledTimes(1);
+    expect(select).toHaveBeenCalledWith("one");
     expect(within(bar).getByRole("button", { name: "Open" })).toBeEnabled();
     fireEvent.keyDown(row, { key: "Enter" });
     expect(open).toHaveBeenLastCalledWith("one");

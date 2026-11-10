@@ -50,21 +50,16 @@ const PEOPLE_COLUMNS = [
 
 function PeopleSpecimen() {
   const [selected, setSelected] = useState<string | null>("p-1");
-  const [sort, setSort] = useState<ObjectListSort>({ key: "name", dir: "asc" });
-  return (
-    <div className="reference-window-frame reference-window-people" data-testid="reference-window-people">
-      <ObjectList
-        label="Specimen people"
-        density="dense"
-        rows={PEOPLE}
-        columns={PEOPLE_COLUMNS}
-        sort={sort}
-        onSort={(key: string) => setSort((current) => ({ key, dir: current.key === key && current.dir === "asc" ? "desc" : "asc" }))}
-        selectedId={selected}
-        onSelect={setSelected}
-      />
-    </div>
-  );
+  const [query, setQuery] = useState("");
+  const [opened, setOpened] = useState("");
+  return <div className="reference-window-frame reference-window-people" data-testid="reference-window-people">
+    <ListPane label="Selected person" list={<ListView label="Specimen people" rows={PEOPLE.filter((row) => row.name.toLowerCase().includes(query.toLowerCase()))} columns={[{ key: "name", word: "Name" }, ...PEOPLE_COLUMNS]}
+      selectedId={selected} onSelect={setSelected} defaultVerb="open"
+      toolbar={{ trailing: <StringGadget label="Find a person" value={query} onChange={setQuery} /> }}
+      verbs={[{ id: "open", label: "Open", key: "Enter", enabled: (row) => Boolean(row), run: (row) => setOpened(row!.name) }]} />}>
+      {opened ? `Opened locally · ${opened}` : PEOPLE.find((row) => row.id === selected)?.name ?? "Select a person"}
+    </ListPane>
+  </div>;
 }
 
 /** A meeting summary, read in its window: the one place a document

@@ -1609,8 +1609,9 @@ accepts Backspace; Return opens through the default verb.
 
 `ListPane` keeps the list and a plain preview in two bounded wells, with the
 preview below the list at every width. `listTestId` and `previewTestId` name
-walk targets. Neither well makes the window body scroll. Meetings Records
-uses this pattern. The Record tab and the meeting window retain their
+walk targets. Neither well makes the window body scroll. Meetings Records and People
+use this pattern. Selection reports a change once even when the click also
+focuses its row. The Record tab and the meeting window retain their
 existing composition.
 
 A reversible receipt belongs in `StatusBar.verbs`, outside the clipped facts

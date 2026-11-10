@@ -276,7 +276,7 @@ def _cases() -> tuple[list[tuple[str, str, str | None]], dict[str, str]]:
         ("decision-record", "surface-decisions", "record:{decision_record}"),
         ("note", "pullout:note:{note}", None),
         ("person", "pullout:people:{person}", None),
-        ("person-walk", "pullout:people:{person}", None),
+        ("person-walk", "surface-people", None),
         # Programs (2026-10-28): a Program's window (the board of direction
         # C), seeded through the real routes on a real git folder.
         ("program", "pullout:program:{program}", None),
@@ -1839,7 +1839,7 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
             page.screenshot(path=str(evidence_dir("desk-sweep") / f"automation-when-editor-{width}.png"))
             page.keyboard.press("Escape")
             popover.wait_for(state="detached", timeout=T)
-        if case_id in {"person", "person-walk"}:
+        if case_id == "person":
             # This pose is the seeded person's content, not the transient
             # readiness/detail gap or a frame whose lazy body has not loaded.
             page.locator(f'[id="{wid}"] [data-testid=people-detail-head]').wait_for(timeout=T)

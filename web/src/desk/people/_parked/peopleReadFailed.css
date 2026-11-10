@@ -1,3 +1,4 @@
+/* Parked: the shared PaneActions draws failure rows. */
 /* Betterment D6: a People read that failed, as one line in place. */
 .people-read-failed {
   display: flex;

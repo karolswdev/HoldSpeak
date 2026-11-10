@@ -5,7 +5,7 @@
  */
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { PeopleCore, prsSummaryLabel, capTokens } from "../PeopleCore";
+import { PersonWindowBody, PeopleCore, prsSummaryLabel, capTokens } from "../PeopleCore";
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
@@ -128,7 +128,7 @@ function stubWithBrief(briefOverrides: Record<string, unknown> = {}) {
 describe("People Prep enrichment HS-172-05", () => {
   it("renders the display step (name) and summary rows", async () => {
     stubWithBrief();
-    render(<PeopleCore scope="people:r1:prep" />);
+    render(<PersonWindowBody relationshipId="r1" />);
     const lens = await screen.findByTestId("people-prep-lens");
     expect(lens).toBeTruthy();
 
@@ -168,7 +168,7 @@ describe("People Prep enrichment HS-172-05", () => {
       last_meeting: null,
       open_commitments: [],
     });
-    render(<PeopleCore scope="people:r1:prep" />);
+    render(<PersonWindowBody relationshipId="r1" />);
     await screen.findByTestId("people-prep-lens");
     expect(screen.queryByTestId("prep-prs-row")).toBeNull();
     expect(screen.queryByTestId("prep-assignments-row")).toBeNull();
@@ -190,7 +190,7 @@ describe("People Prep enrichment HS-172-05", () => {
         open_assignments: [],
       },
     });
-    render(<PeopleCore scope="people:r1:prep" />);
+    render(<PersonWindowBody relationshipId="r1" />);
     await screen.findByTestId("people-prep-lens");
     const numbers = screen.getByTestId("prep-prs-numbers");
     expect(numbers.textContent).toBe("#1 · #2 · #3 +2");
@@ -198,7 +198,7 @@ describe("People Prep enrichment HS-172-05", () => {
 
   it("no pronoun strings in any summary row text", async () => {
     stubWithBrief();
-    render(<PeopleCore scope="people:r1:prep" />);
+    render(<PersonWindowBody relationshipId="r1" />);
     await screen.findByTestId("people-prep-lens");
     const summaryRows = screen.getByTestId("prep-summary-rows");
     const text = summaryRows.textContent || "";
@@ -208,7 +208,7 @@ describe("People Prep enrichment HS-172-05", () => {
 
   it("warning token on days >= 3", async () => {
     stubWithBrief();
-    render(<PeopleCore scope="people:r1:prep" />);
+    render(<PersonWindowBody relationshipId="r1" />);
     await screen.findByTestId("people-prep-lens");
     const daysToken = screen.getByTestId("prep-prs-days");
     expect(daysToken.getAttribute("data-warning")).toBeTruthy();
@@ -224,7 +224,7 @@ describe("People Prep enrichment HS-172-05", () => {
         open_assignments: [],
       },
     });
-    render(<PeopleCore scope="people:r1:prep" />);
+    render(<PersonWindowBody relationshipId="r1" />);
     await screen.findByTestId("people-prep-lens");
     const daysToken = screen.getByTestId("prep-prs-days");
     expect(daysToken.getAttribute("data-warning")).toBeNull();
@@ -232,7 +232,7 @@ describe("People Prep enrichment HS-172-05", () => {
 
   it("Show on the PRS row draws the per-entity PR rows in place", async () => {
     stubWithBrief();
-    render(<PeopleCore scope="people:r1:prep" />);
+    render(<PersonWindowBody relationshipId="r1" />);
     await screen.findByTestId("people-prep-lens");
     // Click Open on the PRS row.
     fireEvent.click(screen.getByTestId("prep-prs-open"));
@@ -247,7 +247,7 @@ describe("People Prep enrichment HS-172-05", () => {
 
   it("Show on the ASSIGNMENTS row draws the assignment rows", async () => {
     stubWithBrief();
-    render(<PeopleCore scope="people:r1:prep" />);
+    render(<PersonWindowBody relationshipId="r1" />);
     await screen.findByTestId("people-prep-lens");
     fireEvent.click(screen.getByTestId("prep-assignments-open"));
     const detail = await screen.findByTestId("now-assignments-detail");
@@ -257,7 +257,7 @@ describe("People Prep enrichment HS-172-05", () => {
 
   it("AGENDA section shows items with count", async () => {
     stubWithBrief();
-    render(<PeopleCore scope="people:r1:prep" />);
+    render(<PersonWindowBody relationshipId="r1" />);
     await screen.findByTestId("people-prep-lens");
     const agenda = screen.getAllByTestId("prep-agenda").map((row) => row.textContent).join("|");
     expect(agenda).toContain("Discuss API contract timeline");
@@ -266,14 +266,14 @@ describe("People Prep enrichment HS-172-05", () => {
 
   it("AGENDA section absent when no items", async () => {
     stubWithBrief({ agenda_items: [] });
-    render(<PeopleCore scope="people:r1:prep" />);
+    render(<PersonWindowBody relationshipId="r1" />);
     await screen.findByTestId("people-prep-lens");
     expect(screen.queryByTestId("prep-agenda")).toBeNull();
   });
 
   it("Open on LAST MEETING renders the meeting Open button", async () => {
     stubWithBrief();
-    render(<PeopleCore scope="people:r1:prep" />);
+    render(<PersonWindowBody relationshipId="r1" />);
     await screen.findByTestId("people-prep-lens");
     const meetingOpen = screen.getByTestId("prep-meeting-open");
     expect(meetingOpen).toBeTruthy();

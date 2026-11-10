@@ -6,37 +6,23 @@
   "steps": [
     {
       "highlight": {
-        "target": "people-rail",
+        "target": "people-roster",
         "thing": "people list",
-        "words": "Press a name to open the person."
+        "words": "Click a name to select it. Double-click or press Return to open."
       }
     },
     {
       "highlight": {
-        "target": "people-detail-head",
-        "thing": "person",
-        "words": "The name, role and next 1:1 are here."
+        "target": "people-summary",
+        "thing": "selected person",
+        "words": "The next 1:1 and open commitments are below the list."
       }
     },
     {
       "highlight": {
-        "target": "people-commitments",
-        "thing": "commitments",
-        "words": "What you owe and what is owed to you. Each row has its next action."
-      }
-    },
-    {
-      "highlight": {
-        "target": "people-next-plate",
-        "thing": "agenda",
-        "words": "The agenda for your next 1:1."
-      }
-    },
-    {
-      "highlight": {
-        "target": "people-composer",
-        "thing": "composer",
-        "words": "Choose Note, Agenda or a commitment. Type or speak, then press Add."
+        "target": "people-status",
+        "thing": "status",
+        "words": "The count and next 1:1 stay here."
       },
       "ask": {
         "ref": "people-feel",

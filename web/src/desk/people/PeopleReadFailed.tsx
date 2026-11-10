@@ -2,7 +2,7 @@
  * Today and Needs you: "People could not be read" with Try again. The rest of
  * the face stays; nothing else breaks. */
 import { Button } from "../../components/signal/Signal";
-import "./peopleReadFailed.css";
+import { PaneActions } from "../surface";
 
 /** The People store states that mean "it exists, but it could not be read". */
 const UNREAD = new Set(["locked", "key_unavailable", "corrupt", "unavailable"]);
@@ -19,15 +19,19 @@ export function peopleNotHere(state: unknown): boolean {
 }
 
 export function PeopleNotHere({ testId = "people-not-here" }: { testId?: string }) {
-  return <div className="people-read-failed" role="status" data-testid={testId}>
-    <span className="people-read-failed-line">People is not set up on this Mac.</span>
-  </div>;
+  return <PaneActionsWrapper role="status" data-testid={testId}>
+    <span>People is not set up on this Mac.</span>
+  </PaneActionsWrapper>;
 }
 
 export function PeopleReadFailed({ onRetry, detail = "", testId = "people-read-failed" }: { onRetry(): void; detail?: string; testId?: string }) {
-  return <div className="people-read-failed" role="status" data-testid={testId}>
-    <span className="people-read-failed-line">People could not be read. Nothing changed. Press Try again.</span>
+  return <PaneActionsWrapper role="status" data-testid={testId}>
+    <span>People could not be read. Nothing changed. Press Try again.</span>
     <Button dense variant="ghost" onClick={onRetry}>Try again</Button>
     {detail ? <span className="sr-only">{detail}</span> : null}
-  </div>;
+  </PaneActionsWrapper>;
+}
+
+function PaneActionsWrapper({ children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+  return <div {...props}><PaneActions>{children}</PaneActions></div>;
 }
