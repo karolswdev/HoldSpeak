@@ -179,8 +179,10 @@ and the owner's real DB stay out of it. Times are from the owner's machine
   every lane and the orchestrator's alike, goes through the lock:
   `uv run python scripts/test_lock.py -- <command>`. A run takes CPUs:
   `--cpus N`, else the pytest `-n N` in the command, else 1; a browser command
-  (tests/e2e, the sweep, glass, Playwright, graph walks, tests/uat) counts its
-  `-n` twice (each worker drives a Chromium); vitest counts 4. Runs share the
+  (tests/e2e, the sweep, glass, Playwright, graph walks) counts its
+  `-n` twice (each worker drives a Chromium); vitest counts 4. `tests/uat`
+  drives no browser: the whole non-browser suite at `-n 6` takes 6, so two
+  of them, or one and the focused runs, share the machine. Runs share the
   machine while their CPUs fit `HOLDSPEAK_TEST_CPUS` (default: the core
   count); a larger run waits, waiters go in arrival order, and a run larger
   than the budget runs alone. The lock does not check HOME; the rigs isolate

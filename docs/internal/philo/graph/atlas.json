@@ -17925,17 +17925,12 @@
       "sources": [
         {
           "path": "holdspeak/db/intel.py",
-          "symbol": "if cls._is_unsettled_stop_reservation_in_transaction(conn, current_job): return \"reserved\"",
-          "claim": "an unsettled stop reservation answers reserved"
-        },
-        {
-          "path": "holdspeak/db/intel.py",
           "symbol": "if cls._is_compatibility_cutover_in_transaction(conn, current_job): return \"reserved\"",
-          "claim": "a compatibility cutover answers reserved too"
+          "claim": "a compatibility cutover answers reserved"
         }
       ],
       "reachable_by": [
-        "unexercised: the reserved posture is minted by the stop handoff and by the pre-C cutover fence; reaching it deliberately needs a stop that leaves its reservation unsettled, which the rig cannot arrange through a production entry point. Cost: the reserved branch of the intelligence axis goes unobserved."
+        "unexercised: the reserved posture comes from the pre-C cutover fence over historical unbound jobs. A fresh rig cannot create that historical state through a production entry point. Cost: the reserved branch of the intelligence axis goes unobserved."
       ]
     },
     {
