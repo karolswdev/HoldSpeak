@@ -305,6 +305,7 @@ PROGRAM_SOURCE = "program"
 
 #: The reason token of each Program your-turn kind.
 PROGRAM_WHY = {
+    "desk": "To show",
     "merge": "TO MERGE", "finding": "TO DECIDE", "parked": "TO RESUME", "ask_review": "TO ASK",
     "core": "TO DECIDE", "race": "TO PICK", "add_step": "TO DECIDE", "close": "TO CLOSE",
     # PG19: the step's agent is at its usage limit: continue in the next, or wait.

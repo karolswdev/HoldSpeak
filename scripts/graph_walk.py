@@ -1036,7 +1036,7 @@ OP_MCP_PROJECTIONS: dict[str, dict[str, Any]] = {
 # (test_walk_rig: the walk is an outsider); test_graph_walk_op_steps fails
 # when a declared tool is missing from this table, so the list cannot drift.
 OP_MCP_PROJECTIONS.update({name: {"kind": "tool", "name": name} for name in (
-    "agent.launch.lane", "agent.launch.explain", "agent.launch.answer", "agent.launch.seen", "agent.launch.done",
+    "project.repository.register", "agent.launch.lane", "agent.launch.explain", "agent.launch.answer", "agent.launch.seen", "agent.launch.done",
     "agent.launch.remove", "agent.launch.resume", "agent.hand.cancel_queued", "agent.helper.allow",
     "agent.hand.preview", "agent.launch.get", "agent.launch.rebrief", "agent.launch.take_back",
     "agent.launch.deliver", "thread.create", "thread.list", "thread.get", "thread.update", "thread.delete",
@@ -1074,8 +1074,6 @@ OP_HTTP_ONLY = frozenset({"decision.status",
                           "setup.found",
                           # PHILO-15 04: the owner's press opens the Calendars privacy pane (HTTP only).
                           "calendar.open_settings", "connection.signin",
-                          # PHILO-15 16: the owner names a Project's repository (HTTP only).
-                          "project.repository.register",
                           # One display protocol (2026-11-08): the compositor's answer to a display request.
                           "desk.request.result",
                           # 2026-11-08: the phone verbs with no MCP tool (a held device or address, a credential).

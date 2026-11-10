@@ -31,7 +31,7 @@ from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.web.context import WebContext
 from holdspeak.web.routes.dictation.pipeline import build_pipeline_router
 
-PIPELINE = "holdspeak.web.routes.dictation.pipeline._run_dictation_dry_run_text"
+PIPELINE = "holdspeak.services.dictation_jobs._run_dictation_dry_run_text"
 
 
 @pytest.fixture(autouse=True)

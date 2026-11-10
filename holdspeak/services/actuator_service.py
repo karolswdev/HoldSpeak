@@ -6,7 +6,8 @@ import hashlib
 import re
 from typing import Any, Callable
 
-from ..principals import Principal
+from ..principals import Principal, PrincipalKind
+from ..operations import OperationOwnerRequired
 from .errors import NotFound, ValidationError
 
 _REPO = re.compile(r"^[A-Za-z0-9._-]+/[A-Za-z0-9._-]+$")
@@ -48,6 +49,8 @@ class ActuatorProposalService:
         return source_ref, {"_source": {"ref": source_ref, "label": label or identifier}}
 
     def _propose(self, principal: Principal, payload: Any, *, target: str) -> dict[str, Any]:
+        if getattr(principal, "kind", None) not in (PrincipalKind.OWNER, PrincipalKind.AGENT):
+            raise OperationOwnerRequired(f"delivery.actuator.{target}.propose")
         text = str(getattr(payload, "text", "") or "").strip()
         if not text: raise ValidationError("text is required")
         config = self._config_provider(); meeting = config.meeting
@@ -81,7 +84,7 @@ class ActuatorProposalService:
         self._broadcast("actuator_proposed", {"id": proposal.id, "meeting_id": proposal.meeting_id,
             "plugin_id": proposal.plugin_id, "status": proposal.status, "target": proposal.target,
             "action": proposal.action, "preview": proposal.preview, "reversible": bool(proposal.reversible)})
-        proposal = self._lifecycle.apply(proposal, target)
+        # Propose never executes. Decide is the owner's separate press in every posture.
         return {"success": True, "proposal": self._lifecycle.serialize(proposal)}
 
     def propose_slack(self, principal: Principal, payload: Any) -> dict[str, Any]:
@@ -97,6 +100,9 @@ class ActuatorProposalService:
     def propose_github(self, principal: Principal, payload: Any) -> dict[str, Any]: return self._propose(principal, payload, target="github")
 
     def _decide(self, principal: Principal, proposal_id: str, payload: Any, *, target: str) -> dict[str, Any]:
+        if getattr(principal, "kind", None) is not PrincipalKind.OWNER:
+            raise OperationOwnerRequired(f"delivery.actuator.{target}.decide")
+        payload = payload.model_copy(update={"decided_by": principal.identity})
         updated, error, status = self._lifecycle.decide(proposal_id, payload, target)
         if error:
             if status == 404: raise NotFound("proposal", proposal_id)

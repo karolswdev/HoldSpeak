@@ -417,7 +417,7 @@ def test_a_cancelled_session_fires_no_macro_and_says_so(stream):
 
 # ── the delivery half: raw, so the one pass is the only pass ─────────────────
 
-PIPELINE = "holdspeak.web.routes.dictation.pipeline._run_dictation_dry_run_text"
+PIPELINE = "holdspeak.services.dictation_jobs._run_dictation_dry_run_text"
 
 
 def _delivery_client(ctx: WebContext) -> TestClient:

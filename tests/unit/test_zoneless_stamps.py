@@ -248,18 +248,30 @@ def test_an_old_decision_inside_the_brief_window_is_found(tmp_path: Path) -> Non
     since_local = datetime(2026, 10, 2, 17, 0)        # Friday 17:00 local (bare, as the window passes it)
     decided = datetime(2026, 10, 4, 21, 0)            # Sunday 21:00 local = Monday 03:00 UTC
     week_end = datetime(2026, 10, 5, 2, 0, tzinfo=timezone.utc)  # Sunday 20:00 local
-    _insert(db, "decision_records", {
-        "id": "d-old", "decision_text": "Ship it", "deleted": 0,
-        "created_at": _old_local(decided), "updated_at": _old_local(decided),
-    })
-    _insert(db, "decision_record_sources", {
-        "record_id": "d-old", "source_type": "meeting", "source_ref": "m-old",
-        "created_at": _old_local(decided),
-    })
+    from holdspeak.meeting_session import MeetingState
+    from holdspeak.principals import Principal, PrincipalKind
+    from holdspeak.services.decision_record_service import DecisionRecordService
+
+    db.meetings.save_meeting(MeetingState(id="m-old", title="Old review", started_at=decided.astimezone()))
+    db.projects.create_project(project_id="brief-reader-room", name="Review")
+    db.projects.associate_meeting_project(meeting_id="m-old", project_id="brief-reader-room")
+    DecisionRecordService(db).create(
+        Principal(PrincipalKind.OWNER, "old-reader"), record_id="d-old", decision_text="Ship it",
+        source_type="meeting", source_id="m-old", sources=(("meeting", "m-old"),),
+    )
+    _set(db, "UPDATE decision_records SET created_at=?, updated_at=? WHERE id='d-old'",
+         _old_local(decided), _old_local(decided))
+    _set(db, "UPDATE decision_record_sources SET created_at=? WHERE record_id='d-old'", _old_local(decided))
     db = _reopen(path, db)
     # Sunday 21:00 local is AFTER the window end (Sunday 20:00 local): not found.
     items = MondayBriefService(db)._collect_meeting_watch(
         "", week_end.isoformat(), None, decisions_since=since_local.isoformat(),
+    )
+    assert not [item for item in items if item.source_ref == "meeting_watch:decisions"], items
+    # The upper boundary remains exclusive, as in the owning brief window.
+    items = MondayBriefService(db)._collect_meeting_watch(
+        "", datetime(2026, 10, 5, 3, 0, tzinfo=timezone.utc).isoformat(), None,
+        decisions_since=since_local.isoformat(),
     )
     assert not [item for item in items if item.source_ref == "meeting_watch:decisions"], items
     # Window end Monday 04:00 UTC (Sunday 22:00 local): found.

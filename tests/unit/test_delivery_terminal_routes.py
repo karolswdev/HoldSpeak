@@ -311,13 +311,10 @@ def test_live_route_disconnect_closes_blocked_offloop_reader(rig) -> None:
     target = _target(rig)
 
     async def walk() -> None:
+        from holdspeak.web.routes.delivery_terminal import _LiveRequest
         response = await route.endpoint(
-            type("LiveBody", (), {
-                "target_id": target["target_id"],
-                "target_generation": target["target_generation"],
-                "stream_id": None,
-                "resume_sequence": None,
-            })()
+            _LiveRequest(target_id=target["target_id"], target_generation=target["target_generation"]),
+            Request({"type": "http", "state": {"principal": OWNER}}),
         )
         iterator = response.body_iterator
         first = await iterator.__anext__()
@@ -395,5 +392,5 @@ def test_client_authority_is_refused_by_name(rig) -> None:
         json={**_steer_body(target), "authority": {"decision": "allowed"}},
     )
     assert res.status_code == 400
-    assert res.json()["error"] == "authority_not_client_settable"
+    assert res.json()["error"] == "authority_in_arguments"
     assert rig.transport_calls == []

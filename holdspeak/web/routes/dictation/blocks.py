@@ -1,168 +1,65 @@
-"""The block from a starter template, with its preview — HS-34-01 split of `dictation.py`.
-
-`POST /api/dictation/blocks/from-template` stays hand-written: with `dry_run` it
-runs the speech pipeline on the template's sample (a model call, admitted as
-its own speech session). The rest of `/api/dictation/blocks*` and the templates
-are declared operations (`holdspeak/dictation_operations.py`, 2026-11-09).
-"""
+"""The template HTTP transport; creation and preview are one declared service job."""
 
 from __future__ import annotations
 
-from copy import deepcopy
 from typing import Any, Optional
 
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
-from ....logging_config import get_logger
+from .... import operations
+from ....services.errors import ServiceError
 from ...context import WebContext
-from ._helpers import (
-    _read_blocks_document,
-    _resolve_blocks_target,
-    _resolve_project_context,
-    _run_cancellable_entry,
-    _run_dictation_dry_run_text,
-    _starter_template,
-    _unique_block_id,
-    session_terminal_of,
-)
-
-log = get_logger("web.routes.dictation")
+from ...operation_routes import operation_router, _principal
+from ._declared import registry_for, _answer
+from ._helpers import _run_cancellable_entry
 
 
 def build_blocks_router(
-    ctx: WebContext,
-    project_doc_suggestions: dict[str, dict[str, str]],
+    ctx: WebContext, project_doc_suggestions: dict[str, dict[str, str]]
 ) -> APIRouter:
-    router = APIRouter()
+    registry = registry_for(ctx)
 
-    @router.post("/api/dictation/blocks/from-template")
     async def api_dictation_blocks_create_from_template(
         request: Request,
         payload: dict[str, Any],
         scope: str = "global",
         project_root: Optional[str] = None,
     ) -> Any:
-        from ....plugins.dictation.blocks import BlockConfigError, save_blocks_yaml
+        async def run_entry(aim: str, work: Any) -> Any:
+            return await _run_cancellable_entry(request, aim, work)
 
-        template_id = payload.get("template_id") if isinstance(payload, dict) else None
-        if not isinstance(template_id, str) or not template_id.strip():
-            return JSONResponse(
-                {"error": "request body must include template_id"},
-                status_code=400,
-            )
-        template = _starter_template(template_id.strip())
-        if template is None:
-            return JSONResponse(
-                {"error": f"unknown starter template {template_id!r}"},
-                status_code=404,
-            )
-        run_dry_run = bool(payload.get("dry_run", False))
-        if "dry_run" in payload and not isinstance(payload.get("dry_run"), bool):
-            return JSONResponse(
-                {"error": "dry_run must be a boolean when provided"},
-                status_code=400,
-            )
         try:
-            path, project = _resolve_blocks_target(scope, project_root)
-        except ValueError as exc:
-            status = 404 if "no project detected" in str(exc) else 400
-            return JSONResponse({"error": str(exc)}, status_code=status)
-        if run_dry_run and project_root:
-            try:
-                _resolve_project_context(project_root)
-            except ValueError as exc:
-                return JSONResponse({"error": str(exc)}, status_code=400)
-
-        requested_block_id = payload.get("block_id") if isinstance(payload, dict) else None
-        if requested_block_id is not None and not isinstance(requested_block_id, str):
-            return JSONResponse(
-                {"error": "block_id must be a string when provided"},
-                status_code=400,
+            body, status = await registry().invoke(
+                _principal(request),
+                "dictation.blocks.from_template",
+                {"payload": payload, "scope": scope, "project_root": project_root},
+                held={
+                    "project_doc_suggestions": project_doc_suggestions,
+                    "run_entry": run_entry,
+                },
             )
-        try:
-            document, _exists = _read_blocks_document(path)
-        except Exception as exc:
-            log.error(f"Failed to read blocks document: {exc}")
-            return JSONResponse({"error": str(exc)}, status_code=500)
+            return JSONResponse(body, status_code=status)
+        except ServiceError as exc:
+            return JSONResponse(
+                exc.context.get("body") or {"error": exc.detail, "code": exc.code},
+                status_code=int(exc.context.get("status") or 400),
+            )
+        except operations.OperationRefused as exc:
+            return JSONResponse(
+                {"error": exc.detail, "code": exc.code}, status_code=400
+            )
 
-        block = deepcopy(template["block"])
-        base_id = (requested_block_id or block["id"]).strip()
-        if not base_id:
-            return JSONResponse({"error": "block_id cannot be empty"}, status_code=400)
-        block["id"] = _unique_block_id(base_id, document)
-        document["blocks"].append(block)
-        try:
-            save_blocks_yaml(path, document)
-        except BlockConfigError as exc:
-            return JSONResponse({"error": str(exc)}, status_code=422)
-        if ctx.on_dictation_config_changed is not None:
-            try:
-                ctx.on_dictation_config_changed()
-            except Exception as exc:
-                log.error(f"on_dictation_config_changed failed: {exc}")
-        response_payload = {
-            "scope": scope,
-            "path": str(path),
-            "project": project,
-            "template": {
-                "id": template["id"],
-                "title": template["title"],
-                "sample_utterance": template["sample_utterance"],
-            },
-            "block": block,
-            "document": document,
-        }
-        if run_dry_run:
-            # HS-131-15: the PREVIEW is admitted (its own fresh session, off the
-            # event loop so a mesh-routed rewrite cannot deadlock the relay
-            # poller). The block write above is a separate, already-COMPLETED
-            # effect: a preview refusal below reports both truths — the block that
-            # exists and the preview that did not run — so a retry neither
-            # duplicates the block nor implies it was rolled back.
-            def _work(config_snapshot: Any, admitted: Any) -> dict[str, Any]:
-                return _run_dictation_dry_run_text(
-                    str(template["sample_utterance"]),
-                    project_root,
-                    suggestions=project_doc_suggestions,
-                    config_snapshot=config_snapshot,
-                    admission=None if admitted is None else admitted.provider,
-                    fence=None if admitted is None else admitted.fence,
-                    terminal_entry=admitted,
-                )
-
-            from ....speech_session import AIM_TEMPLATE_PREVIEW, SpeechSessionRefused
-
-            try:
-                dry_run = await _run_cancellable_entry(
-                    request, AIM_TEMPLATE_PREVIEW, _work
-                )
-            except SpeechSessionRefused as exc:
-                response_payload["dry_run"] = None
-                response_payload["dry_run_error"] = {
-                    "created": True,
-                    "created_block_id": block["id"],
-                    "failure_category": "template_preview_refused",
-                    "refusal": str(getattr(exc, "reason", "") or "speech_session_refused"),
-                    **session_terminal_of(exc),
-                }
-                return JSONResponse(response_payload, status_code=201)
-            except Exception as exc:
-                log.error(f"Template dry-run failed: {exc}")
-                response_payload["dry_run"] = None
-                response_payload["dry_run_error"] = {
-                    "created": True,
-                    "created_block_id": block["id"],
-                    "failure_category": "template_preview_failed",
-                    "error": str(exc),
-                    **session_terminal_of(exc),
-                }
-                return JSONResponse(response_payload, status_code=201)
-            dry_run["created_block_id"] = block["id"]
-            dry_run["template_id"] = template["id"]
-            dry_run["template_title"] = template["title"]
-            dry_run["sample_utterance"] = template["sample_utterance"]
-            response_payload["dry_run"] = dry_run
-        return JSONResponse(response_payload, status_code=201)
-
-    return router
+    return operation_router(
+        [
+            d
+            for d in operations.DICTATION_OPERATIONS
+            if d.name == "dictation.blocks.from_template"
+        ],
+        registry,
+        _answer,
+        module=__name__,
+        hand_written={
+            "dictation.blocks.from_template": lambda d: api_dictation_blocks_create_from_template
+        },
+    )

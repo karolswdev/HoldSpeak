@@ -1,11 +1,12 @@
-// HS-170-04 — the meeting detail pane (the board's right side).
-// Display title + tokens, NEEDS YOU section, TRANSCRIPT well, settled list.
+import { createPortal } from "react-dom";
+import { useCompactViewport } from "../../../desk/useCompactViewport";
+import { useHasWindowBack, useWindowBack } from "../../../desk/surface/back";
 import { NO_TRANSCRIPT_SPEECH, speechWasMissing } from "../../../desk/firstrun/speechTruth";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { failureTitle, plainWords } from "../../../desk/surface/plainFailure";
 import { ActionNotice } from "../../../desk/surface/patterns/ActionNotice";
-import { SurfaceLedger, SurfaceLedgerRow, SurfaceSection, SurfaceState, countLabel } from "../../../desk/surface";
+import { SurfaceLedger, SurfaceLedgerRow, SurfaceSection, SurfaceState, countLabel, StateChip } from "../../../desk/surface";
 import { MeetingRunVerb } from "../../../meetings/runSlot";
 import { MeetingConflictRecovery } from "../../../meetings/MeetingConflictRecovery";
 import { MeetingIntelRecovery } from "../../../meetings/MeetingIntelRecovery";
@@ -46,13 +47,8 @@ import { openDecisionRecord, openPerson, openRef } from "../../../desk/openObjec
 import { openProjectRoom } from "../../../desk/shell";
 import { openSourceRef } from "../../../desk/surface/citations";
 
-
-/** PHILO-17: the meeting window's foot asks its record to open the
- *  transcript fold (`detail`: the meeting id). */
 export const MEETING_TRANSCRIPT_OPEN = "holdspeak:meeting-transcript-open";
 
-/** The meeting's participants as the hub names them (its speakers and the
- *  calendar event's attendees): the deciders of a decision made from it. */
 function meetingAttendees(...reads: Array<Record<string, unknown> | null | undefined>): string[] {
   for (const read of reads) {
     const names = read?.attendees;
@@ -69,17 +65,6 @@ function deferredToken(value: unknown): string {
   return `Not now · Until ${date.toLocaleDateString(undefined, { weekday: "short" })}`;
 }
 
-/** Phase 16 (the interior kit; the canvas window "Cutover sync"): the
- *  meeting's Decisions and Commitments, each a Section over a Ledger. A
- *  proposed decision carries Confirm and Dismiss; a
- *  confirmed one names its owner.
- *
- *  Commitments are OBLIGATIONS, one row each (Astra r1 M1): an action
- *  proposal names its action item (`action_item_id`, the producer's link in
- *  proposal_bridge_service.py), so the item and its proposal are ONE row
- *  while the proposal waits. A dismissed proposal or item is
- *  never drawn. The items are the aftercare's rows, else the meeting's own
- *  (`intel.action_items`). A Section with no rows is not drawn (A.8). */
 export function meetingOutcomes(
   data: Pick<MeetingData, "ftProposals" | "openActions" | "settledActions"> &
     { completedActionIds?: ReadonlySet<string> }
@@ -95,12 +80,6 @@ export function meetingOutcomes(
     return text ? `by ${text}` : "no date";
   };
   const live = data.ftProposals.filter((p) => p.state !== "dismissed");
-  // PHILO-17 ("what did we decide yesterday?"): the decisions the meeting
-  // recorded are on its record too (the ledger: never a confirmed action).
-  // A proposal and a ledger row are the same decision only by identity: the
-  // record the proposal wrote, or its artifact with the same words. The pair
-  // is one row, and it says the RECORD's state (Astra r2: a record replaced
-  // or disputed after Confirm is not DECIDED). A rejected one is not drawn.
   const said = (value: string) => value.trim().toLowerCase().replace(/\s+/g, " ");
   const same = (p: FollowThroughProposal, d: MeetingDecision) =>
     (Boolean(p.decision_record_id) && p.decision_record_id === d.record_id)
@@ -154,8 +133,6 @@ export function meetingOutcomes(
   });
   const commitments: OutcomeRow[] = [];
   const itemIds = new Set<string>();
-  // Outcomes is a single projection.  Every linked action carries both the
-  // proposal decision and the action completion fact from the server.
   for (const proposal of actionProposals) {
     if (proposal.state === "dismissed") continue;
     const id = String(proposal.action_item_id ?? "");
@@ -210,13 +187,13 @@ export function meetingOutcomes(
   return { decisions, commitments };
 }
 
-export function MeetingOutcomes({ data, meeting, onDecide, head }: {
+export function MeetingOutcomes({ data, meeting, onDecide, head, reviewSlot, doors, reading }: {
+  reading?: ReactNode;
+  reviewSlot?: HTMLElement | null;
+  doors?: ReactNode;
   data: MeetingData;
   meeting: Record<string, unknown>;
-  /** The ledger's head: the summary paragraph and the run's quiet line. */
   head?: ReactNode;
-  /** W2-LIVE-2: a decided row with no record and no reader asks the record
-   *  for its New decision well. */
   onDecide?: () => void;
 }) {
   const intel = ((data.detail ?? meeting)?.intel ?? null) as { action_items?: unknown } | null;
@@ -224,8 +201,6 @@ export function MeetingOutcomes({ data, meeting, onDecide, head }: {
     ? (intel!.action_items as unknown[]).filter((a): a is Record<string, unknown> => Boolean(a) && typeof a === "object")
     : [];
   const { decisions, commitments } = meetingOutcomes(data, intelActions);
-  // The proposals' verbs: Confirm and Dismiss. Never the filled
-  // primary: the meeting's one primary is Send (the foot).
   type Person = { id?: string; display_name?: string; owner_aliases?: string[] | null };
   type Draft = { text: string; owner: string; due: string };
   type MoreMenu = { x: number; y: number; autoFocus: boolean };
@@ -237,8 +212,6 @@ export function MeetingOutcomes({ data, meeting, onDecide, head }: {
   const [drafts, setDrafts] = useState<Record<string, Draft>>({});
   const [more, setMore] = useState<Record<string, MoreMenu>>({});
   const [editing, setEditing] = useState<Record<string, boolean>>({});
-  // HS-S41: the Door read has a state and an attempt. A late answer for an
-  // older action set or an older attempt never overwrites a newer read.
   type DoorRead = { key: string; status: "pending" | "ready" | "failed"; found: Record<string, string> };
   const [door, setDoor] = useState<DoorRead>({ key: "", status: "ready", found: {} });
   const [doorAttempt, setDoorAttempt] = useState(0);
@@ -254,9 +227,6 @@ export function MeetingOutcomes({ data, meeting, onDecide, head }: {
       .finally(() => { if (live) setPeopleLoading(false); });
     return () => { live = false; };
   }, [peopleAttempt]);
-  // People is a read-time projection of the Door. Resolve a destination by
-  // the durable action item id only; the owner label on a meeting row is not
-  // enough to guess a relationship (aliases can be ambiguous or unavailable).
   const confirmedActionIds = data.ftProposals
     .filter((proposal) => proposal.kind === "action" && proposal.state === "confirmed" && proposal.action_item_id)
     .map((proposal) => String(proposal.action_item_id).trim())
@@ -271,7 +241,6 @@ export function MeetingOutcomes({ data, meeting, onDecide, head }: {
       setDoor({ key: doorReadKey, status: "ready", found: {} });
       return () => { live = false; };
     }
-    // A stale destination is not shown while the current read is open.
     setDoor({ key: doorReadKey, status: "pending", found: {} });
     const wanted = new Set(confirmedActionIds.split("|"));
     const existing = doorRead.current?.key === doorReadKey ? doorRead.current.promise : null;
@@ -312,8 +281,6 @@ export function MeetingOutcomes({ data, meeting, onDecide, head }: {
   const doorCurrent = door.key === doorReadKey ? door : { key: doorReadKey, status: "pending" as const, found: {} };
   const doorPeople = doorCurrent.status === "ready" ? doorCurrent.found : {};
   const checkPerson = () => setDoorAttempt((attempt) => attempt + 1);
-  // An owner is a NAME. Two people with one display name are one choice,
-  // never two rows that look like a choice of person.
   const ownerNames = Array.from(new Set(people
     .map((person) => String(person.display_name ?? "").trim())
     .filter(Boolean)));
@@ -402,8 +369,6 @@ export function MeetingOutcomes({ data, meeting, onDecide, head }: {
         onSelect: () => openPerson(row.personRelationshipId!, "prep"),
       });
     } else if (!pending && row.plate === "ACT" && row.proposalId && row.actionItemId) {
-      // HS-S41: no person is known from this read. Check reads the Door
-      // again; it never confirms, links or saves.
       menuEntries.push({
         type: "item", id: `check-person-${id}`, label: "Check person",
         ghost: menuBusy ?? (doorCurrent.status === "pending" ? "Reading" : undefined),
@@ -472,21 +437,18 @@ export function MeetingOutcomes({ data, meeting, onDecide, head }: {
         </Button>
       ) : null
     ) : null;
-    // Betterment capture C5: the Result this action asked for is ready.
     const serving = resultServing(data.prepared ?? [], row.actionItemId?.trim());
     const draftReady = serving ? <DraftReady meetingId={String(meeting.id)} result={serving} /> : null;
-    /* W2-LIVE-2 (canvas A, After): a decided row's one verb, Decide…: its
-       record when it has one, else the decision's reader, else New decision. */
     const recordId = String(row.recordId ?? "").trim();
     const decisionId = String(row.decisionId ?? "").trim();
     const decide = row.plate === "DEC" && !pending && (recordId || decisionId || onDecide) ? (
-      <Button dense variant="secondary" data-testid="decision-decide-btn" aria-label={`Decide: ${row.text}`}
+      <Button dense variant="secondary" data-testid="decision-decide-btn" aria-label={`Open the record: ${row.text}`}
         onClick={() => {
           if (recordId) openDecisionRecord(recordId);
           else if (decisionId) openRef(`decision:${decisionId}`);
           else onDecide?.();
         }}>
-        Decide…
+        Open the record
       </Button>
     ) : null;
     return <>{draftReady}{lifecycle}{decide}{actionLifecycle}{destinationVerbs(row, !pending)}{menu}</>;
@@ -561,7 +523,7 @@ export function MeetingOutcomes({ data, meeting, onDecide, head }: {
     const draft = drafts[id];
     return Boolean(draft && (draft.text !== row.text || draft.owner !== (row.owner ?? "") || draft.due !== (row.due ?? "")));
   });
-  const controls = (
+  const controls = eligible.length || data.outcomeRefreshFailed || (confirmedActionIds && doorCurrent.status === "failed") ? (
     <>
       {eligible.length ? (
         <Button dense variant={bulkBlocked ? "ghost" : "primary"} disabled={bulkBlocked} loading={data.busy} data-testid="proposal-confirm-all-btn" onClick={() => void data.confirmAll()}>
@@ -580,64 +542,67 @@ export function MeetingOutcomes({ data, meeting, onDecide, head }: {
         </ActionNotice>
       ) : null}
     </>
-  );
-  // The language (2026-11-08): ONE ledger by weight. What waits on him
-  // first (the meeting's own asks, the proposals), then the open actions
-  // (coral when overdue), the decisions filed, the done actions, then the
-  // Results it prepared. Each row's mark is the spine's colour for its state.
+  ) : undefined;
   const today = new Date().toISOString().slice(0, 10);
   const pendingIds = new Set(data.ftProposals.filter((p) => p.state === "proposed").map((p) => p.id));
   const weigh = (row: OutcomeRow): { weight: number; tone: SpineTone } => {
+    if (row.deferredUntil) return { weight: 6, tone: "graphite" };
     if (row.proposalId && pendingIds.has(row.proposalId)) return { weight: row.plate === "ACT" ? 1 : 2, tone: "brass" };
     if (row.plate === "ACT") {
       if (row.actionStatus === "done") return { weight: 5, tone: "moss" };
       const overdue = /^\d{4}-\d{2}-\d{2}/.test(row.due ?? "") && String(row.due).slice(0, 10) < today;
       return { weight: 3, tone: overdue ? "coral" : "brass" };
     }
-    return { weight: 4, tone: row.meta === "DISPUTED" ? "coral" : "moss" };
+    return { weight: 4, tone: row.meta === "DISPUTED" ? "coral" : row.meta === "REPLACED" ? "graphite" : "moss" };
   };
   const rows = [...withVerbs(commitments), ...withVerbs(decisions)]
     .map((row, index) => ({ row, index, ...weigh(row) }))
     .sort((a, b) => a.weight - b.weight || a.index - b.index);
   const needs = data.needsRows ?? [];
-  const prepared = (data.prepared?.length ?? 0) + (data.canPrepare?.length ?? 0) > 0;
-  if (!rows.length && !needs.length && !prepared) return head ? <section className="mt-ledger" aria-label="Outcomes" data-testid="meeting-ledger">{head}</section> : null;
-  return (
-    <section className="mt-ledger" aria-label="Outcomes" data-testid="meeting-ledger">
+  const pending = (row: OutcomeRow) => Boolean(row.proposalId && pendingIds.has(row.proposalId) && !row.deferredUntil);
+  const drawRow = ({ row, tone }: typeof rows[number]) => (
+    <SurfaceLedgerRow key={row.key}
+      data-testid={row.plate === "DEC" ? "meeting-decisions-row" : "meeting-commitments-row"}
+      lead={<Spine tone={tone} className="mt-ledger-mark" label={tone === "coral" ? "At risk" : undefined} />}
+      primary={<span data-weight={pending(row) || row.plate === "DEC" || (row.due && row.actionStatus !== "done") ? "heavy" : "light"}>{row.text}</span>}
+      meta={<>{row.meta.replace(/(?: · )?Done$|^DECIDED$|^DISPUTED$|^REPLACED$/g, "")} <StateChip state={pending(row) ? "warning" : row.actionStatus === "done" ? "success" : tone === "coral" ? "failure" : "idle"}
+        label={pending(row) ? "Proposed" : row.deferredUntil ? "Not now" : row.plate === "DEC" ? (row.meta === "DISPUTED" ? "Disputed" : row.meta === "REPLACED" ? "Replaced" : "Decided") : row.actionStatus === "done" ? "Done" : tone === "coral" ? "Overdue" : "Open"} /></>}
+      trailing={row.verbs} wrap open={Boolean(row.children)} expands={false}>{row.children}</SurfaceLedgerRow>
+  );
+  const review = <>
+    {controls}
+    <SurfaceLedger label="Review outcomes" cols="meeting-outcomes"><ul className="surface-ledger-rows">
+      {needs.map((row, index) => <SurfaceLedgerRow key={`need-${index}`} data-testid="meeting-needs-row"
+        lead={<Spine tone="brass" className="mt-ledger-mark" />} primary={row.cells[0]} trailing={row.verbs} wrap expands={false} />)}
+      {rows.filter(({ row }) => pending(row)).map(drawRow)}
+    </ul></SurfaceLedger>
+  </>;
+  const standing = reviewSlot ? rows.filter(({ row }) => !pending(row)) : rows;
+  const groups = [
+    { label: "Who owes what", rows: standing.filter(({ row }) => row.plate === "ACT" && row.actionStatus !== "done") },
+    { label: "Decisions", rows: standing.filter(({ row }) => row.plate === "DEC") },
+    { label: "Done", rows: standing.filter(({ row }) => row.plate === "ACT" && row.actionStatus === "done") },
+  ];
+  return <>
+    {reviewSlot ? createPortal(review, reviewSlot) : null}
+    {reading ?? <section className="mt-ledger" aria-label="Outcomes" data-testid="meeting-ledger">
       {head}
-      <SurfaceLedger label="Outcomes" cols="meeting-outcomes" controls={controls}>
+      <SurfaceLedger label="Outcomes" cols="meeting-outcomes" controls={reviewSlot ? undefined : controls}>
         <ul className="surface-ledger-rows">
-          {needs.map((row, index) => (
-            <SurfaceLedgerRow key={`need-${index}`} data-testid="meeting-needs-row"
-              lead={<Spine tone="brass" className="mt-ledger-mark" />} primary={row.cells[0]}
-              trailing={row.verbs} wrap expands={false} />
-          ))}
-          {rows.map(({ row, tone }) => (
-            <SurfaceLedgerRow
-              key={row.key}
-              data-testid={row.plate === "DEC" ? "meeting-decisions-row" : "meeting-commitments-row"}
-              lead={<Spine tone={tone} className="mt-ledger-mark" label={tone === "coral" ? "Overdue" : undefined} />}
-              primary={row.text}
-              meta={row.meta}
-              metaTone={row.tone}
-              trailing={row.verbs}
-              wrap
-              open={Boolean(row.children)}
-              expands={false}
-            >{row.children}</SurfaceLedgerRow>
-          ))}
-          {/* Betterment capture C5: the Results the meeting prepared. */}
-          <PreparedResults meetingId={String(meeting.id)} results={data.prepared ?? []}
-            canPrepare={data.canPrepare ?? []}
-            selectionHash={readPlannedRoute(data.detail ?? meeting)?.selection_hash ?? null}
-            onChanged={data.refreshPrepared} />
+          {reviewSlot ? null : needs.map((row, index) => <SurfaceLedgerRow key={`need-${index}`} data-testid="meeting-needs-row" primary={row.cells[0]} trailing={row.verbs} wrap expands={false} />)}
+          {groups.filter((group) => group.rows.length).map((group) => <li key={group.label} className="mt-ledger-group">
+            <h3>{group.label}</h3><ul className="surface-ledger-rows">{group.rows.map(drawRow)}</ul>
+          </li>)}
+          <PreparedResults meetingId={String(meeting.id)} results={data.prepared ?? []} canPrepare={data.canPrepare ?? []}
+            selectionHash={readPlannedRoute(data.detail ?? meeting)?.selection_hash ?? null} onChanged={data.refreshPrepared} />
+          {doors}
         </ul>
       </SurfaceLedger>
-    </section>
-  );
+    </section>}
+  </>;
+
 }
 
-/** A source destination requires a stored numeric segment, including valid zero. */
 export function validMeetingSegment(index: unknown, length: number): index is number {
   return typeof index === "number" && Number.isInteger(index) && index >= 0 && index < length;
 }
@@ -660,87 +625,40 @@ export function MeetingDetail({
   onLead,
   onConflicts,
   onDecide,
+  reviewSlot,
+  onReading,
 }: {
-  /** The open sync conflicts, for the record's plate. */
+  reviewSlot?: HTMLElement | null;
+  onReading?: (reading: boolean) => void;
   onConflicts?: (count: number) => void;
-  /** The language (2026-11-08): the first proposal still to file, for the
-   *  record's plate (its one verb), or null. */
   onLead?: (lead: PlateLead | null) => void;
-  /** W2-LIVE-2: a decided row's Decide… with no record opens New decision. */
   onDecide?: () => void;
-  /** Window grammar: the window's status bar says what is left to review. */
   onReviewCount?: (count: number) => void;
   meeting: Record<string, unknown> | null;
   sendRequested?: boolean;
   decideRequested?: boolean;
-  /** PHILO-17 transcribe: start Transcribe on this audio-only meeting. */
   onTranscribe?: (id: string) => Promise<unknown>;
-  /** "outcomes" (the face) or "artifacts". */
   view: DetailView;
-  /** HS-109-02/05: a resolved decision moment seeks this transcript row. */
   momentSegmentIndex?: number | null;
   onClose(): void;
   onDeleted(): void;
-  /** HS-111-03 — outcomes land on the footer receipt bar. */
   onReceipt(receipt: Receipt): void;
-  /** HS-201-04 — called with the route this RECORD displays, so the
-   *  disclosure and the request are the same object. */
   onRunIntelligence?: (route: PlannedRoute | null) => void;
-  /** The shared Send sheet returns to the record's opening Send… control. */
   onSendBack?: () => void;
-  /** HS-201-04 — the hub's 409 on this record's last run gesture. */
   runRefusal?: SummaryRefusal | null;
-  /** PHILO-17: bumped by the meeting window when its records may have moved. */
   revision?: number;
 }) {
   const id = String(meeting?.id ?? "");
   const data = useMeetingData(meeting, onReceipt, revision);
   const reviewCount = meetingReviewCount(data);
   useEffect(() => { onReviewCount?.(reviewCount); }, [onReviewCount, reviewCount]);
-  // The plate's lead: an action before a decision; one with no owner or date
-  // opens its row in the ledger ("Fill in") instead of a blind Confirm.
-  // The plate's lead: a proposal (an action before a decision; one with no
-  // owner or date opens its row: "Fill in"), else the first open action (Done).
-  const open = data.ftProposals.filter((p) => p.state === "proposed" && !p.deferred_until);
-  const first = open.find((p) => p.kind === "action") ?? open[0] ?? null;
-  const leadIntel = ((data.detail ?? meeting)?.intel ?? null) as { action_items?: unknown } | null;
-  const openAction = first ? null : meetingOutcomes(data, Array.isArray(leadIntel?.action_items)
-    ? (leadIntel!.action_items as unknown[]).filter((a): a is Record<string, unknown> => Boolean(a) && typeof a === "object")
-    : []).commitments.find((row) => row.actionItemId && !row.proposalId && row.actionStatus !== "done") ?? null;
-  const confirmLead = data.confirmProposal;
-  const completeLead = data.completeAction;
-  const leadKey = first
-    ? `p:${first.id}:${first.text}:${first.owner ?? first.owner_hint ?? ""}:${first.due ?? first.due_hint ?? ""}:${data.busy}`
-    : openAction ? `a:${openAction.actionItemId}:${openAction.text}:${openAction.meta}:${data.busy}` : "";
+  const openAction = reviewCount ? undefined : meetingOutcomes(data).commitments.find((row) => row.actionItemId && !row.proposalId && row.actionStatus !== "done");
   useEffect(() => {
-    if (!onLead) return;
-    if (first) {
-      const owner = String(first.owner ?? first.owner_hint ?? "").trim();
-      const due = String(first.due ?? first.due_hint ?? "").trim();
-      const gap = first.kind === "action" && (!owner || !due);
-      onLead({
-        id: first.id,
-        text: first.text,
-        facts: [first.kind === "action" ? "action" : "decision", owner, due ? `by ${due}` : ""].filter(Boolean).join(" · "),
-        verb: gap ? "Fill in" : "Confirm",
-        busy: data.busy,
-        act: gap
-          ? () => document.querySelector<HTMLElement>("[data-testid=meeting-commitments-row]")?.scrollIntoView?.({ block: "start", behavior: "smooth" })
-          : () => void confirmLead(first.id, { owner: owner || undefined, due: due || undefined }),
-      });
-      return;
-    }
-    if (openAction?.actionItemId) {
-      const itemId = openAction.actionItemId;
-      onLead({ id: itemId, text: openAction.text, facts: `action · ${openAction.meta}`, verb: "Done", busy: data.busy,
-        act: () => void completeLead?.(itemId) });
-      return;
-    }
-    onLead(null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [leadKey, onLead]);
-  // PHILO-17 (the desk sweep): the body is drawn once (per meeting) when
-  // the record's first reads and its Send well's have ended, or at the cap.
+    onLead?.(openAction?.actionItemId ? {
+      id: openAction.actionItemId, text: openAction.text, facts: openAction.meta, verb: "Done", busy: data.busy,
+      act: () => void data.completeAction?.(openAction.actionItemId!),
+    } : null);
+  }, [openAction?.actionItemId, openAction?.text, openAction?.meta, data.busy, onLead, reviewCount]);
   const [wellRead, setWellRead] = useState<{ id: string; read: boolean } | null>(null);
   const reportWell = useCallback((read: boolean) => {
     setWellRead({ id, read });
@@ -756,7 +674,6 @@ export function MeetingDetail({
     return () => window.clearTimeout(timer);
   }, [id]);
   const [drawnFor, setDrawnFor] = useState("");
-  // The Send well is drawn on the outcomes face of a meeting with a summary.
   const wellAsked = sendRequested && view === "outcomes" && Boolean(readMeetingIntel(data.detail ?? meeting)?.summary?.trim());
   const wellDone = !wellAsked || (wellRead?.id === id && wellRead.read);
   const ready = cappedFor === id || (data.firstRead && wellDone);
@@ -764,22 +681,31 @@ export function MeetingDetail({
     if (ready && drawnFor !== id) setDrawnFor(id);
   }, [ready, drawnFor, id]);
   const shown = drawnFor === id || ready;
-  // PHILO-17 (quiet by default): with a summary on the record the
-  // transcript is folded; Open transcript (the foot) and a decision moment
-  // open it. With no summary it is the record's content, open.
-  const hasSummaryText = Boolean(readMeetingIntel(data.detail ?? meeting)?.summary?.trim());
-  const [transcriptAsked, setTranscriptOpen] = useState<boolean | null>(null);
-  const transcriptOpen = transcriptAsked ?? (!hasSummaryText || momentSegmentIndex != null);
+  const [reader, setReader] = useState<"summary" | "transcript" | "context" | null>(momentSegmentIndex != null ? "transcript" : null);
+  const compact = useCompactViewport();
+  const hostedBack = useHasWindowBack();
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const readerRef = useRef<HTMLElement>(null);
+  const doorRef = useRef("meeting-read-summary");
+  const back = () => {
+    setReader(null);
+    window.requestAnimationFrame(() => bodyRef.current?.querySelector<HTMLElement>(`[data-testid=${doorRef.current}]`)?.focus());
+  };
+  useWindowBack({ onBack: reader ? back : onClose, testId: reader ? "meeting-reader-back" : "meeting-record-back" }, [reader, onClose]);
+  useEffect(() => { onReading?.(Boolean(reader)); }, [reader, onReading]);
+  useEffect(() => {
+    if (!reader || (reader === "transcript" && momentSegmentIndex != null)) return;
+    const frame = window.requestAnimationFrame(() => readerRef.current?.scrollIntoView?.({ block: "start" }));
+    return () => window.cancelAnimationFrame(frame);
+  }, [reader, momentSegmentIndex]);
   useEffect(() => {
     const onOpen = (event: Event) => {
-      if ((event as CustomEvent<string>).detail === id) setTranscriptOpen(true);
+      if ((event as CustomEvent<string>).detail === id) setReader("transcript");
     };
     window.addEventListener(MEETING_TRANSCRIPT_OPEN, onOpen);
     return () => window.removeEventListener(MEETING_TRANSCRIPT_OPEN, onOpen);
   }, [id]);
-  useEffect(() => {
-    if (momentSegmentIndex != null) setTranscriptOpen(true);
-  }, [momentSegmentIndex]);
+  useEffect(() => { if (momentSegmentIndex != null) setReader("transcript"); }, [momentSegmentIndex]);
   const {
     detail,
     setDetail,
@@ -790,13 +716,8 @@ export function MeetingDetail({
   } = data;
 
   if (!meeting) return null;
-
-  // HS-201-04: the summary the hub persisted, and the route facts that
-  // belong beside every verb that starts a run. The detail read model is
-  // the source for all three (`intel`, `planned_route`, `run_receipt`).
   const summaryIntel = readMeetingIntel(detail ?? meeting);
   const plannedRoute = readPlannedRoute(detail ?? meeting);
-  // The route the record DISPLAYS: a refusal's fresh route wins over it.
   const displayedRoute = runRefusal?.route ?? plannedRoute;
   const runReceipt = executedReceipt(id, readRunReceipt(detail ?? meeting));
 
@@ -807,16 +728,9 @@ export function MeetingDetail({
 
   return (
     <SurfaceSection>
-      {/* PHILO-17 (the desk sweep): the record's body is mounted at once
-          (its wells start their reads) but drawn only when its first reads
-          end, the Send well's included, or at the cap: a late read never
-          moves a row under the owner's eye (UX-CANON D; the Room's pattern,
-          roomReads.ts and project-room.css .room-body[data-settling]). */}
       <SendWellReadContext.Provider value={reportWell}>
-      <div className="meetings-detail-body" data-settling={shown ? undefined : "true"} aria-busy={shown ? undefined : true}>
+      <div ref={bodyRef} className="meetings-detail-body" data-settling={shown ? undefined : "true"} aria-busy={shown ? undefined : true}>
       {shown ? null : <div className="meetings-detail-settling-line"><SurfaceState loading /></div>}
-      {/* PHILO-17 transcribe: an audio-only meeting's one verb, under the
-          strip that says "NO TRANSCRIPT · SPEECH NOT SET UP". */}
       {onTranscribe ? (
         <MeetingRunVerb>
           <AudioOnlyVerb row={{ ...meeting, ...(detail ?? {}) }} onTranscribe={onTranscribe} setUpSpeech testId="meeting-transcribe" />
@@ -845,20 +759,25 @@ export function MeetingDetail({
           onDeleted();
         }}
       />
-      {/* Betterment capture C5: the ARTIFACTS wing is parked
-          (history/_parked/ArtifactsLibrary.tsx); its Results show under
-          Outcomes ▸ Prepared. */}
-      {(
-        <>
-          {/* PHILO-17 (the Today language): what was said first (the
-              summary), then what was decided and who owes what, then the
-              follow-up (Send), the transcript last. */}
-          {/* betterment/capture C6: what changed since the last meeting of this kind. */}
-          <SinceLastWell since={readSinceLast(data.aftercare)} meetingId={id} />
-          {/* The language (2026-11-08): ONE ledger by weight; its head is the
-              summary (one paragraph) and the run's quiet line. */}
-          <MeetingOutcomes data={data} meeting={meeting} onDecide={onDecide} head={<>
-            <MeetingSummary intel={summaryIntel} receipt={runReceipt} />
+      <>
+          <MeetingOutcomes data={data} meeting={meeting} onDecide={onDecide} reviewSlot={reviewSlot} reading={reader ? <section ref={readerRef} className="mt-reader" data-testid="meeting-reader" aria-label={reader === "summary" ? "Summary" : reader === "transcript" ? "Transcript" : "Meeting context"}>
+        <header className="mt-reader-head">
+          {compact && hostedBack ? null : <Button dense variant="secondary" data-testid="meeting-reader-back" onClick={back}>Back</Button>}
+          <h3>{reader === "summary" ? "Summary" : reader === "transcript" ? "Transcript" : "Meeting context"}</h3>
+        </header>
+        {reader === "summary" ? <MeetingSummary intel={summaryIntel} receipt={runReceipt} />
+          : reader === "transcript" ? <TranscriptWell id={id} segments={segments} momentSegmentIndex={momentSegmentIndex}
+            emptyLabel={speechWasMissing(detail ?? meeting) ? NO_TRANSCRIPT_SPEECH : undefined} />
+          : <><SinceLastWell since={readSinceLast(data.aftercare)} meetingId={id} /><LookedAtWell items={runReceipt?.looked_at} /></>}
+      </section> : undefined} doors={<>
+            <li className="mt-ledger-group"><h3>Read</h3></li>
+            {summaryIntel?.summary?.trim() ? <SurfaceLedgerRow primary="Summary" meta={(summaryIntel.topics ?? []).join(" · ")} expands={false}
+              trailing={<Button dense variant="secondary" data-testid="meeting-read-summary" onClick={() => { doorRef.current = "meeting-read-summary"; setReader("summary"); }}>Read summary</Button>} /> : null}
+            <SurfaceLedgerRow primary="Transcript" meta={segments.length ? `${segments.length} ${segments.length === 1 ? "segment" : "segments"}` : "No transcript"} expands={false}
+              trailing={<Button dense variant="secondary" data-testid="meeting-read-transcript" onClick={() => { doorRef.current = "meeting-read-transcript"; setReader("transcript"); }}>Read transcript</Button>} />
+            {readSinceLast(data.aftercare) || runReceipt?.looked_at?.length ? <SurfaceLedgerRow primary="Meeting context" expands={false}
+              trailing={<Button dense variant="secondary" data-testid="meeting-read-context" onClick={() => { doorRef.current = "meeting-read-context"; setReader("context"); }}>Read context</Button>} /> : null}
+          </>} head={<>
             <SummaryRunVerbs
               intelOff={intelOff}
               intelState={intelState}
@@ -873,24 +792,19 @@ export function MeetingDetail({
                   : undefined
               }
               onSkipIntelligence={
-                // HS-201-04: error/failed belong to the recovery well, which
-                // carries Retry and Skip. Only QUEUED keeps its Skip here.
                 (intelState === "queued" || intelState === "pending")
                   ? async () => {
                       try {
                         await apiFetch(`/api/meetings/${encodeURIComponent(id)}/intel-recovery/skip`, { method: "POST" });
                         setDetail(await apiFetch(`/api/meetings/${encodeURIComponent(id)}`));
                         onDeleted();
-                      } catch { /* stays */ }
+                      } catch {  }
                     }
                   : undefined
               }
             />
           </>} />
-          {/* PHILO-11-05 (canvas C1, C4): SUMMARY, then SEND; no summary, no well.
-              The old aftercare Slack rows are gone (R7): the digest and the
-              follow-up are forms of this one well. */}
-          {sendRequested ? (
+              {sendRequested ? (
             <div id={`meeting-${id}-send`} className="meetings-detail-anchor">
               {summaryIntel?.summary?.trim() ? (
                 <MeetingSendWell meetingId={id} title={meetingTitle} onBack={onSendBack}
@@ -900,8 +814,7 @@ export function MeetingDetail({
               )}
             </div>
           ) : null}
-          {/* PHILO-13-08 (B3): Decide, next to SEND; with or without a summary. */}
-          {decideRequested ? <div id={`meeting-${id}-decide`} className="meetings-detail-anchor"><MeetingDecideWell defaultOpen meetingId={id} title={meetingTitle}
+              {decideRequested ? <div id={`meeting-${id}-decide`} className="meetings-detail-anchor"><MeetingDecideWell defaultOpen meetingId={id} title={meetingTitle}
             startedAt={String((detail ?? meeting)?.started_at ?? "") || null}
             deciders={meetingAttendees(meeting, detail)}
             summary={summaryIntel?.summary ?? null}
@@ -909,20 +822,7 @@ export function MeetingDetail({
               intelOff, hasTranscript, plannedRoute: displayedRoute,
               onRunIntelligence: onRunIntelligence ? () => undefined : undefined,
             })} /></div> : null}
-          <div id={`meeting-${id}-transcript`} className="meetings-detail-anchor">
-            <TranscriptWell
-              id={id}
-              segments={segments}
-              momentSegmentIndex={momentSegmentIndex}
-              open={transcriptOpen}
-              onOpenChange={setTranscriptOpen}
-              emptyLabel={speechWasMissing(detail ?? meeting) ? NO_TRANSCRIPT_SPEECH : undefined}
-            />
-          </div>
-          {/* betterment/capture C2: what the summary read, each with its date. */}
-          <LookedAtWell items={runReceipt?.looked_at} />
         </>
-      )}
       </div>
       </SendWellReadContext.Provider>
     </SurfaceSection>

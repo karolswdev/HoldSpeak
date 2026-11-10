@@ -506,6 +506,13 @@ def compose_hub(host: Any, *, on_launch_hold: Callable[[str], Any]) -> HubCompos
     # same instance. Before this, MCP dispatch and each HTTP route built
     # their own bare copy, so a write from anywhere but the acting browser
     # reached no open desk.
+    from holdspeak.web.routes.actuator_shared import DeskActuatorLifecycle
+    web_ctx.actuator_service = ActuatorProposalService(
+        db, config_provider=lambda: Config.load(path=__import__("holdspeak.config", fromlist=["CONFIG_FILE"]).CONFIG_FILE),
+        broadcast=lambda message_type, data: host.broadcast(message_type, data),
+        lifecycle=DeskActuatorLifecycle(web_ctx, db),
+    )
+
     _runtime_services = install_from_web_context(
         web_ctx, db=db, observer=obs
     )
@@ -524,13 +531,6 @@ def compose_hub(host: Any, *, on_launch_hold: Callable[[str], Any]) -> HubCompos
     except Exception:  # a start never fails on the sweep; it runs again next start
         log.warning("launch grant reconcile failed", exc_info=True)
 
-    from holdspeak.web.routes.actuator_shared import DeskActuatorLifecycle
-    web_ctx.actuator_service = ActuatorProposalService(
-        db, config_provider=lambda: Config.load(path=__import__("holdspeak.config", fromlist=["CONFIG_FILE"]).CONFIG_FILE),
-        broadcast=lambda message_type, data: host.broadcast(message_type, data),
-        lifecycle=DeskActuatorLifecycle(web_ctx, db),
-    )
-    _runtime_services.actuator_service = web_ctx.actuator_service
 
     return HubComposition(
         web_ctx=web_ctx,
