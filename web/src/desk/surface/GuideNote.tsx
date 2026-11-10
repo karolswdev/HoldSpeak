@@ -183,12 +183,15 @@ export function GuideNote({
           ),
         };
       }
+      const horizontal = seat.side === "left" || seat.side === "right";
       const tail = ring
         ? Math.max(
             16,
             Math.min(
-              size.width - 16,
-              ring.left + Math.min(ring.width / 2, 120) - seat.left,
+              (horizontal ? size.height : size.width) - 16,
+              horizontal
+                ? ring.top + Math.min(ring.height / 2, 120) - seat.top
+                : ring.left + Math.min(ring.width / 2, 120) - seat.left,
             ),
           )
         : 20;

@@ -46,9 +46,18 @@
   bottom: -5px;
   transform: rotate(225deg);
 }
-.guide-note[data-side="dock"]::before,
-.guide-note[data-side="left"]::before,
+.guide-note[data-side="left"]::before {
+  left: auto;
+  right: -5px;
+  top: var(--guide-tail);
+  transform: rotate(135deg);
+}
 .guide-note[data-side="right"]::before {
+  left: -5px;
+  top: var(--guide-tail);
+  transform: rotate(315deg);
+}
+.guide-note[data-side="dock"]::before {
   display: none;
 }
 .guide-words {

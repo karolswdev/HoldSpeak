@@ -15,6 +15,20 @@ it("places a note below or above a part without covering it", () => {
   const above = guideSeat(win, bottom, note, 580);
   expect(above.top + note.height).toBeLessThan(bottom.top);
 });
+it("uses a free side when a tall part leaves no room above or below", () => {
+  const win = { left: 0, top: 0, width: 900, height: 600 };
+  for (const part of [
+    { left: 50, top: 50, width: 200, height: 480 },
+    { left: 600, top: 50, width: 250, height: 480 },
+  ]) {
+    const note = { width: 360, height: 110 };
+    const seat = guideSeat(win, part, note, 580);
+    expect(["left", "right"]).toContain(seat.side);
+    expect(seat.left + note.width <= part.left || seat.left >= part.left + part.width).toBe(true);
+    expect(seat.top).toBeGreaterThanOrEqual(36);
+    expect(seat.top + note.height).toBeLessThan(580);
+  }
+});
 it("docks inside a phone window above its status line", () => {
   const seat = guideSeat(
     { left: 0, top: 0, width: 393, height: 700 },
