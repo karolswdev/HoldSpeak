@@ -184,6 +184,8 @@ export interface ObjectListProps {
   /** Window grammar: the provider's own columns, in order (wins over
    *  `visibleColumns`). Name is always first. */
   columns?: readonly ObjectListColumn[];
+  /** A names-only preference list needs no column caption. */
+  headerless?: boolean;
   /** Window grammar: `dense` is the native list view (30 px rows). */
   density?: "default" | "dense";
   /** OS selection grammar: 26 px rows, no row verbs, one selected row. */
@@ -221,6 +223,7 @@ export function ObjectList({
   sort = { key: "name", dir: "asc" },
   visibleColumns,
   columns: declared,
+  headerless = false,
   density = "default",
   selection = false,
   verbs = [],
@@ -374,11 +377,11 @@ export function ObjectList({
       style={{ "--object-list-columns": selection ? fitTracks(columns) : tracks, "--object-list-phone-columns": phoneTracks } as CSSProperties}
       role="grid"
       aria-label={label}
-      aria-rowcount={rows.length + 1}
+      aria-rowcount={rows.length + (headerless ? 0 : 1)}
     >
       {selection ? <><style>{fitRules}</style><div className="object-list-measure" aria-hidden="true">{columns.map((column) => <span key={column.key} data-measure-col={column.key} data-label={column.word} />)}</div></> : null}
       {sortVerb ? (sortSlot ? createPortal(sortVerb, sortSlot) : <div className="object-list-sortline">{sortVerb}</div>) : null}
-      <div className="object-list-head" role="row">
+      {!headerless ? <div className="object-list-head" role="row">
         {columns.map((column) => {
           const active = sort.key === column.key;
           return (
@@ -406,7 +409,7 @@ export function ObjectList({
             </div>
           );
         })}
-      </div>
+      </div> : null}
       <div className="object-list-rows" role="rowgroup" ref={bodyRef}>
         {sorted.map((row) => {
           const selected = selection ? row.id === pickedId : selectedIds ? selectedIds.includes(row.id) : row.id === selectedId;

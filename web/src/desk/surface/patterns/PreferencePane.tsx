@@ -3,6 +3,7 @@ import { Button } from "../../../components/signal/Signal";
 import { CycleGadget, GadgetRow } from "../gadgets";
 import { useRovingRows } from "../roving";
 import "./preferences.css";
+import { useGroupHeading } from "../groupHeading";
 
 /** A window-sized column. Only its list wells scroll. */
 export function PreferencePane({
@@ -35,13 +36,16 @@ export function PaneGroup({
   children: ReactNode;
   grow?: boolean;
 }) {
+  const ref = useRef<HTMLElement>(null);
+  const heading = useGroupHeading(ref, label);
   return (
     <section
+      ref={ref}
       className="surface-pane-group"
       data-grow={grow || undefined}
       aria-label={label}
     >
-      <h3>{label}</h3>
+      {heading ? <h3>{label}</h3> : null}
       {children}
     </section>
   );

@@ -14,6 +14,7 @@ import {
   FoldGadget,
   GadgetGroup,
   GadgetRow,
+  ListView,
   GadgetTable,
   LampGadget,
   LedMeter,
@@ -99,6 +100,7 @@ const GALLERY_PLAN_MIXED: PlanStep[] = [
 ];
 
 export function ControlsGallery({ hero }: CoreProps) {
+  const [preference, setPreference] = useState("sounds");
   const [checked, setChecked] = useState(true);
   const [cycle, setCycle] = useState("auto");
   const [text, setText] = useState("");
@@ -213,6 +215,17 @@ export function ControlsGallery({ hero }: CoreProps) {
           </GadgetRow>
           <GadgetRow label="Level" fact="LedMeter" wide>
             <LedMeter label="CTX" value={prop} />
+          </GadgetRow>
+        </GadgetGroup>
+        <ListView label="Names-only preferences" headerless ordered
+          columns={[{key: "name", word: "Name"}]}
+          rows={[{id: "sounds", kind: "preference", name: "Sounds"}, {id: "name", kind: "preference", name: "Device name"}]}
+          selectedId={preference} onSelect={setPreference} />
+        <GadgetGroup label={preference === "sounds" ? "Sounds" : "Device name"}>
+          <GadgetRow label={preference === "sounds" ? "Sounds" : "Device name"}>
+            {preference === "sounds"
+              ? <CheckGadget label="Preference example sounds" checked={checked} onChange={setChecked} />
+              : <StringGadget label="Preference example device name" value={text} onChange={setText} />}
           </GadgetRow>
         </GadgetGroup>
       </SurfaceSection>

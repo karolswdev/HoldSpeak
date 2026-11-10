@@ -114,6 +114,8 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                         if width == 1440 and pane in ("meetings", "speak", "notices", "calls", "this-mac"):
                             overflow = section.locator(".surface-preference-well:visible").evaluate_all("""els => els.filter(el => !el.closest('.surface-pane-inspector, .surface-list-pane-preview') && el.scrollHeight > el.clientHeight + 1).map(el => ({text:el.innerText, height:el.clientHeight, content:el.scrollHeight}))""")
                             assert not overflow, overflow
+                        if pane in ("calls", "notices", "speak", "meetings", "this-mac"):
+                            assert not section.evaluate(SETTINGS_GROUPS_JS)
                         page.screenshot(path=str(shots / f"{state}-{'900x600' if width == 1440 else '393'}-after.png"))
 
                     def choose_tab(label: str) -> None:
@@ -260,11 +262,23 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                         section.get_by_role("region", name="Spoken symbol", exact=True).get_by_role("button", name="Done").click()
                     if pane == "notices":
                         choose_tab("Brief")
+                        choices = section.get_by_role("grid", name="Brief choices")
+                        expect(choices.get_by_role("row").first).to_have_attribute("aria-selected", "true")
+                        expect(section.get_by_role("combobox", name="Digest", exact=True)).to_be_visible()
+                        assert choices.get_by_role("columnheader").count() == 0
+                        assert section.get_by_role("button", name="Open choice", exact=True).count() == 0
                         for label in ("Digest and Later", "Notices", "Morning brief", "Sweep and loops"):
-                            row = section.get_by_role("row").filter(has_text=label).first
-                            row.dblclick()
+                            row = choices.get_by_role("row").filter(has_text=label).first
+                            row.click()
+                            if label != "Sweep and loops":
+                                form = section.get_by_role("region", name=label, exact=True)
+                                expect(form).to_be_visible()
+                                control = form.locator("input, select, textarea, button").filter(visible=True).first
+                                row.press("Enter")
+                                expect(control).to_be_focused()
+                                row.dblclick()
+                                expect(control).to_be_focused()
                             shot("reach-" + label.lower().replace(" ", "-"))
-                            section.get_by_role("button", name="Done", exact=True).last.click()
                         assert section.get_by_role("tab").count() <= 4
                     if pane == "calls":
                         choose_tab("Phone")
@@ -275,6 +289,11 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                         shot("calls-phone-pair")
                         section.get_by_test_id("phone-pair-cancel").click()
                         choose_tab("Phone alerts")
+                        bundle = section.get_by_test_id("phone-push-bundle")
+                        field = bundle.get_by_role("textbox", name="App bundle ID", exact=True)
+                        label = bundle.locator(".gadget-row-label")
+                        assert field.bounding_box()["x"] > label.bounding_box()["x"]
+                        assert bundle.get_by_role("button", name="Save", exact=True).bounding_box()["x"] >= bundle.locator(".gadget-row-gadget").bounding_box()["x"]
                         for key in ("phone-push-p8", "phone-push-key-id", "phone-push-team-id"):
                             section.get_by_test_id(key).dblclick()
                             shot("calls-" + key + "-edit")
@@ -383,3 +402,36 @@ def _bounded(window: Any) -> None:
       const r = row.getBoundingClientRect(), w = well.getBoundingClientRect();
       return !r.width || !r.height || (r.top >= w.top - 1 && r.bottom <= w.bottom + 1);
     })"""), "The selected row must remain visible above its inspector"
+
+
+# Read the rendered grammar, including composed rows, rather than component counts.
+SETTINGS_GROUPS_JS = r"""section => {
+  const visible = el => el.getClientRects().length && getComputedStyle(el).visibility !== 'hidden';
+  const failures = [];
+  for (const group of section.querySelectorAll('.gadget-group, .surface-pane-group')) {
+    if (!visible(group)) continue;
+    const rows = [...group.querySelectorAll('.gadget-row, .object-list-row')]
+      .filter(row => visible(row) && row.closest('.gadget-group, .surface-pane-group') === group);
+    const heading = [...group.children].find(el => el.matches('h3, .gadget-group-label') && visible(el));
+    if (rows.length === 1 && heading) failures.push(`One row repeats a group heading: ${heading.textContent}`);
+  }
+  if (section.matches('[data-settings-section="calls"]')) {
+    const left = section.getBoundingClientRect().left;
+    for (const row of section.querySelectorAll('.gadget-row')) {
+      if (visible(row) && Math.abs(row.getBoundingClientRect().left - left) > 1)
+        failures.push(`Calls row has a second left edge: ${row.textContent.trim().slice(0, 60)}`);
+    }
+  }
+  for (const pane of section.querySelectorAll('.surface-list-pane')) {
+    if (!visible(pane)) continue;
+    const list = pane.querySelector('.surface-list-pane-list .object-list');
+    const preview = pane.querySelector(':scope > .surface-list-pane-preview');
+    if (!list || !preview) continue;
+    const left = list.getBoundingClientRect().left;
+    for (const el of preview.querySelectorAll('.gadget-row, .gadget-group-label, .surface-pane-group > h3, .surface-pane-inspector-head')) {
+      if (visible(el) && Math.abs(el.getBoundingClientRect().left - left) > 1)
+        failures.push(`Second left edge: ${el.textContent.trim().slice(0, 60)}`);
+    }
+  }
+  return failures;
+}"""

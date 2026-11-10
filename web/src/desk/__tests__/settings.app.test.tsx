@@ -883,7 +883,7 @@ describe("Settings › Rhythm is Rhythm's one home (Betterment setup ST1)", () =
     await screen.findByRole("tab", { name: "Brief" });
     expect(hub.state.calls.some((c) => c.path.startsWith("/api/cadence/"))).toBe(false);
     fireEvent.click(screen.getByRole("tab", { name: "Brief" }));
-    fireEvent.doubleClick(screen.getByText("Sweep and loops", {exact: true}));
+    fireEvent.click(screen.getByText("Sweep and loops", {exact: true}));
     await screen.findByTestId("rhythm-sweep-row");
     expect(screen.queryByTestId("rhythm-headline")).toBeNull();
   });

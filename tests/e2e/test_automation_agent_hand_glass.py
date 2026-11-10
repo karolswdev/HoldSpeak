@@ -8,6 +8,7 @@ import pytest
 
 from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle
 from tests._evidence import evidence_dir
+from .test_automation_glass import _new_automation
 
 pytest.importorskip("playwright.sync_api", reason="the hand automation glass needs Playwright")
 pytestmark = [pytest.mark.e2e]
@@ -77,31 +78,23 @@ def test_hand_automation_do_with_review_controls_are_real_and_saved(
                 go = page.locator("nav[aria-label='Go menu']")
                 go.wait_for(timeout=45_000)
                 go.get_by_role("menuitem", name="Automations").first.evaluate("el => el.click()")
-                page.get_by_test_id("automation-new").wait_for(timeout=45_000)
-                page.get_by_test_id("automation-new").click()
+                _new_automation(page)
                 # The starters are cards in the Automations window's pane.
                 chooser = page.locator("[id='surface-workbenches']")
-                chooser.get_by_test_id("automation-starter-scratch").wait_for(timeout=45_000)
+                chooser.get_by_role("button", name="Create", exact=True).wait_for(timeout=45_000)
                 with page.expect_response(
                     lambda response: response.url.endswith("/api/workbenches")
                     and response.request.method == "POST"
                 ) as created:
-                    chooser.get_by_test_id("automation-starter-scratch").click()
+                    chooser.get_by_role("button", name="Create", exact=True).click()
                 workbench = created.value.json()["workbench"]
                 workbench_id = workbench["id"]
+                chooser.get_by_test_id("automation-setup").wait_for()
+                chooser.get_by_role("button", name="Cancel", exact=True).click()
+                chooser.locator(f'[data-object-id="{workbench_id}"]').dblclick()
                 window = page.get_by_test_id("automation-window")
                 window.wait_for(timeout=45_000)
                 _settle(page)
-
-                # Scratch now opens the guided builder. Complete its real Do
-                # write and the remaining steps before testing saved-summary
-                # editing and native agent admission below.
-                setup = page.get_by_test_id("automation-setup")
-                setup.get_by_role("textbox", name="What it does", exact=True).fill("Complete the action.")
-                for _ in range(4):
-                    setup.get_by_test_id("automation-setup-next").click()
-                setup.get_by_test_id("automation-setup-done").click()
-                setup.wait_for(state="hidden")
 
                 do_line = page.get_by_test_id("automation-line-do")
                 with_line = page.get_by_test_id("automation-line-with")
@@ -131,9 +124,10 @@ def test_hand_automation_do_with_review_controls_are_real_and_saved(
                 ) as with_saved:
                     native_editor.get_by_role("button", name="Use Claude Code", exact=True).click()
                 assert (with_saved.value.request.post_data_json or {}).get("profile_id") == "claude-default"
-                with_line.locator(".automation-line-press-value").get_by_text("Claude Code", exact=True).wait_for(timeout=10_000)
-                assert "claude-default" not in with_line.locator(".automation-line-press-value").inner_text()
+                with_line.get_by_text("Claude Code", exact=True).wait_for(timeout=10_000)
+                assert "claude-default" not in with_line.inner_text()
 
+                page.locator(".surface-popover").press("Escape")
                 page.screenshot(path=str(SHOTS / f"do-with-review-{width}-closed.png"))
                 review_line.get_by_role("button").first.click()
                 editor = page.get_by_test_id("automation-review-editor")

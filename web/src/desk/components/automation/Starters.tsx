@@ -1,175 +1,52 @@
-/** New automation (the native Automations app, 2026-11-08): the starters
- * as pictogram cards inside the Automations window, plus Start from
- * scratch. No second chooser window (the old one is parked in
- * desk/_parked/automations/NewWorkbenchChooser_20261108.tsx).
- *
- * Each starter is one automation's sentence: what it does, when it runs and
- * where the result goes. A press makes exactly one automation with that
- * sentence (no agent is copied); the app then shows it. A blank the starter
- * cannot guess ("About: which people?") is shown here and on the automation.
- *
- * HS-130-09 still holds: one press, one record, no orphan. */
-import "./automation-home.css";
-import { useCallback, useEffect, useId, useRef, useState, type ComponentPropsWithoutRef } from "react";
+/** New automation uses the same inspector form as its saved setup. */
+import { useEffect, useRef, useState } from "react";
 import { apiFetch, readableError } from "../../../lib/api";
-import { Button } from "../../../components/signal/Signal";
-import { spriteUrl } from "../../sprites";
-import { SurfaceState } from "../../surface/Surface";
-import { ChoiceCardShell } from "../../surface/patterns/ChoiceCardShell";
-import { useRovingGrid } from "../../surface/roving";
+import { CycleGadget, InspectorForm, SurfaceState } from "../../surface";
 import { putWords, scheduleWords } from "./model";
 
-/** One starter (`holdspeak/workbench_templates.py` STARTERS). */
 export interface AutomationStarter {
-  id: string;
-  name: string;
-  description: string;
-  instruction: string;
-  sources: string[];
-  when: { kind: string };
-  /** The schedule as cron (shown in words); null when it is not scheduled. */
-  schedule: string | null;
-  output_target: string;
-  /** The lines it cannot guess, in words: `{ about: "which people?" }`. */
-  blanks: Record<string, string>;
+  id: string; name: string; description: string; instruction: string;
+  sources: string[]; when: { kind: string }; schedule: string | null;
+  output_target: string; blanks: Record<string, string>;
 }
 
-function starterWhen(starter: AutomationStarter): string {
-  return scheduleWords(starter.schedule) ?? "Only when I press Run now";
-}
-
-const STARTER_SPRITES: Record<string, string> = {
-  "friday-team-update": "artifact",
-  "meeting-follow-ups": "action",
-  "one-on-one-prep": "person",
-  "summarize-a-drawer": "directory",
-  "morning-prep": "meeting",
-  "friday-runbook": "repository",
-};
-
-function starterSprite(starter: AutomationStarter): string {
-  return spriteUrl(STARTER_SPRITES[starter.id] ?? "workbench", starter.id, "rest", undefined, 32);
-}
-
-function descriptionId(prefix: string, starter: AutomationStarter): string {
-  return `${prefix}-automation-starter-description-${starter.id.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
-}
-
-/** ChoiceCardShell supplies the shared card material while Button remains the
- * one interactive element and retains its chrome variant. ChoiceCardShell
- * owns `disabled` as a visual data attribute, so carry that state through to
- * the underlying native button here. */
-function StarterButton({
-  ["data-disabled"]: dataDisabled,
-  ...props
-}: ComponentPropsWithoutRef<"button"> & { "data-disabled"?: boolean }) {
-  return <Button {...props} variant="chrome" disabled={Boolean(dataDisabled)} />;
-}
-
-export function AutomationStarters({
-  onCreated,
-}: {
-  /** The made automation's id: the app picks it. */
-  onCreated: (workbenchId: string) => void;
+export function AutomationStarters({ onCreated, onCancel = () => undefined }: {
+  onCreated(id: string): void; onCancel?(): void;
 }) {
   const [starters, setStarters] = useState<AutomationStarter[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
+  const [readError, setReadError] = useState("");
+  const [choice, setChoice] = useState("scratch");
   const [busy, setBusy] = useState(false);
-  const [selected, setSelected] = useState<string | null>(null);
-  const [createError, setCreateError] = useState("");
-  const [created, setCreated] = useState<string | null>(null);
-  const descriptionPrefix = useId().replace(/[^a-zA-Z0-9_-]/g, "");
-  const scratchDescriptionId = `${descriptionPrefix}-automation-starter-description-scratch`;
-  const choicesRef = useRef<HTMLDivElement>(null);
-  useRovingGrid(choicesRef, { selector: ".automation-starter" });
-
-  const loadStarters = useCallback(() => {
-    setError(false);
-    setLoading(true);
-    return apiFetch<{ templates?: AutomationStarter[] }>("/api/workbench-templates")
-      .then((answer) => setStarters(answer.templates || []))
-      .catch(() => setError(true))
-      .finally(() => setLoading(false));
-  }, []);
-
-  useEffect(() => { void loadStarters(); }, [loadStarters]);
-
-  const create = async (starter: AutomationStarter | null) => {
-    if (busy || created) return;
-    const name = starter?.name ?? "New automation";
-    setSelected(starter?.id ?? "scratch");
-    setBusy(true);
-    setCreateError("");
-    try {
-      const answer = await apiFetch<{ workbench?: { id?: string } }>(
-        starter ? `/api/workbench-templates/${encodeURIComponent(starter.id)}/instantiate` : "/api/workbenches",
-        { method: "POST", json: starter ? {} : { name } },
-      );
-      const id = answer.workbench?.id;
-      if (!id) {
-        setCreateError(`${name} was not made. Try again.`);
-        return;
-      }
-      // The POST saved it; the app reads it by id and shows it now.
-      setCreated(id);
-      onCreated(id);
-    } catch (failure) {
-      setCreateError(`${name} was not made: ${readableError(failure)}`);
-    } finally {
-      setBusy(false);
-    }
+  const [error, setError] = useState("");
+  const inFlight = useRef(false);
+  const live = useRef(true);
+  const load = async () => {
+    setLoading(true); setReadError("");
+    try { const answer = await apiFetch<{ templates: AutomationStarter[] }>("/api/workbench-templates"); setStarters(answer.templates); }
+    catch (failure) { setReadError(readableError(failure)); }
+    finally { setLoading(false); }
   };
-
-  if (error) {
-    return <SurfaceState error="The starters did not load. Retry." onRetry={() => void loadStarters()} />;
-  }
-  if (loading) return <SurfaceState loading />;
-
-  return (
-    <div ref={choicesRef} className="automation-starters" data-testid="automation-starters">
-      {createError ? <SurfaceState error={createError} /> : null}
-      <ChoiceCardShell
-        as={StarterButton}
-        className="automation-starter automation-starter-scratch"
-        emblem={<img className="automation-starter-sprite" src={spriteUrl("workbench", "scratch", "rest", undefined, 32)} alt="" draggable={false} />}
-        label="Start from scratch"
-        summary={<span className="automation-starter-facts">Blank automation</span>}
-        aria-label="Start from scratch"
-        aria-describedby={scratchDescriptionId}
-        aria-pressed={selected === "scratch"}
-        disabled={busy || Boolean(created)}
-        onClick={() => void create(null)}
-        data-testid="automation-starter-scratch"
-      >
-        <span id={scratchDescriptionId} className="sr-only">
-          Create a blank automation and choose its setup.
-        </span>
-      </ChoiceCardShell>
-      <div className="automation-starter-grid">
-        {starters.map((starter) => (
-          <ChoiceCardShell
-            key={starter.id}
-            as={StarterButton}
-            className="automation-starter"
-            emblem={<img className="automation-starter-sprite" src={starterSprite(starter)} alt="" draggable={false} />}
-            label={starter.name}
-            summary={<span className="automation-starter-facts">{starterWhen(starter)} · {putWords(starter.output_target)}</span>}
-            title={starter.description}
-            aria-label={starter.name}
-            aria-describedby={descriptionId(descriptionPrefix, starter)}
-            aria-pressed={selected === starter.id}
-            disabled={busy || Boolean(created)}
-            onClick={() => void create(starter)}
-            data-testid={`automation-starter-${starter.id}`}
-          >
-            {starter.blanks.about ? (
-              <span className="automation-starter-blank">About: {starter.blanks.about}</span>
-            ) : null}
-            <span id={descriptionId(descriptionPrefix, starter)} className="sr-only">{starter.description}</span>
-          </ChoiceCardShell>
-        ))}
-      </div>
-    </div>
-  );
+  useEffect(() => { live.current = true; void load(); return () => { live.current = false; }; }, []);
+  const starter = starters.find((row) => row.id === choice);
+  const create = async () => {
+    if (inFlight.current) return;
+    inFlight.current = true; setBusy(true); setError("");
+    try {
+      const answer = await apiFetch<{ workbench?: { id?: string } }>(starter
+        ? `/api/workbench-templates/${encodeURIComponent(starter.id)}/instantiate` : "/api/workbenches",
+      { method: "POST", json: starter ? {} : { name: "New automation" } });
+      if (!answer.workbench?.id) throw new Error("No automation was returned");
+      if (live.current) onCreated(answer.workbench.id);
+    } catch (failure) { setError(`${starter?.name ?? "New automation"} was not made: ${readableError(failure)}`); inFlight.current = false; setBusy(false); }
+  };
+  return <InspectorForm testId="automation-starters" rows={[
+    { label: "Start from", control: <CycleGadget label="Automation starter" value={choice} disabled={busy || loading} onChange={setChoice}
+      options={[{value:"scratch",label:"Start from scratch"}, ...starters.map((row) => ({value:row.id,label:row.name}))]} /> },
+    { label: "Runs", control: starter ? scheduleWords(starter.schedule) ?? "On request" : "On request" },
+    { label: "Do", control: starter ? <span title={starter.description}>{starter.instruction}</span> : "Choose what to do" },
+    ...(starter?.blanks.about ? [{ label: "About", control: starter.blanks.about }] : []),
+    { label: "Put it in", control: putWords(starter?.output_target) },
+  ]} notice={loading || readError || error ? <SurfaceState loading={loading} error={readError || error || undefined} onRetry={readError ? () => void load() : undefined} /> : undefined}
+    completion={{cancel:onCancel,cancelDisabled:busy,primary:{label:"Create",run:() => void create(),disabled:loading || Boolean(readError),busy,testId:"automation-create"}}} />;
 }

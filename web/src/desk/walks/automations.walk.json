@@ -8,28 +8,24 @@
       "highlight": {
         "target": "automation-home-rows",
         "thing": "automations",
-        "words": "Press an automation to open it."
+        "words": "Click to select. Return opens the automation window."
+      },
+      "open": {
+        "app": "surface-workbenches"
       }
     },
     {
       "highlight": {
-        "target": "automation-sentence",
-        "thing": "sentence",
-        "words": "Press a part of this sentence to change it. New automations use the same sentence."
+        "target": "automation-toolbar",
+        "thing": "actions",
+        "words": "New automation starts setup. The other actions use the selection."
       }
     },
     {
       "highlight": {
-        "target": "automation-run-now",
-        "thing": "Run now",
-        "words": "Run now starts this automation."
-      }
-    },
-    {
-      "highlight": {
-        "target": "automation-result-list",
-        "thing": "runs",
-        "words": "The newest run comes first. Open result reads its answer."
+        "target": "automations-pane",
+        "thing": "selected automation",
+        "words": "The selection shows here. Edit changes its setup in this window."
       },
       "ask": {
         "ref": "automations-feel",

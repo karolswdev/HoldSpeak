@@ -116,8 +116,8 @@ export function TelnyxSetup({ keyRow, onChanged }: { keyRow: ReactNode; onChange
           />
         ) : connection ? (
           <div className="surface-tab-panel" data-testid="telnyx-step-number">
-            <div className="line-field">
-              <span className="calls-field-line">
+            <GadgetRow label="Area code" controlWidth="standard">
+              <PaneActions>
                 <StringGadget
                   label="Area code"
                   value={area}
@@ -138,8 +138,8 @@ export function TelnyxSetup({ keyRow, onChanged }: { keyRow: ReactNode; onChange
                 >
                   Find numbers
                 </Button>
-              </span>
-            </div>
+              </PaneActions>
+            </GadgetRow>
             {bought ? (
               <Step
                 testId="telnyx-bought"
@@ -207,28 +207,28 @@ export function TelnyxSetup({ keyRow, onChanged }: { keyRow: ReactNode; onChange
                   ) : null}
                 </div>
               ) : (
-                <p className="line-quiet" data-testid="telnyx-none">
+                <span className="gadget-fact" data-testid="telnyx-none">
                   Telnyx has no number in {area.trim()} now. Try another area code.
-                </p>
+                </span>
               )
             ) : null}
           </div>
         ) : null}
 
         {status?.balance ? (
-          <p className="line-quiet" data-testid="telnyx-balance">
-            {`Telnyx balance: ${moneyWords(status.balance.balance, status.balance.currency)}`}
-          </p>
+          <div data-testid="telnyx-balance"><GadgetRow label="Balance">
+            <span>{moneyWords(status.balance.balance, status.balance.currency)}</span>
+          </GadgetRow></div>
         ) : null}
         {status?.error && !failure ? (
-          <p className="calls-refusal" role="alert" data-testid="telnyx-failure">
+          <span role="alert" data-testid="telnyx-failure">
             {status.error}
-          </p>
+          </span>
         ) : null}
         {failure ? (
-          <p className="calls-refusal" role="alert" data-testid="telnyx-failure">
+          <span role="alert" data-testid="telnyx-failure">
             {[failure.error, failure.kept, failure.next].filter(Boolean).join(" ")}
-          </p>
+          </span>
         ) : null}
       </div>
     </PreferencePane>
