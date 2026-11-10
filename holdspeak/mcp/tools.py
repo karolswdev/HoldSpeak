@@ -972,7 +972,9 @@ def runtime_registry(primitives: Any = None, meetings: Any = None) -> operations
              # The Settings family (settings_operations.py, setup_operations.py): off the hub too.
              **_settings_family(db, obs),
              # 2026-11-09 (ops/programs-work): recipe writes, the note window, memory.
-             **_work_services(db, obs)}
+             **_work_services(db, obs),
+             # 2026-11-09 (ops/connections): the Engines window, the providers, the calendar, UI feedback.
+             **_connections_services(db)}
     return operations.for_runtime(program_service=lambda: operations.LIVE_PROGRAM_SERVICE,
                                   phone_service=lambda: operations.LIVE_PHONE_SERVICE,
                                   calls_service=lambda: operations.LIVE_CALLS_SERVICE,
@@ -1019,6 +1021,22 @@ def _watch_service(db: Any, obs: Any) -> Any:
     from holdspeak.services.watch_service import WatchService
 
     return WatchService(db, observer=obs)
+
+
+def _connections_services(db: Any) -> dict[str, Any]:
+    """The bare builds of the concierge, provider, connections, calendar and feedback rows' services (lazy:
+    the connections service composes the assignment authority, built only when a call needs it)."""
+    from holdspeak.provider_operations import bare_provider_service
+    from holdspeak.services.calendar_service import CalendarService
+    from holdspeak.services.concierge_service import ConciergeService
+    from holdspeak.services.ui_feedback import FeedbackService
+
+    from holdspeak.mcp.families import project as project_family
+
+    builds = {"concierge_service": lambda: ConciergeService(db=db), "provider_service": bare_provider_service,
+              "connections_service": project_family._connections_service,
+              "calendar_service": lambda: CalendarService(db=db), "feedback_service": FeedbackService}
+    return {name: (lambda build=build: _Lazy(build)) for name, build in builds.items()}
 
 
 def _tts_service() -> Any:

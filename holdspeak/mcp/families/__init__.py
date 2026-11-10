@@ -38,7 +38,6 @@ _FAMILY_MODULE_NAMES: list[str] = [
     "inference",
     "model_library",
     "inference_assignments",
-    "concierge",
     "door",
     "thread",
     "project",

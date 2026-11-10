@@ -72,9 +72,14 @@ def _call(name: str, arguments: dict[str, Any] | None = None) -> tuple[bool, dic
 
 
 def test_palette_contains_all_family_tools() -> None:
-    """PROJECT_PALETTE == the exact set of tool names in the project family."""
+    """PROJECT_PALETTE == the project family's tools and the provider and connection.list
+    tools produced from their declared rows (2026-11-09, ops/connections)."""
+    from holdspeak.provider_operations import PROVIDER_OPERATIONS
+    from holdspeak.room_operations import CONNECTION_LIST
+
     family_names = frozenset(t["name"] for t in PROJECT_TOOLS)
-    assert PROJECT_PALETTE == family_names
+    declared = frozenset(row.tool_name for row in (*PROVIDER_OPERATIONS, CONNECTION_LIST))
+    assert PROJECT_PALETTE == family_names | declared
 
 
 def test_palette_is_subset_of_global_tools() -> None:
@@ -93,10 +98,12 @@ def test_palette_contains_project_provider_connection_only() -> None:
         )
 
 
-def test_palette_size_is_66() -> None:
+def test_palette_size_is_69() -> None:
     """Includes suggested sources, Confluence, four Interview setup operations and
     (PHILO-9-01) the seven item and resource tools."""
-    assert len(PROJECT_PALETTE) == 66  # PHILO-9-02: + project.mark_update_delivered; MCP M6: + provider.github_pr_get
+    # PHILO-9-02: + project.mark_update_delivered; MCP M6: + provider.github_pr_get;
+    # 2026-11-09 (ops/connections): + the Jira and Confluence remove, the Confluence add.
+    assert len(PROJECT_PALETTE) == 69
 
 
 # ────────────────────────────────────────────────────────────────────

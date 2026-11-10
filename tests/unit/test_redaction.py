@@ -83,6 +83,7 @@ def test_the_shared_redactor_takes_every_shape_and_keeps_the_cause_words() -> No
 def test_jira_search_failure_holds_no_secret_in_its_result_or_its_mcp_answer(
     tmp_path: Any, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    from holdspeak.mcp.families import declared  # the provider tools are produced (2026-11-09)
     from holdspeak.mcp.families import project as family
     from holdspeak.services.jira_provider import JiraProviderAdapter
 
@@ -96,7 +97,7 @@ def test_jira_search_failure_holds_no_secret_in_its_result_or_its_mcp_answer(
 
     adapter = JiraProviderAdapter(db=Database(tmp_path / "jira.db"), runner=runner)
     monkeypatch.setattr(family, "_jira_adapter", lambda: adapter)
-    result = family.dispatch(
+    result = declared.dispatch(
         "provider.jira_search",
         {"connection_ref": "alpha.atlassian.net|user@example.com", "jql": "project = KAN"},
         OWNER,
@@ -133,13 +134,14 @@ def test_jira_connection_failure_is_stored_with_no_secret(tmp_path: Any) -> None
 def test_confluence_discover_and_connection_hold_no_secret(
     tmp_path: Any, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    from holdspeak.mcp.families import declared  # the provider tools are produced (2026-11-09)
     from holdspeak.mcp.families import project as family
     from holdspeak.services.confluence_provider import ConfluenceProviderAdapter
 
     db = Database(tmp_path / "confluence.db")
     adapter = ConfluenceProviderAdapter(db, runner=_completed("switch broke\n" + "\n".join(CREDENTIAL_LINES)))
     monkeypatch.setattr(family, "_confluence_adapter", lambda: adapter)
-    result = family.dispatch(
+    result = declared.dispatch(
         "provider.confluence_discover", {"connection_ref": "alpha.atlassian.net|user@example.com"}, OWNER,
     )
     assert result["state"] == "failed", result
@@ -153,16 +155,17 @@ def test_confluence_discover_and_connection_hold_no_secret(
 # -- gh: the provider ----------------------------------------------------
 
 def test_github_discover_and_probe_hold_no_secret(tmp_path: Any, monkeypatch: pytest.MonkeyPatch) -> None:
+    from holdspeak.mcp.families import declared  # the provider tools are produced (2026-11-09)
     from holdspeak.mcp.families import project as family
     from holdspeak.services.github_provider import GitHubProviderAdapter
 
     db = Database(tmp_path / "github.db")
     adapter = GitHubProviderAdapter(db=db, runner=_completed("gh broke\n" + "\n".join(CREDENTIAL_LINES)))
     monkeypatch.setattr(family, "_github_adapter", lambda: adapter)
-    result = family.dispatch("provider.github_discover", {}, OWNER)
+    result = declared.dispatch("provider.github_discover", {}, OWNER)
     assert result["state"] == "failed", result
     assert _leaks(result) == [], result
-    probe = family.dispatch("provider.github_connection", {}, OWNER)
+    probe = declared.dispatch("provider.github_connection", {}, OWNER)
     assert _leaks(probe) == [], probe
     stored = _stored_error_details(db)
     assert stored and all(_leaks(value) == [] for value in stored), stored
@@ -323,6 +326,7 @@ QUOTED_SECRETS = ("qwertyuiop123", "hunter2pass", "zxcvbnm0987654321", "ATATT3xF
 def test_r1_quoted_json_labels_are_redacted_through_the_github_producer(
     tmp_path: Any, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    from holdspeak.mcp.families import declared  # the provider tools are produced (2026-11-09)
     from holdspeak.mcp.families import project as family
     from holdspeak.services.github_provider import GitHubProviderAdapter
 
@@ -330,12 +334,12 @@ def test_r1_quoted_json_labels_are_redacted_through_the_github_producer(
     db = Database(tmp_path / "github-quoted.db")
     adapter = GitHubProviderAdapter(db=db, runner=_completed(stderr))
     monkeypatch.setattr(family, "_github_adapter", lambda: adapter)
-    probe = family.dispatch("provider.github_connection", {}, OWNER)
+    probe = declared.dispatch("provider.github_connection", {}, OWNER)
     stored = _stored_error_details(db)
     found = json.dumps([probe, stored])
     assert [s for s in QUOTED_SECRETS if s in found] == [], found
     assert "gh broke" in probe["error_detail"]
-    discover = family.dispatch("provider.github_discover", {}, OWNER)
+    discover = declared.dispatch("provider.github_discover", {}, OWNER)
     assert [s for s in QUOTED_SECRETS if s in json.dumps(discover)] == [], discover
     # A count or a flag after a label is not a secret shape the label can hide.
     assert redact_secrets('{"max_tokens": 512}') == '{"max_tokens": 512}'

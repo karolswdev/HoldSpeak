@@ -734,7 +734,7 @@ def test_watch_inspect_not_found(db: Database) -> None:
 # ────────────────────────────────────────────────────────────────────
 
 
-def test_project_family_tool_count_is_66() -> None:
+def test_project_family_tool_count_is_51() -> None:
     """The project family ships the expected number of tools."""
     # 17 original + 5 steward + 5 setup + 1 setup.clarify_jira_scope + 4 provider + 3 jira provider + 3 jira discover/search/validate + 7 watch = 45
     # HS-168-02: + connection.list / connection.recheck (45 -> 47).
@@ -744,7 +744,9 @@ def test_project_family_tool_count_is_66() -> None:
     # PHILO-9-01: + the seven item and resource tools (57 -> 64).
     # PHILO-9-02: + project.mark_update_delivered (64 -> 65).
     # Betterment MCP M6: + provider.github_pr_get (65 -> 66).
-    assert len(project_family.TOOLS) == 66
+    # 2026-11-09 (ops/connections): the 15 provider.* tools and connection.list are produced
+    # from their declared rows (provider_operations.py, room_operations.py) (66 -> 51).
+    assert len(project_family.TOOLS) == 51
 
 
 def test_graduated_watch_states_constant() -> None:

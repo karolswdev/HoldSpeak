@@ -198,6 +198,14 @@ class RuntimeServices:
     plugin_job_service: Optional[Any] = None
 
     # --- providers -------------------------------------------------------
+    # 2026-11-09 (ops/connections): the Engines window, the calendar and the
+    # Desk's UI feedback (concierge_operations.py, calendar_operations.py,
+    # feedback_operations.py) and the provider rows (provider_operations.py);
+    # composition_declared.py builds each.
+    concierge_service: Optional[Any] = None
+    calendar_service: Optional[Any] = None
+    feedback_service: Optional[Any] = None
+    provider_service: Optional[Any] = None         # the three adapters below, read at each call
     github_provider: Optional[Any] = None          # self._gh_runner
     jira_provider: Optional[Any] = None            # self._acli_runner
     confluence_provider: Optional[Any] = None

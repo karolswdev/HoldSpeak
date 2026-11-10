@@ -283,6 +283,15 @@ def test_transcript_route_uses_admitted_verbatim_engine_and_retries_saved_wav(tm
         return Admitted()
 
     app = FastAPI()
+
+    @app.middleware("http")
+    async def owner(request, call_next):
+        # The transcription is owner only (ui_feedback.transcribe, 2026-11-09).
+        from holdspeak.principals import Principal, PrincipalKind
+
+        request.state.principal = Principal(PrincipalKind.OWNER, "owner")
+        return await call_next(request)
+
     app.include_router(build_ui_feedback_router(SimpleNamespace(on_transcribe_admitted=on_transcribe_admitted)))
     with TestClient(app) as client:
         failed = client.post(f"/api/ui-feedback/{payload['id']}/transcribe")

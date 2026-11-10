@@ -431,6 +431,13 @@ CONNECTION_LIST = OperationDescriptor(
     service="connections_service",
     method="list_tools",
     admission=_ROOM_READ,
+    # 2026-11-09 (ops/connections): the route and the tool are produced from this row. The
+    # call names the method, so a bare MCP registry binds it without building the service.
+    call=lambda s, p, a: s.list_tools(p),
+    http=("GET", "/api/connections"),
+    handler="list_connections",
+    tool_schema={"type": "object", "properties": {}, "additionalProperties": False},
+    thread="evidence_read",
 )
 
 CONNECTION_RECHECK = OperationDescriptor(
@@ -457,6 +464,8 @@ CONNECTION_RECHECK = OperationDescriptor(
     exposure=("http:POST /api/connections/{provider}/recheck", "mcp:connection.recheck"),
     service="connections_service",
     method="recheck",
+    # 2026-11-09 (ops/connections): a bare MCP registry binds it without building the service.
+    call=lambda s, p, a: s.recheck(p, **a),
     blocking_io=True,  # gh auth status / acli auth switch+status
     admission=Admission(
         "admitted_if",

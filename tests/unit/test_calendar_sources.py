@@ -48,7 +48,7 @@ class TestCalendarSourcesRoute:
     def test_empty_sources(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """No configured sources -> empty list."""
         db, config = _setup(tmp_path, monkeypatch)
-        from holdspeak.web.routes.calendar_sources import (
+        from holdspeak.services.calendar_service import (
             _source_host,
             _source_type,
         )
@@ -61,7 +61,7 @@ class TestCalendarSourcesRoute:
     def test_https_source_host(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """HTTPS source has a host."""
         db, config = _setup(tmp_path, monkeypatch)
-        from holdspeak.web.routes.calendar_sources import _source_host
+        from holdspeak.services.calendar_service import _source_host
         from holdspeak.config.integrations import CalendarSource
 
         src = CalendarSource(
@@ -74,7 +74,7 @@ class TestCalendarSourcesRoute:
     def test_snapshot_type(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """Snapshot source type detection."""
         db, config = _setup(tmp_path, monkeypatch)
-        from holdspeak.web.routes.calendar_sources import _source_type
+        from holdspeak.services.calendar_service import _source_type
         from holdspeak.config.integrations import CalendarSource
 
         src = CalendarSource(id="x", label="O365 SNAPSHOT", url="/tmp/snap.ics", enabled=True)
@@ -83,7 +83,7 @@ class TestCalendarSourcesRoute:
     def test_file_source_no_egress(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """File source has no egress."""
         db, config = _setup(tmp_path, monkeypatch)
-        from holdspeak.web.routes.calendar_sources import _source_host
+        from holdspeak.services.calendar_service import _source_host
         from holdspeak.config.integrations import CalendarSource
 
         src = CalendarSource(id="x", label="", url="/Users/me/cal.ics", enabled=True)
@@ -127,7 +127,7 @@ class TestCalendarSourcesRoute:
         """matched_this_week counts events with calendar_event_projects links this week."""
         db, config = _setup(tmp_path, monkeypatch)
         from holdspeak.config.integrations import CalendarSource, CalendarConfig
-        from holdspeak.web.routes.calendar_sources import _iso_week_range_local
+        from holdspeak.services.calendar_service import _iso_week_range_local
 
         sid = str(uuid.uuid4())
         source = CalendarSource(id=sid, label="WORK", url="/tmp/cal.ics", enabled=True)
@@ -263,7 +263,7 @@ class TestSourcesPayloadClocks:
     def test_event_count_names_what_it_counts(self, tmp_path, monkeypatch):
         """C9(b): COUNT(DISTINCT uid) is the VEVENT count -> ``event_count``."""
         db, config = _setup(tmp_path, monkeypatch)
-        from holdspeak.web.routes.calendar_sources import read_calendar_sources
+        from holdspeak.services.calendar_service import read_calendar_sources
         sid = _seed_source(config)
         db.calendar_events.replace_projection(
             "rev1",
@@ -282,7 +282,7 @@ class TestSourcesPayloadClocks:
         hub-local ``last_read`` reads 17:47 for 23:47Z at -06:00."""
         db, config = _setup(tmp_path, monkeypatch)
         from datetime import datetime, timezone
-        from holdspeak.web.routes.calendar_sources import read_calendar_sources
+        from holdspeak.services.calendar_service import read_calendar_sources
         sid = _seed_source(config)
         seen = datetime(2026, 9, 5, 23, 47, 0, tzinfo=timezone.utc).timestamp()
         db.calendar_events.replace_projection(
@@ -299,7 +299,7 @@ class TestSourcesPayloadClocks:
         week; one at Sunday 23:00 Denver LAST week does not (H4-1 inverted)."""
         from datetime import timedelta
         from holdspeak.services.project_service import local_week_bounds, utc_z
-        from holdspeak.web.routes.calendar_sources import read_calendar_sources
+        from holdspeak.services.calendar_service import read_calendar_sources
         db, config = _setup(tmp_path, monkeypatch)
         sid = _seed_source(config, auto_record="room_linked")
         monday, next_monday = local_week_bounds()
@@ -319,7 +319,7 @@ class TestSourcesPayloadClocks:
 
     def test_iso_week_range_local_at_denver(self, denver):
         from datetime import datetime
-        from holdspeak.web.routes.calendar_sources import _iso_week_range_local
+        from holdspeak.services.calendar_service import _iso_week_range_local
         now = datetime(2026, 9, 7, 20, 0).astimezone()  # Monday 20:00 Denver
         assert _iso_week_range_local(now) == ("2026-09-07T06:00:00Z", "2026-09-14T06:00:00Z")
 
@@ -388,7 +388,7 @@ class TestSnapshotEgress:
         assert svc.resolve_snapshot_egress(db) == {"scope": "private_network", "host": "192.168.1.43"}
 
     def test_payload_carries_snapshot_egress(self, tmp_path, monkeypatch):
-        from holdspeak.web.routes.calendar_sources import read_calendar_sources
+        from holdspeak.services.calendar_service import read_calendar_sources
         db, config = _setup(tmp_path, monkeypatch)
         _seed_source(config)
         payload = read_calendar_sources(config, db, snapshot_egress={"scope": "private_network", "host": "192.168.1.50"})
@@ -564,7 +564,7 @@ class TestDstEdgeSources:
     def test_iso_week_range_local_across_fall_back(self, denver):
         from datetime import datetime
         from zoneinfo import ZoneInfo
-        from holdspeak.web.routes.calendar_sources import _iso_week_range_local
+        from holdspeak.services.calendar_service import _iso_week_range_local
         tz = ZoneInfo("America/Denver")
         now_fixed = datetime(2026, 11, 1, 20, 0, tzinfo=tz).astimezone()
         assert _iso_week_range_local(now_fixed) == ("2026-10-26T06:00:00Z", "2026-11-02T07:00:00Z")
@@ -573,7 +573,7 @@ class TestDstEdgeSources:
         from datetime import datetime
         from zoneinfo import ZoneInfo
         from holdspeak.services.project_service import utc_z
-        from holdspeak.web.routes.calendar_sources import read_calendar_sources
+        from holdspeak.services.calendar_service import read_calendar_sources
         db, config = _setup(tmp_path, monkeypatch)
         sid = _seed_source(config, auto_record="room_linked")
         tz = ZoneInfo("America/Denver")

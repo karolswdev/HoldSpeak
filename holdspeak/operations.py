@@ -2477,6 +2477,15 @@ from holdspeak.desk_state_operations import DESK_STATE_OPERATIONS  # noqa: E402
 
 DESCRIPTORS = DESCRIPTORS + RECIPE_OPERATIONS + THOUGHT_OPERATIONS + MEMORY_OPERATIONS + DESK_STATE_OPERATIONS
 
+# 2026-11-09 (ops/connections): the Engines window (concierge), the providers,
+# the calendar's reads and Snapshot confirm, the Desk's UI feedback.
+from holdspeak.concierge_operations import CONCIERGE_OPERATIONS  # noqa: E402
+from holdspeak.provider_operations import PROVIDER_OPERATIONS  # noqa: E402
+from holdspeak.calendar_operations import CALENDAR_OPERATIONS  # noqa: E402
+from holdspeak.feedback_operations import FEEDBACK_OPERATIONS  # noqa: E402
+
+DESCRIPTORS = DESCRIPTORS + CONCIERGE_OPERATIONS + PROVIDER_OPERATIONS + CALENDAR_OPERATIONS + FEEDBACK_OPERATIONS
+
 #: The RuntimeServices / WebContext fields the catalogue binds to.
 BOUND_SERVICES: tuple[str, ...] = tuple(dict.fromkeys(d.service for d in DESCRIPTORS))
 

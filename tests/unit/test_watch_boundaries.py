@@ -85,10 +85,14 @@ def test_provider_and_steward_helpers_have_one_wire_source() -> None:
     from holdspeak.services import steward_serialization_service as steward_service
     from holdspeak.services import project_room_reads
     from holdspeak.services import steward_contract
-    from holdspeak.web.routes import providers as provider_route
+    import inspect
 
-    assert provider_route.collect_provider_manifests is provider_service.collect_provider_manifests
-    assert project_family.collect_provider_manifests is provider_service.collect_provider_manifests
+    from holdspeak.services.provider_service import ProviderService
+
+    # 2026-11-09 (ops/connections): provider.list is one declared row; HTTP and MCP
+    # reach ProviderService.providers, which calls the one manifest helper.
+    assert "collect_provider_manifests(" in inspect.getsource(ProviderService.providers)
+    assert provider_service.collect_provider_manifests
 
     # 2026-11-09: the steward routes serialize nothing (every read is a declared operation).
     for name in ("_serialize_policy", "_serialize_run", "_serialize_step", "_serialize_steps"):
@@ -110,12 +114,9 @@ def test_provider_and_steward_helpers_have_one_wire_source() -> None:
         def readiness(self, principal: Any) -> dict[str, Any]:
             return {"principal": principal, "ready": True}
 
-    kwargs = {
-        "github_adapter": Adapter("github"),
-        "jira_adapter": Adapter("jira"),
-        "principal": "owner:test",
-    }
-    assert provider_route.collect_provider_manifests(**kwargs) == project_family.collect_provider_manifests(**kwargs)
+    adapters = {"github": Adapter("github"), "jira": Adapter("jira")}
+    assert ProviderService(adapters.get).providers("owner:test") == provider_service.collect_provider_manifests(
+        github_adapter=adapters["github"], jira_adapter=adapters["jira"], principal="owner:test")
 
     run = {
         "id": "run-1",

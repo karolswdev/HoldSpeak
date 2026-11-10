@@ -541,7 +541,7 @@ class TestJiraMcpParity:
             p for p in http_resp.json()["providers"] if p["provider_id"] == "jira"
         )
         # MCP
-        from holdspeak.web.routes.providers import collect_provider_manifests
+        from holdspeak.services.provider_manifest_service import collect_provider_manifests
         mcp_providers = collect_provider_manifests(
             jira_adapter=jira_adapter, principal=OWNER,
         )

@@ -1,10 +1,15 @@
 """HS-168-02: Connections routes -- ONE readiness shape on the hub.
 
-GET  /api/connections                          -- list all tools
-POST /api/connections/{provider}/recheck       -- recheck one provider
+GET  /api/connections                          -- list all tools (produced from connection.list)
+GET  /api/connections/signin/{run_id}          -- one sign-in's state (produced from connection.signin.status)
+POST /api/connections/{provider}/recheck       -- recheck one provider (hand-written)
+POST /api/connections/{provider}/signin        -- start a provider's sign-in (hand-written)
 
-Parse-and-serialize ONLY: the ConnectionsService docstring law.
-Owner-scoped; same auth gate as providers.py.
+Kept hand-written over the declared operations they call (2026-11-09): the
+recheck has its own admission rule (github, jira and confluence are admitted
+egress with a receipt; calendar and models re-apply the edge right, exempt),
+and the sign-in answers 202 with its receipt and maps the service's own
+``SignInRefused``; a produced route does neither.
 """
 from __future__ import annotations
 
@@ -19,7 +24,7 @@ from ... import operations
 from ...logging_config import get_logger
 from ...operations import OperationRefused
 from ...principals import UNAUTHENTICATED
-from ...room_operations import REMOTE_PROVIDERS
+from ...room_operations import CONNECTION_LIST, REMOTE_PROVIDERS
 from ...services.errors import ServiceError
 from ...onboarding_operations import CONNECTION_SIGN_IN_STATUS
 from ..context import WebContext
@@ -39,24 +44,6 @@ def build_connections_router(ctx: WebContext) -> APIRouter:
 
     def ops() -> Any:
         return operations.for_context(ctx)
-
-    # ── GET /api/connections ──────────────────────────────────────────
-    # PHILO-9-02 (B1): the declared connection.list -- a cached read; it
-    # makes no provider call.
-
-    @router.get("/api/connections")
-    def list_connections(request: Request) -> Any:
-        """The ONE readiness shape: one entry per known tool."""
-        try:
-            if ctx.connections_service is None:
-                return JSONResponse(
-                    {"code": "service_unavailable",
-                     "message": "Connections service not configured"},
-                    status_code=503,
-                )
-            return JSONResponse(ops().invoke(principal(request), "connection.list", {}))
-        except Exception as exc:
-            return error_500(exc, log, "Failed to list connections")
 
     # ── POST /api/connections/{provider}/recheck ─────────────────────
     # Conditional: github, jira, confluence ask the provider (egress:
@@ -163,5 +150,18 @@ def build_connections_router(ctx: WebContext) -> APIRouter:
 
     # The sign-in poll, produced from connection.signin.status (onboarding_operations.py).
     mount_router(router, operation_router((CONNECTION_SIGN_IN_STATUS,), ops, signin_answer, module=__name__))
+
+    async def list_answer(fn: Any, *, status: int = 200) -> Any:
+        if ctx.connections_service is None:
+            return JSONResponse({"code": "service_unavailable", "message": "Connections service not configured"},
+                                status_code=503)
+        try:
+            return JSONResponse(await run_in_threadpool(fn), status_code=status)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to list connections")
+
+    # The ONE readiness shape, produced from connection.list (room_operations.py): a
+    # cached read; it makes no provider call (PHILO-9-02 B1).
+    mount_router(router, operation_router((CONNECTION_LIST,), ops, list_answer, module=__name__))
 
     return router
