@@ -16,3 +16,5 @@
 .recordings-storage-row { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--hs-rule); }
 .desk-next .desk-screen-lamp { white-space:nowrap; }
 @container surface (max-width:520px) { .recordings-object { padding:16px; } }
+
+.recordings-object { margin-block: var(--space-2); }

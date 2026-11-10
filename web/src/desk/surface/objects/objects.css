@@ -3,6 +3,7 @@
 
 /* ── DeskIcon: the sprite over its name; the floor label has an ink plate ── */
 .desk-icon {
+  box-sizing: border-box;
   position: relative;
   display: inline-flex;
   flex-direction: column;
@@ -33,6 +34,7 @@
 /* Desktop Screen pictures use the owner's denser desk scale. Drawer wells
    and the phone keep their own artwork and target sizes. */
 .desk-screen[data-layout="free"] .desk-icon {
+  box-sizing: border-box;
   min-height: 80px;
 }
 .desk-screen[data-layout="free"] .desk-icon-art,
@@ -201,6 +203,7 @@
     gap: 8px 0;
   }
   .desk-icon-grid .desk-icon {
+  box-sizing: border-box;
     width: 88px;
     max-width: 100%;
   }
@@ -233,10 +236,12 @@
     gap: 6px;
   }
   .desk-icon-grid[data-well] .desk-icon {
+  box-sizing: border-box;
     width: auto;
   }
 }
 .desk-icon-grid[data-well] .desk-icon {
+  box-sizing: border-box;
   width: auto;
   min-width: 0;
   min-height: 0;
@@ -1426,3 +1431,8 @@
   max-width: 100%;
   min-width: 0;
 }
+
+/* The row owns its hit area; the paper between rows belongs to neither. */
+.object-list .object-list-head { padding-block: var(--space-1); }
+.object-list .object-list-sort { margin-inline: var(--space-1); }
+.object-list .object-list-row { padding-block: var(--space-1); }

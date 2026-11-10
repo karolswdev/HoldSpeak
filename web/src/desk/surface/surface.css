@@ -5360,3 +5360,8 @@ button.surface-edit-in-place:hover {
   color: var(--wb-muted);
 }
 .desk-next .live-configure .prefs-value { color: var(--wb-ink); font-size: 13px; }
+
+/* Action trays keep distinct controls apart at every window size. */
+.surface-row-verbs, .surface-verbs { gap: var(--space-2); }
+
+.surface-ledger-trailing { gap: var(--space-2); }

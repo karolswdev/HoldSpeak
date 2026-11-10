@@ -97,7 +97,7 @@ export function NeedsMast({ now, head, count, weights, total, checked, scope, se
         data-testid="needs-mast"
       >
         {/* Owner walk 2026-11-08: ONE segmented control, Mine · People. */}
-        <span className="needs-scope" role="group" aria-label="Whose" data-testid="needs-scope">
+        <span className="needs-scope" data-joined-controls role="group" aria-label="Whose" data-testid="needs-scope">
           <Button dense variant="secondary" className="needs-chip"
             aria-pressed={scope === "mine"} data-testid="needs-chip-mine" onClick={() => setScope("mine")}>Mine</Button>
           <Button dense variant="secondary" className="needs-chip"

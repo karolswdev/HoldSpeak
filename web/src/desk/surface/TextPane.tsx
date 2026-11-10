@@ -259,7 +259,7 @@ export function TextPane({
   };
 
   return (
-    <div className={className ? `kit-textpane ${className}` : "kit-textpane"} role="group" aria-label={label}
+    <div className={className ? `kit-textpane ${className}` : "kit-textpane"} role="group" aria-label={label} data-joined-controls
       data-disabled={disabled ? "" : undefined} data-testid={testId}>
       <span className="kit-textpane-mic">
         <MicButton

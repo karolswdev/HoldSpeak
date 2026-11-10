@@ -1537,3 +1537,24 @@ selection alongside Mast and Spine. The agent transcript remains TimelineRail.
 
 Mast lets its verbs move to the next line before they crush the title.
 This keeps object names readable beside Rail; the phone type step is unchanged.
+
+## Control spacing and whole labels
+
+Separate controls keep at least 6 px between their boxes on each axis when
+those boxes overlap on the other axis. Shared action groups use `--space-2`.
+A composite with one shared border declares `data-joined-controls` on its
+own container: StringGadget, StepperGadget, TextPane, segmented wings and the
+Needs-you scope use this contract. The menu bar declares its shared strip.
+A toolbar with separate Buttons keeps the gap; it is not a joined group.
+
+A rich pressable row marks its primary label with `data-control-label`.
+Status, facts and other metadata remain separate text. The sweep checks
+that label on one line and checks every visible word, including metadata,
+with Range rectangles. The shared Rail keeps names on one line and wraps
+metadata at spaces. Its list spacing answers to its own selector, including
+inside a window body.
+
+The Desk sweep reads these properties in its normal fence pass at 1440,
+393, and a saved 900 × 600 window on the 1440 desk. It reads Settings panes
+from the rendered rail and wings from their own controls. The Components
+reference uses these same production species.
