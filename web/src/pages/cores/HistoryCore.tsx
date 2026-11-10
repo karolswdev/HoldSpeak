@@ -340,7 +340,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
       <span className="meetings-search">
         <StringGadget label="Search meetings" value={searchQuery} onChange={setSearchQuery} placeholder="Search meetings" />
       </span>
-      <span className="mt-rail-verbs" role="toolbar" aria-label="Meetings" data-testid="meetings-toolbar">
+      <span className="mt-catalog-verbs" role="toolbar" aria-label="Meetings" data-testid="meetings-toolbar">
         <Button dense variant="secondary" data-testid="meetings-record" onClick={() => openSurfaceOr("record-live", "/live", scope)}>
           <ToolGlyph kind="record" />
           Record
@@ -371,6 +371,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
       picked={scopedMeetingId}
       marked={marked}
       onPick={pickMeeting}
+      onBack={() => openSurfaceOr("review-meetings", "/history")}
       runningId={runningId}
       drainerAbsent={drainerAbsent}
       runRefusal={runRefusal}
@@ -421,7 +422,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
           startImport(event.dataTransfer?.files?.[0]);
         }}
       >
-        <div className="mt-frame" data-picked={showsMeeting ? "" : undefined} data-face={recordsFace ? undefined : "form"}>
+        <div className="mt-frame surface-rail-layout" data-picked={showsMeeting ? "" : undefined} data-face={recordsFace ? undefined : "form"}>
           {/* Record, Import and the door take the whole window. */}
           {recordsFace ? rail : null}
           <div className="mt-pane" data-testid="meetings-pane" data-meeting={showsMeeting ? scopedMeetingId ?? undefined : undefined}>{pane}</div>

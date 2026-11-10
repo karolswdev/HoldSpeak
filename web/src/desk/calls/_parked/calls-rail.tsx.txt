@@ -1,0 +1,71 @@
+// Parked: shared surface Rail owns call and phone rows.
+function CallRow({ call, mine, picked, onPick }: {
+  call: CallSummary; mine: readonly string[]; picked: boolean; onPick(): void;
+}) {
+  const outcome = outcomeOf(call);
+  const length = call.duration_sec && call.duration_sec > 0 ? clockWords(call.duration_sec) : "";
+  const facts = [remoteWords(call.remote, mine), callWhen(call.started_at), length].filter(Boolean);
+  return (
+    <li className="cl-item">
+      <Button variant="chrome" className="cl-row" onClick={onPick} aria-current={picked ? "true" : undefined}
+        data-picked={picked ? "" : undefined} data-tone={SPINE[outcome.tone]} data-kind="call" data-state={call.state}
+        data-call={call.id} data-testid="calls-row">
+        <img className="cl-row-sprite" src={listSprite(spriteUrl("call", "calls"))} alt="" width={32} height={32} draggable={false} />
+        <span className="cl-row-title">{callTitle(call)}</span>
+        <span className="cl-row-state" data-tone={outcome.tone} data-live={call.state !== "ended" || undefined}
+          data-testid="calls-outcome">{outcome.word}</span>
+        <span className="cl-row-facts">{facts.map((fact) => <span key={fact}>{fact}</span>)}</span>
+        <Spine className="cl-row-spine" tone={SPINE[outcome.tone]} />
+      </Button>
+    </li>
+  );
+}
+
+function PhoneRow({ phone, on, picked, onPick }: {
+  phone: ReturnType<typeof usePhone>; on: boolean; picked: boolean; onPick(): void;
+}) {
+  const device = pairedPhone(phone.status);
+  const waits = phone.messages.filter((message) => waitsForReply(message, phone.messages)).length
+    + phone.calls.filter((call) => call.state === "held").length;
+  const push = device ? pushNotReady(device) : null;
+  const state: { word: string; tone: Tone } = !on ? { word: "Off", tone: "idle" }
+    : waits ? { word: waits === 1 ? "Waits on you" : `${waits} wait on you`, tone: "ask" }
+      : device ? (push ? { word: "Push not ready", tone: "warn" } : { word: "Paired", tone: "ok" })
+        : phone.status?.line?.ready ? { word: "By number", tone: "ok" } : { word: "Not paired", tone: "idle" };
+  return (
+    <li className="cl-item">
+      <Button variant="chrome" className="cl-row cl-row--phone" onClick={onPick} aria-current={picked ? "true" : undefined}
+        data-picked={picked ? "" : undefined} data-tone={SPINE[state.tone]} data-testid="calls-rail-phone">
+        <span className="cl-row-sprite phone-handset" aria-hidden="true"><i /></span>
+        <span className="cl-row-title">{device?.name ?? "Your phone"}</span>
+        <span className="cl-row-state" data-tone={state.tone}>{state.word}</span>
+        <Spine className="cl-row-spine" tone={SPINE[state.tone]} />
+      </Button>
+    </li>
+  );
+}
+
+          <nav className="cl-rail" aria-label="Calls" data-testid="calls-rail">
+            {live.length ? (
+              <div className="cl-group" role="group" aria-label="On the line">
+                <h3 className="cl-cap">On the line</h3>
+                <ul className="cl-rows">
+                  {live.map((call) => <CallRow key={call.id} call={call} mine={mine} picked={call.id === pickedId} onPick={() => open(call.id)} />)}
+                </ul>
+              </div>
+            ) : null}
+            {ended.length ? (
+              <div className="cl-group" role="group" aria-label="Recent">
+                <h3 className="cl-cap">Recent</h3>
+                <ul className="cl-rows" data-testid="calls-list">
+                  {ended.map((call) => <CallRow key={call.id} call={call} mine={mine} picked={call.id === pickedId} onPick={() => open(call.id)} />)}
+                </ul>
+              </div>
+            ) : null}
+            <div className="cl-group" role="group" aria-label="Your phone">
+              <h3 className="cl-cap">Your phone</h3>
+              <ul className="cl-rows">
+                <PhoneRow phone={phone} on={phoneOn} picked={onPhone} onPick={() => setPicked({ kind: "phone" })} />
+              </ul>
+            </div>
+          </nav>

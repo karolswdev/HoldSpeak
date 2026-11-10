@@ -600,10 +600,11 @@ export function PeopleCore({ hero, scope }: CoreProps) {
   return <div className="people-surface people-frame" data-testid="people-roster" data-picked={selected ? "" : undefined}>
     {renderHeroSlot(hero, null)}
     {nextReading ? <span hidden aria-busy="true" data-testid="people-next-reading" /> : null}
-    <div className="people-body">
+    <div className="people-body surface-rail-layout">
       {empty ? null : <PeopleRail people={railPeople} suggestions={shownSuggestions.map((s) => ({ key: s.key, name: s.name, source: sentence(suggestionSource(s)) }))}
         picked={selected ? selected.id : pickedSuggestion} query={query} onQuery={setQuery} adding={adding}
         searchable={Boolean(relationships.length || suggestions.length)} head={head}
+        onBack={() => { back(); setPickedSuggestion(null); }}
         onPick={(id) => { if (id.startsWith("suggestion:")) { back(); setPickedSuggestion(id); } else void select(id); }} onAdd={() => (adding ? setAdding(false) : openAdd())} />}
       <div className="people-pane" data-testid="people-pane">
         {failureRow}

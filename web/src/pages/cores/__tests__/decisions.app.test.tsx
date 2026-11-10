@@ -63,7 +63,7 @@ const detail = {
   revisions: [{ id: "revision-1", field_name: "rationale", old_value: "Old rationale", new_value: "The Desk needs a durable answer to why.", created_at: "2026-08-07T10:00:00Z" }],
 };
 
-const ledger = [
+const ledger: import("../../../desk/decisions/api").LedgerRow[] = [
   { source: "meeting", id: "dec-1", text: detail.decision_text, rationale: detail.rationale, decided_at: "2026-10-09T14:00:00",
     lifecycle: "active", status: "accepted", meeting_id: "m-1", meeting_title: "Ledger cutover sync", record_id: detail.id, committed: 0, committed_to: null },
   { source: "meeting", id: "dec-2", text: "Freeze the old ledger on Nov 5", rationale: "Agreed in the meeting.", decided_at: "2026-10-09T14:05:00",
@@ -81,7 +81,7 @@ function hub(path: string): Promise<unknown> {
     let rows = ledger.slice();
     const id = p.get("decision_id");
     if (id) rows = rows.filter((r) => r.id === id);
-    if (p.get("current") === "true") rows = rows.filter((r) => ["recorded", "accepted", "active"].includes(r.lifecycle));
+    if (p.get("current") === "true") rows = rows.filter((r) => ["recorded", "accepted", "active"].includes(r.lifecycle ?? ""));
     const q = (p.get("q") ?? "").toLowerCase().split(/\s+/).filter(Boolean);
     rows = rows.filter((r) => q.every((w) => `${r.text} ${r.meeting_title ?? ""}`.toLowerCase().includes(w)));
     const offset = Number(p.get("offset") ?? 0);
