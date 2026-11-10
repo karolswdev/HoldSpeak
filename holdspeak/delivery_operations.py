@@ -40,7 +40,8 @@ _TEXT = {"type": "string"}
 
 def _op(name: str, method: str, http: tuple[str, str], handler: str, call: Call, description: str, *,
         write: bool = False, owner_only: Optional[bool] = None, properties: Optional[Mapping[str, Any]] = None,
-        required: tuple[str, ...] = (), status: int = 200, tool: bool = True, held: tuple[str, ...] = (), authority: str = "work", blocking_io: bool = False, web_call: Optional[Call] = None,
+        required: tuple[str, ...] = (), status: int = 200, announces_changes: bool = False,
+        completion: str = "synchronous; a write is one desk_changed frame on the hub bus", tool: bool = True, held: tuple[str, ...] = (), authority: str = "work", blocking_io: bool = False, web_call: Optional[Call] = None,
         result: str = "the DeliveryService answer, as the route answered it") -> OperationDescriptor:
     """One verb of ``delivery_service``; its tool requires the path's ids and ``required``."""
     owns = write if owner_only is None else owner_only
@@ -50,9 +51,9 @@ def _op(name: str, method: str, http: tuple[str, str], handler: str, call: Call,
     return OperationDescriptor(
         name=name, version=1, description=description, args_schema={"type": "object"}, principal=_PRINCIPAL,
         effect="write" if write else "read", result=result, refusals=_REFUSALS + ("owner_required",),
-        completion="synchronous; a write is one desk_changed frame on the hub bus",
+        completion=completion,
         exposure=(f"http:{http[0]} {http[1]}",) + ((f"mcp:{name}",) if tool else ()), service="delivery_service", method=method,
-        owner_only=owns, owner_press=owns and write, announces_changes=bool(held), held=held, authority=authority, blocking_io=blocking_io, call=call, web_call=web_call, http=http, http_status=status,
+        owner_only=owns, owner_press=owns and write, announces_changes=announces_changes, held=held, authority=authority, blocking_io=blocking_io, call=call, web_call=web_call, http=http, http_status=status,
         handler=handler, tool_schema=schema if tool else None, thread=("effect_proposal" if write else "evidence_read") if tool else None,
     )
 
@@ -96,7 +97,8 @@ DELIVERY_OPERATIONS: tuple[OperationDescriptor, ...] = (
     *(_op(f"delivery.node.{verb}", "node_call", ("POST", f"{_D}/node/{verb}"), f"api_node_{verb}",
         lambda s, p, a, verb=verb: _node_request(s, p, verb, a),
         "Node protocol traffic. HTTP only: authenticate the held per-node token on every call.",
-        write=True, owner_only=False, tool=False, held=("node_token",), authority="authority", blocking_io=True)
+        write=True, owner_only=False, tool=False, held=("node_token",), authority="authority", blocking_io=True,
+        announces_changes=True, completion="synchronous node protocol answer; delivery.nodes reads its liveness; no Desk frame")
       for verb in ("hello", "heartbeat")),
     _op("delivery.terminal_live", "terminal_subscribe", ("POST", _D + "/terminal/live"), "api_terminal_live",
         lambda s, p, a: s.terminal_subscribe(a["target_id"], a["target_generation"],
