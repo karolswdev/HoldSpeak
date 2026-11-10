@@ -1,3 +1,4 @@
+// Parked: the Open mic latch retired with dictation/_parked/SpeakFace.20261109.tsx.
 // HS-112-06 — the Speak deck with the mic left open.
 //
 // One latch opens the microphone for the session; from then on spoken

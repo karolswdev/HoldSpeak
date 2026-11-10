@@ -10,6 +10,7 @@ import {
   SURFACE_APPLICATIONS,
 } from "../applications";
 import { DESK_TOOLS } from "../tools";
+import { verbById } from "../verbRegistry";
 import { PULLOUT_SIZE } from "../pullouts/size";
 
 describe("DeskOS application manifest", () => {
@@ -86,17 +87,12 @@ describe("DeskOS application manifest", () => {
     expect(conductor?.dock).toMatchObject({ order: 3, launch: "surface", phone: 4 });
   });
 
-  it("derives mark-menu application commands", () => {
-    // PHILO-17 (doors): the HoldSpeak menu holds the setup applications.
-    // Betterment ST7: Engines is its own Desk window; Accounts remains a
-    // Settings section.
-    expect(MARK_APPLICATION_COMMANDS).toEqual([
-      "go.configure-settings",
-      "go.configure-runs-on",
-      "settings.integrations",
-      "settings.wallpaper",
-      "go.configure-setup",
-    ]);
+  it("mark-menu commands resolve live verbs and Engines has one Settings door", () => {
+    for (const command of MARK_APPLICATION_COMMANDS) expect(verbById(command), command).toBeDefined();
+    const engines = DESK_APPLICATIONS.find((application) => application.action === "configure-runs-on");
+    expect(engines?.parked).toBe("settings:engines");
+    expect(engines?.mark).toBeUndefined();
+    expect(DESK_APPLICATION_ALIASES["configure-runs-on"]).toEqual({ target: "configure-settings", scope: "engines" });
   });
 
   it("betterment shell S1: Go lists every application, Daily, Work, Builder", () => {

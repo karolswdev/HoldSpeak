@@ -56,6 +56,11 @@ export function LiveReady({ settings, speech, name, onName, mic = null, checking
           : start}
       </div>
     </section>
-    {speech.notSetUp ? <div data-testid="live-ready-transcript"><SpeechSetup setup={speech} primary={false} toolbar testId="live-speech-setup" /></div> : null}
+    <div className="live-ready-speech" data-testid="live-ready-transcript" aria-busy={speech.ai.read.kind === "loading" || undefined}>
+      {speech.ai.read.kind === "loading" ? <DotWord tone="info">Reading speech…</DotWord>
+        : speech.notSetUp ? <SpeechSetup setup={speech} primary={false} toolbar testId="live-speech-setup" />
+        : speech.ready ? <DotWord tone="ok">Speech ready</DotWord>
+        : <DotWord tone="warn">Speech not read</DotWord>}
+    </div>
   </div>;
 }
