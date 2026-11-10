@@ -129,7 +129,7 @@ export function AutomationsCore(_props: CoreProps) {
         {label:"With",control:engineWords(selected) ?? ""}, ...(selected.do_kind === "run_program" ? [] : [{label:"Put it in",control:<PutValue target={selected.output_target} />}]),
         {label:"Last run",control:lastRun(selected)}, {label:"Next run",control:nextWords(selected.next_run_at)?.replace(/^Next: /,"") ?? ""},
         ...(endedRuns(selected)[0]?.error ? [{label:"Failed",control:failureWords(endedRuns(selected)[0].error)}] : []),
-      ]} /></PaneInspector> : loading || (loadError && !automations.length) ? null : <p data-testid="automation-home-empty">{query && !rows.length ? "No automations match." : automations.length ? "Select an automation." : "No automations. Use New automation."}</p>}
+      ]} completion={{done:() => select(null)}} /></PaneInspector> : loading || (loadError && !automations.length) ? null : <p data-testid="automation-home-empty">{query && !rows.length ? "No automations match." : automations.length ? "Select an automation." : "No automations. Use New automation."}</p>}
       {!deleting && error ? <SurfaceState error={error} /> : null}
     </ListPane>
     <StatusBar data-testid="automation-home-status" items={[

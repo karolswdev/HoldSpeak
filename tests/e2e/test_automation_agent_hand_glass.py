@@ -127,6 +127,7 @@ def test_hand_automation_do_with_review_controls_are_real_and_saved(
                 with_line.get_by_text("Claude Code", exact=True).wait_for(timeout=10_000)
                 assert "claude-default" not in with_line.inner_text()
 
+                page.keyboard.press("Escape")
                 page.screenshot(path=str(SHOTS / f"do-with-review-{width}-closed.png"))
                 review_line.get_by_role("button").first.click()
                 editor = page.get_by_test_id("automation-review-editor")
