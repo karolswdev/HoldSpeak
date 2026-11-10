@@ -12,13 +12,14 @@ const mocks = vi.hoisted(() => ({
   api: vi.fn(),
   picture: vi.fn(),
   stop: vi.fn(),
+  speak: vi.fn(),
 }));
 vi.mock("../../../lib/api", async (original) => ({
   ...(await original<typeof import("../../../lib/api")>()),
   apiFetch: mocks.api,
 }));
 vi.mock("../../../lib/tts", () => ({
-  speak: vi.fn(),
+  speak: mocks.speak,
   stop: mocks.stop,
   onStateChange: () => () => {},
   enqueueSentence: vi.fn(),
@@ -302,4 +303,14 @@ it("restores the host rail posture after its row callback", async () => {
   fireEvent.click(screen.getByRole("button", { name: "Pick two" }));
   act(() => returnView());
   expect(screen.getByTestId("posture")).toHaveTextContent("one:false");
+});
+
+it("speaks local help through the one speech seam without a server voice", async () => {
+  localStorage.setItem("hs:walk-voice", "on");
+  render(<Face />);
+  start();
+  await waitFor(() => expect(mocks.speak).toHaveBeenCalledWith(
+    "Select a decision. Its text shows below.", { localOnly: true },
+  ));
+  expect(mocks.api).not.toHaveBeenCalled();
 });

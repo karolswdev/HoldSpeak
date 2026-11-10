@@ -99,7 +99,7 @@ function pickVoice(): SpeechSynthesisVoice | null {
   return local[0];
 }
 
-function speakBrowser(text: string): Promise<boolean> {
+function speakBrowser(text: string, localOnly = false): Promise<boolean> {
   return new Promise<boolean>((resolve) => {
     if (typeof speechSynthesis === "undefined") {
       // No speechSynthesis — silent no-op with state event.
@@ -107,8 +107,12 @@ function speakBrowser(text: string): Promise<boolean> {
       resolve(false);
       return;
     }
-    const utterance = new SpeechSynthesisUtterance(text);
     const voice = pickVoice();
+    if (localOnly && !voice) {
+      resolve(false);
+      return;
+    }
+    const utterance = new SpeechSynthesisUtterance(text);
     if (voice) utterance.voice = voice;
 
     utterance.onend = () => {
@@ -193,16 +197,17 @@ async function speakServer(text: string, epoch: number): Promise<boolean> {
 
 // ---- public API ----
 
-/** Speak text immediately. Cancels any in-progress speech and clears the queue. */
-export async function speak(text: string): Promise<boolean> {
+/** Speak immediately and clear the queue. localOnly uses an installed browser
+ * voice, with no hub probe or fallback to a cloud voice. */
+export async function speak(text: string, options: { localOnly?: boolean } = {}): Promise<boolean> {
   stop();
   const epoch = speechEpoch;
-  await probeServer();
+  if (!options.localOnly) await probeServer();
   if (epoch !== speechEpoch) return false;
   return new Promise<boolean>((resolve) => {
     const cancel = () => resolve(false);
     cancelled.add(cancel);
-    void speakOne(text, epoch).then(resolve, () => resolve(false)).finally(() => cancelled.delete(cancel));
+    void speakOne(text, epoch, options.localOnly).then(resolve, () => resolve(false)).finally(() => cancelled.delete(cancel));
   });
 }
 
@@ -239,13 +244,13 @@ export function stop(): void {
 
 // ---- internals ----
 
-async function speakOne(text: string, epoch = speechEpoch): Promise<boolean> {
+async function speakOne(text: string, epoch = speechEpoch, localOnly = false): Promise<boolean> {
   if (!text.trim()) {
     setState("idle");
     return false;
   }
 
-  if (preferServer) {
+  if (preferServer && !localOnly) {
     const ok = await speakServer(text, epoch);
     if (epoch !== speechEpoch) return false;
     if (ok) {
@@ -255,7 +260,7 @@ async function speakOne(text: string, epoch = speechEpoch): Promise<boolean> {
     // R4 / error fallback: use browser voice for this utterance.
   }
 
-  const spoken = await speakBrowser(text);
+  const spoken = await speakBrowser(text, localOnly);
   if (epoch === speechEpoch) setState("idle");
   return epoch === speechEpoch && spoken;
 }

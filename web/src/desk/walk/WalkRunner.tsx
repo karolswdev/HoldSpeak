@@ -319,10 +319,7 @@ function WalkSession({ local, token }: { local?: LocalWalk; token?: string }) {
     "";
   useEffect(() => {
     if (!ready || !voice || feedback || !caption) return;
-    if (local) {
-      if (typeof speechSynthesis !== "undefined")
-        speechSynthesis.speak(new SpeechSynthesisUtterance(caption));
-    } else void speak(caption);
+    void speak(caption, local ? { localOnly: true } : undefined);
     return () => stopVoice();
   }, [ready, voice, feedback, caption, local]);
   useEffect(() => {
