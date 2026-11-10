@@ -170,7 +170,7 @@ describe("Live meeting: during, the transcript is the page", () => {
     // The steps band is the before face; while it records the transcript leads.
     expect(screen.queryByTestId("live-steps")).toBeNull();
 
-    fireEvent.click(within(toolbar).getByRole("button", { name: "Settings" }));
+    fireEvent.click(within(screen.getByTestId("live-mast")).getByRole("button", { name: "Settings" }));
     expect(mocks.openSurfaceOr).toHaveBeenCalledWith("configure-settings", "/settings", "meetings");
   });
 

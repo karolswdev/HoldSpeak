@@ -79,6 +79,20 @@ afterEach(() => {
 });
 
 describe("the hub's display requests", () => {
+  it("a declared app identity reaches its retained mounted frame", async () => {
+    const frame = document.createElement("section");
+    frame.id = "ask";
+    frame.dataset.layer = "window";
+    const mast = document.createElement("header");
+    mast.dataset.testid = "ask-mast";
+    frame.appendChild(mast);
+    document.body.appendChild(frame);
+    const result = await executeDeskRequest({ op: "mark", args: { window: "ask:desk", target: "ask-mast" } });
+    expect(result.done).toBe(true);
+    expect(result.part?.window).toBe(frame);
+    expect(result.part?.target).toBe(mast);
+  });
+
   it("a mark puts the Walk's halo on the part, shows its words and answers done", async () => {
     const row = desk();
     render(<DeskRequests />);

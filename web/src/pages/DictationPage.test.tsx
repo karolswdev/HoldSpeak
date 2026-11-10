@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import JOURNAL from "../test/wire/dictation-journal.wire.json";
 import { DictationCore } from "./cores/DictationCore";
 
 const mocks = vi.hoisted(() => ({
@@ -101,9 +102,15 @@ describe("DictationPage failure and rehearsal flows (HS-170-04)", () => {
     );
     const talk = await screen.findByRole("button", { name: "Talk" });
 
+    fireEvent.change(screen.getByLabelText("Utterance"), { target: { value: JOURNAL.wire.items[0].final_text } });
     await clickToggle(talk);
 
     expect(await screen.findByText(/Transcription timed out/)).toBeVisible();
+    // Retry belongs to the same mic, so it cannot deliver an older draft.
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    await waitFor(() => expect(mocks.startStreamSession).toHaveBeenCalledTimes(2));
+    expect(mocks.apiFetch.mock.calls.some(([path]) => path === "/api/dictation/remote")).toBe(false);
+    expect(screen.getByLabelText("Utterance")).toHaveValue(JOURNAL.wire.items[0].final_text);
     // No dialog — failures land in-flow
     expect(screen.queryByRole("dialog")).toBeNull();
   });

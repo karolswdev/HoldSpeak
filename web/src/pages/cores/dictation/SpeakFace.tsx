@@ -1,6 +1,6 @@
 import { createContext, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { Button } from "../../../components/signal/Signal";
-import { apiFetch, readableError } from "../../../lib/api";
+import { apiFetch } from "../../../lib/api";
 import { useOptionalRuntimeBus } from "../../../runtime/RuntimeBus";
 import { useSpeakDeck } from "./useSpeakDeck";
 import { refusalLabel } from "./shared";
@@ -283,7 +283,7 @@ export function SpeakFace() {
             if ((event.metaKey || event.ctrlKey) && event.key === "Enter" && !event.nativeEvent.isComposing) { event.preventDefault(); void deck.deliver(deck.utterance); }
           }} />
         {finalText && finalText !== deck.utterance ? <output className="speak-native-sent">{finalText}</output> : null}
-        {failed ? <SurfaceState error={refusalLabel(deck.refusal || deck.failure || "unknown")} onRetry={retry} retryLabel="Retry" /> : null}
+        {failed ? <SurfaceState error={refusalLabel(deck.refusal || deck.failure || "unknown")} onRetry={deck.micState === "failed" ? undefined : retry} retryLabel="Retry" /> : null}
         {deck.utterance.trim() ? <div className="speak-native-verbs">
           <Button dense variant="secondary" data-testid="speak-copy" onClick={() => void copy(deck.utterance)}>Copy</Button>
           <Button dense variant="secondary" loading={deck.busy} onClick={() => void deck.deliver(deck.utterance)}>Put back</Button>
@@ -299,10 +299,10 @@ export function SpeakFace() {
         </div>)}
       </section> : null}
     </div>
-    <StatusBar className="speak-footer" data-testid="speak-footer" items={[
+    {receipt || custody.display && !custody.show && !speech.notSetUp ? <StatusBar className="speak-footer" data-testid="speak-footer" items={[
       ...(receipt ? [{ key: "receipt", text: receipt }] : []),
       ...(custody.display && !custody.show && !speech.notSetUp ? [{ key: "hold", text: `Hold ${custody.display} anywhere` }] : []),
-    ]} />
+    ]} /> : null}
   </div>;
 }
 

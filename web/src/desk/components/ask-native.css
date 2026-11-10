@@ -18,3 +18,9 @@
   .desk-next .desk-ask-body .surface-compose-capture { margin-left: auto; }
   .desk-ask-body .desk-ask-reading { padding: 0 16px 16px; }
 }
+
+/* A source door keeps the full glyph height and wraps long source names. */
+.desk-next .desk-ask-body .desk-ask-refs .desk-ask-ref.btn.btn--ghost {
+  height: auto; padding-block: 6px; line-height: 1.4; border-radius: 2px;
+}
+.desk-ask-body .desk-ask-ref-title { line-height: 1.4; overflow: visible; white-space: normal; overflow-wrap: anywhere; }

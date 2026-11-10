@@ -22,9 +22,8 @@ import {
   StringGadget,
 } from "../../desk/surface/gadgets";
 import { presentValue } from "../../desk/surface/format";
-import { DotWord, StatusBar, Steps, ToolGlyph, Toolbar, meetingSteps, type StatusBarItem } from "../../desk/surface/kit";
+import { StatusBar, ToolGlyph, Toolbar, type StatusBarItem } from "../../desk/surface/kit";
 import { useWindowInterior } from "../../desk/surface/interior";
-import { countToken } from "../../desk/surface/count";
 import { LiveTranscript } from "./LiveTranscript";
 import { LiveReady } from "./LiveReady";
 import { LiveListening, type MicCheck, type TranscriptPass } from "./LiveLevel";
@@ -104,6 +103,7 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
   const [decisions, setDecisions] = useState<Segment[]>([]);
   const [caughtError, setCaughtError] = useState("");
   const caughtSequence = useRef(0);
+  const intelArrived = useRef(false);
   const action = useAction();
   const [bookmark, setBookmark] = useState("");
   const [bookmarking, setBookmarking] = useState(false);
@@ -136,14 +136,20 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
      window's own name, on the phone too. */
 
   useEffect(() => {
-    setState(initial.data);
-    setSegments(asRows(initial.data, ["segments"]));
-    setIntelResult(initial.data.intel && typeof initial.data.intel === "object" ? initial.data.intel as Record<string, unknown> : null);
+    if (initial.loading) return;
+    setState((current) => ({ ...initial.data, ...current }));
+    setSegments((current) => {
+      const snapshot = asRows(initial.data, ["segments"]);
+      const key = (row: Segment) => String(row.id ?? row.segment_id ?? `${row.start_time ?? row.timestamp}-${row.end_time}-${row.text ?? row.transcript}`);
+      const seen = new Set(snapshot.map(key));
+      return [...snapshot, ...current.filter((row) => !seen.has(key(row)))];
+    });
+    if (!intelArrived.current) setIntelResult(initial.data.intel && typeof initial.data.intel === "object" ? initial.data.intel as Record<string, unknown> : null);
     setTitle(String(initial.data.title ?? ""));
     setTags(
       Array.isArray(initial.data.tags) ? initial.data.tags.join(", ") : "",
     );
-  }, [initial.data]);
+  }, [initial.data, initial.loading]);
   useEffect(
     () =>
       subscribe("*", (frame) => {
@@ -178,6 +184,7 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
   useEffect(
     () =>
       subscribe("intel_complete", (frame) => {
+        intelArrived.current = true;
         setIntelResult(
           frame.data && typeof frame.data === "object"
             ? (frame.data as Record<string, unknown>)
@@ -316,6 +323,8 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
         setRetainedMeetingId("");
         setCaptureAlert("");
         setIntelResult(null);
+        intelArrived.current = false;
+        setSegments([]);
         setState((current) => ({
           ...current,
           ...((value.meeting as Record<string, unknown>) ?? {}),
@@ -575,13 +584,14 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
 
   return (
     <>
-      <Mast kind="meeting" title={active ? title || String(state.title || "Live meeting") : "Your next meeting"}
+      <Mast className="live-mast" kind="meeting" title={active ? title || String(state.title || "Live meeting") : "Your next meeting"}
         facts={<span>{active ? "Listening" : action.message || mic?.state === "failed" || mic?.state === "not_allowed" ? "Failed" : stopOutcome?.saveStatus === "saved" ? "Done" : speech.notSetUp ? "Speech not set up" : "Ready"}{active ? ` · ${duration}` : ""}</span>} data-testid="live-mast">
-        {active ? verbs : settingsVerb}
+        {active ? verbs : null}
+        {settingsVerb}
         <ShowMe app="surface-live" />
       </Mast>
       <Spine tone={action.message || captureAlert || mic?.state === "failed" || mic?.state === "not_allowed" ? "coral" : active ? "steel" : stopOutcome?.saveStatus === "saved" ? "moss" : "brass"} data-testid="live-spine" />
-      {active ? <Toolbar label="Live meeting" data-testid="live-toolbar" trailing={settingsVerb}>
+      {active ? <Toolbar label="Live meeting" data-testid="live-toolbar">
         {bookmarkVerb}
         <Button dense variant="secondary" aria-label="Edit details" onClick={() => setMetaOpen((open) => !open)}>Edit details</Button>
       </Toolbar> : null}
@@ -681,7 +691,7 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
       {caughtError ? <SurfaceState error={caughtError} retryLabel="Retry" onRetry={() => void readCaught()} /> : intelFace}
       </div>
       </div>
-      <StatusBar items={statusItems} data-testid="live-statusbar" />
+      <StatusBar className="live-statusbar" items={statusItems} data-testid="live-statusbar" />
     </>
   );
 }

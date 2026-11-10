@@ -70,3 +70,11 @@
   flex-direction: column;
   gap: 16px;
 }
+
+/* Voice apps use Inter for state and receipt words too. */
+.desk-next .speak-native .surface-mast-facts,
+.desk-next .desk-ask-body .surface-mast-facts,
+.desk-next .live-mast .surface-mast-facts,
+.desk-next .speak-native .kit-statusbar,
+.desk-next .desk-ask-body .kit-statusbar,
+.desk-next .live-statusbar { font-family: var(--font-sans); letter-spacing: normal; }

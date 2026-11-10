@@ -38,7 +38,6 @@ import { apiFetch, readableError } from "../../lib/api";
 import { useDurableDraft } from "../../lib/durableDraft";
 import { qualifiedRef } from "../api";
 import { DeskWindowFrame } from "./DeskWindow";
-import { Material } from "../surface/Material";
 import { PadGadget } from "../surface/gadgets";
 import { routeFromWire, type TurnRoute } from "../turnRoute";
 import { NoteSendWells } from "../documentSendsLazy";
@@ -58,7 +57,7 @@ import { requestAskReturn } from "../thought-workspace/askReturn";
 import { dropMarginAsk, putMarginAsk, updateMarginAsk } from "../thought-workspace/marginAsks";
 import { AskSourceFrame } from "./AskSourceFrame";
 import {
-  ASK_SPRITE, AskClaims, AskComposer, AskEngineWord, AskGroundedWord, AskMore, AskNotAnswered, AskPage, AskPrompts, AskRail, AskReferences, AskScope,
+  ASK_SPRITE, AskClaims, AskEngineWord, AskGroundedWord, AskMore, AskNotAnswered, AskPage, AskPrompts, AskReferences, AskScope,
   AskSendButton, AskTurnDoc, AskVerbs, askReasonLine, type AskReferenceRowData,
 } from "./askFace";
 import { chosenScopeWords, deskPrompts, wholeDeskWords } from "../askPrompts";
@@ -274,6 +273,7 @@ export function AskPanel() {
   const [railPref, setRailPref] = useState(readRailOpen);
   // On a phone the rail is a sheet over the page: closed until asked for.
   const [railSheet, setRailSheet] = useState(false);
+  const [railPaneOpen, setRailPaneOpen] = useState(true);
   const railOpen = compact ? railSheet : railPref;
   const [recent, setRecent] = useState<{ loading: boolean; error: string; rows: ThreadWire[] }>({ loading: false, error: "", rows: [] });
   const [forgotten, setForgotten] = useState<PendingForget | null>(null);
@@ -963,6 +963,7 @@ export function AskPanel() {
   };
   const toggleRail = () => {
     if (compact) { setRailSheet((open) => !open); return; }
+    setRailPaneOpen(false);
     setRailPref((open) => {
       writeRailOpen(!open);
       return !open;
@@ -1186,9 +1187,9 @@ export function AskPanel() {
         <Spine tone={running ? "steel" : failedRun ? "coral" : turns.length ? "moss" : "brass"} data-testid="ask-spine" />
         <div className="desk-ask-main surface-rail-layout">
           {railOpen && (recent.loading || recent.error || railRows.length > 0) ? <Rail label="Recent" data-testid="ask-recent" picked={adoptedRef.current ? `pending:${adoptedRef.current}` : threadId || null}
-            paneOpen={!compact} onBack={() => setRailSheet(false)}
-            head={<Button dense variant="secondary" onClick={() => { setRailSheet(false); startNew(); promptRef.current?.focus(); }}>New ask</Button>}
-            onPick={(id) => { setRailSheet(false); pickRail(id); }}
+            paneOpen={compact ? false : railPaneOpen} onBack={() => { setRailPaneOpen(false); setRailSheet(false); }}
+            head={<Button dense variant="secondary" onClick={() => { setRailSheet(false); setRailPaneOpen(true); startNew(); promptRef.current?.focus(); }}>New ask</Button>}
+            onPick={(id) => { setRailSheet(false); setRailPaneOpen(true); pickRail(id); }}
             items={railRows.map((row) => ({ id: row.id, label: row.title,
               accessibleLabel: row.title, facts: humanTime(row.at),
               state: row.state === "writing" ? "Writing…" : row.state === "not_answered" ? "Not answered" : undefined,

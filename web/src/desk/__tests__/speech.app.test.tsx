@@ -114,7 +114,8 @@ describe("every speech face says speech is not set up", () => {
     // never a chip on the row.
     const row = screen.getByTestId("live-ready-transcript");
     expect(row.contains(verb)).toBe(true);
-    expect(screen.getByTestId("live-mast")).toHaveTextContent("Speech not set up");
+    expect(screen.getByTestId("live-mast")).toHaveTextContent("Failed");
+    expect(screen.getByTestId("live-ready-mic")).toHaveTextContent("No answer");
     expect(verb.getAttribute("title")).toContain("huggingface.co");
     expect(screen.getByTestId("live-speech-setup").textContent?.toUpperCase()).not.toContain("HUGGINGFACE.CO");
     // W1-TRUTH (atlas 2026-10-27): the status bar says the one honest state,

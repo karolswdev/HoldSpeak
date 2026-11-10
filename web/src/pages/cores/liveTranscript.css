@@ -209,7 +209,7 @@
   .live-native-body { grid-template-columns: minmax(0, 1fr); gap: 20px; }
   .live-caught { border-left: 0; border-top: 1px solid var(--hs-rule); padding: 16px 0 0; }
   .desk-next .live-room { padding: 12px; }
-  .desk-next .live-ready .btn, .desk-next [data-testid="live-mast"] .btn { min-height: 48px; border-radius: 2px; }
+  .desk-next .live-ready .btn, .desk-next .live-mast .btn { min-height: 48px; border-radius: 2px; }
 }
 
-.desk-next [data-testid="live-mast"] .live-verb-label { display: inline; }
+.desk-next .live-mast .live-verb-label { display: inline; }

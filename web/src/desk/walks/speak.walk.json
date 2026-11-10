@@ -36,13 +36,13 @@
     },
     {
       "highlight": {
-        "target": "speak-footer",
-        "thing": "receipt",
-        "words": "The result of your last press stays here."
+        "target": "speak-types-into",
+        "thing": "destination",
+        "words": "These words say where your voice will go."
       },
       "ask": {
         "ref": "speak-2",
-        "question": "Keep this?",
+        "question": "Right place?",
         "choices": [
           "Keep",
           "Redo"
