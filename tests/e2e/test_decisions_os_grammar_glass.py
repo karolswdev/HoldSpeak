@@ -198,7 +198,12 @@ def test_decisions_selection_and_shots(tmp_path: Path, monkeypatch: pytest.Monke
                 shot("current")
                 page.route("**/api/decisions/ledger?*", lambda route: route.fulfill(status=503, json={"detail": "Decisions not read"}))
                 find.fill("unavailable")
-                expect(window.get_by_role("alert")).to_contain_text("Decisions not read")
+                expect(preview.get_by_role("alert")).to_contain_text("Decisions not read")
+                assert preview.get_by_role("alert").evaluate("""el => {
+                    const well = el.closest('.surface-list-pane-preview').getBoundingClientRect();
+                    const alert = el.getBoundingClientRect();
+                    return alert.top >= well.top && alert.bottom <= well.bottom;
+                }"""), "The read failure and retry must fit inside the preview"
                 shot("read-error")
                 page.unroute("**/api/decisions/ledger?*")
                 page.route("**/api/decisions/ledger?*", lambda route: route.fulfill(json={"decisions": [], "page": {"total": 0}}))

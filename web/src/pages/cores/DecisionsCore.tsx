@@ -344,11 +344,9 @@ export function DecisionsCore({ scope, scopeLabel }: CoreProps) {
   </div>;
 
   return <PreferencePane label="Decisions" testId="decisions-window">
-    <ListPane label="Selected decision" listTestId="decisions-rail" previewTestId="decisions-preview" list={<>
-      {list}
+    <ListPane label="Selected decision" listTestId="decisions-rail" previewTestId="decisions-preview" list={list}>
       {error ? <SurfaceState error={error} onRetry={() => setReadVersion((value) => value + 1)} />
         : loading ? <Loading data-testid="decisions-loading" /> : null}
-    </>}>
       {composing ? <DecisionComposer title={title} why={why} about={about} onTitle={setTitle} onWhy={setWhy}
         onCreate={() => void create()} onCancel={cancel} busy={creating} autoFocus />
         : selected ? <DecisionPreview key={`${rowKey(selected)}:${readVersion}`} row={selected} />
