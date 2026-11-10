@@ -24,10 +24,18 @@ class ProcessGuard:
         os.environ["HOLDSPEAK_TEST_PROCESS_RUN"] = self.run_id
 
         def start(process, *args, **kwargs):
+            # Even a child with an explicitly reduced environment remains
+            # attributable and keeps the test's spawn isolation.
+            if kwargs.get("env") is not None:
+                env = dict(kwargs["env"])
+                for key in ("HOLDSPEAK_TEST_PROCESS_RUN", "PYTEST_CURRENT_TEST", "HOLDSPEAK_AGENT_SPAWN"):
+                    if key in os.environ:
+                        env[key] = os.environ[key]
+                kwargs["env"] = env
             guard.original(process, *args, **kwargs)
             test = os.environ.get("PYTEST_CURRENT_TEST", "session setup").rsplit(" (", 1)[0]
             argv = process.args
-            command = str(argv[0] if isinstance(argv, (list, tuple)) else argv).split()[0]
+            command = str(argv[0]) if isinstance(argv, (list, tuple)) else "shell"
             guard.started = [(p, origin, cmd) for p, origin, cmd in guard.started if p.poll() is None]
             guard.started.append((process, test, Path(command).name))
             if Path(command).name == "tmux":

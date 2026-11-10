@@ -1019,6 +1019,10 @@ def pytest_sessionfinish(session, exitstatus):
         return
     leaks = guard.finish(os.environ.get("TMUX_TMPDIR", ""))
     leaks += getattr(session.config, "_holdspeak_worker_leaks", [])
+    if not leaks:
+        reporter = session.config.pluginmanager.get_plugin("terminalreporter")
+        if reporter:
+            reporter.write_line("process guard: ps found no live run-owned child (claude, codex and tmux included)")
     if leaks:
         session.exitstatus = pytest.ExitCode.TESTS_FAILED
         reporter = session.config.pluginmanager.get_plugin("terminalreporter")
@@ -1042,6 +1046,7 @@ def db_stamp_clock(monkeypatch):
     """Move store time explicitly, preserving each store's timestamp shape."""
     from datetime import datetime, timedelta, timezone
     from holdspeak.db import primitives, refinement_thoughts, meetings
+    from holdspeak.services import refinement_thought_service
 
     class Clock:
         now = datetime.now(timezone.utc).replace(microsecond=0)
@@ -1058,5 +1063,6 @@ def db_stamp_clock(monkeypatch):
     clock = Clock()
     monkeypatch.setattr(primitives, "_now_iso", clock.z)
     monkeypatch.setattr(refinement_thoughts, "_now", clock.z)
+    monkeypatch.setattr(refinement_thought_service, "_now", clock.z)
     monkeypatch.setattr(meetings, "utc_now_iso", clock.iso)
     return clock
