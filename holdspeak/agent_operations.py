@@ -61,7 +61,7 @@ AGENT_HAND = OperationDescriptor(
         "project_id, control_mode, brief: {bytes, refs, people_cut}}"
     ),
     refusals=_CONTRACT_REFUSALS + (
-        "owner_required: only the owner hands an item to an agent",
+        "owner_required",
         "item_kind_unsupported", "item_unknown", "profile_unknown", "tmux_absent", "executable_absent",
         "no_repository", "repository_not_registered: the Room watches a repository nobody registered",
         "clone_failed", "clone_timed_out", "gh_not_installed", "worktree_duplicate", "worktree_name_invalid", "brief_over_cap",
@@ -109,19 +109,23 @@ PROJECT_REPOSITORY_REGISTER = OperationDescriptor(
     effect="write",
     result="{project_id, repository, registered, cloned, registered_at, cloned_at, watched, host} and the receipt",
     refusals=_CONTRACT_REFUSALS + (
-        "owner_required: only the owner registers a repository",
+        "owner_required",
         "repository_invalid: not owner/name", "project_unknown",
     ),
     completion="synchronous; GET /api/projects/{project_id}/repository shows it",
-    exposure=("http:POST /api/projects/{project_id}/repository",),
+    exposure=("http:POST /api/projects/{project_id}/repository", "mcp:project.repository.register"),
     service="agent_hand_service",
     method="register_project_repository",
+    tool_schema={"type": "object", "properties": {"project_id": {"type": "string", "minLength": 1},
+        "repository": {"type": "string", "minLength": 3}, "command_id": {"type": "string"}},
+        "required": ["project_id", "repository"], "additionalProperties": False},
+    authority="authority",
     owner_only=True,
     owner_press=True,
     admission=Admission(
         "admitted",
         "PHILO-15 16 (B38): the owner's press names the Project's repository (the Door's GitHub row, the "
-        "drawer's Register). HTTP only, in no palette. The clone on the first hand is its own receipt.",
+        "drawer's Register). Owner only, in no agent palette. The clone on the first hand is its own receipt.",
     ),
 )
 
@@ -158,7 +162,8 @@ def _launch_op(name: str, method: str, http: tuple[str, str], handler: str, call
         effect="write" if write else "read", result=result, refusals=_LAUNCH_REFUSALS + refusals,
         completion="synchronous; a write is one desk_changed frame (the Agents window reads its flights again)",
         exposure=(f"http:{http[0]} {http[1]}", f"mcp:{name}"), service="agent_hand_service", method=method,
-        owner_only=owner_only, blocking_io=blocking_io, admission=_EXEMPT,
+        owner_only=owner_only, owner_press=owner_only and write,
+        authority="authority" if owner_only else "work", blocking_io=blocking_io, admission=_EXEMPT,
         call=call, http=http, http_status=status, handler=handler, tool_schema=tool,
         thread="effect_proposal" if write else "evidence_read",
     )
@@ -208,7 +213,7 @@ LAUNCH_OPERATIONS: tuple[OperationDescriptor, ...] = (
     _launch_op("agent.launch.resume", "launch_resume", ("POST", _L + "/resume"), "api_agent_resume",
                lambda s, p, a: s.launch_resume(p, a.get("launch_id")),
                "Resume an agent a restart stopped: a new terminal in its worktree runs the agent's own resume.",
-               write=True, status=202, blocking_io=True, refusals=("owner_required", "launch_not_stopped")),
+               write=True, owner_only=True, status=202, blocking_io=True, refusals=("owner_required", "launch_not_stopped")),
     _launch_op("agent.hand.cancel_queued", "cancel_queued_hand", ("DELETE", "/api/agent/hand/queue/{queue_id}"),
                "api_agent_hand_queue_cancel", lambda s, p, a: s.cancel_queued_hand(p, a.get("queue_id")),
                "Cancel a hand that waits for a free agent: it leaves the queue and never starts.", write=True,
@@ -216,7 +221,7 @@ LAUNCH_OPERATIONS: tuple[OperationDescriptor, ...] = (
     _launch_op("agent.helper.allow", "allow_helper", ("POST", _L + "/helper/allow"), "api_agent_helper_allow",
                lambda s, p, a: s.allow_helper(p, a.get("launch_id"), request_id=a.get("request_id")),
                "Allow the one helper an agent asked for under Secure (the worktree and process.spawn checks "
-               "still decide).", write=True, status=202, blocking_io=True, refusals=("request_id_required",),
+               "still decide).", write=True, owner_only=True, status=202, blocking_io=True, refusals=("owner_required", "request_id_required"),
                properties={"request_id": _ID}, required=("request_id",)),
     # 2026-11-09: the Hand sheet's preview and receipt, the lane's Re-brief and
     # Take back, and Deliver (the held brief of an existing launch).
