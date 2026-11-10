@@ -231,8 +231,10 @@ MIC_ALLOWLIST: tuple[tuple[str, str, str], ...] = (
      "HH:MM time field — a clock value, not dictatable prose"),
     ("pages/cores/CalendarSnapshotReviewCore.tsx", 'key="end"',
      "HH:MM time field — a clock value, not dictatable prose"),
-    ("pages/cores/settings/Speak.tsx", 'key="symbol"',
+    ("pages/cores/settings/Speak.tsx", 'label={`Symbol ${editing! + 1}`}',
      "Glyph field (a single symbol such as →) — not dictatable prose"),
+    ("desk/calls/LineSettings.tsx", 'label="Line address"',
+     "The Line's own SIP address, read-only, shown for Copy — nothing to dictate"),
     # -- the Programs wizard (#1833), 2026-11-08 ------------------------------
     ("desk/programs/ProgramWizard.tsx", 'label="Folder"',
      "Repository folder path (~/dev/my-repo) — a file system path, not dictatable prose"),

@@ -1510,6 +1510,17 @@ describe("Settings ▸ Calls ▸ Line", () => {
     fireEvent.click(nodeRow("karol")!);
     expect(calls).not.toContain("DELETE /api/calls/line/nodes/karol");
     fireEvent.click(screen.getByRole("button", { name: "Revoke machine" }));
+    // The first press asks, in the window, about this machine; nothing is revoked yet.
+    const ask = await screen.findByTestId("line-revoke-ask");
+    expect(ask.getAttribute("data-node")).toBe("karol");
+    expect(ask).toHaveTextContent("Revoke karol?");
+    expect(calls).not.toContain("DELETE /api/calls/line/nodes/karol");
+    // Cancel takes the question away and revokes nothing.
+    fireEvent.click(within(ask).getByRole("button", { name: "Cancel" }));
+    expect(screen.queryByTestId("line-revoke-ask")).toBeNull();
+    expect(calls).not.toContain("DELETE /api/calls/line/nodes/karol");
+    fireEvent.click(screen.getByRole("button", { name: "Revoke machine" }));
+    fireEvent.click(within(await screen.findByTestId("line-revoke-ask")).getByRole("button", { name: "Revoke" }));
     await waitFor(() => expect(calls).toContain("DELETE /api/calls/line/nodes/karol"));
     await waitFor(() => expect(nodeRow("karol")).toBeUndefined());
     expect(calls.filter((call) => call.startsWith("PUT /api/settings"))).toEqual([]);

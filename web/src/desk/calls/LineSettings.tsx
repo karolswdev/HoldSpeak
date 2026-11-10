@@ -17,7 +17,6 @@ import { apiFetch, readableError } from "../../lib/api";
 import { CommandWell } from "../../pages/cores/connections/ConnectionsPane";
 import { spriteUrl } from "../sprites";
 import { GadgetGroup, MxRadio, StringGadget } from "../surface/gadgets";
-import { ConfirmVerb } from "../surface/Surface";
 import { DotWord } from "../surface/kit";
 import { TelnyxSetup } from "./TelnyxSetup";
 import { LINE_OFF, mintLineCode, readLineNodes, readLineStatus, revokeLineNode, testLine } from "./api";
@@ -285,6 +284,8 @@ export function LineSettingsPane({
   const [loaded, setLoaded] = useState(false);
   const [busy, setBusy] = useState("");
   const [refusal, setRefusal] = useState("");
+  /** The machine the owner is asked about before its key is revoked. */
+  const [askRevoke, setAskRevoke] = useState<string | null>(null);
   const [test, setTest] = useState<string>("");
   const [nodes, setNodes] = useState<LineNode[]>([]);
   const [machine, setMachine] = useState("");
@@ -355,6 +356,7 @@ export function LineSettingsPane({
     setRefusal("");
     try {
       await revokeLineNode(node);
+      setAskRevoke(null);
       await load();
     } catch (error) {
       setRefusal(readableError(error));
@@ -496,11 +498,25 @@ export function LineSettingsPane({
                     label: "Revoke machine",
                     symbol: "−",
                     enabled: (row) => Boolean(row?.id.startsWith("node:")) && !busy,
-                    run: (row) => void revoke(nodeOf(row!.id)),
+                    run: (row) => setAskRevoke(nodeOf(row!.id)),
                   },
                 ]}
                 defaultVerb="use"
+                onSelect={() => setAskRevoke(null)}
               />
+              {askRevoke ? (
+                <div role="group" aria-label={`Revoke ${askRevoke}?`} data-testid="line-revoke-ask" data-node={askRevoke}>
+                  <PaneActions>
+                    <span>Revoke {askRevoke}?</span>
+                    <Button dense variant="ghost" disabled={busy === `revoke-${askRevoke}`} onClick={() => setAskRevoke(null)} data-testid="line-revoke-cancel">
+                      Cancel
+                    </Button>
+                    <Button dense variant="danger" loading={busy === `revoke-${askRevoke}`} onClick={() => void revoke(askRevoke)} data-testid="line-node-revoke">
+                      Revoke
+                    </Button>
+                  </PaneActions>
+                </div>
+              ) : null}
               {sheet ? (
                 <CodeSheet code={sheet.code} deadline={sheet.deadline} now={now} busy={busy === "install"} onNew={() => void install(sheet.code.node)} onCancel={() => setSheet(null)} />
               ) : (
