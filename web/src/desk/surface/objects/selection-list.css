@@ -90,3 +90,9 @@
 .object-list-toolbar .kit-toolbar-trailing { flex-wrap: nowrap; }
 
 .object-list-scopes > .gadget-cycle { width: auto; max-width: 200px; }
+
+/* Scope width is a preference, not an inline override of the compact Find row. */
+.object-list-toolbar .kit-toolbar-trailing:has(> .object-list-find-row[data-scoped]) { flex-basis: var(--object-list-scoped-width, auto); }
+@container surface (max-width: 520px) {
+  .object-list-toolbar .kit-toolbar-trailing:has(> .object-list-find-row[data-scoped]) { flex-basis: 100%; }
+}

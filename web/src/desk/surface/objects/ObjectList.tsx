@@ -634,14 +634,14 @@ function SelectionToolbar({ label, testId, trailing, scopes = [], inner = false,
     const width = row?.querySelector<HTMLElement>(".object-list-scopes")?.getBoundingClientRect().width;
     // Keep the complete scope allocation while folded, so a wider Find row
     // can unfold again rather than shrinking to the remaining field.
-    if (row?.parentElement && width) row.parentElement.style.flexBasis = `${Math.ceil(width + (trailing ? 252 : 0))}px`;
+    if (row?.parentElement && width) row.parentElement.style.setProperty("--object-list-scoped-width", `${Math.ceil(width + (trailing ? 252 : 0))}px`);
   }, [scopeFits, scopes, trailing]);
   const anchor = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
   const rect = open ? anchor.current?.getBoundingClientRect() : null;
   const folded = [...(!fits ? entries : []), ...(foldedScopes ? scopeEntries(scopes) : [])];
   const more = <Button ref={anchor} dense variant="secondary" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)}>Actions ▾</Button>;
-  return <Toolbar label={label} data-testid={testId} trailing={trailing || scopes.length ? <span ref={findRef} className="object-list-find-row">
+  return <Toolbar label={label} data-testid={testId} trailing={trailing || scopes.length ? <span ref={findRef} className="object-list-find-row" data-scoped={scopes.length > 0 || undefined}>
     {scopeFits && scopes.length ? <span className="object-list-scopes">{scopes.map(scope => scope.kind === "tick"
       ? <CheckGadget key={scope.id} label={scope.label} variant="token" checked={scope.checked} disabled={scope.disabled} onChange={scope.onChange} />
       : <CycleGadget key={scope.id} label={scope.label} value={scope.value} options={[...scope.options]} disabled={scope.disabled} onChange={scope.onChange} />)}</span> : null}

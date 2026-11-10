@@ -271,3 +271,43 @@ it("a group owns its egress line outside its field sheet and action row", () => 
   expect(line.closest(".surface-pane-egress")).toBeTruthy();
   expect(line.closest(".gadget-sheet,.gadget-group-actions")).toBeNull();
 });
+
+it("an inspector question cancels when the selected target changes", () => {
+  const cancel = vi.fn(), a = vi.fn(), b = vi.fn();
+  const { rerender } = render(<InspectorQuestion targetId="A" question="Delete A?" cancel={cancel} verb={{label:"Delete",run:a}} />);
+  rerender(<InspectorQuestion targetId="B" question="Delete B?" cancel={cancel} verb={{label:"Delete",run:b}} />);
+  expect(screen.queryByRole("button", {name:"Delete"})).toBeNull();
+  expect(cancel).toHaveBeenCalledOnce();
+  expect(a).not.toHaveBeenCalled(); expect(b).not.toHaveBeenCalled();
+});
+it("an inspector answer retains the callback that asked the question", () => {
+  const a = vi.fn(), refreshed = vi.fn(), cancel = vi.fn();
+  const { rerender } = render(<InspectorQuestion targetId="A" question="Delete A?" cancel={cancel} verb={{label:"Delete",run:a}} />);
+  rerender(<InspectorQuestion targetId="A" question="Delete A?" cancel={cancel} verb={{label:"Delete",run:refreshed}} />);
+  fireEvent.click(screen.getByRole("button", {name:"Delete"}));
+  expect(a).toHaveBeenCalledOnce(); expect(refreshed).not.toHaveBeenCalled();
+});
+
+it("status fitting never generates a hiding rule for ask or fail, even at a lower declared priority", () => {
+  let rules = "";
+  const adopted = document.adoptedStyleSheets;
+  vi.stubGlobal("CSSStyleSheet", class { replaceSync(value: string) { rules = value; } });
+  document.adoptedStyleSheets = [];
+  const { container, unmount } = render(<StatusBar items={[
+    {text:"5 items"}, {text:"2 new"}, {text:"Check settings",lamp:"warn"},
+    {text:"1 needs you",lamp:"ask",priority:-10}, {text:"Not saved",lamp:"fail",priority:-20},
+  ]} />);
+  try {
+    for (const text of ["1 needs you", "Not saved"]) {
+      const part = [...container.querySelectorAll(".kit-statusbar-item")].find(node => node.textContent === text)!;
+      expect(rules).not.toContain(`[data-part="${part.getAttribute("data-part")}"] { display: none; }`);
+    }
+    expect(rules).toContain("display: none");
+  } finally {
+    unmount(); document.adoptedStyleSheets = adopted; vi.unstubAllGlobals();
+  }
+});
+
+it("requires a stable target when an inspector holds an answer", () => {
+  expectTypeOf<ComponentProps<typeof InspectorQuestion>>().toExtend<{ targetId: string | number }>();
+});

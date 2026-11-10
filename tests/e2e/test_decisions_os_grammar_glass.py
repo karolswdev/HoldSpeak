@@ -198,12 +198,7 @@ def test_decisions_selection_and_shots(tmp_path: Path, monkeypatch: pytest.Monke
                 scope_row = window.locator('.object-list-find-row').first
                 scope_row.evaluate("el => {el.style.width='210px';el.style.flex='none';}")
                 expect(window.get_by_role("checkbox", name="Current only", exact=True)).to_have_count(0)
-                try:
-                    window.get_by_role("button", name="Actions ▾", exact=True).click(timeout=700)
-                except Exception:
-                    Path(".tmp/kit8b/scope-failure.json").write_text(json.dumps(window.evaluate("el => ({rows:[...el.querySelectorAll('.object-list-find-row,.object-list-scopes,.object-list-toolbar-strip,.kit-toolbar-trailing')].map(n=>({name:n.className,style:n.getAttribute('style'),text:n.textContent,rect:n.getBoundingClientRect().toJSON(),client:n.clientWidth,scroll:n.scrollWidth})),html:el.querySelector('.object-list-toolbar').outerHTML})")))
-                    page.screenshot(path=".tmp/kit8b/scope-failure.png")
-                    raise
+                window.get_by_role("button", name="Actions ▾", exact=True).click()
                 folded_scope = page.get_by_role("menuitemcheckbox", name="Current only", exact=True)
                 expect(folded_scope).to_have_attribute("aria-checked", "false")
                 folded_scope.click()
