@@ -2,7 +2,9 @@
 
 Part 11 of 17 of SCHEMA_SQL, in execution order (holdspeak/db/schema/__init__.py)."""
 
-SQL = """
+# Historical routing tables have no live writer. Reconcile has no retirement
+# policy, so keep their DDL and foreign keys; existing rows are never removed.
+RETIRED_SQL = """
 -- HS-143-05: immutable, content-free routing evidence.  Resolution happens
 -- from one SQLite snapshot before these rows are written; execution and
 -- fallback never consult mutable assignment/profile heads again.
@@ -432,7 +434,9 @@ CREATE TRIGGER IF NOT EXISTS inference_route_execution_transitions_no_delete
 BEFORE DELETE ON inference_route_execution_transitions BEGIN
     SELECT RAISE(ABORT, 'immutable inference route execution transition');
 END;
+"""
 
+SQL = RETIRED_SQL + """
 CREATE TABLE IF NOT EXISTS inference_runtime_leases (
     lease_id TEXT PRIMARY KEY,
     operation_id TEXT NOT NULL UNIQUE,
