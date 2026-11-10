@@ -243,10 +243,10 @@ function hasWords(value: ReactNode): boolean {
 export function InspectorQuestion({ question, keeps, consequence, cancel, verb, notice, testId, cancelTestId, targetId }: {
   question: string; keeps?: ReactNode; consequence?: ReactNode; cancel(): void;
   verb: InspectorVerb; notice?: ReactNode; testId?: string; cancelTestId?: string;
-  targetId?: string | number;
+  targetId: string | number;
 }) {
-  const [answer] = useState(() => ({ target: targetId ?? verb.run, run: verb.run }));
-  const current = answer.target === (targetId ?? verb.run);
+  const [answer] = useState(() => ({ target: targetId, run: verb.run }));
+  const current = answer.target === targetId;
   useLayoutEffect(() => { if (!current) cancel(); }, [current, cancel]);
   const ref = useRef<HTMLElement>(null);
   useLayoutEffect(() => { ref.current?.querySelector<HTMLButtonElement>(".surface-inspector-actions button")?.focus(); }, []);

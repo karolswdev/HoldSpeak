@@ -221,7 +221,7 @@ describe("gadget kit", () => {
     const onReplace = vi.fn();
     const user = userEvent.setup();
     render(
-      <SecretRow
+      <SecretRow targetId="web-token"
         label="Web pairing token"
         configured
         rotatable={false}
@@ -241,7 +241,7 @@ describe("gadget kit", () => {
     const onReplace = vi.fn();
     const user = userEvent.setup();
     render(
-      <SecretRow label="Device audio key" configured={false} onReplace={onReplace} />,
+      <SecretRow targetId="device-key" label="Device audio key" configured={false} onReplace={onReplace} />,
     );
     expect(screen.getByText("Not set")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Replace" }));
@@ -365,6 +365,7 @@ describe("gadget kit", () => {
           head={["Kind"]}
           rows={[["intent"]]}
           onDelete={onDelete}
+          rowKey={() => "intent"}
         />,
       );
       const x = screen.getByRole("button", { name: "Delete row 1" });
@@ -388,6 +389,7 @@ describe("gadget kit", () => {
           rows={[["intent"]]}
           deleteLabel="FORGET?"
           onDelete={onDelete}
+          rowKey={() => "intent"}
         />,
       );
       const x = screen.getByRole("button", { name: "Delete row 1" });

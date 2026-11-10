@@ -1395,7 +1395,7 @@ export function ConfirmVerb({
   disabled?: boolean;
   onConfirm: () => void;
   /** Stable identity of the object this question will change. */
-  targetId?: string | number;
+  targetId: string | number;
   /** HS-200-12 — the resting look; `primary` for a face's one filled
    *  two-step verb (`Accept reviewed`). Armed stays `danger` unless
    *  `armedVariant` says otherwise (an accept is not a destruction). */
@@ -1403,11 +1403,10 @@ export function ConfirmVerb({
   armedVariant?: "danger" | "primary";
   "data-testid"?: string;
 }) {
-  const [answer, setAnswer] = useState<{ target: string | number | (() => void); run: () => void } | null>(null);
-  const target = targetId ?? onConfirm;
-  const armed = answer !== null && answer.target === target;
-  const setArmed = (open: boolean) => setAnswer(open ? { target, run: onConfirm } : null);
-  useLayoutEffect(() => { if (answer && answer.target !== target) setAnswer(null); }, [answer, target]);
+  const [answer, setAnswer] = useState<{ target: string | number; run: () => void } | null>(null);
+  const armed = answer !== null && answer.target === targetId;
+  const setArmed = (open: boolean) => setAnswer(open ? { target: targetId, run: onConfirm } : null);
+  useLayoutEffect(() => { if (answer && answer.target !== targetId) setAnswer(null); }, [answer, targetId]);
   const trigger = useRef<HTMLButtonElement>(null);
   const previous = useRef(false);
   const editFocus = useRef<HTMLElement | null>(null);
@@ -1416,7 +1415,7 @@ export function ConfirmVerb({
     previous.current = armed;
   }, [armed]);
   if (armed && armedVariant === "danger") return <InspectorQuestion
-    targetId={targetId ?? "confirm"}
+    targetId={targetId}
     question={typeof confirmLabel === "string" ? confirmLabel : "Confirm this action?"}
     cancel={() => setArmed(false)}
     verb={{label: ariaLabel ?? (typeof label === "string" && /[a-z]/i.test(label) ? label : typeof confirmLabel === "string" ? confirmLabel.replace(/\?$/, "") : "Confirm"),busy,disabled,testId:dataTestId,run:() => { setArmed(false); answer.run(); if (editFocus.current?.isConnected && editFocus.current !== trigger.current) editFocus.current.focus(); }}} />;

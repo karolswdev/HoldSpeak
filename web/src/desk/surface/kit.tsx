@@ -438,6 +438,13 @@ export function StatusBar({
     if (!seat || typeof CSSStyleSheet === "undefined" || !CSSStyleSheet.prototype.replaceSync) return;
     const sheet = new CSSStyleSheet();
     document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
+    const markLineEnds = () => {
+      const parts = [...seat.querySelectorAll<HTMLElement>(":scope > .kit-statusbar-item")].filter(part => part.getClientRects().length);
+      parts.forEach((part, index) => {
+        const box = part.getBoundingClientRect(), next = parts[index + 1]?.getBoundingClientRect();
+        part.toggleAttribute("data-line-end", !next || Math.min(box.bottom, next.bottom) <= Math.max(box.top, next.top) + 1);
+      });
+    };
     const measure = () => {
       const widths = [...seat.querySelectorAll<HTMLElement>(":scope > .kit-statusbar-item")].map(part => {
         const copy = part.cloneNode(true) as HTMLElement;
@@ -454,12 +461,16 @@ export function StatusBar({
         remaining = remaining.filter(at => at !== index);
         return `@container status-parts (width < ${threshold}px) { [data-status-parts="${id}"] > [data-part="${index}"] { display: none; } ${remaining.length ? `[data-status-parts="${id}"] > [data-part="${remaining.at(-1)}"]::after { content: none; }` : ""} }`;
       }).join("\n"));
+      markLineEnds();
     };
     measure();
+    const observer = typeof ResizeObserver !== "undefined" ? new ResizeObserver(markLineEnds) : null;
+    observer?.observe(seat);
     let active = true;
     void document.fonts?.ready.then(() => { if (active) measure(); });
     return () => {
       active = false;
+      observer?.disconnect();
       document.adoptedStyleSheets = document.adoptedStyleSheets.filter(existing => existing !== sheet);
     };
   }, [items, id]);

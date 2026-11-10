@@ -562,13 +562,14 @@
   min-width: 0;
   white-space: nowrap;
 }
-/* The middle dot trails each item but the last, so a wrapped bar never
-   starts a line with a dot. */
+/* Dots join parts on one line. Hiding a line-end dot keeps its measured
+   seat, so marking the edge cannot change the wrap and make it oscillate. */
 .kit-statusbar-item:not(:last-child)::after {
   content: "·";
   margin-inline: 3px 8px;
   color: var(--wb-muted);
 }
+.kit-statusbar-item[data-line-end]::after { visibility: hidden; }
 .kit-statusbar-item b {
   color: var(--wb-text);
   font-weight: 600;

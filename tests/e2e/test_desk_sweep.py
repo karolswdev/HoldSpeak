@@ -1164,6 +1164,16 @@ LIST_GRAMMAR_JS = r"""(sel) => {
     }
     const parts = [...bar.querySelectorAll('.kit-statusbar-item, .kit-statusbar-verbs, .kit-statusbar-egress, .kit-statusbar-trailing')].filter(visible);
     if (!parts.some(part => part.textContent.trim())) faults.push('empty status bar');
+    const statusParts = [...bar.querySelectorAll('.kit-statusbar-item')].filter(visible);
+    const sameLine = (a, b) => a && b && Math.min(a.getBoundingClientRect().bottom, b.getBoundingClientRect().bottom)
+      > Math.max(a.getBoundingClientRect().top, b.getBoundingClientRect().top) + 1;
+    statusParts.forEach((part, index) => {
+      for (const [pseudo, neighbour] of [['::before', statusParts[index - 1]], ['::after', statusParts[index + 1]]]) {
+        const style = getComputedStyle(part, pseudo);
+        if (style.content.includes('·') && style.visibility !== 'hidden' && style.display !== 'none'
+            && !sameLine(part, neighbour)) faults.push(`${part.textContent}: status separator at line edge`);
+      }
+    });
     for (const part of parts) {
       const range = document.createRange(); range.selectNodeContents(part);
       const seat = bar.getBoundingClientRect();
@@ -2540,6 +2550,8 @@ def test_status_parts_fit_their_own_bar(desk: dict[str, Any], pw_browser: Any, w
         for seat in (393, 220, 90):
             bar.evaluate("(el, width) => {el.style.width = `${width}px`; el.style.maxWidth = '100%';}", seat)
             page.evaluate("() => document.fonts.ready")
+            # Inspect the painted layout after the bar's ResizeObserver has run.
+            page.evaluate("() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))")
             faults = page.evaluate(LIST_GRAMMAR_JS, "#surface-meetings")
             assert not [fault for fault in faults if "status" in fault], faults
             assert bar.locator(".kit-statusbar-item:visible").count() > 0
