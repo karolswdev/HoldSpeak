@@ -485,13 +485,13 @@ def _write(path: Path, data: bytes) -> str:
 # ── A4's KEPT: the working-copy save through both transports ─────────────
 
 
-def test_a4_kept_is_the_working_copy_save_with_revisions_cursor_and_last_modified(hub: Hub) -> None:
+def test_a4_kept_is_the_working_copy_save_with_revisions_cursor_and_last_modified(hub: Hub, db_stamp_clock) -> None:
     thought = _thought(hub, "kept-1", "first body")
     tid = thought["id"]
     before = thought["working_note"]["last_modified"]
     cursor = hub.client.get(f"/api/thoughts/{tid}/workbench").json()["workspace_cursor"]
-    time.sleep(1.1)  # last_modified has second precision on some writers
 
+    db_stamp_clock.advance()
     # HTTP save with the cursor: the working copy moves, the Thought stays open.
     saved = hub.client.patch(f"/api/thoughts/{tid}/working", json={
         "expected_aggregate_revision": thought["aggregate_revision"],
@@ -506,7 +506,7 @@ def test_a4_kept_is_the_working_copy_save_with_revisions_cursor_and_last_modifie
     assert saved.json()["workbench"]["workspace_cursor"]
 
     # MCP save of the SAME Thought on the next revision.
-    time.sleep(1.1)
+    db_stamp_clock.advance()
     is_error, out = hub.mcp("thought.update_working", {
         "thought_id": tid, "expected_aggregate_revision": after_http["aggregate_revision"],
         "expected_working_revision": after_http["working_revision"], "body_markdown": "kept over MCP"})
@@ -537,13 +537,13 @@ def test_a4_kept_is_the_working_copy_save_with_revisions_cursor_and_last_modifie
 # ── the Phase 4 invariants, through MCP ──────────────────────────────────
 
 
-def test_phase4_decision_rows_lead_by_persisted_created_at_via_mcp(hub: Hub) -> None:
+def test_phase4_decision_rows_lead_by_persisted_created_at_via_mcp(hub: Hub, db_stamp_clock) -> None:
     ids = []
     for title in ("First decision", "Second decision", "Third decision", "Fourth decision"):
         is_error, made = hub.mcp("desk.create", {"kind": "decisions", "data": {"title": title}})
         assert is_error is False, made
         ids.append(made["id"])
-        time.sleep(1.05)  # distinct persisted created_at
+        db_stamp_clock.advance()
     is_error, brief = hub.mcp("monday_brief.generate", {})
     assert is_error is False, brief
     rows = brief["sections"]["decisions"]

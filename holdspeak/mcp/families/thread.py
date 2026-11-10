@@ -3,17 +3,16 @@
 One tool: ``thread.set_status`` writes the thread's persisted status line
 and returns the written value.  The live ``thread_status_line`` frame the
 ThreadService loop sent after dispatch is parked (2026-11-08); the family
-touches only the database, no global broadcast seam.
+uses the composed ThreadService; it refuses unknown threads and agents.
 """
 from __future__ import annotations
 
-from holdspeak.runtime.composition import db_or, observer_or, service as runtime_service
+from holdspeak.runtime.composition import db_or, service as runtime_service
 
 from typing import Any
 
 from holdspeak.db import get_database
 from holdspeak.principals import Principal
-from holdspeak.services.errors import ServiceError
 
 
 TOOLS: list[dict[str, Any]] = [
@@ -45,17 +44,13 @@ TOOLS: list[dict[str, Any]] = [
 def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
     """Dispatch thread family tools."""
     if name == "thread.set_status":
-        thread_id = str(arguments.get("thread_id") or "")
-        text = str(arguments.get("text") or "")
-        if not thread_id:
-            raise ServiceError(
-                "thread_request_invalid",
-                "thread_id is required.",
-                context={"status": 400},
-            )
-        db = db_or(get_database)
-        db.threads.patch(thread_id, status_line=text)
-        return {"status_line": text, "thread_id": thread_id}
+        from holdspeak.services.thread_service import ThreadService
+
+        make = runtime_service("hub_thread_service", lambda: lambda: ThreadService(
+            db_or(get_database), broadcast=lambda *_: None))
+        service = make()
+        return service.set_status(principal, str(arguments.get("thread_id") or ""),
+                                  str(arguments.get("text") or ""))
     raise LookupError(name)
 
 

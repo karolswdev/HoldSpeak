@@ -4,7 +4,7 @@ Carved beside ``holdspeak/operations.py`` (which imports it into ``DESCRIPTORS``
 ``services/ui_feedback.FeedbackService`` serves every row (the module of
 functions the route called before). The save and the transcription are owner
 only: each writes a file in his feedback folder; they are the Desk's presses,
-HTTP only. The switch's read has a tool.
+available to the owner on HTTP and MCP. The switch's read has a tool.
 """
 from __future__ import annotations
 
@@ -32,9 +32,13 @@ FEEDBACK_OPERATIONS: tuple[OperationDescriptor, ...] = (
         refusals=_CONTRACT_REFUSALS + ("owner_required", "ui_feedback_disabled", "ui_feedback_invalid",
                                        "ui_feedback_conflict"),
         completion="synchronous; the bundle is complete on disk or absent",
-        exposure=("http:POST /api/ui-feedback",), service="feedback_service", method="save", owner_only=True,
-        blocking_io=True, call=lambda s, p, a: s.save(p, dict(a)), http=("POST", "/api/ui-feedback"),
-        handler="api_ui_feedback",
+        exposure=("http:POST /api/ui-feedback", "mcp:ui_feedback.save"), service="feedback_service", method="save", owner_only=True,
+        blocking_io=True, call=lambda s, p, a: s.save(p, a.get("payload", {})), http=("POST", "/api/ui-feedback"),
+        handler="api_ui_feedback", authority="config", owner_press=True,
+        tool_schema={"type": "object", "properties": {
+            "payload": {"type": "object", "description": "The Desk feedback bundle, including its context and media."}},
+            "required": ["payload"], "additionalProperties": False},
+        web_call=lambda s, p, a: s.save(p, dict(a)),
     ),
     OperationDescriptor(
         name="ui_feedback.transcribe", version=1,
@@ -44,10 +48,12 @@ FEEDBACK_OPERATIONS: tuple[OperationDescriptor, ...] = (
                                                  "transcript_error?, egress_boundary?}",
         refusals=_CONTRACT_REFUSALS + ("owner_required", "ui_feedback_disabled", "ui_feedback_not_found"),
         completion="synchronous; a failure is kept on the bundle and a second press tries again",
-        exposure=("http:POST /api/ui-feedback/{identifier}/transcribe",), service="feedback_service",
+        exposure=("http:POST /api/ui-feedback/{identifier}/transcribe", "mcp:ui_feedback.transcribe"), service="feedback_service",
         method="transcribe", owner_only=True, blocking_io=True,
         call=lambda s, p, a: s.transcribe(p, str(a.get("identifier") or "")),
-        http=("POST", "/api/ui-feedback/{identifier}/transcribe"), handler="api_ui_feedback_transcribe",
+        http=("POST", "/api/ui-feedback/{identifier}/transcribe"), handler="api_ui_feedback_transcribe", authority="config", owner_press=True,
+        tool_schema={"type": "object", "properties": {"identifier": {"type": "string", "minLength": 1}},
+                     "required": ["identifier"], "additionalProperties": False},
     ),
 )
 

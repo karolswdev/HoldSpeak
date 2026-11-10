@@ -1077,8 +1077,6 @@ def _ag8_seed(home: Path) -> None:
     """Five agents on two Projects through the hook ingest, in the fake
     Claude Code's order: one asks, one waits at a permission prompt, one
     finished (New), one works, one finished and was opened (Quiet)."""
-    import time
-
     import holdspeak.agent_context as agent_context_pkg
     from holdspeak.agent_context import event_log, ingest_agent_hook_event
     from holdspeak.db import get_database
@@ -1105,9 +1103,11 @@ def _ag8_seed(home: Path) -> None:
                                               source="manual", confidence=1.0)
     spool = {"state_path": agent_context_pkg.AGENT_CONTEXT_FILE, "events_spool_dir": event_log.default_spool_dir()}
 
+    clock = [datetime.now(timezone.utc) - timedelta(seconds=len(AG8_LAUNCHES))]
+
     def hook(sid: str, event: str, **payload: Any) -> None:
         ingest_agent_hook_event(agent="claude", payload={
-            "session_id": sid, "cwd": str(home / "dev" / "platform"), "hook_event_name": event, **payload}, **spool)
+            "session_id": sid, "cwd": str(home / "dev" / "platform"), "hook_event_name": event, **payload}, now=clock[0], **spool)
 
     iso = (datetime.now(timezone.utc) - timedelta(minutes=10)).isoformat().replace("+00:00", "Z")
     ledger = LaunchLedger()
@@ -1123,7 +1123,7 @@ def _ag8_seed(home: Path) -> None:
                 hook(sid, "Notification", notification_type="permission_prompt", message=AG2_HELD)
             elif stands in ("done", "seen"):
                 hook(sid, "Stop", last_assistant_message=AG0_DONE, stop_hook_active=False)
-            time.sleep(1.1)   # each wait starts in its own second: the oldest ask leads
+            clock[0] += timedelta(seconds=1)
             item = str(conn.execute("SELECT id FROM action_items WHERE task=? LIMIT 1", (task,)).fetchone()[0])
             attempt = db.work_attempts.create(
                 source_id="src_platform", worktree_id=f"wt_{launch_id}", project="platform",

@@ -13,7 +13,7 @@ from holdspeak.mcp.server import handle_message
 REQUIRED_TOOLS = {
     "automation.list", "automation.get", "automation.create", "automation.update",
     "automation.delete", "workbench.update_item", "workbench.delete_item",
-    "workbench.list_runs", "recipe.list", "recipe.get", "recipe.run", "recipe.chat",
+    "workbench.list_runs", "recipe.list", "recipe.get", "recipe.run",
     "zone.file", "zone.unfile", "zone.list_members", "kb.add_member",
     "kb.remove_member", "kb.list_members",
     "ask.resolve_grounding", "ask.run", "ask.cancel", "ask.keep",
@@ -122,17 +122,6 @@ def test_pipeline_tools_dispatch_through_mcp_protocol(monkeypatch) -> None:
     assert call("recipe.list", {}) == [{"id": "recipe"}]
     assert call("recipe.get", {"recipe_id": "recipe"})["id"] == "recipe"
     assert call("recipe.run", {"recipe_id": "recipe", "input": "go", "options": {"max_tokens": 10}})["max_tokens"] == 10
-    # HS-151-02: recipe.chat retired — the tool refuses instead of dispatching
-    # to RecipeService.chat. HS-200-45 R6: the refusal is RAISED now, so the
-    # sidecar reports `isError: true`; returning it made a permanent retirement
-    # read as a successful chat turn.
-    retired = handle_message({
-        "jsonrpc": "2.0", "id": "recipe.chat", "method": "tools/call",
-        "params": {"name": "recipe.chat", "arguments": {"recipe_id": "recipe", "question": "why"}},
-    })
-    assert retired is not None
-    assert retired["result"]["isError"] is True
-    assert "retired" in retired["result"]["content"][0]["text"]
     # PHILO-7-02: the membership tools are declared operations now (zone.file,
     # zone.unfile, zone.members, kb.member.add/remove, kb.members), bound to a
     # REAL PrimitiveService and admitted through the real kernel; this dict

@@ -106,6 +106,15 @@ class InterviewService:
         state["facts"] = available
         state["suggestions"] = {key: value for key, value in state["suggestions"].items() if all(fact_id in available for fact_id in value["fact_ids"])}
 
+    def model_context(self, principal: Principal, thread_id: str) -> dict[str, Any]:
+        """The current interview for a model, with only available user evidence."""
+        self.require_owner(principal)
+        self._thread(thread_id)
+        path = self._db.threads.list_path(thread_id)
+        user_id = next((message.id for message in reversed(path)
+                        if message.role == "user" and not self._db.threads.is_draft_message(message.id)), "")
+        return self.context(thread_id, user_id)
+
     def palette(self, thread_id: str) -> frozenset[str]:
         from ..mcp.tools import TOOLS
         available = {tool["name"] for tool in TOOLS}
