@@ -16,8 +16,8 @@ on an isolated HOME at 1440x900 (mouse, keys) and 393x852 (touch):
 
 * PHILO-3-01 (moved whole): the ONE write receipt's Retry and OK own their
   areas (nine points; 44 x 44 at 393, the painted face at 1440) to
-  `elementFromPoint` and a real pointer, in three consumers (the chrome, a
-  Thread, a footer), each driven to a real failure at the browser boundary.
+  `elementFromPoint` and a real pointer, driven to a real failure at the
+  browser boundary. New decision keeps its receipt in the composer.
 * PHILO-9-04 (moved whole): the selection in the note editor and the thread
   composer is readable (the computed ::selection colours at 4.5:1).
 
@@ -891,6 +891,7 @@ def _search(page, query: str, option: str) -> None:
 def _probe(page, scope: str, name: str, width: int, failures: list[str]) -> None:
     receipt = page.locator(f"{scope} .write-receipt").first
     receipt.wait_for(state="visible", timeout=15000)
+    receipt.scroll_into_view_if_needed()
     # the receipt seats with an animation (write-receipt.css receipt-seat);
     # geometry read mid-flight is not the geometry a press meets
     receipt.evaluate("e => Promise.all(e.getAnimations({ subtree: true }).map(a => a.finished))")
@@ -1038,26 +1039,34 @@ def test_receipt_verbs_own_their_areas(receipt_hub, width: int) -> None:
         _normal_chair(page)
         page.locator("[aria-controls=desk-tool-shelf]").wait_for(timeout=15000)
 
-        # 1. the chrome receipt (the desk backstop)
+        # 1. New decision claims the receipt in its retained composer, so
+        # the desk backstop yields. Probe the one place the owner sees it.
         _fault(page, "POST", "/api/decision-records/from-desk")
         _search(page, "New Decision", "[id='desk-palette-option-desk.new-decision']")
         # PHILO-13-08 (B3): the decision is named before it is created; the
         # refused POST is the named one.
         page.get_by_test_id("palette-name").fill("Adopt the one bus")
-        page.keyboard.press("Enter")
-        # the owner's ruling (2026-09-23): at phone width the backstop is a
-        # full-width row in the desk flow, not a seat in the bar
-        seat = ".desk-receipt-row" if width <= 720 else ".desk-chrome-receipt"
-        _probe(page, seat, "chrome", width, failures)
+        with page.expect_response(lambda response: response.request.method == "POST"
+                                  and response.url.endswith("/api/decision-records/from-desk")) as refused:
+            page.get_by_test_id("palette-name").press("Enter")
+        assert refused.value.status == 500
+        seat = "[data-testid='new-decision']"
+        receipt = page.locator(f"{seat} .write-receipt")
+        receipt.wait_for(state="visible", timeout=15000)
+        assert "Could not make the decision" in receipt.inner_text()
+        assert page.get_by_test_id("palette-name").input_value() == "Adopt the one bus"
+        assert page.locator(".write-receipt:visible").count() == 1
+        _probe(page, seat, "decision-composer", width, failures)
         if width <= 720:
-            _row_law(page, failures)
-            _band_law(page, "row standing", failures)
-            # clear it for real: OK, not the trap
-            page.evaluate("window.__trapOn = false")
-            page.locator(".desk-receipt-row .write-receipt-dismiss").click()
-            page.locator(".desk-receipt-row").wait_for(state="detached", timeout=5000)
+            _band_law(page, "composer receipt standing", failures)
+        # Clear it for real: OK, not the pointer probe's trap.
+        page.evaluate("window.__trapOn = false")
+        receipt.locator(".write-receipt-dismiss").click()
+        receipt.wait_for(state="detached", timeout=5000)
+        assert page.get_by_test_id("palette-name").input_value() == "Adopt the one bus"
+        if width <= 720:
             page.wait_for_timeout(200)
-            _band_law(page, "row cleared", failures)
+            _band_law(page, "composer receipt cleared", failures)
         page.unroute("**/*")
         page.reload()
         page.locator("[aria-controls=desk-tool-shelf]").wait_for(timeout=15000)
