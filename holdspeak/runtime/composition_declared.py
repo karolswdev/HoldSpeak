@@ -347,6 +347,9 @@ def compose_declared_services(services: Any, ctx: Any, resolved_db: Any, resolve
         "heartbeat_service": lambda: LIVE_HEARTBEAT_SERVICE,
         "reach_service": lambda: LIVE_REACH_SERVICE,
         "telegram_service": lambda: LIVE_TELEGRAM_SERVICE,
+        # ops/secrets-access: the owner's raw profiles and remote access.
+        "owner_service": lambda: _owner_profiles(resolved_db),
+        "remote_access_service": lambda: _remote_access(ctx),
         # 2026-11-09 (ops/connections): the Engines window, the calendar and the
         # Desk's UI feedback and the providers read the hub's context at each call.
         **_ops_connections_builders(ctx),
@@ -362,3 +365,13 @@ def compose_declared_services(services: Any, ctx: Any, resolved_db: Any, resolve
             setattr(ctx, name, instance)
         except AttributeError:  # pragma: no cover - a non-dataclass stand-in
             pass
+
+
+def _owner_profiles(db: Any) -> Any:
+    from holdspeak.services.model_profile_service import ModelProfileService
+    return ModelProfileService(db)
+
+
+def _remote_access(ctx: Any) -> Any:
+    from holdspeak.services.remote_access_service import RemoteAccessService
+    return RemoteAccessService(ctx.settings_service)

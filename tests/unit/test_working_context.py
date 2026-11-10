@@ -609,7 +609,10 @@ def test_lexical_totals_and_the_overflow_receipt_stay_honest(
     )
 
     search = db.memory.search(QUERY, kinds=["note"])
-    assert [hit.source_ref for hit in search.hits] == [
+    # The three controls tie on rank; the tie goes to the newer write, and the
+    # three writes can cross a clock tick. The accounting is the claim here,
+    # not the order inside the tie.
+    assert sorted(hit.source_ref for hit in search.hits) == [
         "note:control-0",
         "note:control-1",
         "note:control-2",

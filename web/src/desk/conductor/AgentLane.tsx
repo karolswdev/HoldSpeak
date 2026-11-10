@@ -407,7 +407,7 @@ function RawHeldCall({ call }: { call: LaneGated }) {
       // decided elsewhere first answers 409 with its standing state).
       const done = await apiFetch<{ state?: string; decided_at?: number | null }>(
         `/api/gate/proposals/${encodeURIComponent(call.id)}/decide`,
-        { method: "POST", json: { decision, actor: "owner" } },
+        { method: "POST", json: { decision } },
       );
       const state = String(done?.state ?? decision);
       const at = done?.decided_at ? done.decided_at * 1000 : Date.now();

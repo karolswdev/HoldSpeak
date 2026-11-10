@@ -144,10 +144,11 @@ _STEP = {
         "for_person_id": {"type": ["string", "null"], "description": "The person this step is owed to (a People id)."},
         "may_call": {"type": ["boolean", "null"], "description": "The engine may call the owner's phone about this step where the Reach rules allow it."},
         "no_diff_ok": {"type": ["boolean", "null"], "description": "The step may end with no change (else a step that writes nothing goes back to its agent)."},
-        "kind": {"type": ["string", "null"], "enum": ["agent", "prompt", None],
+        "kind": {"type": ["string", "null"], "enum": ["agent", "prompt", "desk", None],
                  "description": "agent (default): an agent in a worktree. prompt: one model call on the engine "
                                 "assigned to automations, with no repository; the brief is the call, the answer "
-                                "is the step's report."},
+                                "is the step's report. desk: the brief is a JSON list of {op, args} display requests; "
+                                "only mark, say and scroll. No repository or agent. The step waits for each Desk answer."},
         "deliver": {"type": ["string", "null"], "maxLength": 200,
                     "description": "A prompt step: where the answer goes: inbox (default), needs_you, today, "
                                    "destination:<id> (prepared; he presses Send) or project_updates:<project id>."},

@@ -395,7 +395,7 @@ def test_raw_reads_a_cut_call_whole_and_approves_it(hub: str, tmp_path: Path) ->
 
     # Approve as the face sends it; the hub's answer is the receipt.
     status, decided = _http(hub, "POST", "/api/gate/proposals/toolu_cut_1440/decide", TOKEN,
-                            {"decision": "approved", "actor": "owner"})
+                            {"decision": "approved"})
     assert status == 200 and decided["state"] == "approved" and decided["decided_at"], decided
     _fence("gate-decide.approved", decided, tmp_path, hub)
     assert _get(hub, "/api/gate/proposals/toolu_cut_1440")["state"] == "approved"

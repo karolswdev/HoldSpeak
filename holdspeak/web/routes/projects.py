@@ -518,20 +518,6 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
         except Exception as exc:
             return error_500(exc, log, "Failed to build desk needs-you")
 
-    @router.post("/api/desk/needs-you/seen")
-    def api_desk_needs_you_seen(request: Request, body: dict[str, Any] = Body(default={})) -> Any:
-        """Betterment D3: he has seen these meetings' promises kept on
-        arrival; they leave the NEW group (they stay in the list)."""
-        try:
-            ids = body.get("meeting_ids")
-            if not isinstance(ids, list) or not all(isinstance(i, str) for i in ids):
-                return JSONResponse({"success": False, "error": "meeting_ids is a list of meeting ids"}, status_code=400)
-            from holdspeak.services.needs_you_membership import mark_arrivals_seen
-
-            return JSONResponse({"success": True, "seen": mark_arrivals_seen(_get_db(), ids)})
-        except Exception as exc:
-            return error_500(exc, log, "Failed to mark arrivals seen")
-
     # ── HS-172-06: suggested sources ────────────────────────────────
 
     @router.get("/api/projects/{project_id}/suggested-sources")

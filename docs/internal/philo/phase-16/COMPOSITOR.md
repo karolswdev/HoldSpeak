@@ -300,6 +300,42 @@ poll `/api/inference/acquisitions/{job}` into the bar (the TODO in
 
 ## 13. Software design: what we take from PhreshOS (owner ask, 2026-10-09)
 
+### Implemented display protocol (2026-11-09)
+
+`desk_operations.py` declares the window verbs and display requests.
+`requests.ts` executes display requests for agents and the Walk.
+`desk.say` uses `lib/tts`, the Desk's voice. Its answer includes `spoken`.
+Without a voice, the words stay visible and `spoken` is false.
+A repeated request answers again without speaking or pressing twice.
+
+Each declared window change offers **Undo** with the action's name.
+The Desk and Wrote receipts use `windowUndo.ts` and one atomic hub restore.
+Restore checks revisions before changing any window. A later window change is kept.
+The restore covers scope, position, size, depth, seating, zoom and the Stage shelf.
+
+A Program step of kind `desk` takes a JSON list in its brief:
+
+```json
+[
+  {"op": "mark", "args": {"window": "surface-programs", "target": "programs-plate"}},
+  {"op": "say", "args": {"words": "The changes are ready."}}
+]
+```
+
+Programs can mark, say and scroll. They cannot press.
+The step sends requests through the declared port, one at a time.
+Each Desk answer is kept in `facts.desk.answers` before the next request.
+Without a visible Desk, Needs you says **Open the Desk to see this result.**
+The normal Program tick continues after the Desk reports presence.
+An unanswered request can replay with the same ID after 15 seconds. A press cannot replay.
+Display requests stay in hub memory. After a restart, an unanswered display request can repeat.
+
+Presence, arrivals seen, request results and restore are HTTP-only owner callbacks.
+The seven `/api/desk/actuators/*` routes are outside this change.
+
+
+### Historical design notes (2026-10-09)
+
 Read: `github.com/PhreshOS/system` at 0.1.118 (the System service + its
 Desktop; TypeScript; `source/server/core/link-manager/.../process-manager/
 window.ts`, `source/client/view/components/window-manager/{window-manager,

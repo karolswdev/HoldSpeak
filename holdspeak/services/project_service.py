@@ -178,6 +178,32 @@ class ProjectService:
     def get_project(self, principal: Principal, project_id: str) -> dict[str, Any]:
         return self._project_payload(self._require_project(project_id))
 
+    def briefing_facts(self, principal: Principal) -> dict[str, list[dict[str, Any]]]:
+        """The Room's meeting decisions and commitments, once per identity.
+
+        The brief consumes the same section readers as ``room`` without
+        building another Room (Needs you already read each Room for coverage).
+        """
+        decisions = {}
+        commitments = {}
+        for project in self.list_projects(principal):
+            rows = self._read_room_decisions(project["id"])["items"]
+            for row in rows:
+                if row.get("kind") == "decision" and row.get("source_type") == "meeting":
+                    decisions[row["id"]] = row
+            by_commitment = {row["commitment_id"]: row for row in rows if row.get("commitment_id")}
+            for row in self._read_room_commitments(project["id"])["items"]:
+                if row.get("kind") != "action":
+                    continue
+                decision = by_commitment.get(row["id"], {})
+                commitments[row["id"]] = {
+                    **row, "at": decision.get("at"),
+                    "ref": (f"decision:{decision['source_id']}" if decision.get("source_id") else
+                            f"action_item:{row['action_item_id']}" if row.get("action_item_id") else
+                            f"commitment:{row['id']}"),
+                }
+        return {"decisions": list(decisions.values()), "commitments": list(commitments.values())}
+
     def list_briefings(self, principal: Principal, project_id: str, limit: int = 50) -> dict[str, Any]:
         self._require_project(project_id)
         clean_limit = max(1, min(int(limit), 200))

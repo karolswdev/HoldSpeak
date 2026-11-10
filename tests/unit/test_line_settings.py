@@ -55,9 +55,13 @@ def test_the_line_keys_round_trip_and_both_secrets_go_to_the_keystore_only(home,
         "kind": "sip", "user": "holdspeak", "domain": "", "outbound": "", "password_ref": "",
         "connection_id": "", "number": "", "codecs": ["opus", "PCMU", "PCMA"]}, "secrets": {"sip_password": "missing", "telnyx_api_key": "missing"}}
     result = service.update_settings(OWNER, {"calls": {"daily_limit": 5, "line": {
-        "adapter": "line", "where": "node:karol", "telnyx_api_key": "KEY-abc",
-        "account": {"kind": "telnyx", "user": "hsline", "password": "sip-pass-1", "codecs": "PCMU,PCMA"}}}})
+        "adapter": "line", "where": "node:karol",
+        "account": {"kind": "telnyx", "user": "hsline", "codecs": "PCMU,PCMA"}}}})
     assert result.get("success") is not False, result
+    from holdspeak.services.credential_service import CredentialService
+    credentials = CredentialService(get_database())
+    credentials.replace(OWNER, "line_telnyx_api_key", "KEY-abc")
+    credentials.replace(OWNER, "line_sip_password", "sip-pass-1")
     read = service.get_settings(OWNER)["calls"]
     assert read["daily_limit"] == 5 and read["line"]["where"] == "node:karol"
     assert read["line"]["account"]["password_ref"] == "calls.line.sip_password"
@@ -65,10 +69,10 @@ def test_the_line_keys_round_trip_and_both_secrets_go_to_the_keystore_only(home,
     text = json.dumps(read) + (home / ".holdspeak" / "config.json").read_text()
     assert "sip-pass-1" not in text and "KEY-abc" not in text  # never in the read, never in the file
     assert secrets.read(secrets.SIP_PASSWORD) == "sip-pass-1" and secrets.read(secrets.TELNYX_API_KEY) == "KEY-abc"
-    # The face sends its read back: the secrets stay; an empty field keeps them; null forgets.
-    service.update_settings(OWNER, {"calls": {**read, "line": {**read["line"], "account": {**read["line"]["account"], "password": ""}}}})
+    # A normal settings echo preserves keys; only the secret operation removes one.
+    service.update_settings(OWNER, {"calls": read})
     assert secrets.where(secrets.SIP_PASSWORD) == "keystore"
-    service.update_settings(OWNER, {"calls": {"line": {"account": {"password": None}}}})
+    credentials.delete(OWNER, "line_sip_password")
     assert secrets.where(secrets.SIP_PASSWORD) == "missing"
     assert Config.load().calls.line["account"]["password_ref"] == ""
 
@@ -153,7 +157,10 @@ def test_the_wire_routes_carry_hello_events_and_the_long_poll(home, monkeypatch)
     from holdspeak.db import get_database
 
     SettingsService(get_database()).update_settings(OWNER, {"owner": {"name": "Karol"}, "calls": {"line": {
-        "account": {"kind": "telnyx", "user": "hsline", "password": "sip-pass-2"}}}})
+        "account": {"kind": "telnyx", "user": "hsline"}}}})
+    from holdspeak.services.credential_service import CredentialService
+    CredentialService(__import__("holdspeak.db", fromlist=["get_database"]).get_database()).replace(
+        OWNER, "line_sip_password", "sip-pass-2")
     app, line_hub = _app(monkeypatch)
     with TestClient(app) as client:
         hello = client.post("/api/calls/line/hello", json={

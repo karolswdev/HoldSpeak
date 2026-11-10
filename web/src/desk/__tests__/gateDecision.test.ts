@@ -18,7 +18,7 @@ describe("gate decision outcomes", () => {
     api.mockResolvedValueOnce({ state: "approved" }).mockResolvedValueOnce({ proposals: [] });
     await expect(useGate.getState().decide("call/1", "approved")).resolves.toBeUndefined();
     expect(api).toHaveBeenNthCalledWith(1, "/api/gate/proposals/call%2F1/decide", {
-      method: "POST", json: { decision: "approved", reason: undefined, actor: "owner" },
+      method: "POST", json: { decision: "approved", reason: undefined },
     });
     expect(api).toHaveBeenNthCalledWith(2, "/api/gate/proposals?state=held");
     expect(useGate.getState()).toMatchObject({ held: [], loaded: true, error: null });

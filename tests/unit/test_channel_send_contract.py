@@ -73,9 +73,9 @@ def hub(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
 def test_the_operations_are_declared_once_and_reach_one_service_over_http_and_mcp(hub: Hub) -> None:
     from holdspeak import operations
 
-    declared = [d.name for d in operations.DESCRIPTORS if d.name.startswith("channel.")]
+    declared = [d.name for d in operations.DESCRIPTORS if d.service == "channel_service"]
     # Secret saves are HTTP only; each secret is held, never an operation argument.
-    assert declared == [*CHANNEL_OPS, "channel.save_email_key", "channel.save_slack_webhook"]
+    assert all(operations.bind_available({"channel_service": hub.root.channel_service}).descriptor(name).http for name in declared)
     registry = hub.root.operations
     service = hub.root.channel_service
     assert service is not None and hub.server.app is not None
@@ -88,8 +88,8 @@ def test_the_operations_are_declared_once_and_reach_one_service_over_http_and_mc
         assert tools[name]["description"] == descriptor.description, name
         http = [e for e in descriptor.exposure if e.startswith("http:")]
         assert http and f"mcp:{name}" in descriptor.exposure, name
-    assert "channel.save_email_key" not in tools
-    assert "channel.save_slack_webhook" not in tools
+    assert "settings.secret.email_key" not in tools
+    assert "settings.secret.slack_webhook" not in tools
     routes = {(m, r.path) for r in hub.server.app.routes for m in getattr(r, "methods", ()) or ()}
     for name in declared:
         for exposure in registry.descriptor(name).exposure:

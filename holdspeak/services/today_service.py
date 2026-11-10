@@ -25,6 +25,9 @@ class TodayService:
         with the Programs block (PG18: ``ProgramService.since_morning``; ``None``
         when the Programs could not be read, never a count of zero that lies)."""
         read = since_morning_read(self._db, now)
+        # The face needs the event, not the meeting's supporting metadata.
+        read["items"] = [{key: row[key] for key in ("kind", "ref", "title", "word", "at")}
+                         for row in read["items"]]
         try:
             from holdspeak.services.program_service import ProgramService
 
@@ -132,7 +135,8 @@ def _today_read(
 
 # ── DELIGHT slice 5 (2026-10-28): Since this morning ─────────────────────────
 # Today in the evening lists what got done today: tasks ticked, decisions
-# recorded, notes filed, sends sent, meetings held. Each row names its
+# recorded or confirmed, Desk decisions and Projects added, notes filed,
+# sends sent, meetings recorded. Each row names its
 # object (a ref the desk opens), a title, one word and the time; newest
 # first. Every fact is a row the hub already keeps; this read only gathers
 # them for the local day.
@@ -172,22 +176,30 @@ def _first_line(text: Any) -> str:
 
 
 def since_morning_read(db: Any, now: datetime.datetime | None = None,
-                       limit: int = SINCE_MORNING_LIMIT) -> dict[str, Any]:
-    """What got done since the local midnight of ``now`` (the hub's clock)."""
+                       limit: int | None = SINCE_MORNING_LIMIT, *,
+                       window_start: str | None = None, window_end: str | None = None) -> dict[str, Any]:
+    """One history read for Today and the brief, over exact instant bounds.
+
+    Today uses local midnight through now; the brief supplies its lookback
+    and asks for all rows. Meeting metadata also supplies its recording dedup.
+    """
     local_now = (now or wall_clock_now()).astimezone()
     morning = local_now.replace(hour=0, minute=0, second=0, microsecond=0)
-    start = morning.astimezone(datetime.timezone.utc)
+    start = _stamp(window_start) if window_start else morning.astimezone(datetime.timezone.utc)
+    end = _stamp(window_end) if window_end else local_now.astimezone(datetime.timezone.utc) + datetime.timedelta(minutes=5)
+    if start is None or end is None:
+        raise ValueError("Invalid history window")
     # A coarse SQL bound (a day before the UTC morning, as a date prefix,
     # works for every stamp shape); the exact cut is made on the parsed time.
     floor = (start - datetime.timedelta(days=1)).strftime("%Y-%m-%d")
     items: list[dict[str, Any]] = []
 
-    def add(kind: str, ref: str, title: str, word: str, at_value: Any) -> None:
+    def add(kind: str, ref: str, title: str, word: str, at_value: Any, **metadata: Any) -> None:
         at = _stamp(at_value)
-        if at is None or at < start or at > local_now.astimezone(datetime.timezone.utc) + datetime.timedelta(minutes=5):
+        if at is None or at < start or at > end:
             return
         items.append({"kind": kind, "ref": ref, "title": title, "word": word,
-                      "at": at.isoformat(timespec="seconds").replace("+00:00", "Z"), "_at": at})
+                      "at": at.isoformat(timespec="seconds").replace("+00:00", "Z"), "_at": at, "stored_at": str(at_value), **metadata})
 
     def rows(conn: Any, sql: str, *args: Any) -> list[Any]:
         try:
@@ -199,13 +211,28 @@ def since_morning_read(db: Any, now: datetime.datetime | None = None,
         for row in rows(conn, """SELECT id, task, completed_at FROM action_items
                                  WHERE status = 'done' AND completed_at >= ?"""):
             add("action", f"action_item:{row['id']}", str(row["task"] or "Task"), "Done", row["completed_at"])
+        for row in rows(conn, """SELECT id, title, created_at FROM desk_decisions
+                                 WHERE deleted = 0 AND status != 'proposed' AND created_at >= ?"""):
+            add("desk_decision", f"desk_decision:{row['id']}", str(row["title"] or "").strip() or "Untitled decision",
+                "Made", row["created_at"])
+        for row in rows(conn, """SELECT id, name, created_at FROM projects
+                                 WHERE is_archived = 0 AND created_at >= ?"""):
+            add("project", f"project:{row['id']}", str(row["name"] or "").strip() or "Untitled Project",
+                "Added", row["created_at"])
+        for row in rows(conn, """SELECT id, meeting_id, text, decided_at FROM follow_through_proposals
+                                 WHERE state = 'confirmed' AND kind = 'decision' AND decided_at >= ?"""):
+            add("confirmed_decision", f"meeting:{row['meeting_id']}",
+                " ".join(str(row["text"] or "").split())[:160] or "Untitled decision",
+                "Confirmed", row["decided_at"], proposal_id=row["id"])
         # A proposed Desk decision (a Program's Skip or merge by rule, PG16)
         # is not recorded yet: it waits for his Accept.
         for row in rows(conn, """SELECT r.id, r.decision_text, r.created_at FROM decision_records r
                                  WHERE r.deleted = 0 AND r.kind = 'decision'
                                    AND NOT EXISTS (SELECT 1 FROM desk_decisions dd
                                        WHERE r.source_type = 'desk' AND dd.id = r.source_id
-                                         AND dd.deleted = 0 AND LOWER(dd.status) = 'proposed')
+                                         AND dd.deleted = 0)
+                                   AND NOT EXISTS (SELECT 1 FROM follow_through_proposals fp
+                                       WHERE fp.decision_record_id = r.id AND fp.state = 'confirmed')
                                    AND r.created_at >= ?"""):
             add("decision", f"decision_record:{row['id']}", _first_line(row["decision_text"]) or "Decision",
                 "Recorded", row["created_at"])
@@ -225,12 +252,16 @@ def since_morning_read(db: Any, now: datetime.datetime | None = None,
             except (TypeError, ValueError):
                 title = ""
             add("send", str(row["document_ref"]), title.strip() or "Document", "Sent", row["settled_at"])
-        for row in rows(conn, """SELECT id, title, started_at, ended_at, intel_status FROM meetings
-                                 WHERE parked = 0 AND ended_at IS NOT NULL AND started_at >= ?"""):
-            if (_stamp(row["started_at"]) or start) < start:
-                continue
-            add("meeting", f"meeting:{row['id']}", str(row["title"] or "").strip() or "Meeting",
-                "Summary stored" if row["intel_status"] == "ready" else "Held", row["ended_at"])
+        for row in rows(conn, """SELECT m.id, m.title, m.intel_status, m.duration_seconds, m.calendar_event_id,
+                                        COALESCE(m.ended_at, m.started_at) AS window_at,
+                                        (SELECT COUNT(*) FROM action_items a WHERE a.meeting_id = m.id) AS action_count
+                                 FROM meetings m
+                                 WHERE m.parked = 0 AND m.capture_status NOT IN ('recording', 'provisional')
+                                   AND COALESCE(m.ended_at, m.started_at) >= ?"""):
+            add("meeting", f"meeting:{row['id']}", str(row["title"] or "").strip() or "Untitled meeting",
+                "Summary stored" if row["intel_status"] == "ready" else "Held", row["window_at"],
+                duration_seconds=row["duration_seconds"], action_count=row["action_count"],
+                calendar_event_id=row["calendar_event_id"])
     items.sort(key=lambda item: item.pop("_at"), reverse=True)
-    return {"since": start.isoformat().replace("+00:00", "Z"), "items": items[:max(1, int(limit))]}
-
+    return {"since": start.isoformat().replace("+00:00", "Z"),
+            "items": items if limit is None else items[:max(1, int(limit))]}

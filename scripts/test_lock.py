@@ -53,6 +53,9 @@ from typing import IO, Optional
 PRIORITIES = ("high", "low")
 #: A command that names one of these drives a browser: its CPUs count double.
 BROWSER_MARKS = ("tests/e2e", "test_desk_sweep", "playwright", "glass", "graph_walk")
+#: A path under one of these drives no browser, whatever its file is called
+#: (tests/unit/test_graph_walk_op_steps.py reads the walk's tables only).
+NO_BROWSER_DIRS = ("tests/unit", "tests/integration", "tests/critical", "tests/web", "tests/mcp", "tests/uat")
 VITEST_CPUS = 4
 
 
@@ -95,8 +98,13 @@ def cpus_of(cmd: list[str]) -> int:
         elif word.startswith("-n") and len(word) > 2:
             n = _workers(word[2:])
     n = max(1, n or 1)
-    text = " ".join(cmd)
-    return n * 2 if any(mark in text for mark in BROWSER_MARKS) else n
+    return n * 2 if any(_drives_browser(word) for word in cmd) else n
+
+
+def _drives_browser(word: str) -> bool:
+    if any(f"{quiet}/" in f"{word}/" for quiet in NO_BROWSER_DIRS):
+        return False
+    return any(mark in word for mark in BROWSER_MARKS)
 
 
 def _marker(name: str) -> Optional[tuple[int, str]]:
