@@ -457,7 +457,7 @@ def test_no_registered_write_is_silent(hub: Hub, seeded: dict[str, str]) -> None
 
     assert get_database().meetings.mark_ready_unseen(seeded["meeting"]) is not None
     # The asynchronous Ask writes a real thread before it announces. Use the
-    # existing assignment producer and a recorded engine, never a provider.
+    # existing assignment producer and a stub engine, never a live provider.
     from tests.unit.test_phase143_inference_assignments import _profile, OWNER as assignment_owner
     from holdspeak.services.inference_assignment_service import InferenceAssignmentService
 
