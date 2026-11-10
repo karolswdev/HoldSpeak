@@ -28,15 +28,16 @@ from __future__ import annotations
 
 from typing import Any, Callable, Mapping, Optional
 
-from holdspeak.operations import _CONTRACT_REFUSALS, OperationDescriptor
+from holdspeak.operations import _CONTRACT_REFUSALS, OperationDescriptor, OperationOwnerRequired
+from holdspeak.principals import PrincipalKind
 
 Call = Callable[[Any, Any, dict[str, Any]], Any]
 
 _OWNER = "the owner only: the hub token (HTTP edge right OWNER; MCP auth resolver), passed to the service unchanged"
 _OWNER_OR_AGENT = ("the owner or an agent (hub or agent token), or the paired phone: its device token "
                    "(Authorization: Bearer <device JWT>), authenticated by the route on every request")
-_OWNER_OR_DEVICE = ("the owner (hub token), an agent, or the paired phone: its device token, authenticated by the "
-                    "route on every request and HELD as ``device`` (None for the owner or an agent)")
+_OWNER_OR_DEVICE = ("the owner (hub token) or the paired phone: its device token, authenticated by the "
+                    "route on every request and HELD as ``device`` (None for the owner)")
 _REFUSALS = _CONTRACT_REFUSALS + ("owner_required", "PhoneRefused: a named code with its HTTP status", "phone_off")
 _ID = {"type": "string", "minLength": 1}
 
@@ -54,11 +55,24 @@ def _op(name: str, method: str, http: tuple[str, str], handler: str, call: Call,
         effect="write" if write else "read", result="the PhoneService answer", refusals=_REFUSALS,
         completion="synchronous; a write is one phone_changed frame and one desk_changed frame on the hub bus",
         exposure=(f"http:{http[0]} {http[1]}",) + ((f"mcp:{name}",) if tool else ()),
-        service="phone_service", method=method, held=held, owner_only=owner_only, call=call, http=http,
-        http_status=status, handler=handler, tool_schema=schema if tool else None, authority=authority,
+        service="phone_service", method=method, held=held, owner_only=owner_only, owner_press=owner_only and write,
+        call=_device_call(name, call) if "device" in held or name == "phone.redeem" else call, http=http,
+        http_status=status, handler=handler, tool_schema=schema if tool else None,
+        authority="authority" if owner_only and write and authority == "work" else authority,
         # phone.* is an MCP and REST family (thread_modes._thread_side): no palette grows.
         thread=("effect_proposal" if write else "evidence_read") if tool else None,
     )
+
+
+def _device_call(name: str, call: Call) -> Call:
+    """The paired phone or owner acts; an agent cannot impersonate either."""
+    def invoke(service: Any, principal: Any, args: dict[str, Any]) -> Any:
+        if getattr(principal, "kind", None) is PrincipalKind.AGENT:
+            raise OperationOwnerRequired(name)
+        if name != "phone.redeem" and getattr(principal, "kind", None) is not PrincipalKind.OWNER and not args.get("device"):
+            raise OperationOwnerRequired(name)
+        return call(service, principal, args)
+    return invoke
 
 
 def _by(args: dict[str, Any]) -> Optional[Mapping[str, Any]]:
@@ -128,6 +142,30 @@ PHONE_OPERATIONS: tuple[OperationDescriptor, ...] = (
           tool=False, held=("device",), authority="authority")
       for verb in ("accept", "decline", "end")),
 )
+
+# These are transport implementation calls, HTTP-only, never model tools.
+# authenticate rechecks the saved device row on EVERY request, including sockets.
+PHONE_OPERATIONS += (
+    OperationDescriptor(name="phone.authenticate", version=1,
+        description="Authenticate the paired device token held by the HTTP or socket transport.",
+        args_schema={"type": "object", "additionalProperties": False}, principal="the device token held by the transport; never an agent",
+        effect="read", result="the paired device row, or None", refusals=_REFUSALS,
+        completion="synchronous", exposure=("http:device-token authentication",),
+        service="phone_service", method="authenticate", held=("token",),
+        call=lambda s, p, a: _authenticate(s, p, a["token"])),
+    OperationDescriptor(name="phone.hub", version=1, description="Read the hub id for an authenticated phone socket hello.",
+        args_schema={"type": "object", "additionalProperties": False}, principal="the owner or paired phone, held by the socket transport",
+        effect="read", result="the hub id", refusals=_REFUSALS, completion="synchronous",
+        exposure=("http:WEBSOCKET /api/phone/ws",), service="phone_service", method="hub", held=("device",),
+        call=_device_call("phone.hub", lambda s, p, a: s.hub())),
+)
+
+
+def _authenticate(service: Any, principal: Any, token: str) -> Any:
+    if getattr(principal, "kind", None) is PrincipalKind.AGENT:
+        raise OperationOwnerRequired("phone.authenticate")
+    return service.authenticate(token)
+
 
 #: The rows whose routes ``operation_router`` produces (the owner's edge, or no principal).
 PRODUCED: tuple[str, ...] = ("phone.devices", "phone.revoke", "phone.let_wait", "phone.calls",
