@@ -1,3 +1,4 @@
+// Parked 2026-11-09: the picked Today pane uses the shared Mast.
 /** Today's mast (the language, 2026-11-08): the Dock's lamp, the part of
  *  the day as the title, one mono facts line (the meetings ahead, the one
  *  number of Needs you, the next 1:1) and the verbs Record now and Prepare

@@ -1,13 +1,9 @@
-/** Betterment daily D4: the Today window is one page (no wings). A drill
- *  to a decision opens the Decisions window (intelligenceNavigation.ts; the
- *  native app, 2026-11-08: Today keeps no second Decisions page). The
- *  Follow-through wing is parked (`views/_parked`); its rows and verbs are
- *  the Needs-you rows. */
+/** Today hosts one native app: its rail picks the day, brief, prep or
+ * activity. Decisions and Needs you keep their own windows. */
 import { useEffect, useState } from "react";
 import { INTELLIGENCE_NAVIGATE, type IntelligenceNavigation } from "../intelligenceNavigation";
 import { TodayView } from "./views/TodayView";
 import type { PulloutContentProps } from "./types";
-import "./intelligence.css";
 
 export function IntelligencePullout({ object }: PulloutContentProps) {
   const [sinceRequest, setSinceRequest] = useState(0);

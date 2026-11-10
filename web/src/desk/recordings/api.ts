@@ -4,8 +4,8 @@
  * the row it names (a parked row leaves). `useRecordingFrames` keeps the
  * capture store's view of another view's live recording: the menu-bar lamp
  * mounts it on every view. */
-import { useCallback, useEffect, useState } from "react";
-import { ApiError, apiFetch, readableError } from "../../lib/api";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { apiFetch, readableError } from "../../lib/api";
 import { authToken } from "../../lib/auth";
 import { useOptionalRuntimeBus } from "../../runtime/RuntimeBus";
 import { applyRecording } from "./capture";
@@ -20,14 +20,9 @@ export const EMPTY_PAYLOAD: RecordingsPayload = {
 };
 
 export async function readRecordings(): Promise<RecordingsPayload> {
-  try {
-    const body = await apiFetch<RecordingsPayload>("/api/recordings");
-    return body && Array.isArray(body.recordings) ? body : EMPTY_PAYLOAD;
-  } catch (error) {
-    // A hub without the Recordings slice: nothing recorded yet.
-    if (error instanceof ApiError && error.status === 404) return EMPTY_PAYLOAD;
-    throw error;
-  }
+  const body = await apiFetch<RecordingsPayload>("/api/recordings");
+  if (!body || !Array.isArray(body.recordings)) throw new Error("The recordings list could not be read");
+  return body;
 }
 
 function post<T>(path: string): Promise<T> {
@@ -87,20 +82,33 @@ export function useRecordings(): RecordingsState {
   const [error, setError] = useState("");
   const [payload, setPayload] = useState<RecordingsPayload>(EMPTY_PAYLOAD);
 
+  const reads = useRef(0);
+  const changed = useRef(new Map<string, Recording | null>());
   const reload = useCallback(async () => {
+    const mine = ++reads.current;
+    const before = new Map(changed.current);
     try {
       const next = await readRecordings();
-      setPayload(next);
+      if (mine !== reads.current) return;
+      // A frame or acknowledged press after this read began wins per row.
+      const merged = new Map(next.recordings.map((row) => [row.id, row]));
+      for (const [id, row] of changed.current) {
+        if (before.get(id) === row) continue;
+        if (row) merged.set(id, row); else merged.delete(id);
+      }
+      const recordings = [...merged.values()];
+      setPayload({ ...next, recordings });
       setError("");
-      next.recordings.forEach(applyRecording);
+      recordings.forEach(applyRecording);
     } catch (failure) {
-      setError(readableError(failure));
+      if (mine === reads.current) setError(readableError(failure));
     } finally {
-      setLoading(false);
+      if (mine === reads.current) setLoading(false);
     }
   }, []);
 
   const apply = useCallback((row: Recording) => {
+    changed.current.set(row.id, row);
     setPayload((now) => {
       const known = now.recordings.some((item) => item.id === row.id);
       const recordings = known
@@ -111,10 +119,11 @@ export function useRecordings(): RecordingsState {
   }, []);
 
   const drop = useCallback((id: string) => {
+    changed.current.set(id, null);
     setPayload((now) => ({ ...now, recordings: now.recordings.filter((item) => item.id !== id) }));
   }, []);
 
-  useEffect(() => { void reload(); }, [reload]);
+  useEffect(() => { void reload(); return () => { reads.current++; }; }, [reload]);
   useEffect(() => {
     if (!subscribe) return;
     return subscribe("recording_state", (frame) => {

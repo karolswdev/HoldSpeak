@@ -209,19 +209,30 @@ UNRECORDED_RESULTS = frozenset({
     ("DictationService", "transcribe_audio"), ("DictationService", "preview_intent_route"),
     ("DictationService", "wake_type"), ("DictationService", "preview_type"),
     ("DictationService", "test_voice_command"),
+    # A speech job answers the owner's active target (its window title) and
+    # the controls carry the last owner preview (Codex on #2158, F1 and F2).
+    ("DictationService", "rehearse"), ("DictationService", "remote_delivery"),
+    ("DictationService", "replay_journal"), ("DictationService", "intent_controls"),
+    # A peek answers the terminal's screen: the owner's read only.
+    ("CoderService", "relay"),
 })
 #: Arguments withheld by ``(service, method)``: a credential replacement is
 #: recorded (which secret, by whom), never its value (Codex on #2127, finding 3).
 UNRECORDED_ARGS = {("CredentialService", "replace"): frozenset({"value", "metadata_or_patch"}),
                    ("TelegramReach", "save_token"): frozenset({"value"}),
                    ("CredentialService", "rotate"): frozenset({"rotation_input"}),
-    ("DictationService", "transcribe_audio"): frozenset({"raw"}),
+    ("DictationService", "transcribe_audio"): frozenset({"raw", "mic_handle"}),
+    ("DictationService", "rehearse"): frozenset({"args"}),
+    ("DictationService", "remote_delivery"): frozenset({"args"}),
     ("DictationService", "readiness"): frozenset({"project_root"}),
     ("DictationService", "preview_intent_route"): frozenset({"args"}),
     ("DictationService", "wake_type"): frozenset({"payload"}),
     ("DictationService", "preview_type"): frozenset({"payload"}),
     ("DictationService", "preview_discard"): frozenset({"payload"}),
     ("DictationService", "test_voice_command"): frozenset({"payload"}),
+    # The owner's steering text and keys can be a credential typed into a
+    # terminal (Codex on #2149, F1): the verb is recorded, never the body.
+    ("CoderService", "relay"): frozenset({"args"}),
 }
 WITHHELD = "<withheld>"
 

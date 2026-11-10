@@ -1,0 +1,53 @@
+{
+  "title": "Recordings",
+  "open": {
+    "app": "surface-recordings"
+  },
+  "steps": [
+    {
+      "highlight": {
+        "target": "recordings-mast",
+        "thing": "recording head",
+        "words": "The picked recording and its actions."
+      },
+      "ask": {
+        "ref": "recordings-mast",
+        "question": "Recording head: keep or redo?",
+        "choices": [
+          "Keep",
+          "Redo"
+        ]
+      }
+    },
+    {
+      "highlight": {
+        "target": "recordings-plate",
+        "thing": "capture control",
+        "words": "Start a recording, or stop the one that runs."
+      },
+      "ask": {
+        "ref": "recordings-plate",
+        "question": "Capture control: keep or redo?",
+        "choices": [
+          "Keep",
+          "Redo"
+        ]
+      }
+    },
+    {
+      "highlight": {
+        "target": "recordings-storage",
+        "thing": "storage",
+        "words": "Show storage to see the keep time and open the folder."
+      },
+      "ask": {
+        "ref": "recordings-storage",
+        "question": "Storage: keep or redo?",
+        "choices": [
+          "Keep",
+          "Redo"
+        ]
+      }
+    }
+  ]
+}

@@ -38,7 +38,11 @@ def open_chair_window(page: Any, name: str) -> Any:
         has=page.locator(".desk-menu-label", has_text=re.compile(rf"^{re.escape(label)}$"))).click()
     win.wait_for()
     if name == "Brief":
-        # The fold opens, or its read failed (one line and Retry).
+        rail = win.get_by_test_id("today-rail")
+        if not rail.is_visible():
+            win.get_by_test_id("rail-back").click()
+        rail.get_by_role("button", name="Brief", exact=True).click()
+        # The picked brief opens, or its read failed (one line and Retry).
         win.locator("[data-testid=today-since-toggle], [data-testid=today-since-failed]").first.wait_for()
         since = win.get_by_test_id("today-since-toggle")
         if since.count() and since.get_attribute("aria-expanded") != "true":

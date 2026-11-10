@@ -76,7 +76,9 @@ def test_every_declared_walk_keeps_its_parts_and_questions_valid() -> None:
         assert all(step["open"]["app"] == script["open"]["app"] for step in steps if "open" in step), name
         # The app it opens in a linked walk exists on the desk.
         app = script["open"]["app"]
-        assert app == "chair:needs" or f'action: "{app}"' in applications or f'windowId: "{app}"' in applications, app
+        # A pullout window's id on the desk is its declared windowId after "pullout:".
+        window = app.removeprefix("pullout:")
+        assert app == "chair:needs" or f'action: "{app}"' in applications or f'windowId: "{window}"' in applications, app
 
 
 def test_every_part_a_walk_marks_exists_in_the_desk_source() -> None:
@@ -105,6 +107,7 @@ def test_walk_py_apps_keeps_each_apps_order_and_questions() -> None:
     refs = [step["ask"]["ref"] for step in clean["steps"] if "ask" in step]
     expected = [step["ask"]["ref"] for script in scripts.values() for step in script["steps"] if "ask" in step]
     assert sorted(refs) == sorted(expected), "composition lost or repeated an owner's question"
+    assert len(set(refs)) == len(refs), "each answer has one identity across the composed walk"
     # The Room opens his first project; a walk with no project skips the step.
     assert {"app": "open-project-memory", "scope": "@first-project"} in opens
 

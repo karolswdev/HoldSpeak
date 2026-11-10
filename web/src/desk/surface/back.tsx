@@ -16,7 +16,7 @@ export type WindowBack = {
   onCloseRequest?: () => boolean;
 };
 
-/** The host provides a setter; null means no host (pullouts, tests). */
+/** The host provides a setter; null means no host (standalone content, tests). */
 export const BackSlotContext = createContext<((back: WindowBack | null) => void) | null>(null);
 
 /** True when a hosting window will take the step (the core then draws no

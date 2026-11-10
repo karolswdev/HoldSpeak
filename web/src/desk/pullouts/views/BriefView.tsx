@@ -248,7 +248,7 @@ export function SinceYesterday({ brief, failed, now, defaultOpen = false, openRe
     return (
       <div className="today-fold" data-testid="today-since-failed" role="status">
         <span className="today-fold-label">{label}</span>
-        <span className="kit-pill" data-tone="danger">The brief could not be read. Nothing changed. Press Retry.</span>
+        <span className="kit-pill" data-tone="danger">Could not read the brief · Nothing changed · Retry</span>
         <Button dense variant="ghost" onClick={onRetry}>Retry</Button>
       </div>
     );

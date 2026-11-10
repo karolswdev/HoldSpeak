@@ -96,6 +96,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
   },
   {
     action: "open-intelligence",
+    walk: "today",
     windowId: "intelligence:desk",
     label: "Today",
     description: "Briefs, follow-through, receipts, and reasons.",
@@ -529,6 +530,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
   {
     action: "open-recordings",
     windowId: "surface-recordings",
+    walk: "recordings",
     label: "Recordings",
     description: "Record this desk and watch the video on your phone.",
     glyph: "⏺",
@@ -540,10 +542,10 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     surface: {
       eyebrow: "Screen",
       sprite: "system:dock-screen-record",
-      minW: 420,
-      // pullouts/size.ts `recordings` (the first-open matrix): 720 x 520.
-      defaultW: 720,
-      defaultH: 520,
+      minW: 600,
+      // Native rail beside the recording.
+      defaultW: 1000,
+      defaultH: 680,
       load: () =>
         import("./recordings/RecordingsWindow").then((module) => ({
           default: module.RecordingsCore,
@@ -593,6 +595,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
   {
     action: "open-projects",
     windowId: "surface-projects",
+    walk: "projects",
     label: "Projects",
     description: "Every project: where it stands, its next date, its newest update.",
     glyph: "▣",
@@ -603,9 +606,9 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     surface: {
       eyebrow: "Work in flight",
       sprite: "project",
-      minW: 480,
-      defaultW: 640,
-      defaultH: 520,
+      minW: 600,
+      defaultW: 1000,
+      defaultH: 640,
       load: () =>
         import("../pages/cores/ProjectsCore").then((module) => ({
           default: module.ProjectsCore,

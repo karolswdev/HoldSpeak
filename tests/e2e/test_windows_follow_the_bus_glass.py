@@ -81,13 +81,11 @@ def test_mark_done_in_one_window_moves_the_other(tmp_path: Path, monkeypatch: py
 
                 window_a.goto(f"{url}/?token={TOKEN}", wait_until="load")
                 _normal_chair(window_a)
-                # The Needs-you window's row (Today, open on the same desk,
-                # draws the same row: Betterment D4).
+                # Needs you owns the answer; Today shows the shared number.
                 done_in_a = window_a.get_by_test_id("needs-drawer").get_by_role("button", name=f"Done: {TASK}", exact=True)
                 done_in_a.wait_for(timeout=12_000)
 
-                # Window B: Needs you, and Today beside it (its top of Needs
-                # you is the same row; the Follow-through board is parked).
+                # Window B: Today beside Needs you, with its shared count.
                 window_b.goto(f"{url}/?token={TOKEN}", wait_until="load")
                 _normal_chair(window_b)
                 # PHILO-17 (needsyou): the one number is on the bell, not on Intelligence.
@@ -95,10 +93,9 @@ def test_mark_done_in_one_window_moves_the_other(tmp_path: Path, monkeypatch: py
                 window_b.locator('.desk-dock [data-app="intelligence:desk"]').click()
                 board = window_b.locator(".desk-pullout").filter(
                     has=window_b.get_by_role("button", name="Close Today")).last
-                card_in_b = board.get_by_test_id("today-needs").get_by_text(TASK, exact=True)
-                expect(card_in_b).to_have_count(1, timeout=12_000)
-                row_in_b = board.get_by_role("button", name=f"Done: {TASK}", exact=True)
-                expect(row_in_b).to_have_count(1)
+                count_in_b = board.get_by_test_id("today-needs-count")
+                expect(count_in_b).to_have_text("1", timeout=12_000)
+                expect(board.get_by_text(TASK, exact=True)).to_have_count(0)
                 _settle(window_b)
                 window_b.screenshot(path=str(SHOTS / "1440-window-b-before.png"))
 
@@ -114,9 +111,8 @@ def test_mark_done_in_one_window_moves_the_other(tmp_path: Path, monkeypatch: py
                 window_a.locator(".desk-window-shell", has=done_in_a).locator(".desk-pullout-title").first.click()
                 done_in_a.click()
                 pressed = time.monotonic()
-                expect(card_in_b).to_have_count(0, timeout=FOLLOW_BUDGET_S * 1000)
+                expect(count_in_b).to_have_count(0, timeout=FOLLOW_BUDGET_S * 1000)
                 followed_in = time.monotonic() - pressed
-                expect(row_in_b).to_have_count(0, timeout=FOLLOW_BUDGET_S * 1000)
                 expect(window_b.locator(".desk-bell strong")).to_have_count(0)
 
                 assert navigations == [], f"window B reloaded or reconnected: {navigations}"
