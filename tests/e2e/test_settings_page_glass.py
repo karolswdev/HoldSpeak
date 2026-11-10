@@ -271,6 +271,10 @@ def test_engines_pane_chain_editor_library_and_old_link(
             expect(editor).to_contain_text("Codex, then Gemini CLI")
             editor.scroll_into_view_if_needed()
             page.screenshot(path=str(shots / f"editor-{width}.png"))
+            with page.expect_request(lambda request: request.url.endswith("/api/concierge/probe") and request.method == "POST") as probe:
+                editor.get_by_role("button", name="Try it", exact=True).click()
+            assert probe.value.post_data_json["expectedProfileIds"] == ["agent-codex", "agent-gemini"]
+            expect(editor.locator(".engines-result")).to_contain_text("Completed", timeout=15_000)
             editor.get_by_role("button", name="Move Gemini CLI up", exact=True).click()
             expect(row).to_contain_text("Gemini CLI, then Codex")
             roster = _api(page, "GET", "/api/inference/assignments", token=TOKEN)

@@ -481,8 +481,11 @@ export function useRunsOn(scope?: string) {
     try {
       const answer = await conciergeTaskProbe(
         row.probe,
-        engine ? offMachine(engine) || undefined : undefined,
-        [editor.effective.profileId],
+        editor.effectiveEntries.some((entry) => {
+          const target = engines.find((e) => e.profileId === entry.profile_id);
+          return target ? offMachine(target) : entry.boundary !== "local";
+        }) || undefined,
+        editor.effectiveEntries.map((entry) => entry.profile_id),
       );
       if (!mounted.current) return;
       const completed = answer.state === "READY" && answer.ok;
