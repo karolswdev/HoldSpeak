@@ -7,9 +7,7 @@ import { fetchWorkbenchDetail, fetchWorkbenchMemory, forgetAutomationLesson, mak
 import type { MemoryEntry } from "../../detail-types";
 import { readableError } from "../../../lib/api";
 import { Button } from "../../../components/signal/Signal";
-import { CheckGadget, PadGadget, SurfaceLedger, SurfaceLedgerRow, SurfaceState } from "../../surface";
-import { Mast } from "../../surface/patterns/Mast";
-import { Spine } from "../../surface/patterns/Spine";
+import { CheckGadget, Mast, PadGadget, Spine, SurfaceLedger, SurfaceLedgerRow, SurfaceState } from "../../surface";
 import { useOptionalRuntimeBus } from "../../../runtime/RuntimeBus";
 import { WORKBENCH_CHANGE_KINDS, useOnDeskChanged } from "../../useDeskChangedRefresh";
 import { WORKBENCH_RUN_FRAME_TYPES } from "../workbench/runLifecycle";
