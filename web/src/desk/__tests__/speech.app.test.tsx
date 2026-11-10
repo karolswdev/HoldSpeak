@@ -16,6 +16,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("../../runtime/RuntimeBus", () => ({
   useRuntimeBus: () => ({ state: "connected", lastFrame: null, subscribe: () => () => undefined }),
   useRuntimeFrame: () => null,
+  useOptionalRuntimeBus: () => null,
 }));
 
 import { SpeakFace } from "../../pages/cores/dictation/SpeakFace";
@@ -113,8 +114,7 @@ describe("every speech face says speech is not set up", () => {
     // never a chip on the row.
     const row = screen.getByTestId("live-ready-transcript");
     expect(row.contains(verb)).toBe(true);
-    expect(screen.getByTestId("live-ready-transcript-state")).toHaveTextContent("Not set up");
-    expect(screen.getByTestId("live-ready-transcript-state").getAttribute("data-tone")).toBe("warn");
+    expect(screen.getByTestId("live-mast")).toHaveTextContent("Speech not set up");
     expect(verb.getAttribute("title")).toContain("huggingface.co");
     expect(screen.getByTestId("live-speech-setup").textContent?.toUpperCase()).not.toContain("HUGGINGFACE.CO");
     // W1-TRUTH (atlas 2026-10-27): the status bar says the one honest state,

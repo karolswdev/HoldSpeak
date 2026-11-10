@@ -1,31 +1,3 @@
-// The Ask window (Betterment Q4, "One Ask window"; DECISIONS #14).
-//
-// Ask D1 "The question at the top" (canvas ask-direction-2026-10-27,
-// ratified 2026-10-27): the composer is the toolbar row (Recent, the scope
-// word ▾, the one-line field, the mic, the engine, Ask ⏎); the Recent rail
-// folds at the left; the answer is a document whose References are object
-// rows that open their windows; a fresh Ask offers three questions built
-// from this desk; an Ask that did not answer says why in one line with the
-// one verb that fixes it. The parts are askFace.tsx.
-//
-// Ask and Thread are one window. Every Ask is kept as a thread from its first
-// question (no Keep, no Bin): the hub writes the exchange when the answer
-// lands, Recent lists the kept asks, and a follow-up continues the same
-// thread in place. The window draws the conversation (You / answer pairs,
-// each answer's Looked at and its verbs), the About line, the follow-up box,
-// the engine line, and Stop while a question runs. The face is docked
-// in-world, never a modal; the desk stays alive behind it.
-//
-// Betterment Q7 (Ask my whole desk; DECISIONS #16): on an engine that can
-// use tools, the engine line says "Can use your desk"; each answer shows
-// Looked at, and Wrote (desk changes, with Undo) and Prepared (sends, with
-// Send) from the hub's record of the calls it served (MCP M2's UsedLines).
-// A call the hub's tool loop holds for his press waits here with Allow once
-// and Deny. Make it a task makes the same write the agent makes.
-//
-// Before Q4 this was HSM-16-04's Ask AI card (keep or bin one answer) and
-// HS-111-05's query console; the Thread window is parked
-// (`pullouts/_parked/ThreadPullout.tsx`).
 import "./chrome-menus.css";
 import "./ask-panel.css";
 import "../surface/patterns/conversation.css";
@@ -96,6 +68,10 @@ import { countWords } from "../surface/kit";
 import type { DeskNavigation, ProjectReturn } from "../store/types";
 import { useCompactViewport } from "../useCompactViewport";
 import { Token } from "../surface/Token";
+import { ComposerWell, Mast, Spine, Rail, ReadingDocument, ProgressPlan, SurfaceState } from "../surface";
+import { ShowMe } from "../walk/ShowMe";
+import "./ask-native.css";
+import { plainFailure } from "../surface/plainFailure";
 
 /** The engine line of an engine that can use the desk's tools (MCP design). */
 export const DESK_TOOLS_WORDS = "Can use your desk: reads meetings, people, projects, Jira, GitHub; writes notes and drafts; never sends";
@@ -412,6 +388,7 @@ export function AskPanel() {
   }, [abandonRun, closeAsk]);
 
   /** A new Ask in this window: nothing kept is touched. */
+  const [keepFailure, setKeepFailure] = useState("");
   const startNew = useCallback((keepHandoff = false) => {
     threadReadGeneration.current += 1;
     abandonRun();
@@ -431,10 +408,12 @@ export function AskPanel() {
     setSent(null);
     setRunning(false);
     setFailedRun(null);
+    setKeepFailure("");
     setRoute(null);
     setProgress(null);
     setHeld({ threadId: "", calls: [] });
     setSaved({});
+    setSaving(null);
     setTasks({});
     setThreadRead({ loading: false, error: "" });
   }, [abandonRun]);
@@ -645,6 +624,7 @@ export function AskPanel() {
     pendingRequest.current = { id, controller };
     setRunning(true);
     setFailedRun(null);
+    setKeepFailure("");
     setRoute(null);
     const startedAt = Date.now();
     setRunStartedAt(startedAt);
@@ -808,11 +788,14 @@ export function AskPanel() {
   const answerNote = async (turn: AskTurn, verb: string): Promise<string | null> => {
     if (saved[turn.key]) return saved[turn.key];
     if (saving) return null;
+    const generation = threadReadGeneration.current;
     setSaving(turn.key);
+    setKeepFailure("");
     const ref = await saveAnswerAsNote(turn, threadId);
-    if (!mounted.current) return null;
+    if (!mounted.current || generation !== threadReadGeneration.current) return null;
     setSaving(null);
     if (!ref) {
+      setKeepFailure(plainFailure("Answer not kept", new Error("Save refused")));
       reportWriteFailure(verb, new Error("The answer was not saved as a note. It is still here; try again."));
       return null;
     }
@@ -1149,7 +1132,7 @@ export function AskPanel() {
     })),
     ...recent.rows
       .filter((row) => row.id !== forgotten?.threadId)
-      .map((row) => ({ id: row.id, title: row.title?.trim() || "An ask with no question", at: row.last_turn_at || row.updated_at })),
+      .map((row) => ({ id: row.id, title: row.title?.trim() || "An ask with no question", at: row.last_turn_at || row.updated_at, state: undefined })),
   ]);
   const pickRail = (id: string) => {
     if (!id.startsWith(PENDING_ROW)) { void loadThread(id); return; }
@@ -1194,13 +1177,27 @@ export function AskPanel() {
           promptRef.current?.focus();
         }
       }}>
-        <AskComposer
-          className="conversation-composer desk-ask-composer"
-          data-testid="ask-toolbar"
-          railOpen={railOpen}
-          onRail={toggleRail}
-          scope={
-            <AskScope
+        <Mast kind="thread" title="Ask your desk" facts={running ? "Thinking" : failedRun ? "Failed" : turns.length ? "Done" : "Ready"} data-testid="ask-mast">
+          <Button dense variant="secondary" aria-label="Recent" aria-pressed={railOpen} onClick={toggleRail}>Recent</Button>
+          {turns.at(-1) ? <Button dense variant="brass" disabled={running || Boolean(saved[turns.at(-1)!.key])} loading={saving === turns.at(-1)!.key}
+            onClick={() => void saveAsNote(turns.at(-1)!)}>{saved[turns.at(-1)!.key] ? "Kept" : "Keep"}</Button> : null}
+          <ShowMe app="ask:desk" />
+        </Mast>
+        <Spine tone={running ? "steel" : failedRun ? "coral" : turns.length ? "moss" : "brass"} data-testid="ask-spine" />
+        <div className="desk-ask-main surface-rail-layout">
+          {railOpen && (recent.loading || recent.error || railRows.length > 0) ? <Rail label="Recent" data-testid="ask-recent" picked={adoptedRef.current ? `pending:${adoptedRef.current}` : threadId || null}
+            paneOpen={!compact} onBack={() => setRailSheet(false)}
+            head={<Button dense variant="secondary" onClick={() => { setRailSheet(false); startNew(); promptRef.current?.focus(); }}>New ask</Button>}
+            onPick={(id) => { setRailSheet(false); pickRail(id); }}
+            items={railRows.map((row) => ({ id: row.id, label: row.title,
+              accessibleLabel: row.title, facts: humanTime(row.at),
+              state: row.state === "writing" ? "Writing…" : row.state === "not_answered" ? "Not answered" : undefined,
+              spine: { tone: row.state === "writing" ? "steel" : row.state === "not_answered" ? "coral" : "moss" } }))}>
+            {recent.error ? <SurfaceState error="Recent not read" onRetry={() => void readRecent()} /> : undefined}
+          </Rail> : null}
+          <div className="ask-native-object" data-testid="ask-reading">
+            <ComposerWell data-testid="ask-toolbar" className="ask-native-composer"
+              context={<>{<AskScope
               rows={about}
               candidates={candidates}
               weekCount={meetingsThisWeek}
@@ -1208,10 +1205,33 @@ export function AskPanel() {
               onRemove={(row) => removeAbout(row.ref)}
               onOpenRow={(row) => (row.ref === THIS_WEEK ? undefined : () => openRef(row.ref, { projectReturn: activeProjectReturn }))}
               compact={compact}
+            />}{<AskEngineWord
+              state={engine.state}
+              name={engine.model}
+              down={engineDown || Boolean(engine.down)}
+              title={engine.state === "set" ? (deskTools ? DESK_TOOLS_WORDS : "No desk tools") : undefined}
+              onPress={engine.state === "failed" ? () => void refreshEngine("ask.answer") : chooseEngine}
+            />}</>}
+              capture={<MicButton
+              label="Speak your question"
+              draftScope="desk-ask"
+              onText={(text) => setPrompt((current) => current ? `${current} ${text}` : text)}
+            />}
+              actions={<AskSendButton disabled={running || !prompt.trim()} onClick={() => void ask()} />}
+              details={selectedPassage?.source ? (
+            <AskSourceFrame
+              quote={selectedPassage.text}
+              open={passageOpen}
+              onToggle={setPassageOpen}
+              onClear={() => {
+                const source = selectedPassage.source;
+                latchAskSelection(null);
+                setSelectedPassage(source ? { ...selectedPassage, text: "", source } : null);
+              }}
+              onBack={returnToSource}
             />
-          }
-          field={
-            <PadGadget
+          ) : undefined}>
+              <PadGadget
               label="Ask about your work"
               mic={false}
               rows={1}
@@ -1228,57 +1248,14 @@ export function AskPanel() {
                 }
               }}
             />
-          }
-          capture={
-            <MicButton
-              label="Speak your question"
-              draftScope="desk-ask"
-              onText={(text) => setPrompt((current) => current ? `${current} ${text}` : text)}
-            />
-          }
-          engine={
-            <AskEngineWord
-              state={engine.state}
-              name={engine.model}
-              down={engineDown || Boolean(engine.down)}
-              title={engine.state === "set" ? (deskTools ? DESK_TOOLS_WORDS : "No desk tools") : undefined}
-              onPress={engine.state === "failed" ? () => void refreshEngine("ask.answer") : chooseEngine}
-            />
-          }
-          action={<AskSendButton disabled={running || !prompt.trim()} onClick={() => void ask()} />}
-          details={selectedPassage?.source ? (
-            <AskSourceFrame
-              quote={selectedPassage.text}
-              open={passageOpen}
-              onToggle={setPassageOpen}
-              onClear={() => {
-                const source = selectedPassage.source;
-                latchAskSelection(null);
-                setSelectedPassage(source ? { ...selectedPassage, text: "", source } : null);
-              }}
-              onBack={returnToSource}
-            />
-          ) : undefined}
-        />
+            </ComposerWell>
+            {keepFailure ? <SurfaceState error={keepFailure} retryLabel="Retry" onRetry={() => { const turn = turns.at(-1); if (turn) void saveAsNote(turn); }} /> : null}
         {forgotten ? (
           <ActionNotice tone="info" action={{ label: "Undo", onClick: undoForget }}>
             Forgotten: {forgotten.title}
           </ActionNotice>
         ) : null}
 
-        <div className="desk-ask-main">
-          {railOpen ? (
-            <AskRail
-              rows={railRows}
-              selectedId={adoptedRef.current ? `pending:${adoptedRef.current}` : threadId}
-              sheet={compact}
-              loading={recent.loading}
-              failed={Boolean(recent.error)}
-              onRetry={() => void readRecent()}
-              onNew={() => { setRailSheet(false); startNew(); promptRef.current?.focus(); }}
-              onPick={(id) => { setRailSheet(false); pickRail(id); }}
-            />
-          ) : null}
           {hasConversation ? (
             <AskPage readingRef={readingRef}>
               {threadRead.loading ? <li className="desk-ask-turn"><RunLine phase="running" verb="Opening" /></li> : null}
@@ -1291,15 +1268,15 @@ export function AskPanel() {
               ) : null}
               {turns.map((turn) => (
                 <AskTurnDoc key={turn.key} question={turn.question} at={turn.askedAt}>
-                  <div className="desk-ask-answer"><Material>{turn.answer}</Material></div>
+                  <div className="desk-ask-answer"><ReadingDocument>{turn.answer}</ReadingDocument></div>
                   <AskReferences rows={dedupeReferenceRows(citedRefs(turn.lookedAt).map(referenceRow))} />
                   <UsedLines used={usedWithTasks(turn.used, tasks[turn.key])} testPrefix="ask" lookedAt={false} />
                   <AskVerbs>
-                    {saved[turn.key] ? (
+                    {turn !== turns.at(-1) ? <>{saved[turn.key] ? (
                       <Button dense variant="secondary" onClick={() => openRef(saved[turn.key], { projectReturn: activeProjectReturn })}><ToolGlyph kind="open" />Open note</Button>
                     ) : (
                       <Button dense variant="secondary" loading={saving === turn.key} onClick={() => void saveAsNote(turn)}>{saving === turn.key ? null : <ToolGlyph kind="note" />}Save as note</Button>
-                    )}
+                    )}</> : null}
                     <Button dense variant="ghost" onClick={() => void copy(turn.answer)}><ToolGlyph kind="copy" />Copy</Button>
                     <Button dense variant="ghost" disabled={running} onClick={() => void askQuestion(turn.question)}><ToolGlyph kind="retry" />Ask again</Button>
                     <Button dense variant="ghost" aria-expanded={sending === turn.key} onClick={() => void sendAnswer(turn)}><ToolGlyph kind="send" />Send…</Button>
@@ -1336,7 +1313,7 @@ export function AskPanel() {
                       onOpen={(ref) => (refOpener(ref) ? () => openRef(ref, { projectReturn: activeProjectReturn }) : undefined)}
                     />
                   ) : null}
-                  {saved[turn.key] ? <span className="desk-ask-saved" role="status">Saved to your desk</span> : null}
+                  {saved[turn.key] ? <span className="desk-ask-saved" role="status">Saved to your desk <Button dense variant="secondary" onClick={() => openRef(saved[turn.key], { projectReturn: activeProjectReturn })}>Open note</Button></span> : null}
                   {fromNote && added[turn.key] ? (
                     <span className="desk-ask-saved desk-ask-added" role="status" data-testid="ask-added">
                       Added to {fromNote.title || "the note"}
@@ -1358,11 +1335,9 @@ export function AskPanel() {
                           sends them; before the first word, one quiet line.
                           The seconds and Stop are in the status bar. */}
                       {arriving ? (
-                        <div className="desk-ask-answer desk-ask-arriving" data-testid="ask-arriving" aria-live="polite"><Material>{arriving}</Material></div>
+                        <div className="desk-ask-answer desk-ask-arriving" data-testid="ask-arriving" aria-live="polite"><ReadingDocument>{arriving}</ReadingDocument></div>
                       ) : (
-                        <span className="desk-ask-reading-line" data-testid="run-line" data-state="running">
-                          {progress ? progressWords(progress) : "Reading your desk"}
-                        </span>
+                        <div data-testid="run-line"><ProgressPlan compact ariaLabel="Ask progress" steps={[{ id: "answer", label: progress ? progressWords(progress) : "Reading your desk", status: "running" }]} /></div>
                       )}
                       {held.calls.map((call) => (
                         <div className="desk-ask-hold" data-testid="ask-hold" key={call.call_id} role="group" aria-label={call.words}>
@@ -1387,6 +1362,7 @@ export function AskPanel() {
               <AskPrompts prompts={prompts} onPrompt={prefillPrompt} />
             </AskPage>
           )}
+        </div>
         </div>
         {/* Inside the body (the surface container), so the bar takes its
             narrow form at a phone width: Stop keeps its 44 px target. */}

@@ -1525,6 +1525,8 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
         # its desk_changed frame; that follow is fenced in the PHILO-16 glass).
         _hub_open(base, wid, scope)
     ctx, page, errors, requests = _page(pw_browser, width, base)
+    if case_id in {"surface-dictation", "surface-live", "ask"}:
+        page.add_init_script("localStorage.setItem('hs:walk-voice', 'off')")
     try:
         page.goto(f"{base}/?token={TOKEN}", wait_until="load")
         _normal_chair(page)
@@ -1675,6 +1677,23 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
                 sweep.palette()
             elif wid:
                 sweep.wings()
+            if case_id in {"surface-dictation", "surface-live", "ask"}:
+                # The voice apps carry real walks, through the shared runner.
+                front = page.locator(f'[id="{wid}"]')
+                if width < 720:
+                    front.get_by_test_id("show-me-more").click()
+                    page.get_by_role("menuitem", name="Show me", exact=True).click()
+                else:
+                    front.get_by_test_id("show-me").click()
+                walk_name = {"surface-dictation": "speak", "surface-live": "live", "ask": "ask"}[case_id]
+                script = json.loads((REPO / "web/src/desk/walks" / f"{walk_name}.walk.json").read_text())
+                for step in script["steps"]:
+                    page.wait_for_function("question => document.querySelector('[data-testid=walk-question]')?.textContent === question",
+                                           arg=step["ask"]["question"], timeout=T)
+                    page.get_by_test_id("walk-choice-0").click(timeout=T)
+                page.get_by_test_id("walk-end").wait_for(timeout=T)
+                assert not page.get_by_test_id("walk-failure").count()
+                page.get_by_test_id("walk-back").click()
         _verdict(case_id, width, sweep.failures)
     finally:
         ctx.close()

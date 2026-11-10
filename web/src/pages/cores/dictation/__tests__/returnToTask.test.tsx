@@ -109,7 +109,7 @@ describe("return to the task after configuring a model (HS-200-04)", () => {
     window.dispatchEvent(new Event("holdspeak:settings-updated"));
 
     await waitFor(() => expect(readinessCalls()).toBeGreaterThan(before));
-    expect(mocks.detect.mock.calls.length).toBeGreaterThan(detects);
+    // Engine choice lives in Settings; Speak refreshes only its readiness.
     // The task itself is untouched: same words, same well, no reload.
     expect(await screen.findByLabelText("Utterance")).toHaveValue(UTTERANCE);
   });
@@ -256,7 +256,7 @@ describe("SpeakFace hands focus back to the verb it left (HS-200-41)", () => {
     const well = await screen.findByLabelText("Utterance");
     await userEvent.click(well);
     await userEvent.paste(UTTERANCE);
-    const choose = await screen.findByRole("button", { name: "Choose engine" }); // betterment C8 words
+    const choose = await screen.findByRole("button", { name: "Settings" }); // betterment C8 words
     await userEvent.click(choose);
     // The engine row's handoff remembered the verb it was leaving.
     expect(taskFocusPending()).toBe(true);

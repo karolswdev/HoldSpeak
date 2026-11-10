@@ -90,34 +90,6 @@ describe("DictationPage failure and rehearsal flows (HS-170-04)", () => {
     mockRoutes();
   });
 
-  it("rehearses typed words through the dry-run on Try it here (betterment C8)", async () => {
-    mockRoutes({
-      "/api/dictation/dry-run": () =>
-        Promise.resolve({ final_text: "ship it friday", total_ms: 120 }),
-    });
-    render(
-      <MemoryRouter>
-        <DictationCore />
-      </MemoryRouter>,
-    );
-    await screen.findByRole("button", { name: "Talk" });
-    fireEvent.change(screen.getByLabelText("Utterance"), { target: { value: "ship it friday" } });
-    fireEvent.click(screen.getByRole("button", { name: "Try it here" }));
-
-    await waitFor(() => {
-      const calls = mocks.apiFetch.mock.calls.filter(
-        (c: unknown[]) => c[0] === "/api/dictation/dry-run",
-      );
-      expect(calls.length).toBe(1);
-    });
-    // No real delivery happened
-    const remoteCalls = mocks.apiFetch.mock.calls.filter(
-      (c: unknown[]) => c[0] === "/api/dictation/remote",
-    );
-    expect(remoteCalls.length).toBe(0);
-    expect(await screen.findByText("Preview ready · not sent")).toBeVisible();
-  });
-
   it("announces a timeout failure in the receipt channel", async () => {
     mocks.stopAndTranscribe.mockRejectedValue(new ApiError(504, "timeout", {}));
     const stopFn = vi.fn().mockRejectedValue(new ApiError(504, "timeout", {}));

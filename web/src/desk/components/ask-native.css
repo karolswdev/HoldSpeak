@@ -1,0 +1,20 @@
+/* Ask is a conversation object on the shared rail and paper well. */
+.desk-next .desk-ask-body { background: var(--hs-ground); }
+.ask-native-object { display: flex; flex: 1; flex-direction: column; min-width: 0; min-height: 0; }
+.ask-native-composer { flex: none; margin: 16px; padding: 12px 16px; gap: 8px; }
+.ask-native-composer > .gadget-pad { width: 100%; }
+.ask-native-composer textarea { font: 400 16px / 24px var(--font-sans); min-height: 48px; }
+.ask-native-composer .surface-compose-context { display: flex; flex-wrap: wrap; min-width: 0; gap: 8px; }
+.ask-native-composer .surface-compose-actions { flex-wrap: wrap; }
+.desk-ask-main > .surface-rail { flex-basis: 232px; }
+.desk-next .desk-ask-main .surface-rail-row { border-radius: 2px; }
+.desk-ask-body .desk-ask-q { font-family: var(--font-sans); }
+.desk-ask-body .desk-ask-answer { color: var(--hs-ink); }
+.desk-ask-body .desk-ask-reading { padding: 0 20px 20px; }
+@container surface (max-width: 520px) {
+  .ask-native-composer { margin: 12px; }
+  .desk-next .desk-ask-body .btn { min-height: 48px; border-radius: 2px; }
+  .desk-next .desk-ask-body .desk-mic { min-width: 48px; min-height: 48px; }
+  .desk-next .desk-ask-body .surface-compose-capture { margin-left: auto; }
+  .desk-ask-body .desk-ask-reading { padding: 0 16px 16px; }
+}
