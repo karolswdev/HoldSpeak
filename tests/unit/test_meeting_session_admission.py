@@ -473,63 +473,54 @@ def _bundle_session(
     )
 
 
+def _parent_row(db: Database, operation_id: str) -> dict[str, Any]:
+    with db._connection() as conn:
+        return dict(conn.execute(
+            "SELECT * FROM kernel_parent_runs WHERE operation_id=?", (operation_id,)
+        ).fetchone())
+
+
 @pytest.mark.parametrize(
-    ("requested", "transcription", "parent_budget"),
+    ("requested", "parent_budget"),
     [
-        ((), 17_286, 21_383),
-        (("remote-a", "remote-b"), 34_570, 38_667),
+        ((), 21_383),
+        (("remote-a", "remote-b"), 38_667),
     ],
 )
-def test_start_admits_complete_live_bundle_with_exact_aggregate_budget(
+def test_start_admits_one_parent_and_reads_each_job_engine_from_the_door(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     requested: tuple[str, ...],
-    transcription: int,
     parent_budget: int,
 ) -> None:
-    _db, _broker, session = _bundle_session(tmp_path, monkeypatch, requested=requested)
+    db, _broker, session = _bundle_session(tmp_path, monkeypatch, requested=requested)
 
     state = session.start()
 
-    bundle = session._route_bundle
-    assert bundle is not None
     assert state.capture_status == "recording"
-    assert bundle["parent_kind"] == "meeting.session"
-    assert bundle["parent_child_budget"] == parent_budget
-    from holdspeak.services.inference_parent_route_bundle_service import remote_device_evidence
-
-    assert bundle.get("requested_remote_device_ids", []) == sorted(
-        remote_device_evidence(device_id) for device_id in requested
-    )
-    assert bundle["budget_groups"] == [
-        {"id": "meeting-intelligence", "allocation": 4096, "member_keys": ["auto-title", "bookmark-label", "live-analysis"]},
-        {"id": "meeting-preload", "allocation": 1, "member_keys": ["preload"]},
-        {"id": "meeting-transcription", "allocation": transcription, "member_keys": ["transcription"]},
-    ]
-    assert {member["capability_id"] for member in bundle["members"]} == {
-        *_BUNDLE_CAPABILITIES,
-        "speech.preload",
-    }
+    assert set(session._live_engines) == set(_BUNDLE_CAPABILITIES)
+    parent = _parent_row(db, session._intel_parent.operation_id)
+    assert parent["kind"] == "meeting.session"
+    assert parent["child_budget"] == parent_budget
+    with db._connection() as conn:
+        # The door writes no route plan and no bundle.
+        assert conn.execute("SELECT COUNT(*) FROM inference_route_plans").fetchone()[0] == 0
+        assert conn.execute("SELECT COUNT(*) FROM inference_parent_route_bundles").fetchone()[0] == 0
 
 
-def test_unicode_registered_device_freezes_as_evidence_and_rejects_undeclared_source(
+def test_unicode_registered_device_is_requested_and_an_undeclared_source_is_refused(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     from holdspeak.device_audio import DeviceRegistry
     from holdspeak.meeting_session.transcribe_admission import RoutedMeetingTranscriptionAdmission
-    from holdspeak.services.inference_parent_route_bundle_service import remote_device_evidence
 
     descriptor = DeviceRegistry().register("  Réunion 東京  ", "Remote")
-    _db, _broker, session = _bundle_session(
+    db, _broker, session = _bundle_session(
         tmp_path, monkeypatch, requested=(descriptor.id,)
     )
     session.start()
 
-    bundle = session._route_bundle
-    assert bundle is not None
-    assert bundle["requested_remote_device_ids"] == [remote_device_evidence(descriptor.id)]
-    assert bundle["budget_groups"][2]["allocation"] == 25_928
-    assert bundle["parent_child_budget"] == 30_025
+    assert _parent_row(db, session._intel_parent.operation_id)["child_budget"] == 30_025
 
     undeclared = RoutedMeetingTranscriptionAdmission(
         session, "device:unregistered", 0.0, 1.0, False
@@ -564,16 +555,28 @@ def test_route_refusal_keeps_raw_capture_in_durable_record_only(
 
     assert state.capture_status == "recording"
     assert session._recorder is not None and session._recorder.started
+    # No text engine is assigned: live intelligence never starts; the fake
+    # transcriber cannot warm, so the Meeting keeps raw audio only.
+    assert "meeting.live_analysis" not in (session._live_engines or {})
+    assert state.intel_status != "live"
     assert state.transcription_status == "record_only"
-    assert state.intel_status == "refused"
     durable = db.meetings.get_meeting(state.id)
     assert durable is not None and durable.transcription_status == "record_only"
 
 
-def test_recorder_start_failure_fences_committed_bundle(
+def test_recorder_start_failure_cancels_the_admitted_parent(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    db, _broker, session = _bundle_session(tmp_path, monkeypatch)
+    db, broker, session = _bundle_session(tmp_path, monkeypatch)
+    started: list[str] = []
+    real_start = broker.parent_run_controller.start
+
+    def spy(*args: Any, **kwargs: Any) -> Any:
+        parent = real_start(*args, **kwargs)
+        started.append(parent.operation_id)
+        return parent
+
+    monkeypatch.setattr(broker.parent_run_controller, "start", spy)
 
     def fail_start(self: FakeRecorder) -> None:
         self.started = True
@@ -583,17 +586,8 @@ def test_recorder_start_failure_fences_committed_bundle(
     with pytest.raises(RuntimeError, match="device unavailable"):
         session.start()
 
-    assert session._route_bundle is not None
-    parent_id = session._route_bundle["parent_operation_id"]
-    with db._connection() as conn:
-        active = conn.execute(
-            "SELECT COUNT(*) FROM inference_route_executions WHERE state IN ('active','stopping')"
-        ).fetchone()[0]
-        parent = conn.execute(
-            "SELECT state FROM kernel_parent_runs WHERE operation_id=?", (parent_id,)
-        ).fetchone()
-    assert active == 0
-    assert parent is not None and parent["state"] != "OPEN"
+    assert len(started) == 1
+    assert _parent_row(db, started[0])["state"] != "OPEN"
 
 
 def test_late_transcriber_construction_failure_keeps_raw_capture_record_only(tmp_path, monkeypatch):

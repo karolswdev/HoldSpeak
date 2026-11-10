@@ -1150,21 +1150,8 @@ def test_meeting_transcription_children_join_the_existing_meeting_session(
     # aggregate bundle budget.
     assert _budget() == 8418
     assert int(parents[0]["child_budget"]) == 17_287
-    bundle = session._route_bundle
-    assert bundle is not None
-    assert bundle["parent_child_budget"] == 17_287
-    assert bundle["budget_groups"] == [
-        {"id": "meeting-preload", "allocation": 1, "member_keys": ["preload"]},
-        {
-            "id": "meeting-transcription",
-            "allocation": 17_286,
-            "member_keys": ["transcription"],
-        },
-    ]
-    assert {member["capability_id"] for member in bundle["members"]} == {
-        "speech.preload",
-        "speech.transcribe",
-    }
+    # The engine door names the speech engine; no bundle is frozen.
+    assert set(session._live_engines) == {"speech.transcribe"}
 
     text = session._transcribe_audio(np.full(16000, AUDIO_SENTINEL, dtype=np.float32))
     assert text == TEXT_SENTINEL

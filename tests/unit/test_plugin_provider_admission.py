@@ -1011,20 +1011,13 @@ def test_two_admitted_plugins_are_two_children_two_contexts_two_receipts(
     assert len(children) == 2, children
     assert {child["outcome"] for child in children} == {"succeeded"}
     assert len({child["operation_id"] for child in children}) == 2
-    # Every child dispatched on the C1 bundle's frozen revision for its capability.
-    with db._connection() as conn:
-        frozen_revisions = {
-            row["deployment_revision_id"]
-            for row in conn.execute(
-                """SELECT entries.deployment_revision_id
-                   FROM inference_parent_route_bundle_members members
-                   JOIN inference_route_plan_entries entries
-                     ON entries.plan_id=members.route_plan_id
-                  WHERE members.bundle_id=?
-                    AND members.capability_id LIKE 'meeting.plugin.%'""",
-                (job.queue_job.bundle_id,),
-            )
-        }
+    # Every plugin child ran on the engine the door names for its capability.
+    from holdspeak.services import engine_door
+
+    frozen_revisions = {
+        engine_door.engine_for(broker, f"meeting.plugin.{plugin_id}").revision
+        for plugin_id in chain
+    }
     assert {context.revision_id for context in engine.contexts} == frozen_revisions
     # ...and the staged projections became the real rows.
     runs = {row["plugin_id"] for row in _rows(db, "plugin_runs")}

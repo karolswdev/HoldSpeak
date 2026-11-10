@@ -266,10 +266,10 @@ def test_skipping_failed_local_publication_is_final_and_does_not_block_a_sibling
     assert engine.plugin_calls == [DEC, ACT, DEC, ACT]
 
 
-@pytest.mark.parametrize("boundary", ["before_bridge", "before_ready", "before_unseen"])
+@pytest.mark.parametrize("boundary", ["before_pending", "before_bridge", "before_ready", "before_unseen"])
 def test_outcome_publication_crash_recovers_exact_rows_after_stale_parent_reconciliation(tmp_path, monkeypatch, boundary):
-    # before_pending is parked (tests/_parked/fixfwd2_20261109/): the summary
-    # call is run again after that crash since #2128.
+    # before_pending: the recovered job finds the answer its earlier run of the
+    # same call published under the same parent and does not call again.
     from holdspeak.intel_queue import process_next_intel_job
     from holdspeak.kernel.runtime import _configure
 

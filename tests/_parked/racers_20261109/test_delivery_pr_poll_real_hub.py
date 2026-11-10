@@ -1,3 +1,5 @@
+# PARKED 2026-11-09: passes alone, fails under the whole suite at -n 6 (a real hub poll / a real tmux pane with a 5 s capture window).
+# Owner 2026-11-08: no pipeline stands a process up; a timing race proves nothing a user feels. Restore with an event, not a clock.
 """PHILO-15 lane 17 (B51) on a real hub: a merge on GitHub reaches the Room
 receipt within one poll, with no press.
 

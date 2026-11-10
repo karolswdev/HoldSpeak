@@ -173,8 +173,12 @@ def _build(database: Any, *, clock: Any = None) -> Broker:
     register_meeting_plugin_projection(broker.projection_stager)
     register_parked_run_projection(broker.projection_stager)
     register_workbench_projection(broker.projection_stager)
-    # Compose the routed controller before candidate recovery so every staged
-    # inference result is interpreted against its logical route winner.
+    # The routed coordinator, its route recovery and the routed attempt
+    # runtime below serve one caller now: speech capture (dictation,
+    # ``speech_session/``), which still freezes route plans. Meetings and
+    # every other model call go through the engine door. They go when speech
+    # moves onto the door. The startup migration stays: it writes the owner's
+    # assignment rows from his old Config once (the door reads those rows).
     from ..services.inference_adoption_service import RoutedInferenceCoordinator
 
     broker.inference_adoption_service = RoutedInferenceCoordinator(

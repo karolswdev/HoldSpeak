@@ -287,121 +287,75 @@ def _routed_recovery_session(tmp_path, monkeypatch):
     return db, broker, session
 
 
-def _parent_state(db, bundle_id):
+def _parent_state(db, operation_id):
     with db._connection() as conn:
         return conn.execute(
-            """SELECT p.state FROM kernel_parent_runs p
-                 JOIN inference_parent_route_bundles b ON b.parent_operation_id=p.operation_id
-                WHERE b.id=?""",
-            (bundle_id,),
+            "SELECT state FROM kernel_parent_runs WHERE operation_id=?", (operation_id,)
         ).fetchone()[0]
 
 
-def test_recovery_converges_prefence_and_postfence_process_loss_to_one_aftercare_row(
+def test_recovery_converges_a_process_loss_before_the_enqueue_to_one_aftercare_row(
     tmp_path, monkeypatch
 ):
-    """Fault-injection: either Stop crash window recovers queue plus non-OPEN fence."""
+    """Fault-injection: a crash before Stop queued its work recovers one job."""
     from holdspeak.meeting_session.models import TranscriptSegment
-    from holdspeak.services.inference_parent_route_bundle_service import (
-        InferenceParentRouteBundleService,
-    )
-
-    for point in ("before-fence", "inside-fence-transaction"):
-        db, _broker, session = _routed_recovery_session(tmp_path / point, monkeypatch)
-        state = session.start()
-        state.segments.append(TranscriptSegment("aftercare", "Me", 0.0, 1.0))
-        original_handoff = InferenceParentRouteBundleService.request_stop_handoff
-        original_reserve = db.intel._reserve_stop_handoff_in_transaction
-        if point == "before-fence":
-            monkeypatch.setattr(
-                InferenceParentRouteBundleService,
-                "request_stop_handoff",
-                lambda *_args, **_kwargs: (_ for _ in ()).throw(SystemExit("before fence")),
-            )
-        else:
-            monkeypatch.setattr(
-                db.intel,
-                "_reserve_stop_handoff_in_transaction",
-                lambda *_args, **_kwargs: (_ for _ in ()).throw(SystemExit("inside handoff")),
-            )
-        with pytest.raises(SystemExit):
-            session.stop()
-        # A process death rolls back the composed fence/upsert transaction; no
-        # durable half-effect may exist before recovery owns the same predicate.
-        assert _parent_state(db, session._route_bundle["id"]) == "OPEN"
-        with db._connection() as conn:
-            assert conn.execute("SELECT COUNT(*) FROM intel_jobs WHERE meeting_id=?", (state.id,)).fetchone()[0] == 0
-        monkeypatch.setattr(InferenceParentRouteBundleService, "request_stop_handoff", original_handoff)
-        monkeypatch.setattr(db.intel, "_reserve_stop_handoff_in_transaction", original_reserve)
-        recovered = db.meetings.recover_capture(state.id)
-        assert recovered is not None and recovered.capture_status == "recovered"
-        with db._connection() as conn:
-            assert conn.execute("SELECT COUNT(*) FROM intel_jobs WHERE meeting_id=?", (state.id,)).fetchone()[0] == 1
-        assert _parent_state(db, session._route_bundle["id"]) != "OPEN"
-
-
-def test_stop_persists_fence_retry_obligation_and_recovery_clears_it(tmp_path, monkeypatch):
-    """Fault-injection: two fence failures retain aftercare and a durable retry path."""
-    from holdspeak.meeting_session.models import TranscriptSegment
-    from holdspeak.services.inference_parent_route_bundle_service import (
-        InferenceParentRouteBundleService,
-    )
 
     db, _broker, session = _routed_recovery_session(tmp_path, monkeypatch)
     state = session.start()
+    parent_id = session._intel_parent.operation_id
     state.segments.append(TranscriptSegment("aftercare", "Me", 0.0, 1.0))
-    original = InferenceParentRouteBundleService.request_stop_handoff
+    original = db.intel.enqueue_intel_job
+    monkeypatch.setattr(
+        db.intel, "enqueue_intel_job",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(SystemExit("before enqueue")),
+    )
+    with pytest.raises(SystemExit):
+        session.stop()
+    with db._connection() as conn:
+        assert conn.execute("SELECT COUNT(*) FROM intel_jobs WHERE meeting_id=?", (state.id,)).fetchone()[0] == 0
+    monkeypatch.setattr(db.intel, "enqueue_intel_job", original)
+    recovered = db.meetings.recover_capture(state.id)
+    assert recovered is not None and recovered.capture_status == "recovered"
+    with db._connection() as conn:
+        assert conn.execute("SELECT COUNT(*) FROM intel_jobs WHERE meeting_id=?", (state.id,)).fetchone()[0] == 1
+    assert _parent_state(db, parent_id) != "OPEN"
+
+
+def test_stop_persists_enqueue_retry_obligation_and_recovery_clears_it(tmp_path, monkeypatch):
+    """Fault-injection: a failed enqueue at Stop leaves a durable retry marker."""
+    from holdspeak.meeting_session.models import TranscriptSegment
+
+    db, _broker, session = _routed_recovery_session(tmp_path, monkeypatch)
+    state = session.start()
+    parent_id = session._intel_parent.operation_id
+    state.segments.append(TranscriptSegment("aftercare", "Me", 0.0, 1.0))
+    original = db.intel.enqueue_intel_job
     calls = []
 
     def fail(*_args, **_kwargs):
         calls.append(1)
-        raise RuntimeError("handoff fault")
+        raise RuntimeError("queue fault")
 
-    monkeypatch.setattr(InferenceParentRouteBundleService, "request_stop_handoff", fail)
+    monkeypatch.setattr(db.intel, "enqueue_intel_job", fail)
     session.stop()
-    assert len(calls) == 2
+    assert len(calls) == 1
     with db._connection() as conn:
         marker = conn.execute(
             "SELECT route_fence_pending,route_fence_error FROM meetings WHERE id=?", (state.id,)
         ).fetchone()
-        assert tuple(marker)[0] == 1 and "handoff fault" in tuple(marker)[1]
-        # C3 writes no runnable legacy aftercare when the atomic handoff fails.
+        assert tuple(marker)[0] == 1 and "queue fault" in tuple(marker)[1]
         assert conn.execute("SELECT COUNT(*) FROM intel_jobs WHERE meeting_id=?", (state.id,)).fetchone()[0] == 0
-    assert _parent_state(db, session._route_bundle["id"]) == "OPEN"
+    # Stop ended the live parent even though the queue write failed.
+    assert _parent_state(db, parent_id) != "OPEN"
+    assert db.intel.claim_next_intel_job() is None
 
-    monkeypatch.setattr(InferenceParentRouteBundleService, "request_stop_handoff", original)
+    monkeypatch.setattr(db.intel, "enqueue_intel_job", original)
     assert db.meetings.recover_capture(state.id) is not None
     with db._connection() as conn:
         assert conn.execute("SELECT route_fence_pending FROM meetings WHERE id=?", (state.id,)).fetchone()[0] == 0
         assert conn.execute("SELECT COUNT(*) FROM intel_jobs WHERE meeting_id=?", (state.id,)).fetchone()[0] == 1
-    assert _parent_state(db, session._route_bundle["id"]) != "OPEN"
-
-
-def test_pending_fence_aftercare_is_not_claimable_until_recovery_fences(tmp_path, monkeypatch):
-    """Boundary: a durable fence retry marker blocks aftercare execution."""
-    from holdspeak.meeting_session.models import TranscriptSegment
-    from holdspeak.services.inference_parent_route_bundle_service import (
-        InferenceParentRouteBundleService,
-    )
-
-    db, _broker, session = _routed_recovery_session(tmp_path, monkeypatch)
-    state = session.start()
-    state.segments.append(TranscriptSegment("aftercare", "Me", 0.0, 1.0))
-    original = InferenceParentRouteBundleService.request_stop_handoff
-    monkeypatch.setattr(
-        InferenceParentRouteBundleService,
-        "request_stop_handoff",
-        lambda *_args, **_kwargs: (_ for _ in ()).throw(RuntimeError("handoff fault")),
-    )
-    session.stop()
-
-    assert db.intel.claim_next_intel_job() is None
-    monkeypatch.setattr(InferenceParentRouteBundleService, "request_stop_handoff", original)
-    assert db.meetings.recover_capture(state.id) is not None
-    assert _parent_state(db, session._route_bundle["id"]) != "OPEN"
     first_claim = db.intel.claim_next_intel_job()
     assert first_claim is not None and first_claim.meeting_id == state.id
-    assert first_claim.attempts == 1
     assert db.intel.claim_next_intel_job() is None
 
 

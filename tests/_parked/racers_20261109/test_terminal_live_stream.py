@@ -1,3 +1,5 @@
+# PARKED 2026-11-09: passes alone, fails under the whole suite at -n 6 (a real hub poll / a real tmux pane with a 5 s capture window).
+# Owner 2026-11-08: no pipeline stands a process up; a timing race proves nothing a user feels. Restore with an event, not a clock.
 """Actual control-mode terminal streaming on a private tmux server."""
 
 from __future__ import annotations
