@@ -561,13 +561,13 @@ describe("the agent faces say Agents and agent (Betterment AG1)", () => {
     serve({ "/api/coders/sessions": c4.wire, "/api/onboarding/agents": DETECT.wire,
       "/api/agent/launches/": hubWire("lane.c4-runbook").wire });
     render(<ConductorWindow />);
-    await screen.findByRole("button", { name: "Write the rollback runbook" });
+    await screen.findByRole("option", { name: "Write the rollback runbook" });
     expect(screen.getAllByText("Agents").length).toBeGreaterThan(0);
     const plate = screen.getByTestId("conductor-ask-row");
     expect(plate.querySelector(".cw-ask-label")?.textContent).toBe("Asks you");
     expect(document.body.textContent).not.toMatch(OLD_WORDS);
     // Stop confirms in the agent's words.
-    fireEvent.click(within(conductorMember("launch:launch_c4_runbook")!).getByRole("button", { name: "Write the rollback runbook" }));
+    fireEvent.click(within(conductorMember("launch:launch_c4_runbook")!).getByRole("option", { name: "Write the rollback runbook" }));
     fireEvent.click(await screen.findByTestId("conductor-stop"));
     expect(screen.getByTestId("conductor-stop-confirm").textContent).toBe("Stop · sure? (ends the agent's session)");
     expect(document.body.textContent).not.toMatch(OLD_WORDS);
@@ -631,7 +631,7 @@ describe("one press to answer and to allow (Betterment AG2)", () => {
   /** The language: the picked agent's plate is its ask (one at a time). */
   async function plateOf(id: string) {
     render(<ConductorWindow />);
-    await screen.findByRole("button", { name: "Write the on-call note" });
+    await screen.findByRole("option", { name: "Write the on-call note" });
     selectRow(id);
     const plate = within(agentPane()).getByTestId("conductor-ask-row");
     expect(plate.dataset.objectId).toBe(id);
@@ -789,7 +789,7 @@ describe("the screen says the state when no hook speaks (Betterment AG7)", () =>
 
   it("Wants to run shows the command the rules read; Allow sends Enter to its screen prompt (no hook)", async () => {
     render(<ConductorWindow />);
-    await screen.findByRole("button", { name: "Release the rollback build" });
+    await screen.findByRole("option", { name: "Release the rollback build" });
     const held = within(screen.getByTestId("conductor-asks")).getAllByTestId("conductor-ask-row")
       .find((row) => row.dataset.objectId === "launch:launch_ag7_held")!;
     expect(held.querySelector(".cw-ask-label")?.textContent).toBe("Wants to run");
@@ -806,7 +806,7 @@ describe("the screen says the state when no hook speaks (Betterment AG7)", () =>
 
   it("Asks you shows the agent's last words and their choices; Done is New", async () => {
     render(<ConductorWindow />);
-    await screen.findByRole("button", { name: "Move the rollback flag" });
+    await screen.findByRole("option", { name: "Move the rollback flag" });
     selectRow("launch:launch_ag7_asks");
     const asks = within(agentPane()).getByTestId("conductor-ask-row");
     expect(asks.dataset.objectId).toBe("launch:launch_ag7_asks");
@@ -859,7 +859,7 @@ describe("the Agents list is the fleet (Betterment AG8)", () => {
 
   it("window grammar: the asks are plates first; the rest list New, Working, the queue, Quiet, each with its Project; the status bar counts only what is there", async () => {
     render(<ConductorWindow />);
-    await screen.findByRole("button", { name: "Write the on-call note" });
+    await screen.findByRole("option", { name: "Write the on-call note" });
     await findMember("launch:launch_ag8_work");
     expect(statusWords()).toMatch(/^2 need you · 1 new · 1 working/);
     expect(statusWords()).not.toMatch(/\b0\b/);
@@ -908,7 +908,7 @@ describe("the Agents list is the fleet (Betterment AG8)", () => {
       return routes(url, init);
     });
     render(<ConductorWindow />);
-    await screen.findByRole("button", { name: "Write the on-call note" });
+    await screen.findByRole("option", { name: "Write the on-call note" });
     fireEvent.click(screen.getByTestId("conductor-start"));                       // press 1
     const words = await screen.findByTestId("conductor-start-words");
     await waitFor(() => expect(screen.getByRole("combobox", { name: "Project" }).querySelectorAll("option").length).toBeGreaterThan(1));
@@ -947,7 +947,7 @@ describe("the Agents list is the fleet (Betterment AG8)", () => {
       return routes(url, init);
     });
     render(<ConductorWindow />);
-    await screen.findByRole("button", { name: "Write the on-call note" });
+    await screen.findByRole("option", { name: "Write the on-call note" });
     const queued = (await waitFor(() => {
       const el = document.querySelector<HTMLElement>("[data-object-id^='queue:']");
       if (!el) throw new Error("no queued row");
@@ -1131,7 +1131,7 @@ describe("the desk's own answers are visible (Betterment AG3)", () => {
   it("while the desk drafts, the row says so and offers Answer it myself, then the answer box", async () => {
     serveAg3("coders-sessions.drafting");
     render(<ConductorWindow />);
-    await screen.findByRole("button", { name: "Write the on-call note" });
+    await screen.findByRole("option", { name: "Write the on-call note" });
     const row = ghost();
     expect(within(row).getByTestId("agent-row-drafting").textContent).toContain("The desk is drafting an answer");
     expect(within(row).queryByTestId("agent-row-choices")).toBeNull();

@@ -1106,11 +1106,16 @@ AIR_WORDS_JS = r"""(sel) => {
     return R - L > 1 && B - T > 1 ? {L, T, R, B} : null;
   };
   const air = [], whole = new Set();
-  const controls = [...scope.querySelectorAll('[role=listbox], button, input:not([type=hidden]), select, textarea')]
-    .filter(e => !(e.matches('[role=option]') && e.closest('[role=listbox]')))
+  const controls = [...scope.querySelectorAll('[role=option], button, input:not([type=hidden]), select, textarea')]
     .map(e => ({e, r: painted(e)})).filter(c => c.r);
   for (let i = 0; i < controls.length; i++) for (let j = i + 1; j < controls.length; j++) {
     const a = controls[i], b = controls[j];
+    // Adjoining options form one selection control. A real button inside
+    // an option is still measured against its siblings and neighbours;
+    // containment is not an overlap between two independent controls.
+    const list = a.e.matches('[role=option]') && a.e.closest('[role=listbox]');
+    if (list && b.e.matches('[role=option]') && list === b.e.closest('[role=listbox]')) continue;
+    if (a.e.contains(b.e) || b.e.contains(a.e)) continue;
     const joined = a.e.closest('[data-joined-controls]');
     if (joined && joined === b.e.closest('[data-joined-controls]')) continue;
     const x = Math.max(a.r.L, b.r.L) - Math.min(a.r.R, b.r.R);
@@ -1696,7 +1701,7 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
             rail.wait_for(state="attached", timeout=T)
             if not rail.is_visible():
                 page.locator(f'[id="{wid}"]').get_by_test_id("rail-back").click()
-            rail.get_by_role("button", name="Brief" if case_id == "brief" else "The day", exact=True).click()
+            rail.get_by_role("option", name="Brief" if case_id == "brief" else "The day", exact=True).click()
             page.locator(f'[id="{wid}"] [data-testid=today-day]').wait_for(timeout=T)
             if case_id == "brief":
                 # The native rail opens the hub's one brief, already unfolded.
@@ -1710,7 +1715,7 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
             if case_id == "ask-answer":
                 if width < 720:
                     page.locator(f'[id="{wid}"]').get_by_role("button", name="Recent", exact=True).click()
-                page.locator(f'[id="{wid}"] [data-testid=ask-recent]').get_by_role("button", name=thread["recent"]["threads"][0]["title"], exact=True).click()
+                page.locator(f'[id="{wid}"] [data-testid=ask-recent]').get_by_role("option", name=thread["recent"]["threads"][0]["title"], exact=True).click()
                 page.locator(f'[id="{wid}"] [data-testid=ask-turn]').first.wait_for(timeout=T)
             page.mouse.move(2, 2)
         if case_id == "door-picked":
@@ -2378,6 +2383,12 @@ def test_air_keeps_list_selection_together_and_checks_editors(pw_browser: Any) -
         assert page.evaluate(AIR_WORDS_JS, "#face")["air"]
         page.locator("#outside").evaluate("e => e.setAttribute('role', 'option')")
         assert page.evaluate(AIR_WORDS_JS, "#face")["air"], "an option outside a list is still a control"
+        page.set_content('''<div id="face" role="listbox"><div role="option" style="padding:6px">
+          <div id="verbs" style="display:flex;gap:2px"><button>Open</button><button>Hand</button></div>
+          </div><div role="option">Another option</div></div>''')
+        assert page.evaluate(AIR_WORDS_JS, "#face")["air"], "buttons inside an option remain independent controls"
+        page.locator("#verbs").evaluate("e => e.style.gap = '6px'")
+        assert not page.evaluate(AIR_WORDS_JS, "#face")["air"], "a list does not overlap its own child buttons"
         page.set_content('''<div id="face" role="grid"><div role="row"><select><option>Codex</option></select></div>
           <div role="row"><select><option>Gemini</option></select></div></div>''')
         assert page.evaluate(AIR_WORDS_JS, "#face")["air"]

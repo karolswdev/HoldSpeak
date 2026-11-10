@@ -271,8 +271,8 @@ describe("Settings › Meetings", () => {
     hub.state.settings.calendar = { ...hub.state.settings.calendar, sources: [{ id: "src-work", label: "WORK", url: "/Users/owner/work.ics", enabled: true }] };
     hub.state.calendar = { ...clone(calendarOneWire), matched_this_week: 1 };
     render(<SettingsCore scope="integrations" />);
-    fireEvent.click(await screen.findByRole("tab", { name: "Calendars" }));
     const row = await screen.findByTestId("calendar-source-src-work");
+    fireEvent.click(screen.getByRole("tab", { name: "Calendars" }));
     expect(within(row).getByText("Calendar feed")).toBeInTheDocument();
     expect(within(row).getByRole("checkbox", { name: "Read WORK" })).toBeChecked();
     expect(row.querySelector("button")).toBeNull();
@@ -1187,6 +1187,7 @@ describe("Settings › Engines: the chain, its readiness and the spend limit", (
       "/api/inference/model-library/connect-cli-engine": () => ({ answer: step("limit").answer, next: step("limit").gets }),
     });
     render(<SettingsCore scope="engines" />);
+    fireEvent.click(await screen.findByRole("tab", { name: "Engines" }));
     fireEvent.click(await screen.findByRole("button", { name: "Model library" }));
     const row = await screen.findByTestId("settings-engine-agent-claude");
     fireEvent.doubleClick(row);

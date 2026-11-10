@@ -1565,7 +1565,9 @@ and a share of the available height. Lists scroll inside their wells.
 `PaneInspector` holds a choice that cannot fit in a cell, within the same
 window. `PaneActions` spaces verbs and feedback. `Rail compact` has one-line
 names and exposes one listbox with selected options; adjoining options
-are parts of one control. Settings supplies a brass attention dot with an accessible reason.
+are parts of one control. The listbox container is not an extra control over
+its contents. Header and action Buttons remain independent controls; app
+actions belong outside option rows. Settings supplies a brass attention dot with an accessible reason.
 
 Settings Accounts and Engines use these patterns. The other Settings panes
 still use the earlier preference sheet and are pending migration. Each app's

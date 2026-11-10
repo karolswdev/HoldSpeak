@@ -79,7 +79,7 @@ describe("Projects as a native Room client", () => {
     expect(screen.getByTestId("projects-update")).toHaveTextContent("Update drafted");
     expect(screen.getByTestId("projects-new-update")).toHaveTextContent("New update");
     expect(screen.getByTestId("projects-status")).toHaveTextContent("2 projects");
-    fireEvent.click(within(vendor).getByRole("button"));
+    fireEvent.click(within(vendor).getByRole("option"));
     expect(opened.rooms).toEqual([]);
     expect(screen.getByTestId("projects-mast")).toHaveTextContent("Vendor review");
     expect(screen.getByTestId("projects-next")).toHaveTextContent("No date set");
@@ -97,7 +97,7 @@ describe("Projects as a native Room client", () => {
     render(<ProjectsCore />); await settle();
     const vendor = rows().find((row) => row.textContent?.includes("Vendor review"))!;
     expect(within(vendor).getByTestId("projects-not-read")).toHaveTextContent("Not read");
-    fireEvent.click(within(vendor).getByRole("button"));
+    fireEvent.click(within(vendor).getByRole("option"));
     expect(screen.getByTestId("projects-ledger")).toHaveTextContent("Not read");
     failed = false; fireEvent.click(screen.getByRole("button", { name: "Retry" })); await settle();
     expect(screen.getByTestId("projects-ledger")).toHaveTextContent("New");
