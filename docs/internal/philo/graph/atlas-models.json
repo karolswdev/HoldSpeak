@@ -16,7 +16,7 @@
       "phase1_refs": [],
       "sources": [
         {
-          "path": "web/src/features/runson/RunsOnCore.tsx",
+          "path": "web/src/features/runson/EngineLibrary.tsx",
           "symbol": "data-testid=\"runson-find-lan\"",
           "claim": "The existing Engines picker exposes an explicit LAN search."
         }

@@ -390,7 +390,9 @@ export function useRunsOn(scope?: string) {
     [roster],
   );
 
+  const editorRead = useRef(0);
   const loadEditors = useCallback(async (from?: Roster | null) => {
+    const read = ++editorRead.current;
     const source = from ?? roster;
     if (!source) return;
     const answers = await Promise.all(
@@ -404,22 +406,27 @@ export function useRunsOn(scope?: string) {
         }
       }),
     );
-    if (mounted.current) setEditors(Object.fromEntries(answers));
+    if (mounted.current && read === editorRead.current) setEditors(Object.fromEntries(answers));
   }, [editorCapability, roster]);
 
 
   /** Set one row at once: an engine, or null for "Everything else" (the
    *  row's own assignment is cleared). Undo writes the row back. */
   const setRow = useCallback(
-    async (rowId: string, profileId: string | null) => {
+    async (rowId: string, profileId: string | string[] | null) => {
       const row = WHAT_ROWS.find((r) => r.id === rowId);
       const editor = editors[rowId];
       if (!row || !editor || editor === "failed") return;
       const capability = editorCapability(row);
       if (!capability) return;
-      const candidate = profileId ? editor.candidates.find((c) => c.profileId === profileId) : null;
-      if (profileId && !candidate) return;
-      const before = editor.own ? [{ profile_id: editor.own.profileId, profile_revision: editor.own.profileRevision }] : [];
+      const ids = profileId == null ? [] : Array.isArray(profileId) ? profileId : [profileId];
+      const candidates = ids.map((id) => editor.candidates.find((c) => c.profileId === id) ?? (() => {
+        const entry = editor.effectiveEntries.find((e) => e.profile_id === id);
+        return entry ? { profileId: entry.profile_id, profileRevision: entry.profile_revision, label: entry.label } : undefined;
+      })());
+      if (candidates.some((c) => !c) || new Set(ids).size !== ids.length) return;
+      const candidate = candidates[0];
+      const before = editor.ownEntries.map((e) => ({ profile_id: e.profile_id, profile_revision: e.profile_revision }));
       setBusy(true);
       try {
         let produced: number;
@@ -427,7 +434,7 @@ export function useRunsOn(scope?: string) {
           const written = await writeChain({
             scope: row.scope,
             expectedRevision: editor.baseRevision,
-            entries: [{ profile_id: candidate.profileId, profile_revision: candidate.profileRevision }],
+            entries: candidates.map((c) => ({ profile_id: c!.profileId, profile_revision: c!.profileRevision })),
           });
           produced = Number(written.revision ?? 0);
         } else {
@@ -451,9 +458,9 @@ export function useRunsOn(scope?: string) {
         if (isConflict(err)) setReceipt({ text: plainWords(`Could not change ${row.name}`, "It changed elsewhere first"), tone: "danger" });
         else setReceipt(notChanged(row.name, err));
       } finally {
-        if (mounted.current) setBusy(false);
         const next = await loadRoster();
         await loadEditors(next);
+        if (mounted.current) setBusy(false);
         void loadDetection();
       }
     },

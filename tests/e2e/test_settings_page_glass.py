@@ -102,13 +102,13 @@ def test_settings_page_order_anchor_and_saved_write(
             settings.get_by_test_id("settings-index-this-mac").click()
             engines = settings.get_by_test_id("settings-engines-page-link")
             engines.click()
-            engine_window = page.locator("#surface-engines")
-            engine_window.get_by_test_id("runson-root").wait_for(timeout=15_000)
+            engine_window = page.locator("#surface-settings")
+            engine_window.get_by_test_id("settings-engines-spine").wait_for(timeout=15_000)
             rows = _api(page, "GET", "/api/desk/windows", token=TOKEN)["windows"]
-            engine_row = next(row for row in rows if row["id"] == "surface-engines")
-            assert engine_row["app"] == "configure-runs-on", engine_row
+            engine_row = next(row for row in rows if row["id"] == "surface-settings")
+            assert engine_row["app"] == "configure-settings", engine_row
             page.screenshot(path=str(shots / f"settings-engines-{width}.png"), full_page=False)
-            _api(page, "POST", "/api/desk/windows/surface-engines/close", {}, token=TOKEN)
+            _api(page, "POST", "/api/desk/windows/surface-settings/close", {}, token=TOKEN)
             engine_window.wait_for(state="detached", timeout=10_000)
 
             # Restore the legacy entry after visiting another category.

@@ -57,8 +57,7 @@ STATIC_WINDOWS: dict[str, str] = {
     "surface-components": "design-components",
     "surface-activity": "inspect-activity",
     "surface-project-memory": "open-project-memory",
-    # Betterment ST7: the Engines face is a first-class window. The retired
-    # Concierge id below remains known only so old saved rows can close.
+    # Engines and Concierge are retired ids; saved rows can still close.
     "surface-engines": "configure-runs-on",
     "surface-concierge": "open-concierge",
     "surface-project-setup": "project-setup",
@@ -142,6 +141,7 @@ RETIRED_APPS: dict[str, str] = {
 #: the hub both need to retire the old Concierge row without retiring the
 #: canonical Settings window that now hosts Engines.
 RETIRED_WINDOWS: dict[str, str] = {
+    "surface-engines": "Engines is a pane of Settings",
     "surface-commands": "Voice commands is a wing of Speak (Betterment C11)",
     "surface-concierge": "the legacy Concierge window is retired; Engines has a live window (ST7)",
     "surface-companion": "the old Agents application is unmapped; Agents is the Conductor window (Betterment AG1)",

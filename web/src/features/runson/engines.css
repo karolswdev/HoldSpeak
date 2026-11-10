@@ -1,0 +1,32 @@
+/* Settings material: assignments as sentences, editors as plain ordered rows. */
+.engines-editor, .engines-library, .engines-result { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.engines-editor { padding-block: 16px; border-block: 1px solid var(--hs-rule); }
+.engines-editor-head, .engines-verbs { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.engines-editor-head { justify-content: space-between; }
+.engines-editor h3 { margin: 0; font: 600 18px/1.3 var(--font-sans); }
+.engines-chain { margin: 0; padding-inline-start: 24px; }
+.engines-chain li { padding-block: 12px; }
+.engines-chain strong { display: block; margin-bottom: 12px; }
+.engines-library { font: 400 14px/1.5 var(--font-sans); overflow-wrap: anywhere; }
+.engines-library :is(.runson-add, .runson-picker, .runson-kinds, .runson-kind-list, .runson-agent-spend) { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.engines-library :is(.runson-kind-tiles, .runson-add-verbs, .runson-add-answer, .runson-picker-row, .runson-kind-row) { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.engines-library :is(ul, .runson-picker-list) { list-style: none; margin: 0; padding: 0; }
+.engines-library .runson-kind-tile { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+.engines-library .runson-kind-hint { font-size: 12px; font-weight: 400; }
+.engines-library :is(.runson-kind-install, .runson-picker-model) { min-width: 0; overflow-wrap: anywhere; }
+.engines-library .runson-kind-row { padding-block: 12px; border-bottom: 1px solid var(--hs-rule); }
+.engines-library .runson-kind-row-name { font-weight: 600; }
+.engines-library .runson-kind-install { display: flex; flex-direction: column; gap: 8px; }
+.engines-library .runson-kind-install code { white-space: pre-wrap; }
+/* The sentence is the primary fact; state stays secondary and never clips. */
+.desk-next .pref-window .settings-ledger .surface-ledger[data-cols="settings-rows"]:has([data-testid^="settings-job-"]) .surface-ledger-line { grid-template-columns: minmax(0, 1fr) minmax(72px, 100px) auto; }
+.engines-library .settings-line-value { font-family: var(--font-sans); }
+@container surface (max-width: 639.9px) {
+  .desk-next .pref-window .settings-ledger .surface-ledger[data-cols="settings-rows"]:has([data-testid^="settings-job-"]) .surface-ledger-line { grid-template-columns: minmax(0, 1fr) auto; }
+  .engines-library .btn { max-width: 100%; }
+}
+
+#settings-section-engines .settings-plate { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
+#settings-section-engines .settings-plate-verbs { align-self: center; }
+#settings-section-engines .settings-plate-facts { font-family: var(--font-sans); }
+#settings-section-engines .settings-line-value { font-family: var(--font-sans); }

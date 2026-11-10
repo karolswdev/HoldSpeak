@@ -1,3 +1,4 @@
+// Parked: Settings > Engines owns assignments and the model library.
 // PHILO-16 (C) — Runs on: the Models window as a Switchboard.
 //
 // COMPOSITOR.md §12 "The exemplar: Runs on", canvas Board 2. Composed from

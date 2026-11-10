@@ -39,6 +39,25 @@
           "Redo"
         ]
       }
+    },
+    {
+      "press": {
+        "target": "settings-index-engines",
+        "words": "Engines stays here in Settings."
+      },
+      "highlight": {
+        "target": "settings-engines-spine",
+        "thing": "engine assignments",
+        "words": "Each job names its engines in order. Edit keeps the chain here. Model library adds an engine."
+      },
+      "ask": {
+        "ref": "settings-engines",
+        "question": "Is the engine order clear?",
+        "choices": [
+          "Clear",
+          "Unclear"
+        ]
+      }
     }
   ]
 }

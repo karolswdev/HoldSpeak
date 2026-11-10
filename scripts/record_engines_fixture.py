@@ -391,8 +391,46 @@ def what_runs_where() -> dict[str, Any]:
             server.server_close()
 
 
+def settings_chain() -> dict[str, Any]:
+    """Settings' chain edits against this recorder's isolated hub only."""
+    with pytest.MonkeyPatch.context() as mp:
+        hub = _hub(mp, "settings-chain", claude=False, codex=True, more=("gemini",))
+        try:
+            entries = []
+            for preset in ("codex", "gemini"):
+                connected = _post(hub, CONNECT, {"draft": {
+                    "request_id": f"settings-{preset}", "profile_id": f"agent-{preset}",
+                    "expected_profile_revision": 0, "preset": preset}})
+                provider = connected["provider"]
+                entries.append({"profile_id": provider["profile_id"], "profile_revision": provider["profile_revision"]})
+            scope = {"kind": "global"}
+            _post(hub, SET, {"command_id": "settings-initial", "expected_revision": 0, "scope": scope, "entries": entries})
+            steps = [{"name": "open", "gets": _gets(hub), "editors": _editors(hub)}]
+            for name, chain in (("reorder", entries[::-1]), ("remove", entries[:1]), ("restore", entries)):
+                revision = _editors(hub)["default"]["draft_base_revision"]
+                body = {"command_id": f"settings-{name}", "expected_revision": revision, "scope": scope, "entries": chain}
+                answer = _post(hub, SET, body)
+                steps.append({"name": name, "post": SET, "body": body, "answer": answer,
+                              "gets": _gets(hub), "editors": _editors(hub)})
+            refused = hub.client.post(SET, json={"command_id": "settings-stale", "expected_revision": 0,
+                "scope": scope, "entries": entries})
+            assert refused.status_code == 409
+            gets = steps[0]["gets"]
+            for step in steps:
+                step.pop("gets")
+                step["editors"] = {key: value for key, value in step["editors"].items() if key in ("default", "summaries")}
+            return {"gets": gets, "steps": steps, "refusal": refused.json()}
+        finally:
+            _close()
+
+
 def main() -> None:
     only = sys.argv[1:]
+    if only == ["settingsChain"]:
+        path = OUT.with_name("settings-chain.recorded.json")
+        path.write_text(json.dumps(settings_chain(), separators=(",", ":"), sort_keys=True) + "\n")
+        print(f"wrote {path.relative_to(REPO)}")
+        return
     scenarios = {
         "nothingFound": nothing_found,
         "claude": found_then_added,
