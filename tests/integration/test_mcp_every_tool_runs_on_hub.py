@@ -219,8 +219,8 @@ def _tool_json(answer: Any) -> Any:
     return json.loads(answer["result"]["content"][0]["text"])
 
 
-def _sweep(hub: _Hub) -> tuple[int, dict[str, str]]:
-    """Call every tool once. Returns (tool count, {tool: why it cannot run})."""
+def _sweep(hub: _Hub) -> tuple[set[str], dict[str, str]]:
+    """Call every listed tool. Return its identity and any dispatch failures."""
     status, listed = hub.mcp("tools/list", {})
     assert status == 200, listed
     tools = listed["result"]["tools"]
@@ -246,7 +246,7 @@ def _sweep(hub: _Hub) -> tuple[int, dict[str, str]]:
         if not _refusal_is_known(name, payload):
             broken[name] = text[:300]
     assert hub.mcp("ping", {})[0] == 200  # the hub is still alive after the sweep
-    return len(tools), broken
+    return {tool["name"] for tool in tools}, broken
 
 
 @pytest.mark.timeout(900)
@@ -255,10 +255,11 @@ def test_every_mcp_tool_runs_on_the_real_hub(tmp_path: Path) -> None:
     home.mkdir()
     hub = _Hub(home)
     try:
-        count, broken = _sweep(hub)
+        names, broken = _sweep(hub)
     finally:
         hub.kill()
-    assert count > 200, count  # the real catalogue, not a stub
+    from holdspeak.mcp.tools import TOOLS
+    assert names == {tool["name"] for tool in TOOLS}
     report = "\n".join(f"  {name}: {why}" for name, why in sorted(broken.items()))
     assert not broken, f"{len(broken)} MCP tool(s) cannot run on the hub:\n{report}"
 

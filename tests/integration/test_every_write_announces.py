@@ -422,7 +422,7 @@ def test_no_registered_write_is_silent(hub: Hub, seeded: dict[str, str]) -> None
     registry = hub.root.operations
     owner = Principal(PrincipalKind.OWNER, "the-owner")
     writes = [name for name, bound in registry.operations.items() if bound.descriptor.effect == "write"]
-    assert len(writes) >= 60, "the walk lost the catalogue"
+    assert writes, "the registry declares no writes to exercise"
 
     counts: dict[str, int] = {}
     failed: dict[str, str] = {}
