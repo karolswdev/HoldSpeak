@@ -9,6 +9,7 @@ from typing import Any
 import pytest
 
 from tests._evidence import evidence_dir
+from .test_automation_glass import _new_automation
 from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle, clear_hub_windows
 from .test_ui_feedback_glass import _save_feedback
 
@@ -113,36 +114,30 @@ def test_reported_faces_and_saved_images(tmp_path: Path, monkeypatch: pytest.Mon
 
             page.get_by_role("button", name="Go", exact=True).first.click()
             page.locator("nav[aria-label='Go menu']").get_by_role("menuitem", name="Automations").first.click()
-            page.get_by_test_id("automation-new").click()
+            _new_automation(page)
             # New automation: the starters in the Automations window's pane.
             chooser = page.locator("[id='surface-workbenches'][data-layer='window']")
-            scratch = chooser.get_by_test_id("automation-starter-scratch")
-            scratch.wait_for()
+            choices = chooser.get_by_role("combobox", name="Automation starter")
+            choices.wait_for()
             starters = _api(page, "GET", "/api/workbench-templates", token=TOKEN)["templates"]
-            assert any(starter["id"] == "friday-runbook" for starter in starters)
-            page.screenshot(path=str(SHOTS / f"new-automation-{width}.png"))
-            for starter in starters:
-                choice = chooser.get_by_test_id(f"automation-starter-{starter['id']}")
-                _fit_and_hit(choice)
-                page.wait_for_function("el => el.complete && el.naturalWidth > 0", arg=choice.locator("img").element_handle())
-                description = choice.locator(".sr-only").bounding_box()
-                assert description and description["width"] <= 1 and description["height"] <= 1, description
-                assert choice.get_attribute("title") == starter["description"]
-            _fit_and_hit(scratch)
-            assert chooser.locator(".automation-new-pane, [data-testid='automation-home-empty']").first.evaluate("el => el.scrollWidth <= el.clientWidth + 1")
+            assert {starter["id"] for starter in starters} <= set(choices.locator("option").evaluate_all("els => els.map(el => el.value)"))
+            if width == 393:
+                _fit_and_hit(choices)  # The compact select owes a 44 px target.
+            assert chooser.get_by_test_id("automation-starters").evaluate("el => el.scrollWidth <= el.clientWidth + 1")
             page.screenshot(path=str(SHOTS / f"new-automation-{width}.png"))
             chooser.get_by_role("button", name="Give feedback on Automations", exact=True).click()
             page.locator("[data-ui-feedback]").get_by_text("Recording", exact=True).wait_for()
             page.wait_for_timeout(500)
             _save_feedback(page, width, shot_stem="reported-automation", window_id="surface-workbenches", draft=None,
-                           png_regions={"scratch": scratch, "choices": chooser.locator(".automation-starter-grid")})
+                           png_regions={"choices": choices, "form": chooser.get_by_test_id("automation-starters")})
             before = _api(page, "GET", "/api/workbenches", token=TOKEN)["workbenches"]
             with page.expect_response(lambda response: response.url.endswith("/api/workbench-templates/friday-team-update/instantiate") and response.request.method == "POST") as made:
-                chooser.get_by_test_id("automation-starter-friday-team-update").click()
+                choices.select_option("friday-team-update")
+                chooser.get_by_role("button", name="Create", exact=True).click()
             assert made.value.ok, made.value.text()
             receipt = made.value.json()
-            chooser.get_by_test_id("automation-window").wait_for()
-            assert chooser.get_by_test_id("automation-starter-scratch").count() == 0
+            chooser.get_by_test_id("automation-setup").wait_for()
+            assert chooser.get_by_role("combobox", name="Automation starter").count() == 0
             after = _api(page, "GET", "/api/workbenches", token=TOKEN)["workbenches"]
             assert len(after) == len(before) + 1
             assert receipt["workbench"]["id"] in {row["id"] for row in after}
