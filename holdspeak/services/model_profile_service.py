@@ -394,7 +394,6 @@ class ModelProfileService:
             "binding_heads": self._binding_dependencies,
             "deployment_material": self._deployment_material_dependencies,
             "assignment_store": self._assignment_dependencies,
-            "route_plan_store": self._route_plan_dependencies,
         }
         if dependency_providers:
             self._dependency_providers.update(dependency_providers)
@@ -1424,18 +1423,3 @@ class ModelProfileService:
         return self._registered_store_dependencies(
             conn, profile_id, table="inference_assignments", kind="assignment"
         )
-
-    def _route_plan_dependencies(self, conn: Any, profile_id: str) -> list[dict[str, str]]:
-        present = conn.execute(
-            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='inference_route_plan_entries'"
-        ).fetchone()
-        if present is None:
-            return []
-        return [
-            {"kind": "route_plan", "id": str(row["plan_id"])}
-            for row in conn.execute(
-                """SELECT DISTINCT plan_id FROM inference_route_plan_entries
-                     WHERE profile_id=? ORDER BY plan_id""",
-                (profile_id,),
-            ).fetchall()
-        ]
