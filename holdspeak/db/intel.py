@@ -563,8 +563,6 @@ class IntelRepository(BaseRepository):
             """,
             (str(meeting_id),),
         ).fetchone()
-        if cls._is_unsettled_stop_reservation_in_transaction(conn, current_job):
-            return "reserved"
         if cls._is_compatibility_cutover_in_transaction(conn, current_job):
             return "reserved"
         if current_job is not None:
@@ -723,43 +721,6 @@ class IntelRepository(BaseRepository):
             (reason or "Queued for later processing.", now, now, meeting_id, meeting_id),
         )
         return job_id
-
-    @staticmethod
-    def _is_unsettled_stop_reservation_in_transaction(conn: Any, job: Any | None) -> bool:
-        """Whether this exact leaf is an inert C3 Stop reservation.
-
-        Generic Retry/Skip may never rewrite provider-owned work while the Stop
-        primitive has no settlement.  Both queue lifecycle fields are checked so
-        an old skipped/superseded record cannot later qualify for unknown recovery.
-        """
-        if (
-            job is None
-            or str(job["status"] or "") != "reserved"
-            or str(job["lifecycle_posture"] or "") != "reserved"
-        ):
-            return False
-        return conn.execute(
-            """SELECT 1 FROM inference_parent_stop_handoffs h
-                 LEFT JOIN inference_parent_stop_handoff_settlements s
-                   ON s.command_id=h.command_id
-                WHERE h.evidence_ref=?
-                  AND h.evidence_provider_id='meeting-deferred-queue'
-                  AND h.evidence_provider_revision=1
-                  AND s.command_id IS NULL
-                LIMIT 1""",
-            (str(job["job_id"]),),
-        ).fetchone() is not None
-
-    def has_unsettled_stop_reservation(self, meeting_id: str) -> bool:
-        """Return whether the current lineage leaf is an inert Stop handoff."""
-        with self._connection() as conn:
-            job = conn.execute(
-                _CURRENT_LINEAGE_CTE + """
-                SELECT * FROM current_jobs WHERE meeting_id=? AND current_rank=1 LIMIT 1
-                """,
-                (meeting_id,),
-            ).fetchone()
-            return self._is_unsettled_stop_reservation_in_transaction(conn, job)
 
     def has_compatibility_cutover_reservation(self, meeting_id: str) -> bool:
         """Return whether the current leaf is inert pre-C execution evidence."""
@@ -2945,10 +2906,7 @@ class IntelRepository(BaseRepository):
                 """,
                 (meeting_id,),
             ).fetchone()
-            if (
-                self._is_unsettled_stop_reservation_in_transaction(conn, current_job)
-                or self._is_compatibility_cutover_in_transaction(conn, current_job)
-            ):
+            if self._is_compatibility_cutover_in_transaction(conn, current_job):
                 return "reserved"
             if current_job is not None and current_job["status"] in {"running", "claimed"}:
                 return "running"
@@ -3052,10 +3010,7 @@ class IntelRepository(BaseRepository):
                 """,
                 (meeting_id,),
             ).fetchone()
-            if (
-                self._is_unsettled_stop_reservation_in_transaction(conn, job)
-                or self._is_compatibility_cutover_in_transaction(conn, job)
-            ):
+            if self._is_compatibility_cutover_in_transaction(conn, job):
                 return "reserved"
             publication_pending = job is not None and job["lifecycle_posture"] == PUBLICATION_PENDING_POSTURE
             if job is not None and job["status"] in {"running", "claimed"}:

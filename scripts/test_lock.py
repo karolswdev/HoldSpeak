@@ -14,9 +14,11 @@ One CPU budget (2026-11-09), no classes:
 
 * A run takes CPUs: ``--cpus N``, else what the command says (``cpus_of``):
   the pytest ``-n N`` (``auto`` is every core), else 1; a command that drives
-  a browser (tests/e2e, the desk sweep, glass, Playwright, a graph walk,
-  tests/uat) counts double, because each worker also drives a Chromium; a
-  vitest run counts 4.
+  a browser (tests/e2e, the desk sweep, glass, Playwright, a graph walk)
+  counts double, because each worker also drives a Chromium; a vitest run
+  counts 4. tests/uat drives no browser (2026-11-09 night: the mark made the
+  whole non-browser suite at -n 6 count 12, so it ran alone at a load of 6
+  while 13 runs waited).
 * The budget is $HOLDSPEAK_TEST_CPUS (default: the core count). A run starts
   when the CPUs of the runs that hold the lock plus its own fit the budget. A
   run larger than the budget starts when no other run holds the lock.
@@ -50,7 +52,7 @@ from typing import IO, Optional
 
 PRIORITIES = ("high", "low")
 #: A command that names one of these drives a browser: its CPUs count double.
-BROWSER_MARKS = ("tests/e2e", "test_desk_sweep", "playwright", "glass", "graph_walk", "tests/uat")
+BROWSER_MARKS = ("tests/e2e", "test_desk_sweep", "playwright", "glass", "graph_walk")
 VITEST_CPUS = 4
 
 
