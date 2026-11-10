@@ -72,10 +72,10 @@ first user is a Senior Software Architect with reports.
 
 Two Brains (2026-09-19: Astra as Muad'Dib's equal, mutual checks, per-PR
 review rounds) caused "massive delays" and is retired. `docs/internal/TWO-BRAINS.md`
-and `scripts/astra` stay as history. Muad'Dib's workers (Opus 5.5,
-`claude-opus-5-5`, `.claude/agents/opus-worker.md`) build; the Programs engine
-runs the nights; Codex is one reviewer profile for security-surface steps
-(line 2 above).
+and `scripts/astra` stay as history. The builders are Codex Sol (owner
+ruling 2026-11-09 night; `AGENTS.md` › Roles and delegation): Muad'Dib starts
+one `codex exec` session per lane and merges what it opens. A fresh Codex
+session is the one reviewer for security-surface steps (line 2 above).
 
 ## Status
 
