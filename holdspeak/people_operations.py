@@ -18,7 +18,8 @@ Call = Callable[[Any, Any, dict[str, Any]], Any]
 
 _PRINCIPAL = "derived by the transport (HTTP auth middleware; MCP auth resolver); the People service checks it"
 _REFUSALS = _CONTRACT_REFUSALS + ("owner_required", "people_owner_required", "people_<kind>_not_found",
-                                  "people_store_unavailable", "people_mcp_access_disabled",
+                                  "people_store_unavailable", "people_store_<readiness>", "people_store_busy",
+                                  "people_store_write_failed", "people_mcp_access_disabled",
                                   "people_mcp_write_required", "people_mcp_private_record_refused")
 _ID = {"type": "string", "minLength": 1}
 _P = "/api/people"

@@ -5,7 +5,10 @@ from __future__ import annotations
 import json
 from datetime import UTC, date, datetime
 from typing import Any
+
 from uuid import uuid4
+
+from ..db.search import like_literal
 
 from holdspeak.principals import PrincipalRight
 from holdspeak.services.brief_carry import require_right
@@ -877,25 +880,25 @@ class DecisionRecordService:
         predicates: list[str] = []
         params: list[str] = []
         for term in terms:
-            pattern = f"%{term}%"
+            pattern = like_literal(term)
             predicates.append(
-                "(r.decision_text LIKE ? COLLATE NOCASE OR "
-                "COALESCE(r.rationale, '') LIKE ? COLLATE NOCASE OR "
-                "COALESCE(r.alternatives, '') LIKE ? COLLATE NOCASE OR "
-                "COALESCE(r.owner, '') LIKE ? COLLATE NOCASE OR "
+                "(r.decision_text LIKE ? ESCAPE '\\' COLLATE NOCASE OR "
+                "COALESCE(r.rationale, '') LIKE ? ESCAPE '\\' COLLATE NOCASE OR "
+                "COALESCE(r.alternatives, '') LIKE ? ESCAPE '\\' COLLATE NOCASE OR "
+                "COALESCE(r.owner, '') LIKE ? ESCAPE '\\' COLLATE NOCASE OR "
                 "EXISTS (SELECT 1 FROM decision_record_work AS w "
                 "WHERE w.record_id = r.id AND "
-                "(w.work_type LIKE ? COLLATE NOCASE OR w.work_ref LIKE ? COLLATE NOCASE)))"
+                "(w.work_type LIKE ? ESCAPE '\\' COLLATE NOCASE OR w.work_ref LIKE ? ESCAPE '\\' COLLATE NOCASE)))"
             )
             params.extend([pattern] * 6)
         relevance = (
-            "CASE WHEN r.decision_text LIKE ? COLLATE NOCASE THEN 4 "
-            "WHEN COALESCE(r.rationale, '') LIKE ? COLLATE NOCASE THEN 3 "
-            "WHEN COALESCE(r.alternatives, '') LIKE ? COLLATE NOCASE THEN 2 "
-            "WHEN COALESCE(r.owner, '') LIKE ? COLLATE NOCASE THEN 1 "
+            "CASE WHEN r.decision_text LIKE ? ESCAPE '\\' COLLATE NOCASE THEN 4 "
+            "WHEN COALESCE(r.rationale, '') LIKE ? ESCAPE '\\' COLLATE NOCASE THEN 3 "
+            "WHEN COALESCE(r.alternatives, '') LIKE ? ESCAPE '\\' COLLATE NOCASE THEN 2 "
+            "WHEN COALESCE(r.owner, '') LIKE ? ESCAPE '\\' COLLATE NOCASE THEN 1 "
             "ELSE 0 END"
         )
-        phrase = f"%{' '.join(terms)}%"
+        phrase = like_literal(" ".join(terms))
         with self._db._connection() as conn:
             rows = conn.execute(
                 f"""SELECT r.*, {relevance} AS relevance

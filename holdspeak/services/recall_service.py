@@ -37,6 +37,8 @@ from datetime import datetime, timedelta
 from holdspeak.timestamps import local_wall, utc_iso
 from typing import Any
 
+from ..db.search import like_literal
+
 from holdspeak.services.brief_carry import (
     CURRENT_LIFECYCLES,
     pending_carry_refs,
@@ -472,7 +474,7 @@ class RecallService:
                 # keeps the order the owed list already has: soonest due
                 # first, then oldest.
                 predicate = (
-                    " AND ".join("ai.task LIKE ? COLLATE NOCASE" for _ in terms)
+                    " AND ".join("ai.task LIKE ? ESCAPE '\\' COLLATE NOCASE" for _ in terms)
                     if terms
                     else "1 = 1"
                 )
@@ -490,7 +492,7 @@ class RecallService:
                           AND (m.id IS NULL OR m.parked = 0)
                         ORDER BY c.due_at ASC NULLS LAST, c.created_at ASC
                         LIMIT ?""",
-                    [f"%{t}%" for t in terms] + [limit],
+                    [like_literal(t) for t in terms] + [limit],
                 ).fetchall())
             for row in fetched:
                 cid = str(row["id"])
@@ -645,9 +647,9 @@ class RecallService:
             return []
         params: list[Any] = []
         if terms:
-            predicate = " AND ".join("(i.text LIKE ? COLLATE NOCASE OR COALESCE(i.detail,'') LIKE ? COLLATE NOCASE)" for _ in terms)
+            predicate = " AND ".join("(i.text LIKE ? ESCAPE '\\' COLLATE NOCASE OR COALESCE(i.detail,'') LIKE ? ESCAPE '\\' COLLATE NOCASE)" for _ in terms)
             for t in terms:
-                params.extend([f"%{t}%", f"%{t}%"])
+                params.extend([like_literal(t), like_literal(t)])
         else:
             # HS-202-02 — the recent read: the newest brief's items, in the
             # order the brief itself ranked them.

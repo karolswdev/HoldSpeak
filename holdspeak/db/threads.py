@@ -629,6 +629,8 @@ class ThreadRepository(BaseRepository):
         """BM25 search over thread message text. Returns dicts with
         thread_id, message_id, part_id, snippet. Never returns deleted content.
         """
+        from .search import fts_literal
+
         if not query or not query.strip():
             return []
         with self._connection() as conn:
@@ -644,7 +646,7 @@ class ThreadRepository(BaseRepository):
                      AND t.deleted_at IS NULL
                    ORDER BY thread_messages_fts.rank
                    LIMIT ?""",
-                (query, limit),
+                (fts_literal(query), limit),
             ).fetchall()
         return [dict(r) for r in rows]
 

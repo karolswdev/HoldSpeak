@@ -18,6 +18,7 @@ import sqlite3
 from dataclasses import asdict, dataclass
 from typing import Any, Iterable, Optional
 
+from .search import like_literal
 from .base import BaseRepository
 from .decisions import confirmed_action_sql
 
@@ -644,13 +645,15 @@ def _redacted(text: Any) -> str:
 
 def _match_expression(query: str) -> str:
     """Turn arbitrary user text into a safe, deterministic FTS phrase query."""
+    from .search import fts_literal
+
     terms = _query_terms(query)
     if not terms:
         raise ValueError("query must contain searchable text")
     # Quoting each lexical term prevents user punctuation/FTS operators from
     # changing the grammar. OR lets a natural-language ask retrieve partial
     # lexical matches; BM25 still rewards sources matching more query terms.
-    return " OR ".join('"' + term.replace('"', '""') + '"' for term in terms)
+    return " OR ".join(fts_literal(term) for term in terms)
 
 
 def _query_terms(query: str) -> list[str]:
@@ -773,7 +776,7 @@ def _public_match(
     haystack = "\n".join([title] + (summary if kind == "meeting" else body)) if kind != "meeting" \
         else "\n".join(summary)
     return any(
-        matcher.execute("SELECT lower(?) LIKE ?", (haystack, f"%{term.casefold()}%")).fetchone()[0]
+        matcher.execute("SELECT lower(?) LIKE ? ESCAPE '\\'", (haystack, like_literal(term.casefold()))).fetchone()[0]
         for term in terms
     )
 
@@ -975,6 +978,9 @@ class MemoryRepository(BaseRepository):
             keyword_on = any(
                 term not in _QUERY_STOPWORDS for term in _WORD.findall(query.casefold())
             )
+        if keyword_on and str(query).strip() and not _query_terms(query):
+            return MemorySearchResult(hits=[], total=0, limit=max(1, min(int(limit), 500)),
+                                      offset=max(0, int(offset)))
         expression = _match_expression(query) if keyword_on else ""
         terms = _query_terms(query) if keyword_on else []
         # Observations (slice 4) join a search only when the caller names the
@@ -2103,10 +2109,10 @@ class MemoryRepository(BaseRepository):
         with the same bounded LIKE pass the feature stores use.
         """
         haystack = f"lower({_MEETING_SUMMARY}||' '||{_MEETING_TOPICS})"
-        patterns = [f"%{term.casefold()}%" for term in terms]
+        patterns = [like_literal(term.casefold()) for term in terms]
         clauses = [
             "m.parked = 0",
-            "(" + " OR ".join(f"{haystack} LIKE ?" for _ in patterns) + ")",
+            "(" + " OR ".join(f"{haystack} LIKE ? ESCAPE '\\'" for _ in patterns) + ")",
         ]
         params: list[Any] = list(patterns)
         if project:
@@ -2127,7 +2133,7 @@ class MemoryRepository(BaseRepository):
             params.append(end)
         score = (
             "-("
-            + "+".join(f"CASE WHEN {haystack} LIKE ? THEN 1 ELSE 0 END" for _ in patterns)
+            + "+".join(f"CASE WHEN {haystack} LIKE ? ESCAPE '\\' THEN 1 ELSE 0 END" for _ in patterns)
             + ")"
         )
         rows = conn.execute(
@@ -2278,10 +2284,10 @@ class MemoryRepository(BaseRepository):
         haystack = (
             f"lower(COALESCE({spec['title']},'')||' '||COALESCE({spec['body']},''))"
         )
-        patterns = [f"%{term.casefold()}%" for term in terms]
+        patterns = [like_literal(term.casefold()) for term in terms]
         clauses = [
             spec["active"],
-            "(" + " OR ".join(f"{haystack} LIKE ?" for _ in patterns) + ")",
+            "(" + " OR ".join(f"{haystack} LIKE ? ESCAPE '\\'" for _ in patterns) + ")",
         ]
         where_params: list[Any] = list(patterns)
         if project:
@@ -2296,7 +2302,7 @@ class MemoryRepository(BaseRepository):
         score = (
             "-("
             + "+".join(
-                f"CASE WHEN {haystack} LIKE ? THEN 1 ELSE 0 END" for _ in patterns
+                f"CASE WHEN {haystack} LIKE ? ESCAPE '\\' THEN 1 ELSE 0 END" for _ in patterns
             )
             + ")"
         )

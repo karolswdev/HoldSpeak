@@ -152,3 +152,17 @@ def test_setup_and_readiness_release_sqlite_connection_without_waiting_for_gc(tm
     finally:
         for conn in opened:
             conn.close()
+
+
+def test_failed_connection_setup_closes_the_database_handle(tmp_path, monkeypatch):
+    import sqlite3
+    from unittest.mock import Mock
+
+    store = _store(tmp_path)
+    store.initialize()
+    connection = Mock()
+    connection.execute.side_effect = sqlite3.OperationalError("pragma failed")
+    monkeypatch.setattr(sqlite3, "connect", lambda *a, **kw: connection)
+    with pytest.raises(sqlite3.OperationalError):
+        store._connect()
+    connection.close.assert_called_once()

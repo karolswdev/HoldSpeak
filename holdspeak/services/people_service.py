@@ -31,6 +31,17 @@ class PeopleUnavailable(PeopleServiceError):
     """The encrypted sidecar is not available; never fall back to plaintext."""
 
 
+def _store_failure(exc: Exception, default: str = "people_store_unavailable") -> PeopleUnavailable:
+    """Keep the store's content-free refusal; never expose driver text."""
+    from ..people.store import PeopleStoreError, sqlite_busy
+
+    if isinstance(exc, PeopleStoreError):
+        return PeopleUnavailable(str(exc))
+    if sqlite_busy(exc):
+        return PeopleUnavailable("people_store_busy")
+    return PeopleUnavailable(default)
+
+
 class SeriesAlreadyLinked(PeopleServiceError):
     """Invariant P1: a calendar series is already linked to another relationship."""
 
@@ -1998,9 +2009,13 @@ class PeopleService:
             state = self._store.readiness()
             ready = str(getattr(state, "value", state)) == "ready"
         except Exception as exc:
-            raise PeopleUnavailable("people_store_unavailable") from exc
+            raise _store_failure(exc) from exc
         if not ready:
-            raise PeopleUnavailable("people_store_unavailable")
+            from ..people.store import PeopleReadiness
+
+            known = {item.value for item in PeopleReadiness}
+            reason = str(getattr(state, "value", state))
+            raise PeopleUnavailable(f"people_store_{reason}" if reason in known else "people_store_unavailable")
 
     def _require_relationship(self, principal: Any, relationship_id: str, *, read: bool = False) -> dict[str, Any]:
         self._require_ready_owner(principal, read=read)
@@ -2020,7 +2035,7 @@ class PeopleService:
             item = self._store.get(record_id, kind)
             return dict(item) if item is not None else None
         except Exception as exc:
-            raise PeopleUnavailable("people_store_unavailable") from exc
+            raise _store_failure(exc) from exc
 
     def _list(self, kind: str, **kwargs: Any) -> list[dict[str, Any]]:
         try:
@@ -2044,13 +2059,13 @@ class PeopleService:
         try:
             return dict(self._store.archive(record_id))
         except Exception as exc:
-            raise PeopleUnavailable("people_store_write_failed") from exc
+            raise _store_failure(exc, "people_store_write_failed") from exc
 
     def _transition(self, record_id: str, state: str) -> dict[str, Any]:
         try:
             return dict(self._store.transition(record_id, state))
         except Exception as exc:
-            raise PeopleUnavailable("people_store_write_failed") from exc
+            raise _store_failure(exc, "people_store_write_failed") from exc
 
     @staticmethod
     def _text(payload: dict[str, Any], key: str, *, required: bool = False, limit: int = 0) -> str:
