@@ -3058,18 +3058,6 @@ class ConciergeService:
         return download(preset_id=preset_id, model_library_service=library, principal=principal,
                         catalog_revision=catalog["catalog_revision"])
 
-    def discover_lan(self, principal: Any) -> dict[str, Any]:
-        """Find private-LAN OpenAI-compatible engines for this one press; it reads ``/v1/models`` and writes nothing."""
-        from ..kernel.external_egress import EgressOperationRefused
-        from .errors import ServiceError
-        from .lan_engine_discovery import checked_at, scan_lan_engines
-
-        try:
-            result = scan_lan_engines(principal=principal)
-        except EgressOperationRefused as exc:
-            raise ServiceError("concierge_lan_refused", exc.reason, context={"status": 403}) from exc
-        return {**result, "checkedAt": checked_at()}
-
     def retry(self, principal: Any, kind: Any, key: Any) -> dict[str, Any]:
         """Retry on a Needs-you engine row: the same job, run again through the engine door."""
         from . import engine_door

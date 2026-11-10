@@ -23,6 +23,8 @@ DESCRIPTORS: dict[str, Op] = {}  # declared operation name -> (service, method)
 TOOL_OPS: dict[str, str] = {}  # MCP tool name -> declared operation name
 RESOURCE_OPS: set[Op] = set()  # operations a declared ``mcp-resource:`` exposure reads
 HTTP_OPS: dict[tuple[str, str], Op] = {}  # (method, path) a descriptor produces -> its operation
+HTTP_ONLY: dict[Op, list[tuple[str, str]]] = defaultdict(list)  # row name and its reason
+ROUTE_KINDS: dict[tuple[str, str], str] = {}  # API, page, docs or socket, from the assembled app
 
 
 def _norm(name: str) -> str | None:
@@ -40,15 +42,26 @@ def _quiet(get: Any) -> Any:  # an empty closure cell, a name a module no longer
 
 
 def _load_descriptors() -> None:
-    OperationDescriptor = importlib.import_module("holdspeak.operations").OperationDescriptor
+    catalog = importlib.import_module("holdspeak.operations").DESCRIPTORS
+    for mapping in (DESCRIPTORS, TOOL_OPS, HTTP_OPS, HTTP_ONLY):
+        mapping.clear()
+    RESOURCE_OPS.clear()
     for path in sorted((REPO / "holdspeak").glob("*operations.py")):
         module = importlib.import_module(f"holdspeak.{path.stem}")
         TOOL_OPS.update({k: v for k, v in getattr(module, "TOOL_OPERATIONS", {}).items() if isinstance(v, str)})
-        items = [i for v in vars(module).values() for i in (v if isinstance(v, (tuple, list)) else (v,))]
-        found = [i for i in items if isinstance(i, OperationDescriptor)]
-        DESCRIPTORS.update({i.name: (_norm(i.service) or i.service, i.method) for i in found})
-        HTTP_OPS.update({tuple(i.http): DESCRIPTORS[i.name] for i in found if getattr(i, "http", None)})
-        RESOURCE_OPS.update(DESCRIPTORS[i.name] for i in found if any(e.startswith("mcp-resource:") for e in i.exposure))
+    # Only rows in the live catalogue count. A constant in an unregistered
+    # module cannot make an undeclared call appear declared.
+    DESCRIPTORS.update({i.name: (_norm(i.service) or i.service, i.method) for i in catalog})
+    HTTP_OPS.update({tuple(i.http): DESCRIPTORS[i.name] for i in catalog if i.http})
+    RESOURCE_OPS.update(DESCRIPTORS[i.name] for i in catalog if any(e.startswith("mcp-resource:") for e in i.exposure))
+    for row in catalog:
+        if any(e.startswith("http:") for e in row.exposure) and row.tool_schema is None \
+                and not any(e.startswith(("mcp:", "mcp-resource:")) for e in row.exposure):
+            # Older rows already explain the owner gesture in their admission
+            # condition or description. New rows can state the transport reason
+            # directly; no second list of route names lives in this census.
+            reason = row.http_only_reason or (row.admission.condition if row.admission else row.description)
+            HTTP_ONLY[DESCRIPTORS[row.name]].append((row.name, reason))
 
 
 def _text(node: ast.AST) -> str | None:  # a string constant, or an f-string with * for each hole
@@ -160,11 +173,56 @@ class Reader:  # the operations one body, and the helpers it calls, reach
         return self.service(expr.func, assigns, guard + 1)
 
 
+def _returns_html(fn: Any, seen: set[Any] | None = None) -> bool:
+    """Follow a route's shell reader, including a shell returned in a worker.
+
+    The response class and the called helper's return type are executable
+    evidence. A path named /settings or /docs is not evidence of a page.
+    """
+    from starlette.responses import HTMLResponse
+
+    seen = set() if seen is None else seen
+    if not inspect.isfunction(fn) or fn in seen:
+        return False
+    seen.add(fn)
+    if inspect.signature(fn).return_annotation in (HTMLResponse, "HTMLResponse"):
+        return True
+    if not (parsed := _parse(fn)):
+        return False
+    body, scope = parsed
+    for node in (n for stmt in body for n in ast.walk(stmt) if isinstance(n, ast.Call)):
+        # run_in_threadpool(shell_reader): the helper is an argument.
+        for expr in (node.func, *node.args):
+            target = scope.get(expr.id) if isinstance(expr, ast.Name) else None
+            if target is HTMLResponse or (inspect.isfunction(target) and _returns_html(target, seen)):
+                return True
+    return False
+
+
+def route_kind(route: Any, app: Any) -> str:
+    from starlette.responses import HTMLResponse
+    from starlette.routing import WebSocketRoute
+
+    if isinstance(route, WebSocketRoute):
+        return "socket"
+    docs = {getattr(app, attr, None) for attr in
+            ("openapi_url", "docs_url", "redoc_url", "swagger_ui_oauth2_redirect_url")}
+    if route.path in docs:
+        return "docs"
+    response = getattr(route, "response_class", None)
+    if (isinstance(response, type) and issubclass(response, HTMLResponse)) or _returns_html(route.endpoint):
+        return "page"
+    return "API"
+
+
 def web_routes() -> list[tuple[str, str, set[Op]]]:
     rows = []
-    for route in importlib.import_module("gen_api_surface").build_reference_app().routes:
+    app = importlib.import_module("gen_api_surface").build_reference_app()
+    ROUTE_KINDS.clear()
+    for route in app.routes:
         if (endpoint := getattr(route, "endpoint", None)) is not None and type(route).__name__ != "Mount":
             methods = ",".join(sorted((getattr(route, "methods", None) or {"WS"}) - {"HEAD", "OPTIONS"}))
+            ROUTE_KINDS[(methods, route.path)] = route_kind(route, app)
             declared = HTTP_OPS.get((methods, route.path))  # a route produced from a descriptor
             rows.append((methods, route.path, {declared} if declared else Reader({}).function(endpoint)))
     return rows
@@ -244,23 +302,37 @@ def main() -> int:
     mcp |= RESOURCE_OPS  # an MCP resource reaches its operation as a tool does
     web, mcp, cli = (_expand(ops, web | mcp | cli) for ops in (web, mcp, cli))  # list_*s: each method it matches
     tools = {name: _expand(ops, web | mcp | cli) for name, ops in tools.items()}
-    blind_routes, blind_tools = Counter("/".join(p.split("/")[:3]) for _m, p, o in routes if not o), sorted(n for n, o in tools.items() if not o)
+    bypasses = [(m, p, o) for m, p, o in routes if not o and ROUTE_KINDS[(m, p)] == "API"]
+    infrastructure = Counter(kind for kind in ROUTE_KINDS.values() if kind != "API")
+    blind_routes = Counter("/".join(p.split("/")[:3]) for _m, p, _o in bypasses)
+    blind_tools = sorted(n for n, o in tools.items() if not o)
+    http_only = (web - mcp) & HTTP_ONLY.keys()
+    undeclared = web - mcp - http_only
     print(f"# Operation parity census\n\nGenerated by `scripts/operation_parity.py`. An operation is one "
-          f"`<service>.<method>` call.\n\n- live HTTP routes: {len(routes)} ({len(routes) - blind_routes.total()} "
-          f"reach a service operation)\n- routes that reach no service (callers bypassing the port): "
-          f"{blind_routes.total()}\n- MCP tools: {len(tools)} ({len(tools) - len(blind_tools)} reach a service "
+          f"`<service>.<method>` call.\n\n- API routes that bypass a service: {len(bypasses)}"
+          f"\n- web-only operations NOT declared HTTP-only: {len(undeclared)}"
+          f"\n- operations declared HTTP-only by their row: {len(http_only)}"
+          f"\n- pages, docs and sockets (not capabilities): {sum(infrastructure.values())} "
+          f"(pages {infrastructure['page']}, docs {infrastructure['docs']}, sockets {infrastructure['socket']})"
+          f"\n- live HTTP routes: {len(routes)} ({sum(bool(o) for _m, _p, o in routes)} reach a service operation)"
+          f"\n- MCP tools: {len(tools)} ({len(tools) - len(blind_tools)} reach a service "
           f"operation)\n- operations: {len(web | mcp | cli)}; web only {len(web - mcp)}, MCP only "
           f"{len(mcp - web)}, both {len(web & mcp)}, CLI {len(cli)}\n\n"
           "| service | web only | MCP only | both | CLI |\n|---|---:|---:|---:|---:|")
     by = {name: Counter(s for s, _ in ops) for name, ops in (("web", web - mcp), ("mcp", mcp - web), ("both", web & mcp), ("cli", cli))}
     rank = sorted({s for s, _ in web | mcp | cli}, key=lambda s: (-by["web"][s], s))
     print("\n".join(f"| {s} | {by['web'][s]} | {by['mcp'][s]} | {by['both'][s]} | {by['cli'][s]} |" for s in rank))
-    print("\n## Web-only operations, by service (largest first)\n\n" + "\n".join(
-        f"- **{s}** ({by['web'][s]}): " + ", ".join(f"`{m}`" for m in sorted(m for v, m in web - mcp if v == s))
-        for s in rank if by["web"][s]))
-    print(f"\n## Not read ({blind_routes.total()} routes, {len(blind_tools)} tools)\n\nNo service operation was "
-          "found in these bodies: a page, a socket, a probe, a store or ledger called without a service, or a shape "
+    print("\n## Web-only operations without an HTTP-only declaration\n\n" + "\n".join(
+        f"- **{s}**: " + ", ".join(f"`{m}`" for m in sorted(m for v, m in undeclared if v == s))
+        for s in rank if any(v == s for v, _m in undeclared)))
+    print("\n## Declared HTTP-only operations (not defects)\n\n" + "\n".join(
+        f"- `{s}.{m}` — `{name}`: {reason}"
+        for s, m in sorted(http_only) for name, reason in HTTP_ONLY[(s, m)]))
+    print(f"\n## Not read ({len(bypasses)} API routes, {len(blind_tools)} tools)\n\nNo service operation was "
+          "found in these API bodies: a probe, a store or ledger called without a service, or a shape "
           "the reader misses.\n\n- tools: " + ", ".join(f"`{n}`" for n in blind_tools) + "\n- routes: " + ", ".join(f"`{k}` {v}" for k, v in sorted(blind_routes.items(), key=lambda kv: (-kv[1], kv[0]))))
+    print("\n## Pages, docs and sockets (not capabilities)\n\n" + "\n".join(
+        f"- {kind}: {m} {p}" for (m, p), kind in ROUTE_KINDS.items() if kind != "API"))
     if "--rows" in sys.argv:
         print("\n## Route rows\n\n" + "\n".join(f"- {m} {p}: " + ", ".join(sorted(f"{s}.{x}" for s, x in o)) for m, p, o in routes))
     return 0

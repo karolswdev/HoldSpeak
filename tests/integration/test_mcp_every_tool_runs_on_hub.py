@@ -123,14 +123,17 @@ def _refusal_is_known(name: str, payload: Any) -> bool:
     if not isinstance(payload, dict):
         return False
     code, message = payload.get("code"), payload.get("error")
-    from holdspeak.operations import DESCRIPTORS
+    from holdspeak.operations import DESCRIPTORS, _CONTRACT_REFUSALS
 
     descriptor = next((row for row in DESCRIPTORS if row.tool_schema is not None and row.tool_name == name), None)
     status = payload.get("status")
-    if (descriptor is not None and code in descriptor.refusals and isinstance(status, int)
-            and 400 <= status < 500 and status not in (401, 403)):
-        # A declared client refusal proves dispatch reached the service. An
-        # authentication/owner failure or a server failure cannot pass here.
+    # 501 with the row's own code: the capability is not composed on this hub
+    # (the sweep's hub runs no intent router). 500 stays a defect.
+    client_status = isinstance(status, int) and (400 <= status < 500 or status == 501) and status not in (401, 403)
+    # Older domain errors omit status; they can use the row's named refusal.
+    # An explicit authorization or server failure cannot use that fallback.
+    legacy_domain = status is None and code not in (*_CONTRACT_REFUSALS, "owner_required", "principal_right_required")
+    if descriptor is not None and code in descriptor.refusals and (client_status or legacy_domain):
         return True
     # Helper authority is deliberately launch-only. The global owner sweep
     # must call these tools as an owner and record that named refusal; accepting
@@ -139,18 +142,16 @@ def _refusal_is_known(name: str, payload: Any) -> bool:
         return True
     if isinstance(code, str) and KNOWN_CODE.search(code):
         return True
-    # A declared domain refusal is part of the operation's contract. Do not
-    # keep another list of per-family codes here. Authority failures still
-    # fail this owner sweep; the launch-only helper exception is above.
-    from holdspeak.operations import DESCRIPTORS, _CONTRACT_REFUSALS
-
-    descriptor = next((row for row in DESCRIPTORS if row.tool_schema is not None and row.tool_name == name), None)
-    if (isinstance(code, str) and descriptor is not None and code in descriptor.refusals
-            and code not in (*_CONTRACT_REFUSALS, "owner_required", "principal_right_required")):
-        return True
     if not isinstance(message, str):
         return False
     return bool(KNOWN_MESSAGE.search(message)) or KNOWN_BY_TOOL.get(name) == message
+
+
+def test_named_not_found_refusals_come_from_the_live_descriptor() -> None:
+    assert _refusal_is_known("concierge.retry", {"code": "no_retry", "status": 404})
+    for status in (403, 500):
+        assert not _refusal_is_known("concierge.retry", {"code": "no_retry", "status": status})
+    assert not _refusal_is_known("concierge.retry", {"code": "unrecorded_failure", "status": 404})
 
 
 class _Hub:

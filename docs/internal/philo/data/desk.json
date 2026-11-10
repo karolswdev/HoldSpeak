@@ -1692,7 +1692,7 @@
       ],
       "persistence": [],
       "apis": [
-        "POST /api/concierge/discover-lan"
+        "POST /api/setup/lan"
       ],
       "configuration": [],
       "dependencies": [
@@ -1719,10 +1719,10 @@
           "claim": "Bounded network discovery returns transient actual model IDs."
         },
         {
-          "path": "holdspeak/concierge_operations.py",
-          "symbol": "CONCIERGE_OPERATIONS",
-          "line": 70,
-          "claim": "Owner-only scan (concierge.discover_lan, blocking_io) runs outside the hub event loop."
+          "path": "holdspeak/setup_operations.py",
+          "symbol": "SETUP_LAN_SCAN",
+          "line": 157,
+          "claim": "Owner-only scan (setup.lan.scan, blocking_io) runs outside the hub event loop."
         },
         {
           "path": "web/src/features/runson/EngineLibrary.tsx",
