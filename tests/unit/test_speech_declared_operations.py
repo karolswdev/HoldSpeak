@@ -202,7 +202,7 @@ def test_owner_readiness_stays_out_of_agent_readable_observation(tmp_path, monke
 
 
 @pytest.mark.parametrize("fails", [False, True])
-def test_async_template_write_announces_only_after_completion(monkeypatch, fails):
+def test_async_write_announces_only_after_completion(monkeypatch, fails):
     import asyncio
     from dataclasses import replace
     from holdspeak.runtime import composition
@@ -211,8 +211,8 @@ def test_async_template_write_announces_only_after_completion(monkeypatch, fails
     monkeypatch.setattr(
         composition, "_installed", SimpleNamespace(_send_desk_changed=sent.append)
     )
-    template = next(
-        row for row in SPEECH_ROWS if row.name == "dictation.blocks.from_template"
+    existing_write = next(
+        row for row in SPEECH_ROWS if row.name == "recordings.start"
     )
 
     async def create(principal, **args):
@@ -223,7 +223,7 @@ def test_async_template_write_announces_only_after_completion(monkeypatch, fails
         return {"id": "new-block"}
 
     row = replace(
-        template,
+        existing_write,
         held=(),
         call=lambda service, principal, args: create(principal, **args),
     )
