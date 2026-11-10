@@ -1,5 +1,5 @@
 /** The Projects window (Betterment P4, projects RECIPE): one row per project,
- * where it stands, its next date, its newest update; one press opens it.
+ * where it needs attention, its next date, its newest update; selection precedes open.
  *
  * The hub's answers are recorded from the real routes on an isolated hub
  * (scripts/record_projects_go_wire.py); only `apiFetch` and the opener are
@@ -57,38 +57,75 @@ const rows = () => screen.getAllByTestId("projects-row");
 const settle = async () => { await act(async () => { await Promise.resolve(); await Promise.resolve(); }); };
 const seed = () => useDesk.setState({ projects: projects.map((p) => ({ id: p.id, name: p.name })) } as never);
 
-describe("Projects as a native Room client", () => {
-  it("keeps New project in the Rail head, including an empty desk", async () => {
+describe("Projects selection list", () => {
+  it("keeps New project first on an empty desk and has no pane heading or card", async () => {
     useDesk.setState({ projects: [] } as never);
     render(<ProjectsCore />); await settle();
     expect(screen.getByText("No projects yet")).toBeInTheDocument();
-    fireEvent.click(within(screen.getByTestId("projects-rail")).getByRole("button", { name: "New project" }));
+    const bar = screen.getByRole("toolbar", { name: "Projects" });
+    expect(within(bar).getAllByRole("button")[0]).toHaveAccessibleName("New project");
+    fireEvent.click(within(bar).getByRole("button", { name: "New project" }));
     expect(opened.surfaces).toEqual(["project-setup"]);
+    expect(screen.getByTestId("projects-window").querySelector("h1, h2, h3, .projects-plate, .surface-spine")).toBeNull();
     expect(screen.queryByTestId("projects-status")).toBeNull();
   });
 
-  it("ranks the real Room states, picks one into its Mast, and opens its Room", async () => {
+  it("shows actionable states only and selects before opening the Room", async () => {
     expect(appWalk("open-projects")?.open.app).toBe("surface-projects");
     seed(); render(<ProjectsCore />); await settle();
     const [payments, vendor] = rows();
     expect(within(payments).getByTestId("projects-state")).toHaveTextContent("At risk");
-    expect(within(vendor).getByTestId("projects-state")).toHaveTextContent("New");
-    expect(screen.getByTestId("projects-mast")).toHaveTextContent("Payments migration");
+    expect(vendor.querySelector('[data-col="state"]')).toBeEmptyDOMElement();
+    expect(vendor).not.toHaveTextContent("New");
+    expect(screen.getByTestId("projects-pane")).toHaveTextContent("Select a project");
+    expect(screen.getByRole("button", { name: "Open Room" })).toBeDisabled();
+    fireEvent.click(payments);
+    expect(opened.rooms).toEqual([]);
+    expect(screen.getByTestId("projects-pane")).toHaveTextContent("Payments migration");
     expect(screen.getByTestId("projects-reason")).toHaveTextContent("1 milestone late");
     expect(screen.getByTestId("projects-next").textContent).toMatch(/^Target /);
     expect(screen.getByTestId("projects-update")).toHaveTextContent("Update drafted");
     expect(screen.getByTestId("projects-new-update")).toHaveTextContent("New update");
     expect(screen.getByTestId("projects-status")).toHaveTextContent("2 projects");
-    fireEvent.click(within(vendor).getByRole("option"));
-    expect(opened.rooms).toEqual([]);
-    expect(screen.getByTestId("projects-mast")).toHaveTextContent("Vendor review");
+    expect(screen.getByTestId("projects-status")).toHaveTextContent("1 needs you");
+    fireEvent.keyDown(payments, { key: "Enter" });
+    expect(opened.rooms).toEqual([WIRE.payments]);
+    fireEvent.click(vendor);
     expect(screen.getByTestId("projects-next")).toHaveTextContent("No date set");
     expect(screen.getByTestId("projects-update")).toHaveTextContent("No update yet");
-    fireEvent.click(screen.getByTestId("projects-open-selected"));
-    expect(opened.rooms).toEqual([WIRE.vendor]);
+    fireEvent.doubleClick(vendor);
+    expect(opened.rooms).toEqual([WIRE.payments, WIRE.vendor]);
+    expect(vendor.querySelector("button")).toBeNull();
   });
 
-  it("retains a failed Room read as Not read and retries it in place", async () => {
+  it("uses literal Find and clears hidden selection without opening a Room", async () => {
+    seed(); render(<ProjectsCore />); await settle();
+    fireEvent.click(rows()[0]);
+    const find = screen.getByRole("textbox", { name: "Find a project" });
+    fireEvent.change(find, { target: { value: "VENDOR" } });
+    expect(rows()).toHaveLength(1);
+    expect(rows()[0]).toHaveTextContent("Vendor review");
+    expect(screen.getByRole("button", { name: "Open Room" })).toBeDisabled();
+    fireEvent.change(find, { target: { value: "[no-match]" } });
+    expect(screen.queryAllByTestId("projects-row")).toHaveLength(0);
+    expect(screen.getByTestId("projects-pane")).toHaveTextContent("No projects match");
+    fireEvent.change(find, { target: { value: "" } });
+    expect(rows()).toHaveLength(2);
+    expect(opened.rooms).toEqual([]);
+  });
+
+  it("shares Open Room and New project with the right-click menu and row keys", async () => {
+    seed(); render(<ProjectsCore />); await settle();
+    const vendor = rows()[1];
+    fireEvent.contextMenu(vendor, { clientX: 10, clientY: 10 });
+    const menu = screen.getByRole("menu", { name: "Projects actions" });
+    fireEvent.click(within(menu).getByRole("menuitem", { name: /Open Room/ }));
+    expect(opened.rooms).toEqual([WIRE.vendor]);
+    fireEvent.keyDown(vendor, { key: "n" });
+    expect(opened.surfaces).toEqual(["project-setup"]);
+  });
+
+  it("retains failed Room facts and retries in place", async () => {
     seed();
     const vendorPath = `/api/projects/${WIRE.vendor}/room`;
     let failed = true;
@@ -97,11 +134,27 @@ describe("Projects as a native Room client", () => {
     render(<ProjectsCore />); await settle();
     const vendor = rows().find((row) => row.textContent?.includes("Vendor review"))!;
     expect(within(vendor).getByTestId("projects-not-read")).toHaveTextContent("Not read");
-    fireEvent.click(within(vendor).getByRole("option"));
-    expect(screen.getByTestId("projects-ledger")).toHaveTextContent("Not read");
-    failed = false; fireEvent.click(screen.getByRole("button", { name: "Retry" })); await settle();
-    expect(screen.getByTestId("projects-ledger")).toHaveTextContent("New");
+    fireEvent.click(vendor);
+    expect(screen.getByTestId("projects-pane")).toHaveTextContent("Not read");
+    failed = false; fireEvent.keyDown(vendor, { key: "r" }); await settle();
+    expect(vendor).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByTestId("projects-next")).toHaveTextContent("No date set");
     expect(screen.queryByRole("button", { name: "Retry" })).toBeNull();
+  });
+
+  it("keeps health warnings while exposing unavailable dates and their recovery", async () => {
+    seed();
+    apiFetch.mockImplementation((path: string) => {
+      const wire = structuredClone(gets[path]) as Record<string, unknown>;
+      if (path.endsWith("/room")) wire.target = { state: "degraded", error_code: "project_store_unavailable" };
+      return Promise.resolve(wire);
+    });
+    render(<ProjectsCore />); await settle();
+    expect(within(rows()[0]).getByTestId("projects-state")).toHaveTextContent("At risk");
+    const vendor = rows().find((row) => row.textContent?.includes("Vendor review"))!;
+    fireEvent.click(vendor);
+    expect(screen.getByTestId("projects-next")).toHaveTextContent("Not read");
+    expect(screen.getByRole("button", { name: "Retry" })).toBeEnabled();
   });
 
   it("waits for one complete read before ranking, and ignores a late earlier batch", async () => {
@@ -111,7 +164,7 @@ describe("Projects as a native Room client", () => {
       ? slow : Promise.resolve(structuredClone(gets[path])));
     seed(); render(<ProjectsCore />); await settle();
     expect(screen.queryAllByTestId("projects-row")).toEqual([]);
-    useDesk.setState({ projects: projects.filter((p) => p.id === WIRE.vendor) } as never); await settle();
+    act(() => useDesk.setState({ projects: projects.filter((p) => p.id === WIRE.vendor) } as never)); await settle();
     expect(rows()).toHaveLength(1);
     await act(async () => { finishPayments(structuredClone(gets[`/api/projects/${WIRE.payments}/room`])); });
     expect(rows()).toHaveLength(1);

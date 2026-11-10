@@ -6,13 +6,13 @@
   "steps": [
     {
       "highlight": {
-        "target": "projects-mast",
-        "thing": "project head",
-        "words": "The picked project and its standing."
+        "target": "projects-toolbar",
+        "thing": "project actions",
+        "words": "New project, Open Room and Find."
       },
       "ask": {
-        "ref": "projects-mast",
-        "question": "Project head: keep or redo?",
+        "ref": "projects-toolbar",
+        "question": "Project actions: keep or redo?",
         "choices": [
           "Keep",
           "Redo"
@@ -21,13 +21,13 @@
     },
     {
       "highlight": {
-        "target": "projects-plate",
-        "thing": "project Room",
-        "words": "Open the Room to work on this project."
+        "target": "projects-list",
+        "thing": "project list",
+        "words": "Select a project. Return opens its Room."
       },
       "ask": {
-        "ref": "projects-plate",
-        "question": "Project room: keep or redo?",
+        "ref": "projects-list",
+        "question": "Project list: keep or redo?",
         "choices": [
           "Keep",
           "Redo"
@@ -36,12 +36,12 @@
     },
     {
       "highlight": {
-        "target": "projects-ledger",
+        "target": "projects-pane",
         "thing": "project facts",
-        "words": "The next date and the newest update."
+        "words": "The next date and newest update stay below the list."
       },
       "ask": {
-        "ref": "projects-ledger",
+        "ref": "projects-pane",
         "question": "Project facts: keep or redo?",
         "choices": [
           "Keep",

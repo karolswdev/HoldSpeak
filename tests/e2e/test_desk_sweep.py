@@ -1937,12 +1937,12 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
                 sweep.settle()
             sweep.fences()
             if case_id in {"surface-recordings", "surface-projects"}:
-                # Prove the picked object and app walk: Projects has a Rail;
-                # Recordings keeps selection and detail wells in one window.
+                # Both apps keep selection and detail wells in one window.
+                # Prove the picked object and each app's walk.
                 win = page.locator(f'[id="{wid}"]')
                 if case_id == "surface-projects":
-                    win.locator(".surface-rail-row").first.click()
-                    win.get_by_test_id("projects-mast").wait_for(timeout=T)
+                    win.get_by_test_id("projects-row").first.click()
+                    win.get_by_test_id("projects-pane").wait_for(timeout=T)
                     assert win.get_by_test_id("projects-open-selected").is_visible()
                 else:
                     # A real browser encoder films a test canvas. No screen,
@@ -2004,9 +2004,6 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
                 page.mouse.move(2, 2)
                 sweep.settle()
                 sweep.fences("picked")
-                if width == 393 and case_id == "surface-projects":
-                    assert win.get_by_test_id("rail-back").is_visible()
-                    assert not win.locator(".surface-rail-back").is_visible()
                 page.evaluate("localStorage.setItem('hs:walk-voice', 'off')")
                 _start_app_walk(page)
                 script = json.loads((REPO / "web/src/desk/walks" / f"{case_id.removeprefix('surface-')}.walk.json").read_text())
