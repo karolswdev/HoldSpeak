@@ -184,7 +184,7 @@ def test_owner_readiness_stays_out_of_agent_readable_observation(tmp_path, monke
     db = Database(tmp_path / "readiness.db")
     try:
         monkeypatch.setattr(
-            dictation_readiness, "readiness", lambda source, root: {"path": root}
+            dictation_readiness, "readiness", lambda source, root, *, db: {"path": root}
         )
         service = DictationService(db, observer=SimpleNamespace(on_event=events.append))
         registry = operations.bind_available({"dictation_service": service})

@@ -206,7 +206,7 @@ def _runtime_readiness(cfg: Any) -> dict[str, Any]:
     return payload
 
 
-def readiness(ctx: Any, project_root: Optional[str] = None) -> dict[str, Any]:
+def readiness(ctx: Any, project_root: Optional[str] = None, *, db: Any) -> dict[str, Any]:
     from ..agent_context import get_recent_agent_session
     from ..config import Config
     from ..plugins.dictation.project_kb import (
@@ -291,11 +291,10 @@ def readiness(ctx: Any, project_root: Optional[str] = None) -> dict[str, Any]:
     # `on_get_status` is absent on a bare/test app: then availability is
     # honestly `None` (UNKNOWN), never a claim that the listener is up.
     hotkey_payload = _hotkey_custody(ctx, config_snapshot)
-    from ..db import get_database
     from ..speech_session import configured_pipeline_egress_boundary
 
     egress_boundary = configured_pipeline_egress_boundary(
-        config_snapshot, get_database()
+        config_snapshot, db
     )
     try:
         target_payload = detect_active_target_profile(

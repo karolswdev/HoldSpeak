@@ -119,7 +119,7 @@ class DictationService:
     ) -> dict[str, Any]:
         from .dictation_readiness import readiness
 
-        return readiness(self._runtime_source, project_root)
+        return readiness(self._runtime_source, project_root, db=self._db)
 
     def intent_controls(self, principal: Principal) -> dict[str, Any]:
         callback = getattr(self._runtime_source, "on_get_intent_controls", None)
