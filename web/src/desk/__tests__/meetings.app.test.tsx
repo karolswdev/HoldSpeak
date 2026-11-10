@@ -74,7 +74,7 @@ type Call = { path: string; init?: { method?: string; json?: unknown } };
 /** The hub, as captured: each GET answers its captured body. The list read
  *  carries `limit=100` and the face's own params, so it is matched by its
  *  base; every other read is matched by its exact path. */
-function hub(fixture: Fixture, overrides: Record<string, unknown> = {}): Call[] {
+function hub(fixture: Record<string, unknown>, overrides: Record<string, unknown> = {}): Call[] {
   const calls: Call[] = [];
   const bodies: Record<string, unknown> = { ...fixture, ...overrides };
   vi.mocked(apiFetch).mockImplementation(async (path: string, init?: Call["init"]) => {
@@ -919,7 +919,7 @@ describe("the meeting ledger and its reading doors", () => {
   it("the Meetings guide selects a row before it shows the summary and actions", async () => {
     // The seeded guide rig records both list and detail. The older hs170
     // tape has no stored summary, so it cannot prove the summary's ring.
-    hub(guidePreview as Fixture);
+    hub(guidePreview);
     render(<Shell><HistoryCore /></Shell>);
     await screen.findByTestId("meetings-toolbar");
     const script = appWalk("review-meetings")!;
