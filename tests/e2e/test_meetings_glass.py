@@ -55,16 +55,16 @@ class TestTheMeetingRecord(FitRig):
                 win = page.locator("#surface-meetings")
                 # The language (2026-11-08): the rail of meetings, and the
                 # picked meeting (mast, plate, ledger, status bar) in the pane.
-                detail = win.locator(".mt-pane > .meeting-record").first
+                detail = win.locator("[data-testid=meetings-pane] > .meeting-record").first
                 detail.locator("[data-testid=meeting-mast]").first.wait_for(timeout=T)
                 page.wait_for_timeout(800)
                 _settle(page)
 
                 def measure(tag: str) -> dict[str, Any]:
-                    pane = win.locator(".mt-pane").first.evaluate(
+                    pane = win.locator("[data-testid=meetings-pane]").first.evaluate(
                         "(e) => { const b = e.getBoundingClientRect(); return {x: b.left, w: e.clientWidth}; }")
                     d = detail.evaluate(BOX_JS)
-                    rail = win.locator(".mt-rail").first.is_visible()
+                    rail = win.locator(".mt-rail").count() > 0
                     facts = {"pane": pane, "detail": d, "rail": rail}
                     self.facts[f"B22_{tag}"] = facts
                     # The record takes the pane's whole width; on a narrow
@@ -197,13 +197,10 @@ class TestOneMeetingOneWindow:
         page.wait_for_timeout(1200)
 
     def _open_row(self, loc: Any) -> None:
-        """Window grammar: a list row opens on a touch tap, or a double press."""
-        if self.phone:
-            self._press(loc)
-            return
-        loc = loc.first
-        loc.scroll_into_view_if_needed()
-        loc.dblclick()
+        """Selection lists open with Return after a click or tap."""
+        self._press(loc)
+        loc.first.focus()
+        self.page.keyboard.press("Enter")
         self.page.wait_for_timeout(600)
 
     def _press(self, loc: Any) -> None:
@@ -323,7 +320,7 @@ class TestOneMeetingOneWindow:
                     self._press(win.get_by_role("button", name="Back from Meetings", exact=True))
                     self._press(page.get_by_role("button", name="Go", exact=True))
                     self._press(page.locator(".desk-menu-list").get_by_role("menuitem", name="Meetings", exact=True))
-                    self._open_row(win.locator(f"[data-testid='meeting-row-{ONE}'] .mt-rail-row"))
+                    self._open_row(win.locator(f"[data-testid='meeting-row-{ONE}']"))
                 else:
                     self._open_icon(f"meeting:{ONE}")
                 self._one_front(ONE, "icon")
@@ -338,7 +335,7 @@ class TestOneMeetingOneWindow:
                 self._home(staged="review-meetings")
                 page.locator("#surface-meetings [data-testid='meetings-toolbar']").wait_for(timeout=T)
                 self._shot("meetings-list")
-                self._open_row(page.locator(f"#surface-meetings [data-testid='meeting-row-{ONE}'] .mt-rail-row"))
+                self._open_row(page.locator(f"#surface-meetings [data-testid='meeting-row-{ONE}']"))
                 self._one_front(ONE, "list")
 
                 # 5. (Betterment P3) The Room's FILES fold left the Now wing

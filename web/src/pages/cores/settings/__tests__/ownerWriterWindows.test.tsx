@@ -74,12 +74,13 @@ describe("the first-run You card writes through its window's one writer", () => 
   });
 });
 
-describe("the People window reads the owner's name through its window's one writer", () => {
-  it("an unset name draws its one row; the window sends no write of its own, open or closed", async () => {
+describe("the People window leaves the owner name in Settings", () => {
+  it("an unset name adds no notice or settings read; the window sends no write, open or closed", async () => {
     const hub = fakeSettingsHub(apiFetch, ApiError, { _revision: "r3", owner: { name: "", aliases: [] } });
     const view = render(<PeopleCore />);
-    expect(await screen.findByTestId("people-who-are-you")).toHaveTextContent("Your name is not set");
-    expect(apiFetch.mock.calls.some(([url, init]) => url === "/api/settings" && !init?.method)).toBe(true);
+    await waitFor(() => expect(screen.queryByTestId("people-loading")).toBeNull());
+    expect(screen.queryByTestId("people-who-are-you")).toBeNull();
+    expect(apiFetch.mock.calls.some(([url, init]) => url === "/api/settings" && !init?.method)).toBe(false);
     view.unmount();
     expect(hub.puts()).toEqual([]);
     try { window.localStorage.removeItem("hs.people.name-asked"); } catch { /* none */ }

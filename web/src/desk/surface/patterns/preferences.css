@@ -27,12 +27,3 @@
 .surface-tab-panel[hidden] { display: none; }
 .surface-command-code { flex: 1 1 200px; min-width: 0; overflow-wrap: anywhere; font-size: 12px; }
 .surface-terminal-well { display: flex; flex: 1 1 0; min-height: 200px; }
-
-.surface-list-window { display: flex; flex-direction: column; flex: 1 1 0; height: 100%; min-width: 0; min-height: 0; overflow: hidden; }
-.surface-list-window > .object-list { flex: 1 1 0; }
-.surface-list-summary { flex: 1 1 0; min-height: 80px; overflow: auto; padding: 12px 16px; border-top: 1px solid var(--wb-rule-soft); }
-.surface-list-summary > .surface-rows { margin: 0; }
-.surface-list-window > .surface-pane-inspector { flex: none; max-height: 55%; margin: 12px 16px; }
-.desk-next .desk-surface-body:has(> .surface-list-window) { overflow: hidden; }
-
-.surface-list-window > [role="alert"] { flex: none; padding: 8px 16px; }

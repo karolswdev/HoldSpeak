@@ -649,7 +649,7 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
             permit_import.set()
             assert import_done.wait(10), "Fixture import did not complete"
             assert db.meetings.get_meeting(meeting_id).segments, "Import saved no transcript"
-            row.locator(".mt-rail-row").click()
+            row.dblclick()
             _loaded(page.locator("[data-testid=meeting-mast]"))
             page.get_by_text(WORDS, exact=True).wait_for()
             detail = _api(page, "GET", "/api/meetings/" + meeting_id, token=TOKEN)
@@ -669,7 +669,7 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
                 print("RECOVERY: reopen the imported meeting after the recorded import refresh failure.")
                 _desk(page, base)
                 _meetings(page, recovery=not meetings_ok)
-                page.get_by_test_id("meeting-row-" + meeting_id).locator(".mt-rail-row").click()
+                page.get_by_test_id("meeting-row-" + meeting_id).dblclick()
             # UX-CANON A.9 as amended 2026-10-25 (#1481): a ready route draws
             # no host chip in the meeting window; the Run summary verb's hover
             # title names where the run goes.
@@ -728,7 +728,7 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
                 print("RECOVERY: reopen the persisted meeting after the recorded refresh failure.")
                 _desk(page, base)
                 _meetings(page, recovery=not meetings_ok)
-                page.get_by_test_id("meeting-row-" + meeting_id).locator(".mt-rail-row").click()
+                page.get_by_test_id("meeting-row-" + meeting_id).dblclick()
             expect(page.get_by_test_id("meeting-summary-text")).to_have_text(engine.result.summary)
             # The receipt (above) holds the planned host; the face says none.
             said = page.evaluate("""([label]) => {

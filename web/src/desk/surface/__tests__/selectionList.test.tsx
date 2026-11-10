@@ -1,5 +1,7 @@
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { WindowIdContext } from "../../components/window/windowIdContext";
+import { useListMenu } from "../../components/window/listMenu";
 import { ListView, CycleGadget, CheckGadget, type ListVerb } from "..";
 afterEach(cleanup);
 
@@ -27,7 +29,7 @@ describe("the shared selection list", () => {
     expect(open).toHaveBeenCalledTimes(2);
     fireEvent.contextMenu(row, { clientX: 50, clientY: 50 });
     const menu = screen.getByRole("menu");
-    expect(within(menu).getAllByRole("menuitem").map((item) => item.textContent?.replace(/Enter|Delete/g, ""))).toEqual(["Open", "Remove"]);
+    expect(within(menu).getAllByRole("menuitem").map((item) => item.textContent?.replace(/Return|Delete/g, ""))).toEqual(["Open", "Remove"]);
     fireEvent.click(within(menu).getByRole("menuitem", { name: /Remove/ }));
     expect(remove).toHaveBeenCalledWith(expect.objectContaining({ id: "one" }));
   });
@@ -64,10 +66,12 @@ describe("the shared selection list", () => {
   });
 });
 
-it("composes a collection toolbar with Find from the same verb declaration", () => {
-  render(<ListView label="People" actionBar="top" trailing={<input aria-label="Find a person" />} rows={[]} verbs={[{ id: "add", label: "Add person", run: () => {} }]} />);
-  const toolbar = screen.getByRole("toolbar", { name: "People actions" });
-  expect(toolbar).toHaveClass("kit-toolbar", "object-list-toolbar");
-  expect(within(toolbar).getByRole("button", { name: "Add person" })).toBeEnabled();
-  expect(within(toolbar).getByRole("textbox", { name: "Find a person" })).toBeTruthy();
+
+it("the top toolbar publishes its unselected verbs to the app menu on mount", () => {
+  function MenuProbe() { const entries = useListMenu("records-test"); return <output data-testid="menu-probe">{entries.map((entry) => entry.id).join(",")}</output>; }
+  render(<WindowIdContext.Provider value="records-test"><MenuProbe /><ListView label="Records" rows={[]}
+    toolbar={{ trailing: <span>Find</span> }} verbs={[{ id: "record", label: "Record", run: () => {} }]} /></WindowIdContext.Provider>);
+  expect(screen.getByTestId("menu-probe")).toHaveTextContent("record");
+  expect(screen.getByRole("toolbar", { name: "Records" })).toBeTruthy();
+  expect(screen.getAllByRole("toolbar")).toHaveLength(1);
 });

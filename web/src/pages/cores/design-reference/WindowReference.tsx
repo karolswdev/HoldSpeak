@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "../../../components/signal/Signal";
 import {
-  PreferencePane, PaneGroup, CycleGadget, ListWindow as CollectionWindow, ListSummary,
+  PreferencePane, PaneGroup, CycleGadget, ListPane,
   FootSlotContext,
   ObjectList,
   ReadingDocument,
@@ -52,13 +52,14 @@ function PeopleSpecimen() {
   const [selected, setSelected] = useState<string | null>("p-1");
   const [query, setQuery] = useState("");
   const [opened, setOpened] = useState("");
-  return <div className="reference-window-frame reference-window-people" data-testid="reference-window-people"><CollectionWindow>
-    <ListView label="Specimen people" rows={PEOPLE.filter((row) => row.name.toLowerCase().includes(query.toLowerCase()))} columns={[{ key: "name", word: "Name" }, ...PEOPLE_COLUMNS]}
-      selectedId={selected} onSelect={setSelected} actionBar="top" defaultVerb="open"
-      trailing={<StringGadget label="Find a person" value={query} onChange={setQuery} />}
-      verbs={[{ id: "open", label: "Open", key: "Enter", enabled: (row) => Boolean(row), run: (row) => setOpened(row!.name) }]} />
-    <ListSummary label="Selected person">{opened ? `Opened locally · ${opened}` : PEOPLE.find((row) => row.id === selected)?.name ?? "Select a person"}</ListSummary>
-  </CollectionWindow></div>;
+  return <div className="reference-window-frame reference-window-people" data-testid="reference-window-people">
+    <ListPane label="Selected person" list={<ListView label="Specimen people" rows={PEOPLE.filter((row) => row.name.toLowerCase().includes(query.toLowerCase()))} columns={[{ key: "name", word: "Name" }, ...PEOPLE_COLUMNS]}
+      selectedId={selected} onSelect={setSelected} defaultVerb="open"
+      toolbar={{ trailing: <StringGadget label="Find a person" value={query} onChange={setQuery} /> }}
+      verbs={[{ id: "open", label: "Open", key: "Enter", enabled: (row) => Boolean(row), run: (row) => setOpened(row!.name) }]} />}>
+      {opened ? `Opened locally · ${opened}` : PEOPLE.find((row) => row.id === selected)?.name ?? "Select a person"}
+    </ListPane>
+  </div>;
 }
 
 /** A meeting summary, read in its window: the one place a document
@@ -200,56 +201,20 @@ function ListWindow({ preset }: { preset: Exclude<WindowPreset, "reader" | "insp
   return (
     <section className="reference-example reference-window" data-testid="reference-window" aria-label="Window pattern">
       <div className="reference-window-frame" data-preset={preset}>
-        <Toolbar
-          label="Specimen meetings"
-          trailing={<StringGadget label="Search specimen meetings" value={query} onChange={setQuery} placeholder="Search meetings" />}
-        >
-          <Button dense variant={selectedRow?.state?.tone === "fail" ? "secondary" : "primary"} onClick={() => setOpened("record")}>
-            <ToolGlyph kind="record" />
-            Record meeting
-          </Button>
-          <Button dense variant="secondary" onClick={() => setOpened("import")}>
-            <ToolGlyph kind="import" />
-            Import
-          </Button>
-        </Toolbar>
-        <div className="reference-window-content">
-          {preset === "busy" ? (
-            <SurfaceState loading />
-          ) : preset === "failed" ? (
-            <SurfaceState error="Meetings not read" onRetry={() => setOpened("retry read")} />
-          ) : rows.length ? (
-            <ObjectList
-              label="Specimen meetings"
-              density="dense"
-              rows={rows}
-              columns={COLUMNS}
-              sort={sort}
-              onSort={(key: string) => setSort((current) => ({ key, dir: current.key === key && current.dir === "desc" ? "asc" : "desc" }))}
-              selectedId={selected}
-              onSelect={setSelected}
-              onOpen={(id) => setOpened(rows.find((row) => row.id === id)?.name ?? id)}
-            />
-          ) : (
-            <SurfaceState empty emptyImage={SYSTEM.dockMeetings} emptyLabel={preset === "empty" ? "Record or import a meeting" : "No meeting matches"} />
-          )}
-        </div>
+        <ListPane label="Specimen preview" list={<ListView label="Specimen meetings" rows={rows} columns={COLUMNS}
+          sort={sort} onSort={(key: string) => setSort((current) => ({ key, dir: current.key === key && current.dir === "desc" ? "asc" : "desc" }))}
+          selectedId={selected} onSelect={setSelected} defaultVerb="open"
+          toolbar={{ trailing: <StringGadget label="Search specimen meetings" value={query} onChange={setQuery} placeholder="Search meetings" /> }}
+          verbs={[
+            { id: "record", label: "Record", run: () => setOpened("record") },
+            { id: "import", label: "Import", run: () => setOpened("import") },
+            { id: "open", label: "Open", key: "Enter", enabled: (row) => Boolean(row), run: (row) => setOpened(row?.name ?? null) },
+          ]} />}>
+          {preset === "busy" ? <p>Reading meetings…</p> : preset === "failed" ? <SurfaceState error="Meetings not read" onRetry={() => setOpened("retry read")} />
+            : selectedRow ? <><strong>{selectedRow.name}</strong><p>{READER_SUMMARY}</p></> : <p>Select a meeting to read its summary.</p>}
+        </ListPane>
         <FootSlotContext.Provider value={null}>
           <StatusBar
-            verbs={selectedRow ? (
-              <>
-                <Button dense variant="secondary" onClick={() => setOpened(selectedRow.name)}>
-                  <ToolGlyph kind="open" />
-                  Open
-                </Button>
-                {selectedRow.state?.tone === "fail" ? (
-                  <Button dense variant="primary" onClick={() => setOpened(`retry ${selectedRow.name}`)}>
-                    <ToolGlyph kind="retry" />
-                    Retry
-                  </Button>
-                ) : null}
-              </>
-            ) : null}
             items={[
               { key: "count", text: countWords(rows.length, "meeting") },
               review ? { key: "review", lamp: "ask", text: "2 to review" } : null,

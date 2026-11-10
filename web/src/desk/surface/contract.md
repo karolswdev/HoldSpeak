@@ -1594,12 +1594,23 @@ The Desk sweep reads these properties in its normal fence pass at 1440,
 from the rendered rail and wings from their own controls. The Components
 reference uses these same production species.
 
-### Collection selection windows
+### A selection list with a preview (2026-11-10)
 
-`ListView` with `rows` uses the OS selection list. `actionBar="top"` puts
-its declared `ListVerb` actions in the shared Toolbar above the column
-heads; `trailing` holds the Find gadget. The same declaration supplies the
-context and application menus and row key handling. The default remains a
-bottom action bar for preference lists. `ListWindow` bounds the collection
-and its `ListSummary` below it; the list and summary wells scroll, never the
-window body. Add forms use `PaneInspector`, `GadgetGroup` and `GadgetRow`.
+`ListView toolbar={{ trailing, testId }}` draws its declared `ListVerb`s in
+one toolbar above the column headers; the trailing slot holds a find gadget.
+Without this option, the existing action bar remains below the list. The
+shared strip measures available space and folds its verbs into Actions when
+they do not fit. The context menu and app menu use the same declaration.
+`ListVerb.testId` supplies an optional action test target; `title` carries
+the action's hover disclosure. A Delete verb also
+accepts Backspace; Return opens through the default verb.
+
+`ListPane` keeps the list and a plain preview in two bounded wells, with the
+preview below the list at every width. `listTestId` and `previewTestId` name
+walk targets. Neither well makes the window body scroll. Meetings Records and People
+use this pattern. Selection reports a change once even when the click also
+focuses its row. The Record tab and the meeting window retain their
+existing composition.
+
+A reversible receipt belongs in `StatusBar.verbs`, outside the clipped facts
+well. The shared bar bounds its words and keeps Restore or Retry visible.

@@ -216,4 +216,4 @@ export * from "./objects";
 export { PreferencePane, PaneGroup, PaneInspector, PaneActions, SegmentedTabs } from "./patterns/PreferencePane";
 export { listVerbEntries, type ListVerb } from "./objects/ObjectList";
 
-export { ListWindow, ListSummary } from "./patterns/PreferencePane";
+export { ListPane } from "./patterns/ListPane";

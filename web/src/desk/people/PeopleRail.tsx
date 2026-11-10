@@ -17,7 +17,7 @@ export function PeopleRail({ people, suggestions, picked, query, onQuery, onPick
     { key: "relationship", word: "Relationship", track: "minmax(0, 1fr)" },
     { key: "next", word: "Next 1:1", track: "minmax(0, 1fr)" },
     { key: "open", word: "Open with them", track: "minmax(0, 1.4fr)" },
-  ]} selectedId={picked} onSelect={onPick} verbs={verbs} defaultVerb="open" actionBar="top"
-    trailing={<StringGadget label="Find a person" value={query} onChange={onQuery} placeholder="Find a person" />}
+  ]} selectedId={picked} onSelect={onPick} verbs={verbs} defaultVerb="open"
+    toolbar={{ trailing: <StringGadget label="Find a person" value={query} onChange={onQuery} placeholder="Find a person" /> }}
     rowProps={(row) => ({ "data-testid": row.kind === "suggestion" ? "people-suggestion" : "people-row", "data-person": row.id })} />;
 }

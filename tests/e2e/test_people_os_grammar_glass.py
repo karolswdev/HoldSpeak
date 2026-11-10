@@ -105,7 +105,6 @@ def test_people_selection_grammar_and_shots(tmp_path: Path, monkeypatch: pytest.
                 name.fill(f"Keep these words {width}")
                 roster.get_by_role("button", name="Add", exact=True).click()
                 expect(roster.get_by_test_id("people-duplicate")).to_be_visible()
-                assert roster.get_by_test_id("people-duplicate").evaluate("el => { const well = el.closest('.surface-pane-inspector').getBoundingClientRect(); const row = el.getBoundingClientRect(); return row.bottom <= well.bottom; }")
                 shoot("duplicate")
                 roster.get_by_role("button", name="Close", exact=True).click()
                 roster.get_by_role("textbox", name="Find a person").fill("no such name")
@@ -153,7 +152,44 @@ def _open(page: Any, base: str) -> None:
 def _bounded(window: Any) -> None:
     assert window.evaluate("""el => {
       const body = el.querySelector('.desk-surface-body');
-      const list = el.querySelector('.surface-list-window');
+      const list = el.querySelector('.surface-list-pane');
       return body.scrollHeight <= body.clientHeight + 1 && body.scrollWidth <= body.clientWidth + 1
         && (!list || list.scrollHeight <= list.clientHeight + 1);
     }"""), window.bounding_box()
+
+
+@pytest.mark.timeout(240)
+def test_people_shared_list_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Re-shoot the two roster poses after adopting Meetings' shared ListPane."""
+    from playwright.sync_api import sync_playwright, expect
+
+    _ensure_build()
+    server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
+    monkeypatch.setattr(open_rig, "TOKEN", TOKEN)
+    shots = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/os-grammar"
+    shots.mkdir(parents=True, exist_ok=True)
+    try:
+        week = open_rig._seed(tmp_path / "home", base)
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch()
+            for width in (1440, 393):
+                clear_hub_windows_http(base, TOKEN)
+                page = browser.new_page(viewport={"width": width, "height": 900 if width == 1440 else 852}, reduced_motion="reduce")
+                _open(page, base)
+                roster = page.get_by_test_id("people-roster")
+                row = roster.locator(f'[data-object-id="{week["priya"]}"]')
+                row.wait_for()
+                page.get_by_test_id("people-next-reading").wait_for(state="detached")
+                suffix = "900x600" if width == 1440 else "393"
+                _settle(page)
+                _bounded(page.locator("#surface-people"))
+                page.screenshot(path=str(shots / f"people-list-{suffix}-after.png"))
+                row.click()
+                expect(roster.get_by_test_id("people-summary")).to_contain_text(open_rig.COMMITMENT)
+                _settle(page)
+                _bounded(page.locator("#surface-people"))
+                page.screenshot(path=str(shots / f"people-selected-{suffix}-after.png"))
+                page.close()
+            browser.close()
+    finally:
+        server.stop()

@@ -1,5 +1,5 @@
 /* People is a selection list; the person editor keeps its own window. */
-import { StringGadget, SurfaceState, StatusBar, countWords, ListWindow, ListSummary, SurfaceRows, SurfaceRow, PaneActions, PaneInspector, GadgetGroup, GadgetRow, CycleGadget, type ListVerb } from "../../desk/surface";
+import { StringGadget, SurfaceState, StatusBar, countWords, PreferencePane, ListPane, PaneActions, PaneInspector, GadgetGroup, GadgetRow, CycleGadget, type ListVerb } from "../../desk/surface";
 
 import { PersonPages } from "../../desk/standingPages";
 import { wireDate } from "../../desk/surface/format";
@@ -237,15 +237,15 @@ export function PeopleCore({ scope }: CoreProps) {
   if (unavailable) {
     const state = stateOf(readiness);
     // Betterment daily D8: People cannot hold a key on this Mac: one line, no verb.
-    if (state === "no_key_store") return <ListWindow><ListSummary label="People state"><PeopleNotHere /></ListSummary></ListWindow>;
+    if (state === "no_key_store") return <PreferencePane label="People state"><PeopleNotHere /></PreferencePane>;
     // Betterment D6: a People read that failed is one line in place.
-    if (state === "unavailable" || state === "locked") return <ListWindow><ListSummary label="People state"><PeopleReadFailed onRetry={() => void load()} detail={error} /></ListSummary></ListWindow>;
+    if (state === "unavailable" || state === "locked") return <PreferencePane label="People state"><PeopleReadFailed onRetry={() => void load()} detail={error} /></PreferencePane>;
     const face = readinessFace(state);
-    return <ListWindow><ListSummary label="People state"><div data-testid="people-joy-state"><PaneActions>
+    return <PreferencePane label="People state"><div data-testid="people-joy-state"><PaneActions>
       <Button variant="primary" onClick={recover} data-testid="people-joy-action">{face.action}</Button>
       <span>{face.label}</span>
       {error ? <span className="sr-only">{error}</span> : null}
-    </PaneActions></div></ListSummary></ListWindow>;
+    </PaneActions></div></PreferencePane>;
   }
   // PHILO-13-04 (A3): the failure is ONE row that stays on screen while he
   // is down in a fold; the person and any unsent draft stay under it
@@ -294,12 +294,14 @@ export function PeopleCore({ scope }: CoreProps) {
     ] as ListVerb[] : []),
     ...(projectFilter && scopedOut ? [{ id: "everyone", label: `${scopedOut} more · Everyone`, run: () => setProjectFilter(null) }] : []),
   ];
-  return <ListWindow testId="people-roster">
+  return <PreferencePane label="People" testId="people-roster">
     {nextReading ? <span hidden aria-busy="true" data-testid="people-next-reading" /> : null}
-    <PeopleRail people={railPeople} suggestions={shownSuggestions.map((s) => ({ key: s.key, name: s.name, source: sentence(suggestionSource(s)) }))}
+    <ListPane label="Selected person" previewTestId="people-summary" list={<>
+      <PeopleRail people={railPeople} suggestions={shownSuggestions.map((s) => ({ key: s.key, name: s.name, source: sentence(suggestionSource(s)) }))}
       picked={picked} query={query} onQuery={(value) => { setQuery(value); back(); setPickedSuggestion(null); }} verbs={verbs}
       onPick={(id) => { if (id.startsWith("suggestion:")) { back(); setPickedSuggestion(id); } else if (id !== selectedId) void select(id); }} />
     {failureRow}
+    </>}>
     {adding ? <PaneInspector label="New person" onClose={() => setAdding(false)}>
       <div data-testid="people-add-row"><GadgetGroup>
         <GadgetRow label="Name"><StringGadget label="Add person" value={newName} onChange={setNewName} placeholder="Name" inputProps={{ id: "people-new-relationship" }} onKeyDown={(event) => { if (event.key === "Enter") void createRelationship(); if (event.key === "Escape") setAdding(false); }} /></GadgetRow>
@@ -308,25 +310,24 @@ export function PeopleCore({ scope }: CoreProps) {
         <Button dense disabled={!newName.trim() || busy} loading={busy} onClick={() => void createRelationship()}>{duplicateShown ? "Add again" : "Add"}</Button>
         {duplicateShown ? <span role="status" data-testid="people-duplicate">{duplicateShown.display_name} · Already here</span> : null}
       </PaneActions></div>
-    </PaneInspector> : <ListSummary label="Selected person" testId="people-summary">
+    </PaneInspector> : <>
       {selected ? <><strong data-testid="people-summary-name">{selected.display_name}</strong>
-        <SurfaceRows>
-          {selectedNext ? <SurfaceRow title="Next 1:1" detail={oneOnOneWhen(selectedNext)} /> : null}
-          {!detail ? <SurfaceRow title={error ? "Commitments not read" : "Reading commitments…"} /> : <>
-            {(detail.commitments ?? []).filter((item) => (item.state ?? "open") === "open" || item.state === "in_progress").map((item) => <SurfaceRow key={item.id} title={item.body} meta="You owe" />)}
-            {(detail.owed_to_you ?? []).filter((item) => (item.state ?? "open") === "open" || item.state === "in_progress").map((item) => <SurfaceRow key={item.id} title={item.body} meta="Owed to you" />)}
-            {!(detail.commitments ?? []).some((item) => (item.state ?? "open") === "open" || item.state === "in_progress") && !(detail.owed_to_you ?? []).some((item) => (item.state ?? "open") === "open" || item.state === "in_progress") ? <SurfaceRow title="No open commitments" /> : null}
+          {selectedNext ? <p>Next 1:1 · {oneOnOneWhen(selectedNext)}</p> : null}
+          {!detail ? <p>{error ? "Commitments not read" : "Reading commitments…"}</p> : <>
+            {(detail.commitments ?? []).filter((item) => (item.state ?? "open") === "open" || item.state === "in_progress").map((item) => <p key={item.id}>{item.body}<span> · You owe</span></p>)}
+            {(detail.owed_to_you ?? []).filter((item) => (item.state ?? "open") === "open" || item.state === "in_progress").map((item) => <p key={item.id}>{item.body}<span> · Owed to you</span></p>)}
+            {!(detail.commitments ?? []).some((item) => (item.state ?? "open") === "open" || item.state === "in_progress") && !(detail.owed_to_you ?? []).some((item) => (item.state ?? "open") === "open" || item.state === "in_progress") ? <p>No open commitments</p> : null}
           </>}
-        </SurfaceRows>
-      </> : suggestion ? <SurfaceRows><SurfaceRow title={suggestion.name} detail={sentence(suggestionSource(suggestion))} /></SurfaceRows>
+      </> : suggestion ? <><strong>{suggestion.name}</strong><p>{sentence(suggestionSource(suggestion))}</p></>
         : <span data-testid={empty ? "people-empty-roster" : projectFilter && !scoped.length ? "people-roster-none-linked" : undefined}>{empty ? "People you meet appear here." : projectFilter && !scoped.length ? "No one linked yet" : needle && !shownPeople.length && !shownSuggestions.length ? "No names match" : "Select a person"}</span>}
-    </ListSummary>}
+    </>}
+    </ListPane>
     <StatusBar data-testid="people-status" items={[
       { key: "count", testId: "people-count", text: projectFilter ? countWords(scoped.length, "on this project", "on this project") : countWords(relationships.length, "person", "people") },
       soonest ? { key: "next", testId: "people-roster-next", text: `1:1 with ${firstName(soonest.row.display_name)} ${lowerDay(oneOnOneWhen(soonest.next.startsAt))}` } : null,
       { key: "suggested", testId: "people-suggestions", text: projectFilter ? null : countWords(suggestions.length, "from your meetings", "from your meetings") },
     ]} />
-  </ListWindow>;
+  </PreferencePane>;
 }
 
 /** Where a suggested name came from, in words. */
