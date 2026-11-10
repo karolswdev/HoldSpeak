@@ -367,7 +367,7 @@ WATCH_LIST = OperationDescriptor(
     call=lambda s, p, a: {"watches": s.list_watches(p, project_id=a["project_id"], state=a.get("state"))},
     http=("GET", "/api/projects/{project_id}/watches"), handler="list_project_watches",
     tool_schema={"type": "object", "properties": {"project_id": _PROJECT_ID, "state": {"type": ["string", "null"]}},
-                 "required": ["project_id"], "additionalProperties": False},
+                 "required": ["project_id"], "additionalProperties": False}, thread="evidence_read",
 )
 
 # ── the suggested sources ───────────────────────────────────────────────

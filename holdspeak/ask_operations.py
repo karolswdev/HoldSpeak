@@ -35,7 +35,7 @@ def _read(name, method, path, handler, call, description, schema=_EMPTY):
         result="the Ask service answer in the HTTP envelope", refusals=_CONTRACT_REFUSALS + ("owner_required",),
         completion="synchronous", exposure=(f"http:GET {path}", f"mcp:{name}"),
         service="ask_service", method=method, call=call, blocking_io=True, owner_only=True,
-        http=("GET", path), handler=handler, tool_schema=schema,
+        http=("GET", path), handler=handler, tool_schema=schema, thread="evidence_read",
     )
 
 
