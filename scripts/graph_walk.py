@@ -1068,7 +1068,7 @@ OP_HTTP_ONLY = frozenset({"decision.status",
                           # #2027: the Programs verbs the face presses that have no MCP tool.
                           "program.close", "program.proposal_decide", "program.requirement_decide", "program.requirement_edit", "program.round_answer", "program.round_decide", "program.round_next", "program.rounds_open",
                           # PHILO-10-03: the email key is a held input, HTTP only (never a tool argument).
-                          "channel.save_email_key", "channel.save_slack_webhook",
+                          "settings.secret.email_key", "settings.secret.slack_webhook",
                           # The Conductor K1: the owner's one-press hook install (config, HTTP only).
                           "agent_hooks.install", "agent_hooks.remove",
                           "setup.found",
