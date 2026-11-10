@@ -1061,7 +1061,7 @@ OP_HTTP_ONLY = frozenset({"decision.status",
                           # PHILO-9-02: the charter's HTTP capability exceptions.
                           "project.watch.update", "project.watch.baseline",
                           # PHILO-10-03: the email key is a held input, HTTP only (never a tool argument).
-                          "channel.save_email_key", "channel.save_slack_webhook",
+                          "settings.secret.email_key", "settings.secret.slack_webhook",
                           # The Conductor K1: the owner's one-press hook install (config, HTTP only).
                           "agent_hooks.install", "agent_hooks.remove",
                           "setup.found", "setup.lan.scan",

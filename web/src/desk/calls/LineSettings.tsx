@@ -321,7 +321,7 @@ export function LineSettingsPane({ settings, onWrite, onReload }: {
         method: value === null ? "DELETE" : "PUT",
         ...(value === null ? {} : { json: { value } }),
       });
-      if (!answer.success) throw new Error(answer.error || "The secret was not saved.");
+      if (!answer.success) throw new Error(answer.error || "The hub did not confirm the save. Your edit is kept. Try Save again.");
       await onReload?.();
       await load();
       return true;

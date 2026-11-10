@@ -552,7 +552,7 @@ def test_settings_read_and_write_keep_the_retained_field_private(
     assert Config.load(settings_path).meeting.slack_webhook_url == SENTINEL
 
 
-def test_settings_write_ignores_the_retained_field(
+def test_settings_write_refuses_the_retained_credential_field(
     db: Database, settings_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     _save_legacy_config(settings_path, mode="neutral")
@@ -560,10 +560,13 @@ def test_settings_write_ignores_the_retained_field(
     monkeypatch.delitem(credential_service.SECRET_PATHS, "slack_webhook_url", raising=False)
 
     before = Config.load(settings_path).meeting.slack_webhook_url
-    SettingsService(db).update_settings(
-        UNAUTHENTICATED,
-        {"meeting": {"slack_webhook_url": "https://hooks.slack.com/services/ATTACKER"}},
-    )
+    from holdspeak.principals import Principal, PrincipalKind
+    from holdspeak.services.errors import ValidationError
+    for principal in (UNAUTHENTICATED, Principal(PrincipalKind.OWNER, "owner")):
+        with pytest.raises(ValidationError) as caught:
+            SettingsService(db).update_settings(
+                principal, {"meeting": {"slack_webhook_url": "https://hooks.slack.com/services/ATTACKER"}})
+        assert caught.value.code == "credential_in_settings_patch"
     assert Config.load(settings_path).meeting.slack_webhook_url == before
 
 

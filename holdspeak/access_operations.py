@@ -51,7 +51,7 @@ def _row(
 
 
 _R = "/api/settings/remote"
-_D = _R + "/delegations/{agent_identity}"
+_D = _R + "/delegations/{identity}"
 REMOTE_ACCESS_OPERATIONS = (
     _row(
         "settings.remote.get",

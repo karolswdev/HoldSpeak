@@ -408,11 +408,11 @@ def build_mcp_http_router(ctx: WebContext) -> APIRouter:
             return await _remote_answer(lambda: registry().invoke(principal, descriptor.name, args, shape="web"))
 
         if "{project_id}" in descriptor.http[1]:
-            async def endpoint(agent_identity: str, project_id: str, request: Request) -> Any:
-                return await call(request, agent_identity, project_id)
+            async def endpoint(identity: str, project_id: str, request: Request) -> Any:
+                return await call(request, identity, project_id)
         else:
-            async def endpoint(agent_identity: str, request: Request) -> Any:
-                return await call(request, agent_identity)
+            async def endpoint(identity: str, request: Request) -> Any:
+                return await call(request, identity)
         endpoint.__name__ = descriptor.handler
         return endpoint
 
