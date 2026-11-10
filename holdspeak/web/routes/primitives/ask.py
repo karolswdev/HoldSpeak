@@ -4,6 +4,11 @@ from typing import Any
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 from .... import db as hsdb
+from .... import operations
+from ....ask_operations import ASK_OPERATIONS
+from ...operation_routes import operation_router
+from .._mount import mount_router
+from starlette.concurrency import run_in_threadpool
 from ....db import get_observer
 
 def _database() -> Any:
@@ -57,19 +62,7 @@ def build_ask_router(ctx: WebContext) -> APIRouter:
     def principal(request: Request) -> Principal:
         return getattr(request.state, "principal", Principal(PrincipalKind.OWNER, "owner-session"))
     def service() -> AskService:
-        return build_ask_service(ctx)
-    @router.get("/api/models")
-    def api_list_models(request: Request) -> Any:
-        try: return JSONResponse({"models":service().list_models(principal(request))})
-        except Exception as exc: return error_500(exc,log,"Failed to list models")
-    @router.get("/api/ask/engine")
-    async def api_ask_engine(request: Request) -> Any:
-        # Betterment Q7: can the Answers engine use the desk's tools? The
-        # Ask window's engine line says so.
-        try:
-            import asyncio
-            return JSONResponse(await asyncio.to_thread(service().engine_tools))
-        except Exception as exc: return error_500(exc,log,"Failed to read the Answers engine")
+        return getattr(ctx, "ask_service", None) or build_ask_service(ctx)
     @router.post("/api/grounding/resolve")
     async def api_resolve_grounding(request: Request) -> Any:
         body=await _json_body(request)
@@ -96,7 +89,11 @@ def build_ask_router(ctx: WebContext) -> APIRouter:
                 # dropped) does not end it; the answer is kept and claimed
                 # back through /api/ask/runs.
                 import asyncio
-                run=asyncio.ensure_future(service().ask_in_thread(principal(request),str(body.get("prompt") or ""),body.get("grounding"),thread_id=str(body.get("thread_id") or ""),lens=str(body.get("lens") or "Ask"),context=context,invocation_id=invocation_id,source_snapshot=body.get("source_snapshot")))
+                run=asyncio.ensure_future(registry().invoke(principal(request), "ask.in_thread", {
+                    "prompt": str(body.get("prompt") or ""), "grounding": body.get("grounding"),
+                    "thread_id": str(body.get("thread_id") or ""), "lens": str(body.get("lens") or "Ask"),
+                    "context": context, "invocation_id": invocation_id, "source_snapshot": body.get("source_snapshot"),
+                }, shape="web"))
                 run.add_done_callback(lambda task: task.cancelled() or task.exception())
                 result=await asyncio.shield(run)
                 return JSONResponse(result)
@@ -113,16 +110,22 @@ def build_ask_router(ctx: WebContext) -> APIRouter:
             return JSONResponse(result,status_code=201)
         except ServiceError as exc: return _error(exc)
         except Exception as exc: return error_500(exc,log,"Failed to keep ask")
-    @router.get("/api/ask/runs")
-    def api_ask_runs(request: Request) -> Any:
-        # Ask hub gap 5: the asks a window left running, by invocation id.
-        from ....services.ask_service import runs
-        ids=[part for part in str(request.query_params.get("ids") or "").split(",") if part.strip()][:20]
-        return JSONResponse({"runs":runs(ids)})
     @router.post("/api/ask/{invocation_id}/cancel")
     def api_cancel_ask(invocation_id: str, request: Request) -> Any:
         try:
             return JSONResponse(service().cancel(principal(request), invocation_id))
         except ServiceError as exc: return _error(exc)
         except Exception as exc: return error_500(exc,log,"Failed to cancel ask")
+    def registry():
+        return operations.for_context(ctx, ask_service=service)
+
+    async def answer(fn, *, status=200):
+        try:
+            return JSONResponse(await run_in_threadpool(fn), status_code=status)
+        except ServiceError as exc:
+            return _error(exc)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to read Ask")
+
+    mount_router(router, operation_router(ASK_OPERATIONS, registry, answer, module=__name__))
     return router

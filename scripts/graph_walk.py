@@ -1050,16 +1050,19 @@ OP_MCP_PROJECTIONS.update({name: {"kind": "tool", "name": name} for name in (
     "delivery.terminal_sessions", "delivery.terminal_read", "delivery.factory_profiles",
     "delivery.factory_discover", "invocation.list", "invocation.get") if name not in OP_MCP_PROJECTIONS})
 
+# These existing rows now expose their owner-only tools too.
+OP_MCP_PROJECTIONS.update({name: {"kind": "tool", "name": name} for name in (
+    "meeting.result.prepare", "project.watch.update", "project.watch.baseline")})
+# Calls' held answer now has an owner-only tool; the outsider rig sends its
+# unchanged arguments through that tool, never imports the operation registry.
+OP_MCP_PROJECTIONS["calls.decide"] = {"kind": "tool", "name": "calls.decide"}
+
 #: Declared operations with no MCP exposure: the rig refuses them by name.
 OP_HTTP_ONLY = frozenset({"decision.status",
                           # The Settings window's credentials: owner only, HTTP only, no tool reaches a key.
                           "settings.secret.replace", "settings.secret.rotate", "settings.secret.delete",
                           # #2027: the Programs verbs the face presses that have no MCP tool.
                           "program.close", "program.proposal_decide", "program.requirement_decide", "program.requirement_edit", "program.round_answer", "program.round_decide", "program.round_next", "program.rounds_open",
-                          # Betterment capture C5b: the meeting window's Prepare… press (HTTP only).
-                          "meeting.result.prepare",
-                          # PHILO-9-02: the charter's HTTP capability exceptions.
-                          "project.watch.update", "project.watch.baseline",
                           # PHILO-10-03: the email key is a held input, HTTP only (never a tool argument).
                           "channel.save_email_key", "channel.save_slack_webhook",
                           # The Conductor K1: the owner's one-press hook install (config, HTTP only).
@@ -1073,9 +1076,7 @@ OP_HTTP_ONLY = frozenset({"decision.status",
                           "desk.request.result",
                           # 2026-11-08: the phone verbs with no MCP tool (a held device or address, a credential).
                           "phone.redeem", "phone.pair", "phone.save_push_key", "phone.mark_read", "phone.decide",
-                          "phone.accept", "phone.decline", "phone.end",
-                          # 2026-11-08: the Calls window's tap answer (no MCP tool: an agent never answers his hold).
-                          "calls.decide"})
+                          "phone.accept", "phone.decline", "phone.end"})
 
 # PHILO-7-01: the desk kind and id argument of each slice prefix.
 _DESK_OP_KINDS: dict[str, tuple[str, str]] = {

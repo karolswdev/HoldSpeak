@@ -222,14 +222,6 @@ _RECIPE_RUN_OPTIONS_SCHEMA: dict[str, Any] = {
     },
     "additionalProperties": False,
 }
-_RECIPE_CHAT_OPTIONS_SCHEMA: dict[str, Any] = {
-    "type": "object",
-    "properties": {
-        "history": {"type": "array"}, "grounding": {"type": "object"},
-        "egress_context": {},
-    },
-    "additionalProperties": False,
-}
 _WORKBENCH_FIELDS_SCHEMA: dict[str, Any] = {
     "type": "object",
     "properties": {
@@ -308,7 +300,6 @@ TOOLS.extend([
     _workbench_tool("recipe.list", "List Agent recipes.", {}),
     _workbench_tool("recipe.get", "Get an Agent recipe.", {"recipe_id": {"type": "string"}}, ["recipe_id"]),
     _workbench_tool("recipe.run", "Run an Agent recipe and return its lifecycle-backed result and minted artifact reference.", {"recipe_id": {"type": "string"}, "input": {"type": "string"}, "options": _RECIPE_RUN_OPTIONS_SCHEMA}, ["recipe_id"]),
-    _workbench_tool("recipe.chat", "Ask an Agent recipe a question.", {"recipe_id": {"type": "string"}, "question": {"type": "string"}, "options": _RECIPE_CHAT_OPTIONS_SCHEMA}, ["recipe_id", "question"]),
     _workbench_tool("zone.file", "File a primitive in a Zone. File a note into a zone by setting directory_id from desk.list kind=directories and primitive_id to note:<id>. Filing a primitive again moves it.", {"directory_id": {"type": "string", "description": "Zone ID from desk.list kind=directories."}, "primitive_id": {"type": "string", "description": "Object kind:id; for example note:<id> with its ID from desk.list kind=notes."}}, ["directory_id", "primitive_id"]),
     _workbench_tool("zone.unfile", "Remove a primitive from a Zone: directory_id and kind:id primitive_id.", {"directory_id": {"type": "string", "description": "Zone ID from desk.list kind=directories."}, "primitive_id": {"type": "string", "description": "Filed object kind:id; ID from desk.list (for example note:<id> with its ID from desk.list kind=notes)."}}, ["directory_id", "primitive_id"]),
     _workbench_tool("zone.list_members", "List Zone members. List the notes in a zone. Each member has a primitive_id such as note:<id>.", {"directory_id": {"type": "string", "description": "Zone ID from desk.list kind=directories."}}, ["directory_id"]),
@@ -1231,17 +1222,6 @@ def _dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal)
         allowed = ("variables", "max_tokens", "temperature", "source_ref", "source_type", "grounding_refs", "grounding_revisions", "source_revision", "deadline_at", "initiator")
         options = _data(args.get("options"))
         return _run(recipes.run(principal, str(args.get("recipe_id") or ""), input=str(args.get("input") or ""), **{key: options[key] for key in allowed if key in options}))
-    if name == "recipe.chat":
-        # HS-151-02: recipe.chat RETIRED. The tool definition stays so tool
-        # counts documented elsewhere remain stable.
-        # HS-200-45 R6: it RAISES now. Returning the refusal made the sidecar
-        # answer `isError: false`, so a caller read a permanent retirement as a
-        # successful chat turn.
-        raise ToolError(
-            "recipe.chat is retired (HS-151-02) and will never run: threads "
-            "replaced it. Post the turn to /api/threads/{id}/turns instead, or "
-            "call thought.* for the refinement loop."
-        )
     # PHILO-7-02: the membership tools are the declared zone.file/unfile/members
     # and kb.member.add/remove/kb.members operations, through the one registry.
     if name == "zone.file":

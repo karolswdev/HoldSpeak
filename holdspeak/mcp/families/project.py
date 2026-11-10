@@ -1043,9 +1043,14 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
         if error:
             raise ValidationError(error.message)
         service = _setup_service()
-        method = getattr(service, name.rsplit(".", 1)[1])
-        extra = {"repo": arguments.get("repo")} if name.endswith("clarify_repo_scope") else {}
-        return method(principal, arguments["session_id"], arguments["proposal_id"], **extra)
+        if name == "project.setup.select_proposal":
+            return service.select_proposal(principal, arguments["session_id"], arguments["proposal_id"])
+        if name == "project.setup.deselect_proposal":
+            return service.deselect_proposal(principal, arguments["session_id"], arguments["proposal_id"])
+        if name == "project.setup.test_proposal":
+            return service.test_proposal(principal, arguments["session_id"], arguments["proposal_id"])
+        return service.clarify_repo_scope(principal, arguments["session_id"], arguments["proposal_id"],
+                                          repo=arguments.get("repo"))
 
     # ── PHILO-9-01: the Room's operations, through the ONE registry ──────
     #
