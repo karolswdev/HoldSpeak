@@ -156,7 +156,7 @@ describe("An app's own walk", () => {
   it("an app with no walk draws no Show me", () => {
     vi.stubGlobal("fetch", hub());
     const slot = mountDesk();
-    renderMast("open-intelligence", slot);
+    renderMast("not-an-app", slot);
     expect(screen.queryByTestId("show-me")).toBeNull();
     expect(screen.queryByText("Show me")).toBeNull();
   });

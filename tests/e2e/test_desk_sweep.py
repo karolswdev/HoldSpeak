@@ -1551,13 +1551,14 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
             page.wait_for_function(SETTLED_JS, arg=None, timeout=T)
             launch = page.locator(".desk-dock-launch[aria-label^='Today']").first
             launch.click()
+            rail = page.locator(f'[id="{wid}"] [data-testid=today-rail]')
+            rail.wait_for(state="attached", timeout=T)
+            if not rail.is_visible():
+                page.locator(f'[id="{wid}"]').get_by_test_id("rail-back").click()
+            rail.get_by_role("button", name="Brief" if case_id == "brief" else "The day", exact=True).click()
             page.locator(f'[id="{wid}"] [data-testid=today-day]').wait_for(timeout=T)
             if case_id == "brief":
-                # Betterment D4: Today is one page; the brief is its Since
-                # yesterday fold, made when Today opens. Unfold it.
-                toggle = page.locator(f'[id="{wid}"] [data-testid=today-since-toggle]')
-                toggle.wait_for(timeout=T)
-                toggle.click()
+                # The native rail opens the hub's one brief, already unfolded.
                 page.locator(f'[id="{wid}"] [data-testid=today-since-rows]').wait_for(timeout=T)
                 page.wait_for_function(BRIEF_SETTLED_JS, arg=wid, timeout=T)
             page.mouse.move(2, 2)
@@ -1666,6 +1667,83 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
             sweep.failures["drawn"] = [str(exc)[:400]]
         else:
             sweep.fences()
+            if case_id in {"surface-recordings", "surface-projects"}:
+                # These native apps use the shared Rail on a phone too. Prove
+                # the picked pane, its single Back path, and the app's walk.
+                win = page.locator(f'[id="{wid}"]')
+                if case_id == "surface-projects":
+                    win.locator(".surface-rail-row").first.click()
+                    win.get_by_test_id("projects-mast").wait_for(timeout=T)
+                    assert win.get_by_test_id("projects-open-selected").is_visible()
+                else:
+                    # A real browser encoder films a test canvas. No screen,
+                    # microphone, ffmpeg or phone provider is used by this rig.
+                    recording_id = page.evaluate("""async token => {
+                      const canvas = document.createElement('canvas'); canvas.width = 640; canvas.height = 360;
+                      const ink = canvas.getContext('2d'); ink.fillStyle = '#10192b'; ink.fillRect(0, 0, 640, 360);
+                      ink.fillStyle = '#ffffff'; ink.font = '32px sans-serif'; ink.fillText('Desk recording', 40, 180);
+                      canvas.style.cssText = 'position:fixed;left:0;top:0;pointer-events:none';
+                      document.body.appendChild(canvas);
+                      const stream = canvas.captureStream(0), chunks = [], track = stream.getVideoTracks()[0];
+                      const recorder = new MediaRecorder(stream, {mimeType: 'video/webm;codecs=vp9'});
+                      recorder.ondataavailable = event => chunks.push(event.data);
+                      const ended = new Promise(resolve => recorder.onstop = resolve);
+                      const begun = new Promise(resolve => recorder.onstart = resolve);
+                      recorder.start(); track.requestFrame(); ink.fillRect(40, 220, 6, 6); await begun;
+                      for (let frame = 0; frame < 12; frame++) {
+                        ink.fillRect(40 + frame * 8, 220, 6, 6); track.requestFrame(); await new Promise(requestAnimationFrame);
+                      }
+                      recorder.stop(); await ended; stream.getTracks().forEach(track => track.stop()); canvas.remove();
+                      const headers = {Authorization: `Bearer ${token}`, 'Content-Type': 'application/json'};
+                      const started = await fetch('/api/recordings', {method: 'POST', headers,
+                        body: JSON.stringify({width:640, height:360, view:'sweep-canvas'})});
+                      if (!started.ok) throw new Error(`Start: ${started.status}`);
+                      const row = await started.json();
+                      const uploaded = await fetch(`/api/recordings/${row.id}/chunks`, {method:'POST',
+                        headers:{Authorization:`Bearer ${token}`}, body:new Blob(chunks, {type:'video/webm'})});
+                      if (!uploaded.ok) throw new Error(`Upload: ${uploaded.status}`);
+                      const stopped = await fetch(`/api/recordings/${row.id}/stop`, {method:'POST', headers, body:'{}'});
+                      if (!stopped.ok) throw new Error(`Stop: ${stopped.status}`);
+                      return row.id;
+                    }""", TOKEN)
+                    win.locator(f'[data-recording="{recording_id}"] .surface-rail-row').click(timeout=T)
+                    win.get_by_test_id("recordings-video").wait_for(timeout=T)
+                    win.get_by_test_id("recordings-video").evaluate("""async video => {
+                      video.muted = true;
+                      try { await video.play(); video.pause(); }
+                      catch (error) {
+                        const response = await fetch(video.currentSrc || video.src);
+                        const bytes = new Uint8Array(await response.arrayBuffer());
+                        throw new Error(`${error}; HTTP ${response.status}; ${response.headers.get('content-type')}; `
+                          + `${bytes.length} bytes; head ${Array.from(bytes.slice(0, 32))}; ${video.error?.message}`);
+                      }
+                    }""")
+                    win.get_by_test_id("recordings-storage").get_by_role("button").click()
+                    win.get_by_test_id("settings-recordings-usage").scroll_into_view_if_needed(timeout=T)
+                    sweep.settle()
+                    sweep.fences("storage")
+                    win.get_by_test_id("recordings-mast").scroll_into_view_if_needed(timeout=T)
+                    assert win.locator(".recordings-object > .surface-spine").evaluate("el => el.getBoundingClientRect().height") >= 4
+                page.mouse.move(2, 2)
+                sweep.settle()
+                sweep.fences("picked")
+                if width == 393:
+                    assert win.get_by_test_id("rail-back").is_visible()
+                    assert not win.locator(".surface-rail-back").is_visible()
+                page.evaluate("localStorage.setItem('hs:walk-voice', 'off')")
+                if width == 393:
+                    win.get_by_test_id("show-me-more").click()
+                    page.get_by_role("menuitem", name="Show me").click()
+                else:
+                    win.get_by_test_id("show-me").click()
+                script = json.loads((REPO / "web/src/desk/walks" / f"{case_id.removeprefix('surface-')}.walk.json").read_text())
+                for step in script["steps"]:
+                    page.wait_for_function("question => document.querySelector('[data-testid=walk-question]')?.textContent === question",
+                                           arg=step["ask"]["question"], timeout=T)
+                    page.get_by_test_id("walk-choice-0").click(timeout=T)
+                page.get_by_test_id("walk-end").wait_for(timeout=T)
+                assert page.get_by_test_id("walk-end").is_visible()
+                page.get_by_test_id("walk-back").click()
             if case_id == "meeting":
                 # The meeting's long reads replace its ledger, with one Back.
                 for door, label in (("meeting-read-summary", "Summary"), ("meeting-read-transcript", "Transcript")):

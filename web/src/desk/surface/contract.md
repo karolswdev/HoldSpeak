@@ -1529,7 +1529,8 @@ The library roving hook owns Up/Down, Home/End and type-ahead; Enter picks.
 At surface widths through 520 px the list fills the window. A pick opens
 the pane, and Back returns to the list. A hosted phone uses the title-bar
 Back; a narrow desktop window uses an in-flow Back. `paneOpen` and `onBack` let a host
-keep navigation authority; `hostBack` uses its existing Back. `head` holds
+keep navigation authority; `hostBack` uses its existing Back. Object pullouts
+publish the same title-bar Back slot as application windows. `head` holds
 search and library verbs, `foot` holds pagination, and children replace
 rows for loading, empty and failed states. Components → Rail demonstrates
 selection alongside Mast and Spine. The agent transcript remains TimelineRail.

@@ -21,7 +21,6 @@ const viewportWidthMediaAllowlist = new Set([
   "/src/desk/components/list-view.css", // desk-floor shell chip
   "/src/desk/components/pullout.css", // fixed mobile thought-context sheet
   "/src/desk/components/session-pullout.css",
-  "/src/desk/pullouts/intelligence.css", // phone sheet shell
   "/src/desk/thought-workspace/thought-workspace.css", // full-viewport mobile workspace shell
   "/src/styles/react-app.css", // route shell
   // HS-202-05 (the type-scale ruling, §3 rule 4): the ONE viewport block

@@ -1,3 +1,4 @@
+// Parked 2026-11-09: Today opens Needs you; answers have one face.
 /** Betterment daily D4: the top of Needs you, in Today.
  *
  *  The same rows as the Needs-you window, from the same read and in the same
