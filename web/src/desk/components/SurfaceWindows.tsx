@@ -46,6 +46,7 @@ export interface SurfaceRow {
   defaultW?: number;
   /** Preferred first-open height; persisted owner arrangements still win. */
   defaultH?: number;
+  fitContent?: boolean;
   /** Open maximized (full stage) — the canvas-sized surfaces want it. */
   maximized?: boolean;
   /** The world sprite kind of the title bar's glyph (applications.ts). */
@@ -66,6 +67,7 @@ const SURFACES: SurfaceRow[] = SURFACE_APPLICATIONS
   minH: application.surface.minH ?? 220,
   defaultW: application.surface.defaultW,
   defaultH: application.surface.defaultH,
+  fitContent: application.surface.fitContent,
   maximized: application.surface.maximized,
   sprite: application.surface.sprite,
   parked: application.parked,
@@ -244,7 +246,7 @@ export function SurfaceWindowHost({
       defaultH={row.defaultH}
       // The creation form keeps its declared footer seat as source choices
       // arrive. Application readers fit the material on their first open.
-      fitContent={row.key !== "project-setup"}
+      fitContent={row.fitContent ?? row.key !== "project-setup"}
       wings={wings}
       // PHILO-16: a window scoped to a project belongs to that Room (Gather).
       room={scope?.startsWith("project:") ? scope : undefined}

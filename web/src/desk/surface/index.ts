@@ -213,7 +213,7 @@ export { reasonWords, reasonVerb, isRunFailureReason, type RunFailureReason } fr
 // PHILO-14 B1 — the object species (DeskIcon, ObjectList, TimelineRail, ...).
 export * from "./objects";
 
-export { PreferencePane, PaneGroup, PaneInspector, PaneActions, SegmentedTabs } from "./patterns/PreferencePane";
+export { PreferencePane, PreferenceWell, PaneGroup, PaneInspector, PaneActions, SegmentedTabs } from "./patterns/PreferencePane";
 export { listVerbEntries, type ListVerb } from "./objects/ObjectList";
 
 export { ListPane } from "./patterns/ListPane";

@@ -9586,7 +9586,7 @@
         },
         {
           "path": "web/src/pages/cores/settings/Accounts.tsx",
-          "symbol": "<Destinations onSetUpAccount=",
+          "symbol": "<Destinations onCount={setDestinations}",
           "claim": "Settings keeps the channel destination group as the supported path."
         }
       ],

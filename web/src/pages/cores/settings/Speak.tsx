@@ -2,20 +2,7 @@
 import { useEffect, useState } from "react";
 import type { SettingsResponse } from "../core-types";
 import { Button } from "../../../components/signal/Signal";
-import {
-  CycleGadget,
-  FoldGadget,
-  GadgetGroup,
-  GadgetRow,
-  GadgetTable,
-  StringGadget,
-} from "../../../desk/surface/gadgets";
-import {
-  countToken,
-  ConfirmVerb,
-  GadgetDivider,
-  SurfaceColumns,
-} from "../../../desk/surface";
+import { CycleGadget, GadgetGroup, GadgetRow, StringGadget, countToken, PreferencePane, ListPane, SegmentedTabs, PaneGroup, PaneInspector, ListView, type ListVerb } from "../../../desk/surface";
 import { LANGUAGE_OPTIONS, WAKE_ACTION_OPTIONS } from "./prefs";
 import type { SettingsBindings } from "./bindings";
 import type { SettingsWriter } from "./writer";
@@ -29,192 +16,176 @@ export function useSpokenSymbolsDraft(data: SettingsResponse, writer: SettingsWr
   const [spokenSymbolsDraft, setSpokenSymbolsDraft] = useState<SpokenSymbol[] | null>(null);
   useEffect(() => {
     if (spokenSymbolsDraft === null) return;
-    const writesSymbols = ([path]: [string[], unknown]) =>
-      path.length === 2 && path[0] === "dictation" && path[1] === "spoken_symbols";
+    const writesSymbols = ([path]: [string[], unknown]) => path.length === 2 && path[0] === "dictation" && path[1] === "spoken_symbols";
     if (writer.hasPendingWrite(writesSymbols)) return;
     const confirmed = (writer.authoritativeBaseRef.current.dictation as { spoken_symbols?: SpokenSymbol[] } | undefined)?.spoken_symbols ?? [];
     if (
       confirmed.length === spokenSymbolsDraft.length &&
-      confirmed.every((entry, index) =>
-        entry.spoken === spokenSymbolsDraft[index].spoken?.trim() &&
-        entry.symbol === spokenSymbolsDraft[index].symbol &&
-        (entry.attach ?? "none") === (spokenSymbolsDraft[index].attach ?? "none").trim().toLowerCase(),
+      confirmed.every(
+        (entry, index) =>
+          entry.spoken === spokenSymbolsDraft[index].spoken?.trim() &&
+          entry.symbol === spokenSymbolsDraft[index].symbol &&
+          (entry.attach ?? "none") === (spokenSymbolsDraft[index].attach ?? "none").trim().toLowerCase(),
       )
-    ) setSpokenSymbolsDraft(null);
+    )
+      setSpokenSymbolsDraft(null);
   }, [data, spokenSymbolsDraft]);
   return { spokenSymbolsDraft, setSpokenSymbolsDraft };
 }
 
 export type SpokenSymbolsDraft = ReturnType<typeof useSpokenSymbolsDraft>;
 
-export function SpeakSection({ b, symbolsDraft, onRefuse }: {
-  b: SettingsBindings;
-  symbolsDraft: SpokenSymbolsDraft;
-  onRefuse: (refusal: string) => void;
-}) {
+export function SpeakSection({ b, symbolsDraft, onRefuse }: { b: SettingsBindings; symbolsDraft: SpokenSymbolsDraft; onRefuse: (refusal: string) => void }) {
   const { data, update, val, hl, check, str, num, cyc, prop, csv } = b;
   const { spokenSymbolsDraft, setSpokenSymbolsDraft } = symbolsDraft;
-        const symbols = spokenSymbolsDraft ?? (val(["dictation", "spoken_symbols"]) ?? []) as SpokenSymbol[];
-        const symbolsPath = ["dictation", "spoken_symbols"];
-        const writeSymbols = (next: SpokenSymbol[]) => {
-          setSpokenSymbolsDraft(next);
-          if (next.every((entry) => entry.spoken?.trim() && (entry.symbol?.length ?? 0) > 0)) {
-            update(symbolsPath, next);
-          }
-        };
-        const patchSymbol = (index: number, patch: Record<string, string>) =>
-          writeSymbols(
-            symbols.map((entry, row) =>
-              row === index ? { ...entry, ...patch } : entry,
-            ),
-          );
-        const macroItems = (val(["dictation", "macros", "items"]) ??
-          []) as unknown[];
-        return (
-          <>
-            <SurfaceColumns
-              variant="preferences"
-              main={<>
-                <GadgetGroup label="Voice typing" material="inset">
-                  <HotkeyCapture
-                    grouped={false}
-                    value={(data.hotkey ?? {}) as Record<string, unknown>}
-                    highlight={hl(["hotkey"])}
-                    onCommit={(next) =>
-                      update(["hotkey"], {
-                        ...(data.hotkey as Record<string, unknown>),
-                        ...next,
-                      })
-                    }
-                    onRefuse={onRefuse}
-                  />
-                  {cyc(["model", "language"], "Language", LANGUAGE_OPTIONS)}
-                  <GadgetDivider />
-                  {check(["dictation", "preview_before_type"], "Preview before type")}
-                  {check(
-                    ["dictation", "macros", "enabled"],
-                    "Voice commands",
-                    countToken(macroItems.length, "command", "commands") ?? undefined,
-                  )}
-                </GadgetGroup>
-                <GadgetGroup label="Wake word" material="inset">
-                  {check(["wake_word", "enabled"], "Enabled")}
-                  {cyc(
-                    ["wake_word", "action"],
-                    "Action",
-                    WAKE_ACTION_OPTIONS,
-                  )}
-                </GadgetGroup>
-              </>}
-              side={
-                <GadgetGroup
-                  label="Spoken symbols"
-                  material="inset"
-                  actions={<>
-                    <Button dense variant="secondary" onClick={() => setSpokenSymbolsDraft([...symbols, { spoken: "", symbol: "", attach: "none" }])}>Add symbol</Button>
-                    {spokenSymbolsDraft !== null ? <span className="gadget-fact" role="status">Draft</span> : null}
-                  </>}
-                >
-                  {symbols.length ? (
-                    <GadgetTable
-                      layout="fields"
-                      head={["Spoken", "Symbol", "Attach"]}
-                      verbs={(index) => <ConfirmVerb
-                        label="Forget"
-                        confirmLabel="Forget?"
-                        ariaLabel={`Forget symbol ${index + 1}`}
-                        onConfirm={() => writeSymbols(symbols.filter((_, row) => row !== index))}
-                      />}
-                      rows={symbols.map((entry, index) => [
-                        <StringGadget
-                          key="spoken"
-                          label={`Spoken phrase ${index + 1}`}
-                          value={entry.spoken ?? ""}
-                          placeholder="arrow"
-                          onChange={(next) => patchSymbol(index, { spoken: next })}
-                        />,
-                        <StringGadget
-                          key="symbol"
-                          label={`Symbol ${index + 1}`}
-                          value={entry.symbol ?? ""}
-                          placeholder="→"
-                          mic={false}
-                          onChange={(next) => patchSymbol(index, { symbol: next })}
-                        />,
-                        <CycleGadget
-                          key="attach"
-                          label={`Attachment ${index + 1}`}
-                          value={entry.attach ?? "none"}
-                          options={[
-                            { value: "none" },
-                            { value: "left" },
-                            { value: "right" },
-                            { value: "both" },
-                          ]}
-                          onChange={(next) => patchSymbol(index, { attach: next })}
-                        />,
-                      ])}
-                    />
-                  ) : <span className="gadget-fact">No spoken symbols</span>}
-                </GadgetGroup>
+  const symbols = spokenSymbolsDraft ?? ((val(["dictation", "spoken_symbols"]) ?? []) as SpokenSymbol[]);
+  const symbolsPath = ["dictation", "spoken_symbols"];
+  const writeSymbols = (next: SpokenSymbol[]) => {
+    setSpokenSymbolsDraft(next);
+    if (next.every((entry) => entry.spoken?.trim() && (entry.symbol?.length ?? 0) > 0)) {
+      update(symbolsPath, next);
+    }
+  };
+  const patchSymbol = (index: number, patch: Record<string, string>) => writeSymbols(symbols.map((entry, row) => (row === index ? { ...entry, ...patch } : entry)));
+  const macroItems = (val(["dictation", "macros", "items"]) ?? []) as unknown[];
+  const [tab, setTab] = useState("typing");
+  const [picked, pick] = useState<string | null>(null);
+  const [editing, edit] = useState<number | null>(null);
+  const entry = editing === null ? null : symbols[editing];
+  const verbs: ListVerb[] = [
+    {
+      id: "add",
+      label: "Add symbol",
+      symbol: "+",
+      run: () => {
+        setSpokenSymbolsDraft([...symbols, { spoken: "", symbol: "", attach: "none" }]);
+        edit(symbols.length);
+      },
+    },
+    {
+      id: "remove",
+      label: "Forget",
+      symbol: "−",
+      key: "Delete",
+      enabled: (row) => Boolean(row),
+      run: (row) => {
+        writeSymbols(symbols.filter((_, i) => String(i) !== row?.id));
+        pick(null);
+      },
+    },
+    {
+      id: "edit",
+      label: "Edit…",
+      key: "Enter",
+      enabled: (row) => Boolean(row),
+      run: (row) => edit(Number(row!.id)),
+    },
+  ];
+  return (
+    <PreferencePane label="Speak">
+      <SegmentedTabs
+        label="Speak"
+        value={tab}
+        onChange={setTab}
+        tabs={[
+          { id: "typing", label: "Typing" },
+          { id: "wake", label: "Wake word" },
+          { id: "symbols", label: "Symbols" },
+          { id: "pipeline", label: "Pipeline" },
+        ]}
+      >
+        {tab === "typing" ? (
+          <GadgetGroup label="Voice typing">
+            <HotkeyCapture
+              grouped={false}
+              value={(data.hotkey ?? {}) as Record<string, unknown>}
+              highlight={hl(["hotkey"])}
+              onCommit={(next) =>
+                update(["hotkey"], {
+                  ...(data.hotkey as Record<string, unknown>),
+                  ...next,
+                })
               }
+              onRefuse={onRefuse}
             />
-            {/* HS-139-04/05: all voice RAW wells merged. */}
-            <FoldGadget title="More">
-              <GadgetGroup material="inset" label="Transcription">
-                {num(
-                  ["model", "transcribe_timeout_seconds"],
-                  "Transcribe timeout",
-                  {
-                    unit: "s",
-                    min: 5,
-                    step: 5,
-                  },
-                )}
+            {cyc(["model", "language"], "Language", LANGUAGE_OPTIONS)}
+            {check(["dictation", "preview_before_type"], "Preview before type")}
+            {check(["dictation", "macros", "enabled"], "Voice commands", countToken(macroItems.length, "command", "commands") ?? undefined)}
+            {num(["model", "transcribe_timeout_seconds"], "Transcribe timeout", { unit: "s", min: 5, step: 5 })}
+          </GadgetGroup>
+        ) : null}
+        {tab === "wake" ? (
+          <GadgetGroup label="Wake word">
+            {check(["wake_word", "enabled"], "Enabled")}
+            {cyc(["wake_word", "action"], "Action", WAKE_ACTION_OPTIONS)}
+            {str(["wake_word", "model"], "Model", {
+              placeholder: "hey_jarvis",
+            })}
+            {prop(["wake_word", "threshold"], "Threshold", {
+              min: 0,
+              max: 1,
+              step: 0.05,
+            })}
+            {num(["wake_word", "armed_window_seconds"], "Armed window", {
+              unit: "s",
+              min: 1,
+              step: 1,
+            })}
+          </GadgetGroup>
+        ) : null}
+        {tab === "symbols" ? <ListPane label="Symbol inspector" list={(            <PaneGroup label="Spoken symbols">
+              <ListView
+                label="Spoken symbols"
+                ordered
+                rows={symbols.map((symbol, i) => ({
+                  id: String(i),
+                  kind: "symbol",
+                  name: symbol.spoken || "New symbol",
+                  cells: { symbol: symbol.symbol, attach: symbol.attach },
+                }))}
+                columns={[
+                  { key: "name", word: "Spoken" },
+                  { key: "symbol", word: "Symbol" },
+                  { key: "attach", word: "Attach" },
+                ]}
+                selectedId={picked}
+                onSelect={pick}
+                verbs={verbs}
+                defaultVerb="edit"
+              />
+            </PaneGroup>)}>{entry ? (
+            <PaneInspector label="Spoken symbol" onClose={() => edit(null)}>
+              <GadgetGroup>
+                <GadgetRow label="Spoken">
+                  <StringGadget label={`Spoken phrase ${editing! + 1}`} value={entry.spoken ?? ""} onChange={(next) => patchSymbol(editing!, { spoken: next })} />
+                </GadgetRow>
+                <GadgetRow label="Symbol">
+                  <StringGadget label={`Symbol ${editing! + 1}`} value={entry.symbol ?? ""} mic={false} onChange={(next) => patchSymbol(editing!, { symbol: next })} />
+                </GadgetRow>
+                <GadgetRow label="Attach">
+                  <CycleGadget
+                    label={`Attachment ${editing! + 1}`}
+                    value={entry.attach ?? "none"}
+                    options={[{ value: "none" }, { value: "left" }, { value: "right" }, { value: "both" }]}
+                    onChange={(next) => patchSymbol(editing!, { attach: next })}
+                  />
+                </GadgetRow>
               </GadgetGroup>
-              <GadgetGroup material="inset" label="Pipeline">
-                {csv(["dictation", "pipeline", "stages"], "Stages")}
-                {num(
-                  ["dictation", "pipeline", "max_total_latency_ms"],
-                  "Latency budget",
-                  { unit: "ms", min: 0, step: 250 },
-                )}
-                {num(
-                  ["dictation", "pipeline", "rewrite_passes"],
-                  "Rewrite passes",
-                  {
-                    min: 0,
-                    max: 5,
-                  },
-                )}
-                {check(
-                  ["dictation", "pipeline", "target_detect_llm_enabled"],
-                  "LLM target detect",
-                )}
-                {prop(
-                  ["dictation", "pipeline", "target_detect_llm_below"],
-                  "Detect below",
-                  { min: 0, max: 1, step: 0.05 },
-                )}
-              </GadgetGroup>
-              <GadgetGroup material="inset" label="Wake word">
-                {str(["wake_word", "model"], "Model", {
-                  placeholder: "hey_jarvis",
-                })}
-                {prop(["wake_word", "threshold"], "Threshold", {
-                  min: 0,
-                  max: 1,
-                  step: 0.05,
-                })}
-                {num(["wake_word", "armed_window_seconds"], "Armed window", {
-                  unit: "s",
-                  min: 1,
-                  step: 1,
-                })}
-              </GadgetGroup>
-            </FoldGadget>
-          </>
-        );
+              {spokenSymbolsDraft !== null ? <span role="status">Draft</span> : null}
+            </PaneInspector>
+) : null}</ListPane> : null}
+        {tab === "pipeline" ? (
+          <GadgetGroup label="Pipeline">
+            {csv(["dictation", "pipeline", "stages"], "Stages")}
+            {num(["dictation", "pipeline", "max_total_latency_ms"], "Latency budget", { unit: "ms", min: 0, step: 250 })}
+            {num(["dictation", "pipeline", "rewrite_passes"], "Rewrite passes", { min: 0, max: 5 })}
+            {check(["dictation", "pipeline", "target_detect_llm_enabled"], "LLM target detect")}
+            {prop(["dictation", "pipeline", "target_detect_llm_below"], "Detect below", { min: 0, max: 1, step: 0.05 })}
+          </GadgetGroup>
+        ) : null}
+      </SegmentedTabs>
+    </PreferencePane>
+  );
 }
 
 // HS-101 round 5 / HS-111-01 — bespoke configuration components. A
@@ -284,9 +255,7 @@ export function HotkeyCapture({
       }
       const name = CODE_TO_NAME[event.code];
       if (!name) {
-        onRefuse?.(
-          `${event.code} can't be a hold key: use a modifier (⌥ ⌃ ⌘ ⇧, left or right), ⇪, or F1–F12`,
-        );
+        onRefuse?.(`${event.code} can't be a hold key: use a modifier (⌥ ⌃ ⌘ ⇧, left or right), ⇪, or F1–F12`);
         return;
       }
       setListening(false);
@@ -297,23 +266,19 @@ export function HotkeyCapture({
   }, [listening, onCommit, onRefuse]);
   const current = String(value.display || value.key || "unset");
   const row = (
-      <GadgetRow label="Push-to-talk key" fact="hold · release types" highlight={highlight} controlWidth={grouped ? undefined : "short"}>
-        <Button
-          variant="chrome"
-          className={"gadget-keycap" + (listening ? " is-listening" : "")}
-          aria-label={
-            listening
-              ? "Listening for the hold key. Esc cancels."
-              : `Push-to-talk key: ${current}. Press to change.`
-          }
-          onClick={() => {
-            onRefuse?.("");
-            setListening((v) => !v);
-          }}
-        >
-          {listening ? "" : current}
-        </Button>
-      </GadgetRow>
+    <GadgetRow label="Push-to-talk key" fact="hold · release types" highlight={highlight} controlWidth={grouped ? undefined : "short"}>
+      <Button
+        variant="chrome"
+        className={"gadget-keycap" + (listening ? " is-listening" : "")}
+        aria-label={listening ? "Listening for the hold key. Esc cancels." : `Push-to-talk key: ${current}. Press to change.`}
+        onClick={() => {
+          onRefuse?.("");
+          setListening((v) => !v);
+        }}
+      >
+        {listening ? "" : current}
+      </Button>
+    </GadgetRow>
   );
   return grouped ? <GadgetGroup>{row}</GadgetGroup> : row;
 }

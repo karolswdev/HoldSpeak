@@ -18,7 +18,7 @@ import { useHasWindowBack, useWindowBack } from "../../../desk/surface/back";
 import { useWindowTitle } from "../../../desk/surface/title";
 import { useCompactViewport } from "../../../desk/useCompactViewport";
 import { Rail, type SpineTone } from "../../../desk/surface";
-import "./window.css";
+import "../../../desk/surface/patterns/preferences.css";
 
 export type PrefRailItem = {
   id: string;

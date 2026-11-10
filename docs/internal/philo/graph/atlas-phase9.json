@@ -2183,12 +2183,12 @@
         },
         {
           "path": "web/src/pages/cores/settings/RemoteAccess.tsx",
-          "symbol": "data-testid={`credential-row-${cred.id}`}",
+          "symbol": "const rows = [",
           "claim": "one ledger row per credential"
         },
         {
           "path": "web/src/pages/cores/settings/RemoteAccess.tsx",
-          "symbol": "data-testid=\"palette-token\"",
+          "symbol": "paletteLabel(row.credential.palette)",
           "claim": "the row's palette token reads the issued name"
         },
         {

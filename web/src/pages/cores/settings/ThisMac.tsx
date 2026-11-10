@@ -4,13 +4,11 @@ import { useEffect, useState, type ReactNode } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { apiFetch, readableError } from "../../../lib/api";
 import { documentBuildId } from "../../../lib/buildId";
-import { CheckGadget, FoldGadget, GadgetGroup, GadgetRow, StringGadget } from "../../../desk/surface/gadgets";
-import { humanTime, StateChip } from "../../../desk/surface";
-import { openSurfaceOr } from "../../../desk/shell";
+import { CheckGadget, GadgetGroup, GadgetRow, StringGadget } from "../../../desk/surface/gadgets";
+import { PreferencePane, PreferenceWell, SegmentedTabs, PaneActions, humanTime, StateChip } from "../../../desk/surface";
 import { useBuilderTools } from "../../../desk/builderTools";
 import { DeskModule } from "./prefs";
-import { SectionMast, SettingLine, SettingsLedger, SettingsPlate } from "./native";
-import { Token } from "../../../desk/surface/Token";
+import { CredentialsGroup, type SecretChanges } from "./Accounts";
 import { RemoteAccessModule } from "./RemoteAccess";
 import type { GrantAct } from "./grants";
 import type { SettingsBindings } from "./bindings";
@@ -38,12 +36,15 @@ export type RuntimeIdentityWire = {
   repair?: string[];
   owns_database?: boolean | null;
   diagnoses?: { id: string; token: string; detail: string }[];
-  ownership?: { held?: boolean | null; lock_path?: string | null; owner?: Record<string, unknown> | null };
+  ownership?: {
+    held?: boolean | null;
+    lock_path?: string | null;
+    owner?: Record<string, unknown> | null;
+  };
   bundle_on_disk?: string;
 };
 
-const shortToken = (value: string, length = 12) =>
-  value && value.length > length ? value.slice(0, length) : value;
+const shortToken = (value: string, length = 12) => (value && value.length > length ? value.slice(0, length) : value);
 
 /** The tokens that need him: the hub's repair list, plus a STALE BUNDLE
  *  when the loaded document disagrees with the process. Never twice. */
@@ -64,122 +65,41 @@ export function useRuntimeIdentity() {
   useEffect(() => {
     let live = true;
     apiFetch<RuntimeIdentityWire>("/api/system/identity")
-      .then((next) => { if (live) { setWire(next); setError(""); } })
-      .catch((err) => { if (live) setError(readableError(err)); });
-    return () => { live = false; };
+      .then((next) => {
+        if (live) {
+          setWire(next);
+          setError("");
+        }
+      })
+      .catch((err) => {
+        if (live) setError(readableError(err));
+      });
+    return () => {
+      live = false;
+    };
   }, [nonce]);
-  return { wire, error, retry: () => { setError(""); setNonce((n) => n + 1); } };
+  return {
+    wire,
+    error,
+    retry: () => {
+      setError("");
+      setNonce((n) => n + 1);
+    },
+  };
 }
 
 export type RuntimeIdentity = ReturnType<typeof useRuntimeIdentity>;
 
 export function RuntimeIdentityModule({ children }: { children?: ReactNode } = {}) {
-  return <IdentityFold identity={useRuntimeIdentity()}>{children}</IdentityFold>;
-}
-
-/** The repair chips (unless `plated`: they stand on the caller's plate) and
- *  the one RAW fold of diagnostics, from the caller's read. */
-export function IdentityFold({ children, identity, plated = false }: {
-  children?: ReactNode;
-  identity: RuntimeIdentity;
-  plated?: boolean;
-}) {
-  const { wire, error, retry } = identity;
-
-  // PHILO-17 U35: the build hashes, the schema and the mesh name are
-  // diagnostics. They live in ONE RAW fold; only a repair finding (a stale
-  // bundle, a second writer) stays on the face, because it needs him.
-  if (error) {
-    return (
-      <>
-        <div className="prefs-read-failure" data-testid="runtime-unreadable" role="alert">
-          <span>Device read failed · Settings unchanged · Retry</span>
-          <Button variant="ghost" dense onClick={retry}>Retry</Button>
-        </div>
-        {children ? <FoldGadget title="More">{children}</FoldGadget> : null}
-      </>
-    );
-  }
-  if (!wire) return <><span className="gadget-fact" role="status">Reading device details…</span>{children ? <FoldGadget title="More">{children}</FoldGadget> : null}</>;
-
-  const id = wire.identity ?? {};
-  const served = id.frontend_build ?? "";
-  const document_ = documentBuildId();
-  const tokens = repairTokens(wire);
-  const schema = id.schema_version_loaded ?? id.schema_version_expected;
-
-  return (
-    <>
-      {tokens.length && !plated ? <RepairChips tokens={tokens} /> : null}
-      <FoldGadget title="More">
-        <GadgetGroup material="inset" label="Diagnostics">
-          <GadgetRow label="Backend">
-            <Token code className="surface-token" data-chip data-testid="runtime-backend">
-              {`${id.backend_version ?? "unknown"} · ${shortToken(id.backend_revision ?? "unknown")}`}
-            </Token>
-          </GadgetRow>
-          <GadgetRow label="Bundle">
-            <Token code={Boolean(served)} className="surface-token" data-chip data-testid="runtime-bundle">
-              {served ? shortToken(served) : "NONE"}
-            </Token>
-          </GadgetRow>
-          <GadgetRow label="Document">
-            <Token code={Boolean(document_)} className="surface-token" data-chip data-testid="runtime-document">
-              {document_ ? shortToken(document_) : "NONE"}
-            </Token>
-          </GadgetRow>
-          <GadgetRow label="Schema">
-            <Token className="surface-token" data-chip data-testid="runtime-schema">
-              {schema == null ? "NONE" : `SCHEMA ${schema}`}
-            </Token>
-          </GadgetRow>
-          <GadgetRow label="Database">
-            <Token code className="surface-token" data-chip data-testid="runtime-database">
-              {shortToken(id.database_id ?? "unknown", 8)}
-            </Token>
-          </GadgetRow>
-          <GadgetRow label="Started">
-            <Token className="surface-token" data-chip data-testid="runtime-started">
-              {humanTime(id.process_start ?? "")}
-            </Token>
-          </GadgetRow>
-          <GadgetRow label="Identity">
-            <Button variant="secondary" dense onClick={retry}>
-              Recheck
-            </Button>
-          </GadgetRow>
-          <GadgetRow label="Config">
-            <Token code className="surface-token" data-chip>{shortToken(id.config_revision ?? "unknown", 8)}</Token>
-          </GadgetRow>
-          <GadgetRow label="Process">
-            <Token className="surface-token" data-chip>{`PID ${id.pid ?? "—"}`}</Token>
-          </GadgetRow>
-          <GadgetRow label="Owns database">
-            <Token className="surface-token" data-chip data-testid="runtime-owns">
-              {wire.owns_database === true ? "OWNER" : wire.owns_database === false ? "TENANT" : "UNKNOWN"}
-            </Token>
-          </GadgetRow>
-          {id.database_path ? (
-            <GadgetRow label="Path" wide>
-              <Token code className="surface-token" data-chip data-testid="runtime-path">{id.database_path}</Token>
-            </GadgetRow>
-          ) : null}
-          {(wire.diagnoses ?? []).map((finding) => (
-            <GadgetRow key={finding.id} label={finding.token} wide>
-              <Token className="surface-token" data-chip>{finding.detail}</Token>
-            </GadgetRow>
-          ))}
-        </GadgetGroup>
-        {children}
-      </FoldGadget>
-    </>
-  );
+  return <RuntimeIdentityDetails identity={useRuntimeIdentity()}>{children}</RuntimeIdentityDetails>;
 }
 
 export function RepairChips({ tokens }: { tokens: string[] }) {
   return (
-    <div className="prefs-hub-chips" data-testid="runtime-repair">
-      {tokens.map((token) => <StateChip key={token} state="warning" label={token} />)}
+    <div className="surface-pane-actions" data-testid="runtime-repair">
+      {tokens.map((token) => (
+        <StateChip key={token} state="warning" label={token} />
+      ))}
     </div>
   );
 }
@@ -191,13 +111,102 @@ export function hubPlaceWord(host: string): string {
   return clean;
 }
 
+function RuntimeIdentityDetails({ identity, children }: { identity: RuntimeIdentity; children?: ReactNode }) {
+  const id = identity.wire?.identity;
+  const tokens = repairTokens(identity.wire);
+  const stale = tokens.includes("STALE BUNDLE");
+  return (
+    <PreferencePane label="Device details">
+      {identity.error ? (
+        <div className="surface-pane-actions" role="alert" data-testid="runtime-unreadable">
+          <span>Device read failed · Settings unchanged · Retry</span>
+          <Button dense onClick={identity.retry}>
+            Retry
+          </Button>
+        </div>
+      ) : null}
+      {tokens.length ? (
+        <PaneActions>
+          <RepairChips tokens={tokens} />
+          <Button dense onClick={stale ? () => window.location.reload() : identity.retry}>
+            {stale ? "Reload" : "Check again"}
+          </Button>
+        </PaneActions>
+      ) : null}
+      {identity.wire ? (
+        <PreferenceWell>
+          <div className="surface-tab-panel">
+            <GadgetGroup label="Build">
+              <GadgetRow label="Backend">
+                <span data-testid="runtime-backend">
+                  {id?.backend_version} · {shortToken(id?.backend_revision ?? "unknown")}
+                </span>
+              </GadgetRow>
+              <GadgetRow label="Bundle">
+                <span data-testid="runtime-bundle">{shortToken(id?.frontend_build || "None")}</span>
+              </GadgetRow>
+              <GadgetRow label="Document">
+                <span data-testid="runtime-document">{shortToken(documentBuildId() || "None")}</span>
+              </GadgetRow>
+              <GadgetRow label="Started">
+                <span data-testid="runtime-started">{humanTime(id?.process_start ?? "")}</span>
+              </GadgetRow>
+              <GadgetRow label="Process">
+                <span>{id?.pid ?? "—"}</span>
+              </GadgetRow>
+            </GadgetGroup>
+          </div>
+          <div className="surface-tab-panel">
+            <GadgetGroup label="Storage">
+              <GadgetRow label="Schema">
+                <span data-testid="runtime-schema">{id?.schema_version_loaded ?? id?.schema_version_expected ?? "None"}</span>
+              </GadgetRow>
+              <GadgetRow label="Database">
+                <span data-testid="runtime-database">{shortToken(id?.database_id ?? "unknown", 8)}</span>
+              </GadgetRow>
+              <GadgetRow label="Owns database">
+                <span data-testid="runtime-owns">{identity.wire?.owns_database === true ? "Owner" : identity.wire?.owns_database === false ? "Tenant" : "Unknown"}</span>
+              </GadgetRow>
+              <GadgetRow label="Config">
+                <span>{shortToken(id?.config_revision ?? "unknown", 8)}</span>
+              </GadgetRow>
+              <GadgetRow label="Path" wide>
+                <code className="surface-command-code" data-testid="runtime-path" title={id?.database_path ?? undefined}>
+                  {id?.database_path}
+                </code>
+              </GadgetRow>
+            </GadgetGroup>
+          </div>
+          <div className="surface-tab-panel">
+            {children}
+          </div>
+        </PreferenceWell>
+      ) : null}
+      <PaneActions>
+        <Button dense onClick={identity.retry}>
+          Recheck
+        </Button>
+      </PaneActions>
+    </PreferencePane>
+  );
+}
+
 /** Settings > System (the language, 2026-11-11): the mast says where the
  *  hub runs and who can reach it; the plate is a repair finding when one
  *  needs him, else remote access, the section's primary setting; the
  *  ledger holds the device name, Builder tools, the Engines window and Setup; the
  *  fold holds the desk reset and the diagnostics. */
-export function ThisMacSection({ b, hubSystem, grantAct, receiptOpen, onGrantAct, focusHighlight }: {
+export function ThisMacSection({
+  b,
+  hubSystem,
+  grantAct,
+  receiptOpen,
+  onGrantAct,
+  focusHighlight,
+  secrets,
+}: {
   b: SettingsBindings;
+  secrets: SecretChanges;
   hubSystem: { host: string; mesh: boolean; remote?: boolean };
   grantAct: GrantAct | null;
   receiptOpen: boolean;
@@ -206,62 +215,58 @@ export function ThisMacSection({ b, hubSystem, grantAct, receiptOpen, onGrantAct
 }) {
   const { data, update, val, walkerRows } = b;
   const identity = useRuntimeIdentity();
-  const tokens = repairTokens(identity.wire);
-  const [remote, setRemote] = useState<boolean | null>(null);
-  const [nameOpen, setNameOpen] = useState(focusHighlight === "mesh.device_name");
-  useEffect(() => { if (focusHighlight === "mesh.device_name") setNameOpen(true); }, [focusHighlight]);
+  const [tab, setTab] = useState(focusHighlight.startsWith("remote") ? "access" : "device");
   const cachedBuilder = useBuilderTools((state) => state.on);
   const setCachedBuilder = useBuilderTools((state) => state.setOn);
-  const builder = Boolean(val(["ui", "builder_tools"]) ?? cachedBuilder);
-  const setBuilder = (next: boolean) => {
-    // The writer owns the revisioned write; the cache keeps Go and Search
-    // quick until the hub answers.
-    setCachedBuilder(next);
-    update(["ui", "builder_tools"], next);
-  };
-  const deviceName = String(val(["mesh", "device_name"]) ?? "");
-  const on = remote ?? Boolean(hubSystem.remote);
-  const schema = identity.wire?.identity?.schema_version_loaded ?? identity.wire?.identity?.schema_version_expected;
-  const facts = [`Hub on ${hubPlaceWord(hubSystem.host)}`, on ? "other devices on" : "this Mac only", schema != null ? `schema ${schema}` : ""]
-    .filter(Boolean).join(" · ");
-  const device = (data.device ?? {}) as Record<string, unknown>;
-  const stale = tokens.includes("STALE BUNDLE");
-  return <>
-    <SectionMast id="this-mac" label="This Mac" sprite="system" facts={facts} />
-    {tokens.length ? (
-      <SettingsPlate tone="coral" title="Needs repair" testId="settings-system-plate"
-        verbs={stale
-          ? <Button variant="primary" onClick={() => window.location.reload()}>Reload</Button>
-          : <Button variant="primary" onClick={identity.retry}>Check again</Button>}>
-        <RepairChips tokens={tokens} />
-      </SettingsPlate>
-    ) : null}
-    <SettingsPlate tone={on ? "moss" : "steel"} title="Remote access" facts={on ? "On" : "Off"} testId="settings-remote-plate">
-      <RemoteAccessModule bare grantAct={grantAct} receiptOpen={receiptOpen} onGrantAct={onGrantAct} onEnabledChange={setRemote} />
-    </SettingsPlate>
-    <SettingsLedger label="This Mac">
-      <SettingLine label="Hub runs on" value={<span data-testid="system-hub-chips"><span data-testid="system-display">{hubPlaceWord(hubSystem.host)}</span></span>} />
-      <SettingLine label="Device name" value={deviceName || "Not set"} open={nameOpen} testId="settings-device-name"
-        verb={<Button dense variant="secondary" aria-expanded={nameOpen} onClick={() => setNameOpen((o) => !o)}>{nameOpen ? "Done" : "Change"}</Button>}>
-        <div className="settings-line-editor">
-          <StringGadget label="Device name" value={deviceName} onChange={(next) => update(["mesh", "device_name"], next || null)} />
+  return (
+    <PreferencePane label="This Mac">
+      <SegmentedTabs
+        label="This Mac"
+        value={tab}
+        onChange={setTab}
+        tabs={[
+          { id: "device", label: "Device" },
+          { id: "access", label: "Access" },
+          { id: "keys", label: "Keys" },
+          { id: "diagnostics", label: "Details" },
+        ]}
+      >
+        <div className="surface-tab-panel" hidden={tab !== "device"}>
+          <GadgetGroup label="Device">
+            <GadgetRow label="Hub runs on">
+              <span data-testid="system-hub-chips">
+                <span data-testid="system-display">{hubPlaceWord(hubSystem.host)}</span>
+              </span>
+            </GadgetRow>
+            <GadgetRow label="Device name" highlight={focusHighlight === "mesh.device_name"}>
+              <StringGadget label="Device name" value={String(val(["mesh", "device_name"]) ?? "")} onChange={(next) => update(["mesh", "device_name"], next || null)} />
+            </GadgetRow>
+            <GadgetRow label="Builder tools">
+              <CheckGadget
+                variant="state"
+                label="Builder tools"
+                checked={Boolean(val(["ui", "builder_tools"]) ?? cachedBuilder)}
+                onChange={(next) => {
+                  setCachedBuilder(next);
+                  update(["ui", "builder_tools"], next);
+                }}
+              />
+            </GadgetRow>
+          </GadgetGroup>
+          <DeskModule />
         </div>
-      </SettingLine>
-      <SettingLine label="Builder tools" value="Adds Builder to Go and Search"
-        verb={<CheckGadget variant="state" label="Builder tools" checked={builder} onChange={setBuilder} />} />
-      <SettingLine label="Engines" value="Each job and its engine"
-        verb={<Button dense variant="secondary" onClick={() => openSurfaceOr("configure-runs-on", "/models")} data-testid="settings-engines-page-link">Open Engines</Button>} />
-      <SettingLine label="Setup" value="What HoldSpeak found"
-        verb={<Button dense variant="secondary" onClick={() => openSurfaceOr("configure-setup", "/")} data-testid="settings-setup-page-link">Open Setup</Button>} />
-    </SettingsLedger>
-    {/* The rare: the desk reset and the diagnostics, in one fold. */}
-    <IdentityFold identity={identity} plated>
-      <DeskModule />
-      {Object.keys(device).length ? (
-        <GadgetGroup material="inset" label="Device">
-          {walkerRows(device, ["device"])}
-        </GadgetGroup>
-      ) : null}
-    </IdentityFold>
-  </>;
+        <div className="surface-tab-panel" hidden={tab !== "access"}>
+          <RemoteAccessModule bare grantAct={grantAct} receiptOpen={receiptOpen} onGrantAct={onGrantAct} />
+        </div>
+        <div className="surface-tab-panel" hidden={tab !== "keys"}>
+          <CredentialsGroup b={b} secrets={secrets} />
+        </div>
+        {tab === "diagnostics" ? (
+          <RuntimeIdentityDetails identity={identity}>
+            <GadgetGroup label="Device">{walkerRows((data.device ?? {}) as Record<string, unknown>, ["device"])}</GadgetGroup>
+          </RuntimeIdentityDetails>
+        ) : null}
+      </SegmentedTabs>
+    </PreferencePane>
+  );
 }

@@ -22,20 +22,27 @@ import { CycleGadget, FoldGadget, GadgetGroup, GadgetRow, StringGadget } from ".
 import { DotWord } from "../surface/kit";
 import { plainFail } from "../surface/plainFailure";
 import { SurfaceState } from "../surface/Surface";
-import "./reach.css";
+import { PreferencePane, PreferenceWell, SegmentedTabs, PaneActions } from "../surface";
 
 export type ReachStatus = {
   channels: {
     desk: { words: string };
     phone_app: { on: boolean; paired: string | null; words: string };
     telegram: {
-      on: boolean; token: "keystore" | "missing"; destination?: string;
+      on: boolean;
+      token: "keystore" | "missing";
+      destination?: string;
       paired: { name: string; at?: string | null } | null;
       pairing: { expires_at: string } | null;
     };
     calls: { ready: boolean; words: string };
   };
-  ladder: { telegram: string; telegram_words?: string; order: string[]; kinds: Record<string, unknown> };
+  ladder: {
+    telegram: string;
+    telegram_words?: string;
+    order: string[];
+    kinds: Record<string, unknown>;
+  };
   quiet_hours: { start: number; end: number; now: boolean };
   digest: { at: string | number; hour: number };
   later_means: string;
@@ -44,7 +51,12 @@ export type ReachStatus = {
   later: unknown[];
 };
 
-export type Pairing = { code: string; words: string; expires_at: string; say: string };
+export type Pairing = {
+  code: string;
+  words: string;
+  expires_at: string;
+  say: string;
+};
 
 export const TELEGRAM_RUNG = [
   { value: "at_once", label: "At once" },
@@ -70,7 +82,10 @@ export const LATER_MEANS = [
 
 export const DIGEST_TIMES = [
   { value: "end_of_quiet", label: "End of quiet hours" },
-  ...[6, 7, 8, 9, 10, 12, 18].map((hour) => ({ value: String(hour), label: `${String(hour).padStart(2, "0")}:00` })),
+  ...[6, 7, 8, 9, 10, 12, 18].map((hour) => ({
+    value: String(hour),
+    label: `${String(hour).padStart(2, "0")}:00`,
+  })),
 ];
 
 export const TELEGRAM_EGRESS = "Messages go through Telegram's servers";
@@ -89,35 +104,51 @@ function reachKinds(kinds: Record<string, unknown> | undefined): PhoneStatus["re
   return out;
 }
 
-function TokenRow({ present, busy, highlight, onSave }: {
-  present: boolean; busy: boolean; highlight?: boolean; onSave(value: string): void;
-}) {
+function TokenRow({ present, busy, highlight, onSave }: { present: boolean; busy: boolean; highlight?: boolean; onSave(value: string): Promise<boolean> }) {
   const [draft, setDraft] = useState("");
   const [changing, setChanging] = useState(false);
   const open = !present || changing;
-  const save = () => {
+  const save = async () => {
     if (!draft.trim()) return;
-    onSave(draft.trim());
-    setDraft("");
-    setChanging(false);
+    const value = draft;
+    if (await onSave(value.trim())) {
+      setDraft((current) => (current === value ? "" : current));
+      setChanging(false);
+    }
   };
   return (
     <div className="reach-token" data-testid="reach-token" data-present={present || undefined}>
-      <GadgetRow label="Bot token" highlight={highlight} controlWidth="standard"
-        fact={<DotWord tone={present ? "ok" : "idle"} data-testid="reach-token-place">{present ? "Stored in your keystore" : "Missing"}</DotWord>}>
-        {present && !changing
-          ? <Button dense variant="secondary" onClick={() => setChanging(true)} data-testid="reach-token-replace">Replace</Button>
-          : <span />}
-      </GadgetRow>
+      {present && !changing ? <Button dense onClick={() => setChanging(true)} data-testid="reach-token-replace">Replace token</Button> : null}
       {open ? (
-        <div className="reach-field">
-          <StringGadget label="Bot token" value={draft} onChange={setDraft} mic={false} type="password"
-            placeholder="From BotFather · kept in your keystore"
-            onKeyDown={(event) => { if (event.key === "Enter") save(); }}
-            inputProps={{ autoComplete: "off", spellCheck: false }} />
-          <Button dense variant="primary" loading={busy} disabled={!draft.trim()} onClick={save} data-testid="reach-token-save">Save</Button>
-          {changing ? <Button dense variant="ghost" onClick={() => { setChanging(false); setDraft(""); }}>Cancel</Button> : null}
-        </div>
+        <PaneActions>
+          <StringGadget
+            label="Bot token"
+            value={draft}
+            onChange={setDraft}
+            mic={false}
+            type="password"
+            placeholder="Bot token"
+            onKeyDown={(event) => {
+              if (event.key === "Enter") save();
+            }}
+            inputProps={{ autoComplete: "off", spellCheck: false }}
+          />
+          <Button dense variant="primary" loading={busy} disabled={!draft.trim()} onClick={save} data-testid="reach-token-save">
+            Save
+          </Button>
+          {changing ? (
+            <Button
+              dense
+              variant="ghost"
+              onClick={() => {
+                setChanging(false);
+                setDraft("");
+              }}
+            >
+              Cancel
+            </Button>
+          ) : null}
+        </PaneActions>
       ) : null}
     </div>
   );
@@ -126,24 +157,37 @@ function TokenRow({ present, busy, highlight, onSave }: {
 function PairSheet({ pairing, now, onCopy, copied }: { pairing: Pairing; now: number; onCopy(): void; copied: boolean }) {
   const left = minutesLeft(pairing.expires_at, now);
   return (
-    <div className="reach-pair" data-testid="reach-pair-sheet">
+    <div className="surface-pane-actions" data-testid="reach-pair-sheet">
       <span className="reach-pair-say">
         Send <code data-testid="reach-pair-code">/pair {pairing.words}</code> to your bot
       </span>
-      <DotWord tone="info" live data-testid="reach-pair-left">{left > 0 ? `${left} min left` : "This code is too old"}</DotWord>
-      <Button dense variant="secondary" onClick={onCopy} data-testid="reach-pair-copy">{copied ? "Copied" : "Copy"}</Button>
+      <DotWord tone="info" live data-testid="reach-pair-left">
+        {left > 0 ? `${left} min left` : "This code is too old"}
+      </DotWord>
+      <Button dense variant="secondary" onClick={onCopy} data-testid="reach-pair-copy">
+        {copied ? "Copied" : "Copy"}
+      </Button>
     </div>
   );
 }
 
-export function ReachSettingsPane({ highlight, onSaved, quiet, cadence }: {
+export function ReachSettingsPane({
+  highlight,
+  onSaved,
+  quiet,
+  cadence,
+  cadenceTabs,
+}: {
   highlight?: string | null;
   onSaved?: () => void;
   /** Quiet hours: the one store (Settings' heartbeat rows). */
   quiet: ReactNode;
   /** The Cadence and morning brief groups, folded. */
-  cadence: ReactNode;
+  cadence?: ReactNode;
+  cadenceTabs?: { id: string; label: string; content: ReactNode }[];
 }) {
+  const [tab, setTab] = useState(highlight?.startsWith("heartbeat.") || highlight?.startsWith("reach.ladder") ? "timing" : "channels");
+  useEffect(() => { if (highlight?.startsWith("heartbeat.") || highlight?.startsWith("reach.ladder")) setTab("timing"); }, [highlight]);
   const reach = useResource<ReachStatus | null>("/api/reach", null);
   // A hub without the Reach routes (or any other answer) draws the rows empty.
   const status = reach.data && typeof reach.data === "object" && reach.data.channels ? reach.data : null;
@@ -151,7 +195,10 @@ export function ReachSettingsPane({ highlight, onSaved, quiet, cadence }: {
   const [copied, setCopied] = useState(false);
   const [now, setNow] = useState(() => Date.now());
   const [busy, setBusy] = useState("");
-  const [refusal, setRefusal] = useState<{ words: string; title: string } | null>(null);
+  const [refusal, setRefusal] = useState<{
+    words: string;
+    title: string;
+  } | null>(null);
   const [digest, setDigest] = useState("");
   const telegram = status?.channels?.telegram;
   const paired = telegram?.paired ?? null;
@@ -159,7 +206,10 @@ export function ReachSettingsPane({ highlight, onSaved, quiet, cadence }: {
   // The code breathes until a chat pairs: read the hub again every 3 s.
   useEffect(() => {
     if (!pairing) return;
-    const timer = window.setInterval(() => { setNow(Date.now()); void reach.reload(); }, 3_000);
+    const timer = window.setInterval(() => {
+      setNow(Date.now());
+      void reach.reload();
+    }, 3_000);
     return () => window.clearInterval(timer);
   }, [pairing, reach.reload]);
   useEffect(() => {
@@ -172,144 +222,297 @@ export function ReachSettingsPane({ highlight, onSaved, quiet, cadence }: {
     try {
       await act();
       onSaved?.();
+      return true;
     } catch (cause) {
       setRefusal(plainFail(failed, cause, stayed, "Try again"));
+      return false;
     } finally {
       setBusy("");
     }
   };
-  const put = (patch: Record<string, unknown>) => void run("put", async () => {
-    const saved = await apiFetch<ReachStatus>("/api/reach", { method: "PUT", json: patch });
-    reach.setData(saved);
-  }, "Reach was not saved", "The last choice holds");
-  const pair = () => void run("pair", async () => {
-    setCopied(false);
-    setNow(Date.now());
-    setPairing(await apiFetch<Pairing>("/api/reach/telegram/pair", { method: "POST", json: {} }));
-  }, "No pairing code", "Nothing changed");
-  const unpair = () => void run("unpair", async () => {
-    await apiFetch("/api/reach/telegram/pair", { method: "DELETE" });
-    setPairing(null);
-    await reach.reload();
-  }, "Telegram was not unpaired", "It stays paired");
-  const saveToken = (value: string) => void run("token", async () => {
-    await apiFetch("/api/reach/telegram/token", { method: "PUT", json: { token: value } });
-    await reach.reload();
-  }, "The token was not saved", "Nothing changed");
-  const sendDigest = () => void run("digest", async () => {
-    await apiFetch("/api/reach/digest", { method: "POST", json: {} });
-    setDigest("Sent to Telegram");
-  }, "No digest was sent", "Nothing was sent");
+  const put = (patch: Record<string, unknown>) =>
+    void run(
+      "put",
+      async () => {
+        const saved = await apiFetch<ReachStatus>("/api/reach", {
+          method: "PUT",
+          json: patch,
+        });
+        reach.setData(saved);
+      },
+      "Reach was not saved",
+      "The last choice holds",
+    );
+  const pair = () =>
+    void run(
+      "pair",
+      async () => {
+        setCopied(false);
+        setNow(Date.now());
+        setPairing(
+          await apiFetch<Pairing>("/api/reach/telegram/pair", {
+            method: "POST",
+            json: {},
+          }),
+        );
+      },
+      "No pairing code",
+      "Nothing changed",
+    );
+  const unpair = () =>
+    void run(
+      "unpair",
+      async () => {
+        await apiFetch("/api/reach/telegram/pair", { method: "DELETE" });
+        setPairing(null);
+        await reach.reload();
+      },
+      "Telegram was not unpaired",
+      "It stays paired",
+    );
+  const saveToken = (value: string) =>
+    run(
+      "token",
+      async () => {
+        await apiFetch("/api/reach/telegram/token", {
+          method: "PUT",
+          json: { token: value },
+        });
+        await reach.reload();
+      },
+      "The token was not saved",
+      "Nothing changed",
+    );
+  const sendDigest = () =>
+    void run(
+      "digest",
+      async () => {
+        await apiFetch("/api/reach/digest", { method: "POST", json: {} });
+        setDigest("Sent to Telegram");
+      },
+      "No digest was sent",
+      "Nothing was sent",
+    );
   const copy = () => {
     if (!pairing) return;
-    void navigator.clipboard?.writeText(`/pair ${pairing.code}`).then(() => setCopied(true)).catch(() => undefined);
+    void navigator.clipboard
+      ?.writeText(`/pair ${pairing.code}`)
+      .then(() => setCopied(true))
+      .catch(() => undefined);
   };
 
-  const telegramWord = paired
-    ? <DotWord tone="ok" data-testid="reach-telegram-state">{paired.name ? `Paired · ${paired.name}` : "Paired"}</DotWord>
-    : pairing
-      ? <DotWord tone="info" live data-testid="reach-telegram-state">Waiting for your bot</DotWord>
-      : <DotWord tone="idle" data-testid="reach-telegram-state">Not paired</DotWord>;
+  const telegramWord = paired ? (
+    <DotWord tone="ok" data-testid="reach-telegram-state">
+      {paired.name ? `Paired · ${paired.name}` : "Paired"}
+    </DotWord>
+  ) : pairing ? (
+    <DotWord tone="info" live data-testid="reach-telegram-state">
+      Waiting for your bot
+    </DotWord>
+  ) : (
+    <DotWord tone="idle" data-testid="reach-telegram-state">
+      Not paired
+    </DotWord>
+  );
   const kinds = reachKinds(status?.ladder.kinds);
   const level = typeof status?.ladder.kinds?.level === "string" ? String(status.ladder.kinds.level) : undefined;
 
   return (
-    <div className="reach-settings" data-testid="reach-settings" aria-busy={reach.loading || undefined}>
-      {reach.error && !status ? (
-        <SurfaceState error={`Not read · ${reach.error}`} onRetry={() => void reach.reload()} />
-      ) : null}
-      {refusal ? <p className="reach-refusal" role="alert" title={refusal.title} data-testid="reach-refusal">{refusal.words}</p> : null}
-      <GadgetGroup material="inset" label="Channels">
-        <GadgetRow label="Desk" controlWidth="standard"><DotWord tone="ok">Always</DotWord></GadgetRow>
-        <GadgetRow label="Phone app" controlWidth="standard"
-          fact={<DotWord tone={status?.channels.phone_app.paired ? "ok" : "idle"} data-testid="reach-phone-state">
-            {status?.channels.phone_app.words ?? "No phone is paired"}</DotWord>}>
-          <Button dense variant="secondary" onClick={() => openSurfaceOr("configure-settings", "/settings", "calls")}
-            data-testid="reach-phone-open">Open Calls settings</Button>
-        </GadgetRow>
-        <div data-testid="reach-telegram">
-          <GadgetRow label="Telegram" highlight={highlight === "reach.telegram"} controlWidth="standard"
-            fact={<span className="reach-telegram-fact">{telegramWord}<span className="reach-fact" data-testid="reach-egress">{TELEGRAM_EGRESS}</span></span>}>
-            {paired
-              ? <Button dense variant="secondary" loading={busy === "unpair"} onClick={unpair} data-testid="reach-unpair">Unpair</Button>
-              : <Button dense variant={pairing ? "secondary" : "primary"} loading={busy === "pair"}
-                disabled={!status || telegram?.token !== "keystore" || !telegram?.on}
-                title={telegram?.token !== "keystore" ? "Put the bot token in first" : undefined}
-                onClick={pair} data-testid="reach-pair">{pairing ? "New code" : "Pair Telegram"}</Button>}
-          </GadgetRow>
-          {pairing && !paired ? <PairSheet pairing={pairing} now={now} onCopy={copy} copied={copied} /> : null}
-          {status ? <TokenRow present={telegram?.token === "keystore"} busy={busy === "token"} onSave={saveToken}
-            highlight={highlight === "reach.token"} /> : null}
+    <PreferencePane label="Reach" testId="reach-settings">
+      <SegmentedTabs
+        label="Reach"
+        value={tab}
+        onChange={setTab}
+        tabs={[
+          { id: "channels", label: "Channels" },
+          { id: "timing", label: "Timing" },
+          { id: "calls", label: "Calls" },
+          { id: "digest", label: "Digest" },
+          ...(cadenceTabs ?? [{ id: "cadence", label: "Cadence", content: cadence }]),
+        ]}
+      >
+        {reach.error && !status ? <SurfaceState error={`Not read · ${reach.error}`} onRetry={() => void reach.reload()} /> : null}
+        {refusal ? (
+          <p className="gadget-fact" role="alert" title={refusal.title} data-testid="reach-refusal">
+            {refusal.words}
+          </p>
+        ) : null}
+        <div className="surface-tab-panel" hidden={tab !== "channels"}>
+          <GadgetGroup label="Channels">
+            <GadgetRow label="Desk"><span /></GadgetRow>
+            <GadgetRow
+              label="Phone app"
+              controlWidth="standard"
+              fact={
+                <DotWord tone={status?.channels.phone_app.paired ? "ok" : "idle"} data-testid="reach-phone-state">
+                  {status?.channels.phone_app.paired ? "" : status?.channels.phone_app.words ?? "No phone is paired"}
+                </DotWord>
+              }
+            >
+              <Button dense variant="secondary" onClick={() => openSurfaceOr("configure-settings", "/settings", "calls")} data-testid="reach-phone-open">
+                Open Calls settings
+              </Button>
+            </GadgetRow>
+            <div data-testid="reach-telegram">
+              <GadgetRow
+                label="Telegram"
+                highlight={highlight === "reach.telegram"}
+                controlWidth="standard"
+                fact={
+                  <span className="surface-pane-actions">
+                    {paired ? null : telegramWord}
+                    <span className="gadget-fact" data-testid="reach-egress">
+                      {TELEGRAM_EGRESS}
+                    </span>
+                  </span>
+                }
+              >
+                <div className="surface-pane-group">
+                {status ? <TokenRow present={telegram?.token === "keystore"} busy={busy === "token"} onSave={saveToken} highlight={highlight === "reach.token"} /> : null}
+                {paired ? (
+                  <Button dense variant="secondary" loading={busy === "unpair"} onClick={unpair} data-testid="reach-unpair">
+                    Unpair
+                  </Button>
+                ) : (
+                  <Button
+                    dense
+                    variant={pairing ? "secondary" : "primary"}
+                    loading={busy === "pair"}
+                    disabled={!status || telegram?.token !== "keystore" || !telegram?.on}
+                    title={telegram?.token !== "keystore" ? "Put the bot token in first" : undefined}
+                    onClick={pair}
+                    data-testid="reach-pair"
+                  >
+                    {pairing ? "New code" : "Pair Telegram"}
+                  </Button>
+                )}
+                </div>
+              </GadgetRow>
+              {pairing && !paired ? <PairSheet pairing={pairing} now={now} onCopy={copy} copied={copied} /> : null}
+            </div>
+            <GadgetRow
+              label="Calls"
+              controlWidth="standard"
+              fact={
+                <DotWord tone={status?.channels.calls.ready ? "ok" : "idle"} data-testid="reach-calls-state">
+                  {status?.channels.calls.words ?? "Not set in Settings ▸ Calls"}
+                </DotWord>
+              }
+            >
+              <span />
+            </GadgetRow>
+          </GadgetGroup>
         </div>
-        <GadgetRow label="Calls" controlWidth="standard"
-          fact={<DotWord tone={status?.channels.calls.ready ? "ok" : "idle"} data-testid="reach-calls-state">
-            {status?.channels.calls.words ?? "Not set in Settings ▸ Calls"}</DotWord>}>
-          <Button dense variant="secondary" onClick={() => openSurfaceOr("configure-settings", "/settings", "calls")}
-            data-testid="reach-calls-open">Open Calls settings</Button>
-        </GadgetRow>
-      </GadgetGroup>
-      {/* DIR7: the ladder, its rungs in the hub's order, each with its wait. */}
-      <GadgetGroup material="inset" label="When to reach you">
-        <div className="reach-ladder" data-testid="reach-ladder">
-          {(status?.ladder.order ?? LADDER).map((rung) => {
-            if (rung === "desk") {
-              return (
-                <GadgetRow key={rung} label="Desk" controlWidth="standard">
-                  <DotWord tone="ok" data-testid="reach-rung-desk">At once</DotWord>
+        <PreferenceWell>
+            {/* DIR7: the ladder, its rungs in the hub's order, each with its wait. */}
+            {tab === "timing" ? (
+              <GadgetGroup label="When to reach you">
+                <div className="reach-ladder" data-testid="reach-ladder">
+                  {(status?.ladder.order ?? LADDER).map((rung) => {
+                    if (rung === "desk") {
+                      return (
+                        <GadgetRow key={rung} label="Desk" controlWidth="standard">
+                          <DotWord tone="ok" data-testid="reach-rung-desk">
+                            At once
+                          </DotWord>
+                        </GadgetRow>
+                      );
+                    }
+                    if (rung === "phone_app") {
+                      return (
+                        <GadgetRow key={rung} label="Phone" controlWidth="standard">
+                          <CycleGadget
+                            label="Phone"
+                            value={status?.channels.phone_app.on === false ? "off" : "on"}
+                            options={PHONE_RUNG}
+                            disabled={!status || busy === "put"}
+                            onChange={(next) => put({ phone_app: next })}
+                          />
+                        </GadgetRow>
+                      );
+                    }
+                    if (rung === "telegram") {
+                      return (
+                        <GadgetRow key={rung} label="Telegram" highlight={highlight === "reach.ladder"} controlWidth="standard">
+                          <CycleGadget
+                            label="Telegram"
+                            value={status?.ladder.telegram ?? "at_once"}
+                            options={TELEGRAM_RUNG}
+                            disabled={!status || busy === "put"}
+                            onChange={(next) => put({ telegram: next })}
+                          />
+                        </GadgetRow>
+                      );
+                    }
+                    if (rung === "call") {
+                      return (
+                        <GadgetRow
+                          key={rung}
+                          label="Call"
+                          controlWidth="standard"
+                          fact={
+                            <DotWord tone={status?.channels.calls.ready ? "ok" : "idle"} data-testid="reach-rung-call">
+                              {status?.channels.calls.ready ? "By your rules below" : "Not set in Settings ▸ Calls"}
+                            </DotWord>
+                          }
+                        >
+                          <span />
+                        </GadgetRow>
+                      );
+                    }
+                    return null;
+                  })}
+                </div>
+              </GadgetGroup>
+            ) : null}
+            {tab === "calls" && status ? <ReachYouRows reach={kinds} level={level} onChanged={() => reach.reload()} /> : null}
+            {tab === "timing" ? quiet : null}
+            {tab === "digest" ? (
+              <GadgetGroup label="Digest and Later">
+                <GadgetRow label="Digest" highlight={highlight === "reach.digest"} controlWidth="standard">
+                  <CycleGadget
+                    label="Digest"
+                    value={String(status?.digest.at ?? "end_of_quiet")}
+                    options={DIGEST_TIMES}
+                    disabled={!status || busy === "put"}
+                    onChange={(next) =>
+                      put({
+                        digest: next === "end_of_quiet" ? next : Number(next),
+                      })
+                    }
+                  />
                 </GadgetRow>
-              );
-            }
-            if (rung === "phone_app") {
-              return (
-                <GadgetRow key={rung} label="Phone" controlWidth="standard">
-                  <CycleGadget label="Phone" value={status?.channels.phone_app.on === false ? "off" : "on"} options={PHONE_RUNG}
-                    disabled={!status || busy === "put"} onChange={(next) => put({ phone_app: next })} />
+                <GadgetRow
+                  label="Send the digest now"
+                  controlWidth="standard"
+                  fact={
+                    digest ? (
+                      <DotWord tone="ok" data-testid="reach-digest-sent">
+                        {digest}
+                      </DotWord>
+                    ) : undefined
+                  }
+                >
+                  <Button
+                    dense
+                    variant="secondary"
+                    loading={busy === "digest"}
+                    disabled={!paired}
+                    title={paired ? "One message to your Telegram chat" : "Pair Telegram first"}
+                    onClick={sendDigest}
+                    data-testid="reach-digest-now"
+                  >
+                    Send the digest now
+                  </Button>
                 </GadgetRow>
-              );
-            }
-            if (rung === "telegram") {
-              return (
-                <GadgetRow key={rung} label="Telegram" highlight={highlight === "reach.ladder"} controlWidth="standard">
-                  <CycleGadget label="Telegram" value={status?.ladder.telegram ?? "at_once"} options={TELEGRAM_RUNG}
-                    disabled={!status || busy === "put"} onChange={(next) => put({ telegram: next })} />
+                <GadgetRow label="Later means" highlight={highlight === "reach.later"} controlWidth="standard">
+                  <CycleGadget label="Later means" value={status?.later_means ?? "in_2h"} options={LATER_MEANS} disabled={!status || busy === "put"} onChange={(next) => put({ later_means: next })} />
                 </GadgetRow>
-              );
-            }
-            if (rung === "call") {
-              return (
-                <GadgetRow key={rung} label="Call" controlWidth="standard"
-                  fact={<DotWord tone={status?.channels.calls.ready ? "ok" : "idle"} data-testid="reach-rung-call">
-                    {status?.channels.calls.ready ? "By your rules below" : "Not set in Settings ▸ Calls"}</DotWord>}>
-                  <span />
-                </GadgetRow>
-              );
-            }
-            return null;
-          })}
-        </div>
-      </GadgetGroup>
-      {status ? <ReachYouRows reach={kinds} level={level} onChanged={() => reach.reload()} /> : null}
-      {quiet}
-      <GadgetGroup material="inset" label="Digest and Later">
-        <GadgetRow label="Digest" highlight={highlight === "reach.digest"} controlWidth="standard">
-          <CycleGadget label="Digest" value={String(status?.digest.at ?? "end_of_quiet")} options={DIGEST_TIMES}
-            disabled={!status || busy === "put"}
-            onChange={(next) => put({ digest: next === "end_of_quiet" ? next : Number(next) })} />
-        </GadgetRow>
-        <GadgetRow label="Send the digest now" controlWidth="standard"
-          fact={digest ? <DotWord tone="ok" data-testid="reach-digest-sent">{digest}</DotWord> : undefined}>
-          <Button dense variant="secondary" loading={busy === "digest"} disabled={!paired}
-            title={paired ? "One message to your Telegram chat" : "Pair Telegram first"}
-            onClick={sendDigest} data-testid="reach-digest-now">Send the digest now</Button>
-        </GadgetRow>
-        <GadgetRow label="Later means" highlight={highlight === "reach.later"} controlWidth="standard">
-          <CycleGadget label="Later means" value={status?.later_means ?? "in_2h"} options={LATER_MEANS}
-            disabled={!status || busy === "put"} onChange={(next) => put({ later_means: next })} />
-        </GadgetRow>
-      </GadgetGroup>
-      <FoldGadget title="Cadence and the morning brief">
-        <div className="reach-cadence" data-testid="reach-cadence">{cadence}</div>
-      </FoldGadget>
-    </div>
+              </GadgetGroup>
+            ) : null}
+        {cadenceTabs ? cadenceTabs.map((entry) => tab === entry.id ? <div className="surface-tab-panel" key={entry.id}>{entry.content}</div> : null) : tab === "cadence" ? cadence : null}
+        </PreferenceWell>
+      </SegmentedTabs>
+    </PreferencePane>
   );
 }

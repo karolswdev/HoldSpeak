@@ -65,7 +65,21 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                     else:
                         route.continue_()
                 page.route("**/api/inference/assignments/editor", editor)
+                call_fixtures = root / "web/src/desk/calls/__fixtures__"
+                for endpoint, recording in (
+                    ("/api/calls/status", "line.calls.ready.json"),
+                    ("/api/calls/line/status", "line.status.ready.json"),
+                    ("/api/calls/line/nodes", "line.nodes.ready.json"),
+                    ("/api/phone/status", "phone.settings.json"),
+                    ("/api/phone/push", "phone.push.stored.json"),
+                ):
+                    payload = json.loads((call_fixtures / recording).read_text())
+                    page.route(f"**{endpoint}", lambda route, _request, payload=payload: route.fulfill(json=payload))
+                for endpoint, recording in (("/api/settings/remote", "grant-remote-project-live.json"), ("/api/projects", "grant-projects.json")):
+                    payload = json.loads((fixtures / "settings-wire" / recording).read_text())
+                    page.route(f"**{endpoint}", lambda route, _request, payload=payload: route.fulfill(json=payload))
                 settings = json.loads((fixtures / "settings-wire/settings.json").read_text())
+                settings["calls"] = {**json.loads((call_fixtures / "line.settings.json").read_text()), "phone_on": True}
                 calendar = json.loads((fixtures / "settings-wire/calendar-sources-one.json").read_text())
                 # Vary only identity fields of real recorded calendar sources.
                 sources = [{**calendar["sources"][0], "id": f"feed-{i}", "label": name} for i, name in enumerate(("Home", "Woodward", "Work"))]
@@ -74,6 +88,7 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                 page.route("**/api/settings", lambda route: route.fulfill(json=settings) if route.request.method == "GET" else route.continue_())
                 page.route("**/api/calendar/sources", lambda route: route.fulfill(json=calendar))
                 _open_page(page, base)
+                assert page.request.get(f"{base}/api/settings", headers={"authorization": f"Bearer {TOKEN}"}).json()["dictation"]["spoken_symbols"] == []
                 if width == 1440:
                     _api(page, "POST", "/api/desk/windows/surface-settings/set_geometry", {"rect": {"x": "-1/2 + 100", "y": "-1/2 + 80", "w": "900px", "h": "600px"}}, token=TOKEN)
                 _settle(page)
@@ -103,7 +118,7 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                                 assert all(row.bounding_box()["height"] >= 26 for row in section.locator("[role=row][data-object-id]:visible").all())
                             else:
                                 assert all(row.bounding_box()["height"] >= 44 for row in section.locator("[role=row][data-object-id]:visible").all())
-                            assert section.locator('[role="row"] button').count() == 0
+                            assert section.locator('[role="row"] button, .surface-ledger-row button, .surface-row button').count() == 0
                             suffix = {"Services": "services", "Calendars": "calendars", "Send to": "send-to"}[tab]
                             page.screenshot(path=str(shots / f"accounts-{suffix}-{'900x600' if width == 1440 else '393'}-after.png"))
                             if only and tab == "Calendars":
@@ -111,7 +126,9 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                                 row.click()
                                 row.press("Enter")
                                 shot("calendars-inspector")
-                                section.get_by_role("region", name="Calendar", exact=True).get_by_role("button", name="Close", exact=True).click()
+                                expect(row).to_be_visible()
+                                assert row.bounding_box()["y"] < section.get_by_test_id("calendar-well").bounding_box()["y"]
+                                section.get_by_role("region", name="Calendar", exact=True).get_by_role("button", name="Cancel", exact=True).click()
                                 section.get_by_role("button", name="Remove calendar").click()
                                 shot("calendars-remove")
                                 section.get_by_role("button", name="Cancel", exact=True).click()
@@ -123,15 +140,17 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                                 section.get_by_role("button", name="Add calendar").click()
                                 page.get_by_role("menuitem", name="Mac calendars", exact=True).click()
                                 shot("calendars-mac")
-                                section.get_by_role("region", name="Mac calendars", exact=True).get_by_role("button", name="Close", exact=True).click()
+                                section.get_by_role("region", name="Mac calendars", exact=True).get_by_role("button", name="Done", exact=True).click()
                             if only and tab == "Send to":
                                 row = section.locator('[data-testid=dest-row]').first
                                 row.click()
                                 section.get_by_role("button", name="Open", exact=True).click()
                                 shot("send-to-details")
-                                section.locator(".surface-pane-inspector:has([data-testid=dest-open])").get_by_role("button", name="Close", exact=True).click()
+                                section.locator(".surface-pane-inspector:has([data-testid=dest-open])").get_by_role("button", name="Done", exact=True).click()
                                 section.get_by_role("button", name="Edit", exact=True).click()
                                 shot("send-to-edit")
+                                shot("sendto-inspector")
+                                expect(row).to_be_visible()
                                 assert not page.evaluate(AIR_WORDS_JS, "#surface-settings")["air"]
                                 section.get_by_test_id("dest-cancel").click()
                                 section.get_by_role("button", name="Remove destination", exact=True).click()
@@ -141,11 +160,17 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                                 shot("send-to-add")
                                 assert not page.evaluate(AIR_WORDS_JS, "#surface-settings")["air"]
                                 section.get_by_test_id("dest-cancel").click()
-                                section.get_by_role("tab", name="Parked", exact=True).click()
+                                section.get_by_role("combobox", name="Destinations", exact=True).select_option("parked")
                                 shot("send-to-parked")
-                                section.get_by_role("tab", name="Active", exact=True).click()
+                                section.get_by_role("combobox", name="Destinations", exact=True).select_option("active")
 
                         section.get_by_role("tab", name="Services", exact=True).click()
+                        assert section.locator('[role="row"]').filter(has_text="Confluence").count() == 0
+                        section.get_by_role("button", name="Add account", exact=True).click()
+                        shot("services-add-menu")
+                        page.get_by_role("menuitem", name="Confluence", exact=True).click()
+                        shot("services-add-confluence")
+                        section.get_by_role("region", name="Add Confluence account", exact=True).get_by_role("button", name="Cancel", exact=True).click()
                         row = section.get_by_text("GitHub", exact=True)
                         row.click()
                         expect(section.get_by_role("button", name="Sign in…", exact=True)).to_be_enabled()
@@ -166,6 +191,9 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                         expect(app_menu.get_by_role("menuitem", name="Show me", exact=True)).to_be_visible()
                         page.keyboard.press("Escape")
                     else:
+                        _bounded(window)
+                        assert section.locator("h1, h2, .settings-mast, .settings-plate").count() == 0
+                        assert section.locator('[role="row"] button, .surface-ledger-row button, .surface-row button').count() == 0
                         page.screenshot(path=str(shots / f"{pane}-{'900x600' if width == 1440 else '393'}-after.png"))
                         if pane == "engines":
                             _bounded(window)
@@ -173,22 +201,82 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                                 assert all(row.bounding_box()["height"] >= 26 for row in section.locator("[role=row][data-object-id]:visible").all())
                             else:
                                 assert all(row.bounding_box()["height"] >= 44 for row in section.locator("[role=row][data-object-id]:visible").all())
-                            assert section.locator('[role="row"] button').count() == 0
+                            assert section.locator('[role="row"] button, .surface-ledger-row button, .surface-row button').count() == 0
                             expect(section.get_by_role("combobox", name="Everything else engines", exact=True).locator("option:checked")).to_have_text("Codex, then Gemini CLI")
                             if only:
                                 shot("engines-jobs")
                                 section.get_by_role("combobox", name="Everything else engines", exact=True).select_option("order")
                                 shot("engines-order")
-                                section.get_by_role("region", name="Everything else: engine order", exact=True).get_by_role("button", name="Close", exact=True).click()
+                                section.get_by_role("region", name="Everything else: engine order", exact=True).get_by_role("button", name="Done", exact=True).click()
                             section.get_by_role("tab", name="Engines", exact=True).click()
                             shot("engines-installed")
                             section.get_by_role("button", name="Model library", exact=True).click()
                             library = section.get_by_test_id("settings-engines-library")
                             for tab in ("Engines", "Speech", "Search"):
-                                library.get_by_role("tab", name=tab, exact=True).click()
+                                library.get_by_role("combobox", name="Model library category", exact=True).select_option(tab.lower())
                                 _settle(page)
                                 page.screenshot(path=str(shots / f"engines-library-{tab.lower()}-{'900x600' if width == 1440 else '393'}-after.png"))
-                            section.get_by_role("region", name="Model library", exact=True).get_by_role("button", name="Close", exact=True).first.click()
+                            section.get_by_role("region", name="Model library", exact=True).get_by_role("button", name="Done", exact=True).first.click()
+                    # One tab selector per pane, with a compact pop-up for long strips.
+                    if pane not in ("accounts", "engines"):
+                        tabs = section.get_by_role("tablist").all()
+                        assert len(tabs) <= 1
+                        compact = section.locator(".surface-tab-choice:visible select")
+                        if compact.count():
+                            choices = compact.locator("option").evaluate_all("els => els.map(el => ({id: el.value, label: el.textContent}))")
+                            for choice in choices:
+                                compact.select_option(choice["id"])
+                                shot(f"{pane}-{choice['label'].lower().replace(' ', '-')}")
+                        elif tabs:
+                            for label in tabs[0].get_by_role("tab").all_text_contents():
+                                tabs[0].get_by_role("tab", name=label, exact=True).click()
+                                shot(f"{pane}-{label.lower().replace(' ', '-')}")
+                        assert section.locator('[role="row"] button, .surface-ledger-row button, .surface-row button').count() == 0
+                    if pane == "speak":
+                        section.get_by_role("tab", name="Symbols", exact=True).click()
+                        section.get_by_role("button", name="Add symbol", exact=True).click()
+                        section.get_by_role("textbox", name="Spoken phrase 1").fill("right arrow")
+                        page.screenshot(path=str(shots / f"speak-symbol-draft-{'900x600' if width == 1440 else '393'}-after.png"))
+                        _bounded(window)
+                        section.get_by_role("region", name="Spoken symbol", exact=True).get_by_role("button", name="Done").click()
+                    if pane == "calls":
+                        for label, state in (("Line", "calls-line"), ("Phone", "calls-phone")):
+                            section.get_by_role("tab", name=label, exact=True).click()
+                            shot(state)
+                            well = section.locator('[data-testid="line-settings"] > .surface-preference-well' if label == "Line" else '[data-testid="phone-settings"] > .surface-preference-well')
+                            well.evaluate("el => el.scrollTop = el.scrollHeight")
+                            shot(state + "-details")
+                            well.evaluate("el => el.scrollTop = 0")
+                        section.get_by_role("tab", name="Calls", exact=True).click()
+                        expect(section.get_by_role("checkbox", name="Calls on")).to_be_visible()
+                        assert section.get_by_role("grid", name="Set up calls").count() == 0
+                        section.get_by_role("button", name="Change passphrase", exact=True).click()
+                        shot("calls-passphrase")
+                    if pane == "this-mac":
+                        section.get_by_role("tab", name="Device", exact=True).click()
+                        section.get_by_role("button", name="Reset desk to defaults…", exact=True).click()
+                        shot("this-mac-reset")
+                        section.get_by_role("region", name="Reset the desk?", exact=True).get_by_role("button", name="Cancel", exact=True).click()
+                        section.get_by_role("tablist", name="This Mac", exact=True).get_by_role("tab", name="Access", exact=True).click()
+                        section.get_by_text("sweep-runner", exact=True).click()
+                        section.get_by_role("button", name="Details…", exact=True).click()
+                        shot("access-details")
+                        section.get_by_role("region", name="sweep-runner", exact=True).get_by_role("button", name="Done", exact=True).click()
+                        section.get_by_role("button", name="Projects…", exact=True).click()
+                        shot("access-projects")
+                        section.get_by_role("region", name="sweep-runner: projects", exact=True).get_by_role("button", name="Done", exact=True).click()
+                        section.get_by_role("button", name="Issue credential", exact=True).click()
+                        section.get_by_role("textbox", name="Credential name", exact=True).fill("Review runner")
+                        shot("access-issue")
+                        section.get_by_role("region", name="Issue credential", exact=True).get_by_role("button", name="Cancel", exact=True).click()
+                        section.get_by_role("tablist", name="This Mac", exact=True).get_by_role("tab", name="Keys", exact=True).click()
+                        section.locator('[role="row"][data-object-id="web_token"]').dblclick()
+                        shot("key-details")
+                        key = section.get_by_role("region", name="Web pairing token", exact=True)
+                        expect(key.get_by_role("textbox")).to_have_value("")
+                        key.get_by_role("textbox").fill("Review draft")
+                        shot("key-replace")
+                        key.get_by_role("button", name="Cancel", exact=True).click()
                     assert rail.locator(".surface-spine").count() == 0
                     assert all(not node.inner_text() for node in rail.locator(".surface-rail-state").all())
                 assert errors == [], errors
@@ -206,3 +294,10 @@ def _bounded(window: Any) -> None:
         && body.scrollWidth <= body.clientWidth + 1;
     }"""), window.bounding_box()
 
+    assert window.evaluate("""el => [...el.querySelectorAll('.surface-list-pane-list')].every(seat => {
+      const row = seat.querySelector('[data-object-id][aria-selected="true"]');
+      const well = row?.closest('.object-list-rows');
+      if (!row || !well) return true;
+      const r = row.getBoundingClientRect(), w = well.getBoundingClientRect();
+      return !r.width || !r.height || (r.top >= w.top - 1 && r.bottom <= w.bottom + 1);
+    })"""), "The selected row must remain visible above its inspector"

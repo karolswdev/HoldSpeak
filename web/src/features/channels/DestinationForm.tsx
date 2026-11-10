@@ -210,8 +210,8 @@ export function DestForm({ conns, accountsLoading, accountsReadError, onAccounts
     <div className="dest-form" data-testid="dest-form" data-channel={d.channel}>
       <GadgetGroup label={replaces ? "Edit destination" : "New destination"} material="inset" actions={
         <div data-testid="dest-form-verbs"><PaneActions>
-          <Button dense variant="primary" disabled={!valid} loading={busy} onClick={() => void save()} data-testid="dest-save">Save</Button>
           {onCancel ? <Button dense variant="ghost" onClick={onCancel} data-testid="dest-cancel">Cancel</Button> : null}
+          <Button dense variant="primary" disabled={!valid} loading={busy} onClick={() => void save()} data-testid="dest-save">Save</Button>
           <EgressChip label={eg.label} scope={eg.scope} title={eg.title} />
           {refused ? (
             <span className="send-line" data-testid="dest-refused" data-code={refused}>
@@ -227,21 +227,21 @@ export function DestForm({ conns, accountsLoading, accountsReadError, onAccounts
         </GadgetRow>
       )}
       {d.channel === "file" ? (<>
-        <GadgetRow wide controlWidth="full" label="Folder"><StringGadget label="Folder" value={d.folder} onChange={(v) => set({ folder: v })} placeholder="/Users/you/Reports" inputProps={{ "data-testid": "dest-folder" } as never} /></GadgetRow>
+        <GadgetRow controlWidth="standard" label="Folder"><StringGadget label="Folder" value={d.folder} onChange={(v) => set({ folder: v })} placeholder="/Users/you/Reports" inputProps={{ "data-testid": "dest-folder" } as never} /></GadgetRow>
         <GadgetRow controlWidth="standard" label="Synced"><CheckGadget variant="token" label="Synced" checked={d.synced} onChange={(v) => set({ synced: v })} /></GadgetRow>
       </>) : null}
       {d.channel === "github" ? (<>
-        <GadgetRow wide controlWidth="full" label="Account">
+        <GadgetRow controlWidth="standard" label="Account">
           <span className="send-line" data-testid="dest-github-account">
             <Token className="surface-token send-literal" data-chip>{gh?.account?.login ? `@${gh.account.login}` : "READ FROM gh AT SAVE"}</Token>
           </span>
         </GadgetRow>
-        <GadgetRow wide controlWidth="full" label="Repository"><StringGadget label="Repository" value={d.repo} onChange={(v) => set({ repo: v })} placeholder="owner/repo" inputProps={{ "data-testid": "dest-repo" } as never} /></GadgetRow>
+        <GadgetRow controlWidth="standard" label="Repository"><StringGadget label="Repository" value={d.repo} onChange={(v) => set({ repo: v })} placeholder="owner/repo" inputProps={{ "data-testid": "dest-repo" } as never} /></GadgetRow>
         <GadgetRow controlWidth="standard" label="Kind"><CycleGadget label="Kind" value={d.kind} options={[{ value: "issue", label: "Issue" }, { value: "pr", label: "Pull request" }]} onChange={(v) => set({ kind: v as "issue" | "pr" })} /></GadgetRow>
         <GadgetRow controlWidth="short" label="Number"><StringGadget label="Number" value={d.number} onChange={(v) => set({ number: v })} placeholder="42" inputProps={{ "data-testid": "dest-number", inputMode: "numeric" } as never} /></GadgetRow>
       </>) : null}
       {d.channel === "jira" ? (<>
-        <GadgetRow wide controlWidth="full" label="Account">
+        <GadgetRow controlWidth="standard" label="Account">
           <span className="send-line">
             {accountsUnavailable ? accountReadState : jiraConns.length ? (
               <CycleGadget label="Jira account" value={jiraAcc} onChange={(v) => set({ jiraAccount: v })}
@@ -253,7 +253,7 @@ export function DestForm({ conns, accountsLoading, accountsReadError, onAccounts
         <GadgetRow controlWidth="standard" label="Work item"><StringGadget label="Work item" value={d.key} onChange={(v) => set({ key: v })} placeholder="PAY-118" inputProps={{ "data-testid": "dest-key" } as never} /></GadgetRow>
       </>) : null}
       {d.channel === "confluence" ? (<>
-        <GadgetRow wide controlWidth="full" label="Account">
+        <GadgetRow controlWidth="standard" label="Account">
           <span className="send-line">
             {accountsUnavailable ? accountReadState : confConns.length ? (
               <CycleGadget label="Confluence account" value={confAcc} onChange={(v) => set({ confAccount: v })}
@@ -262,12 +262,12 @@ export function DestForm({ conns, accountsLoading, accountsReadError, onAccounts
             {!accountsUnavailable && acc && confConns.length ? <StateChip state={acc.state} label={acc.label} /> : null}
           </span>
         </GadgetRow>
-        <GadgetRow wide controlWidth="full" label="Space id"><StringGadget label="Space id" value={d.space} onChange={(v) => set({ space: v })} placeholder="98304" inputProps={{ "data-testid": "dest-space", inputMode: "numeric" } as never} /></GadgetRow>
+        <GadgetRow controlWidth="standard" label="Space id"><StringGadget label="Space id" value={d.space} onChange={(v) => set({ space: v })} placeholder="98304" inputProps={{ "data-testid": "dest-space", inputMode: "numeric" } as never} /></GadgetRow>
       </>) : null}
       {d.channel === "email" ? (<>
         <GadgetRow controlWidth="standard" label="Provider"><CycleGadget label="Provider" value={d.provider} options={PROVIDERS} onChange={(v) => { setKeyRefused(null); set({ provider: v as EmailProvider }); }} /></GadgetRow>
-        <GadgetRow wide controlWidth="full" label="From"><StringGadget label="From" value={d.fromEmail} onChange={(v) => set({ fromEmail: v })} placeholder="you@company.com" inputProps={{ "data-testid": "dest-from" } as never} /></GadgetRow>
-        <GadgetRow wide controlWidth="full" label="From name"><StringGadget label="From name" value={d.fromName} onChange={(v) => set({ fromName: v })} placeholder="Your name" /></GadgetRow>
+        <GadgetRow controlWidth="standard" label="From"><StringGadget label="From" value={d.fromEmail} onChange={(v) => set({ fromEmail: v })} placeholder="you@company.com" inputProps={{ "data-testid": "dest-from" } as never} /></GadgetRow>
+        <GadgetRow controlWidth="standard" label="From name"><StringGadget label="From name" value={d.fromName} onChange={(v) => set({ fromName: v })} placeholder="Your name" /></GadgetRow>
         <div className="dest-secret" data-testid="dest-key-row">
           <SecretRow label={`${EMAIL_PROVIDERS[d.provider].label} key`} configured={emailKnown === true}
             onReplace={(v) => {
@@ -293,8 +293,8 @@ export function DestForm({ conns, accountsLoading, accountsReadError, onAccounts
             </span>
           ) : null}
         </div>
-        <GadgetRow wide controlWidth="full" label="To"><PadGadget label="To" value={d.to} onChange={(v) => set({ to: v })} placeholder={"a@company.com\nb@company.com"} autoGrow /></GadgetRow>
-        <GadgetRow wide controlWidth="full" label="Cc"><PadGadget label="Cc" value={d.cc} onChange={(v) => set({ cc: v })} placeholder="c@company.com" autoGrow /></GadgetRow>
+        <GadgetRow controlWidth="standard" label="To"><PadGadget label="To" value={d.to} onChange={(v) => set({ to: v })} placeholder={"a@company.com\nb@company.com"} autoGrow /></GadgetRow>
+        <GadgetRow controlWidth="standard" label="Cc"><PadGadget label="Cc" value={d.cc} onChange={(v) => set({ cc: v })} placeholder="c@company.com" autoGrow /></GadgetRow>
       </>) : null}
       {d.channel === "slack" ? (<>
         <div className="dest-secret" data-testid="dest-key-row">
@@ -324,9 +324,9 @@ export function DestForm({ conns, accountsLoading, accountsReadError, onAccounts
             </span>
           ) : null}
         </div>
-        <GadgetRow wide controlWidth="full" label="Channel name"><StringGadget label="Channel name" value={d.slackLabel} onChange={(v) => set({ slackLabel: v })} placeholder="#leads" inputProps={{ "data-testid": "dest-slack-label" } as never} /></GadgetRow>
+        <GadgetRow controlWidth="standard" label="Channel name"><StringGadget label="Channel name" value={d.slackLabel} onChange={(v) => set({ slackLabel: v })} placeholder="#leads" inputProps={{ "data-testid": "dest-slack-label" } as never} /></GadgetRow>
       </>) : null}
-      <GadgetRow wide controlWidth="full" label="Name"><StringGadget label="Name" value={name} onChange={(v) => set({ name: v, nameTouched: true })} placeholder="Name" inputProps={{ "data-testid": "dest-name" } as never} /></GadgetRow>
+      <GadgetRow controlWidth="standard" label="Name"><StringGadget label="Name" value={name} onChange={(v) => set({ name: v, nameTouched: true })} placeholder="Name" inputProps={{ "data-testid": "dest-name" } as never} /></GadgetRow>
       </GadgetGroup>
     </div>
   );

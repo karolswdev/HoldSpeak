@@ -1,7 +1,7 @@
 // The hub owns all chains. Choices write only on an owner press.
 import { useEffect, useState } from "react";
 import { Button } from "../../../components/signal/Signal";
-import { PreferencePane, PaneGroup, PaneInspector, PaneActions, SegmentedTabs, ListView, CycleGadget, type ListVerb } from "../../../desk/surface";
+import { PreferencePane, ListPane, PaneGroup, PaneInspector, PaneActions, SegmentedTabs, ListView, CycleGadget, type ListVerb } from "../../../desk/surface";
 import { stateWord } from "../../../features/runson/stateWord";
 import { EngineLibrary } from "../../../features/runson/EngineLibrary";
 import { conciergeProbe } from "../../../features/concierge/api";
@@ -9,12 +9,13 @@ import { useRunsOn } from "../../../features/runson/useRunsOn";
 import { EVERYTHING_ELSE, WHAT_ROWS } from "../../../features/runson/whatRows";
 import type { RowEditor } from "../../../features/runson/api";
 
-export function EnginesSection() {
+export function EnginesSection({ onCount }: { onCount?: (count: number) => void } = {}) {
   const ctrl = useRunsOn();
   const [library, showLibrary] = useState(false);
   const [tab, setTab] = useState("jobs");
   const [picked, pick] = useState<string | null>(null);
   const [editing, edit] = useState<string | null>(null);
+  const [jobPicked, pickJob] = useState<string | null>(null);
   const [chainPicked, pickChain] = useState<string | null>(null);
   const [test, setTest] = useState("");
   const [testing, setTesting] = useState(false);
@@ -38,6 +39,7 @@ export function EnginesSection() {
     }, run: (row) => { const ids = chain.map((entry) => entry.profile_id); const at = ids.indexOf(row!.id); const next = at + (direction === "up" ? -1 : 1); [ids[at], ids[next]] = [ids[next], ids[at]]; if (editing) void ctrl.what.set(editing, ids); } })),
   ];
   const installed = ctrl.engines.filter((engine) => engine.profileId && !engine.found && engine.kind !== "preset");
+  useEffect(() => { if (rosterIn) onCount?.(installed.length); }, [rosterIn, installed.length, onCount]);
   const engineVerbs: ListVerb[] = [
     { id: "add", label: "Model library", symbol: "+", run: () => showLibrary(true) },
     { id: "test", label: "Test", enabled: (row) => Boolean(row) && !testing && Boolean(installed.find((engine) => engine.key === row?.id)?.detectId), run: (row) => {
@@ -51,14 +53,9 @@ export function EnginesSection() {
   return <PreferencePane label="Engines" testId="settings-engines">
     {ctrl.error ? <PaneActions><span role="alert">Engines not read</span><Button onClick={reload}>Retry</Button></PaneActions> : null}
     {ctrl.receipt ? <PaneActions><span role={ctrl.receipt.tone === "danger" ? "alert" : "status"} data-testid="settings-engines-receipt">{ctrl.receipt.text}</span>{ctrl.canUndo ? <Button dense disabled={ctrl.busy} onClick={() => void ctrl.undo()}>Undo</Button> : null}</PaneActions> : null}
-    {library ? <PaneInspector label="Model library" onClose={() => showLibrary(false)}><EngineLibrary ctrl={ctrl} /></PaneInspector>
-    : job && editor && editor !== "failed" ? <PaneInspector label={`${job.name}: engine order`} onClose={() => edit(null)}>
-      <ListView label="Engine order" ordered rows={chain.map((entry) => ({ id: entry.profile_id, kind: "engine", name: name(entry.profile_id, entry.label) }))} columns={[{ key: "name", word: "Engine, in order" }]}
-        selectedId={chainPicked} onSelect={pickChain} verbs={chainVerbs} />
-      <PaneActions>{job.probe ? <Button dense disabled={ctrl.busy || Boolean(ctrl.trying) || !chain.length} title={`Runs a sample on ${words(editor)}`} onClick={() => void ctrl.what.tryRow(job.id)}>Try it</Button> : null}
-        {job.id !== EVERYTHING_ELSE && editor.own ? <Button dense disabled={ctrl.busy} onClick={() => void ctrl.what.set(job.id, null)}>Same as Everything</Button> : null}</PaneActions>
-      {ctrl.results[`what:${job.id}`] ? <output>{ctrl.results[`what:${job.id}`].tokens.join(" · ")} {ctrl.results[`what:${job.id}`].sampleOutput}</output> : null}
-    </PaneInspector> : <SegmentedTabs label="Engines" value={tab} onChange={setTab} tabs={[{ id: "jobs", label: "Jobs" }, { id: "engines", label: "Engines" }]}>
+    <SegmentedTabs label="Engines" value={tab} onChange={setTab} tabs={[{ id: "jobs", label: "Jobs" }, { id: "engines", label: "Engines" }]}>
+    <ListPane label="Engine inspector" list={<>
+
       <div className="surface-tab-panel" hidden={tab !== "jobs"}>
       <PaneGroup label="Each job runs on">
         <ListView label="Jobs" ordered rows={WHAT_ROWS.map((row) => {
@@ -75,10 +72,10 @@ export function EnginesSection() {
                 ...value.candidates.filter((candidate) => JSON.stringify([candidate.profileId]) !== current).map((candidate) => ({ value: JSON.stringify([candidate.profileId]), label: name(candidate.profileId, candidate.label) })),
                 { value: "order", label: "Set order…" },
               ] : [{ value: "", label: value === "failed" ? "Not read" : "Reading…" }]}
-              onChange={(next) => { if (next === "order") { edit(row.id); pickChain(null); } else if (next !== ownValue) void ctrl.what.set(row.id, next === "inherit" ? null : JSON.parse(next)); }} />,
+              onChange={(next) => { pickJob(row.id); if (next === "order") { edit(row.id); pickChain(null); } else if (next !== ownValue) void ctrl.what.set(row.id, next === "inherit" ? null : JSON.parse(next)); }} />,
           } };
         })} columns={[{ key: "name", word: "Job", track: "minmax(0, 1fr)" }, { key: "chain", word: "Engines, in order", track: "minmax(0, 1.4fr)" }]}
-          rowProps={(row) => ({ "data-testid": `settings-job-${row.id}` })} />
+          selectedId={jobPicked} onSelect={pickJob} rowProps={(row) => ({ "data-testid": `settings-job-${row.id}` })} />
       </PaneGroup>
       </div>
       <div className="surface-tab-panel" hidden={tab !== "engines"}>
@@ -91,6 +88,17 @@ export function EnginesSection() {
       </PaneGroup>
       {test ? <output>{test}</output> : null}
       </div>
-    </SegmentedTabs>}
+    </>}>
+
+    {library ? <PaneInspector label="Model library" onClose={() => showLibrary(false)}><EngineLibrary ctrl={ctrl} /></PaneInspector>
+    : job && editor && editor !== "failed" ? <PaneInspector label={`${job.name}: engine order`} onClose={() => edit(null)}>
+      <ListView label="Engine order" ordered rows={chain.map((entry) => ({ id: entry.profile_id, kind: "engine", name: name(entry.profile_id, entry.label) }))} columns={[{ key: "name", word: "Engine, in order" }]}
+        selectedId={chainPicked} onSelect={pickChain} verbs={chainVerbs} />
+      <PaneActions>{job.probe ? <Button dense disabled={ctrl.busy || Boolean(ctrl.trying) || !chain.length} title={`Runs a sample on ${words(editor)}`} onClick={() => void ctrl.what.tryRow(job.id)}>Try it</Button> : null}
+        {job.id !== EVERYTHING_ELSE && editor.own ? <Button dense disabled={ctrl.busy} onClick={() => void ctrl.what.set(job.id, null)}>Same as Everything</Button> : null}</PaneActions>
+      {ctrl.results[`what:${job.id}`] ? <output>{ctrl.results[`what:${job.id}`].tokens.join(" · ")} {ctrl.results[`what:${job.id}`].sampleOutput}</output> : null}
+    </PaneInspector> : null}
+    </ListPane>
+    </SegmentedTabs>
   </PreferencePane>;
 }

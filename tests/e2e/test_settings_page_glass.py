@@ -63,7 +63,7 @@ def _assert_page_shape(page: Any, width: int) -> None:
     assert not geometry["bodyOverflow"], (width, geometry)
     # One rail. At a narrow width it is hidden while a pane is open (Back shows it).
     assert settings.locator("nav[aria-label='Settings sections']").count() == 1
-    assert page.get_by_role("tab").count() == 0
+    assert settings.get_by_role("tablist").count() <= 1
     assert page.get_by_role("button", name="Open Speak").count() == 0
 
 
@@ -283,7 +283,7 @@ def test_engines_pane_chain_editor_library_and_old_link(
             roster = _api(page, "GET", "/api/inference/assignments", token=TOKEN)
             global_row = next(item for item in roster["rows"] if item["id"] == "global")
             assert [entry["profile_id"] for entry in global_row["assignment"]["entries"]] == ["agent-gemini", "agent-codex"]
-            editor.get_by_role("button", name="Close", exact=True).click()
+            editor.get_by_role("button", name="Done", exact=True).click()
             page.get_by_role("tab", name="Engines", exact=True).click()
             page.get_by_role("button", name="Model library", exact=True).click()
             library = page.get_by_test_id("settings-engines-library")

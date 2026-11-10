@@ -1596,6 +1596,17 @@ The Desk sweep reads these properties in its normal fence pass at 1440,
 from the rendered rail and wings from their own controls. The Components
 reference uses these same production species.
 
+
+Preference windows compose `PreferencePane`, captioned `GadgetGroup` rows,
+`PaneGroup` list wells, `SegmentedTabs`, and `PaneInspector`. The host keeps
+the rail, pane, and frame status bar bounded. A long preference collection
+scrolls in its list well. More form groups get tabs. `PreferencePane` passes
+HTML attributes to its root for observed busy state and accessibility.
+Settings uses this grammar for every section; its retired page material is
+parked. Service providers without an account appear in Add account. Device
+keys have their own selection list in This Mac > Keys. Each list declares
+its selection verbs once, with no verb button in a data row.
+
 ### A selection list with a preview (2026-11-10)
 
 `ListView toolbar={{ trailing, testId }}` draws its declared `ListVerb`s in
@@ -1616,3 +1627,12 @@ existing composition.
 
 A reversible receipt belongs in `StatusBar.verbs`, outside the clipped facts
 well. The shared bar bounds its words and keeps Restore or Retry visible.
+
+Preference panes have at most one tab selector. Long strips become one
+pop-up at narrow width; groups within a tab use captions and one form well.
+`ListPane` keeps the selection list above its inspector, reduces the list
+when inspection opens, and keeps the selected row in its scrolling well.
+`PaneInspector` has one Done verb for immediate changes, or the caller's
+Cancel then primary Save actions for a draft. A draft form omits Done.
+Inspector fields use the same label/control rows as preferences. Reset
+consequences belong in the in-window confirmation, rather than a disclosure.

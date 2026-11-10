@@ -1,3 +1,4 @@
+/* Parked: the surface preference patterns own Settings material. */
 /* Window grammar 2026-10-24: the native preference window.
    Shared Rail | pane (label/control grid); the status bar is kit.
    Scoped to .pref-window so the shared gadget sheets keep their default
@@ -23,13 +24,21 @@
   overflow-x: clip;
 }
 /* The window body gives its inset to the rail and pane: edge to edge. */
-.desk-next .desk-surface-body:has(> .settings-page-content > .pref-window) { padding: 0; }
+.desk-next .desk-surface-body:has(> .settings-page-content > .pref-window) {
+  padding: 0;
+}
 /* The window grows with its pane and never shrinks under it: a long pane
    (Accounts) scrolls on the same paper and rail to its last row. With a
    shrinkable flex item and `min-height: 100%` the paper stopped at the
    first screen and Destinations scrolled up onto the bare body. */
-.desk-next .desk-surface-body > .settings-page-content:has(> .pref-window) { flex: 1 0 auto; display: flex; flex-direction: column; }
-.desk-next .settings-page-content > .pref-window { flex: 1 0 auto; }
+.desk-next .desk-surface-body > .settings-page-content:has(> .pref-window) {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+.desk-next .settings-page-content > .pref-window {
+  flex: 1 0 auto;
+}
 
 /* ── The pane: label/control grid, sections by caption + hairline ── */
 .desk-next .pref-window > .pref-pane {
@@ -40,9 +49,17 @@
   background: transparent;
   box-shadow: none;
 }
-.desk-next .pref-window .pref-pane-back { display: none; }
-.desk-next .pref-window .settings-page-section { min-width: 0; padding: 0; }
-.desk-next .pref-window .settings-page-section:not([hidden]) + .settings-page-section:not([hidden]) { border: 0; padding: 0; }
+.desk-next .pref-window .pref-pane-back {
+  display: none;
+}
+.desk-next .pref-window .settings-page-section {
+  min-width: 0;
+  padding: 0;
+}
+.desk-next .pref-window .settings-page-section:not([hidden]) + .settings-page-section:not([hidden]) {
+  border: 0;
+  padding: 0;
+}
 /* The rail says the category; the pane does not repeat it as a headline. */
 .desk-next .pref-window .settings-page-section-title {
   position: absolute;
@@ -62,10 +79,25 @@
 }
 .desk-next .pref-window .settings-page-section-body .gadget-group,
 .desk-next .pref-window .settings-page-section-body .surface-section,
-.desk-next .pref-window .settings-page-section-body .prefs-calendar-section { width: 100%; max-width: none; }
-.desk-next .pref-window .surface-section-head { display: flex; align-items: baseline; gap: 8px; }
-.desk-next .pref-window .surface-section-head::after { display: none; }
-.desk-next .pref-window .surface-section-head h3 { margin: 0; padding: 0; border: 0; font: inherit; color: inherit; }
+.desk-next .pref-window .settings-page-section-body .prefs-calendar-section {
+  width: 100%;
+  max-width: none;
+}
+.desk-next .pref-window .surface-section-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.desk-next .pref-window .surface-section-head::after {
+  display: none;
+}
+.desk-next .pref-window .surface-section-head h3 {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font: inherit;
+  color: inherit;
+}
 /* Lists inside a section run on the paper: rows and hairlines, no card. */
 .desk-next .pref-window .surface-ledger {
   border: 0;
@@ -96,10 +128,20 @@
   flex-direction: column;
   gap: 18px;
 }
-.desk-next .pref-window .settings-page-section-body .surface-columns { width: 100%; max-width: none; }
+.desk-next .pref-window .settings-page-section-body .surface-columns {
+  width: 100%;
+  max-width: none;
+}
 .desk-next .pref-window .settings-page-section-body .surface-columns > *,
-.desk-next .pref-window .settings-page-section-body .prefs-groups > * { width: 100%; max-width: none; min-width: 0; gap: 18px; }
-.desk-next .pref-window .prefs-column { gap: 18px; }
+.desk-next .pref-window .settings-page-section-body .prefs-groups > * {
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  gap: 18px;
+}
+.desk-next .pref-window .prefs-column {
+  gap: 18px;
+}
 
 /* Every sheet in the pane is a section: caption, hairline, rows. */
 .desk-next .pref-window .gadget-group,
@@ -131,19 +173,33 @@
 }
 /* A section after the first breathes before its caption. */
 .desk-next .pref-window .settings-page-section-body > * + * > .gadget-group-label,
-.desk-next .pref-window .gadget-group + .gadget-group > .gadget-group-label { margin-top: 6px; }
-.desk-next .pref-window .gadget-divider { display: none; }
+.desk-next .pref-window .gadget-group + .gadget-group > .gadget-group-label {
+  margin-top: 6px;
+}
+.desk-next .pref-window .gadget-divider {
+  display: none;
+}
 /* The On word reads as a state, in its own friendly colour. */
-.desk-next .pref-window .gadget-check-state-word { font: 600 12px / 1 var(--font-sans); letter-spacing: 0; }
-.desk-next .pref-window .gadget-group > .gadget-group-label::after { display: none; }
+.desk-next .pref-window .gadget-check-state-word {
+  font: 600 12px / 1 var(--font-sans);
+  letter-spacing: 0;
+}
+.desk-next .pref-window .gadget-group > .gadget-group-label::after {
+  display: none;
+}
 .desk-next .pref-window .gadget-group > .gadget-sheet,
 .desk-next .pref-window .gadget-group[data-material="inset"] > .gadget-sheet {
   display: block;
   padding: 0;
 }
-.desk-next .pref-window .gadget-sheet > .gadget-group { margin: 0; }
+.desk-next .pref-window .gadget-sheet > .gadget-group {
+  margin: 0;
+}
 .desk-next .pref-window .gadget-group[data-material="inset"] > .gadget-group-actions,
-.desk-next .pref-window .gadget-group-actions { padding: 8px 0 0; min-height: 0; }
+.desk-next .pref-window .gadget-group-actions {
+  padding: 8px 0 0;
+  min-height: 0;
+}
 
 .desk-next .pref-window .gadget-row,
 .desk-next .pref-window .gadget-group[data-material="inset"] .gadget-row,
@@ -158,9 +214,13 @@
   transition: background-color var(--pref-ease);
 }
 .desk-next .pref-window .gadget-sheet > .gadget-row:last-child,
-.desk-next .pref-window .gadget-sheet > :last-child > .gadget-row:last-child { border-bottom: 0; }
+.desk-next .pref-window .gadget-sheet > :last-child > .gadget-row:last-child {
+  border-bottom: 0;
+}
 .desk-next .pref-window .gadget-row:hover,
-.desk-next .pref-window .gadget-row:focus-within { background: transparent; }
+.desk-next .pref-window .gadget-row:focus-within {
+  background: transparent;
+}
 .desk-next .pref-window .gadget-row[data-highlight] {
   background: color-mix(in srgb, var(--wb-blue) 70%, transparent);
 }
@@ -191,16 +251,23 @@
   min-width: 0;
   gap: 8px;
 }
-.desk-next .pref-window .prefs-value { font: 400 13px / 1.4 var(--font-sans); color: var(--wb-ink); }
+.desk-next .pref-window .prefs-value {
+  font: 400 13px / 1.4 var(--font-sans);
+  color: var(--wb-ink);
+}
 .desk-next .pref-window .gadget-row-gadget > .gadget-cycle,
 .desk-next .pref-window .gadget-row-gadget > .gadget-string:not(.gadget-stepper) {
   width: var(--gadget-value-width);
   max-width: 100%;
 }
 .desk-next .pref-window .gadget-row[data-control-width="full"] .gadget-row-gadget > :is(.gadget-string, .gadget-cycle),
-.desk-next .pref-window .gadget-row[data-control-width="full"] .gadget-row-gadget .prefs-text-field .gadget-string { width: 100%; }
+.desk-next .pref-window .gadget-row[data-control-width="full"] .gadget-row-gadget .prefs-text-field .gadget-string {
+  width: 100%;
+}
 .desk-next .pref-window .gadget-string input,
-.desk-next .pref-window .gadget-cycle select { font: 400 13px / 1.4 var(--font-sans); }
+.desk-next .pref-window .gadget-cycle select {
+  font: 400 13px / 1.4 var(--font-sans);
+}
 
 /* Tokens inside the pane are quiet sans words, not mono caps. */
 .desk-next .pref-window .settings-page-section-body .surface-token[data-chip] {
@@ -218,15 +285,22 @@
 }
 /* Folds read as a section's last row, never a card: the caption grammar
    (sans 13/600 muted), one 32 px line. */
-.desk-next .pref-window .gadget-fold { margin: 0; }
-.desk-next .pref-window .gadget-fold > summary { min-height: 32px; padding-block: 0; }
+.desk-next .pref-window .gadget-fold {
+  margin: 0;
+}
+.desk-next .pref-window .gadget-fold > summary {
+  min-height: 32px;
+  padding-block: 0;
+}
 .desk-next .pref-window .gadget-fold > summary .gadget-fold-title {
   color: var(--wb-muted);
   font: 600 13px / 1.3 var(--font-sans);
   letter-spacing: 0;
   text-transform: none;
 }
-.desk-next .pref-window .settings-page-section-body > .gadget-fold { border-top: 0; }
+.desk-next .pref-window .settings-page-section-body > .gadget-fold {
+  border-top: 0;
+}
 
 /* ── The status bar is the kit StatusBar (kit.css); the save word keeps
    its ink, a refusal its red, and the plain reason is read aloud only. ── */
@@ -238,7 +312,10 @@
   text-align: start;
   text-transform: none;
 }
-.desk-next .pref-status-bar .pref-status-save[data-tone="danger"] { color: var(--wb-danger-ink); font-weight: 600; }
+.desk-next .pref-status-bar .pref-status-save[data-tone="danger"] {
+  color: var(--wb-danger-ink);
+  font-weight: 600;
+}
 .desk-next .pref-status-bar .pref-status-reason {
   position: absolute;
   width: 1px;
@@ -258,15 +335,22 @@
   overflow: hidden;
   container: surface / inline-size;
 }
-.desk-next .reference-pref-window > .pref-window { flex: 0 0 auto; min-height: 320px; }
+.desk-next .reference-pref-window > .pref-window {
+  flex: 0 0 auto;
+  min-height: 320px;
+}
 
 /* ── Narrow (content width 520 px or less): rail first, then the pane ── */
 @container surface (max-width: 520px) {
   .desk-next .pref-window {
     background: var(--pref-paper);
   }
-  .desk-next .pref-window > .pref-pane { padding: 14px 16px 16px; }
-  .desk-next .pref-window > .pref-pane:has(> .pref-pane-back) { padding-top: 0; }
+  .desk-next .pref-window > .pref-pane {
+    padding: 14px 16px 16px;
+  }
+  .desk-next .pref-window > .pref-pane:has(> .pref-pane-back) {
+    padding-top: 0;
+  }
   .desk-next .pref-window .pref-pane-back {
     display: flex;
     align-items: center;
@@ -311,9 +395,15 @@
      letter per line at 393. */
   .desk-next .pref-window .gadget-group[data-material="inset"] .gadget-row:is([data-wide], [data-control-width="full"]),
   .desk-next .pref-window .gadget-row:has(.gadget-string:not(.gadget-stepper)),
-  .desk-next .pref-window .gadget-row:has(.gadget-prop) { grid-template-columns: minmax(0, 1fr); }
-  .desk-next .pref-window .gadget-row-gadget > .gadget-cycle { width: min(100%, 200px); }
-  .desk-next .pref-window .gadget-cycle select { min-height: 44px; }
+  .desk-next .pref-window .gadget-row:has(.gadget-prop) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .desk-next .pref-window .gadget-row-gadget > .gadget-cycle {
+    width: min(100%, 200px);
+  }
+  .desk-next .pref-window .gadget-cycle select {
+    min-height: 44px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -331,9 +421,16 @@
   text-transform: none;
 }
 /* A stepper shows its whole number. */
-.desk-next .pref-window .gadget-stepper input { flex: 1 0 5ch; min-width: 5ch; width: 5ch; }
+.desk-next .pref-window .gadget-stepper input {
+  flex: 1 0 5ch;
+  min-width: 5ch;
+  width: 5ch;
+}
 /* A refusal's plain reason sits at the top of the pane, in the column. */
-.desk-next .pref-window .pref-pane-alert { max-width: 720px; margin: 0 auto 14px; }
+.desk-next .pref-window .pref-pane-alert {
+  max-width: 720px;
+  margin: 0 auto 14px;
+}
 
 /* A preference pane's verbs are the dense library Button at 24 px with a
    12 px word; a narrow window keeps the 44 px touch target. */
@@ -354,9 +451,13 @@
   max-width: 720px;
   margin-inline: auto;
 }
-.desk-next .pref-window.pref-bare .gadget-group + .gadget-group { margin-top: 18px; }
+.desk-next .pref-window.pref-bare .gadget-group + .gadget-group {
+  margin-top: 18px;
+}
 
-.desk-next .pref-window .settings-mast { margin-bottom: 14px; }
+.desk-next .pref-window .settings-mast {
+  margin-bottom: 14px;
+}
 .desk-next .pref-window .settings-page-section-body:has(> .settings-plate, > .settings-ledger) {
   display: flex;
   flex-direction: column;
@@ -373,13 +474,23 @@
   border-radius: 10px;
   background: var(--hs-raised);
   box-shadow: var(--hs-raised-shadow);
-  transition: box-shadow var(--motion-settle) var(--desk-ease), border-color var(--motion-settle) var(--desk-ease);
+  transition:
+    box-shadow var(--motion-settle) var(--desk-ease),
+    border-color var(--motion-settle) var(--desk-ease);
 }
 /* The plate's meaning colour is its top edge, never a fill. */
-.desk-next .pref-window .settings-plate[data-tone="brass"] { border-top: 3px solid var(--hs-brass); }
-.desk-next .pref-window .settings-plate[data-tone="coral"] { border-top: 3px solid var(--hs-coral); }
-.desk-next .pref-window .settings-plate[data-tone="steel"] { border-top: 3px solid var(--hs-steel); }
-.desk-next .pref-window .settings-plate[data-tone="moss"] { border-top: 3px solid var(--hs-moss); }
+.desk-next .pref-window .settings-plate[data-tone="brass"] {
+  border-top: 3px solid var(--hs-brass);
+}
+.desk-next .pref-window .settings-plate[data-tone="coral"] {
+  border-top: 3px solid var(--hs-coral);
+}
+.desk-next .pref-window .settings-plate[data-tone="steel"] {
+  border-top: 3px solid var(--hs-steel);
+}
+.desk-next .pref-window .settings-plate[data-tone="moss"] {
+  border-top: 3px solid var(--hs-moss);
+}
 .desk-next .pref-window .settings-plate-head {
   display: flex;
   flex-wrap: wrap;
@@ -393,15 +504,32 @@
   font: 600 18px / 22px var(--font-display);
   overflow-wrap: anywhere;
 }
-.desk-next .pref-window .settings-plate-facts { min-width: 0; color: var(--hs-ink-2); font: 400 12px / 16px var(--font-mono); }
-.desk-next .pref-window .settings-plate-verbs { display: flex; flex-wrap: wrap; gap: 8px; }
-.desk-next .pref-window .settings-plate .gadget-group[data-material="inset"] { margin: 0; }
-.desk-next .pref-window > .pref-pane .settings-plate-verbs .btn { min-height: 32px; height: 32px; padding-inline: 14px; font-size: 13px; }
+.desk-next .pref-window .settings-plate-facts {
+  min-width: 0;
+  color: var(--hs-ink-2);
+  font: 400 12px / 16px var(--font-mono);
+}
+.desk-next .pref-window .settings-plate-verbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.desk-next .pref-window .settings-plate .gadget-group[data-material="inset"] {
+  margin: 0;
+}
+.desk-next .pref-window > .pref-pane .settings-plate-verbs .btn {
+  min-height: 32px;
+  height: 32px;
+  padding-inline: 14px;
+  font-size: 13px;
+}
 .desk-next .pref-window .settings-ledger .surface-ledger[data-cols="settings-rows"] .surface-ledger-line {
   grid-template-columns: minmax(120px, 0.8fr) minmax(0, 1.2fr) max-content;
   min-height: 40px;
 }
-.desk-next .pref-window .settings-ledger .surface-ledger-primary { font: 500 14px / 1.3 var(--font-sans); }
+.desk-next .pref-window .settings-ledger .surface-ledger-primary {
+  font: 500 14px / 1.3 var(--font-sans);
+}
 .desk-next .pref-window .settings-line-value {
   min-width: 0;
   overflow-wrap: anywhere;
@@ -415,19 +543,42 @@
   gap: 8px;
   padding: 8px 10px 12px;
 }
-.desk-next .pref-window .settings-line-editor .gadget-string { flex: 1 1 220px; min-width: 0; }
-.desk-next .pref-window .settings-line-refusal { color: var(--hs-coral-ink); font: 400 12px / 16px var(--font-sans); }
+.desk-next .pref-window .settings-line-editor .gadget-string {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+.desk-next .pref-window .settings-line-refusal {
+  color: var(--hs-coral-ink);
+  font: 400 12px / 16px var(--font-sans);
+}
 .desk-next .pref-window .settings-receipt,
-.desk-next .pref-window .settings-reading { margin: 0; color: var(--hs-ink-2); font: 400 12px / 16px var(--font-mono); }
-.desk-next .pref-window .settings-receipt[data-tone="danger"] { color: var(--hs-coral-ink); }
+.desk-next .pref-window .settings-reading {
+  margin: 0;
+  color: var(--hs-ink-2);
+  font: 400 12px / 16px var(--font-mono);
+}
+.desk-next .pref-window .settings-receipt[data-tone="danger"] {
+  color: var(--hs-coral-ink);
+}
 
 @container surface (max-width: 520px) {
-  .desk-next .pref-window .settings-plate { padding: 12px 12px 14px; }
-  .desk-next .pref-window > .pref-pane .settings-plate-verbs .btn { min-height: 44px; height: 44px; }
+  .desk-next .pref-window .settings-plate {
+    padding: 12px 12px 14px;
+  }
+  .desk-next .pref-window > .pref-pane .settings-plate-verbs .btn {
+    min-height: 44px;
+    height: 44px;
+  }
   .desk-next .pref-window .settings-ledger .surface-ledger[data-cols="settings-rows"] .surface-ledger-line {
     grid-template-columns: minmax(0, 1fr) max-content;
     min-height: 52px;
   }
-  .desk-next .pref-window .settings-ledger .settings-line-value { grid-column: 1; grid-row: 2; }
-  .desk-next .pref-window .settings-ledger .surface-ledger-trailing { grid-column: 2; grid-row: 1 / span 2; }
+  .desk-next .pref-window .settings-ledger .settings-line-value {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  .desk-next .pref-window .settings-ledger .surface-ledger-trailing {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
 }

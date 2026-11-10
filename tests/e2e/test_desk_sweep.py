@@ -462,11 +462,6 @@ _red("surface-activity", 393, "whole",
      r"^Button '(?:Artifact (?:new|read) \u00b7|Meeting saved \u00b7)[^']+' uses \d+ lines$",
      "Needs a canvas: full receipt names wrap on the phone")
 
-# Settings belongs to its repair lane. These are the remaining observations,
-# including Calls hosted within Settings; they waive no other control/word.
-_red("surface-settings", 393, "target@pane:speak",
-     r"^'Push-to-talk key: .*loses \d/9 points.*gadget-row-gadget",
-     "Settings Speak: the shortcut Button loses its upper hit corners")
 
 
 def _params() -> list[Any]:

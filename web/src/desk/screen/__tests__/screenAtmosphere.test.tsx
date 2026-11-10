@@ -110,9 +110,9 @@ describe("the current Screen's live atmosphere", () => {
     expect(load).not.toHaveBeenCalled();
     expect(mountAtmosphereScene).not.toHaveBeenCalled();
 
-    fireEvent.click(screen.getByRole("radio", { name: /After-hours radio/ }));
+    fireEvent.doubleClick(screen.getByRole("row", { name: /After-hours radio/ }));
     await waitFor(() => expect(mountAtmosphereScene).toHaveBeenCalledOnce());
-    fireEvent.click(screen.getByRole("radio", { name: /Quiet desk/ }));
+    fireEvent.doubleClick(screen.getByRole("row", { name: /Quiet desk/ }));
     expect(desk.querySelector(".desk-stage, canvas")).toBeNull();
     expect(desk).not.toHaveAttribute("data-place-still");
     expect(release).toHaveBeenCalledOnce();
@@ -142,7 +142,7 @@ describe("the current Screen's live atmosphere", () => {
     render(<><Screen /><WallpaperModule /></>);
     const desk = screen.getByTestId("desk-screen");
     const oldCanvas = desk.querySelector("canvas");
-    fireEvent.click(screen.getByRole("radio", { name: /Night train/ }));
+    fireEvent.doubleClick(screen.getByRole("row", { name: /Night train/ }));
 
     expect(desk).toHaveAttribute("data-place-still");
     expect(desk.style.getPropertyValue("--desk-place-still")).toContain("night-train.webp");

@@ -468,7 +468,6 @@ describe("HS-175 counsel: honest tokens on the calendar rows", () => {
     openCalendar("src-snap");
     const well = screen.getByTestId("calendar-well");
     expect(within(well).queryByRole("textbox", WELL_INPUT)).toBeNull();
-    fireEvent.click(within(well).getByText("Details"));
     const path = "/home/user/.local/share/holdspeak/calendar-snapshots/x.ics";
     expect(within(well).getByText(path).tagName).toBe("CODE");
     fireEvent.change(within(well).getByRole("textbox", { name: "Calendar name" }), { target: { value: "Imported schedule" } });
