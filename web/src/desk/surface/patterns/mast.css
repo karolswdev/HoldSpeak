@@ -7,6 +7,7 @@
 
 .surface-mast-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-3);
   min-width: 0;
@@ -20,7 +21,8 @@
 }
 
 .surface-mast-words {
-  flex: 1 1 auto;
+  /* Keep readable words before the verbs take their own line. */
+  flex: 1 1 20ch;
   min-width: 0;
 }
 
@@ -53,9 +55,6 @@
   .surface-mast-title {
     font-size: 20px;
     line-height: 24px;
-  }
-  .surface-mast-row {
-    flex-wrap: wrap;
   }
   /* The words keep their place beside the sprite; only the verbs wrap. */
   .surface-mast-words {

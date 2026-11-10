@@ -1533,3 +1533,6 @@ keep navigation authority; `hostBack` uses its existing Back. `head` holds
 search and library verbs, `foot` holds pagination, and children replace
 rows for loading, empty and failed states. Components → Rail demonstrates
 selection alongside Mast and Spine. The agent transcript remains TimelineRail.
+
+Mast lets its verbs move to the next line before they crush the title.
+This keeps object names readable beside Rail; the phone type step is unchanged.
