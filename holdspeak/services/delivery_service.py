@@ -449,13 +449,20 @@ class DeliveryService:
         from ..principals import PrincipalKind
         if getattr(principal, "kind", None) is not PrincipalKind.OWNER:
             raise OperationOwnerRequired("delivery.terminal_command")
-        operation = body.get("operation") or {}
-        commands = self._commands()
-        if operation.get("family") == "coder_steering" and operation.get("verb") in {"terminal.text", "terminal.keys"}:
-            return commands.submit_process_input(body, principal)
-        if operation.get("family") == "coder_steering" and operation.get("verb") == "process.resize@1":
-            return commands.submit_process_resize(body, principal)
-        return commands.submit(body)
+        from ..delivery.commands import CommandRefused
+        try:
+            operation = body.get("operation") or {}
+            if not isinstance(operation, dict):
+                raise CommandRefused("operation_unknown", "operation must be an object")
+            commands = self._commands()
+            if operation.get("family") == "coder_steering" and operation.get("verb") in {"terminal.text", "terminal.keys"}:
+                return commands.submit_process_input(body, principal)
+            if operation.get("family") == "coder_steering" and operation.get("verb") == "process.resize@1":
+                return commands.submit_process_resize(body, principal)
+            return commands.submit(body)
+        except CommandRefused as exc:
+            raise _refusal(exc.reason, str(exc), 400,
+                {"ok": False, "error": exc.reason, "detail": str(exc)}) from exc
 
     # -- the factory (HS-94-07) --------------------------------------------------------------
 
@@ -469,7 +476,13 @@ class DeliveryService:
         from ..principals import PrincipalKind
         if getattr(principal, "kind", None) is not PrincipalKind.OWNER:
             raise OperationOwnerRequired("delivery.factory_launch")
-        return self._launcher().launch(body)
+        from ..delivery.factory_launch import LaunchRefused
+        from ..delivery.commands import CommandRefused
+        try:
+            return self._launcher().launch(body)
+        except (LaunchRefused, CommandRefused) as exc:
+            raise _refusal(exc.reason, str(exc), 400,
+                {"ok": False, "error": exc.reason, "detail": str(exc)}) from exc
 
     def factory_discover(self, principal: Any) -> dict[str, Any]:
         """Panes and sessions as immutable targets; the read first binds rider

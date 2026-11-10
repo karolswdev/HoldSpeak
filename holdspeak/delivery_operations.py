@@ -53,7 +53,7 @@ def _op(name: str, method: str, http: tuple[str, str], handler: str, call: Call,
         effect="write" if write else "read", result=result, refusals=_REFUSALS + ("owner_required",),
         completion=completion,
         exposure=(f"http:{http[0]} {http[1]}",) + ((f"mcp:{name}",) if tool else ()), service="delivery_service", method=method,
-        owner_only=owns, owner_press=owns and write, announces_changes=announces_changes, held=held, authority=authority, blocking_io=blocking_io, call=call, web_call=web_call, http=http, http_status=status,
+        owner_only=owns, owner_press=owns and write, announces_changes=announces_changes, held=held, authority="authority" if owns and write and authority == "work" else authority, blocking_io=blocking_io, call=call, web_call=web_call, http=http, http_status=status,
         handler=handler, tool_schema=schema if tool else None, thread=("effect_proposal" if write else "evidence_read") if tool else None,
     )
 
@@ -208,10 +208,10 @@ def _actuator(name: str, target: str, *, decide: bool) -> OperationDescriptor:
             "Propose one external action. The proposal stays pending for the owner."),
         args_schema={"type": "object"}, principal=_PRINCIPAL, effect="write", result="{success, proposal}",
         refusals=_REFUSALS + ("owner_required", "ValidationError", "NotFound"), completion="synchronous; actuator lifecycle frames",
-        exposure=(f"http:POST {path}", f"mcp:{name}"), service="actuator_service", method=method,
-        call=call, http=("POST", path), handler=method, tool_schema=schema,
+        exposure=(f"http:POST {path}",) + ((f"mcp:{name}",) if target != "slack" else ()), service="actuator_service", method=method,
+        call=call, http=("POST", path), handler=method, tool_schema=schema if target != "slack" else None,
         owner_only=decide, owner_press=decide, authority="egress" if decide else "work",
-        thread=None if decide else "effect_proposal", blocking_io=True, announces_changes=True)
+        thread="effect_proposal" if not decide and target != "slack" else None, blocking_io=True)
 
 
 DELIVERY_OPERATIONS += tuple(_actuator(f"delivery.actuator.{target}.{verb}", target, decide=verb == "decide")

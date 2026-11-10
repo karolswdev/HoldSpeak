@@ -458,6 +458,12 @@ def test_no_registered_write_is_silent(hub: Hub, seeded: dict[str, str]) -> None
     hub.frames_until_mark(lambda: None)  # the four opens' frames land before the walk
     for name in writes:
         bound = registry.operations[name]
+        if (bound.descriptor.announces_changes and bound.descriptor.held
+                and not bound.descriptor.owner_only and bound.descriptor.tool_schema is None):
+            # Token-authenticated HTTP protocol callbacks need their node/device
+            # rig; a bare owner cannot invoke them. Their answers/liveness are
+            # covered by the protocol tests, not a synthetic Desk entity write.
+            continue
         if bound.descriptor.announces_changes and name.startswith("desk."):
             # One display protocol (2026-11-08): a display request changes no
             # desk object; its frame is ``desk_request`` (test_desk_requests.py).

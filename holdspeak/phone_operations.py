@@ -57,7 +57,8 @@ def _op(name: str, method: str, http: tuple[str, str], handler: str, call: Call,
         exposure=(f"http:{http[0]} {http[1]}",) + ((f"mcp:{name}",) if tool else ()),
         service="phone_service", method=method, held=held, owner_only=owner_only, owner_press=owner_only and write,
         call=_device_call(name, call) if "device" in held or name == "phone.redeem" else call, http=http,
-        http_status=status, handler=handler, tool_schema=schema if tool else None, authority=authority,
+        http_status=status, handler=handler, tool_schema=schema if tool else None,
+        authority="authority" if owner_only and write and authority == "work" else authority,
         # phone.* is an MCP and REST family (thread_modes._thread_side): no palette grows.
         thread=("effect_proposal" if write else "evidence_read") if tool else None,
     )

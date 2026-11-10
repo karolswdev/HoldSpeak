@@ -55,7 +55,7 @@ def _op(name: str, method: str, http: tuple[str, str], handler: str, call: Call,
         exposure=(f"http:{http[0]} {http[1]}",) + ((f"mcp:{name}",) if tool else ()),
         service="coder_service", method=method, held=held, owner_only=owner_only or write, owner_press=write, blocking_io=blocking_io,
         call=call, http=http, http_status=status, handler=handler, tool_schema=schema if tool else None,
-        authority=authority,
+        authority="authority" if write and authority == "work" else authority,
         thread=("effect_proposal" if write else "evidence_read") if tool else None,
     )
 

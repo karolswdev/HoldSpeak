@@ -65,8 +65,8 @@ def db(temp_db_dir):
 @pytest.fixture
 def settings_path(tmp_path, monkeypatch):
     """HS-139-08: pin posture to neutral so the propose→approve lifecycle
-    tests exercise the manual-decision path. Yolo auto-execution is
-    covered by the dedicated yolo test."""
+    tests exercise the manual-decision path. The YOLO test proves
+    that proposing still waits for the owner."""
     target = tmp_path / "config.json"
     monkeypatch.setattr(config_module, "CONFIG_FILE", target)
     cfg = Config()
@@ -194,7 +194,7 @@ def test_approval_files_the_issue_and_returns_the_url(client, db, settings_path,
 
 
 @pytest.mark.integration
-def test_yolo_files_to_the_registered_repo_without_a_decision(
+def test_yolo_waits_for_owner_before_filing_to_the_registered_repo(
     client, db, settings_path, gh
 ):
     _configure(settings_path)
@@ -203,8 +203,12 @@ def test_yolo_files_to_the_registered_repo_without_a_decision(
         PROPOSE,
         json={"text": "the body", "title": "Wire onboarding"},
     ).json()["proposal"]
-    assert proposal["status"] == "executed"
-    assert proposal["policy_snapshot"]["authority_basis"] == "control_posture"
+    assert proposal["status"] == "proposed"
+    assert gh.calls == []
+    assert db.actuators.get_proposal(proposal["id"]).status == "proposed"
+    decided = _decide(client, proposal["id"], "approved")
+    assert decided.status_code == 200
+    assert decided.json()["proposal"]["status"] == "executed"
     assert len(gh.calls) == 1
 
 

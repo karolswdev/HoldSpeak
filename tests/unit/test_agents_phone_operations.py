@@ -161,3 +161,42 @@ def test_pr_proposal_waits_for_owner_then_executes_once(tmp_path, monkeypatch):
             assert len(sent) == 1
     finally:
         db.close()
+
+
+def test_declared_mcp_refusal_keeps_its_code(monkeypatch):
+    import json
+    from holdspeak.mcp import server, tools
+
+    registry = operations.bind_available({"coder_service": Untouched()})
+    monkeypatch.setattr(tools, "runtime_registry", lambda: registry)
+    monkeypatch.setattr(server, "resolve_auth", lambda: SimpleNamespace(principal=OWNER))
+    response = server.handle_message({"jsonrpc": "2.0", "id": 1, "method": "tools/call",
+        "params": {"name": "coder.list", "arguments": {"principal": "owner"}}})
+    assert response["result"]["isError"] is True
+    payload = json.loads(response["result"]["content"][0]["text"])
+    assert payload["code"] == "authority_in_arguments"
+
+
+def test_node_protocol_changes_liveness_without_a_desk_write(tmp_path):
+    from holdspeak.db import Database
+    from holdspeak.delivery.node_link import NODE_PROTOCOL, NodeLinkState, NodeTokenStore
+    from holdspeak.runtime import composition
+    from holdspeak.services.delivery_service import DeliveryService
+
+    db = Database(tmp_path / "hub.db")
+    frames = []
+    composition.install(composition.RuntimeServices(db=db, broadcast=lambda *args: frames.append(args)))
+    store = NodeTokenStore(tmp_path / "nodes.json")
+    _, token = store.create("lab")
+    link = NodeLinkState(store)
+    service = DeliveryService(db).configure(link=link, legacy_env={})
+    registry = operations.bind_available({"delivery_service": service})
+    try:
+        registry.invoke(Principal(PrincipalKind.NODE, "lab"), "delivery.node.hello",
+            {"name": "lab", "node_protocol": NODE_PROTOCOL, "instance_id": "test", "capabilities": []},
+            held={"node_token": token})
+        nodes = registry.invoke(OWNER, "delivery.nodes", {})
+        assert any(node["name"] == "lab" for node in nodes["nodes"])
+        assert frames == []
+    finally:
+        db.close()
