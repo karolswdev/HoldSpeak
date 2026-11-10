@@ -413,10 +413,10 @@ def test_run_web_runtime_warms_transcriber_on_start(
         with db._connection() as conn:
             outcomes = list(
                 conn.execute(
-                    """SELECT e.terminal_outcome
-                         FROM inference_route_executions e
-                         JOIN inference_route_plans p ON p.id=e.route_plan_id
-                        WHERE p.capability_id='speech.preload'"""
+                    # The warm is one engine-door job (``speech_…``) of the preload service.
+                    """SELECT r.outcome FROM kernel_operations o
+                         JOIN kernel_receipts r ON r.operation_id=o.operation_id
+                        WHERE o.name='inference.invoke' AND o.principal_identity='local-model-preload'"""
                 )
             )
         if [row[0] for row in outcomes] == ["succeeded"]:

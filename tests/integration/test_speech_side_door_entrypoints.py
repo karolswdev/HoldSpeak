@@ -9,6 +9,8 @@ from types import SimpleNamespace
 from typing import Any
 
 import pytest
+
+from tests.unit._speech_door import assign_profile
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
@@ -97,6 +99,7 @@ def _rig(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     )
     monkeypatch.setattr("holdspeak.db.get_database", lambda: database)
     _configure(database)
+    assign_profile(database, "speech.intent_classify", PROFILE_ID)
 
     config = Config()
     config.dictation.pipeline.enabled = True
@@ -118,6 +121,19 @@ def _rig(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
         return runtime
 
     monkeypatch.setattr(assembly, "build_runtime", factory)
+
+    class _Engine:
+        """The engine the runner builds for the revision the door picked: the
+        classify lands here, on the runtime the pipeline constructed."""
+
+        def run_prompt(self, *, user_prompt: str, **_kwargs: Any) -> str:
+            import json
+
+            result = runtimes[-1].classify(user_prompt, None)
+            return json.dumps(result)
+
+    runner = _configure(database).inference_runner
+    monkeypatch.setattr(runner, "_engine_factory", lambda _revision, **_kwargs: _Engine())
     return database, config, events, runtimes
 
 

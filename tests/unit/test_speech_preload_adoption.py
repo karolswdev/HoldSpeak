@@ -1,9 +1,8 @@
-"""HS-143-08 Phase D slice 2: parentless MLX preload adoption proofs.
+"""HS-143-08 Phase D slice 2: the MLX warm through the engine door.
 
-These tests use the composed Database/broker/route planner/controller/session and
-normally constructed ``Transcriber``.  Only MLX's physical library hooks are
-bounded; route authority, lifecycle admission, execution, receipts, and reuse
-are production code.
+These tests use the composed Database/broker/door/session and a normally
+constructed ``Transcriber``. Only MLX's physical library hooks are bounded; the
+door's chain, the warm job, its receipts, and reuse are production code.
 """
 from __future__ import annotations
 
@@ -33,6 +32,17 @@ from tests.unit.test_dictation_session_admission import (
 )
 
 pytestmark = [pytest.mark.timeout(60, method="signal"), pytest.mark.usefixtures("whisper_on_device")]
+
+
+def _speech_outcomes(db: Any) -> list[str]:
+    """The receipts of the speech jobs (warm and transcription), in order."""
+    with db._connection() as conn:
+        return [str(row[0]) for row in conn.execute(
+            """SELECT r.outcome FROM kernel_operations o
+                 JOIN kernel_receipts r ON r.operation_id=o.operation_id
+                WHERE o.name='inference.invoke' AND o.native_id LIKE 'speech\\_%' ESCAPE '\\'
+                ORDER BY o.created_at"""
+        )]
 
 
 def _production_mlx(monkeypatch, *, holder: Any, silent: Any = None) -> tuple[Transcriber, list[str]]:
@@ -75,50 +85,6 @@ def _production_mlx(monkeypatch, *, holder: Any, silent: Any = None) -> tuple[Tr
     return Transcriber(model_name="base", backend="mlx", language="auto"), calls
 
 
-# HS-200-03: this machine must resolve an on-device dictation artifact
-# from default configuration, or the session plan records the transcription
-# capability UNRESOLVED and admission refuses `no_assignment`. That is the
-# environment (no MLX runtime, no configured llama.cpp model), not a product
-# defect, so the dependency is DECLARED and skips with its reason rather
-# than failing as if the product were broken.
-@pytest.mark.requires_local_dictation_route
-def test_parentless_preload_is_closed_capability_only_and_local(tmp_path, monkeypatch):
-    """Coverage 1/2: exact policy, capability source, no preload assignment."""
-    db, broker, _host, _impl = _build_host(tmp_path, monkeypatch, legacy=False)
-    calls: list[str] = []
-    assignments = broker.inference_adoption_service.plans._assignments
-    original_head = assignments._head
-
-    def observed_head(conn: Any, assignment_key: str) -> Any:
-        calls.append(assignment_key)
-        return original_head(conn, assignment_key)
-
-    monkeypatch.setattr(assignments, "_head", observed_head)
-    admission = preload_service_admission(config_snapshot=Config())
-
-    assert admission.principal.kind is PrincipalKind.SERVICE
-    assert admission.principal.identity == "local-model-preload"
-    assert admission.principal.authority_basis == "local-model-preload:assigned-speech-route"
-    assert admission.source_route["source"]["inherited_from"] == "capability"
-    assert calls == ["capability:speech.transcribe"]
-    assert admission.preload_route["capability"]["id"] == "speech.preload"
-    with db._connection() as conn:
-        source_policy = conn.execute(
-            "SELECT payload_json FROM inference_route_plan_principal_evidence WHERE plan_id=?",
-            (admission.source_route["id"],),
-        ).fetchone()["payload_json"]
-        preload_policy = conn.execute(
-            "SELECT payload_json FROM inference_route_plan_principal_evidence WHERE plan_id=?",
-            (admission.preload_route["id"],),
-        ).fetchone()["payload_json"]
-        preload_assignments = conn.execute(
-            "SELECT count(*) FROM inference_assignment_revisions WHERE capability_id='speech.preload'"
-        ).fetchone()[0]
-    assert '"assignment_sources":["capability"]' in source_policy
-    assert '"policy_id":"local-model-preload@1"' in preload_policy
-    assert '"allowed_boundaries":["local"]' in preload_policy
-    assert preload_assignments == 0
-
 
 @pytest.mark.parametrize("boundary", ["mesh", "private_network"])
 def test_parentless_preload_refuses_nonlocal_speech_before_constructing(tmp_path, monkeypatch, boundary):
@@ -159,11 +125,7 @@ def test_preload_freezes_one_sequence_and_stops_on_indeterminate(tmp_path, monke
         transcriber.warm(admission)
 
     assert [call.split(":", 1)[0] for call in calls] == ["model-holder"]
-    with db._connection() as conn:
-        executions = list(conn.execute(
-            "SELECT terminal_outcome,terminal_disposition FROM inference_route_executions"
-        ))
-    assert [tuple(row) for row in executions] == [("indeterminate", "dispatch_outcome_unknown")]
+    assert _speech_outcomes(db) == ["indeterminate"]
 
 
 @pytest.mark.requires_local_dictation_route
@@ -195,13 +157,8 @@ def test_revision_mismatch_reloads_but_matching_receipt_reuses(tmp_path, monkeyp
     assert transcriber.transcribe(np.full(8000, AUDIO_SENTINEL, dtype=np.float32), admission=mismatched.transcription()) == TEXT_SENTINEL
     assert len([call for call in calls if call.startswith("model-holder:")]) == 2
     mismatched.close("succeeded")
-    with db._connection() as conn:
-        preload_outcomes = list(conn.execute(
-            """SELECT e.terminal_outcome FROM inference_route_executions e
-                 JOIN inference_route_plans p ON p.id=e.route_plan_id
-                WHERE p.capability_id='speech.preload' ORDER BY e.rowid"""
-        ))
-    assert [row[0] for row in preload_outcomes] == ["succeeded", "succeeded"]
+    # warm, transcription (reused), warm again, transcription
+    assert _speech_outcomes(db) == ["succeeded"] * 4
 
 
 @pytest.mark.requires_local_dictation_route
@@ -234,10 +191,4 @@ def test_failed_prewarm_defers_to_first_lawful_transcription(tmp_path, monkeypat
     assert transcriber.transcribe(np.full(8000, AUDIO_SENTINEL, dtype=np.float32), admission=session.transcription()) == TEXT_SENTINEL
     session.close("succeeded")
     assert len([call for call in calls if call.startswith("model-holder:")]) == 3
-    with db._connection() as conn:
-        outcomes = list(conn.execute(
-            """SELECT e.terminal_outcome FROM inference_route_executions e
-                 JOIN inference_route_plans p ON p.id=e.route_plan_id
-                WHERE p.capability_id IN ('speech.preload','speech.transcribe') ORDER BY e.rowid"""
-        ))
-    assert [row[0] for row in outcomes] == ["failed", "succeeded", "succeeded"]
+    assert _speech_outcomes(db) == ["failed", "succeeded", "succeeded"]

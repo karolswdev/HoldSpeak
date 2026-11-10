@@ -76,6 +76,14 @@ def global_path(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     return target
 
 
+@pytest.fixture(autouse=True)
+def _stages_through_the_door(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The provider stages run through the engine door onto the stubbed runtime."""
+    from tests.unit._speech_door import route_speech_stages_to_runtime
+
+    route_speech_stages_to_runtime(monkeypatch)
+
+
 @pytest.fixture
 def settings_path(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     target = tmp_path / "config.json"

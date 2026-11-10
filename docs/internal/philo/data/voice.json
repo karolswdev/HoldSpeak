@@ -537,17 +537,6 @@
             "run": "full-python-suite",
             "cases": 1
           }
-        },
-        {
-          "path": "tests/unit/test_dictation_pipeline_admission.py",
-          "node": "test_a_backend_that_cannot_be_rebound_refuses_by_name",
-          "assertion": "An unbindable target is refused and cannot be retargeted.",
-          "execution": {
-            "status": "passed",
-            "record": "docs/generated/test-execution.json",
-            "run": "full-python-suite",
-            "cases": 1
-          }
         }
       ],
       "docs": [

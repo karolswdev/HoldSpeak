@@ -138,13 +138,10 @@ def _queue_summary_after_transcribe(db: Database, meeting_id: str) -> None:
 def _speech_construction(frozen: dict[str, str] | None, config: Config) -> dict[str, str]:
     """PHILO-17 transcribe: the model, backend and language Transcribe uses.
 
-    The admitted speech route's frozen evidence when the session froze one
-    (``SpeechSession.frozen_transcriber_arguments``). Config only when it
-    froze none: a SpeechSession freezes a route only when the speech AND the
-    writing routes are migrated (``speech_session/session.py``
-    new_speech_route). That fallback is SpeechSession compatibility debt; a
-    live MeetingSession freezes speech from its own bundle
-    (``meeting_session/intel_admission.py``) and has no such fallback.
+    The ``speech.transcribe`` engine the door's chain names
+    (``SpeechSession.transcriber_arguments``). Config only for a caller that
+    passes none (the readiness read below, on a desk with no speech
+    assignment).
     """
     if frozen:
         return {
@@ -460,7 +457,7 @@ class MeetingService:
                 deadline_seconds=max(300.0, 120.0 * windows),
                 child_budget=4 * windows + 4,
             )
-            construct = _speech_construction(session.frozen_transcriber_arguments(), config)
+            construct = _speech_construction(session.transcriber_arguments(), config)
             ready = bool(whisper_models.speech_readiness(construct["model_name"], construct["backend"])["ready"])
         except BaseException as exc:
             if session is not None:

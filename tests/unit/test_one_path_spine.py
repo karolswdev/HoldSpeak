@@ -733,7 +733,7 @@ def test_surface_reaches_the_literal_admission_spine(surface: str, tmp_path, mon
 #: Adding a sanitizer without adding it here is what this list exists to catch.
 SANITIZING_ADAPTERS: tuple[tuple[str, str], ...] = (
     ("holdspeak/meeting_session/deferred_bound.py", "BoundMeetingAdapter.dispatch"),
-    ("holdspeak/speech_session/child.py", "SpeechAdapter.dispatch"),
+    ("holdspeak/speech_session/transcription.py", "_WhisperAdapter.dispatch"),
     # HS-131-14: a routed plugin's completion goes through the dispatch handle,
     # which wraps the provider exception so a plugin's `except Exception` cannot
     # turn a physical failure into a summary string. That wrapper is a sanitizer
@@ -777,7 +777,11 @@ def test_both_sanitizing_adapters_let_a_typed_signal_through_at_runtime(signal_n
         BoundMeetingAdapter,
         BoundMeetingProviderFailure,
     )
-    from holdspeak.speech_session.child import SpeechAdapter, SpeechProviderFailure
+    from holdspeak.speech_session.child import SpeechProviderFailure
+    from holdspeak.speech_session.transcription import _WhisperAdapter
+
+    def SpeechAdapter(contract: str, call: Any) -> Any:  # noqa: N802 - the speech sanitizer
+        return _WhisperAdapter(contract, lambda cancellation: call(None, {}, cancellation))
 
     signal: BaseException = (
         ProviderCompatibilityRetry("max_completion_tokens")

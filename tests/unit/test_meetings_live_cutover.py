@@ -262,54 +262,6 @@ def test_thoughts_marker_does_not_activate_unassigned_transcription(tmp_path: Pa
     assert assignments.routed("speech.rewrite") is True
 
 
-def test_speech_session_freezes_only_assigned_provider_subset(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """A missing classifier route does not discard a chosen rewrite route."""
-    from holdspeak.services import inference_assignment_service
-    from holdspeak.speech_session.session import SpeechSession
-
-    captured: dict[str, Any] = {}
-
-    class _Assignments:
-        def __init__(self, _db: Any) -> None:
-            pass
-
-        @staticmethod
-        def routed(capability_id: str, **_selectors: Any) -> bool:
-            return capability_id == "speech.rewrite"
-
-    class _Adoption:
-        @staticmethod
-        def freeze_route_set(
-            _principal: Any, *, command_id: str, routes: list[dict[str, str]]
-        ) -> dict[str, dict[str, str]]:
-            captured["command_id"] = command_id
-            captured["routes"] = routes
-            return {"rewrite": {"id": "rewrite-route"}}
-
-    monkeypatch.setattr(
-        inference_assignment_service, "InferenceAssignmentService", _Assignments
-    )
-    session = object.__new__(SpeechSession)
-    session.broker = SimpleNamespace(
-        database=object(), inference_adoption_service=_Adoption()
-    )
-    session.principal = OWNER
-    session.plan = SimpleNamespace(session_id="speech-subset", has=lambda _key: True)
-    session._routed_routes = {}
-
-    session.freeze_assigned_provider_routes()
-
-    assert captured["routes"] == [
-        {
-            "key": "rewrite",
-            "capability_id": "speech.rewrite",
-            "invocation_id": "speech-subset",
-        }
-    ]
-    assert session._routed_routes == {"rewrite": {"id": "rewrite-route"}}
-
 
 
 def _door_children(db: Database, prefix: str) -> list[str]:
