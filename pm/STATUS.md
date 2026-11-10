@@ -2,6 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-09 · The evening batch (#2136–#2142) proven on main da4058146: quick check GREEN (8,218 affected tests, the sweep 142 cases in 60 s), main check GREEN, whole non-browser suite 16,568 passed, 0 failed; the hub redeployed there. Codex on #2140: NOT RATIFIED, five findings on what an agent reaches through concierge/provider reads; fix lane running.
 - 2026-11-09 · Handover Part II d: the evening wave (#2136–#2141); parity on da4058146: bypassing routes 93, both 575, MCP tools 619; live product lines −16,643 since the pipeline wave closed.
 - 2026-11-09 · #2141 The waist parked: `inference_adoption_service`, `inference_route_plan_service`, `inference_fallback_controller`, `inference_parent_route_bundle_service` (8,170 lines) to `services/_parked/*_20261109.py`; the kernel startup builds no routed coordinator, recovers no route execution, gives the runner no routed attempt runtime (its routed branches go too); the startup Config→assignment migration moves to `services/assignment_migration.py`; speech preload readiness writes through `engine_door.record_ready`; 23 route tables are kept and no longer written; net live −7,300 product lines, −5,098 test lines.
 <<<<<<< HEAD
