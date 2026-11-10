@@ -1,5 +1,5 @@
 import { useGuideView } from "../../walk/viewState";
-import { Children, Fragment, cloneElement, isValidElement, useId, useLayoutEffect, useRef, useState, type ReactNode, type ReactElement, type HTMLAttributes } from "react";
+import { Children, Fragment, createContext, useContext, cloneElement, isValidElement, useId, useLayoutEffect, useRef, useState, type ReactNode, type ReactElement, type HTMLAttributes } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { GadgetRow } from "../gadgets";
 import { useRovingRows } from "../roving";
@@ -72,20 +72,21 @@ export type InspectorCompletion =
 
 /** The inspector owns its name, aligned form grid and single final action row.
  * Stateful editors use InspectorForm inside the inspector, never their own layout. */
-type PaneInspectorProps = { label: string; onClose?(): void; pendingChoice?: boolean } & (
+const InspectorNameContext = createContext<string | null>(null);
+type PaneInspectorProps = { label: string; nameTestId?: string; testId?: string; onClose?(): void; pendingChoice?: boolean } & (
   | { rows: readonly InspectorRow[]; completion?: InspectorCompletion; children?: never }
   | { children: ReactElement | null; rows?: never; completion?: never }
 );
-export function PaneInspector({ label, children, rows, completion, onClose, pendingChoice }: PaneInspectorProps) {
+export function PaneInspector({ label, children, rows, completion, onClose, pendingChoice, nameTestId, testId }: PaneInspectorProps) {
   const ref = useRef<HTMLElement>(null);
   const hasFields = useInspectorFields(ref);
   if (children && typeof children.type === "string") throw new Error("An inspector accepts a form, not app layout");
   const content = children?.type === GadgetRow || children?.type === Fragment ? <InspectorForm>{children}</InspectorForm> : children;
-  return <section ref={ref} className="surface-pane-inspector" aria-label={label} data-pending-choice={pendingChoice || undefined}>
-    <div className="surface-pane-inspector-head"><strong>{label}</strong></div>
+  return <InspectorNameContext.Provider value={label}><section ref={ref} className="surface-pane-inspector" data-testid={testId} aria-label={label} data-pending-choice={pendingChoice || undefined}>
+    <div className="surface-pane-inspector-head"><strong data-testid={nameTestId}>{label}</strong></div>
     {rows ? <InspectorForm pendingChoice={pendingChoice} rows={rows} completion={completion ?? (onClose && (hasFields || pendingChoice) ? { done: onClose } : undefined)} />
       : <>{content}{onClose && (hasFields || pendingChoice) ? <InspectorActions completion={{ done: onClose }} /> : null}</>}
-  </section>;
+  </section></InspectorNameContext.Provider>;
 }
 export function InspectorActions({ completion, danger = false }: { completion?: InspectorCompletion; danger?: boolean }) {
   if (!completion) return null;
@@ -230,9 +231,19 @@ function useFormLabels(ref: { current: HTMLDivElement | null }) {
 
 export interface InspectorFact { label: string; value: ReactNode; key?: string }
 /** Read-only values use the form's grid, without a completion row. */
-export function InspectorFacts({ rows, testId, notice }: { rows: readonly InspectorFact[]; testId?: string; notice?: ReactNode }) {
-  return <InspectorForm testId={testId} notice={notice} rows={rows.filter(row => hasWords(row.value)).map(row => ({ ...row, control: row.value }))} />;
+export function InspectorFacts({ name, nameTestId, rows, testId, notice }: { name: string; nameTestId?: string; rows: readonly InspectorFact[]; testId?: string; notice?: ReactNode }) {
+  const heading = useContext(InspectorNameContext);
+  if (heading !== name) return <PaneInspector label={name} nameTestId={nameTestId} testId={testId}><InspectorFacts name={name} rows={rows} notice={notice} /></PaneInspector>;
+  return <div className="surface-inspector-facts" data-facts-name={name} data-testid={testId}><InspectorForm notice={notice}
+    rows={rows.filter(row => hasWords(row.value) && factText(row.value).trim() !== name.trim()).map(row => ({ ...row, control: row.value }))} /></div>;
 }
+function factText(value: ReactNode): string {
+  if (typeof value === "string" || typeof value === "number") return String(value);
+  if (Array.isArray(value)) return value.map(factText).join("");
+  if (isValidElement<{children?:ReactNode}>(value)) return factText(value.props.children);
+  return "";
+}
+
 function hasWords(value: ReactNode): boolean {
   if (value == null || typeof value === "boolean") return false;
   if (typeof value === "string") return Boolean(value.trim());
@@ -242,8 +253,8 @@ function hasWords(value: ReactNode): boolean {
 }
 
 /** One in-window destructive question. Cancel owns the initial focus. */
-export function InspectorQuestion({ question, keeps, consequence, cancel, verb, notice, testId, cancelTestId, targetId }: {
-  question: string; keeps?: ReactNode; consequence?: ReactNode; cancel(): void;
+export function InspectorQuestion({ question, keeps, clears, restores, keepsTestId, consequenceTestId, consequence, cancel, verb, notice, testId, cancelTestId, targetId }: {
+  question: string; keeps?: readonly string[]; clears?: string; restores?: string; keepsTestId?: string; consequenceTestId?: string; consequence?: ReactNode; cancel(): void;
   verb: InspectorVerb; notice?: ReactNode; testId?: string; cancelTestId?: string;
   targetId: string | number;
 }) {
@@ -255,8 +266,8 @@ export function InspectorQuestion({ question, keeps, consequence, cancel, verb, 
   if (!current) return null;
   return <section ref={ref} className="surface-pane-inspector" aria-label={question} data-question data-testid={testId}>
     <div className="surface-pane-inspector-head"><strong>{question}</strong></div>
-    {consequence ? <div className="surface-question-consequence">{consequence}</div> : null}
-    {keeps ? <div className="surface-question-keeps">Keeps · {keeps}</div> : null}
+    {clears ? <div className="surface-question-consequence" data-testid={consequenceTestId}>Clears {clears}{restores ? ` and puts back ${restores}` : ""}.</div> : consequence ? <div className="surface-question-consequence">{consequence}</div> : null}
+    {keeps?.length ? <div className="surface-question-keeps" data-testid={keepsTestId}>{new Intl.ListFormat("en", {style:"long",type:"conjunction"}).format(keeps)} {keeps.length > 1 || /s$/i.test(keeps[0]) ? "stay" : "stays"}.</div> : null}
     {notice ? <div className="surface-inspector-notice">{notice}</div> : null}
     <InspectorActions danger completion={{ cancel, cancelDisabled: verb.busy, cancelTestId, primary: { ...verb, run: answer.run } }} />
   </section>;

@@ -137,6 +137,7 @@ def test_records_selection_and_shots(tmp_path: Path, monkeypatch: pytest.MonkeyP
                         expect(task).to_contain_text("Dana")
                         assert db.proposals.get_proposal(task_ids[0]).owner == "Dana"
                         actions = window.get_by_role("toolbar", name="Tasks to confirm actions", exact=True)
+                        assert actions.evaluate("el => {const list=el.closest('.object-list');const head=list.querySelector('.object-list-head');const verbs=el.querySelector('.object-list-verbs');return el.getBoundingClientRect().bottom <= head.getBoundingClientRect().top+1 && Math.abs(verbs.getBoundingClientRect().right-list.getBoundingClientRect().right)<=1}")
                         actions.get_by_role("button", name="Confirm", exact=True).click()
                         expect(task).to_have_count(0)
                         assert db.proposals.get_proposal(task_ids[0]).state == "confirmed"

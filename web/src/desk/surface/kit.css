@@ -969,7 +969,7 @@
 .desk-next .desk-window-shell.is-sheet:has(> .desk-surface-foot > .kit-statusbar) > .desk-surface-body {
   scroll-padding-block-end: 8px;
 }
-.desk-next .desk-window-shell.is-sheet:has(> .desk-surface-foot > .kit-statusbar) > .desk-surface-body::after {
+.desk-next .desk-window-shell.is-sheet:has(> .desk-surface-foot > .kit-statusbar) > .desk-surface-body:not(:has(.surface-preference-pane))::after {
   content: "";
   display: block;
   flex: none;

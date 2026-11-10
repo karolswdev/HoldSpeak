@@ -1148,6 +1148,40 @@ LIST_GRAMMAR_JS = r"""(sel) => {
       if (action.querySelector('[role=status],.surface-state-chip,.gadget-chip-egress')) faults.push('inspector action row contains a fact');
     }
   }
+  for (const row of root.querySelectorAll('.surface-inspector-rows > .gadget-row')) {
+    if (!visible(row)) continue;
+    const caption = [...row.querySelectorAll('.object-list-head,.object-list-verbs,.gadget-group-label,.surface-pane-group > h3')].find(visible);
+    const label = row.querySelector(':scope > .gadget-row-label');
+    if (caption && label && visible(label)) faults.push('nested list repeats a row label');
+  }
+  for (const well of root.querySelectorAll('.surface-preference-well')) {
+    const groups = [...well.children].filter(el => el.matches('.gadget-group') && visible(el));
+    const edges = groups.map(el => el.getBoundingClientRect().right);
+    if (edges.some(edge => Math.abs(edge - edges[0]) > 1)) faults.push('preference groups have different right edges');
+    for (const group of groups) {
+      const edge = group.getBoundingClientRect().right;
+      const rows = [...group.querySelectorAll('.gadget-row')].filter(row => visible(row) && row.closest('.gadget-group') === group);
+      if (rows.some(row => Math.abs(row.getBoundingClientRect().right - edge) > 1)) faults.push('preference rules end before the group edge');
+    }
+  }
+  for (const body of root.querySelectorAll('.desk-surface-body')) {
+    const pane = body.querySelector(':scope > .surface-preference-pane');
+    // A scrolling legacy body moves its pane box with the page; only a
+    // bounded body can expose a gap between its pane and the fixed foot.
+    if (pane && visible(pane) && body.scrollHeight <= body.clientHeight + 1 && body.getBoundingClientRect().bottom - pane.getBoundingClientRect().bottom > 1) faults.push('pane ground ends above the status bar');
+  }
+  for (const facts of root.querySelectorAll('.surface-inspector-facts')) {
+    if (!visible(facts)) continue;
+    const name = facts.dataset.factsName?.trim();
+    for (const value of facts.querySelectorAll('.gadget-row-gadget')) {
+      if (visible(value) && value.textContent.trim() === name) faults.push(`${name}: fact repeats the pane heading`);
+    }
+  }
+  for (const list of root.querySelectorAll('.object-list--selection')) {
+    if (!visible(list)) continue;
+    const bar = list.querySelector(':scope > .object-list-inner-toolbar');
+    if (bar && bar.getBoundingClientRect().bottom > list.querySelector('.object-list-head, .object-list-rows').getBoundingClientRect().top + 1) faults.push('inner list verbs are below its header');
+  }
   for (const label of root.querySelectorAll('.gadget-row-label')) {
     if (!visible(label)) continue;
     const line = parseFloat(getComputedStyle(label).lineHeight);

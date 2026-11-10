@@ -383,7 +383,6 @@ function DecisionPreview({ row }: { row: Row }) {
   const state = standing(row);
   const at = state === "proposed" ? record?.created_at ?? row.decided_at : row.decided_at;
   const facts = [
-    { label: "Decision", value: row.text },
     ...(["proposed", "disputed", "superseded"].includes(state) ? [{ label: "State", value: STANDING[state].word }] : []),
     ...(record?.decision_text && record.decision_text !== row.text ? [{ label: "Words", value: record.decision_text }] : []),
     ...(project ? [{ label: "Project", value: project }] : []),
@@ -396,7 +395,7 @@ function DecisionPreview({ row }: { row: Row }) {
     ...(record?.review_date ? [{ label: "Review", value: dayWords(record.review_date) }] : []),
     ...(record?.committed_to || row.committed_to ? [{ label: "Committed to", value: record?.committed_to || row.committed_to }] : []),
   ];
-  return <PaneInspector label="Selected decision"><InspectorFacts rows={facts} testId="decision-summary" notice={failure ? <SurfaceState error={failure} onRetry={() => { setFailure(""); setRetry((value) => value + 1); }} /> : null} /></PaneInspector>;
+  return <InspectorFacts name={row.text} rows={facts} testId="decision-summary" notice={failure ? <SurfaceState error={failure} onRetry={() => { setFailure(""); setRetry((value) => value + 1); }} /> : null} />;
 }
 
 /** The plate (the language, 2026-11-08): the one raised thing of the face,

@@ -25,7 +25,13 @@ export function useStripFit<T extends HTMLElement>(enabled: boolean, key: string
   const ref = useRef<T | null>(null);
   const [fits, setFits] = useState(true);
   const natural = useRef(0);
+  const measuredKey = useRef(key);
   useLayoutEffect(() => {
+    if (measuredKey.current !== key) {
+      measuredKey.current = key;
+      natural.current = 0;
+      if (!fits) { setFits(true); return; }
+    }
     if (!enabled) {
       if (!fits) setFits(true);
       return;

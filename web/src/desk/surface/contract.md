@@ -1690,18 +1690,23 @@ count. Use it for a names-only preference list. Selection can show a form
 immediately through `onSelect`; `onOpen` can focus its first control on
 Return or double-click. Such a list starts with its first row selected and
 does not declare a separate Open verb. Immediate choices keep the form
-visible without a Done button. Settings > Reach > Brief uses this form. The Controls gallery includes a local names-only example.
+visible without a Done button. The Controls gallery includes a local names-only example.
 
 ### Facts, questions and narrow forms (2026-11-10)
 
-`InspectorFacts` takes `{label, value, key?}` rows. Blank values are omitted.
+`InspectorFacts` takes the object `name` and `{label, value, key?}` rows.
+It draws the name as its heading (or uses the matching enclosing inspector
+heading), and omits blank values and values equal to that name.
 It uses the `InspectorForm` label grid and never draws completion buttons.
 Automations, Decisions, Projects, Recordings, Meetings Records and People
 use it for selected facts. An immediate editable choice still uses a form.
 
-`InspectorQuestion` requires the stable `targetId` and takes `question`, optional `keeps` and `consequence`,
+`InspectorQuestion` requires stable `targetId` and takes `question`, optional kept things as `keeps: string[]`,
+optional `clears` and `restores`, optional object context in `consequence`,
 `cancel`, and `verb` (`label`, `run`, optional `busy`, `disabled`, `testId`).
 Cancel is first and receives focus. The destructive verb always uses danger.
+The kit writes kept and cleared things as complete sentences: "Past results
+stay." and "Clears the desk and puts back the default items."
 Facts and failures stay above the action row. `ConfirmVerb` opens this question
 for destructive actions and returns focus to its trigger after Cancel.
 Questions cancel when their target changes; otherwise they stay open until
@@ -1719,8 +1724,31 @@ when it cannot fit alone. Empty parts and empty bars have no DOM.
 
 Forms measure their longest label into one seat, up to 240 px and 55 percent
 of the form width. Longer labels stack. Nested lists and groups stack below
-their label when the form is at most 420 px wide. Labels keep one line.
+their label when the form is at most 420 px wide. A list or group that draws
+its own header or command strip omits the outer form-row label. Labels keep one line.
 Segmented tabs remain named tabs at every width and wrap when needed.
+
+### Inner lists and scope choices (2026-11-10, round 2)
+
+Every selection list without a window toolbar has its shared action bar
+above the header, at the right. A list in a `ListPane` preview uses that
+same inner action bar even when it declares Find. Buttons, keyboard verbs,
+the context menu and app menu all use the same `ListVerb` declarations.
+The three-row minimum counts the complete inner bar, including its padding.
+
+`ListView.toolbar.scopes` takes typed `ListScope` data: a tick has `id`,
+`label`, `kind: "tick"`, `checked`, and `onChange`; a cycle has `kind: "cycle"`,
+`value`, `options`, and `onChange`. Either can be disabled. The kit draws
+scope controls beside Find on one row. When that row cannot fit them with
+the field, they fold into Actions as checked menu items or a choice submenu.
+They unfold when the row grows again. Decisions Current only and the
+Destinations Active/Parked choice use this path. Components has a local
+Sounds only / Find preference example.
+
+PreferencePane gives every direct group the same box width and right edge,
+including inset material. `GadgetGroup.egress` draws a disclosure at that
+group's foot, on its left edge; Calls uses it in its final setup group.
+A bounded preference pane has no extra body reserve above the status bar.
 
 `SecretRow` also requires `targetId`. A `GadgetTable` with default `onDelete`
 requires `rowKey`; display-only tables and custom verb slots can omit it.
