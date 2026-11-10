@@ -41,6 +41,8 @@ import comingUp from "./fixtures/coming-up/coming-up.json";
 import settingsWire from "./fixtures/settings-wire/settings.json";
 import { ComingUp } from "../../pages/cores/history/ComingUp";
 import { meetingRowView } from "../../pages/cores/history/CatalogRail";
+import { appWalk } from "../walk/appWalks";
+import { stepWindow } from "../walk/walk";
 
 vi.mock("../shell", async (original) => ({
   ...(await original<typeof import("../shell")>()),
@@ -913,6 +915,20 @@ describe("DELIGHT 2 small joy: Try again turns the red dot blue, then green", ()
 
 
 describe("the meeting ledger and its reading doors", () => {
+  it("the Meetings walk marks this window's real parts in either host", async () => {
+    at(prepared as Fixture);
+    hub(prepared as Fixture);
+    render(<Shell><MeetingRecord meetingId="c5-review" onClose={() => undefined} /></Shell>);
+    await screen.findByTestId("meeting-read-transcript");
+    const script = appWalk("review-meetings")!;
+    for (const origin of ["surface-meetings", "pullout:meeting:c5-review"]) {
+      for (const step of script.steps) {
+        expect(stepWindow(step, origin)).toBe(origin);
+        expect(within(screen.getByTestId("meeting-record")).getByTestId(step.highlight!.target)).toBeTruthy();
+      }
+    }
+  });
+
   it("opens each long read in the pane and Back returns to the ledger", async () => {
     at(prepared as Fixture);
     hub(prepared as Fixture);
