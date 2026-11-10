@@ -7,8 +7,8 @@ cannot desync it), and each per-database random or time value made again.
 from __future__ import annotations
 
 import sqlite3
-import time
 from pathlib import Path
+from datetime import datetime, timedelta, timezone
 
 import pytest
 
@@ -19,6 +19,38 @@ pytestmark = [
     pytest.mark.real_schema,
     pytest.mark.skipif(not _template_db.enabled(), reason="HOLDSPEAK_TEST_TEMPLATE_DB=0"),
 ]
+
+
+def _seed_clock(monkeypatch):
+    """Run the real schema/restamp under distinct SQL and Python instants."""
+    from holdspeak.db import connection, channels, zoneless_stamps
+
+    clock = [datetime(2030, 1, 1, tzinfo=timezone.utc)]
+    real_apply = connection._apply_pragmas
+
+    def apply(conn):
+        real_apply(conn)
+        # Delegate modifiers and non-now dates to SQLite itself.
+        def sql_datetime(*args):
+            values = tuple(clock[0].isoformat() if value == "now" else value for value in args)
+            delegate = sqlite3.connect(":memory:")
+            try:
+                return delegate.execute("SELECT datetime(" + ",".join("?" for _ in values) + ")", values).fetchone()[0]
+            finally:
+                delegate.close()
+        conn.create_function("datetime", -1, sql_datetime)
+        conn.create_function("current_timestamp", 0, lambda: sql_datetime("now"))
+
+    class SeedDateTime(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return clock[0].astimezone(tz)
+
+    monkeypatch.setattr(connection, "_apply_pragmas", apply)
+    monkeypatch.setattr(channels, "datetime", SeedDateTime)
+    monkeypatch.setattr(zoneless_stamps, "datetime", SeedDateTime)
+    monkeypatch.setattr(_template_db, "datetime", SeedDateTime)
+    return clock
 
 
 def _fresh(path: Path) -> Path:
@@ -74,22 +106,23 @@ def test_a_copy_matches_a_fresh_create_except_the_restamped_values(tmp_path: Pat
     assert differ <= set(_template_db.RESTAMPED), differ - set(_template_db.RESTAMPED)
 
 
-def test_restamped_names_every_value_a_fresh_create_makes_new(tmp_path: Path) -> None:
+def test_restamped_names_every_value_a_fresh_create_makes_new(tmp_path: Path, monkeypatch) -> None:
     """Two fresh creates a second apart differ in exactly the RESTAMPED values.
 
     A new random, unique or time-stamped seed row in SCHEMA_SQL or reconcile
     fails here until it is added to RESTAMPED.
     """
+    clock = _seed_clock(monkeypatch)
     first = _values(_fresh(tmp_path / "first.db"))
-    time.sleep(1.1)  # datetime('now') has whole seconds
+    clock[0] += timedelta(seconds=2)
     second = _values(_fresh(tmp_path / "second.db"))
     differ = {key for key in first if first[key] != second[key]}
     assert differ == set(_template_db.RESTAMPED)
 
 
-def test_each_copy_gets_new_random_and_time_values(tmp_path: Path) -> None:
+def test_each_copy_gets_new_random_and_time_values(tmp_path: Path, monkeypatch) -> None:
     template = _values(_template_db._STATE["template"])
-    time.sleep(1.1)
+    _seed_clock(monkeypatch)
     one = _values(_copy(tmp_path / "one.db"))
     two = _values(_copy(tmp_path / "two.db"))
     for key in _template_db.RESTAMPED:

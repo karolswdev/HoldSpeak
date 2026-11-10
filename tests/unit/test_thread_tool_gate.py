@@ -355,94 +355,89 @@ class TestClassificationCensus:
                  "project.setup.start", "project.setup.answer"},  # a setup's drafting (prepare-then-press)
     }
 
-    #: #694 (Codex Astra counsels r4 and r5, law 9): every function that WRITES
-    #: a delegation or a schedule's authority, FOUND by its writer (not by a
-    #: tool name). The writer -> MCP tool mapping below is HAND-PINNED from
-    #: reading the callers, not derived reachability: the test proves the
-    #: writer set is exact and that every pinned tool is non-work or carries a
-    #: predicate; it cannot prove a pinned tool set is complete. A new writer
-    #: fails the census until someone reads its callers and pins it.
-    MINTERS: dict[tuple[str, str], frozenset[str]] = {
-        # the workbench schedule delegation (ScheduleDelegationService)
-        ("holdspeak/services/schedule_delegation.py", "enable_from_owner"): frozenset(),  # no caller today
-        ("holdspeak/services/schedule_delegation.py", "enable_from_owner_in_transaction"):
-            frozenset({"automation.create", "automation.update"}),
-        # One name since 2026-11-08: automation.* (the workbench.* twins left).
-        ("holdspeak/services/workbench_service.py", "create_workbench"):
-            frozenset({"automation.create"}),
-        ("holdspeak/services/workbench_service.py", "update_workbench"):
-            frozenset({"automation.update", "automation.create"}),
-        # Betterment A4 (#1304): a new engine for an automation re-freezes its
-        # live schedule. Its one caller is InferenceAssignmentService's
-        # _after_subject_write (set_assignment, clear_assignment); the MCP tools
-        # that reach a workbench subject scope are inference_assignment.set and
-        # .clear (config). The owner HTTP route PUT /api/workbenches/{id}/engine
-        # (set_engine) reaches it too. Betterment M3: so do the sentence's
-        # ``with`` and ``when`` words of workbench/automation create and update
-        # (create_automation, update_automation), which their predicates make
-        # config or authority.
-        ("holdspeak/services/workbench_service.py", "refreeze_schedule"):
-            frozenset({"inference_assignment.set", "inference_assignment.clear", "automation.create",
-                       "automation.update"}),
-        # the recording delegation receipt
-        ("holdspeak/services/scheduled_recording_service.py", "create_schedule"):
-            frozenset({"scheduled_recording.create"}),
-        ("holdspeak/services/scheduled_recording_service.py", "update_schedule"):
-            frozenset({"scheduled_recording.update"}),
-        # the steward's unattended runs (its policy)
-        ("holdspeak/services/steward_contract.py", "configure_policy"): frozenset({"project.configure_steward"}),
-        ("holdspeak/services/steward_contract.py", "effect"): frozenset({"project.configure_steward"}),
-        ("holdspeak/db/steward.py", "insert_policy"): frozenset({"project.configure_steward"}),
-        ("holdspeak/db/steward.py", "insert_policy_in_transaction"): frozenset({"project.configure_steward"}),
-        ("holdspeak/db/steward.py", "update_policy"): frozenset({"project.configure_steward"}),
-        ("holdspeak/db/steward.py", "update_policy_in_transaction"): frozenset({"project.configure_steward"}),
-        # an enabled recording written straight to the repository: the calendar
-        # ingest conductor's event-born recordings, under the owner's own
-        # auto-record setting (settings.update: config); no MCP tool reaches it
-        ("holdspeak/calendar_ingest_conductor.py", "_create_event_born_recordings"): frozenset(),
-        # the agent grants: HTTP only (/api/mcp/delegations), no MCP tool
-        ("holdspeak/kernel/desk.py", "grant_effect"): frozenset(),
-        ("holdspeak/kernel/desk.py", "effect"): frozenset(),
-        ("holdspeak/kernel/project_grant.py", "grant_effect"): frozenset(),
-        ("holdspeak/kernel/project_grant.py", "effect"): frozenset(),
-    }
+    def test_every_declared_delegation_or_schedule_writer_is_authority_for_a_thread(self) -> None:
+        """Start at live declarations and follow their service calls to writers.
 
-    def test_every_delegation_or_schedule_writer_is_authority_for_a_thread(self) -> None:
+        This is a syntactic reachability check, not proof of arbitrary Python
+        dispatch. The argument-aware runtime cases below exercise those calls.
+        No writer-to-tool inventory needs an edit when a method moves.
+        """
         import ast
+        from collections import defaultdict
 
+        from holdspeak.operations import DESCRIPTORS
         from holdspeak.mcp.tool_authority import ARGUMENT_AUTHORITY, TOOL_AUTHORITY
         from tests import _tree
 
-        repo = _tree.ROOT
-        found: set[tuple[str, str]] = set()
-        for path in _tree.python_files("holdspeak"):
-            for fn in _tree.walk(path):
-                if not isinstance(fn, (ast.FunctionDef, ast.AsyncFunctionDef)):
+        functions = {}
+        by_name = defaultdict(set)
+        by_class = defaultdict(set)
+
+        def collect(path, node, cls=""):
+            for child in ast.iter_child_nodes(node):
+                owner = child.name if isinstance(child, ast.ClassDef) else cls
+                if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    key = (path, child.lineno)
+                    functions[key] = (child, cls)
+                    by_name[child.name].add(key)
+                    by_class[(cls, child.name)].add(key)
+                collect(path, child, owner)
+
+        for path in _tree.python_files("holdspeak", exclude=("_parked",)):
+            collect(path, _tree.ast_of(path))
+
+        writers = set()
+        edges = defaultdict(set)
+        for key, (fn, cls) in functions.items():
+            for node in ast.walk(fn):
+                if isinstance(node, ast.Call):
+                    callee = getattr(node.func, "attr", getattr(node.func, "id", ""))
+                    receiver = getattr(node.func, "value", None)
+                    receiver_name = getattr(receiver, "attr", "")
+                    if callee == "enable_from_owner_in_transaction" or any(
+                        (kw.arg == "unattended_enabled"
+                         or (kw.arg == "enabled" and receiver_name == "scheduled_recordings"
+                             and callee in {"create", "update"}))
+                        and not (isinstance(kw.value, ast.Constant) and not kw.value.value)
+                        for kw in node.keywords
+                    ):
+                        writers.add(key)
+                    # Resolve self calls in their class, module functions in
+                    # their file, and uniquely named cross-service methods.
+                    if isinstance(receiver, ast.Name) and receiver.id == "self":
+                        targets = by_class[(cls, callee)]
+                    else:
+                        targets = {target for target in by_name[callee] if target[0] == key[0]}
+                        if not targets and len(by_name[callee]) == 1:
+                            targets = by_name[callee]
+                    edges[key].update(targets)
+                elif isinstance(node, ast.Constant) and isinstance(node.value, str):
+                    if node.value == "delegation_enabled" or (
+                        "INSERT INTO kernel_" in node.value and "delegations" in node.value
+                    ):
+                        writers.add(key)
+                elif isinstance(node, ast.JoinedStr):
+                    text = "".join(v.value for v in node.values if isinstance(v, ast.Constant))
+                    if "INSERT INTO " in text and "agent_identity" in text and "delegator" in text:
+                        writers.add(key)
+
+        minters = defaultdict(set)
+        for descriptor in DESCRIPTORS:
+            if descriptor.tool_schema is None:
+                continue
+            cls = "".join(part.title() for part in descriptor.service.split("_"))
+            pending = list(by_class[(cls, descriptor.method)])
+            visited = set()
+            while pending:
+                key = pending.pop()
+                if key in visited:
                     continue
-                for node in ast.walk(fn):
-                    minted = False
-                    if isinstance(node, ast.Call):
-                        callee = getattr(node.func, "attr", getattr(node.func, "id", ""))
-                        receiver = getattr(getattr(node.func, "value", None), "attr", "")
-                        minted = callee == "enable_from_owner_in_transaction" or any(
-                            (kw.arg == "unattended_enabled"
-                             or (kw.arg == "enabled" and receiver == "scheduled_recordings"
-                                 and callee in {"create", "update"}))
-                            and not (isinstance(kw.value, ast.Constant) and not kw.value.value)
-                            for kw in node.keywords)
-                    elif isinstance(node, ast.Constant) and isinstance(node.value, str):
-                        minted = node.value == "delegation_enabled" or (
-                            "INSERT INTO kernel_" in node.value and "delegations" in node.value)
-                    elif isinstance(node, ast.JoinedStr):
-                        text = "".join(v.value for v in node.values if isinstance(v, ast.Constant))
-                        minted = "INSERT INTO " in text and "agent_identity" in text and "delegator" in text
-                    if minted:
-                        found.add((path.relative_to(repo).as_posix(), fn.name))
-                        break
-        # A new writer must be read and pinned (the gate boundary); a writer
-        # that left needs no edit here (2026-11-09: no "gone" check).
-        assert found <= set(self.MINTERS), f"new writers={sorted(found - set(self.MINTERS))}"
-        for site, tools in self.MINTERS.items():
+                visited.add(key)
+                if key in writers:
+                    minters[key].add(descriptor.tool_name)
+                pending.extend(edges[key] - visited)
+        assert minters, "the live declarations reached no delegation writer"
+        for site, tools in minters.items():
             for tool in tools:
                 assert TOOL_AUTHORITY[tool] != "work" or tool in ARGUMENT_AUTHORITY, (site, tool)
 

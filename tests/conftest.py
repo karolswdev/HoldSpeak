@@ -13,6 +13,8 @@ os.environ.setdefault("HOLDSPEAK_TEST_NO_REAL_CLI", "1")
 # Found on this Mac. A test that needs agent engines turns them on and puts its
 # fake `claude`/`codex` first on PATH (tests/fixtures/fake_agent_cli.py).
 os.environ.setdefault("HOLDSPEAK_CLI_ENGINES", "off")
+# A phone press or a manually ticked Program must not start the owner's CLI.
+os.environ["HOLDSPEAK_AGENT_SPAWN"] = "off"
 # AG15: ordinary tests must never enumerate the owner's local tmux panes. The
 # isolated own-agent rig opts in only after it creates its own tmux server.
 os.environ["HOLDSPEAK_OWN_AGENTS"] = "off"
@@ -630,6 +632,10 @@ def pytest_configure(config):
     # (its path constants freeze at import) and before the xdist rewrite below
     # turns HOME into a subdirectory of whatever it was.
     _enforce_isolated_home(config)
+    from tests._process_guard import ProcessGuard
+
+    config._holdspeak_process_guard = ProcessGuard()
+    config._holdspeak_process_guard.install()
     config.addinivalue_line(
         "markers",
         "real_schema: a new database runs the real schema script and reconcile, never the template copy (tests/_template_db.py)",
@@ -980,3 +986,77 @@ def _reset_endpoint_health():
     yield
     default_health.reset()
     endpoint_checks.reset()
+
+
+@pytest.fixture(autouse=True)
+def _agent_spawn_isolated(monkeypatch, request, tmp_path_factory):
+    """Even a preceding opt-in cannot let another test start an agent."""
+    monkeypatch.setenv("HOLDSPEAK_AGENT_SPAWN", "off")
+    yield
+    guard = getattr(request.config, "_holdspeak_process_guard", None)
+    if guard is not None:
+        guard.paths[request.node.nodeid] = str(
+            request.node.funcargs.get("tmp_path", tmp_path_factory.getbasetemp())
+        )
+
+
+@pytest.fixture
+def allow_fake_agent_spawn(monkeypatch, tmp_path):
+    """Opt in by naming the executable this test made, never a PATH default."""
+    def allow(path):
+        fake = Path(path).resolve(strict=True)
+        assert fake.is_relative_to(tmp_path.resolve()) and os.access(fake, os.X_OK), fake
+        monkeypatch.setenv("PATH", f"{fake.parent}{os.pathsep}{os.environ.get('PATH', '')}")
+        monkeypatch.setenv("HOLDSPEAK_AGENT_SPAWN", "on")
+        return fake
+
+    return allow
+
+
+def pytest_sessionfinish(session, exitstatus):
+    guard = getattr(session.config, "_holdspeak_process_guard", None)
+    if guard is None:
+        return
+    leaks = guard.finish(os.environ.get("TMUX_TMPDIR", ""))
+    leaks += getattr(session.config, "_holdspeak_worker_leaks", [])
+    if leaks:
+        session.exitstatus = pytest.ExitCode.TESTS_FAILED
+        reporter = session.config.pluginmanager.get_plugin("terminalreporter")
+        if reporter:
+            reporter.write_sep("=", "test processes leaked (killed)", red=True)
+            for leak in leaks:
+                reporter.write_line(leak, red=True)
+        if hasattr(session.config, "workeroutput"):
+            session.config.workeroutput["holdspeak_process_leaks"] = leaks
+
+
+@pytest.hookimpl(optionalhook=True)
+def pytest_testnodedown(node, error):
+    leaks = node.workeroutput.get("holdspeak_process_leaks", [])
+    if leaks:
+        node.config._holdspeak_worker_leaks = getattr(node.config, "_holdspeak_worker_leaks", []) + leaks
+
+
+@pytest.fixture
+def db_stamp_clock(monkeypatch):
+    """Move store time explicitly, preserving each store's timestamp shape."""
+    from datetime import datetime, timedelta, timezone
+    from holdspeak.db import primitives, refinement_thoughts, meetings
+
+    class Clock:
+        now = datetime.now(timezone.utc).replace(microsecond=0)
+
+        def advance(self):
+            self.now += timedelta(seconds=2)
+
+        def iso(self):
+            return self.now.isoformat()
+
+        def z(self):
+            return self.now.isoformat(timespec="seconds").replace("+00:00", "Z")
+
+    clock = Clock()
+    monkeypatch.setattr(primitives, "_now_iso", clock.z)
+    monkeypatch.setattr(refinement_thoughts, "_now", clock.z)
+    monkeypatch.setattr(meetings, "utc_now_iso", clock.iso)
+    return clock

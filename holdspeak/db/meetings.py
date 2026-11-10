@@ -552,7 +552,7 @@ class MeetingRepository(BaseRepository):
                 provenance = excluded.provenance,
                 calendar_event_id = excluded.calendar_event_id,
                 sync_modified_at = excluded.sync_modified_at,
-                updated_at = datetime('now')
+                updated_at = ?
         """, (
             state.id,
             utc_iso(state.started_at),
@@ -576,6 +576,7 @@ class MeetingRepository(BaseRepository):
             state.provenance,
             state.calendar_event_id,
             utc_iso(sync_modified_at),
+            utc_now_iso(),
         ))
 
         conn.execute("DELETE FROM meeting_tags WHERE meeting_id = ?", (state.id,))
