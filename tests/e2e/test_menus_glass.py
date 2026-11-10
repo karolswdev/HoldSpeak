@@ -603,13 +603,12 @@ class TestSharedControlsAreSpecies:
             ), f"the {name} menu survived Escape"
 
             # ── the wings: one roving Tab stop, arrows walk, species ────
-            # PHILO-17 ("A meeting opens in one window"): the Meetings window
-            # is the list (two wings that fit at 393); Speak keeps four wings
-            # and a door, the strip that folds.
+            # Speak has one face. Activity still declares Records and Rules
+            # with its configuration door, through the shared wing species.
             page.evaluate(
                 """([key]) => sessionStorage.setItem(
                      "hs.desk.staged-surface-open", JSON.stringify({key}))""",
-                ["dictate"],
+                ["inspect-activity"],
             )
             page.reload(wait_until="load")
             _normal_chair(page)
@@ -643,8 +642,8 @@ class TestSharedControlsAreSpecies:
                 # the CHOICES own the target, not only the trigger (Astra counsel
                 # on #730): every row of the open menu, checkable rows included
                 choices = wing_menu.locator("[role^=menuitem]")
-                assert choices.count() >= 5, f"the strip menu drew {choices.count()} choices"
-                assert wing_menu.get_by_role("menuitemcheckbox").count() >= 4
+                assert choices.count() >= 3, f"the strip menu drew {choices.count()} choices"
+                assert wing_menu.get_by_role("menuitemcheckbox").count() >= 2
                 _strip_targets(page, '[role=menu][aria-label="Window faces"] [role^=menuitem]', subject="the strip menu's choices")
                 # a keyboard open puts focus on a row (DeskMenu autoFocus)
                 page.wait_for_function(
@@ -714,7 +713,7 @@ class TestSharedControlsAreSpecies:
                 )
             else:
                 pytest.fail(
-                    "the Speak window drew fewer than two wings; "
+                    "the Activity window drew fewer than two wings; "
                     "the wing keyboard grammar was NOT ASSESSED"
                 )
 

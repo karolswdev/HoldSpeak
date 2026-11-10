@@ -12,6 +12,7 @@ persistence, route truth and engine errors always fail normally.
 """
 from __future__ import annotations
 
+import json
 import os
 import re
 import threading
@@ -27,15 +28,14 @@ from holdspeak.intel_queue_conductor import _on_meeting_ready
 from holdspeak.kernel.runtime import _configure
 from tests.unit.test_meeting_deferred_admission import FakeHost, FakeIntel, _Route
 from .glass_infra import (
-    REPO, SPEECH_CAPABILITY, _api, _boot, _ensure_build, _normal_chair,
-    assign_engine, engine_profile,
+    REPO, _api, _boot, _ensure_build, _normal_chair, _settle,
+    engine_profile,
 )
 from .engine_stub_rig import _StubHandler
 from .concierge_rig import _quiet_concierge
 from .meeting_rig import _FixtureImportTranscriber, _chip_label
 from tests._evidence import evidence_dir
 from .chair_windows import go_group, open_chair_window
-from . import runs_on
 
 TOKEN = "hs202-first-use"
 WAV = REPO / "tests/fixtures/core_path_smoke_16k.wav"
@@ -62,8 +62,12 @@ def _desk_loaded(page):
     icon labels are hidden under it by design (#1526), so the floor's words
     may be empty: then the open sheet is the drawn content."""
     screen = page.get_by_test_id("desk-screen")
-    screen.wait_for(state="visible", timeout=10_000)
-    words = (screen.inner_text() or "").strip()
+    screen.wait_for(state="attached", timeout=10_000)
+    if page.viewport_size["width"] <= 720:
+        page.locator('[data-testid="desk-screen"]:visible, .desk-window-shell.is-sheet:visible').first.wait_for(timeout=10_000)
+    else:
+        screen.wait_for(state="visible", timeout=10_000)
+    words = (screen.inner_text() or "").strip() if screen.is_visible() else ""
     if words in {"", "…", "...", "Loading…"}:
         sheet = page.locator(".desk-window-shell.is-sheet").first
         sheet.wait_for(state="visible", timeout=10_000)
@@ -234,7 +238,11 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
     db = get_database()
     _configure(db)
     engine_profile()
-    assign_engine(SPEECH_CAPABILITY, 1)
+    # Keep the startup migration's local Whisper assignment. A generic
+    # inference profile cannot serve the local-only speech job.
+    from holdspeak.speech_session.transcription import speech_engine
+
+    assert speech_engine(_configure(db)).backend in {"mlx", "faster-whisper"}
     engine = _fixture_engine(monkeypatch, db)
     stub = ThreadingHTTPServer(("127.0.0.1", 0), _StubHandler)
     thread = threading.Thread(target=stub.serve_forever, daemon=True)
@@ -307,10 +315,11 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
                 return check(name, True, message)
 
             # Job 1: the real capture/WS path, supplied only by Chromium's WAV device.
-            sockets, frames = [], []
+            sockets, frames, replies = [], [], []
             def watch(socket):
                 if "/ws/dictation/stream" in socket.url:
                     sockets.append(socket)
+                    socket.on("framereceived", lambda data: replies.append(data))
                     socket.on("framesent", lambda data: frames.append(data) if isinstance(data, bytes) else None)
             page.on("websocket", watch)
             # PHILO-17 U17: /welcome opens the Get ready cards; the First
@@ -335,7 +344,11 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
                 talk.scroll_into_view_if_needed()
                 assert _hit(talk, fit=False), "First Words speech door is unreachable"
                 talk.click()
-                page.get_by_role("button", name="Stop listening", exact=True).wait_for()
+                try:
+                    page.get_by_role("button", name="Stop listening", exact=True).wait_for()
+                except BrowserTimeout as error:
+                    shot("first-words-not-listening")
+                    raise AssertionError(f"First words did not start listening: {words_card.inner_text()}; stream replies: {replies}") from error
                 assert sockets, "Speech did not open its production WebSocket"
                 if not frames:
                     sockets[0].wait_for_event("framesent", predicate=lambda data: isinstance(data, bytes), timeout=5000)
@@ -359,7 +372,7 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
             _desk(page, base)
             # Betterment daily D8: "No engine for summaries" asks in Needs you
             # only when a meeting waits for a summary; this desk has none yet,
-            # so the owner's door is HoldSpeak > Engines (both widths).
+            # so the owner's door is HoldSpeak > Settings > Engines.
             mark = page.locator(".desk-mark")
             assert _hit(mark), "The HoldSpeak menu is unreachable"
             mark.click()
@@ -367,15 +380,16 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
             # hidden under an open sheet; wait for the menu that is drawn.
             page.locator(".desk-menu-list:visible").first.wait_for()
             choose = page.locator("[role^=menuitem]").filter(
-                has=page.locator(".desk-menu-label", has_text=re.compile(r"^Engines$"))).last
+                has=page.locator(".desk-menu-label", has_text=re.compile(r"^Settings$"))).last
             _loaded(choose)
             assert _hit(choose)
             choose.click()
-            # ST7: Engines is its own canonical window.
-            models = page.locator("#surface-engines")
-            models.wait_for()
-            _loaded(models.get_by_test_id("concierge-add-engine"))
-            page.get_by_test_id("concierge-add-engine").click()
+            models = page.locator("#surface-settings")
+            models.get_by_test_id("settings-index-engines").click()
+            models.get_by_role("tab", name="Engines", exact=True).click()
+            models.get_by_role("button", name="Model library", exact=True).click()
+            library = models.get_by_role("region", name="Model library", exact=True)
+            library.get_by_role("button", name="Add an engine", exact=True).click()
             # Betterment E4: Add an engine unfolds into the kinds; the LAN
             # fixture is "A server on my network", which asks for its address.
             page.get_by_test_id("runson-kind-lan").click()
@@ -405,11 +419,12 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
             assert setup_checks[0].post_data_json == {"base_url": endpoint, "check_tools": True}
             expect(address).to_have_value(endpoint)
             # Betterment E3: Check fills the picker; he presses Use on the model.
-            pick = page.locator(f"[data-testid='concierge-add-pick'][data-model='{_StubHandler.MODEL}']")
+            pick = library.get_by_role("grid", name="Available models", exact=True).get_by_role("row").filter(has_text=_StubHandler.MODEL)
             expect(pick).to_be_visible()
+            pick.click()
             with page.expect_response(lambda response: response.url.endswith("/define-endpoint")
                                       and response.request.method == "POST") as defined:
-                pick.get_by_test_id("concierge-add-use").click()
+                library.get_by_role("button", name="Use", exact=True).click()
             assert defined.value.ok, defined.value.text()
             assert len(endpoint_writes) == 1
             assert defined.value.request.post_data_json["draft"]["endpoint"] == endpoint
@@ -417,28 +432,28 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
             page.remove_listener("request", record_setup_request)
             provider = defined.value.json()["provider"]
             assert provider["profile_id"] and provider["profile_revision"] > 0
-            # Betterment E5: What runs where is the face (the drag switchboard
-            # is parked behind Builder tools). One pick on Meeting summaries
-            # sets the summaries. The window stays: the receipt is in its foot.
-            what = models.get_by_test_id("runson-what")
-            what.wait_for()
-            pick_row = what.get_by_test_id("runson-what-pick-summaries")
-            expect(pick_row).to_be_enabled()
-            pick_row.click()
-            option = what.get_by_test_id(f"runson-what-option-summaries-{provider['profile_id']}")
+            # Close the same-window inspectors and set the summary job's pop-up.
+            library.get_by_test_id("runson-add-close").click()
+            library.get_by_role("button", name="Close", exact=True).click()
+            models.get_by_role("tab", name="Jobs", exact=True).click()
+            choice = models.get_by_role("combobox", name="Meeting summaries engines", exact=True)
+            value = json.dumps([provider["profile_id"]], separators=(",", ":"))
+            expect(choice.locator(f"option[value='{value}']")).to_have_count(1)
             with page.expect_response(lambda response: response.url.endswith("/api/inference/assignments/set")) as assigned:
-                option.click()
+                choice.select_option(value)
             assert assigned.value.ok, assigned.value.text()
             assignment = assigned.value.request.post_data_json
             assert assignment["scope"] == {"kind": "capability", "capability_id": "meeting.deferred_analysis"}, assignment
             assert assignment["entries"][0]["profile_id"] == provider["profile_id"], assignment
-            runs_on.wait_receipt(page, r"^Set at ")
-            assert runs_on.receipt(page).startswith("Set at "), runs_on.receipt(page)
-            assert page.locator("[data-testid='runson-undo']").count() == 1
+            expect(models.get_by_test_id("settings-engines-receipt")).to_contain_text("Set at ")
+            assert models.get_by_role("button", name="Undo", exact=True).count() == 1
             # The hub has its summary engine: no setup row asks for one.
             assert not any(b.get("key") == "summary" for b in
                            _api(page, "GET", "/api/desk/needs-you", token=TOKEN).get("blockers", []))
-            back = models.get_by_role("button", name="Back from Engines" if width < 720 else "Close Engines", exact=True)
+            if width < 720:
+                models.get_by_test_id("settings-back").click()
+                expect(models.get_by_test_id("settings-index-engines")).to_be_visible()
+            back = models.get_by_role("button", name="Back from Settings" if width < 720 else "Close Settings", exact=True)
             back.click()
             models.wait_for(state="detached")
             _needs(page)
@@ -454,7 +469,7 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
                  ("meetings", "Meetings", "[data-testid=meetings-toolbar]"),
                  ("people", "People", "#surface-people .desk-surface-body")]
                 if width <= 720 else
-                [("speak", "Speak", ".speak-face"),
+                [("speak", "Speak", "[data-testid=speak-face]"),
                  ("meetings", "Meetings", "[data-testid=meetings-toolbar]"),
                  ("today", "Today", '[id="pullout:intelligence:desk"] [data-testid=today-day]')]
             )
@@ -633,8 +648,15 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
             _meetings(page, recovery=not meetings_ok)
             # Capture C3 (#1271): Import opens the file picker at once; the
             # chosen file opens the import form.
+            _settle(page)
+            toolbar = page.get_by_role("toolbar", name="Meetings", exact=True)
+            folded_actions = toolbar.get_by_role("button", name="Actions ▾", exact=True)
             with page.expect_file_chooser() as chooser:
-                page.get_by_role("toolbar", name="Meetings").get_by_role("button", name="Import", exact=True).click()
+                if folded_actions.is_visible():
+                    folded_actions.click()
+                    page.get_by_role("menu", name="Meetings actions", exact=True).get_by_role("menuitem", name="Import", exact=True).click()
+                else:
+                    toolbar.get_by_role("button", name="Import", exact=True).click()
             chooser.value.set_files(str(WAV))
             page.get_by_role("textbox", name="Title", exact=True).fill(MEETING_TITLE)
             with page.expect_response(lambda response: "/api/meetings/import" in response.url
@@ -649,9 +671,10 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
             permit_import.set()
             assert import_done.wait(10), "Fixture import did not complete"
             assert db.meetings.get_meeting(meeting_id).segments, "Import saved no transcript"
+            row.click()
+            page.get_by_test_id("meetings-preview").get_by_text(WORDS, exact=True).wait_for()
             row.dblclick()
             _loaded(page.locator("[data-testid=meeting-mast]"))
-            page.get_by_text(WORDS, exact=True).wait_for()
             detail = _api(page, "GET", "/api/meetings/" + meeting_id, token=TOKEN)
             planned = detail["planned_route"]
             assert planned["status"] == "ready" and detail.get("run_receipt") is None
@@ -676,6 +699,8 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
             expect(page.get_by_test_id("detail-route")).to_have_count(0)
             run = page.get_by_test_id("detail-run-intelligence-btn")
             expect(run).to_have_attribute("title", re.compile("^Summary runs on .*" + re.escape(host)))
+            run.scroll_into_view_if_needed()
+            _settle(page)
             assert _hit(run), "Run summary must be reachable on the loaded record"
             # The disclosure rides the verb itself (its title), so the old
             # "chip beside the verb" distance check has nothing to measure.
@@ -702,6 +727,9 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
             # 907 px in an 852 px viewport, with the right text drawn 0.43 s
             # after the receipt. Freshness without a reload is the claim here;
             # `drawn` is `visible` without the viewport bounds.
+            # The record offers a summary through its in-window reader.
+            # Its arrival after the run, without a reload, is the fresh result.
+            page.get_by_test_id("meeting-read-summary").click()
             refreshed = observe("record-refresh", """([summary, host]) => {
               const drawn = el => {
                 if (!el || !el.isConnected) return false;
@@ -729,6 +757,7 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
                 _desk(page, base)
                 _meetings(page, recovery=not meetings_ok)
                 page.get_by_test_id("meeting-row-" + meeting_id).dblclick()
+                page.get_by_test_id("meeting-read-summary").click()
             expect(page.get_by_test_id("meeting-summary-text")).to_have_text(engine.result.summary)
             # The receipt (above) holds the planned host; the face says none.
             said = page.evaluate("""([label]) => {
@@ -805,6 +834,7 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
             meeting = page.get_by_role("region", name=MEETING_TITLE, exact=True)
             # PHILO-17: the meeting's own window holds the whole record (its
             # Send well previews the same words); the summary is its slab.
+            meeting.get_by_test_id("meeting-read-summary").click()
             summary = _loaded(meeting.get_by_test_id("meeting-summary-text"))
             expect(summary).to_have_text(engine.result.summary)
             restarted = _api(page, "GET", "/api/meetings/" + meeting_id, token=TOKEN)

@@ -36,3 +36,12 @@ it("a late preview cannot insert the previous meeting's summary", async () => {
   expect(screen.getByTestId("meeting-list-preview")).toHaveTextContent(next.title!);
   expect(screen.getByTestId("meeting-list-preview")).not.toHaveTextContent(previous.intel.summary);
 });
+
+
+it("selection shows the saved transcript without opening a fold", async () => {
+  const meeting = first["/api/meetings/m-saved-outcomes?include_parked=true"];
+  vi.mocked(apiFetch).mockImplementation((path) => Promise.resolve(String(path).includes("decisions") ? { decisions: [] } : meeting) as never);
+  render(<MeetingPreview meeting={meeting} />);
+  const words = meeting.segments[0].text;
+  expect(await screen.findByText(words, { exact: true })).toBeVisible();
+});
