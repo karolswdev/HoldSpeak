@@ -104,6 +104,31 @@ MEETING = "Ledger cutover sync"
 FRAME_MAX, CONTENT_MIN = 142, 680
 T = 30_000
 
+def _prove_window_undo(page: Any) -> None:
+    offer = page.locator(".desk-window-undo")
+    offer.wait_for()
+    assert offer.evaluate("""el => {
+        const r = el.getBoundingClientRect();
+        const strip = el.closest('.desk-menubar')?.getBoundingClientRect();
+        if (!strip || r.top < strip.top || r.bottom > strip.bottom) return false;
+        const overlaps = target => {
+            const b = target.getBoundingClientRect();
+            return b.width > 0 && b.height > 0 && r.left < b.right && r.right > b.left
+                && r.top < b.bottom && r.bottom > b.top;
+        };
+        return ![...document.querySelectorAll('.desk-dock button, [data-layer=window]')].some(overlaps);
+    }"""), "the strip Undo offer must cover no Dock target and no window"
+    button = offer.get_by_test_id("desk-window-undo")
+    assert button.evaluate("""el => {
+        const r = el.getBoundingClientRect();
+        if (innerWidth <= 420 && (r.width < 44 || r.height < 44)) return false;
+        return [r.left + 1, (r.left + r.right) / 2, r.right - 1].every(x =>
+            [r.top + 1, (r.top + r.bottom) / 2, r.bottom - 1].every(y =>
+                el.contains(document.elementFromPoint(x, y))));
+    }"""), "Undo must own its whole strip target"
+    page.screenshot(path=str(evidence_dir("window-undo-strip") / f"offer-{page.viewport_size['width']}.png"))
+
+
 # C1's ratified fence library and the C7 canvas CHROME_OWNS fence, ported
 # verbatim from assets/story-11-canvas/harness/shoot.py:127 (JS_LIB) and
 # assets/story-15-canvas/harness/board.py:86 (CHROME_OWNS).
@@ -1756,12 +1781,7 @@ class TestWindowsOpenWell:
                 ctx_a, a, errors_a = self._page(browser, 1440, onboard=True)
                 a.locator(".desk-dock [data-app=surface-meetings]").click()
                 a.wait_for_timeout(900)
-                receipt = a.locator(".desk-window-undo")
-                receipt.wait_for()
-                assert receipt.evaluate("""el => {
-                    const dock = document.querySelector('.desk-dock').getBoundingClientRect();
-                    return el.getBoundingClientRect().bottom <= dock.top;
-                }"""), "the standing Undo receipt must leave the Dock clear"
+                _prove_window_undo(a)
                 a.locator(".desk-dock [data-app='surface-people']").click()
                 a.wait_for_timeout(900)
                 wins = _w_until(lambda: _w_wins(a), lambda w: {"Meetings", "People"} <= set(w))
@@ -2109,12 +2129,7 @@ class TestCloseMeansGone:
         page.wait_for_timeout(900)
         _settle(page)
         hit = page.evaluate(HIT_JS, [cx, cy])
-        receipt = page.locator(".desk-window-undo")
-        receipt.wait_for()
-        assert receipt.evaluate("""el => {
-            const dock = document.querySelector('.desk-dock').getBoundingClientRect();
-            return el.getBoundingClientRect().bottom <= dock.top;
-        }"""), "Undo must leave the Dock clear after a close too"
+        _prove_window_undo(page)
         left = [o for o in self._open(page) if o["id"] == win["id"]]
         page.screenshot(path=str(CLOSE_SHOTS / f"{name}-after-{width}.png"))
         proof = {"window": win["id"], "centre": [round(cx), round(cy)], "hit": hit, "left_in_dom": left}

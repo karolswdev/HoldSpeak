@@ -4,6 +4,7 @@
  * too) and its answer goes back to the hub. The mark is the Walk's halo on
  * the part; words are the Walk's caption line. Without a bus (a component
  * test with no provider) it listens to nothing. */
+import { createPortal } from "react-dom";
 import { Button } from "../../components/signal/Signal";
 import { restoreWindowUndo, WindowUndoStale } from "../windowUndo";
 import type { WindowUndo } from "../used";
@@ -64,6 +65,11 @@ export function DeskRequests() {
   const latestUndo = useRef<UndoOffer | null>(null);
   const [undoError, setUndoError] = useState("");
   const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    if (!undo) return;
+    const timer = setTimeout(() => setUndo((now) => now === undo ? null : now), 8000);
+    return () => clearTimeout(timer);
+  }, [undo]);
   const requests = useRef(new Map<string, Promise<DeskResult>>());
   useEffect(() => {
     if (!subscribe) return;
@@ -127,25 +133,28 @@ export function DeskRequests() {
     };
   }, [subscribe]);
   if (!shown && !undo) return null;
+  const undoSlot = document.getElementById("desk-window-undo-slot");
   return (
-    <div className="walk-layer" data-walk="" data-testid="desk-requests">
-      <div className="walk-caption-slot desk-request-caption-slot">
-        <Caption text={words} testId="desk-request-words" />
-        {undo ? <div className="desk-window-undo walk-caption" role="status">
-          <span>{undoError || undo.label}</span>
-          <Button dense variant="secondary" disabled={busy} data-testid="desk-window-undo"
-            aria-label={`Undo: ${undo.label}`} onClick={() => {
-              const entry = undo;
-              setBusy(true);
-              void restoreWindowUndo(entry.value).then(() => setUndo((now) => now === entry ? null : now))
-                .catch((cause) => {
-                  if (latestUndo.current === entry) setUndoError(cause instanceof WindowUndoStale
-                    ? cause.message : "Undo could not be checked. Work kept. Try again.");
-                })
-                .finally(() => setBusy(false));
-            }}>Undo</Button>
-        </div> : null}
-      </div>
-    </div>
+    <>
+      {shown ? <div className="walk-layer" data-walk="" data-testid="desk-requests">
+        <div className="walk-caption-slot">
+          <Caption text={words} testId="desk-request-words" />
+        </div>
+      </div> : null}
+      {undo && undoSlot ? createPortal(<div className="desk-window-undo" role="status">
+        <span>{undoError || undo.label}</span>
+        <Button variant="chrome" disabled={busy} data-testid="desk-window-undo"
+          aria-label={`Undo: ${undo.label}`} onClick={() => {
+            const entry = undo;
+            setBusy(true);
+            void restoreWindowUndo(entry.value).then(() => setUndo((now) => now === entry ? null : now))
+              .catch((cause) => {
+                if (latestUndo.current === entry) setUndoError(cause instanceof WindowUndoStale
+                  ? cause.message : "Undo could not be checked. Work kept. Try again.");
+              })
+              .finally(() => setBusy(false));
+          }}>Undo</Button>
+        </div>, undoSlot) : null}
+    </>
   );
 }

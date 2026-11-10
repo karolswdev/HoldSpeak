@@ -328,6 +328,9 @@ export function DeskChrome({
         ) : null}
       </div>
 
+      {/* The compositor seats its transient Undo in the strip, clear of work. */}
+      <div id="desk-window-undo-slot" />
+
       {writeReceipt && !compact ? (
         <div className="desk-chrome desk-chrome-receipt">{writeReceipt}</div>
       ) : null}
