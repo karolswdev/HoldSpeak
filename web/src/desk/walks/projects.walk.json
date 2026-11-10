@@ -1,0 +1,53 @@
+{
+  "title": "Projects",
+  "open": {
+    "app": "surface-projects"
+  },
+  "steps": [
+    {
+      "highlight": {
+        "target": "projects-mast",
+        "thing": "project head",
+        "words": "The picked project and its standing."
+      },
+      "ask": {
+        "ref": "projects-mast",
+        "question": "Project head: keep or redo?",
+        "choices": [
+          "Keep",
+          "Redo"
+        ]
+      }
+    },
+    {
+      "highlight": {
+        "target": "projects-plate",
+        "thing": "project Room",
+        "words": "Open the Room to work on this project."
+      },
+      "ask": {
+        "ref": "projects-plate",
+        "question": "Project room: keep or redo?",
+        "choices": [
+          "Keep",
+          "Redo"
+        ]
+      }
+    },
+    {
+      "highlight": {
+        "target": "projects-ledger",
+        "thing": "project facts",
+        "words": "The next date and the newest update."
+      },
+      "ask": {
+        "ref": "projects-ledger",
+        "question": "Project facts: keep or redo?",
+        "choices": [
+          "Keep",
+          "Redo"
+        ]
+      }
+    }
+  ]
+}

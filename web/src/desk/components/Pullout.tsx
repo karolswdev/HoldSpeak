@@ -23,6 +23,7 @@ import { openNoteThought, type Thought } from "../thoughts";
 // The note's opening face is styled there; the window's code is its own chunk.
 import "../thought-workspace/thought-workspace.css";
 import { FootSlotContext, TitleSlotContext, WingSlotContext } from "../surface";
+import { BackSlotContext, type WindowBack } from "../surface/back";
 import type { ProjectReturn } from "../store/types";
 
 function PulloutFrame({
@@ -76,6 +77,7 @@ function PulloutFrame({
   const [wings, setWings] = useState<ReactNode>(null);
   const [foot, setFoot] = useState<HTMLElement | null>(null);
   const [titleOverride, setTitleOverride] = useState<string | null>(null);
+  const [contentBack, setContentBack] = useState<WindowBack | null>(null);
 
   // Programs (2026-10-28): a pullout family first (`pullout:program:<id>`).
   const Content = PULLOUT_FAMILIES[o.kind] ?? PULLOUT_CONTENT[o.kind];
@@ -114,6 +116,9 @@ function PulloutFrame({
       open
       beforeClose={editing && ["note", "kb", "recipe"].includes(o.kind) ? flushBeforeClose : undefined}
       onClose={close}
+      onBack={contentBack?.onBack}
+      backTestId={contentBack?.testId}
+      backLabel={contentBack?.label}
       actions={
         <>
           {/* Betterment AG8 gaps: the agent that works on this object. */}
@@ -128,6 +133,7 @@ function PulloutFrame({
         </>
       }
     >
+      <BackSlotContext.Provider value={setContentBack}>
       {hosted ? (
         <FootSlotContext.Provider value={foot}>
           <div className="desk-surface-body surface-host-body" data-surface-host={o.kind}>
@@ -144,6 +150,7 @@ function PulloutFrame({
           <footer ref={setFoot} className="desk-surface-foot surface-footer" />
         </FootSlotContext.Provider>
       ) : overrideContent ?? <Content object={o} onClose={() => void close()} registerClose={registerClose} />}
+      </BackSlotContext.Provider>
     </DeskWindowFrame>
   );
 }

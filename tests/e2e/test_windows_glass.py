@@ -371,7 +371,7 @@ class TestThePhoneDesk:
                 self._tap(page, page.locator(".desk-verbbar-menu").get_by_role("menuitem", name="Today", exact=True), width)
                 today = chair_window(page, "Brief")
                 today.wait_for()
-                today.get_by_test_id("today-since-toggle").wait_for()
+                today.get_by_test_id("today-day").wait_for()
                 self._open_meeting(page, width)
                 self._board(page, width, "C7-3a-meeting-window", facts, fails)
                 ring = ["Needs you", "Today", MEETING]
