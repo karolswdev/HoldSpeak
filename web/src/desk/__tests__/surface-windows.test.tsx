@@ -150,7 +150,7 @@ describe("surface windows use the compositor workspace", () => {
     });
   });
 
-  it("registers Engines as one live host and sends the old Concierge alias there", async () => {
+  it("sends Engines and the old Concierge alias to the Settings pane", async () => {
     const { container } = render(<SurfaceWindows />);
     await waitFor(() =>
       expect(container.querySelector("[data-surface-registry-state]"))
@@ -158,16 +158,16 @@ describe("surface windows use the compositor workspace", () => {
     );
 
     expect(openSurface("configure-runs-on", "meetings")).toBe(true);
-    expect(useDesk.getState().windowsById["surface-engines"]).toMatchObject({
-      applicationKey: "configure-runs-on",
-      scope: "meetings",
+    expect(useDesk.getState().windowsById["surface-settings"]).toMatchObject({
+      applicationKey: "configure-settings",
+      scope: "engines::meetings",
     });
     useDesk.getState().closeSurfaceWindow("configure-runs-on");
 
     expect(openSurface("open-concierge", "summary")).toBe(true);
-    expect(useDesk.getState().windowsById["surface-engines"]).toMatchObject({
-      applicationKey: "configure-runs-on",
-      scope: "summary",
+    expect(useDesk.getState().windowsById["surface-settings"]).toMatchObject({
+      applicationKey: "configure-settings",
+      scope: "engines::summary",
     });
   });
 
@@ -191,8 +191,8 @@ describe("surface windows use the compositor workspace", () => {
     // Engines is the speech-model recovery door on the first-use card. It
     // must land in its own live host while recovery-only registration is on.
     expect(openSurface("configure-runs-on", "models")).toBe(true);
-    expect(useDesk.getState().windowsById["surface-engines"]?.applicationKey)
-      .toBe("configure-runs-on");
+    expect(useDesk.getState().windowsById["surface-settings"]?.applicationKey)
+      .toBe("configure-settings");
 
     act(() => {
       expect(openSurface("project-setup")).toBe(true);

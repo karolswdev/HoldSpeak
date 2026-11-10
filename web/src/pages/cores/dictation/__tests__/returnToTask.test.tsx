@@ -87,13 +87,14 @@ describe("return to the task after configuring a model (HS-200-04)", () => {
     });
   });
 
-  it("the Engines handoff has its own hosted surface, so it opens in world", () => {
+  it("the Engines handoff is hosted by the Settings pane", () => {
     const engines = DESK_APPLICATIONS.find((app) => app.action === "configure-runs-on");
     expect(engines).toMatchObject({
       action: "configure-runs-on",
       windowId: "surface-engines",
+      parked: "settings:engines",
     });
-    expect(SURFACE_APPLICATIONS.some((app) => app.action === "configure-runs-on")).toBe(true);
+    expect(SURFACE_APPLICATIONS.some((app) => app.action === "configure-runs-on")).toBe(false);
   });
 
   it("keeps the utterance and re-reads readiness when a model is applied", async () => {

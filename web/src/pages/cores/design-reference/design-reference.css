@@ -430,3 +430,8 @@
 /* A Rail specimen uses the same edge-to-edge list and a growing pane. */
 .reference-navigation-sample { min-height: 320px; }
 .reference-navigation-pane { flex: 1 1 auto; min-width: 0; padding: var(--space-4); }
+
+/* The inspector composes shared columns; it has no feature stylesheet. */
+.reference-inspector-facts { margin: 0; display: grid; gap: 8px; }
+.reference-inspector-facts > div { display: flex; flex-wrap: wrap; gap: 8px; }
+.reference-inspector-facts dd { margin: 0; overflow-wrap: anywhere; }

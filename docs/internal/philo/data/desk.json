@@ -1725,7 +1725,7 @@
           "claim": "Owner-only scan (setup.lan.scan, blocking_io) runs outside the hub event loop."
         },
         {
-          "path": "web/src/features/runson/RunsOnCore.tsx",
+          "path": "web/src/features/runson/EngineLibrary.tsx",
           "symbol": "runson-find-lan",
           "line": 382,
           "claim": "The existing picker offers Find on LAN beside Add an engine."

@@ -278,7 +278,6 @@ UPPER_DEBT: dict[str, int] = {
     "features/project-room/core/Plan.tsx": 1,  # plainWord: a two-letter acronym (PR, CI)
     "features/project-room/RoomPeopleSection.tsx": 1,  # monogram: initials
     "features/project-room/update/model.ts": 3,  # ref plates: MTG id, Jira key, a raw id
-    "features/runson/RunsOnCore.tsx": 1,  # the engine-state compare key
     "features/runson/stateWord.ts": 1,  # the state-map lookup key
     "pages/cores/history/MeetingRecord.tsx": 2,  # the export format acronym (PDF, JSON)
 }
