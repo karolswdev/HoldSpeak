@@ -48,3 +48,10 @@
 .desk-next .object-list.object-list--selection .gadget-cycle { width: 100%; min-height: 22px; }
 
 .object-list-value { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* A row with an independent editor owes that editor air, unlike selection
+   rows, which are adjoining parts of one control. */
+.object-list.object-list--selection .object-list-row:has(select) { min-height: 30px; }
+@container surface (max-width: 520px) {
+  .object-list.object-list--selection .object-list-row:has(select) { min-height: 52px; }
+}

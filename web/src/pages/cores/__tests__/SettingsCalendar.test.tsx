@@ -1,7 +1,8 @@
-import { act, fireEvent, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { calendarSourceEgressChips, formatLocalClock, snapshotEgressChip, SettingsCore } from "../SettingsCore";
 import type { SettingsResponse } from "../core-types";
+import accountsWire from "../../../desk/__tests__/fixtures/connections-wire/connections-checked.json";
 import hubWire from "../../../desk/__tests__/fixtures/settings-wire/hub.json";
 
 const apiFetch = vi.hoisted(() => vi.fn());
@@ -52,6 +53,17 @@ vi.mock("../ContextualAssignment", () => ({
   ContextualAssignment: () => null,
 }));
 
+function openCalendar(id: string) {
+  if (screen.queryByTestId("calendar-well")) fireEvent.click(within(screen.getByTestId("calendar-well")).getByRole("button", { name: "Cancel" }));
+  const row = screen.getByTestId(`calendar-source-${id}`);
+  fireEvent.click(row);
+  fireEvent.keyDown(row, { key: "Enter" });
+}
+function addCalendar(image = false) {
+  if (screen.queryByTestId("calendar-well")) fireEvent.click(within(screen.getByTestId("calendar-well")).getByRole("button", { name: "Cancel" }));
+  fireEvent.click(screen.getByRole("button", { name: "Add calendar" }));
+  if (!image) fireEvent.click(screen.getByRole("menuitem", { name: "Add feed" }));
+}
 const WELL_INPUT = { name: "Calendar URL or file path" };
 
 // HS-175-03: the 146-era GadgetTable became SurfaceLedgerRows (one per
@@ -74,54 +86,36 @@ describe("Accounts calendar source rows", () => {
 
   afterEach(() => vi.useRealTimers());
 
-  it("renders two source rows with label, type, enabled state, the verbs, and the speak-to-fill mic on the well", () => {
-    render(<SettingsCore scope="integrations" />);
+  it("selects calendar rows, toggles reading in place, and opens the shared voice editor", () => {
+    render(<SettingsCore scope="integration:calendar" />);
     const work = screen.getByTestId("calendar-source-src-work");
-    expect(within(work).getByText("Work")).toBeInTheDocument();
-    expect(within(work).getByText("Calendar feed")).toBeInTheDocument();
-    expect(within(work).getByRole("status")).toHaveAttribute("data-state", "idle");
-    expect(within(work).getByRole("button", { name: "Edit" })).toBeInTheDocument();
-    fireEvent.click(within(work).getByRole("button", { name: "Edit" }));
-    const workRow = work.closest(".surface-ledger-row") as HTMLElement;
-    expect(within(workRow).getByRole("button", { name: "Disable" })).toBeInTheDocument();
-    expect(within(workRow).getByRole("button", { name: "Remove" })).toBeInTheDocument();
-
+    expect(within(work).getByText("Work")).toBeVisible();
+    expect(within(work).getByText("Calendar feed")).toBeVisible();
+    expect(within(work).getByRole("checkbox", { name: "Read Work" })).toBeChecked();
     const personal = screen.getByTestId("calendar-source-src-personal");
-    expect(within(personal).getByText("Personal")).toBeInTheDocument();
-    // HS-175 counsel H2-2: a file source wears no reassurance chip.
-    expect(within(personal).queryByText("THIS DEVICE")).toBeNull();
-    // A disabled source: idle StateChip, muted label, Enable verb.
-    expect(within(personal).getByRole("status")).toHaveAttribute("data-state", "idle");
-    expect(within(personal).getByText("Personal")).toHaveAttribute("data-muted", "true");
-    fireEvent.click(within(personal).getByRole("button", { name: "Edit" }));
-    expect(within(personal.closest(".surface-ledger-row") as HTMLElement).getByRole("button", { name: "Enable" })).toBeInTheDocument();
-
-    // The one text well carries the mic (the voice law).
-    fireEvent.click(screen.getByTestId("calendar-add-btn"));
+    expect(within(personal).getByRole("checkbox", { name: "Read Personal" })).not.toBeChecked();
+    expect(within(work).queryByRole("button")).toBeNull();
+    openCalendar("src-work");
+    expect(within(screen.getByTestId("calendar-well")).getByRole("textbox", WELL_INPUT)).toHaveValue("https://work.example/cal.ics");
+    addCalendar();
     const well = within(screen.getByTestId("calendar-well"));
     expect(well.getByRole("textbox", WELL_INPUT)).toHaveValue("");
     expect(well.getByRole("button", { name: /^Speak Calendar URL/ })).toBeInTheDocument();
   });
 
-  it("names the HTTPS source's host in its Edit hover title and none on the file source (absence is the signal)", () => {
-    // HS-175 counsel C9 (H2-2), as amended by UX-CANON A.9 (2026-10-25): no
-    // host chip rests on the row; the Edit verb's hover title names the host.
-    render(<SettingsCore scope="integrations" />);
-    const work = screen.getByTestId("calendar-source-src-work");
-    expect(work.querySelector(".gadget-chip-egress")).toBeNull();
-    const edit = within(work).getByRole("button", { name: "Edit" });
-    expect(edit).toHaveAttribute("title", expect.stringContaining("work.example"));
-    expect(edit).toHaveAttribute("title", expect.stringContaining("Work"));
-    const personal = screen.getByTestId("calendar-source-src-personal");
-    expect(personal.querySelector(".gadget-chip-egress")).toBeNull();
-    expect(within(personal).getByRole("button", { name: "Edit" })).not.toHaveAttribute("title");
-    expect(within(personal).queryByText("THIS DEVICE")).toBeNull();
+  it("discloses a feed's host in the inspector and has no resting egress chip", () => {
+    render(<SettingsCore scope="integration:calendar" />);
+    expect(screen.getByTestId("calendar-source-src-work").querySelector(".gadget-chip-egress")).toBeNull();
+    openCalendar("src-work");
+    expect(screen.getByTestId("calendar-well")).toHaveTextContent("work.example");
+    openCalendar("src-personal");
+    expect(screen.getByTestId("calendar-well")).not.toHaveTextContent("work.example");
   });
 
   it("writes a changed URL through the sources wire from the row's Edit well", async () => {
-    render(<SettingsCore scope="integrations" />);
+    render(<SettingsCore scope="integration:calendar" />);
     const work = screen.getByTestId("calendar-source-src-work");
-    fireEvent.click(within(work).getByRole("button", { name: "Edit" }));
+    openCalendar("src-work");
     const well = screen.getByTestId("calendar-well");
     const input = within(well).getByRole("textbox", WELL_INPUT);
     expect(input).toHaveValue("https://work.example/cal.ics");
@@ -147,8 +141,8 @@ describe("Accounts calendar source rows", () => {
   it("adds a new source with a minted id from the Connect calendar well", async () => {
     const randomUUID = vi.spyOn(crypto, "randomUUID").mockReturnValue("a1b2c3d4-e5f6-7890-abcd-ef1234567890");
     try {
-      render(<SettingsCore scope="integrations" />);
-      fireEvent.click(screen.getByTestId("calendar-add-btn"));
+      render(<SettingsCore scope="integration:calendar" />);
+      addCalendar();
       const well = screen.getByTestId("calendar-well");
       fireEvent.change(within(well).getByRole("textbox", WELL_INPUT), {
         target: { value: "https://new.example/feed.ics" },
@@ -183,8 +177,8 @@ describe("Accounts calendar source rows", () => {
       if (url === "/api/settings" && init?.method === "PUT") return Promise.reject(refusal);
       return Promise.resolve({ settings: { ...settings, _revision: "calendar-r2" } });
     });
-    render(<SettingsCore scope="integrations" />);
-    fireEvent.click(screen.getByTestId("calendar-add-btn"));
+    render(<SettingsCore scope="integration:calendar" />);
+    addCalendar();
     const well = screen.getByTestId("calendar-well");
     fireEvent.change(within(well).getByRole("textbox", WELL_INPUT), {
       target: { value: "ftp://nope.example/cal.ics" },
@@ -205,14 +199,14 @@ describe("Accounts calendar source rows", () => {
       if (url === "/api/settings" && init?.method === "PUT") return new Promise((resolve) => { finish = resolve; });
       return Promise.resolve({ sources: [] });
     });
-    render(<SettingsCore scope="integrations"/>);
-    fireEvent.click(within(screen.getByTestId("calendar-source-src-work")).getByRole("button", { name: "Edit" }));
+    render(<SettingsCore scope="integration:calendar"/>);
+    openCalendar("src-work");
     const well = () => within(screen.getByTestId("calendar-well"));
     fireEvent.change(well().getByRole("textbox", WELL_INPUT), { target: { value: "https://first.example/a.ics" } });
     fireEvent.click(well().getByRole("button", { name: "Save" }));
     await act(async () => { await Promise.resolve(); });
     expect(well().getByRole("button", { name: "Save" })).toHaveAttribute("aria-busy", "true");
-    if (target === "another source") fireEvent.click(within(screen.getByTestId("calendar-source-src-personal")).getByRole("button", { name: "Edit" }));
+    if (target === "another source") openCalendar("src-personal");
     fireEvent.change(well().getByRole("textbox", WELL_INPUT), { target: { value: "https://newer.example/b.ics" } });
     await act(async () => finish({ settings: { ...settings, _revision: "calendar-r2" } }));
     expect(well().getByRole("textbox", WELL_INPUT)).toHaveValue("https://newer.example/b.ics");
@@ -226,8 +220,8 @@ describe("Accounts calendar source rows", () => {
       if (url === "/api/settings" && init?.method === "PUT") return new Promise((_yes, no) => { refuse = no; });
       return Promise.resolve({ ...settings, sources: [] });
     });
-    render(<SettingsCore scope="integrations"/>);
-    fireEvent.click(screen.getByTestId("calendar-add-btn"));
+    render(<SettingsCore scope="integration:calendar"/>);
+    addCalendar();
     // Role queries inside the well: a page-wide role query names every node
     // of every mounted Settings section on each call.
     const inWell = () => within(screen.getByTestId("calendar-well"));
@@ -252,24 +246,25 @@ describe("Accounts calendar source rows", () => {
       if (url === "/api/calendar/sources" && accepted) return Promise.reject(new Error("Read unavailable"));
       return Promise.resolve({ sources: [] });
     });
-    render(<SettingsCore scope="integrations"/>);
-    fireEvent.click(screen.getByTestId("calendar-add-btn"));
+    render(<SettingsCore scope="integration:calendar"/>);
+    addCalendar();
     fireEvent.change(screen.getByRole("textbox", WELL_INPUT), { target: { value: "https://accepted.example/feed.ics" } });
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
     await act(async () => { await vi.advanceTimersByTimeAsync(0); });
     expect(screen.queryByTestId("calendar-well")).toBeNull();
-    const failure = screen.getByText("Calendar read failed · Sources unchanged · Retry");
+    const failure = screen.getByText("Calendars not read");
     expect(failure).toBeVisible();
     expect(screen.queryByTestId("settings-save-failure")).toBeNull();
     // Accounts draws other reads too (Betterment setup ST1): the calendar's own Retry.
-    expect(within(failure.closest(".prefs-read-failure") as HTMLElement).getByRole("button", { name: "Retry" })).toBeEnabled();
+    expect(within(failure.parentElement as HTMLElement).getByRole("button", { name: "Retry" })).toBeEnabled();
   });
 
   it("removes a source after the in-world confirm step (never a modal)", async () => {
-    render(<SettingsCore scope="integrations" />);
+    render(<SettingsCore scope="integration:calendar" />);
     const work = screen.getByTestId("calendar-source-src-work");
-    fireEvent.click(within(work).getByRole("button", { name: "Edit" }));
-    fireEvent.click(within(work.closest(".surface-ledger-row") as HTMLElement).getByRole("button", { name: "Remove" }));
+    fireEvent.click(work);
+    fireEvent.click(screen.getByRole("button", { name: "Remove calendar" }));
+    expect(apiFetch.mock.calls.filter(([url, init]) => url === "/api/settings" && init?.method === "PUT")).toHaveLength(0);
     const confirm = screen.getByTestId("calendar-remove-confirm");
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(within(confirm).getByRole("button", { name: "Cancel" })).toBeInTheDocument();
@@ -288,10 +283,9 @@ describe("Accounts calendar source rows", () => {
   });
 
   it("toggles a source's enabled state through the sources wire", async () => {
-    render(<SettingsCore scope="integrations" />);
+    render(<SettingsCore scope="integration:calendar" />);
     const personal = screen.getByTestId("calendar-source-src-personal");
-    fireEvent.click(within(personal).getByRole("button", { name: "Edit" }));
-    fireEvent.click(within(personal.closest(".surface-ledger-row") as HTMLElement).getByRole("button", { name: "Enable" }));
+    fireEvent.click(within(personal).getByRole("checkbox", { name: "Read Personal" }));
     await act(async () => {
       await vi.advanceTimersByTimeAsync(700);
     });
@@ -318,7 +312,7 @@ describe("Snapshot verb refusal (HS-147-05)", () => {
   afterEach(() => vi.useRealTimers());
 
   it("surfaces a 422 upload refusal in the body with a short footer outcome", async () => {
-    render(<SettingsCore scope="integrations" />);
+    render(<SettingsCore scope="integration:calendar" />);
 
     // Intercept the dynamically created file input
     let capturedInput: HTMLInputElement | null = null;
@@ -340,7 +334,8 @@ describe("Snapshot verb refusal (HS-147-05)", () => {
       return Promise.resolve({ settings: { ...settings, _revision: "calendar-r2" } });
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Import image" }));
+    addCalendar(true);
+    fireEvent.click(screen.getByRole("menuitem", { name: "Import image" }));
 
     expect(capturedInput).not.toBeNull();
     expect(capturedInput!.type).toBe("file");
@@ -441,9 +436,10 @@ describe("HS-175 counsel: honest tokens on the calendar rows", () => {
   });
 
   it("counts EVENTS (never CALENDARS) and prints LAST READ in the viewer's local clock", async () => {
-    render(<SettingsCore scope="integrations" />);
+    render(<SettingsCore scope="integration:calendar" />);
     await act(async () => { await vi.advanceTimersByTimeAsync(10); });
-    const work = screen.getByTestId("calendar-source-src-work");
+    openCalendar("src-work");
+    const work = screen.getByTestId("calendar-well");
     expect(within(work).getByTestId("calendar-source-events").textContent).toBe("40 events");
     expect(within(work).queryByText(/CALENDARS/)).toBeNull();
     const expected = formatLocalClock("2026-09-05T23:47:00Z");
@@ -452,23 +448,24 @@ describe("HS-175 counsel: honest tokens on the calendar rows", () => {
 
   it("names the vision model's host in Import image's hover title BEFORE any upload, never as a resting chip", async () => {
     // UX-CANON A.9 (amended 2026-10-25): the address is said at the act.
-    render(<SettingsCore scope="integrations" />);
+    render(<SettingsCore scope="integration:calendar" />);
     await act(async () => { await vi.advanceTimersByTimeAsync(10); });
-    const importAction = screen.getByRole("button", { name: "Import image" });
+    addCalendar(true);
+    const importAction = screen.getByRole("menuitem", { name: "Import image" });
     expect(within(importAction.parentElement!).queryByText("192.168.1.43")).toBeNull();
     expect(importAction).toHaveAttribute("title", "The screenshot is sent to 192.168.1.43 (a device on your network) for extraction.");
-    expect(screen.getByTestId("calendar-snapshot-btn")).toBeInTheDocument();
+    expect(importAction).toBeVisible();
   });
 
   it("edits the Snapshot name while keeping its generated path read-only and Disable / Remove available", async () => {
-    render(<SettingsCore scope="integrations" />);
+    render(<SettingsCore scope="integration:calendar" />);
     await act(async () => { await vi.advanceTimersByTimeAsync(10); });
     const snap = screen.getByTestId("calendar-source-src-snap");
     expect(within(snap).getByText("Snapshot")).toBeInTheDocument();
-    fireEvent.click(within(snap).getByRole("button", { name: "Edit" }));
-    const snapRow = snap.closest(".surface-ledger-row") as HTMLElement;
-    expect(within(snapRow).getByRole("button", { name: "Disable" })).toBeInTheDocument();
-    expect(within(snapRow).getByRole("button", { name: "Remove" })).toBeInTheDocument();
+    expect(within(snap).getByRole("checkbox", { name: "Read O365 SNAPSHOT" })).toBeChecked();
+    fireEvent.click(snap);
+    expect(screen.getByRole("button", { name: "Remove calendar" })).toBeEnabled();
+    openCalendar("src-snap");
     const well = screen.getByTestId("calendar-well");
     expect(within(well).queryByRole("textbox", WELL_INPUT)).toBeNull();
     fireEvent.click(within(well).getByText("Details"));
@@ -483,7 +480,30 @@ describe("HS-175 counsel: honest tokens on the calendar rows", () => {
       ]) } }),
     });
     const work = screen.getByTestId("calendar-source-src-work");
-    expect(within(work).getByRole("button", { name: "Edit" })).toBeInTheDocument();
+    expect(within(work).getByText("Work")).toBeVisible();
+  });
+});
+
+describe("Accounts navigation", () => {
+  it("opens Send to directly and keeps its draft through service setup", async () => {
+    vi.clearAllMocks();
+    apiFetch.mockImplementation((url: string) => {
+      if (url.startsWith("/api/channels/destinations")) return Promise.resolve({ destinations: [] });
+      if (url === "/api/connections") return Promise.resolve({ tools: accountsWire.tools.filter((tool) => tool.provider_id !== "jira") });
+      return Promise.resolve({ sources: [] });
+    });
+    render(<SettingsCore scope="integration:destinations" />);
+    expect(screen.getByRole("tab", { name: "Send to" })).toHaveAttribute("aria-selected", "true");
+    fireEvent.click(await screen.findByRole("button", { name: "Add destination" }));
+    fireEvent.change(screen.getByLabelText("Channel"), { target: { value: "jira" } });
+    fireEvent.change(screen.getByTestId("dest-key"), { target: { value: "PAY-118" } });
+    fireEvent.click(await screen.findByRole("button", { name: "Set up account" }));
+    await waitFor(() => expect(screen.getByRole("tab", { name: "Services" })).toHaveAttribute("aria-selected", "true"));
+    fireEvent.click(screen.getByRole("button", { name: "Add account" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Jira" }));
+    expect(screen.getByRole("region", { name: "Add Jira account" })).toBeVisible();
+    fireEvent.click(screen.getByRole("tab", { name: "Send to" }));
+    expect(screen.getByTestId("dest-key")).toHaveValue("PAY-118");
   });
 });
 

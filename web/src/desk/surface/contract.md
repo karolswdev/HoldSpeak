@@ -1542,13 +1542,15 @@ This keeps object names readable beside Rail; the phone type step is unchanged.
 
 `ListView` accepts the `ObjectListProps` data API. It uses ObjectList's one
 column, selection and scrolling implementation, with 26 px rows (44 px on a
-narrow surface). The children API remains for chronological streams. New
+narrow surface). Rows with independent pop-up editors have room between the
+controls (30 px rows, 52 px on a narrow surface). The children API remains for chronological streams. New
 preference lists use data rows, never a Button in a row. `cells` can hold a
 `CycleGadget`; `cells.tick` holds a `CheckGadget` before the name. A state is
 an optional dot and short word; omit a state when no action is needed.
 
 A `ListVerb` declares `id`, `label`, optional `key`, `enabled(selection)`
-and `run(selection)`. `symbol` gives Add/Remove their plus/minus face;
+and `run(selection)`. Optional `title` discloses the destination at the act
+in the action bar, context menu and app menu. `symbol` gives Add/Remove their plus/minus face;
 `items` supplies the Add menu. Declare verbs once: the list renders its bar
 and WorkMenu and contributes the same entries to the front app's menu when
 focused. Without selection, a selection verb remains visible and disabled.
@@ -1562,7 +1564,8 @@ and a share of the available height. Lists scroll inside their wells.
 `SegmentedTabs` switches panes with library Buttons and arrow keys;
 `PaneInspector` holds a choice that cannot fit in a cell, within the same
 window. `PaneActions` spaces verbs and feedback. `Rail compact` has one-line
-names; Settings supplies a brass attention dot with an accessible reason.
+names and exposes one listbox with selected options; adjoining options
+are parts of one control. Settings supplies a brass attention dot with an accessible reason.
 
 Settings Accounts and Engines use these patterns. The other Settings panes
 still use the earlier preference sheet and are pending migration. Each app's

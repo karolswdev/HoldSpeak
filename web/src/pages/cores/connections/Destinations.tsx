@@ -26,24 +26,19 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "../../../components/signal/Signal";
 import {
-  ConfirmVerb,
   EgressChip,
-  FoldGadget,
   GadgetGroup,
   StateChip,
-  SurfaceLedger,
-  SurfaceLedgerRow,
 } from "../../../desk/surface";
 import type { ConnectionsResponse } from "./api";
 import { ACCOUNTS_CHANGED, fetchConnections } from "./api";
-import { accountChip } from "../../../features/channels/accountChip";
 import { DestForm, EMPTY, emailKeyIdentity, type Draft } from "../../../features/channels/DestinationForm";
 import {
   CHANNEL_WORD, DEFAULT_EMAIL_PROVIDER, DEST_FOCUS, SEND_WORDS, egressOf, emailProvider, refusedWord, stamp,
   takeDestinationsFocus, targetToken, wire, Refusal, type Channel, type Destination, type EmailProvider,
 } from "../../../features/channels/channels";
 import "../../../features/channels/channels.css";
-import { ListView, PaneInspector, PaneActions, GadgetRow, type ListVerb } from "../../../desk/surface";
+import { ListView, PaneInspector, PaneActions, GadgetRow, SegmentedTabs, type ListVerb } from "../../../desk/surface";
 import { Token } from "../../../desk/surface/Token";
 
 // HS-S53: the form has one owner, features/channels/DestinationForm.tsx.
@@ -89,7 +84,30 @@ function detailFields(d: Destination, keyKnown?: boolean): [string, string][] {
   }
 }
 
-export function Destinations() {
+/** The Check result, by the hub's check state. */
+function CheckChip({ state, channel, answeredAt }: { state: string; channel: Channel; answeredAt?: string | null }) {
+  // Email (B11): Check reports what the provider last answered for this sender, and when -- never a fresh
+  // verification (Codex Astra r2 on #697), never the key alone.
+  if (channel === "email") {
+    const when = answeredAt ? <Token className="surface-token" data-chip>{`LAST SEND ${stamp(answeredAt)}`}</Token> : null;
+    if (state === "ready") return <StateChip state="idle" label="SENDER NOT CHECKED" />;
+    if (state === "sender_accepted") return <><StateChip state="success" label="SENDER ACCEPTED" />{when}</>;
+    if (state === "sender_not_verified") return <><StateChip state="failure" label="SENDER NOT VERIFIED" />{when}</>;
+    if (state === "key_changed") return <StateChip state="warning" label="NOT CHECKED SINCE KEY CHANGE" />;
+  }
+  // Slack (design section 5): what is known without a post -- the webhook is in the keychain and its
+  // host passes the rule. Check never posts a test message.
+  if (channel === "slack" && state === "ready") return <StateChip state="success" label="WEBHOOK SET · HOST OK" />;
+  if (state === "ready" || state === "connected") return <StateChip state="success" label="CHECKED" />;
+  const words: Record<string, string> = {
+    changed: "DESTINATION CHANGED", missing: "NO FOLDER", not_writable: "NOT WRITABLE", parked: "DESTINATION PARKED",
+    owner_action_required: "NOT SIGNED IN", never_checked: "NEVER CHECKED", unavailable: "UNAVAILABLE",
+    degraded: "DEGRADED", not_configured: "NOT SET UP", no_answer: "NO ANSWER",
+  };
+  return <StateChip state="warning" label={words[state] ?? refusedWord(state)} />;
+}
+
+export function Destinations({ onSetUpAccount }: { onSetUpAccount?: (channel: Channel) => void } = {}) {
   const [rows, setRows] = useState<Destination[] | null>(null);
   const [readFailed, setReadFailed] = useState(false);
   const [arrive, setArrive] = useState(false);
@@ -98,21 +116,7 @@ export function Destinations() {
   const [accountsLoading, setAccountsLoading] = useState(true);
   const [accountsReadError, setAccountsReadError] = useState(false);
   const onAccountsRetry = () => window.dispatchEvent(new Event(ACCOUNTS_CHANGED));
-  // Settings: Accounts and Destinations share this module. Open the existing
-  // account control above the form, so the destination draft stays mounted.
-  const setUpAccount = (channel: Channel) => {
-    const module = groupRef.current?.closest(".prefs-module") ?? document;
-    const row = module.querySelector<HTMLElement>(`[data-testid="connections-${channel}"]`)
-      ?? module.querySelector<HTMLElement>(`[data-testid^="connections-${channel}-conn-"]`);
-    const add = module.querySelector<HTMLButtonElement>(`[data-testid="connections-add-open-${channel}"]`);
-    const show = module.querySelector<HTMLButtonElement>(`[data-testid="connections-${channel}-show"]`);
-    if (add && add.getAttribute("aria-expanded") !== "true") add.click();
-    if (show && show.getAttribute("aria-expanded") !== "true") show.click();
-    (row ?? add)?.scrollIntoView?.({ block: "center" });
-    const target = module.querySelector<HTMLInputElement>(`[data-testid="connections-add-${channel}"] input`)
-      ?? show ?? row?.querySelector<HTMLButtonElement>("button:not([disabled])") ?? add;
-    target?.focus({ preventScroll: true });
-  };
+  const setUpAccount = (channel: Channel) => onSetUpAccount?.(channel);
   useEffect(() => {
     let live = true;
     const read = () => {
@@ -127,6 +131,9 @@ export function Destinations() {
     return () => { live = false; window.removeEventListener("focus", read); window.removeEventListener(ACCOUNTS_CHANGED, read); };
   }, []);
   const [open, setOpen] = useState<string | null>(null);
+  const [details, setDetails] = useState<string | null>(null);
+  const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
+  const [tab, setTab] = useState("active");
   const [editing, setEditing] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const [keys, setKeys] = useState<Record<string, boolean>>({});
@@ -139,7 +146,7 @@ export function Destinations() {
     setRemoveBusy(id);
     setRemoveFailed((m) => { const n = { ...m }; delete n[id]; return n; });
     void wire.park(id)
-      .then(() => { setOpen(null); reload(); })
+      .then(() => { setOpen(null); setConfirmRemove(null); setDetails(null); reload(); })
       .catch((e) => setRemoveFailed((m) => ({ ...m, [id]: e instanceof Refusal ? e.code : "no_answer" })))
       .finally(() => setRemoveBusy(null));
   };
@@ -199,28 +206,71 @@ export function Destinations() {
         // otherwise leaves the list above the window).
         setAdding(false); reload();
         // Betterment send S1: a saved GitHub row opens, so its Account line shows the login gh named.
-        if (saved?.channel === "github") setOpen(saved.id);
+        if (saved?.channel === "github") { setOpen(saved.id); setDetails(saved.id); }
         requestAnimationFrame(() => groupRef.current?.scrollIntoView({ block: "start" }));
       }}
-      onCancel={active.length ? () => setAdding(false) : undefined} />
+      onCancel={() => setAdding(false)} />
   );
+  const check = (id: string) => {
+    const destination = rows.find((row) => row.id === id);
+    if (!destination || checks[id]?.busy) return;
+    setChecks((m) => ({ ...m, [id]: { busy: true } }));
+    setDetails(id);
+    void wire.check(id).then((answer) => {
+      setChecks((m) => ({ ...m, [id]: { busy: false, state: answer.check.state, at: new Date().toISOString(), answeredAt: answer.check.answered_at ?? null } }));
+      const ref = String(destination.account.key_ref ?? "");
+      if (destination.channel === "slack" && ref && ["ready", "slack_webhook_missing"].includes(answer.check.state)) {
+        setKeys((keys) => ({ ...keys, [ref]: answer.check.state === "ready" }));
+      }
+    }).catch((error) => setChecks((m) => ({ ...m, [id]: { busy: false, state: error instanceof Refusal ? error.code : "no_answer" } })));
+  };
+  const shown = tab === "parked" ? parked : active;
+  const editable = (id: string | undefined) => Boolean(active.find((row) => row.id === id && !row.builtin));
   const verbs: ListVerb[] = [
-    { id: "add", label: "Add destination", symbol: "+", run: () => { setEditing(null); setAdding(true); } },
-    { id: "remove", label: "Remove destination", symbol: "−", key: "Delete", enabled: (row) => Boolean(row) && !active.find((d) => d.id === row?.id)?.builtin && !removeBusy, run: (row) => { if (row) remove(row.id); } },
-    { id: "open", label: "Open", key: "Enter", enabled: (row) => Boolean(row), run: (row) => { setAdding(false); setEditing(row?.id ?? null); } },
+    { id: "add", label: "Add destination", symbol: "+", run: () => { setEditing(null); setDetails(null); setAdding(true); } },
+    { id: "remove", label: "Remove destination", symbol: "−", key: "Delete", enabled: (row) => editable(row?.id) && !removeBusy, run: (row) => setConfirmRemove(row!.id) },
+    { id: "check", label: "Check", enabled: (row) => Boolean(row) && tab === "active" && !checks[row!.id]?.busy, run: (row) => check(row!.id) },
+    { id: "edit", label: "Edit", enabled: (row) => editable(row?.id), run: (row) => { setDetails(null); setEditing(row!.id); } },
+    { id: "open", label: "Open", key: "Enter", enabled: (row) => Boolean(row), run: (row) => { setAdding(false); setDetails(row!.id); } },
   ];
-  const selected = active.find((d) => d.id === editing);
+  const selected = rows.find((row) => row.id === editing);
+  const inspected = rows.find((row) => row.id === details);
+  const result = inspected ? checks[inspected.id] : undefined;
+  const fields = inspected ? [...detailFields(inspected, slackKey(inspected)), ["Saved", stamp(inspected.created_at)],
+    ...(inspected.parked_at ? [["Parked", stamp(inspected.parked_at)]] : []),
+    ...(result?.at ? [["Checked", stamp(result.at)]] : []),
+    ...(inspected.channel === "email" && result?.state ? [["Key", result.state === "email_key_missing" ? "NOT SET" : result.state.startsWith("email_key") ? refusedWord(result.state) : "SET"]] : []),
+  ] : [];
+  const body = <>
+      <ListView label="Send to" ordered rows={shown.map((destination) => ({ id: destination.id, kind: "destination", name: destination.name,
+        cells: { channel: CHANNEL_NAME[destination.channel], target: targetToken(destination.channel, destination.target) } }))}
+        rowProps={() => ({ "data-testid": tab === "parked" ? "dest-parked-row" : "dest-row" })}
+        columns={[{ key: "name", word: "Destination", track: "minmax(0, 1.2fr)" }, { key: "channel", word: "Channel", track: "80px" }, { key: "target", word: "To", track: "minmax(0, 1fr)" }]}
+        selectedId={open} onSelect={(id) => { setOpen(id); setDetails(null); setConfirmRemove(null); }} verbs={verbs} defaultVerb="open" />
+      {confirmRemove ? <PaneActions>
+        <span>Remove {rows.find((row) => row.id === confirmRemove)?.name}?</span>
+        <Button dense variant="ghost" disabled={Boolean(removeBusy)} onClick={() => setConfirmRemove(null)}>Cancel</Button>
+        <Button dense loading={removeBusy === confirmRemove} data-testid="dest-remove" onClick={() => remove(confirmRemove)}>Remove</Button>
+        {removeFailed[confirmRemove] ? <div role="alert" data-testid="dest-remove-failed" data-code={removeFailed[confirmRemove]}><PaneActions><span>Not removed · {refusedWord(removeFailed[confirmRemove])}</span><Button dense variant="ghost" data-testid="dest-remove-retry" onClick={() => remove(confirmRemove)}>Retry</Button></PaneActions></div> : null}
+      </PaneActions> : null}
+      {inspected ? <PaneInspector label={inspected.name} onClose={() => setDetails(null)}>
+        <div data-testid="dest-open"><GadgetGroup>
+          {fields.map(([label, value]) => <GadgetRow key={label} label={label}>{value}</GadgetRow>)}
+        </GadgetGroup>
+        <PaneActions><span data-testid="dest-verbs"><EgressChip {...egressOf(inspected)} /></span>
+          {result?.busy ? <span role="status">Checking…</span> : null}
+          {result?.state ? <span data-testid="dest-check-result" data-code={result.state}><CheckChip state={result.state} channel={inspected.channel} answeredAt={result.answeredAt} /></span> : null}
+        </PaneActions></div>
+      </PaneInspector> : null}
+  </>;
   return <div className="surface-tab-panel" data-testid="destinations" ref={groupRef}>
-    {Object.values(removeFailed).length ? <PaneActions><span role="alert">Destination not removed</span><Button dense onClick={() => { if (open) remove(open); }}>Retry</Button></PaneActions> : null}
     {adding ? <PaneInspector label="Add destination" onClose={() => setAdding(false)}>{form}</PaneInspector>
     : selected ? <PaneInspector label={selected.name} onClose={() => setEditing(null)}>
-      {selected.builtin ? <GadgetGroup><GadgetRow label="Destination"><EgressChip {...egressOf(selected)} /></GadgetRow>{detailFields(selected).map(([label, value]) => <GadgetRow key={label} label={label}>{value}</GadgetRow>)}</GadgetGroup>
-      : <DestForm conns={conns} accountsLoading={accountsLoading} accountsReadError={accountsReadError} onAccountsRetry={onAccountsRetry}
+      <DestForm conns={conns} accountsLoading={accountsLoading} accountsReadError={accountsReadError} onAccountsRetry={onAccountsRetry}
         initial={fromDestination(selected)} replaces={selected.id} keys={keys} onKey={onKey} onSlackKey={onSlackKey} onKeyKnown={onKeyKnown} onSetUpAccount={setUpAccount}
-        onDone={() => { setEditing(null); reload(); }} onCancel={() => setEditing(null)} />}
-    </PaneInspector> : <ListView label="Send to" ordered rows={active.map((destination) => ({ id: destination.id, kind: "destination", name: destination.name,
-      cells: { channel: CHANNEL_NAME[destination.channel], target: targetToken(destination.channel, destination.target) } }))}
-      columns={[{ key: "name", word: "Destination", track: "minmax(0, 1.2fr)" }, { key: "channel", word: "Channel", track: "100px" }, { key: "target", word: "To", track: "minmax(0, 1fr)" }]}
-      selectedId={open} onSelect={setOpen} verbs={verbs} defaultVerb="open" />}
+        onDone={() => { setEditing(null); reload(); }} onCancel={() => setEditing(null)} />
+    </PaneInspector> : <>
+      {parked.length ? <SegmentedTabs label="Destinations" value={tab} onChange={(tab) => { setTab(tab); setOpen(null); setDetails(null); }} tabs={[{ id: "active", label: "Active" }, { id: "parked", label: "Parked" }]}>{body}</SegmentedTabs> : body}
+    </>}
   </div>;
 }
