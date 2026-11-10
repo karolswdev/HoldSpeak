@@ -1664,3 +1664,23 @@ Records keeps date, time, length and the current state there.
 Read-only tabbed inspector content uses `PreferenceWell` so its rows scroll
 above the completion row. Video in an inspector value seat keeps its aspect
 ratio and fits that seat at narrow widths.
+
+### Preference rows and immediate choices (2026-11-10)
+
+`GadgetGroup` and `PaneGroup` omit their visible caption when they contain
+one rendered row. The row's label carries the name. The group keeps its
+accessible name. This includes fragments, composed rows and changes after
+a read; nested groups own their own rows. A caption that repeats the only
+row is rejected by the kit's rendered behaviour test.
+
+Inside a preference window, a `ListPane` preview and its direct inspector
+share the list's left edge. A compound field uses one `GadgetRow`: its label
+stays in the label seat and the field and Buttons stay in the value seat.
+
+`ListView headerless` omits the column header and adjusts the grid's row
+count. Use it for a names-only preference list. Selection can show a form
+immediately through `onSelect`; `onOpen` can focus its first control on
+Return or double-click. Such a list starts with its first row selected and
+does not declare a separate Open verb. Done returns focus to the selected
+row and keeps the form visible. Settings > Reach > Brief uses this
+form. The Controls gallery includes a local names-only example.

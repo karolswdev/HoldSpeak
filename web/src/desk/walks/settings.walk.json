@@ -49,7 +49,7 @@
       "highlight": {
         "target": "reach-settings",
         "thing": "Reach",
-        "words": "Channels, When, Calls and Brief share this pane. In Brief, select a choice and press Return to open it below the list."
+        "words": "Channels, When, Calls and Brief share this pane. In Brief, select a row to show its form below. Return puts focus in the first control."
       }
     },
     {

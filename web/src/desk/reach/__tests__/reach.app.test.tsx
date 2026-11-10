@@ -78,7 +78,7 @@ describe("Settings ▸ Reach", () => {
     fireEvent.click(screen.getByRole("tab", {name:"When"}));
     expect(screen.getByRole("combobox", { name: "Telegram" })).toHaveValue("at_once");
     fireEvent.click(screen.getByRole("tab", { name: "Brief" }));
-    fireEvent.doubleClick(screen.getByText("Digest and Later", {exact: true}));
+    fireEvent.doubleClick(screen.getByRole("row", {name: "Digest and Later"}));
     expect(screen.getByRole("combobox", { name: "Later means" })).toHaveValue("in_2h");
     expect(screen.getByRole("combobox", { name: "Digest" })).toHaveValue("end_of_quiet");
     expect(screen.getByTestId("reach-digest-now")).toBeDisabled();
@@ -93,21 +93,35 @@ describe("Settings ▸ Reach", () => {
     expect(mocks.openSurfaceOr).toHaveBeenCalledWith("configure-settings", "/settings", "calls");
   });
 
-  it("keeps channel consent and opens brief choices in one window", async () => {
+  it("shows the selected brief form at once and Return or double-click focuses its first control", async () => {
     hub({"GET /api/reach": paired});
     pane();
     await screen.findByTestId("reach-token");
     expect(screen.getAllByRole("tab").length).toBeLessThanOrEqual(4);
     fireEvent.click(screen.getByRole("tab", {name: "Brief"}));
-    const row = screen.getByText("Digest and Later", {exact: true});
-    fireEvent.click(row);
+    const row = screen.getByRole("row", {name: "Digest and Later"});
+    expect(row.closest('[role="row"]')).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("combobox", {name: "Digest"})).toBeInTheDocument();
+    expect(within(screen.getByRole("grid", {name: "Brief choices"})).queryByRole("columnheader")).toBeNull();
+    expect(screen.queryByRole("button", {name: "Open choice"})).toBeNull();
+    fireEvent.click(screen.getByText("Notices", {exact: true}));
+    expect(screen.getByTestId("cadence-rows")).toBeInTheDocument();
     expect(screen.queryByRole("combobox", {name: "Digest"})).toBeNull();
+    fireEvent.click(row);
     fireEvent.keyDown(row.closest('[role="row"]')!, {key: "Enter"});
     expect(screen.getByRole("region", {name: "Digest and Later"})).toBeInTheDocument();
-    expect(screen.getByRole("combobox", {name: "Digest"})).toBeInTheDocument();
+    expect(screen.getByRole("combobox", {name: "Digest"})).toHaveFocus();
+    fireEvent.doubleClick(row);
+    expect(screen.getByRole("combobox", {name: "Digest"})).toHaveFocus();
     fireEvent.click(screen.getByRole("button", {name: "Done"}));
+    expect(row).toHaveFocus();
+    expect(screen.getByRole("combobox", {name: "Digest"})).toBeInTheDocument();
+    fireEvent.click(screen.getByText("Notices", {exact: true}));
     fireEvent.click(screen.getByRole("tab", {name: "Channels"}));
     expect(screen.getByTestId("reach-unpair")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("tab", {name: "Brief"}));
+    expect(screen.getByRole("row", {name: "Digest and Later"})).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("combobox", {name: "Digest"})).toBeInTheDocument();
     expect(calls.some((call) => call.startsWith("PUT ") || call.startsWith("DELETE "))).toBe(false);
   });
 
@@ -178,7 +192,7 @@ describe("Settings ▸ Reach", () => {
     expect(screen.queryByTestId("reach-telegram-state")).toBeNull();
     expect(screen.getByTestId("reach-unpair")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("tab", { name: "Brief" }));
-    fireEvent.doubleClick(screen.getByText("Digest and Later", {exact: true}));
+    fireEvent.doubleClick(screen.getByRole("row", {name: "Digest and Later"}));
     expect(screen.getByTestId("reach-digest-now")).not.toBeDisabled();
     fireEvent.click(screen.getByRole("tab", { name: "Channels" }));
     fireEvent.click(screen.getByTestId("reach-unpair"));
@@ -218,7 +232,7 @@ describe("Settings ▸ Reach", () => {
     await waitFor(() => expect(calls).toContain('PUT /api/reach {"telegram":"after_10"}'));
     await waitFor(() => expect(screen.getByRole("combobox", { name: "Telegram" })).toHaveValue("after_10"));
     fireEvent.click(screen.getByRole("tab", { name: "Brief" }));
-    fireEvent.doubleClick(screen.getByText("Digest and Later", {exact: true}));
+    fireEvent.doubleClick(screen.getByRole("row", {name: "Digest and Later"}));
     expect(screen.getByRole("combobox", { name: "Digest" })).toHaveValue("7");
     fireEvent.change(screen.getByRole("combobox", { name: "Digest" }), {
       target: { value: "end_of_quiet" },

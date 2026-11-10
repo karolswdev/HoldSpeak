@@ -20,8 +20,10 @@ describe("field and check-box labels draw sentence case", () => {
         <GadgetRow label="Server address">
           <StringGadget label="Server address" caption value="" onChange={() => undefined} mic={false} />
         </GadgetRow>
-        <CheckGadget variant="token" label="My server" checked={false} onChange={() => undefined} />
-        <CheckGadget variant="token" label="My server" checked onChange={() => undefined} />
+        <GadgetRow label="My servers">
+          <CheckGadget variant="token" label="My server" checked={false} onChange={() => undefined} />
+          <CheckGadget variant="token" label="My server" checked onChange={() => undefined} />
+        </GadgetRow>
       </GadgetGroup>,
     );
     const faces = [

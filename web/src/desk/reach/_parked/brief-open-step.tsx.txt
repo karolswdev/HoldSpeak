@@ -1,0 +1,14 @@
+// Parked 2026-11-10: Brief selection now shows its form; Return only moves focus.
+                  selectedId={briefPick}
+                  onSelect={pickBrief}
+                  verbs={[
+                    {
+                      id: "open",
+                      label: "Open choice",
+                      key: "Enter",
+                      enabled: (row) => Boolean(row),
+                      run: (row) => openBrief(row!.id),
+                    },
+                  ]}
+                  defaultVerb="open"
+                />
