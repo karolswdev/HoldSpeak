@@ -123,11 +123,13 @@ def test_the_adapter_is_the_line_when_baresip_is_found_else_ai_phone_else_none(h
 def _app(monkeypatch) -> tuple[Any, Any]:
     from holdspeak.calls import service as calls_service
     from holdspeak.line import hub as line_hub
+    from holdspeak.line import service as line_service
     from holdspeak.web.context import WebContext
     import holdspeak.web.routes.calls as calls_routes
 
     fresh_hub = line_hub.LineHub()
     monkeypatch.setattr(line_hub, "LINE_HUB", fresh_hub)
+    monkeypatch.setattr(line_service, "LINE_HUB", fresh_hub)
     monkeypatch.setattr(calls_routes, "LINE_HUB", fresh_hub)
     monkeypatch.setattr(calls_service, "_LINES", {})
     from holdspeak.line import adapter

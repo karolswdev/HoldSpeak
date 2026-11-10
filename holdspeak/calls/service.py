@@ -209,7 +209,7 @@ class DeskTurns:
     def _handle(tool_call_id: str) -> Any:
         from ..services.thread_service import ThreadService
 
-        return ThreadService._tool_executor._handles.get(tool_call_id)
+        return ThreadService.tool_handle(tool_call_id)
 
     def hold_words(self, tool_call_id: str, tool: str) -> str:
         """What leaves, in words: the send's document and destination; the
@@ -385,6 +385,9 @@ class CallsService:
     """The hub's calls (one per hub process)."""
 
     def __init__(self) -> None:
+        from ..line.service import LineService
+
+        self.line = LineService(self)
         self._calls: "OrderedDict[str, CallRecord]" = OrderedDict()
         self._runners: dict[str, CallRunner] = {}
         self._broadcast: Callable[[str, Any], None] = lambda kind, data: None
