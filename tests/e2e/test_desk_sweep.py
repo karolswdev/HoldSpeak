@@ -1154,7 +1154,7 @@ LIST_GRAMMAR_JS = r"""(sel) => {
     const label = row.querySelector(':scope > .gadget-row-label');
     if (caption && label && visible(label)) faults.push('nested list repeats a row label');
   }
-  for (const well of root.querySelectorAll('.surface-preference-well')) {
+  for (const well of root.querySelectorAll('.surface-preference-pane,.surface-preference-well,.surface-tab-panel')) {
     const groups = [...well.children].filter(el => el.matches('.gadget-group') && visible(el));
     const edges = groups.map(el => el.getBoundingClientRect());
     if (edges.some(edge => Math.abs(edge.right - edges[0].right) > 1 || Math.abs(edge.left - edges[0].left) > 1)) faults.push('preference groups have different edges');

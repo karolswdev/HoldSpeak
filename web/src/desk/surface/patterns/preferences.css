@@ -216,7 +216,7 @@
   background: transparent;
   box-shadow: none;
 }
-.desk-next .surface-preference-window .gadget-group > .gadget-group-label {
+.desk-next :is(.surface-preference-window, .surface-preference-pane) .gadget-group > .gadget-group-label {
   position: static;
   transform: none;
   margin: 0;
@@ -231,7 +231,7 @@
   width: 100%;
   max-width: none;
 }
-.desk-next .surface-preference-window .gadget-group-label::after {
+.desk-next :is(.surface-preference-window, .surface-preference-pane) .gadget-group-label::after {
   display: none;
 }
 .desk-next .surface-preference-window .gadget-group > .gadget-sheet {

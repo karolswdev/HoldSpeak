@@ -1637,7 +1637,7 @@ tabs at narrow width; groups within a tab use captions and one form well.
 `ListPane` keeps the selection list above its inspector, reduces the list
 when inspection opens, reserves the header plus at least three complete rows,
 and keeps the selected row in its scrolling well. The inspector takes the
-remaining height and scrolls independently; the pane itself never scrolls.
+remaining height; its content scrolls independently and the pane itself never scrolls.
 `PaneInspector` says its `label` once. It takes `rows` plus a typed
 `completion`, or a stateful editor that returns `InspectorForm`. A form
 takes row data (`label`, `control`) or only `GadgetRow` children, including
