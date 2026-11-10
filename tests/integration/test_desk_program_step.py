@@ -4,6 +4,7 @@ import json
 import pytest
 
 from holdspeak import desk_presence, operations
+from holdspeak.runtime import composition
 from holdspeak.services import program_desk
 from holdspeak.services.desk_window_service import DeskWindowService
 from holdspeak.services.program_service import ProgramRefused
@@ -11,16 +12,26 @@ from tests.integration.program_rig import Rig, OWNER
 
 
 @pytest.fixture
-def rig(tmp_path, monkeypatch):
+def rig(tmp_path):
     rig = Rig(tmp_path)
     rig.display_frames = []
     rig.request_clock = 0.0
     rig.windows = DeskWindowService(rig.db, request_clock=lambda: rig.request_clock, on_changed=lambda *a: None, send_request=rig.display_frames.append)
     port = operations.bind({"desk_window_service": rig.windows}, operations.DESK_DISPLAY_OPERATIONS)
-    monkeypatch.setattr(program_desk, "_port", lambda service: port)
+    try:
+        previous = composition.current()
+    except composition.NoRuntimeError:
+        previous = None
+    composition.install(composition.RuntimeServices(db=rig.db, desk_window_service=rig.windows, operations=port))
     desk_presence.clear()
-    yield rig
-    desk_presence.clear()
+    try:
+        yield rig
+    finally:
+        desk_presence.clear()
+        if previous is None:
+            composition.uninstall()
+        else:
+            composition.install(previous)
 
 
 def make(rig, rows):
