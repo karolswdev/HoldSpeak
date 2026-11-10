@@ -787,7 +787,7 @@ body:has(.desk-next .desk-pullout:not(.is-card)) .ambient-qlippy {
 @media (prefers-reduced-motion: no-preference) {
   .desk-next :is(.desk-pullout-body, .desk-surface-body):not(:is(.desk-pullout-body, .desk-surface-body) *):not(:has(.kit-toolbar)),
   .desk-next :is(.desk-pullout-body, .desk-surface-body) .kit-toolbar ~ * {
-    animation: desk-body-first-paint 160ms var(--ease-standard) both;
+    animation: desk-body-first-paint calc(var(--duration-short) * 4 / 3) var(--ease-standard) both;
   }
 }
 @keyframes desk-body-first-paint {

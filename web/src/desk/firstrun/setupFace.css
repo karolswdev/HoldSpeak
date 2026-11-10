@@ -43,7 +43,7 @@
 .setup-face:not([data-standalone]) > .kit-toolbar {
   position: sticky;
   top: 0;
-  z-index: 1;
+  z-index: var(--desk-z-local);
 }
 
 /* The panes under the list keep the form inset (12–16 px). */

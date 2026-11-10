@@ -9,7 +9,7 @@
      and its place image run to the bottom edge, UNDER the floating dock; the
      icon grid keeps the dock's reserve as padding (below). */
   bottom: 0;
-  z-index: 0;
+  z-index: var(--desk-z-canvas);
   /* The slate under the gradient: a floor label measures its contrast on it. */
   background: var(--desk-floor), var(--wb-backdrop);
   overflow: hidden auto;
@@ -23,8 +23,8 @@
   /* The A1 floor's one light (tokens.css --desk-floor): bright top-left,
      falling to the foot, over the picture. */
   background:
-    radial-gradient(1200px 700px at 8% 0%, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0) 60%),
-    linear-gradient(180deg, rgba(0, 0, 0, 0) 40%, rgba(0, 0, 0, 0.28) 100%),
+    radial-gradient(1200px 700px at 8% 0%, color-mix(in srgb, var(--white) 10%, transparent), transparent 60%),
+    linear-gradient(180deg, transparent 40%, color-mix(in srgb, var(--black) 28%, transparent) 100%),
     var(--desk-place-still) center / cover no-repeat,
     var(--wb-backdrop);
 }
@@ -34,7 +34,7 @@
 .desk-next .desk-screen > .desk-stage {
   position: fixed;
   inset: inherit;
-  z-index: -1;
+  z-index: var(--desk-z-stage);
   pointer-events: none;
   background: transparent;
   opacity: 0;
@@ -171,7 +171,7 @@
 /* A drawer's name edits in its existing caption seat, within its icon row.
    Appending the field below the whole icon covers the next drawer. */
 .desk-screen[data-layout="free"] .desk-screen-cell.is-renaming {
-  z-index: 1;
+  z-index: var(--desk-z-local);
 }
 .desk-screen[data-layout="free"] .desk-screen-cell.is-renaming .desk-icon-name {
   visibility: hidden;
@@ -199,7 +199,7 @@
   position: fixed;
   left: 16px;
   bottom: calc(var(--desk-dock-h, var(--desk-snap-bottom)) + 12px);
-  z-index: 1;
+  z-index: var(--desk-z-local);
 }
 /* PHILO-17 (Astra r2): the delete receipt's seat is desk-level (DeskApp):
    fixed above the dock, above every window (a transient while it stands),

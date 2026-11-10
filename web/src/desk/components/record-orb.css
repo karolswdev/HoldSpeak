@@ -93,11 +93,11 @@
   padding: 0 6px;
   border-radius: 9px;
   background: var(--wb-rec);
-  color: #fff;
+  color: var(--white);
   font: 600 12px / 18px var(--font-sans);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
-  box-shadow: 0 0 0 1.5px var(--wb-paper), 0 1px 3px rgba(12, 20, 32, 0.4);
+  box-shadow: 0 0 0 1.5px var(--wb-paper), 0 1px 3px color-mix(in srgb, var(--depth-ink) 40%, transparent);
   pointer-events: none;
 }
 .desk-next:has(.desk-dock .desk-orb:is(:hover, :focus-visible)) .desk-orb-clock {

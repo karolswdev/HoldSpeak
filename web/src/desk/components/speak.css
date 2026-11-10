@@ -519,13 +519,13 @@
   letter-spacing: 0.02em;
   text-transform: none;
   box-shadow: none;
-  transition: background-color 120ms ease, box-shadow 160ms ease;
+  transition: background-color var(--duration-short) ease, box-shadow calc(var(--duration-short) * 4 / 3) ease;
 }
 .desk-next .speak-transport > .desk-mic.gadget-transport-key .gadget-transport-glyph {
   font-size: 22px;
 }
 .desk-next .speak-transport > .desk-mic.gadget-transport-key:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--wb-ember-ink) 86%, #ffffff);
+  background: color-mix(in srgb, var(--wb-ember-ink) 86%, var(--white));
   box-shadow: none;
 }
 .desk-next .speak-transport > .desk-mic.gadget-transport-key:active:not(:disabled) {
@@ -576,7 +576,7 @@
   height: 26px;
   border-radius: 2px;
   background: color-mix(in srgb, var(--seg) 20%, transparent);
-  transition: background-color 80ms linear;
+  transition: background-color calc(var(--duration-short) * 2 / 3) linear;
 }
 .desk-next .speak-transport .gadget-ledmeter-seg:nth-child(n + 8) { --seg: var(--lamp-warn); }
 .desk-next .speak-transport .gadget-ledmeter-seg:nth-child(n + 11) { --seg: var(--lamp-fail); }
@@ -662,7 +662,7 @@
   border-radius: var(--radius-sm);
   background: var(--wb-paper);
   box-shadow: none;
-  transition: box-shadow 160ms ease;
+  transition: box-shadow calc(var(--duration-short) * 4 / 3) ease;
 }
 .desk-next .speak-plate:hover {
   box-shadow: none;
@@ -822,13 +822,13 @@
   align-items: start;
   min-width: 0;
   border-radius: 3px;
-  transition: background-color 120ms ease, box-shadow 120ms ease;
+  transition: background-color var(--duration-short) ease, box-shadow var(--duration-short) ease;
 }
 .desk-next .speak-check[hidden] {
   display: none;
 }
 .desk-next .speak-check:hover {
-  background: #ffffff;
+  background: var(--white);
   box-shadow: var(--alive-lift);
 }
 .desk-next .speak-check-bead {
@@ -839,7 +839,7 @@
   border: 1px solid var(--wb-rule-soft);
   background: var(--wb-steel);
   box-shadow: var(--wb-raised);
-  transition: background-color 120ms ease, box-shadow 160ms ease;
+  transition: background-color var(--duration-short) ease, box-shadow calc(var(--duration-short) * 4 / 3) ease;
 }
 .desk-next .speak-check[data-tone="ok"] > .speak-check-bead { background: var(--lamp-ok); }
 .desk-next .speak-check[data-tone="warn"] > .speak-check-bead { background: var(--lamp-warn); }
@@ -953,11 +953,11 @@
 .desk-next .speak-journal .surface-ledger-line,
 .desk-next .speak-learned .surface-ledger-line {
   border-radius: 3px;
-  transition: background-color 120ms ease, box-shadow 120ms ease;
+  transition: background-color var(--duration-short) ease, box-shadow var(--duration-short) ease;
 }
 .desk-next .speak-journal .surface-ledger-line:hover,
 .desk-next .speak-learned .surface-ledger-line:hover {
-  background: #ffffff;
+  background: var(--white);
   box-shadow: var(--alive-lift);
 }
 @media (prefers-reduced-motion: reduce) {
@@ -1049,7 +1049,7 @@
   border: 1px solid var(--wb-ink);
   background: var(--wb-steel);
   box-shadow: var(--wb-raised);
-  transition: background-color 120ms ease, box-shadow 160ms ease;
+  transition: background-color var(--duration-short) ease, box-shadow calc(var(--duration-short) * 4 / 3) ease;
 }
 .desk-next .speak-journal .surface-ledger-row:hover .surface-ledger-line::before {
   background: var(--wb-sel);
@@ -1079,7 +1079,7 @@
 }
 .desk-next .speak-journal .journal-hover-verb {
   opacity: 0;
-  transition: opacity 120ms ease;
+  transition: opacity var(--duration-short) ease;
 }
 .desk-next .speak-journal .surface-ledger-row:hover .journal-hover-verb,
 .desk-next .speak-journal .surface-ledger-row:focus-within .journal-hover-verb,

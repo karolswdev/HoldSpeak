@@ -41,7 +41,7 @@
   padding: var(--space-4) var(--space-4) var(--space-3);
 }
 @media (prefers-reduced-motion: no-preference) {
-  .briefing .briefing-read { animation: briefing-rise 160ms var(--ease-standard, ease-out) 1 both; }
+  .briefing .briefing-read { animation: briefing-rise calc(var(--duration-short) * 4 / 3) var(--ease-standard, ease-out) 1 both; }
 }
 @keyframes briefing-rise {
   from { opacity: 0; transform: translateY(4px); }
@@ -107,9 +107,9 @@
 .briefing .briefing-where .pg-station[data-mark="running"] .pg-station-dot { border-color: var(--lamp-info); }
 @media (prefers-reduced-motion: no-preference) {
   .briefing .briefing-where .pg-station[data-mark="blocked"] .pg-station-dot {
-    animation: briefing-light 900ms var(--ease-standard, ease-out) 300ms 1 both;
+    animation: briefing-light calc(var(--duration-short) * 15 / 2) var(--ease-standard, ease-out) calc(var(--duration-short) * 5 / 2) 1 both;
   }
-  .briefing .briefing-where .pg-station[data-mark="blocked"] + .pg-station[data-mark="blocked"] .pg-station-dot { animation-delay: 420ms; }
+  .briefing .briefing-where .pg-station[data-mark="blocked"] + .pg-station[data-mark="blocked"] .pg-station-dot { animation-delay: calc(var(--duration-short) * 7 / 2); }
 }
 @keyframes briefing-light {
   0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--lamp-warn) 0%, transparent); }
@@ -164,7 +164,7 @@
 .briefing .briefing-tray {
   position: sticky;
   bottom: 0;
-  z-index: 1;
+  z-index: var(--desk-z-local);
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
@@ -250,7 +250,7 @@
 .briefing .briefing-outcome > .briefing-lamp { flex: none; transform: translateY(-3px); }
 @media (prefers-reduced-motion: no-preference) {
   .briefing .briefing-settled .briefing-outcome > .briefing-lamp[data-tone="ok"] {
-    animation: kit-lamp-pulse 600ms var(--ease-standard, ease-out) 1;
+    animation: kit-lamp-pulse calc(var(--duration-short) * 5 / 1) var(--ease-standard, ease-out) 1;
   }
 }
 

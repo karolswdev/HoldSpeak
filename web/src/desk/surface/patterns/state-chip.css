@@ -30,7 +30,7 @@
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
   vertical-align: middle;
-  transition: background-color 160ms ease, color 160ms ease;
+  transition: background-color calc(var(--duration-short) * 4 / 3) ease, color calc(var(--duration-short) * 4 / 3) ease;
 }
 /* A lamp with no word of its own: the dot alone, no pill. */
 .desk-next .surface-state-chip[data-bare] {

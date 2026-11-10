@@ -522,8 +522,8 @@
   *,
   *::before,
   *::after {
-    animation-duration: 0ms !important;
+    animation-duration: calc(var(--duration-short) * 0 / 1) !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 0ms !important;
+    transition-duration: calc(var(--duration-short) * 0 / 1) !important;
   }
 }

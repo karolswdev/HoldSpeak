@@ -7,12 +7,14 @@ on:
     branches: [main]
 
 env:
-  UV_SYSTEM_PYTHON: 1
+  HOLDSPEAK_SKIP_WEB_BUILD: "1"
+  PLAYWRIGHT_BROWSERS_PATH: /tmp/holdspeak-playwright-browsers
+  PUPPETEER_CACHE_DIR: /tmp/holdspeak-puppeteer
 
 jobs:
   docs-navigation:
     name: Documentation Navigation
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -22,8 +24,14 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - uses: astral-sh/setup-uv@v5
+      - name: Generate untracked documentation inputs in dependency order
+        run: |
+          uv sync --extra dev
+          scripts/gen_docs.sh
       - name: Check public documentation links and headings
         run: |
+          export HOME=$(mktemp -d)
           python -m unittest discover -s tests/unit -p test_docs_navigation.py
           python scripts/check_docs.py
           python scripts/check_docs.py docs/internal/philo/*.md docs/internal/philo/adr/*.md docs/internal/philo/checks/*.md docs/internal/philo/visuals/README.md docs/internal/philo/desktop-prototypes/README.md agent/skills/*/SKILL.md
@@ -42,7 +50,7 @@ jobs:
 
   web-quality:
     name: DeskOS Web Quality
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout code
@@ -55,254 +63,108 @@ jobs:
           cache: "npm"
           cache-dependency-path: web/package-lock.json
 
+      - uses: astral-sh/setup-uv@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Prepare the test lock
+        run: python -m venv .venv
       - name: Run the complete DeskOS contract
         working-directory: web
         run: |
           npm ci --no-audit --no-fund
-          npm run check
-
-  critical-journeys:
-    name: Critical Journeys (G0)
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v4
-        with:
-          version: "latest"
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Run the G0 critical journeys
-        # HS-200-03: the four journeys a release candidate must complete —
-        # runtime identity, backup/restore, the first kept sentence, and a
-        # Project's first result. They run the real services with only the
-        # external adapters substituted, so this job deliberately has NO local
-        # model, NO PortAudio, NO macOS and no network: if a journey needs any
-        # of those it is not a G0 journey.
-        #
-        # HOME is isolated so the run cannot touch an installation, which the
-        # guard in tests/conftest.py also enforces. This job must be green;
-        # it is reported separately from the historical jobs so a reader can
-        # tell the release gate from the inherited backlog.
-        run: |
-          HOME=$(mktemp -d) uv run --extra test pytest -q -m critical tests/critical -p no:cacheprovider
-
-  unit-tests:
-    name: Unit Tests
-    runs-on: ubuntu-latest
-    env:
-      # Some unit fences drive a real headless Chromium (the graph-walk
-      # calibration, first-paint and readable-row fences). The run isolates
-      # HOME, which hides Playwright's default cache, so pin the browsers
-      # outside HOME, the same way the E2E job does.
-      PLAYWRIGHT_BROWSERS_PATH: /tmp/holdspeak-playwright-browsers
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          # Some unit fences read an older revision with `git show <rev>:<path>`
-          # (the PHILO-3-01 pre-fix route, the council revision the graph
-          # join read). A depth-1 clone does not hold those objects.
-          fetch-depth: 0
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v4
-        with:
-          version: "latest"
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Install Playwright Chromium and Firefox
-        run: uv run --extra test playwright install --with-deps chromium firefox
-
-      - name: Run unit tests with coverage
-        run: |
-          # `uv run --extra test` syncs the project venv *with* the test extra
-          # (pytest et al.) and runs in that same venv — no separate --system
-          # install that uv run would otherwise ignore.
-          # Isolate before pytest collection: a unit fixture can build the
-          # default database while the runner HOME is still its passwd home,
-          # which makes the suite's own HOME guard fail later in the run.
-          HOME=$(mktemp -d) uv run --extra test pytest tests/unit/ -q -n auto -m "not slow" --cov=holdspeak --cov-report=xml --cov-report=term-missing
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
-        with:
-          files: ./coverage.xml
-          flags: unit
-          name: unit-tests
-          fail_ci_if_error: false
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-
-  integration-tests:
-    name: Integration Tests (macOS)
-    runs-on: macos-14  # Apple Silicon
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v4
-        with:
-          version: "latest"
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Install system dependencies
-        run: |
-          # Install PortAudio for sounddevice
-          brew install portaudio
-
-      - name: Set up Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: "22"  # Astro 6 requires Node >=22.12
-          cache: "npm"
-          cache-dependency-path: web/package-lock.json
-
-      - name: Build web frontend
-        # The web/* integration tests serve the built Astro output from
-        # holdspeak/static/_built/ (gitignored), so it must be built here.
-        working-directory: web
-        run: |
-          npm install --no-audit --no-fund
+          npm run tokens:check
+          npm run tokens:gate
+          npm run guard:architecture
+          npm run typecheck
+          HOME_REAL=$HOME
+          export HOME=$(mktemp -d) npm_config_cache=$HOME_REAL/.npm
+          ../.venv/bin/python ../scripts/test_lock.py -- ./node_modules/.bin/vitest run --maxWorkers=4
           npm run build
+          npm run bundle:gate
 
-      - name: Run integration tests with coverage
-        run: |
-          # `uv run --extra test` resolves main + test deps into the venv it
-          # executes in, so pytest is present (the old --system install went to
-          # a different interpreter that uv run never used).
-          #
-          # HS-32-04: this job is where the ungated core-path smoke test
-          # (tests/integration/test_core_path_smoke.py) runs for real — macOS
-          # arm64 has `mlx-whisper` as a core dep, so the test drives a fixed
-          # checked-in WAV through real Whisper ("tiny", downloaded on first
-          # use) -> text -> the injection seam, asserting on the produced text.
-          # It skips on backends-absent environments (e.g. the Linux unit job)
-          # rather than being gated behind the never-in-CI metal/spoken_e2e
-          # markers.
-          uv run --extra test python -m pytest tests/integration/ -q -n auto -m "not slow" --cov=holdspeak --cov-report=xml --cov-report=term-missing
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+  non-browser:
+    name: Non-browser Suite (macOS)
+    runs-on: macos-15
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
         with:
-          files: ./coverage.xml
-          flags: integration
-          name: integration-tests
-          fail_ci_if_error: false
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Install PortAudio
+        run: brew install portaudio
+      - name: Build web bundle once
+        working-directory: web
+        run: npm ci --no-audit --no-fund && npm run build
+      - name: Install test dependencies
+        run: uv sync --extra dev
+      - name: Run the complete non-browser suite
+        run: |
+          HOME_REAL=$HOME
+          export HOME=$(mktemp -d) npm_config_cache=$HOME_REAL/.npm
+          uv run --no-sync python scripts/test_lock.py -- uv run --no-sync pytest -q -n 3 --dist worksteal -m "not slow" -p no:cacheprovider tests/unit tests/integration tests/critical tests/web tests/mcp tests/uat
 
   e2e-tests:
     name: Scoped Browser Tests (macOS)
-    runs-on: macos-14  # Apple Silicon
-    env:
-      # Several real-hub fixtures isolate HOME. Keep browser discovery
-      # independent from that application-data sandbox.
-      PLAYWRIGHT_BROWSERS_PATH: /tmp/holdspeak-playwright-browsers
-      # HS-200-03 follow-through: the same law for the mermaid guard's
-      # browser. `tests/e2e/test_mermaid_renders.py` renders through
-      # mermaid-cli, which is a puppeteer program; puppeteer's default
-      # cache is `$HOME/.cache/puppeteer`, which an isolated HOME hides.
-      # Pin it outside HOME so the pre-warm step below and the test agree.
-      PUPPETEER_CACHE_DIR: /tmp/holdspeak-puppeteer
-
+    runs-on: macos-15
+    timeout-minutes: 40
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
-          # scripts/glass_for.py diffs against the base branch.
           fetch-depth: 0
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v4
-        with:
-          version: "latest"
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-
-      - name: Install system dependencies
+      - name: Select browser tests before provisioning
+        id: scope
+        env:
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
         run: |
-          # Install PortAudio for sounddevice
-          brew install portaudio
-
-      - name: Set up Node
-        uses: actions/setup-node@v4
+          TESTS=$(python scripts/test_lock.py -- python scripts/glass_for.py --base "$BASE" --paths)
+          echo "paths=$TESTS" >> "$GITHUB_OUTPUT"
+          echo "browser tests: ${TESTS:-none (no browser-covered code changed)}"
+      - uses: astral-sh/setup-uv@v5
+        if: steps.scope.outputs.paths != ''
+      - uses: actions/setup-node@v4
+        if: steps.scope.outputs.paths != ''
         with:
           node-version: "22"
-          cache: "npm"
+          cache: npm
           cache-dependency-path: web/package-lock.json
-
-      - name: Build production web bundle
+      - name: Install PortAudio
+        if: steps.scope.outputs.paths != ''
+        run: brew install portaudio
+      - name: Build web bundle once
+        if: steps.scope.outputs.paths != ''
         working-directory: web
+        run: npm ci --no-audit --no-fund && npm run build
+      - name: Install test dependencies and browsers
+        if: steps.scope.outputs.paths != ''
         run: |
-          npm ci --no-audit --no-fund
-          npm run build
-
-      - name: Install Playwright Chromium and Firefox
-        # No live browser test runs WebKit (the PHILO-8-02 engine case is parked).
-        run: uv run --extra test playwright install chromium firefox
-
-      - name: Pre-warm the mermaid renderer
-        # HS-200-03 follow-through. Without this the mermaid guard fell back
-        # to `npx --yes @mermaid-js/mermaid-cli`, which downloads the CLI and
-        # a Chromium into the throwaway HOME on every single render; the
-        # 300s pytest-timeout killed the test (and, with it, the whole E2E
-        # run's report) on run 34059711954. Installing it once here puts
-        # `mmdc` on PATH and the browser in PUPPETEER_CACHE_DIR, both of
-        # which survive an isolated HOME.
-        run: |
+          uv sync --extra dev
+          uv run --no-sync playwright install chromium firefox
           npm install -g @mermaid-js/mermaid-cli
-          mmdc --version
-
-      - name: Gate the live runtime bus
+      - name: Run the selected browser tests
+        if: steps.scope.outputs.paths != ''
         env:
-          HOLDSPEAK_REQUIRE_LIVE_BUS: "1"
+          TESTS: ${{ steps.scope.outputs.paths }}
         run: |
           HOME_REAL=$HOME
-          HOME=$(mktemp -d) npm_config_cache=$HOME_REAL/.npm uv run --extra test python -m pytest tests/e2e/test_live_bus.py -v
-
-      - name: Run the browser tests that cover the change
-        run: |
-          # Owner ruling 2026-10-03: a pull request runs only the browser
-          # tests that read the changed code (scripts/glass_for.py). Every
-          # browser test runs in the nightly workflow (nightly.yml).
-          #
-          # HOME is isolated so no rig can touch an installation, but the
-          # caches the browsers live in are carried across explicitly:
-          # PLAYWRIGHT_BROWSERS_PATH and PUPPETEER_CACHE_DIR (job env, both
-          # outside HOME) and the warm npm cache.
-          BASE="origin/${{ github.base_ref || 'main' }}"
-          if [ "${{ github.event_name }}" = "push" ]; then BASE="${{ github.event.before }}"; fi
-          TESTS=$(uv run --extra test python scripts/glass_for.py --base "$BASE" --paths)
-          echo "browser tests: ${TESTS:-none}"
-          if [ -z "$TESTS" ]; then exit 0; fi
-          HOME_REAL=$HOME
-          HOME=$(mktemp -d) npm_config_cache=$HOME_REAL/.npm uv run --extra test python -m pytest $TESTS -q -n auto -m "e2e and not metal" --ignore=tests/e2e/test_live_bus.py
+          export HOME=$(mktemp -d) npm_config_cache=$HOME_REAL/.npm
+          uv run --no-sync python scripts/test_lock.py -- uv run --no-sync pytest $TESTS -q -n 2 --dist worksteal -m "e2e and not metal" --ignore=tests/e2e/test_metal.py
 
   linux-smoke:
     name: Linux Smoke
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout code
@@ -334,19 +196,19 @@ jobs:
 
   all-tests:
     name: All Tests Summary
-    runs-on: ubuntu-latest
-    needs: [critical-journeys, unit-tests, integration-tests, e2e-tests, linux-smoke]
+    runs-on: ubuntu-24.04
+    needs: [docs-navigation, web-quality, non-browser, e2e-tests, linux-smoke]
     if: always()
-
     steps:
-      - name: Check test results
+      - name: Require every kept job to succeed
+        env:
+          RESULTS: ${{ toJSON(needs) }}
         run: |
-          if [[ "${{ needs.critical-journeys.result }}" == "failure" ]] || \
-             [[ "${{ needs.unit-tests.result }}" == "failure" ]] || \
-             [[ "${{ needs.integration-tests.result }}" == "failure" ]] || \
-             [[ "${{ needs.e2e-tests.result }}" == "failure" ]] || \
-             [[ "${{ needs.linux-smoke.result }}" == "failure" ]]; then
-            echo "One or more test jobs failed"
-            exit 1
-          fi
-          echo "All test jobs passed or were skipped"
+          python3 - <<'PY'
+          import json, os
+          results = json.loads(os.environ["RESULTS"])
+          failed = {name: job["result"] for name, job in results.items() if job["result"] != "success"}
+          if failed:
+              raise SystemExit(f"Jobs did not pass: {failed}")
+          print("Every kept job passed")
+          PY

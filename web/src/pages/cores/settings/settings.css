@@ -61,7 +61,7 @@
   border: 1px solid var(--wb-rule-soft, var(--border));
   background: var(--alive-paper, var(--wb-paper));
   box-shadow: none;
-  transition: background-color 120ms ease;
+  transition: background-color var(--duration-short) ease;
 }
 .desk-next .settings-plate[data-focus] {
   background: color-mix(in srgb, var(--wb-blue, var(--wb-paper)) 8%, var(--alive-paper, var(--wb-paper)));
@@ -236,7 +236,7 @@
   min-width: 0;
   padding: 6px 8px;
   border-radius: var(--radius-sm, 5px);
-  transition: background-color 120ms ease;
+  transition: background-color var(--duration-short) ease;
 }
 .desk-next .guide-row:hover {
   background: color-mix(in srgb, var(--wb-blue, var(--wb-paper)) 7%, var(--alive-paper, var(--wb-paper)));

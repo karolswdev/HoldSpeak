@@ -6,17 +6,20 @@ on:
   push:
     paths:
       - "apple/**"
+      - "docs/product-language.json"
       - "pm/roadmap/holdspeak-mobile/contracts/**"
       - ".github/workflows/holdspeak-mobile-ci.yml"
   pull_request:
     paths:
+      - ".github/workflows/holdspeak-mobile-ci.yml"
       - "apple/**"
+      - "docs/product-language.json"
       - "pm/roadmap/holdspeak-mobile/contracts/**"
 
 jobs:
   swift:
     name: Swift package (build + test + layer guard)
-    runs-on: macos-latest
+    runs-on: macos-15
     defaults:
       run:
         working-directory: apple
@@ -41,12 +44,12 @@ jobs:
 
   contracts:
     name: Contract schemas (Python validator)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - name: Install uv
         run: curl -LsSf https://astral.sh/uv/install.sh | sh
       - name: Validate schemas against the golden fixtures
         run: |
-          uv run --with jsonschema python \
+          uv run --no-project --with jsonschema python \
             pm/roadmap/holdspeak-mobile/contracts/validate.py

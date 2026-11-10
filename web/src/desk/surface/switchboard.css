@@ -192,7 +192,7 @@
   border: 1px solid var(--sb-ink);
   box-shadow: var(--sb-sunken);
 }
-.switchboard-bar i { display: block; height: 100%; background: var(--sb-sel); transition: width 220ms var(--ease, cubic-bezier(.2,.8,.2,1)); }
+.switchboard-bar i { display: block; height: 100%; background: var(--sb-sel); transition: width calc(var(--duration-short) * 11 / 6) var(--ease, cubic-bezier(.2,.8,.2,1)); }
 .switchboard-engine-verb {
   grid-column: 2 / 4;
   display: flex;

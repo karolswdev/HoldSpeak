@@ -514,7 +514,7 @@
 @media (prefers-reduced-motion: no-preference) {
   :is(.needs-drawer, .today-needs) .needs-row[data-settle="done"] {
     pointer-events: none;
-    animation: needs-row-settle 180ms var(--ease-standard) both;
+    animation: needs-row-settle calc(var(--duration-short) * 3 / 2) var(--ease-standard) both;
   }
 }
 @keyframes needs-row-settle {

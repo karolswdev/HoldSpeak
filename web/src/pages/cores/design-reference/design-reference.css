@@ -87,7 +87,7 @@
 .reference-rail-chevron { display: none; }
 .reference-pane { min-width: 0; min-height: 100%; }
 .reference-pane-back { display: none; }
-.design-reference-shell .reference-toolbar { position: sticky; top: 0; z-index: 1; }
+.design-reference-shell .reference-toolbar { position: sticky; top: 0; z-index: var(--desk-z-local); }
 .reference-pane > .reference-panel {
   min-width: 0;
   padding: 12px 20px 20px;

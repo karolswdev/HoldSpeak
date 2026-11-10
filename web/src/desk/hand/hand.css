@@ -26,5 +26,5 @@
   left: 50%;
   transform: translateX(-50%);
   width: min(820px, calc(100% - 32px));
-  z-index: 3;
+  z-index: calc(var(--desk-z-local) + 2);
 }

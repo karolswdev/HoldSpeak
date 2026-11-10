@@ -5,7 +5,7 @@ import Foundation
 /// Codable model names and wire keys remain compatible (`Recipe`, `Directory`,
 /// `KB`, `Chain`, `RuntimeProfile`). Views use these product terms instead.
 public enum CanonicalProductTerm: String, Codable, CaseIterable, Sendable {
-    case desk, meeting, transcript, actionItem = "action_item", result, artifact, note
+    case desk, meeting, transcript, segment, actionItem = "action_item", result, artifact, note
     case zone, knowledge, project, persona, coderSession = "coder_session"
     case workflow, sequence, integration, runsOn = "runs_on"
     case proposedAction = "proposed_action", review, approval, grant, receipt
@@ -112,13 +112,13 @@ public enum ProductLanguage {
 
     public static let labels: [CanonicalProductTerm: (singular: String, plural: String)] = [
         .desk: ("Desk", "Desks"), .meeting: ("Meeting", "Meetings"),
-        .transcript: ("Transcript", "Transcripts"), .actionItem: ("Action item", "Action items"),
+        .transcript: ("Transcript", "Transcripts"), .segment: ("Segment", "Segments"), .actionItem: ("Action item", "Action items"),
         .result: ("Result", "Results"), .artifact: ("Artifact", "Artifacts"),
         .note: ("Note", "Notes"), .zone: ("Zone", "Zones"),
         .knowledge: ("Knowledge", "Knowledge collections"), .project: ("Project", "Projects"),
-        .persona: ("Agent", "Agents"), .coderSession: ("Coder session", "Coder sessions"),
+        .persona: ("Mode", "Modes"), .coderSession: ("Agent", "Agents"),
         .workflow: ("Workflow", "Workflows"), .sequence: ("Sequence", "Sequences"),
-        .integration: ("Integration", "Integrations"), .runsOn: ("Runs on", "Runs on"),
+        .integration: ("Integration", "Integrations"), .runsOn: ("Engine", "Engines"),
         .proposedAction: ("Proposed action", "Proposed actions"), .review: ("Review", "Reviews"),
         .approval: ("Approval", "Approvals"), .grant: ("Grant", "Grants"),
         .receipt: ("Receipt", "Receipts")
@@ -127,7 +127,7 @@ public enum ProductLanguage {
     public static let legacyAliases: [String: CanonicalProductTerm] = [
         "agent": .persona, "recipe": .persona, "coder": .coderSession,
         "directory": .zone, "folder": .zone, "kb": .knowledge,
-        "knowledge_base": .knowledge, "chain": .sequence,
+        "knowledge_base": .knowledge, "chain": .sequence, "seg": .segment, "mtg": .meeting,
         "connector": .integration, "plugin": .integration, "profile": .runsOn
     ]
 
@@ -144,7 +144,7 @@ public enum ProductLanguage {
     public static let meetingProjections = ["summary", "action_items", "transcript", "topics"]
 
     public static let controlModeLabels: [ControlMode: String] = [
-        .safe: "Secure", .neutral: "Normal", .yolo: "YOLO"
+        .safe: "Secure", .neutral: "Normal", .yolo: "Open throttle"
     ]
 
     public static let controlModeDescriptions: [ControlMode: String] = [

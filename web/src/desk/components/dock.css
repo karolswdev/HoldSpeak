@@ -199,7 +199,7 @@
   height: 4px;
   border-radius: 50%;
   background: var(--desk-dock-glass-ink);
-  box-shadow: 0 0 4px rgba(233, 238, 245, 0.6);
+  box-shadow: 0 0 4px color-mix(in srgb, var(--dock-label-ink) 60%, transparent);
   pointer-events: none;
 }
 .desk-next .desk-dock-launch.is-front::before {
@@ -237,7 +237,7 @@
   font: 500 12px / 16px var(--font-sans);
   white-space: nowrap;
   pointer-events: none;
-  z-index: 2;
+  z-index: calc(var(--desk-z-local) + 1);
 }
 /* out of sight until the pointer or the focus is on the tile (opacity, so
    the label keeps its place and a reader of the page still finds it) */
@@ -415,7 +415,7 @@
   font: 500 12px / 16px var(--font-sans);
   white-space: nowrap;
   pointer-events: none;
-  z-index: 2;
+  z-index: calc(var(--desk-z-local) + 1);
 }
 .desk-next .desk-dock .desk-orb-label,
 .desk-next .desk-dock .desk-orb-label * {
@@ -586,7 +586,7 @@
     flex: 0 0 4px;
     align-self: stretch;
     background: var(--desk-dock-glass-solid);
-    z-index: 2;
+    z-index: calc(var(--desk-z-local) + 1);
   }
   /* The end spacer: Dock.tsx sets its width so the last page also starts on
      a whole item (no strip in the gutter at the end of the shelf). */
@@ -620,7 +620,7 @@
     box-shadow: none;
     color: var(--desk-dock-glass-ink);
     font: 700 18px / 23px var(--font-mono);
-    z-index: 2;
+    z-index: calc(var(--desk-z-local) + 1);
   }
 }
 

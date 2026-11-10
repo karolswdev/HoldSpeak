@@ -21,15 +21,15 @@
 /* A service glyph: a small coloured tile with its initial. */
 .connections-tool-emblem {
   display:inline-grid; place-items:center; width:18px; height:18px; border-radius:5px;
-  background:var(--wb-blue, #3b6fd8); color:#fff;
+  background:var(--wb-blue, #3b6fd8); color:var(--white);
   font:700 12px/1 var(--font-sans); letter-spacing:0;
-  box-shadow:inset 0 -1px 0 rgba(0,0,0,0.18);
+  box-shadow:inset 0 -1px 0 color-mix(in srgb, var(--black) 18%, transparent);
 }
-.connections-tool-emblem[data-provider="github"] { background:#24292f; }
-.connections-tool-emblem[data-provider="jira"] { background:#1868db; }
-.connections-tool-emblem[data-provider="confluence"] { background:#1d7afc; }
-.connections-tool-emblem[data-provider="calendar"] { background:#e5484d; }
-.connections-tool-emblem > .connections-tool-emblem-svg { width:12px; height:12px; color:#fff; }
+.connections-tool-emblem[data-provider="github"] { background:var(--brand-github); }
+.connections-tool-emblem[data-provider="jira"] { background:var(--brand-jira); }
+.connections-tool-emblem[data-provider="confluence"] { background:var(--brand-confluence); }
+.connections-tool-emblem[data-provider="calendar"] { background:var(--brand-linear); }
+.connections-tool-emblem > .connections-tool-emblem-svg { width:12px; height:12px; color:var(--white); }
 .connections-tool-emblem-svg { width:16px; height:16px; color:var(--text-muted); }
 .connections-tool-label { flex:0 0 auto; min-width:96px; font:600 13px/1.4 var(--font-ui); color:var(--text); white-space:nowrap; }
 .connections-tool-summary { font:400 13px/1.4 var(--font-sans); color:var(--wb-ink, var(--text)); min-width:0; white-space:normal; overflow-wrap:anywhere; }
@@ -204,7 +204,7 @@
 .desk-next .pref-window .connections-destinations > .gadget-group > .gadget-sheet { grid-column:1 / -1; grid-row:2; }
 .desk-next .pref-window .prefs-calendar-section > .gadget-group > .gadget-group-actions,
 .desk-next .pref-window .connections-destinations > .gadget-group > .gadget-group-actions {
-  grid-column:2; grid-row:1; align-self:start; flex-wrap:nowrap; padding:0; min-height:0; z-index:1;
+  grid-column:2; grid-row:1; align-self:start; flex-wrap:nowrap; padding:0; min-height:0; z-index: var(--desk-z-local);
 }
 .desk-next .pref-window .gadget-group-actions .prefs-inline-controls,
 .desk-next .pref-window .gadget-group-actions .send-verbs { display:flex; flex-wrap:nowrap; align-items:center; gap:6px; }
