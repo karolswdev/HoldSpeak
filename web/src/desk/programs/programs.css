@@ -1043,7 +1043,7 @@ span.pg-req-thumb { height: 150px; }
   flex: 0 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-2);
   padding: 6px 12px;
   border-bottom: 1px solid var(--wb-rule-soft);
   background: var(--wb-paper);
@@ -1132,7 +1132,7 @@ span.pg-req-thumb { height: 150px; }
   display: inline-flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-2);
   margin-left: auto;
 }
 .pg-round-reading {
@@ -1282,7 +1282,7 @@ span.pg-req-thumb { height: 150px; }
 /* ── PG-WINDOW follow-up: the words row under the tray (Brief · Program
    text · Copy page link: not choices, so never raised); Drafting's goal as
    the headline; a step's gate as plain words with the pickers. ── */
-.pg-brief-ev { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 4px; margin: 2px 0 0; }
+.pg-brief-ev { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin: 2px 0 0; }
 .pg-brief-ev:empty { display: none; }
 /* Words, not plates: the briefing page's evidence row (the link ink). */
 .desk-next .pg-brief-ev .btn { border-color: transparent; background: transparent; box-shadow: none; color: var(--wb-sel); }
@@ -1870,3 +1870,5 @@ span.pg-req-thumb { height: 150px; }
   .desk-next .pg-program .btn.pg-earlier { width: 100%; min-height: 44px; margin-left: 0; }
   .pg-program .pg-turn-items { margin: 8px 12px 0; }
 }
+
+.pg-reqs > li { padding-block: var(--space-1); }

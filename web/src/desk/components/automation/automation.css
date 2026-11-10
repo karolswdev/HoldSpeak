@@ -239,7 +239,7 @@
 /* The sentence is the mast, including on a blank automation. */
 .automation-sentence, .automation-head-facts, .automation-line { display: inline; }
 .automation-sentence { font: 600 20px / 1.65 var(--font-sans); letter-spacing: -0.02em; }
-.automation-line-press.btn--chrome { display: inline-flex; vertical-align: middle; max-width: 100%; min-height: 44px; padding: 6px 4px; background: transparent; box-shadow: none; border: 0; border-radius: 0; font: inherit; line-height: inherit; color: var(--hs-ink); text-align: left; white-space: normal; overflow-wrap: anywhere; text-decoration: underline; text-decoration-color: var(--hs-rule); text-underline-offset: 5px; }
+.automation-line-press.btn--chrome { margin: var(--space-1); display: inline-flex; vertical-align: middle; max-width: 100%; min-height: 44px; padding: 6px 4px; background: transparent; box-shadow: none; border: 0; border-radius: 0; font: inherit; line-height: inherit; color: var(--hs-ink); text-align: left; white-space: normal; overflow-wrap: anywhere; text-decoration: underline; text-decoration-color: var(--hs-rule); text-underline-offset: 5px; }
 .automation-line-press.btn--chrome:hover, .automation-line[data-open] .automation-line-press { color: var(--hs-steel); text-decoration-color: currentColor; }
 .automation-line[data-blank] .automation-line-press { color: var(--hs-brass-ink); text-decoration-style: dashed; }
 .automation-join { font-weight: 400; color: var(--hs-ink-2); }
@@ -260,3 +260,5 @@
 
 /* These sentence parts have no border; their hit face ends at their box. */
 .automation-line-press.btn--chrome::after { inset: 0; }
+
+.automation-scroll { margin-block: var(--space-2); }

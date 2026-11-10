@@ -1569,3 +1569,24 @@ still use the earlier preference sheet and are pending migration. Each app's
 Show me entry is in the app menu and uses the existing walk runner. The
 compatibility ShowMe component declares the walk of a mounted object window
 and draws no pane control.
+
+## Control spacing and whole labels
+
+Separate controls keep at least 6 px between their boxes on each axis when
+those boxes overlap on the other axis. Shared action groups use `--space-2`.
+A composite with one shared border declares `data-joined-controls` on its
+own container: StringGadget, PadGadget, StepperGadget, TextPane, segmented wings and the
+Needs-you scope use this contract. The menu bar declares its shared strip.
+A toolbar with separate Buttons keeps the gap; it is not a joined group.
+
+A rich pressable row marks its primary label with `data-control-label`.
+Status, facts and other metadata remain separate text. The sweep checks
+that label on one line and checks every visible word, including metadata,
+with Range rectangles. The shared Rail keeps names on one line and wraps
+metadata at spaces. Its list spacing answers to its own selector, including
+inside a window body.
+
+The Desk sweep reads these properties in its normal fence pass at 1440,
+393, and a saved 900 × 600 window on the 1440 desk. It reads Settings panes
+from the rendered rail and wings from their own controls. The Components
+reference uses these same production species.

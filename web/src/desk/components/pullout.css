@@ -250,7 +250,7 @@
    Button (wings.tsx, useStripFit). The old 480 px rule that wrapped the
    strip to a second head row is replaced (window-chrome.css). */
 .desk-next .desk-wing-door {
-  margin-left: 4px;
+  margin-left: var(--space-2);
 }
 .desk-next .desk-wing {
   flex: 0 0 auto;

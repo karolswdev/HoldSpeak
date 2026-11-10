@@ -18,7 +18,7 @@ function Row({ row }: { row: FamilyRow }) {
     <li className="kit-listrow pg-family-row" data-state={row.state} data-testid="programs-family-row" data-program={row.id}>
       <Button variant="chrome" className="pg-family-open" onClick={() => openProgram(row.id)} aria-label={`Open ${row.name}`}
         data-testid="programs-family-open">
-        <span className="pg-family-name">{row.name}</span>
+        <span className="pg-family-name" data-control-label>{row.name}</span>
         <DotWord tone={programTone(row.state)} className="pg-family-state">{ended ? `${row.state_word} · ${ended}` : row.state_word}</DotWord>
         {row.line ? <span className="pg-family-line" title={row.line}>{row.line}</span> : null}
       </Button>

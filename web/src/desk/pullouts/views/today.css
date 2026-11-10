@@ -86,3 +86,5 @@
 /* Let short read-view verbs sit beside their name; long day verbs wrap. */
 .today .surface-mast-words { flex-basis: 140px; }
 .today .surface-mast-verbs { flex-basis: auto; }
+
+.today-scroll { margin-block: var(--space-2); }

@@ -132,7 +132,7 @@ export function ListRow({
     <>
       {lead}
       <span className="kit-listrow-text">
-        <span className="kit-listrow-name" data-testid={nameTestId}>{name}</span>
+        <span className="kit-listrow-name" data-control-label data-testid={nameTestId}>{name}</span>
         {meta ? <span className="kit-listrow-meta">{meta}</span> : null}
         {facts ? <span className="kit-listrow-facts">{facts}</span> : null}
       </span>

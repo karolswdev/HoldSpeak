@@ -404,7 +404,7 @@ export function ObjectList({
                     />
                   )}
                   <span className="object-list-name-text">
-                    <span className="object-list-name-word" title={row.name} data-testid={row.nameTestId}>{nameBreaks(row.name)}</span>
+                    <span className="object-list-name-word" data-control-label title={row.name} data-testid={row.nameTestId}>{nameBreaks(row.name)}</span>
                     {dense ? null : (
                       <span className="object-list-fold" aria-hidden="true">
                         {has("kind") ? <span className="object-list-fold-token">{kindWord}</span> : null}

@@ -12,7 +12,7 @@ export interface Placed {
 }
 
 const COL = 120; // an icon is 112 px wide; 8 px between
-const DRAWER_ROW = 96;
+const DRAWER_ROW = 104; // two caption lines and at least 6 px of air
 const FIELD_ROW = 100;
 const EDGE = 20;
 const TOP = 12;

@@ -10,6 +10,7 @@
   color: var(--hs-ink);
 }
 .meeting-record-scroll {
+  margin-block: var(--space-2);
   flex: 1 1 auto;
   min-height: 0;
   overflow: auto;

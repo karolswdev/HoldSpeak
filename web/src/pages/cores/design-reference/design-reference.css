@@ -31,7 +31,7 @@
   top: 0;
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: var(--space-2);
   min-width: 0;
   padding: 8px;
 }
@@ -97,7 +97,7 @@
   .reference-layout { display: block; background: var(--wb-paper); }
   .reference-layout[data-pane-open] > .reference-rail { display: none; }
   .reference-layout:not([data-pane-open]) > .reference-pane { display: none; }
-  .reference-rail { position: static; padding: 0; gap: 0; }
+  .reference-rail { position: static; padding: var(--space-2); gap: var(--space-2); }
   .desk-next .reference-rail .reference-rail-row.btn,
   .desk-next .reference-rail .reference-rail-row.btn.is-active {
     min-height: 44px;

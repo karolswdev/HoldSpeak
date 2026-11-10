@@ -327,7 +327,7 @@ export function StringGadget({
   }, [autoFocus]);
 
   const well = (
-    <span className="gadget-string">
+    <span className="gadget-string" data-joined-controls>
       <input
         {...inputProps}
         ref={(el) => {
@@ -442,7 +442,7 @@ export function PadGadget({
     return () => observer.disconnect();
   }, [value, autoGrow]);
   return (
-    <span className="gadget-pad" data-grow={autoGrow || undefined}>
+    <span className="gadget-pad" data-joined-controls data-grow={autoGrow || undefined}>
       <textarea
         {...inputProps}
         ref={(element) => {
@@ -514,7 +514,7 @@ export function StepperGadget({
   };
   const current = Number.isFinite(value) ? value : 0;
   return (
-    <span className="gadget-string gadget-stepper">
+    <span className="gadget-string gadget-stepper" data-joined-controls>
       <Button
         dense
         variant="ghost"

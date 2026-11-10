@@ -1234,7 +1234,7 @@ export function DeskToolShelf() {
                               {row.glyph}
                             </span>
                             <span className="desk-deck-label">
-                              {row.hit || row.meetingMeta ? <span className="desk-deck-title">{row.label}</span> : row.label}
+                              {row.hit || row.meetingMeta ? <span className="desk-deck-title" data-control-label>{row.label}</span> : row.label}
                               {row.ghost ? (
                                 <small className="quiet"> · {row.ghost}</small>
                               ) : null}
