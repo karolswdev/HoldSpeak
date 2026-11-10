@@ -43,6 +43,8 @@ export function ReachSection({
                 unit: "/day",
                 min: 0,
               })}
+              {/* Review 7b F2: this tick permits model drafting of next actions. It stays on the face. */}
+              {check(["cadence", "use_llm"], "Model drafts next actions")}
               {check(["cadence_telegram", "enabled"], "Cadence on Telegram")}
             </>
           ),
