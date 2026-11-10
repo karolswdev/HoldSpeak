@@ -16,6 +16,7 @@ import {
   type Ref,
 } from "react";
 import { Button } from "../../components/signal/Signal";
+import { hasWords } from "./content";
 import { WorkbenchSelect } from "../../components/signal/WorkbenchSelect";
 import { MicButton } from "../components/MicButton";
 import { ConfirmVerb } from "./Surface";
@@ -89,6 +90,7 @@ export function GadgetRow({
     if (highlight && typeof ref.current?.scrollIntoView === "function") ref.current.scrollIntoView({ block: "center" });
   }, [highlight]);
   const GadgetSlot = controlWidth ? "div" : "span";
+  const factValue = hasWords(fact) && !hasWords(children);
   return (
     <div
       ref={ref}
@@ -96,12 +98,13 @@ export function GadgetRow({
       data-wide={wide || undefined}
       data-highlight={highlight || undefined}
       data-control-width={controlWidth}
+      data-value-only={factValue || undefined}
     >
       <span className="gadget-row-label">
         {label}
-        {fact ? <span className="gadget-fact">{fact}</span> : null}
+        {fact && !factValue ? <span className="gadget-fact">{fact}</span> : null}
       </span>
-      <GadgetSlot className="gadget-row-gadget">{children}</GadgetSlot>
+      <GadgetSlot className="gadget-row-gadget">{factValue ? fact : children}</GadgetSlot>
     </div>
   );
 }
