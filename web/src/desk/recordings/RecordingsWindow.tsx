@@ -30,12 +30,11 @@ function RecordingDetails({ row, keepDays }: { row: Recording; keepDays: number 
       ...(row.links.tailnet ? [{ label: "On your phone", control: <span data-testid="recordings-link-tailnet" className="surface-preference-value" title={row.links.tailnet}>{row.links.tailnet}</span> }] : []),
       ...(row.links.local ? [{ label: "On this Mac", control: <span data-testid="recordings-link-local" className="surface-preference-value" title={row.links.local}>{row.links.local}</span> }] : []),
     ]} /> : <InspectorForm rows={[
+      ...(row.state === "failed" ? [{ label: "Needs you", control: <span data-testid="recordings-wait">{row.error || "Recording failed"}</span> }] : []),
       { label: "Recorded", control: value(whenOf(row)) },
       { label: "Length", control: row.duration_s ? lengthWords(row.duration_s) : "" },
       { label: "Kept until", control: keptUntil(row, keepDays) },
       { label: "Size", control: row.bytes_out ? sizeWords(row.bytes_out) : "" },
-      { label: "Voice", control: row.voice ? "On" : "Off" },
-      ...(row.state === "failed" ? [{ label: "Needs you", control: <span data-testid="recordings-wait">{row.error || "Recording failed"}</span> }] : []),
     ]} />}
   </SegmentedTabs></PreferenceWell>;
 }

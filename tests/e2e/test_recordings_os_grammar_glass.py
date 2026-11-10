@@ -1,6 +1,7 @@
 """Recordings selection, confirmation and bounded wells at both Desk sizes."""
 from __future__ import annotations
 
+import base64
 import json
 from pathlib import Path
 from typing import Any
@@ -50,6 +51,25 @@ def test_recordings_selection_and_states(tmp_path: Path, monkeypatch: pytest.Mon
             page.route("**/api/recordings", lambda route, _request: route.fulfill(json=payload))
             clear_hub_windows_http(base, TOKEN)
             page.goto(f"{base}/?token={TOKEN}", wait_until="load")
+            # Film only a test canvas; no screen, microphone or provider is used.
+            media = page.evaluate("""async () => {
+              const canvas = document.createElement('canvas'); canvas.width = 640; canvas.height = 360;
+              const ink = canvas.getContext('2d'); ink.fillStyle = '#10192b'; ink.fillRect(0, 0, 640, 360);
+              ink.fillStyle = '#ffffff'; ink.font = '32px sans-serif'; ink.fillText('Desk recording', 40, 180);
+              const stream = canvas.captureStream(0), track = stream.getVideoTracks()[0], chunks = [];
+              const recorder = new MediaRecorder(stream, {mimeType:'video/webm;codecs=vp9'});
+              recorder.ondataavailable = event => chunks.push(event.data);
+              const ended = new Promise(resolve => recorder.onstop = resolve);
+              const begun = new Promise(resolve => recorder.onstart = resolve);
+              recorder.start(); track.requestFrame(); await begun;
+              for (let frame = 0; frame < 6; frame++) {
+                ink.fillRect(40 + frame * 8, 220, 6, 6); track.requestFrame(); await new Promise(requestAnimationFrame);
+              }
+              recorder.stop(); await ended; stream.getTracks().forEach(track => track.stop());
+              return {video:Array.from(new Uint8Array(await new Blob(chunks, {type:'video/webm'}).arrayBuffer())), poster:canvas.toDataURL()};
+            }""")
+            page.route("**/api/recordings/*/video*", lambda route: route.fulfill(body=bytes(media["video"]), content_type="video/webm"))
+            page.route("**/api/recordings/*/poster*", lambda route: route.fulfill(body=base64.b64decode(media["poster"].split(",", 1)[1]), content_type="image/png"))
             _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
             page.evaluate("sessionStorage.setItem('hs.desk.staged-surface-open', JSON.stringify({key: 'open-recordings'}))")
             page.reload(wait_until="load")
@@ -100,6 +120,9 @@ def test_recordings_selection_and_states(tmp_path: Path, monkeypatch: pytest.Mon
             expect(window.get_by_text("Select a recording.", exact=True)).to_be_visible()
             row = select(ready["id"])
             shot("ready")
+            window.locator(".surface-preference-well").evaluate("el => el.scrollTop = el.scrollHeight")
+            shot("details-end")
+            window.locator(".surface-preference-well").evaluate("el => el.scrollTop = 0")
             assert window.get_by_test_id("recordings-row").filter(has_text="Ready").count() == 0
             # The list keeps room for the header and three complete rows.
             assert window.locator(".surface-list-pane-list").evaluate("""el => {
@@ -110,6 +133,7 @@ def test_recordings_selection_and_states(tmp_path: Path, monkeypatch: pytest.Mon
             }""")
             row.press("ArrowUp")
             expect(window.locator(f'[data-object-id="{failed["id"]}"]')).to_have_attribute("aria-selected", "true")
+            expect(window.get_by_test_id("recordings-wait")).to_be_in_viewport()
             shot("failed")
             select(ready["id"])
             row.click(button="right")
@@ -123,6 +147,8 @@ def test_recordings_selection_and_states(tmp_path: Path, monkeypatch: pytest.Mon
             expect(row).to_have_attribute("aria-selected", "true")
             window.get_by_role("tab", name="Video", exact=True).click()
             expect(window.get_by_test_id("recordings-video")).to_be_visible()
+            window.get_by_test_id("recordings-video").evaluate("async video => { video.muted = true; await video.play(); video.pause(); }")
+            assert window.get_by_test_id("recordings-video").evaluate("video => video.videoWidth") == 640
             shot("video")
             window.get_by_role("tab", name="Links", exact=True).click()
             shot("links")
@@ -150,7 +176,13 @@ def test_recordings_selection_and_states(tmp_path: Path, monkeypatch: pytest.Mon
                     select(data["recordings"][0]["id"])
                 if state == "webm":
                     window.get_by_role("tab", name="Video", exact=True).click()
+                    window.get_by_test_id("recordings-video").evaluate("async video => { video.muted = true; await video.play(); video.pause(); }")
                 shot(state)
+            reopen(_recorded("recordings.empty"))
+            page.evaluate("Object.defineProperty(navigator.mediaDevices, 'getDisplayMedia', {configurable:true, value:undefined})")
+            _verb(page, window, "New recording")
+            expect(window.get_by_text("Record from your computer", exact=True)).to_be_visible()
+            shot("unavailable")
             reopen(listed)
             page.evaluate("localStorage.setItem('hs:walk-voice', 'off')")
             _start_app_walk(page)
