@@ -946,6 +946,7 @@ describe("Settings ▸ Calls ▸ Phone", () => {
     const qr = within(sheet).getByTestId("phone-qr");
     expect(qr.getAttribute("data-qr")).toBe(phonePair.qr_payload);
     expect(qr.querySelector("path")?.getAttribute("d")?.length ?? 0).toBeGreaterThan(500);
+    expect(within(sheet).getByTestId("phone-qr")).toHaveAttribute("data-feedback-redact", "true");
     expect(within(sheet).getByTestId("phone-pair-left").textContent).toMatch(/Good for \d+ more minutes?|This code is too old/);
     paired = true;
     emit("phone_changed", {
@@ -1433,6 +1434,7 @@ describe("Settings ▸ Calls ▸ Line", () => {
     const sheet = await screen.findByTestId("line-code-sheet");
     expect(calls).toContain(`POST /api/calls/line/codes ${JSON.stringify({ node: "karol", hub: window.location.origin })}`);
     expect(within(sheet).getByTestId("line-code").textContent).toBe(lineCodeKarol.code);
+    expect(sheet).toHaveAttribute("data-feedback-redact", "true");
     expect(within(sheet).getByTestId("line-code-life").textContent).toBe("Good for 10 more minutes");
     expect(sheet.textContent).toContain("Run this on karol");
     expect(sheet.textContent).toContain(lineCodeKarol.command);

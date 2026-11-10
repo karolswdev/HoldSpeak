@@ -322,7 +322,7 @@ def feedback_page(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, request: pyte
             page.set_default_timeout(T)
             page.goto(f"{base}/?token={TOKEN}", wait_until="load")
             _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
-            assert _api(page, "GET", "/api/ui-feedback/status", token=TOKEN) == {"enabled": True}
+            assert _api(page, "GET", "/api/ui-feedback/status", token=TOKEN) == {"enabled": True, "transcription_egress": []}
             clear_hub_windows(page, TOKEN)
             _api(page, "POST", "/api/desk/windows/surface-components/open", {}, token=TOKEN)
             page.reload(wait_until="load")
@@ -564,11 +564,16 @@ def test_capture_note_states_with_typed_words(feedback_page: Any) -> None:
     from playwright.sync_api import expect
     from .test_desk_sweep import _GUIDE_FENCES_JS
     page,width,window=feedback_page
-    shots=Path(__file__).resolve().parents[2]/'.tmp/evidence-shots/showme3'
+    shots=Path(__file__).resolve().parents[2]/'.tmp/evidence-shots/showme4'
     shots.mkdir(parents=True,exist_ok=True)
     if width==1440:
         _api(page,'POST','/api/desk/windows/surface-components/set_geometry',{'rect':{'x':'-1/2 + 100','y':'-1/2 + 80','w':'900px','h':'600px'}},token=TOKEN)
         _settle(page)
+    from holdspeak.db import get_database
+    from tests.unit._speech_door import assign_profile
+    db=get_database()
+    db.profiles.upsert(profile_id="feedback-speech",name="Lab speech",kind="openAICompatible",base_url="http://192.168.1.99:8080/v1",model="whisper")
+    assign_profile(db,"speech.transcribe","feedback-speech")
     seat=900 if width==1440 else width
     _feedback_menu_item(page,width).click()
     target=window.get_by_role('checkbox',name='Gallery boolean')
@@ -578,7 +583,9 @@ def test_capture_note_states_with_typed_words(feedback_page: Any) -> None:
     def shot(state: str) -> None:
         # Every ring edge and all capture controls belong to this window.
         assert not page.evaluate(_GUIDE_FENCES_JS,'surface-components'),page.evaluate(_GUIDE_FENCES_JS,'surface-components')
-        page.screenshot(path=str(shots/f'feedback-{state}-{seat}.png'))
+        if state == 'recording':
+            expect(capture.get_by_text('Lab speech',exact=True)).to_be_visible()
+            page.screenshot(path=str(shots/f'feedback-{state}-{seat}.png'))
     shot('idle')
     capture.get_by_role('button',name='Record',exact=True).click()
     capture.get_by_role('meter',name='Audio level').wait_for(timeout=T)

@@ -8,6 +8,17 @@
 import { ApiError, apiFetch } from "../../lib/api";
 import { deskReady } from "../compositor/dom";
 
+/** Closed display-only verbs a linked walk may run. Adding an opener here
+ * requires checking its implementation; prefixes and labels grant no right. */
+export const WALK_WINDOW_VERBS: ReadonlySet<string> = new Set([
+  "desk.open-intelligence", "desk.open-people", "go.dictate", "go.ask", "go.configure-settings",
+  "go.review-meetings", "go.record-live", "go.open-recordings", "go.open-calls",
+  "go.open-conductor", "go.open-programs", "go.open-projects", "go.open-decisions",
+  "go.open-project-memory", "go.open-workbenches", "go.inspect-activity",
+  "go.inspect-processes", "go.configure-commands", "go.configure-runs-on",
+  "go.configure-integrations", "chair.window.needs", "chair.window.capture",
+]);
+
 /** One step. The keys run in this order: open, verb, press, scroll, say,
  * highlight, ask. `thing` names what the target is ("people rows"): when the
  * window holds none, the guide says "No <thing> here yet" and skips. */

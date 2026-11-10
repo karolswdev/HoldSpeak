@@ -352,3 +352,55 @@ it.each(["Stop", "Escape", "Done"])("discloses folded verbs without pressing an 
   expect(screen.queryByRole("menu")).toBeNull();
   expect(write).not.toHaveBeenCalled();
 });
+
+it.each(["href", "submit"])("refuses a nominally safe disclosure carrying %s", (kind) => {
+  const button=document.createElement("button");
+  button.className="surface-strip-menu";
+  button.setAttribute("aria-haspopup","menu");
+  button.setAttribute(kind === "href" ? "href" : "type", kind === "href" ? "/write" : "submit");
+  expect(canGuidePress(button)).toBe(false);
+});
+it("a linked desk.new-drawer step dispatches nothing and keeps its words", async () => {
+  const token="b".repeat(43);
+  window.history.replaceState({},"",`/?walk=${token}`);
+  mocks.api.mockResolvedValueOnce({title:"Review",answers:{},steps:[{
+    verb:{verb:"desk.new-drawer"},highlight:{window:"surface-decisions",target:"new",words:"Read this part."},
+  }]});
+  const registry=await import("../../verbRegistry");
+  const verb=registry.verbById("desk.new-drawer")!;
+  const run=vi.spyOn(verb,"run").mockImplementation(()=>undefined);
+  render(<Face />);
+  await screen.findByText("Read this part.");
+  await waitFor(()=>expect(screen.getByTestId("walk-next")).not.toBeDisabled());
+  expect(run).not.toHaveBeenCalled();
+  expect(screen.getByRole("alert")).toHaveTextContent("cannot run that verb");
+  run.mockRestore();
+});
+it.each(["Stop", "replace"])("aborts a guide's feedback capture on %s", async (end) => {
+  mocks.api.mockResolvedValue({enabled:true});
+  await hydrateUiFeedback();
+  let signal:AbortSignal|undefined;
+  const off=bindUiFeedbackLauncher((_target,request)=>{signal=request?.signal;});
+  render(<Face />);start();
+  fireEvent.click(await screen.findByRole("button",{name:"Say what is off"}));
+  expect(signal?.aborted).toBe(false);
+  if(end === "replace") start();
+  else cleanup();
+  await waitFor(()=>expect(signal?.aborted).toBe(true));
+  off();
+});
+
+it("a linked app opener still runs through the existing registry verb", async () => {
+  const token="c".repeat(43);
+  window.history.replaceState({},"",`/?walk=${token}`);
+  mocks.api.mockResolvedValueOnce({title:"Review",answers:{},steps:[{
+    verb:{verb:"go.configure-settings"},highlight:{window:"surface-decisions",target:"new",words:"Read this part."},
+  }]});
+  const registry=await import("../../verbRegistry");
+  const run=vi.spyOn(registry.verbById("go.configure-settings")!,"run").mockImplementation(()=>undefined);
+  render(<Face />);
+  await screen.findByText("Read this part.");
+  await waitFor(()=>expect(screen.getByTestId("walk-next")).not.toBeDisabled());
+  expect(run).toHaveBeenCalledOnce();
+  run.mockRestore();
+});

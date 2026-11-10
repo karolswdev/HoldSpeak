@@ -25,7 +25,7 @@ export function qrPath(text: string): { size: number; path: string } {
 export function PhoneQr({ text }: { text: string }) {
   const { size, path } = useMemo(() => qrPath(text), [text]);
   return (
-    <span className="phone-qr" data-testid="phone-qr" data-qr={text}>
+    <span className="phone-qr" data-testid="phone-qr" data-feedback-redact="true" data-qr={text}>
       <svg viewBox={`0 0 ${size} ${size}`} shapeRendering="crispEdges" role="img" aria-label="Pairing code">
         <rect width={size} height={size} fill="#fff" />
         <path d={path} fill="#253449" />

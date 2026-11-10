@@ -176,6 +176,7 @@ describe("Settings ▸ Reach", () => {
     pane();
     fireEvent.click(await screen.findByTestId("reach-pair"));
     const sheet = await screen.findByTestId("reach-pair-sheet");
+    expect(within(sheet).getByTestId("reach-pair-code")).toHaveAttribute("data-feedback-redact", "true");
     expect(within(sheet).getByTestId("reach-pair-code").textContent).toBe("/pair 482 913");
     expect(sheet.textContent).toContain("Send /pair 482 913 to your bot");
     expect(within(sheet).getByTestId("reach-pair-left").querySelector("[data-live]")).toBeTruthy();

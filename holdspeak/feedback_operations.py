@@ -16,8 +16,8 @@ _NO_ARGS = {"type": "object", "properties": {}, "additionalProperties": False}
 
 FEEDBACK_OPERATIONS: tuple[OperationDescriptor, ...] = (
     OperationDescriptor(
-        name="ui_feedback.status", version=1, description="Read whether Desk UI feedback is on (HOLDSPEAK_UI_FEEDBACK=1).",
-        args_schema={"type": "object"}, principal=_ANY, effect="read", result="{enabled}",
+        name="ui_feedback.status", version=1, description="Read whether Desk UI feedback is on; for the owner, name configured off-device speech engines before feedback Save.",
+        args_schema={"type": "object"}, principal=_ANY, effect="read", result="{enabled, transcription_egress? (owner only)}",
         refusals=_CONTRACT_REFUSALS, completion="synchronous", exposure=("http:GET /api/ui-feedback/status",
                                                                          "mcp:ui_feedback.status"),
         service="feedback_service", method="status", call=lambda s, p, a: s.status(p),

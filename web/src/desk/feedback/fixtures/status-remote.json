@@ -1,0 +1,9 @@
+{
+  "enabled": true,
+  "transcription_egress": [
+    {
+      "boundary": "private_network",
+      "label": "Lab speech"
+    }
+  ]
+}

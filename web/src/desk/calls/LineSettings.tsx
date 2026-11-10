@@ -101,7 +101,7 @@ function CodeSheet({
 }) {
   const left = minutesLeft(deadline, now);
   return (
-    <div className="line-code-sheet" data-testid="line-code-sheet" data-node={code.node}>
+    <div className="line-code-sheet" data-testid="line-code-sheet" data-feedback-redact="true" data-node={code.node}>
       <div className="line-code-head">
         <code className="line-code" data-testid="line-code">
           {code.code}
