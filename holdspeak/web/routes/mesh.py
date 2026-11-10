@@ -1,9 +1,4 @@
-"""Mesh discovery plus authenticated inbox and relay adapters.
-
-``GET /api/mesh/inbox`` is produced from ``mesh.inbox`` (``holdspeak/device_operations.py``,
-2026-11-09). The discovery answer and the three relay legs (a node protocol: the
-edge derives the node's credential, never an argument) stay hand-written.
-"""
+"""Declared mesh discovery and inbox, with credential-holding relay transports."""
 from __future__ import annotations
 
 from typing import Any
@@ -63,16 +58,7 @@ def build_mesh_router(ctx: WebContext) -> APIRouter:
         raise RuntimeError("MeshService must be supplied at application composition")
     router = APIRouter()
 
-    @router.get(MESH_INFO_PATH)
-    def api_mesh_info() -> Any:
-        from ... import __version__
-        from ...config import Config
-        from ...mesh import resolve_device_name
-        try:
-            configured = Config.load().mesh.device_name
-        except Exception:
-            configured = ""
-        return JSONResponse({"name": resolve_device_name(configured), "version": __version__, "requiresToken": bool(ctx.mesh_requires_token)})
+    service._discovery_requires_token = lambda: bool(ctx.mesh_requires_token)
 
     async def answer(fn: Any, *, status: int = 200) -> Any:
         try:
@@ -82,41 +68,41 @@ def build_mesh_router(ctx: WebContext) -> APIRouter:
         except Exception as exc:
             return error_500(exc, log, "Failed to build the mesh inbox")
 
-    by_name = {d.name: d for d in operations.DEVICE_OPERATIONS}
-    mount_router(router, operation_router([by_name["mesh.inbox"]],
-                                          lambda: operations.for_context(ctx), answer, module=__name__))
-
-    @router.post("/api/mesh/relay/claim")
     def api_mesh_relay_claim(request: Request, payload: dict[str, Any]) -> Any:
         try:
-            return JSONResponse(service.claim_relay(
-                _principal(request), payload or {}, credential=_credential(request)
-            ))
+            return JSONResponse(registry().invoke(_principal(request), "mesh.relay.claim", {"payload": payload or {}},
+                              held={"credential": _credential(request)}))
         except ServiceError as exc:
             return _error(exc)
         except Exception as exc:
             return error_500(exc, log, "Failed to claim relay work")
 
-    @router.post("/api/mesh/relay/{job_id}/complete")
     def api_mesh_relay_complete(job_id: str, request: Request, payload: dict[str, Any]) -> Any:
         try:
-            return JSONResponse(service.complete_relay(
-                _principal(request), job_id, payload or {}, credential=_credential(request)
-            ))
+            return JSONResponse(registry().invoke(_principal(request), "mesh.relay.complete", {"job_id": job_id, "payload": payload or {}},
+                              held={"credential": _credential(request)}))
         except ServiceError as exc:
             return _error(exc)
         except Exception as exc:
             return error_500(exc, log, "Failed to complete relay work")
 
-    @router.post("/api/mesh/relay/{job_id}/fail")
     def api_mesh_relay_fail(job_id: str, request: Request, payload: dict[str, Any]) -> Any:
         try:
-            return JSONResponse(service.fail_relay(
-                _principal(request), job_id, payload or {}, credential=_credential(request)
-            ))
+            return JSONResponse(registry().invoke(_principal(request), "mesh.relay.fail", {"job_id": job_id, "payload": payload or {}},
+                              held={"credential": _credential(request)}))
         except ServiceError as exc:
             return _error(exc)
         except Exception as exc:
             return error_500(exc, log, "Failed to record relay failure")
+
+    def registry() -> operations.OperationRegistry:
+        return operations.for_context(ctx)
+
+    callbacks = {"mesh.relay.claim": api_mesh_relay_claim, "mesh.relay.complete": api_mesh_relay_complete,
+                 "mesh.relay.fail": api_mesh_relay_fail}
+    mount_router(router, operation_router(
+        [d for d in operations.DEVICE_OPERATIONS if d.service == "mesh_service"], registry, answer,
+        module=__name__, hand_written={name: lambda d, handler=handler: handler
+                                      for name, handler in callbacks.items()}))
 
     return router

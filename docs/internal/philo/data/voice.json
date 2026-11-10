@@ -2162,9 +2162,9 @@
       "kernel_operations": [],
       "sources": [
         {
-          "path": "holdspeak/web/routes/dictation/pipeline.py",
-          "symbol": "api_dictation_journal_replay",
-          "line": 1010,
+          "path": "holdspeak/services/dictation_jobs.py",
+          "symbol": "replay_journal",
+          "line": 619,
           "claim": "The route reprocesses a journal entry without typing."
         }
       ],

@@ -37,6 +37,13 @@ class FakeClock:
 
 def _client(session: Any) -> TestClient:
     app = FastAPI()
+    from holdspeak.principals import Principal, PrincipalKind
+
+    @app.middleware("http")
+    async def owner_edge(request, call_next):
+        request.state.principal = Principal(PrincipalKind.OWNER, "speech-route-test-owner")
+        return await call_next(request)
+
     app.include_router(
         build_dictation_router(WebContext(get_state=dict, voice_session=session))
     )

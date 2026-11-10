@@ -105,53 +105,6 @@ def actuator_result_event(proposal: Any) -> dict[str, Any]:
     }
 
 
-def apply_control_posture(
-    ctx: WebContext,
-    db: Any,
-    proposal: Any,
-    *,
-    executors: dict[str, Any],
-) -> Any:
-    """Execute a proposal whose immutable creation snapshot authorizes it.
-
-    This is the zero-prompt YOLO seam. It never re-resolves against the current
-    configuration: changing posture affects future proposals only. Only a
-    fixed, registered destination with a concrete executor can cross the seam;
-    payload/destination/preview parity is still rechecked by ActuatorExecutor
-    immediately before the effect.
-    """
-
-    if proposal.status != "proposed":
-        return proposal
-    policy = dict(getattr(proposal, "policy_snapshot", {}) or {})
-    if not (
-        policy.get("outcome") == "allowed"
-        and policy.get("authority_basis") == "control_posture"
-    ):
-        return proposal
-
-    from ...operation_policy import operation_for_proposal
-
-    operation = operation_for_proposal(proposal)
-    execute = executors.get(proposal.target)
-    if not operation.fixed_destination or execute is None:
-        return proposal
-
-    updated = db.actuators.transition_proposal(
-        proposal.id,
-        to_status="approved",
-        actor=f"control-posture:{policy.get('mode') or 'unknown'}",
-        detail="configured operation authorized by captured control posture",
-        policy_snapshot=policy,
-    )
-    return execute(
-        ctx,
-        db,
-        updated,
-        actor=f"control-posture:{policy.get('mode') or 'unknown'}",
-    )
-
-
 def decide_proposal(
     ctx: WebContext,
     db: Any,
@@ -305,9 +258,6 @@ class DeskActuatorLifecycle:
     def serialize(self, proposal: Any) -> dict[str, Any]:
         return proposal_to_dict(proposal)
 
-    def apply(self, proposal: Any, target: str) -> Any:
-        return apply_control_posture(self._ctx, self._db, proposal, executors=self._executors(target))
-
     def decide(self, proposal_id: str, payload: Any, target: str) -> tuple[Any, str | None, int]:
         return decide_proposal(self._ctx, self._db, proposal_id, decision=payload.decision,
             actor=(payload.decided_by or "companion").strip() or "companion",
@@ -322,3 +272,16 @@ class DeskActuatorLifecycle:
             return {}
         return {target: {"webhook": execute_webhook_proposal,
                          "github": execute_github_proposal}[target]}
+
+
+class PrActuatorLifecycle:
+    """The composed PR connector and serializer, shared by HTTP and MCP."""
+    def __init__(self, ctx: WebContext, service: Any) -> None:
+        self._ctx, self._service = ctx, service
+
+    @staticmethod
+    def serialize(proposal: Any) -> dict[str, Any]:
+        return proposal_to_dict(proposal)
+
+    def execute(self, proposal: Any, *, actor: str) -> Any:
+        return self._service.execute_actuator_proposal(execute_github_proposal, self._ctx, proposal, actor=actor)

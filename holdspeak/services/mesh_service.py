@@ -183,6 +183,20 @@ class MeshService:
             )
         return credential
 
+    def info(self, principal: Principal) -> dict[str, Any]:
+        """The public discovery projection, also used by the iPad pairing flow."""
+        from .. import __version__
+        from ..config import Config
+        from ..mesh import resolve_device_name
+
+        try:
+            configured = Config.load().mesh.device_name
+        except Exception:
+            configured = ""
+        requires_token = getattr(self, "_discovery_requires_token", lambda: True)
+        return {"name": resolve_device_name(configured), "version": __version__,
+                "requiresToken": bool(requires_token())}
+
     @observed
     def list_inbox(self, principal: Principal, filters: dict[str, Any] | None = None) -> dict[str, Any]:
         from ..intel_queue import build_runtime_queue_frame

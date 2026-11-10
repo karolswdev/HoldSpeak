@@ -73,7 +73,7 @@ describe("the imported row draws that length and today's date", () => {
   it("shows `3 S`, not `1 MIN`, for the rehearsal's file", () => {
     draw(new Date().toISOString());
     // Window grammar: list cells are quiet sans (`3 s`), never caps.
-    expect(screen.getByText("3 s")).toBeInTheDocument();
+    expect(screen.getByTestId("meeting-row-imported-1")).toHaveTextContent("3 s");
     expect(screen.queryByText(/1 min/i)).toBeNull();
   });
 
@@ -81,7 +81,7 @@ describe("the imported row draws that length and today's date", () => {
     const now = new Date();
     draw(now.toISOString());
     const word = ledgerDate(now.toISOString());
-    expect(screen.getByText(word.charAt(0) + word.slice(1, 3).toLowerCase() + word.slice(3))).toBeInTheDocument();
+    expect(screen.getByTestId("meeting-row-imported-1")).toHaveTextContent(word.charAt(0) + word.slice(1, 3).toLowerCase() + word.slice(3));
     // The rehearsal's row said JUN 03 for a file imported on 2026-09-20.
     expect(screen.queryByText(/jun 03/i)).toBeNull();
   });

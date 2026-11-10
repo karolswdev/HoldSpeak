@@ -1733,7 +1733,7 @@ def test_the_http_pipeline_route_threads_the_live_admission(tmp_path, monkeypatc
         on_transcribe_admitted=host.transcribe_audio_admitted,
     )
     monkeypatch.setattr(
-        "holdspeak.web.routes.system.voice._resolve_config", lambda ctx: host.config
+        "holdspeak.services.dictation_service.Config.load", lambda: host.config
     )
     monkeypatch.setattr(
         "holdspeak.web.routes.system.voice._route_principal", lambda request: principal
@@ -1773,7 +1773,7 @@ def test_the_http_pipeline_route_closes_the_parent_failed_when_the_pipeline_rais
 
     monkeypatch.setattr("holdspeak.dictation_runner.process_transcript", exploding)
     monkeypatch.setattr(
-        "holdspeak.web.routes.system.voice._resolve_config", lambda ctx: host.config
+        "holdspeak.services.dictation_service.Config.load", lambda: host.config
     )
     monkeypatch.setattr(
         "holdspeak.web.routes.system.voice._route_principal",
@@ -1834,7 +1834,7 @@ def test_the_http_pipeline_route_never_turns_a_fatal_signal_into_raw_success(
 
     monkeypatch.setattr("holdspeak.dictation_runner.process_transcript", refusing)
     monkeypatch.setattr(
-        "holdspeak.web.routes.system.voice._resolve_config", lambda ctx: host.config
+        "holdspeak.services.dictation_service.Config.load", lambda: host.config
     )
     monkeypatch.setattr(
         "holdspeak.web.routes.system.voice._route_principal",
@@ -1894,10 +1894,7 @@ def test_the_http_pipeline_route_reports_an_indeterminate_parent_close(
         lambda _request: _browser_principal(),
     )
     monkeypatch.setattr(
-        "holdspeak.web.routes.system.voice._resolve_config", lambda _ctx: Config()
-    )
-    monkeypatch.setattr(
-        "holdspeak.web.routes.system.voice._resolve_server", lambda _ctx: None
+        "holdspeak.services.dictation_service.Config.load", lambda: Config()
     )
     ctx = WebContext(
         get_state=lambda: {},
@@ -2220,7 +2217,7 @@ def test_the_pipeline_route_admits_no_legacy_browser_pipeline_operation(
 
     monkeypatch.setattr("holdspeak.dictation_runner.process_transcript", spy)
     monkeypatch.setattr(
-        "holdspeak.web.routes.system.voice._resolve_config", lambda ctx: host.config
+        "holdspeak.services.dictation_service.Config.load", lambda: host.config
     )
     ctx = WebContext(
         get_state=lambda: {},

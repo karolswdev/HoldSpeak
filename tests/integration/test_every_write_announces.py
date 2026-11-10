@@ -476,6 +476,12 @@ def test_no_registered_write_is_silent(hub: Hub, seeded: dict[str, str]) -> None
     hub.frames_until_mark(lambda: None)  # setup frames land before the walk
     for name in writes:
         bound = registry.operations[name]
+        if (bound.descriptor.announces_changes and bound.descriptor.held
+                and not bound.descriptor.owner_only and bound.descriptor.tool_schema is None):
+            # Token-authenticated HTTP protocol callbacks need their node/device
+            # rig; a bare owner cannot invoke them. Their answers/liveness are
+            # covered by the protocol tests, not a synthetic Desk entity write.
+            continue
         if bound.descriptor.announces_changes and name.startswith("desk."):
             # One display protocol (2026-11-08): a display request changes no
             # desk object; its frame is ``desk_request`` (test_desk_requests.py).
@@ -485,10 +491,13 @@ def test_no_registered_write_is_silent(hub: Hub, seeded: dict[str, str]) -> None
             # ``program_changed`` itself (the Programs tests read that frame);
             # its effect needs a real Program, not this walk's minimal rows.
             continue
-        if bound.descriptor.announces_changes and name.startswith("dictation.floor."):
-            # 2026-11-09: the open mic's floor lease lives in memory; no desk
-            # object changes and no frame is sent (web/announce.QUIET_ROUTES).
-            continue
+        if bound.descriptor.announces_changes:
+            from holdspeak.web.announce import QUIET_ROUTES
+            # Quiet machine/browser protocols are declared, not a second list
+            # of operation names in this walk. Internal legs share that route.
+            quiet_faces = {f"http:{method} {path}" for method, path in QUIET_ROUTES}
+            if any(face in quiet_faces for face in bound.descriptor.exposure):
+                continue
         if bound.descriptor.announces_changes and bound.descriptor.service == "briefing_service":
             # 2026-11-09 (ops/projects): a briefing page's service announces
             # ``reach`` itself, never with the token; its effect needs a real
