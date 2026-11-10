@@ -1,5 +1,6 @@
 /** Field custody stays here; the shared kit owns tabs, rows and completion. */
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { stateWords } from "../../surface/words";
 import { apiFetch, readableError } from "../../../lib/api";
 import { CheckGadget, CycleGadget, InspectorForm, ListView, PadGadget, SegmentedTabs, StringGadget, SurfaceState } from "../../surface";
 import { setAutomationEngine, setAutomationWhen, updateWorkbenchField, type AutomationWhenChoice } from "../../api";
@@ -12,10 +13,11 @@ import { useDestinations } from "../../surface/send";
 import { TEMPLATES } from "../../programs/api";
 import { CONTROLS } from "../../programs/model";
 import { ProgramAgent, programDraft, programFields } from "./ProgramDo";
-import { readNativeAgentOptions, assignedId, usable, automationEngineProfile } from "./WithEditor";
-import { engineWords, eventSubjectWords, schedulePick, whenWords, type AutomationDetail } from "./model";
+import { readNativeAgentOptions, assignedId, usable, automationEngineProfile, placeOf } from "./WithEditor";
+import { engineWords, eventSubjectWords, schedulePick, whenWords, putWords, type AutomationDetail } from "./model";
 
-type SetupDraft = {name:string;instruction:string;kind:string;program:ReturnType<typeof programDraft>;when:string;time:string;day:string;repository:string;profile:string;review:string;spend:string;target:string};
+type EngineChoice = {value:string;label:string;engine?:BoardEngine};
+type SetupDraft = {name:string;instruction:string;kind:string;program:ReturnType<typeof programDraft>;when:string;time:string;day:string;repository:string;profile:string;review:string;spend:string;target:string;engineOptions?:EngineChoice[]};
 
 const TABS = [{id:"do",label:"Do"},{id:"when",label:"When"},{id:"about",label:"About"},{id:"with",label:"With"},{id:"put",label:"Put it in"}];
 const DAYS = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
@@ -52,7 +54,7 @@ function SetupField({ detail, part, onRead, onDone, onPending, drafts }: {
   const [folder, setFolder] = useState("");
   const [sourceQuery, setSourceQuery] = useState("");
   const [sourcePick, setSourcePick] = useState<string | null>(null);
-  const [engines, setEngines] = useState<Array<{value:string;label:string;engine?:BoardEngine}>>([]);
+  const [engines, setEngines] = useState<EngineChoice[]>(kept?.engineOptions ?? []);
   const [agents, setAgents] = useState<Array<{value:string;label:string}>>([]);
   const [people, setPeople] = useState<Array<{id:string;name:string}>>([]);
   const [busy, setBusy] = useState(false);
@@ -84,7 +86,7 @@ function SetupField({ detail, part, onRead, onDone, onPending, drafts }: {
   useEffect(() => { void readOptions(); }, []);
   const latest = useRef({name,instruction,kind,program,when,time,day,repository,profile,review,spend,target});
   latest.current = {name,instruction,kind,program,when,time,day,repository,profile,review,spend,target};
-  drafts.set(part,latest.current);
+  drafts.set(part,{...latest.current,engineOptions:engines});
   const save = async (write: () => Promise<unknown>, close = true) => {
     if (inFlight.current) return;
     const submitted = JSON.stringify(latest.current);
@@ -104,7 +106,7 @@ function SetupField({ detail, part, onRead, onDone, onPending, drafts }: {
   const candidates = [...aboutCandidates(items,people), ...(detail.assignment_summary?.vendor ? (items.repository ?? []).map((row) => ({ref:`repository:${row.id}`,kind:"folder",label:`Folder ${row.name}`})) : [])];
   const happened = eventSubjectWords(detail);
   const isProgram = detail.do_kind === "run_program";
-  const rows: Array<{label:string;control:ReactNode}> = [];
+  const rows: Array<{key?:string;label:string;control:ReactNode}> = [];
   let primary = () => void update({});
   let disabled = false;
   let immediate = false;
@@ -137,8 +139,8 @@ function SetupField({ detail, part, onRead, onDone, onPending, drafts }: {
   } else if (part === "about") {
     immediate = !folder.trim();
     if (happened) rows.push({label:"Event",control:happened});
-    for (const source of sources) rows.push({label:source.missing ? "Missing source" : "Source",control:<CheckGadget label={source.label} checked onChange={() => void update({sources:refs.filter((ref) => ref !== source.ref)},false)} disabled={busy} />});
-    rows.push({label:"Add source",control:<ListView label="Sources to add" ordered selectedId={sourcePick} onSelect={setSourcePick}
+    for (const source of sources) rows.push({key:source.ref,label:source.missing ? "Missing source" : source.label,control:<CheckGadget label={source.label} checked onChange={() => void update({sources:refs.filter((ref) => ref !== source.ref)},false)} disabled={busy} />});
+    rows.push({label:"Add source",control:<ListView label="Sources to add" columns={[{key:"name",word:"Source",priority:1}]} ordered selectedId={sourcePick} onSelect={setSourcePick}
       rows={aboutMatches(happened ? candidates.filter((row) => row.kind === "folder") : candidates,sourceQuery).filter((row) => !refs.includes(row.ref)).map((row) => ({id:row.ref,kind:row.kind,name:row.label}))}
       defaultVerb="add-source" verbs={[{id:"add-source",label:"Add source",key:"Enter",enabled:(row) => Boolean(row) && !busy,run:(row) => { if (row) void update({sources:[...refs,row.id]},false); }}]}
       toolbar={{trailing:<StringGadget label="Find by name" value={sourceQuery} onChange={(value) => { setSourceQuery(value); setSourcePick(null); }} placeholder="Find a source" />}} />});
@@ -149,6 +151,8 @@ function SetupField({ detail, part, onRead, onDone, onPending, drafts }: {
     else rows.push({label:detail.do_kind === "hand_to_agent" ? "Agent" : "Engine",control:<CycleGadget label="With" value={profile} onChange={setProfile} options={[
       {value:detail.assignment_summary?.profile_id ?? detail.agent_profile ?? "",label:engineWords(detail) ?? "Choose an engine"},...engines.filter((row) => row.value !== (detail.assignment_summary?.profile_id ?? detail.agent_profile ?? ""))]} />},
       {label:"Spend limit",control:<StringGadget label="Spend limit per run" value={spend} onChange={setSpend} placeholder="Engine's limit" type="number" inputProps={{min:0,step:"0.01"}} />});
+    const chosen = engines.find((row) => row.value === profile);
+    if (chosen?.engine) rows.push({label:"Destination",control:stateWords(placeOf(chosen.engine).label)});
     if (detail.do_kind === "hand_to_agent") rows.push({label:"Review by",control:<CycleGadget label="Review by" value={review} onChange={setReview} options={[{value:"none",label:"None"},...agents]} />});
     disabled = !isProgram && (!profile || (Boolean(spend) && (!Number.isFinite(Number(spend)) || Number(spend) < 0)));
     primary = () => void save(async () => {
@@ -159,6 +163,7 @@ function SetupField({ detail, part, onRead, onDone, onPending, drafts }: {
     rows.push({label:"Put it in",control:<CycleGadget label="Put it in" value={target} onChange={setTarget} options={[
       {value:"inbox",label:"My Inbox"},{value:"needs_you",label:"Needs you"},{value:"today",label:"Today"},
       ...(destinations.data ?? []).map((row) => ({value:`destination:${row.id}`,label:row.name})),
+      ...(target.startsWith("destination:") && !(destinations.data ?? []).some((row) => `destination:${row.id}` === target) ? [{value:target,label:putWords(target)}] : []),
     ]} />});
     primary = () => void update({output_target:target});
   }

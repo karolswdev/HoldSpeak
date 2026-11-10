@@ -42,6 +42,8 @@ export function AutomationsCore(_props: CoreProps) {
   const kept = useDesk((state) => state.places[PICKED_AUTOMATION_PLACE]) || null;
   const [picked, setPicked] = useState<string | null>(kept);
   const asks = useRef(0);
+  const view = useRef(0);
+  const pickedNow = useRef(picked); pickedNow.current = picked;
   const actions = useRef(new Set<string>());
   useWindowInterior("list");
   const load = useCallback(async (quiet = false) => {
@@ -62,40 +64,43 @@ export function AutomationsCore(_props: CoreProps) {
     if (actions.current.size || automations.some((row) => row.results?.some((result) => result.program?.id === id) || row.program?.latest?.id === id)) void load(true);
   }), [bus,automations,load]);
   const asked = useDesk((state) => state.places[NEW_AUTOMATION_PLACE]) || "";
-  useEffect(() => { if (asked) { keepPlace(NEW_AUTOMATION_PLACE,""); setMaking(true); setEditing(false); setDeleting(null); } },[asked]);
+  useEffect(() => { if (asked) { view.current += 1; keepPlace(NEW_AUTOMATION_PLACE,""); setMaking(true); setEditing(false); setDeleting(null); } },[asked]);
   const onRead = useCallback((detail: AutomationDetail) => {
     asks.current += 1; setLoading(false); setLoadError("");
     setAutomations((list) => list.some((row) => row.id === detail.id) ? list.map((row) => row.id === detail.id ? detail : row) : [...list,detail]);
   },[]);
   const select = (id: string | null) => {
+    view.current += 1;
     setPicked(id); keepPlace(PICKED_AUTOMATION_PLACE,id ?? ""); setMaking(false); setEditing(false); setDeleting(null); setError(""); setReceipt("");
   };
   const reveal = async (id: string) => {
+    const requestedView = view.current;
     try {
       const answer = await apiFetch<{workbench:AutomationDetail}>(`/api/workbenches/${encodeURIComponent(id)}`);
-      onRead(answer.workbench); select(id); setEditing(true); void useDesk.getState().refresh();
-    } catch (failure) { select(id); setError(`Automation not loaded: ${readableError(failure)}`); void load(true); }
+      onRead(answer.workbench); if (view.current === requestedView) { select(id); setEditing(true); } void useDesk.getState().refresh();
+    } catch (failure) { if (view.current === requestedView) { select(id); setError(`Automation not loaded: ${readableError(failure)}`); } void load(true); }
   };
   const selected = automations.find((row) => row.id === picked) ?? null;
   const act = async (id: string, verb: string, write: () => Promise<unknown>, done?: () => void) => {
     const key = `${verb}:${id}`;
+    const requestedView = view.current;
     if (actions.current.has(key)) return;
     actions.current.add(key); setPending((rows) => ({...rows,[key]:true})); setError(""); setReceipt("");
     try { await write(); done?.(); await load(true); }
-    catch (failure) { setError(`${verb === "run" ? "Run not started" : verb === "cancel" ? "Run not cancelled" : verb === "delete" ? "Not deleted" : "Not saved"}: ${readableError(failure)}`); }
+    catch (failure) { const message = `${verb === "run" ? "Run not started" : verb === "cancel" ? "Run not cancelled" : verb === "delete" ? "Not deleted" : "Not saved"}: ${readableError(failure)}`; if (view.current === requestedView) setError(message); else setReceipt(`${automations.find((row) => row.id === id)?.name ?? "Automation"} · ${message}`); }
     finally { actions.current.delete(key); setPending((rows) => { const next = {...rows}; delete next[key]; return next; }); }
   };
   const byRow = (row: {id:string} | null) => automations.find((entry) => entry.id === row?.id);
   const verbs: ListVerb[] = [
-    {id:"new",label:"New automation",key:"n",testId:"automation-new",run:() => { setMaking(true); setEditing(false); setDeleting(null); setError(""); }},
+    {id:"new",label:"New automation",key:"n",testId:"automation-new",run:() => { view.current += 1; setMaking(true); setEditing(false); setDeleting(null); setError(""); }},
     {id:"open",label:"Open",key:"Enter",enabled:(row) => Boolean(row),run:(row) => { if (row) useDesk.getState().openWorkbenchWindow(row.id); }},
-    {id:"edit",label:"Edit",key:"F2",enabled:(row) => Boolean(row) && !setupPending,run:() => { setEditing(true); setMaking(false); setDeleting(null); }},
+    {id:"edit",label:"Edit",key:"F2",enabled:(row) => Boolean(row) && !setupPending && !pending[`delete:${row?.id}`],run:() => { view.current += 1; setEditing(true); setMaking(false); setDeleting(null); }},
     {id:"run",label:"Run now",key:"r",testId:"automation-run-now",title:selected ? `Run with ${engineWords(selected) ?? "the chosen engine"}` : undefined,
       enabled:(row) => { const detail = byRow(row); return Boolean(detail && (detail.instruction_shown?.trim() || detail.instruction?.trim() || detail.do_kind === "run_program") && !running(detail) && !pending[`run:${detail.id}`] && !setupPending); },
       run:(row) => { if (row) { void act(row.id,"run",async () => { const ran = await triggerWorkbenchRun(row.id); setReceipt(ran?.skipped && typeof ran.reason === "string" ? ran.reason : `Run finished · ${byRow(row)?.name ?? "Automation"}`); }); void load(true); } }},
     {id:"cancel",label:"Cancel run",key:"c",enabled:(row) => { const detail = byRow(row); return Boolean(detail && runningProgram(detail) && !pending[`cancel:${detail.id}`]); },
       run:(row) => { const detail = byRow(row); const program = detail && runningProgram(detail); if (detail && program) void act(detail.id,"cancel",() => programVerb(program,"park"),() => setReceipt("Run cancelled")); }},
-    {id:"delete",label:"Delete",key:"Delete",enabled:(row) => Boolean(row) && !setupPending && !pending[`delete:${row?.id}`],run:(row) => { const detail = byRow(row); if (detail) { setDeleting(detail); setMaking(false); setEditing(false); setError(""); } }},
+    {id:"delete",label:"Delete",key:"Delete",enabled:(row) => Boolean(row) && !setupPending && !pending[`delete:${row?.id}`],run:(row) => { const detail = byRow(row); if (detail) { view.current += 1; setDeleting(detail); setMaking(false); setEditing(false); setError(""); } }},
   ];
   const rows = useMemo(() => automations.filter((row) => `${row.name} ${row.instruction_shown ?? ""}`.toLocaleLowerCase().includes(query.toLocaleLowerCase())).map((detail) => ({
     id:detail.id,kind:"automation",name:detail.name || "Automation",nameTestId:"automation-home-name",
@@ -117,7 +122,7 @@ export function AutomationsCore(_props: CoreProps) {
       {making ? <PaneInspector label="New automation"><AutomationStarters onCreated={(id) => void reveal(id)} onCancel={() => setMaking(false)} /></PaneInspector>
       : deleting ? <PaneInspector label={`Delete ${deleting.name}?`}>
         <InspectorForm rows={[{label:"Keeps",control:"Past results"}]} notice={error ? <SurfaceState error={error} /> : undefined}
-          completion={{cancel:() => { setDeleting(null); setError(""); },cancelDisabled:Boolean(pending[`delete:${deleting.id}`]),primary:{label:"Delete",busy:Boolean(pending[`delete:${deleting.id}`]),testId:"automation-delete-confirm",run:() => void act(deleting.id,"delete",() => apiFetch(`/api/workbenches/${encodeURIComponent(deleting.id)}`,{method:"DELETE"}),() => { select(null); setReceipt("Automation deleted"); })}}} />
+          completion={{cancel:() => { setDeleting(null); setError(""); },cancelDisabled:Boolean(pending[`delete:${deleting.id}`]),primary:{label:"Delete",busy:Boolean(pending[`delete:${deleting.id}`]),testId:"automation-delete-confirm",run:() => void act(deleting.id,"delete",() => apiFetch(`/api/workbenches/${encodeURIComponent(deleting.id)}`,{method:"DELETE"}),() => { const id = deleting.id; setDeleting((current) => current?.id === id ? null : current); if (pickedNow.current === id) { setPicked(null); keepPlace(PICKED_AUTOMATION_PLACE,""); } setReceipt(`Automation deleted · ${deleting.name}`); })}}} />
       </PaneInspector>
       : selected && editing ? <PaneInspector label="Edit automation"><AutomationSetup key={selected.id} detail={selected} onRead={onRead} onDone={() => setEditing(false)} onPending={setSetupPending} /></PaneInspector>
       : selected ? <PaneInspector label={selected.name}><InspectorForm testId="automation-summary" rows={[

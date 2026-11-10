@@ -60,7 +60,7 @@ Open **Go → Automations**. Click a row to select it. Its setup and run times s
 Press **New automation**, choose a starter, then press **Create**.
 The new automation opens its setup below the list. **Edit** opens the same form for an existing automation.
 Use the setup tabs to change its parts. **Save** saves the current tab. **Cancel** or **Done** closes setup.
-Source choices save when you select them.
+In **About**, select a source, then press **Add source**. Source ticks save at once.
 
 **Run now** runs the selection. **Cancel run** parks its running Program and keeps the automation.
 **Delete** asks a question in the same window. Confirm **Delete** to remove the automation. Past results stay stored.
@@ -80,7 +80,7 @@ The sentence has these parts:
 | **Review by** | An optional installed reviewer for an agent handoff. |
 | **Put it in** | **My Inbox**, **Needs you**, **Today**, or a saved destination that prepares a send. |
 
-The **Do**, **When**, **With** and **Put it in** tabs use **Save**. Source choices save at once.
+The **Do**, **When**, **With** and **Put it in** tabs use **Save**. **About** uses **Add source** and ticks.
 In the object window, open a sentence part to change it.
 Neither editor shows the stored cron expression. If a schedule has no usable engine or agent, HoldSpeak keeps
 the schedule saved but off and names the missing **With** choice.

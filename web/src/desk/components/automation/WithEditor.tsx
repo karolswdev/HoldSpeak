@@ -63,7 +63,7 @@ export async function readNativeAgentOptions(): Promise<NativeAgentOption[]> {
 }
 
 /** Where an engine's prompt goes, for its chip. */
-function placeOf(engine: BoardEngine): { label: string; scope: "local" | "cloud" } {
+export function placeOf(engine: BoardEngine): { label: string; scope: "local" | "cloud" } {
   if (engine.vendor) return { label: engine.vendor, scope: "cloud" };
   const place = enginePlace(engine);
   return { label: hostLabel(engine), scope: place.place === "mac" || place.place === "lan" ? "local" : "cloud" };

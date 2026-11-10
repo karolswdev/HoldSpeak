@@ -20,13 +20,14 @@ export function AutomationStarters({ onCreated, onCancel = () => undefined }: {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const inFlight = useRef(false);
+  const live = useRef(true);
   const load = async () => {
     setLoading(true); setReadError("");
     try { const answer = await apiFetch<{ templates: AutomationStarter[] }>("/api/workbench-templates"); setStarters(answer.templates); }
     catch (failure) { setReadError(readableError(failure)); }
     finally { setLoading(false); }
   };
-  useEffect(() => { void load(); }, []);
+  useEffect(() => { live.current = true; void load(); return () => { live.current = false; }; }, []);
   const starter = starters.find((row) => row.id === choice);
   const create = async () => {
     if (inFlight.current) return;
@@ -36,7 +37,7 @@ export function AutomationStarters({ onCreated, onCancel = () => undefined }: {
         ? `/api/workbench-templates/${encodeURIComponent(starter.id)}/instantiate` : "/api/workbenches",
       { method: "POST", json: starter ? {} : { name: "New automation" } });
       if (!answer.workbench?.id) throw new Error("No automation was returned");
-      onCreated(answer.workbench.id);
+      if (live.current) onCreated(answer.workbench.id);
     } catch (failure) { setError(`${starter?.name ?? "New automation"} was not made: ${readableError(failure)}`); inFlight.current = false; setBusy(false); }
   };
   return <InspectorForm testId="automation-starters" rows={[

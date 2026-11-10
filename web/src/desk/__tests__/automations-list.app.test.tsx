@@ -4,6 +4,8 @@ import { AutomationsCore } from "../components/automation/AutomationsCore";
 import { useDesk } from "../store";
 import { EMPTY_ITEMS } from "../api";
 import type { AutomationDetail } from "../components/automation/model";
+import engines from "../../features/runson/__tests__/fixtures/engines.recorded.json";
+import putFolder from "./fixtures/automation-hub/put-folder.json";
 import home from "./fixtures/automation-hub/home-rows.json";
 import starters from "./fixtures/automation-hub/starters.json";
 import blank from "./fixtures/automation-hub/blank-sentence.json";
@@ -19,12 +21,19 @@ let writes: Array<{url:string;method:string;body:Record<string,unknown>}>;
 let hold: null | (() => void);
 let calls: number;
 let next: AutomationDetail | null;
+let holdDetail: null | (() => void);
+let holdCreate: null | (() => void);
 function fetchHub(input:RequestInfo|URL, init?:RequestInit): Promise<Response> {
   const url = String(input), method = init?.method ?? "GET";
   if (method === "GET") {
     if (url === "/api/workbenches") return Promise.resolve(json({workbenches:structuredClone(rows)}));
     if (url === "/api/workbench-templates") return Promise.resolve(json(starters.gets["/api/workbench-templates"]));
-    if (url.startsWith("/api/workbenches/")) return Promise.resolve(json({workbench:structuredClone(rows.find((row) => url.endsWith(row.id)))}));
+    if (url.startsWith("/api/workbenches/")) {
+      const answer = () => json({workbench:structuredClone(rows.find((row) => url.endsWith(row.id)))});
+      if (holdDetail && url.endsWith(friday.workbench_id)) return new Promise((resolve) => { holdDetail = () => resolve(answer()); });
+      return Promise.resolve(answer());
+    }
+    if (url === "/api/concierge/detect") return Promise.resolve(json(engines.claude.steps.find((step) => step.name === "found")!.gets["/api/concierge/detect"]));
     if (url === "/api/people/relationships") return Promise.resolve(json({relationships:[]}));
     if (url === "/api/channels/destinations") return Promise.resolve(json({destinations:[]}));
     if (url === "/api/channels/sends") return Promise.resolve(json({sends:[]}));
@@ -35,10 +44,15 @@ function fetchHub(input:RequestInfo|URL, init?:RequestInit): Promise<Response> {
   if (fail === method || fail === url) return Promise.resolve(json({error:"Unavailable"},503));
   if (url.endsWith("/instantiate")) {
     const detail = recordedDetail(friday);
-    rows = [structuredClone(detail)];
-    return Promise.resolve(json({workbench:detail}));
+    const answer = () => { rows = [...rows.filter((row) => row.id !== detail.id),structuredClone(detail)]; return json({workbench:detail}); };
+    if (holdCreate) return new Promise((resolve) => { holdCreate = () => resolve(answer()); });
+    return Promise.resolve(answer());
   }
-  if (method === "DELETE") { rows = rows.filter((row) => !url.endsWith(row.id)); return Promise.resolve(json({success:true})); }
+  if (method === "DELETE") {
+    const answer = () => { if (fail === "DELETE") return json({error:"Unavailable"},503); rows = rows.filter((row) => !url.endsWith(row.id)); return json({success:true}); };
+    if (hold) return new Promise((resolve) => { hold = () => resolve(answer()); });
+    return Promise.resolve(answer());
+  }
   if (method === "PUT") {
     const answer = () => { if (next) rows = [structuredClone(next)]; return json({workbench:rows[0]}); };
     if (hold) return new Promise((resolve) => { hold = () => resolve(answer()); });
@@ -49,7 +63,7 @@ function fetchHub(input:RequestInfo|URL, init?:RequestInit): Promise<Response> {
   throw new Error(`Unrecorded write ${method} ${url}`);
 }
 beforeEach(() => {
-  rows = structuredClone(initial); fail = ""; writes = []; hold = null; calls = 0; next = null;
+  rows = structuredClone(initial); fail = ""; writes = []; hold = null; calls = 0; next = null; holdDetail = null; holdCreate = null;
   useDesk.setState({places:{},items:EMPTY_ITEMS,workbenchWindows:[],refresh:vi.fn(async () => undefined)});
   vi.stubGlobal("fetch",vi.fn(fetchHub));
 });
@@ -90,8 +104,38 @@ describe("Automations selection grammar",() => {
     expect(row()).toBeInTheDocument();
     expect(question).toBeInTheDocument();
     fail = ""; fireEvent.click(within(question).getByRole("button",{name:"Delete"}));
-    await screen.findByText("Automation deleted");
+    await screen.findByText(/Automation deleted/);
     expect(screen.queryByRole("row",{name:/Friday team update/})).toBeNull();
+  });
+  it.each(["success","refused"])("a late delete %s keeps the next selection and its unsaved draft",async (outcome) => {
+    rows = [...rows,{...rows[0],id:"other",name:"Morning prep"}];
+    await openList(); fireEvent.click(row()); fireEvent.click(button("Delete"));
+    hold = () => undefined;
+    fireEvent.click(screen.getByTestId("automation-delete-confirm"));
+    fireEvent.click(screen.getByRole("row",{name:/Morning prep/})); fireEvent.click(button("Edit"));
+    const input = await screen.findByRole("textbox",{name:"What it does"});
+    fireEvent.change(input,{target:{value:"Keep this unsaved brief."}});
+    if (outcome === "refused") fail = "DELETE";
+    await act(async () => hold?.());
+    if (outcome === "success") await screen.findByText(/Automation deleted/);
+    else expect(await within(screen.getByTestId("automation-home-status")).findByText(/Friday team update.*Not deleted/)).toBeInTheDocument();
+    expect(input).toHaveValue("Keep this unsaved brief.");
+    expect(screen.getByRole("row",{name:/Morning prep/})).toHaveAttribute("aria-selected","true");
+  });
+  it.each(["create","detail"])("a late %s reply keeps a newer draft",async (phase) => {
+    rows = [{...rows[0],id:"other",name:"Morning prep"}];
+    await openList(); fireEvent.click(button("New automation"));
+    fireEvent.change(await screen.findByRole("combobox",{name:"Automation starter"}),{target:{value:"friday-team-update"}});
+    const held = () => undefined;
+    if (phase === "create") holdCreate = held; else holdDetail = held;
+    fireEvent.click(button("Create"));
+    await waitFor(() => expect(phase === "create" ? holdCreate : holdDetail).not.toBe(held));
+    fireEvent.click(screen.getByRole("row",{name:/Morning prep/})); fireEvent.click(button("Edit"));
+    const input = await screen.findByRole("textbox",{name:"What it does"});
+    fireEvent.change(input,{target:{value:"Keep the next draft."}});
+    await act(async () => { if (phase === "create") holdCreate?.(); else holdDetail?.(); });
+    expect(input).toHaveValue("Keep the next draft.");
+    expect(screen.getByRole("row",{name:/Morning prep/})).toHaveAttribute("aria-selected","true");
   });
   it("Find filters the existing read, and a new selection moves with arrows",async () => {
     rows = [...rows,{...rows[0],id:"other",name:"Morning prep"}];
@@ -114,6 +158,33 @@ describe("Automations selection grammar",() => {
     expect(row()).toHaveAttribute("aria-selected","true");
     expect(useDesk.getState().workbenchWindows).toEqual([]);
     expect(writes.filter((entry) => entry.url.endsWith("/instantiate"))).toHaveLength(2);
+  });
+  it("names every saved source beside its tick",async () => {
+    await openList(); fireEvent.click(row()); fireEvent.click(button("Edit"));
+    fireEvent.click(screen.getByRole("tab",{name:"About"}));
+    for (const source of initial[0].sources_shown ?? []) {
+      expect(screen.getByText(source.label,{exact:true})).toBeVisible();
+      expect(screen.getByRole("checkbox",{name:source.label})).toBeChecked();
+    }
+  });
+  it("names the destination where an engine is chosen",async () => {
+    await openList(); fireEvent.click(row()); fireEvent.click(button("Edit"));
+    fireEvent.click(screen.getByRole("tab",{name:"With"}));
+    const option = await screen.findByRole("option",{name:"Add Claude Code"});
+    fireEvent.change(screen.getByRole("combobox",{name:"With"}),{target:{value:(option as HTMLOptionElement).value}});
+    expect(screen.getByText("Anthropic",{exact:true})).toBeVisible();
+    fireEvent.click(screen.getByRole("tab",{name:"Do"}));
+    fireEvent.click(screen.getByRole("tab",{name:"With"}));
+    expect(screen.getByRole("combobox",{name:"With"})).toHaveDisplayValue("Add Claude Code");
+    expect(screen.getByText("Anthropic",{exact:true})).toBeVisible();
+  });
+  it("keeps an unresolved destination in words while its names load",async () => {
+    rows = [recordedDetail(putFolder)];
+    await openList(); fireEvent.click(screen.getByTestId("automation-home-name")); fireEvent.click(button("Edit"));
+    fireEvent.click(screen.getByRole("tab",{name:"Put it in"}));
+    const choice = screen.getByRole("combobox",{name:"Put it in"}) as HTMLSelectElement;
+    expect(choice.value).toBe(rows[0].output_target);
+    expect(choice.selectedOptions[0].textContent).not.toContain("destination:");
   });
   it("keeps a refused Do draft and a newer edit through an older Save",async () => {
     const id = blank.workbench_id;

@@ -1,6 +1,7 @@
 """Automations' selection, same-window setup, questions and bounded wells."""
 from pathlib import Path
 import re
+import json
 from typing import Any
 import pytest
 from tests._evidence import evidence_dir
@@ -82,6 +83,8 @@ def test_automations_selection_and_setup_fit_one_window(tmp_path:Path,monkeypatc
             shot('edit-do')
             win.get_by_role('combobox',name='Do kind').select_option('run_program')
             shot('edit-program')
+            win.get_by_role('button',name='Save',exact=True).scroll_into_view_if_needed()
+            shot('edit-program-actions')
             win.get_by_role('combobox',name='Do kind').select_option('hand_to_agent')
             shot('edit-hand')
             win.get_by_role('combobox',name='Do kind').select_option('run')
@@ -97,9 +100,16 @@ def test_automations_selection_and_setup_fit_one_window(tmp_path:Path,monkeypatc
             win.get_by_test_id('automation-summary').wait_for()
             assert db.workbenches.get(wb).instruction=='Draft the update and name each owner.'
             verb('Edit')
+            engine_recording=json.loads(Path('web/src/features/runson/__tests__/fixtures/engines.recorded.json').read_text())
+            found=next(step for step in engine_recording['claude']['steps'] if step['name']=='found')['gets']['/api/concierge/detect']
+            page.route('**/api/concierge/detect',lambda route:route.fulfill(json=found))
             for tab in ('When','About','With','Put it in'):
                 setup_tab(tab)
                 shot('edit-'+{'When':'when','About':'about','With':'with','Put it in':'put'}[tab])
+                if tab=='With':
+                    win.get_by_role('combobox',name='With',exact=True).select_option(label='Add Claude Code')
+                    expect(win.get_by_text('Anthropic',exact=True)).to_be_visible()
+                    shot('engine-choice')
                 if tab=='When':
                     win.get_by_role('combobox',name='When',exact=True).select_option('weekday')
                     shot('edit-schedule')
@@ -137,14 +147,18 @@ def test_automations_selection_and_setup_fit_one_window(tmp_path:Path,monkeypatc
             obj.locator('.desk-gadget-close').click()
             page.evaluate("localStorage.setItem('hs:walk-voice','off')")
             _start_app_walk(page)
-            import json
             script=json.loads(Path('web/src/desk/walks/automations.walk.json').read_text())
             for _ in range(len(script['steps'])+1):
                 page.wait_for_function("() => ['walk-next','walk-choice-0','walk-end'].some(id => document.querySelector(`[data-testid=${id}]`)?.getClientRects().length)")
                 if page.get_by_test_id('walk-end').is_visible(): break
-                if page.get_by_test_id('walk-choice-0').is_visible(): page.get_by_test_id('walk-choice-0').click()
+                if page.get_by_test_id('walk-choice-0').is_visible():
+                    with page.expect_response(lambda response:'/api/w/' in response.url and response.url.endswith('/answer')) as answered:
+                        page.get_by_test_id('walk-choice-0').click()
+                    assert answered.value.ok
+                    page.get_by_test_id('walk-end').wait_for()
+                    break
                 else: page.get_by_test_id('walk-next').click()
-            page.get_by_test_id('walk-end').click()
+            page.get_by_test_id('walk-back').click()
             shot('walk-done')
             selected_row().click()
             page.route(f'**/api/workbenches/{wb}/run',lambda route:route.fulfill(status=503,json={'error':'Unavailable'}))

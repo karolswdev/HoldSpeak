@@ -221,7 +221,7 @@ class TestFridayWalk:
                 add.click()
                 # Add writes the engine, then this automation uses it ("In use").
                 page.get_by_test_id("automation-with-editor").get_by_text("In use", exact=True).wait_for(timeout=T)
-                page.keyboard.press("Escape")
+                page.locator(".surface-popover").press("Escape")
                 page.locator(f'[id="workbench:{workbench_id}"]').locator(".desk-gadget-close").click()
                 _automation_verb(page, "Run now")
                 app.locator(f'[data-object-id="{workbench_id}"]').dblclick()
