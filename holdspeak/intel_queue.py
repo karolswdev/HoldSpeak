@@ -160,7 +160,7 @@ def _compute_failure_rate_percent(*, total_jobs: int, failed_jobs: int) -> float
 
 
 def _bound_claim(db, *, include_scheduled: bool):
-    """Claim through the C1b binder without a runtime/Config preflight."""
+    """Claim one job: its parent run and the assignment the door reads."""
     from .kernel.runtime import _service
     from .services.meeting_deferred_queue_binding import MeetingDeferredQueueBinder
 
@@ -169,31 +169,6 @@ def _bound_claim(db, *, include_scheduled: bool):
         MeetingDeferredQueueBinder(broker), include_scheduled=include_scheduled
     )
     return job, broker
-
-
-def _reconcile_stop_handoffs(db, broker) -> bool:
-    """Settle known-safe Stop handoffs and fresh-admit only unknown outcomes.
-
-    The bundle primitive remains the sole settlement/activation authority.  This
-    queue boundary merely revisits its durable records after restart and asks the
-    adopter to append a fresh normal job for an unknown terminal; it never makes
-    the old reservation claimable.
-    """
-    from .services.inference_parent_route_bundle_service import InferenceParentRouteBundleService
-
-    service = InferenceParentRouteBundleService(
-        broker,
-        broker.inference_adoption_service,
-        handoff_evidence_providers=(db.intel.stop_handoff_provider(),),
-    )
-    for command_id in db.intel.pending_stop_handoff_commands():
-        try:
-            service.reconcile_stop_handoff(command_id=command_id)
-        except Exception as exc:
-            # An unsettled handoff remains durable and inert; an integrity refusal
-            # is not queue progress and must not open a second execution path.
-            log.warning("Deferred Stop handoff reconciliation deferred: %s", type(exc).__name__)
-    return bool(db.intel.admit_unknown_stop_handoff_recoveries())
 
 
 def _bound_projection_base(job, meeting) -> dict:
@@ -923,17 +898,9 @@ def process_next_intel_job(
     The cloud leg is not threaded in as bare params (HS-112-01): it resolves
     here, through the one resolver, from the assigned InferenceTarget.
     """
-    # C1 bound work has no mutable runtime preflight: route election and the
-    # SERVICE shell were committed with its claim, and execution must load those
-    # stored IDs rather than Config, a resolver, or a fresh plan.
+    # A claim commits the job's parent run; every model call of the job goes
+    # through the engine door, which reads the owner's live assignment.
     db = get_database()
-    # Pending Stop settlements are revisited before any claim. A known-safe
-    # activation falls through into this same normal C1 claim turn; an unknown
-    # terminal reports durable recovery progress and is claimed on the next turn.
-    from .kernel.runtime import _service
-
-    if _reconcile_stop_handoffs(db, _service()):
-        return True
     # Close receipt and successor promotion are separate durable writes. Recover
     # the receipt→promotion crash interval before looking for a close still owed;
     # the scan is idempotent and lets the next drain iteration claim the survivor.

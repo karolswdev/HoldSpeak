@@ -1,25 +1,29 @@
-"""Queue-owned binding of deferred Meeting jobs to frozen route bundles.
+"""The deferred Meeting queue's claim: one parent run per job, no frozen plan.
 
-The queue derives every durable command identity from ``intel_jobs.job_id``.
-It owns no planner, controller, or provider path: it composes the existing
-SERVICE policy, parent/bundle service, and later frozen-route execution.
+A claim records the job, its parent run and the assignment the engine door
+reads for the summary (``engine_door.chain``). Every model call of the job
+goes through the door, which picks the engine from the owner's live
+assignment itself; nothing here plans or freezes a route.
 """
 from __future__ import annotations
 
 import time
-import json
 from dataclasses import dataclass
 from typing import Any, Mapping
 
 from ..db.models import IntelJob
-from ..meeting_session.deferred_bound import PARENT_KIND, queue_service_principal
-from ..meeting_session.intel_plan import DISPLACED_AUTO_TITLE, DISPLACED_BOOKMARK_LABELS
-from .inference_parent_route_bundle_service import InferenceParentRouteBundleService
-from .inference_route_plan_service import ROUTE_PLANNING_AUTHORITY
-from .errors import ConflictError
+from ..meeting_session.deferred_bound import (
+    PARENT_KIND,
+    job_capabilities,
+    queue_service_principal,
+)
+from .errors import ConflictError, ValidationError
 
 # The lawful bound queue owner is the only remaining consumer of this envelope.
 JOB_DEADLINE_SECONDS = 30 * 60
+#: Children one model call may spend: the door's first engine, its runner
+#: dialect retry, the next engine and its dialect retry.
+CHILDREN_PER_CALL = 4
 
 
 @dataclass(frozen=True)
@@ -28,210 +32,109 @@ class _PendingQueueParent:
 
     parent: Any
     deadline_at: float
-    routes: tuple[dict[str, str], ...]
-    lifecycle_child_budget: int
-    admitted_child_budget: int
-    admitted_policy_fingerprints: tuple[dict[str, Any], ...]
+    child_budget: int
+    input_snapshot: dict[str, Any]
+    assignment: str
+    selection: str
+
+
+def _input_snapshot(job: IntelJob) -> dict[str, Any]:
+    return {
+        "schema": "MeetingDeferredIntelQueueParent@1",
+        "job_id": str(job.job_id),
+        "meeting_id": str(job.meeting_id),
+        "work_descriptor_sha256": str(job.work_descriptor_sha256 or ""),
+        "transcript_hash": str(job.transcript_hash),
+        "displaced_work": list(job.displaced_work or ()),
+        "frozen_bookmark_timestamps": list(job.frozen_bookmark_timestamps or ()),
+        "frozen_bookmark_operations": [
+            {"id": bookmark_id, "timestamp": timestamp}
+            for bookmark_id, timestamp in tuple(job.frozen_bookmark_operations or ())
+        ],
+        "frozen_plugin_members": [dict(member) for member in tuple(job.frozen_plugin_members or ())],
+    }
 
 
 class MeetingDeferredQueueBinder:
-    """Bind one immutable queue job to one SERVICE route bundle.
+    """Bind one queue job to one parent run.
 
-    ``prepare`` deliberately performs only pre-claim routing election and kernel
-    shell admission.  The queue calls it before taking SQLite's claim writer
-    lock, because the kernel shell has its own journal transaction.  The actual
-    parent-run row, frozen routes, manifest, member rows, claim references, and
-    ledger event commit together through the connection passed to ``__call__``.
+    ``prepare`` checks the disclosed engine chain and admits the kernel shell
+    before the claim writer lock (the shell has its own journal transaction);
+    ``__call__`` writes the parent-run row in the claim transaction and gives
+    back the references the claim records.
     """
 
-    def __init__(
-        self,
-        broker: Any,
-        *,
-        bundles: InferenceParentRouteBundleService | None = None,
-        clock: Any = time.time,
-    ) -> None:
+    def __init__(self, broker: Any, *, clock: Any = time.time) -> None:
         self._broker = broker
-        self._bundles = bundles or InferenceParentRouteBundleService(
-            broker, broker.inference_adoption_service
-        )
         self._clock = clock
         self._pending: dict[str, _PendingQueueParent] = {}
 
-    @staticmethod
-    def _routes(job: IntelJob) -> tuple[dict[str, str], ...]:
-        routes = [
-            {
-                "key": "analysis",
-                "capability_id": "meeting.deferred_analysis",
-                "invocation_id": str(job.job_id),
-            }
-        ]
-        seen = {"meeting.deferred_analysis"}
-        displaced_capabilities = {
-            DISPLACED_BOOKMARK_LABELS: "meeting.bookmark_label",
-            DISPLACED_AUTO_TITLE: "meeting.auto_title",
-        }
-        for slug in tuple(job.displaced_work or ()):
-            capability = displaced_capabilities.get(str(slug))
-            # The V3 descriptor freezes concrete label operations. A historical
-            # bookmark slug with zero surviving operations is no work at all;
-            # declaring its route would make bundle budgeting disagree with the
-            # parent declaration and wrongly block the base summary.
-            if (
-                capability == "meeting.bookmark_label"
-                and not tuple(job.frozen_bookmark_operations or ())
-            ):
-                continue
-            if capability is not None and capability not in seen:
-                routes.append(
-                    {
-                        "key": capability.rsplit(".", 1)[-1],
-                        "capability_id": capability,
-                        "invocation_id": str(job.job_id),
-                    }
-                )
-                seen.add(capability)
-        # C2 membership is immutable descriptor evidence.  Never construct a
-        # capability from a runtime plugin string: invalid descriptor entries are
-        # refused before the bundle exists, and every valid entry is an exact
-        # registry capability member with its own frozen route plan.
-        for frozen in tuple(job.frozen_plugin_members or ()):
-            capability = str(frozen.get("capability_id") or "").strip()
-            plugin_id = str(frozen.get("plugin_id") or "").strip()
-            if capability != f"meeting.plugin.{plugin_id}" or not plugin_id:
-                raise ValueError("frozen plugin descriptor is not exact")
-            if capability in seen:
-                raise ValueError("duplicate frozen plugin capability")
-            routes.append(
-                {
-                    "key": f"plugin:{plugin_id}",
-                    "capability_id": capability,
-                    "invocation_id": str(job.job_id),
-                }
-            )
-            seen.add(capability)
-        return tuple(routes)
-
     def prepare(self, job: IntelJob, command_ids: Mapping[str, str]) -> None:
-        """Pre-admit the deterministic shell without material or provider egress.
+        """Refuse a job with no engine or a changed chain; admit its shell."""
+        from .meeting_route_projection import chain_legs, project_route, route_is_off, selection_hash
 
-        Missing exact SERVICE assignments fail before a shell exists.  The
-        in-transaction bundle form repeats route election and rejects an
-        assignment/policy race before it writes the binding.
-        """
         job_id = str(job.job_id or "")
         if not job_id:
             raise ValueError("bound queue job has no job_id")
         if job_id in self._pending:
             return
-        principal = queue_service_principal()
-        expected_route = getattr(job, "planned_route", None)
-        if isinstance(expected_route, Mapping):
-            # Claim-time drift fence: the route disclosed by the HTTP gesture
-            # must still be the route the SERVICE resolver would bind.  This is
-            # before parent admission and therefore before any provider call.
-            from .meeting_route_projection import project_route, route_is_off
-            current_route = project_route(
-                self._broker.database,
-                invocation_id=f"meeting:{job.meeting_id}",
+        db = self._broker.database
+        current = project_route(db, invocation_id=f"meeting:{job.meeting_id}")
+        if route_is_off(current):
+            # PHILO-15 01 ruling: OFF wins. The queue settles the job as skipped.
+            raise ValidationError(
+                "The owner turned this off.",
+                code="no_assignment",
+                context={"capability_id": "meeting.deferred_analysis", "off": True},
             )
-            if route_is_off(current_route):
-                # PHILO-15 01 ruling: OFF wins over a stale route. The same
-                # refusal the route planner raises under OFF, so the queue
-                # settles the job as skipped, never as a failure or a drift.
-                from .errors import ValidationError
-
-                raise ValidationError(
-                    "The owner turned this off.",
-                    code="no_assignment",
-                    context={"capability_id": "meeting.deferred_analysis", "off": True},
-                )
-            if (
-                current_route.get("status") != "ready"
-                or current_route.get("selection_hash")
-                != expected_route.get("selection_hash")
-            ):
-                try:
-                    self._broker.database.intel.record_run_receipt(
-                        str(job.meeting_id), str(job.job_id),
-                        expected_route.get("selection_hash"), "refused", None,
-                    )
-                finally:
-                    raise ConflictError(
-                        "The disclosed route changed before queue claim.",
-                        code="selection_drift",
-                    )
+        if current.get("status") != "ready":
+            raise ValidationError("No model assignment can be frozen.", code="no_assignment")
+        self._refuse_drift(job, current)
+        assignment, legs = chain_legs(db)
+        calls = sum(
+            len(tuple(job.frozen_bookmark_operations or ())) if capability == "meeting.bookmark_label" else 1
+            for capability in job_capabilities(job)
+        )
         deadline = float(self._clock()) + JOB_DEADLINE_SECONDS
-        routes = self._routes(job)
-        child_budget = 0
-        lifecycle_child_budget = 0
-        policy_fingerprints: list[dict[str, Any]] = []
-        for route in routes:
-            resolved = self._bundles._plans.resolve_route_plan_for_feature(
-                ROUTE_PLANNING_AUTHORITY,
-                feature_principal=principal,
-                parent_kind=PARENT_KIND,
-                capability_id=route["capability_id"],
-                invocation_id=route["invocation_id"],
-                deadline_at=deadline,
-            )
-            policy = resolved["retry_policy"]
-            policy_fingerprints.append(
-                {
-                    "id": policy["id"],
-                    "revision": policy["revision"],
-                    "sha256": policy["sha256"],
-                    "total_physical_attempts": policy["total_physical_attempts"],
-                }
-            )
-            # One frozen route definition can legally serve many bookmark-label
-            # operations.  Pay the route's governed physical-attempt allowance
-            # once per immutable operation, not once per capability member.
-            instances = (
-                len(tuple(job.frozen_bookmark_operations or ()))
-                if route["capability_id"] == "meeting.bookmark_label"
-                else 1
-            )
-            allowance = int(policy["total_physical_attempts"])
-            child_budget += allowance * instances
-            # The bundle has one member per capability, so its normal declaration
-            # accounts for the first operation.  Carry each additional frozen
-            # bookmark operation as lifecycle budget; the bundle service includes
-            # it in its independently recomputed parent total.
-            lifecycle_child_budget += allowance * max(0, instances - 1)
+        snapshot = _input_snapshot(job)
+        child_budget = CHILDREN_PER_CALL * max(1, calls)
         parent = self._broker.parent_run_controller.start(
-            principal,
+            queue_service_principal(),
             kind=PARENT_KIND,
             definition_ref=f"meeting:{job.meeting_id}:deferred:{job_id}",
             definition_revision=str(job.work_descriptor_sha256 or ""),
-            input_snapshot={
-                "schema": "MeetingDeferredIntelQueueParent@1",
-                "job_id": job_id,
-                "meeting_id": str(job.meeting_id),
-                "work_descriptor_sha256": str(job.work_descriptor_sha256 or ""),
-                "transcript_hash": str(job.transcript_hash),
-                "displaced_work": list(job.displaced_work or ()),
-                "frozen_bookmark_timestamps": list(job.frozen_bookmark_timestamps or ()),
-                "frozen_bookmark_operations": [
-                    {"id": bookmark_id, "timestamp": timestamp}
-                    for bookmark_id, timestamp in tuple(job.frozen_bookmark_operations or ())
-                ],
-                "frozen_plugin_members": [dict(member) for member in tuple(job.frozen_plugin_members or ())],
-            },
+            input_snapshot=snapshot,
             deadline_at=deadline,
             child_budget=child_budget,
             idempotency_key=str(command_ids["parent_command_id"]),
             _defer_persist=True,
         )
         self._pending[job_id] = _PendingQueueParent(
-            parent=parent,
-            deadline_at=deadline,
-            routes=routes,
-            lifecycle_child_budget=lifecycle_child_budget,
-            admitted_child_budget=child_budget,
-            admitted_policy_fingerprints=tuple(policy_fingerprints),
+            parent=parent, deadline_at=deadline, child_budget=child_budget,
+            input_snapshot=snapshot, assignment=assignment,
+            selection=str(selection_hash(assignment, legs) or ""),
         )
+
+    def _refuse_drift(self, job: IntelJob, current: Mapping[str, Any]) -> None:
+        """The chain the run gesture disclosed (its hash and every leg) must be
+        the chain the door reads now; else the job is refused before any
+        model is contacted."""
+        expected = getattr(job, "planned_route", None)
+        if not isinstance(expected, Mapping):
+            return
+        if (
+            current.get("selection_hash") == expected.get("selection_hash")
+            and list(current.get("legs") or ()) == list(expected.get("legs") or ())
+        ):
+            return
+        try:
+            self._broker.database.intel.record_run_receipt(
+                str(job.meeting_id), str(job.job_id), expected.get("selection_hash"), "refused", None,
+            )
+        finally:
+            raise ConflictError(
+                "The disclosed route changed before queue claim.", code="selection_drift",
+            )
 
     def discard(self, job_id: str) -> None:
         """Terminalize an unbound pre-admitted shell after a lost claim race."""
@@ -253,83 +156,48 @@ class MeetingDeferredQueueBinder:
     def __call__(
         self, conn: Any, job: IntelJob, command_ids: Mapping[str, str]
     ) -> Mapping[str, str]:
+        """Write the parent-run row in the claim transaction. The claim keeps
+        ``bundle_id`` = the assignment id and ``bundle_sha256`` = the selection
+        hash of its chain (the column names stay; nothing is frozen)."""
+        del command_ids
         job_id = str(job.job_id or "")
         pending = self._pending.pop(job_id, None)
         if pending is None:
             raise ValueError("bound queue parent was not prepared")
-        expected_route = getattr(job, "planned_route", None)
+        controller = self._broker.parent_run_controller
         try:
-            started = self._bundles.start_in_transaction(
+            # The assignment may change between ``prepare`` and this claim.
+            from .meeting_route_projection import project_route
+
+            current = project_route(self._broker.database, invocation_id=f"meeting:{job.meeting_id}")
+            if current.get("selection_hash") != (pending.selection or None):
+                raise ConflictError(
+                    "The disclosed route changed before queue claim.", code="selection_drift",
+                )
+            self._refuse_drift(job, current)
+            row = controller._persist_parent(
                 conn,
-                queue_service_principal(),
-                command_id=str(command_ids["bundle_command_id"]),
-                parent_command_id=str(command_ids["parent_command_id"]),
-                parent_kind=PARENT_KIND,
+                operation_id=pending.parent.operation_id,
+                native_id=pending.parent.native_id,
+                kind=PARENT_KIND,
                 definition_ref=f"meeting:{job.meeting_id}:deferred:{job_id}",
                 definition_revision=str(job.work_descriptor_sha256 or ""),
-                input_snapshot={
-                    "schema": "MeetingDeferredIntelQueueParent@1",
-                    "job_id": job_id,
-                    "meeting_id": str(job.meeting_id),
-                    "work_descriptor_sha256": str(job.work_descriptor_sha256 or ""),
-                    "transcript_hash": str(job.transcript_hash),
-                    "displaced_work": list(job.displaced_work or ()),
-                    "frozen_plugin_members": [dict(member) for member in tuple(job.frozen_plugin_members or ())],
-                },
+                input_snapshot=pending.input_snapshot,
                 deadline_at=pending.deadline_at,
-                routes=pending.routes,
-                lifecycle_child_budget=pending.lifecycle_child_budget,
-                parent=pending.parent,
-                admitted_child_budget=pending.admitted_child_budget,
-                admitted_policy_fingerprints=pending.admitted_policy_fingerprints,
+                child_budget=pending.child_budget,
+                now=controller._clock(),
             )
-            bundle = started["bundle"]
-            if isinstance(expected_route, Mapping):
-                # ``prepare`` only checked a mutable preview.  Reconstruct the exact
-                # frozen plan that start_in_transaction committed and compare its full
-                # authority material, including assignment identity, entries, policy,
-                # and deployment revisions.  A same-policy assignment swap therefore
-                # cannot retarget this queued job between shell admission and claim.
-                from .meeting_route_projection import selection_hash_for_route_plan
-
-                analysis_member = next(
-                    (
-                        member for member in bundle["members"]
-                        if str(member["capability_id"]) == "meeting.deferred_analysis"
-                    ),
-                    None,
-                )
-                if analysis_member is None:
-                    raise ConflictError(
-                        "The frozen deferred route is missing.",
-                        code="selection_drift",
-                    )
-                row = conn.execute(
-                    "SELECT payload_json FROM inference_route_plans WHERE id=?",
-                    (str(analysis_member["route_plan_id"]),),
-                ).fetchone()
-                frozen = json.loads(str(row["payload_json"])) if row is not None else None
-                actual_hash, frozen_legs = (
-                    selection_hash_for_route_plan(conn, frozen)
-                    if isinstance(frozen, Mapping) else (None, [])
-                )
-                if (
-                    actual_hash != expected_route.get("selection_hash")
-                    or list(expected_route.get("legs") or ()) != frozen_legs
-                ):
-                    raise ConflictError(
-                        "The disclosed route changed before queue claim.",
-                        code="selection_drift",
-                    )
+            if row is None:
+                raise ValueError("bound queue parent row was not written")
         except Exception:
             # The repository rolls back its writer before calling discard(), which
             # then has the pending shell available for a durable refusal receipt.
             self._pending[job_id] = pending
             raise
         return {
-            "parent_operation_id": str(started["parent"].operation_id),
-            "bundle_id": str(bundle["id"]),
-            "bundle_sha256": str(bundle["sha256"]),
+            "parent_operation_id": str(pending.parent.operation_id),
+            "bundle_id": pending.assignment,
+            "bundle_sha256": pending.selection,
         }
 
 

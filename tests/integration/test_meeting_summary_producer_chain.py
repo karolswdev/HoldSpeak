@@ -137,18 +137,15 @@ def test_model_library_producer_revision_survives_summary_route_and_queue_freeze
     )
     claimed = db.intel.claim_next_intel_job_bound(MeetingDeferredQueueBinder(broker))
     assert claimed is not None
-    with db._connection() as conn:
-        row = conn.execute(
-            """SELECT e.profile_id,e.profile_revision,e.deployment_revision_id
-               FROM inference_parent_route_bundle_members m
-               JOIN inference_route_plan_entries e ON e.plan_id=m.route_plan_id
-              WHERE m.bundle_id=? AND m.capability_id='meeting.deferred_analysis'""",
-            (claimed.bundle_id,),
-        ).fetchone()
-    assert row is not None
-    assert row["profile_id"] == second["provider"]["profile_id"]
-    assert int(row["profile_revision"]) == second["provider"]["profile_revision"]
-    assert str(row["deployment_revision_id"]) == route["legs"][0]["deployment_revision_id"]
+    # The claim records the chain the door reads; its first engine is the
+    # second producer revision the disclosure named.
+    assert claimed.bundle_sha256 == route["selection_hash"]
+    from holdspeak.services import engine_door
+
+    engine = engine_door.engine_for(broker, "meeting.deferred_analysis")
+    assert engine.profile == second["provider"]["profile_id"]
+    assert route["legs"][0]["profile_revision"] == second["provider"]["profile_revision"]
+    assert engine.revision == route["legs"][0]["deployment_revision_id"]
 
 
 def test_real_producer_bad_output_is_failed_with_contact_receipt_and_no_summary(
@@ -382,7 +379,7 @@ def test_import_queues_the_disclosed_route_and_the_drainer_runs_the_frozen_produ
     assert db.intel.get_run_receipt(meeting_id) is None
     with db._connection() as conn:
         attempts = conn.execute(
-            "SELECT COUNT(*) AS n FROM inference_route_attempts"
+            "SELECT COUNT(*) AS n FROM kernel_operations WHERE name='inference.invoke'"
         ).fetchone()
     assert attempts["n"] == 0, dict(attempts)
     # …and the import ends now, with a final transcript.

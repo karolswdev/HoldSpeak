@@ -186,7 +186,9 @@ class MeetingSession(
         self._requested_remote_device_ids = tuple(str(value) for value in requested_remote_device_ids)
         # The immutable parent-route bundle is the Phase-B live authority.  The
         # legacy plan field remains only as a v1 reader for deferred/history code.
-        self._route_bundle: Optional[dict[str, Any]] = None
+        #: The engines the door named for this Meeting's jobs at admission.
+        self._live_engines: Optional[dict[str, Any]] = None
+        self._speech_evidence: Optional[dict[str, Any]] = None
         self._intel_plan: Optional[Any] = None
         self._intel_parent: Optional[Any] = None
         self._intel_refusal: str = ""
@@ -564,7 +566,7 @@ class MeetingSession(
                 })
             if self.transcriber is None and self._transcriber_factory is not None and not speech_missing:
                 try:
-                    if resolved_backend == "faster-whisper" and self._route_bundle is not None:
+                    if resolved_backend == "faster-whisper" and self._live_engines is not None:
                         created: dict[str, Transcriber] = {}
 
                         def construct(_cancellation: Any) -> str:

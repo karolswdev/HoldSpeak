@@ -133,6 +133,29 @@ def bound_analysis_dispatch() -> Callable[[Any, Mapping[str, Any], Any], Any]:
     return call
 
 
+def job_capabilities(job: Any) -> tuple[str, ...]:
+    """The model calls one queue job makes, from its immutable descriptor:
+    the analysis, a label for each frozen bookmark, the title, and each
+    frozen plugin. Raises ``ValueError`` for a plugin entry that is not exact."""
+    from .intel_plan import DISPLACED_AUTO_TITLE, DISPLACED_BOOKMARK_LABELS
+
+    capabilities = ["meeting.deferred_analysis"]
+    displaced = tuple(str(slug) for slug in tuple(getattr(job, "displaced_work", None) or ()))
+    if DISPLACED_BOOKMARK_LABELS in displaced and tuple(getattr(job, "frozen_bookmark_operations", None) or ()):
+        capabilities.append("meeting.bookmark_label")
+    if DISPLACED_AUTO_TITLE in displaced:
+        capabilities.append("meeting.auto_title")
+    for frozen in tuple(getattr(job, "frozen_plugin_members", None) or ()):
+        capability = str(frozen.get("capability_id") or "").strip()
+        plugin_id = str(frozen.get("plugin_id") or "").strip()
+        if capability != f"meeting.plugin.{plugin_id}" or not plugin_id:
+            raise ValueError("frozen plugin descriptor is not exact")
+        if capability in capabilities:
+            raise ValueError("duplicate frozen plugin capability")
+        capabilities.append(capability)
+    return tuple(capabilities)
+
+
 def queue_service_principal() -> Principal:
     """Return the narrow service identity for one bound queue owner."""
     return Principal(
@@ -144,13 +167,8 @@ def queue_service_principal() -> Principal:
 
 
 class BoundDeferredIntelJob:
-    """Exact stored-route executor for a C1b-bound queue claim.
-
-    Constructing it only reconstructs the persisted parent and bundle members.
-    It has no
-    Config, planner, host, or legacy-plan entrance, so restart cannot retarget a
-    claimed descriptor.
-    """
+    """The executor of one claimed queue job: its parent run and the calls
+    its descriptor names. Each call goes through the engine door."""
 
     def __init__(
         self,
@@ -176,13 +194,14 @@ class BoundDeferredIntelJob:
 
     @classmethod
     def reconstruct(cls, db: Any, job: Any, *, broker: Any = None) -> "BoundDeferredIntelJob":
-        """Rebuild a claimed job from its stored IDs only."""
+        """Rebuild a claimed job from its stored parent; its calls are the
+        capabilities its descriptor names (``job_capabilities``)."""
         from ..kernel.parent_run import ParentRun
         from ..kernel.runtime import _service
 
         if not all(
             str(getattr(job, field, "") or "").strip()
-            for field in ("job_id", "parent_operation_id", "bundle_id", "bundle_sha256")
+            for field in ("job_id", "parent_operation_id")
         ):
             raise MeetingIntelRefused(SESSION_NOT_ADMITTED, CAPABILITY_DEFERRED_ANALYSIS)
         broker = broker if broker is not None else _service()
@@ -194,17 +213,11 @@ class BoundDeferredIntelJob:
                     AND o.principal_kind='service' AND o.principal_identity=?""",
                 (str(job.parent_operation_id), PARENT_KIND, QUEUE_SERVICE_IDENTITY),
             ).fetchone()
-            bundle = conn.execute(
-                """SELECT * FROM inference_parent_route_bundles
-                   WHERE id=? AND parent_operation_id=? AND sha256=?""",
-                (str(job.bundle_id), str(job.parent_operation_id), str(job.bundle_sha256)),
-            ).fetchone()
-            members = conn.execute(
-                """SELECT * FROM inference_parent_route_bundle_members
-                   WHERE bundle_id=? ORDER BY ordinal""",
-                (str(job.bundle_id),),
-            ).fetchall()
-        if parent_row is None or bundle is None or not members:
+        try:
+            capabilities = job_capabilities(job)
+        except ValueError:
+            raise MeetingIntelRefused(SESSION_NOT_ADMITTED, CAPABILITY_DEFERRED_ANALYSIS) from None
+        if parent_row is None:
             raise MeetingIntelRefused(SESSION_NOT_ADMITTED, CAPABILITY_DEFERRED_ANALYSIS)
         parent = ParentRun(
             str(parent_row["operation_id"]),
@@ -216,7 +229,7 @@ class BoundDeferredIntelJob:
             broker,
             job=job,
             parent=parent,
-            members={str(row["capability_id"]): dict(row) for row in members},
+            members={capability: {"capability_id": capability} for capability in capabilities},
             deadline_at=float(parent_row["deadline_at"] or 0.0),
         )
 
@@ -340,9 +353,16 @@ class BoundDeferredIntelJob:
             if executor_held is not None and not executor_held():
                 raise KernelRefused("bound_executor_lease_lost")
 
-        run_id = "meetingdeferred_" + sha(
-            (str(self._job.job_id), capability, operation_suffix, uuid.uuid4().hex)
-        ).split(":", 1)[1][:40]
+        # One name per call of this job: a recovered job (the same parent)
+        # finds the answer an earlier run of the same call already published.
+        prefix = "meetingdeferred_" + sha(
+            (str(self._job.job_id), capability, operation_suffix)
+        ).split(":", 1)[1][:28]
+        reused = self._published_earlier(prefix, projection_kind)
+        if reused is not None:
+            published, self._last_receipt = reused
+            return published, {"outcome": "succeeded", "receipt": self._last_receipt, "result": None}
+        run_id = f"{prefix}_{uuid.uuid4().hex[:12]}"
         adapter = adapter_for(capability, BoundMeetingAdapter(capability, call).dispatch, registry=self._registry())
         try:
             answer = engine_door.run(
@@ -366,6 +386,50 @@ class BoundDeferredIntelJob:
         return (dict(published) if isinstance(published, Mapping) else None), {
             "outcome": "succeeded", "receipt": self._last_receipt, "result": answer.result,
         }
+
+    def _published_earlier(
+        self, prefix: str, projection_kind: str,
+    ) -> tuple[Mapping[str, Any], Mapping[str, Any]] | None:
+        """The projection an earlier run of this call under this job's parent
+        published (a crash after the call, before the queue moved on), and
+        that run's attempts as the receipt. ``None`` when there is none."""
+        import json
+
+        like = prefix.replace("_", "\\_") + "\\_%"
+        with self._broker.database._connection() as conn:
+            stage = conn.execute(
+                """SELECT s.final_result_json FROM kernel_projection_stages s
+                     JOIN kernel_operations o ON o.operation_id=s.operation_id
+                    WHERE o.parent_operation_id=? AND s.kind=? AND s.state='PUBLISHED'
+                      AND s.invocation_id LIKE ? ESCAPE '\\'
+                    ORDER BY s.updated_at DESC LIMIT 1""",
+                (self.parent_operation_id, projection_kind, like),
+            ).fetchone()
+            if stage is None or not str(stage["final_result_json"] or ""):
+                return None
+            rows = conn.execute(
+                """SELECT o.operation_id, o.native_id, r.state, a.material_json
+                     FROM kernel_operations o
+                     JOIN kernel_receipts r ON r.operation_id=o.operation_id
+                     LEFT JOIN kernel_inference_receipt_attestations a ON a.operation_id=o.operation_id
+                    WHERE o.parent_operation_id=? AND o.name='inference.invoke'
+                      AND o.native_id LIKE ? ESCAPE '\\'
+                    ORDER BY o.created_at""",
+                (self.parent_operation_id, like),
+            ).fetchall()
+        attempts = []
+        for row in rows:
+            try:
+                phase = str(json.loads(row["material_json"] or "{}").get("send_phase") or "")
+            except ValueError:
+                phase = ""
+            attempts.append({
+                "route_leg_ordinal": 2 if "_n2" in str(row["native_id"]) else 1,
+                "send_phase": phase, "outcome": str(row["state"]),
+                "child_operation_id": str(row["operation_id"]),
+            })
+        published = json.loads(str(stage["final_result_json"]))
+        return (dict(published) if isinstance(published, Mapping) else {}), {"attempts": attempts}
 
     def close(self, outcome: str, *, executor_lease: Mapping[str, Any] | None = None) -> bool:
         """Close the old owner before any reserved successor can be promoted.

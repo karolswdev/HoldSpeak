@@ -1,10 +1,10 @@
-"""The disclosed SERVICE route for deferred Meeting intelligence.
+"""The disclosed engine chain for deferred Meeting intelligence.
 
-This module is intentionally a read-only projection.  It asks the same route
-planner and feature principal that the queue binder uses, then removes planner
-identifiers and timestamps from the public selection hash.  Historical jobs
-retain their stored route; the Meeting next-run read resolves the current
-selection so a repaired assignment can be disclosed and run again.
+A read of the owner's live assignment for ``meeting.deferred_analysis``
+through the engine door (``engine_door.chain``): the engines the next run
+will use, in his order. Nothing is planned or frozen. The selection hash
+covers the assignment id and the legs, so a run gesture that carries it
+is refused when the owner changes the assignment in between.
 """
 from __future__ import annotations
 
@@ -13,8 +13,8 @@ import json
 from typing import Any, Mapping
 
 from ..intel.providers import endpoint_host
-from ..meeting_session.deferred_bound import PARENT_KIND, queue_service_principal
-from .inference_route_plan_service import ROUTE_PLANNING_AUTHORITY, InferenceRoutePlanService
+
+SUMMARY_JOB = "meeting.deferred_analysis"
 
 
 def _canonical(value: Any) -> str:
@@ -26,9 +26,12 @@ def _hash(value: Any) -> str:
 
 
 def _boundary(value: str) -> str:
-    return {"local": "local", "private_network": "lan", "mesh": "lan", "cloud": "cloud"}.get(
-        str(value), str(value)
-    )
+    """The public boundary word of a deployment boundary (the assignment
+    aliases, then local / lan / cloud)."""
+    from .inference_assignment_service import _BOUNDARY_ALIASES
+
+    plain = _BOUNDARY_ALIASES.get(str(value), str(value))
+    return {"local": "local", "private_network": "lan", "mesh": "lan", "cloud": "cloud"}.get(plain, plain)
 
 
 def _host_from_row(row: Any, boundary: str) -> str:
@@ -40,62 +43,64 @@ def _host_from_row(row: Any, boundary: str) -> str:
     host = endpoint_host(row["endpoint"])
     if host:
         return host
-    # A local deployment has no endpoint host by design.  This is the route's
-    # actual bound destination, not a mutable-config fallback.
-    return "this machine" if _boundary(str(row["boundary"] or boundary)) == "local" else _boundary(
-        str(row["boundary"] or boundary)
-    )
+    # A local deployment has no endpoint host by design: its raw boundary word
+    # (``same_device``) is the host the faces have always read.
+    raw = str(row["boundary"] or boundary)
+    plain = {"local": "local", "private_network": "lan", "mesh": "lan", "cloud": "cloud"}.get(raw, raw)
+    return "this machine" if plain == "local" else plain
 
 
-def _public_legs(conn: Any, route: Mapping[str, Any]) -> list[dict[str, Any]]:
+def chain_legs(db: Any, job: str = SUMMARY_JOB) -> tuple[str, list[dict[str, Any]]]:
+    """The owner's assignment for ``job`` (``<id>@<revision>``) and its engines as public
+    legs: ``{ordinal, host, boundary, profile_id, profile_revision,
+    deployment_revision_id}``. ``("", [])`` when nothing is assigned, the
+    assigned model cannot do the job, or an engine is not read."""
+    from . import engine_door
+    from .inference_assignment_service import InferenceAssignmentService
+
+    service = InferenceAssignmentService(db)
+    with db._connection() as conn:
+        status = service._resolve(conn, service._registry.require(job))["status"]
+    if status != "assigned":
+        # Nothing assigned, or the assigned model cannot do this job.
+        return "", []
+    assignment, engines = engine_door.chain(db, job)
     legs: list[dict[str, Any]] = []
-    for entry in route.get("entries", ()):
-        deployment_id = str(entry.get("deployment_revision_id") or "")
-        row = conn.execute(
-            "SELECT node,endpoint,boundary FROM deployment_revisions WHERE id=?",
-            (deployment_id,),
+    with db._connection() as conn:
+        head = conn.execute(
+            "SELECT MAX(revision) AS revision FROM inference_assignment_heads WHERE assignment_id=?",
+            (assignment,),
         ).fetchone()
-        host = _host_from_row(row, str(entry.get("boundary") or ""))
-        if not deployment_id or not host:
-            return []
-        legs.append(
-            {
-                "ordinal": int(entry["ordinal"]),
+        # The assignment's revision: a re-save of the same chain is a new selection.
+        assignment = f"{assignment}@{int((head['revision'] if head else 0) or 0)}" if assignment else ""
+        for ordinal, engine in enumerate(engines, 1):
+            row = conn.execute(
+                "SELECT node,endpoint,boundary FROM deployment_revisions WHERE id=?",
+                (engine.revision,),
+            ).fetchone()
+            profile = conn.execute(
+                "SELECT MAX(revision) AS revision FROM model_profile_revisions WHERE profile_id=?",
+                (engine.profile,),
+            ).fetchone()
+            host = _host_from_row(row, "")
+            if not host:
+                return "", []
+            legs.append({
+                "ordinal": ordinal,
                 "host": host,
-                "boundary": _boundary(str(entry["boundary"])),
-                "profile_id": str(entry["profile_id"]),
-                "profile_revision": int(entry["profile_revision"]),
-                "deployment_revision_id": deployment_id,
-            }
-        )
-    return legs
+                "boundary": _boundary(str(row["boundary"] or "")),
+                "profile_id": engine.profile,
+                "profile_revision": int((profile["revision"] if profile else 0) or 0),
+                "deployment_revision_id": engine.revision,
+            })
+    return assignment, legs
 
 
-def _selection_material(route: Mapping[str, Any], legs: list[dict[str, Any]]) -> dict[str, Any]:
-    return {
-        "schema": "MeetingDeferredSelection@1",
-        "capability": dict(route["capability"]),
-        "source": dict(route["source"]),
-        "entries": [dict(item) for item in route.get("entries", ())],
-        "retry_policy": dict(route["retry_policy"]),
-        "operation_policy_revision": str(route["operation_policy_revision"]),
-        "legs": legs,
-    }
-
-
-def selection_hash_for_route_plan(db_or_connection: Any, route: Mapping[str, Any]) -> tuple[str | None, list[dict[str, Any]]]:
-    """Hash one resolved or frozen plan using the exact public selection material.
-
-    The queue binder calls this with its claim transaction after freezing the
-    route.  That closes the prepare-to-claim race against an assignment change;
-    it never reuses a mutable preview hash as proof of the bound plan.
-    """
-    if hasattr(db_or_connection, "execute"):
-        legs = _public_legs(db_or_connection, route)
-        return (_hash(_selection_material(route, legs)) if legs else None), legs
-    with db_or_connection._connection() as conn:
-        legs = _public_legs(conn, route)
-    return (_hash(_selection_material(route, legs)) if legs else None), legs
+def selection_hash(assignment: str, legs: list[dict[str, Any]]) -> str | None:
+    """The hash a run gesture carries: the assignment and its legs."""
+    if not assignment or not legs:
+        return None
+    return _hash({"schema": "MeetingDeferredSelection@2", "assignment": assignment, "legs": legs})
 
 
 #: The route reason when the owner turned summaries OFF (PHILO-15 01 ruling).
@@ -124,32 +129,23 @@ def unavailable(reason: str = "no assignment") -> dict[str, Any]:
 
 
 def project_route(db: Any, *, invocation_id: str | None = "preview") -> dict[str, Any]:
-    """Resolve the Meeting SERVICE route into the settled public shape."""
+    """The summary's engine chain in the settled public shape
+    ``{status, reason_code, selection_hash, legs}``. ``invocation_id`` is
+    kept for callers; the chain does not depend on it."""
+    del invocation_id
+    if summaries_off(db):
+        # PHILO-15 01: the owner turned summaries OFF; not "no engine".
+        return unavailable("summaries_off")
     try:
-        route = InferenceRoutePlanService(db).resolve_route_plan_for_feature(
-            ROUTE_PLANNING_AUTHORITY,
-            feature_principal=queue_service_principal(),
-            parent_kind=PARENT_KIND,
-            capability_id="meeting.deferred_analysis",
-            invocation_id=invocation_id,
-        )
+        assignment, legs = chain_legs(db)
     except Exception as exc:
-        if (getattr(exc, "context", None) or {}).get("off"):
-            # PHILO-15 01: the owner turned summaries OFF; not "no engine".
-            return unavailable("summaries_off")
-        reason = getattr(exc, "code", None) or str(exc) or "route unavailable"
-        return unavailable(reason)
-
-    _selection_hash, legs = selection_hash_for_route_plan(db, route)
+        return unavailable(getattr(exc, "code", None) or str(exc) or "route unavailable")
     if not legs:
-        return unavailable("route unavailable")
-    # The generated route-plan ID and its timestamps are absent. Preserve the
-    # full authority material that chooses the route, including policy identity
-    # and hashes even when two policies use the same numeric revision.
+        return unavailable("no assignment")
     return {
         "status": "ready",
         "reason_code": None,
-        "selection_hash": _selection_hash,
+        "selection_hash": selection_hash(assignment, legs),
         "legs": legs,
     }
 
@@ -217,7 +213,7 @@ def require_expected_selection(route: Mapping[str, Any], expected: Any) -> None:
 
 __all__ = [
     "project_route", "summary_route_display", "route_from_job", "require_expected_selection",
-    "selection_hash_for_route_plan", "unavailable", "SUMMARIES_OFF_REASON",
+    "chain_legs", "selection_hash", "unavailable", "SUMMARIES_OFF_REASON",
     "route_is_off", "summaries_off",
 ]
 
