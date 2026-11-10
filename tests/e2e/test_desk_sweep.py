@@ -1630,8 +1630,10 @@ class _Case:
                 return out || clipped ? [`${name}: ${out ? 'outside frame' : 'clipped label'}`] : [];
               });
             }""", self.wid))
+        # Tabs may scroll in their seat; LIST_GRAMMAR_JS still requires the
+        # selected tab to be whole and every tab to remain on one row.
         faults = _rendered_text_faults(page, scope, on_glass=True,
-                                       horizontal_scroll=(".needs-chip-row",))
+                                       horizontal_scroll=(".needs-chip-row", "[role=tablist]"))
         if not faults["scopes"]:
             fail("readable", f"no visible {scope}: nothing was read")
         fail("readable", ([f"clipped '{c['text']}' in {c['in']}" for c in faults["clipped"]]
