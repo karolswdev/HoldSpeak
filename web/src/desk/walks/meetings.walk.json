@@ -39,9 +39,9 @@
     },
     {
       "highlight": {
-        "target": "meeting-read-summary",
-        "thing": "summary door",
-        "words": "Read summary opens the full text. Back returns to the ledger.",
+        "target": "meeting-read-transcript",
+        "thing": "transcript door",
+        "words": "Read transcript opens the full text. Back returns to the ledger.",
         "window": "pullout:meeting"
       },
       "ask": {
