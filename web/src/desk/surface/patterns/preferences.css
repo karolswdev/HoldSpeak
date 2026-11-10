@@ -404,5 +404,8 @@
   /* An explicit standard value seat remains beside its label, including a compound field. */
   .desk-next .surface-preference-window .gadget-row[data-control-width="standard"]:has(.gadget-string) { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
 }
-/* Commands and paths keep their tokens intact in their own horizontal well. */
-.surface-preference-window .surface-command-code { white-space: pre; overflow-wrap: normal; overflow-x: auto; min-width: 0; max-width: 100%; }
+/* Commands retain one line; the complete value remains in their title and Copy action. */
+.surface-preference-window .surface-command-code { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; max-width: 100%; }
+
+/* Compound controls take their value seat's width before wrapping their verbs. */
+.desk-next .surface-preference-window .gadget-row-gadget > * { min-width: 0; max-width: 100%; }

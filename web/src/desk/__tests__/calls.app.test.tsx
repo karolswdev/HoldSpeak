@@ -315,7 +315,7 @@ describe("Settings ▸ Calls", () => {
     expect(screen.queryByRole("grid", {name:"Set up calls"})).toBeNull();
     expect(screen.getByRole("checkbox", {name:"Calls on"})).toBeInTheDocument();
     expect(screen.getByLabelText("Passphrase")).toBeInTheDocument();
-    for (const command of [INSTALL_COMMAND, RUN_COMMAND, TELNYX_COMMAND, TWILIO_COMMAND]) expect(screen.getByText(command).tagName).toBe("CODE");
+    for (const command of [INSTALL_COMMAND, RUN_COMMAND, TELNYX_COMMAND, TWILIO_COMMAND]) expect(screen.getByText(command)).toHaveAttribute("title", command);
   });
   it("writes the passphrase as write only and clears the acknowledged value", async () => {
     hub({

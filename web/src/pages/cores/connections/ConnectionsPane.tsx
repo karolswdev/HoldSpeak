@@ -192,7 +192,7 @@ export function CommandWell({ hint }: { hint: string }) {
   return (
     <SurfaceWell>
       <div className="surface-pane-actions">
-        <code className="surface-command-code">{hint}</code>
+        <code className="surface-command-code" title={hint}>{hint}</code>
         <Button
           dense
           variant="secondary"
