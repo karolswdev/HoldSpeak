@@ -210,6 +210,15 @@ class ThreadService:
     # Class-level aggregator for the /decide route (HS-152-02).
     _tool_executor: _ToolExecutorAggregator = _ToolExecutorAggregator()
 
+    @classmethod
+    def tool_handle(cls, call_id: str) -> Any:
+        """The active tool call, or None after its turn releases it.
+
+        Calls uses this port to read the held tool's words and decision state.
+        The owning service keeps the executor and its handle storage private.
+        """
+        return cls._tool_executor._handles.get(call_id)
+
     def __init__(
         self,
         db: Database,

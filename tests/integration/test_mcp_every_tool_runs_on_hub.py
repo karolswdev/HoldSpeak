@@ -139,6 +139,15 @@ def _refusal_is_known(name: str, payload: Any) -> bool:
         return True
     if isinstance(code, str) and KNOWN_CODE.search(code):
         return True
+    # A declared domain refusal is part of the operation's contract. Do not
+    # keep another list of per-family codes here. Authority failures still
+    # fail this owner sweep; the launch-only helper exception is above.
+    from holdspeak.operations import DESCRIPTORS, _CONTRACT_REFUSALS
+
+    descriptor = next((row for row in DESCRIPTORS if row.tool_schema is not None and row.tool_name == name), None)
+    if (isinstance(code, str) and descriptor is not None and code in descriptor.refusals
+            and code not in (*_CONTRACT_REFUSALS, "owner_required", "principal_right_required")):
+        return True
     if not isinstance(message, str):
         return False
     return bool(KNOWN_MESSAGE.search(message)) or KNOWN_BY_TOOL.get(name) == message
@@ -154,6 +163,7 @@ class _Hub:
             os.environ, HOME=str(home), HF_HUB_OFFLINE="1",
             HOLDSPEAK_PEOPLE_KEYSTORE_FILE=str(home / "people.key"),
             HOLDSPEAK_CHANNEL_KEYSTORE_FILE=str(home / "channel-keys.json"),
+            HOLDSPEAK_LINE="off", HOLDSPEAK_CALLS="off",
         )
         env.pop("HOLDSPEAK_ALLOW_REAL_HOME", None)
         self.proc = subprocess.Popen(
@@ -262,6 +272,18 @@ def test_every_mcp_tool_runs_on_the_real_hub(tmp_path: Path) -> None:
     assert names == {tool["name"] for tool in TOOLS}
     report = "\n".join(f"  {name}: {why}" for name, why in sorted(broken.items()))
     assert not broken, f"{len(broken)} MCP tool(s) cannot run on the hub:\n{report}"
+
+
+def test_declared_refusals_are_known_but_auth_failures_and_unknown_codes_are_not() -> None:
+    from holdspeak.operations import DESCRIPTORS
+
+    for row in DESCRIPTORS:
+        if row.tool_schema is None:
+            continue
+        assert not _refusal_is_known(row.tool_name, {"code": "unexpected_provider_crash", "error": "boom"})
+        if row.owner_only:
+            assert not _refusal_is_known(row.tool_name, {"code": "owner_required", "error": "owner required"})
+    assert _refusal_is_known("calls.line.telnyx.connect", {"code": "off", "error": "line_off"})
 
 
 @pytest.mark.timeout(900)
