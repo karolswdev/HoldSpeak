@@ -2575,9 +2575,11 @@ _GUIDE_FENCES_JS = r"""root => {
   if(!note || !ring) return ['guide note or ring missing'];
   const box=el=>el.getBoundingClientRect(), W=box(w), N=box(note), R=box(ring), faults=[];
   const inside=(a,b)=>a.left>=b.left-1&&a.top>=b.top-1&&a.right<=b.right+1&&a.bottom<=b.bottom+1;
+  if(N.left<0||N.top<0||N.right>innerWidth+1||N.bottom>innerHeight+1)faults.push('note outside screen '+JSON.stringify({N:N.toJSON(),W:W.toJSON()}));
+  if(w.querySelector('.guide-pointer')||getComputedStyle(note,'::before').content!=='none')faults.push('pointer or tail');
   if(!inside(N,W))faults.push('note outside window '+JSON.stringify({N:N.toJSON(),W:W.toJSON()}));
   if(!inside(R,W))faults.push('ring outside window');
-  if(N.left<R.right&&N.right>R.left&&N.top<R.bottom&&N.bottom>R.top)faults.push('note covers ring '+JSON.stringify({N:N.toJSON(),R:R.toJSON()}));
+  if(N.left<R.right&&N.right>R.left&&N.top<R.bottom&&N.bottom>R.top)faults.push('note covers ring '+JSON.stringify({N:N.toJSON(),R:R.toJSON(),W:W.toJSON()}));
   for(const el of [note,...note.querySelectorAll('*')]) {
     const style=getComputedStyle(el);
     if(style.position==='fixed')faults.push('fixed guide part');
@@ -2618,7 +2620,7 @@ def test_each_app_guide_stays_in_its_window(desk: dict[str, Any], pw_browser: An
     clear_hub_windows_http(base,TOKEN)
     if name != "ask": _hub_open(base,wid,scope,window=width==900)
     ctx,page,errors,requests=_page(pw_browser,width,base)
-    shots=REPO/'.tmp/evidence-shots/showme2'
+    shots=REPO/'.tmp/evidence-shots/showme3'
     shots.mkdir(parents=True,exist_ok=True)
     page.add_init_script("localStorage.setItem('hs:walk-voice','off')")
     if name == "recordings":
@@ -2653,12 +2655,20 @@ def test_each_app_guide_stays_in_its_window(desk: dict[str, Any], pw_browser: An
         page.wait_for_function(SETTLED_JS,arg=wid,timeout=T)
         if width == 900:
             box=page.locator(f'[id="{wid}"]').bounding_box()
-            assert box and abs(box['width']-900)<=1 and abs(box['height']-600)<=1,(name,box)
+            assert box and abs(box['width']-900)<=1 and abs(box['height']-600)<=1 and box['x']>=0 and box['x']+box['width']<=1440,(name,box)
+        if name=='ask' and width==1440:
+            box=page.locator('[id="ask"]').bounding_box()
+            assert box and box['x']+box['width']<=1440 and box['x']>=0, page.locator('[id="ask"]').evaluate('e=>({box:e.getBoundingClientRect().toJSON(),style:e.getAttribute("style"),parent:e.parentElement.getBoundingClientRect().toJSON()})')
         before=_guide_view(page,wid)
+        original_min=page.locator(f'[id="{wid}"]').evaluate('e=>e.style.minHeight')
+        seen_writes=[]
+        page.on('request',lambda req:seen_writes.append(req.url) if req.method=='POST' and req.url.endswith('/seen') else None)
         page.get_by_role('button',name='Help',exact=True).click()
         if width!=1440:page.screenshot(path=str(shots/f'{name}-{width}-0.png'))
         page.get_by_role('menuitem',name=re.compile(r'^Show me '+re.escape(script['title']))).click()
         seen=[]
+        seats=[]
+        facts=[]
         for _ in script['steps']:
             note=page.get_by_test_id('guide-note')
             note.wait_for(timeout=T)
@@ -2669,6 +2679,29 @@ def test_each_app_guide_stays_in_its_window(desk: dict[str, Any], pw_browser: An
             seen.append(text)
             count=note.get_by_test_id('walk-count').inner_text().split(' of ')[0]
             assert not page.evaluate(_GUIDE_FENCES_JS,wid), (name,width,text,page.evaluate(_GUIDE_FENCES_JS,wid))
+            current=note.bounding_box()
+            assert current
+            seats.append((note.get_attribute('data-side'),current))
+            if seats[0][0]=='bottom' and seats[-1][0]=='bottom':
+                assert all(abs(current[key]-seats[0][1][key])<=1 for key in ('x','y','width','height')),(name,width,seats)
+            assert not page.locator('[data-testid="guide-pointer"]').count()
+            if name in ('meetings','room') and width==393:
+                title=page.locator(f'[id="{wid}"] .desk-wings-menu')
+                assert title.inner_text().strip(),(name,title.inner_html())
+                colors=title.evaluate('e => ({ink:getComputedStyle(e).color,paper:getComputedStyle(e).backgroundColor})')
+                assert colors['ink']!=colors['paper'],colors
+            facts.append(page.evaluate("""args => {
+              const w=document.getElementById(args.wid);
+              let target=w.querySelector(/^[a-z][a-z0-9-]*$/i.test(args.target)?`[data-testid="${args.target}"]`:args.target);
+              if(!target || !target.getBoundingClientRect().width) {
+                const label=args.target.match(/aria-label="([^\"]+)"/)?.[1];
+                target=[...w.querySelectorAll('[role^="menuitem"]')].find(el=>el.querySelector('.desk-menu-label')?.textContent===label);
+              }
+              return {words:args.words, selector:args.target, role:target?.getAttribute('role')||target?.tagName.toLowerCase(),
+                name:target?.getAttribute('aria-label')||target?.innerText, part:target?.getBoundingClientRect().toJSON(),
+                window:w.getBoundingClientRect().toJSON(), note:w.querySelector('[data-testid="guide-note"]').getBoundingClientRect().toJSON(),
+                seat:w.querySelector('[data-testid="guide-note"]').dataset.side};
+            }""",{'wid':wid,'target':script['steps'][int(count)-1]['highlight']['target'],'words':text}))
             if width!=1440:page.screenshot(path=str(shots/f'{name}-{width}-{count}.png'))
             if len(seen)==1 and width in (900,393):
                 note.get_by_role('button',name='Say what is off').click()
@@ -2682,12 +2715,15 @@ def test_each_app_guide_stays_in_its_window(desk: dict[str, Any], pw_browser: An
             next_step.click()
             if done:break
         else:raise AssertionError(f'{name}: guide did not reach Done')
+        (shots/f'{name}-{width}-facts.json').write_text(json.dumps(facts,indent=2))
         assert len(seen)==len(script["steps"]),(name,width,"a seeded step was skipped",seen)
         page.get_by_test_id('guide-note').wait_for(state='detached',timeout=T)
         try:
             page.wait_for_function('(args)=>JSON.stringify(('+_GUIDE_VIEW_JS+')(document.getElementById(args.wid)))===JSON.stringify(args.before)',arg={'wid':wid,'before':before},timeout=T)
         except Exception as failure:
             raise AssertionError({'before':before,'after':_guide_view(page,wid)}) from failure
+        assert not seen_writes,seen_writes
+        assert page.locator(f'[id="{wid}"]').evaluate('e=>e.style.minHeight')==original_min
         assert not any('/api/walks' in url or '/api/w/' in url for url in requests),requests
         assert not any('pageerror:' in error for error in errors),errors
     finally:ctx.close()

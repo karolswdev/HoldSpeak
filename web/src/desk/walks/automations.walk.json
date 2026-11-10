@@ -17,7 +17,7 @@
     {
       "highlight": {
         "target": "[data-testid=\"automation-toolbar\"] button[aria-label=\"Run now\"]",
-        "words": "Run now starts the selected automation. Show me does not press it."
+        "words": "Run now starts the selected automation."
       }
     },
     {

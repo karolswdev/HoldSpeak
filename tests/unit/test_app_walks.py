@@ -76,11 +76,12 @@ def test_every_declared_walk_keeps_its_parts_and_questions_valid() -> None:
         assert validate_script({"title": script["title"], "steps": [{"ask": review}]})["steps"][0]["ask"] == review
         for step in steps:
             words = step["highlight"]["words"]
+            assert "Show me does not" not in words, (name, words)
             assert 0 < len(words) <= 100 and len(re.findall(r"[.!?](?:\s|$)", words)) <= 2, (name, words)
             if "press" in step:
                 target = step["press"]["target"]
-                assert re.search(r"\.object-list-row(?:\[[^]]+\])*$|\.surface-rail-row(?:\[[^]]+\])*$|\.surface-segmented-tabs \[role=\"tab\"]\[data-tab=\"[^\"]+\"]$", target), (name, target)
-                assert not re.search(r"(?:button|input|select|textarea|menuitem|contenteditable)", target), (name, target)
+                assert re.search(r"\.object-list-row(?:\[[^]]+\])*$|\.surface-rail-row(?:\[[^]]+\])*$|\.surface-segmented-tabs \[role=\"tab\"]\[data-tab=\"[^\"]+\"]$|\.object-list-toolbar-strip > button\[aria-haspopup=\"menu\"]$|\.surface-strip-menu\[aria-haspopup=\"menu\"]$", target), (name, target)
+                assert not re.search(r"(?:input|select|textarea|menuitem|contenteditable)", target), (name, target)
         # An in-place tour can select another pane of the same app.
         assert all(step["open"]["app"] == script["open"]["app"] for step in steps if "open" in step), name
         # The app it opens in a linked walk exists on the desk.

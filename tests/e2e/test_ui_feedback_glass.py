@@ -69,7 +69,7 @@ def _start_feedback(page: Any, width: int, target: Any, *, again: bool = False) 
     assert box, "the selected rendered control has no hit box"
     page.mouse.click(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
     page.locator("[data-ui-feedback]").get_by_role("button", name="Record", exact=True).click()
-    page.locator("[data-ui-feedback]").get_by_text("Recording", exact=True).wait_for(timeout=T)
+    page.locator("[data-ui-feedback]").get_by_role("meter", name="Audio level").wait_for(timeout=T)
     # Let Chromium's fake track deliver real frames before the hold is ended.
     page.wait_for_timeout(500)
 
@@ -443,7 +443,7 @@ def test_window_feedback_button_records_its_window_without_picking(feedback_page
     button.click()
     strip = page.locator("[data-ui-feedback]")
     strip.get_by_role("button",name="Record",exact=True).click()
-    strip.get_by_text("Recording", exact=True).wait_for(timeout=T)
+    strip.get_by_role("meter", name="Audio level").wait_for(timeout=T)
     assert strip.get_by_text("Select a part", exact=True).count() == 0
     page.wait_for_timeout(500)
     report = _save_feedback(page, width, shot_stem="feedback-direct", window_id=window_id, draft=draft)
@@ -546,7 +546,7 @@ def test_reference_artifact_feedback_png(artifact_reference_page: Any) -> None:
     feedback_button.wait_for(timeout=T)
     feedback_button.click()
     page.locator("[data-ui-feedback]").get_by_role("button",name="Record",exact=True).click()
-    page.locator("[data-ui-feedback]").get_by_text("Recording", exact=True).wait_for(timeout=T)
+    page.locator("[data-ui-feedback]").get_by_role("meter", name="Audio level").wait_for(timeout=T)
     page.wait_for_timeout(500)
     report = _save_feedback(
         page,
@@ -564,7 +564,7 @@ def test_capture_note_states_with_typed_words(feedback_page: Any) -> None:
     from playwright.sync_api import expect
     from .test_desk_sweep import _GUIDE_FENCES_JS
     page,width,window=feedback_page
-    shots=Path(__file__).resolve().parents[2]/'.tmp/evidence-shots/showme2'
+    shots=Path(__file__).resolve().parents[2]/'.tmp/evidence-shots/showme3'
     shots.mkdir(parents=True,exist_ok=True)
     if width==1440:
         _api(page,'POST','/api/desk/windows/surface-components/set_geometry',{'rect':{'x':'-1/2 + 100','y':'-1/2 + 80','w':'900px','h':'600px'}},token=TOKEN)
@@ -581,7 +581,10 @@ def test_capture_note_states_with_typed_words(feedback_page: Any) -> None:
         page.screenshot(path=str(shots/f'feedback-{state}-{seat}.png'))
     shot('idle')
     capture.get_by_role('button',name='Record',exact=True).click()
-    capture.get_by_text('Recording',exact=True).wait_for(timeout=T)
+    capture.get_by_role('meter',name='Audio level').wait_for(timeout=T)
+    expect(capture.get_by_role('status')).to_contain_text('Recording · 0:')
+    page.wait_for_function("() => Number(document.querySelector('[data-ui-feedback] [role=meter]')?.getAttribute('aria-valuenow')) > 0", timeout=T)
+    page.wait_for_function("() => /Recording · 0:0[1-9]/.test(document.querySelector('[data-ui-feedback] [role=status]')?.textContent||'')", timeout=T)
     shot('recording')
     capture.get_by_role('button',name='Stop',exact=True).click()
     capture.get_by_role('button',name='Cancel',exact=True).click()
@@ -633,7 +636,13 @@ def test_guide_feedback_keeps_the_seen_note_in_one_bundle(feedback_page: Any) ->
     window.get_by_test_id('decisions-row').wait_for(timeout=T)
     _start_app_walk(page)
     note=page.get_by_test_id('guide-note')
-    expect(note.get_by_test_id('walk-count')).to_have_text('1 of 3')
+    step=1
+    if width==393:
+        note.get_by_test_id('walk-next').click()
+        step=2
+    expect(note.get_by_test_id('walk-count')).to_have_text(f'{step} of 3')
+    writes=[]
+    page.on('request',lambda req:writes.append(req.url) if req.method=='POST' else None)
     caption=note.get_by_test_id('walk-caption').inner_text()
     win_box=window.bounding_box();note_box=note.bounding_box();ring_box=page.get_by_test_id('guide-ring').bounding_box()
     assert win_box and note_box and ring_box
@@ -645,15 +654,19 @@ def test_guide_feedback_keeps_the_seen_note_in_one_bundle(feedback_page: Any) ->
         note.get_by_role('button',name='Save',exact=True).click()
     saved=response.value.json();directory=Path(saved['directory'])
     expect(note.get_by_test_id('walk-count')).to_have_text('Saved.')
+    shots=Path(__file__).resolve().parents[2]/'.tmp/evidence-shots/showme3'
+    shots.mkdir(parents=True,exist_ok=True)
+    page.screenshot(path=str(shots/f'feedback-guide-saved-{900 if width==1440 else width}.png'))
     expect(note.get_by_test_id('walk-caption')).to_have_text(caption)
+    assert writes and all(url.endswith('/api/ui-feedback') for url in writes),writes
     report=json.loads((directory/'report.json').read_text())
-    assert report['context']['guide']=={'app':'Decisions','step':1,'of':3,'target':json.loads((Path(__file__).resolve().parents[2]/'web/src/desk/walks/decisions.walk.json').read_text())['steps'][0]['highlight']['target'],'words':caption}
+    assert report['context']['guide']=={'app':'Decisions','step':step,'of':3,'target':json.loads((Path(__file__).resolve().parents[2]/'web/src/desk/walks/decisions.walk.json').read_text())['steps'][step-1]['highlight']['target'],'words':caption}
     assert caption in report['context']['owner']['window_text']
     assert report['words']=='The action needs more space.'
     assert not (directory/'audio.wav').exists()
     regions={name:{'x':box['x']-win_box['x'],'y':box['y']-win_box['y'],'width':box['width'],'height':box['height']} for name,box in [('note',note_box),('ring',ring_box)]}
     facts=_browser_png_region_facts(page,directory/'window.png',regions,(round(win_box['width']),round(win_box['height'])))
     assert all(value['colors']>4 and value['changed']>20 for value in facts.values()),facts
-    shots=Path(__file__).resolve().parents[2]/'.tmp/evidence-shots/showme2'
+    shots=Path(__file__).resolve().parents[2]/'.tmp/evidence-shots/showme3'
     shutil.copy2(directory/'window.png',shots/f'feedback-guide-window-{900 if width==1440 else width}.png')
     _finish_app_walk(page)

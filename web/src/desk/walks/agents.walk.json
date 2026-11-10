@@ -6,7 +6,7 @@
   "steps": [
     {
       "highlight": {
-        "target": "agents-mast",
+        "target": "[data-testid=\"agents-rail\"] .surface-rail-row",
         "words": "Choose an agent to read what it needs and what it did."
       },
       "press": {
@@ -17,7 +17,7 @@
     {
       "highlight": {
         "target": "agents-plate",
-        "words": "The selected agent’s next action is here. Show me does not press it."
+        "words": "The selected agent’s next action is here."
       }
     },
     {

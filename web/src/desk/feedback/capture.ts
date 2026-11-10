@@ -500,6 +500,17 @@ function frozenClone(root: Element, signal?: AbortSignal, options: FreezeOptions
   clone.style.margin = "0";
   clone.style.boxSizing = rootStyle.boxSizing;
   wrapper.appendChild(clone);
+  if (root.matches('[data-layer="window"]') && root.id) {
+    for (const menu of document.querySelectorAll<HTMLElement>(`[role="menu"][data-menu-owner="${CSS.escape(root.id)}"]`)) {
+      if (root.contains(menu)) continue;
+      const frozen = frozenClone(menu, signal).clone;
+      const box = menu.getBoundingClientRect();
+      frozen.style.position = "absolute";
+      frozen.style.left = `${box.left - root.getBoundingClientRect().left}px`;
+      frozen.style.top = `${box.top - root.getBoundingClientRect().top}px`;
+      clone.appendChild(frozen);
+    }
+  }
   return { wrapper, clone };
 }
 

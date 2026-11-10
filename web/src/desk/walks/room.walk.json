@@ -7,14 +7,14 @@
   "steps": [
     {
       "highlight": {
-        "target": "room-mast",
-        "words": "This window keeps the project’s work and recent changes together."
+        "target": "[data-testid=\"room-mast\"] .surface-mast-facts",
+        "words": "Read the project’s state and what needs you here."
       }
     },
     {
       "highlight": {
         "target": "[data-testid=\"room-ask-well\"], [data-testid=\"room-head-ask\"]",
-        "words": "Ask uses this project as context. Show me does not send a question."
+        "words": "Ask uses this project as context."
       }
     },
     {

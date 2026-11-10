@@ -6,14 +6,18 @@
   "steps": [
     {
       "highlight": {
-        "target": "today-day",
+        "target": "[data-testid=\"today-rail\"] .surface-rail-row[data-rail-id=\"day\"]",
         "words": "Choose the day to see its meetings and open work."
+      },
+      "press": {
+        "target": "[data-testid=\"today-rail\"] .surface-rail-row[data-rail-id=\"day\"]",
+        "words": ""
       }
     },
     {
       "highlight": {
         "target": "today-needs-all",
-        "words": "Needs you opens the items that need an answer. Show me does not press it."
+        "words": "Needs you opens the items that need an answer."
       }
     },
     {

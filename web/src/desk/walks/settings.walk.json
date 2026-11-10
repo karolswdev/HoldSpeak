@@ -8,12 +8,6 @@
       "highlight": {
         "target": "[data-testid=\"settings-rail\"] .surface-rail-row[data-rail-id=\"engines\"]",
         "words": "Choose a part of Settings in this list."
-      }
-    },
-    {
-      "highlight": {
-        "target": "[data-testid=\"settings-engines\"] [role=\"tab\"][data-tab=\"jobs\"]",
-        "words": "Engines lists each job and the engines it uses."
       },
       "press": {
         "target": "[data-testid=\"settings-rail\"] .surface-rail-row[data-rail-id=\"engines\"]",
@@ -22,12 +16,18 @@
     },
     {
       "highlight": {
-        "target": "[data-testid=\"settings-jobs\"] select",
-        "words": "Choose engines in the job row’s pop-up. Show me does not change it."
+        "target": "[data-testid=\"settings-jobs\"] .object-list[aria-label=\"Jobs\"]",
+        "words": "Engines lists each job and the engines it uses."
       },
       "press": {
         "target": "[data-testid=\"settings-engines\"] .surface-segmented-tabs [role=\"tab\"][data-tab=\"jobs\"]",
         "words": ""
+      }
+    },
+    {
+      "highlight": {
+        "target": "[data-testid=\"settings-jobs\"] select",
+        "words": "Choose engines in the job row’s pop-up."
       }
     }
   ],

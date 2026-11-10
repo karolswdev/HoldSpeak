@@ -13,12 +13,12 @@
     {
       "highlight": {
         "target": "[data-testid=\"needs-first\"] button",
-        "words": "Choose the action for that item. Show me does not press it."
+        "words": "Choose the action for that item."
       }
     },
     {
       "highlight": {
-        "target": "needs-toolbar",
+        "target": "needs-scope",
         "words": "Use Mine or People to choose whose open work you see."
       }
     }

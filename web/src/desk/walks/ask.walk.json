@@ -13,7 +13,7 @@
     {
       "highlight": {
         "target": "[data-testid=\"ask-toolbar\"] button[aria-label=\"Ask\"]",
-        "words": "Ask sends your question to the selected engine. Show me does not press it."
+        "words": "Ask sends your question to the selected engine."
       }
     },
     {

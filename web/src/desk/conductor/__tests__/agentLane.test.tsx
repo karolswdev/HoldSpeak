@@ -18,6 +18,8 @@ vi.mock("../../../lib/api", async (importOriginal) => ({
 vi.mock("../../components/MicButton", () => ({ MicButton: () => <span data-testid="mic" /> }));
 
 import { AgentPane, reportSections } from "../AgentPane";
+import { useLaneOf } from "../AgentLane";
+import { WindowIdContext } from "../../components/window/windowIdContext";
 import { __resetLane, useLane } from "../../lane/laneStore";
 import type { LaneWire } from "../../lane/laneWire";
 import { useAgentFlights } from "../../agentFlights";
@@ -150,6 +152,18 @@ beforeEach(() => {
   useAgentFlights.setState({ flights: [], sessions: [], loaded: true });
 });
 afterEach(() => __resetLane());
+
+describe("a guide borrows an unread agent", () => {
+  it.each([true, false])("guide=%s: only the owner's selection marks the report seen", async (guided) => {
+    serve(fixture());
+    function Probe() { useLaneOf("launch_f2_runbook"); return null; }
+    render(<div id="guide-agent" {...(guided ? { "data-guide-running": "" } : {})}>
+      <WindowIdContext.Provider value="guide-agent"><Probe /></WindowIdContext.Provider>
+    </div>);
+    await waitFor(() => expect(useLane.getState().lane).not.toBeNull());
+    expect(api.fetch.mock.calls.some(([url]) => String(url).endsWith("/seen"))).toBe(!guided);
+  });
+});
 
 describe("the held call is the plate (Allow / Deny on the ask row)", () => {
   it("a launched agent whose lane holds a call shows it on the ask row with Allow and Deny", async () => {

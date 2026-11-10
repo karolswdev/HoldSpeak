@@ -6,20 +6,20 @@
   "steps": [
     {
       "highlight": {
-        "target": "live-ready-mic",
+        "target": "live-ready-mic-state",
         "words": "Check the microphone before you start a meeting."
       }
     },
     {
       "highlight": {
         "target": "[data-testid=\"live-ready-mic\"] button",
-        "words": "Start begins the meeting recording. Show me does not press it."
+        "words": "Start begins the meeting recording."
       }
     },
     {
       "highlight": {
         "target": "live-settings",
-        "words": "Settings opens meeting options. Stop keeps what was said after you start."
+        "words": "Settings opens the meeting options."
       }
     }
   ],

@@ -17,7 +17,7 @@
     {
       "highlight": {
         "target": "[data-testid=\"projects-toolbar\"] button[aria-label=\"Open Room\"]",
-        "words": "Open Room opens the selected project and its work. Show me does not press it."
+        "words": "Open Room opens the selected project and its work."
       }
     },
     {

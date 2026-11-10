@@ -6,7 +6,7 @@
   "steps": [
     {
       "highlight": {
-        "target": "programs-mast",
+        "target": "[data-testid=\"programs-rail\"] .surface-rail-row",
         "words": "Choose a program to read its goal and current step."
       },
       "press": {
@@ -17,7 +17,7 @@
     {
       "highlight": {
         "target": "program-amend",
-        "words": "Amend opens the selected program’s text. Show me does not press it."
+        "words": "Amend opens the selected program’s text."
       }
     },
     {

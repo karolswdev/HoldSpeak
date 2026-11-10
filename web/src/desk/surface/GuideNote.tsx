@@ -1,6 +1,6 @@
 /** A guide belongs to its window. Its ring and note share an unclipped layer. */
 import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
-import { createPortal } from "react-dom";
+import { createPortal, flushSync } from "react-dom";
 import { Button } from "../../components/signal/Signal";
 import "./GuideNote.css";
 
@@ -13,55 +13,21 @@ export interface GuideBox {
 const GAP = 12;
 const EDGE = 8;
 
-/** Pick a free side, keeping both the note and its target inside the window. */
+/** One trailing seat, bounded by the visible window content. */
 export function guideSeat(
   window: GuideBox,
   part: GuideBox | null,
   note: { width: number; height: number },
   floor: number,
+  visible = { left: 0, top: 36, width: window.width, height: floor - 36 },
 ) {
-  const width = Math.min(note.width, window.width - EDGE * 2);
-  const clampX = (x: number) =>
-    Math.max(EDGE, Math.min(x, window.width - width - EDGE));
-  const clampY = (y: number) =>
-    Math.max(36, Math.min(y, floor - note.height - EDGE));
-  if (window.width <= 480 || !part)
-    return {
-      left: clampX(window.width - width - EDGE),
-      top: clampY(floor - note.height - EDGE),
-      side: "dock",
-    };
-  const sides = [
-    {
-      left: clampX(part.left + part.width - width),
-      top: part.top + part.height + GAP,
-      side: "below",
-    },
-    {
-      left: clampX(part.left + part.width - width),
-      top: part.top - note.height - GAP,
-      side: "above",
-    },
-    {
-      left: part.left + part.width + GAP,
-      top: clampY(part.top),
-      side: "right",
-    },
-    { left: part.left - width - GAP, top: clampY(part.top), side: "left" },
-  ];
-  return (
-    sides.find(
-      (s) =>
-        s.left >= EDGE &&
-        s.top >= 36 &&
-        s.left + width <= window.width - EDGE &&
-        s.top + note.height <= floor - EDGE,
-    ) ?? {
-      left: clampX(window.width - width - EDGE),
-      top: clampY(floor - note.height - EDGE),
-      side: "dock",
-    }
-  );
+  const width = Math.min(note.width, visible.width - EDGE * 2);
+  const left = visible.left + visible.width - width - EDGE;
+  const bottom = Math.min(floor, visible.top + visible.height);
+  const top = Math.max(visible.top + EDGE, bottom - note.height - EDGE);
+  const intersects = part && part.left < left + width && part.left + part.width > left
+    && part.top < top + note.height && part.top + part.height > top;
+  return { left, top: intersects ? visible.top + EDGE : top, side: intersects ? "top" : "bottom", width };
 }
 
 export interface GuideNoteProps {
@@ -99,11 +65,13 @@ export function GuideNote({
   const [geometry, setGeometry] = useState<{
     ring: GuideBox | null;
     seat: ReturnType<typeof guideSeat>;
-    tail: number;
-  }>({ ring: null, seat: { left: 8, top: 36, side: "dock" }, tail: 20 });
+  }>({ ring: null, seat: { left: 8, top: 36, side: "bottom", width: 360 } });
   useLayoutEffect(() => {
     let alive = true;
+    const originalMinimum = owner.style.minHeight;
+    if (owner.hasAttribute("data-guide-running")) owner.style.minHeight = `${Math.min(600, Math.max(220, innerHeight-owner.getBoundingClientRect().top-48))}px`;
     let queued = 0;
+    let borrowed: {style: string | null; scroll: number} | null = null;
     const place = () => {
       if (!alive || !note.current) return;
       const win = owner.getBoundingClientRect();
@@ -119,83 +87,55 @@ export function GuideNote({
         ...owner.querySelectorAll<HTMLElement>(".kit-statusbar"),
       ].filter((el) => el.getBoundingClientRect().height > 0);
       const floor = Math.min(
-        box.height,
+        box.height - 48, // Keep one seat even when the status line gains a second row.
         ...bars.map((el) => (el.getBoundingClientRect().top - win.top) / scale),
       );
-      const part = target?.isConnected ? target.getBoundingClientRect() : null;
-      let ring = part
-        ? {
-            left: (part.left - win.left) / scale,
-            top: (part.top - win.top) / scale,
-            width: part.width / scale,
-            height: part.height / scale,
-          }
-        : null;
-      const size = {
-        width: note.current.offsetWidth,
-        height: note.current.offsetHeight,
+      const head = owner.querySelector<HTMLElement>(":scope > .desk-pullout-head")?.getBoundingClientRect();
+      const visible = {
+        left: Math.max(0, -win.left / scale),
+        top: Math.max(head ? (head.bottom - win.top) / scale : 36, -win.top / scale),
+        width: Math.min(box.width, (innerWidth - win.left) / scale) - Math.max(0, -win.left / scale),
+        height: 0,
       };
-      let seat = guideSeat(box, ring, size, floor);
-      // A docked note reserves the bottom of the window. Scroll the well,
-      // never the page, until the selected part is above that reservation.
-      if (
-        target &&
-        ring &&
-        seat.side === "dock" &&
-        ring.top + ring.height > seat.top - GAP
-      ) {
-        for (
-          let el = target.parentElement;
-          el && el !== owner;
-          el = el.parentElement
-        ) {
-          if (
-            /auto|scroll/.test(getComputedStyle(el).overflowY) &&
-            el.scrollHeight > el.clientHeight
-          ) {
-            el.scrollTop += ring.top + ring.height - seat.top + GAP;
+      visible.height = Math.min(floor, (innerHeight - win.top) / scale) - visible.top;
+      const size = { width: box.width <= 480 ? visible.width - EDGE * 2 : 360, height: note.current.offsetHeight };
+      const measurePart = () => {
+        const part = target?.isConnected ? target.getBoundingClientRect() : null;
+        return part ? {left: (part.left-win.left)/scale, top: (part.top-win.top)/scale, width: part.width/scale, height: part.height/scale} : null;
+      };
+      let ring = measurePart();
+      // A tall list owns a smaller scroll well while help uses the foot.
+      // Its style and original scroll position are returned on this step's cleanup.
+      const bottomSeat = guideSeat(box, null, size, floor, visible);
+      if (target && ring && target.matches('.object-list,[role="grid"],.surface-rail')
+        && ring.top < visible.top + size.height + EDGE && ring.top + ring.height > bottomSeat.top) {
+        if (!borrowed) borrowed = { style: target.getAttribute("style"), scroll: target.scrollTop };
+        target.style.maxHeight = `${Math.max(88, bottomSeat.top - ring.top - GAP)}px`;
+        target.style.minHeight = "0";
+        target.style.overflowY = "auto";
+        ring = measurePart();
+      }
+      let seat = guideSeat(box, ring, size, floor, visible);
+      // On a phone, scroll only the target's well before using the top seat.
+      if (target && ring && box.width <= 480 && seat.side === "top") {
+        for (let el = target.parentElement; el && el !== owner; el = el.parentElement) {
+          if (/auto|scroll/.test(getComputedStyle(el).overflowY) && el.scrollHeight > el.clientHeight) {
+            el.scrollTop += Math.max(0, ring.top + ring.height - bottomSeat.top + GAP);
             break;
           }
         }
-        const moved = target.getBoundingClientRect();
-        ring = {
-          left: (moved.left - win.left) / scale,
-          top: (moved.top - win.top) / scale,
-          width: moved.width / scale,
-          height: moved.height / scale,
-        };
+        ring = measurePart();
+        seat = guideSeat(box, ring, size, floor, visible);
       }
       if (ring) {
-        // Ring is on this layer, not a child of the well. Keep its four
-        // edges inside the window even for an edge-to-edge toolbar.
-        const left = Math.max(4, ring.left - 3),
-          top = Math.max(34, ring.top - 3);
-        ring = {
-          left,
-          top,
-          width: Math.max(
-            0,
-            Math.min(box.width - 4, ring.left + ring.width + 3) - left,
-          ),
-          height: Math.max(
-            0,
-            Math.min(floor - 4, ring.top + ring.height + 3) - top,
-          ),
-        };
+        const left = Math.max(visible.left + 4, ring.left - 3), top = Math.max(visible.top, ring.top - 3);
+        ring = {left, top,
+          width: Math.max(0, Math.min(visible.left+visible.width-4, ring.left+ring.width+3)-left),
+          height: Math.max(0, Math.min(floor-4, ring.top+ring.height+3)-top)};
+        // Include the ring's edge, not only the part's content, in the overlap law.
+        seat = guideSeat(box, ring, size, floor, visible);
       }
-      const horizontal = seat.side === "left" || seat.side === "right";
-      const tail = ring
-        ? Math.max(
-            16,
-            Math.min(
-              (horizontal ? size.height : size.width) - 16,
-              horizontal
-                ? ring.top + Math.min(ring.height / 2, 120) - seat.top
-                : ring.left + Math.min(ring.width / 2, 120) - seat.left,
-            ),
-          )
-        : 20;
-      const value = { ring, seat, tail };
+      const value = { ring, seat };
       setGeometry((old) =>
         JSON.stringify(old) === JSON.stringify(value) ? old : value,
       );
@@ -206,16 +146,25 @@ export function GuideNote({
     };
     place();
     const observer =
-      typeof ResizeObserver === "function" ? new ResizeObserver(queue) : null;
+      typeof ResizeObserver === "function" ? new ResizeObserver(() => flushSync(place)) : null;
     observer?.observe(owner);
     if (note.current) observer?.observe(note.current);
     if (target) observer?.observe(target);
+    const mutation = typeof MutationObserver === "function" ? new MutationObserver(() => flushSync(place)) : null;
+    if (note.current) mutation?.observe(note.current, {childList: true, subtree: true, characterData: true});
     owner.addEventListener("scroll", queue, true);
     window.addEventListener("resize", queue);
     return () => {
       alive = false;
+      owner.style.minHeight = originalMinimum;
       cancelAnimationFrame(queued);
       observer?.disconnect();
+      mutation?.disconnect();
+      if (target && borrowed) {
+        if (borrowed.style === null) target.removeAttribute("style");
+        else target.setAttribute("style", borrowed.style);
+        target.scrollTop = borrowed.scroll;
+      }
       owner.removeEventListener("scroll", queue, true);
       window.removeEventListener("resize", queue);
     };
@@ -223,7 +172,7 @@ export function GuideNote({
   useLayoutEffect(() => {
     if (focusNext && !busy) next.current?.focus({ preventScroll: true });
   }, [target, words, focusNext, busy]);
-  const { ring, seat, tail } = geometry;
+  const { ring, seat } = geometry;
   return createPortal(
     <div className="guide-layer" data-guide-layer data-testid="guide-layer">
       {ring && ring.width > 0 && ring.height > 0 ? (
@@ -234,16 +183,6 @@ export function GuideNote({
             style={ring}
             aria-hidden="true"
           />
-          <span
-            className="guide-pointer"
-            style={{
-              left: ring.left + Math.min(ring.width / 2, 120),
-              top: ring.top + ring.height / 2,
-            }}
-            aria-hidden="true"
-          >
-            ↖
-          </span>
         </>
       ) : null}
       <aside
@@ -251,13 +190,7 @@ export function GuideNote({
         className="guide-note"
         data-testid="guide-note"
         data-side={seat.side}
-        style={
-          {
-            left: seat.left,
-            top: seat.top,
-            "--guide-tail": `${tail}px`,
-          } as React.CSSProperties
-        }
+        style={{ left: seat.left, top: seat.top, width: seat.width }}
         aria-label="Guide"
       >
         {words ? (
@@ -303,6 +236,7 @@ export function GuideNote({
                 disabled={busy}
                 onClick={onNext}
                 data-testid="walk-next"
+                className="guide-next"
               >
                 {last ? "Done" : "Next"}
               </Button>

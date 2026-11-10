@@ -17,7 +17,7 @@
     {
       "highlight": {
         "target": "[data-testid=\"people-toolbar\"] button[aria-label=\"Prep 1:1\"]",
-        "words": "Prep 1:1 opens the selected person and their meeting notes. Show me does not press it."
+        "words": "Prep 1:1 opens the selected person and their meeting notes."
       }
     },
     {

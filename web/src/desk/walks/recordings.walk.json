@@ -17,7 +17,7 @@
     {
       "highlight": {
         "target": "[data-testid=\"recordings-toolbar\"] button[aria-label=\"Open note\"]",
-        "words": "Open note opens the selected recording’s note. Show me does not press it."
+        "words": "Open note opens the selected recording’s note."
       }
     },
     {

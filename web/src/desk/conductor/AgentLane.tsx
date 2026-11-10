@@ -1,3 +1,5 @@
+import { guideOwnsView } from "../walk/viewState";
+import { useWindowId } from "../components/window/windowIdContext";
 /* The launched agent in the Agents pane (2026-11-08, "one face per agent"):
  * the lane window folded into the pane. The pane binds the one lane store
  * (lane/laneStore.ts) to the picked launch; these are the parts only the
@@ -31,11 +33,12 @@ const NO_EVENTS: LaneEvent[] = [];
 /** Bind the lane store to the picked launch while the pane shows it: one
  *  read now, one on each coder frame; the done turn is seen (AG0). */
 export function useLaneOf(launchId: string | null | undefined, seen = true) {
+  const windowId = useWindowId();
   // Opening the agent sees its done turn (AG0); the agent Agents picks by
   // itself (nothing pressed) is not opened yet.
   useEffect(() => {
-    if (launchId && seen) void markLaunchSeen(launchId, null);
-  }, [launchId, seen]);
+    if (launchId && seen && !guideOwnsView(windowId)) void markLaunchSeen(launchId, null);
+  }, [launchId, seen, windowId]);
   useEffect(() => {
     if (!launchId) return;
     // Steering bound to another launch's session (its terminal) lets go:

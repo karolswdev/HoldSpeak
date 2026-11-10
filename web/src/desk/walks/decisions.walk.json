@@ -17,7 +17,7 @@
     {
       "highlight": {
         "target": "[data-testid=\"decisions-toolbar\"] button[aria-label=\"Decide\"]",
-        "words": "Decide records your answer for the selected row. Show me does not press it."
+        "words": "Decide records your answer for the selected row."
       }
     },
     {

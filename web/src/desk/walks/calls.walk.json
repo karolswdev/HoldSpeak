@@ -6,7 +6,7 @@
   "steps": [
     {
       "highlight": {
-        "target": "calls-mast",
+        "target": "[data-testid=\"calls-list\"] .surface-rail-row",
         "words": "Choose a call to read who was on it and what happened."
       },
       "press": {
@@ -17,7 +17,7 @@
     {
       "highlight": {
         "target": "calls-plate",
-        "words": "Read the selected call’s result here. Show me does not press its actions."
+        "words": "Read the selected call’s result here."
       }
     },
     {

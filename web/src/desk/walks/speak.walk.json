@@ -13,7 +13,7 @@
     {
       "highlight": {
         "target": "[data-testid=\"speak-plate\"] button",
-        "words": "Hold Talk to speak, then release to use your words. Show me does not press it."
+        "words": "Hold Talk to speak, then release to use your words."
       }
     },
     {

@@ -12,16 +12,10 @@
   border: 2px solid var(--hs-brass);
   border-radius: var(--radius-sm);
 }
-.guide-pointer {
-  position: absolute;
-  color: var(--hs-brass);
-  font-size: var(--font-size-lg);
-  text-shadow: 0 1px var(--wb-paper);
-}
 .guide-note {
   position: absolute;
   box-sizing: border-box;
-  width: min(380px, calc(100% - 16px));
+  width: min(360px, calc(100% - 16px));
   padding: var(--space-3);
   background: var(--wb-paper);
   color: var(--wb-ink);
@@ -30,38 +24,9 @@
   box-shadow: var(--wb-drop);
   pointer-events: auto;
 }
-.guide-note::before {
-  content: "";
-  position: absolute;
-  left: var(--guide-tail);
-  top: -5px;
-  width: 8px;
-  height: 8px;
-  background: var(--wb-paper);
-  box-shadow: -1px -1px 0 var(--wb-rule);
-  transform: rotate(45deg);
-}
-.guide-note[data-side="above"]::before {
-  top: auto;
-  bottom: -5px;
-  transform: rotate(225deg);
-}
-.guide-note[data-side="left"]::before {
-  left: auto;
-  right: -5px;
-  top: var(--guide-tail);
-  transform: rotate(135deg);
-}
-.guide-note[data-side="right"]::before {
-  left: -5px;
-  top: var(--guide-tail);
-  transform: rotate(315deg);
-}
-.guide-note[data-side="dock"]::before {
-  display: none;
-}
 .guide-words {
   margin: 0 0 var(--space-3);
+  min-height: 4.2em;
   white-space: normal;
   overflow: visible;
   overflow-wrap: normal;
@@ -113,3 +78,7 @@
   overflow: auto;
   white-space: pre-wrap;
 }
+
+.guide-capture-recording { display: flex; align-items: center; gap: var(--space-3); }
+
+.guide-next { min-width: 52px; }

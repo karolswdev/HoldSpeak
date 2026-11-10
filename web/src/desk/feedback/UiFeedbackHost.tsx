@@ -1,9 +1,10 @@
 /** One owner feedback bundle: selected part, window image, words and/or audio. */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { subscribeCaptureLevel } from "../../lib/micSession";
 import { apiFetch, readableError } from "../../lib/api";
 import { Button } from "../../components/signal/Signal";
-import { GuideNote, PadGadget } from "../surface";
+import { GuideNote, PadGadget, LedMeter, DotWord } from "../surface";
 import { openSurfaceOr } from "../shell";
 import { TALK_STOP_EVENT } from "../components/MicButton";
 import {
@@ -57,6 +58,8 @@ export function UiFeedbackHost() {
     target: HTMLElement | null;
   } | null>(null);
   const [words, setWords] = useState("");
+  const [level, setLevel] = useState(0);
+  const [elapsed, setElapsed] = useState(0);
   const [error, setError] = useState("");
   const [saved, setSaved] = useState<Saved | null>(null);
   const [request, setRequest] = useState<FeedbackRequest | undefined>();
@@ -131,7 +134,9 @@ export function UiFeedbackHost() {
       document.addEventListener("click", consume, true);
       document.addEventListener("pointercancel", consume, true);
     }
+    const menuOwner = target.closest<HTMLElement>('[data-menu-owner]')?.dataset.menuOwner;
     const owner =
+      (menuOwner ? document.getElementById(menuOwner) : null) ??
       target.closest<HTMLElement>('[data-layer="window"]') ??
       document.getElementById("desk-next") ??
       document.body;
@@ -235,6 +240,14 @@ export function UiFeedbackHost() {
       gestureCleanup.current?.();
     };
   }, []);
+  useEffect(() => {
+    if (phase !== "recording") { setLevel(0); return; }
+    const start = Date.now();
+    setElapsed(0);
+    const tick = setInterval(() => setElapsed(Math.floor((Date.now() - start) / 1000)), 250);
+    const off = subscribeCaptureLevel(setLevel);
+    return () => {clearInterval(tick); off();};
+  }, [phase]);
   const record = async () => {
     const run = generation.current;
     setError("");
@@ -378,12 +391,15 @@ export function UiFeedbackHost() {
       ) : null}
       {state ? (
         <span role="status" className="guide-capture-state">
-          {state}
+          {phase === "recording" ? <span className="guide-capture-recording">
+            <DotWord tone="info">Recording · {Math.floor(elapsed / 60)}:{String(elapsed % 60).padStart(2, "0")}</DotWord>
+            <LedMeter label="Audio level" segments={12} value={level} />
+          </span> : state}
         </span>
       ) : null}
       {error ? (
         <span role="alert" className="guide-capture-state">
-          {error}
+          <DotWord tone="fail">{error}</DotWord>
         </span>
       ) : null}
       {saved?.transcript ? (

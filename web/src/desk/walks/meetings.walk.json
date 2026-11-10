@@ -16,7 +16,7 @@
     },
     {
       "highlight": {
-        "target": "[data-testid=\"meeting-list-preview\"] [data-tab=\"summary\"]",
+        "target": "[data-testid=\"meeting-list-preview\"] [data-testid=\"meeting-summary\"]",
         "words": "Read the summary and decisions below the list."
       },
       "press": {
@@ -27,7 +27,7 @@
     {
       "highlight": {
         "target": "[data-testid=\"meetings-toolbar\"] button[aria-label=\"Send to…\"]",
-        "words": "Send to… opens a preview for a destination. Show me does not press it."
+        "words": "Send to… opens a preview for a destination."
       }
     },
     {

@@ -41,3 +41,8 @@ export function borrowGuideView(windowId: string): () => void {
     .map((checkpoint) => checkpoint.take());
   return () => restore.forEach((giveBack) => giveBack());
 }
+
+/** Reading a borrowed selection is not an owner's seen/acknowledge press. */
+export function guideOwnsView(windowId: string | null | undefined): boolean {
+  return Boolean(windowId && document.getElementById(windowId)?.hasAttribute("data-guide-running"));
+}

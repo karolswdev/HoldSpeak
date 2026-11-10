@@ -15,6 +15,7 @@ import transcribeFailed from "./fixtures/transcribe-failed.json";
 
 const mocks = vi.hoisted(() => ({
   apiFetch: vi.fn(),
+  level: {current: null as ((value:number)=>void) | null},
   captureWindowPng: vi.fn(),
   startFeedbackAudio: vi.fn(),
   canonicalWindowRow: vi.fn(),
@@ -58,6 +59,7 @@ vi.mock("../../lib/micSession", async () => {
   );
   return {
     ...actual,
+    subscribeCaptureLevel: (listener: (value:number)=>void) => { mocks.level.current=listener; return () => {mocks.level.current=null;}; },
     abortHold: mocks.abortHold,
     beginHold: mocks.beginHold,
     endHold: mocks.endHold,
@@ -238,7 +240,7 @@ describe("Window feedback capture", () => {
     await startPicker();
     await selectAction(action);
     fireEvent.click(screen.getByRole("button", { name: "Record" }));
-    await screen.findByText("Recording");
+    await screen.findByRole("meter", {name: "Audio level"});
     fireEvent.click(screen.getByRole("button", { name: "Stop" }));
     expect(recording.stop).toHaveBeenCalledOnce();
     expect(
@@ -267,6 +269,7 @@ describe("Window feedback capture", () => {
       .mockResolvedValueOnce({ ...saveSuccess, transcript_status: "complete" });
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
     await screen.findByText("Hub unavailable");
+    expect(screen.getByRole("alert").querySelector('[data-tone="fail"]')).not.toBeNull();
     expect(screen.getByRole("textbox", { name: "Feedback words" })).toHaveValue(
       "Keep this draft",
     );
@@ -363,7 +366,7 @@ it("keeps a saved recording after a transcript failure and retries only the tran
   await startPicker();
   await selectAction(action);
   fireEvent.click(screen.getByRole("button", { name: "Record" }));
-  await screen.findByText("Recording");
+  await screen.findByRole("meter", {name: "Audio level"});
   fireEvent.click(screen.getByRole("button", { name: "Stop" }));
   mocks.apiFetch
     .mockResolvedValueOnce(saveSuccess)
@@ -386,4 +389,19 @@ it("keeps a saved recording after a transcript failure and retries only the tran
     ),
   ).toHaveLength(2);
   expect(mocks.captureWindowPng).toHaveBeenCalledOnce();
+});
+
+it("recording shows elapsed time and the shared microphone's live level", async () => {
+  const {action}=deskFace();
+  await startPicker();
+  await selectAction(action);
+  vi.useFakeTimers();
+  try {
+    await act(async () => {fireEvent.click(screen.getByRole("button", {name:"Record"}));});
+    act(() => {mocks.level.current?.(0.65);vi.advanceTimersByTime(2100);});
+    expect(screen.getByRole("meter", {name:"Audio level"})).toHaveAttribute("aria-valuenow","0.65");
+    expect(screen.getByRole("status")).toHaveTextContent("Recording · 0:02");
+    fireEvent.click(screen.getByRole("button", {name:"Stop"}));
+    expect(mocks.level.current).toBeNull();
+  } finally { vi.useRealTimers(); }
 });

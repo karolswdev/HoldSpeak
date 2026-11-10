@@ -314,3 +314,41 @@ it("speaks local help through the one speech seam without a server voice", async
   ));
   expect(mocks.api).not.toHaveBeenCalled();
 });
+
+it.each(["Stop", "Escape", "Done"])("discloses folded verbs without pressing an item, and closes on %s", async (end) => {
+  const { WorkMenu } = await import("../../components/DeskMenu");
+  const write = vi.fn();
+  function FoldedFace() {
+    const [open, setOpen] = useState(false);
+    const [anchor, setAnchor] = useState<HTMLButtonElement | null>(null);
+    return <WindowIdContext.Provider value="surface-decisions">
+      <div id="surface-decisions" data-layer="window">
+        <div data-testid="folded-toolbar" className="object-list-toolbar">
+          <span className="object-list-toolbar-strip"><button ref={setAnchor} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)}>Actions</button></span>
+          {open ? <WorkMenu label="Decision actions" x={0} y={50} opener={anchor} onClose={() => setOpen(false)} entries={[
+            {type:"item", id:"decide", label:"Decide", onSelect:write},
+            {type:"item", id:"new", label:"New decision", onSelect:write},
+          ]} /> : null}
+        </div>
+      </div><WalkRunner />
+    </WindowIdContext.Provider>;
+  }
+  render(<FoldedFace />);
+  start([
+    {highlight:{target:'[data-testid="folded-toolbar"] button[aria-label="Decide"]', words:"Decide records the answer."}},
+    {highlight:{target:'[data-testid="folded-toolbar"] button[aria-label="New decision"]', words:"New decision opens a form."}},
+  ]);
+  const item=await screen.findByRole("menuitem", {name:"Decide"});
+  expect(item.closest('[data-layer="window"]')).toHaveAttribute("id","surface-decisions");
+  expect(canGuidePress(item)).toBe(false);
+  expect(canGuidePress(screen.getByRole("button",{name:"Actions"}))).toBe(true);
+  await screen.findByTestId("guide-note");
+  await waitFor(() => expect(screen.getByTestId("walk-next")).not.toBeDisabled());
+  fireEvent.click(screen.getByTestId("walk-next"));
+  await screen.findByText("New decision opens a form.");
+  await waitFor(() => expect(screen.getByTestId("walk-next")).not.toBeDisabled());
+  if(end==="Escape")fireEvent.keyDown(document,{key:"Escape"});
+  else fireEvent.click(screen.getByRole("button",{name:end}));
+  expect(screen.queryByRole("menu")).toBeNull();
+  expect(write).not.toHaveBeenCalled();
+});

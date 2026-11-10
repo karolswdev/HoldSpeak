@@ -36,27 +36,14 @@ export function canGuidePress(target: HTMLElement): boolean {
       '.object-list--selection > .object-list-rows > .object-list-row[role="row"][data-object-id]',
     ) ||
     target.matches('.surface-rail-row[role="option"][data-rail-id]') ||
-    target.matches('.surface-segmented-tabs [role="tab"][data-tab]')
+    target.matches('.surface-segmented-tabs [role="tab"][data-tab]') ||
+    target.matches('.object-list-toolbar-strip > button[aria-haspopup="menu"],.surface-strip-menu[aria-haspopup="menu"]')
   );
 }
 
-/** Find a part in one window. If a verb folded at phone width, point to
- * its Actions menu instead; the guide never opens or presses that menu. */
-export function guideTarget(
-  root: HTMLElement,
-  target: string,
-): HTMLElement | null {
-  const all = [...root.querySelectorAll<HTMLElement>(selectorFor(target))];
-  const drawn = all.find(isDrawn);
-  if (drawn) return drawn;
-  const toolbar = target.match(/^\[data-testid="([^"]+)"\] /)?.[1];
-  return toolbar
-    ? ([
-        ...root.querySelectorAll<HTMLElement>(
-          `[data-testid="${toolbar}"] button[aria-haspopup="menu"]`,
-        ),
-      ].find(isDrawn) ?? null)
-    : null;
+/** A folded verb has the same label in the one declared menu. */
+export function guideTarget(root: HTMLElement, target: string): HTMLElement | null {
+  return [...root.querySelectorAll<HTMLElement>(selectorFor(target))].find(isDrawn) ?? null;
 }
 
 export function WalkRunner() {
@@ -90,6 +77,14 @@ function WalkSession({ local, token }: { local?: LocalWalk; token?: string }) {
   const empty = useRef(false);
   const restore = useRef<(() => void) | null>(null);
   const generation = useRef(0);
+  const activeOwner = useRef<HTMLElement | null>(null);
+  const guideMenu = useRef<HTMLElement | null>(null);
+  const lastSelection = useRef<HTMLElement | null>(null);
+  const closeGuideMenu = () => {
+    const disclosure = guideMenu.current;
+    guideMenu.current = null;
+    if (disclosure?.isConnected && disclosure.getAttribute("aria-expanded") === "true" && canGuidePress(disclosure)) disclosure.click();
+  };
   const [voice, setVoice] = useState(guideVoice);
   useEffect(() => subscribeGuideVoice(() => setVoice(guideVoice())), []);
   useEffect(() => {
@@ -112,6 +107,8 @@ function WalkSession({ local, token }: { local?: LocalWalk; token?: string }) {
   }, [local, token]);
   const finish = useCallback(() => {
     generation.current++;
+    closeGuideMenu();
+    activeOwner.current?.removeAttribute("data-guide-running");
     stopVoice();
     restore.current?.();
     restore.current = null;
@@ -121,6 +118,8 @@ function WalkSession({ local, token }: { local?: LocalWalk; token?: string }) {
   useEffect(
     () => () => {
       generation.current++;
+      closeGuideMenu();
+      activeOwner.current?.removeAttribute("data-guide-running");
       stopVoice();
       restore.current?.();
       restore.current = null;
@@ -154,6 +153,7 @@ function WalkSession({ local, token }: { local?: LocalWalk; token?: string }) {
   }, [closed, feedback, busy, part, finish]);
   const step = page?.steps[index];
   const advance = useCallback(() => {
+    closeGuideMenu();
     setReady(false);
     setSaved(false);
     setWords("");
@@ -197,6 +197,11 @@ function WalkSession({ local, token }: { local?: LocalWalk; token?: string }) {
       if (!owner) {
         advance();
         return;
+      }
+      if (activeOwner.current !== owner) {
+        activeOwner.current?.removeAttribute("data-guide-running");
+        activeOwner.current = owner;
+        owner.setAttribute("data-guide-running", "");
       }
       if (local && !restore.current) {
         const giveBack = borrowGuideView(owner.id);
@@ -260,6 +265,7 @@ function WalkSession({ local, token }: { local?: LocalWalk; token?: string }) {
           return;
         }
         selected.click();
+        if (selected.matches('.surface-rail-row,.object-list-row')) lastSelection.current = selected;
         await new Promise((resolve) =>
           requestAnimationFrame(() => requestAnimationFrame(resolve)),
         );
@@ -280,6 +286,26 @@ function WalkSession({ local, token }: { local?: LocalWalk; token?: string }) {
         );
         target = targetName ? guideTarget(owner, targetName) : null;
       }
+      if (!target && hiddenTarget && !hiddenTarget.closest(".surface-rail")) {
+        const row = lastSelection.current ?? owner.querySelector<HTMLElement>('.surface-rail-row[aria-selected="true"]');
+        if (row && isDrawn(row) && canGuidePress(row)) {
+          row.click();
+          await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+          target = targetName ? guideTarget(owner, targetName) : null;
+        }
+      }
+      const folded = targetName?.match(/^\[data-testid="([^"]+)"\] button\[aria-label="([^"]+)"\]$/);
+      if (!target && folded) {
+        const disclosure = owner.querySelector<HTMLElement>(`[data-testid="${folded[1]}"] .object-list-toolbar-strip > button[aria-haspopup="menu"]`);
+        if (disclosure && isDrawn(disclosure) && canGuidePress(disclosure)) {
+          if (disclosure.getAttribute("aria-expanded") !== "true") disclosure.click();
+          guideMenu.current = disclosure;
+          await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+          const menu = document.querySelector<HTMLElement>(`[role="menu"][data-menu-owner="${CSS.escape(owner.id)}"]`);
+          target = [...(menu?.querySelectorAll<HTMLElement>('[role^="menuitem"]') ?? [])]
+            .find(item => item.querySelector('.desk-menu-label')?.textContent === folded[2]) ?? null;
+        }
+      }
       // The selected pane can read after the press. Do not narrate its old state.
       for (
         let attempt = 0;
@@ -288,6 +314,9 @@ function WalkSession({ local, token }: { local?: LocalWalk; token?: string }) {
       ) {
         await new Promise((resolve) => setTimeout(resolve, 100));
         target = guideTarget(owner, targetName);
+      }
+      for (let attempt = 0; target && [...target.querySelectorAll("option")].some(option => option.textContent === "Reading…") && attempt < 100 && run === generation.current; attempt++) {
+        await new Promise(resolve => setTimeout(resolve, 100));
       }
       if (run !== generation.current) return;
       if (targetName && !target) {
