@@ -18,11 +18,11 @@ import { useResource } from "../../pages/pageSupport";
 import { ReachYouRows } from "../calls/PhoneSettings";
 import type { PhoneStatus } from "../calls/phoneTypes";
 import { openSurfaceOr } from "../shell";
-import { CycleGadget, FoldGadget, GadgetGroup, GadgetRow, StringGadget } from "../surface/gadgets";
+import { CycleGadget, GadgetGroup, GadgetRow, StringGadget } from "../surface/gadgets";
 import { DotWord } from "../surface/kit";
 import { plainFail } from "../surface/plainFailure";
 import { SurfaceState } from "../surface/Surface";
-import { PreferencePane, PreferenceWell, SegmentedTabs, PaneActions } from "../surface";
+import { PreferencePane, PreferenceWell, SegmentedTabs, PaneActions, ListPane, ListView, PaneGroup, PaneInspector, InspectorForm } from "../surface";
 
 export type ReachStatus = {
   channels: {
@@ -118,7 +118,11 @@ function TokenRow({ present, busy, highlight, onSave }: { present: boolean; busy
   };
   return (
     <div className="reach-token" data-testid="reach-token" data-present={present || undefined}>
-      {present && !changing ? <Button dense onClick={() => setChanging(true)} data-testid="reach-token-replace">Replace token</Button> : null}
+      {present && !changing ? (
+        <Button dense onClick={() => setChanging(true)} data-testid="reach-token-replace">
+          Replace token
+        </Button>
+      ) : null}
       {open ? (
         <PaneActions>
           <StringGadget
@@ -184,10 +188,22 @@ export function ReachSettingsPane({
   quiet: ReactNode;
   /** The Cadence and morning brief groups, folded. */
   cadence?: ReactNode;
-  cadenceTabs?: { id: string; label: string; content: ReactNode }[];
+  cadenceTabs?: {
+    id: string;
+    label: string;
+    content: ReactNode;
+    form?: boolean;
+  }[];
 }) {
-  const [tab, setTab] = useState(highlight?.startsWith("heartbeat.") || highlight?.startsWith("reach.ladder") ? "timing" : "channels");
-  useEffect(() => { if (highlight?.startsWith("heartbeat.") || highlight?.startsWith("reach.ladder")) setTab("timing"); }, [highlight]);
+  const briefTarget = highlight === "reach.digest" || highlight === "reach.later" ? "digest"
+    : highlight?.startsWith("cadence.brief") ? "brief" : highlight?.startsWith("cadence.") || highlight?.startsWith("cadence_telegram.") ? "cadence" : null;
+  const [tab, setTab] = useState(briefTarget ? "digest" : highlight?.startsWith("heartbeat.") || highlight?.startsWith("reach.ladder") ? "timing" : "channels");
+  const [briefPick, pickBrief] = useState<string | null>(briefTarget);
+  const [briefOpen, openBrief] = useState<string | null>(briefTarget);
+  useEffect(() => {
+    if (briefTarget) {setTab("digest"); pickBrief(briefTarget); openBrief(briefTarget);}
+    else if (highlight?.startsWith("heartbeat.") || highlight?.startsWith("reach.ladder")) setTab("timing");
+  }, [highlight, briefTarget]);
   const reach = useResource<ReachStatus | null>("/api/reach", null);
   // A hub without the Reach routes (or any other answer) draws the rows empty.
   const status = reach.data && typeof reach.data === "object" && reach.data.channels ? reach.data : null;
@@ -325,10 +341,9 @@ export function ReachSettingsPane({
         onChange={setTab}
         tabs={[
           { id: "channels", label: "Channels" },
-          { id: "timing", label: "Timing" },
+          { id: "timing", label: "When" },
           { id: "calls", label: "Calls" },
-          { id: "digest", label: "Digest" },
-          ...(cadenceTabs ?? [{ id: "cadence", label: "Cadence", content: cadence }]),
+          { id: "digest", label: "Brief" },
         ]}
       >
         {reach.error && !status ? <SurfaceState error={`Not read · ${reach.error}`} onRetry={() => void reach.reload()} /> : null}
@@ -339,13 +354,15 @@ export function ReachSettingsPane({
         ) : null}
         <div className="surface-tab-panel" hidden={tab !== "channels"}>
           <GadgetGroup label="Channels">
-            <GadgetRow label="Desk"><span /></GadgetRow>
+            <GadgetRow label="Desk">
+              <span />
+            </GadgetRow>
             <GadgetRow
               label="Phone app"
               controlWidth="standard"
               fact={
                 <DotWord tone={status?.channels.phone_app.paired ? "ok" : "idle"} data-testid="reach-phone-state">
-                  {status?.channels.phone_app.paired ? "" : status?.channels.phone_app.words ?? "No phone is paired"}
+                  {status?.channels.phone_app.paired ? "" : (status?.channels.phone_app.words ?? "No phone is paired")}
                 </DotWord>
               }
             >
@@ -368,24 +385,26 @@ export function ReachSettingsPane({
                 }
               >
                 <div className="surface-pane-group">
-                {status ? <TokenRow present={telegram?.token === "keystore"} busy={busy === "token"} onSave={saveToken} highlight={highlight === "reach.token"} /> : null}
-                {paired ? (
-                  <Button dense variant="secondary" loading={busy === "unpair"} onClick={unpair} data-testid="reach-unpair">
-                    Unpair
-                  </Button>
-                ) : (
-                  <Button
-                    dense
-                    variant={pairing ? "secondary" : "primary"}
-                    loading={busy === "pair"}
-                    disabled={!status || telegram?.token !== "keystore" || !telegram?.on}
-                    title={telegram?.token !== "keystore" ? "Put the bot token in first" : undefined}
-                    onClick={pair}
-                    data-testid="reach-pair"
-                  >
-                    {pairing ? "New code" : "Pair Telegram"}
-                  </Button>
-                )}
+                  {status ? (
+                    <TokenRow present={telegram?.token === "keystore"} busy={busy === "token"} onSave={saveToken} highlight={highlight === "reach.token"} />
+                  ) : null}
+                  {paired ? (
+                    <Button dense variant="secondary" loading={busy === "unpair"} onClick={unpair} data-testid="reach-unpair">
+                      Unpair
+                    </Button>
+                  ) : (
+                    <Button
+                      dense
+                      variant={pairing ? "secondary" : "primary"}
+                      loading={busy === "pair"}
+                      disabled={!status || telegram?.token !== "keystore" || !telegram?.on}
+                      title={telegram?.token !== "keystore" ? "Put the bot token in first" : undefined}
+                      onClick={pair}
+                      data-testid="reach-pair"
+                    >
+                      {pairing ? "New code" : "Pair Telegram"}
+                    </Button>
+                  )}
                 </div>
               </GadgetRow>
               {pairing && !paired ? <PairSheet pairing={pairing} now={now} onCopy={copy} copied={copied} /> : null}
@@ -403,7 +422,8 @@ export function ReachSettingsPane({
             </GadgetRow>
           </GadgetGroup>
         </div>
-        <PreferenceWell>
+        {tab === "timing" ? (
+          <PreferenceWell>
             {/* DIR7: the ladder, its rungs in the hub's order, each with its wait. */}
             {tab === "timing" ? (
               <GadgetGroup label="When to reach you">
@@ -465,53 +485,127 @@ export function ReachSettingsPane({
                 </div>
               </GadgetGroup>
             ) : null}
-            {tab === "calls" && status ? <ReachYouRows reach={kinds} level={level} onChanged={() => reach.reload()} /> : null}
+
             {tab === "timing" ? quiet : null}
-            {tab === "digest" ? (
-              <GadgetGroup label="Digest and Later">
-                <GadgetRow label="Digest" highlight={highlight === "reach.digest"} controlWidth="standard">
-                  <CycleGadget
-                    label="Digest"
-                    value={String(status?.digest.at ?? "end_of_quiet")}
-                    options={DIGEST_TIMES}
-                    disabled={!status || busy === "put"}
-                    onChange={(next) =>
-                      put({
-                        digest: next === "end_of_quiet" ? next : Number(next),
-                      })
+          </PreferenceWell>
+        ) : null}
+            {tab === "calls" && status ? <ReachYouRows reach={kinds} level={level} onChanged={() => reach.reload()} /> : null}
+        {tab === "digest" ? (
+          <ListPane
+            label="Brief details"
+            list={
+              <PaneGroup label="Brief and notices">
+                <ListView
+                  label="Brief choices"
+                  rows={[
+                    {
+                      id: "digest",
+                      kind: "preference",
+                      name: "Digest and Later",
+                    },
+                    ...(cadenceTabs ?? [{ id: "cadence", label: "Notices", content: cadence }]).map((entry) => ({
+                      id: entry.id,
+                      kind: "preference",
+                      name: entry.label,
+                    })),
+                  ]}
+                  columns={[{ key: "name", word: "Choice" }]}
+                  selectedId={briefPick}
+                  onSelect={pickBrief}
+                  verbs={[
+                    {
+                      id: "open",
+                      label: "Open choice",
+                      key: "Enter",
+                      enabled: (row) => Boolean(row),
+                      run: (row) => openBrief(row!.id),
+                    },
+                  ]}
+                  defaultVerb="open"
+                />
+              </PaneGroup>
+            }
+          >
+            {briefOpen === "digest" ? (
+              <PaneInspector label="Digest and Later" onClose={() => openBrief(null)}>
+                <InspectorForm>
+                  <GadgetRow label="Digest" highlight={highlight === "reach.digest"} controlWidth="standard">
+                    <CycleGadget
+                      label="Digest"
+                      value={String(status?.digest.at ?? "end_of_quiet")}
+                      options={DIGEST_TIMES}
+                      disabled={!status || busy === "put"}
+                      onChange={(next) =>
+                        put({
+                          digest: next === "end_of_quiet" ? next : Number(next),
+                        })
+                      }
+                    />
+                  </GadgetRow>
+                  <GadgetRow
+                    label="Send the digest now"
+                    controlWidth="standard"
+                    fact={
+                      digest ? (
+                        <DotWord tone="ok" data-testid="reach-digest-sent">
+                          {digest}
+                        </DotWord>
+                      ) : undefined
                     }
-                  />
-                </GadgetRow>
-                <GadgetRow
-                  label="Send the digest now"
-                  controlWidth="standard"
-                  fact={
-                    digest ? (
-                      <DotWord tone="ok" data-testid="reach-digest-sent">
-                        {digest}
-                      </DotWord>
-                    ) : undefined
-                  }
-                >
-                  <Button
-                    dense
-                    variant="secondary"
-                    loading={busy === "digest"}
-                    disabled={!paired}
-                    title={paired ? "One message to your Telegram chat" : "Pair Telegram first"}
-                    onClick={sendDigest}
-                    data-testid="reach-digest-now"
                   >
-                    Send the digest now
-                  </Button>
-                </GadgetRow>
-                <GadgetRow label="Later means" highlight={highlight === "reach.later"} controlWidth="standard">
-                  <CycleGadget label="Later means" value={status?.later_means ?? "in_2h"} options={LATER_MEANS} disabled={!status || busy === "put"} onChange={(next) => put({ later_means: next })} />
-                </GadgetRow>
-              </GadgetGroup>
+                    <Button
+                      dense
+                      variant="secondary"
+                      loading={busy === "digest"}
+                      disabled={!paired}
+                      title={paired ? "One message to your Telegram chat" : "Pair Telegram first"}
+                      onClick={sendDigest}
+                      data-testid="reach-digest-now"
+                    >
+                      Send the digest now
+                    </Button>
+                  </GadgetRow>
+                  <GadgetRow label="Later means" highlight={highlight === "reach.later"} controlWidth="standard">
+                    <CycleGadget
+                      label="Later means"
+                      value={status?.later_means ?? "in_2h"}
+                      options={LATER_MEANS}
+                      disabled={!status || busy === "put"}
+                      onChange={(next) => put({ later_means: next })}
+                    />
+                  </GadgetRow>
+                </InspectorForm>
+              </PaneInspector>
             ) : null}
-        {cadenceTabs ? cadenceTabs.map((entry) => tab === entry.id ? <div className="surface-tab-panel" key={entry.id}>{entry.content}</div> : null) : tab === "cadence" ? cadence : null}
-        </PreferenceWell>
+            {(
+              cadenceTabs ?? [
+                {
+                  id: "cadence",
+                  label: "Notices",
+                  content: cadence,
+                  form: false,
+                },
+              ]
+            ).map((entry) =>
+              briefOpen === entry.id ? (
+                entry.form ? (
+                  <PaneInspector key={entry.id} label={entry.label} onClose={() => openBrief(null)}>
+                    <InspectorForm>{entry.content}</InspectorForm>
+                  </PaneInspector>
+                ) : (
+                  <div key={entry.id} className="surface-tab-panel">
+                    {entry.content}
+                    <PaneActions>
+                      <Button dense onClick={() => openBrief(null)}>
+                        Done
+                      </Button>
+                    </PaneActions>
+                  </div>
+                )
+              ) : null,
+            )}
+          </ListPane>
+        ) : null}
       </SegmentedTabs>
     </PreferencePane>
   );

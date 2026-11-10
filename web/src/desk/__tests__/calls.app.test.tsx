@@ -354,12 +354,46 @@ describe("Settings ▸ Calls", () => {
     fireEvent.click(screen.getByRole("checkbox", { name: "Calls on" }));
     await waitFor(() => expect(calls).toContain('PUT /api/settings {"calls":{"enabled":false}}'));
     await waitCallsSettings();
+    openCallsTab("Numbers");
+    fireEvent.click(screen.getByTestId("calls-number-add"));
     fireEvent.change(screen.getByLabelText("Add a number"), {
       target: { value: "+15550100199" },
     });
-    fireEvent.click(screen.getByTestId("calls-number-add"));
+    fireEvent.click(screen.getByTestId("calls-number-save"));
     await waitFor(() => expect(calls).toContain('PUT /api/settings {"calls":{"allowed_numbers":["+15550100142","+15550100199"]}}'));
   });
+  it("keeps a refused number draft and removes only the selected saved number", async () => {
+    let attempts = 0;
+    let numbers = [...settingsCalls.allowed_numbers];
+    hub({
+      "GET /api/settings": () => ({calls: {...settingsCalls, allowed_numbers: numbers}}),
+      "GET /api/calls/status": statusReady,
+      "PUT /api/settings": (init?: {json?: unknown}) => {
+        if (++attempts === 1) throw new ApiError(503, "Unavailable", {error: "Settings unavailable"});
+        numbers = (init?.json as {calls: {allowed_numbers: string[]}}).calls.allowed_numbers;
+        return {settings: {calls: {...settingsCalls, allowed_numbers: numbers}}};
+      },
+    });
+    render(<CallsSettingsPane />);
+    await waitCallsSettings();
+    openCallsTab("Numbers");
+    const remove = screen.getByRole("button", {name: "Remove number"});
+    expect(remove).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", {name: "Add number"}));
+    const field = screen.getByRole("textbox", {name: "Add a number"});
+    fireEvent.change(field, {target: {value: "+15550100199"}});
+    fireEvent.click(screen.getByTestId("calls-number-save"));
+    await screen.findByRole("alert");
+    expect(field).toHaveValue("+15550100199");
+    fireEvent.click(screen.getByTestId("calls-number-save"));
+    await waitFor(() => expect(screen.queryByRole("region", {name: "Add number"})).toBeNull());
+    const list = screen.getByRole("grid", {name: "Your numbers"});
+    fireEvent.click(within(list).getByText("+15550100199", {exact: true}));
+    fireEvent.click(remove);
+    await waitFor(() => expect(numbers).toEqual(settingsCalls.allowed_numbers));
+    expect(within(list).queryByText("+15550100199", {exact: true})).toBeNull();
+  });
+
   it("a missing status keeps the setup steps available", async () => {
     hub({ "GET /api/settings": { calls: settingsCallsFresh } });
     render(<CallsSettingsPane />);
@@ -862,10 +896,8 @@ describe("Settings ▸ Calls ▸ Phone", () => {
     expect(screen.queryAllByTestId("phone-reach-row")).toHaveLength(0);
     fireEvent.click(screen.getByTestId("phone-reach-open"));
     expect(mocks.openSurfaceOr).toHaveBeenCalledWith("configure-settings", "/settings", "reach");
-    expect(screen.getByTestId("phone-quiet").textContent).toContain("22:00 to 08:00");
-    fireEvent.click(screen.getByTestId("phone-quiet-rhythm"));
-    expect(mocks.openSurfaceOr).toHaveBeenCalledWith("configure-settings", "/settings", "rhythm");
-    expect(within(screen.getByTestId("phone-number")).getByTitle(P.status.line.words)).toBeInTheDocument();
+    expect(screen.queryByTestId("phone-quiet")).toBeNull();
+    expect(screen.queryByTestId("phone-number")).toBeNull();
     expect(screen.getAllByTestId("phone-egress")).toHaveLength(1);
     fireEvent.click(row);
     fireEvent.click(screen.getByRole("button", { name: "Remove phone" }));
@@ -951,11 +983,13 @@ describe("Settings ▸ Calls ▸ Phone ▸ Push", () => {
     render(<PhoneSettingsPane />);
     const device = await screen.findByTestId("phone-device-row");
     await waitFor(() => expect(within(device).getByTestId("phone-device-push").textContent).toBe("Push not ready: no Apple push key on the hub"));
-    const p8 = await screen.findByTestId("phone-push-p8");
-    expect(within(p8).getByTestId("phone-push-p8-place").textContent).toBe("Missing");
+    const p8Row = await screen.findByTestId("phone-push-p8");
+    expect(within(p8Row).getByTestId("phone-push-p8-place").textContent).toBe("Missing");
     expect((screen.getByLabelText("App bundle ID") as HTMLInputElement).value).toBe(pushMissing.bundle_id);
     expect(screen.getByTestId("phone-push-test-press")).toBeDisabled();
     expect(screen.getByTestId("phone-push-test").textContent).toContain("Save the key, the Key ID and the Team ID");
+    fireEvent.doubleClick(p8Row);
+    const p8 = screen.getByTestId("phone-push-p8-editor");
     // The pad carries its mic; a paste and Save writes the key, the field clears, the row says where it is.
     expect(within(p8).getByRole("button", { name: /Speak Apple push key/ })).toBeInTheDocument();
     fireEvent.change(within(p8).getByLabelText("Apple push key (.p8)"), {
@@ -970,11 +1004,12 @@ describe("Settings ▸ Calls ▸ Phone ▸ Push", () => {
       ["phone-push-key-id", "Key ID", "KEY1234567"],
       ["phone-push-team-id", "Team ID", "TEAM123456"],
     ]) {
-      const row = screen.getByTestId(testId);
-      fireEvent.change(within(row).getByLabelText(label), {
+      fireEvent.doubleClick(screen.getByTestId(testId));
+      const editor = screen.getByTestId(`${testId}-editor`);
+      fireEvent.change(within(editor).getByLabelText(label), {
         target: { value },
       });
-      fireEvent.click(within(row).getByTestId(`${testId}-save`));
+      fireEvent.click(within(editor).getByTestId(`${testId}-save`));
       await waitFor(() => expect(calls.some((call) => call.startsWith(`PUT /api/phone/push {"${testId === "phone-push-key-id" ? "key_id" : "team_id"}"`))).toBe(true));
     }
     expect(order).toEqual(["p8", "key_id", "team_id"]);
@@ -996,7 +1031,8 @@ describe("Settings ▸ Calls ▸ Phone ▸ Push", () => {
       },
     });
     render(<PhoneSettingsPane />);
-    const p8 = await screen.findByTestId("phone-push-p8");
+    fireEvent.doubleClick(await screen.findByTestId("phone-push-p8"));
+    const p8 = screen.getByTestId("phone-push-p8-editor");
     fireEvent.change(within(p8).getByLabelText("Apple push key (.p8)"), {
       target: { value: "hello" },
     });
@@ -1004,6 +1040,13 @@ describe("Settings ▸ Calls ▸ Phone ▸ Push", () => {
     const refusal = await screen.findByTestId("phone-push-refusal");
     expect(refusal.textContent).toContain("The key was not saved");
     expect(within(screen.getByTestId("phone-push-p8")).getByTestId("phone-push-p8-place").textContent).toBe("Missing");
+    expect(within(p8).getByLabelText("Apple push key (.p8)")).toHaveValue("hello");
+    fireEvent.doubleClick(screen.getByTestId("phone-push-key-id"));
+    fireEvent.doubleClick(screen.getByTestId("phone-push-p8"));
+    expect(screen.getByRole("textbox", {name: "Apple push key (.p8)"})).toHaveValue("hello");
+    fireEvent.click(within(screen.getByTestId("phone-push-p8-editor")).getByRole("button", {name: "Cancel"}));
+    fireEvent.doubleClick(screen.getByTestId("phone-push-p8"));
+    expect(screen.getByRole("textbox", {name: "Apple push key (.p8)"})).toHaveValue("");
   });
 
   it.each([
@@ -1045,7 +1088,6 @@ describe("Settings ▸ Calls ▸ Phone ▸ Push ▸ Builds from", () => {
     const row = await screen.findByTestId("phone-push-host");
     expect(pushStored.host).toBe("app_store");
     expect(row.textContent).toContain("Builds from");
-    expect(row.textContent).toContain("An app built from Xcode has a development token; pick Xcode while you test");
     const choice = within(row).getByLabelText("Builds from") as HTMLSelectElement;
     expect(choice.value).toBe("app_store");
     expect([...choice.options].map((option) => option.textContent)).toEqual(["App Store", "Xcode"]);
@@ -1161,7 +1203,7 @@ describe("Settings ▸ Calls ▸ Line", () => {
     await waitFor(() => expect(state.textContent).toBe("Not running"));
     const place = screen.getByTestId("line-place");
     expect(place.textContent).toContain("This Mac");
-    expect(place.textContent).toContain("About 0.13 core per call minute");
+    expect(place.textContent).not.toContain("core per call minute");
     const install = screen.getByTestId("line-install");
     expect(install.textContent).toContain(LINE_VENV_COMMAND);
     expect(install.textContent).toContain(LINE_RUN_COMMAND);
@@ -1196,21 +1238,20 @@ describe("Settings ▸ Calls ▸ Line", () => {
     render(<CallsSettingsPane />);
     await screen.findByTestId("line-settings");
     openCallsTab("Line");
-    await waitFor(() => expect(screen.getByTestId("line-place-state").textContent).toBe("Ready"));
+    await waitFor(() => expect(screen.getByTestId("line-settings")).toHaveAttribute("data-state", "ready"));
+    expect(screen.queryByTestId("line-place-state")).toBeNull();
     expect(screen.queryByTestId("line-install")).toBeNull();
     expect(screen.getByRole("textbox", {name:"Line address"})).toHaveValue(lineReady.address);
     expect(screen.getByRole("textbox", {name:"Line address"})).toHaveAttribute("readonly");
     fireEvent.click(screen.getByTestId("line-address-copy"));
     await waitFor(() => expect(writeText).toHaveBeenCalledWith(lineReady.address));
     expect(screen.getByTestId("line-address-copy").textContent).toBe("Copied");
-    expect(screen.getByTestId("line-codecs").textContent).toBe("Codecs: opus, PCMU, PCMA");
+    expect(screen.queryByTestId("line-codecs")).toBeNull();
+    openCallsTab("Line account");
     const from = screen.getByTestId("line-from-calls").textContent ?? "";
     expect(from).toContain(`${lineSettings.daily_limit} placed calls a day`);
-    expect(from).toContain("This is HoldSpeak, an AI assistant");
-    expect(from).toContain("911, 112, 999, 000");
-    const adapter = screen.getByTestId("line-adapter");
-    expect(adapter.textContent).toContain("The LineIn use");
-    expect(adapter.textContent).toContain("Optional, AGPL, runs as a separate program");
+
+    expect(screen.queryByTestId("line-adapter")).toBeNull();
   });
 
   it("Test call: Ringing while the hub dials, then the recorded result word", async () => {
@@ -1230,7 +1271,8 @@ describe("Settings ▸ Calls ▸ Line", () => {
     await screen.findByTestId("line-settings");
     openCallsTab("Line");
     const press = await screen.findByTestId("line-test-call");
-    await waitFor(() => expect(screen.getByTestId("line-place-state").textContent).toBe("Ready"));
+    await waitFor(() => expect(screen.getByTestId("line-settings")).toHaveAttribute("data-state", "ready"));
+    expect(screen.queryByTestId("line-place-state")).toBeNull();
     expect(screen.getByTestId("line-test").textContent).toContain(`Calls ${lineSettings.allowed_numbers[0]}`);
     expect(press.getAttribute("title")).toBe("From the Line on This Mac");
     fireEvent.click(press);
@@ -1298,7 +1340,7 @@ describe("Settings ▸ Calls ▸ Line", () => {
     });
     render(<CallsSettingsPane />);
     await screen.findByTestId("line-settings");
-    openCallsTab("Line");
+    openCallsTab("Line account");
     await waitFor(() => expect(screen.getByTestId("line-place-state").textContent).toBe("Not set up"));
     expect(screen.getByTestId("line-account").getAttribute("data-kind")).toBe("telnyx");
     expect(screen.getByTestId("line-password-place").textContent).toBe("Missing");
@@ -1336,7 +1378,7 @@ describe("Settings ▸ Calls ▸ Line", () => {
     });
     render(<CallsSettingsPane />);
     await screen.findByTestId("line-settings");
-    openCallsTab("Line");
+    openCallsTab("Telnyx");
     await screen.findByTestId("line-telnyx-key");
     const field = within(screen.getByTestId("line-telnyx-key")).getByLabelText("Telnyx API key");
     fireEvent.change(field, { target: { value: "key-for-retry" } });
@@ -1350,14 +1392,13 @@ describe("Settings ▸ Calls ▸ Line", () => {
     expect(screen.queryByLabelText("Telnyx API key")).toBeNull();
   });
 
-  it("the adapter: a press on ai-phone writes calls.line.adapter", async () => {
-    lineHub({ "PUT /api/settings": linePut });
+  it("leaves the configured adapter unchanged without offering an implementation switch", async () => {
+    lineHub();
     render(<CallsSettingsPane />);
     await screen.findByTestId("line-settings");
-    openCallsTab("Line");
-    const adapter = await screen.findByTestId("line-adapter");
-    fireEvent.click(within(adapter).getByRole("radio", { name: /ai-phone/ }));
-    await waitFor(() => expect(calls).toContain(`PUT /api/settings ${JSON.stringify({ calls: { line: { adapter: "ai-phone" } } })}`));
+    openCallsTab("Line account");
+    expect(screen.queryByRole("radiogroup", {name: "Adapter"})).toBeNull();
+    expect(calls.some((call) => call.startsWith("PUT "))).toBe(false);
   });
 
   /* LINE-4c: another machine. Install the Line on karol → the one-time code
@@ -1375,6 +1416,7 @@ describe("Settings ▸ Calls ▸ Line", () => {
     render(<CallsSettingsPane />);
     await screen.findByTestId("line-settings");
     openCallsTab("Line");
+    fireEvent.click(screen.getByRole("button", {name: "Add machine"}));
     const add = await screen.findByTestId("line-add");
     const press = within(add).getByTestId("line-install-node");
     expect(press).toBeDisabled();
@@ -1410,6 +1452,7 @@ describe("Settings ▸ Calls ▸ Line", () => {
     render(<CallsSettingsPane />);
     await screen.findByTestId("line-settings");
     openCallsTab("Line");
+    fireEvent.click(screen.getByRole("button", {name: "Add machine"}));
     const add = await screen.findByTestId("line-add");
     fireEvent.change(within(add).getByLabelText("Add a machine"), {
       target: { value: "Karol's box!" },
@@ -1430,7 +1473,8 @@ describe("Settings ▸ Calls ▸ Line", () => {
       render(<CallsSettingsPane />);
       await screen.findByTestId("line-settings");
       openCallsTab("Line");
-      const add = await screen.findByTestId("line-add");
+      fireEvent.click(screen.getByRole("button", {name: "Add machine"}));
+    const add = await screen.findByTestId("line-add");
       fireEvent.change(within(add).getByLabelText("Add a machine"), {
         target: { value: "karol" },
       });
@@ -1461,8 +1505,8 @@ describe("Settings ▸ Calls ▸ Line", () => {
       });
       await waitFor(() => expect(screen.queryByTestId("line-code-sheet")).toBeNull());
       const row = nodeRow("karol")!;
-      expect(within(row).getByTestId("line-node-state").textContent).toBe("Ready");
-      expect(row.textContent).toContain("Linux x86_64 · About 0.4 core per call minute");
+      expect(within(row).queryByTestId("line-node-state")).toBeNull();
+      expect(row.textContent).toContain("Linux x86_64");
       expect(screen.getByTestId("line-add")).toBeInTheDocument();
     } finally {
       vi.useRealTimers();
@@ -1489,8 +1533,8 @@ describe("Settings ▸ Calls ▸ Line", () => {
     await waitFor(() => expect(nodeRow("karol")).toBeTruthy());
     fireEvent.doubleClick(nodeRow("karol")!);
     await waitFor(() => expect(calls).toContain(`PUT /api/settings ${JSON.stringify({ calls: { line: { where: "node:karol" } } })}`));
-    await waitFor(() => expect(within(nodeRow("karol")!).getByTestId("line-place-state").textContent).toBe("Ready"));
-    expect(within(nodeRow("karol")!).getByTestId("line-place-state")).toHaveTextContent("Ready");
+    await waitFor(() => expect(screen.getByTestId("line-settings")).toHaveAttribute("data-state", "ready"));
+    expect(within(nodeRow("karol")!).queryByTestId("line-place-state")).toBeNull();
     expect(screen.getByTestId("line-test-call").getAttribute("title")).toBe("From the Line on karol");
   });
 
@@ -1512,8 +1556,8 @@ describe("Settings ▸ Calls ▸ Line", () => {
     fireEvent.click(screen.getByRole("button", { name: "Revoke machine" }));
     // The first press asks, in the window, about this machine; nothing is revoked yet.
     const ask = await screen.findByTestId("line-revoke-ask");
-    expect(ask.getAttribute("data-node")).toBe("karol");
-    expect(ask).toHaveTextContent("Revoke karol?");
+    expect(screen.getByRole("region", {name: "Revoke karol?"})).toContainElement(ask);
+    expect(ask).toHaveTextContent("karol");
     expect(calls).not.toContain("DELETE /api/calls/line/nodes/karol");
     // Cancel takes the question away and revokes nothing.
     fireEvent.click(within(ask).getByRole("button", { name: "Cancel" }));
@@ -1644,13 +1688,12 @@ describe("Settings ▸ Calls ▸ Line ▸ Set up Telnyx", () => {
     telnyxHub("key");
     render(<CallsSettingsPane />);
     await screen.findByTestId("line-settings");
-    openCallsTab("Line");
+    openCallsTab("Telnyx");
     expect((await screen.findByTestId("telnyx-step-key")).textContent).toContain("Stored in your keystore");
     await waitFor(() => expect(screen.getByTestId("telnyx-connect")).not.toBeDisabled());
     expect(screen.queryByTestId("telnyx-connected")).toBeNull();
     fireEvent.click(screen.getByTestId("telnyx-connect"));
-    const connected = await screen.findByTestId("telnyx-connected");
-    expect(connected.textContent).toBe(`Connected · sip.telnyx.com · user ${tConnect.user}`);
+    await waitFor(() => expect(screen.queryByTestId("telnyx-connect")).toBeNull());
     expect(tConnect.user).toMatch(/^hs/);
     expect(calls).toContain("POST /api/calls/line/telnyx/connect {}");
     // The pane reads the account again: User shows the connection's user.
@@ -1663,25 +1706,26 @@ describe("Settings ▸ Calls ▸ Line ▸ Set up Telnyx", () => {
     telnyxHub("connected");
     render(<CallsSettingsPane />);
     await screen.findByTestId("line-settings");
-    openCallsTab("Line");
+    openCallsTab("Telnyx");
     await findNumbers();
     const first = screen.getAllByTestId("telnyx-number")[0];
     expect(first.getAttribute("data-number")).toBe("+12125550100");
     expect(first.textContent).toContain("+1 212 555 0100");
     expect(within(first).getByTestId("telnyx-monthly").textContent).toBe("$1.00 a month");
     expect(within(first).getByTestId("telnyx-upfront").textContent).toBe("$1.00 upfront");
-    expect(within(first).getByTestId("telnyx-monthly").className).toBe("surface-token");
+    expect(first.querySelector("button")).toBeNull();
   });
 
   it("Buy: the first press only asks; the confirm sends the hub's quote; then Yours · assigned to the line", async () => {
     const at = telnyxHub("connected");
     render(<CallsSettingsPane />);
     await screen.findByTestId("line-settings");
-    openCallsTab("Line");
+    openCallsTab("Telnyx");
     await findNumbers();
-    const buy = within(screen.getAllByTestId("telnyx-number")[0]).getByTestId("telnyx-buy");
-    fireEvent.click(buy);
-    expect(buy.textContent).toBe("Buy +1 212 555 0100 for $1.00 a month?");
+    fireEvent.click(screen.getAllByTestId("telnyx-number")[0]);
+    fireEvent.keyDown(screen.getAllByTestId("telnyx-number")[0], {key: "Enter"});
+    const buy = screen.getByTestId("telnyx-buy");
+    expect(screen.getByText("Buy +1 212 555 0100 for $1.00 a month and $1.00 upfront?")).toBeInTheDocument();
     expect(calls.some((line) => line.startsWith("POST /api/calls/line/telnyx/buy"))).toBe(false);
     fireEvent.click(buy);
     const yours = await screen.findByTestId("telnyx-yours");
@@ -1702,10 +1746,11 @@ describe("Settings ▸ Calls ▸ Line ▸ Set up Telnyx", () => {
     });
     render(<CallsSettingsPane />);
     await screen.findByTestId("line-settings");
-    openCallsTab("Line");
+    openCallsTab("Telnyx");
     await findNumbers();
-    const buy = within(screen.getAllByTestId("telnyx-number")[0]).getByTestId("telnyx-buy");
-    fireEvent.click(buy);
+    fireEvent.click(screen.getAllByTestId("telnyx-number")[0]);
+    fireEvent.click(screen.getByRole("button", {name: "Buy…"}));
+    const buy = screen.getByTestId("telnyx-buy");
     expect(calls.some((line) => line.startsWith("POST /api/calls/line/telnyx/buy"))).toBe(false);
     fireEvent.click(buy);
     const failure = await screen.findByTestId("telnyx-failure");
@@ -1723,7 +1768,7 @@ describe("Settings ▸ Calls ▸ Line ▸ Set up Telnyx", () => {
     });
     render(<CallsSettingsPane />);
     await screen.findByTestId("line-settings");
-    openCallsTab("Line");
+    openCallsTab("Telnyx");
     await waitFor(() => expect(screen.getByTestId("telnyx-connect")).not.toBeDisabled());
     fireEvent.click(screen.getByTestId("telnyx-connect"));
     const failure = await screen.findByTestId("telnyx-failure");

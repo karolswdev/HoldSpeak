@@ -1,0 +1,24 @@
+// PARKED: the route probe and its algorithm controls left Settings; device and waiting-work checks remain live.
+  it("says the true word on an idle hub: no devices, no jobs, and tries a phrase", async () => {
+    mocks.apiFetch.mockImplementation(async (path: string) => {
+      if (path === "/api/plugin-jobs/summary")
+        return { total_jobs: 0, queued_jobs: 0, running_jobs: 0, failed_jobs: 0, next_retry_at: null };
+      if (path === "/api/devices/health") return { devices: [] };
+      if (path === "/api/intents/control") return { profile: "balanced" };
+      if (path === "/api/intents/preview") return { route: "architecture", intent: "decision", confidence: 0.82 };
+      return {};
+    });
+    render(<LiveMeetingTools />);
+    expect(await screen.findByText("No jobs waiting")).toBeInTheDocument();
+    expect(await screen.findByText("None attached")).toBeInTheDocument();
+    expect(document.body.textContent ?? "").not.toMatch(/\b0\b/);
+    expect(screen.queryByRole("button", { name: "Process pending" })).toBeNull();
+
+    fireEvent.change(screen.getByRole("textbox", { name: "Preview route" }), { target: { value: "we decided to freeze" } });
+    fireEvent.click(screen.getByRole("button", { name: "Preview route" }));
+    expect(await screen.findByText("architecture")).toBeInTheDocument();
+    expect(mocks.apiFetch).toHaveBeenCalledWith("/api/intents/preview", {
+      method: "POST",
+      json: { text: "we decided to freeze" },
+    });
+  });
