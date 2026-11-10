@@ -18,11 +18,11 @@ const value = (text: string) => <span className="surface-preference-value" title
 
 function RecordingDetails({ row, keepDays }: { row: Recording; keepDays: number }) {
   const [tab, setTab] = useState("details");
-  return <PreferenceWell><SegmentedTabs label="Recording details" value={tab} onChange={setTab} tabs={[
+  return <SegmentedTabs label="Recording details" value={tab} onChange={setTab} tabs={[
     { id: "details", label: "Details" },
     ...(row.state === "ready" ? [{ id: "video", label: "Video" }] : []),
     ...(row.state === "ready" && row.shared ? [{ id: "links", label: "Links" }] : []),
-  ]}>
+  ]}><PreferenceWell>
     {tab === "video" && row.state === "ready" ? <InspectorForm rows={[
       { label: "Video", control: <video data-testid="recordings-video" aria-label={whenOf(row)} width={320} height={180} src={videoUrl(row.id)} poster={row.encoder === "mp4" ? posterUrl(row.id) : undefined} controls playsInline preload="metadata" /> },
       ...(row.encoder === "webm" ? [{ label: "Format", control: <span data-testid="recordings-webm">Webm · iPhone video needs ffmpeg</span> }] : []),
@@ -36,7 +36,7 @@ function RecordingDetails({ row, keepDays }: { row: Recording; keepDays: number 
       { label: "Kept until", control: keptUntil(row, keepDays) },
       { label: "Size", control: row.bytes_out ? sizeWords(row.bytes_out) : "" },
     ]} />}
-  </SegmentedTabs></PreferenceWell>;
+  </PreferenceWell></SegmentedTabs>;
 }
 
 export function RecordingsCore(_props: CoreProps) {

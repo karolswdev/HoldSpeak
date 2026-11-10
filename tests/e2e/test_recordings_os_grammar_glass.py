@@ -120,7 +120,10 @@ def test_recordings_selection_and_states(tmp_path: Path, monkeypatch: pytest.Mon
             expect(window.get_by_text("Select a recording.", exact=True)).to_be_visible()
             row = select(ready["id"])
             shot("ready")
+            tabs = window.get_by_role("tablist", name="Recording details", exact=True)
+            tabs_y = tabs.bounding_box()["y"]
             window.locator(".surface-preference-well").evaluate("el => el.scrollTop = el.scrollHeight")
+            assert abs(tabs.bounding_box()["y"] - tabs_y) <= 1
             shot("details-end")
             window.locator(".surface-preference-well").evaluate("el => el.scrollTop = 0")
             assert window.get_by_test_id("recordings-row").filter(has_text="Ready").count() == 0
