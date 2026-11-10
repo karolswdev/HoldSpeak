@@ -1352,3 +1352,9 @@
 /* Help keeps the same 44 px chrome target as Search on the phone. */
 .desk-next .desk-menubar [data-menu-id="help"] { flex: none; }
 .desk-next .desk-screen-title:has(+ [data-menu-id="help"]) { flex: 0 1 auto; margin-right: 0; }
+
+/* At phone width the Undo receipt keeps its complete verb. Its description
+   stays in the accessible name and hover title instead of a cut fragment. */
+@media (max-width: 720px) {
+  .desk-next .desk-menubar .desk-window-undo > span { display: none; }
+}

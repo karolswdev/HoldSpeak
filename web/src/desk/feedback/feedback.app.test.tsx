@@ -392,6 +392,7 @@ it("names the remote transcription engine only for recorded audio before Save", 
   fireEvent.click(screen.getByRole("button",{name:"Record"}));
   await screen.findByRole("meter",{name:"Audio level"});
   expect(screen.getByText("Lab speech")).toHaveAttribute("data-scope","remote");
+  expect(screen.getByText("Audio goes to").parentElement).toContainElement(screen.getByText("Lab speech"));
   fireEvent.click(screen.getByRole("button",{name:"Stop"}));
   expect(screen.getByText("Lab speech")).toBeVisible();
 });

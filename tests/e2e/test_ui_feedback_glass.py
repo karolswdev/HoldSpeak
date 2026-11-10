@@ -677,3 +677,48 @@ def test_guide_feedback_keeps_the_seen_note_in_one_bundle(feedback_page: Any) ->
     shots=Path(__file__).resolve().parents[2]/'.tmp/evidence-shots/showme3'
     shutil.copy2(directory/'window.png',shots/f'feedback-guide-window-{900 if width==1440 else width}.png')
     _finish_app_walk(page)
+
+
+def test_recorded_feedback_names_its_destination_inline_and_the_ring_hugs_the_checkbox(feedback_page: Any) -> None:
+    from playwright.sync_api import expect
+    from holdspeak.db import get_database
+    from tests.unit._speech_door import assign_profile
+    page, width, window = feedback_page
+    # This is a real configured but inert engine. The rig cancels the audio;
+    # no transcription or external request is made.
+    db = get_database()
+    db.profiles.upsert(profile_id='feedback-speech', name='Lab speech', kind='openAICompatible', base_url='http://192.168.1.99:8080/v1', model='whisper')
+    assign_profile(db, 'speech.transcribe', 'feedback-speech')
+    if width == 1440:
+        from .test_ui_feedback_glass import TOKEN as FEEDBACK_TOKEN
+        _api(page, 'POST', '/api/desk/windows/surface-components/set_geometry', {'rect': {'x':'-1/2 + 100','y':'-1/2 + 80','w':'900px','h':'600px'}}, token=FEEDBACK_TOKEN)
+        from .test_desk_sweep import SETTLED_JS
+        page.wait_for_function(SETTLED_JS, arg='surface-components', timeout=T)
+    target = window.get_by_role('checkbox', name='Gallery boolean')
+    target.scroll_into_view_if_needed()
+    _feedback_menu_item(page, width).click()
+    target.click()
+    capture = page.locator('[data-ui-feedback]')
+    capture.get_by_role('button', name='Record', exact=True).wait_for(timeout=T)
+    expect(capture.get_by_text('Audio goes to')).to_have_count(0)
+    capture.get_by_role('button', name='Record', exact=True).click()
+    capture.get_by_role('meter', name='Audio level').wait_for(timeout=T)
+    chip = capture.get_by_text('Lab speech', exact=True)
+    expect(chip).to_be_visible()
+    expect(capture.get_by_text('Audio goes to', exact=True)).to_be_visible()
+    assert chip.evaluate('(e) => e.getBoundingClientRect().width < e.parentElement.getBoundingClientRect().width / 2')
+    page.wait_for_function("() => Number(document.querySelector('[data-ui-feedback] [role=meter]')?.getAttribute('aria-valuenow')) > 0", timeout=T)
+    from .test_guide_seat_glass import _seat_shot
+    _seat_shot(page, 'surface-components', f'capture-audio-{900 if width == 1440 else width}')
+    capture.get_by_role('button', name='Stop', exact=True).click()
+    expect(chip).to_be_visible()
+    if width == 393:
+        facts = page.get_by_test_id('guide-ring').evaluate('''ring => {
+          const box=ring.getBoundingClientRect(), well=document.querySelector('input[aria-label="Gallery boolean"]').closest('.gadget-check').querySelector('.gadget-check-well').getBoundingClientRect();
+          return {ring:box.toJSON(),well:well.toJSON()};
+        }''')
+        assert abs(facts['ring']['width']-facts['well']['width']) <= 1, facts
+        assert abs(facts['ring']['height']-facts['well']['height']) <= 1, facts
+        page.screenshot(path=str(evidence_dir('guide5') / 'feedback-ring-393.png'))
+    capture.get_by_role('button', name='Cancel', exact=True).click()
+    expect(page.get_by_test_id('guide-note')).to_have_count(0)

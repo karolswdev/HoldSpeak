@@ -218,6 +218,17 @@ describe("say and Undo use the Desk seams", () => {
     } finally { hub.stop(); }
   });
 
+  it("keeps a receipt's complete words in its accessible name and menu", async () => {
+    render(<DeskRequests />);
+    await act(async () => { hear(voiceUndo.undo); });
+    const receipt = await screen.findByRole("status", {name:"Close Projects"});
+    fireEvent.contextMenu(receipt, {clientX: 120, clientY: 44});
+    const menu = await screen.findByRole("menuitem", {name:"Undo: Close Projects"});
+    fireEvent.click(menu);
+    await vi.waitFor(() => expect(screen.queryByTestId("desk-window-undo")).toBeNull());
+    expect(mocks.posts.filter(post => post.path === "/api/desk/windows/restore")).toHaveLength(1);
+  });
+
   it("removes the strip offer eight seconds after the window act", async () => {
     vi.useFakeTimers();
     render(<DeskRequests />);

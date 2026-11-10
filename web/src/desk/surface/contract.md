@@ -1775,9 +1775,10 @@ requires `rowKey`; display-only tables and custom verb slots can omit it.
 ## GuideNote — help and feedback in the window (2026-11-10)
 
 `GuideNote` portals an absolute layer into its `owner` window. The layer owns
-an unclipped ring and wrapping note. One trailing bottom seat stays above
-the status area; only a part under that seat moves it to the top trailing corner.
-A phone uses the full available width.
+a ring and wrapping note. The note owns a full-width bottom band. Its measured
+height is reserved by the window, so the body and status area end above it.
+The pane lays out in the remaining height; its own well scrolls the marked part
+into view. A checkbox ring follows its visible well, with its stroke inside it.
 It uses the library Buttons for Stop, Next/Done and optional feedback. A capture
 or linked question supplies `children` and `actions` in the same note.
 The Components window's Guide note specimen uses local state only.
@@ -1800,6 +1801,17 @@ withholds both feedback entry points when capture is unavailable.
 Guide and standalone recordings use the shared cross-view microphone floor.
 Capture stops when its owner window, guide or selected part goes away. Before
 Save, recorded audio names the configured off-device speech engines through
-the existing feedback status read; typed feedback has no model call or chip.
+the existing feedback status read. The completion area says Audio goes to,
+followed by inline EgressChip pieces. Typed feedback has no model call or chip.
 
-GuideNote uses one trailing bottom seat throughout a guide, with a fixed caption space so Next stays put. Only an intersecting ring moves that step to the top trailing corner. Capture grows upward; there is no pointer or tail. The seat is bounded by both the window and the visible screen. A tall kit list borrows a shorter scroll well while the guide is open; its original style and scroll return afterward. A short window borrows a minimum height within the visible desk, then returns its original inline minimum. The seat reserves 48 pixels for status rows. Recording shows elapsed time and the shared live level meter; a failed save uses the kit fail mark. Guide-opened folded menus belong to the window, close on advance/exit and are part of its captured image. Their items are never pressed by the runner.
+GuideNote keeps a fixed caption space so Next stays put. Capture grows the same
+bottom band; no pane is covered. The seat is bounded by the window and visible
+screen. The guide layer is a surface container, so its phone completion controls
+keep 44 px targets and the safe-area inset. A short window borrows a minimum
+height within the visible desk, then returns its original inline minimum.
+Closing the note removes the reserved band. Recording shows elapsed time and
+the shared live level meter; a failed save uses the kit fail mark. Guide-opened
+folded menus belong to the window, close on advance/exit and are part of its
+captured image. Their items are never pressed by the runner. Linked walks wait
+for the existing Desk readiness signals and one reading beat before they open
+a window, then wait for that window's first read before selecting a part.

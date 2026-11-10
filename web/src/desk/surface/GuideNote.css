@@ -1,7 +1,16 @@
+/* The host gives every pane the remaining height, including its status line. */
+.desk-next [data-guide-seat] {
+  box-sizing: border-box;
+  padding-bottom: var(--guide-seat-height, 0px);
+}
+.desk-next [data-guide-seat] > :is(.surface-host-body, .desk-pullout-body, .desk-surface-body, .chair-window-body) {
+  min-height: 0;
+}
 .guide-layer {
   position: absolute;
   inset: 0;
   pointer-events: none;
+  container: surface / inline-size;
   z-index: var(--desk-z-popover);
   font: 400 var(--font-size-sm)/1.4 var(--font-sans);
   color: var(--wb-ink);
@@ -17,11 +26,11 @@
   box-sizing: border-box;
   width: min(360px, calc(100% - 16px));
   padding: var(--space-3);
+  padding-bottom: calc(var(--space-3) + var(--guide-safe-bottom, env(safe-area-inset-bottom, 0px)));
   background: var(--wb-paper);
   color: var(--wb-ink);
-  border: 1px solid var(--wb-rule);
-  border-radius: var(--radius-sm);
-  box-shadow: var(--wb-drop);
+  border: 0;
+  border-top: 1px solid var(--wb-rule);
   pointer-events: auto;
 }
 .guide-words {
@@ -63,9 +72,7 @@
   overflow-wrap: break-word;
 }
 @container surface (max-width: 480px) {
-  .guide-note {
-    padding: var(--space-3);
-  }
+  .guide-note .btn { min-height: 44px; }
   .guide-bar {
     row-gap: var(--space-3);
   }
@@ -82,3 +89,10 @@
 .guide-capture-recording { display: flex; align-items: center; gap: var(--space-3); }
 
 .guide-next { min-width: 52px; }
+
+.guide-capture-egress {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}

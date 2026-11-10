@@ -6,6 +6,7 @@
  * test with no provider) it listens to nothing. */
 import { createPortal } from "react-dom";
 import { Button } from "../../components/signal/Signal";
+import { WorkMenu } from "../components/DeskMenu";
 import { restoreWindowUndo, WindowUndoStale } from "../windowUndo";
 import type { WindowUndo } from "../used";
 import { useEffect, useRef, useState } from "react";
@@ -64,6 +65,7 @@ export function DeskRequests() {
   const [undo, setUndo] = useState<UndoOffer | null>(null);
   const latestUndo = useRef<UndoOffer | null>(null);
   const [undoError, setUndoError] = useState("");
+  const [undoMenu, setUndoMenu] = useState<{x: number; y: number} | null>(null);
   const [busy, setBusy] = useState(false);
   useEffect(() => {
     if (!undo) return;
@@ -95,6 +97,7 @@ export function DeskRequests() {
         if (args.verb === "zoom" && (windows[0]?.after as { zoomed?: boolean })?.zoomed === false) verb = "Restore size";
         const offer = { value: { group: "desk", ...args, windows }, label: `${verb}${names.length > 1 ? " windows" : names.length ? ` ${names[0]}` : ""}` };
         latestUndo.current = offer;
+        setUndoMenu(null);
         setUndo(offer);
         setUndoError("");
       },
@@ -132,6 +135,17 @@ export function DeskRequests() {
       if (typeof unsubscribe === "function") unsubscribe();
     };
   }, [subscribe]);
+  const runUndo = () => {
+    if (!undo || busy) return;
+    const entry = undo;
+    setBusy(true);
+    void restoreWindowUndo(entry.value).then(() => setUndo(now => now === entry ? null : now))
+      .catch(cause => {
+        if (latestUndo.current === entry) setUndoError(cause instanceof WindowUndoStale
+          ? cause.message : "Undo could not be checked. Work kept. Try again.");
+      })
+      .finally(() => setBusy(false));
+  };
   if (!shown && !undo) return null;
   const undoSlot = document.getElementById("desk-window-undo-slot");
   return (
@@ -141,20 +155,18 @@ export function DeskRequests() {
           <Caption text={words} testId="desk-request-words" />
         </div>
       </div> : null}
-      {undo && undoSlot ? createPortal(<div className="desk-window-undo" role="status">
+      {undo && undoSlot ? createPortal(<div className="desk-window-undo" role="status"
+        aria-label={undoError || undo.label} title={undoError || undo.label}
+        onContextMenu={event => {event.preventDefault(); setUndoMenu({x:event.clientX,y:event.clientY});}}>
         <span>{undoError || undo.label}</span>
         <Button variant="chrome" disabled={busy} data-testid="desk-window-undo"
-          aria-label={`Undo: ${undo.label}`} onClick={() => {
-            const entry = undo;
-            setBusy(true);
-            void restoreWindowUndo(entry.value).then(() => setUndo((now) => now === entry ? null : now))
-              .catch((cause) => {
-                if (latestUndo.current === entry) setUndoError(cause instanceof WindowUndoStale
-                  ? cause.message : "Undo could not be checked. Work kept. Try again.");
-              })
-              .finally(() => setBusy(false));
-          }}>Undo</Button>
-        </div>, undoSlot) : null}
+          aria-label={`Undo: ${undo.label}`} onClick={runUndo}>Undo</Button>
+        {undoMenu ? <WorkMenu label="Window receipt" x={undoMenu.x} y={undoMenu.y}
+          entries={[
+            ...(undoError ? [{type: "note" as const, id: "failure", label: undoError}] : []),
+            {type: "item", id: "undo", label: `Undo: ${undo.label}`, ghost: busy ? "Undo is running" : undefined, onSelect: runUndo},
+          ]} onClose={() => setUndoMenu(null)} /> : null}
+      </div>, undoSlot) : null}
     </>
   );
 }

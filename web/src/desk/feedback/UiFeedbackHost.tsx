@@ -412,10 +412,14 @@ export function UiFeedbackHost() {
           </span> : state}
         </span>
       ) : null}
-      {(phase === "recording" || payload.current?.audio_base64) && phase !== "saved" ?
-        capability.transcription_egress?.map((route) => <EgressChip key={route.label+route.boundary}
-          label={route.label} scope={route.boundary === "private_network" || route.boundary === "mesh" ? "remote" : "cloud"}
-          title={`Recorded audio goes to ${route.label} for speech to text when you save.`} />) : null}
+      {(phase === "recording" || payload.current?.audio_base64) && phase !== "saved" && capability.transcription_egress?.length ? (
+        <div className="guide-capture-egress">
+          <span>Audio goes to</span>
+          {capability.transcription_egress.map((route) => <EgressChip key={route.label+route.boundary}
+            label={route.label} scope={route.boundary === "private_network" || route.boundary === "mesh" ? "remote" : "cloud"}
+            title={`Audio goes to ${route.label} when you save.`} />)}
+        </div>
+      ) : null}
       {error ? (
         <span role="alert" className="guide-capture-state">
           <DotWord tone="fail">{error}</DotWord>
