@@ -87,7 +87,7 @@ it("list and open meeting: same-device work has no egress chip or loopback addre
   render(<Shell />);
   const row = await screen.findByTestId("meeting-row-a");
   // Window grammar: the selected row's route and attempts sit in the status bar.
-  fireEvent.click(within(row).getByRole("button"));
+  fireEvent.click(row);
   await waitFor(() => expect(chips()).toHaveLength(0));
   expect(chips().join(" ")).not.toContain("127.0.0.1");
   expect(screen.queryByTestId("row-attempts")?.querySelector(".gadget-chip-egress") ?? null).toBeNull();

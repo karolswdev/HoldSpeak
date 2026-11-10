@@ -1,25 +1,23 @@
-// The Meetings app in the language (2026-11-08, owner: "every single app
-// needs to be native"): the rail of meetings at the left, the picked meeting
-// at the right (MeetingRecord: the mast, the spine, the plate, the ledger).
-// A press on a row picks it (the window's scope `meeting:<id>`). At a narrow
-// window the rail and the meeting take turns; the meeting's Back returns.
+// Records uses the shared selection list and a bounded preview below it.
 import { SPEECH_SETUP_EVENT } from "../../desk/firstrun/SpeechSetup";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { openSurfaceOr } from "../../desk/shell";
 import { openSourceRef } from "../../desk/surface/citations";
-import type { CoreProps, MeetingsListResponse } from "./core-types";
+import type { CoreProps } from "./core-types";
 import { asRows } from "../pageSupport";
 import { useResource } from "../pageSupport";
 import {
   ParkReceipt,
-  ParkedStrip,
+  ListPane,
+  parkedOutcome, notParkedOutcome, parkClock,
+  type ListVerb,
   restoredOutcome,
   restoreFailedOutcome,
   type ParkOutcome,
   type ParkedRow,
 } from "../../desk/surface";
-import { fetchParkedMeetings, restoreMeeting } from "../../desk/api";
-import { StringGadget, CheckGadget } from "../../desk/surface/gadgets";
+import { fetchParkedMeetings, restoreMeeting, parkMeeting } from "../../desk/api";
+import { StringGadget } from "../../desk/surface";
 import {
   readPlannedRoute,
   routeOff,
@@ -31,19 +29,19 @@ import { burstTimer } from "../../desk/burstTimer";
 import { onReturnToTask } from "../../desk/returnToTask";
 import { renderHeroSlot } from "./core-layout";
 import {
-  ledgerDate, hasOpenMeetingActions, intelStateOf,
+  ledgerDate, intelStateOf,
   ACTIVE_RUN_STATES, FINAL_RUN_STATES, adoptDurableRunReceipt,
   ImportSection, CatalogRail, DoorSection, meetingFailed,
 } from "./history";
 import { useSummaryRun } from "./history/useSummaryRun";
 import { IMPORT_ACCEPT } from "./history/importWhen";
 import { RecordHome } from "./history/RecordHome";
-import { StatusBar, ToolGlyph, countWords, type StatusBarItem } from "../../desk/surface/kit";
-import { SurfaceState } from "../../desk/surface/Surface";
-import { Button } from "../../components/signal/Signal";
+import { StatusBar, countWords, type StatusBarItem } from "../../desk/surface/kit";
 import { objectWindowStandIn } from "../../desk/objectWindows";
 import { useWindowInterior } from "../../desk/surface/interior";
-import "./history/meetings-list.css";
+import { useMeetingList } from "./history/useMeetingList";
+import { routeTitle } from "../../meetings/RouteDisclosure";
+import { MeetingPreview } from "./history/MeetingPreview";
 import { MeetingWindow } from "../../desk/pullouts/MeetingWindow";
 import { Token } from "../../desk/surface/Token";
 import { MEETING_CHANGE_KINDS } from "../../desk/useDeskChangedRefresh";
@@ -83,6 +81,8 @@ export function HistoryCore({ hero, scope }: CoreProps) {
   const [parkOutcome, setParkOutcome] = useState<ParkOutcome | null>(null);
   const [parked, setParked] = useState<ParkedRow[]>([]);
   const [parkedOn, setParkedOn] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const deletingRef = useRef(false);
   // The rail marks the last meeting picked (Back returns to it) and the one
   // Restore brought back.
   const [marked, setMarked] = useState<string | null>(null);
@@ -113,33 +113,13 @@ export function HistoryCore({ hero, scope }: CoreProps) {
   // HS-170-04: search (StringGadget with mic in the list head)
   const [searchQuery, setSearchQuery] = useState("");
 
-  // HS-170-04: server-side facets (token toggles on the caption row)
-  const [facets, setFacets] = useState<{
-    date_from: string;
-    date_to: string;
-    speaker: string;
-    tag: string;
-    has_open_actions: boolean;
-  }>({ date_from: "", date_to: "", speaker: "", tag: "", has_open_actions: false });
-  const facetsResource = useResource<Record<string, unknown>>("/api/meetings/facets", {});
-
-  // Build meeting params from search + facets.
   const meetingParams = useMemo(() => {
-    const meetingParams = new URLSearchParams();
-    meetingParams.set("limit", "100");
-    const query = searchQuery;
-    if (query) meetingParams.set("search", query);
-    if (facets.date_from) meetingParams.set("date_from", facets.date_from);
-    if (facets.date_to) meetingParams.set("date_to", facets.date_to);
-    if (facets.speaker) meetingParams.set("speaker", facets.speaker);
-    if (facets.tag) meetingParams.set("tag", facets.tag);
-    if (facets.has_open_actions) meetingParams.set("has_open_actions", "true");
-    return meetingParams;
-  }, [searchQuery, facets]);
+    const params = new URLSearchParams({ limit: "100" });
+    if (searchQuery) params.set("search", searchQuery);
+    return params;
+  }, [searchQuery]);
 
-  const meetings = useResource<MeetingsListResponse>(
-    `/api/meetings?${meetingParams.toString()}`, {},
-  );
+  const meetings = useMeetingList(`/api/meetings?${meetingParams.toString()}`);
 
   // HS-170-04: gear door plumbing data (DoorSection)
   const doorActions = useResource<Record<string, unknown>>("/api/all-action-items", {});
@@ -153,16 +133,6 @@ export function HistoryCore({ hero, scope }: CoreProps) {
     () => asRows(meetings.data, ["meetings"]),
     [meetings.data],
   );
-  // A press on a rail row picks the meeting: the pane shows it, on the
-  // Records face.
-  const setView = wings.setView;
-  const setDoorOpen = wings.setDoorOpen;
-  const pickMeeting = useCallback((row: Record<string, unknown>) => {
-    setDoorOpen(false);
-    setView("outcomes");
-    if (row.id) openSourceRef(`meeting:${String(row.id)}`);
-  }, [setDoorOpen, setView]);
-
   // PHILO-13-02: the parked meetings, read through H-A1's client.
   const loadParked = useCallback(async () => {
     try {
@@ -226,15 +196,6 @@ export function HistoryCore({ hero, scope }: CoreProps) {
     if (receipt) setParkOutcome(null);
   }, [receipt]);
 
-  // HS-201-11: the HAS OPEN ACTIONS facet is drawn only when an open
-  // action exists for it to find.
-  const openActionsFacetDrawn = useMemo(
-    () =>
-      facets.has_open_actions ||
-      hasOpenMeetingActions(asRows(doorActions.data, ["action_items"])),
-    [facets.has_open_actions, doorActions.data],
-  );
-
   /* ── the face re-reads itself (HS-202-02 job 2) ──
      `desk_changed`, a deferred summary's `aftercare_ready`, the return from
      a task and window focus re-read the list. The subscription is held for
@@ -285,11 +246,8 @@ export function HistoryCore({ hero, scope }: CoreProps) {
 
   // Window grammar: the Records face runs edge to edge (rail, pane, status
   // bar); Record, Import and the plumbing door keep the form inset.
-  const recordsFace = !wings.doorOpen && wings.view !== "record";
-  useWindowInterior(recordsFace ? "list" : null);
-
-  // W1-KIT (2026-10-27): Choose engine is the warning's fix.
-  const engineMissing = Boolean(faceRoute) && !routeReady(faceRoute) && !routeOff(faceRoute);
+  const recordsFace = !wings.doorOpen && wings.view !== "record" && !scopedMeetingId;
+  useWindowInterior(scopedMeetingId ? undefined : recordsFace ? "list" : null);
 
   // PHILO-13-02 (A1-F) — Restore (C1-5a–e).
   const showParkOutcome = (outcome: ParkOutcome) => {
@@ -297,6 +255,8 @@ export function HistoryCore({ hero, scope }: CoreProps) {
     setParkOutcome(outcome);
   };
   const restoreParked = async (ids: string[]) => {
+    if (deletingRef.current) return;
+    deletingRef.current = true; setDeleting(true);
     try {
       await Promise.all(ids.map((id) => restoreMeeting(id)));
       showParkOutcome(restoredOutcome(ids));
@@ -306,22 +266,19 @@ export function HistoryCore({ hero, scope }: CoreProps) {
       void loadParked();
     } catch {
       showParkOutcome(restoreFailedOutcome(ids));
-    }
+    } finally { deletingRef.current = false; setDeleting(false); }
   };
 
 
   // The status bar's words (UX-CANON A.8: a zero is never said). With a
   // meeting picked, the meeting's own status bar is the window's foot.
-  const failedCount = meetingRows.filter(meetingFailed).length;
-  const reviewCount = meetingRows.reduce((sum, row) => sum + (Number(row.needs_you_count) || 0), 0);
+  const needsCount = meetingRows.filter((row) => meetingFailed(row) || Number(row.needs_you_count) > 0).length;
   const statusItems: StatusBarItem[] = [
-    { key: "count", text: countWords(meetingRows.length, "meeting"), testId: "meetings-count" },
-    { key: "review", lamp: "ask" as const, text: countWords(reviewCount, "to review", "to review") },
-    { key: "failed", lamp: "fail" as const, text: countWords(failedCount, "failed", "failed") },
-    routeWord ? { key: "route", lamp: "warn" as const, text: routeWord, testId: "meetings-route-state" } : null,
-    parkOutcome
-      ? { key: "receipt", text: <ParkReceipt outcome={parkOutcome} onRestore={(ids) => void restoreParked(ids)} data-testid="meetings-park-receipt" /> }
-      : receipt
+    { key: "count", text: countWords(parkedOn ? parked.length : meetingRows.length, "meeting"), testId: "meetings-count" },
+    marked && (parkedOn ? parked.some((row) => row.id === marked) : meetingRows.some((row) => String(row.id) === marked)) && recordsFace ? { key: "selection", text: "1 selected" } : null,
+    !parkedOn ? { key: "needs", lamp: "ask" as const, text: countWords(needsCount, "needs you", "need you") } : null,
+    !parkedOn && routeWord ? { key: "route", lamp: "warn" as const, text: routeWord, testId: "meetings-route-state" } : null,
+    receipt && !parkedOn
         ? {
             key: "receipt",
             text: (
@@ -333,53 +290,43 @@ export function HistoryCore({ hero, scope }: CoreProps) {
         : null,
   ].filter((item): item is NonNullable<typeof item> => Boolean(item)) as StatusBarItem[];
 
-  // The rail's head: the search well, Record meeting and Import, then the
-  // filters (each drawn only when it can find something).
-  const railHead = (
-    <>
-      <span className="meetings-search">
-        <StringGadget label="Search meetings" value={searchQuery} onChange={setSearchQuery} placeholder="Search meetings" />
-      </span>
-      <span className="mt-catalog-verbs" role="toolbar" aria-label="Meetings" data-testid="meetings-toolbar">
-        <Button dense variant="secondary" data-testid="meetings-record" onClick={() => openSurfaceOr("record-live", "/live", scope)}>
-          <ToolGlyph kind="record" />
-          Record
-        </Button>
-        <Button dense variant="secondary" data-testid="meetings-import" onClick={() => importPicker.current?.click()}>
-          <ToolGlyph kind="import" />
-          Import
-        </Button>
-        {openActionsFacetDrawn ? (
-          <span className="meetings-facets" data-testid="meetings-facets">
-            <CheckGadget label="Open actions" variant="token" checked={facets.has_open_actions}
-              onChange={(next) => setFacets((f) => ({ ...f, has_open_actions: next }))} />
-          </span>
-        ) : null}
-        {/* PHILO-13-02: the PARKED token (absent at zero); on, the parked
-            rows take the rail's place, each with Restore. */}
-        <ParkedStrip rows={parked} on={parkedOn} onToggle={setParkedOn}
-          onRestore={(ids) => void restoreParked(ids)} data-testid="meetings-parked" />
-      </span>
-    </>
-  );
-
-  const rail = (
-    <CatalogRail
-      meetingRows={meetingRows}
-      rowsHidden={parkedOn}
-      meetings={meetings}
-      picked={scopedMeetingId}
-      marked={marked}
-      onPick={pickMeeting}
-      onBack={() => openSurfaceOr("review-meetings", "/history")}
-      runningId={runningId}
-      drainerAbsent={drainerAbsent}
-      runRefusal={runRefusal}
-      head={railHead}
-      emptyImage={`${import.meta.env.BASE_URL || "/_built/"}desk/sprites/meeting.png`}
-      onEmptyAction={() => importPicker.current?.click()}
-    />
-  );
+  const remove = async (id: string) => {
+    if (deletingRef.current) return;
+    deletingRef.current = true; setDeleting(true);
+    try {
+      await parkMeeting(id);
+      meetings.setData((data) => ({ ...data, meetings: asRows(data, ["meetings"]).filter((row) => String(row.id) !== id) }));
+      setMarked((current) => current === id ? null : current);
+      showParkOutcome(parkedOutcome([id], parkClock()));
+      void loadParked();
+    } catch {
+      showParkOutcome(notParkedOutcome("Meeting not deleted", "Try again"));
+    } finally { deletingRef.current = false; setDeleting(false); }
+  };
+  const selectedMeeting = meetingRows.find((row) => String(row.id) === marked);
+  const verbs: ListVerb[] = [
+    { id: "record", label: "Record", testId: "meetings-record", run: () => openSurfaceOr("record-live", "/live", scope) },
+    { id: "import", label: "Import", testId: "meetings-import", run: () => importPicker.current?.click() },
+    { id: "open", label: "Open", key: "Enter", enabled: (row) => Boolean(row), run: (row) => { if (row) openSourceRef(`meeting:${row.id}`); } },
+    { id: "summarise", label: "Summarise", title: routeTitle(readPlannedRoute(selectedMeeting)), enabled: (row) => {
+      const meeting = meetingRows.find((entry) => String(entry.id) === row?.id);
+      return Boolean(meeting && meeting.transcriptWords && routeReady(readPlannedRoute(meeting))
+        && !ACTIVE_RUN_STATES.has(intelStateOf(meeting.intel_status)) && runningId !== row?.id);
+    }, run: (row) => { if (row) void summary.run(row.id); } },
+    { id: "delete", label: "Delete", key: "Delete", enabled: (row) => Boolean(row) && !deleting, run: (row) => { if (row) void remove(row.id); } },
+    ...(parked.length ? [{ id: "deleted", label: parkedOn ? "Records" : "Deleted…", run: () => { setParkedOn(!parkedOn); setMarked(null); } }] : []),
+  ];
+  const rail = <CatalogRail meetingRows={meetingRows} meetings={meetings} picked={marked} onPick={(row) => setMarked(String(row.id))}
+    runningId={runningId} drainerAbsent={drainerAbsent} runRefusal={runRefusal} verbs={verbs}
+    trailing={<StringGadget label="Find a meeting" value={searchQuery} onChange={setSearchQuery} placeholder="Find a meeting" />} />;
+  const records = parkedOn ? <ListPane label="Deleted meeting" list={<CatalogRail
+    meetingRows={parked.map((row) => ({ id: row.id, title: row.title, has_summary: true }))} meetings={meetings} picked={marked}
+    onPick={(row) => setMarked(String(row.id))} runningId={null} verbs={[
+      { id: "records", label: "Records", run: () => { setParkedOn(false); setMarked(null); } },
+      { id: "restore", label: "Restore", enabled: (row) => Boolean(row) && !deleting, run: (row) => { if (row) void restoreParked([row.id]); } },
+    ]} />}><p>Deleted meetings can be restored.</p></ListPane> : <ListPane list={rail} label="Meeting preview" listTestId="meetings-list" previewTestId="meetings-preview">
+      {selectedMeeting ? <MeetingPreview key={marked} meeting={selectedMeeting} /> : <p>{meetingRows.length || meetings.error ? "Select a meeting to read its summary." : searchQuery ? "No meeting matches" : "Record or import a meeting"}</p>}
+    </ListPane>;
 
   // The pane: the picked meeting (live while it records, else its record),
   // or one line and the verb that makes a meeting.
@@ -403,18 +350,14 @@ export function HistoryCore({ hero, scope }: CoreProps) {
   ) : scopedMeetingId ? (
     <MeetingWindow key={scopedMeetingId} object={objectWindowStandIn(`meeting:${scopedMeetingId}`)!}
       onClose={() => openSurfaceOr("review-meetings", "/history")} />
-  ) : (
-    <SurfaceState empty emptyKind="meeting" emptyImage={`${import.meta.env.BASE_URL || "/_built/"}desk/sprites/meeting.png`}
-      emptyLabel={meetingRows.length ? "Pick a meeting" : "No meeting yet"}
-      actionLabel="Record meeting" onAction={() => openSurfaceOr("record-live", "/live", scope)} />
-  );
-  const showsMeeting = recordsFace && Boolean(scopedMeetingId);
+  ) : records;
+  const showsMeeting = Boolean(scopedMeetingId) && !wings.doorOpen && wings.view !== "record";
 
   return (
     <>
       {renderHeroSlot(hero, null)}
       <div
-        className="meetings-drop mt-window"
+        className="surface-preference-pane"
         data-testid="meetings-drop"
         onDragOver={(event) => event.preventDefault()}
         onDrop={(event) => {
@@ -422,11 +365,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
           startImport(event.dataTransfer?.files?.[0]);
         }}
       >
-        <div className="mt-frame surface-rail-layout" data-picked={showsMeeting ? "" : undefined} data-face={recordsFace ? undefined : "form"}>
-          {/* Record, Import and the door take the whole window. */}
-          {recordsFace ? rail : null}
-          <div className="mt-pane" data-testid="meetings-pane" data-meeting={showsMeeting ? scopedMeetingId ?? undefined : undefined}>{pane}</div>
-        </div>
+        {recordsFace ? records : <div className="surface-preference-pane mt-pane" data-testid="meetings-pane">{pane}</div>}
         {/* Capture C7: the picker is mounted on every face, so Import on
             Meetings ▸ Record opens it too. */}
         <input
@@ -446,13 +385,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
       {showsMeeting ? null : (
         <StatusBar
           data-testid="meetings-status"
-          verbs={engineMissing ? (
-            <Button dense variant="secondary" data-testid="meetings-choose-engine"
-              onClick={() => openSurfaceOr("open-concierge", "/models", "meetings")}>
-              <ToolGlyph kind="engine" />
-              Choose engine
-            </Button>
-          ) : null}
+          verbs={parkOutcome && !parkedOn ? <ParkReceipt outcome={parkOutcome} onRestore={(ids) => void restoreParked(ids)} data-testid="meetings-park-receipt" /> : null}
           items={statusItems}
         />
       )}

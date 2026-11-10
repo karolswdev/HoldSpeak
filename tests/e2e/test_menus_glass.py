@@ -724,43 +724,14 @@ class TestSharedControlsAreSpecies:
                      "hs.desk.staged-surface-open", JSON.stringify({key: 'review-meetings'}))""")
             page.reload(wait_until="load")
             _normal_chair(page)
-            page.locator("#surface-meetings .object-list-open").first.wait_for(timeout=15_000)
-            # ── the Meetings row body: a real Button that draws as a div ─
-            # It WAS `<div role="button" tabIndex={0}>` (the last raw control
-            # on the Meetings stream, `CatalogRail.tsx:211` in the census).
-            # A <button> arrives wearing the UA plate — buttonface fill, an
-            # outset border, 1px 6px of padding — so `.meetings-stream-row-body`
-            # now erases all three. Read it back off the glass: the row draws
-            # what the div drew.
-            plate = page.evaluate(
-                """() => {
-                     const el = document.querySelector('#surface-meetings .object-list-open');
-                     if (!el) return null;
-                     const s = getComputedStyle(el);
-                     return {
-                       tag: el.tagName,
-                       background: s.backgroundColor,
-                       borderTopWidth: s.borderTopWidth,
-                       paddingTop: s.paddingTop,
-                       paddingLeft: s.paddingLeft,
-                       textAlign: s.textAlign,
-                       display: s.display,
-                       font: s.font,
-                     };
-                   }"""
-            )
-            assert plate is not None, (
-                "the Meetings stream drew no row: the row-body conversion "
-                "was NOT ASSESSED"
-            )
-            assert plate["tag"] == "BUTTON", plate
-            assert plate["background"] in ("rgba(0, 0, 0, 0)", "transparent"), plate
-            assert plate["borderTopWidth"] == "0px", plate
-            # Window grammar: the dense list row's own inset, not the UA's 1px 6px.
-            assert plate["paddingTop"] == "4px", plate
-            assert plate["paddingLeft"] == "10px", plate
-            assert plate["textAlign"] == "left", plate
-            assert plate["display"] == "flex", plate
+            row = page.locator('#surface-meetings [role="row"][data-object-id]').first
+            row.wait_for(timeout=15_000)
+            assert row.locator('button').count() == 0
+            row.click()
+            assert row.get_attribute('aria-selected') == 'true'
+            assert page.locator('#surface-meetings [data-testid="meeting-mast"]').count() == 0
+            assert row.evaluate("el => getComputedStyle(el).display") == "grid"
+
 
             real_errors = [e for e in errors if "ResizeObserver" not in e]
             assert not real_errors, real_errors

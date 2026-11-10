@@ -39,16 +39,16 @@ function rail(rows: Record<string, unknown>[]) {
 
 function token(id: string): string {
   const el = document.querySelector(`[data-testid="meeting-row-${id}"]`) as HTMLElement;
-  return within(el).getByTestId("state-token").textContent ?? "";
+  return within(el).queryByTestId("state-token")?.textContent ?? "";
 }
 
 describe("PHILO-13-04 A3-W — the rail names a stored summary", () => {
-  it("says SUMMARY STORED, never OFF, when the run status is disabled", () => {
+  it("keeps stored summaries quiet and names missing summaries", () => {
     rail([row("stored", "disabled", true), row("none", "disabled", false)]);
-    expect(token("stored")).toBe("Summary stored");
+    expect(token("stored")).toBe("");
     // PHILO-15 10 (B14): OFF only when summaries ARE off (the row's route
     // says "summaries off"); otherwise the summary is not run yet.
-    expect(token("none")).toBe("Not run");
+    expect(token("none")).toBe("No summary");
   });
 
   it("names the stored fact when no run is active", () => {
@@ -68,7 +68,7 @@ describe("PHILO-13-04 A3-W — the rail names a stored summary", () => {
     expect(stateToken(row("f", "error", true)).label).toBe("FAILED");
     rail([row("failed", "error", true)]);
     const el = document.querySelector('[data-testid="meeting-row-failed"]') as HTMLElement;
-    expect(within(el).getByTestId("state-token").textContent).toBe("Failed");
+    expect(within(el).getByTestId("state-token").textContent).toBe("Summary failed");
     expect(meetingRowState(row("failed", "error", true)).verb).toBe("Retry");
   });
 
@@ -101,12 +101,12 @@ describe("PHILO-13-04 A3-W — the rail names a stored summary", () => {
       row("rdy", "ready", true, 1),
       row("non", "ready", true, 0),
     ]);
-    expect(token("err")).toBe("Failed");
+    expect(token("err")).toBe("Summary failed");
     expect(token("run")).toBe("Running");
     expect(token("que")).toBe("Queued");
-    expect(token("dis")).toBe("1 to review");
-    expect(token("rdy")).toBe("1 to review");
-    expect(token("non")).toBe("Summary stored");
+    expect(token("dis")).toBe("1 task to confirm");
+    expect(token("rdy")).toBe("1 task to confirm");
+    expect(token("non")).toBe("");
   });
 
   it("never lets a NEEDS YOU count cover a capture state", () => {

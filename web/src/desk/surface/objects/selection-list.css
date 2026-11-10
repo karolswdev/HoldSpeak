@@ -48,3 +48,8 @@
 .desk-next .object-list.object-list--selection .gadget-cycle { width: 100%; min-height: 22px; }
 
 .object-list-value { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.object-list-toolbar .object-list-verbs { padding: 0; flex-wrap: nowrap; }
+.object-list-toolbar .kit-toolbar-verbs { flex: 1 1 0; min-width: 0; }
+.object-list-toolbar-strip { display: flex; flex: 1 1 0; min-width: 0; }
+.object-list-toolbar .kit-toolbar-sort { display: none; }

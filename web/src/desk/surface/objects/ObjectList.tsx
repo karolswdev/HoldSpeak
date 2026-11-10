@@ -37,7 +37,8 @@ import { Button } from "../../../components/signal/Signal";
 import { LampGadget } from "../gadgets";
 import { useRovingRows } from "../roving";
 import { listSprite } from "../../sprites";
-import { stateTone } from "../kit";
+import { stateTone, Toolbar } from "../kit";
+import { useStripFit } from "../stripMenu";
 import { lampGadgetTone, objectKindWord, objectSprite, type ObjectTone } from "./kinds";
 import { nameBreaks } from "./DeskIcon";
 import "./objects.css";
@@ -143,6 +144,8 @@ export interface ListVerb {
   label: string;
   key?: string;
   symbol?: "+" | "−";
+  testId?: string;
+  title?: string;
   enabled?: (selection: ObjectListRow | null) => boolean;
   run(selection: ObjectListRow | null): void;
   items?: readonly ListVerb[];
@@ -151,7 +154,7 @@ export interface ListVerb {
 export function listVerbEntries(verbs: readonly ListVerb[], selection: ObjectListRow | null): WorkMenuEntry[] {
   return verbs.map((verb) => verb.items
     ? { type: "sub", id: verb.id, label: verb.label, entries: listVerbEntries(verb.items, selection) }
-    : { type: "item", id: verb.id, label: verb.label, keycap: verb.key,
+    : { type: "item", id: verb.id, label: verb.label, keycap: verb.key === "Enter" ? "Return" : verb.key,
       disabled: verb.enabled ? !verb.enabled(selection) : false,
       onSelect: () => { if (!verb.enabled || verb.enabled(selection)) verb.run(selection); } });
 }
@@ -171,6 +174,8 @@ export interface ObjectListProps {
   /** OS selection grammar: 26 px rows, no row verbs, one selected row. */
   selection?: boolean;
   verbs?: readonly ListVerb[];
+  /** Draw the declared verbs above the list, with an optional find field. */
+  toolbar?: { trailing?: ReactNode; testId?: string };
   defaultVerb?: string;
   /** Keep input order for a chain or an authored list of jobs. */
   ordered?: boolean;
@@ -204,6 +209,7 @@ export function ObjectList({
   density = "default",
   selection = false,
   verbs = [],
+  toolbar,
   defaultVerb,
   ordered = false,
   onSort,
@@ -236,7 +242,10 @@ export function ObjectList({
   useEffect(() => {
     if (selection && windowId && ownsListMenu(windowId, menuOwner)) publishListMenu(windowId, menuOwner, listVerbEntries(verbs, picked));
   });
-  useEffect(() => () => { if (windowId) clearListMenu(windowId, menuOwner); }, [windowId, menuOwner]);
+  useEffect(() => {
+    if (selection && toolbar && windowId) publishListMenu(windowId, menuOwner, listVerbEntries(verbs, picked));
+    return () => { if (windowId) clearListMenu(windowId, menuOwner); };
+  }, [windowId, menuOwner, selection, Boolean(toolbar)]);
   const menuRow = rows.find((row) => row.id === menu?.id) ?? null;
   const sorted = useMemo(() => ordered ? rows : sortRows(rows, sort), [rows, sort, ordered]);
   const dense = density === "dense";
@@ -285,7 +294,19 @@ export function ObjectList({
   const sortVerb = dense && onSort ? (
     <ListSortVerb columns={columns} sort={sort} onSort={(key) => onSort(key as ObjectSortKey)} />
   ) : null;
-  return (
+  const verbBar = verbs.length ? <div className="object-list-verbs" role={toolbar ? undefined : "toolbar"} aria-label={toolbar ? undefined : `${label} actions`}>
+    {verbs.map((verb) => <Button key={verb.id} dense variant="secondary" data-testid={verb.testId}
+      aria-label={verb.label} title={verb.title ?? (verb.key ? `${verb.label} (${verb.key === "Enter" ? "Return" : verb.key})` : verb.label)}
+      aria-haspopup={verb.items ? "menu" : undefined}
+      disabled={verb.enabled ? !verb.enabled(picked) : false}
+      onClick={(event) => {
+        if (verb.items) { const rect = event.currentTarget.getBoundingClientRect(); setMenu({ x: rect.left, y: rect.bottom, id: picked?.id ?? null, opener: event.currentTarget }); setSubmenu(verb.id); }
+        else verb.run(picked);
+      }}>{verb.symbol ?? verb.label}</Button>)}
+  </div> : null;
+  return (<>
+    {selection && toolbar ? <SelectionToolbar key={verbs.map((verb) => `${verb.id}:${verb.label}`).join("|")} label={label} testId={toolbar.testId} trailing={toolbar.trailing}
+      verbs={verbBar} entries={listVerbEntries(verbs, picked)} /> : null}
     <div
       ref={listRef}
       onFocusCapture={selection && windowId ? () => publishListMenu(windowId, menuOwner, listVerbEntries(verbs, picked)) : undefined}
@@ -369,7 +390,7 @@ export function ObjectList({
                   event.preventDefault(); const rect = event.currentTarget.getBoundingClientRect();
                   setMenu({ x: rect.left, y: rect.bottom, id: row.id, opener: event.currentTarget });
                 } else {
-                  const verb = verbs.find((entry) => entry.key === event.key);
+                  const verb = verbs.find((entry) => (entry.key === event.key || (entry.key === "Delete" && event.key === "Backspace")));
                   if (verb && (!verb.enabled || verb.enabled(row))) { event.preventDefault(); verb.run(row); }
                 }
               } : undefined}
@@ -419,7 +440,7 @@ export function ObjectList({
                   case "kind":
                     return <div key="kind" role="gridcell" className="object-list-cell" data-col="kind" data-fold={fold("kind")}>{kindWord}</div>;
                   case "when":
-                    return <div key="when" role="gridcell" className="object-list-cell" data-col="when" data-fold={fold("when")}>{row.when ?? ""}</div>;
+                    return <div key="when" role="gridcell" className="object-list-cell" data-col="when" data-fold={fold("when")}>{selection ? <span className="object-list-value" title={row.when}>{row.when ?? ""}</span> : row.when ?? ""}</div>;
                   case "state":
                     return (
                       <div key="state" role="gridcell" className="object-list-state" data-col="state">
@@ -447,21 +468,12 @@ export function ObjectList({
           );
         })}
       </div>
-      {selection && verbs.length ? <div className="object-list-verbs" role="toolbar" aria-label={`${label} actions`}>
-        {verbs.map((verb) => <Button key={verb.id} dense variant="secondary"
-          aria-label={verb.label} title={verb.key ? `${verb.label} (${verb.key})` : verb.label}
-          aria-haspopup={verb.items ? "menu" : undefined}
-          disabled={verb.enabled ? !verb.enabled(picked) : false}
-          onClick={(event) => {
-            if (verb.items) { const rect = event.currentTarget.getBoundingClientRect(); setMenu({ x: rect.left, y: rect.bottom, id: picked?.id ?? null, opener: event.currentTarget }); setSubmenu(verb.id); }
-            else verb.run(picked);
-          }}>{verb.symbol ?? verb.label}</Button>)}
-      </div> : null}
+      {selection && !toolbar ? verbBar : null}
       {menu ? <WorkMenu label={`${label} actions`} x={menu.x} y={menu.y} autoFocus
         entries={listVerbEntries((submenu ? verbs.find((verb) => verb.id === submenu)?.items : null) ?? verbs, menuRow)}
         opener={menu.opener} onClose={() => { setMenu(null); setSubmenu(null); }} returnFocus={() => menu.opener?.focus()} /> : null}
     </div>
-  );
+  </>);
 }
 
 /** The nearest toolbar sort slot above a list: the first `.kit-toolbar-sort`
@@ -528,4 +540,20 @@ function ListSortVerb({
       </Popover>
     </span>
   );
+}
+
+/** The shared strip measures its verbs before folding them into one menu. */
+function SelectionToolbar({ label, testId, trailing, verbs, entries }: {
+  label: string; testId?: string; trailing?: ReactNode; verbs: ReactNode; entries: WorkMenuEntry[];
+}) {
+  const { ref, fits } = useStripFit<HTMLSpanElement>(true, entries.map((entry) => entry.id).join("|"));
+  const anchor = useRef<HTMLButtonElement>(null);
+  const [open, setOpen] = useState(false);
+  const rect = open ? anchor.current?.getBoundingClientRect() : null;
+  return <Toolbar label={label} data-testid={testId} trailing={trailing} className="object-list-toolbar">
+    <span ref={ref} className="object-list-toolbar-strip">{fits ? verbs : <Button ref={anchor} dense variant="secondary"
+      aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)}>Actions ▾</Button>}</span>
+    {rect ? <WorkMenu label={`${label} actions`} x={rect.left} y={rect.bottom} entries={entries} autoFocus
+      opener={anchor.current} returnFocus={() => anchor.current?.focus()} onClose={() => setOpen(false)} /> : null}
+  </Toolbar>;
 }
