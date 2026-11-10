@@ -102,13 +102,13 @@ def test_settings_page_order_anchor_and_saved_write(
             settings.get_by_test_id("settings-index-this-mac").click()
             engines = settings.get_by_test_id("settings-engines-page-link")
             engines.click()
-            engine_window = page.locator("#surface-engines")
-            engine_window.get_by_test_id("runson-root").wait_for(timeout=15_000)
+            engine_window = page.locator("#surface-settings")
+            engine_window.get_by_test_id("settings-engines-spine").wait_for(timeout=15_000)
             rows = _api(page, "GET", "/api/desk/windows", token=TOKEN)["windows"]
-            engine_row = next(row for row in rows if row["id"] == "surface-engines")
-            assert engine_row["app"] == "configure-runs-on", engine_row
+            engine_row = next(row for row in rows if row["id"] == "surface-settings")
+            assert engine_row["app"] == "configure-settings", engine_row
             page.screenshot(path=str(shots / f"settings-engines-{width}.png"), full_page=False)
-            _api(page, "POST", "/api/desk/windows/surface-engines/close", {}, token=TOKEN)
+            _api(page, "POST", "/api/desk/windows/surface-settings/close", {}, token=TOKEN)
             engine_window.wait_for(state="detached", timeout=10_000)
 
             # Restore the legacy entry after visiting another category.
@@ -222,6 +222,77 @@ def test_builder_tools_preference_persists_between_two_browsers(
             _normal_chair(desktop)
             _open_page(desktop, base, scope="this-mac")
             assert desktop.get_by_role("checkbox", name="Builder tools", exact=True).is_checked() is False
+            browser.close()
+    finally:
+        server.stop()
+
+
+@pytest.mark.timeout(240)
+@pytest.mark.parametrize("width", [1440, 393])
+def test_engines_pane_chain_editor_library_and_old_link(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int,
+) -> None:
+    """Every assignment write is on this rig's isolated DB, with fake CLIs."""
+    from playwright.sync_api import sync_playwright, expect
+    from tests.fixtures.fake_agent_cli import install_fake_agent_clis
+
+    _ensure_build()
+    server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
+    fake_bin = install_fake_agent_clis(tmp_path / "bin", names=("codex", "gemini"))
+    monkeypatch.setenv("PATH", f"{fake_bin}:/usr/bin:/bin")
+    monkeypatch.setenv("HOLDSPEAK_CLI_ENGINES", "on")
+    shots = evidence_dir("engines-settings-native")
+    try:
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch()
+            page = browser.new_page(viewport={"width": width, "height": HEIGHT[width]}, reduced_motion="reduce")
+            errors: list[str] = []
+            page.on("pageerror", lambda error: errors.append(str(error)))
+            _open_page(page, base, scope="engines")
+            entries = []
+            for preset in ("codex", "gemini"):
+                added = _api(page, "POST", "/api/inference/model-library/connect-cli-engine", {"draft": {
+                    "request_id": f"browser-{preset}", "profile_id": f"agent-{preset}",
+                    "expected_profile_revision": 0, "preset": preset}}, token=TOKEN)
+                provider = added["provider"]
+                entries.append({"profile_id": provider["profile_id"], "profile_revision": provider["profile_revision"]})
+            _api(page, "POST", "/api/inference/assignments/set", {
+                "command_id": "browser-isolated-chain", "scope": {"kind": "global"},
+                "expected_revision": 0, "entries": entries}, token=TOKEN)
+            # /models is an old door to this same Settings pane.
+            page.goto(f"{base}/models?token={TOKEN}", wait_until="load")
+            row = page.get_by_test_id("settings-job-summaries")
+            expect(row).to_contain_text("Meeting summaries run on Codex, then Gemini CLI", timeout=15_000)
+            assert page.locator("#surface-engines").count() == 0
+            primary = row.locator(".surface-ledger-primary")
+            expect(primary).to_have_css("white-space", "normal")
+            assert primary.evaluate("el => el.scrollWidth <= el.clientWidth + 1 && el.scrollHeight <= el.clientHeight + 1")
+            _settle(page)
+            page.screenshot(path=str(shots / f"assignments-{width}.png"))
+            page.get_by_role("button", name="Edit Everything else", exact=True).click()
+            editor = page.get_by_test_id("settings-engines-editor")
+            expect(editor).to_contain_text("Codex, then Gemini CLI")
+            page.screenshot(path=str(shots / f"editor-{width}.png"))
+            with page.expect_request(lambda request: request.url.endswith("/api/concierge/probe") and request.method == "POST") as probe:
+                editor.get_by_role("button", name="Try it", exact=True).click()
+            assert probe.value.post_data_json["expectedProfileIds"] == ["agent-codex", "agent-gemini"]
+            expect(editor.locator(".engines-result")).to_contain_text("Completed", timeout=15_000)
+            editor.get_by_role("button", name="Move Gemini CLI up", exact=True).click()
+            expect(row).to_contain_text("Gemini CLI, then Codex")
+            roster = _api(page, "GET", "/api/inference/assignments", token=TOKEN)
+            global_row = next(item for item in roster["rows"] if item["id"] == "global")
+            assert [entry["profile_id"] for entry in global_row["assignment"]["entries"]] == ["agent-gemini", "agent-codex"]
+            page.get_by_test_id("settings-engines-library-open").click()
+            library = page.get_by_test_id("settings-engines-library")
+            expect(library.get_by_test_id("settings-engine-agent-codex")).to_be_visible()
+            expect(library.get_by_test_id("runson-phone-speech")).to_be_visible()
+            expect(library.get_by_test_id("concierge-meaning-search")).to_be_visible()
+            _settle(page)
+            page.screenshot(path=str(shots / f"library-{width}.png"))
+            library.get_by_test_id("concierge-add-engine").click()
+            library.get_by_test_id("runson-kind-lan").click()
+            expect(library.get_by_role("textbox", name="Server address", exact=True)).to_be_visible()
+            assert errors == [], errors
             browser.close()
     finally:
         server.stop()

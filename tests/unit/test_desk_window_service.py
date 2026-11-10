@@ -387,14 +387,21 @@ def test_windows_no_view_can_open_from_a_row_are_refused(svc: Any) -> None:
     assert svc.list()["registry"]["not_on_hub"]["inspector"]
 
 
-def test_retired_concierge_window_is_refused_and_listed(svc: Any) -> None:
+@pytest.mark.parametrize("window_id", ["surface-concierge", "surface-engines"])
+def test_retired_engine_window_is_refused_listed_and_saved_row_closes(svc: Any, window_id: str) -> None:
     """PHILO-17: the old Runs on row is retired by static id while Settings
     remains the live host for the Engines wing."""
     with pytest.raises(ValidationError) as refused:
-        svc.open("surface-concierge")
+        svc.open(window_id)
     assert refused.value.code == "window_retired"
     registry = svc.list()["registry"]
-    assert registry["retired"]["surface-concierge"]
+    assert registry["retired"][window_id]
+    # A persisted row survives a face retirement until the browser closes it.
+    with svc._db._connection() as conn:
+        conn.execute("INSERT INTO desk_windows (id, app, depth, revision) VALUES (?, ?, ?, ?)",
+                     (window_id, STATIC_WINDOWS[window_id], 1, 1))
+    svc.close(window_id)
+    assert all(row["id"] != window_id for row in svc.list()["windows"])
     assert svc.open("surface-settings")["app"] == "configure-settings"
 
 
