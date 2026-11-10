@@ -186,6 +186,8 @@ describe("RuntimeIdentityModule", () => {
     mockApiFetch.mockResolvedValueOnce(makeWire({ repair: ["SECOND WRITER"] }));
     render(<RuntimeIdentityModule />);
     await screen.findByTestId("runtime-backend");
+    expect(screen.getByTestId("runtime-path")).not.toBeVisible();
+    fireEvent.click(screen.getByText("Device details", {exact: true}));
     expect(screen.getByTestId("runtime-path")).toBeVisible();
     expect(screen.getByTestId("runtime-repair")).toBeVisible();
     expect(screen.getByTestId("runtime-path")).toBeVisible();

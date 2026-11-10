@@ -7,7 +7,6 @@ import { apiFetch, readableError } from "../../../lib/api";
 import { useResource } from "../../pageSupport";
 import { CadenceCore } from "../CadenceCore";
 import { ReachSettingsPane } from "../../../desk/reach/ReachSettings";
-import { CADENCE_PRESSURE_OPTIONS } from "./prefs";
 import type { SettingsBindings } from "./bindings";
 
 /* ── Reach (PG-DIRECTION DIR6, ruled 2026-10-31: Notices becomes
@@ -26,37 +25,48 @@ export function ReachSection({
   heartbeatRevision: number;
   onHeartbeatWrite: () => void;
 }) {
-  const { check, num, cyc } = b;
+  const { check, num } = b;
   return (
     <ReachSettingsPane
       highlight={focusHighlight}
       onSaved={onSaved}
       quiet={<RhythmNoticeRows highlight={focusHighlight} onSaved={onSaved} onWrite={onHeartbeatWrite} />}
       cadenceTabs={[
-        { id: "cadence", label: "Notices", content: <GadgetGroup label="Cadence">
+        {
+          id: "cadence",
+          label: "Notices",
+          form: true,
+          content: (
+            <>
               {check(["cadence", "enabled"], "Enabled")}
-              {cyc(["cadence", "pressure"], "Pressure", CADENCE_PRESSURE_OPTIONS)}
               {num(["cadence", "max_nudges_per_day"], "Max nudges", {
                 unit: "/day",
                 min: 0,
               })}
-              {check(["cadence", "use_llm"], "Use LLM")}
-              {num(["cadence", "tick_interval_seconds"], "Tick interval", {
-                unit: "s",
-                min: 30,
-                step: 30,
-              })}
               {check(["cadence_telegram", "enabled"], "Cadence on Telegram")}
-            </GadgetGroup> },
-        { id: "brief", label: "Brief", content: <GadgetGroup label="Morning brief">
+            </>
+          ),
+        },
+        {
+          id: "brief",
+          label: "Morning brief",
+          form: true,
+          content: (
+            <>
               {check(["cadence", "brief_enabled"], "Enabled")}
               {num(["cadence", "brief_hour"], "Make at", {
                 unit: "h",
                 min: 0,
                 max: 23,
               })}
-            </GadgetGroup> },
-        { id: "sweep", label: "Sweep", content: <CadenceCore key={heartbeatRevision} embedded /> },
+            </>
+          ),
+        },
+        {
+          id: "sweep",
+          label: "Sweep and loops",
+          content: <CadenceCore key={heartbeatRevision} embedded />,
+        },
       ]}
     />
   );

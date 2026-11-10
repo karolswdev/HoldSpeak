@@ -1,0 +1,10 @@
+// PARKED: the implementation adapter control left Settings; config default is unchanged.
+  it("the adapter: a press on ai-phone writes calls.line.adapter", async () => {
+    lineHub({ "PUT /api/settings": linePut });
+    render(<CallsSettingsPane />);
+    await screen.findByTestId("line-settings");
+    openCallsTab("Line account");
+    const adapter = await screen.findByTestId("line-adapter");
+    fireEvent.click(within(adapter).getByRole("radio", { name: /ai-phone/ }));
+    await waitFor(() => expect(calls).toContain(`PUT /api/settings ${JSON.stringify({ calls: { line: { adapter: "ai-phone" } } })}`));
+  });

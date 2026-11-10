@@ -1,13 +1,13 @@
 // Meetings preferences share the bounded pane and label/control rows.
 import { useState } from "react";
-import { PreferencePane, PreferenceWell, SegmentedTabs, GadgetGroup, GadgetRow, CycleGadget } from "../../../desk/surface";
+import { PreferencePane, SegmentedTabs, GadgetGroup, GadgetRow, CycleGadget } from "../../../desk/surface";
 import { LiveMeetingTools } from "../LiveMeetingTools";
-import { INTELLIGENCE_AUTO_OPTIONS, MIR_PROFILE_OPTIONS, type SettingsHubWire } from "./prefs";
+import { INTELLIGENCE_AUTO_OPTIONS, type SettingsHubWire } from "./prefs";
 import type { SettingsBindings } from "./bindings";
 
 export function MeetingsSection({ b, hub, focusHighlight }: { b: SettingsBindings; hub: { data: SettingsHubWire }; focusHighlight: string }) {
-  const { val, update, check, str, num, cyc, prop, csv } = b;
-  const [tab, setTab] = useState(focusHighlight === "live-meeting" ? "live" : "summary");
+  const { val, update, check, str, cyc, csv } = b;
+  const [tab, setTab] = useState(focusHighlight === "live-meeting" ? "recording" : "summary");
   return (
     <PreferencePane label="Meetings">
       <SegmentedTabs
@@ -17,10 +17,7 @@ export function MeetingsSection({ b, hub, focusHighlight }: { b: SettingsBinding
         tabs={[
           { id: "summary", label: "Summary" },
           { id: "recording", label: "Recording" },
-          { id: "live", label: "Live" },
-          { id: "queue", label: "Queue" },
-          { id: "routing", label: "Routing" },
-          { id: "actuators", label: "Actuators" },
+          { id: "actuators", label: "Actions" },
         ]}
       >
         {tab === "summary" ? (
@@ -69,50 +66,20 @@ export function MeetingsSection({ b, hub, focusHighlight }: { b: SettingsBinding
               })}
             </GadgetGroup>
             <GadgetGroup label="Speakers">
-              {check(["meeting", "diarization_enabled"], "Diarization")}
-              {check(["meeting", "diarize_mic"], "Diarize mic")}
-              {prop(["meeting", "similarity_threshold"], "Similarity", {
-                min: 0,
-                max: 1,
-                step: 0.05,
-              })}
+              {check(["meeting", "diarization_enabled"], "Identify speakers")}
+              {check(["meeting", "diarize_mic"], "Identify microphone speakers")}
             </GadgetGroup>
+            <LiveMeetingTools />
           </>
         ) : null}
-        {tab === "live" ? <LiveMeetingTools /> : null}
-        {tab === "queue" ? <GadgetGroup label="Deferred queue">
-                {num(["meeting", "intel_retry_base_seconds"], "Retry base", {
-                  unit: "s",
-                  min: 1,
-                  step: 5,
-                })}
-                {num(["meeting", "intel_retry_max_seconds"], "Retry max", {
-                  unit: "s",
-                  min: 1,
-                  step: 60,
-                })}
-                {num(["meeting", "intel_retry_max_attempts"], "Retry attempts", { min: 1 })}
-              </GadgetGroup> : null}
-        {tab === "routing" ? <PreferenceWell><GadgetGroup label="Timing">
-                    {cyc(["meeting", "routing_profile"], "Routing profile", MIR_PROFILE_OPTIONS)}
-                    {check(["meeting", "intent_router_enabled"], "Intent router")}
-                    {num(["meeting", "intent_window_seconds"], "Intent window", { unit: "s", min: 10, step: 10 })}
-                    {num(["meeting", "intent_step_seconds"], "Intent step", {
-                      unit: "s",
-                      min: 5,
-                      step: 5,
-                    })}
-                  </GadgetGroup><GadgetGroup label="Detection">
-                    {prop(["meeting", "intent_score_threshold"], "Score threshold", { min: 0, max: 1, step: 0.05 })}
-                    {num(["meeting", "intent_hysteresis_windows"], "Hysteresis windows", { min: 0, max: 10 })}
-                    {check(["meeting", "intent_segment_probe_enabled"], "Segment probe")}
-                  </GadgetGroup></PreferenceWell> : null}
-        {tab === "actuators" ? <GadgetGroup label="Actuators">
-                {check(["meeting", "allow_actuators"], "Allow actuators")}
-                {csv(["meeting", "disabled_plugins"], "Disabled plugins")}
-                {csv(["meeting", "allowed_actuators"], "Allowed actuators")}
-                {csv(["meeting", "webhook_allowed_hosts"], "Webhook hosts")}
-              </GadgetGroup> : null}
+        {tab === "actuators" ? (
+          <GadgetGroup label="Allowed actions">
+            {check(["meeting", "allow_actuators"], "Allow actions")}
+            {csv(["meeting", "disabled_plugins"], "Disabled plugins")}
+            {csv(["meeting", "allowed_actuators"], "Allowed actions")}
+            {csv(["meeting", "webhook_allowed_hosts"], "Webhook hosts")}
+          </GadgetGroup>
+        ) : null}
       </SegmentedTabs>
     </PreferencePane>
   );

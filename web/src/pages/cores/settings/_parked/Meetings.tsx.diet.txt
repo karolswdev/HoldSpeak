@@ -1,0 +1,120 @@
+// PARKED: implementation tuning left Settings; config values and operations are unchanged.
+// Meetings preferences share the bounded pane and label/control rows.
+import { useState } from "react";
+import { PreferencePane, PreferenceWell, SegmentedTabs, GadgetGroup, GadgetRow, CycleGadget } from "../../../desk/surface";
+import { LiveMeetingTools } from "../LiveMeetingTools";
+import { INTELLIGENCE_AUTO_OPTIONS, MIR_PROFILE_OPTIONS, type SettingsHubWire } from "./prefs";
+import type { SettingsBindings } from "./bindings";
+
+export function MeetingsSection({ b, hub, focusHighlight }: { b: SettingsBindings; hub: { data: SettingsHubWire }; focusHighlight: string }) {
+  const { val, update, check, str, num, cyc, prop, csv } = b;
+  const [tab, setTab] = useState(focusHighlight === "live-meeting" ? "live" : "summary");
+  return (
+    <PreferencePane label="Meetings">
+      <SegmentedTabs
+        label="Meetings"
+        value={tab}
+        onChange={setTab}
+        tabs={[
+          { id: "summary", label: "Summary" },
+          { id: "recording", label: "Recording" },
+          { id: "live", label: "Live" },
+          { id: "queue", label: "Queue" },
+          { id: "routing", label: "Routing" },
+          { id: "actuators", label: "Actuators" },
+        ]}
+      >
+        {tab === "summary" ? (
+          <>
+            <GadgetGroup label="Summary">
+              <GadgetRow label="Make summary" highlight={b.hl(["meeting", "intelligence_auto"])}>
+                <CycleGadget
+                  label="Auto-run the summary"
+                  value={String(val(["meeting", "intelligence_auto"]) ?? "every")}
+                  options={INTELLIGENCE_AUTO_OPTIONS}
+                  onChange={(next) => update(["meeting", "intelligence_auto"], next)}
+                />
+              </GadgetRow>
+              <GadgetRow label="Summaries run on">
+                <span data-testid="settings-summary-controls">
+                  {hub.data.meetings?.summariesOff ? (
+                    <span data-testid="settings-summaries-off">Summaries off</span>
+                  ) : hub.data.meetings?.engineSet === false || (!hub.data.models.defaultSet && !hub.data.meetings?.engine) ? (
+                    <span data-testid="settings-no-model">No engine</span>
+                  ) : (
+                    hub.data.meetings?.engine || "Assigned engine"
+                  )}
+                </span>
+              </GadgetRow>
+              {check(["meeting", "intel_cloud_store"], "Cloud store")}
+            </GadgetGroup>
+            <GadgetGroup label="Export">
+              {check(["meeting", "auto_export"], "Auto export")}
+              {cyc(["meeting", "export_format"], "Export format", [
+                { value: "txt", label: "TXT" },
+                { value: "markdown", label: "MD" },
+                { value: "json", label: "JSON" },
+                { value: "srt", label: "SRT" },
+              ])}
+            </GadgetGroup>
+          </>
+        ) : null}
+        {tab === "recording" ? (
+          <>
+            <GadgetGroup label="Audio devices">
+              {str(["meeting", "mic_device"], "Microphone", {
+                placeholder: "System default",
+              })}
+              {str(["meeting", "system_audio_device"], "System audio", {
+                placeholder: "Auto",
+              })}
+            </GadgetGroup>
+            <GadgetGroup label="Speakers">
+              {check(["meeting", "diarization_enabled"], "Diarization")}
+              {check(["meeting", "diarize_mic"], "Diarize mic")}
+              {prop(["meeting", "similarity_threshold"], "Similarity", {
+                min: 0,
+                max: 1,
+                step: 0.05,
+              })}
+            </GadgetGroup>
+          </>
+        ) : null}
+        {tab === "live" ? <LiveMeetingTools /> : null}
+        {tab === "queue" ? <GadgetGroup label="Deferred queue">
+                {num(["meeting", "intel_retry_base_seconds"], "Retry base", {
+                  unit: "s",
+                  min: 1,
+                  step: 5,
+                })}
+                {num(["meeting", "intel_retry_max_seconds"], "Retry max", {
+                  unit: "s",
+                  min: 1,
+                  step: 60,
+                })}
+                {num(["meeting", "intel_retry_max_attempts"], "Retry attempts", { min: 1 })}
+              </GadgetGroup> : null}
+        {tab === "routing" ? <PreferenceWell><GadgetGroup label="Timing">
+                    {cyc(["meeting", "routing_profile"], "Routing profile", MIR_PROFILE_OPTIONS)}
+                    {check(["meeting", "intent_router_enabled"], "Intent router")}
+                    {num(["meeting", "intent_window_seconds"], "Intent window", { unit: "s", min: 10, step: 10 })}
+                    {num(["meeting", "intent_step_seconds"], "Intent step", {
+                      unit: "s",
+                      min: 5,
+                      step: 5,
+                    })}
+                  </GadgetGroup><GadgetGroup label="Detection">
+                    {prop(["meeting", "intent_score_threshold"], "Score threshold", { min: 0, max: 1, step: 0.05 })}
+                    {num(["meeting", "intent_hysteresis_windows"], "Hysteresis windows", { min: 0, max: 10 })}
+                    {check(["meeting", "intent_segment_probe_enabled"], "Segment probe")}
+                  </GadgetGroup></PreferenceWell> : null}
+        {tab === "actuators" ? <GadgetGroup label="Actuators">
+                {check(["meeting", "allow_actuators"], "Allow actuators")}
+                {csv(["meeting", "disabled_plugins"], "Disabled plugins")}
+                {csv(["meeting", "allowed_actuators"], "Allowed actuators")}
+                {csv(["meeting", "webhook_allowed_hosts"], "Webhook hosts")}
+              </GadgetGroup> : null}
+      </SegmentedTabs>
+    </PreferencePane>
+  );
+}
