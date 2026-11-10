@@ -77,7 +77,7 @@
 @media (prefers-reduced-motion: no-preference) {
   .desk-next .cl-plate[data-settle] {
     pointer-events: none;
-    animation: calls-hold-settle-yes 180ms var(--ease-standard) both;
+    animation: calls-hold-settle-yes calc(var(--duration-short) * 3 / 2) var(--ease-standard) both;
   }
   .desk-next .cl-plate[data-settle="no"] { animation-name: calls-hold-settle-no; }
 }

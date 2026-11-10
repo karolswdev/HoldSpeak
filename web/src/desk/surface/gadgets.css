@@ -151,7 +151,7 @@
     stroke-dashoffset: 14;
   }
   .gadget-check input + .gadget-check-well svg path {
-    transition: stroke-dashoffset 160ms var(--ease-standard);
+    transition: stroke-dashoffset calc(var(--duration-short) * 4 / 3) var(--ease-standard);
   }
 }
 .gadget-check input:focus-visible + .gadget-check-well {

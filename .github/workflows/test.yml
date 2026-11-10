@@ -24,17 +24,11 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Generate untracked documentation inputs
+      - uses: astral-sh/setup-uv@v5
+      - name: Generate untracked documentation inputs in dependency order
         run: |
-          mkdir -p docs/generated
-          python scripts/philo_repository_census.py
-          python scripts/philo_api_reference.py
-          python scripts/philo_boundary_census.py
-          python scripts/philo_doctor_reference.py
-          python scripts/philo_config_reference.py
-          python scripts/generate_capability_docs.py
-          python scripts/philo_graph_reference.py
-          python scripts/check_doc_coverage.py
+          uv sync --extra dev
+          scripts/gen_docs.sh
       - name: Check public documentation links and headings
         run: |
           python -m unittest discover -s tests/unit -p test_docs_navigation.py

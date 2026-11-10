@@ -30,7 +30,7 @@
 }
 .kit-question-answer > :first-child { flex: 1 1 auto; min-width: 0; }
 @media (prefers-reduced-motion: no-preference) {
-  .kit-question { animation: kit-question-rise 220ms var(--ease-standard, ease-out) 1; }
+  .kit-question { animation: kit-question-rise calc(var(--duration-short) * 11 / 6) var(--ease-standard, ease-out) 1; }
 }
 @keyframes kit-question-rise {
   from { opacity: 0; transform: translateY(6px); }

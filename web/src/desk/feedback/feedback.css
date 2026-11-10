@@ -8,7 +8,7 @@
   position: fixed;
   right: 12px;
   bottom: calc(var(--desk-dock-h, 0px) + 8px);
-  z-index: 100;
+  z-index: var(--z-overlay);
   display: flex;
   flex-direction: column;
   min-height: 0;

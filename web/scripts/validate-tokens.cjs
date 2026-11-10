@@ -43,7 +43,7 @@ const PATTERNS = [
 function cssFiles(dir, out = []) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const full = path.join(dir, entry.name);
-    if (entry.isDirectory()) cssFiles(full, out);
+    if (entry.isDirectory() && entry.name !== "_parked") cssFiles(full, out);
     else if (entry.name.endsWith(".css") && entry.name !== "tokens.css")
       out.push(full);
   }

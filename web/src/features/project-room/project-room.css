@@ -790,7 +790,7 @@
   column-gap: 7px;
   padding: 4px 4px;
   border-radius: 3px;
-  transition: background-color 120ms ease;
+  transition: background-color var(--duration-short) ease;
 }
 .room-signal:hover { background: color-mix(in srgb, var(--wb-paper) 70%, transparent); }
 .room-signal-lamp {
@@ -873,7 +873,7 @@
   border: 1px solid var(--wb-ink);
   background: var(--wb-steel);
   box-shadow: var(--wb-raised);
-  transition: background-color 120ms ease, box-shadow 160ms ease;
+  transition: background-color var(--duration-short) ease, box-shadow calc(var(--duration-short) * 4 / 3) ease;
 }
 .room-plan-bead[data-tone="danger"] { background: var(--lamp-fail); }
 .room-plan-bead[data-tone="warn"] { background: var(--lamp-warn); }
@@ -894,7 +894,7 @@
   min-width: 0;
   padding: 4px 8px;
   border-radius: 3px;
-  transition: background-color 120ms ease, box-shadow 120ms ease;
+  transition: background-color var(--duration-short) ease, box-shadow var(--duration-short) ease;
 }
 .room-plan-row:hover {
   background: var(--hs-raised);
@@ -949,7 +949,7 @@
   border: 1px solid var(--wb-ink);
   background: var(--wb-paper);
   box-shadow: var(--depth-row); /* DELIGHT slice 5 (the old list led with var(--wb-raised), which is none, and voided the whole value): a plate in its column is the row step (was 3px 4px 0 ink 18 % + 4px 10px 22px ink 14 %) */
-  transition: box-shadow 160ms ease;
+  transition: box-shadow calc(var(--duration-short) * 4 / 3) ease;
   min-width: 0;
 }
 .room-focus:hover {
@@ -1023,7 +1023,7 @@
   letter-spacing: 0;
   text-transform: none;
   color: var(--wb-muted);
-  transition: background-color 120ms ease, color 120ms ease;
+  transition: background-color var(--duration-short) ease, color var(--duration-short) ease;
 }
 .room-fold > .gadget-fold > summary:hover {
   background: var(--wb-paper);

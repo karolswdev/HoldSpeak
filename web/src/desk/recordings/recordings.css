@@ -31,16 +31,16 @@
   max-height: 420px;
   border: 1px solid var(--wb-rule-soft);
   border-radius: 6px;
-  background: #0f1724;
+  background: var(--recording-preview-ground);
   overflow: hidden;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 1px 2px rgba(12, 20, 32, 0.16);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--white) 6%, transparent), 0 1px 2px color-mix(in srgb, var(--depth-ink) 16%, transparent);
 }
 .desk-next .recordings-video {
   display: block;
   width: 100%;
   height: 100%;
   object-fit: contain;
-  background: #0f1724;
+  background: var(--recording-preview-ground);
 }
 .desk-next .recordings-well-wait {
   display: flex;
@@ -63,7 +63,7 @@
   display: block;
   height: 100%;
   background: var(--wb-sel-vivid, #2f67c8);
-  transition: width 400ms var(--ease-standard, ease);
+  transition: width calc(var(--duration-short) * 10 / 3) var(--ease-standard, ease);
 }
 .desk-next .recordings-links {
   display: flex;

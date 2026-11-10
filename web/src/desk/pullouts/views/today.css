@@ -155,7 +155,7 @@
   border: 2px solid var(--alive-paper, var(--wb-paper));
   background: color-mix(in srgb, var(--wb-muted) 55%, var(--wb-paper));
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--wb-ink) 20%, transparent);
-  transition: background-color 120ms ease, box-shadow 160ms ease;
+  transition: background-color var(--duration-short) ease, box-shadow calc(var(--duration-short) * 4 / 3) ease;
 }
 .desk-next .today-node[data-kind="finish"] > .today-bead { background: var(--lamp-warn); }
 .desk-next .today-node[data-kind="next"] > .today-bead {
@@ -212,7 +212,7 @@
   padding: 3px 8px;
   border-radius: var(--radius-sm, 5px);
   box-shadow: inset 0 0 0 1px transparent;
-  transition: background-color 120ms ease, box-shadow 120ms ease;
+  transition: background-color var(--duration-short) ease, box-shadow var(--duration-short) ease;
 }
 .desk-next .today-row:hover {
   background: color-mix(in srgb, var(--wb-sel-vivid) 7%, transparent);
@@ -286,7 +286,7 @@
   border-radius: var(--radius-sm, 5px);
   background: color-mix(in srgb, var(--wb-sel-vivid) 8%, var(--alive-paper, var(--wb-paper)));
   box-shadow: inset 3px 0 0 var(--wb-sel-vivid);
-  transition: background-color 120ms ease;
+  transition: background-color var(--duration-short) ease;
 }
 .desk-next .today-next:hover {
   background: color-mix(in srgb, var(--wb-sel-vivid) 11%, var(--alive-paper, var(--wb-paper)));

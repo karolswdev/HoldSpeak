@@ -12,7 +12,7 @@
   --walk-warm: var(--lamp-ask);
   position: fixed;
   inset: 0;
-  z-index: 95;
+  z-index: var(--desk-z-guide);
   pointer-events: none;
 }
 
@@ -20,7 +20,7 @@
    sheet, at most two lines, fading in with the step and out with it. */
 .walk-caption-slot {
   position: fixed;
-  z-index: 2;
+  z-index: calc(var(--desk-z-local) + 1);
   left: calc(var(--walk-safe-left) + 16px);
   right: calc(var(--walk-safe-right) + 16px);
   bottom: calc(var(--walk-caption-bottom, 12px) + var(--walk-safe-bottom));
@@ -57,7 +57,7 @@
 
 @media (prefers-reduced-motion: no-preference) {
   .walk-caption { animation: walk-caption-in var(--duration-long) var(--ease-standard) 1 both; }
-  .walk-caption[data-leaving] { animation: walk-caption-out 200ms var(--ease-standard) 1 both; }
+  .walk-caption[data-leaving] { animation: walk-caption-out var(--duration-medium) var(--ease-standard) 1 both; }
 }
 
 @keyframes walk-caption-in {

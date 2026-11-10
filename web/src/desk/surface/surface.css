@@ -4547,7 +4547,7 @@ button.surface-edit-in-place:hover {
    - motion on hover and press only. Idle never moves.
    Reduced motion: no transitions, no pulse (the end of this block). */
 .desk-next {
-  --alive-dur: 120ms;
+  --alive-dur: var(--duration-short);
   --alive-ease: cubic-bezier(0.2, 0.7, 0.3, 1);
   --alive-lift: 1px 2px 0 color-mix(in srgb, var(--wb-ink) 10%, transparent),
     2px 5px 14px color-mix(in srgb, var(--wb-ink) 16%, transparent);
@@ -4650,7 +4650,7 @@ button.surface-edit-in-place:hover {
   background: var(--alive-hover-bg);
   box-shadow: var(--alive-lift);
   position: relative;
-  z-index: 1;
+  z-index: var(--desk-z-local);
 }
 .desk-next .surface-ledger-line:not([data-inert]):active {
   background: color-mix(in srgb, var(--wb-sel) 10%, var(--wb-well));
@@ -4757,7 +4757,7 @@ button.surface-edit-in-place:hover {
 .desk-next .meetings-stream-row:hover {
   background: var(--alive-hover-bg);
   box-shadow: var(--alive-lift);
-  z-index: 1;
+  z-index: var(--desk-z-local);
 }
 .desk-next .meetings-stream-row:hover::before,
 .desk-next .meetings-stream-row:hover + .meetings-stream-row::before {
@@ -4860,7 +4860,7 @@ button.surface-edit-in-place:hover {
 .desk-next .desk-window-shell .surface-row:has(> .surface-row-line > .surface-row-open):hover {
   background: var(--alive-hover-bg);
   box-shadow: var(--alive-lift);
-  z-index: 1;
+  z-index: var(--desk-z-local);
 }
 .desk-next .desk-window-shell .surface-row:has(.surface-row-open:active) {
   background: color-mix(in srgb, var(--wb-sel) 10%, var(--wb-well));
@@ -4917,7 +4917,7 @@ button.surface-edit-in-place:hover {
   background-image: linear-gradient(100deg, transparent 30%, color-mix(in srgb, var(--white) 28%, transparent) 50%, transparent 70%);
   background-size: 60% 100%;
   background-repeat: no-repeat;
-  animation: alive-sheen 900ms var(--alive-ease) 1;
+  animation: alive-sheen calc(var(--duration-short) * 15 / 2) var(--alive-ease) 1;
 }
 /* The app's accent tile beside the headline. */
 .kit-apptile {
@@ -5182,7 +5182,7 @@ button.surface-edit-in-place:hover {
   border-radius: var(--radius-sm);
   background: var(--wb-paper);
   box-shadow: none;
-  transition: background-color 120ms ease;
+  transition: background-color var(--duration-short) ease;
 }
 .desk-next .meetings-import-plates .surface-dropwell:hover {
   background: var(--hs-raised);

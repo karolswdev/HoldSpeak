@@ -78,7 +78,7 @@
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--wb-ink) 9%, transparent), var(--depth-row); /* DELIGHT slice 5: a card in its column is the row step (was 0 4px 14px ink 8 %) */
 }
 @media (prefers-reduced-motion: no-preference) {
-  .desk-next .cw-ask { transition: box-shadow 160ms ease; }
+  .desk-next .cw-ask { transition: box-shadow calc(var(--duration-short) * 4 / 3) ease; }
 }
 .desk-next .cw-ask:hover {
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--wb-ink) 12%, transparent), var(--depth-card); /* DELIGHT slice 5: the card lifts to the card step under the pointer (was 0 6px 18px ink 11 %) */

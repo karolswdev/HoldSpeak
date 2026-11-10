@@ -487,6 +487,22 @@
   --lamp-info: var(--accent-cool); /* PHILO-14 B1 (the object species): IconLamp tone info: in progress (an agent at work, a PR open) */
   --lamp-ask: #b8800f; /* IconLamp tone ask: it waits on you; brass, the one warm colour (the language 2026-11-08) */
   --desk-ghost-shadow: drop-shadow(4px 4px 0 rgba(0, 0, 0, 0.45)); /* PHILO-14 B1 (the object species): the DragGhost's hard offset shadow (no blur, the Workbench drop) */
+  --phone-handset-light: #eef3fa; /* the handset plate light edge (value preserved from component CSS) */
+  --phone-handset-shade: #d6e1f0; /* the handset plate shaded edge (value preserved from component CSS) */
+  --phone-handset-body: #2c3e55; /* the handset object body (value preserved from component CSS) */
+  --phone-handset-edge: #4d6a8c; /* the handset inset outline (value preserved from component CSS) */
+  --recording-preview-ground: #0f1724; /* the video preview ground before the first frame (value preserved from component CSS) */
+  --thought-outline: #c9d6ea; /* the thought workspace outline (value preserved from component CSS) */
+  --brand-github: #24292f; /* GitHub connection identity (value preserved from component CSS) */
+  --brand-jira: #1868db; /* Jira connection identity (value preserved from component CSS) */
+  --brand-confluence: #1d7afc; /* Confluence connection identity (value preserved from component CSS) */
+  --brand-linear: #e5484d; /* Linear connection identity (value preserved from component CSS) */
+  --window-shade-ink: rgb(18, 27, 38); /* the window shade treatment ink (value preserved from component CSS) */
+  --dock-label-ink: rgb(233, 238, 245); /* the dock label light ink (value preserved from component CSS) */
+  --depth-ink: rgb(12, 20, 32); /* the dark ink shared by object shadows (value preserved from component CSS) */
+  --thought-texture-ink: rgb(37, 52, 73); /* the thought workspace ruled texture (value preserved from component CSS) */
+  --object-outline-ink: rgb(22, 40, 62); /* the quiet outline shared by raised objects (value preserved from component CSS) */
+  --desk-z-guide: 95; /* the Walk and agent compositor guide above the dock, below feedback */
 }
 
 @media (prefers-reduced-motion: reduce) {

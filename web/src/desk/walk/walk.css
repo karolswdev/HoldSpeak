@@ -17,7 +17,7 @@
    for the whole walk; no line, no pixels. Only its opacity moves. */
 .walk-edge {
   position: fixed;
-  z-index: 2;
+  z-index: calc(var(--desk-z-local) + 1);
   top: var(--walk-safe-top);
   right: var(--walk-safe-right);
   bottom: var(--walk-safe-bottom);
@@ -45,7 +45,7 @@
   position: fixed;
   left: 0;
   top: 0;
-  z-index: 3;
+  z-index: calc(var(--desk-z-local) + 2);
   pointer-events: none;
   transform-origin: 0 0;
   will-change: transform;
@@ -67,7 +67,7 @@
 /* The comet trail: shrinking ghosts that fade from 0.35 to nothing. */
 .walk-cursor-ghost {
   opacity: 0;
-  z-index: 2;
+  z-index: calc(var(--desk-z-local) + 1);
 }
 
 .walk-cursor-ghost .walk-dart {
@@ -87,7 +87,7 @@
 
 @media (prefers-reduced-motion: no-preference) {
   /* The tap: down the 2 px and a squash to 0.9 in 80 ms. */
-  .walk-cursor[data-phase="tap"] .walk-cursor-body { animation: walk-tap 80ms var(--ease-standard) 1 both; }
+  .walk-cursor[data-phase="tap"] .walk-cursor-body { animation: walk-tap calc(var(--duration-short) * 2 / 3) var(--ease-standard) 1 both; }
   /* At rest it breathes: 1 px every 2 s. */
   .walk-cursor[data-phase="rest"] .walk-cursor-body { animation: walk-idle 2s ease-in-out infinite; }
 }
@@ -108,7 +108,7 @@
   position: fixed;
   left: -22px;
   top: -22px;
-  z-index: 2;
+  z-index: calc(var(--desk-z-local) + 1);
   width: 44px;
   height: 44px;
   pointer-events: none;
@@ -122,7 +122,7 @@
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--walk-warm) 70%, transparent),
     0 0 14px 2px color-mix(in srgb, var(--walk-warm) 40%, transparent);
   opacity: 0;
-  animation: walk-ripple 600ms var(--ease-decelerate) 1 both;
+  animation: walk-ripple calc(var(--duration-short) * 5 / 1) var(--ease-decelerate) 1 both;
 }
 
 @keyframes walk-ripple {
@@ -143,7 +143,7 @@
    bottom, the ceiling and the dock's inset are set inline. */
 .walk-card {
   position: fixed;
-  z-index: 1;
+  z-index: var(--desk-z-local);
   left: 0;
   right: 0;
   display: flex;
@@ -278,7 +278,7 @@
   position: fixed;
   left: 50%;
   bottom: calc(var(--desk-dock-h, 0px) + 12px);
-  z-index: 95;
+  z-index: var(--desk-z-guide);
   transform: translateX(-50%);
   margin: 0;
   padding: 8px 12px;

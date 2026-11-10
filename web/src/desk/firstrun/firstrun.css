@@ -336,7 +336,7 @@
 
 /* First use stays in the desk material. The exit remains in reach while
    optional setup unfolds inside the chair's body scroller. */
-.firstrun-head { position:sticky; top:0; z-index:2; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; padding-block:8px; background:var(--wb-field); }
+.firstrun-head { position:sticky; top:0; z-index: calc(var(--desk-z-local) + 1); display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; padding-block:8px; background:var(--wb-field); }
 .firstrun-primary,
 .firstrun[data-heard] .firstrun-primary { grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
 .firstrun-optional .gadget-fold-body { display:flex; flex-direction:column; gap:12px; }

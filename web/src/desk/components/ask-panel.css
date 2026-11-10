@@ -67,7 +67,7 @@
   padding: 3px 8px;
   border: 0;
   border-radius: 6px;
-  background: var(--wb-well, #fff);
+  background: var(--wb-well, var(--white));
   box-shadow: inset 0 0 0 1px var(--wb-rule, var(--border));
   font: 400 13.5px / 20px var(--font-sans);
   color: var(--wb-ink, var(--text));
@@ -205,7 +205,7 @@
 .desk-ask-key {
   padding: 2px 4px;
   border-radius: 3px;
-  background: rgba(255, 255, 255, 0.18);
+  background: color-mix(in srgb, var(--white) 18%, transparent);
   font: 500 12px / 1 var(--font-sans);
   opacity: 0.85;
 }
@@ -350,7 +350,7 @@
 }
 .desk-next .desk-ask-body .desk-ask-rail .desk-ask-rail-row.btn.btn--ghost[aria-current="true"] {
   background: var(--wb-sel-vivid, var(--wb-sel));
-  color: #fff;
+  color: var(--white);
 }
 .desk-next .desk-ask-body .desk-ask-rail .desk-ask-rail-new.btn.btn--ghost {
   color: var(--wb-sel, var(--accent));
@@ -724,7 +724,7 @@
   .desk-ask-rail[data-sheet] {
     position: absolute;
     inset: 0;
-    z-index: 3;
+    z-index: calc(var(--desk-z-local) + 2);
     flex: none;
     width: 100%;
     border-right: 0;

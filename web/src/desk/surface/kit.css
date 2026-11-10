@@ -686,7 +686,7 @@
     content: "";
     position: absolute;
     inset: 6px 0;
-    z-index: -1;
+    z-index: var(--desk-z-stage);
     border: 1px solid var(--wb-rule-soft);
     border-radius: var(--radius-sm);
     background: var(--wb-paper);
@@ -759,7 +759,7 @@
    transform; nothing moves; nothing runs under reduced motion. */
 @media (prefers-reduced-motion: no-preference) {
   .kit-statusbar-item > .kit-dot[data-pulse] {
-    animation: kit-lamp-pulse 600ms var(--ease-standard) 1;
+    animation: kit-lamp-pulse calc(var(--duration-short) * 5 / 1) var(--ease-standard) 1;
   }
 }
 @keyframes kit-lamp-pulse {
@@ -815,7 +815,7 @@
    nothing turns on load; instant under reduced motion. */
 @media (prefers-reduced-motion: no-preference) {
   [data-turns] .kit-dotword > .kit-dot {
-    transition: background-color 160ms var(--ease-standard), box-shadow 160ms var(--ease-standard);
+    transition: background-color calc(var(--duration-short) * 4 / 3) var(--ease-standard), box-shadow calc(var(--duration-short) * 4 / 3) var(--ease-standard);
   }
 }
 /* DELIGHT slice 2 (2026-10-27) — THE DEPTH SCALE. Five named steps
@@ -831,7 +831,7 @@
    in once, 160 ms, opacity only. */
 @media (prefers-reduced-motion: no-preference) {
   .kit-tick[data-tick] {
-    animation: kit-tick-in 160ms var(--ease-standard) 1;
+    animation: kit-tick-in calc(var(--duration-short) * 4 / 3) var(--ease-standard) 1;
   }
 }
 @keyframes kit-tick-in {

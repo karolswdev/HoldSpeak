@@ -51,7 +51,7 @@
   min-height: 30px;
   padding: 0 6px;
   border-radius: 3px;
-  transition: background-color 120ms ease;
+  transition: background-color var(--duration-short) ease;
 }
 .kb-editor-row:hover { background: color-mix(in srgb, var(--wb-blue) 45%, transparent); }
 .kb-editor-glyph { width: 20px; height: 20px; display: block; image-rendering: auto; }

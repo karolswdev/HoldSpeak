@@ -444,7 +444,7 @@
   position: absolute;
   left: 0;
   top: calc(100% + 6px);
-  z-index: 5;
+  z-index: calc(var(--desk-z-local) + 4);
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -463,12 +463,12 @@
   pointer-events: none;
   opacity: 0;
   visibility: hidden;
-  transition: opacity 120ms ease-out 0ms, visibility 0ms linear 120ms;
+  transition: opacity var(--duration-short) ease-out calc(var(--duration-short) * 0 / 1), visibility calc(var(--duration-short) * 0 / 1) linear var(--duration-short);
 }
 .desk-next .thought-note-body .cm-lp-obj:hover .cm-lp-peek {
   opacity: 1;
   visibility: visible;
-  transition: opacity 140ms ease-out 400ms, visibility 0ms linear 400ms;
+  transition: opacity calc(var(--duration-short) * 7 / 6) ease-out calc(var(--duration-short) * 10 / 3), visibility calc(var(--duration-short) * 0 / 1) linear calc(var(--duration-short) * 10 / 3);
 }
 .desk-next .thought-note-body .cm-line .cm-lp-obj .cm-lp-peek-head {
   display: flex;
@@ -484,7 +484,7 @@
 @media (prefers-reduced-motion: reduce) {
   .desk-next .thought-note-body .cm-lp-peek,
   .desk-next .thought-note-body .cm-lp-obj:hover .cm-lp-peek {
-    transition-duration: 0ms;
+    transition-duration: calc(var(--duration-short) * 0 / 1);
   }
 }
 
@@ -616,10 +616,10 @@
    on load; nothing under reduced motion. */
 @media (prefers-reduced-motion: no-preference) {
   .desk-next .thought-note-body .cm-lp-task[data-tick] .cm-lp-checkbox {
-    animation: cm-lp-box-fill 120ms var(--ease-standard) both;
+    animation: cm-lp-box-fill var(--duration-short) var(--ease-standard) both;
   }
   .desk-next .thought-note-body .cm-lp-task[data-tick] .cm-lp-check path {
-    animation: cm-lp-tick 160ms var(--ease-standard) 40ms both;
+    animation: cm-lp-tick calc(var(--duration-short) * 4 / 3) var(--ease-standard) calc(var(--duration-short) * 1 / 3) both;
   }
 }
 @keyframes cm-lp-box-fill {
@@ -1082,7 +1082,7 @@
   /* The hairline on its left is an inset shadow (HS-101 rule 6: no rail). */
   box-shadow: inset 1px 0 0 var(--wb-rule-soft);
   background:
-    linear-gradient(90deg, rgba(37, 52, 73, 0.045), rgba(37, 52, 73, 0) 10px),
+    linear-gradient(90deg, color-mix(in srgb, var(--thought-texture-ink) 4.5%, transparent), transparent 10px),
     color-mix(in srgb, var(--wb-steel-2) 70%, var(--thought-paper, var(--wb-paper)));
   user-select: none;
 }
@@ -1188,7 +1188,7 @@
   color: var(--wb-ink);
   font: 400 13px/1.45 var(--font-ui);
   user-select: text;
-  animation: note-margin-arrive 240ms ease-out both;
+  animation: note-margin-arrive calc(var(--duration-short) * 2 / 1) ease-out both;
 }
 
 .desk-next .note-margin-q {
@@ -1280,14 +1280,14 @@
   /* DELIGHT slice 2: a found row lands in its kind's wash (a task the
      action ember, a decision violet) and the wash fades to paper over
      400 ms; colour and opacity only, the row never moves. */
-  animation: note-margin-arrive 240ms ease-out both, note-margin-wash 400ms ease-out backwards;
-  animation-delay: var(--arrive, 0ms), var(--arrive, 0ms);
+  animation: note-margin-arrive calc(var(--duration-short) * 2 / 1) ease-out both, note-margin-wash calc(var(--duration-short) * 10 / 3) ease-out backwards;
+  animation-delay: var(--arrive, calc(var(--duration-short) * 0 / 1)), var(--arrive, calc(var(--duration-short) * 0 / 1));
 }
 
 .desk-next .note-margin-row:hover,
 .desk-next .note-margin-row:focus-within {
   background: var(--wb-row-hover);
-  box-shadow: inset 0 0 0 1px #c9d6ea;
+  box-shadow: inset 0 0 0 1px var(--thought-outline);
 }
 
 .desk-next .note-margin-row-line {
@@ -1409,10 +1409,10 @@
 
 @media (prefers-reduced-motion: no-preference) {
   .desk-next .note-margin-card-place[data-lead]::before {
-    animation: note-margin-lead-draw 200ms ease-out 240ms backwards;
+    animation: note-margin-lead-draw var(--duration-medium) ease-out calc(var(--duration-short) * 2 / 1) backwards;
   }
   .desk-next .note-margin-card-place[data-lead]::after {
-    animation: note-margin-arrive 120ms ease-out 440ms backwards;
+    animation: note-margin-arrive var(--duration-short) ease-out calc(var(--duration-short) * 11 / 3) backwards;
   }
 }
 
@@ -1435,11 +1435,11 @@
     left: 0;
     right: 0;
     bottom: 0;
-    z-index: 2;
+    z-index: calc(var(--desk-z-local) + 1);
     grid-column: 1;
     max-height: min(60%, 300px);
     border-top: 1px solid var(--wb-rule);
-    box-shadow: 0 -8px 18px rgba(22, 40, 62, 0.1);
+    box-shadow: 0 -8px 18px color-mix(in srgb, var(--object-outline-ink) 10%, transparent);
     background: var(--thought-paper, var(--wb-paper));
   }
 

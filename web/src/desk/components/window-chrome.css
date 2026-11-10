@@ -127,7 +127,7 @@
 }
 @media (prefers-reduced-transparency: reduce) {
   .desk-next .desk-expose-scrim {
-    background: rgb(18, 27, 38);
+    background: var(--window-shade-ink);
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
   }
@@ -1202,7 +1202,7 @@
 }
 .desk-next .desk-expose-cell[data-front] .desk-expose-caption {
   background: var(--wb-sel-vivid);
-  color: #fff;
+  color: var(--white);
 }
 .desk-next .desk-expose-cell[data-front] .desk-expose-caption > img {
   border-radius: 4px;

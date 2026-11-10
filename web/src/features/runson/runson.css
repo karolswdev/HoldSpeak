@@ -54,7 +54,7 @@
   padding: 8px;
   background: var(--wb-well);
   border: 1px solid var(--wb-ink);
-  box-shadow: var(--wb-sunken, inset 1px 1px 0 rgba(0,0,0,.5), inset -1px -1px 0 rgba(255,255,255,.72));
+  box-shadow: var(--wb-sunken, inset 1px 1px 0 rgba(0,0,0,.5), inset -1px -1px 0 color-mix(in srgb, var(--white) 72%, transparent));
 }
 .runson-add-verbs, .runson-add-answer { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .runson-add-answer .surface-token { overflow-wrap: anywhere; }
@@ -144,10 +144,10 @@
 .desk-next .runson-root .switchboard-job {
   padding: 8px 26px 8px 10px;
   background: var(--wb-paper);
-  transition: background-color 120ms ease, box-shadow 160ms ease;
+  transition: background-color var(--duration-short) ease, box-shadow calc(var(--duration-short) * 4 / 3) ease;
 }
 .desk-next .runson-root .switchboard-job:hover {
-  background: #ffffff;
+  background: var(--white);
 }
 .desk-next .runson-root .switchboard-job.is-default {
   background: var(--wb-field-hi);
@@ -189,7 +189,7 @@
 
 /* An engine plate: the steel lifts toward the light on hover. */
 .desk-next .runson-root .switchboard-engine {
-  transition: box-shadow 160ms ease, background-color 120ms ease;
+  transition: box-shadow calc(var(--duration-short) * 4 / 3) ease, background-color var(--duration-short) ease;
 }
 .desk-next .runson-root .switchboard-engine:hover {
   background: var(--wb-steel-2, var(--wb-steel));

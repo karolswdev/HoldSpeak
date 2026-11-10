@@ -498,7 +498,7 @@
 }
 /* The drafted rows are born one after the other (§9.7). */
 @media (prefers-reduced-motion: no-preference) {
-  .kit-listrow.pg-draft[data-landed="born"] { animation-delay: calc(var(--i, 0) * 60ms); }
+  .kit-listrow.pg-draft[data-landed="born"] { animation-delay: calc(var(--i, 0) * var(--duration-micro)); }
 }
 
 /* ── the place line in the status bar (§9b; the Note's place line) ── */
@@ -1090,7 +1090,7 @@ span.pg-req-thumb { height: 150px; }
 }
 /* LANG5 delight (§9.7): the heard sentence settles into the well. */
 @media (prefers-reduced-motion: no-preference) {
-  .pg-shape[data-settle] .gadget-string input { animation: pg-shape-settle 600ms var(--ease-standard) 1; }
+  .pg-shape[data-settle] .gadget-string input { animation: pg-shape-settle calc(var(--duration-short) * 5 / 1) var(--ease-standard) 1; }
 }
 @keyframes pg-shape-settle {
   0% { opacity: 0.2; transform: translateY(-6px); }

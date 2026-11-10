@@ -7,7 +7,7 @@
   /* One paper: the pane is the window's own paper (the status bar and the
      window body share it); the rail is the steel beside it. */
   --pref-paper: var(--wb-paper);
-  --pref-ease: 140ms var(--desk-ease);
+  --pref-ease: calc(var(--duration-short) * 7 / 6) var(--desk-ease);
   --pref-label-w: 160px;
   display: flex;
   align-items: stretch;
