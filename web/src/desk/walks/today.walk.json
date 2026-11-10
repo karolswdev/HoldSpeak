@@ -1,0 +1,68 @@
+{
+  "title": "Today",
+  "open": {
+    "app": "pullout:intelligence:desk"
+  },
+  "steps": [
+    {
+      "highlight": {
+        "target": "today-mast",
+        "thing": "picked day",
+        "words": "The day opens first. Back opens the list of views on your phone."
+      },
+      "ask": {
+        "ref": "today-rail",
+        "question": "Is the day clear?",
+        "choices": [
+          "Keep",
+          "Redo"
+        ]
+      }
+    },
+    {
+      "highlight": {
+        "target": "today-spine",
+        "thing": "day state",
+        "words": "Done is green. Work ahead is blue. What waits on you is brass."
+      },
+      "ask": {
+        "ref": "today-mast",
+        "question": "Is the state clear?",
+        "choices": [
+          "Yes",
+          "No"
+        ]
+      }
+    },
+    {
+      "highlight": {
+        "target": "today-ledger",
+        "thing": "day ledger",
+        "words": "Needs you opens the one place for answers. Calendar and meeting work stay here."
+      },
+      "ask": {
+        "ref": "today-ledger",
+        "question": "Is the next action clear?",
+        "choices": [
+          "Keep",
+          "Redo"
+        ]
+      }
+    },
+    {
+      "highlight": {
+        "target": "today-status",
+        "thing": "day receipt",
+        "words": "The result of your last action stays at the foot."
+      },
+      "ask": {
+        "ref": "today-feel",
+        "question": "Does Today feel native?",
+        "choices": [
+          "Keep",
+          "Redo"
+        ]
+      }
+    }
+  ]
+}

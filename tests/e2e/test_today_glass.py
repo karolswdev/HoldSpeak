@@ -48,8 +48,8 @@ class TestTheTodayWindowSize(FitRig):
                 dock.locator("[data-app='intelligence:desk']").click()
                 win = page.locator(".desk-pullout:has(.intelligence-pullout)").first
                 win.wait_for(timeout=T)
-                # Betterment D4: one page, no wings. Since yesterday (the
-                # brief, made on open) is its folded line.
+                # Today has no wings: the rail picks the brief made on open.
+                win.get_by_test_id("today-rail").get_by_role("button", name="Brief", exact=True).click()
                 first = win.get_by_test_id("today-since-toggle")
                 first.wait_for(timeout=T)
                 page.wait_for_timeout(900)
@@ -95,7 +95,7 @@ class TestTheTodayWindowSize(FitRig):
 # ── PHILO-17 Today on the sweep's seeded desk (its own hub): Today opens from
 #    the Dock between the desk's icon columns and covers no icon of either.
 #    Moved from test_philo17_today_glass.py (push 2 of the test diet, lane
-#    e2e-low-2); its presses are TodayView.test.tsx. ──
+#    e2e-low-2); its presses are today.app.test.tsx. ──
 
 from typing import Any  # noqa: E402
 
@@ -142,5 +142,39 @@ def test_today_opens_between_the_icon_columns(desk: dict[str, Any], pw_browser: 
                    and i["top"] < box["y"] + box["height"] and i["bottom"] > box["y"]]
         assert not covered, (box, covered)
         page.screenshot(path=str(evidence_dir("today") / "today-seat-1440.png"))
+    finally:
+        ctx.close()
+
+
+@pytest.mark.parametrize("width", [1440, 393])
+@pytest.mark.timeout(240)
+def test_today_rail_returns_focus_and_its_walk_files_answers(
+        desk: dict[str, Any], pw_browser: Any, width: int) -> None:
+    """The native phone Back returns to the picked row; Show me runs in place."""
+    from playwright.sync_api import expect
+
+    ctx, page = _open_today(pw_browser, desk["base"], width)
+    try:
+        today = page.locator(TODAY)
+        rail = today.get_by_test_id("today-rail")
+        if width == 393:
+            today.get_by_role("button", name="Back to today", exact=True).click()
+        brief = rail.get_by_role("button", name="Brief", exact=True)
+        brief.click()
+        expect(today.get_by_test_id("today-since-rows")).to_be_visible()
+        if width == 393:
+            today.get_by_role("button", name="Back to today", exact=True).click()
+            expect(brief).to_be_focused()
+        rail.get_by_role("button", name="The day", exact=True).click()
+        if width == 393:
+            today.get_by_test_id("show-me-more").click()
+            page.get_by_role("menuitem", name="Show me", exact=True).click()
+        else:
+            today.get_by_test_id("show-me").click()
+        for question in ["Is the day clear?", "Is the state clear?", "Is the next action clear?", "Does Today feel native?"]:
+            expect(page.get_by_test_id("walk-question")).to_have_text(question, timeout=T)
+            page.get_by_test_id("walk-choice-0").click()
+        expect(page.get_by_test_id("walk-end")).to_contain_text("4 answers", timeout=T)
+        page.screenshot(path=str(evidence_dir("today") / f"today-walk-{width}.png"))
     finally:
         ctx.close()

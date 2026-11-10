@@ -1536,13 +1536,14 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
             page.wait_for_function(SETTLED_JS, arg=None, timeout=T)
             launch = page.locator(".desk-dock-launch[aria-label^='Today']").first
             launch.click()
+            rail = page.locator(f'[id="{wid}"] [data-testid=today-rail]')
+            rail.wait_for(state="attached", timeout=T)
+            if not rail.is_visible():
+                page.locator(f'[id="{wid}"]').get_by_role("button", name="Back to today", exact=True).click()
+            rail.get_by_role("button", name="Brief" if case_id == "brief" else "The day", exact=True).click()
             page.locator(f'[id="{wid}"] [data-testid=today-day]').wait_for(timeout=T)
             if case_id == "brief":
-                # Betterment D4: Today is one page; the brief is its Since
-                # yesterday fold, made when Today opens. Unfold it.
-                toggle = page.locator(f'[id="{wid}"] [data-testid=today-since-toggle]')
-                toggle.wait_for(timeout=T)
-                toggle.click()
+                # The native rail opens the hub's one brief, already unfolded.
                 page.locator(f'[id="{wid}"] [data-testid=today-since-rows]').wait_for(timeout=T)
                 page.wait_for_function(BRIEF_SETTLED_JS, arg=wid, timeout=T)
             page.mouse.move(2, 2)

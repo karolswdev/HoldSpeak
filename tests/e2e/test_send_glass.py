@@ -1363,9 +1363,12 @@ class _Rig:
     def _open_intelligence(page: Any, tab: str | None = None) -> None:
         page.locator("button.desk-dock-app").first.click()
         page.locator(".desk-window .intelligence-pullout").first.wait_for(timeout=H1_T)
-        # Betterment D4: Today is one page; the brief is its Since-yesterday
-        # fold, and its Send well starts folded (one row; Send opens it).
-        page.get_by_test_id("today-since-toggle").first.click()
+        # Today picks its brief through the native rail. Send stays folded.
+        today = page.locator('[id="pullout:intelligence:desk"]')
+        rail = today.get_by_test_id("today-rail")
+        if not rail.is_visible():
+            today.get_by_role("button", name="Back to today", exact=True).click()
+        rail.get_by_role("button", name="Brief", exact=True).click()
         if not tab:
             page.get_by_test_id("brief-send-toggle").first.click()
         page.wait_for_timeout(900)
