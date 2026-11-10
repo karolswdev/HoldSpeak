@@ -27,14 +27,6 @@
         "thing": "outcomes",
         "words": "Decisions and dated work carry weight. Each row has its own action.",
         "window": "pullout:meeting"
-      },
-      "ask": {
-        "ref": "meetings-feel",
-        "question": "Is this how Meetings should feel?",
-        "choices": [
-          "Keep",
-          "Redo"
-        ]
       }
     },
     {
@@ -45,8 +37,8 @@
         "window": "pullout:meeting"
       },
       "ask": {
-        "ref": "meetings-reading",
-        "question": "Is the reading door clear?",
+        "ref": "meetings-feel",
+        "question": "Is this how Meetings should feel?",
         "choices": [
           "Keep",
           "Redo"
