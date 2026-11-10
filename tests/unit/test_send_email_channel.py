@@ -647,11 +647,11 @@ def test_c5_the_key_is_held_never_an_argument_and_the_owner_alone_saves_it(hub: 
     assert store.values == {"sendgrid:sendgrid": KEY}  # PHILO-10-07: the slot is <provider>:<key_ref>
     assert KEY_MARK not in saved.text
     assert KEY_MARK not in dump(hub)
-    [operation] = ops(hub, "channel.save_email_key")
+    [operation] = ops(hub, "settings.secret.email_key")
     assert (operation["state"], operation["principal_kind"]) == ("succeeded", "owner")
     bad = hub.client.put("/api/channels/email-keys/sendgrid", json={"api_key": "two words"})
     assert bad.json()["code"] == "email_key_invalid" and KEY_MARK not in bad.text
-    assert "channel.save_email_key" not in {t["name"] for t in hub.client.post("/api/mcp", json={
+    assert "settings.secret.email_key" not in {t["name"] for t in hub.client.post("/api/mcp", json={
         "jsonrpc": "2.0", "id": 1, "method": "tools/list"}).json()["result"]["tools"]}
 
 
@@ -1340,7 +1340,7 @@ def test_philo15_the_operation_schemas_name_the_default_provider() -> None:
     from holdspeak.services.channel_email import DEFAULT_EMAIL_PROVIDER
 
     by_name = {d.name: d for d in operations.DESCRIPTORS}
-    for name in ("channel.save_destination", "channel.save_email_key"):
+    for name in ("channel.save_destination", "settings.secret.email_key"):
         text = by_name[name].args_schema["properties"]["provider"]["description"]
         assert f"({DEFAULT_EMAIL_PROVIDER} if not given)" in text, (name, text)
         assert "sendgrid" in text  # SendGrid stays selectable by name

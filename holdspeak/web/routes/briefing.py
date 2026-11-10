@@ -38,7 +38,7 @@ from ...logging_config import get_logger
 from ...operations import OperationRefused
 from ...principals import UNAUTHENTICATED
 from ...services.errors import ServiceError
-from ...settings_operations import SETTINGS_ROUTE_OPERATIONS
+from ...settings_operations import SETTINGS_ROUTE_OPERATIONS, TELEGRAM_SECRET_OPERATIONS
 from ..context import WebContext
 from ..operation_routes import operation_router
 from ._mount import mount_router
@@ -243,10 +243,10 @@ def build_briefing_router(ctx: WebContext) -> APIRouter:
     # ── DIR4 to DIR6: Later, his settings, Telegram ──────────────────
     # Produced from the reach.* rows (settings_operations.py); the bot token is
     # HELD by its own handler, never an operation argument.
-    rows = tuple(d for d in SETTINGS_ROUTE_OPERATIONS if d.name.startswith("reach."))
+    rows = tuple(d for d in SETTINGS_ROUTE_OPERATIONS if d.name.startswith("reach.")) + TELEGRAM_SECRET_OPERATIONS
     mount_router(router, operation_router(
         rows, lambda: _ops(ctx), _reach_answer, module=__name__,
-        hand_written={"reach.telegram.token": lambda descriptor: _held_token(ctx, descriptor)},
+        hand_written={"settings.secret.telegram.token": lambda descriptor: _held_token(ctx, descriptor)},
     ))
 
     return router

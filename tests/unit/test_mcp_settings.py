@@ -91,29 +91,15 @@ def test_settings_update_valid_patch_applies(monkeypatch: pytest.MonkeyPatch) ->
     assert captured["patch"] == {"ui": {"desk_sounds": False}}
 
 
-# ---------- settings.update: secret-path write stripped -------------------
+# ---------- settings.update: every principal uses the secret operations ---
 
-def test_settings_update_secret_path_stripped() -> None:
-    """A patch containing a secret-path field is silently stripped, not persisted."""
-    # Write a secret through the MCP tool -- the service should strip it.
-    # Use the real service so strip_secret_mutations is exercised.
-    secret_section, secret_field = SECRET_PATHS["web_token"]  # ("meeting", "web_auth_token")
-
-    result = _call(
-        "settings.update",
-        {"patch": {secret_section: {secret_field: "leaked-secret-value"}}},
-    )
-    assert result["isError"] is False
-
+def test_settings_update_refuses_a_secret_even_from_the_owner() -> None:
+    secret_section, secret_field = SECRET_PATHS["web_token"]
+    result = _call("settings.update", {"patch": {secret_section: {secret_field: "leaked-secret-value"}}})
+    assert result["isError"] is True
     payload = json.loads(result["content"][0]["text"])
-    assert payload["success"] is True
-
-    # The returned (redacted) settings must NOT contain the raw secret field.
-    settings_data = payload.get("settings", {})
-    section_data = settings_data.get(secret_section, {})
-    assert secret_field not in section_data, (
-        f"Secret field {secret_section}.{secret_field} appeared in update response"
-    )
+    assert payload["code"] == "credential_in_settings_patch"
+    assert "leaked-secret-value" not in json.dumps(result)
 
 
 # ---------- settings.update: validation error -> isError:true -------------

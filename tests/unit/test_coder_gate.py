@@ -468,7 +468,7 @@ def test_route_roundtrip_propose_decide_poll(route_rig) -> None:
 
     decided = client.post(
         "/api/gate/proposals/p1/decide",
-        json={"decision": DENIED, "reason": "not on this branch", "actor": "owner"},
+        json={"decision": DENIED, "reason": "not on this branch"},
     )
     assert decided.status_code == 200
     assert decided.json()["state"] == DENIED

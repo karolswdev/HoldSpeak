@@ -2192,8 +2192,8 @@
           "claim": "the row's palette token reads the issued name"
         },
         {
-          "path": "holdspeak/web/routes/mcp_http.py",
-          "symbol": "@router.put(\"/api/settings/remote/delegations/{identity}/projects/{project_id}\")",
+          "path": "holdspeak/access_operations.py",
+          "symbol": "settings.remote.project_delegation.put",
           "claim": "the owner's project grant: admitted, owner-only, HTTP only"
         }
       ],
