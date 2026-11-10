@@ -75,15 +75,27 @@ function addedId(engine: BoardEngine): string {
   return endpointProfileId(engine.baseUrl ?? "", engine.model || engine.name);
 }
 
+/** Shared by the object editor and the list inspector; Add follows the engine library's path. */
+export async function automationEngineProfile(engine: BoardEngine): Promise<string> {
+  let profileId = assignedId(engine);
+  if (engine.found) {
+    profileId = addedId(engine);
+    if (engine.agentPreset) await connectCliEngine({ preset: engine.agentPreset, profileId, expectedProfileRevision: 0 });
+    else await defineEndpoint(endpointDraft({ url: engine.baseUrl ?? "", model: engine.model || engine.name,
+      requestId: `automation-add-${Date.now()}`, expectedProfileRevision: 0 }));
+  }
+  return profileId;
+}
+
 /** The id an assignment names for a library engine. A v1 endpoint has no
  *  profile revision: the assignment calls it `legacy-<id>`. */
-function assignedId(engine: BoardEngine): string {
+export function assignedId(engine: BoardEngine): string {
   const id = engine.profileId ?? "";
   if (!id || engine.profileRevision || id.startsWith("legacy-")) return id;
   return `legacy-${id}`;
 }
 
-function usable(engine: BoardEngine): boolean {
+export function usable(engine: BoardEngine): boolean {
   if (engine.kind === "preset") return false; // a download is the Engines app's job
   if (engine.found) return Boolean(engine.agentPreset || engine.baseUrl);
   return Boolean(engine.profileId);
@@ -193,20 +205,7 @@ function InferenceWithEditor({
     setBusy(engine.key);
     setRefusal(null);
     try {
-      let profileId = assignedId(engine);
-      if (engine.found) {
-        profileId = addedId(engine);
-        if (engine.agentPreset) {
-          await connectCliEngine({ preset: engine.agentPreset, profileId, expectedProfileRevision: 0 });
-        } else {
-          await defineEndpoint(endpointDraft({
-            url: engine.baseUrl ?? "",
-            model: engine.model || engine.name,
-            requestId: `automation-add-${Date.now()}`,
-            expectedProfileRevision: 0,
-          }));
-        }
-      }
+      const profileId = await automationEngineProfile(engine);
       await onUse(profileId);
       await read();
     } catch (error) {

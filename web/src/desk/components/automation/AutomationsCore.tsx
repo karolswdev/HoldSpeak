@@ -1,168 +1,143 @@
-/* Automations (the language, 2026-11-08): the app window
- * `surface-workbenches`, one native object window, as Programs is.
- *
- * Window grammar: title bar → the rail of automations at the left (New
- * automation on top; each automation its sprite, its name, the spine of
- * its last runs and its next run in mono) → the chosen automation at the
- * right (AutomationBody: the mast, the sentence, the plate, the ledger of
- * runs; the same body an automation's own window hosts) → the StatusBar
- * ("3 automations · 1 new · 1 failed"; no count of zero). New automation
- * shows the starters as pictogram cards in the right pane (Starters.tsx);
- * the made automation is then the chosen one. With none yet: the
- * automation object, one line, New automation, and the starters. At 393
- * the rail opens the pane with one Back path. The old list view home and the
- * New Automation chooser window are parked (desk/_parked/automations/). */
-import "./automation-home.css";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { Button } from "../../../components/signal/Signal";
+/** Automations is a selection list; an automation's own window keeps its results. */
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { apiFetch, readableError } from "../../../lib/api";
 import type { CoreProps } from "../../../pages/cores/core-types";
 import { keepPlace } from "../../deskMemory";
-import { spriteUrl } from "../../sprites";
 import { useDesk } from "../../store";
-import { StatusBar, SurfaceState, countWords, Rail, type StatusBarItem } from "../../surface";
+import { CheckGadget, InspectorForm, ListPane, ListView, PaneInspector, PreferencePane, StatusBar, StringGadget, SurfaceState, countWords, type ListVerb } from "../../surface";
 import { useWindowInterior } from "../../surface/interior";
 import { WORKBENCH_CHANGE_KINDS, useOnDeskChanged } from "../../useDeskChangedRefresh";
-import { AutomationBody } from "./AutomationBody";
+import { useOptionalRuntimeBus } from "../../../runtime/RuntimeBus";
+import { setWorkbenchAutomationEnabled, triggerWorkbenchRun, updateWorkbenchField } from "../../api";
+import { programVerb } from "../../programs/api";
 import { AutomationStarters } from "./Starters";
+import { AutomationSetup } from "./AutomationSetup";
+import { PutValue } from "./PutEditor";
 import { NEW_AUTOMATION_PLACE, PICKED_AUTOMATION_PLACE } from "./places";
-import {
-  endedRuns,
-  hasStarts,
-  isOn,
-  nextWords,
-  runSpine,
-  runSpineWords,
-  whenWords,
-  type AutomationDetail,
-} from "./model";
+import { endedRuns, engineWords, eventSubjectWords, failureWords, hasStarts, isOn, nextWords, programDoWords, resultWhen, whenWords, type AutomationDetail } from "./model";
 
-/** The rail's mono line: the next run, else when it runs (· Off). */
-export function railWhen(automation: AutomationDetail): string {
-  if (hasStarts(automation) && !isOn(automation)) return `${whenWords(automation)} · Off`;
-  const next = nextWords(automation.next_run_at);
-  return next ? next.replace(/^Next: /, "next ") : whenWords(automation);
-}
+const runningProgram = (detail: AutomationDetail) => detail.results?.find((row) => row.status === "running" && row.program)?.program?.id
+  ?? (detail.program?.latest && ["running","working"].includes(detail.program.latest.state) ? detail.program.latest.id : null);
+const running = (detail: AutomationDetail) => Boolean(runningProgram(detail) || detail.last_run?.status === "running" || detail.items?.some((row) => row.status === "claimed"));
+const runsWhen = (detail: AutomationDetail) => hasStarts(detail) || detail.when_needs_reset ? whenWords(detail) : "On request";
+const lastRun = (detail: AutomationDetail) => {
+  const result = endedRuns(detail)[0];
+  const stamp = resultWhen(result?.completed_at ?? detail.last_run?.completed_at ?? detail.last_run?.started_at);
+  const failed = result ? result.status === "failed" : detail.last_run?.status === "failed";
+  return [stamp, failed ? "Failed" : ""].filter(Boolean).join(" · ");
+};
 
 export function AutomationsCore(_props: CoreProps) {
   const [automations, setAutomations] = useState<AutomationDetail[]>([]);
   const [loading, setLoading] = useState(true);
-  const [loaded, setLoaded] = useState(false);
   const [loadError, setLoadError] = useState("");
   const [making, setMaking] = useState(false);
-  // The automation a starter just made is chosen before the list has read it.
-  const [made, setMade] = useState<string | null>(null);
-  const kept = useDesk((s) => s.places[PICKED_AUTOMATION_PLACE]) || null;
-  const [paneOpen, setPaneOpen] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [query, setQuery] = useState("");
+  const [pending, setPending] = useState<Record<string, boolean>>({});
+  const [setupPending, setSetupPending] = useState(false);
+  const [error, setError] = useState("");
+  const [receipt, setReceipt] = useState("");
+  const [deleting, setDeleting] = useState<AutomationDetail | null>(null);
+  const kept = useDesk((state) => state.places[PICKED_AUTOMATION_PLACE]) || null;
+  const [picked, setPicked] = useState<string | null>(kept);
+  const asks = useRef(0);
+  const actions = useRef(new Set<string>());
   useWindowInterior("list");
-
   const load = useCallback(async (quiet = false) => {
-    if (!quiet) {
-      setLoading(true);
-      setLoadError("");
-    }
+    const ask = ++asks.current;
+    if (!quiet) setLoading(true);
     try {
-      const answer = await apiFetch<{ workbenches?: AutomationDetail[] }>("/api/workbenches");
-      setAutomations(answer.workbenches || []);
-      setLoaded(true);
-      setLoadError("");
-    } catch (error) {
-      setLoadError(`Automations not loaded: ${readableError(error)}`);
-    } finally {
-      setLoading(false);
-    }
+      const answer = await apiFetch<{workbenches:AutomationDetail[]}>("/api/workbenches");
+      if (ask !== asks.current) return;
+      setAutomations(answer.workbenches); setLoadError("");
+    } catch (failure) { if (ask === asks.current) setLoadError(`Automations not loaded: ${readableError(failure)}`); }
+    finally { if (ask === asks.current) setLoading(false); }
   }, []);
-
-  useEffect(() => { void load(); }, [load]);
-  // The pane's own read of the chosen automation keeps its rail item true
-  // (its runs, its next run) with no second read of the list.
+  useEffect(() => { void load(); return () => { asks.current += 1; }; }, [load]);
+  useOnDeskChanged(() => void load(true),WORKBENCH_CHANGE_KINDS);
+  const bus = useOptionalRuntimeBus();
+  useEffect(() => bus?.subscribe("program_changed", (frame) => {
+    const id = String((frame.data as {program_id?:string})?.program_id ?? "");
+    if (actions.current.size || automations.some((row) => row.results?.some((result) => result.program?.id === id) || row.program?.latest?.id === id)) void load(true);
+  }), [bus,automations,load]);
+  const asked = useDesk((state) => state.places[NEW_AUTOMATION_PLACE]) || "";
+  useEffect(() => { if (asked) { keepPlace(NEW_AUTOMATION_PLACE,""); setMaking(true); setEditing(false); setDeleting(null); } },[asked]);
   const onRead = useCallback((detail: AutomationDetail) => {
-    setAutomations((list) => list.map((a) => (a.id === detail.id ? { ...a, ...detail } : a)));
-  }, []);
-  useOnDeskChanged(() => void load(true), WORKBENCH_CHANGE_KINDS);
-
-  // Another window asked for New automation (the desk's New menu): read once, then cleared.
-  const asked = useDesk((s) => s.places[NEW_AUTOMATION_PLACE]) || "";
-  useEffect(() => {
-    if (!asked) return;
-    keepPlace(NEW_AUTOMATION_PLACE, "");
-    setMaking(true);
-  }, [asked]);
-
-  const picked = made
-    ?? (kept && automations.some((a) => a.id === kept) ? kept : automations[0]?.id ?? null);
-
-  const pick = (id: string) => {
-    setPaneOpen(true);
-    keepPlace(PICKED_AUTOMATION_PLACE, id);
-    setMade(null);
-    setMaking(false);
+    asks.current += 1; setLoading(false); setLoadError("");
+    setAutomations((list) => list.some((row) => row.id === detail.id) ? list.map((row) => row.id === detail.id ? detail : row) : [...list,detail]);
+  },[]);
+  const select = (id: string | null) => {
+    setPicked(id); keepPlace(PICKED_AUTOMATION_PLACE,id ?? ""); setMaking(false); setEditing(false); setDeleting(null); setError(""); setReceipt("");
   };
-  const reveal = (id: string) => {
-    setPaneOpen(true);
-    keepPlace(PICKED_AUTOMATION_PLACE, id);
-    setMade(id);
-    setMaking(false);
-    void load(true);
-    void useDesk.getState().refresh();
+  const reveal = async (id: string) => {
+    try {
+      const answer = await apiFetch<{workbench:AutomationDetail}>(`/api/workbenches/${encodeURIComponent(id)}`);
+      onRead(answer.workbench); select(id); setEditing(true); void useDesk.getState().refresh();
+    } catch (failure) { select(id); setError(`Automation not loaded: ${readableError(failure)}`); void load(true); }
   };
-  const toggleNew = () => { setPaneOpen(true); setMaking((open) => !open); };
-
-
-  const counts = useMemo(() => {
-    let fresh = 0;
-    let failed = 0;
-    for (const automation of automations) {
-      const runs = endedRuns(automation);
-      fresh += runs.filter((r) => r.new).length;
-      if (runs[0]?.status === "failed") failed += 1;
-    }
-    return { fresh, failed };
-  }, [automations]);
-  const status: Array<StatusBarItem | null> = [
-    automations.length ? { key: "count", text: countWords(automations.length, "automation"), testId: "automation-home-count" } : null,
-    counts.fresh ? { key: "new", lamp: "ask", text: `${counts.fresh} new` } : null,
-    counts.failed ? { key: "failed", lamp: "fail", text: `${counts.failed} failed` } : null,
+  const selected = automations.find((row) => row.id === picked) ?? null;
+  const act = async (id: string, verb: string, write: () => Promise<unknown>, done?: () => void) => {
+    const key = `${verb}:${id}`;
+    if (actions.current.has(key)) return;
+    actions.current.add(key); setPending((rows) => ({...rows,[key]:true})); setError(""); setReceipt("");
+    try { await write(); done?.(); await load(true); }
+    catch (failure) { setError(`${verb === "run" ? "Run not started" : verb === "cancel" ? "Run not cancelled" : verb === "delete" ? "Not deleted" : "Not saved"}: ${readableError(failure)}`); }
+    finally { actions.current.delete(key); setPending((rows) => { const next = {...rows}; delete next[key]; return next; }); }
+  };
+  const byRow = (row: {id:string} | null) => automations.find((entry) => entry.id === row?.id);
+  const verbs: ListVerb[] = [
+    {id:"new",label:"New automation",key:"n",testId:"automation-new",run:() => { setMaking(true); setEditing(false); setDeleting(null); setError(""); }},
+    {id:"open",label:"Open",key:"Enter",enabled:(row) => Boolean(row),run:(row) => { if (row) useDesk.getState().openWorkbenchWindow(row.id); }},
+    {id:"edit",label:"Edit",key:"F2",enabled:(row) => Boolean(row) && !setupPending,run:() => { setEditing(true); setMaking(false); setDeleting(null); }},
+    {id:"run",label:"Run now",key:"r",testId:"automation-run-now",title:selected ? `Run with ${engineWords(selected) ?? "the chosen engine"}` : undefined,
+      enabled:(row) => { const detail = byRow(row); return Boolean(detail && (detail.instruction_shown?.trim() || detail.instruction?.trim() || detail.do_kind === "run_program") && !running(detail) && !pending[`run:${detail.id}`] && !setupPending); },
+      run:(row) => { if (row) { void act(row.id,"run",async () => { const ran = await triggerWorkbenchRun(row.id); setReceipt(ran?.skipped && typeof ran.reason === "string" ? ran.reason : `Run finished · ${byRow(row)?.name ?? "Automation"}`); }); void load(true); } }},
+    {id:"cancel",label:"Cancel run",key:"c",enabled:(row) => { const detail = byRow(row); return Boolean(detail && runningProgram(detail) && !pending[`cancel:${detail.id}`]); },
+      run:(row) => { const detail = byRow(row); const program = detail && runningProgram(detail); if (detail && program) void act(detail.id,"cancel",() => programVerb(program,"park"),() => setReceipt("Run cancelled")); }},
+    {id:"delete",label:"Delete",key:"Delete",enabled:(row) => Boolean(row) && !setupPending && !pending[`delete:${row?.id}`],run:(row) => { const detail = byRow(row); if (detail) { setDeleting(detail); setMaking(false); setEditing(false); setError(""); } }},
   ];
-
-  let pane;
-  if (making || (loaded && !automations.length && !made)) {
-    pane = (
-      <div className="automation-new-pane" data-testid={automations.length ? "automation-new-pane" : "automation-home-empty"}>
-        {automations.length ? null : (
-          <SurfaceState empty emptyLabel="An automation does one job for you, again and again."
-            emptyImage={spriteUrl("automation", "automations")} emptyKind="automation" />
-        )}
-        <AutomationStarters onCreated={reveal} />
-      </div>
-    );
-  } else if (!loaded) {
-    pane = <SurfaceState loading={loading} error={loadError || undefined} onRetry={loading ? undefined : () => void load()} />;
-  } else if (picked) {
-    pane = <AutomationBody key={picked} workbenchId={picked} onRead={onRead} />;
-  }
-
-  return (
-    <div className="automation-app" data-testid="automations-window">
-      <div className="automation-frame surface-rail-layout" data-making={making || undefined}>
-        <Rail label="Automations" data-testid="automation-home-rows" picked={making ? null : picked} onPick={pick}
-          paneOpen={paneOpen || making} onBack={() => { setPaneOpen(false); setMaking(false); }}
-          head={<Button variant="primary" dense aria-expanded={making} onClick={toggleNew} data-testid="automation-new">New automation</Button>}
-          items={automations.map((automation) => ({
-            id: automation.id, label: <span data-testid="automation-home-name">{automation.name || "Automation"}</span>,
-            glyph: <img src={spriteUrl("automation", automation.id, "rest", null, 20)} alt="" draggable={false} />,
-            facts: railWhen(automation), state: endedRuns(automation).some((r) => r.new) ? "New" : undefined,
-            spine: { segments: runSpine(automation, 6), label: runSpineWords(automation, 6) ?? undefined },
-            data: { "data-testid": "automation-rail-item", "data-automation": automation.id },
-          }))} />
-        <div className="automation-app-pane" data-testid="automations-pane">
-          {loadError && loaded ? <SurfaceState error={loadError} onRetry={() => void load()} /> : null}
-          {pane}
-        </div>
-      </div>
-      <StatusBar data-testid="automation-home-status" items={status} />
-    </div>
-  );
+  const rows = useMemo(() => automations.filter((row) => `${row.name} ${row.instruction_shown ?? ""}`.toLocaleLowerCase().includes(query.toLocaleLowerCase())).map((detail) => ({
+    id:detail.id,kind:"automation",name:detail.name || "Automation",nameTestId:"automation-home-name",
+    cells:{runs:runsWhen(detail),last:lastRun(detail),next:nextWords(detail.next_run_at)?.replace(/^Next: /,"") ?? ""},
+  })),[automations,query]);
+  const fresh = automations.reduce((n,row) => n + endedRuns(row).filter((result) => result.new).length,0);
+  const attention = automations.filter((row) => endedRuns(row)[0]?.status === "failed" || row.when_needs_reset || row.sources_shown?.some((source) => source.missing) || row.program?.latest?.state === "waiting" || row.results?.some((result) => result.program?.state === "waiting")).length;
+  const toggleStarts = (detail: AutomationDetail, enabled: boolean) => void act(detail.id,"save",async () => {
+    if (detail.schedule) await updateWorkbenchField(detail.id,{schedule_enabled:enabled});
+    for (const start of detail.event_starts ?? []) if (start.id) await setWorkbenchAutomationEnabled(detail.id,start.id,enabled);
+  });
+  return <PreferencePane label="Automations" testId="automations-window">
+    <ListPane label="Selected automation" listTestId="automation-home-rows" previewTestId="automations-pane" list={<>
+      <ListView label="Automations" rows={rows} selectedId={selected?.id ?? null} onSelect={select} verbs={verbs} defaultVerb="open" ordered
+        columns={[{key:"name",word:"Automation",track:"minmax(0, 2fr)",priority:4,minWidth:160},{key:"runs",word:"Runs",track:"minmax(0, 1.5fr)",priority:3,minWidth:160},{key:"last",word:"Last run",track:"minmax(0, 1.3fr)",priority:2,minWidth:150},{key:"next",word:"Next run",track:"minmax(0, 1fr)",priority:1,minWidth:110}]}
+        toolbar={{testId:"automation-toolbar",trailing:<StringGadget label="Find an automation" value={query} onChange={(value) => { setQuery(value); select(null); }} placeholder="Find" />}} />
+      <SurfaceState loading={loading} error={loadError || undefined} onRetry={loadError ? () => void load() : undefined} />
+    </>}>
+      {making ? <PaneInspector label="New automation"><AutomationStarters onCreated={(id) => void reveal(id)} onCancel={() => setMaking(false)} /></PaneInspector>
+      : deleting ? <PaneInspector label={`Delete ${deleting.name}?`}>
+        <InspectorForm rows={[{label:"Keeps",control:"Past results"}]} notice={error ? <SurfaceState error={error} /> : undefined}
+          completion={{cancel:() => { setDeleting(null); setError(""); },cancelDisabled:Boolean(pending[`delete:${deleting.id}`]),primary:{label:"Delete",busy:Boolean(pending[`delete:${deleting.id}`]),testId:"automation-delete-confirm",run:() => void act(deleting.id,"delete",() => apiFetch(`/api/workbenches/${encodeURIComponent(deleting.id)}`,{method:"DELETE"}),() => { select(null); setReceipt("Automation deleted"); })}}} />
+      </PaneInspector>
+      : selected && editing ? <PaneInspector label="Edit automation"><AutomationSetup key={selected.id} detail={selected} onRead={onRead} onDone={() => setEditing(false)} onPending={setSetupPending} /></PaneInspector>
+      : selected ? <PaneInspector label={selected.name}><InspectorForm testId="automation-summary" rows={[
+        {label:"Runs",control:runsWhen(selected)},
+        ...(hasStarts(selected) ? [{label:"On",control:<CheckGadget label="Automation on" checked={isOn(selected)} disabled={Boolean(pending[`save:${selected.id}`])} onChange={(enabled) => toggleStarts(selected,enabled)} />}] : []),
+        {label:"Do",control:selected.do_kind === "run_program" ? programDoWords(selected) : selected.instruction_shown || selected.instruction || "Choose what to do"},
+        ...(["hand_to_agent","run_program"].includes(selected.do_kind ?? "") && selected.instruction ? [{label:selected.do_kind === "run_program" ? "Goal" : "Agent brief",control:selected.instruction}] : []),
+        {label:"About",control:eventSubjectWords(selected) || selected.sources_shown?.map((source) => source.missing ? "Missing source" : source.label).join(", ") || selected.blanks?.about || ""},
+        {label:"With",control:engineWords(selected) ?? ""}, ...(selected.do_kind === "run_program" ? [] : [{label:"Put it in",control:<PutValue target={selected.output_target} />}]),
+        {label:"Last run",control:lastRun(selected)}, {label:"Next run",control:nextWords(selected.next_run_at)?.replace(/^Next: /,"") ?? ""},
+        ...(endedRuns(selected)[0]?.error ? [{label:"Failed",control:failureWords(endedRuns(selected)[0].error)}] : []),
+      ]} /></PaneInspector> : loading || (loadError && !automations.length) ? null : <p data-testid="automation-home-empty">{query && !rows.length ? "No automations match." : automations.length ? "Select an automation." : "No automations. Use New automation."}</p>}
+      {!deleting && error ? <SurfaceState error={error} /> : null}
+    </ListPane>
+    <StatusBar data-testid="automation-home-status" items={[
+      automations.length ? {key:"count",text:countWords(automations.length,"automation"),testId:"automation-home-count"} : null,
+      fresh ? {key:"new",lamp:"ask",text:`${fresh} new`} : null,
+      attention ? {key:"attention",lamp:"ask",text:`${attention} ${attention === 1 ? "needs" : "need"} you`} : null,
+      receipt ? {key:"receipt",text:receipt} : null,
+    ]} />
+  </PreferencePane>;
 }
-
 export default AutomationsCore;

@@ -54,9 +54,20 @@ builder or grant it owner authority.
 
 ## Configure recurring work
 
-The automation head shows one sentence. Press a part to change it in place.
-New automations use the same sentence with empty parts. There is no separate setup wizard.
-**Run now** is in the head. Each run has **Open result** to show its answer.
+Open **Go → Automations**. Click a row to select it. Its setup and run times show below the list.
+**Find** filters the list. Arrow keys move the selection.
+
+Press **New automation**, choose a starter, then press **Create**.
+The new automation opens its setup below the list. **Edit** opens the same form for an existing automation.
+Use the setup tabs to change its parts. **Save** saves the current tab. **Cancel** or **Done** closes setup.
+Source choices save when you select them.
+
+**Run now** runs the selection. **Cancel run** parks its running Program and keeps the automation.
+**Delete** asks a question in the same window. Confirm **Delete** to remove the automation. Past results stay stored.
+
+Double-click a row, press Return, or press **Open** to open the automation's own window.
+That window keeps the editable sentence, lessons, source drops, and result actions.
+Press **Open result** there to read an earlier answer.
 
 The sentence has these parts:
 
@@ -69,8 +80,9 @@ The sentence has these parts:
 | **Review by** | An optional installed reviewer for an agent handoff. |
 | **Put it in** | **My Inbox**, **Needs you**, **Today**, or a saved destination that prepares a send. |
 
-The editor writes each choice when you press it. It does not show the stored
-cron expression. If a schedule has no usable engine or agent, HoldSpeak keeps
+The **Do**, **When**, **With** and **Put it in** tabs use **Save**. Source choices save at once.
+In the object window, open a sentence part to change it.
+Neither editor shows the stored cron expression. If a schedule has no usable engine or agent, HoldSpeak keeps
 the schedule saved but off and names the missing **With** choice.
 
 Before you rely on a recurring task, verify:

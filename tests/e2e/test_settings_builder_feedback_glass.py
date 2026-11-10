@@ -7,6 +7,7 @@ from typing import Any
 import pytest
 
 from tests._evidence import evidence_dir
+from .test_automation_glass import _new_automation
 from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle, clear_hub_windows, wait_for_hub
 from .test_ui_feedback_glass import _save_feedback
 
@@ -195,13 +196,16 @@ def test_reported_settings_categories_and_guided_builder_in_firefox(
 
                 page.get_by_role("button", name="Go", exact=True).first.click()
                 page.locator("nav[aria-label='Go menu']").get_by_role("menuitem", name="Automations").first.click()
-                page.get_by_test_id("automation-new").click()
+                _new_automation(page)
                 with page.expect_response(lambda response: response.url.endswith("/api/workbenches")
                                           and response.request.method == "POST") as created:
-                    page.get_by_test_id("automation-starter-scratch").click()
+                    page.get_by_role("button", name="Create", exact=True).click()
                 workbench_id = created.value.json()["workbench"]["id"]
-                # The made automation opens in the Automations window's pane.
-                automation = page.locator("[id='surface-workbenches'][data-layer='window']")
+                app = page.locator("#surface-workbenches")
+                app.get_by_test_id("automation-setup").wait_for()
+                app.get_by_role("button", name="Cancel", exact=True).click()
+                app.locator(f'[data-object-id="{workbench_id}"]').dblclick()
+                automation = page.locator(f"[id='workbench:{workbench_id}']")
                 automation.get_by_test_id("automation-sentence").wait_for()
                 assert automation.get_by_test_id("automation-run-now").is_disabled()
                 assert not automation.get_by_test_id("automation-newest").is_visible()

@@ -310,7 +310,7 @@ def _cases() -> tuple[list[tuple[str, str, str | None]], dict[str, str]]:
         # subject: the sentence, its newest result, an older failed one).
         ("automation", "workbench:{automation}", None),
         ("automation-when", "workbench:{automation}", None),
-        ("automation-walk", "workbench:{automation}", None),
+        ("automation-walk", "surface-workbenches", None),
         # Programs PG14: an automation that runs a Program (Do: Run a
         # program; its one result is the seeded Program, Running).
         ("automation-program", "workbench:{automation_program}", None),
@@ -451,13 +451,11 @@ for _case in ("program-plan", "program-rounds"):
     for _width in SIZES:
         _red(_case, _width, "whole", r"^Button 'Edit Goal' uses \d+ lines$",
              "Needs a canvas: the Goal paragraph is the edit Button's label")
-for _case in ("automation", "automation-when", "automation-walk", "surface-workbenches"):
+for _case in ("automation", "automation-when"):
     for _width in SIZES:
-        if _case == "surface-workbenches" and _width == 393:
-            continue  # the phone opens on the rail, not a picked automation
         _red(_case, _width, "whole", r"^Button 'Do' uses \d+ lines$",
              "Needs a canvas: the Do sentence part is a paragraph inside a Button",
-             maybe=_case == "automation-walk")
+             maybe=False)
 _red("surface-activity", 393, "whole",
      r"^Button '(?:Artifact (?:new|read) \u00b7|Meeting saved \u00b7)[^']+' uses \d+ lines$",
      "Needs a canvas: full receipt names wrap on the phone")
