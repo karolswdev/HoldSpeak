@@ -1,7 +1,7 @@
 /* Window grammar 2026-10-24 (docs/internal/betterment/native-experience/
  * WINDOW-GRAMMAR-2026-10-24.md): the native preference window.
  *
- *   rail (32 px rows, glyph + label, selection blue) | pane (label/control grid)
+ *   shared Rail (glyph, label, health and selection) | pane (label/control grid)
  *   status bar (24 px, sans 12 muted: the save state, then the facts)
  *
  * Settings and the Components Forms specimen compose these three pieces; the
@@ -25,7 +25,7 @@ export type PrefRailItem = {
   label: string;
   glyph?: ReactNode;
   disabled?: boolean;
-  /** The language (2026-11-11): the section's health, a word under the
+  /** The language (2026-11-11): the section's health, a word beside the
    *  label and a 4 px spine in its meaning colour (Settings; a specimen
    *  rail leaves it out). */
   health?: { tone: SpineTone; word: string };

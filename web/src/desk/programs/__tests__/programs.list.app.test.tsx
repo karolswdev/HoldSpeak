@@ -34,7 +34,7 @@ const detailOf = (id: string, title: string): Program => ({ ...clone(yourTurn), 
 describe("the Programs window (the language, 2026-11-08: the window is the Program)", () => {
   afterEach(() => vi.useRealTimers());
 
-  it("the rail: New program, then the active Programs waiting first, a rule, the ones done this week; each tile says its name and state", async () => {
+  it("the rail: New program, then the active Programs waiting first, then the ones done this week; each row says its name and state", async () => {
     onRecordedDay();
     const first = list.programs[0];
     hub({ "GET /api/programs": list, [`GET /api/programs/${first.id}`]: detailOf(first.id, first.title) });
@@ -55,7 +55,7 @@ describe("the Programs window (the language, 2026-11-08: the window is the Progr
     const waiting = tileOf(first.id);
     expect(waiting.getAttribute("aria-label")).toBe(`${first.title}, waits on you`);
     expect(waiting.getAttribute("title")).toBe(`${first.title}, waits on you`);
-    // A draft is a dashed tile with no sprite and no dot; the others wear the program sprite and a state dot.
+    // Drafts say Drafting; every row keeps its name, sprite and state.
     const draft = tileOf(list.programs.find((row) => row.state === "drafting")!.id);
     expect(draft.textContent).toContain("drafting");
     expect(waiting.querySelector("img")!.getAttribute("src")).toContain("program");
