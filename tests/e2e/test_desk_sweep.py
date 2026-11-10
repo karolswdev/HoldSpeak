@@ -1661,15 +1661,18 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
                       const canvas = document.createElement('canvas'); canvas.width = 640; canvas.height = 360;
                       const ink = canvas.getContext('2d'); ink.fillStyle = '#10192b'; ink.fillRect(0, 0, 640, 360);
                       ink.fillStyle = '#ffffff'; ink.font = '32px sans-serif'; ink.fillText('Desk recording', 40, 180);
-                      const stream = canvas.captureStream(15), chunks = [];
-                      const recorder = new MediaRecorder(stream, {mimeType: 'video/webm'});
+                      canvas.style.cssText = 'position:fixed;left:0;top:0;pointer-events:none';
+                      document.body.appendChild(canvas);
+                      const stream = canvas.captureStream(0), chunks = [], track = stream.getVideoTracks()[0];
+                      const recorder = new MediaRecorder(stream, {mimeType: 'video/webm;codecs=vp9'});
                       recorder.ondataavailable = event => chunks.push(event.data);
                       const ended = new Promise(resolve => recorder.onstop = resolve);
-                      recorder.start();
+                      const begun = new Promise(resolve => recorder.onstart = resolve);
+                      recorder.start(); track.requestFrame(); ink.fillRect(40, 220, 6, 6); await begun;
                       for (let frame = 0; frame < 12; frame++) {
-                        ink.fillRect(40 + frame * 8, 220, 6, 6); await new Promise(requestAnimationFrame);
+                        ink.fillRect(40 + frame * 8, 220, 6, 6); track.requestFrame(); await new Promise(requestAnimationFrame);
                       }
-                      recorder.stop(); await ended; stream.getTracks().forEach(track => track.stop());
+                      recorder.stop(); await ended; stream.getTracks().forEach(track => track.stop()); canvas.remove();
                       const headers = {Authorization: `Bearer ${token}`, 'Content-Type': 'application/json'};
                       const started = await fetch('/api/recordings', {method: 'POST', headers,
                         body: JSON.stringify({width:640, height:360, view:'sweep-canvas'})});
@@ -1684,9 +1687,22 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
                     }""", TOKEN)
                     win.locator(f'[data-recording="{recording_id}"] .surface-rail-row').click(timeout=T)
                     win.get_by_test_id("recordings-video").wait_for(timeout=T)
-                    win.get_by_test_id("recordings-video").evaluate("async video => { video.muted = true; await video.play(); video.pause(); }")
+                    win.get_by_test_id("recordings-video").evaluate("""async video => {
+                      video.muted = true;
+                      try { await video.play(); video.pause(); }
+                      catch (error) {
+                        const response = await fetch(video.currentSrc || video.src);
+                        const bytes = new Uint8Array(await response.arrayBuffer());
+                        throw new Error(`${error}; HTTP ${response.status}; ${response.headers.get('content-type')}; `
+                          + `${bytes.length} bytes; head ${Array.from(bytes.slice(0, 32))}; ${video.error?.message}`);
+                      }
+                    }""")
                     win.get_by_test_id("recordings-storage").get_by_role("button").click()
-                    win.get_by_test_id("settings-recordings-usage").wait_for(timeout=T)
+                    win.get_by_test_id("settings-recordings-usage").scroll_into_view_if_needed(timeout=T)
+                    sweep.settle()
+                    sweep.fences("storage")
+                    win.get_by_test_id("recordings-mast").scroll_into_view_if_needed(timeout=T)
+                    assert win.locator(".recordings-object > .surface-spine").evaluate("el => el.getBoundingClientRect().height") >= 4
                 page.mouse.move(2, 2)
                 sweep.settle()
                 sweep.fences("picked")

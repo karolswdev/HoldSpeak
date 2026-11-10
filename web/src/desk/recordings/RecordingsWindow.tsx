@@ -62,6 +62,7 @@ export function RecordingsCore(_props: CoreProps) {
     finally { locked.current = false; setBusy(""); }
   };
   const state = shown ? stateOf(shown) : null;
+  const notice = refusal || capture.error || receipt;
   return <div className="recordings-window" data-testid="recordings-window">
     <div className="recordings-body surface-rail-layout">
       <Rail label="Recordings" data-testid="recordings-rail" picked={shown?.id ?? null}
@@ -115,9 +116,9 @@ export function RecordingsCore(_props: CoreProps) {
       </article>
     </div>
     <StatusBar data-testid="recordings-status" items={[
-      { text: refusal || capture.error || receipt, lamp: refusal || capture.error ? "warn" : undefined, testId: "recordings-refusal" },
-      { text: countWords(rows.length, "recording") },
-      { text: data.payload.usage.bytes ? `${sizeWords(data.payload.usage.bytes)} used` : null },
+      notice ? { text: notice, lamp: refusal || capture.error ? "warn" : undefined, testId: "recordings-refusal" } : null,
+      rows.length ? { text: countWords(rows.length, "recording") } : null,
+      data.payload.usage.bytes ? { text: `${sizeWords(data.payload.usage.bytes)} used` } : null,
     ]} />
   </div>;
 }

@@ -174,7 +174,7 @@ describe("the window", () => {
     expect(rows).toHaveLength(2);
     const states = rows.map((row) => within(row).getByTestId("recordings-state").textContent);
     expect(states).toEqual(expect.arrayContaining([expect.stringContaining("Ready"), expect.stringContaining("Failed")]));
-    expect(status()).toContain("2 recordings");
+    expect(status().trim()).toMatch(/^2 recordings/);
     expect(status()).toMatch(/\d+ (B|KB|MB) used/);
   });
 
