@@ -10,6 +10,27 @@ from __future__ import annotations
 from typing import Any
 
 
+def bare_settings_hub(db: Any, observer: Any) -> Any:
+    """Off-hub MCP uses the same read, over the usual bare collaborators.
+
+    The hub never uses this builder: its registry holds its composed services.
+    """
+    from .cadence_service import CadenceService
+    from .inference_assignment_service import InferenceAssignmentService
+    from .inference_setup_service import InferenceSetupApplicationService
+    from .model_library_service import ModelLibraryApplicationService
+    from ..config import Config
+
+    setup = InferenceSetupApplicationService(db)
+    return SettingsHubService(
+        # get_library is a read. Do not start acquisition recovery for a hub
+        # summary; no download verb is exposed by this collaborator.
+        model_library_service=ModelLibraryApplicationService(db, setup_service=setup, acquisition_service=None),
+        inference_assignment_service=InferenceAssignmentService(db),
+        cadence_service=CadenceService(db, Config.load().cadence, observer=observer),
+    )
+
+
 def _resolve_meetings_host(config: Any) -> str | None:
     """HS-172-02: resolve the meetings group's assigned model host.
 
@@ -55,6 +76,15 @@ class SettingsHubService:
         self._model_library = model_library_service
         self._assignments = inference_assignment_service
         self._cadence = cadence_service
+
+    def _database(self) -> Any:
+        from ..db import get_database
+        from ..runtime.composition import db_or
+
+        for target in (self._assignments, self._model_library, self._cadence):
+            if (db := getattr(target, "_db", None)) is not None:
+                return db
+        return db_or(get_database)
 
     def hub(self, principal: Any) -> dict[str, Any]:
         """HS-170-04: the Settings hub row facts.
@@ -138,11 +168,9 @@ class SettingsHubService:
         # five faces said "no model" while summaries ran on the LAN box.
         summary_fact: dict[str, Any] = {"engine_set": None, "off": False, "host": None}
         try:
-            from ..db import get_database
             from ..services.meeting_route_projection import summary_engine_fact
 
-            summary_fact = summary_engine_fact(
-                getattr(self._assignments, "_db", None) or get_database())
+            summary_fact = summary_engine_fact(self._database())
         except Exception:
             pass
         if summary_fact.get("engine_set") is not None:
@@ -151,8 +179,7 @@ class SettingsHubService:
         # Connections: count provider connections.
         connected = 0
         try:
-            from ..db import get_database
-            conns = get_database().automations.list_provider_connections()
+            conns = self._database().automations.list_provider_connections()
             connected = len(conns)
         except Exception:
             pass
@@ -187,7 +214,7 @@ class SettingsHubService:
         heartbeat_rhythm: dict[str, Any] = {"loops": loops}
         try:
             from ..services.heartbeat_service import HeartbeatService
-            hb = HeartbeatService(get_database())
+            hb = HeartbeatService(self._database())
             heartbeat_rhythm = hb.hub_rhythm()
         except Exception:
             heartbeat_rhythm["sweepEveryMinutes"] = 15
@@ -219,7 +246,7 @@ class SettingsHubService:
         last_run_at: str | None = None
         last_run_s: int | None = None
         try:
-            with get_database()._connection() as _conn:
+            with self._database()._connection() as _conn:
                 _row = _conn.execute(
                     "SELECT intel_completed_at, intel_requested_at "
                     "FROM meetings "

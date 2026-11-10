@@ -177,6 +177,12 @@ def _settings_hub(services: Any, ctx: Any) -> Any:
                               cadence_service=live("cadence_service"))
 
 
+def _system(ctx: Any) -> Any:
+    from holdspeak.system_operations import system_service
+
+    return system_service(ctx)
+
+
 def _ops_connections_builders(ctx: Any) -> dict[str, Callable[[], Any]]:
     """The concierge, calendar, feedback and provider services' builds (ops/connections)."""
     def concierge() -> Any:
@@ -342,6 +348,7 @@ def compose_declared_services(services: Any, ctx: Any, resolved_db: Any, resolve
         # read, the posture; the heartbeat, Reach and Telegram are read at each call.
         "settings_service": lambda: _bare_settings(resolved_db, resolved_observer),
         "settings_hub_service": lambda: _settings_hub(services, ctx),
+        "system_service": lambda: _system(ctx),
         "authority_service": lambda: _bare_authority(resolved_db, resolved_observer),
         "heartbeat_service": lambda: LIVE_HEARTBEAT_SERVICE,
         "reach_service": lambda: LIVE_REACH_SERVICE,

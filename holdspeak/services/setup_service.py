@@ -619,8 +619,16 @@ class SetupService:
         }:
             return {"rows": [], "checkedAt": checked(), "disabled": True}
         scanner = self._lan_scanner or scan_lan_engines
-        result = scanner(principal=principal)
-        return {"rows": result.get("engines", []), "checkedAt": checked()}
+        from ..kernel.external_egress import EgressOperationRefused
+
+        try:
+            result = scanner(principal=principal)
+        except EgressOperationRefused as exc:
+            raise ServiceError("setup_lan_refused", exc.reason, context={"status": 403}) from exc
+        # Both Setup and Runs on consume this one scan. Keep partial/unavailable
+        # facts: dropping them would turn a failed look into an empty success.
+        return {**{key: value for key, value in result.items() if key != "engines"},
+                "rows": result.get("engines", []), "checkedAt": checked()}
 
     def add_people(self, principal: Principal, names: Any) -> dict[str, Any]:
         if self._people is None:

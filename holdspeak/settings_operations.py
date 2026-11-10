@@ -223,7 +223,7 @@ SETTINGS_ROUTE_OPERATIONS: tuple[OperationDescriptor, ...] = (
          lambda s, p, a: s.hub(p),
          "Read the Settings hub row facts: each section's state (engines, connections, voice, meetings, rhythm).",
          result="{models, connections, voice, meetings, answers, rhythm, sounds, agents, system, posture, writtenAt}",
-         blocking_io=True),
+         blocking_io=True, tool=_NO_ARGS),
     _row("heartbeat.status", "heartbeat_service", "get_settings", ("GET", "/api/settings/heartbeat"),
          "api_heartbeat_get", lambda s, p, a: {**s.get_settings(), "held": s.in_quiet_hours()},
          "Read the heartbeat sweep settings, and whether quiet hours hold it now.",
@@ -319,7 +319,13 @@ def bare_builders(db: Any, observer: Any) -> dict[str, Any]:
 
         return OnboardingService()
 
-    return {"setup_service": setup, "settings_service": settings, "onboarding_service": onboarding,
+    def settings_hub() -> Any:
+        from holdspeak.services.settings_hub_service import bare_settings_hub
+
+        return bare_settings_hub(db, observer)
+
+    return {"setup_service": setup, "settings_service": settings, "settings_hub_service": settings_hub,
+            "onboarding_service": onboarding,
             "heartbeat_service": lambda: LIVE_HEARTBEAT_SERVICE, "reach_service": lambda: LIVE_REACH_SERVICE}
 
 

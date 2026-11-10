@@ -118,3 +118,38 @@ def test_answers_engine_names_the_ask_assignment_after_the_route_migration(tmp_p
     assert client.get("/api/settings/hub").json()["answers"] == {
         "engineSet": True, "engine": "Hub Answer Profile",
     }
+
+
+def test_settings_hub_tool_uses_the_same_composed_read(tmp_path: Path, monkeypatch) -> None:
+    from unittest.mock import Mock
+
+    from holdspeak import operations
+    from holdspeak.mcp import tools
+    from holdspeak.mcp.families import declared
+    from holdspeak.services.settings_hub_service import SettingsHubService, bare_settings_hub
+
+    db = Database(tmp_path / "tool-hub.db")
+    target = bare_settings_hub(db, None)
+    assert isinstance(target, SettingsHubService)
+    read = Mock(wraps=target.hub)
+    monkeypatch.setattr(target, "hub", read)
+    registry = operations.bind_available({"settings_hub_service": target})
+    monkeypatch.setattr(tools, "runtime_registry", lambda: registry)
+    ctx = WebContext(get_state=lambda: {})
+    ctx.credential_service = object()  # the unused secret routes require a composed target
+    ctx.operations = registry
+    app = FastAPI()
+
+    @app.middleware("http")
+    async def owner(request: Request, call_next):
+        request.state.principal = OWNER
+        return await call_next(request)
+
+    app.include_router(build_settings_router(ctx))
+    web = TestClient(app).get("/api/settings/hub")
+    assert web.status_code == 200, web.text
+    tool = tools.dispatch("settings.hub", {}, OWNER)
+    assert "settings.hub" in declared.NAMES
+    for key in ("models", "meetings", "answers", "agents", "voice", "system"):
+        assert tool[key] == web.json()[key]
+    assert read.call_count == 2

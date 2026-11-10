@@ -196,6 +196,9 @@ class OperationDescriptor:
     tool_schema: Optional[Mapping[str, Any]] = None
     authority: str = "work"
     thread: Optional[str] = None
+    #: Why this declared HTTP operation has no MCP tool (a device callback,
+    #: browser gesture or hub-local read). The parity census prints this row.
+    http_only_reason: Optional[str] = None
 
     @property
     def tool_name(self) -> str:
@@ -230,6 +233,7 @@ class OperationDescriptor:
             "owner_only": self.owner_only,
             "blocking_io": self.blocking_io,
             "owner_press": self.owner_press,
+            "http_only_reason": self.http_only_reason,
             "admission": self.admission.export() if self.admission is not None else None,
         }
 
@@ -2485,6 +2489,11 @@ from holdspeak.calendar_operations import CALENDAR_OPERATIONS  # noqa: E402
 from holdspeak.feedback_operations import FEEDBACK_OPERATIONS  # noqa: E402
 
 DESCRIPTORS = DESCRIPTORS + CONCIERGE_OPERATIONS + PROVIDER_OPERATIONS + CALENDAR_OPERATIONS + FEEDBACK_OPERATIONS
+
+# The hub-local callbacks (ops/system): each row states why it is HTTP only.
+from holdspeak.system_operations import SYSTEM_OPERATIONS  # noqa: E402
+
+DESCRIPTORS = DESCRIPTORS + SYSTEM_OPERATIONS
 
 #: The RuntimeServices / WebContext fields the catalogue binds to.
 BOUND_SERVICES: tuple[str, ...] = tuple(dict.fromkeys(d.service for d in DESCRIPTORS))
