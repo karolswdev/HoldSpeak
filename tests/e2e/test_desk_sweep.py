@@ -2604,14 +2604,22 @@ def test_each_app_guide_stays_in_its_window(desk: dict[str, Any], pw_browser: An
             if width == 900:
                 ask_window=page.locator('[id="ask"]')
                 ask_window.wait_for(timeout=T)
-                box=ask_window.bounding_box();grip=ask_window.locator('.desk-window-grip').bounding_box()
-                assert box and grip
-                x,y=grip['x']+grip['width']/2,grip['y']+grip['height']/2
-                page.mouse.move(x,y);page.mouse.down()
-                page.mouse.move(x+900-box['width'],y+600-box['height'],steps=8);page.mouse.up()
+                page.wait_for_function(SETTLED_JS,arg='ask',timeout=T)
+                for _ in range(3):
+                    box=ask_window.bounding_box();grip=ask_window.locator('.desk-window-grip').bounding_box()
+                    assert box and grip
+                    if abs(box['width']-900)<=1 and abs(box['height']-600)<=1:break
+                    x,y=grip['x']+grip['width']/2,grip['y']+grip['height']/2
+                    page.mouse.move(x,y);page.mouse.down()
+                    page.mouse.move(x+900-box['width'],y+600-box['height'],steps=8);page.mouse.up()
+                    page.wait_for_function(SETTLED_JS,arg='ask',timeout=T)
+
 
         page.locator(f'[id="{wid}"]').wait_for(timeout=T)
         page.wait_for_function(SETTLED_JS,arg=wid,timeout=T)
+        if width == 900:
+            box=page.locator(f'[id="{wid}"]').bounding_box()
+            assert box and abs(box['width']-900)<=1 and abs(box['height']-600)<=1,(name,box)
         before=_guide_view(page,wid)
         page.get_by_role('button',name='Help',exact=True).click()
         if width!=1440:page.screenshot(path=str(shots/f'{name}-{width}-0.png'))

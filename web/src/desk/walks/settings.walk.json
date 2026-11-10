@@ -24,6 +24,10 @@
       "highlight": {
         "target": "[data-testid=\"settings-jobs\"] select",
         "words": "Choose engines in the job row’s pop-up. Show me does not change it."
+      },
+      "press": {
+        "target": "[data-testid=\"settings-engines\"] .surface-segmented-tabs [role=\"tab\"][data-tab=\"jobs\"]",
+        "words": ""
       }
     }
   ],

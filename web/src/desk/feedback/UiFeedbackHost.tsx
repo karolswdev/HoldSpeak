@@ -4,6 +4,7 @@ import { createPortal } from "react-dom";
 import { apiFetch, readableError } from "../../lib/api";
 import { Button } from "../../components/signal/Signal";
 import { GuideNote, PadGadget } from "../surface";
+import { openSurfaceOr } from "../shell";
 import { TALK_STOP_EVENT } from "../components/MicButton";
 import {
   audioBase64,
@@ -398,6 +399,20 @@ export function UiFeedbackHost() {
                 onClick={() => void retryTranscript()}
               >
                 Retry transcription
+              </Button>
+            ) : null}
+            {saved?.transcript_status === "failed" &&
+            /unavailable|not_ready|route_member_missing|not_admitted|binding_/.test(
+              saved.transcript_error ?? "",
+            ) ? (
+              <Button
+                dense
+                variant="secondary"
+                onClick={() =>
+                  openSurfaceOr("configure-settings", "/settings", "speak")
+                }
+              >
+                Set up speech
               </Button>
             ) : null}
             {saved?.directory ? (

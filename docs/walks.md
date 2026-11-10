@@ -31,7 +31,7 @@ them in this order: `open`, `verb`, `press`, `scroll`, `say`, `highlight`,
 | `scroll` | Names a part to bring into view in its window. |
 | `say` | Shows the step's words in the note. |
 | `highlight` | Marks one part: `{"target": "programs-new", "words": "..."}`. A plain name is a `data-testid`. Other text is a CSS selector. The walk looks only in the window of the step: `window`, else the last `open`. If that window is not open, the walk skips the step. |
-| `thing` | In `press`, `scroll` or `highlight`: the name of the part, for example `"people rows"`. If the window has no such part, the guide says `No people rows here yet` and skips the step without a question. |
+| `thing` | In `press`, `scroll` or `highlight`: the name of the part, for example `"people rows"`. If the window has no such part, the guide skips that step. An empty app guide goes to the action that starts a new item. |
 | `ask` | Asks one question: `{"ref": "s11-well", "question": "...", "choices": ["Keep", "Redo"]}`. |
 
 `target` and `window` in `press` and `scroll` work as in `highlight`. An

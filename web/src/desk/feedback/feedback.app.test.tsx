@@ -357,3 +357,33 @@ it("a guide recording uses the shared local mic without a hub floor call", async
   expect(mocks.releaseAudioFloor).not.toHaveBeenCalled();
   expect(mocks.renewAudioFloor).not.toHaveBeenCalled();
 });
+
+it("keeps a saved recording after a transcript failure and retries only the transcript", async () => {
+  const { action } = deskFace();
+  await startPicker();
+  await selectAction(action);
+  fireEvent.click(screen.getByRole("button", { name: "Record" }));
+  await screen.findByText("Recording");
+  fireEvent.click(screen.getByRole("button", { name: "Stop" }));
+  mocks.apiFetch
+    .mockResolvedValueOnce(saveSuccess)
+    .mockResolvedValueOnce(transcribeFailed)
+    .mockResolvedValueOnce(transcribeSuccess);
+  fireEvent.click(screen.getByRole("button", { name: "Save" }));
+  await screen.findByRole("button", { name: "Retry transcription" });
+  fireEvent.click(screen.getByRole("button", { name: "Retry transcription" }));
+  await waitFor(() =>
+    expect(
+      screen.queryByRole("button", { name: "Retry transcription" }),
+    ).toBeNull(),
+  );
+  expect(
+    mocks.apiFetch.mock.calls.filter((call) => call[0] === "/api/ui-feedback"),
+  ).toHaveLength(1);
+  expect(
+    mocks.apiFetch.mock.calls.filter((call) =>
+      String(call[0]).endsWith("/transcribe"),
+    ),
+  ).toHaveLength(2);
+  expect(mocks.captureWindowPng).toHaveBeenCalledOnce();
+});

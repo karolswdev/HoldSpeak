@@ -3,10 +3,11 @@ import { useState } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { GuideNote, ListPane, ListView } from "../../../desk/surface";
 export function GuideReference() {
-  const [owner, setOwner] = useState<HTMLDivElement | null>(null);
+  const [body, setBody] = useState<HTMLDivElement | null>(null);
+  const owner = body?.closest<HTMLElement>('[data-layer="window"]') ?? body;
   const [step, setStep] = useState(-1);
   const [picked, setPicked] = useState<string | null>(null);
-  const target = owner?.querySelector<HTMLElement>(
+  const target = body?.querySelector<HTMLElement>(
     step === 0 ? ".object-list-row" : '[data-testid="guide-example-new"]',
   );
   const stop = () => {
@@ -14,11 +15,7 @@ export function GuideReference() {
     setPicked(null);
   };
   return (
-    <div
-      ref={setOwner}
-      className="surface-preference-pane"
-      style={{ position: "relative" }}
-    >
+    <div ref={setBody} className="surface-preference-pane">
       <Button
         variant="secondary"
         onClick={() => {
