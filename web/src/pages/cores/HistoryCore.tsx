@@ -87,6 +87,8 @@ export function HistoryCore({ hero, scope }: CoreProps) {
   // The rail marks the last meeting picked (Back returns to it) and the one
   // Restore brought back.
   const [marked, setMarked] = useState<string | null>(null);
+  const [sendRequest, setSendRequest] = useState(0);
+  const [sending, setSending] = useState(false);
   const [recordedPreview, setRecordedPreview] = useState<string | null>(null);
   useEffect(() => {
     if (scopedMeetingId) setMarked(scopedMeetingId);
@@ -274,11 +276,13 @@ export function HistoryCore({ hero, scope }: CoreProps) {
 
   // The status bar's words (UX-CANON A.8: a zero is never said). With a
   // meeting picked, the meeting's own status bar is the window's foot.
-  const needsCount = meetingRows.filter((row) => meetingFailed(row) || Number(row.needs_you_count) > 0).length;
+  const tasksCount = meetingRows.reduce((sum, row) => sum + Number(row.needs_you_count ?? 0), 0);
+  const needsCount = meetingRows.filter(meetingFailed).length;
   const statusItems: StatusBarItem[] = [
     { key: "count", text: countWords(parkedOn ? parked.length : meetingRows.length, "meeting"), testId: "meetings-count" },
     marked && (parkedOn ? parked.some((row) => row.id === marked) : meetingRows.some((row) => String(row.id) === marked)) && recordsFace ? { key: "selection", text: "1 selected" } : null,
-    !parkedOn ? { key: "needs", lamp: "ask" as const, text: countWords(needsCount, "needs you", "need you") } : null,
+    !parkedOn && tasksCount ? { key: "tasks", lamp: "ask" as const, text: `${tasksCount} ${tasksCount === 1 ? "task" : "tasks"} to confirm` } : null,
+    !parkedOn && needsCount ? { key: "needs", lamp: "ask" as const, text: countWords(needsCount, "needs you", "need you") } : null,
     !parkedOn && routeWord ? { key: "route", lamp: "warn" as const, text: routeWord, testId: "meetings-route-state" } : null,
     receipt && !parkedOn
         ? {
@@ -310,6 +314,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
     { id: "record", label: "Record", testId: "meetings-record", run: () => openSurfaceOr("record-live", "/live", scope) },
     { id: "import", label: "Import", testId: "meetings-import", run: () => importPicker.current?.click() },
     { id: "open", label: "Open", key: "Enter", enabled: (row) => Boolean(row), run: (row) => { if (row) { setRecordedPreview(null); openSourceRef(`meeting:${row.id}`); } } },
+    { id: "send", label: "Send to…", testId: "meetings-send", enabled: (row) => Boolean(row && meetingRows.find((entry) => String(entry.id) === row.id)?.has_summary), run: () => setSendRequest((value) => value + 1) },
     { id: "summarise", label: "Summarise", title: routeTitle(readPlannedRoute(selectedMeeting)), enabled: (row) => {
       const meeting = meetingRows.find((entry) => String(entry.id) === row?.id);
       return Boolean(meeting && meeting.transcriptWords && routeReady(readPlannedRoute(meeting))
@@ -318,16 +323,16 @@ export function HistoryCore({ hero, scope }: CoreProps) {
     { id: "delete", label: "Delete", key: "Delete", enabled: (row) => Boolean(row) && !deleting, run: (row) => { if (row) void remove(row.id); } },
     ...(parked.length ? [{ id: "deleted", label: parkedOn ? "Records" : "Deleted…", run: () => { setParkedOn(!parkedOn); setMarked(null); } }] : []),
   ];
-  const rail = <CatalogRail meetingRows={meetingRows} meetings={meetings} picked={marked} onPick={(row) => setMarked(String(row.id))}
+  const rail = <CatalogRail meetingRows={meetingRows} meetings={meetings} picked={marked} onPick={(row) => { setMarked(String(row.id)); setSendRequest(0); }}
     runningId={runningId} drainerAbsent={drainerAbsent} runRefusal={runRefusal} verbs={verbs}
     trailing={<StringGadget label="Find a meeting" value={searchQuery} onChange={setSearchQuery} placeholder="Find a meeting" />} />;
   const records = parkedOn ? <ListPane label="Deleted meeting" list={<CatalogRail
     meetingRows={parked.map((row) => ({ id: row.id, title: row.title, has_summary: true }))} meetings={meetings} picked={marked}
-    onPick={(row) => setMarked(String(row.id))} runningId={null} verbs={[
+    onPick={(row) => { setMarked(String(row.id)); setSendRequest(0); }} runningId={null} verbs={[
       { id: "records", label: "Records", run: () => { setParkedOn(false); setMarked(null); } },
       { id: "restore", label: "Restore", enabled: (row) => Boolean(row) && !deleting, run: (row) => { if (row) void restoreParked([row.id]); } },
     ]} />}><p>Deleted meetings can be restored.</p></ListPane> : <ListPane list={rail} label="Meeting preview" listTestId="meetings-list" previewTestId="meetings-preview">
-      {selectedMeeting ? <MeetingPreview key={marked} meeting={selectedMeeting} state={listMeetingState(selectedMeeting, { runningId, drainerAbsent, refusal: runRefusal?.meetingId === marked ? runRefusal.refusal : null })?.label} /> : <p>{meetingRows.length || meetings.error ? "Select a meeting to read its summary." : searchQuery ? "No meeting matches" : "Record or import a meeting"}</p>}
+      {selectedMeeting ? <MeetingPreview key={marked} meeting={selectedMeeting} sendRequest={sendRequest} onSendState={setSending} onChanged={() => void reloadMeetings()} state={listMeetingState(selectedMeeting, { runningId, drainerAbsent, refusal: runRefusal?.meetingId === marked ? runRefusal.refusal : null })?.label} /> : <p>{meetingRows.length || meetings.error ? "Select a meeting to read its summary." : searchQuery ? "No meeting matches" : "Record or import a meeting"}</p>}
     </ListPane>;
 
   // The pane: the picked meeting (live while it records, else its record),
@@ -389,7 +394,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
         />
       </div>
       {/* One foot per window: the picked meeting's own status bar, else this. */}
-      {showsMeeting ? null : (
+      {showsMeeting || sending ? null : (
         <StatusBar
           data-testid="meetings-status"
           verbs={parkOutcome && !parkedOn ? <ParkReceipt outcome={parkOutcome} onRestore={(ids) => void restoreParked(ids)} data-testid="meetings-park-receipt" /> : null}

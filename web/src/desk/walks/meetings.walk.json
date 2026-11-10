@@ -8,7 +8,7 @@
       "highlight": {
         "target": "meetings-toolbar",
         "thing": "meeting actions",
-        "words": "Record or import a meeting. The other actions use the selected meeting."
+        "words": "Record or import a meeting. Send to… opens the selected meeting’s Send sheet."
       }
     },
     {
@@ -22,7 +22,7 @@
       "highlight": {
         "target": "meetings-preview",
         "thing": "selected summary",
-        "words": "The selected summary and decisions appear below the list."
+        "words": "Read the summary and decisions below the list. Tasks to confirm has Confirm, Edit and Dismiss."
       }
     },
     {

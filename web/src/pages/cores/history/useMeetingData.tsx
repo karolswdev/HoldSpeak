@@ -69,7 +69,7 @@ export interface OutcomeReviewResponse {
   revision?: string | null;
 }
 
-async function readOutcomeReview(id: string): Promise<OutcomeReviewResponse> {
+export async function readOutcomeReview(id: string): Promise<OutcomeReviewResponse> {
   try {
     const current = await apiFetch<OutcomeReviewResponse>(
       `/api/meetings/${encodeURIComponent(id)}/outcome-review`,
