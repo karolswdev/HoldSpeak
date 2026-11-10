@@ -1726,9 +1726,9 @@
         },
         {
           "path": "web/src/features/runson/EngineLibrary.tsx",
-          "symbol": "runson-find-lan",
-          "line": 382,
-          "claim": "The existing picker offers Find on LAN beside Add an engine."
+          "symbol": "runson-kind-find-lan",
+          "line": 280,
+          "claim": "The engine inspector offers Find on LAN when the kind is an engine on the network."
         }
       ],
       "tests": [
