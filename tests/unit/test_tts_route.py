@@ -44,6 +44,13 @@ def client(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(line_models, "ready", lambda row: True)
     monkeypatch.setattr(speech, "Pocket", FakePocket)
     app = FastAPI()
+    from holdspeak.principals import Principal, PrincipalKind
+
+    @app.middleware("http")
+    async def owner_edge(request, call_next):
+        request.state.principal = Principal(PrincipalKind.OWNER, "speech-route-test-owner")
+        return await call_next(request)
+
     app.include_router(tts_routes.build_tts_router(WebContext(get_state=lambda: {})))
     yield TestClient(app)
     tts_service._reset_state()

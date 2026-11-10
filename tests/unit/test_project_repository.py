@@ -160,13 +160,15 @@ def test_a_room_watch_with_no_registration_is_named_for_the_register_verb(hub, h
     assert (read["registered"], read["repository"], read["watched"]) == (False, None, [REPO])
 
 
-def test_the_descriptor_is_owner_only_http_only_and_admitted() -> None:
+def test_the_descriptor_is_owner_only_on_both_surfaces_and_admitted() -> None:
     from holdspeak.agent_operations import PROJECT_REPOSITORY_REGISTER as op
     from holdspeak.kernel.project import OWNER_ONLY_OPERATIONS, REPOSITORY_ADMITTED
 
     assert op.owner_only and op.owner_press and op.admission.rule == "admitted" and op.admission.enforced
-    assert op.exposure == ("http:POST /api/projects/{project_id}/repository",)
-    assert REPOSITORY_ADMITTED == {"project.repository.register", "project.repository.clone"}
+    assert "http:POST /api/projects/{project_id}/repository" in op.exposure
+    assert f"mcp:{op.tool_name}" in op.exposure
+    assert op.tool_schema and op.authority == "authority"
+    assert op.name in REPOSITORY_ADMITTED
     assert REPOSITORY_ADMITTED <= OWNER_ONLY_OPERATIONS
 
 

@@ -14,7 +14,8 @@ from datetime import datetime, timezone
 from types import SimpleNamespace
 
 import pytest
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from holdspeak.principals import Principal, PrincipalKind
 from fastapi.testclient import TestClient
 
 import holdspeak.agent_context as agent_context
@@ -48,6 +49,10 @@ def client(monkeypatch) -> TestClient:
         lambda agent=None: [s for s in sessions if agent is None or s.agent == agent],
     )
     app = FastAPI()
+    @app.middleware("http")
+    async def owner_principal(request: Request, call_next):
+        request.state.principal = Principal(PrincipalKind.OWNER, "raw-peek-test")
+        return await call_next(request)
     app.include_router(build_coder_steering_router(WebContext(get_state=lambda: {})))
     return TestClient(app)
 

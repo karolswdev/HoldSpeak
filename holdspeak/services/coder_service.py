@@ -74,6 +74,47 @@ class CoderService:
         # The launch driver's reads (``LaunchReads``); None: the defaults.
         self._launch_reads = launch_reads
 
+    def explain(self, principal: Principal, target: str) -> dict[str, Any]:
+        from .agent_flights import explain_agent
+
+        answer = explain_agent(self._db, target)
+        if answer is None:
+            raise NotFound("agent", target)
+        return answer
+
+    def relay(self, principal: Principal, verb: str, args: dict[str, Any]) -> dict[str, Any]:
+        """Relay through the configured node's existing token and authority checks."""
+        from .. import coder_steering_relay
+        from ..principals import PrincipalKind
+        from ..operations import OperationOwnerRequired
+        from urllib.parse import urlencode
+
+        if getattr(principal, "kind", None) is not PrincipalKind.OWNER:
+            raise OperationOwnerRequired(f"coder.relay.{verb}")
+        key = str(args.get("key") or "").strip()
+        if not key:
+            raise CoderRefused({"error": "key is required"}, 400)
+        body = {k: v for k, v in args.items() if k not in ("key", "node")}
+        if verb == "peek":
+            query = {"lines": _integer(args.get("lines"), "lines", 200)}
+            if args.get("last_hash"):
+                query["last_hash"] = args["last_hash"]
+            if _integer(args.get("raw"), "raw", 0):
+                query["raw"] = 1
+            path, body = "peek?" + urlencode(query), None
+        else:
+            path = verb
+            if verb == "arm":
+                body = {"ttl_seconds": body["ttl_seconds"]} if "ttl_seconds" in body else {}
+            elif verb == "disarm":
+                body = {}
+        result = coder_steering_relay.relay(args.get("node"), path, key,
+            method="GET" if verb == "peek" else "POST", body=body)
+        status = coder_steering_relay.relay_http_code(result)
+        if status != 200:
+            raise CoderRefused(result, status)
+        return result
+
     def list_sessions(
         self,
         principal: Principal,

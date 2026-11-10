@@ -35,6 +35,7 @@ Call = Callable[[Any, Any, dict[str, Any]], Any]
 
 _ANY = "derived by the transport (HTTP edge right OWNER; MCP auth resolver); the service takes none"
 _REFUSALS = _CONTRACT_REFUSALS + (
+    "owner_required",
     "ServiceError: a named reason with its HTTP status (not_found, busy, not_recording, not_ready, "
     "tts_not_installed, tts_no_preset, ...)",
 )
@@ -54,13 +55,16 @@ def _refusing(fn: Callable[[], Any]) -> Any:
 
 def _op(name: str, service: str, method: str, http: tuple[str, str], handler: str, call: Call,
         description: str, *, write: bool = False, tool: bool = True, status: int = 200,
+        owner_only: bool = False, held: tuple[str, ...] = (),
         authority: str = "work", owner_press: bool = False, blocking_io: bool = False,
         properties: Optional[Mapping[str, Any]] = None, kind: str = "recording") -> OperationDescriptor:
     ids = [part[1:-1] for part in http[1].split("/") if part.startswith("{")]
     schema = {"type": "object", "properties": {**{key: _ID for key in ids}, **dict(properties or {})},
               "required": ids, "additionalProperties": False}
     return OperationDescriptor(
-        name=name, version=1, description=description, args_schema={"type": "object"}, principal=_ANY,
+        name=name, version=1, description=description, args_schema={"type": "object"},
+        principal=("the owner, checked by the registry before held inputs" if owner_only else
+                   "public share link: the held token, checked by the service" if "share_token" in held else _ANY),
         effect="write" if write else "read", result=f"the {service} answer", refusals=_REFUSALS,
         # The recordings service sends its own recording_state frame; the
         # registry adds the one desk_changed frame (kind recording).
@@ -69,6 +73,7 @@ def _op(name: str, service: str, method: str, http: tuple[str, str], handler: st
         exposure=(f"http:{http[0]} {http[1]}",) + ((f"mcp:{name}",) if tool else ()),
         service=service, method=method, call=call, http=http, http_status=status, handler=handler,
         tool_schema=schema if tool else None, authority=authority, owner_press=owner_press,
+        owner_only=owner_only, held=held,
         blocking_io=blocking_io,
         # A read is evidence (MCP and HTTP only: thread_modes._MCP_ONLY); a write a proposal.
         thread=("effect_proposal" if write else "evidence_read") if tool else None,
@@ -92,33 +97,57 @@ MEDIA_OPERATIONS: tuple[OperationDescriptor, ...] = (
     _rec("recordings.list", "payload", ("GET", _R), "api_recordings", lambda s, p, a: s.payload(),
          "List the screen recordings with their state and links, the disk usage, the keep days and the encoder."),
     _rec("recordings.start", "start", ("POST", _R), "api_recording_start", _start,
-         "Start a screen recording (the browser captures and sends the chunks).", write=True, tool=False,
+         "HTTP-only: start the browser capture; the browser must send its captured chunks.",
+         write=True, tool=False, owner_only=True,
          status=201),
     _rec("recordings.open_folder", "open_folder", ("POST", _R + "/folder/open"), "api_recordings_open_folder",
-         lambda s, p, a: s.open_folder(), "Open the recordings folder in Finder.", write=True, tool=False,
+         lambda s, p, a: s.open_folder(), "HTTP-only: open Finder on the owner desk; this requires his press.",
+         write=True, tool=False, owner_only=True,
          blocking_io=True),
     _rec("recordings.get", "get", ("GET", _ONE), "api_recording_get",
          lambda s, p, a: s.get(str(a.get("recording_id") or "")), "Read one screen recording."),
+    _rec("recordings.chunk", "chunk", ("POST", _ONE + "/chunks"), "api_recording_chunk",
+         lambda s, p, a: s.chunk(str(a.get("recording_id") or ""), a["data"]),
+         "HTTP-only: accept raw capture bytes held by the browser transport.", write=True, tool=False,
+         owner_only=True, held=("data",)),
+    _rec("recordings.video", "video_file", ("GET", _ONE + "/video"), "api_recording_video",
+         lambda s, p, a: s.video_file(str(a.get("recording_id") or "")),
+         "HTTP-only: serve a video file with byte ranges on the owner desk.", tool=False, owner_only=True),
+    _rec("recordings.poster", "poster_file", ("GET", _ONE + "/poster"), "api_recording_poster",
+         lambda s, p, a: s.poster_file(str(a.get("recording_id") or "")),
+         "HTTP-only: serve a poster file on the owner desk.", tool=False, owner_only=True),
+    _rec("recordings.shared_video", "video_file", ("GET", "/r/{recording_id}/{token}/{name}"), "shared_recording",
+         lambda s, p, a: s.video_file(str(a.get("recording_id") or ""),
+                                     share_token=a["share_token"], name=str(a.get("name") or "")),
+         "HTTP-only public link: the transport holds the share token; the service checks it and the file name.",
+         tool=False, held=("share_token",)),
     _rec("recordings.stop", "stop", ("POST", _ONE + "/stop"), "api_recording_stop",
          lambda s, p, a: s.stop(str(a.get("recording_id") or "")),
-         "End a screen capture; the encode starts.", write=True, tool=False),
+         "HTTP-only: finish the browser capture after its last chunk; the encode starts.",
+         write=True, tool=False, owner_only=True),
     _rec("recordings.retry", "retry", ("POST", _ONE + "/retry"), "api_recording_retry",
          lambda s, p, a: s.retry(str(a.get("recording_id") or "")),
          "Encode a failed screen recording again.", write=True),
     _rec("recordings.share", "share", ("POST", _ONE + "/share"), "api_recording_share",
          lambda s, p, a: s.share(str(a.get("recording_id") or "")),
-         "Make a new share link for a screen recording.", write=True, tool=False),
+         "HTTP-only: make a public share link by the owner press.",
+         write=True, tool=False, owner_only=True),
     _rec("recordings.unshare", "unshare", ("POST", _ONE + "/unshare"), "api_recording_unshare",
          lambda s, p, a: s.unshare(str(a.get("recording_id") or "")),
          "Stop sharing a screen recording: its link stops working.", write=True),
     _rec("recordings.park", "park", ("POST", _ONE + "/park"), "api_recording_park",
          lambda s, p, a: s.park(str(a.get("recording_id") or "")),
          "Park a screen recording (it moves to recordings/_parked/; nothing is deleted).", write=True),
+    _op("tts.speak", "tts_service", "speak", ("POST", "/api/tts"), "tts_speak",
+        lambda s, p, a: s.speak(a.get("text"), a.get("voice")),
+        "HTTP-only: return a WAV stream to the owner desk; the transport sends audio bytes.",
+        tool=False, owner_only=True, blocking_io=True, kind="tts"),
     _op("tts.status", "tts_service", "status", ("GET", "/api/tts/status"), "tts_status",
         lambda s, p, a: s.status(), "Read the hub's voice: whether the Line extra is installed and the voice "
         "model is downloaded, the engine and the voice.", kind="tts"),
     _op("tts.download", "tts_service", "download", ("POST", "/api/tts/download"), "tts_download",
-        lambda s, p, a: s.download(), "Download the voice model weights from the catalogue host.", write=True,
+        lambda s, p, a: s.download(), "HTTP-only: download voice weights from the catalogue host by the owner press.",
+        write=True, owner_only=True,
         tool=False, status=202, authority="egress", owner_press=True, blocking_io=True, kind="tts"),
 )
 
