@@ -465,7 +465,8 @@ def _shape(value: Any) -> Any:
     if isinstance(value, dict):
         return {k: _shape(v) for k, v in sorted(value.items())}
     if isinstance(value, list):
-        return [_shape(v) for v in value]
+        # A shape is not an order: two notes written in one tick list either way.
+        return sorted((_shape(v) for v in value), key=lambda item: _json.dumps(item, sort_keys=True))
     return "null" if value is None else type(value).__name__
 
 
