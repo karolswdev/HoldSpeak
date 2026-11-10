@@ -4,7 +4,7 @@ import { apiFetch } from "../../lib/api";
 import { useDesk } from "../../desk/store";
 import { openProjectRoom, openSurfaceOr } from "../../desk/shell";
 import { ROOM_CHANGE_KINDS, useOnDeskChanged } from "../../desk/useDeskChangedRefresh";
-import { ListView, ListPane, PreferencePane, PaneInspector, StringGadget, SurfaceState, StatusBar, countWords, type ListVerb, type ObjectListRow } from "../../desk/surface";
+import { ListView, ListPane, PreferencePane, PaneInspector, InspectorFacts, StringGadget, SurfaceState, StatusBar, countWords, type ListVerb, type ObjectListRow } from "../../desk/surface";
 import { useWindowInterior } from "../../desk/surface/interior";
 import { ShowMe } from "../../desk/walk/ShowMe";
 import { wireDate } from "../../desk/surface/format";
@@ -152,13 +152,13 @@ export function ProjectsCore(_props: CoreProps) {
           onChange={(value) => { setQuery(value); setPicked(null); }} /> }} />
       {!complete ? <SurfaceState loading data-testid="projects-loading" /> : null}
     </>}>
-      {shown ? <PaneInspector label={shown.name} onClose={() => setPicked(null)} rows={[
-        ...(shown.attention ? [{ label: "State", control: shown.attention }] : []),
-        ...(shown.reason ? [{ label: "Reason", control: <span data-testid="projects-reason">{shown.reason}</span> }] : []),
-        { label: "Next date", control: <span data-testid="projects-next">{shown.next?.words ?? (shown.dateRead ? "No date set" : "Not read")}</span> },
-        { label: "Newest update", control: <span data-testid="projects-update">{shown.update?.words ?? (shown.updateRead ? "No update yet" : "Not read")}
+      {shown ? <PaneInspector label={shown.name}><InspectorFacts rows={[
+        ...(shown.attention ? [{ label: "State", value: shown.attention }] : []),
+        ...(shown.reason ? [{ label: "Reason", value: <span data-testid="projects-reason">{shown.reason}</span> }] : []),
+        { label: "Next date", value: <span data-testid="projects-next">{shown.next?.words ?? (shown.dateRead ? "No date set" : "Not read")}</span> },
+        { label: "Newest update", value: <span data-testid="projects-update">{shown.update?.words ?? (shown.updateRead ? "No update yet" : "Not read")}
           {shown.update?.fresh ? <> · <span data-testid="projects-new-update">New update</span></> : null}</span> },
-      ]} /> : <p>{complete ? emptyLine : ""}</p>}
+      ]} /></PaneInspector> : <p>{complete ? emptyLine : ""}</p>}
     </ListPane>
     <StatusBar data-testid="projects-status" items={[
       { text: countWords(projects.length, "project") },

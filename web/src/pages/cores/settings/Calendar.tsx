@@ -11,7 +11,7 @@ import type { CalendarSourceFact } from "../core-types";
 import { Button } from "../../../components/signal/Signal";
 import { apiFetch, readableError } from "../../../lib/api";
 import { StringGadget } from "../../../desk/surface/gadgets";
-import { ListPane, ListView, CheckGadget, GadgetRow, PaneActions, PaneInspector, InspectorForm, type ListVerb } from "../../../desk/surface";
+import { ListPane, ListView, CheckGadget, GadgetRow, PaneActions, PaneInspector, InspectorForm, InspectorQuestion, type ListVerb } from "../../../desk/surface";
 import { useCalendarStep } from "../../../desk/firstrun/calendarStep";
 import { importCalendarImage, snapshotEgressChip } from "../../../desk/calendarImageImport";
 import type { SettingsBindings } from "./bindings";
@@ -245,15 +245,13 @@ export function CalendarSection({ b, cal, commitMany, onRefuse, beforeChange, on
     return <>
       {calReadError ? <PaneActions><span role="alert">Calendars not read</span><Button dense disabled={calLoading} onClick={() => void loadCalSources()}>Retry</Button></PaneActions> : null}
       <ListPane list={list} label="Calendar inspector">
-      {calRemoveFor ? <PaneInspector label={`Remove ${sources.find((source) => source.id === calRemoveFor)?.label || "calendar"}?`}>
-        <InspectorForm testId="calendar-remove-confirm" completion={{ cancel: () => setCalRemoveFor(null), cancelDisabled: calWellSaving, primary: { label: "Remove", disabled: calWellSaving, run: () => {
+      {calRemoveFor ? <InspectorQuestion question={`Remove ${sources.find((source) => source.id === calRemoveFor)?.label || "calendar"}?`} testId="calendar-remove-confirm" cancel={() => setCalRemoveFor(null)} verb={{ label: "Remove", disabled: calWellSaving, run: () => {
             const id = calRemoveFor;
             setCalWellSaving(true);
             void commitMany([[sourcesPath, sources.filter((source) => source.id !== id)]])
               .then((ok) => { if (ok) { setCalRemoveFor(null); pick(null); } })
               .finally(() => setCalWellSaving(false));
-           } } }} />
-      </PaneInspector> : choosing ? <PaneInspector label="Mac calendars" onClose={() => setChoosing(false)}><InspectorForm><GadgetRow label="Calendars"><MacCalendars beforeUse={beforeChange} onUsed={onChanged} /></GadgetRow></InspectorForm></PaneInspector>
+           } }} /> : choosing ? <PaneInspector pendingChoice label="Mac calendars" onClose={() => setChoosing(false)}><InspectorForm><GadgetRow label="Calendars"><MacCalendars beforeUse={beforeChange} onUsed={onChanged} /></GadgetRow></InspectorForm></PaneInspector>
       : calWellFor ? <PaneInspector label={calWellFor === "new" ? "Add feed" : "Calendar"}>{calWell}</PaneInspector>
  : null}
       </ListPane>

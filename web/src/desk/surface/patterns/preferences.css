@@ -381,8 +381,7 @@
 .surface-pane-inspector .gadget-row[data-control-width="full"] { grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); }
 .surface-pane-inspector .gadget-row-gadget > .gadget-string { width: 100%; }
 
-.surface-tab-choice { display: none; }
-@container surface (max-width: 520px) { .surface-segmented-tabs[data-many] { display: none; } .surface-tab-choice { display: flex; justify-content: center; flex: none; } }
+
 
 /* A long tab has one scroll owner. Its sections retain their intrinsic height. */
 .surface-preference-well .surface-tab-panel, .surface-preference-well .surface-preference-well { flex: none; min-height: auto; overflow: visible; }
@@ -411,30 +410,43 @@
 
 /* All inspector forms share one grid and one indent, including editors hosted
    outside Settings. The form scrolls in the inspector, never in the pane. */
-.surface-inspector-form { display: flex; flex-direction: column; flex: none; min-width: 0; gap: 12px; }
-.surface-inspector-rows { display: grid; grid-template-columns: minmax(80px, 1fr) minmax(0, 2fr); gap: 0 16px; min-width: 0; }
-.desk-next .surface-pane-inspector .surface-inspector-rows > .gadget-row { display: grid; grid-template-columns: subgrid; grid-column: 1 / -1; padding: 6px 0; gap: 4px 16px; min-height: 32px; border-bottom: 1px solid var(--wb-rule-soft); }
-.desk-next .surface-pane-inspector .surface-inspector-rows .gadget-row-label { color: var(--wb-ink); font: 400 13px / 1.4 var(--font-sans); letter-spacing: 0; text-transform: none; }
-.desk-next .surface-pane-inspector .surface-inspector-rows .gadget-row-gadget { display: flex; flex-wrap: wrap; justify-content: flex-start; gap: 12px; min-width: 0; }
-.desk-next .surface-pane-inspector .surface-inspector-rows .gadget-row-gadget > * { min-width: 0; max-width: 100%; }
-.desk-next .surface-pane-inspector .surface-inspector-rows .gadget-row-gadget > :is(.gadget-string, .gadget-cycle) { width: 100%; }
+.surface-inspector-form { display: flex; flex-direction: column; flex: none; min-width: 0; gap: 12px; container: inspector-form / inline-size; }
+.surface-inspector-rows { display: grid; grid-template-columns: var(--surface-label-seat, 160px) minmax(0, 1fr); gap: 0 16px; min-width: 0; }
+.desk-next .surface-inspector-form .surface-inspector-rows > .gadget-row { display: grid; grid-template-columns: subgrid; grid-column: 1 / -1; padding: 6px 0; gap: 4px 16px; min-height: 32px; border-bottom: 1px solid var(--wb-rule-soft); }
+.desk-next .surface-inspector-form .surface-inspector-rows .gadget-row-label { color: var(--wb-ink); font: 400 13px / 1.4 var(--font-sans); letter-spacing: 0; text-transform: none; }
+.desk-next .surface-inspector-form .surface-inspector-rows .gadget-row-gadget { display: flex; flex-wrap: wrap; justify-content: flex-start; gap: 12px; min-width: 0; }
+.desk-next .surface-inspector-form .surface-inspector-rows .gadget-row-gadget > * { min-width: 0; max-width: 100%; }
+.desk-next .surface-inspector-form .surface-inspector-rows .gadget-row-gadget > :is(.gadget-string, .gadget-cycle) { width: 100%; }
 .surface-inspector-actions { flex: none; padding-top: 4px; }
 @container surface (max-width: 520px) {
   .surface-inspector-rows { gap: 0 12px; }
-  .desk-next .surface-pane-inspector .surface-inspector-rows > .gadget-row { min-height: 44px; gap: 8px 12px; }
+  .desk-next .surface-inspector-form .surface-inspector-rows > .gadget-row { min-height: 44px; gap: 8px 12px; }
 }
 
 /* These rows opt into the inspector grid regardless of preference or legacy
    GadgetRow width hints. A field never changes the form's label indent. */
-.desk-next .surface-pane-inspector .surface-inspector-rows > .gadget-row[data-control-width],
-.desk-next .surface-preference-window .surface-pane-inspector .surface-inspector-rows > .gadget-row { grid-template-columns: subgrid; }
-.desk-next .surface-pane-inspector .surface-inspector-rows .gadget-row-gadget > .gadget-string.gadget-string,
-.desk-next .surface-pane-inspector .surface-inspector-rows .gadget-row-gadget > .gadget-cycle.gadget-cycle { width: 100%; max-width: 100%; }
+.desk-next .surface-inspector-form .surface-inspector-rows > .gadget-row[data-control-width],
+.desk-next .surface-preference-window .surface-inspector-form .surface-inspector-rows > .gadget-row { grid-template-columns: subgrid; }
+.desk-next .surface-inspector-form .surface-inspector-rows .gadget-row-gadget > .gadget-string.gadget-string,
+.desk-next .surface-inspector-form .surface-inspector-rows .gadget-row-gadget > .gadget-cycle.gadget-cycle { width: 100%; max-width: 100%; }
 
 .surface-inspector-control { display: contents; }
 .surface-inspector-control:has(> .object-list) { display: flex; flex-direction: column; width: 100%; min-width: 0; gap: 8px; }
 .surface-inspector-control > .object-list--selection { flex: none; height: calc(var(--object-list-row-height) * 4 + 2px); min-height: calc(var(--object-list-row-height) * 4 + 2px); }
-.desk-next .surface-pane-inspector .surface-inspector-rows .surface-inspector-control > :is(.gadget-string, .gadget-cycle) { width: 100%; max-width: 100%; }
+.desk-next .surface-inspector-form .surface-inspector-rows .surface-inspector-control > :is(.gadget-string, .gadget-cycle) { width: 100%; max-width: 100%; }
 
 /* Media takes the inspector value seat, including narrow label/control grids. */
 .surface-inspector-control > video { display: block; max-width: 100%; height: auto; }
+
+/* Label seats and nested controls answer to the form's own width. */
+.desk-next :is(.surface-inspector-form, .surface-preference-pane) .gadget-row-label { white-space: nowrap; width: max-content; max-width: none; }
+.desk-next .surface-preference-pane .gadget-row { --pref-label-w: var(--surface-label-seat, 160px); }
+.desk-next :is(.surface-pane-inspector, .surface-preference-window) .gadget-row[data-label-stacked] { grid-template-columns: minmax(0, 1fr); }
+.desk-next .surface-inspector-rows > .gadget-row[data-label-stacked] > * { grid-column: 1 / -1; }
+@container inspector-form (max-width: 420px) {
+  .desk-next .surface-inspector-rows > .gadget-row:has(:is(.object-list, .gadget-group, .surface-pane-group)) > * { grid-column: 1 / -1; }
+}
+.surface-preference-pane > .gadget-group { box-sizing: border-box; width: 100%; max-width: none; }
+.desk-next .surface-preference-window .surface-preference-pane .gadget-row:not([data-control-width="full"]) { grid-template-columns: var(--surface-label-seat, 160px) minmax(0, 1fr); }
+.desk-next .surface-preference-window .surface-preference-pane .gadget-row[data-label-stacked] { grid-template-columns: minmax(0, 1fr); }
+.desk-next :is(.surface-inspector-form, .surface-preference-pane) .gadget-row-label { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }

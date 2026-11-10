@@ -131,7 +131,7 @@ describe("CommandsCore is one honest items-writer (HS-130-07)", () => {
     await screen.findByText("“docs”");
     // ConfirmVerb: arm, then confirm.
     fireEvent.click(screen.getByRole("button", { name: "Delete" }));
-    fireEvent.click(screen.getByRole("button", { name: "Delete?" }));
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
 
     await waitFor(() =>
       expect(

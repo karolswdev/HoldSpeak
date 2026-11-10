@@ -430,9 +430,9 @@ describe("Needs you with a prepared Send row (Send S3)", () => {
     const row = (await screen.findByText("S3 private delivery — update r1 (2026-10-20)")).closest("li.needs-row") as HTMLElement;
     const discard = row.querySelector("[data-testid='needs-send-discard']") as HTMLElement;
     fireEvent.click(discard);
-    expect(discard.textContent).toBe("Discard?");
+    expect(within(row).getByRole("region", {name:"Discard?"})).toBeInTheDocument();
     expect(posts).toEqual([]);
-    fireEvent.click(discard);
+    fireEvent.click(within(row).getByRole("button", {name:"Discard"}));
     await waitFor(() => expect(posts.some((post) => post.url.endsWith("/discard"))).toBe(true));
     expect(posts.filter((post) => post.url.endsWith("/discard"))).toHaveLength(1);
   });

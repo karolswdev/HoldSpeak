@@ -1,10 +1,10 @@
 /** Automations is a selection list; an automation's own window keeps its results. */
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { apiFetch, readableError } from "../../../lib/api";
 import type { CoreProps } from "../../../pages/cores/core-types";
 import { keepPlace } from "../../deskMemory";
 import { useDesk } from "../../store";
-import { CheckGadget, InspectorForm, ListPane, ListView, PaneInspector, PreferencePane, StatusBar, StringGadget, SurfaceState, countWords, type ListVerb } from "../../surface";
+import { CheckGadget, InspectorForm, InspectorFacts, InspectorQuestion, ListPane, ListView, PaneInspector, PreferencePane, StatusBar, StringGadget, SurfaceState, countWords, type ListVerb } from "../../surface";
 import { useWindowInterior } from "../../surface/interior";
 import { WORKBENCH_CHANGE_KINDS, useOnDeskChanged } from "../../useDeskChangedRefresh";
 import { useOptionalRuntimeBus } from "../../../runtime/RuntimeBus";
@@ -120,21 +120,18 @@ export function AutomationsCore(_props: CoreProps) {
       <SurfaceState loading={loading} error={loadError || undefined} onRetry={loadError ? () => void load() : undefined} />
     </>}>
       {making ? <PaneInspector label="New automation"><AutomationStarters onCreated={(id) => void reveal(id)} onCancel={() => setMaking(false)} /></PaneInspector>
-      : deleting ? <PaneInspector label={`Delete ${deleting.name}?`}>
-        <InspectorForm rows={[{label:"Keeps",control:"Past results"}]} notice={error ? <SurfaceState error={error} /> : undefined}
-          completion={{cancel:() => { setDeleting(null); setError(""); },cancelDisabled:Boolean(pending[`delete:${deleting.id}`]),primary:{label:"Delete",busy:Boolean(pending[`delete:${deleting.id}`]),testId:"automation-delete-confirm",run:() => void act(deleting.id,"delete",() => apiFetch(`/api/workbenches/${encodeURIComponent(deleting.id)}`,{method:"DELETE"}),() => { const id = deleting.id; setDeleting((current) => current?.id === id ? null : current); if (pickedNow.current === id) { setPicked(null); keepPlace(PICKED_AUTOMATION_PLACE,""); } setReceipt(`Automation deleted · ${deleting.name}`); })}}} />
-      </PaneInspector>
+      : deleting ? <InspectorQuestion question={`Delete ${deleting.name}?`} keeps="Past results" notice={error ? <SurfaceState error={error} /> : undefined}
+          cancel={() => { setDeleting(null); setError(""); }} verb={{label:"Delete",busy:Boolean(pending[`delete:${deleting.id}`]),testId:"automation-delete-confirm",run:() => void act(deleting.id,"delete",() => apiFetch(`/api/workbenches/${encodeURIComponent(deleting.id)}`,{method:"DELETE"}),() => { const id = deleting.id; setDeleting((current) => current?.id === id ? null : current); if (pickedNow.current === id) { setPicked(null); keepPlace(PICKED_AUTOMATION_PLACE,""); } setReceipt(`Automation deleted · ${deleting.name}`); })}} />
       : selected && editing ? <PaneInspector label="Edit automation"><AutomationSetup key={selected.id} detail={selected} onRead={onRead} onDone={() => setEditing(false)} onPending={setSetupPending} /></PaneInspector>
-      : selected ? <PaneInspector label={selected.name}><InspectorForm testId="automation-summary" rows={[
-        {label:"Runs",control:runsWhen(selected)},
-        ...(hasStarts(selected) ? [{label:"On",control:<CheckGadget label="Automation on" checked={isOn(selected)} disabled={Boolean(pending[`save:${selected.id}`])} onChange={(enabled) => toggleStarts(selected,enabled)} />}] : []),
-        {label:"Do",control:selected.do_kind === "run_program" ? programDoWords(selected) : selected.instruction_shown || selected.instruction || "Choose what to do"},
-        ...(["hand_to_agent","run_program"].includes(selected.do_kind ?? "") && selected.instruction ? [{label:selected.do_kind === "run_program" ? "Goal" : "Agent brief",control:selected.instruction}] : []),
-        {label:"About",control:eventSubjectWords(selected) || selected.sources_shown?.map((source) => source.missing ? "Missing source" : source.label).join(", ") || selected.blanks?.about || ""},
-        {label:"With",control:engineWords(selected) ?? ""}, ...(selected.do_kind === "run_program" ? [] : [{label:"Put it in",control:<PutValue target={selected.output_target} />}]),
-        {label:"Last run",control:lastRun(selected)}, {label:"Next run",control:nextWords(selected.next_run_at)?.replace(/^Next: /,"") ?? ""},
-        ...(endedRuns(selected)[0]?.error ? [{label:"Failed",control:failureWords(endedRuns(selected)[0].error)}] : []),
-      ]} completion={{done:() => select(null)}} /></PaneInspector> : loading || (loadError && !automations.length) ? null : <p data-testid="automation-home-empty">{query && !rows.length ? "No automations match." : automations.length ? "Select an automation." : "No automations. Use New automation."}</p>}
+      : selected ? <PaneInspector label={selected.name}><AutomationFacts><InspectorFacts testId="automation-summary" rows={[
+        {label:"Runs",value:runsWhen(selected)},
+        {label:"Do",value:selected.do_kind === "run_program" ? programDoWords(selected) : selected.instruction_shown || selected.instruction || "Choose what to do"},
+        ...(["hand_to_agent","run_program"].includes(selected.do_kind ?? "") && selected.instruction ? [{label:selected.do_kind === "run_program" ? "Goal" : "Agent brief",value:selected.instruction}] : []),
+        {label:"About",value:eventSubjectWords(selected) || selected.sources_shown?.map((source) => source.missing ? "Missing source" : source.label).join(", ") || selected.blanks?.about || ""},
+        {label:"With",value:engineWords(selected) ?? ""}, ...(selected.do_kind === "run_program" ? [] : [{label:"Put it in",value:<PutValue target={selected.output_target} />}]),
+        {label:"Last run",value:lastRun(selected)}, {label:"Next run",value:nextWords(selected.next_run_at)?.replace(/^Next: /,"") ?? ""},
+        ...(endedRuns(selected)[0]?.error ? [{label:"Failed",value:failureWords(endedRuns(selected)[0].error)}] : []),
+      ]} />{hasStarts(selected) ? <InspectorForm rows={[{label:"On",control:<CheckGadget label="Automation on" checked={isOn(selected)} disabled={Boolean(pending[`save:${selected.id}`])} onChange={(enabled) => toggleStarts(selected,enabled)} />}]} completion={{done:() => select(null)}} /> : null}</AutomationFacts></PaneInspector> : loading || (loadError && !automations.length) ? null : <p data-testid="automation-home-empty">{query && !rows.length ? "No automations match." : automations.length ? "Select an automation." : "No automations. Use New automation."}</p>}
       {!deleting && error ? <SurfaceState error={error} /> : null}
     </ListPane>
     <StatusBar data-testid="automation-home-status" items={[
@@ -146,3 +143,5 @@ export function AutomationsCore(_props: CoreProps) {
   </PreferencePane>;
 }
 export default AutomationsCore;
+
+function AutomationFacts({children}: {children: ReactNode}) { return <>{children}</>; }

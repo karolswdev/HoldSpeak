@@ -150,24 +150,29 @@ describe("rows and verbs (idiom rules 3–5)", () => {
     expect(container.querySelectorAll("dt")).toHaveLength(2);
   });
 
-  it("ConfirmVerb: first press arms, second fires, arming self-disarms", () => {
-    vi.useFakeTimers();
+  it("ConfirmVerb: Cancel holds focus and no destructive write occurs until the answer", () => {
     const fire = vi.fn();
     render(<ConfirmVerb label="Kill loop" confirmLabel="Kill?" onConfirm={fire} />);
     const verb = screen.getByRole("button", { name: "Kill loop" });
     fireEvent.click(verb);
     expect(fire).not.toHaveBeenCalled();
-    expect(screen.getByRole("button", { name: "Kill?" })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Kill?" }));
-    expect(fire).toHaveBeenCalledTimes(1);
-    // Re-arm and let it decay.
+    expect(screen.getByRole("button", { name: "Kill loop" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Kill loop" }));
-    act(() => {
-      vi.advanceTimersByTime(3100);
-    });
+    expect(fire).toHaveBeenCalledTimes(1);
+    // Cancel returns to the trigger without a second write.
+    fireEvent.click(screen.getByRole("button", { name: "Kill loop" }));
+    expect(screen.getByRole("button", {name: "Cancel"})).toHaveFocus();
+    fireEvent.click(screen.getByRole("button", {name: "Cancel"}));
     expect(screen.getByRole("button", { name: "Kill loop" })).toBeInTheDocument();
     expect(fire).toHaveBeenCalledTimes(1);
   });
+  it("a glyph trigger gets a word for its destructive answer", () => {
+    render(<ConfirmVerb label="×" confirmLabel="Forget?" onConfirm={()=>{}} />);
+    fireEvent.click(screen.getByRole("button", {name:"×"}));
+    expect(screen.getByRole("button",{name:"Forget"})).toHaveClass("btn--danger");
+    expect(screen.getByRole("button",{name:"Cancel"})).toHaveFocus();
+  });
+
 });
 
 describe("the reference core (Cadence) is native", () => {

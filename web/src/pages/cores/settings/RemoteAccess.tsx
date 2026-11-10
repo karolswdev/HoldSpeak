@@ -533,7 +533,7 @@ export function RemoteAccessModule({
           defaultVerb="details"
         />)} >
       {oneTimeToken ? (
-        <PaneInspector label="Copy this token now" onClose={() => setOneTimeToken(null)}>
+        <PaneInspector pendingChoice label="Copy this token now" onClose={() => setOneTimeToken(null)}>
           <InspectorForm><GadgetRow label="Token"><code className="surface-command-code" data-testid="token-value">{oneTimeToken}</code><Button dense onClick={copyToken} data-testid="token-copy">Copy</Button></GadgetRow></InspectorForm>
         </PaneInspector>
       ) : issueOpen ? (

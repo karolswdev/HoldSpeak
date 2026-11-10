@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { readableError } from "../../lib/api";
 import type { CoreProps } from "../../pages/cores/core-types";
 import { openRef } from "../openObject";
-import { CheckGadget, InspectorForm, ListPane, ListView, PaneInspector, PreferencePane, PreferenceWell, SegmentedTabs, StatusBar, StringGadget, SurfaceState, countWords, type ListVerb, type ObjectListRow } from "../surface";
+import { CheckGadget, InspectorFacts, InspectorQuestion, ListPane, ListView, PaneInspector, PreferencePane, PreferenceWell, SegmentedTabs, StatusBar, StringGadget, SurfaceState, countWords, type ListVerb, type ObjectListRow } from "../surface";
 import { useWindowInterior } from "../surface/interior";
 import { ShowMe } from "../walk/ShowMe";
 import { canCapture, isLive, setVoice, stopCapture, useCapture } from "./capture";
@@ -23,18 +23,18 @@ function RecordingDetails({ row, keepDays }: { row: Recording; keepDays: number 
     ...(row.state === "ready" ? [{ id: "video", label: "Video" }] : []),
     ...(row.state === "ready" && row.shared ? [{ id: "links", label: "Links" }] : []),
   ]}><PreferenceWell>
-    {tab === "video" && row.state === "ready" ? <InspectorForm rows={[
-      { label: "Video", control: <video data-testid="recordings-video" aria-label={whenOf(row)} width={320} height={180} src={videoUrl(row.id)} poster={row.encoder === "mp4" ? posterUrl(row.id) : undefined} controls playsInline preload="metadata" /> },
-      ...(row.encoder === "webm" ? [{ label: "Format", control: <span data-testid="recordings-webm">Webm · iPhone video needs ffmpeg</span> }] : []),
-    ]} /> : tab === "links" && row.state === "ready" && row.shared ? <InspectorForm testId="recordings-links" rows={[
-      ...(row.links.tailnet ? [{ label: "On your phone", control: <span data-testid="recordings-link-tailnet" className="surface-preference-value" title={row.links.tailnet}>{row.links.tailnet}</span> }] : []),
-      ...(row.links.local ? [{ label: "On this Mac", control: <span data-testid="recordings-link-local" className="surface-preference-value" title={row.links.local}>{row.links.local}</span> }] : []),
-    ]} /> : <InspectorForm rows={[
-      ...(row.state === "failed" ? [{ label: "Needs you", control: <span data-testid="recordings-wait">{row.error || "Recording failed"}</span> }] : []),
-      { label: "Recorded", control: value(whenOf(row)) },
-      { label: "Length", control: row.duration_s ? lengthWords(row.duration_s) : "" },
-      { label: "Kept until", control: keptUntil(row, keepDays) },
-      { label: "Size", control: row.bytes_out ? sizeWords(row.bytes_out) : "" },
+    {tab === "video" && row.state === "ready" ? <InspectorFacts rows={[
+      { label: "Video", value: <video data-testid="recordings-video" aria-label={whenOf(row)} width={320} height={180} src={videoUrl(row.id)} poster={row.encoder === "mp4" ? posterUrl(row.id) : undefined} controls playsInline preload="metadata" /> },
+      ...(row.encoder === "webm" ? [{ label: "Format", value: <span data-testid="recordings-webm">Webm · iPhone video needs ffmpeg</span> }] : []),
+    ]} /> : tab === "links" && row.state === "ready" && row.shared ? <InspectorFacts testId="recordings-links" rows={[
+      ...(row.links.tailnet ? [{ label: "On your phone", value: <span data-testid="recordings-link-tailnet" className="surface-preference-value" title={row.links.tailnet}>{row.links.tailnet}</span> }] : []),
+      ...(row.links.local ? [{ label: "On this Mac", value: <span data-testid="recordings-link-local" className="surface-preference-value" title={row.links.local}>{row.links.local}</span> }] : []),
+    ]} /> : <InspectorFacts rows={[
+      ...(row.state === "failed" ? [{ label: "Needs you", value: <span data-testid="recordings-wait">{row.error || "Recording failed"}</span> }] : []),
+      { label: "Recorded", value: value(whenOf(row)) },
+      { label: "Length", value: row.duration_s ? lengthWords(row.duration_s) : "" },
+      { label: "Kept until", value: keptUntil(row, keepDays) },
+      { label: "Size", value: row.bytes_out ? sizeWords(row.bytes_out) : "" },
     ]} />}
   </PreferenceWell></SegmentedTabs>;
 }
@@ -107,17 +107,17 @@ export function RecordingsCore(_props: CoreProps) {
         rowProps={(row) => ({ "data-testid": "recordings-row", "data-recording": row.id, "data-state": rows.find((recording) => recording.id === row.id)?.state })} />
       {data.loading || data.error ? <SurfaceState loading={data.loading} error={data.error} onRetry={() => void data.reload()} /> : !visible.length ? <SurfaceState empty emptyLabel={query ? "No recordings found" : "No recordings yet"} /> : null}
     </>}>
-      {panel === "remove" && removeId && rows.some((row) => row.id === removeId) ? <PaneInspector label="Remove recording?" rows={[{ label: "Recording", control: value(whenOf(rows.find((row) => row.id === removeId)!)) }]} completion={{ cancel: () => setPanel(null), cancelDisabled: Boolean(busy), primary: { label: "Remove", testId: "recordings-remove-confirm", busy: busy === "park", disabled: Boolean(busy), run: () => void run("park", async () => {
+      {panel === "remove" && removeId && rows.some((row) => row.id === removeId) ? <InspectorQuestion question="Remove recording?" consequence={value(whenOf(rows.find((row) => row.id === removeId)!))} cancel={() => setPanel(null)} verb={{ label: "Remove", testId: "recordings-remove-confirm", busy: busy === "park", disabled: Boolean(busy), run: () => void run("park", async () => {
         const answer = await parkRecording(removeId); if (!answer.parked) throw new Error("The recording was not removed"); data.drop(removeId); setPicked((current) => current === removeId ? null : current); setPanel((current) => current === "remove" ? null : current); setNotice("Recording moved to the parked folder");
-      }) } }} /> : panel === "capture" ? <PaneInspector label={live ? "Recording now" : "New recording"} rows={[
+      }) }} /> : panel === "capture" ? <PaneInspector label={live ? "Recording now" : "New recording"} rows={[
         ...(live ? [{ label: "Length", control: capture.remote ? "Recording on another view" : clock || "" }] : available ? [{ label: "Voice", control: <CheckGadget label="Voice" checked={capture.voice} onChange={setVoice} /> }] : [{ label: "Screen", control: "Record from your computer" }]),
       ]} completion={available && !live ? { cancel: () => setPanel(null), cancelDisabled: capture.phase === "asking", primary: { label: "Record screen", testId: "recordings-record", busy: capture.phase === "asking", run: pressScreenRecord } } : { done: () => setPanel(null) }} />
-        : panel === "storage" ? <PaneInspector label="Storage" rows={[
-          { label: "Keep", control: <span data-testid="settings-recordings-usage">{data.payload.usage.keep_days > 0 ? `${data.payload.usage.keep_days} days` : "For good"}</span> },
-          { label: "Used", control: sizeWords(data.payload.usage.bytes) },
-          { label: "Folder", control: value(data.payload.folder) },
-        ]} completion={{ done: () => setPanel(null) }} />
-          : shown ? <PaneInspector label={whenOf(shown)} onClose={() => setPicked(null)}><RecordingDetails key={shown.id} row={shown} keepDays={data.payload.usage.keep_days} /></PaneInspector> : <p>Select a recording.</p>}
+        : panel === "storage" ? <PaneInspector label="Storage"><InspectorFacts rows={[
+          { label: "Keep", value: <span data-testid="settings-recordings-usage">{data.payload.usage.keep_days > 0 ? `${data.payload.usage.keep_days} days` : "For good"}</span> },
+          { label: "Used", value: sizeWords(data.payload.usage.bytes) },
+          { label: "Folder", value: value(data.payload.folder) },
+        ]} /></PaneInspector>
+          : shown ? <PaneInspector label={whenOf(shown)}><RecordingDetails key={shown.id} row={shown} keepDays={data.payload.usage.keep_days} /></PaneInspector> : <p>Select a recording.</p>}
     </ListPane>
     <StatusBar data-testid="recordings-status" items={[
       rows.length ? { text: countWords(rows.length, "recording") } : null,

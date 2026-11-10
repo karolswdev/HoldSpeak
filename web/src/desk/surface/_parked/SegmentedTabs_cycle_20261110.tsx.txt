@@ -1,0 +1,2 @@
+// Parked: long tab strips keep named tabs and wrap at narrow widths.
+      {tabs.length > 4 ? <div className="surface-tab-choice"><CycleGadget label={`${label} tab`} value={value} onChange={onChange} options={tabs.map((tab) => ({value: tab.id, label: tab.label}))} /></div> : null}

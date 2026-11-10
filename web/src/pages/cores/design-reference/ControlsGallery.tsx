@@ -15,6 +15,8 @@ import {
   GadgetGroup,
   GadgetRow,
   ListView,
+  PaneInspector,
+  InspectorFacts,
   GadgetTable,
   LampGadget,
   LedMeter,
@@ -319,6 +321,13 @@ export function ControlsGallery({ hero }: CoreProps) {
             <SurfaceLedgerRow time="09:44" primary="Home and End jump; letters seek" expands={false} />
           </ul>
         </SurfaceLedger>
+      </SurfaceSection>
+      <SurfaceSection label="Read-only facts">
+        <PaneInspector label="Selected automation"><InspectorFacts rows={[
+          {label:"Do",value:"Draft the team update"},
+          {label:"With",value:"Codex"},
+          {label:"Next run",value:""},
+        ]} /></PaneInspector>
       </SurfaceSection>
       <SurfaceSection label="Rows, states, and the two-step">
         <SurfaceRows>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Button } from "../../../components/signal/Signal";
-import { PaneActions, PreferencePane, PreferenceWell, SegmentedTabs } from "../../../desk/surface";
+import { InspectorFacts, PaneActions, PreferencePane, PreferenceWell, SegmentedTabs } from "../../../desk/surface";
 import { apiFetch } from "../../../lib/api";
 import { MeetingSummary, readMeetingIntel } from "../../../meetings/MeetingSummarySlab";
 import { MeetingSendWellLazy } from "../../../meetings/MeetingSendWellLazy";
@@ -53,8 +53,13 @@ export function MeetingPreview({ meeting, state, sendRequest = 0, onSendState, o
   return <PreferencePane label="Selected meeting" testId="meeting-list-preview">
     <SegmentedTabs label="Meeting contents" value={tab} onChange={setTab} tabs={[{ id: "summary", label: "Summary" }, { id: "tasks", label: "Tasks to confirm" }]}>
     <div className="surface-tab-panel" hidden={tab !== "summary"}><PreferenceWell>
-    <strong>{String(meeting.title || "Meeting")}</strong>
-    <p>{[ledgerDate(meeting.started_at ?? meeting.created_at), clockTime(meeting.started_at ?? meeting.created_at), durationToken(meeting.duration_seconds), state ?? listMeetingState(meeting, { runningId: null })?.label].filter(Boolean).join(" · ")}</p>
+    <InspectorFacts rows={[
+      {label:"Meeting",value:String(meeting.title || "Meeting")},
+      {label:"Date",value:ledgerDate(meeting.started_at ?? meeting.created_at)},
+      {label:"Time",value:clockTime(meeting.started_at ?? meeting.created_at)},
+      {label:"Length",value:durationToken(meeting.duration_seconds)},
+      {label:"State",value:state ?? listMeetingState(meeting, {runningId:null})?.label},
+    ]} />
     {error ? <PaneActions><span role="alert">Summary not read</span><Button dense onClick={() => setRetry(retry + 1)}>Retry</Button></PaneActions>
       : !detail ? <p>Reading summary…</p> : <>
         <MeetingSummary intel={intel} receipt={null} />

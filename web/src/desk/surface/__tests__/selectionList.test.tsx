@@ -2,7 +2,7 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-li
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { WindowIdContext } from "../../components/window/windowIdContext";
 import { useListMenu } from "../../components/window/listMenu";
-import { ListView, CycleGadget, CheckGadget, PaneInspector, InspectorForm, GadgetGroup, GadgetRow, PaneGroup, StringGadget, ListPane, DotWord, type ListVerb } from "..";
+import { ListView, CycleGadget, CheckGadget, PaneInspector, InspectorForm, InspectorFacts, InspectorQuestion, StatusBar, SegmentedTabs, GadgetGroup, GadgetRow, PaneGroup, StringGadget, ListPane, DotWord, type ListVerb } from "..";
 afterEach(cleanup);
 
 describe("the shared selection list", () => {
@@ -106,9 +106,9 @@ it("the top toolbar publishes its unselected verbs to the app menu on mount", ()
 
 it("puts the inspector's single Done after its last field", () => {
   const done = vi.fn();
-  const { container } = render(<PaneInspector label="Calendar" onClose={done}><GadgetRow label="From">Mac calendar</GadgetRow></PaneInspector>);
+  const { container } = render(<PaneInspector label="Calendar" onClose={done}><GadgetRow label="From"><CheckGadget label="Mac calendar" checked onChange={() => {}} /></GadgetRow></PaneInspector>);
   const inspector = screen.getByRole("region", { name: "Calendar" });
-  const field = within(inspector).getByText("Mac calendar");
+  const field = within(inspector).getByRole("checkbox", {name:"Mac calendar"});
   const action = within(inspector).getByRole("button", { name: "Done" });
   expect(field.compareDocumentPosition(action) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   expect(container.querySelectorAll(".surface-inspector-actions")).toHaveLength(1);
@@ -163,4 +163,48 @@ it("keeps the full value on retained text cells and state words", () => {
   ]} />);
   expect(screen.getByText(value)).toHaveAttribute("title", value);
   for (const word of screen.getAllByText(state)) expect(word.closest("[title]")).toHaveAttribute("title", state);
+});
+
+
+it("read-only facts omit blank values and have no completion row", () => {
+  const {container} = render(<PaneInspector label="Selected automation"><InspectorFacts rows={[
+    {label:"Do",value:"Draft the update"}, {label:"With",value:"  "}, {label:"Next run",value:null}, {label:"Last run",value:<span />},
+  ]} /></PaneInspector>);
+  expect(screen.getByText("Draft the update").closest(".gadget-row")?.parentElement).toHaveClass("surface-inspector-rows");
+  expect(screen.queryByText("With")).toBeNull();
+  expect(screen.queryByText("Next run")).toBeNull();
+  expect(screen.queryByText("Last run")).toBeNull();
+  expect(container.querySelector(".surface-inspector-actions")).toBeNull();
+});
+
+it("a destructive question focuses Cancel, keeps consequences out of facts and uses danger", () => {
+  const cancel=vi.fn(), remove=vi.fn();
+  const {container} = render(<InspectorQuestion question="Delete Friday update?" keeps="Past results" cancel={cancel} verb={{label:"Delete",run:remove}} />);
+  const buttons=screen.getAllByRole("button");
+  expect(buttons.map(button=>button.textContent)).toEqual(["Cancel","Delete"]);
+  expect(buttons[0]).toHaveFocus();
+  expect(buttons[1]).toHaveClass("btn--danger");
+  expect(container.querySelector(".gadget-row")).toBeNull();
+  expect(remove).not.toHaveBeenCalled();
+  fireEvent.click(buttons[0]); expect(cancel).toHaveBeenCalledOnce();
+  fireEvent.click(buttons[1]); expect(remove).toHaveBeenCalledOnce();
+});
+
+it("an empty status has no DOM even when a caller supplies empty nodes", () => {
+  const {container} = render(<StatusBar items={[{text:" "},{text:<span />},null]} verbs={<></>} />);
+  expect(container).toBeEmptyDOMElement();
+});
+
+it("a long tab strip keeps every named tab instead of becoming an unnamed choice", () => {
+  render(<SegmentedTabs label="Setup" tabs={["Do","When","About","With","Put it in"].map(label=>({id:label,label}))} value="About" onChange={()=>{}}>Source list</SegmentedTabs>);
+  expect(screen.getByRole("tab",{name:"About"})).toHaveAttribute("aria-selected","true");
+  expect(screen.queryByRole("combobox")).toBeNull();
+});
+
+
+it("a nested selection choice retains one completion row", () => {
+  render(<PaneInspector label="Engine order" onClose={()=>{}}><InspectorForm><GadgetRow label="Order">
+    <ListView label="Order choices" rows={[{id:"codex",kind:"engine",name:"Codex"}]} />
+  </GadgetRow></InspectorForm></PaneInspector>);
+  expect(screen.getAllByRole("button",{name:"Done"})).toHaveLength(1);
 });

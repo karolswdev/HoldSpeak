@@ -181,7 +181,7 @@ describe("Forget", () => {
     // one step, in-world (no modal)
     expect(screen.queryByRole("dialog")).toBeNull();
     await userEvent.click(
-      within(rows()[0]).getByRole("button", { name: "Forget?" }),
+      within(rows()[0]).getByRole("button", { name: "Forget" }),
     );
 
     // the verb is the WORD, never the `x` glyph (rule A.1 / HS-176-02)
