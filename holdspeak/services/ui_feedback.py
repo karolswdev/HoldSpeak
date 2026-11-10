@@ -507,3 +507,75 @@ __all__ = [
     "fail_transcript",
     "save_feedback",
 ]
+
+
+class FeedbackRefused(UIFeedbackError):
+    """A refusal with its HTTP status: 404 while feedback is off, 404 for an unknown bundle."""
+
+    def __init__(self, detail: str, status: int) -> None:
+        super().__init__(detail)
+        self.status = status
+
+
+class FeedbackService:
+    """The Desk's UI feedback verbs, once (2026-11-09, ops/connections): the
+    routes are produced from ``holdspeak/feedback_operations.py``. Owner only:
+    each write is a file in his feedback folder. ``source`` is the hub's
+    context, read at each call for ``on_transcribe_admitted`` (the hub's
+    admitted speech route)."""
+
+    def __init__(self, source: Any = None) -> None:
+        self._source = source
+
+    def status(self, principal: Any) -> dict[str, bool]:
+        return {"enabled": enabled()}
+
+    @staticmethod
+    def _require_enabled() -> None:
+        if not enabled():
+            raise FeedbackRefused("UI feedback is disabled.", 404)
+
+    def save(self, principal: Any, payload: Mapping[str, Any]) -> dict[str, Any]:
+        """Validate and publish one feedback bundle (the window shot, the recording, the context)."""
+        self._require_enabled()
+        return save_feedback(payload)
+
+    def transcribe(self, principal: Any, identifier: str) -> dict[str, Any]:
+        """Transcribe one saved recording, verbatim, on the configured speech route; a failure is kept on the bundle."""
+        self._require_enabled()
+        try:
+            current = feedback_transcript(identifier)
+        except UIFeedbackError as exc:
+            raise FeedbackRefused(str(exc), 404) from exc
+        if current.get("transcript_status") == "complete":
+            return current
+        try:
+            import numpy as np
+
+            with wave.open(io.BytesIO(feedback_audio(identifier)), "rb") as source:
+                frames = source.readframes(source.getnframes())
+            audio = np.frombuffer(frames, dtype=np.int16).astype(np.float32) / 32768.0
+        except (OSError, EOFError, ValueError, wave.Error):
+            return fail_transcript(identifier, "audio_unreadable")
+        transcribe = getattr(self._source, "on_transcribe_admitted", None)
+        if transcribe is None:
+            return fail_transcript(identifier, "transcription_unavailable")
+        from ..speech_session import SpeechSessionRefused
+
+        admitted = None
+        outcome = "failed"
+        try:
+            admitted = transcribe(audio, principal=principal, mic_handle="", verbatim=True)
+            text = str(admitted.text)
+            if not text.strip():
+                return fail_transcript(identifier, "no_speech")
+            result = save_transcript(identifier, text, str(admitted.provider.egress_boundary))
+            outcome = "succeeded"
+            return result
+        except SpeechSessionRefused as exc:
+            return fail_transcript(identifier, exc.reason)
+        except Exception as exc:  # pragma: no cover - provider/runtime specific
+            return fail_transcript(identifier, str(getattr(exc, "reason", "") or "transcription_failed"))
+        finally:
+            if admitted is not None:
+                admitted.close(outcome)

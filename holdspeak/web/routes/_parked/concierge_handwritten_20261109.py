@@ -1,0 +1,530 @@
+# PARKED 20261109 (ops/connections): the hand-written concierge routes.
+# The routes are produced from ``holdspeak/concierge_operations.py`` (``web/routes/concierge.py``);
+# their bodies moved into ``ConciergeService``. Not imported. Restore with ``git revert``.
+"""Concierge routes (HS-170-03).
+
+GET  /api/concierge/detect    -- every engine found, plus the named repair states
+POST /api/concierge/propose   -- the seven groups with proposed engines
+POST /api/concierge/probe     -- reachability for an engine, or `task: true` for
+                                 one REAL request through the assigned route
+POST /api/concierge/apply     -- write the assignment set
+POST /api/concierge/summary-selection -- select one summary engine
+GET  /api/concierge/speech    -- the Line's two speech models, their state and progress (LINE-6)
+POST /api/concierge/download  -- start a preset download (a speech model: the Line's fetch)
+POST /api/concierge/discover-lan -- find transient private-LAN engines
+"""
+from __future__ import annotations
+
+import asyncio
+from typing import Any
+
+from fastapi import APIRouter, Request
+from starlette.concurrency import run_in_threadpool
+from fastapi.responses import JSONResponse
+
+from ...principals import UNAUTHENTICATED, PrincipalKind
+from ...kernel.external_egress import EgressOperationRefused
+from ...services.errors import ConflictError, ServiceError
+from ..context import WebContext
+from ..runtime_support import error_500
+from ...logging_config import get_logger
+
+log = get_logger("web.routes.concierge")
+
+
+def _safe_error(exc: ServiceError) -> JSONResponse:
+    ctx = exc.context or {}
+    status = int(ctx.get("status", 400))
+    if isinstance(exc, ConflictError) and status < 400:
+        status = 409
+    body: dict[str, Any] = {"code": exc.code, "message": exc.detail}
+    # PHILO-15 10: a refused group is named, so the face can say which one.
+    if ctx.get("group"):
+        body["group"] = str(ctx["group"])
+    return JSONResponse(body, status_code=status)
+
+
+def _live_hub() -> bool:
+    """True in the hub that owns the database: it scans loopback engine ports."""
+    try:
+        from ...intel_queue_conductor import owns_database
+
+        return owns_database()
+    except Exception:  # pragma: no cover
+        return False
+
+
+def build_concierge_router(ctx: WebContext) -> APIRouter:
+    router = APIRouter(prefix="/api/concierge", tags=["concierge"])
+
+    def _owner(request: Request) -> None:
+        principal = getattr(request.state, "principal", UNAUTHENTICATED)
+        if principal.kind is not PrincipalKind.OWNER:
+            raise ServiceError(
+                "concierge_owner_required",
+                "Owner access is required.",
+                context={"status": 403},
+            )
+
+    @router.get("/detect")
+    async def get_detect(request: Request) -> Any:
+        try:
+            _owner(request)
+            from ...services.concierge_service import detect
+
+            setup_svc = ctx.inference_setup_service
+            db = None
+            if setup_svc is not None:
+                db = setup_svc._db
+
+            if db is None:
+                return JSONResponse(
+                    {"code": "concierge_unavailable", "message": "Database is not available."},
+                    status_code=503,
+                )
+
+            from pathlib import Path
+            home = setup_svc._home_provider() if setup_svc is not None else Path.home()
+
+            live_hub = _live_hub()
+            result = await run_in_threadpool(
+                detect,
+                db=db,
+                home=home,
+                assignment_service=ctx.inference_assignment_service,
+                principal=getattr(request.state, "principal", None),
+                scan_loopback=live_hub,
+                # Read again: every endpoint is checked now, not read from
+                # its last check (lane HUB TIMEOUTS).
+                **({"fresh": True} if request.query_params.get("fresh") == "1" else {}),
+            )
+            # PHILO-16 (C): the Switchboard accepts or refuses a drop with
+            # the authority's own answer, per engine and group.  A fit read
+            # never breaks detection.
+            if ctx.inference_assignment_service is not None:
+                try:
+                    from ...services.concierge_service import authority_fit, engine_fits
+
+                    engine_fits(
+                        result["engines"],
+                        await run_in_threadpool(
+                            authority_fit,
+                            ctx.inference_assignment_service,
+                            getattr(request.state, "principal", None),
+                            db,
+                        ),
+                        ctx.inference_assignment_service._group_ids(),
+                    )
+                except Exception as exc:  # pragma: no cover - never break detect
+                    log.warning(f"concierge fits unavailable: {exc}")
+            # A detection is an engine change the default rule must see.
+            if live_hub and ctx.inference_default_service is not None:
+                ctx.inference_default_service.kick("detect")
+            # HS-200-04: `needs_attention` resolved into named repair states,
+            # each carrying the ONE verb that opens an existing control.  A
+            # repair read never blocks the face: it degrades to no rows.
+            try:
+                from ...services.concierge_service import repairs
+
+                result["repairs"] = await run_in_threadpool(
+                    repairs,
+                    db=db,
+                    assignment_service=ctx.inference_assignment_service,
+                    principal=getattr(request.state, "principal", None),
+                )
+            except Exception as exc:  # pragma: no cover - never break detect
+                log.warning(f"concierge repairs unavailable: {exc}")
+                result["repairs"] = []
+            # PHILO-15 10 (Astra r2, finding 3): the last press's failed
+            # groups, read from its receipt, survive a reload.
+            from ...services.concierge_service import last_apply
+
+            result["lastApply"] = await run_in_threadpool(last_apply, db)
+            return JSONResponse(result)
+        except ServiceError as exc:
+            return _safe_error(exc)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to detect engines")
+
+    @router.post("/discover-lan")
+    async def post_discover_lan(request: Request) -> Any:
+        """Find private-LAN OpenAI-compatible engines for this one owner press.
+
+        This route intentionally does not load the database.  The scanner only
+        reads ``/v1/models`` and returns transient Found rows; the existing
+        ``Use it`` verb is the separate owner action that defines a profile.
+        """
+        try:
+            _owner(request)
+            from ...services.lan_engine_discovery import checked_at, scan_lan_engines
+
+            result = await asyncio.to_thread(scan_lan_engines, principal=request.state.principal)
+            return JSONResponse({**result, "checkedAt": checked_at()})
+        except EgressOperationRefused as exc:
+            return _safe_error(ServiceError(
+                "concierge_lan_refused", exc.reason, context={"status": 403},
+            ))
+        except ServiceError as exc:
+            return _safe_error(exc)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to discover LAN engines")
+
+    @router.post("/retry")
+    async def post_retry(request: Request) -> Any:
+        """Retry on a Needs-you engine row: the same job, run again through
+        the engine door by the caller that registered it (``engine_door.RETRY``)."""
+        try:
+            _owner(request)
+            body = await request.json()
+            if not isinstance(body, dict) or not isinstance(body.get("kind"), str) or not isinstance(body.get("key"), str):
+                raise ServiceError("concierge_retry_invalid", "Retry needs the job's kind and key.", context={"status": 400})
+            from ...services import engine_door
+
+            try:
+                await run_in_threadpool(engine_door.retry, request.state.principal, body["kind"], body["key"])
+            except engine_door.EngineDoorError as exc:
+                if exc.code == "no_retry":
+                    return JSONResponse({"ok": False, "code": exc.code, "message": "This job has no Retry."}, status_code=404)
+                # The engine's own words stay out of the answer (a path or a host).
+                return JSONResponse({"ok": False, "code": exc.code,
+                                     "message": "It did not run again. The row stays."}, status_code=409)
+            return JSONResponse({"ok": True})
+        except ServiceError as exc:
+            return _safe_error(exc)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to retry the job")
+
+    @router.post("/propose")
+    async def post_propose(request: Request) -> Any:
+        try:
+            _owner(request)
+            from ...services.concierge_service import detect, propose
+
+            setup_svc = ctx.inference_setup_service
+            db = None
+            if setup_svc is not None:
+                db = setup_svc._db
+
+            if db is None:
+                return JSONResponse(
+                    {"code": "concierge_unavailable", "message": "Database is not available."},
+                    status_code=503,
+                )
+
+            from pathlib import Path
+            home = setup_svc._home_provider() if setup_svc is not None else Path.home()
+
+            detection = await run_in_threadpool(detect, db=db, home=home, scan_loopback=_live_hub())
+            # PHILO-15 10 (B05): READY only where the assignment authority
+            # serves the whole group; the same check a write runs.
+            fit = None
+            if ctx.inference_assignment_service is not None:
+                from ...services.concierge_service import authority_fit
+
+                fit = authority_fit(
+                    ctx.inference_assignment_service,
+                    getattr(request.state, "principal", None),
+                    db,
+                )
+            result = propose(engines=detection["engines"], fit=fit)
+            return JSONResponse(result)
+        except ServiceError as exc:
+            return _safe_error(exc)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to propose engine set")
+
+    @router.post("/probe")
+    async def post_probe(request: Request) -> Any:
+        try:
+            _owner(request)
+            body = await request.json()
+            if not isinstance(body, dict):
+                raise ServiceError(
+                    "concierge_probe_invalid",
+                    "Expected a JSON object.",
+                    context={"status": 400},
+                )
+
+            engine_id = body.get("engineId")
+            generate = bool(body.get("generate", False))
+
+            # HS-200-04: the task probe. One real request through the frozen
+            # route the assignment resolves to, so the answer names the model
+            # that actually served it and the boundary it actually crossed.
+            if bool(body.get("task", False)):
+                from ...kernel.runtime import _service as kernel_service
+                from ...services.route_probe import (
+                    DEFAULT_PROBE_CAPABILITY,
+                    PROBE_CAPABILITIES,
+                    task_probe,
+                )
+
+                capability_id = str(body.get("capabilityId") or DEFAULT_PROBE_CAPABILITY)
+                if capability_id not in PROBE_CAPABILITIES:
+                    raise ServiceError(
+                        "concierge_probe_invalid",
+                        "capabilityId is not probeable.",
+                        context={"status": 400},
+                    )
+                expected_profiles = body.get("expectedProfileIds")
+                if "expectedProfileIds" in body and (
+                    not isinstance(expected_profiles, list)
+                    or any(not isinstance(item, str) or not item.strip() for item in expected_profiles)
+                ):
+                    raise ServiceError(
+                        "concierge_probe_invalid",
+                        "expectedProfileIds must be a list of profile IDs.",
+                        context={"status": 400},
+                    )
+                setup_svc = ctx.inference_setup_service
+                db = setup_svc._db if setup_svc is not None else None
+                if db is None:
+                    return JSONResponse(
+                        {"code": "concierge_unavailable", "message": "Database is not available."},
+                        status_code=503,
+                    )
+                result = await run_in_threadpool(
+                    task_probe,
+                    kernel_service(),
+                    request.state.principal,
+                    db=db,
+                    capability_id=capability_id,
+                    allow_off_machine=bool(body.get("confirmOffMachine", False)),
+                    expected_profile_ids=expected_profiles,
+                )
+                return JSONResponse(result)
+
+            if not engine_id or not isinstance(engine_id, str):
+                raise ServiceError(
+                    "concierge_probe_invalid",
+                    "engineId is required.",
+                    context={"status": 400},
+                )
+
+            from ...services.concierge_service import detect, probe
+
+            setup_svc = ctx.inference_setup_service
+            db = None
+            if setup_svc is not None:
+                db = setup_svc._db
+
+            if db is None:
+                return JSONResponse(
+                    {"code": "concierge_unavailable", "message": "Database is not available."},
+                    status_code=503,
+                )
+
+            from pathlib import Path
+            home = setup_svc._home_provider() if setup_svc is not None else Path.home()
+
+            detection = await run_in_threadpool(detect, db=db, home=home)
+            engine = None
+            for e in detection["engines"]:
+                if e["id"] == engine_id:
+                    engine = e
+                    break
+
+            if engine is None:
+                raise ServiceError(
+                    "concierge_engine_not_found",
+                    f"Engine '{engine_id}' not found.",
+                    context={"status": 404},
+                )
+
+            result = await run_in_threadpool(probe, engine=engine, generate=generate)
+            return JSONResponse(result)
+        except ServiceError as exc:
+            return _safe_error(exc)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to probe engine")
+
+    @router.post("/apply")
+    async def post_apply(request: Request) -> Any:
+        try:
+            _owner(request)
+            body = await request.json()
+            if not isinstance(body, dict):
+                raise ServiceError(
+                    "concierge_apply_invalid",
+                    "Expected a JSON object.",
+                    context={"status": 400},
+                )
+
+            rows = body.get("rows")
+            if not isinstance(rows, list):
+                raise ServiceError(
+                    "concierge_apply_invalid",
+                    "rows is required.",
+                    context={"status": 400},
+                )
+
+            from ...services.concierge_service import apply, detect
+
+            setup_svc = ctx.inference_setup_service
+            assignment_svc = ctx.inference_assignment_service
+            db = None
+            if setup_svc is not None:
+                db = setup_svc._db
+
+            if db is None or assignment_svc is None:
+                return JSONResponse(
+                    {"code": "concierge_unavailable", "message": "Required services are not available."},
+                    status_code=503,
+                )
+
+            from pathlib import Path
+            home = setup_svc._home_provider() if setup_svc is not None else Path.home()
+
+            detection = await run_in_threadpool(detect, db=db, home=home)
+            principal = request.state.principal
+
+            result = apply(
+                rows=rows,
+                engines=detection["engines"],
+                assignment_service=assignment_svc,
+                principal=principal,
+                db=db,
+            )
+            return JSONResponse(result)
+        except ConflictError as exc:
+            return _safe_error(exc)
+        except ServiceError as exc:
+            return _safe_error(exc)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to apply engine set")
+
+    @router.post("/summary-selection")
+    async def post_summary_selection(request: Request) -> Any:
+        """Commit the owner's one explicit summary-engine selection."""
+        try:
+            _owner(request)
+            body = await request.json()
+            allowed = {
+                "commandId",
+                "expectedAssignmentRevision",
+                "profileId",
+                "profileRevision",
+            }
+            # PHILO-15 10 (Astra r1, finding 2): `setDefault` (optional) also
+            # makes this engine the Default for AI work, once, when no
+            # default ever existed (revision-0 rule).
+            set_default = bool(isinstance(body, dict) and body.pop("setDefault", False) is True)
+            if not isinstance(body, dict) or set(body) != allowed:
+                raise ServiceError(
+                    "concierge_summary_selection_invalid",
+                    "Summary selection has an invalid request shape.",
+                    context={"status": 400},
+                )
+
+            setup_svc = ctx.inference_setup_service
+            assignment_svc = ctx.inference_assignment_service
+            db = setup_svc._db if setup_svc is not None else None
+            if db is None or assignment_svc is None:
+                return JSONResponse(
+                    {
+                        "code": "concierge_unavailable",
+                        "message": "Required services are not available.",
+                    },
+                    status_code=503,
+                )
+
+            from ...services.concierge_service import assign_summary
+
+            result = assign_summary(
+                assignment_service=assignment_svc,
+                principal=request.state.principal,
+                db=db,
+                profile_id=body["profileId"],
+                profile_revision=body["profileRevision"],
+                expected_assignment_revision=body["expectedAssignmentRevision"],
+                command_id=body["commandId"],
+            )
+            if set_default and result.get("status") == "succeeded":
+                from ...services.concierge_service import set_default_once
+
+                result["defaultSet"] = set_default_once(
+                    assignment_service=assignment_svc,
+                    principal=request.state.principal,
+                    profile_id=body["profileId"],
+                    profile_revision=body["profileRevision"],
+                )
+            return JSONResponse(result)
+        except ServiceError as exc:
+            return _safe_error(exc)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to select summary engine")
+
+    @router.get("/speech")
+    async def get_speech(request: Request) -> Any:
+        """The Line's speech models (RECIPE LINE-6): the Engines window's
+        "Phone speech" rows, with each download's progress."""
+        try:
+            _owner(request)
+            from ...services.concierge_service import speech_rows
+
+            return JSONResponse({"rows": await asyncio.to_thread(speech_rows)})
+        except ServiceError as exc:
+            return _safe_error(exc)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to read the speech models")
+
+    @router.post("/download")
+    async def post_download(request: Request) -> Any:
+        try:
+            _owner(request)
+            body = await request.json()
+            if not isinstance(body, dict):
+                raise ServiceError(
+                    "concierge_download_invalid",
+                    "Expected a JSON object.",
+                    context={"status": 400},
+                )
+
+            preset_id = body.get("presetId")
+            if not preset_id or not isinstance(preset_id, str):
+                raise ServiceError(
+                    "concierge_download_invalid",
+                    "presetId is required.",
+                    context={"status": 400},
+                )
+
+            from ...services.concierge_service import download, download_speech, is_speech_preset
+
+            if is_speech_preset(preset_id):
+                return JSONResponse(download_speech(preset_id), status_code=202)
+
+            from ...inference_setup_catalog import (
+                packaged_catalog_envelope_json,
+                verify_catalog_envelope,
+            )
+            from datetime import datetime, timezone
+
+            model_lib_svc = ctx.model_library_service
+            if model_lib_svc is None:
+                return JSONResponse(
+                    {"code": "concierge_unavailable", "message": "Model library is not available."},
+                    status_code=503,
+                )
+
+            now = datetime.now(timezone.utc)
+            envelope_json = packaged_catalog_envelope_json()
+            catalog = verify_catalog_envelope(envelope_json, now=now)
+            catalog_revision = catalog["catalog_revision"]
+
+            principal = request.state.principal
+            result = download(
+                preset_id=preset_id,
+                model_library_service=model_lib_svc,
+                principal=principal,
+                catalog_revision=catalog_revision,
+            )
+            return JSONResponse(result, status_code=202)
+        except ServiceError as exc:
+            return _safe_error(exc)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to start download")
+
+    return router
+
+
+__all__ = ["build_concierge_router"]

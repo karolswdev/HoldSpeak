@@ -59,9 +59,11 @@ def _call(name: str, arguments: dict | None = None) -> tuple[bool, dict]:
 
 
 class TestRegistry:
-    def test_connection_list_in_project_tools(self) -> None:
-        names = {t["name"] for t in PROJECT_TOOLS}
-        assert "connection.list" in names
+    def test_connection_list_is_produced_from_its_row(self) -> None:
+        # 2026-11-09 (ops/connections): the declared family makes it (room_operations.CONNECTION_LIST).
+        from holdspeak.mcp.families.declared import NAMES
+
+        assert "connection.list" in NAMES
 
     def test_connection_recheck_in_project_tools(self) -> None:
         names = {t["name"] for t in PROJECT_TOOLS}

@@ -197,11 +197,6 @@ TOOL_AUTHORITY: dict[str, str] = {
     "inference_assignment.set": CONFIG,  # which model serves a capability
     "inference_assignment.preview_use_default": WORK,
     "inference_assignment.clear": CONFIG,  # which model serves a capability
-    "concierge.detect": WORK,
-    "concierge.propose": WORK,
-    "concierge.probe": WORK,
-    "concierge.apply": CONFIG,  # the engine set for every capability group
-    "concierge.download": CONFIG,  # a model download
     "door.get": WORK,
     "door.add_item": WORK,
     "thread.set_status": WORK,
@@ -240,20 +235,6 @@ TOOL_AUTHORITY: dict[str, str] = {
     "project.setup.answer": WORK,  # drafts the setup: writes only its own session (the prepare)
     "project.setup.suggest": WORK,  # drafts the setup: writes only its own session (the prepare)
     "project.setup.finalize": CONFIG,  # commits the setup: creates the project, arms its watches (the press)
-    "provider.list": WORK,
-    "provider.github_connection": WORK,
-    "provider.github_discover": WORK,
-    "provider.github_validate_repo": WORK,
-    "provider.github_pr_get": WORK,  # MCP M6: one PR read, as his gh read
-    "provider.jira_connections": WORK,
-    "provider.jira_add_connection": CONFIG,  # a provider connection
-    "provider.jira_connection": WORK,
-    "provider.jira_discover": WORK,
-    "provider.jira_search": WORK,
-    "provider.jira_validate_scope": WORK,
-    "provider.confluence_connections": WORK,
-    "provider.confluence_discover": WORK,
-    "provider.confluence_validate_space": WORK,
     "project.setup.clarify_jira_scope": WORK,  # drafts the setup: writes only its own session (the prepare)
     "project.watch.inspect": WORK,
     "project.watch.test": WORK,
@@ -265,7 +246,6 @@ TOOL_AUTHORITY: dict[str, str] = {
     "project.suggested_sources": WORK,
     "project.add_suggested_source": CONFIG,  # arms a new Room watch on a source
     "project.dismiss_suggested_source": WORK,
-    "connection.list": WORK,
     "connection.recheck": WORK,
     "project.setup.select_proposal": WORK,  # drafts the setup: writes only its own session (the prepare)
     "project.setup.deselect_proposal": WORK,  # drafts the setup: writes only its own session (the prepare)

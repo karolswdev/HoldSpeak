@@ -1,3 +1,6 @@
+# PARKED 20261109 (ops/connections): the hand-written concierge MCP family.
+# Its tools are produced from ``holdspeak/concierge_operations.py`` (``mcp/families/declared.py``),
+# over ``ConciergeService`` (``services/concierge_service.py``). Not imported. Restore with ``git revert``.
 """Concierge MCP twins (HS-170-03).
 
 Five tools: concierge.detect, concierge.propose, concierge.probe,

@@ -1,123 +1,64 @@
-"""Owner-local Desk UI feedback routes."""
+"""Owner-local Desk UI feedback routes.
+
+Produced from ``holdspeak/feedback_operations.py`` (2026-11-09), served by
+``services/ui_feedback.FeedbackService``: the switch's read, the save and the
+transcription. The save and the transcription are owner only. A refusal
+answers ``{success: false, error}``: 404 while feedback is off or for an
+unknown bundle, 400 for a bad payload, 409 for a reused id, 403 for anyone
+but the owner.
+"""
 
 from __future__ import annotations
 
-import asyncio
-import io
-import wave
-from typing import Any
+from typing import Any, Callable
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter
 from fastapi.responses import JSONResponse
+from starlette.concurrency import run_in_threadpool
 
+from .... import operations
+from ....feedback_operations import FEEDBACK_OPERATIONS
 from ....logging_config import get_logger
-from ....services.ui_feedback import (
-    UIFeedbackConflict,
-    UIFeedbackError,
-    fail_transcript,
-    feedback_audio,
-    feedback_transcript,
-    save_transcript,
-)
-from ....services.ui_feedback import enabled as feedback_enabled
-from ....services.ui_feedback import save_feedback
-from ....speech_session import SpeechSessionRefused
-
-import numpy as np
-
-from .voice import _route_principal
+from ....operations import OperationRefused
+from ....services.errors import ServiceError
+from ....services.ui_feedback import FeedbackRefused, UIFeedbackConflict, UIFeedbackError
+from ...operation_routes import operation_router
+from .._mount import mount_router
 
 log = get_logger("web.routes.system")
+
+
+def _refused(error: str, status: int) -> JSONResponse:
+    return JSONResponse({"success": False, "error": error}, status_code=status)
+
+
+async def _answer(fn: Callable[[], Any], *, status: int = 200) -> Any:
+    try:
+        return JSONResponse(await run_in_threadpool(fn), status_code=status)
+    except FeedbackRefused as exc:
+        return _refused(str(exc), exc.status)
+    except UIFeedbackConflict as exc:
+        return _refused(str(exc), 409)
+    except UIFeedbackError as exc:
+        return _refused(str(exc), 400)
+    except OperationRefused as exc:
+        return _refused(exc.detail, 400)
+    except ServiceError as exc:  # owner_required (403)
+        return _refused(exc.detail, int((exc.context or {}).get("status") or 400))
+    except Exception as exc:  # pragma: no cover - filesystem-specific failures
+        log.exception("Failed to save local UI feedback: %s", exc)
+        return _refused("The local feedback bundle could not be saved.", 500)
 
 
 def build_ui_feedback_router(ctx: Any) -> APIRouter:
     router = APIRouter()
 
-    @router.get("/api/ui-feedback/status")
-    def api_ui_feedback_status() -> dict[str, bool]:
-        return {"enabled": feedback_enabled()}
+    def registry() -> Any:
+        from ....services.ui_feedback import FeedbackService
 
-    @router.post("/api/ui-feedback")
-    async def api_ui_feedback(request: Request) -> Any:
-        if not feedback_enabled():
-            return JSONResponse(
-                {"success": False, "error": "UI feedback is disabled."}, status_code=404
-            )
-        try:
-            payload = await request.json()
-        except Exception:
-            return JSONResponse(
-                {"success": False, "error": "A JSON object is required."}, status_code=400
-            )
-        try:
-            return JSONResponse(save_feedback(payload))
-        except UIFeedbackConflict as exc:
-            return JSONResponse({"success": False, "error": str(exc)}, status_code=409)
-        except UIFeedbackError as exc:
-            return JSONResponse({"success": False, "error": str(exc)}, status_code=400)
-        except Exception as exc:  # pragma: no cover - filesystem-specific failures
-            log.exception("Failed to save local UI feedback: %s", exc)
-            return JSONResponse(
-                {"success": False, "error": "The local feedback bundle could not be saved."},
-                status_code=500,
-            )
+        return operations.for_context(ctx, feedback_service=lambda: FeedbackService(ctx))
 
-    @router.post("/api/ui-feedback/{identifier}/transcribe")
-    async def api_ui_feedback_transcribe(identifier: str, request: Request) -> Any:
-        """Transcribe one already-saved recording under the configured speech route."""
-        if not feedback_enabled():
-            return JSONResponse(
-                {"success": False, "error": "UI feedback is disabled."}, status_code=404
-            )
-        try:
-            current = feedback_transcript(identifier)
-        except UIFeedbackError as exc:
-            return JSONResponse({"success": False, "error": str(exc)}, status_code=404)
-        if current.get("transcript_status") == "complete":
-            return current
-        try:
-            raw = feedback_audio(identifier)
-            with wave.open(io.BytesIO(raw), "rb") as source:
-                frames = source.readframes(source.getnframes())
-            audio = np.frombuffer(frames, dtype=np.int16).astype(np.float32) / 32768.0
-        except (OSError, EOFError, ValueError, wave.Error) as exc:
-            log.exception("Saved feedback audio could not be decoded: %s", exc)
-            return fail_transcript(identifier, "audio_unreadable")
-
-        if ctx.on_transcribe_admitted is None:
-            return fail_transcript(identifier, "transcription_unavailable")
-
-        principal = _route_principal(request)
-
-        def transcribe_and_attach() -> dict[str, Any]:
-            admitted = None
-            outcome = "failed"
-            try:
-                admitted = ctx.on_transcribe_admitted(
-                    audio,
-                    principal=principal,
-                    mic_handle="",
-                    verbatim=True,
-                )
-                text = str(admitted.text)
-                if not text.strip():
-                    return fail_transcript(identifier, "no_speech")
-                boundary = str(admitted.provider.egress_boundary)
-                result = save_transcript(identifier, text, boundary)
-                outcome = "succeeded"
-                return result
-            except SpeechSessionRefused as exc:
-                return fail_transcript(identifier, exc.reason)
-            except Exception as exc:  # pragma: no cover - provider/runtime specific
-                log.exception("Saved feedback transcription failed: %s", exc)
-                reason = str(getattr(exc, "reason", "") or "transcription_failed")
-                return fail_transcript(identifier, reason)
-            finally:
-                if admitted is not None:
-                    admitted.close(outcome)
-
-        return await asyncio.to_thread(transcribe_and_attach)
-
+    mount_router(router, operation_router(FEEDBACK_OPERATIONS, registry, _answer, module=__name__))
     return router
 
 

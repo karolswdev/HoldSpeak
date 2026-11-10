@@ -899,7 +899,12 @@ class TestPaletteConsumer:
             TOOLS as PROJECT_TOOLS,
         )
 
-        family_names = frozenset(t["name"] for t in PROJECT_TOOLS)
+        from holdspeak.provider_operations import PROVIDER_OPERATIONS
+        from holdspeak.room_operations import CONNECTION_LIST
+
+        # 2026-11-09 (ops/connections): the provider tools and connection.list are produced from their rows.
+        family_names = frozenset(t["name"] for t in PROJECT_TOOLS) | frozenset(
+            row.tool_name for row in (*PROVIDER_OPERATIONS, CONNECTION_LIST))
         assert PROJECT_PALETTE == family_names, (
             f"Palette vs family mismatch: "
             f"extra={PROJECT_PALETTE - family_names}, "
