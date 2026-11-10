@@ -16,7 +16,7 @@ on:
 jobs:
   swift:
     name: Swift package (build + test + layer guard)
-    runs-on: macos-latest
+    runs-on: macos-15
     defaults:
       run:
         working-directory: apple
@@ -41,7 +41,7 @@ jobs:
 
   contracts:
     name: Contract schemas (Python validator)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - name: Install uv

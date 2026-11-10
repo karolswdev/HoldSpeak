@@ -14,7 +14,7 @@ env:
 jobs:
   full-suite:
     name: Full Suite (macOS)
-    runs-on: macos-14  # Apple Silicon
+    runs-on: macos-15  # Apple Silicon
     env:
       # Several real-hub fixtures isolate HOME. Keep browser discovery
       # independent from that application-data sandbox.
