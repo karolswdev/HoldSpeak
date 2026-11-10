@@ -8,7 +8,14 @@
 // (the face halves; the hub halves are tests/unit/test_phase200_runtime_identity.py)
 
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, waitFor, cleanup, fireEvent, within } from "@testing-library/react";
+import {
+  render,
+  screen,
+  waitFor,
+  cleanup,
+  fireEvent,
+  within,
+} from "@testing-library/react";
 import { RuntimeIdentityModule } from "../SettingsCore";
 
 const mockApiFetch = vi.fn();
@@ -41,7 +48,11 @@ function makeWire(overrides: Record<string, unknown> = {}) {
     repair: [],
     owns_database: true,
     diagnoses: [],
-    ownership: { held: true, lock_path: "/tmp/x.owner.lock", owner: { pid: 81866 } },
+    ownership: {
+      held: true,
+      lock_path: "/tmp/x.owner.lock",
+      owner: { pid: 81866 },
+    },
     bundle_on_disk: "3228921edf301508",
     ...overrides,
   };
@@ -69,10 +80,16 @@ describe("RuntimeIdentityModule", () => {
       expect(screen.getByTestId("runtime-backend")).toBeTruthy();
     });
     expect(mockApiFetch).toHaveBeenCalledWith("/api/system/identity");
-    expect(screen.getByTestId("runtime-backend").textContent).toBe("0.4.0 · d066a862aaaa");
-    expect(screen.getByTestId("runtime-bundle").textContent).toBe("3228921edf30");
-    expect(screen.getByTestId("runtime-document").textContent).toBe("3228921edf30");
-    expect(screen.getByTestId("runtime-schema").textContent).toBe("Schema 76");
+    expect(screen.getByTestId("runtime-backend").textContent).toBe(
+      "0.4.0 · d066a862aaaa",
+    );
+    expect(screen.getByTestId("runtime-bundle").textContent).toBe(
+      "3228921edf30",
+    );
+    expect(screen.getByTestId("runtime-document").textContent).toBe(
+      "3228921edf30",
+    );
+    expect(screen.getByTestId("runtime-schema").textContent).toBe("76");
     expect(screen.getByTestId("runtime-database").textContent).toBe("01234567");
     expect(screen.getByTestId("runtime-owns").textContent).toBe("Owner");
   });
@@ -81,7 +98,9 @@ describe("RuntimeIdentityModule", () => {
     mockApiFetch.mockResolvedValueOnce(makeWire());
     render(<RuntimeIdentityModule />);
 
-    await waitFor(() => { expect(screen.getByTestId("runtime-backend")).toBeTruthy(); });
+    await waitFor(() => {
+      expect(screen.getByTestId("runtime-backend")).toBeTruthy();
+    });
     expect(screen.queryByTestId("runtime-repair")).toBeNull();
     expect(screen.queryByText("0")).toBeNull();
   });
@@ -92,14 +111,24 @@ describe("RuntimeIdentityModule", () => {
         repair: ["STALE BUNDLE", "TWO RUNTIMES"],
         owns_database: false,
         diagnoses: [
-          { id: "stale_bundle", token: "STALE BUNDLE", detail: "Restart the hub." },
-          { id: "two_runtimes", token: "TWO RUNTIMES", detail: "Another hub owns this database." },
+          {
+            id: "stale_bundle",
+            token: "STALE BUNDLE",
+            detail: "Restart the hub.",
+          },
+          {
+            id: "two_runtimes",
+            token: "TWO RUNTIMES",
+            detail: "Another hub owns this database.",
+          },
         ],
       }),
     );
     render(<RuntimeIdentityModule />);
 
-    await waitFor(() => { expect(screen.getByTestId("runtime-repair")).toBeTruthy(); });
+    await waitFor(() => {
+      expect(screen.getByTestId("runtime-repair")).toBeTruthy();
+    });
     const chips = screen.getByTestId("runtime-repair");
     expect(chips.textContent).toContain("Stale bundle");
     expect(chips.textContent).toContain("Two runtimes");
@@ -111,9 +140,15 @@ describe("RuntimeIdentityModule", () => {
     mockApiFetch.mockResolvedValueOnce(makeWire());
     render(<RuntimeIdentityModule />);
 
-    await waitFor(() => { expect(screen.getByTestId("runtime-repair")).toBeTruthy(); });
-    expect(screen.getByTestId("runtime-repair").textContent).toContain("Stale bundle");
-    expect(screen.getByTestId("runtime-document").textContent).toBe("ffffffffffff");
+    await waitFor(() => {
+      expect(screen.getByTestId("runtime-repair")).toBeTruthy();
+    });
+    expect(screen.getByTestId("runtime-repair").textContent).toContain(
+      "Stale bundle",
+    );
+    expect(screen.getByTestId("runtime-document").textContent).toBe(
+      "ffffffffffff",
+    );
   });
 
   it("never lists the same token twice", async () => {
@@ -121,61 +156,61 @@ describe("RuntimeIdentityModule", () => {
     mockApiFetch.mockResolvedValueOnce(makeWire({ repair: ["STALE BUNDLE"] }));
     render(<RuntimeIdentityModule />);
 
-    await waitFor(() => { expect(screen.getByTestId("runtime-repair")).toBeTruthy(); });
-    const chips = screen.getByTestId("runtime-repair").querySelectorAll(".surface-state-chip");
+    await waitFor(() => {
+      expect(screen.getByTestId("runtime-repair")).toBeTruthy();
+    });
+    const chips = screen
+      .getByTestId("runtime-repair")
+      .querySelectorAll(".surface-state-chip");
     expect(chips.length).toBe(1);
   });
 
   it("an absent bundle stamp reads NONE, not an empty token", async () => {
     setDocumentBuild(null);
     mockApiFetch.mockResolvedValueOnce(
-      makeWire({ identity: { ...makeWire().identity, frontend_build: "" }, repair: ["STALE BUNDLE"] }),
+      makeWire({
+        identity: { ...makeWire().identity, frontend_build: "" },
+        repair: ["STALE BUNDLE"],
+      }),
     );
     render(<RuntimeIdentityModule />);
 
-    await waitFor(() => { expect(screen.getByTestId("runtime-bundle")).toBeTruthy(); });
+    await waitFor(() => {
+      expect(screen.getByTestId("runtime-bundle")).toBeTruthy();
+    });
     expect(screen.getByTestId("runtime-bundle").textContent).toBe("None");
     expect(screen.getByTestId("runtime-document").textContent).toBe("None");
   });
 
-  it("the database path lives inside the RAW fold only", async () => {
-    mockApiFetch.mockResolvedValueOnce(makeWire());
-    const { container } = render(<RuntimeIdentityModule />);
-
-    await waitFor(() => { expect(screen.getByTestId("runtime-backend")).toBeTruthy(); });
-    const fold = container.querySelector("details, .gadget-fold");
-    expect(fold).toBeTruthy();
-    const path = screen.getByTestId("runtime-path");
-    expect(fold!.contains(path)).toBe(true);
-  });
-
-  it("PHILO-17 U35: the build hashes and schema live in the RAW fold; a repair finding stays on the face", async () => {
+  it("keeps the database path on the Storage tab and leaves repair findings visible", async () => {
     mockApiFetch.mockResolvedValueOnce(makeWire({ repair: ["SECOND WRITER"] }));
-    const { container } = render(<RuntimeIdentityModule />);
-
-    await waitFor(() => { expect(screen.getByTestId("runtime-backend")).toBeTruthy(); });
-    const fold = container.querySelector("details.gadget-fold")!;
-    for (const id of ["runtime-backend", "runtime-bundle", "runtime-document", "runtime-schema", "runtime-database"]) {
-      expect(fold.contains(screen.getByTestId(id))).toBe(true);
-    }
-    expect(fold.contains(screen.getByTestId("runtime-repair"))).toBe(false);
+    render(<RuntimeIdentityModule />);
+    await screen.findByTestId("runtime-backend");
+    expect(screen.getByTestId("runtime-path")).not.toBeVisible();
+    expect(screen.getByTestId("runtime-repair")).toBeVisible();
+    fireEvent.click(screen.getByRole("tab", { name: "Storage" }));
+    expect(screen.getByTestId("runtime-path")).toBeVisible();
+    expect(screen.getByTestId("runtime-backend")).not.toBeVisible();
+    expect(screen.getByTestId("runtime-repair")).toBeVisible();
   });
 
   it("every verb is the library Button — no raw <button> outside it", async () => {
     mockApiFetch.mockResolvedValueOnce(makeWire());
     const { container } = render(<RuntimeIdentityModule />);
 
-    await waitFor(() => { expect(screen.getByTestId("runtime-backend")).toBeTruthy(); });
+    await waitFor(() => {
+      expect(screen.getByTestId("runtime-backend")).toBeTruthy();
+    });
     // The canon fence (parked tests/e2e/_parked/test_hs170_settings_hub_glass.py:142; successor web/src/desk/__tests__/settings.app.test.tsx): a
     // library button carries .btn, .surface-ledger-line or .gadget-cycle.
     const raw = Array.from(container.querySelectorAll("button")).filter(
       (node) =>
         !node.classList.contains("btn") &&
+        !node.classList.contains("btn--chrome") &&
         !node.classList.contains("surface-ledger-line") &&
         !node.classList.contains("gadget-cycle"),
     );
     expect(raw.map((n) => n.className)).toEqual([]);
-    expect(container.querySelectorAll("button.btn").length).toBe(1);
   });
 
   it("an unreadable route states it and shows no invented identity", async () => {
@@ -183,7 +218,9 @@ describe("RuntimeIdentityModule", () => {
     render(<RuntimeIdentityModule />);
 
     const failure = await screen.findByRole("alert");
-    expect(failure.textContent).toContain("Device read failed · Settings unchanged · Retry");
+    expect(failure.textContent).toContain(
+      "Device read failed · Settings unchanged · Retry",
+    );
     expect(screen.queryByTestId("runtime-backend")).toBeNull();
     mockApiFetch.mockResolvedValueOnce(makeWire());
     fireEvent.click(within(failure).getByRole("button", { name: "Retry" }));

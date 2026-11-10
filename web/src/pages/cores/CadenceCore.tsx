@@ -6,35 +6,15 @@
 // The existing cadence loop rows + their verbs (reply, snooze, mark done,
 // kill) are preserved BELOW the new heartbeat rows under a `NOW N` caption,
 // absent at zero.
-import { useCallback, useEffect, useLayoutEffect, useState } from "react";
-import type {
-  CoreProps,
-  CadenceLoopsResponse,
-  CadenceHistoryResponse,
-} from "./core-types";
+import { useCallback, useEffect, useLayoutEffect, useState, type ReactNode } from "react";
+import type { CoreProps, CadenceLoopsResponse, CadenceHistoryResponse } from "./core-types";
 import { Button } from "../../components/signal/Signal";
-import {
-  CheckGadget,
-  CycleGadget,
-  LampGadget,
-  PadGadget,
-} from "../../desk/surface/gadgets";
-import {
-  SurfaceLedger,
-  SurfaceLedgerRow,
-  SurfaceSection,
-  countLabel,
-  countToken,
-} from "../../desk/surface";
+import { CheckGadget, CycleGadget, LampGadget, PadGadget } from "../../desk/surface/gadgets";
+import { GadgetGroup, GadgetRow, PaneActions, ListView, PaneInspector, type ListVerb, SurfaceSection, countLabel, countToken } from "../../desk/surface";
 import { DotWord } from "../../desk/surface/kit";
 import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 import { egressForEvent } from "../../desk/surface/egress";
-import {
-  ConfirmVerb,
-  SurfaceRows,
-  SurfaceRow,
-  SurfaceState,
-} from "../../desk/surface/Surface";
+import { ConfirmVerb, SurfaceRows, SurfaceRow, SurfaceState } from "../../desk/surface/Surface";
 import { apiFetch, readableError } from "../../lib/api";
 import { useResource, asRows, rowId } from "../pageSupport";
 import { useAction } from "./core-hooks";
@@ -42,6 +22,28 @@ import { renderHeroSlot } from "./core-layout";
 import { deSnake, humanTime, wireClock } from "../../desk/surface/format";
 import "./rhythm.css";
 import { Token } from "../../desk/surface/Token";
+
+/** Keep the existing wire bindings while the kit draws the form row. */
+function RhythmSetting({
+  primary,
+  cells,
+  trailing,
+  "data-testid": testId,
+}: {
+  primary: ReactNode;
+  cells?: ReactNode;
+  trailing?: ReactNode;
+  "data-testid"?: string;
+  expands?: boolean;
+  wrap?: boolean;
+}) {
+  return (
+    <div data-testid={testId}>
+      <GadgetRow label={primary}>{cells}</GadgetRow>
+      {trailing ? <PaneActions>{trailing}</PaneActions> : null}
+    </div>
+  );
+}
 
 /* ── Wire shapes ────────────────────────────────────────────────── */
 
@@ -131,12 +133,16 @@ function fmtDate(iso: string | null | undefined): string | null {
 /** HS-175 counsel C9(a): the Rhythm summary line, honest at one and zero.
  * `1 meeting · 1 armed · 1 watch item · 1 commitment due`; null when no
  * part counts (A.8). W6-F words: sentence case, sans. */
-export function briefSummaryLine(
-  items: Array<{ source_ref?: string | null; text?: string | null }> | undefined,
-): string | null {
+export function briefSummaryLine(items: Array<{ source_ref?: string | null; text?: string | null }> | undefined): string | null {
   if (!items || items.length === 0) return null;
-  let meetings = 0, armed = 0, watch = 0, due = 0;
-  const lead = (text: string) => { const m = text.match(/^(\d+)\s+/); return m ? parseInt(m[1], 10) : 0; };
+  let meetings = 0,
+    armed = 0,
+    watch = 0,
+    due = 0;
+  const lead = (text: string) => {
+    const m = text.match(/^(\d+)\s+/);
+    return m ? parseInt(m[1], 10) : 0;
+  };
   for (const item of items) {
     const ref = item.source_ref ?? "";
     const text = item.text ?? "";
@@ -188,9 +194,7 @@ export function CadenceCore({ hero, embedded = false }: CoreProps & { embedded?:
   // ── Existing cadence loop + nudge resources (kept for the NOW N section) ──
   const cadenceStatus = useResource<Record<string, unknown>>("/api/cadence/status", {});
   const briefJobRaw = cadenceStatus.data?.brief_job as { enabled?: unknown; hour?: unknown } | undefined;
-  const briefJob = briefJobRaw && typeof briefJobRaw.hour === "number"
-    ? { enabled: briefJobRaw.enabled === true, hour: briefJobRaw.hour }
-    : null;
+  const briefJob = briefJobRaw && typeof briefJobRaw.hour === "number" ? { enabled: briefJobRaw.enabled === true, hour: briefJobRaw.hour } : null;
   const loopsResource = useResource<CadenceLoopsResponse>("/api/cadence/loops", {});
   const history = useResource<CadenceHistoryResponse>("/api/cadence/history?limit=20", {});
   const loops = asRows(loopsResource.data, ["loops"]);
@@ -201,13 +205,17 @@ export function CadenceCore({ hero, embedded = false }: CoreProps & { embedded?:
   // stays drawn: a later reload never hides it again.
   const firstReads = [heartbeat, briefRes, doorRes, projectsRes, cadenceStatus, loopsResource, history];
   const readsEnded = firstReads.every((r) => !r.loading);
+  const [selectedLoop, selectLoop] = useState<string | null>(null);
+  const [editingLoop, editLoop] = useState<string | null>(null);
   const [capped, setCapped] = useState(false);
   useEffect(() => {
     const timer = window.setTimeout(() => setCapped(true), RHYTHM_READS_CAP_MS);
     return () => window.clearTimeout(timer);
   }, []);
   const [drawn, setDrawn] = useState(false);
-  useLayoutEffect(() => { if (!drawn && (readsEnded || capped)) setDrawn(true); }, [drawn, readsEnded, capped]);
+  useLayoutEffect(() => {
+    if (!drawn && (readsEnded || capped)) setDrawn(true);
+  }, [drawn, readsEnded, capped]);
   const shown = drawn || readsEnded || capped;
   const [replies, setReplies] = useState<Record<string, string>>({});
   const [replyReceipt, setReplyReceipt] = useState("");
@@ -249,20 +257,26 @@ export function CadenceCore({ hero, embedded = false }: CoreProps & { embedded?:
   const projects = projectsRes.data?.projects ?? [];
 
   // ── Heartbeat mutations ──
-  const putSetting = useCallback(async (patch: Partial<HeartbeatSettings>) => {
-    setSaving(true);
-    setSaveError("");
-    try {
-      await apiFetch("/api/settings/heartbeat", { method: "PUT", json: patch });
-      setWrittenAt(Date.now() / 1000);
-      await heartbeat.reload();
-    } catch (error) {
-      setSaveError("Could not confirm the save · The shown settings stay");
-      setSaveReason(readableError(error));
-    } finally {
-      setSaving(false);
-    }
-  }, [heartbeat]);
+  const putSetting = useCallback(
+    async (patch: Partial<HeartbeatSettings>) => {
+      setSaving(true);
+      setSaveError("");
+      try {
+        await apiFetch("/api/settings/heartbeat", {
+          method: "PUT",
+          json: patch,
+        });
+        setWrittenAt(Date.now() / 1000);
+        await heartbeat.reload();
+      } catch (error) {
+        setSaveError("Could not confirm the save · The shown settings stay");
+        setSaveReason(readableError(error));
+      } finally {
+        setSaving(false);
+      }
+    },
+    [heartbeat],
+  );
 
   const runNow = useCallback(async () => {
     setSweeping(true);
@@ -313,10 +327,7 @@ export function CadenceCore({ hero, embedded = false }: CoreProps & { embedded?:
     if (!text) return;
     setReplyReceipt("");
     await action.run(async () => {
-      const result = await apiFetch<{ pane?: string }>(
-        `/api/cadence/loops/${encodeURIComponent(id)}/reply`,
-        { method: "POST", json: { text } },
-      );
+      const result = await apiFetch<{ pane?: string }>(`/api/cadence/loops/${encodeURIComponent(id)}/reply`, { method: "POST", json: { text } });
       setReplyReceipt(`Sent to ${result.pane || "the agent"}`);
       setReplies((prev) => ({ ...prev, [id]: "" }));
       await loopsResource.reload();
@@ -335,9 +346,7 @@ export function CadenceCore({ hero, embedded = false }: CoreProps & { embedded?:
     return hour >= start || hour < end;
   })();
 
-  const sweepLabel = settings.sweep_every_minutes >= 60
-    ? `Every ${Math.round(settings.sweep_every_minutes / 60)} hr`
-    : `Every ${settings.sweep_every_minutes} min`;
+  const sweepLabel = settings.sweep_every_minutes >= 60 ? `Every ${Math.round(settings.sweep_every_minutes / 60)} hr` : `Every ${settings.sweep_every_minutes} min`;
 
   // Brief info
   const brief = briefRes.data;
@@ -353,338 +362,329 @@ export function CadenceCore({ hero, embedded = false }: CoreProps & { embedded?:
     <>
       {embedded ? null : renderHeroSlot(hero, null, null)}
       <div className="cadence-body" data-settling={shown ? undefined : "true"} aria-busy={shown ? undefined : true}>
-      {shown ? null : <div className="cadence-settling-line"><SurfaceState loading /></div>}
-      {saveError ? <SurfaceState error={saveError} errorTitle={saveReason} onRetry={async () => { if (await heartbeat.reload()) setSaveError(""); }} /> : null}
-      {heartbeat.error ? <SurfaceState error="Could not load the Rhythm settings · Nothing changed · Check the hub" errorTitle={heartbeat.error} onRetry={() => void heartbeat.reload()} /> : null}
-
-      {/* Display headline: accent when the sweep runs, muted when not */}
-      {embedded ? null : <span
-        className="surface-display"
-        data-testid="rhythm-headline"
-        data-tone={settings.sweep_every_minutes > 0 ? "accent" : undefined}
-        data-muted={settings.sweep_every_minutes <= 0 || undefined}
-      >
-        {settings.sweep_every_minutes > 0 ? sweepLabel : "Not running"}
-      </span>}
-
-      {/* ── SWEEP row ──────────────────────────────────────────── */}
-      <div className="rhythm-section">
-      <SurfaceLedger count="" cols="hub">
-        <SurfaceLedgerRow
-          primary="Sweep"
-          expands={false}
-          data-testid="rhythm-sweep-row"
-          trailing={
-            <Button
-              variant="ghost"
-              dense
-              disabled={sweeping || saving}
-              onClick={() => void runNow()}
-              data-testid="rhythm-run-now"
-            >
-              Run now
-            </Button>
-          }
-          cells={
-            <CycleGadget
-              label="Sweep interval"
-              value={String(settings.sweep_every_minutes)}
-              options={SWEEP_OPTIONS}
-              disabled={saving || sweeping}
-              onChange={(v) => void putSetting({ sweep_every_minutes: parseInt(v, 10) })}
-            />
-          }
-        />
-      </SurfaceLedger>
-      {/* W6-F words: the facts are one quiet sans line in sentence case
-          (`Quiet 22:00 to 08:00 · Next 10:15 · Last 10:00 · Checked 3 rooms in
-          42 ms`); a state is a dot and a word. */}
-      <div className="rhythm-facts" data-testid="rhythm-sweep-facts">
-        {sweeping ? (
-          <DotWord tone="info">Running</DotWord>
-        ) : inQuiet ? (
-          <DotWord tone="warn">{`Held · Quiet until ${fmtHour(settings.quiet_hours.end)}`}</DotWord>
+        {shown ? null : (
+          <div className="cadence-settling-line">
+            <SurfaceState loading />
+          </div>
+        )}
+        {saveError ? (
+          <SurfaceState
+            error={saveError}
+            errorTitle={saveReason}
+            onRetry={async () => {
+              if (await heartbeat.reload()) setSaveError("");
+            }}
+          />
         ) : null}
-        {!sweeping && (
-          <span className="rhythm-facts-line">
-            {[
-              `Quiet ${fmtHour(settings.quiet_hours.start)} to ${fmtHour(settings.quiet_hours.end)}`,
-              settings.next_sweep_at ? `Next ${fmtTime(settings.next_sweep_at)}` : null,
-              settings.last_sweep_at ? `Last ${fmtTime(settings.last_sweep_at)}` : null,
-              receipt
-                ? `Checked ${receipt.rooms > 0 ? receipt.rooms : "no"} ${receipt.rooms === 1 ? "room" : "rooms"} in ${Math.round(receipt.duration_ms)} ms`
-                : null,
-            ].filter(Boolean).join(" · ")}
+        {heartbeat.error ? <SurfaceState error="Could not load the Rhythm settings · Nothing changed · Check the hub" errorTitle={heartbeat.error} onRetry={() => void heartbeat.reload()} /> : null}
+
+        {/* Display headline: accent when the sweep runs, muted when not */}
+        {embedded ? null : (
+          <span
+            className="surface-display"
+            data-testid="rhythm-headline"
+            data-tone={settings.sweep_every_minutes > 0 ? "accent" : undefined}
+            data-muted={settings.sweep_every_minutes <= 0 || undefined}
+          >
+            {settings.sweep_every_minutes > 0 ? sweepLabel : "Not running"}
           </span>
         )}
-      </div>
-      {sweepError ? <SurfaceState error={sweepError} errorTitle={sweepReason} /> : null}
-      </div>{/* /rhythm-section sweep */}
 
-      {/* ── RUNS ON row (HS-174-08) ────────────────────────────── */}
-      <div className="rhythm-section">
-      <SurfaceLedger count="" cols="hub">
-        <SurfaceLedgerRow
-          primary="Where it runs"
-          expands={false}
-          data-testid="rhythm-runs-on-row"
-          cells={
-            <CycleGadget
-              label="Runner host"
-              value={settings.runs_on || "local"}
-              disabled={saving || sweeping}
-              options={[
-                { value: "local", label: "This device" },
-                ...(settings.remote_hosts ?? []).map((h) => ({ value: h, label: h })),
-              ]}
-              onChange={(v) => void putSetting({ runs_on: v })}
-              data-testid="rhythm-runs-on-gadget"
+        {/* ── SWEEP row ──────────────────────────────────────────── */}
+        <div className="rhythm-section">
+          <GadgetGroup>
+            <RhythmSetting
+              primary="Sweep"
+              expands={false}
+              data-testid="rhythm-sweep-row"
+              trailing={
+                <Button variant="ghost" dense disabled={sweeping || saving} onClick={() => void runNow()} data-testid="rhythm-run-now">
+                  Run now
+                </Button>
+              }
+              cells={
+                <CycleGadget
+                  label="Sweep interval"
+                  value={String(settings.sweep_every_minutes)}
+                  options={SWEEP_OPTIONS}
+                  disabled={saving || sweeping}
+                  onChange={(v) => void putSetting({ sweep_every_minutes: parseInt(v, 10) })}
+                />
+              }
             />
-          }
-        />
-      </SurfaceLedger>
-      <div className="rhythm-facts" data-testid="rhythm-runs-on-facts">
-        {settings.runs_on && settings.runs_on !== "local" ? (
-          <>
-            <span className="rhythm-facts-line">
-              {settings.last_remote_run_at ? (
-                <span>Last run {humanTime(settings.last_remote_run_at)}</span>
-              ) : (
-                <span data-testid="rhythm-runs-on-no-runs">No runs yet</span>
-              )}
-              {receipt ? (
-                <>
-                  {/* W6-D (2026-10-28): the receipt in sentence case, as Activity says it. */}
-                  {" · "}
-                  <span data-testid="rhythm-runs-on-checked">
-                    Checked {receipt.rooms} {receipt.rooms === 1 ? "room" : "rooms"}
-                  </span>
-                  {settings.last_remote_run_at ? <>{" · "}{fmtTime(settings.last_remote_run_at)}</> : null}
-                </>
-              ) : null}
-            </span>
-            <span className="rhythm-runs-on-caption" data-testid="rhythm-runs-on-caption">
-              While this Mac is awake
-            </span>
-          </>
-        ) : null}
-      </div>
-      </div>{/* /rhythm-section runs-on */}
+          </GadgetGroup>
+          {/* W6-F words: the facts are one quiet sans line in sentence case
+          (`Quiet 22:00 to 08:00 · Next 10:15 · Last 10:00 · Checked 3 rooms in
+          42 ms`); a state is a dot and a word. */}
+          <div className="rhythm-facts" data-testid="rhythm-sweep-facts">
+            {sweeping ? <DotWord tone="info">Running</DotWord> : inQuiet ? <DotWord tone="warn">{`Held · Quiet until ${fmtHour(settings.quiet_hours.end)}`}</DotWord> : null}
+            {!sweeping && (
+              <span className="rhythm-facts-line">
+                {[
+                  `Quiet ${fmtHour(settings.quiet_hours.start)} to ${fmtHour(settings.quiet_hours.end)}`,
+                  settings.next_sweep_at ? `Next ${fmtTime(settings.next_sweep_at)}` : null,
+                  settings.last_sweep_at ? `Last ${fmtTime(settings.last_sweep_at)}` : null,
+                  receipt ? `Checked ${receipt.rooms > 0 ? receipt.rooms : "no"} ${receipt.rooms === 1 ? "room" : "rooms"} in ${Math.round(receipt.duration_ms)} ms` : null,
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
+              </span>
+            )}
+          </div>
+          {sweepError ? <SurfaceState error={sweepError} errorTitle={sweepReason} /> : null}
+        </div>
+        {/* /rhythm-section sweep */}
 
-      {/* ── WEEKLY / MONDAY BRIEF row (HS-175) ─────────────────── */}
-      <div className="rhythm-section">
-      <SurfaceLedger count="" cols="hub">
-        <SurfaceLedgerRow
-          primary={calendarConfigured ? "Weekly brief" : "Daily brief"}
-          expands={false}
-          data-testid="rhythm-brief-row"
-          trailing={
-            <Button
-              variant="ghost"
-              dense
-              disabled={generating}
-              onClick={() => void generateBrief()}
-              data-testid="rhythm-generate-now"
-            >
-              Generate
-            </Button>
-          }
-          cells={
-            <>
-              {/* HS-175 counsel C9(a) / H4-0: the brief regenerates once a
+        {/* ── RUNS ON row (HS-174-08) ────────────────────────────── */}
+        <div className="rhythm-section">
+          <GadgetGroup>
+            <RhythmSetting
+              primary="Where it runs"
+              expands={false}
+              data-testid="rhythm-runs-on-row"
+              cells={
+                <CycleGadget
+                  label="Runner host"
+                  value={settings.runs_on || "local"}
+                  disabled={saving || sweeping}
+                  options={[
+                    { value: "local", label: "This device" },
+                    ...(settings.remote_hosts ?? []).map((h) => ({
+                      value: h,
+                      label: h,
+                    })),
+                  ]}
+                  onChange={(v) => void putSetting({ runs_on: v })}
+                  data-testid="rhythm-runs-on-gadget"
+                />
+              }
+            />
+          </GadgetGroup>
+          <div className="rhythm-facts" data-testid="rhythm-runs-on-facts">
+            {settings.runs_on && settings.runs_on !== "local" ? (
+              <>
+                <span className="rhythm-facts-line">
+                  {settings.last_remote_run_at ? <span>Last run {humanTime(settings.last_remote_run_at)}</span> : <span data-testid="rhythm-runs-on-no-runs">No runs yet</span>}
+                  {receipt ? (
+                    <>
+                      {/* W6-D (2026-10-28): the receipt in sentence case, as Activity says it. */}
+                      {" · "}
+                      <span data-testid="rhythm-runs-on-checked">
+                        Checked {receipt.rooms} {receipt.rooms === 1 ? "room" : "rooms"}
+                      </span>
+                      {settings.last_remote_run_at ? (
+                        <>
+                          {" · "}
+                          {fmtTime(settings.last_remote_run_at)}
+                        </>
+                      ) : null}
+                    </>
+                  ) : null}
+                </span>
+                <span className="rhythm-runs-on-caption" data-testid="rhythm-runs-on-caption">
+                  While this Mac is awake
+                </span>
+              </>
+            ) : null}
+          </div>
+        </div>
+        {/* /rhythm-section runs-on */}
+
+        {/* ── WEEKLY / MONDAY BRIEF row (HS-175) ─────────────────── */}
+        <div className="rhythm-section">
+          <GadgetGroup>
+            <RhythmSetting
+              primary={calendarConfigured ? "Weekly brief" : "Daily brief"}
+              expands={false}
+              data-testid="rhythm-brief-row"
+              trailing={
+                <Button variant="ghost" dense disabled={generating} onClick={() => void generateBrief()} data-testid="rhythm-generate-now">
+                  Generate
+                </Button>
+              }
+              cells={
+                <>
+                  {/* HS-175 counsel C9(a) / H4-0: the brief regenerates once a
                   DAY (runtime/cadence.py _maybe_regenerate_brief); no weekly
                   cadence exists, so the token says DAILY on both rows.  The
                   row's name stays "Weekly brief" -- it is the week-window
                   brief.  PHILO-15 05: the hour is the Brief job's own
                   (cadence.brief_hour, 06:00 by default), OFF when the job is
                   off; an older hub without it keeps the quiet-hours end. */}
-              <Token className="surface-token rhythm-fact" data-testid="rhythm-brief-cadence">
-                {briefJob
-                  ? briefJob.enabled ? `Daily ${fmtHour(briefJob.hour)}` : "Off"
-                  : `Daily ${fmtHour(settings.quiet_hours.end)}`}
-              </Token>
-              <Token className="surface-token rhythm-fact" data-testid="rhythm-brief-last">
-                {briefDate ? (
-                  <DotWord tone="ok">{`Last ${briefDate}`}</DotWord>
-                ) : (
-                  <DotWord>Never made</DotWord>
-                )}
-              </Token>
-            </>
-          }
-        />
-      </SurfaceLedger>
+                  <Token className="surface-token rhythm-fact" data-testid="rhythm-brief-cadence">
+                    {briefJob ? (briefJob.enabled ? `Daily ${fmtHour(briefJob.hour)}` : "Off") : `Daily ${fmtHour(settings.quiet_hours.end)}`}
+                  </Token>
+                  <Token className="surface-token rhythm-fact" data-testid="rhythm-brief-last">
+                    {briefDate ? <DotWord tone="ok">{`Last ${briefDate}`}</DotWord> : <DotWord>Never made</DotWord>}
+                  </Token>
+                </>
+              }
+            />
+          </GadgetGroup>
 
-      {/* HS-175: brief summary line -- absent when all zero (A.8) */}
-      <div className="rhythm-facts" data-testid="rhythm-brief-facts">
-        {generating ? (
-          <DotWord tone="info">Making the brief</DotWord>
+          {/* HS-175: brief summary line -- absent when all zero (A.8) */}
+          <div className="rhythm-facts" data-testid="rhythm-brief-facts">
+            {generating ? <DotWord tone="info">Making the brief</DotWord> : null}
+            {!generating && briefSummary ? (
+              <span className="rhythm-facts-line" data-testid="rhythm-brief-summary">
+                {briefSummary}
+              </span>
+            ) : null}
+          </div>
+          {briefError ? <SurfaceState error={briefError} errorTitle={briefReason} /> : null}
+          {briefRes.error ? <SurfaceState error="Could not load the brief · Nothing changed · Check the hub" errorTitle={briefRes.error} onRetry={() => void briefRes.reload()} /> : null}
+        </div>
+        {/* /rhythm-section brief */}
+
+        {/* ── NOTIFY row ─────────────────────────────────────────── */}
+        <div className="rhythm-section">
+          {embedded ? null : (
+            <GadgetGroup>
+              <RhythmSetting
+                primary="Notify"
+                expands={false}
+                // PHILO-17: in quiet hours the HELD pill joins the gadget; at a
+                // phone width the row wraps (it squeezed "Notify" to 14 px).
+                wrap
+                data-testid="rhythm-notify-row"
+                cells={
+                  <>
+                    <CycleGadget label="Notification mode" value={settings.notify} options={NOTIFY_OPTIONS} disabled={saving || sweeping} onChange={(v) => void putSetting({ notify: v })} />
+                    {/* Betterment daily D8 (decision 2): the quiet notice for a new
+                  automation result. Notify off turns it off too. */}
+                    <CheckGadget
+                      label="Finished work"
+                      variant="token"
+                      checked={settings.notify_finished !== false}
+                      disabled={saving || sweeping || settings.notify === "off"}
+                      onChange={(on) => void putSetting({ notify_finished: on })}
+                    />
+                  </>
+                }
+                trailing={inQuiet ? <DotWord tone="warn">Held</DotWord> : null}
+              />
+            </GadgetGroup>
+          )}
+          {/* Project mute toggles */}
+          {projects.length > 0 ? (
+            <div className="rhythm-mutes" data-testid="rhythm-mute-toggles">
+              {projects.map((p) => {
+                const name = p.name || p.title || p.id;
+                const muted = (settings.muted_projects ?? []).includes(p.id);
+                return (
+                  <CheckGadget
+                    key={p.id}
+                    label={name}
+                    variant="token"
+                    checked={!muted}
+                    disabled={saving || sweeping}
+                    onChange={(on) => {
+                      const list = settings.muted_projects.filter((id: string) => id !== p.id);
+                      if (!on) list.push(p.id);
+                      void putSetting({ muted_projects: list });
+                    }}
+                  />
+                );
+              })}
+            </div>
+          ) : null}
+        </div>
+        {/* /rhythm-section notify */}
+
+        {/* ── NOW N: existing cadence loops (kept from the old face) ── */}
+        {action.message ? <SurfaceState error={action.message} /> : null}
+        {replyReceipt ? (
+          <p className="surface-receipt-line" data-tone="ok" role="status">
+            <svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true" style={{ flexShrink: 0 }}>
+              <path d="M3.5 8.5 6.5 11.5 12.5 4.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            {replyReceipt}
+          </p>
         ) : null}
-        {!generating && briefSummary ? (
-          <span className="rhythm-facts-line" data-testid="rhythm-brief-summary">
-            {briefSummary}
-          </span>
+        {loops.length > 0 ? (
+          <>
+            {editingLoop ? (
+              <PaneInspector label="Loop" onClose={() => editLoop(null)}>
+                {(() => {
+                  const loop = loops.find((entry, index) => rowId(entry, index) === editingLoop);
+                  if (!loop) return null;
+                  return (
+                    <>
+                      <strong>{String(loop.title ?? "Open loop")}</strong>
+                      {loop.source_type === "agent_question" ? (
+                        <>
+                          <PadGadget label={`Reply to ${String(loop.title)}`} value={replies[editingLoop] ?? ""} onChange={(next) => setReplies({ ...replies, [editingLoop]: next })} />
+                          <PaneActions>
+                            <Button dense disabled={!replies[editingLoop]?.trim()} onClick={() => void sendReply(editingLoop)}>
+                              Send reply
+                            </Button>
+                          </PaneActions>
+                        </>
+                      ) : null}
+                    </>
+                  );
+                })()}
+              </PaneInspector>
+            ) : (
+              <ListView
+                label="Open loops"
+                rows={loops.map((loop, index) => ({
+                  id: rowId(loop, index),
+                  kind: "loop",
+                  name: String(loop.title ?? "Open loop"),
+                  cells: { source: deSnake(loop.source_type) },
+                }))}
+                columns={[
+                  { key: "name", word: "Loop" },
+                  { key: "source", word: "From" },
+                ]}
+                selectedId={selectedLoop}
+                onSelect={selectLoop}
+                defaultVerb="open"
+                verbs={[
+                  {
+                    id: "open",
+                    label: "Open…",
+                    key: "Enter",
+                    enabled: (row) => Boolean(row),
+                    run: (row) => editLoop(row!.id),
+                  },
+                  {
+                    id: "snooze",
+                    label: "Snooze 1 day",
+                    enabled: (row) => Boolean(row) && !action.busy,
+                    run: (row) => void act(row!.id, "snooze"),
+                  },
+                  {
+                    id: "close",
+                    label: "Mark done",
+                    enabled: (row) => Boolean(row) && !action.busy,
+                    run: (row) => void act(row!.id, "close"),
+                  },
+                  {
+                    id: "kill",
+                    label: "Kill loop",
+                    enabled: (row) => Boolean(row) && !action.busy,
+                    run: (row) => void act(row!.id, "kill"),
+                  },
+                ]}
+              />
+            )}
+          </>
         ) : null}
       </div>
-      {briefError ? <SurfaceState error={briefError} errorTitle={briefReason} /> : null}
-      {briefRes.error ? <SurfaceState error="Could not load the brief · Nothing changed · Check the hub" errorTitle={briefRes.error} onRetry={() => void briefRes.reload()} /> : null}
-      </div>{/* /rhythm-section brief */}
-
-      {/* ── NOTIFY row ─────────────────────────────────────────── */}
-      <div className="rhythm-section">
-      {embedded ? null : <SurfaceLedger count="" cols="hub">
-        <SurfaceLedgerRow
-          primary="Notify"
-          expands={false}
-          // PHILO-17: in quiet hours the HELD pill joins the gadget; at a
-          // phone width the row wraps (it squeezed "Notify" to 14 px).
-          wrap
-          data-testid="rhythm-notify-row"
-          cells={
-            <>
-              <CycleGadget
-                label="Notification mode"
-                value={settings.notify}
-                options={NOTIFY_OPTIONS}
-                disabled={saving || sweeping}
-                onChange={(v) => void putSetting({ notify: v })}
-              />
-              {/* Betterment daily D8 (decision 2): the quiet notice for a new
-                  automation result. Notify off turns it off too. */}
-              <CheckGadget
-                label="Finished work"
-                variant="token"
-                checked={settings.notify_finished !== false}
-                disabled={saving || sweeping || settings.notify === "off"}
-                onChange={(on) => void putSetting({ notify_finished: on })}
-              />
-            </>
-          }
-          trailing={
-            inQuiet ? (
-              <DotWord tone="warn">Held</DotWord>
+      {/* ── Footer ─────────────────────────────────────────────── */}
+      {embedded ? null : (
+        <SurfaceFooter
+          receipt={
+            saving || saveError || writtenAt ? (
+              <Token className="surface-footer-receipt-line" data-tone={saveError ? "fail" : undefined} role="status">
+                {saving ? "Saving" : saveError ? "Not confirmed" : `Saved ${fmtEpoch(writtenAt)}`}
+              </Token>
             ) : null
           }
         />
-      </SurfaceLedger>}
-      {/* Project mute toggles */}
-      {projects.length > 0 ? (
-        <div className="rhythm-mutes" data-testid="rhythm-mute-toggles">
-          {projects.map((p) => {
-            const name = p.name || p.title || p.id;
-            const muted = (settings.muted_projects ?? []).includes(p.id);
-            return (
-              <CheckGadget
-                key={p.id}
-                label={name}
-                variant="token"
-                checked={!muted}
-                disabled={saving || sweeping}
-                onChange={(on) => {
-                  const list = settings.muted_projects.filter((id: string) => id !== p.id);
-                  if (!on) list.push(p.id);
-                  void putSetting({ muted_projects: list });
-                }}
-              />
-            );
-          })}
-        </div>
-      ) : null}
-      </div>{/* /rhythm-section notify */}
-
-      {/* ── NOW N: existing cadence loops (kept from the old face) ── */}
-      {action.message ? <SurfaceState error={action.message} /> : null}
-      {replyReceipt ? (
-        <p className="surface-receipt-line" data-tone="ok" role="status">
-          <svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true" style={{ flexShrink: 0 }}><path d="M3.5 8.5 6.5 11.5 12.5 4.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
-          {replyReceipt}
-        </p>
-      ) : null}
-      {loops.length > 0 ? (
-        <SurfaceSection label={countLabel("Now", loops.length)} data-engine={cadenceStatus.data?.enabled ?? false}>
-          <SurfaceRows>
-            {loops.map((loop, index) => {
-              const id = rowId(loop, index);
-              const next = loop.next_action as Record<string, unknown> | undefined;
-              const score = Number(loop.stale_score ?? 0);
-              const isQuestion = loop.source_type === "agent_question";
-              return (
-                <SurfaceRow
-                  key={id}
-                  title={String(loop.title ?? "Open loop")}
-                  detail={
-                    <>
-                      {loop.needs_review ? (
-                        <LampGadget on tone="warn" label="review" />
-                      ) : null}{" "}
-                      {deSnake(loop.source_type)}
-                    </>
-                  }
-                  meta={score > 0 ? score.toFixed(0) : undefined}
-                  verbs={
-                    <>
-                      {isQuestion ? (
-                        <Button
-                          dense
-                          disabled={!replies[id]?.trim()}
-                          onClick={() => void sendReply(id)}
-                        >
-                          Send reply
-                        </Button>
-                      ) : null}
-                      <Button
-                        dense
-                        variant="ghost"
-                        onClick={() => void act(id, "snooze")}
-                      >
-                        Snooze 1 day
-                      </Button>
-                      <ConfirmVerb
-                        label="Mark done"
-                        confirmLabel="Done?"
-                        busy={action.busy}
-                        onConfirm={() => void act(id, "close")}
-                      />
-                      <ConfirmVerb
-                        label="Kill loop"
-                        confirmLabel="Kill?"
-                        busy={action.busy}
-                        onConfirm={() => void act(id, "kill")}
-                      />
-                    </>
-                  }
-                >
-                  {next ? (
-                    <div className="surface-next-move">
-                      <strong>{String(next.title ?? "Next action")}</strong>
-                      <p>{String(next.body ?? next.body_markdown ?? "")}</p>
-                    </div>
-                  ) : null}
-                  {isQuestion ? (
-                    <PadGadget
-                      label={`Reply to ${String(loop.title)}`}
-                      value={replies[id] ?? ""}
-                      onChange={(nextVal) =>
-                        setReplies({ ...replies, [id]: nextVal })
-                      }
-                    />
-                  ) : null}
-                </SurfaceRow>
-              );
-            })}
-          </SurfaceRows>
-        </SurfaceSection>
-      ) : null}
-
-      </div>
-      {/* ── Footer ─────────────────────────────────────────────── */}
-      {embedded ? null : <SurfaceFooter
-        receipt={saving || saveError || writtenAt ? (
-          <Token className="surface-footer-receipt-line" data-tone={saveError ? "fail" : undefined} role="status">
-            {saving ? "Saving" : saveError ? "Not confirmed" : `Saved ${fmtEpoch(writtenAt)}`}
-          </Token>
-        ) : null}
-      />}
+      )}
     </>
   );
 }

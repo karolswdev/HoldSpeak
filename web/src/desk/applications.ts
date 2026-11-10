@@ -16,6 +16,8 @@ export interface DeskSurfaceSpec {
   /** Preferred first-open width (PHILO-17 U24); the band still clamps it. */
   defaultW?: number;
   defaultH?: number;
+  /** Bounded panes keep their declared window height on first open. */
+  fitContent?: boolean;
   maximized?: boolean;
   /** The world sprite kind the title bar wears (`decision`): the window's
    *  own object glyph, drawn at 20 px (Icons D). */
@@ -278,6 +280,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
       minW: 880,
       defaultW: 1040,
       defaultH: 720,
+      fitContent: false,
       load: () =>
         import("../pages/cores/SettingsCore").then((module) => ({
           default: module.SettingsCore,

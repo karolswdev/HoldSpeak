@@ -1,29 +1,11 @@
 // Settings > This Mac > Remote access (HS-174-02/03): the credential ledger,
 // the issue well and the desk and project grants. Moved out of SettingsCore.tsx.
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { ApiError, apiFetch, readableError } from "../../../lib/api";
 import { humanizeWireValue } from "../../../lib/productLanguage";
-import {
-  CycleGadget,
-  GadgetGroup,
-  GadgetRow,
-  StringGadget,
-  type CycleOption,
-} from "../../../desk/surface/gadgets";
-import {
-  Disclosure,
-  countToken,
-  StateChip,
-  SurfaceLedger,
-  SurfaceLedgerRow,
-  SurfaceWell,
-} from "../../../desk/surface";
+import { CycleGadget, GadgetGroup, GadgetRow, StringGadget, type CycleOption } from "../../../desk/surface/gadgets";
+import { ListView, PreferencePane, PaneInspector, PaneActions, type ListVerb, countToken, StateChip, SurfaceLedger, SurfaceLedgerRow, SurfaceWell } from "../../../desk/surface";
 import { Token } from "../../../desk/surface/Token";
 import {
   DESK_GRANT_PALETTES,
@@ -49,12 +31,7 @@ import {
 
 /* ── HS-174-02/03: Remote Access — the credential ledger + issue well ── */
 
-const PALETTE_OPTIONS: CycleOption[] = [
-  { value: "PROJECT" },
-  { value: "SWEEP" },
-  { value: "DESK" },
-  { value: "ALL" },
-];
+const PALETTE_OPTIONS: CycleOption[] = [{ value: "PROJECT" }, { value: "SWEEP" }, { value: "DESK" }, { value: "ALL" }];
 const TTL_OPTIONS: CycleOption[] = [
   { value: "43200", label: "12 H" },
   { value: "86400", label: "24 H" },
@@ -73,8 +50,11 @@ type RemoteCredential = {
   active: boolean;
 };
 
-
-type ProjectFact = { id: string; name: string; is_archived?: boolean | number | null };
+type ProjectFact = {
+  id: string;
+  name: string;
+  is_archived?: boolean | number | null;
+};
 
 type RemoteWire = {
   enabled: boolean;
@@ -132,11 +112,18 @@ export function RemoteAccessModule({
   receiptOpen?: boolean;
   onGrantAct?: (act: GrantAct) => void;
 } = {}) {
+  const [picked, pick] = useState<string | null>(null);
+  const [inspecting, inspect] = useState<string | null>(null);
+  const [projectPicked, pickProject] = useState<string | null>(null);
   const [wire, setWire] = useState<RemoteWire | null>(null);
   const [loading, setLoading] = useState(true);
   type ReadTarget = "remote" | "projects";
   const [readErrors, setReadErrors] = useState<Partial<Record<ReadTarget, string>>>({});
-  const [writeError, setWriteError] = useState<{ action: string; subject: string; message: string } | null>(null);
+  const [writeError, setWriteError] = useState<{
+    action: string;
+    subject: string;
+    message: string;
+  } | null>(null);
   const remoteReads = useRef(0);
   const projectReads = useRef(0);
   const writes = useRef(0);
@@ -165,7 +152,11 @@ export function RemoteAccessModule({
       setReadErrors((current) => ({ ...current, remote: undefined }));
       onEnabledChange?.(data.enabled);
     } catch (err) {
-      if (order === remoteReads.current) setReadErrors((current) => ({ ...current, remote: readableError(err) }));
+      if (order === remoteReads.current)
+        setReadErrors((current) => ({
+          ...current,
+          remote: readableError(err),
+        }));
     } finally {
       if (order === remoteReads.current) setLoading(false);
     }
@@ -180,7 +171,11 @@ export function RemoteAccessModule({
       setProjects((listed?.projects ?? []).filter((project) => !project.is_archived));
       setReadErrors((current) => ({ ...current, projects: undefined }));
     } catch (err) {
-      if (order === projectReads.current) setReadErrors((current) => ({ ...current, projects: readableError(err) }));
+      if (order === projectReads.current)
+        setReadErrors((current) => ({
+          ...current,
+          projects: readableError(err),
+        }));
     } finally {
       if (order === projectReads.current) setProjectsLoading(false);
     }
@@ -196,7 +191,9 @@ export function RemoteAccessModule({
     if (order === writes.current) setWriteError({ action, subject, message: readableError(err) });
   };
 
-  useEffect(() => { void fetchRemote(); }, [fetchRemote]);
+  useEffect(() => {
+    void fetchRemote();
+  }, [fetchRemote]);
 
   const toggleEnabled = async (next: string) => {
     const enabled = next === "ON";
@@ -266,9 +263,7 @@ export function RemoteAccessModule({
       if (act) onGrantAct?.(act);
     } catch (err) {
       const payload = err instanceof ApiError ? err.payload : null;
-      const code = payload && typeof payload === "object"
-        ? String((payload as Record<string, unknown>).error ?? "")
-        : "";
+      const code = payload && typeof payload === "object" ? String((payload as Record<string, unknown>).error ?? "") : "";
       if (code) {
         setRefusals((current) => ({ ...current, [identity]: { verb, code } }));
         const act = grantActFrom(payload, "refused", verb, identity, code);
@@ -289,10 +284,10 @@ export function RemoteAccessModule({
     const order = beginWrite();
     setGranting(key);
     try {
-      const result = await apiFetch(
-        `/api/settings/remote/delegations/${encodeURIComponent(identity)}/projects/${encodeURIComponent(projectId)}`,
-        { method: verb === "allow" ? "PUT" : "DELETE", ...(verb === "allow" ? { json: {} } : {}) },
-      );
+      const result = await apiFetch(`/api/settings/remote/delegations/${encodeURIComponent(identity)}/projects/${encodeURIComponent(projectId)}`, {
+        method: verb === "allow" ? "PUT" : "DELETE",
+        ...(verb === "allow" ? { json: {} } : {}),
+      });
       setRefusals((current) => {
         const next = { ...current };
         delete next[key];
@@ -302,9 +297,7 @@ export function RemoteAccessModule({
       if (act) onGrantAct?.(act);
     } catch (err) {
       const payload = err instanceof ApiError ? err.payload : null;
-      const code = payload && typeof payload === "object"
-        ? String((payload as Record<string, unknown>).error ?? "")
-        : "";
+      const code = payload && typeof payload === "object" ? String((payload as Record<string, unknown>).error ?? "") : "";
       if (code) {
         setRefusals((current) => ({ ...current, [key]: { verb, code } }));
         const act = grantActFrom(payload, "refused", verb, identity, code, extra);
@@ -327,13 +320,13 @@ export function RemoteAccessModule({
       });
       // Durable first: the credential's LIVE grants were revoked BEFORE the
       // credential, each with its own receipt (credential_revoked).
-      const projectEnded = Array.isArray(result?.project_grants_revoked)
-        ? (result.project_grants_revoked as Record<string, unknown>[])
-        : [];
+      const projectEnded = Array.isArray(result?.project_grants_revoked) ? (result.project_grants_revoked as Record<string, unknown>[]) : [];
       if (projectEnded.length > 0) {
         const last = projectEnded[projectEnded.length - 1];
         const act = grantActFrom(last, "succeeded", "stop", identity, undefined, {
-          kind: "project", project: String(last.project_name ?? ""), reason: PROJECT_GRANT_WORDS.credentialRevoked,
+          kind: "project",
+          project: String(last.project_name ?? ""),
+          reason: PROJECT_GRANT_WORDS.credentialRevoked,
         });
         if (act) onGrantAct?.(act);
       } else if (result?.grant_revoked) {
@@ -354,8 +347,21 @@ export function RemoteAccessModule({
     }
   };
 
-  if (loading && !wire) return <span className="gadget-fact" role="status">Reading remote access…</span>;
-  if (readErrors.remote && !wire) return <div className="prefs-read-failure" role="alert"><span>Remote access read failed · Grants unchanged · Retry</span><Button dense variant="ghost" onClick={() => void fetchRemote()}>Retry</Button></div>;
+  if (loading && !wire)
+    return (
+      <span className="gadget-fact" role="status">
+        Reading remote access…
+      </span>
+    );
+  if (readErrors.remote && !wire)
+    return (
+      <div className="prefs-read-failure" role="alert">
+        <span>Remote access read failed · Grants unchanged · Retry</span>
+        <Button dense variant="ghost" onClick={() => void fetchRemote()}>
+          Retry
+        </Button>
+      </div>
+    );
 
   const enabled = wire?.enabled ?? false;
   const allCredentials = wire?.credentials ?? [];
@@ -367,9 +373,9 @@ export function RemoteAccessModule({
   // never granted stays hidden. Always: every grant row with no credential.
   const credentials = enabled
     ? allCredentials
-    : allCredentials.filter((c) => c.delegation?.state === "LIVE"
-        || (c.project_delegations ?? []).some((g) => g.state === "LIVE")
-        || (c.active && (Boolean(c.delegation) || (c.project_delegations ?? []).length > 0)));
+    : allCredentials.filter(
+        (c) => c.delegation?.state === "LIVE" || (c.project_delegations ?? []).some((g) => g.state === "LIVE") || (c.active && (Boolean(c.delegation) || (c.project_delegations ?? []).length > 0)),
+      );
   const delegations = wire?.delegations ?? [];
   const projectOrphans = wire?.project_delegations ?? [];
   const toggleRow = (identity: string, open: boolean) => {
@@ -381,304 +387,254 @@ export function RemoteAccessModule({
   };
   const activeCount = credentials.filter((c) => c.active).length;
   const totalCount = allCredentials.length;
-  const addressToken = enabled && wire?.port
-    ? `${wire.bind_host || "0.0.0.0"}:${wire.port}`
-    : null;
+  const addressToken = enabled && wire?.port ? `${wire.bind_host || "0.0.0.0"}:${wire.port}` : null;
 
+  const rows = [
+    ...credentials.map((cred) => ({
+      id: cred.id,
+      kind: "credential" as const,
+      name: cred.identity,
+      credential: cred,
+      delegation: cred.delegation,
+    })),
+    ...delegations.map((grant) => ({
+      id: grant.grant_id,
+      kind: "delegation" as const,
+      name: grant.identity,
+      credential: null,
+      delegation: grant,
+    })),
+    ...projectOrphans.map((grant) => ({
+      id: grant.grant_id,
+      kind: "project" as const,
+      name: grant.identity,
+      credential: null,
+      delegation: null,
+      project: grant,
+    })),
+  ];
+  const selected = rows.find((row) => row.id === picked);
+  const current = rows.find((row) => row.id === inspecting);
+  const currentCred = current?.credential;
+  const projectCapable = currentCred && paletteHolds(currentCred.palette, PROJECT_GRANT_PALETTES, ["project.run_steward"]);
+  const canFile = (row: typeof selected) =>
+    Boolean(row && (row.delegation?.state === "LIVE" || (row.credential && paletteHolds(row.credential.palette, DESK_GRANT_PALETTES, ["desk.", "zone.", "decision.", "note.", "kb."]))));
+  const verbs: ListVerb[] = [
+    {
+      id: "issue",
+      label: "Issue credential",
+      symbol: "+",
+      enabled: () => enabled && !issuing,
+      run: () => {
+        setOneTimeToken(null);
+        setIssueOpen(true);
+      },
+    },
+    {
+      id: "revoke",
+      label: "Revoke credential",
+      symbol: "−",
+      enabled: (row) => Boolean(rows.find((r) => r.id === row?.id)?.credential) && !revoking,
+      run: (row) => {
+        const cred = rows.find((r) => r.id === row?.id)?.credential;
+        if (cred) void revokeCredential(cred.id, cred.identity);
+      },
+    },
+    {
+      id: "filing",
+      label: selected?.delegation?.state === "LIVE" ? GRANT_WORDS.stop : GRANT_WORDS.allow,
+      enabled: (row) => !granting && canFile(rows.find((r) => r.id === row?.id)),
+      run: (row) => {
+        const source = rows.find((r) => r.id === row?.id);
+        if (source) void setGrant(source.name, source.delegation?.state === "LIVE" ? "stop" : "allow");
+      },
+    },
+    {
+      id: "projects",
+      label: "Projects…",
+      key: "Enter",
+      enabled: (row) => {
+        const cred = rows.find((r) => r.id === row?.id)?.credential;
+        return Boolean(cred && (paletteHolds(cred.palette, PROJECT_GRANT_PALETTES, ["project.run_steward"]) || cred.project_delegations?.some((g) => g.state === "LIVE")));
+      },
+      run: (row) => {
+        inspect(row!.id);
+        void fetchProjects();
+      },
+    },
+    {
+      id: "stop-project",
+      label: PROJECT_GRANT_WORDS.stop,
+      enabled: (row) => !granting && rows.some((r) => r.id === row?.id && "project" in r && r.project.state === "LIVE"),
+      run: (row) => {
+        const source = rows.find((r) => r.id === row?.id);
+        if (source && "project" in source) void setProjectGrant(source.name, source.project.project_id, source.project.project_name, "stop");
+      },
+    },
+  ];
+  const projectRows = currentCred
+    ? [
+        ...projects.map((p) => ({ ...p, archived: false })),
+        ...(currentCred.project_delegations ?? [])
+          .filter((g) => g.project_archived && g.state === "LIVE")
+          .map((g) => ({
+            id: g.project_id,
+            name: g.project_name,
+            archived: true,
+          })),
+      ]
+    : [];
   return (
-    <GadgetGroup material="inset" label={bare ? undefined : "Remote access"} actions={enabled && !issueOpen ? (
-      <Button variant="ghost" onClick={() => { setOneTimeToken(null); setIssueOpen(true); }} data-testid="issue-credential-btn">Issue credential</Button>
-    ) : undefined}>
-      {/* The toggle row */}
-      {/* PHILO-17 U35: plain words (was "Streamable HTTP", the transport's
-          name); the select keeps its "Remote transport" name. */}
-      <GadgetRow label="Other devices">
-        <CycleGadget
-          label="Remote transport"
-          value={enabled ? "ON" : "OFF"}
-          options={[{ value: "OFF", label: "Off" }, { value: "ON", label: "On" }]}
-          disabled={toggleBusy || loading}
-          onChange={toggleEnabled}
+    <PreferencePane label="Remote access">
+      <GadgetGroup label={bare ? undefined : "Remote access"}>
+        <GadgetRow label="Other devices">
+          <CycleGadget
+            label="Remote transport"
+            value={enabled ? "ON" : "OFF"}
+            options={[
+              { value: "OFF", label: "Off" },
+              { value: "ON", label: "On" },
+            ]}
+            disabled={toggleBusy || loading}
+            onChange={toggleEnabled}
+          />
+        </GadgetRow>
+        {addressToken ? (
+          <GadgetRow label="Address">
+            <span data-testid="remote-address">{addressToken}</span>
+          </GadgetRow>
+        ) : null}
+      </GadgetGroup>
+      {oneTimeToken ? (
+        <PaneInspector label="Copy this token now" onClose={() => setOneTimeToken(null)}>
+          <code className="surface-command-code" data-testid="token-value">
+            {oneTimeToken}
+          </code>
+          <PaneActions>
+            <Button dense onClick={copyToken} data-testid="token-copy">
+              Copy
+            </Button>
+          </PaneActions>
+        </PaneInspector>
+      ) : issueOpen ? (
+        <PaneInspector label="Issue credential" onClose={() => setIssueOpen(false)}>
+          <GadgetGroup>
+            <GadgetRow label="Name">
+              <StringGadget label="Credential name" value={issueName} onChange={setIssueName} autoFocus />
+            </GadgetRow>
+            <GadgetRow label="Access">
+              <CycleGadget label="Access" value={issuePalette} options={PALETTE_OPTIONS} onChange={setIssuePalette} />
+            </GadgetRow>
+            <GadgetRow label="Expires after">
+              <CycleGadget label="Expires after" value={issueTtl} options={TTL_OPTIONS} onChange={setIssueTtl} />
+            </GadgetRow>
+          </GadgetGroup>
+          <PaneActions>
+            <Button disabled={issuing || !issueName.trim()} onClick={() => void issueCredential()} data-testid="issue-submit">
+              Issue
+            </Button>
+            <Button variant="ghost" onClick={() => setIssueOpen(false)} data-testid="issue-cancel">
+              Cancel
+            </Button>
+          </PaneActions>
+        </PaneInspector>
+      ) : currentCred ? (
+        <PaneInspector label={`${currentCred.identity}: projects`} onClose={() => inspect(null)}>
+          <ListView
+            label="Project access"
+            rows={projectRows.map((project) => {
+              const grant = currentCred.project_delegations?.find((g) => g.project_id === project.id);
+              const live = grant?.state === "LIVE";
+              return {
+                id: project.id,
+                kind: "project",
+                name: project.name,
+                cells: {
+                  access: (
+                    <CycleGadget
+                      label={`${project.name} access`}
+                      value={live ? "allow" : "stop"}
+                      disabled={Boolean(granting) || (project.archived && !live) || (!projectCapable && !live)}
+                      options={[
+                        { value: "stop", label: "Stopped" },
+                        { value: "allow", label: "Allow run and publish" },
+                      ]}
+                      onChange={(next) => void setProjectGrant(currentCred.identity, project.id, project.name, next as GrantVerbKind)}
+                    />
+                  ),
+                },
+              };
+            })}
+            columns={[
+              { key: "name", word: "Project" },
+              { key: "access", word: "Access", track: "minmax(0, 2fr)" },
+            ]}
+            selectedId={projectPicked}
+            onSelect={pickProject}
+          />
+        </PaneInspector>
+      ) : (
+        <ListView
+          label="Remote credentials"
+          rows={rows.map((row) => ({
+            id: row.id,
+            kind: row.kind,
+            name: row.name,
+            cells: {
+              access: row.credential ? paletteLabel(row.credential.palette) : "No credential",
+              filing: row.delegation?.state === "LIVE" ? "May file" : row.delegation ? "Filing stopped" : "",
+            },
+          }))}
+          columns={[
+            { key: "name", word: "Name" },
+            { key: "access", word: "Access" },
+            { key: "filing", word: "Filing" },
+          ]}
+          selectedId={picked}
+          onSelect={pick}
+          verbs={verbs}
+          defaultVerb="projects"
         />
-        {enabled && addressToken ? (
-          <span className="gadget-fact" data-testid="remote-address">{addressToken}</span>
-        ) : null}
-        {enabled && totalCount > 0 ? (
-          <Token className="surface-token" data-chip data-testid="remote-total-count">
-            {countToken(totalCount, "CREDENTIAL", "CREDENTIALS")}
-          </Token>
-        ) : null}
-      </GadgetRow>
-
-      {/* PHILO-7-02: the ledger renders when any credential row OR any
-          grant row is visible, whatever the switch says. */}
-      {credentials.length > 0 || delegations.length > 0 || projectOrphans.length > 0 ? (
-        <SurfaceLedger
-          count={<>
-            {GRANT_WORDS.agents}
-            {activeCount > 0 ? (
-              <> · <Token className="surface-token" data-chip data-testid="remote-active-count">
-                {countToken(activeCount, "ACTIVE CREDENTIAL", "ACTIVE CREDENTIALS")}
-              </Token></>
-            ) : null}
-          </>}
-          cols="room"
-        >
-          {credentials.map((cred) => {
-            const projectGrants = cred.project_delegations ?? [];
-            const projectCapable = paletteHolds(cred.palette, PROJECT_GRANT_PALETTES, ["project.run_steward"]);
-            // A LIVE desk grant always keeps its chip and its Stop (a grant is authority).
-            const deskCapable = paletteHolds(cred.palette, DESK_GRANT_PALETTES, ["desk.", "zone.", "decision.", "note.", "kb."])
-              || cred.delegation?.state === "LIVE";
-            const isOpen = projectCapable && openRows.includes(cred.identity);
-            const bodyId = `project-lines-${cred.id}`;
-            return (
-              <SurfaceLedgerRow
-                key={cred.id}
-                lead={<StateChip state={cred.active ? "success" : "idle"} label="" icon="●" />}
-                primary={cred.identity}
-                expands={false}
-                open={isOpen}
-                data-testid={`credential-row-${cred.id}`}
-                cells={<>
-                  {deskCapable ? <GrantChip grant={cred.delegation} /> : null}
-                  <GrantRefusalChip refusal={refusals[cred.identity]} />
-                  <ProjectGrantSummary grants={projectGrants} />
-                  <Token className="surface-token" data-chip data-testid="palette-token">{paletteLabel(cred.palette)}</Token>
-                  {cred.active ? (
-                    <Token className="surface-token" data-chip>
-                      EXPIRES {formatExpiry(cred.expires_at)}
-                    </Token>
-                  ) : (
-                    <StateChip state="warning" label="EXPIRED" />
-                  )}
-                  <Token className="surface-token" data-chip data-muted>
-                    {cred.last_used_at ? `LAST USED ${relativeAge(cred.last_used_at)}` : "NEVER USED"}
-                  </Token>
-                </>}
-                trailing={<>
-                  {projectCapable ? (
-                    // The library Disclosure's trigger; its body is the row's own
-                    // expansion slot (the HS-200-15 pattern). No popover, no modal.
-                    <Disclosure
-                      label={PROJECT_GRANT_WORDS.projects}
-                      ariaLabel={`${PROJECT_GRANT_WORDS.projects}: ${cred.identity}`}
-                      open={isOpen}
-                      onOpenChange={(open) => toggleRow(cred.identity, open)}
-                      controlsId={bodyId}
-                      variant="default"
-                    >
-                      {null}
-                    </Disclosure>
-                  ) : null}
-                  {deskCapable ? (
-                    <Button
-                      variant="ghost"
-                      dense
-                      disabled={granting === cred.identity}
-                      onClick={() => void setGrant(cred.identity, cred.delegation?.state === "LIVE" ? "stop" : "allow")}
-                      data-testid="grant-verb"
-                    >
-                      {cred.delegation?.state === "LIVE" ? GRANT_WORDS.stop : GRANT_WORDS.allow}
-                    </Button>
-                  ) : null}
-                  <Button
-                    variant="ghost"
-                    dense
-                    disabled={revoking === cred.id}
-                    onClick={() => void revokeCredential(cred.id, cred.identity)}
-                    data-testid="credential-revoke"
-                  >
-                    {GRANT_WORDS.revokeCredential}
-                  </Button>
-                </>}
-              >
-                {projectCapable ? (
-                  <div id={bodyId} data-testid={`project-lines-${cred.identity}`}>
-                    {[
-                      ...projects.map((p) => ({ id: p.id, name: p.name, archived: false })),
-                      // Archive keeps a grant (the charter): a LIVE grant on an
-                      // archived project stays listed, Stop only, never Allow.
-                      ...projectGrants
-                        .filter((g) => g.project_archived && g.state === "LIVE")
-                        .map((g) => ({ id: g.project_id, name: g.project_name, archived: true })),
-                    ].map((p) => {
-                      const grant = projectGrants.find((g) => g.project_id === p.id) ?? null;
-                      const key = `${cred.identity}/${p.id}`;
-                      const live = grant?.state === "LIVE";
-                      return (
-                        <GadgetRow key={p.id} label={p.name} wide controlWidth="full">
-                          <span className="prefs-project-line" data-testid={`project-line-${p.id}`}>
-                            {p.archived ? (
-                              <Token className="surface-token" data-chip data-testid="project-archived">
-                                {PROJECT_GRANT_WORDS.archived}
-                              </Token>
-                            ) : null}
-                            <ProjectGrantChip grant={grant} />
-                            <GrantRefusalChip refusal={refusals[key]} />
-                            {live || !p.archived ? (
-                              <Button
-                                variant="ghost"
-                                dense
-                                disabled={granting === key}
-                                onClick={() => void setProjectGrant(cred.identity, p.id, p.name, live ? "stop" : "allow")}
-                                data-testid="project-grant-verb"
-                              >
-                                {live ? PROJECT_GRANT_WORDS.stop : PROJECT_GRANT_WORDS.allow}
-                              </Button>
-                            ) : null}
-                          </span>
-                        </GadgetRow>
-                      );
-                    })}
-                  </div>
-                ) : null}
-              </SurfaceLedgerRow>
-            );
-          })}
-          {delegations.map((grant) => (
-            <SurfaceLedgerRow
-              key={grant.grant_id}
-              lead={<StateChip state="idle" label="" icon="●" />}
-              primary={grant.identity}
-              expands={false}
-              data-testid={`delegation-row-${grant.grant_id}`}
-              cells={<>
-                <GrantChip grant={grant} />
-                <GrantRefusalChip refusal={refusals[grant.identity]} />
-                <Token className="surface-token" data-chip data-muted>{GRANT_WORDS.noCredential}</Token>
-              </>}
-              trailing={grant.state === "LIVE" ? (
-                <Button
-                  variant="ghost"
-                  dense
-                  disabled={granting === grant.identity}
-                  onClick={() => void setGrant(grant.identity, "stop")}
-                  data-testid="grant-verb"
-                >
-                  {GRANT_WORDS.stop}
-                </Button>
-              ) : undefined}
-            />
-          ))}
-          {/* PHILO-9-07: a LIVE project grant with no credential row (a restart
-              or a lost credential), beside Phase 7's desk orphans, with its Stop. */}
-          {projectOrphans.map((grant) => {
-            const key = `${grant.identity}/${grant.project_id}`;
-            return (
-              <SurfaceLedgerRow
-                key={grant.grant_id}
-                lead={<StateChip state="idle" label="" icon="●" />}
-                primary={grant.identity}
-                expands={false}
-                data-testid={`project-delegation-row-${grant.grant_id}`}
-                cells={<>
-                  <ProjectGrantChip grant={grant} />
-                  <GrantRefusalChip refusal={refusals[key]} />
-                  <Token className="surface-token" data-chip>{grant.project_name}</Token>
-                  {grant.project_archived ? (
-                    <Token className="surface-token" data-chip data-testid="project-archived">{PROJECT_GRANT_WORDS.archived}</Token>
-                  ) : null}
-                  <Token className="surface-token" data-chip data-muted>{GRANT_WORDS.noCredential}</Token>
-                </>}
-                trailing={grant.state === "LIVE" ? (
-                  <Button
-                    variant="ghost"
-                    dense
-                    disabled={granting === key}
-                    onClick={() => void setProjectGrant(grant.identity, grant.project_id, grant.project_name, "stop")}
-                    data-testid="project-grant-verb"
-                  >
-                    {PROJECT_GRANT_WORDS.stop}
-                  </Button>
-                ) : undefined}
-              />
-            );
-          })}
-        </SurfaceLedger>
-      ) : null}
-
-      {/* The last grant act's receipt: outside the removable ledger, so it
-          survives when its row disappears; opened from the footer. */}
+      )}
       {receiptOpen && grantAct ? <GrantReceiptWell act={grantAct} /> : null}
-
-      {/* Everything below only when ON */}
-      {enabled ? (
-        <>
-          {/* One-time token display (after issue, before dismissal) */}
-          {oneTimeToken ? (
-            <SurfaceWell>
-              <div className="prefs-token-once">
-                <code className="prefs-token-value" data-testid="token-value">{oneTimeToken}</code>
-                <Button variant="ghost" dense onClick={copyToken} data-testid="token-copy">
-                  Copy
-                </Button>
-              </div>
-              <span className="prefs-token-caption" data-tone="warning">
-                TOKEN SHOWN ONCE — COPY IT NOW
-              </span>
-            </SurfaceWell>
-          ) : null}
-
-          {/* Issue credential verb + well */}
-          {issueOpen ? (
-            <SurfaceWell>
-              <GadgetRow label="Name" controlWidth="full">
-                <StringGadget
-                  label="Credential name"
-                  value={issueName}
-                  placeholder="e.g. sweep-runner"
-                  onChange={setIssueName}
-                  autoFocus
-                />
-              </GadgetRow>
-              <GadgetRow label="Access">
-                <CycleGadget
-                  label="Access"
-                  value={issuePalette}
-                  options={PALETTE_OPTIONS}
-                  onChange={setIssuePalette}
-                />
-              </GadgetRow>
-              <GadgetRow label="Expires after">
-                <CycleGadget
-                  label="Expires after"
-                  value={issueTtl}
-                  options={TTL_OPTIONS}
-                  onChange={setIssueTtl}
-                />
-              </GadgetRow>
-              <div className="prefs-issue-actions">
-                <Button variant="primary" disabled={issuing || !issueName.trim()} onClick={() => void issueCredential()} data-testid="issue-submit">
-                  Issue
-                </Button>
-                <Button variant="ghost" onClick={() => { setIssueOpen(false); setIssueName(""); }} data-testid="issue-cancel">
-                  Cancel
-                </Button>
-              </div>
-            </SurfaceWell>
-          ) : null}
-        </>
+      {Object.values(refusals).some(Boolean) ? (
+        <PaneActions>
+          {Object.entries(refusals).map(([key, refusal]) => (
+            <GrantRefusalChip key={key} refusal={refusal} />
+          ))}
+        </PaneActions>
       ) : null}
-
       {readErrors.remote ? (
-        <div className="prefs-read-failure" role="alert" data-testid="remote-read-error">
-          <span>Remote access read failed · Grants unchanged · Retry · {humanizeWireValue(readErrors.remote)}</span>
-          <Button dense variant="ghost" disabled={loading} onClick={() => void fetchRemote()}>Retry</Button>
-        </div>
+        <PaneActions>
+          <span role="alert" data-testid="remote-read-error">
+            Remote access read failed · Grants unchanged · Retry
+          </span>
+          <Button dense disabled={loading} onClick={() => void fetchRemote()}>
+            Retry
+          </Button>
+        </PaneActions>
       ) : null}
       {readErrors.projects ? (
-        <div className="prefs-read-failure" role="alert" data-testid="remote-projects-error">
-          <span>Project read failed · Projects unchanged · Retry · {humanizeWireValue(readErrors.projects)}</span>
-          <Button dense variant="ghost" disabled={projectsLoading} onClick={() => void fetchProjects()}>Retry</Button>
-        </div>
+        <PaneActions>
+          <span role="alert" data-testid="remote-projects-error">
+            Project read failed · Projects unchanged · Retry
+          </span>
+          <Button dense disabled={projectsLoading} onClick={() => void fetchProjects()}>
+            Retry
+          </Button>
+        </PaneActions>
       ) : null}
       {writeError ? (
-        <div className="prefs-read-failure" role="alert" data-testid="remote-error">
-          <span>Change not confirmed · {writeError.action}{writeError.subject ? ` · ${writeError.subject}` : ""} · {humanizeWireValue(writeError.message)}</span>
-          <Button dense variant="ghost" disabled={loading} onClick={() => void fetchRemote()}>Reload current state</Button>
-        </div>
+        <PaneActions>
+          <span role="alert" data-testid="remote-error">
+            Change not confirmed · {writeError.action}
+            {writeError.subject ? ` · ${writeError.subject}` : ""} · {humanizeWireValue(writeError.message)}
+          </span>
+          <Button dense onClick={() => void fetchRemote()}>
+            Reload current state
+          </Button>
+        </PaneActions>
       ) : null}
-    </GadgetGroup>
+    </PreferencePane>
   );
 }

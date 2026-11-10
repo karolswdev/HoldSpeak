@@ -1,6 +1,6 @@
 // Settings > Desk: sounds, presence and the voice (TTS). Moved out of SettingsCore.tsx.
 import { CheckGadget, GadgetGroup, GadgetRow } from "../../../desk/surface/gadgets";
-import { SurfaceColumns } from "../../../desk/surface";
+import { PreferencePane, SegmentedTabs, SurfaceColumns } from "../../../desk/surface";
 import { toggleSfx } from "../../../lib/sfx";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { apiFetch, readableError } from "../../../lib/api";
@@ -12,41 +12,44 @@ import { RecordingsSettings } from "../../../desk/recordings/RecordingsSettings"
 import type { SettingsBindings } from "./bindings";
 
 /* ── Sounds & Presence: desk sounds + presence + mascot ── */
-function SoundsModule({ b }: { b: SettingsBindings }) {
-  const { update, val, hl, check } = b;
-        return (
-          <SurfaceColumns variant="preferences" main={<>
-              <GadgetGroup material="inset" label="Sounds">
-                <GadgetRow
-                  label="Desk sounds"
-                  highlight={hl(["ui", "desk_sounds"])}
-                  controlWidth="short"
-                >
-                  <CheckGadget
-                    variant="state"
-                    label="Desk sounds"
-                    checked={Boolean(val(["ui", "desk_sounds"]) ?? true)}
-                    onChange={(next) => {
-                      update(["ui", "desk_sounds"], next);
-                      toggleSfx(next);
-                    }}
-                  />
-                </GadgetRow>
-              </GadgetGroup>
-              <GadgetGroup material="inset" label="Presence">
-                {check(["presence", "enabled"], "Presence")}
-                {check(["presence", "mascot"], "Mascot")}
-              </GadgetGroup>
-          </>} side={<TtsSettingsBlock />} />
-        );
-}
-
 export function DeskSection({ b, focusHighlight }: { b: SettingsBindings; focusHighlight: string }) {
-  return <>
-    <SoundsModule b={b} />
-    <WallpaperModule showFavorites highlight={focusHighlight} />
-    <RecordingsSettings />
-  </>;
+  const [tab, setTab] = useState(focusHighlight === "motion" ? "wallpaper" : "sounds");
+  return (
+    <PreferencePane label="Desk">
+      <SegmentedTabs
+        label="Desk"
+        value={tab}
+        onChange={setTab}
+        tabs={[
+          { id: "sounds", label: "Sounds" },
+          { id: "wallpaper", label: "Wallpaper" },
+          { id: "speech", label: "Speech" },
+          { id: "storage", label: "Storage" },
+        ]}
+      >
+        {tab === "sounds" ? (
+          <GadgetGroup label="Sounds and presence">
+            <GadgetRow label="Desk sounds">
+              <CheckGadget
+                variant="state"
+                label="Desk sounds"
+                checked={Boolean(b.val(["ui", "desk_sounds"]) ?? true)}
+                onChange={(next) => {
+                  b.update(["ui", "desk_sounds"], next);
+                  toggleSfx(next);
+                }}
+              />
+            </GadgetRow>
+            {b.check(["presence", "enabled"], "Presence")}
+            {b.check(["presence", "mascot"], "Mascot")}
+          </GadgetGroup>
+        ) : null}
+        {tab === "wallpaper" ? <WallpaperModule showFavorites highlight={focusHighlight} /> : null}
+        {tab === "speech" ? <TtsSettingsBlock /> : null}
+        {tab === "storage" ? <RecordingsSettings /> : null}
+      </SegmentedTabs>
+    </PreferencePane>
+  );
 }
 
 /**
@@ -74,24 +77,30 @@ export function TtsSettingsBlock() {
   const [readError, setReadError] = useState(false);
   const browserAvailable = typeof window.speechSynthesis !== "undefined";
 
-  useEffect(
-    () => {
-      mounted.current = true;
-      return () => { mounted.current = false; };
-    },
-    [],
-  );
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
 
   const reload = useCallback(async () => {
     setLoading(true);
     try {
       const data = await apiFetch<TtsStatus>("/api/tts/status");
-      if (mounted.current) { setStatus(data); setReadError(false); }
+      if (mounted.current) {
+        setStatus(data);
+        setReadError(false);
+      }
     } catch {
       if (mounted.current) setReadError(true);
-    } finally { if (mounted.current) setLoading(false); }
+    } finally {
+      if (mounted.current) setLoading(false);
+    }
   }, []);
-  useEffect(() => { void reload(); }, [reload]);
+  useEffect(() => {
+    void reload();
+  }, [reload]);
 
   const handleDownload = async () => {
     setDownloading(true);
@@ -117,8 +126,23 @@ export function TtsSettingsBlock() {
     }
   };
 
-  if (loading) return <GadgetGroup material="inset" label="Speech"><span aria-busy="true">Checking</span></GadgetGroup>;
-  if (readError) return <GadgetGroup material="inset" label="Speech"><GadgetRow label="Server voice"><StateChip state="failure" label="Could not read" /><Button dense variant="secondary" onClick={() => void reload()}>Retry</Button></GadgetRow></GadgetGroup>;
+  if (loading)
+    return (
+      <GadgetGroup material="inset" label="Speech">
+        <span aria-busy="true">Checking</span>
+      </GadgetGroup>
+    );
+  if (readError)
+    return (
+      <GadgetGroup material="inset" label="Speech">
+        <GadgetRow label="Server voice">
+          <StateChip state="failure" label="Could not read" />
+          <Button dense variant="secondary" onClick={() => void reload()}>
+            Retry
+          </Button>
+        </GadgetRow>
+      </GadgetGroup>
+    );
 
   // Extra NOT installed: one-line install instruction, no dead switch.
   if (!status?.installed) {
@@ -127,51 +151,53 @@ export function TtsSettingsBlock() {
         <GadgetRow label="Browser voice">
           <span className="prefs-value">{browserAvailable ? "Available" : "Not available"}</span>
         </GadgetRow>
-        <GadgetRow label="Server voice"><span className="prefs-value">Not installed</span></GadgetRow>
-        <FoldGadget title="Details"><CommandWell hint="pip install 'holdspeak[line]'"/></FoldGadget>
+        <GadgetRow label="Server voice">
+          <span className="prefs-value">Not installed</span>
+        </GadgetRow>
+        <CommandWell hint="pip install 'holdspeak[line]'" />
       </GadgetGroup>
     );
   }
 
   // Extra installed.
   return (
-    <GadgetGroup material="inset" label="Speech" actions={!status.model_ready || receipt || error ? <>
-      {!status.model_ready ? (
-        <>
-          <EgressChip
-            label="DOWNLOADS huggingface.co · ~226 MB"
-            title="One-time model download from Hugging Face."
-            scope="cloud"
-          />
-          <Button dense disabled={downloading} onClick={handleDownload}>
-            {downloading ? "Downloading…" : "Download model"}
-          </Button>
-        </>
-      ) : null}
-      {receipt ? (
-        <span className="gadget-fact" role="status">
-          {receipt}
-        </span>
-      ) : null}
-      {error ? (
-        <span className="gadget-fact" data-tone="danger" role="alert">
-          {error}
-        </span>
-      ) : null}
-    </> : undefined}>
+    <GadgetGroup
+      material="inset"
+      label="Speech"
+      actions={
+        !status.model_ready || receipt || error ? (
+          <>
+            {!status.model_ready ? (
+              <>
+                <EgressChip label="DOWNLOADS huggingface.co · ~226 MB" title="One-time model download from Hugging Face." scope="cloud" />
+                <Button dense disabled={downloading} onClick={handleDownload}>
+                  {downloading ? "Downloading…" : "Download model"}
+                </Button>
+              </>
+            ) : null}
+            {receipt ? (
+              <span className="gadget-fact" role="status">
+                {receipt}
+              </span>
+            ) : null}
+            {error ? (
+              <span className="gadget-fact" data-tone="danger" role="alert">
+                {error}
+              </span>
+            ) : null}
+          </>
+        ) : undefined
+      }
+    >
       <GadgetRow label="Browser voice">
         <span className="prefs-value">{browserAvailable ? "Available" : "Not available"}</span>
       </GadgetRow>
       <GadgetRow label="Server voice">
-        <span className="prefs-value">
-          {status.model_ready ? "Ready" : "Model needed"}
-        </span>
+        <span className="prefs-value">{status.model_ready ? "Ready" : "Model needed"}</span>
       </GadgetRow>
-      <FoldGadget title="Details">
-        <span className="gadget-fact">
-          Pocket TTS · MIT · weights CC-BY-4.0
-        </span>
-      </FoldGadget>
+      <>
+        <span className="gadget-fact">Pocket TTS · MIT · weights CC-BY-4.0</span>
+      </>
     </GadgetGroup>
   );
 }

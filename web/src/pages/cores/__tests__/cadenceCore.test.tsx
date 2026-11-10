@@ -39,6 +39,7 @@ function stubDesk(reply: () => Response) {
 }
 
 async function typeReply(text: string) {
+  fireEvent.doubleClick(await screen.findByText("SQLite or config?"));
   const pad = await screen.findByLabelText("Reply to SQLite or config?");
   fireEvent.change(pad, { target: { value: text } });
   return pad;

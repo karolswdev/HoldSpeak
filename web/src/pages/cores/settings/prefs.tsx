@@ -15,7 +15,6 @@ import { ConfirmVerb } from "../../../desk/surface/Surface";
 import { DotWord } from "../../../desk/surface/kit";
 import type { SpineTone } from "../../../desk/surface/patterns/Spine";
 import { useDesk } from "../../../desk/store";
-import "./settings.css";
 
 /* ── the roster (owner-named destinations, including the Models/Assignments pair) ── */
 

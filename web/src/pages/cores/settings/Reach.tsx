@@ -1,6 +1,6 @@
 // Settings > Reach: the channels, quiet hours, Cadence and the morning brief. Moved out of SettingsCore.tsx.
 import { FoldGadget, GadgetGroup } from "../../../desk/surface/gadgets";
-import { SurfaceColumns } from "../../../desk/surface";
+import { PreferencePane, SegmentedTabs, PaneInspector, SurfaceColumns } from "../../../desk/surface";
 import { useState } from "react";
 import { CycleGadget, GadgetRow, StepperGadget } from "../../../desk/surface";
 import { SurfaceState } from "../../../desk/surface/Surface";
@@ -14,7 +14,13 @@ import type { SettingsBindings } from "./bindings";
 /* ── Reach (PG-DIRECTION DIR6, ruled 2026-10-31: Notices becomes
          Reach): the channels, Telegram, when to reach you, quiet hours,
          the digest, Later means; Cadence and the morning brief folded. ── */
-export function ReachSection({ b, focusHighlight, onSaved, heartbeatRevision, onHeartbeatWrite }: {
+export function ReachSection({
+  b,
+  focusHighlight,
+  onSaved,
+  heartbeatRevision,
+  onHeartbeatWrite,
+}: {
   b: SettingsBindings;
   focusHighlight: string;
   onSaved: () => void;
@@ -22,64 +28,59 @@ export function ReachSection({ b, focusHighlight, onSaved, heartbeatRevision, on
   onHeartbeatWrite: () => void;
 }) {
   const { check, num, cyc } = b;
-        return (
-          <ReachSettingsPane
-            highlight={focusHighlight}
-            onSaved={onSaved}
-            quiet={
-              /* Betterment setup ST1: quiet hours have one store, the
-                 heartbeat policy the notices loop reads (shared with the Phone). */
-              <RhythmNoticeRows
-                highlight={focusHighlight}
-                onSaved={onSaved}
-                onWrite={onHeartbeatWrite}
-              />
-            }
-            cadence={<>
-            <SurfaceColumns variant="preferences" main={<>
-              <GadgetGroup material="inset" label="Cadence">
-                {check(["cadence", "enabled"], "Enabled")}
-                {cyc(
-                  ["cadence", "pressure"],
-                  "Pressure",
-                  CADENCE_PRESSURE_OPTIONS,
-                )}
-                {num(["cadence", "max_nudges_per_day"], "Max nudges", {
-                  unit: "/day",
-                  min: 0,
-                })}
-              </GadgetGroup>
-            </>} side={<>
-              {/* PHILO-15 05: the morning Brief job, ON by default; its own setting. */}
-              <GadgetGroup material="inset" label="Morning brief">
-                {check(["cadence", "brief_enabled"], "Enabled")}
-                {num(["cadence", "brief_hour"], "Make at", {
-                  unit: "h",
-                  min: 0,
-                  max: 23,
-                })}
-              </GadgetGroup>
-            </>} />
-            {/* HS-139-04: operator knobs fold behind RAW. */}
-            <FoldGadget title="More">
-              <GadgetGroup material="inset">
-                {check(["cadence", "use_llm"], "Use LLM")}
-                {num(["cadence", "tick_interval_seconds"], "Tick interval", {
-                  unit: "s",
-                  min: 30,
-                  step: 30,
-                })}
-                {/* PG-DIRECTION DIR5: one bot; Cadence's nudges and brief go to
-                    the chat paired in Reach (the old allow-list is read once). */}
-                {check(["cadence_telegram", "enabled"], "Cadence on Telegram")}
-              </GadgetGroup>
-              {/* Betterment setup ST1: the parked Rhythm window's sweep
-                  interval, Run now, Where it runs, mutes and loops. */}
-              <RhythmSweepFold revision={heartbeatRevision} />
-            </FoldGadget>
-            </>}
-          />
-        );
+  const [tab, setTab] = useState("cadence");
+  return (
+    <ReachSettingsPane
+      highlight={focusHighlight}
+      onSaved={onSaved}
+      quiet={<RhythmNoticeRows highlight={focusHighlight} onSaved={onSaved} onWrite={onHeartbeatWrite} />}
+      cadence={
+        <SegmentedTabs
+          label="Cadence"
+          value={tab}
+          onChange={setTab}
+          tabs={[
+            { id: "cadence", label: "Notices" },
+            { id: "brief", label: "Brief" },
+            { id: "sweep", label: "Sweep" },
+          ]}
+        >
+          {tab === "cadence" ? (
+            <GadgetGroup label="Cadence">
+              {check(["cadence", "enabled"], "Enabled")}
+              {cyc(["cadence", "pressure"], "Pressure", CADENCE_PRESSURE_OPTIONS)}
+              {num(["cadence", "max_nudges_per_day"], "Max nudges", {
+                unit: "/day",
+                min: 0,
+              })}
+              {check(["cadence", "use_llm"], "Use LLM")}
+              {num(["cadence", "tick_interval_seconds"], "Tick interval", {
+                unit: "s",
+                min: 30,
+                step: 30,
+              })}
+              {check(["cadence_telegram", "enabled"], "Cadence on Telegram")}
+            </GadgetGroup>
+          ) : null}
+          {tab === "brief" ? (
+            <GadgetGroup label="Morning brief">
+              {check(["cadence", "brief_enabled"], "Enabled")}
+              {num(["cadence", "brief_hour"], "Make at", {
+                unit: "h",
+                min: 0,
+                max: 23,
+              })}
+            </GadgetGroup>
+          ) : null}
+          {tab === "sweep" ? (
+            <PaneInspector label="Sweep and loops" onClose={() => setTab("cadence")}>
+              <CadenceCore key={heartbeatRevision} embedded />
+            </PaneInspector>
+          ) : null}
+        </SegmentedTabs>
+      }
+    />
+  );
 }
 
 // Betterment setup ST1 — Rhythm has one home, Settings ▸ Rhythm.
@@ -104,15 +105,7 @@ const NOTIFY_OPTIONS = [
 
 /** Notify and Quiet hours, on the heartbeat policy. `onSaved` lets the
  *  Settings foot say Saved; `highlight` lights the row a deep link names. */
-export function RhythmNoticeRows({
-  onSaved,
-  onWrite,
-  highlight,
-}: {
-  onSaved?: () => void;
-  onWrite?: () => void;
-  highlight?: string | null;
-}) {
+export function RhythmNoticeRows({ onSaved, onWrite, highlight }: { onSaved?: () => void; onWrite?: () => void; highlight?: string | null }) {
   const heartbeat = useResource<Heartbeat | null>("/api/settings/heartbeat", null);
   const [error, setError] = useState("");
   const data = heartbeat.data;
@@ -121,9 +114,16 @@ export function RhythmNoticeRows({
   const put = async (patch: Heartbeat) => {
     setError("");
     // Shown at once; the hub's answer is the truth after it.
-    heartbeat.setData({ ...(data ?? {}), ...patch, quiet_hours: { start, end, ...patch.quiet_hours } });
+    heartbeat.setData({
+      ...(data ?? {}),
+      ...patch,
+      quiet_hours: { start, end, ...patch.quiet_hours },
+    });
     try {
-      const saved = await apiFetch<Heartbeat>("/api/settings/heartbeat", { method: "PUT", json: patch });
+      const saved = await apiFetch<Heartbeat>("/api/settings/heartbeat", {
+        method: "PUT",
+        json: patch,
+      });
       heartbeat.setData(saved);
       onSaved?.();
       onWrite?.();
@@ -134,25 +134,16 @@ export function RhythmNoticeRows({
   };
   return (
     <GadgetGroup material="inset" label="Notices">
-      {heartbeat.error && !data ? (
-        <SurfaceState error={`Not read · ${heartbeat.error}`} onRetry={() => void heartbeat.reload()} />
-      ) : null}
+      {heartbeat.error && !data ? <SurfaceState error={`Not read · ${heartbeat.error}`} onRetry={() => void heartbeat.reload()} /> : null}
       {error ? <SurfaceState error={error} onRetry={() => void heartbeat.reload().then(() => setError(""))} /> : null}
       <GadgetRow label="Notify" highlight={highlight === "heartbeat.notify"} controlWidth="standard">
-        <CycleGadget
-          label="Notify"
-          value={data?.notify ?? "edge"}
-          options={NOTIFY_OPTIONS}
-          onChange={(next) => void put({ notify: next })}
-        />
+        <CycleGadget label="Notify" value={data?.notify ?? "edge"} options={NOTIFY_OPTIONS} onChange={(next) => void put({ notify: next })} />
       </GadgetRow>
       <GadgetRow label="Quiet from" highlight={highlight === "heartbeat.quiet_hours"} controlWidth="short">
-        <StepperGadget label="Quiet from" value={start} unit="h" min={0} max={23}
-          onChange={(next) => void put({ quiet_hours: { start: next } })} />
+        <StepperGadget label="Quiet from" value={start} unit="h" min={0} max={23} onChange={(next) => void put({ quiet_hours: { start: next } })} />
       </GadgetRow>
       <GadgetRow label="Quiet until" controlWidth="short">
-        <StepperGadget label="Quiet until" value={end} unit="h" min={0} max={23}
-          onChange={(next) => void put({ quiet_hours: { end: next } })} />
+        <StepperGadget label="Quiet until" value={end} unit="h" min={0} max={23} onChange={(next) => void put({ quiet_hours: { end: next } })} />
       </GadgetRow>
     </GadgetGroup>
   );
@@ -164,7 +155,12 @@ export function RhythmNoticeRows({
 export function RhythmSweepFold({ revision = 0 }: { revision?: number }) {
   const [opened, setOpened] = useState(false);
   return (
-    <FoldGadget title="Sweep and loops" onToggle={(open) => { if (open) setOpened(true); }}>
+    <FoldGadget
+      title="Sweep and loops"
+      onToggle={(open) => {
+        if (open) setOpened(true);
+      }}
+    >
       <div className="prefs-rhythm-sweep" data-testid="settings-rhythm-sweep">
         {opened ? <CadenceCore key={revision} embedded /> : null}
       </div>

@@ -51,7 +51,18 @@ def test_settings_selection_grammar_and_pane_shots(tmp_path: Path, monkeypatch: 
                     else:
                         route.continue_()
                 page.route("**/api/inference/assignments/editor", editor)
+                call_fixtures = root / "web/src/desk/calls/__fixtures__"
+                for endpoint, recording in (
+                    ("/api/calls/status", "line.calls.ready.json"),
+                    ("/api/calls/line/status", "line.status.ready.json"),
+                    ("/api/calls/line/nodes", "line.nodes.ready.json"),
+                    ("/api/phone/status", "phone.settings.json"),
+                    ("/api/phone/push", "phone.push.stored.json"),
+                ):
+                    payload = json.loads((call_fixtures / recording).read_text())
+                    page.route(f"**{endpoint}", lambda route, _request, payload=payload: route.fulfill(json=payload))
                 settings = json.loads((fixtures / "settings-wire/settings.json").read_text())
+                settings["calls"] = {**json.loads((call_fixtures / "line.settings.json").read_text()), "phone_on": True}
                 calendar = json.loads((fixtures / "settings-wire/calendar-sources-one.json").read_text())
                 # Vary only identity fields of real recorded calendar sources.
                 sources = [{**calendar["sources"][0], "id": f"feed-{i}", "label": name} for i, name in enumerate(("Home", "Woodward", "Work"))]
@@ -82,7 +93,7 @@ def test_settings_selection_grammar_and_pane_shots(tmp_path: Path, monkeypatch: 
                                 assert all(abs(row.bounding_box()["height"] - 26) < 1 for row in section.locator("[role=row][data-object-id]:visible").all())
                             else:
                                 assert all(row.bounding_box()["height"] >= 44 for row in section.locator("[role=row][data-object-id]:visible").all())
-                            assert section.locator('[role="row"] button').count() == 0
+                            assert section.locator('[role="row"] button, .surface-ledger-row button, .surface-row button').count() == 0
                             suffix = {"Services": "services", "Calendars": "calendars", "Send to": "send-to"}[tab]
                             page.screenshot(path=str(shots / f"accounts-{suffix}-{'900x600' if width == 1440 else '393'}-after.png"))
                         section.get_by_role("tab", name="Services", exact=True).click()
@@ -106,6 +117,9 @@ def test_settings_selection_grammar_and_pane_shots(tmp_path: Path, monkeypatch: 
                         expect(app_menu.get_by_role("menuitem", name="Show me", exact=True)).to_be_visible()
                         page.keyboard.press("Escape")
                     else:
+                        _bounded(window)
+                        assert section.locator("h1, h2, .settings-mast, .settings-plate").count() == 0
+                        assert section.locator('[role="row"] button, .surface-ledger-row button, .surface-row button').count() == 0
                         page.screenshot(path=str(shots / f"{pane}-{'900x600' if width == 1440 else '393'}-after.png"))
                         if pane == "engines":
                             _bounded(window)
@@ -113,7 +127,7 @@ def test_settings_selection_grammar_and_pane_shots(tmp_path: Path, monkeypatch: 
                                 assert all(abs(row.bounding_box()["height"] - 26) < 1 for row in section.locator("[role=row][data-object-id]:visible").all())
                             else:
                                 assert all(row.bounding_box()["height"] >= 44 for row in section.locator("[role=row][data-object-id]:visible").all())
-                            assert section.locator('[role="row"] button').count() == 0
+                            assert section.locator('[role="row"] button, .surface-ledger-row button, .surface-row button').count() == 0
                             expect(section.get_by_role("combobox", name="Everything else engines", exact=True).locator("option:checked")).to_have_text("Codex, then Gemini CLI")
                             section.get_by_role("button", name="Model library", exact=True).click()
                             library = section.get_by_test_id("settings-engines-library")
@@ -122,6 +136,39 @@ def test_settings_selection_grammar_and_pane_shots(tmp_path: Path, monkeypatch: 
                                 _settle(page)
                                 page.screenshot(path=str(shots / f"engines-library-{tab.lower()}-{'900x600' if width == 1440 else '393'}-after.png"))
                             section.get_by_role("region", name="Model library", exact=True).get_by_role("button", name="Close", exact=True).first.click()
+                    # Each tab state is bounded at both owner sizes. Nested tab
+                    # lists are visited after their parent opens.
+                    if pane not in ("accounts", "engines"):
+                        def shoot_tabs(depth: int = 0, prefix: str = "") -> None:
+                            lists = section.get_by_role("tablist").all()
+                            if depth >= len(lists):
+                                return
+                            tablist = lists[depth]
+                            labels = tablist.get_by_role("tab").all_text_contents()
+                            for label in labels:
+                                tablist.get_by_role("tab", name=label, exact=True).click()
+                                _settle(page)
+                                suffix = (prefix + "-" + label.lower().replace(" ", "-")).strip("-")
+                                page.screenshot(path=str(shots / f"{pane}-{suffix}-{'900x600' if width == 1440 else '393'}-after.png"))
+                                _bounded(window)
+                                assert section.locator('[role="row"] button, .surface-ledger-row button, .surface-row button').count() == 0
+                                shoot_tabs(depth + 1, suffix)
+                        shoot_tabs()
+                    if pane == "speak":
+                        section.get_by_role("tab", name="Symbols", exact=True).click()
+                        section.get_by_role("button", name="Add symbol", exact=True).click()
+                        section.get_by_role("textbox", name="Spoken phrase 1").fill("right arrow")
+                        page.screenshot(path=str(shots / f"speak-symbol-draft-{'900x600' if width == 1440 else '393'}-after.png"))
+                        _bounded(window)
+                        section.get_by_role("region", name="Spoken symbol", exact=True).get_by_role("button", name="Close").click()
+                    if pane == "calls":
+                        section.get_by_role("tablist", name="Calls", exact=True).get_by_role("tab", name="Calls", exact=True).click()
+                        for setting in ("install", "daemon", "line", "engine", "passphrase", "enable", "numbers"):
+                            section.locator(f'[role="row"][data-object-id="{setting}"]').dblclick()
+                            _settle(page)
+                            page.screenshot(path=str(shots / f"calls-edit-{setting}-{'900x600' if width == 1440 else '393'}-after.png"))
+                            _bounded(window)
+                            section.locator('.surface-pane-inspector').get_by_role("button", name="Close", exact=True).click()
                     assert rail.locator(".surface-spine").count() == 0
                     assert all(not node.inner_text() for node in rail.locator(".surface-rail-state").all())
                 assert errors == [], errors

@@ -462,35 +462,6 @@ _red("surface-activity", 393, "whole",
      r"^Button '(?:Artifact (?:new|read) \u00b7|Meeting saved \u00b7)[^']+' uses \d+ lines$",
      "Needs a canvas: full receipt names wrap on the phone")
 
-# Settings belongs to its repair lane. These are the remaining observations,
-# including Calls hosted within Settings; they waive no other control/word.
-for _width in (1440, 900):
-    for _case, _suffix in (("surface-settings", "@pane:accounts"),
-                           ("surface-settings@integration:destinations", "")):
-        _red(_case, _width, "whole" + _suffix,
-             r"^Button 'Choose calendar' uses 2 lines$",
-             "Settings: Choose calendar wraps its Button label")
-        _red(_case, _width, "air" + _suffix,
-             r"^'Check' x 'Check': .*<connections-check-action",
-             "Settings: adjacent service Check buttons have 1 px of air")
-        _red(_case, _width, "air" + _suffix,
-             r"^'Details' x 'Details': .*<surface-ledger-trailing",
-             "Settings: adjacent destination Details buttons have 1 px of air")
-        _red(_case, _width, "air" + _suffix,
-             r"^'Details' x 'Add destination': .*<send-verbs$",
-             "Settings: the last destination Details touches Add destination")
-for _width in SIZES:
-    for _case, _suffix in (("surface-settings", "@pane:calls"), ("surface-settings@calls", "")):
-        _red(_case, _width, "whole" + _suffix,
-             r"^word '[^']+' breaks in calls-step-line$",
-             "Settings Calls: setup code breaks a word across lines")
-        if _width != 1440:
-            _red(_case, _width, "whole" + _suffix,
-                 r"^word '[^']+' breaks in calls-step-install$",
-                 "Settings Calls: the install command breaks a word across lines")
-_red("surface-settings", 393, "target@pane:speak",
-     r"^'Push-to-talk key: .*loses \d/9 points.*gadget-row-gadget",
-     "Settings Speak: the shortcut Button loses its upper hit corners")
 
 
 def _params() -> list[Any]:

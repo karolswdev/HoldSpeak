@@ -1,3 +1,4 @@
+import { SegmentedTabs, ListView, GadgetRow, PaneActions } from "../surface";
 /* Settings ▸ Calls ▸ Phone (PHONE-DESIGN-2026-10-28 §9; canvas
  * docs/internal/betterment/phone/canvases/phone-2026-10-28.html): the
  * Accounts grammar — one paper, one grid per group (Your phone, Reach you,
@@ -23,13 +24,20 @@ import { deviceFact, pushNotReady } from "./PhonePane";
 import { PhoneQr } from "./PhoneQr";
 import "./phone.css";
 
-export const PHONE_EGRESS_SENTENCE =
-  "A message goes to your phone through Apple's push service. A call on the number goes through your line's carrier. The words of a call stay on your home engine.";
+export const PHONE_EGRESS_SENTENCE = "A message goes to your phone through Apple's push service. A call on the number goes through your line's carrier. The words of a call stay on your home engine.";
 
 /** The kinds that may reach him (§6, `phone_rules.KINDS`), in the design's
  *  order, in his words. */
-export const REACH_KINDS: ReadonlyArray<{ kind: string; label: string; note?: string }> = [
-  { kind: "core_question", label: "A program asks you", note: "a call follows after 10 min with no reply when it may call" },
+export const REACH_KINDS: ReadonlyArray<{
+  kind: string;
+  label: string;
+  note?: string;
+}> = [
+  {
+    kind: "core_question",
+    label: "A program asks you",
+    note: "a call follows after 10 min with no reply when it may call",
+  },
   { kind: "step_red", label: "A program step stays red" },
   { kind: "program_done", label: "A program is done" },
   { kind: "heartbeat_security", label: "A security or data-loss finding" },
@@ -43,7 +51,12 @@ const CHANNELS: ReadonlyArray<{ value: ReachChannel; word: string }> = [
   { value: "nothing", word: "Nothing" },
 ];
 
-const LEVEL_WORDS: Record<string, string> = { secure: "Secure", normal: "Normal", yolo: "YOLO", owner: "Owner" };
+const LEVEL_WORDS: Record<string, string> = {
+  secure: "Secure",
+  normal: "Normal",
+  yolo: "YOLO",
+  owner: "Owner",
+};
 
 export function levelWord(level: string | undefined): string {
   const key = String(level ?? "normal").toLowerCase();
@@ -71,10 +84,10 @@ function minutesLeft(expiresAt: string, now: number): number {
 
 function Row({ name, fact, verb, testId }: { name: ReactNode; fact?: ReactNode; verb?: ReactNode; testId?: string }) {
   return (
-    <div className="phone-row" data-testid={testId}>
-      <span className="phone-row-name">{name}</span>
-      <span className="phone-row-fact">{fact}</span>
-      <span className="phone-row-verb">{verb}</span>
+    <div data-testid={testId}>
+      <GadgetRow label={name} fact={fact}>
+        {verb ?? <span />}
+      </GadgetRow>
     </div>
   );
 }
@@ -94,7 +107,9 @@ function PairSheet({ pairing, now, busy, onNew }: { pairing: PhonePairing; now: 
         <span>Remove the phone here at any time.</span>
         <span className="phone-pair-left" data-testid="phone-pair-left">
           {left > 0 ? `Good for ${left} more ${left === 1 ? "minute" : "minutes"}` : "This code is too old"}
-          <Button variant="ghost" dense loading={busy} onClick={onNew} data-testid="phone-pair-new">New code</Button>
+          <Button variant="ghost" dense loading={busy} onClick={onNew} data-testid="phone-pair-new">
+            New code
+          </Button>
         </span>
       </div>
     </div>
@@ -110,14 +125,27 @@ export const PUSH_HOSTS: ReadonlyArray<{ value: string; label: string }> = [
 ];
 
 /** The Test push's answer in his words (`POST /api/phone/push/test`). */
-export function pushTestWords(result: PhonePushTest): { word: string; tone: Tone } {
+export function pushTestWords(result: PhonePushTest): {
+  word: string;
+  tone: Tone;
+} {
   if (result.answer === "accepted") return { word: "Apple accepted it", tone: "ok" };
   if (result.answer === "stale") {
-    return { word: "This phone's token is stale: open the app once. If this is an Xcode build, pick Xcode under Builds from", tone: "warn" };
+    return {
+      word: "This phone's token is stale: open the app once. If this is an Xcode build, pick Xcode under Builds from",
+      tone: "warn",
+    };
   }
-  if (result.answer === "refused") return { word: "Apple refused the key: check the Key ID and Team ID", tone: "fail" };
+  if (result.answer === "refused")
+    return {
+      word: "Apple refused the key: check the Key ID and Team ID",
+      tone: "fail",
+    };
   if (!result.status) return { word: "The hub could not reach Apple", tone: "fail" };
-  return { word: `Apple answered ${result.status}${result.reason ? `: ${result.reason}` : ""}`, tone: "fail" };
+  return {
+    word: `Apple answered ${result.status}${result.reason ? `: ${result.reason}` : ""}`,
+    tone: "fail",
+  };
 }
 
 /** A .p8 file dropped on the pad: its text. */
@@ -128,40 +156,78 @@ async function droppedText(event: DragEvent): Promise<string> {
 
 /** One write-only part of the key: where it is, never its value; Change
  *  opens the field again. The .p8 is a pad that takes a paste or a drop. */
-function PushSecret({ label, present, pad = false, busy, onSave, testId }: {
-  label: string; present: boolean; pad?: boolean; busy: boolean; onSave(value: string): void; testId: string;
-}) {
+function PushSecret({ label, present, pad = false, busy, onSave, testId }: { label: string; present: boolean; pad?: boolean; busy: boolean; onSave(value: string): Promise<boolean>; testId: string }) {
   const [draft, setDraft] = useState("");
   const [changing, setChanging] = useState(false);
   const open = !present || changing;
-  const save = () => {
+  const save = async () => {
     if (!draft.trim()) return;
-    onSave(draft.trim());
-    setDraft("");
-    setChanging(false);
+    const value = draft;
+    if (await onSave(value.trim())) {
+      setDraft((current) => (current === value ? "" : current));
+      setChanging(false);
+    }
   };
   return (
-    <div className="phone-secret" data-testid={testId} data-present={present || undefined}>
-      <Row name={label}
-        fact={<DotWord tone={present ? "ok" : "idle"} data-testid={`${testId}-place`}>{present ? "Stored in your keystore" : "Missing"}</DotWord>}
-        verb={present && !changing
-          ? <Button dense variant="secondary" onClick={() => setChanging(true)} data-testid={`${testId}-change`}>Change</Button>
-          : null} />
+    <div className="surface-pane-group" data-testid={testId} data-present={present || undefined}>
+      <Row
+        name={label}
+        fact={
+          <DotWord tone={present ? "ok" : "idle"} data-testid={`${testId}-place`}>
+            {present ? "Stored in your keystore" : "Missing"}
+          </DotWord>
+        }
+        verb={
+          present && !changing ? (
+            <Button dense variant="secondary" onClick={() => setChanging(true)} data-testid={`${testId}-change`}>
+              Change
+            </Button>
+          ) : null
+        }
+      />
       {open ? (
-        <div className="phone-field">
+        <div className="surface-pane-actions">
           {pad ? (
-            <span className="phone-drop" data-testid={`${testId}-drop`}
+            <span
+              className="surface-input-well"
+              data-testid={`${testId}-drop`}
               onDragOver={(event) => event.preventDefault()}
-              onDrop={(event) => { event.preventDefault(); void droppedText(event).then((text) => { if (text) setDraft(text); }); }}>
-              <PadGadget label={label} value={draft} onChange={setDraft} rows={4}
-                placeholder="Paste the .p8 file here, or drop it here" inputProps={{ spellCheck: false }} />
+              onDrop={(event) => {
+                event.preventDefault();
+                void droppedText(event).then((text) => {
+                  if (text) setDraft(text);
+                });
+              }}
+            >
+              <PadGadget label={label} value={draft} onChange={setDraft} rows={4} placeholder="Paste the .p8 file here, or drop it here" inputProps={{ spellCheck: false }} />
             </span>
           ) : (
-            <StringGadget label={label} value={draft} onChange={setDraft} placeholder="Kept in your keystore"
-              onKeyDown={(event) => { if (event.key === "Enter") save(); }} inputProps={{ autoComplete: "off", spellCheck: false }} />
+            <StringGadget
+              label={label}
+              value={draft}
+              onChange={setDraft}
+              placeholder="Kept in your keystore"
+              onKeyDown={(event) => {
+                if (event.key === "Enter") save();
+              }}
+              inputProps={{ autoComplete: "off", spellCheck: false }}
+            />
           )}
-          <Button dense variant="primary" loading={busy} disabled={!draft.trim()} onClick={save} data-testid={`${testId}-save`}>Save</Button>
-          {changing ? <Button dense variant="ghost" onClick={() => { setChanging(false); setDraft(""); }}>Cancel</Button> : null}
+          <Button dense variant="primary" loading={busy} disabled={!draft.trim()} onClick={save} data-testid={`${testId}-save`}>
+            Save
+          </Button>
+          {changing ? (
+            <Button
+              dense
+              variant="ghost"
+              onClick={() => {
+                setChanging(false);
+                setDraft("");
+              }}
+            >
+              Cancel
+            </Button>
+          ) : null}
         </div>
       ) : null}
     </div>
@@ -172,25 +238,46 @@ function PushSecret({ label, present, pad = false, busy, onSave, testId }: {
  *  its Key ID and Team ID (write only, in the hub's keystore), the app's
  *  bundle id, and Test push with Apple's answer. */
 function PushGroup({ devices, onChanged }: { devices: PhoneDevice[]; onChanged(): void }) {
+  const [tab, setTab] = useState("keys");
   const [key, setKey] = useState<PhonePushKey | null>(null);
   const [busy, setBusy] = useState("");
   const [bundle, setBundle] = useState("");
   const [result, setResult] = useState<PhonePushTest | null>(null);
-  const [refusal, setRefusal] = useState<{ words: string; title: string } | null>(null);
+  const [refusal, setRefusal] = useState<{
+    words: string;
+    title: string;
+  } | null>(null);
   useEffect(() => {
     let alive = true;
-    readPushKey().then((next) => { if (alive) { setKey(next); setBundle(next.bundle_id); } }).catch(() => undefined);
-    return () => { alive = false; };
+    readPushKey()
+      .then((next) => {
+        if (alive) {
+          setKey(next);
+          setBundle(next.bundle_id);
+        }
+      })
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
   }, []);
   if (!key) return null;
-  const save = (part: string, value: string) => {
+  const save = async (part: string, value: string): Promise<boolean> => {
     setBusy(part);
     setRefusal(null);
     setResult(null);
-    savePushKey({ [part]: value })
-      .then((next) => { setKey(next); setBundle(next.bundle_id); onChanged(); })
-      .catch((cause) => setRefusal(plainFail("The key was not saved", cause, "Nothing changed", "Try again")))
-      .finally(() => setBusy(""));
+    try {
+      const next = await savePushKey({ [part]: value });
+      setKey(next);
+      setBundle(next.bundle_id);
+      onChanged();
+      return true;
+    } catch (cause) {
+      setRefusal(plainFail("The key was not saved", cause, "Nothing changed", "Try again"));
+      return false;
+    } finally {
+      setBusy("");
+    }
   };
   const test = () => {
     setBusy("test");
@@ -205,36 +292,89 @@ function PushGroup({ devices, onChanged }: { devices: PhoneDevice[]; onChanged()
   const reachable = devices.some((device) => device.has_push);
   const words = result ? pushTestWords(result) : null;
   return (
-    <GadgetGroup material="inset" label="Push">
-      <div data-testid="phone-push">
-        <PushSecret label="Apple push key (.p8)" present={key.present.p8} pad busy={busy === "p8"}
-          onSave={(value) => save("p8", value)} testId="phone-push-p8" />
-        <PushSecret label="Key ID" present={key.present.key_id} busy={busy === "key_id"}
-          onSave={(value) => save("key_id", value)} testId="phone-push-key-id" />
-        <PushSecret label="Team ID" present={key.present.team_id} busy={busy === "team_id"}
-          onSave={(value) => save("team_id", value)} testId="phone-push-team-id" />
-        <div className="phone-secret" data-testid="phone-push-bundle">
-          <Row name="App bundle ID" fact="The HoldSpeak app on your phone" />
-          <div className="phone-field">
-            <StringGadget label="App bundle ID" value={bundle} onChange={setBundle}
-              inputProps={{ autoComplete: "off", spellCheck: false }} />
-            <Button dense variant="secondary" loading={busy === "bundle_id"} disabled={!bundle.trim() || bundle.trim() === key.bundle_id}
-              onClick={() => save("bundle_id", bundle.trim())} data-testid="phone-push-bundle-save">Save</Button>
-          </div>
+    <div className="surface-tab-panel" data-testid="phone-push">
+      {refusal ? (
+        <span role="alert" title={refusal.title} data-testid="phone-push-refusal">
+          {refusal.words}
+        </span>
+      ) : null}
+      <SegmentedTabs
+        label="Push"
+        value={tab}
+        onChange={setTab}
+        tabs={[
+          { id: "keys", label: "Keys" },
+          { id: "app", label: "App" },
+          { id: "test", label: "Test" },
+        ]}
+      >
+        <div className="surface-tab-panel" hidden={tab !== "keys"}>
+          <GadgetGroup label="Push keys">
+            <PushSecret label="Apple push key (.p8)" present={key.present.p8} pad busy={busy === "p8"} onSave={(value) => save("p8", value)} testId="phone-push-p8" />
+            <PushSecret label="Key ID" present={key.present.key_id} busy={busy === "key_id"} onSave={(value) => save("key_id", value)} testId="phone-push-key-id" />
+            <PushSecret label="Team ID" present={key.present.team_id} busy={busy === "team_id"} onSave={(value) => save("team_id", value)} testId="phone-push-team-id" />
+          </GadgetGroup>
         </div>
-        <Row testId="phone-push-host" name="Builds from"
-          fact="An app built from Xcode has a development token; pick Xcode while you test"
-          verb={<CycleGadget label="Builds from" value={key.host ?? "app_store"} options={[...PUSH_HOSTS]}
-            disabled={busy === "host"} onChange={(next) => save("host", next)} />} />
-        <Row testId="phone-push-test" name="Test push"
-          fact={words ? <DotWord tone={words.tone} data-testid="phone-push-answer" title={result?.reason || undefined}>{words.word}</DotWord>
-            : refusal ? <DotWord tone="fail" data-testid="phone-push-refusal" title={refusal.title}>{refusal.words}</DotWord>
-              : ready ? <DotWord tone="ok">{reachable ? "Ready" : "No phone sent a push token"}</DotWord>
-                : <DotWord tone="idle">Save the key, the Key ID and the Team ID</DotWord>}
-          verb={<Button dense variant="secondary" loading={busy === "test"} disabled={!ready || !reachable} onClick={test}
-            title="A silent push to your phone through Apple's push service" data-testid="phone-push-test-press">Test push</Button>} />
-      </div>
-    </GadgetGroup>
+        <div className="surface-tab-panel" hidden={tab !== "app"}>
+          <GadgetGroup label="Phone app">
+            <div className="surface-pane-group" data-testid="phone-push-bundle">
+              <Row name="App bundle ID" fact="The HoldSpeak app on your phone" />
+              <div className="surface-pane-actions">
+                <StringGadget label="App bundle ID" value={bundle} onChange={setBundle} inputProps={{ autoComplete: "off", spellCheck: false }} />
+                <Button
+                  dense
+                  variant="secondary"
+                  loading={busy === "bundle_id"}
+                  disabled={!bundle.trim() || bundle.trim() === key.bundle_id}
+                  onClick={() => save("bundle_id", bundle.trim())}
+                  data-testid="phone-push-bundle-save"
+                >
+                  Save
+                </Button>
+              </div>
+            </div>
+            <Row
+              testId="phone-push-host"
+              name="Builds from"
+              fact="An app built from Xcode has a development token; pick Xcode while you test"
+              verb={<CycleGadget label="Builds from" value={key.host ?? "app_store"} options={[...PUSH_HOSTS]} disabled={busy === "host"} onChange={(next) => save("host", next)} />}
+            />
+          </GadgetGroup>
+        </div>
+        <div className="surface-tab-panel" hidden={tab !== "test"}>
+          <GadgetGroup label="Test push">
+            <Row
+              testId="phone-push-test"
+              name="Test push"
+              fact={
+                words ? (
+                  <DotWord tone={words.tone} data-testid="phone-push-answer" title={result?.reason || undefined}>
+                    {words.word}
+                  </DotWord>
+                ) : ready ? (
+                  <DotWord tone="ok">{reachable ? "Ready" : "No phone sent a push token"}</DotWord>
+                ) : (
+                  <DotWord tone="idle">Save the key, the Key ID and the Team ID</DotWord>
+                )
+              }
+              verb={
+                <Button
+                  dense
+                  variant="secondary"
+                  loading={busy === "test"}
+                  disabled={!ready || !reachable}
+                  onClick={test}
+                  title="A silent push to your phone through Apple's push service"
+                  data-testid="phone-push-test-press"
+                >
+                  Test push
+                </Button>
+              }
+            />
+          </GadgetGroup>
+        </div>
+      </SegmentedTabs>
+    </div>
   );
 }
 
@@ -242,61 +382,91 @@ function PushGroup({ devices, onChanged }: { devices: PhoneDevice[]; onChanged()
  *  Settings ▸ Calls ▸ Phone): a table of kinds × Message · Call · Nothing,
  *  prefilled by the Control level; a choice is his own word over the
  *  level's (`calls.phone_reach`, the Phone's reach rules read it). */
-export function ReachYouRows({ reach, level: levelKey, onChanged }: {
-  reach: PhoneStatus["reach"] | undefined; level: string | undefined; onChanged(): void | Promise<unknown>;
-}) {
+export function ReachYouRows({ reach, level: levelKey, onChanged }: { reach: PhoneStatus["reach"] | undefined; level: string | undefined; onChanged(): void | Promise<unknown> }) {
   const [chosen, setChosen] = useState<Record<string, ReachChannel>>({});
   const [busy, setBusy] = useState("");
-  const [refusal, setRefusal] = useState<{ words: string; title: string } | null>(null);
+  const [refusal, setRefusal] = useState<{
+    words: string;
+    title: string;
+  } | null>(null);
   const status = { reach } as PhoneStatus;
   const run = async (key: string, act: () => Promise<void>, failed: (cause: unknown) => { words: string; title: string }) => {
     setBusy(key);
     setRefusal(null);
-    try { await act(); } catch (error) {
+    try {
+      await act();
+    } catch (error) {
       setRefusal(failed(error));
-    } finally { setBusy(""); }
+    } finally {
+      setBusy("");
+    }
   };
-  const choose = (kind: string, channel: ReachChannel) => void run(`reach-${kind}`, async () => {
-    const own = { ...ownReach(status), ...chosen, [kind]: channel };
-    setChosen(own);
-    await writeReach(own);
-    await onChanged();
-  }, (cause) => plainFail("Reach you was not saved", cause, "The last choice holds", "Try again"));
-  const followLevel = () => void run("reach-reset", async () => {
-    setChosen({});
-    await writeReach({});
-    await onChanged();
-  }, (cause) => plainFail("Reach you was not saved", cause, "The last choices hold", "Try again"));
+  const choose = (kind: string, channel: ReachChannel) =>
+    void run(
+      `reach-${kind}`,
+      async () => {
+        const own = { ...ownReach(status), ...chosen, [kind]: channel };
+        setChosen(own);
+        await writeReach(own);
+        await onChanged();
+      },
+      (cause) => plainFail("Reach you was not saved", cause, "The last choice holds", "Try again"),
+    );
+  const followLevel = () =>
+    void run(
+      "reach-reset",
+      async () => {
+        setChosen({});
+        await writeReach({});
+        await onChanged();
+      },
+      (cause) => plainFail("Reach you was not saved", cause, "The last choices hold", "Try again"),
+    );
   const level = levelWord(levelKey);
   const own = { ...ownReach(status), ...chosen };
   const rows = REACH_KINDS.map((entry) => {
     const sent = reach?.[entry.kind];
-    return { ...entry, channel: (own[entry.kind] ?? sent?.level_word ?? sent?.word ?? "message") as ReachChannel, own: entry.kind in own };
+    return {
+      ...entry,
+      channel: (own[entry.kind] ?? sent?.level_word ?? sent?.word ?? "message") as ReachChannel,
+      own: entry.kind in own,
+    };
   });
   return (
     <>
-      {refusal ? <p className="phone-refusal" role="alert" title={refusal.title} data-testid="phone-settings-refusal">{refusal.words}</p> : null}
+      {refusal ? (
+        <p className="phone-refusal" role="alert" title={refusal.title} data-testid="phone-settings-refusal">
+          {refusal.words}
+        </p>
+      ) : null}
       <GadgetGroup material="inset" label="Reach you">
         <div className="phone-reach" data-testid="phone-reach">
           <span className="phone-reach-head">When</span>
-          {CHANNELS.map((channel) => <span key={channel.value} className="phone-reach-head" aria-hidden="true">{channel.word}</span>)}
+          {CHANNELS.map((channel) => (
+            <span key={channel.value} className="phone-reach-head" aria-hidden="true">
+              {channel.word}
+            </span>
+          ))}
           {rows.map((row) => (
-            <div key={row.kind} className="phone-reach-line" data-testid="phone-reach-row" data-kind={row.kind}
-              data-channel={row.channel} data-own={row.own || undefined}>
-              <span className="phone-reach-kind">{row.label}{row.note ? <span>{row.note}</span> : null}</span>
+            <div key={row.kind} className="phone-reach-line" data-testid="phone-reach-row" data-kind={row.kind} data-channel={row.channel} data-own={row.own || undefined}>
+              <span className="phone-reach-kind">
+                {row.label}
+                {row.note ? <span>{row.note}</span> : null}
+              </span>
               <MxRadio
                 label={row.label}
                 value={row.channel}
                 onChange={(next) => choose(row.kind, next as ReachChannel)}
-                options={CHANNELS.map((channel) => ({ value: channel.value, label: <span className="phone-reach-word">{channel.word}</span> }))}
+                options={CHANNELS.map((channel) => ({
+                  value: channel.value,
+                  label: <span className="phone-reach-word">{channel.word}</span>,
+                }))}
               />
             </div>
           ))}
         </div>
         <div className="phone-reach-foot">
-          <span data-testid="phone-reach-level">
-            {Object.keys(own).length ? `Your choices over Control: ${level}` : `Set by Control: ${level}`}
-          </span>
+          <span data-testid="phone-reach-level">{Object.keys(own).length ? `Your choices over Control: ${level}` : `Set by Control: ${level}`}</span>
           {Object.keys(own).length ? (
             <Button variant="ghost" dense loading={busy === "reach-reset"} onClick={followLevel} data-testid="phone-reach-reset">
               Use the {level} set
@@ -309,12 +479,16 @@ export function ReachYouRows({ reach, level: levelKey, onChanged }: {
 }
 
 export function PhoneSettingsPane() {
+  const [tab, setTab] = useState("phones");
   const phone = usePhone(true, false);
   const status = phone.status;
   const [pairing, setPairing] = useState<PhonePairing | null>(null);
   const [pairedAt, setPairedAt] = useState(0);
   const [busy, setBusy] = useState("");
-  const [refusal, setRefusal] = useState<{ words: string; title: string } | null>(null);
+  const [refusal, setRefusal] = useState<{
+    words: string;
+    title: string;
+  } | null>(null);
   const [now, setNow] = useState(() => Date.now());
 
   const paired = (status?.devices ?? []).filter((device) => device.state === "paired");
@@ -331,76 +505,159 @@ export function PhoneSettingsPane() {
   const run = async (key: string, act: () => Promise<void>, failed: (cause: unknown) => { words: string; title: string }) => {
     setBusy(key);
     setRefusal(null);
-    try { await act(); } catch (error) {
+    try {
+      await act();
+    } catch (error) {
       setRefusal(failed(error));
-    } finally { setBusy(""); }
+    } finally {
+      setBusy("");
+    }
   };
-  const pair = () => void run("pair", async () => {
-    setPairedAt(paired.length);
-    setNow(Date.now());
-    setPairing(await startPairing());
-  }, (cause) => plainFail("No pairing code", cause, "Nothing changed", "Try again"));
-  const remove = (id: string) => void run(`remove-${id}`, async () => {
-    await removePhoneDevice(id);
-    await phone.reload();
-  }, (cause) => plainFail("The phone was not removed", cause, "It stays paired", "Try again"));
+  const pair = () =>
+    void run(
+      "pair",
+      async () => {
+        setPairedAt(paired.length);
+        setNow(Date.now());
+        setPairing(await startPairing());
+      },
+      (cause) => plainFail("No pairing code", cause, "Nothing changed", "Try again"),
+    );
+  const remove = (id: string) =>
+    void run(
+      `remove-${id}`,
+      async () => {
+        await removePhoneDevice(id);
+        await phone.reload();
+      },
+      (cause) => plainFail("The phone was not removed", cause, "It stays paired", "Try again"),
+    );
 
   return (
-    <div className="phone-settings" data-testid="phone-settings" aria-busy={phone.loading || undefined}>
-      {refusal ? <p className="phone-refusal" role="alert" title={refusal.title} data-testid="phone-settings-refusal">{refusal.words}</p> : null}
-      {!phone.loading && !status ? (
-        <p className="phone-egress" data-testid="phone-off">Phone is off on this desk.</p>
+    <div className="surface-preference-pane" data-testid="phone-settings" aria-busy={phone.loading || undefined}>
+      {refusal ? (
+        <p className="phone-refusal" role="alert" title={refusal.title} data-testid="phone-settings-refusal">
+          {refusal.words}
+        </p>
       ) : null}
-      <GadgetGroup material="inset" label="Your phone">
-        <div data-testid="phone-devices">
-          {paired.map((device) => (
-            <Row key={device.id} testId="phone-device-row"
-              name={<><span className="phone-handset" aria-hidden="true"><i /></span>{device.name}</>}
-              fact={pushNotReady(device)
-                ? <DotWord tone="warn" data-testid="phone-device-push" title={deviceFact(device)}>{pushNotReady(device)}</DotWord>
-                : <DotWord tone="ok">{deviceFact(device) || stateWords("PAIRED")}</DotWord>}
-              verb={<Button dense variant="secondary" loading={busy === `remove-${device.id}`} onClick={() => remove(device.id)}
-                data-testid="phone-device-remove">Remove</Button>} />
-          ))}
-          {pairing ? (
-            <>
-              <Row name={paired.length ? "Another phone" : "No phone paired"}
-                fact={<DotWord tone="info">{stateWords("PAIRING")}</DotWord>}
-                verb={<Button dense variant="secondary" onClick={() => setPairing(null)} data-testid="phone-pair-cancel">Cancel</Button>} />
-              <PairSheet pairing={pairing} now={now} busy={busy === "pair"} onNew={pair} />
-            </>
-          ) : (
-            <Row testId="phone-pair-row" name={paired.length ? "Another phone" : "No phone paired"}
-              verb={<Button dense variant={paired.length ? "secondary" : "primary"} loading={busy === "pair"} disabled={!status}
-                onClick={pair} data-testid="phone-pair">Pair a phone</Button>} />
-          )}
+      {!phone.loading && !status ? (
+        <p className="phone-egress" data-testid="phone-off">
+          Phone is off on this desk.
+        </p>
+      ) : null}
+      <SegmentedTabs
+        label="Phone"
+        value={tab}
+        onChange={setTab}
+        tabs={[
+          { id: "phones", label: "Phones" },
+          { id: "push", label: "Push" },
+          { id: "rules", label: "Rules" },
+        ]}
+      >
+        <div className="surface-tab-panel" hidden={tab !== "phones"}>
+          <GadgetGroup label="Your phone">
+            <div data-testid="phone-devices">
+              <ListView
+                label="Paired phones"
+                rows={paired.map((device) => ({
+                  id: device.id,
+                  kind: "phone",
+                  name: device.name,
+                  cells: {
+                    needs: pushNotReady(device) ? (
+                      <DotWord tone="warn" data-testid="phone-device-push" title={deviceFact(device)}>
+                        {pushNotReady(device)}
+                      </DotWord>
+                    ) : (
+                      ""
+                    ),
+                  },
+                }))}
+                rowProps={() => ({ "data-testid": "phone-device-row" })}
+                columns={[
+                  { key: "name", word: "Phone" },
+                  { key: "needs", word: "Needs you" },
+                ]}
+                verbs={[
+                  {
+                    id: "remove",
+                    label: "Remove phone",
+                    symbol: "−",
+                    enabled: (row) => Boolean(row) && !busy,
+                    run: (row) => remove(row!.id),
+                  },
+                ]}
+              />
+              {pairing ? (
+                <>
+                  <Row
+                    name={paired.length ? "Another phone" : "No phone paired"}
+                    fact={<DotWord tone="info">{stateWords("PAIRING")}</DotWord>}
+                    verb={
+                      <Button dense variant="secondary" onClick={() => setPairing(null)} data-testid="phone-pair-cancel">
+                        Cancel
+                      </Button>
+                    }
+                  />
+                  <PairSheet pairing={pairing} now={now} busy={busy === "pair"} onNew={pair} />
+                </>
+              ) : (
+                <Row
+                  testId="phone-pair-row"
+                  name={paired.length ? "Another phone" : "No phone paired"}
+                  verb={
+                    <Button dense variant={paired.length ? "secondary" : "primary"} loading={busy === "pair"} disabled={!status} onClick={pair} data-testid="phone-pair">
+                      Pair a phone
+                    </Button>
+                  }
+                />
+              )}
+            </div>
+          </GadgetGroup>
         </div>
-      </GadgetGroup>
-      {status ? <PushGroup devices={paired} onChanged={() => void phone.reload()} /> : null}
-      {/* PG-DIRECTION DIR6 (ruled 2026-10-31): Reach you moved to Settings ▸ Reach. */}
-      <GadgetGroup material="inset" label="Reach you">
-        <Row testId="phone-reach-moved" name="When the desk reaches you"
-          verb={<Button dense variant="secondary" onClick={() => openSurfaceOr("configure-settings", "/settings", "reach")}
-            data-testid="phone-reach-open">Open Reach</Button>} />
-      </GadgetGroup>
-      <GadgetGroup material="inset" label="Quiet hours">
-        <Row testId="phone-quiet"
-          name={quietWords(status?.quiet_hours) || "22:00 to 08:00"}
-          fact={status?.quiet_hours?.now ? "Quiet now. Messages wait. Only urgent calls ring." : "Messages wait. Only urgent calls ring."}
-          verb={<Button dense variant="secondary" onClick={() => openSurfaceOr("configure-settings", "/settings", "rhythm")}
-            data-testid="phone-quiet-rhythm">Change in Reach</Button>} />
-        <Row testId="phone-urgent"
-          name="Urgent calls ring through Do Not Disturb"
-          fact={status?.urgent_dnd ? "A security or data-loss call rings through" : "Until Apple allows it, an urgent call rings once more after 1 min"}
-          verb={<CheckGadget label={status?.urgent_dnd ? "On" : "Off"} checked={Boolean(status?.urgent_dnd)} disabled onChange={() => undefined} />} />
-      </GadgetGroup>
-      <GadgetGroup material="inset" label="The number">
-        <Row testId="phone-number"
-          name="Your number"
-          fact={<DotWord tone={status?.line?.ready ? "ok" : "idle"}>{status?.line?.words || "Not set in Settings ▸ Calls"}</DotWord>}
-          verb={null} />
-      </GadgetGroup>
-      <p className="phone-egress" data-testid="phone-egress">{PHONE_EGRESS_SENTENCE}</p>
+        <div className="surface-tab-panel" hidden={tab !== "push"}>
+          {status ? <PushGroup devices={paired} onChanged={() => void phone.reload()} /> : null}
+        </div>
+        <div className="surface-tab-panel" hidden={tab !== "rules"}>
+          {/* PG-DIRECTION DIR6 (ruled 2026-10-31): Reach you moved to Settings ▸ Reach. */}
+          <GadgetGroup material="inset" label="Reach you">
+            <Row
+              testId="phone-reach-moved"
+              name="When the desk reaches you"
+              verb={
+                <Button dense variant="secondary" onClick={() => openSurfaceOr("configure-settings", "/settings", "reach")} data-testid="phone-reach-open">
+                  Open Reach
+                </Button>
+              }
+            />
+          </GadgetGroup>
+          <GadgetGroup material="inset" label="Quiet hours">
+            <Row
+              testId="phone-quiet"
+              name={quietWords(status?.quiet_hours) || "22:00 to 08:00"}
+              fact={status?.quiet_hours?.now ? "Quiet now. Messages wait. Only urgent calls ring." : "Messages wait. Only urgent calls ring."}
+              verb={
+                <Button dense variant="secondary" onClick={() => openSurfaceOr("configure-settings", "/settings", "rhythm")} data-testid="phone-quiet-rhythm">
+                  Change in Reach
+                </Button>
+              }
+            />
+            <Row
+              testId="phone-urgent"
+              name="Urgent calls ring through Do Not Disturb"
+              fact={status?.urgent_dnd ? "A security or data-loss call rings through" : "Until Apple allows it, an urgent call rings once more after 1 min"}
+              verb={<CheckGadget label={status?.urgent_dnd ? "On" : "Off"} checked={Boolean(status?.urgent_dnd)} disabled onChange={() => undefined} />}
+            />
+          </GadgetGroup>
+          <GadgetGroup material="inset" label="The number">
+            <Row testId="phone-number" name="Your number" fact={<DotWord tone={status?.line?.ready ? "ok" : "idle"}>{status?.line?.words || "Not set in Settings ▸ Calls"}</DotWord>} verb={null} />
+          </GadgetGroup>
+        </div>
+      </SegmentedTabs>
+      <p className="phone-egress" data-testid="phone-egress">
+        {PHONE_EGRESS_SENTENCE}
+      </p>
     </div>
   );
 }

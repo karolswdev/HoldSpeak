@@ -1590,3 +1590,14 @@ The Desk sweep reads these properties in its normal fence pass at 1440,
 393, and a saved 900 × 600 window on the 1440 desk. It reads Settings panes
 from the rendered rail and wings from their own controls. The Components
 reference uses these same production species.
+
+
+Preference windows compose `PreferencePane`, captioned `GadgetGroup` rows,
+`PaneGroup` list wells, `SegmentedTabs`, and `PaneInspector`. The host keeps
+the rail, pane, and frame status bar bounded. A long preference collection
+scrolls in its list well. More form groups get tabs. `PreferencePane` passes
+HTML attributes to its root for observed busy state and accessibility.
+Settings uses this grammar for every section; its retired page material is
+parked. Service providers without an account appear in Add account. Device
+keys have their own selection list in This Mac > Keys. Each list declares
+its selection verbs once, with no verb button in a data row.

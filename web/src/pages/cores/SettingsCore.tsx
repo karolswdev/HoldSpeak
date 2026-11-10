@@ -19,16 +19,9 @@ import { OwnerNameGroup, ownerSaveState, useOwnerPreferences } from "./settings/
 import { PrefSection, PrefWindow, clockWord } from "./settings/window";
 import type { ConnectionsFoot } from "./connections";
 import { CallsSettingsPane } from "../../desk/calls/CallsSettings";
-import "./settings/surfaceRepair.css";
-import {
-  SETTINGS_SECTIONS,
-  type SettingsSectionId,
-  PrefStatusBar,
-  SettingsRailGlyph,
-  sectionHealth,
-  type SettingsHubWire,
-} from "./settings/prefs";
-import { SectionMast } from "./settings/native";
+
+import { SETTINGS_SECTIONS, type SettingsSectionId, PrefStatusBar, SettingsRailGlyph, sectionHealth, type SettingsHubWire } from "./settings/prefs";
+
 import { EnginesSection } from "./settings/Engines";
 import { SECTION_ALIASES, SETTINGS_FOCUS_PATHS, settingsPageScope } from "./settings/navigation";
 import { settingsOwnerAdapter, useSettingsWriter, type SettingsChanges, type SettingsWriter } from "./settings/writer";
@@ -44,28 +37,10 @@ import { DeskSection } from "./settings/Desk";
 import { ThisMacSection } from "./settings/ThisMac";
 
 // Every name other modules and tests import from SettingsCore stays here.
-export {
-  mergeSettingsChanges,
-  installSettingsChanges,
-  projectPendingSettingsChanges,
-} from "./settings/writer";
-export {
-  formatLocalClock,
-  calendarSourceIdentity,
-  snapshotEgressChip,
-  calendarSourceEgressChips,
-} from "./settings/Calendar";
+export { mergeSettingsChanges, installSettingsChanges, projectPendingSettingsChanges } from "./settings/writer";
+export { formatLocalClock, calendarSourceIdentity, snapshotEgressChip, calendarSourceEgressChips } from "./settings/Calendar";
 export { settingsScope } from "./settings/navigation";
-export {
-  GRANT_WORDS,
-  PROJECT_GRANT_WORDS,
-  PROJECT_GRANT_PALETTES,
-  DESK_GRANT_PALETTES,
-  GRANT_REFUSAL_TOKEN,
-  GrantReceiptWell,
-  GrantFootReceipt,
-  type GrantAct,
-} from "./settings/grants";
+export { GRANT_WORDS, PROJECT_GRANT_WORDS, PROJECT_GRANT_PALETTES, DESK_GRANT_PALETTES, GRANT_REFUSAL_TOKEN, GrantReceiptWell, GrantFootReceipt, type GrantAct } from "./settings/grants";
 export { RuntimeIdentityModule, hubPlaceWord, type RuntimeIdentityWire } from "./settings/ThisMac";
 export { RemoteAccessModule } from "./settings/RemoteAccess";
 
@@ -112,15 +87,9 @@ function SettingsFace({ hero, scope }: CoreProps) {
     if (!body) return;
     body.scrollTop = 0;
   }, [moduleId]);
-  const integrationSubject =
-    moduleId === "accounts"
-      ? navigation.focus
-      : null;
+  const integrationSubject = moduleId === "accounts" ? navigation.focus : null;
   const resource = useResource<SettingsResponse>("/api/settings", {});
-  const authority = useResource<AuthorityPolicyResponse>(
-    "/api/authority/policy",
-    {},
-  );
+  const authority = useResource<AuthorityPolicyResponse>("/api/authority/policy", {});
   // HS-170-04: the hub wire — one read for all seven module rows' state tokens.
   const hub = useResource<SettingsHubWire>("/api/settings/hub", {
     models: { engines: 0, groupsSet: 0, defaultSet: false },
@@ -150,6 +119,8 @@ function SettingsFace({ hero, scope }: CoreProps) {
    *  embedded sweep again (it reads the same heartbeat). */
   const [heartbeatRevision, setHeartbeatRevision] = useState(0);
   // HS-168-03: connections receipt for the integrations module footer.
+  const [accountsStatus, setAccountsStatus] = useState("");
+  const [engineCount, setEngineCount] = useState(0);
   const [accountAttention, setAccountAttention] = useState<string | null>(null);
   const [connectionsFoot, setConnectionsFoot] = useState<ConnectionsFoot | null>(null);
   const handleConnectionsFooter = useCallback((foot: ConnectionsFoot) => {
@@ -198,7 +169,11 @@ function SettingsFace({ hero, scope }: CoreProps) {
   // Edited, Saving or Not saved, the bar says that word (ownerSaveState), and
   // a success of the general writer cannot acknowledge it. With no You state
   // to say, the bar says the window's last write (Saved counts per window).
-  const receipt = { saving: saving || Boolean(secretChanges.secretBusy), writtenAt, refusal };
+  const receipt = {
+    saving: saving || Boolean(secretChanges.secretBusy),
+    writtenAt,
+    refusal,
+  };
   const ownerSave = moduleId === "you" ? ownerSaveState(ownerPrefs) : undefined;
   const focusHighlight = SETTINGS_FOCUS_PATHS[navigation.focus ?? ""] ?? navigation.focus ?? "";
   // The language (2026-11-11): each rail row says its section's health;
@@ -206,29 +181,65 @@ function SettingsFace({ hero, scope }: CoreProps) {
   // mast (its facts are their own reads).
   const health = sectionHealth(hub.data, String((resource.data as { owner?: { name?: unknown } } | null)?.owner?.name ?? ""));
   const pageSection = (id: SettingsSectionId, label: string, children: ReactNode) => {
-    const section = SETTINGS_SECTIONS.find((entry) => entry.id === id)!;
-    const ownMast = id === "engines" || id === "accounts" || id === "this-mac";
     return (
-      <PrefSection id={id} label={label} hidden={moduleId !== id} quiet={id === "you" || id === "agents"}
-        mast={ownMast ? false : <SectionMast id={id} label={label} sprite={section.sprite} facts={health[id]?.word} />}>{children}</PrefSection>
+      <PrefSection id={id} label={label} hidden={moduleId !== id} mast={false}>
+        {children}
+      </PrefSection>
     );
   };
   const railItems = SETTINGS_SECTIONS.map((section) => ({
     id: section.id,
     label: section.label,
     glyph: <SettingsRailGlyph section={section} />,
-    health: section.id === "accounts" ? accountAttention ? { tone: "brass" as const, word: accountAttention } : undefined : health[section.id],
+    health: section.id === "accounts" ? (accountAttention ? { tone: "brass" as const, word: accountAttention } : undefined) : health[section.id],
   }));
   const settingsPage = (
-    <PrefWindow bounded={moduleId === "accounts" || moduleId === "engines"} items={railItems} selected={moduleId} onSelect={(id) => { setCameFromRail(true); openSection(id); }} paneOpen={paneOpen} onBack={() => { setCameFromRail(false); setPaneOpen(false); }} frameBack holdFrameBack={cameFromRail} testId="settings-page">
-        {refusal && moduleId !== "you" ? <div className="pref-pane-alert"><SurfaceWell><div className="prefs-read-failure" role="alert" data-testid="settings-save-failure"><span>{refusal}</span>{failedChangesRef.current.length ? <Button dense variant="ghost" disabled={saving} onClick={() => void retryFailedChanges()}>Retry</Button> : null}</div></SurfaceWell></div> : null}
-        {pageSection("you", "You", <OwnerNameGroup prefs={ownerPrefs} highlight={focusHighlight} />)}
-        {pageSection("engines", "Engines", moduleId === "engines" ? <EnginesSection /> : null)}
-        {pageSection("speak", "Speak", <SpeakSection b={b} symbolsDraft={symbolsDraft} onRefuse={writer.setRefusal} />)}
-        {pageSection("meetings", "Meetings", <MeetingsSection b={b} hub={hub} focusHighlight={focusHighlight} />)}
-        {pageSection("notices", "Reach", <ReachSection b={b} focusHighlight={focusHighlight} onSaved={stamp} heartbeatRevision={heartbeatRevision} onHeartbeatWrite={() => setHeartbeatRevision((n) => n + 1)} />)}
-        {pageSection("accounts", "Accounts", <AccountsSection
+    <PrefWindow
+      bounded
+      items={railItems}
+      selected={moduleId}
+      onSelect={(id) => {
+        setCameFromRail(true);
+        openSection(id);
+      }}
+      paneOpen={paneOpen}
+      onBack={() => {
+        setCameFromRail(false);
+        setPaneOpen(false);
+      }}
+      frameBack
+      holdFrameBack={cameFromRail}
+      testId="settings-page"
+    >
+      {refusal && moduleId !== "you" ? (
+        <div className="pref-pane-alert">
+          <SurfaceWell>
+            <div className="prefs-read-failure" role="alert" data-testid="settings-save-failure">
+              <span>{refusal}</span>
+              {failedChangesRef.current.length ? (
+                <Button dense variant="ghost" disabled={saving} onClick={() => void retryFailedChanges()}>
+                  Retry
+                </Button>
+              ) : null}
+            </div>
+          </SurfaceWell>
+        </div>
+      ) : null}
+      {pageSection("you", "You", <OwnerNameGroup prefs={ownerPrefs} highlight={focusHighlight} />)}
+      {pageSection("engines", "Engines", moduleId === "engines" ? <EnginesSection onCount={setEngineCount} /> : null)}
+      {pageSection("speak", "Speak", <SpeakSection b={b} symbolsDraft={symbolsDraft} onRefuse={writer.setRefusal} />)}
+      {pageSection("meetings", "Meetings", <MeetingsSection b={b} hub={hub} focusHighlight={focusHighlight} />)}
+      {pageSection(
+        "notices",
+        "Reach",
+        <ReachSection b={b} focusHighlight={focusHighlight} onSaved={stamp} heartbeatRevision={heartbeatRevision} onHeartbeatWrite={() => setHeartbeatRevision((n) => n + 1)} />,
+      )}
+      {pageSection(
+        "accounts",
+        "Accounts",
+        <AccountsSection
           b={b}
+          onStatus={setAccountsStatus}
           secrets={secretChanges}
           cal={cal}
           writer={writer}
@@ -239,49 +250,52 @@ function SettingsFace({ hero, scope }: CoreProps) {
             focusProvider: integrationSubject,
             onCalendarChanged: calendarChanged,
           }}
-        />)}
-        {pageSection("calls", "Calls", moduleId === "calls" ? <CallsSettingsPane highlight={focusHighlight} onSaved={stamp} /> : null)}
-        {pageSection("agents", "Agents", <AgentsSection b={b} focusHighlight={focusHighlight} posture={hub.data.posture} authority={authority} control={control} />)}
-        {pageSection("desk", "Desk", <DeskSection b={b} focusHighlight={focusHighlight} />)}
-        {pageSection("this-mac", "This Mac", <ThisMacSection
+        />,
+      )}
+      {pageSection("calls", "Calls", moduleId === "calls" ? <CallsSettingsPane highlight={focusHighlight} onSaved={stamp} /> : null)}
+      {pageSection("agents", "Agents", <AgentsSection b={b} focusHighlight={focusHighlight} posture={hub.data.posture} authority={authority} control={control} />)}
+      {pageSection("desk", "Desk", <DeskSection b={b} focusHighlight={focusHighlight} />)}
+      {pageSection(
+        "this-mac",
+        "This Mac",
+        <ThisMacSection
           b={b}
           hubSystem={hub.data.system}
+          secrets={secretChanges}
           grantAct={grantAct}
           receiptOpen={grantReceiptOpen}
-          onGrantAct={(act) => { setGrantAct(act); setGrantReceiptOpen(false); }}
+          onGrantAct={(act) => {
+            setGrantAct(act);
+            setGrantReceiptOpen(false);
+          }}
           focusHighlight={focusHighlight}
-        />)}
+        />,
+      )}
     </PrefWindow>
   );
   return (
     <>
       {hero ? hero(null) : null}
       <div ref={contentRef} className="settings-content settings-page-content" data-settings-view={moduleId || "page"}>
-      <SurfaceState
-        loading={resource.loading}
-        error={resource.error}
-        onRetry={() => void resource.reload()}
-      >
-        <SurfaceState loading={hub.loading} error={hub.error} onRetry={() => void hub.reload()}>
-          {settingsPage}
+        <SurfaceState loading={resource.loading} error={resource.error} onRetry={() => void resource.reload()}>
+          <SurfaceState loading={hub.loading} error={hub.error} onRetry={() => void hub.reload()}>
+            {settingsPage}
+          </SurfaceState>
         </SurfaceState>
-      </SurfaceState>
       </div>
       <PrefStatusBar
         receipt={receipt}
         save={ownerSave ?? undefined}
         failureTestId={moduleId === "you" ? undefined : null}
-        onRetry={moduleId === "you"
-          ? (ownerPrefs.state === "Not saved" ? () => void ownerPrefs.owner.flush() : undefined)
-          : (failedChangesRef.current.length ? () => void retryFailedChanges() : undefined)}
+        onRetry={
+          moduleId === "you" ? (ownerPrefs.state === "Not saved" ? () => void ownerPrefs.owner.flush() : undefined) : failedChangesRef.current.length ? () => void retryFailedChanges() : undefined
+        }
+        facts={[
+          moduleId === "engines" && engineCount ? `${engineCount} engine${engineCount === 1 ? "" : "s"}` : moduleId === "accounts" && accountsStatus ? accountsStatus : <span aria-hidden="true" />,
+          moduleId === "accounts" ? accountAttention : null,
+        ]}
         idleReceipt={undefined}
-        grantReceipt={grantAct ? (
-          <GrantFootReceipt
-            act={grantAct}
-            open={grantReceiptOpen}
-            onToggle={() => setGrantReceiptOpen((open) => !open)}
-          />
-        ) : null}
+        grantReceipt={grantAct ? <GrantFootReceipt act={grantAct} open={grantReceiptOpen} onToggle={() => setGrantReceiptOpen((open) => !open)} /> : null}
         /* W6-A (atlas pass 3, defect 1): the bar says Saved only for a
            write made in this window. The settings file's own mtime
            (hub.writtenAt) is any writer's, so at open the bar was

@@ -10,7 +10,6 @@ import { MeaningSearchRow } from "../concierge/MeaningSearchRow";
 import { ListView } from "../../desk/surface/objects/ListView";
 import { speechStateWord, licenceWords, useSpeechModels } from "./PhoneSpeech";
 import { SpeechSetup, useSpeechSetup } from "../../desk/firstrun/SpeechSetup";
-import { SettingsLedger, SettingLine } from "../../pages/cores/settings/native";
 import { agentChip, costTokens, enginePlace, hostLabel, checkedWords, limitNoticeWords, type BoardEngine } from "./model";
 import { stateWord } from "./stateWord";
 import type { RunsOnController, AddKind } from "./useRunsOn";

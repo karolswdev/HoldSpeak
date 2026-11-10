@@ -40,9 +40,9 @@ launched coding agent.
 
 ## Configure it
 
-Open **Settings > Speak** and unfold **More**. The **Pipeline** group holds
+Open **Settings > Speak > Pipeline**. This tab holds
 **Stages**, **Latency budget**, **Rewrite passes**, **LLM target detect**, and
-**Detect below**. Choose the dictation model in **HoldSpeak > Engines**. See
+**Detect below**. Choose the dictation model in **Settings > Engines**. See
 the [Dictation Pipeline Guide](./DICTATION_PIPELINE_GUIDE.md).
 
 For a headless setup, edit `~/.config/holdspeak/config.json`:
@@ -61,7 +61,7 @@ For a headless setup, edit `~/.config/holdspeak/config.json`:
 ```
 
 The endpoint and model are not dictation config keys. Assign them in
-**HoldSpeak > Engines**. See [Models](./MODELS.md).
+**Settings > Engines**. See [Models](./MODELS.md).
 
 Use the Dictation face to select stages and the output target. The relevant API
 surfaces are:

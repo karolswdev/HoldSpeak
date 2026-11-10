@@ -1,7 +1,7 @@
 // Settings > Accounts: connections, calendar, destinations and credentials. Moved out of SettingsCore.tsx.
 import { Button } from "../../../components/signal/Signal";
-import { PreferencePane, SegmentedTabs, PaneInspector, PaneActions } from "../../../desk/surface";
-import { useState } from "react";
+import { PreferencePane, SegmentedTabs, PaneInspector, PaneActions, ListView } from "../../../desk/surface";
+import { useEffect, useState } from "react";
 import type { SecretState } from "../core-types";
 import { apiFetch, readableError } from "../../../lib/api";
 import { FoldGadget, GadgetGroup, SecretRow } from "../../../desk/surface/gadgets";
@@ -20,21 +20,13 @@ const SECRET_LABELS: Record<string, string> = {
   failure_webhook_credential: "Failure alert credential",
   companion_webhook_url: "Custom webhook",
 };
-const ROTATABLE_SECRETS = new Set([
-  "web_token",
-  "device_psk",
-  "telegram_pairing_code",
-]);
+const ROTATABLE_SECRETS = new Set(["web_token", "device_psk", "telegram_pairing_code"]);
 
 /** A credential's Replace, Rotate and Delete. The face holds the busy id
  *  (the status bar says Saving while one is in flight). */
 export function useSecretChanges(writer: SettingsWriter, onWritten: () => void) {
   const [secretBusy, setSecretBusy] = useState("");
-  const changeSecret = async (
-    secretId: string,
-    action: "replace" | "rotate" | "delete",
-    value?: string,
-  ) => {
+  const changeSecret = async (secretId: string, action: "replace" | "rotate" | "delete", value?: string) => {
     setSecretBusy(secretId);
     writer.restoreRefusal();
     try {
@@ -65,27 +57,109 @@ export function useSecretChanges(writer: SettingsWriter, onWritten: () => void) 
 
 export type SecretChanges = ReturnType<typeof useSecretChanges>;
 
+/** Hub-wide keys belong to This Mac, separate from service accounts. */
+export function CredentialsGroup({ b, secrets }: { b: SettingsBindings; secrets: SecretChanges }) {
+  const rows = Object.entries((b.data._secrets ?? {}) as Record<string, SecretState>).filter(([id]) => !id.startsWith("telegram_"));
+  const [picked, pick] = useState<string | null>(null);
+  const [editing, edit] = useState<string | null>(null);
+  const state = rows.find(([id]) => id === editing)?.[1];
+  return state && editing ? (
+    <PaneInspector label={SECRET_LABELS[editing] ?? title(editing)} onClose={() => edit(null)}>
+      <GadgetGroup>
+        <SecretRow
+          label={SECRET_LABELS[editing] ?? title(editing)}
+          configured={Boolean(state.configured)}
+          destination={state.destination}
+          busy={secrets.secretBusy === editing}
+          rotatable={ROTATABLE_SECRETS.has(editing)}
+          onReplace={(value) => void secrets.changeSecret(editing, "replace", value)}
+          onRotate={() => void secrets.changeSecret(editing, "rotate")}
+          onDelete={() => void secrets.changeSecret(editing, "delete")}
+        />
+      </GadgetGroup>
+    </PaneInspector>
+  ) : (
+    <ListView
+      label="Device credentials"
+      rows={rows.map(([id, state]) => ({
+        id,
+        kind: "credential",
+        name: SECRET_LABELS[id] ?? title(id),
+        cells: { place: state.configured ? "Stored" : "Not set" },
+      }))}
+      columns={[
+        { key: "name", word: "Credential", track: "minmax(0, 2fr)" },
+        { key: "place", word: "State" },
+      ]}
+      selectedId={picked}
+      onSelect={pick}
+      verbs={[
+        {
+          id: "edit",
+          label: "Edit…",
+          key: "Enter",
+          enabled: (row) => Boolean(row),
+          run: (row) => edit(row!.id),
+        },
+      ]}
+      defaultVerb="edit"
+    />
+  );
+}
+
 /** Accounts are three list panes; secrets keep their separate inspector. */
-export function AccountsSection({ b, secrets: secretChanges, cal, writer, connections }: {
-  b: SettingsBindings; secrets: SecretChanges; cal: CalendarSources; writer: SettingsWriter;
-  connections: { onFooterUpdate: (foot: ConnectionsFoot) => void; onOpenModule: (id: string) => void; focusProvider: string | null | undefined; onAttention?: (reason: string | null) => void; onCalendarChanged: () => Promise<void> };
+export function AccountsSection({
+  b,
+  secrets: secretChanges,
+  cal,
+  writer,
+  connections,
+  onStatus,
+}: {
+  onStatus?: (fact: string) => void;
+  b: SettingsBindings;
+  secrets: SecretChanges;
+  cal: CalendarSources;
+  writer: SettingsWriter;
+  connections: {
+    onFooterUpdate: (foot: ConnectionsFoot) => void;
+    onOpenModule: (id: string) => void;
+    focusProvider: string | null | undefined;
+    onAttention?: (reason: string | null) => void;
+    onCalendarChanged: () => Promise<void>;
+  };
 }) {
   const [tab, setTab] = useState(connections.focusProvider === "calendar" ? "calendars" : "services");
-  const [credentials, showCredentials] = useState(false);
-  const secretRows = Object.entries((b.data._secrets ?? {}) as Record<string, SecretState>).filter(([id]) => !id.startsWith("telegram_"));
-  return <PreferencePane label="Accounts" testId="settings-accounts">
-    <SegmentedTabs label="Accounts" value={tab} onChange={(id) => { setTab(id); showCredentials(false); }} tabs={[
-      { id: "services", label: "Services" }, { id: "calendars", label: "Calendars" }, { id: "destinations", label: "Send to" },
-    ]}>
-      <div className="surface-tab-panel" hidden={tab !== "services"}>
-        {credentials ? <PaneInspector label="Credentials" onClose={() => showCredentials(false)}><GadgetGroup>{secretRows.map(([id, state]) => <SecretRow key={id}
-          label={SECRET_LABELS[id] ?? title(id)} configured={Boolean(state.configured)} destination={state.destination}
-          busy={secretChanges.secretBusy === id} rotatable={ROTATABLE_SECRETS.has(id)}
-          onReplace={(value) => void secretChanges.changeSecret(id, "replace", value)} onRotate={() => void secretChanges.changeSecret(id, "rotate")} onDelete={() => void secretChanges.changeSecret(id, "delete")} />)}</GadgetGroup></PaneInspector>
-        : <><ConnectionsPane {...connections} extraVerbs={[{ id: "credentials", label: "Credentials…", run: () => showCredentials(true) }]} /></>}
-      </div>
-      <div className="surface-tab-panel" hidden={tab !== "calendars"}><CalendarSection b={b} cal={cal} commitMany={writer.commitMany} onRefuse={writer.setRefusal} beforeChange={writer.beforeCalendarChange} onChanged={connections.onCalendarChanged} /></div>
-      <div className="surface-tab-panel" hidden={tab !== "destinations"}><Destinations /></div>
-    </SegmentedTabs>
-  </PreferencePane>;
+  const [services, setServices] = useState(0);
+  const [destinations, setDestinations] = useState(0);
+  const calendars = ((b.data.calendar as { sources?: unknown[] })?.sources ?? []).length;
+  const count = tab === "services" ? services : tab === "calendars" ? calendars : destinations;
+  const noun = tab === "services" ? "account" : tab === "calendars" ? "calendar" : "destination";
+  useEffect(() => {
+    onStatus?.(count ? `${count} ${noun}${count === 1 ? "" : "s"}` : "");
+  }, [count, noun, onStatus]);
+  return (
+    <PreferencePane label="Accounts" testId="settings-accounts">
+      <SegmentedTabs
+        label="Accounts"
+        value={tab}
+        onChange={setTab}
+        tabs={[
+          { id: "services", label: "Services" },
+          { id: "calendars", label: "Calendars" },
+          { id: "destinations", label: "Send to" },
+        ]}
+      >
+        <div className="surface-tab-panel" hidden={tab !== "services"}>
+          <ConnectionsPane {...connections} onCount={setServices} />
+        </div>
+        <div className="surface-tab-panel" hidden={tab !== "calendars"}>
+          <CalendarSection b={b} cal={cal} commitMany={writer.commitMany} onRefuse={writer.setRefusal} beforeChange={writer.beforeCalendarChange} onChanged={connections.onCalendarChanged} />
+        </div>
+        <div className="surface-tab-panel" hidden={tab !== "destinations"}>
+          <Destinations onCount={setDestinations} />
+        </div>
+      </SegmentedTabs>
+    </PreferencePane>
+  );
 }
