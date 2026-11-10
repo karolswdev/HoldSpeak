@@ -272,7 +272,6 @@ def test_engines_pane_chain_editor_library_and_old_link(
             page.get_by_role("button", name="Edit Everything else", exact=True).click()
             editor = page.get_by_test_id("settings-engines-editor")
             expect(editor).to_contain_text("Codex, then Gemini CLI")
-            editor.scroll_into_view_if_needed()
             page.screenshot(path=str(shots / f"editor-{width}.png"))
             with page.expect_request(lambda request: request.url.endswith("/api/concierge/probe") and request.method == "POST") as probe:
                 editor.get_by_role("button", name="Try it", exact=True).click()
@@ -286,7 +285,9 @@ def test_engines_pane_chain_editor_library_and_old_link(
             page.get_by_test_id("settings-engines-library-open").click()
             library = page.get_by_test_id("settings-engines-library")
             expect(library.get_by_test_id("settings-engine-agent-codex")).to_be_visible()
-            library.scroll_into_view_if_needed()
+            expect(library.get_by_test_id("runson-phone-speech")).to_be_visible()
+            expect(library.get_by_test_id("concierge-meaning-search")).to_be_visible()
+            _settle(page)
             page.screenshot(path=str(shots / f"library-{width}.png"))
             library.get_by_test_id("concierge-add-engine").click()
             library.get_by_test_id("runson-kind-lan").click()

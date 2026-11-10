@@ -398,7 +398,8 @@ export function EngineLibrary({ ctrl }: { ctrl: RunsOnController }) {
       </div>
     </SettingLine>;
   }
-  return <div className="engines-library" data-testid="settings-engines-library">
+  return <div className="engines-library" data-testid="settings-engines-library"
+    aria-busy={models.reading || speech.ai.read.kind === "loading" || undefined}>
     {ctrl.detectionFailed ? <div className="engines-verbs" role="alert">Engine checks failed<Button onClick={ctrl.readAgain}>Retry</Button></div> : null}
     <div className="engines-verbs">
       <Button variant="primary" aria-expanded={ctrl.add.open} data-testid="concierge-add-engine"
