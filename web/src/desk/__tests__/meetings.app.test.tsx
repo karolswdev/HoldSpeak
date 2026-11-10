@@ -300,7 +300,7 @@ describe("the meeting after a run (HS-172 seed)", () => {
     render(<Shell><HistoryCore /></Shell>);
     const row = await screen.findByTestId("meeting-row-m-ran");
     const token = within(row).getByTestId("state-token").textContent ?? "";
-    expect(token.includes("tasks to confirm")).toBe(true);
+    expect(token).toBe("Tasks to confirm");
     const body = document.body.textContent ?? "";
     expect(body).not.toContain("0 NEEDS");
     expect(body).not.toContain("LOCAL");
@@ -1025,5 +1025,45 @@ describe("Records selection and recovery", () => {
     fireEvent.click(within(receipt).getByRole("button", { name: /Restore/ }));
     await waitFor(() => expect(calls.some((call) => call.path === "/api/meetings/m-saved-clean/restore" && call.init?.method === "POST")).toBe(true));
     expect(calls.filter((call) => call.init?.method === "DELETE")).toHaveLength(2);
+  });
+});
+
+describe("Records tasks to confirm", () => {
+  it("reads proposed tasks in a selection list and keeps a failed edit", async () => {
+    const calls = hub(hs172 as Fixture);
+    const base = vi.mocked(apiFetch).getMockImplementation()!;
+    vi.mocked(apiFetch).mockImplementation((path, init) => String(path).endsWith("/edit")
+      ? Promise.reject(new Error("Hub unavailable")) : base(path, init));
+    render(<Shell><HistoryCore /></Shell>);
+    fireEvent.click(await screen.findByTestId("meeting-row-m-ran"));
+    fireEvent.click(screen.getByRole("tab", { name: "Tasks to confirm" }));
+    const proposal = hs172["/api/meetings/m-ran/follow-through-proposals"].proposals.find((row) => row.kind === "action")!;
+    const row = await screen.findByTestId(`meeting-task-${proposal.id}`);
+    expect(within(row).queryByRole("button")).toBeNull();
+    fireEvent.click(row);
+    const bar = screen.getByRole("toolbar", { name: "Tasks to confirm actions" });
+    expect(within(bar).getByRole("button", { name: "Confirm" })).toBeEnabled();
+    fireEvent.click(within(bar).getByRole("button", { name: "Edit" }));
+    const task = screen.getByRole("textbox", { name: "Task" });
+    fireEvent.change(task, { target: { value: "Keep this task edit" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Not saved");
+    expect(task).toHaveValue("Keep this task edit");
+    expect(calls.some((call) => call.path.endsWith("/confirm"))).toBe(false);
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(screen.queryByRole("textbox", { name: "Task" })).toBeNull();
+    expect(screen.getByTestId(`meeting-task-${proposal.id}`)).toHaveTextContent(proposal.text);
+  });
+
+  it("withholds Send to… until the selected record has a saved summary", async () => {
+    hub(hs170 as Fixture);
+    render(<Shell><HistoryCore /></Shell>);
+    const bar = await screen.findByRole("toolbar", { name: "Meetings" });
+    expect(within(bar).getByRole("button", { name: "Send to…" })).toBeDisabled();
+    const row = await screen.findByTestId("meeting-row-m-saved-clean");
+    fireEvent.click(row);
+    expect(within(bar).getByRole("button", { name: "Send to…" })).toBeDisabled();
+    fireEvent.contextMenu(row);
+    expect(within(screen.getByRole("menu", { name: "Meetings actions" })).getByRole("menuitem", { name: "Send to…" })).toBeDisabled();
   });
 });

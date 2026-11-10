@@ -582,7 +582,7 @@ class TestSendGlass:
     def _whole(self, win: str, board: str, *, field: bool = True) -> None:
         """The arrival: the window name, the picked row, the preview's first field and Send, each WHOLE on screen."""
         w = f"[id='{win}']"
-        sels = [".desk-screen-name" if self.phone else f"{w} > .desk-pullout-head .desk-pullout-title",
+        sels = ["[data-testid=desk-screen-title]" if self.phone else f"{w} > .desk-pullout-head .desk-pullout-title",
                 f"{w} li.send-destination-item:has([data-testid=send-open]) .surface-primary"]
         if field:
             sels += [f"{w} [data-testid=send-open] [data-testid=send-preview-field] dd",
@@ -617,7 +617,7 @@ class TestSendGlass:
         """replaces: tests/e2e/test_philo13_15_send_to_glass.py::TestSendToGlass::test_send_to_from_every_document_window
         (the gesture and geometry legs: C5-1 the menu by right click or long press,
         the submenu beside its parent, C5-3 the pick whole in view, 44 x 44 at 393)."""
-        self._session(width, lambda si, folder: self._menu_and_pick(), adjacent=True)
+        self._session(width, lambda si, folder: self._menu_and_pick(folder))
 
     @pytest.mark.e2e
     @pytest.mark.timeout(600)
@@ -630,22 +630,57 @@ class TestSendGlass:
         UPDATE + Retry in the Room's SEND well; Retry (the real read) recovers to the well."""
         self._session(width, lambda si, folder: self._room_second_read_fails(si, folder))
 
-    def _menu_and_pick(self) -> None:
+    def _menu_and_pick(self, folder: Path) -> None:
+        """The Records selection verb opens the existing sheet, then the owner sends."""
+        from playwright.sync_api import expect
+
         page = self.page
-        self._open_ref("meeting:m-standup", MEET)
-        label = self._send_to(MEET)
-        assert label == "Send to", label
-        rows = self._rows()
-        assert "Team updates · File" in rows and "Slack #leads · Slack" in rows, rows
-        self._glass("C5-1")
-        self._shot("C5-1-window-menu-send-to")
-        self._pick("Slack #leads")
-        page.locator(f"[id='{MEET}'] [data-testid=send-open] [data-testid=send-preview]").wait_for(timeout=T)
-        self._wait(900)
+        self._open_surface("review-meetings", None, MEET)
+        win = page.locator(f"[id='{MEET}']")
+        if not self.phone:
+            _api(page, "POST", f"/api/desk/windows/{MEET}/set_geometry", {
+                "rect": {"x": "-1/2 + 100", "y": "-1/2 + 80", "w": "900px", "h": "600px"}}, token=TOKEN)
+        row = win.get_by_test_id("meeting-row-m-standup")
+        row.click()
+        # One declaration supplies the toolbar, right-click and app menu.
+        if self.phone:
+            self._tap(win.get_by_role("button", name="Actions ▾", exact=True))
+            self._tap(page.get_by_role("menu", name="Meetings actions", exact=True).get_by_role("menuitem", name="Send to…", exact=True))
+        else:
+            win.get_by_test_id("meetings-send").click()
+        sheet = win.get_by_test_id("send-sheet")
+        expect(sheet).to_be_visible()
+        expect(win.get_by_test_id("meetings-status")).to_have_count(0)
+        shots = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/os-grammar"
+        shots.mkdir(parents=True, exist_ok=True)
+        size = "393" if self.phone else "900x600"
+        page.screenshot(path=str(shots / f"meetings-send-pick-{size}-after.png"))
+        destination = sheet.get_by_test_id("destination-row").filter(has=page.locator("[data-destination='Team updates']"))
+        destination.locator(".send-destination-chip").click()
+        opened = sheet.locator("[data-testid=send-open][data-destination='Team updates']")
+        expect(opened.get_by_test_id("send-preview")).to_be_visible()
         assert self._db_sends("meeting_summary:m-standup") == []
-        self._whole(MEET, "C5-3")
-        self._glass("C5-3")
-        self._shot("C5-3-picked-preview-in-view")
+        # This is the existing disclosure, at the selected destination.
+        expect(opened.get_by_test_id("send-preview")).to_contain_text("Team updates")
+        send = sheet.get_by_test_id("send-verb")
+        send.scroll_into_view_if_needed()
+        selector = f"[id='{MEET}'] [data-testid=send-sheet] [data-testid=send-verb]"
+        self._probe_send_button(page, selector)
+        page.screenshot(path=str(shots / f"meetings-send-preview-{size}-after.png"))
+        send.click()
+        expect(win.get_by_test_id("send-sent")).to_be_visible(timeout=T)
+        sends = self._db_sends("meeting_summary:m-standup")
+        assert len(sends) == 1 and sends[0]["state"] == "sent", sends
+        path = Path(sends[0]["proof"]["path"])
+        assert path.parent.resolve() == folder.resolve()
+        stored = self.db.channel_sends.get(sends[0]["id"])
+        assert stored is not None and path.read_bytes() == bytes(stored["payload"])
+        self._face_row_receipt(stored, "meeting_summary:m-standup")
+        assert win.evaluate("el => { const body = el.querySelector('.desk-surface-body'); return body.scrollHeight <= body.clientHeight + 1; }")
+        page.screenshot(path=str(shots / f"meetings-send-sent-{size}-after.png"))
+        sheet.get_by_test_id("send-back").click()
+        expect(win.get_by_test_id("meetings-status")).to_be_visible()
+        expect(win.get_by_test_id("send-sheet")).to_have_count(0)
 
     def _session(self, width: int, run: Any, *, adjacent: bool = False) -> None:
         from playwright.sync_api import sync_playwright
