@@ -18,6 +18,8 @@ import connectionsWire from "./fixtures/connections-wire/connections-cold.json";
 import destinationsWire from "./fixtures/destinations-wire/list-empty.json";
 import authorityWire from "./fixtures/settings-wire/authority-policy.json";
 import calendarWire from "./fixtures/settings-wire/calendar-sources.json";
+import calendarCandidateWire from "../../test/wire/onboarding-calendar.wire.json";
+import calendarUseWire from "../../test/wire/onboarding-calendar.use.wire.json";
 import calendarOneWire from "./fixtures/settings-wire/calendar-sources-one.json";
 import hubWire from "./fixtures/settings-wire/hub.json";
 import heartbeatWire from "./fixtures/settings-wire/heartbeat.json";
@@ -262,37 +264,62 @@ describe("Settings › Meetings", () => {
     expect(meetings.querySelector(".prefs-calendar-section")).toBeNull();
     expect(within(meetings as HTMLElement).queryByTestId("calendar-source-src-work")).toBeNull();
     expect(within(meetings as HTMLElement).queryByTestId("calendar-connect-row")).toBeNull();
-    expect(document.querySelectorAll(".prefs-calendar-section")).toHaveLength(1);
+    expect(document.querySelectorAll("[aria-label=Calendars].object-list")).toHaveLength(1);
   });
 
-  it("Accounts holds the calendar: the source row, Add feed and Import image; no zero counter (Betterment setup ST1)", async () => {
-    // replaces: tests/e2e/test_hs175_settings_meetings_glass.py::TestSettingsCalendarSection::test_calendar_section (the source rows, moved to Accounts)
+  it("Accounts has one tick list for calendars and its actions stay outside rows", async () => {
     hub.state.settings.calendar = { ...hub.state.settings.calendar, sources: [{ id: "src-work", label: "WORK", url: "/Users/owner/work.ics", enabled: true }] };
     hub.state.calendar = { ...clone(calendarOneWire), matched_this_week: 1 };
     render(<SettingsCore scope="integrations" />);
+    fireEvent.click(await screen.findByRole("tab", { name: "Calendars" }));
     const row = await screen.findByTestId("calendar-source-src-work");
     expect(within(row).getByText("Calendar feed")).toBeInTheDocument();
-    expect(within(row).queryByText("THIS DEVICE")).toBeNull();
-    fireEvent.click(within(row).getByRole("button", { name: "Edit" }));
-    for (const verb of ["Disable", "Remove"]) expect(within(row.closest(".surface-ledger-row") as HTMLElement).getByRole("button", { name: verb })).toBeInTheDocument();
-    const connect = screen.getByTestId("calendar-connect-row");
-    expect(within(connect).getByRole("button", { name: "Add feed" })).toBeInTheDocument();
-    expect(within(connect).getByRole("button", { name: "Import image" })).toBeInTheDocument();
-    // Accounts' own Calendar row chooses a calendar; no "Add calendar" goes round.
-    expect(within(connect).queryByRole("button", { name: "Add calendar" })).toBeNull();
-    expect(document.querySelector(".prefs-calendar-section")?.textContent ?? "").not.toMatch(/\b0\s+(SOURCE|CALENDAR|EVENT|RECORDING|MATCHED)/i);
-    expect(rawButtons(document.querySelector(".prefs-calendar-section")!)).toEqual([]);
+    expect(within(row).getByRole("checkbox", { name: "Read WORK" })).toBeChecked();
+    expect(row.querySelector("button")).toBeNull();
+    fireEvent.doubleClick(row);
+    expect(screen.getByTestId("calendar-well")).toBeInTheDocument();
   });
 
-  it("Add unfolds the connect well in Accounts: the field names ICS, carries the mic, Cancel and Save", async () => {
-    // replaces: tests/e2e/test_hs175_settings_meetings_glass.py::TestSettingsCalendarSection::test_calendar_well_unfold
+  it("Add feed opens the existing editor with microphone, Cancel and Save", async () => {
     render(<SettingsCore scope="integrations" />);
-    fireEvent.click(await screen.findByTestId("calendar-add-btn"));
+    fireEvent.click(await screen.findByRole("tab", { name: "Calendars" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add calendar" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Add feed" }));
     const well = screen.getByTestId("calendar-well");
     expect(within(well).getByRole("textbox", { name: "Calendar URL or file path" }).getAttribute("placeholder")).toMatch(/ICS|file/);
     expect(well.querySelector(".desk-mic")).not.toBeNull();
     expect(within(well).getByRole("button", { name: "Cancel" })).toBeInTheDocument();
     expect(within(well).getByRole("button", { name: "Save" })).toBeInTheDocument();
+  });
+
+  it("chooses a Mac calendar through the shared selection list and the declared use operation", async () => {
+    const base = hub.fetchStub;
+    const writes: Json[] = [];
+    const candidate = calendarCandidateWire.wire.candidates[0];
+    vi.stubGlobal("fetch", vi.fn(async (input: string, init?: RequestInit) => {
+      const path = new URL(String(input), "http://hub.test").pathname;
+      let answer: unknown;
+      if (path === "/api/onboarding/calendar") answer = calendarCandidateWire.wire;
+      else if (path === "/api/onboarding/calendar/use") {
+        writes.push(JSON.parse(String(init?.body)));
+        hub.state.settings.calendar.sources = [{ id: calendarUseWire.wire.source.id, label: candidate.label, url: candidate.id, enabled: true }];
+        answer = calendarUseWire.wire;
+      } else return base(input, init);
+      return new Response(JSON.stringify(answer), { status: 200, headers: { "content-type": "application/json" } });
+    }));
+    render(<SettingsCore scope="accounts" />);
+    fireEvent.click(await screen.findByRole("tab", { name: "Calendars" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add calendar" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Mac calendars" }));
+    const list = await screen.findByRole("grid", { name: "Available Mac calendars" });
+    const use = within(list).getByRole("button", { name: "Use" });
+    await within(list).findByText("Work");
+    expect(use).toBeDisabled();
+    fireEvent.click(within(list).getByText("Work"));
+    expect(list.querySelector('[data-object-id] button')).toBeNull();
+    fireEvent.click(use);
+    await waitFor(() => expect(writes).toEqual([{ id: candidate.id, label: candidate.label }]));
+    await waitFor(() => expect(within(list).getByText("Read")).toBeInTheDocument());
   });
 
   it("Auto-record stays a link when OFF", async () => {
@@ -435,11 +462,12 @@ describe("Settings repair: ordinary choices and recoverable writes", () => {
     hub.state.settings.calendar = { ...original, sources: [native, feed] };
     hub.state.calendar = { ...clone(calendarOneWire), sources: [{ ...clone(calendarOneWire.sources[0]), id: native.id, label: "", type: "MACOS" }] };
     render(<SettingsCore scope="integrations" />);
+    fireEvent.click(await screen.findByRole("tab", { name: "Calendars" }));
     const row = await screen.findByTestId("calendar-source-native-work");
     expect(row.textContent).toContain("Mac calendar");
     expect(row.textContent).not.toContain("6A0B9E7C");
     expect(row.textContent).not.toContain("ICS");
-    fireEvent.click(within(row).getByRole("button", { name: "Edit" }));
+    fireEvent.doubleClick(row);
     const well = screen.getByTestId("calendar-well");
     expect(within(well).queryByRole("textbox", { name: "Calendar URL or file path" })).toBeNull();
     fireEvent.change(within(well).getByRole("textbox", { name: "Calendar name" }), { target: { value: "Work" } });
@@ -536,8 +564,8 @@ describe("Settings repair: ordinary choices and recoverable writes", () => {
     fireEvent.click(await screen.findByRole("checkbox", { name: "Auto export" }));
     await screen.findByTestId("settings-save-failure", {}, { timeout: 3000 });
     fireEvent.click(screen.getByTestId("settings-index-accounts"));
-    const credentials = screen.getByText("Credentials").closest("details")!;
-    fireEvent.click(within(credentials).getByText("Credentials"));
+    fireEvent.click(screen.getByRole("button", { name: "Credentials…" }));
+    const credentials = screen.getByRole("region", { name: "Credentials" });
     const secret = Array.from(credentials.querySelectorAll(".gadget-secret")).find((row) => row.textContent?.includes("Web pairing token")) as HTMLElement;
     fireEvent.click(within(secret).getByRole("button", { name: "Replace" }));
     const replacement = within(secret).getByLabelText("Replacement Web pairing token");
@@ -1114,23 +1142,15 @@ describe("Settings › Engines: the chain, its readiness and the spend limit", (
     return sent;
   }
 
-  it("an engine that does not answer has a coral plate whose Set up opens its chain here", async () => {
+  it("an engine that does not answer is a state cell; no progress strip, Set up plate or row button", async () => {
     engines({ "/api/concierge/detect": downDetect.wire, "/api/inference/assignments": downRoster.wire }, {
-      "/api/inference/assignments/editor": (body) => {
-        if (body.scope.kind !== "global") throw new Error("Editor not recorded");
-        return { answer: downEditor.wire };
-      },
+      "/api/inference/assignments/editor": () => ({ answer: downEditor.wire }),
     });
     const { container } = render(<SettingsCore scope="engines" />);
-    const plate = await screen.findByTestId("settings-engines-plate");
-    await waitFor(() => expect(plate).toHaveTextContent("Not answering"));
-    expect(plate).toHaveAttribute("data-tone", "coral");
-    expect(screen.getByTestId("settings-mast-engines")).toHaveTextContent("Studio engine");
-    expect(screen.getByTestId("settings-index-engines")).toHaveAttribute("aria-current", "true");
-    fireEvent.click(within(plate).getByRole("button", { name: "Set up" }));
-    expect(screen.getByTestId("settings-engines-editor")).toHaveTextContent("Studio engine");
-    expect(openEngines).not.toHaveBeenCalled();
-    expect(rawButtons(container.querySelector(".settings-page")!)).toEqual([]);
+    await screen.findByText("Not answering");
+    expect(screen.queryByTestId("settings-engines-plate")).toBeNull();
+    expect(screen.queryByTestId("settings-engines-spine")).toBeNull();
+    expect(container.querySelectorAll('[data-settings-section=engines] [role=row] button')).toHaveLength(0);
   });
 
   it("changing the default order writes the chain and renders the acknowledged order in the mast", async () => {
@@ -1147,10 +1167,13 @@ describe("Settings › Engines: the chain, its readiness and the spend limit", (
       },
     });
     render(<SettingsCore scope="models" />);
-    await waitFor(() => expect(screen.getByTestId("settings-mast-engines")).toHaveTextContent("Codex, then Gemini CLI"));
-    fireEvent.click(screen.getByRole("button", { name: "Edit Everything else" }));
-    fireEvent.click(within(screen.getByTestId("settings-engines-editor")).getByRole("button", { name: "Move Gemini CLI up" }));
-    await waitFor(() => expect(screen.getByTestId("settings-mast-engines")).toHaveTextContent("Gemini CLI, then Codex"));
+    const choice = await screen.findByRole("combobox", { name: "Everything else engines" });
+    await waitFor(() => expect(within(choice).getByRole("option", { name: "Codex, then Gemini CLI" })).toBeInTheDocument());
+    expect(sent).toEqual([]);
+    fireEvent.change(choice, { target: { value: "order" } });
+    fireEvent.click(screen.getByText("Gemini CLI"));
+    fireEvent.click(screen.getByRole("button", { name: "Move up" }));
+    await waitFor(() => expect(screen.getByTestId("settings-engines-receipt")).toHaveTextContent("Gemini CLI, then Codex"));
     expect(sent).toHaveLength(1);
     expect(sent[0].body).toMatchObject({ scope: { kind: "global" }, entries: reordered.body!.entries, expected_revision: reordered.body!.expected_revision });
     expect(screen.getByTestId("settings-engines-receipt")).toHaveTextContent("Everything else → Gemini CLI, then Codex");
@@ -1165,33 +1188,29 @@ describe("Settings › Engines: the chain, its readiness and the spend limit", (
     });
     render(<SettingsCore scope="engines" />);
     fireEvent.click(await screen.findByRole("button", { name: "Model library" }));
-    const row = (await screen.findByTestId("settings-engine-agent-claude")).closest(".surface-ledger-row") as HTMLElement;
-    fireEvent.click(within(row).getByRole("button", { name: "Inspect" }));
-    fireEvent.click(within(row).getByRole("button", { name: "Spend limit" }));
-    expect(within(row).getByLabelText("Spend limit per run")).toHaveValue("");
-    fireEvent.change(within(row).getByLabelText("Spend limit per run"), { target: { value: "0.50" } });
-    fireEvent.click(within(row).getByRole("button", { name: "Save" }));
+    const row = await screen.findByTestId("settings-engine-agent-claude");
+    fireEvent.doubleClick(row);
+    const inspector = screen.getByRole("region", { name: "Claude Code" });
+    fireEvent.click(within(inspector).getByRole("button", { name: "Spend limit" }));
+    expect(within(inspector).getByLabelText("Spend limit per run")).toHaveValue("");
+    fireEvent.change(within(inspector).getByLabelText("Spend limit per run"), { target: { value: "0.50" } });
+    fireEvent.click(within(inspector).getByRole("button", { name: "Save" }));
     await waitFor(() => expect(screen.getByTestId("settings-engines-receipt")).toHaveTextContent("Spend limit $0.50 per run"));
-    await within(row).findByRole("button", { name: "No limit" });
-    fireEvent.click(within(row).getByRole("button", { name: "Spend limit" }));
-    fireEvent.click(within(row).getByRole("button", { name: "Spend limit" }));
-    expect(within(row).getByLabelText("Spend limit per run")).toHaveValue("0.50");
+    await within(inspector).findByRole("button", { name: "No limit" });
+    fireEvent.click(within(inspector).getByRole("button", { name: "Spend limit" }));
+    fireEvent.click(within(inspector).getByRole("button", { name: "Spend limit" }));
+    expect(within(inspector).getByLabelText("Spend limit per run")).toHaveValue("0.50");
     expect(sent[0].body.draft).toMatchObject({ preset: "claude", profile_id: "agent-claude", spend_limit_usd: 0.5 });
   });
 });
 
-describe("Settings: the rail says each section's health", () => {
-  it("on the recorded hub: Engines brass, Speak brass, Meetings brass, Reach moss, This Mac only", async () => {
+describe("Settings: the rail has names and attention dots", () => {
+  it("carries reasons in accessible titles, with no status fragments or progress bars", async () => {
     render(<SettingsCore />);
-    await screen.findByTestId("settings-page");
-    const word = (id: string) => screen.getByTestId(`settings-index-${id}-health`);
-    expect(word("engines").textContent).toBe("No engine yet");
-    expect(word("engines")).toHaveAttribute("data-tone", "brass");
-    expect(word("speak").textContent).toBe("Speech not set up");
-    expect(word("meetings").textContent).toBe("No summary engine");
-    expect(word("notices").textContent).toBe("Every 15 min");
-    expect(word("this-mac").textContent).toBe("This Mac only");
-    // No counter of zero: an empty section says Not set.
-    expect(word("accounts").textContent).toBe("Not set");
+    const rail = await screen.findByRole("navigation", { name: "Settings sections" });
+    expect(rail.textContent).not.toMatch(/engine yet|connected|Up to|Every 15|This Mac only/);
+    expect(screen.getByTestId("settings-index-engines-health")).toHaveAttribute("title", "No engine yet");
+    expect(screen.getByTestId("settings-index-engines-health")).toHaveTextContent("");
+    expect(rail.querySelector(".surface-spine")).toBeNull();
   });
 });

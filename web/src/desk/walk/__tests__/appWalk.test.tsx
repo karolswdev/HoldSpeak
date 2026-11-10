@@ -41,6 +41,7 @@ vi.mock("../../../lib/api", async (importOriginal) => {
 });
 
 import { WalkRunner } from "../WalkRunner";
+import { ApplicationMenu } from "../../components/DeskMenuBar";
 import { ShowMe } from "../ShowMe";
 import { forgetAppWalkRecords } from "../appWalks";
 import { Mast } from "../../surface/patterns/Mast";
@@ -115,13 +116,11 @@ describe("An app's own walk", () => {
     const slot = mountDesk();
     render(<WalkRunner />);
     renderMast("surface-programs", slot);
-
-    const showMe = screen.getByTestId("show-me");
+    render(<ApplicationMenu windowId="surface-programs" />);
+    fireEvent.click(screen.getByRole("button", { name: "Programs" }));
+    const showMe = screen.getByRole("menuitem", { name: "Show me" });
     expect(showMe).toHaveTextContent("Show me");
-    expect(showMe).toHaveClass("btn--secondary");
-    // At the end of the mast's verbs.
-    expect(showMe.parentElement).toHaveClass("surface-mast-verbs");
-    expect(showMe.parentElement!.lastElementChild).toBe(showMe);
+    expect(document.querySelector(".surface-mast-verbs")?.textContent ?? "").not.toContain("Show me");
     fireEvent.click(showMe);
 
     // The first press makes the walk record: title and steps, no open.

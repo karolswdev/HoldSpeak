@@ -8,43 +8,29 @@
       "highlight": {
         "target": "settings-rail",
         "thing": "settings list",
-        "words": "All your settings are here, one row for each part."
+        "words": "Choose a part of Settings here. A dot marks a part that needs you."
       }
     },
     {
-      "highlight": {
-        "target": ".settings-mast",
-        "thing": "section head",
-        "words": "This is one part of Settings: its name and its state, in one line."
-      }
-    },
-    {
-      "highlight": {
-        "target": ".settings-plate",
-        "thing": "thing to fix",
-        "words": "This matters now: the one thing in this part that needs you, with its button."
-      }
-    },
-    {
-      "highlight": {
-        "target": ".settings-ledger",
-        "thing": "settings rows",
-        "words": "The other settings of this part, one row each."
+      "open": {
+        "app": "surface-settings",
+        "scope": "accounts"
       },
-      "ask": {
-        "ref": "settings-feel",
-        "question": "Is this how Settings should feel?",
-        "choices": [
-          "Keep",
-          "Redo"
-        ]
+      "highlight": {
+        "target": "settings-accounts",
+        "thing": "accounts",
+        "words": "Services, Calendars and Send to each have one tab. Select a row, then choose an action below it."
       }
     },
     {
+      "open": {
+        "app": "surface-settings",
+        "scope": "engines"
+      },
       "highlight": {
-        "target": "settings-engines-spine",
-        "thing": "engine assignments",
-        "words": "Each job names its engines in order. Edit keeps the chain here. Model library adds an engine."
+        "target": "settings-job-default",
+        "thing": "engine order",
+        "words": "Choose engines in the job row. Set order changes a longer chain. The saved order stays until your press."
       },
       "ask": {
         "ref": "settings-engines",
@@ -53,10 +39,21 @@
           "Clear",
           "Unclear"
         ]
+      }
+    },
+    {
+      "highlight": {
+        "target": "settings-engines",
+        "thing": "engines",
+        "words": "The lower list shows engines on this desk. Plus opens the model library."
       },
-      "open": {
-        "app": "surface-settings",
-        "scope": "engines"
+      "ask": {
+        "ref": "settings-feel",
+        "question": "Is this how Settings should feel?",
+        "choices": [
+          "Keep",
+          "Redo"
+        ]
       }
     }
   ]

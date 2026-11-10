@@ -1,122 +1,91 @@
-// One home for assignments and models. The hub owns every chain and its order.
-import { useEffect, useRef, useState } from "react";
+// The hub owns all chains. Choices write only on an owner press.
+import { useEffect, useState } from "react";
 import { Button } from "../../../components/signal/Signal";
-import { DotWord, Spine, type SpineTone } from "../../../desk/surface";
+import { PreferencePane, PaneGroup, PaneInspector, PaneActions, ListView, CycleGadget, type ListVerb } from "../../../desk/surface";
 import { stateWord } from "../../../features/runson/stateWord";
 import { EngineLibrary } from "../../../features/runson/EngineLibrary";
+import { conciergeProbe } from "../../../features/concierge/api";
 import { useRunsOn } from "../../../features/runson/useRunsOn";
 import { EVERYTHING_ELSE, WHAT_ROWS } from "../../../features/runson/whatRows";
 import type { RowEditor } from "../../../features/runson/api";
-import { SectionMast, SettingLine, SettingsLedger, SettingsPlate } from "./native";
-import "../../../features/runson/engines.css";
-
-type Health = { word: string; tone: SpineTone };
-function health(editor: RowEditor | "failed" | undefined): Health {
-  if (editor === "failed") return { word: "Not read", tone: "coral" };
-  if (!editor) return { word: "Reading", tone: "steel" };
-  if (!editor.effectiveEntries.length) return { word: "Not assigned", tone: "brass" };
-  if (editor.effectiveEntries.some((entry) => entry.readiness !== "ready")) return { word: "Not ready", tone: "brass" };
-  return { word: "Assigned", tone: "moss" };
-}
 
 export function EnginesSection() {
   const ctrl = useRunsOn();
-  const [picked, pick] = useState<string | null>(null);
   const [library, showLibrary] = useState(false);
-  const pane = useRef<HTMLDivElement>(null);
-  const previousView = useRef({ picked, library });
-  useEffect(() => {
-    const previous = previousView.current;
-    if (previous.picked !== picked || previous.library !== library) pane.current?.scrollIntoView?.({ block: "start" });
-    previousView.current = { picked, library };
-  }, [picked, library]);
+  const [picked, pick] = useState<string | null>(null);
+  const [editing, edit] = useState<string | null>(null);
+  const [chainPicked, pickChain] = useState<string | null>(null);
+  const [test, setTest] = useState("");
+  const [testing, setTesting] = useState(false);
   const rosterIn = Boolean(ctrl.roster);
   const engineSet = ctrl.engines.map((e) => `${e.key}:${e.profileRevision}`).join("|");
-  useEffect(() => { if (rosterIn) ctrl.what.reload(); }, [rosterIn, engineSet]); // controller owns refresh after a write
-  const { editors } = ctrl.what;
-  const speech = editors.speech;
-  const speechIds = new Set(speech && speech !== "failed" ? speech.candidates.map((c) => c.profileId) : []);
-  const rowHealth = (id: string): Health => {
-    const editor = editors[id];
-    const base = health(editor);
-    if (editor && editor !== "failed" && editor.effectiveEntries.some((entry) => {
-      const engine = ctrl.engines.find((e) => e.profileId === entry.profile_id);
-      return engine && stateWord(engine.state) === "BROKEN";
-    })) return { word: "Not answering", tone: "coral" };
-    return base;
-  };
-  const nameOf = (id: string, label: string) => ctrl.engines.find((engine) => engine.profileId === id)?.name || label;
-  const chainWords = (editor: RowEditor) => editor.effectiveEntries.map((e) => nameOf(e.profile_id, e.label)).join(", then ");
-  const rowWords = (id: string) => {
-    const row = WHAT_ROWS.find((r) => r.id === id)!;
-    const editor = editors[id];
-    return editor && editor !== "failed" && editor.effectiveEntries.length
-      ? `${row.name} ${["default", "thread", "memory", "dictation", "speech"].includes(row.id) ? "runs" : "run"} on ${chainWords(editor)}` : row.name;
-  };
-  const problem = WHAT_ROWS.find((row) => rowHealth(row.id).tone === "coral")
-    ?? WHAT_ROWS.find((row) => rowHealth(row.id).tone === "brass");
-  const defaultEditor = editors[EVERYTHING_ELSE];
-  const facts = defaultEditor && defaultEditor !== "failed" && defaultEditor.effectiveEntries.length
-    ? chainWords(defaultEditor) : "What HoldSpeak does, wired to what you have";
-  const selected = WHAT_ROWS.find((row) => row.id === picked);
-  const editor = picked ? editors[picked] : undefined;
+  useEffect(() => { if (rosterIn) ctrl.what.reload(); }, [rosterIn, engineSet]);
+  const name = (id: string, label: string) => ctrl.engines.find((engine) => engine.profileId === id)?.name || label;
+  const words = (editor: RowEditor) => editor.effectiveEntries.map((entry) => name(entry.profile_id, entry.label)).join(", then ");
   const reload = () => { ctrl.readAgain(); ctrl.what.reload(); };
-  return <div className="engines-pane" ref={pane}>
-    <SectionMast id="engines" label="Engines" sprite="models" facts={facts}>
-      <Button variant="ghost" disabled={ctrl.busy} onClick={reload}>Check again</Button>
-      <Button variant="secondary" aria-pressed={library} data-testid="settings-engines-library-open"
-        onClick={() => showLibrary(!library)}>{library ? "Assignments" : "Model library"}</Button>
-    </SectionMast>
-    <Spine data-testid="settings-engines-spine" segments={WHAT_ROWS.map((row) => ({ tone: rowHealth(row.id).tone, share: 1 }))} />
-    {ctrl.error ? <SettingsPlate tone="coral" title="Engines not read" testId="settings-engines-plate"
-      verbs={<Button onClick={reload}>Retry</Button>} /> : null}
-    {!library && !ctrl.error && problem ? <SettingsPlate tone={rowHealth(problem.id).tone === "coral" ? "coral" : "brass"}
-      title={problem.name} facts={rowHealth(problem.id).word} testId="settings-engines-plate"
-      verbs={<Button variant="brass" onClick={() => pick(problem.id)}>Set up</Button>} /> : null}
-    {!ctrl.roster && !ctrl.error ? <span role="status">Reading engines…</span> : null}
-    {ctrl.receipt ? <span className="settings-receipt" role={ctrl.receipt.tone === "danger" ? "alert" : "status"}
-      data-tone={ctrl.receipt.tone} data-testid="settings-engines-receipt">{ctrl.receipt.text}</span> : null}
-    {ctrl.canUndo ? <div className="engines-verbs"><Button disabled={ctrl.busy} onClick={() => void ctrl.undo()}>Undo</Button></div> : null}
-    {library ? <EngineLibrary ctrl={ctrl} /> : <>
-      {selected ? <section className="engines-editor" data-testid="settings-engines-editor" aria-label={`${selected.name} engines`}>
-        <div className="engines-editor-head"><h3>{selected.name}</h3><Button variant="ghost" onClick={() => pick(null)}>Close editor</Button></div>
-        {!editor || editor === "failed" ? <><span>{health(editor).word}</span><Button onClick={reload}>Retry</Button></> : <>
-          <span>{rowWords(selected.id)}</span>
-          <ol className="engines-chain">{editor.effectiveEntries.map((entry, index, chain) => {
-            const ids = chain.map((e) => e.profile_id);
-            return <li key={entry.profile_id}><strong>{nameOf(entry.profile_id, entry.label)}</strong><div className="engines-verbs">
-              <Button dense disabled={ctrl.busy || index === 0} aria-label={`Move ${entry.label} up`}
-                onClick={() => { [ids[index - 1], ids[index]] = [ids[index], ids[index - 1]]; void ctrl.what.set(selected.id, ids); }}>Move up</Button>
-              <Button dense disabled={ctrl.busy || index === chain.length - 1} aria-label={`Move ${entry.label} down`}
-                onClick={() => { [ids[index], ids[index + 1]] = [ids[index + 1], ids[index]]; void ctrl.what.set(selected.id, ids); }}>Move down</Button>
-              <Button dense disabled={ctrl.busy} aria-label={`Remove ${entry.label}`}
-                onClick={() => void ctrl.what.set(selected.id, ids.filter((id) => id !== entry.profile_id))}>Remove</Button>
-            </div></li>;
-          })}</ol>
-          {!editor.own && editor.effectiveEntries.length ? <span>Follows the default order</span> : null}
-          {selected.id !== EVERYTHING_ELSE && editor.own ? <Button disabled={ctrl.busy}
-            onClick={() => void ctrl.what.set(selected.id, null)}>{selected.id === "speech" ? "Clear assignment" : "Use default order"}</Button> : null}
-          <div className="engines-verbs" aria-label="Add an engine to the order">
-            {editor.candidates.filter((c) => !editor.effectiveEntries.some((e) => e.profile_id === c.profileId) && (selected.id !== EVERYTHING_ELSE || !speechIds.has(c.profileId))).map((c) =>
-              <Button key={c.profileId} disabled={ctrl.busy} onClick={() => void ctrl.what.set(selected.id,
-                [...editor.effectiveEntries.map((e) => e.profile_id), c.profileId])}>Add {nameOf(c.profileId, c.label)}</Button>)}
-            <Button variant="ghost" onClick={() => showLibrary(true)}>Add a model</Button>
-          </div>
-          {selected.probe && editor.effectiveEntries.length && (selected.id !== EVERYTHING_ELSE || (editors.answers && editors.answers !== "failed" && editors.answers.effective?.inheritedFrom === "global")) ? <Button disabled={ctrl.busy || Boolean(ctrl.trying)}
-            title={`Runs a sample on ${chainWords(editor)}`} onClick={() => void ctrl.what.tryRow(selected.id)}>Try it</Button> : null}
-          {ctrl.results[`what:${selected.id}`] ? <div role="status" className="engines-result">
-            <span>{ctrl.results[`what:${selected.id}`].tokens.join(" · ")}</span>
-            <span>{ctrl.results[`what:${selected.id}`].sampleOutput}</span>
-          </div> : null}
-        </>}
-      </section> : null}
-      <SettingsLedger label="What HoldSpeak does">{WHAT_ROWS.map((row) => {
-        const state = rowHealth(row.id);
-        return <SettingLine key={row.id} label={rowWords(row.id)} testId={`settings-job-${row.id}`}
-          value={<><DotWord tone={state.tone === "moss" ? "ok" : state.tone === "coral" ? "fail" : state.tone === "brass" ? "warn" : "info"}>{state.word}</DotWord><Spine tone={state.tone} /></>}
-          verb={<Button dense variant="secondary" aria-expanded={picked === row.id} aria-label={`Edit ${row.name}`}
-            onClick={() => pick(row.id)}>Edit</Button>} />;
-      })}</SettingsLedger>
+  const job = WHAT_ROWS.find((row) => row.id === editing);
+  const editor = editing ? ctrl.what.editors[editing] : undefined;
+  const chain = editor && editor !== "failed" ? editor.effectiveEntries : [];
+  const chainVerbs: ListVerb[] = [
+    { id: "add", label: "Add engine", symbol: "+", run: () => {}, enabled: () => !ctrl.busy, items: editor && editor !== "failed" ? editor.candidates.filter((candidate) => !chain.some((entry) => entry.profile_id === candidate.profileId)).map((candidate) => ({
+      id: candidate.profileId, label: name(candidate.profileId, candidate.label), run: () => { if (editing) void ctrl.what.set(editing, [...chain.map((entry) => entry.profile_id), candidate.profileId]); },
+    })) : [] },
+    { id: "remove", label: "Remove from order", symbol: "−", key: "Delete", enabled: (row) => Boolean(row) && !ctrl.busy, run: (row) => { if (editing) void ctrl.what.set(editing, chain.filter((entry) => entry.profile_id !== row?.id).map((entry) => entry.profile_id)); } },
+    ...(["up", "down"] as const).map((direction): ListVerb => ({ id: direction, label: direction === "up" ? "Move up" : "Move down", enabled: (row) => {
+      const at = chain.findIndex((entry) => entry.profile_id === row?.id);
+      return !ctrl.busy && at >= 0 && (direction === "up" ? at > 0 : at < chain.length - 1);
+    }, run: (row) => { const ids = chain.map((entry) => entry.profile_id); const at = ids.indexOf(row!.id); const next = at + (direction === "up" ? -1 : 1); [ids[at], ids[next]] = [ids[next], ids[at]]; if (editing) void ctrl.what.set(editing, ids); } })),
+  ];
+  const installed = ctrl.engines.filter((engine) => engine.profileId && !engine.found && engine.kind !== "preset");
+  const engineVerbs: ListVerb[] = [
+    { id: "add", label: "Model library", symbol: "+", run: () => showLibrary(true) },
+    { id: "test", label: "Test", enabled: (row) => Boolean(row) && !testing && Boolean(installed.find((engine) => engine.key === row?.id)?.detectId), run: (row) => {
+      const engine = installed.find((engine) => engine.key === row?.id); if (!engine?.detectId || testing) return;
+      setTesting(true); setTest("Testing…");
+      void conciergeProbe(engine.detectId).then((answer) => setTest(`${engine.name} · ${answer.plainReason || (answer.state === "READY" ? "Ready" : "Not ready")}`))
+        .catch(() => setTest(`${engine.name} · Test failed`)).finally(() => setTesting(false));
+    } },
+    { id: "open", label: "Open", key: "Enter", enabled: (row) => Boolean(row), run: () => showLibrary(true) },
+  ];
+  return <PreferencePane label="Engines" testId="settings-engines">
+    {ctrl.error ? <PaneActions><span role="alert">Engines not read</span><Button onClick={reload}>Retry</Button></PaneActions> : null}
+    {ctrl.receipt ? <PaneActions><span role={ctrl.receipt.tone === "danger" ? "alert" : "status"} data-testid="settings-engines-receipt">{ctrl.receipt.text}</span>{ctrl.canUndo ? <Button dense disabled={ctrl.busy} onClick={() => void ctrl.undo()}>Undo</Button> : null}</PaneActions> : null}
+    {library ? <PaneInspector label="Model library" onClose={() => showLibrary(false)}><EngineLibrary ctrl={ctrl} /></PaneInspector>
+    : job && editor && editor !== "failed" ? <PaneInspector label={`${job.name}: engine order`} onClose={() => edit(null)}>
+      <ListView label="Engine order" ordered rows={chain.map((entry) => ({ id: entry.profile_id, kind: "engine", name: name(entry.profile_id, entry.label) }))} columns={[{ key: "name", word: "Engine, in order" }]}
+        selectedId={chainPicked} onSelect={pickChain} verbs={chainVerbs} />
+      <PaneActions>{job.probe ? <Button dense disabled={ctrl.busy || Boolean(ctrl.trying) || !chain.length} title={`Runs a sample on ${words(editor)}`} onClick={() => void ctrl.what.tryRow(job.id)}>Try it</Button> : null}
+        {job.id !== EVERYTHING_ELSE && editor.own ? <Button dense disabled={ctrl.busy} onClick={() => void ctrl.what.set(job.id, null)}>Same as Everything</Button> : null}</PaneActions>
+      {ctrl.results[`what:${job.id}`] ? <output>{ctrl.results[`what:${job.id}`].tokens.join(" · ")} {ctrl.results[`what:${job.id}`].sampleOutput}</output> : null}
+    </PaneInspector> : <>
+      <PaneGroup label="Each job runs on">
+        <ListView label="Jobs" ordered rows={WHAT_ROWS.map((row) => {
+          const value = ctrl.what.editors[row.id];
+          const current = value && value !== "failed" ? JSON.stringify(value.effectiveEntries.map((entry) => entry.profile_id)) : "";
+          const inherited = value && value !== "failed" && !value.own && row.id !== EVERYTHING_ELSE;
+          const ownValue = inherited ? "inherit" : current;
+          return { id: row.id, kind: "job", name: row.id === EVERYTHING_ELSE ? "Everything" : row.name, cells: {
+            chain: <CycleGadget label={`${row.name} engines`} value={ownValue}
+              disabled={!value || value === "failed" || ctrl.busy}
+              options={value && value !== "failed" ? [
+                ...(row.id !== EVERYTHING_ELSE ? [{ value: "inherit", label: "Same as Everything" }] : []),
+                { value: current, label: words(value) || "No engine" },
+                ...value.candidates.filter((candidate) => JSON.stringify([candidate.profileId]) !== current).map((candidate) => ({ value: JSON.stringify([candidate.profileId]), label: name(candidate.profileId, candidate.label) })),
+                { value: "order", label: "Set order…" },
+              ] : [{ value: "", label: value === "failed" ? "Not read" : "Reading…" }]}
+              onChange={(next) => { if (next === "order") { edit(row.id); pickChain(null); } else if (next !== ownValue) void ctrl.what.set(row.id, next === "inherit" ? null : JSON.parse(next)); }} />,
+          } };
+        })} columns={[{ key: "name", word: "Job", track: "minmax(0, 1fr)" }, { key: "chain", word: "Engines, in order", track: "minmax(0, 1.4fr)" }]}
+          rowProps={(row) => ({ "data-testid": `settings-job-${row.id}` })} />
+      </PaneGroup>
+      <PaneGroup label="Engines on this desk">
+        <ListView label="Engines on this desk" ordered rows={installed.map((engine) => ({ id: engine.key, kind: "engine", name: engine.name,
+          cells: { where: engine.kind === "agent" || engine.kind === "local" ? "This Mac" : engine.host },
+          state: stateWord(engine.state) === "READY" ? undefined : { label: stateWord(engine.state) === "BROKEN" ? "Not answering" : "Not ready", tone: "warn" as const },
+        }))} columns={[{ key: "name", word: "Engine", track: "minmax(0, 1.5fr)" }, { key: "where", word: "Where", track: "minmax(0, 1fr)" }, { key: "state", word: "State", track: "130px" }]}
+          selectedId={picked} onSelect={pick} verbs={engineVerbs} defaultVerb="open" />
+      </PaneGroup>
+      {test ? <output>{test}</output> : null}
     </>}
-  </div>;
+  </PreferencePane>;
 }

@@ -103,7 +103,7 @@ def test_settings_page_order_anchor_and_saved_write(
                 _api(page, "POST", "/api/desk/windows/surface-settings/open", {}, token=TOKEN)
             settings.get_by_test_id("settings-index-engines").click()
             engine_window = page.locator("#surface-settings")
-            engine_window.get_by_test_id("settings-engines-spine").wait_for(timeout=15_000)
+            engine_window.get_by_role("grid", name="Jobs", exact=True).wait_for(timeout=15_000)
             rows = _api(page, "GET", "/api/desk/windows", token=TOKEN)["windows"]
             engine_row = next(row for row in rows if row["id"] == "surface-settings")
             assert engine_row["app"] == "configure-settings", engine_row
@@ -262,34 +262,34 @@ def test_engines_pane_chain_editor_library_and_old_link(
             # /models is an old door to this same Settings pane.
             page.goto(f"{base}/models?token={TOKEN}", wait_until="load")
             row = page.get_by_test_id("settings-job-summaries")
-            expect(row).to_contain_text("Meeting summaries run on Codex, then Gemini CLI", timeout=15_000)
+            expect(row.get_by_role("combobox")).to_have_value("inherit", timeout=15_000)
             assert page.locator("#surface-engines").count() == 0
-            primary = row.locator(".surface-ledger-primary")
-            expect(primary).to_have_css("white-space", "normal")
-            assert primary.evaluate("el => el.scrollWidth <= el.clientWidth + 1 && el.scrollHeight <= el.clientHeight + 1")
+            assert row.locator("button").count() == 0
+            choice = page.get_by_role("combobox", name="Everything else engines", exact=True)
+            expect(choice.locator("option:checked")).to_have_text("Codex, then Gemini CLI")
             _settle(page)
             page.screenshot(path=str(shots / f"assignments-{width}.png"))
-            page.get_by_role("button", name="Edit Everything else", exact=True).click()
-            editor = page.get_by_test_id("settings-engines-editor")
-            expect(editor).to_contain_text("Codex, then Gemini CLI")
+            choice.select_option("order")
+            editor = page.get_by_role("region", name="Everything else: engine order", exact=True)
+            expect(editor).to_contain_text("Codex")
             page.screenshot(path=str(shots / f"editor-{width}.png"))
             with page.expect_request(lambda request: request.url.endswith("/api/concierge/probe") and request.method == "POST") as probe:
                 editor.get_by_role("button", name="Try it", exact=True).click()
             assert probe.value.post_data_json["expectedProfileIds"] == ["agent-codex", "agent-gemini"]
-            expect(editor.locator(".engines-result")).to_contain_text("Completed", timeout=15_000)
-            editor.get_by_role("button", name="Move Gemini CLI up", exact=True).click()
-            expect(row).to_contain_text("Gemini CLI, then Codex")
+            expect(editor.locator("output")).to_contain_text("Completed", timeout=15_000)
+            editor.get_by_text("Gemini CLI", exact=True).click()
+            editor.get_by_role("button", name="Move up", exact=True).click()
+            expect(page.get_by_test_id("settings-engines-receipt")).to_contain_text("Gemini CLI, then Codex")
             roster = _api(page, "GET", "/api/inference/assignments", token=TOKEN)
             global_row = next(item for item in roster["rows"] if item["id"] == "global")
             assert [entry["profile_id"] for entry in global_row["assignment"]["entries"]] == ["agent-gemini", "agent-codex"]
-            page.get_by_test_id("settings-engines-library-open").click()
+            editor.get_by_role("button", name="Close", exact=True).click()
+            page.get_by_role("button", name="Model library", exact=True).click()
             library = page.get_by_test_id("settings-engines-library")
             expect(library.get_by_test_id("settings-engine-agent-codex")).to_be_visible()
-            expect(library.get_by_test_id("runson-phone-speech")).to_be_visible()
-            expect(library.get_by_test_id("concierge-meaning-search")).to_be_visible()
             _settle(page)
             page.screenshot(path=str(shots / f"library-{width}.png"))
-            library.get_by_test_id("concierge-add-engine").click()
+            library.get_by_role("button", name="Add an engine", exact=True).click()
             library.get_by_test_id("runson-kind-lan").click()
             expect(library.get_by_role("textbox", name="Server address", exact=True)).to_be_visible()
             assert errors == [], errors

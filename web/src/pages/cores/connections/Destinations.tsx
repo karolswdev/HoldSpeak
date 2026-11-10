@@ -36,7 +36,6 @@ import {
 } from "../../../desk/surface";
 import type { ConnectionsResponse } from "./api";
 import { ACCOUNTS_CHANGED, fetchConnections } from "./api";
-import "./connections.css";
 import { accountChip } from "../../../features/channels/accountChip";
 import { DestForm, EMPTY, emailKeyIdentity, type Draft } from "../../../features/channels/DestinationForm";
 import {
@@ -44,6 +43,7 @@ import {
   takeDestinationsFocus, targetToken, wire, Refusal, type Channel, type Destination, type EmailProvider,
 } from "../../../features/channels/channels";
 import "../../../features/channels/channels.css";
+import { ListView, PaneInspector, PaneActions, GadgetRow, type ListVerb } from "../../../desk/surface";
 import { Token } from "../../../desk/surface/Token";
 
 // HS-S53: the form has one owner, features/channels/DestinationForm.tsx.
@@ -72,15 +72,6 @@ function fromDestination(d: Destination): Draft {
   };
 }
 
-function Field({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="send-field">
-      <dt className="surface-token">{label}</dt>
-      <dd>{value || "—"}</dd>
-    </div>
-  );
-}
-
 function detailFields(d: Destination, keyKnown?: boolean): [string, string][] {
   const t = d.target, a = d.account;
   const base: [string, string][] = [["Channel", CHANNEL_WORD[d.channel] ?? d.channel]];
@@ -96,29 +87,6 @@ function detailFields(d: Destination, keyKnown?: boolean): [string, string][] {
       ["Webhook", keyKnown === true ? "SET · hooks.slack.com" : keyKnown === false ? "NOT SET" : "hooks.slack.com"]];
     default: return base;
   }
-}
-
-/** The Check result, by the hub's check state. */
-function CheckChip({ state, channel, answeredAt }: { state: string; channel: Channel; answeredAt?: string | null }) {
-  // Email (B11): Check reports what the provider last answered for this sender, and when -- never a fresh
-  // verification (Codex Astra r2 on #697), never the key alone.
-  if (channel === "email") {
-    const when = answeredAt ? <Token className="surface-token" data-chip>{`LAST SEND ${stamp(answeredAt)}`}</Token> : null;
-    if (state === "ready") return <StateChip state="idle" label="SENDER NOT CHECKED" />;
-    if (state === "sender_accepted") return <><StateChip state="success" label="SENDER ACCEPTED" />{when}</>;
-    if (state === "sender_not_verified") return <><StateChip state="failure" label="SENDER NOT VERIFIED" />{when}</>;
-    if (state === "key_changed") return <StateChip state="warning" label="NOT CHECKED SINCE KEY CHANGE" />;
-  }
-  // Slack (design section 5): what is known without a post -- the webhook is in the keychain and its
-  // host passes the rule. Check never posts a test message.
-  if (channel === "slack" && state === "ready") return <StateChip state="success" label="WEBHOOK SET · HOST OK" />;
-  if (state === "ready" || state === "connected") return <StateChip state="success" label="CHECKED" />;
-  const words: Record<string, string> = {
-    changed: "DESTINATION CHANGED", missing: "NO FOLDER", not_writable: "NOT WRITABLE", parked: "DESTINATION PARKED",
-    owner_action_required: "NOT SIGNED IN", never_checked: "NEVER CHECKED", unavailable: "UNAVAILABLE",
-    degraded: "DEGRADED", not_configured: "NOT SET UP", no_answer: "NO ANSWER",
-  };
-  return <StateChip state="warning" label={words[state] ?? refusedWord(state)} />;
 }
 
 export function Destinations() {
@@ -236,110 +204,23 @@ export function Destinations() {
       }}
       onCancel={active.length ? () => setAdding(false) : undefined} />
   );
-  return (
-    <div className="connections-destinations" data-send="destinations" data-testid="destinations" ref={groupRef}>
-      <GadgetGroup label={active.length ? `Destinations ${active.length}` : "Destinations"} actions={active.length === 0 || adding ? undefined : (
-        // Window grammar: the group's verb sits on its caption line.
-        <div className="send-verbs" data-testid="dest-add-line">
-          <Button dense variant="secondary" data-testid="dest-add" onClick={() => { setOpen(null); setAdding(true); }}>Add destination</Button>
-        </div>
-      )}>
-        {active.length ? (
-          <SurfaceLedger count="" cols="account-destinations">
-            <ul className="surface-ledger-rows" data-testid="dest-list">
-              {active.map((d) => {
-                const eg = egressOf(d);
-                const known = slackKey(d);
-                const acc = (accountsLoading || accountsReadError) && ["github", "jira", "confluence"].includes(d.channel) ? null
-                  : accountChip(known === undefined ? d : { ...d, account: { ...d.account, key_present: known } }, conns);
-                const c = checks[d.id];
-                return (
-                  <SurfaceLedgerRow key={d.id} data-testid="dest-row" wrap open={open === d.id}
-                    lineLabel={`${d.name}, ${CHANNEL_WORD[d.channel] ?? d.channel}`}
-                    onToggle={() => { setEditing(null); setOpen(open === d.id ? null : d.id); }}
-                    lead={<span className="send-pick" aria-hidden="true">{open === d.id ? "▾" : "▸"}</span>}
-                    primary={<span className="connections-tool-identity"><strong className="connections-tool-label" data-destination={d.name}>{d.name}</strong><span className="connections-tool-summary send-target">{targetToken(d.channel, d.target)}</span></span>}
-                    cells={<span className="surface-ledger-cells connections-tool-chips"><span className="connections-tool-summary">{CHANNEL_NAME[d.channel] ?? d.channel}</span>{acc ? <StateChip state={acc.state} label={acc.label}/> : null}</span>}
-                    trailing={<Button dense variant="secondary" onClick={() => { setEditing(null); setOpen(open === d.id ? null : d.id); }}>{open === d.id ? "Close" : "Details"}</Button>}>
-                    {open === d.id ? (
-                      editing === d.id ? (
-                        <DestForm conns={conns} accountsLoading={accountsLoading} accountsReadError={accountsReadError} onAccountsRetry={onAccountsRetry} initial={fromDestination(d)} replaces={d.id} keys={keys} onKey={onKey} onSlackKey={onSlackKey} onKeyKnown={onKeyKnown} onSetUpAccount={setUpAccount}
-                          onDone={() => { setEditing(null); setOpen(null); reload(); }} onCancel={() => setEditing(null)} />
-                      ) : (
-                        <div className="send-open" data-testid="dest-open">
-                          <dl className="send-fields">
-                            {detailFields(d, slackKey(d)).map(([l, v]) => <Field key={l} label={l} value={v} />)}
-                            <Field label="Saved" value={stamp(d.created_at)} />
-                            {c?.at ? <Field label="Checked" value={stamp(c.at)} /> : null}
-                            {d.channel === "email" && c?.state ? (
-                              <Field label="Key" value={c.state === "email_key_missing" ? "NOT SET" : c.state.startsWith("email_key") ? refusedWord(c.state) : "SET"} />
-                            ) : null}
-                          </dl>
-                          <div className="send-verbs" data-testid="dest-verbs">
-                            <Button dense variant="ghost" loading={c?.busy} data-testid="dest-check"
-                              onClick={() => {
-                                setChecks((m) => ({ ...m, [d.id]: { busy: true } }));
-                                void wire.check(d.id)
-                                  .then((r) => {
-                                    setChecks((m) => ({ ...m, [d.id]: { busy: false, state: r.check.state, at: new Date().toISOString(), answeredAt: r.check.answered_at ?? null } }));
-                                    // Slack: the Check reads the keychain, so it tells the face present or absent.
-                                    const ref = String(d.account.key_ref ?? "");
-                                    if (d.channel === "slack" && ref && (r.check.state === "ready" || r.check.state === "slack_webhook_missing")) {
-                                      setKeys((k) => ({ ...k, [ref]: r.check.state === "ready" }));
-                                    }
-                                  })
-                                  .catch((e) => setChecks((m) => ({ ...m, [d.id]: { busy: false, state: e instanceof Refusal ? e.code : "no_answer" } })));
-                              }}>Check</Button>
-                            <EgressChip label={eg.label} scope={eg.scope} title={eg.title} />
-                            {/* The built-in HoldSpeak folder is always there: no Edit, no Remove. */}
-                            {d.builtin ? null : <>
-                              <Button dense variant="ghost" data-testid="dest-edit" onClick={() => setEditing(d.id)}>Edit</Button>
-                              <ConfirmVerb label="Remove" confirmLabel="Remove?" busy={removeBusy === d.id} data-testid="dest-remove"
-                                onConfirm={() => remove(d.id)} />
-                            </>}
-                            {removeFailed[d.id] ? (
-                              <span className="send-line" data-testid="dest-remove-failed" data-code={removeFailed[d.id]}>
-                                <StateChip state="failure" label="NOT REMOVED" />
-                                <Token className="surface-token" data-chip>{refusedWord(removeFailed[d.id])}</Token>
-                                <Button dense variant="ghost" data-testid="dest-remove-retry" onClick={() => remove(d.id)}>{SEND_WORDS.retry}</Button>
-                              </span>
-                            ) : null}
-                            {c?.state ? (
-                              <span className="send-line" data-testid="dest-check-result" data-code={c.state}>
-                                <CheckChip state={c.state} channel={d.channel} answeredAt={c.answeredAt} />
-                              </span>
-                            ) : null}
-                          </div>
-                        </div>
-                      )
-                    ) : null}
-                  </SurfaceLedgerRow>
-                );
-              })}
-            </ul>
-          </SurfaceLedger>
-        ) : null}
-        {active.length === 0 || adding ? form : null}
-        {parked.length ? (
-          <div data-testid="dest-parked">
-            <FoldGadget title="PARKED" token={String(parked.length)}>
-              <SurfaceLedger count="" cols="account-destinations">
-                <ul className="surface-ledger-rows">
-                  {parked.map((d) => (
-                    <SurfaceLedgerRow key={d.id} data-testid="dest-parked-row" wrap expands={false}
-                      primary={<span className="surface-primary" data-destination={d.name}>{d.name}</span>}
-                      cells={<span className="surface-ledger-cells connections-tool-chips">
-                        <Token className="surface-token" data-chip>{CHANNEL_WORD[d.channel] ?? d.channel}</Token>
-                        <Token className="surface-token send-literal send-wrap send-target" data-chip title={targetToken(d.channel, d.target)}>{targetToken(d.channel, d.target)}</Token>
-                        <Token className="surface-token" data-chip>{`PARKED ${stamp(d.parked_at)}`}</Token>
-                      </span>} />
-                  ))}
-                </ul>
-              </SurfaceLedger>
-            </FoldGadget>
-          </div>
-        ) : null}
-      </GadgetGroup>
-    </div>
-  );
+  const verbs: ListVerb[] = [
+    { id: "add", label: "Add destination", symbol: "+", run: () => { setEditing(null); setAdding(true); } },
+    { id: "remove", label: "Remove destination", symbol: "−", key: "Delete", enabled: (row) => Boolean(row) && !active.find((d) => d.id === row?.id)?.builtin && !removeBusy, run: (row) => { if (row) remove(row.id); } },
+    { id: "open", label: "Open", key: "Enter", enabled: (row) => Boolean(row), run: (row) => { setAdding(false); setEditing(row?.id ?? null); } },
+  ];
+  const selected = active.find((d) => d.id === editing);
+  return <div className="surface-tab-panel" data-testid="destinations" ref={groupRef}>
+    {Object.values(removeFailed).length ? <PaneActions><span role="alert">Destination not removed</span><Button dense onClick={() => { if (open) remove(open); }}>Retry</Button></PaneActions> : null}
+    {adding ? <PaneInspector label="Add destination" onClose={() => setAdding(false)}>{form}</PaneInspector>
+    : selected ? <PaneInspector label={selected.name} onClose={() => setEditing(null)}>
+      {selected.builtin ? <GadgetGroup><GadgetRow label="Destination"><EgressChip {...egressOf(selected)} /></GadgetRow>{detailFields(selected).map(([label, value]) => <GadgetRow key={label} label={label}>{value}</GadgetRow>)}</GadgetGroup>
+      : <DestForm conns={conns} accountsLoading={accountsLoading} accountsReadError={accountsReadError} onAccountsRetry={onAccountsRetry}
+        initial={fromDestination(selected)} replaces={selected.id} keys={keys} onKey={onKey} onSlackKey={onSlackKey} onKeyKnown={onKeyKnown} onSetUpAccount={setUpAccount}
+        onDone={() => { setEditing(null); reload(); }} onCancel={() => setEditing(null)} />}
+    </PaneInspector> : <ListView label="Send to" ordered rows={active.map((destination) => ({ id: destination.id, kind: "destination", name: destination.name,
+      cells: { channel: CHANNEL_NAME[destination.channel], target: targetToken(destination.channel, destination.target) } }))}
+      columns={[{ key: "name", word: "Destination", track: "minmax(0, 1.2fr)" }, { key: "channel", word: "Channel", track: "100px" }, { key: "target", word: "To", track: "minmax(0, 1fr)" }]}
+      selectedId={open} onSelect={setOpen} verbs={verbs} defaultVerb="open" />}
+  </div>;
 }

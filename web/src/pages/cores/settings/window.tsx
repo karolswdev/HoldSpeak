@@ -43,7 +43,9 @@ export function PrefWindow({
   frameBack = false,
   holdFrameBack = true,
   children,
+  bounded = false,
 }: {
+  bounded?: boolean;
   items: readonly PrefRailItem[];
   selected: string;
   onSelect: (id: string) => void;
@@ -71,13 +73,12 @@ export function PrefWindow({
   );
   const current = items.find((item) => item.id === selected);
   return (
-    <div className="settings-page pref-window surface-rail-layout" data-testid={testId} data-pane-open={paneOpen || undefined}>
+    <div className="settings-page pref-window surface-rail-layout surface-preference-window" data-bounded={bounded || undefined} data-testid={testId} data-pane-open={paneOpen || undefined}>
       {frameBack ? <PaneTitle label={viaFrame && paneOpen && current ? current.label : null} /> : null}
       <Rail label={label} data-testid="settings-rail" picked={selected} onPick={onSelect}
-        paneOpen={paneOpen} hostBack items={items.map((item) => ({
+        paneOpen={paneOpen} hostBack compact items={items.map((item) => ({
           id: item.id, label: item.label, glyph: item.glyph, disabled: item.disabled,
-          state: item.health ? <span data-tone={item.health.tone} data-testid={`${railTestIdPrefix}${item.id}-health`}>{item.health.word}</span> : undefined,
-          spine: item.health ? { tone: item.health.tone } : undefined,
+          state: item.health && ["brass", "coral"].includes(item.health.tone) ? <span className="surface-rail-attention" role="img" aria-label={item.health.word} title={item.health.word} data-testid={`${railTestIdPrefix}${item.id}-health`} /> : undefined,
           data: { "data-testid": `${railTestIdPrefix}${item.id}` },
         }))} />
       <div className="settings-page-sections pref-pane">
@@ -125,7 +126,7 @@ export function PrefSection({ id, label, hidden, quiet, mast, children }: {
       className="settings-page-section"
       hidden={hidden}
       aria-hidden={hidden}
-      aria-labelledby={`settings-section-title-${id}`}
+      aria-label={label}
     >
       {mast !== undefined ? mast : <h2 id={`settings-section-title-${id}`} className={`settings-page-section-title${quiet ? " settings-page-section-title-quiet" : ""}`}>{label}</h2>}
       <div className="settings-page-section-body">{children}</div>

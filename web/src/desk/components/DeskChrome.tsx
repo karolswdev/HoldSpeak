@@ -19,7 +19,7 @@ import { subscribeMicPhase, type MicPhase } from "../../lib/micSession";
 import { callLoopState, stopCallLoop } from "../../lib/callLoop";
 import { TALK_STOP_EVENT } from "./MicButton";
 import { DeskToolShelf } from "./DeskToolShelf";
-import { DeskMenuBar } from "./DeskMenuBar";
+import { DeskMenuBar, ApplicationMenu } from "./DeskMenuBar";
 import { useFrontWindowId, useAllOpenWindows } from "./window/windowRegistry";
 import { useNeedsYou } from "../needsYou";
 import { openNeedsYouDrawer } from "../screen/open";
@@ -127,11 +127,7 @@ function ScreenTitle() {
   // open window, so the ones behind are two taps away.
   const compact = useCompactViewport();
   if (compact && open.length > 1 && phoneRing().length > 1) return <ScreenSwitcher name={name} />;
-  return (
-    <span className="desk-screen-title" data-testid="desk-screen-title">
-      <span className="desk-screen-name" title={name}>{name}</span>
-    </span>
-  );
+  return <ApplicationMenu windowId={front} name={name} />;
 }
 
 /** The OS clock — every desktop has one. */

@@ -143,21 +143,12 @@ def test_reported_settings_categories_and_guided_builder_in_firefox(
                 assert settings.locator("[data-settings-section]:visible").count() == 1
                 assert settings.locator("[data-settings-section]:visible").get_attribute("data-settings-section") == "you"
                 you_row = settings.get_by_test_id("settings-index-you")
-                assert you_row.get_attribute("aria-current") == "location"
-                assert you_row.get_attribute("aria-pressed") == "true"
+                assert you_row.get_attribute("aria-current") == "true"
                 if width == 1440:
-                    # The selected rail row is the vivid blue plate with paper ink.
-                    plate = you_row.evaluate("""el => {
-                      const probe = document.createElement('span');
-                      probe.hidden = true; probe.style.color = 'var(--wb-paper)'; el.append(probe);
-                      const paper = getComputedStyle(probe).color; probe.remove();
-                      const cs = getComputedStyle(el);
-                      return {ink: cs.color, paper, image: cs.backgroundImage};
-                    }""")
-                    assert plate["ink"] == plate["paper"] and "gradient" in plate["image"], plate
-                for image in settings.locator(".settings-page-index img").all():
+                    _selection_has_ink(you_row, aria_current="true")
+                for image in settings.locator(".surface-rail img").all():
                     page.wait_for_function("el => el.complete && el.naturalWidth > 0", arg=image.element_handle())
-                assert settings.locator(".settings-page-index img").count() == 10
+                assert settings.locator(".surface-rail img").count() == settings.locator("[data-settings-section]").count()
                 # A real category press blurs and commits an alias. It must still
                 # be present when the owner returns to You.
                 alias = settings.get_by_test_id("settings-owner-aliases").get_by_role("textbox")

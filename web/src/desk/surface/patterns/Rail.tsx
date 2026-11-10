@@ -29,6 +29,7 @@ export type RailGroup = {
 };
 export type RailProps = {
   label: string;
+  compact?: boolean;
   items?: readonly RailItem[];
   groups?: readonly RailGroup[];
   picked: string | null;
@@ -47,15 +48,15 @@ export type RailProps = {
 
 /** One list beside a pane. On a narrow surface the list and pane take turns;
  *  names and state remain readable, and Back returns focus to the picked row. */
-export function Rail({ label, items = [], groups, picked, onPick, head, foot, children,
+export function Rail({ label, compact = false, items = [], groups, picked, onPick, head, foot, children,
   paneOpen, onBack, hostBack = false, "data-testid": testId }: RailProps) {
   const ref = useRef<HTMLElement>(null);
   const lastPicked = useRef(picked);
   const [opened, setOpened] = useState(false);
   const open = paneOpen ?? opened;
-  const compact = useCompactViewport();
+  const compactViewport = useCompactViewport();
   const hosted = useHasWindowBack();
-  const viaFrame = compact && hosted;
+  const viaFrame = compactViewport && hosted;
   useRovingRows(ref, { selector: ".surface-rail-row:not(:disabled)" });
   useEffect(() => {
     if (picked) lastPicked.current = picked;
@@ -76,7 +77,7 @@ export function Rail({ label, items = [], groups, picked, onPick, head, foot, ch
   return <>
     {hostBack ? null : <RailFrameBack open={viaFrame && open} onBack={back} />}
     <nav ref={ref} className="surface-rail surface-rail--fold" aria-label={label}
-      data-pane-open={open || undefined} data-testid={testId}>
+      data-pane-open={open || undefined} data-compact={compact || undefined} data-testid={testId}>
       {head ? <div className="surface-rail-head">{head}</div> : null}
       {children ?? (groups ?? [{ id: "items", items }]).map((group) => group.items.length ? (
         <div key={group.id} className="surface-rail-group" role={group.label ? "group" : undefined}

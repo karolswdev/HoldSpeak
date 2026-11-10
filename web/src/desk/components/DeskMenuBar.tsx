@@ -43,6 +43,7 @@ import { rootDirectories } from "../screen/compose";
 import { openScreenRef } from "../screen/open";
 import { qualifiedRef } from "../api";
 import { Button } from "../../components/signal/Signal";
+import { useApplicationMenu } from "./window/applicationMenu";
 import { frontSendTo, primeSendTo, useSendToTick } from "../windowSend";
 import {
   closeFrontWindow,
@@ -463,4 +464,19 @@ export function DeskMenuBar() {
       ))}
     </nav>
   );
+}
+
+/** The front app's list verbs and its declared walk share one menu. */
+export function ApplicationMenu({ windowId, name }: { windowId: string | null; name?: string }) {
+  const { label, entries, failed } = useApplicationMenu(windowId, name);
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLButtonElement>(null);
+  useEffect(() => { setOpen(false); }, [windowId]);
+  if (!windowId || !entries.length) return <span className="desk-screen-title" data-testid="desk-screen-title" data-app-window={windowId}><span className="desk-screen-name">{name ?? "Desk"}</span></span>;
+  const rect = ref.current?.getBoundingClientRect();
+  return <span className="desk-verbbar-item desk-screen-title" data-testid="desk-screen-title" data-app-window={windowId}>
+    <Button ref={ref} variant="chrome" className="desk-verbbar-title" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)}>{label}</Button>
+    {open && rect ? <WorkMenu label={`${label} menu`} entries={entries} x={rect.left} y={rect.bottom} autoFocus opener={ref.current} returnFocus={() => ref.current?.focus()} onClose={() => setOpen(false)} /> : null}
+    {failed ? <span role="alert">Walk did not start</span> : null}
+  </span>;
 }

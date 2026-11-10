@@ -1,0 +1,93 @@
+// Parked: two list streams replaced by the selection-list specimen.
+function InspectorWindow() {
+  const [selected, setSelected] = useState<string | null>("e-1");
+  const [job, setJob] = useState<string | null>(null);
+  const [did, setDid] = useState<string | null>(null);
+  const [runs, setRuns] = useState<Record<string, string>>({ "Everything else": "e-1", "Meeting summaries": "e-1", "Answers (Ask)": "e-2" });
+  const nameOf = (id: string | undefined) => SPEC_ENGINES.find((engine) => engine.id === id)?.name ?? NOT_SET;
+  const cycle = (name: string) => {
+    const order = [undefined, ...SPEC_ENGINES.map((engine) => engine.id)];
+    const next = order[(order.indexOf(runs[name]) + 1) % order.length];
+    setRuns((current) => {
+      const copy = { ...current };
+      if (next) copy[name] = next;
+      else delete copy[name];
+      return copy;
+    });
+  };
+  return (
+    <section className="reference-example reference-window" data-testid="reference-window" aria-label="Window pattern">
+      <div className="reference-window-frame" data-preset="inspector">
+        <Toolbar label="Specimen engines">
+          <Button dense variant="primary" onClick={() => setDid("Add an engine")}>
+            <ToolGlyph kind="new" />
+            Add an engine
+          </Button>
+          <Button dense variant="secondary" onClick={() => setDid("Check all")}>
+            <ToolGlyph kind="retry" />
+            Check all
+          </Button>
+        </Toolbar>
+        <div className="reference-window-content">
+          <SurfaceColumns main={<ListView label="Specimen jobs">
+                <ListDay label="What HoldSpeak does">
+                  {SPEC_JOBS.map((name) => (
+                    <ListRow
+                      key={name}
+                      name={name}
+                      onOpen={() => { setJob(job === name ? null : name); setSelected(null); }}
+                      openLabel={name}
+                      selected={job === name}
+                      lit={Boolean(selected && runs[name] === selected)}
+                      verbs={
+                        <Button dense variant="secondary" aria-label={`${name}: ${nameOf(runs[name])}`} onClick={() => cycle(name)}>
+                          <span>{nameOf(runs[name])}</span>
+                          <span className="runson-what-caret" aria-hidden="true">▾</span>
+                        </Button>
+                      }
+                    />
+                  ))}
+                </ListDay>
+              </ListView>} side={<ListView label="Specimen engines">
+                <ListDay label="Engines">
+                  {SPEC_ENGINES.map((engine) => {
+                    const used = SPEC_JOBS.filter((name) => runs[name] === engine.id);
+                    const open = selected === engine.id;
+                    return (
+                      <ListRow
+                        key={engine.id}
+                        glyph={spriteUrl("model", engine.id, "rest", null, 20)}
+                        name={engine.name}
+                        meta={engine.where}
+                        state={engine.state}
+                        progress={engine.progress ?? null}
+                        onOpen={() => { setSelected(open ? null : engine.id); setJob(null); }}
+                        openLabel={engine.name}
+                        expanded={open}
+                        selected={open}
+                        lit={Boolean(job && runs[job] === engine.id)}
+                        fold={open ? (
+                          <dl className="reference-inspector-facts">
+                            <div ><dt>{engine.address ? "Address" : "Where"}</dt><dd>{engine.address ? <Token code>{engine.address}</Token> : engine.where}</dd></div>
+                            <div ><dt>Used for</dt><dd>{used.length ? used.join(", ") : <DotWord>{NOT_SET}</DotWord>}</dd></div>
+                          </dl>
+                        ) : undefined}
+                      />
+                    );
+                  })}
+                </ListDay>
+              </ListView>} />
+        </div>
+        <FootSlotContext.Provider value={null}>
+          <StatusBar
+            items={[
+              { key: "count", lamp: "ok", text: countWords(SPEC_ENGINES.length, "engine") },
+              { key: "checked", text: "Checked 23:11" },
+              did ? { key: "did", text: <span data-testid="reference-window-opened">Pressed locally · {did}</span> } : null,
+            ]}
+          />
+        </FootSlotContext.Provider>
+      </div>
+    </section>
+  );
+}

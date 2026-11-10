@@ -9,6 +9,7 @@ import { WorkMenu, type WorkMenuEntry } from "../DeskMenu";
 import { useDesk } from "../../store";
 import { useChairWindows } from "../../chair/chairWindows";
 import { useAllOpenWindows } from "./windowRegistry";
+import { useApplicationMenu } from "./applicationMenu";
 import { phoneCurrent, phoneRing, showRingWindow } from "./phoneRing";
 
 export function ScreenSwitcher({ name }: { name: string }) {
@@ -38,13 +39,14 @@ export function ScreenSwitcher({ name }: { name: string }) {
     return () => document.removeEventListener("pointerdown", down, true);
   }, []);
   const current = phoneCurrent();
-  const entries: WorkMenuEntry[] = phoneRing().map((w) => ({
+  const app = useApplicationMenu(current, name);
+  const entries: WorkMenuEntry[] = [...phoneRing().map((w) => ({
     type: "item" as const,
     id: `switch-${w.id}`,
     label: w.label,
     checked: w.id === current,
     onSelect: () => showRingWindow(w.id),
-  }));
+  })), ...(app.entries.length ? [{ type: "sep" as const, id: "app-sep" }, { type: "sub" as const, id: "app", label: app.label, entries: app.entries }] : [])];
   return (
     <span className="desk-screen-title has-switcher" data-testid="desk-screen-title">
       <Button
@@ -77,6 +79,7 @@ export function ScreenSwitcher({ name }: { name: string }) {
             stays the window's name for every reader of the screen bar. */}
         <span className="desk-screen-switcher-mark" aria-hidden="true" data-testid="desk-screen-switcher-mark" />
       </Button>
+      {app.failed ? <span role="alert">Walk did not start</span> : null}
       {at ? (
         <WorkMenu
           className="desk-head-menu desk-screen-switcher-menu"

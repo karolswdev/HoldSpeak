@@ -9560,8 +9560,8 @@
         },
         {
           "path": "web/src/pages/cores/connections/Destinations.tsx",
-          "symbol": "data-testid=\"dest-row\"",
-          "claim": "Saved destinations render as rows with an owner Check verb."
+          "symbol": "label=\"Send to\"",
+          "claim": "Saved destinations render in one selection list; its Open verb edits the selected destination."
         }
       ],
       "reachable_by": [

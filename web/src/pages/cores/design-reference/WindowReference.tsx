@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "../../../components/signal/Signal";
 import {
+  PreferencePane, PaneGroup, CycleGadget,
   FootSlotContext,
   ObjectList,
   ReadingDocument,
@@ -167,96 +168,28 @@ const SPEC_JOBS = ["Everything else", "Meeting summaries", "Answers (Ask)", "Aut
 const NOT_SET = "Not assigned";
 
 function InspectorWindow() {
-  const [selected, setSelected] = useState<string | null>("e-1");
-  const [job, setJob] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string | null>(null);
   const [did, setDid] = useState<string | null>(null);
   const [runs, setRuns] = useState<Record<string, string>>({ "Everything else": "e-1", "Meeting summaries": "e-1", "Answers (Ask)": "e-2" });
-  const nameOf = (id: string | undefined) => SPEC_ENGINES.find((engine) => engine.id === id)?.name ?? NOT_SET;
-  const cycle = (name: string) => {
-    const order = [undefined, ...SPEC_ENGINES.map((engine) => engine.id)];
-    const next = order[(order.indexOf(runs[name]) + 1) % order.length];
-    setRuns((current) => {
-      const copy = { ...current };
-      if (next) copy[name] = next;
-      else delete copy[name];
-      return copy;
-    });
-  };
-  return (
-    <section className="reference-example reference-window" data-testid="reference-window" aria-label="Window pattern">
-      <div className="reference-window-frame" data-preset="inspector">
-        <Toolbar label="Specimen engines">
-          <Button dense variant="primary" onClick={() => setDid("Add an engine")}>
-            <ToolGlyph kind="new" />
-            Add an engine
-          </Button>
-          <Button dense variant="secondary" onClick={() => setDid("Check all")}>
-            <ToolGlyph kind="retry" />
-            Check all
-          </Button>
-        </Toolbar>
-        <div className="reference-window-content">
-          <SurfaceColumns main={<ListView label="Specimen jobs">
-                <ListDay label="What HoldSpeak does">
-                  {SPEC_JOBS.map((name) => (
-                    <ListRow
-                      key={name}
-                      name={name}
-                      onOpen={() => { setJob(job === name ? null : name); setSelected(null); }}
-                      openLabel={name}
-                      selected={job === name}
-                      lit={Boolean(selected && runs[name] === selected)}
-                      verbs={
-                        <Button dense variant="secondary" aria-label={`${name}: ${nameOf(runs[name])}`} onClick={() => cycle(name)}>
-                          <span>{nameOf(runs[name])}</span>
-                          <span className="runson-what-caret" aria-hidden="true">▾</span>
-                        </Button>
-                      }
-                    />
-                  ))}
-                </ListDay>
-              </ListView>} side={<ListView label="Specimen engines">
-                <ListDay label="Engines">
-                  {SPEC_ENGINES.map((engine) => {
-                    const used = SPEC_JOBS.filter((name) => runs[name] === engine.id);
-                    const open = selected === engine.id;
-                    return (
-                      <ListRow
-                        key={engine.id}
-                        glyph={spriteUrl("model", engine.id, "rest", null, 20)}
-                        name={engine.name}
-                        meta={engine.where}
-                        state={engine.state}
-                        progress={engine.progress ?? null}
-                        onOpen={() => { setSelected(open ? null : engine.id); setJob(null); }}
-                        openLabel={engine.name}
-                        expanded={open}
-                        selected={open}
-                        lit={Boolean(job && runs[job] === engine.id)}
-                        fold={open ? (
-                          <dl className="reference-inspector-facts">
-                            <div ><dt>{engine.address ? "Address" : "Where"}</dt><dd>{engine.address ? <Token code>{engine.address}</Token> : engine.where}</dd></div>
-                            <div ><dt>Used for</dt><dd>{used.length ? used.join(", ") : <DotWord>{NOT_SET}</DotWord>}</dd></div>
-                          </dl>
-                        ) : undefined}
-                      />
-                    );
-                  })}
-                </ListDay>
-              </ListView>} />
-        </div>
-        <FootSlotContext.Provider value={null}>
-          <StatusBar
-            items={[
-              { key: "count", lamp: "ok", text: countWords(SPEC_ENGINES.length, "engine") },
-              { key: "checked", text: "Checked 23:11" },
-              did ? { key: "did", text: <span data-testid="reference-window-opened">Pressed locally · {did}</span> } : null,
-            ]}
-          />
-        </FootSlotContext.Provider>
+  return <section className="reference-example reference-window" data-testid="reference-window" aria-label="Window pattern">
+    <div className="reference-window-frame" data-preset="inspector">
+      <div className="reference-window-content">
+        <PreferencePane label="Specimen preferences">
+          <PaneGroup label="Each job runs on"><ListView label="Specimen jobs" ordered rows={SPEC_JOBS.map((name) => ({ id: name, kind: "job", name, cells: {
+            engine: <CycleGadget label={`${name} engine`} value={runs[name] ?? ""} options={[{ value: "", label: "Same as Everything" }, ...SPEC_ENGINES.map((engine) => ({ value: engine.id, label: engine.name }))]} onChange={(id) => setRuns((now) => ({ ...now, [name]: id }))} />,
+          } }))} columns={[{ key: "name", word: "Job", track: "minmax(0, 1fr)" }, { key: "engine", word: "Engine", track: "minmax(0, 1fr)" }]} /></PaneGroup>
+          <PaneGroup label="Engines on this desk"><ListView label="Specimen engines" rows={SPEC_ENGINES.map((engine) => ({ id: engine.id, kind: "engine", name: engine.name,
+            cells: { where: engine.where }, state: { label: engine.state.word, tone: engine.state.tone },
+          }))} columns={[{ key: "name", word: "Engine" }, { key: "where", word: "Where", track: "minmax(0, 1fr)" }, { key: "state", word: "State", track: "150px" }]}
+            selectedId={selected} onSelect={setSelected} defaultVerb="open" verbs={[
+              { id: "add", label: "Model library", symbol: "+", run: () => setDid("Model library") },
+              { id: "open", label: "Open", key: "Enter", enabled: (row) => Boolean(row), run: (row) => setDid(row?.name ?? null) },
+            ]} /></PaneGroup>
+        </PreferencePane>
       </div>
-    </section>
-  );
+      <FootSlotContext.Provider value={null}><StatusBar items={did ? [{ text: <span data-testid="reference-window-opened">Opened locally · {did}</span> }] : []} /></FootSlotContext.Provider>
+    </div>
+  </section>;
 }
 
 function ListWindow({ preset }: { preset: Exclude<WindowPreset, "reader" | "inspector" | "decision-new" | "decision-filled"> }) {

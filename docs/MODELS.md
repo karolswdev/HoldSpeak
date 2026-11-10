@@ -8,36 +8,35 @@ brief. See [Coder integration](CODER_INTEGRATION.md).
 ## Choose an engine
 
 1. Open **Settings > Engines**.
-2. Select **Edit** on a job row.
-3. Select **Add** beside an engine name. The engine goes last in the order.
-4. Use **Move up**, **Move down**, or **Remove** to change that order.
+2. Open the engine choice in a job row.
+3. Choose one engine, or select **Set order…** for more engines.
+4. In the order list, select an engine and use **Move up**, **Move down**, or **Remove from order**.
+5. Use plus to add an engine at the end of the order.
 
-Each row names every assigned engine in the order the hub stores. For example,
-“Meeting summaries run on Codex, then Gemini CLI”. A press saves the change.
-The result stays in the pane. **Undo** restores the previous assignment.
+A choice saves the change. **Undo** restores the previous assignment.
+Opening Settings does not change the saved engine order.
 
-**Everything else** is the default assignment. A job with no specific
-assignment follows it. **Use default order** clears a specific assignment.
-**Speech to text** uses its own assignment and does not follow a text engine.
-
-The first job that needs setup or has a problem appears above the other rows.
-Its **Set up** button opens the editor in the same pane.
+**Everything** is the default assignment. A job with no specific choice shows
+**Same as Everything**. Select that choice to clear an override. Speech to text
+requires a compatible speech engine.
 
 ## Add or check an engine
 
-Select **Model library** in Settings > Engines. This opens the library in the
-same pane. **Assignments** returns to the job rows. Old `/models` and
-`/profiles` links open this pane too.
+Select plus under **Engines on this desk**. The model library opens in the
+same window. **Close** returns to the job rows. Old `/models` and `/profiles`
+links open Settings > Engines.
 
-Select **Add an engine**, then choose an agent CLI, a hosted service, a server
-on your network, a model on this Mac, or another HoldSpeak. For a server,
-enter its **Server address** and select **Check**. Select **Use** beside a
-model that the server offers. **Find on LAN** starts an explicit network scan.
-A local model has **Download** in its inspector.
+Select plus in the library, then choose an engine type. For a server, enter
+its **Server address** and select **Check**. Select a model, then **Use**.
+**Find on LAN** starts a network scan only when you press it.
 
-Select **Inspect** on an engine to read its destination, model, and last
-check. An agent CLI has **Spend limit**. The limit applies only when that CLI
-can enforce it. **Check again** reads engine health again.
+Select an engine, then **Inspect**, or double-click its row. Its inspector
+shows the destination and model. An agent CLI has **Spend limit**. The limit
+applies only when that CLI can enforce it. **Test** under the desk engine list
+checks an engine that has a probe.
+
+The library's **Speech** tab holds speech setup and phone speech downloads.
+The **Search** tab holds the meaning-search model switch.
 
 A key belongs to the owner-only secret field. It is not copied into Notes,
 Threads, Receipts, or model payloads.

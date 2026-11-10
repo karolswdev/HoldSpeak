@@ -1,0 +1,29 @@
+/* Shared pane patterns: bounded columns, wells and in-window inspection. */
+.surface-preference-pane { display: flex; flex-direction: column; flex: 1 1 0; min-width: 0; min-height: 0; gap: 12px; height: 100%; }
+.surface-pane-group { display: flex; flex-direction: column; flex: none; min-width: 0; min-height: 0; gap: 8px; }
+.surface-pane-group[data-grow] { flex: 1 1 0; }
+.surface-pane-group > h3 { flex: none; margin: 0; color: var(--text-muted); font: 600 12px / 18px var(--font-sans); }
+.surface-pane-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.surface-pane-inspector { display: flex; flex-direction: column; gap: 12px; min-width: 0; min-height: 0; flex: 1 1 0; overflow: auto; padding: 12px; border: 1px solid var(--wb-rule-soft); background: var(--wb-field); }
+.surface-pane-inspector-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.surface-pane-inspector-head > strong { min-width: 0; font: 600 13px / 20px var(--font-sans); }
+.surface-segmented-tabs { display: flex; align-self: center; align-items: stretch; flex: none; gap: 2px; padding: 2px; border: 1px solid var(--wb-rule-soft); border-radius: var(--radius-sm); background: var(--wb-field); }
+.desk-next .surface-segmented-tabs > .btn--chrome { min-height: 26px; padding: 2px 14px; border: 0; background: transparent; box-shadow: none; color: var(--wb-ink); font: 500 13px / 20px var(--font-sans); white-space: nowrap; }
+.desk-next .surface-segmented-tabs > .btn--chrome[aria-selected="true"] { background: var(--wb-paper); box-shadow: inset 0 0 0 1px var(--wb-rule-soft); border-radius: var(--radius-sm); }
+.desk-next .surface-segmented-tabs > .btn--chrome:focus-visible { outline: 2px solid var(--wb-sel); outline-offset: -2px; }
+.surface-tab-panel { display: flex; flex-direction: column; gap: 12px; flex: 1 1 0; min-height: 0; min-width: 0; }
+/* Preference hosts opt into this material only after all of a pane moves. */
+.desk-next .desk-surface-body:has(.surface-preference-window[data-bounded]) { overflow: hidden; }
+.desk-next .desk-surface-body > .settings-page-content:has(.surface-preference-window[data-bounded]) { flex: 1 1 0; min-height: 0; overflow: hidden; }
+.desk-next .settings-page-content > .surface-preference-window[data-bounded] { flex: 1 1 0; min-height: 0; height: 100%; overflow: hidden; }
+.desk-next .surface-preference-window[data-bounded] > .pref-pane { display: flex; flex-direction: column; min-height: 0; padding: 12px 16px; overflow: hidden; }
+.desk-next .surface-preference-window[data-bounded] .settings-page-section:not([hidden]) { display: flex; flex-direction: column; flex: 1 1 0; min-height: 0; }
+.desk-next .surface-preference-window[data-bounded] .settings-page-section-body { flex: 1 1 0; min-height: 0; width: 100%; max-width: none; margin: 0; gap: 12px; }
+@container surface (max-width: 520px) {
+  .desk-next .surface-segmented-tabs > .btn--chrome { min-height: 44px; padding-inline: 10px; }
+  .desk-next .surface-preference-window[data-bounded] > .pref-pane { padding: 12px; }
+  .surface-pane-actions { gap: 12px; }
+}
+.surface-tab-panel[hidden] { display: none; }
+.surface-command-code { flex: 1 1 200px; min-width: 0; overflow-wrap: anywhere; font-size: 12px; }
+.surface-terminal-well { display: flex; flex: 1 1 0; min-height: 200px; }

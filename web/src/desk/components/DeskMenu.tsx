@@ -194,6 +194,8 @@ export type WorkMenuEntry =
       keycap?: string;
       /** null/undefined = runnable; a string = ghosted WITH that reason. */
       ghost?: string | null;
+      /** Selection verbs stay visible when no row is selected. */
+      disabled?: boolean;
       /** HS-148-01: checkable. boolean = checkbox, "exclusive" = radio. */
       checked?: boolean | "exclusive";
       onSelect(): void;
@@ -415,7 +417,9 @@ function WorkMenuRows({
             onPointerLeave={() => {
               if (intent.current) clearTimeout(intent.current);
             }}
+            disabled={entry.disabled}
             onClick={() => {
+              if (entry.disabled) return;
               onClose();
               entry.onSelect();
             }}
@@ -516,9 +520,19 @@ export function WorkMenu({
       const t = e.target as Node;
       if (!panelRef.current?.contains(t) && !opener?.contains(t)) onClose();
     };
+    // The menu owns Escape even before its deferred focus settles.
+    const key = (event: KeyboardEvent) => {
+      if (event.key !== "Escape" || event.defaultPrevented) return;
+      event.preventDefault(); event.stopPropagation();
+      onClose(); returnFocus?.();
+    };
     document.addEventListener("pointerdown", down, true);
-    return () => document.removeEventListener("pointerdown", down, true);
-  }, [onClose, opener]);
+    document.addEventListener("keydown", key, true);
+    return () => {
+      document.removeEventListener("pointerdown", down, true);
+      document.removeEventListener("keydown", key, true);
+    };
+  }, [onClose, opener, returnFocus]);
 
   // HS-148-01 D3 repair: defer focus past the browser's native click-to-focus.
   // On a real pointer-down open, the browser's click sequence
