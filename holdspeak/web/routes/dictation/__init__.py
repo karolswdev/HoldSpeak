@@ -8,18 +8,9 @@ factory into a `routes/dictation/` sub-package by domain — each
 identical** and `build_dictation_router` stays the public entry point
 (`routes/__init__.py` imports it unchanged).
 
-Domains:
-- `intents`       — `/api/intents/*`
-- `_declared`     — the declared operations (`holdspeak/dictation_operations.py`,
-  2026-11-09): the journal edits, the corrections, the floor, the project
-  context, agent hooks, `.hs` files and KB, the templates and blocks
-- `blocks`        — `/api/dictation/blocks/from-template` (it can run a preview)
-- `pipeline`      — `/api/dictation/readiness`, `dry-run`, `remote`, journal replay
-
-`blocks` and `pipeline` share one in-memory project-doc-suggestion
-store (a dry-run detects a suggestion; its GET route is parked 2026-11-08).
-That store is created here, once per router build (per app), and passed to the
-groups that touch it — preserving the original closure-scoped lifetime.
+All HTTP verbs come from DictationService's declared rows. The pipeline and
+block adapters hold request cancellation/fresh-session callbacks; services own
+their jobs and the shared suggestion state supplied here. The socket is separate.
 """
 
 from __future__ import annotations
@@ -48,7 +39,7 @@ def build_dictation_router(ctx: WebContext) -> APIRouter:
 
     mount_router(router, build_intents_router(ctx))
     mount_router(router, build_declared_router(ctx, (
-        "dictation.project_context", "dictation.agent_hooks", "dictation.project_hs.get",
+        "dictation.readiness", "dictation.project_context", "dictation.agent_hooks", "dictation.project_hs.get",
         "dictation.project_hs.put", "dictation.block_templates", "dictation.blocks.list",
         "dictation.blocks.create",
     )))

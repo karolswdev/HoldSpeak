@@ -1647,6 +1647,17 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
             sweep.failures["drawn"] = [str(exc)[:400]]
         else:
             sweep.fences()
+            if case_id == "meeting":
+                # The meeting's long reads replace its ledger, with one Back.
+                for door, label in (("meeting-read-summary", "Summary"), ("meeting-read-transcript", "Transcript")):
+                    win = page.locator(f'[id="{wid}"]')
+                    win.get_by_test_id(door).click()
+                    win.get_by_test_id("meeting-reader").wait_for(timeout=T)
+                    assert win.get_by_test_id("meeting-ledger").count() == 0
+                    sweep.settle()
+                    sweep.fences(label)
+                    win.get_by_test_id("meeting-reader-back").click()
+                    win.get_by_test_id("meeting-ledger").wait_for(timeout=T)
             if case_id == "surface-activity":
                 # Window grammar (2026-10-24): the remote sweep seed is a dense
                 # list row (What · Who · When · Outcome). Its words and its

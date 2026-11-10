@@ -12,7 +12,6 @@ from __future__ import annotations
 import os
 import queue
 import threading
-import time
 from typing import Any, Callable, Optional
 
 from ..logging_config import get_logger
@@ -102,6 +101,25 @@ class RecordingsService:
 
     def get(self, recording_id: str) -> dict[str, Any]:
         return self.wire(self.store.require(recording_id))
+
+    def video_file(self, recording_id: str, *, share_token: str | None = None,
+                   name: str | None = None) -> tuple[Any, str] | None:
+        """Resolve a ready video; a public link must also prove its token and name."""
+        rec = (self.store.by_share(recording_id, share_token) if share_token is not None
+               else self.store.get(recording_id))
+        if rec is None or rec.state != "ready" or (name is not None and name != rec.video_name()):
+            return None
+        path = self.store.video_path(rec)
+        if not path.is_file():
+            return None
+        return path, {"mp4": "video/mp4", "webm": "video/webm"}.get(rec.encoder, "video/mp4")
+
+    def poster_file(self, recording_id: str) -> Any:
+        try:
+            path = self.store.poster_path(recording_id)
+        except RecordingRefused:
+            return None
+        return path if path.is_file() else None
 
     # ── the capture ─────────────────────────────────────────────────────
 

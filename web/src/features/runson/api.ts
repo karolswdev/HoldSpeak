@@ -378,18 +378,18 @@ export interface LanDiscovery {
 }
 
 export async function discoverLan(): Promise<LanDiscovery> {
-  const raw = await apiFetch<Record<string, unknown>>("/api/concierge/discover-lan", {
+  const raw = await apiFetch<Record<string, unknown>>("/api/setup/lan", {
     method: "POST",
     json: {},
   });
   return {
-    engines: Array.isArray(raw.engines)
-      ? (raw.engines as Record<string, unknown>[]).map(decodeEngine)
+    engines: Array.isArray(raw.rows)
+      ? (raw.rows as Record<string, unknown>[]).map(decodeEngine)
       : [],
     checkedAt: String(raw.checkedAt ?? ""),
     partial: raw.partial === true,
-    unavailable: raw.unavailable === true,
-    reason: str(raw.reason),
+    unavailable: raw.unavailable === true || raw.disabled === true,
+    reason: raw.disabled === true ? "LAN scan is off" : str(raw.reason),
     hostsChecked: typeof raw.hostsChecked === "number" ? raw.hostsChecked : 0,
   };
 }

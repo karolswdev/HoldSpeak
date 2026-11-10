@@ -33,7 +33,9 @@ from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
 
 from ...logging_config import get_logger
+from ...operations import OperationOwnerRequired
 from ...services.delivery_service import TERMINAL_ABSENCE_HTTP
+from ...principals import UNAUTHENTICATED
 from ..context import WebContext
 from . import delivery_declared
 from ._mount import mount_router
@@ -61,22 +63,14 @@ class _LiveRequest(BaseModel):
 def build_delivery_terminal_router(ctx: WebContext) -> APIRouter:
     """The terminal routes. ``sessions`` and ``subscriptions`` are produced
     from the ``delivery.terminal_sessions`` and ``delivery.terminal_read``
-    rows. Two stay written here: ``live`` answers an NDJSON stream, and
-    ``commands`` runs keys and process commands in a terminal (a spawn
-    among them). The targets, the stream, the commands and their test seams
+    rows. Commands are produced from their owner-only row.
+    ``live`` stays here: it answers an NDJSON stream with disconnect cleanup. The targets, the stream, the commands and their test seams
     live on ``ctx.delivery_service`` (``DeliveryService.configure``)."""
-    delivery_service = delivery_declared.delivery_of(ctx)
+    delivery_declared.delivery_of(ctx)
     router = APIRouter()
     mount_router(router, delivery_declared.router(
-        ctx, ("delivery.terminal_sessions", "delivery.terminal_read"), module=__name__,
+        ctx, ("delivery.terminal_sessions", "delivery.terminal_read", "delivery.terminal_command"), module=__name__,
     ))
-
-    def _refused(exc: Any) -> JSONResponse:
-        reason = getattr(exc, "reason", "refused")
-        status = 401 if reason == "unauthorized" else 400
-        return JSONResponse(
-            {"ok": False, "error": reason, "detail": str(exc)}, status_code=status
-        )
 
     @router.post(
         "/api/delivery/terminal/live",
@@ -93,7 +87,7 @@ def build_delivery_terminal_router(ctx: WebContext) -> APIRouter:
             503: {"description": "Local stream unavailable"},
         },
     )
-    async def api_terminal_live(body: _LiveRequest) -> Any:
+    async def api_terminal_live(body: _LiveRequest, request: Request) -> Any:
         """Continuous local output as one authenticated NDJSON stream.
 
         ``subscribe`` performs the initial immutable-target proof and the
@@ -103,12 +97,10 @@ def build_delivery_terminal_router(ctx: WebContext) -> APIRouter:
         the iterator detaches only the control client.
         """
         try:
-            subscription = await asyncio.to_thread(lambda: delivery_service.terminal_subscribe(
-                body.target_id,
-                body.target_generation,
-                stream_id=body.stream_id,
-                resume_sequence=body.resume_sequence,
-            ))
+            subscription = await asyncio.to_thread(lambda: delivery_declared.registry_for(ctx)().invoke(
+                getattr(request.state, "principal", UNAUTHENTICATED), "delivery.terminal_live", body.model_dump()))
+        except OperationOwnerRequired as exc:
+            return JSONResponse({"error": exc.code, "code": exc.code}, status_code=403)
         except Exception as exc:
             status_name = getattr(exc, "status", "stream_unavailable")
             status_code = TERMINAL_ABSENCE_HTTP.get(status_name, 503)
@@ -135,27 +127,5 @@ def build_delivery_terminal_router(ctx: WebContext) -> APIRouter:
                 subscription.close()
 
         return StreamingResponse(lines(), media_type="application/x-ndjson")
-
-    @router.post("/api/delivery/terminal/commands")
-    async def api_terminal_command(
-        request: Request, payload: Optional[dict[str, Any]] = None
-    ) -> Any:
-        from ...delivery.commands import CommandRefused
-        from ...principals import UNAUTHENTICATED
-
-        body = payload if isinstance(payload, dict) else {}
-        principal = getattr(
-            request.state, "principal", UNAUTHENTICATED
-        )
-        try:
-            out = await asyncio.to_thread(lambda: delivery_service.terminal_command(principal, body))
-        except CommandRefused as exc:
-            return _refused(exc)
-        except Exception as exc:
-            log.error(f"terminal command failure: {exc}")
-            return JSONResponse(
-                {"error": "terminal_command_failure"}, status_code=500
-            )
-        return JSONResponse(out)
 
     return router

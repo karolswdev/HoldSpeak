@@ -5,6 +5,16 @@ The runtime is split into single-concern modules, thin assembly cores, and a
 small operation kernel for consent, audit, and execution receipts. Density
 guards keep those boundaries from silently regrowing.
 
+Speech follows the declared operation path too. `dictation_operations.py`,
+`media_operations.py` and `device_operations.py` produce the speech HTTP routes
+and eligible MCP tools. Browser capture, preview tokens, remote delivery and
+mesh relay legs are declared HTTP-only operations. Their adapters hold raw
+bytes, cancellation callbacks or the edge-authenticated node credential;
+`DictationService`, `RecordingsService`, `TtsService` and `MeshService` own the
+work. A relay still requires its node identity and credential generation; an
+agent cannot call an owner row or a relay callback. The dictation and device
+audio sockets retain their separate streaming protocol.
+
 ## Why this exists
 
 `web_runtime.py` proved that a carve regrows without a lock. Phase 52

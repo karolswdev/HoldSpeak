@@ -1,0 +1,32 @@
+{
+  "_producer": "SetupService.scan_lan over scan_lan_engines; injected /31 interface and pure model probe; no transports",
+  "found": {
+    "partial": false,
+    "unavailable": false,
+    "interfaceSource": "injected",
+    "hostsChecked": 1,
+    "portsChecked": 1,
+    "rows": [
+      {
+        "id": "lan:192.168.1.43:8080:qwen3.8-27b",
+        "kind": "lan",
+        "name": "qwen3.8-27b",
+        "legacyLabel": "qwen3.8-27b",
+        "host": "192.168.1.43",
+        "state": "READY",
+        "baseUrl": "http://192.168.1.43:8080/v1",
+        "found": true
+      }
+    ],
+    "checkedAt": "2026-11-09T12:00:00+00:00"
+  },
+  "unavailable": {
+    "partial": false,
+    "unavailable": true,
+    "reason": "LAN interface addresses are unavailable.",
+    "hostsChecked": 0,
+    "portsChecked": 0,
+    "rows": [],
+    "checkedAt": "2026-11-09T12:00:00+00:00"
+  }
+}

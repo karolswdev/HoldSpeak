@@ -62,7 +62,11 @@ async def _device(request: Request) -> Optional[dict[str, Any]]:
     token = _device_token(request)
     if not token or token.count(".") != 2:
         return None
-    return await run_in_threadpool(_service().authenticate, token)
+    if getattr(_principal(request), "kind", None) is PrincipalKind.AGENT:
+        return None
+    registry = operations.bind_available({"phone_service": _service()})
+    return await run_in_threadpool(lambda: registry.invoke(_principal(request) or UNAUTHENTICATED,
+        "phone.authenticate", {}, held={"token": token}))
 
 
 async def _body(request: Request) -> dict[str, Any]:
@@ -149,7 +153,7 @@ def build_phone_router(ctx: WebContext) -> APIRouter:
     @router.post("/api/phone/messages/{message_id}/read")
     async def api_phone_message_read(message_id: str, request: Request) -> Any:
         device = None
-        if _owner_or_agent(request) is None:
+        if getattr(_principal(request), "kind", None) is not PrincipalKind.OWNER:
             device = await _device(request)
             if device is None:
                 return _unauthorized()
@@ -189,7 +193,7 @@ def build_phone_router(ctx: WebContext) -> APIRouter:
     def answer_verb(verb: str) -> None:
         async def endpoint(call_id: str, request: Request) -> Any:
             device = None
-            if _owner_or_agent(request) is None:
+            if getattr(_principal(request), "kind", None) is not PrincipalKind.OWNER:
                 device = await _device(request)
                 if device is None:
                     return _unauthorized()
@@ -222,7 +226,8 @@ def build_phone_router(ctx: WebContext) -> APIRouter:
         service = _service()
         token = devs.bearer(websocket.headers.get("authorization")) or str(
             websocket.query_params.get("device_token") or "")
-        device = await run_in_threadpool(service.authenticate, token) if token.count(".") == 2 else None
+        device = await run_in_threadpool(lambda: registry().invoke(UNAUTHENTICATED, "phone.authenticate", {},
+            held={"token": token})) if token.count(".") == 2 else None
         owner = derive_owner(token or str(websocket.query_params.get("token") or ""),
                              getattr(websocket.app.state, "owner_token", ""))
         if device is None and owner is None:
@@ -237,7 +242,8 @@ def build_phone_router(ctx: WebContext) -> APIRouter:
             after = 0
         try:
             last_seq = await run_in_threadpool(service.events.last_seq)
-            hub = await run_in_threadpool(service.hub)
+            hub = await run_in_threadpool(lambda: registry().invoke(owner or UNAUTHENTICATED, "phone.hub", {},
+                held={"device": device}))
             await websocket.send_json({"type": "hello", "ts": utc_now_iso(),
                                        "data": {"hub_id": hub, "last_seq": last_seq, "server_ts": utc_now_iso()}})
             sent = after

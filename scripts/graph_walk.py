@@ -1036,7 +1036,7 @@ OP_MCP_PROJECTIONS: dict[str, dict[str, Any]] = {
 # (test_walk_rig: the walk is an outsider); test_graph_walk_op_steps fails
 # when a declared tool is missing from this table, so the list cannot drift.
 OP_MCP_PROJECTIONS.update({name: {"kind": "tool", "name": name} for name in (
-    "agent.launch.lane", "agent.launch.explain", "agent.launch.answer", "agent.launch.seen", "agent.launch.done",
+    "project.repository.register", "agent.launch.lane", "agent.launch.explain", "agent.launch.answer", "agent.launch.seen", "agent.launch.done",
     "agent.launch.remove", "agent.launch.resume", "agent.hand.cancel_queued", "agent.helper.allow",
     "agent.hand.preview", "agent.launch.get", "agent.launch.rebrief", "agent.launch.take_back",
     "agent.launch.deliver", "thread.create", "thread.list", "thread.get", "thread.update", "thread.delete",
@@ -1049,6 +1049,10 @@ OP_MCP_PROJECTIONS.update({name: {"kind": "tool", "name": name} for name in (
     "delivery.prs", "delivery.prs_refresh", "delivery.pr_diff", "delivery.pr_fetch", "delivery.nodes",
     "delivery.terminal_sessions", "delivery.terminal_read", "delivery.factory_profiles",
     "delivery.factory_discover", "invocation.list", "invocation.get") if name not in OP_MCP_PROJECTIONS})
+
+# The shared LAN scan and Retry now have produced tools.
+OP_MCP_PROJECTIONS.update({name: {"kind": "tool", "name": name}
+                           for name in ("setup.lan.scan", "concierge.retry")})
 
 # These existing rows now expose their owner-only tools too.
 OP_MCP_PROJECTIONS.update({name: {"kind": "tool", "name": name} for name in (
@@ -1067,11 +1071,9 @@ OP_HTTP_ONLY = frozenset({"decision.status",
                           "settings.secret.email_key", "settings.secret.slack_webhook",
                           # The Conductor K1: the owner's one-press hook install (config, HTTP only).
                           "agent_hooks.install", "agent_hooks.remove",
-                          "setup.found", "setup.lan.scan",
+                          "setup.found",
                           # PHILO-15 04: the owner's press opens the Calendars privacy pane (HTTP only).
                           "calendar.open_settings", "connection.signin",
-                          # PHILO-15 16: the owner names a Project's repository (HTTP only).
-                          "project.repository.register",
                           # One display protocol (2026-11-08): the compositor's answer to a display request.
                           "desk.request.result",
                           # 2026-11-08: the phone verbs with no MCP tool (a held device or address, a credential).

@@ -30,7 +30,14 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
         raise LookupError(name)
     from holdspeak.mcp.tools import runtime_registry  # tools.py imports this family
 
-    return runtime_registry().invoke(principal, TOOL_OPERATIONS[name], dict(arguments or {}))
+    try:
+        return runtime_registry().invoke(principal, TOOL_OPERATIONS[name], dict(arguments or {}))
+    except operations.OperationRefused as exc:
+        from holdspeak.services.errors import ServiceError
+
+        # HTTP has ContractRefusal; MCP preserves the same named contract error
+        # and its admission receipt, rather than dropping the code as ValueError.
+        raise ServiceError(exc.code, exc.detail, context=dict(getattr(exc, "kernel", None) or {})) from exc
 
 
 __all__ = ["NAMES", "TOOLS", "TOOL_OPERATIONS", "dispatch"]

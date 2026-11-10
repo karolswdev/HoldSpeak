@@ -113,17 +113,12 @@ CONCIERGE_OPERATIONS: tuple[OperationDescriptor, ...] = (
          status=202, refusals=("concierge_download_invalid",),
          tool=_tool({"presetId": {"type": "string", "minLength": 1, "maxLength": 160}}, ("presetId",)),
          completion="asynchronous; GET /api/inference/acquisitions/{jobId}, or concierge.speech for a speech model"),
-    # HTTP only: the Engines window's Find on this network, one look per press.
-    # setup.lan (setup_operations.py) is the same look in Setup's shape.
-    _row("concierge.discover_lan", "discover_lan", ("POST", f"{_P}/discover-lan"), "post_discover_lan",
-         lambda s, p, a: s.discover_lan(p),
-         "Look once on the owner's private network for engines that answer (/v1/models). It adds no engine.",
-         result="{engines: [...], checkedAt}", authority="egress", press=True, refusals=("concierge_lan_refused",)),
-    # HTTP only: the Retry press on a Needs-you engine row.
+    # The Retry press and tool reach the same engine door.
     _row("concierge.retry", "retry", ("POST", f"{_P}/retry"), "post_retry",
          lambda s, p, a: s.retry(p, a.get("kind"), a.get("key")),
          "Run one failed engine job again, through the engine door, by the caller that registered it.",
-         result="{ok: true}", write=True, refusals=("concierge_retry_invalid", "no_retry"),),
+         result="{ok: true}", write=True, refusals=("concierge_retry_invalid", "no_retry"),
+         tool=_tool({"kind": {"type": "string"}, "key": {"type": "string"}}, ("kind", "key"))),
 )
 
 
