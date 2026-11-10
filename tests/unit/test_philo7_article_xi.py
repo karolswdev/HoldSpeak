@@ -397,9 +397,8 @@ def test_an_agent_cannot_grant_or_revoke_and_the_edge_refuses_the_unauthenticate
     for method in ("put", "delete"):
         count = Count(hub)
         resp = getattr(agent, method)(f"/api/settings/remote/delegations/{AGENT_ID}", **({"json": {}} if method == "put" else {}))
-        assert resp.status_code == 403 and resp.json()["error"] == "owner_principal_required", resp.text
-        name = "delegation.grant" if method == "put" else "delegation.revoke"
-        _one(count, name, "owner_principal_required")
+        assert resp.status_code == 403 and resp.json()["error"] == "owner_required", resp.text
+        _none(count)  # The owner-only declared row refuses before any grant attempt.
     with hub.db._connection() as conn:
         assert conn.execute("SELECT COUNT(*) FROM kernel_desk_delegations").fetchone()[0] == 0
     from starlette.testclient import TestClient

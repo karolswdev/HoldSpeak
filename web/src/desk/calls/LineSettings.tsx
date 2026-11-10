@@ -12,7 +12,7 @@
  * said here once. */
 import { useCallback, useEffect, useState, type MouseEvent, type ReactNode } from "react";
 import { Button } from "../../components/signal/Signal";
-import { readableError } from "../../lib/api";
+import { apiFetch, readableError } from "../../lib/api";
 import { CommandWell } from "../../pages/cores/connections/ConnectionsPane";
 import { spriteUrl } from "../sprites";
 import { GadgetGroup, MxRadio, StringGadget } from "../surface/gadgets";
@@ -136,17 +136,18 @@ function Row({ name, fact, state, verb, testId }: {
 /** A write-only secret: the field clears after Save and the row says where
  *  the secret is, never its value. */
 function SecretRow({ label, place, busy, onSave, testId }: {
-  label: string; place: SecretPlace; busy: boolean; onSave(value: string): void; testId: string;
+  label: string; place: SecretPlace; busy: boolean; onSave(value: string): Promise<boolean>; testId: string;
 }) {
   const [draft, setDraft] = useState("");
   const [changing, setChanging] = useState(false);
   const words = SECRET_WORDS[place];
   const open = place !== "keystore" || changing;
-  const save = () => {
-    if (!draft.trim()) return;
-    onSave(draft.trim());
-    setDraft("");
-    setChanging(false);
+  const save = async () => {
+    if (!draft.trim() || busy) return;
+    if (await onSave(draft.trim())) {
+      setDraft("");
+      setChanging(false);
+    }
   };
   return (
     <div className="line-secret" data-testid={testId} data-place={place}>
@@ -163,6 +164,7 @@ function SecretRow({ label, place, busy, onSave, testId }: {
             <StringGadget
               label={label}
               type="password"
+              disabled={busy}
               mic={false}
               value={draft}
               onChange={setDraft}
@@ -311,6 +313,26 @@ export function LineSettingsPane({ settings, onWrite, onReload }: {
     }
   };
 
+  const writeSecret = async (key: string, secretId: string, value: string | null) => {
+    setBusy(key);
+    setRefusal("");
+    try {
+      const answer = await apiFetch<{ success: boolean; error?: string }>(`/api/settings/secrets/${secretId}`, {
+        method: value === null ? "DELETE" : "PUT",
+        ...(value === null ? {} : { json: { value } }),
+      });
+      if (!answer.success) throw new Error(answer.error || "The hub did not confirm the save. Your edit is kept. Try Save again.");
+      await onReload?.();
+      await load();
+      return true;
+    } catch (error) {
+      setRefusal(readableError(error));
+      return false;
+    } finally {
+      setBusy("");
+    }
+  };
+
   const places = Array.from(new Set(["this_mac", ...nodes.map((row) => `node:${row.node}`), where]));
   const nodeRow = (value: string) => nodes.find((row) => `node:${row.node}` === value);
   const typed = machine.trim();
@@ -431,14 +453,14 @@ export function LineSettingsPane({ settings, onWrite, onReload }: {
             <>
               <TelnyxSetup onChanged={async () => { await onReload?.(); await load(); }} keyRow={(
                 <SecretRow label="Telnyx API key" place={secrets.telnyx_api_key ?? "missing"} busy={busy === "telnyx_api_key"}
-                  onSave={(value) => void write("telnyx_api_key", { telnyx_api_key: value })} testId="line-telnyx-key" />
+                  onSave={(value) => writeSecret("telnyx_api_key", "line_telnyx_api_key", value)} testId="line-telnyx-key" />
               )} />
               <AccountField label="User" value={acct.user} placeholder="Your Telnyx SIP user" busy={busy === "user"}
                 onSave={(next) => void write("user", { account: { user: next } })} testId="line-user" />
               <AccountField label="Domain" value={acct.domain} placeholder="sip.telnyx.com" busy={busy === "domain"}
                 onSave={(next) => void write("domain", { account: { domain: next } })} testId="line-domain" />
               <SecretRow label="SIP password" place={secrets.sip_password ?? "missing"} busy={busy === "password"}
-                onSave={(value) => void write("password", { account: { password: value } })} testId="line-password" />
+                onSave={(value) => writeSecret("password", "line_sip_password", value)} testId="line-password" />
             </>
           )}
           {acct.codecs?.length ? <p className="line-quiet" data-testid="line-codecs">Codecs: {acct.codecs.join(", ")}</p> : null}
