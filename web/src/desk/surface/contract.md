@@ -1604,3 +1604,23 @@ Settings uses this grammar for every section; its retired page material is
 parked. Service providers without an account appear in Add account. Device
 keys have their own selection list in This Mac > Keys. Each list declares
 its selection verbs once, with no verb button in a data row.
+
+### A selection list with a preview (2026-11-10)
+
+`ListView toolbar={{ trailing, testId }}` draws its declared `ListVerb`s in
+one toolbar above the column headers; the trailing slot holds a find gadget.
+Without this option, the existing action bar remains below the list. The
+shared strip measures available space and folds its verbs into Actions when
+they do not fit. The context menu and app menu use the same declaration.
+`ListVerb.testId` supplies an optional action test target; `title` carries
+the action's hover disclosure. A Delete verb also
+accepts Backspace; Return opens through the default verb.
+
+`ListPane` keeps the list and a plain preview in two bounded wells, with the
+preview below the list at every width. `listTestId` and `previewTestId` name
+walk targets. Neither well makes the window body scroll. Meetings Records
+uses this pattern. The Record tab and the meeting window retain their
+existing composition.
+
+A reversible receipt belongs in `StatusBar.verbs`, outside the clipped facts
+well. The shared bar bounds its words and keeps Restore or Retry visible.

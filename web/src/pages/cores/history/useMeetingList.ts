@@ -1,0 +1,25 @@
+import { useCallback, useEffect, useRef, useState } from "react";
+import { apiFetch, readableError } from "../../../lib/api";
+import type { MeetingsListResponse } from "../core-types";
+
+/** Search and refresh share one freshness rule: only the latest read can land. */
+export function useMeetingList(url: string) {
+  const [data, setData] = useState<MeetingsListResponse>({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const read = useRef(0);
+  const reload = useCallback(async () => {
+    const current = ++read.current;
+    setLoading(true); setError("");
+    try {
+      const result = await apiFetch<MeetingsListResponse>(url);
+      if (current === read.current) setData(result);
+      return result;
+    } catch (reason) {
+      if (current === read.current) setError(readableError(reason));
+      return null;
+    } finally { if (current === read.current) setLoading(false); }
+  }, [url]);
+  useEffect(() => { void reload(); return () => { read.current += 1; }; }, [reload]);
+  return { data, setData, loading, error, reload };
+}
