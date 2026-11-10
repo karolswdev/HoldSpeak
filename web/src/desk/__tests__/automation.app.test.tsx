@@ -10,11 +10,12 @@
  * The sends read of the Send fold answers an empty list (its own tests:
  * desk/__tests__/send.app.test.tsx). */
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import type { ComponentProps } from "react";
+
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useDesk } from "../store";
 import { AutomationWindow, AUTOMATION_WINDOW_SIZE } from "../components/automation/AutomationWindow";
 import empty from "./fixtures/automation-hub/empty.json";
+import blankSentence from "./fixtures/automation-hub/blank-sentence.json";
 import one from "./fixtures/automation-hub/one.json";
 import failed from "./fixtures/automation-hub/failed.json";
 import populated from "./fixtures/automation-hub/populated.json";
@@ -50,7 +51,6 @@ import programNew from "./fixtures/automation-hub/program-new.json";
 import programRan from "./fixtures/automation-hub/program-ran.json";
 import programStill from "./fixtures/automation-hub/program-still.json";
 import { AutomationsCore } from "../components/automation/AutomationsCore";
-import { AutomationBuilder } from "../components/automation/AutomationBuilder";
 import type { AutomationDetail } from "../components/automation/model";
 import { EMPTY_ITEMS, fromWireDirectory, fromWireNote } from "../api";
 import { useDropHand } from "../hand";
@@ -210,100 +210,13 @@ async function open(step: Step) {
   await screen.findByTestId("automation-sentence");
 }
 
-function blankBuilderDetail(): AutomationDetail {
-  const detail = ((fridayNew as Step).gets[DETAIL_OF(fridayNew)] as { workbench: unknown }).workbench;
-  return {
-    ...(detail as AutomationDetail),
-    instruction: "",
-    instruction_shown: "",
-    results: [],
-    items: [],
-  };
-}
-
-function renderBuilder(
-  overrides: Partial<ComponentProps<typeof AutomationBuilder>> = {},
-) {
-  const callbacks = {
-    onSaveDo: vi.fn(async () => true),
-    onSaveSources: vi.fn(async () => true),
-    onChooseEngine: vi.fn(async () => true),
-    onSpendLimit: vi.fn(async () => true),
-    onChooseWhen: vi.fn(async () => true),
-    onChoosePut: vi.fn(async () => true),
-    onChooseReview: vi.fn(async () => true),
-    onPending: vi.fn(),
-    onDone: vi.fn(),
-  };
-  render(
-    <AutomationBuilder
-      detail={blankBuilderDetail()}
-      pending={false}
-      whenSaving={null}
-      saveError={null}
-      {...callbacks}
-      {...overrides}
-    />,
-  );
-  return callbacks;
-}
-
-describe("the guided automation setup", () => {
-  it("cannot skip an empty Do through the step rail and finish setup", () => {
-    const callbacks = renderBuilder();
-    const put = screen.getByTestId("automation-setup-step-put");
-    expect(put).toBeDisabled();
-    fireEvent.click(put);
-    expect(screen.getByTestId("automation-setup-do")).toBeInTheDocument();
-    expect(screen.queryByTestId("automation-setup-done")).toBeNull();
-    expect(callbacks.onDone).not.toHaveBeenCalled();
-    expect(callbacks.onSaveDo).not.toHaveBeenCalled();
-  });
-
-  it("keeps a Do draft when Back returns from About", async () => {
-    const callbacks = renderBuilder();
-    const box = screen.getByRole("textbox", { name: "What it does" });
-    fireEvent.change(box, { target: { value: "Keep this draft" } });
-    fireEvent.click(screen.getByTestId("automation-setup-next"));
-    await screen.findByTestId("automation-setup-about");
-    expect(callbacks.onSaveDo).toHaveBeenCalledWith("run", "Keep this draft");
-    fireEvent.click(screen.getByTestId("automation-setup-back"));
-    expect(screen.getByRole("textbox", { name: "What it does" })).toHaveValue("Keep this draft");
-  });
-
-  it("stays on Do and keeps the draft when its save fails", async () => {
-    const onSaveDo = vi.fn(async () => false);
-    renderBuilder({ onSaveDo });
-    const box = screen.getByRole("textbox", { name: "What it does" });
-    fireEvent.change(box, { target: { value: "Do not lose this" } });
-    fireEvent.click(screen.getByTestId("automation-setup-next"));
-    await waitFor(() => expect(onSaveDo).toHaveBeenCalledTimes(1));
-    expect(screen.queryByTestId("automation-setup-about")).toBeNull();
-    expect(screen.getByRole("textbox", { name: "What it does" })).toHaveValue("Do not lose this");
-    fireEvent.click(screen.getByTestId("automation-setup-next"));
-    await waitFor(() => expect(onSaveDo).toHaveBeenCalledTimes(2));
-  });
-
-  it("does not run while Next advances through setup or when Done returns", async () => {
-    const onDone = vi.fn();
-    renderBuilder({ onDone });
-    fireEvent.change(screen.getByRole("textbox", { name: "What it does" }), { target: { value: "Prepare it" } });
-    fireEvent.click(screen.getByTestId("automation-setup-next"));
-    await screen.findByTestId("automation-setup-about");
-    for (const step of ["with", "when", "put"] as const) {
-      fireEvent.click(screen.getByTestId("automation-setup-next"));
-      await screen.findByTestId(`automation-setup-${step}`);
-    }
-    fireEvent.click(screen.getByTestId("automation-setup-done"));
-    expect(onDone).toHaveBeenCalledTimes(1);
-  });
-});
-
 describe("the sentence on top", () => {
   it("reads When, Do, About, With and Put it in in words, with no ref and no id", async () => {
     await open(empty as Step);
+    expect(screen.getByTestId("automation-mast").contains(sentence())).toBe(true);
+    expect(screen.queryByTestId("automation-setup")).toBeNull();
     expect(line("when")).toHaveTextContent("Only when I press Run now");
-    expect(line("do")).toHaveTextContent("Write my weekly update from these notes.");
+    expect(line("do")).toHaveTextContent("Write my weekly update from these notes");
     expect(within(line("about")).getByText("Platform sync")).toBeInTheDocument();
     expect(within(line("about")).getByText("Hiring")).toBeInTheDocument();
     expect(line("with")).toHaveTextContent("LAN Qwen");
@@ -312,14 +225,59 @@ describe("the sentence on top", () => {
     expect(words).not.toMatch(/note:|note-sync|wb-friday|artifact_|wbocc_|\* \* \*/);
     // No result yet: the plate is the first run and its Run now; no ledger,
     // no fold of zero lessons.
-    expect(newest()).toHaveTextContent("First run");
-    expect(within(newest()).getByTestId("automation-run-now")).toBeEnabled();
+    expect(screen.queryByTestId("automation-newest")).toBeNull();
+    expect(screen.getByTestId("automation-no-runs")).toHaveTextContent("No runs yet");
+    expect(within(screen.getByTestId("automation-mast")).getByTestId("automation-run-now")).toBeEnabled();
     expect(screen.queryByTestId("automation-result-list")).toBeNull();
     // The mast: the automation's name and its facts in one line.
-    expect(screen.getByTestId("automation-mast")).toHaveTextContent("Only when I press Run now · LAN Qwen");
+    expect(screen.getByTestId("automation-mast")).toHaveTextContent("LAN Qwen");
     expect(screen.queryByText("What it has learned")).toBeNull();
     // Only when he presses Run now: there is no start to switch on or off.
     expect(screen.queryByTestId("automation-on")).toBeNull();
+  });
+
+  it("a new blank automation uses the mast sentence; a refused edit keeps its words and Retry shows the acknowledged sentence", async () => {
+    // Recorded from the real WorkbenchService routes with _client in
+    // tests/integration/test_desk_workbenches.py: POST a name-only record,
+    // GET it, PUT the Do instruction, then GET it again. No engine runs.
+    const id = blankSentence.workbench_id;
+    const path = `/api/workbenches/${id}`;
+    const saved = blankSentence.write.workbench.instruction;
+    let attempts = 0;
+    let finish!: () => void;
+    const fetchSpy = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      if (String(input) === path && init?.method === "PUT") {
+        attempts += 1;
+        if (attempts === 1) return new Response("", { status: 503 });
+        await new Promise<void>((resolve) => { finish = resolve; });
+        hub.step = { workbench_id: id, ...blankSentence.after };
+        return json(blankSentence.write);
+      }
+      return hubFetch(input, init);
+    });
+    vi.stubGlobal("fetch", fetchSpy);
+    await open({ workbench_id: id, ...blankSentence.before });
+    expect(screen.getByTestId("automation-mast").contains(sentence())).toBe(true);
+    expect(screen.queryByTestId("automation-setup")).toBeNull();
+    expect(screen.getByTestId("automation-run-now")).toBeDisabled();
+    fireEvent.click(within(line("do")).getByRole("button"));
+    const input = await screen.findByRole("textbox", { name: "What it does" });
+    fireEvent.change(input, { target: { value: saved } });
+    fireEvent.click(screen.getByTestId("automation-do-save"));
+    await waitFor(() => expect(screen.getByTestId("automation-do-save")).toBeEnabled());
+    expect(input).toHaveValue(saved);
+    fireEvent.click(screen.getByTestId("automation-do-save"));
+    await waitFor(() => expect(attempts).toBe(2));
+    const newer = `${saved} Check the rollout owners.`;
+    fireEvent.change(input, { target: { value: newer } });
+    await act(async () => finish());
+    await waitFor(() => expect(line("do")).toHaveTextContent(saved.replace(/\.$/, "")));
+    expect(input).toHaveValue(newer);
+    expect(screen.getByTestId("automation-do-editor")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(screen.queryByTestId("automation-do-editor")).toBeNull();
+    expect(fetchSpy.mock.calls.filter(([, init]) => init?.method === "PUT")).toHaveLength(2);
+    expect(fetchSpy.mock.calls.some(([url]) => String(url).endsWith("/run"))).toBe(false);
   });
 
   it("an event start saved before the watch fold says it must be set again", async () => {
@@ -368,11 +326,11 @@ describe("Run now and the results", () => {
     await open(empty as Step);
     hub.afterRun = [one as Step];
     hub.hold = () => undefined;
-    const card = newest();
+    expect(screen.queryByTestId("automation-newest")).toBeNull();
     const sentenceBefore = sentence().innerHTML;
     fireEvent.click(screen.getByTestId("automation-run-now"));
     await waitFor(() => expect(newest()).toHaveTextContent(/Working…/));
-    expect(newest()).toBe(card);
+    const card = newest();
     expect(newest()).toHaveTextContent("LAN Qwen");
     expect(screen.getByTestId("automation-run-now")).toBeDisabled();
     expect(sentence().innerHTML).toBe(sentenceBefore);
@@ -436,12 +394,10 @@ describe("Run now and the results", () => {
 });
 
 describe("What it has learned", () => {
-  it("is a fold, closed by default; Forget removes that one lesson", async () => {
+  it("shows light lesson rows; Forget removes that one lesson", async () => {
     await open(populated as Step);
-    const fold = screen.getByText("What it has learned").closest("details")!;
-    expect(fold).not.toHaveAttribute("open");
-    // A4: the fold says how many in words, never a bare count.
-    expect(fold.querySelector("summary")).toHaveTextContent("2 lessons");
+    const fold = screen.getByRole("region", { name: "What it has learned" });
+    expect(fold.querySelector("details")).toBeNull();
     const lessons = within(fold).getAllByRole("listitem");
     expect(lessons.map((l) => l.textContent)).toEqual([
       expect.stringContaining("Keep the update under ten lines."),
@@ -517,7 +473,7 @@ describe("A4: With, the engine in place", () => {
     expect(hub.calls[1].body).toEqual({ profile_id: "agent-claude" });
     await waitFor(() => expect(line("with")).toHaveTextContent("Claude Code"));
     // A10: an agent engine's egress chip names its vendor.
-    expect(line("with")).toHaveTextContent("Anthropic");
+    expect(screen.getByTestId("automation-with-editor")).toHaveTextContent("Anthropic");
     // The engine in use offers this automation's own Spend limit per run.
     await waitFor(() => expect(within(screen.getByTestId("automation-with-editor")).getByText("In use")).toBeInTheDocument());
     expect(screen.getByTestId("automation-spend")).toBeInTheDocument();
@@ -716,7 +672,7 @@ describe("About (A5)", () => {
     fireEvent.click(screen.getByRole("button", { name: "Add Platform sync" })); presses += 1;
     await waitFor(() => expect(hub.calls).toContainEqual({ method: "PUT", url: DETAIL_OF(aboutNone), body: { sources: ["note:note-sync"] } }));
     // The chip on the line and in the editor (with its Remove).
-    const chips = await within(line("about")).findAllByTestId("automation-about-chips");
+    const chips = await screen.findAllByTestId("automation-about-chips");
     for (const chip of chips) expect(chip).toHaveTextContent("Platform sync");
     expect(presses).toBe(2);
     // The typed text is never deleted: it stays for the next pick.
@@ -932,12 +888,9 @@ describe("an old automation (A9)", () => {
     expect(screen.queryByTestId("automation-newest")).toBeNull();
     expect(screen.queryByTestId("automation-raw")).toBeNull();
     expect(screen.getByTestId("automation-make-one")).toHaveTextContent("Make this one automation");
-    // A long Do (the agent's prompt) clamps to 3 lines on a phone; "more" opens it.
-    const text = line("do").querySelector(".automation-do-text")!;
-    expect(text).toHaveAttribute("data-clamped");
-    fireEvent.click(screen.getByTestId("automation-do-more"));
-    expect(text).not.toHaveAttribute("data-clamped");
-    expect(screen.getByTestId("automation-do-more")).toHaveTextContent("less");
+    // The mast is a short sentence; the full instruction stays in its editor.
+    fireEvent.click(within(line("do")).getByRole("button"));
+    expect(await screen.findByRole("textbox", { name: "What it does" })).toHaveValue("");
   });
 
   it("an old queue is set up as a program: New program opens with its waiting tasks as the steps", async () => {
@@ -1088,7 +1041,7 @@ describe("an agent works in a folder (A10)", () => {
     hub.step = folderRan as Step;
     render(<AutomationWindow workbenchId={(folderRan as Step).workbench_id} />);
     await screen.findByTestId("automation-sentence");
-    expect(within(line("about")).getByTestId("automation-about-chips")).toHaveTextContent("Folder ledger");
+    expect(line("about")).toHaveTextContent("Folder ledger");
     expect(line("with")).toHaveTextContent("Claude Code");
     // Owner ruling 2026-10-25: no egress chip on the mast; With names the engine.
     expect(screen.getByTestId("automation-mast")).not.toHaveTextContent("Anthropic");
@@ -1182,18 +1135,4 @@ describe("PG14: Run a program", () => {
     }));
   });
 
-  it("the guided Do step offers Run a program and needs a template before Next", async () => {
-    const callbacks = renderBuilder();
-    fireEvent.click(screen.getByTestId("automation-do-run-program"));
-    fireEvent.change(screen.getByRole("textbox", { name: "Goal" }), { target: { value: "Clear the bug list." } });
-    fireEvent.click(screen.getByTestId("automation-setup-next"));
-    expect(await screen.findByText("Choose a template before Next.")).toBeInTheDocument();
-    expect(callbacks.onSaveDo).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByTestId("automation-program-template-race"));
-    fireEvent.click(screen.getByTestId("automation-program-control-secure"));
-    fireEvent.click(screen.getByTestId("automation-setup-next"));
-    await waitFor(() => expect(callbacks.onSaveDo).toHaveBeenCalledWith(
-      "run_program", "Clear the bug list.", { template: "race", control: "secure", runsOn: [] }));
-    expect(await screen.findByTestId("automation-setup-about")).toBeInTheDocument();
-  });
 });

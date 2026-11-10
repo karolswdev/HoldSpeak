@@ -4062,22 +4062,22 @@
       "phase1_refs": [],
       "sources": [
         {
-          "path": "web/src/pages/cores/PeopleCore.tsx",
+          "path": "web/src/pages/cores/PeopleLedger.tsx",
           "symbol": "function LinkSuggestions(",
           "claim": "A calendar event whose title holds the alias shows with a library Link this 1:1 Button; the press calls the existing calendar-links route."
         },
         {
-          "path": "web/src/pages/cores/PeopleCore.tsx",
-          "symbol": "function PrepPane(",
+          "path": "web/src/pages/cores/PeopleLedger.tsx",
+          "symbol": "export function PeopleLedger",
           "claim": "The Now side reads the linked 1:1 with the header's formatter; a failed brief read is a named failure with Try again."
         },
         {
-          "path": "web/src/pages/cores/PeopleCore.tsx",
-          "symbol": "function shortDay(",
+          "path": "web/src/pages/cores/peopleModel.ts",
+          "symbol": "export function shortDay",
           "claim": "A date-only deadline stays its calendar day in the desk's zone."
         },
         {
-          "path": "web/src/pages/cores/PeopleCore.tsx",
+          "path": "web/src/pages/cores/PeopleLedger.tsx",
           "symbol": "data-testid=\"people-next-1on1\"",
           "claim": "NEXT 1:1 reads the hub's linked event through one formatter."
         }

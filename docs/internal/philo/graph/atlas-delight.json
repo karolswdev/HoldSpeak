@@ -55,8 +55,8 @@
       "phase1_refs": [],
       "sources": [
         {
-          "path": "web/src/pages/cores/PeopleCore.tsx",
-          "symbol": "function PrepPane({",
+          "path": "web/src/pages/cores/PeopleLedger.tsx",
+          "symbol": "export function PeopleLedger",
           "claim": "Prep retains the agenda and starts recording through the actual linked calendar event."
         }
       ],

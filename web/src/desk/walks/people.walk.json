@@ -8,32 +8,39 @@
       "highlight": {
         "target": "people-rail",
         "thing": "people list",
-        "words": "All your people are here. Press a name to open it."
+        "words": "Press a name to open the person."
       }
     },
     {
       "highlight": {
         "target": "people-detail-head",
-        "thing": "person head",
-        "words": "This is one person: the name and how you work together, in one line."
+        "thing": "person",
+        "words": "The name, role and next 1:1 are here."
       }
     },
     {
       "highlight": {
-        "target": "people-plate",
-        "thing": "next thing with this person",
-        "words": "This matters now: the one thing to do with this person."
-      }
-    },
-    {
-      "highlight": {
-        "target": "prep-commitments",
+        "target": "people-commitments",
         "thing": "commitments",
-        "words": "The commitments: what you owe and what is owed to you."
+        "words": "What you owe and what is owed to you. Each row has its next action."
+      }
+    },
+    {
+      "highlight": {
+        "target": "people-next-plate",
+        "thing": "agenda",
+        "words": "The agenda for your next 1:1."
+      }
+    },
+    {
+      "highlight": {
+        "target": "people-composer",
+        "thing": "composer",
+        "words": "Choose Note, Agenda or a commitment. Type or speak, then press Add."
       },
       "ask": {
         "ref": "people-feel",
-        "question": "Is this how People should feel?",
+        "question": "Keep this People view?",
         "choices": [
           "Keep",
           "Redo"

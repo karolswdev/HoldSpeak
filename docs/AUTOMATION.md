@@ -54,7 +54,11 @@ builder or grant it owner authority.
 
 ## Configure recurring work
 
-The Automation sentence has these words:
+The automation head shows one sentence. Press a part to change it in place.
+New automations use the same sentence with empty parts. There is no separate setup wizard.
+**Run now** is in the head. Each run has **Open result** to show its answer.
+
+The sentence has these parts:
 
 | Word | Meaning |
 | --- | --- |
@@ -65,7 +69,7 @@ The Automation sentence has these words:
 | **Review by** | An optional installed reviewer for an agent handoff. |
 | **Put it in** | **My Inbox**, **Needs you**, **Today**, or a saved destination that prepares a send. |
 
-The builder writes each choice when you press it. It does not show the stored
+The editor writes each choice when you press it. It does not show the stored
 cron expression. If a schedule has no usable engine or agent, HoldSpeak keeps
 the schedule saved but off and names the missing **With** choice.
 

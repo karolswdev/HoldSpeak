@@ -169,15 +169,16 @@ describe("People: a person's own window (PHILO-17 2b)", () => {
     expect(screen.queryByTestId("people-failure")).toBeNull();
   });
 
-  it("draws THAT person on the RelationshipPane: Prep and three folded tabs, no Back, not the roster", async () => {
+  it("draws THAT person as a ledger with one composer and no disclosure pages", async () => {
     stubHub();
     render(<PersonWindowBody relationshipId="r1" />);
     const win = await screen.findByTestId("person-window");
-    await within(win).findByTestId("people-folds");
+    await within(win).findByTestId("people-composer");
     expect(win.textContent).toContain("Ania");
     // Betterment D7: the prep, then Context, History and Info as folds under it.
     expect(within(win).getByTestId("people-prep-lens")).toBeTruthy();
-    expect([...win.querySelectorAll('[data-testid="people-folds"] .surface-disclosure-label')].map((n) => n.textContent)).toEqual(["Context", "History", "Info"]);
+    expect(win.querySelector(".surface-disclosure")).toBeNull();
+    expect(win.querySelectorAll("textarea")).toHaveLength(1);
     const head = win.querySelector(".people-detail-head");
     expect(head).toBeTruthy();
     expect(head!.textContent).not.toMatch(/\bBack\b/);
@@ -229,11 +230,19 @@ describe("People: Add on They owe you shows the saved item", () => {
     const owed = await screen.findByTestId("people-commitments", {}, { timeout: 5000 });
     expect(within(owed).queryByText(owedBody)).toBeNull();
     expect(within(owed).queryByLabelText("Priya owes me")).toBeNull();
-    // One Add on the ledger; the well asks which way the promise goes.
-    fireEvent.click(within(owed).getByRole("button", { name: "Add" }));
-    fireEvent.click(within(owed).getByRole("button", { name: "Priya owes me" }));
-    fireEvent.change(within(owed).getByLabelText("Priya owes me"), { target: { value: owedBody } });
-    fireEvent.click(within(owed).getByRole("button", { name: "Add" }));
+    const composer = screen.getByTestId("people-composer");
+    fireEvent.change(within(composer).getByRole("combobox", { name: "Add to this person" }), { target: { value: "they" } });
+    fireEvent.change(within(composer).getByLabelText("Priya owes me"), { target: { value: owedBody } });
+    const owedInput = within(composer).getByLabelText("Priya owes me");
+    fireEvent.change(within(composer).getByRole("combobox", { name: "Add to this person" }), { target: { value: "note" } });
+    const noteInput = within(composer).getByLabelText("Note");
+    // A different voice target mounts for each kind; late dictation cannot
+    // follow a reused pad into the other draft.
+    expect(noteInput).not.toBe(owedInput);
+    expect(noteInput).toHaveValue("");
+    fireEvent.change(within(composer).getByRole("combobox", { name: "Add to this person" }), { target: { value: "they" } });
+    expect(within(composer).getByLabelText("Priya owes me")).toHaveValue(owedBody);
+    fireEvent.click(within(composer).getByRole("button", { name: /^Add$/ }));
     // 5 s, not the 1 s default: the full suite runs in parallel (#1100).
     await waitFor(() => expect(within(screen.getByTestId("people-commitments")).getByText(owedBody)).toBeTruthy(), { timeout: 5000 });
     const posted = fetchSpy.mock.calls.filter(([url, o]) => String(url) === `/api/people/relationships/${id}/owed` && o?.method === "POST");

@@ -272,6 +272,7 @@ def _cases() -> tuple[list[tuple[str, str, str | None]], dict[str, str]]:
         ("decision-record", "surface-decisions", "record:{decision_record}"),
         ("note", "pullout:note:{note}", None),
         ("person", "pullout:people:{person}", None),
+        ("person-walk", "pullout:people:{person}", None),
         # Programs (2026-10-28): a Program's window (the board of direction
         # C), seeded through the real routes on a real git folder.
         ("program", "pullout:program:{program}", None),
@@ -304,6 +305,8 @@ def _cases() -> tuple[list[tuple[str, str, str | None]], dict[str, str]]:
         # Betterment A3: an automation's window (an object window, so a seeded
         # subject: the sentence, its newest result, an older failed one).
         ("automation", "workbench:{automation}", None),
+        ("automation-when", "workbench:{automation}", None),
+        ("automation-walk", "workbench:{automation}", None),
         # Programs PG14: an automation that runs a Program (Do: Run a
         # program; its one result is the seeded Program, Running).
         ("automation-program", "workbench:{automation_program}", None),
@@ -1629,7 +1632,54 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
             win.get_by_test_id("program-round-strip").wait_for(timeout=T)
             win.get_by_test_id("program-question").wait_for(timeout=T)
             page.mouse.move(2, 2)
-        if case_id == "person":
+        if case_id in {"person-walk", "automation-walk"}:
+            # The app's real Show me -> WalkRunner -> saved answer, on the
+            # isolated hub. Voice is off; no provider or microphone runs.
+            page.evaluate("localStorage.setItem('hs:walk-voice', 'off')")
+            win = page.locator(f'[id="{wid}"]')
+            if width < 720:
+                win.get_by_test_id("show-me-more").click()
+                page.get_by_role("menuitem", name="Show me", exact=True).click()
+            else:
+                win.get_by_test_id("show-me").click()
+            walk_name = "people" if case_id == "person-walk" else "automations"
+            script = json.loads((REPO / f"web/src/desk/walks/{walk_name}.walk.json").read_text())
+            kept = False
+            for _ in range(len(script["steps"]) + 1):
+                page.wait_for_function("""() => ['walk-next', 'walk-choice-0', 'walk-end'].some(id => {
+                    const e = document.querySelector(`[data-testid="${id}"]`);
+                    return e && e.getClientRects().length;
+                })""", timeout=T)
+                if page.get_by_test_id("walk-end").is_visible():
+                    break
+                choice = page.get_by_test_id("walk-choice-0")
+                if choice.is_visible():
+                    with page.expect_response(lambda r: "/api/w/" in r.url and r.url.endswith("/answer")) as saved:
+                        choice.click()
+                    assert saved.value.ok and saved.value.json()["choice"] == "Keep"
+                    kept = True
+                else:
+                    page.get_by_test_id("walk-next").click()
+            assert kept, "The app walk did not save its answer"
+            page.get_by_test_id("walk-end").wait_for(timeout=T)
+            page.get_by_test_id("walk-back").click()
+        if case_id == "automation-when":
+            when = page.locator(f'[id="{wid}"] [data-testid=automation-line-when] button')
+            when.click()
+            popover = page.locator(".surface-popover").filter(has=page.get_by_test_id("automation-when-editor"))
+            popover.wait_for(timeout=T)
+            box = popover.bounding_box()
+            assert box and box["x"] >= 0 and box["x"] + box["width"] <= width, box
+            page.keyboard.press("Escape")
+            popover.wait_for(state="detached", timeout=T)
+            assert when.evaluate("e => e === document.activeElement")
+            when.click()
+            popover.wait_for(timeout=T)
+            assert not page.evaluate(TARGET_JS, ".surface-popover")
+            page.screenshot(path=str(evidence_dir("desk-sweep") / f"automation-when-editor-{width}.png"))
+            page.keyboard.press("Escape")
+            popover.wait_for(state="detached", timeout=T)
+        if case_id in {"person", "person-walk"}:
             # This pose is the seeded person's content, not the transient
             # readiness/detail gap or a frame whose lazy body has not loaded.
             page.locator(f'[id="{wid}"] [data-testid=people-detail-head]').wait_for(timeout=T)
