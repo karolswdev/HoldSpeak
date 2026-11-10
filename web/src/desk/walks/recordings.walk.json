@@ -6,13 +6,13 @@
   "steps": [
     {
       "highlight": {
-        "target": "recordings-mast",
-        "thing": "recording head",
-        "words": "The picked recording and its actions."
+        "target": "recordings-toolbar",
+        "thing": "recording actions",
+        "words": "New recording, the selected recording, and Find. More has links and storage."
       },
       "ask": {
-        "ref": "recordings-mast",
-        "question": "Recording head: keep or redo?",
+        "ref": "recordings-toolbar",
+        "question": "Recording actions: keep or redo?",
         "choices": [
           "Keep",
           "Redo"
@@ -21,13 +21,13 @@
     },
     {
       "highlight": {
-        "target": "recordings-plate",
-        "thing": "capture control",
-        "words": "Start a recording, or stop the one that runs."
+        "target": "recordings-list",
+        "thing": "recording list",
+        "words": "Choose a recording. Return opens its note."
       },
       "ask": {
-        "ref": "recordings-plate",
-        "question": "Capture control: keep or redo?",
+        "ref": "recordings-list",
+        "question": "Recording list: keep or redo?",
         "choices": [
           "Keep",
           "Redo"
@@ -36,13 +36,13 @@
     },
     {
       "highlight": {
-        "target": "recordings-storage",
-        "thing": "storage",
-        "words": "Show storage to see the keep time and open the folder."
+        "target": "recordings-document",
+        "thing": "selected recording",
+        "words": "Read the facts, watch the video, or read the links below the list."
       },
       "ask": {
-        "ref": "recordings-storage",
-        "question": "Storage: keep or redo?",
+        "ref": "recordings-document",
+        "question": "Selected recording: keep or redo?",
         "choices": [
           "Keep",
           "Redo"

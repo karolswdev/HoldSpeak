@@ -1660,3 +1660,7 @@ Long retained text cells use an ellipsis with their full value in `title`.
 Apps keep facts from hidden columns in their same-window selection pane.
 People keeps relationship, next meeting and commitments there; Meetings
 Records keeps date, time, length and the current state there.
+
+Read-only tabbed inspector content uses `PreferenceWell` so its rows scroll
+above the completion row. Video in an inspector value seat keeps its aspect
+ratio and fits that seat at narrow widths.

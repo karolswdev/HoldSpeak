@@ -1,43 +1,43 @@
-/* One recording beside its rail. Capture uses the desk's one store. */
-import { useRef, useState } from "react";
-import { Button } from "../../components/signal/Signal";
+/* One selection list; capture still uses the desk's one store. */
+import { useEffect, useRef, useState } from "react";
 import { readableError } from "../../lib/api";
 import type { CoreProps } from "../../pages/cores/core-types";
 import { openRef } from "../openObject";
-import { Rail, Mast, Spine, ConfirmVerb, Disclosure, CheckGadget, DotWord, StatusBar, SurfaceState, countWords, type SpineTone } from "../surface";
+import { CheckGadget, InspectorForm, ListPane, ListView, PaneInspector, PreferencePane, PreferenceWell, SegmentedTabs, StatusBar, StringGadget, SurfaceState, countWords, type ListVerb, type ObjectListRow } from "../surface";
 import { useWindowInterior } from "../surface/interior";
 import { ShowMe } from "../walk/ShowMe";
-import { SPRITE_BASE } from "../sprites";
 import { canCapture, isLive, setVoice, stopCapture, useCapture } from "./capture";
-import { lengthWords, parkRecording, posterUrl, retryRecording, shareRecording, sizeWords, unshareRecording, useRecordings, videoUrl } from "./api";
-import { RecordingsSettings } from "./RecordingsSettings";
+import { lengthWords, openRecordingsFolder, parkRecording, posterUrl, retryRecording, shareRecording, sizeWords, unshareRecording, useRecordings, videoUrl } from "./api";
 import { pressScreenRecord, useLiveClock } from "./ScreenRecord";
 import type { Recording } from "./types";
-import "./recordings.css";
 
-export function stateOf(row: Recording): { word: string; tone: "fail" | "info" | "warn" | "ok"; spine: SpineTone; live?: boolean } {
-  switch (row.state) {
-    case "recording": return { word: "Recording", tone: "info", spine: "steel", live: true };
-    case "encoding": return { word: `Encoding ${Math.max(0, Math.min(99, row.progress || 0))} %`, tone: "info", spine: "steel", live: true };
-    case "failed": return { word: "Failed", tone: "fail", spine: "coral" };
-    default: return row.encoder === "webm" ? { word: "Ready · webm", tone: "warn", spine: "brass" } : { word: "Ready", tone: "ok", spine: "moss" };
-  }
-}
 const whenOf = (row: Recording) => row.title.replace(/^Recording · /, "");
+const dateOf = (seconds: number) => new Date(seconds * 1000).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
+const keptUntil = (row: Recording, days: number) => days > 0 ? dateOf(row.started_ts + days * 86400) : "";
+const value = (text: string) => <span className="surface-preference-value" title={text}>{text}</span>;
 
-function CopyLink({ href, label = "Copy", testId }: { href: string; label?: string; testId: string }) {
-  const [receipt, setReceipt] = useState("");
-  const copy = async () => {
-    try { await navigator.clipboard.writeText(href); setReceipt("Copied"); }
-    catch { setReceipt("Copy failed"); }
-  };
-  return <Button dense onClick={() => void copy()} title={href} data-testid={testId}>{receipt || label}</Button>;
-}
-function ShareUrlRow({ label, href, testId, copy = true }: { label: string; href: string; testId: string; copy?: boolean }) {
-  return <div className="recordings-link" data-testid={testId}>
-    <span>{label}</span><span className="recordings-link-url" title={href}>{href}</span>
-    {copy ? <CopyLink key={href} href={href} testId={`${testId}-copy`} /> : null}
-  </div>;
+function RecordingDetails({ row, keepDays }: { row: Recording; keepDays: number }) {
+  const [tab, setTab] = useState("details");
+  return <PreferenceWell><SegmentedTabs label="Recording details" value={tab} onChange={setTab} tabs={[
+    { id: "details", label: "Details" },
+    ...(row.state === "ready" ? [{ id: "video", label: "Video" }] : []),
+    ...(row.state === "ready" && row.shared ? [{ id: "links", label: "Links" }] : []),
+  ]}>
+    {tab === "video" && row.state === "ready" ? <InspectorForm rows={[
+      { label: "Video", control: <video data-testid="recordings-video" aria-label={whenOf(row)} width={320} height={180} src={videoUrl(row.id)} poster={row.encoder === "mp4" ? posterUrl(row.id) : undefined} controls playsInline preload="metadata" /> },
+      ...(row.encoder === "webm" ? [{ label: "Format", control: <span data-testid="recordings-webm">Webm · iPhone video needs ffmpeg</span> }] : []),
+    ]} /> : tab === "links" && row.state === "ready" && row.shared ? <InspectorForm testId="recordings-links" rows={[
+      ...(row.links.tailnet ? [{ label: "On your phone", control: <span data-testid="recordings-link-tailnet" className="surface-preference-value" title={row.links.tailnet}>{row.links.tailnet}</span> }] : []),
+      ...(row.links.local ? [{ label: "On this Mac", control: <span data-testid="recordings-link-local" className="surface-preference-value" title={row.links.local}>{row.links.local}</span> }] : []),
+    ]} /> : <InspectorForm rows={[
+      { label: "Recorded", control: value(whenOf(row)) },
+      { label: "Length", control: row.duration_s ? lengthWords(row.duration_s) : "" },
+      { label: "Kept until", control: keptUntil(row, keepDays) },
+      { label: "Size", control: row.bytes_out ? sizeWords(row.bytes_out) : "" },
+      { label: "Voice", control: row.voice ? "On" : "Off" },
+      ...(row.state === "failed" ? [{ label: "Needs you", control: <span data-testid="recordings-wait">{row.error || "Recording failed"}</span> }] : []),
+    ]} />}
+  </SegmentedTabs></PreferenceWell>;
 }
 
 export function RecordingsCore(_props: CoreProps) {
@@ -46,80 +46,86 @@ export function RecordingsCore(_props: CoreProps) {
   const capture = useCapture();
   const clock = useLiveClock(capture);
   const [picked, setPicked] = useState<string | null>(null);
-  const [paneOpen, setPaneOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [panel, setPanel] = useState<"capture" | "storage" | "remove" | null>(null);
+  const [removeId, setRemoveId] = useState<string | null>(null);
   const [busy, setBusy] = useState("");
-  const [refusal, setRefusal] = useState("");
-  const [receipt, setReceipt] = useState("");
+  const [notice, setNotice] = useState("");
+  const [failed, setFailed] = useState(false);
   const locked = useRef(false);
+  const captured = useRef<string | null>(null);
   const rows = data.payload.recordings;
-  const shown = rows.find((row) => row.id === picked) ?? rows[0];
+  const shown = rows.find((row) => row.id === picked);
   const live = isLive(capture);
   const available = canCapture();
+  // Stop leaves the recording made here selected; another selection wins.
+  useEffect(() => {
+    if (capture.phase === "recording" && !capture.remote && panel === "capture") captured.current = capture.id;
+    if (capture.phase === "idle" && captured.current) {
+      if (panel === "capture") { setPicked(captured.current); setPanel(null); }
+      captured.current = null;
+    }
+  }, [capture.phase, capture.id, capture.remote, panel]);
   const run = async (kind: string, act: () => Promise<void>) => {
     if (locked.current) return;
-    locked.current = true; setBusy(kind); setRefusal(""); setReceipt("");
-    try { await act(); } catch (error) { setRefusal(readableError(error)); }
+    locked.current = true; setBusy(kind); setNotice(""); setFailed(false);
+    try { await act(); } catch (error) { setNotice(readableError(error)); setFailed(true); }
     finally { locked.current = false; setBusy(""); }
   };
-  const state = shown ? stateOf(shown) : null;
-  const notice = refusal || capture.error || receipt;
-  return <div className="recordings-window" data-testid="recordings-window">
-    <div className="recordings-body surface-rail-layout">
-      <Rail label="Recordings" data-testid="recordings-rail" picked={shown?.id ?? null}
-        paneOpen={paneOpen} onBack={() => setPaneOpen(false)} onPick={(id) => { setPicked(id); setPaneOpen(true); setRefusal(""); }}
-        head={<Button dense variant="primary" onClick={() => { setPaneOpen(true); }} data-testid="recordings-capture-open">{live ? "Recording now" : available ? "New recording" : "Storage"}</Button>}
-        items={rows.map((row) => { const s = stateOf(row); return { id: row.id, label: whenOf(row),
-          facts: [row.duration_s ? lengthWords(row.duration_s) : "", row.state === "ready" ? sizeWords(row.bytes_out) : ""].filter(Boolean).join(" · "),
-          state: <span data-tone={s.spine} data-testid="recordings-state">{s.word}</span>, spine: { tone: s.spine },
-          rowData: { "data-testid": "recordings-row", "data-recording": row.id } }; })}>
-        {data.loading || data.error ? <SurfaceState loading={data.loading} error={data.error} onRetry={() => void data.reload()} />
-          : !rows.length ? <SurfaceState empty emptyLabel="No recordings yet" emptyKind="recording" emptyImage={`${SPRITE_BASE}system/48/dock-screen-record.png`} /> : undefined}
-      </Rail>
-      <article className="recordings-object" data-testid="recordings-document" data-recording={shown?.id} data-state={shown?.state}>
-        <Mast kind="recording" glyph={`${SPRITE_BASE}system/dock-screen-record.png`} title={shown ? whenOf(shown) : "Record this desk"}
-          facts={shown ? [state?.word, shown.duration_s ? lengthWords(shown.duration_s) : ""].filter(Boolean).join(" · ") : undefined} data-testid="recordings-mast">
-          {shown?.note_ref ? <Button dense onClick={() => openRef(shown.note_ref)} data-testid="recordings-open-note">Open note</Button> : null}
-          {shown?.state === "ready" ? <Button dense loading={busy === "share"} disabled={Boolean(busy)} data-testid="recordings-share"
-            onClick={() => void run("share", async () => { data.apply(await (shown.shared ? unshareRecording(shown.id) : shareRecording(shown.id))); })}>{shown.shared ? "Stop sharing" : "Share"}</Button> : null}
-          {shown && ["ready", "failed"].includes(shown.state) ? <ConfirmVerb key={shown.id} label="Remove" confirmLabel="Remove recording?"
-            data-testid="recordings-park" busy={busy === "park"} disabled={Boolean(busy)} onConfirm={() => void run("park", async () => {
-              const answer = await parkRecording(shown.id);
-              if (!answer.parked) throw new Error("The recording was not removed");
-              data.drop(shown.id); setPicked((current) => current === shown.id ? null : current); setReceipt("Recording moved to the parked folder");
-            })} /> : null}
-          {shown?.state === "ready" && shown.shared && shown.links.tailnet ? <CopyLink key={shown.links.tailnet} href={shown.links.tailnet}
-            label="Copy phone link" testId="recordings-link-tailnet-copy" /> : null}
-          <ShowMe app="open-recordings" />
-        </Mast>
-        <Spine tone={state?.spine ?? "idle"} />
-        <section className="recordings-plate" data-testid="recordings-plate">
-          <span className="recordings-caption">{live ? "Recording now" : "Screen and voice"}</span>
-          <h3>{live ? (capture.remote ? "Recording on another view" : clock || "Recording") : "Your next recording"}</h3>
-          {live ? <Button dense variant="danger" onClick={stopCapture} disabled={capture.phase === "stopping"} data-testid="recordings-stop">Stop</Button>
-            : !available ? <DotWord tone="info">Record from your computer</DotWord> : <div className="recordings-capture-verbs"><Button dense variant="primary" loading={capture.phase === "asking"} onClick={pressScreenRecord} data-testid="recordings-record">Record screen</Button>
-              <CheckGadget variant="token" label="Voice" checked={capture.voice} onChange={setVoice} /></div>}
-        </section>
-        {shown?.state === "ready" ? <>
-          {shown.shared ? <section className="recordings-links" aria-label="Links" data-testid="recordings-links">
-            {shown.links.tailnet ? <ShareUrlRow key={shown.links.tailnet} copy={false} label="On your phone" href={shown.links.tailnet} testId="recordings-link-tailnet" /> : null}
-            {shown.links.local ? <ShareUrlRow key={shown.links.local} label="On this Mac" href={shown.links.local} testId="recordings-link-local" /> : null}
-          </section> : null}
-          <video className="recordings-video" data-testid="recordings-video" src={videoUrl(shown.id)}
-            poster={shown.encoder === "mp4" ? posterUrl(shown.id) : undefined} controls playsInline preload="metadata" />
-          {shown.encoder === "webm" ? <DotWord tone="warn" data-testid="recordings-webm">Webm · iPhone video needs ffmpeg</DotWord> : null}
-        </> : shown ? <section className="recordings-wait" data-testid="recordings-wait">
-          <DotWord tone={state?.tone} live={state?.live}>{shown.error || state?.word}</DotWord>
-          {shown.state === "failed" && shown.bytes_in > 0 ? <Button dense loading={busy === "retry"} data-testid="recordings-retry"
-            onClick={() => void run("retry", async () => { data.apply(await retryRecording(shown.id)); })}>Retry</Button> : null}
-        </section> : null}
-        <div data-testid="recordings-storage"><Disclosure label="Storage"><RecordingsSettings payload={data.payload} /></Disclosure></div>
-      </article>
-    </div>
+  const selected = (row: ObjectListRow | null) => rows.find((recording) => recording.id === row?.id);
+  const copy = (href: string) => void run("copy", async () => { await navigator.clipboard.writeText(href); setNotice("Copied"); });
+  const ready = (row: ObjectListRow | null) => !busy && selected(row)?.state === "ready";
+  const retry = shown?.state === "failed";
+  const verbs: ListVerb[] = [
+    { id: "new", label: live ? "Stop" : "New recording", key: "n", testId: live ? "recordings-stop" : "recordings-capture-open",
+      enabled: () => !busy && capture.phase !== "asking" && capture.phase !== "stopping",
+      run: () => { if (live) stopCapture(); else { setPanel("capture"); setNotice(""); } } },
+    { id: "open", label: "Open note", key: "Enter", testId: "recordings-open-note", enabled: (row) => !busy && Boolean(selected(row)?.note_ref), run: (row) => openRef(selected(row)!.note_ref) },
+    retry ? { id: "retry", label: "Retry", key: "r", testId: "recordings-retry", enabled: (row) => !busy && selected(row)?.state === "failed" && Boolean(selected(row)?.bytes_in), run: (row) => void run("retry", async () => { data.apply(await retryRecording(row!.id)); }) }
+      : { id: "share", label: shown?.shared ? "Stop sharing" : "Share", key: "s", testId: "recordings-share", enabled: ready, run: (row) => void run("share", async () => { const recording = selected(row)!; data.apply(await (recording.shared ? unshareRecording(recording.id) : shareRecording(recording.id))); }) },
+    { id: "remove", label: "Remove", key: "Delete", testId: "recordings-park", enabled: (row) => !busy && ["ready", "failed"].includes(selected(row)?.state ?? ""), run: (row) => { setRemoveId(row!.id); setPanel("remove"); setNotice(""); } },
+    { id: "more", label: "More", items: [
+      { id: "phone-link", label: "Copy phone link", testId: "recordings-link-tailnet-copy", enabled: (row) => ready(row) && Boolean(selected(row)?.shared && selected(row)?.links.tailnet), run: (row) => copy(selected(row)!.links.tailnet!) },
+      { id: "mac-link", label: "Copy Mac link", testId: "recordings-link-local-copy", enabled: (row) => ready(row) && Boolean(selected(row)?.shared && selected(row)?.links.local), run: (row) => copy(selected(row)!.links.local!) },
+      { id: "storage", label: "Storage", testId: "recordings-storage", run: () => setPanel("storage") },
+      { id: "folder", label: "Open folder", testId: "settings-recordings-open-folder", enabled: () => !busy, run: () => void run("folder", async () => { const answer = await openRecordingsFolder(); if (!answer.opened) throw new Error("The folder did not open"); setNotice("Folder opened"); }) },
+    ], run: () => undefined },
+  ];
+  const needsYou = rows.filter((row) => row.state === "failed").length;
+  const visible = rows.filter((row) => `${row.title} ${dateOf(row.started_ts)}`.toLowerCase().includes(query.trim().toLowerCase()));
+  return <PreferencePane label="Recordings" testId="recordings-window">
+    <ShowMe app="open-recordings" />
+    <ListPane label="Selected recording" listTestId="recordings-list" previewTestId="recordings-document" list={<>
+      <ListView label="Recordings" rows={visible.map((row) => ({ id: row.id, kind: "recording", name: `${whenOf(row)}${row.state === "failed" ? " · Failed" : ""}`, cells: {
+        length: row.duration_s ? lengthWords(row.duration_s) : "", recorded: dateOf(row.started_ts), kept: keptUntil(row, data.payload.usage.keep_days),
+      } }))} columns={[
+        { key: "name", word: "Recording", priority: 100, track: "minmax(0, 2fr)", minWidth: 180 },
+        { key: "length", word: "Length", priority: 30, track: "90px" },
+        { key: "recorded", word: "Recorded", priority: 20, track: "130px" },
+        { key: "kept", word: "Kept until", priority: 10, track: "130px" },
+      ]} ordered selectedId={picked} onSelect={(id) => { setPicked(id); setPanel(null); setNotice(""); }} verbs={verbs} defaultVerb="open"
+        toolbar={{ testId: "recordings-toolbar", trailing: <StringGadget label="Find a recording" placeholder="Find a recording" value={query} onChange={(next) => { setQuery(next); setPicked(null); setPanel(null); }} /> }}
+        rowProps={(row) => ({ "data-testid": "recordings-row", "data-recording": row.id, "data-state": rows.find((recording) => recording.id === row.id)?.state })} />
+      {data.loading || data.error ? <SurfaceState loading={data.loading} error={data.error} onRetry={() => void data.reload()} /> : !visible.length ? <SurfaceState empty emptyLabel={query ? "No recordings found" : "No recordings yet"} /> : null}
+    </>}>
+      {panel === "remove" && removeId && rows.some((row) => row.id === removeId) ? <PaneInspector label="Remove recording?" rows={[{ label: "Recording", control: value(whenOf(rows.find((row) => row.id === removeId)!)) }]} completion={{ cancel: () => setPanel(null), cancelDisabled: Boolean(busy), primary: { label: "Remove", testId: "recordings-remove-confirm", busy: busy === "park", disabled: Boolean(busy), run: () => void run("park", async () => {
+        const answer = await parkRecording(removeId); if (!answer.parked) throw new Error("The recording was not removed"); data.drop(removeId); setPicked((current) => current === removeId ? null : current); setPanel((current) => current === "remove" ? null : current); setNotice("Recording moved to the parked folder");
+      }) } }} /> : panel === "capture" ? <PaneInspector label={live ? "Recording now" : "New recording"} rows={[
+        ...(live ? [{ label: "Length", control: capture.remote ? "Recording on another view" : clock || "" }] : available ? [{ label: "Voice", control: <CheckGadget label="Voice" checked={capture.voice} onChange={setVoice} /> }] : [{ label: "Screen", control: "Record from your computer" }]),
+      ]} completion={available && !live ? { cancel: () => setPanel(null), cancelDisabled: capture.phase === "asking", primary: { label: "Record screen", testId: "recordings-record", busy: capture.phase === "asking", run: pressScreenRecord } } : { done: () => setPanel(null) }} />
+        : panel === "storage" ? <PaneInspector label="Storage" rows={[
+          { label: "Keep", control: <span data-testid="settings-recordings-usage">{data.payload.usage.keep_days > 0 ? `${data.payload.usage.keep_days} days` : "For good"}</span> },
+          { label: "Used", control: sizeWords(data.payload.usage.bytes) },
+          { label: "Folder", control: value(data.payload.folder) },
+        ]} completion={{ done: () => setPanel(null) }} />
+          : shown ? <PaneInspector label={whenOf(shown)} onClose={() => setPicked(null)}><RecordingDetails key={shown.id} row={shown} keepDays={data.payload.usage.keep_days} /></PaneInspector> : <p>Select a recording.</p>}
+    </ListPane>
     <StatusBar data-testid="recordings-status" items={[
-      notice ? { text: notice, lamp: refusal || capture.error ? "warn" : undefined, testId: "recordings-refusal" } : null,
       rows.length ? { text: countWords(rows.length, "recording") } : null,
-      data.payload.usage.bytes ? { text: `${sizeWords(data.payload.usage.bytes)} used` } : null,
+      needsYou ? { text: `${needsYou} ${needsYou === 1 ? "needs" : "need"} you`, lamp: "ask" } : null,
+      live ? { text: capture.remote ? "Recording on another view" : `Recording ${clock || ""}` } : null,
+      notice || capture.error ? { text: notice || capture.error, lamp: failed || capture.error ? "warn" : undefined, testId: "recordings-refusal" } : null,
     ]} />
-  </div>;
+  </PreferencePane>;
 }
 export default RecordingsCore;
