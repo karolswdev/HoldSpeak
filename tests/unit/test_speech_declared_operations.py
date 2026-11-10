@@ -211,9 +211,7 @@ def test_async_write_announces_only_after_completion(monkeypatch, fails):
     monkeypatch.setattr(
         composition, "_installed", SimpleNamespace(_send_desk_changed=sent.append)
     )
-    existing_write = next(
-        row for row in SPEECH_ROWS if row.name == "recordings.start"
-    )
+    existing_write = next(row for row in SPEECH_ROWS if row.name == "recordings.start")
 
     async def create(principal, **args):
         await asyncio.sleep(0)
@@ -243,3 +241,69 @@ def test_async_write_announces_only_after_completion(monkeypatch, fails):
             assert len(sent) == 1
 
     asyncio.run(run())
+
+
+@pytest.mark.parametrize(
+    "name,hook",
+    [
+        ("dictation.wake.type", "on_wake_type"),
+        ("dictation.preview.type", "on_preview_type"),
+    ],
+)
+def test_owner_preview_text_is_not_copied_to_agent_events(tmp_path, name, hook):
+    from holdspeak.db import Database
+    from holdspeak.services.dictation_service import (
+        DictationService,
+        bind_dictation_runtime,
+    )
+    from holdspeak.web.context import WebContext
+
+    events = []
+    db = Database(tmp_path / "preview.db")
+    try:
+        ctx = WebContext(get_state=dict, **{hook: lambda token: "OWNER_TYPED_PRIVATE"})
+        service = bind_dictation_runtime(
+            DictationService(db, observer=SimpleNamespace(on_event=events.append)), ctx
+        )
+        registry = operations.bind_available({"dictation_service": service})
+        result = registry.invoke(
+            Principal(PrincipalKind.OWNER, "owner"),
+            name,
+            {"token": "OWNER_TOKEN_PRIVATE"},
+        )
+        assert result["typed"] == "OWNER_TYPED_PRIVATE"
+        event = events[-1]
+        assert "OWNER_TYPED_PRIVATE" not in event.args_summary + event.result_summary
+        assert "OWNER_TOKEN_PRIVATE" not in event.args_summary + event.result_summary
+        assert "<withheld>" in event.result_summary
+    finally:
+        db.close()
+
+
+def test_owner_command_and_output_are_not_copied_to_agent_events(tmp_path, monkeypatch):
+    from holdspeak.db import Database
+    from holdspeak.plugins import voice_macro_connector
+    from holdspeak.services.dictation_service import DictationService
+
+    events = []
+    db = Database(tmp_path / "command.db")
+    try:
+        monkeypatch.setattr(
+            voice_macro_connector,
+            "build_voice_macro_connector",
+            lambda action: lambda proposal: {"stdout": "OWNER_OUTPUT_PRIVATE"},
+        )
+        service = DictationService(db, observer=SimpleNamespace(on_event=events.append))
+        registry = operations.bind_available({"dictation_service": service})
+        result = registry.invoke(
+            Principal(PrincipalKind.OWNER, "owner"),
+            "dictation.command.test",
+            {"kind": "shell", "payload": "printf OWNER_COMMAND_PRIVATE"},
+        )
+        assert result["result"]["stdout"] == "OWNER_OUTPUT_PRIVATE"
+        event = events[-1]
+        assert "OWNER_OUTPUT_PRIVATE" not in event.args_summary + event.result_summary
+        assert "OWNER_COMMAND_PRIVATE" not in event.args_summary + event.result_summary
+        assert "<withheld>" in event.result_summary
+    finally:
+        db.close()
