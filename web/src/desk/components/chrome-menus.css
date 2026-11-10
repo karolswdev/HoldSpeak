@@ -1313,3 +1313,33 @@
   min-height: var(--desk-button-hit-size);
   margin: 2px 8px 4px auto;
 }
+
+/* Window Undo is one strip item. Its words yield first; the verb owns its
+   whole target even when only Undo fits beside the other strip items. */
+.desk-next .desk-menubar #desk-window-undo-slot {
+  display: flex;
+  align-items: stretch;
+  flex: 0 1 26ch;
+  max-width: 18%;
+  min-width: calc(var(--desk-button-hit-size) + var(--space-2));
+}
+.desk-next .desk-menubar #desk-window-undo-slot:empty {
+  display: none;
+}
+.desk-next .desk-menubar .desk-window-undo {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  width: 100%;
+  gap: var(--space-1);
+  font-size: var(--font-size-sm);
+}
+.desk-next .desk-menubar .desk-window-undo > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.desk-next .desk-menubar .desk-window-undo > button {
+  flex-shrink: 0;
+}

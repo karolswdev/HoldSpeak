@@ -64,6 +64,9 @@ function hear(frame: { type: string; data: unknown }): void {
 }
 
 beforeEach(() => {
+  const slot = document.createElement("div");
+  slot.id = "desk-window-undo-slot";
+  document.body.appendChild(slot);
   mocks.posts.length = 0;
   mocks.speak.mockReset().mockResolvedValue(true);
   mocks.restoreFails = false;
@@ -203,12 +206,27 @@ describe("say and Undo use the Desk seams", () => {
         revision = windows[0].revision;
         hub.onFrame({ kind: "windows", id: "surface-projects" });
       };
+      await act(async () => { await vi.advanceTimersByTimeAsync(7000); });
       fireEvent.click(screen.getByTestId("desk-window-undo"));
       await act(async () => { await hub.idle(); });
       await vi.waitFor(() => expect(screen.getByTestId("projects-window")).toBeInTheDocument());
+      expect(screen.queryByTestId("desk-window-undo")).toBeNull();
       expect(mocks.posts.find((post) => post.path === "/api/desk/windows/restore")?.init)
         .toEqual({ method: "POST", json: { group: "desk", ...voiceUndo.undo.data.args } });
     } finally { hub.stop(); }
+  });
+
+  it("removes the strip offer eight seconds after the window act", async () => {
+    vi.useFakeTimers();
+    render(<DeskRequests />);
+    await act(async () => { hear(voiceUndo.undo); });
+    expect(screen.getByTestId("desk-window-undo")).toBeInTheDocument();
+    expect(screen.getByRole("status").parentElement?.id).toBe("desk-window-undo-slot");
+    await act(async () => { await vi.advanceTimersByTimeAsync(7999); });
+    expect(screen.getByTestId("desk-window-undo")).toBeInTheDocument();
+    await act(async () => { await vi.advanceTimersByTimeAsync(1); });
+    expect(screen.queryByRole("status")).toBeNull();
+    expect(mocks.posts.some((post) => post.path === "/api/desk/windows/restore")).toBe(false);
   });
 
   it.each([409, 500])("a refused Undo (%s) keeps its receipt for retry", async (status) => {

@@ -131,6 +131,11 @@ retrieval starting point, not a blanket access boundary.
 Ask and Thread share one durable conversation. The answer shows **References**.
 The retained trace can also expose **Looked at**, **Wrote**, and **Prepared**.
 **Looked at** names the records used.
+
+A window change offers **Undo** in the top menu strip for eight seconds.
+The next window change replaces the offer. An agent's **Used** lines keep
+**Undo** for the same change after the strip offer leaves.
+
 **Wrote** lists Desk changes and offers **Undo** when the change supports it.
 **Prepared** lists a send that still needs your **Send** press. HoldSpeak does
 not send from a prepared result by itself.
