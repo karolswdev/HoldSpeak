@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import datetime
 
-from holdspeak.timestamps import aware, in_window, local_now, local_wall, parse_stamp, sql_instant, sql_window, utc_iso
+from holdspeak.timestamps import aware, in_window, local_now, local_wall, parse_stamp, sql_window
 import json
 import logging
 import re
@@ -746,13 +746,19 @@ class MondayBriefService:
             )
             # PHILO-15-09 (B04, ruling 4): what the owner added to the desk
             # in the window (a decision he made, a Project, a person).
+            try:
+                history = self._history(period_start.isoformat(), period_end.isoformat())
+            except Exception as exc:
+                log.warning("brief: the history was not read: %s", exc)
+                waiting_items.append(_not_read_item("history", exc))
+                history = []
             desk_changes = self._collect_desk_additions(
-                period_start.isoformat(), period_end.isoformat()
+                period_start.isoformat(), period_end.isoformat(), history=history,
             )
             # PHILO-15 B58: what the day did: decisions confirmed, actions
             # done, agent launches, their PRs and merges, updates sent.
             day_changes, day_unread = self._collect_day(
-                period_start.isoformat(), period_end.isoformat(), today
+                period_start.isoformat(), period_end.isoformat(), today, history=history,
             )
             said = {item.text.split(": ", 1)[1] for item in day_changes
                     if item.text.startswith("Action done: ")}
@@ -798,20 +804,32 @@ class MondayBriefService:
             # an occurrence already recorded is SINCE FRIDAY's, not THIS
             # WEEK's.
             recorded_event_ids = self._recorded_calendar_event_ids(
-                period_start.isoformat(), period_end.isoformat()
+                period_start.isoformat(), period_end.isoformat(), history=history,
             )
 
             # HS-175-05: new collectors (THIS WEEK section, forward-looking)
-            calendar_items = self._collect_calendar_events(
-                ahead_start_iso, ahead_end_iso, ahead_start_iso,
-                exclude_event_ids=recorded_event_ids,
-                clock_tz=clock_tz,
-            )
+            try:
+                calendar_items = self._collect_calendar_events(
+                    ahead_start_iso, ahead_end_iso, ahead_start_iso,
+                    exclude_event_ids=recorded_event_ids,
+                    clock_tz=clock_tz,
+                )
+            except Exception as exc:
+                log.warning("brief: the calendar was not read: %s", exc)
+                waiting_items.append(_not_read_item("calendar", exc))
+                calendar_items = []
+            try:
+                meeting_facts = self._meeting_facts(principal)
+            except Exception as exc:
+                log.warning("brief: the Room facts were not read: %s", exc)
+                waiting_items.append(_not_read_item("room", exc))
+                meeting_facts = {"decisions": [], "commitments": []}
             meeting_watch_items = self._collect_meeting_watch(
                 ahead_start_iso, ahead_end_iso, last_brief_at,
                 decisions_since=period_start.isoformat(),
                 due_from=local_start.date().isoformat(),
                 due_until=local_end.date().isoformat() + "T23:59:59",
+                meeting_facts=meeting_facts,
             )
 
             # PHILO-4-03: the brief id is minted before the collectors, so the
@@ -826,7 +844,7 @@ class MondayBriefService:
                 + desk_changes
                 + day_changes
                 + self._collect_meetings(
-                    period_start.isoformat(), period_end.isoformat()
+                    period_start.isoformat(), period_end.isoformat(), history=history,
                 ),
                 "broke": self._collect_breakage(
                     period_start.isoformat(), period_end.isoformat(), brief_id
@@ -837,12 +855,13 @@ class MondayBriefService:
                 "decisions": self._collect_decisions(
                     principal,
                     {
-                        str(r["id"]) for r in self._commitments_due_rows(
-                            conn,
+                        str(r["id"]) for r in self._due_commitments(
+                            meeting_facts,
                             local_start.date().isoformat(),
                             local_end.date().isoformat() + "T23:59:59",
                         )
                     },
+                    meeting_facts=meeting_facts,
                 ),
             }
             headline, sections = self._compose(
@@ -942,7 +961,8 @@ class MondayBriefService:
         # brief id and the failure): it was matched above, or it left.
         return kept
 
-    def _collect_desk_additions(self, window_start: str, window_end: str) -> list[BriefItem]:
+    def _collect_desk_additions(self, window_start: str, window_end: str, *,
+                                history: list[dict[str, Any]] | None = None) -> list[BriefItem]:
         """PHILO-15-09 (B04, ruling 4): what the owner added to the desk.
 
         From the durable rows, as ``_collect_meetings`` does: a decision he
@@ -952,34 +972,16 @@ class MondayBriefService:
         sent to other places, so no People content is written into it.
         """
         items: list[BriefItem] = []
-        # Small tables, stamps of mixed shapes: the instant test is exact.
-        with self._db._connection() as conn:
-            decisions = conn.execute(
-                """SELECT id, title, status, created_at FROM desk_decisions
-                   WHERE deleted = 0 AND status != 'proposed'"""
-            ).fetchall()
-            projects = conn.execute(
-                "SELECT id, name, created_at FROM projects WHERE is_archived = 0"
-            ).fetchall()
-        for row in sorted(decisions, key=lambda r: (str(r["created_at"]), str(r["id"]))):
-            if not in_window(row["created_at"], window_start, window_end):
+        history = history if history is not None else self._history(window_start, window_end)
+        for row in reversed(history):
+            if row["kind"] not in ("desk_decision", "project"):
                 continue
-            title = str(row["title"] or "").strip() or "Untitled decision"
+            decision = row["kind"] == "desk_decision"
             items.append(BriefItem(
                 id=f"brief-item-{uuid.uuid4().hex}", section="changed",
-                text=f"Decision made: {title}", source_ref=f"desk_decision:{row['id']}",
-                detail=_when_words(row["created_at"], _day_of(window_end)),
-                priority=_MEETING_PRIORITY - 1, created_at=str(row["created_at"]),
-            ))
-        for row in sorted(projects, key=lambda r: (str(r["created_at"]), str(r["id"]))):
-            if not in_window(row["created_at"], window_start, window_end):
-                continue
-            name = str(row["name"] or "").strip() or "Untitled Project"
-            items.append(BriefItem(
-                id=f"brief-item-{uuid.uuid4().hex}", section="changed",
-                text=f"Project added: {name}", source_ref=f"project:{row['id']}",
-                detail=_when_words(row["created_at"], _day_of(window_end)),
-                priority=_MEETING_PRIORITY - 2, created_at=str(row["created_at"]),
+                text=f"{'Decision made' if decision else 'Project added'}: {row['title']}",
+                source_ref=row["ref"], detail=_when_words(row["at"], _day_of(window_end)),
+                priority=_MEETING_PRIORITY - (1 if decision else 2), created_at=row["stored_at"],
             ))
         people = self._people_added(window_start, window_end)
         if people:
@@ -1003,7 +1005,7 @@ class MondayBriefService:
         "Decision confirmed": _DAY_TOP - 3,
         "Action done": _DAY_TOP - 4,
         "Agent launched": _DAY_TOP - 5,
-        # Programs (2026-10-28, §9b): a Project's line counts its running Programs.
+        # Programs: the same today-movement read as the Today face.
         "Programs": _DAY_TOP - 6,
     }
     #: How an update left (``project_update_deliveries.channel``).
@@ -1024,7 +1026,8 @@ class MondayBriefService:
         )
 
     def _collect_day(
-        self, window_start: str, window_end: str, today: datetime.date | None,
+        self, window_start: str, window_end: str, today: datetime.date | None, *,
+        history: list[dict[str, Any]] | None = None,
     ) -> tuple[list[BriefItem], list[BriefItem]]:
         """PHILO-15 B58: decisions confirmed, actions done, agent launches,
         PRs opened and merged, and updates published or sent, in the window.
@@ -1039,28 +1042,12 @@ class MondayBriefService:
             return bool(stamp) and in_window(stamp, window_start, window_end)
 
         lo, hi = sql_window(window_start, window_end)
-        with self._db._connection() as conn:
-            confirmed = conn.execute(
-                """SELECT id, meeting_id, kind, text, decided_at FROM follow_through_proposals
-                   WHERE state = 'confirmed' AND kind = 'decision'
-                     AND decided_at BETWEEN ? AND ?""",
-                (lo, hi),
-            ).fetchall()
-            done = conn.execute(
-                """SELECT id, task, completed_at FROM action_items
-                   WHERE status = 'done' AND completed_at BETWEEN ? AND ?""",
-                (lo, hi),
-            ).fetchall()
-        for row in sorted(confirmed, key=lambda r: (str(r["decided_at"]), str(r["id"]))):
-            if inside(row["decided_at"]):
-                title = " ".join(str(row["text"] or "").split())[:160] or "Untitled decision"
-                items.append(self._day_item("Decision confirmed", title, row["decided_at"],
-                                            f"meeting:{row['meeting_id']}", today))
-        for row in sorted(done, key=lambda r: (str(r["completed_at"]), str(r["id"]))):
-            if inside(row["completed_at"]):
-                title = " ".join(str(row["task"] or "").split())[:160] or "Untitled action"
-                items.append(self._day_item("Action done", title, row["completed_at"],
-                                            f"action_item:{row['id']}", today))
+        history = history if history is not None else self._history(window_start, window_end)
+        for row in reversed(history):
+            if row["kind"] in ("confirmed_decision", "action"):
+                kind = "Decision confirmed" if row["kind"] == "confirmed_decision" else "Action done"
+                title = " ".join(row["title"].split())[:160] or "Untitled action"
+                items.append(self._day_item(kind, title, row["stored_at"], row["ref"], today))
         try:
             merged_urls = self._collect_launches(items, inside, today)
         except Exception as exc:  # noqa: BLE001 - said as a NOT READ row
@@ -1078,36 +1065,27 @@ class MondayBriefService:
             log.warning("brief: the Room updates were not read: %s", exc)
             unread.append(_not_read_item("updates", exc))
         try:
-            self._collect_programs(items, today)
+            self._collect_programs(items, now=parse_stamp(window_end))
         except Exception as exc:  # noqa: BLE001 - said as a NOT READ row
             log.warning("brief: the Programs were not read: %s", exc)
             unread.append(_not_read_item("programs", exc))
         return items, unread
 
-    def _collect_programs(self, items: list[BriefItem], today: Any) -> None:
-        """One row per Project with a running Program: how many run, how many
-        wait on him (Programs §9b)."""
+    def _collect_programs(self, items: list[BriefItem], *, now: Any = None) -> None:
+        """Programs that moved today, from the same read as Today."""
         from holdspeak.services.program_service import ProgramService
 
-        service = ProgramService(self._db)
-        projects: dict[str, dict[str, int]] = {}
-        for row in service.list().get("programs") or []:
-            if row["state"] not in ("running", "waiting") or not row.get("project_id"):
-                continue
-            counts = projects.setdefault(str(row["project_id"]), {"running": 0, "waiting": 0})
-            counts["running"] += 1
-            counts["waiting"] += 1 if row["state"] == "waiting" else 0
-        if not projects:
+        counts = ProgramService(self._db).since_morning(now=now or self._clock())
+        if not counts["moved"]:
             return
-        with self._db._connection() as conn:
-            names = {str(r["id"]): str(r["name"]) for r in conn.execute("SELECT id, name FROM projects")}
-        for project_id, counts in sorted(projects.items()):
-            detail = f"{counts['running']} running" + (f", {counts['waiting']} wait on you" if counts["waiting"] else "")
-            items.append(BriefItem(
-                id=f"brief-item-{uuid.uuid4().hex}", section="changed",
-                text=f"Programs: {names.get(project_id, project_id)}", detail=detail,
-                source_ref=f"project:{project_id}", priority=self._DAY_PRIORITY["Programs"],
-            ))
+        detail = ", ".join(f"{counts[key]} {word}" for key, word in (
+            ("running", "running"), ("waiting", "waits on you" if counts["waiting"] == 1 else "wait on you"),
+            ("done", "done"), ("merged", "PR merged" if counts["merged"] == 1 else "PRs merged"),
+        ) if counts[key])
+        items.append(BriefItem(
+            id=f"brief-item-{uuid.uuid4().hex}", section="changed", text="Programs",
+            detail=detail or f"{counts['moved']} changed", source_ref="programs:today", priority=self._DAY_PRIORITY["Programs"],
+        ))
 
     def _collect_launches(self, items: list[BriefItem], inside: Callable[[Any], bool],
                           today: Any) -> set[str]:
@@ -1670,59 +1648,34 @@ class MondayBriefService:
         ledger = LedgerSummary(operations=ledger_count, since=ledger_since)
         return items, ledger
 
-    def _collect_meetings(self, window_start: str, window_end: str) -> list[BriefItem]:
-        """Gather meetings recorded inside the window.
+    def _history(self, window_start: str, window_end: str) -> list[dict[str, Any]]:
+        from .today_service import since_morning_read
 
-        HS-132-08: the observer's method markers (create/update/delete/…) never
-        match the meeting lifecycle, so a week full of recorded meetings used to
-        read as an empty brief. Meetings are collected from their own
-        durable rows rather than from pipeline receipts, which is the honest
-        source: a meeting exists whether or not an observed method ran.
-        """
-        # Stored stamps mix old local and new UTC text: a padded text
-        # prefilter, then the exact instant test and order.
-        with self._db._connection() as conn:
-            rows = conn.execute(
-                """SELECT m.id, m.title, m.started_at, m.ended_at, m.duration_seconds,
-                          COALESCE(m.ended_at, m.started_at) AS window_at,
-                          (SELECT COUNT(*) FROM action_items a
-                            WHERE a.meeting_id = m.id) AS action_count
-                   FROM meetings AS m
-                   WHERE m.parked = 0
-                     AND COALESCE(m.ended_at, m.started_at) BETWEEN ? AND ?
-                     AND m.capture_status NOT IN ('recording', 'provisional')""",
-                sql_window(window_start, window_end),
-            ).fetchall()
-        rows = sorted(
-            (r for r in rows if in_window(r["window_at"], window_start, window_end)),
-            key=lambda r: (parse_stamp(r["window_at"]), str(r["id"])),
-        )
+        return since_morning_read(self._db, limit=None, window_start=window_start,
+                                  window_end=window_end)["items"]
 
-        items: list[BriefItem] = []
-        for row in rows:
-            title = str(row["title"] or "").strip() or "Untitled meeting"
-            parts: list[str] = []
-            duration = row["duration_seconds"]
-            if duration:
-                parts.append(f"{max(1, round(float(duration) / 60))} min")
+    def _collect_meetings(self, window_start: str, window_end: str, *,
+                          history: list[dict[str, Any]] | None = None) -> list[BriefItem]:
+        """Word the recorded meetings from the same history read as Today."""
+        history = history if history is not None else self._history(window_start, window_end)
+        items = []
+        for row in reversed(history):
+            if row["kind"] != "meeting":
+                continue
+            parts = []
+            if row["duration_seconds"]:
+                parts.append(f"{max(1, round(float(row['duration_seconds']) / 60))} min")
             actions = int(row["action_count"] or 0)
             if actions:
                 parts.append(f"{actions} action item{'' if actions == 1 else 's'}")
-            # PHILO-15 lane 19 (Astra r1, 6): the meeting row carries its time.
-            when = _when_words(row["window_at"], _day_of(window_end))
+            when = _when_words(row["at"], _day_of(window_end))
             if when:
                 parts.append(when)
-            items.append(
-                BriefItem(
-                    id=f"brief-item-{uuid.uuid4().hex}",
-                    section="changed",
-                    text=f"Meeting recorded: {title}",
-                    detail=" · ".join(parts) or None,
-                    source_ref=f"meeting:{row['id']}",
-                    priority=_MEETING_PRIORITY,
-                    created_at=str(row["window_at"]),
-                )
-            )
+            items.append(BriefItem(
+                id=f"brief-item-{uuid.uuid4().hex}", section="changed",
+                text=f"Meeting recorded: {row['title']}", detail=" · ".join(parts) or None,
+                source_ref=row["ref"], priority=_MEETING_PRIORITY, created_at=row["stored_at"],
+            ))
         return items
 
     def _collect_breakage(
@@ -1857,7 +1810,8 @@ class MondayBriefService:
         return items
 
     def _collect_decisions(
-        self, principal: Any, exclude_commitment_ids: set[str] | None = None,
+        self, principal: Any, exclude_commitment_ids: set[str] | None = None, *,
+        meeting_facts: dict[str, Any] | None = None,
     ) -> list[BriefItem]:
         """Gather decisions requiring owner attention.
 
@@ -1866,7 +1820,6 @@ class MondayBriefService:
         due this week``); their lookback ``Commitment due`` items are
         dropped -- dedup by commitment id, never by text.
         """
-        del principal
         items: list[BriefItem] = []
         excluded_commitments = exclude_commitment_ids or set()
 
@@ -1928,21 +1881,14 @@ class MondayBriefService:
         # creation timestamp keeps their row aligned with the decision queue.
         today = self._clock().date()
         horizon = today + datetime.timedelta(days=7)
-        with self._db._connection() as conn:
-            commitments = conn.execute(
-                """SELECT dc.id, dc.decision_id, dc.due_at, d.text, d.created_at
-                   FROM decision_commitments AS dc
-                   JOIN decisions AS d ON d.id = dc.decision_id
-                   WHERE dc.status = 'open' AND dc.due_at IS NOT NULL
-                     AND d.deleted = 0
-                   ORDER BY dc.due_at ASC, dc.id ASC"""
-            ).fetchall()
+        facts = meeting_facts if meeting_facts is not None else self._meeting_facts(principal)
+        commitments = sorted(facts["commitments"], key=lambda row: (str(row.get("dueAt") or ""), row["id"]))
         for commitment in commitments:
             if str(commitment["id"]) in excluded_commitments:
                 continue  # already said under THIS WEEK
             try:
                 due_date = datetime.datetime.fromisoformat(
-                    str(commitment["due_at"]).replace("Z", "+00:00")
+                    str(commitment["dueAt"]).replace("Z", "+00:00")
                 ).date()
             except ValueError:
                 continue
@@ -1953,9 +1899,9 @@ class MondayBriefService:
                     id=f"brief-item-{uuid.uuid4().hex}",
                     section="decisions",
                     text=f"Commitment due {due_date.isoformat()}: {commitment['text']}",
-                    source_ref=f"decision:{commitment['decision_id']}",
+                    source_ref=commitment["ref"],
                     priority=120 if due_date <= today else 110,
-                    created_at=str(commitment["created_at"]),
+                    created_at=commitment.get("at"),
                 )
             )
 
@@ -1964,218 +1910,86 @@ class MondayBriefService:
     # ── HS-175-05: calendar events + meeting watch collectors ─────────
 
     def _collect_calendar_events(
-        self, week_start: str, week_end: str, now_iso: str,
-        *,
+        self, week_start: str, week_end: str, now_iso: str, *,
         exclude_event_ids: set[str] | None = None,
         clock_tz: datetime.tzinfo | None = None,
     ) -> list[BriefItem]:
-        """Calendar events in the week range.
+        """Word the calendar service's lookahead, excluding meetings already said."""
+        from holdspeak.runtime import composition
+        from .calendar_service import CalendarService
 
-        HS-175-05: produces items for the ``this_week`` section
-        (forward-looking calendar and armed-recording data):
-        - ``N meetings`` (count of events in the week).
-        - ``Next: [title] at [time]`` (next event after now).
-        - ``N armed`` (events with linked armed recordings).
-
-        C11: ``exclude_event_ids`` is the calendar_uid dedup against the
-        lookback's "Meeting recorded" rows, keyed by the occurrence (the
-        projection id hashes uid + starts_at) so a recurring series' next
-        occurrence is never hidden by its last recording.  ``clock_tz``
-        renders the ``Next:`` clock in the brief's own zone rather than
-        the stored UTC.
-
-        Returns an empty list when no calendar events exist (no
-        calendar configured or no events in range).
-        """
-        items: list[BriefItem] = []
-        excluded = exclude_event_ids or set()
-        with self._db._connection() as conn:
-            # Check that calendar_events table exists (belt -- fresh DBs)
-            table_check = conn.execute(
-                "SELECT 1 FROM sqlite_master WHERE type='table' AND name='calendar_events'"
-            ).fetchone()
-            if table_check is None:
-                return items
-
-            event_rows = [
-                row for row in conn.execute(
-                    """SELECT id, uid, title, starts_at, meeting_url
-                       FROM calendar_events
-                       WHERE starts_at >= ? AND starts_at < ?
-                       ORDER BY starts_at ASC, id ASC""",
-                    (week_start, week_end),
-                ).fetchall()
-                if str(row["id"]) not in excluded
-            ]
-            if not event_rows:
-                return items
-
-            total = len(event_rows)
-            items.append(
-                BriefItem(
-                    id=f"brief-cal-total-{uuid.uuid4().hex}",
-                    section="this_week",
-                    text=f"{total} meeting{'s' if total != 1 else ''} this week",
-                    source_ref="calendar:week",
-                    priority=_MEETING_PRIORITY + 10,
-                )
-            )
-
-            # Next event after now
-            for row in event_rows:
-                if str(row["starts_at"]) > now_iso:
-                    try:
-                        next_dt = datetime.datetime.fromisoformat(
-                            str(row["starts_at"]).replace("Z", "+00:00")
-                        )
-                        if clock_tz is not None and next_dt.tzinfo is not None:
-                            next_dt = next_dt.astimezone(clock_tz)
-                        time_str = next_dt.strftime("%H:%M")
-                    except (ValueError, TypeError):
-                        time_str = ""
-                    title = str(row["title"] or "").strip() or "Untitled"
-                    items.append(
-                        BriefItem(
-                            id=f"brief-cal-next-{uuid.uuid4().hex}",
-                            section="this_week",
-                            text=f"Next: {title} at {time_str}",
-                            source_ref=f"calendar_event:{row['id']}",
-                            priority=_MEETING_PRIORITY + 5,
-                        )
-                    )
-                    break
-
-            # Armed recordings count
-            sched_table = conn.execute(
-                "SELECT 1 FROM sqlite_master WHERE type='table' AND name='scheduled_recordings'"
-            ).fetchone()
-            if sched_table is not None:
-                event_ids = [str(r["id"]) for r in event_rows]
-                placeholders = ",".join("?" * len(event_ids))
-                armed_row = conn.execute(
-                    f"""SELECT COUNT(*) AS cnt FROM scheduled_recordings
-                        WHERE calendar_event_id IN ({placeholders})
-                          AND enabled = 1""",
-                    event_ids,
-                ).fetchone()
-                armed = int(armed_row["cnt"]) if armed_row else 0
-                if armed:
-                    items.append(
-                        BriefItem(
-                            id=f"brief-cal-armed-{uuid.uuid4().hex}",
-                            section="this_week",
-                            text=f"{armed} armed",
-                            source_ref="calendar:armed",
-                            priority=_MEETING_PRIORITY + 3,
-                        )
-                    )
-
+        service = composition.service("calendar_service", lambda: CalendarService(db=self._db))
+        events = [row for row in service.lookahead(None, week_start, week_end)
+                  if row["id"] not in (exclude_event_ids or set())]
+        if not events:
+            return []
+        total = len(events)
+        items = [BriefItem(
+            id=f"brief-cal-total-{uuid.uuid4().hex}", section="this_week",
+            text=f"{total} meeting{'s' if total != 1 else ''} this week",
+            source_ref="calendar:week", priority=_MEETING_PRIORITY + 10,
+        )]
+        for row in events:
+            if row["starts_at"] <= now_iso:
+                continue
+            next_dt = datetime.datetime.fromisoformat(row["starts_at"].replace("Z", "+00:00"))
+            if clock_tz is not None and next_dt.tzinfo is not None:
+                next_dt = next_dt.astimezone(clock_tz)
+            title = str(row["title"] or "").strip() or "Untitled"
+            items.append(BriefItem(
+                id=f"brief-cal-next-{uuid.uuid4().hex}", section="this_week",
+                text=f"Next: {title} at {next_dt:%H:%M}", source_ref=f"calendar_event:{row['id']}",
+                priority=_MEETING_PRIORITY + 5,
+            ))
+            break
+        armed = sum(row["armed"] for row in events)
+        if armed:
+            items.append(BriefItem(
+                id=f"brief-cal-armed-{uuid.uuid4().hex}", section="this_week",
+                text=f"{armed} armed", source_ref="calendar:armed", priority=_MEETING_PRIORITY + 3,
+            ))
         return items
 
+    def _meeting_facts(self, principal: Any) -> dict[str, Any]:
+        from holdspeak.runtime import composition
+        from .project_service import ProjectService
+
+        service = composition.service("project_service", lambda: ProjectService(self._db))
+        return service.briefing_facts(principal)
+
+    @staticmethod
+    def _due_commitments(facts: dict[str, Any], start: str, end: str) -> list[dict[str, Any]]:
+        return sorted((row for row in facts["commitments"]
+                       if start <= str(row.get("dueAt") or "") < end),
+                      key=lambda row: (row["dueAt"], row["id"]))
+
     def _collect_meeting_watch(
-        self, week_start: str, week_end: str, last_brief_at: str | None,
-        *,
-        decisions_since: str | None = None,
-        due_from: str | None = None,
-        due_until: str | None = None,
+        self, week_start: str, week_end: str, last_brief_at: str | None, *,
+        decisions_since: str | None = None, due_from: str | None = None, due_until: str | None = None,
+        meeting_facts: dict[str, Any] | None = None,
     ) -> list[BriefItem]:
-        """Meeting watch items: new decisions and commitments.
-
-        HS-175-05: reads decisions and commitments from meetings linked
-        to any Room, filtered to the week window.
-
-        - Meetings with new decisions since the last brief.
-        - Meetings with new commitments.
-        - Commitments due this week.
-
-        C11: ``week_start`` is the forward window's start (``now``).  New
-        decisions are a "since the last brief" fact, so their fallback
-        floor is ``decisions_since`` (the lookback's start), not ``now``.
-        Commitments carry due DATES, so they are bounded by the owner's
-        local dates ``due_from`` (today) and ``due_until`` (Sunday), not by
-        UTC instants.  The calendar_uid dedup lives in the calendar
-        collector (``exclude_event_ids``); these items are counts over
-        meeting data and name no event.
-        """
-        items: list[BriefItem] = []
+        """Word the Room's decisions and commitments, once per identity."""
+        facts = meeting_facts if meeting_facts is not None else self._meeting_facts(None)
         since = last_brief_at or decisions_since or week_start
-        due_lo = due_from or week_start[:10]
-        due_hi = due_until or week_end
-
-        with self._db._connection() as conn:
-            # Check tables exist
-            for table in ("decision_records", "decision_record_sources",
-                          "decision_commitments"):
-                if conn.execute(
-                    f"SELECT 1 FROM sqlite_master WHERE type='table' AND name='{table}'"
-                ).fetchone() is None:
-                    return items
-
-            # New decisions since last brief
-            decision_rows = conn.execute(
-                """SELECT r.id, r.decision_text, r.created_at,
-                          s.source_ref AS meeting_id
-                   FROM decision_records r
-                   JOIN decision_record_sources s ON s.record_id = r.id
-                   WHERE s.source_type = 'meeting'
-                     AND julianday(r.created_at) >= julianday(?) AND julianday(r.created_at) < julianday(?)
-                     AND r.deleted = 0
-                     -- PHILO-15 08: an action's record is not a new decision.
-                     AND COALESCE(r.kind, 'decision') != 'action'
-                     AND NOT EXISTS (SELECT 1 FROM follow_through_proposals fp
-                                     WHERE fp.decision_record_id = r.id AND fp.kind = 'action')
-                   ORDER BY julianday(r.created_at) DESC""",
-                (sql_instant(since), sql_instant(week_end)),
-            ).fetchall()
-
-            if decision_rows:
-                count = len(decision_rows)
-                items.append(
-                    BriefItem(
-                        id=f"brief-mtgwatch-decisions-{uuid.uuid4().hex}",
-                        section="this_week",
-                        text=f"{count} new decision{'s' if count != 1 else ''} from meetings",
-                        source_ref="meeting_watch:decisions",
-                        priority=_MEETING_PRIORITY + 2,
-                    )
-                )
-
-            # Commitments due this week
-            commitment_rows = self._commitments_due_rows(conn, due_lo, due_hi)
-
-            if commitment_rows:
-                count = len(commitment_rows)
-                first = commitment_rows[0]
-                first_due = str(first["due_at"] or "")[:10]
-                first_text = None
-                try:
-                    d_row = conn.execute(
-                        """SELECT d.text FROM decisions d
-                           JOIN decision_commitments dc ON dc.decision_id = d.id
-                           WHERE dc.id = ?""",
-                        (str(first["id"]),),
-                    ).fetchone()
-                    if d_row and d_row["text"]:
-                        first_text = str(d_row["text"]).strip()
-                except Exception:
-                    pass
-                detail_parts = []
-                if first_text:
-                    detail_parts.append(first_text)
-                if first_due:
-                    detail_parts.append(first_due)
-                detail = " | ".join(detail_parts) if detail_parts else None
-                items.append(
-                    BriefItem(
-                        id=f"brief-mtgwatch-commitments-{uuid.uuid4().hex}",
-                        section="this_week",
-                        text=f"{count} commitment{'s' if count != 1 else ''} due this week",
-                        detail=detail,
-                        source_ref="meeting_watch:commitments_due",
-                        priority=_MEETING_PRIORITY + 1,
-                    )
-                )
-
+        decisions = [row for row in facts["decisions"] if in_window(row["at"], since, week_end)]
+        commitments = self._due_commitments(facts, due_from or week_start[:10], due_until or week_end)
+        items = []
+        if decisions:
+            count = len(decisions)
+            items.append(BriefItem(
+                id=f"brief-mtgwatch-decisions-{uuid.uuid4().hex}", section="this_week",
+                text=f"{count} new decision{'s' if count != 1 else ''} from meetings",
+                source_ref="meeting_watch:decisions", priority=_MEETING_PRIORITY + 2,
+            ))
+        if commitments:
+            count = len(commitments)
+            first = commitments[0]
+            items.append(BriefItem(
+                id=f"brief-mtgwatch-commitments-{uuid.uuid4().hex}", section="this_week",
+                text=f"{count} commitment{'s' if count != 1 else ''} due this week",
+                detail=" | ".join(part for part in (first["text"], str(first["dueAt"] or "")[:10]) if part) or None,
+                source_ref="meeting_watch:commitments_due", priority=_MEETING_PRIORITY + 1,
+            ))
         return items
 
     @staticmethod
@@ -2197,46 +2011,13 @@ class MondayBriefService:
         return aware.astimezone(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
     def _recorded_calendar_event_ids(
-        self, window_start: str, window_end: str,
+        self, window_start: str, window_end: str, *,
+        history: list[dict[str, Any]] | None = None,
     ) -> set[str]:
-        """C11: the calendar occurrences already recorded inside the lookback.
-
-        Mirrors ``_collect_meetings``' predicate so an event that is a
-        "Meeting recorded" row in SINCE FRIDAY is never also counted or
-        named in THIS WEEK.
-        """
-        with self._db._connection() as conn:
-            rows = conn.execute(
-                """SELECT m.calendar_event_id AS event_id,
-                          COALESCE(m.ended_at, m.started_at) AS window_at
-                   FROM meetings AS m
-                   WHERE m.parked = 0
-                     AND m.calendar_event_id IS NOT NULL
-                     AND m.calendar_event_id != ''
-                     AND COALESCE(m.ended_at, m.started_at) BETWEEN ? AND ?
-                     AND m.capture_status NOT IN ('recording', 'provisional')""",
-                sql_window(window_start, window_end),
-            ).fetchall()
-        return {
-            str(r["event_id"]) for r in rows
-            if in_window(r["window_at"], window_start, window_end)
-        }
-
-    @staticmethod
-    def _commitments_due_rows(conn: Any, due_lo: str, due_hi: str) -> list[Any]:
-        """Open commitments due in ``[due_lo, due_hi)`` -- the one query THIS
-        WEEK counts and the lookback dedups against (by commitment id)."""
-        try:
-            return conn.execute(
-                """SELECT dc.id, dc.due_at, dc.status, dc.owner
-                   FROM decision_commitments dc
-                   WHERE dc.status = 'open'
-                     AND dc.due_at >= ? AND dc.due_at < ?
-                   ORDER BY dc.due_at ASC""",
-                (due_lo, due_hi),
-            ).fetchall()
-        except Exception:
-            return []
+        """Use exactly the meeting rows already said in Changed."""
+        history = history if history is not None else self._history(window_start, window_end)
+        return {str(row["calendar_event_id"]) for row in history
+                if row["kind"] == "meeting" and row.get("calendar_event_id")}
 
     @staticmethod
     def _leading_count(items: list[BriefItem], source_ref: str) -> int:

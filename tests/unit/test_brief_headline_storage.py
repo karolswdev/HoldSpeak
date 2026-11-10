@@ -108,7 +108,7 @@ def _fixture_producer(service: MondayBriefService, monkeypatch: Any) -> None:
         "_collect_changes",
         lambda _start, _end: (_items(fixture, "changed"), LedgerSummary()),
     )
-    monkeypatch.setattr(service, "_collect_meetings", lambda _start, _end: [])
+    monkeypatch.setattr(service, "_collect_meetings", lambda _start, _end, **_kwargs: [])
     monkeypatch.setattr(
         service,
         "_collect_breakage",
@@ -117,7 +117,7 @@ def _fixture_producer(service: MondayBriefService, monkeypatch: Any) -> None:
     monkeypatch.setattr(
         service,
         "_collect_decisions",
-        lambda _principal, _excluded: _items(fixture, "decisions"),
+        lambda _principal, _excluded, **_kwargs: _items(fixture, "decisions"),
     )
     monkeypatch.setattr(
         service,
