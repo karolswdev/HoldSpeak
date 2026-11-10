@@ -92,6 +92,7 @@ describe("Settings > Engines", () => {
       return recordedGet(at.gets, String(path).split("?")[0]) as never;
     });
     render(<EnginesSection />);
+    fireEvent.click(await screen.findByRole("tab", { name: "Engines" }));
     fireEvent.click(screen.getByRole("button", { name: "Model library" }));
     const library = screen.getByTestId("settings-engines-library");
     fireEvent.click(within(library).getByRole("button", { name: "Add an engine" }));
@@ -103,6 +104,7 @@ describe("Settings > Engines", () => {
     expect(writes).toEqual([expect.objectContaining({ draft: expect.objectContaining({ preset: "claude", profile_id: "agent-claude" }) })]);
     fireEvent.click(within(library).getByRole("region", { name: "Add engine" }).querySelector("button")!);
     expect(await screen.findByTestId("settings-engine-agent-claude")).toHaveTextContent("Ready");
+    fireEvent.click(await screen.findByRole("tab", { name: "Engines" }));
     fireEvent.click(screen.getByRole("region", { name: "Model library" }).querySelector("button")!);
     expect(screen.queryByTestId("settings-engines-library")).toBeNull();
   });

@@ -284,6 +284,7 @@ def test_engines_pane_chain_editor_library_and_old_link(
             global_row = next(item for item in roster["rows"] if item["id"] == "global")
             assert [entry["profile_id"] for entry in global_row["assignment"]["entries"]] == ["agent-gemini", "agent-codex"]
             editor.get_by_role("button", name="Close", exact=True).click()
+            page.get_by_role("tab", name="Engines", exact=True).click()
             page.get_by_role("button", name="Model library", exact=True).click()
             library = page.get_by_test_id("settings-engines-library")
             expect(library.get_by_test_id("settings-engine-agent-codex")).to_be_visible()
